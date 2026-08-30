@@ -1,5 +1,5 @@
 <?php
-// modules/users/change_password.php - Self-service password change (all roles)
+// modules/users/change_password.php - Self-service and forced password change
 require_once dirname(__DIR__, 2) . '/config/config.php';
 require_once dirname(__DIR__, 2) . '/config/database.php';
 require_once dirname(__DIR__, 2) . '/config/functions.php';
@@ -13,6 +13,7 @@ if (!Session::isLoggedIn()) {
 
 $pageTitle = 'تغيير كلمة المرور';
 $active    = 'password';
+$forced    = isset($_GET['forced']) && $_GET['forced'] === '1';
 
 $me = dbFetchOne("SELECT * FROM users WHERE id = ?", [current_user_id()]);
 $hashCol = null;
@@ -40,23 +41,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ($new !== $confirm) {
             flash('error', t('كلمتا المرور الجديدتان غير متطابقتين.'));
         } else {
-            dbExecute("UPDATE users SET {$hashCol} = ? WHERE id = ?", [password_hash($new, PASSWORD_DEFAULT), current_user_id()]);
             dbExecute(
-                "INSERT INTO audit_log (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent)
-                 VALUES (?, 'CHANGE_PASSWORD', 'users', ?, NULL, ?, ?, ?)",
-                [
-                    current_user_id(),
-                    current_user_id(),
-                    json_encode(['password_changed' => true], JSON_UNESCAPED_UNICODE),
-                    $_SERVER['REMOTE_ADDR'] ?? '',
-                    $_SERVER['HTTP_USER_AGENT'] ?? ''
-                ]
+                "UPDATE users
+                 SET {$hashCol} = ?, password_change_required = 0
+                 WHERE id = ?",
+                [password_hash($new, PASSWORD_DEFAULT), current_user_id()]
             );
-            flash('success', t('تم تغيير كلمة المرور بنجاح.'));
+
+            try {
+                dbExecute(
+                    "UPDATE password_recovery_requests
+                     SET status = 'completed'
+                     WHERE user_id = ? AND status = 'approved'",
+                    [current_user_id()]
+                );
+            } catch (Throwable $e) {}
+
+            try {
+                dbExecute(
+                    "INSERT INTO audit_log
+                     (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent)
+                     VALUES (?, 'CHANGE_PASSWORD', 'users', ?, NULL, ?, ?, ?)",
+                    [
+                        current_user_id(),
+                        current_user_id(),
+                        json_encode(['password_changed' => true, 'forced' => $forced], JSON_UNESCAPED_UNICODE),
+                        $_SERVER['REMOTE_ADDR'] ?? '',
+                        $_SERVER['HTTP_USER_AGENT'] ?? ''
+                    ]
+                );
+            } catch (Throwable $e) {}
+
+            flash('success', $forced ? 'تم إنشاء كلمة المرور الجديدة بنجاح.' : t('تم تغيير كلمة المرور بنجاح.'));
             redirect(url('modules/users/change_password.php'));
         }
     }
-    redirect(url('modules/users/change_password.php'));
+    redirect(url('modules/users/change_password.php' . ($forced ? '?forced=1' : '')));
 }
 
 include dirname(__DIR__, 2) . '/includes/header.php';
@@ -64,7 +84,11 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 
 <div class="welcome-section fade-in">
     <h2><i class="fas fa-key me-2"></i><?php echo t('تغيير كلمة المرور'); ?></h2>
-    <p><?php echo t('اختر كلمة مرور قوية ولا تشاركها مع أحد.'); ?></p>
+    <?php if ($forced): ?>
+        <p class="mb-0"><strong>تم تسجيل الدخول بكلمة مرور مؤقتة.</strong> يجب إنشاء كلمة مرور جديدة للمتابعة.</p>
+    <?php else: ?>
+        <p><?php echo t('اختر كلمة مرور قوية ولا تشاركها مع أحد.'); ?></p>
+    <?php endif; ?>
 </div>
 
 <?php include dirname(__DIR__, 2) . '/includes/alerts.php'; ?>
@@ -74,16 +98,16 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         <form method="post" autocomplete="new-password">
             <?php echo csrf_field(); ?>
             <div class="mb-3">
-                <label class="form-label"><?php echo t('كلمة المرور الحالية'); ?></label>
+                <label class="form-label"><?php echo $forced ? 'كلمة المرور المؤقتة' : t('كلمة المرور الحالية'); ?></label>
                 <div class="input-group">
-                    <input type="password" name="current_password" id="ak_cur" class="form-control" required>
+                    <input type="password" name="current_password" id="ak_cur" class="form-control" required autocomplete="current-password">
                     <button class="btn btn-outline-secondary" type="button" onclick="var i=document.getElementById('ak_cur');i.type=i.type==='password'?'text':'password';"><i class="fas fa-eye"></i></button>
                 </div>
             </div>
             <div class="mb-3">
                 <label class="form-label"><?php echo t('كلمة المرور الجديدة'); ?></label>
                 <div class="input-group">
-                    <input type="password" name="new_password" id="ak_new" class="form-control" minlength="6" required>
+                    <input type="password" name="new_password" id="ak_new" class="form-control" minlength="6" required autocomplete="new-password">
                     <button class="btn btn-outline-secondary" type="button" onclick="var i=document.getElementById('ak_new');i.type=i.type==='password'?'text':'password';"><i class="fas fa-eye"></i></button>
                 </div>
                 <div class="form-text"><?php echo t('6 أحرف على الأقل.'); ?></div>
@@ -91,13 +115,13 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             <div class="mb-3">
                 <label class="form-label"><?php echo t('تأكيد كلمة المرور الجديدة'); ?></label>
                 <div class="input-group">
-                    <input type="password" name="confirm_password" id="ak_conf" class="form-control" minlength="6" required>
+                    <input type="password" name="confirm_password" id="ak_conf" class="form-control" minlength="6" required autocomplete="new-password">
                     <button class="btn btn-outline-secondary" type="button" onclick="var i=document.getElementById('ak_conf');i.type=i.type==='password'?'text':'password';"><i class="fas fa-eye"></i></button>
                 </div>
             </div>
             <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i><?php echo t('حفظ'); ?></button>
-                <a href="<?php echo url('modules/users/profile.php'); ?>" class="btn btn-outline-secondary"><?php echo t('رجوع'); ?></a>
+                <?php if (!$forced): ?><a href="<?php echo url('modules/users/profile.php'); ?>" class="btn btn-outline-secondary"><?php echo t('رجوع'); ?></a><?php endif; ?>
             </div>
         </form>
     </div>
