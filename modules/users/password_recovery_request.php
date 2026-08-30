@@ -24,60 +24,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = 'يرجى إدخال اسم المستخدم أو البريد الإلكتروني.';
         } else {
             try {
-                $user = dbFetchOne(
-                    "SELECT id, username, full_name, email
-                     FROM users
-                     WHERE status = 'active'
-                       AND (username = ? OR email = ?)
-                     LIMIT 1",
-                    [$identity, $identity]
-                );
+                $user = dbFetchOne("SELECT id, username, full_name, email FROM users WHERE status = 'active' AND (username = ? OR email = ?) LIMIT 1", [$identity, $identity]);
 
                 if ($user) {
-                    /* Do not create multiple simultaneous pending requests. */
-                    $pending = dbFetchOne(
-                        "SELECT id
-                         FROM password_recovery_requests
-                         WHERE user_id = ? AND status = 'pending'
-                         ORDER BY id DESC
-                         LIMIT 1",
-                        [(int)$user['id']]
-                    );
+                    $pending = dbFetchOne("SELECT id FROM password_recovery_requests WHERE user_id = ? AND status = 'pending' ORDER BY id DESC LIMIT 1", [(int)$user['id']]);
 
                     if (!$pending) {
-                        dbExecute(
-                            "INSERT INTO password_recovery_requests (user_id, status, requested_at)
-                             VALUES (?, 'pending', NOW())",
-                            [(int)$user['id']]
-                        );
+                        dbExecute("INSERT INTO password_recovery_requests (user_id, status, requested_at) VALUES (?, 'pending', NOW())", [(int)$user['id']]);
 
-                        /* Notify every HR manager/staff account. */
-                        $hrUsers = dbFetchAll(
-                            "SELECT id FROM users
-                             WHERE status = 'active'
-                               AND role IN ('hr_manager', 'hr_staff')"
-                        );
+                        /* Notify both HR and the system administrator so either authorized person can respond. */
+                        $recoveryHandlers = dbFetchAll("SELECT id FROM users WHERE status = 'active' AND role IN ('admin', 'hr_manager')");
 
-                        foreach ($hrUsers as $hr) {
+                        foreach ($recoveryHandlers as $handler) {
                             try {
-                                dbExecute(
-                                    "INSERT INTO notifications
-                                     (recipient_user_id, type, title, body, link, is_read)
-                                     VALUES (?, 'recovery', ?, ?, ?, 0)",
-                                    [
-                                        (int)$hr['id'],
-                                        'طلب استعادة كلمة مرور جديد',
-                                        'يوجد طلب جديد لاستعادة كلمة مرور للمستخدم: ' . $user['full_name'],
-                                        'modules/users/recovery.php'
-                                    ]
-                                );
+                                dbExecute("INSERT INTO notifications (recipient_user_id, type, title, body, link, is_read) VALUES (?, 'recovery', ?, ?, ?, 0)", [
+                                    (int)$handler['id'],
+                                    'طلب استعادة كلمة مرور جديد',
+                                    'يوجد طلب جديد لاستعادة كلمة مرور للمستخدم: ' . $user['full_name'],
+                                    'modules/users/recovery.php'
+                                ]);
                             } catch (Throwable $e) {}
                         }
                     }
                 }
 
                 /* Generic response prevents account enumeration. */
-                $message = 'تم استلام الطلب. إذا كان الحساب موجوداً ونشطاً، فسيقوم قسم الموارد البشرية بمراجعته والتواصل معك لاستلام كلمة المرور المؤقتة.';
+                $message = 'تم استلام الطلب. إذا كان الحساب موجوداً ونشطاً، فسيقوم قسم الموارد البشرية أو مسؤول النظام بمراجعته والتواصل معك لاستلام كلمة المرور المؤقتة.';
             } catch (Throwable $e) {
                 $error = 'تعذر إرسال الطلب حالياً. يرجى المحاولة مرة أخرى لاحقاً.';
             }
@@ -108,42 +80,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="recovery-head">
         <i class="fas fa-key"></i>
         <h2 class="h4 mb-1">استعادة كلمة المرور</h2>
-        <p class="mb-0 opacity-75">طلب مساعدة من قسم الموارد البشرية</p>
+        <p class="mb-0 opacity-75">طلب مساعدة من الموارد البشرية أو مسؤول النظام</p>
     </div>
     <div class="recovery-body">
-        <?php if ($message): ?>
-            <div class="alert alert-success">
-                <i class="fas fa-circle-check me-1"></i>
-                <?php echo e($message); ?>
-            </div>
-        <?php endif; ?>
-
-        <?php if ($error): ?>
-            <div class="alert alert-danger">
-                <i class="fas fa-triangle-exclamation me-1"></i>
-                <?php echo e($error); ?>
-            </div>
-        <?php endif; ?>
-
+        <?php if ($message): ?><div class="alert alert-success"><i class="fas fa-circle-check me-1"></i><?php echo e($message); ?></div><?php endif; ?>
+        <?php if ($error): ?><div class="alert alert-danger"><i class="fas fa-triangle-exclamation me-1"></i><?php echo e($error); ?></div><?php endif; ?>
         <?php if (!$message): ?>
-        <p class="text-muted mb-4">أدخل اسم المستخدم أو البريد الإلكتروني المسجل في النظام. سيتم إرسال الطلب إلى قسم الموارد البشرية لمراجعته.</p>
+        <p class="text-muted mb-4">أدخل اسم المستخدم أو البريد الإلكتروني المسجل في النظام. سيتم إرسال الطلب إلى الموارد البشرية ومسؤول النظام، ويمكن لأي منهما معالجته.</p>
         <form method="post" autocomplete="off">
             <?php echo csrf_field(); ?>
-            <div class="mb-3">
-                <label class="form-label fw-bold">اسم المستخدم أو البريد الإلكتروني</label>
-                <input type="text" name="identity" class="form-control" required autofocus maxlength="190">
-            </div>
-            <button type="submit" class="btn btn-primary w-100 py-2">
-                <i class="fas fa-paper-plane me-1"></i> إرسال طلب الاستعادة
-            </button>
+            <div class="mb-3"><label class="form-label fw-bold">اسم المستخدم أو البريد الإلكتروني</label><input type="text" name="identity" class="form-control" required autofocus maxlength="190"></div>
+            <button type="submit" class="btn btn-primary w-100 py-2"><i class="fas fa-paper-plane me-1"></i> إرسال طلب الاستعادة</button>
         </form>
         <?php endif; ?>
-
-        <div class="text-center mt-4">
-            <a href="<?php echo e(APP_URL); ?>index.php" class="text-decoration-none">
-                <i class="fas fa-arrow-right me-1"></i> العودة إلى تسجيل الدخول
-            </a>
-        </div>
+        <div class="text-center mt-4"><a href="<?php echo e(APP_URL); ?>index.php" class="text-decoration-none"><i class="fas fa-arrow-right me-1"></i> العودة إلى تسجيل الدخول</a></div>
     </div>
 </div>
 </body>
