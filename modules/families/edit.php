@@ -157,11 +157,19 @@ if (!$errors) {
 $needId = (int)($_POST['medical_need_id'] ?? 0) ?: null;
 $health = trim($_POST['health_status'] ?? 'سليم');
 $psych  = trim($_POST['psychological_state'] ?? 'سليم');
-dbExecute("INSERT INTO family_children (family_id, child_name, national_id, birth_date, gender, education_level,
+$lock = dbFetchOne("SELECT GET_LOCK('ahl_el_kheir_orphan_form_serial', 10) AS locked");
+if ((int)($lock['locked'] ?? 0) !== 1) {
+    $errors[] = 'تعذر إنشاء رقم الاستمارة الآن. يرجى المحاولة مرة أخرى.';
+} else {
+    try {
+        $mx = dbFetchOne("SELECT MAX(CAST(SUBSTRING(form_serial, 4) AS UNSIGNED)) m FROM family_children WHERE form_serial LIKE 'AK-%'");
+        $formSerial = 'AK-' . str_pad((string)(((int)($mx['m'] ?? 0)) + 1), 5, '0', STR_PAD_LEFT);
+
+        dbExecute("INSERT INTO family_children (family_id, child_name, national_id, birth_date, gender, education_level,
 has_medical_needs, medical_need_id, medical_notes,
 nationality, health_status, health_status_other, psychological_state, psychological_state_other, guardian_name, guardian_relationship,
-monthly_sponsorship_value, extra_allowance, is_active)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)",
+monthly_sponsorship_value, extra_allowance, form_serial, is_active)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)",
 [$id, $cn,
 trim($_POST['national_id'] ?? '') ?: null,
 trim($_POST['birth_date'] ?? '') ?: null,
@@ -175,9 +183,17 @@ $psych, $psych === 'أخرى' ? trim($_POST['psychological_state_other'] ?? '') 
 trim($_POST['guardian_name'] ?? '') ?: null,
 trim($_POST['guardian_relationship'] ?? '') ?: null,
 trim($_POST['monthly_sponsorship_value'] ?? '') !== '' ? (float)str_replace(',', '', $_POST['monthly_sponsorship_value']) : null,
-trim($_POST['extra_allowance'] ?? '') !== '' ? (float)str_replace(',', '', $_POST['extra_allowance']) : null]);
-flash('success', 'تمت إضافة الطفل.');
-redirect('modules/families/edit.php?id=' . $id);
+trim($_POST['extra_allowance'] ?? '') !== '' ? (float)str_replace(',', '', $_POST['extra_allowance']) : null,
+$formSerial]);
+        flash('success', 'تمت إضافة الطفل.');
+        redirect('modules/families/edit.php?id=' . $id);
+    } catch (Throwable $e) {
+        error_log('Orphan form serial/child insert: ' . $e->getMessage());
+        $errors[] = 'تعذر إضافة الطفل. يرجى المحاولة مرة أخرى.';
+    } finally {
+        dbExecute("SELECT RELEASE_LOCK('ahl_el_kheir_orphan_form_serial')");
+    }
+}
 }
 /* Session-7: update existing child (financials + basics). DELETE child removed by design (data safety). */
 } elseif (isset($_POST['update_child'])) {
