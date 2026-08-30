@@ -1,99 +1,151 @@
 <?php
-// modules/users/recovery.php - Approve/reject password recovery requests (Admin + VGM)
+// modules/users/recovery.php - HR password recovery request management
 require_once dirname(__DIR__, 2) . '/config/config.php';
 require_once dirname(__DIR__, 2) . '/config/database.php';
 require_once dirname(__DIR__, 2) . '/config/functions.php';
 require_once dirname(__DIR__, 2) . '/config/session.php';
 Session::start();
 
-if (!Session::isLoggedIn() || !in_array(Session::getUserRole(), ['admin', 'vice_general_manager'], true)) {
-    header('Location: ' . APP_URL . 'index.php'); exit();
+/*
+ * Password recovery has two sides:
+ *   1) Unauthenticated users submit a recovery request through
+ *      password_recovery_request.php.
+ *   2) HR processes pending requests here.
+ *
+ * Only HR is responsible for approving recovery requests.
+ */
+if (!Session::isLoggedIn() || !in_array(Session::getUserRole(), ['hr_manager', 'hr_staff', 'admin'], true)) {
+    header('Location: ' . APP_URL . 'index.php');
+    exit();
 }
-$pageTitle = 'طلبات استرداد كلمات المرور';
+
+$pageTitle = 'طلبات استعادة كلمات المرور';
 $active    = 'users';
-
-/* ---------- SMTP-ready mail stub (logs to outbox until hosting provides SMTP) ---------- */
-if (!function_exists('ak_send_mail')) {
-    function ak_send_mail(string $to, string $subject, string $body): bool {
-        $set = [];
-        foreach (dbFetchAll("SELECT setting_key, setting_value FROM settings WHERE setting_key LIKE 'smtp\\_%'") as $r) $set[$r['setting_key']] = (string)$r['setting_value'];
-        $logDir = dirname(__DIR__, 2) . '/storage/logs';
-        if (!is_dir($logDir)) @mkdir($logDir, 0777, true);
-        $line = date('Y-m-d H:i:s') . ' | to=' . $to . ' | subject=' . $subject . ' | smtp=' . (trim($set['smtp_host'] ?? '') !== '' ? 'configured' : 'not-configured') . ' | ' . $body;
-        @file_put_contents($logDir . '/mail_outbox.log', $line . PHP_EOL, FILE_APPEND);
-        // TODO(hosting): replace with PHPMailer using smtp_* settings when online.
-        return false;
-    }
-}
-
-$approvedCode = null; $approvedFor = '';
+$approvedTemporaryPassword = null;
+$approvedFor = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!verify_csrf()) {
         flash('error', 'انتهت صلاحية الجلسة.');
-    } else {
-        $rid = (int)($_POST['request_id'] ?? 0);
-        $req = dbFetchOne("SELECT r.*, u.username, u.full_name, u.email
-                           FROM password_recovery_requests r JOIN users u ON u.id = r.user_id
-                           WHERE r.id = ?", [$rid]);
-
-        if (!$req || $req['status'] !== 'pending') {
-            flash('error', 'الطلب غير موجود أو تمت معالجته.');
-        } elseif (isset($_POST['approve'])) {
-            $code = str_pad((string)random_int(0, 999999), 6, '0', STR_PAD_LEFT);
-            dbExecute("UPDATE password_recovery_requests
-                       SET status='approved', code_hash=?, reviewed_by=?, reviewed_at=NOW(),
-                           expires_at=DATE_ADD(NOW(), INTERVAL 24 HOUR)
-                       WHERE id=?",
-                [hash('sha256', $code), Session::getUserId(), $rid]);
-            if (!empty($req['email'])) {
-                ak_send_mail($req['email'], 'رمز استرداد كلمة المرور — أهل الخير', 'رمزك: ' . $code . ' (صالح 24 ساعة)');
-            }
-            try {
-                dbExecute("INSERT INTO audit_log (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent)
-                           VALUES (?, 'RECOVERY', 'users', ?, NULL, ?, ?, ?)",
-                    [Session::getUserId(), (int)$req['user_id'],
-                     json_encode(['approved_request' => $rid], JSON_UNESCAPED_UNICODE),
-                     $_SERVER['REMOTE_ADDR'] ?? '', $_SERVER['HTTP_USER_AGENT'] ?? '']);
-            } catch (Throwable $e) {}
-            $approvedCode = $code;
-            $approvedFor  = $req['full_name'];
-            flash('success', 'تمت الموافقة على طلب: ' . $req['full_name']);
-        } elseif (isset($_POST['reject'])) {
-            dbExecute("UPDATE password_recovery_requests SET status='rejected', reviewed_by=?, reviewed_at=NOW() WHERE id=?",
-                [Session::getUserId(), $rid]);
-            flash('success', 'تم رفض الطلب.');
-        }
+        header('Location: ' . APP_URL . 'modules/users/recovery.php');
+        exit();
     }
-    if ($approvedCode === null) { header('Location: ' . APP_URL . 'modules/users/recovery.php'); exit(); }
+
+    $rid = (int)($_POST['request_id'] ?? 0);
+    $req = dbFetchOne(
+        "SELECT r.*, u.username, u.full_name, u.email
+         FROM password_recovery_requests r
+         JOIN users u ON u.id = r.user_id
+         WHERE r.id = ?",
+        [$rid]
+    );
+
+    if (!$req || $req['status'] !== 'pending') {
+        flash('error', 'الطلب غير موجود أو تمت معالجته.');
+    } elseif (isset($_POST['approve'])) {
+        /*
+         * Generate a temporary password, store only its secure hash in users,
+         * and force the user to replace it at the next login.
+         */
+        $temporaryPassword = bin2hex(random_bytes(6));
+        $temporaryHash = password_hash($temporaryPassword, PASSWORD_DEFAULT);
+
+        try {
+            dbExecute("UPDATE users
+                       SET password_hash = ?, password_change_required = 1
+                       WHERE id = ?",
+                [$temporaryHash, (int)$req['user_id']]);
+
+            dbExecute("UPDATE password_recovery_requests
+                       SET status='approved', reviewed_by=?, reviewed_at=NOW(),
+                           expires_at=DATE_ADD(NOW(), INTERVAL 24 HOUR)
+                       WHERE id=? AND status='pending'",
+                [Session::getUserId(), $rid]);
+
+            try {
+                dbExecute("INSERT INTO notifications
+                           (recipient_user_id, type, title, body, link, is_read)
+                           VALUES (?, 'recovery', ?, ?, ?, 0)",
+                    [
+                        (int)$req['user_id'],
+                        'تمت الموافقة على طلب استعادة كلمة المرور',
+                        'تمت الموافقة على طلبك. تواصل مع مسؤول الموارد البشرية لاستلام كلمة المرور المؤقتة.',
+                        'modules/users/change_password.php?forced=1'
+                    ]
+                );
+            } catch (Throwable $e) {
+                // Notification failure must not undo the password recovery.
+            }
+
+            try {
+                dbExecute("INSERT INTO audit_log
+                           (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent)
+                           VALUES (?, 'RECOVERY_APPROVED', 'users', ?, NULL, ?, ?, ?)",
+                    [
+                        Session::getUserId(),
+                        (int)$req['user_id'],
+                        json_encode(['recovery_request_id' => $rid, 'password_change_required' => true], JSON_UNESCAPED_UNICODE),
+                        $_SERVER['REMOTE_ADDR'] ?? '',
+                        $_SERVER['HTTP_USER_AGENT'] ?? ''
+                    ]
+                );
+            } catch (Throwable $e) {}
+
+            $approvedTemporaryPassword = $temporaryPassword;
+            $approvedFor = $req['full_name'];
+            flash('success', 'تمت الموافقة على الطلب وإنشاء كلمة مرور مؤقتة للمستخدم.');
+        } catch (Throwable $e) {
+            flash('error', 'تعذر تنفيذ استعادة كلمة المرور. لم يتم تغيير الحساب.');
+        }
+    } elseif (isset($_POST['reject'])) {
+        dbExecute(
+            "UPDATE password_recovery_requests
+             SET status='rejected', reviewed_by=?, reviewed_at=NOW()
+             WHERE id=? AND status='pending'",
+            [Session::getUserId(), $rid]
+        );
+        flash('success', 'تم رفض طلب استعادة كلمة المرور.');
+    }
+
+    if ($approvedTemporaryPassword === null) {
+        header('Location: ' . APP_URL . 'modules/users/recovery.php');
+        exit();
+    }
 }
 
-// Mark my recovery notifications as read
-try { dbExecute("UPDATE notifications SET is_read = 1 WHERE recipient_user_id = ? AND type = 'recovery'", [Session::getUserId()]); } catch (Throwable $e) {}
+try {
+    dbExecute(
+        "UPDATE notifications
+         SET is_read = 1
+         WHERE recipient_user_id = ? AND type = 'recovery'",
+        [Session::getUserId()]
+    );
+} catch (Throwable $e) {}
 
-$requests = dbFetchAll("
-    SELECT r.*, u.username, u.full_name, rev.full_name AS reviewer_name
-    FROM password_recovery_requests r
-    JOIN users u ON u.id = r.user_id
-    LEFT JOIN users rev ON rev.id = r.reviewed_by
-    ORDER BY (r.status = 'pending') DESC, r.id DESC
-    LIMIT 50
-");
+$requests = dbFetchAll(
+    "SELECT r.*, u.username, u.full_name, rev.full_name AS reviewer_name
+     FROM password_recovery_requests r
+     JOIN users u ON u.id = r.user_id
+     LEFT JOIN users rev ON rev.id = r.reviewed_by
+     ORDER BY (r.status = 'pending') DESC, r.id DESC
+     LIMIT 50"
+);
 
 include dirname(__DIR__, 2) . '/includes/header.php';
 ?>
+
 <div class="welcome-section fade-in">
-    <h2>طلبات استرداد كلمات المرور</h2>
-    <p>عند الموافقة يُنشأ رمز لمرة واحدة (صالح 24 ساعة) يُسلَّم للمستخدم هاتفياً أو حضورياً</p>
+    <h2>طلبات استعادة كلمات المرور</h2>
+    <p>تتم معالجة طلبات استعادة كلمات المرور بواسطة الموارد البشرية فقط. عند الموافقة يتم إنشاء كلمة مرور مؤقتة ويُجبر المستخدم على تغييرها بعد تسجيل الدخول.</p>
 </div>
 
 <?php include dirname(__DIR__, 2) . '/includes/alerts.php'; ?>
 
-<?php if ($approvedCode): ?>
+<?php if ($approvedTemporaryPassword): ?>
 <div class="alert alert-warning fade-in">
-    <h5 class="alert-heading"><i class="fas fa-key me-2"></i>رمز الاسترداد لـ <?php echo e($approvedFor); ?></h5>
-    <p class="fs-3 fw-bold mb-1" dir="ltr" style="letter-spacing:6px"><?php echo e($approvedCode); ?></p>
-    <p class="mb-0"><small>سلّم هذا الرمز للمستخدم الآن — لن يظهر مرة أخرى.</small></p>
+    <h5 class="alert-heading"><i class="fas fa-key me-2"></i>كلمة المرور المؤقتة لـ <?php echo e($approvedFor); ?></h5>
+    <p class="fs-3 fw-bold mb-1" dir="ltr" style="letter-spacing:4px"><?php echo e($approvedTemporaryPassword); ?></p>
+    <p class="mb-0"><small>سلّم كلمة المرور للمستخدم الآن. ستُستخدم للدخول مرة واحدة عملياً ثم يجب عليه إنشاء كلمة مرور جديدة.</small></p>
 </div>
 <?php endif; ?>
 
@@ -101,7 +153,9 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     <div class="card-body">
         <div class="table-responsive">
             <table class="table table-hover align-middle">
-                <thead><tr><th>#</th><th>المستخدم</th><th>تاريخ الطلب</th><th>الحالة</th><th>راجعه</th><th>الصلاحية</th><th class="text-center">إجراء</th></tr></thead>
+                <thead>
+                    <tr><th>#</th><th>المستخدم</th><th>تاريخ الطلب</th><th>الحالة</th><th>راجعه</th><th>الصلاحية</th><th class="text-center">إجراء</th></tr>
+                </thead>
                 <tbody>
                 <?php if (!$requests): ?>
                     <tr><td colspan="7" class="text-center text-muted py-4">لا توجد طلبات.</td></tr>
@@ -112,7 +166,13 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                         <td><small><?php echo e($r['requested_at']); ?></small></td>
                         <td>
                             <?php
-                            $st = ['pending' => ['قيد المراجعة','bg-warning'], 'approved' => ['موافق عليه','bg-info'], 'completed' => ['مكتمل','bg-success'], 'rejected' => ['مرفوض','bg-danger'], 'expired' => ['منتهي','bg-secondary']];
+                            $st = [
+                                'pending' => ['قيد المراجعة','bg-warning text-dark'],
+                                'approved' => ['موافق عليه','bg-info'],
+                                'completed' => ['مكتمل','bg-success'],
+                                'rejected' => ['مرفوض','bg-danger'],
+                                'expired' => ['منتهي','bg-secondary']
+                            ];
                             [$sl, $sc] = $st[$r['status']] ?? [$r['status'], 'bg-secondary'];
                             ?>
                             <span class="badge <?php echo $sc; ?>"><?php echo $sl; ?></span>
@@ -123,10 +183,10 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                             <?php if ($r['status'] === 'pending'): ?>
                                 <form method="post" class="d-inline"><?php echo csrf_field(); ?>
                                     <input type="hidden" name="request_id" value="<?php echo (int)$r['id']; ?>">
-                                    <button name="approve" value="1" class="btn btn-sm btn-success" onclick="return confirm('الموافقة وتوليد رمز؟')"><i class="fas fa-check me-1"></i>موافقة</button>
+                                    <button name="approve" value="1" class="btn btn-sm btn-success" onclick="return confirm('الموافقة وتوليد كلمة مرور مؤقتة؟')"><i class="fas fa-check me-1"></i>موافقة</button>
                                     <button name="reject" value="1" class="btn btn-sm btn-danger" onclick="return confirm('رفض الطلب؟')"><i class="fas fa-ban me-1"></i>رفض</button>
                                 </form>
-                            <?php else: echo '—'; endif; ?>
+                            <?php else: ?>—<?php endif; ?>
                         </td>
                     </tr>
                 <?php endforeach; endif; ?>
@@ -135,4 +195,5 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         </div>
     </div>
 </div>
+
 <?php include dirname(__DIR__, 2) . '/includes/footer.php'; ?>
