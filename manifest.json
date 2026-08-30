@@ -1,0 +1,26 @@
+{
+  "name": "منظمة أهل الخير - نظام الإدارة",
+  "short_name": "أهل الخير",
+  "description": "Ahl El Kheir Charity Management System",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "/AhlElKheir/",
+  "scope": "/AhlElKheir/",
+  "display": "standalone",
+  "background_color": "#f4f6f9",
+  "theme_color": "#1b4d8f",
+  "icons": [
+    {
+      "src": "assets/img/logo.png?v=3",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/img/logo.png?v=3",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
