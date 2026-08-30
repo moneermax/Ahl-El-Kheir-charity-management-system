@@ -6,15 +6,8 @@ require_once dirname(__DIR__, 2) . '/config/functions.php';
 require_once dirname(__DIR__, 2) . '/config/session.php';
 Session::start();
 
-/*
- * Password recovery has two sides:
- *   1) Unauthenticated users submit a recovery request through
- *      password_recovery_request.php.
- *   2) HR processes pending requests here.
- *
- * Only HR is responsible for approving recovery requests.
- */
-if (!Session::isLoggedIn() || !in_array(Session::getUserRole(), ['hr_manager', 'hr_staff', 'admin'], true)) {
+/* Password recovery is an HR responsibility. */
+if (!Session::isLoggedIn() || !in_array(Session::getUserRole(), ['hr_manager', 'hr_staff'], true)) {
     header('Location: ' . APP_URL . 'index.php');
     exit();
 }
@@ -43,10 +36,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$req || $req['status'] !== 'pending') {
         flash('error', 'الطلب غير موجود أو تمت معالجته.');
     } elseif (isset($_POST['approve'])) {
-        /*
-         * Generate a temporary password, store only its secure hash in users,
-         * and force the user to replace it at the next login.
-         */
         $temporaryPassword = bin2hex(random_bytes(6));
         $temporaryHash = password_hash($temporaryPassword, PASSWORD_DEFAULT);
 
@@ -73,9 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'modules/users/change_password.php?forced=1'
                     ]
                 );
-            } catch (Throwable $e) {
-                // Notification failure must not undo the password recovery.
-            }
+            } catch (Throwable $e) {}
 
             try {
                 dbExecute("INSERT INTO audit_log
@@ -145,7 +132,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 <div class="alert alert-warning fade-in">
     <h5 class="alert-heading"><i class="fas fa-key me-2"></i>كلمة المرور المؤقتة لـ <?php echo e($approvedFor); ?></h5>
     <p class="fs-3 fw-bold mb-1" dir="ltr" style="letter-spacing:4px"><?php echo e($approvedTemporaryPassword); ?></p>
-    <p class="mb-0"><small>سلّم كلمة المرور للمستخدم الآن. ستُستخدم للدخول مرة واحدة عملياً ثم يجب عليه إنشاء كلمة مرور جديدة.</small></p>
+    <p class="mb-0"><small>سلّم كلمة المرور للمستخدم الآن. ستصبح غير صالحة بعد تغيير المستخدم لها.</small></p>
 </div>
 <?php endif; ?>
 
