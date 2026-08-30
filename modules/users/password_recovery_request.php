@@ -24,7 +24,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = 'يرجى إدخال اسم المستخدم أو البريد الإلكتروني.';
         } else {
             try {
-                $user = dbFetchOne("SELECT id, username, full_name, email FROM users WHERE status = 'active' AND (username = ? OR email = ?) LIMIT 1", [$identity, $identity]);
+                // The Ahl El Kheir users table uses is_active, while role information
+                // is stored in roles and linked through users.role_id.
+                $user = dbFetchOne("SELECT id, username, full_name, email FROM users WHERE is_active = 1 AND (username = ? OR email = ?) LIMIT 1", [$identity, $identity]);
 
                 if ($user) {
                     $pending = dbFetchOne("SELECT id FROM password_recovery_requests WHERE user_id = ? AND status = 'pending' ORDER BY id DESC LIMIT 1", [(int)$user['id']]);
@@ -32,8 +34,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if (!$pending) {
                         dbExecute("INSERT INTO password_recovery_requests (user_id, status, requested_at) VALUES (?, 'pending', NOW())", [(int)$user['id']]);
 
-                        /* Notify both HR and the system administrator so either authorized person can respond. */
-                        $recoveryHandlers = dbFetchAll("SELECT id FROM users WHERE status = 'active' AND role IN ('admin', 'hr_manager')");
+                        /* Notify both HR Manager and System Administrator so either authorized person can respond. */
+                        $recoveryHandlers = dbFetchAll("SELECT u.id FROM users u INNER JOIN roles r ON r.id = u.role_id WHERE u.is_active = 1 AND r.code IN ('admin', 'hr_manager')");
 
                         foreach ($recoveryHandlers as $handler) {
                             try {
