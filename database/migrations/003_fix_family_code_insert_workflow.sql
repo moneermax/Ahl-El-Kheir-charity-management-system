@@ -1,6 +1,10 @@
 -- Ahl El Kheir - Fix family-code insert workflow
 -- Replaces the strict BEFORE INSERT trigger from migration 001.
 -- The application may INSERT a family before its AUTO_INCREMENT id is known.
+--
+-- Important: family_code validation is only required when the code itself
+-- changes. Unrelated updates to a legacy family must not fail merely because
+-- its existing legacy code is outside the current format.
 
 ALTER TABLE families
     MODIFY COLUMN family_code VARCHAR(50) NULL;
@@ -26,19 +30,26 @@ CREATE TRIGGER trg_families_family_code_bu
 BEFORE UPDATE ON families
 FOR EACH ROW
 BEGIN
-    SET NEW.family_code = NULLIF(TRIM(NEW.family_code), '');
+    /*
+       If family_code itself is unchanged, allow unrelated updates such as
+       child-count synchronization even when the row contains a legacy code
+       such as IMP2-FAM-######.
+    */
+    IF NOT (NEW.family_code <=> OLD.family_code) THEN
+        SET NEW.family_code = NULLIF(TRIM(NEW.family_code), '');
 
-    IF NEW.family_code IS NULL THEN
-        SET NEW.family_code = CONCAT('IMP-FAM-', LPAD(OLD.id, 6, '0'));
-    END IF;
+        IF NEW.family_code IS NULL THEN
+            SET NEW.family_code = CONCAT('IMP-FAM-', LPAD(OLD.id, 6, '0'));
+        END IF;
 
-    IF NEW.family_code REGEXP '^FAM-[0-9]{6}$' THEN
-        SET NEW.family_code = CONCAT('IMP-FAM-', SUBSTRING(NEW.family_code, 5));
-    END IF;
+        IF NEW.family_code REGEXP '^FAM-[0-9]{6}$' THEN
+            SET NEW.family_code = CONCAT('IMP-FAM-', SUBSTRING(NEW.family_code, 5));
+        END IF;
 
-    IF NEW.family_code NOT REGEXP '^IMP-FAM-[0-9]{6}$' THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Invalid family_code. Expected IMP-FAM-######';
+        IF NEW.family_code NOT REGEXP '^IMP-FAM-[0-9]{6}$' THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'Invalid family_code. Expected IMP-FAM-######';
+        END IF;
     END IF;
 END$$
 
