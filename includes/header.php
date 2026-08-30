@@ -1,0 +1,1710 @@
+<?php
+
+/*
+|--------------------------------------------------------------------------
+| includes/header.php
+|--------------------------------------------------------------------------
+| Main application header
+|--------------------------------------------------------------------------
+*/
+
+
+/*
+|--------------------------------------------------------------------------
+| Notifications
+|--------------------------------------------------------------------------
+*/
+
+$notifUnread = 0;
+
+$notifItems = [];
+
+
+try {
+
+    $notifUnread =
+        (int)(
+            dbFetchOne(
+                "SELECT COUNT(*) c
+                 FROM notifications
+                 WHERE recipient_user_id = ?
+                 AND is_read = 0",
+                [
+                    current_user_id()
+                ]
+            )['c'] ?? 0
+        );
+
+
+    $notifItems =
+        dbFetchAll(
+            "SELECT
+                title,
+                body,
+                link,
+                created_at
+             FROM notifications
+             WHERE recipient_user_id = ?
+             ORDER BY id DESC
+             LIMIT 8",
+            [
+                current_user_id()
+            ]
+        );
+
+} catch (Throwable $e) {
+
+    $notifUnread = 0;
+    $notifItems = [];
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| Pending password recoveries
+|--------------------------------------------------------------------------
+*/
+
+$pendingRecoveries = 0;
+
+
+if (
+    in_array(
+        current_user_role(),
+        [
+            'admin',
+            'hr_manager'
+        ],
+        true
+    )
+) {
+
+    try {
+
+        $pendingRecoveries =
+            (int)(
+                dbFetchOne(
+                    "SELECT COUNT(*) c
+                     FROM password_recovery_requests
+                     WHERE status = 'pending'"
+                )['c'] ?? 0
+            );
+
+    } catch (Throwable $e) {
+
+        $pendingRecoveries = 0;
+    }
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| CURRENT USER AVATAR
+|--------------------------------------------------------------------------
+|
+| IMPORTANT:
+|
+| Physical filesystem path:
+|
+| D:/xampp/htdocs/AhlElKheir/
+|     storage/avatars/user_X.jpg
+|
+| Browser URL:
+|
+| http://localhost:8081/AhlElKheir/
+|     storage/avatars/user_X.jpg
+|
+| We deliberately keep these two concepts separate.
+|--------------------------------------------------------------------------
+*/
+
+$avatarUrl = '';
+
+
+try {
+
+
+    /*
+     * Current logged-in user.
+     */
+    $headerUserId =
+        current_user_id();
+
+
+    /*
+     * Get avatar path from database.
+     */
+    $avatarRecord =
+        dbFetchOne(
+            "SELECT avatar_path
+             FROM users
+             WHERE id = ?",
+            [
+                $headerUserId
+            ]
+        );
+
+
+    if (
+        $avatarRecord &&
+        !empty($avatarRecord['avatar_path'])
+    ) {
+
+
+        /*
+         * Database example:
+         *
+         * storage/avatars/user_5_123456.jpg
+         *
+         * We only need:
+         *
+         * user_5_123456.jpg
+         */
+        $headerAvatarFileName =
+            basename(
+                (string)$avatarRecord['avatar_path']
+            );
+
+
+        /*
+         * Physical filesystem path.
+         */
+        $headerAvatarPhysicalPath =
+            dirname(__DIR__) .
+            DIRECTORY_SEPARATOR .
+            'storage' .
+            DIRECTORY_SEPARATOR .
+            'avatars' .
+            DIRECTORY_SEPARATOR .
+            $headerAvatarFileName;
+
+
+        /*
+         * Verify that Apache/PHP has an actual file
+         * at the expected filesystem location.
+         */
+        if (
+            is_file(
+                $headerAvatarPhysicalPath
+            )
+        ) {
+
+
+            /*
+             * Construct browser URL.
+             *
+             * APP_URL example:
+             *
+             * http://localhost:8081/AhlElKheir/
+             *
+             * Result:
+             *
+             * http://localhost:8081/AhlElKheir/
+             * storage/avatars/user_5_123456.jpg
+             */
+            $avatarUrl =
+                APP_URL .
+                'storage/avatars/' .
+                rawurlencode(
+                    $headerAvatarFileName
+                );
+
+
+            /*
+             * Cache buster.
+             *
+             * Added ONCE.
+             */
+            $headerAvatarModifiedTime =
+                filemtime(
+                    $headerAvatarPhysicalPath
+                );
+
+
+            if (
+                $headerAvatarModifiedTime !== false
+            ) {
+
+                $avatarUrl .=
+                    '?v=' .
+                    $headerAvatarModifiedTime;
+            }
+        }
+    }
+
+
+} catch (Throwable $e) {
+
+    /*
+     * Never allow avatar problems to break the header.
+     */
+    $avatarUrl = '';
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| Notification / language URLs
+|--------------------------------------------------------------------------
+*/
+
+$markReadUrl =
+    e(
+        $_SERVER['REQUEST_URI'] .
+        (
+            strpos(
+                (string)$_SERVER['REQUEST_URI'],
+                '?'
+            ) !== false
+                ? '&'
+                : '?'
+        ) .
+        'mark_notif_read=1'
+    );
+
+
+$uri =
+    (string)(
+        $_SERVER['REQUEST_URI']
+        ?? ''
+    );
+
+
+$langSwitchUrl =
+    e(
+        $uri .
+        (
+            strpos(
+                $uri,
+                '?'
+            ) !== false
+                ? '&'
+                : '?'
+        ) .
+        'lang=' .
+        (
+            AK_LANG === 'ar'
+                ? 'en'
+                : 'ar'
+        )
+    );
+
+
+/*
+|--------------------------------------------------------------------------
+| QUICK ACTIONS CONFIGURATION
+|--------------------------------------------------------------------------
+*/
+
+$raw_role =
+    (string)current_user_role();
+
+
+$aliasMap = [
+
+    'sudo' =>
+        'admin',
+
+    'gm' =>
+        'general_manager',
+
+    'vgm' =>
+        'vice_general_manager',
+
+    'fm' =>
+        'financial_manager'
+
+];
+
+
+$resolved_role =
+    $aliasMap[$raw_role]
+    ?? $raw_role;
+
+
+$qaMap = [
+
+    'admin' => [
+
+        [
+            'label' => 'إدارة المستخدمين',
+            'url' => 'modules/users/index.php',
+            'icon' => 'fa-users-gear',
+            'color' => '#0d6efd'
+        ],
+
+        [
+            'label' => 'سجل التدقيق',
+            'url' => 'modules/logs/audit.php',
+            'icon' => 'fa-file-lines',
+            'color' => '#6c757d'
+        ],
+
+        [
+            'label' => 'إدارة قاعدة البيانات',
+            'url' => 'modules/system/database.php',
+            'icon' => 'fa-database',
+            'color' => '#dc3545'
+        ],
+
+        [
+            'label' => 'إعدادات النظام',
+            'url' => 'modules/settings/index.php',
+            'icon' => 'fa-gear',
+            'color' => '#6610f2'
+        ],
+
+        [
+            'label' => 'استعادة كلمة المرور',
+            'url' => 'modules/users/recovery.php',
+            'icon' => 'fa-key',
+            'color' => '#dc3545'
+        ],
+
+    ],
+
+
+    'general_manager' => [
+
+        [
+            'label' => 'تقرير المصالحة',
+            'url' => 'modules/accounting/gm_reconciliation.php',
+            'icon' => 'fa-scale-balanced',
+            'color' => '#17a2b8'
+        ],
+
+        [
+            'label' => 'التقارير العامة',
+            'url' => 'modules/reports/index.php',
+            'icon' => 'fa-chart-line',
+            'color' => '#0d6efd'
+        ],
+
+        [
+            'label' => 'سجل الكفالات',
+            'url' => 'modules/sponsorships/index.php',
+            'icon' => 'fa-file-contract',
+            'color' => '#6f42c1'
+        ],
+        [
+            'label' => 'مشاريع المنظمة',
+            'url' => 'modules/projects/index.php',
+            'icon' => 'fa-diagram-project',
+            'color' => '#17a2b8'
+        ],
+        [
+            'label' => 'استمارات الأيتام',
+            'url' => 'modules/families/orphan_forms_index.php',
+            'icon' => 'fa-file-signature',
+            'color' => '#fd7e14'
+        ],
+
+    ],
+
+
+    'vice_general_manager' => [
+
+        [
+            'label' => 'تقرير المصالحة',
+            'url' => 'modules/accounting/gm_reconciliation.php',
+            'icon' => 'fa-scale-balanced',
+            'color' => '#17a2b8'
+        ],
+
+        [
+            'label' => 'طابور المراجعة المالية',
+            'url' => 'modules/accounting/fm_review_queue.php',
+            'icon' => 'fa-clipboard-check',
+            'color' => '#ffc107'
+        ],
+
+        [
+            'label' => 'التقارير العامة',
+            'url' => 'modules/reports/index.php',
+            'icon' => 'fa-chart-line',
+            'color' => '#0d6efd'
+        ],
+
+    ],
+
+
+    'financial_manager' => [
+        [
+            'label' => 'لوحة المحاسبة',
+            'url' => 'modules/accounting/',
+            'icon' => 'fas fa-calculator',
+            'color' => '#d3701fcc'
+        ],
+        [
+            'label' => 'التحويلات الشهرية',
+            'url' => 'modules/accounting/disbursements.php',
+            'icon' => 'fa-money-check-dollar',
+            'color' => '#28a745'
+        ],
+        [
+            'label' => ' دليل الحسابات',
+            'url' => 'modules/accounting/accounts.php',
+            'icon' => 'fa-sitemap',
+            'color' => '#2195c4'
+        ],
+        [
+            'label' => 'مراجعة ميزانيات المشاريع',
+            'url' => 'modules/accounting/fm_dashboard.php#project-budget-review',
+            'icon' => 'fa-clipboard-check',
+            'color' => '#ffc107'
+        ],
+
+        [
+            'label' => 'التقارير المالية',
+            'url' => 'modules/reports/financial.php',
+            'icon' => 'fa-chart-pie',
+            'color' => '#0d6efd'
+        ],
+        [
+            'label' => 'سجل المعاملات',
+            'url' => 'modules/transactions/index.php',
+            'icon' => 'fa-money-bill-transfer',
+            'color' => '#2daf79'
+        ],
+    ],
+
+
+    'accountant' => [
+
+        [
+            'label' => 'التحويلات الشهرية',
+            'url' => 'modules/accounting/disbursements.php',
+            'icon' => 'fa-money-check-dollar',
+            'color' => '#28a745'
+        ],
+
+        [
+            'label' => 'سجل المعاملات',
+            'url' => 'modules/transactions/index.php',
+            'icon' => 'fa-money-bill-transfer',
+            'color' => '#20c997'
+        ],
+
+        [
+            'label' => 'سندات القبض/الصرف',
+            'url' => 'modules/accounting/vouchers.php',
+            'icon' => 'fa-file-invoice-dollar',
+            'color' => '#fd7e14'
+        ],
+
+    ],
+
+
+    'supervisor' => [
+
+        [
+            'label' => 'سجل الكفلاء',
+            'url' => 'modules/sponsors/index.php',
+            'icon' => 'fa-hand-holding-heart',
+            'color' => '#e83e8c'
+        ],
+
+        [
+            'label' => 'سجل الأسر',
+            'url' => 'modules/families/index.php',
+            'icon' => 'fa-house-chimney',
+            'color' => '#20c997'
+        ],
+
+        [
+            'label' => 'استمارات الأيتام',
+            'url' => 'modules/families/orphan_forms_index.php',
+            'icon' => 'fa-file-signature',
+            'color' => '#fd7e14'
+        ],
+
+        [
+            'label' => 'سجل الكفالات',
+            'url' => 'modules/sponsorships/index.php',
+            'icon' => 'fa-file-contract',
+            'color' => '#6f42c1'
+        ],
+
+    ],
+
+
+    'nanny' => [
+
+        [
+            'label' => 'أسر تحت الكفالة',
+            'url' => 'modules/families/index.php',
+            'icon' => 'fa-house-chimney',
+            'color' => '#20c997'
+        ],
+
+        [
+            'label' => 'التحويلات الشهرية',
+            'url' => 'modules/accounting/disbursements.php',
+            'icon' => 'fa-money-check-dollar',
+            'color' => '#28a745'
+        ],
+
+        [
+            'label' => 'سجل المدفوعات',
+            'url' => 'modules/transactions/index.php',
+            'icon' => 'fa-money-bill-transfer',
+            'color' => '#20c997'
+        ],
+
+    ],
+
+
+    'administration' => [
+
+        [
+            'label' => 'متابعة الاسترجاع',
+            'url' => 'modules/administration/winback.php',
+            'icon' => 'fa-person-booth',
+            'color' => '#6f42c1'
+        ],
+
+        [
+            'label' => 'سجل الكفلاء',
+            'url' => 'modules/sponsors/index.php',
+            'icon' => 'fa-hand-holding-heart',
+            'color' => '#e83e8c'
+        ],
+
+        [
+            'label' => 'سجل الأسر',
+            'url' => 'modules/families/index.php',
+            'icon' => 'fa-house-chimney',
+            'color' => '#20c997'
+        ],
+
+    ],
+
+
+    'social_media' => [
+
+        [
+            'label' => 'طلبات الانضمام',
+            'url' => 'modules/sponsors/requests.php',
+            'icon' => 'fa-user-plus',
+            'color' => '#0d6efd'
+        ],
+
+        [
+            'label' => 'استمارات الأيتام',
+            'url' => 'modules/families/orphan_forms_index.php',
+            'icon' => 'fa-file-signature',
+            'color' => '#fd7e14'
+        ],
+
+    ],
+
+
+    'hr_manager' => [
+
+        [
+            'label' => 'إضافة موظف',
+            'url' => 'modules/hr/employees.php?action=add',
+            'icon' => 'fa-user-plus',
+            'color' => '#1b4d8f'
+        ],
+
+        [
+            'label' => 'الحضور والانصراف',
+            'url' => 'modules/hr/attendance.php',
+            'icon' => 'fa-clock',
+            'color' => '#6c757d'
+        ],
+
+        [
+            'label' => 'طلبات الإجازة',
+            'url' => 'modules/hr/leaves.php',
+            'icon' => 'fa-calendar-alt',
+            'color' => '#ffc107'
+        ],
+
+        [
+            'label' => 'كشف الرواتب',
+            'url' => 'modules/hr/payroll.php',
+            'icon' => 'fa-money-bill-wave',
+            'color' => '#28a745'
+        ],
+
+        [
+            'label' => 'العقود',
+            'url' => 'modules/hr/contracts.php',
+            'icon' => 'fa-file-contract',
+            'color' => '#17a2b8'
+        ],
+
+        [
+            'label' => 'استعادة كلمة المرور',
+            'url' => 'modules/users/recovery.php',
+            'icon' => 'fa-key',
+            'color' => '#dc3545'
+        ],
+
+    ],
+
+
+    'hr_staff' => [
+
+        [
+            'label' => 'إضافة موظف',
+            'url' => 'modules/hr/employees.php?action=add',
+            'icon' => 'fa-user-plus',
+            'color' => '#1b4d8f'
+        ],
+
+        [
+            'label' => 'الحضور والانصراف',
+            'url' => 'modules/hr/attendance.php',
+            'icon' => 'fa-clock',
+            'color' => '#6c757d'
+        ],
+
+        [
+            'label' => 'طلبات الإجازة',
+            'url' => 'modules/hr/leaves.php',
+            'icon' => 'fa-calendar-alt',
+            'color' => '#ffc107'
+        ],
+
+    ],
+
+];
+
+
+$currentQuickActions =
+    $qaMap[$resolved_role]
+    ?? [];
+
+
+/*
+|--------------------------------------------------------------------------
+| Universal Request Leave button
+|--------------------------------------------------------------------------
+*/
+
+if (Session::isLoggedIn()) {
+
+    $currentQuickActions[] = [
+
+        'label' =>
+            'طلب إجازة',
+
+        'url' =>
+            'modules/hr/leaves.php?action=request',
+
+        'icon' =>
+            'fa-calendar-plus',
+
+        'color' =>
+            '#17a2b8',
+
+        'is_universal' =>
+            true
+
+    ];
+}
+
+?>
+
+<!DOCTYPE html>
+
+<html
+    lang="<?php echo e(AK_LANG); ?>"
+    dir="<?php echo e(AK_DIR); ?>"
+>
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        <?php
+        echo e(
+            $pageTitle
+            ?? 'أهل الخير'
+        );
+        ?>
+        | نظام إدارة الكفالات
+    </title>
+
+
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css"
+        rel="stylesheet"
+    >
+
+    <link
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+        rel="stylesheet"
+    >
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+
+    <style>
+
+        :root {
+            --navy: #1b4d8f;
+            --navy-dark: #143a6b;
+        }
+
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: #f4f7fb;
+            margin: 0;
+        }
+
+
+        .app-wrapper {
+            display: flex;
+            min-height: 100vh;
+        }
+
+
+        .sidebar {
+            width: 260px;
+            background: var(--navy);
+            color: #fff;
+            flex-shrink: 0;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 1020;
+        }
+
+
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+
+        .brand-title {
+            font-size: 1.3rem;
+            font-weight: 800;
+        }
+
+
+        .brand-subtitle {
+            font-size: 0.75rem;
+            opacity: 0.8;
+        }
+
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            color: rgba(255,255,255,0.85);
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+
+        .sidebar-link:hover,
+        .sidebar-link.active {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+        }
+
+
+        .sidebar-link i {
+            width: 20px;
+            text-align: center;
+        }
+
+
+        .main-area {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+
+        /* Sticky header container - MUST be at top of main-area */
+        .header-sticky-wrapper {
+            position: sticky;
+            top: 0;
+            z-index: 1050;
+            background: var(--navy);
+            flex-shrink: 0;
+        }
+
+        /* Organization header banner */
+        .org-header-banner {
+            background: var(--navy);
+            color: #fff;
+            text-align: center;
+            padding: 10px 20px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+            font-family: 'Cairo', sans-serif;
+            flex-shrink: 0;
+        }
+
+        .org-header-banner .org-name {
+            font-size: 1.3rem;
+            font-weight: 800;
+        }
+
+        .org-header-banner .org-flag {
+            font-size: 1.5rem;
+            margin: 0 6px;
+        }
+
+        body.theme-dark .org-header-banner {
+            background: #1a202c;
+            border-bottom-color: #2d3748;
+        }
+
+        body.theme-dark .header-sticky-wrapper {
+            background: #1a202c;
+        }
+
+
+        .qa-top-bar {
+            background: var(--navy);
+            color: #fff;
+            padding: 8px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            gap: 10px;
+            flex-wrap: nowrap;
+        }
+
+
+        .qa-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            align-items: center;
+            flex-grow: 1;
+            justify-content: flex-start;
+        }
+
+
+        .qa-user-controls {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+
+            <?php if (AK_DIR === 'rtl'): ?>
+
+            margin-right: auto;
+            margin-left: 0;
+
+            <?php else: ?>
+
+            margin-left: auto;
+            margin-right: 0;
+
+            <?php endif; ?>
+        }
+
+
+        .qa-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #fff !important;
+            transition: all 0.2s;
+            border: 1px solid rgba(255,255,255,0.2);
+            white-space: nowrap;
+        }
+
+
+        .qa-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            filter: brightness(1.15);
+        }
+
+
+        .qa-user-btn {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.75rem;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+
+        .qa-user-btn:hover {
+            background: rgba(255,255,255,0.2);
+            color: #fff;
+        }
+
+
+        .ak-dd {
+            position: relative;
+        }
+
+
+        .ak-dd-menu {
+            display: none;
+            position: absolute;
+            top: calc(100% + 5px);
+
+            <?php if (AK_DIR === 'rtl'): ?>
+
+            left: 0;
+            right: auto;
+
+            <?php else: ?>
+
+            right: 0;
+            left: auto;
+
+            <?php endif; ?>
+
+            min-width: 180px;
+            background: #fff;
+            border: 1px solid #e3e7ee;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(10,31,68,.18);
+            z-index: 1050;
+            padding: 0.3rem;
+            color: #333;
+        }
+
+
+        .ak-dd.open .ak-dd-menu {
+            display: block;
+        }
+
+
+        .ak-dd-item {
+            display: block;
+            padding: 0.4rem 0.6rem;
+            border-radius: 4px;
+            color: #21315b;
+            text-decoration: none;
+            font-size: 0.8rem;
+        }
+
+
+        .ak-dd-item:hover {
+            background: #eef2f9;
+        }
+
+
+        .ak-dd-item.text-danger {
+            color: #dc3545;
+        }
+
+
+        .ak-dd-item.text-danger:hover {
+            background: #ffe5e5;
+        }
+
+
+        .dropdown-divider {
+            height: 0;
+            margin: 0.2rem 0;
+            overflow: hidden;
+            border-top: 1px solid #e3e7ee;
+        }
+
+
+        .content {
+            padding: 24px;
+            flex-grow: 1;
+            background: #f4f7fb;
+        }
+
+
+        .welcome-section {
+            margin-bottom: 24px;
+        }
+
+
+        .welcome-section h2 {
+            font-weight: 800;
+            color: var(--navy);
+            margin-bottom: 4px;
+        }
+
+
+        .fade-in {
+            animation: fadeIn 0.4s ease-in-out;
+        }
+
+
+        @keyframes fadeIn {
+
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+
+        }
+
+
+        .ak-search-bar-wrap {
+            background: #fff;
+            border-bottom: 1px solid #e3e7ee;
+            padding: 8px 24px;
+        }
+
+        .ak-search-form {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .ak-search-form .form-select-sm,
+        .ak-search-form .form-control-sm {
+            border-radius: 6px;
+            font-size: 0.85rem;
+            height: 34px;
+            padding: 4px 10px;
+        }
+
+        .ak-search-form .btn-sm {
+            border-radius: 6px;
+            font-size: 0.85rem;
+            height: 34px;
+            padding: 4px 14px;
+        }
+
+        .ak-search-form .btn-outline-secondary {
+            border-color: #dee2e6;
+        }
+
+        .ak-search-form .btn-outline-secondary:hover {
+            background: #f8f9fa;
+            border-color: #c1c9d0;
+        }
+
+        @media (max-width: 991.98px) {
+
+            .qa-top-bar {
+                flex-direction: column;
+                align-items: stretch;
+                flex-wrap: wrap;
+            }
+
+            .qa-actions {
+                justify-content: center;
+            }
+
+            .qa-user-controls {
+                justify-content: flex-end;
+                margin: 5px 0 0 0;
+            }
+
+        }
+
+        @media (max-width: 768px) {
+            .ak-search-bar-wrap {
+                padding: 8px 12px;
+            }
+            
+            .ak-search-form .form-select-sm,
+            .ak-search-form .form-control-sm {
+                font-size: 0.75rem;
+                height: 30px;
+            }
+            
+            .ak-search-form .btn-sm {
+                font-size: 0.75rem;
+                height: 30px;
+                padding: 2px 10px;
+            }
+
+            .org-header-banner {
+                font-size: 1rem;
+                padding: 8px 12px;
+            }
+
+            .org-header-banner .org-name {
+                font-size: 1rem;
+            }
+
+            .org-header-banner .org-flag {
+                font-size: 1.2rem;
+            }
+        }
+
+        /* Dark mode support for search */
+        body.theme-dark .ak-search-bar-wrap {
+            background: #2d3748;
+            border-bottom-color: #4a5568;
+        }
+
+        body.theme-dark .ak-search-form .form-select-sm,
+        body.theme-dark .ak-search-form .form-control-sm {
+            background: #1a1a2e;
+            color: #e2e8f0;
+            border-color: #4a5568;
+        }
+
+        body.theme-dark .ak-search-form .form-select-sm:focus,
+        body.theme-dark .ak-search-form .form-control-sm:focus {
+            background: #1a1a2e;
+            color: #e2e8f0;
+            border-color: var(--navy);
+            box-shadow: 0 0 0 0.2rem rgba(27, 77, 143, 0.25);
+        }
+
+        body.theme-dark .ak-search-form .form-select-sm option {
+            background: #2d3748;
+            color: #e2e8f0;
+        }
+
+        body.theme-dark .ak-search-form .btn-outline-secondary {
+            color: #e2e8f0;
+            border-color: #4a5568;
+        }
+
+        body.theme-dark .ak-search-form .btn-outline-secondary:hover {
+            background: #4a5568;
+            border-color: #6c7a8a;
+        }
+
+    </style>
+
+
+    <!-- Apply saved theme -->
+
+    <script>
+
+    document.addEventListener(
+        'DOMContentLoaded',
+        function () {
+
+            const theme =
+                localStorage.getItem(
+                    'theme_preference'
+                )
+                ||
+                '<?php
+                    echo $_SESSION['theme_preference']
+                        ?? 'light';
+                ?>';
+
+
+            if (
+                theme &&
+                theme !== 'auto'
+            ) {
+
+                document.body.classList.add(
+                    'theme-' + theme
+                );
+
+            } else if (
+                theme === 'auto'
+            ) {
+
+                if (
+                    window.matchMedia &&
+                    window.matchMedia(
+                        '(prefers-color-scheme: dark)'
+                    ).matches
+                ) {
+
+                    document.body.classList.add(
+                        'theme-dark'
+                    );
+                }
+            }
+
+        }
+    );
+
+    </script>
+
+</head>
+
+
+<body>
+
+
+<div class="app-wrapper">
+
+
+    <?php
+    include __DIR__ . '/sidebar.php';
+    ?>
+
+
+    <div class="main-area">
+
+        <!-- =========================================================
+             STICKY HEADER WRAPPER - All header elements stay on top
+             ========================================================= -->
+
+        <div class="header-sticky-wrapper">
+
+            <!-- =========================================================
+                 ORGANIZATION HEADER BANNER
+                 ========================================================= -->
+            <div class="org-header-banner">
+                <span class="org-flag">🇸🇩</span>
+                <span class="org-name">منظمة أهل الخير النسوية لكفالة الأيتام</span>
+                <span class="org-flag">🇸🇩</span>
+            </div>
+
+            <!-- =========================================================
+                 TOP BAR
+                 ========================================================= -->
+
+            <div class="qa-top-bar">
+
+                <div class="qa-actions">
+
+                    <?php
+                    foreach (
+                        $currentQuickActions
+                        as $qa
+                    ):
+                    ?>
+
+                        <?php
+                        if (!empty($qa['is_universal'])):
+                        ?>
+
+                            <a
+                                href="<?php
+                                    echo APP_URL .
+                                        e($qa['url']);
+                                ?>"
+                                class="qa-btn"
+                                style="background: rgba(255,255,255,0.15);"
+                            >
+
+                                <i
+                                    class="fas <?php
+                                        echo e($qa['icon']);
+                                    ?>"
+                                ></i>
+
+                                <?php
+                                echo e($qa['label']);
+                                ?>
+
+                            </a>
+
+                        <?php else: ?>
+
+                            <a
+                                href="<?php
+                                    echo APP_URL .
+                                        e($qa['url']);
+                                ?>"
+                                class="qa-btn"
+                                style="background: <?php
+                                    echo e($qa['color']);
+                                ?>;"
+                            >
+
+                                <i
+                                    class="fas <?php
+                                        echo e($qa['icon']);
+                                    ?>"
+                                ></i>
+
+                                <?php
+                                echo e($qa['label']);
+                                ?>
+
+                            </a>
+
+                        <?php endif; ?>
+
+                    <?php endforeach; ?>
+
+                </div>
+
+                <!-- =====================================================
+                     USER CONTROLS
+                     ===================================================== -->
+
+                <div class="qa-user-controls">
+
+                    <a
+                        href="<?php echo e($langSwitchUrl); ?>"
+                        class="qa-btn"
+                        style="background: rgba(255,255,255,0.1);"
+                    >
+
+                        <i class="fas fa-globe"></i>
+
+                        <?php
+                        echo AK_LANG === 'ar'
+                            ? 'EN'
+                            : 'عربي';
+                        ?>
+
+                    </a>
+
+                    <?php if ($pendingRecoveries > 0): ?>
+
+                        <a
+                            href="<?php
+                                echo APP_URL;
+                            ?>modules/users/recovery.php"
+                            class="qa-btn"
+                            style="background: #dc3545;"
+                        >
+
+                            <i class="fas fa-key"></i>
+
+                            <span class="badge bg-white text-danger">
+
+                                <?php
+                                echo $pendingRecoveries;
+                                ?>
+
+                            </span>
+
+                        </a>
+
+                    <?php endif; ?>
+
+                    <!-- =================================================
+                         USER DROPDOWN
+                         ================================================= -->
+
+                    <div
+                        class="ak-dd"
+                        id="userDropdown"
+                    >
+
+                        <button
+                            class="qa-user-btn"
+                            onclick="
+                                document
+                                    .getElementById('userDropdown')
+                                    .classList
+                                    .toggle('open')
+                            "
+                        >
+
+                            <?php if ($avatarUrl): ?>
+
+                                <img
+                                    src="<?php
+                                        echo e($avatarUrl);
+                                    ?>"
+                                    alt="Avatar"
+                                    style="
+                                        width:22px;
+                                        height:22px;
+                                        border-radius:50%;
+                                        object-fit:cover;
+                                    "
+                                >
+
+                            <?php else: ?>
+
+                                <i
+                                    class="fas fa-user-circle fa-lg"
+                                ></i>
+
+                            <?php endif; ?>
+
+                            <span>
+
+                                <?php
+                                echo e(
+                                    current_user_name()
+                                );
+                                ?>
+
+                            </span>
+
+                            <i
+                                class="fas fa-chevron-down"
+                                style="font-size:0.65rem;"
+                            ></i>
+
+                        </button>
+
+                        <div class="ak-dd-menu">
+
+                            <a
+                                href="<?php
+                                    echo APP_URL;
+                                ?>modules/users/profile.php"
+                                class="ak-dd-item"
+                            >
+
+                                <i
+                                    class="fas fa-id-card me-2"
+                                ></i>
+
+                                الملف الشخصي
+
+                            </a>
+
+                            <a
+                                href="<?php
+                                    echo APP_URL;
+                                ?>modules/users/settings.php"
+                                class="ak-dd-item"
+                            >
+
+                                <i
+                                    class="fas fa-cog me-2"
+                                ></i>
+
+                                الإعدادات
+
+                            </a>
+
+                            <div class="dropdown-divider"></div>
+
+                            <a
+                                href="<?php
+                                    echo APP_URL;
+                                ?>logout.php"
+                                class="ak-dd-item text-danger"
+                            >
+
+                                <i
+                                    class="fas fa-sign-out-alt me-2"
+                                ></i>
+
+                                تسجيل الخروج
+
+                            </a>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- =========================================================
+                 SEARCH
+                 ========================================================= -->
+
+            <div class="ak-search-bar-wrap">
+                <form
+                    action="<?php echo APP_URL; ?>modules/search/index.php"
+                    method="get"
+                    class="ak-search-form"
+                    id="globalSearchForm"
+                >
+                    <div class="d-flex flex-wrap gap-2 w-100 align-items-center">
+                        <!-- Search Type -->
+                        <select
+                            name="type"
+                            class="form-select form-select-sm"
+                            style="width:140px; flex-shrink:0;"
+                            id="searchType"
+                        >
+                            <?php
+                            $searchTypes = [
+                                'all' => 'كل الأنواع',
+                                'families' => 'الأسر والأيتام',
+                                'sponsors' => 'الكفلاء',
+                                'sponsorships' => 'الكفالات',
+                                'payments' => 'الدفعات الشهرية'
+                            ];
+                            $curType = $_GET['type'] ?? 'all';
+                            foreach ($searchTypes as $tv => $tl):
+                            ?>
+                                <option value="<?php echo e($tv); ?>" <?php echo $curType === $tv ? 'selected' : ''; ?>>
+                                    <?php echo e($tl); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+
+                        <!-- Search Query -->
+                        <input
+                            type="text"
+                            name="q"
+                            class="form-control form-control-sm"
+                            placeholder="ابحث بالاسم، الكود، رقم الهاتف..."
+                            value="<?php echo e($_GET['q'] ?? ''); ?>"
+                            id="searchQuery"
+                            style="flex:1; min-width:150px;"
+                            <?php echo (strpos($_SERVER['SCRIPT_NAME'] ?? '', 'modules/search/index.php') !== false) ? 'autofocus' : ''; ?>
+                        >
+
+                        <!-- Status Filter -->
+                        <select name="status" class="form-select form-select-sm" id="searchStatus" style="width:130px; flex-shrink:0;">
+                            <option value="">الحالة</option>
+                            <option value="active" <?php echo ($_GET['status'] ?? '') === 'active' ? 'selected' : ''; ?>>نشط</option>
+                            <option value="inactive" <?php echo ($_GET['status'] ?? '') === 'inactive' ? 'selected' : ''; ?>>غير نشط</option>
+                            <option value="pending" <?php echo ($_GET['status'] ?? '') === 'pending' ? 'selected' : ''; ?>>قيد الانتظار</option>
+                            <option value="completed" <?php echo ($_GET['status'] ?? '') === 'completed' ? 'selected' : ''; ?>>مكتمل</option>
+                            <option value="paused" <?php echo ($_GET['status'] ?? '') === 'paused' ? 'selected' : ''; ?>>موقوف</option>
+                            <option value="cancelled" <?php echo ($_GET['status'] ?? '') === 'cancelled' ? 'selected' : ''; ?>>ملغى</option>
+                            <option value="archived" <?php echo ($_GET['status'] ?? '') === 'archived' ? 'selected' : ''; ?>>مؤرشف</option>
+                        </select>
+
+                        <!-- Month Filter (for payments) -->
+                        <input
+                            type="month"
+                            name="month"
+                            class="form-control form-control-sm"
+                            id="searchMonth"
+                            value="<?php echo e($_GET['month'] ?? ''); ?>"
+                            placeholder="الشهر"
+                            style="width:160px; flex-shrink:0; <?php echo ($curType === 'payments') ? '' : 'display:none;'; ?>"
+                        >
+
+                        <!-- Search Button -->
+                        <button type="submit" class="btn btn-primary btn-sm" id="searchSubmitBtn" style="flex-shrink:0;">
+                            <i class="fas fa-search"></i>
+                            بحث
+                        </button>
+
+                        <!-- Reset Button -->
+                        <a href="<?php echo APP_URL; ?>modules/search/index.php" class="btn btn-outline-secondary btn-sm" style="flex-shrink:0;">
+                            <i class="fas fa-undo"></i>
+                        </a>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+        <!-- END header-sticky-wrapper -->
+
+        <!-- =========================================================
+             CONTENT
+             ========================================================= -->
+
+        <div class="content">
+
+
+            <?php
+            if (
+                isset($_GET['mark_notif_read']) &&
+                $_GET['mark_notif_read'] == '1'
+            ):
+            ?>
+
+                <?php
+
+                try {
+
+                    dbQuery(
+                        "UPDATE notifications
+                         SET is_read = 1
+                         WHERE recipient_user_id = ?",
+                        [
+                            current_user_id()
+                        ]
+                    );
+
+                } catch (Throwable $e) {}
+
+                header(
+                    'Location: ' .
+                    strtok(
+                        $_SERVER["REQUEST_URI"],
+                        '?'
+                    )
+                );
+
+                exit;
+
+                ?>
+
+            <?php endif; ?>
+
+
+            <?php if (!empty($_SESSION['flash'])): ?>
+
+
+                <?php
+                foreach (
+                    $_SESSION['flash']
+                    as $msg
+                ):
+                ?>
+
+
+                    <div
+                        class="alert alert-<?php
+                            echo e(
+                                $msg['type'] === 'error'
+                                    ? 'danger'
+                                    : $msg['type']
+                            );
+                        ?> alert-dismissible fade-show"
+                        role="alert"
+                    >
+
+                        <?php
+                        echo e(
+                            $msg['message']
+                        );
+                        ?>
+
+
+                        <button
+                            type="button"
+                            class="btn-close"
+                            data-bs-dismiss="alert"
+                            aria-label="Close"
+                        ></button>
+
+
+                    </div>
+
+
+                <?php endforeach; ?>
+
+
+                <?php
+                unset(
+                    $_SESSION['flash']
+                );
+                ?>
+
+
+            <?php endif; ?>

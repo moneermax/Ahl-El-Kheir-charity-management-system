@@ -1,0 +1,163 @@
+<?php
+require_once dirname(__DIR__, 2) . '/config/config.php';
+require_once dirname(__DIR__, 2) . '/config/database.php';
+require_once dirname(__DIR__, 2) . '/config/functions.php';
+require_once dirname(__DIR__, 2) . '/config/session.php';
+
+Session::start();
+if (!Session::isLoggedIn()) { header('Location: ' . APP_URL . 'index.php'); exit(); }
+$role = Session::getUserRole();
+if (!in_array($role, ['admin', 'vice_general_manager', 'general_manager', 'supervisor', 'financial_manager', 'accountant'], true)) {
+    header('Location: ' . APP_URL . 'index.php'); exit();
+}
+
+dbExecute("ALTER TABLE sponsors ADD COLUMN IF NOT EXISTS brought_by_name VARCHAR(255) NULL");
+
+$pageTitle = 'ملف الكفيل';
+$active = 'sponsors';
+$id = (int)($_GET['id'] ?? 0);
+
+/* Restore the sponsor-list state when the user clicks Back/رجوع. */
+$returnQuery = trim((string)($_GET['return'] ?? ''));
+$backUrl = APP_URL . 'modules/sponsors/index.php';
+if ($returnQuery !== '') {
+    $returnParams = [];
+    parse_str(rawurldecode($returnQuery), $parsedReturnParams);
+    foreach (['q', 'status', 'sup', 'page'] as $key) {
+        if (isset($parsedReturnParams[$key]) && $parsedReturnParams[$key] !== '') {
+            $returnParams[$key] = $key === 'page' || $key === 'sup'
+                ? (int)$parsedReturnParams[$key]
+                : trim((string)$parsedReturnParams[$key]);
+        }
+    }
+    if ($returnParams) $backUrl .= '?' . http_build_query($returnParams);
+}
+
+$sp = dbFetchOne("SELECT s.*, l.code AS letter, u.full_name AS supervisor_name
+                  FROM sponsors s
+                  LEFT JOIN letters l ON l.id = s.first_letter_id
+                  LEFT JOIN users u ON u.id = s.supervisor_id
+                  WHERE s.id = ?", [$id]);
+
+if (!$sp) { flash('error', 'الكفيل غير موجود.'); redirect('modules/sponsors/index.php'); }
+
+if ($role === 'supervisor') {
+    $myLetterIds = array_map('intval', array_column(dbFetchAll("SELECT letter_id FROM supervisor_letters WHERE supervisor_id = ?", [Session::getUserId()]), 'letter_id'));
+    $mine = ((int)($sp['supervisor_id'] ?? 0) === Session::getUserId())
+          || ($sp['first_letter_id'] && in_array((int)$sp['first_letter_id'], $myLetterIds, true));
+    if (!$mine) { flash('error', 'لا تملك صلاحية عرض هذا الكفيل.'); redirect('modules/sponsors/index.php'); }
+}
+
+$ships = dbFetchAll(
+    "SELECT sp.id,
+            COALESCE(NULLIF(TRIM(sp.sponsorship_code), ''), CONCAT('SH-', LPAD(sp.id, 6, '0'))) AS sponsorship_code,
+            sp.monthly_amount, sp.start_date, sp.status,
+            fc.child_name, f.mother_name, f.family_code
+     FROM sponsorships sp
+     JOIN family_children fc ON fc.id = sp.child_id
+     JOIN families f ON f.id = fc.family_id
+     WHERE sp.sponsor_id = ?
+     ORDER BY sp.status ASC, sp.id DESC",
+    [$id]
+);
+
+$gLabel = ['male' => 'ذكر', 'female' => 'أنثى', 'organization' => 'منظمة', 'unknown' => 'غير معروف'][$sp['gender']] ?? '—';
+
+include dirname(__DIR__, 2) . '/includes/header.php';
+?>
+
+<div class="welcome-section fade-in">
+    <h2><?php echo e($sp['full_name']); ?></h2>
+    <p>
+        <?php echo e($sp['sponsor_code']); ?> ·
+        الحرف: <span class="badge bg-light text-dark border"><?php echo e($sp['letter'] ?? '-'); ?></span> ·
+        الجنس: <span class="badge bg-light text-dark border"><?php echo e($gLabel); ?></span> ·
+        المشرف: <?php echo e($sp['supervisor_name'] ?? '—'); ?>
+    </p>
+    <div class="mt-2">
+        <?php if (!empty($sp['acquisition_source'])): ?>
+            <span class="badge bg-info text-dark me-2"><i class="fas fa-bullhorn me-1"></i> المصدر: <?php echo e($sp['acquisition_source']); ?></span>
+        <?php endif; ?>
+        <?php if (!empty($sp['brought_by_name'])): ?>
+            <span class="badge bg-success me-2"><i class="fas fa-user-tag me-1"></i> جلب بواسطة: <?php echo e($sp['brought_by_name']); ?></span>
+        <?php endif; ?>
+    </div>
+    <div class="quick-actions mt-3">
+        <a href="<?php echo e($backUrl); ?>" class="btn btn-secondary btn-sm"><i class="fas fa-arrow-right me-1"></i> رجوع</a>
+        <?php if (in_array($role, ['admin', 'vice_general_manager', 'supervisor', 'financial_manager', 'accountant'], true)): ?>
+            <a href="<?php echo APP_URL; ?>modules/sponsors/edit.php?id=<?php echo $id; ?>&return=<?php echo rawurlencode($returnQuery); ?>" class="btn btn-warning btn-sm"><i class="fas fa-pen me-1"></i> تعديل</a>
+            <a href="<?php echo APP_URL; ?>modules/sponsorships/create.php?sponsor_id=<?php echo $id; ?>" class="btn btn-primary btn-sm"><i class="fas fa-plus me-1"></i> إضافة كفالة</a>
+            <a href="<?php echo APP_URL; ?>modules/transactions/create.php?sponsor_id=<?php echo $id; ?>" class="btn btn-info btn-sm"><i class="fas fa-hand-holding-dollar me-1"></i> تسجيل دفعة أخرى / تبرع</a>
+        <?php endif; ?>
+    </div>
+</div>
+
+<?php include dirname(__DIR__, 2) . '/includes/alerts.php'; ?>
+
+<div class="card mb-4 fade-in">
+    <div class="card-header"><i class="fas fa-info-circle me-2"></i>البيانات الأساسية</div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4"><small class="text-muted">الهاتف</small><div dir="ltr"><?php echo e($sp['phone'] ?? '-'); ?></div></div>
+            <div class="col-md-4"><small class="text-muted">البريد الإلكتروني</small><div><?php echo e($sp['email'] ?? '-'); ?></div></div>
+            <div class="col-md-4"><small class="text-muted">العنوان</small><div><?php echo e($sp['address'] ?? '-'); ?></div></div>
+            <div class="col-md-4 mt-2"><small class="text-muted">النوع</small><div><?php echo e($sp['sponsor_type']); ?></div></div>
+            <div class="col-md-4 mt-2"><small class="text-muted">طريقة الدفع</small><div><?php echo e($sp['preferred_payment_method'] ?? '-'); ?></div></div>
+            <div class="col-md-4 mt-2"><small class="text-muted">الحالة</small><div><?php echo e($sp['status']); ?></div></div>
+        </div>
+    </div>
+</div>
+
+<div class="card fade-in">
+    <div class="card-header"><i class="fas fa-child me-2"></i>الكفالات والأيتام</div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>الكود</th>
+                        <th>اليتيم</th>
+                        <th>الأسرة</th>
+                        <th>المبلغ الشهري</th>
+                        <th>البداية</th>
+                        <th>الحالة</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (!$ships): ?>
+                        <tr><td colspan="7" class="text-center text-muted py-3">لا توجد كفالات.</td></tr>
+                    <?php else: foreach ($ships as $s): ?>
+                        <tr>
+                            <td><?php echo e($s['sponsorship_code']); ?></td>
+                            <td><strong><?php echo e($s['child_name']); ?></strong></td>
+                            <td><?php echo e($s['mother_name']); ?> <small class="text-muted">(<?php echo e($s['family_code']); ?>)</small></td>
+                            <td><?php echo number_format((float)$s['monthly_amount'], 0); ?></td>
+                            <td><?php echo e($s['start_date']); ?></td>
+                            <td>
+                                <?php
+                                $st = [
+                                    'active' => ['نشطة','bg-success'],
+                                    'paused' => ['متوقفة','bg-warning'],
+                                    'completed' => ['مكتملة','bg-info'],
+                                    'cancelled' => ['ملغية','bg-danger']
+                                ];
+                                [$stLabel, $stClass] = $st[$s['status']] ?? [$s['status'], 'bg-secondary'];
+                                ?>
+                                <span class="badge <?php echo $stClass; ?>"><?php echo $stLabel; ?></span>
+                            </td>
+                            <td class="text-nowrap">
+                                <a class="btn btn-sm btn-primary" href="<?php echo APP_URL; ?>modules/sponsorships/view.php?id=<?php echo (int)$s['id']; ?>" title="عرض التفاصيل"><i class="fas fa-eye"></i></a>
+                                <?php if (in_array($role, ['admin', 'vice_general_manager', 'supervisor', 'financial_manager', 'accountant'], true) && $s['status'] === 'active'): ?>
+                                    <a class="btn btn-sm btn-success" href="<?php echo APP_URL; ?>modules/transactions/create.php?sponsorship_id=<?php echo (int)$s['id']; ?>" title="دفعة شهرية"><i class="fas fa-receipt"></i></a>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; endif; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<?php include dirname(__DIR__, 2) . '/includes/footer.php'; ?>
