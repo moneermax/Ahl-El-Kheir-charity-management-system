@@ -70,7 +70,9 @@ if (!function_exists('ak_search_normalize_type')) {
 
 /*
  * Enforce the requested search type before modules/search/index.php executes.
- * This prevents direct URL tampering from bypassing the search UI policy.
+ * The search page loads functions.php before session.php, so initialize the
+ * application's own Session class here only for the search route. Session::start()
+ * is idempotent, so the later explicit call in the search page remains safe.
  */
 if (!function_exists('ak_search_enforce_request')) {
     function ak_search_enforce_request(): void
@@ -80,6 +82,9 @@ if (!function_exists('ak_search_enforce_request')) {
             return;
         }
 
+        require_once __DIR__ . '/session.php';
+        Session::start();
+
         $requestedType = strtolower(trim((string)($_GET['type'] ?? 'all')));
 
         if (!in_array($requestedType, ['all', 'families', 'sponsors', 'sponsorships', 'payments'], true)) {
@@ -87,7 +92,7 @@ if (!function_exists('ak_search_enforce_request')) {
             exit('Invalid search type.');
         }
 
-        if (!ak_search_can_type($requestedType)) {
+        if (!Session::isLoggedIn() || !ak_search_can_type($requestedType, Session::getUserRole())) {
             http_response_code(403);
             exit('You are not authorized to search this data type.');
         }
@@ -95,31 +100,27 @@ if (!function_exists('ak_search_enforce_request')) {
 }
 
 /*
- * Hide unauthorized search types from the existing global header without
- * rebuilding/replacing includes/header.php. The backend guard above remains
- * authoritative even if a user manually changes the request URL.
+ * Filter the existing global-search controls without rebuilding header.php.
+ * The authorization check above remains authoritative if a user tampers
+ * with the URL or sends a request manually.
  */
 if (!function_exists('ak_search_register_ui_filter')) {
     function ak_search_register_ui_filter(): void
     {
         static $registered = false;
-        if ($registered || !function_exists('current_user_role')) {
+        if ($registered) {
             return;
         }
         $registered = true;
 
-        $allowed = ak_search_allowed_types();
-        $allowedJson = json_encode(array_values($allowed), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-        if ($allowedJson === false) {
-            $allowedJson = '[]';
-        }
-
-        register_shutdown_function(static function () use ($allowedJson): void {
-            if (!headers_sent()) {
-                echo "\n<script>\n";
-            } else {
-                echo "\n<script>\n";
+        register_shutdown_function(static function (): void {
+            $allowed = ak_search_allowed_types();
+            $allowedJson = json_encode(array_values($allowed), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            if ($allowedJson === false) {
+                $allowedJson = '[]';
             }
+
+            echo "\n<script>\n";
             echo "document.addEventListener('DOMContentLoaded', function () {\n";
             echo "  const allowed = new Set(" . $allowedJson . ");\n";
             echo "  const typeSelect = document.getElementById('searchType');\n";
