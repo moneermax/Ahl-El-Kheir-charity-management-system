@@ -2,53 +2,53 @@
 declare(strict_types=1);
 /**
  * Global Helpers & Routing — v2.3
- * Restores csrf_field() + flash() helpers, keeps the FM routing fix, 
+ * Restores csrf_field() + flash() helpers, keeps the FM routing fix,
  * and ADDS routing for projects_manager and project_supervisor.
  */
 
 /* ---------- output & url ---------- */
-function e(?string $value): string { 
-    return htmlspecialchars($value ?? '', ENT_QUOTES, 'UTF-8'); 
+function e(?string $value): string {
+    return htmlspecialchars($value ?? '', ENT_QUOTES, 'UTF-8');
 }
 
-function url(string $path = ''): string { 
-    return APP_URL . ltrim($path, '/'); 
+function url(string $path = ''): string {
+    return APP_URL . ltrim($path, '/');
 }
 
-function asset(string $path): string { 
-    return APP_URL . 'assets/' . ltrim($path, '/'); 
+function asset(string $path): string {
+    return APP_URL . 'assets/' . ltrim($path, '/');
 }
 
 function redirect(string $url): void {
-    if (!preg_match('#^https?://#i', $url)) { 
-        $url = APP_URL . ltrim($url, '/'); 
+    if (!preg_match('#^https?://#i', $url)) {
+        $url = APP_URL . ltrim($url, '/');
     }
-    header('Location: ' . $url); 
+    header('Location: ' . $url);
     exit;
 }
 
 /* ---------- session ---------- */
-function is_logged_in(): bool { 
-    return isset($_SESSION['user_id'], $_SESSION['user_role']); 
+function is_logged_in(): bool {
+    return isset($_SESSION['user_id'], $_SESSION['user_role']);
 }
 
-function current_user_id(): ?int { 
-    return isset($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : null; 
+function current_user_id(): ?int {
+    return isset($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : null;
 }
 
-function current_user_role(): ?string { 
-    return $_SESSION['user_role'] ?? null; 
+function current_user_role(): ?string {
+    return $_SESSION['user_role'] ?? null;
 }
 
-function current_user_name(): ?string { 
-    return $_SESSION['user_name'] ?? null; 
+function current_user_name(): ?string {
+    return $_SESSION['user_name'] ?? null;
 }
 
 /* ---------- CSRF ---------- */
 if (!function_exists('csrf_token')) {
     function csrf_token(): string {
-        if (empty($_SESSION['csrf_token'])) { 
-            $_SESSION['csrf_token'] = bin2hex(random_bytes(32)); 
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
         }
         return $_SESSION['csrf_token'];
     }
@@ -86,9 +86,9 @@ if (!function_exists('flash_all')) {
 /* ---------- auth guards ---------- */
 if (!function_exists('require_login')) {
     function require_login(): void {
-        if (!Session::isLoggedIn()) { 
-            header('Location: ' . APP_URL . 'index.php'); 
-            exit(); 
+        if (!Session::isLoggedIn()) {
+            header('Location: ' . APP_URL . 'index.php');
+            exit();
         }
     }
 }
@@ -98,9 +98,9 @@ if (!function_exists('require_role')) {
         require_login();
         $userRole = Session::getUserRole();
         $roles = is_array($roles) ? $roles : [$roles];
-        if (!in_array($userRole, $roles, true)) { 
-            header('Location: ' . APP_URL . 'index.php'); 
-            exit(); 
+        if (!in_array($userRole, $roles, true)) {
+            header('Location: ' . APP_URL . 'index.php');
+            exit();
         }
     }
 }
@@ -120,10 +120,10 @@ if (!function_exists('dashboard_for_role')) {
             'administration', 'staff' => 'dashboard/staff_dashboard.php',
             'social_media' => 'dashboard/staff_dashboard.php',
             'hr_manager', 'hr_staff' => 'dashboard/hr_dashboard.php',
-            
-            // ✅ NEW: Route project roles to the unified projects dashboard
+
+            // NEW: Route project roles to the unified projects dashboard
             'projects_manager', 'project_supervisor' => 'dashboard/projects_dashboard.php',
-            
+
             default => 'index.php',
         };
     }
@@ -140,4 +140,15 @@ function first_letter_of(string $name): array {
     if ($clean === '') return ['', ''];
     $raw = mb_substr($clean, 0, 1, 'UTF-8');
     return [$raw, normalize_arabic_letter($raw)];
+}
+
+/* ---------- centralized global-search authorization ---------- */
+require_once __DIR__ . '/search_permissions.php';
+
+if (function_exists('ak_search_enforce_request')) {
+    ak_search_enforce_request();
+}
+
+if (function_exists('ak_search_register_ui_filter')) {
+    ak_search_register_ui_filter();
 }
