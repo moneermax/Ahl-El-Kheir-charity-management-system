@@ -37,12 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($username) || empty($password)) {
         $error = 'يرجى إدخال اسم المستخدم وكلمة المرور.';
     } else {
-        $user = dbFetchOne("
-            SELECT u.id, u.username, u.full_name, u.password_hash, u.is_active, r.code as role_code
-            FROM users u
-            JOIN roles r ON u.role_id = r.id
-            WHERE u.username = ?
-        ", [$username]);
+        $user = dbFetchOne("SELECT u.id, u.username, u.full_name, u.password_hash, u.is_active, r.code as role_code FROM users u JOIN roles r ON u.role_id = r.id WHERE u.username = ?", [$username]);
 
         if ($user && password_verify($password, $user['password_hash'])) {
             if (!$user['is_active']) {
@@ -56,15 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 dbExecute("UPDATE users SET last_login_at = NOW() WHERE id = ?", [$user['id']]);
 
                 try {
-                    dbExecute("
-                        INSERT INTO audit_log (user_id, action, entity_type, entity_id, ip_address, user_agent, created_at)
-                        VALUES (?, 'LOGIN', 'users', ?, ?, ?, NOW())
-                    ", [
-                        $user['id'],
-                        $user['id'],
-                        $_SERVER['REMOTE_ADDR'] ?? '',
-                        $_SERVER['HTTP_USER_AGENT'] ?? ''
-                    ]);
+                    dbExecute("INSERT INTO audit_log (user_id, action, entity_type, entity_id, ip_address, user_agent, created_at) VALUES (?, 'LOGIN', 'users', ?, ?, ?, NOW())", [$user['id'], $user['id'], $_SERVER['REMOTE_ADDR'] ?? '', $_SERVER['HTTP_USER_AGENT'] ?? '']);
                 } catch (Throwable $e) { /* Fail silently */ }
 
                 header('Location: ' . APP_URL . dashboard_for_role($user['role_code']));
@@ -94,72 +81,18 @@ $langSwitchUrl = e($uri . (strpos($uri, '?') !== false ? '&' : '?') . 'lang=' . 
 <link rel="icon" type="image/png" href="<?php echo APP_URL; ?>assets/img/logo.png">
 <link rel="apple-touch-icon" href="<?php echo APP_URL; ?>assets/img/logo.png">
 <style>
-body {
-background: linear-gradient(135deg, #0a1f44 0%, #1b4d8f 100%);
-font-family: 'Cairo', sans-serif;
-min-height: 100vh;
-display: flex;
-align-items: center;
-justify-content: center;
-margin: 0;
-}
-.login-card {
-background: #fff;
-border-radius: 15px;
-box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-overflow: hidden;
-max-width: 450px;
-width: 100%;
-}
-.login-header {
-background: #1b4d8f;
-color: #fff;
-padding: 2rem;
-text-align: center;
-}
-.login-logo {
-width: 92px; height: 92px; object-fit: cover; border-radius: 50%;
-border: 3px solid rgba(255,255,255,.45); background: #fff;
-margin: 0 auto 1rem; display: block;
-}
-.login-body {
-padding: 2rem;
-}
-.form-control {
-border-radius: 8px;
-padding: 0.75rem 1rem;
-border: 1px solid #ced4da;
-}
-.form-control:focus {
-border-color: #1b4d8f;
-box-shadow: 0 0 0 0.25rem rgba(27, 77, 143, 0.25);
-}
-.input-group-text {
-background-color: #f8f9fa;
-border: 1px solid #ced4da;
-color: #1b4d8f;
-}
-.btn-primary {
-background-color: #1b4d8f;
-border-color: #1b4d8f;
-padding: 0.75rem;
-font-weight: 600;
-border-radius: 8px;
-}
-.btn-primary:hover {
-background-color: #0a1f44;
-border-color: #0a1f44;
-}
-.btn-eye {
-background-color: #f8f9fa;
-border: 1px solid #ced4da;
-color: #1b4d8f;
-padding: 0.75rem 0.9rem;
-}
-.btn-eye:hover {
-background-color: #e9ecef;
-color: #0a1f44;
-}
+body { background: linear-gradient(135deg, #0a1f44 0%, #1b4d8f 100%); font-family: 'Cairo', sans-serif; min-height: 100vh; display: flex; align-items: center; justify-content: center; margin: 0; }
+.login-card { background: #fff; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); overflow: hidden; max-width: 450px; width: 100%; }
+.login-header { background: #1b4d8f; color: #fff; padding: 2rem; text-align: center; }
+.login-logo { width: 92px; height: 92px; object-fit: cover; border-radius: 50%; border: 3px solid rgba(255,255,255,.45); background: #fff; margin: 0 auto 1rem; display: block; }
+.login-body { padding: 2rem; }
+.form-control { border-radius: 8px; padding: 0.75rem 1rem; border: 1px solid #ced4da; }
+.form-control:focus { border-color: #1b4d8f; box-shadow: 0 0 0 0.25rem rgba(27, 77, 143, 0.25); }
+.input-group-text { background-color: #f8f9fa; border: 1px solid #ced4da; color: #1b4d8f; }
+.btn-primary { background-color: #1b4d8f; border-color: #1b4d8f; padding: 0.75rem; font-weight: 600; border-radius: 8px; }
+.btn-primary:hover { background-color: #0a1f44; border-color: #0a1f44; }
+.btn-eye { background-color: #f8f9fa; border: 1px solid #ced4da; color: #1b4d8f; padding: 0.75rem 0.9rem; }
+.btn-eye:hover { background-color: #e9ecef; color: #0a1f44; }
 </style>
 </head>
 <body>
@@ -174,62 +107,28 @@ color: #0a1f44;
 </div>
 <div class="login-body">
 <?php if ($error): ?>
-<div class="alert alert-danger py-2 text-center">
-<i class="fas fa-exclamation-triangle me-2"></i> <?php echo htmlspecialchars($error); ?>
-</div>
+<div class="alert alert-danger py-2 text-center"><i class="fas fa-exclamation-triangle me-2"></i> <?php echo htmlspecialchars($error); ?></div>
 <?php endif; ?>
 <form method="POST" action="">
 <div class="mb-3">
 <label for="username" class="form-label"><?php echo t('اسم المستخدم'); ?></label>
-<div class="input-group">
-<span class="input-group-text"><i class="fas fa-user"></i></span>
-<input type="text" name="username" id="username" class="form-control" required autofocus>
-</div>
+<div class="input-group"><span class="input-group-text"><i class="fas fa-user"></i></span><input type="text" name="username" id="username" class="form-control" required autofocus></div>
 </div>
 <div class="mb-4">
 <label for="password" class="form-label"><?php echo t('كلمة المرور'); ?></label>
-<div class="input-group">
-<span class="input-group-text"><i class="fas fa-lock"></i></span>
-<input type="password" name="password" id="password" class="form-control" required>
-<button type="button" class="btn btn-eye" id="togglePassword" tabindex="-1"
-title="<?php echo $lang === 'ar' ? 'إظهار / إخفاء كلمة المرور' : 'Show / Hide password'; ?>">
-<i class="fas fa-eye" id="togglePasswordIcon"></i>
-</button>
+<div class="input-group"><span class="input-group-text"><i class="fas fa-lock"></i></span><input type="password" name="password" id="password" class="form-control" required><button type="button" class="btn btn-eye" id="togglePassword" tabindex="-1" title="<?php echo $lang === 'ar' ? 'إظهار / إخفاء كلمة المرور' : 'Show / Hide password'; ?>"><i class="fas fa-eye" id="togglePasswordIcon"></i></button></div>
 </div>
-</div>
-<button type="submit" class="btn btn-primary w-100">
-<i class="fas fa-sign-in-alt me-2"></i> <?php echo t('تسجيل الدخول'); ?>
-</button>
+<button type="submit" class="btn btn-primary w-100"><i class="fas fa-sign-in-alt me-2"></i> <?php echo t('تسجيل الدخول'); ?></button>
 </form>
-<div class="text-center mt-3 text-muted small">
-&copy; <?php echo date('Y'); ?> <?php echo t('منظمة أهل الخير'); ?>. <?php echo t('جميع الحقوق محفوظة.'); ?>
+<div class="text-center mt-3">
+<a href="<?php echo APP_URL; ?>modules/users/password_recovery_request.php" class="text-decoration-none"><i class="fas fa-key me-1"></i> <?php echo $lang === 'ar' ? 'نسيت كلمة المرور؟' : 'Forgot your password?'; ?></a>
 </div>
+<div class="text-center mt-3 text-muted small">&copy; <?php echo date('Y'); ?> <?php echo t('منظمة أهل الخير'); ?>. <?php echo t('جميع الحقوق محفوظة.'); ?></div>
 </div>
 </div>
 <script>
-(function(){
-var pwd  = document.getElementById('password');
-var btn  = document.getElementById('togglePassword');
-var icon = document.getElementById('togglePasswordIcon');
-if (!btn || !pwd || !icon) return;
-btn.addEventListener('click', function(){
-if (pwd.type === 'password') {
-pwd.type = 'text';
-icon.classList.remove('fa-eye');
-icon.classList.add('fa-eye-slash');
-} else {
-pwd.type = 'password';
-icon.classList.remove('fa-eye-slash');
-icon.classList.add('fa-eye');
-}
-pwd.focus();
-});
-})();
+(function(){var pwd=document.getElementById('password'),btn=document.getElementById('togglePassword'),icon=document.getElementById('togglePasswordIcon');if(!btn||!pwd||!icon)return;btn.addEventListener('click',function(){if(pwd.type==='password'){pwd.type='text';icon.classList.remove('fa-eye');icon.classList.add('fa-eye-slash');}else{pwd.type='password';icon.classList.remove('fa-eye-slash');icon.classList.add('fa-eye');}pwd.focus();});})();
 </script>
-<script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('<?php echo APP_URL; ?>sw.js').catch(function(){});
-}
-</script>
+<script>if ('serviceWorker' in navigator) { navigator.serviceWorker.register('<?php echo APP_URL; ?>sw.js').catch(function(){}); }</script>
 </body>
 </html>
