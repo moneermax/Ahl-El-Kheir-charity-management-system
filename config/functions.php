@@ -151,4 +151,8 @@ if (function_exists('ak_search_enforce_request')) {
 
 if (function_exists('ak_search_register_ui_filter')) {
     ak_search_register_ui_filter();
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 7f4282655b6a978af854bb06ec52ae2d69fddbef

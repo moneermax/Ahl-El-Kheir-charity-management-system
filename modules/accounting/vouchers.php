@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?php
 // modules/accounting/vouchers.php - Receipt & payment vouchers (create / list / void)
 require_once dirname(__DIR__, 2) . '/config/config.php';
@@ -223,4 +224,231 @@ document.querySelectorAll('.ak-void-form').forEach(function(form) {
     });
 });
 </script>
+=======
+<?php
+// modules/accounting/vouchers.php - Receipt & payment vouchers (create / list / void)
+require_once dirname(__DIR__, 2) . '/config/config.php';
+require_once dirname(__DIR__, 2) . '/config/database.php';
+require_once dirname(__DIR__, 2) . '/config/functions.php';
+require_once dirname(__DIR__, 2) . '/config/session.php';
+require_once __DIR__ . '/lib.php';
+Session::start();
+
+if (!Session::isLoggedIn() || !in_array(Session::getUserRole(), ['admin', 'financial_manager','accountant', 'general_manager', 'vice_general_manager'], true)) {
+    header('Location: ' . APP_URL . 'index.php'); exit();
+}
+$canManage = in_array(Session::getUserRole(), ['admin', 'accountant'], true);
+$pageTitle = 'السندات';
+$active    = 'vouchers';
+ak_ensure_tables(); ak_seed_accounts();
+
+$cashAccounts  = dbFetchAll("SELECT id, code, name_ar FROM accounts WHERE code IN ('1100','1200','1300') ORDER BY code");
+$incomeAccounts = dbFetchAll("SELECT id, code, name_ar FROM accounts WHERE account_type IN ('revenue','liability') AND is_active = 1 ORDER BY code");
+$expenseAccounts = dbFetchAll("SELECT id, code, name_ar FROM accounts WHERE account_type IN ('expense','liability') AND is_active = 1 ORDER BY code");
+
+$errors = [];
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $canManage) {
+    if (!verify_csrf()) $errors[] = 'انتهت صلاحية الجلسة.';
+    elseif (isset($_POST['save_voucher'])) {
+        $vType  = ($_POST['voucher_type'] ?? 'receipt') === 'payment' ? 'payment' : 'receipt';
+        $date   = trim($_POST['voucher_date'] ?? '') ?: date('Y-m-d');
+        $amount = (float)str_replace(',', '', (string)($_POST['amount'] ?? 0));
+        $cashId = (int)($_POST['cash_account_id'] ?? 0);
+        $otherId = (int)($_POST['other_account_id'] ?? 0);
+        $party  = trim($_POST['party_name'] ?? '');
+        $desc   = trim($_POST['description'] ?? '');
+        $ref    = trim($_POST['reference_number'] ?? '');
+
+        if ($amount <= 0) $errors[] = 'المبلغ يجب أن يكون أكبر من صفر.';
+        if (!in_array($cashId, array_map(fn($c) => (int)$c['id'], $cashAccounts), true)) $errors[] = 'اختر مكان النقد (صندوق/بنك/محفظة).';
+        if ($otherId <= 0) $errors[] = 'اختر الحساب المقابل.';
+
+        if (!$errors) {
+            $cnt = (int)(dbFetchOne("SELECT COUNT(*) c FROM vouchers WHERE voucher_type = ?", [$vType])['c'] ?? 0) + 1;
+            $vNo = ($vType === 'receipt' ? 'RV-' : 'PV-') . str_pad((string)$cnt, 6, '0', STR_PAD_LEFT);
+            dbExecute("INSERT INTO vouchers (voucher_type, voucher_no, voucher_date, party_name, amount, cash_account_id, other_account_id, description, reference_number, status, created_by)
+                       VALUES (?,?,?,?,?,?,?,?,?,'posted',?)",
+                [$vType, $vNo, $date, $party !== '' ? $party : null, $amount, $cashId, $otherId,
+                 $desc !== '' ? $desc : null, $ref !== '' ? $ref : null, Session::getUserId()]);
+            $vId = (int)(dbFetchOne("SELECT LAST_INSERT_ID() id")['id']);
+
+            // Balanced double-entry: receipt => Dr cash / Cr other ; payment => Dr other / Cr cash
+            $n = (int)(dbFetchOne("SELECT COUNT(*) c FROM journal_entries")['c'] ?? 0) + 1;
+            $jeCode = 'JE-' . str_pad((string)$n, 6, '0', STR_PAD_LEFT);
+            $label = ($vType === 'receipt' ? 'سند قبض ' : 'سند صرف ') . $vNo . ($party !== '' ? ' — ' . $party : '');
+            dbExecute("INSERT INTO journal_entries (entry_code, entry_date, description, reference_type, reference_id, status, created_by)
+                       VALUES (?,?,?,'voucher',?,'posted',?)",
+                [$jeCode, $date, $label, $vId, Session::getUserId()]);
+            $eid = (int)(dbFetchOne("SELECT LAST_INSERT_ID() id")['id']);
+            if ($vType === 'receipt') {
+                dbExecute("INSERT INTO journal_lines (entry_id, account_id, debit, credit, description) VALUES (?,?,?,?,?)", [$eid, $cashId, $amount, 0, $label]);
+                dbExecute("INSERT INTO journal_lines (entry_id, account_id, debit, credit, description) VALUES (?,?,?,?,?)", [$eid, $otherId, 0, $amount, $label]);
+            } else {
+                dbExecute("INSERT INTO journal_lines (entry_id, account_id, debit, credit, description) VALUES (?,?,?,?,?)", [$eid, $otherId, $amount, 0, $label]);
+                dbExecute("INSERT INTO journal_lines (entry_id, account_id, debit, credit, description) VALUES (?,?,?,?,?)", [$eid, $cashId, 0, $amount, $label]);
+            }
+            dbExecute("UPDATE vouchers SET entry_id = ? WHERE id = ?", [$eid, $vId]);
+            try {
+                dbExecute("INSERT INTO audit_log (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent)
+                           VALUES (?, 'CREATE', 'vouchers', ?, NULL, ?, ?, ?)",
+                    [Session::getUserId(), $vId, json_encode(['no' => $vNo, 'type' => $vType, 'amount' => $amount], JSON_UNESCAPED_UNICODE),
+                     $_SERVER['REMOTE_ADDR'] ?? '', $_SERVER['HTTP_USER_AGENT'] ?? '']);
+            } catch (Throwable $e) {}
+            flash('success', 'تم ترحيل ' . ($vType === 'receipt' ? 'سند القبض ' : 'سند الصرف ') . $vNo);
+            header('Location: ' . APP_URL . 'modules/accounting/vouchers.php?tab=list'); exit();
+        }
+    } elseif (isset($_POST['void_voucher'])) {
+        $vId = (int)$_POST['void_voucher'];
+        $v = dbFetchOne("SELECT id, voucher_no, status FROM vouchers WHERE id = ?", [$vId]);
+        if ($v && $v['status'] === 'posted') {
+            dbExecute("UPDATE vouchers SET status='voided' WHERE id = ?", [$vId]);
+            ak_void_journal_for_voucher($vId, trim($_POST['void_reason'] ?? '') ?: 'إبطال سند');
+            flash('success', 'تم إبطال السند ' . $v['voucher_no']);
+        }
+        header('Location: ' . APP_URL . 'modules/accounting/vouchers.php?tab=list'); exit();
+    }
+}
+
+$tab = $_GET['tab'] ?? ($canManage ? 'new' : 'list');
+$fType = $_GET['vtype'] ?? '';
+$list = dbFetchAll("SELECT v.*, c1.code cash_code, c1.name_ar cash_name, c2.code other_code, c2.name_ar other_name
+                    FROM vouchers v
+                    JOIN accounts c1 ON c1.id = v.cash_account_id
+                    JOIN accounts c2 ON c2.id = v.other_account_id
+                    " . ($fType !== '' ? "WHERE v.voucher_type = '" . ($fType === 'payment' ? 'payment' : 'receipt') . "' " : '') . "
+                    ORDER BY v.id DESC LIMIT 300");
+
+include dirname(__DIR__, 2) . '/includes/header.php';
+?>
+<div class="welcome-section fade-in">
+    <h2>السندات المالية</h2>
+    <p>سند قبض = نقد داخل (يزيد الصندوق/البنك) · سند صرف = نقد خارج (ينقص الصندوق/البنك) — الترحيل مزدوج تلقائياً</p>
+    <div class="quick-actions mt-3">
+        <a href="<?php echo APP_URL; ?>modules/accounting/vouchers.php?tab=new" class="btn btn-primary btn-sm <?php echo $tab === 'new' ? '' : ''; ?>"><i class="fas fa-plus me-1"></i>سند جديد</a>
+        <a href="<?php echo APP_URL; ?>modules/accounting/vouchers.php?tab=list" class="btn btn-secondary btn-sm"><i class="fas fa-list me-1"></i>سجل السندات</a>
+    </div>
+</div>
+<?php include dirname(__DIR__, 2) . '/includes/alerts.php'; ?>
+<?php if ($errors): ?><div class="alert alert-danger fade-in"><ul class="mb-0"><?php foreach ($errors as $er) echo '<li>' . e($er) . '</li>'; ?></ul></div><?php endif; ?>
+
+<?php if ($tab === 'new' && $canManage): ?>
+<div class="card fade-in">
+    <div class="card-header"><i class="fas fa-file-invoice me-2"></i>تسجيل سند</div>
+    <div class="card-body">
+        <form method="post">
+            <?php echo csrf_field(); ?>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">نوع السند *</label>
+                    <select name="voucher_type" class="form-select" required>
+                        <option value="receipt">سند قبض (نقد داخل)</option>
+                        <option value="payment">سند صرف (نقد خارج)</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">مكان النقد *</label>
+                    <select name="cash_account_id" class="form-select" required>
+                        <?php foreach ($cashAccounts as $c): ?>
+                            <option value="<?php echo (int)$c['id']; ?>"><?php echo e($c['name_ar']); ?> (<?php echo e($c['code']); ?>)</option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-3"><label class="form-label">التاريخ *</label><input type="date" name="voucher_date" class="form-control" value="<?php echo date('Y-m-d'); ?>" required></div>
+                <div class="col-md-3"><label class="form-label">المبلغ *</label><input type="number" step="0.01" min="0.01" name="amount" class="form-control" required></div>
+                <div class="col-md-6">
+                    <label class="form-label">الحساب المقابل * <small class="text-muted">(إيراد للسند القبض / مصروف للسند الصرف)</small></label>
+                    <select name="other_account_id" class="form-select" required>
+                        <option value="">— اختر —</option>
+                        <optgroup label="حسابات الإيرادات (للقبض)">
+                            <?php foreach ($incomeAccounts as $c): ?><option value="<?php echo (int)$c['id']; ?>"><?php echo e($c['code']); ?> — <?php echo e($c['name_ar']); ?></option><?php endforeach; ?>
+                        </optgroup>
+                        <optgroup label="حسابات المصروفات (للصرف)">
+                            <?php foreach ($expenseAccounts as $c): ?><option value="<?php echo (int)$c['id']; ?>"><?php echo e($c['code']); ?> — <?php echo e($c['name_ar']); ?></option><?php endforeach; ?>
+                        </optgroup>
+                    </select>
+                </div>
+                <div class="col-md-6"><label class="form-label">استلمنا من / صرفنا إلى</label><input type="text" name="party_name" class="form-control"></div>
+                <div class="col-md-6"><label class="form-label">البيان</label><input type="text" name="description" class="form-control"></div>
+                <div class="col-md-6"><label class="form-label">رقم مرجعي</label><input type="text" name="reference_number" class="form-control" dir="ltr"></div>
+            </div>
+            <div class="mt-4">
+                <button name="save_voucher" value="1" class="btn btn-primary"><i class="fas fa-save me-1"></i> حفظ وترحيل السند</button>
+            </div>
+        </form>
+    </div>
+</div>
+<?php else: ?>
+<div class="card mb-3 fade-in">
+    <div class="card-body">
+        <form method="get" class="row g-2 align-items-end">
+            <input type="hidden" name="tab" value="list">
+            <div class="col-md-3">
+                <label class="form-label">النوع</label>
+                <select name="vtype" class="form-select">
+                    <option value="">الكل</option>
+                    <option value="receipt" <?php echo $fType === 'receipt' ? 'selected' : ''; ?>>سندات قبض</option>
+                    <option value="payment" <?php echo $fType === 'payment' ? 'selected' : ''; ?>>سندات صرف</option>
+                </select>
+            </div>
+            <div class="col-md-2"><button class="btn btn-primary w-100"><i class="fas fa-search"></i> عرض</button></div>
+        </form>
+    </div>
+</div>
+<div class="card fade-in">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead><tr><th>الرقم</th><th>النوع</th><th>التاريخ</th><th>الطرف</th><th>مكان النقد</th><th>الحساب المقابل</th><th>المبلغ</th><th>الحالة</th><th class="text-center">إجراءات</th></tr></thead>
+                <tbody>
+                <?php if (!$list): ?>
+                    <tr><td colspan="9" class="text-center text-muted py-4">لا توجد سندات.</td></tr>
+                <?php else: foreach ($list as $v): ?>
+                    <tr>
+                        <td><code><?php echo e($v['voucher_no']); ?></code></td>
+                        <td><?php echo $v['voucher_type'] === 'receipt' ? '<span class="badge bg-success">قبض</span>' : '<span class="badge bg-warning text-dark">صرف</span>'; ?></td>
+                        <td><?php echo e($v['voucher_date']); ?></td>
+                        <td><?php echo e($v['party_name'] ?? '—'); ?></td>
+                        <td><?php echo e($v['cash_name']); ?></td>
+                        <td><small><?php echo e($v['other_code']); ?> <?php echo e($v['other_name']); ?></small></td>
+                        <td><strong><?php echo number_format((float)$v['amount'], 2); ?></strong></td>
+                        <td><?php echo $v['status'] === 'posted' ? '<span class="badge bg-success">مرحّل</span>' : '<span class="badge bg-danger">مبطل</span>'; ?></td>
+                        <td class="text-center" style="white-space:nowrap;">
+                            <a class="btn btn-sm btn-info" title="طباعة" href="<?php echo APP_URL; ?>modules/accounting/voucher_print.php?id=<?php echo (int)$v['id']; ?>"><i class="fas fa-print"></i></a>
+                            <?php if ($canManage && $v['status'] === 'posted'): ?>
+                                <form method="post" class="d-inline ak-void-form" data-confirm-msg="هل أنت متأكد من إبطال هذا السند؟"><?php echo csrf_field(); ?>
+                                    <input type="hidden" name="void_voucher" value="<?php echo (int)$v['id']; ?>">
+                                    <input type="text" name="void_reason" class="form-control form-control-sm d-inline-block" style="width:110px" placeholder="السبب" required>
+                                    <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-ban"></i></button>
+                                </form>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                <?php endforeach; endif; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+<!-- SweetAlert2 for a styled confirmation instead of the plain browser dialog -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+document.querySelectorAll('.ak-void-form').forEach(function(form) {
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        var msg = form.dataset.confirmMsg || 'هل أنت متأكد؟';
+        function proceed() { form.submit(); }
+        if (typeof Swal !== 'undefined' && typeof Swal.fire === 'function') {
+            Swal.fire({
+                title: 'تأكيد الإبطال', text: msg, icon: 'warning',
+                showCancelButton: true, confirmButtonColor: '#dc3545', cancelButtonColor: '#6c757d',
+                confirmButtonText: 'نعم، إبطال', cancelButtonText: 'إلغاء', reverseButtons: true
+            }).then(function(result) { if (result.isConfirmed) proceed(); });
+        } else {
+            if (confirm(msg)) proceed();
+        }
+    });
+});
+</script>
+>>>>>>> 7f4282655b6a978af854bb06ec52ae2d69fddbef
 <?php include dirname(__DIR__, 2) . '/includes/footer.php'; ?>

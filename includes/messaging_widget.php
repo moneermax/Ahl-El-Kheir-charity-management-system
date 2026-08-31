@@ -38,4 +38,8 @@ if (Session::isLoggedIn()) {
  }catch(e){}
 })();
 </script>
+<<<<<<< HEAD
 <?php } ?>
+=======
+<?php } ?>
+>>>>>>> 7f4282655b6a978af854bb06ec52ae2d69fddbef

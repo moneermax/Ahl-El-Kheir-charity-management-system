@@ -99,4 +99,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 </div>
 </body>
+<<<<<<< HEAD
 </html>
+=======
+</html>
+>>>>>>> 7f4282655b6a978af854bb06ec52ae2d69fddbef

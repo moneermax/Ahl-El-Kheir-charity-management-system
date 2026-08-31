@@ -149,4 +149,8 @@ if (!function_exists('ak_search_register_ui_filter')) {
             echo "});\n</script>\n";
         });
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 7f4282655b6a978af854bb06ec52ae2d69fddbef
