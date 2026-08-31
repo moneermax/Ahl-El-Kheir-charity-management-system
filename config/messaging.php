@@ -26,7 +26,36 @@ function get_conversation_list(int $userId,int $limit=20): array { $limit=max(1,
 function get_message_by_id(int $messageId,int $viewerId): ?array { if(!messaging_user_can_read($viewerId,$messageId))return null;$r=dbFetchOne("SELECT m.*,u.full_name sender_name,r.code sender_role,CASE WHEN mr.id IS NULL THEN 0 ELSE 1 END is_read FROM messages m JOIN users u ON u.id=m.sender_id LEFT JOIN roles r ON r.id=u.role_id LEFT JOIN message_reads mr ON mr.message_id=m.id AND mr.user_id=? WHERE m.id=? LIMIT 1",[$viewerId,$messageId]);return $r?:null; }
 function mark_message_read(int $userId,int $messageId): bool { if(!messaging_user_can_read($userId,$messageId))return false;try{$s=messaging_db()->prepare("INSERT IGNORE INTO message_reads(message_id,user_id,read_at) VALUES(?,?,NOW())");$s->execute([$messageId,$userId]);return true;}catch(Throwable $e){return false;} }
 function mark_all_messages_read(int $userId,string $role): bool { try{$s=messaging_db()->prepare("INSERT IGNORE INTO message_reads(message_id,user_id,read_at) SELECT m.id,?,NOW() FROM messages m LEFT JOIN message_reads mr ON mr.message_id=m.id AND mr.user_id=? WHERE (m.recipient_user_id=? OR (m.recipient_role=? AND m.sender_id<>?)) AND mr.id IS NULL");$s->execute([$userId,$userId,$userId,$role,$userId]);return true;}catch(Throwable $e){return false;} }
-function get_message_thread(int $messageId,int $viewerId): array { $m=get_message_by_id($messageId,$viewerId);if(!$m)return ['root'=>null,'replies'=>[]];$rootId=(int)$m['id'];$guard=0;while(!empty($m['parent_id'])&&$guard++<50){$p=get_message_by_id((int)$m['parent_id'],$viewerId);if(!$p)break;$m=$p;$rootId=(int)$p['id'];}mark_message_read($viewerId,$rootId);$root=get_message_by_id($rootId,$viewerId);if(!$root)return ['root'=>null,'replies'=>[]];$replies=dbFetchAll("SELECT m.*,u.full_name sender_name,r.code sender_role FROM messages m JOIN users u ON u.id=m.sender_id LEFT JOIN roles r ON r.id=u.role_id WHERE m.parent_id=? ORDER BY m.id ASC",[$rootId]);foreach($replies as $reply){if((int)$reply['sender_id']!==$viewerId)mark_message_read($viewerId,(int)$reply['id']);}return ['root'=>$root,'replies'=>$replies]; }
+function get_message_thread(int $messageId,int $viewerId): array {
+    $m=get_message_by_id($messageId,$viewerId);
+    if(!$m)return ['root'=>null,'replies'=>[]];
+    $rootId=(int)$m['id'];
+    $guard=0;
+    while(!empty($m['parent_id'])&&$guard++<50){
+        $p=get_message_by_id((int)$m['parent_id'],$viewerId);
+        if(!$p)break;
+        $m=$p;
+        $rootId=(int)$p['id'];
+    }
+    mark_message_read($viewerId,$rootId);
+    $root=get_message_by_id($rootId,$viewerId);
+    if(!$root)return ['root'=>null,'replies'=>[]];
+
+    // Replies are supported only for direct user-to-user conversations.
+    // Never expose unrelated replies merely because they share parent_id.
+    $replies=[];
+    if($root['recipient_user_id']!==null){
+        $rootSender=(int)$root['sender_id'];
+        $rootRecipient=(int)$root['recipient_user_id'];
+        $replies=dbFetchAll("SELECT m.*,u.full_name sender_name,r.code sender_role FROM messages m JOIN users u ON u.id=m.sender_id LEFT JOIN roles r ON r.id=u.role_id WHERE m.parent_id=? AND m.recipient_user_id IS NOT NULL AND ((m.sender_id=? AND m.recipient_user_id=?) OR (m.sender_id=? AND m.recipient_user_id=?)) ORDER BY m.id ASC",[$rootId,$rootSender,$rootRecipient,$rootRecipient,$rootSender]);
+        foreach($replies as $reply){
+            if((int)$reply['sender_id']!==$viewerId && ((int)$reply['recipient_user_id']===$viewerId || (int)$reply['sender_id']===$viewerId)){
+                mark_message_read($viewerId,(int)$reply['id']);
+            }
+        }
+    }
+    return ['root'=>$root,'replies'=>$replies];
+}
 function get_message_updates(int $userId,string $role,int $afterId=0): array { return dbFetchAll("SELECT m.id,m.subject,LEFT(m.body,160) body_preview,m.created_at,m.sender_id,u.full_name sender_name,m.is_urgent FROM messages m JOIN users u ON u.id=m.sender_id WHERE m.id>? AND (m.recipient_user_id=? OR (m.recipient_role=? AND m.sender_id<>?)) ORDER BY m.id ASC LIMIT 50",[$afterId,$userId,$role,$userId]); }
 function get_unified_unread_count(int $userId,string $role): int { $n=0;try{$r=dbFetchOne("SELECT COUNT(*) c FROM notifications WHERE recipient_user_id=? AND is_read=0",[$userId]);$n=(int)($r['c']??0);}catch(Throwable $e){}return get_unread_message_count($userId,$role)+$n; }
 function get_unread_count(int $userId,string $role): int{return get_unified_unread_count($userId,$role);}
