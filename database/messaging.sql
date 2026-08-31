@@ -36,6 +36,5 @@ CREATE TABLE IF NOT EXISTS message_reads (
     CONSTRAINT fk_message_reads_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Helpful indexes for the real-time unread query. These are safe to run only once.
--- If your database already has equivalent indexes, skip these two ALTER statements.
-CREATE INDEX idx_users_role_active ON users(role_id, is_active, id);
+-- No ALTER INDEX statement is included here because installations may already have
+-- an equivalent users(role_id,is_active,id) index under a different name.
