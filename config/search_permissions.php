@@ -120,6 +120,17 @@ if (!function_exists('ak_search_register_ui_filter')) {
         $registered = true;
 
         register_shutdown_function(static function (): void {
+            /*
+             * This UI filter is HTML-only. Never append its script to POST,
+             * AJAX, JSON, or other non-HTML responses. In particular, messaging
+             * endpoints return JSON and may call exit after writing the JSON;
+             * shutdown functions still execute after exit, so this guard must
+             * live inside the shutdown callback itself.
+             */
+            if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'GET') {
+                return;
+            }
+
             $allowed = ak_search_allowed_types();
             $allowAll = ak_search_can_type('all');
             $allowedJson = json_encode(array_values($allowed), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
