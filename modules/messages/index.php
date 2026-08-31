@@ -13,152 +13,109 @@ $role = Session::getUserRole();
 $pageTitle = 'الرسائل الداخلية';
 $active = 'messages';
 $canBroadcast = in_array($role,['admin','general_manager','vice_general_manager','financial_manager','hr_manager'],true);
+$msgUrl = APP_URL.'modules/messages/index.php';
 
 if ($_SERVER['REQUEST_METHOD']==='POST') {
     header('Content-Type: application/json; charset=utf-8');
     if (!verify_csrf()) { http_response_code(419); echo json_encode(['ok'=>false,'message'=>'انتهت صلاحية الجلسة.'],JSON_UNESCAPED_UNICODE); exit; }
     $action = $_POST['action'] ?? '';
     if ($action==='send') {
-        $type = $_POST['recipient_type'] ?? 'user';
-        $subject = trim((string)($_POST['subject'] ?? ''));
-        $body = trim((string)($_POST['body'] ?? ''));
-        $urgent = !empty($_POST['is_urgent']);
-        if ($subject==='' || $body==='') { http_response_code(422); echo json_encode(['ok'=>false,'message'=>'الموضوع ونص الرسالة مطلوبان.'],JSON_UNESCAPED_UNICODE); exit; }
-        if ($type==='role') {
-            if (!$canBroadcast) { http_response_code(403); echo json_encode(['ok'=>false,'message'=>'ليس لديك صلاحية الإرسال إلى دور كامل.'],JSON_UNESCAPED_UNICODE); exit; }
-            $recipientRole = trim((string)($_POST['recipient_role'] ?? ''));
-            $id = broadcast_to_role($uid,$recipientRole,$subject,$body,null,null,$urgent);
-        } else {
-            $recipient = (int)($_POST['recipient_user_id'] ?? 0);
-            $id = send_user_message($uid,$recipient,$subject,$body,null,null,null,$urgent);
-        }
-        if (!$id) { http_response_code(422); echo json_encode(['ok'=>false,'message'=>'تعذر إرسال الرسالة. تحقق من المستلم والبيانات.'],JSON_UNESCAPED_UNICODE); exit; }
-        echo json_encode(['ok'=>true,'id'=>$id,'message'=>'تم إرسال الرسالة بنجاح.'],JSON_UNESCAPED_UNICODE); exit;
+        $type=$_POST['recipient_type']??'user'; $subject=trim((string)($_POST['subject']??'')); $body=trim((string)($_POST['body']??'')); $urgent=!empty($_POST['is_urgent']);
+        if($subject===''||$body===''){http_response_code(422);echo json_encode(['ok'=>false,'message'=>'الموضوع ونص الرسالة مطلوبان.'],JSON_UNESCAPED_UNICODE);exit;}
+        if($type==='role'){
+            if(!$canBroadcast){http_response_code(403);echo json_encode(['ok'=>false,'message'=>'ليس لديك صلاحية الإرسال إلى دور كامل.'],JSON_UNESCAPED_UNICODE);exit;}
+            $id=broadcast_to_role($uid,trim((string)($_POST['recipient_role']??'')),$subject,$body,null,null,$urgent);
+        }else{$id=send_user_message($uid,(int)($_POST['recipient_user_id']??0),$subject,$body,null,null,null,$urgent);}
+        if(!$id){http_response_code(422);echo json_encode(['ok'=>false,'message'=>'تعذر إرسال الرسالة. تحقق من المستلم والبيانات.'],JSON_UNESCAPED_UNICODE);exit;}
+        echo json_encode(['ok'=>true,'id'=>$id,'message'=>'تم إرسال الرسالة بنجاح.'],JSON_UNESCAPED_UNICODE);exit;
     }
-    if ($action==='read') {
-        $mid=(int)($_POST['message_id']??0);
-        echo json_encode(['ok'=>mark_message_read($uid,$mid)],JSON_UNESCAPED_UNICODE); exit;
-    }
-    if ($action==='read_all') {
-        echo json_encode(['ok'=>mark_all_messages_read($uid,$role)],JSON_UNESCAPED_UNICODE); exit;
-    }
-    if ($action==='reply') {
-        $parent=(int)($_POST['message_id']??0);
-        $parentMessage=get_message_by_id($parent,$uid);
+    if($action==='read'){echo json_encode(['ok'=>mark_message_read($uid,(int)($_POST['message_id']??0))],JSON_UNESCAPED_UNICODE);exit;}
+    if($action==='read_all'){echo json_encode(['ok'=>mark_all_messages_read($uid,$role)],JSON_UNESCAPED_UNICODE);exit;}
+    if($action==='reply'){
+        $parent=(int)($_POST['message_id']??0); $parentMessage=get_message_by_id($parent,$uid);
         if(!$parentMessage){http_response_code(404);echo json_encode(['ok'=>false,'message'=>'الرسالة غير متاحة.'],JSON_UNESCAPED_UNICODE);exit;}
-        $body=trim((string)($_POST['body']??''));
-        if($body===''){http_response_code(422);echo json_encode(['ok'=>false,'message'=>'نص الرد مطلوب.'],JSON_UNESCAPED_UNICODE);exit;}
-        $target=(int)$parentMessage['sender_id']===$uid ? (int)($parentMessage['recipient_user_id']??0) : (int)$parentMessage['sender_id'];
+        $body=trim((string)($_POST['body']??'')); if($body===''){http_response_code(422);echo json_encode(['ok'=>false,'message'=>'نص الرد مطلوب.'],JSON_UNESCAPED_UNICODE);exit;}
+        $target=(int)$parentMessage['sender_id']===$uid?(int)($parentMessage['recipient_user_id']??0):(int)$parentMessage['sender_id'];
         if($target<=0){http_response_code(422);echo json_encode(['ok'=>false,'message'=>'لا يمكن الرد على رسالة جماعية من هذه الشاشة حالياً.'],JSON_UNESCAPED_UNICODE);exit;}
         $id=send_user_message($uid,$target,'رد: '.$parentMessage['subject'],$body,$parent,null,null,false);
         echo json_encode(['ok'=>(bool)$id,'id'=>$id,'message'=>$id?'تم إرسال الرد.':'تعذر إرسال الرد.'],JSON_UNESCAPED_UNICODE);exit;
     }
-    http_response_code(400); echo json_encode(['ok'=>false,'message'=>'طلب غير معروف.'],JSON_UNESCAPED_UNICODE); exit;
+    http_response_code(400);echo json_encode(['ok'=>false,'message'=>'طلب غير معروف.'],JSON_UNESCAPED_UNICODE);exit;
 }
 
-$view = $_GET['view'] ?? 'inbox';
-$filter = $_GET['filter'] ?? 'all';
-$messageId = (int)($_GET['message'] ?? 0);
-$thread = $messageId ? get_message_thread($messageId,$uid) : ['root'=>null,'replies'=>[]];
-$messages = $view==='sent' ? get_sent_messages($uid) : get_messages($uid,$role,$filter);
-$users = get_messaging_users($uid);
-$roles = $canBroadcast ? get_broadcast_roles() : [];
-$unread = get_unread_message_count($uid,$role);
+$view=$_GET['view']??'inbox'; $filter=$_GET['filter']??'all'; $messageId=(int)($_GET['message']??0);
+$thread=$messageId?get_message_thread($messageId,$uid):['root'=>null,'replies'=>[]];
+$messages=$view==='sent'?get_sent_messages($uid):get_messages($uid,$role,$filter);
+$users=get_messaging_users($uid); $roles=$canBroadcast?get_broadcast_roles():[]; $unread=get_unread_message_count($uid,$role);
 include dirname(__DIR__,2).'/includes/header.php';
 ?>
 <style>
-.msg-card{border:0;border-radius:14px;box-shadow:0 4px 18px rgba(20,58,107,.08)}
-.msg-row{cursor:pointer;border-inline-start:4px solid transparent;transition:.15s}.msg-row:hover{background:#f6f9fd}.msg-row.unread{border-inline-start-color:#1b4d8f;background:#eef5ff}.msg-avatar{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:#e7effa;color:#1b4d8f;font-weight:800}.msg-body{white-space:pre-wrap;line-height:1.9}
-.compose-modal .modal-dialog{max-width:680px}.compose-modal .modal-content{border:0;border-radius:18px;overflow:hidden;box-shadow:0 16px 50px rgba(10,31,68,.22)}
-.compose-modal .modal-header{background:#1b4d8f;color:#fff;border:0;padding:14px 18px}.compose-modal .modal-header .btn-close{filter:brightness(0) invert(1);opacity:.9}.compose-modal .modal-body{padding:18px}.compose-modal .modal-footer{padding:12px 18px;border-top:1px solid #edf0f4}.compose-modal .form-label{font-size:.82rem;font-weight:700;color:#44546a;margin-bottom:5px}.compose-modal .form-control,.compose-modal .form-select{border-radius:9px;border-color:#dce2ea;font-size:.9rem}.compose-modal textarea{min-height:130px;resize:vertical}.compose-recipient{background:#f6f8fb;border:1px solid #e8edf3;border-radius:12px;padding:12px}.compose-error{display:none;border-radius:9px;font-size:.85rem}.compose-error.show{display:block}
-.ak-send-status{display:none;font-size:.82rem}.ak-send-status.show{display:inline-flex;align-items:center;gap:6px}
+:root{--msg-primary:#1b4d8f;--msg-primary-dark:#143b70;--msg-bg:#f5f7fb;--msg-surface:#fff;--msg-border:#e5eaf1;--msg-text:#172338;--msg-muted:#778398;--msg-font:'Cairo',sans-serif;--msg-size:14px;--msg-radius:16px}
+.messages-shell{font-family:var(--msg-font);font-size:var(--msg-size);color:var(--msg-text)}
+.msg-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}.msg-title{display:flex;align-items:center;gap:12px}.msg-title-icon{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;background:#eaf2ff;color:var(--msg-primary);font-size:19px}.msg-title h2{font-size:1.25rem;font-weight:800;margin:0}.msg-title p{font-size:.75rem;color:var(--msg-muted);margin:3px 0 0}.msg-settings{display:flex;align-items:center;gap:7px;color:#687589;font-size:.7rem}.msg-settings select{width:100px;font-size:.7rem;border-radius:8px;border-color:var(--msg-border)}
+.msg-layout{display:grid;grid-template-columns:215px minmax(310px,1fr) minmax(390px,1.25fr);height:calc(100vh - 235px);min-height:590px;background:var(--msg-surface);border:1px solid var(--msg-border);border-radius:var(--msg-radius);box-shadow:0 8px 30px rgba(22,55,95,.07);overflow:hidden}.msg-sidebar{background:#f8fafd;border-inline-end:1px solid var(--msg-border);padding:16px}.msg-compose-btn{width:100%;border:0;border-radius:11px;padding:10px 12px;font-weight:800;background:var(--msg-primary);color:#fff;box-shadow:0 5px 14px rgba(27,77,143,.18);margin-bottom:15px}.msg-compose-btn:hover{background:var(--msg-primary-dark)}.msg-nav{display:flex;flex-direction:column;gap:3px}.msg-nav a,.msg-nav button{display:flex;align-items:center;gap:10px;width:100%;border:0;background:transparent;color:#526176;text-decoration:none;border-radius:10px;padding:10px 11px;font-size:.78rem;text-align:start}.msg-nav a:hover,.msg-nav button:hover{background:#edf3fb;color:var(--msg-primary)}.msg-nav a.active{background:#e7f0fc;color:var(--msg-primary);font-weight:800}.msg-nav i{width:20px;text-align:center}.msg-count{margin-inline-start:auto;min-width:22px;font-size:.62rem}.msg-section-label{font-size:.65rem;font-weight:800;color:#9aa5b5;margin:22px 10px 8px}
+.msg-list-pane{border-inline-end:1px solid var(--msg-border);min-width:0;display:flex;flex-direction:column}.msg-list-head{padding:13px 15px;border-bottom:1px solid var(--msg-border);display:flex;align-items:center;justify-content:space-between;gap:8px}.msg-list-head h3{font-size:.86rem;font-weight:800;margin:0}.msg-filter{display:flex;gap:3px}.msg-filter a{font-size:.63rem;padding:5px 8px;border-radius:7px;text-decoration:none;color:var(--msg-muted)}.msg-filter a.active{background:#eaf2ff;color:var(--msg-primary);font-weight:700}.msg-list{overflow:auto;flex:1}.msg-row{position:relative;display:flex;gap:10px;padding:13px 14px;border:0;border-bottom:1px solid #eef1f5;text-decoration:none;color:inherit;transition:.15s;cursor:pointer}.msg-row:hover{background:#f8fbff}.msg-row.unread{background:#f0f6ff}.msg-row.unread:before{content:'';position:absolute;inset-inline-start:0;top:0;bottom:0;width:3px;background:var(--msg-primary)}.msg-avatar{width:38px;height:38px;flex:0 0 38px;border-radius:12px;display:grid;place-items:center;background:#e8f0fb;color:var(--msg-primary);font-weight:800}.msg-row-main{min-width:0;flex:1}.msg-row-top,.msg-row-bottom{display:flex;align-items:center;justify-content:space-between;gap:7px}.msg-name{font-size:.74rem;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.msg-time{font-size:.59rem;color:#9aa4b2;white-space:nowrap}.msg-subject{font-size:.75rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}.msg-preview{font-size:.66rem;color:var(--msg-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}.msg-new{font-size:.55rem;padding:3px 5px;border-radius:5px;background:#dceaff;color:var(--msg-primary);font-weight:800}.msg-urgent{color:#c0392b;font-size:.66rem}
+.msg-conversation{display:flex;flex-direction:column;min-width:0;background:#fff}.msg-conv-head{padding:14px 17px;border-bottom:1px solid var(--msg-border);display:flex;align-items:center;justify-content:space-between;gap:10px}.msg-conv-person{display:flex;align-items:center;gap:10px;min-width:0}.msg-conv-person .msg-avatar{width:41px;height:41px;flex-basis:41px}.msg-conv-name{font-weight:800;font-size:.82rem}.msg-conv-meta{font-size:.61rem;color:var(--msg-muted);margin-top:2px}.msg-conv-actions{display:flex;gap:5px}.msg-icon-btn{width:31px;height:31px;border:1px solid var(--msg-border);background:#fff;color:#657286;border-radius:8px;display:grid;place-items:center}.msg-icon-btn:hover{background:#f4f7fb;color:var(--msg-primary)}.msg-thread{padding:20px;overflow:auto;flex:1;background:linear-gradient(180deg,#fafcff,#fff)}.msg-root{border:1px solid var(--msg-border);border-radius:14px;padding:16px;background:#fff;box-shadow:0 3px 12px rgba(30,60,100,.04);margin-bottom:12px}.msg-bubble{max-width:88%;border-radius:14px;padding:11px 14px;margin:9px 0;border:1px solid var(--msg-border);background:#fff;box-shadow:0 2px 8px rgba(30,60,100,.03)}.msg-bubble.mine{margin-inline-start:auto;background:#eaf3ff;border-color:#d8e7fb}.msg-bubble-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:5px}.msg-bubble-name{font-weight:800;font-size:.69rem}.msg-bubble-time{font-size:.58rem;color:#99a3b2}.msg-body{white-space:pre-wrap;line-height:1.85;font-size:.8rem;word-break:break-word}.msg-subject-large{font-size:.98rem;font-weight:800;margin-bottom:4px}.msg-root-meta{font-size:.63rem;color:var(--msg-muted)}.msg-empty{height:100%;display:grid;place-items:center;text-align:center;color:var(--msg-muted);padding:50px 20px}.msg-empty-icon{width:58px;height:58px;border-radius:18px;display:grid;place-items:center;background:#eef4fb;color:#8ca0b8;font-size:22px;margin:0 auto 12px}.msg-empty strong{display:block;color:#536176;font-size:.8rem;margin-bottom:3px}
+.msg-reply{padding:11px 15px;border-top:1px solid var(--msg-border);background:#fff}.msg-reply-box{border:1px solid #dfe5ed;border-radius:12px;background:#fafbfd;overflow:hidden}.msg-reply textarea{border:0!important;background:transparent;resize:none;min-height:70px;max-height:170px;padding:10px 12px;font-family:var(--msg-font);font-size:.77rem;box-shadow:none!important}.msg-reply-tools{display:flex;align-items:center;justify-content:space-between;padding:6px 8px;border-top:1px solid #e9edf2}.msg-tools{display:flex;gap:2px}.msg-tool{border:0;background:transparent;color:#7c8796;width:29px;height:29px;border-radius:7px}.msg-tool:hover{background:#eaf0f7;color:var(--msg-primary)}.msg-send{border:0;border-radius:8px;background:var(--msg-primary);color:#fff;font-size:.69rem;font-weight:800;padding:7px 12px}.msg-send:hover{background:var(--msg-primary-dark)}.msg-status{display:none;font-size:.64rem;color:#7c8796}.msg-status.show{display:inline-flex;align-items:center;gap:5px}.msg-reply-error{display:none;font-size:.68rem;margin-bottom:7px;padding:6px 9px;border-radius:7px}.msg-reply-error.show{display:block}
+.compose-modal .modal-dialog{max-width:710px}.compose-modal .modal-content{border:0;border-radius:18px;overflow:hidden;box-shadow:0 18px 55px rgba(10,31,68,.25)}.compose-modal .modal-header{padding:14px 18px;background:#fff;color:var(--msg-text);border-bottom:1px solid var(--msg-border)}.compose-head-icon{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:#eaf2ff;color:var(--msg-primary)}.compose-modal .modal-body{padding:17px 19px}.compose-modal .modal-footer{padding:10px 19px;border-top:1px solid var(--msg-border);background:#fbfcfe}.compose-modal .form-label{font-size:.69rem;font-weight:800;color:#59677a;margin-bottom:5px}.compose-modal .form-control,.compose-modal .form-select{border-radius:9px;border-color:#dfe5ed;font-family:var(--msg-font);font-size:.76rem;padding:.52rem .68rem}.compose-modal textarea{min-height:145px;resize:vertical}.compose-recipient{padding:11px;background:#f7f9fc;border:1px solid #e8edf3;border-radius:12px}.compose-error{display:none;border-radius:9px;font-size:.72rem}.compose-error.show{display:block}.compose-urgent{font-size:.69rem;color:#667386}.compose-urgent input{accent-color:#c0392b}.compose-footer-actions{display:flex;align-items:center;justify-content:space-between;width:100%}.compose-send{border:0;background:var(--msg-primary);color:#fff;border-radius:9px;padding:8px 15px;font-size:.73rem;font-weight:800}.compose-send:hover{background:var(--msg-primary-dark)}.compose-cancel{border:1px solid #dfe5ed;background:#fff;color:#687589;border-radius:9px;padding:8px 13px;font-size:.72rem}.msg-toast{position:fixed;bottom:22px;inset-inline-end:22px;z-index:1090;display:none;padding:9px 13px;border-radius:10px;background:#202938;color:#fff;font-size:.72rem;box-shadow:0 8px 25px rgba(0,0,0,.18)}.msg-toast.show{display:block}
+@media(max-width:1199px){.msg-layout{grid-template-columns:205px minmax(310px,1fr);height:auto;min-height:650px}.msg-conversation{grid-column:1/-1;border-top:1px solid var(--msg-border);min-height:600px}.msg-list-pane{border-inline-end:0;min-height:600px}}
+@media(max-width:767px){.msg-toolbar{align-items:flex-start}.msg-settings{display:none}.msg-layout{display:block;min-height:0}.msg-sidebar{border:0;border-bottom:1px solid var(--msg-border)}.msg-nav{display:grid;grid-template-columns:repeat(3,1fr)}.msg-nav a,.msg-nav button{justify-content:center;flex-direction:column;gap:3px;padding:8px 4px;text-align:center;font-size:.61rem}.msg-section-label{display:none}.msg-compose-btn{margin-bottom:10px}.msg-list-pane{min-height:470px}.msg-conversation{min-height:620px}.msg-thread{padding:12px}.msg-bubble{max-width:94%}}
 </style>
-<div class="welcome-section fade-in d-flex justify-content-between align-items-center flex-wrap gap-2">
-  <div><h2><i class="fas fa-envelope-open-text me-2"></i>الرسائل الداخلية</h2><p class="text-muted mb-0">مراسلات داخلية آمنة بين مستخدمي النظام</p></div>
-  <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#composeModal"><i class="fas fa-pen me-1"></i>رسالة جديدة</button>
-</div>
-<div class="row g-4">
- <div class="col-lg-3">
-  <div class="card msg-card"><div class="list-group list-group-flush">
-   <a class="list-group-item list-group-item-action <?php echo $view==='inbox'?'active':'';?>" href="<?php echo APP_URL;?>modules/messages/index.php"><i class="fas fa-inbox me-2"></i>الوارد <span class="badge <?php echo $view==='inbox'?'bg-light text-primary':'bg-primary';?> float-end"><?php echo $unread;?></span></a>
-   <a class="list-group-item list-group-item-action <?php echo $view==='sent'?'active':'';?>" href="<?php echo APP_URL;?>modules/messages/index.php?view=sent"><i class="fas fa-paper-plane me-2"></i>المرسل</a>
-   <button type="button" class="list-group-item list-group-item-action text-start" onclick="markAllRead()"><i class="fas fa-check-double me-2"></i>تحديد الوارد كمقروء</button>
-  </div></div>
+
+<div class="messages-shell">
+ <div class="msg-toolbar">
+  <div class="msg-title"><div class="msg-title-icon"><i class="fas fa-envelope-open-text"></i></div><div><h2>الرسائل الداخلية</h2><p>مراسلات آمنة بين مستخدمي النظام والأدوار الإدارية</p></div></div>
+  <div class="msg-settings"><i class="fas fa-text-height"></i><span>حجم النص</span><select id="msgFontSize" class="form-select form-select-sm"><option value="13px">صغير</option><option value="14px" selected>متوسط</option><option value="15px">كبير</option><option value="16px">كبير جداً</option></select></div>
  </div>
- <div class="col-lg-9">
-  <?php if($thread['root']): ?>
-   <?php $m=$thread['root']; mark_message_read($uid,(int)$m['id']); ?>
-   <div class="card msg-card mb-3"><div class="card-body">
-    <div class="d-flex justify-content-between gap-3"><div><h4><?php echo e($m['subject']);?></h4><div class="text-muted small">من: <?php echo e($m['sender_name']);?> · <?php echo e($m['created_at']);?></div></div><a class="btn btn-outline-secondary btn-sm" href="<?php echo APP_URL;?>modules/messages/index.php">عودة</a></div>
-    <hr><div class="msg-body"><?php echo e($m['body']);?></div>
-   </div></div>
-   <?php foreach($thread['replies'] as $r): ?><div class="card msg-card mb-2"><div class="card-body"><div class="small text-muted mb-2"><?php echo e($r['sender_name']);?> · <?php echo e($r['created_at']);?></div><div class="msg-body"><?php echo e($r['body']);?></div></div></div><?php endforeach; ?>
-   <?php if(($m['recipient_user_id']!==null || (int)$m['sender_id']!==$uid) && !($m['recipient_role']!==null)): ?>
-   <form id="replyForm" class="card msg-card p-3 mt-3"><input type="hidden" name="action" value="reply"><input type="hidden" name="message_id" value="<?php echo (int)$m['id'];?>"><?php echo csrf_field();?><textarea name="body" class="form-control mb-2" rows="3" placeholder="اكتب ردك..."></textarea><div class="text-end"><button type="submit" class="btn btn-primary">إرسال الرد</button></div></form>
-   <?php endif; ?>
-  <?php else: ?>
-   <div class="d-flex justify-content-between align-items-center mb-2"><div class="btn-group btn-group-sm"><a class="btn <?php echo $filter==='all'?'btn-primary':'btn-outline-primary';?>" href="?view=<?php echo e($view);?>&filter=all">الكل</a><a class="btn <?php echo $filter==='unread'?'btn-primary':'btn-outline-primary';?>" href="?view=<?php echo e($view);?>&filter=unread">غير المقروء</a></div></div>
-   <div class="card msg-card"><div class="list-group list-group-flush">
-    <?php if(!$messages): ?><div class="p-5 text-center text-muted"><i class="fas fa-inbox fa-2x mb-2"></i><div>لا توجد رسائل.</div></div><?php endif; ?>
-    <?php foreach($messages as $m): ?>
-      <?php $isUnread=isset($m['is_read'])&&(int)$m['is_read']===0; $name=$view==='sent'?($m['recipient_name']??''):$m['sender_name']; ?>
-      <a href="<?php echo APP_URL;?>modules/messages/index.php?message=<?php echo (int)$m['id'];?>" class="list-group-item list-group-item-action msg-row <?php echo $isUnread?'unread':'';?>">
-       <div class="d-flex gap-3 align-items-start"><div class="msg-avatar"><?php echo e(mb_substr($name!==''?$name:'?',0,1,'UTF-8'));?></div><div class="flex-grow-1"><div class="d-flex justify-content-between gap-2"><strong><?php echo e($m['subject']);?></strong><small class="text-muted"><?php echo e($m['created_at']);?></small></div><div class="small text-muted mt-1"><?php echo $view==='sent'?'إلى: ':'من: '; echo e($name);?><?php if(!empty($m['recipient_role'])):?> · إلى دور: <?php echo e($m['recipient_role']);?><?php endif;?></div><div class="text-secondary small mt-1"><?php echo e($m['body_preview']??mb_substr($m['body']??'',0,150,'UTF-8'));?></div></div><?php if($isUnread):?><span class="badge bg-primary">جديد</span><?php endif;?></div>
-      </a>
+ <div class="msg-layout">
+  <aside class="msg-sidebar">
+   <button type="button" class="msg-compose-btn" data-bs-toggle="modal" data-bs-target="#composeModal"><i class="fas fa-pen-to-square me-2"></i>رسالة جديدة</button>
+   <nav class="msg-nav">
+    <a class="<?php echo $view==='inbox'?'active':'';?>" href="<?php echo $msgUrl;?>"><i class="fas fa-inbox"></i><span>الوارد</span><span class="badge bg-primary msg-count"><?php echo $unread;?></span></a>
+    <a class="<?php echo $view==='sent'?'active':'';?>" href="<?php echo $msgUrl;?>?view=sent"><i class="fas fa-paper-plane"></i><span>المرسل</span></a>
+    <button type="button" onclick="markAllRead()"><i class="fas fa-check-double"></i><span>تحديد الكل كمقروء</span></button>
+   </nav>
+   <div class="msg-section-label">حالة المراسلات</div><div class="small text-muted px-2" style="font-size:.65rem;line-height:1.8">يتم تحديث الإشعارات والرسائل الجديدة تلقائياً دون الحاجة إلى إعادة تحميل الصفحة.</div>
+  </aside>
+  <section class="msg-list-pane">
+   <div class="msg-list-head"><h3><?php echo $view==='sent'?'الرسائل المرسلة':'صندوق الوارد';?></h3><div class="msg-filter"><a class="<?php echo $filter==='all'?'active':'';?>" href="?view=<?php echo e($view);?>&filter=all">الكل</a><a class="<?php echo $filter==='unread'?'active':'';?>" href="?view=<?php echo e($view);?>&filter=unread">غير مقروء</a></div></div>
+   <div class="msg-list">
+    <?php if(!$messages): ?><div class="msg-empty"><div><div class="msg-empty-icon"><i class="fas fa-inbox"></i></div><strong>لا توجد رسائل</strong><span>ستظهر الرسائل الجديدة هنا.</span></div></div><?php endif; ?>
+    <?php foreach($messages as $m): $isUnread=isset($m['is_read'])&&(int)$m['is_read']===0; $name=$view==='sent'?($m['recipient_name']??''):$m['sender_name']; $initial=mb_substr($name!==''?$name:'?',0,1,'UTF-8'); ?>
+     <a href="<?php echo $msgUrl;?>?message=<?php echo (int)$m['id'];?>" class="msg-row <?php echo $isUnread?'unread':'';?>"><div class="msg-avatar"><?php echo e($initial);?></div><div class="msg-row-main"><div class="msg-row-top"><span class="msg-name"><?php echo e($name);?></span><span class="msg-time"><?php echo e($m['created_at']);?></span></div><div class="msg-row-bottom"><span class="msg-subject"><?php echo e($m['subject']);?></span><?php if($isUnread):?><span class="msg-new">جديد</span><?php endif;?></div><div class="msg-preview"><?php echo $view==='sent'?'إلى: ':'من: '; echo e($name);?><?php if(!empty($m['recipient_role'])):?> · <?php echo e($m['recipient_role']);?><?php endif;?> · <?php echo e($m['body_preview']??mb_substr($m['body']??'',0,150,'UTF-8'));?></div></div><?php if(!empty($m['is_urgent'])):?><i class="fas fa-triangle-exclamation msg-urgent" title="عاجل"></i><?php endif;?></a>
     <?php endforeach; ?>
-   </div></div>
-  <?php endif; ?>
+   </div>
+  </section>
+  <section class="msg-conversation">
+   <?php if($thread['root']): $m=$thread['root']; mark_message_read($uid,(int)$m['id']); $rootName=$m['sender_name']; $rootInitial=mb_substr($rootName!==''?$rootName:'?',0,1,'UTF-8'); ?>
+    <div class="msg-conv-head"><div class="msg-conv-person"><div class="msg-avatar"><?php echo e($rootInitial);?></div><div><div class="msg-conv-name"><?php echo e($rootName);?></div><div class="msg-conv-meta">مراسلة داخلية · <?php echo e($m['created_at']);?></div></div></div><div class="msg-conv-actions"><a class="msg-icon-btn" href="<?php echo $msgUrl;?>" title="العودة"><i class="fas fa-arrow-right"></i></a><button class="msg-icon-btn" type="button" onclick="focusReply()" title="الرد"><i class="fas fa-reply"></i></button></div></div>
+    <div class="msg-thread"><article class="msg-root"><div class="msg-subject-large"><?php echo e($m['subject']);?></div><div class="msg-root-meta"><i class="fas fa-user me-1"></i><?php echo e($rootName);?> · <?php echo e($m['created_at']);?></div><hr class="my-3"><div class="msg-body"><?php echo e($m['body']);?></div></article>
+     <?php foreach($thread['replies'] as $r): $mine=(int)$r['sender_id']===$uid; ?><article class="msg-bubble <?php echo $mine?'mine':'';?>"><div class="msg-bubble-head"><span class="msg-bubble-name"><?php echo e($r['sender_name']);?></span><span class="msg-bubble-time"><?php echo e($r['created_at']);?></span></div><div class="msg-body"><?php echo e($r['body']);?></div></article><?php endforeach; ?>
+    </div>
+    <?php if(($m['recipient_user_id']!==null||(int)$m['sender_id']!==$uid)&&!($m['recipient_role']!==null)): ?><div class="msg-reply"><form id="replyForm"><input type="hidden" name="action" value="reply"><input type="hidden" name="message_id" value="<?php echo (int)$m['id'];?>"><?php echo csrf_field();?><div id="replyError" class="alert alert-danger msg-reply-error"></div><div class="msg-reply-box"><textarea name="body" maxlength="10000" placeholder="اكتب ردك هنا..." required></textarea><div class="msg-reply-tools"><div class="msg-tools"><button type="button" class="msg-tool" title="إرفاق ملف"><i class="fas fa-paperclip"></i></button><button type="button" class="msg-tool" title="رمز تعبيري"><i class="far fa-face-smile"></i></button></div><div class="d-flex align-items-center gap-2"><span id="replyStatus" class="msg-status"><i class="fas fa-circle-notch fa-spin"></i> جارٍ الإرسال...</span><button class="msg-send" type="submit"><i class="fas fa-paper-plane me-1"></i>إرسال الرد</button></div></div></div></form></div><?php endif; ?>
+   <?php else: ?><div class="msg-empty"><div><div class="msg-empty-icon"><i class="fas fa-comments"></i></div><strong>اختر رسالة لعرض المحادثة</strong><span>يمكنك قراءة الرسالة والرد عليها من هذه المساحة.</span></div></div><?php endif; ?>
+  </section>
  </div>
 </div>
 
-<div class="modal fade compose-modal" id="composeModal" tabindex="-1" aria-labelledby="composeModalLabel" aria-hidden="true">
- <div class="modal-dialog modal-dialog-centered">
-  <div class="modal-content">
-   <div class="modal-header">
-    <div><h5 class="modal-title mb-0" id="composeModalLabel"><i class="fas fa-paper-plane me-2"></i>رسالة جديدة</h5><small class="opacity-75">إرسال مراسلة داخلية</small></div>
-    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
-   </div>
-   <form id="composeForm" novalidate>
-    <div class="modal-body">
-     <?php echo csrf_field();?><input type="hidden" name="action" value="send">
-     <div id="composeError" class="alert alert-danger compose-error mb-3" role="alert"></div>
-     <div class="compose-recipient mb-3">
-      <div class="row g-2 align-items-end">
-       <div class="col-sm-4"><label class="form-label">إرسال إلى</label><select name="recipient_type" id="recipientType" class="form-select form-select-sm"><option value="user">مستخدم محدد</option><?php if($canBroadcast):?><option value="role">دور كامل</option><?php endif;?></select></div>
-       <div class="col-sm-8" id="userRecipientWrap"><label class="form-label">المستلم</label><select name="recipient_user_id" id="recipientUser" class="form-select form-select-sm" required><option value="">اختر المستخدم</option><?php foreach($users as $u):?><option value="<?php echo (int)$u['id'];?>"><?php echo e($u['name']);?> — <?php echo e($u['role_name_ar']??$u['role']);?></option><?php endforeach;?></select></div>
-       <div class="col-sm-8 d-none" id="roleRecipientWrap"><label class="form-label">الدور المستلم</label><select name="recipient_role" id="recipientRole" class="form-select form-select-sm"><option value="">اختر الدور</option><?php foreach($roles as $r):?><option value="<?php echo e($r['code']);?>"><?php echo e($r['name_ar']?:$r['name_en']);?> (<?php echo (int)$r['active_count'];?> مستخدم)</option><?php endforeach;?></select></div>
-      </div>
-     </div>
-     <div class="mb-3"><label class="form-label">الموضوع</label><input name="subject" maxlength="255" class="form-control" required placeholder="مثال: متابعة تقرير شهر أغسطس"></div>
-     <div class="mb-3"><label class="form-label">الرسالة</label><textarea name="body" rows="5" class="form-control" maxlength="10000" required placeholder="اكتب رسالتك هنا..."></textarea></div>
-     <div class="d-flex justify-content-between align-items-center"><div class="form-check"><input class="form-check-input" type="checkbox" name="is_urgent" id="urgent"><label class="form-check-label small" for="urgent">رسالة عاجلة</label></div><span id="sendStatus" class="ak-send-status text-muted"><i class="fas fa-circle-notch fa-spin"></i> جارٍ الإرسال...</span></div>
-    </div>
-    <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">إلغاء</button><button type="submit" id="sendMessageBtn" class="btn btn-primary px-4"><i class="fas fa-paper-plane me-1"></i>إرسال الرسالة</button></div>
-   </form>
-  </div>
- </div>
-</div>
+<div class="modal fade compose-modal" id="composeModal" tabindex="-1" aria-labelledby="composeModalLabel" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+ <div class="modal-header"><div class="d-flex align-items-center gap-2"><div class="compose-head-icon"><i class="fas fa-pen-to-square"></i></div><div><h5 class="modal-title mb-0 fw-bold" id="composeModalLabel">رسالة جديدة</h5><small class="text-muted" style="font-size:.62rem">مراسلة داخلية آمنة</small></div></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button></div>
+ <form id="composeForm" novalidate><div class="modal-body"><?php echo csrf_field();?><input type="hidden" name="action" value="send"><div id="composeError" class="alert alert-danger compose-error mb-3"></div>
+  <div class="compose-recipient mb-3"><div class="row g-2 align-items-end"><div class="col-sm-4"><label class="form-label">نوع المستلم</label><select name="recipient_type" id="recipientType" class="form-select" required><option value="user">مستخدم محدد</option><?php if($canBroadcast):?><option value="role">دور كامل</option><?php endif;?></select></div><div class="col-sm-8" id="userRecipientWrap"><label class="form-label">المستلم</label><select name="recipient_user_id" id="recipientUser" class="form-select" required><option value="">اختر المستخدم</option><?php foreach($users as $u):?><option value="<?php echo (int)$u['id'];?>"><?php echo e($u['name']);?> — <?php echo e($u['role_name_ar']??$u['role']);?></option><?php endforeach;?></select></div><div class="col-sm-8 d-none" id="roleRecipientWrap"><label class="form-label">الدور المستلم</label><select name="recipient_role" id="recipientRole" class="form-select"><option value="">اختر الدور</option><?php foreach($roles as $r):?><option value="<?php echo e($r['code']);?>"><?php echo e($r['name_ar']?:$r['name_en']);?> (<?php echo (int)$r['active_count'];?> مستخدم)</option><?php endforeach;?></select></div></div></div>
+  <div class="mb-3"><label class="form-label">الموضوع</label><input name="subject" maxlength="255" class="form-control" required placeholder="اكتب عنواناً واضحاً للرسالة"></div><div class="mb-2"><label class="form-label">نص الرسالة</label><textarea name="body" maxlength="10000" class="form-control" required placeholder="اكتب رسالتك هنا..."></textarea></div><label class="compose-urgent d-inline-flex align-items-center gap-2"><input type="checkbox" name="is_urgent" value="1"><i class="fas fa-triangle-exclamation"></i> تعليم الرسالة كعاجلة</label>
+ </div><div class="modal-footer"><div class="compose-footer-actions"><button type="button" class="compose-cancel" data-bs-dismiss="modal">إلغاء</button><div class="d-flex align-items-center gap-2"><span id="composeStatus" class="msg-status"><i class="fas fa-circle-notch fa-spin"></i> جارٍ الإرسال...</span><button type="submit" class="compose-send"><i class="fas fa-paper-plane me-1"></i>إرسال الرسالة</button></div></div></div></form>
+ </div></div></div>
+<div id="msgToast" class="msg-toast"></div>
 <script>
-const msgCsrf=<?php echo json_encode(csrf_token());?>;
-const apiUrl=<?php echo json_encode(APP_URL.'modules/messages/realtime.php');?>;
-const msgUrl=<?php echo json_encode(APP_URL.'modules/messages/index.php');?>;
-const typeEl=document.getElementById('recipientType');
-const userWrap=document.getElementById('userRecipientWrap');
-const roleWrap=document.getElementById('roleRecipientWrap');
-const userEl=document.getElementById('recipientUser');
-const roleEl=document.getElementById('recipientRole');
-const errorEl=document.getElementById('composeError');
-const sendBtn=document.getElementById('sendMessageBtn');
-const sendStatus=document.getElementById('sendStatus');
-function setRecipientMode(){const roleMode=typeEl&&typeEl.value==='role';if(userWrap)userWrap.classList.toggle('d-none',roleMode);if(roleWrap)roleWrap.classList.toggle('d-none',!roleMode);if(userEl)userEl.required=!roleMode;if(roleEl)roleEl.required=roleMode;}
-if(typeEl)typeEl.addEventListener('change',setRecipientMode);
-setRecipientMode();
-function showComposeError(message){if(errorEl){errorEl.textContent=message||'تعذر إرسال الرسالة.';errorEl.classList.add('show')}}
-function clearComposeError(){if(errorEl){errorEl.textContent='';errorEl.classList.remove('show')}}
-async function postMessage(form){const r=await fetch(msgUrl,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8','X-Requested-With':'XMLHttpRequest'},body:new URLSearchParams(new FormData(form))});const text=await r.text();let data=null;try{data=JSON.parse(text)}catch(e){throw new Error('استجاب الخادم برد غير صالح. تحقق من سجل أخطاء PHP.')}if(!r.ok||!data.ok)throw new Error(data.message||'تعذر إرسال الرسالة.');return data;}
-document.getElementById('composeForm')?.addEventListener('submit',async e=>{e.preventDefault();clearComposeError();const form=e.currentTarget;if(!form.checkValidity()){form.reportValidity();return;}sendBtn.disabled=true;sendStatus?.classList.add('show');try{const x=await postMessage(form);window.location.href=msgUrl+'?message='+encodeURIComponent(x.id);}catch(err){showComposeError(err.message);sendBtn.disabled=false;sendStatus?.classList.remove('show');}});
-document.getElementById('replyForm')?.addEventListener('submit',async e=>{e.preventDefault();const x=await postMessage(e.currentTarget);if(x.ok)location.reload();else alert(x.message||'فشل إرسال الرد');});
-async function markAllRead(){const f=new URLSearchParams({action:'read_all',csrf_token:msgCsrf});const r=await fetch(msgUrl,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:f});const x=await r.json();if(x.ok)location.reload();}
-(function(){let last=0;try{last=parseInt(localStorage.getItem('ak_msg_last_id')||'0',10)||0}catch(e){};try{const es=new EventSource(apiUrl+'?stream=1&last_id='+last);es.addEventListener('message_update',e=>{try{const d=JSON.parse(e.data);if(d.last_id){try{localStorage.setItem('ak_msg_last_id',d.last_id)}catch(x){}}if(d.unread>0&&location.pathname.indexOf('/messages/')===-1){document.title='('+d.unread+') '+document.title;}}catch(x){}});es.onerror=()=>{};}catch(e){}})();
+const msgCsrf=<?php echo json_encode(csrf_token());?>; const msgUrl=<?php echo json_encode($msgUrl);?>;
+const typeEl=document.getElementById('recipientType'), userWrap=document.getElementById('userRecipientWrap'), roleWrap=document.getElementById('roleRecipientWrap'), userEl=document.getElementById('recipientUser'), roleEl=document.getElementById('recipientRole');
+function setRecipientMode(){const roleMode=typeEl?.value==='role';userWrap?.classList.toggle('d-none',roleMode);roleWrap?.classList.toggle('d-none',!roleMode);if(userEl)userEl.required=!roleMode;if(roleEl)roleEl.required=roleMode} typeEl?.addEventListener('change',setRecipientMode);setRecipientMode();
+function status(id,on){document.getElementById(id)?.classList.toggle('show',on)} function toast(msg){const x=document.getElementById('msgToast');if(!x)return;x.textContent=msg;x.classList.add('show');setTimeout(()=>x.classList.remove('show'),2500)}
+const font=document.getElementById('msgFontSize'); if(font){font.value=localStorage.getItem('ak_msg_font_size')||'14px';document.documentElement.style.setProperty('--msg-size',font.value);font.addEventListener('change',()=>{document.documentElement.style.setProperty('--msg-size',font.value);localStorage.setItem('ak_msg_font_size',font.value)})}
+async function postMessage(form){const r=await fetch(msgUrl,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8','X-Requested-With':'XMLHttpRequest'},body:new URLSearchParams(new FormData(form)),credentials:'same-origin'});const text=await r.text();let data;try{data=JSON.parse(text)}catch(e){throw new Error('استجاب الخادم برد غير صالح.')};if(!r.ok||!data.ok)throw new Error(data.message||'تعذر تنفيذ الطلب.');return data}
+document.getElementById('composeForm')?.addEventListener('submit',async e=>{e.preventDefault();const f=e.currentTarget,btn=f.querySelector('button[type=submit]'),err=document.getElementById('composeError');err?.classList.remove('show');if(!f.checkValidity()){f.reportValidity();return}btn.disabled=true;status('composeStatus',true);try{const x=await postMessage(f);bootstrap.Modal.getInstance(document.getElementById('composeModal'))?.hide();toast(x.message);setTimeout(()=>location.href=msgUrl+'?message='+encodeURIComponent(x.id),250)}catch(ex){if(err){err.textContent=ex.message;err.classList.add('show')}else toast(ex.message)}finally{btn.disabled=false;status('composeStatus',false)}});
+document.getElementById('replyForm')?.addEventListener('submit',async e=>{e.preventDefault();const f=e.currentTarget,btn=f.querySelector('button[type=submit]'),err=document.getElementById('replyError');err?.classList.remove('show');if(!f.checkValidity()){f.reportValidity();return}btn.disabled=true;status('replyStatus',true);try{const x=await postMessage(f);toast(x.message);setTimeout(()=>location.reload(),250)}catch(ex){if(err){err.textContent=ex.message;err.classList.add('show')}else toast(ex.message)}finally{btn.disabled=false;status('replyStatus',false)}});
+function focusReply(){document.querySelector('#replyForm textarea')?.focus()}
+async function markAllRead(){try{const f=new URLSearchParams({action:'read_all',csrf_token:msgCsrf});const r=await fetch(msgUrl,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded','X-Requested-With':'XMLHttpRequest'},body:f,credentials:'same-origin'});const x=await r.json();if(x.ok){toast('تم تحديد الرسائل كمقروءة');setTimeout(()=>location.reload(),250)}}catch(e){toast('تعذر تحديث حالة الرسائل')}}
 </script>
 <?php include dirname(__DIR__,2).'/includes/footer.php'; ?>
