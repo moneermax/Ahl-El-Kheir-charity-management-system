@@ -1,0 +1,5 @@
+Require all granted
+
+<FilesMatch "\.(jpg|jpeg|png|webp)$">
+    Require all granted
+</FilesMatch>
