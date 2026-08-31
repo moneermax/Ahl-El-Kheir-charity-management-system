@@ -1,0 +1,3 @@
+# Project documents must be delivered through serve_project_document.php.
+Require all denied
+Deny from all

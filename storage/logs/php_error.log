@@ -1,0 +1,28 @@
+[13-Aug-2026 13:21:08 Africa/Khartoum] PHP Fatal error:  Uncaught Error: Undefined constant "DB_PORT" in D:\xampp\htdocs\AhlElKheir\config\database.php:12
+Stack trace:
+#0 D:\xampp\htdocs\AhlElKheir\config\database.php(33): db()
+#1 D:\xampp\htdocs\AhlElKheir\config\config.php(39): dbFetchOne('SELECT value FR...')
+#2 D:\xampp\htdocs\AhlElKheir\config\config.php(115): run_phase1_schema_sync()
+#3 D:\xampp\htdocs\AhlElKheir\index.php(3): require_once('D:\\xampp\\htdocs...')
+#4 {main}
+  thrown in D:\xampp\htdocs\AhlElKheir\config\database.php on line 12
+[13-Aug-2026 13:24:00 Africa/Khartoum] Schema sync failed: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'value' in 'field list'
+[13-Aug-2026 13:24:00 Africa/Khartoum] PHP Fatal error:  Uncaught Error: Undefined constant "APP_URL" in D:\xampp\htdocs\AhlElKheir\index.php:77
+Stack trace:
+#0 {main}
+  thrown in D:\xampp\htdocs\AhlElKheir\index.php on line 77
+[13-Aug-2026 13:24:03 Africa/Khartoum] Schema sync failed: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'value' in 'field list'
+[13-Aug-2026 13:24:03 Africa/Khartoum] PHP Fatal error:  Uncaught Error: Undefined constant "APP_URL" in D:\xampp\htdocs\AhlElKheir\index.php:77
+Stack trace:
+#0 {main}
+  thrown in D:\xampp\htdocs\AhlElKheir\index.php on line 77
+[13-Aug-2026 13:24:04 Africa/Khartoum] Schema sync failed: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'value' in 'field list'
+[13-Aug-2026 13:24:04 Africa/Khartoum] PHP Fatal error:  Uncaught Error: Undefined constant "APP_URL" in D:\xampp\htdocs\AhlElKheir\index.php:77
+Stack trace:
+#0 {main}
+  thrown in D:\xampp\htdocs\AhlElKheir\index.php on line 77
+[13-Aug-2026 13:24:06 Africa/Khartoum] Schema sync failed: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'value' in 'field list'
+[13-Aug-2026 13:24:06 Africa/Khartoum] PHP Fatal error:  Uncaught Error: Undefined constant "APP_URL" in D:\xampp\htdocs\AhlElKheir\index.php:77
+Stack trace:
+#0 {main}
+  thrown in D:\xampp\htdocs\AhlElKheir\index.php on line 77

@@ -1,0 +1,240 @@
+<?php
+require_once dirname(__DIR__, 2) . '/config/config.php';
+require_once dirname(__DIR__, 2) . '/config/database.php';
+require_once dirname(__DIR__, 2) . '/config/functions.php';
+require_once dirname(__DIR__, 2) . '/config/session.php';
+
+Session::start();
+if (!Session::isLoggedIn()) { header('Location: ' . APP_URL . 'index.php'); exit(); }
+$role = Session::getUserRole();
+if (!in_array($role, ['admin', 'vice_general_manager', 'supervisor'], true)) { header('Location: ' . APP_URL . 'index.php'); exit(); }
+
+dbExecute("ALTER TABLE sponsors ADD COLUMN IF NOT EXISTS brought_by_name VARCHAR(255) NULL");
+
+$pageTitle = 'تعديل الكفيل';
+$active = 'sponsors';
+$id = (int)($_GET['id'] ?? $_POST['id'] ?? 0);
+
+/* Preserve the sponsor-list state through the edit page. */
+$returnQuery = trim((string)($_GET['return'] ?? $_POST['return'] ?? ''));
+$backUrl = APP_URL . 'modules/sponsors/index.php';
+if ($returnQuery !== '') {
+    $returnParams = [];
+    parse_str(rawurldecode($returnQuery), $parsedReturnParams);
+    foreach (['q', 'status', 'sup', 'page'] as $key) {
+        if (isset($parsedReturnParams[$key]) && $parsedReturnParams[$key] !== '') {
+            $returnParams[$key] = $key === 'page' || $key === 'sup'
+                ? (int)$parsedReturnParams[$key]
+                : trim((string)$parsedReturnParams[$key]);
+        }
+    }
+    if ($returnParams) $backUrl .= '?' . http_build_query($returnParams);
+}
+
+$sp = dbFetchOne("SELECT * FROM sponsors WHERE id = ?", [$id]);
+if (!$sp) { flash('error', 'الكفيل غير موجود.'); redirect('modules/sponsors/index.php'); }
+
+/* Load the sponsor's existing orphan sponsorships for display on this page. */
+$ships = dbFetchAll(
+    "SELECT sp.id,
+            COALESCE(NULLIF(TRIM(sp.sponsorship_code), ''), CONCAT('SH-', LPAD(sp.id, 6, '0'))) AS sponsorship_code,
+            sp.monthly_amount, sp.start_date,
+            sp.status, fc.child_name, f.mother_name, f.family_code
+     FROM sponsorships sp
+     JOIN family_children fc ON fc.id = sp.child_id
+     JOIN families f ON f.id = fc.family_id
+     WHERE sp.sponsor_id = ?
+     ORDER BY sp.status ASC, sp.id DESC",
+    [$id]
+);
+
+if ($role === 'supervisor') {
+    $myLetterIds = array_map('intval', array_column(dbFetchAll("SELECT letter_id FROM supervisor_letters WHERE supervisor_id = ?", [Session::getUserId()]), 'letter_id'));
+    $mine = ((int)($sp['supervisor_id'] ?? 0) === Session::getUserId()) || ($sp['first_letter_id'] && in_array((int)$sp['first_letter_id'], $myLetterIds, true));
+    if (!$mine) { flash('error', 'لا تملك صلاحية تعديل هذا الكفيل.'); redirect('modules/sponsors/index.php'); }
+}
+
+$errors = [];
+$input = [
+    'full_name' => $sp['full_name'], 'email' => $sp['email'] ?? '', 'phone' => $sp['phone'] ?? '', 'phone_purpose' => $sp['phone_purpose'] ?? 'both',
+    'alt_phone' => $sp['alt_phone'] ?? '', 'alt_phone_purpose' => $sp['alt_phone_purpose'] ?? 'both', 'address' => $sp['address'] ?? '',
+    'sponsor_type' => $sp['sponsor_type'] ?? 'individual', 'gender' => $sp['gender'] ?? 'unknown', 'payment' => $sp['preferred_payment_method'] ?? 'cash',
+    'status' => $sp['status'] ?? 'active', 'desired_orphans' => $sp['desired_orphans'] ?? '', 'notes' => $sp['notes'] ?? '',
+    'acquisition_source' => $sp['acquisition_source'] ?? '', 'brought_by_name' => $sp['brought_by_name'] ?? ''
+];
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $input['full_name'] = trim($_POST['full_name'] ?? '');
+    $input['email'] = trim($_POST['email'] ?? '');
+    $input['phone'] = trim($_POST['phone'] ?? '');
+    $input['phone_purpose'] = in_array($_POST['phone_purpose'] ?? '', ['call','whatsapp','both'], true) ? $_POST['phone_purpose'] : 'both';
+    $input['alt_phone'] = trim($_POST['alt_phone'] ?? '');
+    $input['alt_phone_purpose'] = in_array($_POST['alt_phone_purpose'] ?? '', ['call','whatsapp','both'], true) ? $_POST['alt_phone_purpose'] : 'both';
+    $input['address'] = trim($_POST['address'] ?? '');
+    $input['sponsor_type'] = in_array($_POST['sponsor_type'] ?? '', ['individual','company','organization'], true) ? $_POST['sponsor_type'] : 'individual';
+    $input['gender'] = in_array($_POST['gender'] ?? '', ['male','female','organization','unknown'], true) ? $_POST['gender'] : 'unknown';
+    $input['payment'] = in_array($_POST['payment'] ?? '', ['cash','bank_transfer','credit_card','mobile','other'], true) ? $_POST['payment'] : 'cash';
+    $input['status'] = in_array($_POST['status'] ?? '', ['active','inactive','suspended','cancelled'], true) ? $_POST['status'] : 'active';
+    $input['desired_orphans'] = trim($_POST['desired_orphans'] ?? '');
+    $input['notes'] = trim($_POST['notes'] ?? '');
+    $input['acquisition_source'] = trim($_POST['acquisition_source'] ?? '');
+    $input['brought_by_name'] = trim($_POST['brought_by_name'] ?? '');
+
+    if ($input['full_name'] === '') $errors[] = 'اسم الكفيل مطلوب.';
+    if ($input['email'] !== '' && !filter_var($input['email'], FILTER_VALIDATE_EMAIL)) $errors[] = 'البريد الإلكتروني غير صالح.';
+
+    if (!$errors && verify_csrf()) {
+        $letterMap = [];
+        foreach (dbFetchAll("SELECT id, code FROM letters WHERE is_active = 1") as $L) $letterMap[normalize_arabic_letter($L['code'])] = (int)$L['id'];
+        [$raw, $norm] = first_letter_of($input['full_name']);
+        $letterId = $letterMap[$norm] ?? null;
+        $matrixSupId = null;
+        $matrix = [];
+        foreach (dbFetchAll("SELECT sl.supervisor_id, l.code, sl.gender FROM supervisor_letters sl JOIN letters l ON l.id = sl.letter_id") as $r) {
+            $n = normalize_arabic_letter($r['code']); $matrix[$n][$r['gender']] = (int)$r['supervisor_id'];
+        }
+        if (isset($matrix[$norm])) {
+            $g = $input['gender'];
+            if (in_array($g, ['male', 'female'])) $matrixSupId = $matrix[$norm][$g] ?? $matrix[$norm]['both'] ?? null;
+            else $matrixSupId = $matrix[$norm]['both'] ?? $matrix[$norm]['male'] ?? $matrix[$norm]['female'] ?? null;
+        }
+        $finalSupId = (int)($sp['supervisor_id'] ?? 0) ?: $matrixSupId;
+
+        dbExecute(
+            "UPDATE sponsors SET full_name=?, first_letter_raw=?, first_letter_id=?, phone=?, phone_purpose=?, alt_phone=?, alt_phone_purpose=?,
+             email=?, address=?, sponsor_type=?, gender=?, preferred_payment_method=?, status=?, notes=?, desired_orphans=?,
+             supervisor_id=?, is_manual_override=?, assigned_by=?, assigned_at=NOW(), updated_by=?,
+             acquisition_source=?, brought_by_name=? WHERE id=?",
+            [
+                $input['full_name'], $raw, $letterId,
+                $input['phone'] !== '' ? $input['phone'] : null, $input['phone_purpose'],
+                $input['alt_phone'] !== '' ? $input['alt_phone'] : null, $input['alt_phone_purpose'],
+                $input['email'] !== '' ? $input['email'] : null, $input['address'] !== '' ? $input['address'] : null,
+                $input['sponsor_type'], $input['gender'], $input['payment'], $input['status'],
+                $input['notes'] !== '' ? $input['notes'] : null, $input['desired_orphans'] !== '' ? (int)$input['desired_orphans'] : null,
+                $finalSupId, 0, Session::getUserId(), Session::getUserId(),
+                $input['acquisition_source'] !== '' ? $input['acquisition_source'] : null,
+                $input['brought_by_name'] !== '' ? $input['brought_by_name'] : null, $id
+            ]
+        );
+        flash('success', 'تم تحديث بيانات الكفيل.');
+        redirect('modules/sponsors/view.php?id=' . $id . '&return=' . rawurlencode($returnQuery));
+    }
+}
+include dirname(__DIR__, 2) . '/includes/header.php';
+?>
+<style>
+input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+input[type=number] { -moz-appearance: textfield; appearance: textfield; }
+</style>
+
+<div class="welcome-section fade-in"><h2>تعديل الكفيل: <?php echo e($sp['full_name']); ?></h2><p><?php echo e($sp['sponsor_code']); ?></p></div>
+<?php include dirname(__DIR__, 2) . '/includes/alerts.php'; ?>
+<?php if ($errors): ?>
+    <div class="alert alert-danger fade-in"><ul class="mb-0"><?php foreach ($errors as $er) echo '<li>' . e($er) . '</li>'; ?></ul></div>
+<?php endif; ?>
+
+<div class="card fade-in">
+    <div class="card-body">
+        <form method="post">
+            <?php echo csrf_field(); ?>
+            <input type="hidden" name="id" value="<?php echo $id; ?>">
+            <input type="hidden" name="return" value="<?php echo e($returnQuery); ?>">
+            <div class="row g-3">
+                <div class="col-md-6"><label class="form-label">اسم الكفيل *</label><input type="text" name="full_name" class="form-control" required value="<?php echo e($input['full_name']); ?>"></div>
+                <div class="col-md-6"><label class="form-label">البريد الإلكتروني</label><input type="email" name="email" class="form-control" dir="ltr" value="<?php echo e($input['email']); ?>"></div>
+                <div class="col-md-3"><label class="form-label">الهاتف</label><input type="text" name="phone" class="form-control" dir="ltr" value="<?php echo e($input['phone']); ?>"></div>
+                <div class="col-md-3"><label class="form-label">نوع الاستخدام</label><select name="phone_purpose" class="form-select"><option value="call" <?php echo $input['phone_purpose'] === 'call' ? 'selected' : ''; ?>>للاتصال</option><option value="whatsapp" <?php echo $input['phone_purpose'] === 'whatsapp' ? 'selected' : ''; ?>>واتساب</option><option value="both" <?php echo $input['phone_purpose'] === 'both' ? 'selected' : ''; ?>>للاتصال وواتساب</option></select></div>
+                <div class="col-md-3"><label class="form-label">هاتف بديل</label><input type="text" name="alt_phone" class="form-control" dir="ltr" value="<?php echo e($input['alt_phone']); ?>"></div>
+                <div class="col-md-3"><label class="form-label">نوع الاستخدام</label><select name="alt_phone_purpose" class="form-select"><option value="call" <?php echo $input['alt_phone_purpose'] === 'call' ? 'selected' : ''; ?>>للاتصال</option><option value="whatsapp" <?php echo $input['alt_phone_purpose'] === 'whatsapp' ? 'selected' : ''; ?>>واتساب</option><option value="both" <?php echo $input['alt_phone_purpose'] === 'both' ? 'selected' : ''; ?>>للاتصال وواتساب</option></select></div>
+                <div class="col-md-3"><label class="form-label">النوع</label><select name="sponsor_type" class="form-select"><option value="individual" <?php echo $input['sponsor_type'] === 'individual' ? 'selected' : ''; ?>>فرد</option><option value="company" <?php echo $input['sponsor_type'] === 'company' ? 'selected' : ''; ?>>شركة</option><option value="organization" <?php echo $input['sponsor_type'] === 'organization' ? 'selected' : ''; ?>>منظمة</option></select></div>
+                <div class="col-md-3"><label class="form-label">الجنس</label><select name="gender" class="form-select"><option value="unknown" <?php echo $input['gender'] === 'unknown' ? 'selected' : ''; ?>>غير معروف</option><option value="male" <?php echo $input['gender'] === 'male' ? 'selected' : ''; ?>>ذكر</option><option value="female" <?php echo $input['gender'] === 'female' ? 'selected' : ''; ?>>أنثى</option><option value="organization" <?php echo $input['gender'] === 'organization' ? 'selected' : ''; ?>>منظمة</option></select></div>
+                <div class="col-md-3"><label class="form-label">طريقة الدفع المفضلة</label><select name="payment" class="form-select"><option value="cash" <?php echo $input['payment'] === 'cash' ? 'selected' : ''; ?>>نقدي</option><option value="bank_transfer" <?php echo $input['payment'] === 'bank_transfer' ? 'selected' : ''; ?>>تحويل بنكي</option><option value="mobile" <?php echo $input['payment'] === 'mobile' ? 'selected' : ''; ?>>محفظة إلكترونية</option><option value="other" <?php echo $input['payment'] === 'other' ? 'selected' : ''; ?>>أخرى</option></select></div>
+                <div class="col-md-3"><label class="form-label">الحالة</label><select name="status" class="form-select"><option value="active" <?php echo $input['status'] === 'active' ? 'selected' : ''; ?>>نشط</option><option value="inactive" <?php echo $input['status'] === 'inactive' ? 'selected' : ''; ?>>غير نشط</option><option value="suspended" <?php echo $input['status'] === 'suspended' ? 'selected' : ''; ?>>موقوف</option><option value="cancelled" <?php echo $input['status'] === 'cancelled' ? 'selected' : ''; ?>>ملغي</option></select></div>
+                <div class="col-md-6"><label class="form-label">العنوان</label><input type="text" name="address" class="form-control" value="<?php echo e($input['address']); ?>"></div>
+                <div class="col-md-6"><label class="form-label">عدد الأيتام الراغب في كفالتهم</label><input type="number" name="desired_orphans" class="form-control" min="0" value="<?php echo e($input['desired_orphans']); ?>"></div>
+
+                <div class="col-12 mt-3 border-top pt-3">
+                    <h6 class="text-muted mb-3"><i class="fas fa-bullhorn me-2"></i>معلومات الاستقطاب</h6>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">مصدر الاستقطاب</label>
+                            <select name="acquisition_source" class="form-select">
+                                <option value="">— غير محدد —</option>
+                                <option value="تيك توك" <?php echo $input['acquisition_source'] === 'تيك توك' ? 'selected' : ''; ?>>تيك توك</option>
+                                <option value="فيسبوك" <?php echo $input['acquisition_source'] === 'فيسبوك' ? 'selected' : ''; ?>>فيسبوك</option>
+                                <option value="حملة إعلامية" <?php echo $input['acquisition_source'] === 'حملة إعلامية' ? 'selected' : ''; ?>>حملة إعلامية</option>
+                                <option value="موظف" <?php echo $input['acquisition_source'] === 'موظف' ? 'selected' : ''; ?>>موظف</option>
+                                <option value="مباشر" <?php echo $input['acquisition_source'] === 'مباشر' ? 'selected' : ''; ?>>مباشر (مبادرة ذاتية)</option>
+                                <option value="أخرى" <?php echo $input['acquisition_source'] === 'أخرى' ? 'selected' : ''; ?>>أخرى</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">جلب بواسطة (الموظف/المشرف)</label>
+                            <input type="text" name="brought_by_name" class="form-control" value="<?php echo e($input['brought_by_name']); ?>" placeholder="أدخل اسم الشخص أو الجهة">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 mt-3"><label class="form-label">ملاحظات</label><textarea name="notes" class="form-control" rows="2"><?php echo e($input['notes']); ?></textarea></div>
+            </div>
+            <div class="mt-4">
+                <button class="btn btn-primary"><i class="fas fa-save me-1"></i> حفظ التعديلات</button>
+                <a href="<?php echo e($backUrl); ?>" class="btn btn-secondary">إلغاء</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card fade-in mt-4">
+    <div class="card-header"><i class="fas fa-child me-2"></i>الكفالات والأيتام</div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>الكود</th>
+                        <th>اليتيم</th>
+                        <th>الأسرة</th>
+                        <th>المبلغ الشهري</th>
+                        <th>البداية</th>
+                        <th>الحالة</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (!$ships): ?>
+                        <tr><td colspan="7" class="text-center text-muted py-3">لا توجد كفالات.</td></tr>
+                    <?php else: foreach ($ships as $s): ?>
+                        <tr>
+                            <td><?php echo e($s['sponsorship_code']); ?></td>
+                            <td><strong><?php echo e($s['child_name']); ?></strong></td>
+                            <td><?php echo e($s['mother_name']); ?> <small class="text-muted">(<?php echo e($s['family_code']); ?>)</small></td>
+                            <td><?php echo number_format((float)$s['monthly_amount'], 0); ?></td>
+                            <td><?php echo e($s['start_date']); ?></td>
+                            <td>
+                                <?php
+                                $st = [
+                                    'active' => ['نشطة', 'bg-success'],
+                                    'paused' => ['متوقفة', 'bg-warning'],
+                                    'completed' => ['مكتملة', 'bg-info'],
+                                    'cancelled' => ['ملغية', 'bg-danger']
+                                ];
+                                [$stLabel, $stClass] = $st[$s['status']] ?? [$s['status'], 'bg-secondary'];
+                                ?>
+                                <span class="badge <?php echo $stClass; ?>"><?php echo e($stLabel); ?></span>
+                            </td>
+                            <td class="text-nowrap">
+                                <a class="btn btn-sm btn-primary" href="<?php echo APP_URL; ?>modules/sponsorships/view.php?id=<?php echo (int)$s['id']; ?>" title="عرض التفاصيل"><i class="fas fa-eye"></i></a>
+                                <?php if (in_array($role, ['admin', 'vice_general_manager', 'supervisor'], true)): ?>
+                                    <a class="btn btn-sm btn-warning" href="<?php echo APP_URL; ?>modules/sponsorships/edit.php?id=<?php echo (int)$s['id']; ?>" title="تعديل الكفالة"><i class="fas fa-pen"></i></a>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; endif; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<?php include dirname(__DIR__, 2) . '/includes/footer.php'; ?>
