@@ -1,9 +1,10 @@
 -- Ahl El Kheir - Internal Messaging Attachments
 -- Run once against the active application database.
+-- IMPORTANT: message_id MUST match messages.id exactly (INT UNSIGNED).
 
 CREATE TABLE IF NOT EXISTS message_attachments (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    message_id BIGINT UNSIGNED NOT NULL,
+    message_id INT UNSIGNED NOT NULL,
     uploader_user_id INT UNSIGNED NOT NULL,
     original_name VARCHAR(255) NOT NULL,
     stored_name VARCHAR(255) NOT NULL,
