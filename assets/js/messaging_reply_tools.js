@@ -52,9 +52,7 @@
             button.className = 'msg-emoji';
             button.textContent = emoji;
             button.setAttribute('aria-label', 'إدراج ' + emoji);
-            button.addEventListener('mousedown', function (event) {
-                event.preventDefault();
-            });
+            button.addEventListener('mousedown', function (event) { event.preventDefault(); });
             button.addEventListener('click', function (event) {
                 event.preventDefault();
                 insertAtCursor(textarea, emoji);
@@ -136,8 +134,7 @@
                 window.__akPendingMessageAttachment = null;
                 return;
             }
-            var max = 10 * 1024 * 1024;
-            if (file.size > max) {
+            if (file.size > 10 * 1024 * 1024) {
                 fileInput.value = '';
                 window.__akPendingMessageAttachment = null;
                 attachment.innerHTML = '<div class="alert alert-danger py-1 px-2 mb-0" style="font-size:.65rem">الحد الأقصى لحجم الملف هو 10 ميجابايت.</div>';
@@ -195,41 +192,10 @@
         });
     }
 
-    function installFetchAttachmentBridge() {
-        if (window.__akMessagingFetchBridgeInstalled) return;
-        window.__akMessagingFetchBridgeInstalled = true;
-        var originalFetch = window.fetch.bind(window);
-        window.fetch = async function (input, init) {
-            var response = await originalFetch(input, init);
-            try {
-                var url = typeof input === 'string' ? input : input.url;
-                var body = init && init.body;
-                var isMessagePost = url && url.indexOf('/modules/messages/index.php') !== -1 && body instanceof URLSearchParams;
-                if (!isMessagePost) return response;
-                var action = body.get('action');
-                if ((action !== 'send' && action !== 'reply') || !window.__akPendingMessageAttachment) return response;
-                var clone = response.clone();
-                var data = JSON.parse(await clone.text());
-                if (!data.ok || !data.id) return response;
-                var file = window.__akPendingMessageAttachment;
-                window.__akPendingMessageAttachment = null;
-                var upload = new FormData();
-                upload.append('action', 'upload_attachment');
-                upload.append('csrf_token', body.get('csrf_token') || '');
-                upload.append('message_id', String(data.id));
-                upload.append('attachment', file, file.name);
-                var uploadResponse = await originalFetch(url, { method:'POST', headers:{'X-Requested-With':'XMLHttpRequest'}, body:upload, credentials:'same-origin' });
-                if (!uploadResponse.ok) window.__akAttachmentUploadFailed = true;
-            } catch (e) {
-                window.__akAttachmentUploadFailed = true;
-            }
-            return response;
-        };
-    }
-
     function escapeHtml(value) {
         return String(value).replace(/[&<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]; });
     }
+
     function formatBytes(bytes) {
         if (bytes < 1024) return bytes + ' B';
         if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
@@ -276,7 +242,6 @@
         injectStyles();
         document.querySelectorAll('.msg-reply-box').forEach(initComposer);
         initComposeAttachment();
-        installFetchAttachmentBridge();
         scrollThreadToBottom();
 
         document.addEventListener('click', function (event) {
