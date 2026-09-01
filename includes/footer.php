@@ -21,11 +21,10 @@
 <script src="<?php echo asset('js/messaging_reply_tools.js'); ?>"></script>
 <script src="<?php echo asset('js/messaging_ui_fixes.js'); ?>"></script>
 <script src="<?php echo asset('js/messaging_ui_cleanup.js'); ?>"></script>
-<script src="<?php echo asset('js/messaging_attachment_bridge.js'); ?>"></script>
 <script src="<?php echo asset('js/messaging_attachments.js'); ?>"></script>
 <script>
 (function(){var deferred=null;var btn=document.getElementById('akInstallBtn');window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferred=e;if(btn)btn.classList.remove('d-none')});if(btn)btn.addEventListener('click',function(){if(!deferred)return;deferred.prompt();deferred.userChoice.then(function(){deferred=null;btn.classList.add('d-none')})});window.addEventListener('appinstalled',function(){if(btn)btn.classList.add('d-none')})})();
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('<?php echo APP_URL; ?>sw.js').catch(function(){})})}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('<?php echo APP_URL; ?>sw.js').catch(function(){})}
 </script>
 </body>
 </html>
