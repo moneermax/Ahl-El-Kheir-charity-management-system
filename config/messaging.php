@@ -20,8 +20,57 @@ function broadcast_to_role(int $senderId,string $recipientRole,string $subject,s
 function get_messaging_users(int $excludeUserId,?string $roleFilter=null): array { $sql="SELECT u.id,u.full_name AS name,u.username,r.code AS role,r.name_ar AS role_name_ar,r.name_en AS role_name_en FROM users u JOIN roles r ON r.id=u.role_id WHERE u.id<>? AND u.is_active=1";$p=[$excludeUserId];if($roleFilter){$sql.=" AND r.code=?";$p[]=$roleFilter;}$sql.=" ORDER BY r.id,u.full_name";return dbFetchAll($sql,$p); }
 function get_broadcast_roles(): array { return dbFetchAll("SELECT r.code,r.name_ar,r.name_en,COUNT(u.id) active_count FROM roles r JOIN users u ON u.role_id=r.id AND u.is_active=1 GROUP BY r.id,r.code,r.name_ar,r.name_en ORDER BY r.id"); }
 function get_unread_message_count(int $userId,string $role): int { $r=dbFetchOne("SELECT COUNT(*) c FROM messages m LEFT JOIN message_reads mr ON mr.message_id=m.id AND mr.user_id=? WHERE (m.recipient_user_id=? OR (m.recipient_role=? AND m.sender_id<>?)) AND mr.id IS NULL",[$userId,$userId,$role,$userId]);return (int)($r['c']??0); }
-function get_messages(int $userId,string $role,string $filter='all',int $limit=25,int $offset=0): array { $limit=max(1,min(100,$limit));$offset=max(0,$offset);$rf=$filter==='unread'?' AND mr.id IS NULL':'';return dbFetchAll("SELECT m.*,u.full_name sender_name,r.name_ar sender_role_name_ar,r.name_en sender_role_name_en,CASE WHEN mr.id IS NULL THEN 0 ELSE 1 END is_read FROM messages m JOIN users u ON u.id=m.sender_id LEFT JOIN roles r ON r.id=u.role_id LEFT JOIN message_reads mr ON mr.message_id=m.id AND mr.user_id=? WHERE (m.recipient_user_id=? OR (m.recipient_role=? AND m.sender_id<>?)) $rf ORDER BY m.id DESC LIMIT $limit OFFSET $offset",[$userId,$userId,$role,$userId]); }
-function get_sent_messages(int $userId,int $limit=25,int $offset=0): array { $limit=max(1,min(100,$limit));$offset=max(0,$offset);return dbFetchAll("SELECT m.*,COALESCE(u.full_name,CONCAT('الدور: ',m.recipient_role)) recipient_name,CASE WHEN m.recipient_role IS NULL THEN 'direct' ELSE 'broadcast' END delivery_type FROM messages m LEFT JOIN users u ON u.id=m.recipient_user_id WHERE m.sender_id=? ORDER BY m.id DESC LIMIT $limit OFFSET $offset",[$userId]); }
+
+/**
+ * Return one inbox row per sender/conversation partner.
+ * The newest message represents the conversation, while unread messages
+ * from the same sender are counted in unread_count so they are not lost.
+ */
+function get_messages(int $userId,string $role,string $filter='all',int $limit=25,int $offset=0): array {
+    $limit=max(1,min(100,$limit));
+    $offset=max(0,$offset);
+    $sql="SELECT x.* FROM (
+        SELECT
+            m.*,
+            u.full_name sender_name,
+            r.name_ar sender_role_name_ar,
+            r.name_en sender_role_name_en,
+            CASE WHEN mr.id IS NULL THEN 0 ELSE 1 END is_read,
+            COUNT(*) OVER (PARTITION BY m.sender_id) message_count,
+            SUM(CASE WHEN mr.id IS NULL THEN 1 ELSE 0 END) OVER (PARTITION BY m.sender_id) unread_count,
+            ROW_NUMBER() OVER (PARTITION BY m.sender_id ORDER BY m.id DESC) sender_row
+        FROM messages m
+        JOIN users u ON u.id=m.sender_id
+        LEFT JOIN roles r ON r.id=u.role_id
+        LEFT JOIN message_reads mr ON mr.message_id=m.id AND mr.user_id=?
+        WHERE (m.recipient_user_id=? OR (m.recipient_role=? AND m.sender_id<>?))
+    ) x
+    WHERE x.sender_row=1";
+    $p=[$userId,$userId,$role,$userId];
+    if($filter==='unread'){$sql.=" AND x.unread_count>0";}
+    $sql.=" ORDER BY x.id DESC LIMIT $limit OFFSET $offset";
+    return dbFetchAll($sql,$p);
+}
+
+/** Return one sent-inbox row per recipient, showing the latest message. */
+function get_sent_messages(int $userId,int $limit=25,int $offset=0): array {
+    $limit=max(1,min(100,$limit));
+    $offset=max(0,$offset);
+    return dbFetchAll("SELECT x.* FROM (
+        SELECT
+            m.*,
+            COALESCE(u.full_name,CONCAT('الدور: ',m.recipient_role)) recipient_name,
+            CASE WHEN m.recipient_role IS NULL THEN 'direct' ELSE 'broadcast' END delivery_type,
+            COUNT(*) OVER (PARTITION BY COALESCE(CAST(m.recipient_user_id AS CHAR),CONCAT('role:',m.recipient_role))) message_count,
+            ROW_NUMBER() OVER (PARTITION BY COALESCE(CAST(m.recipient_user_id AS CHAR),CONCAT('role:',m.recipient_role)) ORDER BY m.id DESC) recipient_row
+        FROM messages m
+        LEFT JOIN users u ON u.id=m.recipient_user_id
+        WHERE m.sender_id=?
+    ) x
+    WHERE x.recipient_row=1
+    ORDER BY x.id DESC
+    LIMIT $limit OFFSET $offset",[$userId]);
+}
 function get_conversation_list(int $userId,int $limit=20): array { $limit=max(1,min(50,$limit));return dbFetchAll("SELECT other_user_id,other_name,last_subject,last_body,last_at FROM (SELECT CASE WHEN m.sender_id=? THEN m.recipient_user_id ELSE m.sender_id END other_user_id,u.full_name other_name,m.subject last_subject,LEFT(m.body,100) last_body,m.created_at last_at,ROW_NUMBER() OVER(PARTITION BY CASE WHEN m.sender_id=? THEN m.recipient_user_id ELSE m.sender_id END ORDER BY m.id DESC) rn FROM messages m JOIN users u ON u.id=CASE WHEN m.sender_id=? THEN m.recipient_user_id ELSE m.sender_id END WHERE (m.sender_id=? AND m.recipient_user_id IS NOT NULL) OR (m.recipient_user_id=? AND m.sender_id IS NOT NULL)) x WHERE rn=1 ORDER BY last_at DESC LIMIT $limit",[$userId,$userId,$userId,$userId,$userId]); }
 function get_message_by_id(int $messageId,int $viewerId): ?array { if(!messaging_user_can_read($viewerId,$messageId))return null;$r=dbFetchOne("SELECT m.*,u.full_name sender_name,r.code sender_role,CASE WHEN mr.id IS NULL THEN 0 ELSE 1 END is_read FROM messages m JOIN users u ON u.id=m.sender_id LEFT JOIN roles r ON r.id=u.role_id LEFT JOIN message_reads mr ON mr.message_id=m.id AND mr.user_id=? WHERE m.id=? LIMIT 1",[$viewerId,$messageId]);return $r?:null; }
 function mark_message_read(int $userId,int $messageId): bool { if(!messaging_user_can_read($userId,$messageId))return false;try{$s=messaging_db()->prepare("INSERT IGNORE INTO message_reads(message_id,user_id,read_at) VALUES(?,?,NOW())");$s->execute([$messageId,$userId]);return true;}catch(Throwable $e){return false;} }
