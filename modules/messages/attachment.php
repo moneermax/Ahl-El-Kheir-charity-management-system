@@ -9,10 +9,18 @@ require_once dirname(__DIR__, 2) . '/config/messaging.php';
 
 Session::start();
 require_login();
+
+// Keep attachment API responses pure JSON even if an included file emits a
+// warning/notice before the handler returns its response.
+ob_start();
+
 header('Content-Type: application/json; charset=utf-8');
 $uid = Session::getUserId();
 
 function attachment_json(array $payload, int $status = 200): never {
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
     http_response_code($status);
     echo json_encode($payload, JSON_UNESCAPED_UNICODE);
     exit;
@@ -48,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && ($_GET['action'] ?? '') === 'list') 
     }
 
     $rows = dbFetchAll(
-        "SELECT a.id,a.message_id,a.original_name,a.mime_type,a.size_bytes,a.created_at,u.full_name uploader_name
+        "SELECT a.id,a.message_id,a.original_name,a.mime_type,a.size_bytes,a.created_at,a.uploader_user_id,u.full_name uploader_name
          FROM message_attachments a
          JOIN users u ON u.id=a.uploader_user_id
          WHERE a.message_id=? OR a.message_id IN (SELECT id FROM messages WHERE parent_id=?)
