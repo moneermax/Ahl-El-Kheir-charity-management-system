@@ -1,12 +1,10 @@
 (function () {
     'use strict';
 
+    var messageUrl = new URL('index.php', window.location.href).href;
+    var uploadUrl = new URL('attachment.php', messageUrl).href;
     var MAX_SIZE = 10 * 1024 * 1024;
     var ALLOWED_EXT = ['pdf','doc','docx','xls','xlsx','ppt','pptx','txt','jpg','jpeg','png','gif','webp','zip'];
-    var uploadUrl = (window.msgUrl || '') .replace(/index\.php(?:\?.*)?$/, 'attachment.php');
-    if (!uploadUrl || uploadUrl === window.msgUrl) {
-        uploadUrl = new URL('attachment.php', window.location.href).href;
-    }
 
     function esc(value) {
         return String(value).replace(/[&<>"']/g, function (c) {
@@ -55,8 +53,7 @@
 
     function setAttachmentInputMultiple(form) {
         var input = form && form.querySelector('input[type="file"]');
-        if (!input) return;
-        input.multiple = true;
+        if (input) input.multiple = true;
     }
 
     function renderFilePreview(form) {
@@ -65,14 +62,13 @@
         var files = Array.prototype.slice.call(input.files || []);
         var row = form.querySelector('.msg-attachment-preview');
         var composeRow = form.querySelector('.msg-compose-attachment');
-        var target = row || composeRow;
-        if (!target) return;
+        if (!row && !composeRow) return;
 
         if (!files.length) {
             if (row) row.innerHTML = '';
             if (composeRow) {
-                var label = composeRow.querySelector('.msg-compose-file');
-                if (label) label.textContent = '';
+                var emptyLabel = composeRow.querySelector('.msg-compose-file');
+                if (emptyLabel) emptyLabel.textContent = '';
             }
             return;
         }
@@ -123,9 +119,7 @@
                 var text = await response.text();
                 var result;
                 try { result = JSON.parse(text); } catch (e) { result = null; }
-                if (!response.ok || !result || !result.ok) {
-                    failed.push(files[i].name);
-                }
+                if (!response.ok || !result || !result.ok) failed.push(files[i].name);
             } catch (e) {
                 failed.push(files[i].name);
             }
@@ -146,7 +140,7 @@
         try {
             var payload = new URLSearchParams(new FormData(form));
             payload.delete('attachment');
-            var response = await fetch(window.msgUrl, {
+            var response = await fetch(messageUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
@@ -160,21 +154,23 @@
             try { result = JSON.parse(text); } catch (e) { throw new Error('استجاب الخادم برد غير صالح.'); }
             if (!response.ok || !result.ok) throw new Error(result.message || 'تعذر إرسال الرسالة.');
 
-            var csrf = form.querySelector('input[name="csrf_token"]')?.value || window.msgCsrf || '';
+            var csrf = form.querySelector('input[name="csrf_token"]')?.value || '';
             var failed = await uploadFiles(result.id, files, csrf);
 
-            if (form.id === 'composeForm') {
-                if (window.bootstrap) bootstrap.Modal.getInstance(document.getElementById('composeModal'))?.hide();
+            if (form.id === 'composeForm' && window.bootstrap) {
+                var modal = document.getElementById('composeModal');
+                var instance = modal ? bootstrap.Modal.getInstance(modal) : null;
+                if (instance) instance.hide();
             }
 
             if (failed.length) {
                 var warning = 'تم إرسال الرسالة، لكن تعذر رفع: ' + failed.join('، ');
                 if (error) { error.textContent = warning; error.classList.add('show'); }
                 if (typeof window.toast === 'function') window.toast(warning);
-                setTimeout(function () { window.location.href = window.msgUrl + '?message=' + encodeURIComponent(result.id); }, 1100);
+                setTimeout(function () { window.location.href = messageUrl + '?message=' + encodeURIComponent(result.id); }, 1100);
             } else {
                 if (typeof window.toast === 'function') window.toast(result.message || 'تم إرسال الرسالة بنجاح.');
-                setTimeout(function () { window.location.href = window.msgUrl + '?message=' + encodeURIComponent(result.id); }, 250);
+                setTimeout(function () { window.location.href = messageUrl + '?message=' + encodeURIComponent(result.id); }, 250);
             }
         } catch (e) {
             if (error) { error.textContent = e.message || 'تعذر تنفيذ الطلب.'; error.classList.add('show'); }
@@ -206,7 +202,6 @@
                 }
                 event.preventDefault();
                 event.stopImmediatePropagation();
-                window.__akPendingMessageAttachment = null;
                 sendWithAttachments(form, files);
             }, true);
         });
@@ -242,7 +237,7 @@
                     + '<div class="msg-attachment-info"><strong title="' + esc(item.original_name) + '">' + esc(item.original_name) + '</strong><small>' + esc(item.size_label || bytesLabel(parseInt(item.size_bytes,10)||0)) + ' · ' + esc(item.uploader_name || '') + '</small></div>'
                     + '<div class="msg-attachment-actions"><a href="' + esc(item.download_url) + '" class="msg-attachment-download" title="تحميل" aria-label="تحميل"><i class="fas fa-download"></i></a><button type="button" class="msg-attachment-delete" title="حذف" aria-label="حذف"><i class="fas fa-trash"></i></button></div>';
                 var del = card.querySelector('.msg-attachment-delete');
-                del.addEventListener('click', function () { deleteAttachment(item.id, card, messageId); });
+                del.addEventListener('click', function () { deleteAttachment(item.id, card); });
                 grid.appendChild(card);
             });
             thread.appendChild(section);
@@ -251,9 +246,9 @@
         }
     }
 
-    async function deleteAttachment(id, card, messageId) {
+    async function deleteAttachment(id, card) {
         if (!window.confirm('هل أنت متأكد من حذف هذا المرفق؟')) return;
-        var csrf = document.querySelector('#replyForm input[name="csrf_token"]')?.value || window.msgCsrf || '';
+        var csrf = document.querySelector('#replyForm input[name="csrf_token"]')?.value || '';
         var data = new URLSearchParams({action:'delete_attachment',csrf_token:csrf,attachment_id:String(id)});
         try {
             var response = await fetch(uploadUrl, {
