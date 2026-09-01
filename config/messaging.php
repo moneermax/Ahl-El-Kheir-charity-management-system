@@ -35,7 +35,7 @@ function get_messages(int $userId,string $role,string $filter='all',int $limit=2
             u.full_name sender_name,
             r.name_ar sender_role_name_ar,
             r.name_en sender_role_name_en,
-            CASE WHEN mr.id IS NULL THEN 0 ELSE 1 END is_read,
+            CASE WHEN SUM(CASE WHEN mr.id IS NULL THEN 1 ELSE 0 END) OVER (PARTITION BY m.sender_id)>0 THEN 0 ELSE 1 END is_read,
             COUNT(*) OVER (PARTITION BY m.sender_id) message_count,
             SUM(CASE WHEN mr.id IS NULL THEN 1 ELSE 0 END) OVER (PARTITION BY m.sender_id) unread_count,
             ROW_NUMBER() OVER (PARTITION BY m.sender_id ORDER BY m.id DESC) sender_row
@@ -61,8 +61,8 @@ function get_sent_messages(int $userId,int $limit=25,int $offset=0): array {
             m.*,
             COALESCE(u.full_name,CONCAT('الدور: ',m.recipient_role)) recipient_name,
             CASE WHEN m.recipient_role IS NULL THEN 'direct' ELSE 'broadcast' END delivery_type,
-            COUNT(*) OVER (PARTITION BY COALESCE(CAST(m.recipient_user_id AS CHAR),CONCAT('role:',m.recipient_role))) message_count,
-            ROW_NUMBER() OVER (PARTITION BY COALESCE(CAST(m.recipient_user_id AS CHAR),CONCAT('role:',m.recipient_role)) ORDER BY m.id DESC) recipient_row
+            COUNT(*) OVER (PARTITION BY COALESCE(CONCAT('u:',m.recipient_user_id),CONCAT('r:',m.recipient_role))) message_count,
+            ROW_NUMBER() OVER (PARTITION BY COALESCE(CONCAT('u:',m.recipient_user_id),CONCAT('r:',m.recipient_role)) ORDER BY m.id DESC) recipient_row
         FROM messages m
         LEFT JOIN users u ON u.id=m.recipient_user_id
         WHERE m.sender_id=?
