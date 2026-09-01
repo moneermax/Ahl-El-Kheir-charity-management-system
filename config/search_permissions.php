@@ -127,9 +127,15 @@ if (!function_exists('ak_search_register_ui_filter')) {
              * shutdown functions still execute after exit, so this guard must
              * live inside the shutdown callback itself.
              */
-            if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'GET') {
-                return;
-            }
+            $script = str_replace(
+    '\\',
+    '/',
+    (string)($_SERVER['SCRIPT_NAME'] ?? '')
+);
+
+if (strpos($script, '/modules/search/index.php') === false) {
+    return;
+}
 
             $allowed = ak_search_allowed_types();
             $allowAll = ak_search_can_type('all');
