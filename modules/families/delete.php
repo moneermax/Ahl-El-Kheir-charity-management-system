@@ -90,6 +90,24 @@ try {
         redirect('modules/families/index.php');
     }
 
+    // Record the deletion before removing the family row.
+    // The audit log preserves who performed the action and which family was removed.
+    dbExecute(
+        "INSERT INTO audit_log (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent)
+         VALUES (?, 'DELETE', 'families', ?, ?, NULL, ?, ?)",
+        [
+            Session::getUserId(),
+            $familyId,
+            json_encode([
+                'family_code' => (string)$lock['family_code'],
+                'mother_name' => (string)$lock['mother_name'],
+                'reason' => 'Manual deletion of family with zero actual orphans'
+            ], JSON_UNESCAPED_UNICODE),
+            $_SERVER['REMOTE_ADDR'] ?? '',
+            $_SERVER['HTTP_USER_AGENT'] ?? ''
+        ]
+    );
+
     // Let the database enforce all remaining foreign-key dependencies.
     // This is safer than manually deleting related business/financial records.
     dbExecute("DELETE FROM families WHERE id = ?", [$familyId]);
