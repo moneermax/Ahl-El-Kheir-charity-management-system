@@ -50,11 +50,28 @@ foreach ($all as $row) {
 $total = count($filtered); $pages = max(1, (int)ceil($total / $perPage)); $page = min($page, $pages); $rows = array_slice($filtered, ($page - 1) * $perPage, $perPage); $qs = fn(array $extra) => APP_URL . 'modules/families/index.php?' . http_build_query(array_merge($_GET, $extra));
 $canDeleteFamily = in_array($role, ['admin', 'vice_general_manager'], true);
 include dirname(__DIR__, 2) . '/includes/header.php'; ?>
+<style>
+/* Families table: distinct, sticky header */
+.families-table-wrap {
+    overflow-x: auto;
+}
+.families-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: #212529;
+    color: #fff;
+    font-weight: 600;
+    white-space: nowrap;
+    border-bottom: 2px solid #495057;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+}
+</style>
 <div class="welcome-section fade-in"><h2>الأسر</h2><p><?php echo $total; ?> أسرة</p><div class="quick-actions mt-3"><?php if (in_array($role, ['admin', 'vice_general_manager', 'supervisor'], true)): ?><a href="<?php echo APP_URL; ?>modules/families/create.php" class="btn btn-primary btn-sm"><i class="fas fa-plus me-1"></i> إضافة أسرة</a><?php endif; ?></div></div>
 <?php include dirname(__DIR__, 2) . '/includes/alerts.php'; ?>
 <?php if ($role === 'nanny' && $total === 0): ?><div class="alert alert-info fade-in"><i class="fas fa-circle-info me-2"></i>لا توجد أسر معينة لك بعد. تواصل مع المدير لتعيين الأسر.</div><?php endif; ?>
 <div class="card mb-3 fade-in"><div class="card-body"><form method="get" class="row g-2 align-items-end"><div class="col-md-6"><label class="form-label">بحث <small class="text-muted">(يطابق بداية اسم الأم)</small></label><input type="text" name="q" class="form-control" value="<?php echo e($q); ?>"></div><div class="col-md-3"><label class="form-label">الحالة</label><select name="status" class="form-select"><option value="">الكل</option><option value="active" <?php echo $fStatus === 'active' ? 'selected' : ''; ?>>نشطة</option><option value="pending" <?php echo $fStatus === 'pending' ? 'selected' : ''; ?>>معلقة</option><option value="paused" <?php echo $fStatus === 'paused' ? 'selected' : ''; ?>>متوقفة</option><option value="completed" <?php echo $fStatus === 'completed' ? 'selected' : ''; ?>>مكتملة</option><option value="archived" <?php echo $fStatus === 'archived' ? 'selected' : ''; ?>>مؤرشفة</option></select></div><div class="col-md-3"><button class="btn btn-primary w-100"><i class="fas fa-search me-1"></i> بحث</button></div></form></div></div>
-<div class="card fade-in"><div class="card-body p-0"><div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr><th>الكود</th><th>اسم الأم</th><th>الهاتف</th><th>الأيتام</th><th>كفالات نشطة</th><th>الالتزام الشهري</th><th>الأخصائية</th><th>الحالة</th><th class="text-center">إجراءات</th></tr></thead><tbody><?php if (!$rows): ?><tr><td colspan="9" class="text-center text-muted py-4">لا توجد نتائج.</td></tr><?php else: foreach ($rows as $r): $st = ['active'=>['نشطة','bg-success'],'pending'=>['معلقة','bg-warning text-dark'],'paused'=>['متوقفة','bg-warning text-dark'],'completed'=>['مكتملة','bg-info'],'archived'=>['مؤرشفة','bg-secondary'],'inactive'=>['غير نشطة','bg-secondary'],'closed'=>['مغلقة','bg-dark']]; [$sl,$sc] = $st[$r['status']] ?? [$r['status'],'bg-secondary']; $childCount = (int)$r['actual_children_count']; ?>
+<div class="card fade-in"><div class="card-body p-0"><div class="table-responsive families-table-wrap"><table class="table table-hover align-middle mb-0 families-table"><thead><tr><th>الكود</th><th>اسم الأم</th><th>الهاتف</th><th>الأيتام</th><th>كفالات نشطة</th><th>الالتزام الشهري</th><th>الأخصائية</th><th>الحالة</th><th class="text-center">إجراءات</th></tr></thead><tbody><?php if (!$rows): ?><tr><td colspan="9" class="text-center text-muted py-4">لا توجد نتائج.</td></tr><?php else: foreach ($rows as $r): $st = ['active'=>['نشطة','bg-success'],'pending'=>['معلقة','bg-warning text-dark'],'paused'=>['متوقفة','bg-warning text-dark'],'completed'=>['مكتملة','bg-info'],'archived'=>['مؤرشفة','bg-secondary'],'inactive'=>['غير نشطة','bg-secondary'],'closed'=>['مغلقة','bg-dark']]; [$sl,$sc] = $st[$r['status']] ?? [$r['status'],'bg-secondary']; $childCount = (int)$r['actual_children_count']; ?>
 <tr><td><?php echo e($r['family_code']); ?></td><td><strong><?php echo e($r['mother_name']); ?></strong></td><td dir="ltr"><?php echo e($r['mother_phone'] ?? '-'); ?></td><td><?php echo $childCount; ?></td><td><?php echo (int)$r['active_sponsorships']; ?></td><td><?php echo number_format((float)$r['monthly_commitment'], 0); ?></td><td><?php echo e($r['nanny_name'] ?? '—'); ?></td><td><span class="badge <?php echo $sc; ?>"><?php echo $sl; ?></span></td><td class="text-center" style="white-space:nowrap;"><a class="btn btn-sm btn-primary" title="عرض" href="<?php echo APP_URL; ?>modules/families/view.php?id=<?php echo (int)$r['id']; ?>"><i class="fas fa-eye"></i></a><?php if ($role !== 'general_manager'): ?><a class="btn btn-sm btn-warning" title="تعديل" href="<?php echo APP_URL; ?>modules/families/edit.php?id=<?php echo (int)$r['id']; ?>"><i class="fas fa-pen"></i></a><?php endif; ?><?php if ($canDeleteFamily && $childCount === 0): ?><button type="button" class="btn btn-sm btn-danger" title="حذف الأسرة" data-bs-toggle="modal" data-bs-target="#deleteFamilyModal" data-family-id="<?php echo (int)$r['id']; ?>" data-family-code="<?php echo e($r['family_code']); ?>" data-mother-name="<?php echo e($r['mother_name']); ?>"><i class="fas fa-trash"></i></button><?php endif; ?></td></tr>
 <?php endforeach; endif; ?></tbody></table></div></div></div>
 <?php if ($pages > 1): ?>
