@@ -7,6 +7,18 @@ require_once dirname(__DIR__, 2) . '/config/session.php';
 Session::start();
 if (!Session::isLoggedIn()) { header('Location: ' . APP_URL . 'index.php'); exit(); }
 $role = Session::getUserRole();
+
+// Refresh the role from the database so the permission check always uses the
+// authoritative role code (users.role_id -> roles.code), not a stale session value.
+$currentUserId = Session::getUserId();
+if ($currentUserId > 0) {
+    $dbRole = dbFetchOne("SELECT r.code AS role_code FROM users u JOIN roles r ON r.id = u.role_id WHERE u.id = ? LIMIT 1", [$currentUserId]);
+    if ($dbRole && !empty($dbRole['role_code'])) {
+        $role = (string)$dbRole['role_code'];
+        $_SESSION['user_role'] = $role;
+    }
+}
+
 if (!in_array($role, ['admin', 'vice_general_manager', 'general_manager', 'supervisor', 'nanny'], true)) { header('Location: ' . APP_URL . 'index.php'); exit(); }
 $pageTitle = 'الأسر'; $active = 'families';
 $norm = function (string $s): string { $s = preg_replace('/[\x{064B}-\x{0652}\x{0640}\x{200B}-\x{200D}\x{FEFF}]/u', '', $s); $s = str_replace(['أ','إ','آ','ٱ'], 'ا', $s); $s = str_replace(['ة'], 'ه', $s); return mb_strtolower(preg_replace('/\s+/u', ' ', trim($s)), 'UTF-8'); };
@@ -45,7 +57,41 @@ include dirname(__DIR__, 2) . '/includes/header.php'; ?>
 <div class="card fade-in"><div class="card-body p-0"><div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr><th>الكود</th><th>اسم الأم</th><th>الهاتف</th><th>الأيتام</th><th>كفالات نشطة</th><th>الالتزام الشهري</th><th>الأخصائية</th><th>الحالة</th><th class="text-center">إجراءات</th></tr></thead><tbody><?php if (!$rows): ?><tr><td colspan="9" class="text-center text-muted py-4">لا توجد نتائج.</td></tr><?php else: foreach ($rows as $r): $st = ['active'=>['نشطة','bg-success'],'pending'=>['معلقة','bg-warning text-dark'],'paused'=>['متوقفة','bg-warning text-dark'],'completed'=>['مكتملة','bg-info'],'archived'=>['مؤرشفة','bg-secondary'],'inactive'=>['غير نشطة','bg-secondary'],'closed'=>['مغلقة','bg-dark']]; [$sl,$sc] = $st[$r['status']] ?? [$r['status'],'bg-secondary']; $childCount = (int)$r['actual_children_count']; ?>
 <tr><td><?php echo e($r['family_code']); ?></td><td><strong><?php echo e($r['mother_name']); ?></strong></td><td dir="ltr"><?php echo e($r['mother_phone'] ?? '-'); ?></td><td><?php echo $childCount; ?></td><td><?php echo (int)$r['active_sponsorships']; ?></td><td><?php echo number_format((float)$r['monthly_commitment'], 0); ?></td><td><?php echo e($r['nanny_name'] ?? '—'); ?></td><td><span class="badge <?php echo $sc; ?>"><?php echo $sl; ?></span></td><td class="text-center" style="white-space:nowrap;"><a class="btn btn-sm btn-primary" title="عرض" href="<?php echo APP_URL; ?>modules/families/view.php?id=<?php echo (int)$r['id']; ?>"><i class="fas fa-eye"></i></a><?php if ($role !== 'general_manager'): ?><a class="btn btn-sm btn-warning" title="تعديل" href="<?php echo APP_URL; ?>modules/families/edit.php?id=<?php echo (int)$r['id']; ?>"><i class="fas fa-pen"></i></a><?php endif; ?><?php if ($canDeleteFamily && $childCount === 0): ?><button type="button" class="btn btn-sm btn-danger" title="حذف الأسرة" data-bs-toggle="modal" data-bs-target="#deleteFamilyModal" data-family-id="<?php echo (int)$r['id']; ?>" data-family-code="<?php echo e($r['family_code']); ?>" data-mother-name="<?php echo e($r['mother_name']); ?>"><i class="fas fa-trash"></i></button><?php endif; ?></td></tr>
 <?php endforeach; endif; ?></tbody></table></div></div></div>
-<?php if ($pages > 1): ?><nav class="mt-3 mb-4"><ul class="pagination justify-content-center"><?php for ($i=1;$i<=$pages;$i++): ?><li class="page-item <?php echo $i === $page ? 'active' : ''; ?>"><a class="page-link" href="<?php echo e($qs(['page'=>$i])); ?>"><?php echo $i; ?></a></li><?php endfor; ?></ul></nav><?php endif; ?>
+<?php if ($pages > 1): ?>
+<nav class="mt-3 mb-4" aria-label="تنقل صفحات الأسر">
+    <ul class="pagination justify-content-center flex-wrap gap-1" style="row-gap:.35rem;">
+        <li class="page-item <?php echo $page <= 1 ? 'disabled' : ''; ?>">
+            <a class="page-link" href="<?php echo $page <= 1 ? '#' : e($qs(['page'=>1])); ?>" aria-label="الأولى">الأولى</a>
+        </li>
+        <li class="page-item <?php echo $page <= 1 ? 'disabled' : ''; ?>">
+            <a class="page-link" href="<?php echo $page <= 1 ? '#' : e($qs(['page'=>$page-1])); ?>" aria-label="السابقة">السابق</a>
+        </li>
+        <?php
+        $startPage = max(1, $page - 2);
+        $endPage = min($pages, $page + 2);
+        if ($page <= 3) $endPage = min($pages, 5);
+        if ($page >= $pages - 2) $startPage = max(1, $pages - 4);
+        if ($startPage > 1):
+        ?>
+            <li class="page-item"><a class="page-link" href="<?php echo e($qs(['page'=>1])); ?>">1</a></li>
+            <?php if ($startPage > 2): ?><li class="page-item disabled"><span class="page-link">…</span></li><?php endif; ?>
+        <?php endif; ?>
+        <?php for ($i = $startPage; $i <= $endPage; $i++): ?>
+            <li class="page-item <?php echo $i === $page ? 'active' : ''; ?>"><a class="page-link" href="<?php echo e($qs(['page'=>$i])); ?>"><?php echo $i; ?></a></li>
+        <?php endfor; ?>
+        <?php if ($endPage < $pages): ?>
+            <?php if ($endPage < $pages - 1): ?><li class="page-item disabled"><span class="page-link">…</span></li><?php endif; ?>
+            <li class="page-item"><a class="page-link" href="<?php echo e($qs(['page'=>$pages])); ?>"><?php echo $pages; ?></a></li>
+        <?php endif; ?>
+        <li class="page-item <?php echo $page >= $pages ? 'disabled' : ''; ?>">
+            <a class="page-link" href="<?php echo $page >= $pages ? '#' : e($qs(['page'=>$page+1])); ?>" aria-label="التالية">التالي</a>
+        </li>
+        <li class="page-item <?php echo $page >= $pages ? 'disabled' : ''; ?>">
+            <a class="page-link" href="<?php echo $page >= $pages ? '#' : e($qs(['page'=>$pages])); ?>" aria-label="الأخيرة">الأخيرة</a>
+        </li>
+    </ul>
+</nav>
+<?php endif; ?>
 <?php if ($canDeleteFamily): ?>
 <div class="modal fade" id="deleteFamilyModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content" dir="rtl"><div class="modal-header"><h5 class="modal-title text-danger"><i class="fas fa-triangle-exclamation me-2"></i>تأكيد حذف الأسرة</h5><button type="button" class="btn-close ms-0" data-bs-dismiss="modal" aria-label="إغلاق"></button></div><div class="modal-body"><p class="mb-2">هل أنت متأكد من حذف هذه الأسرة؟</p><div class="alert alert-warning mb-0"><strong id="deleteFamilyLabel"></strong><br><small>لا يوجد لها أي يتيم مسجل حالياً. سيتم التحقق مرة أخرى من الخادم قبل الحذف.</small></div></div><div class="modal-footer"><form method="post" action="<?php echo APP_URL; ?>modules/families/delete.php" class="m-0"><?php echo csrf_field(); ?><input type="hidden" name="family_id" id="deleteFamilyId" value=""><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button><button type="submit" class="btn btn-danger"><i class="fas fa-trash me-1"></i> نعم، حذف الأسرة</button></form></div></div></div></div>
 <script>
