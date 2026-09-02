@@ -1,5 +1,6 @@
 <?php
 // modules/reports/orphaned_families.php - Orphaned Families Report
+// Family/orphan counts are derived from family_children, not families.children_count.
 require_once dirname(__DIR__, 2) . '/config/config.php';
 require_once dirname(__DIR__, 2) . '/config/database.php';
 require_once dirname(__DIR__, 2) . '/config/functions.php';
@@ -14,7 +15,6 @@ if (!Session::isLoggedIn()) {
 $role = Session::getUserRole();
 $uid = Session::getUserId();
 
-// التحقق من الصلاحية
 $allowed_roles = ['admin', 'general_manager', 'vice_general_manager', 'supervisor', 'nanny'];
 if (!in_array($role, $allowed_roles, true)) {
     $_SESSION['flash'][] = ['type' => 'error', 'message' => 'ليس لديك صلاحية الوصول لهذه الصفحة'];
@@ -22,7 +22,6 @@ if (!in_array($role, $allowed_roles, true)) {
     exit();
 }
 
-// معالجة الفلاتر
 $city_filter = trim($_GET['city'] ?? '');
 $status_filter = trim($_GET['status'] ?? 'active');
 $from = trim($_GET['from'] ?? date('Y-m-01'));
@@ -31,28 +30,42 @@ $to = trim($_GET['to'] ?? date('Y-m-d'));
 $pageTitle = 'الأسر بلا كفالة';
 $active = 'reports';
 
-// بناء استعلام الأسر غير المكفولة
-// نستخدم استعلاماً مباشراً وآمناً لضمان العمل حتى لو لم يتم إنشاء الـ View بعد
-$sql = "SELECT 
+/*
+ * IMPORTANT DOMAIN RULE:
+ * family_children is the authoritative family -> orphan relationship.
+ * families.children_count is only a cache and is intentionally not used
+ * to decide whether a family has children or to calculate child totals.
+ */
+$sql = "SELECT
     f.id,
     f.family_code,
     f.mother_name,
     f.city,
-    f.children_count,
+    (SELECT COUNT(*)
+       FROM family_children fc_all
+      WHERE fc_all.family_id = f.id) AS actual_children_count,
+    (SELECT COUNT(*)
+       FROM family_children fc_active
+      WHERE fc_active.family_id = f.id
+        AND fc_active.is_active = 1) AS active_children,
     f.monthly_need_amount,
-    f.status,
-    (SELECT COUNT(*) FROM family_children fc WHERE fc.family_id = f.id AND fc.is_active = 1) as active_children
+    f.status
     FROM families f
-    WHERE f.status IN ('active', 'pending') 
-      AND f.children_count > 0
+    WHERE f.status IN ('active', 'pending')
+      AND EXISTS (
+          SELECT 1
+          FROM family_children fc_exists
+          WHERE fc_exists.family_id = f.id
+            AND fc_exists.is_active = 1
+      )
       AND NOT EXISTS (
-          SELECT 1 FROM sponsorships sp
+          SELECT 1
+          FROM sponsorships sp
           JOIN family_children fc ON sp.child_id = fc.id
           WHERE fc.family_id = f.id
             AND sp.status = 'active'
       )";
 
-// إضافة فلاتر اختيارية
 $params = [];
 if (!empty($city_filter)) {
     $sql .= " AND f.city = ?";
@@ -67,11 +80,9 @@ $sql .= " ORDER BY f.city ASC, f.mother_name ASC";
 
 $families = dbFetchAll($sql, $params);
 
-// جلب قائمة المدن المتاحة للفلترة
 $cities_sql = "SELECT DISTINCT city FROM families WHERE city IS NOT NULL AND city != '' ORDER BY city";
 $cities = array_column(dbFetchAll($cities_sql), 'city');
 
-// إحصائية سريعة
 $total_orphaned = count($families);
 $total_children_waiting = array_sum(array_column($families, 'active_children'));
 
@@ -86,7 +97,6 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     <p class="text-muted">قائمة الأسر والأطفال الذين ينتظرون ربطهم بكفلاء</p>
 </div>
 
-<!-- نموذج الفلتر -->
 <div class="card mb-4 fade-in shadow-sm">
     <div class="card-body">
         <form method="GET" action="" class="row g-3 align-items-end">
@@ -118,7 +128,6 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     </div>
 </div>
 
-<!-- بطاقات الإحصائيات -->
 <div class="row g-4 mb-4 fade-in">
     <div class="col-md-6">
         <div class="card border-0 shadow-sm text-center bg-light h-100" style="border-right: 4px solid #dc3545 !important;">
@@ -138,7 +147,6 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     </div>
 </div>
 
-<!-- أزرار التصدير -->
 <div class="mb-3 text-end fade-in">
     <button onclick="exportToExcel()" class="btn btn-success me-2">
         <i class="fas fa-file-excel me-1"></i> تصدير Excel
@@ -148,7 +156,6 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     </button>
 </div>
 
-<!-- محتوى التقرير -->
 <div id="report-content" class="fade-in">
     <div class="card shadow-sm">
         <div class="card-header bg-white fw-bold" style="color: #1b4d8f;">
@@ -171,7 +178,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($families as $row): 
+                        <?php foreach ($families as $row):
                             $status_badge = $row['status'] === 'active' ? 'bg-success' : 'bg-warning text-dark';
                             $status_label = $row['status'] === 'active' ? 'نشطة' : 'قيد الانتظار';
                         ?>
@@ -179,14 +186,14 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                             <td><code><?php echo e($row['family_code'] ?? '-'); ?></code></td>
                             <td class="fw-bold"><?php echo e($row['mother_name']); ?></td>
                             <td><?php echo e($row['city'] ?? 'غير محدد'); ?></td>
-                            <td><?php echo number_format($row['children_count']); ?></td>
-                            <td><span class="badge bg-info"><?php echo number_format($row['active_children']); ?></span></td>
+                            <td><?php echo number_format((int)$row['actual_children_count']); ?></td>
+                            <td><span class="badge bg-info"><?php echo number_format((int)$row['active_children']); ?></span></td>
                             <td class="text-primary fw-bold">
                                 <?php echo $row['monthly_need_amount'] ? number_format($row['monthly_need_amount'], 2) . ' ج.س' : '-'; ?>
                             </td>
                             <td><span class="badge <?php echo $status_badge; ?>"><?php echo e($status_label); ?></span></td>
                             <td>
-                                <a href="<?php echo APP_URL; ?>modules/families/view.php?id=<?php echo $row['id']; ?>" class="btn btn-sm btn-outline-primary" target="_blank">
+                                <a href="<?php echo APP_URL; ?>modules/families/view.php?id=<?php echo (int)$row['id']; ?>" class="btn btn-sm btn-outline-primary" target="_blank">
                                     <i class="fas fa-eye me-1"></i> عرض
                                 </a>
                             </td>
@@ -205,7 +212,6 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     </div>
 </div>
 
-<!-- زر العودة -->
 <div class="mt-4 text-center fade-in">
     <a href="<?php echo APP_URL; ?>modules/reports/index.php" class="btn btn-outline-secondary">
         <i class="fas fa-arrow-right me-1"></i> العودة إلى مركز التقارير
@@ -213,7 +219,6 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 </div>
 
 <script>
-// تصدير إلى Excel
 function exportToExcel() {
     const table = document.querySelector('#report-content table');
     if (!table) {
@@ -224,7 +229,6 @@ function exportToExcel() {
     XLSX.writeFile(wb, 'orphaned_families_<?php echo date("Y-m-d"); ?>.xlsx');
 }
 
-// تصدير إلى PDF
 function exportToPDF() {
     const element = document.getElementById('report-content');
     const opt = {
