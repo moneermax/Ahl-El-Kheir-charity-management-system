@@ -1,3 +1,9 @@
 # Runtime-uploaded messaging attachments
 /storage/message_attachments/*
 !/storage/message_attachments/.gitkeep
+
+# Local database backups / exports
+/database/backups/*
+!/database/backups/.gitkeep
+*.sql.gz
+*.sql.zip
