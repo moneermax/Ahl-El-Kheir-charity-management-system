@@ -84,8 +84,6 @@ if (!function_exists('ak_register_data_integrity_hooks')) {
     function ak_register_data_integrity_hooks(): void
     {
         $path=parse_url((string)($_SERVER['REQUEST_URI']??''),PHP_URL_PATH)?:''; $method=$_SERVER['REQUEST_METHOD']??'GET';
-        /* edit.php is loaded before session.php in the current application. Do
-         * not use flash/session APIs here. Block the invalid write directly. */
         if($method==='POST'&&str_ends_with($path,'/modules/families/edit.php')&&isset($_POST['update_family'])){
             $familyId=(int)($_POST['id']??$_GET['id']??0);
             if($familyId>0&&!ak_family_has_orphan($familyId)){
@@ -103,6 +101,6 @@ if (!function_exists('ak_register_data_integrity_hooks')) {
             if($childId>0)register_shutdown_function(static function()use($childId):void{try{ak_sync_family_children_count_for_child($childId);}catch(Throwable $e){error_log('Orphan-form family children count sync: '.$e->getMessage());}});
         }
         if($method==='POST'&&str_ends_with($path,'/modules/supervisors/assign-letters.php'))register_shutdown_function(static function():void{try{ak_sync_non_manual_sponsor_supervisors();}catch(Throwable $e){error_log('Supervisor sponsor sync: '.$e->getMessage());}});
-        if($method==='POST'&&(str_ends_with($path,'/modules/sponsors/create.php')||str_ends_with($path,'/modules/sponsors/edit.php')))register_shutdown_function(static function():void{try{ak_sync_non_manual_sponsor_supervisors();}catch(Throwable $e){error_log('Sponsor sponsor sync: '.$e->getMessage());}});
+        if($method==='POST'&&(str_ends_with($path,'/modules/sponsors/create.php')||str_ends_with($path,'/modules/sponsors/edit.php')))register_shutdown_function(static function():void{try{ak_sync_non_manual_sponsor_supervisors();}catch(Throwable $e){error_log('Sponsor supervisor sync: '.$e->getMessage());}});
     }
 }
