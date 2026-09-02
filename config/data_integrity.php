@@ -24,6 +24,17 @@ if (!function_exists('ak_sync_family_children_count')) {
     }
 }
 
+if (!function_exists('ak_sync_family_children_count_for_child')) {
+    function ak_sync_family_children_count_for_child(int $childId): void
+    {
+        if ($childId <= 0) return;
+        $row = dbFetchOne("SELECT family_id FROM family_children WHERE id = ?", [$childId]);
+        if ($row) {
+            ak_sync_family_children_count((int)$row['family_id']);
+        }
+    }
+}
+
 if (!function_exists('ak_sync_all_family_children_counts')) {
     function ak_sync_all_family_children_counts(): void
     {
@@ -135,15 +146,19 @@ if (!function_exists('ak_sync_non_manual_sponsor_supervisors')) {
 }
 
 /*
- * Register the two write-path reconciliations centrally. This keeps the
- * authoritative business rule in PHP while avoiding duplicated hooks in
- * large page controllers.
+ * Register write-path reconciliations centrally. The shutdown callbacks are
+ * intentionally defensive: a failed reconciliation is logged and never
+ * converts a successful business operation into a user-facing fatal error.
  */
 if (!function_exists('ak_register_data_integrity_hooks')) {
     function ak_register_data_integrity_hooks(): void
     {
         $path = parse_url((string)($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH) ?: '';
+        $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
+        /* Former family_children INSERT/UPDATE/DELETE triggers.
+         * family edit and orphan-form are both child write paths in the app.
+         */
         if (str_ends_with($path, '/modules/families/edit.php')) {
             $familyId = (int)($_GET['id'] ?? $_POST['id'] ?? 0);
             if ($familyId > 0) {
@@ -157,12 +172,44 @@ if (!function_exists('ak_register_data_integrity_hooks')) {
             }
         }
 
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && str_ends_with($path, '/modules/supervisors/assign-letters.php')) {
+        if (str_ends_with($path, '/modules/families/orphan_form.php')) {
+            $childId = (int)($_GET['child'] ?? $_GET['id'] ?? $_POST['child_id'] ?? $_POST['id'] ?? 0);
+            if ($childId > 0) {
+                register_shutdown_function(static function () use ($childId): void {
+                    try {
+                        ak_sync_family_children_count_for_child($childId);
+                    } catch (Throwable $e) {
+                        error_log('Orphan-form family children count sync: ' . $e->getMessage());
+                    }
+                });
+            }
+        }
+
+        /* Former supervisor_letters INSERT/UPDATE/DELETE triggers.
+         * Reconcile after every assignment change so non-manual sponsors
+         * immediately reflect the current supervisor-letter matrix.
+         */
+        if ($method === 'POST' && str_ends_with($path, '/modules/supervisors/assign-letters.php')) {
             register_shutdown_function(static function (): void {
                 try {
                     ak_sync_non_manual_sponsor_supervisors();
                 } catch (Throwable $e) {
                     error_log('Supervisor sponsor sync: ' . $e->getMessage());
+                }
+            });
+        }
+
+        /* Sponsor create/edit can change first_letter_id or gender without a
+         * supervisor_letters change. Keep the same rule authoritative here. */
+        if ($method === 'POST' && (
+            str_ends_with($path, '/modules/sponsors/create.php') ||
+            str_ends_with($path, '/modules/sponsors/edit.php')
+        )) {
+            register_shutdown_function(static function (): void {
+                try {
+                    ak_sync_non_manual_sponsor_supervisors();
+                } catch (Throwable $e) {
+                    error_log('Sponsor supervisor sync: ' . $e->getMessage());
                 }
             });
         }
