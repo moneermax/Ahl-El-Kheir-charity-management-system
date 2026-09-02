@@ -120,10 +120,7 @@ if (!function_exists('dashboard_for_role')) {
             'administration', 'staff' => 'dashboard/staff_dashboard.php',
             'social_media' => 'dashboard/staff_dashboard.php',
             'hr_manager', 'hr_staff' => 'dashboard/hr_dashboard.php',
-
-            // NEW: Route project roles to the unified projects dashboard
             'projects_manager', 'project_supervisor' => 'dashboard/projects_dashboard.php',
-
             default => 'index.php',
         };
     }
@@ -141,6 +138,10 @@ function first_letter_of(string $name): array {
     $raw = mb_substr($clean, 0, 1, 'UTF-8');
     return [$raw, normalize_arabic_letter($raw)];
 }
+
+/* ---------- application-owned data integrity rules ---------- */
+require_once __DIR__ . '/data_integrity.php';
+ak_register_data_integrity_hooks();
 
 /* ---------- centralized global-search authorization ---------- */
 require_once __DIR__ . '/search_permissions.php';
