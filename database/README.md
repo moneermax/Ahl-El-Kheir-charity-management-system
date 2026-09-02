@@ -12,7 +12,7 @@ This is a legacy full database snapshot. It contains database structure and inse
 
 **Do not import this file into an existing live/development database unless you intentionally want to restore that snapshot.** It is not the authoritative mechanism for applying incremental schema changes.
 
-The current application architecture uses the migration files below and explicit PHP business logic for the integrity rules that were previously implemented by MySQL triggers.
+The current application architecture uses the migration files below and explicit PHP business logic for integrity rules that were previously implemented by MySQL triggers.
 
 ### `migrations/`
 
@@ -22,14 +22,21 @@ Migration files are applied in chronological order when a database change is req
 - `2026-09-02_replace_integrity_triggers_views_with_php.sql` — removes the legacy family/child/supervisor triggers and legacy reporting views after reconciling the affected data.
 - `2026-09-02_verify_php_integrity_migration.sql` — verification queries for the trigger/view migration and related integrity checks.
 
-## Current integrity architecture
+## Current domain and integrity architecture
 
-The following former database-trigger responsibilities are now owned by application code in `config/data_integrity.php`:
+The core beneficiary relationship is:
 
-- Synchronizing `families.children_count` from `family_children`.
+**Family → one or more Orphans (`family_children`) → Sponsorships**
+
+A family is not a standalone beneficiary record. The system must not create a new family without at least one orphan. Sponsors are linked to orphan records through `sponsorships.child_id`; they are not linked directly to a family.
+
+The following integrity responsibilities are owned by application code in `config/data_integrity.php`:
+
+- Synchronizing `families.children_count` from the actual `family_children` relationship.
+- Preventing the family-update workflow from saving an orphanless family.
 - Reconciliation of non-manually-overridden sponsor supervisor assignments from `supervisor_letters`.
 
-This keeps business rules explicit, testable, auditable, and consistent with the procedural PHP architecture.
+The Families list uses the actual `family_children` relationship for its orphan count rather than trusting a stale cached counter. This makes the relationship the source of truth while `families.children_count` remains a maintained cache.
 
 ## Database safety rules
 
