@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 02, 2026 at 06:27 AM
+-- Generation Time: Sep 02, 2026 at 09:40 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -1540,7 +1540,12 @@ INSERT INTO `audit_log` (`id`, `user_id`, `action`, `entity_type`, `entity_id`, 
 (1419, 2, 'LOGOUT', 'users', 2, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:154.0) Gecko/20100101 Firefox/154.0', '2026-09-01 18:40:08'),
 (1420, 1, 'LOGIN', 'users', 1, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:154.0) Gecko/20100101 Firefox/154.0', '2026-09-01 23:57:50'),
 (1421, 1, 'LOGIN', 'users', 1, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:154.0) Gecko/20100101 Firefox/154.0', '2026-09-02 07:10:29'),
-(1422, 1, 'EXPORT', 'database', NULL, NULL, '{\"file\":\"backup_20260902_061040.sql\",\"size\":5815308}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:154.0) Gecko/20100101 Firefox/154.0', '2026-09-02 07:10:42');
+(1422, 1, 'EXPORT', 'database', NULL, NULL, '{\"file\":\"backup_20260902_061040.sql\",\"size\":5815308}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:154.0) Gecko/20100101 Firefox/154.0', '2026-09-02 07:10:42'),
+(1423, 1, 'LOGOUT', 'users', 1, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:154.0) Gecko/20100101 Firefox/154.0', '2026-09-02 17:31:47'),
+(1424, 3, 'LOGIN', 'users', 3, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-02 17:37:15'),
+(1425, 3, 'LOGOUT', 'users', 3, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-02 21:55:45'),
+(1426, 3, 'LOGIN', 'users', 3, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-02 21:55:56'),
+(1427, 3, 'DELETE', 'families', 8, '{\"family_code\":\"IMP-FAM-000008\",\"mother_name\":\"اخلاص النور محمد\",\"reason\":\"Manual deletion of family with zero actual orphans\"}', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-02 22:17:45');
 
 -- --------------------------------------------------------
 
@@ -1772,14 +1777,13 @@ CREATE TABLE `families` (
 --
 
 INSERT INTO `families` (`id`, `mother_name`, `mother_phone`, `mother_job`, `address`, `children_count`, `monthly_need_amount`, `medical_notes`, `status`, `notes`, `created_by`, `created_at`, `updated_at`, `family_code`, `mother_national_id`, `mother_birth_date`, `mother_alt_phone`, `mother_workplace`, `legacy_mother_first_letter`, `city`, `district`, `registration_date`, `registration_number`, `closure_date`, `closure_reason`, `supervisor_id`, `assigned_by`, `assigned_at`, `updated_by`, `nanny_id`, `bank_name`, `bank_account_number`, `bank_branch`, `bank_account_holder`, `father_name`, `father_death_date`, `father_death_cause`, `mother_marital_status`, `mother_bank_name`, `mother_bank_account`, `mother_bank_branch`) VALUES
-(1, 'أم الحسن الامين', '0926091885', 'ربة منزل', 'اللاماب', 5, NULL, NULL, 'pending', 'Imported from Excel source data. Original records preserved in excel_import_staging.', NULL, '2026-08-07 18:03:16', '2026-08-14 14:48:13', 'IMP-FAM-000001', NULL, NULL, NULL, NULL, 'أ', NULL, NULL, NULL, 'IMP-2026-000001', NULL, NULL, NULL, NULL, NULL, 3, NULL, NULL, NULL, NULL, NULL, 'ابراهيم عبد المنعم', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(1, 'أم الحسن الامين', '0926091885', 'ربة منزل', 'اللاماب', 5, NULL, NULL, 'pending', 'Imported from Excel source data. Original records preserved in excel_import_staging.', NULL, '2026-08-07 18:03:16', '2026-09-02 22:35:46', 'IMP-FAM-000001', NULL, NULL, NULL, NULL, 'أ', NULL, NULL, NULL, 'IMP-2026-000001', NULL, NULL, NULL, NULL, '2026-09-02 22:35:46', 3, NULL, NULL, NULL, NULL, NULL, 'ابراهيم عبد المنعم', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (2, 'أميرة نصر الدين أحمد ارباب', '0909356976', 'ربة منزل', NULL, 1, 0.00, NULL, 'pending', 'Imported from Excel source data. Original records preserved in excel_import_staging.', NULL, '2026-08-07 18:03:16', '2026-08-27 17:59:55', 'IMP-FAM-000002', NULL, NULL, NULL, NULL, 'أ', NULL, NULL, NULL, 'IMP-2026-000002', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'عبد الله الفاضل محمد احمد', '2012-01-01', NULL, 'أرملة', NULL, NULL, NULL),
 (3, 'ابتسام الهادي محمد طه', '0911614230', 'ربة منزل', 'الحلة الجديدة', 2, 5000.00, NULL, 'pending', 'Imported from Excel source data. Original records preserved in excel_import_staging.', NULL, '2026-08-07 18:03:16', '2026-08-27 17:59:54', 'IMP-FAM-000003', NULL, NULL, NULL, NULL, 'ا', NULL, NULL, NULL, 'IMP-2026-000003', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'عمادالدين سعد على سعد', '2017-03-26', NULL, 'أرملة', NULL, '2311789', NULL),
 (4, 'ابتسام حسن سعد', '0119059074', 'ربة منزل', 'مدني حي حبيب الله', 3, 4000.00, NULL, 'pending', 'Imported from Excel source data. Original records preserved in excel_import_staging.', NULL, '2026-08-07 18:03:16', '2026-08-27 17:59:54', 'IMP-FAM-000004', NULL, NULL, NULL, NULL, 'ا', NULL, NULL, NULL, 'IMP-2026-000004', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'عاطف الامين عوض', '2015-06-03', NULL, 'أرملة', NULL, '2415881', NULL),
 (5, 'ابتسام مقدم عبدالله فرح', '0915586893', 'ربة منزل', 'الثورة الحارة الرابعة', 5, 3000.00, NULL, 'pending', 'Imported from Excel source data. Original records preserved in excel_import_staging.', NULL, '2026-08-07 18:03:16', '2026-08-27 17:59:54', 'IMP-FAM-000005', NULL, NULL, NULL, NULL, 'ا', NULL, NULL, NULL, 'IMP-2026-000005', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'خالد فضل السيد', '2017-10-13', NULL, 'أرملة', NULL, '2051154', NULL),
 (6, 'ابتهاج حسن نقد', '0115202295', NULL, NULL, 2, 3500.00, NULL, 'pending', 'Imported from Excel source data. Original records preserved in excel_import_staging.', NULL, '2026-08-07 18:03:16', '2026-08-27 17:59:54', 'IMP-FAM-000006', NULL, NULL, NULL, NULL, 'ا', NULL, NULL, NULL, 'IMP-2026-000006', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'محمد سيد احمد', '2014-08-15', NULL, 'أرملة', NULL, '2698842', NULL),
 (7, 'احلام حسن محمد', '0960847780', 'ربة منزل', 'الفتيح العقليين', 2, 1000.00, NULL, 'pending', 'Imported from Excel source data. Original records preserved in excel_import_staging.', NULL, '2026-08-07 18:03:16', '2026-08-27 17:59:54', 'IMP-FAM-000007', NULL, NULL, NULL, NULL, 'ا', NULL, NULL, NULL, 'IMP-2026-000007', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'ابراهيم عمر يعقوب', '2012-08-04', NULL, 'أرملة', NULL, '1811272', NULL),
-(8, 'اخلاص النور محمد', '0905141272', NULL, NULL, 0, NULL, NULL, 'pending', 'Imported from Excel source data. Original records preserved in excel_import_staging.', NULL, '2026-08-07 18:03:16', '2026-08-09 22:46:38', 'IMP-FAM-000008', NULL, NULL, NULL, NULL, 'ا', NULL, NULL, NULL, 'IMP-2026-000008', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (9, 'اخلاص مبارك', '0995215074', 'ربة منزل', 'شندي', 2, 2000.00, NULL, 'pending', 'Imported from Excel source data. Original records preserved in excel_import_staging.', NULL, '2026-08-07 18:03:16', '2026-08-27 17:59:54', 'IMP-FAM-000009', NULL, NULL, NULL, NULL, 'ا', NULL, NULL, NULL, 'IMP-2026-000009', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'محمد ادريس سالم', '2017-03-02', NULL, 'أرملة', NULL, NULL, NULL),
 (10, 'ازاهر حسن على احمد', '0121177543', NULL, NULL, 2, 2000.00, NULL, 'pending', 'Imported from Excel source data. Original records preserved in excel_import_staging.', NULL, '2026-08-07 18:03:16', '2026-08-27 17:59:54', 'IMP-FAM-000010', NULL, NULL, NULL, NULL, 'ا', NULL, NULL, NULL, 'IMP-2026-000010', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'منصور ابراهيم منصور', '2019-04-09', NULL, 'أرملة', NULL, '2149125', NULL),
 (11, 'ازدهار العوض بخيت', NULL, NULL, NULL, 3, 2500.00, NULL, 'pending', 'Imported from Excel source data. Original records preserved in excel_import_staging.', NULL, '2026-08-07 18:03:16', '2026-08-27 17:59:54', 'IMP-FAM-000011', NULL, NULL, '0913332274', NULL, 'ا', NULL, NULL, NULL, 'IMP-2026-000011', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'عوض جايد محمد', '2018-07-16', NULL, 'أرملة', NULL, '1772065', NULL),
@@ -1882,9 +1886,9 @@ INSERT INTO `families` (`id`, `mother_name`, `mother_phone`, `mother_job`, `addr
 (108, 'رحاب عبدالرحيم محمد', '0918585651', NULL, NULL, 3, 4000.00, NULL, 'pending', 'Imported from Excel source data. Original records preserved in excel_import_staging.', NULL, '2026-08-07 18:03:16', '2026-08-27 17:59:56', 'IMP-FAM-000108', NULL, NULL, NULL, NULL, 'ر', NULL, NULL, NULL, 'IMP-2026-000108', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'محمد عبدالله عبدالرحمن', '2019-09-05', NULL, 'أرملة', NULL, '2342203', NULL),
 (109, 'رشا الامين محمد احمد', '0900044648', NULL, 'غرب الجبل', 3, 2000.00, NULL, 'pending', 'Imported from Excel source data. Original records preserved in excel_import_staging.', NULL, '2026-08-07 18:03:16', '2026-08-27 17:59:56', 'IMP-FAM-000109', NULL, NULL, NULL, NULL, 'ر', NULL, NULL, NULL, 'IMP-2026-000109', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'على احمد على', '2016-03-25', NULL, 'أرملة', NULL, '2377069', NULL),
 (110, 'رشا الطيب الشيخ', '0121702411', NULL, NULL, 4, 3000.00, NULL, 'active', 'Imported from Excel source data. Original records preserved in excel_import_staging.', NULL, '2026-08-07 18:03:16', '2026-08-27 17:59:56', 'IMP-FAM-000110', NULL, NULL, NULL, NULL, 'ر', NULL, NULL, NULL, 'IMP-2026-000110', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'عماد ابراهيم حسن جبريل', '2018-03-10', NULL, 'أرملة', NULL, '1990080', NULL),
-(111, 'رشا محمد عبدلله', '0127681108', NULL, NULL, 5, 5000.00, NULL, 'pending', 'Imported from Excel source data. Original records preserved in excel_import_staging.', NULL, '2026-08-07 18:03:16', '2026-08-27 17:59:56', 'IMP-FAM-000111', NULL, NULL, NULL, NULL, 'ر', NULL, NULL, NULL, 'IMP-2026-000111', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'محمدين ادم عبدالله', '2020-07-28', NULL, 'أرملة', NULL, '2701492', NULL);
+(111, 'رشا محمد عبدلله', '0127681108', NULL, NULL, 5, 5000.00, NULL, 'pending', 'Imported from Excel source data. Original records preserved in excel_import_staging.', NULL, '2026-08-07 18:03:16', '2026-08-27 17:59:56', 'IMP-FAM-000111', NULL, NULL, NULL, NULL, 'ر', NULL, NULL, NULL, 'IMP-2026-000111', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'محمدين ادم عبدالله', '2020-07-28', NULL, 'أرملة', NULL, '2701492', NULL),
+(112, 'رشيدة عبدالله احمد جميل', '0121140696', 'ربة منزل', 'امبدة السبيل الحارة 13', 0, NULL, NULL, 'pending', 'Imported from Excel source data. Original records preserved in excel_import_staging.', NULL, '2026-08-07 18:03:16', '2026-08-09 22:46:38', 'IMP-FAM-000112', NULL, NULL, '0911388685', NULL, 'ر', NULL, NULL, NULL, 'IMP-2026-000112', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'أرملة', NULL, NULL, NULL);
 INSERT INTO `families` (`id`, `mother_name`, `mother_phone`, `mother_job`, `address`, `children_count`, `monthly_need_amount`, `medical_notes`, `status`, `notes`, `created_by`, `created_at`, `updated_at`, `family_code`, `mother_national_id`, `mother_birth_date`, `mother_alt_phone`, `mother_workplace`, `legacy_mother_first_letter`, `city`, `district`, `registration_date`, `registration_number`, `closure_date`, `closure_reason`, `supervisor_id`, `assigned_by`, `assigned_at`, `updated_by`, `nanny_id`, `bank_name`, `bank_account_number`, `bank_branch`, `bank_account_holder`, `father_name`, `father_death_date`, `father_death_cause`, `mother_marital_status`, `mother_bank_name`, `mother_bank_account`, `mother_bank_branch`) VALUES
-(112, 'رشيدة عبدالله احمد جميل', '0121140696', 'ربة منزل', 'امبدة السبيل الحارة 13', 0, NULL, NULL, 'pending', 'Imported from Excel source data. Original records preserved in excel_import_staging.', NULL, '2026-08-07 18:03:16', '2026-08-09 22:46:38', 'IMP-FAM-000112', NULL, NULL, '0911388685', NULL, 'ر', NULL, NULL, NULL, 'IMP-2026-000112', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (113, 'رفيدة عثمان خضر', '0123712025', 'ربة منزل', 'الكلاكلة اللفة', 2, 5000.00, NULL, 'pending', 'Imported from Excel source data. Original records preserved in excel_import_staging.', NULL, '2026-08-07 18:03:16', '2026-08-27 17:59:56', 'IMP-FAM-000113', NULL, NULL, NULL, NULL, 'ر', NULL, NULL, NULL, 'IMP-2026-000113', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'عوض الكريم حسن خضر', '2012-02-10', NULL, 'أرملة', NULL, '2681565', NULL),
 (114, 'رفيعة يحي حسن', '0914707558', NULL, NULL, 1, 4000.00, NULL, 'pending', 'Imported from Excel source data. Original records preserved in excel_import_staging.', NULL, '2026-08-07 18:03:16', '2026-08-27 17:59:56', 'IMP-FAM-000114', NULL, NULL, NULL, NULL, 'ر', NULL, NULL, NULL, 'IMP-2026-000114', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'ملك الدين سليمان محمد الحسن', '2011-11-05', NULL, 'أرملة', NULL, '2111992', NULL),
 (115, 'رماز بابكر محمد', '0918316861', NULL, NULL, 0, NULL, NULL, 'pending', 'Imported from Excel source data. Original records preserved in excel_import_staging.', NULL, '2026-08-07 18:03:16', '2026-08-09 22:46:38', 'IMP-FAM-000115', NULL, NULL, '0912112459', NULL, 'ر', NULL, NULL, NULL, 'IMP-2026-000115', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'أرملة', NULL, NULL, NULL),
@@ -1993,9 +1997,9 @@ INSERT INTO `families` (`id`, `mother_name`, `mother_phone`, `mother_job`, `addr
 (218, 'ماريه ابراهيم سيد أحمد عمر', '0916145719', 'ربة منزل', 'الرميلة', 0, NULL, NULL, 'pending', 'Imported from Excel source data. Original records preserved in excel_import_staging.', NULL, '2026-08-07 18:03:16', '2026-08-09 22:46:38', 'IMP-FAM-000218', NULL, NULL, NULL, NULL, 'م', NULL, NULL, NULL, 'IMP-2026-000218', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (219, 'مروة حسن محمد', '0913058902', NULL, NULL, 5, NULL, NULL, 'pending', 'Imported from Excel source data. Original records preserved in excel_import_staging.', NULL, '2026-08-07 18:03:16', '2026-08-14 00:12:20', 'IMP-FAM-000219', NULL, NULL, NULL, NULL, 'م', NULL, NULL, NULL, 'IMP-2026-000219', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'ابو شره ابراهيم', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (220, 'مريم السيد احمد محمد', '0969699190', NULL, NULL, 1, 3000.00, NULL, 'pending', 'Imported from Excel source data. Original records preserved in excel_import_staging.', NULL, '2026-08-07 18:03:16', '2026-08-27 17:59:57', 'IMP-FAM-000220', NULL, NULL, NULL, NULL, 'م', NULL, NULL, NULL, 'IMP-2026-000220', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'ياسر عبدالكريم', '2013-10-22', NULL, 'أرملة', NULL, '2212632', NULL),
-(221, 'مريم النور محمد', '0915013372', NULL, NULL, 4, 2000.00, NULL, 'pending', 'Imported from Excel source data. Original records preserved in excel_import_staging.', NULL, '2026-08-07 18:03:16', '2026-08-27 17:59:57', 'IMP-FAM-000221', NULL, NULL, NULL, NULL, 'م', NULL, NULL, NULL, 'IMP-2026-000221', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'عوض جمعة عبدالله', '2017-12-17', NULL, 'أرملة', NULL, '2042052', NULL);
+(221, 'مريم النور محمد', '0915013372', NULL, NULL, 4, 2000.00, NULL, 'pending', 'Imported from Excel source data. Original records preserved in excel_import_staging.', NULL, '2026-08-07 18:03:16', '2026-08-27 17:59:57', 'IMP-FAM-000221', NULL, NULL, NULL, NULL, 'م', NULL, NULL, NULL, 'IMP-2026-000221', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'عوض جمعة عبدالله', '2017-12-17', NULL, 'أرملة', NULL, '2042052', NULL),
+(222, 'مريم سيد احمد القاسم', '0125758121', 'معلمة مدرسة خاصة', 'دردوق', 3, 4000.00, NULL, 'pending', 'Imported from Excel source data. Original records preserved in excel_import_staging.', NULL, '2026-08-07 18:03:16', '2026-08-27 17:59:57', 'IMP-FAM-000222', NULL, NULL, NULL, NULL, 'م', NULL, NULL, NULL, 'IMP-2026-000222', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'سيف الدين احمد محجوب', '2016-03-21', NULL, 'أرملة', NULL, '2287444', NULL);
 INSERT INTO `families` (`id`, `mother_name`, `mother_phone`, `mother_job`, `address`, `children_count`, `monthly_need_amount`, `medical_notes`, `status`, `notes`, `created_by`, `created_at`, `updated_at`, `family_code`, `mother_national_id`, `mother_birth_date`, `mother_alt_phone`, `mother_workplace`, `legacy_mother_first_letter`, `city`, `district`, `registration_date`, `registration_number`, `closure_date`, `closure_reason`, `supervisor_id`, `assigned_by`, `assigned_at`, `updated_by`, `nanny_id`, `bank_name`, `bank_account_number`, `bank_branch`, `bank_account_holder`, `father_name`, `father_death_date`, `father_death_cause`, `mother_marital_status`, `mother_bank_name`, `mother_bank_account`, `mother_bank_branch`) VALUES
-(222, 'مريم سيد احمد القاسم', '0125758121', 'معلمة مدرسة خاصة', 'دردوق', 3, 4000.00, NULL, 'pending', 'Imported from Excel source data. Original records preserved in excel_import_staging.', NULL, '2026-08-07 18:03:16', '2026-08-27 17:59:57', 'IMP-FAM-000222', NULL, NULL, NULL, NULL, 'م', NULL, NULL, NULL, 'IMP-2026-000222', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'سيف الدين احمد محجوب', '2016-03-21', NULL, 'أرملة', NULL, '2287444', NULL),
 (223, 'مريم على محمد', '0918276209', NULL, NULL, 0, NULL, NULL, 'pending', 'Imported from Excel source data. Original records preserved in excel_import_staging.', NULL, '2026-08-07 18:03:16', '2026-08-09 22:46:38', 'IMP-FAM-000223', NULL, NULL, NULL, NULL, 'م', NULL, NULL, NULL, 'IMP-2026-000223', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (224, 'مشاعر ابو القاسم فضل الله', '0125208649', NULL, NULL, 2, 4000.00, NULL, 'pending', 'Imported from Excel source data. Original records preserved in excel_import_staging.', NULL, '2026-08-07 18:03:16', '2026-08-27 17:59:57', 'IMP-FAM-000224', NULL, NULL, NULL, NULL, 'م', NULL, NULL, NULL, 'IMP-2026-000224', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'برعي محمد ادريس', '2012-10-09', NULL, 'أرملة', NULL, '1886873', NULL),
 (225, 'مشاعر طه البشير', '0118476244', NULL, NULL, 4, 1000.00, NULL, 'pending', 'Imported from Excel source data. Original records preserved in excel_import_staging.', NULL, '2026-08-07 18:03:16', '2026-08-27 17:59:57', 'IMP-FAM-000225', NULL, NULL, '0929966850', NULL, 'م', NULL, NULL, NULL, 'IMP-2026-000225', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'الخير داؤود الماحي', '2020-05-26', NULL, 'أرملة', NULL, '2477623', NULL),
@@ -2114,9 +2118,9 @@ INSERT INTO `families` (`id`, `mother_name`, `mother_phone`, `mother_job`, `addr
 (338, 'النخيل الحاج المرضي سعيد', NULL, NULL, NULL, 2, 3000.00, NULL, 'pending', 'Imported from sheet \"قاعده لمياء المحدثه\" row 133', 3, '2026-08-10 12:30:38', '2026-08-27 17:58:52', 'IMP2-FAM-000338', NULL, NULL, NULL, NULL, 'ا', NULL, NULL, NULL, 'IMP2-133', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'مصطفي ادم الهادي', '2015-05-21', NULL, 'أرملة', NULL, NULL, NULL),
 (339, 'الهام صالح محفوظ', NULL, NULL, NULL, 3, 2000.00, NULL, 'pending', 'Imported from sheet \"قاعده لمياء المحدثه\" row 135', 3, '2026-08-10 12:30:38', '2026-08-27 17:58:55', 'IMP2-FAM-000339', NULL, NULL, NULL, NULL, 'ا', NULL, NULL, NULL, 'IMP2-135', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'عبد العظيم حمزه', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (340, 'الهام عبد الرحيم محمد الحسن', NULL, NULL, NULL, 6, 3000.00, NULL, 'pending', 'Imported from sheet \"قاعده لمياء المحدثه\" row 139', 3, '2026-08-10 12:30:38', '2026-08-27 17:58:52', 'IMP2-FAM-000340', NULL, NULL, NULL, NULL, 'ا', NULL, NULL, NULL, 'IMP2-139', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'حسن عبد الرحيم موسي', '2010-03-28', NULL, 'أرملة', NULL, NULL, NULL),
-(341, 'الهام عثمان الشيخ', NULL, NULL, NULL, 1, 12000.00, NULL, 'pending', 'Imported from sheet \"قاعده لمياء المحدثه\" row 145', 3, '2026-08-10 12:30:38', '2026-08-27 17:58:56', 'IMP2-FAM-000341', NULL, NULL, NULL, NULL, 'ا', NULL, NULL, NULL, 'IMP2-145', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'عبد الحليم الجيلاني', NULL, NULL, 'أرملة', NULL, NULL, NULL);
+(341, 'الهام عثمان الشيخ', NULL, NULL, NULL, 1, 12000.00, NULL, 'pending', 'Imported from sheet \"قاعده لمياء المحدثه\" row 145', 3, '2026-08-10 12:30:38', '2026-08-27 17:58:56', 'IMP2-FAM-000341', NULL, NULL, NULL, NULL, 'ا', NULL, NULL, NULL, 'IMP2-145', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'عبد الحليم الجيلاني', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(342, 'الهام محمد محجوب', NULL, NULL, NULL, 4, 5000.00, NULL, 'pending', 'Imported from sheet \"قاعده لمياء المحدثه\" row 146', 3, '2026-08-10 12:30:38', '2026-08-27 17:58:57', 'IMP2-FAM-000342', NULL, NULL, NULL, NULL, 'ا', NULL, NULL, NULL, 'IMP2-146', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'ابوبكر حسن', NULL, NULL, 'أرملة', NULL, NULL, NULL);
 INSERT INTO `families` (`id`, `mother_name`, `mother_phone`, `mother_job`, `address`, `children_count`, `monthly_need_amount`, `medical_notes`, `status`, `notes`, `created_by`, `created_at`, `updated_at`, `family_code`, `mother_national_id`, `mother_birth_date`, `mother_alt_phone`, `mother_workplace`, `legacy_mother_first_letter`, `city`, `district`, `registration_date`, `registration_number`, `closure_date`, `closure_reason`, `supervisor_id`, `assigned_by`, `assigned_at`, `updated_by`, `nanny_id`, `bank_name`, `bank_account_number`, `bank_branch`, `bank_account_holder`, `father_name`, `father_death_date`, `father_death_cause`, `mother_marital_status`, `mother_bank_name`, `mother_bank_account`, `mother_bank_branch`) VALUES
-(342, 'الهام محمد محجوب', NULL, NULL, NULL, 4, 5000.00, NULL, 'pending', 'Imported from sheet \"قاعده لمياء المحدثه\" row 146', 3, '2026-08-10 12:30:38', '2026-08-27 17:58:57', 'IMP2-FAM-000342', NULL, NULL, NULL, NULL, 'ا', NULL, NULL, NULL, 'IMP2-146', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'ابوبكر حسن', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (343, 'الهناء عثمان محمد', NULL, NULL, NULL, 3, 2000.00, NULL, 'pending', 'Imported from sheet \"قاعده لمياء المحدثه\" row 149', 3, '2026-08-10 12:30:38', '2026-08-27 17:58:56', 'IMP2-FAM-000343', NULL, NULL, NULL, NULL, 'ا', NULL, NULL, NULL, 'IMP2-149', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'الطيب الشيخ', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (344, 'اليقين سليمان حسين', NULL, NULL, NULL, 3, 3000.00, NULL, 'pending', 'Imported from sheet \"قاعده لمياء المحدثه\" row 152', 3, '2026-08-10 12:30:38', '2026-08-27 17:59:01', 'IMP2-FAM-000344', NULL, NULL, NULL, NULL, 'ا', NULL, NULL, NULL, 'IMP2-152', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'مصري محمد عبد القادر', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (345, 'ام الحسين محمد دوليب', NULL, NULL, NULL, 4, 74000.00, NULL, 'pending', 'Imported from sheet \"قاعده لمياء المحدثه\" row 160', 3, '2026-08-10 12:30:38', '2026-08-27 18:00:50', 'IMP2-FAM-000345', NULL, NULL, NULL, NULL, 'ا', NULL, NULL, NULL, 'IMP2-160', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'النور الصافي', NULL, NULL, 'أرملة', NULL, NULL, NULL),
@@ -2245,9 +2249,9 @@ INSERT INTO `families` (`id`, `mother_name`, `mother_phone`, `mother_job`, `addr
 (468, 'حمره عبد الحميد عثمان', NULL, NULL, NULL, 2, 3000.00, NULL, 'pending', 'Imported from sheet \"قاعده لمياء المحدثه\" row 493', 3, '2026-08-10 12:30:42', '2026-08-27 17:59:00', 'IMP2-FAM-000468', NULL, NULL, NULL, NULL, 'ح', NULL, NULL, NULL, 'IMP2-493', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'عثمان حسن', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (469, 'حميراء الاصيفر الكباشي', NULL, NULL, NULL, 3, 3000.00, NULL, 'pending', 'Imported from sheet \"قاعده لمياء المحدثه\" row 495', 3, '2026-08-10 12:30:42', '2026-08-27 17:58:55', 'IMP2-FAM-000469', NULL, NULL, NULL, NULL, 'ح', NULL, NULL, NULL, 'IMP2-495', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'ابراهيم احمد', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (470, 'حميراء نجم الدين النور', NULL, NULL, NULL, 2, 3000.00, NULL, 'pending', 'Imported from sheet \"قاعده لمياء المحدثه\" row 498', 3, '2026-08-10 12:30:42', '2026-08-27 17:58:55', 'IMP2-FAM-000470', NULL, NULL, NULL, NULL, 'ح', NULL, NULL, NULL, 'IMP2-498', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'عصام احمد', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(471, 'حنان عبدو محمد صالح', NULL, NULL, NULL, 1, 6000.00, NULL, 'pending', 'Imported from sheet \"قاعده لمياء المحدثه\" row 503', 3, '2026-08-10 12:30:42', '2026-08-27 17:58:58', 'IMP2-FAM-000471', NULL, NULL, NULL, NULL, 'ح', NULL, NULL, NULL, 'IMP2-503', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'محمد عبدالمطلب', NULL, NULL, 'أرملة', NULL, NULL, NULL);
+(471, 'حنان عبدو محمد صالح', NULL, NULL, NULL, 1, 6000.00, NULL, 'pending', 'Imported from sheet \"قاعده لمياء المحدثه\" row 503', 3, '2026-08-10 12:30:42', '2026-08-27 17:58:58', 'IMP2-FAM-000471', NULL, NULL, NULL, NULL, 'ح', NULL, NULL, NULL, 'IMP2-503', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'محمد عبدالمطلب', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(472, 'حنان فرح قسم السيد', NULL, NULL, NULL, 2, 35000.00, NULL, 'pending', 'Imported from sheet \"قاعده لمياء المحدثه\" row 504', 3, '2026-08-10 12:30:42', '2026-08-30 20:59:57', 'IMP2-FAM-000472', NULL, NULL, NULL, NULL, 'ح', NULL, NULL, NULL, 'IMP2-504', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'حسن علي', NULL, NULL, 'أرملة', NULL, NULL, NULL);
 INSERT INTO `families` (`id`, `mother_name`, `mother_phone`, `mother_job`, `address`, `children_count`, `monthly_need_amount`, `medical_notes`, `status`, `notes`, `created_by`, `created_at`, `updated_at`, `family_code`, `mother_national_id`, `mother_birth_date`, `mother_alt_phone`, `mother_workplace`, `legacy_mother_first_letter`, `city`, `district`, `registration_date`, `registration_number`, `closure_date`, `closure_reason`, `supervisor_id`, `assigned_by`, `assigned_at`, `updated_by`, `nanny_id`, `bank_name`, `bank_account_number`, `bank_branch`, `bank_account_holder`, `father_name`, `father_death_date`, `father_death_cause`, `mother_marital_status`, `mother_bank_name`, `mother_bank_account`, `mother_bank_branch`) VALUES
-(472, 'حنان فرح قسم السيد', NULL, NULL, NULL, 2, 35000.00, NULL, 'pending', 'Imported from sheet \"قاعده لمياء المحدثه\" row 504', 3, '2026-08-10 12:30:42', '2026-08-30 20:59:57', 'IMP2-FAM-000472', NULL, NULL, NULL, NULL, 'ح', NULL, NULL, NULL, 'IMP2-504', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'حسن علي', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (473, 'حنان محمد علي', NULL, NULL, NULL, 2, 3000.00, NULL, 'pending', 'Imported from sheet \"قاعده لمياء المحدثه\" row 506', 3, '2026-08-10 12:30:42', '2026-08-27 17:58:57', 'IMP2-FAM-000473', NULL, NULL, NULL, NULL, 'ح', NULL, NULL, NULL, 'IMP2-506', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'علي موسي', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (474, 'حنان يس رحمه', NULL, NULL, NULL, 1, 4000.00, NULL, 'pending', 'Imported from sheet \"قاعده لمياء المحدثه\" row 508', 3, '2026-08-10 12:30:42', '2026-08-27 17:59:00', 'IMP2-FAM-000474', NULL, NULL, NULL, NULL, 'ح', NULL, NULL, NULL, 'IMP2-508', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'علي بندر', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (475, 'حواء ابوبكر موسي', NULL, NULL, NULL, 2, 2000.00, NULL, 'pending', 'Imported from sheet \"قاعده لمياء المحدثه\" row 509', 3, '2026-08-10 12:30:42', '2026-08-27 17:58:59', 'IMP2-FAM-000475', NULL, NULL, NULL, NULL, 'ح', NULL, NULL, NULL, 'IMP2-509', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'احمد عثمان', NULL, NULL, 'أرملة', NULL, NULL, NULL),
@@ -2375,9 +2379,9 @@ INSERT INTO `families` (`id`, `mother_name`, `mother_phone`, `mother_job`, `addr
 (597, 'سميه فضل سليمان', NULL, NULL, NULL, 3, 2000.00, NULL, 'pending', 'Imported from sheet \"قاعده لمياء المحدثه\" row 887', 3, '2026-08-10 12:30:46', '2026-08-27 17:58:53', 'IMP2-FAM-000597', NULL, NULL, NULL, NULL, 'س', NULL, NULL, NULL, 'IMP2-887', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'ياسر ابكر', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (598, 'سميه محمد احمد', '0912345003', NULL, NULL, 5, 10000.00, NULL, 'active', 'Imported from sheet \"قاعده لمياء المحدثه\" row 890', 3, '2026-08-10 12:30:46', '2026-08-27 17:58:58', 'IMP2-FAM-000598', NULL, NULL, '0123456003', NULL, 'س', NULL, NULL, NULL, 'IMP2-890', NULL, NULL, NULL, NULL, NULL, NULL, 16, 'بنك الخرطوم', '100000598', 'فرع أم درمان', 'سميه محمد احمد', 'مجلي محمد مصطفي', NULL, NULL, 'أرملة', 'بنك الخرطوم', '100000598', 'فرع أم درمان'),
 (599, 'سناء كرار يحي', NULL, NULL, NULL, 5, 2000.00, NULL, 'pending', 'Imported from sheet \"قاعده لمياء المحدثه\" row 895', 3, '2026-08-10 12:30:46', '2026-08-27 17:58:55', 'IMP2-FAM-000599', NULL, NULL, NULL, NULL, 'س', NULL, NULL, NULL, 'IMP2-895', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'محمد احمد', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(600, 'سناء محمد الشريف', NULL, NULL, NULL, 2, 4000.00, NULL, 'pending', 'Imported from sheet \"قاعده لمياء المحدثه\" row 900', 3, '2026-08-10 12:30:46', '2026-08-27 17:58:53', 'IMP2-FAM-000600', NULL, NULL, NULL, NULL, 'س', NULL, NULL, NULL, 'IMP2-900', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'محمد توم عبد المجيد', '2018-11-27', NULL, 'أرملة', NULL, NULL, NULL);
+(600, 'سناء محمد الشريف', NULL, NULL, NULL, 2, 4000.00, NULL, 'pending', 'Imported from sheet \"قاعده لمياء المحدثه\" row 900', 3, '2026-08-10 12:30:46', '2026-08-27 17:58:53', 'IMP2-FAM-000600', NULL, NULL, NULL, NULL, 'س', NULL, NULL, NULL, 'IMP2-900', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'محمد توم عبد المجيد', '2018-11-27', NULL, 'أرملة', NULL, NULL, NULL),
+(601, 'سهام اسماعيل بركه', '0912345004', NULL, NULL, 1, 35000.00, NULL, 'active', 'Imported from sheet \"قاعده لمياء المحدثه\" row 902', 3, '2026-08-10 12:30:46', '2026-08-27 18:00:50', 'IMP2-FAM-000601', NULL, NULL, '0123456004', NULL, 'س', NULL, NULL, NULL, 'IMP2-902', NULL, NULL, NULL, NULL, NULL, NULL, 16, 'بنك الخرطوم', '100000601', 'فرع أم درمان', 'سهام اسماعيل بركه', 'عبد الله النور', NULL, NULL, 'أرملة', 'بنك الخرطوم', '100000601', 'فرع أم درمان');
 INSERT INTO `families` (`id`, `mother_name`, `mother_phone`, `mother_job`, `address`, `children_count`, `monthly_need_amount`, `medical_notes`, `status`, `notes`, `created_by`, `created_at`, `updated_at`, `family_code`, `mother_national_id`, `mother_birth_date`, `mother_alt_phone`, `mother_workplace`, `legacy_mother_first_letter`, `city`, `district`, `registration_date`, `registration_number`, `closure_date`, `closure_reason`, `supervisor_id`, `assigned_by`, `assigned_at`, `updated_by`, `nanny_id`, `bank_name`, `bank_account_number`, `bank_branch`, `bank_account_holder`, `father_name`, `father_death_date`, `father_death_cause`, `mother_marital_status`, `mother_bank_name`, `mother_bank_account`, `mother_bank_branch`) VALUES
-(601, 'سهام اسماعيل بركه', '0912345004', NULL, NULL, 1, 35000.00, NULL, 'active', 'Imported from sheet \"قاعده لمياء المحدثه\" row 902', 3, '2026-08-10 12:30:46', '2026-08-27 18:00:50', 'IMP2-FAM-000601', NULL, NULL, '0123456004', NULL, 'س', NULL, NULL, NULL, 'IMP2-902', NULL, NULL, NULL, NULL, NULL, NULL, 16, 'بنك الخرطوم', '100000601', 'فرع أم درمان', 'سهام اسماعيل بركه', 'عبد الله النور', NULL, NULL, 'أرملة', 'بنك الخرطوم', '100000601', 'فرع أم درمان'),
 (602, 'سهام جعفر يحي', NULL, NULL, NULL, 2, 3000.00, NULL, 'pending', 'Imported from sheet \"قاعده لمياء المحدثه\" row 903', 3, '2026-08-10 12:30:46', '2026-08-27 17:58:56', 'IMP2-FAM-000602', NULL, NULL, NULL, NULL, 'س', NULL, NULL, NULL, 'IMP2-903', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'الرضي كمال', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (603, 'سهام حسن عبد الله', NULL, NULL, NULL, 4, 14500.00, NULL, 'pending', 'Imported from sheet \"قاعده لمياء المحدثه\" row 905', 3, '2026-08-10 12:30:46', '2026-08-27 17:58:59', 'IMP2-FAM-000603', NULL, NULL, NULL, NULL, 'س', NULL, NULL, NULL, 'IMP2-905', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'النور محمد عثمان', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (604, 'سهام عبد الجليل', NULL, NULL, NULL, 3, 3000.00, NULL, 'pending', 'Imported from sheet \"قاعده لمياء المحدثه\" row 909', 3, '2026-08-10 12:30:46', '2026-08-27 17:58:59', 'IMP2-FAM-000604', NULL, NULL, NULL, NULL, 'س', NULL, NULL, NULL, 'IMP2-909', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'محمد عبيدي', NULL, NULL, 'أرملة', NULL, NULL, NULL),
@@ -2506,9 +2510,9 @@ INSERT INTO `families` (`id`, `mother_name`, `mother_phone`, `mother_job`, `addr
 (727, 'كبري احمد ابكر', NULL, NULL, NULL, 5, 2000.00, NULL, 'pending', 'Imported from sheet \"قاعده لمياء المحدثه\" row 1290', 3, '2026-08-10 12:30:50', '2026-08-27 17:58:54', 'IMP2-FAM-000727', NULL, NULL, NULL, NULL, 'ك', NULL, NULL, NULL, 'IMP2-1290', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'موسي النيل عمر', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (728, 'كلتوم محمد ابكر', NULL, NULL, NULL, 2, 3000.00, NULL, 'pending', 'Imported from sheet \"قاعده لمياء المحدثه\" row 1294', 3, '2026-08-10 12:30:50', '2026-08-27 17:58:54', 'IMP2-FAM-000728', NULL, NULL, NULL, NULL, 'ك', NULL, NULL, NULL, 'IMP2-1294', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'هارون ادم خاطر جماع', '2011-11-17', NULL, 'أرملة', NULL, NULL, NULL),
 (729, 'كلثوم ادم محمد', NULL, NULL, NULL, 2, 3000.00, NULL, 'pending', 'Imported from sheet \"قاعده لمياء المحدثه\" row 1296', 3, '2026-08-10 12:30:50', '2026-08-27 17:59:00', 'IMP2-FAM-000729', NULL, NULL, NULL, NULL, 'ك', NULL, NULL, NULL, 'IMP2-1296', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'احمد حسن', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(730, 'كلثوم حماد الطاهر', NULL, NULL, NULL, 1, 6000.00, NULL, 'pending', 'Imported from sheet \"قاعده لمياء المحدثه\" row 1298', 3, '2026-08-10 12:30:50', '2026-08-27 17:58:58', 'IMP2-FAM-000730', NULL, NULL, NULL, NULL, 'ك', NULL, NULL, NULL, 'IMP2-1298', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'علي داؤود علي', NULL, NULL, 'أرملة', NULL, NULL, NULL);
+(730, 'كلثوم حماد الطاهر', NULL, NULL, NULL, 1, 6000.00, NULL, 'pending', 'Imported from sheet \"قاعده لمياء المحدثه\" row 1298', 3, '2026-08-10 12:30:50', '2026-08-27 17:58:58', 'IMP2-FAM-000730', NULL, NULL, NULL, NULL, 'ك', NULL, NULL, NULL, 'IMP2-1298', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'علي داؤود علي', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(731, 'كوثر احمد ادم', NULL, NULL, NULL, 2, 2000.00, NULL, 'pending', 'Imported from sheet \"قاعده لمياء المحدثه\" row 1299', 3, '2026-08-10 12:30:50', '2026-08-27 17:58:54', 'IMP2-FAM-000731', NULL, NULL, NULL, NULL, 'ك', NULL, NULL, NULL, 'IMP2-1299', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'سليمان محمد', NULL, NULL, 'أرملة', NULL, NULL, NULL);
 INSERT INTO `families` (`id`, `mother_name`, `mother_phone`, `mother_job`, `address`, `children_count`, `monthly_need_amount`, `medical_notes`, `status`, `notes`, `created_by`, `created_at`, `updated_at`, `family_code`, `mother_national_id`, `mother_birth_date`, `mother_alt_phone`, `mother_workplace`, `legacy_mother_first_letter`, `city`, `district`, `registration_date`, `registration_number`, `closure_date`, `closure_reason`, `supervisor_id`, `assigned_by`, `assigned_at`, `updated_by`, `nanny_id`, `bank_name`, `bank_account_number`, `bank_branch`, `bank_account_holder`, `father_name`, `father_death_date`, `father_death_cause`, `mother_marital_status`, `mother_bank_name`, `mother_bank_account`, `mother_bank_branch`) VALUES
-(731, 'كوثر احمد ادم', NULL, NULL, NULL, 2, 2000.00, NULL, 'pending', 'Imported from sheet \"قاعده لمياء المحدثه\" row 1299', 3, '2026-08-10 12:30:50', '2026-08-27 17:58:54', 'IMP2-FAM-000731', NULL, NULL, NULL, NULL, 'ك', NULL, NULL, NULL, 'IMP2-1299', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'سليمان محمد', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (732, 'كوثر حامد الزمزمي', NULL, NULL, NULL, 4, 3000.00, NULL, 'pending', 'Imported from sheet \"قاعده لمياء المحدثه\" row 1301', 3, '2026-08-10 12:30:50', '2026-08-27 17:58:54', 'IMP2-FAM-000732', NULL, NULL, NULL, NULL, 'ك', NULL, NULL, NULL, 'IMP2-1301', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'طارق عوض', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (733, 'كوثر عمر عبد الله الغاء لانها كذبت قالت مابتجيها كفاله بتاريخ 24\\5\\2024', NULL, NULL, NULL, 1, 5500.00, NULL, 'pending', 'Imported from sheet \"قاعده لمياء المحدثه\" row 1305', 3, '2026-08-10 12:30:50', '2026-08-27 17:57:33', 'IMP2-FAM-000733', NULL, NULL, NULL, NULL, 'ك', NULL, NULL, NULL, 'IMP2-1305', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'ناصر كباشي', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (734, 'كوثر يوسف عبدالرازق', NULL, NULL, NULL, 2, 3000.00, NULL, 'pending', 'Imported from sheet \"قاعده لمياء المحدثه\" row 1306', 3, '2026-08-10 12:30:50', '2026-08-27 17:59:01', 'IMP2-FAM-000734', NULL, NULL, NULL, NULL, 'ك', NULL, NULL, NULL, 'IMP2-1306', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'رحمه حسن', NULL, NULL, 'أرملة', NULL, NULL, NULL),
@@ -2636,9 +2640,9 @@ INSERT INTO `families` (`id`, `mother_name`, `mother_phone`, `mother_job`, `addr
 (856, 'نسرين عبد الرسول احمد عيسي', NULL, NULL, NULL, 4, 2000.00, NULL, 'pending', 'Imported from sheet \"قاعده لمياء المحدثه\" row 1628', 3, '2026-08-10 12:34:22', '2026-08-27 17:58:54', 'IMP2-FAM-000856', NULL, NULL, NULL, NULL, 'ن', NULL, NULL, NULL, 'IMP2-1628', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'عوض ابراهيم موسى', '2019-11-10', NULL, 'أرملة', NULL, NULL, NULL),
 (857, 'نسرين محمد عبد الباقي', NULL, NULL, NULL, 6, 2000.00, NULL, 'pending', 'Imported from sheet \"قاعده لمياء المحدثه\" row 1632', 3, '2026-08-10 12:34:22', '2026-08-27 17:58:54', 'IMP2-FAM-000857', NULL, NULL, NULL, NULL, 'ن', NULL, NULL, NULL, 'IMP2-1632', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'محمد عبد القادر الصديق', '2017-05-29', NULL, 'أرملة', NULL, NULL, NULL),
 (858, 'نصره عمر فضل الله', NULL, NULL, NULL, 2, 9375.00, NULL, 'pending', 'Imported from sheet \"قاعده لمياء المحدثه\" row 1638', 3, '2026-08-10 12:34:23', '2026-08-27 17:59:00', 'IMP2-FAM-000858', NULL, NULL, NULL, NULL, 'ن', NULL, NULL, NULL, 'IMP2-1638', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'احمد محمد', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(859, 'نضال شلبي محمد', NULL, NULL, NULL, 2, 3000.00, NULL, 'pending', 'Imported from sheet \"قاعده لمياء المحدثه\" row 1640', 3, '2026-08-10 12:34:23', '2026-08-27 17:59:01', 'IMP2-FAM-000859', NULL, NULL, NULL, NULL, 'ن', NULL, NULL, NULL, 'IMP2-1640', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'عبدالمجيد عبدالغني', NULL, NULL, 'أرملة', NULL, NULL, NULL);
+(859, 'نضال شلبي محمد', NULL, NULL, NULL, 2, 3000.00, NULL, 'pending', 'Imported from sheet \"قاعده لمياء المحدثه\" row 1640', 3, '2026-08-10 12:34:23', '2026-08-27 17:59:01', 'IMP2-FAM-000859', NULL, NULL, NULL, NULL, 'ن', NULL, NULL, NULL, 'IMP2-1640', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'عبدالمجيد عبدالغني', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(860, 'نعمات زكريا عبدالرحيم', NULL, NULL, NULL, 1, 4000.00, NULL, 'pending', 'Imported from sheet \"قاعده لمياء المحدثه\" row 1642', 3, '2026-08-10 12:34:23', '2026-08-27 17:58:59', 'IMP2-FAM-000860', NULL, NULL, NULL, NULL, 'ن', NULL, NULL, NULL, 'IMP2-1642', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'عيد خليفه', NULL, NULL, 'أرملة', NULL, NULL, NULL);
 INSERT INTO `families` (`id`, `mother_name`, `mother_phone`, `mother_job`, `address`, `children_count`, `monthly_need_amount`, `medical_notes`, `status`, `notes`, `created_by`, `created_at`, `updated_at`, `family_code`, `mother_national_id`, `mother_birth_date`, `mother_alt_phone`, `mother_workplace`, `legacy_mother_first_letter`, `city`, `district`, `registration_date`, `registration_number`, `closure_date`, `closure_reason`, `supervisor_id`, `assigned_by`, `assigned_at`, `updated_by`, `nanny_id`, `bank_name`, `bank_account_number`, `bank_branch`, `bank_account_holder`, `father_name`, `father_death_date`, `father_death_cause`, `mother_marital_status`, `mother_bank_name`, `mother_bank_account`, `mother_bank_branch`) VALUES
-(860, 'نعمات زكريا عبدالرحيم', NULL, NULL, NULL, 1, 4000.00, NULL, 'pending', 'Imported from sheet \"قاعده لمياء المحدثه\" row 1642', 3, '2026-08-10 12:34:23', '2026-08-27 17:58:59', 'IMP2-FAM-000860', NULL, NULL, NULL, NULL, 'ن', NULL, NULL, NULL, 'IMP2-1642', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'عيد خليفه', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (861, 'نعمات معاذ محمد', NULL, NULL, NULL, 3, 2000.00, NULL, 'pending', 'Imported from sheet \"قاعده لمياء المحدثه\" row 1643', 3, '2026-08-10 12:34:23', '2026-08-27 17:58:54', 'IMP2-FAM-000861', NULL, NULL, NULL, NULL, 'ن', NULL, NULL, NULL, 'IMP2-1643', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'ابوبكر حسن عمر ادريس', '2018-09-05', NULL, 'أرملة', NULL, NULL, NULL),
 (862, 'نعمات ناصر ضو البيت', NULL, NULL, NULL, 1, 24000.00, NULL, 'pending', 'Imported from sheet \"قاعده لمياء المحدثه\" row 1646', 3, '2026-08-10 12:34:23', '2026-08-30 20:59:57', 'IMP2-FAM-000862', NULL, NULL, NULL, NULL, 'ن', NULL, NULL, NULL, 'IMP2-1646', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'احمد محمد', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (863, 'نعمات هاشم سليمان', NULL, NULL, NULL, 2, 2000.00, NULL, 'pending', 'Imported from sheet \"قاعده لمياء المحدثه\" row 1647', 3, '2026-08-10 12:34:23', '2026-08-27 17:59:00', 'IMP2-FAM-000863', NULL, NULL, NULL, NULL, 'ن', NULL, NULL, NULL, 'IMP2-1647', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'محمد احمد علي', NULL, NULL, 'أرملة', NULL, NULL, NULL),
@@ -2770,10 +2774,10 @@ INSERT INTO `families` (`id`, `mother_name`, `mother_phone`, `mother_job`, `addr
 (990, 'كوثر عمر عبدالله', NULL, NULL, NULL, 1, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:43', '2026-08-30 17:36:11', 'IMP-FAM-000990', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'ناصر كباشي سومر', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (991, 'سميه فضل دكر', NULL, NULL, NULL, 3, 40000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:43', '2026-08-30 20:59:57', 'IMP-FAM-000991', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'فتح الرحمن الامين', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (992, 'سميه فضل ذكر', NULL, NULL, NULL, 1, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:43', '2026-08-30 17:36:11', 'IMP-FAM-000992', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'فتح الرحمن الامين', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(993, 'عبير طارق نصر الدين', NULL, NULL, NULL, 3, 30000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:43', '2026-08-30 17:36:11', 'IMP-FAM-000993', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'خالد ناصر عبدالقادر', NULL, NULL, 'أرملة', NULL, NULL, NULL);
-INSERT INTO `families` (`id`, `mother_name`, `mother_phone`, `mother_job`, `address`, `children_count`, `monthly_need_amount`, `medical_notes`, `status`, `notes`, `created_by`, `created_at`, `updated_at`, `family_code`, `mother_national_id`, `mother_birth_date`, `mother_alt_phone`, `mother_workplace`, `legacy_mother_first_letter`, `city`, `district`, `registration_date`, `registration_number`, `closure_date`, `closure_reason`, `supervisor_id`, `assigned_by`, `assigned_at`, `updated_by`, `nanny_id`, `bank_name`, `bank_account_number`, `bank_branch`, `bank_account_holder`, `father_name`, `father_death_date`, `father_death_cause`, `mother_marital_status`, `mother_bank_name`, `mother_bank_account`, `mother_bank_branch`) VALUES
+(993, 'عبير طارق نصر الدين', NULL, NULL, NULL, 3, 30000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:43', '2026-08-30 17:36:11', 'IMP-FAM-000993', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'خالد ناصر عبدالقادر', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (994, 'فتحيه ربي رضاك عبدالمعطي', NULL, NULL, NULL, 2, 30000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:43', '2026-08-30 20:59:57', 'IMP-FAM-000994', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'عبدالرحمن عثمان عبدالرحمن', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(995, 'فتحيه ربي رضاك عبد المعطي', NULL, NULL, NULL, 1, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:43', '2026-08-30 17:36:11', 'IMP-FAM-000995', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'عبد الرحمن عثمان عبد الرحمن', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(995, 'فتحيه ربي رضاك عبد المعطي', NULL, NULL, NULL, 1, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:43', '2026-08-30 17:36:11', 'IMP-FAM-000995', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'عبد الرحمن عثمان عبد الرحمن', NULL, NULL, 'أرملة', NULL, NULL, NULL);
+INSERT INTO `families` (`id`, `mother_name`, `mother_phone`, `mother_job`, `address`, `children_count`, `monthly_need_amount`, `medical_notes`, `status`, `notes`, `created_by`, `created_at`, `updated_at`, `family_code`, `mother_national_id`, `mother_birth_date`, `mother_alt_phone`, `mother_workplace`, `legacy_mother_first_letter`, `city`, `district`, `registration_date`, `registration_number`, `closure_date`, `closure_reason`, `supervisor_id`, `assigned_by`, `assigned_at`, `updated_by`, `nanny_id`, `bank_name`, `bank_account_number`, `bank_branch`, `bank_account_holder`, `father_name`, `father_death_date`, `father_death_cause`, `mother_marital_status`, `mother_bank_name`, `mother_bank_account`, `mother_bank_branch`) VALUES
 (996, 'راقيه عبدالرحمن عبدالقادر', NULL, NULL, NULL, 3, 30000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:43', '2026-08-30 17:36:11', 'IMP-FAM-000996', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'عبدالله محمد علي', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (997, 'رهام عطا المنان محمد', NULL, NULL, NULL, 4, 40000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:43', '2026-08-30 17:36:11', 'IMP-FAM-000997', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'فاروق عبدالحفيظ عبدالرازق', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (998, 'زينب عزت يحي', NULL, NULL, NULL, 1, 20000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:43', '2026-08-30 20:59:57', 'IMP-FAM-000998', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'طه بشير اسماعيل', NULL, NULL, 'أرملة', NULL, NULL, NULL),
@@ -2915,10 +2919,10 @@ INSERT INTO `families` (`id`, `mother_name`, `mother_phone`, `mother_job`, `addr
 (1134, 'سلمي الحسين ابراهيم', NULL, NULL, NULL, 4, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:45', '2026-08-30 17:36:11', 'IMP-FAM-001134', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'عبد الرحمن بابكر', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (1135, 'امنه عبد الكريم عبدالله', NULL, NULL, NULL, 5, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:45', '2026-08-30 17:36:11', 'IMP-FAM-001135', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'حسن موسي', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (1136, 'ايمان العجب حميدان', NULL, NULL, NULL, 4, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:45', '2026-08-30 17:36:11', 'IMP-FAM-001136', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'علاء الدين محمد العوض', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(1137, 'عزه علي محمد الحسن', NULL, NULL, NULL, 0, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:46', '2026-08-30 17:36:11', 'IMP-FAM-001137', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL);
-INSERT INTO `families` (`id`, `mother_name`, `mother_phone`, `mother_job`, `address`, `children_count`, `monthly_need_amount`, `medical_notes`, `status`, `notes`, `created_by`, `created_at`, `updated_at`, `family_code`, `mother_national_id`, `mother_birth_date`, `mother_alt_phone`, `mother_workplace`, `legacy_mother_first_letter`, `city`, `district`, `registration_date`, `registration_number`, `closure_date`, `closure_reason`, `supervisor_id`, `assigned_by`, `assigned_at`, `updated_by`, `nanny_id`, `bank_name`, `bank_account_number`, `bank_branch`, `bank_account_holder`, `father_name`, `father_death_date`, `father_death_cause`, `mother_marital_status`, `mother_bank_name`, `mother_bank_account`, `mother_bank_branch`) VALUES
+(1137, 'عزه علي محمد الحسن', NULL, NULL, NULL, 0, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:46', '2026-08-30 17:36:11', 'IMP-FAM-001137', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (1138, 'ريم عبدالله محمد', NULL, NULL, NULL, 3, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:46', '2026-08-30 17:36:11', 'IMP-FAM-001138', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'فيصل عثمان محمد احمد', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(1139, 'فاطمه محمد عبدالرحمن', NULL, NULL, NULL, 3, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:46', '2026-08-30 17:36:11', 'IMP-FAM-001139', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'علاء الدين الصادق', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(1139, 'فاطمه محمد عبدالرحمن', NULL, NULL, NULL, 3, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:46', '2026-08-30 17:36:11', 'IMP-FAM-001139', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'علاء الدين الصادق', NULL, NULL, 'أرملة', NULL, NULL, NULL);
+INSERT INTO `families` (`id`, `mother_name`, `mother_phone`, `mother_job`, `address`, `children_count`, `monthly_need_amount`, `medical_notes`, `status`, `notes`, `created_by`, `created_at`, `updated_at`, `family_code`, `mother_national_id`, `mother_birth_date`, `mother_alt_phone`, `mother_workplace`, `legacy_mother_first_letter`, `city`, `district`, `registration_date`, `registration_number`, `closure_date`, `closure_reason`, `supervisor_id`, `assigned_by`, `assigned_at`, `updated_by`, `nanny_id`, `bank_name`, `bank_account_number`, `bank_branch`, `bank_account_holder`, `father_name`, `father_death_date`, `father_death_cause`, `mother_marital_status`, `mother_bank_name`, `mother_bank_account`, `mother_bank_branch`) VALUES
 (1140, 'معزه ادم عبدالله', NULL, NULL, NULL, 5, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:46', '2026-08-30 17:36:11', 'IMP-FAM-001140', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'المعز محمد عبد لله', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (1141, 'بخيته عبدالله جبريل', NULL, NULL, NULL, 4, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:46', '2026-08-30 17:36:11', 'IMP-FAM-001141', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'ياسر عوض محمد', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (1142, 'سيده سعيد النور', NULL, NULL, NULL, 3, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:46', '2026-08-30 17:36:11', 'IMP-FAM-001142', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'عباس ويدان التوم', NULL, NULL, 'أرملة', NULL, NULL, NULL),
@@ -3061,10 +3065,10 @@ INSERT INTO `families` (`id`, `mother_name`, `mother_phone`, `mother_job`, `addr
 (1279, 'سيده هاشم علي', NULL, NULL, NULL, 2, 60000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:48', '2026-08-30 17:36:11', 'IMP-FAM-001279', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'محمد سيف علي', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (1280, 'سعاد احمد الحسين', NULL, NULL, NULL, 1, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:48', '2026-08-30 17:36:11', 'IMP-FAM-001280', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'احمد محمد', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (1281, 'اميمه نور الدين ابو زيد', NULL, NULL, NULL, 1, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:48', '2026-08-30 17:36:11', 'IMP-FAM-001281', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'صلاح عبد القادر', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(1282, 'عايده هاشم الضو', NULL, NULL, NULL, 2, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:48', '2026-08-30 17:36:11', 'IMP-FAM-001282', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'عصام الدين الطيب احمد', NULL, NULL, 'أرملة', NULL, NULL, NULL);
-INSERT INTO `families` (`id`, `mother_name`, `mother_phone`, `mother_job`, `address`, `children_count`, `monthly_need_amount`, `medical_notes`, `status`, `notes`, `created_by`, `created_at`, `updated_at`, `family_code`, `mother_national_id`, `mother_birth_date`, `mother_alt_phone`, `mother_workplace`, `legacy_mother_first_letter`, `city`, `district`, `registration_date`, `registration_number`, `closure_date`, `closure_reason`, `supervisor_id`, `assigned_by`, `assigned_at`, `updated_by`, `nanny_id`, `bank_name`, `bank_account_number`, `bank_branch`, `bank_account_holder`, `father_name`, `father_death_date`, `father_death_cause`, `mother_marital_status`, `mother_bank_name`, `mother_bank_account`, `mother_bank_branch`) VALUES
+(1282, 'عايده هاشم الضو', NULL, NULL, NULL, 2, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:48', '2026-08-30 17:36:11', 'IMP-FAM-001282', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'عصام الدين الطيب احمد', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (1283, 'نجلاء قسم الغني سالم', NULL, NULL, NULL, 1, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:48', '2026-08-30 17:36:11', 'IMP-FAM-001283', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'كرم الله', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(1284, 'قسوم خالد سيد الجاك', NULL, NULL, NULL, 3, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:48', '2026-08-30 17:36:11', 'IMP-FAM-001284', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'جاه الرسول عبد الرحمن احمد', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(1284, 'قسوم خالد سيد الجاك', NULL, NULL, NULL, 3, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:48', '2026-08-30 17:36:11', 'IMP-FAM-001284', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'جاه الرسول عبد الرحمن احمد', NULL, NULL, 'أرملة', NULL, NULL, NULL);
+INSERT INTO `families` (`id`, `mother_name`, `mother_phone`, `mother_job`, `address`, `children_count`, `monthly_need_amount`, `medical_notes`, `status`, `notes`, `created_by`, `created_at`, `updated_at`, `family_code`, `mother_national_id`, `mother_birth_date`, `mother_alt_phone`, `mother_workplace`, `legacy_mother_first_letter`, `city`, `district`, `registration_date`, `registration_number`, `closure_date`, `closure_reason`, `supervisor_id`, `assigned_by`, `assigned_at`, `updated_by`, `nanny_id`, `bank_name`, `bank_account_number`, `bank_branch`, `bank_account_holder`, `father_name`, `father_death_date`, `father_death_cause`, `mother_marital_status`, `mother_bank_name`, `mother_bank_account`, `mother_bank_branch`) VALUES
 (1285, 'مواهب مصطفي خلف الله', NULL, NULL, NULL, 5, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:48', '2026-08-30 17:36:11', 'IMP-FAM-001285', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'احمد الرشيد سيد احمد', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (1286, 'سوزان اور ناصر', NULL, NULL, NULL, 2, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:48', '2026-08-30 17:36:11', 'IMP-FAM-001286', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'بخاري عبد الله عبد القادر', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (1287, 'عرفه موسي عيسي', NULL, NULL, NULL, 4, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:48', '2026-08-30 17:36:11', 'IMP-FAM-001287', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'زكريا السيد احمد', NULL, NULL, 'أرملة', NULL, NULL, NULL),
@@ -3206,11 +3210,11 @@ INSERT INTO `families` (`id`, `mother_name`, `mother_phone`, `mother_job`, `addr
 (1423, 'زينب علي محمد', NULL, NULL, NULL, 2, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:50', '2026-08-30 17:36:11', 'IMP-FAM-001423', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'ابكر محمد عيسي', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (1424, 'حرم عبدالله يعقوب', NULL, NULL, NULL, 2, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:50', '2026-08-30 17:36:11', 'IMP-FAM-001424', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'عبد العزيز ادم اسحق', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (1425, 'صفاء احمد محمد', NULL, NULL, NULL, 3, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:50', '2026-08-30 17:36:11', 'IMP-FAM-001425', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'بكري احمد جوده', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(1426, 'زهور محمد سعيد', NULL, NULL, NULL, 5, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:50', '2026-08-30 17:36:11', 'IMP-FAM-001426', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'فتح الرحمن عبد اللطيف', NULL, NULL, 'أرملة', NULL, NULL, NULL);
-INSERT INTO `families` (`id`, `mother_name`, `mother_phone`, `mother_job`, `address`, `children_count`, `monthly_need_amount`, `medical_notes`, `status`, `notes`, `created_by`, `created_at`, `updated_at`, `family_code`, `mother_national_id`, `mother_birth_date`, `mother_alt_phone`, `mother_workplace`, `legacy_mother_first_letter`, `city`, `district`, `registration_date`, `registration_number`, `closure_date`, `closure_reason`, `supervisor_id`, `assigned_by`, `assigned_at`, `updated_by`, `nanny_id`, `bank_name`, `bank_account_number`, `bank_branch`, `bank_account_holder`, `father_name`, `father_death_date`, `father_death_cause`, `mother_marital_status`, `mother_bank_name`, `mother_bank_account`, `mother_bank_branch`) VALUES
+(1426, 'زهور محمد سعيد', NULL, NULL, NULL, 5, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:50', '2026-08-30 17:36:11', 'IMP-FAM-001426', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'فتح الرحمن عبد اللطيف', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (1427, 'عوضيه عبدالله مهدي', NULL, NULL, NULL, 2, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:50', '2026-08-30 17:36:11', 'IMP-FAM-001427', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'محمد نور حمزه خوجلي', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (1428, 'مي عبدالرحمن عبدالماجد', NULL, NULL, NULL, 2, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:50', '2026-08-30 17:36:11', 'IMP-FAM-001428', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'احمد محمد سعد', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(1429, 'رنده موسي شريف', NULL, NULL, NULL, 1, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:50', '2026-08-30 17:36:11', 'IMP-FAM-001429', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'معتصم عثمان', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(1429, 'رنده موسي شريف', NULL, NULL, NULL, 1, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:50', '2026-08-30 17:36:11', 'IMP-FAM-001429', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'معتصم عثمان', NULL, NULL, 'أرملة', NULL, NULL, NULL);
+INSERT INTO `families` (`id`, `mother_name`, `mother_phone`, `mother_job`, `address`, `children_count`, `monthly_need_amount`, `medical_notes`, `status`, `notes`, `created_by`, `created_at`, `updated_at`, `family_code`, `mother_national_id`, `mother_birth_date`, `mother_alt_phone`, `mother_workplace`, `legacy_mother_first_letter`, `city`, `district`, `registration_date`, `registration_number`, `closure_date`, `closure_reason`, `supervisor_id`, `assigned_by`, `assigned_at`, `updated_by`, `nanny_id`, `bank_name`, `bank_account_number`, `bank_branch`, `bank_account_holder`, `father_name`, `father_death_date`, `father_death_cause`, `mother_marital_status`, `mother_bank_name`, `mother_bank_account`, `mother_bank_branch`) VALUES
 (1430, 'مريم جعفر حسن', NULL, NULL, NULL, 3, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:50', '2026-08-30 17:36:11', 'IMP-FAM-001430', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'عبد الرحمن ابراهيم خالد', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (1431, 'اسماء محمد موسي', NULL, NULL, NULL, 2, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:50', '2026-08-30 17:36:11', 'IMP-FAM-001431', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'عوض بشير مصطفي', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (1432, 'مدينه صالح عسل', NULL, NULL, NULL, 1, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:50', '2026-08-30 17:36:11', 'IMP-FAM-001432', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'اسماعيل عبد الله', NULL, NULL, 'أرملة', NULL, NULL, NULL),
@@ -3351,11 +3355,11 @@ INSERT INTO `families` (`id`, `mother_name`, `mother_phone`, `mother_job`, `addr
 (1567, 'نهاد محمد عبد الله', NULL, NULL, NULL, 4, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:51', '2026-08-30 17:36:11', 'IMP-FAM-001567', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'نزار الخير احمد', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (1568, 'مناهل عبد الله ابراهيم', NULL, NULL, NULL, 1, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:51', '2026-08-30 17:36:11', 'IMP-FAM-001568', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'خضر جودات ابراهيم', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (1569, 'نعمات عوض الله محمد', NULL, NULL, NULL, 1, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:51', '2026-08-30 17:36:11', 'IMP-FAM-001569', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'عبد الله الحاج ابراهيم', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(1570, 'وداد عبدون محمد', NULL, NULL, NULL, 1, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:51', '2026-08-30 17:36:11', 'IMP-FAM-001570', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'خالد عبد الله محمد', NULL, NULL, 'أرملة', NULL, NULL, NULL);
-INSERT INTO `families` (`id`, `mother_name`, `mother_phone`, `mother_job`, `address`, `children_count`, `monthly_need_amount`, `medical_notes`, `status`, `notes`, `created_by`, `created_at`, `updated_at`, `family_code`, `mother_national_id`, `mother_birth_date`, `mother_alt_phone`, `mother_workplace`, `legacy_mother_first_letter`, `city`, `district`, `registration_date`, `registration_number`, `closure_date`, `closure_reason`, `supervisor_id`, `assigned_by`, `assigned_at`, `updated_by`, `nanny_id`, `bank_name`, `bank_account_number`, `bank_branch`, `bank_account_holder`, `father_name`, `father_death_date`, `father_death_cause`, `mother_marital_status`, `mother_bank_name`, `mother_bank_account`, `mother_bank_branch`) VALUES
+(1570, 'وداد عبدون محمد', NULL, NULL, NULL, 1, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:51', '2026-08-30 17:36:11', 'IMP-FAM-001570', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'خالد عبد الله محمد', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (1571, 'عايده محمود الصافي', NULL, NULL, NULL, 3, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:51', '2026-08-30 17:36:11', 'IMP-FAM-001571', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'عبدالماجد الطيب عيسي', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (1572, 'عزة بدوي محمد', NULL, NULL, NULL, 2, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:51', '2026-08-30 17:36:11', 'IMP-FAM-001572', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'موسي الصادق ادم', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(1573, 'زينب نعيم عارف', NULL, NULL, NULL, 1, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:51', '2026-08-30 17:36:11', 'IMP-FAM-001573', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'محمد عمر حامد', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(1573, 'زينب نعيم عارف', NULL, NULL, NULL, 1, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:51', '2026-08-30 17:36:11', 'IMP-FAM-001573', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'محمد عمر حامد', NULL, NULL, 'أرملة', NULL, NULL, NULL);
+INSERT INTO `families` (`id`, `mother_name`, `mother_phone`, `mother_job`, `address`, `children_count`, `monthly_need_amount`, `medical_notes`, `status`, `notes`, `created_by`, `created_at`, `updated_at`, `family_code`, `mother_national_id`, `mother_birth_date`, `mother_alt_phone`, `mother_workplace`, `legacy_mother_first_letter`, `city`, `district`, `registration_date`, `registration_number`, `closure_date`, `closure_reason`, `supervisor_id`, `assigned_by`, `assigned_at`, `updated_by`, `nanny_id`, `bank_name`, `bank_account_number`, `bank_branch`, `bank_account_holder`, `father_name`, `father_death_date`, `father_death_cause`, `mother_marital_status`, `mother_bank_name`, `mother_bank_account`, `mother_bank_branch`) VALUES
 (1574, 'التومه احمد ابراهيم', NULL, NULL, NULL, 3, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:52', '2026-08-30 17:36:11', 'IMP-FAM-001574', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'ابراهيم يحي ابراهيم', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (1575, 'موده بابكر محمد', NULL, NULL, NULL, 1, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:52', '2026-08-30 17:36:11', 'IMP-FAM-001575', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'ابراهيم جاد كريم محمد', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (1576, 'الرضينه حامد علي', NULL, NULL, NULL, 2, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:52', '2026-08-30 17:36:11', 'IMP-FAM-001576', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'عادل اسماعيل امبدي', NULL, NULL, 'أرملة', NULL, NULL, NULL),
@@ -3496,11 +3500,11 @@ INSERT INTO `families` (`id`, `mother_name`, `mother_phone`, `mother_job`, `addr
 (1711, 'عائشه عمر النور', NULL, NULL, NULL, 2, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:53', '2026-08-30 17:36:11', 'IMP-FAM-001711', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'ياسر محمد هلال', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (1712, 'ساره جون تعبان', NULL, NULL, NULL, 4, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:53', '2026-08-30 17:36:11', 'IMP-FAM-001712', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'فضل الله احمد حمد', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (1713, 'اسراء صديق احمد', NULL, NULL, NULL, 3, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:53', '2026-08-30 17:36:11', 'IMP-FAM-001713', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'رياض احمد عبد الماجد', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(1714, 'خيرات الشيخ محمد', NULL, NULL, NULL, 2, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:53', '2026-08-30 17:36:11', 'IMP-FAM-001714', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'مزمل عتيق الله ناصر', NULL, NULL, 'أرملة', NULL, NULL, NULL);
-INSERT INTO `families` (`id`, `mother_name`, `mother_phone`, `mother_job`, `address`, `children_count`, `monthly_need_amount`, `medical_notes`, `status`, `notes`, `created_by`, `created_at`, `updated_at`, `family_code`, `mother_national_id`, `mother_birth_date`, `mother_alt_phone`, `mother_workplace`, `legacy_mother_first_letter`, `city`, `district`, `registration_date`, `registration_number`, `closure_date`, `closure_reason`, `supervisor_id`, `assigned_by`, `assigned_at`, `updated_by`, `nanny_id`, `bank_name`, `bank_account_number`, `bank_branch`, `bank_account_holder`, `father_name`, `father_death_date`, `father_death_cause`, `mother_marital_status`, `mother_bank_name`, `mother_bank_account`, `mother_bank_branch`) VALUES
+(1714, 'خيرات الشيخ محمد', NULL, NULL, NULL, 2, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:53', '2026-08-30 17:36:11', 'IMP-FAM-001714', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'مزمل عتيق الله ناصر', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (1715, 'اجلال سعد عبد الرحمن', NULL, NULL, NULL, 2, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:53', '2026-08-30 17:36:11', 'IMP-FAM-001715', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'تاج الدين علي الحبيب', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (1716, 'اميره حسن احمد', NULL, NULL, NULL, 2, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:53', '2026-08-30 17:36:11', 'IMP-FAM-001716', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'جعفر عبد الرحمن محمد', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(1717, 'حليمه يعقوب رماد', NULL, NULL, NULL, 6, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:53', '2026-08-30 17:36:11', 'IMP-FAM-001717', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'خميني احمد محمود', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(1717, 'حليمه يعقوب رماد', NULL, NULL, NULL, 6, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:53', '2026-08-30 17:36:11', 'IMP-FAM-001717', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'خميني احمد محمود', NULL, NULL, 'أرملة', NULL, NULL, NULL);
+INSERT INTO `families` (`id`, `mother_name`, `mother_phone`, `mother_job`, `address`, `children_count`, `monthly_need_amount`, `medical_notes`, `status`, `notes`, `created_by`, `created_at`, `updated_at`, `family_code`, `mother_national_id`, `mother_birth_date`, `mother_alt_phone`, `mother_workplace`, `legacy_mother_first_letter`, `city`, `district`, `registration_date`, `registration_number`, `closure_date`, `closure_reason`, `supervisor_id`, `assigned_by`, `assigned_at`, `updated_by`, `nanny_id`, `bank_name`, `bank_account_number`, `bank_branch`, `bank_account_holder`, `father_name`, `father_death_date`, `father_death_cause`, `mother_marital_status`, `mother_bank_name`, `mother_bank_account`, `mother_bank_branch`) VALUES
 (1718, 'مروه مسلم حسين', NULL, NULL, NULL, 1, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:53', '2026-08-30 17:36:11', 'IMP-FAM-001718', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'مجاهد ابكر عثمان', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (1719, 'عفراء عمر ادم', NULL, NULL, NULL, 3, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:53', '2026-08-30 17:36:11', 'IMP-FAM-001719', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'ابوبكر ادم احمد', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (1720, 'سميه مهدي احمد', NULL, NULL, NULL, 2, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:53', '2026-08-30 17:36:11', 'IMP-FAM-001720', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'بشري الفاضل ابو علامه', NULL, NULL, 'أرملة', NULL, NULL, NULL),
@@ -3641,11 +3645,11 @@ INSERT INTO `families` (`id`, `mother_name`, `mother_phone`, `mother_job`, `addr
 (1855, 'منال عبد الله عبد القيوم', NULL, NULL, NULL, 2, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:55', '2026-08-30 17:36:11', 'IMP-FAM-001855', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'الحارث هاشم احمد', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (1856, 'عوضيه عبد الله سعد الدين', NULL, NULL, NULL, 2, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:55', '2026-08-30 17:36:11', 'IMP-FAM-001856', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'علي الامين علي', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (1857, 'زبيده محمد بشير', NULL, NULL, NULL, 2, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:55', '2026-08-30 17:36:11', 'IMP-FAM-001857', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'ابو دجانه الصديق محمد', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(1858, 'عبير الطيب عبد الفضيل', NULL, NULL, NULL, 2, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:55', '2026-08-30 17:36:11', 'IMP-FAM-001858', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'فرزدق مجالي حسن', NULL, NULL, 'أرملة', NULL, NULL, NULL);
-INSERT INTO `families` (`id`, `mother_name`, `mother_phone`, `mother_job`, `address`, `children_count`, `monthly_need_amount`, `medical_notes`, `status`, `notes`, `created_by`, `created_at`, `updated_at`, `family_code`, `mother_national_id`, `mother_birth_date`, `mother_alt_phone`, `mother_workplace`, `legacy_mother_first_letter`, `city`, `district`, `registration_date`, `registration_number`, `closure_date`, `closure_reason`, `supervisor_id`, `assigned_by`, `assigned_at`, `updated_by`, `nanny_id`, `bank_name`, `bank_account_number`, `bank_branch`, `bank_account_holder`, `father_name`, `father_death_date`, `father_death_cause`, `mother_marital_status`, `mother_bank_name`, `mother_bank_account`, `mother_bank_branch`) VALUES
+(1858, 'عبير الطيب عبد الفضيل', NULL, NULL, NULL, 2, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:55', '2026-08-30 17:36:11', 'IMP-FAM-001858', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'فرزدق مجالي حسن', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (1859, 'سجود عبد العاطي عبد الواحد', NULL, NULL, NULL, 1, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:55', '2026-08-30 17:36:11', 'IMP-FAM-001859', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'نيازي النوراني فخر الدين', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (1860, 'تغريد محمد احمد', NULL, NULL, NULL, 1, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:55', '2026-08-30 17:36:11', 'IMP-FAM-001860', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'محمد عابدين عبد الرحيم', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(1861, 'نجوي موسي محمد موسي', NULL, NULL, NULL, 1, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:55', '2026-08-30 17:36:11', 'IMP-FAM-001861', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'مجاهد عبد الله حسن', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(1861, 'نجوي موسي محمد موسي', NULL, NULL, NULL, 1, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:55', '2026-08-30 17:36:11', 'IMP-FAM-001861', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'مجاهد عبد الله حسن', NULL, NULL, 'أرملة', NULL, NULL, NULL);
+INSERT INTO `families` (`id`, `mother_name`, `mother_phone`, `mother_job`, `address`, `children_count`, `monthly_need_amount`, `medical_notes`, `status`, `notes`, `created_by`, `created_at`, `updated_at`, `family_code`, `mother_national_id`, `mother_birth_date`, `mother_alt_phone`, `mother_workplace`, `legacy_mother_first_letter`, `city`, `district`, `registration_date`, `registration_number`, `closure_date`, `closure_reason`, `supervisor_id`, `assigned_by`, `assigned_at`, `updated_by`, `nanny_id`, `bank_name`, `bank_account_number`, `bank_branch`, `bank_account_holder`, `father_name`, `father_death_date`, `father_death_cause`, `mother_marital_status`, `mother_bank_name`, `mother_bank_account`, `mother_bank_branch`) VALUES
 (1862, '177-وجدان عبدالغفار العوض 2', NULL, NULL, NULL, 0, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:55', '2026-08-30 17:36:11', 'IMP-FAM-001862', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (1863, '178-رماح رمضان هجانه3', NULL, NULL, NULL, 0, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:55', '2026-08-30 17:36:11', 'IMP-FAM-001863', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (1864, '179-وفاء عبدالكريم شنقاره 3', NULL, NULL, NULL, 0, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:56:55', '2026-08-30 17:36:11', 'IMP-FAM-001864', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
@@ -3786,11 +3790,11 @@ INSERT INTO `families` (`id`, `mother_name`, `mother_phone`, `mother_job`, `addr
 (1999, 'نسرين محمد محمد', NULL, NULL, NULL, 1, 2000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:57:34', '2026-08-30 17:36:11', 'IMP-FAM-001999', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'محمد دين', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (2000, 'هاله احمد ادريس', NULL, NULL, NULL, 4, 3000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:57:34', '2026-08-30 17:36:11', 'IMP-FAM-002000', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'مامون سيد مامون', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (2001, 'هديل بشير الحاج', NULL, NULL, NULL, 1, 4000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:57:34', '2026-08-30 17:36:11', 'IMP-FAM-002001', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'حافظ حسن', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(2002, 'هنادي علي احمد ( السن القانوني)', NULL, NULL, NULL, 1, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:57:34', '2026-08-30 17:36:11', 'IMP-FAM-002002', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'امير علي الطيب', NULL, NULL, 'أرملة', NULL, NULL, NULL);
-INSERT INTO `families` (`id`, `mother_name`, `mother_phone`, `mother_job`, `address`, `children_count`, `monthly_need_amount`, `medical_notes`, `status`, `notes`, `created_by`, `created_at`, `updated_at`, `family_code`, `mother_national_id`, `mother_birth_date`, `mother_alt_phone`, `mother_workplace`, `legacy_mother_first_letter`, `city`, `district`, `registration_date`, `registration_number`, `closure_date`, `closure_reason`, `supervisor_id`, `assigned_by`, `assigned_at`, `updated_by`, `nanny_id`, `bank_name`, `bank_account_number`, `bank_branch`, `bank_account_holder`, `father_name`, `father_death_date`, `father_death_cause`, `mother_marital_status`, `mother_bank_name`, `mother_bank_account`, `mother_bank_branch`) VALUES
+(2002, 'هنادي علي احمد ( السن القانوني)', NULL, NULL, NULL, 1, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:57:34', '2026-08-30 17:36:11', 'IMP-FAM-002002', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'امير علي الطيب', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (2003, 'عائشه محمد احمد', NULL, NULL, NULL, 4, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:57:35', '2026-08-30 17:36:11', 'IMP-FAM-002003', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'عثمان الريح', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (2004, 'الهام محمد مصطفي', NULL, NULL, NULL, 1, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:57:35', '2026-08-30 17:36:11', 'IMP-FAM-002004', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'محمد مرسال', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(2005, 'منال احمد مؤمن', NULL, NULL, NULL, 4, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:57:35', '2026-08-30 17:36:11', 'IMP-FAM-002005', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'عيد ادم', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(2005, 'منال احمد مؤمن', NULL, NULL, NULL, 4, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:57:35', '2026-08-30 17:36:11', 'IMP-FAM-002005', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'عيد ادم', NULL, NULL, 'أرملة', NULL, NULL, NULL);
+INSERT INTO `families` (`id`, `mother_name`, `mother_phone`, `mother_job`, `address`, `children_count`, `monthly_need_amount`, `medical_notes`, `status`, `notes`, `created_by`, `created_at`, `updated_at`, `family_code`, `mother_national_id`, `mother_birth_date`, `mother_alt_phone`, `mother_workplace`, `legacy_mother_first_letter`, `city`, `district`, `registration_date`, `registration_number`, `closure_date`, `closure_reason`, `supervisor_id`, `assigned_by`, `assigned_at`, `updated_by`, `nanny_id`, `bank_name`, `bank_account_number`, `bank_branch`, `bank_account_holder`, `father_name`, `father_death_date`, `father_death_cause`, `mother_marital_status`, `mother_bank_name`, `mother_bank_account`, `mother_bank_branch`) VALUES
 (2006, 'فاطمه علي ادم', NULL, NULL, NULL, 1, 10000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:57:35', '2026-08-30 17:36:11', 'IMP-FAM-002006', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (2007, 'سيده محمد يعقوب', NULL, NULL, NULL, 1, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:57:35', '2026-08-30 17:36:11', 'IMP-FAM-002007', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (2008, 'عائشه نادر اندريه', NULL, NULL, NULL, 1, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:57:35', '2026-08-30 17:36:11', 'IMP-FAM-002008', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'احمد مرغني', NULL, NULL, 'أرملة', NULL, NULL, NULL),
@@ -3888,57 +3892,57 @@ INSERT INTO `families` (`id`, `mother_name`, `mother_phone`, `mother_job`, `addr
 (2100, 'هدى مدثر محمد', NULL, NULL, NULL, 1, 5000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:59:58', '2026-08-30 17:36:11', 'IMP-FAM-002100', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'جمال الدين حسن ابراهيم', '2014-07-23', NULL, 'أرملة', NULL, '1946600', NULL),
 (2101, 'هناء على احمد', NULL, NULL, NULL, 4, 5000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:59:58', '2026-08-30 17:36:11', 'IMP-FAM-002101', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'ابراهيم حسين احمد', '2018-08-27', NULL, 'أرملة', NULL, '2219711', NULL),
 (2102, 'ياسمين يوسف ادم ( العمر)', NULL, NULL, NULL, 1, 4000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 17:59:58', '2026-08-30 17:36:11', 'IMP-FAM-002102', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'الزاكي ابكر', NULL, NULL, 'أرملة', NULL, '2322947', NULL),
-(2103, 'ميسون حسن احمد', NULL, NULL, NULL, 2, 20000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:30', '2026-08-30 17:36:11', 'IMP-FAM-002103', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(2104, 'شيماء عبد الحليم محمد', NULL, NULL, NULL, 2, 20000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:30', '2026-08-30 17:36:11', 'IMP-FAM-002104', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(2105, 'لمياءء محمد الزين', NULL, NULL, NULL, 3, 30000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:30', '2026-08-30 17:36:11', 'IMP-FAM-002105', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(2106, 'الخنساء ابو عبيده', NULL, NULL, NULL, 2, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:31', '2026-08-30 17:36:11', 'IMP-FAM-002106', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(2107, 'زبيده ادم محمد', NULL, NULL, NULL, 1, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:31', '2026-08-30 17:36:11', 'IMP-FAM-002107', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(2108, 'ناديه حمد عمر', NULL, NULL, NULL, 3, 30000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:31', '2026-08-30 17:36:11', 'IMP-FAM-002108', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(2109, 'زازه وليد عبد الرحمن', NULL, NULL, NULL, 3, 30000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:31', '2026-08-30 17:36:11', 'IMP-FAM-002109', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(2110, 'جمال تاج السر', NULL, NULL, NULL, 2, 50000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-08-30 17:36:11', 'IMP-FAM-002110', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(2111, 'منيره علي ابراهيم', NULL, NULL, NULL, 2, 30000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-08-30 17:36:11', 'IMP-FAM-002111', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(2112, 'رحاب عبد الله علي', NULL, NULL, NULL, 3, 95000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-08-30 17:36:11', 'IMP-FAM-002112', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(2113, 'حبيبه ادم ابراهيم', NULL, NULL, NULL, 6, 90000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-08-30 17:36:11', 'IMP-FAM-002113', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(2114, 'هيبات السر عبد الله', NULL, NULL, NULL, 10, 50000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-08-30 17:36:11', 'IMP-FAM-002114', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(2115, 'عرفه عبد الصادق', NULL, NULL, NULL, 5, 117000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-08-30 17:36:11', 'IMP-FAM-002115', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(2116, 'ميسون حسن محمد', NULL, NULL, NULL, 3, 41000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-08-30 17:36:11', 'IMP-FAM-002116', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(2117, 'اميره يونس صالح', NULL, NULL, NULL, 1, 48000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-08-30 17:36:11', 'IMP-FAM-002117', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(2118, 'مياده حسين حسن', NULL, NULL, NULL, 1, 18000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-08-30 17:36:11', 'IMP-FAM-002118', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(2119, 'موده ايوب عبد الرحمن', NULL, NULL, NULL, 1, 48000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-08-30 17:36:11', 'IMP-FAM-002119', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(2120, 'نسرين عبد الرسول احمد', NULL, NULL, NULL, 4, 192000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-08-30 17:36:11', 'IMP-FAM-002120', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(2121, 'عفاف محمد العبيد', NULL, NULL, NULL, 1, 16000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-08-30 17:36:11', 'IMP-FAM-002121', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(2122, 'فاطمه محمد احمد البشير', NULL, NULL, NULL, 1, 18000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-08-30 17:36:11', 'IMP-FAM-002122', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(2123, 'انصاف عثمان بشير', NULL, NULL, NULL, 1, 48000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-08-30 17:36:11', 'IMP-FAM-002123', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(2124, 'امنه عبد الله عوض الكريم', NULL, NULL, NULL, 1, 100000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-08-30 17:36:11', 'IMP-FAM-002124', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(2125, 'هيبات الطيب حسن', NULL, NULL, NULL, 1, 48000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-08-30 17:36:11', 'IMP-FAM-002125', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(2103, 'ميسون حسن احمد', NULL, NULL, NULL, 0, 20000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:30', '2026-09-02 14:23:39', 'IMP-FAM-002103', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(2104, 'شيماء عبد الحليم محمد', NULL, NULL, NULL, 0, 20000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:30', '2026-09-02 14:23:39', 'IMP-FAM-002104', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(2105, 'لمياءء محمد الزين', NULL, NULL, NULL, 0, 30000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:30', '2026-09-02 14:23:39', 'IMP-FAM-002105', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(2106, 'الخنساء ابو عبيده', NULL, NULL, NULL, 0, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:31', '2026-09-02 14:23:39', 'IMP-FAM-002106', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(2107, 'زبيده ادم محمد', NULL, NULL, NULL, 0, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:31', '2026-09-02 14:23:39', 'IMP-FAM-002107', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(2108, 'ناديه حمد عمر', NULL, NULL, NULL, 0, 30000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:31', '2026-09-02 14:23:39', 'IMP-FAM-002108', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(2109, 'زازه وليد عبد الرحمن', NULL, NULL, NULL, 0, 30000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:31', '2026-09-02 14:23:39', 'IMP-FAM-002109', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(2110, 'جمال تاج السر', NULL, NULL, NULL, 0, 50000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-09-02 14:23:39', 'IMP-FAM-002110', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(2111, 'منيره علي ابراهيم', NULL, NULL, NULL, 0, 30000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-09-02 14:23:39', 'IMP-FAM-002111', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(2112, 'رحاب عبد الله علي', NULL, NULL, NULL, 0, 95000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-09-02 14:23:39', 'IMP-FAM-002112', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(2113, 'حبيبه ادم ابراهيم', NULL, NULL, NULL, 0, 90000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-09-02 14:23:39', 'IMP-FAM-002113', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(2114, 'هيبات السر عبد الله', NULL, NULL, NULL, 0, 50000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-09-02 14:23:39', 'IMP-FAM-002114', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(2115, 'عرفه عبد الصادق', NULL, NULL, NULL, 0, 117000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-09-02 14:23:39', 'IMP-FAM-002115', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(2116, 'ميسون حسن محمد', NULL, NULL, NULL, 0, 41000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-09-02 14:23:39', 'IMP-FAM-002116', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(2117, 'اميره يونس صالح', NULL, NULL, NULL, 0, 48000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-09-02 14:23:39', 'IMP-FAM-002117', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(2118, 'مياده حسين حسن', NULL, NULL, NULL, 0, 18000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-09-02 14:23:39', 'IMP-FAM-002118', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(2119, 'موده ايوب عبد الرحمن', NULL, NULL, NULL, 0, 48000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-09-02 14:23:39', 'IMP-FAM-002119', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(2120, 'نسرين عبد الرسول احمد', NULL, NULL, NULL, 0, 192000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-09-02 14:23:39', 'IMP-FAM-002120', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(2121, 'عفاف محمد العبيد', NULL, NULL, NULL, 0, 16000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-09-02 19:27:50', 'IMP-FAM-002121', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-02 19:27:50', 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(2122, 'فاطمه محمد احمد البشير', NULL, NULL, NULL, 0, 18000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-09-02 14:23:39', 'IMP-FAM-002122', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(2123, 'انصاف عثمان بشير', NULL, NULL, NULL, 0, 48000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-09-02 14:23:39', 'IMP-FAM-002123', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(2124, 'امنه عبد الله عوض الكريم', NULL, NULL, NULL, 0, 100000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-09-02 14:23:39', 'IMP-FAM-002124', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(2125, 'هيبات الطيب حسن', NULL, NULL, NULL, 0, 48000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-09-02 14:23:39', 'IMP-FAM-002125', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (2126, 'هبه قسم السيد', NULL, NULL, NULL, 0, 48000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-08-30 17:36:11', 'IMP-FAM-002126', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (2127, 'مريم السيد احمد', NULL, NULL, NULL, 0, 48000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-08-30 17:36:11', 'IMP-FAM-002127', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(2128, 'سميه قسم السيد', NULL, NULL, NULL, 3, 48000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-08-30 17:36:11', 'IMP-FAM-002128', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(2129, 'سحر الجد', NULL, NULL, NULL, 3, 90000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-08-30 17:36:11', 'IMP-FAM-002129', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(2128, 'سميه قسم السيد', NULL, NULL, NULL, 0, 48000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-09-02 14:23:39', 'IMP-FAM-002128', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(2129, 'سحر الجد', NULL, NULL, NULL, 0, 90000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-09-02 14:23:39', 'IMP-FAM-002129', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (2130, 'صافيناز كمال ابوعوف', NULL, NULL, NULL, 0, 25000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-08-30 17:36:11', 'IMP-FAM-002130', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(2131, 'رجاء الصديق علي', NULL, NULL, NULL, 2, 96000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-08-30 17:36:11', 'IMP-FAM-002131', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(2132, 'راويه حمد حسين', NULL, NULL, NULL, 3, 72000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-08-30 17:36:11', 'IMP-FAM-002132', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(2133, 'انتصار قسم السيد', NULL, NULL, NULL, 1, 34000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-08-30 17:36:11', 'IMP-FAM-002133', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(2131, 'رجاء الصديق علي', NULL, NULL, NULL, 0, 96000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-09-02 14:23:39', 'IMP-FAM-002131', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(2132, 'راويه حمد حسين', NULL, NULL, NULL, 0, 72000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-09-02 14:23:39', 'IMP-FAM-002132', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(2133, 'انتصار قسم السيد', NULL, NULL, NULL, 0, 34000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-09-02 14:23:39', 'IMP-FAM-002133', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (2134, 'سميه شمس الدين', NULL, NULL, NULL, 0, 35000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-08-30 17:36:11', 'IMP-FAM-002134', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (2135, 'سميه محمد الصديق', NULL, NULL, NULL, 0, 35000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-08-30 17:36:11', 'IMP-FAM-002135', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (2136, 'نجود محمد عبد الله', NULL, NULL, NULL, 3, 100000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-08-30 17:36:11', 'IMP-FAM-002136', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(2137, 'تهليل حسن عبد القادر', NULL, NULL, NULL, 1, 48000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-08-30 17:36:11', 'IMP-FAM-002137', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(2138, 'جيهان حسن موسي', NULL, NULL, NULL, 2, 48000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-08-30 17:36:11', 'IMP-FAM-002138', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(2139, 'ايات فيصل علي', NULL, NULL, NULL, 1, 48000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-08-30 17:36:11', 'IMP-FAM-002139', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(2140, 'ساميه حمد كرار', NULL, NULL, NULL, 1, 58000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-08-30 17:36:11', 'IMP-FAM-002140', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(2141, 'عبير كمال عبد الرحمن', NULL, NULL, NULL, 1, 50000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-08-30 17:36:11', 'IMP-FAM-002141', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(2142, 'زينب حسن الامام', NULL, NULL, NULL, 1, 38000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-08-30 17:36:11', 'IMP-FAM-002142', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(2143, 'زبيده الحاج احمد', NULL, NULL, NULL, 1, 30000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-08-30 17:36:11', 'IMP-FAM-002143', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(2144, 'زاريا عبد المنعم صالح', NULL, NULL, NULL, 1, 30000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-08-30 17:36:11', 'IMP-FAM-002144', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(2145, 'اسلام ابراهيم احمد', NULL, NULL, NULL, 0, 64000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-08-30 17:36:11', 'IMP-FAM-002145', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL);
+(2137, 'تهليل حسن عبد القادر', NULL, NULL, NULL, 0, 48000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-09-02 14:23:39', 'IMP-FAM-002137', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(2138, 'جيهان حسن موسي', NULL, NULL, NULL, 0, 48000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-09-02 14:23:39', 'IMP-FAM-002138', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(2139, 'ايات فيصل علي', NULL, NULL, NULL, 0, 48000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-09-02 14:23:39', 'IMP-FAM-002139', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(2140, 'ساميه حمد كرار', NULL, NULL, NULL, 0, 58000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-09-02 14:23:39', 'IMP-FAM-002140', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(2141, 'عبير كمال عبد الرحمن', NULL, NULL, NULL, 0, 50000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-09-02 14:23:39', 'IMP-FAM-002141', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(2142, 'زينب حسن الامام', NULL, NULL, NULL, 0, 38000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-09-02 14:23:39', 'IMP-FAM-002142', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(2143, 'زبيده الحاج احمد', NULL, NULL, NULL, 0, 30000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-09-02 14:23:39', 'IMP-FAM-002143', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(2144, 'زاريا عبد المنعم صالح', NULL, NULL, NULL, 0, 30000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-09-02 14:23:39', 'IMP-FAM-002144', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(2145, 'اسلام ابراهيم احمد', NULL, NULL, NULL, 0, 64000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-08-30 17:36:11', 'IMP-FAM-002145', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(2146, 'امنه عبد الله ادم', NULL, NULL, NULL, 0, 15000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-09-02 14:23:39', 'IMP-FAM-002146', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(2147, 'شاذليه محمد زين', NULL, NULL, NULL, 0, 30000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-09-02 14:23:39', 'IMP-FAM-002147', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(2148, 'الشيماء الزين', NULL, NULL, NULL, 0, 98000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-09-02 14:23:39', 'IMP-FAM-002148', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL);
 INSERT INTO `families` (`id`, `mother_name`, `mother_phone`, `mother_job`, `address`, `children_count`, `monthly_need_amount`, `medical_notes`, `status`, `notes`, `created_by`, `created_at`, `updated_at`, `family_code`, `mother_national_id`, `mother_birth_date`, `mother_alt_phone`, `mother_workplace`, `legacy_mother_first_letter`, `city`, `district`, `registration_date`, `registration_number`, `closure_date`, `closure_reason`, `supervisor_id`, `assigned_by`, `assigned_at`, `updated_by`, `nanny_id`, `bank_name`, `bank_account_number`, `bank_branch`, `bank_account_holder`, `father_name`, `father_death_date`, `father_death_cause`, `mother_marital_status`, `mother_bank_name`, `mother_bank_account`, `mother_bank_branch`) VALUES
-(2146, 'امنه عبد الله ادم', NULL, NULL, NULL, 1, 15000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-08-30 17:36:11', 'IMP-FAM-002146', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(2147, 'شاذليه محمد زين', NULL, NULL, NULL, 1, 30000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-08-30 17:36:11', 'IMP-FAM-002147', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(2148, 'الشيماء الزين', NULL, NULL, NULL, 1, 98000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-08-30 17:36:11', 'IMP-FAM-002148', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (2149, 'هاديه جاد السيد', NULL, NULL, NULL, 2, 18000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-08-30 17:36:11', 'IMP-FAM-002149', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(2150, 'امنه سويكت حميده', NULL, NULL, NULL, 1, 46000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-08-30 17:36:11', 'IMP-FAM-002150', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(2151, 'شيراز عبد الرحمن', NULL, NULL, NULL, 1, 30000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-08-30 17:36:11', 'IMP-FAM-002151', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
-(2152, 'اميمه عبد القادر النور', NULL, NULL, NULL, 1, 18000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-08-30 17:36:11', 'IMP-FAM-002152', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(2150, 'امنه سويكت حميده', NULL, NULL, NULL, 0, 46000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-09-02 14:23:39', 'IMP-FAM-002150', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(2151, 'شيراز عبد الرحمن', NULL, NULL, NULL, 0, 30000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-09-02 14:23:39', 'IMP-FAM-002151', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
+(2152, 'اميمه عبد القادر النور', NULL, NULL, NULL, 0, 18000.00, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:00:50', '2026-09-02 14:23:39', 'IMP-FAM-002152', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (2153, 'اماني ابرااهيم محمد', NULL, NULL, NULL, 3, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:01:27', '2026-08-30 17:36:11', 'IMP-FAM-002153', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (2154, 'سهام ابوبكر مصفي', NULL, NULL, NULL, 2, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:01:27', '2026-08-30 17:36:11', 'IMP-FAM-002154', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (2155, 'انصاف فضل الله خير الله', NULL, NULL, NULL, 1, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:01:27', '2026-08-30 17:36:11', 'IMP-FAM-002155', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
@@ -3997,46 +4001,6 @@ INSERT INTO `families` (`id`, `mother_name`, `mother_phone`, `mother_job`, `addr
 (2208, 'لمياء سعد', NULL, NULL, NULL, 1, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:01:28', '2026-08-30 17:36:11', 'IMP-FAM-002208', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (2209, 'حواء حسن احمد', NULL, NULL, NULL, 1, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:01:28', '2026-08-30 17:36:11', 'IMP-FAM-002209', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL),
 (2210, 'سهاد فضل السيد', NULL, NULL, NULL, 1, NULL, NULL, 'active', 'imported from CSV', NULL, '2026-08-27 18:01:28', '2026-08-30 17:36:11', 'IMP-FAM-002210', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, 'أرملة', NULL, NULL, NULL);
-
---
--- Triggers `families`
---
-DELIMITER $$
-CREATE TRIGGER `trg_families_family_code_ai` AFTER INSERT ON `families` FOR EACH ROW BEGIN
-    IF NEW.family_code IS NULL OR TRIM(NEW.family_code) = '' THEN
-        UPDATE families
-        SET family_code = CONCAT('IMP-FAM-', LPAD(NEW.id, 6, '0'))
-        WHERE id = NEW.id;
-    END IF;
-END
-$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `trg_families_family_code_bu` BEFORE UPDATE ON `families` FOR EACH ROW BEGIN
-    /*
-       If family_code itself is unchanged, allow unrelated updates such as
-       child-count synchronization even when the row contains a legacy code
-       such as IMP2-FAM-######.
-    */
-    IF NOT (NEW.family_code <=> OLD.family_code) THEN
-        SET NEW.family_code = NULLIF(TRIM(NEW.family_code), '');
-
-        IF NEW.family_code IS NULL THEN
-            SET NEW.family_code = CONCAT('IMP-FAM-', LPAD(OLD.id, 6, '0'));
-        END IF;
-
-        IF NEW.family_code REGEXP '^FAM-[0-9]{6}$' THEN
-            SET NEW.family_code = CONCAT('IMP-FAM-', SUBSTRING(NEW.family_code, 5));
-        END IF;
-
-        IF NEW.family_code NOT REGEXP '^IMP-FAM-[0-9]{6}$' THEN
-            SIGNAL SQLSTATE '45000'
-                SET MESSAGE_TEXT = 'Invalid family_code. Expected IMP-FAM-######';
-        END IF;
-    END IF;
-END
-$$
-DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -9040,90 +9004,6 @@ INSERT INTO `family_children` (`id`, `family_id`, `child_name`, `birth_date`, `g
 (5024, 2209, 'اياد', NULL, 'unknown', NULL, NULL, 1, '2026-08-27 18:01:28', '2026-08-30 20:59:57', '', NULL, NULL, NULL, 0, 'legacy_import', NULL, NULL, NULL, 'سودانية', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'AK-04910', NULL, 0, 'unmatched', NULL, NULL),
 (5025, 2210, 'انس', NULL, 'unknown', NULL, NULL, 1, '2026-08-27 18:01:28', '2026-08-29 22:31:27', '', NULL, NULL, NULL, 0, 'legacy_import', NULL, NULL, NULL, 'سودانية', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'AK-00016', NULL, 0, 'unmatched', NULL, NULL);
 
---
--- Triggers `family_children`
---
-DELIMITER $$
-CREATE TRIGGER `trg_family_children_ad` AFTER DELETE ON `family_children` FOR EACH ROW BEGIN
-
-    UPDATE families
-
-    SET children_count = (
-
-        SELECT COUNT(*)
-
-        FROM family_children
-
-        WHERE family_id = OLD.family_id
-
-    )
-
-    WHERE id = OLD.family_id;
-
-END
-$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `trg_family_children_ai` AFTER INSERT ON `family_children` FOR EACH ROW BEGIN
-
-    UPDATE families
-
-    SET children_count = (
-
-        SELECT COUNT(*)
-
-        FROM family_children
-
-        WHERE family_id = NEW.family_id
-
-    )
-
-    WHERE id = NEW.family_id;
-
-END
-$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `trg_family_children_au` AFTER UPDATE ON `family_children` FOR EACH ROW BEGIN
-
-    IF OLD.family_id <> NEW.family_id THEN
-
-        UPDATE families
-
-        SET children_count = (
-
-            SELECT COUNT(*)
-
-            FROM family_children
-
-            WHERE family_id = OLD.family_id
-
-        )
-
-        WHERE id = OLD.family_id;
-
-    END IF;
-
-
-
-    UPDATE families
-
-    SET children_count = (
-
-        SELECT COUNT(*)
-
-        FROM family_children
-
-        WHERE family_id = NEW.family_id
-
-    )
-
-    WHERE id = NEW.family_id;
-
-END
-$$
-DELIMITER ;
-
 -- --------------------------------------------------------
 
 --
@@ -9326,20 +9206,6 @@ INSERT INTO `journal_lines` (`id`, `entry_id`, `account_id`, `debit`, `credit`, 
 (36, 22, 2, 25000000.00, 0.00, 'رصيد افتتاحي — بنكي'),
 (37, 22, 3, 25000000.00, 0.00, 'رصيد افتتاحي — محفظة إلكترونية'),
 (38, 22, 7, 0.00, 100000000.00, 'الأرصدة الافتتاحية'),
-(39, 23, 13, 250000.00, 0.00, 'تخصيص ميزانية مشروع'),
-(40, 23, 1, 0.00, 250000.00, 'تخصيص ميزانية مشروع'),
-(41, 24, 19, 50000.00, 0.00, 'استلام تمويل مشروع'),
-(42, 24, 3, 0.00, 50000.00, 'استلام تمويل مشروع'),
-(43, 25, 19, 150000.00, 0.00, 'استلام تمويل مشروع'),
-(44, 25, 2, 0.00, 150000.00, 'استلام تمويل مشروع'),
-(45, 26, 19, 100000.00, 0.00, 'استلام تمويل مشروع'),
-(46, 26, 1, 0.00, 100000.00, 'استلام تمويل مشروع'),
-(47, 27, 13, 0.00, 250000.00, 'عكس: تخصيص ميزانية مشروع'),
-(48, 27, 1, 250000.00, 0.00, 'عكس: تخصيص ميزانية مشروع'),
-(49, 28, 13, 300000.00, 0.00, 'تخصيص تمويل مشروع'),
-(50, 28, 1, 0.00, 100000.00, 'تمويل مشروع من مصدر التمويل'),
-(51, 28, 2, 0.00, 150000.00, 'تمويل مشروع من مصدر التمويل'),
-(52, 28, 3, 0.00, 50000.00, 'تمويل مشروع من مصدر التمويل'),
 (53, 29, 13, 250000.00, 0.00, 'تخصيص تمويل مشروع'),
 (54, 29, 1, 0.00, 50000.00, 'تمويل مشروع من مصدر التمويل'),
 (55, 29, 2, 0.00, 100000.00, 'تمويل مشروع من مصدر التمويل'),
@@ -9535,7 +9401,6 @@ INSERT INTO `message_attachments` (`id`, `message_id`, `uploader_user_id`, `orig
 (3, 12, 1, 'License premium.txt', 'f1320276e9757f90b3af1af0c00a5312e82c39db.txt', 'text/plain', 1115, '2026-09-01 07:07:12'),
 (4, 13, 3, 'License premium.txt', '2bcf5312736afad84072d81f5caa8749a9de6f96.txt', 'text/plain', 1115, '2026-09-01 07:12:55'),
 (5, 14, 3, '52048.jpg', 'e3922a1d6e5d3e9f333eb2c5504cd149f9d1c7e9.jpg', 'image/jpeg', 1313542, '2026-09-01 07:15:38'),
-(6, 15, 3, 'License premium.txt', '6f9d65bbd8a09bbc1c520d4ffeabb2dd31a82459.txt', 'text/plain', 1115, '2026-09-01 07:19:05'),
 (11, 21, 1, 'License premium.txt', '572f82f221bd1bf4f62c21c0b576d880767db821.txt', 'text/plain', 1115, '2026-09-01 13:31:26'),
 (13, 23, 1, '1.pdf', '5a04ea77a4cdf0192b6b320336b879df47d1ea24.pdf', 'application/pdf', 218244, '2026-09-01 14:09:38'),
 (14, 24, 1, '1.pdf', 'd684255db63b3432779c306cbe52e4fe8e9ce3a6.pdf', 'application/pdf', 218244, '2026-09-01 14:13:50'),
@@ -9589,7 +9454,8 @@ INSERT INTO `message_reads` (`id`, `message_id`, `user_id`, `read_at`) VALUES
 (191, 25, 1, '2026-09-01 18:06:36'),
 (209, 20, 2, '2026-09-01 18:25:01'),
 (210, 22, 2, '2026-09-01 18:25:01'),
-(211, 26, 2, '2026-09-01 18:25:01');
+(211, 26, 2, '2026-09-01 18:25:01'),
+(232, 21, 3, '2026-09-02 18:30:27');
 
 -- --------------------------------------------------------
 
@@ -27682,154 +27548,6 @@ INSERT INTO `supervisor_letters` (`id`, `supervisor_id`, `letter_id`, `assigned_
 (61, 21, 11, 3, '2026-08-27 21:06:36', 'female'),
 (62, 21, 12, 3, '2026-08-27 21:08:33', 'female');
 
---
--- Triggers `supervisor_letters`
---
-DELIMITER $$
-CREATE TRIGGER `trg_supervisor_letters_ad` AFTER DELETE ON `supervisor_letters` FOR EACH ROW BEGIN
-
-    UPDATE sponsors s
-
-    SET s.supervisor_id = (
-
-            SELECT sl.supervisor_id
-
-            FROM supervisor_letters sl
-
-            WHERE sl.letter_id = s.first_letter_id
-
-            ORDER BY CASE
-
-                WHEN s.gender = 'male'   THEN CASE sl.gender WHEN 'male'   THEN 1 WHEN 'both' THEN 2 ELSE 3 END
-
-                WHEN s.gender = 'female' THEN CASE sl.gender WHEN 'female' THEN 1 WHEN 'both' THEN 2 ELSE 3 END
-
-                ELSE                          CASE sl.gender WHEN 'both'   THEN 1 WHEN 'male' THEN 2 ELSE 3 END
-
-            END
-
-            LIMIT 1
-
-        ),
-
-        s.assigned_at = NOW()
-
-    WHERE s.is_manual_override = 0
-
-      AND s.first_letter_id = OLD.letter_id;
-
-END
-$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `trg_supervisor_letters_ai` AFTER INSERT ON `supervisor_letters` FOR EACH ROW BEGIN
-
-    UPDATE sponsors s
-
-    SET s.supervisor_id = (
-
-            SELECT sl.supervisor_id
-
-            FROM supervisor_letters sl
-
-            WHERE sl.letter_id = s.first_letter_id
-
-            ORDER BY CASE
-
-                WHEN s.gender = 'male'   THEN CASE sl.gender WHEN 'male'   THEN 1 WHEN 'both' THEN 2 ELSE 3 END
-
-                WHEN s.gender = 'female' THEN CASE sl.gender WHEN 'female' THEN 1 WHEN 'both' THEN 2 ELSE 3 END
-
-                ELSE                          CASE sl.gender WHEN 'both'   THEN 1 WHEN 'male' THEN 2 ELSE 3 END
-
-            END
-
-            LIMIT 1
-
-        ),
-
-        s.assigned_at = NOW()
-
-    WHERE s.is_manual_override = 0
-
-      AND s.first_letter_id = NEW.letter_id;
-
-END
-$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `trg_supervisor_letters_au` AFTER UPDATE ON `supervisor_letters` FOR EACH ROW BEGIN
-
-    UPDATE sponsors s
-
-    SET s.supervisor_id = (
-
-            SELECT sl.supervisor_id
-
-            FROM supervisor_letters sl
-
-            WHERE sl.letter_id = s.first_letter_id
-
-            ORDER BY CASE
-
-                WHEN s.gender = 'male'   THEN CASE sl.gender WHEN 'male'   THEN 1 WHEN 'both' THEN 2 ELSE 3 END
-
-                WHEN s.gender = 'female' THEN CASE sl.gender WHEN 'female' THEN 1 WHEN 'both' THEN 2 ELSE 3 END
-
-                ELSE                          CASE sl.gender WHEN 'both'   THEN 1 WHEN 'male' THEN 2 ELSE 3 END
-
-            END
-
-            LIMIT 1
-
-        ),
-
-        s.assigned_at = NOW()
-
-    WHERE s.is_manual_override = 0
-
-      AND s.first_letter_id = OLD.letter_id;
-
-
-
-    IF NEW.letter_id <> OLD.letter_id THEN
-
-        UPDATE sponsors s
-
-        SET s.supervisor_id = (
-
-                SELECT sl.supervisor_id
-
-                FROM supervisor_letters sl
-
-                WHERE sl.letter_id = s.first_letter_id
-
-                ORDER BY CASE
-
-                    WHEN s.gender = 'male'   THEN CASE sl.gender WHEN 'male'   THEN 1 WHEN 'both' THEN 2 ELSE 3 END
-
-                    WHEN s.gender = 'female' THEN CASE sl.gender WHEN 'female' THEN 1 WHEN 'both' THEN 2 ELSE 3 END
-
-                    ELSE                          CASE sl.gender WHEN 'both'   THEN 1 WHEN 'male' THEN 2 ELSE 3 END
-
-                END
-
-                LIMIT 1
-
-            ),
-
-            s.assigned_at = NOW()
-
-        WHERE s.is_manual_override = 0
-
-          AND s.first_letter_id = NEW.letter_id;
-
-    END IF;
-
-END
-$$
-DELIMITER ;
-
 -- --------------------------------------------------------
 
 --
@@ -27952,7 +27670,7 @@ CREATE TABLE `users` (
 INSERT INTO `users` (`id`, `role_id`, `username`, `password_hash`, `full_name`, `email`, `phone`, `is_active`, `password_change_required`, `last_login_at`, `created_by`, `created_at`, `updated_at`, `legacy_status`, `avatar_path`, `address`, `birth_date`, `gender`, `department_id`, `manager_id`, `theme_preference`, `language_preference`, `email_notifications`, `push_notifications`, `email_newsletter`) VALUES
 (1, 1, 'sudo', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'منير علي طه صالح', 'sudo@ahlelkheir.org', '0966616614', 1, 0, '2026-09-02 07:10:29', NULL, '2026-08-02 16:49:35', '2026-09-02 07:10:29', 'active', NULL, NULL, NULL, 'male', 1, 1, 'light', 'ar', 1, 1, 1),
 (2, 2, 'gm', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'المدير العام', 'gm@ahlelkheir.org', NULL, 1, 0, '2026-09-01 18:24:54', NULL, '2026-08-02 16:49:35', '2026-09-01 18:24:54', 'active', 'storage/avatars/user_2_1787805764.png', NULL, NULL, NULL, 1, NULL, 'light', 'ar', 1, 1, 1),
-(3, 3, 'vgm', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'لمياء علي طه صالح', 'vgm@ahlelkheir.org', NULL, 1, 0, '2026-09-01 07:08:20', NULL, '2026-08-02 16:49:35', '2026-09-01 07:08:20', 'active', 'storage/avatars/user_3_1787556761.png', NULL, NULL, 'female', 1, 2, 'light', 'ar', 1, 1, 1),
+(3, 3, 'vgm', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'لمياء علي طه صالح', 'vgm@ahlelkheir.org', NULL, 1, 0, '2026-09-02 21:55:56', NULL, '2026-08-02 16:49:35', '2026-09-02 21:55:56', 'active', 'storage/avatars/user_3_1787556761.png', NULL, NULL, 'female', 1, 2, 'light', 'ar', 1, 1, 1),
 (4, 10, 'accountant', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'محاسب (موظف)', 'accountant@ahlelkheir.org', '0123456789', 1, 0, '2026-08-17 14:11:48', NULL, '2026-08-08 12:33:29', '2026-08-17 14:30:38', 'active', NULL, NULL, NULL, NULL, 6, 29, 'light', 'ar', 1, 1, 1),
 (14, 4, 'Mad_Max', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'أحمد محمد', 'moneerali2000@gmail.com', '0912345100', 0, 0, '2026-08-16 09:20:38', 3, '2026-08-09 10:41:43', '2026-08-19 12:38:50', 'active', NULL, NULL, NULL, NULL, NULL, NULL, 'light', 'ar', 1, 1, 1),
 (15, 4, 'medo', '$2y$10$A9RH6qwIkMC9gxPkgoDeU.rO3CwziOFwYso3j7NbZ0JxK3pknYPYq', 'مديحه عبد الماجد', 'madiha@example.com', '096664568', 0, 0, NULL, 3, '2026-08-10 10:31:56', '2026-08-16 09:19:07', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'light', 'ar', 1, 1, 1),
@@ -28046,63 +27764,6 @@ CREATE TABLE `vouchers` (
 -- --------------------------------------------------------
 
 --
--- Stand-in structure for view `vw_families_without_sponsorship`
--- (See below for the actual view)
---
-CREATE TABLE `vw_families_without_sponsorship` (
-`id` int(10) unsigned
-,`family_code` varchar(50)
-,`mother_name` varchar(150)
-,`city` varchar(100)
-,`children_count` smallint(5) unsigned
-,`status` enum('pending','active','paused','completed','archived','inactive','closed')
-,`waiting_children_count` bigint(21)
-);
-
--- --------------------------------------------------------
-
---
--- Stand-in structure for view `vw_sponsor_current_supervisor`
--- (See below for the actual view)
---
-CREATE TABLE `vw_sponsor_current_supervisor` (
-`id` int(10) unsigned
-,`full_name` varchar(150)
-,`first_letter_raw` varchar(10)
-,`first_letter_id` tinyint(3) unsigned
-,`phone` varchar(30)
-,`email` varchar(190)
-,`address` varchar(255)
-,`sponsor_type` enum('individual','company','organization')
-,`preferred_payment_method` enum('cash','bank_transfer','credit_card','mobile','other')
-,`status` enum('active','inactive','suspended','cancelled')
-,`notes` text
-,`created_by` int(10) unsigned
-,`created_at` datetime
-,`updated_at` datetime
-,`assigned_supervisor_id` int(10) unsigned
-);
-
--- --------------------------------------------------------
-
---
--- Stand-in structure for view `vw_supervisor_sponsors`
--- (See below for the actual view)
---
-CREATE TABLE `vw_supervisor_sponsors` (
-`supervisor_id` int(10) unsigned
-,`sponsor_id` int(10) unsigned
-,`full_name` varchar(150)
-,`first_letter_id` tinyint(3) unsigned
-,`sponsor_letter` char(1)
-,`phone` varchar(30)
-,`email` varchar(190)
-,`status` enum('active','inactive','suspended','cancelled')
-);
-
--- --------------------------------------------------------
-
---
 -- Table structure for table `winback_campaigns`
 --
 
@@ -28140,33 +27801,6 @@ CREATE TABLE `winback_contacts` (
   `outcome` varchar(50) NOT NULL DEFAULT 'no_answer',
   `notes` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- --------------------------------------------------------
-
---
--- Structure for view `vw_families_without_sponsorship`
---
-DROP TABLE IF EXISTS `vw_families_without_sponsorship`;
-
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vw_families_without_sponsorship`  AS SELECT `f`.`id` AS `id`, `f`.`family_code` AS `family_code`, `f`.`mother_name` AS `mother_name`, `f`.`city` AS `city`, `f`.`children_count` AS `children_count`, `f`.`status` AS `status`, (select count(0) from `family_children` `fc` where `fc`.`family_id` = `f`.`id` and `fc`.`match_status` in ('unmatched','waiting_list','lost_sponsor')) AS `waiting_children_count` FROM `families` AS `f` WHERE `f`.`status` in ('active','pending') AND `f`.`children_count` > 0 AND !exists(select 1 from (`sponsorships` `sp` join `family_children` `fc` on(`sp`.`child_id` = `fc`.`id`)) where `fc`.`family_id` = `f`.`id` AND `sp`.`status` = 'active' limit 1) ORDER BY (select count(0) from `family_children` `fc` where `fc`.`family_id` = `f`.`id` and `fc`.`match_status` in ('unmatched','waiting_list','lost_sponsor')) DESC, `f`.`id` DESC ;
-
--- --------------------------------------------------------
-
---
--- Structure for view `vw_sponsor_current_supervisor`
---
-DROP TABLE IF EXISTS `vw_sponsor_current_supervisor`;
-
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vw_sponsor_current_supervisor`  AS SELECT `s`.`id` AS `id`, `s`.`full_name` AS `full_name`, `s`.`first_letter_raw` AS `first_letter_raw`, `s`.`first_letter_id` AS `first_letter_id`, `s`.`phone` AS `phone`, `s`.`email` AS `email`, `s`.`address` AS `address`, `s`.`sponsor_type` AS `sponsor_type`, `s`.`preferred_payment_method` AS `preferred_payment_method`, `s`.`status` AS `status`, `s`.`notes` AS `notes`, `s`.`created_by` AS `created_by`, `s`.`created_at` AS `created_at`, `s`.`updated_at` AS `updated_at`, `sl`.`supervisor_id` AS `assigned_supervisor_id` FROM (`sponsors` `s` left join `supervisor_letters` `sl` on(`sl`.`letter_id` = `s`.`first_letter_id`)) ;
-
--- --------------------------------------------------------
-
---
--- Structure for view `vw_supervisor_sponsors`
---
-DROP TABLE IF EXISTS `vw_supervisor_sponsors`;
-
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vw_supervisor_sponsors`  AS SELECT `sl`.`supervisor_id` AS `supervisor_id`, `s`.`id` AS `sponsor_id`, `s`.`full_name` AS `full_name`, `s`.`first_letter_id` AS `first_letter_id`, `l`.`code` AS `sponsor_letter`, `s`.`phone` AS `phone`, `s`.`email` AS `email`, `s`.`status` AS `status` FROM ((`supervisor_letters` `sl` join `sponsors` `s` on(`s`.`first_letter_id` = `sl`.`letter_id`)) left join `letters` `l` on(`l`.`id` = `s`.`first_letter_id`)) ;
 
 --
 -- Indexes for dumped tables
@@ -28818,7 +28452,7 @@ ALTER TABLE `attendance`
 -- AUTO_INCREMENT for table `audit_log`
 --
 ALTER TABLE `audit_log`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1423;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1428;
 
 --
 -- AUTO_INCREMENT for table `contracts`
@@ -28926,7 +28560,7 @@ ALTER TABLE `message_attachments`
 -- AUTO_INCREMENT for table `message_reads`
 --
 ALTER TABLE `message_reads`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=231;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=234;
 
 --
 -- AUTO_INCREMENT for table `monthly_disbursements`
