@@ -63,9 +63,7 @@ if (!function_exists('ak_get_supervisor_matrix')) {
 
             $gender = ak_supervisor_gender_normalize($row['gender'] ?? null);
             if ($gender === '') {
-                // Legacy NULL/unknown/'both' rows own both genders.
-                $matrix[$letterId]['male'] = $supervisorId;
-                $matrix[$letterId]['female'] = $supervisorId;
+                // Legacy NULL/unknown/'both' rows are fallback assignments.
                 $matrix[$letterId]['legacy'] = $supervisorId;
             } else {
                 $matrix[$letterId][$gender] = $supervisorId;
