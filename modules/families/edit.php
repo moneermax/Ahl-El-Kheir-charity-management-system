@@ -110,7 +110,7 @@ $supId = ($role !== 'supervisor' && $role !== 'nanny' && isset($_POST['superviso
 $nannyId = ($role !== 'nanny' && isset($_POST['nanny_id']) && $_POST['nanny_id'] !== '')
 ? (int)$_POST['nanny_id'] : ($fam['nanny_id'] ?? null);
 dbExecute("UPDATE families SET mother_name=?, mother_phone=?, mother_alt_phone=?, mother_job=?, mother_workplace=?,
-mother_national_id=?, mother_birth_date=?, father_name=?, father_death_date=?, father_death_cause=?, mother_marital_status=?,
+mother_national_id=?, registration_date=?, father_name=?, father_death_date=?, father_death_cause=?, mother_marital_status=?,
 city=?, district=?, address=?, monthly_need_amount=?,
 status=?, notes=?, supervisor_id=?, nanny_id=?, assigned_by=?, assigned_at=NOW(), updated_by=? WHERE id=?",
 [$name,
@@ -119,7 +119,7 @@ trim($_POST['mother_alt_phone'] ?? '') ?: null,
 trim($_POST['mother_job'] ?? '') ?: null,
 trim($_POST['mother_workplace'] ?? '') ?: null,
 trim($_POST['mother_national_id'] ?? '') ?: null,
-trim($_POST['mother_birth_date'] ?? '') ?: null,
+trim($_POST['registration_date'] ?? '') ?: null,
 trim($_POST['father_name'] ?? '') ?: null,
 trim($_POST['father_death_date'] ?? '') ?: null,
 trim($_POST['father_death_cause'] ?? '') ?: null,
@@ -251,6 +251,7 @@ input[type=number]{ -moz-appearance:textfield; appearance:textfield; }
 <?php echo csrf_field(); ?>
 <input type="hidden" name="id" value="<?php echo $id; ?>">
 <div class="row g-3">
+<div class="col-md-4"><label class="form-label">تاريخ الإنضمام</label><input type="date" name="registration_date" class="form-control" value="<?php echo e($fam['registration_date'] ?? ''); ?>"></div>
 <div class="col-md-6"><label class="form-label">اسم الأم *</label><input type="text" name="mother_name" class="form-control" required value="<?php echo e($fam['mother_name']); ?>"></div>
 <div class="col-md-3"><label class="form-label">الهاتف</label><input type="text" name="mother_phone" class="form-control" dir="ltr" value="<?php echo e($fam['mother_phone'] ?? ''); ?>"></div>
 <div class="col-md-3"><label class="form-label">هاتف بديل</label><input type="text" name="mother_alt_phone" class="form-control" dir="ltr" value="<?php echo e($fam['mother_alt_phone'] ?? ''); ?>"></div>
@@ -266,7 +267,6 @@ input[type=number]{ -moz-appearance:textfield; appearance:textfield; }
 <div class="col-md-3"><label class="form-label">سبب وفاة الأب</label><input type="text" name="father_death_cause" class="form-control" value="<?php echo e($fam['father_death_cause'] ?? ''); ?>"></div>
 <div class="col-md-3"><label class="form-label">مهنة الأم</label><input type="text" name="mother_job" class="form-control" value="<?php echo e($fam['mother_job'] ?? ''); ?>"></div>
 <div class="col-md-3"><label class="form-label">مكان العمل</label><input type="text" name="mother_workplace" class="form-control" value="<?php echo e($fam['mother_workplace'] ?? ''); ?>"></div>
-<div class="col-md-4"><label class="form-label">تاريخ ميلاد الأم</label><input type="date" name="mother_birth_date" class="form-control" value="<?php echo e($fam['mother_birth_date'] ?? ''); ?>"></div>
 <div class="col-md-3"><label class="form-label">المدينة</label><input type="text" name="city" class="form-control" value="<?php echo e($fam['city'] ?? ''); ?>"></div>
 <div class="col-md-3"><label class="form-label">الحي/المنطقة</label><input type="text" name="district" class="form-control" value="<?php echo e($fam['district'] ?? ''); ?>"></div>
 <div class="col-md-3"><label class="form-label">الاحتياج الشهري (ج.س)</label><input type="text" inputmode="decimal" name="monthly_need_amount" class="form-control" value="<?php echo e((string)($fam['monthly_need_amount'] ?? '')); ?>"></div>
