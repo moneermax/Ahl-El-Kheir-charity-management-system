@@ -46,13 +46,10 @@ function startSupervisorLeave(
 ): int {
     $pdo = db();
     $pdo->beginTransaction();
-
     try {
         $supervisor = dbFetchOne("SELECT u.id, u.is_active, COALESCE(u.supervisor_status, 'active') AS supervisor_status
-            FROM users u
-            JOIN roles r ON r.id = u.role_id
-            WHERE u.id = ? AND r.code = 'supervisor'
-            FOR UPDATE", [$supervisorId]);
+            FROM users u JOIN roles r ON r.id = u.role_id
+            WHERE u.id = ? AND r.code = 'supervisor' FOR UPDATE", [$supervisorId]);
         if (!$supervisor) throw new RuntimeException('Supervisor not found.');
         if ($supervisor['supervisor_status'] !== 'active') throw new RuntimeException('Supervisor is not active.');
 
@@ -135,6 +132,56 @@ function returnSupervisorFromLeave(int $supervisorId, ?int $actorId): void
     }
 }
 
+function ensureSupervisorLetterHistoryTable(): void
+{
+    dbExecute("CREATE TABLE IF NOT EXISTS supervisor_letter_assignment_history (
+        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        supervisor_letter_id INT UNSIGNED NULL,
+        supervisor_id INT UNSIGNED NOT NULL,
+        letter_id INT UNSIGNED NOT NULL,
+        gender ENUM('male','female','both') NOT NULL DEFAULT 'both',
+        assigned_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        assigned_by INT UNSIGNED NULL,
+        assignment_type ENUM('permanent','temporary') NOT NULL DEFAULT 'permanent',
+        assignment_reason VARCHAR(100) NULL,
+        ended_at DATETIME NULL,
+        ended_by INT UNSIGNED NULL,
+        end_reason VARCHAR(100) NULL,
+        INDEX idx_slah_supervisor (supervisor_id),
+        INDEX idx_slah_letter (letter_id),
+        INDEX idx_slah_active (letter_id, gender, ended_at),
+        CONSTRAINT fk_slah_supervisor FOREIGN KEY (supervisor_id) REFERENCES users(id) ON DELETE RESTRICT,
+        CONSTRAINT fk_slah_letter FOREIGN KEY (letter_id) REFERENCES letters(id) ON DELETE RESTRICT,
+        CONSTRAINT fk_slah_assigned_by FOREIGN KEY (assigned_by) REFERENCES users(id) ON DELETE SET NULL,
+        CONSTRAINT fk_slah_ended_by FOREIGN KEY (ended_by) REFERENCES users(id) ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+}
+
+function preserveAndReleaseSupervisorLetters(int $supervisorId, ?int $actorId, string $reason = 'supervisor_departure'): int
+{
+    ensureSupervisorLetterHistoryTable();
+    $rows = dbFetchAll("SELECT sl.id, sl.supervisor_id, sl.letter_id, COALESCE(sl.gender, 'both') AS gender, sl.assigned_by
+        FROM supervisor_letters sl WHERE sl.supervisor_id = ? FOR UPDATE", [$supervisorId]);
+
+    foreach ($rows as $row) {
+        $existing = dbFetchOne("SELECT id FROM supervisor_letter_assignment_history
+            WHERE supervisor_letter_id = ? AND ended_at IS NULL LIMIT 1", [(int)$row['id']]);
+        if (!$existing) {
+            dbExecute("INSERT INTO supervisor_letter_assignment_history
+                (supervisor_letter_id, supervisor_id, letter_id, gender, assigned_by, assignment_type, assignment_reason, ended_at, ended_by, end_reason)
+                VALUES (?, ?, ?, ?, ?, 'permanent', 'legacy_backfill', NOW(), ?, ?)",
+                [(int)$row['id'], (int)$row['supervisor_id'], (int)$row['letter_id'], $row['gender'], $row['assigned_by'] ?: null, $actorId, $reason]);
+        } else {
+            dbExecute("UPDATE supervisor_letter_assignment_history
+                SET ended_at = NOW(), ended_by = ?, end_reason = ?
+                WHERE id = ? AND ended_at IS NULL", [$actorId, $reason, (int)$existing['id']]);
+        }
+    }
+
+    if ($rows) dbExecute("DELETE FROM supervisor_letters WHERE supervisor_id = ?", [$supervisorId]);
+    return count($rows);
+}
+
 function archiveSupervisor(int $supervisorId, ?int $actorId): int
 {
     $pdo = db();
@@ -150,12 +197,11 @@ function archiveSupervisor(int $supervisorId, ?int $actorId): int
         }
 
         $released = releaseSupervisorSponsors($supervisorId, $actorId, 'supervisor_departure');
+        preserveAndReleaseSupervisorLetters($supervisorId, $actorId, 'supervisor_departure');
 
         dbExecute("UPDATE supervisor_leaves
             SET status = 'completed', actual_return_date = COALESCE(actual_return_date, CURDATE()), updated_by = ?
             WHERE supervisor_id = ? AND status IN ('planned','active')", [$actorId, $supervisorId]);
-
-        dbExecute("DELETE FROM supervisor_letters WHERE supervisor_id = ?", [$supervisorId]);
         dbExecute("DELETE FROM user_sessions WHERE user_id = ?", [$supervisorId]);
         dbExecute("UPDATE users SET
             is_active = 0,
