@@ -143,7 +143,7 @@ href="<?php echo APP_URL; ?>modules/supervisors/edit.php?id=<?php echo (int)$sup
 href="<?php echo APP_URL; ?>modules/supervisors/assign-letters.php?supervisor=<?php echo (int)$sup['id']; ?>">
 <i class="fas fa-font"></i>
 </a>
-<form method="post" class="d-inline" onsubmit="return confirm('تغيير حالة المشرف؟');">
+<form method="post" class="d-inline" data-confirm="تغيير حالة المشرف؟">
 <input type="hidden" name="user_id" value="<?php echo (int)$sup['id']; ?>">
 <button type="submit" name="toggle_status" value="1"
 class="btn btn-sm <?php echo ((int)$sup['is_active'] === 1) ? 'btn-danger' : 'btn-success'; ?>"
