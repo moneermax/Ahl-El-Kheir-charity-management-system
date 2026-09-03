@@ -244,7 +244,7 @@ include __DIR__ . '/../includes/header.php';
                                        href="<?php echo APP_URL; ?>modules/supervisors/edit.php?id=<?php echo (int)$s['id']; ?>">
                                         <i class="fas fa-pen"></i>
                                     </a>
-                                    <form method="post" class="d-inline" onsubmit="return confirm('هل تريد تغيير حالة هذا الحساب؟');">
+                                    <form method="post" class="d-inline js-supervisor-action" data-confirm-type="toggle">
                                         <?php echo csrf_field(); ?>
                                         <input type="hidden" name="supervisor_id" value="<?php echo (int)$s['id']; ?>">
                                         <button type="submit" name="supervisor_action" value="toggle_status"
@@ -253,7 +253,7 @@ include __DIR__ . '/../includes/header.php';
                                             <i class="fas <?php echo ((int)$s['is_active'] === 1) ? 'fa-pause' : 'fa-play'; ?>"></i>
                                         </button>
                                     </form>
-                                    <form method="post" class="d-inline" onsubmit="return confirm('سيتم حذف صلاحية دخول حساب المشرف وفصل ارتباطه بالأسر والكفلاء مع إبقاء جميع البيانات والسجل التاريخي. هل تريد المتابعة؟');">
+                                    <form method="post" class="d-inline js-supervisor-action" data-confirm-type="delete">
                                         <?php echo csrf_field(); ?>
                                         <input type="hidden" name="supervisor_id" value="<?php echo (int)$s['id']; ?>">
                                         <button type="submit" name="supervisor_action" value="delete_account" class="btn btn-sm btn-outline-danger" title="حذف صلاحية الحساب وفصل الارتباطات">
@@ -269,6 +269,48 @@ include __DIR__ . '/../includes/header.php';
         </div>
     </div>
 </div>
+
+<!-- System confirmation dialog: replaces the browser's native confirm() dialog. -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+(function () {
+    'use strict';
+
+    document.querySelectorAll('.js-supervisor-action').forEach(function (form) {
+        form.addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            var type = form.getAttribute('data-confirm-type');
+            var isDelete = type === 'delete';
+            var title = isDelete ? 'تأكيد إنهاء حساب المشرف' : 'تأكيد تغيير حالة الحساب';
+            var text = isDelete
+                ? 'سيتم حذف صلاحية دخول حساب المشرف وفصل ارتباطه بالأسر والكفلاء مع إبقاء جميع البيانات والسجل التاريخي. هل تريد المتابعة؟'
+                : 'هل تريد تغيير حالة حساب هذا المشرف؟';
+
+            Swal.fire({
+                title: title,
+                text: text,
+                icon: isDelete ? 'warning' : 'question',
+                showCancelButton: true,
+                confirmButtonText: isDelete ? 'نعم، متابعة' : 'نعم، متابعة',
+                cancelButtonText: 'إلغاء',
+                reverseButtons: true,
+                focusCancel: true,
+                allowOutsideClick: false,
+                customClass: {
+                    confirmButton: 'btn btn-danger px-4 ms-2',
+                    cancelButton: 'btn btn-secondary px-4'
+                },
+                buttonsStyling: false
+            }).then(function (result) {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+        });
+    });
+})();
+</script>
 
 <!-- ADDED: Load the Age Alert Popup Widget for VGM Dashboard -->
 <?php include __DIR__ . '/../includes/age_alert.php'; ?>
