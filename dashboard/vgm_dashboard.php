@@ -123,11 +123,15 @@ ORDER BY
     u.full_name
 ");
 
+// Dashboard action cards. All use the same compact dimensions and are arranged in two rows.
 $cards = [
     ['href' => 'modules/supervisors/index.php', 'label' => 'إدارة المشرفين', 'description' => 'عرض وإدارة حسابات المشرفين', 'icon' => 'fa-user-tie', 'class' => 'action-primary'],
     ['href' => 'modules/supervisors/create.php', 'label' => 'إضافة مشرف', 'description' => 'إنشاء حساب مشرف جديد', 'icon' => 'fa-user-plus', 'class' => 'action-secondary'],
     ['href' => 'modules/supervisors/assign-letters.php', 'label' => 'توزيع الحروف', 'description' => 'توزيع الحروف على المشرفين', 'icon' => 'fa-font', 'class' => 'action-secondary'],
     ['href' => 'modules/deputy_gm/groups.php', 'label' => 'مجموعات الأيتام', 'description' => 'إنشاء المجموعات وتعيين الحاضنات', 'icon' => 'fa-users', 'class' => 'action-success'],
+    ['href' => 'modules/accounting/gm_reconciliation.php', 'label' => 'تقرير المصالحة', 'description' => 'مراجعة ومطابقة العمليات المالية', 'icon' => 'fa-scale-balanced', 'class' => 'action-info'],
+    ['href' => 'modules/accounting/fm_review_queue.php', 'label' => 'طابور المراجعة المالية', 'description' => 'متابعة العمليات المالية قيد المراجعة', 'icon' => 'fa-clipboard-check', 'class' => 'action-warning'],
+    ['href' => 'modules/reports/index.php', 'label' => 'التقارير العامة', 'description' => 'الوصول إلى تقارير النظام العامة', 'icon' => 'fa-chart-line', 'class' => 'action-primary'],
 ];
 
 $statCards = [
@@ -143,98 +147,152 @@ include __DIR__ . '/../includes/header.php';
 ?>
 
 <style>
-.stat-card {
-    border-right: 4px solid #1b4d8f;
+/* VGM dashboard header: these actions are now represented by cards below. */
+.qa-actions {
+    display: none !important;
+}
+
+/* One compact card size shared by dashboard action/stat cards. */
+.dashboard-card {
+    width: 170px;
+    min-height: 96px;
     border-radius: 10px;
     box-shadow: 0 2px 8px rgba(10,31,68,.07);
 }
-.stat-value {
-    font-size: 1.55rem;
-    font-weight: 700;
-    color: #1b4d8f;
-}
-.stat-label {
-    color: #6c757d;
-    font-size: .82rem;
+
+.dashboard-card .card-body {
+    padding: .65rem .55rem;
 }
 
 .quick-action-grid {
     max-width: 760px;
-    margin: 0 auto 1.5rem;
+    margin: 0 auto 1.25rem;
 }
+
 .quick-action-row {
     display: flex;
     justify-content: center;
-    gap: 1rem;
-    margin-bottom: 1rem;
+    gap: .75rem;
+    margin-bottom: .75rem;
 }
+
 .quick-action-row:last-child {
     margin-bottom: 0;
 }
+
 .quick-action-card {
-    width: 230px;
-    min-height: 128px;
+    flex: 0 0 170px;
+    min-height: 96px;
     border: none;
-    border-radius: 12px;
-    box-shadow: 0 2px 10px rgba(10,31,68,.08);
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(10,31,68,.07);
     transition: transform .2s, box-shadow .2s;
     text-decoration: none;
     color: inherit;
 }
+
 .quick-action-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 6px 18px rgba(10,31,68,.14);
+    transform: translateY(-3px);
+    box-shadow: 0 5px 14px rgba(10,31,68,.13);
     color: inherit;
 }
+
 .quick-action-card .card-body {
-    padding: 1rem .75rem;
+    padding: .65rem .55rem;
 }
+
 .quick-action-icon {
-    font-size: 1.65rem;
-    margin-bottom: .5rem;
+    font-size: 1.35rem;
+    margin-bottom: .3rem;
 }
+
 .quick-action-card h6 {
-    font-size: .95rem;
-    margin-bottom: .25rem;
+    font-size: .82rem;
+    line-height: 1.35;
+    margin-bottom: .15rem;
 }
+
 .quick-action-card p {
-    font-size: .75rem;
+    font-size: .66rem;
+    line-height: 1.35;
     margin-bottom: 0;
 }
+
 .action-primary { border-top: 3px solid #1b4d8f; }
 .action-secondary { border-top: 3px solid #6c757d; }
 .action-success { border-top: 3px solid #198754; }
+.action-info { border-top: 3px solid #17a2b8; }
+.action-warning { border-top: 3px solid #ffc107; }
+
+.stat-card {
+    border-right: 4px solid #1b4d8f;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(10,31,68,.07);
+    min-height: 96px;
+}
+
+.stat-value {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #1b4d8f;
+}
+
+.stat-label {
+    color: #6c757d;
+    font-size: .76rem;
+}
 
 .supervisor-table tbody tr.supervisor-disabled td {
     background-color: #fff8e1;
 }
+
 .supervisor-table tbody tr.supervisor-archived td {
     background-color: #eeeeee;
     color: #6c757d;
 }
+
 .supervisor-table tbody tr.supervisor-archived strong {
     color: #6c757d;
 }
+
 .supervisor-table tbody tr.supervisor-archived:hover td,
 .supervisor-table tbody tr.supervisor-disabled:hover td {
     background-color: inherit;
 }
+
 .archived-badge {
     background-color: #6c757d;
     color: #fff;
 }
+
 .disabled-badge {
     background-color: #ffc107;
     color: #212529;
 }
 
+@media (max-width: 768px) {
+    .quick-action-grid {
+        max-width: 100%;
+    }
+
+    .quick-action-row {
+        gap: .5rem;
+    }
+
+    .quick-action-card {
+        flex-basis: 160px;
+        width: 160px;
+    }
+}
+
 @media (max-width: 576px) {
     .quick-action-row {
-        gap: .65rem;
+        flex-wrap: wrap;
     }
+
     .quick-action-card {
-        width: 46%;
-        min-height: 120px;
+        flex-basis: calc(50% - .25rem);
+        width: calc(50% - .25rem);
     }
 }
 </style>
@@ -246,11 +304,11 @@ include __DIR__ . '/../includes/header.php';
 
 <?php include __DIR__ . '/../includes/alerts.php'; ?>
 
-<!-- Quick actions: moved from the header into a compact two-row clickable card layout. -->
+<!-- Compact clickable actions: 4 cards on the first row and 3 on the second. -->
 <div class="quick-action-grid fade-in">
     <div class="quick-action-row">
-        <?php foreach (array_slice($cards, 0, 2) as $c): ?>
-            <a href="<?php echo APP_URL . $c['href']; ?>" class="quick-action-card card <?php echo e($c['class']); ?>">
+        <?php foreach (array_slice($cards, 0, 4) as $c): ?>
+            <a href="<?php echo APP_URL . $c['href']; ?>" class="quick-action-card card <?php echo e($c['class']); ?> dashboard-card">
                 <div class="card-body text-center d-flex flex-column justify-content-center">
                     <div class="quick-action-icon">
                         <i class="fas <?php echo e($c['icon']); ?>"></i>
@@ -262,8 +320,8 @@ include __DIR__ . '/../includes/header.php';
         <?php endforeach; ?>
     </div>
     <div class="quick-action-row">
-        <?php foreach (array_slice($cards, 2, 2) as $c): ?>
-            <a href="<?php echo APP_URL . $c['href']; ?>" class="quick-action-card card <?php echo e($c['class']); ?>">
+        <?php foreach (array_slice($cards, 4, 3) as $c): ?>
+            <a href="<?php echo APP_URL . $c['href']; ?>" class="quick-action-card card <?php echo e($c['class']); ?> dashboard-card">
                 <div class="card-body text-center d-flex flex-column justify-content-center">
                     <div class="quick-action-icon">
                         <i class="fas <?php echo e($c['icon']); ?>"></i>
@@ -276,12 +334,12 @@ include __DIR__ . '/../includes/header.php';
     </div>
 </div>
 
-<!-- Compact live statistics -->
-<div class="row g-2 mb-4 fade-in">
+<!-- Compact live statistics; dimensions match the clickable cards above. -->
+<div class="row g-2 mb-4 fade-in justify-content-center">
     <?php foreach ($statCards as $c): ?>
-        <div class="col-6 col-md-3">
-            <div class="card stat-card text-center h-100">
-                <div class="card-body py-2">
+        <div class="col-6 col-md-auto">
+            <div class="card stat-card dashboard-card text-center h-100">
+                <div class="card-body py-2 d-flex flex-column justify-content-center">
                     <div class="stat-value"><?php echo $c['value']; ?></div>
                     <div class="stat-label">
                         <i class="fas <?php echo e($c['icon']); ?> me-1"></i>
