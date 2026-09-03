@@ -123,12 +123,9 @@ ORDER BY
     u.full_name
 ");
 
-// Dashboard action cards. All use the same compact dimensions and are arranged in two rows.
+// Dashboard action cards. Keep the remaining actions together in one row on desktop.
 $cards = [
     ['href' => 'modules/supervisors/index.php', 'label' => 'إدارة المشرفين', 'description' => 'عرض وإدارة حسابات المشرفين', 'icon' => 'fa-user-tie', 'class' => 'action-primary'],
-    ['href' => 'modules/supervisors/create.php', 'label' => 'إضافة مشرف', 'description' => 'إنشاء حساب مشرف جديد', 'icon' => 'fa-user-plus', 'class' => 'action-secondary'],
-    ['href' => 'modules/supervisors/assign-letters.php', 'label' => 'توزيع الحروف', 'description' => 'توزيع الحروف على المشرفين', 'icon' => 'fa-font', 'class' => 'action-secondary'],
-    ['href' => 'modules/deputy_gm/groups.php', 'label' => 'مجموعات الأيتام', 'description' => 'إنشاء المجموعات وتعيين الحاضنات', 'icon' => 'fa-users', 'class' => 'action-success'],
     ['href' => 'modules/accounting/gm_reconciliation.php', 'label' => 'تقرير المصالحة', 'description' => 'مراجعة ومطابقة العمليات المالية', 'icon' => 'fa-scale-balanced', 'class' => 'action-info'],
     ['href' => 'modules/accounting/fm_review_queue.php', 'label' => 'طابور المراجعة المالية', 'description' => 'متابعة العمليات المالية قيد المراجعة', 'icon' => 'fa-clipboard-check', 'class' => 'action-warning'],
     ['href' => 'modules/reports/index.php', 'label' => 'التقارير العامة', 'description' => 'الوصول إلى تقارير النظام العامة', 'icon' => 'fa-chart-line', 'class' => 'action-primary'],
@@ -304,23 +301,10 @@ include __DIR__ . '/../includes/header.php';
 
 <?php include __DIR__ . '/../includes/alerts.php'; ?>
 
-<!-- Compact clickable actions: 4 cards on the first row and 3 on the second. -->
+<!-- Compact clickable actions grouped in one row on desktop. -->
 <div class="quick-action-grid fade-in">
     <div class="quick-action-row">
-        <?php foreach (array_slice($cards, 0, 4) as $c): ?>
-            <a href="<?php echo APP_URL . $c['href']; ?>" class="quick-action-card card <?php echo e($c['class']); ?> dashboard-card">
-                <div class="card-body text-center d-flex flex-column justify-content-center">
-                    <div class="quick-action-icon">
-                        <i class="fas <?php echo e($c['icon']); ?>"></i>
-                    </div>
-                    <h6 class="card-title"><?php echo e($c['label']); ?></h6>
-                    <p class="card-text text-muted"><?php echo e($c['description']); ?></p>
-                </div>
-            </a>
-        <?php endforeach; ?>
-    </div>
-    <div class="quick-action-row">
-        <?php foreach (array_slice($cards, 4, 3) as $c): ?>
+        <?php foreach ($cards as $c): ?>
             <a href="<?php echo APP_URL . $c['href']; ?>" class="quick-action-card card <?php echo e($c['class']); ?> dashboard-card">
                 <div class="card-body text-center d-flex flex-column justify-content-center">
                     <div class="quick-action-icon">
