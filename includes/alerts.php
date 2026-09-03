@@ -11,11 +11,15 @@ foreach ($flashes as $flash) {
     if (!in_array($type, ['success', 'danger', 'warning', 'info'], true)) {
         $type = 'info';
     }
+
+    $message = (string)($flash['message'] ?? '');
 ?>
-    <div class="alert alert-<?php echo e($type); ?> alert-dismissible fade show" role="alert">
-        <?php echo e($flash['message'] ?? ''); ?>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
+    <div
+        class="ak-flash-message d-none"
+        data-ak-flash="<?php echo e($type); ?>"
+        data-ak-message="<?php echo e($message); ?>"
+        aria-live="polite"
+    ><?php echo e($message); ?></div>
 <?php
 }
 ?>
