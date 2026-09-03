@@ -32,7 +32,6 @@
         window.AKNotify = {
             toast: fallbackToast,
             confirm: function (message, onConfirm) {
-                /* Last-resort compatibility only if the CDN is unavailable. */
                 if (window.confirm(message || 'هل أنت متأكد؟') && typeof onConfirm === 'function') {
                     onConfirm();
                 }
@@ -48,9 +47,7 @@
         timer: 3200,
         timerProgressBar: true,
         showCloseButton: true,
-        customClass: {
-            popup: 'ak-swal-toast'
-        },
+        customClass: { popup: 'ak-swal-toast' },
         didOpen: function (toast) {
             toast.addEventListener('mouseenter', window.Swal.stopTimer);
             toast.addEventListener('mouseleave', window.Swal.resumeTimer);
@@ -60,13 +57,8 @@
     window.AKNotify = {
         toast: function (type, message) {
             var icon = type === 'danger' || type === 'error' ? 'error' : type;
-            if (!['success', 'error', 'warning', 'info', 'question'].includes(icon)) {
-                icon = 'info';
-            }
-            return Toast.fire({
-                icon: icon,
-                title: message || ''
-            });
+            if (!['success', 'error', 'warning', 'info', 'question'].includes(icon)) icon = 'info';
+            return Toast.fire({ icon: icon, title: message || '' });
         },
 
         modal: function (options) {
@@ -99,9 +91,7 @@
                     cancelButton: 'ak-swal-cancel-btn'
                 }
             }).then(function (result) {
-                if (result.isConfirmed && typeof onConfirm === 'function') {
-                    onConfirm();
-                }
+                if (result.isConfirmed && typeof onConfirm === 'function') onConfirm();
                 return result;
             });
         }
@@ -117,15 +107,9 @@
         window.AKNotify.confirm(message, proceed);
     }
 
-    /*
-     * Preferred declarative API: data-confirm.
-     * Capture phase runs before inline handlers, so it also lets us neutralize
-     * legacy onsubmit="return confirm(...)" handlers without editing every page.
-     */
     document.addEventListener('submit', function (event) {
         var form = event.target;
         if (!form || form.tagName !== 'FORM') return;
-
         if (form.dataset.akConfirmBypass === '1') {
             delete form.dataset.akConfirmBypass;
             return;
@@ -133,42 +117,30 @@
 
         var message = form.getAttribute('data-confirm');
         var inlineHandler = form.getAttribute('onsubmit');
-
         if (!message && inlineHandler && /\bconfirm\s*\(/i.test(inlineHandler)) {
             message = extractConfirmMessage(inlineHandler);
         }
-
         if (!message) return;
 
         event.preventDefault();
         event.stopImmediatePropagation();
-
-        /* Remove only the legacy inline confirmation. Other declarative logic
-         * should use data-confirm and remain untouched. */
-        if (inlineHandler && /\bconfirm\s*\(/i.test(inlineHandler)) {
-            form.removeAttribute('onsubmit');
-        }
+        if (inlineHandler && /\bconfirm\s*\(/i.test(inlineHandler)) form.removeAttribute('onsubmit');
 
         var submitter = event.submitter || null;
         showConfirmation(message, function () {
             form.dataset.akConfirmBypass = '1';
             if (typeof form.requestSubmit === 'function') {
-                if (submitter && submitter.form === form) {
-                    form.requestSubmit(submitter);
-                } else {
-                    form.requestSubmit();
-                }
+                if (submitter && submitter.form === form) form.requestSubmit(submitter);
+                else form.requestSubmit();
             } else {
                 HTMLFormElement.prototype.submit.call(form);
             }
         });
     }, true);
 
-    /* Also cover legacy onclick="return confirm(...)" on buttons/links. */
     document.addEventListener('click', function (event) {
         var target = event.target && event.target.closest
-            ? event.target.closest('[data-confirm], [onclick*="confirm("]')
-            : null;
+            ? event.target.closest('[data-confirm], [onclick*="confirm("]') : null;
 
         if (!target || target.dataset.akConfirmBypass === '1') {
             if (target) delete target.dataset.akConfirmBypass;
@@ -177,32 +149,50 @@
 
         var message = target.getAttribute('data-confirm');
         var inlineHandler = target.getAttribute('onclick');
-
-        if (!message && inlineHandler && /\bconfirm\s*\(/i.test(inlineHandler)) {
-            message = extractConfirmMessage(inlineHandler);
-        }
-
+        if (!message && inlineHandler && /\bconfirm\s*\(/i.test(inlineHandler)) message = extractConfirmMessage(inlineHandler);
         if (!message) return;
-
-        /* Forms are handled by submit capture above. */
         if (target.tagName === 'BUTTON' && target.type === 'submit' && target.form) return;
         if (target.tagName === 'INPUT' && target.type === 'submit' && target.form) return;
 
         event.preventDefault();
         event.stopImmediatePropagation();
-
-        if (inlineHandler && /\bconfirm\s*\(/i.test(inlineHandler)) {
-            target.removeAttribute('onclick');
-        }
-
+        if (inlineHandler && /\bconfirm\s*\(/i.test(inlineHandler)) target.removeAttribute('onclick');
         showConfirmation(message, function () {
             target.dataset.akConfirmBypass = '1';
             if (typeof target.click === 'function') target.click();
         });
     }, true);
 
-    /* Convert server-side flash messages into the same toast design. */
+    /*
+     * Compatibility bridge for the existing VGM supervisor table while its
+     * lifecycle controls are being migrated. The visible dashboard buttons
+     * continue to work, but server-side execution now goes through the
+     * lifecycle-safe endpoints instead of the legacy action handler.
+     */
     document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('form.js-supervisor-action').forEach(function (form) {
+            var button = form.querySelector('button[name="supervisor_action"]');
+            if (!button) return;
+
+            var idInput = form.querySelector('input[name="supervisor_id"]');
+            if (!idInput || !idInput.value) return;
+
+            var hiddenId = form.querySelector('input[name="id"]');
+            if (!hiddenId) {
+                hiddenId = document.createElement('input');
+                hiddenId.type = 'hidden';
+                hiddenId.name = 'id';
+                form.appendChild(hiddenId);
+            }
+            hiddenId.value = idInput.value;
+
+            if (button.value === 'delete_account') {
+                form.action = '../modules/users/supervisor_departure.php';
+            } else if (button.value === 'toggle_status') {
+                form.action = '../modules/users/supervisor_status.php';
+            }
+        });
+
         document.querySelectorAll('[data-ak-flash]').forEach(function (node) {
             var type = node.getAttribute('data-ak-flash') || 'info';
             var message = node.getAttribute('data-ak-message') || node.textContent || '';
@@ -211,7 +201,6 @@
         });
     });
 
-    /* Small project-specific visual refinements. */
     var style = document.createElement('style');
     style.textContent = '\n' +
         '.ak-swal-toast{font-family:Cairo,sans-serif;font-size:.9rem;border-radius:12px!important;}\n' +
