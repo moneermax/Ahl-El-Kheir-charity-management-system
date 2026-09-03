@@ -199,16 +199,23 @@ $formSerial]);
 } elseif (isset($_POST['update_child'])) {
 $cid = (int)$_POST['update_child'];
 $cn = trim($_POST['child_name'] ?? '');
+$health = trim($_POST['health_status'] ?? 'سليم');
+$healthOther = $health === 'أخرى' ? trim($_POST['health_status_other'] ?? '') : null;
+$psych = trim($_POST['psychological_state'] ?? 'سليم');
+$psychOther = $psych === 'أخرى' ? trim($_POST['psychological_state_other'] ?? '') : null;
 if ($cn === '') $errors[] = 'اسم الطفل مطلوب.';
 if (!dbFetchOne("SELECT id FROM family_children WHERE id = ? AND family_id = ?", [$cid, $id])) $errors[] = 'الطفل غير موجود.';
 if (!$errors) {
 dbExecute("UPDATE family_children SET child_name=?, national_id=?, birth_date=?, gender=?, education_level=?,
+medical_notes=?, health_status=?, health_status_other=?, psychological_state=?, psychological_state_other=?,
 monthly_sponsorship_value=?, extra_allowance=?, guardian_name=?, guardian_relationship=? WHERE id=? AND family_id=?",
 [$cn,
 trim($_POST['national_id'] ?? '') ?: null,
 trim($_POST['birth_date'] ?? '') ?: null,
 in_array($_POST['gender'] ?? '', ['male', 'female', 'unknown'], true) ? $_POST['gender'] : 'unknown',
 trim($_POST['education_level'] ?? '') ?: null,
+trim($_POST['medical_notes'] ?? '') ?: null,
+$health, $healthOther, $psych, $psychOther,
 trim($_POST['monthly_sponsorship_value'] ?? '') !== '' ? (float)str_replace(',', '', $_POST['monthly_sponsorship_value']) : null,
 trim($_POST['extra_allowance'] ?? '') !== '' ? (float)str_replace(',', '', $_POST['extra_allowance']) : null,
 trim($_POST['guardian_name'] ?? '') ?: null,
@@ -264,12 +271,13 @@ input[type=number]{ -moz-appearance:textfield; appearance:textfield; }
 </select></div>
 <div class="col-md-3"><label class="form-label">مهنة الأم</label><input type="text" name="mother_job" class="form-control" value="<?php echo e($fam['mother_job'] ?? ''); ?>"></div>
 <div class="col-md-3"><label class="form-label">مكان العمل</label><input type="text" name="mother_workplace" class="form-control" value="<?php echo e($fam['mother_workplace'] ?? ''); ?>"></div>
+<div class="col-md-9"><label class="form-label">العنوان</label><input type="text" name="address" class="form-control" value="<?php echo e($fam['address'] ?? ''); ?>"></div>
+<div class="col-md-3"><label class="form-label">المدينة</label><input type="text" name="city" class="form-control" value="<?php echo e($fam['city'] ?? ''); ?>"></div>
+<div class="col-md-3"><label class="form-label">الحي/المنطقة</label><input type="text" name="district" class="form-control" value="<?php echo e($fam['district'] ?? ''); ?>"></div>
 <div class="col-md-4"><label class="form-label">اسم الأب (والد الأطفال)</label><input type="text" name="father_name" class="form-control" value="<?php echo e($fam['father_name'] ?? ''); ?>"></div>
 <div class="col-md-3"><label class="form-label">تاريخ وفاة الأب</label><input type="date" name="father_death_date" class="form-control" value="<?php echo e($fam['father_death_date'] ?? ''); ?>"></div>
 <div class="col-md-3"><label class="form-label">سبب وفاة الأب</label><input type="text" name="father_death_cause" class="form-control" value="<?php echo e($fam['father_death_cause'] ?? ''); ?>"></div>
-<div class="col-md-3"><label class="form-label">المدينة</label><input type="text" name="city" class="form-control" value="<?php echo e($fam['city'] ?? ''); ?>"></div>
-<div class="col-md-3"><label class="form-label">الحي/المنطقة</label><input type="text" name="district" class="form-control" value="<?php echo e($fam['district'] ?? ''); ?>"></div>
-<div class="col-md-9"><label class="form-label">العنوان</label><input type="text" name="address" class="form-control" value="<?php echo e($fam['address'] ?? ''); ?>"></div>
+<div class="col-12"><hr><h5 class="text-primary">Section B : ()</h5></div>
 <div class="col-md-3"><label class="form-label">الاحتياج الشهري (ج.س)</label><input type="text" inputmode="decimal" name="monthly_need_amount" class="form-control" value="<?php echo e((string)($fam['monthly_need_amount'] ?? '')); ?>"></div>
 <div class="col-md-3"><label class="form-label">الحالة</label>
 <select name="status" class="form-select">
@@ -377,6 +385,11 @@ input[type=number]{ -moz-appearance:textfield; appearance:textfield; }
 <option value="female" <?php echo ($c['gender'] ?? '') === 'female' ? 'selected' : ''; ?>>أنثى</option>
 </select></div>
 <div class="col-md-2"><label class="form-label small mb-1">التعليم</label><input type="text" name="education_level" class="form-control form-control-sm" value="<?php echo e($c['education_level'] ?? ''); ?>"></div>
+<div class="col-md-3"><label class="form-label small mb-1">الحالة الصحية</label><select name="health_status" class="form-select form-select-sm" onchange="document.getElementById('edit_h_other_<?php echo (int)$c['id']; ?>').style.display = this.value === 'أخرى' ? '' : 'none';"><?php foreach ($AK_ORPHAN_OPTS['health'] as $o): ?><option value="<?php echo e($o); ?>" <?php echo ($c['health_status'] ?? 'سليم') === $o ? 'selected' : ''; ?>><?php echo e($o); ?></option><?php endforeach; ?></select></div>
+<div class="col-md-3" id="edit_h_other_<?php echo (int)$c['id']; ?>" style="display:<?php echo ($c['health_status'] ?? '') === 'أخرى' ? '' : 'none'; ?>"><label class="form-label small mb-1">حالة صحية أخرى</label><input type="text" name="health_status_other" class="form-control form-control-sm" value="<?php echo e($c['health_status_other'] ?? ''); ?>"></div>
+<div class="col-md-3"><label class="form-label small mb-1">الحالة النفسية</label><select name="psychological_state" class="form-select form-select-sm" onchange="document.getElementById('edit_p_other_<?php echo (int)$c['id']; ?>').style.display = this.value === 'أخرى' ? '' : 'none';"><?php foreach ($AK_ORPHAN_OPTS['psych'] as $o): ?><option value="<?php echo e($o); ?>" <?php echo ($c['psychological_state'] ?? 'سليم') === $o ? 'selected' : ''; ?>><?php echo e($o); ?></option><?php endforeach; ?></select></div>
+<div class="col-md-3" id="edit_p_other_<?php echo (int)$c['id']; ?>" style="display:<?php echo ($c['psychological_state'] ?? '') === 'أخرى' ? '' : 'none'; ?>"><label class="form-label small mb-1">حالة نفسية أخرى</label><input type="text" name="psychological_state_other" class="form-control form-control-sm" value="<?php echo e($c['psychological_state_other'] ?? ''); ?>"></div>
+<div class="col-md-4"><label class="form-label small mb-1">ملاحظات طبية</label><input type="text" name="medical_notes" class="form-control form-control-sm" value="<?php echo e($c['medical_notes'] ?? ''); ?>"></div>
 <div class="col-md-2"><label class="form-label small mb-1">كفالة شهرية (ج.س)</label><input type="number" step="100" min="0" name="monthly_sponsorship_value" class="form-control form-control-sm" value="<?php echo e((string)($c['monthly_sponsorship_value'] ?? '')); ?>"></div>
 <div class="col-md-2"><label class="form-label small mb-1">إضافة شهرية (ج.س)</label><input type="number" step="100" min="0" name="extra_allowance" class="form-control form-control-sm" value="<?php echo e((string)($c['extra_allowance'] ?? '')); ?>"></div>
 <div class="col-md-3"><label class="form-label small mb-1">الوصي/المعيل</label><input type="text" name="guardian_name" class="form-control form-control-sm" value="<?php echo e($c['guardian_name'] ?? ''); ?>"></div>

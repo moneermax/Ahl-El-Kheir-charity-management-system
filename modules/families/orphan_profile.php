@@ -349,17 +349,17 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 
                 <div class="col-md-4">
                     <label class="form-label fw-bold">الحالة الصحية</label>
-                    <select name="health_status" class="form-select" <?php echo $isViewMode ? 'disabled' : ''; ?>>
-                        <option value="سليم" <?php echo ($child['health_status'] ?? '') === 'سليم' ? 'selected' : ''; ?>>سليم</option>
-                        <option value="يعاني من مرض" <?php echo ($child['health_status'] ?? '') === 'يعاني من مرض' ? 'selected' : ''; ?>>يعاني من مرض</option>
-                        <option value="آخر" <?php echo ($child['health_status'] ?? '') === 'آخر' ? 'selected' : ''; ?>>آخر</option>
+                    <select name="health_status" class="form-select" onchange="document.getElementById('health_status_other_wrap').style.display = this.value === 'أخرى' ? '' : 'none';" <?php echo $isViewMode ? 'disabled' : ''; ?>>
+                        <?php $healthOptions = $AK_ORPHAN_OPTS['health']; $currentHealth = $child['health_status'] ?? 'سليم'; if ($currentHealth !== '' && !in_array($currentHealth, $healthOptions, true)) $healthOptions[] = $currentHealth; foreach ($healthOptions as $o): ?>
+                            <option value="<?php echo e($o); ?>" <?php echo $currentHealth === $o ? 'selected' : ''; ?>><?php echo e($o); ?></option>
+                        <?php endforeach; ?>
                     </select>
                     <?php if ($isViewMode): ?>
                         <input type="hidden" name="health_status" value="<?php echo e($child['health_status'] ?? ''); ?>">
                     <?php endif; ?>
                 </div>
                 
-                <div class="col-md-4">
+                <div class="col-md-4" id="health_status_other_wrap" style="display:<?php echo ($child['health_status'] ?? '') === 'أخرى' ? '' : 'none'; ?>">
                     <label class="form-label fw-bold">تفاصيل الحالة الصحية</label>
                     <input type="text" name="health_status_other" class="form-control" 
                            value="<?php echo e($child['health_status_other'] ?? ''); ?>" 
@@ -368,17 +368,17 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 
                 <div class="col-md-4">
                     <label class="form-label fw-bold">الحالة النفسية</label>
-                    <select name="psychological_state" class="form-select" <?php echo $isViewMode ? 'disabled' : ''; ?>>
-                        <option value="سليم" <?php echo ($child['psychological_state'] ?? '') === 'سليم' ? 'selected' : ''; ?>>سليم</option>
-                        <option value="يعاني من مشكلة" <?php echo ($child['psychological_state'] ?? '') === 'يعاني من مشكلة' ? 'selected' : ''; ?>>يعاني من مشكلة</option>
-                        <option value="آخر" <?php echo ($child['psychological_state'] ?? '') === 'آخر' ? 'selected' : ''; ?>>آخر</option>
+                    <select name="psychological_state" class="form-select" onchange="document.getElementById('psychological_state_other_wrap').style.display = this.value === 'أخرى' ? '' : 'none';" <?php echo $isViewMode ? 'disabled' : ''; ?>>
+                        <?php $psychOptions = $AK_ORPHAN_OPTS['psych']; $currentPsych = $child['psychological_state'] ?? 'سليم'; if ($currentPsych !== '' && !in_array($currentPsych, $psychOptions, true)) $psychOptions[] = $currentPsych; foreach ($psychOptions as $o): ?>
+                            <option value="<?php echo e($o); ?>" <?php echo $currentPsych === $o ? 'selected' : ''; ?>><?php echo e($o); ?></option>
+                        <?php endforeach; ?>
                     </select>
                     <?php if ($isViewMode): ?>
                         <input type="hidden" name="psychological_state" value="<?php echo e($child['psychological_state'] ?? ''); ?>">
                     <?php endif; ?>
                 </div>
                 
-                <div class="col-md-4">
+                <div class="col-md-4" id="psychological_state_other_wrap" style="display:<?php echo ($child['psychological_state'] ?? '') === 'أخرى' ? '' : 'none'; ?>">
                     <label class="form-label fw-bold">تفاصيل الحالة النفسية</label>
                     <input type="text" name="psychological_state_other" class="form-control" 
                            value="<?php echo e($child['psychological_state_other'] ?? ''); ?>" 
