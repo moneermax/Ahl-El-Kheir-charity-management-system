@@ -253,8 +253,18 @@ input[type=number]{ -moz-appearance:textfield; appearance:textfield; }
 <?php endif; ?>
 <div class="card mb-4 fade-in">
 <div class="card-header"><i class="fas fa-house-chimney me-2"></i>بيانات الأسرة</div>
+<style>
+.family-details-form > .row.g-3 > [class*="col-"] { display: flex; align-items: center; gap: .5rem; }
+.family-details-form > .row.g-3 > [class*="col-"] > .form-label { flex: 0 0 auto; white-space: nowrap; margin-bottom: 0; }
+.family-details-form > .row.g-3 > [class*="col-"] > .form-control,
+.family-details-form > .row.g-3 > [class*="col-"] > .form-select { flex: 1 1 auto; min-width: 0; width: auto; }
+.family-details-form > .row.g-3 > .col-12 { align-items: center; }
+@media (max-width: 576px) {
+    .family-details-form > .row.g-3 > [class*="col-"] > .form-label { font-size: .82rem; }
+}
+</style>
 <div class="card-body">
-<form method="post">
+<form method="post" class="family-details-form">
 <?php echo csrf_field(); ?>
 <input type="hidden" name="id" value="<?php echo $id; ?>">
 <div class="row g-3">
@@ -277,7 +287,7 @@ input[type=number]{ -moz-appearance:textfield; appearance:textfield; }
 <div class="col-md-4"><label class="form-label">اسم الأب (والد الأطفال)</label><input type="text" name="father_name" class="form-control" value="<?php echo e($fam['father_name'] ?? ''); ?>"></div>
 <div class="col-md-3"><label class="form-label">تاريخ وفاة الأب</label><input type="date" name="father_death_date" class="form-control" value="<?php echo e($fam['father_death_date'] ?? ''); ?>"></div>
 <div class="col-md-3"><label class="form-label">سبب وفاة الأب</label><input type="text" name="father_death_cause" class="form-control" value="<?php echo e($fam['father_death_cause'] ?? ''); ?>"></div>
-<div class="col-12"><hr><h5 class="text-primary">Section B : ()</h5></div>
+<div class="col-12"><hr></div>
 <div class="col-md-3"><label class="form-label">الاحتياج الشهري (ج.س)</label><input type="text" inputmode="decimal" name="monthly_need_amount" class="form-control" value="<?php echo e((string)($fam['monthly_need_amount'] ?? '')); ?>"></div>
 <div class="col-md-3"><label class="form-label">الحالة</label>
 <select name="status" class="form-select">

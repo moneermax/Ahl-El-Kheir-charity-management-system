@@ -64,7 +64,17 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
 include dirname(__DIR__,2).'/includes/header.php'; ?>
 <div class="welcome-section fade-in"><h2>إضافة أسرة جديدة</h2><p>يجب تسجيل يتيم واحد على الأقل مع كل أسرة.</p></div>
 <?php if($errors): ?><div class="alert alert-danger fade-in"><ul class="mb-0"><?php foreach($errors as $er): ?><li><?php echo e($er); ?></li><?php endforeach; ?></ul></div><?php endif; ?>
-<div class="card fade-in"><div class="card-body"><form method="post"><?php echo csrf_field(); ?><div class="row g-3">
+<style>
+.family-details-form > .row.g-3 > [class*="col-"] { display: flex; align-items: center; gap: .5rem; }
+.family-details-form > .row.g-3 > [class*="col-"] > .form-label { flex: 0 0 auto; white-space: nowrap; margin-bottom: 0; }
+.family-details-form > .row.g-3 > [class*="col-"] > .form-control,
+.family-details-form > .row.g-3 > [class*="col-"] > .form-select { flex: 1 1 auto; min-width: 0; width: auto; }
+.family-details-form > .row.g-3 > .col-12 { align-items: center; }
+@media (max-width: 576px) {
+    .family-details-form > .row.g-3 > [class*="col-"] > .form-label { font-size: .82rem; }
+}
+</style>
+<div class="card fade-in"><div class="card-body"><form method="post" class="family-details-form"><?php echo csrf_field(); ?><div class="row g-3">
 	<div class="col-md-4"><label class="form-label">تاريخ الإنضمام</label><input type="date" name="registration_date" class="form-control" value="<?php echo e($_POST['registration_date'] ?? date('Y-m-d')); ?>" required></div>
 	<div class="col-md-6"><label class="form-label">اسم الأم *</label><input type="text" name="mother_name" class="form-control" value="<?php echo e($_POST['mother_name']??''); ?>" required></div>
 	<div class="col-md-4"><label class="form-label">الرقم الوطني (الأم)</label><input type="text" name="mother_national_id" class="form-control" dir="ltr"></div>
@@ -72,7 +82,7 @@ include dirname(__DIR__,2).'/includes/header.php'; ?>
 	<div class="col-md-4"><label class="form-label">المهنة</label><input type="text" name="mother_job" class="form-control"></div><div class="col-md-4"><label class="form-label">مكان العمل</label><input type="text" name="mother_workplace" class="form-control"></div>
 	<div class="col-md-6"><label class="form-label">العنوان</label><input type="text" name="address" class="form-control"></div><div class="col-md-3"><label class="form-label">المدينة</label><input type="text" name="city" class="form-control"></div><div class="col-md-3"><label class="form-label">الحي/المنطقة</label><input type="text" name="district" class="form-control"></div>
 	<div class="col-md-4"><label class="form-label">اسم الأب (والد الأطفال)</label><input type="text" name="father_name" class="form-control"></div><div class="col-md-4"><label class="form-label">تاريخ وفاة الأب</label><input type="date" name="father_death_date" class="form-control"></div>
-	<div class="col-12"><hr><h5 class="text-primary">Section B : ()</h5></div>
+	<div class="col-12"><hr></div>
 	<div class="col-md-3"><label class="form-label">الاحتياج الشهري</label><input type="text" name="monthly_need_amount" class="form-control"></div><div class="col-md-3"><label class="form-label">الحالة</label><select name="status" class="form-select"><?php foreach($statuses as $k=>$label): ?><option value="<?php echo $k; ?>"><?php echo $label; ?></option><?php endforeach; ?></select></div>
 <?php if($supervisors): ?><div class="col-md-4"><label class="form-label">المشرف المسؤول</label><select name="supervisor_id" class="form-select"><option value="">— غير معين —</option><?php foreach($supervisors as $s): ?><option value="<?php echo (int)$s['id']; ?>"><?php echo e($s['full_name']); ?></option><?php endforeach; ?></select></div><?php endif; ?>
 <?php if($nannies): ?><div class="col-md-4"><label class="form-label">أخصائية شؤون الأمهات</label><select name="nanny_id" class="form-select"><option value="">— غير معين —</option><?php foreach($nannies as $nn): ?><option value="<?php echo (int)$nn['id']; ?>"><?php echo e($nn['full_name']); ?></option><?php endforeach; ?></select></div><?php endif; ?>
