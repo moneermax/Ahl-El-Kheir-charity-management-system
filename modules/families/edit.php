@@ -262,15 +262,15 @@ input[type=number]{ -moz-appearance:textfield; appearance:textfield; }
 <option value="<?php echo e($o); ?>" <?php echo ($fam['mother_marital_status'] ?? 'أرملة') === $o ? 'selected' : ''; ?>><?php echo e($o); ?></option>
 <?php endforeach; ?>
 </select></div>
+<div class="col-md-3"><label class="form-label">مهنة الأم</label><input type="text" name="mother_job" class="form-control" value="<?php echo e($fam['mother_job'] ?? ''); ?>"></div>
+<div class="col-md-3"><label class="form-label">مكان العمل</label><input type="text" name="mother_workplace" class="form-control" value="<?php echo e($fam['mother_workplace'] ?? ''); ?>"></div>
 <div class="col-md-4"><label class="form-label">اسم الأب (والد الأطفال)</label><input type="text" name="father_name" class="form-control" value="<?php echo e($fam['father_name'] ?? ''); ?>"></div>
 <div class="col-md-3"><label class="form-label">تاريخ وفاة الأب</label><input type="date" name="father_death_date" class="form-control" value="<?php echo e($fam['father_death_date'] ?? ''); ?>"></div>
 <div class="col-md-3"><label class="form-label">سبب وفاة الأب</label><input type="text" name="father_death_cause" class="form-control" value="<?php echo e($fam['father_death_cause'] ?? ''); ?>"></div>
-<div class="col-md-3"><label class="form-label">مهنة الأم</label><input type="text" name="mother_job" class="form-control" value="<?php echo e($fam['mother_job'] ?? ''); ?>"></div>
-<div class="col-md-3"><label class="form-label">مكان العمل</label><input type="text" name="mother_workplace" class="form-control" value="<?php echo e($fam['mother_workplace'] ?? ''); ?>"></div>
 <div class="col-md-3"><label class="form-label">المدينة</label><input type="text" name="city" class="form-control" value="<?php echo e($fam['city'] ?? ''); ?>"></div>
 <div class="col-md-3"><label class="form-label">الحي/المنطقة</label><input type="text" name="district" class="form-control" value="<?php echo e($fam['district'] ?? ''); ?>"></div>
-<div class="col-md-3"><label class="form-label">الاحتياج الشهري (ج.س)</label><input type="text" inputmode="decimal" name="monthly_need_amount" class="form-control" value="<?php echo e((string)($fam['monthly_need_amount'] ?? '')); ?>"></div>
 <div class="col-md-9"><label class="form-label">العنوان</label><input type="text" name="address" class="form-control" value="<?php echo e($fam['address'] ?? ''); ?>"></div>
+<div class="col-md-3"><label class="form-label">الاحتياج الشهري (ج.س)</label><input type="text" inputmode="decimal" name="monthly_need_amount" class="form-control" value="<?php echo e((string)($fam['monthly_need_amount'] ?? '')); ?>"></div>
 <div class="col-md-3"><label class="form-label">الحالة</label>
 <select name="status" class="form-select">
 <?php foreach ($statuses as $k => $label): ?>
