@@ -21,11 +21,15 @@ function ak_catalog(string $language): array {
     $file = __DIR__ . '/../lang/' . ($language === 'ar' ? 'ar.php' : 'en.php');
     $catalog = is_file($file) ? require $file : [];
 
-    // Module catalogs are stable-key catalogs too; they keep large domains isolated
-    // while the project completes its migration into the two main catalogs.
-    $moduleFile = __DIR__ . '/../lang/reports_' . ($language === 'ar' ? 'ar' : 'en') . '.php';
-    $moduleCatalog = is_file($moduleFile) ? require $moduleFile : [];
-    if (is_array($moduleCatalog)) $catalog = array_merge(is_array($catalog) ? $catalog : [], $moduleCatalog);
+    // Stable module catalogs are merged while the migration is completed.
+    $moduleFiles = [
+        __DIR__ . '/../lang/reports_' . ($language === 'ar' ? 'ar' : 'en') . '.php',
+        __DIR__ . '/../lang/ui_' . ($language === 'ar' ? 'ar' : 'en') . '.php',
+    ];
+    foreach ($moduleFiles as $moduleFile) {
+        $moduleCatalog = is_file($moduleFile) ? require $moduleFile : [];
+        if (is_array($moduleCatalog)) $catalog = array_merge(is_array($catalog) ? $catalog : [], $moduleCatalog);
+    }
 
     return $cache[$language] = is_array($catalog) ? $catalog : [];
 }
@@ -116,7 +120,7 @@ function ak_translate_page(string $html): string {
     }, $html) ?? $html;
 
     /* Translate complete legacy UI attribute values only. */
-    $html = preg_replace_callback('/\b(placeholder|title|aria-label|aria-description|data-bs-title|alt|data-confirm|data-reassign-confirm)=(["\'])(.*?)\2/iu', static function($m) use ($legacy) {
+    $html = preg_replace_callback('/\b(placeholder|title|aria-label|aria-description|data-bs-title|alt|data-confirm|data-reassign-confirm)=([' . "\"'" . '])(.*?)\2/iu', static function($m) use ($legacy) {
         $translated = ak_legacy_lookup($m[3], $legacy);
         if ($translated === null) return $m[0];
         return $m[1] . '=' . $m[2] . htmlspecialchars($translated, ENT_QUOTES | ENT_HTML5, 'UTF-8') . $m[2];
