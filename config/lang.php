@@ -86,11 +86,12 @@ if (!function_exists('t')) {
 }
 
 /**
- * Translate only UI text nodes and known UI attributes.
+ * Translate only complete UI text nodes and known UI attributes.
  *
- * Unlike the old global str_replace(), this never searches inside scripts,
- * styles, URLs, form values, or arbitrary markup. Exact dictionary matches
- * are required for attributes, protecting user/database content.
+ * The old implementation performed a global str_replace() over the entire
+ * HTML document. That could alter dynamic business data and could also modify
+ * script contents. This implementation requires an exact dictionary match,
+ * with whitespace normalization only. Database values therefore remain intact.
  */
 if (!function_exists('ak_translate_page')) {
     function ak_translate_page(string $html): string {
@@ -111,21 +112,8 @@ if (!function_exists('ak_translate_page')) {
         $html = preg_replace_callback(
             '/>([^<>]+)</u',
             static function ($m): string {
-                $text = $m[1];
-                if (trim($text) === '') return $m[0];
-                $translated = ak_translation_lookup($text);
-                if ($translated !== null) return '>' . $translated . '<';
-
-                $dict = ak_dict();
-                $keys = array_keys($dict);
-                usort($keys, static fn($a, $b) => mb_strlen($b, 'UTF-8') <=> mb_strlen($a, 'UTF-8'));
-                foreach ($keys as $key) {
-                    if ($key === '' || mb_strlen($key, 'UTF-8') < 2) continue;
-                    if (mb_strpos($text, $key, 0, 'UTF-8') !== false) {
-                        $text = str_replace($key, (string)$dict[$key], $text);
-                    }
-                }
-                return '>' . $text . '<';
+                $translated = ak_translation_lookup($m[1]);
+                return $translated === null ? $m[0] : '>' . $translated . '<';
             },
             $html
         ) ?? $html;
@@ -141,8 +129,8 @@ if (!function_exists('ak_translate_page')) {
             $html
         ) ?? $html;
 
-        // Submit/button/reset input labels are UI, while other input values
-        // are deliberately left untouched because they may contain user data.
+        // Submit/button/reset input labels are UI. Other input values may be
+        // user data and are deliberately not translated.
         $html = preg_replace_callback(
             '/(<input\b[^>]*\btype=["\'](?:submit|button|reset)["\'][^>]*\bvalue=)(["\'])(.*?)\2/iu',
             static function ($m): string {
