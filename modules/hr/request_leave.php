@@ -7,7 +7,6 @@ require_once __DIR__ . '/../../config/session.php';
 
 Session::start();
 
-// Any logged-in user can access this page
 if (!Session::isLoggedIn()) {
     header('Location: ' . APP_URL . 'index.php');
     exit();
@@ -17,7 +16,6 @@ $user_id = Session::getUserId();
 $message = '';
 $msg_type = 'success';
 
-// Find the employee record linked to this user account
 $employee = dbFetchOne("SELECT id, full_name FROM employees WHERE user_id = ?", [$user_id]);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $employee) {
@@ -26,21 +24,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $employee) {
         $start = $_POST['start_date'];
         $end = $_POST['end_date'];
         $reason = trim($_POST['reason']);
-        
         $d1 = new DateTime($start);
         $d2 = new DateTime($end);
         $days = $d1->diff($d2)->days + 1;
-
         $sql = "INSERT INTO leaves (employee_id, leave_type, start_date, end_date, days_count, reason, status) VALUES (?, ?, ?, ?, ?, ?, 'pending')";
         $pdo->prepare($sql)->execute([$employee['id'], $type, $start, $end, $days, $reason]);
-        $message = "تم تقديم طلب الإجازة بنجاح وبانتظار اعتماد المدير.";
+        $message = t('hr.request_submitted');
     } catch (Exception $e) {
-        $message = "خطأ: " . $e->getMessage();
+        $message = t('hr.leave_request_error', ['message' => $e->getMessage()]);
         $msg_type = 'error';
     }
 }
 
-$pageTitle = 'طلب إجازة';
+$pageTitle = t('hr.leave_request_title');
 require_once __DIR__ . '/../../includes/header.php';
 ?>
 
@@ -60,13 +56,13 @@ require_once __DIR__ . '/../../includes/header.php';
 </style>
 
 <div class="fm-header">
-    <h1><i class="fas fa-calendar-plus me-2"></i> تقديم طلب إجازة</h1>
-    <p>يمكنك تقديم طلب إجازة جديد وسيتم تحويله تلقائياً لمديرك المباشر للاعتماد</p>
+    <h1><i class="fas fa-calendar-plus me-2"></i> <?php echo e(t('hr.leave_request_title')); ?></h1>
+    <p><?php echo e(t('hr.leave_request_intro')); ?></p>
 </div>
 
 <?php if ($message): ?>
     <div class="alert alert-<?php echo $msg_type === 'error' ? 'danger' : 'success'; ?> alert-dismissible fade show" style="border-radius: 8px;">
-        <?php echo $message; ?>
+        <?php echo e($message); ?>
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 <?php endif; ?>
@@ -75,9 +71,9 @@ require_once __DIR__ . '/../../includes/header.php';
     <div class="fm-card">
         <div class="fm-card-body text-center py-5">
             <i class="fas fa-exclamation-circle fa-3x text-warning mb-3"></i>
-            <h4>عذراً، لا يوجد ملف موظف مرتبط بحسابك</h4>
-            <p class="text-muted">يرجى التواصل مع إدارة الموارد البشرية لربط حسابك ببيانات الموظف.</p>
-            <a href="<?php echo APP_URL; ?>modules/users/profile.php" class="btn-fm btn-navy">العودة للملف الشخصي</a>
+            <h4><?php echo e(t('hr.no_employee_profile')); ?></h4>
+            <p class="text-muted"><?php echo e(t('hr.contact_hr')); ?></p>
+            <a href="<?php echo APP_URL; ?>modules/users/profile.php" class="btn-fm btn-navy"><?php echo e(t('hr.back_to_profile')); ?></a>
         </div>
     </div>
 <?php else: ?>
@@ -85,42 +81,38 @@ require_once __DIR__ . '/../../includes/header.php';
         <div class="col-md-8">
             <div class="fm-card">
                 <div class="fm-card-head">
-                    <span>📝 بيانات الطلب</span>
-                    <span class="badge bg-light text-dark">الموظف: <?php echo e($employee['full_name']); ?></span>
+                    <span>📝 <?php echo e(t('hr.request_data')); ?></span>
+                    <span class="badge bg-light text-dark"><?php echo e(t('hr.employee_label')); ?>: <?php echo e($employee['full_name']); ?></span>
                 </div>
                 <div class="fm-card-body">
                     <form method="POST">
                         <div class="mb-3">
-                            <label class="form-label">نوع الإجازة <span class="text-danger">*</span></label>
+                            <label class="form-label"><?php echo e(t('hr.leave_type_label')); ?> <span class="text-danger">*</span></label>
                             <select name="leave_type" class="form-select" required>
-                                <option value="annual">سنوية</option>
-                                <option value="sick">مرضية</option>
-                                <option value="emergency">طارئة</option>
-                                <option value="unpaid">بدون راتب</option>
-                                <option value="remote_work_request">طلب عمل عن بُعد</option>
+                                <option value="annual"><?php echo e(t('hr.leave_type_annual')); ?></option>
+                                <option value="sick"><?php echo e(t('hr.leave_type_sick')); ?></option>
+                                <option value="emergency"><?php echo e(t('hr.leave_type_emergency')); ?></option>
+                                <option value="unpaid"><?php echo e(t('hr.leave_type_unpaid')); ?></option>
+                                <option value="remote_work_request"><?php echo e(t('hr.leave_type_remote_work')); ?></option>
                             </select>
                         </div>
                         <div class="row mb-3">
                             <div class="col-md-6">
-                                <label class="form-label">من تاريخ <span class="text-danger">*</span></label>
+                                <label class="form-label"><?php echo e(t('hr.from_date')); ?> <span class="text-danger">*</span></label>
                                 <input type="date" name="start_date" class="form-control" required min="<?php echo date('Y-m-d'); ?>">
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">إلى تاريخ <span class="text-danger">*</span></label>
+                                <label class="form-label"><?php echo e(t('hr.to_date')); ?> <span class="text-danger">*</span></label>
                                 <input type="date" name="end_date" class="form-control" required min="<?php echo date('Y-m-d'); ?>">
                             </div>
                         </div>
                         <div class="mb-4">
-                            <label class="form-label">سبب الإجازة <span class="text-danger">*</span></label>
-                            <textarea name="reason" class="form-control" rows="4" placeholder="اشرح سبب الطلب باختصار..." required></textarea>
+                            <label class="form-label"><?php echo e(t('hr.leave_reason')); ?> <span class="text-danger">*</span></label>
+                            <textarea name="reason" class="form-control" rows="4" placeholder="<?php echo e(t('hr.leave_reason_placeholder')); ?>" required></textarea>
                         </div>
                         <div class="d-flex gap-2">
-                            <button type="submit" class="btn-fm btn-navy">
-                                <i class="fas fa-paper-plane me-1"></i> إرسال الطلب
-                            </button>
-                            <a href="<?php echo APP_URL; ?>modules/hr/leaves.php" class="btn-fm" style="background:#e9ecef; color:#495057;">
-                                <i class="fas fa-arrow-right me-1"></i> متابعة طلباتي
-                            </a>
+                            <button type="submit" class="btn-fm btn-navy"><i class="fas fa-paper-plane me-1"></i> <?php echo e(t('hr.submit_request')); ?></button>
+                            <a href="<?php echo APP_URL; ?>modules/hr/leaves.php" class="btn-fm" style="background:#e9ecef; color:#495057;"><i class="fas fa-arrow-right me-1"></i> <?php echo e(t('hr.my_requests')); ?></a>
                         </div>
                     </form>
                 </div>
