@@ -1,16 +1,16 @@
 </main>
-    <footer class="app-footer text-center text-muted py-3">
-        <div class="container">
-            <div class="row"><div class="col-12"><div class="d-flex flex-wrap align-items-center justify-content-center gap-3">
-                <span class="fw-bold" style="color: var(--navy, #1b4d8f);">🇸🇩 منظمة أهل الخير النسوية لكفالة الأيتام</span><span class="text-muted">|</span>
-                <a href="https://wa.me/249900008247" target="_blank" rel="noopener" class="text-decoration-none d-inline-flex align-items-center gap-1"><i class="fab fa-whatsapp" style="color:#25D366"></i><span class="text-muted small">واتساب</span></a><span class="text-muted">|</span>
-                <a href="https://www.tiktok.com/@ahlalkheir1" target="_blank" rel="noopener" class="text-decoration-none d-inline-flex align-items-center gap-1"><i class="fab fa-tiktok"></i><span class="text-muted small">تيك توك</span></a><span class="text-muted">|</span>
-                <a href="https://www.instagram.com/ahlalkhair9/" target="_blank" rel="noopener" class="text-decoration-none d-inline-flex align-items-center gap-1"><i class="fab fa-instagram" style="color:#E4405F"></i><span class="text-muted small">انستغرام</span></a><span class="text-muted">|</span>
-                <a href="https://www.facebook.com/61576384876429" target="_blank" rel="noopener" class="text-decoration-none d-inline-flex align-items-center gap-1"><i class="fab fa-facebook" style="color:#1877F2"></i><span class="text-muted small">فيسبوك</span></a>
-            </div></div></div>
-            <div class="row mt-3"><div class="col-12"><small>Ahl El Kheir Charity Management System &copy; <?php echo date('Y'); ?></small></div></div>
-        </div>
-    </footer>
+<footer class="app-footer text-center text-muted py-3">
+    <div class="container">
+        <div class="row"><div class="col-12"><div class="d-flex flex-wrap align-items-center justify-content-center gap-3">
+            <span class="fw-bold" style="color: var(--navy, #1b4d8f);">🇸🇩 <?php echo e(t('common.organization_name')); ?></span><span class="text-muted">|</span>
+            <a href="https://wa.me/249900008247" target="_blank" rel="noopener" class="text-decoration-none d-inline-flex align-items-center gap-1"><i class="fab fa-whatsapp" style="color:#25D366"></i><span class="text-muted small">واتساب</span></a><span class="text-muted">|</span>
+            <a href="https://www.tiktok.com/@ahlalkheir1" target="_blank" rel="noopener" class="text-decoration-none d-inline-flex align-items-center gap-1"><i class="fab fa-tiktok"></i><span class="text-muted small">تيك توك</span></a><span class="text-muted">|</span>
+            <a href="https://www.instagram.com/ahlalkhair9/" target="_blank" rel="noopener" class="text-decoration-none d-inline-flex align-items-center gap-1"><i class="fab fa-instagram" style="color:#E4405F"></i><span class="text-muted small">انستغرام</span></a><span class="text-muted">|</span>
+            <a href="https://www.facebook.com/61576384876429" target="_blank" rel="noopener" class="text-decoration-none d-inline-flex align-items-center gap-1"><i class="fab fa-facebook" style="color:#1877F2"></i><span class="text-muted small">فيسبوك</span></a>
+        </div></div></div>
+        <div class="row mt-3"><div class="col-12"><small>Ahl El Kheir Charity Management System &copy; <?php echo date('Y'); ?></small></div></div>
+    </div>
+</footer>
 </div>
 </div>
 <div id="sidebarOverlay" class="sidebar-overlay"></div>
@@ -20,7 +20,7 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 window.AK_LANG = <?php echo json_encode(AK_LANG, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
-window.AK_TRANSLATIONS = <?php echo json_encode(ak_dict(), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+window.AK_TRANSLATIONS = <?php echo json_encode(ak_catalog(AK_LANG), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
 </script>
 <script src="<?php echo asset('js/language.js'); ?>"></script>
 <script src="<?php echo asset('js/app.js'); ?>"></script>
