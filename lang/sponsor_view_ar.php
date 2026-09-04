@@ -32,4 +32,9 @@ return [
     'sponsors.view_cancelled' => 'ملغية',
     'sponsors.view_details' => 'عرض التفاصيل',
     'sponsors.view_monthly_payment' => 'دفعة شهرية',
+    'sponsors.view_male' => 'ذكر',
+    'sponsors.view_female' => 'أنثى',
+    'sponsors.view_organization' => 'منظمة',
+    'sponsors.view_unknown' => 'غير معروف',
+    'sponsors.view_not_available' => '—',
 ];
