@@ -1,100 +1,159 @@
 <?php
-// config/lang.php - Lightweight i18n layer (cookie-based, runtime HTML translation)
-// Session 6: + EN missing-key harvester (ak_harvest) -> storage/logs/untranslated.log
+// config/lang.php - Application-wide i18n bootstrap.
+//
+// The application supports Arabic (ar) and English (en). Translation is
+// deliberately UI-only: database values are never harvested or translated.
 declare(strict_types=1);
 
-// 1) Detect / persist language
 $ak_lang = $_COOKIE['ak_lang'] ?? 'ar';
 if (isset($_GET['lang']) && in_array($_GET['lang'], ['ar', 'en'], true)) {
     $ak_lang = $_GET['lang'];
-    setcookie('ak_lang', $ak_lang, time() + 86400 * 365, '/');
+    setcookie('ak_lang', $ak_lang, [
+        'expires' => time() + 86400 * 365,
+        'path' => '/',
+        'samesite' => 'Lax',
+    ]);
 }
-if (!defined('AK_LANG')) define('AK_LANG', $ak_lang);
-if (!defined('AK_DIR'))  define('AK_DIR', AK_LANG === 'ar' ? 'rtl' : 'ltr');
 
-// 2) Dictionary loader
+if (!defined('AK_LANG')) define('AK_LANG', $ak_lang);
+if (!defined('AK_DIR')) define('AK_DIR', AK_LANG === 'ar' ? 'rtl' : 'ltr');
+
 if (!function_exists('ak_dict')) {
     function ak_dict(): array {
         static $dict = null;
-        if ($dict === null) {
-            $f = __DIR__ . '/../lang/en.php';
-            $dict = is_file($f) ? (array)require $f : [];
+        if ($dict !== null) return $dict;
+
+        $dict = [];
+        $files = [
+            __DIR__ . '/../lang/common.php',
+            __DIR__ . '/../lang/en.php',
+        ];
+
+        foreach ($files as $file) {
+            if (is_file($file)) {
+                $part = require $file;
+                if (is_array($part)) $dict = array_merge($dict, $part);
+            }
         }
+
         return $dict;
     }
 }
 
-// 2b) EN missing-key harvester (Session 6)
-// Logs each untranslated Arabic string ONCE to storage/logs/untranslated.log.
-// Silent & non-blocking; zero effect in AR mode; curated at the final i18n polish step.
-if (!function_exists('ak_harvest')) {
-    function ak_harvest(string $s): void {
-        $s = trim($s);
-        if ($s === '' || !preg_match('/[\x{0600}-\x{06FF}]/u', $s)) return;
-        $logFile = __DIR__ . '/../storage/logs/untranslated.log';
-        static $seen = null;
-        if ($seen === null) {
-            $lines = is_file($logFile) ? @file($logFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) : false;
-            $seen = $lines ? array_flip(array_map('trim', $lines)) : [];
-        }
-        if (isset($seen[$s])) return;
-        $seen[$s] = true;
-        $dir = dirname($logFile);
-        if (!is_dir($dir)) @mkdir($dir, 0777, true);
-        @file_put_contents($logFile, $s . PHP_EOL, FILE_APPEND | LOCK_EX);
+if (!function_exists('ak_normalize_translation_text')) {
+    function ak_normalize_translation_text(string $text): string {
+        $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $text = str_replace(["\xC2\xA0", "\xE2\x80\xAF"], ' ', $text);
+        $text = preg_replace('/[\x{00A0}\x{202F}\s]+/u', ' ', $text) ?? $text;
+        return trim($text);
     }
 }
 
-// 3) Translate a single string
-if (!function_exists('ak_t')) {
-    function ak_t(string $s): string {
-        if (AK_LANG === 'ar') return $s;
-        $d = ak_dict();
-        if (isset($d[$s])) return $d[$s];
-        ak_harvest($s);
-        return $s;
+if (!function_exists('ak_translation_lookup')) {
+    function ak_translation_lookup(string $text): ?string {
+        $dict = ak_dict();
+        if (!$dict) return null;
+
+        if (array_key_exists($text, $dict)) return (string)$dict[$text];
+
+        $normalized = ak_normalize_translation_text($text);
+        if ($normalized !== $text && array_key_exists($normalized, $dict)) {
+            return (string)$dict[$normalized];
+        }
+
+        return null;
     }
 }
-// Alias used by public pages (apply.php etc.)
+
+if (!function_exists('ak_harvest')) {
+    function ak_harvest(string $s): void {
+        // Intentionally disabled for runtime pages. Harvesting rendered HTML
+        // can capture real beneficiary/sponsor data and is therefore unsafe.
+        return;
+    }
+}
+
+if (!function_exists('ak_t')) {
+    function ak_t(string $s): string {
+        if (AK_LANG === 'ar' || $s === '') return $s;
+        $translated = ak_translation_lookup($s);
+        return $translated ?? $s;
+    }
+}
+
 if (!function_exists('t')) {
     function t(string $s): string { return ak_t($s); }
 }
 
-// 4) Whole-page translation (HTML responses only; skips CSV/SQL/JSON downloads)
+/**
+ * Translate only text nodes and known UI attributes.
+ *
+ * Unlike the old global str_replace(), this never searches inside scripts,
+ * styles, URLs, form values, or arbitrary markup. Exact dictionary matches
+ * are required for attributes, protecting user/database content.
+ */
 if (!function_exists('ak_translate_page')) {
     function ak_translate_page(string $html): string {
-        if (AK_LANG !== 'en') return $html;
+        if (AK_LANG !== 'en' || $html === '') return $html;
         if (!preg_match('/^\s*(<!DOCTYPE|<html)/i', $html)) return $html;
-        $d = ak_dict();
-        if (!$d) return $html;
-        $keys = array_keys($d);
-        usort($keys, fn($a, $b) => strlen($b) <=> strlen($a));
-        $vals = array_map(fn($k) => $d[$k], $keys);
-        $html = str_replace($keys, $vals, $html);
-        // SECURITY FIX (August 2026): the previous version of this function also
-        // scanned the ENTIRE rendered page for any Arabic-looking text run and
-        // logged it as "untranslated" via ak_harvest(). Because this ran on the
-        // final HTML output, it could not distinguish a static UI label from
-        // dynamic database content — and in production it silently wrote real
-        // children's names, mothers' names, and sponsor case notes into
-        // storage/logs/untranslated.log (confirmed by cross-referencing the
-        // existing log against the live database: ~86% of harvested lines were
-        // real beneficiary/sponsor data, not UI text).
-        //
-        // This blanket, whole-page harvesting has been permanently removed.
-        // The safe alternative is the harvester inside ak_t() above, which only
-        // ever sees strings a developer explicitly wrote and passed through
-        // t()/ak_t() — it can never see raw database output, because it never
-        // touches the rendered page at all.
-        //
-        // If you are reading this because untranslated.log stopped growing:
-        // that is expected and correct. New untranslated UI text will now only
-        // be captured when a developer deliberately calls t('...') on it.
+
+        $protected = [];
+        $html = preg_replace_callback(
+            '/<(script|style|pre|code|textarea)\b[^>]*>.*?<\/\1\s*>/is',
+            static function ($m) use (&$protected): string {
+                $token = "__AK_I18N_PROTECTED_" . count($protected) . "__";
+                $protected[$token] = $m[0];
+                return $token;
+            },
+            $html
+        ) ?? $html;
+
+        // Translate visible text between tags. We intentionally use exact
+        // dictionary lookup first; then replace known phrases within the same
+        // text node so labels split by surrounding markup remain translatable.
+        $html = preg_replace_callback(
+            '/>([^<>]+)</u',
+            static function ($m): string {
+                $text = $m[1];
+                if (trim($text) === '') return $m[0];
+                $translated = ak_translation_lookup($text);
+                if ($translated !== null) return '>' . $translated . '<';
+
+                $dict = ak_dict();
+                $keys = array_keys($dict);
+                usort($keys, static fn($a, $b) => mb_strlen($b, 'UTF-8') <=> mb_strlen($a, 'UTF-8'));
+                foreach ($keys as $key) {
+                    if ($key === '' || mb_strlen($key, 'UTF-8') < 2) continue;
+                    if (mb_strpos($text, $key, 0, 'UTF-8') !== false) {
+                        $text = str_replace($key, (string)$dict[$key], $text);
+                    }
+                }
+                return '>' . $text . '<';
+            },
+            $html
+        ) ?? $html;
+
+        // Translate UI attributes only when their complete value is in the
+        // dictionary. This covers placeholders, titles, labels and alt text.
+        $html = preg_replace_callback(
+            '/\b(placeholder|title|aria-label|aria-description|data-bs-title|alt)=(["\'])(.*?)\2/iu',
+            static function ($m): string {
+                $translated = ak_translation_lookup($m[3]);
+                return $translated === null
+                    ? $m[0]
+                    : $m[1] . '=' . $m[2] . htmlspecialchars($translated, ENT_QUOTES | ENT_HTML5, 'UTF-8') . $m[2];
+            },
+            $html
+        ) ?? $html;
+
+        foreach ($protected as $token => $original) {
+            $html = str_replace($token, $original, $html);
+        }
+
         return $html;
     }
 }
 
-// 5) Capture every page output
 if (!defined('AK_OB_STARTED')) {
     define('AK_OB_STARTED', true);
     ob_start('ak_translate_page');
