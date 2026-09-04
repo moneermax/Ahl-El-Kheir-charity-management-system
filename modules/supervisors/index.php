@@ -7,7 +7,6 @@ require_once dirname(__DIR__, 2) . '/config/session.php';
 require_once dirname(__DIR__, 2) . '/config/supervisor_lifecycle.php';
 Session::start();
 
-// ---- Access guard ----
 if (!Session::isLoggedIn()) {
     header('Location: ' . APP_URL . 'index.php');
     exit();
@@ -18,7 +17,9 @@ if (!in_array($role, ['admin', 'vice_general_manager'], true)) {
     exit();
 }
 
-// ---- Load supervisors + letters(+gender) + workloads + lifecycle ----
+$showArchived = isset($_GET['show_archived']) && $_GET['show_archived'] === '1';
+$statusFilter = $showArchived ? "" : "AND COALESCE(u.supervisor_status, CASE WHEN u.is_active = 1 THEN 'active' ELSE 'suspended' END) NOT IN ('departed', 'archived')";
+
 $supervisors = dbFetchAll("
     SELECT u.id, u.username, u.full_name, u.phone, u.email, u.is_active,
         COALESCE(u.supervisor_status, CASE WHEN u.is_active = 1 THEN 'active' ELSE 'suspended' END) AS supervisor_status,
@@ -34,14 +35,36 @@ $supervisors = dbFetchAll("
         (SELECT COUNT(*) FROM families f WHERE f.supervisor_id = u.id) AS family_count
     FROM users u
     INNER JOIN roles r ON r.id = u.role_id
-    WHERE r.code = 'supervisor'
+    WHERE r.code = 'supervisor' {$statusFilter}
     ORDER BY u.full_name
 ");
 
 $pageTitle = 'إدارة المشرفين';
-$active    = 'supervisors';
+$active = 'supervisors';
 include dirname(__DIR__, 2) . '/includes/header.php';
 ?>
+<style>
+.supervisor-management-table { font-size: 13px; }
+.supervisor-management-table thead th { padding: 9px 10px; white-space: nowrap; }
+.supervisor-management-table tbody td { padding: 8px 10px; vertical-align: middle; }
+.supervisor-management-table .supervisor-name { min-width: 180px; }
+.supervisor-management-table .supervisor-actions { min-width: 190px; width: 190px; }
+.supervisor-management-table .supervisor-actions .btn {
+    width: 31px;
+    height: 31px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 7px;
+}
+.supervisor-management-table .supervisor-actions form { display: inline-flex; margin: 0; }
+.supervisor-management-table .badge { font-size: 11px; padding: 4px 8px; }
+.supervisor-management-table .workload-link { font-weight: 700; text-decoration: none; }
+.supervisor-management-table .workload-cell { white-space: nowrap; }
+.supervisor-management-table .letters-cell { min-width: 125px; }
+</style>
+
 <div class="welcome-section fade-in">
     <h2>إدارة المشرفين</h2>
     <p>إدارة المشرفين، توزيع الحروف، متابعة أعباء العمل، وإدارة دورة حياة المشرف.</p>
@@ -52,40 +75,47 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         <a href="<?php echo APP_URL; ?>modules/supervisors/assign-letters.php" class="btn btn-secondary btn-sm">
             <i class="fas fa-font me-1"></i> توزيع الحروف
         </a>
+        <a href="<?php echo APP_URL; ?>modules/supervisors/index.php?show_archived=<?php echo $showArchived ? '0' : '1'; ?>" class="btn btn-outline-dark btn-sm">
+            <i class="fas <?php echo $showArchived ? 'fa-user-check' : 'fa-box-archive'; ?> me-1"></i>
+            <?php echo $showArchived ? 'إخفاء المؤرشفين' : 'عرض المؤرشفين'; ?>
+        </a>
     </div>
 </div>
 
 <?php include dirname(__DIR__, 2) . '/includes/alerts.php'; ?>
 
-<div class="alert alert-info fade-in">
+<div class="alert alert-info fade-in py-2 mb-3">
     <i class="fas fa-circle-info me-1"></i>
-    <strong>دورة حياة المشرف:</strong>
-    الإيقاف المؤقت لا يعني المغادرة النهائية. المغادرة النهائية تحفظ السجل التاريخي وتحرر الكفلاء لإعادة التوزيع اليدوي.
+    <strong>دورة الحياة:</strong> الإيقاف المؤقت لا يعني المغادرة النهائية. المغادرة النهائية تحفظ السجل التاريخي وتحرر الكفلاء لإعادة التوزيع اليدوي.
+    <?php if (!$showArchived): ?>
+        <span class="text-muted">المشرفون المغادرون/المؤرشفون مخفيون من قائمة العمل ويمكن عرضهم من زر «عرض المؤرشفين».</span>
+    <?php endif; ?>
 </div>
 
 <div class="card fade-in">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <span><i class="fas fa-user-tie me-2"></i>قائمة المشرفين</span>
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <span><i class="fas fa-user-tie me-2"></i><?php echo $showArchived ? 'المشرفون المؤرشفون وسجل المشرفين' : 'المشرفون الحاليون'; ?></span>
         <span class="badge bg-primary"><?php echo count($supervisors); ?> مشرف</span>
     </div>
-    <div class="card-body">
+    <div class="card-body p-2 p-md-3">
         <div class="table-responsive">
-            <table class="table table-hover align-middle">
+            <table class="table table-hover align-middle mb-0 supervisor-management-table">
                 <thead>
                 <tr>
-                    <th>#</th>
+                    <th class="text-center" style="width:42px">#</th>
                     <th>المشرف</th>
-                    <th>اسم المستخدم</th>
-                    <th>الحروف</th>
-                    <th>الكفلاء</th>
-                    <th>الأسر</th>
-                    <th>الحالة</th>
-                    <th class="text-center">إجراءات المشرف</th>
+                    <th class="letters-cell">الحروف</th>
+                    <th class="text-center">الأعباء</th>
+                    <th class="text-center">الحالة</th>
+                    <th class="text-center supervisor-actions">الإجراءات</th>
                 </tr>
                 </thead>
                 <tbody>
                 <?php if (empty($supervisors)): ?>
-                    <tr><td colspan="8" class="text-center text-muted py-4">لا يوجد مشرفون بعد.</td></tr>
+                    <tr><td colspan="6" class="text-center text-muted py-5">
+                        <i class="fas fa-users-slash fa-2x mb-2 d-block"></i>
+                        <?php echo $showArchived ? 'لا يوجد مشرفون مؤرشفون.' : 'لا يوجد مشرفون حاليون.'; ?>
+                    </td></tr>
                 <?php else: foreach ($supervisors as $i => $sup):
                     $status = (string)$sup['supervisor_status'];
                     $isFinal = supervisorLifecycleIsFinal($status);
@@ -99,68 +129,73 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     };
                 ?>
                 <tr>
-                    <td><?php echo $i + 1; ?></td>
-                    <td><strong><?php echo e($sup['full_name']); ?></strong></td>
-                    <td><?php echo e($sup['username']); ?></td>
-                    <td>
+                    <td class="text-center text-muted"><?php echo $i + 1; ?></td>
+                    <td class="supervisor-name">
+                        <strong><?php echo e($sup['full_name']); ?></strong>
+                        <small class="d-block text-muted mt-1">@<?php echo e($sup['username']); ?></small>
+                    </td>
+                    <td class="letters-cell">
                         <?php if (!empty($sup['letters'])): ?>
                             <?php foreach (explode('، ', $sup['letters']) as $L): ?>
-                                <span class="badge bg-light text-dark border"><?php echo e($L); ?></span>
+                                <span class="badge bg-light text-dark border me-1 mb-1"><?php echo e($L); ?></span>
                             <?php endforeach; ?>
                         <?php else: ?>
-                            <span class="text-muted">— لا حروف —</span>
+                            <span class="text-muted">—</span>
                         <?php endif; ?>
                     </td>
-                    <td>
-                        <a href="<?php echo APP_URL; ?>modules/supervisors/sponsors.php?supervisor=<?php echo (int)$sup['id']; ?>">
-                            <?php echo (int)$sup['sponsor_count']; ?>
+                    <td class="text-center workload-cell">
+                        <a class="workload-link" href="<?php echo APP_URL; ?>modules/supervisors/sponsors.php?supervisor=<?php echo (int)$sup['id']; ?>" title="الكفلاء المرتبطون">
+                            <i class="fas fa-hand-holding-heart text-muted"></i> <?php echo (int)$sup['sponsor_count']; ?>
                         </a>
+                        <span class="text-muted mx-1">·</span>
+                        <span title="الأسر"><i class="fas fa-house-user text-muted"></i> <?php echo (int)$sup['family_count']; ?></span>
                     </td>
-                    <td><?php echo (int)$sup['family_count']; ?></td>
-                    <td>
+                    <td class="text-center">
                         <span class="badge <?php echo $statusClass; ?>">
                             <?php echo e(supervisorLifecycleStatusLabel($status)); ?>
                         </span>
                     </td>
-                    <td class="text-center">
-                        <div class="d-flex flex-wrap justify-content-center gap-1">
+                    <td class="text-center supervisor-actions">
+                        <div class="d-inline-flex flex-wrap justify-content-center gap-1">
                             <a class="btn btn-sm btn-primary"
-                               title="عرض الكفلاء المرتبطين بالمشرف"
+                               title="الكفلاء"
+                               aria-label="الكفلاء"
                                href="<?php echo APP_URL; ?>modules/supervisors/sponsors.php?supervisor=<?php echo (int)$sup['id']; ?>">
-                                <i class="fas fa-hand-holding-heart me-1"></i> الكفلاء
+                                <i class="fas fa-hand-holding-heart"></i>
                             </a>
-                            <a class="btn btn-sm btn-warning"
-                               title="تعديل بيانات المشرف"
-                               href="<?php echo APP_URL; ?>modules/supervisors/edit.php?id=<?php echo (int)$sup['id']; ?>">
-                                <i class="fas fa-pen me-1"></i> تعديل
-                            </a>
-                            <a class="btn btn-sm btn-info"
-                               title="إدارة الحروف المسندة للمشرف"
-                               href="<?php echo APP_URL; ?>modules/supervisors/assign-letters.php?supervisor=<?php echo (int)$sup['id']; ?>">
-                                <i class="fas fa-font me-1"></i> الحروف
-                            </a>
-
-                            <?php if (!$isFinal && in_array($status, ['active', 'suspended'], true)): ?>
-                                <form method="post" action="<?php echo APP_URL; ?>modules/users/supervisor_status.php" class="d-inline" data-confirm="<?php echo $status === 'active' ? 'هل تريد إيقاف هذا المشرف مؤقتاً؟' : 'هل تريد إعادة تفعيل هذا المشرف؟'; ?>">
-                                    <?php echo csrf_field(); ?>
-                                    <input type="hidden" name="id" value="<?php echo (int)$sup['id']; ?>">
-                                    <button type="submit"
-                                            class="btn btn-sm <?php echo $status === 'active' ? 'btn-danger' : 'btn-success'; ?>"
-                                            title="<?php echo $status === 'active' ? 'إيقاف مؤقت' : 'إعادة تفعيل'; ?>">
-                                        <i class="fas <?php echo $status === 'active' ? 'fa-pause' : 'fa-play'; ?> me-1"></i>
-                                        <?php echo $status === 'active' ? 'إيقاف مؤقت' : 'تفعيل'; ?>
-                                    </button>
-                                </form>
-                            <?php endif; ?>
-
                             <?php if (!$isFinal): ?>
+                                <a class="btn btn-sm btn-warning"
+                                   title="تعديل"
+                                   aria-label="تعديل"
+                                   href="<?php echo APP_URL; ?>modules/supervisors/edit.php?id=<?php echo (int)$sup['id']; ?>">
+                                    <i class="fas fa-pen"></i>
+                                </a>
+                                <a class="btn btn-sm btn-info"
+                                   title="الحروف"
+                                   aria-label="الحروف"
+                                   href="<?php echo APP_URL; ?>modules/supervisors/assign-letters.php?supervisor=<?php echo (int)$sup['id']; ?>">
+                                    <i class="fas fa-font"></i>
+                                </a>
+                                <?php if (in_array($status, ['active', 'suspended'], true)): ?>
+                                    <form method="post" action="<?php echo APP_URL; ?>modules/users/supervisor_status.php" data-confirm="<?php echo $status === 'active' ? 'هل تريد إيقاف هذا المشرف مؤقتاً؟' : 'هل تريد إعادة تفعيل هذا المشرف؟'; ?>">
+                                        <?php echo csrf_field(); ?>
+                                        <input type="hidden" name="id" value="<?php echo (int)$sup['id']; ?>">
+                                        <button type="submit"
+                                                class="btn btn-sm <?php echo $status === 'active' ? 'btn-danger' : 'btn-success'; ?>"
+                                                title="<?php echo $status === 'active' ? 'إيقاف مؤقت' : 'تفعيل'; ?>"
+                                                aria-label="<?php echo $status === 'active' ? 'إيقاف مؤقت' : 'تفعيل'; ?>">
+                                            <i class="fas <?php echo $status === 'active' ? 'fa-pause' : 'fa-play'; ?>"></i>
+                                        </button>
+                                    </form>
+                                <?php endif; ?>
                                 <a class="btn btn-sm btn-outline-danger"
-                                   title="تسجيل مغادرة دائمة وأرشفة الحساب وتحرير الكفلاء لإعادة التوزيع"
+                                   title="مغادرة نهائية"
+                                   aria-label="مغادرة نهائية"
                                    href="<?php echo APP_URL; ?>modules/users/supervisor_departure.php?id=<?php echo (int)$sup['id']; ?>">
-                                    <i class="fas fa-user-slash me-1"></i> مغادرة نهائية
+                                    <i class="fas fa-user-slash"></i>
                                 </a>
                             <?php else: ?>
-                                <span class="badge bg-dark align-self-center py-2">حساب نهائي/مؤرشف</span>
+                                <span class="badge bg-dark align-self-center">نهائي</span>
                             <?php endif; ?>
                         </div>
                     </td>
