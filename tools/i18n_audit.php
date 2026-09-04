@@ -6,9 +6,12 @@ $root=dirname(__DIR__);
 function loadCatalog(string $lang):array{
     global $root;
     $suffix=$lang==='ar'?'ar':'en';
-    $files=[$root.'/lang/'.$suffix.'.php',$root.'/lang/reports_'.$suffix.'.php',$root.'/lang/ui_'.$suffix.'.php',$root.'/lang/dashboard_'.$suffix.'.php'];
     $catalog=[];
-    foreach($files as $file){$part=is_file($file)?require $file:[];if(is_array($part))$catalog=array_merge($catalog,$part);}
+    $main=$root.'/lang/'.$suffix.'.php';
+    if(is_file($main)){$part=require $main;if(is_array($part))$catalog=$part;}
+    $files=glob($root.'/lang/*_'.$suffix.'.php')?:[];
+    sort($files,SORT_STRING);
+    foreach($files as $file){if(basename($file)==='legacy_'.$suffix.'.php')continue;$part=require $file;if(is_array($part))$catalog=array_merge($catalog,$part);}
     return $catalog;
 }
 $ar=loadCatalog('ar');$en=loadCatalog('en');
