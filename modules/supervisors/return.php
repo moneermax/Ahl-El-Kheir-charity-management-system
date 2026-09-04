@@ -79,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'sponsors_auto_restored' => false,
                 ], JSON_UNESCAPED_UNICODE),
                 $_SERVER['REMOTE_ADDR'] ?? '',
-                $_SERVER['HTTP_USER_AGENT'] ?? ''
+                $_SERVER['HTTP_USER_AGENT'] ?? '',
             ]);
         } catch (Throwable $auditError) {
             error_log('Supervisor restore audit: ' . $auditError->getMessage());
@@ -159,7 +159,9 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 <div class="card fade-in border-primary">
     <div class="card-header py-3">تفعيل حساب المشرف</div>
     <div class="card-body">
-        <form method="post" id="supervisorReturnForm" data-confirm="سيتم إعادة المشرف إلى حالة نشط وتفعيل تسجيل الدخول. لن تتم إعادة الكفلاء أو الحروف تلقائياً. هل تريد المتابعة؟">
+        <!-- This form intentionally does not use the global data-confirm attribute.
+             Confirmation is handled only when the actual submit button is pressed. -->
+        <form method="post" id="supervisorReturnForm">
             <?php echo csrf_field(); ?>
             <input type="hidden" name="id" value="<?php echo $id; ?>">
             <div class="row g-3">
@@ -174,11 +176,40 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 </div>
             </div>
             <div class="mt-4">
-                <button type="submit" class="btn btn-primary"><i class="fas fa-user-check me-1"></i> إعادة المشرف إلى العمل</button>
+                <button type="submit" class="btn btn-primary" id="supervisorReturnSubmit"><i class="fas fa-user-check me-1"></i> إعادة المشرف إلى العمل</button>
                 <a href="<?php echo APP_URL; ?>modules/supervisors/index.php?show_archived=1" class="btn btn-secondary">إلغاء</a>
             </div>
         </form>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var form = document.getElementById('supervisorReturnForm');
+    if (!form || typeof window.AKNotify === 'undefined') return;
+
+    form.addEventListener('submit', function (event) {
+        if (form.dataset.confirmed === '1') {
+            delete form.dataset.confirmed;
+            return;
+        }
+
+        event.preventDefault();
+        event.stopImmediatePropagation();
+
+        window.AKNotify.confirm(
+            'سيتم إعادة المشرف إلى حالة نشط وتفعيل تسجيل الدخول. لن تتم إعادة الكفلاء أو الحروف تلقائياً. هل تريد المتابعة؟',
+            function () {
+                form.dataset.confirmed = '1';
+                if (typeof form.requestSubmit === 'function') {
+                    form.requestSubmit();
+                } else {
+                    HTMLFormElement.prototype.submit.call(form);
+                }
+            }
+        );
+    });
+});
+</script>
 
 <?php include dirname(__DIR__, 2) . '/includes/footer.php'; ?>
