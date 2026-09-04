@@ -52,28 +52,73 @@ function ak_t(string $key, array $params = []): string {
 function t(string $key, array $params = []): string { return ak_t($key, $params); }
 function ak_harvest(string $s): void { /* Runtime harvesting is intentionally disabled. */ }
 
-/** Temporary exact-match compatibility bridge for pages not yet migrated. */
+/**
+ * Temporary exact-value compatibility bridge for pages not yet migrated.
+ *
+ * This bridge deliberately translates only complete UI values that exist in
+ * the legacy catalog. It does not translate substrings, database fields, or
+ * user-entered values. Whitespace normalization is used only to tolerate
+ * formatting differences in older templates.
+ */
+function ak_legacy_normalize(string $value): string {
+    $value = str_replace(["\xC2\xA0", "\xE2\x80\xAF"], ' ', $value);
+    return trim((string)(preg_replace('/\s+/u', ' ', $value) ?? $value));
+}
+
+function ak_legacy_lookup(string $value, array $legacy): ?string {
+    if (array_key_exists($value, $legacy)) return (string)$legacy[$value];
+
+    static $normalizedCache = null;
+    if ($normalizedCache === null) {
+        $normalizedCache = [];
+        foreach ($legacy as $source => $target) {
+            $normalizedSource = ak_legacy_normalize((string)$source);
+            if ($normalizedSource !== '' && !array_key_exists($normalizedSource, $normalizedCache)) {
+                $normalizedCache[$normalizedSource] = (string)$target;
+            }
+        }
+    }
+
+    $normalized = ak_legacy_normalize($value);
+    return array_key_exists($normalized, $normalizedCache)
+        ? $normalizedCache[$normalized]
+        : null;
+}
+
 function ak_translate_page(string $html): string {
     if (AK_LANG !== 'en' || $html === '' || !preg_match('/^\s*(<!DOCTYPE|<html)/i', $html)) return $html;
+
     $legacy = ak_legacy_catalog();
     if (!$legacy) return $html;
+
     $protected = [];
     $html = preg_replace_callback('/<(script|style|pre|code|textarea)\b[^>]*>.*?<\/\1\s*>/is', static function($m) use (&$protected) {
         $token = '__AK_I18N_PROTECTED_' . count($protected) . '__';
         $protected[$token] = $m[0];
         return $token;
     }, $html) ?? $html;
+
+    /* Translate complete text-node values while preserving surrounding HTML. */
     $html = preg_replace_callback('/>([^<>]+)</u', static function($m) use ($legacy) {
-        $translated = $legacy[$m[1]] ?? null;
-        return $translated === null ? $m[0] : '>' . $translated . '<';
+        $translated = ak_legacy_lookup($m[1], $legacy);
+        if ($translated === null) return $m[0];
+
+        $leading = preg_match('/^\s*/u', $m[1], $lm) ? $lm[0] : '';
+        $trailing = preg_match('/\s*$/u', $m[1], $tm) ? $tm[0] : '';
+        return '>' . $leading . $translated . $trailing . '<';
     }, $html) ?? $html;
+
+    /* Translate complete legacy UI attribute values only. */
     $html = preg_replace_callback('/\b(placeholder|title|aria-label|aria-description|data-bs-title|alt|data-confirm|data-reassign-confirm)=(["\'])(.*?)\2/iu', static function($m) use ($legacy) {
-        $translated = $legacy[$m[3]] ?? null;
-        return $translated === null ? $m[0] : $m[1] . '=' . $m[2] . htmlspecialchars((string)$translated, ENT_QUOTES | ENT_HTML5, 'UTF-8') . $m[2];
+        $translated = ak_legacy_lookup($m[3], $legacy);
+        if ($translated === null) return $m[0];
+        return $m[1] . '=' . $m[2] . htmlspecialchars($translated, ENT_QUOTES | ENT_HTML5, 'UTF-8') . $m[2];
     }, $html) ?? $html;
+
     foreach ($protected as $token => $original) $html = str_replace($token, $original, $html);
     return $html;
 }
+
 if (!defined('AK_OB_STARTED')) {
     define('AK_OB_STARTED', true);
     ob_start('ak_translate_page');
