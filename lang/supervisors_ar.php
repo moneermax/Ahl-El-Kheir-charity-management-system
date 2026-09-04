@@ -51,7 +51,6 @@ return [
     'supervisors.direct_title' => 'تعيين مباشر — خارج مصفوفة الحروف',
     'supervisors.active' => 'نشط',
     'supervisors.suspended' => 'موقوف',
-    'supervisors.view' => 'عرض',
     'supervisors.male' => 'ذكر',
     'supervisors.female' => 'أنثى',
     'supervisors.gender_unknown' => '—',
