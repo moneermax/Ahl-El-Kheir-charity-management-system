@@ -9,7 +9,7 @@ Session::start();
 if (!Session::isLoggedIn() || !in_array(Session::getUserRole(), ['admin', 'general_manager'], true)) {
     header('Location: ' . APP_URL . 'index.php'); exit();
 }
-$pageTitle = 'سجل العمليات';
+$pageTitle = t('navigation.audit_log');
 $active    = 'logs';
 
 $fAction = trim($_GET['action'] ?? '');
@@ -47,36 +47,36 @@ $qs = fn(array $extra) => APP_URL . 'modules/logs/audit.php?' . http_build_query
 include dirname(__DIR__, 2) . '/includes/header.php';
 ?>
 <div class="welcome-section fade-in">
-    <h2>سجل العمليات (Audit Log)</h2>
-    <p><?php echo $total; ?> عملية مسجلة</p>
+    <h2><?php echo e(t('navigation.audit_log')); ?></h2>
+    <p><?php echo $total; ?> <?php echo e(t('common.completed')); ?></p>
 </div>
 
 <div class="card mb-3 fade-in">
     <div class="card-body">
         <form method="get" class="row g-2 align-items-end">
             <div class="col-md-3">
-                <label class="form-label">العملية</label>
+                <label class="form-label"><?php echo e(t('common.actions')); ?></label>
                 <select name="action" class="form-select">
-                    <option value="">الكل</option>
+                    <option value=""><?php echo e(t('common.all')); ?></option>
                     <?php foreach ($actions as $a): ?>
                         <option value="<?php echo e($a); ?>" <?php echo $fAction === $a ? 'selected' : ''; ?>><?php echo e($a); ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
             <div class="col-md-3">
-                <label class="form-label">المستخدم</label>
+                <label class="form-label"><?php echo e(t('common.users')); ?></label>
                 <select name="user" class="form-select">
-                    <option value="">الكل</option>
+                    <option value=""><?php echo e(t('common.all')); ?></option>
                     <?php foreach ($users as $u): ?>
                         <option value="<?php echo (int)$u['id']; ?>" <?php echo $fUser === (int)$u['id'] ? 'selected' : ''; ?>><?php echo e($u['username']); ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
-            <div class="col-md-2"><label class="form-label">من</label><input type="date" name="from" class="form-control" value="<?php echo e($from); ?>"></div>
-            <div class="col-md-2"><label class="form-label">إلى</label><input type="date" name="to" class="form-control" value="<?php echo e($to); ?>"></div>
+            <div class="col-md-2"><label class="form-label"><?php echo e(t('common.previous')); ?></label><input type="date" name="from" class="form-control" value="<?php echo e($from); ?>"></div>
+            <div class="col-md-2"><label class="form-label"><?php echo e(t('common.next')); ?></label><input type="date" name="to" class="form-control" value="<?php echo e($to); ?>"></div>
             <div class="col-md-2 d-flex gap-1">
-                <button class="btn btn-primary w-100"><i class="fas fa-search"></i></button>
-                <a class="btn btn-secondary" href="<?php echo APP_URL; ?>modules/logs/audit.php"><i class="fas fa-rotate-right"></i></a>
+                <button class="btn btn-primary w-100" title="<?php echo e(t('common.search')); ?>"><i class="fas fa-search"></i></button>
+                <a class="btn btn-secondary" href="<?php echo APP_URL; ?>modules/logs/audit.php" title="<?php echo e(t('common.clear')); ?>"><i class="fas fa-rotate-right"></i></a>
             </div>
         </form>
     </div>
@@ -86,10 +86,10 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     <div class="card-body">
         <div class="table-responsive">
             <table class="table table-sm table-hover align-middle">
-                <thead><tr><th>#</th><th>الوقت</th><th>المستخدم</th><th>العملية</th><th>الكيان</th><th>قبل</th><th>بعد</th><th>IP</th></tr></thead>
+                <thead><tr><th>#</th><th><?php echo e(t('accounting.date')); ?></th><th><?php echo e(t('common.users')); ?></th><th><?php echo e(t('common.actions')); ?></th><th><?php echo e(t('common.status')); ?></th><th>Before</th><th>After</th><th>IP</th></tr></thead>
                 <tbody>
                 <?php if (!$rows): ?>
-                    <tr><td colspan="8" class="text-center text-muted py-4">لا توجد سجلات.</td></tr>
+                    <tr><td colspan="8" class="text-center text-muted py-4"><?php echo e(t('common.no_data')); ?></td></tr>
                 <?php else: foreach ($rows as $r): ?>
                     <tr>
                         <td><?php echo (int)$r['id']; ?></td>
