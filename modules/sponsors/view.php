@@ -61,11 +61,11 @@ $ships = dbFetchAll(
 );
 
 $gLabel = [
-    'male' => t('common.male'),
-    'female' => t('common.female'),
+    'male' => t('sponsors.view_male'),
+    'female' => t('sponsors.view_female'),
     'organization' => t('sponsors.view_organization'),
-    'unknown' => t('common.unknown')
-][$sp['gender']] ?? t('common.not_available');
+    'unknown' => t('sponsors.view_unknown')
+][$sp['gender']] ?? t('sponsors.view_not_available');
 
 include dirname(__DIR__, 2) . '/includes/header.php';
 ?>
