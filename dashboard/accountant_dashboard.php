@@ -7,16 +7,14 @@ require_once __DIR__ . '/../config/session.php';
 
 Session::start();
 
-// Allow accountant, accountant_staff, admin, sudo
 if (!Session::isLoggedIn() || !in_array(Session::getUserRole(), ['accountant', 'accountant_staff', 'admin', 'sudo', 'fm', 'finance', 'financial_manager'], true)) {
     header('Location: ' . APP_URL . 'index.php');
     exit();
 }
 
-$pageTitle = 'لوحة المحاسب';
+$pageTitle = t('accounting.dashboard_title');
 $active = 'dashboard';
 
-// KPIs (Inflows + Package 5 Outflows)
 $s = dbFetchOne("SELECT
   (SELECT COUNT(*) FROM transactions WHERE status = 'posted') AS tx_count,
   (SELECT COALESCE(SUM(amount),0) FROM transactions WHERE status = 'posted' AND DATE_FORMAT(transaction_date,'%Y-%m') = DATE_FORMAT(CURDATE(),'%Y-%m')) AS month_total,
@@ -29,10 +27,9 @@ $recent = dbFetchAll("SELECT t.id, t.transaction_date, t.amount, t.receipt_numbe
   FROM transactions t LEFT JOIN sponsors s ON s.id = t.sponsor_id
   WHERE t.status = 'posted' ORDER BY t.id DESC LIMIT 5");
 
-// Package 5: Outflow status breakdown
-$disb_stats = dbFetchAll("SELECT status, COUNT(*) as c, COALESCE(SUM(total_amount),0) as total 
-    FROM monthly_disbursements 
-    WHERE status IN ('draft', 'pending_approval', 'approved', 'transferred', 'received') 
+$disb_stats = dbFetchAll("SELECT status, COUNT(*) as c, COALESCE(SUM(total_amount),0) as total
+    FROM monthly_disbursements
+    WHERE status IN ('draft', 'pending_approval', 'approved', 'transferred', 'received')
     GROUP BY status");
 $disb_map = [];
 foreach ($disb_stats as $row) $disb_map[$row['status']] = $row;
@@ -41,126 +38,49 @@ include __DIR__ . '/../includes/header.php';
 ?>
 
 <div class="welcome-section fade-in">
-    <h2>مرحباً، <?php echo e(Session::getUserName()); ?></h2>
-    <p>نظرة شاملة على الإيرادات والمصروفات واعتمادات المدير المالي</p>
+    <h2><?php echo e(t('accounting.welcome', ['name' => Session::getUserName()])); ?></h2>
+    <p><?php echo e(t('accounting.dashboard_description')); ?></p>
 </div>
 
 <?php include __DIR__ . '/../includes/alerts.php'; ?>
 
-<!-- KPI Cards -->
 <div class="row g-3 mb-4 fade-in">
     <div class="col-md-3 col-sm-6">
-        <div class="card stat-card border-start border-primary border-4">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="text-muted mb-1">إجمالي المعاملات</h6>
-                        <h3 class="mb-0"><?php echo (int)$s['tx_count']; ?></h3>
-                    </div>
-                    <div class="stat-icon bg-primary bg-opacity-10 text-primary"><i class="fas fa-receipt"></i></div>
-                </div>
-            </div>
-        </div>
+        <div class="card stat-card border-start border-primary border-4"><div class="card-body"><div class="d-flex justify-content-between align-items-center"><div><h6 class="text-muted mb-1"><?php echo e(t('accounting.total_transactions')); ?></h6><h3 class="mb-0"><?php echo (int)$s['tx_count']; ?></h3></div><div class="stat-icon bg-primary bg-opacity-10 text-primary"><i class="fas fa-receipt"></i></div></div></div></div>
     </div>
     <div class="col-md-3 col-sm-6">
-        <div class="card stat-card border-start border-success border-4">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="text-muted mb-1">تحصيل هذا الشهر</h6>
-                        <h3 class="mb-0"><?php echo number_format((float)$s['month_total'], 0); ?></h3>
-                    </div>
-                    <div class="stat-icon bg-success bg-opacity-10 text-success"><i class="fas fa-coins"></i></div>
-                </div>
-            </div>
-        </div>
+        <div class="card stat-card border-start border-success border-4"><div class="card-body"><div class="d-flex justify-content-between align-items-center"><div><h6 class="text-muted mb-1"><?php echo e(t('accounting.month_collection')); ?></h6><h3 class="mb-0"><?php echo number_format((float)$s['month_total'], 0); ?></h3></div><div class="stat-icon bg-success bg-opacity-10 text-success"><i class="fas fa-coins"></i></div></div></div></div>
     </div>
     <div class="col-md-3 col-sm-6">
-        <div class="card stat-card border-start border-warning border-4">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="text-muted mb-1">إيرادات بانتظار الاعتماد</h6>
-                        <h3 class="mb-0"><?php echo (int)$s['pending_inflows']; ?></h3>
-                    </div>
-                    <div class="stat-icon bg-warning bg-opacity-10 text-warning"><i class="fas fa-hourglass-half"></i></div>
-                </div>
-            </div>
-        </div>
+        <div class="card stat-card border-start border-warning border-4"><div class="card-body"><div class="d-flex justify-content-between align-items-center"><div><h6 class="text-muted mb-1"><?php echo e(t('accounting.pending_income')); ?></h6><h3 class="mb-0"><?php echo (int)$s['pending_inflows']; ?></h3></div><div class="stat-icon bg-warning bg-opacity-10 text-warning"><i class="fas fa-hourglass-half"></i></div></div></div></div>
     </div>
     <div class="col-md-3 col-sm-6">
-        <div class="card stat-card border-start border-danger border-4">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="text-muted mb-1">صرفيات بانتظار الاعتماد</h6>
-                        <h3 class="mb-0"><?php echo (int)$s['pending_outflows']; ?></h3>
-                        <small class="text-muted"><?php echo number_format((float)$s['outflow_amount_pending'], 0); ?> ج.س</small>
-                    </div>
-                    <div class="stat-icon bg-danger bg-opacity-10 text-danger"><i class="fas fa-money-check-dollar"></i></div>
-                </div>
-            </div>
-        </div>
+        <div class="card stat-card border-start border-danger border-4"><div class="card-body"><div class="d-flex justify-content-between align-items-center"><div><h6 class="text-muted mb-1"><?php echo e(t('accounting.pending_outflows')); ?></h6><h3 class="mb-0"><?php echo (int)$s['pending_outflows']; ?></h3><small class="text-muted"><?php echo number_format((float)$s['outflow_amount_pending'], 0); ?> <?php echo e(t('accounting.currency_sdg')); ?></small></div><div class="stat-icon bg-danger bg-opacity-10 text-danger"><i class="fas fa-money-check-dollar"></i></div></div></div></div>
     </div>
 </div>
 
 <div class="row g-4 fade-in">
-    <!-- Recent Inflows -->
     <div class="col-md-7">
         <div class="card">
-            <div class="card-header"><i class="fas fa-receipt me-2"></i>آخر المعاملات (الإيرادات)</div>
-            <div class="card-body p-0">
-                <table class="table align-middle mb-0">
-                    <thead><tr><th>#</th><th>التاريخ</th><th>الكفيل</th><th>إيصال</th><th>المبلغ</th></tr></thead>
-                    <tbody>
-                    <?php if (!$recent): ?>
-                        <tr><td colspan="5" class="text-center text-muted py-4">لا توجد معاملات</td></tr>
-                    <?php else: foreach ($recent as $r): ?>
-                        <tr>
-                            <td><?php echo (int)$r['id']; ?></td>
-                            <td><?php echo e($r['transaction_date']); ?></td>
-                            <td><?php echo e($r['sponsor_name'] ?? '-'); ?></td>
-                            <td><?php echo e($r['receipt_number'] ?? '-'); ?></td>
-                            <td><strong><?php echo number_format((float)$r['amount'], 0); ?></strong></td>
-                        </tr>
-                    <?php endforeach; endif; ?>
-                    </tbody>
-                </table>
-            </div>
+            <div class="card-header"><i class="fas fa-receipt me-2"></i><?php echo e(t('accounting.last_income_transactions')); ?></div>
+            <div class="card-body p-0"><table class="table align-middle mb-0"><thead><tr><th>#</th><th><?php echo e(t('accounting.date')); ?></th><th><?php echo e(t('accounting.sponsor')); ?></th><th><?php echo e(t('accounting.receipt')); ?></th><th><?php echo e(t('accounting.amount')); ?></th></tr></thead>
+                <tbody>
+                <?php if (!$recent): ?><tr><td colspan="5" class="text-center text-muted py-4"><?php echo e(t('accounting.no_transactions')); ?></td></tr>
+                <?php else: foreach ($recent as $r): ?><tr><td><?php echo (int)$r['id']; ?></td><td><?php echo e($r['transaction_date']); ?></td><td><?php echo e($r['sponsor_name'] ?? '-'); ?></td><td><?php echo e($r['receipt_number'] ?? '-'); ?></td><td><strong><?php echo number_format((float)$r['amount'], 0); ?></strong></td></tr><?php endforeach; endif; ?>
+                </tbody></table></div>
         </div>
     </div>
 
-    <!-- Package 5: Outflows Widget -->
     <div class="col-md-5">
         <div class="card border-primary">
-            <div class="card-header bg-primary text-white">
-                <i class="fas fa-money-check-dollar me-2"></i>حالة التحويلات الشهرية (المخرجات)
-                <a href="<?php echo APP_URL; ?>modules/accounting/disbursements.php" class="btn btn-sm btn-light float-end">إدارة الصرفيات</a>
-            </div>
-            <div class="card-body">
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <span><i class="fas fa-pencil-alt text-secondary me-2"></i> مسودات (قيد الإعداد)</span>
-                        <span class="badge bg-secondary rounded-pill"><?php echo (int)($disb_map['draft']['c'] ?? 0); ?></span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <span><i class="fas fa-paper-plane text-warning me-2"></i> أُرسِلت للمدير المالي</span>
-                        <span class="badge bg-warning text-dark rounded-pill"><?php echo (int)($disb_map['pending_approval']['c'] ?? 0); ?></span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <span><i class="fas fa-check-circle text-info me-2"></i> معتمدة (بانتظار التحويل)</span>
-                        <span class="badge bg-info text-dark rounded-pill"><?php echo (int)($disb_map['approved']['c'] ?? 0); ?></span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <span><i class="fas fa-truck text-primary me-2"></i> تم التحويل للأخصائية</span>
-                        <span class="badge bg-primary rounded-pill"><?php echo (int)($disb_map['transferred']['c'] ?? 0); ?></span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <span><i class="fas fa-flag-checkered text-success me-2"></i> مكتملة (تم الاستلام)</span>
-                        <span class="badge bg-success rounded-pill"><?php echo (int)($disb_map['received']['c'] ?? 0); ?></span>
-                    </li>
-                </ul>
-            </div>
+            <div class="card-header bg-primary text-white"><i class="fas fa-money-check-dollar me-2"></i><?php echo e(t('accounting.monthly_transfer_status')); ?><a href="<?php echo APP_URL; ?>modules/accounting/disbursements.php" class="btn btn-sm btn-light float-end"><?php echo e(t('accounting.manage_outflows')); ?></a></div>
+            <div class="card-body"><ul class="list-group list-group-flush">
+                <li class="list-group-item d-flex justify-content-between align-items-center"><span><i class="fas fa-pencil-alt text-secondary me-2"></i> <?php echo e(t('accounting.drafts')); ?></span><span class="badge bg-secondary rounded-pill"><?php echo (int)($disb_map['draft']['c'] ?? 0); ?></span></li>
+                <li class="list-group-item d-flex justify-content-between align-items-center"><span><i class="fas fa-paper-plane text-warning me-2"></i> <?php echo e(t('accounting.sent_to_financial_manager')); ?></span><span class="badge bg-warning text-dark rounded-pill"><?php echo (int)($disb_map['pending_approval']['c'] ?? 0); ?></span></li>
+                <li class="list-group-item d-flex justify-content-between align-items-center"><span><i class="fas fa-check-circle text-info me-2"></i> <?php echo e(t('accounting.approved_waiting_transfer')); ?></span><span class="badge bg-info text-dark rounded-pill"><?php echo (int)($disb_map['approved']['c'] ?? 0); ?></span></li>
+                <li class="list-group-item d-flex justify-content-between align-items-center"><span><i class="fas fa-truck text-primary me-2"></i> <?php echo e(t('accounting.transferred_to_specialist')); ?></span><span class="badge bg-primary rounded-pill"><?php echo (int)($disb_map['transferred']['c'] ?? 0); ?></span></li>
+                <li class="list-group-item d-flex justify-content-between align-items-center"><span><i class="fas fa-flag-checkered text-success me-2"></i> <?php echo e(t('accounting.completed_received')); ?></span><span class="badge bg-success rounded-pill"><?php echo (int)($disb_map['received']['c'] ?? 0); ?></span></li>
+            </ul></div>
         </div>
     </div>
 </div>
