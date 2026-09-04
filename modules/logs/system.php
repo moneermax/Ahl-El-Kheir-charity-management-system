@@ -44,7 +44,6 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 ?>
 <div class="welcome-section fade-in">
     <h2><?php echo e(t('admin.logs')); ?></h2>
-    <p><?php echo e(t('common.documents')); ?> — 300 <?php echo e(t('common.completed')); ?></p>
 </div>
 
 <?php include dirname(__DIR__, 2) . '/includes/alerts.php'; ?>
