@@ -110,7 +110,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             </div>
             <?php if ($role !== 'nanny'): ?>
             <div class="col-md-3">
-                <label class="form-label"><?php echo e(t('common.orphan_groups')); ?></label>
+                <label class="form-label"><?php echo e(t('navigation.orphan_groups')); ?></label>
                 <select name="group_id" class="form-select">
                     <option value=""><?php echo e(t('common.all')); ?></option>
                     <?php foreach ($groups as $g): ?>
@@ -197,7 +197,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                         <tr>
                             <th>#</th>
                             <th><?php echo e(t('common.month')); ?></th>
-                            <th><?php echo e(t('common.orphan_groups')); ?></th>
+                            <th><?php echo e(t('navigation.orphan_groups')); ?></th>
                             <th><?php echo e(t('families.specialist')); ?></th>
                             <th><?php echo e(t('accounting.amount')); ?></th>
                             <th><?php echo e(t('common.completed')); ?></th>
@@ -227,7 +227,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                                     </div>
                                 </div>
                                 <small class="text-muted">
-                                    <?php echo (int)$d['confirmed_items']; ?>/<?php echo (int)$d['total_items']; ?> <?php echo e(t('families.count', ['count' => ''])); ?>
+                                    <?php echo e(t('families.count', ['count' => (int)$d['confirmed_items']])); ?>/<?php echo (int)$d['total_items']; ?>
                                 </small>
                             </td>
                             <td>
