@@ -48,7 +48,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 .supervisor-management-table thead th { padding: 9px 10px; white-space: nowrap; }
 .supervisor-management-table tbody td { padding: 8px 10px; vertical-align: middle; }
 .supervisor-management-table .supervisor-name { min-width: 180px; }
-.supervisor-management-table .supervisor-actions { min-width: 190px; width: 190px; }
+.supervisor-management-table .supervisor-actions { min-width: 220px; width: 220px; }
 .supervisor-management-table .supervisor-actions .btn {
     width: 31px;
     height: 31px;
@@ -89,7 +89,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 
 <div class="alert alert-info fade-in py-2 mb-3">
     <i class="fas fa-circle-info me-1"></i>
-    <strong>دورة الحياة:</strong> الإيقاف المؤقت لا يعني المغادرة النهائية. المغادرة النهائية تحفظ السجل التاريخي وتحرر الكفلاء لإعادة التوزيع اليدوي.
+    <strong>دورة الحياة:</strong> الإيقاف المؤقت لا يعني المغادرة النهائية. المغادرة النهائية تحفظ السجل التاريخي وتحرر الكفلاء والحروف لإعادة التوزيع اليدوي.
     <?php if (!$showArchived): ?>
         <span class="text-muted">المشرفون المغادرون/المؤرشفون مخفيون من قائمة العمل ويمكن عرضهم من زر «عرض المؤرشفين».</span>
     <?php endif; ?>
@@ -183,6 +183,9 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                                     <i class="fas fa-user-slash"></i>
                                 </a>
                             <?php else: ?>
+                                <a class="btn btn-sm btn-success" title="إعادة المشرف إلى العمل" aria-label="إعادة المشرف إلى العمل" href="<?php echo APP_URL; ?>modules/supervisors/return.php?id=<?php echo (int)$sup['id']; ?>">
+                                    <i class="fas fa-user-rotate"></i>
+                                </a>
                                 <span class="badge bg-dark align-self-center">نهائي</span>
                             <?php endif; ?>
                         </div>
