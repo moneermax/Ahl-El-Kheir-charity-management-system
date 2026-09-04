@@ -9,7 +9,7 @@ Session::start();
 if (!Session::isLoggedIn() || Session::getUserRole() !== 'admin') {
     header('Location: ' . APP_URL . 'index.php'); exit();
 }
-$pageTitle = 'سجلات النظام';
+$pageTitle = t('admin.logs');
 $active    = 'logs';
 
 $logsDir = dirname(__DIR__, 2) . '/storage/logs';
@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['clear_log']) && $sel 
                 [Session::getUserId(), json_encode(['file' => $sel], JSON_UNESCAPED_UNICODE),
                  $_SERVER['REMOTE_ADDR'] ?? '', $_SERVER['HTTP_USER_AGENT'] ?? '']);
         } catch (Throwable $e) {}
-        flash('success', 'تم تفريغ السجل: ' . $sel);
+        flash('success', t('common.completed') . ': ' . $sel);
     }
     header('Location: ' . APP_URL . 'modules/logs/system.php'); exit();
 }
@@ -43,8 +43,8 @@ if ($sel !== '' && is_file($logsDir . '/' . $sel)) {
 include dirname(__DIR__, 2) . '/includes/header.php';
 ?>
 <div class="welcome-section fade-in">
-    <h2>سجلات النظام</h2>
-    <p>آخر 300 سطر من الملفات الموجودة في storage/logs</p>
+    <h2><?php echo e(t('admin.logs')); ?></h2>
+    <p><?php echo e(t('common.documents')); ?> — 300 <?php echo e(t('common.completed')); ?></p>
 </div>
 
 <?php include dirname(__DIR__, 2) . '/includes/alerts.php'; ?>
@@ -53,7 +53,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     <div class="card-body">
         <form method="get" class="row g-2 align-items-end">
             <div class="col-md-6">
-                <label class="form-label">الملف</label>
+                <label class="form-label"><?php echo e(t('common.documents')); ?></label>
                 <select name="log" class="form-select" onchange="this.form.submit()">
                     <?php foreach ($files as $f): ?>
                         <option value="<?php echo e(basename($f)); ?>" <?php echo basename($f) === $sel ? 'selected' : ''; ?>>
@@ -66,8 +66,8 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             <div class="col-md-3">
                 <form method="post"><?php echo csrf_field(); ?>
                     <input type="hidden" name="log" value="<?php echo e($sel); ?>">
-                    <button name="clear_log" value="1" class="btn btn-outline-danger w-100" onclick="return confirm('تفريغ <?php echo e($sel); ?>؟')">
-                        <i class="fas fa-eraser me-1"></i> تفريغ السجل
+                    <button name="clear_log" value="1" class="btn btn-outline-danger w-100" data-confirm="<?php echo e(t('common.confirm')); ?>">
+                        <i class="fas fa-eraser me-1"></i> <?php echo e(t('common.clear')); ?>
                     </button>
                 </form>
             </div>
@@ -80,7 +80,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     <div class="card-header"><i class="fas fa-file-lines me-2"></i><?php echo e($sel ?: '—'); ?></div>
     <div class="card-body">
         <?php if (!$lines): ?>
-            <div class="text-muted">السجل فارغ.</div>
+            <div class="text-muted"><?php echo e(t('common.no_data')); ?></div>
         <?php else: ?>
             <pre dir="ltr" style="max-height:520px;overflow:auto;background:#0a1f44;color:#d8e0ee;border-radius:10px;padding:1rem;font-size:.8rem"><?php foreach ($lines as $l) echo e($l) . "\n"; ?></pre>
         <?php endif; ?>
