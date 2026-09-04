@@ -1,0 +1,21 @@
+<?php
+return [
+'users.password_title'=>'Change Password',
+'users.password_intro'=>'Choose a strong password and do not share it with anyone.',
+'users.temporary_password'=>'Temporary Password',
+'users.forced_intro'=>'You signed in with a temporary password. You must create a new password to continue.',
+'users.current_password'=>'Current Password',
+'users.new_password'=>'New Password',
+'users.password_minimum'=>'At least 6 characters.',
+'users.confirm_password'=>'Confirm New Password',
+'users.save_password'=>'Save',
+'users.back'=>'Back',
+'users.session_expired'=>'Session expired. Please try again.',
+'users.account_unavailable'=>'Unable to load account data.',
+'users.fill_all'=>'Please fill in all fields.',
+'users.current_invalid'=>'Current password is incorrect.',
+'users.minimum_error'=>'The new password must be at least 6 characters.',
+'users.mismatch'=>'The new passwords do not match.',
+'users.changed'=>'Password changed successfully.',
+'users.forced_changed'=>'New password created successfully.',
+];
