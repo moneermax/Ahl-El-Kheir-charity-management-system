@@ -129,6 +129,49 @@ function preserveAndReleaseSupervisorLetters(int $supervisorId, ?int $actorId, s
     return count($rows);
 }
 
+/**
+ * Restore an archived supervisor to active work status without restoring
+ * sponsors or letters automatically. Those assignments require explicit
+ * management decisions and are handled by their respective workflows.
+ * A new password is mandatory because archiveSupervisor() invalidates the
+ * previous login credential.
+ */
+function restoreArchivedSupervisor(int $supervisorId, string $newPassword, ?int $actorId): void
+{
+    $newPassword = trim($newPassword);
+    if (strlen($newPassword) < 6) {
+        throw new RuntimeException('كلمة المرور الجديدة يجب ألا تقل عن 6 أحرف.');
+    }
+
+    $pdo = db();
+    $pdo->beginTransaction();
+    try {
+        $supervisor = dbFetchOne("SELECT u.id, u.full_name,
+                COALESCE(u.supervisor_status, CASE WHEN u.is_active = 1 THEN 'active' ELSE 'suspended' END) AS supervisor_status
+            FROM users u
+            JOIN roles r ON r.id = u.role_id
+            WHERE u.id = ? AND r.code = 'supervisor'
+            FOR UPDATE", [$supervisorId]);
+        if (!$supervisor) throw new RuntimeException('Supervisor not found.');
+        if (!supervisorLifecycleIsFinal((string)$supervisor['supervisor_status'])) {
+            throw new RuntimeException('هذا المشرف ليس في حالة مغادرة نهائية قابلة للعودة.');
+        }
+
+        dbExecute("UPDATE users
+            SET supervisor_status = 'active', is_active = 1, password_hash = ?, updated_at = NOW()
+            WHERE id = ?", [password_hash($newPassword, PASSWORD_DEFAULT), $supervisorId]);
+
+        // No sponsor or letter assignments are restored here. Management must
+        // explicitly restore/reassign them through the dedicated workflows.
+        dbExecute("DELETE FROM user_sessions WHERE user_id = ?", [$supervisorId]);
+
+        $pdo->commit();
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        throw $e;
+    }
+}
+
 function archiveSupervisor(int $supervisorId, ?int $actorId): int
 {
     $pdo = db();
