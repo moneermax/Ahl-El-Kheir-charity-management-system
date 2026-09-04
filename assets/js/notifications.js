@@ -139,6 +139,13 @@
     }, true);
 
     document.addEventListener('click', function (event) {
+        // Form controls are never confirmation targets. This is especially
+        // important for select elements: opening/changing a dropdown must not
+        // trigger a form confirmation before the user chooses a value.
+        var control = event.target && event.target.closest
+            ? event.target.closest('select, option, input, textarea, button') : null;
+        if (control) return;
+
         var target = event.target && event.target.closest
             ? event.target.closest('[data-confirm], [onclick*="confirm("]') : null;
 
@@ -147,9 +154,7 @@
             return;
         }
 
-        // A form-level data-confirm is handled by the submit listener above.
-        // Do not let clicks on controls inside that form (especially selects)
-        // trigger the confirmation before the user has finished choosing.
+        // A form-level data-confirm is handled only by the submit listener.
         if (target.tagName === 'FORM') return;
 
         var message = target.getAttribute('data-confirm');
