@@ -32,4 +32,9 @@ return [
     'sponsors.view_cancelled' => 'Cancelled',
     'sponsors.view_details' => 'View Details',
     'sponsors.view_monthly_payment' => 'Monthly Payment',
+    'sponsors.view_male' => 'Male',
+    'sponsors.view_female' => 'Female',
+    'sponsors.view_organization' => 'Organization',
+    'sponsors.view_unknown' => 'Unknown',
+    'sponsors.view_not_available' => '—',
 ];
