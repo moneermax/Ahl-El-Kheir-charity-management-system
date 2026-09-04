@@ -86,7 +86,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     <div class="card-body">
         <div class="table-responsive">
             <table class="table table-sm table-hover align-middle">
-                <thead><tr><th>#</th><th><?php echo e(t('accounting.date')); ?></th><th><?php echo e(t('common.users')); ?></th><th><?php echo e(t('common.actions')); ?></th><th><?php echo e(t('common.status')); ?></th><th>Before</th><th>After</th><th>IP</th></tr></thead>
+                <thead><tr><th>#</th><th><?php echo e(t('accounting.date')); ?></th><th><?php echo e(t('common.users')); ?></th><th><?php echo e(t('common.actions')); ?></th><th><?php echo e(t('common.status')); ?></th><th><?php echo e(t('common.previous')); ?></th><th><?php echo e(t('common.next')); ?></th><th>IP</th></tr></thead>
                 <tbody>
                 <?php if (!$rows): ?>
                     <tr><td colspan="8" class="text-center text-muted py-4"><?php echo e(t('common.no_data')); ?></td></tr>
