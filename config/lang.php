@@ -20,6 +20,13 @@ function ak_catalog(string $language): array {
     if (isset($cache[$language])) return $cache[$language];
     $file = __DIR__ . '/../lang/' . ($language === 'ar' ? 'ar.php' : 'en.php');
     $catalog = is_file($file) ? require $file : [];
+
+    // Module catalogs are stable-key catalogs too; they keep large domains isolated
+    // while the project completes its migration into the two main catalogs.
+    $moduleFile = __DIR__ . '/../lang/reports_' . ($language === 'ar' ? 'ar' : 'en') . '.php';
+    $moduleCatalog = is_file($moduleFile) ? require $moduleFile : [];
+    if (is_array($moduleCatalog)) $catalog = array_merge(is_array($catalog) ? $catalog : [], $moduleCatalog);
+
     return $cache[$language] = is_array($catalog) ? $catalog : [];
 }
 
