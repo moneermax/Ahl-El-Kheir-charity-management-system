@@ -6,7 +6,7 @@ require_once __DIR__ . '/../config/session.php';
 Session::start();
 if (!Session::isLoggedIn() || Session::getUserRole() !== 'vice_general_manager') { header('Location: ' . APP_URL . 'index.php'); exit(); }
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['supervisor_action'])) {
-    if (!verify_csrf()) { flash('error', t('common.session_expired')); redirect('dashboard/vgm_dashboard.php'); }
+    if (!verify_csrf()) { flash('error', t('supervisors.session_expired')); redirect('dashboard/vgm_dashboard.php'); }
     $supervisorId=(int)($_POST['supervisor_id']??0); $action=(string)($_POST['supervisor_action']??'');
     $target=dbFetchOne("SELECT u.id,u.full_name,u.is_active,u.legacy_status FROM users u INNER JOIN roles r ON r.id=u.role_id WHERE u.id=? AND r.code='supervisor'",[$supervisorId]);
     if(!$target){flash('error',t('dashboard.supervisor_not_found'));redirect('dashboard/vgm_dashboard.php');}
@@ -26,17 +26,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['supervisor_action']))
     }catch(Throwable $e){if(isset($pdo)&&$pdo instanceof PDO&&$pdo->inTransaction())$pdo->rollBack();error_log('VGM supervisor action: '.$e->getMessage());flash('error',t('dashboard.action_failed'));}
     redirect('dashboard/vgm_dashboard.php');
 }
-$stats=dbFetchOne("SELECT
-(SELECT COUNT(*) FROM users u INNER JOIN roles r ON r.id=u.role_id WHERE r.code='supervisor' AND u.is_active=1) active_supervisors,
-(SELECT COUNT(*) FROM supervisor_letters) letters_assigned,
-(SELECT COUNT(*) FROM letters l WHERE NOT EXISTS(SELECT 1 FROM supervisor_letters sl WHERE sl.letter_id=l.id)) letters_unassigned,
-(SELECT COUNT(*) FROM sponsors) total_sponsors,
-(SELECT COUNT(*) FROM families) total_families,
-(SELECT COUNT(*) FROM families WHERE status='active') active_families,
-(SELECT COUNT(*) FROM sponsorships WHERE status='active') active_sponsorships");
+$stats=dbFetchOne("SELECT (SELECT COUNT(*) FROM users u INNER JOIN roles r ON r.id=u.role_id WHERE r.code='supervisor' AND u.is_active=1) active_supervisors,(SELECT COUNT(*) FROM supervisor_letters) letters_assigned,(SELECT COUNT(*) FROM letters l WHERE NOT EXISTS(SELECT 1 FROM supervisor_letters sl WHERE sl.letter_id=l.id)) letters_unassigned,(SELECT COUNT(*) FROM sponsors) total_sponsors,(SELECT COUNT(*) FROM families) total_families,(SELECT COUNT(*) FROM families WHERE status='active') active_families,(SELECT COUNT(*) FROM sponsorships WHERE status='active') active_sponsorships");
 $stats=is_array($stats)?$stats:[];
 function ak_vgm_norm_gender($raw):string{$v=strtolower(trim((string)$raw));if(in_array($v,['female','f','أنثى','انثى'],true))return'female';if(in_array($v,['male','m','ذكر'],true))return'male';return'';}
-$letterNormById=[];foreach(dbFetchAll("SELECT id,code FROM letters") as $letter)$letterNormById[(int)$letter['id']=normalize_arabic_letter($letter['code']);
+$letterNormById=[];foreach(dbFetchAll("SELECT id,code FROM letters") as $letter){$letterNormById[(int)$letter['id']]=normalize_arabic_letter($letter['code']);}
 $ownByNorm=[];foreach(dbFetchAll("SELECT sl.supervisor_id,sl.gender,l.code FROM supervisor_letters sl INNER JOIN letters l ON l.id=sl.letter_id") as $a){$norm=normalize_arabic_letter($a['code']);$gender=ak_vgm_norm_gender($a['gender']);if($gender===''){$ownByNorm[$norm]['male']=(int)$a['supervisor_id'];$ownByNorm[$norm]['female']=(int)$a['supervisor_id'];}else{$ownByNorm[$norm][$gender]=(int)$a['supervisor_id'];}}
 $supervisorSponsorCounts=[];foreach(dbFetchAll("SELECT id,first_letter_raw,first_letter_id,supervisor_id,full_name,gender FROM sponsors") as $sp){$norm='';if($sp['first_letter_id']!==null)$norm=$letterNormById[(int)$sp['first_letter_id']]??'';if($norm==='')[,$norm]=first_letter_of((string)($sp['first_letter_raw']??''));if($norm==='')[,$norm]=first_letter_of((string)$sp['full_name']);$gender=ak_vgm_norm_gender($sp['gender']??'');$genders=$gender!==''?[$gender]:['male','female'];$owners=[];if($norm!=='')foreach($genders as $g){$owner=$ownByNorm[$norm][$g]??null;if($owner)$owners[(int)$owner]=true;}if($owners)foreach(array_keys($owners) as $ownerId)$supervisorSponsorCounts[$ownerId]=($supervisorSponsorCounts[$ownerId]??0)+1;elseif(!empty($sp['supervisor_id'])){$ownerId=(int)$sp['supervisor_id'];$supervisorSponsorCounts[$ownerId]=($supervisorSponsorCounts[$ownerId]??0)+1;}}
 $supervisors=dbFetchAll("SELECT u.id,u.full_name,u.is_active,COALESCE(u.legacy_status,'') legacy_status,GROUP_CONCAT(l.name_ar SEPARATOR '، ') letters FROM users u INNER JOIN roles r ON r.id=u.role_id LEFT JOIN supervisor_letters sl ON sl.supervisor_id=u.id LEFT JOIN letters l ON l.id=sl.letter_id WHERE r.code='supervisor' GROUP BY u.id,u.full_name,u.is_active,u.legacy_status ORDER BY u.is_active DESC,CASE WHEN COALESCE(u.legacy_status,'')='deleted' THEN 2 ELSE 1 END ASC,u.full_name");
