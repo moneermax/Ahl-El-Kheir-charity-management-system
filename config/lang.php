@@ -1,5 +1,5 @@
 <?php
-/** Ahl El Kheir i18n bootstrap. New code uses stable translation keys. */
+/** Ahl El Kheir i18n bootstrap. Stable keys are authoritative; legacy text mapping is temporary. */
 declare(strict_types=1);
 
 $ak_lang = $_COOKIE['ak_lang'] ?? 'ar';
@@ -35,6 +35,14 @@ if (!function_exists('ak_legacy_catalog')) {
     }
 }
 
+if (!function_exists('ak_dict')) {
+    /** Client dictionary: stable keys plus the temporary exact-match legacy bridge. */
+    function ak_dict(): array {
+        if (AK_LANG === 'en') return array_merge(ak_legacy_catalog(), ak_catalog('en'));
+        return ak_catalog('ar');
+    }
+}
+
 if (!function_exists('ak_interpolate')) {
     function ak_interpolate(string $value, array $params): string {
         foreach ($params as $name => $replacement) $value = str_replace(':' . $name, (string)$replacement, $value);
@@ -61,22 +69,24 @@ if (!function_exists('ak_harvest')) {
     function ak_harvest(string $s): void { /* Runtime harvesting is intentionally disabled. */ }
 }
 
-/** Legacy exact-match DOM compatibility; remove after page migration. */
+/** Temporary exact-match DOM compatibility; remove after all pages are migrated. */
 if (!function_exists('ak_translate_page')) {
     function ak_translate_page(string $html): string {
         if (AK_LANG !== 'en' || $html === '' || !preg_match('/^\s*(<!DOCTYPE|<html)/i', $html)) return $html;
+        $legacy = ak_legacy_catalog();
+        if (!$legacy) return $html;
         $protected = [];
         $html = preg_replace_callback('/<(script|style|pre|code|textarea)\b[^>]*>.*?<\/\1\s*>/is', static function($m) use (&$protected) {
             $token = '__AK_I18N_PROTECTED_' . count($protected) . '__';
             $protected[$token] = $m[0];
             return $token;
         }, $html) ?? $html;
-        $html = preg_replace_callback('/>([^<>]+)</u', static function($m) {
-            $translated = ak_legacy_catalog()[$m[1]] ?? null;
+        $html = preg_replace_callback('/>([^<>]+)</u', static function($m) use ($legacy) {
+            $translated = $legacy[$m[1]] ?? null;
             return $translated === null ? $m[0] : '>' . $translated . '<';
         }, $html) ?? $html;
-        $html = preg_replace_callback('/\b(placeholder|title|aria-label|aria-description|data-bs-title|alt|data-confirm|data-reassign-confirm)=(["\'])(.*?)\2/iu', static function($m) {
-            $translated = ak_legacy_catalog()[$m[3]] ?? null;
+        $html = preg_replace_callback('/\b(placeholder|title|aria-label|aria-description|data-bs-title|alt|data-confirm|data-reassign-confirm)=(["\'])(.*?)\2/iu', static function($m) use ($legacy) {
+            $translated = $legacy[$m[3]] ?? null;
             return $translated === null ? $m[0] : $m[1] . '=' . $m[2] . htmlspecialchars((string)$translated, ENT_QUOTES | ENT_HTML5, 'UTF-8') . $m[2];
         }, $html) ?? $html;
         foreach ($protected as $token => $original) $html = str_replace($token, $original, $html);
