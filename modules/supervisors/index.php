@@ -29,15 +29,96 @@ $supervisors = dbFetchAll("
          FROM supervisor_letters sl
          INNER JOIN letters l ON l.id = sl.letter_id
          WHERE sl.supervisor_id = u.id) AS letters,
-        (SELECT COUNT(*)
-         FROM sponsor_supervisor_assignments ssa
-         WHERE ssa.supervisor_id = u.id AND ssa.ended_at IS NULL) AS sponsor_count,
-        (SELECT COUNT(*) FROM families f WHERE f.supervisor_id = u.id) AS family_count
+        0 AS sponsor_count,
+        0 AS family_count
     FROM users u
     INNER JOIN roles r ON r.id = u.role_id
     WHERE r.code = 'supervisor' {$statusFilter}
     ORDER BY u.full_name
 ");
+
+/*
+ * Workload counts must use the same ownership rules as the supervisor work
+ * screens.  sponsor_supervisor_assignments is historical/current assignment
+ * data, but the effective sponsor owner is determined by letter + gender.
+ * Families use the same letter fallback rule used by modules/families/index.php.
+ */
+$letterNormById = [];
+foreach (dbFetchAll("SELECT id, code FROM letters") as $letter) {
+    $letterNormById[(int)$letter['id']] = normalize_arabic_letter($letter['code']);
+}
+
+$sponsorOwners = [];
+foreach (dbFetchAll("SELECT sl.supervisor_id, sl.gender, l.code FROM supervisor_letters sl JOIN letters l ON l.id = sl.letter_id") as $assignment) {
+    $norm = normalize_arabic_letter($assignment['code']);
+    $gender = strtolower(trim((string)$assignment['gender']));
+    if ($gender === 'أنثى' || $gender === 'انثى' || $gender === 'f') $gender = 'female';
+    elseif ($gender === 'ذكر' || $gender === 'm') $gender = 'male';
+    if ($norm === '') continue;
+    if ($gender === 'male' || $gender === 'female') {
+        $sponsorOwners[$norm][$gender] = (int)$assignment['supervisor_id'];
+    } else {
+        $sponsorOwners[$norm]['male'] = (int)$assignment['supervisor_id'];
+        $sponsorOwners[$norm]['female'] = (int)$assignment['supervisor_id'];
+    }
+}
+
+$sponsorRows = dbFetchAll("SELECT id, first_letter_raw, first_letter_id, supervisor_id, gender, full_name FROM sponsors");
+$sponsorCounts = [];
+foreach ($sponsorRows as $sponsor) {
+    $norm = '';
+    if ($sponsor['first_letter_id'] !== null) {
+        $norm = $letterNormById[(int)$sponsor['first_letter_id']] ?? '';
+    }
+    if ($norm === '') [, $norm] = first_letter_of((string)($sponsor['first_letter_raw'] ?? ''));
+    if ($norm === '') [, $norm] = first_letter_of((string)$sponsor['full_name']);
+
+    $gender = strtolower(trim((string)($sponsor['gender'] ?? '')));
+    if (in_array($gender, ['أنثى', 'انثى', 'f'], true)) $gender = 'female';
+    elseif (in_array($gender, ['ذكر', 'm'], true)) $gender = 'male';
+    else $gender = '';
+
+    $genders = $gender !== '' ? [$gender] : ['male', 'female'];
+    $owners = [];
+    foreach ($genders as $g) {
+        $owner = $sponsorOwners[$norm][$g] ?? null;
+        if ($owner) $owners[] = (int)$owner;
+    }
+
+    if ($owners) {
+        foreach (array_unique($owners) as $ownerId) {
+            $sponsorCounts[$ownerId] = ($sponsorCounts[$ownerId] ?? 0) + 1;
+        }
+    } elseif ((int)($sponsor['supervisor_id'] ?? 0) > 0) {
+        $ownerId = (int)$sponsor['supervisor_id'];
+        $sponsorCounts[$ownerId] = ($sponsorCounts[$ownerId] ?? 0) + 1;
+    }
+}
+
+$familyRows = dbFetchAll("SELECT id, supervisor_id, legacy_mother_first_letter FROM families");
+$familyCounts = [];
+foreach ($familyRows as $family) {
+    $ownerId = (int)($family['supervisor_id'] ?? 0);
+    $norm = normalize_arabic_letter((string)($family['legacy_mother_first_letter'] ?? ''));
+    $matrixOwner = $norm !== '' ? ($familyLetterOwners[$norm] ?? null) : null;
+
+    // Explicit supervisor_id remains the direct assignment/override, matching
+    // the family list's Rule-1 behavior. If there is no explicit owner, use
+    // the current supervisor who owns the mother's first-letter.
+    if ($ownerId <= 0 && $matrixOwner) {
+        $ownerId = (int)$matrixOwner;
+    }
+    if ($ownerId > 0) {
+        $familyCounts[$ownerId] = ($familyCounts[$ownerId] ?? 0) + 1;
+    }
+}
+
+foreach ($supervisors as &$supervisor) {
+    $sid = (int)$supervisor['id'];
+    $supervisor['sponsor_count'] = $sponsorCounts[$sid] ?? 0;
+    $supervisor['family_count'] = $familyCounts[$sid] ?? 0;
+}
+unset($supervisor);
 
 $pageTitle = 'إدارة المشرفين';
 $active = 'supervisors';
