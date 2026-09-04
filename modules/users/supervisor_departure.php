@@ -8,7 +8,8 @@ require_once dirname(__DIR__, 2) . '/config/supervisor_lifecycle.php';
 Session::start();
 $role = Session::getUserRole();
 if (!Session::isLoggedIn() || !in_array($role, ['admin', 'vice_general_manager', 'vgm', 'general_manager', 'gm'], true)) {
-    header('Location: ' . APP_URL . 'index.php'); exit();
+    header('Location: ' . APP_URL . 'index.php');
+    exit();
 }
 
 $id = (int)($_GET['id'] ?? $_POST['id'] ?? 0);
@@ -74,12 +75,49 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         <p>الكفلاء المرتبطون به حالياً: <strong><?php echo $assigned; ?></strong></p>
         <div class="alert alert-warning"><strong>تنبيه:</strong> هذه العملية تعني مغادرة دائمة، وليست إجازة مؤقتة. سيتم أرشفة الحساب، وإنهاء التعيينات الحالية للكفلاء، وإظهار الكفلاء غير المعيّنين في قائمة إعادة التوزيع. لن يتم حذف السجل التاريخي للمشرف.</div>
         <div class="alert alert-info">إذا كان المشرف في إجازة أو غياب مؤقت وقد يعود، استخدم <strong>إدارة الإجازة</strong> بدلاً من هذه العملية.</div>
-        <form method="post" data-confirm="هل أنت متأكد من تسجيل المغادرة الدائمة لهذا المشرف؟ سيتم أرشفة الحساب وتحرير الكفلاء لإعادة التوزيع.">
+        <form method="post" id="supervisorDepartureForm">
             <?php echo csrf_field(); ?>
             <input type="hidden" name="id" value="<?php echo $id; ?>">
-            <button type="submit" class="btn btn-danger"><i class="fas fa-user-slash me-1"></i> تأكيد المغادرة الدائمة</button>
+            <button type="button" class="btn btn-danger" id="confirmSupervisorDeparture"><i class="fas fa-user-slash me-1"></i> تأكيد المغادرة الدائمة</button>
             <a href="<?php echo APP_URL; ?>modules/supervisors/index.php" class="btn btn-secondary">إلغاء</a>
         </form>
     </div>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var form = document.getElementById('supervisorDepartureForm');
+    var button = document.getElementById('confirmSupervisorDeparture');
+    if (!form || !button) return;
+
+    button.addEventListener('click', function () {
+        var message = 'هل أنت متأكد من تسجيل المغادرة الدائمة لهذا المشرف؟ سيتم أرشفة الحساب وتحرير الكفلاء لإعادة التوزيع.';
+        var proceed = function () {
+            // Bypass the global data-confirm submit interception deliberately.
+            HTMLFormElement.prototype.submit.call(form);
+        };
+
+        if (window.AKNotify && typeof window.AKNotify.confirm === 'function') {
+            window.AKNotify.confirm(message, proceed);
+            return;
+        }
+
+        if (window.Swal && typeof window.Swal.fire === 'function') {
+            window.Swal.fire({
+                title: 'تأكيد المغادرة الدائمة',
+                text: message,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'نعم، تسجيل المغادرة',
+                cancelButtonText: 'إلغاء',
+                reverseButtons: true
+            }).then(function (result) {
+                if (result.isConfirmed) proceed();
+            });
+            return;
+        }
+
+        if (window.confirm(message)) proceed();
+    });
+});
+</script>
 <?php include dirname(__DIR__, 2) . '/includes/footer.php'; ?>
