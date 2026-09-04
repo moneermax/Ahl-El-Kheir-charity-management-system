@@ -1,0 +1,21 @@
+<?php
+return [
+'users.password_title'=>'تغيير كلمة المرور',
+'users.password_intro'=>'اختر كلمة مرور قوية ولا تشاركها مع أحد.',
+'users.temporary_password'=>'كلمة المرور المؤقتة',
+'users.forced_intro'=>'تم تسجيل الدخول بكلمة مرور مؤقتة. يجب إنشاء كلمة مرور جديدة للمتابعة.',
+'users.current_password'=>'كلمة المرور الحالية',
+'users.new_password'=>'كلمة المرور الجديدة',
+'users.password_minimum'=>'6 أحرف على الأقل.',
+'users.confirm_password'=>'تأكيد كلمة المرور الجديدة',
+'users.save_password'=>'حفظ',
+'users.back'=>'رجوع',
+'users.session_expired'=>'انتهت صلاحية الجلسة، حاول مرة أخرى.',
+'users.account_unavailable'=>'تعذر تحميل بيانات الحساب.',
+'users.fill_all'=>'يرجى تعبئة جميع الحقول.',
+'users.current_invalid'=>'كلمة المرور الحالية غير صحيحة.',
+'users.minimum_error'=>'كلمة المرور الجديدة يجب ألا تقل عن 6 أحرف.',
+'users.mismatch'=>'كلمتا المرور الجديدتان غير متطابقتين.',
+'users.changed'=>'تم تغيير كلمة المرور بنجاح.',
+'users.forced_changed'=>'تم إنشاء كلمة المرور الجديدة بنجاح.',
+];
