@@ -12,15 +12,15 @@ if (!in_array($role, ['admin', 'vice_general_manager', 'general_manager', 'super
     header('Location: ' . APP_URL . 'index.php'); exit();
 }
 
-$pageTitle = 'الكفالات';
+$pageTitle = t('sponsorships.title');
 $active = 'sponsorships';
 
 /* - Arabic normalizer for search - */
 $norm = function (string $s): string {
-    $s = preg_replace('/[\x{064B}-\x{0652}\x{0640}\x{200B}-\x{200D}\x{FEFF}]/u', '', $s);
+    $s = preg_replace('/[\\x{064B}-\\x{0652}\\x{0640}\\x{200B}-\\x{200D}\\x{FEFF}]/u', '', $s);
     $s = str_replace(['أ','إ','آ','ٱ'], 'ا', $s);
     $s = str_replace(['ة'], 'ه', $s);
-    $s = preg_replace('/\s+/u', ' ', trim($s));
+    $s = preg_replace('/\\s+/u', ' ', trim($s));
     return mb_strtolower($s, 'UTF-8');
 };
 
@@ -100,11 +100,11 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 ?>
 
 <div class="welcome-section fade-in">
-    <h2>الكفالات</h2>
-    <p><?php echo $total; ?> كفالة · <?php echo $activeCount; ?> نشطة · الالتزام الشهري: <?php echo number_format($activeMonthly, 0); ?> ج.س</p>
+    <h2><?php echo e(t('sponsorships.title')); ?></h2>
+    <p><?php echo e(t('families.count', ['count' => $total])); ?> · <?php echo e(t('families.status_active')); ?>: <?php echo $activeCount; ?> · <?php echo e(t('families.monthly_commitment')); ?>: <?php echo number_format($activeMonthly, 0); ?> <?php echo e(t('accounting.currency_sdg')); ?></p>
     <div class="quick-actions mt-3">
         <?php if (in_array($role, ['admin', 'vice_general_manager', 'supervisor'], true)): ?>
-            <a href="<?php echo APP_URL; ?>modules/sponsorships/create.php" class="btn btn-primary btn-sm"><i class="fas fa-plus me-1"></i> إنشاء كفالة</a>
+            <a href="<?php echo APP_URL; ?>modules/sponsorships/create.php" class="btn btn-primary btn-sm"><i class="fas fa-plus me-1"></i> <?php echo e(t('sponsorships.create')); ?></a>
         <?php endif; ?>
     </div>
 </div>
@@ -113,34 +113,34 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     <div class="card-body">
         <form method="get" class="row g-2 align-items-end">
             <div class="col-md-3">
-                <label class="form-label">بحث <small class="text-muted">(يطابق بداية الاسم)</small></label>
-                <input type="text" name="q" class="form-control" value="<?php echo e($q); ?>" placeholder="اكتب بداية الاسم أو الكود...">
+                <label class="form-label"><?php echo e(t('common.search')); ?> <small class="text-muted"><?php echo e(t('families.search_hint')); ?></small></label>
+                <input type="text" name="q" class="form-control" value="<?php echo e($q); ?>" placeholder="<?php echo e(t('search.placeholder')); ?>">
             </div>
             <div class="col-md-2">
-                <label class="form-label">بحث في</label>
+                <label class="form-label"><?php echo e(t('common.search')); ?> <?php echo e(t('search.all_types')); ?></label>
                 <select name="stype" class="form-select">
-                    <option value="all" <?php echo $fType === 'all' ? 'selected' : ''; ?>>الكل</option>
-                    <option value="sponsor" <?php echo $fType === 'sponsor' ? 'selected' : ''; ?>>اسم الكفيل</option>
-                    <option value="orphan" <?php echo $fType === 'orphan' ? 'selected' : ''; ?>>اسم اليتيم</option>
-                    <option value="family" <?php echo $fType === 'family' ? 'selected' : ''; ?>>اسم الأسرة</option>
-                    <option value="code" <?php echo $fType === 'code' ? 'selected' : ''; ?>>الأكواد</option>
+                    <option value="all" <?php echo $fType === 'all' ? 'selected' : ''; ?>><?php echo e(t('common.all')); ?></option>
+                    <option value="sponsor" <?php echo $fType === 'sponsor' ? 'selected' : ''; ?>><?php echo e(t('common.sponsors')); ?></option>
+                    <option value="orphan" <?php echo $fType === 'orphan' ? 'selected' : ''; ?>><?php echo e(t('common.orphans')); ?></option>
+                    <option value="family" <?php echo $fType === 'family' ? 'selected' : ''; ?>><?php echo e(t('common.families')); ?></option>
+                    <option value="code" <?php echo $fType === 'code' ? 'selected' : ''; ?>><?php echo e(t('families.code')); ?></option>
                 </select>
             </div>
             <div class="col-md-2">
-                <label class="form-label">الحالة</label>
+                <label class="form-label"><?php echo e(t('common.status')); ?></label>
                 <select name="status" class="form-select">
-                    <option value="">الكل</option>
-                    <option value="active" <?php echo $fStatus === 'active' ? 'selected' : ''; ?>>نشطة</option>
-                    <option value="paused" <?php echo $fStatus === 'paused' ? 'selected' : ''; ?>>متوقفة</option>
-                    <option value="completed" <?php echo $fStatus === 'completed' ? 'selected' : ''; ?>>مكتملة</option>
-                    <option value="cancelled" <?php echo $fStatus === 'cancelled' ? 'selected' : ''; ?>>ملغية</option>
+                    <option value=""><?php echo e(t('common.all')); ?></option>
+                    <option value="active" <?php echo $fStatus === 'active' ? 'selected' : ''; ?>><?php echo e(t('common.active')); ?></option>
+                    <option value="paused" <?php echo $fStatus === 'paused' ? 'selected' : ''; ?>><?php echo e(t('common.paused')); ?></option>
+                    <option value="completed" <?php echo $fStatus === 'completed' ? 'selected' : ''; ?>><?php echo e(t('common.completed')); ?></option>
+                    <option value="cancelled" <?php echo $fStatus === 'cancelled' ? 'selected' : ''; ?>><?php echo e(t('common.cancelled')); ?></option>
                 </select>
             </div>
             <div class="col-md-2">
-                <button class="btn btn-primary w-100"><i class="fas fa-search me-1"></i> بحث</button>
+                <button class="btn btn-primary w-100"><i class="fas fa-search me-1"></i> <?php echo e(t('common.search')); ?></button>
             </div>
             <div class="col-md-2">
-                <a class="btn btn-secondary w-100" href="<?php echo APP_URL; ?>modules/sponsorships/index.php" title="مسح الفلاتر"><i class="fas fa-rotate-right me-1"></i> مسح</a>
+                <a class="btn btn-secondary w-100" href="<?php echo APP_URL; ?>modules/sponsorships/index.php" title="<?php echo e(t('common.clear')); ?>"><i class="fas fa-rotate-right me-1"></i> <?php echo e(t('common.clear')); ?></a>
             </div>
         </form>
     </div>
@@ -152,19 +152,19 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             <table class="table table-hover align-middle">
                 <thead>
                     <tr>
-                        <th>الكود</th>
-                        <th>الكفيل</th>
-                        <th>اليتيم</th>
-                        <th>الأسرة</th>
-                        <th>المبلغ الشهري</th>
-                        <th>البداية</th>
-                        <th>الحالة</th>
-                        <th class="text-center">عرض</th>
+                        <th><?php echo e(t('families.code')); ?></th>
+                        <th><?php echo e(t('common.sponsors')); ?></th>
+                        <th><?php echo e(t('common.orphans')); ?></th>
+                        <th><?php echo e(t('common.families')); ?></th>
+                        <th><?php echo e(t('families.monthly_commitment')); ?></th>
+                        <th><?php echo e(t('accounting.date')); ?></th>
+                        <th><?php echo e(t('common.status')); ?></th>
+                        <th class="text-center"><?php echo e(t('common.view')); ?></th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (!$rows): ?>
-                        <tr><td colspan="8" class="text-center text-muted py-4">لا توجد نتائج.</td></tr>
+                        <tr><td colspan="8" class="text-center text-muted py-4"><?php echo e(t('common.no_data')); ?></td></tr>
                     <?php else: foreach ($rows as $r): ?>
                         <tr>
                             <td><?php echo e($r['sponsorship_code']); ?></td>
@@ -174,13 +174,15 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                             <td><?php echo number_format((float)$r['monthly_amount'], 0); ?></td>
                             <td><?php echo e($r['start_date']); ?></td>
                             <td><?php
-                                $st = ['active' => ['نشطة','bg-success'], 'paused' => ['متوقفة','bg-warning'], 'completed' => ['مكتملة','bg-info'], 'cancelled' => ['ملغية','bg-danger']];
-                                [$stLabel, $stClass] = $st[$r['status']] ?? [$r['status'], 'bg-secondary'];
+                                $st = ['active' => 'common.active', 'paused' => 'common.paused', 'completed' => 'common.completed', 'cancelled' => 'common.cancelled'];
+                                $stKey = $st[$r['status']] ?? null;
+                                $stLabel = $stKey ? t($stKey) : (string)$r['status'];
+                                $stClass = ['active' => 'bg-success', 'paused' => 'bg-warning', 'completed' => 'bg-info', 'cancelled' => 'bg-danger'][$r['status']] ?? 'bg-secondary';
                             ?>
-                                <span class="badge <?php echo $stClass; ?>"><?php echo $stLabel; ?></span>
+                                <span class="badge <?php echo $stClass; ?>"><?php echo e($stLabel); ?></span>
                             </td>
                             <td class="text-center">
-                                <a class="btn btn-sm btn-primary" href="<?php echo APP_URL; ?>modules/sponsorships/view.php?id=<?php echo (int)$r['id']; ?>"><i class="fas fa-eye"></i></a>
+                                <a class="btn btn-sm btn-primary" href="<?php echo APP_URL; ?>modules/sponsorships/view.php?id=<?php echo (int)$r['id']; ?>" title="<?php echo e(t('common.view')); ?>"><i class="fas fa-eye"></i></a>
                             </td>
                         </tr>
                     <?php endforeach; endif; ?>
@@ -189,7 +191,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         </div>
 
         <?php if ($pages > 1): ?>
-            <nav class="mt-2">
+            <nav class="mt-2" aria-label="<?php echo e(t('families.pages_label')); ?>">
                 <ul class="pagination pagination-sm justify-content-center">
                     <?php for ($i = 1; $i <= $pages; $i++): ?>
                         <li class="page-item <?php echo $i === $page ? 'active' : ''; ?>">
