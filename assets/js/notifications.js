@@ -31,10 +31,12 @@
     if (!window.Swal) {
         window.AKNotify = {
             toast: fallbackToast,
+            // Never fall back to browser-native confirm(). The application has
+            // one confirmation language and pages must not silently switch to
+            // a browser dialog when SweetAlert2 is unavailable.
             confirm: function (message, onConfirm) {
-                if (window.confirm(message || 'هل أنت متأكد؟') && typeof onConfirm === 'function') {
-                    onConfirm();
-                }
+                fallbackToast('تعذر فتح نافذة التأكيد الخاصة بالنظام.');
+                return Promise.resolve({ isConfirmed: false, isDismissed: true });
             }
         };
         return;
@@ -139,15 +141,51 @@
     }, true);
 
     document.addEventListener('click', function (event) {
-        // Form controls are never confirmation targets. This is especially
-        // important for select elements: opening/changing a dropdown must not
-        // trigger a form confirmation before the user chooses a value.
+        var target = event.target && event.target.closest
+            ? event.target.closest('[data-confirm], [onclick*="confirm("]') : null;
+
+        /*
+         * Legacy inline onclick="return confirm(...)" is still capable of
+         * opening the browser's native dialog because the inline handler is
+         * attached directly to a form control. Intercept it before the normal
+         * form-control early return and route it through AKNotify instead.
+         */
+        if (target) {
+            var targetInlineHandler = target.getAttribute('onclick');
+            var targetMessage = target.getAttribute('data-confirm');
+            if (!targetMessage && targetInlineHandler && /\bconfirm\s*\(/i.test(targetInlineHandler)) {
+                targetMessage = extractConfirmMessage(targetInlineHandler);
+            }
+
+            if (targetMessage && targetInlineHandler && /\bconfirm\s*\(/i.test(targetInlineHandler)) {
+                if (target.dataset.akConfirmBypass === '1') {
+                    delete target.dataset.akConfirmBypass;
+                    return;
+                }
+
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                target.removeAttribute('onclick');
+
+                showConfirmation(targetMessage, function () {
+                    target.dataset.akConfirmBypass = '1';
+                    if (target.tagName === 'BUTTON' && target.type === 'submit' && target.form) {
+                        if (typeof target.form.requestSubmit === 'function') target.form.requestSubmit(target);
+                        else HTMLFormElement.prototype.submit.call(target.form);
+                    } else if (typeof target.click === 'function') {
+                        target.click();
+                    }
+                });
+                return;
+            }
+        }
+
+        // Form controls are otherwise never confirmation targets. This is
+        // especially important for select elements: opening/changing a
+        // dropdown must not trigger a confirmation before a value is chosen.
         var control = event.target && event.target.closest
             ? event.target.closest('select, option, input, textarea, button') : null;
         if (control) return;
-
-        var target = event.target && event.target.closest
-            ? event.target.closest('[data-confirm], [onclick*="confirm("]') : null;
 
         if (!target || target.dataset.akConfirmBypass === '1') {
             if (target) delete target.dataset.akConfirmBypass;
