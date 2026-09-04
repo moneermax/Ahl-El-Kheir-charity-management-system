@@ -1,339 +1,55 @@
 <?php
-// dashboard/vgm_dashboard.php - Vice General Manager dashboard
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/functions.php';
 require_once __DIR__ . '/../config/session.php';
-
 Session::start();
-
-if (!Session::isLoggedIn() || Session::getUserRole() !== 'vice_general_manager') {
-    header('Location: ' . APP_URL . 'index.php');
-    exit();
-}
-
-// Supervisor account actions: edit, pause/resume, and safe account archiving.
+if (!Session::isLoggedIn() || Session::getUserRole() !== 'vice_general_manager') { header('Location: ' . APP_URL . 'index.php'); exit(); }
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['supervisor_action'])) {
-    if (!verify_csrf()) {
-        flash('error', 'انتهت صلاحية الجلسة، حاول مرة أخرى.');
-        redirect('dashboard/vgm_dashboard.php');
-    }
-
-    $supervisorId = (int)($_POST['supervisor_id'] ?? 0);
-    $action = (string)($_POST['supervisor_action'] ?? '');
-    $target = dbFetchOne("SELECT u.id, u.full_name, u.is_active, u.legacy_status
-        FROM users u
-        INNER JOIN roles r ON r.id = u.role_id
-        WHERE u.id = ? AND r.code = 'supervisor'", [$supervisorId]);
-
-    if (!$target) {
-        flash('error', 'المشرف غير موجود.');
-        redirect('dashboard/vgm_dashboard.php');
-    }
-
+    if (!verify_csrf()) { flash('error', t('common.session_expired')); redirect('dashboard/vgm_dashboard.php'); }
+    $supervisorId=(int)($_POST['supervisor_id']??0); $action=(string)($_POST['supervisor_action']??'');
+    $target=dbFetchOne("SELECT u.id,u.full_name,u.is_active,u.legacy_status FROM users u INNER JOIN roles r ON r.id=u.role_id WHERE u.id=? AND r.code='supervisor'",[$supervisorId]);
+    if(!$target){flash('error',t('dashboard.supervisor_not_found'));redirect('dashboard/vgm_dashboard.php');}
     try {
-        if ($action === 'toggle_status') {
-            if (($target['legacy_status'] ?? '') === 'deleted') {
-                flash('error', 'هذا الحساب مؤرشف ولا يمكن إعادة تفعيله من هذه الصفحة.');
-                redirect('dashboard/vgm_dashboard.php');
-            }
-
-            $newActive = ((int)$target['is_active'] === 1) ? 0 : 1;
-            dbExecute('UPDATE users SET is_active = ? WHERE id = ?', [$newActive, $supervisorId]);
-            try {
-                dbExecute("INSERT INTO audit_log (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent)
-                    VALUES (?, 'UPDATE', 'users', ?, ?, ?, ?, ?)", [
-                    Session::getUserId(), $supervisorId,
-                    json_encode(['is_active' => (int)$target['is_active']], JSON_UNESCAPED_UNICODE),
-                    json_encode(['is_active' => $newActive], JSON_UNESCAPED_UNICODE),
-                    $_SERVER['REMOTE_ADDR'] ?? '', $_SERVER['HTTP_USER_AGENT'] ?? ''
-                ]);
-            } catch (Throwable $e) { /* audit must never break the action */ }
-            flash('success', $newActive ? 'تم تفعيل حساب المشرف.' : 'تم إيقاف حساب المشرف.');
-        } elseif ($action === 'delete_account') {
-            if (($target['legacy_status'] ?? '') === 'deleted') {
-                flash('error', 'هذا الحساب مؤرشف بالفعل.');
-                redirect('dashboard/vgm_dashboard.php');
-            }
-
-            $pdo = db();
-            $pdo->beginTransaction();
-            dbExecute('UPDATE families SET supervisor_id = NULL WHERE supervisor_id = ?', [$supervisorId]);
-            dbExecute('UPDATE sponsors SET supervisor_id = NULL WHERE supervisor_id = ?', [$supervisorId]);
-            dbExecute('UPDATE sponsor_payments SET supervisor_id = NULL WHERE supervisor_id = ?', [$supervisorId]);
-            dbExecute('DELETE FROM supervisor_letters WHERE supervisor_id = ?', [$supervisorId]);
-            dbExecute('DELETE FROM user_sessions WHERE user_id = ?', [$supervisorId]);
-            dbExecute("UPDATE users
-                SET is_active = 0,
-                    legacy_status = 'deleted',
-                    username = CONCAT('deleted_supervisor_', id, '_', UNIX_TIMESTAMP()),
-                    password_hash = ?,
-                    email = NULL,
-                    phone = NULL
-                WHERE id = ?", [password_hash(bin2hex(random_bytes(32)), PASSWORD_DEFAULT), $supervisorId]);
-            $pdo->commit();
-            flash('success', 'تمت أرشفة حساب المشرف وتعطيل صلاحية الدخول مع الحفاظ على البيانات والسجل التاريخي.');
-        } else {
-            flash('error', 'إجراء غير صالح.');
-        }
-    } catch (Throwable $e) {
-        if (isset($pdo) && $pdo instanceof PDO && $pdo->inTransaction()) {
-            $pdo->rollBack();
-        }
-        error_log('VGM supervisor action: ' . $e->getMessage());
-        flash('error', 'تعذر تنفيذ الإجراء، ولم يتم حذف أو تعديل البيانات المرتبطة.');
-    }
-
+        if($action==='toggle_status'){
+            if(($target['legacy_status']??'')==='deleted'){flash('error',t('dashboard.archived_cannot_reactivate'));redirect('dashboard/vgm_dashboard.php');}
+            $newActive=((int)$target['is_active']===1)?0:1; dbExecute('UPDATE users SET is_active=? WHERE id=?',[$newActive,$supervisorId]);
+            try{dbExecute("INSERT INTO audit_log (user_id,action,entity_type,entity_id,old_values,new_values,ip_address,user_agent) VALUES (?, 'UPDATE','users',?,?,?,?,?)",[Session::getUserId(),$supervisorId,json_encode(['is_active'=>(int)$target['is_active']],JSON_UNESCAPED_UNICODE),json_encode(['is_active'=>$newActive],JSON_UNESCAPED_UNICODE),$_SERVER['REMOTE_ADDR']??'',$_SERVER['HTTP_USER_AGENT']??'']);}catch(Throwable $e){}
+            flash('success',$newActive?t('dashboard.supervisor_activated'):t('dashboard.supervisor_suspended'));
+        }elseif($action==='delete_account'){
+            if(($target['legacy_status']??'')==='deleted'){flash('error',t('dashboard.already_archived'));redirect('dashboard/vgm_dashboard.php');}
+            $pdo=db();$pdo->beginTransaction();
+            dbExecute('UPDATE families SET supervisor_id=NULL WHERE supervisor_id=?',[$supervisorId]); dbExecute('UPDATE sponsors SET supervisor_id=NULL WHERE supervisor_id=?',[$supervisorId]); dbExecute('UPDATE sponsor_payments SET supervisor_id=NULL WHERE supervisor_id=?',[$supervisorId]); dbExecute('DELETE FROM supervisor_letters WHERE supervisor_id=?',[$supervisorId]); dbExecute('DELETE FROM user_sessions WHERE user_id=?',[$supervisorId]);
+            dbExecute("UPDATE users SET is_active=0,legacy_status='deleted',username=CONCAT('deleted_supervisor_',id,'_',UNIX_TIMESTAMP()),password_hash=?,email=NULL,phone=NULL WHERE id=?",[password_hash(bin2hex(random_bytes(32)),PASSWORD_DEFAULT),$supervisorId]);
+            $pdo->commit(); flash('success',t('dashboard.supervisor_archived_success'));
+        }else{flash('error',t('dashboard.invalid_action'));}
+    }catch(Throwable $e){if(isset($pdo)&&$pdo instanceof PDO&&$pdo->inTransaction())$pdo->rollBack();error_log('VGM supervisor action: '.$e->getMessage());flash('error',t('dashboard.action_failed'));}
     redirect('dashboard/vgm_dashboard.php');
 }
-
-// Statistics (live schema)
-$stats = dbFetchOne("SELECT
-    (SELECT COUNT(*) FROM users u INNER JOIN roles r ON r.id = u.role_id WHERE r.code = 'supervisor' AND u.is_active = 1) AS active_supervisors,
-    (SELECT COUNT(*) FROM supervisor_letters) AS letters_assigned,
-    (SELECT COUNT(*) FROM letters l WHERE NOT EXISTS (SELECT 1 FROM supervisor_letters sl WHERE sl.letter_id = l.id)) AS letters_unassigned,
-    (SELECT COUNT(*) FROM sponsors) AS total_sponsors,
-    (SELECT COUNT(*) FROM families) AS total_families,
-    (SELECT COUNT(*) FROM families WHERE status = 'active') AS active_families,
-    (SELECT COUNT(*) FROM sponsorships WHERE status = 'active') AS active_sponsorships
-");
-
-$stats = is_array($stats) ? $stats : [];
-
-/*
- * Supervisor sponsor workload must follow the same letter + gender ownership
- * matrix used by modules/supervisors/sponsors.php. A direct sponsors.supervisor_id
- * count alone becomes stale after a letter/gender reassignment.
- */
-function ak_vgm_norm_gender($raw): string {
-    $v = strtolower(trim((string)$raw));
-    if (in_array($v, ['female', 'f', 'أنثى', 'انثى'], true)) return 'female';
-    if (in_array($v, ['male', 'm', 'ذكر'], true)) return 'male';
-    return '';
-}
-
-$letterNormById = [];
-foreach (dbFetchAll("SELECT id, code FROM letters") as $letter) {
-    $letterNormById[(int)$letter['id']] = normalize_arabic_letter($letter['code']);
-}
-
-$ownByNorm = [];
-foreach (dbFetchAll("SELECT sl.supervisor_id, sl.gender, l.code
-    FROM supervisor_letters sl
-    INNER JOIN letters l ON l.id = sl.letter_id") as $assignment) {
-    $norm = normalize_arabic_letter($assignment['code']);
-    $gender = ak_vgm_norm_gender($assignment['gender']);
-    if ($gender === '') {
-        $ownByNorm[$norm]['male'] = (int)$assignment['supervisor_id'];
-        $ownByNorm[$norm]['female'] = (int)$assignment['supervisor_id'];
-    } else {
-        $ownByNorm[$norm][$gender] = (int)$assignment['supervisor_id'];
-    }
-}
-
-$supervisorSponsorCounts = [];
-foreach (dbFetchAll("SELECT id, first_letter_raw, first_letter_id, supervisor_id, full_name, gender FROM sponsors") as $sponsor) {
-    $norm = '';
-    if ($sponsor['first_letter_id'] !== null) {
-        $norm = $letterNormById[(int)$sponsor['first_letter_id']] ?? '';
-    }
-    if ($norm === '') [, $norm] = first_letter_of((string)($sponsor['first_letter_raw'] ?? ''));
-    if ($norm === '') [, $norm] = first_letter_of((string)$sponsor['full_name']);
-
-    $gender = ak_vgm_norm_gender($sponsor['gender'] ?? '');
-    $genders = ($gender !== '') ? [$gender] : ['male', 'female'];
-    $owners = [];
-    if ($norm !== '') {
-        foreach ($genders as $g) {
-            $owner = $ownByNorm[$norm][$g] ?? null;
-            if ($owner) $owners[(int)$owner] = true;
-        }
-    }
-
-    if ($owners) {
-        foreach (array_keys($owners) as $ownerId) {
-            $supervisorSponsorCounts[$ownerId] = ($supervisorSponsorCounts[$ownerId] ?? 0) + 1;
-        }
-    } elseif (!empty($sponsor['supervisor_id'])) {
-        $ownerId = (int)$sponsor['supervisor_id'];
-        $supervisorSponsorCounts[$ownerId] = ($supervisorSponsorCounts[$ownerId] ?? 0) + 1;
-    }
-}
-
-$supervisors = dbFetchAll("SELECT
-    u.id,
-    u.full_name,
-    u.is_active,
-    COALESCE(u.legacy_status, '') AS legacy_status,
-    GROUP_CONCAT(l.name_ar SEPARATOR '، ') AS letters
-FROM users u
-INNER JOIN roles r ON r.id = u.role_id
-LEFT JOIN supervisor_letters sl ON sl.supervisor_id = u.id
-LEFT JOIN letters l ON l.id = sl.letter_id
-WHERE r.code = 'supervisor'
-GROUP BY u.id, u.full_name, u.is_active, u.legacy_status
-ORDER BY
-    u.is_active DESC,
-    CASE WHEN COALESCE(u.legacy_status, '') = 'deleted' THEN 2 ELSE 1 END ASC,
-    u.full_name
-");
-
-foreach ($supervisors as &$supervisor) {
-    $supervisor['sponsor_count'] = $supervisorSponsorCounts[(int)$supervisor['id']] ?? 0;
-}
-unset($supervisor);
-
-// Dashboard action cards. Keep the remaining actions together in one row on desktop.
-$cards = [
-    ['href' => 'modules/supervisors/index.php', 'label' => 'إدارة المشرفين', 'description' => 'عرض وإدارة حسابات المشرفين', 'icon' => 'fa-user-tie', 'class' => 'action-primary'],
-    ['href' => 'modules/accounting/gm_reconciliation.php', 'label' => 'تقرير المصالحة', 'description' => 'مراجعة ومطابقة العمليات المالية', 'icon' => 'fa-scale-balanced', 'class' => 'action-info'],
-    ['href' => 'modules/accounting/fm_review_queue.php', 'label' => 'طابور المراجعة المالية', 'description' => 'متابعة العمليات المالية قيد المراجعة', 'icon' => 'fa-clipboard-check', 'class' => 'action-warning'],
-    ['href' => 'modules/reports/index.php', 'label' => 'التقارير العامة', 'description' => 'الوصول إلى تقارير النظام العامة', 'icon' => 'fa-chart-line', 'class' => 'action-primary'],
-];
-
-$statCards = [
-    ['value' => (int)($stats['active_supervisors'] ?? 0), 'label' => 'مشرفون نشطون', 'icon' => 'fa-user-tie'],
-    ['value' => (int)($stats['letters_assigned'] ?? 0), 'label' => 'حروف موزعة', 'icon' => 'fa-font'],
-    ['value' => (int)($stats['letters_unassigned'] ?? 0), 'label' => 'حروف غير موزعة', 'icon' => 'fa-keyboard'],
-    ['value' => (int)($stats['total_sponsors'] ?? 0), 'label' => 'إجمالي الكفلاء', 'icon' => 'fa-hand-holding-heart'],
-];
-
-$pageTitle = 'لوحة نائب المدير العام';
-$active = 'dashboard';
-include __DIR__ . '/../includes/header.php';
+$stats=dbFetchOne("SELECT
+(SELECT COUNT(*) FROM users u INNER JOIN roles r ON r.id=u.role_id WHERE r.code='supervisor' AND u.is_active=1) active_supervisors,
+(SELECT COUNT(*) FROM supervisor_letters) letters_assigned,
+(SELECT COUNT(*) FROM letters l WHERE NOT EXISTS(SELECT 1 FROM supervisor_letters sl WHERE sl.letter_id=l.id)) letters_unassigned,
+(SELECT COUNT(*) FROM sponsors) total_sponsors,
+(SELECT COUNT(*) FROM families) total_families,
+(SELECT COUNT(*) FROM families WHERE status='active') active_families,
+(SELECT COUNT(*) FROM sponsorships WHERE status='active') active_sponsorships");
+$stats=is_array($stats)?$stats:[];
+function ak_vgm_norm_gender($raw):string{$v=strtolower(trim((string)$raw));if(in_array($v,['female','f','أنثى','انثى'],true))return'female';if(in_array($v,['male','m','ذكر'],true))return'male';return'';}
+$letterNormById=[];foreach(dbFetchAll("SELECT id,code FROM letters") as $letter)$letterNormById[(int)$letter['id']=normalize_arabic_letter($letter['code']);
+$ownByNorm=[];foreach(dbFetchAll("SELECT sl.supervisor_id,sl.gender,l.code FROM supervisor_letters sl INNER JOIN letters l ON l.id=sl.letter_id") as $a){$norm=normalize_arabic_letter($a['code']);$gender=ak_vgm_norm_gender($a['gender']);if($gender===''){$ownByNorm[$norm]['male']=(int)$a['supervisor_id'];$ownByNorm[$norm]['female']=(int)$a['supervisor_id'];}else{$ownByNorm[$norm][$gender]=(int)$a['supervisor_id'];}}
+$supervisorSponsorCounts=[];foreach(dbFetchAll("SELECT id,first_letter_raw,first_letter_id,supervisor_id,full_name,gender FROM sponsors") as $sp){$norm='';if($sp['first_letter_id']!==null)$norm=$letterNormById[(int)$sp['first_letter_id']]??'';if($norm==='')[,$norm]=first_letter_of((string)($sp['first_letter_raw']??''));if($norm==='')[,$norm]=first_letter_of((string)$sp['full_name']);$gender=ak_vgm_norm_gender($sp['gender']??'');$genders=$gender!==''?[$gender]:['male','female'];$owners=[];if($norm!=='')foreach($genders as $g){$owner=$ownByNorm[$norm][$g]??null;if($owner)$owners[(int)$owner]=true;}if($owners)foreach(array_keys($owners) as $ownerId)$supervisorSponsorCounts[$ownerId]=($supervisorSponsorCounts[$ownerId]??0)+1;elseif(!empty($sp['supervisor_id'])){$ownerId=(int)$sp['supervisor_id'];$supervisorSponsorCounts[$ownerId]=($supervisorSponsorCounts[$ownerId]??0)+1;}}
+$supervisors=dbFetchAll("SELECT u.id,u.full_name,u.is_active,COALESCE(u.legacy_status,'') legacy_status,GROUP_CONCAT(l.name_ar SEPARATOR '، ') letters FROM users u INNER JOIN roles r ON r.id=u.role_id LEFT JOIN supervisor_letters sl ON sl.supervisor_id=u.id LEFT JOIN letters l ON l.id=sl.letter_id WHERE r.code='supervisor' GROUP BY u.id,u.full_name,u.is_active,u.legacy_status ORDER BY u.is_active DESC,CASE WHEN COALESCE(u.legacy_status,'')='deleted' THEN 2 ELSE 1 END ASC,u.full_name");
+foreach($supervisors as &$supervisor)$supervisor['sponsor_count']=$supervisorSponsorCounts[(int)$supervisor['id']]??0;unset($supervisor);
+$cards=[['href'=>'modules/supervisors/index.php','key'=>'dashboard.manage_supervisors','desc'=>'dashboard.manage_supervisors_desc','icon'=>'fa-user-tie','class'=>'action-primary'],['href'=>'modules/accounting/gm_reconciliation.php','key'=>'dashboard.reconciliation_report','desc'=>'dashboard.reconciliation_report_desc','icon'=>'fa-scale-balanced','class'=>'action-info'],['href'=>'modules/accounting/fm_review_queue.php','key'=>'dashboard.financial_review_queue','desc'=>'dashboard.financial_review_queue_desc','icon'=>'fa-clipboard-check','class'=>'action-warning'],['href'=>'modules/reports/index.php','key'=>'dashboard.general_reports','desc'=>'dashboard.general_reports_desc','icon'=>'fa-chart-line','class'=>'action-primary']];
+$statCards=[[(int)($stats['active_supervisors']??0),'dashboard.active_supervisors_count','fa-user-tie'],[(int)($stats['letters_assigned']??0),'dashboard.assigned_letters_count','fa-font'],[(int)($stats['letters_unassigned']??0),'dashboard.unassigned_letters_count','fa-keyboard'],[(int)($stats['total_sponsors']??0),'dashboard.total_sponsors_count','fa-hand-holding-heart']];
+$pageTitle=t('dashboard.vgm_title');$active='dashboard';include __DIR__.'/../includes/header.php';
 ?>
-
-<style>
-.qa-actions { display: none !important; }
-.dashboard-card { width: 170px; min-height: 96px; border-radius: 10px; box-shadow: 0 2px 8px rgba(10,31,68,.07); }
-.dashboard-card .card-body { padding: .65rem .55rem; }
-.quick-action-grid { max-width: 760px; margin: 0 auto 1.25rem; }
-.quick-action-row { display: flex; justify-content: center; gap: .75rem; margin-bottom: .75rem; }
-.quick-action-row:last-child { margin-bottom: 0; }
-.quick-action-card { flex: 0 0 170px; min-height: 96px; border: none; border-radius: 10px; box-shadow: 0 2px 8px rgba(10,31,68,.07); transition: transform .2s, box-shadow .2s; text-decoration: none; color: inherit; }
-.quick-action-card:hover { transform: translateY(-3px); box-shadow: 0 5px 14px rgba(10,31,68,.13); color: inherit; }
-.quick-action-card .card-body { padding: .65rem .55rem; }
-.quick-action-icon { font-size: 1.35rem; margin-bottom: .3rem; }
-.quick-action-card h6 { font-size: .82rem; line-height: 1.35; margin-bottom: .15rem; }
-.quick-action-card p { font-size: .66rem; line-height: 1.35; margin-bottom: 0; }
-.action-primary { border-top: 3px solid #1b4d8f; }
-.action-secondary { border-top: 3px solid #6c757d; }
-.action-success { border-top: 3px solid #198754; }
-.action-info { border-top: 3px solid #17a2b8; }
-.action-warning { border-top: 3px solid #ffc107; }
-.stat-card { border-right: 4px solid #1b4d8f; border-radius: 10px; box-shadow: 0 2px 8px rgba(10,31,68,.07); min-height: 96px; }
-.stat-value { font-size: 1.4rem; font-weight: 700; color: #1b4d8f; }
-.stat-label { color: #6c757d; font-size: .76rem; }
-.supervisor-table tbody tr.supervisor-disabled td { background-color: #fff8e1; }
-.supervisor-table tbody tr.supervisor-archived td { background-color: #eeeeee; color: #6c757d; }
-.supervisor-table tbody tr.supervisor-archived strong { color: #6c757d; }
-.supervisor-table tbody tr.supervisor-archived:hover td, .supervisor-table tbody tr.supervisor-disabled:hover td { background-color: inherit; }
-.archived-badge { background-color: #6c757d; color: #fff; }
-.disabled-badge { background-color: #ffc107; color: #212529; }
-@media (max-width: 768px) { .quick-action-grid { max-width: 100%; } .quick-action-row { gap: .5rem; } .quick-action-card { flex-basis: 160px; width: 160px; } }
-@media (max-width: 576px) { .quick-action-row { flex-wrap: wrap; } .quick-action-card { flex-basis: calc(50% - .25rem); width: calc(50% - .25rem); } }
-</style>
-
-<div class="welcome-section fade-in">
-    <h2>مرحباً، <?php echo e(Session::getUserName()); ?></h2>
-    <p>إدارة المشرفين وتوزيع الحروف ومتابعة العمليات</p>
-</div>
-
-<?php include __DIR__ . '/../includes/alerts.php'; ?>
-
-<div class="quick-action-grid fade-in">
-    <div class="quick-action-row">
-        <?php foreach ($cards as $c): ?>
-            <a href="<?php echo APP_URL . $c['href']; ?>" class="quick-action-card card <?php echo e($c['class']); ?> dashboard-card">
-                <div class="card-body text-center d-flex flex-column justify-content-center">
-                    <div class="quick-action-icon"><i class="fas <?php echo e($c['icon']); ?>"></i></div>
-                    <h6 class="card-title"><?php echo e($c['label']); ?></h6>
-                    <p class="card-text text-muted"><?php echo e($c['description']); ?></p>
-                </div>
-            </a>
-        <?php endforeach; ?>
-    </div>
-</div>
-
-<div class="row g-2 mb-4 fade-in justify-content-center">
-    <?php foreach ($statCards as $c): ?>
-        <div class="col-6 col-md-auto">
-            <div class="card stat-card dashboard-card text-center h-100">
-                <div class="card-body py-2 d-flex flex-column justify-content-center">
-                    <div class="stat-value"><?php echo $c['value']; ?></div>
-                    <div class="stat-label"><i class="fas <?php echo e($c['icon']); ?> me-1"></i><?php echo e($c['label']); ?></div>
-                </div>
-            </div>
-        </div>
-    <?php endforeach; ?>
-</div>
-
-<div class="card fade-in">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <span><i class="fas fa-user-tie me-2"></i>المشرفون وحروفهم</span>
-        <span class="badge bg-primary"><?php echo count($supervisors); ?> مشرف</span>
-    </div>
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle supervisor-table">
-                <thead><tr><th>المشرف</th><th>الحروف</th><th>الكفلاء</th><th>الحالة</th><th class="text-center">إجراءات</th></tr></thead>
-                <tbody>
-                <?php if (empty($supervisors)): ?>
-                    <tr><td colspan="5" class="text-center text-muted py-4">لا يوجد مشرفون حتى الآن</td></tr>
-                <?php else: foreach ($supervisors as $s): ?>
-                    <?php $isArchived = ($s['legacy_status'] ?? '') === 'deleted'; $isInactive = (int)$s['is_active'] !== 1; $rowClass = $isArchived ? 'supervisor-archived' : ($isInactive ? 'supervisor-disabled' : ''); ?>
-                    <tr class="<?php echo $rowClass; ?>">
-                        <td><strong><?php echo e($s['full_name']); ?></strong><?php if ($isArchived): ?><span class="badge archived-badge ms-1">مؤرشف</span><?php endif; ?></td>
-                        <td><?php echo e($s['letters'] ?: 'لا يوجد'); ?></td>
-                        <td><?php echo (int)$s['sponsor_count']; ?></td>
-                        <td>
-                            <?php if ($isArchived): ?><span class="badge archived-badge">مؤرشف</span>
-                            <?php elseif ((int)$s['is_active'] === 1): ?><span class="badge bg-success">نشط</span>
-                            <?php else: ?><span class="badge disabled-badge">موقوف</span><?php endif; ?>
-                        </td>
-                        <td class="text-center" style="white-space:nowrap;">
-                            <?php if (!$isArchived): ?>
-                                <a class="btn btn-sm btn-warning" title="تعديل بيانات الحساب" href="<?php echo APP_URL; ?>modules/supervisors/edit.php?id=<?php echo (int)$s['id']; ?>"><i class="fas fa-pen"></i></a>
-                                <form method="post" class="d-inline js-supervisor-action" data-confirm-type="toggle">
-                                    <?php echo csrf_field(); ?><input type="hidden" name="supervisor_id" value="<?php echo (int)$s['id']; ?>">
-                                    <button type="submit" name="supervisor_action" value="toggle_status" class="btn btn-sm <?php echo ((int)$s['is_active'] === 1) ? 'btn-danger' : 'btn-success'; ?>" title="<?php echo ((int)$s['is_active'] === 1) ? 'إيقاف الحساب' : 'تفعيل الحساب'; ?>"><i class="fas <?php echo ((int)$s['is_active'] === 1) ? 'fa-pause' : 'fa-play'; ?>"></i></button>
-                                </form>
-                                <form method="post" class="d-inline js-supervisor-action" data-confirm-type="delete">
-                                    <?php echo csrf_field(); ?><input type="hidden" name="supervisor_id" value="<?php echo (int)$s['id']; ?>">
-                                    <button type="submit" name="supervisor_action" value="delete_account" class="btn btn-sm btn-outline-danger" title="أرشفة حساب المشرف وفصل الارتباطات"><i class="fas fa-box-archive"></i></button>
-                                </form>
-                            <?php else: ?><span class="text-muted small"><i class="fas fa-box-archive me-1"></i>سجل تاريخي</span><?php endif; ?>
-                        </td>
-                    </tr>
-                <?php endforeach; endif; ?>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-(function () {
-    'use strict';
-    document.querySelectorAll('.js-supervisor-action').forEach(function (form) {
-        form.addEventListener('submit', function (event) {
-            event.preventDefault();
-            var type = form.getAttribute('data-confirm-type');
-            var isDelete = type === 'delete';
-            var title = isDelete ? 'تأكيد أرشفة حساب المشرف' : 'تأكيد تغيير حالة الحساب';
-            var text = isDelete ? 'سيتم تعطيل صلاحية الدخول وأرشفة الحساب وفصل ارتباطاته مع إبقاء جميع البيانات والسجل التاريخي. هل تريد المتابعة؟' : 'هل تريد تغيير حالة حساب هذا المشرف؟';
-            Swal.fire({
-                title: title, text: text, icon: isDelete ? 'warning' : 'question',
-                showCancelButton: true, confirmButtonText: 'نعم، متابعة', cancelButtonText: 'إلغاء',
-                reverseButtons: true, focusCancel: true, allowOutsideClick: false,
-                customClass: { confirmButton: 'btn btn-danger px-4 ms-2', cancelButton: 'btn btn-secondary px-4' },
-                buttonsStyling: false
-            }).then(function (result) { if (result.isConfirmed) form.submit(); });
-        });
-    });
-})();
-</script>
-
-<?php include __DIR__ . '/../includes/age_alert.php'; ?>
-<?php include __DIR__ . '/../includes/footer.php'; ?>
+<style>.dashboard-card{width:170px;min-height:96px;border-radius:10px;box-shadow:0 2px 8px rgba(10,31,68,.07)}.dashboard-card .card-body{padding:.65rem .55rem}.quick-action-grid{max-width:760px;margin:0 auto 1.25rem}.quick-action-row{display:flex;justify-content:center;gap:.75rem;margin-bottom:.75rem}.quick-action-card{flex:0 0 170px;min-height:96px;border:none;border-radius:10px;box-shadow:0 2px 8px rgba(10,31,68,.07);transition:transform .2s,box-shadow .2s;text-decoration:none;color:inherit}.quick-action-card:hover{transform:translateY(-3px);box-shadow:0 5px 14px rgba(10,31,68,.13);color:inherit}.quick-action-card .card-body{padding:.65rem .55rem}.quick-action-icon{font-size:1.35rem;margin-bottom:.3rem}.quick-action-card h6{font-size:.82rem;line-height:1.35;margin-bottom:.15rem}.quick-action-card p{font-size:.66rem;line-height:1.35;margin-bottom:0}.action-primary{border-top:3px solid #1b4d8f}.action-info{border-top:3px solid #17a2b8}.action-warning{border-top:3px solid #ffc107}.stat-card{border-right:4px solid #1b4d8f;border-radius:10px;box-shadow:0 2px 8px rgba(10,31,68,.07);min-height:96px}.stat-value{font-size:1.4rem;font-weight:700;color:#1b4d8f}.stat-label{color:#6c757d;font-size:.76rem}.supervisor-table tbody tr.supervisor-disabled td{background-color:#fff8e1}.supervisor-table tbody tr.supervisor-archived td{background-color:#eee;color:#6c757d}.archived-badge{background-color:#6c757d;color:#fff}.disabled-badge{background-color:#ffc107;color:#212529}@media(max-width:576px){.quick-action-row{flex-wrap:wrap}.quick-action-card{flex-basis:calc(50% - .25rem);width:calc(50% - .25rem)}}</style>
+<div class="welcome-section fade-in"><h2><?php echo e(t('dashboard.welcome_user',['name'=>Session::getUserName()])); ?></h2><p><?php echo e(t('dashboard.vgm_intro')); ?></p></div>
+<?php include __DIR__.'/../includes/alerts.php'; ?>
+<div class="quick-action-grid fade-in"><div class="quick-action-row"><?php foreach($cards as $c): ?><a href="<?php echo APP_URL.$c['href']; ?>" class="quick-action-card card <?php echo e($c['class']); ?> dashboard-card"><div class="card-body text-center d-flex flex-column justify-content-center"><div class="quick-action-icon"><i class="fas <?php echo e($c['icon']); ?>"></i></div><h6><?php echo e(t($c['key'])); ?></h6><p class="text-muted"><?php echo e(t($c['desc'])); ?></p></div></a><?php endforeach; ?></div></div>
+<div class="row g-2 mb-4 fade-in justify-content-center"><?php foreach($statCards as $c): ?><div class="col-6 col-md-auto"><div class="card stat-card dashboard-card text-center h-100"><div class="card-body py-2 d-flex flex-column justify-content-center"><div class="stat-value"><?php echo $c[0]; ?></div><div class="stat-label"><i class="fas <?php echo e($c[2]); ?> me-1"></i><?php echo e(t($c[1])); ?></div></div></div></div><?php endforeach; ?></div>
+<div class="card fade-in"><div class="card-header d-flex justify-content-between align-items-center"><span><i class="fas fa-user-tie me-2"></i><?php echo e(t('dashboard.supervisors_and_letters')); ?></span><span class="badge bg-primary"><?php echo count($supervisors); ?> <?php echo e(t('dashboard.supervisor_unit')); ?></span></div><div class="card-body"><div class="table-responsive"><table class="table table-hover align-middle supervisor-table"><thead><tr><th><?php echo e(t('common.supervisors')); ?></th><th><?php echo e(t('dashboard.letters')); ?></th><th><?php echo e(t('common.sponsors')); ?></th><th><?php echo e(t('common.status')); ?></th><th class="text-center"><?php echo e(t('common.actions')); ?></th></tr></thead><tbody><?php if(empty($supervisors)): ?><tr><td colspan="5" class="text-center text-muted py-4"><?php echo e(t('dashboard.no_supervisors')); ?></td></tr><?php else: foreach($supervisors as $s): $isArchived=($s['legacy_status']??'')==='deleted';$isInactive=(int)$s['is_active']!==1;$rowClass=$isArchived?'supervisor-archived':($isInactive?'supervisor-disabled':''); ?><tr class="<?php echo $rowClass; ?>"><td><strong><?php echo e($s['full_name']); ?></strong><?php if($isArchived): ?><span class="badge archived-badge ms-1"><?php echo e(t('common.archived')); ?></span><?php endif; ?></td><td><?php echo e($s['letters']?:t('dashboard.none')); ?></td><td><?php echo (int)$s['sponsor_count']; ?></td><td><?php if($isArchived): ?><span class="badge archived-badge"><?php echo e(t('common.archived')); ?></span><?php elseif((int)$s['is_active']===1): ?><span class="badge bg-success"><?php echo e(t('common.active')); ?></span><?php else: ?><span class="badge disabled-badge"><?php echo e(t('common.paused')); ?></span><?php endif; ?></td><td class="text-center" style="white-space:nowrap;"><?php if(!$isArchived): ?><a class="btn btn-sm btn-warning" title="<?php echo e(t('dashboard.edit_account')); ?>" href="<?php echo APP_URL; ?>modules/supervisors/edit.php?id=<?php echo (int)$s['id']; ?>"><i class="fas fa-pen"></i></a><form method="post" class="d-inline js-supervisor-action" data-confirm-type="toggle"><?php echo csrf_field(); ?><input type="hidden" name="supervisor_id" value="<?php echo (int)$s['id']; ?>"><button type="submit" name="supervisor_action" value="toggle_status" class="btn btn-sm <?php echo ((int)$s['is_active']===1)?'btn-danger':'btn-success'; ?>" title="<?php echo e(((int)$s['is_active']===1)?t('dashboard.suspend_account'):t('dashboard.activate_account')); ?>"><i class="fas <?php echo ((int)$s['is_active']===1)?'fa-pause':'fa-play'; ?>"></i></button></form><form method="post" class="d-inline js-supervisor-action" data-confirm-type="delete"><?php echo csrf_field(); ?><input type="hidden" name="supervisor_id" value="<?php echo (int)$s['id']; ?>"><button type="submit" name="supervisor_action" value="delete_account" class="btn btn-sm btn-outline-danger" title="<?php echo e(t('dashboard.archive_account')); ?>"><i class="fas fa-box-archive"></i></button></form><?php else: ?><span class="text-muted small"><i class="fas fa-box-archive me-1"></i><?php echo e(t('dashboard.historical_record')); ?></span><?php endif; ?></td></tr><?php endforeach; endif; ?></tbody></table></div></div></div>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script><script>(function(){'use strict';document.querySelectorAll('.js-supervisor-action').forEach(function(form){form.addEventListener('submit',function(event){event.preventDefault();var isDelete=form.getAttribute('data-confirm-type')==='delete';Swal.fire({title:isDelete?<?php echo json_encode(t('dashboard.confirm_archive_title'),JSON_UNESCAPED_UNICODE); ?>:<?php echo json_encode(t('dashboard.confirm_status_title'),JSON_UNESCAPED_UNICODE); ?>,text:isDelete?<?php echo json_encode(t('dashboard.confirm_archive_text'),JSON_UNESCAPED_UNICODE); ?>:<?php echo json_encode(t('dashboard.confirm_status_text'),JSON_UNESCAPED_UNICODE); ?>,icon:isDelete?'warning':'question',showCancelButton:true,confirmButtonText:<?php echo json_encode(t('dashboard.confirm_continue'),JSON_UNESCAPED_UNICODE); ?>,cancelButtonText:<?php echo json_encode(t('common.cancel'),JSON_UNESCAPED_UNICODE); ?>,reverseButtons:true,focusCancel:true,allowOutsideClick:false,customClass:{confirmButton:'btn btn-danger px-4 ms-2',cancelButton:'btn btn-secondary px-4'},buttonsStyling:false}).then(function(r){if(r.isConfirmed)form.submit();});});});})();</script>
+<?php include __DIR__.'/../includes/age_alert.php'; include __DIR__.'/../includes/footer.php'; ?>
