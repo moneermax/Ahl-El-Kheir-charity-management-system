@@ -13,11 +13,10 @@ if (!in_array($role, ['admin', 'vice_general_manager', 'general_manager', 'super
 
 dbExecute("ALTER TABLE sponsors ADD COLUMN IF NOT EXISTS brought_by_name VARCHAR(255) NULL");
 
-$pageTitle = 'ملف الكفيل';
+$pageTitle = t('sponsors.view_title');
 $active = 'sponsors';
 $id = (int)($_GET['id'] ?? 0);
 
-/* Restore the sponsor-list state when the user clicks Back/رجوع. */
 $returnQuery = trim((string)($_GET['return'] ?? ''));
 $backUrl = APP_URL . 'modules/sponsors/index.php';
 if ($returnQuery !== '') {
@@ -39,13 +38,13 @@ $sp = dbFetchOne("SELECT s.*, l.code AS letter, u.full_name AS supervisor_name
                   LEFT JOIN users u ON u.id = s.supervisor_id
                   WHERE s.id = ?", [$id]);
 
-if (!$sp) { flash('error', 'الكفيل غير موجود.'); redirect('modules/sponsors/index.php'); }
+if (!$sp) { flash('error', t('sponsors.view_not_found')); redirect('modules/sponsors/index.php'); }
 
 if ($role === 'supervisor') {
     $myLetterIds = array_map('intval', array_column(dbFetchAll("SELECT letter_id FROM supervisor_letters WHERE supervisor_id = ?", [Session::getUserId()]), 'letter_id'));
     $mine = ((int)($sp['supervisor_id'] ?? 0) === Session::getUserId())
           || ($sp['first_letter_id'] && in_array((int)$sp['first_letter_id'], $myLetterIds, true));
-    if (!$mine) { flash('error', 'لا تملك صلاحية عرض هذا الكفيل.'); redirect('modules/sponsors/index.php'); }
+    if (!$mine) { flash('error', t('sponsors.view_no_permission')); redirect('modules/sponsors/index.php'); }
 }
 
 $ships = dbFetchAll(
@@ -61,7 +60,12 @@ $ships = dbFetchAll(
     [$id]
 );
 
-$gLabel = ['male' => 'ذكر', 'female' => 'أنثى', 'organization' => 'منظمة', 'unknown' => 'غير معروف'][$sp['gender']] ?? '—';
+$gLabel = [
+    'male' => t('common.male'),
+    'female' => t('common.female'),
+    'organization' => t('sponsors.view_organization'),
+    'unknown' => t('common.unknown')
+][$sp['gender']] ?? t('common.not_available');
 
 include dirname(__DIR__, 2) . '/includes/header.php';
 ?>
@@ -70,24 +74,24 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     <h2><?php echo e($sp['full_name']); ?></h2>
     <p>
         <?php echo e($sp['sponsor_code']); ?> ·
-        الحرف: <span class="badge bg-light text-dark border"><?php echo e($sp['letter'] ?? '-'); ?></span> ·
-        الجنس: <span class="badge bg-light text-dark border"><?php echo e($gLabel); ?></span> ·
-        المشرف: <?php echo e($sp['supervisor_name'] ?? '—'); ?>
+        <?php echo e(t('sponsors.view_letter')); ?>: <span class="badge bg-light text-dark border"><?php echo e($sp['letter'] ?? '-'); ?></span> ·
+        <?php echo e(t('sponsors.view_gender')); ?>: <span class="badge bg-light text-dark border"><?php echo e($gLabel); ?></span> ·
+        <?php echo e(t('sponsors.view_supervisor')); ?>: <?php echo e($sp['supervisor_name'] ?? '—'); ?>
     </p>
     <div class="mt-2">
         <?php if (!empty($sp['acquisition_source'])): ?>
-            <span class="badge bg-info text-dark me-2"><i class="fas fa-bullhorn me-1"></i> المصدر: <?php echo e($sp['acquisition_source']); ?></span>
+            <span class="badge bg-info text-dark me-2"><i class="fas fa-bullhorn me-1"></i> <?php echo e(t('sponsors.view_source')); ?>: <?php echo e($sp['acquisition_source']); ?></span>
         <?php endif; ?>
         <?php if (!empty($sp['brought_by_name'])): ?>
-            <span class="badge bg-success me-2"><i class="fas fa-user-tag me-1"></i> جلب بواسطة: <?php echo e($sp['brought_by_name']); ?></span>
+            <span class="badge bg-success me-2"><i class="fas fa-user-tag me-1"></i> <?php echo e(t('sponsors.view_brought_by')); ?>: <?php echo e($sp['brought_by_name']); ?></span>
         <?php endif; ?>
     </div>
     <div class="quick-actions mt-3">
-        <a href="<?php echo e($backUrl); ?>" class="btn btn-secondary btn-sm"><i class="fas fa-arrow-right me-1"></i> رجوع</a>
+        <a href="<?php echo e($backUrl); ?>" class="btn btn-secondary btn-sm"><i class="fas fa-arrow-right me-1"></i> <?php echo e(t('sponsors.view_back')); ?></a>
         <?php if (in_array($role, ['admin', 'vice_general_manager', 'supervisor', 'financial_manager', 'accountant'], true)): ?>
-            <a href="<?php echo APP_URL; ?>modules/sponsors/edit.php?id=<?php echo $id; ?>&return=<?php echo rawurlencode($returnQuery); ?>" class="btn btn-warning btn-sm"><i class="fas fa-pen me-1"></i> تعديل</a>
-            <a href="<?php echo APP_URL; ?>modules/sponsorships/create.php?sponsor_id=<?php echo $id; ?>" class="btn btn-primary btn-sm"><i class="fas fa-plus me-1"></i> إضافة كفالة</a>
-            <a href="<?php echo APP_URL; ?>modules/transactions/create.php?sponsor_id=<?php echo $id; ?>" class="btn btn-info btn-sm"><i class="fas fa-hand-holding-dollar me-1"></i> تسجيل دفعة أخرى / تبرع</a>
+            <a href="<?php echo APP_URL; ?>modules/sponsors/edit.php?id=<?php echo $id; ?>&return=<?php echo rawurlencode($returnQuery); ?>" class="btn btn-warning btn-sm"><i class="fas fa-pen me-1"></i> <?php echo e(t('sponsors.view_edit')); ?></a>
+            <a href="<?php echo APP_URL; ?>modules/sponsorships/create.php?sponsor_id=<?php echo $id; ?>" class="btn btn-primary btn-sm"><i class="fas fa-plus me-1"></i> <?php echo e(t('sponsors.view_add_sponsorship')); ?></a>
+            <a href="<?php echo APP_URL; ?>modules/transactions/create.php?sponsor_id=<?php echo $id; ?>" class="btn btn-info btn-sm"><i class="fas fa-hand-holding-dollar me-1"></i> <?php echo e(t('sponsors.view_add_payment')); ?></a>
         <?php endif; ?>
     </div>
 </div>
@@ -95,38 +99,38 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 <?php include dirname(__DIR__, 2) . '/includes/alerts.php'; ?>
 
 <div class="card mb-4 fade-in">
-    <div class="card-header"><i class="fas fa-info-circle me-2"></i>البيانات الأساسية</div>
+    <div class="card-header"><i class="fas fa-info-circle me-2"></i><?php echo e(t('sponsors.view_basic_data')); ?></div>
     <div class="card-body">
         <div class="row">
-            <div class="col-md-4"><small class="text-muted">الهاتف</small><div dir="ltr"><?php echo e($sp['phone'] ?? '-'); ?></div></div>
-            <div class="col-md-4"><small class="text-muted">البريد الإلكتروني</small><div><?php echo e($sp['email'] ?? '-'); ?></div></div>
-            <div class="col-md-4"><small class="text-muted">العنوان</small><div><?php echo e($sp['address'] ?? '-'); ?></div></div>
-            <div class="col-md-4 mt-2"><small class="text-muted">النوع</small><div><?php echo e($sp['sponsor_type']); ?></div></div>
-            <div class="col-md-4 mt-2"><small class="text-muted">طريقة الدفع</small><div><?php echo e($sp['preferred_payment_method'] ?? '-'); ?></div></div>
-            <div class="col-md-4 mt-2"><small class="text-muted">الحالة</small><div><?php echo e($sp['status']); ?></div></div>
+            <div class="col-md-4"><small class="text-muted"><?php echo e(t('sponsors.view_phone')); ?></small><div dir="ltr"><?php echo e($sp['phone'] ?? '-'); ?></div></div>
+            <div class="col-md-4"><small class="text-muted"><?php echo e(t('sponsors.view_email')); ?></small><div><?php echo e($sp['email'] ?? '-'); ?></div></div>
+            <div class="col-md-4"><small class="text-muted"><?php echo e(t('sponsors.view_address')); ?></small><div><?php echo e($sp['address'] ?? '-'); ?></div></div>
+            <div class="col-md-4 mt-2"><small class="text-muted"><?php echo e(t('sponsors.view_type')); ?></small><div><?php echo e($sp['sponsor_type']); ?></div></div>
+            <div class="col-md-4 mt-2"><small class="text-muted"><?php echo e(t('sponsors.view_payment_method')); ?></small><div><?php echo e($sp['preferred_payment_method'] ?? '-'); ?></div></div>
+            <div class="col-md-4 mt-2"><small class="text-muted"><?php echo e(t('sponsors.view_status')); ?></small><div><?php echo e($sp['status']); ?></div></div>
         </div>
     </div>
 </div>
 
 <div class="card fade-in">
-    <div class="card-header"><i class="fas fa-child me-2"></i>الكفالات والأيتام</div>
+    <div class="card-header"><i class="fas fa-child me-2"></i><?php echo e(t('sponsors.view_sponsorships_orphans')); ?></div>
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>الكود</th>
-                        <th>اليتيم</th>
-                        <th>الأسرة</th>
-                        <th>المبلغ الشهري</th>
-                        <th>البداية</th>
-                        <th>الحالة</th>
+                        <th><?php echo e(t('sponsors.view_code')); ?></th>
+                        <th><?php echo e(t('sponsors.view_orphan')); ?></th>
+                        <th><?php echo e(t('sponsors.view_family')); ?></th>
+                        <th><?php echo e(t('sponsors.view_monthly_amount')); ?></th>
+                        <th><?php echo e(t('sponsors.view_start')); ?></th>
+                        <th><?php echo e(t('sponsors.view_status')); ?></th>
                         <th></th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (!$ships): ?>
-                        <tr><td colspan="7" class="text-center text-muted py-3">لا توجد كفالات.</td></tr>
+                        <tr><td colspan="7" class="text-center text-muted py-3"><?php echo e(t('sponsors.view_no_sponsorships')); ?></td></tr>
                     <?php else: foreach ($ships as $s): ?>
                         <tr>
                             <td><?php echo e($s['sponsorship_code']); ?></td>
@@ -137,19 +141,19 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                             <td>
                                 <?php
                                 $st = [
-                                    'active' => ['نشطة','bg-success'],
-                                    'paused' => ['متوقفة','bg-warning'],
-                                    'completed' => ['مكتملة','bg-info'],
-                                    'cancelled' => ['ملغية','bg-danger']
+                                    'active' => [t('sponsors.view_active'),'bg-success'],
+                                    'paused' => [t('sponsors.view_paused'),'bg-warning'],
+                                    'completed' => [t('sponsors.view_completed'),'bg-info'],
+                                    'cancelled' => [t('sponsors.view_cancelled'),'bg-danger']
                                 ];
                                 [$stLabel, $stClass] = $st[$s['status']] ?? [$s['status'], 'bg-secondary'];
                                 ?>
-                                <span class="badge <?php echo $stClass; ?>"><?php echo $stLabel; ?></span>
+                                <span class="badge <?php echo $stClass; ?>"><?php echo e($stLabel); ?></span>
                             </td>
                             <td class="text-nowrap">
-                                <a class="btn btn-sm btn-primary" href="<?php echo APP_URL; ?>modules/sponsorships/view.php?id=<?php echo (int)$s['id']; ?>" title="عرض التفاصيل"><i class="fas fa-eye"></i></a>
+                                <a class="btn btn-sm btn-primary" href="<?php echo APP_URL; ?>modules/sponsorships/view.php?id=<?php echo (int)$s['id']; ?>" title="<?php echo e(t('sponsors.view_details')); ?>"><i class="fas fa-eye"></i></a>
                                 <?php if (in_array($role, ['admin', 'vice_general_manager', 'supervisor', 'financial_manager', 'accountant'], true) && $s['status'] === 'active'): ?>
-                                    <a class="btn btn-sm btn-success" href="<?php echo APP_URL; ?>modules/transactions/create.php?sponsorship_id=<?php echo (int)$s['id']; ?>" title="دفعة شهرية"><i class="fas fa-receipt"></i></a>
+                                    <a class="btn btn-sm btn-success" href="<?php echo APP_URL; ?>modules/transactions/create.php?sponsorship_id=<?php echo (int)$s['id']; ?>" title="<?php echo e(t('sponsors.view_monthly_payment')); ?>"><i class="fas fa-receipt"></i></a>
                                 <?php endif; ?>
                             </td>
                         </tr>
