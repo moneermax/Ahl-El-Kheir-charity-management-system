@@ -16,26 +16,25 @@ if (!Session::isLoggedIn()) {
 
 $role = Session::getUserRole();
 
-// Deletion is intentionally limited to senior management/admin roles.
 if (!in_array($role, ['admin', 'vice_general_manager'], true)) {
-    flash('error', 'ليس لديك صلاحية حذف الأسر.');
+    flash('error', t('families.delete_permission'));
     redirect('modules/families/index.php');
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    flash('error', 'طلب غير صالح.');
+    flash('error', t('families.delete_invalid_request'));
     redirect('modules/families/index.php');
 }
 
 if (!verify_csrf()) {
-    flash('error', 'انتهت صلاحية الجلسة. يرجى المحاولة مرة أخرى.');
+    flash('error', t('families.delete_session_expired'));
     redirect('modules/families/index.php');
 }
 
 $familyId = (int)($_POST['family_id'] ?? 0);
 
 if ($familyId <= 0) {
-    flash('error', 'معرّف الأسرة غير صالح.');
+    flash('error', t('families.delete_invalid_id'));
     redirect('modules/families/index.php');
 }
 
@@ -45,7 +44,7 @@ $fam = dbFetchOne(
 );
 
 if (!$fam) {
-    flash('error', 'الأسرة غير موجودة.');
+    flash('error', t('families.delete_not_found'));
     redirect('modules/families/index.php');
 }
 
@@ -57,7 +56,7 @@ $childRow = dbFetchOne(
 $childCount = (int)($childRow['c'] ?? 0);
 
 if ($childCount > 0) {
-    flash('error', 'لا يمكن حذف الأسرة لأنها تحتوي على ' . $childCount . ' يتيم/أيتام مسجلين.');
+    flash('error', t('families.delete_has_orphans', ['count' => $childCount]));
     redirect('modules/families/index.php');
 }
 
@@ -74,7 +73,7 @@ try {
 
     if (!$lock) {
         $pdo->rollBack();
-        flash('error', 'الأسرة غير موجودة.');
+        flash('error', t('families.delete_not_found'));
         redirect('modules/families/index.php');
     }
 
@@ -86,7 +85,7 @@ try {
 
     if ($lockedChildCount > 0) {
         $pdo->rollBack();
-        flash('error', 'لا يمكن حذف الأسرة لأن لديها الآن ' . $lockedChildCount . ' يتيم/أيتام مسجلين.');
+        flash('error', t('families.delete_has_orphans_now', ['count' => $lockedChildCount]));
         redirect('modules/families/index.php');
     }
 
@@ -114,7 +113,10 @@ try {
 
     $pdo->commit();
 
-    flash('success', 'تم حذف الأسرة ' . (string)$fam['family_code'] . ' (' . (string)$fam['mother_name'] . ') بنجاح.');
+    flash('success', t('families.delete_success', [
+        'code' => (string)$fam['family_code'],
+        'mother' => (string)$fam['mother_name']
+    ]));
 } catch (Throwable $e) {
     try {
         if (isset($pdo) && $pdo->inTransaction()) {
@@ -125,7 +127,7 @@ try {
     }
 
     error_log('Family deletion failed for ID ' . $familyId . ': ' . $e->getMessage());
-    flash('error', 'لم يتم حذف الأسرة. قد تكون مرتبطة بسجلات أخرى في النظام. تم الحفاظ على البيانات ولم يتم حذف أي سجلات مرتبطة.');
+    flash('error', t('families.delete_failed'));
 }
 
 redirect('modules/families/index.php');
