@@ -1,5 +1,5 @@
 <?php
-/** Ahl El Kheir i18n bootstrap. Stable keys are authoritative; legacy text mapping is temporary. */
+/** Ahl El Kheir i18n bootstrap. Stable-key catalogs are authoritative; legacy compatibility is temporary. */
 declare(strict_types=1);
 
 $ak_lang = $_COOKIE['ak_lang'] ?? 'ar';
@@ -11,21 +11,28 @@ $ak_lang = in_array($ak_lang, ['ar', 'en'], true) ? $ak_lang : 'ar';
 if (!defined('AK_LANG')) define('AK_LANG', $ak_lang);
 if (!defined('AK_DIR')) define('AK_DIR', AK_LANG === 'ar' ? 'rtl' : 'ltr');
 
+/** Load the main catalog plus every stable module catalog for the selected language. */
 function ak_catalog(string $language): array {
     static $cache = [];
     if (isset($cache[$language])) return $cache[$language];
-    $file = __DIR__ . '/../lang/' . ($language === 'ar' ? 'ar.php' : 'en.php');
-    $catalog = is_file($file) ? require $file : [];
-    $moduleFiles = [
-        __DIR__ . '/../lang/reports_' . ($language === 'ar' ? 'ar' : 'en') . '.php',
-        __DIR__ . '/../lang/ui_' . ($language === 'ar' ? 'ar' : 'en') . '.php',
-        __DIR__ . '/../lang/dashboard_' . ($language === 'ar' ? 'ar' : 'en') . '.php',
-    ];
-    foreach ($moduleFiles as $moduleFile) {
-        $moduleCatalog = is_file($moduleFile) ? require $moduleFile : [];
-        if (is_array($moduleCatalog)) $catalog = array_merge(is_array($catalog) ? $catalog : [], $moduleCatalog);
+
+    $suffix = $language === 'ar' ? 'ar' : 'en';
+    $catalog = [];
+    $mainFile = __DIR__ . '/../lang/' . $suffix . '.php';
+    if (is_file($mainFile)) {
+        $main = require $mainFile;
+        if (is_array($main)) $catalog = $main;
     }
-    return $cache[$language] = is_array($catalog) ? $catalog : [];
+
+    $moduleFiles = glob(__DIR__ . '/../lang/*_' . $suffix . '.php') ?: [];
+    sort($moduleFiles, SORT_STRING);
+    foreach ($moduleFiles as $moduleFile) {
+        if (basename($moduleFile) === 'legacy_' . $suffix . '.php') continue;
+        $moduleCatalog = require $moduleFile;
+        if (is_array($moduleCatalog)) $catalog = array_merge($catalog, $moduleCatalog);
+    }
+
+    return $cache[$language] = $catalog;
 }
 
 function ak_legacy_catalog(): array {
