@@ -52,7 +52,7 @@ while ((time()-$started)<300) {
         }
     } catch(Throwable $e) {
         echo "event: error\n";
-        echo 'data: '.json_encode(['message'=>'stream temporarily unavailable'])."\n\n";
+        echo 'data: '.json_encode(['message'=>t('messages.realtime_unavailable')],JSON_UNESCAPED_UNICODE)."\n\n";
         @ob_flush(); flush();
     }
     sleep(2);
