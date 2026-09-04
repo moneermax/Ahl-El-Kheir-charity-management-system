@@ -147,6 +147,11 @@
             return;
         }
 
+        // A form-level data-confirm is handled by the submit listener above.
+        // Do not let clicks on controls inside that form (especially selects)
+        // trigger the confirmation before the user has finished choosing.
+        if (target.tagName === 'FORM') return;
+
         var message = target.getAttribute('data-confirm');
         var inlineHandler = target.getAttribute('onclick');
         if (!message && inlineHandler && /\bconfirm\s*\(/i.test(inlineHandler)) message = extractConfirmMessage(inlineHandler);
