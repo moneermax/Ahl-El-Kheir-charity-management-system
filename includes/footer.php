@@ -18,6 +18,11 @@
 <?php include __DIR__ . '/messaging_widget.php'; ?>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+window.AK_LANG = <?php echo json_encode(AK_LANG, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+window.AK_TRANSLATIONS = <?php echo json_encode(ak_dict(), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+</script>
+<script src="<?php echo asset('js/language.js'); ?>"></script>
 <script src="<?php echo asset('js/app.js'); ?>"></script>
 <script src="<?php echo asset('js/notifications.js'); ?>"></script>
 <script src="<?php echo asset('js/messaging_reply_tools.js'); ?>"></script>
