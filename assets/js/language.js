@@ -78,39 +78,103 @@
         });
     }
 
+    /*
+     * Language links are generated server-side, but older pages can contain
+     * an existing ?lang= value. Appending another lang parameter is unsafe:
+     * PHP uses the last duplicate value while URLSearchParams.get() uses the
+     * first one. That made the toggle appear to work only after navigating to
+     * another page. Always replace every existing lang parameter with exactly
+     * one target value, and set the cookie immediately before navigation.
+     */
+    function prepareLanguageUrl(href, target) {
+        try {
+            var url = new URL(href, window.location.href);
+            url.searchParams.delete('lang');
+            url.searchParams.set('lang', target);
+            return url.toString();
+        } catch (e) {
+            return href;
+        }
+    }
+
+    function switchLanguage(target, href) {
+        if (target !== 'ar' && target !== 'en') return;
+
+        var destination = prepareLanguageUrl(href || window.location.href, target);
+
+        /* Keep the language state synchronized even if navigation is handled
+         * by browser history/cache before the next PHP request. */
+        document.cookie = 'ak_lang=' + encodeURIComponent(target) + '; Max-Age=31536000; Path=/; SameSite=Lax';
+
+        /* Replace the current URL rather than leaving duplicate lang params. */
+        window.location.assign(destination);
+    }
+
     function normalizeLanguageLinks() {
         var links = document.querySelectorAll('a[href*="lang="]');
         Array.prototype.forEach.call(links, function (link) {
             try {
                 var url = new URL(link.href, window.location.href);
-                if (!url.searchParams.has('lang')) return;
-                var target = url.searchParams.get('lang');
+                var params = url.searchParams.getAll('lang');
+                if (!params.length) return;
+
+                var target = params[params.length - 1];
                 if (target !== 'ar' && target !== 'en') return;
+
+                url.searchParams.delete('lang');
                 url.searchParams.set('lang', target);
                 link.href = url.toString();
             } catch (e) {}
         });
     }
 
-    function fixBootstrapDirection() {
-        if (window.AK_LANG !== 'en') return;
-        var links = document.querySelectorAll('link[rel="stylesheet"]');
+    function bindLanguageToggle() {
+        var links = document.querySelectorAll('a[href*="lang="]');
         Array.prototype.forEach.call(links, function (link) {
-            if (link.href.indexOf('bootstrap.rtl') === -1) return;
-            link.href = link.href.replace('bootstrap.rtl', 'bootstrap');
+            if (link.dataset.akLangBound === '1') return;
+            link.dataset.akLangBound = '1';
+
+            link.addEventListener('click', function (event) {
+                event.preventDefault();
+
+                var target = window.AK_LANG === 'en' ? 'ar' : 'en';
+                switchLanguage(target, link.href);
+            });
         });
-        document.documentElement.dir = 'ltr';
-        document.documentElement.lang = 'en';
+    }
+
+    function fixBootstrapDirection() {
+        var links = document.querySelectorAll('link[rel="stylesheet"]');
+
+        Array.prototype.forEach.call(links, function (link) {
+            if (window.AK_LANG === 'en') {
+                if (link.href.indexOf('bootstrap.rtl') !== -1) {
+                    link.href = link.href.replace('bootstrap.rtl', 'bootstrap');
+                }
+            } else {
+                if (link.href.indexOf('bootstrap.min.css') !== -1 && link.href.indexOf('bootstrap.rtl') === -1) {
+                    link.href = link.href.replace('bootstrap.min.css', 'bootstrap.rtl.min.css');
+                }
+            }
+        });
+
+        document.documentElement.dir = window.AK_LANG === 'en' ? 'ltr' : 'rtl';
+        document.documentElement.lang = window.AK_LANG === 'en' ? 'en' : 'ar';
     }
 
     window.AKLang = {
         t: translate,
-        refresh: function (root) { translateElement(root || document.body); }
+        refresh: function (root) { translateElement(root || document.body); },
+        switchTo: function (target) {
+            switchLanguage(target, window.location.href);
+        }
     };
 
     document.addEventListener('DOMContentLoaded', function () {
         normalizeLanguageLinks();
+        bindLanguageToggle();
         fixBootstrapDirection();
+
         if (window.AK_LANG !== 'en') return;
         translateElement(document.body);
 
