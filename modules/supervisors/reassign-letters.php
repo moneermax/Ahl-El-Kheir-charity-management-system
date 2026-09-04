@@ -27,8 +27,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pdo = db();
         $pdo->beginTransaction();
 
-        // Resolve the latest permanent-departure event for this exact letter+gender.
-        // Later assignments do not erase or hide that historical release event.
         $source = dbFetchOne("SELECT h.id, h.supervisor_id AS old_supervisor_id, h.letter_id, h.gender,
                 h.ended_at, l.code AS letter_code, u.full_name AS old_supervisor_name,
                 COALESCE(u.supervisor_status, CASE WHEN u.is_active = 1 THEN 'active' ELSE 'suspended' END) AS old_supervisor_status
@@ -195,18 +193,18 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     <td><?php if ($hasCurrentOwner): ?><strong class="ak-current-owner"><?php echo e($row['current_supervisor_name']); ?></strong><small class="d-block text-muted">مُعيّن حالياً</small><?php else: ?><span class="badge bg-warning text-dark">غير معيّن</span><?php endif; ?></td>
                     <td><div class="d-flex flex-column gap-2">
                         <?php if ($previousIsActive): ?>
-                            <form method="post" data-confirm="<?php echo e($restoreMessage); ?>">
+                            <form method="post">
                                 <?php echo csrf_field(); ?><input type="hidden" name="history_id" value="<?php echo (int)$row['history_id']; ?>"><input type="hidden" name="letter_action" value="restore">
                                 <?php if ($hasCurrentOwner): ?><input type="hidden" name="confirm_replace" value="1"><?php endif; ?>
-                                <button type="submit" class="btn btn-success btn-sm w-100"><i class="fas fa-rotate-left me-1"></i> إعادة للمشرف السابق</button>
+                                <button type="submit" class="btn btn-success btn-sm w-100" data-confirm="<?php echo e($restoreMessage); ?>"><i class="fas fa-rotate-left me-1"></i> إعادة للمشرف السابق</button>
                             </form>
                         <?php endif; ?>
                         <?php if (!$hasCurrentOwner): ?>
                             <?php if ($supervisors): ?>
-                                <form method="post" class="d-flex gap-2 align-items-center" data-confirm="هل تريد تعيين هذا الحرف للمشرف المختار؟">
+                                <form method="post" class="d-flex gap-2 align-items-center">
                                     <?php echo csrf_field(); ?><input type="hidden" name="history_id" value="<?php echo (int)$row['history_id']; ?>"><input type="hidden" name="letter_action" value="assign">
                                     <select name="supervisor_id" class="form-select form-select-sm" required><option value="">— اختر مشرفاً آخر —</option><?php foreach ($supervisors as $sup): ?><option value="<?php echo (int)$sup['id']; ?>"><?php echo e($sup['full_name']); ?></option><?php endforeach; ?></select>
-                                    <button type="submit" class="btn btn-primary btn-sm text-nowrap"><i class="fas fa-user-plus me-1"></i> تعيين</button>
+                                    <button type="submit" class="btn btn-primary btn-sm text-nowrap" data-confirm="هل تريد تعيين هذا الحرف للمشرف المختار؟"><i class="fas fa-user-plus me-1"></i> تعيين</button>
                                 </form>
                             <?php else: ?><span class="text-muted">لا يوجد مشرف نشط متاح حالياً.</span><?php endif; ?>
                         <?php else: ?><small class="text-muted">الحرف معيّن حالياً. استخدم «إعادة للمشرف السابق» فقط إذا كان قرار الاستبدال مقصوداً.</small><?php endif; ?>
@@ -218,4 +216,3 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     <?php endif; ?>
     </div>
 </div>
-<?php include dirname(__DIR__, 2) . '/includes/footer.php'; ?>
