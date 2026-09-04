@@ -1,0 +1,43 @@
+name: i18n and PHP Audit
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, pdo, pdo_mysql
+
+      - name: Run i18n audit
+        run: php tools/i18n_audit.php
+
+      - name: Check PHP syntax
+        shell: bash
+        run: |
+          set -e
+          status=0
+          while IFS= read -r -d '' file; do
+            if ! php -l "$file" >/dev/null; then
+              echo "Syntax error: $file"
+              status=1
+            fi
+          done < <(find . -type f -name '*.php' \
+            -not -path './TCPDF/*' \
+            -not -path './storage/*' \
+            -not -path './database/*' \
+            -not -path './vendor/*' -print0)
+          exit $status
