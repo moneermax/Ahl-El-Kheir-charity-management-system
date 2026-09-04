@@ -16,7 +16,6 @@ if (!Session::isLoggedIn() || !in_array($userRole, ['hr_manager', 'hr_staff', 'a
 $message = '';
 $msg_type = 'success';
 
-// Handle Actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     try {
@@ -25,18 +24,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $status = $_POST['status'];
             $payment_date = $status === 'paid' ? date('Y-m-d') : null;
             $pdo->prepare("UPDATE payroll SET status = ?, payment_date = ? WHERE id = ?")->execute([$status, $payment_date, $id]);
-            $message = "تم تحديث حالة الراتب";
+            $message = t('hr.status_updated');
         }
     } catch (Exception $e) {
-        $message = "خطأ: " . $e->getMessage();
+        $message = t('hr.error', ['message' => $e->getMessage()]);
         $msg_type = 'error';
     }
 }
 
-// Fetch Data
 $payrolls = dbFetchAll("SELECT p.*, e.full_name as emp_name FROM payroll p JOIN employees e ON p.employee_id = e.id ORDER BY p.year DESC, p.month DESC, p.id DESC", []);
 
-$pageTitle = 'كشف الرواتب';
+$pageTitle = t('hr.payroll_title');
 require_once __DIR__ . '/../../includes/header.php';
 ?>
 
@@ -63,40 +61,40 @@ require_once __DIR__ . '/../../includes/header.php';
 </style>
 
 <div class="fm-header">
-    <h1><i class="fas fa-money-bill-wave me-2"></i> كشف الرواتب</h1>
-    <p>إدارة رواتب الموظفين الشهرية</p>
+    <h1><i class="fas fa-money-bill-wave me-2"></i> <?php echo e(t('hr.payroll_title')); ?></h1>
+    <p><?php echo e(t('hr.payroll_intro')); ?></p>
 </div>
 
 <?php if ($message): ?>
     <div class="alert alert-<?php echo $msg_type === 'error' ? 'danger' : 'success'; ?> alert-dismissible fade show" style="border-radius: 8px;">
-        <?php echo $message; ?>
+        <?php echo e($message); ?>
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 <?php endif; ?>
 
 <div class="fm-card">
     <div class="fm-card-head">
-        <span>📋 سجل الرواتب</span>
-        <span class="badge-fm badge-blue"><?php echo count($payrolls); ?> سجل</span>
+        <span>📋 <?php echo e(t('hr.payroll_records')); ?></span>
+        <span class="badge-fm badge-blue"><?php echo e(t('hr.record_count', ['count' => count($payrolls)])); ?></span>
     </div>
     <div class="fm-card-body">
         <div class="table-responsive">
             <table class="fm-table">
                 <thead>
                     <tr>
-                        <th>الموظف</th>
-                        <th>الشهر / السنة</th>
-                        <th>الأساسي</th>
-                        <th>الإضافي</th>
-                        <th>الخصومات</th>
-                        <th>الصافي</th>
-                        <th>الحالة</th>
-                        <th class="text-end">إجراء</th>
+                        <th><?php echo e(t('hr.employee')); ?></th>
+                        <th><?php echo e(t('hr.month_year')); ?></th>
+                        <th><?php echo e(t('hr.basic')); ?></th>
+                        <th><?php echo e(t('hr.allowances')); ?></th>
+                        <th><?php echo e(t('hr.deductions')); ?></th>
+                        <th><?php echo e(t('hr.net')); ?></th>
+                        <th><?php echo e(t('common.status')); ?></th>
+                        <th class="text-end"><?php echo e(t('common.actions')); ?></th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($payrolls)): ?>
-                        <tr><td colspan="8" class="text-center py-4 text-muted">لا توجد سجلات رواتب.</td></tr>
+                        <tr><td colspan="8" class="text-center py-4 text-muted"><?php echo e(t('hr.no_payroll_records')); ?></td></tr>
                     <?php else: ?>
                         <?php foreach ($payrolls as $p): ?>
                         <tr>
@@ -108,11 +106,15 @@ require_once __DIR__ . '/../../includes/header.php';
                             <td><strong><?php echo number_format($p['net_salary'], 0); ?></strong></td>
                             <td>
                                 <?php
-                                $status_map = ['draft' => ['badge-amber', 'مسودة'], 'approved' => ['badge-blue', 'معتمد'], 'paid' => ['badge-green', 'مدفوع']];
+                                $status_map = [
+                                    'draft' => ['badge-amber', t('hr.status_draft')],
+                                    'approved' => ['badge-blue', t('hr.status_approved')],
+                                    'paid' => ['badge-green', t('hr.status_paid')]
+                                ];
                                 $cls = $status_map[$p['status']][0] ?? 'badge-gray';
                                 $lbl = $status_map[$p['status']][1] ?? $p['status'];
                                 ?>
-                                <span class="badge-fm <?php echo $cls; ?>"><?php echo $lbl; ?></span>
+                                <span class="badge-fm <?php echo $cls; ?>"><?php echo e($lbl); ?></span>
                             </td>
                             <td class="text-end">
                                 <?php if ($p['status'] === 'draft'): ?>
@@ -120,14 +122,14 @@ require_once __DIR__ . '/../../includes/header.php';
                                         <input type="hidden" name="action" value="update_status">
                                         <input type="hidden" name="payroll_id" value="<?php echo $p['id']; ?>">
                                         <input type="hidden" name="status" value="approved">
-                                        <button class="btn-fm btn-navy">اعتماد</button>
+                                        <button class="btn-fm btn-navy"><?php echo e(t('hr.approve')); ?></button>
                                     </form>
                                 <?php elseif ($p['status'] === 'approved'): ?>
                                     <form method="POST" style="display:inline;">
                                         <input type="hidden" name="action" value="update_status">
                                         <input type="hidden" name="payroll_id" value="<?php echo $p['id']; ?>">
                                         <input type="hidden" name="status" value="paid">
-                                        <button class="btn-fm btn-success">صرف</button>
+                                        <button class="btn-fm btn-success"><?php echo e(t('hr.disburse')); ?></button>
                                     </form>
                                 <?php endif; ?>
                             </td>
