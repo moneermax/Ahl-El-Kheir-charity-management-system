@@ -86,7 +86,7 @@ if (!function_exists('t')) {
 }
 
 /**
- * Translate only text nodes and known UI attributes.
+ * Translate only UI text nodes and known UI attributes.
  *
  * Unlike the old global str_replace(), this never searches inside scripts,
  * styles, URLs, form values, or arbitrary markup. Exact dictionary matches
@@ -108,9 +108,6 @@ if (!function_exists('ak_translate_page')) {
             $html
         ) ?? $html;
 
-        // Translate visible text between tags. We intentionally use exact
-        // dictionary lookup first; then replace known phrases within the same
-        // text node so labels split by surrounding markup remain translatable.
         $html = preg_replace_callback(
             '/>([^<>]+)</u',
             static function ($m): string {
@@ -133,15 +130,26 @@ if (!function_exists('ak_translate_page')) {
             $html
         ) ?? $html;
 
-        // Translate UI attributes only when their complete value is in the
-        // dictionary. This covers placeholders, titles, labels and alt text.
         $html = preg_replace_callback(
-            '/\b(placeholder|title|aria-label|aria-description|data-bs-title|alt)=(["\'])(.*?)\2/iu',
+            '/\b(placeholder|title|aria-label|aria-description|data-bs-title|alt|data-confirm|data-reassign-confirm)=(["\'])(.*?)\2/iu',
             static function ($m): string {
                 $translated = ak_translation_lookup($m[3]);
                 return $translated === null
                     ? $m[0]
                     : $m[1] . '=' . $m[2] . htmlspecialchars($translated, ENT_QUOTES | ENT_HTML5, 'UTF-8') . $m[2];
+            },
+            $html
+        ) ?? $html;
+
+        // Submit/button/reset input labels are UI, while other input values
+        // are deliberately left untouched because they may contain user data.
+        $html = preg_replace_callback(
+            '/(<input\b[^>]*\btype=["\'](?:submit|button|reset)["\'][^>]*\bvalue=)(["\'])(.*?)\2/iu',
+            static function ($m): string {
+                $translated = ak_translation_lookup($m[3]);
+                return $translated === null
+                    ? $m[0]
+                    : $m[1] . $m[2] . htmlspecialchars($translated, ENT_QUOTES | ENT_HTML5, 'UTF-8') . $m[2];
             },
             $html
         ) ?? $html;
