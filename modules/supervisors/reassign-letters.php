@@ -202,7 +202,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                         <?php endif; ?>
                         <?php if (!$hasCurrentOwner): ?>
                             <?php if ($supervisors): ?>
-                                <form method="post" class="d-flex gap-2 align-items-center js-reassign-confirm" data-reassign-confirm="<?php echo e($assignMessage); ?>">
+                                <form method="post" class="d-flex gap-2 align-items-center js-reassign-confirm">
                                     <?php echo csrf_field(); ?><input type="hidden" name="history_id" value="<?php echo (int)$row['history_id']; ?>"><input type="hidden" name="letter_action" value="assign">
                                     <select name="supervisor_id" class="form-select form-select-sm" required><option value="">— اختر مشرفاً آخر —</option><?php foreach ($supervisors as $sup): ?><option value="<?php echo (int)$sup['id']; ?>"><?php echo e($sup['full_name']); ?></option><?php endforeach; ?></select>
                                     <button type="submit" class="btn btn-primary btn-sm text-nowrap"><i class="fas fa-user-plus me-1"></i> تعيين</button>
@@ -227,20 +227,35 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             delete form.dataset.akReassignConfirmed;
             return;
         }
-        var message = form.getAttribute('data-reassign-confirm') || 'هل تريد المتابعة؟';
+        var message = form.getAttribute('data-reassign-confirm');
+        if (!message) {
+            var supervisor = form.querySelector('select[name="supervisor_id"]');
+            var selected = supervisor && supervisor.options[supervisor.selectedIndex];
+            message = selected && selected.value
+                ? 'هل تريد تعيين الحرف للمشرف «' + selected.text + '»؟'
+                : 'اختر المشرف الذي سيستلم الحرف أولاً.';
+            if (!selected || !selected.value) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                if (window.AKNotify && typeof window.AKNotify.toast === 'function') window.AKNotify.toast('warning', message);
+                return;
+            }
+        }
+
         event.preventDefault();
         event.stopImmediatePropagation();
-        if (window.AKNotify && typeof window.AKNotify.confirm === 'function') {
-            window.AKNotify.confirm(message, function () {
-                form.dataset.akReassignConfirmed = '1';
-                if (typeof form.requestSubmit === 'function') form.requestSubmit();
-                else HTMLFormElement.prototype.submit.call(form);
-            });
-        } else if (window.confirm(message)) {
+        if (!window.AKNotify || typeof window.AKNotify.confirm !== 'function') {
+            if (window.AKNotify && typeof window.AKNotify.toast === 'function') {
+                window.AKNotify.toast('error', 'تعذر فتح نافذة التأكيد الخاصة بالنظام.');
+            }
+            return;
+        }
+
+        window.AKNotify.confirm(message, function () {
             form.dataset.akReassignConfirmed = '1';
             if (typeof form.requestSubmit === 'function') form.requestSubmit();
             else HTMLFormElement.prototype.submit.call(form);
-        }
+        });
     }, true);
 })();
 </script>
