@@ -75,6 +75,9 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         <a href="<?php echo APP_URL; ?>modules/supervisors/assign-letters.php" class="btn btn-secondary btn-sm">
             <i class="fas fa-font me-1"></i> توزيع الحروف
         </a>
+        <a href="<?php echo APP_URL; ?>modules/supervisors/reassign-letters.php" class="btn btn-warning btn-sm">
+            <i class="fas fa-right-left me-1"></i> إعادة تعيين الحروف المحررة
+        </a>
         <a href="<?php echo APP_URL; ?>modules/supervisors/index.php?show_archived=<?php echo $showArchived ? '0' : '1'; ?>" class="btn btn-outline-dark btn-sm">
             <i class="fas <?php echo $showArchived ? 'fa-user-check' : 'fa-box-archive'; ?> me-1"></i>
             <?php echo $showArchived ? 'إخفاء المؤرشفين' : 'عرض المؤرشفين'; ?>
@@ -157,41 +160,26 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     </td>
                     <td class="text-center supervisor-actions">
                         <div class="d-inline-flex flex-wrap justify-content-center gap-1">
-                            <a class="btn btn-sm btn-primary"
-                               title="الكفلاء"
-                               aria-label="الكفلاء"
-                               href="<?php echo APP_URL; ?>modules/supervisors/sponsors.php?supervisor=<?php echo (int)$sup['id']; ?>">
+                            <a class="btn btn-sm btn-primary" title="الكفلاء" aria-label="الكفلاء" href="<?php echo APP_URL; ?>modules/supervisors/sponsors.php?supervisor=<?php echo (int)$sup['id']; ?>">
                                 <i class="fas fa-hand-holding-heart"></i>
                             </a>
                             <?php if (!$isFinal): ?>
-                                <a class="btn btn-sm btn-warning"
-                                   title="تعديل"
-                                   aria-label="تعديل"
-                                   href="<?php echo APP_URL; ?>modules/supervisors/edit.php?id=<?php echo (int)$sup['id']; ?>">
+                                <a class="btn btn-sm btn-warning" title="تعديل" aria-label="تعديل" href="<?php echo APP_URL; ?>modules/supervisors/edit.php?id=<?php echo (int)$sup['id']; ?>">
                                     <i class="fas fa-pen"></i>
                                 </a>
-                                <a class="btn btn-sm btn-info"
-                                   title="الحروف"
-                                   aria-label="الحروف"
-                                   href="<?php echo APP_URL; ?>modules/supervisors/assign-letters.php?supervisor=<?php echo (int)$sup['id']; ?>">
+                                <a class="btn btn-sm btn-info" title="الحروف" aria-label="الحروف" href="<?php echo APP_URL; ?>modules/supervisors/assign-letters.php?supervisor=<?php echo (int)$sup['id']; ?>">
                                     <i class="fas fa-font"></i>
                                 </a>
                                 <?php if (in_array($status, ['active', 'suspended'], true)): ?>
                                     <form method="post" action="<?php echo APP_URL; ?>modules/users/supervisor_status.php" data-confirm="<?php echo $status === 'active' ? 'هل تريد إيقاف هذا المشرف مؤقتاً؟' : 'هل تريد إعادة تفعيل هذا المشرف؟'; ?>">
                                         <?php echo csrf_field(); ?>
                                         <input type="hidden" name="id" value="<?php echo (int)$sup['id']; ?>">
-                                        <button type="submit"
-                                                class="btn btn-sm <?php echo $status === 'active' ? 'btn-danger' : 'btn-success'; ?>"
-                                                title="<?php echo $status === 'active' ? 'إيقاف مؤقت' : 'تفعيل'; ?>"
-                                                aria-label="<?php echo $status === 'active' ? 'إيقاف مؤقت' : 'تفعيل'; ?>">
+                                        <button type="submit" class="btn btn-sm <?php echo $status === 'active' ? 'btn-danger' : 'btn-success'; ?>" title="<?php echo $status === 'active' ? 'إيقاف مؤقت' : 'تفعيل'; ?>" aria-label="<?php echo $status === 'active' ? 'إيقاف مؤقت' : 'تفعيل'; ?>">
                                             <i class="fas <?php echo $status === 'active' ? 'fa-pause' : 'fa-play'; ?>"></i>
                                         </button>
                                     </form>
                                 <?php endif; ?>
-                                <a class="btn btn-sm btn-outline-danger"
-                                   title="مغادرة نهائية"
-                                   aria-label="مغادرة نهائية"
-                                   href="<?php echo APP_URL; ?>modules/users/supervisor_departure.php?id=<?php echo (int)$sup['id']; ?>">
+                                <a class="btn btn-sm btn-outline-danger" title="مغادرة نهائية" aria-label="مغادرة نهائية" href="<?php echo APP_URL; ?>modules/users/supervisor_departure.php?id=<?php echo (int)$sup['id']; ?>">
                                     <i class="fas fa-user-slash"></i>
                                 </a>
                             <?php else: ?>
