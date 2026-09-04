@@ -13,11 +13,11 @@ if (!Session::isLoggedIn() || !in_array(Session::getUserRole(), ['admin', 'vice_
 $id = (int)($_POST['id'] ?? 0);
 if (!$id || !verify_csrf()) {
     flash('error', 'تعذر التحقق من الطلب.');
-    redirect('modules/users/index.php');
+    redirect('modules/supervisors/index.php');
 }
 if ($id === Session::getUserId()) {
     flash('error', 'لا يمكن تغيير حالة حسابك الحالي بهذه الطريقة.');
-    redirect('modules/users/index.php');
+    redirect('modules/supervisors/index.php');
 }
 
 try {
@@ -42,13 +42,13 @@ try {
         dbExecute("INSERT INTO audit_log
             (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent)
             VALUES (?, 'STATUS_CHANGE', 'supervisor', ?, ?, ?, ?, ?)", [
-                Session::getUserId(),
-                $id,
-                json_encode(['supervisor_status' => $status, 'is_active' => (int)$supervisor['is_active']], JSON_UNESCAPED_UNICODE),
-                json_encode(['supervisor_status' => $newStatus, 'is_active' => $newStatus === 'active' ? 1 : 0], JSON_UNESCAPED_UNICODE),
-                $_SERVER['REMOTE_ADDR'] ?? '',
-                $_SERVER['HTTP_USER_AGENT'] ?? ''
-            ]);
+            Session::getUserId(),
+            $id,
+            json_encode(['supervisor_status' => $status, 'is_active' => (int)$supervisor['is_active']], JSON_UNESCAPED_UNICODE),
+            json_encode(['supervisor_status' => $newStatus, 'is_active' => $newStatus === 'active' ? 1 : 0], JSON_UNESCAPED_UNICODE),
+            $_SERVER['REMOTE_ADDR'] ?? '',
+            $_SERVER['HTTP_USER_AGENT'] ?? ''
+        ]);
     } catch (Throwable $auditError) {
         error_log('Supervisor status audit: ' . $auditError->getMessage());
     }
@@ -59,4 +59,4 @@ try {
     flash('error', 'تعذر تغيير حالة المشرف.');
 }
 
-redirect('dashboard/vgm_dashboard.php');
+redirect('modules/supervisors/index.php');
