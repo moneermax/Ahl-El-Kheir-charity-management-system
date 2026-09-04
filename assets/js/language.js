@@ -63,19 +63,44 @@
             if (translated !== node.nodeValue) node.nodeValue = translated;
         });
 
-        var attrs = root.querySelectorAll ? root.querySelectorAll('[placeholder],[title],[aria-label],[aria-description],[data-bs-title],[alt]') : [];
+        var attrs = root.querySelectorAll ? root.querySelectorAll('[placeholder],[title],[aria-label],[aria-description],[data-bs-title],[alt],[data-confirm],[data-reassign-confirm]') : [];
         Array.prototype.forEach.call(attrs, translateAttributes);
         if (root.nodeType === 1) translateAttributes(root);
     }
 
     function translateAttributes(element) {
         if (!element || shouldSkip(element)) return;
-        ['placeholder', 'title', 'aria-label', 'aria-description', 'data-bs-title', 'alt'].forEach(function (name) {
+        ['placeholder', 'title', 'aria-label', 'aria-description', 'data-bs-title', 'alt', 'data-confirm', 'data-reassign-confirm'].forEach(function (name) {
             if (!element.hasAttribute(name)) return;
             var value = element.getAttribute(name);
             var translated = translate(value);
             if (translated !== value) element.setAttribute(name, translated);
         });
+    }
+
+    function normalizeLanguageLinks() {
+        var links = document.querySelectorAll('a[href*="lang="]');
+        Array.prototype.forEach.call(links, function (link) {
+            try {
+                var url = new URL(link.href, window.location.href);
+                if (!url.searchParams.has('lang')) return;
+                var target = url.searchParams.get('lang');
+                if (target !== 'ar' && target !== 'en') return;
+                url.searchParams.set('lang', target);
+                link.href = url.toString();
+            } catch (e) {}
+        });
+    }
+
+    function fixBootstrapDirection() {
+        if (window.AK_LANG !== 'en') return;
+        var links = document.querySelectorAll('link[rel="stylesheet"]');
+        Array.prototype.forEach.call(links, function (link) {
+            if (link.href.indexOf('bootstrap.rtl') === -1) return;
+            link.href = link.href.replace('bootstrap.rtl', 'bootstrap');
+        });
+        document.documentElement.dir = 'ltr';
+        document.documentElement.lang = 'en';
     }
 
     window.AKLang = {
@@ -84,6 +109,8 @@
     };
 
     document.addEventListener('DOMContentLoaded', function () {
+        normalizeLanguageLinks();
+        fixBootstrapDirection();
         if (window.AK_LANG !== 'en') return;
         translateElement(document.body);
 
