@@ -184,6 +184,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 $restoreMessage = $hasCurrentOwner
                     ? 'الحرف «' . $row['letter_code'] . '» معيّن حالياً للمشرف «' . $row['current_supervisor_name'] . '». سيتم إنهاء التعيين الحالي وإعادته إلى المشرف السابق «' . $row['old_supervisor_name'] . '». هل تريد المتابعة؟'
                     : 'هل تريد إعادة الحرف «' . $row['letter_code'] . '» (' . $genderLabel . ') إلى المشرف السابق «' . $row['old_supervisor_name'] . '»؟';
+                $assignMessage = 'هل تريد تعيين الحرف «' . $row['letter_code'] . '» (' . $genderLabel . ') للمشرف المختار؟';
             ?>
                 <tr>
                     <td class="text-center"><span class="ak-letter-chip"><?php echo e($row['letter_code']); ?></span></td>
@@ -193,18 +194,18 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     <td><?php if ($hasCurrentOwner): ?><strong class="ak-current-owner"><?php echo e($row['current_supervisor_name']); ?></strong><small class="d-block text-muted">مُعيّن حالياً</small><?php else: ?><span class="badge bg-warning text-dark">غير معيّن</span><?php endif; ?></td>
                     <td><div class="d-flex flex-column gap-2">
                         <?php if ($previousIsActive): ?>
-                            <form method="post">
+                            <form method="post" class="js-reassign-confirm" data-reassign-confirm="<?php echo e($restoreMessage); ?>">
                                 <?php echo csrf_field(); ?><input type="hidden" name="history_id" value="<?php echo (int)$row['history_id']; ?>"><input type="hidden" name="letter_action" value="restore">
                                 <?php if ($hasCurrentOwner): ?><input type="hidden" name="confirm_replace" value="1"><?php endif; ?>
-                                <button type="submit" class="btn btn-success btn-sm w-100" data-confirm="<?php echo e($restoreMessage); ?>"><i class="fas fa-rotate-left me-1"></i> إعادة للمشرف السابق</button>
+                                <button type="submit" class="btn btn-success btn-sm w-100"><i class="fas fa-rotate-left me-1"></i> إعادة للمشرف السابق</button>
                             </form>
                         <?php endif; ?>
                         <?php if (!$hasCurrentOwner): ?>
                             <?php if ($supervisors): ?>
-                                <form method="post" class="d-flex gap-2 align-items-center">
+                                <form method="post" class="d-flex gap-2 align-items-center js-reassign-confirm" data-reassign-confirm="<?php echo e($assignMessage); ?>">
                                     <?php echo csrf_field(); ?><input type="hidden" name="history_id" value="<?php echo (int)$row['history_id']; ?>"><input type="hidden" name="letter_action" value="assign">
                                     <select name="supervisor_id" class="form-select form-select-sm" required><option value="">— اختر مشرفاً آخر —</option><?php foreach ($supervisors as $sup): ?><option value="<?php echo (int)$sup['id']; ?>"><?php echo e($sup['full_name']); ?></option><?php endforeach; ?></select>
-                                    <button type="submit" class="btn btn-primary btn-sm text-nowrap" data-confirm="هل تريد تعيين هذا الحرف للمشرف المختار؟"><i class="fas fa-user-plus me-1"></i> تعيين</button>
+                                    <button type="submit" class="btn btn-primary btn-sm text-nowrap"><i class="fas fa-user-plus me-1"></i> تعيين</button>
                                 </form>
                             <?php else: ?><span class="text-muted">لا يوجد مشرف نشط متاح حالياً.</span><?php endif; ?>
                         <?php else: ?><small class="text-muted">الحرف معيّن حالياً. استخدم «إعادة للمشرف السابق» فقط إذا كان قرار الاستبدال مقصوداً.</small><?php endif; ?>
@@ -216,3 +217,30 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     <?php endif; ?>
     </div>
 </div>
+<script>
+(function () {
+    'use strict';
+    document.addEventListener('submit', function (event) {
+        var form = event.target;
+        if (!form || !form.classList || !form.classList.contains('js-reassign-confirm')) return;
+        if (form.dataset.akReassignConfirmed === '1') {
+            delete form.dataset.akReassignConfirmed;
+            return;
+        }
+        var message = form.getAttribute('data-reassign-confirm') || 'هل تريد المتابعة؟';
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        if (window.AKNotify && typeof window.AKNotify.confirm === 'function') {
+            window.AKNotify.confirm(message, function () {
+                form.dataset.akReassignConfirmed = '1';
+                if (typeof form.requestSubmit === 'function') form.requestSubmit();
+                else HTMLFormElement.prototype.submit.call(form);
+            });
+        } else if (window.confirm(message)) {
+            form.dataset.akReassignConfirmed = '1';
+            if (typeof form.requestSubmit === 'function') form.requestSubmit();
+            else HTMLFormElement.prototype.submit.call(form);
+        }
+    }, true);
+})();
+</script>
