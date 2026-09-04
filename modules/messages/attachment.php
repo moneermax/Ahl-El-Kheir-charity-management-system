@@ -52,7 +52,7 @@ function attachment_allowed_types(): array {
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && ($_GET['action'] ?? '') === 'list') {
     $messageId = (int)($_GET['message_id'] ?? 0);
     if ($messageId <= 0 || !messaging_user_can_read($uid, $messageId)) {
-        attachment_json(['ok' => false, 'message' => 'ليس لديك صلاحية لعرض مرفقات هذه الرسالة.'], 403);
+        attachment_json(['ok' => false, 'message' => t('messages.attachment_list_forbidden')], 403);
     }
 
     $rows = dbFetchAll(
@@ -79,11 +79,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && ($_GET['action'] ?? '') === 'list') 
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    attachment_json(['ok' => false, 'message' => 'طريقة الطلب غير مسموحة.'], 405);
+    attachment_json(['ok' => false, 'message' => t('messages.attachment_method_not_allowed')], 405);
 }
 
 if (!verify_csrf()) {
-    attachment_json(['ok' => false, 'message' => 'انتهت صلاحية الجلسة.'], 419);
+    attachment_json(['ok' => false, 'message' => t('messages.attachment_session_expired')], 419);
 }
 
 $action = (string)($_POST['action'] ?? '');
@@ -91,7 +91,7 @@ $action = (string)($_POST['action'] ?? '');
 if ($action === 'delete_attachment') {
     $attachmentId = (int)($_POST['attachment_id'] ?? 0);
     if ($attachmentId <= 0) {
-        attachment_json(['ok' => false, 'message' => 'المرفق غير صالح.'], 422);
+        attachment_json(['ok' => false, 'message' => t('messages.attachment_invalid')], 422);
     }
 
     $row = dbFetchOne(
@@ -101,15 +101,15 @@ if ($action === 'delete_attachment') {
          WHERE a.id=? LIMIT 1",
         [$attachmentId]
     );
-    if (!$row) attachment_json(['ok' => false, 'message' => 'المرفق غير موجود.'], 404);
+    if (!$row) attachment_json(['ok' => false, 'message' => t('messages.attachment_not_found')], 404);
     if (!messaging_user_can_read($uid, (int)$row['message_id'])) {
-        attachment_json(['ok' => false, 'message' => 'ليس لديك صلاحية لحذف هذا المرفق.'], 403);
+        attachment_json(['ok' => false, 'message' => t('messages.attachment_delete_forbidden')], 403);
     }
 
     $isOwner = (int)$row['uploader_user_id'] === $uid;
     $isAdmin = messaging_role_for_user($uid) === 'admin';
     if (!$isOwner && !$isAdmin) {
-        attachment_json(['ok' => false, 'message' => 'يمكن حذف المرفق بواسطة صاحبه أو مدير النظام فقط.'], 403);
+        attachment_json(['ok' => false, 'message' => t('messages.attachment_owner_or_admin')], 403);
     }
 
     $path = attachment_storage_path() . DIRECTORY_SEPARATOR . basename((string)$row['stored_name']);
@@ -117,36 +117,36 @@ if ($action === 'delete_attachment') {
         dbExecute('DELETE FROM message_attachments WHERE id=?', [$attachmentId]);
         if (is_file($path)) @unlink($path);
         error_log('message attachment deleted: id=' . $attachmentId . ' by user=' . $uid);
-        attachment_json(['ok' => true, 'message' => 'تم حذف المرفق.']);
+        attachment_json(['ok' => true, 'message' => t('messages.attachment_deleted')]);
     } catch (Throwable $e) {
         error_log('message attachment delete: ' . $e->getMessage());
-        attachment_json(['ok' => false, 'message' => 'تعذر حذف المرفق.'], 500);
+        attachment_json(['ok' => false, 'message' => t('messages.attachment_delete_failed')], 500);
     }
 }
 
 if ($action !== 'upload_attachment') {
-    attachment_json(['ok' => false, 'message' => 'طلب مرفق غير معروف.'], 400);
+    attachment_json(['ok' => false, 'message' => t('messages.attachment_unknown_request')], 400);
 }
 
 $messageId = (int)($_POST['message_id'] ?? 0);
 if ($messageId <= 0) {
-    attachment_json(['ok' => false, 'message' => 'بيانات المرفق غير مكتملة.'], 422);
+    attachment_json(['ok' => false, 'message' => t('messages.attachment_incomplete')], 422);
 }
 if (!messaging_user_can_read($uid, $messageId)) {
-    attachment_json(['ok' => false, 'message' => 'ليس لديك صلاحية لإرفاق ملف بهذه الرسالة.'], 403);
+    attachment_json(['ok' => false, 'message' => t('messages.attachment_attach_forbidden')], 403);
 }
 if (empty($_FILES['attachment']) || !is_array($_FILES['attachment'])) {
-    attachment_json(['ok' => false, 'message' => 'لم يتم اختيار ملف.'], 422);
+    attachment_json(['ok' => false, 'message' => t('messages.attachment_no_file')], 422);
 }
 
 $file = $_FILES['attachment'];
 if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
-    attachment_json(['ok' => false, 'message' => 'تعذر رفع الملف.'], 422);
+    attachment_json(['ok' => false, 'message' => t('messages.attachment_upload_failed')], 422);
 }
 
 $maxSize = 10 * 1024 * 1024;
 if ((int)$file['size'] <= 0 || (int)$file['size'] > $maxSize) {
-    attachment_json(['ok' => false, 'message' => 'حجم الملف يجب ألا يتجاوز 10 ميجابايت.'], 422);
+    attachment_json(['ok' => false, 'message' => t('messages.attachment_size_limit')], 422);
 }
 
 $original = basename((string)$file['name']);
@@ -155,24 +155,24 @@ $original = mb_substr($original, 0, 240, 'UTF-8');
 $allowed = attachment_allowed_types();
 $ext = strtolower(pathinfo($original, PATHINFO_EXTENSION));
 if (!isset($allowed[$ext])) {
-    attachment_json(['ok' => false, 'message' => 'نوع الملف غير مسموح.'], 422);
+    attachment_json(['ok' => false, 'message' => t('messages.attachment_type_not_allowed')], 422);
 }
 
 $finfo = new finfo(FILEINFO_MIME_TYPE);
 $mime = (string)$finfo->file($file['tmp_name']);
 if (!in_array($mime, $allowed[$ext], true)) {
-    attachment_json(['ok' => false, 'message' => 'محتوى الملف لا يتطابق مع نوعه المعلن.'], 422);
+    attachment_json(['ok' => false, 'message' => t('messages.attachment_type_mismatch')], 422);
 }
 
 $storage = attachment_storage_path();
 if (!is_dir($storage) && !mkdir($storage, 0750, true) && !is_dir($storage)) {
-    attachment_json(['ok' => false, 'message' => 'تعذر إنشاء مساحة تخزين المرفقات.'], 500);
+    attachment_json(['ok' => false, 'message' => t('messages.attachment_storage_failed')], 500);
 }
 
 $stored = bin2hex(random_bytes(20)) . '.' . $ext;
 $target = $storage . DIRECTORY_SEPARATOR . $stored;
 if (!move_uploaded_file($file['tmp_name'], $target)) {
-    attachment_json(['ok' => false, 'message' => 'تعذر حفظ المرفق.'], 500);
+    attachment_json(['ok' => false, 'message' => t('messages.attachment_save_failed')], 500);
 }
 
 try {
@@ -185,10 +185,10 @@ try {
         'id' => (int)db()->lastInsertId(),
         'name' => $original,
         'size' => (int)$file['size'],
-        'message' => 'تم إرفاق الملف بنجاح.'
+        'message' => t('messages.attachment_registered')
     ]);
 } catch (Throwable $e) {
     @unlink($target);
     error_log('message attachment insert: ' . $e->getMessage());
-    attachment_json(['ok' => false, 'message' => 'تعذر تسجيل المرفق.'], 500);
+    attachment_json(['ok' => false, 'message' => t('messages.attachment_record_failed')], 500);
 }
