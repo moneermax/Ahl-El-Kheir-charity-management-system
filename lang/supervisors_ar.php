@@ -54,4 +54,6 @@ return [
     'supervisors.male' => 'ذكر',
     'supervisors.female' => 'أنثى',
     'supervisors.gender_unknown' => '—',
+    'supervisors.male_suffix' => '(ذ)',
+    'supervisors.female_suffix' => '(إ)',
 ];
