@@ -4,6 +4,12 @@
 
 # Local database backups / exports
 /database/backups/*
-!/database/backups/.gitkeep
+/storage/backups/*
+!/storage/backups/.gitkeep
 *.sql.gz
 *.sql.zip
+
+# Runtime/debug logs
+/storage/logs/*
+!/storage/logs/.gitkeep
+/storage/avatar_debug.log
