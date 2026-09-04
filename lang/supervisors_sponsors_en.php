@@ -26,4 +26,6 @@ return [
     'supervisors.male' => 'Male',
     'supervisors.female' => 'Female',
     'supervisors.gender_unknown' => '—',
+    'supervisors.male_suffix' => '(M)',
+    'supervisors.female_suffix' => '(F)',
 ];
