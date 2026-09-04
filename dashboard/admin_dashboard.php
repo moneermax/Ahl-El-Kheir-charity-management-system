@@ -12,35 +12,35 @@ if (!Session::isLoggedIn() || Session::getUserRole() !== 'admin') {
     exit();
 }
 
-$pageTitle = 'لوحة التحكم التقنية';
+$pageTitle = t('admin.dashboard_title');
 $active = 'dashboard';
 
 include __DIR__ . '/../includes/header.php';
 ?>
 
 <div class="welcome-section fade-in">
-    <h2>مرحباً، <?php echo e(current_user_name()); ?></h2>
-    <p>هذه لوحة تحكم تقنية خاصة بالمطور / مدير النظام، وليست لوحة الإدارة التنظيمية.</p>
+    <h2><?php echo e(t('admin.welcome', ['name' => current_user_name()])); ?></h2>
+    <p><?php echo e(t('admin.dashboard_description')); ?></p>
 
     <div class="quick-actions mt-3">
         <a href="<?php echo url('modules/system/backup.php'); ?>" class="btn btn-light btn-sm">
             <i class="fas fa-database me-1"></i>
-            نسخة احتياطية
+            <?php echo e(t('admin.backup')); ?>
         </a>
 
         <a href="<?php echo url('modules/system/database.php'); ?>" class="btn btn-light btn-sm">
             <i class="fas fa-table me-1"></i>
-            قاعدة البيانات
+            <?php echo e(t('admin.database')); ?>
         </a>
 
         <a href="<?php echo url('modules/logs/audit.php'); ?>" class="btn btn-light btn-sm">
             <i class="fas fa-file-lines me-1"></i>
-            السجلات
+            <?php echo e(t('admin.logs')); ?>
         </a>
 
         <a href="<?php echo url('modules/settings/index.php'); ?>" class="btn btn-light btn-sm">
             <i class="fas fa-gear me-1"></i>
-            الإعدادات
+            <?php echo e(t('admin.settings')); ?>
         </a>
     </div>
 </div>
@@ -51,7 +51,7 @@ include __DIR__ . '/../includes/header.php';
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <div class="stat-number"><?php echo PHP_VERSION; ?></div>
-                    <div class="stat-label">إصدار PHP</div>
+                    <div class="stat-label"><?php echo e(t('admin.php_version')); ?></div>
                 </div>
                 <div class="stat-icon bg-success-subtle text-success">
                     <i class="fab fa-php"></i>
@@ -65,7 +65,7 @@ include __DIR__ . '/../includes/header.php';
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <div class="stat-number">MySQL</div>
-                    <div class="stat-label">قاعدة البيانات</div>
+                    <div class="stat-label"><?php echo e(t('admin.database_type')); ?></div>
                 </div>
                 <div class="stat-icon bg-primary-subtle text-primary">
                     <i class="fas fa-database"></i>
@@ -79,7 +79,7 @@ include __DIR__ . '/../includes/header.php';
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <div class="stat-number">Admin</div>
-                    <div class="stat-label">نوع الحساب</div>
+                    <div class="stat-label"><?php echo e(t('admin.account_type')); ?></div>
                 </div>
                 <div class="stat-icon bg-warning-subtle text-warning">
                     <i class="fas fa-user-shield"></i>
@@ -93,7 +93,7 @@ include __DIR__ . '/../includes/header.php';
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <div class="stat-number"><?php echo date('H:i'); ?></div>
-                    <div class="stat-label">وقت الخادم</div>
+                    <div class="stat-label"><?php echo e(t('admin.server_time')); ?></div>
                 </div>
                 <div class="stat-icon bg-danger-subtle text-danger">
                     <i class="fas fa-clock"></i>
@@ -106,42 +106,42 @@ include __DIR__ . '/../includes/header.php';
 <div class="card">
     <div class="card-header">
         <i class="fas fa-circle-info me-2"></i>
-        معلومات النظام
+        <?php echo e(t('admin.system_info')); ?>
     </div>
     <div class="card-body">
         <div class="table-responsive">
             <table class="table table-bordered align-middle">
                 <tbody>
                     <tr>
-                        <th style="width: 250px;">اسم التطبيق</th>
+                        <th style="width: 250px;"><?php echo e(t('admin.app_name')); ?></th>
                         <td><?php echo e(APP_NAME); ?></td>
                     </tr>
                     <tr>
-                        <th>مسار التطبيق</th>
+                        <th><?php echo e(t('admin.app_path')); ?></th>
                         <td><?php echo e(APP_DIR); ?></td>
                     </tr>
                     <tr>
-                        <th>رابط التطبيق</th>
+                        <th><?php echo e(t('admin.app_url')); ?></th>
                         <td><?php echo e(APP_URL); ?></td>
                     </tr>
                     <tr>
-                        <th>قاعدة البيانات</th>
+                        <th><?php echo e(t('admin.db_name')); ?></th>
                         <td><?php echo e(DB_NAME); ?></td>
                     </tr>
                     <tr>
-                        <th>مستخدم قاعدة البيانات</th>
+                        <th><?php echo e(t('admin.db_user')); ?></th>
                         <td><?php echo e(DB_USER); ?></td>
                     </tr>
                     <tr>
-                        <th>مجلد النسخ الاحتياطية</th>
+                        <th><?php echo e(t('admin.backup_dir')); ?></th>
                         <td><?php echo e(BACKUP_DIR); ?></td>
                     </tr>
                     <tr>
-                        <th>مجلد السجلات</th>
+                        <th><?php echo e(t('admin.log_dir')); ?></th>
                         <td><?php echo e(LOG_DIR); ?></td>
                     </tr>
                     <tr>
-                        <th>المستخدم الحالي</th>
+                        <th><?php echo e(t('admin.current_user')); ?></th>
                         <td><?php echo e(current_user_name()); ?> (<?php echo e(current_user_role()); ?>)</td>
                     </tr>
                 </tbody>
