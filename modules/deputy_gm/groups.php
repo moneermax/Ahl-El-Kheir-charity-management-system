@@ -163,9 +163,6 @@ try {
                     ->execute(['reason' => trim((string) ($_POST['reason'] ?? 'تفعيل المجموعة')), 'id' => $group_id]);
                 $success_message = 'تم تفعيل المجموعة';
             } else {
-                if ($new_status === 'archive' && $group['status'] === 'archived') {
-                    $success_message = 'المجموعة مؤرشفة بالفعل';
-                }
                 if ($new_status === 'cancelled' && $has_financial_history) {
                     throw new RuntimeException('لا يمكن إلغاء مجموعة لها سجل صرف مالي. استخدم الإغلاق بدلاً من ذلك.');
                 }
@@ -195,10 +192,8 @@ try {
             $status = $stmt->fetchColumn();
             if (!$status || !groupCanChangeMembers($status)) throw new RuntimeException('لا يمكن تعيين حاضنة لمجموعة غير تشغيلية');
             $pdo->beginTransaction();
-            $pdo->prepare('UPDATE nanny_group_assignments SET end_date = CURDATE() WHERE group_id = :id AND end_date IS NULL')
-                ->execute(['id' => $group_id]);
-            $pdo->prepare('INSERT INTO nanny_group_assignments (group_id, nanny_id, start_date, assigned_by) VALUES (:group_id, :nanny_id, CURDATE(), :actor)')
-                ->execute(['group_id' => $group_id, 'nanny_id' => $nanny_id, 'actor' => $actor_id]);
+            $pdo->prepare('UPDATE nanny_group_assignments SET end_date = CURDATE() WHERE group_id = :id AND end_date IS NULL')->execute(['id' => $group_id]);
+            $pdo->prepare('INSERT INTO nanny_group_assignments (group_id, nanny_id, start_date, assigned_by) VALUES (:group_id, :nanny_id, CURDATE(), :actor)')->execute(['group_id' => $group_id, 'nanny_id' => $nanny_id, 'actor' => $actor_id]);
             $pdo->commit();
             $success_message = 'تم تحديث الحاضنة مع الحفاظ على سجل التعيينات السابق';
         }
@@ -257,12 +252,11 @@ try {
             $stmt->execute(['id' => $group_id]);
             $status = $stmt->fetchColumn();
             if (!$status || !groupCanChangeMembers($status)) throw new RuntimeException('لا يمكن تعديل أعضاء مجموعة غير تشغيلية');
-            $reason = trim((string) ($_POST['reason'] ?? ''));
             $stmt = $pdo->prepare('UPDATE group_children SET left_date = CURDATE() WHERE group_id = :group_id AND child_id = :child_id AND left_date IS NULL');
             $stmt->execute(['group_id' => $group_id, 'child_id' => $child_id]);
             if ($stmt->rowCount() === 0) throw new RuntimeException('العضو غير موجود كعضو حالي في هذه المجموعة');
             syncGroupState($pdo, $group_id, $actor_id);
-            $success_message = $reason !== '' ? 'تم إزالة اليتيم وتسجيل سبب الإزالة' : 'تم إزالة اليتيم من المجموعة مع الحفاظ على سجل العضوية';
+            $success_message = 'تم إزالة اليتيم من المجموعة مع الحفاظ على سجل العضوية';
         }
 
         elseif ($action === 'transfer_orphan') {
@@ -285,10 +279,8 @@ try {
             if (!$check->fetchColumn()) throw new RuntimeException('اليتيم ليس عضواً حالياً في المجموعة المصدر');
             $check->execute(['group_id' => $target_group_id, 'child_id' => $child_id]);
             if ($check->fetchColumn()) throw new RuntimeException('اليتيم لديه سجل عضوية سابق في المجموعة الهدف');
-            $pdo->prepare('UPDATE group_children SET left_date = CURDATE() WHERE group_id = :group_id AND child_id = :child_id AND left_date IS NULL')
-                ->execute(['group_id' => $group_id, 'child_id' => $child_id]);
-            $pdo->prepare('INSERT INTO group_children (group_id, child_id, joined_date, added_by) VALUES (:group_id, :child_id, CURDATE(), :actor)')
-                ->execute(['group_id' => $target_group_id, 'child_id' => $child_id, 'actor' => $actor_id]);
+            $pdo->prepare('UPDATE group_children SET left_date = CURDATE() WHERE group_id = :group_id AND child_id = :child_id AND left_date IS NULL')->execute(['group_id' => $group_id, 'child_id' => $child_id]);
+            $pdo->prepare('INSERT INTO group_children (group_id, child_id, joined_date, added_by) VALUES (:group_id, :child_id, CURDATE(), :actor)')->execute(['group_id' => $target_group_id, 'child_id' => $child_id, 'actor' => $actor_id]);
             syncGroupState($pdo, $group_id, $actor_id);
             syncGroupState($pdo, $target_group_id, $actor_id);
             $pdo->commit();
@@ -475,17 +467,16 @@ include __DIR__ . '/../../includes/header.php';
             </div>
 
             <?php if (groupCanChangeMembers($status)): ?>
-            <div class="row g-3 mb-3">
-                <div class="col-md-6">
-                    <div class="card h-100"><div class="card-header py-2"><strong>الحاضنة الحالية</strong></div><div class="card-body">
-                        <?php $current_nanny = $group_history[0] ?? null; if ($current_nanny && empty($current_nanny['end_date'])): ?><div class="mb-2"><i class="bi bi-person-check"></i> <?php echo htmlspecialchars($current_nanny['nanny_name']); ?></div><?php else: ?><div class="text-muted small mb-2">لا توجد حاضنة حالية</div><?php endif; ?>
-                        <form method="POST" class="d-flex gap-2"><input type="hidden" name="action" value="assign_nanny"><input type="hidden" name="group_id" value="<?php echo (int)$selected_group['id']; ?>"><select class="form-select form-select-sm" name="nanny_id" required><option value="">اختر الحاضنة</option><?php foreach ($nannies as $nanny): ?><option value="<?php echo (int)$nanny['id']; ?>"><?php echo htmlspecialchars($nanny['full_name']); ?></option><?php endforeach; ?></select><button class="btn btn-primary btn-sm">تعيين</button></form>
-                    </div></div>
-                </div>
-                <div class="col-md-6">
-                    <div class="card h-100"><div class="card-header py-2"><strong>إضافة أعضاء</strong></div><div class="card-body">
-                        <form method="POST"><input type="hidden" name="action" value="add_orphan_bulk"><input type="hidden" name="group_id" value="<?php echo (int)$selected_group['id']; ?>"><select class="form-select form-select-sm mb-2" name="child_ids[]" multiple size="5" <?php echo $has_current_disbursement ? 'disabled' : ''; ?>><?php foreach ($orphans as $orphan): ?><option value="<?php echo (int)$orphan['id']; ?>"><?php echo htmlspecialchars($orphan['child_name']); ?> — <?php echo htmlspecialchars($orphan['family_name']); ?><?php if ($orphan['sponsor_name']): ?> — <?php echo htmlspecialchars($orphan['sponsor_name']); ?><?php endif; ?></option><?php endforeach; ?></select><div class="small text-muted mb-2">يمكن اختيار أكثر من يتيم. اليتيم المرتبط بصرف الشهر الحالي لا يظهر هنا.</div><button class="btn btn-success btn-sm" <?php echo $has_current_disbursement ? 'disabled' : ''; ?>>إضافة المختارين</button></form>
-                    </div></div>
+            <div class="card mb-3">
+                <div class="card-header py-2"><strong><i class="bi bi-person-badge"></i> الحاضنة الحالية وتعيين الحاضنة</strong></div>
+                <div class="card-body">
+                    <?php $current_nanny = $group_history[0] ?? null; ?>
+                    <?php if ($current_nanny && empty($current_nanny['end_date'])): ?><div class="alert alert-info py-2 mb-2"><i class="bi bi-person-check"></i> <strong>الحاضنة الحالية:</strong> <?php echo htmlspecialchars($current_nanny['nanny_name']); ?> <span class="small">(منذ <?php echo htmlspecialchars($current_nanny['start_date']); ?>)</span></div><?php endif; ?>
+                    <form method="POST" class="row g-2">
+                        <input type="hidden" name="action" value="assign_nanny"><input type="hidden" name="group_id" value="<?php echo (int)$selected_group['id']; ?>">
+                        <div class="col-md-8"><select class="form-select form-select-sm" name="nanny_id" required><option value="">-- اختر الحاضنة --</option><?php foreach ($nannies as $nanny): ?><option value="<?php echo (int)$nanny['id']; ?>"><?php echo htmlspecialchars($nanny['full_name']); ?></option><?php endforeach; ?></select></div>
+                        <div class="col-md-4"><button class="btn btn-primary btn-sm w-100"><i class="bi bi-check-circle"></i> تعيين</button></div>
+                    </form>
                 </div>
             </div>
             <?php endif; ?>
@@ -493,7 +484,7 @@ include __DIR__ . '/../../includes/header.php';
             <div class="card mb-3">
                 <div class="card-header py-2 d-flex justify-content-between"><strong>الأعضاء الحاليون</strong><span class="badge bg-secondary"><?php echo $current_members; ?></span></div>
                 <div class="card-body p-0">
-                    <?php if (!$group_orphans): ?><div class="text-center text-muted py-4">لا يوجد أعضاء حاليون. هذه المجموعة تظهر كـ «فارغة» بعد المزامنة.</div><?php else: ?>
+                    <?php if (!$group_orphans): ?><div class="text-center text-muted py-4">لا يوجد أعضاء حاليون. استخدم قسم «إضافة أيتام جدد» أسفل الصفحة.</div><?php else: ?>
                     <div class="table-responsive"><table class="table table-sm table-hover align-middle mb-0"><thead><tr><th>اليتيم</th><th>الأسرة</th><th>العمر</th><th>الانضمام</th><th class="text-end">الإجراءات</th></tr></thead><tbody>
                     <?php foreach ($group_orphans as $orphan): ?><tr><td><?php echo htmlspecialchars($orphan['child_name']); ?></td><td><?php echo htmlspecialchars($orphan['family_name']); ?></td><td><?php echo (int)$orphan['age']; ?></td><td><?php echo htmlspecialchars($orphan['joined_date']); ?></td><td class="text-end">
                         <?php if (groupCanChangeMembers($status) && !$has_current_disbursement): ?><form method="POST" class="d-inline" data-confirm="هل تريد نقل هذا اليتيم إلى مجموعة أخرى؟"><input type="hidden" name="action" value="transfer_orphan"><input type="hidden" name="group_id" value="<?php echo (int)$selected_group['id']; ?>"><input type="hidden" name="child_id" value="<?php echo (int)$orphan['child_id']; ?>"><select name="target_group_id" class="form-select form-select-sm d-inline-block" style="width:180px" required><option value="">نقل إلى...</option><?php foreach ($target_groups as $target): ?><option value="<?php echo (int)$target['id']; ?>"><?php echo htmlspecialchars($target['group_name']); ?> (<?php echo (int)$target['orphan_count']; ?>)</option><?php endforeach; ?></select><button class="btn btn-outline-primary btn-sm">نقل</button></form>
@@ -512,6 +503,228 @@ include __DIR__ . '/../../includes/header.php';
         <?php endif; ?>
         </div>
     </div>
+
+    <?php if ($selected_group && groupCanChangeMembers($status)): ?>
+    <div class="row mt-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-warning">
+                    <h5 class="mb-0"><i class="bi bi-plus-circle"></i> إضافة أيتام جدد للمجموعة: <?php echo htmlspecialchars($selected_group['group_name']); ?></h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-light border mb-3">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <span><i class="bi bi-info-circle text-primary"></i> يوجد <strong><?php echo count($orphans); ?></strong> يتيم مؤهل للإضافة (كفالة نشطة + لم يُصرف له هذا الشهر بعد)</span>
+                            <div>
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="selectAllBtn">تحديد الكل</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" id="deselectAllBtn">إلغاء التحديد</button>
+                            </div>
+                        </div>
+                        <div class="text-muted small mt-2 border-top pt-2">
+                            <i class="bi bi-exclamation-circle"></i> ملاحظة: قد لا يظهر كل أطفال أسرة واحدة معاً — إذا كان بعض إخوتهم مضافاً بالفعل لمجموعة أخرى هذا الشهر عبر كفيل مختلف، سيبقون مستبعدين من هذه القائمة فقط دون التأثير على بقية الأسرة.
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            <input type="text" class="form-control" id="orphanSearch" placeholder="ابحث بالاسم أو اسم الأسرة أو الكفيل...">
+                            <button class="btn btn-outline-secondary" type="button" id="clearSearch">مسح</button>
+                        </div>
+                        <div class="form-text">اختر الأيتام ثم اضغط على "إضافة المحددين"</div>
+                    </div>
+
+                    <div class="table-responsive" style="max-height: 600px; overflow-y: auto;">
+                        <table class="table table-hover table-bordered" id="orphansTable">
+                            <thead class="table-primary sticky-top" style="z-index: 10; background: white;">
+                                <tr>
+                                    <th width="40"><input type="checkbox" id="selectAll" class="form-check-input"></th>
+                                    <th>#</th><th>الاسم</th><th>العمر</th><th>الأسرة</th><th>الكفيل</th><th>الحالة</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php
+                                $counter = 1;
+                                $lastFamilyId = null;
+                                foreach ($orphans as $orphan):
+                                    $already_in_group = false;
+                                    foreach ($group_orphans as $go) {
+                                        if ($go['child_id'] == $orphan['id']) { $already_in_group = true; break; }
+                                    }
+                                    if ($already_in_group) continue;
+                                    if ($orphan['family_id'] !== $lastFamilyId):
+                                        $lastFamilyId = $orphan['family_id'];
+                                ?>
+                                    <tr class="family-header-row" data-family="<?php echo (int)$orphan['family_id']; ?>">
+                                        <td colspan="7" class="bg-light">
+                                            <input type="checkbox" class="form-check-input family-checkbox" data-family="<?php echo (int)$orphan['family_id']; ?>">
+                                            <strong class="ms-1"><i class="bi bi-house-heart"></i> أسرة: <?php echo htmlspecialchars($orphan['family_name'] ?: '-'); ?></strong>
+                                            <span class="text-muted small">(<?php echo htmlspecialchars($orphan['family_code'] ?: '—'); ?>)</span>
+                                        </td>
+                                    </tr>
+                                <?php endif; ?>
+                                    <tr class="orphan-row" data-family="<?php echo (int)$orphan['family_id']; ?>" data-name="<?php echo htmlspecialchars(mb_strtolower($orphan['child_name'] . ' ' . ($orphan['family_name'] ?? '') . ' ' . ($orphan['sponsor_name'] ?? ''), 'UTF-8'), ENT_QUOTES); ?>">
+                                        <td><input type="checkbox" class="form-check-input orphan-checkbox" data-family="<?php echo (int)$orphan['family_id']; ?>" name="selected_orphans[]" value="<?php echo (int)$orphan['id']; ?>"></td>
+                                        <td><?php echo $counter++; ?></td>
+                                        <td><strong><?php echo htmlspecialchars($orphan['child_name']); ?></strong></td>
+                                        <td><?php echo (int)$orphan['age']; ?> سنة</td>
+                                        <td><?php echo htmlspecialchars($orphan['family_name'] ?: '-'); ?></td>
+                                        <td><span class="badge bg-info text-dark"><?php echo htmlspecialchars($orphan['sponsor_name'] ?: '—'); ?></span></td>
+                                        <td><span class="badge bg-success">متاح</span></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mt-3 p-3 bg-white border rounded">
+                        <div><strong>المحدد: <span id="selectedCount" class="text-primary">0</span> يتيم</strong></div>
+                        <button type="button" class="btn btn-warning" id="addSelectedBtn">
+                            <i class="bi bi-plus-circle"></i> إضافة المحددين (<span id="btnCount">0</span>)
+                        </button>
+                    </div>
+
+                    <form method="POST" action="" id="bulkAddForm" style="display:none;">
+                        <input type="hidden" name="action" value="add_orphan_bulk">
+                        <input type="hidden" name="group_id" value="<?php echo (int)$selected_group['id']; ?>">
+                        <div id="orphansContainer"></div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
 </div>
+
+<script>
+(function () {
+    const search = document.getElementById('orphanSearch');
+    const clear = document.getElementById('clearSearch');
+    const selectAll = document.getElementById('selectAll');
+    const selectAllBtn = document.getElementById('selectAllBtn');
+    const deselectAllBtn = document.getElementById('deselectAllBtn');
+    const addSelectedBtn = document.getElementById('addSelectedBtn');
+
+    if (!search || !addSelectedBtn) return;
+
+    function syncFamilyHeaders() {
+        document.querySelectorAll('.family-header-row').forEach(function (header) {
+            const familyId = header.dataset.family;
+            const rows = document.querySelectorAll('.orphan-row[data-family="' + familyId + '"]');
+            const visible = Array.from(rows).some(function (row) { return row.style.display !== 'none'; });
+            header.style.display = visible ? '' : 'none';
+        });
+    }
+
+    function updateSelectedCount() {
+        const checked = document.querySelectorAll('.orphan-checkbox:checked').length;
+        const count = document.getElementById('selectedCount');
+        const buttonCount = document.getElementById('btnCount');
+        if (count) count.textContent = checked;
+        if (buttonCount) buttonCount.textContent = checked;
+
+        document.querySelectorAll('.family-checkbox').forEach(function (familyBox) {
+            const familyId = familyBox.dataset.family;
+            const children = Array.from(document.querySelectorAll('.orphan-checkbox[data-family="' + familyId + '"]'))
+                .filter(function (cb) { return cb.closest('tr').style.display !== 'none'; });
+            familyBox.checked = children.length > 0 && children.every(function (cb) { return cb.checked; });
+        });
+    }
+
+    function setVisibleCheckboxes(checked) {
+        document.querySelectorAll('.orphan-checkbox').forEach(function (cb) {
+            if (cb.closest('tr').style.display !== 'none') cb.checked = checked;
+        });
+        updateSelectedCount();
+    }
+
+    search.addEventListener('input', function () {
+        const term = this.value.trim().toLocaleLowerCase('ar');
+        const words = term.split(/\s+/).filter(Boolean);
+        document.querySelectorAll('.orphan-row').forEach(function (row) {
+            const name = (row.dataset.name || '').toLocaleLowerCase('ar');
+            const show = !term || words.every(function (word) { return name.includes(word); });
+            row.style.display = show ? '' : 'none';
+        });
+        syncFamilyHeaders();
+        updateSelectedCount();
+    });
+
+    clear.addEventListener('click', function () {
+        search.value = '';
+        document.querySelectorAll('.orphan-row').forEach(function (row) { row.style.display = ''; });
+        syncFamilyHeaders();
+        updateSelectedCount();
+        search.focus();
+    });
+
+    selectAll.addEventListener('change', function () { setVisibleCheckboxes(this.checked); });
+    selectAllBtn.addEventListener('click', function () { setVisibleCheckboxes(true); selectAll.checked = true; });
+    deselectAllBtn.addEventListener('click', function () { setVisibleCheckboxes(false); selectAll.checked = false; });
+
+    document.querySelectorAll('.family-checkbox').forEach(function (familyBox) {
+        familyBox.addEventListener('change', function () {
+            const familyId = this.dataset.family;
+            document.querySelectorAll('.orphan-checkbox[data-family="' + familyId + '"]').forEach(function (cb) {
+                if (cb.closest('tr').style.display !== 'none') cb.checked = familyBox.checked;
+            });
+            updateSelectedCount();
+        });
+    });
+
+    document.querySelectorAll('.orphan-checkbox').forEach(function (cb) {
+        cb.addEventListener('change', updateSelectedCount);
+    });
+
+    addSelectedBtn.addEventListener('click', function () {
+        const checked = Array.from(document.querySelectorAll('.orphan-checkbox:checked'));
+        if (!checked.length) {
+            if (window.AKNotify && typeof AKNotify.toast === 'function') {
+                AKNotify.toast('يرجى اختيار يتيم واحد على الأقل', 'warning');
+            }
+            return;
+        }
+
+        const submit = function () {
+            const container = document.getElementById('orphansContainer');
+            container.innerHTML = '';
+            checked.forEach(function (cb) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'child_ids[]';
+                input.value = cb.value;
+                container.appendChild(input);
+            });
+            document.getElementById('bulkAddForm').submit();
+        };
+
+        if (window.AKNotify && typeof AKNotify.confirm === 'function') {
+            AKNotify.confirm({
+                title: 'إضافة أيتام للمجموعة',
+                text: 'هل تريد إضافة ' + checked.length + ' يتيم للمجموعة؟',
+                icon: 'question',
+                confirmButtonText: 'نعم، إضافة',
+                cancelButtonText: 'إلغاء'
+            }).then(function (confirmed) {
+                if (confirmed) submit();
+            });
+        } else {
+            if (window.Swal && typeof Swal.fire === 'function') {
+                Swal.fire({
+                    title: 'إضافة أيتام للمجموعة',
+                    text: 'هل تريد إضافة ' + checked.length + ' يتيم للمجموعة؟',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'نعم، إضافة',
+                    cancelButtonText: 'إلغاء',
+                    reverseButtons: true
+                }).then(function (result) { if (result.isConfirmed) submit(); });
+            }
+        }
+    });
+
+    updateSelectedCount();
+})();
+</script>
 
 <?php include __DIR__ . '/../../includes/footer.php'; ?>
