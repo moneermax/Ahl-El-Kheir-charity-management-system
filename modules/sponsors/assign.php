@@ -1,57 +1,16 @@
 <?php
-require_once dirname(__DIR__, 2) . '/config/config.php';
-require_once dirname(__DIR__, 2) . '/config/database.php';
-require_once dirname(__DIR__, 2) . '/config/functions.php';
-require_once dirname(__DIR__, 2) . '/config/session.php';
-require_once dirname(__DIR__, 2) . '/config/sponsor_assignments.php';
-
-Session::start();
-$role = Session::getUserRole();
-if (!Session::isLoggedIn() || !in_array($role, ['admin', 'vice_general_manager', 'general_manager'], true)) {
-    header('Location: ' . APP_URL . 'index.php'); exit();
+require_once dirname(__DIR__,2).'/config/config.php';require_once dirname(__DIR__,2).'/config/database.php';require_once dirname(__DIR__,2).'/config/functions.php';require_once dirname(__DIR__,2).'/config/session.php';require_once dirname(__DIR__,2).'/config/sponsor_assignments.php';Session::start();
+$role=Session::getUserRole();if(!Session::isLoggedIn()||!in_array($role,['admin','vice_general_manager','general_manager'],true)){header('Location: '.APP_URL.'index.php');exit();}
+ensureSponsorAssignmentHistoryTable();$errors=[];
+if($_SERVER['REQUEST_METHOD']==='POST'){
+ if(!verify_csrf())$errors[]=t('sponsors.session_expired');
+ $sponsorId=(int)($_POST['sponsor_id']??0);$supervisorId=(int)($_POST['supervisor_id']??0);$sponsor=dbFetchOne('SELECT id,full_name,supervisor_id FROM sponsors WHERE id=?',[$sponsorId]);$supervisor=dbFetchOne("SELECT u.id FROM users u JOIN roles r ON r.id=u.role_id WHERE u.id=? AND r.code='supervisor' AND u.is_active=1",[$supervisorId]);
+ if(!$sponsor)$errors[]=t('sponsors.not_found');if(!$supervisor)$errors[]=t('sponsors.supervisor_invalid');
+ if(!$errors){db()->beginTransaction();try{recordSponsorAssignment($sponsorId,$supervisorId,Session::getUserId(),'manual_reassignment');dbExecute('UPDATE sponsors SET supervisor_id=?,is_manual_override=1,assigned_by=?,assigned_at=NOW(),updated_by=? WHERE id=?',[$supervisorId,Session::getUserId(),Session::getUserId(),$sponsorId]);db()->commit();flash('success',t('sponsors.reassigned'));redirect('modules/sponsors/assign.php');}catch(Throwable $e){if(db()->inTransaction())db()->rollBack();error_log('Sponsor reassignment: '.$e->getMessage());$errors[]=t('sponsors.reassign_save_error');}}
 }
-
-ensureSponsorAssignmentHistoryTable();
-$errors = [];
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (!verify_csrf()) $errors[] = 'انتهت صلاحية الجلسة.';
-    $sponsorId = (int)($_POST['sponsor_id'] ?? 0);
-    $supervisorId = (int)($_POST['supervisor_id'] ?? 0);
-    $sponsor = dbFetchOne("SELECT id, full_name, supervisor_id FROM sponsors WHERE id = ?", [$sponsorId]);
-    $supervisor = dbFetchOne("SELECT u.id FROM users u JOIN roles r ON r.id = u.role_id WHERE u.id = ? AND r.code = 'supervisor' AND u.is_active = 1", [$supervisorId]);
-    if (!$sponsor) $errors[] = 'الكفيل غير موجود.';
-    if (!$supervisor) $errors[] = 'المشرف المختار غير نشط أو غير موجود.';
-    if (!$errors) {
-        db()->beginTransaction();
-        try {
-            recordSponsorAssignment($sponsorId, $supervisorId, Session::getUserId(), 'manual_reassignment');
-            dbExecute("UPDATE sponsors SET supervisor_id = ?, is_manual_override = 1, assigned_by = ?, assigned_at = NOW(), updated_by = ? WHERE id = ?", [$supervisorId, Session::getUserId(), Session::getUserId(), $sponsorId]);
-            db()->commit();
-            flash('success', 'تمت إعادة تعيين الكفيل إلى المشرف بنجاح.');
-            redirect('modules/sponsors/assign.php');
-        } catch (Throwable $e) {
-            if (db()->inTransaction()) db()->rollBack();
-            error_log('Sponsor reassignment: ' . $e->getMessage());
-            $errors[] = 'تعذر حفظ إعادة التعيين.';
-        }
-    }
-}
-
-$unassigned = dbFetchAll("SELECT id, full_name, sponsor_code, phone FROM sponsors WHERE supervisor_id IS NULL ORDER BY id DESC LIMIT 100");
-$supervisors = dbFetchAll("SELECT u.id, u.full_name FROM users u JOIN roles r ON r.id = u.role_id WHERE r.code = 'supervisor' AND u.is_active = 1 ORDER BY u.full_name");
-$pageTitle = 'إعادة توزيع الكفلاء';
-$active = 'sponsors';
-include dirname(__DIR__, 2) . '/includes/header.php';
-?>
-<div class="welcome-section fade-in"><h2>إعادة توزيع الكفلاء</h2><p>الكفلاء غير المعيّنين جاهزون لإسنادهم إلى مشرف نشط.</p></div>
-<?php include dirname(__DIR__, 2) . '/includes/alerts.php'; ?>
-<?php if ($errors): ?><div class="alert alert-danger"><ul class="mb-0"><?php foreach ($errors as $e) echo '<li>' . e($e) . '</li>'; ?></ul></div><?php endif; ?>
-<div class="card fade-in"><div class="card-body p-0"><div class="table-responsive"><table class="table table-hover align-middle mb-0">
-<thead><tr><th>الكود</th><th>الكفيل</th><th>الهاتف</th><th>المشرف الجديد</th><th>إجراء</th></tr></thead><tbody>
-<?php if (!$unassigned): ?><tr><td colspan="5" class="text-center text-muted py-4">لا يوجد كفلاء غير معيّنين.</td></tr>
-<?php else: foreach ($unassigned as $s): ?><tr>
-<td><?php echo e($s['sponsor_code']); ?></td><td><?php echo e($s['full_name']); ?></td><td dir="ltr"><?php echo e($s['phone'] ?? '-'); ?></td>
-<td><form method="post" class="d-flex gap-2"><input type="hidden" name="sponsor_id" value="<?php echo (int)$s['id']; ?>"><?php echo csrf_field(); ?><select name="supervisor_id" class="form-select form-select-sm" required><option value="">اختر المشرف</option><?php foreach ($supervisors as $sup): ?><option value="<?php echo (int)$sup['id']; ?>"><?php echo e($sup['full_name']); ?></option><?php endforeach; ?></select></td>
-<td><button class="btn btn-sm btn-primary"><i class="fas fa-user-plus me-1"></i> إسناد</button></form></td>
-</tr><?php endforeach; endif; ?></tbody></table></div></div></div>
-<?php include dirname(__DIR__, 2) . '/includes/footer.php'; ?>
+$unassigned=dbFetchAll('SELECT id,full_name,sponsor_code,phone FROM sponsors WHERE supervisor_id IS NULL ORDER BY id DESC LIMIT 100');$supervisors=dbFetchAll("SELECT u.id,u.full_name FROM users u JOIN roles r ON r.id=u.role_id WHERE r.code='supervisor' AND u.is_active=1 ORDER BY u.full_name");$pageTitle=t('sponsors.reassign_title');$active='sponsors';include dirname(__DIR__,2).'/includes/header.php';?>
+<div class="welcome-section fade-in"><h2><?php echo e(t('sponsors.reassign_title')); ?></h2><p><?php echo e(t('sponsors.reassign_intro')); ?></p></div>
+<?php include dirname(__DIR__,2).'/includes/alerts.php'; ?><?php if($errors): ?><div class="alert alert-danger"><ul class="mb-0"><?php foreach($errors as $error)echo '<li>'.e($error).'</li>'; ?></ul></div><?php endif; ?>
+<div class="card fade-in"><div class="card-body p-0"><div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr><th><?php echo e(t('sponsors.code')); ?></th><th><?php echo e(t('sponsors.sponsor')); ?></th><th><?php echo e(t('common.phone')); ?></th><th><?php echo e(t('sponsors.new_supervisor')); ?></th><th><?php echo e(t('common.actions')); ?></th></tr></thead><tbody>
+<?php if(!$unassigned): ?><tr><td colspan="5" class="text-center text-muted py-4"><?php echo e(t('sponsors.no_unassigned')); ?></td></tr><?php else: foreach($unassigned as $s): ?><tr><td><?php echo e($s['sponsor_code']); ?></td><td><?php echo e($s['full_name']); ?></td><td dir="ltr"><?php echo e($s['phone']??'-'); ?></td><td><form method="post" class="d-flex gap-2"><input type="hidden" name="sponsor_id" value="<?php echo (int)$s['id']; ?>"><?php echo csrf_field(); ?><select name="supervisor_id" class="form-select form-select-sm" required><option value=""><?php echo e(t('sponsors.select_supervisor')); ?></option><?php foreach($supervisors as $sup): ?><option value="<?php echo (int)$sup['id']; ?>"><?php echo e($sup['full_name']); ?></option><?php endforeach; ?></select></td><td><button class="btn btn-sm btn-primary"><i class="fas fa-user-plus me-1"></i><?php echo e(t('sponsors.assign')); ?></button></form></td></tr><?php endforeach; endif; ?></tbody></table></div></div></div>
+<?php include dirname(__DIR__,2).'/includes/footer.php'; ?>
