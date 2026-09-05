@@ -20,7 +20,7 @@ $extensions=['php','js','html'];$excluded=[DIRECTORY_SEPARATOR.'TCPDF'.DIRECTORY
 $files=new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root,FilesystemIterator::SKIP_DOTS));$arabicHits=[];$keyHits=[];
 foreach($files as $file){if(!$file->isFile()||!in_array(strtolower($file->getExtension()),$extensions,true))continue;$path=$file->getPathname();$normalized=str_replace(['/','\\'],DIRECTORY_SEPARATOR,$path);foreach($excluded as $part)if(str_contains($normalized,$part))continue 2;$content=@file_get_contents($path);if($content===false)continue;$relative=ltrim(str_replace($root,'',$path),DIRECTORY_SEPARATOR);
 if(preg_match_all('/[\x{0600}-\x{06FF}][^\r\n<>{};]*[\x{0600}-\x{06FF}]/u',$content,$matches)){foreach(array_unique($matches[0]) as $match){$match=trim(preg_replace('/\s+/u',' ',$match)??$match);if($match!=='')$arabicHits[$relative][]=mb_substr($match,0,160);}}
-if(preg_match_all("/(?:t|AKLang\\.t)\\s*\\(\\s*['\"]([^'\"]+)['\"]",$content,$matches)){foreach(array_unique($matches[1]) as $key)$keyHits[$relative][]=$key;}
+if(preg_match_all('~(?:t|AKLang\.t)\s*\(\s*[\'\"]([^\'\"]+)[\'\"]~',$content,$matches)){foreach(array_unique($matches[1]) as $key)$keyHits[$relative][]=$key;}
 }
 $unknownKeys=[];foreach($keyHits as $path=>$keys)foreach($keys as $key)if(!array_key_exists($key,$ar)||!array_key_exists($key,$en))$unknownKeys[$path][]=$key;
 $hardCodedCount=array_sum(array_map('count',$arabicHits));$keyCount=array_sum(array_map('count',$keyHits));$unknownCount=array_sum(array_map('count',$unknownKeys));$ok=!$missingEn&&!$missingAr&&!$unknownKeys;
