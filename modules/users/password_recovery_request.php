@@ -43,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     (int)$handler['id'],
                                     'طلب استعادة كلمة مرور جديد',
                                     'يوجد طلب جديد لاستعادة كلمة مرور للمستخدم: ' . $user['full_name'],
-                                    'modules/users/recovery.php'
+                                    APP_URL . 'modules/users/recovery.php'
                                 ]);
                             } catch (Throwable $e) {}
                         }
