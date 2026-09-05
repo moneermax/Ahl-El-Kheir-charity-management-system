@@ -39,6 +39,60 @@ $currentEmployee = dbFetchOne(
 );
 
 /**
+ * Create one persistent notification without creating duplicates when an
+ * already-completed POST is replayed or a page is refreshed.
+ */
+function createLeaveNotification(int $recipientUserId, string $title, string $body, string $link): void
+{
+    if ($recipientUserId <= 0) {
+        return;
+    }
+
+    $existing = dbFetchOne(
+        "SELECT id
+         FROM notifications
+         WHERE recipient_user_id = ?
+           AND title = ?
+           AND link = ?
+         LIMIT 1",
+        [$recipientUserId, $title, $link]
+    );
+
+    if ($existing) {
+        return;
+    }
+
+    db()->prepare(
+        "INSERT INTO notifications (recipient_user_id, title, body, link)
+         VALUES (?, ?, ?, ?)"
+    )->execute([$recipientUserId, $title, $body, $link]);
+}
+
+/**
+ * Notify every workflow recipient for the supplied role codes.
+ * The role relationship is users.role_id -> roles.id -> roles.code.
+ */
+function notifyLeaveRoleUsers(array $roleCodes, string $title, string $body, string $link): void
+{
+    if (empty($roleCodes)) {
+        return;
+    }
+
+    $placeholders = implode(',', array_fill(0, count($roleCodes), '?'));
+    $users = dbFetchAll(
+        "SELECT u.id
+         FROM users u
+         JOIN roles r ON r.id = u.role_id
+         WHERE r.code IN ({$placeholders})",
+        array_values($roleCodes)
+    );
+
+    foreach ($users as $user) {
+        createLeaveNotification((int)$user['id'], $title, $body, $link);
+    }
+}
+
+/**
  * Create the attendance rows for an approved leave.
  * This is deliberately executed after the single final approval stage.
  */
@@ -113,6 +167,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                  VALUES (?, ?, ?, ?, ?, ?, 'pending')"
             )->execute([$emp_id, $type, $start, $end, $days, $reason]);
 
+            $leaveId = (int)db()->lastInsertId();
+            $leaveLink = APP_URL . 'modules/hr/leaves.php?status=pending&leave_id=' . $leaveId;
+            $leavePeriod = $start === $end ? $start : $start . ' إلى ' . $end;
+            $requesterName = (string)$currentEmployee['full_name'];
+
+            if ($isHrUser) {
+                notifyLeaveRoleUsers(
+                    $gmRoles,
+                    'طلب إجازة جديد من الموارد البشرية',
+                    'قام الموظف ' . $requesterName . ' بتقديم طلب إجازة للفترة ' . $leavePeriod . ' ويحتاج إلى اعتماد المدير العام.',
+                    $leaveLink
+                );
+            } else {
+                notifyLeaveRoleUsers(
+                    $hrRoles,
+                    'طلب إجازة جديد',
+                    'قام الموظف ' . $requesterName . ' بتقديم طلب إجازة للفترة ' . $leavePeriod . ' ويحتاج إلى مراجعة الموارد البشرية.',
+                    $leaveLink
+                );
+            }
+
             header('Location: ' . APP_URL . 'modules/hr/leaves.php?action=request');
             exit();
         }
@@ -131,7 +206,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // HR approves every normal employee request in one stage.
                 // HR requests themselves are excluded so HR can never approve their own leave.
                 $leave = dbFetchOne(
-                    "SELECT l.*
+                    "SELECT l.*, e.user_id AS requester_user_id, e.full_name AS requester_name
                      FROM leaves l
                      JOIN employees e ON e.id = l.employee_id
                      JOIN users u ON u.id = e.user_id
@@ -159,6 +234,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
                 createLeaveAttendance($leave);
+
+                createLeaveNotification(
+                    (int)$leave['requester_user_id'],
+                    'تم اعتماد طلب الإجازة',
+                    'تم اعتماد طلب إجازتك للفترة ' . $leave['start_date'] . ' إلى ' . $leave['end_date'] . ' من قبل الموارد البشرية.',
+                    APP_URL . 'modules/hr/leaves.php?action=request&leave_id=' . $id
+                );
+
                 $message = t('hr.leave_approved_final');
             } else {
                 if (!$isGmUser) {
@@ -167,7 +250,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 // Only the General Manager approves HR employees' own leave requests.
                 $leave = dbFetchOne(
-                    "SELECT l.*
+                    "SELECT l.*, e.user_id AS requester_user_id, e.full_name AS requester_name
                      FROM leaves l
                      JOIN employees e ON e.id = l.employee_id
                      JOIN users u ON u.id = e.user_id
@@ -197,6 +280,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
                 createLeaveAttendance($leave);
+
+                createLeaveNotification(
+                    (int)$leave['requester_user_id'],
+                    'تم اعتماد طلب إجازة الموارد البشرية',
+                    'تم اعتماد طلب إجازتك للفترة ' . $leave['start_date'] . ' إلى ' . $leave['end_date'] . ' من قبل المدير العام.',
+                    APP_URL . 'modules/hr/leaves.php?action=request&leave_id=' . $id
+                );
+
                 $message = t('hr.leave_approved_final');
             }
 
@@ -221,7 +312,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 : "r.code IN ('hr_manager', 'hr_staff')";
 
             $leave = dbFetchOne(
-                "SELECT l.id
+                "SELECT l.id, l.start_date, l.end_date, e.user_id AS requester_user_id, e.full_name AS requester_name
                  FROM leaves l
                  JOIN employees e ON e.id = l.employee_id
                  JOIN users u ON u.id = e.user_id
@@ -245,6 +336,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($updated->rowCount() !== 1) {
                 throw new RuntimeException('تعذر رفض طلب الإجازة لأنه لم يعد قيد المراجعة.');
             }
+
+            createLeaveNotification(
+                (int)$leave['requester_user_id'],
+                'تم رفض طلب الإجازة',
+                'تم رفض طلب إجازتك للفترة ' . $leave['start_date'] . ' إلى ' . $leave['end_date'] . '. يرجى مراجعة الموارد البشرية لمزيد من التفاصيل.',
+                APP_URL . 'modules/hr/leaves.php?action=request&leave_id=' . $id
+            );
 
             header('Location: ' . APP_URL . 'modules/hr/leaves.php?status=pending');
             exit();
