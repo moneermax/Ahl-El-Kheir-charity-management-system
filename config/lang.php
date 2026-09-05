@@ -42,7 +42,34 @@ function ak_legacy_catalog(): array {
     $part = is_file($file) ? require $file : [];
     return $dict = is_array($part) ? $part : [];
 }
-function ak_dict(): array { return AK_LANG === 'en' ? array_merge(ak_legacy_catalog(), ak_catalog('en')) : ak_catalog('ar'); }
+
+/**
+ * Build the browser dictionary for the compatibility layer.
+ *
+ * Stable catalogs are key => translation, while the temporary DOM bridge needs
+ * source-text => translation. Therefore we derive an exact Arabic => English
+ * map from the authoritative AR/EN catalogs. The legacy dictionary remains a
+ * fallback only for strings that have not yet been migrated into stable keys.
+ */
+function ak_dict(): array {
+    if (AK_LANG !== 'en') return ak_catalog('ar');
+
+    $legacy = ak_legacy_catalog();
+    $ar = ak_catalog('ar');
+    $en = ak_catalog('en');
+    $stable = [];
+
+    foreach ($ar as $key => $arabic) {
+        if (!array_key_exists($key, $en)) continue;
+        $source = ak_legacy_normalize((string)$arabic);
+        if ($source === '') continue;
+        $stable[$source] = (string)$en[$key];
+    }
+
+    // Stable catalog text wins over the old compatibility dictionary.
+    return array_merge($legacy, $stable);
+}
+
 function ak_interpolate(string $value, array $params): string { foreach ($params as $name => $replacement) $value = str_replace(':' . $name, (string)$replacement, $value); return $value; }
 function ak_t(string $key, array $params = []): string {
     if ($key === '') return '';
@@ -73,7 +100,7 @@ function ak_legacy_lookup(string $value, array $legacy): ?string {
 }
 function ak_translate_page(string $html): string {
     if (AK_LANG !== 'en' || $html === '' || !preg_match('/^\s*(<!DOCTYPE|<html)/i', $html)) return $html;
-    $legacy = ak_legacy_catalog();
+    $legacy = ak_dict();
     if (!$legacy) return $html;
     $protected = [];
     $html = preg_replace_callback('/<(script|style|pre|code|textarea)\b[^>]*>.*?<\/\1\s*>/is', static function($m) use (&$protected) { $token = '__AK_I18N_PROTECTED_' . count($protected) . '__'; $protected[$token] = $m[0]; return $token; }, $html) ?? $html;
