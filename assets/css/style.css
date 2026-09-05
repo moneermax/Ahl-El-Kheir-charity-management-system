@@ -497,6 +497,7 @@ a {
 /* ============================================
    BROWSER-INDEPENDENT SUDAN FLAG
    Uses CSS geometry instead of Unicode regional-indicator emoji.
+   The green triangle remains on the physical hoist/left side.
    ============================================ */
 .org-header-banner .org-flag,
 .app-footer .org-flag {
@@ -523,9 +524,4 @@ a {
   width: 42%;
   background: #087a3b;
   clip-path: polygon(0 0, 100% 50%, 0 100%);
-}
-
-body[dir="rtl"] .org-header-banner .org-flag::before,
-body[dir="rtl"] .app-footer .org-flag::before {
-  inset: 0 0 0 auto;
 }
