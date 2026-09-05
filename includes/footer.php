@@ -2,7 +2,7 @@
 <footer class="app-footer text-center text-muted py-3">
     <div class="container">
         <div class="row"><div class="col-12"><div class="d-flex flex-wrap align-items-center justify-content-center gap-3">
-            <span class="fw-bold" style="color: var(--navy, #1b4d8f);"><span class="org-flag">🇸🇩</span> <?php echo e(t('common.organization_name')); ?></span><span class="text-muted">|</span>
+            <span class="fw-bold" style="color: var(--navy, #1b4d8f);"><span class="org-flag" aria-hidden="true"></span> <?php echo e(t('common.organization_name')); ?></span><span class="text-muted">|</span>
             <a href="https://wa.me/249900008247" target="_blank" rel="noopener" class="text-decoration-none d-inline-flex align-items-center gap-1"><i class="fab fa-whatsapp" style="color:#25D366"></i><span class="text-muted small"><?php echo e(t('common.whatsapp')); ?></span></a><span class="text-muted">|</span>
             <a href="https://www.tiktok.com/@ahlalkheir1" target="_blank" rel="noopener" class="text-decoration-none d-inline-flex align-items-center gap-1"><i class="fab fa-tiktok"></i><span class="text-muted small"><?php echo e(t('common.tiktok')); ?></span></a><span class="text-muted">|</span>
             <a href="https://www.instagram.com/ahlalkhair9/" target="_blank" rel="noopener" class="text-decoration-none d-inline-flex align-items-center gap-1"><i class="fab fa-instagram" style="color:#E4405F"></i><span class="text-muted small"><?php echo e(t('common.instagram')); ?></span></a><span class="text-muted">|</span>
@@ -18,71 +18,92 @@
 <?php include __DIR__ . '/messaging_widget.php'; ?>
 
 <style>
-/* Animated Sudan flag — shared by header and footer. */
+/* Real CSS Sudan flag with a subtle fabric-wave animation. */
 .org-header-banner .org-flag,
 .app-footer .org-flag {
-  display: inline-block;
-  position: relative;
-  width: 1.65em;
-  height: 1.1em;
-  min-width: 1.65em;
-  margin-inline: 7px;
-  vertical-align: -0.15em;
-  overflow: hidden;
-  border-radius: 0.06em;
-  font-size: 0 !important;
-  line-height: 1;
-  background:
-    linear-gradient(to right, transparent 0 12%, rgba(255,255,255,.18) 18%, transparent 27%, rgba(0,0,0,.12) 35%, transparent 45%, rgba(255,255,255,.16) 54%, transparent 65%, rgba(0,0,0,.1) 76%, transparent 86%),
-    linear-gradient(to bottom, #d71920 0 33.333%, #fff 33.333% 66.666%, #000 66.666% 100%);
-  box-shadow: 0 1px 3px rgba(0,0,0,.22);
-  transform-origin: left center;
-  animation: ak-sudan-flag-wave 2.4s ease-in-out infinite;
+    display: inline-block !important;
+    position: relative;
+    width: 34px !important;
+    height: 23px !important;
+    min-width: 34px !important;
+    margin-inline: 7px;
+    vertical-align: middle;
+    overflow: hidden;
+    border-radius: 2px;
+    font-size: 0 !important;
+    line-height: 0;
+    background: linear-gradient(
+        to bottom,
+        #d71920 0 33.333%,
+        #ffffff 33.333% 66.666%,
+        #000000 66.666% 100%
+    ) !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,.28);
+    transform-origin: left center;
+    animation: ak-sudan-flag-wave 2.8s ease-in-out infinite;
 }
 
 .org-header-banner .org-flag::before,
 .app-footer .org-flag::before {
-  content: "";
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 43%;
-  background: #087a3b;
-  clip-path: polygon(0 0, 100% 50%, 0 100%);
-  z-index: 2;
+    content: "";
+    display: block !important;
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 43%;
+    height: 100%;
+    background: #087a3b !important;
+    clip-path: polygon(0 0, 100% 50%, 0 100%);
+    z-index: 2;
 }
 
 .org-header-banner .org-flag::after,
 .app-footer .org-flag::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, rgba(255,255,255,.2), transparent 22%, rgba(0,0,0,.12) 38%, transparent 52%, rgba(255,255,255,.16) 68%, transparent 82%);
-  opacity: .8;
-  mix-blend-mode: overlay;
-  pointer-events: none;
-  z-index: 3;
-  animation: ak-sudan-flag-folds 2.4s ease-in-out infinite;
+    content: "";
+    display: block !important;
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255,255,255,.28) 18%,
+        transparent 34%,
+        rgba(0,0,0,.16) 48%,
+        transparent 63%,
+        rgba(255,255,255,.22) 78%,
+        transparent 100%
+    );
+    z-index: 3;
+    pointer-events: none;
+    animation: ak-sudan-flag-folds 2.8s ease-in-out infinite;
 }
 
 @keyframes ak-sudan-flag-wave {
-  0%, 100% { transform: perspective(90px) rotateY(0deg) skewY(0deg); }
-  25% { transform: perspective(90px) rotateY(-7deg) skewY(1deg); }
-  50% { transform: perspective(90px) rotateY(7deg) skewY(-1deg); }
-  75% { transform: perspective(90px) rotateY(-4deg) skewY(.5deg); }
+    0%, 100% {
+        transform: perspective(120px) rotateY(0deg) skewY(0deg) scaleX(1);
+    }
+    25% {
+        transform: perspective(120px) rotateY(-12deg) skewY(1.5deg) scaleX(.96);
+    }
+    50% {
+        transform: perspective(120px) rotateY(10deg) skewY(-1deg) scaleX(.98);
+    }
+    75% {
+        transform: perspective(120px) rotateY(-7deg) skewY(.8deg) scaleX(.97);
+    }
 }
 
 @keyframes ak-sudan-flag-folds {
-  0%, 100% { transform: translateX(-5%); }
-  50% { transform: translateX(7%); }
+    0%, 100% { transform: translateX(-12%); }
+    50% { transform: translateX(12%); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .org-header-banner .org-flag,
-  .app-footer .org-flag,
-  .org-header-banner .org-flag::after,
-  .app-footer .org-flag::after {
-    animation: none;
-  }
+    .org-header-banner .org-flag,
+    .app-footer .org-flag,
+    .org-header-banner .org-flag::after,
+    .app-footer .org-flag::after {
+        animation: none;
+    }
 }
 </style>
 
@@ -105,7 +126,7 @@ window.AK_TRANSLATIONS = <?php echo json_encode(ak_dict(), JSON_UNESCAPED_UNICOD
 <?php endif; ?>
 <script>
 (function(){var deferred=null;var btn=document.getElementById('akInstallBtn');window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferred=e;if(btn)btn.classList.remove('d-none')});if(btn)btn.addEventListener('click',function(){if(!deferred)return;deferred.prompt();deferred.userChoice.then(function(){deferred=null;btn.classList.add('d-none')})});window.addEventListener('appinstalled',function(){if(btn)btn.classList.add('d-none')})})();
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('<?php echo APP_URL; ?>sw.js').catch(function(){})})}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('<?php echo APP_URL; ?>sw.js').catch(function(){})});}
 </script>
 </body>
 </html>
