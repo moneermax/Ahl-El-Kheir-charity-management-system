@@ -52,11 +52,54 @@ window.AK_TRANSLATIONS=<?php echo json_encode(ak_dict(),JSON_UNESCAPED_UNICODE|J
     document.querySelectorAll('.att3 .person-avatar').forEach(function(avatar){avatar.remove()});
     var bulkForm=document.getElementById('bulkForm');
     if(!bulkForm)return;
-    bulkForm.addEventListener('submit',function(){
-        bulkForm.querySelectorAll('input[data-att3-generated="1"]').forEach(function(input){input.remove()});
-        document.querySelectorAll('.att3 .row-check:checked').forEach(function(check){
-            var hidden=document.createElement('input');hidden.type='hidden';hidden.name='employee_ids[]';hidden.value=check.value;hidden.setAttribute('data-att3-generated','1');bulkForm.appendChild(hidden);
+    var selected=new Set();
+    document.querySelectorAll('.att3 .row-check:checked').forEach(function(check){selected.add(String(check.value))});
+
+    function syncSelection(){
+        document.querySelectorAll('.att3 .row-check').forEach(function(check){
+            var id=String(check.value);
+            if(check.checked)selected.add(id); else selected.delete(id);
         });
+    }
+    document.querySelectorAll('.att3 .row-check').forEach(function(check){
+        check.addEventListener('change',function(){
+            var id=String(check.value);
+            if(check.checked)selected.add(id); else selected.delete(id);
+        });
+    });
+    var selectAll=document.getElementById('selectAll');
+    if(selectAll)selectAll.addEventListener('click',function(){setTimeout(syncSelection,0)});
+
+    bulkForm.addEventListener('submit',function(event){
+        event.preventDefault();
+        syncSelection();
+        if(!selected.size){
+            if(window.Swal)Swal.fire({icon:'warning',title:'تنبيه',text:'يرجى تحديد موظف واحد على الأقل.',confirmButtonText:'حسناً'});
+            return;
+        }
+        var data=new FormData(bulkForm);
+        data.delete('employee_ids[]');
+        data.delete('employee_ids_json');
+        data.set('employee_ids_json',JSON.stringify(Array.from(selected)));
+        var action=event.submitter&&event.submitter.name==='action'?event.submitter.value:'';
+        if(!action){
+            if(window.Swal)Swal.fire({icon:'warning',title:'تنبيه',text:'يرجى اختيار إجراء.',confirmButtonText:'حسناً'});
+            return;
+        }
+        data.set('action',action);
+        fetch('<?php echo APP_URL; ?>modules/hr/bulk_attendance.php',{method:'POST',body:data,credentials:'same-origin'})
+            .then(function(response){return response.json().then(function(json){return {ok:response.ok,json:json}})})
+            .then(function(result){
+                if(!result.ok||!result.json.ok)throw new Error(result.json.message||'تعذر تنفيذ الإجراء.');
+                if(window.Swal){
+                    return Swal.fire({icon:'success',title:'تم بنجاح',text:result.json.message,confirmButtonText:'حسناً'}).then(function(){window.location.reload()});
+                }
+                window.location.reload();
+            })
+            .catch(function(error){
+                if(window.Swal)Swal.fire({icon:'error',title:'خطأ',text:error.message,confirmButtonText:'حسناً'});
+                else alert(error.message);
+            });
     });
 })();
 
