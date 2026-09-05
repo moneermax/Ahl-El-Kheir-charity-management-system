@@ -15,6 +15,58 @@
         return key;
     }
 
+    function normalizeText(value) {
+        return String(value == null ? '' : value).replace(/\u00a0|\u202f/g, ' ').replace(/\s+/g, ' ').trim();
+    }
+
+    /* Exact-value compatibility for remaining hard-coded interface phrases. */
+    function translateLegacyText(root) {
+        if (window.AK_LANG !== 'en' || !root) return;
+
+        var scope = root.nodeType === 9 ? root.body : root;
+        if (!scope) return;
+
+        var walker = document.createTreeWalker(scope, NodeFilter.SHOW_TEXT, {
+            acceptNode: function (node) {
+                var parent = node.parentElement;
+                if (!parent) return NodeFilter.FILTER_REJECT;
+                if (/^(SCRIPT|STYLE|PRE|CODE|TEXTAREA|OPTION)$/i.test(parent.tagName)) return NodeFilter.FILTER_REJECT;
+                if (parent.closest('[data-i18n]')) return NodeFilter.FILTER_REJECT;
+                var text = normalizeText(node.nodeValue);
+                if (!text || !/[\u0600-\u06ff]/u.test(text)) return NodeFilter.FILTER_REJECT;
+                return Object.prototype.hasOwnProperty.call(dictionary, text)
+                    ? NodeFilter.FILTER_ACCEPT
+                    : NodeFilter.FILTER_REJECT;
+            }
+        }, false);
+
+        var nodes = [];
+        var current;
+        while ((current = walker.nextNode())) nodes.push(current);
+
+        nodes.forEach(function (node) {
+            var original = node.nodeValue;
+            var leadingMatch = original.match(/^\s*/u);
+            var trailingMatch = original.match(/\s*$/u);
+            var leading = leadingMatch ? leadingMatch[0] : '';
+            var trailing = trailingMatch ? trailingMatch[0] : '';
+            var normalized = normalizeText(original);
+            node.nodeValue = leading + dictionary[normalized] + trailing;
+        });
+
+        var attributeElements = scope.querySelectorAll ? scope.querySelectorAll('[placeholder],[title],[aria-label],[aria-description]') : [];
+        Array.prototype.forEach.call(attributeElements, function (element) {
+            ['placeholder', 'title', 'aria-label', 'aria-description'].forEach(function (attribute) {
+                if (!element.hasAttribute(attribute)) return;
+                var value = normalizeText(element.getAttribute(attribute));
+                if (!value || !/[\u0600-\u06ff]/u.test(value)) return;
+                if (Object.prototype.hasOwnProperty.call(dictionary, value)) {
+                    element.setAttribute(attribute, dictionary[value]);
+                }
+            });
+        });
+    }
+
     function refresh(root) {
         root = root || document;
         var elements = root.querySelectorAll ? root.querySelectorAll('[data-i18n]') : [];
@@ -36,6 +88,8 @@
                 if (attribute && key) element.setAttribute(attribute, translate(key));
             });
         });
+
+        translateLegacyText(root);
     }
 
     function prepareLanguageUrl(href, target) {
@@ -108,7 +162,6 @@
         });
         if (!buttons.length) return;
 
-        /* fm_dashboard.php uses the treasury .grid-4 as its first content block. */
         var anchor = document.querySelector('.main-area .grid-4');
         if (!anchor) anchor = document.querySelector('main.container-fluid .grid-4');
         if (!anchor) return;
