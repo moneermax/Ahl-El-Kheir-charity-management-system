@@ -81,10 +81,6 @@ if ($report_type === 'disbursement') {
 
 $returns_voids = [];
 if ($report_type === 'returns_voids') {
-    // The two UNION branches read text from different tables whose collations
-    // may differ (for example families.mother_name vs sponsors.full_name).
-    // Normalize every textual UNION column explicitly so MariaDB never has to
-    // choose between incompatible collations.
     $returns_voids = dbFetchAll("SELECT
         CONVERT('return' USING utf8mb4) COLLATE utf8mb4_unicode_ci as type,
         di.id,
@@ -185,64 +181,105 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             <th><?php echo e(t('common.month')); ?></th><th><?php echo e(t('reports.sponsorship_income')); ?></th><th><?php echo e(t('reports.general_donations')); ?></th><th><?php echo e(t('reports.admin_fees')); ?></th><th><?php echo e(t('reports.other_income')); ?></th><th><?php echo e(t('reports.total_income')); ?></th><th><?php echo e(t('reports.total_expense')); ?></th><th><?php echo e(t('reports.net_profit_loss')); ?></th>
         </tr></thead><tbody>
         <?php
-        $all_months = array_unique(array_merge(array_column($income_expense_data['income'], 'month'), array_column($income_expense_data['expense'], 'month')));
-        sort($all_months);
+        $all_months = array_unique(array_merge(array_column($income_expense_data['income'], 'month'), array_column($income_expense_data['expense'], 'month'))); sort($all_months);
         foreach ($all_months as $month):
             $income_row = current(array_filter($income_expense_data['income'], fn($r) => $r['month'] === $month));
             $expense_row = current(array_filter($income_expense_data['expense'], fn($r) => $r['month'] === $month));
             $total_income = $income_row ? (float)$income_row['total_income'] : 0;
             $total_expense = $expense_row ? (float)$expense_row['total_expense'] : 0;
+            $net = $total_income - $total_expense;
         ?>
-            <tr>
-                <td><?php echo e($month); ?></td>
-                <td><?php echo number_format((float)($income_row['sponsorship_income'] ?? 0), 2); ?></td>
-                <td><?php echo number_format((float)($income_row['donation_income'] ?? 0), 2); ?></td>
-                <td><?php echo number_format((float)($income_row['admin_fee_income'] ?? 0), 2); ?></td>
-                <td><?php echo number_format((float)($income_row['other_income'] ?? 0), 2); ?></td>
-                <td><?php echo number_format($total_income, 2); ?></td>
-                <td><?php echo number_format($total_expense, 2); ?></td>
-                <td class="fw-bold <?php echo ($total_income - $total_expense) >= 0 ? 'text-success' : 'text-danger'; ?>"><?php echo number_format($total_income - $total_expense, 2); ?></td>
-            </tr>
+            <tr><td><?php echo e($month); ?></td>
+            <td><?php echo number_format((float)($income_row['sponsorship_income'] ?? 0), 2); ?></td><td><?php echo number_format((float)($income_row['donation_income'] ?? 0), 2); ?></td><td><?php echo number_format((float)($income_row['admin_fee_income'] ?? 0), 2); ?></td><td><?php echo number_format((float)($income_row['other_income'] ?? 0), 2); ?></td>
+            <td class="text-success fw-bold"><?php echo number_format($total_income, 2); ?> <?php echo e(t('accounting.currency_sdg')); ?></td><td class="text-danger fw-bold"><?php echo number_format($total_expense, 2); ?> <?php echo e(t('accounting.currency_sdg')); ?></td><td class="<?php echo $net >= 0 ? 'text-success' : 'text-danger'; ?> fw-bold"><?php echo number_format($net, 2); ?> <?php echo e(t('accounting.currency_sdg')); ?></td></tr>
         <?php endforeach; ?>
         </tbody></table></div>
-    <?php else: ?>
-        <div class="alert alert-info mb-0"><?php echo e(t('reports.no_data')); ?></div>
-    <?php endif; ?>
+    <?php else: ?><div class="alert alert-info"><?php echo e(t('reports.no_period_data')); ?></div><?php endif; ?>
     </div></div>
-<?php elseif ($report_type === 'cashflow'): ?>
-    <div class="card shadow-sm"><div class="card-header bg-white fw-bold"><i class="fas fa-water me-2"></i><?php echo e(t('reports.cashflow')); ?></div><div class="card-body">
-        <?php if ($cashflow_data): ?>
-            <div class="table-responsive"><table class="table table-bordered table-hover" id="report-table"><thead class="table-light"><tr><th><?php echo e(t('common.month')); ?></th><th><?php echo e(t('reports.inflow')); ?></th><th><?php echo e(t('reports.outflow')); ?></th><th><?php echo e(t('reports.net_cashflow')); ?></th></tr></thead><tbody>
-            <?php foreach ($cashflow_data as $r): $net = (float)$r['inflow'] - (float)$r['outflow']; ?><tr><td><?php echo e($r['month']); ?></td><td><?php echo number_format((float)$r['inflow'], 2); ?></td><td><?php echo number_format((float)$r['outflow'], 2); ?></td><td class="fw-bold <?php echo $net >= 0 ? 'text-success' : 'text-danger'; ?>"><?php echo number_format($net, 2); ?></td></tr><?php endforeach; ?>
-            </tbody></table></div>
-        <?php else: ?><div class="alert alert-info mb-0"><?php echo e(t('reports.no_data')); ?></div><?php endif; ?>
-    </div></div>
+
 <?php elseif ($report_type === 'treasury'): ?>
-    <div class="card shadow-sm"><div class="card-header bg-white fw-bold"><i class="fas fa-vault me-2"></i><?php echo e(t('reports.treasury')); ?></div><div class="card-body">
-        <?php if ($treasury_balances): ?><div class="table-responsive"><table class="table table-bordered table-hover" id="report-table"><thead class="table-light"><tr><th><?php echo e(t('accounting.account_code')); ?></th><th><?php echo e(t('accounting.account_name')); ?></th><th><?php echo e(t('reports.balance')); ?></th></tr></thead><tbody><?php foreach ($treasury_balances as $r): ?><tr><td><?php echo e($r['code']); ?></td><td><?php echo e(AK_LANG === 'en' ? $r['name_en'] : $r['name_ar']); ?></td><td class="fw-bold"><?php echo number_format((float)$r['balance'], 2); ?></td></tr><?php endforeach; ?></tbody></table></div><?php else: ?><div class="alert alert-info mb-0"><?php echo e(t('reports.no_data')); ?></div><?php endif; ?>
+    <div class="card shadow-sm"><div class="card-header bg-white fw-bold" style="color:#1b4d8f;"><i class="fas fa-wallet me-2"></i><?php echo e(t('reports.treasury_balances')); ?></div><div class="card-body">
+        <div class="row g-4 mb-4"><?php foreach ($treasury_balances as $balance): ?><div class="col-md-4"><div class="card border-0 shadow-sm text-center"><div class="card-body">
+            <h6 class="text-muted"><?php echo e($balance['name_ar']); ?></h6><div class="display-6 fw-bold" style="color:#1b4d8f;"><?php echo number_format($balance['balance'], 2); ?> <span class="fs-6"><?php echo e(t('accounting.currency_sdg')); ?></span></div><small class="text-muted"><?php echo e(t('reports.account_code')); ?>: <?php echo e($balance['code']); ?></small>
+        </div></div></div><?php endforeach; ?></div>
+        <div class="table-responsive"><table class="table table-bordered" id="report-table"><thead class="table-light"><tr><th><?php echo e(t('reports.account_code')); ?></th><th><?php echo e(t('reports.account_name_ar')); ?></th><th><?php echo e(t('reports.account_name_en')); ?></th><th><?php echo e(t('reports.current_balance')); ?></th></tr></thead><tbody>
+        <?php foreach ($treasury_balances as $balance): ?><tr><td><?php echo e($balance['code']); ?></td><td><?php echo e($balance['name_ar']); ?></td><td><?php echo e($balance['name_en']); ?></td><td class="fw-bold"><?php echo number_format($balance['balance'], 2); ?> <?php echo e(t('accounting.currency_sdg')); ?></td></tr><?php endforeach; ?>
+        </tbody></table></div>
     </div></div>
+
 <?php elseif ($report_type === 'disbursement'): ?>
-    <div class="card shadow-sm"><div class="card-header bg-white fw-bold"><i class="fas fa-hand-holding-dollar me-2"></i><?php echo e(t('reports.disbursement')); ?></div><div class="card-body">
-        <?php if ($disbursement_summary): ?><div class="table-responsive"><table class="table table-bordered table-hover" id="report-table"><thead class="table-light"><tr><th><?php echo e(t('common.month')); ?></th><th><?php echo e(t('reports.nanny')); ?></th><th><?php echo e(t('reports.families_count')); ?></th><th><?php echo e(t('reports.total_amount')); ?></th><th><?php echo e(t('reports.paid_count')); ?></th><th><?php echo e(t('reports.returned_amount')); ?></th><th><?php echo e(t('common.status')); ?></th></tr></thead><tbody><?php foreach ($disbursement_summary as $r): $badge = $status_badges[$r['disb_status']] ?? ['common.unknown', 'bg-secondary']; ?><tr><td><?php echo e($r['month']); ?></td><td><?php echo e($r['nanny_name']); ?></td><td><?php echo (int)$r['families_count']; ?></td><td><?php echo number_format((float)$r['total_amount'], 2); ?></td><td><?php echo (int)$r['paid_count']; ?></td><td><?php echo number_format((float)$r['returned_amount'], 2); ?></td><td><span class="badge <?php echo e($badge[1]); ?>"><?php echo e(t($badge[0])); ?></span></td></tr><?php endforeach; ?></tbody></table></div><?php else: ?><div class="alert alert-info mb-0"><?php echo e(t('reports.no_data')); ?></div><?php endif; ?>
+    <div class="card shadow-sm"><div class="card-header bg-white fw-bold" style="color:#1b4d8f;"><i class="fas fa-hand-holding-usd me-2"></i><?php echo e(t('reports.disbursement_summary')); ?></div><div class="card-body">
+    <?php if (!empty($disbursement_summary)): ?><div class="table-responsive"><table class="table table-bordered table-hover" id="report-table"><thead class="table-light"><tr>
+        <th><?php echo e(t('common.month')); ?></th><th><?php echo e(t('reports.nanny')); ?></th><th><?php echo e(t('reports.families_count')); ?></th><th><?php echo e(t('reports.total_amount')); ?></th><th><?php echo e(t('reports.paid')); ?></th><th><?php echo e(t('reports.returned_amount')); ?></th><th><?php echo e(t('reports.status')); ?></th>
+    </tr></thead><tbody>
+    <?php foreach ($disbursement_summary as $row): [$statusKey, $statusClass] = $status_badges[$row['disb_status']] ?? [null, 'bg-secondary']; $statusLabel = $statusKey ? t($statusKey) : (string)$row['disb_status']; ?>
+        <tr><td><?php echo e($row['month']); ?></td><td><?php echo e($row['nanny_name']); ?></td><td><?php echo number_format((float)($row['families_count'] ?? 0)); ?></td><td><?php echo number_format((float)($row['total_amount'] ?? 0), 2); ?> <?php echo e(t('accounting.currency_sdg')); ?></td><td><?php echo number_format((float)($row['paid_count'] ?? 0)); ?></td><td class="text-danger"><?php echo number_format((float)($row['returned_amount'] ?? 0), 2); ?> <?php echo e(t('accounting.currency_sdg')); ?></td><td><span class="badge <?php echo e($statusClass); ?>"><?php echo e($statusLabel); ?></span></td></tr>
+    <?php endforeach; ?></tbody></table></div>
+    <?php else: ?><div class="alert alert-info"><?php echo e(t('reports.no_period_data')); ?></div><?php endif; ?>
     </div></div>
+
 <?php elseif ($report_type === 'returns_voids'): ?>
-    <div class="card shadow-sm"><div class="card-header bg-white fw-bold"><i class="fas fa-rotate-left me-2"></i><?php echo e(t('reports.returns_voids')); ?></div><div class="card-body">
-        <?php if ($returns_voids): ?><div class="table-responsive"><table class="table table-bordered table-hover" id="report-table"><thead class="table-light"><tr><th><?php echo e(t('common.type')); ?></th><th><?php echo e(t('common.reference')); ?></th><th><?php echo e(t('common.reason')); ?></th><th><?php echo e(t('common.amount')); ?></th><th><?php echo e(t('common.date')); ?></th><th><?php echo e(t('common.entity')); ?></th><th><?php echo e(t('common.month')); ?></th></tr></thead><tbody><?php foreach ($returns_voids as $r): ?><tr><td><span class="badge <?php echo $r['type'] === 'return' ? 'bg-warning text-dark' : 'bg-danger'; ?>"><?php echo e(t($r['type'] === 'return' ? 'reports.return' : 'reports.void')); ?></span></td><td><?php echo e($r['journal_ref']); ?></td><td><?php echo e($r['reason'] ?: t('common.not_available')); ?></td><td><?php echo number_format((float)$r['amount'], 2); ?></td><td><?php echo e($r['date']); ?></td><td><?php echo e($r['entity_name']); ?></td><td><?php echo e($r['month']); ?></td></tr><?php endforeach; ?></tbody></table></div><?php else: ?><div class="alert alert-info mb-0"><?php echo e(t('reports.no_data')); ?></div><?php endif; ?>
+    <div class="card shadow-sm"><div class="card-header bg-white fw-bold" style="color:#1b4d8f;"><i class="fas fa-undo me-2"></i><?php echo e(t('reports.returns_voids')); ?></div><div class="card-body">
+    <?php if (!empty($returns_voids)): ?><div class="table-responsive"><table class="table table-bordered table-hover" id="report-table"><thead class="table-light"><tr>
+        <th><?php echo e(t('reports.type')); ?></th><th><?php echo e(t('reports.date')); ?></th><th><?php echo e(t('common.month')); ?></th><th><?php echo e(t('reports.family_sponsor')); ?></th><th><?php echo e(t('reports.total_amount')); ?></th><th><?php echo e(t('reports.reason')); ?></th><th><?php echo e(t('reports.journal_reference')); ?></th>
+    </tr></thead><tbody>
+    <?php foreach ($returns_voids as $row): ?><tr class="<?php echo $row['type'] === 'void' ? 'table-warning' : 'table-danger'; ?>"><td>
+        <?php if ($row['type'] === 'void'): ?><span class="badge bg-warning text-dark"><?php echo e(t('reports.void')); ?></span><?php else: ?><span class="badge bg-danger"><?php echo e(t('reports.return')); ?></span><?php endif; ?>
+    </td><td><?php echo e($row['date'] ?? '-'); ?></td><td><?php echo e($row['month'] ?? '-'); ?></td><td><?php echo e($row['entity_name'] ?? '-'); ?></td><td><?php echo number_format((float)$row['amount'], 2); ?> <?php echo e(t('accounting.currency_sdg')); ?></td><td><?php echo e($row['reason'] ?? '-'); ?></td><td><code><?php echo e($row['journal_ref']); ?></code></td></tr><?php endforeach; ?>
+    </tbody></table></div>
+    <?php else: ?><div class="alert alert-info"><?php echo e(t('reports.no_returns_voids')); ?></div><?php endif; ?>
+    </div></div>
+
+<?php elseif ($report_type === 'cashflow'): ?>
+    <div class="card shadow-sm"><div class="card-header bg-white fw-bold" style="color:#1b4d8f;"><i class="fas fa-exchange-alt me-2"></i><?php echo e(t('reports.cashflow')); ?></div><div class="card-body">
+    <?php if (!empty($cashflow_data)): ?><canvas id="cashflowChart" height="80"></canvas><hr><div class="table-responsive"><table class="table table-bordered table-hover mt-3" id="report-table"><thead class="table-light"><tr><th><?php echo e(t('common.month')); ?></th><th><?php echo e(t('reports.inflow')); ?></th><th><?php echo e(t('reports.outflow')); ?></th><th><?php echo e(t('reports.net_cashflow')); ?></th></tr></thead><tbody>
+        <?php foreach ($cashflow_data as $row): $net = (float)$row['inflow'] - (float)$row['outflow']; ?><tr><td><?php echo e($row['month']); ?></td><td class="text-success"><?php echo number_format($row['inflow'], 2); ?> <?php echo e(t('accounting.currency_sdg')); ?></td><td class="text-danger"><?php echo number_format($row['outflow'], 2); ?> <?php echo e(t('accounting.currency_sdg')); ?></td><td class="<?php echo $net >= 0 ? 'text-success' : 'text-danger'; ?> fw-bold"><?php echo number_format($net, 2); ?> <?php echo e(t('accounting.currency_sdg')); ?></td></tr><?php endforeach; ?>
+    </tbody></table></div><?php else: ?><div class="alert alert-info"><?php echo e(t('reports.no_period_data')); ?></div><?php endif; ?>
     </div></div>
 <?php endif; ?>
 </div>
 
+<div class="mt-4 text-center"><a href="<?php echo APP_URL; ?>modules/reports/index.php?from=<?php echo e($from); ?>&to=<?php echo e($to); ?>" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i><?php echo e(t('reports.back_to_center')); ?></a></div>
+
 <script>
-function exportToExcel() {
-    const table = document.getElementById('report-table');
-    if (!table || typeof XLSX === 'undefined') return;
-    const wb = XLSX.utils.table_to_book(table, {sheet: 'Report'});
-    XLSX.writeFile(wb, 'financial-report.xlsx');
+<?php if ($report_type === 'income_expense' && (!empty($income_expense_data['income']) || !empty($income_expense_data['expense']))):
+    $chart_months = array_unique(array_merge(array_column($income_expense_data['income'], 'month'), array_column($income_expense_data['expense'], 'month'))); sort($chart_months);
+    $incomeMap = []; foreach ($income_expense_data['income'] as $r) $incomeMap[$r['month']] = $r;
+    $expenseMap = []; foreach ($income_expense_data['expense'] as $r) $expenseMap[$r['month']] = $r;
+?>
+new Chart(document.getElementById('incomeExpenseChart').getContext('2d'), {
+    type: 'bar',
+    data: {
+        labels: <?php echo json_encode(array_values($chart_months), JSON_UNESCAPED_UNICODE); ?>,
+        datasets: [
+            {label: <?php echo json_encode(t('reports.sponsorship_income_chart'), JSON_UNESCAPED_UNICODE); ?>, data: <?php echo json_encode(array_map(fn($m) => (float)($incomeMap[$m]['sponsorship_income'] ?? 0), $chart_months)); ?>},
+            {label: <?php echo json_encode(t('reports.general_donations_chart'), JSON_UNESCAPED_UNICODE); ?>, data: <?php echo json_encode(array_map(fn($m) => (float)($incomeMap[$m]['donation_income'] ?? 0), $chart_months)); ?>},
+            {label: <?php echo json_encode(t('reports.admin_fees_chart'), JSON_UNESCAPED_UNICODE); ?>, data: <?php echo json_encode(array_map(fn($m) => (float)($incomeMap[$m]['admin_fee_income'] ?? 0), $chart_months)); ?>},
+            {label: <?php echo json_encode(t('reports.expense_chart'), JSON_UNESCAPED_UNICODE); ?>, data: <?php echo json_encode(array_map(fn($m) => (float)($expenseMap[$m]['total_expense'] ?? 0), $chart_months)); ?>}
+        ]
+    }, options: {responsive:true, plugins:{legend:{position:'bottom'}}, scales:{y:{beginAtZero:true}}}
+});
+<?php endif; ?>
+
+<?php if ($report_type === 'cashflow' && !empty($cashflow_data)): ?>
+new Chart(document.getElementById('cashflowChart').getContext('2d'), {
+    type:'line',
+    data:{labels:<?php echo json_encode(array_column($cashflow_data, 'month'), JSON_UNESCAPED_UNICODE); ?>,datasets:[
+        {label:<?php echo json_encode(t('reports.inflow_chart'), JSON_UNESCAPED_UNICODE); ?>,data:<?php echo json_encode(array_map(fn($r)=>(float)$r['inflow'],$cashflow_data)); ?>,fill:true,tension:.3},
+        {label:<?php echo json_encode(t('reports.outflow_chart'), JSON_UNESCAPED_UNICODE); ?>,data:<?php echo json_encode(array_map(fn($r)=>(float)$r['outflow'],$cashflow_data)); ?>,fill:true,tension:.3}
+    ]},options:{responsive:true,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true}}}
+});
+<?php endif; ?>
+
+function exportToExcel(){
+    const table=document.querySelector('#report-content table');
+    if(!table){alert(<?php echo json_encode(t('reports.no_table_export'), JSON_UNESCAPED_UNICODE); ?>);return;}
+    const wb=XLSX.utils.table_to_book(table,{sheet:'Report'});XLSX.writeFile(wb,'financial_report_<?php echo date('Y-m-d'); ?>.xlsx');
 }
-function exportToPDF() {
-    const content = document.getElementById('report-content');
-    if (!content || typeof html2pdf === 'undefined') return;
-    html2pdf().set({margin: 0.35, filename: 'financial-report.pdf', image: {type: 'jpeg', quality: 0.95}, html2canvas: {scale: 2}, jsPDF: {unit: 'in', format: 'a4', orientation: 'landscape'}}).from(content).save();
+function exportToPDF(){
+    const element=document.getElementById('report-content');
+    const opt={margin:.5,filename:'financial_report_<?php echo date('Y-m-d'); ?>.pdf',image:{type:'jpeg',quality:.98},html2canvas:{scale:2,useCORS:true},jsPDF:{unit:'in',format:'a4',orientation:'landscape'}};
+    html2pdf().set(opt).from(element).save();
 }
 </script>
 
