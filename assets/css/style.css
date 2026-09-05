@@ -493,3 +493,39 @@ a {
 .cursor-pointer {
   cursor: pointer;
 }
+
+/* ============================================
+   BROWSER-INDEPENDENT SUDAN FLAG
+   Uses CSS geometry instead of Unicode regional-indicator emoji.
+   ============================================ */
+.org-header-banner .org-flag,
+.app-footer .org-flag {
+  display: inline-block;
+  position: relative;
+  width: 1.5em;
+  height: 1em;
+  min-width: 1.5em;
+  margin-inline: 6px;
+  vertical-align: -0.12em;
+  overflow: hidden;
+  border-radius: 0.08em;
+  font-size: 0 !important;
+  line-height: 1;
+  background: linear-gradient(to bottom, #d71920 0 33.333%, #fff 33.333% 66.666%, #000 66.666% 100%);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);
+}
+
+.org-header-banner .org-flag::before,
+.app-footer .org-flag::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 42%;
+  background: #087a3b;
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+}
+
+body[dir="rtl"] .org-header-banner .org-flag::before,
+body[dir="rtl"] .app-footer .org-flag::before {
+  inset: 0 0 0 auto;
+}
