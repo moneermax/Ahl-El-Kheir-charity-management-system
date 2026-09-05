@@ -46,4 +46,7 @@ if (Session::isLoggedIn()) {
  }catch(e){}
 })();
 </script>
-<?php } ?>
+<?php }
+
+require_once __DIR__.'/notification_widget.php';
+?>
