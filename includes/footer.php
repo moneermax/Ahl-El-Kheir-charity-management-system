@@ -2,7 +2,7 @@
 <footer class="app-footer text-center text-muted py-3">
     <div class="container">
         <div class="row"><div class="col-12"><div class="d-flex flex-wrap align-items-center justify-content-center gap-3">
-            <span class="fw-bold" style="color: var(--navy, #1b4d8f);">🇸🇩 <?php echo e(t('common.organization_name')); ?></span><span class="text-muted">|</span>
+            <span class="fw-bold" style="color: var(--navy, #1b4d8f);"><span class="org-flag">🇸🇩</span> <?php echo e(t('common.organization_name')); ?></span><span class="text-muted">|</span>
             <a href="https://wa.me/249900008247" target="_blank" rel="noopener" class="text-decoration-none d-inline-flex align-items-center gap-1"><i class="fab fa-whatsapp" style="color:#25D366"></i><span class="text-muted small"><?php echo e(t('common.whatsapp')); ?></span></a><span class="text-muted">|</span>
             <a href="https://www.tiktok.com/@ahlalkheir1" target="_blank" rel="noopener" class="text-decoration-none d-inline-flex align-items-center gap-1"><i class="fab fa-tiktok"></i><span class="text-muted small"><?php echo e(t('common.tiktok')); ?></span></a><span class="text-muted">|</span>
             <a href="https://www.instagram.com/ahlalkhair9/" target="_blank" rel="noopener" class="text-decoration-none d-inline-flex align-items-center gap-1"><i class="fab fa-instagram" style="color:#E4405F"></i><span class="text-muted small"><?php echo e(t('common.instagram')); ?></span></a><span class="text-muted">|</span>
