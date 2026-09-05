@@ -5,7 +5,9 @@
 
     function interpolate(value, params) {
         value = String(value == null ? '' : value); params = params || {};
-        Object.keys(params).forEach(function (name) { value = value.split(':' + name).join(String(params[name] == null ? '' : params[name])); });
+        Object.keys(params).forEach(function (name) {
+            value = value.split(':' + name).join(String(params[name] == null ? '' : params[name]));
+        });
         return value;
     }
 
@@ -16,55 +18,100 @@
     }
 
     function normalizeText(value) {
-        return String(value == null ? '' : value).replace(/\u00a0|\u202f/g, ' ').replace(/\s+/g, ' ').trim();
+        return String(value == null ? '' : value)
+            .replace(/\u00a0|\u202f/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
     }
 
-    /* Exact-value compatibility for remaining hard-coded interface phrases. */
-    function translateLegacyText(root) {
-        if (window.AK_LANG !== 'en' || !root) return;
+    /*
+     * Remaining legacy FM dashboard phrases. These are interface labels only;
+     * values coming from the database are never translated unless they exactly
+     * match one of these known UI phrases.
+     */
+    var fmPhrases = {
+        'إيرادات الشهر': 'Monthly Income',
+        'مصروفات الشهر': 'Monthly Expenses',
+        'دخل': 'Income',
+        'خرج': 'Outgoing',
+        'إجمالي الإيرادات': 'Total Income',
+        'إجمالي المصروفات': 'Total Expenses',
+        'نقداً': 'Cash',
+        'بنكياً': 'Bank',
+        'صافي التدفق الشهري': 'Net Monthly Flow',
+        'فائض': 'Surplus',
+        'عجز': 'Deficit',
+        'الإيرادات': 'Income',
+        'المصروفات': 'Expenses',
+        'حالة الدفعات الشهرية': 'Monthly Disbursement Status',
+        'عرض الكل': 'View All',
+        'بانتظار الاعتماد': 'Pending Approval',
+        'محوّلة (مفتوحة)': 'Transferred (Open)',
+        'مستلمة (مغلقة)': 'Received (Closed)',
+        'تم الصرف الكامل': 'Fully Disbursed',
+        'مُبطَلة': 'Voided',
+        'قيد عكسي مُرحّل': 'Posted Reversal',
+        'آخر عمليات الإرجاع': 'Recent Returns',
+        'آخر الدفعات المُبطَلة': 'Recent Voided Disbursements',
+        'إحصائيات سريعة': 'Quick Statistics',
+        'كفالة نشطة': 'Active Sponsorships',
+        'أسرة نشطة': 'Active Families',
+        'أخصائية نشطة': 'Active Nannies',
+        'مُصرَف هذا الشهر': 'Disbursed This Month',
+        'آخر القيود المحاسبية': 'Recent Journal Entries',
+        'رقم القيد': 'Entry Number',
+        'التاريخ': 'Date',
+        'الوصف': 'Description',
+        'مدين': 'Debit',
+        'دائن': 'Credit',
+        'مرحّل': 'Posted',
+        'الشهر': 'Month',
+        'الأخصائية': 'Nanny',
+        'أنشأها': 'Created By',
+        'المبلغ': 'Amount',
+        'تاريخ الإرسال': 'Submission Date',
+        'تاريخ التحويل': 'Transfer Date',
+        'أيام مفتوحة': 'Days Open',
+        'الإجراء': 'Action',
+        'البنود': 'Items',
+        'مُصرَف': 'Paid',
+        'معلّق': 'Pending',
+        'إرجاع': 'Return',
+        'السبب': 'Reason',
+        'مراجعة': 'Review',
+        'تفاصيل': 'Details',
+        'طلب': 'Request',
+        'المشروع': 'Project',
+        'النوع': 'Type',
+        'الميزانية': 'Budget',
+        'متاح': 'Available',
+        'نسخة': 'Version',
+        'عرض المشروع': 'View Project',
+        'اعتماد مالي': 'Financial Approval',
+        'رفض': 'Reject',
+        'توزيع مصادر التمويل من قبل المدير المالي': 'Funding Source Distribution by Financial Manager',
+        'ميزانيات المشاريع بانتظار المراجعة المالية': 'Project Budgets Pending Financial Review',
+        'لا توجد ميزانيات مشاريع بانتظار المراجعة المالية.': 'No project budgets are pending financial review.'
+    };
 
-        var scope = root.nodeType === 9 ? root.body : root;
-        if (!scope) return;
+    function translateKnownPhrase(value) {
+        if (window.AK_LANG !== 'en') return null;
+        var text = normalizeText(value);
+        if (Object.prototype.hasOwnProperty.call(dictionary, text)) return dictionary[text];
+        if (Object.prototype.hasOwnProperty.call(fmPhrases, text)) return fmPhrases[text];
 
-        var walker = document.createTreeWalker(scope, NodeFilter.SHOW_TEXT, {
-            acceptNode: function (node) {
-                var parent = node.parentElement;
-                if (!parent) return NodeFilter.FILTER_REJECT;
-                if (/^(SCRIPT|STYLE|PRE|CODE|TEXTAREA|OPTION)$/i.test(parent.tagName)) return NodeFilter.FILTER_REJECT;
-                if (parent.closest('[data-i18n]')) return NodeFilter.FILTER_REJECT;
-                var text = normalizeText(node.nodeValue);
-                if (!text || !/[\u0600-\u06ff]/u.test(text)) return NodeFilter.FILTER_REJECT;
-                return Object.prototype.hasOwnProperty.call(dictionary, text)
-                    ? NodeFilter.FILTER_ACCEPT
-                    : NodeFilter.FILTER_REJECT;
-            }
-        }, false);
-
-        var nodes = [];
-        var current;
-        while ((current = walker.nextNode())) nodes.push(current);
-
-        nodes.forEach(function (node) {
-            var original = node.nodeValue;
-            var leadingMatch = original.match(/^\s*/u);
-            var trailingMatch = original.match(/\s*$/u);
-            var leading = leadingMatch ? leadingMatch[0] : '';
-            var trailing = trailingMatch ? trailingMatch[0] : '';
-            var normalized = normalizeText(original);
-            node.nodeValue = leading + dictionary[normalized] + trailing;
-        });
-
-        var attributeElements = scope.querySelectorAll ? scope.querySelectorAll('[placeholder],[title],[aria-label],[aria-description]') : [];
-        Array.prototype.forEach.call(attributeElements, function (element) {
-            ['placeholder', 'title', 'aria-label', 'aria-description'].forEach(function (attribute) {
-                if (!element.hasAttribute(attribute)) return;
-                var value = normalizeText(element.getAttribute(attribute));
-                if (!value || !/[\u0600-\u06ff]/u.test(value)) return;
-                if (Object.prototype.hasOwnProperty.call(dictionary, value)) {
-                    element.setAttribute(attribute, dictionary[value]);
-                }
-            });
-        });
+        /* Dynamic FM headings containing counts/months. */
+        var match = text.match(/^📈\s*إيرادات الشهر\s*\(([^)]+)\)$/u);
+        if (match) return '📈 Monthly Income (' + match[1] + ')';
+        match = text.match(/^📉\s*مصروفات الشهر\s*\(([^)]+)\)$/u);
+        if (match) return '📉 Monthly Expenses (' + match[1] + ')';
+        match = text.match(/^⏳\s*طابور اعتماد الدفعات\s*[—-]\s*(.+)$/u);
+        if (match) return '⏳ Disbursement Approval Queue — ' + match[1].replace(/دفعة بانتظار مراجعتك/u, 'disbursement(s) awaiting your review');
+        match = text.match(/^🔓\s*دفعات مفتوحة\s*[—-]\s*بانتظار صرف الأخصائيات$/u);
+        if (match) return '🔓 Open Disbursements — Awaiting Nanny Payout';
+        match = text.match(/^📁\s*ميزانيات المشاريع بانتظار المراجعة المالية$/u);
+        if (match) return '📁 Project Budgets Pending Financial Review';
+        return null;
     }
 
     function refresh(root) {
@@ -72,8 +119,7 @@
         var elements = root.querySelectorAll ? root.querySelectorAll('[data-i18n]') : [];
         Array.prototype.forEach.call(elements, function (element) {
             var key = element.getAttribute('data-i18n');
-            if (!key) return;
-            element.textContent = translate(key);
+            if (key) element.textContent = translate(key);
         });
 
         var attributeElements = root.querySelectorAll ? root.querySelectorAll('[data-i18n-attr]') : [];
@@ -90,6 +136,43 @@
         });
 
         translateLegacyText(root);
+    }
+
+    function translateLegacyText(root) {
+        if (window.AK_LANG !== 'en' || !root) return;
+        var scope = root.nodeType === 9 ? root.body : root;
+        if (!scope) return;
+
+        var walker = document.createTreeWalker(scope, NodeFilter.SHOW_TEXT, {
+            acceptNode: function (node) {
+                var parent = node.parentElement;
+                if (!parent) return NodeFilter.FILTER_REJECT;
+                if (/^(SCRIPT|STYLE|PRE|CODE|TEXTAREA|OPTION)$/i.test(parent.tagName)) return NodeFilter.FILTER_REJECT;
+                if (parent.closest('[data-i18n]')) return NodeFilter.FILTER_REJECT;
+                var text = normalizeText(node.nodeValue);
+                if (!text || !/[\u0600-\u06ff]/u.test(text)) return NodeFilter.FILTER_REJECT;
+                return translateKnownPhrase(text) !== null ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+            }
+        }, false);
+
+        var nodes = [], current;
+        while ((current = walker.nextNode())) nodes.push(current);
+        nodes.forEach(function (node) {
+            var original = node.nodeValue;
+            var leading = (original.match(/^\s*/u) || [''])[0];
+            var trailing = (original.match(/\s*$/u) || [''])[0];
+            var translated = translateKnownPhrase(original);
+            if (translated !== null) node.nodeValue = leading + translated + trailing;
+        });
+
+        var attributeElements = scope.querySelectorAll ? scope.querySelectorAll('[placeholder],[title],[aria-label],[aria-description]') : [];
+        Array.prototype.forEach.call(attributeElements, function (element) {
+            ['placeholder', 'title', 'aria-label', 'aria-description'].forEach(function (attribute) {
+                if (!element.hasAttribute(attribute)) return;
+                var translated = translateKnownPhrase(element.getAttribute(attribute));
+                if (translated !== null) element.setAttribute(attribute, translated);
+            });
+        });
     }
 
     function prepareLanguageUrl(href, target) {
@@ -149,21 +232,16 @@
         document.documentElement.lang = window.AK_LANG === 'en' ? 'en' : 'ar';
     }
 
-    /* FM dashboard role-specific header actions become six cards above Treasury. */
     function buildFinancialManagerCards() {
         if (!/\/modules\/accounting\/fm_dashboard\.php(?:$|[?#])/.test(window.location.pathname)) return;
         if (document.querySelector('.ak-fm-action-grid')) return;
-
         var source = document.querySelector('.qa-actions');
         if (!source) return;
-
         var buttons = Array.prototype.filter.call(source.querySelectorAll('a.qa-btn'), function (link) {
             return !/modules\/hr\/leaves\.php\?action=request/.test(link.getAttribute('href') || '');
         });
         if (!buttons.length) return;
-
-        var anchor = document.querySelector('.main-area .grid-4');
-        if (!anchor) anchor = document.querySelector('main.container-fluid .grid-4');
+        var anchor = document.querySelector('.main-area .grid-4') || document.querySelector('main.container-fluid .grid-4');
         if (!anchor) return;
 
         var style = document.createElement('style');
@@ -175,12 +253,6 @@
             .ak-fm-action-icon{font-size:1.45rem;margin-bottom:.35rem}\
             .ak-fm-action-title{font-size:.82rem;font-weight:700;line-height:1.35}\
             .ak-fm-action-desc{font-size:.66rem;line-height:1.3;color:#6c757d;margin-top:.18rem}\
-            .ak-fm-action-card.ak-fm-action-1{border-top:3px solid #d3701f}\
-            .ak-fm-action-card.ak-fm-action-2{border-top:3px solid #28a745}\
-            .ak-fm-action-card.ak-fm-action-3{border-top:3px solid #2195c4}\
-            .ak-fm-action-card.ak-fm-action-4{border-top:3px solid #ffc107}\
-            .ak-fm-action-card.ak-fm-action-5{border-top:3px solid #0d6efd}\
-            .ak-fm-action-card.ak-fm-action-6{border-top:3px solid #2daf79}\
             @media(max-width:767.98px){.ak-fm-action-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}\
             @media(max-width:420px){.ak-fm-action-grid{grid-template-columns:1fr}.ak-fm-action-card{height:96px;min-height:96px}}';
         document.head.appendChild(style);
@@ -188,48 +260,21 @@
         var grid = document.createElement('div');
         grid.className = 'ak-fm-action-grid fade-in';
         grid.setAttribute('aria-label', translate('accounting.quick_actions'));
-
-        var titleKeys = [
-            'accounting.header_accounting',
-            'accounting.header_disbursements',
-            'accounting.header_accounts',
-            'accounting.header_projects',
-            'accounting.header_reports',
-            'accounting.header_transactions'
-        ];
-        var descKeys = [
-            'accounting.fm_action_accounting_desc',
-            'accounting.fm_action_disbursements_desc',
-            'accounting.fm_action_accounts_desc',
-            'accounting.fm_action_projects_desc',
-            'accounting.fm_action_reports_desc',
-            'accounting.fm_action_transactions_desc'
-        ];
+        var titleKeys = ['accounting.header_accounting','accounting.header_disbursements','accounting.header_accounts','accounting.header_projects','accounting.header_reports','accounting.header_transactions'];
+        var descKeys = ['accounting.fm_action_accounting_desc','accounting.fm_action_disbursements_desc','accounting.fm_action_accounts_desc','accounting.fm_action_projects_desc','accounting.fm_action_reports_desc','accounting.fm_action_transactions_desc'];
 
         buttons.forEach(function (button, index) {
             var card = document.createElement('a');
-            card.className = 'ak-fm-action-card ak-fm-action-' + (index + 1);
+            card.className = 'ak-fm-action-card';
             card.href = button.href;
-            var body = document.createElement('div');
-            body.className = 'text-center px-2';
-            var icon = document.createElement('div');
-            icon.className = 'ak-fm-action-icon';
-            var originalIcon = button.querySelector('i');
-            if (originalIcon) icon.innerHTML = originalIcon.outerHTML;
-            var title = document.createElement('div');
-            title.className = 'ak-fm-action-title';
-            title.textContent = translate(titleKeys[index] || '');
-            var desc = document.createElement('div');
-            desc.className = 'ak-fm-action-desc';
-            desc.textContent = translate(descKeys[index] || '');
-            body.appendChild(icon);
-            body.appendChild(title);
-            if (desc.textContent) body.appendChild(desc);
-            card.appendChild(body);
-            grid.appendChild(card);
-            button.remove();
+            var body = document.createElement('div'); body.className = 'text-center px-2';
+            var icon = document.createElement('div'); icon.className = 'ak-fm-action-icon';
+            var originalIcon = button.querySelector('i'); if (originalIcon) icon.innerHTML = originalIcon.outerHTML;
+            var title = document.createElement('div'); title.className = 'ak-fm-action-title'; title.textContent = translate(titleKeys[index] || '');
+            var desc = document.createElement('div'); desc.className = 'ak-fm-action-desc'; desc.textContent = translate(descKeys[index] || '');
+            body.appendChild(icon); body.appendChild(title); if (desc.textContent) body.appendChild(desc);
+            card.appendChild(body); grid.appendChild(card); button.remove();
         });
-
         source.classList.toggle('d-none', !source.querySelector('a.qa-btn'));
         anchor.parentNode.insertBefore(grid, anchor);
     }
@@ -246,7 +291,6 @@
         fixBootstrapDirection();
         refresh(document);
         buildFinancialManagerCards();
-
         if (!window.MutationObserver) return;
         var observer = new MutationObserver(function (mutations) {
             mutations.forEach(function (mutation) {
