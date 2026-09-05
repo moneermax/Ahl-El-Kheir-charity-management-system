@@ -9,7 +9,7 @@
 if (Session::isLoggedIn()) {
     $akNotifUnread = isset($notifUnread) ? (int)$notifUnread : 0;
     $akNotifItems = isset($notifItems) && is_array($notifItems) ? $notifItems : [];
-    $akNotifMarkReadUrl = isset($markReadUrl) ? $markReadUrl : '';
+    $akNotifMarkReadUrl = APP_URL . 'modules/notifications/mark_all_read.php';
 ?>
 <style>
 #akNotificationBell{position:relative;z-index:1061;display:inline-flex;align-items:center;flex-shrink:0}
