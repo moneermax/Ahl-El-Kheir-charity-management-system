@@ -68,35 +68,64 @@ document.addEventListener('DOMContentLoaded', function () {
      * layer only turns the header into a compact Search Center entry point and
      * upgrades the search page UI without changing its authorization/query logic.
      */
-    const searchBar = document.querySelector('.ak-search-bar-wrap');
-    const searchForm = document.getElementById('globalSearchForm');
+    ensureGlobalSearchUI();
+
+    // Some pages (and the language switcher) can rebuild the shared header after
+    // DOMContentLoaded. Keep the old search fields hidden and recreate the compact
+    // Search Center button whenever that happens.
+    if (document.body) {
+        const headerObserver = new MutationObserver(function () {
+            ensureGlobalSearchUI();
+        });
+        headerObserver.observe(document.body, { childList: true, subtree: true });
+    }
+
     const searchPage = /\/modules\/search\/index\.php(?:$|[?#])/.test(window.location.href);
-
-    if (searchBar) {
-        searchBar.style.display = 'none';
-    }
-
-    if (searchForm) {
-        const searchUrl = searchForm.getAttribute('action');
-        const userControls = document.querySelector('.qa-user-controls');
-
-        if (userControls && searchUrl && !document.getElementById('akGlobalSearchButton')) {
-            const button = document.createElement('a');
-            button.id = 'akGlobalSearchButton';
-            button.href = searchUrl;
-            button.className = 'qa-btn ak-global-search-btn';
-            button.innerHTML = '<i class="fas fa-search"></i><span class="ak-search-button-label"></span>';
-            button.querySelector('.ak-search-button-label').textContent =
-                document.documentElement.lang === 'en' ? 'Search' : 'بحث';
-            button.style.cssText = 'background:#2e63a8;border-color:rgba(255,255,255,.3);';
-            userControls.insertBefore(button, userControls.firstChild);
-        }
-    }
-
     if (searchPage) {
         initSearchCenter();
     }
 });
+
+function ensureGlobalSearchUI() {
+    const searchBar = document.querySelector('.ak-search-bar-wrap');
+    const searchForm = document.getElementById('globalSearchForm');
+    const userControls = document.querySelector('.qa-user-controls');
+
+    // CSS is injected as well as applying an inline rule so dynamically rebuilt
+    // header markup can never briefly restore the old search fields.
+    if (!document.getElementById('ak-global-search-style')) {
+        const style = document.createElement('style');
+        style.id = 'ak-global-search-style';
+        style.textContent = '.ak-search-bar-wrap{display:none!important}.ak-global-search-btn{background:#2e63a8!important;border-color:rgba(255,255,255,.3)!important}';
+        document.head.appendChild(style);
+    }
+
+    if (searchBar) {
+        searchBar.style.setProperty('display', 'none', 'important');
+    }
+
+    if (!searchForm || !userControls) return;
+
+    const searchUrl = searchForm.getAttribute('action');
+    if (!searchUrl) return;
+
+    let button = document.getElementById('akGlobalSearchButton');
+    if (!button) {
+        button = document.createElement('a');
+        button.id = 'akGlobalSearchButton';
+        button.href = searchUrl;
+        button.className = 'qa-btn ak-global-search-btn';
+        button.innerHTML = '<i class="fas fa-search"></i><span class="ak-search-button-label"></span>';
+        userControls.insertBefore(button, userControls.firstChild);
+    } else {
+        button.href = searchUrl;
+    }
+
+    const label = button.querySelector('.ak-search-button-label');
+    if (label) {
+        label.textContent = document.documentElement.lang === 'en' ? 'Search' : 'بحث';
+    }
+}
 
 function initSearchCenter() {
     const existingWelcome = document.querySelector('.welcome-section');
@@ -440,6 +469,6 @@ function escapeHtml(value) {
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
+        .replace(/\"/g, '&quot;')
         .replace(/'/g, '&#039;');
 }
