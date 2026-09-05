@@ -51,15 +51,8 @@ include __DIR__ . '/../../includes/sidebar.php';
 ?>
 
 <div class="content-wrapper" style="margin-right: 250px; padding: 20px; background-color: #f4f6f9; min-height: 100vh;">
-    <div class="ak-card p-3 mb-4 d-flex justify-content-between align-items-center flex-wrap" style="position: sticky; top: 0; z-index: 1020; border-right: 4px solid #1b4d8f; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+    <div class="ak-card p-3 mb-3 d-flex align-items-center" style="border-right: 4px solid #1b4d8f; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
         <h5 class="mb-0 text-navy fw-bold"><i class="fas fa-users-cog me-2"></i> <?php echo e(t('hr.dashboard_title')); ?></h5>
-        <div class="d-flex gap-2 flex-wrap">
-            <a href="employees.php" class="btn btn-navy btn-sm"><i class="fas fa-user-plus me-1"></i> <?php echo e(t('hr.add_employee')); ?></a>
-            <a href="attendance.php" class="btn btn-outline-secondary btn-sm"><i class="fas fa-clock me-1"></i> <?php echo e(t('hr.attendance')); ?></a>
-            <a href="leaves.php" class="btn btn-outline-warning btn-sm"><i class="fas fa-calendar-alt me-1"></i> <?php echo e(t('hr.leaves')); ?><?php if ($stats['pending_leaves'] > 0): ?><span class="badge bg-danger ms-1"><?php echo (int)$stats['pending_leaves']; ?></span><?php endif; ?></a>
-            <a href="payroll.php" class="btn btn-outline-success btn-sm"><i class="fas fa-money-bill-wave me-1"></i> <?php echo e(t('hr.payroll')); ?></a>
-            <a href="contracts.php" class="btn btn-outline-info btn-sm"><i class="fas fa-file-contract me-1"></i> <?php echo e(t('hr.contracts')); ?></a>
-        </div>
     </div>
 
     <?php if (isset($db_error)): ?>
@@ -68,6 +61,57 @@ include __DIR__ . '/../../includes/sidebar.php';
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="<?php echo e(t('common.close')); ?>"></button>
         </div>
     <?php endif; ?>
+
+    <div class="row g-3 mb-4 hr-dashboard-actions">
+        <div class="col-12 col-sm-6 col-lg">
+            <a href="employees.php" class="hr-action-card">
+                <span class="hr-action-icon text-navy"><i class="fas fa-user-plus"></i></span>
+                <span class="hr-action-content">
+                    <span class="hr-action-title"><?php echo e(t('hr.add_employee')); ?></span>
+                    <span class="hr-action-subtitle">إدارة بيانات الموظفين</span>
+                </span>
+            </a>
+        </div>
+        <div class="col-12 col-sm-6 col-lg">
+            <a href="attendance.php" class="hr-action-card">
+                <span class="hr-action-icon text-secondary"><i class="fas fa-clock"></i></span>
+                <span class="hr-action-content">
+                    <span class="hr-action-title"><?php echo e(t('hr.attendance')); ?></span>
+                    <span class="hr-action-subtitle">متابعة الحضور والانصراف</span>
+                </span>
+            </a>
+        </div>
+        <div class="col-12 col-sm-6 col-lg">
+            <a href="leaves.php" class="hr-action-card">
+                <span class="hr-action-icon text-warning"><i class="fas fa-calendar-alt"></i></span>
+                <span class="hr-action-content">
+                    <span class="hr-action-title"><?php echo e(t('hr.leaves')); ?></span>
+                    <span class="hr-action-subtitle">مراجعة طلبات الإجازات</span>
+                </span>
+                <?php if ($stats['pending_leaves'] > 0): ?>
+                    <span class="badge bg-danger hr-action-badge"><?php echo (int)$stats['pending_leaves']; ?></span>
+                <?php endif; ?>
+            </a>
+        </div>
+        <div class="col-12 col-sm-6 col-lg">
+            <a href="payroll.php" class="hr-action-card">
+                <span class="hr-action-icon text-success"><i class="fas fa-money-bill-wave"></i></span>
+                <span class="hr-action-content">
+                    <span class="hr-action-title"><?php echo e(t('hr.payroll')); ?></span>
+                    <span class="hr-action-subtitle">كشف ومتابعة الرواتب</span>
+                </span>
+            </a>
+        </div>
+        <div class="col-12 col-sm-6 col-lg">
+            <a href="contracts.php" class="hr-action-card">
+                <span class="hr-action-icon text-info"><i class="fas fa-file-contract"></i></span>
+                <span class="hr-action-content">
+                    <span class="hr-action-title"><?php echo e(t('hr.contracts')); ?></span>
+                    <span class="hr-action-subtitle">إدارة عقود الموظفين</span>
+                </span>
+            </a>
+        </div>
+    </div>
 
     <div class="row g-4 mb-4">
         <div class="col-md-3"><div class="ak-card p-3 h-100" style="border-right: 4px solid #1b4d8f;"><div class="d-flex justify-content-between align-items-center"><div><h6 class="text-muted mb-1"><?php echo e(t('hr.active_employees_total')); ?></h6><h3 class="mb-0 fw-bold text-dark"><?php echo number_format((int)$stats['total_employees']); ?></h3></div><div class="text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; background-color: #1b4d8f;"><i class="fas fa-users"></i></div></div></div></div>
@@ -90,9 +134,72 @@ include __DIR__ . '/../../includes/sidebar.php';
 <?php include __DIR__ . '/../../includes/footer.php'; ?>
 <style>
     .text-navy { color: #1b4d8f !important; }
-    .btn-navy { background-color: #1b4d8f; color: white; border: none; }
-    .btn-navy:hover { background-color: #133a6d; color: white; }
     .ak-card { border: none; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); transition: transform 0.2s; background: white; }
-    .ak-card:hover { transform: translateY(-3px); }
-    @media (max-width: 768px) { .content-wrapper { margin-right: 0 !important; } }
+    .ak-card:hover { transform: translateY(-2px); }
+    .hr-dashboard-actions { align-items: stretch; }
+    .hr-dashboard-actions > div { display: flex; }
+    .hr-action-card {
+        position: relative;
+        display: flex;
+        align-items: center;
+        width: 100%;
+        min-height: 78px;
+        padding: 12px 14px;
+        gap: 11px;
+        border: 1px solid #e7ebef;
+        border-radius: 10px;
+        background: #fff;
+        color: #212529;
+        text-decoration: none;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.045);
+        transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    }
+    .hr-action-card:hover {
+        color: #212529;
+        transform: translateY(-2px);
+        border-color: #cfd8e3;
+        box-shadow: 0 5px 14px rgba(0,0,0,0.08);
+    }
+    .hr-action-icon {
+        width: 42px;
+        height: 42px;
+        min-width: 42px;
+        border-radius: 9px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: #f4f6f8;
+        font-size: 17px;
+    }
+    .hr-action-content {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        line-height: 1.25;
+    }
+    .hr-action-title {
+        font-size: 0.9rem;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+    .hr-action-subtitle {
+        margin-top: 3px;
+        color: #6c757d;
+        font-size: 0.72rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .hr-action-badge {
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        min-width: 22px;
+    }
+    @media (max-width: 991.98px) {
+        .hr-action-card { min-height: 74px; }
+    }
+    @media (max-width: 768px) {
+        .content-wrapper { margin-right: 0 !important; }
+    }
 </style>
