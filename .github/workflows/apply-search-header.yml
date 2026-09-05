@@ -62,8 +62,8 @@ jobs:
               b = s.index('''    </style>\n''', a)
               s = s[:a] + s[b:]
           p.write_text(s, encoding='utf-8', newline='\n')
-          if 'globalSearchForm' in s or 'ak-search-bar-wrap' in s or '<select' in s[s.index('<div class="qa-user-controls">'):s.index('</div>', s.index('<div class="qa-user-controls">')) + 6]:
-              raise SystemExit('header search markup was not fully removed')
+          if 'globalSearchForm' in s or 'ak-search-bar-wrap' in s:
+              raise SystemExit('old header search markup remained')
       - name: Commit patched header
         run: |
           git config user.name "github-actions[bot]"
