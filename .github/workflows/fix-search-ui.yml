@@ -1,0 +1,257 @@
+name: Apply final search header cleanup
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  fix-search-ui:
+    if: ${{ !contains(github.event.head_commit.message, 'ui: remove legacy header search form') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Patch search UI
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          header = Path('includes/header.php')
+          text = header.read_text(encoding='utf-8')
+
+          old_controls = '''                <div class="qa-user-controls">\n\n                    <a\n                        href="<?php echo e($langSwitchUrl); ?>"'''
+          new_controls = '''                <div class="qa-user-controls">\n\n                    <?php if ($canGlobalSearch): ?>\n                    <a\n                        href="<?php echo APP_URL; ?>modules/search/index.php"\n                        class="qa-btn ak-header-search-btn"\n                        style="background: rgba(255,255,255,0.15);"\n                        aria-label="<?php echo AK_LANG === 'ar' ? 'البحث' : 'Search'; ?>"\n                        data-search-types="<?php echo e(implode(',', $allowedSearchTypes)); ?>"\n                    >\n                        <i class="fas fa-search"></i>\n                        <span><?php echo AK_LANG === 'ar' ? 'بحث' : 'Search'; ?></span>\n                    </a>\n                    <?php endif; ?>\n\n                    <a\n                        href="<?php echo e($langSwitchUrl); ?>"'''
+          if old_controls not in text:
+              raise SystemExit('header user-controls marker not found')
+          text = text.replace(old_controls, new_controls, 1)
+
+          search_block = re.compile(r'''\n            <!-- =========================================================\n                 SEARCH\n                 ========================================================= -->\n\n            \Q<?php if ($canGlobalSearch): ?>\E.*?\Q            <?php endif; ?>\E\n'''.replace(r'\Q','').replace(r'\E',''), re.S | re.X)
+          text, n = search_block.subn('\n', text, count=1)
+          if n != 1:
+              raise SystemExit(f'legacy search markup removal failed: {n}')
+
+          css = re.compile(r'''\n        \.ak-search-bar-wrap \{.*?\n        @media \(max-width: 991\.98px\) \{''', re.S)
+          text, n = css.subn('\n        @media (max-width: 991.98px) {', text, count=1)
+          if n != 1:
+              raise SystemExit(f'legacy search CSS removal failed: {n}')
+
+          mobile = re.compile(r'''\n            \.ak-search-bar-wrap \{.*?\n            \.org-header-banner \{''', re.S)
+          text, n = mobile.subn('\n            .org-header-banner {', text, count=1)
+          if n != 1:
+              raise SystemExit(f'legacy mobile search CSS removal failed: {n}')
+
+          header.write_text(text, encoding='utf-8')
+
+          app = Path('assets/js/app.js')
+          app_text = app.read_text(encoding='utf-8')
+
+          start = app_text.index("    /*\n     * Global search redesign")
+          app_text = app_text[:start].rstrip() + "\n});\n"
+
+          search_js = r'''
+
+function initSearchCenter() {
+    const existingWelcome = document.querySelector('.welcome-section');
+    const existingFilter = document.getElementById('filterForm');
+    const content = document.querySelector('.content');
+    const searchEntry = document.querySelector('.ak-header-search-btn');
+
+    if (!content || !existingWelcome || !searchEntry || document.getElementById('akSearchCenter')) {
+        return;
+    }
+
+    const lang = document.documentElement.lang === 'en' ? 'en' : 'ar';
+    const params = new URLSearchParams(window.location.search);
+    const q = params.get('q') || '';
+    const type = params.get('type') || '';
+    const status = params.get('status') || '';
+    const month = params.get('month') || '';
+    const allowedTypes = (searchEntry.dataset.searchTypes || '').split(',').map(function (v) {
+        return v.trim();
+    }).filter(Boolean);
+    const allowAll = allowedTypes.length === 4;
+
+    const text = {
+        ar: {
+            title: 'مركز البحث',
+            subtitle: 'ابحث في بيانات النظام من مكان واحد، ثم ضيّق النتائج باستخدام الفلاتر المتقدمة.',
+            placeholder: 'ابحث بالاسم، الكود، رقم الهاتف أو أي معلومة...',
+            scope: 'نطاق البحث', all: 'كل البيانات', families: 'الأسر والأيتام',
+            sponsors: 'الكفلاء', sponsorships: 'الكفالات', payments: 'الدفعات الشهرية',
+            advanced: 'خيارات متقدمة', hideAdvanced: 'إخفاء الخيارات المتقدمة',
+            status: 'الحالة', allStatuses: 'كل الحالات', month: 'الشهر', search: 'بحث',
+            reset: 'إعادة ضبط', activeFilters: 'الفلاتر النشطة', remove: 'إزالة'
+        },
+        en: {
+            title: 'Search Center',
+            subtitle: 'Search system data from one place, then narrow the results with advanced filters.',
+            placeholder: 'Search by name, code, phone number, or any detail...',
+            scope: 'Search scope', all: 'All data', families: 'Families & Orphans',
+            sponsors: 'Sponsors', sponsorships: 'Sponsorships', payments: 'Monthly Payments',
+            advanced: 'Advanced filters', hideAdvanced: 'Hide advanced filters',
+            status: 'Status', allStatuses: 'All statuses', month: 'Month', search: 'Search',
+            reset: 'Reset', activeFilters: 'Active filters', remove: 'Remove'
+        }
+    }[lang];
+
+    const typeLabels = {
+        all: text.all,
+        families: text.families,
+        sponsors: text.sponsors,
+        sponsorships: text.sponsorships,
+        payments: text.payments
+    };
+
+    const statusMap = {
+        families: [
+            ['pending', lang === 'en' ? 'Pending' : 'قيد الانتظار'], ['active', lang === 'en' ? 'Active' : 'نشطة'],
+            ['paused', lang === 'en' ? 'Paused' : 'موقوفة'], ['completed', lang === 'en' ? 'Completed' : 'مكتملة'],
+            ['archived', lang === 'en' ? 'Archived' : 'مؤرشفة'], ['inactive', lang === 'en' ? 'Inactive' : 'غير نشطة'],
+            ['closed', lang === 'en' ? 'Closed' : 'مغلقة']
+        ],
+        sponsors: [
+            ['active', lang === 'en' ? 'Active' : 'نشط'], ['inactive', lang === 'en' ? 'Inactive' : 'غير نشط'],
+            ['suspended', lang === 'en' ? 'Suspended' : 'موقوف'], ['cancelled', lang === 'en' ? 'Cancelled' : 'ملغى']
+        ],
+        sponsorships: [
+            ['active', lang === 'en' ? 'Active' : 'نشطة'], ['paused', lang === 'en' ? 'Paused' : 'موقوفة'],
+            ['completed', lang === 'en' ? 'Completed' : 'مكتملة'], ['cancelled', lang === 'en' ? 'Cancelled' : 'ملغاة']
+        ],
+        payments: [
+            ['draft', lang === 'en' ? 'Draft' : 'مسودة'], ['pending_approval', lang === 'en' ? 'Pending Approval' : 'بانتظار الاعتماد'],
+            ['approved', lang === 'en' ? 'Approved' : 'معتمدة'], ['transferred', lang === 'en' ? 'Transferred' : 'محوّلة'],
+            ['received', lang === 'en' ? 'Received' : 'مستلمة'], ['returned', lang === 'en' ? 'Returned' : 'مغلقة مع إرجاع'],
+            ['cancelled', lang === 'en' ? 'Cancelled' : 'ملغاة'], ['voided', lang === 'en' ? 'Voided' : 'ملغاة (فسخ)']
+        ]
+    };
+
+    const selectedType = allowedTypes.includes(type) ? type : (allowAll ? 'all' : (allowedTypes[0] || ''));
+    const style = document.createElement('style');
+    style.id = 'ak-search-center-style';
+    style.textContent = `
+        .ak-search-center{margin-bottom:24px}.ak-search-hero{background:#fff;border:1px solid #e3e8ef;border-radius:16px;box-shadow:0 4px 18px rgba(10,31,68,.06);overflow:hidden}.ak-search-hero-head{padding:22px 24px 12px}.ak-search-hero-head h2{margin:0 0 4px;color:var(--navy,#1b4d8f);font-weight:800;font-size:1.35rem}.ak-search-hero-head p{margin:0;color:#64748b;font-size:.9rem}.ak-search-main{padding:8px 24px 22px}.ak-search-input-wrap{display:flex;gap:10px;align-items:center}.ak-search-input{flex:1;min-width:0;height:48px;border:2px solid #dfe6ef;border-radius:11px;padding:8px 16px;font-family:inherit;font-size:.95rem;outline:0}.ak-search-input:focus{border-color:#1f4e8c;box-shadow:0 0 0 4px rgba(31,78,140,.10)}.ak-search-submit{height:48px;padding:8px 20px;border-radius:11px;font-weight:700;white-space:nowrap}.ak-search-scope{margin-top:14px}.ak-search-label{display:block;margin-bottom:7px;font-size:.78rem;font-weight:700;color:#475569}.ak-search-scopes{display:flex;gap:7px;flex-wrap:wrap}.ak-search-scope-btn{border:1px solid #d8e1ec;background:#fff;color:#475569;border-radius:9px;padding:7px 12px;font-size:.78rem;font-weight:600;cursor:pointer}.ak-search-scope-btn:hover{border-color:#9fb3cb;background:#f8fafc}.ak-search-scope-btn.active{background:#1f4e8c;color:#fff;border-color:#1f4e8c}.ak-search-advanced-toggle{margin-top:14px;border:0;background:transparent;color:#1f4e8c;padding:0;font-family:inherit;font-size:.8rem;font-weight:700;cursor:pointer}.ak-search-advanced{display:none;margin-top:14px;padding-top:15px;border-top:1px solid #e8edf3}.ak-search-advanced.open{display:block}.ak-search-filter-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.ak-search-field label{display:block;margin-bottom:5px;font-size:.75rem;font-weight:700;color:#475569}.ak-search-field select,.ak-search-field input{width:100%;height:38px;border:1px solid #d8e1ec;border-radius:8px;padding:5px 10px;font-family:inherit;font-size:.8rem;background:#fff}.ak-search-actions{display:flex;gap:8px;align-items:center;margin-top:13px}.ak-search-active{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:12px}.ak-search-chip{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border-radius:999px;background:#eef4fb;color:#1f4e8c;font-size:.7rem;font-weight:700}.ak-search-chip button{border:0;background:transparent;color:inherit;padding:0;cursor:pointer;font-size:.8rem}body.theme-dark .ak-search-hero{background:#1f2937;border-color:#374151}body.theme-dark .ak-search-hero-head p,body.theme-dark .ak-search-label,body.theme-dark .ak-search-field label{color:#a0aec0}body.theme-dark .ak-search-hero-head h2{color:#e2e8f0}body.theme-dark .ak-search-input,body.theme-dark .ak-search-field select,body.theme-dark .ak-search-field input{background:#111827;color:#e2e8f0;border-color:#4b5563}body.theme-dark .ak-search-scope-btn{background:#1f2937;color:#d1d5db;border-color:#4b5563}body.theme-dark .ak-search-scope-btn.active{background:#2e63a8;border-color:#2e63a8;color:#fff}@media(max-width:767.98px){.ak-search-main,.ak-search-hero-head{padding-left:14px;padding-right:14px}.ak-search-input-wrap{flex-direction:column;align-items:stretch}.ak-search-submit{width:100%}.ak-search-filter-grid{grid-template-columns:1fr}}
+    `;
+    document.head.appendChild(style);
+
+    const center = document.createElement('section');
+    center.id = 'akSearchCenter';
+    center.className = 'ak-search-center fade-in';
+    center.innerHTML = `
+        <div class="ak-search-hero">
+            <div class="ak-search-hero-head"><h2><i class="fas fa-search"></i> ${escapeHtml(text.title)}</h2><p>${escapeHtml(text.subtitle)}</p></div>
+            <div class="ak-search-main">
+                <form id="akSearchForm" method="get" action="">
+                    <div class="ak-search-input-wrap"><input id="akSearchInput" class="ak-search-input" type="search" name="q" value="${escapeHtml(q)}" placeholder="${escapeHtml(text.placeholder)}" autocomplete="off"><button class="btn btn-primary ak-search-submit" type="submit"><i class="fas fa-search"></i> ${escapeHtml(text.search)}</button></div>
+                    <div class="ak-search-scope"><span class="ak-search-label">${escapeHtml(text.scope)}</span><div class="ak-search-scopes" id="akSearchScopes"></div></div>
+                    <button type="button" class="ak-search-advanced-toggle" id="akAdvancedToggle"><i class="fas fa-sliders"></i> <span>${escapeHtml(text.advanced)}</span></button>
+                    <div class="ak-search-advanced" id="akAdvancedPanel"><div class="ak-search-filter-grid"><div class="ak-search-field" id="akStatusField"><label for="akSearchStatus">${escapeHtml(text.status)}</label><select id="akSearchStatus" name="status"><option value="">${escapeHtml(text.allStatuses)}</option></select></div><div class="ak-search-field" id="akMonthField"><label for="akSearchMonth">${escapeHtml(text.month)}</label><input id="akSearchMonth" type="month" name="month" value="${escapeHtml(month)}"></div></div><div class="ak-search-actions"><button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-filter"></i> ${escapeHtml(text.search)}</button><a href="?" class="btn btn-outline-secondary btn-sm"><i class="fas fa-rotate-left"></i> ${escapeHtml(text.reset)}</a></div></div>
+                    <div class="ak-search-active" id="akActiveFilters"></div>
+                </form>
+            </div>
+        </div>`;
+    content.insertBefore(center, existingWelcome);
+    existingWelcome.style.display = 'none';
+    if (existingFilter) { const bar = existingFilter.closest('.filter-bar'); if (bar) bar.style.display = 'none'; }
+
+    const scopes = document.getElementById('akSearchScopes');
+    const scopeTypes = allowedTypes.slice();
+    if (allowAll) scopeTypes.unshift('all');
+    scopeTypes.forEach(function (value) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'ak-search-scope-btn' + (selectedType === value ? ' active' : '');
+        button.dataset.type = value;
+        button.textContent = typeLabels[value] || value;
+        scopes.appendChild(button);
+    });
+
+    function updateFilters(selected) {
+        const statusSelect = document.getElementById('akSearchStatus');
+        const statusField = document.getElementById('akStatusField');
+        const monthField = document.getElementById('akMonthField');
+        const statuses = statusMap[selected] || [];
+        statusSelect.innerHTML = '<option value="">' + escapeHtml(text.allStatuses) + '</option>';
+        statuses.forEach(function (pair) { const option = document.createElement('option'); option.value = pair[0]; option.textContent = pair[1]; if (status === pair[0]) option.selected = true; statusSelect.appendChild(option); });
+        statusField.style.display = statuses.length ? '' : 'none';
+        monthField.style.display = selected === 'payments' ? '' : 'none';
+    }
+
+    scopes.addEventListener('click', function (event) {
+        const button = event.target.closest('.ak-search-scope-btn');
+        if (!button) return;
+        const url = new URL(window.location.href);
+        url.searchParams.set('type', button.dataset.type);
+        url.searchParams.set('page', '1');
+        if (button.dataset.type !== 'payments') url.searchParams.delete('month');
+        window.location.href = url.toString();
+    });
+
+    const advancedToggle = document.getElementById('akAdvancedToggle');
+    const advancedPanel = document.getElementById('akAdvancedPanel');
+    const advancedLabel = advancedToggle.querySelector('span');
+    if (status || month) { advancedPanel.classList.add('open'); advancedToggle.classList.add('open'); advancedLabel.textContent = text.hideAdvanced; }
+    advancedToggle.addEventListener('click', function () { const open = advancedPanel.classList.toggle('open'); advancedToggle.classList.toggle('open', open); advancedLabel.textContent = open ? text.hideAdvanced : text.advanced; });
+    updateFilters(selectedType);
+
+    document.getElementById('akSearchForm').addEventListener('submit', function () {
+        const scope = document.createElement('input'); scope.type = 'hidden'; scope.name = 'type'; scope.value = document.querySelector('.ak-search-scope-btn.active')?.dataset.type || selectedType; this.appendChild(scope);
+        const page = document.createElement('input'); page.type = 'hidden'; page.name = 'page'; page.value = '1'; this.appendChild(page);
+    });
+
+    const active = document.getElementById('akActiveFilters');
+    if (q || status || month) {
+        const label = document.createElement('span'); label.style.cssText = 'font-size:.72rem;font-weight:700;color:#64748b'; label.textContent = text.activeFilters + ':'; active.appendChild(label);
+        if (q) addChip(q, 'q');
+        if (status) addChip((statusMap[selectedType] || []).find(function (x) { return x[0] === status; })?.[1] || status, 'status');
+        if (month) addChip(month, 'month');
+    }
+    function addChip(label, key) {
+        const chip = document.createElement('span'); chip.className = 'ak-search-chip'; chip.innerHTML = escapeHtml(label) + ' <button type="button" aria-label="' + escapeHtml(text.remove) + '">×</button>';
+        chip.querySelector('button').addEventListener('click', function () { const url = new URL(window.location.href); url.searchParams.delete(key); url.searchParams.set('page', '1'); window.location.href = url.toString(); });
+        active.appendChild(chip);
+    }
+}
+
+function escapeHtml(value) {
+    return String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
+'''
+          app_text = app_text.rstrip() + search_js
+          app.write_text(app_text, encoding='utf-8')
+          PY
+
+      - name: Validate PHP and JavaScript files
+        run: |
+          php -l includes/header.php
+          node --check assets/js/app.js
+          test "$(grep -c 'ak-search-bar-wrap' includes/header.php)" -eq 0
+          test "$(grep -c 'globalSearchForm' includes/header.php)" -eq 0
+          test "$(grep -c 'ak-header-search-btn' includes/header.php)" -eq 1
+          test "$(grep -c 'MutationObserver' assets/js/app.js)" -eq 0
+          test "$(grep -c 'ensureGlobalSearchUI' assets/js/app.js)" -eq 0
+
+      - name: Commit final search UI
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add includes/header.php assets/js/app.js
+          git commit -m "ui: remove legacy header search form" || exit 0
+          git push origin main
+
+      - name: Remove temporary workflow
+        if: always()
+        run: |
+          git fetch origin main
+          git checkout main
+          git pull --ff-only origin main || true
+          git rm -f .github/workflows/fix-search-ui.yml || true
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: remove temporary search UI patch workflow" || true
+          git push origin main || true
