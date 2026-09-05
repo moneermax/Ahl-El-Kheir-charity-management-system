@@ -63,4 +63,11 @@ return [
     'accounting.total_expenses' => 'Total Expenses',
     'accounting.cash_label' => 'Cash',
     'accounting.bank_label' => 'Bank',
+    'accounting.cash_with_icon' => '💵 Cash on Hand',
+    'accounting.bank_with_icon' => '🏦 Bank Account',
+    'accounting.wallet_with_icon' => '📱 Electronic Wallet',
+    'accounting.total_treasury_with_icon' => '💰 Total Treasury',
+    'accounting.budget_version' => 'Version',
+    'accounting.available_prefix' => 'Available',
+    'accounting.sdg_code' => 'SDG',
 ];
