@@ -1,0 +1,307 @@
+name: Apply global search redesign
+
+on:
+  push:
+    paths:
+      - '.github/workflows/apply-search-redesign.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  redesign:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Redesign search UI
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          header = Path('includes/header.php')
+          s = header.read_text(encoding='utf-8')
+
+          old_css = '''        .ak-search-bar-wrap {
+            background: #fff;
+            border-bottom: 1px solid #e3e7ee;
+            padding: 8px 24px;
+        }
+
+        .ak-search-form {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .ak-search-form .form-select-sm,
+        .ak-search-form .form-control-sm {
+            border-radius: 6px;
+            font-size: 0.85rem;
+            height: 34px;
+            padding: 4px 10px;
+        }
+
+        .ak-search-form .btn-sm {
+            border-radius: 6px;
+            font-size: 0.85rem;
+            height: 34px;
+            padding: 4px 14px;
+        }
+
+        .ak-search-form .btn-outline-secondary {
+            border-color: #dee2e6;
+        }
+
+        .ak-search-form .btn-outline-secondary:hover {
+            background: #f8f9fa;
+            border-color: #c1c9d0;
+        }
+'''
+          new_css = '''        /* Global search entry: keep the application header compact. */
+        .ak-search-entry {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            min-height: 32px;
+            padding: 4px 11px;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 5px;
+            background: rgba(255,255,255,0.12);
+            color: #fff !important;
+            text-decoration: none;
+            font-size: 0.72rem;
+            font-weight: 600;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+        }
+
+        .ak-search-entry:hover {
+            background: rgba(255,255,255,0.22);
+            color: #fff !important;
+            transform: translateY(-1px);
+        }
+
+        .ak-search-entry i {
+            font-size: 0.78rem;
+        }
+'''
+          if old_css not in s:
+              raise SystemExit('old search CSS not found')
+          s = s.replace(old_css, new_css, 1)
+
+          dark_old = '''        /* Dark mode support for search */
+        body.theme-dark .ak-search-bar-wrap {
+            background: #2d3748;
+            border-bottom-color: #4a5568;
+        }
+
+        body.theme-dark .ak-search-form .form-select-sm,
+        body.theme-dark .ak-search-form .form-control-sm {
+            background: #1a1a2e;
+            color: #e2e8f0;
+            border-color: #4a5568;
+        }
+
+        body.theme-dark .ak-search-form .form-select-sm:focus,
+        body.theme-dark .ak-search-form .form-control-sm:focus {
+            background: #1a1a2e;
+            color: #e2e8f0;
+            border-color: var(--navy);
+            box-shadow: 0 0 0 0.2rem rgba(27, 77, 143, 0.25);
+        }
+
+        body.theme-dark .ak-search-form .form-select-sm option {
+            background: #2d3748;
+            color: #e2e8f0;
+        }
+
+        body.theme-dark .ak-search-form .btn-outline-secondary {
+            color: #e2e8f0;
+            border-color: #4a5568;
+        }
+
+        body.theme-dark .ak-search-form .btn-outline-secondary:hover {
+            background: #4a5568;
+            border-color: #6c7a8a;
+        }
+'''
+          if dark_old not in s:
+              raise SystemExit('old search dark CSS not found')
+          s = s.replace(dark_old, '', 1)
+
+          search_block = re.compile(r'''            <!-- =========================================================\n                 SEARCH\n                 ========================================================= -->\n\n            \?\>.*?            <\?php endif; \?>\n\n        </div>\n        <!-- END header-sticky-wrapper -->''', re.S)
+          replacement = '''            <!-- =========================================================
+                 GLOBAL SEARCH ENTRY
+                 ========================================================= -->
+
+            <?php if ($canGlobalSearch): ?>
+                <div class="d-flex justify-content-end px-3 py-2" style="background:#fff;border-bottom:1px solid #e3e7ee;">
+                    <a
+                        href="<?php echo APP_URL; ?>modules/search/index.php"
+                        class="ak-search-entry"
+                        aria-label="<?php echo AK_LANG === 'ar' ? 'فتح البحث العام' : 'Open global search'; ?>"
+                        style="background:var(--navy,#1b4d8f);"
+                    >
+                        <i class="fas fa-search"></i>
+                        <span><?php echo AK_LANG === 'ar' ? 'البحث' : 'Search'; ?></span>
+                    </a>
+                </div>
+            <?php endif; ?>
+
+        </div>
+        <!-- END header-sticky-wrapper -->'''
+          if not search_block.search(s):
+              raise SystemExit('header search block not found')
+          s = search_block.sub(replacement, s, count=1)
+
+          # Remove the old mobile search rules that are now obsolete.
+          s = re.sub(r'''\n        @media \(max-width: 768px\) \{\n            \.ak-search-bar-wrap \{.*?            \.ak-search-form \.btn-sm \{.*?            \}\n\n''', '\n        @media (max-width: 768px) {\n', s, count=1, flags=re.S)
+
+          if 'globalSearchForm' in s or 'ak-search-bar-wrap' in s or 'id="searchType"' in s:
+              raise SystemExit('old header search controls remain')
+
+          header.write_text(s, encoding='utf-8', newline='\n')
+
+          search = Path('modules/search/index.php')
+          s = search.read_text(encoding='utf-8')
+
+          anchor = '''body.theme-dark .filter-bar { background: #2d3748; }\n</style>'''
+          search_css = '''body.theme-dark .filter-bar { background: #2d3748; }
+
+.search-workspace {
+    background: #fff;
+    border: 1px solid #e3e7ee;
+    border-radius: 12px;
+    box-shadow: 0 3px 14px rgba(15, 23, 42, 0.06);
+    padding: 18px;
+    margin-bottom: 20px;
+}
+.search-workspace-title {
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--navy, #1b4d8f);
+    margin-bottom: 4px;
+}
+.search-workspace-subtitle {
+    color: #6c757d;
+    font-size: 0.82rem;
+    margin-bottom: 14px;
+}
+.search-main-row { display:flex; gap:8px; align-items:stretch; }
+.search-main-row .search-query { flex:1; min-width:0; }
+.search-main-row .search-type { width:190px; flex:0 0 190px; }
+.search-main-row .search-submit { min-width:92px; }
+.search-quick-filters { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:12px; }
+.search-quick-filters .form-select, .search-quick-filters .form-control { max-width:190px; }
+.search-filter-label { font-size:0.76rem; color:#6c757d; font-weight:600; }
+body.theme-dark .search-workspace { background:#2d3748; border-color:#4a5568; }
+body.theme-dark .search-workspace-title { color:#e2e8f0; }
+body.theme-dark .search-workspace-subtitle, body.theme-dark .search-filter-label { color:#a0aec0; }
+body.theme-dark .search-workspace .form-control, body.theme-dark .search-workspace .form-select { background:#1a1a2e; color:#e2e8f0; border-color:#4a5568; }
+@media (max-width: 768px) {
+    .search-main-row { flex-direction:column; }
+    .search-main-row .search-type { width:100%; flex-basis:auto; }
+    .search-main-row .search-submit { width:100%; }
+    .search-quick-filters .form-select, .search-quick-filters .form-control { max-width:none; flex:1 1 160px; }
+}
+</style>'''
+          if anchor not in s:
+              raise SystemExit('search CSS anchor not found')
+          s = s.replace(anchor, search_css, 1)
+
+          old_intro = re.compile(r'''<div class="welcome-section fade-in">.*?</div>\n<?php include dirname\(__DIR__, 2\) \. '/includes/alerts\.php'; \?>''', re.S)
+          intro = '''<div class="welcome-section fade-in">
+    <h2><i class="fas fa-search me-2"></i><?php echo AK_LANG === 'ar' ? 'البحث العام' : 'Global Search'; ?></h2>
+    <p class="text-muted mb-0"><?php echo AK_LANG === 'ar' ? 'ابحث في السجلات المتاحة لك باستخدام الاسم أو الكود أو رقم الهاتف أو غيرها.' : 'Search the records available to you by name, code, phone number, and more.'; ?></p>
+</div>
+
+<div class="search-workspace fade-in">
+    <div class="search-workspace-title"><i class="fas fa-magnifying-glass me-2"></i><?php echo AK_LANG === 'ar' ? 'بحث جديد' : 'New Search'; ?></div>
+    <div class="search-workspace-subtitle"><?php echo AK_LANG === 'ar' ? 'يمكنك تضييق النتائج حسب نوع السجل ثم استخدام الفلاتر المناسبة.' : 'Choose a record type, then refine the results with contextual filters.'; ?></div>
+
+    <form method="get" action="<?php echo APP_URL; ?>modules/search/index.php" id="globalSearchForm">
+        <div class="search-main-row">
+            <select name="type" class="form-select search-type" aria-label="Search type">
+                <?php
+                $searchTypeLabels = [
+                    'families' => AK_LANG === 'ar' ? 'الأسر والأيتام' : 'Families & Orphans',
+                    'sponsors' => AK_LANG === 'ar' ? 'الكفلاء' : 'Sponsors',
+                    'sponsorships' => AK_LANG === 'ar' ? 'الكفالات' : 'Sponsorships',
+                    'payments' => AK_LANG === 'ar' ? 'الدفعات الشهرية' : 'Monthly Payments'
+                ];
+                $searchTypes = ['all' => AK_LANG === 'ar' ? 'كل الأنواع' : 'All types'];
+                foreach ($searchTypeLabels as $typeKey => $typeLabel) {
+                    if (in_array($typeKey, $allowedSearchTypes, true)) { $searchTypes[$typeKey] = $typeLabel; }
+                }
+                foreach ($searchTypes as $tv => $tl):
+                ?>
+                    <option value="<?php echo e($tv); ?>" <?php echo $type === $tv ? 'selected' : ''; ?>><?php echo e($tl); ?></option>
+                <?php endforeach; ?>
+            </select>
+
+            <input type="text" name="q" class="form-control search-query" value="<?php echo e($q); ?>" autofocus autocomplete="off"
+                   placeholder="<?php echo AK_LANG === 'ar' ? 'الاسم، الكود، الهاتف، البريد الإلكتروني...' : 'Name, code, phone, email...'; ?>">
+
+            <button type="submit" class="btn btn-primary search-submit">
+                <i class="fas fa-search me-1"></i><?php echo AK_LANG === 'ar' ? 'بحث' : 'Search'; ?>
+            </button>
+        </div>
+
+        <?php if ($type !== 'all'): ?>
+            <?php
+            $workspaceStatusOptions = [];
+            if ($type === 'families') { $workspaceStatusOptions = $FAMILY_STATUS_LABELS; }
+            elseif ($type === 'sponsors') { $workspaceStatusOptions = $SPONSOR_STATUS_LABELS; }
+            elseif ($type === 'sponsorships') { $workspaceStatusOptions = $SPONSORSHIP_STATUS_LABELS; }
+            elseif ($type === 'payments') { foreach ($PAYMENT_STATUS_LABELS as $k => $v) { $workspaceStatusOptions[$k] = $v[0]; } }
+            ?>
+            <div class="search-quick-filters">
+                <span class="search-filter-label"><i class="fas fa-filter me-1"></i><?php echo AK_LANG === 'ar' ? 'فلاتر' : 'Filters'; ?></span>
+                <?php if ($workspaceStatusOptions): ?>
+                    <select name="status" class="form-select form-select-sm">
+                        <option value=""><?php echo AK_LANG === 'ar' ? 'كل الحالات' : 'All statuses'; ?></option>
+                        <?php foreach ($workspaceStatusOptions as $sv => $sl): ?>
+                            <option value="<?php echo e($sv); ?>" <?php echo $status === $sv ? 'selected' : ''; ?>><?php echo e($sl); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                <?php endif; ?>
+                <?php if ($type === 'payments'): ?>
+                    <input type="month" name="month" class="form-control form-control-sm" value="<?php echo e($month); ?>" aria-label="Month">
+                <?php endif; ?>
+                <a href="<?php echo APP_URL; ?>modules/search/index.php" class="btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-rotate-left me-1"></i><?php echo AK_LANG === 'ar' ? 'مسح الفلاتر' : 'Clear'; ?>
+                </a>
+            </div>
+        <?php endif; ?>
+    </form>
+</div>
+
+<?php include dirname(__DIR__, 2) . '/includes/alerts.php'; ?>'''
+          if not old_intro.search(s):
+              raise SystemExit('search intro block not found')
+          s = old_intro.sub(intro, s, count=1)
+
+          # Keep filters in one place: the new workspace handles status/month selection.
+          s = re.sub(r'''\n    <?php if \(\$type !== 'all'\): \?>\n    <div class="filter-bar mb-4">.*?    <?php endif; \?>\n\n    <!-- Families:''', '\n    <!-- Families:', s, count=1, flags=re.S)
+
+          search.write_text(s, encoding='utf-8', newline='\n')
+
+      - name: Commit redesigned search
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add includes/header.php modules/search/index.php
+          git diff --cached --check
+          git diff --cached --quiet && exit 0
+          git commit -m "ui: move global search into dedicated workspace"
+          git push
+
+      - name: Remove temporary workflow
+        run: |
+          git rm .github/workflows/apply-search-redesign.yml
+          git commit -m "chore: remove temporary search redesign workflow"
+          git push
