@@ -32,12 +32,9 @@ $message = '';
 $msg_type = 'success';
 $filter = $_GET['status'] ?? 'all';
 
+// users stores the role through role_id; the role code lives in roles.code.
 $currentEmployee = dbFetchOne(
-    "SELECT e.id, e.full_name, u.role AS employee_role
-     FROM employees e
-     JOIN users u ON u.id = e.user_id
-     WHERE e.user_id = ?
-     LIMIT 1",
+    "SELECT id, full_name FROM employees WHERE user_id = ? LIMIT 1",
     [Session::getUserID()]
 );
 
@@ -138,9 +135,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                      FROM leaves l
                      JOIN employees e ON e.id = l.employee_id
                      JOIN users u ON u.id = e.user_id
+                     JOIN roles r ON r.id = u.role_id
                      WHERE l.id = ?
                        AND l.status = 'pending'
-                       AND u.role NOT IN ('hr_manager', 'hr_staff')
+                       AND r.code NOT IN ('hr_manager', 'hr_staff')
                      LIMIT 1",
                     [$id]
                 );
@@ -173,9 +171,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                      FROM leaves l
                      JOIN employees e ON e.id = l.employee_id
                      JOIN users u ON u.id = e.user_id
+                     JOIN roles r ON r.id = u.role_id
                      WHERE l.id = ?
                        AND l.status = 'pending'
-                       AND u.role IN ('hr_manager', 'hr_staff')
+                       AND r.code IN ('hr_manager', 'hr_staff')
                      LIMIT 1",
                     [$id]
                 );
@@ -218,14 +217,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // Reject only requests this role is responsible for approving.
             $roleCondition = $isHrUser
-                ? "u.role NOT IN ('hr_manager', 'hr_staff')"
-                : "u.role IN ('hr_manager', 'hr_staff')";
+                ? "r.code NOT IN ('hr_manager', 'hr_staff')"
+                : "r.code IN ('hr_manager', 'hr_staff')";
 
             $leave = dbFetchOne(
                 "SELECT l.id
                  FROM leaves l
                  JOIN employees e ON e.id = l.employee_id
                  JOIN users u ON u.id = e.user_id
+                 JOIN roles r ON r.id = u.role_id
                  WHERE l.id = ?
                    AND l.status = 'pending'
                    AND {$roleCondition}
@@ -329,15 +329,16 @@ if ($isRequestMode) {
 
 // Management view: HR sees normal employees' pending requests; GM sees HR requests.
 $roleCondition = $isHrUser
-    ? "u.role NOT IN ('hr_manager', 'hr_staff')"
-    : "u.role IN ('hr_manager', 'hr_staff')";
+    ? "r.code NOT IN ('hr_manager', 'hr_staff')"
+    : "r.code IN ('hr_manager', 'hr_staff')";
 
 $sql = "SELECT l.*, e.full_name AS emp_name, d.name_ar AS dept_name,
                u1.full_name AS mgr_name, u2.full_name AS hr_name,
-               u.role AS employee_role
+               r.code AS employee_role
         FROM leaves l
         JOIN employees e ON l.employee_id = e.id
         JOIN users u ON u.id = e.user_id
+        JOIN roles r ON r.id = u.role_id
         LEFT JOIN departments d ON e.department_id = d.id
         LEFT JOIN users u1 ON l.manager_approved_by = u1.id
         LEFT JOIN users u2 ON l.hr_approved_by = u2.id
