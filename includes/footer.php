@@ -54,7 +54,6 @@ window.AK_TRANSLATIONS=<?php echo json_encode(ak_dict(),JSON_UNESCAPED_UNICODE|J
     if(!bulkForm)return;
     var selected=new Set();
     document.querySelectorAll('.att3 .row-check:checked').forEach(function(check){selected.add(String(check.value))});
-
     function syncSelection(){
         document.querySelectorAll('.att3 .row-check').forEach(function(check){
             var id=String(check.value);
@@ -69,7 +68,6 @@ window.AK_TRANSLATIONS=<?php echo json_encode(ak_dict(),JSON_UNESCAPED_UNICODE|J
     });
     var selectAll=document.getElementById('selectAll');
     if(selectAll)selectAll.addEventListener('click',function(){setTimeout(syncSelection,0)});
-
     bulkForm.addEventListener('submit',function(event){
         event.preventDefault();
         syncSelection();
@@ -106,5 +104,6 @@ window.AK_TRANSLATIONS=<?php echo json_encode(ak_dict(),JSON_UNESCAPED_UNICODE|J
 (function(){var deferred=null;var btn=document.getElementById('akInstallBtn');window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferred=e;if(btn)btn.classList.remove('d-none')});if(btn)btn.addEventListener('click',function(){if(!deferred)return;deferred.prompt();deferred.userChoice.then(function(){deferred=null;btn.classList.add('d-none')})});window.addEventListener('appinstalled',function(){if(btn)btn.classList.add('d-none')})})();
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('<?php echo APP_URL; ?>sw.js').catch(function(){})});}
 </script>
+<script src="<?php echo asset('js/attendance_bulk_fix.js'); ?>"></script>
 </body>
 </html>
