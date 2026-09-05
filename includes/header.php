@@ -1054,6 +1054,56 @@ if (Session::isLoggedIn()) {
         }
 
 
+        .ak-header-search-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            min-height: 32px;
+            padding: 4px 11px;
+            border: 1px solid rgba(255,255,255,0.22);
+            border-radius: 6px;
+            background: rgba(255,255,255,0.12);
+            color: #fff !important;
+            text-decoration: none;
+            font-size: 0.72rem;
+            font-weight: 700;
+            white-space: nowrap;
+            transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .ak-header-search-btn:hover {
+            background: rgba(255,255,255,0.22);
+            color: #fff !important;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.16);
+        }
+
+        .ak-header-search-btn:focus-visible {
+            outline: 3px solid rgba(255,255,255,0.72);
+            outline-offset: 2px;
+        }
+
+        .ak-header-search-btn i {
+            font-size: 0.82rem;
+        }
+
+        body.theme-dark .ak-header-search-btn {
+            background: rgba(255,255,255,0.09);
+            border-color: rgba(255,255,255,0.28);
+        }
+
+        @media (max-width: 768px) {
+            .ak-header-search-btn span {
+                display: none;
+            }
+
+            .ak-header-search-btn {
+                width: 32px;
+                padding: 4px;
+            }
+        }
+
         .content {
             padding: 24px;
             flex-grow: 1;
@@ -1093,126 +1143,6 @@ if (Session::isLoggedIn()) {
         }
 
 
-        .ak-search-bar-wrap {
-            background: #fff;
-            border-bottom: 1px solid #e3e7ee;
-            padding: 8px 24px;
-        }
-
-        .ak-search-form {
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-
-        .ak-search-form .form-select-sm,
-        .ak-search-form .form-control-sm {
-            border-radius: 6px;
-            font-size: 0.85rem;
-            height: 34px;
-            padding: 4px 10px;
-        }
-
-        .ak-search-form .btn-sm {
-            border-radius: 6px;
-            font-size: 0.85rem;
-            height: 34px;
-            padding: 4px 14px;
-        }
-
-        .ak-search-form .btn-outline-secondary {
-            border-color: #dee2e6;
-        }
-
-        .ak-search-form .btn-outline-secondary:hover {
-            background: #f8f9fa;
-            border-color: #c1c9d0;
-        }
-
-        @media (max-width: 991.98px) {
-
-            .qa-top-bar {
-                flex-direction: column;
-                align-items: stretch;
-                flex-wrap: wrap;
-            }
-
-            .qa-actions {
-                justify-content: center;
-            }
-
-            .qa-user-controls {
-                justify-content: flex-end;
-                margin: 5px 0 0 0;
-            }
-
-        }
-
-        @media (max-width: 768px) {
-            .ak-search-bar-wrap {
-                padding: 8px 12px;
-            }
-            
-            .ak-search-form .form-select-sm,
-            .ak-search-form .form-control-sm {
-                font-size: 0.75rem;
-                height: 30px;
-            }
-            
-            .ak-search-form .btn-sm {
-                font-size: 0.75rem;
-                height: 30px;
-                padding: 2px 10px;
-            }
-
-            .org-header-banner {
-                font-size: 1rem;
-                padding: 8px 12px;
-            }
-
-            .org-header-banner .org-name {
-                font-size: 1rem;
-            }
-
-            .org-header-banner .org-flag {
-                font-size: 1.2rem;
-            }
-        }
-
-        /* Dark mode support for search */
-        body.theme-dark .ak-search-bar-wrap {
-            background: #2d3748;
-            border-bottom-color: #4a5568;
-        }
-
-        body.theme-dark .ak-search-form .form-select-sm,
-        body.theme-dark .ak-search-form .form-control-sm {
-            background: #1a1a2e;
-            color: #e2e8f0;
-            border-color: #4a5568;
-        }
-
-        body.theme-dark .ak-search-form .form-select-sm:focus,
-        body.theme-dark .ak-search-form .form-control-sm:focus {
-            background: #1a1a2e;
-            color: #e2e8f0;
-            border-color: var(--navy);
-            box-shadow: 0 0 0 0.2rem rgba(27, 77, 143, 0.25);
-        }
-
-        body.theme-dark .ak-search-form .form-select-sm option {
-            background: #2d3748;
-            color: #e2e8f0;
-        }
-
-        body.theme-dark .ak-search-form .btn-outline-secondary {
-            color: #e2e8f0;
-            border-color: #4a5568;
-        }
-
-        body.theme-dark .ak-search-form .btn-outline-secondary:hover {
-            background: #4a5568;
-            border-color: #6c7a8a;
-        }
 
     </style>
 
@@ -1375,6 +1305,19 @@ if (Session::isLoggedIn()) {
 
                 <div class="qa-user-controls">
 
+                    <?php if ($canGlobalSearch): ?>
+                        <a
+                            href="<?php echo APP_URL; ?>modules/search/index.php"
+                            class="ak-header-search-btn"
+                            data-search-types="<?php echo e(implode(',', $allowedSearchTypes)); ?>"
+                            aria-label="<?php echo e(AK_LANG === 'ar' ? 'فتح البحث العام' : 'Open global search'); ?>"
+                            title="<?php echo e(AK_LANG === 'ar' ? 'البحث العام' : 'Global Search'); ?>"
+                        >
+                            <i class="fas fa-search" aria-hidden="true"></i>
+                            <span><?php echo e(AK_LANG === 'ar' ? 'البحث' : 'Search'); ?></span>
+                        </a>
+                    <?php endif; ?>
+
                     <a
                         href="<?php echo e($langSwitchUrl); ?>"
                         class="qa-btn"
@@ -1531,105 +1474,6 @@ if (Session::isLoggedIn()) {
 
             </div>
 
-            <!-- =========================================================
-                 SEARCH
-                 ========================================================= -->
-
-            <?php if ($canGlobalSearch): ?>
-            <div class="ak-search-bar-wrap">
-                <form
-                    action="<?php echo APP_URL; ?>modules/search/index.php"
-                    method="get"
-                    class="ak-search-form"
-                    id="globalSearchForm"
-                >
-                    <div class="d-flex flex-wrap gap-2 w-100 align-items-center">
-                        <!-- Search Type -->
-                        <select
-                            name="type"
-                            class="form-select form-select-sm"
-                            style="width:140px; flex-shrink:0;"
-                            id="searchType"
-                        >
-                            <?php
-                            $searchTypeLabels = [
-                                'families' => 'الأسر والأيتام',
-                                'sponsors' => 'الكفلاء',
-                                'sponsorships' => 'الكفالات',
-                                'payments' => 'الدفعات الشهرية'
-                            ];
-
-                            $searchTypes = [];
-                            if ($canGlobalSearch) {
-                                $searchTypes['all'] = 'كل الأنواع';
-                                foreach ($searchTypeLabels as $typeKey => $typeLabel) {
-                                    if (in_array($typeKey, $allowedSearchTypes, true)) {
-                                        $searchTypes[$typeKey] = $typeLabel;
-                                    }
-                                }
-                            }
-
-                            $curType = $_GET['type'] ?? 'all';
-                            if (!isset($searchTypes[$curType])) {
-                                $curType = array_key_first($searchTypes) ?? 'all';
-                            }
-                            foreach ($searchTypes as $tv => $tl):
-                            ?>
-                                <option value="<?php echo e($tv); ?>" <?php echo $curType === $tv ? 'selected' : ''; ?>>
-                                    <?php echo e($tl); ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-
-                        <!-- Search Query -->
-                        <input
-                            type="text"
-                            name="q"
-                            class="form-control form-control-sm"
-                            placeholder="ابحث بالاسم، الكود، رقم الهاتف..."
-                            value="<?php echo e($_GET['q'] ?? ''); ?>"
-                            id="searchQuery"
-                            style="flex:1; min-width:150px;"
-                            <?php echo (strpos($_SERVER['SCRIPT_NAME'] ?? '', 'modules/search/index.php') !== false) ? 'autofocus' : ''; ?>
-                        >
-
-                        <!-- Status Filter -->
-                        <select name="status" class="form-select form-select-sm" id="searchStatus" style="width:130px; flex-shrink:0;">
-                            <option value="">الحالة</option>
-                            <option value="active" <?php echo ($_GET['status'] ?? '') === 'active' ? 'selected' : ''; ?>>نشط</option>
-                            <option value="inactive" <?php echo ($_GET['status'] ?? '') === 'inactive' ? 'selected' : ''; ?>>غير نشط</option>
-                            <option value="pending" <?php echo ($_GET['status'] ?? '') === 'pending' ? 'selected' : ''; ?>>قيد الانتظار</option>
-                            <option value="completed" <?php echo ($_GET['status'] ?? '') === 'completed' ? 'selected' : ''; ?>>مكتمل</option>
-                            <option value="paused" <?php echo ($_GET['status'] ?? '') === 'paused' ? 'selected' : ''; ?>>موقوف</option>
-                            <option value="cancelled" <?php echo ($_GET['status'] ?? '') === 'cancelled' ? 'selected' : ''; ?>>ملغى</option>
-                            <option value="archived" <?php echo ($_GET['status'] ?? '') === 'archived' ? 'selected' : ''; ?>>مؤرشف</option>
-                        </select>
-
-                        <!-- Month Filter (for payments) -->
-                        <input
-                            type="month"
-                            name="month"
-                            class="form-control form-control-sm"
-                            id="searchMonth"
-                            value="<?php echo e($_GET['month'] ?? ''); ?>"
-                            placeholder="الشهر"
-                            style="width:160px; flex-shrink:0; <?php echo ($curType === 'payments') ? '' : 'display:none;'; ?>"
-                        >
-
-                        <!-- Search Button -->
-                        <button type="submit" class="btn btn-primary btn-sm" id="searchSubmitBtn" style="flex-shrink:0;">
-                            <i class="fas fa-search"></i>
-                            بحث
-                        </button>
-
-                        <!-- Reset Button -->
-                        <a href="<?php echo APP_URL; ?>modules/search/index.php" class="btn btn-outline-secondary btn-sm" style="flex-shrink:0;">
-                            <i class="fas fa-undo"></i>
-                        </a>
-                    </div>
-                </form>
-            </div>
-            <?php endif; ?>
 
         </div>
         <!-- END header-sticky-wrapper -->

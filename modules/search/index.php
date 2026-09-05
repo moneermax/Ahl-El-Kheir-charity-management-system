@@ -3,8 +3,9 @@
  * modules/search/index.php
  *
  * Global search across the core of the system: families & orphans, sponsors,
- * sponsorships, and monthly disbursements (payments). Fed by the search bar
- * in includes/header.php (visible on every page, for every role).
+ * sponsorships, and monthly disbursements (payments). The shared header opens
+ * this route as a dedicated Search Center; results remain rendered here so
+ * query state, filters, permissions, and pagination stay in one workspace.
  *
  * When q is empty, shows all results filtered by type and status/month.
  */
