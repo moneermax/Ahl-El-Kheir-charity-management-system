@@ -105,6 +105,11 @@
         animation: none;
     }
 }
+
+/* The personal leave action is rendered inside the user menu, not the top action strip. */
+.ak-leave-request-moving {
+    visibility: hidden;
+}
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -125,6 +130,32 @@ window.AK_TRANSLATIONS = <?php echo json_encode(ak_dict(), JSON_UNESCAPED_UNICOD
 <script src="<?php echo asset('js/fm_dashboard_layout.js'); ?>"></script>
 <?php endif; ?>
 <script>
+(function(){
+    var leaveLink = document.querySelector('a[href*="modules/hr/leaves.php?action=request"]');
+    var userMenu = document.querySelector('#userDropdown .ak-dd-menu');
+
+    if (leaveLink && userMenu) {
+        leaveLink.classList.remove('qa-btn');
+        leaveLink.classList.add('ak-dd-item', 'ak-leave-request-moving');
+        leaveLink.removeAttribute('style');
+        leaveLink.setAttribute('title', 'طلب إجازة');
+
+        var icon = leaveLink.querySelector('i');
+        if (icon) {
+            icon.className = 'fas fa-calendar-plus me-2';
+        }
+
+        var divider = document.createElement('div');
+        divider.className = 'dropdown-divider';
+        userMenu.insertBefore(divider, userMenu.firstChild);
+        userMenu.insertBefore(leaveLink, divider.nextSibling);
+
+        requestAnimationFrame(function(){
+            leaveLink.classList.remove('ak-leave-request-moving');
+        });
+    }
+})();
+
 (function(){var deferred=null;var btn=document.getElementById('akInstallBtn');window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferred=e;if(btn)btn.classList.remove('d-none')});if(btn)btn.addEventListener('click',function(){if(!deferred)return;deferred.prompt();deferred.userChoice.then(function(){deferred=null;btn.classList.add('d-none')})});window.addEventListener('appinstalled',function(){if(btn)btn.classList.add('d-none')})})();
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('<?php echo APP_URL; ?>sw.js').catch(function(){})});}
 </script>
