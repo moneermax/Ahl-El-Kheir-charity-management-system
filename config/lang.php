@@ -44,30 +44,29 @@ function ak_legacy_catalog(): array {
 }
 
 /**
- * Build the browser dictionary for the compatibility layer.
- *
- * Stable catalogs are key => translation, while the temporary DOM bridge needs
- * source-text => translation. Therefore we derive an exact Arabic => English
- * map from the authoritative AR/EN catalogs. The legacy dictionary remains a
- * fallback only for strings that have not yet been migrated into stable keys.
+ * Build the browser dictionary used by both AKLang.t() and the temporary
+ * exact-value compatibility bridge. Stable key => English entries must remain
+ * available for AKLang.t(); derived Arabic => English entries let still-unmigrated
+ * pages benefit from the authoritative catalogs instead of requiring legacy data.
  */
 function ak_dict(): array {
     if (AK_LANG !== 'en') return ak_catalog('ar');
 
-    $legacy = ak_legacy_catalog();
     $ar = ak_catalog('ar');
     $en = ak_catalog('en');
-    $stable = [];
+    $legacy = ak_legacy_catalog();
+    $stableText = [];
 
     foreach ($ar as $key => $arabic) {
         if (!array_key_exists($key, $en)) continue;
         $source = ak_legacy_normalize((string)$arabic);
         if ($source === '') continue;
-        $stable[$source] = (string)$en[$key];
+        $stableText[$source] = (string)$en[$key];
     }
 
-    // Stable catalog text wins over the old compatibility dictionary.
-    return array_merge($legacy, $stable);
+    // Preserve stable key lookups first. Exact Arabic text mappings are
+    // compatibility aliases, with stable catalog text taking precedence.
+    return array_merge($legacy, $stableText, $en);
 }
 
 function ak_interpolate(string $value, array $params): string { foreach ($params as $name => $replacement) $value = str_replace(':' . $name, (string)$replacement, $value); return $value; }
