@@ -1,0 +1,133 @@
+name: Perform search header fix
+
+on:
+  push:
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply compact search header
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          p = Path('includes/header.php')
+          s = p.read_text(encoding='utf-8')
+
+          # Remove legacy search CSS.
+          s = re.sub(r'\n\s*\.ak-search-bar-wrap\s*\{.*?\n\s*\.ak-search-form \.btn-outline-secondary:hover\s*\{.*?\n\s*\}\s*', '\n', s, count=1, flags=re.S)
+          s = re.sub(r'\n\s*@media \(max-width: 768px\) \{\s*\.ak-search-bar-wrap.*?(?=\n\s*\.org-header-banner)', '\n', s, count=1, flags=re.S)
+          s = re.sub(r'\n\s*/\* Dark mode support for search \*/.*?(?=\n\s*</style>)', '\n', s, count=1, flags=re.S)
+
+          css = r'''
+        /* Compact global search entry */
+        .qa-search-entry {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            height: 32px;
+            padding: 4px 11px;
+            border: 1px solid rgba(255,255,255,0.22);
+            border-radius: 5px;
+            background: rgba(255,255,255,0.12);
+            color: #fff !important;
+            text-decoration: none;
+            font-size: 0.72rem;
+            font-weight: 700;
+            white-space: nowrap;
+            transition: background .15s ease, transform .15s ease;
+        }
+        .qa-search-entry:hover {
+            background: rgba(255,255,255,0.22);
+            color: #fff !important;
+            transform: translateY(-1px);
+        }
+        .qa-search-entry i { font-size: 0.78rem; }
+        @media (max-width: 768px) {
+            .qa-search-entry span { display: none; }
+            .qa-search-entry { width: 32px; padding: 4px; }
+            .org-header-banner { font-size: 1rem; padding: 8px 12px; }
+            .org-header-banner .org-name { font-size: 1rem; }
+            .org-header-banner .org-flag { font-size: 1.2rem; }
+        }
+'''
+          if '.qa-search-entry {' not in s:
+              s = s.replace('    </style>', css + '\n    </style>', 1)
+
+          # Replace only the old rendered search block. Keep the sticky wrapper intact.
+          pattern = re.compile(
+              r'''\n\s*<!-- =========================================================\n\s*SEARCH\n\s*========================================================= -->\n\s*<\?php if \(\$canGlobalSearch\): \?>.*?\n\s*<\?php endif; \?>\n\n\s*</div>\n\s*<!-- END header-sticky-wrapper -->''',
+              re.S
+          )
+          replacement = r'''
+
+            <!-- =========================================================
+                 GLOBAL SEARCH ENTRY
+                 ========================================================= -->
+            <?php if ($canGlobalSearch): ?>
+                <a
+                    href="<?php echo APP_URL; ?>modules/search/index.php"
+                    class="qa-search-entry"
+                    aria-label="<?php echo AK_LANG === 'ar' ? 'فتح البحث العام' : 'Open global search'; ?>"
+                    title="<?php echo AK_LANG === 'ar' ? 'البحث العام' : 'Global Search'; ?>"
+                >
+                    <i class="fas fa-search"></i>
+                    <span><?php echo AK_LANG === 'ar' ? 'البحث' : 'Search'; ?></span>
+                </a>
+            <?php endif; ?>
+
+        </div>
+        <!-- END header-sticky-wrapper -->'''
+          if not pattern.search(s):
+              raise SystemExit('legacy search block not found')
+          s = pattern.sub(replacement, s, count=1)
+
+          # Move the search link into the top bar instead of creating another header row.
+          marker = '''                <!-- =====================================================
+                     USER CONTROLS
+                     ===================================================== -->'''
+          search_markup = '''                <?php if ($canGlobalSearch): ?>
+                    <a
+                        href="<?php echo APP_URL; ?>modules/search/index.php"
+                        class="qa-search-entry"
+                        aria-label="<?php echo AK_LANG === 'ar' ? 'فتح البحث العام' : 'Open global search'; ?>"
+                        title="<?php echo AK_LANG === 'ar' ? 'البحث العام' : 'Global Search'; ?>"
+                    >
+                        <i class="fas fa-search"></i>
+                        <span><?php echo AK_LANG === 'ar' ? 'البحث' : 'Search'; ?></span>
+                    </a>
+                <?php endif; ?>
+
+'''
+          if marker not in s:
+              raise SystemExit('user controls marker not found')
+          s = s.replace(marker, search_markup + marker, 1)
+
+          # Remove accidental literal escaped-newline output if any was introduced by prior attempts.
+          s = s.replace('echo "\\n<script>\\n";', 'echo "<script>";')
+
+          for bad in ('ak-search-bar-wrap', 'ak-search-form', 'globalSearchForm', 'id="searchType"', 'id="searchQuery"', 'id="searchStatus"', 'id="searchMonth"'):
+              if bad in s:
+                  raise SystemExit('legacy search token remains: ' + bad)
+
+          p.write_text(s, encoding='utf-8', newline='\n')
+
+      - name: Commit source change
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add includes/header.php
+          git diff --cached --check
+          git diff --cached --quiet || git commit -m "ui: redesign global search header entry"
+          git push
