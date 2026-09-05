@@ -95,12 +95,7 @@
         document.documentElement.lang = window.AK_LANG === 'en' ? 'en' : 'ar';
     }
 
-    /*
-     * FM dashboard: move the role-specific header quick actions into a
-     * compact, equal-size card grid above the statistics. The universal
-     * Leave Request action remains in the header because it is shared by
-     * all roles and is not part of the FM dashboard action set.
-     */
+    /* FM dashboard role-specific header actions become six cards above Treasury. */
     function buildFinancialManagerCards() {
         if (!/\/modules\/accounting\/fm_dashboard\.php(?:$|[?#])/.test(window.location.pathname)) return;
         if (document.querySelector('.ak-fm-action-grid')) return;
@@ -113,10 +108,9 @@
         });
         if (!buttons.length) return;
 
-        var anchor = document.querySelector('.main-area .row.g-3.mb-4.fade-in');
-        if (!anchor) {
-            anchor = document.querySelector('.main-area .row.g-3');
-        }
+        /* fm_dashboard.php uses the treasury .grid-4 as its first content block. */
+        var anchor = document.querySelector('.main-area .grid-4');
+        if (!anchor) anchor = document.querySelector('main.container-fluid .grid-4');
         if (!anchor) return;
 
         var style = document.createElement('style');
@@ -142,47 +136,49 @@
         grid.className = 'ak-fm-action-grid fade-in';
         grid.setAttribute('aria-label', translate('accounting.quick_actions'));
 
+        var titleKeys = [
+            'accounting.header_accounting',
+            'accounting.header_disbursements',
+            'accounting.header_accounts',
+            'accounting.header_projects',
+            'accounting.header_reports',
+            'accounting.header_transactions'
+        ];
+        var descKeys = [
+            'accounting.fm_action_accounting_desc',
+            'accounting.fm_action_disbursements_desc',
+            'accounting.fm_action_accounts_desc',
+            'accounting.fm_action_projects_desc',
+            'accounting.fm_action_reports_desc',
+            'accounting.fm_action_transactions_desc'
+        ];
+
         buttons.forEach(function (button, index) {
             var card = document.createElement('a');
             card.className = 'ak-fm-action-card ak-fm-action-' + (index + 1);
             card.href = button.href;
-
             var body = document.createElement('div');
             body.className = 'text-center px-2';
-
             var icon = document.createElement('div');
             icon.className = 'ak-fm-action-icon';
             var originalIcon = button.querySelector('i');
             if (originalIcon) icon.innerHTML = originalIcon.outerHTML;
-
             var title = document.createElement('div');
             title.className = 'ak-fm-action-title';
-            title.textContent = button.textContent.trim();
-
-            var descKeys = [
-                'accounting.fm_action_accounting_desc',
-                'accounting.fm_action_disbursements_desc',
-                'accounting.fm_action_accounts_desc',
-                'accounting.fm_action_projects_desc',
-                'accounting.fm_action_reports_desc',
-                'accounting.fm_action_transactions_desc'
-            ];
+            title.textContent = translate(titleKeys[index] || '');
             var desc = document.createElement('div');
             desc.className = 'ak-fm-action-desc';
             desc.textContent = translate(descKeys[index] || '');
-
             body.appendChild(icon);
             body.appendChild(title);
             if (desc.textContent) body.appendChild(desc);
             card.appendChild(body);
             grid.appendChild(card);
-
             button.remove();
         });
 
         source.classList.toggle('d-none', !source.querySelector('a.qa-btn'));
         anchor.parentNode.insertBefore(grid, anchor);
-        refresh(grid);
     }
 
     window.AKLang = {
