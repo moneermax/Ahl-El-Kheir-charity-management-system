@@ -17,13 +17,13 @@ $uid = (int)Session::getUserId();
 $urole = (string)Session::getUserRole();
 
 if (!in_array($urole, ['financial_manager', 'admin', 'general_manager', 'vice_general_manager', 'fm'], true)) {
-    flash('error', 'غير مصرح لك بعرض هذه الصفحة.');
+    flash('error', t('fm.unauthorized'));
     header('Location: ' . APP_URL . 'dashboard/staff_dashboard.php');
     exit;
 }
 
 $active = 'fm_dashboard';
-$pageTitle = 'لوحة المدير المالي';
+$pageTitle = t('fm.page_title');
 
 ak_ensure_tables();
 ak_seed_accounts();
@@ -32,13 +32,13 @@ ak_out_ensure_schema();
 /* ══════════ PROJECT BUDGET FIRST-LEVEL APPROVAL ══════════ */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['project_fm_review'])) {
     if (!verify_csrf()) {
-        flash('error', 'انتهت صلاحية الجلسة.');
+        flash('error', t('fm.session_expired'));
         header('Location: ' . $_SERVER['REQUEST_URI']);
         exit;
     }
 
     if (!in_array($urole, ['financial_manager', 'admin', 'fm'], true)) {
-        flash('error', 'اعتماد ميزانية المشروع متاح للمدير المالي فقط.');
+        flash('error', t('fm.approval_fm_only'));
         header('Location: ' . $_SERVER['REQUEST_URI']);
         exit;
     }
@@ -57,13 +57,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['project_fm_review']))
 
     try {
         if (!$approval || $approval['approval_status'] !== 'submitted') {
-            throw new RuntimeException('المشروع غير موجود في طابور المراجعة المالية.');
+            throw new RuntimeException(t('fm.project_not_in_queue'));
         }
         if (!in_array($decision, ['approve', 'reject'], true)) {
-            throw new RuntimeException('قرار المراجعة غير صالح.');
+            throw new RuntimeException(t('fm.invalid_review_decision'));
         }
         if ($decision === 'reject' && $fmReason === '') {
-            throw new RuntimeException('سبب رفض الميزانية مطلوب.');
+            throw new RuntimeException(t('fm.rejection_reason_required'));
         }
 
         $budgetRow = dbFetchOne("SELECT b.id AS budget_id, COALESCE(SUM(COALESCE(bl.approved_amount, bl.estimated_amount)), 0) AS budget_amount
@@ -79,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['project_fm_review']))
         dbExecute('START TRANSACTION');
 
         if ($decision === 'approve') {
-            if ($budgetAmount <= 0) throw new RuntimeException('لا يمكن اعتماد مشروع دون مبلغ ميزانية مقترح.');
+            if ($budgetAmount <= 0) throw new RuntimeException(t('fm.no_budget_amount'));
             $accountIds = array_map('intval', array_keys($postedFundingAmounts));
             $allowedAccounts = dbFetchAll("SELECT a.id, a.code,
                     COALESCE(SUM(jl.debit - jl.credit), 0) AS ledger_balance,
@@ -94,13 +94,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['project_fm_review']))
             foreach ($postedFundingAmounts as $accountId => $rawAmount) {
                 $accountId = (int)$accountId; $amount = round((float)$rawAmount, 2);
                 if ($amount <= 0) continue;
-                if (!isset($accountsById[$accountId])) throw new RuntimeException('حساب مصدر التمويل غير صالح.');
+                if (!isset($accountsById[$accountId])) throw new RuntimeException(t('fm.invalid_funding_account'));
                 $available = round((float)$accountsById[$accountId]['ledger_balance'] - (float)$accountsById[$accountId]['reserved_amount'], 2);
-                if ($amount > $available) throw new RuntimeException('الرصيد المتاح غير كافٍ في الحساب ' . $accountsById[$accountId]['code'] . '. المتاح: ' . number_format($available, 2));
+                if ($amount > $available) throw new RuntimeException(t('fm.insufficient_balance', ['code' => $accountsById[$accountId]['code'], 'amount' => number_format($available, 2)]));
                 $allocationTotal += $amount;
                 $allocationRows[] = [$accountId, $accountsById[$accountId]['code'], $amount];
             }
-            if (round($allocationTotal, 2) !== $budgetAmount) throw new RuntimeException('يجب أن يساوي مجموع مصادر التمويل الميزانية المقترحة: ' . number_format($budgetAmount, 2));
+            if (round($allocationTotal, 2) !== $budgetAmount) throw new RuntimeException(t('fm.funding_total_mismatch', ['amount' => number_format($budgetAmount, 2)]));
             $expenseAccount = dbFetchOne("SELECT id FROM accounts WHERE code = '5110' AND is_active = 1 LIMIT 1");
             dbExecute('DELETE FROM project_funding_allocations WHERE project_id = ? AND status = \'approved\' AND journal_entry_id IS NULL', [$projectId]);
             foreach ($allocationRows as $allocation) {
@@ -118,7 +118,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['project_fm_review']))
                        WHERE project_id = ? AND approval_status = 'submitted'", [$uid, $projectId]);
             $auditAction = 'FM_APPROVE_PROJECT_BUDGET';
             $auditNew = ['approval_status' => 'fm_approved'];
-            $message = 'تم اعتماد ميزانية المشروع مبدئياً، وأصبح المشروع جاهزاً للاعتماد النهائي من المدير العام.';
+            $message = t('fm.approved_success');
         } else {
             dbExecute("UPDATE project_approval
                        SET approval_status = 'rejected', fm_reviewed_by = ?,
@@ -126,7 +126,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['project_fm_review']))
                        WHERE project_id = ? AND approval_status = 'submitted'", [$uid, $fmReason, $projectId]);
             $auditAction = 'FM_REJECT_PROJECT_BUDGET';
             $auditNew = ['approval_status' => 'rejected', 'fm_rejection_reason' => $fmReason];
-            $message = 'تم رفض ميزانية المشروع وإعادتها إلى مدير المشاريع.';
+            $message = t('fm.rejected_success');
         }
 
         dbExecute("INSERT INTO audit_log
@@ -335,8 +335,8 @@ $recentJournals = dbFetchAll("SELECT je.entry_code, je.entry_date, je.descriptio
 
 <main class="container-fluid py-4">
 <div class="fm-header">
-    <h1>مرحباً، المدير المالي</h1>
-    <p>نظرة شاملة على الخزينة والتدفقات المالية — <?php echo date('Y-m-d'); ?></p>
+    <h1><?php echo e(t('fm.welcome')); ?></h1>
+    <p><?php echo e(t('fm.overview', ['date' => date('Y-m-d')])); ?></p>
 </div>
 
 <?php
@@ -350,62 +350,61 @@ if (is_array($fl)) {
 }
 ?>
 
-
-
 <!-- ══════════ TREASURY BALANCE ══════════ -->
 <div class="grid-4">
-    <div class="stat-box"><div class="stat-label">💵 الصندوق النقدي</div><div class="stat-value"><?php echo number_format((float)$treasury['cash'], 0); ?></div><div class="stat-sub">حساب 1100</div></div>
-    <div class="stat-box blue"><div class="stat-label">🏦 الحساب البنكي</div><div class="stat-value"><?php echo number_format((float)$treasury['bank'], 0); ?></div><div class="stat-sub">حساب 1200</div></div>
-    <div class="stat-box purple"><div class="stat-label">📱 المحفظة الإلكترونية</div><div class="stat-value"><?php echo number_format((float)$treasury['wallet'], 0); ?></div><div class="stat-sub">حساب 1300</div></div>
-    <div class="stat-box green"><div class="stat-label">💰 إجمالي الخزينة</div><div class="stat-value"><?php echo number_format((float)$treasury['total'], 0); ?></div><div class="stat-sub">SDG</div></div>
+    <div class="stat-box"><div class="stat-label">💵 <?php echo e(t('fm.cash')); ?></div><div class="stat-value"><?php echo number_format((float)$treasury['cash'], 0); ?></div><div class="stat-sub"><?php echo e(t('fm.account_1100')); ?></div></div>
+    <div class="stat-box blue"><div class="stat-label">🏦 <?php echo e(t('fm.bank')); ?></div><div class="stat-value"><?php echo number_format((float)$treasury['bank'], 0); ?></div><div class="stat-sub"><?php echo e(t('fm.account_1200')); ?></div></div>
+    <div class="stat-box purple"><div class="stat-label">📱 <?php echo e(t('fm.wallet')); ?></div><div class="stat-value"><?php echo number_format((float)$treasury['wallet'], 0); ?></div><div class="stat-sub"><?php echo e(t('fm.account_1300')); ?></div></div>
+    <div class="stat-box green"><div class="stat-label">💰 <?php echo e(t('fm.total_treasury')); ?></div><div class="stat-value"><?php echo number_format((float)$treasury['total'], 0); ?></div><div class="stat-sub"><?php echo e(t('fm.currency_sdg')); ?></div></div>
 </div>
+
 <!-- ══════════ PROJECT BUDGETS PENDING FM REVIEW ══════════ -->
 <div id="project-budget-review" class="fm-card" style="border-right:5px solid #ffc107;">
     <div class="fm-card-head">
-        <span>📁 ميزانيات المشاريع بانتظار المراجعة المالية</span>
-        <span class="badge-fm <?php echo $projectApprovalCount ? 'badge-amber' : 'badge-green'; ?>"><?php echo $projectApprovalCount; ?> طلب</span>
+        <span>📁 <?php echo e(t('fm.project_budget_review')); ?></span>
+        <span class="badge-fm <?php echo $projectApprovalCount ? 'badge-amber' : 'badge-green'; ?>"><?php echo e(t('fm.request_count', ['count' => $projectApprovalCount])); ?></span>
     </div>
     <div class="fm-card-body">
         <?php if (!$projectApprovalQueue): ?>
-            <div class="empty-state">لا توجد ميزانيات مشاريع بانتظار المراجعة المالية.</div>
+            <div class="empty-state"><?php echo e(t('fm.no_project_budgets')); ?></div>
         <?php else: ?>
             <div style="overflow-x:auto">
                 <table class="fm-table">
-                    <thead><tr><th>المشروع</th><th>النوع</th><th>أنشأه</th><th>الميزانية</th><th>البنود</th><th>تاريخ الإرسال</th><th>توزيع مصادر التمويل من قبل FM</th><th>الإجراء</th></tr></thead>
+                    <thead><tr><th><?php echo e(t('fm.project')); ?></th><th><?php echo e(t('fm.project_type')); ?></th><th><?php echo e(t('fm.created_by')); ?></th><th><?php echo e(t('fm.budget')); ?></th><th><?php echo e(t('fm.items')); ?></th><th><?php echo e(t('fm.submission_date')); ?></th><th><?php echo e(t('fm.funding_source_distribution')); ?></th><th><?php echo e(t('fm.action')); ?></th></tr></thead>
                     <tbody>
                     <?php foreach ($projectApprovalQueue as $projectRequest): ?>
                         <tr>
                             <td><strong><?php echo e($projectRequest['project_name']); ?></strong><br><small class="text-muted"><code><?php echo e($projectRequest['project_code'] ?? ''); ?></code></small></td>
                             <td><?php echo e($projectRequest['project_type'] ?? '-'); ?></td>
                             <td><?php echo e($projectRequest['submitted_by_name'] ?? '-'); ?></td>
-                            <td><strong><?php echo number_format((float)$projectRequest['budget_amount'], 2); ?> <?php echo e($projectRequest['currency_code'] ?: 'SDG'); ?></strong><br><small class="text-muted">نسخة <?php echo (int)$projectRequest['budget_version']; ?></small></td>
+                            <td><strong><?php echo number_format((float)$projectRequest['budget_amount'], 2); ?> <?php echo e($projectRequest['currency_code'] ?: t('fm.currency_sdg')); ?></strong><br><small class="text-muted"><?php echo e(t('fm.version', ['version' => (int)$projectRequest['budget_version']])); ?></small></td>
                             <td><?php echo (int)$projectRequest['budget_line_count']; ?></td>
                             <td><?php echo e($projectRequest['submitted_at'] ?? '-'); ?></td>
                             <td style="min-width:260px">
                                 <?php $approvalFormId = 'fm-project-' . (int)$projectRequest['project_id']; ?>
                                 <?php foreach ($fundingAccounts as $fundingAccount): $available = max(0, round((float)$fundingAccount['ledger_balance'] - (float)$fundingAccount['reserved_amount'], 2)); ?>
                                     <label style="display:block; margin-bottom:5px; font-size:.8rem">
-                                        <span><?php echo e($fundingAccount['code'] . ' — ' . ($fundingAccount['name_ar'] ?: $fundingAccount['name_en'])); ?> (متاح <?php echo number_format($available, 2); ?>)</span>
-                                        <input form="<?php echo e($approvalFormId); ?>" type="number" step="0.01" min="0" max="<?php echo e((string)$available); ?>" name="funding_amounts[<?php echo (int)$projectRequest['project_id']; ?>][<?php echo (int)$fundingAccount['id']; ?>]" class="form-control form-control-sm" value="0" placeholder="المبلغ من هذا الحساب">
+                                        <span><?php echo e($fundingAccount['code'] . ' — ' . ($fundingAccount['name_ar'] ?: $fundingAccount['name_en'])); ?> (<?php echo e(t('fm.available', ['amount' => number_format($available, 2)])); ?>)</span>
+                                        <input form="<?php echo e($approvalFormId); ?>" type="number" step="0.01" min="0" max="<?php echo e((string)$available); ?>" name="funding_amounts[<?php echo (int)$projectRequest['project_id']; ?>][<?php echo (int)$fundingAccount['id']; ?>]" class="form-control form-control-sm" value="0" placeholder="<?php echo e(t('fm.amount_from_account')); ?>">
                                     </label>
                                 <?php endforeach; ?>
                             </td>
                             <td style="white-space:nowrap">
-                                <a class="btn-fm btn-navy" href="<?php echo APP_URL; ?>modules/projects/view.php?id=<?php echo (int)$projectRequest['project_id']; ?>">عرض المشروع</a>
-                                <form id="<?php echo e($approvalFormId); ?>" method="post" style="display:inline-block" onsubmit="return confirm('اعتماد ميزانية هذا المشروع بعد حفظ توزيع مصادر التمويل؟');">
+                                <a class="btn-fm btn-navy" href="<?php echo APP_URL; ?>modules/projects/view.php?id=<?php echo (int)$projectRequest['project_id']; ?>"><?php echo e(t('fm.view_project')); ?></a>
+                                <form id="<?php echo e($approvalFormId); ?>" method="post" style="display:inline-block" onsubmit="return confirm('<?php echo e(t('fm.approve_project_confirm')); ?>');">
                                     <?php echo csrf_field(); ?>
                                     <input type="hidden" name="project_fm_review" value="1">
                                     <input type="hidden" name="project_id" value="<?php echo (int)$projectRequest['project_id']; ?>">
                                     <input type="hidden" name="project_fm_decision" value="approve">
-                                    <button class="btn-fm btn-navy" type="submit">اعتماد مالي</button>
+                                    <button class="btn-fm btn-navy" type="submit"><?php echo e(t('fm.financial_approval')); ?></button>
                                 </form>
-                                <form method="post" style="display:inline-block" onsubmit="var r=prompt('اكتب سبب رفض الميزانية:'); if (!r || !r.trim()) return false; this.fm_rejection_reason.value=r; return true;">
+                                <form method="post" style="display:inline-block" onsubmit="var r=prompt('<?php echo e(t('fm.reject_reason_prompt')); ?>'); if (!r || !r.trim()) return false; this.fm_rejection_reason.value=r; return true;">
                                     <?php echo csrf_field(); ?>
                                     <input type="hidden" name="project_fm_review" value="1">
                                     <input type="hidden" name="project_id" value="<?php echo (int)$projectRequest['project_id']; ?>">
                                     <input type="hidden" name="project_fm_decision" value="reject">
                                     <input type="hidden" name="fm_rejection_reason" value="">
-                                    <button class="btn-fm btn-ghost" type="submit">رفض</button>
+                                    <button class="btn-fm btn-ghost" type="submit"><?php echo e(t('fm.reject')); ?></button>
                                 </form>
                             </td>
                         </tr>
@@ -416,37 +415,36 @@ if (is_array($fl)) {
         <?php endif; ?>
     </div>
 </div>
+
 <!-- ══════════ MONTHLY FLOW ══════════ -->
 <div class="grid-2">
-    <div class="fm-card"><div class="fm-card-head"><span>📈 إيرادات الشهر (<?php echo date('Y-m'); ?>)</span><span class="badge-fm badge-green">دخل</span></div><div class="fm-card-body"><div class="flow-row"><span class="flow-label">إجمالي الإيرادات</span><span class="flow-value income"><?php echo number_format((float)$monthlyFlow['income_total'], 0); ?></span></div><div class="flow-row"><span class="flow-label">💵 نقداً (4100)</span><span class="flow-value income"><?php echo number_format((float)$monthlyFlow['income_cash'], 0); ?></span></div><div class="flow-row"><span class="flow-label">🏦 بنكياً (4200)</span><span class="flow-value income"><?php echo number_format((float)$monthlyFlow['income_bank'], 0); ?></span></div></div></div>
-    <div class="fm-card"><div class="fm-card-head"><span>📉 مصروفات الشهر (<?php echo date('Y-m'); ?>)</span><span class="badge-fm badge-red">خرج</span></div><div class="fm-card-body"><div class="flow-row"><span class="flow-label">إجمالي المصروفات</span><span class="flow-value outgoing"><?php echo number_format((float)$monthlyFlow['outgoing_total'], 0); ?></span></div><div class="flow-row"><span class="flow-label">💵 نقداً (5100)</span><span class="flow-value outgoing"><?php echo number_format((float)$monthlyFlow['outgoing_cash'], 0); ?></span></div><div class="flow-row"><span class="flow-label">🏦 بنكياً (5200)</span><span class="flow-value outgoing"><?php echo number_format((float)$monthlyFlow['outgoing_bank'], 0); ?></span></div></div></div>
+    <div class="fm-card"><div class="fm-card-head"><span>📈 <?php echo e(t('fm.monthly_income', ['month' => date('Y-m')])); ?></span><span class="badge-fm badge-green"><?php echo e(t('fm.income')); ?></span></div><div class="fm-card-body"><div class="flow-row"><span class="flow-label"><?php echo e(t('fm.total_income')); ?></span><span class="flow-value income"><?php echo number_format((float)$monthlyFlow['income_total'], 0); ?></span></div><div class="flow-row"><span class="flow-label">💵 <?php echo e(t('fm.cash_income')); ?></span><span class="flow-value income"><?php echo number_format((float)$monthlyFlow['income_cash'], 0); ?></span></div><div class="flow-row"><span class="flow-label">🏦 <?php echo e(t('fm.bank_income')); ?></span><span class="flow-value income"><?php echo number_format((float)$monthlyFlow['income_bank'], 0); ?></span></div></div></div>
+    <div class="fm-card"><div class="fm-card-head"><span>📉 <?php echo e(t('fm.monthly_expenses', ['month' => date('Y-m')])); ?></span><span class="badge-fm badge-red"><?php echo e(t('fm.outgoing')); ?></span></div><div class="fm-card-body"><div class="flow-row"><span class="flow-label"><?php echo e(t('fm.total_expenses')); ?></span><span class="flow-value outgoing"><?php echo number_format((float)$monthlyFlow['outgoing_total'], 0); ?></span></div><div class="flow-row"><span class="flow-label">💵 <?php echo e(t('fm.cash_expense')); ?></span><span class="flow-value outgoing"><?php echo number_format((float)$monthlyFlow['outgoing_cash'], 0); ?></span></div><div class="flow-row"><span class="flow-label">🏦 <?php echo e(t('fm.bank_expense')); ?></span><span class="flow-value outgoing"><?php echo number_format((float)$monthlyFlow['outgoing_bank'], 0); ?></span></div></div></div>
 </div>
 
 <!-- Net Flow -->
-<div class="fm-card"><div class="fm-card-head"><span>📊 صافي التدفق الشهري</span></div><div class="fm-card-body"><?php $netFlow = (float)$monthlyFlow['income_total'] - (float)$monthlyFlow['outgoing_total']; $netClass = $netFlow >= 0 ? 'income' : 'outgoing'; $netLabel = $netFlow >= 0 ? 'فائض' : 'عجز'; ?><div style="display:flex; justify-content:space-around; align-items:center; flex-wrap:wrap; gap:20px"><div style="text-align:center"><div class="stat-label">الإيرادات</div><div class="stat-value income"><?php echo number_format((float)$monthlyFlow['income_total'], 0); ?></div></div><div style="font-size:2rem; color:#999">−</div><div style="text-align:center"><div class="stat-label">المصروفات</div><div class="stat-value outgoing"><?php echo number_format((float)$monthlyFlow['outgoing_total'], 0); ?></div></div><div style="font-size:2rem; color:#999">=</div><div style="text-align:center"><div class="stat-label">الصافي (<?php echo $netLabel; ?>)</div><div class="stat-value <?php echo $netClass; ?>"><?php echo number_format(abs($netFlow), 0); ?></div></div></div></div></div>
+<div class="fm-card"><div class="fm-card-head"><span>📊 <?php echo e(t('fm.net_monthly_flow')); ?></span></div><div class="fm-card-body"><?php $netFlow = (float)$monthlyFlow['income_total'] - (float)$monthlyFlow['outgoing_total']; $netClass = $netFlow >= 0 ? 'income' : 'outgoing'; $netLabel = $netFlow >= 0 ? t('fm.surplus') : t('fm.deficit'); ?><div style="display:flex; justify-content:space-around; align-items:center; flex-wrap:wrap; gap:20px"><div style="text-align:center"><div class="stat-label"><?php echo e(t('fm.income')); ?></div><div class="stat-value income"><?php echo number_format((float)$monthlyFlow['income_total'], 0); ?></div></div><div style="font-size:2rem; color:#999">−</div><div style="text-align:center"><div class="stat-label"><?php echo e(t('fm.total_expenses')); ?></div><div class="stat-value outgoing"><?php echo number_format((float)$monthlyFlow['outgoing_total'], 0); ?></div></div><div style="font-size:2rem; color:#999">=</div><div style="text-align:center"><div class="stat-label"><?php echo e(t('fm.net_result', ['status' => $netLabel])); ?></div><div class="stat-value <?php echo $netClass; ?>"><?php echo number_format(abs($netFlow), 0); ?></div></div></div></div></div>
 
 <!-- ══════════ DISBURSEMENT STATUS ═════════ -->
-<div class="fm-card"><div class="fm-card-head"><span>📋 حالة الدفعات الشهرية</span><a href="<?php echo APP_URL; ?>modules/accounting/disbursements.php" class="btn-fm btn-ghost" style="background:#fff; color:#1b4d8f; font-size:0.8rem">عرض الكل</a></div><div class="fm-card-body"><div class="grid-4"><div class="stat-box amber"><div class="stat-value"><?php echo (int)$disbStats['pending_approval']; ?></div><div class="stat-label">بانتظار الاعتماد</div><div class="stat-sub"><?php echo number_format((float)$disbStats['pending_amount'], 0); ?> SDG</div></div><div class="stat-box blue"><div class="stat-value"><?php echo (int)$disbStats['transferred']; ?></div><div class="stat-label">محوّلة (مفتوحة)</div><div class="stat-sub"><?php echo number_format((float)$disbStats['transferred_amount'], 0); ?> SDG</div></div><div class="stat-box green"><div class="stat-value"><?php echo (int)$disbStats['received']; ?></div><div class="stat-label">مستلمة (مغلقة)</div><div class="stat-sub">تم الصرف الكامل</div></div><div class="stat-box red"><div class="stat-value"><?php echo (int)$disbStats['voided']; ?></div><div class="stat-label">مُبطَلة</div><div class="stat-sub">قيد عكسي مُرحّل</div></div></div></div></div>
+<div class="fm-card"><div class="fm-card-head"><span>📋 <?php echo e(t('fm.monthly_disbursement_status')); ?></span><a href="<?php echo APP_URL; ?>modules/accounting/disbursements.php" class="btn-fm btn-ghost" style="background:#fff; color:#1b4d8f; font-size:0.8rem"><?php echo e(t('fm.view_all')); ?></a></div><div class="fm-card-body"><div class="grid-4"><div class="stat-box amber"><div class="stat-value"><?php echo (int)$disbStats['pending_approval']; ?></div><div class="stat-label"><?php echo e(t('fm.pending_approval')); ?></div><div class="stat-sub"><?php echo number_format((float)$disbStats['pending_amount'], 0); ?> <?php echo e(t('fm.currency_sdg')); ?></div></div><div class="stat-box blue"><div class="stat-value"><?php echo (int)$disbStats['transferred']; ?></div><div class="stat-label"><?php echo e(t('fm.transferred_open')); ?></div><div class="stat-sub"><?php echo number_format((float)$disbStats['transferred_amount'], 0); ?> <?php echo e(t('fm.currency_sdg')); ?></div></div><div class="stat-box green"><div class="stat-value"><?php echo (int)$disbStats['received']; ?></div><div class="stat-label"><?php echo e(t('fm.received_closed')); ?></div><div class="stat-sub"><?php echo e(t('fm.fully_disbursed')); ?></div></div><div class="stat-box red"><div class="stat-value"><?php echo (int)$disbStats['voided']; ?></div><div class="stat-label"><?php echo e(t('fm.voided')); ?></div><div class="stat-sub"><?php echo e(t('fm.posted_reversal')); ?></div></div></div></div></div>
 
 <!-- ═════════ PENDING MONTHLY DISBURSEMENTS ═════════ -->
-<?php if ($pendingQueue): ?><div class="fm-card"><div class="fm-card-head"><span>⏳ طابور اعتماد الدفعات — <?php echo count($pendingQueue); ?> دفعة بانتظار مراجعتك</span></div><div class="fm-card-body"><div style="overflow-x:auto"><table class="fm-table"><thead><tr><th>#</th><th>الشهر</th><th>الأخصائية</th><th>أنشأها</th><th>المبلغ</th><th>تاريخ الإرسال</th><th>إجراء</th></tr></thead><tbody><?php foreach ($pendingQueue as $pq): ?><tr><td><strong>#<?php echo (int)$pq['id']; ?></strong></td><td><?php echo e($pq['month']); ?></td><td><?php echo e($pq['nanny_name'] ?? '-'); ?></td><td><?php echo e($pq['created_by_name'] ?? '-'); ?></td><td><strong><?php echo number_format((float)$pq['total_amount'], 0); ?></strong></td><td><?php echo e($pq['submitted_at'] ?? '-'); ?></td><td><a href="<?php echo APP_URL; ?>modules/accounting/disbursements.php?view=<?php echo (int)$pq['id']; ?>" class="btn-fm btn-navy">مراجعة</a></td></tr><?php endforeach; ?></tbody></table></div></div></div><?php endif; ?>
+<?php if ($pendingQueue): ?><div class="fm-card"><div class="fm-card-head"><span>⏳ <?php echo e(t('fm.disbursement_approval_queue', ['count' => count($pendingQueue)])); ?></span></div><div class="fm-card-body"><div style="overflow-x:auto"><table class="fm-table"><thead><tr><th>#</th><th><?php echo e(t('common.month')); ?></th><th><?php echo e(t('fm.nanny')); ?></th><th><?php echo e(t('fm.created_by')); ?></th><th><?php echo e(t('accounting.amount')); ?></th><th><?php echo e(t('fm.submission_date')); ?></th><th><?php echo e(t('fm.action')); ?></th></tr></thead><tbody><?php foreach ($pendingQueue as $pq): ?><tr><td><strong>#<?php echo (int)$pq['id']; ?></strong></td><td><?php echo e($pq['month']); ?></td><td><?php echo e($pq['nanny_name'] ?? '-'); ?></td><td><?php echo e($pq['created_by_name'] ?? '-'); ?></td><td><strong><?php echo number_format((float)$pq['total_amount'], 0); ?></strong></td><td><?php echo e($pq['submitted_at'] ?? '-'); ?></td><td><a href="<?php echo APP_URL; ?>modules/accounting/disbursements.php?view=<?php echo (int)$pq['id']; ?>" class="btn-fm btn-navy"><?php echo e(t('fm.review')); ?></a></td></tr><?php endforeach; ?></tbody></table></div></div></div><?php endif; ?>
 
 <!-- ═════════ OPEN BATCHES (Aging) ══════════ -->
-<?php if ($openBatches): ?><div class="fm-card"><div class="fm-card-head"><span>🔓 دفعات مفتوحة — بانتظار صرف الأخصائيات</span><span class="badge-fm badge-blue"><?php echo count($openBatches); ?> دفعة</span></div><div class="fm-card-body"><div style="overflow-x:auto"><table class="fm-table"><thead><tr><th>#</th><th>الشهر</th><th>الأخصائية</th><th>البنود</th><th>المبلغ</th><th>تاريخ التحويل</th><th>أيام مفتوحة</th><th>إجراء</th></tr></thead><tbody><?php foreach ($openBatches as $ob): $daysOpen = $ob['transferred_at'] ? floor((time() - strtotime($ob['transferred_at'])) / 86400) : 0; $agingClass = $daysOpen > 14 ? 'badge-red' : ($daysOpen > 7 ? 'badge-amber' : 'badge-blue'); ?><tr><td><strong>#<?php echo (int)$ob['id']; ?></strong></td><td><?php echo e($ob['month']); ?></td><td><?php echo e($ob['nanny_name'] ?? '-'); ?></td><td><span class="badge-fm badge-green"><?php echo (int)$ob['paid_items']; ?> مُصرَف</span><?php if ((int)$ob['pending_items'] > 0): ?> <span class="badge-fm badge-amber"><?php echo (int)$ob['pending_items']; ?> معلّق</span><?php endif; ?><?php if ((int)$ob['return_items'] > 0): ?> <span class="badge-fm badge-red"><?php echo (int)$ob['return_items']; ?> إرجاع</span><?php endif; ?></td><td><strong><?php echo number_format((float)$ob['total_amount'], 0); ?></strong></td><td><?php echo e($ob['transferred_at'] ?? '-'); ?></td><td><span class="badge-fm <?php echo $agingClass; ?>"><?php echo $daysOpen; ?> يوم</span></td><td><a href="<?php echo APP_URL; ?>modules/accounting/disbursements.php?view=<?php echo (int)$ob['id']; ?>" class="btn-fm btn-ghost">تفاصيل</a></td></tr><?php endforeach; ?></tbody></table></div></div></div><?php endif; ?>
+<?php if ($openBatches): ?><div class="fm-card"><div class="fm-card-head"><span>🔓 <?php echo e(t('fm.open_disbursements')); ?></span><span class="badge-fm badge-blue"><?php echo e(t('fm.disbursement_count', ['count' => count($openBatches)])); ?></span></div><div class="fm-card-body"><div style="overflow-x:auto"><table class="fm-table"><thead><tr><th>#</th><th><?php echo e(t('common.month')); ?></th><th><?php echo e(t('fm.nanny')); ?></th><th><?php echo e(t('fm.items')); ?></th><th><?php echo e(t('accounting.amount')); ?></th><th><?php echo e(t('fm.transfer_date')); ?></th><th><?php echo e(t('fm.days_open')); ?></th><th><?php echo e(t('fm.action')); ?></th></tr></thead><tbody><?php foreach ($openBatches as $ob): $daysOpen = $ob['transferred_at'] ? floor((time() - strtotime($ob['transferred_at'])) / 86400) : 0; $agingClass = $daysOpen > 14 ? 'badge-red' : ($daysOpen > 7 ? 'badge-amber' : 'badge-blue'); ?><tr><td><strong>#<?php echo (int)$ob['id']; ?></strong></td><td><?php echo e($ob['month']); ?></td><td><?php echo e($ob['nanny_name'] ?? '-'); ?></td><td><span class="badge-fm badge-green"><?php echo e(t('fm.paid_count', ['count' => (int)$ob['paid_items']])); ?></span><?php if ((int)$ob['pending_items'] > 0): ?> <span class="badge-fm badge-amber"><?php echo e(t('fm.pending_count', ['count' => (int)$ob['pending_items']])); ?></span><?php endif; ?><?php if ((int)$ob['return_items'] > 0): ?> <span class="badge-fm badge-red"><?php echo e(t('fm.return_count', ['count' => (int)$ob['return_items']])); ?></span><?php endif; ?></td><td><strong><?php echo number_format((float)$ob['total_amount'], 0); ?></strong></td><td><?php echo e($ob['transferred_at'] ?? '-'); ?></td><td><span class="badge-fm <?php echo $agingClass; ?>"><?php echo e(t('fm.day_count', ['count' => $daysOpen])); ?></span></td><td><a href="<?php echo APP_URL; ?>modules/accounting/disbursements.php?view=<?php echo (int)$ob['id']; ?>" class="btn-fm btn-ghost"><?php echo e(t('fm.details')); ?></a></td></tr><?php endforeach; ?></tbody></table></div></div></div><?php endif; ?>
 
 <!-- ══════════ RECENT RETURNS & VOIDS ══════════ -->
 <div class="grid-2">
-<?php if ($recentReturns): ?><div class="fm-card"><div class="fm-card-head"><span>آخر عمليات الإرجاع</span><span class="badge-fm badge-amber"><?php echo count($recentReturns); ?></span></div><div class="fm-card-body"><div style="overflow-x:auto"><table class="fm-table"><thead><tr><th>القيد</th><th>التاريخ</th><th>الأسرة</th><th>المبلغ</th></tr></thead><tbody><?php foreach ($recentReturns as $rr): ?><tr><td><code><?php echo e($rr['entry_code']); ?></code></td><td><?php echo e($rr['entry_date']); ?></td><td><?php echo e($rr['family_code'] ?? '-'); ?></td><td><strong class="flow-value outgoing"><?php echo number_format((float)$rr['amount'], 0); ?></strong></td></tr><?php endforeach; ?></tbody></table></div></div></div><?php endif; ?>
-<?php if ($recentVoids): ?><div class="fm-card"><div class="fm-card-head"><span>آخر الدفعات المُبطَلة</span><span class="badge-fm badge-red"><?php echo count($recentVoids); ?></span></div><div class="fm-card-body"><div style="overflow-x:auto"><table class="fm-table"><thead><tr><th>#</th><th>الشهر</th><th>الأخصائية</th><th>المبلغ</th><th>السبب</th></tr></thead><tbody><?php foreach ($recentVoids as $rv): ?><tr><td><strong>#<?php echo (int)$rv['id']; ?></strong></td><td><?php echo e($rv['month']); ?></td><td><?php echo e($rv['nanny_name'] ?? '-'); ?></td><td><strong><?php echo number_format((float)$rv['total_amount'], 0); ?></strong></td><td title="<?php echo e($rv['void_reason'] ?? ''); ?>"><?php echo e(mb_substr($rv['void_reason'] ?? '-', 0, 30)); ?></td></tr><?php endforeach; ?></tbody></table></div></div></div><?php endif; ?>
+<?php if ($recentReturns): ?><div class="fm-card"><div class="fm-card-head"><span><?php echo e(t('fm.recent_returns')); ?></span><span class="badge-fm badge-amber"><?php echo count($recentReturns); ?></span></div><div class="fm-card-body"><div style="overflow-x:auto"><table class="fm-table"><thead><tr><th><?php echo e(t('fm.entry')); ?></th><th><?php echo e(t('fm.date')); ?></th><th><?php echo e(t('fm.family')); ?></th><th><?php echo e(t('accounting.amount')); ?></th></tr></thead><tbody><?php foreach ($recentReturns as $rr): ?><tr><td><code><?php echo e($rr['entry_code']); ?></code></td><td><?php echo e($rr['entry_date']); ?></td><td><?php echo e($rr['family_code'] ?? '-'); ?></td><td><strong class="flow-value outgoing"><?php echo number_format((float)$rr['amount'], 0); ?></strong></td></tr><?php endforeach; ?></tbody></table></div></div></div><?php endif; ?>
+<?php if ($recentVoids): ?><div class="fm-card"><div class="fm-card-head"><span><?php echo e(t('fm.recent_voided')); ?></span><span class="badge-fm badge-red"><?php echo count($recentVoids); ?></span></div><div class="fm-card-body"><div style="overflow-x:auto"><table class="fm-table"><thead><tr><th>#</th><th><?php echo e(t('common.month')); ?></th><th><?php echo e(t('fm.nanny')); ?></th><th><?php echo e(t('accounting.amount')); ?></th><th><?php echo e(t('fm.reason')); ?></th></tr></thead><tbody><?php foreach ($recentVoids as $rv): ?><tr><td><strong>#<?php echo (int)$rv['id']; ?></strong></td><td><?php echo e($rv['month']); ?></td><td><?php echo e($rv['nanny_name'] ?? '-'); ?></td><td><strong><?php echo number_format((float)$rv['total_amount'], 0); ?></strong></td><td title="<?php echo e($rv['void_reason'] ?? ''); ?>"><?php echo e(mb_substr($rv['void_reason'] ?? '-', 0, 30)); ?></td></tr><?php endforeach; ?></tbody></table></div></div></div><?php endif; ?>
 </div>
 
 <!-- ═════════ QUICK STATS ══════════ -->
-<div class="fm-card"><div class="fm-card-head"><span>إحصائيات سريعة</span></div><div class="fm-card-body"><div class="grid-4"><div class="stat-box"><div class="stat-value"><?php echo (int)$quickStats['active_sponsorships']; ?></div><div class="stat-label">كفالة نشطة</div></div><div class="stat-box blue"><div class="stat-value"><?php echo (int)$quickStats['active_families']; ?></div><div class="stat-label">أسرة نشطة</div></div><div class="stat-box purple"><div class="stat-value"><?php echo (int)$quickStats['active_nannies']; ?></div><div class="stat-label">أخصائية نشطة</div></div><div class="stat-box green"><div class="stat-value"><?php echo number_format((float)$quickStats['received_this_month'], 0); ?></div><div class="stat-label">مُصرَف هذا الشهر</div></div></div></div></div>
+<div class="fm-card"><div class="fm-card-head"><span><?php echo e(t('fm.quick_stats')); ?></span></div><div class="fm-card-body"><div class="grid-4"><div class="stat-box"><div class="stat-value"><?php echo (int)$quickStats['active_sponsorships']; ?></div><div class="stat-label"><?php echo e(t('fm.active_sponsorships')); ?></div></div><div class="stat-box blue"><div class="stat-value"><?php echo (int)$quickStats['active_families']; ?></div><div class="stat-label"><?php echo e(t('fm.active_families')); ?></div></div><div class="stat-box purple"><div class="stat-value"><?php echo (int)$quickStats['active_nannies']; ?></div><div class="stat-label"><?php echo e(t('fm.active_nannies')); ?></div></div><div class="stat-box green"><div class="stat-value"><?php echo number_format((float)$quickStats['received_this_month'], 0); ?></div><div class="stat-label"><?php echo e(t('fm.disbursed_this_month')); ?></div></div></div></div></div>
 
 <!-- ══════════ RECENT JOURNAL ENTRIES ══════════ -->
-<div class="fm-card"><div class="fm-card-head"><span>📒 آخر القيود المحاسبية</span><a href="<?php echo APP_URL; ?>modules/accounting/journal.php" class="btn-fm btn-ghost" style="background:#fff; color:#1b4d8f; font-size:0.8rem">عرض الكل</a></div><div class="fm-card-body"><div style="overflow-x:auto"><table class="fm-table"><thead><tr><th>رقم القيد</th><th>التاريخ</th><th>الوصف</th><th>مدين</th><th>دائن</th><th>الحالة</th></tr></thead><tbody><?php foreach ($recentJournals as $rj): ?><tr><td><code><?php echo e($rj['entry_code']); ?></code></td><td><?php echo e($rj['entry_date']); ?></td><td><?php echo e(mb_substr($rj['description'] ?? '-', 0, 50)); ?></td><td><?php echo number_format((float)$rj['total_debit'], 0); ?></td><td><?php echo number_format((float)$rj['total_credit'], 0); ?></td><td><span class="badge-fm badge-green"><?php echo e($rj['status'] === 'posted' ? 'مرحّل' : ($rj['status'] === 'voided' ? 'مُبطَل' : $rj['status'])); ?></span></td></tr><?php endforeach; ?></tbody></table></div></div></div>
+<div class="fm-card"><div class="fm-card-head"><span>📒 <?php echo e(t('fm.recent_journals')); ?></span><a href="<?php echo APP_URL; ?>modules/accounting/journal.php" class="btn-fm btn-ghost" style="background:#fff; color:#1b4d8f; font-size:0.8rem"><?php echo e(t('fm.view_all')); ?></a></div><div class="fm-card-body"><div style="overflow-x:auto"><table class="fm-table"><thead><tr><th><?php echo e(t('fm.entry_number')); ?></th><th><?php echo e(t('fm.date')); ?></th><th><?php echo e(t('fm.description')); ?></th><th><?php echo e(t('fm.debit')); ?></th><th><?php echo e(t('fm.credit')); ?></th><th><?php echo e(t('fm.status')); ?></th></tr></thead><tbody><?php foreach ($recentJournals as $rj): ?><tr><td><code><?php echo e($rj['entry_code']); ?></code></td><td><?php echo e($rj['entry_date']); ?></td><td><?php echo e(mb_substr($rj['description'] ?? '-', 0, 50)); ?></td><td><?php echo number_format((float)$rj['total_debit'], 0); ?></td><td><?php echo number_format((float)$rj['total_credit'], 0); ?></td><td><span class="badge-fm badge-green"><?php echo e($rj['status'] === 'posted' ? t('fm.status_posted') : ($rj['status'] === 'voided' ? t('fm.status_voided') : $rj['status'])); ?></span></td></tr><?php endforeach; ?></tbody></table></div></div></div>
 
-<!-- ══════════ QUICK ACTIONS ══════════ -->
-<div class="fm-card"><div class="fm-card-head"><span>إجراءات سريعة</span></div><div class="fm-card-body" style="display:flex; gap:10px; flex-wrap:wrap"><a href="#project-budget-review" class="btn-fm btn-navy">📁 مراجعة ميزانيات المشاريع (<?php echo $projectApprovalCount; ?>)</a><a href="<?php echo APP_URL; ?>modules/accounting/disbursements.php" class="btn-fm btn-navy">📋 التحويلات الشهرية</a><a href="<?php echo APP_URL; ?>modules/accounting/fm_review_queue.php" class="btn-fm btn-navy">⏳ طابور المراجعة</a><a href="<?php echo APP_URL; ?>modules/accounting/gm_reconciliation.php" class="btn-fm btn-navy">تقرير المصالحة</a><a href="<?php echo APP_URL; ?>modules/accounting/journal.php" class="btn-fm btn-ghost">📒 القيود اليومية</a><a href="<?php echo APP_URL; ?>modules/accounting/accounts.php" class="btn-fm btn-ghost">🌳 شجرة الحسابات</a><a href="<?php echo APP_URL; ?>modules/transactions/index.php" class="btn-fm btn-ghost">💳 المعاملات المالية</a></div></div>
 </main>
 <?php require_once dirname(__DIR__, 2) . '/includes/footer.php'; ?>
