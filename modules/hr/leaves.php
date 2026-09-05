@@ -60,10 +60,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             $days = $d1->diff($d2)->days + 1;
+
+            // Prevent accidental double submission/replay of the same pending request.
+            $duplicate = dbFetchOne(
+                "SELECT id FROM leaves
+                 WHERE employee_id = ?
+                   AND leave_type = ?
+                   AND start_date = ?
+                   AND end_date = ?
+                   AND status = 'pending'
+                 ORDER BY id ASC
+                 LIMIT 1",
+                [$emp_id, $type, $start, $end]
+            );
+
+            if ($duplicate) {
+                // The browser may replay the original POST after a refresh.
+                // Treat the existing request as the successful submission and redirect to GET.
+                header('Location: ' . APP_URL . 'modules/hr/leaves.php?action=request');
+                exit();
+            }
+
             $sql = "INSERT INTO leaves (employee_id, leave_type, start_date, end_date, days_count, reason, status)
                     VALUES (?, ?, ?, ?, ?, ?, 'pending')";
             db()->prepare($sql)->execute([$emp_id, $type, $start, $end, $days, $reason]);
-            $message = t('hr.request_submitted');
+
+            // POST/Redirect/GET prevents browser refresh from replaying the INSERT.
+            header('Location: ' . APP_URL . 'modules/hr/leaves.php?action=request');
+            exit();
         } elseif ($action === 'approve_manager') {
             $id = (int)$_POST['leave_id'];
             $sql = "UPDATE leaves SET status = 'manager_approved', manager_approved_by = ?, manager_approved_at = NOW() WHERE id = ? AND status = 'pending'";
