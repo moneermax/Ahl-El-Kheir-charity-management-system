@@ -1,0 +1,74 @@
+name: Apply search header redesign
+
+on:
+  push:
+    paths:
+      - '.github/workflows/apply-search-header.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Patch header
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('includes/header.php')
+          s = p.read_text(encoding='utf-8')
+          button = '''                    <?php if ($canGlobalSearch): ?>
+                        <a
+                            href="<?php echo APP_URL; ?>modules/search/index.php"
+                            class="qa-btn ak-header-search-btn"
+                            style="background: rgba(255,255,255,0.15);"
+                            aria-label="<?php echo AK_LANG === 'ar' ? 'البحث' : 'Search'; ?>"
+                            data-search-types="<?php echo e(implode(',', $allowedSearchTypes)); ?>"
+                        >
+                            <i class="fas fa-search"></i>
+                            <span><?php echo AK_LANG === 'ar' ? 'بحث' : 'Search'; ?></span>
+                        </a>
+                    <?php endif; ?>
+
+'''
+          needle = '''                    <a
+                        href="<?php echo e($langSwitchUrl); ?>"
+'''
+          if 'ak-header-search-btn' not in s:
+              if needle not in s:
+                  raise SystemExit('language switch anchor not found')
+              s = s.replace(needle, button + needle, 1)
+          search_start = '''            <!-- =========================================================
+                 SEARCH
+                 ========================================================= -->
+'''
+          if search_start in s:
+              a = s.index(search_start)
+              end = '''            <?php endif; ?>\n\n        </div>\n        <!-- END header-sticky-wrapper -->'''
+              b = s.index(end, a)
+              s = s[:a] + '\n' + s[b + len('            <?php endif; ?>\n\n'):]
+          css_start = '''        .ak-search-bar-wrap {\n'''
+          if css_start in s:
+              a = s.index(css_start)
+              b = s.index('''        /* Dark mode support for search */\n''', a)
+              s = s[:a] + s[b:]
+          dark = '''        /* Dark mode support for search */\n'''
+          if dark in s:
+              a = s.index(dark)
+              b = s.index('''    </style>\n''', a)
+              s = s[:a] + s[b:]
+          p.write_text(s, encoding='utf-8', newline='\n')
+          if 'globalSearchForm' in s or 'ak-search-bar-wrap' in s or '<select' in s[s.index('<div class="qa-user-controls">'):s.index('</div>', s.index('<div class="qa-user-controls">')) + 6]:
+              raise SystemExit('header search markup was not fully removed')
+      - name: Commit patched header
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add includes/header.php
+          git diff --cached --quiet && exit 0
+          git commit -m "ui: replace header search fields with search button"
+          git push
