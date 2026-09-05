@@ -12,7 +12,7 @@
         if (Object.prototype.hasOwnProperty.call(dictionary, key)) return interpolate(dictionary[key], params);
         return key;
     }
-    function exactCompatibilityText(value) {
+    function exactCompatibility(value) {
         if (window.AK_LANG !== 'en') return null;
         var source = String(value == null ? '' : value);
         var normalized = source.replace(/[\u00a0\u202f]/g, ' ').replace(/\s+/g, ' ').trim();
@@ -32,9 +32,20 @@
         });
         var nodes = []; while (walker.nextNode()) nodes.push(walker.currentNode);
         nodes.forEach(function (node) {
-            var translated = exactCompatibilityText(node.nodeValue); if (translated === null) return;
+            var translated = exactCompatibility(node.nodeValue); if (translated === null) return;
             var leading = (node.nodeValue.match(/^\s*/) || [''])[0], trailing = (node.nodeValue.match(/\s*$/) || [''])[0];
             node.nodeValue = leading + translated + trailing;
+        });
+    }
+    function refreshExactAttributes(root) {
+        if (window.AK_LANG !== 'en' || !root || !root.querySelectorAll) return;
+        var elements = root.querySelectorAll('[placeholder],[title],[aria-label],[aria-description],[data-bs-title],[alt]');
+        Array.prototype.forEach.call(elements, function (element) {
+            ['placeholder', 'title', 'aria-label', 'aria-description', 'data-bs-title', 'alt'].forEach(function (attribute) {
+                if (!element.hasAttribute(attribute)) return;
+                var value = element.getAttribute(attribute), translated = exactCompatibility(value);
+                if (translated !== null) element.setAttribute(attribute, translated);
+            });
         });
     }
     function refresh(root) {
@@ -46,7 +57,7 @@
             var spec = element.getAttribute('data-i18n-attr'); if (!spec) return;
             spec.split(';').forEach(function (entry) { var parts = entry.split(':'); if (parts.length < 2) return; var attribute = parts.shift().trim(), key = parts.join(':').trim(); if (attribute && key) element.setAttribute(attribute, translate(key)); });
         });
-        refreshExactText(root);
+        refreshExactText(root); refreshExactAttributes(root);
     }
     function prepareLanguageUrl(href, target) { try { var url = new URL(href, window.location.href); url.searchParams.delete('lang'); url.searchParams.set('lang', target); return url.toString(); } catch (e) { return href; } }
     function switchLanguage(target, href) { if (target !== 'ar' && target !== 'en') return; var destination = prepareLanguageUrl(href || window.location.href, target); document.cookie = 'ak_lang=' + encodeURIComponent(target) + '; Max-Age=31536000; Path=/; SameSite=Lax'; window.location.assign(destination); }
