@@ -63,4 +63,11 @@ return [
     'accounting.total_expenses' => 'إجمالي المصروفات',
     'accounting.cash_label' => 'نقداً',
     'accounting.bank_label' => 'بنكياً',
+    'accounting.cash_with_icon' => '💵 الصندوق النقدي',
+    'accounting.bank_with_icon' => '🏦 الحساب البنكي',
+    'accounting.wallet_with_icon' => '📱 المحفظة الإلكترونية',
+    'accounting.total_treasury_with_icon' => '💰 إجمالي الخزينة',
+    'accounting.budget_version' => 'نسخة',
+    'accounting.available_prefix' => 'متاح',
+    'accounting.sdg_code' => 'SDG',
 ];
