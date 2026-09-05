@@ -15,18 +15,26 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Render the Sudan flag with CSS instead of the Unicode flag emoji.
-    // This avoids browser/font-dependent rendering such as "SD".
-    const FLAG_MARKER = '\ud83c\udde8\ud83c\udde9';
+    // Render Sudan flags with CSS so the result never depends on the browser's emoji/font support.
     const flagStyle = document.createElement('style');
     flagStyle.textContent = '.ak-sudan-flag{display:inline-block;width:1.35em;height:.9em;min-width:1.35em;vertical-align:-.12em;position:relative;overflow:hidden;border-radius:.08em;background:linear-gradient(to bottom,#d71920 0 33.333%,#fff 33.333% 66.666%,#000 66.666% 100%);box-shadow:0 0 0 1px rgba(0,0,0,.12);margin-inline-end:.3em}.ak-sudan-flag::before{content:"";position:absolute;inset:0 auto 0 0;width:42%;background:#087a3b;clip-path:polygon(0 0,100% 50%,0 100%)}';
     document.head.appendChild(flagStyle);
 
+    document.querySelectorAll('.org-flag').forEach(function (element) {
+        element.textContent = '';
+        element.classList.add('ak-sudan-flag');
+        element.setAttribute('role', 'img');
+        element.setAttribute('aria-label', 'Sudan flag');
+    });
+
+    // Also replace any standalone Unicode Sudan flag used elsewhere in the shared layout.
+    const FLAG_MARKER = '\ud83c\udde8\ud83c\udde9';
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
         acceptNode: function (node) {
             if (!node.nodeValue || !node.nodeValue.includes(FLAG_MARKER)) return NodeFilter.FILTER_REJECT;
             const parent = node.parentElement;
             if (parent && /^(SCRIPT|STYLE|TEXTAREA)$/i.test(parent.tagName)) return NodeFilter.FILTER_REJECT;
+            if (parent && parent.classList.contains('ak-sudan-flag')) return NodeFilter.FILTER_REJECT;
             return NodeFilter.FILTER_ACCEPT;
         }
     });
