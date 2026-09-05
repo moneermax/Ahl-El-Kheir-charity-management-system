@@ -43,6 +43,15 @@ function ak_legacy_catalog(): array {
     return $dict = is_array($part) ? $part : [];
 }
 
+/** Convert transitional "Arabic / English" values to the selected language's side. */
+function ak_legacy_target(string $value): string {
+    if (AK_LANG !== 'en') return $value;
+    if (preg_match('/^\s*[\x{0600}-\x{06FF}].*?\s+\/\s+([^\r\n]+?)\s*$/u', $value, $m)) {
+        return trim($m[1]);
+    }
+    return $value;
+}
+
 /**
  * Build the browser dictionary used by both AKLang.t() and the temporary
  * exact-value compatibility bridge. Stable key => English entries must remain
@@ -64,9 +73,15 @@ function ak_dict(): array {
         $stableText[$source] = (string)$en[$key];
     }
 
+    // Normalize transitional bilingual legacy values before exposing them to JS/DOM.
+    $legacyNormalized = [];
+    foreach ($legacy as $source => $target) {
+        $legacyNormalized[$source] = ak_legacy_target((string)$target);
+    }
+
     // Preserve stable key lookups first. Exact Arabic text mappings are
     // compatibility aliases, with stable catalog text taking precedence.
-    return array_merge($legacy, $stableText, $en);
+    return array_merge($legacyNormalized, $stableText, $en);
 }
 
 function ak_interpolate(string $value, array $params): string { foreach ($params as $name => $replacement) $value = str_replace(':' . $name, (string)$replacement, $value); return $value; }
@@ -74,7 +89,10 @@ function ak_t(string $key, array $params = []): string {
     if ($key === '') return '';
     $catalog = ak_catalog(AK_LANG);
     if (array_key_exists($key, $catalog)) return ak_interpolate((string)$catalog[$key], $params);
-    return AK_LANG === 'en' && array_key_exists($key, ak_legacy_catalog()) ? ak_interpolate((string)ak_legacy_catalog()[$key], $params) : ak_interpolate($key, $params);
+    if (AK_LANG === 'en' && array_key_exists($key, ak_legacy_catalog())) {
+        return ak_interpolate(ak_legacy_target((string)ak_legacy_catalog()[$key]), $params);
+    }
+    return ak_interpolate($key, $params);
 }
 function t(string $key, array $params = []): string { return ak_t($key, $params); }
 function ak_harvest(string $s): void { /* Runtime harvesting is intentionally disabled. */ }
@@ -85,13 +103,13 @@ function ak_legacy_normalize(string $value): string {
     return trim((string)(preg_replace('/\s+/u', ' ', $value) ?? $value));
 }
 function ak_legacy_lookup(string $value, array $legacy): ?string {
-    if (array_key_exists($value, $legacy)) return (string)$legacy[$value];
+    if (array_key_exists($value, $legacy)) return ak_legacy_target((string)$legacy[$value]);
     static $normalizedCache = null;
     if ($normalizedCache === null) {
         $normalizedCache = [];
         foreach ($legacy as $source => $target) {
             $normalizedSource = ak_legacy_normalize((string)$source);
-            if ($normalizedSource !== '' && !array_key_exists($normalizedSource, $normalizedCache)) $normalizedCache[$normalizedSource] = (string)$target;
+            if ($normalizedSource !== '' && !array_key_exists($normalizedSource, $normalizedCache)) $normalizedCache[$normalizedSource] = ak_legacy_target((string)$target);
         }
     }
     $normalized = ak_legacy_normalize($value);
