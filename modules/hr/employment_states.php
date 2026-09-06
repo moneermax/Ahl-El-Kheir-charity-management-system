@@ -49,6 +49,7 @@ require_once __DIR__ . '/../../includes/header.php';
 .state-pill.suspended{background:#fff0c2;color:#8a5a00}
 .state-dot{width:7px;height:7px;border-radius:50%;background:#1b4d8f}
 .state-dot.suspended{background:#d39e00}
+.state-code{font-size:.72rem;color:#98a2b3;margin-top:4px}
 .metric-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:18px}
 .metric{background:#fff;border:1px solid #e8edf3;border-radius:10px;padding:14px 16px}.metric small{display:block;color:#667085;margin-bottom:4px}.metric strong{font-size:1.35rem;color:#101828}
 @media(max-width:768px){.metric-grid{grid-template-columns:1fr}.hr-state-wrap{padding:12px}}
@@ -72,8 +73,18 @@ require_once __DIR__ . '/../../includes/header.php';
             <table class="hr-state-table">
                 <thead><tr><th>الكود</th><th>الموظف</th><th>الحالة الوظيفية</th><th>الحالة القديمة</th><th>بدأت الحالة في</th><th>سبب السجل</th></tr></thead>
                 <tbody>
-                <?php foreach ($rows as $row): ?>
-                    <?php $isSuspended = (($row['state_code'] ?? '') === 'suspended'); ?>
+                <?php
+                $legacyLabels = [
+                    'active' => 'نشط',
+                    'suspended' => 'موقوف مؤقتاً',
+                    'on_leave' => 'في إجازة',
+                    'terminated' => 'منهي الخدمة',
+                ];
+                foreach ($rows as $row):
+                    $isSuspended = (($row['state_code'] ?? '') === 'suspended');
+                    $legacyStatus = (string)($row['status'] ?? '');
+                    $legacyLabel = $legacyLabels[$legacyStatus] ?? ($legacyStatus !== '' ? $legacyStatus : '-');
+                ?>
                     <tr class="<?php echo $isSuspended ? 'state-suspended' : ''; ?>">
                         <td><code><?php echo e((string)$row['employee_code']); ?></code></td>
                         <td><strong><?php echo e((string)$row['full_name']); ?></strong></td>
@@ -83,10 +94,10 @@ require_once __DIR__ . '/../../includes/header.php';
                                     <span class="state-dot<?php echo $isSuspended ? ' suspended' : ''; ?>"></span>
                                     <?php echo e((string)$row['state_name']); ?>
                                 </span>
-                                <small class="text-muted d-block mt-1"><?php echo e((string)$row['state_code']); ?></small>
+                                <div class="state-code"><?php echo e((string)$row['state_code']); ?></div>
                             <?php else: ?>-<?php endif; ?>
                         </td>
-                        <td><?php echo e((string)($row['status'] ?? '-')); ?></td>
+                        <td><span class="text-muted"><?php echo e($legacyLabel); ?></span></td>
                         <td><?php echo e((string)($row['history_from'] ?? $row['employment_state_changed_at'] ?? '-')); ?></td>
                         <td><?php echo e((string)($row['history_reason'] ?? '-')); ?></td>
                     </tr>
