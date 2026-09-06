@@ -49,7 +49,6 @@ require_once __DIR__ . '/../../includes/header.php';
 .state-pill.suspended{background:#fff0c2;color:#8a5a00}
 .state-dot{width:7px;height:7px;border-radius:50%;background:#1b4d8f}
 .state-dot.suspended{background:#d39e00}
-.state-flag{display:inline-flex;align-items:center;gap:5px;margin-inline-start:6px;padding:3px 7px;border-radius:999px;background:#ffe8a1;color:#7a5200;font-size:.7rem;font-weight:700}
 .metric-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:18px}
 .metric{background:#fff;border:1px solid #e8edf3;border-radius:10px;padding:14px 16px}.metric small{display:block;color:#667085;margin-bottom:4px}.metric strong{font-size:1.35rem;color:#101828}
 @media(max-width:768px){.metric-grid{grid-template-columns:1fr}.hr-state-wrap{padding:12px}}
@@ -84,9 +83,6 @@ require_once __DIR__ . '/../../includes/header.php';
                                     <span class="state-dot<?php echo $isSuspended ? ' suspended' : ''; ?>"></span>
                                     <?php echo e((string)$row['state_name']); ?>
                                 </span>
-                                <?php if ($isSuspended): ?>
-                                    <span class="state-flag"><i class="fas fa-pause-circle"></i> موقوف مؤقتاً</span>
-                                <?php endif; ?>
                                 <small class="text-muted d-block mt-1"><?php echo e((string)$row['state_code']); ?></small>
                             <?php else: ?>-<?php endif; ?>
                         </td>
