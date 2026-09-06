@@ -46,64 +46,8 @@ window.AK_TRANSLATIONS=<?php echo json_encode(ak_dict(),JSON_UNESCAPED_UNICODE|J
 <script>
 (function(){var leaveLink=document.querySelector('a[href*="modules/hr/leaves.php?action=request"]');var userMenu=document.querySelector('#userDropdown .ak-dd-menu');if(leaveLink&&userMenu){leaveLink.classList.remove('qa-btn');leaveLink.classList.add('ak-dd-item','ak-leave-request-moving');leaveLink.removeAttribute('style');leaveLink.setAttribute('title','طلب إجازة');var icon=leaveLink.querySelector('i');if(icon)icon.className='fas fa-calendar-plus me-2';var divider=document.createElement('div');divider.className='dropdown-divider';userMenu.insertBefore(divider,userMenu.firstChild);userMenu.insertBefore(leaveLink,divider.nextSibling);requestAnimationFrame(function(){leaveLink.classList.remove('ak-leave-request-moving')})}})();
 
-/* Design 3 attendance fixes. */
-(function(){
-    if(!/\/modules\/hr\/attendance\.php(?:$|[?#])/.test(window.location.pathname+window.location.search))return;
-    document.querySelectorAll('.att3 .person-avatar').forEach(function(avatar){avatar.remove()});
-    var bulkForm=document.getElementById('bulkForm');
-    if(!bulkForm)return;
-    var selected=new Set();
-    document.querySelectorAll('.att3 .row-check:checked').forEach(function(check){selected.add(String(check.value))});
-    function syncSelection(){
-        document.querySelectorAll('.att3 .row-check').forEach(function(check){
-            var id=String(check.value);
-            if(check.checked)selected.add(id); else selected.delete(id);
-        });
-    }
-    document.querySelectorAll('.att3 .row-check').forEach(function(check){
-        check.addEventListener('change',function(){
-            var id=String(check.value);
-            if(check.checked)selected.add(id); else selected.delete(id);
-        });
-    });
-    var selectAll=document.getElementById('selectAll');
-    if(selectAll)selectAll.addEventListener('click',function(){setTimeout(syncSelection,0)});
-    bulkForm.addEventListener('submit',function(event){
-        event.preventDefault();
-        syncSelection();
-        if(!selected.size){
-            if(window.Swal)Swal.fire({icon:'warning',title:'تنبيه',text:'يرجى تحديد موظف واحد على الأقل.',confirmButtonText:'حسناً'});
-            return;
-        }
-        var data=new FormData(bulkForm);
-        data.delete('employee_ids[]');
-        data.delete('employee_ids_json');
-        data.set('employee_ids_json',JSON.stringify(Array.from(selected)));
-        var action=event.submitter&&event.submitter.name==='action'?event.submitter.value:'';
-        if(!action){
-            if(window.Swal)Swal.fire({icon:'warning',title:'تنبيه',text:'يرجى اختيار إجراء.',confirmButtonText:'حسناً'});
-            return;
-        }
-        data.set('action',action);
-        fetch('<?php echo APP_URL; ?>modules/hr/bulk_attendance.php',{method:'POST',body:data,credentials:'same-origin'})
-            .then(function(response){return response.json().then(function(json){return {ok:response.ok,json:json}})})
-            .then(function(result){
-                if(!result.ok||!result.json.ok)throw new Error(result.json.message||'تعذر تنفيذ الإجراء.');
-                if(window.Swal){
-                    return Swal.fire({icon:'success',title:'تم بنجاح',text:result.json.message,confirmButtonText:'حسناً'}).then(function(){window.location.reload()});
-                }
-                window.location.reload();
-            })
-            .catch(function(error){
-                if(window.Swal)Swal.fire({icon:'error',title:'خطأ',text:error.message,confirmButtonText:'حسناً'});
-                else alert(error.message);
-            });
-    });
-})();
-
 (function(){var deferred=null;var btn=document.getElementById('akInstallBtn');window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferred=e;if(btn)btn.classList.remove('d-none')});if(btn)btn.addEventListener('click',function(){if(!deferred)return;deferred.prompt();deferred.userChoice.then(function(){deferred=null;btn.classList.add('d-none')})});window.addEventListener('appinstalled',function(){if(btn)btn.classList.add('d-none')})})();
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('<?php echo APP_URL; ?>sw.js').catch(function(){})});}
 </script>
-<script src="<?php echo asset('js/attendance_bulk_fix.js'); ?>"></script>
 </body>
 </html>
