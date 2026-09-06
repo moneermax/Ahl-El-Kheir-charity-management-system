@@ -43,8 +43,13 @@ require_once __DIR__ . '/../../includes/header.php';
 .hr-state-table th{background:#fbfcfd;color:#667085;font-weight:700;white-space:nowrap}
 .hr-state-table tr:last-child td{border-bottom:0}
 .hr-state-table tr:hover td{background:#fafcff}
+.hr-state-table tr.state-suspended td{background:#fff8e6;border-bottom-color:#f5df9a}
+.hr-state-table tr.state-suspended:hover td{background:#fff3d6}
 .state-pill{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;background:#eef4ff;color:#1b4d8f;font-weight:700;font-size:.78rem}
+.state-pill.suspended{background:#fff0c2;color:#8a5a00}
 .state-dot{width:7px;height:7px;border-radius:50%;background:#1b4d8f}
+.state-dot.suspended{background:#d39e00}
+.state-flag{display:inline-flex;align-items:center;gap:5px;margin-inline-start:6px;padding:3px 7px;border-radius:999px;background:#ffe8a1;color:#7a5200;font-size:.7rem;font-weight:700}
 .metric-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:18px}
 .metric{background:#fff;border:1px solid #e8edf3;border-radius:10px;padding:14px 16px}.metric small{display:block;color:#667085;margin-bottom:4px}.metric strong{font-size:1.35rem;color:#101828}
 @media(max-width:768px){.metric-grid{grid-template-columns:1fr}.hr-state-wrap{padding:12px}}
@@ -69,12 +74,19 @@ require_once __DIR__ . '/../../includes/header.php';
                 <thead><tr><th>الكود</th><th>الموظف</th><th>الحالة الوظيفية</th><th>الحالة القديمة</th><th>بدأت الحالة في</th><th>سبب السجل</th></tr></thead>
                 <tbody>
                 <?php foreach ($rows as $row): ?>
-                    <tr>
+                    <?php $isSuspended = (($row['state_code'] ?? '') === 'suspended'); ?>
+                    <tr class="<?php echo $isSuspended ? 'state-suspended' : ''; ?>">
                         <td><code><?php echo e((string)$row['employee_code']); ?></code></td>
                         <td><strong><?php echo e((string)$row['full_name']); ?></strong></td>
                         <td>
                             <?php if (!empty($row['state_name'])): ?>
-                                <span class="state-pill"><span class="state-dot"></span><?php echo e((string)$row['state_name']); ?></span>
+                                <span class="state-pill<?php echo $isSuspended ? ' suspended' : ''; ?>">
+                                    <span class="state-dot<?php echo $isSuspended ? ' suspended' : ''; ?>"></span>
+                                    <?php echo e((string)$row['state_name']); ?>
+                                </span>
+                                <?php if ($isSuspended): ?>
+                                    <span class="state-flag"><i class="fas fa-pause-circle"></i> موقوف مؤقتاً</span>
+                                <?php endif; ?>
                                 <small class="text-muted d-block mt-1"><?php echo e((string)$row['state_code']); ?></small>
                             <?php else: ?>-<?php endif; ?>
                         </td>
