@@ -20,11 +20,27 @@
             .filter(function(item){ return !!item.check; });
     }
 
+    /* Leave status is rendered as .status3.lv in Design 3. Keep data-status as a secondary check. */
     function onLeave(row){
-        return row.getAttribute('data-status') === 'on_leave';
+        return row.getAttribute('data-status') === 'on_leave' || !!row.querySelector('.status3.lv');
+    }
+
+    /* Leave employees can never be selected for normal attendance bulk operations. */
+    function lockLeaveRows(){
+        items().forEach(function(item){
+            if (onLeave(item.row)) {
+                item.check.checked = false;
+                item.check.disabled = true;
+                item.check.title = 'الموظف في إجازة';
+            } else {
+                item.check.disabled = false;
+                item.check.removeAttribute('title');
+            }
+        });
     }
 
     function refresh(){
+        lockLeaveRows();
         var list = items();
         var eligible = list.filter(function(item){ return !onLeave(item.row); });
         var selected = eligible.filter(function(item){ return item.check.checked; });
@@ -36,10 +52,10 @@
     }
 
     /*
-     * The page contains an older Select All change handler.  Handle the
-     * change event in CAPTURE phase and stop propagation before that handler
-     * can select every checkbox.  At this point the browser has already
-     * toggled Select All, so its new checked state is reliable.
+     * The original page also has a Select All handler. We deliberately run
+     * in capture phase and then run once more after the other handler has
+     * finished. Disabled leave checkboxes provide the final browser-level
+     * protection against being selected.
      */
     selectAll.addEventListener('change', function(event){
         event.stopImmediatePropagation();
@@ -48,8 +64,15 @@
         items().forEach(function(item){
             item.check.checked = shouldSelect && !onLeave(item.row);
         });
-
         refresh();
+
+        window.setTimeout(function(){
+            items().forEach(function(item){
+                if (onLeave(item.row)) item.check.checked = false;
+                else item.check.checked = shouldSelect;
+            });
+            refresh();
+        }, 0);
     }, true);
 
     /* Keep the selection counter/filter state synchronized for normal rows. */
@@ -64,14 +87,12 @@
         e.preventDefault();
         e.stopImmediatePropagation();
 
-        /* Never send an employee marked on leave to the bulk endpoint. */
-        items().forEach(function(item){
-            if (onLeave(item.row)) item.check.checked = false;
-        });
+        /* Final guard: never send an employee marked on leave to the bulk endpoint. */
+        lockLeaveRows();
         refresh();
 
         var ids = Array.prototype.map.call(
-            table.querySelectorAll('.row-check:checked'),
+            table.querySelectorAll('.row-check:checked:not(:disabled)'),
             function(cb){ return parseInt(cb.value, 10); }
         ).filter(function(id){ return id > 0; });
 
@@ -118,5 +139,7 @@
         });
     }, true);
 
+    /* Filters/search can change visible rows; keep leave rows locked. */
+    lockLeaveRows();
     refresh();
 })();
