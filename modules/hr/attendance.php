@@ -1,91 +1,311 @@
 <?php
 declare(strict_types=1);
+
 require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../config/functions.php';
 require_once __DIR__ . '/../../config/session.php';
+
 Session::start();
 $userRole = Session::getUserRole();
-if (!Session::isLoggedIn() || !in_array($userRole, ['hr_manager','hr_staff','admin'], true)) { header('Location: '.APP_URL.'index.php'); exit(); }
+if (!Session::isLoggedIn() || !in_array($userRole, ['hr_manager', 'hr_staff', 'admin'], true)) {
+    header('Location: ' . APP_URL . 'index.php');
+    exit();
+}
 
 $selectedDate = (string)($_GET['date'] ?? date('Y-m-d'));
 $dateObject = DateTime::createFromFormat('Y-m-d', $selectedDate);
-if (!$dateObject || $dateObject->format('Y-m-d') !== $selectedDate) $selectedDate = date('Y-m-d');
-$message=''; $msgType='success';
-
-function attendanceIsOnLeave(int $employeeId, string $date): bool {
-    $row=dbFetchOne("SELECT status FROM attendance WHERE employee_id=? AND date=? LIMIT 1",[$employeeId,$date]);
-    return $row !== null && ($row['status'] ?? '') === 'on_leave';
-}
-function attendanceRequireEligible(int $employeeId,string $date): void {
-    if($employeeId<=0) throw new InvalidArgumentException('الموظف المحدد غير صالح.');
-    $employee=dbFetchOne("SELECT id FROM employees WHERE id=? AND status='active' LIMIT 1",[$employeeId]);
-    if(!$employee) throw new InvalidArgumentException('الموظف غير موجود أو غير نشط.');
-    if(attendanceIsOnLeave($employeeId,$date)) throw new RuntimeException('الموظف في إجازة. يجب تنفيذ "عودة من الإجازة" أولاً قبل تسجيل أي إجراء حضور.');
+if (!$dateObject || $dateObject->format('Y-m-d') !== $selectedDate) {
+    $selectedDate = date('Y-m-d');
 }
 
-if($_SERVER['REQUEST_METHOD']==='POST'){
-    $action=(string)($_POST['action']??'');
-    $employeeId=(int)($_POST['employee_id']??0);
-    try{
-        if($action==='return_from_leave'){
-            $record=dbFetchOne("SELECT id FROM attendance WHERE employee_id=? AND date=? AND status='on_leave' LIMIT 1",[$employeeId,$selectedDate]);
-            if(!$record) throw new RuntimeException('لا يوجد سجل إجازة مفتوح لهذا الموظف في التاريخ المحدد.');
-            dbExecute("UPDATE attendance SET status='absent',check_in=NULL,check_out=NULL,work_mode=NULL,notes='عودة من الإجازة - بانتظار تسجيل الحضور' WHERE employee_id=? AND date=? AND status='on_leave'",[$employeeId,$selectedDate]);
-            $message='تمت عودة الموظف من الإجازة. أصبح الآن مؤهلاً لتسجيل الحضور.';
-        }elseif(in_array($action,['check_in','check_out','mark_absent','mark_leave'],true)){
-            attendanceRequireEligible($employeeId,$selectedDate);
-            if($action==='check_in'){
-                $mode=(string)($_POST['work_mode']??'remote'); if(!in_array($mode,['remote','onsite','hybrid'],true)) $mode='remote';
-                dbExecute("INSERT INTO attendance(employee_id,date,check_in,work_mode,status,notes) VALUES(?,?,?,?, 'present',NULL) ON DUPLICATE KEY UPDATE check_in=VALUES(check_in),work_mode=VALUES(work_mode),status='present',notes=NULL",[$employeeId,$selectedDate,date('H:i:s'),$mode]);
-                $message=t('hr.attendance_recorded');
-            }elseif($action==='check_out'){
-                dbExecute("UPDATE attendance SET check_out=?,status=CASE WHEN status='absent' THEN 'present' ELSE status END WHERE employee_id=? AND date=? AND status<>'on_leave'",[date('H:i:s'),$employeeId,$selectedDate]);
-                $message=t('hr.checkout_recorded');
-            }elseif($action==='mark_absent'){
-                dbExecute("INSERT INTO attendance(employee_id,date,status) VALUES(?,?,'absent') ON DUPLICATE KEY UPDATE status='absent',check_in=NULL,check_out=NULL,work_mode=NULL",[$employeeId,$selectedDate]);
-                $message=t('hr.absence_recorded');
-            }else{
-                dbExecute("INSERT INTO attendance(employee_id,date,status,notes) VALUES(?,?,'on_leave','إجازة يدوية') ON DUPLICATE KEY UPDATE status='on_leave',check_in=NULL,check_out=NULL,work_mode=NULL,notes='إجازة يدوية'",[$employeeId,$selectedDate]);
-                $message=t('hr.attendance_leave_recorded');
+$message = '';
+$msgType = 'success';
+
+/*
+ * LEAVE IS AUTHORITATIVE IN THE leaves TABLE.
+ *
+ * attendance rows are daily attendance data.  An approved leave may also
+ * have generated on_leave rows for compatibility, but those rows are not
+ * the source of truth.  A return from leave is represented by a daily
+ * attendance override whose note starts with the controlled return marker.
+ */
+function attendanceApprovedLeave(int $employeeId, string $date): ?array
+{
+    return dbFetchOne(
+        "SELECT id, employee_id, start_date, end_date, leave_type, status
+         FROM leaves
+         WHERE employee_id = ?
+           AND status = 'hr_approved'
+           AND start_date <= ?
+           AND end_date >= ?
+         ORDER BY start_date DESC, id DESC
+         LIMIT 1",
+        [$employeeId, $date, $date]
+    );
+}
+
+function attendanceHasReturnOverride(int $employeeId, string $date): bool
+{
+    $row = dbFetchOne(
+        "SELECT id
+         FROM attendance
+         WHERE employee_id = ?
+           AND date = ?
+           AND status = 'absent'
+           AND notes LIKE 'عودة من الإجازة%'
+         LIMIT 1",
+        [$employeeId, $date]
+    );
+    return $row !== null;
+}
+
+function attendanceIsOnLeave(int $employeeId, string $date): bool
+{
+    $leave = attendanceApprovedLeave($employeeId, $date);
+    if (!$leave) {
+        return false;
+    }
+    return !attendanceHasReturnOverride($employeeId, $date);
+}
+
+function attendanceRequireEligible(int $employeeId, string $date): void
+{
+    if ($employeeId <= 0) {
+        throw new InvalidArgumentException('الموظف المحدد غير صالح.');
+    }
+
+    $employee = dbFetchOne(
+        "SELECT id FROM employees WHERE id = ? AND status = 'active' LIMIT 1",
+        [$employeeId]
+    );
+    if (!$employee) {
+        throw new InvalidArgumentException('الموظف غير موجود أو غير نشط.');
+    }
+
+    if (attendanceIsOnLeave($employeeId, $date)) {
+        throw new RuntimeException('الموظف في إجازة معتمدة. يجب تنفيذ "عودة من الإجازة" أولاً قبل تسجيل أي إجراء حضور.');
+    }
+}
+
+function attendanceReturnFromLeave(int $employeeId, string $date): void
+{
+    if ($employeeId <= 0) {
+        throw new InvalidArgumentException('الموظف المحدد غير صالح.');
+    }
+
+    $employee = dbFetchOne(
+        "SELECT id FROM employees WHERE id = ? AND status = 'active' LIMIT 1",
+        [$employeeId]
+    );
+    if (!$employee) {
+        throw new InvalidArgumentException('الموظف غير موجود أو غير نشط.');
+    }
+
+    $leave = attendanceApprovedLeave($employeeId, $date);
+    if (!$leave) {
+        throw new RuntimeException('لا توجد إجازة معتمدة لهذا الموظف في التاريخ المحدد.');
+    }
+
+    if (attendanceHasReturnOverride($employeeId, $date)) {
+        throw new RuntimeException('تم تسجيل عودة الموظف من الإجازة مسبقاً لهذا التاريخ.');
+    }
+
+    dbExecute(
+        "INSERT INTO attendance (employee_id, date, status, notes)
+         VALUES (?, ?, 'absent', 'عودة من الإجازة - بانتظار تسجيل الحضور')
+         ON DUPLICATE KEY UPDATE
+            status = 'absent',
+            check_in = NULL,
+            check_out = NULL,
+            work_mode = NULL,
+            notes = 'عودة من الإجازة - بانتظار تسجيل الحضور'",
+        [$employeeId, $date]
+    );
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $action = (string)($_POST['action'] ?? '');
+    $employeeId = (int)($_POST['employee_id'] ?? 0);
+
+    try {
+        if ($action === 'return_from_leave') {
+            attendanceReturnFromLeave($employeeId, $selectedDate);
+            $message = 'تم تسجيل عودة الموظف من الإجازة. أصبح الآن مؤهلاً لتسجيل الحضور.';
+        } elseif (in_array($action, ['check_in', 'check_out', 'mark_absent', 'mark_leave'], true)) {
+            attendanceRequireEligible($employeeId, $selectedDate);
+
+            if ($action === 'check_in') {
+                $mode = (string)($_POST['work_mode'] ?? 'remote');
+                if (!in_array($mode, ['remote', 'onsite', 'hybrid'], true)) {
+                    $mode = 'remote';
+                }
+
+                dbExecute(
+                    "INSERT INTO attendance (employee_id, date, check_in, work_mode, status, notes)
+                     VALUES (?, ?, ?, ?, 'present', NULL)
+                     ON DUPLICATE KEY UPDATE
+                        check_in = VALUES(check_in),
+                        work_mode = VALUES(work_mode),
+                        status = 'present',
+                        notes = NULL",
+                    [$employeeId, $selectedDate, date('H:i:s'), $mode]
+                );
+                $message = t('hr.attendance_recorded');
+            } elseif ($action === 'check_out') {
+                $record = dbFetchOne(
+                    "SELECT id FROM attendance
+                     WHERE employee_id = ? AND date = ? AND status <> 'on_leave'
+                     LIMIT 1",
+                    [$employeeId, $selectedDate]
+                );
+                if (!$record) {
+                    throw new RuntimeException('لا يمكن تسجيل الانصراف قبل وجود سجل حضور لهذا اليوم.');
+                }
+
+                dbExecute(
+                    "UPDATE attendance
+                     SET check_out = ?,
+                         status = CASE WHEN status = 'absent' THEN 'present' ELSE status END
+                     WHERE employee_id = ? AND date = ? AND status <> 'on_leave'",
+                    [date('H:i:s'), $employeeId, $selectedDate]
+                );
+                $message = t('hr.checkout_recorded');
+            } elseif ($action === 'mark_absent') {
+                dbExecute(
+                    "INSERT INTO attendance (employee_id, date, status)
+                     VALUES (?, ?, 'absent')
+                     ON DUPLICATE KEY UPDATE
+                        status = 'absent',
+                        check_in = NULL,
+                        check_out = NULL,
+                        work_mode = NULL,
+                        notes = NULL",
+                    [$employeeId, $selectedDate]
+                );
+                $message = t('hr.absence_recorded');
+            } else {
+                dbExecute(
+                    "INSERT INTO attendance (employee_id, date, status, notes)
+                     VALUES (?, ?, 'on_leave', 'إجازة يدوية')
+                     ON DUPLICATE KEY UPDATE
+                        status = 'on_leave',
+                        check_in = NULL,
+                        check_out = NULL,
+                        work_mode = NULL,
+                        notes = 'إجازة يدوية'",
+                    [$employeeId, $selectedDate]
+                );
+                $message = t('hr.attendance_leave_recorded');
             }
         }
-    }catch(Throwable $e){$message=t('hr.attendance_error',['message'=>$e->getMessage()]);$msgType='error';}
+    } catch (Throwable $e) {
+        $message = t('hr.attendance_error', ['message' => $e->getMessage()]);
+        $msgType = 'error';
+    }
 }
 
-$employees=dbFetchAll("SELECT e.id,e.full_name,e.department_id,d.name_ar AS dept_name FROM employees e LEFT JOIN departments d ON d.id=e.department_id WHERE e.status='active' ORDER BY e.full_name",[]);
-$attendanceRecords=[]; foreach(dbFetchAll("SELECT * FROM attendance WHERE date=?",[$selectedDate]) as $att) $attendanceRecords[(int)$att['employee_id']]=$att;
-$stats=['present'=>0,'absent'=>0,'late'=>0,'on_leave'=>0]; foreach($attendanceRecords as $att){if(isset($stats[$att['status']]))$stats[$att['status']]++;}
-$departments=[]; foreach($employees as $employee){if(!empty($employee['dept_name']))$departments[(int)$employee['department_id']]=$employee['dept_name'];}
-$pageTitle=t('hr.attendance_title'); require_once __DIR__.'/../../includes/header.php';
+$employees = dbFetchAll(
+    "SELECT e.id, e.full_name, e.department_id, d.name_ar AS dept_name
+     FROM employees e
+     LEFT JOIN departments d ON d.id = e.department_id
+     WHERE e.status = 'active'
+     ORDER BY e.full_name",
+    []
+);
+
+$attendanceRecords = [];
+foreach (dbFetchAll("SELECT * FROM attendance WHERE date = ?", [$selectedDate]) as $att) {
+    $attendanceRecords[(int)$att['employee_id']] = $att;
+}
+
+$rows = [];
+$stats = ['present' => 0, 'absent' => 0, 'late' => 0, 'on_leave' => 0];
+$departments = [];
+
+foreach ($employees as $employee) {
+    $id = (int)$employee['id'];
+    $att = $attendanceRecords[$id] ?? null;
+    $approvedLeave = attendanceApprovedLeave($id, $selectedDate);
+    $returned = $approvedLeave ? attendanceHasReturnOverride($id, $selectedDate) : false;
+    $onLeave = $approvedLeave !== null && !$returned;
+
+    if ($onLeave) {
+        $status = 'on_leave';
+    } else {
+        $status = (string)($att['status'] ?? 'absent');
+        if ($status === 'on_leave') {
+            // A stale/generated on_leave row must never override an approved
+            // leave decision that is absent, rejected, or explicitly returned.
+            $status = $returned ? 'absent' : ($approvedLeave ? 'on_leave' : 'absent');
+        }
+    }
+
+    if (isset($stats[$status])) {
+        $stats[$status]++;
+    }
+
+    if (!empty($employee['dept_name'])) {
+        $departments[(int)$employee['department_id']] = $employee['dept_name'];
+    }
+
+    $rows[] = [
+        'employee' => $employee,
+        'attendance' => $att,
+        'leave' => $approvedLeave,
+        'returned' => $returned,
+        'on_leave' => $onLeave,
+        'status' => $status,
+    ];
+}
+
+$pageTitle = t('hr.attendance_title');
+require_once __DIR__ . '/../../includes/header.php';
 ?>
 <style>
-.att4{--ink:#172033;--muted:#667085;--line:#e6e9ee;--brand:#1b4d8f;background:#f5f6f8;margin:-10px -12px 0;padding:20px}.att4-head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:16px}.att4-title{font-size:1.35rem;font-weight:800;color:var(--ink);margin:0}.att4-sub{font-size:.76rem;color:var(--muted);margin-top:5px}.att4-date{display:flex;align-items:center;gap:5px}.att4-date a{width:34px;height:34px;border:1px solid var(--line);background:#fff;border-radius:8px;color:#475467;display:inline-flex;align-items:center;justify-content:center;text-decoration:none}.att4-date input{height:34px;width:145px;border:1px solid var(--line);border-radius:8px;background:#fff;text-align:center;font-size:.78rem;font-weight:700;color:#344054;padding:0 7px}.att4-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:14px}.att4-kpi{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 13px;display:flex;align-items:center;justify-content:space-between}.att4-label{font-size:.69rem;color:var(--muted)}.att4-num{font-size:1.12rem;font-weight:800;color:var(--ink);margin-top:2px}.att4-icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:#eef1f5;color:#667085;font-size:.82rem}.att4-kpi.p .att4-icon{background:#eaf7ef;color:#16804a}.att4-kpi.l .att4-icon{background:#fff5d7;color:#947000}.att4-kpi.a .att4-icon{background:#fdebed;color:#c73543}.att4-kpi.lv .att4-icon{background:#eaf5fb;color:#167395}.att4-panel{background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}.att4-tools{padding:10px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:7px;flex-wrap:wrap}.att4-search{position:relative;flex:1;min-width:220px}.att4-search input{height:35px;width:100%;border:1px solid var(--line);border-radius:8px;padding:0 32px 0 10px;font-size:.77rem}.att4-search i{position:absolute;right:11px;top:10px;color:#98a2b3;font-size:.72rem}.att4-tools select,.att4-mode{height:35px;border:1px solid var(--line);border-radius:8px;padding:0 8px;font-size:.75rem;color:#475467;background:#fff;min-width:135px}.att4-selection{display:none;align-items:center;gap:7px;padding:8px 10px;background:#f1f6fc;border-bottom:1px solid #dbe7f5}.att4-selection.show{display:flex}.att4-count{font-size:.74rem;font-weight:800;color:var(--brand);margin-right:auto}.att4-btn,.att4-row-btn{height:30px;border:0;border-radius:7px;padding:0 9px;font-size:.69rem;font-weight:750;display:inline-flex;align-items:center;gap:5px;cursor:pointer}.att4-in{background:#dff3e7;color:#176b40}.att4-out{background:#fbe1e5;color:#a82e3b}.att4-leave{background:#fff0bd;color:#785d00}.att4-absent{background:#eceff3;color:#475467}.att4-table{width:100%;border-collapse:separate;border-spacing:0}.att4-table th{height:38px;background:#fafbfc;border-bottom:1px solid var(--line);font-size:.66rem;font-weight:800;color:#667085;text-align:right;padding:0 12px;white-space:nowrap}.att4-table td{height:54px;border-bottom:1px solid #f0f1f3;padding:7px 12px;font-size:.75rem;color:#344054;vertical-align:middle}.att4-table tbody tr:hover{background:#fbfcfe}.att4-check{width:38px;text-align:center!important}.att4-check input{width:15px;height:15px;accent-color:var(--brand);cursor:pointer}.att4-check input:disabled{cursor:not-allowed;opacity:.45}.att4-person{display:flex;align-items:center;gap:8px;min-width:185px}.att4-avatar{width:31px;height:31px;border-radius:50%;background:#edf3fb;color:var(--brand);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:800;flex:none}.att4-name{font-size:.76rem;font-weight:800;color:#273444}.att4-meta{font-size:.64rem;color:#98a2b3;margin-top:1px}.att4-dept{color:#667085;font-size:.71rem}.att4-time{font-variant-numeric:tabular-nums;font-weight:700;color:#344054}.att4-time.empty{font-weight:500;color:#adb5bd}.att4-mode-label{font-size:.66rem;font-weight:700;padding:3px 7px;background:#f1f3f5;border-radius:5px;color:#596579}.att4-status{display:inline-flex;align-items:center;gap:4px;border-radius:15px;padding:3px 8px;font-size:.66rem;font-weight:800}.att4-status.p{background:#eaf7ef;color:#167447}.att4-status.l{background:#fff5d7;color:#8a6700}.att4-status.a{background:#fdebed;color:#b42331}.att4-status.lv{background:#eaf5fb;color:#126c8e}.att4-row-actions{display:flex;justify-content:flex-end;gap:5px;align-items:center}.att4-row-actions select{height:29px;border:1px solid var(--line);border-radius:6px;font-size:.67rem;padding:0 5px;max-width:95px}.att4-row-in{background:#eaf7ef;color:#167447}.att4-row-out{background:#fdebed;color:#b42331}.att4-row-leave{background:#fff4cf;color:#7b5c00}.att4-row-return{background:#eaf5fb;color:#126c8e}.att4-done{font-size:.67rem;color:#98a2b3;display:inline-flex;align-items:center;gap:4px}.att4-leave-note{font-size:.64rem;color:#126c8e;margin-top:2px}.att4-empty{text-align:center!important;padding:35px!important;color:#98a2b3}@media(max-width:950px){.att4{padding:16px}.att4-kpis{grid-template-columns:repeat(2,1fr)}.att4-table{min-width:930px}.att4-panel{overflow-x:auto}}@media(max-width:600px){.att4-head{align-items:stretch;flex-direction:column}.att4-kpis{grid-template-columns:1fr 1fr}}
+.att5{--ink:#172033;--muted:#667085;--line:#e6e9ee;--brand:#1b4d8f;background:#f5f6f8;margin:-10px -12px 0;padding:20px}
+.att5-head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:16px}.att5-title{font-size:1.35rem;font-weight:800;color:var(--ink);margin:0}.att5-sub{font-size:.76rem;color:var(--muted);margin-top:5px}.att5-date{display:flex;align-items:center;gap:5px}.att5-date a{width:34px;height:34px;border:1px solid var(--line);background:#fff;border-radius:8px;color:#475467;display:inline-flex;align-items:center;justify-content:center;text-decoration:none}.att5-date input{height:34px;width:145px;border:1px solid var(--line);border-radius:8px;background:#fff;text-align:center;font-size:.78rem;font-weight:700;color:#344054;padding:0 7px}
+.att5-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:14px}.att5-kpi{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 13px;display:flex;align-items:center;justify-content:space-between}.att5-label{font-size:.69rem;color:var(--muted)}.att5-num{font-size:1.12rem;font-weight:800;color:var(--ink);margin-top:2px}.att5-icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:#eef1f5;color:#667085;font-size:.82rem}.att5-kpi.p .att5-icon{background:#eaf7ef;color:#16804a}.att5-kpi.l .att5-icon{background:#fff5d7;color:#947000}.att5-kpi.a .att5-icon{background:#fdebed;color:#c73543}.att5-kpi.lv .att5-icon{background:#eaf5fb;color:#167395}
+.att5-panel{background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}.att5-tools{padding:10px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:7px;flex-wrap:wrap}.att5-search{position:relative;flex:1;min-width:220px}.att5-search input{height:35px;width:100%;border:1px solid var(--line);border-radius:8px;padding:0 32px 0 10px;font-size:.77rem}.att5-search i{position:absolute;right:11px;top:10px;color:#98a2b3;font-size:.72rem}.att5-tools select,.att5-mode{height:35px;border:1px solid var(--line);border-radius:8px;padding:0 8px;font-size:.75rem;color:#475467;background:#fff;min-width:135px}
+.att5-selection{display:none;align-items:center;gap:7px;padding:8px 10px;background:#f1f6fc;border-bottom:1px solid #dbe7f5}.att5-selection.show{display:flex}.att5-count{font-size:.74rem;font-weight:800;color:var(--brand);margin-right:auto}.att5-btn,.att5-row-btn{height:30px;border:0;border-radius:7px;padding:0 9px;font-size:.69rem;font-weight:750;display:inline-flex;align-items:center;gap:5px;cursor:pointer}.att5-in{background:#dff3e7;color:#176b40}.att5-out{background:#fbe1e5;color:#a82e3b}.att5-leave{background:#fff0bd;color:#785d00}.att5-absent{background:#eceff3;color:#475467}
+.att5-table{width:100%;border-collapse:separate;border-spacing:0}.att5-table th{height:38px;background:#fafbfc;border-bottom:1px solid var(--line);font-size:.66rem;font-weight:800;color:#667085;text-align:right;padding:0 12px;white-space:nowrap}.att5-table td{height:54px;border-bottom:1px solid #f0f1f3;padding:7px 12px;font-size:.75rem;color:#344054;vertical-align:middle}.att5-table tbody tr:hover{background:#fbfcfe}.att5-check{width:38px;text-align:center!important}.att5-check input{width:15px;height:15px;accent-color:var(--brand);cursor:pointer}.att5-check input:disabled{cursor:not-allowed;opacity:.45}.att5-person{display:flex;align-items:center;gap:8px;min-width:185px}.att5-avatar{width:31px;height:31px;border-radius:50%;background:#edf3fb;color:var(--brand);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:800;flex:none}.att5-name{font-size:.76rem;font-weight:800;color:#273444}.att5-meta{font-size:.64rem;color:#98a2b3;margin-top:1px}.att5-dept{color:#667085;font-size:.71rem}.att5-time{font-variant-numeric:tabular-nums;font-weight:700;color:#344054}.att5-time.empty{font-weight:500;color:#adb5bd}.att5-mode-label{font-size:.66rem;font-weight:700;padding:3px 7px;background:#f1f3f5;border-radius:5px;color:#596579}.att5-status{display:inline-flex;align-items:center;gap:4px;border-radius:15px;padding:3px 8px;font-size:.66rem;font-weight:800}.att5-status.p{background:#eaf7ef;color:#167447}.att5-status.l{background:#fff5d7;color:#8a6700}.att5-status.a{background:#fdebed;color:#b42331}.att5-status.lv{background:#eaf5fb;color:#126c8e}.att5-row-actions{display:flex;justify-content:flex-end;gap:5px;align-items:center}.att5-row-actions select{height:29px;border:1px solid var(--line);border-radius:6px;font-size:.67rem;padding:0 5px;max-width:95px}.att5-row-in{background:#eaf7ef;color:#167447}.att5-row-out{background:#fdebed;color:#b42331}.att5-row-leave{background:#fff4cf;color:#7b5c00}.att5-row-return{background:#eaf5fb;color:#126c8e}.att5-done{font-size:.67rem;color:#98a2b3;display:inline-flex;align-items:center;gap:4px}.att5-leave-note{font-size:.64rem;color:#126c8e;margin-top:2px}.att5-empty{text-align:center!important;padding:35px!important;color:#98a2b3}
+@media(max-width:950px){.att5{padding:16px}.att5-kpis{grid-template-columns:repeat(2,1fr)}.att5-table{min-width:930px}.att5-panel{overflow-x:auto}}@media(max-width:600px){.att5-head{align-items:stretch;flex-direction:column}.att5-kpis{grid-template-columns:1fr 1fr}}
 </style>
-<div class="att4">
-<div class="att4-head"><div><h1 class="att4-title"><i class="fas fa-calendar-check me-2" style="color:#1b4d8f"></i><?php echo e(t('hr.attendance_title')); ?></h1><div class="att4-sub">إدارة الحضور والانصراف يومياً مع حماية حالة الإجازة ومنع تسجيل أي حضور قبل العودة منها.</div></div><div class="att4-date"><a href="?date=<?php echo htmlspecialchars(date('Y-m-d',strtotime($selectedDate.' -1 day'))); ?>" title="اليوم السابق"><i class="fas fa-chevron-right"></i></a><form method="GET" class="m-0"><input type="date" name="date" value="<?php echo htmlspecialchars($selectedDate); ?>" onchange="this.form.submit()"></form><a href="?date=<?php echo htmlspecialchars(date('Y-m-d',strtotime($selectedDate.' +1 day'))); ?>" title="اليوم التالي"><i class="fas fa-chevron-left"></i></a></div></div>
+<div class="att5">
+<div class="att5-head"><div><h1 class="att5-title"><i class="fas fa-calendar-check me-2" style="color:#1b4d8f"></i><?php echo e(t('hr.attendance_title')); ?></h1><div class="att5-sub">الإجازة المعتمدة هي المصدر الأساسي لحماية الموظف. لا يمكن تسجيل الحضور إلا بعد تنفيذ «عودة من الإجازة».</div></div><div class="att5-date"><a href="?date=<?php echo htmlspecialchars(date('Y-m-d',strtotime($selectedDate.' -1 day'))); ?>" title="اليوم السابق"><i class="fas fa-chevron-right"></i></a><form method="GET" class="m-0"><input type="date" name="date" value="<?php echo htmlspecialchars($selectedDate); ?>" onchange="this.form.submit()"></form><a href="?date=<?php echo htmlspecialchars(date('Y-m-d',strtotime($selectedDate.' +1 day'))); ?>" title="اليوم التالي"><i class="fas fa-chevron-left"></i></a></div></div>
 <?php if($message): ?><div class="alert alert-<?php echo $msgType==='error'?'danger':'success'; ?> py-2 px-3 mb-3" style="border-radius:8px;font-size:.78rem"><?php echo e($message); ?><button type="button" class="btn-close"></button></div><?php endif; ?>
-<div class="att4-kpis"><div class="att4-kpi p"><div><div class="att4-label"><?php echo e(t('hr.present')); ?></div><div class="att4-num"><?php echo $stats['present']; ?></div></div><div class="att4-icon"><i class="fas fa-check"></i></div></div><div class="att4-kpi l"><div><div class="att4-label"><?php echo e(t('hr.late')); ?></div><div class="att4-num"><?php echo $stats['late']; ?></div></div><div class="att4-icon"><i class="fas fa-clock"></i></div></div><div class="att4-kpi a"><div><div class="att4-label"><?php echo e(t('hr.absent')); ?></div><div class="att4-num"><?php echo $stats['absent']; ?></div></div><div class="att4-icon"><i class="fas fa-user-xmark"></i></div></div><div class="att4-kpi lv"><div><div class="att4-label"><?php echo e(t('hr.on_leave')); ?></div><div class="att4-num"><?php echo $stats['on_leave']; ?></div></div><div class="att4-icon"><i class="fas fa-calendar-day"></i></div></div></div>
-<div class="att4-panel"><div class="att4-tools"><div class="att4-search"><i class="fas fa-search"></i><input id="att4Search" type="search" placeholder="البحث باسم الموظف..." autocomplete="off"></div><select id="att4Dept"><option value="">كل الأقسام</option><?php foreach($departments as $department): ?><option value="<?php echo htmlspecialchars((string)$department); ?>"><?php echo htmlspecialchars((string)$department); ?></option><?php endforeach; ?></select><select id="att4Status"><option value="">كل الحالات</option><option value="present"><?php echo e(t('hr.present')); ?></option><option value="late"><?php echo e(t('hr.late')); ?></option><option value="absent"><?php echo e(t('hr.absent')); ?></option><option value="on_leave"><?php echo e(t('hr.on_leave')); ?></option></select></div>
-<div class="att4-selection" id="att4Selection"><select id="att4BulkMode" class="att4-mode"><option value="remote"><?php echo e(t('hr.work_mode_remote')); ?></option><option value="onsite"><?php echo e(t('hr.work_mode_onsite')); ?></option><option value="hybrid"><?php echo e(t('hr.work_mode_hybrid')); ?></option></select><button type="button" data-bulk-action="bulk_check_in" class="att4-btn att4-in"><i class="fas fa-right-to-bracket"></i> تسجيل حضور</button><button type="button" data-bulk-action="bulk_check_out" class="att4-btn att4-out"><i class="fas fa-right-from-bracket"></i> تسجيل انصراف</button><button type="button" data-bulk-action="bulk_leave" class="att4-btn att4-leave"><i class="fas fa-calendar-check"></i> إجازة</button><button type="button" data-bulk-action="bulk_absent" class="att4-btn att4-absent"><i class="fas fa-user-xmark"></i> غياب</button><span class="att4-count" id="att4Count">0 محدد</span></div>
-<div class="table-responsive"><table class="att4-table" id="att4Table"><thead><tr><th class="att4-check"><input id="att4SelectAll" type="checkbox" title="تحديد جميع الموظفين المؤهلين"></th><th><?php echo e(t('hr.employee')); ?></th><th><?php echo e(t('groups.group')); ?></th><th><?php echo e(t('hr.check_in')); ?></th><th><?php echo e(t('hr.check_out')); ?></th><th>النمط</th><th><?php echo e(t('common.status')); ?></th><th class="text-end"><?php echo e(t('common.actions')); ?></th></tr></thead><tbody>
-<?php if(empty($employees)): ?><tr><td colspan="8" class="att4-empty">لا يوجد موظفون نشطون.</td></tr><?php else: foreach($employees as $employee): $employeeId=(int)$employee['id'];$attendance=$attendanceRecords[$employeeId]??null;$status=(string)($attendance['status']??'absent');$onLeave=$status==='on_leave';$workMode=(string)($attendance['work_mode']??'');$initial=mb_substr(trim((string)$employee['full_name']),0,1,'UTF-8');$statusClass=['present'=>'p','late'=>'l','absent'=>'a','on_leave'=>'lv'][$status]??'';$statusIcon=['present'=>'fa-check','late'=>'fa-clock','absent'=>'fa-user-xmark','on_leave'=>'fa-calendar-check'][$status]??'fa-minus';$statusKey=['present'=>'hr.present','late'=>'hr.late','absent'=>'hr.absent','on_leave'=>'hr.on_leave'][$status]??'common.status';$modeKey=['remote'=>'hr.work_mode_remote','onsite'=>'hr.work_mode_onsite','hybrid'=>'hr.work_mode_hybrid'][$workMode]??''; ?>
-<tr data-name="<?php echo htmlspecialchars(mb_strtolower((string)$employee['full_name'],'UTF-8')); ?>" data-dept="<?php echo htmlspecialchars((string)($employee['dept_name']??'')); ?>" data-status="<?php echo htmlspecialchars($status); ?>" data-on-leave="<?php echo $onLeave?'1':'0'; ?>"><td class="att4-check"><input class="att4-row-check" type="checkbox" value="<?php echo $employeeId; ?>" <?php echo $onLeave?'disabled title="الموظف في إجازة - يجب إعادته أولاً"':''; ?>></td><td><div class="att4-person"><div class="att4-avatar"><?php echo htmlspecialchars($initial); ?></div><div><div class="att4-name"><?php echo htmlspecialchars((string)$employee['full_name']); ?></div><div class="att4-meta">ID #<?php echo $employeeId; ?></div></div></div></td><td class="att4-dept"><?php echo htmlspecialchars((string)($employee['dept_name']??'-')); ?></td><td><span class="att4-time <?php echo (!$attendance||!$attendance['check_in'])?'empty':''; ?>"><?php echo ($attendance&&$attendance['check_in'])?substr((string)$attendance['check_in'],0,5):'--:--'; ?></span></td><td><span class="att4-time <?php echo (!$attendance||!$attendance['check_out'])?'empty':''; ?>"><?php echo ($attendance&&$attendance['check_out'])?substr((string)$attendance['check_out'],0,5):'--:--'; ?></span></td><td><span class="att4-mode-label"><?php echo $modeKey?e(t($modeKey)):'—'; ?></span></td><td><span class="att4-status <?php echo $statusClass; ?>"><i class="fas <?php echo $statusIcon; ?>"></i><?php echo e(t($statusKey)); ?></span><?php if($onLeave): ?><div class="att4-leave-note">يجب تنفيذ عودة من الإجازة أولاً</div><?php endif; ?></td><td class="text-end"><div class="att4-row-actions"><?php if($onLeave): ?><form method="POST" class="m-0"><input type="hidden" name="action" value="return_from_leave"><input type="hidden" name="employee_id" value="<?php echo $employeeId; ?>"><button class="att4-row-btn att4-row-return" type="submit" title="عودة من الإجازة"><i class="fas fa-person-walking-arrow-right me-1"></i>عودة من الإجازة</button></form><?php elseif(!$attendance||!$attendance['check_in']): ?><form method="POST" class="m-0"><input type="hidden" name="action" value="check_in"><input type="hidden" name="employee_id" value="<?php echo $employeeId; ?>"><select name="work_mode"><option value="remote"><?php echo e(t('hr.work_mode_remote')); ?></option><option value="onsite"><?php echo e(t('hr.work_mode_onsite')); ?></option><option value="hybrid"><?php echo e(t('hr.work_mode_hybrid')); ?></option></select><button class="att4-row-btn att4-row-in" type="submit" title="تسجيل حضور"><i class="fas fa-right-to-bracket"></i></button></form><?php elseif(!$attendance['check_out']): ?><form method="POST" class="m-0"><input type="hidden" name="action" value="check_out"><input type="hidden" name="employee_id" value="<?php echo $employeeId; ?>"><button class="att4-row-btn att4-row-out" type="submit" title="تسجيل انصراف"><i class="fas fa-right-from-bracket"></i></button></form><?php else: ?><span class="att4-done"><i class="fas fa-circle-check"></i><?php echo e(t('hr.complete')); ?></span><?php endif; ?><?php if(!$onLeave&&(!$attendance||$status==='absent')): ?><form method="POST" class="m-0"><input type="hidden" name="action" value="mark_leave"><input type="hidden" name="employee_id" value="<?php echo $employeeId; ?>"><button class="att4-row-btn att4-row-leave" type="submit" title="تسجيل إجازة"><i class="fas fa-calendar-check"></i></button></form><?php endif; ?></div></td></tr>
-<?php endforeach; endif; ?></tbody></table></div></div></div>
+<div class="att5-kpis"><div class="att5-kpi p"><div><div class="att5-label"><?php echo e(t('hr.present')); ?></div><div class="att5-num"><?php echo $stats['present']; ?></div></div><div class="att5-icon"><i class="fas fa-check"></i></div></div><div class="att5-kpi l"><div><div class="att5-label"><?php echo e(t('hr.late')); ?></div><div class="att5-num"><?php echo $stats['late']; ?></div></div><div class="att5-icon"><i class="fas fa-clock"></i></div></div><div class="att5-kpi a"><div><div class="att5-label"><?php echo e(t('hr.absent')); ?></div><div class="att5-num"><?php echo $stats['absent']; ?></div></div><div class="att5-icon"><i class="fas fa-user-xmark"></i></div></div><div class="att5-kpi lv"><div><div class="att5-label"><?php echo e(t('hr.on_leave')); ?></div><div class="att5-num"><?php echo $stats['on_leave']; ?></div></div><div class="att5-icon"><i class="fas fa-calendar-day"></i></div></div></div>
+<div class="att5-panel">
+<div class="att5-tools"><div class="att5-search"><i class="fas fa-search"></i><input id="att5Search" type="search" placeholder="البحث باسم الموظف..." autocomplete="off"></div><select id="att5Dept"><option value="">كل الأقسام</option><?php foreach($departments as $department): ?><option value="<?php echo htmlspecialchars((string)$department); ?>"><?php echo htmlspecialchars((string)$department); ?></option><?php endforeach; ?></select><select id="att5Status"><option value="">كل الحالات</option><option value="present"><?php echo e(t('hr.present')); ?></option><option value="late"><?php echo e(t('hr.late')); ?></option><option value="absent"><?php echo e(t('hr.absent')); ?></option><option value="on_leave"><?php echo e(t('hr.on_leave')); ?></option></select></div>
+<div class="att5-selection" id="att5Selection"><select id="att5BulkMode" class="att5-mode"><option value="remote">عن بُعد</option><option value="onsite">من المكتب</option><option value="hybrid">هجين</option></select><span class="att5-count" id="att5Count">0 موظف محدد</span><button type="button" class="att5-btn att5-in" data-bulk-action="bulk_check_in"><i class="fas fa-right-to-bracket"></i> حضور</button><button type="button" class="att5-btn att5-out" data-bulk-action="bulk_check_out"><i class="fas fa-right-from-bracket"></i> انصراف</button><button type="button" class="att5-btn att5-absent" data-bulk-action="bulk_absent"><i class="fas fa-user-xmark"></i> غياب</button><button type="button" class="att5-btn att5-leave" data-bulk-action="bulk_leave"><i class="fas fa-calendar-day"></i> إجازة يدوية</button></div>
+<table class="att5-table"><thead><tr><th class="att5-check"><input type="checkbox" id="att5SelectAll" title="تحديد الموظفين المؤهلين"></th><th>الموظف</th><th>القسم</th><th>الحالة</th><th>الحضور</th><th>الانصراف</th><th>النمط</th><th>الإجراء</th></tr></thead><tbody id="att5Body">
+<?php if(!$rows): ?><tr><td colspan="8" class="att5-empty">لا يوجد موظفون نشطون.</td></tr><?php endif; ?>
+<?php foreach($rows as $row): $employee=$row['employee']; $att=$row['attendance']; $status=$row['status']; $onLeave=$row['on_leave']; $returned=$row['returned']; $initials=mb_substr((string)$employee['full_name'],0,1,'UTF-8'); $searchText=mb_strtolower((string)$employee['full_name'].' '.(string)($employee['dept_name']??''),'UTF-8'); ?>
+<tr data-name="<?php echo htmlspecialchars($searchText); ?>" data-dept="<?php echo htmlspecialchars((string)($employee['dept_name']??'')); ?>" data-status="<?php echo htmlspecialchars($status); ?>">
+<td class="att5-check"><input type="checkbox" class="att5-employee" value="<?php echo (int)$employee['id']; ?>" <?php echo $onLeave?'disabled title="الموظف في إجازة معتمدة"':''; ?>></td>
+<td><div class="att5-person"><div class="att5-avatar"><?php echo e($initials); ?></div><div><div class="att5-name"><?php echo e($employee['full_name']); ?></div><?php if($onLeave && $row['leave']): ?><div class="att5-leave-note">إجازة معتمدة: <?php echo e($row['leave']['start_date']); ?> → <?php echo e($row['leave']['end_date']); ?></div><?php elseif($returned): ?><div class="att5-meta">تمت العودة من الإجازة لهذا اليوم</div><?php endif; ?></div></div></td>
+<td class="att5-dept"><?php echo e($employee['dept_name'] ?? '—'); ?></td>
+<td><?php if($status==='present'): ?><span class="att5-status p"><i class="fas fa-check"></i><?php echo e(t('hr.present')); ?></span><?php elseif($status==='late'): ?><span class="att5-status l"><i class="fas fa-clock"></i><?php echo e(t('hr.late')); ?></span><?php elseif($status==='on_leave'): ?><span class="att5-status lv"><i class="fas fa-calendar-day"></i><?php echo e(t('hr.on_leave')); ?></span><?php else: ?><span class="att5-status a"><i class="fas fa-user-xmark"></i><?php echo e(t('hr.absent')); ?></span><?php endif; ?></td>
+<td class="att5-time <?php echo empty($att['check_in'])?'empty':''; ?>"><?php echo e($att['check_in'] ?? '—'); ?></td><td class="att5-time <?php echo empty($att['check_out'])?'empty':''; ?>"><?php echo e($att['check_out'] ?? '—'); ?></td><td><?php echo !empty($att['work_mode']) ? '<span class="att5-mode-label">'.e($att['work_mode']).'</span>' : '<span class="att5-time empty">—</span>'; ?></td>
+<td><div class="att5-row-actions">
+<?php if($onLeave): ?><form method="POST" class="att5-return-form m-0"><input type="hidden" name="action" value="return_from_leave"><input type="hidden" name="employee_id" value="<?php echo (int)$employee['id']; ?>"><button type="submit" class="att5-row-btn att5-row-return"><i class="fas fa-person-walking-arrow-right"></i> عودة من الإجازة</button></form>
+<?php else: ?><form method="POST" class="m-0"><input type="hidden" name="action" value="check_in"><input type="hidden" name="employee_id" value="<?php echo (int)$employee['id']; ?>"><select name="work_mode" title="نمط العمل"><option value="remote">عن بُعد</option><option value="onsite">مكتب</option><option value="hybrid">هجين</option></select><button type="submit" class="att5-row-btn att5-row-in" title="تسجيل الحضور"><i class="fas fa-right-to-bracket"></i></button></form><form method="POST" class="m-0"><input type="hidden" name="action" value="check_out"><input type="hidden" name="employee_id" value="<?php echo (int)$employee['id']; ?>"><button type="submit" class="att5-row-btn att5-row-out" title="تسجيل الانصراف"><i class="fas fa-right-from-bracket"></i></button></form><form method="POST" class="m-0"><input type="hidden" name="action" value="mark_absent"><input type="hidden" name="employee_id" value="<?php echo (int)$employee['id']; ?>"><button type="submit" class="att5-row-btn att5-row-leave" title="تسجيل الغياب"><i class="fas fa-user-xmark"></i></button></form><?php endif; ?>
+</div></td></tr>
+<?php endforeach; ?></tbody></table></div></div>
 <script>
 document.addEventListener('DOMContentLoaded',function(){
- const table=document.getElementById('att4Table'),all=document.getElementById('att4SelectAll'),selection=document.getElementById('att4Selection'),count=document.getElementById('att4Count'),search=document.getElementById('att4Search'),dept=document.getElementById('att4Dept'),status=document.getElementById('att4Status');
- if(!table||!all)return;
- const rows=()=>Array.from(table.querySelectorAll('tbody tr[data-name]'));
- const visible=()=>rows().filter(r=>r.style.display!=='none');
- const eligible=()=>visible().map(r=>r.querySelector('.att4-row-check')).filter(c=>c&&!c.disabled);
- function refresh(){const list=eligible(),selected=list.filter(c=>c.checked);count.textContent=selected.length+' محدد';selection.classList.toggle('show',selected.length>0);all.checked=list.length>0&&selected.length===list.length;all.indeterminate=selected.length>0&&selected.length<list.length;}
- function filter(){const q=(search.value||'').trim().toLocaleLowerCase();rows().forEach(r=>{r.style.display=(!q||r.dataset.name.includes(q))&&(!dept.value||r.dataset.dept===dept.value)&&(!status.value||r.dataset.status===status.value)?'':'none';});refresh();}
- all.addEventListener('change',function(){eligible().forEach(c=>c.checked=all.checked);refresh();});
- table.addEventListener('change',function(e){if(e.target.classList.contains('att4-row-check'))refresh();});
- search.addEventListener('input',filter);dept.addEventListener('change',filter);status.addEventListener('change',filter);
- document.querySelectorAll('[data-bulk-action]').forEach(function(button){button.addEventListener('click',function(){const selected=eligible().filter(c=>c.checked).map(c=>parseInt(c.value,10)).filter(id=>id>0);if(!selected.length){if(window.Swal)Swal.fire({icon:'warning',title:'لم يتم تحديد موظفين',text:'يرجى تحديد موظف واحد على الأقل.',confirmButtonText:'حسناً'});return;}const data=new FormData();data.append('action',button.dataset.bulkAction);data.append('selected_date',<?php echo json_encode($selectedDate,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES); ?>);data.append('bulk_work_mode',document.getElementById('att4BulkMode').value);data.append('employee_ids_json',JSON.stringify(selected));button.disabled=true;fetch('<?php echo APP_URL; ?>modules/hr/bulk_attendance.php',{method:'POST',body:data,credentials:'same-origin',headers:{'X-Requested-With':'XMLHttpRequest'}}).then(r=>r.json().then(j=>{if(!r.ok||!j.ok)throw new Error(j.message||'تعذر تنفيذ العملية.');return j;})).then(j=>window.Swal?Swal.fire({icon:'success',title:'تم بنجاح',text:j.message,confirmButtonText:'حسناً'}).then(()=>location.reload()):location.reload()).catch(e=>{button.disabled=false;if(window.Swal)Swal.fire({icon:'error',title:'تعذر تنفيذ العملية',text:e.message,confirmButtonText:'حسناً'});else alert(e.message);});});});
+ const body=document.getElementById('att5Body'), all=document.getElementById('att5SelectAll'), selection=document.getElementById('att5Selection'), count=document.getElementById('att5Count'), search=document.getElementById('att5Search'), dept=document.getElementById('att5Dept'), status=document.getElementById('att5Status');
+ const eligible=()=>Array.from(body.querySelectorAll('tr')).filter(r=>r.style.display!=='none').flatMap(r=>{const c=r.querySelector('.att5-employee');return c&&!c.disabled?[c]:[]});
+ const checked=()=>eligible().filter(c=>c.checked);
+ const refresh=()=>{const cs=checked();count.textContent=cs.length+' موظف محدد';selection.classList.toggle('show',cs.length>0);const es=eligible();all.disabled=es.length===0;all.checked=es.length>0&&cs.length===es.length;all.indeterminate=cs.length>0&&cs.length<es.length;};
+ const filter=()=>{const q=(search.value||'').trim().toLowerCase(),d=dept.value,s=status.value;body.querySelectorAll('tr').forEach(r=>{if(!r.querySelector('.att5-employee'))return;const n=(r.dataset.name||'').toLowerCase(),rd=r.dataset.dept||'',rs=r.dataset.status||'';r.style.display=(!q||n.includes(q))&&(!d||rd===d)&&(!s||rs===s)?'':'none';});refresh();};
+ all.addEventListener('change',()=>{eligible().forEach(c=>c.checked=all.checked);refresh();});
+ body.addEventListener('change',e=>{if(e.target.classList.contains('att5-employee'))refresh();});
+ [search,dept,status].forEach(el=>el.addEventListener('input',filter));
+ [dept,status].forEach(el=>el.addEventListener('change',filter));
+ document.querySelectorAll('[data-bulk-action]').forEach(btn=>btn.addEventListener('click',async()=>{const cs=checked();if(!cs.length)return;const action=btn.dataset.bulkAction;const mode=document.getElementById('att5BulkMode').value;const names=cs.map(c=>c.closest('tr').querySelector('.att5-name')?.textContent.trim()).filter(Boolean);if(window.Swal){const result=await Swal.fire({icon:'question',title:'تأكيد الإجراء',html:'سيتم تنفيذ الإجراء على <b>'+cs.length+'</b> موظف.<br><small>سيتم استثناء أي موظف يظهر أنه في إجازة عند التحقق من الخادم.</small>',showCancelButton:true,confirmButtonText:'تنفيذ',cancelButtonText:'إلغاء'});if(!result.isConfirmed)return;}const fd=new FormData();fd.append('action',action);fd.append('selected_date',<?php echo json_encode($selectedDate); ?>);fd.append('bulk_work_mode',mode);fd.append('employee_ids_json',JSON.stringify(cs.map(c=>Number(c.value))));try{const res=await fetch('bulk_attendance.php',{method:'POST',body:fd,credentials:'same-origin'});const data=await res.json();if(!res.ok||!data.ok)throw new Error(data.message||'تعذر تنفيذ الإجراء.');if(window.Swal)await Swal.fire({icon:data.skipped>0?'warning':'success',title:'تم التنفيذ',text:data.message,confirmButtonText:'حسناً'});location.reload();}catch(err){if(window.Swal)Swal.fire({icon:'error',title:'تعذر التنفيذ',text:err.message,confirmButtonText:'حسناً'});else alert(err.message);}}));
+ document.querySelectorAll('.att5-return-form').forEach(form=>form.addEventListener('submit',async e=>{e.preventDefault();if(window.Swal){const r=await Swal.fire({icon:'question',title:'عودة من الإجازة',text:'هل تؤكد عودة الموظف من الإجازة لهذا التاريخ؟ بعد التأكيد سيصبح مؤهلاً لتسجيل الحضور.',showCancelButton:true,confirmButtonText:'تأكيد العودة',cancelButtonText:'إلغاء'});if(!r.isConfirmed)return;}form.submit();}));
  refresh();
 });
 </script>
-<?php require_once __DIR__.'/../../includes/footer.php'; ?>
+<?php require_once __DIR__ . '/../../includes/footer.php'; ?>
