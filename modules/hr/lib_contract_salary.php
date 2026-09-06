@@ -10,57 +10,38 @@ declare(strict_types=1);
 
 function hrGetEmployeeContract(int $contractId): ?array
 {
-    if ($contractId <= 0) {
-        return null;
-    }
-
+    if ($contractId <= 0) return null;
     return dbFetchOne(
         "SELECT c.*, e.employee_code, e.full_name
          FROM hr_employee_contracts c
          JOIN employees e ON e.id = c.employee_id
-         WHERE c.id = ?
-         LIMIT 1",
+         WHERE c.id = ? LIMIT 1",
         [$contractId]
     );
 }
 
 function hrGetActiveEmployeeContract(int $employeeId, ?string $onDate = null): ?array
 {
-    if ($employeeId <= 0) {
-        return null;
-    }
-
+    if ($employeeId <= 0) return null;
     $onDate = $onDate ?: date('Y-m-d');
-
     return dbFetchOne(
-        "SELECT c.*
-         FROM hr_employee_contracts c
-         WHERE c.employee_id = ?
-           AND c.status = 'active'
-           AND c.start_date <= ?
-           AND (c.end_date IS NULL OR c.end_date >= ?)
-         ORDER BY c.start_date DESC, c.id DESC
-         LIMIT 1",
+        "SELECT c.* FROM hr_employee_contracts c
+         WHERE c.employee_id = ? AND c.status = 'active'
+           AND c.start_date <= ? AND (c.end_date IS NULL OR c.end_date >= ?)
+         ORDER BY c.start_date DESC, c.id DESC LIMIT 1",
         [$employeeId, $onDate, $onDate]
     );
 }
 
 function hrGetEmployeeSalary(int $employeeId, ?string $onDate = null): ?array
 {
-    if ($employeeId <= 0) {
-        return null;
-    }
-
+    if ($employeeId <= 0) return null;
     $onDate = $onDate ?: date('Y-m-d');
-
     return dbFetchOne(
-        "SELECT s.*
-         FROM hr_employee_salary_history s
-         WHERE s.employee_id = ?
-           AND s.effective_from <= ?
+        "SELECT s.* FROM hr_employee_salary_history s
+         WHERE s.employee_id = ? AND s.effective_from <= ?
            AND (s.effective_to IS NULL OR s.effective_to >= ?)
-         ORDER BY s.effective_from DESC, s.id DESC
-         LIMIT 1",
+         ORDER BY s.effective_from DESC, s.id DESC LIMIT 1",
         [$employeeId, $onDate, $onDate]
     );
 }
@@ -83,7 +64,7 @@ function hrCreateEmployeeContract(
     string $startDate,
     ?string $endDate,
     float $basicSalary,
-    string $currency = 'EGP',
+    string $currency = APP_CURRENCY_CODE,
     string $payFrequency = 'monthly',
     ?string $contractNumber = null,
     ?string $probationEndDate = null,
@@ -91,39 +72,24 @@ function hrCreateEmployeeContract(
     ?string $notes = null,
     ?int $createdBy = null
 ): int {
-    if ($employeeId <= 0) {
-        throw new InvalidArgumentException('الموظف غير صالح.');
-    }
-    if ($basicSalary < 0) {
-        throw new InvalidArgumentException('الراتب لا يمكن أن يكون سالباً.');
-    }
-    if ($endDate !== null && $endDate < $startDate) {
-        throw new InvalidArgumentException('تاريخ نهاية العقد يجب أن يكون بعد تاريخ بدايته.');
-    }
+    if ($employeeId <= 0) throw new InvalidArgumentException('الموظف غير صالح.');
+    if ($basicSalary < 0) throw new InvalidArgumentException('الراتب لا يمكن أن يكون سالباً.');
+    if ($endDate !== null && $endDate < $startDate) throw new InvalidArgumentException('تاريخ نهاية العقد يجب أن يكون بعد تاريخ بدايته.');
 
     $pdo = db();
     $pdo->beginTransaction();
     try {
-        $employee = dbFetchOne(
-            "SELECT id FROM employees WHERE id = ? LIMIT 1 FOR UPDATE",
-            [$employeeId]
-        );
-        if (!$employee) {
-            throw new RuntimeException('الموظف غير موجود.');
-        }
+        $employee = dbFetchOne("SELECT id FROM employees WHERE id = ? LIMIT 1 FOR UPDATE", [$employeeId]);
+        if (!$employee) throw new RuntimeException('الموظف غير موجود.');
 
         $overlap = dbFetchOne(
             "SELECT id FROM hr_employee_contracts
-             WHERE employee_id = ?
-               AND status IN ('draft','active')
-               AND start_date <= ?
-               AND (end_date IS NULL OR end_date >= ?)
+             WHERE employee_id = ? AND status IN ('draft','active')
+               AND start_date <= ? AND (end_date IS NULL OR end_date >= ?)
              LIMIT 1",
             [$employeeId, $endDate ?: '9999-12-31', $startDate]
         );
-        if ($overlap) {
-            throw new RuntimeException('يوجد عقد آخر متداخل مع الفترة المحددة.');
-        }
+        if ($overlap) throw new RuntimeException('يوجد عقد آخر متداخل مع الفترة المحددة.');
 
         $status = $startDate <= date('Y-m-d') ? 'active' : 'draft';
         $stmt = $pdo->prepare(
@@ -138,26 +104,19 @@ function hrCreateEmployeeContract(
             $status, $basicSalary, strtoupper($currency), $payFrequency, $probationEndDate,
             $contractFilePath, $notes, $createdBy
         ]);
-
         $contractId = (int)$pdo->lastInsertId();
 
         if ($status === 'active') {
             $pdo->prepare(
-                "UPDATE hr_employee_contracts
-                 SET status = 'expired'
-                 WHERE employee_id = ?
-                   AND id <> ?
-                   AND status = 'active'
+                "UPDATE hr_employee_contracts SET status = 'expired'
+                 WHERE employee_id = ? AND id <> ? AND status = 'active'
                    AND (end_date IS NULL OR end_date >= ?)"
             )->execute([$employeeId, $contractId, $startDate]);
         }
-
         $pdo->commit();
         return $contractId;
     } catch (Throwable $e) {
-        if ($pdo->inTransaction()) {
-            $pdo->rollBack();
-        }
+        if ($pdo->inTransaction()) $pdo->rollBack();
         throw $e;
     }
 }
@@ -170,38 +129,25 @@ function hrChangeEmployeeSalary(
     ?int $changedBy = null,
     ?string $notes = null,
     ?int $contractId = null,
-    string $currency = 'EGP',
+    string $currency = APP_CURRENCY_CODE,
     string $payFrequency = 'monthly'
 ): void {
-    if ($employeeId <= 0) {
-        throw new InvalidArgumentException('الموظف غير صالح.');
-    }
-    if ($basicSalary < 0) {
-        throw new InvalidArgumentException('الراتب لا يمكن أن يكون سالباً.');
-    }
+    if ($employeeId <= 0) throw new InvalidArgumentException('الموظف غير صالح.');
+    if ($basicSalary < 0) throw new InvalidArgumentException('الراتب لا يمكن أن يكون سالباً.');
 
     $allowedReasons = ['initial','annual_increase','promotion','adjustment','contract_change','correction','other'];
-    if (!in_array($reason, $allowedReasons, true)) {
-        throw new InvalidArgumentException('سبب تغيير الراتب غير صالح.');
-    }
+    if (!in_array($reason, $allowedReasons, true)) throw new InvalidArgumentException('سبب تغيير الراتب غير صالح.');
 
     $pdo = db();
     $pdo->beginTransaction();
     try {
-        $employee = dbFetchOne(
-            "SELECT id FROM employees WHERE id = ? LIMIT 1 FOR UPDATE",
-            [$employeeId]
-        );
-        if (!$employee) {
-            throw new RuntimeException('الموظف غير موجود.');
-        }
+        $employee = dbFetchOne("SELECT id FROM employees WHERE id = ? LIMIT 1 FOR UPDATE", [$employeeId]);
+        if (!$employee) throw new RuntimeException('الموظف غير موجود.');
 
         $current = dbFetchOne(
             "SELECT id, effective_from FROM hr_employee_salary_history
-             WHERE employee_id = ?
-               AND effective_to IS NULL
-             ORDER BY effective_from DESC, id DESC
-             LIMIT 1",
+             WHERE employee_id = ? AND effective_to IS NULL
+             ORDER BY effective_from DESC, id DESC LIMIT 1",
             [$employeeId]
         );
 
@@ -221,11 +167,9 @@ function hrChangeEmployeeSalary(
         } else {
             if ($current) {
                 $previousTo = date('Y-m-d', strtotime($effectiveFrom . ' -1 day'));
-                $pdo->prepare(
-                    "UPDATE hr_employee_salary_history SET effective_to = ? WHERE id = ?"
-                )->execute([$previousTo, (int)$current['id']]);
+                $pdo->prepare("UPDATE hr_employee_salary_history SET effective_to = ? WHERE id = ?")
+                    ->execute([$previousTo, (int)$current['id']]);
             }
-
             $pdo->prepare(
                 "INSERT INTO hr_employee_salary_history
                     (employee_id, contract_id, effective_from, effective_to, basic_salary,
@@ -237,17 +181,14 @@ function hrChangeEmployeeSalary(
             ]);
         }
 
-        // Compatibility mirror only. Payroll will read salary history instead.
+        // Compatibility mirror only. Payroll reads salary history.
         if ($effectiveFrom <= date('Y-m-d')) {
             $pdo->prepare("UPDATE employees SET basic_salary = ? WHERE id = ?")
                 ->execute([$basicSalary, $employeeId]);
         }
-
         $pdo->commit();
     } catch (Throwable $e) {
-        if ($pdo->inTransaction()) {
-            $pdo->rollBack();
-        }
+        if ($pdo->inTransaction()) $pdo->rollBack();
         throw $e;
     }
 }
