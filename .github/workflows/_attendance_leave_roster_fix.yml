@@ -1,0 +1,44 @@
+name: Apply attendance leave roster fix
+
+on:
+  push:
+    paths:
+      - '.github/workflows/_attendance_leave_roster_fix.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Patch attendance roster
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('modules/hr/attendance.php')
+          s = p.read_text(encoding='utf-8')
+
+          old = """    const status=document.getElementById('att5Status');\n\n    // Eligibility is determined"""
+          new = """    const status=document.getElementById('att5Status');\n\n    // Approved-leave employees are kept out of the attendance roster entirely.\n    // Their existing return-from-leave form is moved into a dedicated panel.\n    const leaveRows=Array.from(body.querySelectorAll('tr[data-status=\\\"on_leave\\\"]'));\n    if(leaveRows.length){\n        const panel=document.createElement('div');\n        panel.className='att5-leave-panel';\n        panel.innerHTML='<div class=\\\"att5-leave-head\\\"><div><strong><i class=\\\"fas fa-calendar-day\\\"></i> الموظفون في إجازة معتمدة</strong><span>لن يظهر الموظف في كشف الحضور حتى تسجيل عودته.</span></div><span class=\\\"att5-leave-count\\\">'+leaveRows.length+' موظف</span></div>';\n        const wrap=document.createElement('div');\n        wrap.className='att5-leave-list';\n        const leaveTable=document.createElement('table');\n        leaveTable.className='att5-table';\n        leaveTable.innerHTML='<thead><tr><th>الموظف</th><th>القسم</th><th>الإجازة</th><th>الإجراء</th></tr></thead>';\n        const leaveBody=document.createElement('tbody');\n        leaveRows.forEach(row=>{\n            const cells=row.children;\n            const tr=document.createElement('tr');\n            tr.innerHTML='<td>'+cells[1].innerHTML+'</td><td>'+cells[2].innerHTML+'</td><td>'+cells[3].innerHTML+'</td><td>'+cells[7].innerHTML+'</td>';\n            leaveBody.appendChild(tr);\n            row.remove();\n        });\n        leaveTable.appendChild(leaveBody);\n        wrap.appendChild(leaveTable);\n        panel.appendChild(wrap);\n        document.querySelector('.att5-panel').before(panel);\n    }\n\n    // Eligibility is determined"""
+          if old not in s:
+              raise SystemExit('JS anchor not found')
+          s = s.replace(old, new, 1)
+
+          oldcss = """.att5-table tr.att5-on-leave:hover{background:#f8fbfd}\n</style>"""
+          newcss = """.att5-table tr.att5-on-leave:hover{background:#f8fbfd}.att5-leave-panel{background:#fff;border:1px solid #dbe7f5;border-radius:12px;overflow:hidden;margin-bottom:14px}.att5-leave-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 14px;background:#f1f7fc;border-bottom:1px solid #dbe7f5}.att5-leave-head strong{display:block;font-size:.76rem;color:#126c8e}.att5-leave-head strong i{margin-left:5px}.att5-leave-head span{font-size:.66rem;color:#667085;display:block;margin-top:3px}.att5-leave-count{font-weight:800!important;color:#126c8e!important;background:#e4f3fa;padding:4px 8px;border-radius:12px;white-space:nowrap}.att5-leave-list{overflow-x:auto}.att5-leave-list .att5-table{min-width:650px}.att5-leave-list .att5-table th,.att5-leave-list .att5-table td{height:48px}.att5-leave-list .att5-check{display:none}.att5-leave-list .att5-status{white-space:nowrap}\n</style>"""
+          if oldcss not in s:
+              raise SystemExit('CSS anchor not found')
+          s = s.replace(oldcss, newcss, 1)
+
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Commit attendance roster fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add modules/hr/attendance.php
+          git diff --cached --quiet && exit 0
+          git commit -m "Hide approved leave employees from attendance roster"
+          git push
