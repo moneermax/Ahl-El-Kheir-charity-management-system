@@ -31,8 +31,22 @@ try {
     if ($table_check) {
         $stats['total_employees'] = $pdo->query("SELECT COUNT(*) FROM employees WHERE status = 'active'")->fetchColumn() ?: 0;
         $stats['pending_leaves'] = $pdo->query("SELECT COUNT(*) FROM leaves WHERE status IN ('pending', 'manager_approved')")->fetchColumn() ?: 0;
-        $stats['expiring_contracts'] = $pdo->query("SELECT COUNT(*) FROM contracts WHERE status = 'active' AND end_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY)")->fetchColumn() ?: 0;
-        $stats['monthly_payroll'] = $pdo->query("SELECT COALESCE(SUM(basic_salary), 0) FROM employees WHERE status = 'active'")->fetchColumn() ?: 0;
+
+        // Historical contract model is authoritative. Keep a safe fallback for installations
+        // that have not yet run the contract/salary foundation migration.
+        $contractsTable = $pdo->query("SHOW TABLES LIKE 'hr_employee_contracts'")->fetch();
+        if ($contractsTable) {
+            $stats['expiring_contracts'] = $pdo->query("SELECT COUNT(*) FROM hr_employee_contracts WHERE status = 'active' AND end_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY)")->fetchColumn() ?: 0;
+        } else {
+            $stats['expiring_contracts'] = $pdo->query("SELECT COUNT(*) FROM contracts WHERE status = 'active' AND end_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY)")->fetchColumn() ?: 0;
+        }
+
+        $salaryTable = $pdo->query("SHOW TABLES LIKE 'hr_employee_salary_history'")->fetch();
+        if ($salaryTable) {
+            $stats['monthly_payroll'] = $pdo->query("SELECT COALESCE(SUM(s.basic_salary), 0) FROM hr_employee_salary_history s JOIN employees e ON e.id = s.employee_id JOIN (SELECT employee_id, MAX(effective_from) AS max_effective_from FROM hr_employee_salary_history WHERE effective_from <= CURDATE() GROUP BY employee_id) latest ON latest.employee_id = s.employee_id AND latest.max_effective_from = s.effective_from WHERE e.status = 'active'")->fetchColumn() ?: 0;
+        } else {
+            $stats['monthly_payroll'] = $pdo->query("SELECT COALESCE(SUM(basic_salary), 0) FROM employees WHERE status = 'active'")->fetchColumn() ?: 0;
+        }
 
         $today_attendance = $pdo->query("SELECT work_mode, COUNT(*) as count FROM attendance WHERE date = CURDATE() AND status IN ('present', 'remote_work', 'late') GROUP BY work_mode")->fetchAll(PDO::FETCH_ASSOC);
         foreach ($today_attendance as $row) {
@@ -55,6 +69,7 @@ include __DIR__ . '/../../includes/sidebar.php';
         <h5 class="mb-0 text-navy fw-bold"><i class="fas fa-users-cog me-2"></i> <?php echo e(t('hr.dashboard_title')); ?></h5>
         <div class="d-flex gap-2 flex-wrap">
             <a href="employees.php" class="btn btn-navy btn-sm"><i class="fas fa-user-plus me-1"></i> <?php echo e(t('hr.add_employee')); ?></a>
+            <a href="employment_states.php" class="btn btn-outline-primary btn-sm"><i class="fas fa-id-badge me-1"></i> حالات التوظيف</a>
             <a href="attendance.php" class="btn btn-outline-secondary btn-sm"><i class="fas fa-clock me-1"></i> <?php echo e(t('hr.attendance')); ?></a>
             <a href="leaves.php" class="btn btn-outline-warning btn-sm"><i class="fas fa-calendar-alt me-1"></i> <?php echo e(t('hr.leaves')); ?><?php if ($stats['pending_leaves'] > 0): ?><span class="badge bg-danger ms-1"><?php echo (int)$stats['pending_leaves']; ?></span><?php endif; ?></a>
             <a href="payroll.php" class="btn btn-outline-success btn-sm"><i class="fas fa-money-bill-wave me-1"></i> <?php echo e(t('hr.payroll')); ?></a>
@@ -70,10 +85,10 @@ include __DIR__ . '/../../includes/sidebar.php';
     <?php endif; ?>
 
     <div class="row g-4 mb-4">
-        <div class="col-md-3"><div class="ak-card p-3 h-100" style="border-right: 4px solid #1b4d8f;"><div class="d-flex justify-content-between align-items-center"><div><h6 class="text-muted mb-1"><?php echo e(t('hr.active_employees_total')); ?></h6><h3 class="mb-0 fw-bold text-dark"><?php echo number_format((int)$stats['total_employees']); ?></h3></div><div class="text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; background-color: #1b4d8f;"><i class="fas fa-users"></i></div></div></div></div>
-        <div class="col-md-3"><div class="ak-card p-3 h-100" style="border-right: 4px solid #ffc107;"><div class="d-flex justify-content-between align-items-center"><div><h6 class="text-muted mb-1"><?php echo e(t('hr.pending_leave_requests')); ?></h6><h3 class="mb-0 fw-bold text-warning"><?php echo number_format((int)$stats['pending_leaves']); ?></h3></div><div class="text-warning rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; background-color: #fff3cd;"><i class="fas fa-hourglass-half"></i></div></div></div></div>
-        <div class="col-md-3"><div class="ak-card p-3 h-100" style="border-right: 4px solid #dc3545;"><div class="d-flex justify-content-between align-items-center"><div><h6 class="text-muted mb-1"><?php echo e(t('hr.expiring_contracts')); ?></h6><h3 class="mb-0 fw-bold text-danger"><?php echo number_format((int)$stats['expiring_contracts']); ?></h3></div><div class="text-danger rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; background-color: #f8d7da;"><i class="fas fa-file-signature"></i></div></div></div></div>
-        <div class="col-md-3"><div class="ak-card p-3 h-100" style="border-right: 4px solid #198754;"><div class="d-flex justify-content-between align-items-center"><div><h6 class="text-muted mb-1"><?php echo e(t('hr.monthly_payroll_total')); ?></h6><h4 class="mb-0 fw-bold text-success"><?php echo number_format((float)$stats['monthly_payroll'], 2); ?> <small class="fs-6"><?php echo e(t('hr.currency_sdg')); ?></small></h4></div><div class="text-success rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; background-color: #d1e7dd;"><i class="fas fa-coins"></i></div></div></div></div>
+        <div class="col-md-3"><div class="ak-card p-3 h-100" style="border-right: 4px solid #1b4d8f;"><div class="d-flex justify-content-between align-items-center"><div><h6 class="text-muted mb-1"><?php echo e(t('hr.active_employees_total')); ?></h6><h3 class="mb-0 fw-bold text-dark"><?php echo number_format((int)$stats['total_employees']); ?></h3></div><div class="text-white rounded-circle d-flex justify-content-center align-items-center" style="width:50px;height:50px;background-color:#1b4d8f;"><i class="fas fa-users"></i></div></div></div></div>
+        <div class="col-md-3"><div class="ak-card p-3 h-100" style="border-right: 4px solid #ffc107;"><div class="d-flex justify-content-between align-items-center"><div><h6 class="text-muted mb-1"><?php echo e(t('hr.pending_leave_requests')); ?></h6><h3 class="mb-0 fw-bold text-warning"><?php echo number_format((int)$stats['pending_leaves']); ?></h3></div><div class="text-warning rounded-circle d-flex justify-content-center align-items-center" style="width:50px;height:50px;background-color:#fff3cd;"><i class="fas fa-hourglass-half"></i></div></div></div></div>
+        <div class="col-md-3"><div class="ak-card p-3 h-100" style="border-right: 4px solid #dc3545;"><div class="d-flex justify-content-between align-items-center"><div><h6 class="text-muted mb-1"><?php echo e(t('hr.expiring_contracts')); ?></h6><h3 class="mb-0 fw-bold text-danger"><?php echo number_format((int)$stats['expiring_contracts']); ?></h3></div><div class="text-danger rounded-circle d-flex justify-content-center align-items-center" style="width:50px;height:50px;background-color:#f8d7da;"><i class="fas fa-file-signature"></i></div></div></div></div>
+        <div class="col-md-3"><div class="ak-card p-3 h-100" style="border-right: 4px solid #198754;"><div class="d-flex justify-content-between align-items-center"><div><h6 class="text-muted mb-1"><?php echo e(t('hr.monthly_payroll_total')); ?></h6><h4 class="mb-0 fw-bold text-success"><?php echo number_format((float)$stats['monthly_payroll'], 2); ?> <small class="fs-6"><?php echo e(t('hr.currency_sdg')); ?></small></h4></div><div class="text-success rounded-circle d-flex justify-content-center align-items-center" style="width:50px;height:50px;background-color:#d1e7dd;"><i class="fas fa-coins"></i></div></div></div></div>
     </div>
 
     <div class="row g-4">
