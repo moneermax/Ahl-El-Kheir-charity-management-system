@@ -7,6 +7,10 @@ require_once __DIR__ . '/../../config/session.php';
 
 Session::start();
 
+// database.php exposes the connection through db(); keep a local PDO handle
+// because this page uses direct prepared statements in several legacy handlers.
+$pdo = db();
+
 $userRole = Session::getUserRole();
 if (!Session::isLoggedIn() || !in_array($userRole, ['hr_manager', 'hr_staff', 'admin'])) {
     header('Location: ' . APP_URL . 'index.php');
@@ -243,7 +247,7 @@ require_once __DIR__ . '/../../includes/header.php';
                                     $currentUserRole = Session::getUserRole();
                                     $isAdmin = in_array($currentUserRole, ['admin', 'sudo']);
                                     
-                                    if ($emp['status'] !== 'terminated'):
+                                    if ($emp['status'] !== 'terminated'): 
                                         if ($emp['status'] === 'active'): ?>
                                             <form method="POST" style="display:inline;">
                                                 <input type="hidden" name="action" value="suspend">
@@ -401,7 +405,7 @@ require_once __DIR__ . '/../../includes/header.php';
                     <?php endif; ?>
                 </div>
                 <div class="mt-4 d-flex gap-2">
-                    <button type="submit" class="btn-fm btn-navy"><i class="fas fa-save me-1"></i> حفظ البيانات</button>
+                    <button type="submit" class="btn-fm btn-navy"><i class="fas fa-save me-1"></i> <?php echo $action === 'add' ? 'إضافة الموظف' : 'حفظ التعديلات'; ?></button>
                     <a href="employees.php" class="btn-fm btn-ghost">إلغاء</a>
                 </div>
             </form>
