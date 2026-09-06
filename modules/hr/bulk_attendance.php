@@ -74,24 +74,41 @@ try {
     }
 
     /*
-     * Employees on approved leave are an exception, not a reason to reject
-     * the entire bulk operation. They are filtered out before any write.
-     * The UI already disables their checkboxes, but this server-side rule
-     * protects against stale pages and manually forged POST requests.
+     * The leaves table is the authoritative source for approved leave.
+     * A daily attendance row containing the controlled return marker is an
+     * explicit exception: HR has already returned that employee for this date.
+     * This remains safe even if generated on_leave attendance rows were deleted.
      */
     $leaveRows = dbFetchAll(
-        "SELECT employee_id FROM attendance
-         WHERE employee_id IN ({$placeholders}) AND date = ? AND status = 'on_leave'",
+        "SELECT employee_id
+         FROM leaves
+         WHERE employee_id IN ({$placeholders})
+           AND status = 'hr_approved'
+           AND start_date <= ?
+           AND end_date >= ?",
+        array_merge($ids, [$selectedDate, $selectedDate])
+    );
+    $approvedLeaveIds = array_values(array_unique(array_map(static fn($row) => (int)$row['employee_id'], $leaveRows)));
+
+    $returnRows = dbFetchAll(
+        "SELECT employee_id
+         FROM attendance
+         WHERE employee_id IN ({$placeholders})
+           AND date = ?
+           AND status = 'absent'
+           AND notes LIKE 'عودة من الإجازة%'",
         array_merge($ids, [$selectedDate])
     );
-    $leaveIds = array_values(array_unique(array_map(static fn($row) => (int)$row['employee_id'], $leaveRows)));
+    $returnedIds = array_values(array_unique(array_map(static fn($row) => (int)$row['employee_id'], $returnRows)));
+
+    $leaveIds = array_values(array_diff($approvedLeaveIds, $returnedIds));
     $eligibleIds = array_values(array_diff($ids, $leaveIds));
 
     if (!$eligibleIds) {
         http_response_code(409);
         echo json_encode([
             'ok' => false,
-            'message' => 'جميع الموظفين المحددين في إجازة. يجب تنفيذ "عودة من الإجازة" أولاً.',
+            'message' => 'جميع الموظفين المحددين في إجازة معتمدة. يجب تنفيذ "عودة من الإجازة" أولاً.',
             'blocked_employee_ids' => $leaveIds,
             'affected' => 0
         ], JSON_UNESCAPED_UNICODE);
@@ -107,12 +124,17 @@ try {
                 "INSERT INTO attendance (employee_id, date, check_in, work_mode, status, notes)
                  VALUES (?, ?, ?, ?, 'present', NULL)
                  ON DUPLICATE KEY UPDATE
-                    check_in = VALUES(check_in), work_mode = VALUES(work_mode), status = 'present', notes = NULL",
+                    check_in = VALUES(check_in),
+                    work_mode = VALUES(work_mode),
+                    status = 'present',
+                    notes = NULL",
                 [$id, $selectedDate, $now, $mode]
             );
         } elseif ($action === 'bulk_check_out') {
             dbExecute(
-                "UPDATE attendance SET check_out = ?, status = CASE WHEN status = 'absent' THEN 'present' ELSE status END
+                "UPDATE attendance
+                 SET check_out = ?,
+                     status = CASE WHEN status = 'absent' THEN 'present' ELSE status END
                  WHERE employee_id = ? AND date = ? AND status <> 'on_leave'",
                 [$now, $id, $selectedDate]
             );
@@ -120,14 +142,24 @@ try {
             dbExecute(
                 "INSERT INTO attendance (employee_id, date, status)
                  VALUES (?, ?, 'absent')
-                 ON DUPLICATE KEY UPDATE status = 'absent', check_in = NULL, check_out = NULL, work_mode = NULL",
+                 ON DUPLICATE KEY UPDATE
+                    status = 'absent',
+                    check_in = NULL,
+                    check_out = NULL,
+                    work_mode = NULL,
+                    notes = NULL",
                 [$id, $selectedDate]
             );
         } elseif ($action === 'bulk_leave') {
             dbExecute(
                 "INSERT INTO attendance (employee_id, date, status, notes)
                  VALUES (?, ?, 'on_leave', 'إجازة يدوية')
-                 ON DUPLICATE KEY UPDATE status = 'on_leave', check_in = NULL, check_out = NULL, work_mode = NULL, notes = 'إجازة يدوية'",
+                 ON DUPLICATE KEY UPDATE
+                    status = 'on_leave',
+                    check_in = NULL,
+                    check_out = NULL,
+                    work_mode = NULL,
+                    notes = 'إجازة يدوية'",
                 [$id, $selectedDate]
             );
         }
@@ -136,7 +168,7 @@ try {
 
     $skipped = count($leaveIds);
     $message = $skipped > 0
-        ? 'تم تنفيذ الإجراء على ' . $affected . ' موظف، وتم استثناء ' . $skipped . ' موظف في إجازة.'
+        ? 'تم تنفيذ الإجراء على ' . $affected . ' موظف، وتم استثناء ' . $skipped . ' موظف في إجازة معتمدة.'
         : 'تم تنفيذ الإجراء للموظفين المحددين بنجاح.';
 
     echo json_encode([
