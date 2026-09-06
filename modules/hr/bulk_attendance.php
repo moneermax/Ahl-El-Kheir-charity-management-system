@@ -74,26 +74,26 @@ try {
     }
 
     /*
-     * Leave protection is deliberately checked before any write. A bulk
-     * attendance request is atomic at the application level: if even one
-     * selected employee is still on leave, the entire request is rejected.
+     * Employees on approved leave are an exception, not a reason to reject
+     * the entire bulk operation. They are filtered out before any write.
+     * The UI already disables their checkboxes, but this server-side rule
+     * protects against stale pages and manually forged POST requests.
      */
-    $leaveParams = array_merge($ids, [$selectedDate]);
     $leaveRows = dbFetchAll(
         "SELECT employee_id FROM attendance
          WHERE employee_id IN ({$placeholders}) AND date = ? AND status = 'on_leave'",
-        $leaveParams
+        array_merge($ids, [$selectedDate])
     );
+    $leaveIds = array_values(array_unique(array_map(static fn($row) => (int)$row['employee_id'], $leaveRows)));
+    $eligibleIds = array_values(array_diff($ids, $leaveIds));
 
-    if ($leaveRows) {
-        $leaveIds = array_map(static fn($row) => (int)$row['employee_id'], $leaveRows);
+    if (!$eligibleIds) {
         http_response_code(409);
         echo json_encode([
             'ok' => false,
-            'message' => count($leaveIds) === 1
-                ? 'يوجد موظف في إجازة ضمن التحديد. يجب تنفيذ "عودة من الإجازة" أولاً، ثم تسجيل الحضور.'
-                : 'يوجد ' . count($leaveIds) . ' موظفين في إجازة ضمن التحديد. يجب تنفيذ "عودة من الإجازة" أولاً، ثم تسجيل الحضور.',
-            'blocked_employee_ids' => $leaveIds
+            'message' => 'جميع الموظفين المحددين في إجازة. يجب تنفيذ "عودة من الإجازة" أولاً.',
+            'blocked_employee_ids' => $leaveIds,
+            'affected' => 0
         ], JSON_UNESCAPED_UNICODE);
         exit;
     }
@@ -101,7 +101,7 @@ try {
     $affected = 0;
     $now = date('H:i:s');
 
-    foreach ($ids as $id) {
+    foreach ($eligibleIds as $id) {
         if ($action === 'bulk_check_in') {
             dbExecute(
                 "INSERT INTO attendance (employee_id, date, check_in, work_mode, status, notes)
@@ -134,10 +134,17 @@ try {
         $affected++;
     }
 
+    $skipped = count($leaveIds);
+    $message = $skipped > 0
+        ? 'تم تنفيذ الإجراء على ' . $affected . ' موظف، وتم استثناء ' . $skipped . ' موظف في إجازة.'
+        : 'تم تنفيذ الإجراء للموظفين المحددين بنجاح.';
+
     echo json_encode([
         'ok' => true,
         'affected' => $affected,
-        'message' => 'تم تنفيذ الإجراء للموظفين المحددين بنجاح.'
+        'skipped' => $skipped,
+        'blocked_employee_ids' => $leaveIds,
+        'message' => $message
     ], JSON_UNESCAPED_UNICODE);
 } catch (Throwable $e) {
     http_response_code(500);
