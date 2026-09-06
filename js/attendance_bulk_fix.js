@@ -7,19 +7,45 @@
 
     var selectAll = document.getElementById('selectAll');
 
-    /* Design 3: Select All must never select employees already on leave. */
-    function excludeLeaveFromSelectAll(){
+    /*
+     * Design 3 rule:
+     * Select All selects only employees who are NOT already on leave.
+     * Use capture phase because the original attendance page also has a
+     * Select All handler; this guarantees the leave exclusion wins.
+     */
+    function applyLeaveExclusion(){
         if (!selectAll || !selectAll.checked) return;
-        document.querySelectorAll('.att3 .row-check').forEach(function(check){
+
+        var checks = document.querySelectorAll('.att3 .row-check');
+        var eligible = 0;
+        var selectedEligible = 0;
+
+        checks.forEach(function(check){
             var row = check.closest('tr');
-            var isOnLeave = row && row.querySelector('.status3.lv');
-            if (isOnLeave) check.checked = false;
+            var isOnLeave = !!(row && row.querySelector('.status3.lv'));
+
+            if (isOnLeave) {
+                check.checked = false;
+                return;
+            }
+
+            eligible++;
+            if (check.checked) selectedEligible++;
         });
+
+        selectAll.checked = eligible > 0 && selectedEligible === eligible;
+        selectAll.indeterminate = selectedEligible > 0 && selectedEligible < eligible;
     }
 
     if (selectAll) {
-        selectAll.addEventListener('click', excludeLeaveFromSelectAll);
-        selectAll.addEventListener('change', excludeLeaveFromSelectAll);
+        selectAll.addEventListener('change', function(){
+            if (!selectAll.checked) {
+                selectAll.indeterminate = false;
+                return;
+            }
+            /* Run after the existing Select All handler has selected the rows. */
+            window.setTimeout(applyLeaveExclusion, 0);
+        }, true);
     }
 
     form.addEventListener('submit', function(e){
@@ -28,6 +54,9 @@
 
         e.preventDefault();
         e.stopImmediatePropagation();
+
+        /* Final client-side guard: never submit an employee marked on leave. */
+        applyLeaveExclusion();
 
         var ids = Array.prototype.map.call(
             document.querySelectorAll('.att3 .row-check:checked'),
