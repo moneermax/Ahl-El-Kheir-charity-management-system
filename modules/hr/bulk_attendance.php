@@ -58,9 +58,22 @@ if (!in_array($mode, ['remote', 'onsite', 'hybrid'], true)) {
 
 try {
     $affected = 0;
+    $skippedLeave = 0;
     $now = date('H:i:s');
 
     foreach ($ids as $id) {
+        /* Never overwrite an employee's existing on-leave record with attendance. */
+        if ($action !== 'bulk_leave') {
+            $existing = dbFetchOne(
+                "SELECT status FROM attendance WHERE employee_id=? AND date=? LIMIT 1",
+                [$id, $selectedDate]
+            );
+            if ($existing && ($existing['status'] ?? '') === 'on_leave') {
+                $skippedLeave++;
+                continue;
+            }
+        }
+
         if ($action === 'bulk_check_in') {
             dbExecute(
                 "INSERT INTO attendance (employee_id, date, check_in, work_mode, status)
@@ -94,10 +107,16 @@ try {
         $affected++;
     }
 
+    $message = 'تم تنفيذ الإجراء للموظفين المحددين بنجاح.';
+    if ($skippedLeave > 0) {
+        $message .= ' تم استبعاد ' . $skippedLeave . ' موظفاً في إجازة.';
+    }
+
     echo json_encode([
         'ok' => true,
         'affected' => $affected,
-        'message' => 'تم تنفيذ الإجراء للموظفين المحددين بنجاح.'
+        'skipped_leave' => $skippedLeave,
+        'message' => $message
     ], JSON_UNESCAPED_UNICODE);
 } catch (Throwable $e) {
     http_response_code(500);
