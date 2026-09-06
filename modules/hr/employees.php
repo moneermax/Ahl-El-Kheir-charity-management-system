@@ -13,7 +13,7 @@ if (!Session::isLoggedIn() || !in_array($userRole, ['hr_manager', 'hr_staff', 'a
     exit();
 }
 
-$action = $_GET['action'] ?? 'list';
+$action = $_GET['action'] ?? $_POST['action'] ?? 'list';
 $emp_id = (int)($_GET['id'] ?? 0);
 $message = '';
 $msg_type = 'success';
@@ -243,7 +243,7 @@ require_once __DIR__ . '/../../includes/header.php';
                                     $currentUserRole = Session::getUserRole();
                                     $isAdmin = in_array($currentUserRole, ['admin', 'sudo']);
                                     
-                                    if ($emp['status'] !== 'terminated'): 
+                                    if ($emp['status'] !== 'terminated'):
                                         if ($emp['status'] === 'active'): ?>
                                             <form method="POST" style="display:inline;">
                                                 <input type="hidden" name="action" value="suspend">
@@ -393,17 +393,16 @@ require_once __DIR__ . '/../../includes/header.php';
                     </div>
                     <?php if ($action === 'add'): ?>
                     <div class="col-12">
-                        <div class="form-check form-switch p-3" style="background:#f8f9fa; border-radius:8px;">
+                        <div class="form-check">
                             <input class="form-check-input" type="checkbox" name="create_account" id="create_account">
-                            <label class="form-check-label fw-bold" for="create_account">إنشاء حساب نظامي للموظف (سيسمح له بتسجيل الدخول بكلمة مرور: admin123)</label>
+                            <label class="form-check-label" for="create_account">إنشاء حساب نظامي للموظف</label>
                         </div>
                     </div>
                     <?php endif; ?>
-                    <div class="col-12 text-end mt-4">
-                        <button type="submit" class="btn-fm btn-navy" style="padding: 10px 24px; font-size: 1rem;">
-                            <i class="fas fa-save me-1"></i> <?php echo $action === 'add' ? 'حفظ الموظف' : 'حفظ التعديلات'; ?>
-                        </button>
-                    </div>
+                </div>
+                <div class="mt-4 d-flex gap-2">
+                    <button type="submit" class="btn-fm btn-navy"><i class="fas fa-save me-1"></i> حفظ البيانات</button>
+                    <a href="employees.php" class="btn-fm btn-ghost">إلغاء</a>
                 </div>
             </form>
         </div>
