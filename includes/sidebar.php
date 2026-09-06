@@ -1,5 +1,5 @@
 <?php
-// includes/sidebar.php — v15: Role-based sidebar with stable i18n keys
+// includes/sidebar.php — v16: Role-based sidebar with stable i18n keys
 if (!isset($active)) $active = '';
 $raw_role = (string)current_user_role();
 $rid = 0;
@@ -152,6 +152,7 @@ $menus = [
     'hr_manager' => [
         ['active' => 'dashboard', 'label_key' => 'navigation.dashboard', 'icon' => 'fa-gauge-high', 'url' => 'dashboard/hr_dashboard.php'],
         ['active' => 'employees', 'label_key' => 'navigation.employees', 'icon' => 'fa-users', 'url' => 'modules/hr/employees.php'],
+        ['active' => 'employment_states', 'label_key' => 'navigation.employment_states', 'icon' => 'fa-id-badge', 'url' => 'modules/hr/employment_states.php'],
         ['active' => 'attendance', 'label_key' => 'navigation.attendance', 'icon' => 'fa-clock', 'url' => 'modules/hr/attendance.php'],
         ['active' => 'leaves', 'label_key' => 'navigation.leave_requests', 'icon' => 'fa-calendar-alt', 'url' => 'modules/hr/leaves.php'],
         ['active' => 'payroll', 'label_key' => 'navigation.payroll', 'icon' => 'fa-money-bill-wave', 'url' => 'modules/hr/payroll.php'],
@@ -160,6 +161,7 @@ $menus = [
     'hr_staff' => [
         ['active' => 'dashboard', 'label_key' => 'navigation.dashboard', 'icon' => 'fa-gauge-high', 'url' => 'dashboard/hr_dashboard.php'],
         ['active' => 'employees', 'label_key' => 'navigation.employees', 'icon' => 'fa-users', 'url' => 'modules/hr/employees.php'],
+        ['active' => 'employment_states', 'label_key' => 'navigation.employment_states', 'icon' => 'fa-id-badge', 'url' => 'modules/hr/employment_states.php'],
         ['active' => 'attendance', 'label_key' => 'navigation.attendance', 'icon' => 'fa-clock', 'url' => 'modules/hr/attendance.php'],
         ['active' => 'leaves', 'label_key' => 'navigation.leave_requests', 'icon' => 'fa-calendar-alt', 'url' => 'modules/hr/leaves.php'],
         ['active' => 'payroll', 'label_key' => 'navigation.payroll', 'icon' => 'fa-money-bill-wave', 'url' => 'modules/hr/payroll.php'],
