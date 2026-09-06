@@ -5,6 +5,23 @@
     var form = document.getElementById('bulkForm');
     if (!form) return;
 
+    var selectAll = document.getElementById('selectAll');
+
+    /* Design 3: Select All must never select employees already on leave. */
+    function excludeLeaveFromSelectAll(){
+        if (!selectAll || !selectAll.checked) return;
+        document.querySelectorAll('.att3 .row-check').forEach(function(check){
+            var row = check.closest('tr');
+            var isOnLeave = row && row.querySelector('.status3.lv');
+            if (isOnLeave) check.checked = false;
+        });
+    }
+
+    if (selectAll) {
+        selectAll.addEventListener('click', excludeLeaveFromSelectAll);
+        selectAll.addEventListener('change', excludeLeaveFromSelectAll);
+    }
+
     form.addEventListener('submit', function(e){
         var submitter = e.submitter || document.activeElement;
         if (!submitter || !/^bulk_/.test(submitter.value || '')) return;
