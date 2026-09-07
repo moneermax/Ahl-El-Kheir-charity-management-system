@@ -7,6 +7,13 @@
 --   trigger only when it does not exist, so an older trigger definition could
 --   remain active after the PHP implementation was corrected.
 --
+-- Important:
+--   The salary-history recursion guard is a MySQL/MariaDB user variable. When
+--   it has never been initialized, `@hr_salary_history_sync = 1` evaluates to
+--   NULL, and `NOT (NULL)` is also NULL. An IF condition receiving NULL is not
+--   true, so the trigger silently skipped synchronization. Use COALESCE so an
+--   uninitialized guard is treated as 0.
+--
 -- This migration is safe for existing salary-history data: it changes only
 -- the trigger definition and does not modify employee or salary rows.
 
@@ -45,7 +52,7 @@ BEGIN
     DECLARE v_current_id BIGINT UNSIGNED DEFAULT NULL;
     DECLARE v_target_to DATE DEFAULT NULL;
 
-    IF NOT (@hr_salary_history_sync = 1)
+    IF COALESCE(@hr_salary_history_sync, 0) <> 1
        AND NOT (OLD.basic_salary <=> NEW.basic_salary) THEN
 
         SELECT id INTO v_current_id
@@ -61,9 +68,6 @@ BEGIN
         WHERE employee_id = NEW.id
           AND effective_from > CURDATE();
 
-        -- If the current salary row starts today, update it in place. This is
-        -- the required behavior for same-day edits made by the legacy employee
-        -- screen.
         IF v_current_id IS NOT NULL
            AND EXISTS (
                SELECT 1
@@ -76,8 +80,6 @@ BEGIN
                 notes = 'Synchronized from employee record'
             WHERE id = v_current_id;
         ELSE
-            -- Otherwise close the currently-effective segment yesterday and
-            -- create today's compatibility adjustment segment.
             IF v_current_id IS NOT NULL THEN
                 UPDATE hr_employee_salary_history
                 SET effective_to = DATE_SUB(CURDATE(), INTERVAL 1 DAY)
@@ -103,7 +105,6 @@ END$$
 
 DELIMITER ;
 
--- Verification: these should return exactly two rows.
 SELECT TRIGGER_NAME, EVENT_MANIPULATION, ACTION_TIMING
 FROM information_schema.TRIGGERS
 WHERE TRIGGER_SCHEMA = DATABASE()
