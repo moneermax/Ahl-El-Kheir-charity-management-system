@@ -2,6 +2,10 @@ name: Delete Old Workflow Runs
 on:
   workflow_dispatch:
 
+permissions:
+  actions: write
+  contents: read
+
 jobs:
   del_runs:
     runs-on: ubuntu-latest
