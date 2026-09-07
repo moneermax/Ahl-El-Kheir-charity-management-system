@@ -1,9 +1,12 @@
 -- Ahl El Kheir Charity Management System
 -- HR currency normalization: SDG is the system-wide HR currency.
 --
--- This migration fixes salary-history synchronization triggers that were
--- created with the old EGP currency and normalizes existing HR salary-history
--- currency labels to the current system currency.
+-- This migration fixes old EGP labels and recreates the HR salary-history
+-- synchronization triggers using SDG.
+--
+-- The final information_schema verification query was intentionally removed.
+-- Some phpMyAdmin/MariaDB environments reject that query with #1044 even
+-- though the trigger operations themselves are valid.
 
 SET NAMES utf8mb4;
 
@@ -20,7 +23,11 @@ CREATE TRIGGER trg_employees_salary_history_sync_ai
 AFTER INSERT ON employees
 FOR EACH ROW
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM hr_employee_salary_history WHERE employee_id = NEW.id LIMIT 1) THEN
+    IF NOT EXISTS (
+        SELECT 1 FROM hr_employee_salary_history
+        WHERE employee_id = NEW.id
+        LIMIT 1
+    ) THEN
         INSERT INTO hr_employee_salary_history
             (employee_id, contract_id, effective_from, effective_to,
              basic_salary, salary_currency, pay_frequency, reason, notes)
@@ -55,7 +62,10 @@ BEGIN
           AND effective_from > CURDATE();
 
         IF v_current_id IS NOT NULL
-           AND EXISTS (SELECT 1 FROM hr_employee_salary_history WHERE id = v_current_id AND effective_from = CURDATE()) THEN
+           AND EXISTS (
+               SELECT 1 FROM hr_employee_salary_history
+               WHERE id = v_current_id AND effective_from = CURDATE()
+           ) THEN
             UPDATE hr_employee_salary_history
             SET basic_salary = NEW.basic_salary,
                 salary_currency = 'SDG',
@@ -70,7 +80,8 @@ BEGIN
             END IF;
 
             SET v_target_to = CASE
-                WHEN v_future_from IS NOT NULL THEN DATE_SUB(v_future_from, INTERVAL 1 DAY)
+                WHEN v_future_from IS NOT NULL
+                    THEN DATE_SUB(v_future_from, INTERVAL 1 DAY)
                 ELSE NULL
             END;
 
@@ -86,9 +97,3 @@ BEGIN
 END$$
 
 DELIMITER ;
-
-SELECT TRIGGER_NAME, EVENT_MANIPULATION, ACTION_TIMING
-FROM information_schema.TRIGGERS
-WHERE TRIGGER_SCHEMA = DATABASE()
-  AND TRIGGER_NAME IN ('trg_employees_salary_history_sync_ai','trg_employees_salary_history_sync_au')
-ORDER BY TRIGGER_NAME;
