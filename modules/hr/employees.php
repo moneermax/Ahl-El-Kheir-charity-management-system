@@ -31,7 +31,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($action, ['add','edit','su
             $action = 'list';
         } else {
             $full_name = trim($_POST['full_name'] ?? '');
-            $employee_code = trim($_POST['employee_code'] ?? '');
             $national_id = trim($_POST['national_id'] ?? '');
             $birth_date = $_POST['birth_date'] ?: null;
             $gender = $_POST['gender'] ?: null;
@@ -49,6 +48,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($action, ['add','edit','su
             if ($action === 'add') {
                 $initialStateCode = $_POST['employment_state'] ?? 'active';
                 if (!isset($statesByCode[$initialStateCode])) throw new RuntimeException('حالة التوظيف المختارة غير صالحة.');
+
+                // Employee codes are system-generated. Existing codes are never reused or changed.
+                $lastCodeRow = dbFetchOne(
+                    "SELECT employee_code
+                     FROM employees
+                     WHERE employee_code REGEXP '^EMP-[0-9]+$'
+                     ORDER BY CAST(SUBSTRING(employee_code, 5) AS UNSIGNED) DESC
+                     LIMIT 1"
+                );
+                $nextNumber = 1;
+                if ($lastCodeRow && preg_match('/^EMP-(\\d+)$/', (string)$lastCodeRow['employee_code'], $m)) {
+                    $nextNumber = (int)$m[1] + 1;
+                }
+                do {
+                    $employee_code = 'EMP-' . str_pad((string)$nextNumber, 4, '0', STR_PAD_LEFT);
+                    $exists = dbFetchOne('SELECT id FROM employees WHERE employee_code = ? LIMIT 1', [$employee_code]);
+                    $nextNumber++;
+                } while ($exists);
+
                 $user_id = null;
                 if (isset($_POST['create_account'])) {
                     $username = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $full_name));
@@ -68,8 +86,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($action, ['add','edit','su
                 $newStateCode = $_POST['employment_state'] ?? '';
                 if (!isset($statesByCode[$newStateCode])) throw new RuntimeException('حالة التوظيف المختارة غير صالحة.');
                 $old = dbFetchOne('SELECT employment_state_id FROM employees WHERE id = ?', [$emp_id]);
-                $stmt = $pdo->prepare('UPDATE employees SET full_name=?, employee_code=?, national_id=?, birth_date=?, gender=?, phone=?, email=?, address=?, hire_date=?, department_id=?, position=?, employment_type=?, work_mode=?, basic_salary=?, bank_account=? WHERE id=?');
-                $stmt->execute([$full_name,$employee_code,$national_id,$birth_date,$gender,$phone,$email,$address,$hire_date,$department_id,$position,$employment_type,$work_mode,$basic_salary,$bank_account,$emp_id]);
+                // Employee code is immutable after creation; do not accept or update it from the edit form.
+                $stmt = $pdo->prepare('UPDATE employees SET full_name=?, national_id=?, birth_date=?, gender=?, phone=?, email=?, address=?, hire_date=?, department_id=?, position=?, employment_type=?, work_mode=?, basic_salary=?, bank_account=? WHERE id=?');
+                $stmt->execute([$full_name,$national_id,$birth_date,$gender,$phone,$email,$address,$hire_date,$department_id,$position,$employment_type,$work_mode,$basic_salary,$bank_account,$emp_id]);
                 if ((int)($old['employment_state_id'] ?? 0) !== (int)$statesByCode[$newStateCode]['id']) {
                     hrSetEmploymentState($emp_id, (int)$statesByCode[$newStateCode]['id'], Session::getUserID(), 'Employment state changed from employee edit');
                 }
@@ -94,12 +113,30 @@ if ($action === 'delete' && $emp_id > 0) {
 }
 
 $departments=dbFetchAll('SELECT id,name_ar FROM departments ORDER BY name_ar',[]);
-$employee=null; $employees=[];
+$employee=null; $employees=[]; $nextEmployeeCode='';
 if ($action==='edit' && $emp_id>0) {
     $employee=dbFetchOne('SELECT e.*, s.code AS state_code, s.name_ar AS state_name FROM employees e LEFT JOIN hr_employment_states s ON s.id=e.employment_state_id WHERE e.id=?',[$emp_id]);
 } else {
     $search=trim($_GET['search']??'');
     $employees=dbFetchAll('SELECT e.*, d.name_ar AS dept_name, s.code AS state_code, s.name_ar AS state_name, s.category AS state_category FROM employees e LEFT JOIN departments d ON e.department_id=d.id LEFT JOIN hr_employment_states s ON s.id=e.employment_state_id WHERE e.full_name LIKE ? OR e.employee_code LIKE ? OR e.position LIKE ? ORDER BY e.id DESC',["%$search%","%$search%","%$search%"]);
+    if ($action === 'add') {
+        $lastCodeRow = dbFetchOne(
+            "SELECT employee_code
+             FROM employees
+             WHERE employee_code REGEXP '^EMP-[0-9]+$'
+             ORDER BY CAST(SUBSTRING(employee_code, 5) AS UNSIGNED) DESC
+             LIMIT 1"
+        );
+        $nextNumber = 1;
+        if ($lastCodeRow && preg_match('/^EMP-(\\d+)$/', (string)$lastCodeRow['employee_code'], $m)) {
+            $nextNumber = (int)$m[1] + 1;
+        }
+        do {
+            $nextEmployeeCode = 'EMP-' . str_pad((string)$nextNumber, 4, '0', STR_PAD_LEFT);
+            $exists = dbFetchOne('SELECT id FROM employees WHERE employee_code = ? LIMIT 1', [$nextEmployeeCode]);
+            $nextNumber++;
+        } while ($exists);
+    }
 }
 
 $pageTitle='إدارة الموظفين'; require_once __DIR__.'/../../includes/header.php';
@@ -119,7 +156,7 @@ $pageTitle='إدارة الموظفين'; require_once __DIR__.'/../../includes/
 </tr><?php endforeach; endif; ?></tbody></table></div></div></div>
 <?php else: ?>
 <div class="fm-card"><div class="fm-card-head"><span>📝 بيانات الموظف</span><a href="employees.php" class="btn-fm btn-ghost" style="background:#fff;color:#1b4d8f;font-size:.8rem">العودة للقائمة</a></div><div class="fm-card-body"><form method="POST" enctype="multipart/form-data"><div class="row g-3">
-<div class="col-md-6"><label class="form-label">الاسم الكامل <span class="text-danger">*</span></label><input type="text" name="full_name" class="form-control" required value="<?php echo htmlspecialchars($employee['full_name']??''); ?>"></div><div class="col-md-3"><label class="form-label">كود الموظف <span class="text-danger">*</span></label><input type="text" name="employee_code" class="form-control" required value="<?php echo htmlspecialchars($employee['employee_code']??''); ?>"></div><div class="col-md-3"><label class="form-label">الرقم القومي</label><input type="text" name="national_id" class="form-control" value="<?php echo htmlspecialchars($employee['national_id']??''); ?>"></div>
+<div class="col-md-6"><label class="form-label">الاسم الكامل <span class="text-danger">*</span></label><input type="text" name="full_name" class="form-control" required value="<?php echo htmlspecialchars($employee['full_name']??''); ?>"></div><div class="col-md-3"><label class="form-label">كود الموظف</label><input type="text" class="form-control bg-light" readonly value="<?php echo htmlspecialchars($action==='add'?$nextEmployeeCode:($employee['employee_code']??'')); ?>"><small class="text-muted"><?php echo $action==='add'?'يتم إنشاء الكود تلقائياً بواسطة النظام ولا يمكن إدخاله يدوياً.':'كود الموظف ثابت ولا يمكن تغييره بعد الإنشاء.'; ?></small></div><div class="col-md-3"><label class="form-label">الرقم القومي</label><input type="text" name="national_id" class="form-control" value="<?php echo htmlspecialchars($employee['national_id']??''); ?>"></div>
 <div class="col-md-3"><label class="form-label">تاريخ الميلاد</label><input type="date" name="birth_date" class="form-control" value="<?php echo htmlspecialchars($employee['birth_date']??''); ?>"></div><div class="col-md-3"><label class="form-label">النوع</label><select name="gender" class="form-select"><option value="">-- اختر --</option><option value="male" <?php echo ($employee['gender']??'')==='male'?'selected':''; ?>>ذكر</option><option value="female" <?php echo ($employee['gender']??'')==='female'?'selected':''; ?>>أنثى</option></select></div><div class="col-md-3"><label class="form-label">رقم الهاتف</label><input type="text" name="phone" class="form-control" value="<?php echo htmlspecialchars($employee['phone']??''); ?>"></div><div class="col-md-3"><label class="form-label">البريد الإلكتروني</label><input type="email" name="email" class="form-control" value="<?php echo htmlspecialchars($employee['email']??''); ?>"></div>
 <div class="col-12"><label class="form-label">العنوان</label><input type="text" name="address" class="form-control" value="<?php echo htmlspecialchars($employee['address']??''); ?>"></div><div class="col-md-3"><label class="form-label">تاريخ التعيين <span class="text-danger">*</span></label><input type="date" name="hire_date" class="form-control" required value="<?php echo htmlspecialchars($employee['hire_date']??''); ?>"></div><div class="col-md-3"><label class="form-label">القسم</label><select name="department_id" class="form-select"><option value="">-- اختر القسم --</option><?php foreach($departments as $dept): ?><option value="<?php echo $dept['id']; ?>" <?php echo ($employee['department_id']??'')==$dept['id']?'selected':''; ?>><?php echo htmlspecialchars($dept['name_ar']); ?></option><?php endforeach; ?></select></div><div class="col-md-3"><label class="form-label">المسمى الوظيفي <span class="text-danger">*</span></label><input type="text" name="position" class="form-control" required value="<?php echo htmlspecialchars($employee['position']??''); ?>"></div>
 <div class="col-md-3"><label class="form-label">نوع التوظيف</label><select name="employment_type" class="form-select"><option value="full_time" <?php echo ($employee['employment_type']??'')==='full_time'?'selected':''; ?>>دوام كامل</option><option value="part_time" <?php echo ($employee['employment_type']??'')==='part_time'?'selected':''; ?>>دوام جزئي</option><option value="contract" <?php echo ($employee['employment_type']??'')==='contract'?'selected':''; ?>>عقد مؤقت</option><option value="volunteer" <?php echo ($employee['employment_type']??'')==='volunteer'?'selected':''; ?>>متطوع</option></select></div><div class="col-md-3"><label class="form-label">نمط العمل</label><select name="work_mode" class="form-select"><option value="remote" <?php echo ($employee['work_mode']??'')==='remote'?'selected':''; ?>>عن بُعد</option><option value="onsite" <?php echo ($employee['work_mode']??'')==='onsite'?'selected':''; ?>>في المقر</option><option value="hybrid" <?php echo ($employee['work_mode']??'')==='hybrid'?'selected':''; ?>>مختلط</option></select></div><div class="col-md-3"><label class="form-label">الراتب الأساسي</label><input type="number" step="0.01" name="basic_salary" class="form-control" value="<?php echo htmlspecialchars($employee['basic_salary']??'0.00'); ?>"></div><div class="col-md-3"><label class="form-label">رقم الحساب البنكي</label><input type="text" name="bank_account" class="form-control" value="<?php echo htmlspecialchars($employee['bank_account']??''); ?>"></div>
