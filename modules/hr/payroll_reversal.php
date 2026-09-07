@@ -31,7 +31,7 @@ try {
   if($payroll['status']!=='paid') throw new RuntimeException('لا يمكن عكس مسير غير مصروف.');
   if(dbFetchOne("SELECT id FROM hr_payroll_reversals WHERE payroll_id=? LIMIT 1",[$payrollId])) throw new RuntimeException('تم عكس هذا المسير مسبقاً ولا يمكن إنشاء عكس ثانٍ.');
   $original=dbFetchOne("SELECT id FROM journal_entries WHERE reference_type='payroll' AND reference_id=? AND status='posted' ORDER BY id ASC LIMIT 1",[$payrollId]);
-  if(!$original) throw new RuntimeException('لا يوجد قيد محاسبي أصلي مصروف مرتبط بهذا المسير.');
+  if(!$original) throw new RuntimeException('هذا المسير مصروف، لكنه لم يُرحّل إلى المحاسبة؛ لا يوجد قيد محاسبي يمكن عكسه.');
   $reversalEntryId=hrReversePaidPayroll($payrollId,(int)Session::getUserId(),$reason);
   try {
    $pdo->prepare("INSERT INTO hr_payroll_reversals (payroll_id,original_entry_id,reversal_entry_id,reason,reversed_by) VALUES (?,?,?,?,?)")
@@ -42,13 +42,16 @@ try {
   $message='تم عكس القيد المحاسبي لمسير الراتب بنجاح. بقي سجل المسير الأصلي محفوظاً وغير قابل للتعديل.';
  }
 } catch(Throwable $e) { $message='خطأ: '.$e->getMessage(); $msgType='error'; }
-$rows=dbFetchAll("SELECT p.id,p.month,p.year,p.net_salary,p.payment_date,e.employee_code,e.full_name AS employee_name,r.reversal_entry_id,r.reason AS reversal_reason,r.reversed_at
- FROM payroll p JOIN employees e ON e.id=p.employee_id LEFT JOIN hr_payroll_reversals r ON r.payroll_id=p.id
+$rows=dbFetchAll("SELECT p.id,p.month,p.year,p.net_salary,p.payment_date,p.accounting_status,e.employee_code,e.full_name AS employee_name,
+ COALESCE(je.id,0) AS original_entry_id,r.reversal_entry_id,r.reason AS reversal_reason,r.reversed_at
+ FROM payroll p JOIN employees e ON e.id=p.employee_id
+ LEFT JOIN journal_entries je ON je.reference_type='payroll' AND je.reference_id=p.id AND je.status='posted'
+ LEFT JOIN hr_payroll_reversals r ON r.payroll_id=p.id
  WHERE p.status='paid' ORDER BY p.year DESC,p.month DESC,e.full_name ASC");
 $pageTitle='عكس مسيرات الرواتب'; require_once __DIR__ . '/../../includes/header.php';
 ?>
 <style>
-.prr-wrap{max-width:1450px;margin:auto}.prr-header{background:linear-gradient(135deg,#7f1d1d,#991b1b);color:#fff;padding:22px;border-radius:12px;margin-bottom:18px}.prr-header h1{margin:0;font-size:1.55rem}.prr-header p{margin:5px 0 0;opacity:.9}.prr-card{background:#fff;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.06);overflow:hidden}.prr-head{padding:14px 18px;border-bottom:1px solid #e9ecef}.prr-body{padding:18px}.prr-table{width:100%;border-collapse:collapse}.prr-table th,.prr-table td{padding:10px;border-bottom:1px solid #edf0f2;text-align:right;vertical-align:middle;font-size:.84rem}.prr-table th{background:#f8f9fa;font-weight:800;white-space:nowrap}.prr-btn{border:0;border-radius:7px;padding:7px 11px;font-size:.76rem;font-weight:800;cursor:pointer}.prr-danger{background:#991b1b;color:#fff}.prr-done{background:#e2e3e5;color:#495057}.prr-muted{font-size:.72rem;color:#6c757d}.prr-locked{background:#fff4f4;border-right:3px solid #991b1b;padding:10px 13px;border-radius:7px;color:#5b1a1a;font-size:.82rem}
+.prr-wrap{max-width:1450px;margin:auto}.prr-header{background:linear-gradient(135deg,#7f1d1d,#991b1b);color:#fff;padding:22px;border-radius:12px;margin-bottom:18px}.prr-header h1{margin:0;font-size:1.55rem}.prr-header p{margin:5px 0 0;opacity:.9}.prr-card{background:#fff;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.06);overflow:hidden}.prr-head{padding:14px 18px;border-bottom:1px solid #e9ecef}.prr-body{padding:18px}.prr-table{width:100%;border-collapse:collapse}.prr-table th,.prr-table td{padding:10px;border-bottom:1px solid #edf0f2;text-align:right;vertical-align:middle;font-size:.84rem}.prr-table th{background:#f8f9fa;font-weight:800;white-space:nowrap}.prr-btn{border:0;border-radius:7px;padding:7px 11px;font-size:.76rem;font-weight:800;cursor:pointer}.prr-danger{background:#991b1b;color:#fff}.prr-done{background:#e2e3e5;color:#495057}.prr-disabled{background:#f1f3f5;color:#6c757d;cursor:not-allowed}.prr-muted{font-size:.72rem;color:#6c757d}.prr-locked{background:#fff4f4;border-right:3px solid #991b1b;padding:10px 13px;border-radius:7px;color:#5b1a1a;font-size:.82rem}.prr-warning{background:#fff8e1;color:#664d03;border-right:3px solid #ffc107;padding:8px 10px;border-radius:6px;font-size:.72rem}
 </style>
 <div class="prr-wrap">
 <div class="prr-header"><h1><i class="fas fa-rotate-left me-2"></i> عكس مسيرات الرواتب</h1><p>إجراء تصحيحي محاسبي مستقل — لا يعيد فتح المسير الأصلي ولا يغيّر بيانات الصرف التاريخية.</p></div>
@@ -62,8 +65,24 @@ $pageTitle='عكس مسيرات الرواتب'; require_once __DIR__ . '/../../
 <td><?php echo htmlspecialchars(sprintf('%04d-%02d',(int)$row['year'],(int)$row['month'])); ?></td>
 <td><strong><?php echo number_format((float)$row['net_salary'],2); ?></strong> <span class="prr-muted"><?php echo htmlspecialchars(APP_CURRENCY_CODE); ?></span></td>
 <td><?php echo htmlspecialchars($row['payment_date']?:'—'); ?></td>
-<td><?php if(!empty($row['reversal_entry_id'])): ?><span class="badge text-bg-warning">تم العكس</span><div class="prr-muted">قيد العكس #<?php echo (int)$row['reversal_entry_id']; ?></div><?php else: ?><span class="badge text-bg-success">مصروف — سليم</span><?php endif; ?></td>
-<td><?php if(!empty($row['reversal_entry_id'])): ?><button class="prr-btn prr-done" type="button" disabled><i class="fas fa-check me-1"></i> تم العكس</button><?php else: ?><button class="prr-btn prr-danger" type="button" onclick="openReverse(<?php echo (int)$row['id']; ?>,<?php echo htmlspecialchars(json_encode($row['employee_name'],JSON_UNESCAPED_UNICODE),ENT_QUOTES,'UTF-8'); ?>,'<?php echo sprintf('%04d-%02d',(int)$row['year'],(int)$row['month']); ?>','<?php echo number_format((float)$row['net_salary'],2); ?>')"><i class="fas fa-rotate-left me-1"></i> عكس المسير</button><?php endif; ?></td>
+<td>
+<?php if(!empty($row['reversal_entry_id'])): ?>
+ <span class="badge text-bg-warning">تم العكس</span><div class="prr-muted">قيد العكس #<?php echo (int)$row['reversal_entry_id']; ?></div>
+<?php elseif(!empty($row['original_entry_id'])): ?>
+ <span class="badge text-bg-success">مصروف — مرحل محاسبياً</span><div class="prr-muted">القيد الأصلي #<?php echo (int)$row['original_entry_id']; ?></div>
+<?php else: ?>
+ <span class="badge text-bg-secondary">مصروف — غير مرحل</span><div class="prr-warning mt-1">لا يوجد قيد محاسبي أصلي لهذا المسير</div>
+<?php endif; ?>
+</td>
+<td>
+<?php if(!empty($row['reversal_entry_id'])): ?>
+ <button class="prr-btn prr-done" type="button" disabled><i class="fas fa-check me-1"></i> تم العكس</button>
+<?php elseif(empty($row['original_entry_id'])): ?>
+ <button class="prr-btn prr-disabled" type="button" disabled title="لا يوجد قيد محاسبي أصلي"><i class="fas fa-ban me-1"></i> لا يوجد قيد</button>
+<?php else: ?>
+ <button class="prr-btn prr-danger" type="button" onclick="openReverse(<?php echo (int)$row['id']; ?>,<?php echo htmlspecialchars(json_encode($row['employee_name'],JSON_UNESCAPED_UNICODE),ENT_QUOTES,'UTF-8'); ?>,'<?php echo sprintf('%04d-%02d',(int)$row['year'],(int)$row['month']); ?>','<?php echo number_format((float)$row['net_salary'],2); ?>')"><i class="fas fa-rotate-left me-1"></i> عكس المسير</button>
+<?php endif; ?>
+</td>
 </tr><?php endforeach; endif; ?></tbody></table></div>
 </div></div></div>
 <div class="modal fade" id="reverseModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content" dir="rtl">
