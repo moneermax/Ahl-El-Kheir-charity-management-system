@@ -192,3 +192,107 @@ function hrChangeEmployeeSalary(
         throw $e;
     }
 }
+
+/**
+ * Establish the payroll -> accounting boundary once the HR salary library is loaded.
+ *
+ * Draft and approved payroll remain HR-owned. A transition to paid is the financial
+ * event: a single posted journal is created for the payroll record, debiting 5200
+ * (Salaries) and crediting the selected cash/bank account. Existing paid payroll is
+ * intentionally untouched because the trigger fires only on a new transition to paid.
+ */
+function hrEnsurePayrollAccountingIntegration(): void
+{
+    static $done = false;
+    if ($done) return;
+    $done = true;
+
+    require_once dirname(__DIR__) . '/accounting/lib.php';
+    ak_ensure_tables();
+    ak_seed_accounts();
+
+    dbExecute("ALTER TABLE payroll ADD COLUMN IF NOT EXISTS accounting_status ENUM('none','ready','posted') NOT NULL DEFAULT 'none'");
+    dbExecute("ALTER TABLE payroll ADD COLUMN IF NOT EXISTS accounting_entry_id INT UNSIGNED NULL");
+    dbExecute("ALTER TABLE payroll ADD COLUMN IF NOT EXISTS payment_account_id INT UNSIGNED NULL");
+
+    $trigger = dbFetchOne(
+        "SELECT TRIGGER_NAME FROM information_schema.TRIGGERS
+         WHERE TRIGGER_SCHEMA = DATABASE() AND TRIGGER_NAME = 'trg_payroll_accounting_before_update' LIMIT 1"
+    );
+    if ($trigger) return;
+
+    $sql = <<<'SQL'
+CREATE TRIGGER trg_payroll_accounting_before_update
+BEFORE UPDATE ON payroll
+FOR EACH ROW
+BEGIN
+    DECLARE v_entry_id INT UNSIGNED DEFAULT NULL;
+    DECLARE v_expense_account_id INT UNSIGNED DEFAULT NULL;
+    DECLARE v_payment_account_id INT UNSIGNED DEFAULT NULL;
+    DECLARE v_employee_name VARCHAR(150) DEFAULT NULL;
+    DECLARE v_entry_date DATE;
+    DECLARE v_amount DECIMAL(14,2);
+    DECLARE v_entry_code VARCHAR(50);
+
+    IF OLD.status <> 'approved' AND NEW.status = 'approved' THEN
+        SET NEW.accounting_status = 'ready';
+    END IF;
+
+    IF OLD.status <> 'paid' AND NEW.status = 'paid' THEN
+        SET v_amount = COALESCE(NEW.net_salary, 0);
+        IF v_amount <= 0 THEN
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'لا يمكن ترحيل مسير راتب بصافي راتب غير صالح إلى المحاسبة.';
+        END IF;
+
+        SELECT id INTO v_expense_account_id FROM accounts WHERE code = '5200' LIMIT 1;
+        IF v_expense_account_id IS NULL THEN
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'حساب الرواتب 5200 غير موجود في دليل الحسابات.';
+        END IF;
+
+        SET v_payment_account_id = NEW.payment_account_id;
+        IF v_payment_account_id IS NULL OR v_payment_account_id = 0 THEN
+            SELECT id INTO v_payment_account_id FROM accounts WHERE code = '1200' AND is_active = 1 LIMIT 1;
+        ELSE
+            SELECT id INTO v_payment_account_id FROM accounts WHERE id = v_payment_account_id AND is_active = 1 LIMIT 1;
+        END IF;
+        IF v_payment_account_id IS NULL THEN
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'حساب الدفع البنكي غير صالح.';
+        END IF;
+
+        SET v_entry_code = CONCAT('PAY-', NEW.id);
+        SET v_entry_date = COALESCE(NEW.payment_date, CURDATE());
+
+        SELECT id INTO v_entry_id
+        FROM journal_entries
+        WHERE reference_type = 'payroll' AND reference_id = NEW.id AND status = 'posted'
+        LIMIT 1;
+
+        IF v_entry_id IS NULL THEN
+            SELECT full_name INTO v_employee_name FROM employees WHERE id = NEW.employee_id LIMIT 1;
+            INSERT INTO journal_entries
+                (entry_code, entry_date, description, reference_type, reference_id, status, created_by)
+            VALUES
+                (v_entry_code, v_entry_date,
+                 CONCAT('صرف راتب الموظف: ', COALESCE(v_employee_name, CONCAT('ID ', NEW.employee_id)), ' - ', NEW.year, '-', LPAD(NEW.month, 2, '0')),
+                 'payroll', NEW.id, 'posted', NULL);
+            SET v_entry_id = LAST_INSERT_ID();
+
+            INSERT INTO journal_lines (entry_id, account_id, debit, credit, description)
+            VALUES (v_entry_id, v_expense_account_id, v_amount, 0,
+                    CONCAT('رواتب وأجور - ', NEW.year, '-', LPAD(NEW.month, 2, '0')));
+
+            INSERT INTO journal_lines (entry_id, account_id, debit, credit, description)
+            VALUES (v_entry_id, v_payment_account_id, 0, v_amount,
+                    CONCAT('صرف رواتب - ', NEW.year, '-', LPAD(NEW.month, 2, '0')));
+        END IF;
+
+        SET NEW.accounting_entry_id = v_entry_id;
+        SET NEW.accounting_status = 'posted';
+    END IF;
+END
+SQL;
+
+    db()->exec($sql);
+}
+
+hrEnsurePayrollAccountingIntegration();
