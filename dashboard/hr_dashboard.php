@@ -45,7 +45,10 @@ require_once __DIR__ . '/../includes/header.php';
 <?php if (in_array($userRole, ['hr_manager', 'admin'], true)): ?>
 <div class="hr-financial-tools">
     <div class="tool-title"><span class="tool-title-icon"><i class="fas fa-rotate-left"></i></span><span>التصحيحات المالية للرواتب<span class="tool-subtitle">عكس القيود المحاسبية للمسيرات المصروفة</span></span></div>
-    <a href="<?php echo APP_URL; ?>modules/hr/payroll_reversal.php" class="btn btn-outline-danger btn-sm tool-link"><i class="fas fa-rotate-left me-1"></i> عكس مسير مصروف</a>
+    <div class="d-flex gap-2 flex-wrap">
+        <a href="<?php echo APP_URL; ?>modules/hr/payroll_reversal.php" class="btn btn-outline-danger btn-sm tool-link"><i class="fas fa-rotate-left me-1"></i> عكس مسير مصروف</a>
+        <a href="<?php echo APP_URL; ?>modules/hr/payroll_integrity.php" class="btn btn-outline-primary btn-sm tool-link"><i class="fas fa-shield-halved me-1"></i> فحص سلامة الرواتب</a>
+    </div>
 </div>
 <?php endif; ?>
 
