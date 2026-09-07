@@ -47,26 +47,90 @@ function hrCreateEmployeeContract(int $employeeId, string $contractType, string 
     } catch (Throwable $e) { if ($pdo->inTransaction()) $pdo->rollBack(); throw $e; }
 }
 
+/**
+ * Create or update a salary-history segment effective on a specific date.
+ * Future scheduled salary rows are preserved and the new segment ends the day
+ * before the next future change. The current employee salary is mirrored only
+ * when the effective date has arrived.
+ */
 function hrChangeEmployeeSalary(int $employeeId, float $basicSalary, string $effectiveFrom, string $reason = 'adjustment', ?int $changedBy = null, ?string $notes = null, ?int $contractId = null, string $currency = APP_CURRENCY_CODE, string $payFrequency = 'monthly'): void
 {
     if ($employeeId <= 0) throw new InvalidArgumentException('الموظف غير صالح.');
     if ($basicSalary < 0) throw new InvalidArgumentException('الراتب لا يمكن أن يكون سالباً.');
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $effectiveFrom) || !strtotime($effectiveFrom)) throw new InvalidArgumentException('تاريخ سريان الراتب غير صالح.');
     $allowedReasons = ['initial','annual_increase','promotion','adjustment','contract_change','correction','other'];
     if (!in_array($reason, $allowedReasons, true)) throw new InvalidArgumentException('سبب تغيير الراتب غير صالح.');
+
     $pdo = db(); $pdo->beginTransaction();
     try {
         if (!dbFetchOne("SELECT id FROM employees WHERE id = ? LIMIT 1 FOR UPDATE", [$employeeId])) throw new RuntimeException('الموظف غير موجود.');
-        $current = dbFetchOne("SELECT id, effective_from FROM hr_employee_salary_history WHERE employee_id = ? AND effective_to IS NULL ORDER BY effective_from DESC, id DESC LIMIT 1", [$employeeId]);
-        if ($current && $effectiveFrom < $current['effective_from']) throw new RuntimeException('تاريخ سريان الراتب الجديد لا يمكن أن يسبق آخر سجل راتب.');
-        if ($current && $effectiveFrom === $current['effective_from']) {
-            $pdo->prepare("UPDATE hr_employee_salary_history SET basic_salary = ?, salary_currency = ?, pay_frequency = ?, reason = ?, notes = ?, changed_by = ?, contract_id = ? WHERE id = ?")->execute([$basicSalary, strtoupper($currency), $payFrequency, $reason, $notes, $changedBy, $contractId, (int)$current['id']]);
+
+        $existingAtDate = dbFetchOne(
+            "SELECT id, effective_from, effective_to
+             FROM hr_employee_salary_history
+             WHERE employee_id = ?
+               AND effective_from <= ?
+               AND (effective_to IS NULL OR effective_to >= ?)
+             ORDER BY effective_from DESC, id DESC
+             LIMIT 1
+             FOR UPDATE",
+            [$employeeId, $effectiveFrom, $effectiveFrom]
+        );
+
+        $future = dbFetchOne(
+            "SELECT id, effective_from
+             FROM hr_employee_salary_history
+             WHERE employee_id = ? AND effective_from > ?
+             ORDER BY effective_from ASC, id ASC
+             LIMIT 1
+             FOR UPDATE",
+            [$employeeId, $effectiveFrom]
+        );
+
+        $futureTo = $future ? date('Y-m-d', strtotime($future['effective_from'] . ' -1 day')) : null;
+
+        if ($existingAtDate && $existingAtDate['effective_from'] === $effectiveFrom) {
+            $pdo->prepare(
+                "UPDATE hr_employee_salary_history
+                 SET basic_salary = ?, salary_currency = ?, pay_frequency = ?, reason = ?, notes = ?, changed_by = ?, contract_id = ?, effective_to = ?
+                 WHERE id = ?"
+            )->execute([
+                $basicSalary, strtoupper($currency), $payFrequency, $reason, $notes, $changedBy,
+                $contractId, $futureTo, (int)$existingAtDate['id']
+            ]);
         } else {
-            if ($current) $pdo->prepare("UPDATE hr_employee_salary_history SET effective_to = ? WHERE id = ?")->execute([date('Y-m-d', strtotime($effectiveFrom . ' -1 day')), (int)$current['id']]);
-            $pdo->prepare("INSERT INTO hr_employee_salary_history (employee_id, contract_id, effective_from, effective_to, basic_salary, salary_currency, pay_frequency, reason, notes, changed_by) VALUES (?, ?, ?, NULL, ?, ?, ?, ?, ?, ?)")->execute([$employeeId, $contractId, $effectiveFrom, $basicSalary, strtoupper($currency), $payFrequency, $reason, $notes, $changedBy]);
+            if ($existingAtDate) {
+                $pdo->prepare(
+                    "UPDATE hr_employee_salary_history
+                     SET effective_to = ?
+                     WHERE id = ?"
+                )->execute([date('Y-m-d', strtotime($effectiveFrom . ' -1 day')), (int)$existingAtDate['id']]);
+            }
+
+            $pdo->prepare(
+                "INSERT INTO hr_employee_salary_history
+                    (employee_id, contract_id, effective_from, effective_to, basic_salary, salary_currency, pay_frequency, reason, notes, changed_by)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+            )->execute([
+                $employeeId, $contractId, $effectiveFrom, $futureTo, $basicSalary,
+                strtoupper($currency), $payFrequency, $reason, $notes, $changedBy
+            ]);
         }
-        if ($effectiveFrom <= date('Y-m-d')) $pdo->prepare("UPDATE employees SET basic_salary = ? WHERE id = ?")->execute([$basicSalary, $employeeId]);
+
+        if ($effectiveFrom <= date('Y-m-d')) {
+            $pdo->exec("SET @hr_salary_history_sync = 1");
+            try {
+                $pdo->prepare("UPDATE employees SET basic_salary = ? WHERE id = ?")->execute([$basicSalary, $employeeId]);
+            } finally {
+                $pdo->exec("SET @hr_salary_history_sync = 0");
+            }
+        }
+
         $pdo->commit();
-    } catch (Throwable $e) { if ($pdo->inTransaction()) $pdo->rollBack(); throw $e; }
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        throw $e;
+    }
 }
 
 function hrEnsurePayrollAccountingIntegration(): void
