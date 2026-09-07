@@ -17,7 +17,10 @@ $errors = [];
 
 function integrityTableExists(string $table): bool
 {
-    return (bool)dbFetchOne("SHOW TABLES LIKE ?", [$table]);
+    return (bool)dbFetchOne(
+        "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? LIMIT 1",
+        [$table]
+    );
 }
 
 function integrityAddCheck(array &$checks, string $key, string $title, bool $ok, string $summary, array $rows = []): void
@@ -44,6 +47,7 @@ try {
     if (!integrityTableExists('payroll')) {
         throw new RuntimeException('جدول payroll غير موجود.');
     }
+
     $paidWithoutJournal = dbFetchAll(
         "SELECT p.id,e.employee_code,e.full_name,p.month,p.year,p.net_salary
          FROM payroll p JOIN employees e ON e.id=p.employee_id
