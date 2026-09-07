@@ -74,6 +74,54 @@ try {
     }
 
     /*
+     * Employment state is the canonical HR eligibility source.
+     * An employee must have a working-category state that overlaps the
+     * selected attendance date. The legacy employees.status check above is
+     * retained only as a backward-compatibility safety check.
+     */
+    $stateRows = dbFetchAll(
+        "SELECT e.id,
+                s.code AS employment_state_code,
+                s.name_ar AS employment_state_name,
+                s.category AS employment_state_category
+         FROM employees e
+         INNER JOIN hr_employee_state_history h
+                 ON h.employee_id = e.id
+                AND h.effective_from <= CONCAT(?, ' 23:59:59')
+                AND (h.effective_to IS NULL OR h.effective_to >= CONCAT(?, ' 00:00:00'))
+         INNER JOIN hr_employment_states s
+                 ON s.id = h.employment_state_id
+         WHERE e.id IN ({$placeholders})
+           AND h.id = (
+                SELECT h2.id
+                  FROM hr_employee_state_history h2
+                 WHERE h2.employee_id = e.id
+                   AND h2.effective_from <= CONCAT(?, ' 23:59:59')
+                   AND (h2.effective_to IS NULL OR h2.effective_to >= CONCAT(?, ' 00:00:00'))
+                 ORDER BY h2.effective_from DESC, h2.id DESC
+                 LIMIT 1
+           )",
+        array_merge([$selectedDate, $selectedDate], $ids, [$selectedDate, $selectedDate])
+    );
+
+    $stateById = [];
+    foreach ($stateRows as $stateRow) {
+        $stateById[(int)$stateRow['id']] = $stateRow;
+    }
+
+    $ineligibleIds = [];
+    foreach ($ids as $id) {
+        $state = $stateById[$id] ?? null;
+        if (!$state || $state['employment_state_category'] !== 'working') {
+            $ineligibleIds[] = $id;
+        }
+    }
+
+    if ($ineligibleIds) {
+        throw new RuntimeException('يوجد موظف غير مؤهل للحضور بسبب حالة التوظيف في التاريخ المحدد. لم يتم تنفيذ أي تغيير.');
+    }
+
+    /*
      * The leaves table is the authoritative source for approved leave.
      * A daily attendance row containing the controlled return marker is an
      * explicit exception: HR has already returned that employee for this date.
