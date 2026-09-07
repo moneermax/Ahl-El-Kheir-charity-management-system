@@ -95,6 +95,7 @@ function notifyLeaveRoleUsers(array $roleCodes, string $title, string $body, str
 /**
  * Create the attendance rows for an approved leave.
  * This is deliberately executed after the single final approval stage.
+ * Existing attendance rows are preserved; only missing rows are inserted.
  */
 function createLeaveAttendance(array $leave): void
 {
@@ -103,9 +104,8 @@ function createLeaveAttendance(array $leave): void
     $interval = new DateInterval('P1D');
     $period = new DatePeriod($start, $interval, $end->modify('+1 day'));
     $stmt = db()->prepare(
-        "INSERT INTO attendance (employee_id, date, status, notes)
-         VALUES (?, ?, 'on_leave', 'إجازة معتمدة')
-         ON DUPLICATE KEY UPDATE status = 'on_leave'"
+        "INSERT IGNORE INTO attendance (employee_id, date, status, notes)
+         VALUES (?, ?, 'on_leave', 'إجازة معتمدة')"
     );
 
     foreach ($period as $date) {
