@@ -54,7 +54,20 @@ function attendanceIsOnLeave(int $employeeId, string $date): bool
     $leave = attendanceApprovedLeave($employeeId, $date);
     return $leave !== null && !attendanceHasReturnOverride($employeeId, $date);
 }
-
+function attendanceEmploymentState(int $employeeId, string $date): ?array
+{
+    return dbFetchOne(
+        "SELECT h.employment_state_id, s.code, s.name_ar, s.name_en, s.category
+         FROM hr_employee_state_history h
+         INNER JOIN hr_employment_states s ON s.id = h.employment_state_id
+         WHERE h.employee_id = ?
+           AND h.effective_from <= ?
+           AND (h.effective_to IS NULL OR h.effective_to >= ?)
+         ORDER BY h.effective_from DESC, h.id DESC
+         LIMIT 1",
+        [$employeeId, $date . ' 23:59:59', $date . ' 00:00:00']
+    );
+}
 function attendanceRequireEligible(int $employeeId, string $date): void
 {
     if ($employeeId <= 0) {
@@ -65,8 +78,18 @@ function attendanceRequireEligible(int $employeeId, string $date): void
         "SELECT id FROM employees WHERE id = ? AND status = 'active' LIMIT 1",
         [$employeeId]
     );
-    if (!$employee) {
+        if (!$employee) {
         throw new InvalidArgumentException('الموظف غير موجود أو غير نشط.');
+    }
+
+    $state = attendanceEmploymentState($employeeId, $date);
+
+    if (!$state) {
+        throw new InvalidArgumentException('لا توجد حالة توظيف معتمدة لهذا الموظف في التاريخ المحدد.');
+    }
+
+    if ($state['category'] !== 'working') {
+        throw new InvalidArgumentException('الموظف غير مؤهل لتسجيل الحضور في التاريخ المحدد وفق حالة التوظيف الحالية.');
     }
 
     if (attendanceIsOnLeave($employeeId, $date)) {
@@ -164,9 +187,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $employees = dbFetchAll(
     "SELECT e.id, e.full_name, e.department_id, d.name_ar AS dept_name
-     FROM employees e LEFT JOIN departments d ON d.id = e.department_id
-     WHERE e.status = 'active' ORDER BY e.full_name",
-    []
+     FROM employees e
+     LEFT JOIN departments d ON d.id = e.department_id
+     INNER JOIN hr_employee_state_history h
+       ON h.employee_id = e.id
+      AND h.id = (
+          SELECT h2.id
+          FROM hr_employee_state_history h2
+          WHERE h2.employee_id = e.id
+            AND h2.effective_from <= ?
+            AND (h2.effective_to IS NULL OR h2.effective_to >= ?)
+          ORDER BY h2.effective_from DESC, h2.id DESC
+          LIMIT 1
+      )
+     INNER JOIN hr_employment_states s ON s.id = h.employment_state_id
+     WHERE e.status = 'active'
+       AND s.category = 'working'
+     ORDER BY e.full_name",
+    [$selectedDate . ' 23:59:59', $selectedDate . ' 00:00:00']
 );
 
 $attendanceRecords = [];
