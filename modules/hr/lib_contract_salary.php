@@ -200,6 +200,10 @@ function hrChangeEmployeeSalary(
  * event: a single posted journal is created for the payroll record, debiting 5200
  * (Salaries) and crediting the selected cash/bank account. Existing paid payroll is
  * intentionally untouched because the trigger fires only on a new transition to paid.
+ *
+ * Paid payroll is also immutable at the database boundary: core historical fields
+ * cannot be changed after payment. Corrections must be implemented as a reversal/new
+ * accounting event rather than silently changing the original payroll record.
  */
 function hrEnsurePayrollAccountingIntegration(): void
 {
@@ -233,6 +237,24 @@ BEGIN
     DECLARE v_entry_date DATE;
     DECLARE v_amount DECIMAL(14,2);
     DECLARE v_entry_code VARCHAR(50);
+
+    /* A paid payroll is a historical financial record. Only accounting metadata
+       may be completed by the integration itself; operational payroll fields are
+       frozen once status is paid. */
+    IF OLD.status = 'paid' AND (
+        NOT (OLD.employee_id <=> NEW.employee_id) OR
+        NOT (OLD.month <=> NEW.month) OR
+        NOT (OLD.year <=> NEW.year) OR
+        NOT (OLD.basic_salary <=> NEW.basic_salary) OR
+        NOT (OLD.allowances <=> NEW.allowances) OR
+        NOT (OLD.overtime <=> NEW.overtime) OR
+        NOT (OLD.deductions <=> NEW.deductions) OR
+        NOT (OLD.net_salary <=> NEW.net_salary) OR
+        NOT (OLD.status <=> NEW.status) OR
+        NOT (OLD.payment_date <=> NEW.payment_date)
+    ) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'لا يمكن تعديل مسير راتب بعد صرفه. استخدم إجراء تصحيح/عكس محاسبي مستقل.';
+    END IF;
 
     IF OLD.status <> 'approved' AND NEW.status = 'approved' THEN
         SET NEW.accounting_status = 'ready';
