@@ -43,6 +43,68 @@ function hrCreateEmployeeContract(int $employeeId, string $contractType, string 
         $stmt->execute([$employeeId, $contractNumber ?: null, $contractType, $startDate, $endDate, $status, $basicSalary, strtoupper($currency), $payFrequency, $probationEndDate, $contractFilePath, $notes, $createdBy]);
         $contractId = (int)$pdo->lastInsertId();
         if ($status === 'active') $pdo->prepare("UPDATE hr_employee_contracts SET status = 'expired' WHERE employee_id = ? AND id <> ? AND status = 'active' AND (end_date IS NULL OR end_date >= ?)")->execute([$employeeId, $contractId, $startDate]);
+
+        // Every contract defines a salary effective from its start date, including future contracts.
+        // Keep employees.basic_salary unchanged until a future-dated salary actually becomes effective.
+        $existingAtDate = dbFetchOne(
+            "SELECT id, effective_from, effective_to
+             FROM hr_employee_salary_history
+             WHERE employee_id = ?
+               AND effective_from <= ?
+               AND (effective_to IS NULL OR effective_to >= ?)
+             ORDER BY effective_from DESC, id DESC
+             LIMIT 1
+             FOR UPDATE",
+            [$employeeId, $startDate, $startDate]
+        );
+        $future = dbFetchOne(
+            "SELECT id, effective_from
+             FROM hr_employee_salary_history
+             WHERE employee_id = ? AND effective_from > ?
+             ORDER BY effective_from ASC, id ASC
+             LIMIT 1
+             FOR UPDATE",
+            [$employeeId, $startDate]
+        );
+        $futureTo = $future ? date('Y-m-d', strtotime($future['effective_from'] . ' -1 day')) : null;
+
+        if ($existingAtDate && $existingAtDate['effective_from'] === $startDate) {
+            $pdo->prepare(
+                "UPDATE hr_employee_salary_history
+                 SET basic_salary = ?, salary_currency = ?, pay_frequency = ?, reason = 'contract_change', notes = ?, changed_by = ?, contract_id = ?, effective_to = ?
+                 WHERE id = ?"
+            )->execute([
+                $basicSalary, strtoupper($currency), $payFrequency, 'تم إنشاء سجل الراتب من عقد جديد', $createdBy,
+                $contractId, $futureTo, (int)$existingAtDate['id']
+            ]);
+        } else {
+            if ($existingAtDate) {
+                $pdo->prepare(
+                    "UPDATE hr_employee_salary_history
+                     SET effective_to = ?
+                     WHERE id = ?"
+                )->execute([date('Y-m-d', strtotime($startDate . ' -1 day')), (int)$existingAtDate['id']]);
+            }
+
+            $pdo->prepare(
+                "INSERT INTO hr_employee_salary_history
+                    (employee_id, contract_id, effective_from, effective_to, basic_salary, salary_currency, pay_frequency, reason, notes, changed_by)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, 'contract_change', ?, ?, ?)"
+            )->execute([
+                $employeeId, $contractId, $startDate, $futureTo, $basicSalary,
+                strtoupper($currency), $payFrequency, 'تم إنشاء سجل الراتب من عقد جديد', $createdBy
+            ]);
+        }
+
+        if ($startDate <= date('Y-m-d')) {
+            $pdo->exec("SET @hr_salary_history_sync = 1");
+            try {
+                $pdo->prepare("UPDATE employees SET basic_salary = ? WHERE id = ?")->execute([$basicSalary, $employeeId]);
+            } finally {
+                $pdo->exec("SET @hr_salary_history_sync = 0");
+            }
+        }
+
         $pdo->commit(); return $contractId;
     } catch (Throwable $e) { if ($pdo->inTransaction()) $pdo->rollBack(); throw $e; }
 }
@@ -198,31 +260,3 @@ END
 SQL;
     db()->exec($sql);
 }
-
-function hrReversePaidPayroll(int $payrollId, ?int $createdBy = null, ?string $reason = null): int
-{
-    require_once dirname(__DIR__) . '/accounting/lib.php'; ak_ensure_tables(); ak_seed_accounts();
-    $payroll = dbFetchOne("SELECT * FROM payroll WHERE id = ? LIMIT 1", [$payrollId]);
-    if (!$payroll) throw new RuntimeException('سجل مسير الراتب غير موجود.');
-    if ($payroll['status'] !== 'paid') throw new RuntimeException('لا يمكن عكس مسير غير مصروف.');
-    $original = dbFetchOne("SELECT * FROM journal_entries WHERE reference_type = 'payroll' AND reference_id = ? AND status = 'posted' ORDER BY id ASC LIMIT 1", [$payrollId]);
-    if (!$original) throw new RuntimeException('لا يوجد قيد محاسبي مصروف مرتبط بهذا المسير.');
-    $existing = dbFetchOne("SELECT id FROM journal_entries WHERE reference_type = 'payroll_reversal' AND reference_id = ? AND status = 'posted' LIMIT 1", [$payrollId]);
-    if ($existing) return (int)$existing['id'];
-    $lines = dbFetchAll("SELECT account_id, debit, credit, description FROM journal_lines WHERE entry_id = ? ORDER BY id ASC", [(int)$original['id']]);
-    if (!$lines) throw new RuntimeException('القيد الأصلي لا يحتوي على تفاصيل محاسبية.');
-    $pdo = db(); $pdo->beginTransaction();
-    try {
-        $code = 'REV-PAY-' . $payrollId;
-        if (dbFetchOne("SELECT id FROM journal_entries WHERE entry_code = ? LIMIT 1", [$code])) throw new RuntimeException('يوجد قيد عكس مسجل لهذا المسير بالفعل.');
-        $description = 'عكس صرف راتب'; if ($reason !== null && trim($reason) !== '') $description .= ' - ' . mb_substr(trim($reason), 0, 180);
-        $pdo->prepare("INSERT INTO journal_entries (entry_code, entry_date, description, reference_type, reference_id, status, created_by) VALUES (?, ?, ?, 'payroll_reversal', ?, 'posted', ?)")->execute([$code, date('Y-m-d'), $description, $payrollId, $createdBy]);
-        $entryId = (int)$pdo->lastInsertId();
-        $stmt = $pdo->prepare("INSERT INTO journal_lines (entry_id, account_id, debit, credit, description) VALUES (?, ?, ?, ?, ?)");
-        foreach ($lines as $line) $stmt->execute([$entryId, (int)$line['account_id'], (float)$line['credit'], (float)$line['debit'], 'عكس: ' . (string)($line['description'] ?? '')]);
-        $pdo->commit(); return $entryId;
-    } catch (Throwable $e) { if ($pdo->inTransaction()) $pdo->rollBack(); throw $e; }
-}
-
-hrEnsurePayrollAccountingIntegration();
-hrEnsurePayrollImmutabilityTrigger();
