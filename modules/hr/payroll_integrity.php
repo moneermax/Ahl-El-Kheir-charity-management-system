@@ -23,53 +23,57 @@ function integrityTableExists(string $table): bool
     );
 }
 
+function integrityColumnExists(string $table, string $column): bool
+{
+    return (bool)dbFetchOne(
+        "SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ? LIMIT 1",
+        [$table, $column]
+    );
+}
+
 function integrityAddCheck(array &$checks, string $key, string $title, bool $ok, string $summary, array $rows = []): void
 {
     $checks[$key] = ['title' => $title, 'ok' => $ok, 'summary' => $summary, 'rows' => $rows];
 }
 
 try {
-    $triggers = dbFetchAll(
-        "SELECT TRIGGER_NAME FROM information_schema.TRIGGERS
-         WHERE TRIGGER_SCHEMA = DATABASE()
-           AND TRIGGER_NAME IN ('trg_payroll_accounting_before_update','trg_payroll_immutable_before_update')"
-    );
-    $triggerNames = array_column($triggers, 'TRIGGER_NAME');
-    integrityAddCheck($checks, 'triggers', 'حماية قاعدة البيانات',
-        in_array('trg_payroll_accounting_before_update', $triggerNames, true) && in_array('trg_payroll_immutable_before_update', $triggerNames, true),
-        'فحص وجود مشغلات ترحيل الرواتب ومنع تعديل المسيرات المصروفة.',
-        [
-            ['item' => 'ترحيل الرواتب إلى المحاسبة', 'state' => in_array('trg_payroll_accounting_before_update', $triggerNames, true) ? 'موجود' : 'مفقود'],
-            ['item' => 'منع تعديل المسير بعد الصرف', 'state' => in_array('trg_payroll_immutable_before_update', $triggerNames, true) ? 'موجود' : 'مفقود'],
-        ]
-    );
-
     if (!integrityTableExists('payroll')) {
         throw new RuntimeException('جدول payroll غير موجود.');
     }
 
-    $paidWithoutJournal = dbFetchAll(
-        "SELECT p.id,e.employee_code,e.full_name,p.month,p.year,p.net_salary
+    $schemaOk = integrityColumnExists('payroll', 'accounting_status')
+        && integrityColumnExists('payroll', 'accounting_entry_id')
+        && integrityColumnExists('payroll', 'payment_account_id');
+    integrityAddCheck(
+        $checks,
+        'schema',
+        'تكامل أعمدة المحاسبة',
+        $schemaOk,
+        $schemaOk ? 'أعمدة حالة المحاسبة والقيد وحساب الدفع موجودة في payroll.' : 'أعمدة تكامل المحاسبة المطلوبة غير مكتملة.'
+    );
+
+    $paidMissingJournal = dbFetchAll(
+        "SELECT p.id,e.employee_code,e.full_name,p.month,p.year,p.net_salary,p.accounting_status,p.accounting_entry_id
          FROM payroll p JOIN employees e ON e.id=p.employee_id
          LEFT JOIN journal_entries j ON j.reference_type='payroll' AND j.reference_id=p.id AND j.status='posted'
          WHERE p.status='paid' AND p.net_salary > 0 AND j.id IS NULL
          ORDER BY p.year DESC,p.month DESC,e.full_name ASC"
     );
     integrityAddCheck($checks, 'paid_missing_journal', 'المسيرات المصروفة غير المرحلة',
-        count($paidWithoutJournal) === 0,
-        count($paidWithoutJournal) === 0 ? 'كل مسير مصروف بصافي موجب له قيد محاسبي مرحل.' : 'يوجد مسير مصروف بصافي موجب بدون قيد محاسبي.',
-        $paidWithoutJournal
+        count($paidMissingJournal) === 0,
+        count($paidMissingJournal) === 0 ? 'كل مسير مصروف بصافي موجب له قيد محاسبي مرحل.' : 'يوجد مسير مصروف بصافي موجب بدون قيد محاسبي مرحل.',
+        $paidMissingJournal
     );
 
     $paidWrongStatus = dbFetchAll(
-        "SELECT p.id,e.employee_code,e.full_name,p.month,p.year,p.accounting_status
+        "SELECT p.id,e.employee_code,e.full_name,p.month,p.year,p.accounting_status,p.accounting_entry_id
          FROM payroll p JOIN employees e ON e.id=p.employee_id
-         WHERE p.status='paid' AND COALESCE(p.accounting_status,'none') <> 'posted'
+         WHERE p.status='paid' AND (COALESCE(p.accounting_status,'none') <> 'posted' OR COALESCE(p.accounting_entry_id,0)=0)
          ORDER BY p.year DESC,p.month DESC,e.full_name ASC"
     );
     integrityAddCheck($checks, 'paid_status', 'حالة المحاسبة للمسيرات المصروفة',
         count($paidWrongStatus) === 0,
-        count($paidWrongStatus) === 0 ? 'كل المسيرات المصروفة تحمل حالة محاسبية posted.' : 'توجد مسيرات مصروفة بحالة محاسبية غير posted.',
+        count($paidWrongStatus) === 0 ? 'كل المسيرات المصروفة تحمل حالة posted ورقم قيد محاسبي.' : 'توجد مسيرات مصروفة بحالة أو قيد محاسبي غير مكتمل.',
         $paidWrongStatus
     );
 
@@ -94,7 +98,7 @@ try {
     );
     integrityAddCheck($checks, 'draft_posted', 'المسودات المرتبطة بقيود مرحّلة',
         count($draftPosted) === 0,
-        count($draftPosted) === 0 ? 'لا توجد مسودة راتب مرتبطة بقيد محاسبي مرحل.' : 'توجد مسودة مرتبطة بقيد مرحل، وهذا يخالف دورة الاعتماد.',
+        count($draftPosted) === 0 ? 'لا توجد مسودة مرتبطة بقيد محاسبي مرحل.' : 'توجد مسودة مرتبطة بقيد مرحل.',
         $draftPosted
     );
 
@@ -155,16 +159,8 @@ require_once __DIR__ . '/../../includes/header.php';
 <style>
 .pi-wrap{max-width:1450px;margin:auto}.pi-header{background:linear-gradient(135deg,#173f5f,#20639b);color:#fff;padding:22px;border-radius:12px;margin-bottom:18px}.pi-header h1{margin:0;font-size:1.55rem}.pi-header p{margin:5px 0 0;opacity:.9}.pi-summary{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px}.pi-stat{background:#fff;border:1px solid #e5e9ee;border-radius:10px;padding:14px 18px;min-width:180px;box-shadow:0 2px 8px rgba(0,0,0,.045)}.pi-stat strong{display:block;font-size:1.35rem}.pi-ok{color:#198754}.pi-bad{color:#dc3545}.pi-card{background:#fff;border:1px solid #e5e9ee;border-radius:12px;margin-bottom:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.04)}.pi-card-head{padding:13px 16px;display:flex;justify-content:space-between;gap:12px;align-items:center;border-bottom:1px solid #edf0f2}.pi-card-body{padding:14px 16px}.pi-badge{border-radius:999px;padding:4px 9px;font-size:.72rem;font-weight:800}.pi-pass{background:#d1e7dd;color:#0f5132}.pi-fail{background:#f8d7da;color:#842029}.pi-muted{font-size:.76rem;color:#6c757d}.pi-table{width:100%;border-collapse:collapse;font-size:.8rem}.pi-table th,.pi-table td{padding:7px 8px;border-bottom:1px solid #edf0f2;text-align:right}.pi-table th{background:#f8f9fa;font-weight:800}.pi-alert{background:#fff3cd;color:#664d03;border-right:3px solid #ffc107;padding:10px 12px;border-radius:7px;font-size:.8rem}
 </style>
-<div class="pi-wrap">
-<div class="pi-header"><h1><i class="fas fa-shield-halved me-2"></i> فحص سلامة الرواتب</h1><p>فحص تشخيصي للربط بين HR والرواتب والمحاسبة — لا يقوم بتعديل أي سجل.</p></div>
+<div class="pi-wrap"><div class="pi-header"><h1><i class="fas fa-shield-halved me-2"></i> فحص سلامة الرواتب</h1><p>فحص تشخيصي للربط بين HR والرواتب والمحاسبة — لا يقوم بتعديل أي سجل.</p></div>
 <?php if($errors): ?><div class="alert alert-danger"><?php echo htmlspecialchars(implode(' | ',$errors)); ?></div><?php endif; ?>
 <div class="pi-summary"><div class="pi-stat"><span class="pi-muted">إجمالي الفحوص</span><strong><?php echo count($checks); ?></strong></div><div class="pi-stat"><span class="pi-muted">سليمة</span><strong class="pi-ok"><?php echo count($checks)-$failed; ?></strong></div><div class="pi-stat"><span class="pi-muted">تحتاج معالجة</span><strong class="pi-bad"><?php echo $failed; ?></strong></div></div>
-<?php foreach($checks as $check): ?>
-<div class="pi-card"><div class="pi-card-head"><div><strong><?php echo htmlspecialchars($check['title']); ?></strong><div class="pi-muted mt-1"><?php echo htmlspecialchars($check['summary']); ?></div></div><span class="pi-badge <?php echo $check['ok']?'pi-pass':'pi-fail'; ?>"><?php echo $check['ok']?'سليم':'يحتاج معالجة'; ?></span></div>
-<?php if(!$check['ok'] || !empty($check['rows'])): ?><div class="pi-card-body">
-<?php if(!$check['ok'] && empty($check['rows'])): ?><div class="pi-alert">لم يتم العثور على تفاصيل إضافية لهذا الفشل. راجع إعدادات قاعدة البيانات والمشغلات.</div>
-<?php elseif(!empty($check['rows'])): ?><div class="table-responsive"><table class="pi-table"><thead><tr><?php foreach(array_keys($check['rows'][0]) as $col): ?><th><?php echo htmlspecialchars($col); ?></th><?php endforeach; ?></tr></thead><tbody><?php foreach($check['rows'] as $row): ?><tr><?php foreach($row as $value): ?><td><?php echo htmlspecialchars((string)$value); ?></td><?php endforeach; ?></tr><?php endforeach; ?></tbody></table></div><?php endif; ?>
-</div><?php endif; ?></div>
-<?php endforeach; ?>
-</div>
+<?php foreach($checks as $check): ?><div class="pi-card"><div class="pi-card-head"><div><strong><?php echo htmlspecialchars($check['title']); ?></strong><div class="pi-muted mt-1"><?php echo htmlspecialchars($check['summary']); ?></div></div><span class="pi-badge <?php echo $check['ok']?'pi-pass':'pi-fail'; ?>"><?php echo $check['ok']?'سليم':'يحتاج معالجة'; ?></span></div><?php if(!$check['ok'] || !empty($check['rows'])): ?><div class="pi-card-body"><?php if(!$check['ok'] && empty($check['rows'])): ?><div class="pi-alert">راجع بنية قاعدة البيانات والربط الإجرائي للرواتب.</div><?php elseif(!empty($check['rows'])): ?><div class="table-responsive"><table class="pi-table"><thead><tr><?php foreach(array_keys($check['rows'][0]) as $col): ?><th><?php echo htmlspecialchars($col); ?></th><?php endforeach; ?></tr></thead><tbody><?php foreach($check['rows'] as $row): ?><tr><?php foreach($row as $value): ?><td><?php echo htmlspecialchars((string)$value); ?></td><?php endforeach; ?></tr><?php endforeach; ?></tbody></table></div><?php endif; ?></div><?php endif; ?></div><?php endforeach; ?></div>
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>

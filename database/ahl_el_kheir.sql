@@ -124,6 +124,7 @@ INSERT INTO `attendance` (`id`, `employee_id`, `date`, `check_in`, `check_out`, 
 -- Triggers `attendance`
 --
 DELIMITER $$
+<<<<<<< HEAD
 CREATE TRIGGER `trg_attendance_employment_state_bi` BEFORE INSERT ON `attendance` FOR EACH ROW BEGIN
     DECLARE v_category VARCHAR(32) DEFAULT NULL;
 
@@ -147,10 +148,36 @@ CREATE TRIGGER `trg_attendance_employment_state_bi` BEFORE INSERT ON `attendance
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'لا يمكن تسجيل الحضور: حالة توظيف الموظف لا تسمح بتسجيل الحضور في هذا التاريخ.';
     END IF;
+=======
+CREATE TRIGGER `trg_attendance_employment_state_bi` BEFORE INSERT ON `attendance` FOR EACH ROW BEGIN
+    DECLARE v_category VARCHAR(32) DEFAULT NULL;
+
+    SELECT s.category
+      INTO v_category
+      FROM hr_employee_state_history h
+      INNER JOIN hr_employment_states s
+              ON s.id = h.employment_state_id
+     WHERE h.employee_id = NEW.employee_id
+       AND h.effective_from <= CONCAT(NEW.date, ' 23:59:59')
+       AND (h.effective_to IS NULL OR h.effective_to >= CONCAT(NEW.date, ' 00:00:00'))
+     ORDER BY h.effective_from DESC, h.id DESC
+     LIMIT 1;
+
+    IF v_category IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'لا يمكن تسجيل الحضور: لا توجد حالة توظيف معتمدة للموظف في هذا التاريخ.';
+    END IF;
+
+    IF v_category <> 'working' THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'لا يمكن تسجيل الحضور: حالة توظيف الموظف لا تسمح بتسجيل الحضور في هذا التاريخ.';
+    END IF;
+>>>>>>> dd38c4bfcae0115cc3218e6d9719e522078ca169
 END
 $$
 DELIMITER ;
 DELIMITER $$
+<<<<<<< HEAD
 CREATE TRIGGER `trg_attendance_employment_state_bu` BEFORE UPDATE ON `attendance` FOR EACH ROW BEGIN
     DECLARE v_category VARCHAR(32) DEFAULT NULL;
 
@@ -174,6 +201,31 @@ CREATE TRIGGER `trg_attendance_employment_state_bu` BEFORE UPDATE ON `attendance
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'لا يمكن تعديل الحضور: حالة توظيف الموظف لا تسمح بتسجيل الحضور في هذا التاريخ.';
     END IF;
+=======
+CREATE TRIGGER `trg_attendance_employment_state_bu` BEFORE UPDATE ON `attendance` FOR EACH ROW BEGIN
+    DECLARE v_category VARCHAR(32) DEFAULT NULL;
+
+    SELECT s.category
+      INTO v_category
+      FROM hr_employee_state_history h
+      INNER JOIN hr_employment_states s
+              ON s.id = h.employment_state_id
+     WHERE h.employee_id = NEW.employee_id
+       AND h.effective_from <= CONCAT(NEW.date, ' 23:59:59')
+       AND (h.effective_to IS NULL OR h.effective_to >= CONCAT(NEW.date, ' 00:00:00'))
+     ORDER BY h.effective_from DESC, h.id DESC
+     LIMIT 1;
+
+    IF v_category IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'لا يمكن تعديل الحضور: لا توجد حالة توظيف معتمدة للموظف في هذا التاريخ.';
+    END IF;
+
+    IF v_category <> 'working' THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'لا يمكن تعديل الحضور: حالة توظيف الموظف لا تسمح بتسجيل الحضور في هذا التاريخ.';
+    END IF;
+>>>>>>> dd38c4bfcae0115cc3218e6d9719e522078ca169
 END
 $$
 DELIMITER ;
@@ -1867,6 +1919,7 @@ INSERT INTO `employees` (`id`, `user_id`, `full_name`, `birth_date`, `gender`, `
 -- Triggers `employees`
 --
 DELIMITER $$
+<<<<<<< HEAD
 CREATE TRIGGER `trg_employees_employment_state_ai` AFTER INSERT ON `employees` FOR EACH ROW BEGIN
     INSERT INTO hr_employee_state_history
         (employee_id, employment_state_id, effective_from, effective_to, reason, changed_by)
@@ -1882,10 +1935,28 @@ CREATE TRIGGER `trg_employees_employment_state_ai` AFTER INSERT ON `employees` F
           SELECT 1 FROM hr_employee_state_history h
           WHERE h.employee_id = NEW.id
       );
+=======
+CREATE TRIGGER `trg_employees_employment_state_ai` AFTER INSERT ON `employees` FOR EACH ROW BEGIN
+    INSERT INTO hr_employee_state_history
+        (employee_id, employment_state_id, effective_from, effective_to, reason, changed_by)
+    SELECT
+        NEW.id,
+        NEW.employment_state_id,
+        COALESCE(NEW.employment_state_changed_at, NOW()),
+        NULL,
+        'Initial employee creation',
+        NEW.created_by
+    WHERE NEW.employment_state_id IS NOT NULL
+      AND NOT EXISTS (
+          SELECT 1 FROM hr_employee_state_history h
+          WHERE h.employee_id = NEW.id
+      );
+>>>>>>> dd38c4bfcae0115cc3218e6d9719e522078ca169
 END
 $$
 DELIMITER ;
 DELIMITER $$
+<<<<<<< HEAD
 CREATE TRIGGER `trg_employees_employment_state_bi` BEFORE INSERT ON `employees` FOR EACH ROW BEGIN
     DECLARE v_state_id INT DEFAULT NULL;
 
@@ -1909,10 +1980,36 @@ CREATE TRIGGER `trg_employees_employment_state_bi` BEFORE INSERT ON `employees` 
     IF NEW.employment_state_changed_at IS NULL THEN
         SET NEW.employment_state_changed_at = NOW();
     END IF;
+=======
+CREATE TRIGGER `trg_employees_employment_state_bi` BEFORE INSERT ON `employees` FOR EACH ROW BEGIN
+    DECLARE v_state_id INT DEFAULT NULL;
+
+    SELECT id INTO v_state_id
+    FROM hr_employment_states
+    WHERE code = CASE
+        WHEN NEW.status = 'suspended' THEN 'suspended'
+        WHEN NEW.status = 'terminated' THEN 'terminated'
+        WHEN NEW.status = 'retired' THEN 'retired'
+        WHEN NEW.status = 'resigned' THEN 'resigned'
+        WHEN NEW.status = 'probation' THEN 'probation'
+        ELSE 'active'
+    END
+      AND is_active = 1
+    LIMIT 1;
+
+    IF NEW.employment_state_id IS NULL OR NEW.employment_state_id = 0 THEN
+        SET NEW.employment_state_id = v_state_id;
+    END IF;
+
+    IF NEW.employment_state_changed_at IS NULL THEN
+        SET NEW.employment_state_changed_at = NOW();
+    END IF;
+>>>>>>> dd38c4bfcae0115cc3218e6d9719e522078ca169
 END
 $$
 DELIMITER ;
 DELIMITER $$
+<<<<<<< HEAD
 CREATE TRIGGER `trg_employees_employment_state_bu` BEFORE UPDATE ON `employees` FOR EACH ROW BEGIN
     DECLARE v_state_id INT DEFAULT NULL;
 
@@ -1954,10 +2051,54 @@ CREATE TRIGGER `trg_employees_employment_state_bu` BEFORE UPDATE ON `employees` 
        AND (NEW.employment_state_changed_at <=> OLD.employment_state_changed_at) THEN
         SET NEW.employment_state_changed_at = NOW();
     END IF;
+=======
+CREATE TRIGGER `trg_employees_employment_state_bu` BEFORE UPDATE ON `employees` FOR EACH ROW BEGIN
+    DECLARE v_state_id INT DEFAULT NULL;
+
+    IF (NEW.employment_state_id <=> OLD.employment_state_id)
+       AND NOT (NEW.status <=> OLD.status) THEN
+
+        SELECT id INTO v_state_id
+        FROM hr_employment_states
+        WHERE code = CASE
+            WHEN NEW.status = 'suspended' THEN 'suspended'
+            WHEN NEW.status = 'terminated' THEN 'terminated'
+            WHEN NEW.status = 'retired' THEN 'retired'
+            WHEN NEW.status = 'resigned' THEN 'resigned'
+            WHEN NEW.status = 'probation' THEN 'probation'
+            ELSE 'active'
+        END
+          AND is_active = 1
+        LIMIT 1;
+
+        IF v_state_id IS NOT NULL AND NOT (v_state_id <=> OLD.employment_state_id) THEN
+            UPDATE hr_employee_state_history
+            SET effective_to = NOW()
+            WHERE employee_id = OLD.id
+              AND effective_to IS NULL;
+
+            INSERT INTO hr_employee_state_history
+                (employee_id, employment_state_id, effective_from, effective_to, reason, changed_by)
+            VALUES
+                (OLD.id, v_state_id, NOW(), NULL,
+                 'Legacy employees.status lifecycle change', NULL);
+
+            SET NEW.employment_state_id = v_state_id;
+            SET NEW.employment_state_changed_at = NOW();
+        END IF;
+    END IF;
+
+    IF NOT (NEW.employment_state_id <=> OLD.employment_state_id)
+       AND NEW.employment_state_id IS NOT NULL
+       AND (NEW.employment_state_changed_at <=> OLD.employment_state_changed_at) THEN
+        SET NEW.employment_state_changed_at = NOW();
+    END IF;
+>>>>>>> dd38c4bfcae0115cc3218e6d9719e522078ca169
 END
 $$
 DELIMITER ;
 DELIMITER $$
+<<<<<<< HEAD
 CREATE TRIGGER `trg_employees_salary_history_sync_ai` AFTER INSERT ON `employees` FOR EACH ROW BEGIN
     IF NOT EXISTS (
         SELECT 1 FROM hr_employee_salary_history
@@ -1972,10 +2113,27 @@ CREATE TRIGGER `trg_employees_salary_history_sync_ai` AFTER INSERT ON `employees
              COALESCE(NEW.basic_salary, 0.00), 'SDG', 'monthly', 'initial',
              'Initial salary history created from employee record');
     END IF;
+=======
+CREATE TRIGGER `trg_employees_salary_history_sync_ai` AFTER INSERT ON `employees` FOR EACH ROW BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM hr_employee_salary_history
+        WHERE employee_id = NEW.id
+        LIMIT 1
+    ) THEN
+        INSERT INTO hr_employee_salary_history
+            (employee_id, contract_id, effective_from, effective_to,
+             basic_salary, salary_currency, pay_frequency, reason, notes)
+        VALUES
+            (NEW.id, NULL, COALESCE(NEW.hire_date, CURDATE()), NULL,
+             COALESCE(NEW.basic_salary, 0.00), 'SDG', 'monthly', 'initial',
+             'Initial salary history created from employee record');
+    END IF;
+>>>>>>> dd38c4bfcae0115cc3218e6d9719e522078ca169
 END
 $$
 DELIMITER ;
 DELIMITER $$
+<<<<<<< HEAD
 CREATE TRIGGER `trg_employees_salary_history_sync_au` AFTER UPDATE ON `employees` FOR EACH ROW BEGIN
     DECLARE v_future_from DATE DEFAULT NULL;
     DECLARE v_current_id BIGINT UNSIGNED DEFAULT NULL;
@@ -2029,6 +2187,61 @@ CREATE TRIGGER `trg_employees_salary_history_sync_au` AFTER UPDATE ON `employees
                  'adjustment', 'Synchronized from employee record');
         END IF;
     END IF;
+=======
+CREATE TRIGGER `trg_employees_salary_history_sync_au` AFTER UPDATE ON `employees` FOR EACH ROW BEGIN
+    DECLARE v_future_from DATE DEFAULT NULL;
+    DECLARE v_current_id BIGINT UNSIGNED DEFAULT NULL;
+    DECLARE v_target_to DATE DEFAULT NULL;
+
+    IF COALESCE(@hr_salary_history_sync, 0) <> 1
+       AND NOT (OLD.basic_salary <=> NEW.basic_salary) THEN
+        SELECT id INTO v_current_id
+        FROM hr_employee_salary_history
+        WHERE employee_id = NEW.id
+          AND effective_from <= CURDATE()
+          AND (effective_to IS NULL OR effective_to >= CURDATE())
+        ORDER BY effective_from DESC, id DESC
+        LIMIT 1;
+
+        SELECT MIN(effective_from) INTO v_future_from
+        FROM hr_employee_salary_history
+        WHERE employee_id = NEW.id
+          AND effective_from > CURDATE();
+
+        IF v_current_id IS NOT NULL
+           AND EXISTS (
+               SELECT 1 FROM hr_employee_salary_history
+               WHERE id = v_current_id AND effective_from = CURDATE()
+           ) THEN
+            UPDATE hr_employee_salary_history
+            SET basic_salary = NEW.basic_salary,
+                salary_currency = 'SDG',
+                notes = 'Synchronized from employee record'
+            WHERE id = v_current_id;
+        ELSE
+            IF v_current_id IS NOT NULL THEN
+                UPDATE hr_employee_salary_history
+                SET effective_to = DATE_SUB(CURDATE(), INTERVAL 1 DAY),
+                    salary_currency = 'SDG'
+                WHERE id = v_current_id;
+            END IF;
+
+            SET v_target_to = CASE
+                WHEN v_future_from IS NOT NULL
+                    THEN DATE_SUB(v_future_from, INTERVAL 1 DAY)
+                ELSE NULL
+            END;
+
+            INSERT INTO hr_employee_salary_history
+                (employee_id, contract_id, effective_from, effective_to,
+                 basic_salary, salary_currency, pay_frequency, reason, notes)
+            VALUES
+                (NEW.id, NULL, CURDATE(), v_target_to,
+                 COALESCE(NEW.basic_salary, 0.00), 'SDG', 'monthly',
+                 'adjustment', 'Synchronized from employee record');
+        END IF;
+    END IF;
+>>>>>>> dd38c4bfcae0115cc3218e6d9719e522078ca169
 END
 $$
 DELIMITER ;
@@ -9640,20 +9853,36 @@ INSERT INTO `hr_payroll_policy_versions` (`id`, `version_no`, `effective_from`, 
 -- Triggers `hr_payroll_policy_versions`
 --
 DELIMITER $$
+<<<<<<< HEAD
 CREATE TRIGGER `trg_hr_payroll_policy_no_delete_effective` BEFORE DELETE ON `hr_payroll_policy_versions` FOR EACH ROW BEGIN
     IF OLD.effective_from <= CURDATE() THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Effective payroll policy versions cannot be deleted.';
     END IF;
+=======
+CREATE TRIGGER `trg_hr_payroll_policy_no_delete_effective` BEFORE DELETE ON `hr_payroll_policy_versions` FOR EACH ROW BEGIN
+    IF OLD.effective_from <= CURDATE() THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Effective payroll policy versions cannot be deleted.';
+    END IF;
+>>>>>>> dd38c4bfcae0115cc3218e6d9719e522078ca169
 END
 $$
 DELIMITER ;
 DELIMITER $$
+<<<<<<< HEAD
 CREATE TRIGGER `trg_hr_payroll_policy_no_update_effective` BEFORE UPDATE ON `hr_payroll_policy_versions` FOR EACH ROW BEGIN
     IF OLD.effective_from <= CURDATE() THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Effective payroll policy versions are immutable; create a new version instead.';
     END IF;
+=======
+CREATE TRIGGER `trg_hr_payroll_policy_no_update_effective` BEFORE UPDATE ON `hr_payroll_policy_versions` FOR EACH ROW BEGIN
+    IF OLD.effective_from <= CURDATE() THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Effective payroll policy versions are immutable; create a new version instead.';
+    END IF;
+>>>>>>> dd38c4bfcae0115cc3218e6d9719e522078ca169
 END
 $$
 DELIMITER ;
@@ -9834,6 +10063,7 @@ INSERT INTO `leaves` (`id`, `employee_id`, `leave_type`, `start_date`, `end_date
 -- Triggers `leaves`
 --
 DELIMITER $$
+<<<<<<< HEAD
 CREATE TRIGGER `trg_leaves_validate_insert` BEFORE INSERT ON `leaves` FOR EACH ROW BEGIN
     DECLARE v_state_category VARCHAR(30) DEFAULT NULL;
 
@@ -9871,10 +10101,50 @@ CREATE TRIGGER `trg_leaves_validate_insert` BEFORE INSERT ON `leaves` FOR EACH R
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'يوجد طلب إجازة آخر متداخل مع الفترة المحددة.';
     END IF;
+=======
+CREATE TRIGGER `trg_leaves_validate_insert` BEFORE INSERT ON `leaves` FOR EACH ROW BEGIN
+    DECLARE v_state_category VARCHAR(30) DEFAULT NULL;
+
+    IF NEW.start_date IS NULL OR NEW.end_date IS NULL OR NEW.end_date < NEW.start_date THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'تواريخ الإجازة غير صالحة.';
+    END IF;
+
+    SELECT s.category
+      INTO v_state_category
+      FROM employees e
+      JOIN hr_employment_states s ON s.id = e.employment_state_id
+     WHERE e.id = NEW.employee_id
+     LIMIT 1;
+
+    IF v_state_category IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'لا يمكن إنشاء طلب إجازة لموظف بدون حالة توظيف صالحة.';
+    END IF;
+
+    IF v_state_category <> 'working' THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'لا يمكن إنشاء طلب إجازة لموظف خارج حالات العمل.';
+    END IF;
+
+    IF NEW.status IN ('pending', 'manager_approved', 'hr_approved')
+       AND EXISTS (
+           SELECT 1
+             FROM leaves l
+            WHERE l.employee_id = NEW.employee_id
+              AND l.status IN ('pending', 'manager_approved', 'hr_approved')
+              AND NEW.start_date <= l.end_date
+              AND NEW.end_date >= l.start_date
+       ) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'يوجد طلب إجازة آخر متداخل مع الفترة المحددة.';
+    END IF;
+>>>>>>> dd38c4bfcae0115cc3218e6d9719e522078ca169
 END
 $$
 DELIMITER ;
 DELIMITER $$
+<<<<<<< HEAD
 CREATE TRIGGER `trg_leaves_validate_update` BEFORE UPDATE ON `leaves` FOR EACH ROW BEGIN
     DECLARE v_state_category VARCHAR(30) DEFAULT NULL;
 
@@ -9913,6 +10183,46 @@ CREATE TRIGGER `trg_leaves_validate_update` BEFORE UPDATE ON `leaves` FOR EACH R
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'يوجد طلب إجازة آخر متداخل مع الفترة المحددة.';
     END IF;
+=======
+CREATE TRIGGER `trg_leaves_validate_update` BEFORE UPDATE ON `leaves` FOR EACH ROW BEGIN
+    DECLARE v_state_category VARCHAR(30) DEFAULT NULL;
+
+    IF NEW.start_date IS NULL OR NEW.end_date IS NULL OR NEW.end_date < NEW.start_date THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'تواريخ الإجازة غير صالحة.';
+    END IF;
+
+    SELECT s.category
+      INTO v_state_category
+      FROM employees e
+      JOIN hr_employment_states s ON s.id = e.employment_state_id
+     WHERE e.id = NEW.employee_id
+     LIMIT 1;
+
+    IF v_state_category IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'لا يمكن حفظ طلب إجازة لموظف بدون حالة توظيف صالحة.';
+    END IF;
+
+    IF v_state_category <> 'working' THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'لا يمكن حفظ طلب إجازة لموظف خارج حالات العمل.';
+    END IF;
+
+    IF NEW.status IN ('pending', 'manager_approved', 'hr_approved')
+       AND EXISTS (
+           SELECT 1
+             FROM leaves l
+            WHERE l.id <> NEW.id
+              AND l.employee_id = NEW.employee_id
+              AND l.status IN ('pending', 'manager_approved', 'hr_approved')
+              AND NEW.start_date <= l.end_date
+              AND NEW.end_date >= l.start_date
+       ) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'يوجد طلب إجازة آخر متداخل مع الفترة المحددة.';
+    END IF;
+>>>>>>> dd38c4bfcae0115cc3218e6d9719e522078ca169
 END
 $$
 DELIMITER ;
@@ -10474,6 +10784,7 @@ INSERT INTO `payroll` (`id`, `employee_id`, `month`, `year`, `basic_salary`, `al
 -- Triggers `payroll`
 --
 DELIMITER $$
+<<<<<<< HEAD
 CREATE TRIGGER `trg_payroll_accounting_before_update` BEFORE UPDATE ON `payroll` FOR EACH ROW BEGIN
     DECLARE v_entry_id INT UNSIGNED DEFAULT NULL;
     DECLARE v_expense_account_id INT UNSIGNED DEFAULT NULL;
@@ -10538,10 +10849,77 @@ CREATE TRIGGER `trg_payroll_accounting_before_update` BEFORE UPDATE ON `payroll`
         SET NEW.accounting_entry_id = v_entry_id;
         SET NEW.accounting_status = 'posted';
     END IF;
+=======
+CREATE TRIGGER `trg_payroll_accounting_before_update` BEFORE UPDATE ON `payroll` FOR EACH ROW BEGIN
+    DECLARE v_entry_id INT UNSIGNED DEFAULT NULL;
+    DECLARE v_expense_account_id INT UNSIGNED DEFAULT NULL;
+    DECLARE v_payment_account_id INT UNSIGNED DEFAULT NULL;
+    DECLARE v_employee_name VARCHAR(150) DEFAULT NULL;
+    DECLARE v_entry_date DATE;
+    DECLARE v_amount DECIMAL(14,2);
+    DECLARE v_entry_code VARCHAR(50);
+
+    IF OLD.status <> 'approved' AND NEW.status = 'approved' THEN
+        SET NEW.accounting_status = 'ready';
+    END IF;
+
+    IF OLD.status <> 'paid' AND NEW.status = 'paid' THEN
+        SET v_amount = COALESCE(NEW.net_salary, 0);
+        IF v_amount <= 0 THEN
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'لا يمكن ترحيل مسير راتب بصافي راتب غير صالح إلى المحاسبة.';
+        END IF;
+
+        SELECT id INTO v_expense_account_id FROM accounts WHERE code = '5200' LIMIT 1;
+        IF v_expense_account_id IS NULL THEN
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'حساب الرواتب 5200 غير موجود في دليل الحسابات.';
+        END IF;
+
+        SET v_payment_account_id = NEW.payment_account_id;
+        IF v_payment_account_id IS NULL OR v_payment_account_id = 0 THEN
+            SELECT id INTO v_payment_account_id FROM accounts WHERE code = '1200' AND is_active = 1 LIMIT 1;
+        ELSE
+            SELECT id INTO v_payment_account_id FROM accounts WHERE id = v_payment_account_id AND is_active = 1 LIMIT 1;
+        END IF;
+        IF v_payment_account_id IS NULL THEN
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'حساب الدفع البنكي غير صالح.';
+        END IF;
+
+        SET v_entry_code = CONCAT('PAY-', NEW.id);
+        SET v_entry_date = COALESCE(NEW.payment_date, CURDATE());
+
+        SELECT id INTO v_entry_id
+        FROM journal_entries
+        WHERE reference_type = 'payroll' AND reference_id = NEW.id AND status = 'posted'
+        LIMIT 1;
+
+        IF v_entry_id IS NULL THEN
+            SELECT full_name INTO v_employee_name FROM employees WHERE id = NEW.employee_id LIMIT 1;
+            INSERT INTO journal_entries
+                (entry_code, entry_date, description, reference_type, reference_id, status, created_by)
+            VALUES
+                (v_entry_code, v_entry_date,
+                 CONCAT('صرف راتب الموظف: ', COALESCE(v_employee_name, CONCAT('ID ', NEW.employee_id)), ' - ', NEW.year, '-', LPAD(NEW.month, 2, '0')),
+                 'payroll', NEW.id, 'posted', NULL);
+            SET v_entry_id = LAST_INSERT_ID();
+
+            INSERT INTO journal_lines (entry_id, account_id, debit, credit, description)
+            VALUES (v_entry_id, v_expense_account_id, v_amount, 0,
+                    CONCAT('رواتب وأجور - ', NEW.year, '-', LPAD(NEW.month, 2, '0')));
+
+            INSERT INTO journal_lines (entry_id, account_id, debit, credit, description)
+            VALUES (v_entry_id, v_payment_account_id, 0, v_amount,
+                    CONCAT('صرف رواتب - ', NEW.year, '-', LPAD(NEW.month, 2, '0')));
+        END IF;
+
+        SET NEW.accounting_entry_id = v_entry_id;
+        SET NEW.accounting_status = 'posted';
+    END IF;
+>>>>>>> dd38c4bfcae0115cc3218e6d9719e522078ca169
 END
 $$
 DELIMITER ;
 DELIMITER $$
+<<<<<<< HEAD
 CREATE TRIGGER `trg_payroll_immutable_before_update` BEFORE UPDATE ON `payroll` FOR EACH ROW BEGIN
     IF OLD.status = 'paid' AND (
         NOT (OLD.employee_id <=> NEW.employee_id) OR
@@ -10557,6 +10935,23 @@ CREATE TRIGGER `trg_payroll_immutable_before_update` BEFORE UPDATE ON `payroll` 
     ) THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'لا يمكن تعديل مسير راتب بعد صرفه. استخدم إجراء تصحيح/عكس محاسبي مستقل.';
     END IF;
+=======
+CREATE TRIGGER `trg_payroll_immutable_before_update` BEFORE UPDATE ON `payroll` FOR EACH ROW BEGIN
+    IF OLD.status = 'paid' AND (
+        NOT (OLD.employee_id <=> NEW.employee_id) OR
+        NOT (OLD.month <=> NEW.month) OR
+        NOT (OLD.year <=> NEW.year) OR
+        NOT (OLD.basic_salary <=> NEW.basic_salary) OR
+        NOT (OLD.allowances <=> NEW.allowances) OR
+        NOT (OLD.overtime <=> NEW.overtime) OR
+        NOT (OLD.deductions <=> NEW.deductions) OR
+        NOT (OLD.net_salary <=> NEW.net_salary) OR
+        NOT (OLD.status <=> NEW.status) OR
+        NOT (OLD.payment_date <=> NEW.payment_date)
+    ) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'لا يمكن تعديل مسير راتب بعد صرفه. استخدم إجراء تصحيح/عكس محاسبي مستقل.';
+    END IF;
+>>>>>>> dd38c4bfcae0115cc3218e6d9719e522078ca169
 END
 $$
 DELIMITER ;

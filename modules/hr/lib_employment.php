@@ -68,79 +68,74 @@ function hrGetEmploymentStates(bool $activeOnly = true): array
     return dbFetchAll($sql);
 }
 
-/** Compatibility guard for legacy employee screens that still write salary directly. */
-function hrEnsureEmployeeSalaryHistorySync(): void
+/**
+ * Explicit application-level replacement for the former salary-history triggers.
+ * Call this immediately after an employee is created or after employees.basic_salary changes.
+ */
+function hrSyncEmployeeSalaryHistory(int $employeeId, ?float $basicSalary = null, ?string $effectiveDate = null, string $reason = 'adjustment'): void
 {
-    static $done = false;
-    if ($done) return;
-    $done = true;
+    if ($employeeId <= 0) throw new InvalidArgumentException('الموظف غير صالح.');
 
-    $triggerAfterInsert = 'trg_employees_salary_history_sync_ai';
-    $triggerAfterUpdate = 'trg_employees_salary_history_sync_au';
+    $employee = dbFetchOne(
+        "SELECT id, hire_date, basic_salary FROM employees WHERE id = ? LIMIT 1",
+        [$employeeId]
+    );
+    if (!$employee) throw new RuntimeException('الموظف غير موجود.');
 
-    if (!dbFetchOne("SELECT TRIGGER_NAME FROM information_schema.TRIGGERS WHERE TRIGGER_SCHEMA = DATABASE() AND TRIGGER_NAME = ? LIMIT 1", [$triggerAfterInsert])) {
-        db()->exec(<<<'SQL'
-CREATE TRIGGER trg_employees_salary_history_sync_ai
-AFTER INSERT ON employees
-FOR EACH ROW
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM hr_employee_salary_history WHERE employee_id = NEW.id LIMIT 1) THEN
-        INSERT INTO hr_employee_salary_history
+    $salary = $basicSalary !== null ? $basicSalary : (float)($employee['basic_salary'] ?? 0);
+    $effective = $effectiveDate ?: date('Y-m-d');
+    $effectiveObj = DateTime::createFromFormat('Y-m-d', $effective);
+    if (!$effectiveObj || $effectiveObj->format('Y-m-d') !== $effective) {
+        throw new InvalidArgumentException('تاريخ سريان الراتب غير صالح.');
+    }
+
+    $existing = dbFetchOne(
+        "SELECT id
+         FROM hr_employee_salary_history
+         WHERE employee_id = ? AND effective_from = ?
+         ORDER BY id DESC LIMIT 1",
+        [$employeeId, $effective]
+    );
+
+    if ($existing) {
+        db()->prepare(
+            "UPDATE hr_employee_salary_history
+             SET basic_salary = ?, salary_currency = 'SDG', notes = 'Synchronized from employee record'
+             WHERE id = ?"
+        )->execute([$salary, (int)$existing['id']]);
+        return;
+    }
+
+    $current = dbFetchOne(
+        "SELECT id
+         FROM hr_employee_salary_history
+         WHERE employee_id = ?
+           AND effective_from <= ?
+           AND (effective_to IS NULL OR effective_to >= ?)
+         ORDER BY effective_from DESC, id DESC LIMIT 1",
+        [$employeeId, $effective, $effective]
+    );
+
+    $future = dbFetchOne(
+        "SELECT effective_from
+         FROM hr_employee_salary_history
+         WHERE employee_id = ? AND effective_from > ?
+         ORDER BY effective_from ASC, id ASC LIMIT 1",
+        [$employeeId, $effective]
+    );
+
+    if ($current) {
+        db()->prepare(
+            "UPDATE hr_employee_salary_history
+             SET effective_to = DATE_SUB(?, INTERVAL 1 DAY), salary_currency = 'SDG'
+             WHERE id = ?"
+        )->execute([$effective, (int)$current['id']]);
+    }
+
+    $targetTo = $future ? (new DateTime($future['effective_from']))->modify('-1 day')->format('Y-m-d') : null;
+    db()->prepare(
+        "INSERT INTO hr_employee_salary_history
             (employee_id, contract_id, effective_from, effective_to, basic_salary, salary_currency, pay_frequency, reason, notes)
-        VALUES
-            (NEW.id, NULL, COALESCE(NEW.hire_date, CURDATE()), NULL, COALESCE(NEW.basic_salary, 0.00), 'SDG', 'monthly', 'initial', 'Initial salary history created from employee record');
-    END IF;
-END
-SQL
-        );
-    }
-
-    if (!dbFetchOne("SELECT TRIGGER_NAME FROM information_schema.TRIGGERS WHERE TRIGGER_SCHEMA = DATABASE() AND TRIGGER_NAME = ? LIMIT 1", [$triggerAfterUpdate])) {
-        db()->exec(<<<'SQL'
-CREATE TRIGGER trg_employees_salary_history_sync_au
-AFTER UPDATE ON employees
-FOR EACH ROW
-BEGIN
-    DECLARE v_future_from DATE DEFAULT NULL;
-    DECLARE v_current_id BIGINT UNSIGNED DEFAULT NULL;
-    DECLARE v_target_to DATE DEFAULT NULL;
-
-    IF COALESCE(@hr_salary_history_sync, 0) <> 1
-       AND NOT (OLD.basic_salary <=> NEW.basic_salary) THEN
-        SELECT id INTO v_current_id
-        FROM hr_employee_salary_history
-        WHERE employee_id = NEW.id
-          AND effective_from <= CURDATE()
-          AND (effective_to IS NULL OR effective_to >= CURDATE())
-        ORDER BY effective_from DESC, id DESC LIMIT 1;
-
-        SELECT MIN(effective_from) INTO v_future_from
-        FROM hr_employee_salary_history
-        WHERE employee_id = NEW.id AND effective_from > CURDATE();
-
-        IF v_current_id IS NOT NULL AND EXISTS (
-            SELECT 1 FROM hr_employee_salary_history WHERE id = v_current_id AND effective_from = CURDATE()
-        ) THEN
-            UPDATE hr_employee_salary_history
-            SET basic_salary = NEW.basic_salary, salary_currency = 'SDG', notes = 'Synchronized from employee record'
-            WHERE id = v_current_id;
-        ELSE
-            IF v_current_id IS NOT NULL THEN
-                UPDATE hr_employee_salary_history
-                SET effective_to = DATE_SUB(CURDATE(), INTERVAL 1 DAY), salary_currency = 'SDG'
-                WHERE id = v_current_id;
-            END IF;
-            SET v_target_to = CASE WHEN v_future_from IS NOT NULL THEN DATE_SUB(v_future_from, INTERVAL 1 DAY) ELSE NULL END;
-            INSERT INTO hr_employee_salary_history
-                (employee_id, contract_id, effective_from, effective_to, basic_salary, salary_currency, pay_frequency, reason, notes)
-            VALUES
-                (NEW.id, NULL, CURDATE(), v_target_to, COALESCE(NEW.basic_salary, 0.00), 'SDG', 'monthly', 'adjustment', 'Synchronized from employee record');
-        END IF;
-    END IF;
-END
-SQL
-        );
-    }
+         VALUES (?, NULL, ?, ?, ?, 'SDG', 'monthly', ?, 'Synchronized from employee record')"
+    )->execute([$employeeId, $effective, $targetTo, $salary, $reason]);
 }
-
-hrEnsureEmployeeSalaryHistorySync();
