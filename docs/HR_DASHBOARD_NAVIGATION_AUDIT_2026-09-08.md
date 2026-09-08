@@ -32,6 +32,8 @@ This preserves existing bookmarks/legacy internal references without maintaining
 - `payroll_reversal.php` — conditionally linked for `hr_manager`/`admin`
 - `payroll_integrity.php` — conditionally linked for `hr_manager`/`admin`
 
+The seven normal HR navigation cards plus the privileged **التصحيحات المالية للرواتب** control are now presented as one unified action-card grid. On desktop, the grid uses four equal-width columns, producing two balanced rows when all eight controls are visible to `hr_manager`/`admin`. The financial corrections control is no longer a separate full-width toolbar; it occupies the same visual card row and retains separate buttons for reversal and integrity checking.
+
 ### Internal endpoints/libraries
 
 - `bulk_attendance.php` is an API/JSON endpoint and is not a dashboard navigation item.
@@ -49,9 +51,15 @@ The canonical HR dashboard is authorized for `hr_manager`, `hr_staff`, and `admi
 
 1. `dashboard/hr_dashboard.php` was made the authoritative HR dashboard and now includes the missing Payroll Policy navigation path.
 2. `modules/hr/index.php` was reduced to a compatibility redirect to the canonical dashboard.
-3. No HR business logic, database schema, payroll workflow, leave workflow, attendance workflow, or authorization rules were intentionally changed by this consolidation.
+3. The top HR action area was normalized to four equal-width columns on desktop, with eight total controls forming two balanced rows for privileged HR roles.
+4. The Payroll Financial Corrections control was integrated into the same card grid while preserving its two existing destinations: Payroll Reversal and Payroll Integrity.
+5. No HR business logic, database schema, payroll workflow, leave workflow, attendance workflow, or authorization rules were intentionally changed by this UI adjustment.
 
-Implementation commits:
+Latest implementation commit:
+
+- `d20e83960cda8acb642e0035d1fe68aa1cb541e4` — align HR dashboard action cards into two equal rows and integrate Payroll Financial Corrections into the same grid.
+
+Earlier navigation commits:
 
 - `9ca3e8ab26610702a256b9f495527890fa5eb71c` — convert `modules/hr/index.php` into compatibility redirect.
 - `6b471457e8eaf33690da683189b6b9b5e4675c07` — complete canonical HR dashboard navigation.
@@ -64,6 +72,8 @@ Browser verification should confirm:
 - `/modules/hr/index.php` redirects to the same canonical dashboard.
 - `hr_staff` can see Payroll Policy but cannot see Payroll Reversal/Integrity controls.
 - `hr_manager` and `admin` can see the sensitive payroll controls.
+- For `hr_manager`/`admin`, the eight top action controls appear in two equal desktop rows of four.
+- The **التصحيحات المالية للرواتب** control is aligned with the other cards rather than appearing as a separate full-width section.
 - All dashboard links open their intended HR pages.
 
 ## Architectural decision
