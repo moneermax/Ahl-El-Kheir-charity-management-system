@@ -2,9 +2,25 @@
 
 ## Result
 
-The HR module was reviewed to ensure user-facing HR pages are reachable from the HR dashboard without exposing internal API/library files as navigation items.
+The HR entry-point architecture was re-audited after identifying two competing HR landing pages.
 
-### User-facing HR pages
+### Canonical HR dashboard
+
+`dashboard/hr_dashboard.php` is the **single canonical/main HR dashboard**.
+
+It is the page that should be used as the HR landing page after role-based login and as the authoritative navigation hub for HR.
+
+### Historical duplicate entry point
+
+`modules/hr/index.php` previously contained a second, duplicate HR dashboard implementation. Maintaining two independent HR dashboards created a navigation and maintenance risk because changes could be applied to one page while the other remained stale.
+
+It has now been converted to a compatibility redirect to:
+
+`dashboard/hr_dashboard.php`
+
+This preserves existing bookmarks/legacy internal references without maintaining duplicate dashboard logic.
+
+### User-facing HR pages reachable from the canonical dashboard
 
 - `employees.php` — linked
 - `employment_states.php` — linked
@@ -12,28 +28,44 @@ The HR module was reviewed to ensure user-facing HR pages are reachable from the
 - `leaves.php` — linked
 - `payroll.php` — linked
 - `contracts.php` — linked
-- `payroll_policy.php` — **linked by the dashboard fix**
-- `payroll_reversal.php` — **linked conditionally by role**
+- `payroll_policy.php` — linked
+- `payroll_reversal.php` — conditionally linked for `hr_manager`/`admin`
+- `payroll_integrity.php` — conditionally linked for `hr_manager`/`admin`
 
 ### Internal endpoints/libraries
 
-- `bulk_attendance.php` is an API/JSON endpoint and should not be linked as a normal page.
-- HR `lib_*.php` files are internal libraries and should not be exposed as dashboard navigation.
+- `bulk_attendance.php` is an API/JSON endpoint and is not a dashboard navigation item.
+- HR `lib_*.php` files are internal libraries and are not dashboard navigation items.
 
-### Navigation and authorization rule
+## Authorization rule
 
-`payroll_policy.php` is visible to the same authorized HR dashboard audience (`hr_manager`, `hr_staff`, `admin`).
+The canonical HR dashboard is authorized for `hr_manager`, `hr_staff`, and `admin`.
 
-`payroll_reversal.php` performs a sensitive payroll/accounting reversal and is shown only to `hr_manager` and `admin`, matching its server-side authorization rather than weakening access control.
+`payroll_policy.php` remains a normal HR-management page for the HR dashboard audience.
+
+`payroll_reversal.php` and `payroll_integrity.php` are sensitive payroll/accounting controls and are shown only to `hr_manager` and `admin`. Their dashboard visibility matches their server-side authorization and does not replace server-side access control.
 
 ## Implementation
 
-`modules/hr/index.php` was updated to add the two missing navigation paths while preserving the existing dashboard statistics, business logic, and authorization behavior.
+1. `dashboard/hr_dashboard.php` was made the authoritative HR dashboard and now includes the missing Payroll Policy navigation path.
+2. `modules/hr/index.php` was reduced to a compatibility redirect to the canonical dashboard.
+3. No HR business logic, database schema, payroll workflow, leave workflow, attendance workflow, or authorization rules were intentionally changed by this consolidation.
 
-Commit: `1094ff515fd1eaaef966e44ccb4bc546b16061b7`
+Implementation commits:
 
-The dashboard now provides a navigation path to all user-facing HR pages identified in this audit, while keeping API endpoints and internal libraries out of the menu.
+- `9ca3e8ab26610702a256b9f495527890fa5eb71c` — convert `modules/hr/index.php` into compatibility redirect.
+- `6b471457e8eaf33690da683189b6b9b5e4675c07` — complete canonical HR dashboard navigation.
 
-## Verification note
+## Verification
 
-The code change has been committed to `main`. Browser verification should confirm that the links appear correctly for `hr_staff`, while the payroll-reversal link is visible only to `hr_manager`/`admin`, and that each link opens the intended page.
+Browser verification should confirm:
+
+- `/dashboard/hr_dashboard.php` opens as the main HR dashboard.
+- `/modules/hr/index.php` redirects to the same canonical dashboard.
+- `hr_staff` can see Payroll Policy but cannot see Payroll Reversal/Integrity controls.
+- `hr_manager` and `admin` can see the sensitive payroll controls.
+- All dashboard links open their intended HR pages.
+
+## Architectural decision
+
+There is now **one HR dashboard implementation**. Future HR navigation changes must be made in `dashboard/hr_dashboard.php`; `modules/hr/index.php` must remain only a compatibility redirect unless the architecture is deliberately changed and documented.
