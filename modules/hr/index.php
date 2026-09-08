@@ -74,6 +74,10 @@ include __DIR__ . '/../../includes/sidebar.php';
             <a href="leaves.php" class="btn btn-outline-warning btn-sm"><i class="fas fa-calendar-alt me-1"></i> <?php echo e(t('hr.leaves')); ?><?php if ($stats['pending_leaves'] > 0): ?><span class="badge bg-danger ms-1"><?php echo (int)$stats['pending_leaves']; ?></span><?php endif; ?></a>
             <a href="payroll.php" class="btn btn-outline-success btn-sm"><i class="fas fa-money-bill-wave me-1"></i> <?php echo e(t('hr.payroll')); ?></a>
             <a href="contracts.php" class="btn btn-outline-info btn-sm"><i class="fas fa-file-contract me-1"></i> <?php echo e(t('hr.contracts')); ?></a>
+            <a href="payroll_policy.php" class="btn btn-outline-dark btn-sm"><i class="fas fa-sliders-h me-1"></i> سياسات الرواتب</a>
+            <?php if (in_array($userRole, ['hr_manager', 'admin'], true)): ?>
+                <a href="payroll_reversal.php" class="btn btn-outline-danger btn-sm"><i class="fas fa-undo-alt me-1"></i> عكس مسيرات الرواتب</a>
+            <?php endif; ?>
         </div>
     </div>
 
