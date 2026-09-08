@@ -10,16 +10,80 @@
 
 ---
 
-## How to use this file
+# 🚨 CURRENT DEVELOPMENT CHECKPOINT — 2026-09-08
+
+## HR PHASE: CLOSED
+
+The HR audit/foundation phase is **COMPLETE and CLOSED for continuation purposes**.
+
+The final completed HR work includes:
+
+- employment state model;
+- contract and salary foundation;
+- leave lifecycle and approval;
+- attendance eligibility and leave interaction;
+- persistent return-from-leave model using `hr_leave_returns`;
+- payroll policy foundation;
+- payroll/accounting boundary and related integrity work;
+- canonical HR dashboard decision;
+- HR dashboard navigation consolidation;
+- final HR dashboard action-card layout adjustment.
+
+### Final HR dashboard architecture
+
+- **Canonical/main HR dashboard:** `dashboard/hr_dashboard.php`
+- **Historical compatibility entry point:** `modules/hr/index.php`
+- `modules/hr/index.php` is a redirect only and must not regain duplicate dashboard logic.
+- The final dashboard action area uses an even two-row layout of equal-sized clickable cards, including **التصحيحات المالية للرواتب** within the same card grid.
+
+### IMPORTANT — DO NOT REOPEN HR
+
+Do **not** restart, repeat, or reinterpret old HR investigations merely because historical documents mention them.
+
+In particular, the earlier `attendance.php` / `عودة من الإجازة` investigation is **historical completed work**, not the current continuation point.
+
+The persistent `hr_leave_returns` design remains authoritative, but it is not an unfinished task to investigate from scratch.
+
+Only return to HR if a future cross-module audit produces concrete evidence of a dependency or regression requiring HR changes.
+
+---
+
+# NEXT PHASE: ACCOUNTING AUDIT
+
+The exact next development phase is:
+
+**ACCOUNTING AUDIT — PHASE 1: REPOSITORY/CODE AUDIT**
+
+The next session must begin by auditing the current Accounting implementation, not by reopening HR.
+
+The intended sequence is:
+
+1. Accounting repository/code audit.
+2. Accounting database/schema audit.
+3. Accounting integrity audit.
+4. Cross-module accounting audit.
+5. Accounting user-workflow/authorization audit.
+6. Accounting reporting/reconciliation audit.
+7. Targeted fixes only where concrete issues are proven.
+8. Testing and verification.
+9. Documentation and session-index update.
+
+The objective is to establish the authoritative accounting structures and financial workflows before making changes.
+
+**DO NOT start by modifying code.** First inspect and map the current implementation.
+
+---
+
+# How to use this file
 
 This file is a navigation index, not the technical source of truth.
 
 When continuing the project in a new AI/chat session:
 
-1. Review this index first.
-2. Review the current repository documentation listed below.
-3. Review relevant historical ChatGPT sessions only when the current task depends on decisions, debugging, or implementation history recorded there.
-4. Inspect the current repository code before proposing changes.
+1. Read the **CURRENT DEVELOPMENT CHECKPOINT** above first.
+2. Review the current repository branch/commit and affected code.
+3. Review the current repository documentation listed below.
+4. Review relevant historical ChatGPT sessions only when the current task depends on decisions, debugging, or implementation history recorded there.
 5. Do not restart completed work or reintroduce superseded architecture.
 6. Treat current repository code and current documentation as authoritative over older chat assumptions.
 
@@ -31,19 +95,19 @@ Important project knowledge should be migrated into `docs/` so the project remai
 
 ### `docs/AHL_EL_KHEIR_SYSTEM_ANALYSIS.md`
 
-Main long-lived system analysis and architecture reference. It describes the overall system, functional areas, technical architecture, database concepts, workflows, roles, and development assumptions.
+Main long-lived system analysis and architecture reference.
 
 ### `docs/AHL_EL_KHEIR_CURRENT_SYSTEM_STATUS_2026-09-08.md`
 
-Current cross-module status as of 2026-09-08. Covers authentication, users/roles, departments, families, sponsors, sponsorships, supervisors/nannies, verification/disbursement, accounting, transactions, projects, HR, messaging, notifications, search, reports, settings, system administration, logs, architecture, and cross-module integrity rules.
+Current cross-module status as of 2026-09-08. It identifies Accounting as `IMPLEMENTED-PARTIAL` with a remaining need for canonical financial-source mapping, reconciliation, and deeper integrity audit.
 
 ### `docs/AHL_EL_KHEIR_DOCUMENTATION_UPDATE_2026-09-08.md`
 
 Latest chronological development update, especially HR employment state, contracts/salary, leave, attendance, payroll policy, accounting integration, and persistent return-from-leave handling.
 
-### `docs/AHL_EL_KHEIR_DOCUMENTATION_UPDATE_2026-09-02.md`
+### `docs/HR_DASHBOARD_NAVIGATION_AUDIT_2026-09-08.md`
 
-Earlier chronological development update. Useful when tracing implementation history before 2026-09-08.
+Final HR dashboard/navigation audit. It confirms `dashboard/hr_dashboard.php` as the canonical HR dashboard and `modules/hr/index.php` as a compatibility redirect.
 
 ### `docs/AHL_EL_KHEIR_COMPLETE_REPOSITORY_AUDIT.md`
 
@@ -55,7 +119,7 @@ Earlier Phase 1 repository implementation audit/correction register. Preserve as
 
 ---
 
-# Important historical ChatGPT sessions
+# Historical ChatGPT sessions
 
 > These links are historical navigation aids. Repository documentation and current code remain the durable source of truth.
 
@@ -71,106 +135,55 @@ https://chatgpt.com/c/6a9e61de-ffb8-83ea-8a02-73b9b276a5e3
 
 Continuation point where the HR foundation refactor was developed and tested.
 
-### HR salary / payroll integration
-Historical session from the salary, payroll, and accounting integration sequence. The exact URL is not currently preserved in the project notes; use current repository documentation and Git history as the authoritative source unless the link is supplied later.
+### Additional historical continuation sessions
+https://chatgpt.com/share/6a9fa736-49f0-83ea-810c-b9d09e7344f2
+https://chatgpt.com/share/6aa00e60-838c-83e9-861a-1261a5f14904
+https://chatgpt.com/share/6a9f9df1-fd08-83e9-a26f-92cb34cd15e8
 
-### Salary synchronization / duplicate payroll prevention
-Historical session covering salary synchronization and payroll duplicate-prevention hardening. Do not assume the old test state is current; inspect the repository and current documentation.
-
-## Attendance / leave return
-
-Historical sessions covered:
-- attendance eligibility
-- approved leave exclusion
-- `عودة من الإجازة` workflow
-- bulk attendance handling
-- persistent effective return date
-- preserving the original approved leave record instead of shortening it
-
-Current authoritative implementation is documented in the 2026-09-08 documentation files listed above.
+These are historical references only. Do not infer the current stopping point from them when the repository checkpoint above is available.
 
 ## Messaging / attachments
 
-Historical sessions covered the internal messaging attachment failure where JSON responses were contaminated by an appended `<script>` block, causing `JSON.parse` to fail. The issue was fixed and tested successfully; messages and attachments subsequently sent/received correctly, including older attachments.
-
-The exact historical chat URL is not currently preserved here. Repository code and documentation are the durable reference.
+Historical messaging work fixed the JSON contamination problem and attachment send/receive behavior. This is completed work and should not be treated as the current task.
 
 ## Disbursement / confirmation / returns
 
-Historical sessions covered:
-- nanny disbursement confirmation
-- replacing browser `confirm()` with SweetAlert2
-- receipt upload
-- changing `disbursement_items` from `pending` to `paid`
-- return/reversal handling
-- accounting impact of returned amounts
-
-When modifying this area, inspect both the operational module and accounting integration before changing behavior.
+Historical sessions covered nanny confirmation, receipts, returned amounts, reversal behavior and accounting integration. When auditing Accounting, inspect these integrations as current code paths rather than reopening the old UI bugs automatically.
 
 ---
 
-# Project continuation checkpoints
+# Project continuation rules
 
-### Foundation
-- Authentication/session handling established.
-- Core configuration/database structure established.
-- Users, roles, departments, families, sponsors, sponsorships, and operational workflows implemented incrementally.
+When starting from a new chat:
 
-### Integrity / architecture hardening
-- Server-side authorization and scope checks were progressively strengthened.
-- Operational state and accounting state were deliberately separated where appropriate.
-- Conflicting database integrity mechanisms were replaced or hardened in PHP where documented.
-- Legacy structures are not automatically authoritative merely because they exist in the database.
-
-### HR foundation
-- Employment state model established.
-- Contract/salary foundation established.
-- Leave lifecycle and approval rules established.
-- Attendance eligibility tied to employment state and approved leave.
-- Persistent return-from-leave effective date introduced through `hr_leave_returns`.
-- Original leave dates remain historical; early return is represented separately.
-- Payroll is treated as financial impact, with accounting as the financial record.
-
-### Messaging
-- Internal messaging and attachments are operational.
-- API endpoints must return pure JSON when JSON is expected.
-- Attachment downloads/deletion are permission-controlled.
-
-### Documentation / cleanup
-- Completed migration scripts were removed from `database/migrations/` after application.
-- Current cross-module system-status documentation was added.
-- Obsolete `get/pull.txt` was removed.
-- Potentially risky duplicate assets were preserved when deletion could not be proven safe.
+1. **Honor the current checkpoint at the top of this file.**
+2. Establish the current repository branch/commit.
+3. Inspect the actual code in the affected module.
+4. Read `docs/AHL_EL_KHEIR_CURRENT_SYSTEM_STATUS_2026-09-08.md`.
+5. Read relevant chronological documentation.
+6. Use historical chats only as supporting context.
+7. If an old document describes a previously completed issue, do not treat it as an open task unless current code proves regression or incompleteness.
+8. If the next phase is explicitly recorded above, do not invent a different continuation point.
 
 ---
 
-# Current continuation rule
+# Documentation maintenance rule
 
-When starting from a new chat, do not assume the last historical chat message is the current project state.
+After every meaningful milestone:
 
-Establish the current state in this order:
+**Code is correct → behavior verified → documentation updated → session index updated → next continuation point clear.**
 
-1. Current repository branch/commit.
-2. Current code in the affected module.
-3. `docs/AHL_EL_KHEIR_CURRENT_SYSTEM_STATUS_2026-09-08.md`.
-4. `docs/AHL_EL_KHEIR_DOCUMENTATION_UPDATE_2026-09-08.md` when HR/history is relevant.
-5. `docs/AHL_EL_KHEIR_SYSTEM_ANALYSIS.md` for architecture and system-wide context.
-6. This `docs/CHATGPT_SESSION_INDEX.md` for historical conversation navigation.
-7. Relevant older audit documents when the task touches an area covered by them.
+Update the appropriate dated documentation after significant feature, bugfix, architectural, database, workflow, security, or testing milestones.
 
-Then continue from the actual current implementation.
+When a major phase closes, explicitly record:
 
----
+- the phase that closed;
+- the final architectural decision;
+- what must not be reopened without evidence;
+- the exact next phase;
+- the exact first audit/action to perform.
 
-# Rules for updating this index
-
-When a future ChatGPT session contains an important architectural decision, completed feature, major bug investigation, or testing milestone:
-
-1. Add the session link here if available.
-2. Add a short description of what the session contains.
-3. Record the durable technical/business decision in the appropriate `docs/` document as well.
-4. Do not use this index as a replacement for technical documentation.
-5. Keep historical descriptions intact; add newer checkpoints rather than rewriting history.
+Historical audit documents should remain historical. Do not rewrite them merely to erase old findings.
 
 ---
 
@@ -182,46 +195,78 @@ Use the following prompt whenever project continuity is lost or a new AI/chat se
 >
 > **Repository:** https://github.com/moneermax/Ahl-El-Kheir-charity-management-system
 >
-> First, review the current repository and the following documentation before making recommendations or changes:
+> **CRITICAL CURRENT CHECKPOINT:** The HR audit/foundation phase is COMPLETE and CLOSED. The final HR dashboard/navigation work is also COMPLETE, including the final equal two-row clickable-card layout. Do NOT reopen the old HR attendance/return-from-leave investigation unless current code provides concrete evidence of a regression or an Accounting integration dependency.
 >
+> **NEXT PHASE:** Begin the **ACCOUNTING AUDIT — PHASE 1: REPOSITORY/CODE AUDIT**.
+>
+> First review:
 > - `docs/CHATGPT_SESSION_INDEX.md`
 > - `docs/AHL_EL_KHEIR_CURRENT_SYSTEM_STATUS_2026-09-08.md`
 > - `docs/AHL_EL_KHEIR_SYSTEM_ANALYSIS.md`
 > - `docs/AHL_EL_KHEIR_DOCUMENTATION_UPDATE_2026-09-08.md`
+> - `docs/HR_DASHBOARD_NAVIGATION_AUDIT_2026-09-08.md`
 > - `docs/AHL_EL_KHEIR_COMPLETE_REPOSITORY_AUDIT.md`
 > - `docs/AHL_EL_KHEIR_REPOSITORY_AUDIT.md`
 >
-> Use `docs/CHATGPT_SESSION_INDEX.md` to identify relevant historical ChatGPT sessions and review those sessions when necessary. The session links are historical context, not the primary source of truth.
+> Then inspect the current repository code and Git state before making recommendations.
 >
-> Before changing code, establish the actual current state from the repository, including the current branch/commit and the affected files. Compare the documentation with the current implementation and do not blindly trust an old conversation or old documentation statement if the code has since changed.
+> Do NOT make code changes yet.
+>
+> First map the complete Accounting implementation, including:
+> - accounting dashboards;
+> - chart of accounts;
+> - journal entries and journal lines;
+> - opening balances;
+> - vouchers;
+> - receipts/payments/transactions;
+> - posting and reversal/void behavior;
+> - financial-manager review;
+> - reconciliation;
+> - accounting reports;
+> - payroll integration;
+> - donation/transaction integration;
+> - sponsorship integration;
+> - disbursement/return/reversal integration;
+> - project financial integration;
+> - authorization and audit logging.
+>
+> Then identify the authoritative financial structures, current workflows, database relationships, integrity controls, legacy/duplicate structures, cross-module boundaries, and concrete risks.
 >
 > Preserve the established architecture:
-> - PHP 8.2+ backend
-> - procedural PHP only; NO OOP
-> - MySQL/MariaDB
-> - Vanilla JavaScript only; NO frontend frameworks
-> - Bootstrap 5.3 RTL
-> - Font Awesome 6
-> - Google Fonts Cairo
+> - PHP 8.2+;
+> - procedural PHP only — NO OOP;
+> - MySQL/MariaDB;
+> - Vanilla JavaScript only — NO frontend frameworks;
+> - Bootstrap 5.3 RTL;
+> - Font Awesome 6;
+> - Google Fonts Cairo.
 >
-> Preserve existing business rules, authorization boundaries, accounting integrity, audit behavior, database relationships, and completed fixes unless there is clear evidence that a change is required.
+> Preserve completed business rules and do not redesign working architecture without evidence.
 >
-> Do not undo, duplicate, or redesign completed work merely because an older ChatGPT session used a different approach.
+> Follow this sequence:
 >
-> Treat the current repository implementation and current documentation as the source of truth. Historical ChatGPT sessions are supporting context for why decisions were made.
+> **Inspect → Understand → Verify → Identify risk → Fix narrowly → Test → Document**
 >
-> If the previous stopping point is not obvious, determine it from the latest code, Git history, documentation, and session index rather than asking me to repeat the entire project history.
+> Treat current repository code and the current checkpoint documentation as the source of truth. Historical ChatGPT sessions are supporting context only.
 >
-> Then tell me briefly:
-> 1. what the current system state is,
-> 2. what the most recent completed work was,
-> 3. exactly where development should continue,
-> 4. what you need me to test only if testing is actually required.
+> If an old session or document describes an earlier HR issue, do not automatically resume it. The explicit current checkpoint is **HR CLOSED → ACCOUNTING AUDIT NEXT**.
 >
-> Do not make unrelated changes. Keep each development step narrow, verify dependencies before modifying them, and update the appropriate `docs/` documentation after meaningful architectural or workflow changes.
+> At the end of the initial inspection, report:
+> 1. Accounting files found;
+> 2. Accounting tables/structures found;
+> 3. main accounting workflows;
+> 4. authoritative financial structures currently identifiable;
+> 5. integrations;
+> 6. authorization boundaries;
+> 7. integrity risks;
+> 8. what is already correct;
+> 9. what requires deeper verification;
+> 10. the first concrete Accounting audit task to perform next.
+>
+> Do not ask me to repeat the project's entire history when the repository and checkpoint documentation already establish it.
 
 ---
 
 # Maintenance principle
 
-The goal is that this repository remains self-describing. ChatGPT session links are useful for historical reasoning, but the important architecture, business rules, decisions, completed fixes, and current status must also exist in repository documentation.
+The repository must remain self-describing. ChatGPT session links are historical context; the important architecture, business rules, decisions, completed fixes, current status, and exact continuation point must also exist in repository documentation.

@@ -22,16 +22,30 @@ $tid = (int)$_POST['void_tx'];
 $reason = trim($_POST['void_reason'] ?? '') ?: 'إلغاء';
 $t = dbFetchOne("SELECT id, status, transaction_code FROM transactions WHERE id = ?", [$tid]);
 if ($t && $t['status'] === 'posted') {
-dbExecute("UPDATE transactions SET status='voided', voided_at=NOW(), voided_by=?, void_reason=? WHERE id=?", [Session::getUserId(), $reason, $tid]);
-ak_void_journal_for_transaction($tid, $reason);
-try {
-dbExecute("INSERT INTO audit_log (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent)
-VALUES (?, 'VOID', 'transactions', ?, ?, ?, ?, ?)",
-[Session::getUserId(), $tid, json_encode(['code' => $t['transaction_code'], 'status' => 'posted'], JSON_UNESCAPED_UNICODE),
-json_encode(['status' => 'voided', 'reason' => $reason], JSON_UNESCAPED_UNICODE),
-$_SERVER['REMOTE_ADDR'] ?? '', $_SERVER['HTTP_USER_AGENT'] ?? '']);
-} catch (Throwable $e) {}
-flash('success', 'تم إبطال المعاملة وقيدها.');
+    $financialCommitted = false;
+    try {
+        db()->beginTransaction();
+
+        dbExecute("UPDATE transactions SET status='voided', voided_at=NOW(), voided_by=?, void_reason=? WHERE id=?", [Session::getUserId(), $reason, $tid]);
+        ak_void_journal_for_transaction($tid, $reason);
+
+        db()->commit();
+        $financialCommitted = true;
+    } catch (Throwable $e) {
+        if (db()->inTransaction()) db()->rollBack();
+        flash('error', 'تعذر إبطال المعاملة وقيدها. لم يتم حفظ أي جزء من العملية.');
+    }
+
+    if ($financialCommitted) {
+        try {
+            dbExecute("INSERT INTO audit_log (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent)
+            VALUES (?, 'VOID', 'transactions', ?, ?, ?, ?, ?)",
+            [Session::getUserId(), $tid, json_encode(['code' => $t['transaction_code'], 'status' => 'posted'], JSON_UNESCAPED_UNICODE),
+            json_encode(['status' => 'voided', 'reason' => $reason], JSON_UNESCAPED_UNICODE),
+            $_SERVER['REMOTE_ADDR'] ?? '', $_SERVER['HTTP_USER_AGENT'] ?? '']);
+        } catch (Throwable $e) {}
+        flash('success', 'تم إبطال المعاملة وقيدها.');
+    }
 }
 }
 header('Location: ' . APP_URL . 'modules/transactions/index.php'); exit();
