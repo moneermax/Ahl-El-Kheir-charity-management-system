@@ -3,7 +3,7 @@
 
 **Repository:** `moneermax/Ahl-El-Kheir-charity-management-system`  
 **Authoritative branch:** `main`  
-**Purpose:** Synchronize the documentation with the verified implementation state reached during the HR integrity audit through 2026-09-08.
+**Purpose:** Synchronize the documentation with the verified implementation state reached during the HR integrity audit through 2026-09-08 and establish the exact continuation point for the next Accounting audit phase.
 
 > This is a chronological implementation record. Earlier audit documents retain their historical conclusions. This document records later verified changes and supersedes older descriptions only where explicitly stated below.
 
@@ -110,21 +110,7 @@ The organizational rule is now:
 
 It is not merely a one-day attendance override.
 
-Example:
-
-```text
-Approved leave: 2026-09-08 → 2026-09-30
-Return date:    2026-09-08
-
-2026-09-07 → normal attendance
-2026-09-08 → attendance eligible after return
-2026-09-09 → attendance eligible
-2026-09-10 → attendance eligible
-...
-2026-09-30 → attendance eligible
-```
-
-The original leave remains `2026-09-08 → 2026-09-30` for historical integrity.
+The original leave remains unchanged for historical integrity. The persistent `hr_leave_returns` record is the authoritative effective-return event.
 
 ## 3.4 Persistent return record — VERIFIED
 
@@ -193,26 +179,7 @@ The current leave model must be understood as two separate concepts:
 1. **Approved leave interval** — the HR-approved historical interval stored in `leaves`.
 2. **Effective return** — the date on which the employee actually becomes eligible to resume attendance, stored separately in `hr_leave_returns`.
 
-Conceptually:
-
-```text
-HR approves leave
-      │
-      ├── leaves.start_date / end_date preserved
-      │
-      └── Employee unavailable for covered dates
-                    │
-                    ▼
-            Return from leave
-                    │
-                    ▼
-          hr_leave_returns record
-                    │
-                    ▼
-       Attendance eligible from return_date onward
-```
-
-This model preserves both HR history and operational attendance behavior.
+The original approved leave interval must remain unchanged when an employee returns early.
 
 ---
 
@@ -230,8 +197,6 @@ The completed migration scripts under the repository's root `migrations/` direct
 
 The repository should therefore no longer be treated as containing a queue of pending migration scripts.
 
-Future schema changes must be handled deliberately and documented before being applied; an applied change must not be assumed to remain reproducible merely because an old migration file once existed.
-
 ## 6.3 Important operational rule
 
 Before any future schema change, create/update the authoritative database backup and document the exact structural change. Do not delete or overwrite database evidence until the resulting schema has been captured.
@@ -242,19 +207,11 @@ Before any future schema change, create/update the authoritative database backup
 
 The messaging work documented in the 2026-09-02 update remains valid.
 
-The system supports:
-
-- message attachments;
-- attachment download;
-- attachment deletion where authorized;
-- individual message soft deletion;
-- preservation of reply relationships;
-- suppression of deleted message content from normal previews;
-- deletion audit information.
+The system supports message attachments, attachment download/deletion where authorized, individual message soft deletion, preservation of reply relationships and deletion audit information.
 
 The attachment JSON response issue encountered during development was corrected so that the response remains valid JSON rather than JSON followed by an injected HTML/script payload.
 
-This is an implementation-history note; the current repository behavior is the source of truth.
+This is completed implementation history, not the current continuation task.
 
 ---
 
@@ -268,66 +225,179 @@ The system supports item-level payment confirmation, receipt evidence, returned 
 
 The distinction between operational disbursement state and accounting journal state must remain intact.
 
-No new accounting policy is introduced by this documentation update.
+The Accounting module is **IMPLEMENTED-PARTIAL** and is now the **next audit phase**. No new accounting policy is introduced by this documentation update.
 
 ---
 
-# 9. Security and Integrity Principles Confirmed During HR Audit
+# 9. HR Dashboard and Navigation — CLOSED 2026-09-08
 
-The HR work reinforced the following project-wide rules:
+The HR dashboard/navigation audit was completed.
 
-1. UI state is not authoritative.
-2. POST actions must repeat business-rule validation server-side.
-3. Historical HR approvals must not be destroyed merely to make current operational behavior convenient.
-4. Date-based business rules must evaluate the selected business date, not only the current date.
-5. A durable lifecycle event should be persisted explicitly rather than inferred from a temporary UI note.
-6. A later transaction must not erase the historical evidence required to explain why the transaction was allowed.
-7. Legacy fields remain compatibility structures until a controlled migration removes them.
-8. New HR behavior must not silently bypass payroll, attendance or accounting integrity rules.
+### Canonical HR dashboard
+
+`dashboard/hr_dashboard.php` is the **single canonical/main HR dashboard**.
+
+### Historical compatibility entry point
+
+`modules/hr/index.php` no longer contains a duplicate dashboard. It redirects to `dashboard/hr_dashboard.php` so existing bookmarks/internal references remain functional.
+
+### Final dashboard navigation
+
+The canonical dashboard provides the HR user-facing actions for:
+
+- employees;
+- employment states;
+- attendance;
+- leaves;
+- payroll;
+- contracts;
+- payroll policy;
+- payroll financial corrections.
+
+Sensitive payroll correction controls remain role-conditional for `hr_manager` and `admin`.
+
+### Final dashboard layout
+
+The clickable HR action cards were finalized as an even two-row grid of equal-sized cards. **التصحيحات المالية للرواتب** is included within the same action-card grid rather than being maintained as a separate toolbar.
+
+This dashboard/navigation work is **CLOSED**. Future HR navigation changes must be made in `dashboard/hr_dashboard.php` unless a deliberate architectural decision changes the design.
 
 ---
 
-# 10. Remaining HR Work — Not Yet Declared Complete
+# 10. HR Phase Closure — IMPORTANT CONTINUATION RULE
 
-The HR audit has materially strengthened the employment-state, leave and attendance foundation, but the following should remain visible as future verification work rather than being falsely marked complete:
+The HR integrity/foundation phase is now **CLOSED for continuation purposes**.
 
-- full payroll calculation verification against attendance and approved leave;
-- complete payroll/accounting reconciliation;
-- final role/permission matrix across all HR actions;
-- comprehensive audit-log coverage for every HR lifecycle mutation;
-- broader regression testing across historical and future dates;
-- production deployment review, including timezone and error-display policy;
-- final reconciliation of legacy and canonical HR structures.
+The following are historical completed work and must not be treated as the next task merely because older documentation discusses them:
 
-These are **OPEN / IMPLEMENTED-PARTIAL** areas, not failures of the current attendance fix.
+- the original attendance eligibility investigation;
+- the `عودة من الإجازة` implementation/debugging sequence;
+- the persistent `hr_leave_returns` correction;
+- the HR dashboard duplicate-entry-point investigation;
+- the HR dashboard navigation consolidation;
+- the final HR dashboard card-layout adjustment.
+
+These should only be reopened if current repository code provides concrete evidence of a regression or if a later cross-module audit proves a dependency requiring a targeted HR change.
+
+Some broader HR items remain **IMPLEMENTED-PARTIAL**, especially complete payroll/accounting reconciliation, organization-wide permission coverage, comprehensive audit-log coverage and production regression testing. Those are future verification items and do not change the current phase checkpoint.
 
 ---
 
-# 11. Current System Status — 2026-09-08
+# 11. NEXT PHASE — ACCOUNTING AUDIT
 
-The current verified HR attendance model is:
+The exact next development phase is:
+
+**ACCOUNTING AUDIT — PHASE 1: REPOSITORY/CODE AUDIT**
+
+The first Accounting phase must begin with inspection and mapping, not random fixes.
+
+The Accounting audit sequence is:
+
+1. Repository/code audit.
+2. Database/schema audit.
+3. Accounting integrity audit.
+4. Cross-module accounting audit.
+5. User workflow and authorization audit.
+6. Reporting and reconciliation audit.
+7. Targeted fixes only where concrete issues are proven.
+8. Testing and verification.
+9. Documentation and session-index update.
+
+The first Accounting inspection must identify:
+
+- accounting dashboards;
+- chart of accounts;
+- journal entries and journal lines;
+- opening balances;
+- vouchers;
+- receipts/payments/transactions;
+- posting and reversal/void behavior;
+- financial-manager review;
+- reconciliation;
+- accounting reports;
+- payroll integration;
+- donation/transaction integration;
+- sponsorship integration;
+- disbursement/return/reversal integration;
+- project financial integration;
+- authorization and audit logging.
+
+Do not modify code until the current Accounting implementation and authoritative structures have been mapped.
+
+---
+
+# 12. Current System Status for the Next Session
+
+The continuation state is explicitly:
 
 ```text
-Employee
-   │
-   ├── Effective employment state
-   │       └── must be working
-   │
-   └── Approved leave for selected date?
-           │
-           ├── No → attendance eligible
-           │
-           └── Yes
-                │
-                ├── Effective return exists?
-                │       ├── No → on leave / blocked
-                │       └── Yes → attendance eligible
-                │
-                └── Return applies from return_date onward
+HR FOUNDATION / INTEGRITY AUDIT
+        ↓
+      CLOSED
+        ↓
+HR DASHBOARD / NAVIGATION
+        ↓
+      CLOSED
+        ↓
+FINAL HR CARD LAYOUT
+        ↓
+      CLOSED
+        ↓
+ACCOUNTING AUDIT
+        ↓
+PHASE 1 — REPOSITORY / CODE AUDIT
 ```
 
-The key integrity rule is now:
+**Authoritative continuation point:** Accounting Phase 1.
 
-> **An approved leave is historical HR evidence; an effective return is a separate lifecycle event. Returning early must never rewrite the original approved leave interval.**
+A new AI/chat session must not resume an older HR investigation when this checkpoint is present.
 
-This is the authoritative documentation position for the attendance/leave behavior as of 2026-09-08.
+---
+
+# 13. Documentation Maintenance Decision
+
+The documentation set now has an explicit continuation hierarchy:
+
+### Historical audit layer
+
+- `AHL_EL_KHEIR_REPOSITORY_AUDIT.md`
+- `AHL_EL_KHEIR_COMPLETE_REPOSITORY_AUDIT.md`
+
+These preserve historical evidence and conclusions.
+
+### Long-lived architecture layer
+
+- `AHL_EL_KHEIR_SYSTEM_ANALYSIS.md`
+
+This remains the architectural/functional handoff document.
+
+### Current/chronological layer
+
+- `AHL_EL_KHEIR_DOCUMENTATION_UPDATE_2026-09-02.md`
+- `AHL_EL_KHEIR_DOCUMENTATION_UPDATE_2026-09-08.md`
+- `AHL_EL_KHEIR_CURRENT_SYSTEM_STATUS_2026-09-08.md`
+- `HR_DASHBOARD_NAVIGATION_AUDIT_2026-09-08.md`
+
+### Continuation/navigation layer
+
+- `CHATGPT_SESSION_INDEX.md`
+
+This file now contains the explicit **HR CLOSED → ACCOUNTING NEXT** checkpoint and the emergency continuation prompt.
+
+---
+
+# 14. Maintenance Principle
+
+For every meaningful milestone:
+
+**Code correct → behavior verified → documentation updated → session index updated → next continuation point clear.**
+
+When a major phase closes, the repository documentation must explicitly record:
+
+- the phase that closed;
+- final architectural decisions;
+- historical issues that must not be reopened without evidence;
+- exact next phase;
+- exact first audit/action to perform.
+
+This prevents historical ChatGPT conversations from being mistaken for the current project state.
