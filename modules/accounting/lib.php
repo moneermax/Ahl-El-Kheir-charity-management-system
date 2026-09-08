@@ -172,15 +172,38 @@ function ak_post_transaction_journal(int $txnId): int {
         $lines[] = ['4100', 0.0, $net, 'إيراد كفالات ' . $t['transaction_code']];
         if ($fee > 0) $lines[] = ['4200', 0.0, $fee, 'رسوم إدارية ' . $t['transaction_code']];
     }
+
+    // A posted transaction must never produce a partial journal. Missing accounts
+    // are a hard failure so the caller can roll back the surrounding operation.
+    $resolvedLines = [];
+    $totalDebit = 0.0;
+    $totalCredit = 0.0;
+    foreach ($lines as $l) {
+        $aid = ak_account_id($l[0]);
+        if ($aid <= 0) {
+            throw new RuntimeException('الحساب المحاسبي غير موجود: ' . $l[0]);
+        }
+        $debit = round((float)$l[1], 2);
+        $credit = round((float)$l[2], 2);
+        if ($debit < 0 || $credit < 0 || ($debit > 0 && $credit > 0)) {
+            throw new RuntimeException('سطر قيد محاسبي غير صالح للمعاملة ' . $txnId);
+        }
+        $resolvedLines[] = [$aid, $debit, $credit, $l[3]];
+        $totalDebit += $debit;
+        $totalCredit += $credit;
+    }
+    if (round($totalDebit, 2) !== round($totalCredit, 2)) {
+        throw new RuntimeException('القيد المحاسبي غير متوازن للمعاملة ' . $txnId);
+    }
+
     $n = (int)(dbFetchOne("SELECT COUNT(*) c FROM journal_entries")['c'] ?? 0) + 1;
     $code = 'JE-' . str_pad((string)$n, 6, '0', STR_PAD_LEFT);
     dbExecute("INSERT INTO journal_entries (entry_code, entry_date, description, reference_type, reference_id, status, created_by)
                VALUES (?,?,?,'transaction',?,'posted',?)",
         [$code, $t['transaction_date'], 'قيد آلي من ' . $t['transaction_code'], $txnId, Session::getUserId()]);
     $eid = (int)(dbFetchOne("SELECT LAST_INSERT_ID() id")['id']);
-    foreach ($lines as $l) {
-        $aid = ak_account_id($l[0]);
-        if ($aid > 0) dbExecute("INSERT INTO journal_lines (entry_id, account_id, debit, credit, description) VALUES (?,?,?,?,?)", [$eid, $aid, $l[1], $l[2], $l[3]]);
+    foreach ($resolvedLines as $l) {
+        dbExecute("INSERT INTO journal_lines (entry_id, account_id, debit, credit, description) VALUES (?,?,?,?,?)", [$eid, $l[0], $l[1], $l[2], $l[3]]);
     }
     return $eid;
 }
