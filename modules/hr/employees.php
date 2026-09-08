@@ -80,15 +80,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($action, ['add','edit','su
                 $stmt = $pdo->prepare('INSERT INTO employees (user_id, full_name, employee_code, national_id, birth_date, gender, phone, email, address, hire_date, department_id, position, employment_type, work_mode, basic_salary, bank_account, status, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
                 $stmt->execute([$user_id,$full_name,$employee_code,$national_id,$birth_date,$gender,$phone,$email,$address,$hire_date,$department_id,$position,$employment_type,$work_mode,$basic_salary,$bank_account,'active',Session::getUserID()]);
                 $emp_id = (int)$pdo->lastInsertId();
+                hrSyncEmployeeSalaryHistory($emp_id, $basic_salary, $hire_date ?: date('Y-m-d'), 'initial');
                 hrInitializeEmploymentState($emp_id, $initialStateCode, Session::getUserID(), null, 'Initial employee creation');
                 $message = 'تم إضافة الموظف بنجاح' . ($user_id ? ' (تم إنشاء حساب نظامي له)' : '');
             } else {
                 $newStateCode = $_POST['employment_state'] ?? '';
                 if (!isset($statesByCode[$newStateCode])) throw new RuntimeException('حالة التوظيف المختارة غير صالحة.');
-                $old = dbFetchOne('SELECT employment_state_id FROM employees WHERE id = ?', [$emp_id]);
+                $old = dbFetchOne('SELECT employment_state_id, basic_salary FROM employees WHERE id = ?', [$emp_id]);
                 // Employee code is immutable after creation; do not accept or update it from the edit form.
                 $stmt = $pdo->prepare('UPDATE employees SET full_name=?, national_id=?, birth_date=?, gender=?, phone=?, email=?, address=?, hire_date=?, department_id=?, position=?, employment_type=?, work_mode=?, basic_salary=?, bank_account=? WHERE id=?');
                 $stmt->execute([$full_name,$national_id,$birth_date,$gender,$phone,$email,$address,$hire_date,$department_id,$position,$employment_type,$work_mode,$basic_salary,$bank_account,$emp_id]);
+                if ((float)($old['basic_salary'] ?? 0) !== $basic_salary) {
+                    hrSyncEmployeeSalaryHistory($emp_id, $basic_salary, date('Y-m-d'), 'adjustment');
+                }
                 if ((int)($old['employment_state_id'] ?? 0) !== (int)$statesByCode[$newStateCode]['id']) {
                     hrSetEmploymentState($emp_id, (int)$statesByCode[$newStateCode]['id'], Session::getUserID(), 'Employment state changed from employee edit');
                 }
