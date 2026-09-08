@@ -191,28 +191,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_record']) && ver
                     $sets = []; $params = [];
                     foreach ($upd as $k => $v) { $sets[] = "`$k` = ?"; $params[] = $v; }
                     $params[] = $rid;
-                    dbExecute("UPDATE transactions SET " . implode(', ', $sets) . " WHERE id = ?", $params);
                     
-                    if ((float)$old['amount'] !== $newAmount || ($old['purpose'] ?? '') !== $newPurpose) {
-                        ak_void_journal_for_transaction($rid, 'تعديل بيانات الدفعة');
-                        ak_post_transaction_journal($rid);
+                    $financialChanged = (float)$old['amount'] !== $newAmount || ($old['purpose'] ?? '') !== $newPurpose;
+                    try {
+                        db()->beginTransaction();
+                        dbExecute("UPDATE transactions SET " . implode(', ', $sets) . " WHERE id = ?", $params);
+                        
+                        if ($financialChanged) {
+                            ak_void_journal_for_transaction($rid, 'تعديل بيانات الدفعة');
+                            $newJournalId = ak_post_transaction_journal($rid);
+                            if ($newJournalId <= 0) throw new RuntimeException('فشل إنشاء القيد المحاسبي البديل للدفعة المعدلة.');
+                        }
+                        db()->commit();
+                    } catch (Throwable $e) {
+                        if (db()->inTransaction()) db()->rollBack();
+                        $errors[] = 'تعذر حفظ تعديل الدفعة المرحّلة مع القيد المحاسبي بشكل ذري. لم يتم اعتماد أي جزء من التعديل.';
                     }
                     
-                    try {
-                        dbExecute("INSERT INTO audit_log (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent)
-                                   VALUES (?, 'EDIT_POSTED', 'transactions', ?, ?, ?, ?, ?)",
-                            [$uid, $rid, json_encode($old, JSON_UNESCAPED_UNICODE), json_encode($upd, JSON_UNESCAPED_UNICODE), $_SERVER['REMOTE_ADDR'] ?? '', $_SERVER['HTTP_USER_AGENT'] ?? '']);
-                        $gms = dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id = r.id WHERE r.code IN ('general_manager','vice_general_manager') AND u.is_active = 1");
-                        foreach ($gms as $g) {
-                            dbExecute("INSERT INTO notifications (user_id, title, body, link) VALUES (?, ?, ?, ?)",
-                                [$g['id'], 'تعديل دفعة مرحّلة', 'تم تعديل بيانات دفعة مرحّلة بواسطة ' . (Session::getUserName() ?? '') . '.', 'modules/transactions/index.php']);
-                        }
-                    } catch (Throwable $e) {}
-                    flash('success', 'تم تعديل الدفعة المرحّلة وتحديث القيود المحاسبية بنجاح.');
+                    if (!$errors) {
+                        try {
+                            dbExecute("INSERT INTO audit_log (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent)
+                                       VALUES (?, 'EDIT_POSTED', 'transactions', ?, ?, ?, ?, ?)",
+                                [$uid, $rid, json_encode($old, JSON_UNESCAPED_UNICODE), json_encode($upd, JSON_UNESCAPED_UNICODE), $_SERVER['REMOTE_ADDR'] ?? '', $_SERVER['HTTP_USER_AGENT'] ?? '']);
+                            $gms = dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id = r.id WHERE r.code IN ('general_manager','vice_general_manager') AND u.is_active = 1");
+                            foreach ($gms as $g) {
+                                dbExecute("INSERT INTO notifications (user_id, title, body, link) VALUES (?, ?, ?, ?)",
+                                    [$g['id'], 'تعديل دفعة مرحّلة', 'تم تعديل بيانات دفعة مرحّلة بواسطة ' . (Session::getUserName() ?? '') . '.', 'modules/transactions/index.php']);
+                            }
+                        } catch (Throwable $e) {}
+                        flash('success', 'تم تعديل الدفعة المرحّلة وتحديث القيود المحاسبية بنجاح.');
+                    }
                 }
             }
-            header('Location: ' . APP_URL . 'modules/transactions/create.php?sponsor_id=' . $input['sponsor_id']);
-            exit();
+            if (!$errors) {
+                header('Location: ' . APP_URL . 'modules/transactions/create.php?sponsor_id=' . $input['sponsor_id']);
+                exit();
+            }
         }
     }
 }
@@ -362,48 +376,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['edit_record'])) {
                     $postLines = [['idx' => 0, 'month' => null, 'purpose' => null, 'note' => $input['other_source_note'], 'amount' => $amount, 'own' => $unifiedPath, 'uni' => null]];
                 }
 
-                foreach ($postLines as $pl) {
-                    $isSpon = ($pl['purpose'] === 'monthly_sponsorship');
-                    $txnType = $pl['purpose'] === null ? $txnTypeMap[$input['type']] : ($isSpon ? 'sponsorship_payment' : 'general_donation');
-                    $feePct = $isSpon ? (float)$input['fee'] : 0.0;
-                    $feeAmt = round($pl['amount'] * $feePct / 100, 2);
-                    $net = round($pl['amount'] - $feeAmt, 2);
-                    $purLabel = $pl['purpose'] !== null ? ($purposeLabels[$pl['purpose']] ?? $pl['purpose']) : '';
-                    $desc = trim(($input['description'] !== '' ? $input['description'] : 'دفعة')
-                        . ($purLabel !== '' ? ' — ' . $purLabel : '')
-                        . ($pl['month'] ? ' عن شهر ' . $pl['month'] : '')
-                        . ($pl['note'] !== '' ? ' (' . $pl['note'] . ')' : ''));
-                    $n = (int)(dbFetchOne("SELECT COUNT(*) c FROM transactions")['c'] ?? 0) + 1;
-                    $code = 'TR-' . str_pad((string)$n, 6, '0', STR_PAD_LEFT);
-                    dbExecute("INSERT INTO transactions
-                        (sponsorship_id, amount, currency_code, payment_method, transaction_date, receipt_number, description,
-                         months_covered, admin_fee_percent, admin_fee_amount, net_amount, status, created_by, transaction_code,
-                         transaction_type, sponsor_id, project_id, reference_number, receipt_path, unified_receipt_path, payment_period, purpose_note, purpose)
-                        VALUES (?, ?, 'SDG', ?, ?, ?, ?, ?, ?, ?, ?, 'posted', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                        [$ship ? $ship['id'] : null, $pl['amount'], $input['method'], $input['date'],
-                         $input['receipt'] !== '' ? $input['receipt'] : null, $desc,
-                         $isSpon ? 1.00 : 0.00, $feePct, $feeAmt, $net, $uid, $code, $txnType,
-                         $input['sponsor_id'] > 0 ? $input['sponsor_id'] : null,
-                         $input['project_id'] > 0 ? $input['project_id'] : null,
-                         $input['reference'] !== '' ? $input['reference'] : null,
-                         $pl['own'], $pl['uni'], $pl['month'], $pl['note'] !== '' ? $pl['note'] : null, $pl['purpose']]);
-                    ak_post_transaction_journal((int)dbLastInsertId());
-                    $count++;
-                }
                 try {
-                    dbExecute("INSERT INTO audit_log (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent)
-                               VALUES (?, 'DIRECT_POST', 'transactions', NULL, NULL, ?, ?, ?)",
-                        [$uid, json_encode(['lines' => $count, 'type' => $input['type'], 'sponsor_id' => $input['sponsor_id']], JSON_UNESCAPED_UNICODE),
-                         $_SERVER['REMOTE_ADDR'] ?? '', $_SERVER['HTTP_USER_AGENT'] ?? '']);
-                    $gms = dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id = r.id WHERE r.code IN ('general_manager','vice_general_manager') AND u.is_active = 1");
-                    foreach ($gms as $g) {
-                        dbExecute("INSERT INTO notifications (user_id, title, body, link) VALUES (?, ?, ?, ?)",
-                            [$g['id'], 'تدفق نقدي وارد', 'تم ترحيل ' . $count . ' دفعة مباشرة بالخزينة.', 'modules/accounting/fm_dashboard.php']);
+                    db()->beginTransaction();
+                    foreach ($postLines as $pl) {
+                        $isSpon = ($pl['purpose'] === 'monthly_sponsorship');
+                        $txnType = $pl['purpose'] === null ? $txnTypeMap[$input['type']] : ($isSpon ? 'sponsorship_payment' : 'general_donation');
+                        $feePct = $isSpon ? (float)$input['fee'] : 0.0;
+                        $feeAmt = round($pl['amount'] * $feePct / 100, 2);
+                        $net = round($pl['amount'] - $feeAmt, 2);
+                        $purLabel = $pl['purpose'] !== null ? ($purposeLabels[$pl['purpose']] ?? $pl['purpose']) : '';
+                        $desc = trim(($input['description'] !== '' ? $input['description'] : 'دفعة')
+                            . ($purLabel !== '' ? ' — ' . $purLabel : '')
+                            . ($pl['month'] ? ' عن شهر ' . $pl['month'] : '')
+                            . ($pl['note'] !== '' ? ' (' . $pl['note'] . ')' : ''));
+                        $n = (int)(dbFetchOne("SELECT COUNT(*) c FROM transactions")['c'] ?? 0) + 1;
+                        $code = 'TR-' . str_pad((string)$n, 6, '0', STR_PAD_LEFT);
+                        dbExecute("INSERT INTO transactions
+                            (sponsorship_id, amount, currency_code, payment_method, transaction_date, receipt_number, description,
+                             months_covered, admin_fee_percent, admin_fee_amount, net_amount, status, created_by, transaction_code,
+                             transaction_type, sponsor_id, project_id, reference_number, receipt_path, unified_receipt_path, payment_period, purpose_note, purpose)
+                            VALUES (?, ?, 'SDG', ?, ?, ?, ?, ?, ?, ?, ?, 'posted', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                            [$ship ? $ship['id'] : null, $pl['amount'], $input['method'], $input['date'],
+                             $input['receipt'] !== '' ? $input['receipt'] : null, $desc,
+                             $isSpon ? 1.00 : 0.00, $feePct, $feeAmt, $net, $uid, $code, $txnType,
+                             $input['sponsor_id'] > 0 ? $input['sponsor_id'] : null,
+                             $input['project_id'] > 0 ? $input['project_id'] : null,
+                             $input['reference'] !== '' ? $input['reference'] : null,
+                             $pl['own'], $pl['uni'], $pl['month'], $pl['note'] !== '' ? $pl['note'] : null, $pl['purpose']]);
+                        $journalId = ak_post_transaction_journal((int)dbLastInsertId());
+                        if ($journalId <= 0) throw new RuntimeException('فشل إنشاء القيد المحاسبي للدفعة.');
+                        $count++;
                     }
-                } catch (Throwable $e) {}
-                flash('success', "تم تسجيل $count دفعة وترحيل القيود المحاسبية بنجاح.");
-                header('Location: ' . APP_URL . ($input['sponsor_id'] > 0 ? 'modules/sponsors/view.php?id=' . $input['sponsor_id'] : 'modules/transactions/index.php'));
-                exit();
+                    db()->commit();
+                } catch (Throwable $e) {
+                    if (db()->inTransaction()) db()->rollBack();
+                    $errors[] = 'تعذر تسجيل الدفعات وترحيل القيود المحاسبية بشكل ذري. لم يتم اعتماد أي جزء من العملية.';
+                }
+
+                if (!$errors) {
+                    try {
+                        dbExecute("INSERT INTO audit_log (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent)
+                                   VALUES (?, 'DIRECT_POST', 'transactions', NULL, NULL, ?, ?, ?)",
+                            [$uid, json_encode(['lines' => $count, 'type' => $input['type'], 'sponsor_id' => $input['sponsor_id']], JSON_UNESCAPED_UNICODE),
+                             $_SERVER['REMOTE_ADDR'] ?? '', $_SERVER['HTTP_USER_AGENT'] ?? '']);
+                        $gms = dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id = r.id WHERE r.code IN ('general_manager','vice_general_manager') AND u.is_active = 1");
+                        foreach ($gms as $g) {
+                            dbExecute("INSERT INTO notifications (user_id, title, body, link) VALUES (?, ?, ?, ?)",
+                                [$g['id'], 'تدفق نقدي وارد', 'تم ترحيل ' . $count . ' دفعة مباشرة بالخزينة.', 'modules/accounting/fm_dashboard.php']);
+                        }
+                    } catch (Throwable $e) {}
+                    flash('success', "تم تسجيل $count دفعة وترحيل القيود المحاسبية بنجاح.");
+                    header('Location: ' . APP_URL . ($input['sponsor_id'] > 0 ? 'modules/sponsors/view.php?id=' . $input['sponsor_id'] : 'modules/transactions/index.php'));
+                    exit();
+                }
             }
         }
     }
