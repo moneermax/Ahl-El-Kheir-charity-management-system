@@ -23,6 +23,10 @@ function hrPayrollPolicyValidate(array $input): array
     if (!$date || $date->format('Y-m-d') !== $policy['effective_from']) {
         throw new InvalidArgumentException('تاريخ سريان السياسة غير صالح.');
     }
+    if ($policy['effective_from'] <= date('Y-m-d')) {
+        throw new InvalidArgumentException('لا يمكن إنشاء نسخة جديدة بتاريخ سريان اليوم أو تاريخ سابق. استخدم تاريخاً مستقبلياً.');
+    }
+
     foreach ([
         'absence_deduction_percent' => 'نسبة خصم الغياب',
         'unpaid_leave_deduction_percent' => 'نسبة خصم الإجازة غير المدفوعة',
@@ -32,18 +36,20 @@ function hrPayrollPolicyValidate(array $input): array
             throw new InvalidArgumentException($label . ' يجب أن تكون بين 0 و100.');
         }
     }
+
     if ($policy['paid_leave_deduction_percent'] != 0.0) {
         throw new InvalidArgumentException('خصم الإجازة المدفوعة يجب أن يساوي 0 في الإصدار الأول.');
-    }
-    if ($policy['overtime_enabled'] && $policy['overtime_multiplier'] <= 0) {
-        throw new InvalidArgumentException('معامل العمل الإضافي يجب أن يكون أكبر من صفر عند تفعيل العمل الإضافي.');
     }
     if ($policy['overtime_multiplier'] <= 0) {
         throw new InvalidArgumentException('معامل العمل الإضافي يجب أن يكون أكبر من صفر.');
     }
+    if ($policy['daily_deduction_method'] !== 'monthly_salary_div_30') {
+        throw new InvalidArgumentException('طريقة الخصم اليومية غير مدعومة في الإصدار الأول.');
+    }
     if ($policy['rounding_decimals'] < 0 || $policy['rounding_decimals'] > 4) {
         throw new InvalidArgumentException('عدد المنازل العشرية يجب أن يكون بين 0 و4.');
     }
+
     return $policy;
 }
 
