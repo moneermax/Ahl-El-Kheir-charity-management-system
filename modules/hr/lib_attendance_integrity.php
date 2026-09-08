@@ -40,13 +40,23 @@ function hrAttendanceApprovedLeave(int $employeeId, string $date): ?array
 
 function hrAttendanceHasReturnOverride(int $employeeId, string $date): bool
 {
+    /*
+     * A return-from-leave starts by creating an 'absent' attendance row with
+     * the special return note. Later attendance actions (check-in, check-out,
+     * mark absent) legitimately change the status and may clear the note.
+     *
+     * Therefore the return override must remain true for any attendance row
+     * that is no longer 'on_leave'. Otherwise a normal check-in changes the
+     * row to 'present', the note disappears, and the approved leave is
+     * immediately re-applied to the UI, moving the employee back to the
+     * on-leave section.
+     */
     return dbFetchOne(
         "SELECT id
          FROM attendance
          WHERE employee_id = ?
            AND date = ?
-           AND status = 'absent'
-           AND notes LIKE 'عودة من الإجازة%'
+           AND status <> 'on_leave'
          LIMIT 1",
         [$employeeId, $date]
     ) !== null;
