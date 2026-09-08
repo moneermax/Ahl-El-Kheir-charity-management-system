@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 06, 2026 at 09:00 AM
+-- Generation Time: Sep 08, 2026 at 07:46 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -118,18 +118,65 @@ CREATE TABLE `attendance` (
 --
 
 INSERT INTO `attendance` (`id`, `employee_id`, `date`, `check_in`, `check_out`, `work_mode`, `ip_address`, `location_note`, `status`, `notes`, `created_at`) VALUES
-(124, 15, '2026-09-05', NULL, NULL, 'remote', NULL, NULL, 'on_leave', 'إجازة معتمدة', '2026-09-06 09:04:42'),
-(125, 15, '2026-09-06', NULL, NULL, 'remote', NULL, NULL, 'on_leave', 'إجازة معتمدة', '2026-09-06 09:04:42'),
-(126, 15, '2026-09-07', NULL, NULL, 'remote', NULL, NULL, 'on_leave', 'إجازة معتمدة', '2026-09-06 09:04:42'),
-(127, 15, '2026-09-08', NULL, NULL, 'remote', NULL, NULL, 'on_leave', 'إجازة معتمدة', '2026-09-06 09:04:42'),
-(128, 15, '2026-09-09', NULL, NULL, 'remote', NULL, NULL, 'on_leave', 'إجازة معتمدة', '2026-09-06 09:04:42'),
-(129, 15, '2026-09-10', NULL, NULL, 'remote', NULL, NULL, 'on_leave', 'إجازة معتمدة', '2026-09-06 09:04:42'),
-(130, 15, '2026-09-11', NULL, NULL, 'remote', NULL, NULL, 'on_leave', 'إجازة معتمدة', '2026-09-06 09:04:42'),
-(131, 15, '2026-09-12', NULL, NULL, 'remote', NULL, NULL, 'on_leave', 'إجازة معتمدة', '2026-09-06 09:04:42'),
-(132, 15, '2026-09-13', NULL, NULL, 'remote', NULL, NULL, 'on_leave', 'إجازة معتمدة', '2026-09-06 09:04:42'),
-(133, 15, '2026-09-14', NULL, NULL, 'remote', NULL, NULL, 'on_leave', 'إجازة معتمدة', '2026-09-06 09:04:42'),
-(134, 15, '2026-09-15', NULL, NULL, 'remote', NULL, NULL, 'on_leave', 'إجازة معتمدة', '2026-09-06 09:04:42'),
-(135, 15, '2026-09-16', NULL, NULL, 'remote', NULL, NULL, 'on_leave', 'إجازة معتمدة', '2026-09-06 09:04:42');
+(159, 15, '2026-09-07', '19:45:56', NULL, 'remote', NULL, NULL, 'present', NULL, '2026-09-07 20:45:56');
+
+--
+-- Triggers `attendance`
+--
+DELIMITER $$
+CREATE TRIGGER `trg_attendance_employment_state_bi` BEFORE INSERT ON `attendance` FOR EACH ROW BEGIN
+    DECLARE v_category VARCHAR(32) DEFAULT NULL;
+
+    SELECT s.category
+      INTO v_category
+      FROM hr_employee_state_history h
+      INNER JOIN hr_employment_states s
+              ON s.id = h.employment_state_id
+     WHERE h.employee_id = NEW.employee_id
+       AND h.effective_from <= CONCAT(NEW.date, ' 23:59:59')
+       AND (h.effective_to IS NULL OR h.effective_to >= CONCAT(NEW.date, ' 00:00:00'))
+     ORDER BY h.effective_from DESC, h.id DESC
+     LIMIT 1;
+
+    IF v_category IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'لا يمكن تسجيل الحضور: لا توجد حالة توظيف معتمدة للموظف في هذا التاريخ.';
+    END IF;
+
+    IF v_category <> 'working' THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'لا يمكن تسجيل الحضور: حالة توظيف الموظف لا تسمح بتسجيل الحضور في هذا التاريخ.';
+    END IF;
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `trg_attendance_employment_state_bu` BEFORE UPDATE ON `attendance` FOR EACH ROW BEGIN
+    DECLARE v_category VARCHAR(32) DEFAULT NULL;
+
+    SELECT s.category
+      INTO v_category
+      FROM hr_employee_state_history h
+      INNER JOIN hr_employment_states s
+              ON s.id = h.employment_state_id
+     WHERE h.employee_id = NEW.employee_id
+       AND h.effective_from <= CONCAT(NEW.date, ' 23:59:59')
+       AND (h.effective_to IS NULL OR h.effective_to >= CONCAT(NEW.date, ' 00:00:00'))
+     ORDER BY h.effective_from DESC, h.id DESC
+     LIMIT 1;
+
+    IF v_category IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'لا يمكن تعديل الحضور: لا توجد حالة توظيف معتمدة للموظف في هذا التاريخ.';
+    END IF;
+
+    IF v_category <> 'working' THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'لا يمكن تعديل الحضور: حالة توظيف الموظف لا تسمح بتسجيل الحضور في هذا التاريخ.';
+    END IF;
+END
+$$
+DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -1625,7 +1672,18 @@ INSERT INTO `audit_log` (`id`, `user_id`, `action`, `entity_type`, `entity_id`, 
 (1486, 32, 'LOGOUT', 'users', 32, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-06 09:02:42'),
 (1487, 16, 'LOGIN', 'users', 16, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-06 09:02:53'),
 (1488, 16, 'LOGOUT', 'users', 16, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-06 09:03:51'),
-(1489, 32, 'LOGIN', 'users', 32, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-06 09:04:03');
+(1489, 32, 'LOGIN', 'users', 32, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-06 09:04:03'),
+(1490, 32, 'LOGIN', 'users', 32, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-06 18:55:15'),
+(1491, 32, 'LOGIN', 'users', 32, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-07 06:16:01'),
+(1492, 32, 'LOGOUT', 'users', 32, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-07 06:37:28'),
+(1493, 29, 'LOGIN', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-07 06:37:40'),
+(1494, 29, 'LOGOUT', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-07 06:44:16'),
+(1495, 32, 'LOGIN', 'users', 32, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-07 06:44:26'),
+(1496, 32, 'LOGOUT', 'users', 32, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-07 18:04:26'),
+(1497, 18, 'LOGIN', 'users', 18, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-07 18:04:53'),
+(1498, 18, 'LOGOUT', 'users', 18, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-07 18:07:31'),
+(1499, 32, 'LOGIN', 'users', 32, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-07 18:07:39'),
+(1500, 32, 'LOGIN', 'users', 32, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-08 06:57:06');
 
 -- --------------------------------------------------------
 
@@ -1771,6 +1829,8 @@ CREATE TABLE `employees` (
   `bank_account` varchar(100) DEFAULT NULL,
   `contract_file_path` varchar(255) DEFAULT NULL COMMENT 'Path to uploaded contract file',
   `status` enum('active','on_leave','terminated','suspended') NOT NULL DEFAULT 'active',
+  `employment_state_id` int(10) UNSIGNED DEFAULT NULL,
+  `employment_state_changed_at` datetime DEFAULT NULL,
   `created_by` int(10) UNSIGNED DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
@@ -1780,27 +1840,198 @@ CREATE TABLE `employees` (
 -- Dumping data for table `employees`
 --
 
-INSERT INTO `employees` (`id`, `user_id`, `full_name`, `birth_date`, `gender`, `phone`, `email`, `address`, `department_id`, `employee_code`, `national_id`, `hire_date`, `position`, `employment_type`, `work_mode`, `basic_salary`, `bank_account`, `contract_file_path`, `status`, `created_by`, `created_at`, `updated_at`) VALUES
-(1, 1, 'منير علي طه صالح', NULL, NULL, '0966616614', 'sudo@ahlelkheir.org', NULL, NULL, 'EMP-0001', NULL, '2026-08-02', 'مدير النظام', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-08-18 23:51:09', '2026-08-18 23:51:09'),
-(2, 2, 'المدير العام', NULL, NULL, NULL, 'gm@ahlelkheir.org', NULL, 1, 'EMP-0002', NULL, '2026-08-02', 'المدير العام', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-08-18 23:51:09', '2026-08-28 00:19:41'),
-(3, 3, 'لمياء علي طه صالح', NULL, NULL, NULL, 'vgm@ahlelkheir.org', NULL, 1, 'EMP-0003', NULL, '2026-08-02', 'نائب المدير العام', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-08-18 23:51:09', '2026-08-18 23:51:09'),
-(4, 14, 'أحمد محمد', NULL, NULL, '0912345100', 'moneerali2000@gmail.com', NULL, NULL, 'EMP-0014', NULL, '2026-08-09', 'مشرف', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-08-18 23:51:09', '2026-08-18 23:51:09'),
-(5, 15, 'مديحه عبد الماجد', NULL, NULL, '096664568', 'madiha@example.com', NULL, NULL, 'EMP-0015', NULL, '2026-08-10', 'مشرف', 'full_time', 'remote', 0.00, NULL, NULL, 'terminated', 1, '2026-08-18 23:51:09', '2026-08-18 23:51:09'),
-(6, 19, 'فاطمه سليمان', NULL, NULL, '0999999999999', 'fatima@gmail.com', NULL, 5, 'EMP-0019', NULL, '2026-08-14', 'مشرف', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-08-18 23:51:09', '2026-08-18 23:51:09'),
-(7, 20, 'ميادة الحبر', NULL, NULL, NULL, 'mayadah@gmail.com', NULL, 5, 'EMP-0020', NULL, '2026-08-14', 'مشرف', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-08-18 23:51:09', '2026-08-18 23:51:09'),
-(8, 21, 'هديل عثمان', NULL, NULL, '03333333333333', 'hadeel@gmail.com', NULL, 5, 'EMP-0021', NULL, '2026-08-14', 'مشرف', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-08-18 23:51:09', '2026-08-18 23:51:09'),
-(9, 22, 'ميساء سليمان', NULL, NULL, '26498879658', 'mysa@gmail.com', NULL, 5, 'EMP-0022', NULL, '2026-08-14', 'مشرف', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-08-18 23:51:09', '2026-08-18 23:51:09'),
-(10, 23, 'هبه خلف الله', NULL, NULL, '0123467', 'hibah@gmail.com', NULL, 5, 'EMP-0023', NULL, '2026-08-14', 'مشرف', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-08-18 23:51:09', '2026-08-18 23:51:09'),
-(11, 25, 'مها محجوب', NULL, NULL, '023547891', 'maha@gmail.com', NULL, 5, 'EMP-0025', NULL, '2026-08-14', 'مشرف', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-08-18 23:51:09', '2026-08-18 23:51:09'),
-(12, 26, 'ساره خلف الله', NULL, NULL, '015468972', 'sarah@gmail.com', NULL, 5, 'EMP-0026', NULL, '2026-08-14', 'مشرف', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-08-18 23:51:09', '2026-08-18 23:51:09'),
-(13, 27, 'هناء خلف الله', NULL, NULL, '78999456789', 'hanah@gmail.com', NULL, 5, 'EMP-0027', NULL, '2026-08-14', 'مشرف', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-08-18 23:51:09', '2026-08-18 23:51:09'),
-(14, 29, 'المدير المالي', NULL, NULL, NULL, 'fm@ahlelkheir.org', NULL, 1, 'EMP-0029', NULL, '2026-08-17', 'المدير المالي', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-08-18 23:51:09', '2026-08-28 00:19:54'),
-(15, 16, 'nany1', NULL, NULL, '094449785', 'nany1@gmail.com', NULL, 2, 'EMP-0016', NULL, '2026-08-13', 'أخصائية شؤون الأمهات', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-08-18 23:51:09', '2026-08-18 23:51:09'),
-(16, 18, 'ro1', NULL, NULL, '0123456789', 'ro@gmail.com', NULL, 3, 'EMP-0018', NULL, '2026-08-13', 'مندوب استرجاع الكفلاء', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-08-18 23:51:09', '2026-08-18 23:51:09'),
-(17, 28, 'أحمد حسين', NULL, NULL, '8545567865', 'ahmed@gmail.com', NULL, 4, 'EMP-0028', NULL, '2026-08-14', 'موظف العلاقات العامة والإعلام', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-08-18 23:51:09', '2026-08-18 23:51:09'),
-(18, 4, 'محاسب (موظف)', NULL, NULL, '0123456789', 'accountant@ahlelkheir.org', NULL, 6, 'EMP-0004', NULL, '2026-08-08', 'محاسب', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-08-18 23:51:09', '2026-08-18 23:51:09'),
-(19, 17, 'acc1', NULL, NULL, '0945786321', 'acc1@gmail.com', NULL, 6, 'EMP-0017', NULL, '2026-08-13', 'محاسب', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-08-18 23:51:09', '2026-08-18 23:51:09'),
-(20, 32, 'مدير الموارد البشرية', NULL, NULL, '00112233445566', 'hr@ahlelkheir.org', NULL, 1, 'EMP-0032', NULL, '2026-08-18', 'مدير الموارد البشرية', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-08-18 23:51:09', '2026-08-28 00:20:10');
+INSERT INTO `employees` (`id`, `user_id`, `full_name`, `birth_date`, `gender`, `phone`, `email`, `address`, `department_id`, `employee_code`, `national_id`, `hire_date`, `position`, `employment_type`, `work_mode`, `basic_salary`, `bank_account`, `contract_file_path`, `status`, `employment_state_id`, `employment_state_changed_at`, `created_by`, `created_at`, `updated_at`) VALUES
+(1, 1, 'منير علي طه صالح', NULL, NULL, '0966616614', 'sudo@ahlelkheir.org', NULL, NULL, 'EMP-0001', NULL, '2026-08-02', 'مدير النظام', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-09-06 21:31:44'),
+(2, 2, 'المدير العام', NULL, NULL, NULL, 'gm@ahlelkheir.org', NULL, 1, 'EMP-0002', NULL, '2026-08-02', 'المدير العام', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-09-06 21:31:44'),
+(3, 3, 'لمياء علي طه صالح', NULL, NULL, NULL, 'vgm@ahlelkheir.org', NULL, 1, 'EMP-0003', NULL, '2026-08-02', 'نائب المدير العام', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-09-06 21:31:44'),
+(4, 14, 'أحمد محمد', NULL, NULL, '0912345100', 'moneerali2000@gmail.com', '', NULL, 'EMP-0014', '', '2026-08-09', 'مشرف', 'full_time', 'remote', 0.00, '', NULL, 'terminated', 5, '2026-09-07 07:43:57', 1, '2026-08-18 23:51:09', '2026-09-07 08:43:57'),
+(5, 15, 'مديحه عبد الماجد', NULL, NULL, '096664568', 'madiha@example.com', NULL, NULL, 'EMP-0015', NULL, '2026-08-10', 'مشرف', 'full_time', 'remote', 0.00, NULL, NULL, 'terminated', 5, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-09-06 21:31:44'),
+(6, 19, 'فاطمه سليمان', NULL, NULL, '0999999999999', 'fatima@gmail.com', NULL, 5, 'EMP-0019', NULL, '2026-08-14', 'مشرف', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-09-06 21:31:44'),
+(7, 20, 'ميادة الحبر', NULL, NULL, NULL, 'mayadah@gmail.com', NULL, 5, 'EMP-0020', NULL, '2026-08-14', 'مشرف', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-09-06 21:31:44'),
+(8, 21, 'هديل عثمان', NULL, NULL, '03333333333333', 'hadeel@gmail.com', NULL, 5, 'EMP-0021', NULL, '2026-08-14', 'مشرف', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-09-06 21:31:44'),
+(9, 22, 'ميساء سليمان', NULL, NULL, '26498879658', 'mysa@gmail.com', NULL, 5, 'EMP-0022', NULL, '2026-08-14', 'مشرف', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-09-06 21:31:44'),
+(10, 23, 'هبه خلف الله', NULL, NULL, '0123467', 'hibah@gmail.com', NULL, 5, 'EMP-0023', NULL, '2026-08-14', 'مشرف', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-09-06 21:31:44'),
+(11, 25, 'مها محجوب', NULL, NULL, '023547891', 'maha@gmail.com', NULL, 5, 'EMP-0025', NULL, '2026-08-14', 'مشرف', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-09-06 21:31:44'),
+(12, 26, 'ساره خلف الله', NULL, NULL, '015468972', 'sarah@gmail.com', NULL, 5, 'EMP-0026', NULL, '2026-08-14', 'مشرف', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-09-06 21:31:44'),
+(13, 27, 'هناء خلف الله', NULL, NULL, '78999456789', 'hanah@gmail.com', NULL, 5, 'EMP-0027', NULL, '2026-08-14', 'مشرف', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-09-06 21:31:44'),
+(14, 29, 'المدير المالي', NULL, NULL, NULL, 'fm@ahlelkheir.org', NULL, 1, 'EMP-0029', NULL, '2026-08-17', 'المدير المالي', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-09-06 21:31:44'),
+(15, 16, 'nany1', NULL, NULL, '094449785', 'nany1@gmail.com', NULL, 2, 'EMP-0016', NULL, '2026-08-13', 'أخصائية شؤون الأمهات', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-09-06 21:31:44'),
+(16, 18, 'ro1', NULL, NULL, '0123456789', 'ro@gmail.com', '', 3, 'EMP-0018', '', '2026-08-13', 'مندوب استرجاع الكفلاء', 'full_time', 'remote', 5000.00, '', NULL, 'active', 1, '2026-09-06 21:28:24', 1, '2026-08-18 23:51:09', '2026-09-06 23:10:30'),
+(17, 28, 'أحمد حسين', NULL, NULL, '8545567865', 'ahmed@gmail.com', NULL, 4, 'EMP-0028', NULL, '2026-08-14', 'موظف العلاقات العامة والإعلام', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-09-06 21:31:44'),
+(18, 4, 'محاسب (موظف)', NULL, NULL, '0123456789', 'accountant@ahlelkheir.org', NULL, 6, 'EMP-0004', NULL, '2026-08-08', 'محاسب', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-09-06 21:31:44'),
+(19, 17, 'acc1', NULL, NULL, '0945786321', 'acc1@gmail.com', NULL, 6, 'EMP-0017', NULL, '2026-08-13', 'محاسب', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-09-06 21:31:44'),
+(20, 32, 'مدير الموارد البشرية', NULL, NULL, '00112233445566', 'hr@ahlelkheir.org', NULL, 1, 'EMP-0032', NULL, '2026-08-18', 'مدير الموارد البشرية', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-09-06 21:31:44'),
+(21, NULL, 'HR Salary Test', '2000-01-01', 'male', '', '', '', 3, 'EMP-0033', '', '2026-09-07', 'HR Test', 'full_time', 'remote', 7000.00, '', NULL, 'active', 1, '2026-09-07 09:07:51', 32, '2026-09-07 09:07:51', '2026-09-07 16:15:18');
+
+--
+-- Triggers `employees`
+--
+DELIMITER $$
+CREATE TRIGGER `trg_employees_employment_state_ai` AFTER INSERT ON `employees` FOR EACH ROW BEGIN
+    INSERT INTO hr_employee_state_history
+        (employee_id, employment_state_id, effective_from, effective_to, reason, changed_by)
+    SELECT
+        NEW.id,
+        NEW.employment_state_id,
+        COALESCE(NEW.employment_state_changed_at, NOW()),
+        NULL,
+        'Initial employee creation',
+        NEW.created_by
+    WHERE NEW.employment_state_id IS NOT NULL
+      AND NOT EXISTS (
+          SELECT 1 FROM hr_employee_state_history h
+          WHERE h.employee_id = NEW.id
+      );
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `trg_employees_employment_state_bi` BEFORE INSERT ON `employees` FOR EACH ROW BEGIN
+    DECLARE v_state_id INT DEFAULT NULL;
+
+    SELECT id INTO v_state_id
+    FROM hr_employment_states
+    WHERE code = CASE
+        WHEN NEW.status = 'suspended' THEN 'suspended'
+        WHEN NEW.status = 'terminated' THEN 'terminated'
+        WHEN NEW.status = 'retired' THEN 'retired'
+        WHEN NEW.status = 'resigned' THEN 'resigned'
+        WHEN NEW.status = 'probation' THEN 'probation'
+        ELSE 'active'
+    END
+      AND is_active = 1
+    LIMIT 1;
+
+    IF NEW.employment_state_id IS NULL OR NEW.employment_state_id = 0 THEN
+        SET NEW.employment_state_id = v_state_id;
+    END IF;
+
+    IF NEW.employment_state_changed_at IS NULL THEN
+        SET NEW.employment_state_changed_at = NOW();
+    END IF;
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `trg_employees_employment_state_bu` BEFORE UPDATE ON `employees` FOR EACH ROW BEGIN
+    DECLARE v_state_id INT DEFAULT NULL;
+
+    IF (NEW.employment_state_id <=> OLD.employment_state_id)
+       AND NOT (NEW.status <=> OLD.status) THEN
+
+        SELECT id INTO v_state_id
+        FROM hr_employment_states
+        WHERE code = CASE
+            WHEN NEW.status = 'suspended' THEN 'suspended'
+            WHEN NEW.status = 'terminated' THEN 'terminated'
+            WHEN NEW.status = 'retired' THEN 'retired'
+            WHEN NEW.status = 'resigned' THEN 'resigned'
+            WHEN NEW.status = 'probation' THEN 'probation'
+            ELSE 'active'
+        END
+          AND is_active = 1
+        LIMIT 1;
+
+        IF v_state_id IS NOT NULL AND NOT (v_state_id <=> OLD.employment_state_id) THEN
+            UPDATE hr_employee_state_history
+            SET effective_to = NOW()
+            WHERE employee_id = OLD.id
+              AND effective_to IS NULL;
+
+            INSERT INTO hr_employee_state_history
+                (employee_id, employment_state_id, effective_from, effective_to, reason, changed_by)
+            VALUES
+                (OLD.id, v_state_id, NOW(), NULL,
+                 'Legacy employees.status lifecycle change', NULL);
+
+            SET NEW.employment_state_id = v_state_id;
+            SET NEW.employment_state_changed_at = NOW();
+        END IF;
+    END IF;
+
+    IF NOT (NEW.employment_state_id <=> OLD.employment_state_id)
+       AND NEW.employment_state_id IS NOT NULL
+       AND (NEW.employment_state_changed_at <=> OLD.employment_state_changed_at) THEN
+        SET NEW.employment_state_changed_at = NOW();
+    END IF;
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `trg_employees_salary_history_sync_ai` AFTER INSERT ON `employees` FOR EACH ROW BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM hr_employee_salary_history
+        WHERE employee_id = NEW.id
+        LIMIT 1
+    ) THEN
+        INSERT INTO hr_employee_salary_history
+            (employee_id, contract_id, effective_from, effective_to,
+             basic_salary, salary_currency, pay_frequency, reason, notes)
+        VALUES
+            (NEW.id, NULL, COALESCE(NEW.hire_date, CURDATE()), NULL,
+             COALESCE(NEW.basic_salary, 0.00), 'SDG', 'monthly', 'initial',
+             'Initial salary history created from employee record');
+    END IF;
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `trg_employees_salary_history_sync_au` AFTER UPDATE ON `employees` FOR EACH ROW BEGIN
+    DECLARE v_future_from DATE DEFAULT NULL;
+    DECLARE v_current_id BIGINT UNSIGNED DEFAULT NULL;
+    DECLARE v_target_to DATE DEFAULT NULL;
+
+    IF COALESCE(@hr_salary_history_sync, 0) <> 1
+       AND NOT (OLD.basic_salary <=> NEW.basic_salary) THEN
+        SELECT id INTO v_current_id
+        FROM hr_employee_salary_history
+        WHERE employee_id = NEW.id
+          AND effective_from <= CURDATE()
+          AND (effective_to IS NULL OR effective_to >= CURDATE())
+        ORDER BY effective_from DESC, id DESC
+        LIMIT 1;
+
+        SELECT MIN(effective_from) INTO v_future_from
+        FROM hr_employee_salary_history
+        WHERE employee_id = NEW.id
+          AND effective_from > CURDATE();
+
+        IF v_current_id IS NOT NULL
+           AND EXISTS (
+               SELECT 1 FROM hr_employee_salary_history
+               WHERE id = v_current_id AND effective_from = CURDATE()
+           ) THEN
+            UPDATE hr_employee_salary_history
+            SET basic_salary = NEW.basic_salary,
+                salary_currency = 'SDG',
+                notes = 'Synchronized from employee record'
+            WHERE id = v_current_id;
+        ELSE
+            IF v_current_id IS NOT NULL THEN
+                UPDATE hr_employee_salary_history
+                SET effective_to = DATE_SUB(CURDATE(), INTERVAL 1 DAY),
+                    salary_currency = 'SDG'
+                WHERE id = v_current_id;
+            END IF;
+
+            SET v_target_to = CASE
+                WHEN v_future_from IS NOT NULL
+                    THEN DATE_SUB(v_future_from, INTERVAL 1 DAY)
+                ELSE NULL
+            END;
+
+            INSERT INTO hr_employee_salary_history
+                (employee_id, contract_id, effective_from, effective_to,
+                 basic_salary, salary_currency, pay_frequency, reason, notes)
+            VALUES
+                (NEW.id, NULL, CURDATE(), v_target_to,
+                 COALESCE(NEW.basic_salary, 0.00), 'SDG', 'monthly',
+                 'adjustment', 'Synchronized from employee record');
+        END IF;
+    END IF;
+END
+$$
+DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -9187,6 +9418,272 @@ INSERT INTO `group_workflow_audit_log` (`id`, `group_id`, `family_id`, `month`, 
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `hr_employee_contracts`
+--
+
+CREATE TABLE `hr_employee_contracts` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `employee_id` bigint(20) UNSIGNED NOT NULL,
+  `contract_number` varchar(100) DEFAULT NULL,
+  `contract_type` enum('permanent','fixed_term','part_time','temporary','internship','other') NOT NULL DEFAULT 'permanent',
+  `start_date` date NOT NULL,
+  `end_date` date DEFAULT NULL,
+  `status` enum('draft','active','expired','terminated','cancelled') NOT NULL DEFAULT 'draft',
+  `basic_salary` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `salary_currency` char(3) NOT NULL DEFAULT 'SDG',
+  `pay_frequency` enum('monthly','weekly','daily','hourly') NOT NULL DEFAULT 'monthly',
+  `working_hours_per_week` decimal(5,2) DEFAULT NULL,
+  `probation_end_date` date DEFAULT NULL,
+  `contract_file_path` varchar(500) DEFAULT NULL,
+  `notes` text DEFAULT NULL,
+  `created_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `hr_employee_contracts`
+--
+
+INSERT INTO `hr_employee_contracts` (`id`, `employee_id`, `contract_number`, `contract_type`, `start_date`, `end_date`, `status`, `basic_salary`, `salary_currency`, `pay_frequency`, `working_hours_per_week`, `probation_end_date`, `contract_file_path`, `notes`, `created_by`, `created_at`, `updated_at`) VALUES
+(1, 1, 'LEGACY-EMP-0001', 'permanent', '2026-08-02', NULL, 'active', 0.00, 'SDG', 'monthly', NULL, NULL, NULL, 'Initial contract created from existing employee record', NULL, '2026-09-06 19:32:55', '2026-09-06 20:22:57'),
+(2, 2, 'LEGACY-EMP-0002', 'permanent', '2026-08-02', NULL, 'active', 0.00, 'SDG', 'monthly', NULL, NULL, NULL, 'Initial contract created from existing employee record', NULL, '2026-09-06 19:32:55', '2026-09-06 20:22:57'),
+(3, 3, 'LEGACY-EMP-0003', 'permanent', '2026-08-02', NULL, 'active', 0.00, 'SDG', 'monthly', NULL, NULL, NULL, 'Initial contract created from existing employee record', NULL, '2026-09-06 19:32:55', '2026-09-06 20:22:57'),
+(4, 4, 'LEGACY-EMP-0014', 'permanent', '2026-08-09', NULL, 'active', 0.00, 'SDG', 'monthly', NULL, NULL, NULL, 'Initial contract created from existing employee record', NULL, '2026-09-06 19:32:55', '2026-09-06 20:22:57'),
+(5, 5, 'LEGACY-EMP-0015', 'permanent', '2026-08-10', NULL, 'active', 0.00, 'SDG', 'monthly', NULL, NULL, NULL, 'Initial contract created from existing employee record', NULL, '2026-09-06 19:32:55', '2026-09-06 20:22:57'),
+(6, 6, 'LEGACY-EMP-0019', 'permanent', '2026-08-14', NULL, 'active', 0.00, 'SDG', 'monthly', NULL, NULL, NULL, 'Initial contract created from existing employee record', NULL, '2026-09-06 19:32:55', '2026-09-06 20:22:57'),
+(7, 7, 'LEGACY-EMP-0020', 'permanent', '2026-08-14', NULL, 'active', 0.00, 'SDG', 'monthly', NULL, NULL, NULL, 'Initial contract created from existing employee record', NULL, '2026-09-06 19:32:55', '2026-09-06 20:22:57'),
+(8, 8, 'LEGACY-EMP-0021', 'permanent', '2026-08-14', NULL, 'active', 0.00, 'SDG', 'monthly', NULL, NULL, NULL, 'Initial contract created from existing employee record', NULL, '2026-09-06 19:32:55', '2026-09-06 20:22:57'),
+(9, 9, 'LEGACY-EMP-0022', 'permanent', '2026-08-14', NULL, 'active', 0.00, 'SDG', 'monthly', NULL, NULL, NULL, 'Initial contract created from existing employee record', NULL, '2026-09-06 19:32:55', '2026-09-06 20:22:57'),
+(10, 10, 'LEGACY-EMP-0023', 'permanent', '2026-08-14', NULL, 'active', 0.00, 'SDG', 'monthly', NULL, NULL, NULL, 'Initial contract created from existing employee record', NULL, '2026-09-06 19:32:55', '2026-09-06 20:22:57'),
+(11, 11, 'LEGACY-EMP-0025', 'permanent', '2026-08-14', NULL, 'active', 0.00, 'SDG', 'monthly', NULL, NULL, NULL, 'Initial contract created from existing employee record', NULL, '2026-09-06 19:32:55', '2026-09-06 20:22:57'),
+(12, 12, 'LEGACY-EMP-0026', 'permanent', '2026-08-14', NULL, 'active', 0.00, 'SDG', 'monthly', NULL, NULL, NULL, 'Initial contract created from existing employee record', NULL, '2026-09-06 19:32:55', '2026-09-06 20:22:57'),
+(13, 13, 'LEGACY-EMP-0027', 'permanent', '2026-08-14', NULL, 'active', 0.00, 'SDG', 'monthly', NULL, NULL, NULL, 'Initial contract created from existing employee record', NULL, '2026-09-06 19:32:55', '2026-09-06 20:22:57'),
+(14, 14, 'LEGACY-EMP-0029', 'permanent', '2026-08-17', NULL, 'active', 0.00, 'SDG', 'monthly', NULL, NULL, NULL, 'Initial contract created from existing employee record', NULL, '2026-09-06 19:32:55', '2026-09-06 20:22:57'),
+(15, 15, 'LEGACY-EMP-0016', 'permanent', '2026-08-13', NULL, 'active', 0.00, 'SDG', 'monthly', NULL, NULL, NULL, 'Initial contract created from existing employee record', NULL, '2026-09-06 19:32:55', '2026-09-06 20:22:57'),
+(16, 16, 'LEGACY-EMP-0018', 'permanent', '2026-08-13', NULL, 'active', 0.00, 'SDG', 'monthly', NULL, NULL, NULL, 'Initial contract created from existing employee record', NULL, '2026-09-06 19:32:55', '2026-09-06 20:22:57'),
+(17, 17, 'LEGACY-EMP-0028', 'permanent', '2026-08-14', NULL, 'active', 0.00, 'SDG', 'monthly', NULL, NULL, NULL, 'Initial contract created from existing employee record', NULL, '2026-09-06 19:32:55', '2026-09-06 20:22:57'),
+(18, 18, 'LEGACY-EMP-0004', 'permanent', '2026-08-08', NULL, 'active', 0.00, 'SDG', 'monthly', NULL, NULL, NULL, 'Initial contract created from existing employee record', NULL, '2026-09-06 19:32:55', '2026-09-06 20:22:57'),
+(19, 19, 'LEGACY-EMP-0017', 'permanent', '2026-08-13', NULL, 'active', 0.00, 'SDG', 'monthly', NULL, NULL, NULL, 'Initial contract created from existing employee record', NULL, '2026-09-06 19:32:55', '2026-09-06 20:22:57'),
+(20, 20, 'LEGACY-EMP-0032', 'permanent', '2026-08-18', NULL, 'active', 0.00, 'SDG', 'monthly', NULL, NULL, NULL, 'Initial contract created from existing employee record', NULL, '2026-09-06 19:32:55', '2026-09-06 20:22:57'),
+(22, 21, 'CTR-2026-000022', 'permanent', '2026-09-07', NULL, 'active', 7000.00, 'SDG', 'monthly', NULL, NULL, NULL, NULL, 32, '2026-09-07 13:15:18', '2026-09-07 13:15:18');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `hr_employee_salary_history`
+--
+
+CREATE TABLE `hr_employee_salary_history` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `employee_id` bigint(20) UNSIGNED NOT NULL,
+  `contract_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `effective_from` date NOT NULL,
+  `effective_to` date DEFAULT NULL,
+  `basic_salary` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `salary_currency` char(3) NOT NULL DEFAULT 'SDG',
+  `pay_frequency` enum('monthly','weekly','daily','hourly') NOT NULL DEFAULT 'monthly',
+  `reason` enum('initial','annual_increase','promotion','adjustment','contract_change','correction','other') NOT NULL DEFAULT 'initial',
+  `notes` varchar(500) DEFAULT NULL,
+  `changed_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `hr_employee_salary_history`
+--
+
+INSERT INTO `hr_employee_salary_history` (`id`, `employee_id`, `contract_id`, `effective_from`, `effective_to`, `basic_salary`, `salary_currency`, `pay_frequency`, `reason`, `notes`, `changed_by`, `created_at`) VALUES
+(1, 1, 1, '2026-08-02', NULL, 0.00, 'SDG', 'monthly', 'initial', 'Initial HR contract/salary foundation migration', NULL, '2026-09-06 19:32:55'),
+(2, 2, 2, '2026-08-02', NULL, 0.00, 'SDG', 'monthly', 'initial', 'Initial HR contract/salary foundation migration', NULL, '2026-09-06 19:32:55'),
+(3, 3, 3, '2026-08-02', NULL, 0.00, 'SDG', 'monthly', 'initial', 'Initial HR contract/salary foundation migration', NULL, '2026-09-06 19:32:55'),
+(4, 4, 4, '2026-08-09', NULL, 0.00, 'SDG', 'monthly', 'initial', 'Initial HR contract/salary foundation migration', NULL, '2026-09-06 19:32:55'),
+(5, 5, 5, '2026-08-10', NULL, 0.00, 'SDG', 'monthly', 'initial', 'Initial HR contract/salary foundation migration', NULL, '2026-09-06 19:32:55'),
+(6, 6, 6, '2026-08-14', NULL, 0.00, 'SDG', 'monthly', 'initial', 'Initial HR contract/salary foundation migration', NULL, '2026-09-06 19:32:55'),
+(7, 7, 7, '2026-08-14', NULL, 0.00, 'SDG', 'monthly', 'initial', 'Initial HR contract/salary foundation migration', NULL, '2026-09-06 19:32:55'),
+(8, 8, 8, '2026-08-14', NULL, 0.00, 'SDG', 'monthly', 'initial', 'Initial HR contract/salary foundation migration', NULL, '2026-09-06 19:32:55'),
+(9, 9, 9, '2026-08-14', NULL, 0.00, 'SDG', 'monthly', 'initial', 'Initial HR contract/salary foundation migration', NULL, '2026-09-06 19:32:55'),
+(10, 10, 10, '2026-08-14', NULL, 0.00, 'SDG', 'monthly', 'initial', 'Initial HR contract/salary foundation migration', NULL, '2026-09-06 19:32:55'),
+(11, 11, 11, '2026-08-14', NULL, 0.00, 'SDG', 'monthly', 'initial', 'Initial HR contract/salary foundation migration', NULL, '2026-09-06 19:32:55'),
+(12, 12, 12, '2026-08-14', NULL, 0.00, 'SDG', 'monthly', 'initial', 'Initial HR contract/salary foundation migration', NULL, '2026-09-06 19:32:55'),
+(13, 13, 13, '2026-08-14', NULL, 0.00, 'SDG', 'monthly', 'initial', 'Initial HR contract/salary foundation migration', NULL, '2026-09-06 19:32:55'),
+(14, 14, 14, '2026-08-17', NULL, 0.00, 'SDG', 'monthly', 'initial', 'Initial HR contract/salary foundation migration', NULL, '2026-09-06 19:32:55'),
+(15, 15, 15, '2026-08-13', NULL, 0.00, 'SDG', 'monthly', 'initial', 'Initial HR contract/salary foundation migration', NULL, '2026-09-06 19:32:55'),
+(16, 16, 16, '2026-08-13', '2026-09-05', 0.00, 'SDG', 'monthly', 'initial', 'Initial HR contract/salary foundation migration', NULL, '2026-09-06 19:32:55'),
+(17, 17, 17, '2026-08-14', NULL, 0.00, 'SDG', 'monthly', 'initial', 'Initial HR contract/salary foundation migration', NULL, '2026-09-06 19:32:55'),
+(18, 18, 18, '2026-08-08', NULL, 0.00, 'SDG', 'monthly', 'initial', 'Initial HR contract/salary foundation migration', NULL, '2026-09-06 19:32:55'),
+(19, 19, 19, '2026-08-13', NULL, 0.00, 'SDG', 'monthly', 'initial', 'Initial HR contract/salary foundation migration', NULL, '2026-09-06 19:32:55'),
+(20, 20, 20, '2026-08-18', NULL, 0.00, 'SDG', 'monthly', 'initial', 'Initial HR contract/salary foundation migration', NULL, '2026-09-06 19:32:55'),
+(32, 16, 16, '2026-09-06', '2026-09-30', 5000.00, 'SDG', 'monthly', 'initial', NULL, 32, '2026-09-06 20:10:30'),
+(33, 16, 16, '2026-10-01', NULL, 6000.00, 'SDG', 'monthly', 'initial', NULL, 32, '2026-09-07 03:19:22'),
+(34, 21, 22, '2026-09-07', NULL, 7000.00, 'SDG', 'monthly', 'contract_change', 'تم إنشاء سجل الراتب من عقد جديد', 32, '2026-09-07 06:07:51');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `hr_employee_state_history`
+--
+
+CREATE TABLE `hr_employee_state_history` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `employee_id` bigint(20) UNSIGNED NOT NULL,
+  `employment_state_id` int(10) UNSIGNED NOT NULL,
+  `effective_from` datetime NOT NULL,
+  `effective_to` datetime DEFAULT NULL,
+  `reason` varchar(255) DEFAULT NULL,
+  `changed_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `hr_employee_state_history`
+--
+
+INSERT INTO `hr_employee_state_history` (`id`, `employee_id`, `employment_state_id`, `effective_from`, `effective_to`, `reason`, `changed_by`, `created_at`) VALUES
+(1, 1, 1, '2026-09-06 21:31:44', NULL, 'Initial HR foundation migration', NULL, '2026-09-06 18:31:44'),
+(2, 2, 1, '2026-09-06 21:31:44', NULL, 'Initial HR foundation migration', NULL, '2026-09-06 18:31:44'),
+(3, 3, 1, '2026-09-06 21:31:44', NULL, 'Initial HR foundation migration', NULL, '2026-09-06 18:31:44'),
+(4, 4, 1, '2026-09-06 21:31:44', '2026-09-07 07:43:36', 'Initial HR foundation migration', NULL, '2026-09-06 18:31:44'),
+(5, 5, 5, '2026-09-06 21:31:44', NULL, 'Initial HR foundation migration', NULL, '2026-09-06 18:31:44'),
+(6, 6, 1, '2026-09-06 21:31:44', NULL, 'Initial HR foundation migration', NULL, '2026-09-06 18:31:44'),
+(7, 7, 1, '2026-09-06 21:31:44', NULL, 'Initial HR foundation migration', NULL, '2026-09-06 18:31:44'),
+(8, 8, 1, '2026-09-06 21:31:44', NULL, 'Initial HR foundation migration', NULL, '2026-09-06 18:31:44'),
+(9, 9, 1, '2026-09-06 21:31:44', NULL, 'Initial HR foundation migration', NULL, '2026-09-06 18:31:44'),
+(10, 10, 1, '2026-09-06 21:31:44', NULL, 'Initial HR foundation migration', NULL, '2026-09-06 18:31:44'),
+(11, 11, 1, '2026-09-06 21:31:44', NULL, 'Initial HR foundation migration', NULL, '2026-09-06 18:31:44'),
+(12, 12, 1, '2026-09-06 21:31:44', NULL, 'Initial HR foundation migration', NULL, '2026-09-06 18:31:44'),
+(13, 13, 1, '2026-09-06 21:31:44', NULL, 'Initial HR foundation migration', NULL, '2026-09-06 18:31:44'),
+(14, 14, 1, '2026-09-06 21:31:44', NULL, 'Initial HR foundation migration', NULL, '2026-09-06 18:31:44'),
+(15, 15, 1, '2026-09-06 21:31:44', NULL, 'Initial HR foundation migration', NULL, '2026-09-06 18:31:44'),
+(16, 16, 1, '2026-09-06 21:31:44', '2026-09-06 21:54:15', 'Initial HR foundation migration', NULL, '2026-09-06 18:31:44'),
+(17, 17, 1, '2026-09-06 21:31:44', NULL, 'Initial HR foundation migration', NULL, '2026-09-06 18:31:44'),
+(18, 18, 1, '2026-09-06 21:31:44', NULL, 'Initial HR foundation migration', NULL, '2026-09-06 18:31:44'),
+(19, 19, 1, '2026-09-06 21:31:44', NULL, 'Initial HR foundation migration', NULL, '2026-09-06 18:31:44'),
+(20, 20, 1, '2026-09-06 21:31:44', NULL, 'Initial HR foundation migration', NULL, '2026-09-06 18:31:44'),
+(32, 16, 3, '2026-09-06 21:54:15', '2026-09-06 21:56:10', 'Legacy employees.status lifecycle change', NULL, '2026-09-06 18:54:15'),
+(33, 16, 1, '2026-09-06 21:56:10', '2026-09-06 21:56:37', 'Legacy employees.status lifecycle change', NULL, '2026-09-06 18:56:10'),
+(34, 16, 3, '2026-09-06 21:56:37', '2026-09-06 21:15:49', 'Legacy employees.status lifecycle change', NULL, '2026-09-06 18:56:37'),
+(35, 16, 1, '2026-09-06 21:15:49', '2026-09-06 21:26:54', 'Employee reactivated', 32, '2026-09-06 19:15:49'),
+(36, 16, 3, '2026-09-06 21:26:54', '2026-09-06 21:27:39', 'Employment state changed from employee edit', 32, '2026-09-06 19:26:54'),
+(37, 16, 2, '2026-09-06 21:27:39', '2026-09-06 21:28:24', 'Employment state changed from employee edit', 32, '2026-09-06 19:27:39'),
+(38, 16, 1, '2026-09-06 21:28:24', NULL, 'Employment state changed from employee edit', 32, '2026-09-06 19:28:24'),
+(39, 4, 3, '2026-09-07 07:43:36', '2026-09-07 07:43:57', 'Employee temporarily suspended', 32, '2026-09-07 05:43:36'),
+(40, 4, 5, '2026-09-07 07:43:57', NULL, 'Employment state changed from employee edit', 32, '2026-09-07 05:43:57'),
+(41, 21, 1, '2026-09-07 09:07:51', NULL, 'Initial employee creation', 32, '2026-09-07 06:07:51');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `hr_employment_states`
+--
+
+CREATE TABLE `hr_employment_states` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `code` varchar(50) NOT NULL,
+  `name_ar` varchar(100) NOT NULL,
+  `name_en` varchar(100) NOT NULL,
+  `category` enum('working','temporary_unavailable','separation') NOT NULL DEFAULT 'working',
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `sort_order` int(11) NOT NULL DEFAULT 0,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `hr_employment_states`
+--
+
+INSERT INTO `hr_employment_states` (`id`, `code`, `name_ar`, `name_en`, `category`, `is_active`, `sort_order`, `created_at`, `updated_at`) VALUES
+(1, 'active', 'على رأس العمل', 'Active', 'working', 1, 10, '2026-09-06 18:31:44', '2026-09-06 18:31:44'),
+(2, 'probation', 'فترة تجربة', 'Probation', 'working', 1, 20, '2026-09-06 18:31:44', '2026-09-06 18:31:44'),
+(3, 'suspended', 'موقوف مؤقتاً', 'Suspended', 'temporary_unavailable', 1, 30, '2026-09-06 18:31:44', '2026-09-06 18:31:44'),
+(4, 'resigned', 'مستقيل', 'Resigned', 'separation', 1, 40, '2026-09-06 18:31:44', '2026-09-06 18:31:44'),
+(5, 'terminated', 'منهي الخدمة', 'Terminated', 'separation', 1, 50, '2026-09-06 18:31:44', '2026-09-06 18:31:44'),
+(6, 'retired', 'متقاعد', 'Retired', 'separation', 1, 60, '2026-09-06 18:31:44', '2026-09-06 18:31:44');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `hr_payroll_policy_versions`
+--
+
+CREATE TABLE `hr_payroll_policy_versions` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `version_no` int(10) UNSIGNED NOT NULL,
+  `effective_from` date NOT NULL,
+  `absence_enabled` tinyint(1) NOT NULL DEFAULT 1,
+  `absence_deduction_percent` decimal(7,4) NOT NULL DEFAULT 100.0000,
+  `unpaid_leave_enabled` tinyint(1) NOT NULL DEFAULT 1,
+  `unpaid_leave_deduction_percent` decimal(7,4) NOT NULL DEFAULT 100.0000,
+  `paid_leave_deduction_percent` decimal(7,4) NOT NULL DEFAULT 0.0000,
+  `late_enabled` tinyint(1) NOT NULL DEFAULT 0,
+  `early_departure_enabled` tinyint(1) NOT NULL DEFAULT 0,
+  `overtime_enabled` tinyint(1) NOT NULL DEFAULT 0,
+  `overtime_multiplier` decimal(7,4) NOT NULL DEFAULT 1.0000,
+  `daily_deduction_method` enum('monthly_salary_div_30') NOT NULL DEFAULT 'monthly_salary_div_30',
+  `rounding_decimals` tinyint(3) UNSIGNED NOT NULL DEFAULT 2,
+  `notes` varchar(1000) DEFAULT NULL,
+  `created_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `hr_payroll_policy_versions`
+--
+
+INSERT INTO `hr_payroll_policy_versions` (`id`, `version_no`, `effective_from`, `absence_enabled`, `absence_deduction_percent`, `unpaid_leave_enabled`, `unpaid_leave_deduction_percent`, `paid_leave_deduction_percent`, `late_enabled`, `early_departure_enabled`, `overtime_enabled`, `overtime_multiplier`, `daily_deduction_method`, `rounding_decimals`, `notes`, `created_by`, `created_at`, `updated_at`) VALUES
+(1, 1, '2026-10-01', 1, 100.0000, 1, 100.0000, 0.0000, 0, 0, 0, 1.0000, 'monthly_salary_div_30', 2, 'الإعدادات الافتراضية — يجب اعتمادها من إدارة الجمعية', NULL, '2026-09-07 20:13:55', '2026-09-07 20:13:55'),
+(2, 2, '2026-11-01', 1, 100.0000, 1, 100.0000, 0.0000, 0, 0, 0, 1.0000, 'monthly_salary_div_30', 2, 'الإعدادات الافتراضية — يجب اعتمادها من إدارة الجمعية', 32, '2026-09-08 04:01:32', '2026-09-08 04:01:32');
+
+--
+-- Triggers `hr_payroll_policy_versions`
+--
+DELIMITER $$
+CREATE TRIGGER `trg_hr_payroll_policy_no_delete_effective` BEFORE DELETE ON `hr_payroll_policy_versions` FOR EACH ROW BEGIN
+    IF OLD.effective_from <= CURDATE() THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Effective payroll policy versions cannot be deleted.';
+    END IF;
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `trg_hr_payroll_policy_no_update_effective` BEFORE UPDATE ON `hr_payroll_policy_versions` FOR EACH ROW BEGIN
+    IF OLD.effective_from <= CURDATE() THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Effective payroll policy versions are immutable; create a new version instead.';
+    END IF;
+END
+$$
+DELIMITER ;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `hr_payroll_reversals`
+--
+
+CREATE TABLE `hr_payroll_reversals` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `payroll_id` int(10) UNSIGNED NOT NULL,
+  `original_entry_id` int(10) UNSIGNED NOT NULL,
+  `reversal_entry_id` int(10) UNSIGNED NOT NULL,
+  `reason` varchar(255) NOT NULL,
+  `reversed_by` int(10) UNSIGNED DEFAULT NULL,
+  `reversed_at` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `hr_payroll_reversals`
+--
+
+INSERT INTO `hr_payroll_reversals` (`id`, `payroll_id`, `original_entry_id`, `reversal_entry_id`, `reason`, `reversed_by`, `reversed_at`) VALUES
+(1, 20, 31, 32, 'اختبار عكس القيد المحاسبي لمسير أكتوبر', 32, '2026-09-07 07:00:19');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `journal_entries`
 --
 
@@ -9228,7 +9725,10 @@ INSERT INTO `journal_entries` (`id`, `entry_code`, `entry_date`, `description`, 
 (21, 'JE-000016', '2026-08-26', 'قيد آلي من SP-000005', 'transaction', 18, 'posted', NULL, NULL, NULL, 29, '2026-08-26 05:48:21'),
 (22, 'JE-OB-000017', '2026-01-01', 'الرصيد الافتتاحي الحقيقي للمنظمة', 'opening_balance', NULL, 'posted', NULL, NULL, NULL, 29, '2026-08-26 20:41:04'),
 (29, 'JE-PRJ-0002-20260829181607', '2026-08-29', 'تخصيص تمويل مشروع: اختبار مشروع الحماية المالية', 'project', 2, 'posted', NULL, NULL, NULL, 2, '2026-08-29 19:16:07'),
-(30, 'JE-PRJ-0004-20260829184954', '2026-08-29', 'تخصيص تمويل مشروع: تجديد ملجأ أيتام الخرطوم', 'project', 4, 'posted', NULL, NULL, NULL, 2, '2026-08-29 19:49:54');
+(30, 'JE-PRJ-0004-20260829184954', '2026-08-29', 'تخصيص تمويل مشروع: تجديد ملجأ أيتام الخرطوم', 'project', 4, 'posted', NULL, NULL, NULL, 2, '2026-08-29 19:49:54'),
+(31, 'PAY-20', '2026-09-07', 'صرف راتب الموظف: ro1 - 2026-10', 'payroll', 20, 'posted', NULL, NULL, NULL, NULL, '2026-09-07 06:36:51'),
+(32, 'REV-PAY-20', '2026-09-07', 'عكس صرف راتب - اختبار عكس القيد المحاسبي لمسير أكتوبر', 'payroll_reversal', 20, 'posted', NULL, NULL, NULL, 32, '2026-09-07 07:00:19'),
+(33, 'PAY-22', '2026-09-07', 'صرف راتب الموظف: HR Salary Test - 2026-09', 'payroll', 22, 'posted', NULL, NULL, NULL, NULL, '2026-09-07 17:20:46');
 
 -- --------------------------------------------------------
 
@@ -9293,7 +9793,13 @@ INSERT INTO `journal_lines` (`id`, `entry_id`, `account_id`, `debit`, `credit`, 
 (57, 30, 13, 500000.00, 0.00, 'تخصيص تمويل مشروع'),
 (58, 30, 1, 0.00, 250000.00, 'تمويل مشروع من مصدر التمويل'),
 (59, 30, 2, 0.00, 150000.00, 'تمويل مشروع من مصدر التمويل'),
-(60, 30, 3, 0.00, 100000.00, 'تمويل مشروع من مصدر التمويل');
+(60, 30, 3, 0.00, 100000.00, 'تمويل مشروع من مصدر التمويل'),
+(61, 31, 14, 6000.00, 0.00, 'رواتب وأجور - 2026-10'),
+(62, 31, 2, 0.00, 6000.00, 'صرف رواتب - 2026-10'),
+(63, 32, 14, 0.00, 6000.00, 'عكس: رواتب وأجور - 2026-10'),
+(64, 32, 2, 6000.00, 0.00, 'عكس: صرف رواتب - 2026-10'),
+(65, 33, 14, 7000.00, 0.00, 'رواتب وأجور - 2026-09'),
+(66, 33, 2, 0.00, 7000.00, 'صرف رواتب - 2026-09');
 
 -- --------------------------------------------------------
 
@@ -9322,7 +9828,94 @@ CREATE TABLE `leaves` (
 --
 
 INSERT INTO `leaves` (`id`, `employee_id`, `leave_type`, `start_date`, `end_date`, `days_count`, `reason`, `status`, `manager_approved_by`, `manager_approved_at`, `hr_approved_by`, `hr_approved_at`, `created_at`) VALUES
-(4, 15, 'sick', '2026-09-05', '2026-09-16', 12, 'as per doctor orders', 'hr_approved', NULL, NULL, 32, '2026-09-06 09:04:42', '2026-09-06 09:03:41');
+(5, 16, 'sick', '2026-09-08', '2026-09-30', 23, 'as per doctor orders', 'hr_approved', NULL, NULL, 32, '2026-09-07 18:07:54', '2026-09-07 18:05:51');
+
+--
+-- Triggers `leaves`
+--
+DELIMITER $$
+CREATE TRIGGER `trg_leaves_validate_insert` BEFORE INSERT ON `leaves` FOR EACH ROW BEGIN
+    DECLARE v_state_category VARCHAR(30) DEFAULT NULL;
+
+    IF NEW.start_date IS NULL OR NEW.end_date IS NULL OR NEW.end_date < NEW.start_date THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'تواريخ الإجازة غير صالحة.';
+    END IF;
+
+    SELECT s.category
+      INTO v_state_category
+      FROM employees e
+      JOIN hr_employment_states s ON s.id = e.employment_state_id
+     WHERE e.id = NEW.employee_id
+     LIMIT 1;
+
+    IF v_state_category IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'لا يمكن إنشاء طلب إجازة لموظف بدون حالة توظيف صالحة.';
+    END IF;
+
+    IF v_state_category <> 'working' THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'لا يمكن إنشاء طلب إجازة لموظف خارج حالات العمل.';
+    END IF;
+
+    IF NEW.status IN ('pending', 'manager_approved', 'hr_approved')
+       AND EXISTS (
+           SELECT 1
+             FROM leaves l
+            WHERE l.employee_id = NEW.employee_id
+              AND l.status IN ('pending', 'manager_approved', 'hr_approved')
+              AND NEW.start_date <= l.end_date
+              AND NEW.end_date >= l.start_date
+       ) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'يوجد طلب إجازة آخر متداخل مع الفترة المحددة.';
+    END IF;
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `trg_leaves_validate_update` BEFORE UPDATE ON `leaves` FOR EACH ROW BEGIN
+    DECLARE v_state_category VARCHAR(30) DEFAULT NULL;
+
+    IF NEW.start_date IS NULL OR NEW.end_date IS NULL OR NEW.end_date < NEW.start_date THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'تواريخ الإجازة غير صالحة.';
+    END IF;
+
+    SELECT s.category
+      INTO v_state_category
+      FROM employees e
+      JOIN hr_employment_states s ON s.id = e.employment_state_id
+     WHERE e.id = NEW.employee_id
+     LIMIT 1;
+
+    IF v_state_category IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'لا يمكن حفظ طلب إجازة لموظف بدون حالة توظيف صالحة.';
+    END IF;
+
+    IF v_state_category <> 'working' THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'لا يمكن حفظ طلب إجازة لموظف خارج حالات العمل.';
+    END IF;
+
+    IF NEW.status IN ('pending', 'manager_approved', 'hr_approved')
+       AND EXISTS (
+           SELECT 1
+             FROM leaves l
+            WHERE l.id <> NEW.id
+              AND l.employee_id = NEW.employee_id
+              AND l.status IN ('pending', 'manager_approved', 'hr_approved')
+              AND NEW.start_date <= l.end_date
+              AND NEW.end_date >= l.start_date
+       ) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'يوجد طلب إجازة آخر متداخل مع الفترة المحددة.';
+    END IF;
+END
+$$
+DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -9703,11 +10296,8 @@ INSERT INTO `notifications` (`id`, `recipient_user_id`, `type`, `title`, `body`,
 (10, 32, 'recovery', 'طلب استعادة كلمة مرور جديد', 'يوجد طلب جديد لاستعادة كلمة مرور للمستخدم: project supervisor', '/AhlElKheir/modules/users/recovery.php', 1, '2026-08-30 22:04:27'),
 (11, 28, 'recovery', 'تمت الموافقة على طلب استعادة كلمة المرور', 'تمت الموافقة على طلبك. تواصل مع مسؤول الموارد البشرية أو مسؤول النظام لاستلام كلمة المرور المؤقتة.', 'modules/users/change_password.php?forced=1', 0, '2026-08-30 22:12:47'),
 (12, 34, 'recovery', 'تمت الموافقة على طلب استعادة كلمة المرور', 'تمت الموافقة على طلبك. تواصل مع مسؤول الموارد البشرية أو مسؤول النظام لاستلام كلمة المرور المؤقتة.', 'modules/users/change_password.php?forced=1', 0, '2026-08-30 22:15:59'),
-(13, 32, 'info', 'طلب إجازة جديد', 'قام الموظف nany1 بتقديم طلب إجازة للفترة 2026-09-05 إلى 2026-09-30 ويحتاج إلى مراجعة الموارد البشرية.', 'http://localhost:8081/AhlElKheir/modules/hr/leaves.php?status=pending&leave_id=3', 1, '2026-09-05 20:44:35'),
-(14, 29, 'info', 'تم اعتماد طلب الإجازة', 'تم اعتماد طلب إجازتك للفترة 2026-09-05 إلى 2026-09-10 من قبل الموارد البشرية.', 'http://localhost:8081/AhlElKheir/modules/hr/leaves.php?action=request&leave_id=1', 0, '2026-09-05 20:45:27'),
-(15, 16, 'info', 'تم اعتماد طلب الإجازة', 'تم اعتماد طلب إجازتك للفترة 2026-09-05 إلى 2026-09-30 من قبل الموارد البشرية.', 'http://localhost:8081/AhlElKheir/modules/hr/leaves.php?action=request&leave_id=3', 1, '2026-09-05 20:45:30'),
-(16, 32, 'info', 'طلب إجازة جديد', 'قام الموظف nany1 بتقديم طلب إجازة للفترة 2026-09-05 إلى 2026-09-16 ويحتاج إلى مراجعة الموارد البشرية.', 'http://localhost:8081/AhlElKheir/modules/hr/leaves.php?status=pending&leave_id=4', 1, '2026-09-06 09:03:41'),
-(17, 16, 'info', 'تم اعتماد طلب الإجازة', 'تم اعتماد طلب إجازتك للفترة 2026-09-05 إلى 2026-09-16 من قبل الموارد البشرية.', 'http://localhost:8081/AhlElKheir/modules/hr/leaves.php?action=request&leave_id=4', 0, '2026-09-06 09:04:42');
+(18, 32, 'info', 'طلب إجازة جديد', 'قام الموظف ro1 بتقديم طلب إجازة للفترة 2026-09-08 إلى 2026-09-30 ويحتاج إلى مراجعة الموارد البشرية.', 'http://localhost:8081/AhlElKheir/modules/hr/leaves.php?status=pending&leave_id=5', 0, '2026-09-07 18:05:51'),
+(19, 18, 'info', 'تم اعتماد طلب الإجازة', 'تم اعتماد طلب إجازتك للفترة 2026-09-08 إلى 2026-09-30 من قبل الموارد البشرية.', 'http://localhost:8081/AhlElKheir/modules/hr/leaves.php?action=request&leave_id=5', 0, '2026-09-07 18:07:54');
 
 -- --------------------------------------------------------
 
@@ -9842,11 +10432,134 @@ CREATE TABLE `payroll` (
   `overtime` decimal(10,2) NOT NULL DEFAULT 0.00,
   `net_salary` decimal(10,2) NOT NULL,
   `status` enum('draft','approved','paid') NOT NULL DEFAULT 'draft',
+  `payroll_policy_version_id` bigint(20) UNSIGNED DEFAULT NULL,
   `payment_date` date DEFAULT NULL,
   `journal_entry_id` int(10) UNSIGNED DEFAULT NULL COMMENT 'Links to accounting journal entries',
   `created_by` int(10) UNSIGNED DEFAULT NULL,
-  `created_at` datetime NOT NULL DEFAULT current_timestamp()
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `accounting_status` enum('none','ready','posted') NOT NULL DEFAULT 'none',
+  `accounting_entry_id` int(10) UNSIGNED DEFAULT NULL,
+  `payment_account_id` int(10) UNSIGNED DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `payroll`
+--
+
+INSERT INTO `payroll` (`id`, `employee_id`, `month`, `year`, `basic_salary`, `allowances`, `deductions`, `overtime`, `net_salary`, `status`, `payroll_policy_version_id`, `payment_date`, `journal_entry_id`, `created_by`, `created_at`, `accounting_status`, `accounting_entry_id`, `payment_account_id`) VALUES
+(1, 19, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(2, 15, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(4, 17, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(5, 4, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(6, 2, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(7, 14, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(8, 12, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(9, 6, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(10, 3, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(11, 18, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(12, 20, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(13, 1, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(14, 11, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(15, 7, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(16, 9, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(17, 10, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(18, 8, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(19, 13, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(20, 16, 10, 2026, 6000.00, 0.00, 0.00, 0.00, 6000.00, 'paid', NULL, '2026-09-07', NULL, NULL, '2026-09-07 06:17:11', 'posted', 31, NULL),
+(21, 16, 9, 2026, 5000.00, 0.00, 0.00, 0.00, 5000.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-07 07:36:14', 'none', NULL, NULL),
+(22, 21, 9, 2026, 7000.00, 0.00, 0.00, 0.00, 7000.00, 'paid', NULL, '2026-09-07', NULL, NULL, '2026-09-07 16:24:25', 'posted', 33, NULL),
+(23, 21, 10, 2026, 7000.00, 0.00, 0.00, 0.00, 7000.00, 'draft', 1, NULL, NULL, NULL, '2026-09-08 07:17:26', 'none', NULL, NULL);
+
+--
+-- Triggers `payroll`
+--
+DELIMITER $$
+CREATE TRIGGER `trg_payroll_accounting_before_update` BEFORE UPDATE ON `payroll` FOR EACH ROW BEGIN
+    DECLARE v_entry_id INT UNSIGNED DEFAULT NULL;
+    DECLARE v_expense_account_id INT UNSIGNED DEFAULT NULL;
+    DECLARE v_payment_account_id INT UNSIGNED DEFAULT NULL;
+    DECLARE v_employee_name VARCHAR(150) DEFAULT NULL;
+    DECLARE v_entry_date DATE;
+    DECLARE v_amount DECIMAL(14,2);
+    DECLARE v_entry_code VARCHAR(50);
+
+    IF OLD.status <> 'approved' AND NEW.status = 'approved' THEN
+        SET NEW.accounting_status = 'ready';
+    END IF;
+
+    IF OLD.status <> 'paid' AND NEW.status = 'paid' THEN
+        SET v_amount = COALESCE(NEW.net_salary, 0);
+        IF v_amount <= 0 THEN
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'لا يمكن ترحيل مسير راتب بصافي راتب غير صالح إلى المحاسبة.';
+        END IF;
+
+        SELECT id INTO v_expense_account_id FROM accounts WHERE code = '5200' LIMIT 1;
+        IF v_expense_account_id IS NULL THEN
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'حساب الرواتب 5200 غير موجود في دليل الحسابات.';
+        END IF;
+
+        SET v_payment_account_id = NEW.payment_account_id;
+        IF v_payment_account_id IS NULL OR v_payment_account_id = 0 THEN
+            SELECT id INTO v_payment_account_id FROM accounts WHERE code = '1200' AND is_active = 1 LIMIT 1;
+        ELSE
+            SELECT id INTO v_payment_account_id FROM accounts WHERE id = v_payment_account_id AND is_active = 1 LIMIT 1;
+        END IF;
+        IF v_payment_account_id IS NULL THEN
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'حساب الدفع البنكي غير صالح.';
+        END IF;
+
+        SET v_entry_code = CONCAT('PAY-', NEW.id);
+        SET v_entry_date = COALESCE(NEW.payment_date, CURDATE());
+
+        SELECT id INTO v_entry_id
+        FROM journal_entries
+        WHERE reference_type = 'payroll' AND reference_id = NEW.id AND status = 'posted'
+        LIMIT 1;
+
+        IF v_entry_id IS NULL THEN
+            SELECT full_name INTO v_employee_name FROM employees WHERE id = NEW.employee_id LIMIT 1;
+            INSERT INTO journal_entries
+                (entry_code, entry_date, description, reference_type, reference_id, status, created_by)
+            VALUES
+                (v_entry_code, v_entry_date,
+                 CONCAT('صرف راتب الموظف: ', COALESCE(v_employee_name, CONCAT('ID ', NEW.employee_id)), ' - ', NEW.year, '-', LPAD(NEW.month, 2, '0')),
+                 'payroll', NEW.id, 'posted', NULL);
+            SET v_entry_id = LAST_INSERT_ID();
+
+            INSERT INTO journal_lines (entry_id, account_id, debit, credit, description)
+            VALUES (v_entry_id, v_expense_account_id, v_amount, 0,
+                    CONCAT('رواتب وأجور - ', NEW.year, '-', LPAD(NEW.month, 2, '0')));
+
+            INSERT INTO journal_lines (entry_id, account_id, debit, credit, description)
+            VALUES (v_entry_id, v_payment_account_id, 0, v_amount,
+                    CONCAT('صرف رواتب - ', NEW.year, '-', LPAD(NEW.month, 2, '0')));
+        END IF;
+
+        SET NEW.accounting_entry_id = v_entry_id;
+        SET NEW.accounting_status = 'posted';
+    END IF;
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `trg_payroll_immutable_before_update` BEFORE UPDATE ON `payroll` FOR EACH ROW BEGIN
+    IF OLD.status = 'paid' AND (
+        NOT (OLD.employee_id <=> NEW.employee_id) OR
+        NOT (OLD.month <=> NEW.month) OR
+        NOT (OLD.year <=> NEW.year) OR
+        NOT (OLD.basic_salary <=> NEW.basic_salary) OR
+        NOT (OLD.allowances <=> NEW.allowances) OR
+        NOT (OLD.overtime <=> NEW.overtime) OR
+        NOT (OLD.deductions <=> NEW.deductions) OR
+        NOT (OLD.net_salary <=> NEW.net_salary) OR
+        NOT (OLD.status <=> NEW.status) OR
+        NOT (OLD.payment_date <=> NEW.payment_date)
+    ) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'لا يمكن تعديل مسير راتب بعد صرفه. استخدم إجراء تصحيح/عكس محاسبي مستقل.';
+    END IF;
+END
+$$
+DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -28100,7 +28813,7 @@ INSERT INTO `users` (`id`, `role_id`, `username`, `password_hash`, `full_name`, 
 (15, 4, 'medo', '$2y$10$8XL6WcxWHuHZ2MB0XKlWReI28/2VUY0P9TJNWIM1chyov7mi9vZGy', 'مديحه عبد الماجد', 'madiha@example.com', '096664568', 0, 'archived', 0, NULL, 3, '2026-08-10 10:31:56', '2026-09-04 08:01:57', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'light', 'ar', 1, 1, 1),
 (16, 7, 'nany1', '$2y$10$bOs5FR0MQDIWcay4vmcoc.wkTOTt7mU2umWJYHn1AFkAXclPGcZWO', 'nany1', 'nany1@gmail.com', '094449785', 1, '', 0, '2026-09-06 09:02:53', 1, '2026-08-13 18:03:28', '2026-09-06 09:02:53', NULL, 'storage/avatars/user_16_1787805870.png', NULL, NULL, 'female', 2, 3, 'light', 'ar', 1, 1, 1),
 (17, 10, 'acc1', '$2y$10$n6sTBlpffNdZOaN48KkAx.zqkDnrikirhM.HWVBH81qG255EuUqKS', 'acc1', 'acc1@gmail.com', '0945786321', 1, '', 0, '2026-08-24 07:48:11', 1, '2026-08-13 19:47:47', '2026-08-24 07:48:11', NULL, NULL, NULL, NULL, 'male', 6, 4, 'light', 'ar', 1, 1, 1),
-(18, 8, 'ro1', '$2y$10$F9dn7QOVYgE/fNrcNqsL1OVsnXR0XhEuwwSjBWK63uYw684Y31Ip.', 'ro1', 'ro@gmail.com', '0123456789', 1, '', 0, '2026-08-13 20:37:00', 1, '2026-08-13 20:23:47', '2026-08-13 20:37:00', NULL, NULL, NULL, NULL, 'male', 3, 3, 'light', 'ar', 1, 1, 1),
+(18, 8, 'ro1', '$2y$10$F9dn7QOVYgE/fNrcNqsL1OVsnXR0XhEuwwSjBWK63uYw684Y31Ip.', 'ro1', 'ro@gmail.com', '0123456789', 1, '', 0, '2026-09-07 18:04:53', 1, '2026-08-13 20:23:47', '2026-09-07 18:04:53', NULL, NULL, NULL, NULL, 'male', 3, 3, 'light', 'ar', 1, 1, 1),
 (19, 4, 'sv1', '$2y$10$1orOJuoh50H0m8Ow4eKIMOZC18pCFV6XILrjtEZvInwH/M/yGCDUS', 'فاطمه سليمان', 'fatima@gmail.com', '0999999999999', 1, 'active', 0, '2026-08-30 08:20:39', 3, '2026-08-14 08:10:49', '2026-09-03 15:28:42', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
 (20, 4, 'sv2', '$2y$10$GlgbXKPFv/Tqz/UYdBF2kOgV.Wwpe6yBpfmzcUSOKOocQuLulV2IW', 'ميادة الحبر', 'mayadah@gmail.com', NULL, 1, 'active', 0, '2026-08-27 18:12:40', 3, '2026-08-14 08:12:16', '2026-09-03 15:28:42', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
 (21, 4, 'sv3', '$2y$10$hi/o4qq4Byzdwq96wvXYPe3JW4lPlbIAwRH.JFjLtLXa7DEAj06ZG', 'هديل عثمان', 'hadeel@gmail.com', '03333333333333', 1, 'active', 0, '2026-08-16 09:14:05', 3, '2026-08-14 08:31:52', '2026-09-03 15:28:42', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
@@ -28110,8 +28823,8 @@ INSERT INTO `users` (`id`, `role_id`, `username`, `password_hash`, `full_name`, 
 (26, 4, 'sv8', '$2y$10$iRZLB9UdIggAJqKsR.eoPuwyMFfS4w3RgVjZ4XjvxxUynOuhMAc/i', 'ساره خلف الله', 'sarah@gmail.com', '015468972', 1, 'active', 0, NULL, 3, '2026-08-14 09:28:14', '2026-09-04 08:38:22', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
 (27, 4, 'sv9', '$2y$10$oBV.8O1UW/yiwOAcPMxbqeH8Xh/PJhNtq.tIkyOqh55v1v7GzjSJW', 'هناء خلف الله', 'hanah@gmail.com', '78999456789', 1, 'active', 0, NULL, 3, '2026-08-14 09:31:19', '2026-09-03 15:28:42', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
 (28, 9, 'sm1', '$2y$10$gtVZcFBfL2yMhNXOPpkr5e7up/SiAnE7KfjJ8tq4JFocePuGjcr0C', 'أحمد حسين', 'ahmed@gmail.com', '8545567865', 1, '', 0, '2026-08-30 22:14:14', 1, '2026-08-14 13:06:45', '2026-08-30 22:14:14', NULL, NULL, NULL, NULL, 'male', 4, 3, 'light', 'ar', 1, 1, 1),
-(29, 6, 'fm', '$2y$10$K2.yA1kpqLaGWrqH/QOQ2uXv0PJhvWTMC55tW5kSkU6u5iaz6JmVW', 'المدير المالي', 'fm@ahlelkheir.org', NULL, 1, '', 0, '2026-09-05 20:20:41', 1, '2026-08-17 14:26:40', '2026-09-05 20:20:41', NULL, 'storage/avatars/user_29_1787555658.jpg', NULL, NULL, 'أنثى', 1, 2, 'light', 'ar', 1, 1, 1),
-(32, 11, 'hrh', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'مدير الموارد البشرية', 'hr@ahlelkheir.org', '00112233445566', 1, '', 0, '2026-09-06 09:04:03', NULL, '2026-08-18 21:49:04', '2026-09-06 09:04:03', NULL, 'storage/avatars/user_32_1788630391.png', NULL, NULL, NULL, 1, NULL, 'light', 'ar', 1, 1, 1),
+(29, 6, 'fm', '$2y$10$K2.yA1kpqLaGWrqH/QOQ2uXv0PJhvWTMC55tW5kSkU6u5iaz6JmVW', 'المدير المالي', 'fm@ahlelkheir.org', NULL, 1, '', 0, '2026-09-07 06:37:40', 1, '2026-08-17 14:26:40', '2026-09-07 06:37:40', NULL, 'storage/avatars/user_29_1787555658.jpg', NULL, NULL, 'أنثى', 1, 2, 'light', 'ar', 1, 1, 1),
+(32, 11, 'hrh', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'مدير الموارد البشرية', 'hr@ahlelkheir.org', '00112233445566', 1, '', 0, '2026-09-08 06:57:06', NULL, '2026-08-18 21:49:04', '2026-09-08 06:57:06', NULL, 'storage/avatars/user_32_1788630391.png', NULL, NULL, NULL, 1, NULL, 'light', 'ar', 1, 1, 1),
 (33, 13, 'gpm', '$2y$10$ftQaFFCk4DF1UrdPlpGtd.OVR.2pyxPxKlIcZ7KhRxa7VMP/FXC/G', 'projects manager', 'pm@gmail.com', '00012344456678', 1, '', 0, '2026-08-29 19:51:41', 1, '2026-08-28 18:33:31', '2026-08-29 19:51:41', NULL, 'storage/avatars/user_33_1787943667.jpg', NULL, NULL, 'male', 8, 2, 'light', 'ar', 1, 1, 1),
 (34, 14, 'ps1', '$2y$10$y6GVpoe/hF9GxE8zyezAPORKNgBn5n65Ct.tUHI0r6lnkyHEdkrZi', 'project supervisor', 'gps@gmail.com', '987654321', 1, '', 0, '2026-08-30 22:24:07', 1, '2026-08-28 18:35:16', '2026-08-30 22:24:07', NULL, NULL, NULL, NULL, 'male', 8, 2, 'light', 'ar', 1, 1, 1);
 
@@ -28302,7 +29015,8 @@ ALTER TABLE `employees`
   ADD UNIQUE KEY `uq_employee_code` (`employee_code`),
   ADD UNIQUE KEY `uq_employee_user` (`user_id`),
   ADD KEY `idx_employee_status` (`status`),
-  ADD KEY `fk_employee_created_by` (`created_by`);
+  ADD KEY `fk_employee_created_by` (`created_by`),
+  ADD KEY `idx_employees_employment_state` (`employment_state_id`);
 
 --
 -- Indexes for table `families`
@@ -28362,6 +29076,59 @@ ALTER TABLE `group_workflow_audit_log`
   ADD KEY `idx_gwal_group` (`group_id`),
   ADD KEY `idx_gwal_family` (`family_id`),
   ADD KEY `idx_gwal_action` (`action_type`);
+
+--
+-- Indexes for table `hr_employee_contracts`
+--
+ALTER TABLE `hr_employee_contracts`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_hr_contract_number` (`contract_number`),
+  ADD KEY `idx_hr_contract_employee_dates` (`employee_id`,`start_date`,`end_date`),
+  ADD KEY `idx_hr_contract_employee_status` (`employee_id`,`status`),
+  ADD KEY `idx_hr_contract_active_dates` (`status`,`start_date`,`end_date`);
+
+--
+-- Indexes for table `hr_employee_salary_history`
+--
+ALTER TABLE `hr_employee_salary_history`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_hr_salary_employee_dates` (`employee_id`,`effective_from`,`effective_to`),
+  ADD KEY `idx_hr_salary_contract` (`contract_id`),
+  ADD KEY `idx_hr_salary_current` (`employee_id`,`effective_to`);
+
+--
+-- Indexes for table `hr_employee_state_history`
+--
+ALTER TABLE `hr_employee_state_history`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_hr_state_history_employee_dates` (`employee_id`,`effective_from`),
+  ADD KEY `idx_hr_state_history_current` (`employee_id`,`effective_to`),
+  ADD KEY `idx_hr_state_history_state` (`employment_state_id`);
+
+--
+-- Indexes for table `hr_employment_states`
+--
+ALTER TABLE `hr_employment_states`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_hr_employment_states_code` (`code`),
+  ADD KEY `idx_hr_employment_states_active_sort` (`is_active`,`sort_order`);
+
+--
+-- Indexes for table `hr_payroll_policy_versions`
+--
+ALTER TABLE `hr_payroll_policy_versions`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_hr_payroll_policy_version` (`version_no`),
+  ADD UNIQUE KEY `uq_hr_payroll_policy_effective_from` (`effective_from`),
+  ADD KEY `idx_hr_payroll_policy_effective` (`effective_from`);
+
+--
+-- Indexes for table `hr_payroll_reversals`
+--
+ALTER TABLE `hr_payroll_reversals`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_hr_payroll_reversal_payroll` (`payroll_id`),
+  ADD KEY `idx_hr_payroll_reversal_entry` (`reversal_entry_id`);
 
 --
 -- Indexes for table `journal_entries`
@@ -28515,9 +29282,11 @@ ALTER TABLE `password_recovery_requests`
 ALTER TABLE `payroll`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `uq_payroll_employee_month` (`employee_id`,`month`,`year`),
+  ADD UNIQUE KEY `uq_payroll_employee_period` (`employee_id`,`month`,`year`),
   ADD KEY `idx_payroll_status` (`status`),
   ADD KEY `fk_payroll_journal` (`journal_entry_id`),
-  ADD KEY `fk_payroll_created_by` (`created_by`);
+  ADD KEY `fk_payroll_created_by` (`created_by`),
+  ADD KEY `idx_payroll_policy_version` (`payroll_policy_version_id`);
 
 --
 -- Indexes for table `performance_reviews`
@@ -28907,13 +29676,13 @@ ALTER TABLE `accounts`
 -- AUTO_INCREMENT for table `attendance`
 --
 ALTER TABLE `attendance`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=136;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=160;
 
 --
 -- AUTO_INCREMENT for table `audit_log`
 --
 ALTER TABLE `audit_log`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1490;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1501;
 
 --
 -- AUTO_INCREMENT for table `contracts`
@@ -28937,7 +29706,7 @@ ALTER TABLE `disbursement_items`
 -- AUTO_INCREMENT for table `employees`
 --
 ALTER TABLE `employees`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- AUTO_INCREMENT for table `families`
@@ -28976,22 +29745,58 @@ ALTER TABLE `group_workflow_audit_log`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
+-- AUTO_INCREMENT for table `hr_employee_contracts`
+--
+ALTER TABLE `hr_employee_contracts`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+
+--
+-- AUTO_INCREMENT for table `hr_employee_salary_history`
+--
+ALTER TABLE `hr_employee_salary_history`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
+
+--
+-- AUTO_INCREMENT for table `hr_employee_state_history`
+--
+ALTER TABLE `hr_employee_state_history`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
+
+--
+-- AUTO_INCREMENT for table `hr_employment_states`
+--
+ALTER TABLE `hr_employment_states`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+
+--
+-- AUTO_INCREMENT for table `hr_payroll_policy_versions`
+--
+ALTER TABLE `hr_payroll_policy_versions`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT for table `hr_payroll_reversals`
+--
+ALTER TABLE `hr_payroll_reversals`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
 -- AUTO_INCREMENT for table `journal_entries`
 --
 ALTER TABLE `journal_entries`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
 
 --
 -- AUTO_INCREMENT for table `journal_lines`
 --
 ALTER TABLE `journal_lines`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=61;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=67;
 
 --
 -- AUTO_INCREMENT for table `leaves`
 --
 ALTER TABLE `leaves`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `letters`
@@ -29045,7 +29850,7 @@ ALTER TABLE `nanny_group_assignments`
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 
 --
 -- AUTO_INCREMENT for table `orphan_documents`
@@ -29075,7 +29880,7 @@ ALTER TABLE `password_recovery_requests`
 -- AUTO_INCREMENT for table `payroll`
 --
 ALTER TABLE `payroll`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
 
 --
 -- AUTO_INCREMENT for table `performance_reviews`
