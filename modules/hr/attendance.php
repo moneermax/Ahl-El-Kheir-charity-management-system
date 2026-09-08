@@ -5,6 +5,7 @@ require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../config/functions.php';
 require_once __DIR__ . '/../../config/session.php';
+require_once __DIR__ . '/lib_attendance_integrity.php';
 
 Session::start();
 $userRole = Session::getUserRole();
@@ -22,81 +23,6 @@ if (!$dateObject || $dateObject->format('Y-m-d') !== $selectedDate) {
 $message = '';
 $msgType = 'success';
 
-function attendanceApprovedLeave(int $employeeId, string $date): ?array
-{
-    return dbFetchOne(
-        "SELECT id, employee_id, start_date, end_date, leave_type, status
-         FROM leaves
-         WHERE employee_id = ?
-           AND status = 'hr_approved'
-           AND start_date <= ?
-           AND end_date >= ?
-         ORDER BY start_date DESC, id DESC
-         LIMIT 1",
-        [$employeeId, $date, $date]
-    );
-}
-
-function attendanceHasReturnOverride(int $employeeId, string $date): bool
-{
-    return dbFetchOne(
-        "SELECT id FROM attendance
-         WHERE employee_id = ? AND date = ?
-           AND status = 'absent'
-           AND notes LIKE 'عودة من الإجازة%'
-         LIMIT 1",
-        [$employeeId, $date]
-    ) !== null;
-}
-
-function attendanceIsOnLeave(int $employeeId, string $date): bool
-{
-    $leave = attendanceApprovedLeave($employeeId, $date);
-    return $leave !== null && !attendanceHasReturnOverride($employeeId, $date);
-}
-function attendanceEmploymentState(int $employeeId, string $date): ?array
-{
-    return dbFetchOne(
-        "SELECT h.employment_state_id, s.code, s.name_ar, s.name_en, s.category
-         FROM hr_employee_state_history h
-         INNER JOIN hr_employment_states s ON s.id = h.employment_state_id
-         WHERE h.employee_id = ?
-           AND h.effective_from <= ?
-           AND (h.effective_to IS NULL OR h.effective_to >= ?)
-         ORDER BY h.effective_from DESC, h.id DESC
-         LIMIT 1",
-        [$employeeId, $date . ' 23:59:59', $date . ' 00:00:00']
-    );
-}
-function attendanceRequireEligible(int $employeeId, string $date): void
-{
-    if ($employeeId <= 0) {
-        throw new InvalidArgumentException('الموظف المحدد غير صالح.');
-    }
-
-    $employee = dbFetchOne(
-        "SELECT id FROM employees WHERE id = ? AND status = 'active' LIMIT 1",
-        [$employeeId]
-    );
-        if (!$employee) {
-        throw new InvalidArgumentException('الموظف غير موجود أو غير نشط.');
-    }
-
-    $state = attendanceEmploymentState($employeeId, $date);
-
-    if (!$state) {
-        throw new InvalidArgumentException('لا توجد حالة توظيف معتمدة لهذا الموظف في التاريخ المحدد.');
-    }
-
-    if ($state['category'] !== 'working') {
-        throw new InvalidArgumentException('الموظف غير مؤهل لتسجيل الحضور في التاريخ المحدد وفق حالة التوظيف الحالية.');
-    }
-
-    if (attendanceIsOnLeave($employeeId, $date)) {
-        throw new RuntimeException('الموظف في إجازة معتمدة. يجب تنفيذ "عودة من الإجازة" أولاً قبل تسجيل أي إجراء حضور.');
-    }
-}
-
 function attendanceReturnFromLeave(int $employeeId, string $date): void
 {
     if ($employeeId <= 0) {
@@ -111,12 +37,12 @@ function attendanceReturnFromLeave(int $employeeId, string $date): void
         throw new InvalidArgumentException('الموظف غير موجود أو غير نشط.');
     }
 
-    $leave = attendanceApprovedLeave($employeeId, $date);
+    $leave = hrAttendanceApprovedLeave($employeeId, $date);
     if (!$leave) {
         throw new RuntimeException('لا توجد إجازة معتمدة لهذا الموظف في التاريخ المحدد.');
     }
 
-    if (attendanceHasReturnOverride($employeeId, $date)) {
+    if (hrAttendanceHasReturnOverride($employeeId, $date)) {
         throw new RuntimeException('تم تسجيل عودة الموظف من الإجازة مسبقاً لهذا التاريخ.');
     }
 
@@ -139,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             attendanceReturnFromLeave($employeeId, $selectedDate);
             $message = 'تم تسجيل عودة الموظف من الإجازة. أصبح الآن مؤهلاً لتسجيل الحضور.';
         } elseif (in_array($action, ['check_in', 'check_out', 'mark_absent', 'mark_leave'], true)) {
-            attendanceRequireEligible($employeeId, $selectedDate);
+            hrAttendanceRequireEligible($employeeId, $selectedDate);
 
             if ($action === 'check_in') {
                 $mode = (string)($_POST['work_mode'] ?? 'remote');
@@ -219,8 +145,8 @@ $departments = [];
 foreach ($employees as $employee) {
     $id = (int)$employee['id'];
     $att = $attendanceRecords[$id] ?? null;
-    $approvedLeave = attendanceApprovedLeave($id, $selectedDate);
-    $returned = $approvedLeave ? attendanceHasReturnOverride($id, $selectedDate) : false;
+    $approvedLeave = hrAttendanceApprovedLeave($id, $selectedDate);
+    $returned = $approvedLeave ? hrAttendanceHasReturnOverride($id, $selectedDate) : false;
 
     // The effective status is authoritative for the UI. This is important:
     // even if an old attendance row says on_leave, or an approved leave is
@@ -285,11 +211,11 @@ document.addEventListener('DOMContentLoaded', function(){
 
     // Approved-leave employees are kept out of the attendance roster entirely.
     // Their existing return-from-leave form is moved into a dedicated panel.
-    const leaveRows=Array.from(body.querySelectorAll('tr[data-status=\"on_leave\"]'));
+    const leaveRows=Array.from(body.querySelectorAll('tr[data-status="on_leave"]'));
     if(leaveRows.length){
         const panel=document.createElement('div');
         panel.className='att5-leave-panel';
-        panel.innerHTML='<div class=\"att5-leave-head\"><div><strong><i class=\"fas fa-calendar-day\"></i> الموظفون في إجازة معتمدة</strong><span>لن يظهر الموظف في كشف الحضور حتى تسجيل عودته.</span></div><span class=\"att5-leave-count\">'+leaveRows.length+' موظف</span></div>';
+        panel.innerHTML='<div class="att5-leave-head"><div><strong><i class="fas fa-calendar-day"></i> الموظفون في إجازة معتمدة</strong><span>لن يظهر الموظف في كشف الحضور حتى تسجيل عودته.</span></div><span class="att5-leave-count">'+leaveRows.length+' موظف</span></div>';
         const wrap=document.createElement('div');
         wrap.className='att5-leave-list';
         const leaveTable=document.createElement('table');
