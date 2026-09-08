@@ -38,28 +38,68 @@ function hrAttendanceApprovedLeave(int $employeeId, string $date): ?array
     );
 }
 
+/**
+ * Return true when an approved leave has an explicit effective return date
+ * on or before the requested attendance date.
+ *
+ * The return record is linked to the specific leave, so a later/new leave
+ * cannot accidentally inherit a previous return.
+ *
+ * The legacy attendance-note fallback is intentionally kept only as a one-time
+ * bridge for rows created by the existing "return from leave" action before
+ * this persistent return table existed. Once detected, it is persisted.
+ */
 function hrAttendanceHasReturnOverride(int $employeeId, string $date): bool
 {
+    $leave = hrAttendanceApprovedLeave($employeeId, $date);
+    if (!$leave) {
+        return false;
+    }
+
+    $storedReturn = dbFetchOne(
+        "SELECT id
+         FROM hr_leave_returns
+         WHERE leave_id = ?
+           AND employee_id = ?
+           AND return_date <= ?
+         LIMIT 1",
+        [(int)$leave['id'], $employeeId, $date]
+    );
+
+    if ($storedReturn) {
+        return true;
+    }
+
     /*
-     * A return-from-leave starts by creating an 'absent' attendance row with
-     * the special return note. Later attendance actions (check-in, check-out,
-     * mark absent) legitimately change the status and may clear the note.
-     *
-     * Therefore the return override must remain true for any attendance row
-     * that is no longer 'on_leave'. Otherwise a normal check-in changes the
-     * row to 'present', the note disappears, and the approved leave is
-     * immediately re-applied to the UI, moving the employee back to the
-     * on-leave section.
+     * Compatibility bridge for the return implementation used before the
+     * persistent return table was introduced. The return action creates this
+     * exact note. The first integrity check persists the effective date.
      */
-    return dbFetchOne(
+    $legacyReturn = dbFetchOne(
         "SELECT id
          FROM attendance
          WHERE employee_id = ?
            AND date = ?
            AND status <> 'on_leave'
+           AND notes LIKE 'عودة من الإجازة%'
          LIMIT 1",
         [$employeeId, $date]
-    ) !== null;
+    );
+
+    if (!$legacyReturn) {
+        return false;
+    }
+
+    dbExecute(
+        "INSERT INTO hr_leave_returns (leave_id, employee_id, return_date)
+         VALUES (?, ?, ?)
+         ON DUPLICATE KEY UPDATE
+            employee_id = VALUES(employee_id),
+            return_date = LEAST(return_date, VALUES(return_date))",
+        [(int)$leave['id'], $employeeId, $date]
+    );
+
+    return true;
 }
 
 /**
