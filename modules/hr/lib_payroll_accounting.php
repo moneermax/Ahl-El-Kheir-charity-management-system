@@ -58,8 +58,11 @@ function hrPayrollResolvePaymentAccount(PDO $pdo, ?int $requestedAccountId): int
 function hrPayrollPostAccounting(PDO $pdo, array $payroll): int
 {
     require_once dirname(__DIR__) . '/accounting/lib.php';
-    ak_ensure_tables();
-    ak_seed_accounts();
+
+    // IMPORTANT: ak_ensure_tables() contains DDL (CREATE TABLE IF NOT EXISTS).
+    // DDL may implicitly commit a MySQL/MariaDB transaction, so it MUST NOT
+    // be called while the payroll transaction is active. Initialization is
+    // performed by hrPayrollChangeStatus() before beginTransaction().
 
     $amount = (float)($payroll['net_salary'] ?? 0);
     if ($amount <= 0) {
@@ -156,6 +159,12 @@ function hrPayrollChangeStatus(PDO $pdo, int $payrollId, string $newStatus, ?int
         throw new RuntimeException('سجل الرواتب غير صالح.');
     }
 
+    // Accounting table initialization contains DDL. Do it before opening
+    // the transaction so it cannot implicitly commit the payroll transaction.
+    require_once dirname(__DIR__) . '/accounting/lib.php';
+    ak_ensure_tables();
+    ak_seed_accounts();
+
     $startedHere = false;
     if (!$pdo->inTransaction()) {
         $pdo->beginTransaction();
@@ -226,6 +235,11 @@ function hrPayrollApproveAll(PDO $pdo, int $month, int $year): int
     if ($month < 1 || $month > 12) {
         throw new RuntimeException('الشهر غير صالح.');
     }
+
+    // Ensure accounting infrastructure before starting the transaction.
+    require_once dirname(__DIR__) . '/accounting/lib.php';
+    ak_ensure_tables();
+    ak_seed_accounts();
 
     $pdo->beginTransaction();
     try {
