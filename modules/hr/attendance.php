@@ -121,14 +121,15 @@ function attendanceReturnFromLeave(int $employeeId, string $date): void
     }
 
     dbExecute(
-        INSERT INTO attendance (employee_id, date, status, work_mode, notes)
-VALUES (?, ?, 'absent', 'remote', 'عودة من الإجازة - بانتظار تسجيل الحضور')
-ON DUPLICATE KEY UPDATE
-    status = 'absent',
-    check_in = NULL,
-    check_out = NULL,
-    work_mode = 'remote',
-    notes = 'عودة من الإجازة - بانتظار تسجيل الحضور'
+        "INSERT INTO attendance (employee_id, date, status, work_mode, notes)
+        VALUES (?, ?, 'absent', 'remote', 'عودة من الإجازة - بانتظار تسجيل الحضور')
+        ON DUPLICATE KEY UPDATE
+        status = 'absent',
+        check_in = NULL,
+        check_out = NULL,
+        work_mode = 'remote',
+        notes = 'عودة من الإجازة - بانتظار تسجيل الحضور'
+        ",
         [$employeeId, $date]
     );
 }
