@@ -32,8 +32,8 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && verify_csrf()) {
             try {
                 db()->beginTransaction();
                 $old=['status'=>$t['status'],'fm_reviewed_by'=>$t['fm_reviewed_by'],'fm_reviewed_at'=>$t['fm_reviewed_at'],'fm_review_reason'=>$t['fm_review_reason']];
-                $stmt = dbExecute("UPDATE transactions SET status='posted', fm_reviewed_by=?, fm_reviewed_at=NOW(), fm_review_reason=NULL WHERE id=? AND status='pending_fm_review'",[$uid,$tid]);
-                if ($stmt->rowCount()!==1) throw new RuntimeException('تعذر اعتماد الدفعة.');
+                $affected = dbExecute("UPDATE transactions SET status='posted', fm_reviewed_by=?, fm_reviewed_at=NOW(), fm_review_reason=NULL WHERE id=? AND status='pending_fm_review'",[$uid,$tid]);
+                if ($affected!==1) throw new RuntimeException('تعذر اعتماد الدفعة.');
                 $journalId=ak_post_transaction_journal($tid);
                 if ($journalId<=0) throw new RuntimeException('فشل إنشاء القيد المحاسبي.');
                 ak_transaction_review_audit($uid,'FM_APPROVE',$tid,$old,['status'=>'posted','journal_id'=>$journalId]);
@@ -57,8 +57,8 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && verify_csrf()) {
             else {
                 try {
                     db()->beginTransaction();
-                    $stmt = dbExecute("UPDATE transactions SET status='returned', fm_reviewed_by=?, fm_reviewed_at=NOW(), fm_review_reason=? WHERE id=? AND status='pending_fm_review'",[$uid,$reason,$tid]);
-                    if($stmt->rowCount()!==1) throw new RuntimeException('تعذر إرجاع الدفعة.');
+                    $affected = dbExecute("UPDATE transactions SET status='returned', fm_reviewed_by=?, fm_reviewed_at=NOW(), fm_review_reason=? WHERE id=? AND status='pending_fm_review'",[$uid,$reason,$tid]);
+                    if($affected!==1) throw new RuntimeException('تعذر إرجاع الدفعة.');
                     ak_transaction_review_audit($uid,'FM_RETURN',$tid,['status'=>'pending_fm_review'],['status'=>'returned','reason'=>$reason]);
                     db()->commit();
                     ak_transaction_review_notify_user((int)$t['created_by'],'تم إرجاع الدفعة للتعديل','تم إرجاع الدفعة ' . ($t['transaction_code']??('#'.$tid)) . ' للتعديل. السبب: '.$reason,'modules/transactions/create.php?sponsor_id='.(int)($t['sponsor_id']??0));
