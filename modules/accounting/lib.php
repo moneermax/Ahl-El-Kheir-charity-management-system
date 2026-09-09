@@ -211,9 +211,64 @@ function ak_post_transaction_journal(int $txnId): int {
 
 if (!function_exists('ak_void_journal_for_transaction')) {
 function ak_void_journal_for_transaction(int $txnId, string $reason): void {
-    dbExecute("UPDATE journal_entries SET status='voided', voided_at=NOW(), voided_by=?, void_reason=?
-               WHERE reference_type='transaction' AND reference_id=? AND status='posted'",
-        [Session::getUserId(), $reason, $txnId]);
+    ak_ensure_tables();
+    $original = dbFetchOne("SELECT id, entry_code, entry_date, description, status FROM journal_entries
+                            WHERE reference_type='transaction' AND reference_id=?
+                            ORDER BY id ASC LIMIT 1 FOR UPDATE", [$txnId]);
+    if (!$original) {
+        throw new RuntimeException('لا يوجد قيد محاسبي مرحّل للمعاملة ' . $txnId);
+    }
+    if ($original['status'] !== 'posted') {
+        throw new RuntimeException('القيد المحاسبي للمعاملة ' . $txnId . ' ليس في حالة مرحّلة.');
+    }
+
+    $existingReversal = dbFetchOne("SELECT id FROM journal_entries
+                                    WHERE reference_type='transaction_void' AND reference_id=?
+                                    LIMIT 1 FOR UPDATE", [$txnId]);
+    if ($existingReversal) {
+        throw new RuntimeException('يوجد قيد إلغاء محاسبي سابق للمعاملة ' . $txnId . '.');
+    }
+
+    $lines = dbFetchAll("SELECT account_id, debit, credit, description
+                         FROM journal_lines WHERE entry_id=? ORDER BY id", [(int)$original['id']]);
+    if (!$lines) {
+        throw new RuntimeException('القيد المحاسبي للمعاملة ' . $txnId . ' لا يحتوي على أسطر.');
+    }
+
+    $totalDebit = 0.0; $totalCredit = 0.0;
+    foreach ($lines as $line) {
+        $debit = round((float)$line['debit'], 2);
+        $credit = round((float)$line['credit'], 2);
+        if ($debit < 0 || $credit < 0 || ($debit > 0 && $credit > 0)) {
+            throw new RuntimeException('سطر القيد الأصلي غير صالح للمعاملة ' . $txnId);
+        }
+        $totalDebit += $debit; $totalCredit += $credit;
+    }
+    if (round($totalDebit, 2) !== round($totalCredit, 2) || round($totalDebit, 2) <= 0) {
+        throw new RuntimeException('القيد الأصلي للمعاملة ' . $txnId . ' غير متوازن أو صفري.');
+    }
+
+    // Preserve the original posted entry for audit/history, then post a separate
+    // balanced reversal with every debit/credit swapped. The two entries net to zero.
+    dbExecute("UPDATE journal_entries SET status='voided', voided_at=NOW(), voided_by=?, void_reason=? WHERE id=? AND status='posted'",
+        [Session::getUserId(), $reason, (int)$original['id']]);
+    if (db()->rowCount() !== 1) {
+        throw new RuntimeException('تعذر إبطال القيد الأصلي للمعاملة ' . $txnId);
+    }
+
+    $code = 'JE-VOID-TXN-' . $txnId;
+    $codeExists = dbFetchOne("SELECT id FROM journal_entries WHERE entry_code=? LIMIT 1", [$code]);
+    if ($codeExists) {
+        throw new RuntimeException('رمز قيد الإلغاء موجود مسبقاً للمعاملة ' . $txnId . '.');
+    }
+    dbExecute("INSERT INTO journal_entries (entry_code, entry_date, description, reference_type, reference_id, status, created_by)
+               VALUES (?,?,?,?,?,'posted',?)",
+        [$code, $original['entry_date'], 'عكس القيد بسبب إبطال المعاملة ' . $txnId, 'transaction_void', $txnId, Session::getUserId()]);
+    $reversalId = (int)(dbFetchOne("SELECT LAST_INSERT_ID() id")['id']);
+    foreach ($lines as $line) {
+        dbExecute("INSERT INTO journal_lines (entry_id, account_id, debit, credit, description) VALUES (?,?,?,?,?)",
+            [$reversalId, (int)$line['account_id'], round((float)$line['credit'], 2), round((float)$line['debit'], 2), 'عكس: ' . ($line['description'] ?? '')]);
+    }
 }
 }
 
