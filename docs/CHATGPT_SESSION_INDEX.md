@@ -23,7 +23,7 @@ Historical compatibility entry point: `modules/hr/index.php` (redirect only).
 
 # ACCOUNTING AUDIT — CURRENT CHECKPOINT
 
-The project is currently in **ACCOUNTING AUDIT — PHASE 1: TRANSACTION / FM REVIEW INTEGRITY**.
+The project is currently in **ACCOUNTING AUDIT — PHASE 1: ACCOUNTING / JOURNAL INTEGRITY**.
 
 Completed and verified:
 
@@ -34,6 +34,7 @@ Completed and verified:
 5. FM approves → `posted` + exactly one balanced journal.
 6. Creator cancels returned transaction → `cancelled` with cancellation audit and no journal.
 7. Authorized void of a posted transaction → original journal `voided` + separate balanced `transaction_void` reversal journal + transaction `voided`, atomically.
+8. Manual Journal Entry Integrity → fully tested and PASSED.
 
 ## Completed control records — DO NOT MODIFY OR REUSE
 
@@ -64,7 +65,6 @@ Completed and verified:
 
 ### TR-000016 — transaction ID 22
 
-- Creator: controlled Accounting test transaction
 - Final status: `voided`
 - Type: `general_donation`
 - Amount: `1,000.00`
@@ -75,27 +75,88 @@ Completed and verified:
 - Void performed by: Financial Manager
 - Complete posted → void + reversal workflow passed.
 
-**TR-000014, TR-000015, and TR-000016 are completed control-test records and must not be modified or reused.**
+### JE-000027 — manual journal control
+
+- Date: `2026-09-09`
+- Description: `اختبار رقابي - قيد يومية يدوي`
+- Reference type: `manual`
+- Total: `1,000.00`
+- Status: `posted`
+- Creator: Financial Manager
+- Full Manual Journal Entry Integrity test set passed.
+
+**TR-000014, TR-000015, TR-000016, and JE-000027 are completed control-test records and must not be modified or reused.**
 
 Detailed checkpoints:
 
 - `docs/AHL_EL_KHEIR_ACCOUNTING_AUDIT_CHECKPOINT_2026-09-09.md`
 - `docs/AHL_EL_KHEIR_ACCOUNTING_VOID_REVERSAL_CHECKPOINT_2026-09-09.md`
+- `docs/AHL_EL_KHEIR_DOCUMENTATION_UPDATE_2026-09-09.md`
 
 Relevant implementation commits:
 
 - Cancellation correction: `62229c5a9a4be9ad2d55223402b5fe1f03bd81e4`
 - Void/reversal hardening: `99759d186cbb9507be631aa4df48cbef4d7e202b`
+- Manual journal validation/atomicity/numbering hardening: `8aa473eee507cce3d5ad96aa6d5403a7dc467002`
+- Manual journal void segregation: `45d07f3003eeb9df1eb297eb408c949948bc68b3`
+
+## Manual Journal Entry Integrity — FINAL RESULT: PASSED
+
+Live verification was performed using the correct role model:
+
+- **ACC1 / Accounting Staff:** journal access = denied, including direct access attempt.
+- **Financial Manager:** journal and manual-journal access = allowed.
+- No role escalation was performed.
+
+The Financial Manager successfully created `JE-000027` and all planned validation/security tests passed, including:
+
+- valid balanced journal;
+- unbalanced rejection;
+- zero-value rejection;
+- negative/invalid amount rejection;
+- excessive decimal precision rejection;
+- minimum two-line enforcement;
+- duplicate-account rejection;
+- debit/credit same-line rejection;
+- invalid/nonexistent account rejection;
+- inactive-account rejection;
+- invalid-date rejection;
+- description validation;
+- no partial journal after rejected submission;
+- unique journal numbering/collision protection;
+- audit trail;
+- posted-entry immutability;
+- creator cannot void own manual journal;
+- separate authorized user can void another user's manual journal;
+- void history/audit preservation;
+- automated journal protection.
+
+The controlled unbalanced test returned:
+
+`القيد غير متوازن: مدين 1,000.00 ≠ دائن 15,000.00`
+
+This control is now CLOSED/PASSED for the current audit cycle.
 
 ## Exact next continuation point
 
-**Continue with the next concrete Accounting integrity control: Manual Journal Entry Integrity.**
+**Continue with the next concrete Accounting integrity control: Journal Integrity / Accounting History Interaction.**
 
-Target implementation: `modules/accounting/journal_create.php`
+Do not repeat the completed Manual Journal Entry Integrity tests.
 
-Audit the existing implementation first. Verify authorization/segregation of duties, server-side validation, balance enforcement, journal numbering, atomic header/line creation, failure rollback, audit-trail requirements, posted-entry immutability, and manual-entry void behavior. Make only a narrow correction if concrete evidence requires it.
+Next audit scope:
 
-Do not repeat the completed TR-000014 posting test, TR-000015 return/cancellation test, or TR-000016 void/reversal test.
+1. journal listing and filtering integrity;
+2. correct separation of `manual`, `transaction`, `transaction_void`, `disbursement`, and `voucher` references;
+3. journal detail/history consistency;
+4. visibility of posted versus voided entries;
+5. preservation of original entries after reversal/void;
+6. prevention of unauthorized journal mutation through alternate routes;
+7. accounting-history totals and balance consistency;
+8. interaction between transaction status and journal status;
+9. duplicate/missing journal relationships;
+10. cross-module accounting references and auditability.
+
+Do not modify or reuse TR-000014, TR-000015, TR-000016, or JE-000027.
 
 ---
 
@@ -103,9 +164,9 @@ Do not repeat the completed TR-000014 posting test, TR-000015 return/cancellatio
 
 - `docs/AHL_EL_KHEIR_SYSTEM_ANALYSIS.md` — long-lived architecture/system reference.
 - `docs/AHL_EL_KHEIR_CURRENT_SYSTEM_STATUS_2026-09-08.md` — cross-module status baseline.
-- `docs/AHL_EL_KHEIR_DOCUMENTATION_UPDATE_2026-09-09.md` — chronological Accounting Phase 1 milestone record.
-- `docs/AHL_EL_KHEIR_ACCOUNTING_AUDIT_CHECKPOINT_2026-09-09.md` — verified return/cancellation control checkpoint.
-- `docs/AHL_EL_KHEIR_ACCOUNTING_VOID_REVERSAL_CHECKPOINT_2026-09-09.md` — verified posted-transaction void/reversal control checkpoint.
+- `docs/AHL_EL_KHEIR_DOCUMENTATION_UPDATE_2026-09-09.md` — chronological Accounting milestone record.
+- `docs/AHL_EL_KHEIR_ACCOUNTING_AUDIT_CHECKPOINT_2026-09-09.md` — verified return/cancellation checkpoint.
+- `docs/AHL_EL_KHEIR_ACCOUNTING_VOID_REVERSAL_CHECKPOINT_2026-09-09.md` — verified posted-transaction void/reversal checkpoint.
 - `docs/AHL_EL_KHEIR_DOCUMENTATION_UPDATE_2026-09-08.md` — prior HR/payroll/accounting integration milestone.
 - `docs/HR_DASHBOARD_NAVIGATION_AUDIT_2026-09-08.md` — final HR dashboard/navigation audit.
 - `docs/AHL_EL_KHEIR_COMPLETE_REPOSITORY_AUDIT.md` — historical consolidated repository audit.
@@ -176,6 +237,6 @@ I am continuing development of the existing **Ahl El Kheir Charity Management Sy
 
 Repository: https://github.com/moneermax/Ahl-El-Kheir-charity-management-system
 
-Current checkpoint: HR is CLOSED. Accounting Audit Phase 1 is in progress. The creator/FM transaction workflow is verified, TR-000014 posting is verified, TR-000015 returned → cancelled is verified, and TR-000016 posted → void + reversal is verified. Do not modify or reuse those control records.
+Current checkpoint: HR is CLOSED. Accounting Audit Phase 1 is in progress. The creator/FM transaction workflow is verified, TR-000014 posting is verified, TR-000015 returned → cancelled is verified, TR-000016 posted → void + reversal is verified, and Manual Journal Entry Integrity is verified/PASSED using FM access. ACC1 does not have journal access. Do not modify or reuse the completed control records.
 
-Read `docs/CHATGPT_SESSION_INDEX.md` and the current Accounting documentation first. Continue from the exact next Accounting integrity control: Manual Journal Entry Integrity. Do not repeat completed tests. Preserve the established procedural PHP / Vanilla JS architecture and follow Inspect → Understand → Verify → Fix narrowly → Test → Document.
+Read `docs/CHATGPT_SESSION_INDEX.md` and the current Accounting documentation first. Continue from the exact next Accounting integrity control: Journal Integrity / Accounting History Interaction. Do not repeat completed tests. Preserve the established procedural PHP / Vanilla JS architecture and follow Inspect → Understand → Verify → Fix narrowly → Test → Document.
