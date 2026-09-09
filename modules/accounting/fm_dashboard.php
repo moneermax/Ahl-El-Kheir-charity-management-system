@@ -308,6 +308,16 @@ if (is_array($fl)) {
 }
 ?>
 
+
+
+    <div class="fm-top-right">
+        <!-- ══════════ TREASURY BALANCE ══════════ -->
+        <div class="grid-4">
+            <div class="stat-box"><div class="stat-label">💵 <?php echo e(t('fm.cash')); ?></div><div class="stat-value"><?php echo number_format((float)$treasury['cash'], 0); ?></div><div class="stat-sub"><?php echo e(t('fm.account_1100')); ?></div></div>
+            <div class="stat-box blue"><div class="stat-label">🏦 <?php echo e(t('fm.bank')); ?></div><div class="stat-value"><?php echo number_format((float)$treasury['bank'], 0); ?></div><div class="stat-sub"><?php echo e(t('fm.account_1200')); ?></div></div>
+            <div class="stat-box purple"><div class="stat-label">📱 <?php echo e(t('fm.wallet')); ?></div><div class="stat-value"><?php echo number_format((float)$treasury['wallet'], 0); ?></div><div class="stat-sub"><?php echo e(t('fm.account_1300')); ?></div></div>
+            <div class="stat-box green"><div class="stat-label">💰 <?php echo e(t('fm.total_treasury')); ?></div><div class="stat-value"><?php echo number_format((float)$treasury['total'], 0); ?></div><div class="stat-sub"><?php echo e(t('fm.currency_sdg')); ?></div></div>
+        </div>
 <!-- ══════════ TOP FINANCIAL OVERSIGHT LAYOUT ══════════ -->
 <div class="fm-top-layout">
     <div class="fm-card fm-review-card" id="fm-transaction-review">
@@ -325,16 +335,6 @@ if (is_array($fl)) {
             </div>
         </div>
     </div>
-
-    <div class="fm-top-right">
-        <!-- ══════════ TREASURY BALANCE ══════════ -->
-        <div class="grid-4">
-            <div class="stat-box"><div class="stat-label">💵 <?php echo e(t('fm.cash')); ?></div><div class="stat-value"><?php echo number_format((float)$treasury['cash'], 0); ?></div><div class="stat-sub"><?php echo e(t('fm.account_1100')); ?></div></div>
-            <div class="stat-box blue"><div class="stat-label">🏦 <?php echo e(t('fm.bank')); ?></div><div class="stat-value"><?php echo number_format((float)$treasury['bank'], 0); ?></div><div class="stat-sub"><?php echo e(t('fm.account_1200')); ?></div></div>
-            <div class="stat-box purple"><div class="stat-label">📱 <?php echo e(t('fm.wallet')); ?></div><div class="stat-value"><?php echo number_format((float)$treasury['wallet'], 0); ?></div><div class="stat-sub"><?php echo e(t('fm.account_1300')); ?></div></div>
-            <div class="stat-box green"><div class="stat-label">💰 <?php echo e(t('fm.total_treasury')); ?></div><div class="stat-value"><?php echo number_format((float)$treasury['total'], 0); ?></div><div class="stat-sub"><?php echo e(t('fm.currency_sdg')); ?></div></div>
-        </div>
-
         <!-- ══════════ PROJECT BUDGETS PENDING FM REVIEW ══════════ -->
         <div id="project-budget-review" class="fm-card" style="border-right:5px solid #ffc107;">
             <div class="fm-card-head">
