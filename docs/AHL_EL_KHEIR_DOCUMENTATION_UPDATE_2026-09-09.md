@@ -3,7 +3,7 @@
 
 **Repository:** `moneermax/Ahl-El-Kheir-charity-management-system`  
 **Authoritative branch:** `main`  
-**Purpose:** Record the verified Accounting Phase 1 transaction workflow and establish the exact next accounting control checkpoint.
+**Purpose:** Record the verified Accounting Phase 1 transaction workflow, posting integrity, and returned-transaction cancellation control.
 
 > This is a chronological implementation and verification record. Earlier audit documents remain historical evidence and are not rewritten merely because later work has been completed.
 
@@ -13,7 +13,7 @@
 
 ## 1.1 Core workflow — VERIFIED / PASSED
 
-The complete transaction review workflow has now been implemented and verified through a controlled test:
+The complete transaction review workflow has been implemented and verified through controlled tests:
 
 ```text
 Creator creates transaction
@@ -48,9 +48,11 @@ Verified controls:
 - The posting creates exactly one journal entry for the transaction.
 - The journal is balanced.
 
-## 1.2 Controlled test — TR-000014 — PASSED
+---
 
-The controlled transaction used for this workflow test is:
+# 2. Controlled posting test — TR-000014 — PASSED
+
+The controlled transaction used for the successful approval/posting workflow was:
 
 - Transaction code: `TR-000014`
 - Transaction ID: `20`
@@ -65,7 +67,7 @@ The controlled transaction used for this workflow test is:
 - Status: `posted`
 - FM review timestamp: `2026-09-09 11:18:20`
 
-TR-000014 successfully completed the following tested lifecycle:
+TR-000014 successfully completed:
 
 ```text
 ACC1 creates
@@ -77,13 +79,11 @@ ACC1 creates
 → accounting journal posts
 ```
 
-**TR-000014 is now a completed control-test record and must not be modified or reused for subsequent cancellation testing.**
+**TR-000014 is a completed control-test record and must not be modified or reused.**
 
 ---
 
-# 2. Journal Posting Integrity — VERIFIED / PASSED
-
-## 2.1 Journal existence and uniqueness
+# 3. Journal Posting Integrity — VERIFIED / PASSED
 
 For transaction ID `20`, the database contains exactly one journal entry:
 
@@ -93,10 +93,6 @@ For transaction ID `20`, the database contains exactly one journal entry:
 - `status = posted`
 - Created at: `2026-09-09 11:18:20`
 
-No duplicate journal entry exists for TR-000014.
-
-## 2.2 Journal lines
-
 Journal entry `36` contains exactly two lines:
 
 | Account | Account name | Debit | Credit |
@@ -104,34 +100,30 @@ Journal entry `36` contains exactly two lines:
 | `1300` | المحافظ الإلكترونية | 250,000.00 | 0.00 |
 | `4300` | التبرعات العامة | 0.00 | 250,000.00 |
 
-Descriptions recorded by the journal:
+Descriptions:
 
 - `تحصيل TR-000014`
 - `تبرع عام TR-000014`
 
-## 2.3 Balance verification
-
-Journal entry `36` was independently checked using the actual database schema.
+Balance verification:
 
 - Total debit: `250,000.00`
 - Total credit: `250,000.00`
 - Difference: `0.00`
 
-Therefore:
+Therefore **TR-000014 posting integrity = PASSED**.
 
-**TR-000014 posting integrity = PASSED**
-
-The verified relationship in the database is:
+The verified database relationship is:
 
 `journal_lines.entry_id = journal_entries.id`
 
-The `journal_lines` foreign-key column is `entry_id`, not `journal_entry_id`.
+The journal-lines foreign-key column is `entry_id`, not `journal_entry_id`.
 
 ---
 
-# 3. Final Transaction Integrity — VERIFIED
+# 4. Final Transaction Integrity — VERIFIED
 
-The final transaction database record confirms:
+The final transaction database record for TR-000014 confirms:
 
 - `id = 20`
 - `transaction_code = TR-000014`
@@ -148,11 +140,9 @@ The final transaction database record confirms:
 - `fm_reviewed_by = 29`
 - `fm_reviewed_at = 2026-09-09 11:18:20`
 
-The absence of sponsor, sponsorship and project references is consistent with the tested `general_donation` transaction.
-
 ---
 
-# 4. Implementation Corrections Confirmed During This Phase
+# 5. Implementation Corrections Confirmed During This Phase
 
 The returned-transaction editor was corrected to use the actual transaction schema field:
 
@@ -166,11 +156,17 @@ The Arabic error message was clarified from the earlier wording containing `بش
 
 `تعذر حفظ التعديلات وإعادة إرسال الدفعة للمراجعة المالية. يرجى التحقق من البيانات والمحاولة مرة أخرى.`
 
+The returned-transaction cancellation implementation was corrected to enforce creator-only cancellation, require a non-empty cancellation reason server-side, perform the state change atomically, record `CANCEL_RETURNED`, notify FM users, and avoid any journal/posting operation. Receipt physical deletion remains subject to reference-safety checks.
+
+Implementation commit:
+
+`62229c5a9a4be9ad2d55223402b5fe1f03bd81e4`
+
 ---
 
-# 5. Authorization / Segregation of Duties — VERIFIED IN CONTROL TEST
+# 6. Authorization / Segregation of Duties — VERIFIED
 
-The verified test establishes:
+The verified posting test establishes:
 
 - Creator = user `17` / ACC1
 - Reviewer = user `29` / Financial Manager
@@ -179,48 +175,115 @@ The same user did not create and approve TR-000014.
 
 The FM review workflow includes prevention of FM self-approval.
 
-The original creator remains associated with the transaction throughout the return/edit/resubmit cycle.
+For returned cancellation, TR-000015 was cancelled by its original creator (user `17`), demonstrating the creator boundary in the tested route.
 
 ---
 
-# 6. Next Accounting Control Checkpoint
+# 7. RETURNED TRANSACTION → CANCELLED — VERIFIED / PASSED
 
-The next controlled test is:
+A separate controlled transaction was used so the completed posting test was not altered.
 
-# RETURNED TRANSACTION → CANCELLED
+### Controlled transaction — TR-000015
 
-A new transaction must be used. **TR-000014 must not be modified.**
+- Transaction ID: `21`
+- Creator: user `17` / ACC1
+- FM reviewer: user `29`
+- Type: `project_donation`
+- Amount: `25,000`
+- Payment method: `bank_transfer`
+- Reference number: `987654321`
 
-The intended test is:
+Tested lifecycle:
 
 ```text
 ACC1 creates
 → pending_fm_review
 → FM returns with reason
-→ ACC1 decides not to correct/resubmit
 → ACC1 cancels
+→ cancelled
 ```
 
-The following must be verified:
+### FM return verification — PASSED
 
-1. Only the original creator can cancel.
-2. Cancellation requires a reason.
-3. Status changes from `returned` to `cancelled`.
-4. `cancelled_at` is populated.
-5. `cancelled_by` is populated.
-6. `cancel_reason` is populated.
-7. No journal entry is created.
-8. FM cannot improperly use the creator cancellation route.
-9. Audit logging records the cancellation.
-10. Correct notification behavior occurs.
-11. Receipt files remain safely handled.
-12. No financial posting occurs.
+The transaction changed to `returned` and disappeared from the FM pending queue.
 
-After this checkpoint passes, continue to the next Accounting integrity control without repeating the already-passed TR-000014 workflow.
+Verified values included:
+
+- `created_by = 17`
+- `fm_reviewed_by = 29`
+- `fm_reviewed_at = 2026-09-09 16:26:12`
+- `fm_review_reason = اختبار رقابي — تم الإرجاع للاختبار قبل الإلغاء`
+
+No journal entry existed for transaction `21` after return.
+
+Audit records included:
+
+- `1516` — `SUBMIT_FM`
+- `1517` — `FM_RETURN`
+
+### Cancellation verification — PASSED
+
+ACC1 cancelled TR-000015 from the returned state.
+
+Final verified values:
+
+- `status = cancelled`
+- `cancelled_at = 2026-09-09 16:30:38`
+- `cancelled_by = 17`
+- `cancel_reason = إلغاء من المنشئ بعد الإرجاع`
+
+The UI confirmed:
+
+`تم إلغاء الدفعة المُعادة وحذف الإيصالات غير المستخدمة مع الحفاظ على سجل التدقيق.`
+
+No journal entry existed for transaction `21` after cancellation.
+
+The new audit event was:
+
+- `1518` — user `17` — `CANCEL_RETURNED` — transaction `21`
+
+The complete audit sequence is:
+
+```text
+1516 SUBMIT_FM
+1517 FM_RETURN
+1518 CANCEL_RETURNED
+```
+
+The FM return history remained preserved after cancellation.
+
+**TR-000015 is now a completed cancellation control-test record and must not be modified or reused.**
+
+Detailed checkpoint: `docs/AHL_EL_KHEIR_ACCOUNTING_AUDIT_CHECKPOINT_2026-09-09.md`
 
 ---
 
-# 7. Continuation Rule
+# 8. Current Accounting Phase 1 State
+
+The verified Accounting Phase 1 state is now:
+
+```text
+Creator → pending_fm_review                    PASSED
+        ↓
+FM RETURN → returned                            PASSED
+        ↓
+Creator EDIT / RESUBMIT                         PASSED
+        ↓
+FM APPROVE → posted + journal                   PASSED
+        ↓
+Returned → Creator CANCEL → cancelled          PASSED
+```
+
+Both controlled records are complete and must remain untouched:
+
+- TR-000014 — posting control
+- TR-000015 — return/cancellation control
+
+The next audit task must inspect the next concrete Accounting integrity control in the current implementation without repeating these completed tests.
+
+---
+
+# 9. Continuation Rule
 
 The current Accounting continuation state is:
 
@@ -241,21 +304,24 @@ CORE WORKFLOW — PASSED
         ↓
 TR-000014 POSTING INTEGRITY — PASSED
         ↓
-NEXT: RETURNED → CANCELLED
+TR-000015 RETURNED → CANCELLED — PASSED
+        ↓
+NEXT: NEXT CONCRETE ACCOUNTING INTEGRITY CONTROL
 ```
 
-The next session must continue from **RETURNED TRANSACTION → CANCELLED** and must not restart the Accounting audit from the beginning.
+Do not restart the Accounting audit from the beginning.
 
 ---
 
-# 8. Documentation Maintenance
+# 10. Documentation Maintenance
 
-This document records the verified 2026-09-09 Accounting milestone. The project documentation hierarchy remains:
+This document records the verified 2026-09-09 Accounting milestones. The project documentation hierarchy remains:
 
 - Historical audit documents preserve historical findings.
 - Long-lived architecture documentation remains the architectural source of truth.
 - Chronological dated updates record verified implementation milestones.
 - `CHATGPT_SESSION_INDEX.md` records the current continuation point.
+- `AHL_EL_KHEIR_ACCOUNTING_AUDIT_CHECKPOINT_2026-09-09.md` records the detailed returned/cancelled control test.
 
 Required maintenance sequence remains:
 
