@@ -58,7 +58,7 @@ function ak_transaction_review_notify_fm(int $count, string $creatorName = ''): 
         foreach ($users as $u) {
             ak_transaction_review_notify_user((int)$u['id'], 'دفعات بانتظار المراجعة المالية',
                 'لديك ' . $count . ' دفعة بانتظار الاعتماد' . ($creatorName !== '' ? ' من ' . $creatorName : '') . '.',
-                'modules/accounting/fm_review_queue.php');
+                'modules/accounting/fm_transaction_review.php');
         }
     } catch (Throwable $e) {}
 }
