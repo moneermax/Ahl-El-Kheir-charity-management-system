@@ -45,13 +45,14 @@ if ($to !== '') {
 
 $accounts = dbFetchAll(
     "SELECT a.id, a.code, a.name_ar, a.name_en, a.account_type,
-            COALESCE(SUM(jl.debit),0) debit_total,
-            COALESCE(SUM(jl.credit),0) credit_total
+            COALESCE(SUM(CASE WHEN je.id IS NOT NULL THEN jl.debit ELSE 0 END),0) debit_total,
+            COALESCE(SUM(CASE WHEN je.id IS NOT NULL THEN jl.credit ELSE 0 END),0) credit_total
      FROM accounts a
      LEFT JOIN journal_lines jl ON jl.account_id=a.id
      LEFT JOIN journal_entries je ON je.id=jl.entry_id AND {$where}
      GROUP BY a.id, a.code, a.name_ar, a.name_en, a.account_type
-     HAVING COALESCE(SUM(jl.debit),0) <> 0 OR COALESCE(SUM(jl.credit),0) <> 0
+     HAVING COALESCE(SUM(CASE WHEN je.id IS NOT NULL THEN jl.debit ELSE 0 END),0) <> 0
+         OR COALESCE(SUM(CASE WHEN je.id IS NOT NULL THEN jl.credit ELSE 0 END),0) <> 0
      ORDER BY a.code",
     $params
 );
@@ -72,7 +73,7 @@ $totals = dbFetchOne(
 $totalDebit = (float)($totals['total_debit'] ?? 0);
 $totalCredit = (float)($totals['total_credit'] ?? 0);
 $difference = round($totalDebit - $totalCredit, 2);
-isBalanced = ($difference === 0.0);
+$isBalanced = ($difference === 0.0);
 
 include dirname(__DIR__,2).'/includes/header.php';
 ?>
