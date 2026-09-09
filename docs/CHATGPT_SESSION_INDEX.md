@@ -33,6 +33,7 @@ Completed and verified:
 4. Creator edits/resubmits returned transaction.
 5. FM approves → `posted` + exactly one balanced journal.
 6. Creator cancels returned transaction → `cancelled` with cancellation audit and no journal.
+7. Authorized void of a posted transaction → original journal `voided` + separate balanced `transaction_void` reversal journal + transaction `voided`, atomically.
 
 ## Completed control records — DO NOT MODIFY OR REUSE
 
@@ -61,15 +62,40 @@ Completed and verified:
 - No journal entry exists for transaction `21`.
 - Audit sequence verified: `SUBMIT_FM` → `FM_RETURN` → `CANCEL_RETURNED`.
 
-Detailed checkpoint: `docs/AHL_EL_KHEIR_ACCOUNTING_AUDIT_CHECKPOINT_2026-09-09.md`
+### TR-000016 — transaction ID 22
 
-Cancellation implementation correction: commit `62229c5a9a4be9ad2d55223402b5fe1f03bd81e4`.
+- Creator: controlled Accounting test transaction
+- Final status: `voided`
+- Type: `general_donation`
+- Amount: `1,000.00`
+- Method: `cash`
+- Original journal: `JE-000026` / journal ID `37`, final status `voided`
+- Reversal journal: `JE-VOID-TXN-22`, `reference_type = transaction_void`, final status `posted`
+- Reversal balanced debit/credit: `1,000.00 / 1,000.00`
+- Void performed by: Financial Manager
+- Complete posted → void + reversal workflow passed.
+
+**TR-000014, TR-000015, and TR-000016 are completed control-test records and must not be modified or reused.**
+
+Detailed checkpoints:
+
+- `docs/AHL_EL_KHEIR_ACCOUNTING_AUDIT_CHECKPOINT_2026-09-09.md`
+- `docs/AHL_EL_KHEIR_ACCOUNTING_VOID_REVERSAL_CHECKPOINT_2026-09-09.md`
+
+Relevant implementation commits:
+
+- Cancellation correction: `62229c5a9a4be9ad2d55223402b5fe1f03bd81e4`
+- Void/reversal hardening: `99759d186cbb9507be631aa4df48cbef4d7e202b`
 
 ## Exact next continuation point
 
-**Continue with the next concrete Accounting integrity control in the existing implementation.**
+**Continue with the next concrete Accounting integrity control: Manual Journal Entry Integrity.**
 
-Do not repeat the completed TR-000014 posting test or TR-000015 return/cancellation test. Inspect the next control, verify the relevant code/schema/workflow, make only a narrow correction if concrete evidence requires it, then test and document.
+Target implementation: `modules/accounting/journal_create.php`
+
+Audit the existing implementation first. Verify authorization/segregation of duties, server-side validation, balance enforcement, journal numbering, atomic header/line creation, failure rollback, audit-trail requirements, posted-entry immutability, and manual-entry void behavior. Make only a narrow correction if concrete evidence requires it.
+
+Do not repeat the completed TR-000014 posting test, TR-000015 return/cancellation test, or TR-000016 void/reversal test.
 
 ---
 
@@ -79,6 +105,7 @@ Do not repeat the completed TR-000014 posting test or TR-000015 return/cancellat
 - `docs/AHL_EL_KHEIR_CURRENT_SYSTEM_STATUS_2026-09-08.md` — cross-module status baseline.
 - `docs/AHL_EL_KHEIR_DOCUMENTATION_UPDATE_2026-09-09.md` — chronological Accounting Phase 1 milestone record.
 - `docs/AHL_EL_KHEIR_ACCOUNTING_AUDIT_CHECKPOINT_2026-09-09.md` — verified return/cancellation control checkpoint.
+- `docs/AHL_EL_KHEIR_ACCOUNTING_VOID_REVERSAL_CHECKPOINT_2026-09-09.md` — verified posted-transaction void/reversal control checkpoint.
 - `docs/AHL_EL_KHEIR_DOCUMENTATION_UPDATE_2026-09-08.md` — prior HR/payroll/accounting integration milestone.
 - `docs/HR_DASHBOARD_NAVIGATION_AUDIT_2026-09-08.md` — final HR dashboard/navigation audit.
 - `docs/AHL_EL_KHEIR_COMPLETE_REPOSITORY_AUDIT.md` — historical consolidated repository audit.
@@ -149,6 +176,6 @@ I am continuing development of the existing **Ahl El Kheir Charity Management Sy
 
 Repository: https://github.com/moneermax/Ahl-El-Kheir-charity-management-system
 
-Current checkpoint: HR is CLOSED. Accounting Audit Phase 1 is in progress. The creator/FM transaction workflow is verified, TR-000014 posting is verified, and TR-000015 returned → cancelled is verified. Do not modify or reuse those control records.
+Current checkpoint: HR is CLOSED. Accounting Audit Phase 1 is in progress. The creator/FM transaction workflow is verified, TR-000014 posting is verified, TR-000015 returned → cancelled is verified, and TR-000016 posted → void + reversal is verified. Do not modify or reuse those control records.
 
-Read `docs/CHATGPT_SESSION_INDEX.md` and the current Accounting documentation first. Continue from the exact next Accounting integrity control in the repository. Do not repeat completed tests. Preserve the established procedural PHP / Vanilla JS architecture and follow Inspect → Understand → Verify → Fix narrowly → Test → Document.
+Read `docs/CHATGPT_SESSION_INDEX.md` and the current Accounting documentation first. Continue from the exact next Accounting integrity control: Manual Journal Entry Integrity. Do not repeat completed tests. Preserve the established procedural PHP / Vanilla JS architecture and follow Inspect → Understand → Verify → Fix narrowly → Test → Document.
