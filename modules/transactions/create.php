@@ -1,10 +1,11 @@
 <?php
-// modules/transactions/create.php - Unified Payment Entry & Journal Posting (v7: history below, details & edit modals)
+// modules/transactions/create.php - Unified Payment Entry & Journal Posting (v8: FM review workflow)
 require_once dirname(__DIR__, 2) . '/config/config.php';
 require_once dirname(__DIR__, 2) . '/config/database.php';
 require_once dirname(__DIR__, 2) . '/config/functions.php';
 require_once dirname(__DIR__, 2) . '/config/session.php';
 require_once dirname(__DIR__, 2) . '/modules/accounting/lib.php';
+require_once dirname(__DIR__, 2) . '/modules/accounting/lib_transaction_review.php';
 
 Session::start();
 if (!Session::isLoggedIn()) { header('Location: ' . APP_URL . 'index.php'); exit(); }
@@ -99,7 +100,7 @@ if ($input['sponsor_id'] > 0) {
     $currentSponsor = dbFetchOne("SELECT id, full_name, sponsor_code FROM sponsors WHERE id = ?", [$input['sponsor_id']]);
 }
 
-/* ---- EDIT HANDLER ---- */
+/* ---- EDIT / RESUBMIT HANDLER ---- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_record']) && verify_csrf()) {
     $src = $_POST['edit_src'] ?? '';
     $rid = (int)$_POST['edit_id'];
@@ -107,16 +108,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_record']) && ver
     $newPurpose = trim($_POST['edit_purpose'] ?? '');
     $newNote = trim($_POST['edit_note'] ?? '');
     $newAmount = (float)str_replace(',', '', $_POST['edit_amount'] ?? 0);
-    
-    $canEdit = in_array($role, ['admin', 'financial_manager', 'accountant'], true);
-    if ($src === 'pending' && $role === 'supervisor') {
-        $chk = dbFetchOne("SELECT supervisor_id FROM sponsor_payments WHERE id = ?", [$rid]);
-        if ($chk && (int)$chk['supervisor_id'] === $uid) $canEdit = true;
+
+    // Sponsor-supervisor workflow remains separate and retains its existing permissions.
+    $canEdit = false;
+    $isReturnedTransaction = false;
+    if ($src === 'pending') {
+        $canEdit = false;
+        if ($role === 'supervisor') {
+            $chk = dbFetchOne("SELECT supervisor_id, status FROM sponsor_payments WHERE id = ?", [$rid]);
+            if ($chk && (int)$chk['supervisor_id'] === $uid && $chk['status'] === 'returned') $canEdit = true;
+        }
+    } elseif ($src === 'transaction') {
+        $chk = ak_transaction_review_validate_returned_owner($rid, (int)$uid);
+        if ($chk) {
+            $canEdit = true;
+            $isReturnedTransaction = true;
+        }
+    } elseif ($src === 'posted') {
+        // Legacy posted-edit submissions are deliberately blocked. Posted transactions
+        // must be corrected through the separate post-approval void/reversal path.
+        $errors[] = 'لا يمكن تعديل دفعة مرحّلة مباشرة. استخدم مسار التصحيح/الإبطال المعتمد.';
     }
-    
-    if (!$canEdit) $errors[] = 'لا تملك صلاحية التعديل.';
-    elseif ($newAmount <= 0) $errors[] = 'المبلغ يجب أن يكون أكبر من صفر.';
-    else {
+
+    if (!$canEdit && !$errors) $errors[] = 'لا تملك صلاحية تعديل هذه الدفعة أو أنها ليست مُعادة إليك.';
+    elseif ($newAmount <= 0 && !$errors) $errors[] = 'المبلغ يجب أن يكون أكبر من صفر.';
+    elseif (!$errors) {
         $lineReceiptPath = null;
         if (isset($_FILES['edit_receipt_file']) && $_FILES['edit_receipt_file']['error'] === UPLOAD_ERR_OK) {
             $file = $_FILES['edit_receipt_file'];
@@ -126,6 +142,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_record']) && ver
                 if (!is_dir($dir)) @mkdir($dir, 0777, true);
                 $fn = 'TR-' . date('YmdHis') . '-' . bin2hex(random_bytes(3)) . '.' . $ext;
                 if (move_uploaded_file($file['tmp_name'], $dir . '/' . $fn)) $lineReceiptPath = 'storage/receipts/' . $fn;
+                else $errors[] = 'فشل حفظ ملف إيصال البند.';
             } else $errors[] = 'صيغة أو حجم إيصال البند غير صالح.';
         }
         $uniReceiptPath = null;
@@ -137,95 +154,103 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_record']) && ver
                 if (!is_dir($dir)) @mkdir($dir, 0777, true);
                 $fn = 'TR-' . date('YmdHis') . '-' . bin2hex(random_bytes(3)) . '.' . $ext;
                 if (move_uploaded_file($file['tmp_name'], $dir . '/' . $fn)) $uniReceiptPath = 'storage/receipts/' . $fn;
+                else $errors[] = 'فشل حفظ ملف الإيصال الموحّد.';
             } else $errors[] = 'صيغة أو حجم الإيصال الموحّد غير صالح.';
         }
-        
-        if (!$errors) {
-            if ($src === 'pending') {
-                $old = dbFetchOne("SELECT * FROM sponsor_payments WHERE id = ?", [$rid]);
-                if ($old) {
-                    $upd = [
-                        'payment_period' => $newMonth,
-                        'payment_type' => $newPurpose,
-                        'purpose_note' => $newNote !== '' ? $newNote : null,
-                        'amount' => $newAmount,
-                    ];
-                    if ($lineReceiptPath) $upd['receipt_file_path'] = $lineReceiptPath;
-                    if ($uniReceiptPath) $upd['unified_receipt_path'] = $uniReceiptPath;
-                    
-                    $sets = []; $params = [];
-                    foreach ($upd as $k => $v) { $sets[] = "`$k` = ?"; $params[] = $v; }
-                    $params[] = $rid;
-                    dbExecute("UPDATE sponsor_payments SET " . implode(', ', $sets) . " WHERE id = ?", $params);
-                    
-                    try {
-                        dbExecute("INSERT INTO audit_log (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent)
-                                   VALUES (?, 'EDIT_PENDING', 'sponsor_payments', ?, ?, ?, ?, ?)",
-                            [$uid, $rid, json_encode($old, JSON_UNESCAPED_UNICODE), json_encode($upd, JSON_UNESCAPED_UNICODE), $_SERVER['REMOTE_ADDR'] ?? '', $_SERVER['HTTP_USER_AGENT'] ?? '']);
-                    } catch (Throwable $e) {}
-                    flash('success', 'تم تعديل الدفعة المعلقة بنجاح.');
-                }
+
+        if (!$errors && $src === 'transaction' && $isReturnedTransaction) {
+            $old = dbFetchOne("SELECT * FROM transactions WHERE id = ? AND status = 'returned' AND created_by = ?", [$rid, $uid]);
+            if (!$old) {
+                $errors[] = 'الدفعة غير موجودة أو لم تعد في حالة الإرجاع.';
             } else {
-                $old = dbFetchOne("SELECT * FROM transactions WHERE id = ?", [$rid]);
-                if ($old) {
-                    $isSpon = ($newPurpose === 'monthly_sponsorship');
-                    $txnType = $isSpon ? 'sponsorship_payment' : 'general_donation';
-                    if ($old['transaction_type'] === 'project_donation') $txnType = 'project_donation';
-                    if ($old['transaction_type'] === 'other' && !$isSpon) $txnType = 'other';
-                    
-                    $feePct = $isSpon ? (float)$old['admin_fee_percent'] : 0.0;
-                    $feeAmt = round($newAmount * $feePct / 100, 2);
-                    $net = round($newAmount - $feeAmt, 2);
-                    
-                    $upd = [
-                        'payment_period' => $newMonth,
-                        'purpose' => $newPurpose,
-                        'purpose_note' => $newNote !== '' ? $newNote : null,
-                        'amount' => $newAmount,
-                        'admin_fee_amount' => $feeAmt,
-                        'net_amount' => $net,
-                    ];
-                    if ($lineReceiptPath) $upd['receipt_path'] = $lineReceiptPath;
-                    if ($uniReceiptPath) $upd['unified_receipt_path'] = $uniReceiptPath;
-                    
-                    $sets = []; $params = [];
-                    foreach ($upd as $k => $v) { $sets[] = "`$k` = ?"; $params[] = $v; }
-                    $params[] = $rid;
-                    
-                    $financialChanged = (float)$old['amount'] !== $newAmount || ($old['purpose'] ?? '') !== $newPurpose;
-                    try {
-                        db()->beginTransaction();
-                        dbExecute("UPDATE transactions SET " . implode(', ', $sets) . " WHERE id = ?", $params);
-                        
-                        if ($financialChanged) {
-                            ak_void_journal_for_transaction($rid, 'تعديل بيانات الدفعة');
-                            $newJournalId = ak_post_transaction_journal($rid);
-                            if ($newJournalId <= 0) throw new RuntimeException('فشل إنشاء القيد المحاسبي البديل للدفعة المعدلة.');
-                        }
-                        db()->commit();
-                    } catch (Throwable $e) {
-                        if (db()->inTransaction()) db()->rollBack();
-                        $errors[] = 'تعذر حفظ تعديل الدفعة المرحّلة مع القيد المحاسبي بشكل ذري. لم يتم اعتماد أي جزء من التعديل.';
-                    }
-                    
-                    if (!$errors) {
-                        try {
-                            dbExecute("INSERT INTO audit_log (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent)
-                                       VALUES (?, 'EDIT_POSTED', 'transactions', ?, ?, ?, ?, ?)",
-                                [$uid, $rid, json_encode($old, JSON_UNESCAPED_UNICODE), json_encode($upd, JSON_UNESCAPED_UNICODE), $_SERVER['REMOTE_ADDR'] ?? '', $_SERVER['HTTP_USER_AGENT'] ?? '']);
-                            $gms = dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id = r.id WHERE r.code IN ('general_manager','vice_general_manager') AND u.is_active = 1");
-                            foreach ($gms as $g) {
-                                dbExecute("INSERT INTO notifications (user_id, title, body, link) VALUES (?, ?, ?, ?)",
-                                    [$g['id'], 'تعديل دفعة مرحّلة', 'تم تعديل بيانات دفعة مرحّلة بواسطة ' . (Session::getUserName() ?? '') . '.', 'modules/transactions/index.php']);
-                            }
-                        } catch (Throwable $e) {}
-                        flash('success', 'تم تعديل الدفعة المرحّلة وتحديث القيود المحاسبية بنجاح.');
-                    }
+                $isSpon = ($newPurpose === 'monthly_sponsorship');
+                $feePct = $isSpon ? (float)$old['admin_fee_percent'] : 0.0;
+                $feeAmt = round($newAmount * $feePct / 100, 2);
+                $net = round($newAmount - $feeAmt, 2);
+                $txnType = $old['transaction_type'];
+                if ($txnType === 'sponsorship_payment' || $isSpon) $txnType = $isSpon ? 'sponsorship_payment' : 'general_donation';
+                if ($old['transaction_type'] === 'project_donation') $txnType = 'project_donation';
+                if ($old['transaction_type'] === 'other' && !$isSpon) $txnType = 'other';
+
+                $upd = [
+                    'payment_period' => $newMonth !== '' ? $newMonth : null,
+                    'purpose' => $newPurpose,
+                    'purpose_note' => $newNote !== '' ? $newNote : null,
+                    'amount' => $newAmount,
+                    'admin_fee_amount' => $feeAmt,
+                    'net_amount' => $net,
+                    'transaction_type' => $txnType,
+                    'status' => 'pending_fm_review',
+                    'fm_reviewed_by' => null,
+                    'fm_reviewed_at' => null,
+                    'fm_review_reason' => null,
+                    'resubmitted_at' => date('Y-m-d H:i:s'),
+                ];
+                if ($lineReceiptPath) $upd['receipt_path'] = $lineReceiptPath;
+                if ($uniReceiptPath) $upd['unified_receipt_path'] = $uniReceiptPath;
+
+                $oldReceipt = $old['receipt_path'] ?? null;
+                $oldUnified = $old['unified_receipt_path'] ?? null;
+                $sets = []; $params = [];
+                foreach ($upd as $k => $v) { $sets[] = "`$k` = ?"; $params[] = $v; }
+                $params[] = $rid;
+
+                try {
+                    db()->beginTransaction();
+                    dbExecute("UPDATE transactions SET " . implode(', ', $sets) . " WHERE id = ? AND status = 'returned' AND created_by = ?", array_merge($params, [$uid]));
+                    if (db()->rowCount() !== 1) throw new RuntimeException('تعذر تحديث الدفعة المُعادة.');
+                    ak_transaction_review_audit($uid, 'RESUBMIT_FM', $rid, $old, $upd);
+                    db()->commit();
+                } catch (Throwable $e) {
+                    if (db()->inTransaction()) db()->rollBack();
+                    $errors[] = 'تعذر إعادة إرسال الدفعة للمراجعة المالية بشكل ذري.';
+                }
+
+                if (!$errors) {
+                    if ($lineReceiptPath && $oldReceipt && $oldReceipt !== $lineReceiptPath) ak_transaction_review_delete_receipt_if_unreferenced($oldReceipt);
+                    if ($uniReceiptPath && $oldUnified && $oldUnified !== $uniReceiptPath) ak_transaction_review_delete_receipt_if_unreferenced($oldUnified);
+                    ak_transaction_review_notify_fm(1, Session::getUserName() ?? '');
+                    flash('success', 'تم تعديل الدفعة وإعادة إرسالها للمدير المالي للمراجعة.');
+                    header('Location: ' . APP_URL . 'modules/transactions/create.php?sponsor_id=' . $input['sponsor_id']);
+                    exit();
                 }
             }
-            if (!$errors) {
-                header('Location: ' . APP_URL . 'modules/transactions/create.php?sponsor_id=' . $input['sponsor_id']);
-                exit();
+        } elseif (!$errors && $src === 'pending') {
+            $old = dbFetchOne("SELECT * FROM sponsor_payments WHERE id = ? AND status = 'returned'", [$rid]);
+            if ($old) {
+                $upd = [
+                    'payment_period' => $newMonth,
+                    'payment_type' => $newPurpose,
+                    'purpose_note' => $newNote !== '' ? $newNote : null,
+                    'amount' => $newAmount,
+                    'status' => 'pending',
+                    'return_note' => null,
+                ];
+                if ($lineReceiptPath) $upd['receipt_file_path'] = $lineReceiptPath;
+                if ($uniReceiptPath) $upd['unified_receipt_path'] = $uniReceiptPath;
+                $oldReceipt = $old['receipt_file_path'] ?? null;
+                $oldUnified = $old['unified_receipt_path'] ?? null;
+                $sets = []; $params = [];
+                foreach ($upd as $k => $v) { $sets[] = "`$k` = ?"; $params[] = $v; }
+                $params[] = $rid;
+                try {
+                    db()->beginTransaction();
+                    dbExecute("UPDATE sponsor_payments SET " . implode(', ', $sets) . " WHERE id = ? AND status = 'returned' AND supervisor_id = ?", array_merge($params, [$uid]));
+                    if (db()->rowCount() !== 1) throw new RuntimeException('تعذر إعادة إرسال التحصيل.');
+                    db()->commit();
+                } catch (Throwable $e) {
+                    if (db()->inTransaction()) db()->rollBack();
+                    $errors[] = 'تعذر إعادة إرسال التحصيل للمراجعة.';
+                }
+                if (!$errors) {
+                    if ($lineReceiptPath && $oldReceipt && $oldReceipt !== $lineReceiptPath) ak_transaction_review_delete_receipt_if_unreferenced($oldReceipt);
+                    if ($uniReceiptPath && $oldUnified && $oldUnified !== $uniReceiptPath) ak_transaction_review_delete_receipt_if_unreferenced($oldUnified);
+                    flash('success', 'تم تعديل التحصيل وإعادته للمراجعة المالية.');
+                    header('Location: ' . APP_URL . 'modules/transactions/create.php?sponsor_id=' . $input['sponsor_id']);
+                    exit();
+                }
+            } else {
+                $errors[] = 'التحصيل غير موجود أو لم يعد في حالة الإرجاع.';
             }
         }
     }
@@ -267,7 +292,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['edit_record'])) {
         $input['fee'] = (float)($_POST['fee'] ?? $defaultFee);
 
         $amount = (float)str_replace(',', '', $input['amount']);
-
         $ship = null;
         if ($input['sponsorship_id'] > 0) {
             $ship = dbFetchOne("SELECT id, sponsor_id, status FROM sponsorships WHERE id = ?", [$input['sponsorship_id']]);
@@ -394,8 +418,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['edit_record'])) {
                         dbExecute("INSERT INTO transactions
                             (sponsorship_id, amount, currency_code, payment_method, transaction_date, receipt_number, description,
                              months_covered, admin_fee_percent, admin_fee_amount, net_amount, status, created_by, transaction_code,
-                             transaction_type, sponsor_id, project_id, reference_number, receipt_path, unified_receipt_path, payment_period, purpose_note, purpose)
-                            VALUES (?, ?, 'SDG', ?, ?, ?, ?, ?, ?, ?, ?, 'posted', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                             transaction_type, sponsor_id, project_id, reference_number, receipt_path, unified_receipt_path, payment_period, purpose_note, purpose,
+                             submitted_at)
+                            VALUES (?, ?, 'SDG', ?, ?, ?, ?, ?, ?, ?, ?, 'pending_fm_review', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())",
                             [$ship ? $ship['id'] : null, $pl['amount'], $input['method'], $input['date'],
                              $input['receipt'] !== '' ? $input['receipt'] : null, $desc,
                              $isSpon ? 1.00 : 0.00, $feePct, $feeAmt, $net, $uid, $code, $txnType,
@@ -403,29 +428,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['edit_record'])) {
                              $input['project_id'] > 0 ? $input['project_id'] : null,
                              $input['reference'] !== '' ? $input['reference'] : null,
                              $pl['own'], $pl['uni'], $pl['month'], $pl['note'] !== '' ? $pl['note'] : null, $pl['purpose']]);
-                        $journalId = ak_post_transaction_journal((int)dbLastInsertId());
-                        if ($journalId <= 0) throw new RuntimeException('فشل إنشاء القيد المحاسبي للدفعة.');
+                        $txnId = (int)dbLastInsertId();
+                        ak_transaction_review_audit($uid, 'SUBMIT_FM', $txnId, null, ['status' => 'pending_fm_review', 'transaction_code' => $code]);
                         $count++;
                     }
                     db()->commit();
                 } catch (Throwable $e) {
                     if (db()->inTransaction()) db()->rollBack();
-                    $errors[] = 'تعذر تسجيل الدفعات وترحيل القيود المحاسبية بشكل ذري. لم يتم اعتماد أي جزء من العملية.';
+                    $errors[] = 'تعذر تسجيل الدفعات وإرسالها للمراجعة المالية بشكل ذري. لم يتم اعتماد أي جزء من العملية.';
                 }
 
                 if (!$errors) {
-                    try {
-                        dbExecute("INSERT INTO audit_log (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent)
-                                   VALUES (?, 'DIRECT_POST', 'transactions', NULL, NULL, ?, ?, ?)",
-                            [$uid, json_encode(['lines' => $count, 'type' => $input['type'], 'sponsor_id' => $input['sponsor_id']], JSON_UNESCAPED_UNICODE),
-                             $_SERVER['REMOTE_ADDR'] ?? '', $_SERVER['HTTP_USER_AGENT'] ?? '']);
-                        $gms = dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id = r.id WHERE r.code IN ('general_manager','vice_general_manager') AND u.is_active = 1");
-                        foreach ($gms as $g) {
-                            dbExecute("INSERT INTO notifications (user_id, title, body, link) VALUES (?, ?, ?, ?)",
-                                [$g['id'], 'تدفق نقدي وارد', 'تم ترحيل ' . $count . ' دفعة مباشرة بالخزينة.', 'modules/accounting/fm_dashboard.php']);
-                        }
-                    } catch (Throwable $e) {}
-                    flash('success', "تم تسجيل $count دفعة وترحيل القيود المحاسبية بنجاح.");
+                    ak_transaction_review_notify_fm($count, Session::getUserName() ?? '');
+                    flash('success', "تم تسجيل $count دفعة وإرسالها للمدير المالي للمراجعة قبل الترحيل.");
                     header('Location: ' . APP_URL . ($input['sponsor_id'] > 0 ? 'modules/sponsors/view.php?id=' . $input['sponsor_id'] : 'modules/transactions/index.php'));
                     exit();
                 }
@@ -459,7 +474,7 @@ input[type=number] { -moz-appearance:textfield; appearance:textfield; }
         <?php if ($currentSponsor): ?>
             الكفيل: <strong><?php echo e($currentSponsor['full_name']); ?></strong> (<code><?php echo e($currentSponsor['sponsor_code']); ?></code>)
         <?php else: ?>
-            كل دفعة مرحّلة تُنشئ قيداً مزدوجاً تلقائياً (صندوق/بنك ← إيراد)
+            كل دفعة جديدة تُرسل أولاً للمدير المالي للمراجعة والاعتماد قبل إنشاء القيد المحاسبي.
         <?php endif; ?>
     </p>
 </div>
@@ -507,37 +522,12 @@ input[type=number] { -moz-appearance:textfield; appearance:textfield; }
                         <?php foreach ($lines as $ln): ?>
                         <div class="pay-line border rounded p-2 mb-2">
                             <div class="row g-2 align-items-end">
-                                <div class="col-md-3">
-                                    <label class="form-label small text-muted mb-1">سداد عن شهر</label>
-                                    <select name="pay_month[]" class="form-select form-select-sm">
-                                        <?php foreach ($monthOptions as $m): ?>
-                                            <option value="<?php echo $m; ?>" <?php echo $ln['month']===$m?'selected':''; ?>><?php echo $m; ?></option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label small text-muted mb-1">غرض الدفعة</label>
-                                    <select name="pay_purpose[]" class="form-select form-select-sm line-purpose">
-                                        <?php foreach ($purposeLabels as $pk => $pl2): ?>
-                                            <option value="<?php echo $pk; ?>" <?php echo $ln['purpose']===$pk?'selected':''; ?>><?php echo $pl2; ?></option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                </div>
-                                <div class="col-md-2">
-                                    <label class="form-label small text-muted mb-1">المبلغ</label>
-                                    <input type="number" step="0.01" min="0" name="pay_amount[]" class="form-control form-control-sm line-amount" value="<?php echo e($ln['amount']); ?>">
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label small text-muted mb-1">إيصال هذا السطر</label>
-                                    <input type="file" name="pay_receipt_file[]" class="form-control form-control-sm" accept="image/jpeg,image/png,application/pdf">
-                                </div>
-                                <div class="col-md-1 text-end">
-                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeLine(this)"><i class="fas fa-trash"></i></button>
-                                </div>
-                                <div class="col-md-6 line-note-wrap" <?php echo $ln['purpose']==='other'?'':'style="display:none"'; ?>>
-                                    <label class="form-label small text-muted mb-1">توضيح الغرض</label>
-                                    <input type="text" name="pay_note[]" class="form-control form-control-sm" value="<?php echo e($ln['note']); ?>">
-                                </div>
+                                <div class="col-md-3"><label class="form-label small text-muted mb-1">سداد عن شهر</label><select name="pay_month[]" class="form-select form-select-sm"><?php foreach ($monthOptions as $m): ?><option value="<?php echo $m; ?>" <?php echo $ln['month']===$m?'selected':''; ?>><?php echo $m; ?></option><?php endforeach; ?></select></div>
+                                <div class="col-md-3"><label class="form-label small text-muted mb-1">غرض الدفعة</label><select name="pay_purpose[]" class="form-select form-select-sm line-purpose"><?php foreach ($purposeLabels as $pk => $pl2): ?><option value="<?php echo $pk; ?>" <?php echo $ln['purpose']===$pk?'selected':''; ?>><?php echo $pl2; ?></option><?php endforeach; ?></select></div>
+                                <div class="col-md-2"><label class="form-label small text-muted mb-1">المبلغ</label><input type="number" step="0.01" min="0" name="pay_amount[]" class="form-control form-control-sm line-amount" value="<?php echo e($ln['amount']); ?>"></div>
+                                <div class="col-md-3"><label class="form-label small text-muted mb-1">إيصال هذا السطر</label><input type="file" name="pay_receipt_file[]" class="form-control form-control-sm" accept="image/jpeg,image/png,application/pdf"></div>
+                                <div class="col-md-1 text-end"><button type="button" class="btn btn-sm btn-outline-danger" onclick="removeLine(this)"><i class="fas fa-trash"></i></button></div>
+                                <div class="col-md-6 line-note-wrap" <?php echo $ln['purpose']==='other'?'':'style="display:none"'; ?>><label class="form-label small text-muted mb-1">توضيح الغرض</label><input type="text" name="pay_note[]" class="form-control form-control-sm" value="<?php echo e($ln['note']); ?>"></div>
                             </div>
                         </div>
                         <?php endforeach; ?>
@@ -545,66 +535,20 @@ input[type=number] { -moz-appearance:textfield; appearance:textfield; }
                     <button type="button" class="btn btn-sm btn-outline-primary mt-1" onclick="addLine()"><i class="fas fa-plus me-1"></i>إضافة سطر آخر (شهر/غرض)</button>
                     <div class="form-text mt-2">إجمالي التحصيل: <strong id="linesTotal" style="color:#1b4d8f">0</strong> ج.س</div>
                 </div>
-                <div class="col-md-4" id="grpSingleAmount" style="display:none;">
-                    <label class="form-label">المبلغ *</label>
-                    <input type="number" step="0.01" name="amount" class="form-control" value="<?php echo e($input['amount']); ?>">
-                </div>
-                <div class="col-md-4" id="grpProject" style="display:none;">
-                    <label class="form-label">المشروع *</label>
-                    <select name="project_id" class="form-select">
-                        <option value="">— اختر —</option>
-                        <?php foreach ($projects as $p): ?>
-                            <option value="<?php echo $p['id']; ?>" <?php echo $input['project_id']===(int)$p['id']?'selected':''; ?>><?php echo e($p['name']); ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-                <div class="col-md-4" id="grpOther" style="display:none;">
-                    <label class="form-label">تفاصيل المصدر الآخر *</label>
-                    <input type="text" name="other_source_note" class="form-control" placeholder="حدد الجهة أو المصدر" value="<?php echo e($input['other_source_note']); ?>">
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">التاريخ *</label>
-                    <input type="date" name="date" class="form-control" required value="<?php echo e($input['date']); ?>">
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">طريقة الدفع</label>
-                    <select name="method" class="form-select">
-                        <option value="cash" <?php echo $input['method']==='cash'?'selected':''; ?>>نقدي / كاش</option>
-                        <option value="bank_transfer" <?php echo $input['method']==='bank_transfer'?'selected':''; ?>>تحويل بنكي</option>
-                        <option value="mobile" <?php echo $input['method']==='mobile'?'selected':''; ?>>محفظة إلكترونية</option>
-                        <option value="credit_card" <?php echo $input['method']==='credit_card'?'selected':''; ?>>بطاقة ائتمانية</option>
-                        <option value="other" <?php echo $input['method']==='other'?'selected':''; ?>>أخرى</option>
-                    </select>
-                </div>
-                <div class="col-md-4" id="grpFee">
-                    <label class="form-label">نسبة الرسوم الإدارية (%)</label>
-                    <input type="number" step="0.01" name="fee" class="form-control" value="<?php echo e($input['fee']); ?>">
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">رقم الإيصال / المرجع</label>
-                    <input type="text" name="receipt" class="form-control" dir="ltr" value="<?php echo e($input['receipt']); ?>">
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">رقم مرجعي إضافي</label>
-                    <input type="text" name="reference" class="form-control" dir="ltr" value="<?php echo e($input['reference']); ?>">
-                </div>
-                <div class="col-12">
-                    <label class="form-label">ملاحظات / البيان</label>
-                    <textarea name="description" class="form-control" rows="2"><?php echo e($input['description']); ?></textarea>
-                </div>
-                <div class="col-12">
-                    <label class="form-label">إيصال موحّد للدفعة كاملة (غطاء)</label>
-                    <input type="file" name="receipt_file" class="form-control" accept="image/jpeg,image/png,application/pdf">
-                    <div class="form-text">يُحفظ مع كل سطر كإيصال غطاء — لا يلغي إيصالات الأسطر المستقلة</div>
-                </div>
+                <div class="col-md-4" id="grpSingleAmount" style="display:none;"><label class="form-label">المبلغ *</label><input type="number" step="0.01" name="amount" class="form-control" value="<?php echo e($input['amount']); ?>"></div>
+                <div class="col-md-4" id="grpProject" style="display:none;"><label class="form-label">المشروع *</label><select name="project_id" class="form-select"><option value="">— اختر —</option><?php foreach ($projects as $p): ?><option value="<?php echo $p['id']; ?>" <?php echo $input['project_id']===(int)$p['id']?'selected':''; ?>><?php echo e($p['name']); ?></option><?php endforeach; ?></select></div>
+                <div class="col-md-4" id="grpOther" style="display:none;"><label class="form-label">تفاصيل المصدر الآخر *</label><input type="text" name="other_source_note" class="form-control" placeholder="حدد الجهة أو المصدر" value="<?php echo e($input['other_source_note']); ?>"></div>
+                <div class="col-md-4"><label class="form-label">التاريخ *</label><input type="date" name="date" class="form-control" required value="<?php echo e($input['date']); ?>"></div>
+                <div class="col-md-4"><label class="form-label">طريقة الدفع</label><select name="method" class="form-select"><option value="cash" <?php echo $input['method']==='cash'?'selected':''; ?>>نقدي / كاش</option><option value="bank_transfer" <?php echo $input['method']==='bank_transfer'?'selected':''; ?>>تحويل بنكي</option><option value="mobile" <?php echo $input['method']==='mobile'?'selected':''; ?>>محفظة إلكترونية</option><option value="credit_card" <?php echo $input['method']==='credit_card'?'selected':''; ?>>بطاقة ائتمانية</option><option value="other" <?php echo $input['method']==='other'?'selected':''; ?>>أخرى</option></select></div>
+                <div class="col-md-4" id="grpFee"><label class="form-label">نسبة الرسوم الإدارية (%)</label><input type="number" step="0.01" name="fee" class="form-control" value="<?php echo e($input['fee']); ?>"></div>
+                <div class="col-md-4"><label class="form-label">رقم الإيصال / المرجع</label><input type="text" name="receipt" class="form-control" dir="ltr" value="<?php echo e($input['receipt']); ?>"></div>
+                <div class="col-md-4"><label class="form-label">رقم مرجعي إضافي</label><input type="text" name="reference" class="form-control" dir="ltr" value="<?php echo e($input['reference']); ?>"></div>
+                <div class="col-12"><label class="form-label">ملاحظات / البيان</label><textarea name="description" class="form-control" rows="2"><?php echo e($input['description']); ?></textarea></div>
+                <div class="col-12"><label class="form-label">إيصال موحّد للدفعة كاملة (غطاء)</label><input type="file" name="receipt_file" class="form-control" accept="image/jpeg,image/png,application/pdf"><div class="form-text">يُحفظ مع كل سطر كإيصال غطاء — لا يلغي إيصالات الأسطر المستقلة</div></div>
             </div>
             <div class="mt-4">
-                <button class="btn btn-primary btn-lg"><i class="fas fa-save me-1"></i> حفظ الدفعة</button>
-                <?php if ($currentSponsor): ?>
-                    <a href="<?php echo APP_URL; ?>modules/sponsors/view.php?id=<?php echo $currentSponsor['id']; ?>" class="btn btn-secondary btn-lg ms-2">إلغاء</a>
-                <?php else: ?>
-                    <a href="<?php echo APP_URL; ?>modules/transactions/index.php" class="btn btn-secondary btn-lg ms-2">إلغاء</a>
-                <?php endif; ?>
+                <button class="btn btn-primary btn-lg"><i class="fas fa-paper-plane me-1"></i> إرسال للمراجعة المالية</button>
+                <?php if ($currentSponsor): ?><a href="<?php echo APP_URL; ?>modules/sponsors/view.php?id=<?php echo $currentSponsor['id']; ?>" class="btn btn-secondary btn-lg ms-2">إلغاء</a><?php else: ?><a href="<?php echo APP_URL; ?>modules/transactions/index.php" class="btn btn-secondary btn-lg ms-2">إلغاء</a><?php endif; ?>
             </div>
         </form>
     </div>
@@ -614,264 +558,68 @@ input[type=number] { -moz-appearance:textfield; appearance:textfield; }
 <?php if ($currentSponsor): ?>
 <div class="card fade-in mb-4">
     <div class="card-header"><i class="fas fa-history me-2"></i>سجل الدفعات الشهرية لهذا الكفيل</div>
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>الشهر</th>
-                        <th>الغرض</th>
-                        <th>المبلغ</th>
-                        <th>الحالة</th>
-                        <th>الإيصالات</th>
-                        <th class="text-center">الإجراءات</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if (!$history): ?>
-                        <tr><td colspan="6" class="text-center text-muted py-3">لا توجد دفعات سابقة.</td></tr>
-                    <?php else: foreach ($history as $h):
-                        $typeAr = ['monthly_sponsorship'=>'كفالة شهرية','sponsorship_payment'=>'كفالة شهرية','school_fees'=>'رسوم دراسية','medicine'=>'علاج وأدوية','gift'=>'هدية/عيدية','admin_fee'=>'رسوم إدارية','general_donation'=>'تبرع عام','project_donation'=>'تبرع مشروع','other'=>'أخرى'][$h['purpose'] ?? $h['type']] ?? $h['type'];
-                        $kind = '';
-                        if (in_array($h['type'], ['monthly_sponsorship','sponsorship_payment'], true) && $h['payment_period']) {
-                            $pm2 = ak_period_months($h['payment_period']);
-                            if ($pm2 !== null) {
-                                if ($pm2 > $CUR_IDX) $kind = '<span class="badge bg-info text-dark">مقدم</span>';
-                                elseif ($pm2 === $CUR_IDX) $kind = '<span class="badge bg-success">الشهر الحالي</span>';
-                                else $kind = '<span class="badge bg-warning text-dark">متأخرات</span>';
-                            }
-                        }
-                        $statusBadge = $h['status'] === 'posted' ? '<span class="badge bg-success">مرحّل</span>' :
-                                       ($h['status'] === 'pending' ? '<span class="badge bg-warning text-dark">بانتظار المدير المالي</span>' :
-                                       '<span class="badge bg-secondary">' . e($h['status']) . '</span>');
-                        $ownUrl = ''; $uniUrl = '';
-                        if ($h['receipt_path']) {
-                            $ownUrl = ($h['src'] === 'transaction')
-                                ? APP_URL . 'modules/transactions/receipt_file.php?id=' . (int)$h['id']
-                                : APP_URL . 'modules/transactions/receipt_sp.php?id=' . (int)$h['id'];
-                        }
-                        if (!empty($h['unified_receipt_path'])) {
-                            $uniUrl = ($h['src'] === 'transaction')
-                                ? APP_URL . 'modules/transactions/receipt_file.php?id=' . (int)$h['id'] . '&kind=unified'
-                                : APP_URL . 'modules/transactions/receipt_sp.php?id=' . (int)$h['id'] . '&kind=unified';
-                        }
-                    ?>
-                        <tr>
-                            <td>
-                                <?php echo e($h['payment_period'] ?? '—'); ?>
-                                <?php echo $kind; ?>
-                            </td>
-                            <td>
-                                <small><?php echo e($typeAr); ?></small>
-                                <?php if (!empty($h['purpose_note'])): ?><small class="text-muted d-block"><i class="fas fa-note-sticky me-1"></i><?php echo e($h['purpose_note']); ?></small><?php endif; ?>
-                            </td>
-                            <td><strong><?php echo number_format((float)$h['amount'], 0); ?></strong></td>
-                            <td><?php echo $statusBadge; ?></td>
-                            <td class="text-nowrap">
-                                <?php if ($ownUrl): ?><a href="<?php echo $ownUrl; ?>" target="_blank" class="btn btn-sm btn-outline-primary" title="إيصال البند"><i class="fas fa-eye"></i></a><?php endif; ?>
-                                <?php if ($uniUrl): ?><a href="<?php echo $uniUrl; ?>" target="_blank" class="btn btn-sm btn-outline-secondary" title="الإيصال الموحّد"><i class="fas fa-layer-group"></i></a><?php endif; ?>
-                            </td>
-                            <td class="text-nowrap text-center">
-                                <button class="btn btn-sm btn-info text-white" data-bs-toggle="modal" data-bs-target="#detailsModal"
-                                    data-src="<?php echo $h['src']; ?>" data-id="<?php echo $h['id']; ?>"
-                                    data-period="<?php echo e($h['payment_period'] ?? '—'); ?>"
-                                    data-type="<?php echo e($typeAr); ?>" data-note="<?php echo e($h['purpose_note'] ?? ''); ?>"
-                                    data-amount="<?php echo number_format((float)$h['amount'], 2); ?>"
-                                    data-status="<?php echo $h['status']; ?>" data-fee="<?php echo e($h['admin_fee_percent'] ?? 0); ?>"
-                                    title="تفاصيل"><i class="fas fa-circle-info"></i></button>
-                                <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editModal"
-                                    data-src="<?php echo $h['src']; ?>" data-id="<?php echo $h['id']; ?>"
-                                    data-period="<?php echo e($h['payment_period'] ?? ''); ?>"
-                                    data-purpose="<?php echo e($h['purpose'] ?? ''); ?>" data-note="<?php echo e($h['purpose_note'] ?? ''); ?>"
-                                    data-amount="<?php echo (float)$h['amount']; ?>"
-                                    title="تعديل"><i class="fas fa-pen"></i></button>
-                            </td>
-                        </tr>
-                    <?php endforeach; endif; ?>
-                </tbody>
-            </table>
-        </div>
-    </div>
+    <div class="card-body p-0"><div class="table-responsive"><table class="table table-hover align-middle mb-0">
+        <thead class="table-light"><tr><th>الشهر</th><th>الغرض</th><th>المبلغ</th><th>الحالة</th><th>الإيصالات</th><th class="text-center">الإجراءات</th></tr></thead>
+        <tbody>
+        <?php if (!$history): ?><tr><td colspan="6" class="text-center text-muted py-3">لا توجد دفعات سابقة.</td></tr>
+        <?php else: foreach ($history as $h):
+            $typeAr = ['monthly_sponsorship'=>'كفالة شهرية','sponsorship_payment'=>'كفالة شهرية','school_fees'=>'رسوم دراسية','medicine'=>'علاج وأدوية','gift'=>'هدية/عيدية','admin_fee'=>'رسوم إدارية','general_donation'=>'تبرع عام','project_donation'=>'تبرع مشروع','other'=>'أخرى'][$h['purpose'] ?? $h['type']] ?? $h['type'];
+            $kind = '';
+            if (in_array($h['type'], ['monthly_sponsorship','sponsorship_payment'], true) && $h['payment_period']) {
+                $pm2 = ak_period_months($h['payment_period']);
+                if ($pm2 !== null) {
+                    if ($pm2 > $CUR_IDX) $kind = '<span class="badge bg-info text-dark">مقدم</span>';
+                    elseif ($pm2 === $CUR_IDX) $kind = '<span class="badge bg-success">الشهر الحالي</span>';
+                    else $kind = '<span class="badge bg-warning text-dark">متأخرات</span>';
+                }
+            }
+            $statusBadge = match ($h['status']) {
+                'posted' => '<span class="badge bg-success">مرحّل</span>',
+                'pending_fm_review' => '<span class="badge bg-warning text-dark">بانتظار المدير المالي</span>',
+                'returned' => '<span class="badge bg-danger">مُعادة للتعديل</span>',
+                'cancelled' => '<span class="badge bg-secondary">ملغاة</span>',
+                'pending' => '<span class="badge bg-warning text-dark">بانتظار المدير المالي</span>',
+                default => '<span class="badge bg-secondary">' . e($h['status']) . '</span>'
+            };
+            $ownUrl = ''; $uniUrl = '';
+            if ($h['receipt_path']) $ownUrl = ($h['src'] === 'transaction') ? APP_URL . 'modules/transactions/receipt_file.php?id=' . (int)$h['id'] : APP_URL . 'modules/transactions/receipt_sp.php?id=' . (int)$h['id'];
+            if (!empty($h['unified_receipt_path'])) $uniUrl = ($h['src'] === 'transaction') ? APP_URL . 'modules/transactions/receipt_file.php?id=' . (int)$h['id'] . '&kind=unified' : APP_URL . 'modules/transactions/receipt_sp.php?id=' . (int)$h['id'] . '&kind=unified';
+            $canReturnedEdit = ($h['src'] === 'transaction' && $h['status'] === 'returned' && (int)$h['created_by'] === (int)$uid) || ($h['src'] === 'pending' && $h['status'] === 'returned' && $role === 'supervisor' && (int)$h['created_by'] === (int)$uid);
+        ?>
+            <tr>
+                <td><?php echo e($h['payment_period'] ?? '—'); ?> <?php echo $kind; ?></td>
+                <td><small><?php echo e($typeAr); ?></small><?php if (!empty($h['purpose_note'])): ?><small class="text-muted d-block"><i class="fas fa-note-sticky me-1"></i><?php echo e($h['purpose_note']); ?></small><?php endif; ?></td>
+                <td><strong><?php echo number_format((float)$h['amount'], 0); ?></strong></td>
+                <td><?php echo $statusBadge; ?></td>
+                <td class="text-nowrap"><?php if ($ownUrl): ?><a href="<?php echo $ownUrl; ?>" target="_blank" class="btn btn-sm btn-outline-primary" title="إيصال البند"><i class="fas fa-eye"></i></a><?php endif; ?><?php if ($uniUrl): ?><a href="<?php echo $uniUrl; ?>" target="_blank" class="btn btn-sm btn-outline-secondary" title="الإيصال الموحّد"><i class="fas fa-layer-group"></i></a><?php endif; ?></td>
+                <td class="text-nowrap text-center">
+                    <button class="btn btn-sm btn-info text-white" data-bs-toggle="modal" data-bs-target="#detailsModal" data-src="<?php echo $h['src']; ?>" data-id="<?php echo $h['id']; ?>" data-period="<?php echo e($h['payment_period'] ?? '—'); ?>" data-type="<?php echo e($typeAr); ?>" data-note="<?php echo e($h['purpose_note'] ?? ''); ?>" data-amount="<?php echo number_format((float)$h['amount'], 2); ?>" data-status="<?php echo $h['status']; ?>" data-fee="<?php echo e($h['admin_fee_percent'] ?? 0); ?>" title="تفاصيل"><i class="fas fa-circle-info"></i></button>
+                    <?php if ($canReturnedEdit): ?><button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editModal" data-src="<?php echo $h['src']; ?>" data-id="<?php echo $h['id']; ?>" data-period="<?php echo e($h['payment_period'] ?? ''); ?>" data-purpose="<?php echo e($h['purpose'] ?? ''); ?>" data-note="<?php echo e($h['purpose_note'] ?? ''); ?>" data-amount="<?php echo (float)$h['amount']; ?>" title="تعديل وإعادة إرسال"><i class="fas fa-pen"></i></button><?php endif; ?>
+                </td>
+            </tr>
+        <?php endforeach; endif; ?>
+        </tbody></table></div></div>
 </div>
 
-<!-- Details Modal -->
-<div class="modal fade" id="detailsModal" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header" style="background:#1b4d8f; color:white">
-        <h5 class="modal-title"><i class="fas fa-circle-info me-2"></i>تفاصيل الدفعة</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <ul class="list-group list-group-flush">
-          <li class="list-group-item d-flex justify-content-between"><span>الشهر:</span> <strong id="det-period"></strong></li>
-          <li class="list-group-item d-flex justify-content-between"><span>الغرض:</span> <strong id="det-type"></strong></li>
-          <li class="list-group-item d-flex justify-content-between"><span>توضيح:</span> <span id="det-note"></span></li>
-          <li class="list-group-item d-flex justify-content-between"><span>المبلغ:</span> <strong id="det-amount" style="color:#1b4d8f"></strong></li>
-          <li class="list-group-item d-flex justify-content-between"><span>نسبة الرسوم:</span> <span id="det-fee"></span></li>
-          <li class="list-group-item d-flex justify-content-between"><span>الحالة:</span> <span id="det-status"></span></li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</div>
+<div class="modal fade" id="detailsModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header" style="background:#1b4d8f;color:white"><h5 class="modal-title"><i class="fas fa-circle-info me-2"></i>تفاصيل الدفعة</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body"><ul class="list-group list-group-flush"><li class="list-group-item d-flex justify-content-between"><span>الشهر:</span> <strong id="det-period"></strong></li><li class="list-group-item d-flex justify-content-between"><span>الغرض:</span> <strong id="det-type"></strong></li><li class="list-group-item d-flex justify-content-between"><span>توضيح:</span> <span id="det-note"></span></li><li class="list-group-item d-flex justify-content-between"><span>المبلغ:</span> <strong id="det-amount" style="color:#1b4d8f"></strong></li><li class="list-group-item d-flex justify-content-between"><span>نسبة الرسوم:</span> <span id="det-fee"></span></li><li class="list-group-item d-flex justify-content-between"><span>الحالة:</span> <span id="det-status"></span></li></ul></div></div></div></div>
 
-<!-- Edit Modal -->
-<div class="modal fade" id="editModal" tabindex="-1">
-  <div class="modal-dialog">
-    <form method="post" enctype="multipart/form-data">
-      <?php echo csrf_field(); ?>
-      <input type="hidden" name="edit_record" value="1">
-      <input type="hidden" name="edit_src" id="edit-src">
-      <input type="hidden" name="edit_id" id="edit-id">
-      <div class="modal-content">
-        <div class="modal-header bg-warning">
-          <h5 class="modal-title"><i class="fas fa-pen me-2"></i>تعديل بيانات الدفعة</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <div class="alert alert-info small mb-3"><i class="fas fa-shield-halved me-1"></i>سيتم حفظ التعديل في سجل التدقيق. إذا كانت الدفعة مرحّلة، سيتم إبطال القيد القديم وإنشاء قيد جديد تلقائياً.</div>
-          <div class="row g-3">
-            <div class="col-md-6">
-              <label class="form-label">سداد عن شهر</label>
-              <select name="edit_month" id="edit-month" class="form-select">
-                <?php foreach ($monthOptions as $m): ?><option value="<?php echo $m; ?>"><?php echo $m; ?></option><?php endforeach; ?>
-              </select>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">غرض الدفعة</label>
-              <select name="edit_purpose" id="edit-purpose" class="form-select">
-                <?php foreach ($purposeLabels as $pk => $pl2): ?><option value="<?php echo $pk; ?>"><?php echo $pl2; ?></option><?php endforeach; ?>
-              </select>
-            </div>
-            <div class="col-12">
-              <label class="form-label">توضيح الغرض</label>
-              <input type="text" name="edit_note" id="edit-note" class="form-control">
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">المبلغ</label>
-              <input type="number" step="0.01" name="edit_amount" id="edit-amount" class="form-control" required>
-            </div>
-            <div class="col-12">
-              <label class="form-label">استبدال إيصال البند (اختياري)</label>
-              <input type="file" name="edit_receipt_file" class="form-control" accept="image/jpeg,image/png,application/pdf">
-            </div>
-            <div class="col-12">
-              <label class="form-label">استبدال الإيصال الموحّد (اختياري)</label>
-              <input type="file" name="edit_unified_file" class="form-control" accept="image/jpeg,image/png,application/pdf">
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
-          <button type="submit" class="btn btn-warning" onclick="return confirm('حفظ التعديلات؟')">حفظ التعديلات</button>
-        </div>
-      </div>
-    </form>
-  </div>
-</div>
+<div class="modal fade" id="editModal" tabindex="-1"><div class="modal-dialog"><form method="post" enctype="multipart/form-data"><?php echo csrf_field(); ?><input type="hidden" name="edit_record" value="1"><input type="hidden" name="edit_src" id="edit-src"><input type="hidden" name="edit_id" id="edit-id"><div class="modal-content"><div class="modal-header bg-warning"><h5 class="modal-title"><i class="fas fa-pen me-2"></i>تعديل وإعادة إرسال الدفعة</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="alert alert-info small mb-3"><i class="fas fa-shield-halved me-1"></i>هذه الدفعة أُعيدت من المدير المالي. بعد التعديل ستعود تلقائياً إلى طابور المراجعة، ولن يتم إنشاء قيد محاسبي حتى الاعتماد.</div><div class="row g-3"><div class="col-md-6"><label class="form-label">سداد عن شهر</label><select name="edit_month" id="edit-month" class="form-select"><?php foreach ($monthOptions as $m): ?><option value="<?php echo $m; ?>"><?php echo $m; ?></option><?php endforeach; ?></select></div><div class="col-md-6"><label class="form-label">غرض الدفعة</label><select name="edit_purpose" id="edit-purpose" class="form-select"><?php foreach ($purposeLabels as $pk => $pl2): ?><option value="<?php echo $pk; ?>"><?php echo $pl2; ?></option><?php endforeach; ?></select></div><div class="col-12"><label class="form-label">توضيح الغرض</label><input type="text" name="edit_note" id="edit-note" class="form-control"></div><div class="col-md-6"><label class="form-label">المبلغ</label><input type="number" step="0.01" name="edit_amount" id="edit-amount" class="form-control" required></div><div class="col-12"><label class="form-label">استبدال إيصال البند (اختياري)</label><input type="file" name="edit_receipt_file" class="form-control" accept="image/jpeg,image/png,application/pdf"></div><div class="col-12"><label class="form-label">استبدال الإيصال الموحّد (اختياري)</label><input type="file" name="edit_unified_file" class="form-control" accept="image/jpeg,image/png,application/pdf"></div></div></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button><button type="submit" class="btn btn-warning" onclick="return confirm('حفظ التعديلات وإعادة إرسال الدفعة للمراجعة المالية؟')">حفظ وإعادة إرسال</button></div></div></form></div></div>
 <?php endif; ?>
 
 <script>
 const MONTHS = <?php echo json_encode($monthOptions); ?>;
 const CUR = <?php echo json_encode($CURRENT_MONTH); ?>;
 const PURPOSES = <?php echo json_encode($purposeLabels, JSON_UNESCAPED_UNICODE); ?>;
-
-function monthSelectHtml(selected) {
-    let html = '<select name="pay_month[]" class="form-select form-select-sm">';
-    MONTHS.forEach(m => { html += '<option value="' + m + '"' + (m === selected ? ' selected' : '') + '>' + m + '</option>'; });
-    return html + '</select>';
-}
-function purposeSelectHtml(selected) {
-    let html = '<select name="pay_purpose[]" class="form-select form-select-sm line-purpose">';
-    for (const [v, l] of Object.entries(PURPOSES)) html += '<option value="' + v + '"' + (v === selected ? ' selected' : '') + '>' + l + '</option>';
-    return html + '</select>';
-}
-function addLine() {
-    const wrap = document.getElementById('linesWrap');
-    const div = document.createElement('div');
-    div.className = 'pay-line border rounded p-2 mb-2';
-    div.innerHTML =
-        '<div class="row g-2 align-items-end">' +
-        '<div class="col-md-3"><label class="form-label small text-muted mb-1">سداد عن شهر</label>' + monthSelectHtml(CUR) + '</div>' +
-        '<div class="col-md-3"><label class="form-label small text-muted mb-1">غرض الدفعة</label>' + purposeSelectHtml('monthly_sponsorship') + '</div>' +
-        '<div class="col-md-2"><label class="form-label small text-muted mb-1">المبلغ</label><input type="number" step="0.01" min="0" name="pay_amount[]" class="form-control form-control-sm line-amount"></div>' +
-        '<div class="col-md-3"><label class="form-label small text-muted mb-1">إيصال هذا السطر</label><input type="file" name="pay_receipt_file[]" class="form-control form-control-sm" accept="image/jpeg,image/png,application/pdf"></div>' +
-        '<div class="col-md-1 text-end"><button type="button" class="btn btn-sm btn-outline-danger" onclick="removeLine(this)"><i class="fas fa-trash"></i></button></div>' +
-        '<div class="col-md-6 line-note-wrap" style="display:none"><label class="form-label small text-muted mb-1">توضيح الغرض</label><input type="text" name="pay_note[]" class="form-control form-control-sm"></div>' +
-        '</div>';
-    wrap.appendChild(div);
-    recalcTotal();
-}
-function removeLine(btn) {
-    const lines = document.querySelectorAll('.pay-line');
-    if (lines.length > 1) btn.closest('.pay-line').remove();
-    else {
-        const l = lines[0];
-        l.querySelectorAll('select')[0].value = CUR;
-        l.querySelectorAll('select')[1].value = 'monthly_sponsorship';
-        l.querySelector('.line-note-wrap').style.display = 'none';
-        l.querySelector('.line-amount').value = '';
-    }
-    recalcTotal();
-}
-function recalcTotal() {
-    let t = 0;
-    document.querySelectorAll('.line-amount').forEach(i => { t += parseFloat(i.value) || 0; });
-    document.getElementById('linesTotal').textContent = t.toLocaleString('en-US');
-}
-function toggleFields() {
-    const t = document.getElementById('payType').value;
-    const monthly = (t === 'monthly_sponsorship');
-    document.getElementById('grpShip').style.display = monthly ? '' : 'none';
-    document.getElementById('grpLines').style.display = monthly ? '' : 'none';
-    document.getElementById('grpFee').style.display = monthly ? '' : 'none';
-    document.getElementById('grpSingleAmount').style.display = monthly ? 'none' : '';
-    document.getElementById('grpProject').style.display = (t === 'project_donation') ? '' : 'none';
-    document.getElementById('grpOther').style.display = (t === 'other') ? '' : 'none';
-}
-document.addEventListener('input', e => { if (e.target.classList.contains('line-amount')) recalcTotal(); });
-document.addEventListener('change', e => {
-    if (e.target.classList.contains('line-purpose')) {
-        e.target.closest('.pay-line').querySelector('.line-note-wrap').style.display = (e.target.value === 'other') ? '' : 'none';
-    }
-    if (e.target.name === 'sponsorship_id') {
-        const amt = (e.target.selectedOptions[0] && e.target.selectedOptions[0].dataset.amount) || '';
-        document.querySelectorAll('.line-amount').forEach(i => { if (!i.value && amt) i.value = amt; });
-        recalcTotal();
-    }
-});
-
-// Modals data binding
-document.addEventListener('DOMContentLoaded', function() {
-    var detModal = document.getElementById('detailsModal');
-    if (detModal) {
-        detModal.addEventListener('show.bs.modal', function (event) {
-            var btn = event.relatedTarget;
-            document.getElementById('det-period').textContent = btn.getAttribute('data-period');
-            document.getElementById('det-type').textContent = btn.getAttribute('data-type');
-            document.getElementById('det-note').textContent = btn.getAttribute('data-note') || '—';
-            document.getElementById('det-amount').textContent = btn.getAttribute('data-amount') + ' ج.س';
-            document.getElementById('det-fee').textContent = btn.getAttribute('data-fee') + ' %';
-            document.getElementById('det-status').textContent = btn.getAttribute('data-status');
-        });
-    }
-    var editModal = document.getElementById('editModal');
-    if (editModal) {
-        editModal.addEventListener('show.bs.modal', function (event) {
-            var btn = event.relatedTarget;
-            document.getElementById('edit-src').value = btn.getAttribute('data-src');
-            document.getElementById('edit-id').value = btn.getAttribute('data-id');
-            document.getElementById('edit-month').value = btn.getAttribute('data-period');
-            document.getElementById('edit-purpose').value = btn.getAttribute('data-purpose');
-            document.getElementById('edit-note').value = btn.getAttribute('data-note');
-            document.getElementById('edit-amount').value = btn.getAttribute('data-amount');
-        });
-    }
-});
-
-toggleFields();
-recalcTotal();
+function monthSelectHtml(selected){let html='<select name="pay_month[]" class="form-select form-select-sm">';MONTHS.forEach(m=>{html+='<option value="'+m+'"'+(m===selected?' selected':'')+'>'+m+'</option>';});return html+'</select>';}
+function purposeSelectHtml(selected){let html='<select name="pay_purpose[]" class="form-select form-select-sm line-purpose">';for(const[v,l]of Object.entries(PURPOSES))html+='<option value="'+v+'"'+(v===selected?' selected':'')+'>'+l+'</option>';return html+'</select>';}
+function addLine(){const wrap=document.getElementById('linesWrap');const div=document.createElement('div');div.className='pay-line border rounded p-2 mb-2';div.innerHTML='<div class="row g-2 align-items-end"><div class="col-md-3"><label class="form-label small text-muted mb-1">سداد عن شهر</label>'+monthSelectHtml(CUR)+'</div><div class="col-md-3"><label class="form-label small text-muted mb-1">غرض الدفعة</label>'+purposeSelectHtml('monthly_sponsorship')+'</div><div class="col-md-2"><label class="form-label small text-muted mb-1">المبلغ</label><input type="number" step="0.01" min="0" name="pay_amount[]" class="form-control form-control-sm line-amount"></div><div class="col-md-3"><label class="form-label small text-muted mb-1">إيصال هذا السطر</label><input type="file" name="pay_receipt_file[]" class="form-control form-control-sm" accept="image/jpeg,image/png,application/pdf"></div><div class="col-md-1 text-end"><button type="button" class="btn btn-sm btn-outline-danger" onclick="removeLine(this)"><i class="fas fa-trash"></i></button></div><div class="col-md-6 line-note-wrap" style="display:none"><label class="form-label small text-muted mb-1">توضيح الغرض</label><input type="text" name="pay_note[]" class="form-control form-control-sm"></div></div>';wrap.appendChild(div);recalcTotal();}
+function removeLine(btn){const lines=document.querySelectorAll('.pay-line');if(lines.length>1)btn.closest('.pay-line').remove();else{const l=lines[0];l.querySelectorAll('select')[0].value=CUR;l.querySelectorAll('select')[1].value='monthly_sponsorship';l.querySelector('.line-note-wrap').style.display='none';l.querySelector('.line-amount').value='';}recalcTotal();}
+function recalcTotal(){let t=0;document.querySelectorAll('.line-amount').forEach(i=>{t+=parseFloat(i.value)||0;});const el=document.getElementById('linesTotal');if(el)el.textContent=t.toLocaleString('en-US');}
+function toggleFields(){const t=document.getElementById('payType').value;const monthly=t==='monthly_sponsorship';document.getElementById('grpShip').style.display=monthly?'':'none';document.getElementById('grpLines').style.display=monthly?'':'none';document.getElementById('grpFee').style.display=monthly?'':'none';document.getElementById('grpSingleAmount').style.display=monthly?'none':'';document.getElementById('grpProject').style.display=t==='project_donation'?'':'none';document.getElementById('grpOther').style.display=t==='other'?'':'none';}
+document.addEventListener('input',e=>{if(e.target.classList.contains('line-amount'))recalcTotal();});
+document.addEventListener('change',e=>{if(e.target.classList.contains('line-purpose'))e.target.closest('.pay-line').querySelector('.line-note-wrap').style.display=e.target.value==='other'?'':'none';if(e.target.name==='sponsorship_id'){const amt=(e.target.selectedOptions[0]&&e.target.selectedOptions[0].dataset.amount)||'';document.querySelectorAll('.line-amount').forEach(i=>{if(!i.value&&amt)i.value=amt;});recalcTotal();}});
+document.addEventListener('DOMContentLoaded',function(){var detModal=document.getElementById('detailsModal');if(detModal){detModal.addEventListener('show.bs.modal',function(event){var btn=event.relatedTarget;document.getElementById('det-period').textContent=btn.getAttribute('data-period');document.getElementById('det-type').textContent=btn.getAttribute('data-type');document.getElementById('det-note').textContent=btn.getAttribute('data-note')||'—';document.getElementById('det-amount').textContent=btn.getAttribute('data-amount')+' ج.س';document.getElementById('det-fee').textContent=btn.getAttribute('data-fee')+' %';document.getElementById('det-status').textContent=btn.getAttribute('data-status');});}var editModal=document.getElementById('editModal');if(editModal){editModal.addEventListener('show.bs.modal',function(event){var btn=event.relatedTarget;document.getElementById('edit-src').value=btn.getAttribute('data-src');document.getElementById('edit-id').value=btn.getAttribute('data-id');document.getElementById('edit-month').value=btn.getAttribute('data-period');document.getElementById('edit-purpose').value=btn.getAttribute('data-purpose');document.getElementById('edit-note').value=btn.getAttribute('data-note');document.getElementById('edit-amount').value=btn.getAttribute('data-amount');});}});
+toggleFields();recalcTotal();
 </script>
 
 <?php include dirname(__DIR__, 2) . '/includes/footer.php'; ?>
