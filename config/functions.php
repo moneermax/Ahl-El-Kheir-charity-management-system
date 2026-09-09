@@ -1,9 +1,8 @@
 <?php
 declare(strict_types=1);
 /**
- * Global Helpers & Routing — v2.3
- * Restores csrf_field() + flash() helpers, keeps the FM routing fix,
- * and ADDS routing for projects_manager and project_supervisor.
+ * Global Helpers & Routing — v2.4
+ * Centralized dashboard routing for accounting roles.
  */
 
 /* ---------- output & url ---------- */
@@ -105,7 +104,7 @@ if (!function_exists('require_role')) {
     }
 }
 
-/* ---------- login router (Permanent Fix + Projects Roles) ---------- */
+/* ---------- login router ---------- */
 if (!function_exists('dashboard_for_role')) {
     function dashboard_for_role(?string $role): string {
         $role = trim((string) $role);
@@ -114,7 +113,7 @@ if (!function_exists('dashboard_for_role')) {
             'general_manager', 'gm' => 'dashboard/gm_dashboard.php',
             'vice_general_manager', 'vgm' => 'dashboard/vgm_dashboard.php',
             'financial_manager', 'fm', 'finance' => 'modules/accounting/fm_dashboard.php',
-            'accountant', 'accountant_staff' => 'dashboard/accountant_dashboard.php',
+            'accountant', 'accountant_staff' => 'dashboard/accountant_staff_dashboard.php',
             'supervisor' => 'dashboard/supervisor_dashboard.php',
             'nanny' => 'dashboard/nanny_dashboard.php',
             'administration', 'staff' => 'dashboard/staff_dashboard.php',
