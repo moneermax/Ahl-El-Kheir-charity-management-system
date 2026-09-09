@@ -339,6 +339,31 @@ $recentJournals = dbFetchAll("SELECT je.entry_code, je.entry_date, je.descriptio
     <p><?php echo e(t('fm.overview', ['date' => date('Y-m-d')])); ?></p>
 </div>
 
+<!-- ══════════ FM TRANSACTION REVIEW ══════════ -->
+<div class="fm-card" style="border-right:5px solid #1b4d8f;">
+    <div class="fm-card-head">
+        <span>🧾 مراجعة المعاملات المالية</span>
+        <a href="<?php echo APP_URL; ?>modules/accounting/fm_transaction_review.php" class="btn-fm btn-navy" style="background:#fff; color:#1b4d8f;">
+            <i class="fas fa-clipboard-check"></i>
+            مراجعة المعاملات
+        </a>
+    </div>
+    <div class="fm-card-body">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:15px; flex-wrap:wrap;">
+            <div>
+                <strong>مراجعة واعتماد المعاملات المالية</strong>
+                <div class="text-muted" style="margin-top:4px;">
+                    مراجعة المعاملات المعلقة، اعتمادها وترحيلها أو إعادتها للمنشئ للتعديل.
+                </div>
+            </div>
+            <a href="<?php echo APP_URL; ?>modules/accounting/fm_transaction_review.php" class="btn-fm btn-navy">
+                <i class="fas fa-arrow-left"></i>
+                فتح شاشة المراجعة
+            </a>
+        </div>
+    </div>
+</div>
+
 <?php
 $fl = $_SESSION['flash'] ?? null;
 if (is_array($fl)) {
