@@ -279,10 +279,10 @@ $recentJournals = dbFetchAll("SELECT je.entry_code, je.entry_date, je.descriptio
 .empty-state { text-align: center; padding: 30px; color: #999; }
 .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 20px; }
 .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; }
-/* Keep the review card compact while placing it beside the treasury/project area. */
 .fm-top-layout { display: grid; grid-template-columns: minmax(300px, 0.34fr) minmax(0, 1fr); gap: 20px; align-items: start; margin-bottom: 20px; }
-.fm-review-card { margin-bottom: 0; }
-.fm-review-card .fm-card-body { padding: 16px 20px 20px; }
+.fm-review-card { align-self: start; height: auto !important; min-height: 0 !important; margin: 0; }
+.fm-review-card .fm-card-body { display: block; height: auto; min-height: 0; padding: 16px 20px 20px; }
+.fm-top-right { align-self: start; min-width: 0; }
 .fm-top-right > .grid-4 { margin-bottom: 20px; }
 .fm-top-right > .fm-card { margin-bottom: 0; }
 @media (max-width: 991.98px) {
@@ -310,23 +310,21 @@ if (is_array($fl)) {
 
 <!-- ══════════ TOP FINANCIAL OVERSIGHT LAYOUT ══════════ -->
 <div class="fm-top-layout">
-    <div>
-        <div class="fm-card fm-review-card" id="fm-transaction-review">
-            <div class="fm-card-head">
-                <span>🧾 مراجعة المعاملات المالية</span>
-                <span class="badge-fm badge-blue"><i class="fas fa-clipboard-check"></i></span>
-            </div>
-            <div class="fm-card-body">
-                <div style="width:100%;">
-                    <div style="font-size:1.15rem; font-weight:700; color:#1b4d8f; margin-bottom:10px;">مراجعة واعتماد المعاملات المالية</div>
-                    <div class="text-muted" style="line-height:1.8; margin-bottom:20px;">
-                        مراجعة المعاملات المعلقة، اعتمادها وترحيلها أو إعادتها للمنشئ للتعديل.
-                    </div>
-                    <a href="<?php echo APP_URL; ?>modules/accounting/fm_transaction_review.php" class="btn-fm btn-navy" style="width:100%; text-align:center; padding:12px 16px;">
-                        <i class="fas fa-clipboard-check"></i>
-                        فتح شاشة مراجعة المعاملات
-                    </a>
+    <div class="fm-card fm-review-card" id="fm-transaction-review">
+        <div class="fm-card-head">
+            <span>🧾 مراجعة المعاملات المالية</span>
+            <span class="badge-fm badge-blue"><i class="fas fa-clipboard-check"></i></span>
+        </div>
+        <div class="fm-card-body">
+            <div style="width:100%;">
+                <div style="font-size:1.15rem; font-weight:700; color:#1b4d8f; margin-bottom:10px;">مراجعة واعتماد المعاملات المالية</div>
+                <div class="text-muted" style="line-height:1.8; margin-bottom:20px;">
+                    مراجعة المعاملات المعلقة، اعتمادها وترحيلها أو إعادتها للمنشئ للتعديل.
                 </div>
+                <a href="<?php echo APP_URL; ?>modules/accounting/fm_transaction_review.php" class="btn-fm btn-navy" style="width:100%; text-align:center; padding:12px 16px;">
+                    <i class="fas fa-clipboard-check"></i>
+                    فتح شاشة مراجعة المعاملات
+                </a>
             </div>
         </div>
     </div>
