@@ -96,7 +96,7 @@ $menus = [
 
     'accountant_staff' => [
         ['active' => 'dashboard', 'label_key' => 'navigation.dashboard', 'icon' => 'fa-gauge-high', 'url' => 'dashboard/accountant_staff_dashboard.php'],
-        $transactionsItem, $projectsItem, $disbItem, $orphanFormsItem,
+        $transactionsItem, $disbItem, $orphanFormsItem,
         ['active' => 'my_nannies', 'label_key' => 'navigation.assigned_nannies', 'icon' => 'fa-user-nurse', 'url' => 'modules/accounting/my_nannies.php'],
         [
             'type' => 'dropdown', 'label_key' => 'navigation.reports', 'icon' => 'fa-chart-line',
