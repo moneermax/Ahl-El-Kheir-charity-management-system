@@ -16,8 +16,8 @@ $t=dbFetchOne("SELECT * FROM transactions WHERE id=? AND status='returned' AND c
 if(!$t){ flash('error','لا يمكن إلغاء هذه الدفعة. يجب أن تكون مُعادة إليك وأن تكون أنت منشئها.'); header('Location: ' . APP_URL . 'modules/transactions/index.php'); exit(); }
 try {
     db()->beginTransaction();
-    $stmt = dbExecute("UPDATE transactions SET status='cancelled', cancelled_at=NOW(), cancelled_by=?, cancel_reason=? WHERE id=? AND status='returned' AND created_by=?",[$uid,$reason,$tid,$uid]);
-    if($stmt->rowCount()!==1) throw new RuntimeException('تعذر إلغاء الدفعة.');
+    $affected = dbExecute("UPDATE transactions SET status='cancelled', cancelled_at=NOW(), cancelled_by=?, cancel_reason=? WHERE id=? AND status='returned' AND created_by=?",[$uid,$reason,$tid,$uid]);
+    if($affected!==1) throw new RuntimeException('تعذر إلغاء الدفعة.');
     ak_transaction_review_audit($uid,'CANCEL_RETURNED',$tid,$t,['status'=>'cancelled','cancel_reason'=>$reason]);
     db()->commit();
     ak_transaction_review_delete_receipt_if_unreferenced($t['receipt_path']??null);
