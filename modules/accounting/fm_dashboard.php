@@ -318,9 +318,6 @@ if (is_array($fl)) {
         <div class="fm-card-body">
             <div style="width:100%;">
                 <div style="font-size:1.15rem; font-weight:700; color:#1b4d8f; margin-bottom:10px;">مراجعة واعتماد المعاملات المالية</div>
-                <div class="text-muted" style="line-height:1.8; margin-bottom:20px;">
-                    مراجعة المعاملات المعلقة، اعتمادها وترحيلها أو إعادتها للمنشئ للتعديل.
-                </div>
                 <a href="<?php echo APP_URL; ?>modules/accounting/fm_transaction_review.php" class="btn-fm btn-navy" style="width:100%; text-align:center; padding:12px 16px;">
                     <i class="fas fa-clipboard-check"></i>
                     فتح شاشة مراجعة المعاملات
