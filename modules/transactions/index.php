@@ -5,6 +5,7 @@ require_once dirname(__DIR__, 2) . '/config/database.php';
 require_once dirname(__DIR__, 2) . '/config/functions.php';
 require_once dirname(__DIR__, 2) . '/config/session.php';
 require_once dirname(__DIR__, 2) . '/modules/accounting/lib.php';
+require_once dirname(__DIR__, 2) . '/modules/accounting/lib_transaction_void.php';
 Session::start();
 if (!Session::isLoggedIn()) { header('Location: ' . APP_URL . 'index.php'); exit(); }
 $role = Session::getUserRole();
@@ -14,7 +15,8 @@ $canReviewPending = in_array($role, ['admin','financial_manager'], true);
 $canViewJournal = in_array($role, ['admin','vice_general_manager','general_manager','financial_manager','accountant'], true);
 $canEditReturned = in_array($role, ['admin','accountant','accountant_staff'], true);
 
-// Posted transaction void workflow. The actual accounting reversal remains in lib.php.
+// Posted transaction void workflow. The accounting reversal is atomic and is
+// completed before the transaction itself is marked voided.
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['void_tx']) && $canVoid) {
     if (verify_csrf()) {
         $tid = (int)$_POST['void_tx'];
@@ -24,12 +26,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['void_tx']) && $canVoi
             $financialCommitted = false;
             try {
                 db()->beginTransaction();
-                dbExecute("UPDATE transactions SET status='voided',voided_at=NOW(),voided_by=?,void_reason=? WHERE id=?", [Session::getUserId(),$reason,$tid]);
-                ak_void_journal_for_transaction($tid,$reason);
+
+                // The journal reversal and transaction state change share one
+                // transaction. If either step fails, neither is persisted.
+                ak_void_transaction_journal_atomic($tid, $reason);
+
+                $affected = dbExecute(
+                    "UPDATE transactions SET status='voided',voided_at=NOW(),voided_by=?,void_reason=? WHERE id=? AND status='posted'",
+                    [Session::getUserId(),$reason,$tid]
+                );
+                if ($affected !== 1) {
+                    throw new RuntimeException('تعذر إبطال حالة المعاملة ' . $tid . '.');
+                }
+
                 db()->commit();
                 $financialCommitted = true;
             } catch (Throwable $e) {
                 if (db()->inTransaction()) db()->rollBack();
+                error_log('Transaction void failed for #' . $tid . ': ' . $e->getMessage());
                 flash('error','تعذر إبطال المعاملة وقيدها. لم يتم حفظ أي جزء من العملية.');
             }
             if ($financialCommitted) {
