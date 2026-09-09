@@ -7,7 +7,7 @@
 
 if (!function_exists('ak_transaction_review_is_fm')) {
 function ak_transaction_review_is_fm(string $role): bool {
-    return in_array($role, ['financial_manager', 'fm', 'finance', 'admin', 'general_manager', 'vice_general_manager'], true);
+    return in_array($role, ['financial_manager', 'fm', 'finance', 'admin'], true);
 }
 }
 
