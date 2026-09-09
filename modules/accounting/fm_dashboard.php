@@ -279,16 +279,15 @@ $recentJournals = dbFetchAll("SELECT je.entry_code, je.entry_date, je.descriptio
 .empty-state { text-align: center; padding: 30px; color: #999; }
 .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 20px; }
 .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; }
-/* The FM transaction-review card intentionally occupies the left column and the
-   first two dashboard rows occupy the right column at desktop widths. */
-.fm-top-layout { display: grid; grid-template-columns: minmax(300px, 0.34fr) minmax(0, 1fr); gap: 20px; align-items: stretch; margin-bottom: 20px; }
-.fm-review-card { height: 100%; margin-bottom: 0; display: flex; flex-direction: column; }
-.fm-review-card .fm-card-body { flex: 1; display: flex; align-items: center; }
+/* Keep the review card compact while placing it beside the treasury/project area. */
+.fm-top-layout { display: grid; grid-template-columns: minmax(300px, 0.34fr) minmax(0, 1fr); gap: 20px; align-items: start; margin-bottom: 20px; }
+.fm-review-card { margin-bottom: 0; }
+.fm-review-card .fm-card-body { padding: 16px 20px 20px; }
 .fm-top-right > .grid-4 { margin-bottom: 20px; }
 .fm-top-right > .fm-card { margin-bottom: 0; }
 @media (max-width: 991.98px) {
     .fm-top-layout { grid-template-columns: 1fr; }
-    .fm-review-card { height: auto; margin-bottom: 20px; }
+    .fm-review-card { margin-bottom: 20px; }
 }
 </style>
 
