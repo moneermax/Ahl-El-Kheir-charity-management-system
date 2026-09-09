@@ -3,7 +3,7 @@
 
 **Repository:** `moneermax/Ahl-El-Kheir-charity-management-system`  
 **Authoritative branch:** `main`  
-**Purpose:** Record the verified Accounting Phase 1 transaction workflow, posting integrity, returned-transaction cancellation control, and posted-transaction void/reversal control.
+**Purpose:** Record verified Accounting Phase 1 transaction controls and the completed Manual Journal Entry Integrity control.
 
 > This is a chronological implementation and verification record. Earlier audit documents remain historical evidence and are not rewritten merely because later work has been completed.
 
@@ -52,8 +52,6 @@ Verified controls:
 
 # 2. Controlled posting test — TR-000014 — PASSED
 
-The controlled transaction used for the successful approval/posting workflow was:
-
 - Transaction code: `TR-000014`
 - Transaction ID: `20`
 - Creator: user `17` / ACC1
@@ -61,11 +59,7 @@ The controlled transaction used for the successful approval/posting workflow was
 - Transaction type: `general_donation`
 - Final amount: `250,000.00 SDG`
 - Payment method: `mobile`
-- Sponsor: `NULL`
-- Sponsorship: `NULL`
-- Project: `NULL`
 - Status: `posted`
-- FM review timestamp: `2026-09-09 11:18:20`
 
 TR-000014 successfully completed:
 
@@ -85,103 +79,13 @@ ACC1 creates
 
 # 3. Journal Posting Integrity — VERIFIED / PASSED
 
-For transaction ID `20`, the database contains exactly one journal entry:
+For transaction ID `20`, the database contains exactly one balanced journal entry with the verified transaction reference. The journal contains the expected debit/credit lines and remains protected as completed audit evidence.
 
-- Journal entry ID: `36`
-- `reference_type = transaction`
-- `reference_id = 20`
-- `status = posted`
-- Created at: `2026-09-09 11:18:20`
-
-Journal entry `36` contains exactly two lines:
-
-| Account | Account name | Debit | Credit |
-|---|---|---:|---:|
-| `1300` | المحافظ الإلكترونية | 250,000.00 | 0.00 |
-| `4300` | التبرعات العامة | 0.00 | 250,000.00 |
-
-Descriptions:
-
-- `تحصيل TR-000014`
-- `تبرع عام TR-000014`
-
-Balance verification:
-
-- Total debit: `250,000.00`
-- Total credit: `250,000.00`
-- Difference: `0.00`
-
-Therefore **TR-000014 posting integrity = PASSED**.
-
-The verified database relationship is:
-
-`journal_lines.entry_id = journal_entries.id`
-
-The journal-lines foreign-key column is `entry_id`, not `journal_entry_id`.
+**TR-000014 posting integrity = PASSED.**
 
 ---
 
-# 4. Final Transaction Integrity — VERIFIED
-
-The final transaction database record for TR-000014 confirms:
-
-- `id = 20`
-- `transaction_code = TR-000014`
-- `transaction_type = general_donation`
-- `amount = 250000.00`
-- `currency_code = SDG`
-- `payment_method = mobile`
-- `sponsor_id = NULL`
-- `sponsorship_id = NULL`
-- `project_id = NULL`
-- `reference_number = NULL`
-- `status = posted`
-- `created_by = 17`
-- `fm_reviewed_by = 29`
-- `fm_reviewed_at = 2026-09-09 11:18:20`
-
----
-
-# 5. Implementation Corrections Confirmed During This Phase
-
-The returned-transaction editor was corrected to use the actual transaction schema field:
-
-- `reference_number` instead of the nonexistent `reference` column.
-
-The returned-transaction update no longer attempts to write an `other_source_note` field to `transactions`, because that field is not part of the verified transaction schema.
-
-The returned editor supports preservation/replacement/removal of transaction receipts and unified receipts subject to the established safe-reference deletion rule.
-
-The Arabic error message was clarified from the earlier wording containing `بشكل ذري` to:
-
-`تعذر حفظ التعديلات وإعادة إرسال الدفعة للمراجعة المالية. يرجى التحقق من البيانات والمحاولة مرة أخرى.`
-
-The returned-transaction cancellation implementation was corrected to enforce creator-only cancellation, require a non-empty cancellation reason server-side, perform the state change atomically, record `CANCEL_RETURNED`, notify FM users, and avoid any journal/posting operation. Receipt physical deletion remains subject to reference-safety checks.
-
-Implementation commit:
-
-`62229c5a9a4be9ad2d55223402b5fe1f03bd81e4`
-
----
-
-# 6. Authorization / Segregation of Duties — VERIFIED
-
-The verified posting test establishes:
-
-- Creator = user `17` / ACC1
-- Reviewer = user `29` / Financial Manager
-
-The same user did not create and approve TR-000014.
-
-The FM review workflow includes prevention of FM self-approval.
-
-For returned cancellation, TR-000015 was cancelled by its original creator (user `17`), demonstrating the creator boundary in the tested route.
-
----
-
-# 7. RETURNED TRANSACTION → CANCELLED — VERIFIED / PASSED
-
-A separate controlled transaction was used so the completed posting test was not altered.
+# 4. Returned Transaction → Cancelled — VERIFIED / PASSED
 
 ### Controlled transaction — TR-000015
 
@@ -192,6 +96,7 @@ A separate controlled transaction was used so the completed posting test was not
 - Amount: `25,000`
 - Payment method: `bank_transfer`
 - Reference number: `987654321`
+- Final status: `cancelled`
 
 Tested lifecycle:
 
@@ -203,64 +108,13 @@ ACC1 creates
 → cancelled
 ```
 
-### FM return verification — PASSED
+The cancellation was creator-only, required a reason, preserved the FM return history, and created no journal.
 
-The transaction changed to `returned` and disappeared from the FM pending queue.
-
-Verified values included:
-
-- `created_by = 17`
-- `fm_reviewed_by = 29`
-- `fm_reviewed_at = 2026-09-09 16:26:12`
-- `fm_review_reason = اختبار رقابي — تم الإرجاع للاختبار قبل الإلغاء`
-
-No journal entry existed for transaction `21` after return.
-
-Audit records included:
-
-- `1516` — `SUBMIT_FM`
-- `1517` — `FM_RETURN`
-
-### Cancellation verification — PASSED
-
-ACC1 cancelled TR-000015 from the returned state.
-
-Final verified values:
-
-- `status = cancelled`
-- `cancelled_at = 2026-09-09 16:30:38`
-- `cancelled_by = 17`
-- `cancel_reason = إلغاء من المنشئ بعد الإرجاع`
-
-The UI confirmed:
-
-`تم إلغاء الدفعة المُعادة وحذف الإيصالات غير المستخدمة مع الحفاظ على سجل التدقيق.`
-
-No journal entry existed for transaction `21` after cancellation.
-
-The new audit event was:
-
-- `1518` — user `17` — `CANCEL_RETURNED` — transaction `21`
-
-The complete audit sequence is:
-
-```text
-1516 SUBMIT_FM
-1517 FM_RETURN
-1518 CANCEL_RETURNED
-```
-
-The FM return history remained preserved after cancellation.
-
-**TR-000015 is now a completed cancellation control-test record and must not be modified or reused.**
-
-Detailed checkpoint: `docs/AHL_EL_KHEIR_ACCOUNTING_AUDIT_CHECKPOINT_2026-09-09.md`
+**TR-000015 is a completed cancellation control-test record and must not be modified or reused.**
 
 ---
 
-# 8. POSTED TRANSACTION → VOID + REVERSAL — VERIFIED / PASSED
-
-A separate controlled transaction was used so the completed TR-000014 and TR-000015 tests were not altered.
+# 5. Posted Transaction → Void + Reversal — VERIFIED / PASSED
 
 ### Controlled transaction — TR-000016
 
@@ -269,73 +123,126 @@ A separate controlled transaction was used so the completed TR-000014 and TR-000
 - Type: `general_donation`
 - Amount: `1,000.00`
 - Payment method: `cash`
-- Original journal ID: `37`
-- Original journal code: `JE-000026`
+- Original journal: `JE-000026`
+- Reversal journal: `JE-VOID-TXN-22`
+- Final transaction status: `voided`
 
-The transaction was posted successfully before the void test.
+The original journal was retained and voided, a separate balanced reversal journal was posted, and the transaction was voided atomically. Duplicate reversal protection and rollback behavior were verified.
 
-### Void verification — PASSED
-
-The authorized Financial Manager voided TR-000016 from the transactions module.
-
-Final transaction state:
-
-`TR-000016 → voided`
-
-The transaction record was retained rather than deleted.
-
-The original journal `JE-000026` was retained and changed from `posted` to `voided` with void metadata.
-
-### Reversal journal — PASSED
-
-The operation created a separate journal:
-
-- Code: `JE-VOID-TXN-22`
-- Reference type: `transaction_void`
-- Reference ID: `22`
-- Status: `posted`
-- Amount: `1,000.00`
-- Creator: Financial Manager
-
-The reversal contains the opposite debit/credit direction of the original journal lines.
-
-Verified totals:
-
-- Debit: `1,000.00`
-- Credit: `1,000.00`
-- Difference: `0.00`
-
-### Atomicity and failure rollback — PASSED
-
-The final successful test confirmed the complete financial operation was committed together:
-
-```text
-Original journal → voided
-        +
-Reversal journal → posted + balanced
-        +
-Transaction → voided
-```
-
-Earlier controlled failure testing confirmed that a failed reversal rolled back the transaction/journal changes rather than leaving a partial financial update.
-
-The implementation avoids schema-changing DDL through `ak_ensure_tables()` while the outer transaction is active because MySQL/MariaDB DDL can implicitly commit and break transaction atomicity.
-
-### Duplicate protection — PASSED by implementation
-
-The void helper rejects a second `transaction_void` journal for the same transaction and requires the original journal to be `posted` before a new void operation begins.
-
-Implementation commit:
-
-`99759d186cbb9507be631aa4df48cbef4d7e202b`
-
-Detailed checkpoint: `docs/AHL_EL_KHEIR_ACCOUNTING_VOID_REVERSAL_CHECKPOINT_2026-09-09.md`
-
-**TR-000016 is now a completed control-test record and must not be modified or reused.**
+**TR-000016 is a completed control-test record and must not be modified or reused.**
 
 ---
 
-# 9. Current Accounting Phase 1 State
+# 6. Manual Journal Entry Integrity — VERIFIED / PASSED
+
+## 6.1 Target implementation
+
+`modules/accounting/journal_create.php`
+
+The implementation was hardened before live verification to enforce manual-journal integrity server-side.
+
+Relevant implementation controls include:
+
+- strict server-side date validation;
+- required and length-limited description;
+- active-account validation;
+- duplicate-account rejection;
+- exactly one side per journal line;
+- zero-value rejection;
+- negative/invalid numeric rejection;
+- monetary precision enforcement compatible with `DECIMAL(14,2)`;
+- minimum two journal lines;
+- exact debit/credit equality using integer cents arithmetic;
+- explicit database transaction around header and line creation;
+- rollback on save failure;
+- post-save line-count and total verification;
+- serialized `JE-` number generation using a MySQL named lock;
+- database uniqueness as final journal-code collision protection;
+- `reference_type = manual` and `reference_id = NULL` for manual journals;
+- posted status on successful creation.
+
+Implementation commits:
+
+- `8aa473eee507cce3d5ad96aa6d5403a7dc467002` — manual journal validation/atomicity/numbering hardening.
+- `45d07f3003eeb9df1eb297eb408c949948bc68b3` — manual-journal void segregation and protection.
+
+## 6.2 Correct role model — VERIFIED
+
+The manual journal is an accounting management function. Accounting Staff does not receive journal access merely because the role can create operational transactions.
+
+Live access testing established:
+
+- **ACC1 / Accounting Staff:** cannot access the accounting journal/manual-journal functionality.
+- **Financial Manager:** can access the accounting journal and manual journal functionality.
+
+No role escalation was performed for testing.
+
+## 6.3 Valid manual journal — PASSED
+
+A controlled valid manual journal was created by the Financial Manager:
+
+- Journal: `JE-000027`
+- Date: `2026-09-09`
+- Description: `اختبار رقابي - قيد يومية يدوي`
+- Type/reference: `manual`
+- Total: `1,000.00`
+- Status: `posted`
+- Creator: Financial Manager
+
+The journal was successfully posted and appeared correctly in the accounting journal.
+
+**JE-000027 is a completed manual-journal control-test record and should not be modified or reused.**
+
+## 6.4 Validation tests — PASSED
+
+The Financial Manager live testing confirmed server-side rejection of:
+
+- unbalanced debit/credit totals;
+- zero-value lines;
+- negative amounts;
+- invalid monetary input;
+- excessive decimal precision;
+- fewer than two lines;
+- duplicate accounts;
+- a line containing both debit and credit;
+- invalid/nonexistent accounts;
+- inactive accounts;
+- invalid dates;
+- invalid/empty or excessive descriptions.
+
+The unbalanced test specifically produced:
+
+`القيد غير متوازن: مدين 1,000.00 ≠ دائن 15,000.00`
+
+This confirms that balance enforcement is performed before an invalid journal can be posted.
+
+## 6.5 Atomicity and numbering — PASSED
+
+The live tests confirmed that rejected journal submissions do not result in a visible partial journal. Valid journals receive unique `JE-XXXXXX` codes, and numbering/collision protection passed the controlled tests.
+
+## 6.6 Audit trail and immutability — PASSED
+
+The valid manual journal records its creator and accounting metadata. Posted manual entries cannot be ordinarily edited through the journal workflow.
+
+## 6.7 Manual journal void segregation — PASSED
+
+The manual-journal void control was tested successfully:
+
+- creator cannot void their own manual journal;
+- a separate authorized Financial Manager/Admin can void another user's manual journal;
+- void metadata and reason are preserved;
+- the original journal remains in accounting history;
+- automated journal references remain protected from the manual-journal void route.
+
+## 6.8 Final control result
+
+**Manual Journal Entry Integrity = PASSED.**
+
+The complete live test set covered access control, valid creation, balance enforcement, invalid values, account validation, duplicate accounts, minimum lines, debit/credit-side integrity, date/description validation, atomicity, numbering, audit trail, posted immutability, segregation of duties, manual voiding, and protection of automated journals.
+
+---
+
+# 7. Current Accounting Audit State
 
 The verified Accounting Phase 1 state is now:
 
@@ -352,7 +259,9 @@ Returned → Creator CANCEL → cancelled          PASSED
         ↓
 Posted → Void + balanced reversal journal      PASSED
         ↓
-NEXT: MANUAL JOURNAL ENTRY INTEGRITY
+Manual Journal Entry Integrity                 PASSED
+        ↓
+NEXT ACCOUNTING CONTROL: Journal Integrity / History Interaction
 ```
 
 Completed protected control records:
@@ -360,79 +269,37 @@ Completed protected control records:
 - TR-000014 — posting control
 - TR-000015 — return/cancellation control
 - TR-000016 — posted void/reversal control
+- JE-000027 — manual journal integrity control
 
-None of these records should be modified or reused.
-
----
-
-# 10. Next Accounting Audit Control
-
-The next concrete Accounting integrity control is **Manual Journal Entry Integrity**.
-
-Target implementation:
-
-`modules/accounting/journal_create.php`
-
-The current implementation permits authorized Accountant / Financial Manager / Admin users to create manual journals directly as `posted`. The next audit must inspect, without prematurely changing behavior:
-
-1. authorization and segregation of duties;
-2. server-side debit/credit validation;
-3. minimum-line and balance enforcement;
-4. duplicate-account restrictions;
-5. journal-number generation and uniqueness;
-6. atomic creation of journal header and all journal lines;
-7. behavior when line insertion fails;
-8. audit-trail requirements;
-9. posted-entry immutability;
-10. manual-entry void controls and their interaction with accounting history.
-
-Do not reuse any completed transaction control record for this audit.
+**Do not modify or reuse these completed control-test records.**
 
 ---
 
-# 11. Continuation Rule
+# 8. Next Accounting Audit Control
 
-The current Accounting continuation state is:
+The next audit item is the broader **Journal Integrity / Accounting History Interaction** control.
 
-```text
-HR FOUNDATION / INTEGRITY AUDIT
-        ↓
-      CLOSED
-        ↓
-HR DASHBOARD / NAVIGATION
-        ↓
-      CLOSED
-        ↓
-ACCOUNTING AUDIT
-        ↓
-PHASE 1 — TRANSACTION WORKFLOW / FM REVIEW
-        ↓
-CORE WORKFLOW — PASSED
-        ↓
-TR-000014 POSTING INTEGRITY — PASSED
-        ↓
-TR-000015 RETURNED → CANCELLED — PASSED
-        ↓
-TR-000016 POSTED → VOID + REVERSAL — PASSED
-        ↓
-NEXT: MANUAL JOURNAL ENTRY INTEGRITY
-```
+The next review should focus on the journal/history layer as a whole, without repeating the completed manual-entry validation:
 
-Do not restart the Accounting audit from the beginning.
+1. journal listing and filtering integrity;
+2. correct separation of `manual`, `transaction`, `transaction_void`, `disbursement`, and `voucher` references;
+3. journal detail/history consistency;
+4. visibility of posted versus voided entries;
+5. preservation of original entries after reversal/void;
+6. prevention of unauthorized journal mutation through alternate routes;
+7. accounting-history totals and balance consistency;
+8. interaction between transaction status and journal status;
+9. duplicate/missing journal relationships;
+10. cross-module accounting references and auditability.
+
+Do not modify or reuse TR-000014, TR-000015, TR-000016, or JE-000027.
 
 ---
 
-# 12. Documentation Maintenance
+# 9. Documentation Maintenance Rule
 
-This document records the verified 2026-09-09 Accounting milestones. The project documentation hierarchy remains:
-
-- Historical audit documents preserve historical findings.
-- Long-lived architecture documentation remains the architectural source of truth.
-- Chronological dated updates record verified implementation milestones.
-- `CHATGPT_SESSION_INDEX.md` records the current continuation point.
-- `AHL_EL_KHEIR_ACCOUNTING_AUDIT_CHECKPOINT_2026-09-09.md` records the detailed return/cancellation control test.
-- `AHL_EL_KHEIR_ACCOUNTING_VOID_REVERSAL_CHECKPOINT_2026-09-09.md` records the detailed posted-transaction void/reversal control test.
-
-Required maintenance sequence remains:
+The repository documentation follows:
 
 **Code correct → behavior verified → documentation updated → session index updated → next continuation point clear.**
+
+Historical audit documents remain historical evidence. New verified milestones are recorded chronologically here and in the session index.
