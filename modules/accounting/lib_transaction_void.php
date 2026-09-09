@@ -87,19 +87,23 @@ function ak_void_transaction_journal_atomic(int $txnId, string $reason): void {
         ]
     );
 
-    $reversalId = (int)db()->lastInsertId();
+    // Use the same LAST_INSERT_ID() retrieval pattern already used by the
+    // accounting posting engine. This is reliable across the project's MariaDB setup.
+    $reversalIdRow = dbFetchOne("SELECT LAST_INSERT_ID() AS id");
+    $reversalId = (int)($reversalIdRow['id'] ?? 0);
     if ($reversalId <= 0) {
         throw new RuntimeException('تعذر إنشاء قيد الإلغاء للمعاملة ' . $txnId);
     }
 
     $reversalDebit = 0.0;
     $reversalCredit = 0.0;
+    $insertedLines = 0;
     foreach ($lines as $line) {
         $debit = round((float)$line['credit'], 2);
         $credit = round((float)$line['debit'], 2);
         $reversalDebit += $debit;
         $reversalCredit += $credit;
-        dbExecute(
+        $lineAffected = dbExecute(
             "INSERT INTO journal_lines (entry_id, account_id, debit, credit, description)
              VALUES (?,?,?,?,?)",
             [
@@ -110,8 +114,15 @@ function ak_void_transaction_journal_atomic(int $txnId, string $reason): void {
                 'عكس: ' . ($line['description'] ?? '')
             ]
         );
+        if ($lineAffected !== 1) {
+            throw new RuntimeException('تعذر إنشاء أحد أسطر قيد الإلغاء للمعاملة ' . $txnId);
+        }
+        $insertedLines++;
     }
 
+    if ($insertedLines !== count($lines)) {
+        throw new RuntimeException('عدد أسطر قيد الإلغاء غير مكتمل للمعاملة ' . $txnId);
+    }
     if (round($reversalDebit, 2) !== round($reversalCredit, 2) || round($reversalDebit, 2) <= 0) {
         throw new RuntimeException('قيد الإلغاء للمعاملة ' . $txnId . ' غير متوازن.');
     }
