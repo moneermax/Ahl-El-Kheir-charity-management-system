@@ -79,7 +79,7 @@ function ak_void_transaction_journal_atomic(int $txnId, string $reason): void {
          VALUES (?,?,?,?,?,'posted',?)",
         [
             $code,
-            date('Y-m-d'),
+            $original['entry_date'],
             'عكس القيد بسبب إبطال المعاملة ' . $txnId,
             'transaction_void',
             $txnId,
@@ -87,48 +87,44 @@ function ak_void_transaction_journal_atomic(int $txnId, string $reason): void {
         ]
     );
 
-    // Resolve the new entry by its unique code rather than relying on a separate
-    // LAST_INSERT_ID() SELECT. This keeps the helper independent of connection-
-    // specific last-insert-id behavior and guarantees we use the row just inserted.
-    $reversal = dbFetchOne(
-        "SELECT id FROM journal_entries WHERE entry_code=? LIMIT 1 FOR UPDATE",
-        [$code]
-    );
-    $reversalId = (int)($reversal['id'] ?? 0);
+    // Capture the generated journal ID directly from the same PDO connection.
+    // Do this immediately after the INSERT so no intervening SELECT can affect
+    // the connection's last-insert-id state.
+    $reversalId = (int)dbLastInsertId();
     if ($reversalId <= 0) {
-        throw new RuntimeException('تعذر العثور على قيد الإلغاء بعد إنشائه للمعاملة ' . $txnId);
+        throw new RuntimeException('تعذر الحصول على رقم قيد الإلغاء للمعاملة ' . $txnId);
     }
 
-    $reversalDebit = 0.0;
-    $reversalCredit = 0.0;
-    $insertedLines = 0;
-    foreach ($lines as $line) {
-        $debit = round((float)$line['credit'], 2);
-        $credit = round((float)$line['debit'], 2);
-        $reversalDebit += $debit;
-        $reversalCredit += $credit;
-        $lineAffected = dbExecute(
-            "INSERT INTO journal_lines (entry_id, account_id, debit, credit, description)
-             VALUES (?,?,?,?,?)",
-            [
-                $reversalId,
-                (int)$line['account_id'],
-                $debit,
-                $credit,
-                'عكس: ' . ($line['description'] ?? '')
-            ]
-        );
-        if ($lineAffected !== 1) {
-            throw new RuntimeException('تعذر إنشاء أحد أسطر قيد الإلغاء للمعاملة ' . $txnId);
-        }
-        $insertedLines++;
+    // Insert the complete reversal in one INSERT ... SELECT. This deliberately
+    // reuses the original journal_lines rows, so every account_id is already
+    // proven valid by the original FK relationship. Debit and credit are swapped.
+    $lineCount = dbExecute(
+        "INSERT INTO journal_lines (entry_id, account_id, debit, credit, description)
+         SELECT ?, account_id, credit, debit, CONCAT('عكس: ', COALESCE(description, ''))
+         FROM journal_lines
+         WHERE entry_id=?
+         ORDER BY id",
+        [$reversalId, (int)$original['id']]
+    );
+
+    if ($lineCount !== count($lines)) {
+        throw new RuntimeException('تعذر إنشاء جميع أسطر قيد الإلغاء للمعاملة ' . $txnId);
     }
 
-    if ($insertedLines !== count($lines)) {
-        throw new RuntimeException('عدد أسطر قيد الإلغاء غير مكتمل للمعاملة ' . $txnId);
-    }
-    if (round($reversalDebit, 2) !== round($reversalCredit, 2) || round($reversalDebit, 2) <= 0) {
-        throw new RuntimeException('قيد الإلغاء للمعاملة ' . $txnId . ' غير متوازن.');
+    // Final balance check against the rows actually inserted.
+    $reversalTotals = dbFetchOne(
+        "SELECT COALESCE(SUM(debit),0) AS total_debit,
+                COALESCE(SUM(credit),0) AS total_credit,
+                COUNT(*) AS line_count
+         FROM journal_lines
+         WHERE entry_id=?",
+        [$reversalId]
+    );
+
+    if ((int)($reversalTotals['line_count'] ?? 0) !== count($lines)
+        || round((float)$reversalTotals['total_debit'], 2) !== round((float)$reversalTotals['total_credit'], 2)
+        || round((float)$reversalTotals['total_debit'], 2) <= 0) {
+        throw new RuntimeException('قيد الإلغاء للمعاملة ' . $txnId . ' غير متوازن أو غير مكتمل.');
     }
 }
 }
