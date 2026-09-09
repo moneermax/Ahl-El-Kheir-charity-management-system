@@ -24,7 +24,11 @@ if (!class_exists('Session', false)) {
         }
 
         public static function getUserRole(): string {
-            return (string)($_SESSION['user_role'] ?? 'guest');
+            $role = trim((string)($_SESSION['user_role'] ?? 'guest'));
+            return match ($role) {
+                'fm', 'finance' => 'financial_manager',
+                default => $role,
+            };
         }
 
         public static function getUserId(): int {
