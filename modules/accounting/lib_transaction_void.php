@@ -79,7 +79,7 @@ function ak_void_transaction_journal_atomic(int $txnId, string $reason): void {
          VALUES (?,?,?,?,?,'posted',?)",
         [
             $code,
-            $original['entry_date'],
+            date('Y-m-d'),
             'عكس القيد بسبب إبطال المعاملة ' . $txnId,
             'transaction_void',
             $txnId,
@@ -87,12 +87,16 @@ function ak_void_transaction_journal_atomic(int $txnId, string $reason): void {
         ]
     );
 
-    // Use the same LAST_INSERT_ID() retrieval pattern already used by the
-    // accounting posting engine. This is reliable across the project's MariaDB setup.
-    $reversalIdRow = dbFetchOne("SELECT LAST_INSERT_ID() AS id");
-    $reversalId = (int)($reversalIdRow['id'] ?? 0);
+    // Resolve the new entry by its unique code rather than relying on a separate
+    // LAST_INSERT_ID() SELECT. This keeps the helper independent of connection-
+    // specific last-insert-id behavior and guarantees we use the row just inserted.
+    $reversal = dbFetchOne(
+        "SELECT id FROM journal_entries WHERE entry_code=? LIMIT 1 FOR UPDATE",
+        [$code]
+    );
+    $reversalId = (int)($reversal['id'] ?? 0);
     if ($reversalId <= 0) {
-        throw new RuntimeException('تعذر إنشاء قيد الإلغاء للمعاملة ' . $txnId);
+        throw new RuntimeException('تعذر العثور على قيد الإلغاء بعد إنشائه للمعاملة ' . $txnId);
     }
 
     $reversalDebit = 0.0;
