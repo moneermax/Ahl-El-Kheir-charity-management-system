@@ -3,7 +3,7 @@
 
 **Repository:** `moneermax/Ahl-El-Kheir-charity-management-system`  
 **Authoritative branch:** `main`  
-**Purpose:** Record the verified Accounting Phase 1 transaction workflow, posting integrity, and returned-transaction cancellation control.
+**Purpose:** Record the verified Accounting Phase 1 transaction workflow, posting integrity, returned-transaction cancellation control, and posted-transaction void/reversal control.
 
 > This is a chronological implementation and verification record. Earlier audit documents remain historical evidence and are not rewritten merely because later work has been completed.
 
@@ -258,7 +258,84 @@ Detailed checkpoint: `docs/AHL_EL_KHEIR_ACCOUNTING_AUDIT_CHECKPOINT_2026-09-09.m
 
 ---
 
-# 8. Current Accounting Phase 1 State
+# 8. POSTED TRANSACTION → VOID + REVERSAL — VERIFIED / PASSED
+
+A separate controlled transaction was used so the completed TR-000014 and TR-000015 tests were not altered.
+
+### Controlled transaction — TR-000016
+
+- Transaction ID: `22`
+- Transaction code: `TR-000016`
+- Type: `general_donation`
+- Amount: `1,000.00`
+- Payment method: `cash`
+- Original journal ID: `37`
+- Original journal code: `JE-000026`
+
+The transaction was posted successfully before the void test.
+
+### Void verification — PASSED
+
+The authorized Financial Manager voided TR-000016 from the transactions module.
+
+Final transaction state:
+
+`TR-000016 → voided`
+
+The transaction record was retained rather than deleted.
+
+The original journal `JE-000026` was retained and changed from `posted` to `voided` with void metadata.
+
+### Reversal journal — PASSED
+
+The operation created a separate journal:
+
+- Code: `JE-VOID-TXN-22`
+- Reference type: `transaction_void`
+- Reference ID: `22`
+- Status: `posted`
+- Amount: `1,000.00`
+- Creator: Financial Manager
+
+The reversal contains the opposite debit/credit direction of the original journal lines.
+
+Verified totals:
+
+- Debit: `1,000.00`
+- Credit: `1,000.00`
+- Difference: `0.00`
+
+### Atomicity and failure rollback — PASSED
+
+The final successful test confirmed the complete financial operation was committed together:
+
+```text
+Original journal → voided
+        +
+Reversal journal → posted + balanced
+        +
+Transaction → voided
+```
+
+Earlier controlled failure testing confirmed that a failed reversal rolled back the transaction/journal changes rather than leaving a partial financial update.
+
+The implementation avoids schema-changing DDL through `ak_ensure_tables()` while the outer transaction is active because MySQL/MariaDB DDL can implicitly commit and break transaction atomicity.
+
+### Duplicate protection — PASSED by implementation
+
+The void helper rejects a second `transaction_void` journal for the same transaction and requires the original journal to be `posted` before a new void operation begins.
+
+Implementation commit:
+
+`99759d186cbb9507be631aa4df48cbef4d7e202b`
+
+Detailed checkpoint: `docs/AHL_EL_KHEIR_ACCOUNTING_VOID_REVERSAL_CHECKPOINT_2026-09-09.md`
+
+**TR-000016 is now a completed control-test record and must not be modified or reused.**
+
+---
+
+# 9. Current Accounting Phase 1 State
 
 The verified Accounting Phase 1 state is now:
 
@@ -272,18 +349,48 @@ Creator EDIT / RESUBMIT                         PASSED
 FM APPROVE → posted + journal                   PASSED
         ↓
 Returned → Creator CANCEL → cancelled          PASSED
+        ↓
+Posted → Void + balanced reversal journal      PASSED
+        ↓
+NEXT: MANUAL JOURNAL ENTRY INTEGRITY
 ```
 
-Both controlled records are complete and must remain untouched:
+Completed protected control records:
 
 - TR-000014 — posting control
 - TR-000015 — return/cancellation control
+- TR-000016 — posted void/reversal control
 
-The next audit task must inspect the next concrete Accounting integrity control in the current implementation without repeating these completed tests.
+None of these records should be modified or reused.
 
 ---
 
-# 9. Continuation Rule
+# 10. Next Accounting Audit Control
+
+The next concrete Accounting integrity control is **Manual Journal Entry Integrity**.
+
+Target implementation:
+
+`modules/accounting/journal_create.php`
+
+The current implementation permits authorized Accountant / Financial Manager / Admin users to create manual journals directly as `posted`. The next audit must inspect, without prematurely changing behavior:
+
+1. authorization and segregation of duties;
+2. server-side debit/credit validation;
+3. minimum-line and balance enforcement;
+4. duplicate-account restrictions;
+5. journal-number generation and uniqueness;
+6. atomic creation of journal header and all journal lines;
+7. behavior when line insertion fails;
+8. audit-trail requirements;
+9. posted-entry immutability;
+10. manual-entry void controls and their interaction with accounting history.
+
+Do not reuse any completed transaction control record for this audit.
+
+---
+
+# 11. Continuation Rule
 
 The current Accounting continuation state is:
 
@@ -306,14 +413,16 @@ TR-000014 POSTING INTEGRITY — PASSED
         ↓
 TR-000015 RETURNED → CANCELLED — PASSED
         ↓
-NEXT: NEXT CONCRETE ACCOUNTING INTEGRITY CONTROL
+TR-000016 POSTED → VOID + REVERSAL — PASSED
+        ↓
+NEXT: MANUAL JOURNAL ENTRY INTEGRITY
 ```
 
 Do not restart the Accounting audit from the beginning.
 
 ---
 
-# 10. Documentation Maintenance
+# 12. Documentation Maintenance
 
 This document records the verified 2026-09-09 Accounting milestones. The project documentation hierarchy remains:
 
@@ -321,7 +430,8 @@ This document records the verified 2026-09-09 Accounting milestones. The project
 - Long-lived architecture documentation remains the architectural source of truth.
 - Chronological dated updates record verified implementation milestones.
 - `CHATGPT_SESSION_INDEX.md` records the current continuation point.
-- `AHL_EL_KHEIR_ACCOUNTING_AUDIT_CHECKPOINT_2026-09-09.md` records the detailed returned/cancelled control test.
+- `AHL_EL_KHEIR_ACCOUNTING_AUDIT_CHECKPOINT_2026-09-09.md` records the detailed return/cancellation control test.
+- `AHL_EL_KHEIR_ACCOUNTING_VOID_REVERSAL_CHECKPOINT_2026-09-09.md` records the detailed posted-transaction void/reversal control test.
 
 Required maintenance sequence remains:
 
