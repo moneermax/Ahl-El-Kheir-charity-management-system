@@ -27,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && verify_csrf()) {
         $tid=(int)$_POST['approve_transaction'];
         $t=dbFetchOne("SELECT * FROM transactions WHERE id=? AND status='pending_fm_review'",[$tid]);
         if (!$t) flash('error','الدفعة غير موجودة أو لم تعد بانتظار المراجعة.');
-        elseif ((int)$t['created_by']===$uid && $role!=='admin') flash('error','لا يجوز للمنشئ اعتماد معاملته بنفسه.');
+        elseif ((int)$t['created_by']===$uid) flash('error','لا يجوز للمنشئ اعتماد معاملته بنفسه.');
         else {
             try {
                 db()->beginTransaction();
@@ -53,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && verify_csrf()) {
         else {
             $t=dbFetchOne("SELECT * FROM transactions WHERE id=? AND status='pending_fm_review'",[$tid]);
             if(!$t) flash('error','الدفعة غير موجودة أو لم تعد بانتظار المراجعة.');
-            elseif((int)$t['created_by']===$uid && $role!=='admin') flash('error','لا يجوز للمنشئ إرجاع معاملته بنفسه.');
+            elseif((int)$t['created_by']===$uid) flash('error','لا يجوز للمنشئ إرجاع معاملته بنفسه.');
             else {
                 try {
                     db()->beginTransaction();
