@@ -7,8 +7,20 @@ require_once dirname(__DIR__, 2) . '/config/session.php';
 require_once __DIR__ . '/lib.php';
 Session::start();
 
-if (!Session::isLoggedIn() || !in_array(Session::getUserRole(), ['admin', 'financial_manager','accountant', 'general_manager', 'vice_general_manager'], true)) {
-    header('Location: ' . APP_URL . 'index.php'); exit();
+$voucherRole = Session::getUserRole();
+
+$allowedVoucherRoles = [
+    'admin',
+    'financial_manager',
+    'accountant',
+    'accountant_staff',
+    'general_manager',
+    'vice_general_manager'
+];
+
+if (!Session::isLoggedIn() || !in_array($voucherRole, $allowedVoucherRoles, true)) {
+    header('Location: ' . APP_URL . 'index.php');
+    exit();
 }
 $canManage = in_array(Session::getUserRole(), ['admin', 'accountant'], true);
 $pageTitle = 'السندات';
@@ -93,14 +105,27 @@ $list = dbFetchAll("SELECT v.*, c1.code cash_code, c1.name_ar cash_name, c2.code
 
 include dirname(__DIR__, 2) . '/includes/header.php';
 ?>
+```php
 <div class="welcome-section fade-in">
     <h2>السندات المالية</h2>
     <p>سند قبض = نقد داخل (يزيد الصندوق/البنك) · سند صرف = نقد خارج (ينقص الصندوق/البنك) — الترحيل مزدوج تلقائياً</p>
-    <div class="quick-actions mt-3">
-        <a href="<?php echo APP_URL; ?>modules/accounting/vouchers.php?tab=new" class="btn btn-primary btn-sm <?php echo $tab === 'new' ? '' : ''; ?>"><i class="fas fa-plus me-1"></i>سند جديد</a>
-        <a href="<?php echo APP_URL; ?>modules/accounting/vouchers.php?tab=list" class="btn btn-secondary btn-sm"><i class="fas fa-list me-1"></i>سجل السندات</a>
-    </div>
+
+    <?php if ($canManage): ?>
+        <div class="quick-actions mt-3">
+            <a href="<?php echo APP_URL; ?>modules/accounting/vouchers.php?tab=new"
+               class="btn btn-primary btn-sm">
+                <i class="fas fa-plus me-1"></i>سند جديد
+            </a>
+
+            <a href="<?php echo APP_URL; ?>modules/accounting/vouchers.php?tab=list"
+               class="btn btn-secondary btn-sm">
+                <i class="fas fa-list me-1"></i>سجل السندات
+            </a>
+        </div>
+    <?php endif; ?>
 </div>
+```
+
 <?php include dirname(__DIR__, 2) . '/includes/alerts.php'; ?>
 <?php if ($errors): ?><div class="alert alert-danger fade-in"><ul class="mb-0"><?php foreach ($errors as $er) echo '<li>' . e($er) . '</li>'; ?></ul></div><?php endif; ?>
 
