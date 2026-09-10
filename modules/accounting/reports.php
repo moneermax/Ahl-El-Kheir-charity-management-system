@@ -7,8 +7,19 @@ require_once dirname(__DIR__, 2) . '/config/session.php';
 require_once __DIR__ . '/lib.php';
 Session::start();
 
-if (!Session::isLoggedIn() || !in_array(Session::getUserRole(), ['admin', 'accountant_staff', 'financial_manager', 'general_manager', 'vice_general_manager'], true)) {
-    header('Location: ' . APP_URL . 'index.php'); exit();
+$reportRole = Session::getUserRole();
+
+$allowedReportRoles = [
+    'admin',
+    'financial_manager',
+    'accountant_staff',
+    'general_manager',
+    'vice_general_manager'
+];
+
+if (!Session::isLoggedIn() || !in_array($reportRole, $allowedReportRoles, true)) {
+    header('Location: ' . APP_URL . 'index.php');
+    exit();
 }
 $pageTitle = 'التقارير المالية';
 $active    = 'acct_reports';
