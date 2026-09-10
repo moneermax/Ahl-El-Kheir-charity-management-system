@@ -6,7 +6,7 @@
 **Document type:** Canonical Accounting Audit Record  
 **Last verified:** 2026-09-10
 
-This is the canonical Accounting Phase 1 audit document. It consolidates the previously separate chronological Accounting checkpoint, void/reversal checkpoint, and documentation-update records. Historical evidence is preserved here; the superseded duplicate files are removed to keep `docs/` organized.
+This is the canonical Accounting audit record. Historical evidence is preserved here; the current continuation point is maintained at the end of this document.
 
 ---
 
@@ -22,6 +22,7 @@ Accounting Phase 1 has completed and passed the following controls:
 6. Posted transaction → authorized void + balanced reversal journal.
 7. Manual Journal Entry Integrity.
 8. Trial Balance Integrity.
+9. Accountant Staff financial/reporting authorization surface audit.
 
 The next control is **Journal Integrity / Accounting History Interaction**.
 
@@ -240,7 +241,7 @@ The Trial Balance:
 
 The Trial Balance is an accounting-integrity control. It is intentionally separate from `modules/accounting/gm_reconciliation.php`, which is a management/operational reconciliation report covering inflows, outflows, cash movement, open disbursement batches, aging, returns, and voided disbursement history.
 
-These reports are complementary, not duplicates:
+These reports are complementary, not duplicates.
 
 | Trial Balance | GM Reconciliation |
 |---|---|
@@ -261,15 +262,66 @@ Implementation commits:
 
 ---
 
-# 8. Cross-session continuation communication rule
+# 8. Accountant Staff financial/reporting authorization — PASSED
 
-This project uses a **work-first, result-only communication rule** for ChatGPT continuation sessions.
+The targeted authorization audit for role `accountant_staff` was completed without modifying accounting data.
 
-- Perform repository inspection, analysis, documentation maintenance, and safe code changes directly before responding.
-- Do not send progress-only messages such as `proceed`, `I will inspect`, `I will check`, plans, or announcements of intended work.
-- Return to the user only when there is a concrete result, or when user action is genuinely required.
-- User action should be requested only for a local verification/test that cannot be performed through repository inspection, or when a required file cannot be safely retrieved from the repository and must be provided/pulled by the user.
-- When user action is required, state exactly what to check/provide and why, using the smallest possible request.
-- Do not ask the user to repeat information already available in the repository or the current documented checkpoint.
+Confirmed restricted organization-wide financial surfaces:
 
-This rule exists to reduce unnecessary chat messages, preserve conversation capacity, and keep continuation sessions focused on actual implementation and verification.
+- `modules/accounting/journal.php`
+- `modules/accounting/account_ledger.php`
+- `modules/accounting/trial_balance.php`
+- `modules/accounting/reports.php`
+- `modules/reports/financial.php`
+- `modules/reports/sponsorship.php`
+- `modules/reports/operational.php`
+
+`modules/reports/confirmed_disbursements_report.php` was identified as an authorization gap because it exposed organization-wide disbursement information. Accountant Staff access was removed.
+
+Fix commit:
+
+`4750cb72ddd080ee604928e9aa1c67b9b11f70a9`
+
+The dedicated read-only `modules/reports/my_financial.php` remains scoped to the authenticated Accountant Staff user's own `created_by` transactions, and `modules/reports/index.php` redirects that role to the scoped report.
+
+Direct access by ACC1 (`user_id = 17`) to the formerly exposed confirmed-disbursements report was retested after the fix and **PASSED**.
+
+The working Accountant Staff dashboard was intentionally not modified during this milestone.
+
+---
+
+# 9. Current continuation point
+
+**Next control: Journal Integrity / Accounting History Interaction.**
+
+Do not repeat completed controls unless new code evidence creates a regression.
+
+Required scope:
+
+1. journal listing and filtering integrity;
+2. separation of `manual`, `transaction`, `transaction_void`, `disbursement`, and `voucher` references;
+3. journal detail/history consistency;
+4. posted versus voided visibility;
+5. preservation of original entries after reversal/void;
+6. prevention of unauthorized journal mutation through alternate routes;
+7. accounting-history totals and balance consistency;
+8. interaction between transaction status and journal status;
+9. duplicate/missing journal relationships;
+10. cross-module accounting references and auditability.
+
+Known historical observations must be treated carefully: transactions `8`, `13`, and `16` previously showed posted transactions without the expected generic `reference_type='transaction'` journal relationship and may represent disbursement accounting paths; transactions `5`, `14`, and `15` had historical void relationships requiring interpretation rather than destructive correction. Do not alter those records solely to make the audit query pass.
+
+Protected completed control records remain protected:
+
+- TR-000014 / transaction `20`
+- TR-000015 / transaction `21`
+- TR-000016 / transaction `22`
+- JE-000027
+- JE-000026 / journal `37`
+- JE-VOID-TXN-22
+
+---
+
+# 10. Continuation communication rule
+
+Perform repository inspection, analysis, documentation maintenance, and safe code changes directly before responding. Do not send progress-only messages or plans. Return only when there is a concrete result or when local user action is genuinely required.
