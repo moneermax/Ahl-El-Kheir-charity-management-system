@@ -8,7 +8,7 @@ require_once dirname(__DIR__, 2) . '/config/session.php';
 Session::start();
 $role = Session::getUserRole();
 
-if (!Session::isLoggedIn() || !in_array($role, ['admin', 'accountant', 'accountant_staff', 'nanny'])) {
+if (!Session::isLoggedIn() || !in_array($role, ['admin', 'accountant', 'nanny'])) {
     header('Location: ' . APP_URL . 'index.php');
     exit();
 }
