@@ -12,7 +12,7 @@ $reportRole = Session::getUserRole();
 $allowedReportRoles = [
     'admin',
     'financial_manager',
-    'accountant_staff',
+    'accountant',
     'general_manager',
     'vice_general_manager'
 ];
@@ -27,25 +27,6 @@ ak_ensure_tables(); ak_seed_accounts();
 
 $tabs = ['trial' => 'ميزان المراجعة', 'income' => 'قائمة الدخل', 'balance' => 'المركز المالي', 'cash' => 'دفتر النقد'];
 $tab = $_GET['tab'] ?? 'trial';
-/*
- * Report-level authorization
- *
- * Financial Manager / Admin:
- *   Full accounting reports.
- *
- * General Manager / Vice General Manager:
- *   Read-only financial oversight.
- *
- * Accountant Staff:
- *   Cash book only.
- *   No Trial Balance, Income Statement, or Balance Sheet.
- */
-if (
-    $reportRole === 'accountant_staff' &&
-    $tab !== 'cash'
-) {
-    $tab = 'cash';
-}
 if (!isset($tabs[$tab])) $tab = 'trial';
 $from = trim($_GET['from'] ?? ''); $to = trim($_GET['to'] ?? ''); $asof = trim($_GET['asof'] ?? '') ?: date('Y-m-d');
 $cashId = (int)($_GET['cash'] ?? 0) ?: ak_account_id('1100');
@@ -93,7 +74,7 @@ if ($tab === 'cash') {
 /* ---------- CSV export ---------- */
 if ($export) {
     header('Content-Type: text/csv; charset=utf-8');
-    header('Content-Disposition: attachment; filename="acct_' . $tab . '.csv"');
+    header('Content-Disposition: attachment; filename=\"acct_' . $tab . '.csv\"');
     $out = fopen('php://output', 'w');
     fwrite($out, "\xEF\xBB\xBF");
     if ($tab === 'cash') {
@@ -194,7 +175,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 <div class="card fade-in">
     <div class="card-body table-responsive">
         <table class="table table-sm align-middle">
-            <thead><tr><th>الحساب</th><th>الاسم</th><th>المبلغ</th></tr></thead>
+            <thead><tr><th>الحساب</th><th>الاسم</th><th class="text-center">المبلغ</th></tr></thead>
             <tbody>
             <tr class="table-secondary fw-bold"><td colspan="3">الإيرادات</td></tr>
             <?php $totRev = 0; foreach ($data as $r): if ($r['account_type'] !== 'revenue') continue; $v = (float)$r['c'] - (float)$r['d']; $totRev += $v; ?>
