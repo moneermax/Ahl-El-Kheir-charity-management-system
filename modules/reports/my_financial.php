@@ -69,17 +69,9 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 <div class="card shadow-sm mb-4 fade-in">
     <div class="card-body">
         <form method="get" class="row g-3 align-items-end">
-            <div class="col-md-3">
-                <label class="form-label fw-bold">من</label>
-                <input type="date" name="from" class="form-control" value="<?php echo e($from); ?>" required>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label fw-bold">إلى</label>
-                <input type="date" name="to" class="form-control" value="<?php echo e($to); ?>" required>
-            </div>
-            <div class="col-md-2">
-                <button type="submit" class="btn btn-primary w-100"><i class="fas fa-filter me-1"></i>تطبيق</button>
-            </div>
+            <div class="col-md-3"><label class="form-label fw-bold">من</label><input type="date" name="from" class="form-control" value="<?php echo e($from); ?>" required></div>
+            <div class="col-md-3"><label class="form-label fw-bold">إلى</label><input type="date" name="to" class="form-control" value="<?php echo e($to); ?>" required></div>
+            <div class="col-md-2"><button type="submit" class="btn btn-primary w-100"><i class="fas fa-filter me-1"></i>تطبيق</button></div>
         </form>
     </div>
 </div>
@@ -99,16 +91,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         <?php else: ?>
             <div class="table-responsive">
                 <table class="table table-bordered table-hover align-middle">
-                    <thead class="table-light">
-                        <tr>
-                            <th>التاريخ</th>
-                            <th>رقم المعاملة</th>
-                            <th>النوع</th>
-                            <th>المبلغ</th>
-                            <th>الحالة</th>
-                            <th>البيان</th>
-                        </tr>
-                    </thead>
+                    <thead class="table-light"><tr><th>التاريخ</th><th>رقم المعاملة</th><th>النوع</th><th>المبلغ</th><th>الحالة</th><th>الطرف</th></tr></thead>
                     <tbody>
                     <?php foreach ($transactions as $transaction): ?>
                         <?php
@@ -127,7 +110,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                             <td><?php echo e($transaction['transaction_type'] ?? '—'); ?></td>
                             <td class="fw-bold"><?php echo number_format((float)$transaction['amount'], 2); ?></td>
                             <td><span class="badge <?php echo $badge; ?>"><?php echo e($status ?: '—'); ?></span></td>
-                            <td><?php echo e($transaction['description'] ?? $party); ?></td>
+                            <td><?php echo e($party); ?></td>
                         </tr>
                     <?php endforeach; ?>
                     </tbody>
