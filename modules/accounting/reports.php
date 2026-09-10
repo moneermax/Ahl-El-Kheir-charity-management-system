@@ -27,6 +27,25 @@ ak_ensure_tables(); ak_seed_accounts();
 
 $tabs = ['trial' => 'ميزان المراجعة', 'income' => 'قائمة الدخل', 'balance' => 'المركز المالي', 'cash' => 'دفتر النقد'];
 $tab = $_GET['tab'] ?? 'trial';
+/*
+ * Report-level authorization
+ *
+ * Financial Manager / Admin:
+ *   Full accounting reports.
+ *
+ * General Manager / Vice General Manager:
+ *   Read-only financial oversight.
+ *
+ * Accountant Staff:
+ *   Cash book only.
+ *   No Trial Balance, Income Statement, or Balance Sheet.
+ */
+if (
+    $reportRole === 'accountant_staff' &&
+    $tab !== 'cash'
+) {
+    $tab = 'cash';
+}
 if (!isset($tabs[$tab])) $tab = 'trial';
 $from = trim($_GET['from'] ?? ''); $to = trim($_GET['to'] ?? ''); $asof = trim($_GET['asof'] ?? '') ?: date('Y-m-d');
 $cashId = (int)($_GET['cash'] ?? 0) ?: ak_account_id('1100');
