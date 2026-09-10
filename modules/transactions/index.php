@@ -65,7 +65,25 @@ if($role==='supervisor'){
     if($myLetterIds){$ph=implode(',',array_fill(0,count($myLetterIds),'?'));$sql.=" OR first_letter_id IN ($ph)";$params=array_merge($params,$myLetterIds);}
     $mySponsorIds=array_map('intval',array_column(dbFetchAll($sql,$params),'id'));
 }
-$all=dbFetchAll("SELECT t.*,s.full_name sponsor,f.mother_name family FROM transactions t LEFT JOIN sponsors s ON s.id=t.sponsor_id LEFT JOIN families f ON f.id=t.family_id ORDER BY t.transaction_date DESC,t.id DESC");
+if ($role === 'accountant_staff') {
+    $all = dbFetchAll(
+        "SELECT t.*,s.full_name sponsor,f.mother_name family
+         FROM transactions t
+         LEFT JOIN sponsors s ON s.id=t.sponsor_id
+         LEFT JOIN families f ON f.id=t.family_id
+         WHERE t.created_by=?
+         ORDER BY t.transaction_date DESC,t.id DESC",
+        [Session::getUserId()]
+    );
+} else {
+    $all = dbFetchAll(
+        "SELECT t.*,s.full_name sponsor,f.mother_name family
+         FROM transactions t
+         LEFT JOIN sponsors s ON s.id=t.sponsor_id
+         LEFT JOIN families f ON f.id=t.family_id
+         ORDER BY t.transaction_date DESC,t.id DESC"
+    );
+}
 $filtered=[];
 foreach($all as $row){
     if($mySponsorIds!==null&&!in_array((int)($row['sponsor_id']??0),$mySponsorIds,true))continue;
