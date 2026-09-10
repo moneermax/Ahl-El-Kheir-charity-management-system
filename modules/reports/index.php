@@ -16,7 +16,7 @@ $uid = Session::getUserId();
 
 $all_tabs = [
     'overview'    => ['label' => t('navigation.general_reports'), 'file' => 'index.php', 'roles' => ['admin', 'general_manager', 'vice_general_manager', 'supervisor', 'accountant', 'financial_manager', 'nanny', 'hr_manager', 'hr_staff', 'accountant_staff']],
-    'financial'   => ['label' => t('navigation.accounting'), 'file' => 'financial.php', 'roles' => ['admin', 'general_manager', 'vice_general_manager', 'accountant', 'financial_manager', 'accountant_staff']],
+    'financial'   => ['label' => t('navigation.accounting'), 'file' => 'financial.php', 'roles' => ['admin', 'general_manager', 'vice_general_manager', 'accountant', 'financial_manager']],
     'sponsorship' => ['label' => t('navigation.sponsor_reports'), 'file' => 'sponsorship.php', 'roles' => ['admin', 'general_manager', 'vice_general_manager', 'supervisor']],
     'operational' => ['label' => t('navigation.reports'), 'file' => 'operational.php', 'roles' => ['admin', 'general_manager', 'vice_general_manager', 'supervisor', 'nanny', 'financial_manager']],
     'hr'          => ['label' => t('navigation.employees'), 'file' => 'hr.php', 'roles' => ['admin', 'general_manager', 'vice_general_manager', 'hr_manager', 'hr_staff']],
