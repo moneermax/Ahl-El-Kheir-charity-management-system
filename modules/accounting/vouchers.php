@@ -105,7 +105,6 @@ $list = dbFetchAll("SELECT v.*, c1.code cash_code, c1.name_ar cash_name, c2.code
 
 include dirname(__DIR__, 2) . '/includes/header.php';
 ?>
-```php
 <div class="welcome-section fade-in">
     <h2>السندات المالية</h2>
     <p>سند قبض = نقد داخل (يزيد الصندوق/البنك) · سند صرف = نقد خارج (ينقص الصندوق/البنك) — الترحيل مزدوج تلقائياً</p>
