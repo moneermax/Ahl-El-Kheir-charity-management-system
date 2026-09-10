@@ -6,7 +6,7 @@ require_once dirname(__DIR__,2).'/config/session.php';
 require_once __DIR__.'/lib.php';
 Session::start();
 
-if (!Session::isLoggedIn() || !in_array(Session::getUserRole(), ['admin','accountant','financial_manager'], true)) {
+if (!Session::isLoggedIn() || !in_array(Session::getUserRole(), ['admin','financial_manager'], true)) {
     header('Location: ' . APP_URL . 'index.php');
     exit();
 }
@@ -53,8 +53,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $rawDebit = trim(str_replace(',', '', (string)($debits[$i] ?? '')));
                 $rawCredit = trim(str_replace(',', '', (string)($credits[$i] ?? '')));
 
-                // Blank rows are ignored, but any supplied row must be a real,
-                // active account with a valid non-negative amount on exactly one side.
                 if ($rawAid === '' && $rawDebit === '' && $rawCredit === '') {
                     continue;
                 }
@@ -122,9 +120,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
                 $pdo->beginTransaction();
-
-                // The advisory lock serializes application-generated JE numbers.
-                // The UNIQUE key on entry_code remains the final database safeguard.
                 $last = dbFetchOne("SELECT COALESCE(MAX(CAST(SUBSTRING(entry_code, 4) AS UNSIGNED)), 0) AS max_no
                                     FROM journal_entries
                                     WHERE entry_code REGEXP '^JE-[0-9]+$'");
@@ -186,7 +181,7 @@ include dirname(__DIR__,2).'/includes/header.php'; ?>
 <div class="row g-2 mb-3"><div class="col-md-3"><label class="form-label"><?php echo e(t('accounting.date')); ?> *</label><input type="date" name="entry_date" class="form-control" value="<?php echo e(date('Y-m-d')); ?>" required></div><div class="col-md-9"><label class="form-label"><?php echo e(t('accounting.description')); ?> *</label><input type="text" name="description" class="form-control" required placeholder="<?php echo e(t('accounting.example_description')); ?>"></div></div>
 <div class="table-responsive"><table class="table align-middle" id="linesTable"><thead><tr><th style="width:40%"><?php echo e(t('accounting.account')); ?></th><th><?php echo e(t('accounting.amount')); ?></th><th><?php echo e(t('accounting.amount')); ?></th><th><?php echo e(t('accounting.line_description')); ?></th><th></th></tr></thead><tbody>
 <?php for ($i = 0; $i < 2; $i++): ?><tr class="je-line"><td><select name="account_id[]" class="form-select" required><option value=""><?php echo e(t('accounting.choose')); ?></option><?php foreach ($accounts as $a): ?><option value="<?php echo (int)$a['id']; ?>"><?php echo e($a['code']); ?> — <?php echo e($a['name_ar']); ?></option><?php endforeach; ?></select></td><td><input type="number" step="0.01" min="0" name="debit[]" class="form-control amt" placeholder="0.00"></td><td><input type="number" step="0.01" min="0" name="credit[]" class="form-control amt" placeholder="0.00"></td><td><input type="text" name="line_desc[]" class="form-control"></td><td><button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('tr').remove();recalc();"><i class="fas fa-trash"></i></button></td></tr><?php endfor; ?>
-</tbody><tfoot><tr class="table-active fw-bold"><td><?php echo e(t('accounting.total')); ?></td><td id="totD">0.00</td><td id="totC">0.00</td><td id="diff" colspan="2"><?php echo e(t('accounting.balanced')); ?></td></tr></tfoot></table></div>
+</tbody><tfoot><tr class="table-active fw-bold"><td><?php echo e(t('accounting.total')); ?></td><td id="totD">0.00</td><td id="totC">0.00</td><td id="diff" colspan="2"><?php echo e(t('accounting.balanced')); ?></td></tr></table></div>
 <div class="d-flex gap-2"><button type="button" class="btn btn-secondary" onclick="addLine()"><i class="fas fa-plus me-1"></i><?php echo e(t('accounting.add_line')); ?></button><button class="btn btn-primary"><i class="fas fa-save me-1"></i><?php echo e(t('accounting.post_entry')); ?></button></div>
 </form></div></div>
 <script>
