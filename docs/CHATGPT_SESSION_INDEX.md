@@ -6,7 +6,7 @@
 
 **Local development URL:** http://localhost:8081/AhlElKheir/
 
-**Last maintained:** 2026-09-09
+**Last maintained:** 2026-09-10
 
 ---
 
@@ -203,6 +203,8 @@ Historical sessions covered nanny confirmation, receipts, returned amounts, reve
 6. Do not restart completed work or reintroduce superseded architecture.
 7. Preserve the established architecture: PHP 8.2+ procedural PHP only, MySQL/MariaDB, Vanilla JavaScript only, Bootstrap 5.3 RTL, Font Awesome 6, Google Fonts Cairo.
 8. Follow: **Inspect → Understand → Verify → Identify risk → Fix narrowly → Test → Document**.
+9. **Continuation communication rule:** Do the repository inspection, reasoning, documentation work, and safe code changes directly. Do not send progress-only messages such as “proceed”, “I will inspect”, “I will check”, plans, or announcements of work. Return only when there is a concrete result, or when user action is genuinely required to verify behavior, provide/pull a file that cannot be safely retrieved, or perform a local test. This rule exists to minimize unnecessary chat messages and preserve conversation capacity.
+10. When user action is genuinely required, state exactly what is needed and why, with the smallest possible test/request. Do not ask the user to repeat information already available in the repository or current checkpoint.
 
 ---
 
@@ -217,13 +219,3 @@ The repository must remain self-describing. Important architecture, business rul
 New permanent documentation files should only be added when they represent a genuinely distinct subject or preserve historical evidence that cannot be cleanly incorporated into an existing canonical document.
 
 ---
-
-# Standard continuation prompt
-
-I am continuing development of the existing **Ahl El Kheir Charity Management System**. This is NOT a new project. Do not restart the architecture or assume older chat state is current.
-
-Repository: https://github.com/moneermax/Ahl-El-Kheir-charity-management-system
-
-Current checkpoint: HR is CLOSED. Accounting Audit Phase 1 is in progress. The creator/FM transaction workflow is verified, TR-000014 posting is verified, TR-000015 returned → cancelled is verified, TR-000016 posted → void + reversal is verified, Manual Journal Entry Integrity is verified/PASSED using FM access, and Trial Balance Integrity is verified/PASSED. ACC1 does not have journal access. Do not modify or reuse the completed control records.
-
-Read `docs/CHATGPT_SESSION_INDEX.md` and `docs/AHL_EL_KHEIR_ACCOUNTING_AUDIT.md` first. Continue from the exact next Accounting integrity control: Journal Integrity / Accounting History Interaction. Do not repeat completed tests. Preserve the established procedural PHP / Vanilla JS architecture and follow Inspect → Understand → Verify → Fix narrowly → Test → Document.
