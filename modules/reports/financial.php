@@ -12,7 +12,7 @@ if (!Session::isLoggedIn()) {
 }
 
 $role = Session::getUserRole();
-$allowed_roles = ['admin', 'general_manager', 'vice_general_manager', 'accountant', 'financial_manager', 'accountant_staff'];
+$allowed_roles = ['admin', 'general_manager', 'vice_general_manager', 'accountant', 'financial_manager'];
 if (!in_array($role, $allowed_roles, true)) {
     $_SESSION['flash'][] = ['type' => 'error', 'message' => t('reports.permission_denied')];
     header('Location: ' . APP_URL . 'modules/reports/index.php');
