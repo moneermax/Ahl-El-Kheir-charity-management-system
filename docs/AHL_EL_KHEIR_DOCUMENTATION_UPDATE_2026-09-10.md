@@ -47,11 +47,9 @@ Affected file:
 
 `modules/reports/confirmed_disbursements_report.php`
 
-Previous scoped-report implementation:
+Scoped report file SHA at this checkpoint:
 
-`5280e3abf4d3fa6b3b6f24b8d3df58402ca2fe3cd5` 
-
-(Note: the authoritative current repository SHA should be taken from GitHub rather than this historical note if the file is changed later.)
+`5280e3abf4d3fa6b3f24b8d3df58402ca2fe3cd5`
 
 ---
 
