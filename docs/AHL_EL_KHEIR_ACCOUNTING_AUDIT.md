@@ -4,7 +4,7 @@
 **Repository:** `moneermax/Ahl-El-Kheir-charity-management-system`  
 **Branch:** `main`  
 **Document type:** Canonical Accounting Audit Record  
-**Last verified:** 2026-09-09
+**Last verified:** 2026-09-10
 
 This is the canonical Accounting Phase 1 audit document. It consolidates the previously separate chronological Accounting checkpoint, void/reversal checkpoint, and documentation-update records. Historical evidence is preserved here; the superseded duplicate files are removed to keep `docs/` organized.
 
@@ -261,93 +261,15 @@ Implementation commits:
 
 ---
 
-# 8. Protected control-test records
+# 8. Cross-session continuation communication rule
 
-The following records are completed audit evidence and must never be modified, deleted, or reused for future tests:
+This project uses a **work-first, result-only communication rule** for ChatGPT continuation sessions.
 
-- `TR-000014` / transaction ID `20`
-- `TR-000015` / transaction ID `21`
-- `TR-000016` / transaction ID `22`
-- `JE-000027`
-- Original journal `JE-000026` associated with TR-000016 must also be preserved as historical accounting evidence.
+- Perform repository inspection, analysis, documentation maintenance, and safe code changes directly before responding.
+- Do not send progress-only messages such as `proceed`, `I will inspect`, `I will check`, plans, or announcements of intended work.
+- Return to the user only when there is a concrete result, or when user action is genuinely required.
+- User action should be requested only for a local verification/test that cannot be performed through repository inspection, or when a required file cannot be safely retrieved from the repository and must be provided/pulled by the user.
+- When user action is required, state exactly what to check/provide and why, using the smallest possible request.
+- Do not ask the user to repeat information already available in the repository or the current documented checkpoint.
 
-Future testing must use newly created controlled records.
-
----
-
-# 9. Current Accounting Phase 1 checkpoint
-
-```text
-Creator → pending_fm_review                         PASSED
-        ↓
-FM RETURN → returned                                 PASSED
-        ↓
-Creator EDIT / RESUBMIT                              PASSED
-        ↓
-FM APPROVE → posted + balanced journal              PASSED
-        ↓
-Returned → Creator CANCEL → cancelled               PASSED
-        ↓
-Posted → Void + balanced reversal journal           PASSED
-        ↓
-Manual Journal Entry Integrity                      PASSED
-        ↓
-Trial Balance Integrity                             PASSED
-        ↓
-NEXT: Journal Integrity / Accounting History Interaction
-```
-
----
-
-# 10. Next Accounting audit control
-
-Continue with **Journal Integrity / Accounting History Interaction**.
-
-Review without repeating completed controls:
-
-1. journal listing and filtering integrity;
-2. correct separation of `manual`, `transaction`, `transaction_void`, `disbursement`, and `voucher` references;
-3. journal detail/history consistency;
-4. visibility of posted versus voided entries;
-5. preservation of original entries after reversal/void;
-6. prevention of unauthorized journal mutation through alternate routes;
-7. accounting-history totals and balance consistency;
-8. interaction between transaction status and journal status;
-9. duplicate/missing journal relationships;
-10. cross-module accounting references and auditability.
-
-Follow the project method:
-
-**Inspect → Understand → Verify → Identify risk → Fix narrowly → Test → Document**
-
----
-
-# 11. Documentation organization rule
-
-The `docs/` directory is organized by document purpose, not by creating a new permanent file for every session.
-
-Use:
-
-- `AHL_EL_KHEIR_ACCOUNTING_AUDIT.md` — canonical, current Accounting Phase 1 audit record.
-- `AHL_EL_KHEIR_SYSTEM_ANALYSIS.md` — long-lived architecture/system reference.
-- `AHL_EL_KHEIR_CURRENT_SYSTEM_STATUS_2026-09-08.md` — cross-module status baseline until a newer consolidated status document replaces it.
-- `CHATGPT_SESSION_INDEX.md` — compact continuation index and navigation record.
-- `AHL_EL_KHEIR_COMPLETE_REPOSITORY_AUDIT.md` — historical consolidated repository audit.
-- `AHL_EL_KHEIR_REPOSITORY_AUDIT.md` — historical Phase 1 repository audit/correction register.
-- Specialized documents such as `I18N.md`, `PRODUCTION_PREPARATION.md`, and the HR navigation audit remain separate because they cover distinct long-lived subjects.
-
-Chronological duplicate files should only be created when they contain genuinely independent historical evidence that cannot be cleanly preserved in a canonical document. Otherwise, update the canonical document and session index.
-
----
-
-# 12. Historical consolidation note
-
-The following Accounting documents were consolidated into this file without intentionally discarding their verified control information:
-
-- `AHL_EL_KHEIR_ACCOUNTING_AUDIT_CHECKPOINT_2026-09-09.md`
-- `AHL_EL_KHEIR_ACCOUNTING_VOID_REVERSAL_CHECKPOINT_2026-09-09.md`
-- `AHL_EL_KHEIR_DOCUMENTATION_UPDATE_2026-09-09.md`
-
-Those files are superseded and should no longer be used as continuation documents.
-
-**Canonical Accounting documentation = this file.**
+This rule exists to reduce unnecessary chat messages, preserve conversation capacity, and keep continuation sessions focused on actual implementation and verification.
