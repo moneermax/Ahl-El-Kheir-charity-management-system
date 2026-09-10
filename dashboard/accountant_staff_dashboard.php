@@ -58,6 +58,7 @@ include __DIR__ . '/../includes/header.php';
     <h2><?php echo e(t('dashboard.welcome_user', ['name' => $me['full_name'] ?? ''])); ?></h2>
     <p><?php echo e(t('dashboard.accountant_intro')); ?></p>
     <div class="quick-actions mt-3">
+        <a href="<?php echo url('modules/reports/my_financial.php'); ?>" class="btn btn-outline-primary btn-sm me-2"><i class="fas fa-file-invoice-dollar me-1"></i>تقاريري المالية</a>
         <a href="<?php echo url('modules/accounting/group_disbursements.php'); ?>" class="btn btn-success btn-sm me-2"><i class="fas fa-users-cog me-1"></i><?php echo e(t('accounting.group_disbursements')); ?></a>
         <a href="<?php echo url('modules/accounting/disbursements.php'); ?>" class="btn btn-primary btn-sm me-2"><i class="fas fa-money-check-dollar me-1"></i><?php echo e(t('accounting.individual_disbursements')); ?></a>
     </div>
@@ -75,7 +76,7 @@ include __DIR__ . '/../includes/header.php';
     <div class="col-md-3"><div class="card fade-in border-warning"><div class="card-body text-center"><i class="fas fa-clipboard-list fa-2x text-warning mb-2"></i><h3 class="mb-0"><?php echo (int)($group_stats['submitted_count'] ?? 0); ?></h3><small class="text-muted"><?php echo e(t('dashboard.groups_pending_review')); ?></small></div></div></div>
     <div class="col-md-3"><div class="card fade-in border-info"><div class="card-body text-center"><i class="fas fa-clock fa-2x text-info mb-2"></i><h3 class="mb-0"><?php echo (int)($group_stats['approved_count'] ?? 0); ?></h3><small class="text-muted"><?php echo e(t('dashboard.batches_pending_receipt')); ?></small></div></div></div>
     <div class="col-md-3"><div class="card fade-in border-success"><div class="card-body text-center"><i class="fas fa-check-circle fa-2x text-success mb-2"></i><h3 class="mb-0"><?php echo (int)($group_stats['transferred_count'] ?? 0); ?></h3><small class="text-muted"><?php echo e(t('dashboard.groups_transferred')); ?></small></div></div></div>
-    <div class="col-md-3"><div class="card fade-in border-primary"><div class="card-body text-center"><i class="fas fa-users-gear fa-2x text-primary mb-2"></i><h3 class="mb-0"><?php echo count($myNannies); ?></h3><small class="text-muted"><?php echo e(t('dashboard.assigned_nannies')); ?></small></div></div></div>
+    <div class="col-md-3"><div class="card fade-in border-primary"><div class="card-body text-center"><i class="fas fa-users-gear fa-2x text-primary me-1"></i><h3 class="mb-0"><?php echo count($myNannies); ?></h3><small class="text-muted"><?php echo e(t('dashboard.assigned_nannies')); ?></small></div></div></div>
 </div>
 
 <div class="row g-4 fade-in mb-4">
