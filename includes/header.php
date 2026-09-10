@@ -461,11 +461,11 @@ $qaMap = [
         ],
 
         [
-            'label' => 'التقارير المالية',
-            'url' => 'modules/reports/financial.php',
-            'icon' => 'fa-chart-pie',
-            'color' => '#0d6efd'
-        ],
+    'label' => 'التقارير المالية',
+    'url' => 'modules/accounting/reports.php',
+    'icon' => 'fa-chart-pie',
+    'color' => '#0d6efd'
+],
         [
             'label' => 'سجل المعاملات',
             'url' => 'modules/transactions/index.php',
@@ -499,7 +499,37 @@ $qaMap = [
         ],
 
     ],
+'accountant_staff' => [
 
+    [
+        'label' => 'التحويلات الشهرية',
+        'url' => 'modules/accounting/disbursements.php',
+        'icon' => 'fa-money-check-dollar',
+        'color' => '#28a745'
+    ],
+
+    [
+        'label' => 'سجل المعاملات',
+        'url' => 'modules/transactions/index.php',
+        'icon' => 'fa-money-bill-transfer',
+        'color' => '#20c997'
+    ],
+
+    [
+        'label' => 'سندات القبض/الصرف',
+        'url' => 'modules/accounting/vouchers.php',
+        'icon' => 'fa-file-invoice-dollar',
+        'color' => '#fd7e14'
+    ],
+
+    [
+        'label' => 'دفتر النقد',
+        'url' => 'modules/accounting/reports.php?tab=cash',
+        'icon' => 'fa-book',
+        'color' => '#0d6efd'
+    ],
+
+],
 
     'supervisor' => [
 
