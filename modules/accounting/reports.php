@@ -12,7 +12,6 @@ $reportRole = Session::getUserRole();
 $allowedReportRoles = [
     'admin',
     'financial_manager',
-    'accountant',
     'general_manager',
     'vice_general_manager'
 ];
