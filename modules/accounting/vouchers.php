@@ -84,11 +84,60 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $canManage) {
         }
     } elseif (isset($_POST['void_voucher'])) {
         $vId = (int)$_POST['void_voucher'];
-        $v = dbFetchOne("SELECT id, voucher_no, status FROM vouchers WHERE id = ?", [$vId]);
+        $v = dbFetchOne("SELECT id, voucher_no, status, entry_id FROM vouchers WHERE id = ? FOR UPDATE", [$vId]);
         if ($v && $v['status'] === 'posted') {
-            dbExecute("UPDATE vouchers SET status='voided' WHERE id = ?", [$vId]);
-            ak_void_journal_for_voucher($vId, trim($_POST['void_reason'] ?? '') ?: 'إبطال سند');
-            flash('success', 'تم إبطال السند ' . $v['voucher_no']);
+            try {
+                dbBeginTransaction();
+
+                $vLocked = dbFetchOne("SELECT id, voucher_no, status, entry_id FROM vouchers WHERE id = ? FOR UPDATE", [$vId]);
+                if (!$vLocked || $vLocked['status'] !== 'posted') {
+                    throw new RuntimeException('السند غير موجود أو ليس في حالة مرحّل.');
+                }
+                if (empty($vLocked['entry_id'])) {
+                    throw new RuntimeException('لا يمكن إبطال السند: لا يوجد قيد محاسبي مرتبط به.');
+                }
+
+                $journal = dbFetchOne("SELECT id, status, reference_type, reference_id
+                                       FROM journal_entries
+                                       WHERE id = ?
+                                         AND reference_type = 'voucher'
+                                         AND reference_id = ?
+                                       FOR UPDATE", [(int)$vLocked['entry_id'], $vId]);
+                if (!$journal || $journal['reference_type'] !== 'voucher' || (int)$journal['reference_id'] !== $vId) {
+                    throw new RuntimeException('لا يمكن إبطال السند: القيد المرتبط به غير موجود أو مرجعه غير صحيح.');
+                }
+                if ($journal['status'] !== 'posted') {
+                    throw new RuntimeException('لا يمكن إبطال السند: القيد المرتبط به ليس مرحّلاً.');
+                }
+
+                $linkedCount = (int)(dbFetchOne("SELECT COUNT(*) c
+                                                 FROM journal_entries
+                                                 WHERE reference_type = 'voucher'
+                                                   AND reference_id = ?", [$vId])['c'] ?? 0);
+                if ($linkedCount !== 1) {
+                    throw new RuntimeException('لا يمكن إبطال السند: يجب أن يرتبط السند بقيد محاسبي واحد فقط.');
+                }
+
+                dbExecute("UPDATE journal_entries
+                           SET status='voided', voided_at=NOW(), voided_by=?, void_reason=?
+                           WHERE id=? AND status='posted'",
+                    [Session::getUserId(), trim($_POST['void_reason'] ?? '') ?: 'إبطال سند', (int)$journal['id']]);
+
+                if ((int)dbAffectedRows() !== 1) {
+                    throw new RuntimeException('تعذر إبطال القيد المحاسبي المرتبط بالسند.');
+                }
+
+                dbExecute("UPDATE vouchers SET status='voided' WHERE id=? AND status='posted'", [$vId]);
+                if ((int)dbAffectedRows() !== 1) {
+                    throw new RuntimeException('تعذر تحديث حالة السند إلى مبطل.');
+                }
+
+                dbCommit();
+                flash('success', 'تم إبطال السند ' . $vLocked['voucher_no']);
+            } catch (Throwable $e) {
+                try { dbRollback(); } catch (Throwable $rollbackError) {}
+                flash('danger', $e->getMessage());
+            }
         }
         header('Location: ' . APP_URL . 'modules/accounting/vouchers.php?tab=list'); exit();
     }
@@ -123,7 +172,6 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         </div>
     <?php endif; ?>
 </div>
-```
 
 <?php include dirname(__DIR__, 2) . '/includes/alerts.php'; ?>
 <?php if ($errors): ?><div class="alert alert-danger fade-in"><ul class="mb-0"><?php foreach ($errors as $er) echo '<li>' . e($er) . '</li>'; ?></ul></div><?php endif; ?>
