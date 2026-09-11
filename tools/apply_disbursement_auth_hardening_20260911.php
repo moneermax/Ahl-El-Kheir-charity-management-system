@@ -20,12 +20,20 @@ if ($source === false) {
     fwrite(STDERR, "ERROR: unable to read disbursements.php.\n");
     exit(1);
 }
-$expectedSha = '0d8d6c094f838b3d2260513070cf59fb727113a9';
+
+// The repository baseline and the audited local working copy are both valid
+// patch inputs. The local copy contains prior disbursement fixes that must be
+// preserved, so do not force it back to the repository baseline.
+$expectedShas = [
+    '0d8d6c094f838b3d2260513070cf59fb727113a9',
+    '459ec58693c3cf8ecd82ccf27d565fbd79d709b4',
+];
 $currentSha = sha1('blob ' . strlen($source) . "\0" . $source);
-if ($currentSha !== $expectedSha) {
-    fwrite(STDERR, "ERROR: unexpected source version.\nExpected: {$expectedSha}\nActual:   {$currentSha}\nNo changes were made.\n");
+if (!in_array($currentSha, $expectedShas, true)) {
+    fwrite(STDERR, "ERROR: unexpected source version.\nExpected one of:\n - " . implode("\n - ", $expectedShas) . "\nActual:   {$currentSha}\nNo changes were made.\n");
     exit(1);
 }
+
 $backup = $file . '.before_auth_hardening_20260911.bak';
 if (!file_exists($backup) && file_put_contents($backup, $source, LOCK_EX) === false) {
     fwrite(STDERR, "ERROR: could not create backup.\n");
