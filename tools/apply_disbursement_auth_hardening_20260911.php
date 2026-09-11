@@ -5,8 +5,8 @@
  * Run from the repository root with:
  *   php tools/apply_disbursement_auth_hardening_20260911.php
  *
- * The script is deliberately source-version guarded and creates a backup before
- * changing anything. It does not modify the database.
+ * The script is source-version guarded and creates a backup before changing
+ * anything. It does not modify the database.
  */
 
 $root = dirname(__DIR__);
@@ -32,8 +32,8 @@ if (!file_exists($backup) && file_put_contents($backup, $source, LOCK_EX) === fa
     exit(1);
 }
 
-$changes = 0;
-function replace_once(string &$source, string $old, string $new, string $label): void {
+function replace_once(string &$source, string $old, string $new, string $label): void
+{
     $count = substr_count($source, $old);
     if ($count !== 1) {
         throw new RuntimeException($label . ': expected 1 occurrence, found ' . $count);
@@ -42,69 +42,122 @@ function replace_once(string &$source, string $old, string $new, string $label):
 }
 
 try {
-    replace_once($source,
-        "$canManage = in_array($role, ['admin','general_manager','financial_manager','accountant', 'accountant_staff'], true);",
-        "$isAccountantStaff = ($role === 'accountant_staff');\n$canManage = in_array($role, ['admin','general_manager','financial_manager','accountant'], true);\n$canManageAssigned = $canManage || $isAccountantStaff;",
-        'role permissions');
-    replace_once($source, "if (!$isNanny && !$canManage) {", "if (!$isNanny && !$canManageAssigned) {", 'access guard');
-    replace_once($source, "if ($canManage && isset($_POST['create_batch'])) {", "if ($canManageAssigned && isset($_POST['create_batch'])) {", 'create guard');
+    replace_once(
+        $source,
+        <<<'OLD'
+$canManage = in_array($role, ['admin','general_manager','financial_manager','accountant', 'accountant_staff'], true);
+OLD,
+        <<<'NEW'
+$isAccountantStaff = ($role === 'accountant_staff');
+$canManage = in_array($role, ['admin','general_manager','financial_manager','accountant'], true);
+$canManageAssigned = $canManage || $isAccountantStaff;
+NEW,
+        'role permissions'
+    );
 
-    replace_once($source,
-"                if ((int)$groupData['verified_families'] === 0) {
+    replace_once($source, <<<'OLD'
+if (!$isNanny && !$canManage) {
+OLD, <<<'NEW'
+if (!$isNanny && !$canManageAssigned) {
+NEW, 'access guard');
+
+    replace_once($source, <<<'OLD'
+if ($canManage && isset($_POST['create_batch'])) {
+OLD, <<<'NEW'
+if ($canManageAssigned && isset($_POST['create_batch'])) {
+NEW, 'create guard');
+
+    replace_once($source, <<<'OLD'
+                if ((int)$groupData['verified_families'] === 0) {
                     $skipped++;
-                    $skip_reasons[] = \"المجموعة ID {$gid}: لا توجد عائلات موثقة بالكامل (3 خانات) لهذا الشهر.\";
+                    $skip_reasons[] = "المجموعة ID {$gid}: لا توجد عائلات موثقة بالكامل (3 خانات) لهذا الشهر.";
                     continue;
-                }",
-"                if ($isAccountantStaff && !dbFetchOne(\"SELECT 1 FROM accountant_nanny_assignments WHERE accountant_id = ? AND nanny_id = ?\", [$uid, (int)$groupData['nanny_id']])) {
+                }
+OLD, <<<'NEW'
+                if ($isAccountantStaff && !dbFetchOne("SELECT 1 FROM accountant_nanny_assignments WHERE accountant_id = ? AND nanny_id = ?", [$uid, (int)$groupData['nanny_id']])) {
                     $skipped++;
-                    $skip_reasons[] = \"المجموعة ID {$gid}: ليست ضمن المجموعات المسندة إليك.\";
+                    $skip_reasons[] = "المجموعة ID {$gid}: ليست ضمن المجموعات المسندة إليك.";
                     continue;
                 }
                 if ((int)$groupData['verified_families'] === 0) {
                     $skipped++;
-                    $skip_reasons[] = \"المجموعة ID {$gid}: لا توجد عائلات موثقة بالكامل (3 خانات) لهذا الشهر.\";
+                    $skip_reasons[] = "المجموعة ID {$gid}: لا توجد عائلات موثقة بالكامل (3 خانات) لهذا الشهر.";
                     continue;
-                }",
-        'create assignment check');
+                }
+NEW, 'create assignment check');
 
-    replace_once($source, "if ($canManage && isset($_POST['reopen_batch'])) {", "if ($canManageAssigned && isset($_POST['reopen_batch'])) {", 'reopen batch guard');
-    replace_once($source,
-"        if (!$b || !in_array($b['status'], ['received', 'returned'], true)) {
+    replace_once($source, <<<'OLD'
+if ($canManage && isset($_POST['reopen_batch'])) {
+OLD, <<<'NEW'
+if ($canManageAssigned && isset($_POST['reopen_batch'])) {
+NEW, 'reopen batch guard');
+
+    replace_once($source, <<<'OLD'
+        if (!$b || !in_array($b['status'], ['received', 'returned'], true)) {
             flash('error', 'لا يمكن إعادة فتح هذه الدفعة من حالتها الحالية.');
-        } elseif ($reason === '') {",
-"        if (!$b || !in_array($b['status'], ['received', 'returned'], true)) {
+        } elseif ($reason === '') {
+OLD, <<<'NEW'
+        if (!$b || !in_array($b['status'], ['received', 'returned'], true)) {
             flash('error', 'لا يمكن إعادة فتح هذه الدفعة من حالتها الحالية.');
-        } elseif ($isAccountantStaff && !dbFetchOne(\"SELECT 1 FROM accountant_nanny_assignments WHERE accountant_id = ? AND nanny_id = ?\", [$uid, (int)$b['nanny_id']])) {
+        } elseif ($isAccountantStaff && !dbFetchOne("SELECT 1 FROM accountant_nanny_assignments WHERE accountant_id = ? AND nanny_id = ?", [$uid, (int)$b['nanny_id']])) {
             flash('error', 'هذه الدفعة ليست ضمن الدفعات المسندة إليك.');
-        } elseif ($reason === '') {",
-        'reopen batch assignment check');
+        } elseif ($reason === '') {
+NEW, 'reopen batch assignment check');
 
-    replace_once($source, "if ($canManage && isset($_POST['reopen_item'])) {", "if ($canManageAssigned && isset($_POST['reopen_item'])) {", 'reopen item guard');
-    replace_once($source,
-        "SELECT i.*, d.id AS disbursement_id, d.status AS dstatus, d.group_id, d.month",
-        "SELECT i.*, d.id AS disbursement_id, d.nanny_id, d.status AS dstatus, d.group_id, d.month",
-        'reopen item nanny id');
-    replace_once($source,
-"        if (!$item || !in_array($item['status'], ['paid', 'returned'], true)) {
+    replace_once($source, <<<'OLD'
+if ($canManage && isset($_POST['reopen_item'])) {
+OLD, <<<'NEW'
+if ($canManageAssigned && isset($_POST['reopen_item'])) {
+NEW, 'reopen item guard');
+
+    replace_once($source, <<<'OLD'
+SELECT i.*, d.id AS disbursement_id, d.status AS dstatus, d.group_id, d.month
+OLD, <<<'NEW'
+SELECT i.*, d.id AS disbursement_id, d.nanny_id, d.status AS dstatus, d.group_id, d.month
+NEW, 'reopen item nanny id');
+
+    replace_once($source, <<<'OLD'
+        if (!$item || !in_array($item['status'], ['paid', 'returned'], true)) {
             flash('error', 'لا يمكن إعادة فتح هذا السجل من حالته الحالية.');
-        } elseif ($reason === '') {",
-"        if (!$item || !in_array($item['status'], ['paid', 'returned'], true)) {
+        } elseif ($reason === '') {
+OLD, <<<'NEW'
+        if (!$item || !in_array($item['status'], ['paid', 'returned'], true)) {
             flash('error', 'لا يمكن إعادة فتح هذا السجل من حالته الحالية.');
-        } elseif ($isAccountantStaff && !dbFetchOne(\"SELECT 1 FROM accountant_nanny_assignments WHERE accountant_id = ? AND nanny_id = ?\", [$uid, (int)$item['nanny_id']])) {
+        } elseif ($isAccountantStaff && !dbFetchOne("SELECT 1 FROM accountant_nanny_assignments WHERE accountant_id = ? AND nanny_id = ?", [$uid, (int)$item['nanny_id']])) {
             flash('error', 'هذا السجل ليس ضمن الدفعات المسندة إليك.');
-        } elseif ($reason === '') {",
-        'reopen item assignment check');
+        } elseif ($reason === '') {
+NEW, 'reopen item assignment check');
 
-    replace_once($source, "if ($canManage) {\n    // Shared default month", "if ($canManageAssigned) {\n    // Shared default month", 'group loading guard');
-    replace_once($source, "($canManage && $anyReopenableItem)", "($canManageAssigned && $anyReopenableItem)", 'item action column');
-    replace_once($source, "elseif ($canManage && in_array($it['status'], ['paid', 'returned'], true))", "elseif ($canManageAssigned && in_array($it['status'], ['paid', 'returned'], true))", 'item reopen ui');
-    replace_once($source, "if ($canManage && in_array($viewBatch['status'], ['received', 'returned']))", "if ($canManageAssigned && in_array($viewBatch['status'], ['received', 'returned']))", 'batch reopen ui');
-    replace_once($source, "if ($canManage && !$viewId)", "if ($canManageAssigned && !$viewId)", 'create ui');
+    replace_once($source, <<<'OLD'
+if ($canManage) {
+    // Shared default month
+OLD, <<<'NEW'
+if ($canManageAssigned) {
+    // Shared default month
+NEW, 'group loading guard');
 
-    replace_once($source,
-"    WHERE og.verification_status IN ('submitted', 'approved', 'pending')
-    GROUP BY og.id, og.group_name, u.full_name, nga.nanny_id",
-"    WHERE og.verification_status IN ('submitted', 'approved', 'pending')
+    replace_once($source, '($canManage && $anyReopenableItem)', '($canManageAssigned && $anyReopenableItem)', 'item action column');
+    replace_once($source, <<<'OLD'
+elseif ($canManage && in_array($it['status'], ['paid', 'returned'], true))
+OLD, <<<'NEW'
+elseif ($canManageAssigned && in_array($it['status'], ['paid', 'returned'], true))
+NEW, 'item reopen ui');
+    replace_once($source, <<<'OLD'
+if ($canManage && in_array($viewBatch['status'], ['received', 'returned']))
+OLD, <<<'NEW'
+if ($canManageAssigned && in_array($viewBatch['status'], ['received', 'returned']))
+NEW, 'batch reopen ui');
+    replace_once($source, <<<'OLD'
+if ($canManage && !$viewId)
+OLD, <<<'NEW'
+if ($canManageAssigned && !$viewId)
+NEW, 'create ui');
+
+    replace_once($source, <<<'OLD'
+    WHERE og.verification_status IN ('submitted', 'approved', 'pending')
+    GROUP BY og.id, og.group_name, u.full_name, nga.nanny_id
+OLD, <<<'NEW'
+    WHERE og.verification_status IN ('submitted', 'approved', 'pending')
       AND (
           ? = 0
           OR EXISTS (
@@ -114,34 +167,33 @@ try {
                 AND ana.nanny_id = nga.nanny_id
           )
       )
-    GROUP BY og.id, og.group_name, u.full_name, nga.nanny_id",
-        'group assignment filter');
-    replace_once($source,
-        "    \", [$previewMonth]);",
-        "    \", [$previewMonth, $isAccountantStaff ? $uid : 0, $isAccountantStaff ? $uid : 0]);",
-        'group query params');
+    GROUP BY og.id, og.group_name, u.full_name, nga.nanny_id
+NEW, 'group assignment filter');
 
-    replace_once($source, "SELECT jl.account_id, a.code, a.name", "SELECT jl.account_id, a.code", 'return expense account select');
-    replace_once($source, "SELECT id, code, name FROM accounts WHERE code = ? LIMIT 1", "SELECT id, code FROM accounts WHERE code = ? LIMIT 1", 'return fallback account select');
+    replace_once($source, <<<'OLD'
+    ", [$previewMonth]);
+OLD, <<<'NEW'
+    ", [$previewMonth, $isAccountantStaff ? $uid : 0, $isAccountantStaff ? $uid : 0]);
+NEW, 'group query params');
+
+    replace_once($source, 'SELECT jl.account_id, a.code, a.name', 'SELECT jl.account_id, a.code', 'return expense account select');
+    replace_once($source, 'SELECT id, code, name FROM accounts WHERE code = ? LIMIT 1', 'SELECT id, code FROM accounts WHERE code = ? LIMIT 1', 'return fallback account select');
     replace_once($source, "SELECT id, code, name FROM accounts WHERE code = '1100' LIMIT 1", "SELECT id, code FROM accounts WHERE code = '1100' LIMIT 1", 'return cash account select');
 
     if (file_put_contents($file, $source, LOCK_EX) === false) {
         throw new RuntimeException('Unable to write patched disbursements.php.');
     }
+
     passthru(PHP_BINARY . ' -l ' . escapeshellarg($file), $lintExit);
     if ($lintExit !== 0) {
         copy($backup, $file);
         throw new RuntimeException('PHP syntax check failed; original file restored.');
     }
+
     echo "PASS: disbursements.php authorization hardening applied and PHP syntax is valid.\n";
     echo "Backup: {$backup}\n";
 } catch (Throwable $e) {
-    if (is_file($backup)) {
-        $current = file_get_contents($file);
-        if ($current !== false && $current !== $source) {
-            @copy($backup, $file);
-        }
-    }
+    @copy($backup, $file);
     fwrite(STDERR, "ERROR: " . $e->getMessage() . "\n");
     exit(1);
 }
