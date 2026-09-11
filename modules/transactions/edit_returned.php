@@ -8,7 +8,7 @@ require_once dirname(__DIR__, 2) . '/modules/accounting/lib_transaction_review.p
 Session::start();
 if (!Session::isLoggedIn()) { header('Location: ' . APP_URL . 'index.php'); exit(); }
 $role = Session::getUserRole();
-if (!in_array($role, ['admin', 'accountant', 'accountant_staff'], true)) { header('Location: ' . APP_URL . 'index.php'); exit(); }
+if (!in_array($role, ['admin', 'accountant_staff'], true)) { header('Location: ' . APP_URL . 'index.php'); exit(); }
 $uid = (int)Session::getUserId();
 $tid = (int)($_GET['id'] ?? $_POST['transaction_id'] ?? 0);
 $t = dbFetchOne("SELECT t.*, s.full_name AS sponsor_name, s.sponsor_code FROM transactions t LEFT JOIN sponsors s ON s.id=t.sponsor_id WHERE t.id=? AND t.status='returned' AND t.created_by=?", [$tid, $uid]);
