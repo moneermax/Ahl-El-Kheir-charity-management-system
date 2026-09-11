@@ -12,10 +12,8 @@ if (!Session::isLoggedIn() || !in_array(Session::getUserRole(), ['admin', 'accou
 }
 $role = Session::getUserRole();
 $isNanny = ($role === 'nanny');
-$isAccountantStaff = ($role === 'accountant_staff');
-$canManage = in_array($role, ['admin','general_manager','financial_manager','accountant'], true);
-$canManageAssigned = $canManage || $isAccountantStaff;
-if (!$isNanny && !$canManageAssigned) {
+$canManage = in_array($role, ['admin','general_manager','financial_manager','accountant', 'accountant_staff'], true);
+if (!$isNanny && !$canManage) {
     flash('error', 'ليس لديك صلاحية الوصول.');
     header('Location: ' . APP_URL . 'index.php');
     exit();
@@ -157,7 +155,7 @@ function closeDisbursementWithReturn(int $disbursementId, int $nannyId, string $
         // Find the expense account used by the original disbursement journal.
         // This avoids hard-coding 5100/5110 for the reversal.
         $originalExpense = dbFetchOne(
-            "SELECT jl.account_id, a.code
+            "SELECT jl.account_id, a.code, a.name
             FROM journal_entries je
             INNER JOIN journal_lines jl ON jl.entry_id = je.id
             INNER JOIN accounts a ON a.id = jl.account_id
@@ -173,14 +171,14 @@ function closeDisbursementWithReturn(int $disbursementId, int $nannyId, string $
             $expenseAccountCode = (string)$originalExpense['code'];
         } else {
             $fallbackCode = trim((string)($batch['expense_account_code'] ?? '5100'));
-            $expenseAccount = dbFetchOne("SELECT id, code FROM accounts WHERE code = ? LIMIT 1", [$fallbackCode]);
+            $expenseAccount = dbFetchOne("SELECT id, code, name FROM accounts WHERE code = ? LIMIT 1", [$fallbackCode]);
             if (!$expenseAccount) {
                 throw new Exception('تعذر تحديد حساب المصروف المرتبط بالدفعة.');
             }
             $expenseAccountId = (int)$expenseAccount['id'];
             $expenseAccountCode = (string)$expenseAccount['code'];
         }
-        $cashAccount = dbFetchOne("SELECT id, code FROM accounts WHERE code = '1100' LIMIT 1");
+        $cashAccount = dbFetchOne("SELECT id, code, name FROM accounts WHERE code = '1100' LIMIT 1");
         if (!$cashAccount) {
             throw new Exception('حساب الصندوق 1100 غير موجود في دليل الحسابات.');
         }
@@ -282,7 +280,7 @@ $groups = [];
 // ==========================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
     // 1. Accountant: create batches from groups
-    if ($canManageAssigned && isset($_POST['create_batch'])) {
+    if ($canManage && isset($_POST['create_batch'])) {
         $month = trim($_POST['month'] ?? '');
         $groupIds = isset($_POST['group_ids']) ? array_map('intval', $_POST['group_ids']) : [];
         if (!preg_match('/^\d{4}-\d{2}$/', $month)) {
@@ -321,11 +319,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
                 if (!$groupData || !$groupData['nanny_id']) {
                     $skipped++;
                     $skip_reasons[] = "المجموعة ID {$gid}: لا توجد مربية معينة للمجموعة.";
-                    continue;
-                }
-                if ($isAccountantStaff && !dbFetchOne("SELECT 1 FROM accountant_nanny_assignments WHERE accountant_id = ? AND nanny_id = ?", [$uid, (int)$groupData['nanny_id']])) {
-                    $skipped++;
-                    $skip_reasons[] = "المجموعة ID {$gid}: ليست ضمن المجموعات المسندة إليك.";
                     continue;
                 }
                 if ((int)$groupData['verified_families'] === 0) {
@@ -559,14 +552,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
         exit();
     }
     // 6. Accountant: Reopen an entire closed/returned batch and its group for further nanny edits
-    if ($canManageAssigned && isset($_POST['reopen_batch'])) {
+    if ($canManage && isset($_POST['reopen_batch'])) {
         $id = (int)$_POST['reopen_batch'];
         $reason = trim((string)($_POST['reopen_batch_reason'] ?? ''));
         $b = dbFetchOne("SELECT * FROM monthly_disbursements WHERE id = ?", [$id]);
         if (!$b || !in_array($b['status'], ['received', 'returned'], true)) {
             flash('error', 'لا يمكن إعادة فتح هذه الدفعة من حالتها الحالية.');
-        } elseif ($isAccountantStaff && !dbFetchOne("SELECT 1 FROM accountant_nanny_assignments WHERE accountant_id = ? AND nanny_id = ?", [$uid, (int)$b['nanny_id']])) {
-            flash('error', 'هذه الدفعة ليست ضمن الدفعات المسندة إليك.');
         } elseif ($reason === '') {
             flash('error', 'يرجى كتابة سبب إعادة الفتح.');
         } else {
@@ -593,19 +584,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
     // 7. Accountant: Reopen a single family record within a batch for re-confirmation
     // (e.g. she uploaded the wrong receipt, or regained contact with a family
     // previously marked as lost / returned to the fund).
-    if ($canManageAssigned && isset($_POST['reopen_item'])) {
+    if ($canManage && isset($_POST['reopen_item'])) {
         $itemId = (int)$_POST['reopen_item'];
         $reason = trim((string)($_POST['reopen_item_reason'] ?? ''));
         $item = dbFetchOne(
-            "SELECT i.*, d.id AS disbursement_id, d.nanny_id, d.status AS dstatus, d.group_id, d.month
+            "SELECT i.*, d.id AS disbursement_id, d.status AS dstatus, d.group_id, d.month
             FROM disbursement_items i JOIN monthly_disbursements d ON d.id = i.disbursement_id
             WHERE i.id = ?", [$itemId]
         );
         $redirectId = $item['disbursement_id'] ?? null;
         if (!$item || !in_array($item['status'], ['paid', 'returned'], true)) {
             flash('error', 'لا يمكن إعادة فتح هذا السجل من حالته الحالية.');
-        } elseif ($isAccountantStaff && !dbFetchOne("SELECT 1 FROM accountant_nanny_assignments WHERE accountant_id = ? AND nanny_id = ?", [$uid, (int)$item['nanny_id']])) {
-            flash('error', 'هذا السجل ليس ضمن الدفعات المسندة إليك.');
         } elseif ($reason === '') {
             flash('error', 'يرجى كتابة سبب إعادة الفتح.');
         } else {
@@ -791,7 +780,7 @@ if ($viewId) {
         }
     }
 }
-if ($canManageAssigned) {
+if ($canManage) {
     // Shared default month for the pre-creation checklist AND the month input field below,
     // so the preview total is computed for the same month the accountant is about to submit.
     $previewMonth = $_GET['month'] ?? date('Y-m');
@@ -813,18 +802,9 @@ if ($canManageAssigned) {
     AND v.is_orphan_verified = 1 AND v.is_mother_contact_verified = 1 AND v.is_bank_verified = 1
     LEFT JOIN sponsorships sp ON sp.child_id = gc.child_id AND sp.status = 'active'
     WHERE og.verification_status IN ('submitted', 'approved', 'pending')
-      AND (
-          ? = 0
-          OR EXISTS (
-              SELECT 1
-              FROM accountant_nanny_assignments ana
-              WHERE ana.accountant_id = ?
-                AND ana.nanny_id = nga.nanny_id
-          )
-      )
     GROUP BY og.id, og.group_name, u.full_name, nga.nanny_id
     ORDER BY og.group_name
-    ", [$previewMonth, $isAccountantStaff ? $uid : 0, $isAccountantStaff ? $uid : 0]);
+    ", [$previewMonth]);
 }
 include dirname(__DIR__, 2) . '/includes/header.php';
 ?>
@@ -936,7 +916,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                         if (in_array($vi['status'], ['paid', 'returned'], true)) { $anyReopenableItem = true; break; }
                     }
                     $showItemActionCol = ($isNanny && in_array($viewBatch['status'], ['transferred', 'received']))
-                        || ($canManageAssigned && $anyReopenableItem);
+                        || ($canManage && $anyReopenableItem);
                     ?>
                     <?php if ($showItemActionCol): ?>
                     <th class="text-center">إجراء</th>
@@ -993,7 +973,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                             </div>
                         </form>
                     </td>
-                    <?php elseif ($canManageAssigned && in_array($it['status'], ['paid', 'returned'], true)): ?>
+                    <?php elseif ($canManage && in_array($it['status'], ['paid', 'returned'], true)): ?>
                     <td class="text-center">
                         <button type="button" class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#reopenItemModal<?php echo (int)$it['id']; ?>">
                             <i class="fas fa-unlock"></i> إعادة فتح
@@ -1030,7 +1010,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         </table>
     </div>
     <!-- Accountant: Reopen the entire batch/group once fully closed -->
-    <?php if ($canManageAssigned && in_array($viewBatch['status'], ['received', 'returned'])): ?>
+    <?php if ($canManage && in_array($viewBatch['status'], ['received', 'returned'])): ?>
     <div class="mt-4 p-3 bg-warning bg-opacity-10 rounded border border-warning">
         <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
             <div>
@@ -1233,7 +1213,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 </div>
 </div>
 <?php endif; ?>
-<?php if ($canManageAssigned && !$viewId): ?>
+<?php if ($canManage && !$viewId): ?>
 <div class="card mb-4 fade-in">
     <div class="card-header"><h5 class="mb-0"><i class="fas fa-plus me-2"></i>إنشاء دفعات شهر جديد</h5></div>
     <div class="card-body">
