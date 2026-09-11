@@ -111,3 +111,10 @@ if (basename((string)($_SERVER['SCRIPT_FILENAME'] ?? '')) === 'disbursements.php
     && isset($_POST['void_batch'])) {
     require_once __DIR__ . '/../modules/accounting/disbursement_void_guard.php';
 }
+
+// Narrow role normalization: the legacy `accountant` role is no longer valid
+// for the disbursement workflow. Current authority is split between
+// `financial_manager` and `accountant_staff`.
+if (basename((string)($_SERVER['SCRIPT_FILENAME'] ?? '')) === 'disbursements.php') {
+    require_once __DIR__ . '/../modules/accounting/disbursement_legacy_role_guard.php';
+}
