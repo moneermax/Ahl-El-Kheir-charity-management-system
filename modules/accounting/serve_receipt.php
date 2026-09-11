@@ -1,10 +1,11 @@
 <?php
 // modules/accounting/serve_receipt.php — Secure receipt viewer
 error_reporting(E_ALL);
-ini_set('display_errors', '0');
+ini_set('display_errors', '0'); // Never show errors in file output
 
 require_once dirname(__DIR__, 2) . '/config/config.php';
 require_once dirname(__DIR__, 2) . '/config/database.php';
+require_once dirname(__DIR__, 2) . '/config/functions.php';
 require_once dirname(__DIR__, 2) . '/config/session.php';
 require_once dirname(__DIR__, 2) . '/modules/accounting/lib_outflows.php';
 
