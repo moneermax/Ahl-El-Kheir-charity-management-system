@@ -10,7 +10,6 @@ require_once __DIR__ . '/../../config/session.php';
 Session::start();
 
 if (Session::isLoggedIn() && Session::getUserRole() === 'accountant') {
-    flash('error', 'هذا الدور المحاسبي لم يعد معتمداً. استخدم الدور المحاسبي الحالي المخصص لك.');
     header('Location: ' . APP_URL . 'index.php');
     exit();
 }
