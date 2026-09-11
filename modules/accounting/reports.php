@@ -4,7 +4,7 @@ require_once dirname(__DIR__, 2) . '/config/config.php';
 require_once dirname(__DIR__, 2) . '/config/database.php';
 require_once dirname(__DIR__, 2) . '/config/functions.php';
 require_once dirname(__DIR__, 2) . '/config/session.php';
-require_once dirname(__DIR__, 2) . '/config/lib.php';
+require_once __DIR__ . '/lib.php';
 Session::start();
 
 $reportRole = Session::getUserRole();
