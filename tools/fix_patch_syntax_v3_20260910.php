@@ -21,11 +21,10 @@ if ($source === false) {
 
 $original = $source;
 
-// Escape PHP variables inside source-code strings by using single-quoted PHP
-// strings for the two UI anchors. This avoids PHP interpolation at parse time.
+// Replace the UI-anchor assignment with valid PHP source text.
 $source = preg_replace(
     '/^\$uiOld\s*=\s*.*;$/m',
-    '$uiOld = \'<?php if ($canManage && in_array($viewBatch[\' . "\\\"status\\\"" . '], [\'received\', \'returned\'])): ?>\';',
+    '$uiOld = \'<?php if ($canManage && in_array($viewBatch["status"], [\'received\', \'returned\'])): ?>\';',
     $source,
     -1,
     $countOld
@@ -37,7 +36,7 @@ if ($countOld !== 1) {
 
 $source = preg_replace(
     '/^\$uiNew\s*=\s*.*;$/m',
-    '$uiNew = \'<?php if ($canManage && $viewBatch[\' . "\\\"status\\\"" . '] === \'received\'): ?>\';',
+    '$uiNew = \'<?php if ($canManage && $viewBatch["status"] === \'received\'): ?>\';',
     $source,
     -1,
     $countNew
@@ -50,8 +49,8 @@ if ($countNew !== 1) {
 // The patch script must search for source text containing PHP variables without
 // interpolating them while the patch script itself is parsed.
 $source = preg_replace(
-    '/^\s*"if \(!\$b \|\| \$b\[\'status\'\] !== \'received\'\)",$/m',
-    '    \'if (!$b || $b[\' . "\\\"status\\\"" . \'] !== \'received\')\',',
+    "/^\s*\"if \(!\$b \|\| \$b\['status'\] !== 'received'\)\",$/m",
+    '    \'if (!$b || $b[\'status\'] !== \'received\')\',',
     $source,
     -1,
     $countRequired
@@ -78,7 +77,7 @@ $source = str_replace(
 
 // Correct Git blob SHA calculation for the original canonical file.
 $source = preg_replace(
-    '/\$currentSha\s*=\s*hash\(\'sha1\',\s*\$source\);/',
+    '/\$currentSha\s*=\s*hash(\'sha1\',\s*\$source);/',
     '$currentSha = sha1("blob " . strlen($source) . "\\0" . $source);',
     $source,
     -1,
