@@ -13,6 +13,7 @@ $allowedReportRoles = [
     'admin',
     'financial_manager',
     'accountant',
+    'accountant_staff',
     'general_manager',
     'vice_general_manager'
 ];
