@@ -1,16 +1,16 @@
 # Ahl El Kheir Charity Management System — Documentation Update
 
 **Date:** 2026-09-11  
-**Area:** Accounting Audit — Disbursement Authorization / Receipt Handling  
-**Status:** Milestone completed and verified except for one deferred UI item
+**Area:** Accounting Audit — Journal Integrity / Accounting History Interaction  
+**Status:** Current milestone checkpoint completed; cross-reference auditability remains TODO
 
 ---
 
-## 1. Accountant Staff disbursement authorization — PASSED
+## 1. Previous disbursement authorization milestone — PASSED
 
-The disbursement authorization audit for role `accountant_staff` was completed against `modules/accounting/disbursements.php`.
+The Accountant Staff disbursement authorization audit was completed against `modules/accounting/disbursements.php`.
 
-### Established workflow
+Established workflow:
 
 ```text
 Vice General Manager creates the disbursement batch
@@ -18,111 +18,141 @@ Vice General Manager creates the disbursement batch
 → Accountant Staff manages only batches belonging to an assigned nanny
 ```
 
-Accountant Staff is not a batch-creation role in the tested workflow.
+Assigned visibility, restricted financial actions, reopen controls, nanny receipt confirmation, batch void and existing receipt/closure workflow all passed. Accountant Staff is not a batch-creation role in the established workflow.
 
-### Server-side authorization controls
-
-The disbursement module now distinguishes:
-
-- organization-level managers/full accountants who retain management authority;
-- `accountant_staff`, whose management authority is limited by the existing accountant → nanny assignment relationship.
-
-Server-side checks were added/verified for:
-
-- viewing assigned batches;
-- reopening an assigned batch;
-- reopening an assigned family item;
-- group/nanny selection;
-- batch-related operations requiring assignment scope.
-
-Accountant Staff is blocked from restricted financial/disbursement operations including:
-
-- transfer/post;
-- void;
-- confirming nanny receipt;
-- operating on unassigned batches/items.
-
-Unauthorized operations are rejected server-side and are not allowed to create accounting journal/transaction entries.
-
-### Completed tests
-
-- Test 1A — Assigned batch visibility: **PASS**
-- Test 1B — Unassigned batch visibility: **PASS**
-- Test 2 — Restricted financial actions: **PASS**
-- Test 3 — Reopen assigned batch: **PASS**
-- Test 4 — Reopen unassigned batch: **PASS by visibility restriction**
-- Test 5 — Reopen assigned family item: **PASS**
-- Test 6 — Unassigned family item: **PASS by visibility restriction**
-- Test 7 — Batch creation: **N/A by design**; Accountant Staff does not create batches in the established workflow
-- Test 9 — Confirm nanny receipt: **PASS**
-- Test 10 — Void batch: **PASS**
-- Test 11 — Existing receipt/closure workflow: **PASS**
-
-The working test fixture used `acc1` (`user_id = 17`) and the existing accountant → nanny assignment relationship. The intentionally unassigned fixture remained invisible to `acc1`.
-
-### Implementation
-
-Primary file:
-
-`modules/accounting/disbursements.php`
-
-The authorization hardening was implemented and verified in the repository before the receipt UI work.
+Do not repeat these tests unless new code evidence creates a regression.
 
 ---
 
 ## 2. Receipt handling hardening — COMPLETED
 
-The receipt viewer was hardened so that a stale or missing stored receipt path is handled by the application instead of falling through to a browser/server 404.
-
-Primary file:
-
-`modules/accounting/serve_receipt.php`
-
-The viewer now:
-
-- loads `config/functions.php` so application escaping/message helpers are available;
-- validates the stored receipt path with `realpath()`;
-- confirms the resolved file remains inside the application base directory;
-- confirms the target is an actual file;
-- displays an application-level Arabic message when the receipt is missing/stale;
-- does **not** substitute an individual family receipt for a missing batch receipt.
+`modules/accounting/serve_receipt.php` validates stored receipt paths with `realpath()` and `is_file()`, confirms the resolved file remains inside the application base directory, and shows an application-level Arabic message for missing/stale receipts. It does not substitute an individual family receipt for a missing final batch receipt.
 
 Relevant commits:
 
-- `e6b6fd1f15f63a48c6224da3635efddc95ac38f2` — missing/stale file handling and no item-receipt fallback
-- `65625215686027ce172425c611e40c1d039de35c` — fixed missing `functions.php` dependency that caused the previous blank page
-- `8cbf181071fc27de59abc26e1f4d4f0bf8f71a9e` — attempted same-page receipt presentation integration
+- `e6b6fd1f15f63a48c6224da3635efddc95ac38f2`
+- `65625215686027ce172425c611e40c1d039de35c`
+- `8cbf181071fc27de59abc26e1f4d4f0bf8f71a9e`
+
+### Deferred receipt-preview UI TODO
+
+The requested final UX remains:
+
+> Show missing/stale receipt feedback as a same-page Bootstrap modal on `modules/accounting/disbursements.php` instead of navigating to a separate receipt page/window.
+
+This is a UI TODO only. It does not invalidate the completed authorization/security controls.
 
 ---
 
-## 3. Deferred receipt-preview UI item — TODO
+## 3. Journal listing/filtering — PASSED
 
-The requested final UX is:
+Current `modules/accounting/journal.php` was inspected and the journal listing/filtering control was completed.
 
-> When a batch has no usable final receipt, do not navigate to a separate receipt page. Show the application message as a popup/modal on the existing disbursement page.
+Verified:
 
-The current implementation still opens a new page/window when the receipt preview action is used. The user explicitly confirmed this remains unresolved.
+- authorized management/accounting access;
+- date-from/date-to filtering;
+- newest-first ordering;
+- journal code/date/description/reference/value/status/creator display;
+- direct journal detail access;
+- protected automated reference-type set.
 
-This is **deferred, not a failed accounting-control test**.
+The automated reference set now includes:
 
-Required future fix:
+```text
+transaction
+transaction_void
+disbursement
+disbursement_return
+voucher
+manual_void
+```
 
-- keep the user on `modules/accounting/disbursements.php`;
-- use the existing Bootstrap 5 modal system or an equivalent same-page UI;
-- show the missing/stale receipt message inside the modal;
-- for a valid receipt, provide a safe in-page preview or appropriate modal viewer;
-- never use an individual item receipt as a substitute for a missing batch receipt;
-- preserve the existing server-side receipt authorization/path validation.
+The `disbursement_return` omission was corrected by commit `c37d72b3b0bff2497aab525f6944e05c58cb5fd7`.
 
-Do not reopen the already-passed disbursement authorization tests solely because this UI item is deferred.
+**Result: PASS.**
 
 ---
 
-## 4. Accounting data preservation
+## 4. Journal detail/history consistency — PASSED
 
-No protected accounting audit evidence was intentionally modified during this milestone.
+Current `modules/accounting/journal.php` and `modules/accounting/lib.php` were inspected directly.
 
-Protected completed control records remain protected:
+Verified:
+
+1. Journal detail loads the actual `journal_entries` record.
+2. Journal lines are loaded from `journal_lines` and resolved through `accounts`.
+3. Displayed debit/credit totals are calculated from the actual displayed lines.
+4. Voided originals remain inspectable.
+5. Transaction voiding preserves the original journal and creates a separate `transaction_void` reversal journal.
+6. Manual voiding preserves the original journal and creates a separate `manual_void` reversal journal.
+7. Automated reference types cannot be voided through the manual-journal route.
+8. Original and reversal journals remain independently inspectable through the journal detail route.
+
+No accounting data was changed for this inspection, and previously completed balance/status/orphan tests were not repeated.
+
+**Result: PASS.**
+
+---
+
+## 5. Cross-reference/auditability gap — TODO LATER
+
+The journal detail page currently exposes the raw `reference_type`, but does not provide direct source navigation or explicit original↔reversal navigation.
+
+For example:
+
+```text
+JE-000026
+  transaction / 22
+
+JE-VOID-TXN-22
+  transaction_void / 22
+```
+
+Both records are inspectable, but an accountant must currently interpret the relationship manually rather than follow a direct UI link.
+
+This is **not classified as a journal-detail integrity failure**. It is parked as a dedicated future cross-module accounting-auditability task.
+
+Future implementation should consider safe, role-aware links for:
+
+- source transaction;
+- original journal;
+- transaction-void reversal;
+- manual-void original/reversal;
+- disbursement and disbursement-return source records;
+- voucher source record.
+
+Any future implementation must preserve server-side authorization and must not expose records outside the user's existing accounting permissions.
+
+---
+
+## 6. Current Accounting Audit state
+
+The accounting audit remains an existing continuation, not a new audit.
+
+Completed controls include:
+
+- creator → FM review workflow;
+- FM return/resubmission;
+- FM approval → posted + balanced journal;
+- returned transaction cancellation with no journal;
+- authorized transaction void + reversal;
+- manual journal integrity;
+- Trial Balance integrity;
+- Accountant Staff financial/report authorization;
+- Accountant Staff disbursement authorization;
+- receipt/closure workflow;
+- journal listing/filtering;
+- journal detail/history consistency;
+- posted/voided visibility;
+- preservation of original entries;
+- accounting-history balance consistency;
+- current transaction-status/journal-status control verification;
+- duplicate/orphan relationship audit.
+
+Known historical accounting anomalies remain documented and must not be destructively corrected merely to satisfy an audit query. In particular, observations involving transactions `5`, `8`, `13`, `14`, `15`, and `16` require schema/code interpretation.
+
+Protected completed evidence remains:
 
 - TR-000014 / transaction `20`
 - TR-000015 / transaction `21`
@@ -131,35 +161,28 @@ Protected completed control records remain protected:
 - JE-000026 / journal `37`
 - JE-VOID-TXN-22
 
-Known fixture/test records for disbursement authorization are test infrastructure and must not be recreated manually unless a future regression genuinely requires it.
+---
+
+## 7. Exact next Accounting Audit task
+
+Continue with the remaining **Journal Integrity / Accounting History Interaction** work:
+
+1. Verify separation and semantics of `manual`, `transaction`, `transaction_void`, `disbursement`, `disbursement_return`, and `voucher` references.
+2. Verify prevention of unauthorized journal mutation through alternate routes.
+3. Verify duplicate/missing journal relationships where not already covered.
+4. Continue the cross-module accounting references/auditability audit.
+5. Specifically address the deferred original↔reversal/source navigation TODO when that audit item is reached.
+
+Do not rerun controls already marked PASS unless new repository evidence indicates regression.
 
 ---
 
-## 5. Exact next Accounting Audit control
+## 8. Continuation rule
 
-The disbursement authorization milestone is complete. The deferred receipt-preview UI item is parked for later.
+The next session must read/use together:
 
-Continue directly with:
+- `docs/AHL_EL_KHEIR_ACCOUNTING_AUDIT.md`
+- `docs/AHL_EL_KHEIR_DOCUMENTATION_UPDATE_2026-09-11.md`
+- `docs/CHATGPT_SESSION_INDEX.md`
 
-**Journal Integrity / Accounting History Interaction**
-
-Required scope:
-
-1. journal listing and filtering integrity;
-2. separation of `manual`, `transaction`, `transaction_void`, `disbursement`, and `voucher` references;
-3. journal detail/history consistency;
-4. posted versus voided visibility;
-5. preservation of original entries after reversal/void;
-6. prevention of unauthorized journal mutation through alternate routes;
-7. accounting-history totals and balance consistency;
-8. interaction between transaction status and journal status;
-9. duplicate/missing journal relationships;
-10. cross-module accounting references and auditability.
-
-Do not repeat completed controls unless new code evidence creates a regression.
-
----
-
-## 6. Continuation rule
-
-The next ChatGPT session must treat this document together with `docs/AHL_EL_KHEIR_ACCOUNTING_AUDIT.md` and `docs/CHATGPT_SESSION_INDEX.md` as the current checkpoint. The work is a continuation of the existing Accounting Audit, not a new audit and not a new project.
+Treat these as the current Accounting Audit checkpoint. Inspect the current repository before making new conclusions or changes.
