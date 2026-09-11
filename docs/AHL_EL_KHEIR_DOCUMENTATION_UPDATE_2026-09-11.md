@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-11  
 **Area:** Accounting Audit — Journal Integrity / Accounting History Interaction  
-**Status:** Current milestone checkpoint completed; cross-reference auditability remains TODO
+**Status:** Current milestone checkpoint completed; targeted runtime verification remains pending
 
 ---
 
@@ -18,7 +18,7 @@ Vice General Manager creates the disbursement batch
 → Accountant Staff manages only batches belonging to an assigned nanny
 ```
 
-Assigned visibility, restricted financial actions, reopen controls, nanny receipt confirmation, batch void and existing receipt/closure workflow all passed. Accountant Staff is not a batch-creation role in the established workflow.
+Assigned visibility, restricted financial actions, reopen controls, batch void and existing receipt/closure workflow all passed. Accountant Staff is not a batch-creation role in the established workflow.
 
 Do not repeat these tests unless new code evidence creates a regression.
 
@@ -48,16 +48,7 @@ This is a UI TODO only. It does not invalidate the completed authorization/secur
 
 Current `modules/accounting/journal.php` was inspected and the journal listing/filtering control was completed.
 
-Verified:
-
-- authorized management/accounting access;
-- date-from/date-to filtering;
-- newest-first ordering;
-- journal code/date/description/reference/value/status/creator display;
-- direct journal detail access;
-- protected automated reference-type set.
-
-The automated reference set now includes:
+The earlier protection set included:
 
 ```text
 transaction
@@ -69,8 +60,6 @@ manual_void
 ```
 
 The `disbursement_return` omission was corrected by commit `c37d72b3b0bff2497aab525f6944e05c58cb5fd7`.
-
-**Result: PASS.**
 
 ---
 
@@ -95,7 +84,76 @@ No accounting data was changed for this inspection, and previously completed bal
 
 ---
 
-## 5. Cross-reference/auditability gap — TODO LATER
+## 5. New reference-type / alternate-mutation finding — FIXED
+
+Repository inspection of the active accounting paths found three current journal reference types that were not protected by the generic manual-void route:
+
+```text
+disbursement_void
+item_return
+payroll
+```
+
+### `disbursement_void`
+
+`modules/accounting/lib_outflows.php` creates the batch-void reversal using:
+
+```text
+reference_type = disbursement_void
+reference_id   = monthly_disbursements.id
+```
+
+Because this reversal is itself an automated accounting history record, allowing the generic manual-void page to void it would create an alternate mutation path.
+
+### `item_return`
+
+The active partial item-return flow creates:
+
+```text
+reference_type = item_return
+reference_id   = disbursement_items.id
+```
+
+The journal ID is stored in `disbursement_items.reversal_journal_id`. This is intentionally distinct from the batch-level `disbursement_return` relationship and was not renamed merely to satisfy the older audit naming convention.
+
+### `payroll`
+
+`modules/hr/lib_payroll_accounting.php` creates payroll journals using:
+
+```text
+reference_type = payroll
+reference_id   = payroll.id
+```
+
+The payroll row stores the journal in `accounting_entry_id` and marks `accounting_status = posted`. Before this fix, the generic journal void route could void the payroll journal without changing the linked payroll status, creating a cross-module history mismatch.
+
+### Narrow fix
+
+Only `modules/accounting/journal.php` was changed. The protected reference set is now:
+
+```text
+transaction
+transaction_void
+disbursement
+disbursement_return
+disbursement_void
+item_return
+voucher
+payroll
+manual_void
+```
+
+No accounting records or historical evidence were modified.
+
+**Fix commit:** `8e3ee6fd7d95c0efef834a284ed428d125064bfc`
+
+Static repository verification confirmed the updated protection set is present in the current branch.
+
+**Local runtime/UI verification is still pending.**
+
+---
+
+## 6. Cross-reference/auditability gap — TODO LATER
 
 The journal detail page currently exposes the raw `reference_type`, but does not provide direct source navigation or explicit original↔reversal navigation.
 
@@ -111,22 +169,11 @@ JE-VOID-TXN-22
 
 Both records are inspectable, but an accountant must currently interpret the relationship manually rather than follow a direct UI link.
 
-This is **not classified as a journal-detail integrity failure**. It is parked as a dedicated future cross-module accounting-auditability task.
-
-Future implementation should consider safe, role-aware links for:
-
-- source transaction;
-- original journal;
-- transaction-void reversal;
-- manual-void original/reversal;
-- disbursement and disbursement-return source records;
-- voucher source record.
-
-Any future implementation must preserve server-side authorization and must not expose records outside the user's existing accounting permissions.
+This is **not classified as a journal-detail integrity failure**. It remains a dedicated future cross-module accounting-auditability task.
 
 ---
 
-## 6. Current Accounting Audit state
+## 7. Current Accounting Audit state
 
 The accounting audit remains an existing continuation, not a new audit.
 
@@ -150,6 +197,8 @@ Completed controls include:
 - current transaction-status/journal-status control verification;
 - duplicate/orphan relationship audit.
 
+The newly found alternate mutation defect is **fixed in code but not yet marked PASS until targeted local runtime verification is completed**.
+
 Known historical accounting anomalies remain documented and must not be destructively corrected merely to satisfy an audit query. In particular, observations involving transactions `5`, `8`, `13`, `14`, `15`, and `16` require schema/code interpretation.
 
 Protected completed evidence remains:
@@ -163,21 +212,21 @@ Protected completed evidence remains:
 
 ---
 
-## 7. Exact next Accounting Audit task
+## 8. Exact next Accounting Audit task
 
-Continue with the remaining **Journal Integrity / Accounting History Interaction** work:
+Continue from this exact checkpoint:
 
-1. Verify separation and semantics of `manual`, `transaction`, `transaction_void`, `disbursement`, `disbursement_return`, and `voucher` references.
-2. Verify prevention of unauthorized journal mutation through alternate routes.
-3. Verify duplicate/missing journal relationships where not already covered.
-4. Continue the cross-module accounting references/auditability audit.
-5. Specifically address the deferred original↔reversal/source navigation TODO when that audit item is reached.
+1. Pull/verify commit `8e3ee6fd7d95c0efef834a284ed428d125064bfc` locally.
+2. Perform targeted runtime/UI verification that `payroll`, `disbursement_void`, and `item_return` journal entries no longer expose the generic manual-void action.
+3. Inspect the remaining callers of `ak_void_journal_for_voucher()` and any direct journal mutation routes.
+4. Continue duplicate/missing relationship checks only where a genuinely new route is discovered.
+5. Only after the underlying routes are fully audited, revisit the parked original↔reversal/source navigation enhancement.
 
-Do not rerun controls already marked PASS unless new repository evidence indicates regression.
+Do not rerun the already-passed accounting tests.
 
 ---
 
-## 8. Continuation rule
+## 9. Continuation rule
 
 The next session must read/use together:
 
