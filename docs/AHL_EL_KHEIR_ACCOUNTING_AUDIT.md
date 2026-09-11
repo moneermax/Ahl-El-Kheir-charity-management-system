@@ -231,7 +231,7 @@ Deferred UI TODO: move the missing/stale receipt message (and preferably valid r
 
 ---
 
-# 10. Journal Integrity / Accounting History Interaction — COMPLETED TO CURRENT CHECKPOINT
+# 10. Journal Integrity / Accounting History Interaction — CURRENT CHECKPOINT
 
 ## 10.1 Journal listing/filtering integrity — PASS
 
@@ -242,14 +242,101 @@ Current `modules/accounting/journal.php`:
 - orders by entry date descending and journal ID descending;
 - displays journal code, date, description, reference type, value, status and creator;
 - provides a direct detail view for each journal;
-- includes the current automated reference-type set:
-  `transaction`, `transaction_void`, `disbursement`, `disbursement_return`, `voucher`, `manual_void`.
+- now protects automated/reversal reference types used by current accounting modules.
 
-The journal list was also corrected so `disbursement_return` is treated as an automated reference rather than being omitted from the protected set.
+The original protection set included:
 
-Related commit: `c37d72b3b0bff2497aab525f6944e05c58cb5fd7`.
+```text
+transaction
+transaction_void
+disbursement
+disbursement_return
+voucher
+manual_void
+```
 
-## 10.2 Journal detail/history consistency — PASS
+The current repository inspection found three additional current journal reference types that must also be protected from the generic manual-void route:
+
+```text
+disbursement_void
+item_return
+payroll
+```
+
+The resulting protected set is now:
+
+```text
+transaction
+transaction_void
+disbursement
+disbursement_return
+disbursement_void
+item_return
+voucher
+payroll
+manual_void
+```
+
+`disbursement_return` was previously added by commit `c37d72b3b0bff2497aab525f6944e05c58cb5fd7`.
+
+The new protection correction is commit `8e3ee6fd7d95c0efef834a284ed428d125064bfc`.
+
+## 10.2 Reference-type semantics and alternate mutation route — DEFECT FOUND AND NARROWLY FIXED
+
+Repository inspection of the active accounting implementations found:
+
+### `disbursement_void`
+
+`modules/accounting/lib_outflows.php` creates the batch-void reversal with:
+
+```text
+reference_type = disbursement_void
+reference_id   = monthly_disbursements.id
+```
+
+The reversal is created inside the disbursement void transaction and the original transaction/disbursement state is updated in the same transaction.
+
+Before this checkpoint, `disbursement_void` was **not** in the journal page's automated protection list. Therefore an authorized user of the generic manual journal page could potentially reach the reversal through the manual-void route and create a second reversal/history mutation.
+
+### `item_return`
+
+The active item-return workflow creates a partial reversal with:
+
+```text
+reference_type = item_return
+reference_id   = disbursement_items.id
+```
+
+The corresponding `disbursement_items.reversal_journal_id` stores that journal ID. This is semantically distinct from the batch-level `disbursement_return` relationship and must not be silently relabeled merely to satisfy an audit query.
+
+Before this checkpoint, `item_return` was also **not** in the journal page's automated protection list, leaving the same alternate manual-void route available.
+
+### `payroll`
+
+`modules/hr/lib_payroll_accounting.php` creates payroll journals with:
+
+```text
+reference_type = payroll
+reference_id   = payroll.id
+```
+
+The existing payroll record stores the accounting journal in `payroll.accounting_entry_id` and marks `accounting_status = posted`.
+
+Before this checkpoint, `payroll` was not in the journal page's automated protection list. That meant the generic manual-void route could void a posted payroll journal without changing the linked payroll status/accounting linkage, creating a cross-module accounting-history inconsistency.
+
+### Narrow fix
+
+Only the protection set in `modules/accounting/journal.php` was changed. No accounting data was modified and no historical journal was rewritten.
+
+The new set protects all three newly discovered automated/reversal types while preserving the existing semantics and reference IDs.
+
+**Fix commit:** `8e3ee6fd7d95c0efef834a284ed428d125064bfc`
+
+Static repository verification after the fix confirmed the updated protection set is present in the current `journal.php`.
+
+**Local runtime/UI verification is still required before marking this control fully PASS.**
+
+## 10.3 Journal detail/history consistency — PASS
 
 Current journal detail behavior was inspected directly in `modules/accounting/journal.php` and the accounting core in `modules/accounting/lib.php`.
 
@@ -266,7 +353,7 @@ Verified:
 
 No database data was changed for this check, and previously passed balance/status/orphan tests were not repeated.
 
-## 10.3 Cross-reference/auditability TODO identified
+## 10.4 Cross-reference/auditability TODO
 
 The current journal detail page displays the raw `reference_type`, but it does not yet provide direct source navigation or explicit original↔reversal links.
 
@@ -292,21 +379,13 @@ Both entries are independently inspectable, but the UI does not currently provid
 
 Continue with the remaining **Journal Integrity / Accounting History Interaction** controls, without restarting prior work:
 
-1. separation and semantics of `manual`, `transaction`, `transaction_void`, `disbursement`, `disbursement_return`, and `voucher` references;
-2. prevention of unauthorized journal mutation through alternate routes;
-3. duplicate/missing journal relationships;
-4. cross-module accounting references and auditability, including the deferred direct original↔reversal/source navigation enhancement;
-5. verify whether any remaining accounting path can mutate journal state outside the protected routes.
+1. Perform the targeted local runtime/UI verification for the newly protected `payroll`, `disbursement_void`, and `item_return` reference types.
+2. Inspect the remaining repository callers of `ak_void_journal_for_voucher()` and any other direct `UPDATE journal_entries` / `DELETE` / journal-line mutation routes.
+3. Verify duplicate/missing journal relationships only where a genuinely new route is discovered.
+4. Continue cross-module accounting references and auditability.
+5. After the underlying routes are fully audited, revisit the parked direct original↔reversal/source navigation enhancement.
 
-Controls already passed in this area must not be rerun unless new code evidence indicates regression:
-
-- journal listing/filtering;
-- journal detail/history consistency;
-- posted/voided visibility;
-- preservation of original entries;
-- accounting-history totals/balance consistency;
-- transaction-status/journal-status current-control verification;
-- orphan/mismatched relationship audit.
+Controls already passed in this area must not be rerun unless new code evidence indicates regression.
 
 Historical anomalies involving transactions `5`, `8`, `13`, `14`, `15`, and `16` remain historical evidence and must be interpreted against the actual schema/code. Do not rewrite history merely to make an audit query return clean results.
 
