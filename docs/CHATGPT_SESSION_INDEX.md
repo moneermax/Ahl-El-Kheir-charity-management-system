@@ -55,7 +55,7 @@ Latest checkpoint:
 16. Accounting-history totals/balance consistency.
 17. Current transaction-status ↔ journal-status control.
 18. Duplicate/orphan/mismatched relationship audit.
-19. Unauthorized journal mutation alternate-route audit to the current checkpoint.
+19. Previous alternate-route protection for `disbursement_return`.
 
 Do not rerun these controls unless new code evidence indicates regression.
 
@@ -147,7 +147,7 @@ Deferred UI TODO: same-page Bootstrap modal on `modules/accounting/disbursements
 - provides journal detail links;
 - protects automated references.
 
-Current automated reference set:
+The earlier protected set was:
 
 ```text
 transaction
@@ -158,7 +158,49 @@ voucher
 manual_void
 ```
 
-The `disbursement_return` protection was added in commit `c37d72b3b0bff2497aab525f6944e05c58cb5fd7`.
+## New reference-type finding — FIXED, RUNTIME VERIFICATION PENDING
+
+Repository inspection found three additional active journal reference types that were not protected from the generic manual-void route:
+
+```text
+disbursement_void
+item_return
+payroll
+```
+
+Semantics verified from current code:
+
+- `disbursement_void` → `monthly_disbursements.id`
+- `item_return` → `disbursement_items.id`
+- `payroll` → `payroll.id`
+
+The payroll journal is also linked back through `payroll.accounting_entry_id` / `accounting_status`.
+
+These are automated/cross-module accounting records and must not be mutable through the generic manual-void route.
+
+### Narrow fix
+
+`modules/accounting/journal.php` now protects:
+
+```text
+transaction
+transaction_void
+disbursement
+disbursement_return
+disbursement_void
+item_return
+voucher
+payroll
+manual_void
+```
+
+Fix commit:
+
+`8e3ee6fd7d95c0efef834a284ed428d125064bfc`
+
+No accounting data was changed.
+
+Static repository verification confirmed the updated set is present. **Targeted local runtime/UI verification is still pending**, so this control is not yet marked fully PASS.
 
 ## Journal detail/history consistency — PASS
 
@@ -206,7 +248,7 @@ The final flow locks the voucher and linked journal, requires `entry_id`, requir
 
 The user has already pulled this change locally.
 
-The accounting helper `ak_void_journal_for_voucher()` remains a weak legacy helper in `modules/accounting/lib.php`, but the current voucher page no longer relies on its unsafe non-atomic behavior. If future callers are found, harden/remove it as part of alternate-route mutation auditing rather than changing historical data.
+The accounting helper `ak_void_journal_for_voucher()` remains a weak legacy helper in `modules/accounting/lib.php`, but the current voucher page no longer relies on its unsafe non-atomic behavior. Continue auditing its callers before deciding whether to harden/remove it.
 
 ---
 
@@ -269,6 +311,7 @@ For disbursement items, the actual relationship column is `disbursement_items.di
 - Receipt viewer dependency: `65625215686027ce172425c611e40c1d039de35c`
 - Receipt UI attempt: `8cbf181071fc27de59abc26e1f4d4f0bf8f71a9e`
 - Journal reference protection: `c37d72b3b0bff2497aab525f6944e05c58cb5fd7`
+- New automated/reversal reference protection: `8e3ee6fd7d95c0efef834a284ed428d125064bfc`
 - Voucher void atomicity: `2165513c9009d1fa435fdd122d545bf4d2404b07`
 - Latest accounting documentation checkpoint: `3be66e925bb7f51860979f6bca1557c7672b62a0` plus `c728cf87a027ecd84e16fa3ef5373a9470290030`
 
@@ -282,41 +325,41 @@ Do NOT restart the audit and do NOT rerun the already-passed tests.
 
 Next work should be:
 
-### 1. Reference-type separation and semantics
-Verify the actual code/schema behavior for:
+### 1. Targeted local runtime/UI verification
 
-- `manual`
-- `transaction`
-- `transaction_void`
-- `disbursement`
-- `disbursement_return`
-- `voucher`
-- `manual_void`
+Verify that the generic manual-void route now rejects/does not expose the void action for:
 
-Determine whether every active accounting route uses the correct reference semantics and whether any route can create an ambiguous or incorrect journal relationship.
+- `payroll`
+- `disbursement_void`
+- `item_return`
 
-### 2. Alternate journal mutation routes
-Continue auditing whether any route other than the protected journal/manual-void, transaction-void, voucher-void and relevant disbursement workflows can mutate journal state without the required authorization/transaction safety.
+Do not create new fixtures if existing records can be used.
 
-Pay special attention to callers of `ak_void_journal_for_voucher()` and any direct `UPDATE journal_entries` / `DELETE` / mutation paths.
+### 2. Remaining alternate mutation routes
+
+Inspect remaining callers of `ak_void_journal_for_voucher()` and any direct `UPDATE journal_entries`, `DELETE`, or journal-line mutation paths.
 
 ### 3. Duplicate/missing journal relationships
-Continue the relationship audit only where not already covered. Do not rerun the completed orphan/balance/status tests unless new code evidence requires a targeted regression check.
+
+Continue only where a genuinely new accounting route is discovered. Do not rerun the completed orphan/balance/status tests without regression evidence.
 
 ### 4. Cross-module accounting references / auditability
-This is the main future TODO:
+
+Continue the relationship audit for:
 
 - source transaction ↔ journal;
 - original transaction journal ↔ transaction_void reversal;
 - manual journal ↔ manual_void reversal;
-- disbursement ↔ disbursement_return;
-- voucher ↔ journal;
-- safe role-aware navigation between those records.
+- disbursement ↔ disbursement_return/disbursement_void;
+- disbursement item ↔ item_return;
+- payroll ↔ payroll journal;
+- voucher ↔ voucher journal.
 
-The direct original↔reversal/source navigation UI was identified but deliberately **not implemented yet**. First finish the audit of the underlying relationships and alternate routes; then decide the narrowest safe UI enhancement.
+The direct original↔reversal/source navigation UI remains deliberately parked until the underlying audit is complete.
 
 ### 5. Preserve historical evidence
-Do not repair historical anomalies just to satisfy a query. If a legacy inconsistency is found, classify it as historical and determine whether the current code path is protected.
+
+Do not repair historical anomalies just to satisfy a query. Classify legacy inconsistencies and determine whether current code paths are protected.
 
 ---
 
