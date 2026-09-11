@@ -67,26 +67,10 @@ include __DIR__ . '/../includes/header.php';
 
 <!-- Row 1: Accounting Stats -->
 <div class="row g-3 mb-4 fade-in">
-    <div class="col-md-3 col-sm-6">
-        <div class="card stat-card border border-primary h-100">
-            <div class="card-body"><div class="d-flex justify-content-between align-items-center"><div><h6 class="text-muted mb-1"><?php echo e(t('accounting.total_transactions')); ?></h6><h3 class="mb-0"><?php echo (int)($accountingStats['tx_count'] ?? 0); ?></h3><small class="text-muted">معاملة</small></div><div class="stat-icon bg-primary bg-opacity-10 text-primary"><i class="fas fa-receipt"></i></div></div></div>
-        </div>
-    </div>
-    <div class="col-md-3 col-sm-6">
-        <div class="card stat-card border border-success h-100">
-            <div class="card-body"><div class="d-flex justify-content-between align-items-center"><div><h6 class="text-muted mb-1"><?php echo e(t('accounting.month_collection')); ?></h6><h3 class="mb-0"><?php echo number_format((float)($accountingStats['month_total'] ?? 0), 0); ?></h3><small class="text-muted"><?php echo e(t('accounting.currency_sdg')); ?></small></div><div class="stat-icon bg-success bg-opacity-10 text-success"><i class="fas fa-coins"></i></div></div></div>
-        </div>
-    </div>
-    <div class="col-md-3 col-sm-6">
-        <div class="card stat-card border border-warning h-100">
-            <div class="card-body"><div class="d-flex justify-content-between align-items-center"><div><h6 class="text-muted mb-1"><?php echo e(t('accounting.pending_income')); ?></h6><h3 class="mb-0"><?php echo (int)($accountingStats['pending_inflows'] ?? 0); ?></h3><small class="text-muted">معاملة</small></div><div class="stat-icon bg-warning bg-opacity-10 text-warning"><i class="fas fa-hourglass-half"></i></div></div></div>
-        </div>
-    </div>
-    <div class="col-md-3 col-sm-6">
-        <div class="card stat-card border border-danger h-100">
-            <div class="card-body"><div class="d-flex justify-content-between align-items-center"><div><h6 class="text-muted mb-1"><?php echo e(t('accounting.pending_outflows')); ?></h6><h3 class="mb-0"><?php echo (int)($accountingStats['pending_outflows'] ?? 0); ?></h3><small class="text-muted"><?php echo number_format((float)($accountingStats['outflow_amount_pending'] ?? 0), 0); ?> <?php echo e(t('accounting.currency_sdg')); ?></small></div><div class="stat-icon bg-danger bg-opacity-10 text-danger"><i class="fas fa-money-check-dollar"></i></div></div></div>
-        </div>
-    </div>
+    <div class="col-md-3 col-sm-6"><div class="card stat-card border border-primary h-100"><div class="card-body"><div class="d-flex justify-content-between align-items-center"><div><h6 class="text-muted mb-1"><?php echo e(t('accounting.total_transactions')); ?></h6><h3 class="mb-0"><?php echo (int)($accountingStats['tx_count'] ?? 0); ?></h3><small class="text-muted">معاملة</small></div><div class="stat-icon bg-primary bg-opacity-10 text-primary"><i class="fas fa-receipt"></i></div></div></div></div></div>
+    <div class="col-md-3 col-sm-6"><div class="card stat-card border border-success h-100"><div class="card-body"><div class="d-flex justify-content-between align-items-center"><div><h6 class="text-muted mb-1"><?php echo e(t('accounting.month_collection')); ?></h6><h3 class="mb-0"><?php echo number_format((float)($accountingStats['month_total'] ?? 0), 0); ?></h3><small class="text-muted"><?php echo e(t('accounting.currency_sdg')); ?></small></div><div class="stat-icon bg-success bg-opacity-10 text-success"><i class="fas fa-coins"></i></div></div></div></div></div>
+    <div class="col-md-3 col-sm-6"><div class="card stat-card border border-warning h-100"><div class="card-body"><div class="d-flex justify-content-between align-items-center"><div><h6 class="text-muted mb-1"><?php echo e(t('accounting.pending_income')); ?></h6><h3 class="mb-0"><?php echo (int)($accountingStats['pending_inflows'] ?? 0); ?></h3><small class="text-muted">معاملة</small></div><div class="stat-icon bg-warning bg-opacity-10 text-warning"><i class="fas fa-hourglass-half"></i></div></div></div></div></div>
+    <div class="col-md-3 col-sm-6"><div class="card stat-card border border-danger h-100"><div class="card-body"><div class="d-flex justify-content-between align-items-center"><div><h6 class="text-muted mb-1"><?php echo e(t('accounting.pending_outflows')); ?></h6><h3 class="mb-0"><?php echo (int)($accountingStats['pending_outflows'] ?? 0); ?></h3><small class="text-muted"><?php echo number_format((float)($accountingStats['outflow_amount_pending'] ?? 0), 0); ?> <?php echo e(t('accounting.currency_sdg')); ?></small></div><div class="stat-icon bg-danger bg-opacity-10 text-danger"><i class="fas fa-money-check-dollar"></i></div></div></div></div></div>
 </div>
 
 <!-- Row 2: Group Stats -->
@@ -107,16 +91,18 @@ include __DIR__ . '/../includes/header.php';
 </tbody></table></div></div></div></div></div>
 
 <script>
-/*
- * Accountant Staff must not enter the organization-wide Cash Book from the
- * global header quick actions. Keep the existing header entry harmless by
- * routing it to the already-authorized personal financial report.
- * This is intentionally scoped to this dashboard only.
- */
+/* Accountant Staff: the global header must expose the authorized personal report,
+ * not the organization-wide Cash Book. This is scoped to this dashboard because
+ * the header quick-action map is shared globally by multiple roles. */
 document.addEventListener('DOMContentLoaded', function () {
-    document.querySelectorAll('a[href*="modules/accounting/reports.php?tab=cash"]').forEach(function (link) {
-        link.setAttribute('href', '<?php echo e(url('modules/reports/my_financial.php')); ?>');
-        link.setAttribute('title', 'تقاريري المالية');
+    document.querySelectorAll('a').forEach(function (link) {
+        var label = (link.textContent || '').trim();
+        var href = link.getAttribute('href') || '';
+        if (label === 'دفتر النقد' || href.indexOf('modules/accounting/reports.php?tab=cash') !== -1) {
+            link.href = '<?php echo e(url('modules/reports/my_financial.php')); ?>';
+            link.textContent = 'تقاريري المالية';
+            link.title = 'تقاريري المالية';
+        }
     });
 });
 </script>
