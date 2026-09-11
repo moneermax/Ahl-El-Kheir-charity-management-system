@@ -49,38 +49,73 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $canManage) {
         if ($otherId <= 0) $errors[] = 'اختر الحساب المقابل.';
 
         if (!$errors) {
-            $cnt = (int)(dbFetchOne("SELECT COUNT(*) c FROM vouchers WHERE voucher_type = ?", [$vType])['c'] ?? 0) + 1;
-            $vNo = ($vType === 'receipt' ? 'RV-' : 'PV-') . str_pad((string)$cnt, 6, '0', STR_PAD_LEFT);
-            dbExecute("INSERT INTO vouchers (voucher_type, voucher_no, voucher_date, party_name, amount, cash_account_id, other_account_id, description, reference_number, status, created_by)
-                       VALUES (?,?,?,?,?,?,?,?,?,'posted',?)",
-                [$vType, $vNo, $date, $party !== '' ? $party : null, $amount, $cashId, $otherId,
-                 $desc !== '' ? $desc : null, $ref !== '' ? $ref : null, Session::getUserId()]);
-            $vId = (int)(dbFetchOne("SELECT LAST_INSERT_ID() id")['id']);
-
-            // Balanced double-entry: receipt => Dr cash / Cr other ; payment => Dr other / Cr cash
-            $n = (int)(dbFetchOne("SELECT COUNT(*) c FROM journal_entries")['c'] ?? 0) + 1;
-            $jeCode = 'JE-' . str_pad((string)$n, 6, '0', STR_PAD_LEFT);
-            $label = ($vType === 'receipt' ? 'سند قبض ' : 'سند صرف ') . $vNo . ($party !== '' ? ' — ' . $party : '');
-            dbExecute("INSERT INTO journal_entries (entry_code, entry_date, description, reference_type, reference_id, status, created_by)
-                       VALUES (?,?,?,'voucher',?,'posted',?)",
-                [$jeCode, $date, $label, $vId, Session::getUserId()]);
-            $eid = (int)(dbFetchOne("SELECT LAST_INSERT_ID() id")['id']);
-            if ($vType === 'receipt') {
-                dbExecute("INSERT INTO journal_lines (entry_id, account_id, debit, credit, description) VALUES (?,?,?,?,?)", [$eid, $cashId, $amount, 0, $label]);
-                dbExecute("INSERT INTO journal_lines (entry_id, account_id, debit, credit, description) VALUES (?,?,?,?,?)", [$eid, $otherId, 0, $amount, $label]);
-            } else {
-                dbExecute("INSERT INTO journal_lines (entry_id, account_id, debit, credit, description) VALUES (?,?,?,?,?)", [$eid, $otherId, $amount, 0, $label]);
-                dbExecute("INSERT INTO journal_lines (entry_id, account_id, debit, credit, description) VALUES (?,?,?,?,?)", [$eid, $cashId, 0, $amount, $label]);
-            }
-            dbExecute("UPDATE vouchers SET entry_id = ? WHERE id = ?", [$eid, $vId]);
             try {
-                dbExecute("INSERT INTO audit_log (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent)
-                           VALUES (?, 'CREATE', 'vouchers', ?, NULL, ?, ?, ?)",
-                    [Session::getUserId(), $vId, json_encode(['no' => $vNo, 'type' => $vType, 'amount' => $amount], JSON_UNESCAPED_UNICODE),
-                     $_SERVER['REMOTE_ADDR'] ?? '', $_SERVER['HTTP_USER_AGENT'] ?? '']);
-            } catch (Throwable $e) {}
-            flash('success', 'تم ترحيل ' . ($vType === 'receipt' ? 'سند القبض ' : 'سند الصرف ') . $vNo);
-            header('Location: ' . APP_URL . 'modules/accounting/vouchers.php?tab=list'); exit();
+                db()->beginTransaction();
+
+                $otherAccount = dbFetchOne(
+                    "SELECT id, account_type, is_active FROM accounts WHERE id = ? FOR UPDATE",
+                    [$otherId]
+                );
+                if (!$otherAccount || (int)$otherAccount['is_active'] !== 1) {
+                    throw new RuntimeException('الحساب المقابل غير موجود أو غير نشط.');
+                }
+
+                $requiredType = $vType === 'receipt' ? 'revenue' : 'expense';
+                if ($otherAccount['account_type'] !== $requiredType) {
+                    throw new RuntimeException(
+                        $vType === 'receipt'
+                            ? 'سند القبض يجب أن يستخدم حساب إيراد كحساب مقابل.'
+                            : 'سند الصرف يجب أن يستخدم حساب مصروف كحساب مقابل.'
+                    );
+                }
+
+                $cnt = (int)(dbFetchOne("SELECT COUNT(*) c FROM vouchers WHERE voucher_type = ?", [$vType])['c'] ?? 0) + 1;
+                $vNo = ($vType === 'receipt' ? 'RV-' : 'PV-') . str_pad((string)$cnt, 6, '0', STR_PAD_LEFT);
+                dbExecute("INSERT INTO vouchers (voucher_type, voucher_no, voucher_date, party_name, amount, cash_account_id, other_account_id, description, reference_number, status, created_by)
+                           VALUES (?,?,?,?,?,?,?,?,?,'posted',?)",
+                    [$vType, $vNo, $date, $party !== '' ? $party : null, $amount, $cashId, $otherId,
+                     $desc !== '' ? $desc : null, $ref !== '' ? $ref : null, Session::getUserId()]);
+                $vId = (int)(dbFetchOne("SELECT LAST_INSERT_ID() id")['id']);
+                if ($vId <= 0) {
+                    throw new RuntimeException('تعذر إنشاء السند.');
+                }
+
+                // Balanced double-entry: receipt => Dr cash / Cr other ; payment => Dr other / Cr cash
+                $n = (int)(dbFetchOne("SELECT COUNT(*) c FROM journal_entries")['c'] ?? 0) + 1;
+                $jeCode = 'JE-' . str_pad((string)$n, 6, '0', STR_PAD_LEFT);
+                $label = ($vType === 'receipt' ? 'سند قبض ' : 'سند صرف ') . $vNo . ($party !== '' ? ' — ' . $party : '');
+                dbExecute("INSERT INTO journal_entries (entry_code, entry_date, description, reference_type, reference_id, status, created_by)
+                           VALUES (?,?,?,'voucher',?,'posted',?)",
+                    [$jeCode, $date, $label, $vId, Session::getUserId()]);
+                $eid = (int)(dbFetchOne("SELECT LAST_INSERT_ID() id")['id']);
+                if ($eid <= 0) {
+                    throw new RuntimeException('تعذر إنشاء القيد المحاسبي للسند.');
+                }
+                if ($vType === 'receipt') {
+                    dbExecute("INSERT INTO journal_lines (entry_id, account_id, debit, credit, description) VALUES (?,?,?,?,?)", [$eid, $cashId, $amount, 0, $label]);
+                    dbExecute("INSERT INTO journal_lines (entry_id, account_id, debit, credit, description) VALUES (?,?,?,?,?)", [$eid, $otherId, 0, $amount, $label]);
+                } else {
+                    dbExecute("INSERT INTO journal_lines (entry_id, account_id, debit, credit, description) VALUES (?,?,?,?,?)", [$eid, $otherId, $amount, 0, $label]);
+                    dbExecute("INSERT INTO journal_lines (entry_id, account_id, debit, credit, description) VALUES (?,?,?,?,?)", [$eid, $cashId, 0, $amount, $label]);
+                }
+                dbExecute("UPDATE vouchers SET entry_id = ? WHERE id = ?", [$eid, $vId]);
+
+                try {
+                    dbExecute("INSERT INTO audit_log (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent)
+                               VALUES (?, 'CREATE', 'vouchers', ?, NULL, ?, ?, ?)",
+                        [Session::getUserId(), $vId, json_encode(['no' => $vNo, 'type' => $vType, 'amount' => $amount], JSON_UNESCAPED_UNICODE),
+                         $_SERVER['REMOTE_ADDR'] ?? '', $_SERVER['HTTP_USER_AGENT'] ?? '']);
+                } catch (Throwable $auditError) {}
+
+                db()->commit();
+                flash('success', 'تم ترحيل ' . ($vType === 'receipt' ? 'سند القبض ' : 'سند الصرف ') . $vNo);
+                header('Location: ' . APP_URL . 'modules/accounting/vouchers.php?tab=list'); exit();
+            } catch (Throwable $e) {
+                try {
+                    if (db()->inTransaction()) db()->rollBack();
+                } catch (Throwable $rollbackError) {}
+                $errors[] = 'تعذر ترحيل السند: ' . $e->getMessage();
+            }
         }
     } elseif (isset($_POST['void_voucher'])) {
         $vId = (int)$_POST['void_voucher'];
