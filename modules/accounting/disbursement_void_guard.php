@@ -13,8 +13,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['void_batch'])) {
 }
 
 require_once dirname(__DIR__, 2) . '/config/database.php';
-require_once __DIR__ . '/session.php';
-require_once __DIR__ . '/functions.php';
+require_once dirname(__DIR__, 2) . '/config/session.php';
+require_once dirname(__DIR__, 2) . '/config/functions.php';
 
 Session::start();
 
