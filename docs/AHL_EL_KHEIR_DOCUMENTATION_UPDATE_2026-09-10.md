@@ -1,8 +1,8 @@
 # Ahl El Kheir Charity Management System — Documentation Update
 
-**Date:** 2026-09-10  
+**Date:** 2026-09-10 (historical milestone; superseded by 2026-09-11 checkpoint)  
 **Area:** Accounting Audit — Cross-module Authorization / Reporting  
-**Status:** Milestone completed and verified
+**Status:** Historical milestone completed and verified
 
 ---
 
@@ -35,8 +35,6 @@ Direct access by ACC1 (`user_id = 17`, role `accountant_staff`) to:
 
 was tested after the authorization fix and **PASSED**.
 
-The Accountant Staff financial/reporting authorization surface inspected in this milestone is therefore considered clean.
-
 ### Implementation
 
 Fix commit:
@@ -46,10 +44,6 @@ Fix commit:
 Affected file:
 
 `modules/reports/confirmed_disbursements_report.php`
-
-Scoped report file SHA at this checkpoint:
-
-`5280e3abf4d3fa6b3f24b8d3df58402ca2fe3cd5`
 
 ---
 
@@ -61,7 +55,7 @@ The existing shortcut **تقاريري المالية** continues to point to:
 
 `modules/reports/my_financial.php`
 
-Do not reintroduce the superseded dashboard restriction commit or alter the working dashboard as part of this accounting authorization audit unless a new concrete regression is demonstrated.
+Do not alter the working dashboard as part of this accounting authorization audit unless a new concrete regression is demonstrated.
 
 ---
 
@@ -80,9 +74,23 @@ Protected completed control records remain protected:
 
 ---
 
-## 4. Next Accounting Audit control
+## 4. Supersession note
 
-The authorization/reporting milestone is complete. Continue directly with:
+The later 2026-09-11 milestone expanded the authorization audit to `modules/accounting/disbursements.php`, verified Accountant Staff assignment-scoped disbursement access, and hardened receipt handling. See:
+
+`docs/AHL_EL_KHEIR_DOCUMENTATION_UPDATE_2026-09-11.md`
+
+and
+
+`docs/CHATGPT_SESSION_INDEX.md`
+
+for the current checkpoint and exact next task.
+
+---
+
+## 5. Historical next Accounting Audit control
+
+At the end of this milestone the planned next control was:
 
 **Journal Integrity / Accounting History Interaction**
 
@@ -99,4 +107,4 @@ Primary scope:
 9. duplicate/missing journal relationships;
 10. cross-module accounting references and auditability.
 
-Do not repeat already-passed Accountant Staff authorization tests unless new code evidence requires regression testing.
+The 2026-09-11 checkpoint confirms this remains the next audit control after the completed disbursement authorization milestone.
