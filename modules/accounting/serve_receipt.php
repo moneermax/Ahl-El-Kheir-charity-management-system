@@ -26,22 +26,62 @@ if ($id <= 0) {
     exit('Invalid ID');
 }
 
-// A batch may have no final/closing receipt while its individual items already
-// have receipt files. In that case, fall back to the first available item receipt
-// instead of incorrectly returning 404. If neither the batch nor any item has a
-// receipt, ak_out_serve_receipt() keeps the normal 404 behavior.
-if ($kind !== 'item') {
-    $batch = ak_out_row('monthly_disbursements', $id);
-    if ($batch && (string)($batch['receipt_file_path'] ?? '') === '') {
-        $item = dbFetchOne(
-            "SELECT id FROM disbursement_items WHERE disbursement_id = ? AND receipt_file_path IS NOT NULL AND TRIM(receipt_file_path) <> '' ORDER BY id ASC LIMIT 1",
-            [$id]
-        );
-        if ($item) {
-            $kind = 'item';
-            $id = (int)$item['id'];
-        }
-    }
+// Do not substitute an individual item receipt for a batch receipt.
+// A batch receipt and an item receipt are different documents and must remain
+// independently addressable.
+if ($kind === 'item') {
+    $item = ak_out_row('disbursement_items', $id);
+    $row = $item ? ak_out_row('monthly_disbursements', (int)$item['disbursement_id']) : null;
+    $receiptPath = trim((string)($item['receipt_file_path'] ?? ''));
+} else {
+    $kind = 'batch';
+    $row = ak_out_row('monthly_disbursements', $id);
+    $receiptPath = trim((string)($row['receipt_file_path'] ?? ''));
 }
 
+if (!$row || !($row && ((int)$row['nanny_id'] === $uid || $allowed))) {
+    http_response_code(403);
+    exit('403');
+}
+
+if ($receiptPath === '') {
+    // Keep this a normal application response rather than a browser/server 404.
+    // This is especially important for a closed batch that has no final receipt:
+    // individual item receipts do not count as a batch receipt.
+    $title = $kind === 'batch' ? 'لا يوجد إيصال نهائي للدفعة' : 'لا يوجد إيصال لهذا السجل';
+    $message = $kind === 'batch'
+        ? 'هذه الدفعة لا تحتوي حالياً على إيصال نهائي مرفوع. إيصالات الأسر الفردية لا تُستخدم كبديل عن إيصال الدفعة.'
+        : 'لم يتم رفع إيصال لهذا السجل حتى الآن.';
+    $back = APP_URL . 'modules/accounting/disbursements.php';
+    if ($kind === 'batch') {
+        $back .= '?view=' . (int)$id;
+    }
+    ?>
+    <!doctype html>
+    <html lang="ar" dir="rtl">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title><?php echo e($title); ?></title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+        <style>body{background:#f8f9fa}.receipt-message{max-width:650px;margin:12vh auto;padding:2rem}</style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="card receipt-message shadow-sm border-warning">
+                <div class="card-body text-center">
+                    <div class="fs-1 text-warning mb-3">&#9888;</div>
+                    <h4 class="mb-3"><?php echo e($title); ?></h4>
+                    <p class="text-muted mb-4"><?php echo e($message); ?></p>
+                    <a href="<?php echo e($back); ?>" class="btn btn-secondary">العودة</a>
+                </div>
+            </div>
+        </div>
+    </body>
+    </html>
+    <?php
+    exit;
+}
+
+// Let the secure common helper validate the stored path and stream the file.
 ak_out_serve_receipt($id, $uid, $allowed, $kind);
