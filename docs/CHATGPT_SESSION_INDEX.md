@@ -8,60 +8,73 @@
 
 ---
 
-# 🚨 CURRENT DEVELOPMENT CHECKPOINT — 2026-09-11
+# CURRENT AUTHORITATIVE CHECKPOINT — 2026-09-11
 
-This is an **existing project and existing Accounting Audit continuation**. Do not restart the project, restart the audit, repeat completed tests, or recreate fixtures unless genuine regression evidence requires it.
+This is an **existing project and existing Accounting Audit continuation**.
 
-## HR PHASE — CLOSED
+**Do not restart the project. Do not restart the audit. Do not repeat passed tests. Do not recreate fixtures unless genuine regression evidence requires it. Preserve completed audit evidence.**
 
-The HR foundation/audit phase is complete and closed for continuation purposes. Do not reopen previous HR investigations unless a future cross-module audit provides concrete regression evidence.
+Follow:
 
-Canonical HR dashboard: `dashboard/hr_dashboard.php`  
-Historical compatibility entry point: `modules/hr/index.php` (redirect only).
+**Inspect → Understand → Verify → Identify risk → Fix narrowly → Test → Document**
 
 ---
 
-# ACCOUNTING AUDIT — CURRENT PHASE
+# PROJECT / ARCHITECTURE
 
-The project is currently in:
+- Windows + XAMPP + Apache
+- PHP 8.2+
+- MariaDB/MySQL
+- Procedural PHP only — **NO OOP**
+- Vanilla JavaScript only
+- Bootstrap 5.3 RTL
+- Font Awesome 6
+- Google Fonts Cairo
 
-**ACCOUNTING AUDIT — PHASE 1: ACCOUNTING / JOURNAL INTEGRITY**
+The current repository and actual database schema are authoritative. Never guess table or column names.
 
-Canonical audit record:
+---
 
-`docs/AHL_EL_KHEIR_ACCOUNTING_AUDIT.md`
+# HR STATUS
 
-Latest checkpoint:
+**HR foundation/audit: COMPLETE AND CLOSED.**
 
-`docs/AHL_EL_KHEIR_DOCUMENTATION_UPDATE_2026-09-11.md`
+Do not reopen HR work unless a current Accounting/cross-module audit produces concrete regression evidence or a dependency requiring investigation.
 
-## Completed and verified controls
+---
 
-1. Creator transaction → `pending_fm_review`.
+# ACCOUNTING AUDIT STATUS
+
+We are continuing the existing:
+
+**Accounting Audit → Journal Integrity / Accounting History Interaction**
+
+The following are already passed and must not be rerun without regression evidence:
+
+1. Creator → FM review workflow.
 2. No journal before FM approval.
 3. FM return with mandatory reason.
-4. Creator edits/resubmits returned transaction.
-5. FM approves → `posted` + balanced journal.
-6. Creator cancels returned transaction → `cancelled`, audit history, no journal.
-7. Authorized posted-transaction void → original journal `voided` + separate balanced `transaction_void` reversal + transaction `voided` atomically.
+4. Creator edit/resubmit.
+5. FM approval → posted + balanced journal.
+6. Returned transaction → creator cancellation without journal.
+7. Posted transaction → authorized void + balanced `transaction_void` reversal.
 8. Manual Journal Entry Integrity.
 9. Trial Balance Integrity.
-10. Accountant Staff organization-wide financial/reporting authorization.
+10. Accountant Staff financial/reporting authorization.
 11. Accountant Staff disbursement authorization.
 12. Existing disbursement receipt/closure workflow.
-13. Journal listing/filtering integrity.
+13. Journal listing/filtering.
 14. Journal detail/history consistency.
-15. Posted vs voided visibility and preservation of original entries.
+15. Posted/voided visibility and preservation of originals.
 16. Accounting-history totals/balance consistency.
 17. Current transaction-status ↔ journal-status control.
 18. Duplicate/orphan/mismatched relationship audit.
-19. Previous alternate-route protection for `disbursement_return`.
-
-Do not rerun these controls unless new code evidence indicates regression.
+19. `disbursement_return` alternate-route protection.
+20. Legacy disbursement `void_batch` protection — **PASS in this checkpoint**.
 
 ---
 
-# PROTECTED COMPLETED AUDIT RECORDS — DO NOT MODIFY OR REUSE
+# PROTECTED COMPLETED EVIDENCE — DO NOT MODIFY OR REUSE
 
 - TR-000014 / transaction `20`
 - TR-000015 / transaction `21`
@@ -70,30 +83,44 @@ Do not rerun these controls unless new code evidence indicates regression.
 - JE-000026 / journal `37`
 - JE-VOID-TXN-22
 
-These are protected evidence for completed controls.
+Historical anomalies involving transactions `5`, `8`, `13`, `14`, `15`, and `16` are preserved findings. Do not modify them merely to make an audit query look clean.
 
 ---
 
-# TRIAL BALANCE — PASSED
+# ACCOUNTING SCHEMA FACTS
 
-Read-only page: `modules/accounting/trial_balance.php`
+Actual core accounting tables:
 
-Verified:
+- `accounts`
+- `journal_entries`
+- `journal_lines`
 
-- Debit: `103,373,000.00`
-- Credit: `103,373,000.00`
-- Difference: `0.00`
-- Posted journals: `24`
-- Posted lines: `54`
-- Result: **balanced / PASSED**
+Account display field: `accounts.name_ar`.
 
-Trial Balance uses posted journals only and excludes voided journals. It is distinct from `modules/accounting/gm_reconciliation.php`, which is an operational/management reconciliation report.
+Do not assume a nonexistent `accounting_entries` table.
+
+Transaction ↔ journal linkage is application-level through `journal_entries.reference_type` / `reference_id`; there is no assumed direct `transactions.journal_entry_id` FK.
+
+Disbursement-item relationship uses `disbursement_items.disbursement_id`.
+
+The local `audit_log` schema uses:
+
+```text
+action
+```
+
+not `action_type`.
 
 ---
 
-# ACCOUNTANT STAFF DISBURSEMENT AUTHORIZATION — PASSED
+# ACCOUNTANT STAFF DISBURSEMENT MODEL
 
-Primary file: `modules/accounting/disbursements.php`
+Known test users/data:
+
+- `acc1` / user `17` / `accountant_staff`
+- `nany1` / user `16`
+- assignment `1`: accountant `17` → nanny `16`
+- group `1`: `مجموعة الحاضنة 1`
 
 Established workflow:
 
@@ -103,84 +130,63 @@ Vice General Manager creates batch
 → Accountant Staff manages only assigned nanny/batch scope
 ```
 
-Verified: assigned visibility, unassigned visibility restriction, restricted financial actions, assigned/unassigned reopen controls, family-item visibility/reopen controls, nanny receipt confirmation, batch void, and existing receipt/closure workflow.
+Accountant Staff is not a batch-creation role in the tested workflow.
 
-`accountant_staff` is not a batch-creation role in the established workflow.
-
-Known test users:
-
-- `acc1` / user `17`
-- `nany1` / user `16`
-- assignment `1`: accountant `17` → nanny `16`
-- existing group `1`: `مجموعة الحاضنة 1`
-
-Do not repeat these tests without regression evidence.
+Do not touch protected batch `6` as a fixture; it is evidence from the earlier disbursement-return audit.
 
 ---
 
-# RECEIPT HANDLING — HARDENED; UI TODO
+# LEGACY DISBURSEMENT VOID TEST — PASS
 
-Primary viewer: `modules/accounting/serve_receipt.php`
+A legacy `void_batch` mutation path in `modules/accounting/disbursements.php` was hardened with:
 
-The viewer validates stored receipt paths using `realpath()` and `is_file()`, confirms the file is inside the application base directory, and displays an application-level Arabic missing/stale message. It never substitutes a family/item receipt for a missing final batch receipt.
+`modules/accounting/disbursement_void_guard.php`
 
-Relevant commits:
+Guard correction commit:
 
-- `e6b6fd1f15f63a48c6224da3635efddc95ac38f2`
-- `65625215686027ce172425c611e40c1d039de35c`
-- `8cbf181071fc27de59abc26e1f4d4f0bf8f71a9e`
+`0071aa0ed83f428e6c4ee61154eef106dcbb7b10`
 
-Deferred UI TODO: same-page Bootstrap modal on `modules/accounting/disbursements.php` for missing/stale receipt feedback, preferably also valid receipt preview. Preserve all server-side authorization/path validation.
+Controlled fixture already existed and was not recreated:
+
+- batch `11`
+- transaction `23`
+- reference `AUDIT-DISB-VOID-11`
+- original journal `JE-AUDIT-DISB-11`
+- amount `100.00`
+
+Browser result:
+
+> تم إبطال الدفعة وإنشاء القيد العكسي مع الحفاظ على القيد الأصلي وسجل التدقيق.
+
+Final database verification:
+
+- batch `11` → `voided`
+- reversal journal ID `43`
+- transaction `23` → `voided`
+- original journal `JE-AUDIT-DISB-11` → `voided`
+- reversal journal `JE-REV-DISB-000011-20260911183412`
+- reversal `reference_type = disbursement_void`
+- reversal status `posted`
+- reversal debit = credit = `100.00`
+- `DISBURSEMENT_VOID` audit entries = `1`
+
+**Audit Test: PASS. CLOSED. Do not rerun.**
+
+Detailed record:
+
+`docs/AHL_EL_KHEIR_DOCUMENTATION_UPDATE_2026-09-11_DISBURSEMENT_VOID.md`
 
 ---
 
-# JOURNAL INTEGRITY — CURRENT CHECKPOINT
+# AUTOMATED JOURNAL REFERENCE PROTECTION — CODE FIXED, RUNTIME TEST PENDING
 
-## Journal listing/filtering — PASS
+Repository inspection found these automated reference types were not previously protected from the generic manual-void route:
 
-`modules/accounting/journal.php` currently:
+- `disbursement_void`
+- `item_return`
+- `payroll`
 
-- restricts access to authorized accounting/management roles;
-- supports date-from/date-to filtering;
-- orders newest-first;
-- shows code/date/description/reference/value/status/creator;
-- provides journal detail links;
-- protects automated references.
-
-The earlier protected set was:
-
-```text
-transaction
-transaction_void
-disbursement
-disbursement_return
-voucher
-manual_void
-```
-
-## New reference-type finding — FIXED, RUNTIME VERIFICATION PENDING
-
-Repository inspection found three additional active journal reference types that were not protected from the generic manual-void route:
-
-```text
-disbursement_void
-item_return
-payroll
-```
-
-Semantics verified from current code:
-
-- `disbursement_void` → `monthly_disbursements.id`
-- `item_return` → `disbursement_items.id`
-- `payroll` → `payroll.id`
-
-The payroll journal is also linked back through `payroll.accounting_entry_id` / `accounting_status`.
-
-These are automated/cross-module accounting records and must not be mutable through the generic manual-void route.
-
-### Narrow fix
-
-`modules/accounting/journal.php` now protects:
+Current protection set in `modules/accounting/journal.php`:
 
 ```text
 transaction
@@ -198,208 +204,118 @@ Fix commit:
 
 `8e3ee6fd7d95c0efef834a284ed428d125064bfc`
 
-No accounting data was changed.
-
-Static repository verification confirmed the updated set is present. **Targeted local runtime/UI verification is still pending**, so this control is not yet marked fully PASS.
-
-## Journal detail/history consistency — PASS
-
-Inspected current `modules/accounting/journal.php` and `modules/accounting/lib.php`.
-
-Verified:
-
-- detail loads actual journal entry and journal lines;
-- account names/codes come from `accounts` joined through `account_id`;
-- displayed totals are calculated from actual lines;
-- voided originals remain inspectable;
-- transaction void preserves the original and creates a separate `transaction_void` reversal;
-- manual void preserves the original and creates a separate `manual_void` reversal;
-- automated entries cannot be manually voided through the manual route;
-- original and reversal entries remain independently inspectable.
-
-No accounting data was modified for this checkpoint.
-
-## Cross-reference/auditability — TODO LATER
-
-The current journal detail shows the raw `reference_type`, but does not yet provide direct source/original/reversal navigation.
-
-Example:
-
-```text
-JE-000026 → transaction / 22
-JE-VOID-TXN-22 → transaction_void / 22
-```
-
-Both are inspectable, but the UI does not yet provide direct original↔reversal/source links.
-
-**Park this as a future auditability enhancement. It is not a journal-detail integrity failure.**
+**Important:** the code fix is present, but targeted local runtime/UI verification for these three reference types has NOT yet been completed.
 
 ---
 
-# VOUCHER ATOMICITY FIX — COMPLETED
+# VOUCHER ATOMICITY
 
-The voucher void workflow was hardened in `modules/accounting/vouchers.php`.
+Voucher void was hardened with atomic locking/transaction handling.
 
-Final commit:
+Commit:
 
 `2165513c9009d1fa435fdd122d545bf4d2404b07`
 
-The final flow locks the voucher and linked journal, requires `entry_id`, requires exactly one posted voucher journal, voids the journal and voucher inside one PDO transaction, and rolls back on failure.
-
-The user has already pulled this change locally.
-
-The accounting helper `ak_void_journal_for_voucher()` remains a weak legacy helper in `modules/accounting/lib.php`, but the current voucher page no longer relies on its unsafe non-atomic behavior. Continue auditing its callers before deciding whether to harden/remove it.
+The remaining task is to inspect callers of the legacy helper `ak_void_journal_for_voucher()` and other direct journal mutation routes before deciding whether further hardening is necessary.
 
 ---
 
-# HISTORICAL ACCOUNTING ANOMALIES — PRESERVE / INTERPRET
+# TRIAL BALANCE — PASSED
 
-Historical observations involving transactions `5`, `8`, `13`, `14`, `15`, and `16` were identified during status/journal relationship review.
+Verified earlier:
 
-Notable example:
+- Debit: `103,373,000.00`
+- Credit: `103,373,000.00`
+- Difference: `0.00`
+- Posted journals: `24`
+- Posted lines: `54`
 
-- transaction `5` is historically `voided` while older posted transaction/disbursement journals remain associated with it.
-- transactions `13`, `14`, `15`, and `16` have historical no-journal/relationship patterns.
-- transaction `8` is associated with an older voided disbursement journal.
+Later global accounting integrity check:
 
-These are **historical findings**, not fixtures to rewrite. Interpret against the actual schema/code. Do not modify records merely to make an audit query look clean.
+- Journals: `28`
+- Lines: `62`
+- Debit: `204,945,000.00`
+- Credit: `204,945,000.00`
 
----
-
-# CURRENT DATABASE / ACCOUNTING SCHEMA FACTS
-
-Do not assume nonexistent `accounting_entries`.
-
-Actual accounting tables:
-
-- `accounts`
-- `journal_entries`
-- `journal_lines`
-
-Account display field is `accounts.name_ar`.
-
-`journal_entries` includes:
-
-- `entry_code`
-- `entry_date`
-- `description`
-- `reference_type`
-- `reference_id`
-- `status` (`posted` / `voided`)
-- `voided_at`
-- `voided_by`
-- `void_reason`
-- `created_by`
-
-`journal_lines.entry_id` references `journal_entries.id` with cascade delete in the current schema definition.
-
-For disbursement items, the actual relationship column is `disbursement_items.disbursement_id` — not `monthly_disbursement_id`.
+Do not rerun these checks unless regression evidence requires it.
 
 ---
 
-# IMPLEMENTATION COMMITS — IMPORTANT ACCOUNTING HISTORY
+# RECEIPT HANDLING
 
-- Cancellation correction: `62229c5a9a4be9ad2d55223402b5fe1f03bd81e4`
-- Transaction void/reversal hardening: `99759d186cbb9507be631aa4df48cbef4d7e202b`
-- Manual journal validation: `8aa473eee507cce3d5ad96aa6d5403a7dc467002`
-- Manual journal void segregation: `45d07f3003eeb9df1eb297eb408c949948bc68b3`
-- Trial Balance: `4aa9c05892a806be016c20b9234b15d392b441b9`, `a0c9b73daf70a393d31587b2874b70154f9c0857`, `af97f58607317a6605feac69adfb1ef5d590d4d6`
-- Account Ledger: `14a0b04e9916bf3c572fafb9b3f831acaafb849e`
-- Chart of Accounts integration: `be24ce9046fc8d37bc31e48a2b9b137a8a26eb4e`
-- Accountant Staff reporting authorization: `4750cb72ddd080ee604928e9aa1c67b9b11f70a9`
-- Receipt missing/stale: `e6b6fd1f15f63a48c6224da3635efddc95ac38f2`
-- Receipt viewer dependency: `65625215686027ce172425c611e40c1d039de35c`
-- Receipt UI attempt: `8cbf181071fc27de59abc26e1f4d4f0bf8f71a9e`
-- Journal reference protection: `c37d72b3b0bff2497aab525f6944e05c58cb5fd7`
-- New automated/reversal reference protection: `8e3ee6fd7d95c0efef834a284ed428d125064bfc`
-- Voucher void atomicity: `2165513c9009d1fa435fdd122d545bf4d2404b07`
-- Latest accounting documentation checkpoint: `3be66e925bb7f51860979f6bca1557c7672b62a0` plus `c728cf87a027ecd84e16fa3ef5373a9470290030`
+Server-side receipt path validation is hardened.
+
+Deferred UI TODO:
+
+- same-page Bootstrap modal for missing/stale receipt feedback;
+- preferably valid receipt preview;
+- preserve existing server-side authorization/path validation.
+
+Do not reopen this until the accounting audit reaches the parked UI work.
 
 ---
 
-# EXACT NEXT TASK FOR THE NEXT CHAT SESSION
+# PARKED TODO LATER
 
-Continue **Journal Integrity / Accounting History Interaction** from this exact checkpoint.
+1. Direct original ↔ reversal/source navigation in journal detail.
+2. Missing/stale receipt same-page modal UX.
+3. Broader accounting auditability enhancements after underlying mutation routes are fully audited.
 
-Do NOT restart the audit and do NOT rerun the already-passed tests.
-
-Next work should be:
-
-### 1. Targeted local runtime/UI verification
-
-Verify that the generic manual-void route now rejects/does not expose the void action for:
-
-- `payroll`
-- `disbursement_void`
-- `item_return`
-
-Do not create new fixtures if existing records can be used.
-
-### 2. Remaining alternate mutation routes
-
-Inspect remaining callers of `ak_void_journal_for_voucher()` and any direct `UPDATE journal_entries`, `DELETE`, or journal-line mutation paths.
-
-### 3. Duplicate/missing journal relationships
-
-Continue only where a genuinely new accounting route is discovered. Do not rerun the completed orphan/balance/status tests without regression evidence.
-
-### 4. Cross-module accounting references / auditability
-
-Continue the relationship audit for:
-
-- source transaction ↔ journal;
-- original transaction journal ↔ transaction_void reversal;
-- manual journal ↔ manual_void reversal;
-- disbursement ↔ disbursement_return/disbursement_void;
-- disbursement item ↔ item_return;
-- payroll ↔ payroll journal;
-- voucher ↔ voucher journal.
-
-The direct original↔reversal/source navigation UI remains deliberately parked until the underlying audit is complete.
-
-### 5. Preserve historical evidence
-
-Do not repair historical anomalies just to satisfy a query. Classify legacy inconsistencies and determine whether current code paths are protected.
+These are deliberately parked and are not blockers for the current audit sequence.
 
 ---
 
-# PROJECT CONTINUATION RULES
+# EXACT NEXT TASK — NEXT CHAT SESSION
 
-1. Existing project + existing Accounting Audit — never restart.
-2. Inspect actual repository code before proposing changes.
-3. Current repository code and current documentation override older chat assumptions.
-4. Do not repeat passed tests without regression evidence.
-5. Do not manually recreate known fixtures merely to rerun a passed test.
-6. Preserve procedural PHP + Vanilla JS + Bootstrap 5.3 RTL + Font Awesome 6 + Google Fonts Cairo + MariaDB/MySQL/PDO.
-7. Follow: **Inspect → Understand → Verify → Identify risk → Fix narrowly → Test → Document**.
-8. Do repository inspection and safe code changes directly; do not send progress-only messages.
-9. Never modify protected audit records to make verification queries look clean.
-10. After a meaningful milestone: update code, verify behavior, update documentation, update this session index, and state the exact next continuation point.
-11. If a new test genuinely requires local SQL/UI action, ask only for that new action/result; do not ask the user to repeat the entire audit setup.
+Continue directly from this checkpoint.
 
----
+### NEXT TEST / ACTION
 
-# AUTHORITATIVE DOCUMENTATION
+**Targeted runtime/UI verification of the generic manual-void protection for automated journal reference types:**
 
-Current accounting documents:
+1. `payroll`
+2. `disbursement_void`
+3. `item_return`
 
-- `docs/AHL_EL_KHEIR_ACCOUNTING_AUDIT.md`
-- `docs/AHL_EL_KHEIR_DOCUMENTATION_UPDATE_2026-09-11.md`
-- `docs/CHATGPT_SESSION_INDEX.md`
+Use existing records where possible. **Do not create artificial fixtures unless genuinely necessary.**
 
-Long-lived architecture/status references:
+The expected security behavior is that the generic manual-void route must not expose/allow manual voiding of these automated/cross-module journal entries.
 
-- `docs/AHL_EL_KHEIR_SYSTEM_ANALYSIS.md`
-- `docs/AHL_EL_KHEIR_CURRENT_SYSTEM_STATUS_2026-09-08.md`
+After that:
 
-Historical audit documents remain historical and must not override the current checkpoint.
+4. Inspect remaining callers of `ak_void_journal_for_voucher()`.
+5. Inspect other direct journal mutation routes (`UPDATE journal_entries`, journal-line mutation, destructive deletes) only where they represent real alternate accounting mutation paths.
+6. Continue cross-module journal relationship/auditability review.
+7. Preserve all historical anomalies and protected evidence.
+
+Do not rerun completed tests.
 
 ---
 
-# HISTORICAL CHATGPT ACCOUNTING SESSIONS
+# AUTHORITATIVE DOCUMENTATION FOR CONTINUATION
 
-- Accounting Audit continuation: `https://chatgpt.com/share/6aa0e018-7948-83e9-8aaa-6356a993d7ed`
-- Immediately previous Accounting Audit: `https://chatgpt.com/share/6aa0f28f-2378-83ea-8f5d-c79d31b853ca`
-- Current completed Accounting session: `https://chatgpt.com/share/6aa11a53-d8cc-83ea-9055-b0986ef86301`
+Read/use these together:
 
-Historical HR sessions remain preserved in the repository's previous version of this index and the HR documentation set.
+1. `docs/AHL_EL_KHEIR_ACCOUNTING_AUDIT.md`
+2. `docs/AHL_EL_KHEIR_DOCUMENTATION_UPDATE_2026-09-11.md`
+3. `docs/AHL_EL_KHEIR_DOCUMENTATION_UPDATE_2026-09-11_DISBURSEMENT_VOID.md`
+4. `docs/CHATGPT_SESSION_INDEX.md`
+5. `docs/AHL_EL_KHEIR_SYSTEM_ANALYSIS.md`
+6. `docs/AHL_EL_KHEIR_CURRENT_SYSTEM_STATUS_2026-09-08.md`
+
+Historical audit documents remain historical and must not override this current checkpoint.
+
+---
+
+# IMPORTANT CONTINUATION RULES
+
+- Existing project + existing Accounting Audit — never restart.
+- Do not ask for information already present in the repository/documentation.
+- Do not repeat old SQL verification.
+- Do not recreate known fixtures merely to rerun passed tests.
+- Never guess table/column names; inspect actual schema if SQL is required.
+- Keep SQL to the minimum necessary.
+- Prefer safe functional browser testing.
+- If code modification is needed, make it narrow and verify the resulting repository file.
+- Preserve procedural PHP, Vanilla JS, Bootstrap 5.3 RTL, Font Awesome 6, Cairo, MariaDB/MySQL/PDO.
+- Historical test records are evidence; do not modify them to make queries cleaner.
