@@ -12,7 +12,6 @@ $voucherRole = Session::getUserRole();
 $allowedVoucherRoles = [
     'admin',
     'financial_manager',
-    'accountant',
     'accountant_staff',
     'general_manager',
     'vice_general_manager'
@@ -22,7 +21,7 @@ if (!Session::isLoggedIn() || !in_array($voucherRole, $allowedVoucherRoles, true
     header('Location: ' . APP_URL . 'index.php');
     exit();
 }
-$canManage = in_array(Session::getUserRole(), ['admin', 'accountant'], true);
+$canManage = in_array(Session::getUserRole(), ['admin', 'financial_manager'], true);
 $pageTitle = 'السندات';
 $active    = 'vouchers';
 ak_ensure_tables(); ak_seed_accounts();
@@ -188,145 +187,3 @@ $list = dbFetchAll("SELECT v.*, c1.code cash_code, c1.name_ar cash_name, c2.code
 
 include dirname(__DIR__, 2) . '/includes/header.php';
 ?>
-<div class="welcome-section fade-in">
-    <h2>السندات المالية</h2>
-    <p>سند قبض = نقد داخل (يزيد الصندوق/البنك) · سند صرف = نقد خارج (ينقص الصندوق/البنك) — الترحيل مزدوج تلقائياً</p>
-
-    <?php if ($canManage): ?>
-        <div class="quick-actions mt-3">
-            <a href="<?php echo APP_URL; ?>modules/accounting/vouchers.php?tab=new"
-               class="btn btn-primary btn-sm">
-                <i class="fas fa-plus me-1"></i>سند جديد
-            </a>
-
-            <a href="<?php echo APP_URL; ?>modules/accounting/vouchers.php?tab=list"
-               class="btn btn-secondary btn-sm">
-                <i class="fas fa-list me-1"></i>سجل السندات
-            </a>
-        </div>
-    <?php endif; ?>
-</div>
-
-<?php include dirname(__DIR__, 2) . '/includes/alerts.php'; ?>
-<?php if ($errors): ?><div class="alert alert-danger fade-in"><ul class="mb-0"><?php foreach ($errors as $er) echo '<li>' . e($er) . '</li>'; ?></ul></div><?php endif; ?>
-
-<?php if ($tab === 'new' && $canManage): ?>
-<div class="card fade-in">
-    <div class="card-header"><i class="fas fa-file-invoice me-2"></i>تسجيل سند</div>
-    <div class="card-body">
-        <form method="post">
-            <?php echo csrf_field(); ?>
-            <div class="row g-3">
-                <div class="col-md-3">
-                    <label class="form-label">نوع السند *</label>
-                    <select name="voucher_type" class="form-select" required>
-                        <option value="receipt">سند قبض (نقد داخل)</option>
-                        <option value="payment">سند صرف (نقد خارج)</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">مكان النقد *</label>
-                    <select name="cash_account_id" class="form-select" required>
-                        <?php foreach ($cashAccounts as $c): ?>
-                            <option value="<?php echo (int)$c['id']; ?>"><?php echo e($c['name_ar']); ?> (<?php echo e($c['code']); ?>)</option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-                <div class="col-md-3"><label class="form-label">التاريخ *</label><input type="date" name="voucher_date" class="form-control" value="<?php echo date('Y-m-d'); ?>" required></div>
-                <div class="col-md-3"><label class="form-label">المبلغ *</label><input type="number" step="0.01" min="0.01" name="amount" class="form-control" required></div>
-                <div class="col-md-6">
-                    <label class="form-label">الحساب المقابل * <small class="text-muted">(إيراد للسند القبض / مصروف للسند الصرف)</small></label>
-                    <select name="other_account_id" class="form-select" required>
-                        <option value="">— اختر —</option>
-                        <optgroup label="حسابات الإيرادات (للقبض)">
-                            <?php foreach ($incomeAccounts as $c): ?><option value="<?php echo (int)$c['id']; ?>"><?php echo e($c['code']); ?> — <?php echo e($c['name_ar']); ?></option><?php endforeach; ?>
-                        </optgroup>
-                        <optgroup label="حسابات المصروفات (للصرف)">
-                            <?php foreach ($expenseAccounts as $c): ?><option value="<?php echo (int)$c['id']; ?>"><?php echo e($c['code']); ?> — <?php echo e($c['name_ar']); ?></option><?php endforeach; ?>
-                        </optgroup>
-                    </select>
-                </div>
-                <div class="col-md-6"><label class="form-label">استلمنا من / صرفنا إلى</label><input type="text" name="party_name" class="form-control"></div>
-                <div class="col-md-6"><label class="form-label">البيان</label><input type="text" name="description" class="form-control"></div>
-                <div class="col-md-6"><label class="form-label">رقم مرجعي</label><input type="text" name="reference_number" class="form-control" dir="ltr"></div>
-            </div>
-            <div class="mt-4">
-                <button name="save_voucher" value="1" class="btn btn-primary"><i class="fas fa-save me-1"></i> حفظ وترحيل السند</button>
-            </div>
-        </form>
-    </div>
-</div>
-<?php else: ?>
-<div class="card mb-3 fade-in">
-    <div class="card-body">
-        <form method="get" class="row g-2 align-items-end">
-            <input type="hidden" name="tab" value="list">
-            <div class="col-md-3">
-                <label class="form-label">النوع</label>
-                <select name="vtype" class="form-select">
-                    <option value="">الكل</option>
-                    <option value="receipt" <?php echo $fType === 'receipt' ? 'selected' : ''; ?>>سندات قبض</option>
-                    <option value="payment" <?php echo $fType === 'payment' ? 'selected' : ''; ?>>سندات صرف</option>
-                </select>
-            </div>
-            <div class="col-md-2"><button class="btn btn-primary w-100"><i class="fas fa-search"></i> عرض</button></div>
-        </form>
-    </div>
-</div>
-<div class="card fade-in">
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle">
-                <thead><tr><th>الرقم</th><th>النوع</th><th>التاريخ</th><th>الطرف</th><th>مكان النقد</th><th>الحساب المقابل</th><th>المبلغ</th><th>الحالة</th><th class="text-center">إجراءات</th></tr></thead>
-                <tbody>
-                <?php if (!$list): ?>
-                    <tr><td colspan="9" class="text-center text-muted py-4">لا توجد سندات.</td></tr>
-                <?php else: foreach ($list as $v): ?>
-                    <tr>
-                        <td><code><?php echo e($v['voucher_no']); ?></code></td>
-                        <td><?php echo $v['voucher_type'] === 'receipt' ? '<span class="badge bg-success">قبض</span>' : '<span class="badge bg-warning text-dark">صرف</span>'; ?></td>
-                        <td><?php echo e($v['voucher_date']); ?></td>
-                        <td><?php echo e($v['party_name'] ?? '—'); ?></td>
-                        <td><?php echo e($v['cash_name']); ?></td>
-                        <td><small><?php echo e($v['other_code']); ?> <?php echo e($v['other_name']); ?></small></td>
-                        <td><strong><?php echo number_format((float)$v['amount'], 2); ?></strong></td>
-                        <td><?php echo $v['status'] === 'posted' ? '<span class="badge bg-success">مرحّل</span>' : '<span class="badge bg-danger">مبطل</span>'; ?></td>
-                        <td class="text-center" style="white-space:nowrap;">
-                            <a class="btn btn-sm btn-info" title="طباعة" href="<?php echo APP_URL; ?>modules/accounting/voucher_print.php?id=<?php echo (int)$v['id']; ?>"><i class="fas fa-print"></i></a>
-                            <?php if ($canManage && $v['status'] === 'posted'): ?>
-                                <form method="post" class="d-inline ak-void-form" data-confirm-msg="هل أنت متأكد من إبطال هذا السند؟"><?php echo csrf_field(); ?>
-                                    <input type="hidden" name="void_voucher" value="<?php echo (int)$v['id']; ?>">
-                                    <input type="text" name="void_reason" class="form-control form-control-sm d-inline-block" style="width:110px" placeholder="السبب" required>
-                                    <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-ban"></i></button>
-                                </form>
-                            <?php endif; ?>
-                        </td>
-                    </tr>
-                <?php endforeach; endif; ?>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-<?php endif; ?>
-<!-- SweetAlert2 for a styled confirmation instead of the plain browser dialog -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-document.querySelectorAll('.ak-void-form').forEach(function(form) {
-    form.addEventListener('submit', function(e) {
-        e.preventDefault();
-        var msg = form.dataset.confirmMsg || 'هل أنت متأكد؟';
-        function proceed() { form.submit(); }
-        if (typeof Swal !== 'undefined' && typeof Swal.fire === 'function') {
-            Swal.fire({
-                title: 'تأكيد الإبطال', text: msg, icon: 'warning',
-                showCancelButton: true, confirmButtonColor: '#dc3545', cancelButtonColor: '#6c757d',
-                confirmButtonText: 'نعم، إبطال', cancelButtonText: 'إلغاء', reverseButtons: true
-            }).then(function(result) { if (result.isConfirmed) proceed(); });
-        } else {
-            if (confirm(msg)) proceed();
-        }
-    });
-});
-</script>
-<?php include dirname(__DIR__, 2) . '/includes/footer.php'; ?>
