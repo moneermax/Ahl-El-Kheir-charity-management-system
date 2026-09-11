@@ -4,11 +4,12 @@ require_once dirname(__DIR__, 2) . '/config/config.php';
 require_once dirname(__DIR__, 2) . '/config/database.php';
 require_once dirname(__DIR__, 2) . '/config/functions.php';
 require_once dirname(__DIR__, 2) . '/config/session.php';
+require_once dirname(__DIR__, 2) . '/modules/accounting/lib_outflows.php';
 
 Session::start();
 $role = Session::getUserRole();
 
-if (!Session::isLoggedIn() || !in_array($role, ['admin', 'accountant', 'nanny'])) {
+if (!Session::isLoggedIn() || !in_array($role, ['admin', 'accountant', 'accountant_staff', 'nanny'])) {
     header('Location: ' . APP_URL . 'index.php');
     exit();
 }
@@ -21,8 +22,28 @@ $monthTo = $_GET['month_to'] ?? date('Y-m');
 $groupId = isset($_GET['group_id']) ? (int)$_GET['group_id'] : null;
 $nannyId = isset($_GET['nanny_id']) ? (int)$_GET['nanny_id'] : null;
 
+/*
+ * Accountant Staff may use this report, but only for nannies explicitly
+ * assigned to the logged-in Accountant Staff user. This is an operational
+ * report for their own disbursement responsibility, not an organization-wide
+ * financial report.
+ */
+$scopedNannyIds = null;
+if ($role === 'accountant_staff') {
+    $scopedNannyIds = array_map(
+        'intval',
+        array_column(
+            dbFetchAll(
+                "SELECT nanny_id FROM accountant_nanny_assignments WHERE accountant_id = ?",
+                [Session::getUserId()]
+            ),
+            'nanny_id'
+        )
+    );
+}
+
 $sql = "
-SELECT 
+SELECT
     d.id as disbursement_id,
     d.month,
     d.total_amount,
@@ -50,6 +71,27 @@ $params = [$monthFrom, $monthTo];
 if ($role === 'nanny') {
     $sql .= " AND d.nanny_id = ?";
     $params[] = Session::getUserId();
+} elseif ($role === 'accountant_staff') {
+    if (!$scopedNannyIds) {
+        $sql .= " AND 1 = 0";
+    } else {
+        $placeholders = implode(',', array_fill(0, count($scopedNannyIds), '?'));
+        $sql .= " AND d.nanny_id IN ($placeholders)";
+        foreach ($scopedNannyIds as $assignedNannyId) $params[] = $assignedNannyId;
+    }
+
+    if ($groupId) {
+        $sql .= " AND og.id = ?";
+        $params[] = $groupId;
+    }
+    if ($nannyId) {
+        if (!in_array($nannyId, $scopedNannyIds ?? [], true)) {
+            $sql .= " AND 1 = 0";
+        } else {
+            $sql .= " AND d.nanny_id = ?";
+            $params[] = $nannyId;
+        }
+    }
 } else {
     if ($groupId) {
         $sql .= " AND og.id = ?";
@@ -68,7 +110,28 @@ $disbursements = dbFetchAll($sql, $params);
 
 $groups = [];
 $nannies = [];
-if ($role !== 'nanny') {
+if ($role === 'accountant_staff') {
+    if ($scopedNannyIds) {
+        $placeholders = implode(',', array_fill(0, count($scopedNannyIds), '?'));
+        $nannies = dbFetchAll(
+            "SELECT u.id, u.full_name
+             FROM users u
+             JOIN roles r ON u.role_id = r.id
+             WHERE r.code = 'nanny'
+               AND u.id IN ($placeholders)
+             ORDER BY u.full_name",
+            $scopedNannyIds
+        );
+        $groups = dbFetchAll(
+            "SELECT DISTINCT og.id, og.group_name
+             FROM orphan_groups og
+             JOIN monthly_disbursements d ON d.group_id = og.id
+             WHERE d.nanny_id IN ($placeholders)
+             ORDER BY og.group_name",
+            $scopedNannyIds
+        );
+    }
+} elseif ($role !== 'nanny') {
     $groups = dbFetchAll("SELECT id, group_name FROM orphan_groups ORDER BY group_name");
     $nannies = dbFetchAll("SELECT u.id, u.full_name FROM users u JOIN roles r ON u.role_id = r.id WHERE r.code = 'nanny' ORDER BY u.full_name");
 }
@@ -93,6 +156,13 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     <h2><i class="fas fa-check-circle me-2 text-success"></i><?php echo e($pageTitle); ?></h2>
     <p><?php echo e($pageTitle); ?></p>
 </div>
+
+<?php if ($role === 'accountant_staff'): ?>
+<div class="alert alert-info fade-in">
+    <i class="fas fa-user-lock me-1"></i>
+    يعرض هذا التقرير فقط التحويلات الخاصة بالحاضنات المعيّنات لك.
+</div>
+<?php endif; ?>
 
 <div class="card mb-4 fade-in">
     <div class="card-header">
@@ -208,9 +278,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     </thead>
                     <tbody>
                         <?php foreach ($disbursements as $d):
-                            $progress = $d['total_items'] > 0
-                                ? round(($d['confirmed_items'] / $d['total_items']) * 100)
-                                : 0;
+                            $progress = $d['total_items'] > 0 ? round(($d['confirmed_items'] / $d['total_items']) * 100) : 0;
                             $isComplete = ($d['confirmed_items'] == $d['total_items'] && $d['total_items'] > 0);
                         ?>
                         <tr class="<?php echo $isComplete ? 'table-success' : ''; ?>">
