@@ -25,7 +25,7 @@ $receiptsDir = dirname(__DIR__, 2) . '/storage/receipts';
 if (!is_dir($receiptsDir)) @mkdir($receiptsDir, 0777, true);
 function disb_audit(int $userId, string $action, int $entityId, array $new): void {
     try {
-        dbExecute("INSERT INTO audit_log (user_id, action, entity_type, entity_id, new_values, ip_address, user_agent, created_at)
+        dbExecute("INSERT INTO audit_log (user_id, action_type, entity_type, entity_id, new_values, ip_address, user_agent, created_at)
         VALUES (?, CONCAT('DISBURSEMENT_', ?), 'monthly_disbursements', ?, ?, ?, ?, NOW())",
         [$userId, $action, $entityId, json_encode($new, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
         $_SERVER['REMOTE_ADDR'] ?? 'cli', $_SERVER['HTTP_USER_AGENT'] ?? 'cli']);
