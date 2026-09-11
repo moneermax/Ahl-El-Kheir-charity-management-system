@@ -4,7 +4,7 @@
 **Repository:** `moneermax/Ahl-El-Kheir-charity-management-system`  
 **Branch:** `main`  
 **Document type:** Canonical Accounting Audit Record  
-**Last verified:** 2026-09-10
+**Last verified:** 2026-09-11
 
 This is the canonical Accounting audit record. Historical evidence is preserved here; the current continuation point is maintained at the end of this document.
 
@@ -23,8 +23,12 @@ Accounting Phase 1 has completed and passed the following controls:
 7. Manual Journal Entry Integrity.
 8. Trial Balance Integrity.
 9. Accountant Staff financial/reporting authorization surface audit.
+10. Accountant Staff disbursement authorization.
+11. Existing disbursement receipt/closure workflow.
+12. Journal listing/filtering integrity.
+13. Journal detail/history consistency.
 
-The next control is **Journal Integrity / Accounting History Interaction**.
+The remaining Journal Integrity / Accounting History Interaction controls are the relationship/auditability items listed in Section 11.
 
 ---
 
@@ -139,8 +143,6 @@ Transaction → voided
 
 Failure testing confirmed rollback protection. Duplicate reversal protection prevents a second `transaction_void` journal for the same transaction.
 
-The implementation avoids schema-changing DDL inside the outer transaction because MySQL/MariaDB DDL may implicitly commit.
-
 Primary helper: `modules/accounting/lib_transaction_void.php`  
 Calling workflow: `modules/transactions/index.php`  
 Hardening commit: `99759d186cbb9507be631aa4df48cbef4d7e202b`
@@ -151,86 +153,28 @@ Hardening commit: `99759d186cbb9507be631aa4df48cbef4d7e202b`
 
 # 6. Manual Journal Entry Integrity — PASSED
 
-## Implementation
-
 Primary page: `modules/accounting/journal_create.php`
 
-Server-side controls verified include:
+Server-side controls verified include strict validation, active-account validation, duplicate-account rejection, one-sided lines, positive amounts, minimum two lines, exact debit/credit equality, atomic transaction handling, post-save verification, serialized numbering, uniqueness protection, and `reference_type = manual` / `reference_id = NULL`.
 
-- strict date validation;
-- required/length-limited description;
-- active-account validation;
-- duplicate-account rejection;
-- exactly one side per line;
-- zero/negative/invalid amount rejection;
-- monetary precision enforcement compatible with `DECIMAL(14,2)`;
-- minimum two lines;
-- exact debit/credit equality using integer cents;
-- atomic database transaction and rollback;
-- post-save line-count and total verification;
-- serialized `JE-` numbering with MySQL named lock;
-- database uniqueness as final collision protection;
-- `reference_type = manual`, `reference_id = NULL`;
-- successful creation as `posted`.
+Manual voiding is restricted to authorized roles; the creator cannot void their own manual journal; automated journal references are protected from the manual void route.
+
+Controlled journal: `JE-000027` — date `2026-09-09`, manual, `1,000.00`, posted, created by Financial Manager.
+
+**JE-000027 is protected completed audit evidence. Do not modify or reuse it.**
 
 Implementation commits:
 
 - `8aa473eee507cce3d5ad96aa6d5403a7dc467002`
 - `45d07f3003eeb9df1eb297eb408c949948bc68b3`
 
-## Role segregation
-
-- **ACC1 / Accounting Staff:** journal access denied, including direct access.
-- **Financial Manager:** journal/manual-journal access allowed.
-- Creator cannot void their own manual journal.
-- Separate authorized Financial Manager/Admin can void another user's manual journal.
-- Automated journal references are protected from the manual-journal void route.
-
-## Controlled journal
-
-`JE-000027`
-
-- Date: `2026-09-09`
-- Description: `اختبار رقابي - قيد يومية يدوي`
-- Reference type: `manual`
-- Total: `1,000.00`
-- Status: `posted`
-- Creator: Financial Manager
-
-The full validation set passed, including unbalanced, zero, negative, invalid numeric, excessive precision, fewer-than-two-lines, duplicate-account, both-sides-on-one-line, invalid/inactive-account, invalid-date, and invalid-description tests.
-
-The controlled unbalanced test returned:
-
-`القيد غير متوازن: مدين 1,000.00 ≠ دائن 15,000.00`
-
-**JE-000027 is protected completed audit evidence. Do not modify or reuse it.**
-
 ---
 
 # 7. Trial Balance Integrity — PASSED
 
-## Objective
-
-Verify that the complete posted accounting book is mathematically balanced:
-
-**Total Debit = Total Credit**
-
-## Implementation
-
 Read-only page: `modules/accounting/trial_balance.php`
 
-The Trial Balance:
-
-- is restricted to Admin and Financial Manager;
-- uses posted journal entries only;
-- excludes voided journals;
-- includes normal posted journals, posted transaction-void reversal journals, and posted manual journals;
-- supports optional date filtering;
-- reports account-level debit, credit, and net movement;
-- independently calculates system-wide debit and credit totals;
-- reports posted journal and posted-line counts.
-
-## Verified result
+Verified result:
 
 - Total debit: **103,373,000.00**
 - Total credit: **103,373,000.00**
@@ -239,79 +183,136 @@ The Trial Balance:
 - Posted lines: **54**
 - Result: **✓ الميزان متوازن — PASSED**
 
-The Trial Balance is an accounting-integrity control. It is intentionally separate from `modules/accounting/gm_reconciliation.php`, which is a management/operational reconciliation report covering inflows, outflows, cash movement, open disbursement batches, aging, returns, and voided disbursement history.
-
-These reports are complementary, not duplicates.
-
-| Trial Balance | GM Reconciliation |
-|---|---|
-| Proves posted journal debit/credit equality | Reviews operational financial movement |
-| Covers every posted journal line | Focuses on management-level inflow/outflow/cash views |
-| Account-level accounting totals | Monthly/category and workflow-oriented summaries |
-| Accounting integrity control | Management oversight/reconciliation |
-
-**Trial Balance Integrity = PASSED.**
+The Trial Balance uses posted journal entries only and excludes voided journals. It is intentionally distinct from `modules/accounting/gm_reconciliation.php`, which is a management/operational reconciliation report.
 
 Implementation commits:
 
-- `4aa9c05892a806be016c20b9234b15d392b441b9` — initial Trial Balance
-- `a0c9b73daf70a393d31587b2874b70154f9c0857` — corrected posted-line aggregation
-- `af97f58607317a6605feac69adfb1ef5d590d4d6` — Chart of Accounts link
-- `14a0b04e9916bf3c572fafb9b3f831acaafb849e` — Account Ledger
-- `be24ce9046fc8d37bc31e48a2b9b137a8a26eb4e` — Chart of Accounts integration
+- `4aa9c05892a806be016c20b9234b15d392b441b9`
+- `a0c9b73daf70a393d31587b2874b70154f9c0857`
+- `af97f58607317a6605feac69adfb1ef5d590d4d6`
+- `14a0b04e9916bf3c572fafb9b3f831acaafb849e`
+- `be24ce9046fc8d37bc31e48a2b9b137a8a26eb4e`
 
 ---
 
-# 8. Accountant Staff financial/reporting authorization — PASSED
+# 8. Accountant Staff financial/reporting and disbursement authorization — PASSED
 
-The targeted authorization audit for role `accountant_staff` was completed without modifying accounting data.
+The organization-wide financial/reporting authorization audit and the Accountant Staff disbursement authorization audit were completed without modifying protected accounting evidence.
 
-Confirmed restricted organization-wide financial surfaces:
+Confirmed restricted financial/reporting surfaces include journal, ledger, trial balance and organization-wide financial reports. The previously exposed confirmed-disbursements report was corrected by commit `4750cb72ddd080ee604928e9aa1c67b9b11f70a9`.
 
-- `modules/accounting/journal.php`
-- `modules/accounting/account_ledger.php`
-- `modules/accounting/trial_balance.php`
-- `modules/accounting/reports.php`
-- `modules/reports/financial.php`
-- `modules/reports/sponsorship.php`
-- `modules/reports/operational.php`
+Disbursement workflow established and tested:
 
-`modules/reports/confirmed_disbursements_report.php` was identified as an authorization gap because it exposed organization-wide disbursement information. Accountant Staff access was removed.
+```text
+Vice General Manager creates batch
+→ assigns batch/group to Accountant Staff
+→ Accountant Staff manages only assigned nanny/batch scope
+```
 
-Fix commit:
+Assigned visibility, restricted financial actions, reopen controls, nanny receipt confirmation, batch void and existing receipt/closure workflow all passed. Accountant Staff is not a batch-creation role in the established workflow.
 
-`4750cb72ddd080ee604928e9aa1c67b9b11f70a9`
-
-The dedicated read-only `modules/reports/my_financial.php` remains scoped to the authenticated Accountant Staff user's own `created_by` transactions, and `modules/reports/index.php` redirects that role to the scoped report.
-
-Direct access by ACC1 (`user_id = 17`) to the formerly exposed confirmed-disbursements report was retested after the fix and **PASSED**.
-
-The working Accountant Staff dashboard was intentionally not modified during this milestone.
+Do not repeat these tests unless new code evidence creates a regression.
 
 ---
 
-# 9. Current continuation point
+# 9. Receipt handling — HARDENED; UI DEFERRED
 
-**Next control: Journal Integrity / Accounting History Interaction.**
+Primary viewer: `modules/accounting/serve_receipt.php`
 
-Do not repeat completed controls unless new code evidence creates a regression.
+Stored receipt paths are validated with `realpath()` and `is_file()`, constrained to the application base directory, and handled with an application-level Arabic message when missing/stale. The viewer does not substitute an individual family receipt for a missing final batch receipt.
 
-Required scope:
+Relevant commits:
 
-1. journal listing and filtering integrity;
-2. separation of `manual`, `transaction`, `transaction_void`, `disbursement`, and `voucher` references;
-3. journal detail/history consistency;
-4. posted versus voided visibility;
-5. preservation of original entries after reversal/void;
-6. prevention of unauthorized journal mutation through alternate routes;
-7. accounting-history totals and balance consistency;
-8. interaction between transaction status and journal status;
-9. duplicate/missing journal relationships;
-10. cross-module accounting references and auditability.
+- `e6b6fd1f15f63a48c6224da3635efddc95ac38f2`
+- `65625215686027ce172425c611e40c1d039de35c`
+- `8cbf181071fc27de59abc26e1f4d4f0bf8f71a9e`
 
-Known historical observations must be treated carefully: transactions `8`, `13`, and `16` previously showed posted transactions without the expected generic `reference_type='transaction'` journal relationship and may represent disbursement accounting paths; transactions `5`, `14`, and `15` had historical void relationships requiring interpretation rather than destructive correction. Do not alter those records solely to make the audit query pass.
+Deferred UI TODO: move the missing/stale receipt message (and preferably valid receipt preview) into a same-page Bootstrap modal on `modules/accounting/disbursements.php` without weakening server-side receipt authorization/path validation.
 
-Protected completed control records remain protected:
+---
+
+# 10. Journal Integrity / Accounting History Interaction — COMPLETED TO CURRENT CHECKPOINT
+
+## 10.1 Journal listing/filtering integrity — PASS
+
+Current `modules/accounting/journal.php`:
+
+- restricts journal access to authorized management/accounting roles;
+- supports date-from/date-to filtering;
+- orders by entry date descending and journal ID descending;
+- displays journal code, date, description, reference type, value, status and creator;
+- provides a direct detail view for each journal;
+- includes the current automated reference-type set:
+  `transaction`, `transaction_void`, `disbursement`, `disbursement_return`, `voucher`, `manual_void`.
+
+The journal list was also corrected so `disbursement_return` is treated as an automated reference rather than being omitted from the protected set.
+
+Related commit: `c37d72b3b0bff2497aab525f6944e05c58cb5fd7`.
+
+## 10.2 Journal detail/history consistency — PASS
+
+Current journal detail behavior was inspected directly in `modules/accounting/journal.php` and the accounting core in `modules/accounting/lib.php`.
+
+Verified:
+
+- detail loads the actual `journal_entries` row;
+- detail loads actual `journal_lines` joined to `accounts`;
+- displayed debit/credit totals are calculated from the underlying lines;
+- voided originals remain inspectable;
+- transaction voids preserve the original and create a separate `transaction_void` reversal;
+- manual voids preserve the original and create a separate `manual_void` reversal;
+- automated references are explicitly protected from the manual void route;
+- reversal entries remain separately inspectable through the same journal detail mechanism.
+
+No database data was changed for this check, and previously passed balance/status/orphan tests were not repeated.
+
+## 10.3 Cross-reference/auditability TODO identified
+
+The current journal detail page displays the raw `reference_type`, but it does not yet provide direct source navigation or explicit original↔reversal links.
+
+Example:
+
+```text
+JE-000026
+  reference_type = transaction
+  reference_id   = 22
+
+JE-VOID-TXN-22
+  reference_type = transaction_void
+  reference_id   = 22
+```
+
+Both entries are independently inspectable, but the UI does not currently provide a direct “source transaction / original journal / reversal journal” navigation relationship.
+
+**Decision:** park this as a dedicated future auditability task. It is not classified as a journal-detail integrity failure.
+
+---
+
+# 11. Exact next Accounting Audit task
+
+Continue with the remaining **Journal Integrity / Accounting History Interaction** controls, without restarting prior work:
+
+1. separation and semantics of `manual`, `transaction`, `transaction_void`, `disbursement`, `disbursement_return`, and `voucher` references;
+2. prevention of unauthorized journal mutation through alternate routes;
+3. duplicate/missing journal relationships;
+4. cross-module accounting references and auditability, including the deferred direct original↔reversal/source navigation enhancement;
+5. verify whether any remaining accounting path can mutate journal state outside the protected routes.
+
+Controls already passed in this area must not be rerun unless new code evidence indicates regression:
+
+- journal listing/filtering;
+- journal detail/history consistency;
+- posted/voided visibility;
+- preservation of original entries;
+- accounting-history totals/balance consistency;
+- transaction-status/journal-status current-control verification;
+- orphan/mismatched relationship audit.
+
+Historical anomalies involving transactions `5`, `8`, `13`, `14`, `15`, and `16` remain historical evidence and must be interpreted against the actual schema/code. Do not rewrite history merely to make an audit query return clean results.
+
+---
+
+# 12. Protected completed control records — DO NOT MODIFY OR REUSE
 
 - TR-000014 / transaction `20`
 - TR-000015 / transaction `21`
@@ -322,6 +323,10 @@ Protected completed control records remain protected:
 
 ---
 
-# 10. Continuation communication rule
+# 13. Documentation / continuation rule
 
-Perform repository inspection, analysis, documentation maintenance, and safe code changes directly before responding. Do not send progress-only messages or plans. Return only when there is a concrete result or when local user action is genuinely required.
+After every meaningful milestone:
+
+**Code is correct → behavior verified → documentation updated → session index updated → exact next continuation point clear.**
+
+This document is an existing-audit continuation record. Never restart the project or accounting audit from zero.
