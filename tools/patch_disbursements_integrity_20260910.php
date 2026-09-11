@@ -22,7 +22,7 @@ if ($source === false) {
 }
 
 $expectedSha = '0d8d6c094f838b3d2260513070cf59fb727113a9';
-$currentSha = hash('sha1', $source);
+$currentSha = sha1('blob ' . strlen($source) . "\0" . $source);
 if ($currentSha !== $expectedSha) {
     fwrite(STDERR, "ERROR: unexpected source version.\nExpected blob SHA: {$expectedSha}\nActual file SHA:    {$currentSha}\nNo changes were made.\n");
     exit(1);
@@ -656,8 +656,12 @@ $changes[] = 'Changed batch voiding to create balanced reversals for all posted 
 // -----------------------------------------------------------------------------
 // UI: whole-batch reopen is only offered for received batches.
 // -----------------------------------------------------------------------------
-$uiOld = "<?php if ($canManage && in_array($viewBatch['status'], ['received', 'returned'])): ?>";
-$uiNew = "<?php if ($canManage && $viewBatch['status'] === 'received'): ?>";
+$uiOld = <<<'HTML'
+<?php if ($canManage && in_array($viewBatch['status'], ['received', 'returned'])): ?>
+HTML;
+$uiNew = <<<'HTML'
+<?php if ($canManage && $viewBatch['status'] === 'received'): ?>
+HTML;
 if (substr_count($source, $uiOld) !== 1) {
     fwrite(STDERR, "ERROR: batch-reopen UI condition was not found exactly once.\nNo changes were made.\n");
     exit(1);
