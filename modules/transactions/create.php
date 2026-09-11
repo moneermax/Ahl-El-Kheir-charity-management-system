@@ -9,7 +9,7 @@ require_once dirname(__DIR__, 2) . '/modules/accounting/lib_transaction_review.p
 Session::start();
 if (!Session::isLoggedIn()) { header('Location: ' . APP_URL . 'index.php'); exit(); }
 $role = Session::getUserRole();
-if (!in_array($role, ['admin', 'accountant', 'accountant_staff', 'financial_manager', 'supervisor', 'vice_general_manager'], true)) { header('Location: ' . APP_URL . 'index.php'); exit(); }
+if (!in_array($role, ['admin', 'accountant_staff', 'financial_manager', 'supervisor', 'vice_general_manager'], true)) { header('Location: ' . APP_URL . 'index.php'); exit(); }
 $uid = Session::getUserId();
 $pageTitle = 'تسجيل دفعة'; $active = 'transactions'; ak_ensure_tables(); ak_seed_accounts();
 function ak_period_months(?string $p): ?int { if (!$p) return null; $d = DateTime::createFromFormat('!F/Y', $p); return $d ? ((int)$d->format('Y') * 12 + (int)$d->format('n')) : null; }
