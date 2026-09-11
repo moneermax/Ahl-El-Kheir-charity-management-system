@@ -26,4 +26,22 @@ if ($id <= 0) {
     exit('Invalid ID');
 }
 
+// A batch may have no final/closing receipt while its individual items already
+// have receipt files. In that case, fall back to the first available item receipt
+// instead of incorrectly returning 404. If neither the batch nor any item has a
+// receipt, ak_out_serve_receipt() keeps the normal 404 behavior.
+if ($kind !== 'item') {
+    $batch = ak_out_row('monthly_disbursements', $id);
+    if ($batch && (string)($batch['receipt_file_path'] ?? '') === '') {
+        $item = dbFetchOne(
+            "SELECT id FROM disbursement_items WHERE disbursement_id = ? AND receipt_file_path IS NOT NULL AND TRIM(receipt_file_path) <> '' ORDER BY id ASC LIMIT 1",
+            [$id]
+        );
+        if ($item) {
+            $kind = 'item';
+            $id = (int)$item['id'];
+        }
+    }
+}
+
 ak_out_serve_receipt($id, $uid, $allowed, $kind);
