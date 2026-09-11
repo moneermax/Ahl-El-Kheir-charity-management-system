@@ -6,11 +6,11 @@
 
 **Local development URL:** http://localhost:8081/AhlElKheir/
 
-**Last maintained:** 2026-09-10
+**Last maintained:** 2026-09-11
 
 ---
 
-# 🚨 CURRENT DEVELOPMENT CHECKPOINT — 2026-09-09
+# 🚨 CURRENT DEVELOPMENT CHECKPOINT — 2026-09-11
 
 ## HR PHASE: CLOSED
 
@@ -25,11 +25,15 @@ Historical compatibility entry point: `modules/hr/index.php` (redirect only).
 
 The project is currently in **ACCOUNTING AUDIT — PHASE 1: ACCOUNTING / JOURNAL INTEGRITY**.
 
-The canonical Accounting audit record is now:
+The canonical Accounting audit record is:
 
 `docs/AHL_EL_KHEIR_ACCOUNTING_AUDIT.md`
 
-Completed and verified:
+The latest detailed milestone record is:
+
+`docs/AHL_EL_KHEIR_DOCUMENTATION_UPDATE_2026-09-11.md`
+
+## Completed and verified controls
 
 1. Creator creates transaction → `pending_fm_review`.
 2. No journal before FM approval.
@@ -40,57 +44,18 @@ Completed and verified:
 7. Authorized void of a posted transaction → original journal `voided` + separate balanced `transaction_void` reversal journal + transaction `voided`, atomically.
 8. Manual Journal Entry Integrity → fully tested and PASSED.
 9. Trial Balance Integrity → fully tested and PASSED.
+10. Accountant Staff organization-wide financial/reporting authorization → PASSED.
+11. Accountant Staff disbursement authorization → PASSED.
+12. Existing disbursement receipt/closure workflow → PASSED.
 
-## Completed control records — DO NOT MODIFY OR REUSE
+## Protected completed control records — DO NOT MODIFY OR REUSE
 
-### TR-000014 — transaction ID 20
-
-- Creator: user `17` / ACC1
-- FM reviewer: user `29`
-- Final status: `posted`
-- Amount: `250,000.00 SDG`
-- Journal entry: `36`
-- Balanced debit/credit: `250,000.00 / 250,000.00`
-- Full create → return → edit → resubmit → approve → post lifecycle passed.
-
-### TR-000015 — transaction ID 21
-
-- Creator: user `17` / ACC1
-- FM reviewer: user `29`
-- Type: `project_donation`
-- Amount: `25,000`
-- Method: `bank_transfer`
-- Reference: `987654321`
-- Final status: `cancelled`
-- `cancelled_by = 17`
-- `cancelled_at = 2026-09-09 16:30:38`
-- Cancellation reason persisted.
-- No journal entry exists for transaction `21`.
-- Audit sequence verified: `SUBMIT_FM` → `FM_RETURN` → `CANCEL_RETURNED`.
-
-### TR-000016 — transaction ID 22
-
-- Final status: `voided`
-- Type: `general_donation`
-- Amount: `1,000.00`
-- Method: `cash`
-- Original journal: `JE-000026` / journal ID `37`, final status `voided`
-- Reversal journal: `JE-VOID-TXN-22`, `reference_type = transaction_void`, final status `posted`
-- Reversal balanced debit/credit: `1,000.00 / 1,000.00`
-- Void performed by: Financial Manager
-- Complete posted → void + reversal workflow passed.
-
-### JE-000027 — manual journal control
-
-- Date: `2026-09-09`
-- Description: `اختبار رقابي - قيد يومية يدوي`
-- Reference type: `manual`
-- Total: `1,000.00`
-- Status: `posted`
-- Creator: Financial Manager
-- Full Manual Journal Entry Integrity test set passed.
-
-**TR-000014, TR-000015, TR-000016, and JE-000027 are completed control-test records and must not be modified or reused.**
+- TR-000014 / transaction `20`
+- TR-000015 / transaction `21`
+- TR-000016 / transaction `22`
+- JE-000027
+- JE-000026 / journal `37`
+- JE-VOID-TXN-22
 
 ## Trial Balance Integrity — PASSED
 
@@ -105,32 +70,83 @@ Verified result:
 - Posted lines: `54`
 - Result: **✓ الميزان متوازن — PASSED**
 
-The Trial Balance uses posted journal entries only and excludes voided journals. It is an accounting-integrity control and is intentionally distinct from `modules/accounting/gm_reconciliation.php`, which is a management/operational reconciliation report covering inflows, outflows, cash movement, open disbursement batches, aging, returns, and voided disbursement history.
+The Trial Balance uses posted journal entries only and excludes voided journals. It is an accounting-integrity control and is intentionally distinct from `modules/accounting/gm_reconciliation.php`, which is a management/operational reconciliation report.
 
-## Relevant implementation commits
+---
 
-- Cancellation correction: `62229c5a9a4be9ad2d55223402b5fe1f03bd81e4`
-- Void/reversal hardening: `99759d186cbb9507be631aa4df48cbef4d7e202b`
-- Manual journal validation/atomicity/numbering hardening: `8aa473eee507cce3d5ad96aa6d5403a7dc467002`
-- Manual journal void segregation: `45d07f3003eeb9df1eb297eb408c949948bc68b3`
-- Trial Balance initial implementation: `4aa9c05892a806be016c20b9234b15d392b441b9`
-- Trial Balance posted-line aggregation correction: `a0c9b73daf70a393d31587b2874b70154f9c0857`
-- Trial Balance Chart of Accounts link: `af97f58607317a6605feac69adfb1ef5d590d4d6`
-- Account Ledger: `14a0b04e9916bf3c572fafb9b3f831acaafb849e`
-- Chart of Accounts integration: `be24ce9046fc8d37bc31e48a2b9b137a8a26eb4e`
+# ACCOUNTANT STAFF DISBURSEMENT AUTHORIZATION — PASSED
 
-## Exact next continuation point
+Primary file: `modules/accounting/disbursements.php`
 
-**Continue with the next concrete Accounting integrity control: Journal Integrity / Accounting History Interaction.**
+Established workflow:
 
-Do not repeat completed controls.
+```text
+Vice General Manager creates batch
+→ assigns batch/group to Accountant Staff
+→ Accountant Staff manages only assigned nanny/batch scope
+```
 
-Next audit scope:
+`accountant_staff` is not a batch-creation role in the tested workflow.
+
+Verified:
+
+- assigned batch visibility — PASS;
+- unassigned batch hidden — PASS;
+- restricted transfer/post/financial actions — PASS;
+- assigned batch reopen — PASS;
+- unassigned batch reopen blocked by visibility — PASS;
+- assigned family-item reopen — PASS;
+- unassigned family item hidden — PASS;
+- batch creation — N/A by design;
+- nanny receipt confirmation — PASS;
+- batch void — PASS;
+- existing receipt/closure workflow — PASS.
+
+Server-side authorization uses the existing accountant → nanny assignment relationship. Unauthorized operations are blocked server-side and are not permitted to create accounting journal/transaction entries.
+
+Do not repeat these tests unless new code evidence creates a regression.
+
+---
+
+# RECEIPT HANDLING — HARDENED; UI ITEM DEFERRED
+
+Primary viewer: `modules/accounting/serve_receipt.php`
+
+The receipt viewer now validates the stored path with `realpath()` and `is_file()`, confirms the resolved file remains within the application base directory, and displays an application-level Arabic message for missing/stale receipts. `config/functions.php` is loaded so the application message renders correctly.
+
+The viewer deliberately does **not** substitute an individual family receipt for a missing final batch receipt.
+
+Relevant commits:
+
+- `e6b6fd1f15f63a48c6224da3635efddc95ac38f2`
+- `65625215686027ce172425c611e40c1d039de35c`
+- `8cbf181071fc27de59abc26e1f4d4f0bf8f71a9e`
+
+### Deferred TODO
+
+The user wants the missing/stale receipt message to appear as a popup/modal on the same `disbursements.php` page instead of opening a new page/window. The current implementation still opens a new page/window. This is a **UI TODO only** and does not invalidate the receipt security/authorization hardening or the completed disbursement authorization tests.
+
+Future fix must preserve:
+
+- same-page Bootstrap modal UX;
+- server-side receipt authorization;
+- actual-file/path validation;
+- no item-receipt substitution for batch receipts.
+
+---
+
+# EXACT NEXT ACCOUNTING AUDIT TASK
+
+**Continue with: Journal Integrity / Accounting History Interaction.**
+
+Do not restart the audit. Do not repeat passed disbursement/authorization tests. Do not recreate fixture data manually.
+
+Required scope:
 
 1. journal listing and filtering integrity;
-2. correct separation of `manual`, `transaction`, `transaction_void`, `disbursement`, and `voucher` references;
+2. separation of `manual`, `transaction`, `transaction_void`, `disbursement`, and `voucher` references;
 3. journal detail/history consistency;
-4. visibility of posted versus voided entries;
+4. posted versus voided visibility;
 5. preservation of original entries after reversal/void;
 6. prevention of unauthorized journal mutation through alternate routes;
 7. accounting-history totals and balance consistency;
@@ -138,26 +154,59 @@ Next audit scope:
 9. duplicate/missing journal relationships;
 10. cross-module accounting references and auditability.
 
-Do not modify or reuse TR-000014, TR-000015, TR-000016, or JE-000027.
+Known historical observations must be interpreted rather than destructively corrected. In particular, previously observed transaction/journal relationships involving transactions `8`, `13`, `16`, `5`, `14`, and `15` require code/schema interpretation before any conclusion or change.
+
+---
+
+# Relevant implementation commits
+
+- Cancellation correction: `62229c5a9a4be9ad2d55223402b5fe1f03bd81e4`
+- Void/reversal hardening: `99759d186cbb9507be631aa4df48cbef4d7e202b`
+- Manual journal validation/atomicity/numbering: `8aa473eee507cce3d5ad96aa6d5403a7dc467002`
+- Manual journal void segregation: `45d07f3003eeb9df1eb297eb408c949948bc68b3`
+- Trial Balance initial implementation: `4aa9c05892a806be016c20b9234b15d392b441b9`
+- Trial Balance aggregation correction: `a0c9b73daf70a393d31587b2874b70154f9c0857`
+- Chart of Accounts link: `af97f58607317a6605feac69adfb1ef5d590d4d6`
+- Account Ledger: `14a0b04e9916bf3c572fafb9b3f831acaafb849e`
+- Chart of Accounts integration: `be24ce9046fc8d37bc31e48a2b9b137a8a26eb4e`
+- Accountant Staff reporting authorization: `4750cb72ddd080ee604928e9aa1c67b9b11f70a9`
+- Receipt missing/stale-file handling: `e6b6fd1f15f63a48c6224da3635efddc95ac38f2`
+- Receipt viewer dependency fix: `65625215686027ce172425c611e40c1d039de35c`
+- Receipt UI attempt: `8cbf181071fc27de59abc26e1f4d4f0bf8f71a9e`
+- Latest documentation checkpoint: `d15416abf1327fc057c001b5224af72a89be0bca`
 
 ---
 
 # Current authoritative documentation
 
-- `docs/AHL_EL_KHEIR_ACCOUNTING_AUDIT.md` — **canonical current Accounting Phase 1 audit record**.
+- `docs/AHL_EL_KHEIR_ACCOUNTING_AUDIT.md` — canonical Accounting Phase 1 audit record.
+- `docs/AHL_EL_KHEIR_DOCUMENTATION_UPDATE_2026-09-11.md` — latest disbursement authorization/receipt checkpoint.
 - `docs/AHL_EL_KHEIR_SYSTEM_ANALYSIS.md` — long-lived architecture/system reference.
 - `docs/AHL_EL_KHEIR_CURRENT_SYSTEM_STATUS_2026-09-08.md` — cross-module status baseline.
-- `docs/CHATGPT_SESSION_INDEX.md` — compact continuation index and navigation record.
-- `docs/AHL_EL_KHEIR_DOCUMENTATION_UPDATE_2026-09-08.md` — prior HR/payroll/accounting integration milestone.
+- `docs/CHATGPT_SESSION_INDEX.md` — compact continuation index.
+- `docs/AHL_EL_KHEIR_DOCUMENTATION_UPDATE_2026-09-10.md` — previous accounting authorization milestone.
 - `docs/HR_DASHBOARD_NAVIGATION_AUDIT_2026-09-08.md` — final HR dashboard/navigation audit.
 - `docs/AHL_EL_KHEIR_COMPLETE_REPOSITORY_AUDIT.md` — historical consolidated repository audit.
 - `docs/AHL_EL_KHEIR_REPOSITORY_AUDIT.md` — historical Phase 1 repository audit/correction register.
 
-Specialized long-lived documents such as `I18N.md` and `PRODUCTION_PREPARATION.md` remain separate because they have distinct purposes.
+Historical documents remain historical; they are not to override the latest checkpoint above.
 
-The former separate 2026-09-09 Accounting checkpoint/update files were consolidated into `AHL_EL_KHEIR_ACCOUNTING_AUDIT.md` and removed from the repository to prevent duplicate continuation sources.
+---
 
-Historical audit information was preserved in the canonical Accounting document rather than silently discarded.
+# Project continuation rules
+
+1. This is an existing project and an existing Accounting Audit continuation. Never restart from zero.
+2. Establish the current repository branch/commit before making code conclusions.
+3. Inspect actual repository code before proposing changes.
+4. Treat current repository code and current documentation as authoritative over older chat assumptions.
+5. Do not repeat completed tests unless new code evidence creates a regression.
+6. Do not manually recreate known fixture data merely to rerun a test already passed.
+7. Preserve the established architecture: PHP 8.2+ procedural PHP only, MySQL/MariaDB, Vanilla JavaScript only, Bootstrap 5.3 RTL, Font Awesome 6, Google Fonts Cairo.
+8. Follow: **Inspect → Understand → Verify → Identify risk → Fix narrowly → Test → Document**.
+9. Perform repository inspection, analysis, documentation maintenance, and safe code changes directly before responding.
+10. Do not send progress-only messages or plans. Return only when there is a concrete result or when local user action is genuinely required.
+11. Preserve protected audit records and never alter them merely to make a query look cleaner.
+12. When documentation is updated, make the exact next continuation point explicit.
 
 ---
 
@@ -183,29 +232,6 @@ Historical audit information was preserved in the canonical Accounting document 
 - Current completed Accounting session:
   https://chatgpt.com/share/6aa11a53-d8cc-83ea-9055-b0986ef86301
 
-## Messaging / attachments
-
-Historical messaging work fixed JSON contamination and attachment send/receive behavior. Treat as completed work unless current code proves regression.
-
-## Disbursement / confirmation / returns
-
-Historical sessions covered nanny confirmation, receipts, returned amounts, reversal behavior and accounting integration. When auditing Accounting, inspect these integrations as current code paths rather than automatically reopening old UI issues.
-
----
-
-# Project continuation rules
-
-1. Honor the current checkpoint above.
-2. Establish the current repository branch/commit.
-3. Inspect actual code in the affected module.
-4. Treat current repository code and current documentation as authoritative over older chat assumptions.
-5. Use historical chats only as supporting context.
-6. Do not restart completed work or reintroduce superseded architecture.
-7. Preserve the established architecture: PHP 8.2+ procedural PHP only, MySQL/MariaDB, Vanilla JavaScript only, Bootstrap 5.3 RTL, Font Awesome 6, Google Fonts Cairo.
-8. Follow: **Inspect → Understand → Verify → Identify risk → Fix narrowly → Test → Document**.
-9. **Continuation communication rule:** Do the repository inspection, reasoning, documentation work, and safe code changes directly. Do not send progress-only messages such as “proceed”, “I will inspect”, “I will check”, plans, or announcements of work. Return only when there is a concrete result, or when user action is genuinely required to verify behavior, provide/pull a file that cannot be safely retrieved, or perform a local test. This rule exists to minimize unnecessary chat messages and preserve conversation capacity.
-10. When user action is genuinely required, state exactly what is needed and why, with the smallest possible test/request. Do not ask the user to repeat information already available in the repository or current checkpoint.
-
 ---
 
 # Documentation maintenance rule
@@ -215,7 +241,3 @@ After every meaningful milestone:
 **Code is correct → behavior verified → documentation updated → session index updated → next continuation point clear.**
 
 The repository must remain self-describing. Important architecture, business rules, decisions, completed fixes, current status, and exact continuation points must exist in repository documentation; ChatGPT links are supporting historical context only.
-
-New permanent documentation files should only be added when they represent a genuinely distinct subject or preserve historical evidence that cannot be cleanly incorporated into an existing canonical document.
-
----
