@@ -73,6 +73,62 @@ if ($receiptPath === '' || $full === false) {
         <style>body{background:#f8f9fa}.receipt-message{max-width:650px;margin:12vh auto;padding:2rem}</style>
     </head>
     <body>
+    <script>
+    (function () {
+        var title = <?php echo json_encode($title, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+        var message = <?php echo json_encode($message, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+        var openerWindow = window.opener;
+
+        if (openerWindow && !openerWindow.closed) {
+            try {
+                var doc = openerWindow.document;
+                var existing = doc.getElementById('receiptMissingModal');
+                if (existing) {
+                    existing.remove();
+                }
+
+                var modal = doc.createElement('div');
+                modal.id = 'receiptMissingModal';
+                modal.className = 'modal fade';
+                modal.tabIndex = -1;
+                modal.setAttribute('aria-hidden', 'true');
+                modal.innerHTML =
+                    '<div class="modal-dialog modal-dialog-centered">' +
+                        '<div class="modal-content border-warning">' +
+                            '<div class="modal-header">' +
+                                '<h5 class="modal-title"><i class="fas fa-triangle-exclamation text-warning me-2"></i>' + title + '</h5>' +
+                                '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>' +
+                            '</div>' +
+                            '<div class="modal-body text-center py-4">' +
+                                '<div class="fs-1 text-warning mb-3"><i class="fas fa-file-circle-xmark"></i></div>' +
+                                '<p class="text-muted mb-0">' + message + '</p>' +
+                            '</div>' +
+                            '<div class="modal-footer justify-content-center">' +
+                                '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>';
+                doc.body.appendChild(modal);
+
+                if (openerWindow.bootstrap && openerWindow.bootstrap.Modal) {
+                    var instance = openerWindow.bootstrap.Modal.getOrCreateInstance(modal);
+                    instance.show();
+                    modal.addEventListener('hidden.bs.modal', function () {
+                        modal.remove();
+                    }, { once: true });
+                } else {
+                    openerWindow.alert(title + '\n\n' + message);
+                    modal.remove();
+                }
+
+                window.close();
+                return;
+            } catch (e) {
+                // Fall through to the standalone application message below.
+            }
+        }
+    }());
+    </script>
         <div class="container">
             <div class="card receipt-message shadow-sm border-warning">
                 <div class="card-body text-center">
