@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-11  
 **Area:** Accounting Audit — Journal Integrity / Accounting History Interaction  
-**Status:** Current milestone checkpoint completed; targeted runtime verification remains pending
+**Status:** Current milestone checkpoint updated; disbursement void protection test PASS; targeted automated-reference runtime verification remains pending
 
 ---
 
@@ -149,11 +149,78 @@ No accounting records or historical evidence were modified.
 
 Static repository verification confirmed the updated protection set is present in the current branch.
 
-**Local runtime/UI verification is still pending.**
+**Local runtime/UI verification for these three reference types is still pending.**
 
 ---
 
-## 6. Cross-reference/auditability gap — TODO LATER
+## 6. Legacy disbursement void protection — PASS
+
+A separate audit of the legacy `void_batch` route in `modules/accounting/disbursements.php` identified an unsafe direct-mutation path for posted disbursement accounting state.
+
+A narrow guard was implemented in:
+
+`modules/accounting/disbursement_void_guard.php`
+
+The guard intercepts the legacy `void_batch` POST route and performs the accounting operation atomically:
+
+```text
+posted disbursement
+→ separate balanced disbursement_void reversal
+→ original journal preserved + voided
+→ linked transaction voided
+→ monthly disbursement voided
+→ audit_log recorded
+```
+
+The local `audit_log` schema was explicitly verified before correction. It uses `action`, not `action_type`.
+
+The corrected guard was committed as:
+
+`0071aa0ed83f428e6c4ee61154eef106dcbb7b10`
+
+### Controlled fixture
+
+Existing controlled fixture used without recreation:
+
+- monthly disbursement ID `11`
+- transaction ID `23`
+- transaction reference `AUDIT-DISB-VOID-11`
+- original journal `JE-AUDIT-DISB-11`
+- original amount `100.00`
+
+### Browser execution — PASS
+
+The application returned:
+
+> تم إبطال الدفعة وإنشاء القيد العكسي مع الحفاظ على القيد الأصلي وسجل التدقيق.
+
+### Final database verification — PASS
+
+Verified result:
+
+- batch `11` → `voided`
+- reversal journal ID `43`
+- transaction `23` → `voided`
+- original journal `JE-AUDIT-DISB-11` → `voided`
+- reversal journal `JE-REV-DISB-000011-20260911183412`
+- reversal reference type `disbursement_void`
+- reversal status `posted`
+- reversal debit `100.00`
+- reversal credit `100.00`
+- reversal balanced
+- `DISBURSEMENT_VOID` audit entries: `1`
+
+**Audit Test: PASS.**
+
+Do not rerun or recreate this fixture unless genuine regression evidence appears.
+
+Detailed milestone record:
+
+`docs/AHL_EL_KHEIR_DOCUMENTATION_UPDATE_2026-09-11_DISBURSEMENT_VOID.md`
+
+---
+
+## 7. Cross-reference/auditability gap — TODO LATER
 
 The journal detail page currently exposes the raw `reference_type`, but does not provide direct source navigation or explicit original↔reversal navigation.
 
@@ -173,7 +240,7 @@ This is **not classified as a journal-detail integrity failure**. It remains a d
 
 ---
 
-## 7. Current Accounting Audit state
+## 8. Current Accounting Audit state
 
 The accounting audit remains an existing continuation, not a new audit.
 
@@ -195,9 +262,10 @@ Completed controls include:
 - preservation of original entries;
 - accounting-history balance consistency;
 - current transaction-status/journal-status control verification;
-- duplicate/orphan relationship audit.
+- duplicate/orphan relationship audit;
+- legacy disbursement `void_batch` protection and accounting reversal.
 
-The newly found alternate mutation defect is **fixed in code but not yet marked PASS until targeted local runtime verification is completed**.
+The three newly protected automated reference types (`payroll`, `disbursement_void`, `item_return`) remain **code-fixed but runtime verification pending**.
 
 Known historical accounting anomalies remain documented and must not be destructively corrected merely to satisfy an audit query. In particular, observations involving transactions `5`, `8`, `13`, `14`, `15`, and `16` require schema/code interpretation.
 
@@ -212,26 +280,30 @@ Protected completed evidence remains:
 
 ---
 
-## 8. Exact next Accounting Audit task
+## 9. Exact next Accounting Audit task
 
 Continue from this exact checkpoint:
 
-1. Pull/verify commit `8e3ee6fd7d95c0efef834a284ed428d125064bfc` locally.
-2. Perform targeted runtime/UI verification that `payroll`, `disbursement_void`, and `item_return` journal entries no longer expose the generic manual-void action.
-3. Inspect the remaining callers of `ak_void_journal_for_voucher()` and any direct journal mutation routes.
-4. Continue duplicate/missing relationship checks only where a genuinely new route is discovered.
+1. Perform targeted runtime/UI verification that the generic manual-void route does not expose/allow voiding for:
+   - `payroll`
+   - `disbursement_void`
+   - `item_return`
+2. Inspect the remaining callers of `ak_void_journal_for_voucher()` and any direct journal mutation routes.
+3. Continue duplicate/missing relationship checks only where a genuinely new route is discovered.
+4. Continue cross-module accounting references and auditability.
 5. Only after the underlying routes are fully audited, revisit the parked original↔reversal/source navigation enhancement.
 
 Do not rerun the already-passed accounting tests.
 
 ---
 
-## 9. Continuation rule
+## 10. Continuation rule
 
 The next session must read/use together:
 
 - `docs/AHL_EL_KHEIR_ACCOUNTING_AUDIT.md`
 - `docs/AHL_EL_KHEIR_DOCUMENTATION_UPDATE_2026-09-11.md`
+- `docs/AHL_EL_KHEIR_DOCUMENTATION_UPDATE_2026-09-11_DISBURSEMENT_VOID.md`
 - `docs/CHATGPT_SESSION_INDEX.md`
 
-Treat these as the current Accounting Audit checkpoint. Inspect the current repository before making new conclusions or changes.
+Treat the disbursement void test as **closed/PASS**. The next session begins with the remaining automated-reference manual-void protection verification.
