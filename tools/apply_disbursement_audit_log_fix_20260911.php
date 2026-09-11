@@ -14,16 +14,28 @@ if (!is_file($file)) {
     exit(1);
 }
 
-$source = file_get_contents($file);
-if ($source === false) {
-    fwrite(STDERR, "ERROR: unable to read disbursements.php.\n");
+$expectedSha = '92b808e1df79f10d8d2b419437f440eafea10193';
+
+// Verify using Git's own blob hashing so the check matches `git hash-object` exactly.
+$escapedFile = escapeshellarg($file);
+$gitOutput = [];
+$gitExitCode = 0;
+exec("git -C " . escapeshellarg($root) . " hash-object {$escapedFile}", $gitOutput, $gitExitCode);
+$currentSha = $gitOutput[0] ?? '';
+
+if ($gitExitCode !== 0 || !preg_match('/^[0-9a-f]{40}$/', $currentSha)) {
+    fwrite(STDERR, "ERROR: unable to verify disbursements.php with Git hash-object.\nNo changes were made.\n");
     exit(1);
 }
 
-$expectedSha = '92b808e1df79f10d8d2b419437f440eafea10193';
-$currentSha = sha1('blob ' . strlen($source) . "\0" . $source);
 if ($currentSha !== $expectedSha) {
-    fwrite(STDERR, "ERROR: unexpected source version.\nExpected blob SHA: {$expectedSha}\nActual file SHA:    {$currentSha}\nNo changes were made.\n");
+    fwrite(STDERR, "ERROR: unexpected source version.\nExpected blob SHA: {$expectedSha}\nActual Git blob SHA: {$currentSha}\nNo changes were made.\n");
+    exit(1);
+}
+
+$source = file_get_contents($file);
+if ($source === false) {
+    fwrite(STDERR, "ERROR: unable to read disbursements.php.\n");
     exit(1);
 }
 
@@ -53,9 +65,18 @@ if (file_put_contents($file, $patched) === false) {
     exit(1);
 }
 
-$patchedSha = sha1('blob ' . strlen($patched) . "\0" . $patched);
+$verifySource = file_get_contents($file);
+if ($verifySource === false) {
+    fwrite(STDERR, "ERROR: unable to reread patched disbursements.php.\n");
+    exit(1);
+}
 
-if (substr_count($patched, $old) !== 0 || substr_count($patched, $new) !== 1) {
+$verifyGitOutput = [];
+$verifyGitExitCode = 0;
+exec("git -C " . escapeshellarg($root) . " hash-object " . escapeshellarg($file), $verifyGitOutput, $verifyGitExitCode);
+$patchedSha = $verifyGitOutput[0] ?? '';
+
+if ($verifyGitExitCode !== 0 || substr_count($verifySource, $old) !== 0 || substr_count($verifySource, $new) !== 1) {
     fwrite(STDERR, "ERROR: post-patch verification failed.\n");
     exit(1);
 }
