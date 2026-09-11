@@ -1,7 +1,7 @@
 <?php
 // modules/accounting/serve_receipt.php — Secure receipt viewer
 error_reporting(E_ALL);
-ini_set('display_errors', '0'); // Never show errors in file output
+ini_set('display_errors', '0');
 
 require_once dirname(__DIR__, 2) . '/config/config.php';
 require_once dirname(__DIR__, 2) . '/config/database.php';
@@ -19,16 +19,13 @@ $role = (string)Session::getUserRole();
 $allowed = in_array($role, ['admin', 'financial_manager', 'general_manager', 'vice_general_manager', 'accountant', 'accountant_staff'], true);
 
 $id = (int)($_GET['id'] ?? 0);
-$kind = (string)($_GET['kind'] ?? 'batch'); // 'batch' or 'item'
+$kind = (string)($_GET['kind'] ?? 'batch');
 
 if ($id <= 0) {
     http_response_code(400);
     exit('Invalid ID');
 }
 
-// Do not substitute an individual item receipt for a batch receipt.
-// A batch receipt and an item receipt are different documents and must remain
-// independently addressable.
 if ($kind === 'item') {
     $item = ak_out_row('disbursement_items', $id);
     $row = $item ? ak_out_row('monthly_disbursements', (int)$item['disbursement_id']) : null;
@@ -39,19 +36,27 @@ if ($kind === 'item') {
     $receiptPath = trim((string)($row['receipt_file_path'] ?? ''));
 }
 
-if (!$row || !($row && ((int)$row['nanny_id'] === $uid || $allowed))) {
+if (!$row || !((int)$row['nanny_id'] === $uid || $allowed)) {
     http_response_code(403);
     exit('403');
 }
 
-if ($receiptPath === '') {
-    // Keep this a normal application response rather than a browser/server 404.
-    // This is especially important for a closed batch that has no final receipt:
-    // individual item receipts do not count as a batch receipt.
+// Resolve the stored path here so stale/missing files are handled by the
+// application instead of falling through to a browser/server 404.
+$base = realpath(dirname(__DIR__, 2));
+$full = false;
+if ($receiptPath !== '' && $base !== false) {
+    $candidate = realpath($base . '/' . ltrim($receiptPath, '/\\'));
+    if ($candidate !== false && strpos($candidate, $base . DIRECTORY_SEPARATOR) === 0 && is_file($candidate)) {
+        $full = $candidate;
+    }
+}
+
+if ($receiptPath === '' || $full === false) {
     $title = $kind === 'batch' ? 'لا يوجد إيصال نهائي للدفعة' : 'لا يوجد إيصال لهذا السجل';
     $message = $kind === 'batch'
-        ? 'هذه الدفعة لا تحتوي حالياً على إيصال نهائي مرفوع. إيصالات الأسر الفردية لا تُستخدم كبديل عن إيصال الدفعة.'
-        : 'لم يتم رفع إيصال لهذا السجل حتى الآن.';
+        ? 'لا يوجد ملف إيصال نهائي متاح لهذه الدفعة حالياً. إيصالات الأسر الفردية لا تُستخدم كبديل عن إيصال الدفعة.'
+        : 'لا يوجد ملف إيصال متاح لهذا السجل حالياً.';
     $back = APP_URL . 'modules/accounting/disbursements.php';
     if ($kind === 'batch') {
         $back .= '?view=' . (int)$id;
@@ -83,5 +88,4 @@ if ($receiptPath === '') {
     exit;
 }
 
-// Let the secure common helper validate the stored path and stream the file.
 ak_out_serve_receipt($id, $uid, $allowed, $kind);
