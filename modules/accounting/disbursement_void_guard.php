@@ -186,19 +186,21 @@ try {
         throw new RuntimeException('فشل التحقق من حالة الدفعة بعد الإبطال.');
     }
 
-    // Match the existing disbursement audit_log schema/pattern.
-    // audit_log.action_type is populated as DISBURSEMENT_<action>.
+    // Match the actual audit_log schema: the action column stores the event name.
     dbExecute(
         "INSERT INTO audit_log
-         (user_id, action_type, entity_type, entity_id, new_values, ip_address, user_agent, created_at)
-         VALUES (?, CONCAT('DISBURSEMENT_', ?), 'monthly_disbursements', ?, ?, ?, ?, NOW())",
+         (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent, created_at)
+         VALUES (?, 'DISBURSEMENT_VOID', 'monthly_disbursements', ?, ?, ?, ?, ?, NOW())",
         [
             $uid,
-            'VOID',
             $id,
             json_encode([
-                'from' => $batch['status'],
-                'to' => 'voided',
+                'status' => $batch['status'],
+                'transaction_id' => $batch['transaction_id'] ?? null,
+                'original_journal_id' => $original['id'] ?? null,
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            json_encode([
+                'status' => 'voided',
                 'reason' => $reason,
                 'original_journal_id' => $original['id'] ?? null,
                 'reversal_journal_id' => $journalId,
