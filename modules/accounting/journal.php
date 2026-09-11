@@ -15,7 +15,7 @@ $canVoidManual=in_array($role,['admin','financial_manager'],true);
 $pageTitle=t('accounting.journal_title');
 $active='journal';
 ak_ensure_tables(); ak_seed_accounts();
-$automatedReferenceTypes=['transaction','transaction_void','disbursement','disbursement_return','voucher','manual_void'];
+$automatedReferenceTypes=['transaction','transaction_void','disbursement','disbursement_return','disbursement_void','item_return','voucher','payroll','manual_void'];
 
 if($_SERVER['REQUEST_METHOD']==='POST'&&isset($_POST['void_entry'])&&$canVoidManual){
     if(verify_csrf()){
