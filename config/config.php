@@ -103,3 +103,11 @@ if (APP_ENV === 'development') {
 }
 
 require_once __DIR__ . '/lang.php';
+
+// Narrow accounting hardening: intercept only the legacy disbursement void POST
+// before modules/accounting/disbursements.php can mutate a posted journal directly.
+if (basename((string)($_SERVER['SCRIPT_FILENAME'] ?? '')) === 'disbursements.php'
+    && $_SERVER['REQUEST_METHOD'] === 'POST'
+    && isset($_POST['void_batch'])) {
+    require_once __DIR__ . '/../modules/accounting/disbursement_void_guard.php';
+}
