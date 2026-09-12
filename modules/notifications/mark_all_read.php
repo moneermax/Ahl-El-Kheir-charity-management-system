@@ -37,8 +37,20 @@ try {
 
 $redirect = (string)($_POST['redirect'] ?? '');
 
-if ($redirect === '' || strpos($redirect, APP_URL) !== 0) {
+if ($redirect === '') {
     $redirect = APP_URL;
+} elseif (strpos($redirect, APP_URL) === 0) {
+    // Keep existing absolute application URLs unchanged.
+} else {
+    $scheme = parse_url($redirect, PHP_URL_SCHEME);
+
+    if ($scheme === null && !str_starts_with($redirect, '//')) {
+        // Support relative current-page redirects and legacy application paths.
+        $redirect = APP_URL . ltrim($redirect, '/');
+    } else {
+        // Reject external and protocol-relative redirects.
+        $redirect = APP_URL;
+    }
 }
 
 header('Location: ' . $redirect);
