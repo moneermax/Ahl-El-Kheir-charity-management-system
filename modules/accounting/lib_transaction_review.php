@@ -40,25 +40,55 @@ function ak_transaction_review_delete_receipt_if_unreferenced(?string $path): vo
 
 if (!function_exists('ak_transaction_review_notify_user')) {
 function ak_transaction_review_notify_user(int $userId, string $title, string $body, string $link): void {
+    if ($userId <= 0 || trim($title) === '') return;
+
     try {
-        dbExecute("INSERT INTO notifications (user_id, title, message, link, is_read, created_at) VALUES (?, ?, ?, ?, 0, NOW())",
-            [$userId, $title, $body, $link]);
+        // The notifications table is recipient_user_id/title/body/link/is_read/created_at.
+        // Avoid duplicate delivery when a workflow POST is replayed or retried.
+        $existing = dbFetchOne(
+            "SELECT id
+             FROM notifications
+             WHERE recipient_user_id = ?
+               AND title = ?
+               AND link = ?
+             LIMIT 1",
+            [$userId, $title, $link]
+        );
+
+        if ($existing) return;
+
+        dbExecute(
+            "INSERT INTO notifications (recipient_user_id, title, body, link, is_read, created_at)
+             VALUES (?, ?, ?, ?, 0, NOW())",
+            [$userId, $title, $body, $link]
+        );
     } catch (Throwable $e) {
-        try {
-            dbExecute("INSERT INTO notifications (user_id, title, body, link) VALUES (?, ?, ?, ?)", [$userId, $title, $body, $link]);
-        } catch (Throwable $e2) {}
+        // Notification delivery must never roll back an already-completed business action.
     }
 }
 }
 
 if (!function_exists('ak_transaction_review_notify_fm')) {
 function ak_transaction_review_notify_fm(int $count, string $creatorName = ''): void {
+    if ($count <= 0) return;
+
     try {
-        $users = dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id = r.id WHERE r.code IN ('financial_manager','fm','finance') AND u.is_active = 1");
+        $users = dbFetchAll(
+            "SELECT u.id
+             FROM users u
+             JOIN roles r ON u.role_id = r.id
+             WHERE r.code IN ('financial_manager', 'fm', 'finance')
+               AND u.is_active = 1"
+        );
+
         foreach ($users as $u) {
-            ak_transaction_review_notify_user((int)$u['id'], 'دفعات بانتظار المراجعة المالية',
-                'لديك ' . $count . ' دفعة بانتظار الاعتماد' . ($creatorName !== '' ? ' من ' . $creatorName : '') . '.',
-                'modules/accounting/fm_transaction_review.php');
+            ak_transaction_review_notify_user(
+                (int)$u['id'],
+                'دفعات بانتظار المراجعة المالية',
+                'لديك ' . $count . ' دفعة بانتظار الاعتماد' .
+                    ($creatorName !== '' ? ' من ' . $creatorName : '') . '.',
+                APP_URL . 'modules/accounting/fm_transaction_review.php'
+            );
         }
     } catch (Throwable $e) {}
 }
