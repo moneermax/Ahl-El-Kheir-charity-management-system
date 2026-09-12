@@ -103,6 +103,7 @@ if (APP_ENV === 'development') {
 }
 
 require_once __DIR__ . '/lang.php';
+require_once __DIR__ . '/family_scope.php';
 
 // Narrow accounting hardening: intercept only the legacy disbursement void POST
 // before modules/accounting/disbursements.php can mutate a posted journal directly.
