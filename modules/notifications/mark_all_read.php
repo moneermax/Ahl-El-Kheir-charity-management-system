@@ -45,8 +45,15 @@ if ($redirect === '') {
     $scheme = parse_url($redirect, PHP_URL_SCHEME);
 
     if ($scheme === null && !str_starts_with($redirect, '//')) {
-        // Support relative current-page redirects and legacy application paths.
-        $redirect = APP_URL . ltrim($redirect, '/');
+        // Normalize relative current-page links that may already contain the app directory.
+        $relativeBase = trim(APP_BASE_PATH, '/');
+        $relativeRedirect = ltrim($redirect, '/');
+
+        if ($relativeBase !== '' && ($relativeRedirect === $relativeBase || str_starts_with($relativeRedirect, $relativeBase . '/'))) {
+            $relativeRedirect = ltrim(substr($relativeRedirect, strlen($relativeBase)), '/');
+        }
+
+        $redirect = APP_URL . $relativeRedirect;
     } else {
         // Reject external and protocol-relative redirects.
         $redirect = APP_URL;
