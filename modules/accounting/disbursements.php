@@ -6,14 +6,14 @@ require_once dirname(__DIR__, 2) . '/config/functions.php';
 require_once dirname(__DIR__, 2) . '/config/session.php';
 require_once dirname(__DIR__, 2) . '/modules/accounting/lib_group_workflow.php';
 Session::start();
-if (!Session::isLoggedIn() || !in_array(Session::getUserRole(), ['admin', 'accountant', 'accountant_staff', 'financial_manager', 'general_manager', 'vice_general_manager', 'nanny'], true)) {
+if (!Session::isLoggedIn() || !in_array(Session::getUserRole(), ['admin', 'accountant_staff', 'financial_manager', 'general_manager', 'vice_general_manager', 'nanny'], true)) {
     header('Location: ' . APP_URL . 'index.php');
     exit();
 }
 $role = Session::getUserRole();
 $isNanny = ($role === 'nanny');
 $isAccountantStaff = ($role === 'accountant_staff');
-$canManage = in_array($role, ['admin','general_manager','financial_manager','accountant'], true);
+$canManage = in_array($role, ['admin','general_manager','financial_manager'], true);
 $canManageAssigned = $canManage || $isAccountantStaff;
 if (!$isNanny && !$canManageAssigned) {
     flash('error', 'ليس لديك صلاحية الوصول.');
