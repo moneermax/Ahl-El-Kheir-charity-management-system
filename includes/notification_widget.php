@@ -10,6 +10,7 @@ if (Session::isLoggedIn()) {
     $akNotifUnread = isset($notifUnread) ? (int)$notifUnread : 0;
     $akNotifItems = isset($notifItems) && is_array($notifItems) ? $notifItems : [];
     $akNotifMarkReadUrl = APP_URL . 'modules/notifications/mark_all_read.php';
+    $akNotifRedirect = (string)($_SERVER['REQUEST_URI'] ?? APP_URL);
 ?>
 <style>
 #akNotificationBell{position:relative;z-index:1061;display:inline-flex;align-items:center;flex-shrink:0}
@@ -39,7 +40,13 @@ if (Session::isLoggedIn()) {
  <div class="ak-notif-panel">
   <div class="ak-notif-panel-head">
    <strong><i class="fas fa-bell me-1"></i>الإشعارات</strong>
-   <?php if ($akNotifUnread > 0 && $akNotifMarkReadUrl): ?><a class="ak-notif-mark" href="<?php echo e($akNotifMarkReadUrl); ?>">تحديد الكل كمقروء</a><?php endif; ?>
+   <?php if ($akNotifUnread > 0 && $akNotifMarkReadUrl): ?>
+    <form method="post" action="<?php echo e($akNotifMarkReadUrl); ?>" class="d-inline">
+     <?php echo csrf_field(); ?>
+     <input type="hidden" name="redirect" value="<?php echo e($akNotifRedirect); ?>">
+     <button type="submit" class="ak-notif-mark border-0 bg-transparent p-0">تحديد الكل كمقروء</button>
+    </form>
+   <?php endif; ?>
   </div>
   <div class="ak-notif-panel-body">
    <?php if (!$akNotifItems): ?>
