@@ -83,7 +83,8 @@ function notifyLeaveRoleUsers(array $roleCodes, string $title, string $body, str
         "SELECT u.id
          FROM users u
          JOIN roles r ON r.id = u.role_id
-         WHERE r.code IN ({$placeholders})",
+         WHERE r.code IN ({$placeholders})
+  AND u.is_active = 1",
         array_values($roleCodes)
     );
 
