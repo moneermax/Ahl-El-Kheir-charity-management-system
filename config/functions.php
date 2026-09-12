@@ -43,6 +43,16 @@ function current_user_name(): ?string {
     return $_SESSION['user_name'] ?? null;
 }
 
+/* ---------- legacy notification request hardening ---------- */
+/*
+ * Older header code recognized ?mark_notif_read=1 as a state-changing GET.
+ * Keep that legacy parameter inert unless a future explicit POST handler
+ * consumes it. Current notification actions use dedicated POST+CSRF endpoints.
+ */
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' && isset($_GET['mark_notif_read'])) {
+    unset($_GET['mark_notif_read']);
+}
+
 /* ---------- CSRF ---------- */
 if (!function_exists('csrf_token')) {
     function csrf_token(): string {
