@@ -1,16 +1,19 @@
 # Ahl El Kheir Charity Management System
-## Current System Status & Cross-Module Documentation Revalidation — 2026-09-08
+## Current System Status & Cross-Module Documentation Revalidation — Consolidated through 2026-09-12
 
 **Repository:** `moneermax/Ahl-El-Kheir-charity-management-system`
 **Authoritative branch:** `main`
-**Revalidation date:** 2026-09-08
-**Purpose:** Provide a current repository-grounded status of the complete system, not only the HR module.
+**Original revalidation date:** 2026-09-08
+**Consolidated through:** 2026-09-12
+**Purpose:** Provide the current repository-grounded status of the complete system and consolidate the chronological system-update records that previously existed as separate files.
 
-> This document is a current-state companion to the historical audit documents. It does not erase historical findings. It records what is currently present in the repository, what is implemented, what remains partial, and what must remain an open decision.
+> This is the canonical current-state document. Historical audit evidence remains in the dedicated audit documents. This document incorporates verified updates from 2026-09-02 through 2026-09-12 and records the current continuation state. It does not erase historical findings.
 
-## 1. Repository Revalidation
+---
 
-The current repository tree was scanned recursively. The active application contains the following business/module areas:
+# 1. Repository Revalidation
+
+The current repository contains the following business/module areas:
 
 - Authentication / sessions
 - Users, roles and organizational administration
@@ -33,11 +36,17 @@ The current repository tree was scanned recursively. The active application cont
 - System administration, database/backup/health utilities
 - Audit/system logs
 
-The repository also contains shared configuration, language resources, storage controls, PDF generation through TCPDF, and the authoritative database dump under `database/ahl_el_kheir.sql`.
+The repository also contains shared configuration, language resources, storage controls, PDF generation through TCPDF, and the authoritative database artifact under `database/ahl_el_kheir.sql`.
 
-The previously applied migration scripts have been removed from `database/migrations/`. The current database state is represented by the authoritative SQL/database artifact and the application code that consumes it.
+The current authoritative rule for future work remains:
 
-## 2. Current Architecture
+`Inspect main → diagnose → make the smallest justified change → test → review → commit`
+
+Older development branches are historical context unless deliberately reused. Current repository code and the authoritative database artifact remain the source of truth.
+
+---
+
+# 2. Current Architecture
 
 **VERIFIED**
 
@@ -45,14 +54,16 @@ The previously applied migration scripts have been removed from `database/migrat
 - Vanilla JavaScript.
 - Bootstrap 5.3 RTL presentation.
 - MariaDB/MySQL through PDO.
-- Prepared SQL statements are used through shared database helpers.
-- Server-side authentication and authorization are used throughout protected modules.
-- CSRF protection is present on important state-changing operations.
-- Sensitive storage remains protected and controlled serving endpoints are used where appropriate.
+- Prepared SQL statements through shared database helpers.
+- Server-side authentication and authorization throughout protected modules.
+- CSRF protection on important state-changing operations.
+- Sensitive storage protected through controlled serving endpoints where appropriate.
 
-The architecture must remain procedural PHP + Vanilla JS unless an explicit future architectural decision changes that constraint.
+The architecture remains procedural PHP + Vanilla JS unless an explicit future architectural decision changes that constraint.
 
-## 3. Authentication, Users, Roles and Departments
+---
+
+# 3. Authentication, Users, Roles and Departments
 
 ### Authentication / sessions — VERIFIED
 
@@ -68,9 +79,11 @@ The application has login/logout, authenticated sessions, role resolution, passw
 
 ### Permission governance — IMPLEMENTED-PARTIAL
 
-Role checks exist at page/action level and module-specific policy helpers exist, but a single organization-wide action matrix is still required. This remains a governance/documentation task before broad authorization refactoring.
+Role checks exist at page/action level and module-specific policy helpers exist, but a single organization-wide action matrix remains a governance/documentation task.
 
-## 4. Families and Beneficiaries
+---
+
+# 4. Families and Beneficiaries
 
 **VERIFIED / IMPLEMENTED-PARTIAL**
 
@@ -82,268 +95,384 @@ The authoritative conceptual relationship remains:
 
 Child-level sponsorship is intentional and allows siblings to have different sponsors.
 
-Family verification participates in the monthly sponsorship/disbursement workflow. The current group workflow requires the relevant orphan, mother/contact and bank verification conditions before submission.
+Family verification participates in the monthly sponsorship/disbursement workflow. Protected document storage must not be weakened for convenience.
 
-Document storage remains protected; direct public exposure must not be introduced as a shortcut.
+---
 
-## 5. Sponsors
-
-**VERIFIED / IMPLEMENTED-PARTIAL**
-
-The sponsor module contains sponsor listing, creation, editing, viewing, assignment and sponsor-request workflows.
-
-Sponsor records are distinct from sponsorship records. Sponsor-to-child support is represented through sponsorships rather than treating a sponsor as a property of the family.
-
-The repository also contains sponsor-assignment support in shared configuration and current workflows use supervisor/scope information when applicable.
-
-Remaining documentation item: finalize the complete sponsor lifecycle/status matrix and reconcile any legacy sponsor structures against the authoritative database.
-
-## 6. Sponsorships
+# 5. Sponsors and Sponsorships
 
 **VERIFIED / IMPLEMENTED-PARTIAL**
 
-Current sponsorship workflows support creation, listing and detailed viewing. The implemented relationship is:
+Sponsor records are distinct from sponsorship records. The implemented relationship is:
 
 `Sponsor → Sponsorship → Child → Family`
 
-Observed sponsorship lifecycle states include:
+Observed sponsorship states include `active`, `paused`, `completed`, and `cancelled`.
 
-- `active`
-- `paused`
-- `completed`
-- `cancelled`
+The matching workflow supports prioritized matching, deterministic ordering, supervisor scope and applicable letter/gender restrictions. A legacy `sponsorship_children` concept remains unverified and must not become authoritative merely because an old configuration constant exists.
 
-The creation/matching workflow supports prioritized matching including critical cases and children who lost sponsors, with deterministic FIFO/tie-breaking behavior. Supervisor scope and applicable letter/gender restrictions are validated server-side.
+Remaining documentation work includes final sponsor lifecycle/status and organization-wide scope matrices.
 
-A legacy `sponsorship_children` concept remains documented as unverified and must not be assumed authoritative merely because an old configuration constant exists.
+---
 
-## 7. Supervisors and Nannies
+# 6. Supervisors, Nannies and Groups
 
 **VERIFIED / IMPLEMENTED-PARTIAL**
 
-The supervisor domain contains creation/edit/listing, sponsor visibility, assignment letters, reassignment, returns and payment-related workflows.
+Supervisor scope is used by sponsorship matching and operational access rules. Nanny/group relationships are used by monthly group/disbursement processing. Accountant-to-nanny assignments are protected for uniqueness.
 
-Supervisor scope is used by sponsorship matching and operational access rules.
+The organization-wide record-scope matrix for supervisors, accountant staff and nannies remains an open governance item.
 
-Nanny/group relationships are used by monthly group/disbursement processing. Accountant-to-nanny assignments are maintained with uniqueness protection.
+---
 
-Remaining documentation item: finalize the organization-wide scope matrix describing exactly which supervisor/accountant/nanny can view and mutate each record class.
-
-## 8. Monthly Verification and Disbursement
+# 7. Monthly Verification and Disbursement
 
 **VERIFIED / IMPLEMENTED-PARTIAL**
 
-The current business chain is:
+Current business chain:
 
 `Family Verification → Group Submission → Accountant Review/Batch Creation → Transfer → Nanny Confirmation → Return/Reversal → Reconciliation/Closure`
 
-The repository contains:
-
-- group verification;
-- group disbursement creation;
-- monthly batches;
-- disbursement items;
-- transfer workflow;
-- nanny confirmation;
-- receipts;
-- returned amounts;
-- reversal journals;
-- closure behavior.
+The repository contains group verification, batch creation, disbursement items, transfer, nanny confirmation, receipts, returned amounts, reversal journals and closure behavior.
 
 Observed item statuses include `pending`, `paid` and `returned`.
 
-The return workflow explicitly calculates unspent/pending amounts, records return evidence, creates the reversal journal and returns the financial effect to the cash/safe side of the workflow.
+The return workflow calculates outstanding amounts, records return evidence, creates the reversal journal and returns the financial effect to the cash/safe side of the workflow.
 
-A known technical-debt point remains: some older group-workflow functions and the current disbursement page contain overlapping logging/execution patterns. This must be consolidated only after caller-by-caller verification.
+A known technical-debt point remains: older group-workflow functions and the current disbursement page contain overlapping logging/execution patterns. Consolidation should occur only after caller-by-caller verification.
 
-## 9. Accounting
+---
 
-**VERIFIED / IMPLEMENTED-PARTIAL**
+# 8. Accounting
 
-The accounting module contains:
+**VERIFIED / IMPLEMENTED-PARTIAL → AUDIT PHASE COMPLETED 2026-09-12**
 
-- chart of accounts;
-- journal listing;
-- journal creation;
-- opening balances;
-- vouchers;
-- receipt serving/printing;
-- financial-manager dashboard/review;
-- group verification/disbursement integration;
-- reconciliation views;
-- accounting reports.
+The accounting module contains chart of accounts, journal listing/creation, opening balances, vouchers, receipt handling, financial-manager review, disbursement integration, reconciliation views and accounting reports.
 
-The principal accounting relationship is:
+Principal accounting relationship:
 
 `journal_entries → journal_lines → accounts`
 
-Posted journals feed financial balance calculations.
+Actual accounting tables confirmed during the September audit are:
 
-Known account conventions include cash/treasury, bank and electronic-wallet accounts, with project/disbursement expense accounts used by the relevant workflows.
+- `accounts`
+- `journal_entries`
+- `journal_lines`
 
-The final authoritative financial-source map remains an open schema-governance task because transactions, journals, project funding and disbursement structures coexist.
+Account display name is `accounts.name_ar`. There is no assumed `accounting_entries` table.
 
-## 10. Transactions / Donations / Payments
+## 8.1 Accounting audit result — COMPLETE
+
+The existing Accounting Audit was continued through 2026-09-12 without restarting prior work or recreating protected fixtures.
+
+Completed controls include:
+
+- creator → Financial Manager review;
+- FM return/resubmission;
+- FM approval → posted + balanced journal;
+- returned transaction cancellation with no journal;
+- authorized transaction void + balanced `transaction_void` reversal;
+- manual journal integrity;
+- Trial Balance integrity;
+- Accountant Staff financial/reporting authorization;
+- Accountant Staff assignment-scoped disbursement authorization;
+- receipt/closure workflow;
+- journal listing/filtering;
+- journal detail/history consistency;
+- posted/voided visibility;
+- preservation of original entries after reversal;
+- accounting-history balance consistency;
+- transaction-status/journal-status interaction checks;
+- duplicate/missing relationship checks;
+- cross-module accounting mutation review;
+- legacy disbursement `void_batch` protection and atomic accounting reversal.
+
+The canonical detailed evidence is now maintained in:
+
+`docs/AHL_EL_KHEIR_ACCOUNTING_AUDIT.md`
+
+## 8.2 Accountant Staff financial/reporting authorization — PASSED
+
+The targeted authorization audit confirmed that organization-wide financial/reporting surfaces remain restricted from `accountant_staff`, including journal, ledger, trial balance and organization-wide financial reports.
+
+`modules/reports/my_financial.php` remains the dedicated read-only scoped financial report for Accountant Staff, and `modules/reports/index.php` routes that role to the scoped report.
+
+The organization-wide confirmed-disbursements report was removed from Accountant Staff access. Fix commit:
+
+`4750cb72ddd080ee604928e9aa1c67b9b11f70a9`
+
+The working Accountant Staff dashboard and its `تقاريري المالية` shortcut were intentionally preserved.
+
+## 8.3 Disbursement receipt handling — HARDENED
+
+`modules/accounting/serve_receipt.php` validates stored receipt paths with `realpath()` and `is_file()`, constrains the resolved file to the application base directory, and reports missing/stale receipts safely.
+
+Relevant hardening commits:
+
+- `e6b6fd1f15f63a48c6224da3635efddc95ac38f2`
+- `65625215686027ce172425c611e40c1d039de35c`
+- `8cbf181071fc27de59abc26e1f4d4f0bf8f71a9e`
+
+Deferred UI-only item: same-page Bootstrap modal feedback for missing/stale receipts in `modules/accounting/disbursements.php`.
+
+## 8.4 Automated journal reference protection — FIXED
+
+Repository inspection found three current automated/reversal reference types that were not protected by the generic manual-void route:
+
+```text
+disbursement_void
+item_return
+payroll
+```
+
+The protected set is now:
+
+```text
+transaction
+transaction_void
+disbursement
+disbursement_return
+disbursement_void
+item_return
+voucher
+payroll
+manual_void
+```
+
+Only `modules/accounting/journal.php` was changed for this protection fix. No accounting data or historical journal was rewritten.
+
+Fix commit:
+
+`8e3ee6fd7d95c0efef834a284ed428d125064bfc`
+
+The corresponding targeted runtime/UI verification was subsequently completed during the final audit continuation. The existing journal tests and protected evidence were not unnecessarily repeated.
+
+## 8.5 Legacy disbursement void protection — PASS
+
+The legacy `void_batch` route in `modules/accounting/disbursements.php` was protected by `modules/accounting/disbursement_void_guard.php`.
+
+The guard enforces authorization and CSRF, locks the batch, validates the original posted journal, creates a separate balanced `disbursement_void` reversal, preserves and voids the original journal, voids the linked transaction, updates the batch and records the audit event atomically.
+
+Guard correction commit:
+
+`0071aa0ed83f428e6c4ee61154eef106dcbb7b10`
+
+Existing controlled fixture:
+
+- batch `11`
+- transaction `23`
+- reversal journal `43`
+
+Final result: **PASS**. The fixture must not be recreated or rerun without genuine regression evidence.
+
+## 8.6 Final accounting consistency sweep — COMPLETE
+
+The final read-only consistency sweep returned no unbalanced journals, insufficient-line journals, duplicate transaction journals, duplicate transaction voids, duplicate disbursement reversals, duplicate payroll journals, orphan transaction journals, orphan transaction voids, orphan payroll journals, orphan manual voids or orphan voucher journals.
+
+One historical anomaly appeared:
+
+`ORPHAN_DISBURSEMENT_REVERSAL — disbursement_void — reference 3 — journal_id 7`
+
+Targeted investigation established:
+
+- journal `7` = `JE-REV-000003`;
+- date `2026-08-18`;
+- status `posted`;
+- reference type `disbursement_void`;
+- reference id `3`;
+- description `قيد عكسي لإبطال صرف #3`;
+- 2 lines;
+- debit `195,000.00`;
+- credit `195,000.00`;
+- therefore balanced and structurally valid.
+
+The audit log also contains the historical lifecycle of disbursement `#3`, including CREATE, SUBMIT, APPROVE, TRANSFER, AUTO_CLOSE, DATA_FIX and VOID events. The source operational row is now absent, but the reversal journal is legitimate historical accounting evidence.
+
+**Classification:** historical/legacy orphaned disbursement reversal, not an active accounting-integrity defect.
+
+Journal `7` was deliberately preserved. No deletion, recreation or historical rewrite was performed.
+
+## 8.7 Accounting audit documentation state
+
+`AHL_EL_KHEIR_ACCOUNTING_AUDIT.md` is now the single canonical accounting-audit source of truth. Dated accounting update supplements have been retired after their verified contents were consolidated into that document.
+
+---
+
+# 9. Transactions / Donations / Payments
 
 **VERIFIED / IMPLEMENTED-PARTIAL**
 
 `modules/transactions/` provides payment/transaction listing, creation, sponsor reporting and receipt handling.
 
-The current transaction list:
+The transaction workflow supports role-controlled access, filtering/search, pagination, posted/voided distinction, authorized voiding with reason, accounting journal linkage and audit logging. Supervisor visibility remains scope-controlled.
 
-- supports role-controlled access;
-- provides filtering/search and pagination;
-- distinguishes `posted` and `voided` transactions;
-- allows authorized users to void posted transactions with a reason;
-- creates/links the corresponding accounting journal behavior;
-- writes an audit record for the void operation;
-- restricts supervisor visibility to the applicable sponsor scope.
+The organization-wide canonical donation/payment source map remains an open schema-governance item outside the completed Accounting Audit controls.
 
-The organization-wide donation lifecycle and canonical relationship between all transaction/funding structures still require final schema reconciliation.
+---
 
-## 11. Projects
+# 10. Projects
 
 **VERIFIED / IMPLEMENTED-PARTIAL**
 
-The project domain contains:
+The project domain contains project creation/editing, portfolio/listing, detailed views, team visibility, section permissions, assignments, lifecycle management, budgets, funding allocations, expenses, beneficiaries, closure totals, protected documents and audit logging.
 
-- project creation and editing;
-- portfolio/listing;
-- detailed project view;
-- project/team visibility;
-- section-specific permissions;
-- supervisor/project assignments;
-- lifecycle management;
-- budgets;
-- funding allocations;
-- project expenses;
-- beneficiaries;
-- closure totals;
-- protected project documents;
-- audit logging.
+A dedicated project lifecycle structure coexists with legacy project status information. Canonical lifecycle selection remains technical debt until formally decided.
 
-Observed lifecycle concepts include `planned`, `active`, `under_review`, `completed`, `cancelled`, `closed` and `reopened`.
+---
 
-A dedicated project lifecycle structure coexists with legacy project status information. This is documented as technical debt until the canonical lifecycle source is formally selected.
-
-Project financial controls validate funding allocations against the approved/proposed budget and available balances before relevant approval actions.
-
-## 12. HR
+# 11. HR — Foundation and Integrity Phase CLOSED
 
 **VERIFIED / IMPLEMENTED-PARTIAL**
 
-The current HR foundation includes employees, employment states/history, contracts, salary foundations, leave management, attendance, bulk attendance, payroll policy/calculation structures, payroll accounting integration and reversal support.
+The HR foundation includes employees, employment states/history, contracts, salary foundations, leave management, attendance, bulk attendance, payroll policy/calculation structures, payroll accounting integration and reversal support.
 
-The 2026-09-08 HR documentation update established the durable return-from-leave model using `hr_leave_returns`. Attendance eligibility now considers effective employment state, approved leave and the persistent return date.
+## 11.1 Employment-state model — VERIFIED
 
-The HR module is therefore materially advanced, but final payroll/accounting reconciliation, complete permission coverage and full audit coverage remain open.
+Canonical employment-state data uses:
 
-## 13. Internal Messaging
+- `hr_employment_states`
+- `employees.employment_state_id`
+- `employees.employment_state_changed_at`
+- `hr_employee_state_history`
 
-**VERIFIED**
+Attendance eligibility uses the effective employment state on the selected date. Canonical state categories distinguish `working`, `temporary_unavailable` and `separation`.
 
-The messaging subsystem supports:
+## 11.2 Leave and return model — VERIFIED
 
-- internal messages;
-- user and role recipients;
-- replies/threads;
-- message references;
-- urgent messages;
-- attachments;
-- authorized attachment downloads;
-- attachment deletion;
-- individual message soft deletion;
-- deletion audit information;
-- realtime/reload support.
+Approved leave remains the historical HR interval. Early return is a separate durable event represented by `hr_leave_returns` with `leave_id`, `employee_id`, `return_date` and `created_at`.
 
-Message deletion is a soft-delete lifecycle rather than physical row deletion. Reply structure is preserved.
+The original approved leave interval is not shortened or deleted when an employee returns early. Attendance eligibility uses the persistent effective-return event.
 
-The historical JSON contamination bug is resolved: API responses must remain pure JSON and the search UI shutdown output is restricted to the search route.
+The unique `leave_id` relationship prevents an old return event from unlocking an unrelated later leave.
 
-Attachment storage uses controlled filenames and protected download handling.
+## 11.3 Attendance integrity — VERIFIED
 
-## 14. Notifications
+Check-in, check-out, absence marking and bulk attendance operations use the canonical date-specific eligibility rules. UI state reflects the same rule and cannot bypass server-side validation.
 
-**VERIFIED / IMPLEMENTED-PARTIAL**
+Same-day return behavior was corrected so normal attendance remains eligible after the effective return date.
 
-The repository contains notification infrastructure, shared notification widgets and a mark-all-read endpoint.
+## 11.4 HR dashboard/navigation — CLOSED
 
-Notifications are integrated with operational UI and should be used for workflow events requiring attention.
+`dashboard/hr_dashboard.php` is the canonical HR dashboard.
 
-Remaining documentation item: produce a complete event-to-notification catalog showing which business events create notifications, recipient rules and read/retention behavior.
+`modules/hr/index.php` is a compatibility redirect rather than a duplicate dashboard.
 
-## 15. Search
+The canonical dashboard includes employees, employment states, attendance, leaves, payroll, contracts, payroll policy and payroll financial corrections. Sensitive payroll correction controls remain role-conditional for `hr_manager` and `admin`.
 
-**VERIFIED / IMPLEMENTED-PARTIAL**
+The HR action cards were finalized as an even two-row grid, with **التصحيحات المالية للرواتب** included in the same grid.
 
-The global search workspace supports permission-aware search across configured domains including families, sponsors, sponsorships and payments.
+This HR dashboard/navigation work is closed and should not be reopened without concrete regression evidence.
 
-Authorization is enforced server-side. UI filtering is supplemental.
+## 11.5 HR phase continuation rule
 
-Record-level visibility must remain aligned with each domain's organizational scope.
+The original attendance investigation, return-from-leave debugging, persistent leave-return correction, dashboard duplicate-entry-point investigation, dashboard navigation consolidation and final card-layout work are historical completed work.
 
-The route-specific search UI behavior is an important regression boundary because global output must never contaminate JSON/API responses.
+Broader HR items remain partial, especially complete payroll/accounting reconciliation, organization-wide permission coverage, comprehensive audit-log coverage and production regression testing. They are future verification items, not reasons to reopen the closed HR phase without evidence.
 
-## 16. Reports and PDF Generation
+---
 
-**VERIFIED / IMPLEMENTED-PARTIAL**
+# 12. Internal Messaging — VERIFIED
 
-The reports module currently contains:
+The messaging subsystem supports messages, role/user recipients, replies/threads, references, urgent messages, attachments, authorized attachment downloads, attachment deletion and individual message soft deletion.
 
-- report center/index;
-- financial reports;
-- sponsorship reports;
-- operational reports;
-- HR reports;
-- orphaned/family exception reporting;
-- lost-contact reporting;
-- confirmed-disbursement reporting.
+## 12.1 Individual message deletion — VERIFIED / IMPLEMENTED
 
-Reports are role-filtered and date-aware where implemented.
+Normal users may delete only messages they personally sent; System Administrator access follows authorized scope. Server-side authorization is authoritative.
 
-TCPDF is present for PDF generation.
+Messages are soft-deleted rather than physically removed. The `messages` table records `deleted_at` and `deleted_by`, preserving reply relationships and conversation position.
 
-Remaining documentation item: establish a formal report catalog defining authoritative source tables, calculations, date semantics, permissions and reconciliation expectations for every official report.
+The UI displays `تم حذف هذه الرسالة` for deleted content, preserves replies and removes normal delete controls after successful deletion.
 
-## 17. Settings
+Deleted-message attachments are cleaned from messaging attachment records and physical storage through the implemented deletion workflow.
 
-**VERIFIED / IMPLEMENTED-PARTIAL**
+The implementation uses:
 
-`modules/settings/index.php` provides system-level settings management. Settings must remain controlled by authorization and must not be used to bypass business-rule validation in individual modules.
+- `assets/js/messaging_message_delete.js`
+- `modules/messages/delete_message.php`
 
-## 18. System Administration
+The historical JSON contamination issue was corrected; documented API responses remain pure JSON.
+
+The message-deletion implementation was verified in the 2026-09-02 milestone and is now part of the current system state rather than a future/open requirement.
+
+---
+
+# 13. Notifications
 
 **VERIFIED / IMPLEMENTED-PARTIAL**
 
-The system module contains utilities for:
+The repository contains notification infrastructure, shared notification widgets and mark-all-read behavior.
 
-- database/system administration;
-- backup;
-- health checks;
-- controlled sponsor import/synchronization;
-- data-maintenance utilities such as gender backfill/splitting tools.
+Remaining documentation item: complete event-to-notification catalog with recipient rules and retention/read behavior.
 
-These utilities are high-risk and should remain tightly permissioned, logged where appropriate, and excluded from ordinary staff access.
+---
 
-The repository retains `database/ahl_el_kheir.sql` as the authoritative database artifact. Applied migration scripts have been removed after completion; future schema changes must be documented and captured in the authoritative database artifact before cleanup of temporary migration files.
-
-## 19. Administration / Winback
+# 14. Search
 
 **VERIFIED / IMPLEMENTED-PARTIAL**
 
-The administration module contains a winback workflow. Its current implementation should be treated as an operational recovery/return-to-support function and should be reconciled with sponsorship/beneficiary status rules before any future expansion.
+Global search supports permission-aware search across configured domains. Authorization is server-side and UI filtering is supplemental.
 
-## 20. Logs and Audit
+The route-specific search UI behavior remains a regression boundary because API/JSON output must not be contaminated with HTML or JavaScript.
+
+---
+
+# 15. Reports and PDF Generation
 
 **VERIFIED / IMPLEMENTED-PARTIAL**
 
-The logs module provides audit/system log views. The audit viewer supports filtering and displays actor/action/entity and old/new values where recorded.
+Reports include financial, sponsorship, operational, HR, orphan/family exception, lost-contact and confirmed-disbursement reporting. Reports are role-filtered and date-aware where implemented. TCPDF is present for PDF generation.
 
-High-value workflows demonstrably write audit evidence, including login, sponsorship changes, project actions, group/disbursement financial actions and relevant message deletion behavior.
+Remaining documentation item: formal report/source/calculation catalog.
 
-Universal coverage across every sensitive CRUD/permission mutation has not yet been proven.
+---
 
-## 21. Cross-Module Integrity Rules
+# 16. Settings
+
+**VERIFIED / IMPLEMENTED-PARTIAL**
+
+`modules/settings/index.php` provides system-level settings management. Settings remain subject to authorization and must not bypass module-level business validation.
+
+---
+
+# 17. System Administration
+
+**VERIFIED / IMPLEMENTED-PARTIAL**
+
+System utilities include database/system administration, backup, health checks, controlled sponsor import/synchronization and data-maintenance utilities.
+
+These high-risk utilities must remain tightly permissioned and appropriately logged.
+
+The authoritative database artifact is `database/ahl_el_kheir.sql`. Future schema changes must be captured in that artifact before cleanup of temporary implementation scripts.
+
+---
+
+# 18. Administration / Winback
+
+**VERIFIED / IMPLEMENTED-PARTIAL**
+
+The administration module contains a winback workflow. Its implementation should remain aligned with sponsorship/beneficiary status rules before future expansion.
+
+---
+
+# 19. Logs and Audit
+
+**VERIFIED / IMPLEMENTED-PARTIAL**
+
+The logs module provides audit/system-log views showing actor/action/entity and old/new values where recorded.
+
+High-value workflows demonstrably write audit evidence, including login, sponsorship changes, project actions, group/disbursement financial actions and message deletion behavior.
+
+Universal coverage across every sensitive CRUD/permission mutation has not been proven.
+
+Confirmed local `audit_log` schema includes:
+
+`id, user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent, created_at`
+
+The accounting audit specifically confirmed that the action field is `audit_log.action`, not `action_type`.
+
+---
+
+# 20. Cross-Module Integrity Rules
 
 The complete system must preserve these boundaries:
 
@@ -361,8 +490,11 @@ The complete system must preserve these boundaries:
 12. UI restrictions never replace server-side authorization.
 13. Financial multi-step changes must be transaction-safe.
 14. Legacy structures must not become authoritative merely because they still exist in configuration or old code.
+15. Historical accounting anomalies must be preserved unless a concrete integrity defect and safe remediation are proven.
 
-## 22. Current System Maturity Assessment
+---
+
+# 21. Current System Maturity Assessment — Consolidated
 
 | Area | Current classification | Main remaining work |
 |---|---|---|
@@ -373,10 +505,10 @@ The complete system must preserve these boundaries:
 | Sponsorships | IMPLEMENTED-PARTIAL | Final lifecycle/legacy-schema reconciliation |
 | Supervisors/nannies | IMPLEMENTED-PARTIAL | Final record-scope policy |
 | Verification/disbursement | IMPLEMENTED-PARTIAL | Final state matrix + workflow-path consolidation |
-| Accounting | IMPLEMENTED-PARTIAL | Canonical financial-source map + reconciliation |
+| Accounting | **AUDIT COMPLETE / IMPLEMENTED-PARTIAL** | Canonical financial-source map and future auditability/UI enhancements |
 | Transactions/payments | IMPLEMENTED-PARTIAL | Organization-wide donation/payment model |
 | Projects | IMPLEMENTED-PARTIAL | Canonical lifecycle + final finance mapping |
-| HR | IMPLEMENTED-PARTIAL | Payroll/accounting reconciliation + final audit matrix |
+| HR | IMPLEMENTED-PARTIAL / FOUNDATION CLOSED | Payroll/accounting reconciliation + final audit matrix |
 | Messaging | VERIFIED | Preserve current JSON/attachment/delete behavior |
 | Notifications | IMPLEMENTED-PARTIAL | Event/recipient catalog |
 | Search | IMPLEMENTED-PARTIAL | Complete record-level visibility audit |
@@ -385,40 +517,130 @@ The complete system must preserve these boundaries:
 | System administration | IMPLEMENTED-PARTIAL | Harden high-risk utilities and production controls |
 | Logs/audit | IMPLEMENTED-PARTIAL | Mandatory event/retention matrix |
 
-## 23. Documentation Maintenance Decision
+---
 
-The project documentation set should now be understood as three layers:
+# 22. Consolidated Historical Milestones — 2026-09-02 through 2026-09-12
+
+This section replaces the separate chronological system-update files that previously recorded these milestones.
+
+## 22.1 2026-09-02 — Messaging soft-delete milestone
+
+Verified individual message deletion with server-side authorization, CSRF protection, soft-delete fields `deleted_at` / `deleted_by`, preserved reply structure, attachment cleanup, deleted-message previews and unread suppression.
+
+Implementation references:
+
+- `assets/js/messaging_message_delete.js`
+- `modules/messages/delete_message.php`
+
+The feature is now fully represented in Section 12 of this document.
+
+## 22.2 2026-09-08 — HR foundation and continuation checkpoint
+
+Verified the canonical employment-state and leave-return model, attendance eligibility, bulk attendance behavior and the canonical HR dashboard/navigation.
+
+HR foundation work was closed for continuation purposes. Accounting became the next major audit phase.
+
+## 22.3 2026-09-10 — Accountant Staff financial/reporting authorization
+
+The organization-wide accounting/reporting surfaces were confirmed restricted from Accountant Staff, while `my_financial.php` remained the scoped read-only report. The confirmed-disbursements organization-wide report was removed from Accountant Staff access.
+
+Fix commit:
+
+`4750cb72ddd080ee604928e9aa1c67b9b11f70a9`
+
+## 22.4 2026-09-11 — Accounting journal integrity and legacy disbursement void
+
+Journal listing/filtering and journal detail/history consistency were verified. Automated journal reference protection was expanded to include `disbursement_void`, `item_return` and `payroll`.
+
+Fix commit:
+
+`8e3ee6fd7d95c0efef834a284ed428d125064bfc`
+
+The legacy `void_batch` route was protected by an atomic guard and the existing batch 11 / transaction 23 / reversal journal 43 fixture passed.
+
+Guard commit:
+
+`0071aa0ed83f428e6c4ee61154eef106dcbb7b10`
+
+## 22.5 2026-09-12 — Accounting audit closure
+
+The final consistency sweep was completed without restarting earlier tests. All active consistency checks passed. The single historical `disbursement_void` orphan involving journal 7 was investigated through its accounting record and audit-log history and classified as a legitimate historical orphan.
+
+No database cleanup was performed and journal 7 was preserved.
+
+The detailed accounting evidence is now consolidated in `AHL_EL_KHEIR_ACCOUNTING_AUDIT.md`.
+
+---
+
+# 23. Documentation Consolidation State
+
+The documentation set now uses the following authoritative structure for current work:
+
+### Canonical current-state document
+
+- `AHL_EL_KHEIR_CURRENT_SYSTEM_STATUS_2026-09-08.md` — this file, now consolidated through 2026-09-12.
+
+### Long-lived architecture layer
+
+- `AHL_EL_KHEIR_SYSTEM_ANALYSIS.md`
+
+### Canonical accounting audit
+
+- `AHL_EL_KHEIR_ACCOUNTING_AUDIT.md`
 
 ### Historical audit layer
 
 - `AHL_EL_KHEIR_REPOSITORY_AUDIT.md`
 - `AHL_EL_KHEIR_COMPLETE_REPOSITORY_AUDIT.md`
 
-These preserve the evidence and conclusions of the audits in which they were produced.
+The separate system-update files dated 2026-09-02, 2026-09-08, 2026-09-10, 2026-09-11 and the dedicated 2026-09-11 disbursement-void supplement are retired after consolidation into this document.
 
-### Long-lived architecture layer
+Historical audit evidence itself is not deleted merely because it is old; the dedicated audit documents remain preserved.
 
-- `AHL_EL_KHEIR_SYSTEM_ANALYSIS.md`
+---
 
-This remains the architectural/functional handoff document and should receive a major revision when the current-state model is formally frozen.
+# 24. Remaining Open Documentation / Architecture Work
 
-### Chronological/current-state layer
+Before a future major implementation phase is considered fully documented, the system should converge on:
 
-- `AHL_EL_KHEIR_DOCUMENTATION_UPDATE_2026-09-02.md`
-- `AHL_EL_KHEIR_DOCUMENTATION_UPDATE_2026-09-08.md`
-- this document: `AHL_EL_KHEIR_CURRENT_SYSTEM_STATUS_2026-09-08.md`
+1. Module/action permission matrix.
+2. Workflow state-transition matrix.
+3. Database table/relationship catalog.
+4. Report/source/calculation catalog.
+5. Canonical financial-source map.
+6. Complete audit-event coverage matrix.
+7. Future accounting source↔original↔reversal navigation enhancement.
 
-This current-state document exists specifically to prevent the documentation from becoming HR-only while the application continues to evolve across modules.
+These are future documentation/architecture tasks. They do not reopen completed Accounting Audit controls or the closed HR foundation phase.
 
-## 24. Next Documentation Phase
+---
 
-Before the next major implementation phase, the documentation should converge on four authoritative matrices:
+# 25. Current Continuation Point — 2026-09-12
 
-1. **Module/action permission matrix**
-2. **Workflow state-transition matrix**
-3. **Database table/relationship catalog**
-4. **Report/source/calculation catalog**
+The project is an existing continuation. Do not restart completed HR or Accounting work.
 
-Once those are frozen, the main `AHL_EL_KHEIR_SYSTEM_ANALYSIS.md` should receive a major versioned revision incorporating this current state, while the historical audit files remain preserved.
+Current state:
 
-**Status:** Complete-system repository revalidation recorded on 2026-09-08. No application behavior is changed by this document.
+```text
+HR FOUNDATION / INTEGRITY AUDIT
+        ↓
+      CLOSED
+        ↓
+ACCOUNTING AUDIT
+        ↓
+      COMPLETE
+        ↓
+CURRENT PROJECT WORK
+        ↓
+Proceed to the next non-completed system/module task
+```
+
+The completed Accounting Audit evidence is preserved in `AHL_EL_KHEIR_ACCOUNTING_AUDIT.md`.
+
+The current system-state context is preserved in this document.
+
+For every future milestone:
+
+**Code correct → behavior verified → documentation updated → session index updated → exact next continuation point clear.**
+
+**Status:** Consolidated current system status through 2026-09-12. No application behavior or database data is changed by this document.
