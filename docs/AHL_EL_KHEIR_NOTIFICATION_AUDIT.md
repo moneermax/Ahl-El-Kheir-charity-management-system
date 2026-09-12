@@ -105,10 +105,18 @@ Payroll approval and payment are currently HR-controlled state transitions, with
 
 `config/messaging.php` already has recipient-scoped `mark_notification_read()` support, while the notification widget currently provides mark-all-read. Individual notification links do not yet have a dedicated POST+CSRF mark-read action. This should be addressed after required workflow delivery is complete so read-state work does not obscure missing business notifications.
 
+## 2026-09-12 repository re-check
+
+The current `main` branch was re-read directly from the repository before continuing implementation work. The re-check confirms that the two previously identified sponsor-payment gaps are still present in `modules/transactions/create.php`: the returned `sponsor_payments` resubmission path changes the state back to `pending` but sends no FM notification, and the new supervisor `sponsor_payments` creation path has no FM notification delivery. The existing `ak_transaction_review_notify_fm_event()` helper remains available for the safe implementation.
+
+The same repository re-check confirms that `modules/hr/leaves.php::notifyLeaveRoleUsers()` still selects users by role without `u.is_active = 1`, so the HR leave recipient-scope finding remains open.
+
+No code in these large files was replaced during this re-check. The repository write interface requires a complete replacement body for an existing file; because the connector's retrieval response truncates these large source files, blindly reconstructing and replacing them would risk deleting unrelated working code. Therefore these findings remain explicitly **open**, rather than being falsely reported as fixed. The existing audit document is the only file updated in this checkpoint.
+
 ## Next exact work
 
-1. Wire supervisor sponsor-payment submit/resubmit → active FM notifications.
-2. Correct HR leave recipient filtering to active users.
+1. Safely patch supervisor sponsor-payment submit/resubmit → active FM notifications.
+2. Safely patch HR leave recipient filtering → active users only.
 3. Implement the confirmed disbursement notifications using existing authorization scope and event/reference-aware helpers.
 4. Audit remaining direct notification writers and generic helper callers.
 5. Add individual notification mark-read behavior where appropriate.
