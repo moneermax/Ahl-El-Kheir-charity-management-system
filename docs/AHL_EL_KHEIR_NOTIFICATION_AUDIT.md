@@ -79,9 +79,13 @@ The monthly sponsorship loop notifies per inserted payment row, and the non-mont
 
 ### HR leave notifications — fixed
 
-`modules/hr/leaves.php::notifyLeaveRoleUsers()` now restricts role recipients to active users with `u.is_active = 1`. This prevents inactive accounts from receiving leave workflow notifications while preserving the existing role-based recipient scope.
+`modules/hr/leaves.php::notifyLeaveRoleUsers()` restricts role recipients to active users with `u.is_active = 1`. This prevents inactive accounts from receiving leave workflow notifications while preserving the existing role-based recipient scope.
 
-Current verified source commit: `100738461d7a4b030a3ff0f1f5c25ff920dadfda`.
+The local `createLeaveNotification()` writer is now internally exception-isolated. Notification delivery failures are logged and cannot alter the already-completed leave state transition or turn a successful workflow into a generic error response.
+
+Source fix commit: `ff0e9e2c74bdde820be4a72e1d15bc04629401cc`.
+
+The resulting leave source was re-read after the user's push and the replacement function was verified structurally/syntactically. No user-side leave workflow test is required merely to close this resilience finding.
 
 ## Disbursement notifications — implementation confirmed
 
@@ -130,9 +134,26 @@ The required implementation is now recorded as source-complete:
 
 Payroll approval and payment are currently HR-controlled state transitions, with automatic accounting posting on payment. Repository inspection did not establish a separate human approval recipient who must act after the payroll transition. Therefore no notification is classified as mandatory yet; this remains an architectural decision point rather than a defect.
 
-## Generic notification helper — architectural finding pending caller audit
+## Direct notification writers / caller audit — current checkpoint
 
-`config/messaging.php::send_system_notification()` accepts type/reference parameters but currently stores only recipient/title/body/link and derives the link from the reference ID as a message-center URL. Before changing it, all active callers must be audited to determine whether it is legacy, incorrectly implemented, or intentionally limited.
+The remaining notification-producing source paths were re-read using the current `main` branch and the repository's notification-related commit history.
+
+### Confirmed active direct writers
+
+1. `modules/users/recovery.php` writes password-recovery approval/rejection notifications directly to `notifications`. These writes are POST-only, CSRF-protected by the workflow, recipient-specific, and notification failures are isolated. The rejection writer is additionally guarded by the successful pending→rejected state change.
+2. `modules/hr/leaves.php` uses its local `createLeaveNotification()` writer. It now has internal exception isolation and active-user role filtering. Its workflow writes occur only after the relevant leave state change succeeds.
+
+These two local writers are intentionally retained because their workflows are already self-contained and do not need to be coupled to the accounting transaction-review helper.
+
+### Confirmed active notification helper path
+
+Accounting transaction review, supervisor sponsor-payment review, transaction cancellation, and disbursement workflow notifications use the event/reference-aware notification infrastructure rather than the generic `send_system_notification()` helper. The current helper persists workflow type/reference fields where supplied, uses active recipient scope, deduplicates by workflow reference, and isolates notification failures from the committed business action.
+
+### Generic `send_system_notification()` — retained, not changed speculatively
+
+`config/messaging.php::send_system_notification()` accepts `type`, `referenceType`, and `referenceId`, but its implementation stores only recipient/title/body/link and derives a message-center link from the reference ID. The repository code-search facility does not currently return reliable caller results for this exact symbol, and notification-related commit history does not identify an active production caller.
+
+Therefore the audit does **not** claim that the helper is definitively unused. It is classified as a **legacy/compatibility helper with no recoverable active caller in the current repository audit**, and it remains unchanged to avoid breaking an undiscovered caller. If a future active caller is identified, the helper must be reviewed before use for workflow notifications because its type/reference arguments are not fully persisted.
 
 ## Notification read state — fixed for individual workflow links
 
@@ -159,30 +180,23 @@ Global widget inclusion commit: `96ea51abbef748e1b5122de66f7b2d0e94369049`
 
 The current repository was re-checked for the notification infrastructure and the known direct notification writers. The notification module now contains both POST+CSRF mark-all-read and POST+CSRF individual mark-read endpoints. `includes/header.php` still contains the legacy `mark_notif_read` URL construction, but `config/functions.php` explicitly strips that parameter from non-POST requests, so the legacy GET mutation is inert.
 
-Two direct workflow notification writers remain confirmed in source:
-
-- `modules/users/recovery.php` writes approval/rejection notifications with current `recipient_user_id`, `type`, `title`, `body`, `link`, and `is_read` columns.
-- `modules/hr/leaves.php` uses its local `createLeaveNotification()` writer and active-role recipient query.
+The direct-writer audit now confirms two self-contained workflow writers: password recovery and HR leave. Accounting/disbursement workflow notifications are routed through the event/reference-aware helper path. No additional active direct writer was established from the current repository source and notification-related history available to the audit tooling.
 
 The recovery workflow had an additional GET-side mutation that marked all recovery notifications read whenever the recovery-management page was opened. That mutation has been removed. The business approval/rejection notifications themselves remain unchanged and continue to be generated only from POST workflow actions.
 
-`config/messaging.php::send_system_notification()` remains a legacy/general helper whose current implementation does not persist `type`, `reference_id`, or `reference_type` even though those arguments are accepted. It has not been changed speculatively because active callers must be established first. The event-aware helper used by active accounting workflows remains the authoritative path for reference-aware workflow notifications.
-
-### Leave notification isolation — still requires source patch
-
-The leave notification writer itself is not internally exception-isolated. Its caller is inside the workflow `try/catch`, so a notification database failure cannot roll back the already-executed leave state change, but it can make the completed workflow fall into the generic error path instead of cleanly redirecting. This remains a notification-resilience finding and should be patched when the complete current `modules/hr/leaves.php` blob can be safely edited without reconstructing the source.
+`config/messaging.php::send_system_notification()` remains a legacy/general helper whose current implementation does not persist `type`, `reference_id`, or `reference_type` even though those arguments are accepted. It has not been changed speculatively because an active caller could not be established reliably. The event-aware helper used by active accounting workflows remains the authoritative path for reference-aware workflow notifications.
 
 ## Current checkpoint
 
-The notification UI/read-state layer is now integrated in source. No user-side workflow test is required merely to continue the code audit; testing should be performed after the next set of business-notification source changes or when a targeted regression needs confirmation.
+The notification UI/read-state layer is integrated in source. The leave notification resilience finding is closed. The remaining notification architecture finding is the legacy generic helper described above; it is intentionally deferred until an active caller can be established with reliable repository evidence.
+
+No user-side workflow test is required merely to continue this source audit. Testing should be performed only after a newly changed business-notification workflow or when a targeted regression requires confirmation.
 
 ## Next exact work
 
-1. Patch leave notification delivery so notification failures are isolated from the user-facing workflow result as well as from the business state mutation.
-2. Re-read the resulting leave source and verify recipient scope, active-user filtering, self-notification exclusion, event/reference values, actionable links, and post-commit ordering.
-3. Audit remaining direct notification writers/callers that can be recovered from repository source without relying on incomplete code-search indexing.
-4. Review the generic `send_system_notification()` helper only after its active callers are established.
-5. Run only targeted end-to-end notification tests for newly changed workflows; do not recreate old fixtures or rerun completed accounting tests.
+1. If reliable caller evidence for `send_system_notification()` becomes available, audit each caller before deciding whether to modernize or retire the helper.
+2. Continue a source-level sweep for notification-producing SQL only where repository tooling can provide complete, reliable evidence; do not treat failed code-search indexing as proof of absence.
+3. Run only targeted end-to-end notification tests for newly changed workflows; do not recreate old fixtures or rerun completed accounting tests.
 
 ## Protected principle
 
