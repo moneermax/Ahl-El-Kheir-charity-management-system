@@ -138,12 +138,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_opening_balance'
                     header('Location: ' . APP_URL . 'modules/accounting/journal.php?view=' . $eid); exit();
                 } catch (Throwable $e) {
                     if ($pdo->inTransaction()) $pdo->rollBack();
-                    error_log(sprintf(
-                        '[Ahl El Kheir] Opening balance transaction failed: %s in %s:%d',
-                        $e->getMessage(),
-                        $e->getFile(),
-                        $e->getLine()
-                    ));
                     $errors[] = 'تعذر تسجيل الرصيد الافتتاحي بالكامل. لم يتم حفظ أي جزء منه.';
                 }
             }
