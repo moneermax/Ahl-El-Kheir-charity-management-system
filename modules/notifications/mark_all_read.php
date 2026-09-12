@@ -12,6 +12,17 @@ if (!Session::isLoggedIn()) {
     exit;
 }
 
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    header('Location: ' . APP_URL);
+    exit;
+}
+
+if (!verify_csrf()) {
+    flash('error', 'انتهت جلسة الأمان. يرجى المحاولة مرة أخرى.');
+    header('Location: ' . APP_URL);
+    exit;
+}
+
 try {
     dbExecute(
         "UPDATE notifications
@@ -24,7 +35,7 @@ try {
     // Do not expose database details to the user.
 }
 
-$redirect = (string)($_SERVER['HTTP_REFERER'] ?? '');
+$redirect = (string)($_POST['redirect'] ?? '');
 
 if ($redirect === '' || strpos($redirect, APP_URL) !== 0) {
     $redirect = APP_URL;
