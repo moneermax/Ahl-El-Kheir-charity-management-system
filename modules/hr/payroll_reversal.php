@@ -161,13 +161,18 @@ try {
   if(dbFetchOne("SELECT id FROM hr_payroll_reversals WHERE payroll_id=? LIMIT 1",[$payrollId])) throw new RuntimeException('تم عكس هذا المسير مسبقاً ولا يمكن إنشاء عكس ثانٍ.');
   $original=dbFetchOne("SELECT id FROM journal_entries WHERE reference_type='payroll' AND reference_id=? AND status='posted' ORDER BY id ASC LIMIT 1",[$payrollId]);
   if(!$original) throw new RuntimeException('هذا المسير مصروف، لكنه لم يُرحّل إلى المحاسبة؛ لا يوجد قيد محاسبي يمكن عكسه.');
-  $reversalEntryId=hrReversePaidPayroll($payrollId,(int)Session::getUserId(),$reason);
+
+  $pdo->beginTransaction();
   try {
+   $reversalEntryId=hrReversePaidPayroll($payrollId,(int)Session::getUserId(),$reason);
    $pdo->prepare("INSERT INTO hr_payroll_reversals (payroll_id,original_entry_id,reversal_entry_id,reason,reversed_by) VALUES (?,?,?,?,?)")
     ->execute([$payrollId,(int)$original['id'],$reversalEntryId,$reason,(int)Session::getUserId()]);
-  } catch(Throwable $auditError) {
-   if(!dbFetchOne("SELECT id FROM hr_payroll_reversals WHERE payroll_id=? LIMIT 1",[$payrollId])) throw $auditError;
+   $pdo->commit();
+  } catch(Throwable $workflowError) {
+   if($pdo->inTransaction()) $pdo->rollBack();
+   throw $workflowError;
   }
+
   $message='تم عكس القيد المحاسبي لمسير الراتب بنجاح. بقي سجل المسير الأصلي محفوظاً وغير قابل للتعديل.';
  }
 } catch(Throwable $e) { $message='خطأ: '.$e->getMessage(); $msgType='error'; }
