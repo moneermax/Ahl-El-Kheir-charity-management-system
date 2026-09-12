@@ -49,8 +49,17 @@ $ships = dbFetchAll(
 );
 
 if ($role === 'supervisor') {
-    $myLetterIds = array_map('intval', array_column(dbFetchAll("SELECT letter_id FROM supervisor_letters WHERE supervisor_id = ?", [Session::getUserId()]), 'letter_id'));
-    $mine = ((int)($sp['supervisor_id'] ?? 0) === Session::getUserId()) || ($sp['first_letter_id'] && in_array((int)$sp['first_letter_id'], $myLetterIds, true));
+    $matrixRows = dbFetchAll("SELECT letter_id, gender FROM supervisor_letters WHERE supervisor_id = ?", [Session::getUserId()]);
+    $mine = ((int)($sp['supervisor_id'] ?? 0) === Session::getUserId());
+    if (!$mine && $sp['first_letter_id']) {
+        $sponsorGender = strtolower(trim((string)($sp['gender'] ?? '')));
+        foreach ($matrixRows as $matrixRow) {
+            if ((int)$matrixRow['letter_id'] !== (int)$sp['first_letter_id']) continue;
+            $scopeGender = strtolower(trim((string)($matrixRow['gender'] ?? '')));
+            $scopeGender = in_array($scopeGender, ['male','m','ذكر'], true) ? 'male' : (in_array($scopeGender, ['female','f','أنثى','انثى'], true) ? 'female' : 'both');
+            if ($scopeGender === 'both' || $scopeGender === $sponsorGender) { $mine = true; break; }
+        }
+    }
     if (!$mine) { flash('error', 'لا تملك صلاحية تعديل هذا الكفيل.'); redirect('modules/sponsors/index.php'); }
 }
 
@@ -58,7 +67,7 @@ $errors = [];
 $input = [
     'full_name' => $sp['full_name'], 'email' => $sp['email'] ?? '', 'phone' => $sp['phone'] ?? '', 'phone_purpose' => $sp['phone_purpose'] ?? 'both',
     'alt_phone' => $sp['alt_phone'] ?? '', 'alt_phone_purpose' => $sp['alt_phone_purpose'] ?? 'both', 'address' => $sp['address'] ?? '',
-    'sponsor_type' => $sp['sponsor_type'] ?? 'individual', 'gender' => $sp['gender'] ?? 'unknown', 'payment' => $sp['preferred_payment_method'] ?? 'cash',
+    'sponsor_type' => $sp['sponsor_type'] ?? 'individual', 'gender' => $sp['gender'] ?? '', 'payment' => $sp['preferred_payment_method'] ?? 'cash',
     'status' => $sp['status'] ?? 'active', 'desired_orphans' => $sp['desired_orphans'] ?? '', 'notes' => $sp['notes'] ?? '',
     'acquisition_source' => $sp['acquisition_source'] ?? '', 'brought_by_name' => $sp['brought_by_name'] ?? ''
 ];
@@ -72,7 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $input['alt_phone_purpose'] = in_array($_POST['alt_phone_purpose'] ?? '', ['call','whatsapp','both'], true) ? $_POST['alt_phone_purpose'] : 'both';
     $input['address'] = trim($_POST['address'] ?? '');
     $input['sponsor_type'] = in_array($_POST['sponsor_type'] ?? '', ['individual','company','organization'], true) ? $_POST['sponsor_type'] : 'individual';
-    $input['gender'] = in_array($_POST['gender'] ?? '', ['male','female','organization','unknown'], true) ? $_POST['gender'] : 'unknown';
+    $input['gender'] = in_array($_POST['gender'] ?? '', ['male','female','organization'], true) ? $_POST['gender'] : '';
     $input['payment'] = in_array($_POST['payment'] ?? '', ['cash','bank_transfer','credit_card','mobile','other'], true) ? $_POST['payment'] : 'cash';
     $input['status'] = in_array($_POST['status'] ?? '', ['active','inactive','suspended','cancelled'], true) ? $_POST['status'] : 'active';
     $input['desired_orphans'] = trim($_POST['desired_orphans'] ?? '');
@@ -82,6 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($input['full_name'] === '') $errors[] = 'اسم الكفيل مطلوب.';
     if ($input['email'] !== '' && !filter_var($input['email'], FILTER_VALIDATE_EMAIL)) $errors[] = 'البريد الإلكتروني غير صالح.';
+    if ($input['gender'] === '') $errors[] = 'جنس الكفيل مطلوب.';
 
     if (!$errors && verify_csrf()) {
         $letterMap = [];
@@ -148,7 +158,7 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
                 <div class="col-md-3"><label class="form-label">هاتف بديل</label><input type="text" name="alt_phone" class="form-control" dir="ltr" value="<?php echo e($input['alt_phone']); ?>"></div>
                 <div class="col-md-3"><label class="form-label">نوع الاستخدام</label><select name="alt_phone_purpose" class="form-select"><option value="call" <?php echo $input['alt_phone_purpose'] === 'call' ? 'selected' : ''; ?>>للاتصال</option><option value="whatsapp" <?php echo $input['alt_phone_purpose'] === 'whatsapp' ? 'selected' : ''; ?>>واتساب</option><option value="both" <?php echo $input['alt_phone_purpose'] === 'both' ? 'selected' : ''; ?>>للاتصال وواتساب</option></select></div>
                 <div class="col-md-3"><label class="form-label">النوع</label><select name="sponsor_type" class="form-select"><option value="individual" <?php echo $input['sponsor_type'] === 'individual' ? 'selected' : ''; ?>>فرد</option><option value="company" <?php echo $input['sponsor_type'] === 'company' ? 'selected' : ''; ?>>شركة</option><option value="organization" <?php echo $input['sponsor_type'] === 'organization' ? 'selected' : ''; ?>>منظمة</option></select></div>
-                <div class="col-md-3"><label class="form-label">الجنس</label><select name="gender" class="form-select"><option value="unknown" <?php echo $input['gender'] === 'unknown' ? 'selected' : ''; ?>>غير معروف</option><option value="male" <?php echo $input['gender'] === 'male' ? 'selected' : ''; ?>>ذكر</option><option value="female" <?php echo $input['gender'] === 'female' ? 'selected' : ''; ?>>أنثى</option><option value="organization" <?php echo $input['gender'] === 'organization' ? 'selected' : ''; ?>>منظمة</option></select></div>
+                <div class="col-md-3"><label class="form-label">الجنس *</label><select name="gender" class="form-select" required><option value="">— اختر الجنس —</option><option value="male" <?php echo $input['gender'] === 'male' ? 'selected' : ''; ?>>ذكر</option><option value="female" <?php echo $input['gender'] === 'female' ? 'selected' : ''; ?>>أنثى</option><option value="organization" <?php echo $input['gender'] === 'organization' ? 'selected' : ''; ?>>منظمة</option></select></div>
                 <div class="col-md-3"><label class="form-label">طريقة الدفع المفضلة</label><select name="payment" class="form-select"><option value="cash" <?php echo $input['payment'] === 'cash' ? 'selected' : ''; ?>>نقدي</option><option value="bank_transfer" <?php echo $input['payment'] === 'bank_transfer' ? 'selected' : ''; ?>>تحويل بنكي</option><option value="mobile" <?php echo $input['payment'] === 'mobile' ? 'selected' : ''; ?>>محفظة إلكترونية</option><option value="other" <?php echo $input['payment'] === 'other' ? 'selected' : ''; ?>>أخرى</option></select></div>
                 <div class="col-md-3"><label class="form-label">الحالة</label><select name="status" class="form-select"><option value="active" <?php echo $input['status'] === 'active' ? 'selected' : ''; ?>>نشط</option><option value="inactive" <?php echo $input['status'] === 'inactive' ? 'selected' : ''; ?>>غير نشط</option><option value="suspended" <?php echo $input['status'] === 'suspended' ? 'selected' : ''; ?>>موقوف</option><option value="cancelled" <?php echo $input['status'] === 'cancelled' ? 'selected' : ''; ?>>ملغي</option></select></div>
                 <div class="col-md-6"><label class="form-label">العنوان</label><input type="text" name="address" class="form-control" value="<?php echo e($input['address']); ?>"></div>
@@ -236,5 +246,4 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
         </div>
     </div>
 </div>
-
 <?php include dirname(__DIR__, 2) . '/includes/footer.php'; ?>
