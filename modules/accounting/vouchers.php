@@ -129,7 +129,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $canManage) {
                 throw new RuntimeException('لا يمكن إبطال السند: لا يوجد قيد محاسبي مرتبط به.');
             }
 
-            $journal = dbFetchOne("SELECT id, status, reference_type, reference_id
+            $journal = dbFetchOne("SELECT id, entry_code, entry_date, description, status, reference_type, reference_id
                                    FROM journal_entries
                                    WHERE id = ?
                                      AND reference_type = 'voucher'
@@ -150,13 +150,68 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $canManage) {
                 throw new RuntimeException('لا يمكن إبطال السند: يجب أن يرتبط السند بقيد محاسبي واحد فقط.');
             }
 
+            $reversalCount = (int)(dbFetchOne("SELECT COUNT(*) c
+                                               FROM journal_entries
+                                               WHERE reference_type = 'voucher_void'
+                                                 AND reference_id = ?", [$vId])['c'] ?? 0);
+            if ($reversalCount !== 0) {
+                throw new RuntimeException('لا يمكن إبطال السند: يوجد قيد عكسي سابق مرتبط به.');
+            }
+
+            $originalLines = dbFetchAll("SELECT account_id, debit, credit, description
+                                         FROM journal_lines
+                                         WHERE entry_id = ?
+                                         ORDER BY id
+                                         FOR UPDATE", [(int)$journal['id']]);
+            if (count($originalLines) < 2) {
+                throw new RuntimeException('لا يمكن إبطال السند: القيد الأصلي لا يحتوي على سطور محاسبية كافية.');
+            }
+
+            $totalDebit = 0.0;
+            $totalCredit = 0.0;
+            foreach ($originalLines as $line) {
+                $totalDebit += (float)$line['debit'];
+                $totalCredit += (float)$line['credit'];
+            }
+            if ($totalDebit <= 0 || abs($totalDebit - $totalCredit) > 0.000001) {
+                throw new RuntimeException('لا يمكن إبطال السند: القيد الأصلي غير متوازن.');
+            }
+
             $voidReason = trim($_POST['void_reason'] ?? '') ?: 'إبطال سند';
+
+            // Preserve the original posted journal as voided, then create a separate
+            // posted reversal journal linked to the voucher. The reversal swaps debit/credit
+            // on every original line and therefore remains independently balanced.
+            $n = (int)(dbFetchOne("SELECT COUNT(*) c FROM journal_entries")['c'] ?? 0) + 1;
+            $reversalCode = 'JE-' . str_pad((string)$n, 6, '0', STR_PAD_LEFT);
+            $reversalLabel = 'عكس سند ' . $vLocked['voucher_no'] . ($voidReason !== '' ? ' — ' . $voidReason : '');
+
+            dbExecute("INSERT INTO journal_entries (entry_code, entry_date, description, reference_type, reference_id, status, created_by)
+                       VALUES (?,?,?,'voucher_void',?,'posted',?)",
+                [$reversalCode, $journal['entry_date'], $reversalLabel, $vId, Session::getUserId()]);
+            $reversalId = (int)(dbFetchOne("SELECT LAST_INSERT_ID() id")['id']);
+            if ($reversalId <= 0) {
+                throw new RuntimeException('تعذر إنشاء القيد العكسي للسند.');
+            }
+
+            foreach ($originalLines as $line) {
+                dbExecute("INSERT INTO journal_lines (entry_id, account_id, debit, credit, description)
+                           VALUES (?,?,?,?,?)",
+                    [$reversalId, (int)$line['account_id'], (float)$line['credit'], (float)$line['debit'], $reversalLabel]);
+            }
+
+            $reversalTotals = dbFetchOne("SELECT COALESCE(SUM(debit),0) debit_total, COALESCE(SUM(credit),0) credit_total
+                                          FROM journal_lines WHERE entry_id = ?", [$reversalId]);
+            if (abs((float)$reversalTotals['debit_total'] - (float)$reversalTotals['credit_total']) > 0.000001 || (float)$reversalTotals['debit_total'] <= 0) {
+                throw new RuntimeException('تعذر إبطال السند: القيد العكسي الناتج غير متوازن.');
+            }
+
             $journalAffected = dbExecute("UPDATE journal_entries
                                           SET status='voided', voided_at=NOW(), voided_by=?, void_reason=?
                                           WHERE id=? AND status='posted'",
                 [Session::getUserId(), $voidReason, (int)$journal['id']]);
             if ($journalAffected !== 1) {
-                throw new RuntimeException('تعذر إبطال القيد المحاسبي المرتبط بالسند.');
+                throw new RuntimeException('تعذر إبطال القيد المحاسبي الأصلي المرتبط بالسند.');
             }
 
             $voucherAffected = dbExecute("UPDATE vouchers SET status='voided' WHERE id=? AND status='posted'", [$vId]);
@@ -164,8 +219,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $canManage) {
                 throw new RuntimeException('تعذر تحديث حالة السند إلى مبطل.');
             }
 
+            try {
+                dbExecute("INSERT INTO audit_log (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent)
+                           VALUES (?, 'VOID', 'vouchers', ?, ?, ?, ?, ?)",
+                    [Session::getUserId(), $vId,
+                     json_encode(['status' => 'posted', 'entry_id' => (int)$journal['id']], JSON_UNESCAPED_UNICODE),
+                     json_encode(['status' => 'voided', 'entry_id' => (int)$journal['id'], 'reversal_journal_id' => $reversalId, 'reason' => $voidReason], JSON_UNESCAPED_UNICODE),
+                     $_SERVER['REMOTE_ADDR'] ?? '', $_SERVER['HTTP_USER_AGENT'] ?? '']);
+            } catch (Throwable $auditError) {}
+
             db()->commit();
-            flash('success', 'تم إبطال السند ' . $vLocked['voucher_no']);
+            flash('success', 'تم إبطال السند ' . $vLocked['voucher_no'] . ' وإنشاء القيد العكسي #' . $reversalId);
         } catch (Throwable $e) {
             try {
                 if (db()->inTransaction()) db()->rollBack();
