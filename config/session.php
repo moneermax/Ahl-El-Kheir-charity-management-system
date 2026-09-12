@@ -26,6 +26,12 @@ if (!class_exists('Session', false)) {
                     }
                 }
             }
+
+            // Centralized record-level boundary for the small set of legacy
+            // family/child routes that historically accepted direct IDs.
+            if (function_exists('ak_enforce_family_request_scope')) {
+                ak_enforce_family_request_scope();
+            }
         }
 
         public static function isLoggedIn(): bool {
