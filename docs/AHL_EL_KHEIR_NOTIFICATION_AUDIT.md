@@ -52,6 +52,23 @@ The accounting transaction-review notification path now uses the current notific
 
 Relevant commits include `3ca3814cf01a676536c2cf91b89f3842fc07cbe5`, `717ed19104bf94ea1a6a4114bad7c5dce8b57898`, `0d06152736b2b905d63c07ee9f6fc7e49614d5cb`, and `5f7fc01e2c884f42d604f4b12be67027613e6377`.
 
+### Supervisor sponsor-payment notifications — fixed
+
+`modules/transactions/create.php` now sends event-aware FM notifications for both previously missing supervisor payment paths:
+
+1. a newly created supervisor sponsor payment (`pending`), using event type `sponsor_payment_submitted` and the payment-specific `sponsor_payments.id` reference;
+2. a supervisor resubmitting a returned sponsor payment (`returned` → `pending`), using event type `sponsor_payment_resubmitted` and the payment-specific reference.
+
+Both notifications:
+
+- target active Financial Manager role codes through `ak_transaction_review_notify_fm_event()`;
+- exclude the submitting supervisor from the FM recipient set;
+- use the payment-specific FM review queue link;
+- use the existing event/reference-aware deduplication path;
+- are isolated from the business-state mutation so notification delivery failure does not roll back the completed payment workflow.
+
+The monthly sponsorship loop notifies per inserted payment row, and the non-monthly supervisor-payment path notifies after its inserted payment row. The returned-payment path notifies only after the guarded `returned` → `pending` update succeeds and after obsolete receipt cleanup.
+
 ## Confirmed remaining findings
 
 ### HR leave notifications — finding pending
@@ -59,15 +76,6 @@ Relevant commits include `3ca3814cf01a676536c2cf91b89f3842fc07cbe5`, `717ed19104
 `modules/hr/leaves.php` sends request/approval/rejection notifications, but its role-recipient query does not currently require `u.is_active = 1`. This can allow inactive accounts with the relevant role to receive workflow notifications.
 
 Required correction: restrict role recipients to active users without changing the leave workflow or recipient roles.
-
-### Supervisor sponsor-payment notifications — finding pending
-
-`modules/transactions/create.php` still lacks explicit FM notification delivery for:
-
-1. a newly created supervisor sponsor payment;
-2. a supervisor resubmitting a returned sponsor payment.
-
-The event-aware FM helper already exists in `modules/accounting/lib_transaction_review.php` and should be used for both paths with payment-specific reference IDs/types and actionable FM review links.
 
 ### Disbursement notifications — detailed workflow audit
 
@@ -107,20 +115,21 @@ Payroll approval and payment are currently HR-controlled state transitions, with
 
 ## 2026-09-12 repository re-check
 
-The current `main` branch was re-read directly from the repository before continuing implementation work. The re-check confirms that the two previously identified sponsor-payment gaps are still present in `modules/transactions/create.php`: the returned `sponsor_payments` resubmission path changes the state back to `pending` but sends no FM notification, and the new supervisor `sponsor_payments` creation path has no FM notification delivery. The existing `ak_transaction_review_notify_fm_event()` helper remains available for the safe implementation.
+The current `main` branch was re-read after the local supervisor sponsor-payment notification changes were pushed. The sponsor-payment finding is now **closed in source**: the returned-payment resubmission path sends an FM notification after the guarded state transition succeeds, and both supervisor sponsor-payment creation paths send an FM notification for each newly inserted payment row.
 
-The same repository re-check confirms that `modules/hr/leaves.php::notifyLeaveRoleUsers()` still selects users by role without `u.is_active = 1`, so the HR leave recipient-scope finding remains open.
+The repository re-check also confirms that the FM notification implementation uses the existing event-aware helper and payment-specific references/links rather than introducing a separate notification mechanism.
 
-No code in these large files was replaced during this re-check. The repository write interface requires a complete replacement body for an existing file; because the connector's retrieval response truncates these large source files, blindly reconstructing and replacing them would risk deleting unrelated working code. Therefore these findings remain explicitly **open**, rather than being falsely reported as fixed. The existing audit document is the only file updated in this checkpoint.
+The HR leave recipient-scope finding remains open: `modules/hr/leaves.php::notifyLeaveRoleUsers()` still selects users by role without `u.is_active = 1`.
+
+No old accounting fixtures or verification tests were repeated. The sponsor-payment changes require only targeted notification workflow tests after the remaining source audit is complete.
 
 ## Next exact work
 
-1. Safely patch supervisor sponsor-payment submit/resubmit → active FM notifications.
-2. Safely patch HR leave recipient filtering → active users only.
-3. Implement the confirmed disbursement notifications using existing authorization scope and event/reference-aware helpers.
-4. Audit remaining direct notification writers and generic helper callers.
-5. Add individual notification mark-read behavior where appropriate.
-6. Run only targeted end-to-end notification tests for newly changed workflows.
+1. Safely patch HR leave recipient filtering → active users only.
+2. Implement the confirmed disbursement notifications using existing authorization scope and event/reference-aware helpers.
+3. Audit remaining direct notification writers and generic helper callers.
+4. Add individual notification mark-read behavior where appropriate.
+5. Run only targeted end-to-end notification tests for newly changed workflows, including the supervisor sponsor-payment submit/resubmit paths.
 
 ## Protected principle
 
