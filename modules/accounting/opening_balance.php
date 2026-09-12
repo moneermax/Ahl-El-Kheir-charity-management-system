@@ -75,32 +75,63 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_opening_balance'
             if (!$cashId || !$bankId || !$walletId || !$obId) {
                 $errors[] = 'أحد الحسابات الأساسية (1100/1200/1300/3100) غير موجود في دليل الحسابات. راجع صفحة "دليل الحسابات" أولاً.';
             } else {
-                $n = (int)(dbFetchOne("SELECT COUNT(*) c FROM journal_entries")['c'] ?? 0) + 1;
-                $code = 'JE-OB-' . str_pad((string)$n, 6, '0', STR_PAD_LEFT);
-
-                dbExecute(
-                    "INSERT INTO journal_entries (entry_code, entry_date, description, reference_type, status, created_by)
-                     VALUES (?, ?, ?, 'opening_balance', 'posted', ?)",
-                    [$code, $date, 'الرصيد الافتتاحي الحقيقي للمنظمة', $uid]
-                );
-                $eid = (int)(dbFetchOne("SELECT LAST_INSERT_ID() id")['id']);
-
-                if ($cash > 0)   dbExecute("INSERT INTO journal_lines (entry_id, account_id, debit, credit, description) VALUES (?,?,?,0,?)", [$eid, $cashId, $cash, 'رصيد افتتاحي — نقدي']);
-                if ($bank > 0)   dbExecute("INSERT INTO journal_lines (entry_id, account_id, debit, credit, description) VALUES (?,?,?,0,?)", [$eid, $bankId, $bank, 'رصيد افتتاحي — بنكي']);
-                if ($wallet > 0) dbExecute("INSERT INTO journal_lines (entry_id, account_id, debit, credit, description) VALUES (?,?,?,0,?)", [$eid, $walletId, $wallet, 'رصيد افتتاحي — محفظة إلكترونية']);
-                dbExecute("INSERT INTO journal_lines (entry_id, account_id, debit, credit, description) VALUES (?,?,0,?,?)", [$eid, $obId, $total, 'الأرصدة الافتتاحية']);
-
+                $pdo = db();
                 try {
-                    dbExecute(
-                        "INSERT INTO audit_log (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent)
-                         VALUES (?, 'CREATE_OPENING_BALANCE', 'journal_entries', ?, NULL, ?, ?, ?)",
-                        [$uid, $eid, json_encode(['cash' => $cash, 'bank' => $bank, 'wallet' => $wallet], JSON_UNESCAPED_UNICODE),
-                         $_SERVER['REMOTE_ADDR'] ?? '', $_SERVER['HTTP_USER_AGENT'] ?? '']
-                    );
-                } catch (Throwable $e) {}
+                    // Opening-balance creation is one accounting event: the journal header,
+                    // all journal lines, and the source audit record must succeed together.
+                    $pdo->beginTransaction();
 
-                flash('success', 'تم تسجيل الرصيد الافتتاحي بنجاح: ' . number_format($total, 2) . ' ج.س (' . $code . ')');
-                header('Location: ' . APP_URL . 'modules/accounting/journal.php?view=' . $eid); exit();
+                    $lastNo = (int)(dbFetchOne(
+                        "SELECT COALESCE(MAX(CAST(SUBSTRING(entry_code, 4) AS UNSIGNED)), 0) AS max_no
+                         FROM journal_entries WHERE entry_code REGEXP '^JE-[0-9]+$'"
+                    )['max_no'] ?? 0);
+                    $n = $lastNo + 1;
+                    $code = 'JE-OB-' . str_pad((string)$n, 6, '0', STR_PAD_LEFT);
+
+                    dbExecute(
+                        "INSERT INTO journal_entries (entry_code, entry_date, description, reference_type, status, created_by)
+                         VALUES (?, ?, ?, 'opening_balance', 'posted', ?)",
+                        [$code, $date, 'الرصيد الافتتاحي الحقيقي للمنظمة', $uid]
+                    );
+                    $eid = (int)dbLastInsertId();
+                    if ($eid <= 0) {
+                        throw new RuntimeException('تعذر إنشاء رأس القيد المحاسبي.');
+                    }
+
+                    if ($cash > 0)   dbExecute("INSERT INTO journal_lines (entry_id, account_id, debit, credit, description) VALUES (?,?,?,0,?)", [$eid, $cashId, $cash, 'رصيد افتتاحي — نقدي']);
+                    if ($bank > 0)   dbExecute("INSERT INTO journal_lines (entry_id, account_id, debit, credit, description) VALUES (?,?,?,0,?)", [$eid, $bankId, $bank, 'رصيد افتتاحي — بنكي']);
+                    if ($wallet > 0) dbExecute("INSERT INTO journal_lines (entry_id, account_id, debit, credit, description) VALUES (?,?,?,0,?)", [$eid, $walletId, $wallet, 'رصيد افتتاحي — محفظة إلكترونية']);
+                    dbExecute("INSERT INTO journal_lines (entry_id, account_id, debit, credit, description) VALUES (?,?,0,?,?)", [$eid, $obId, $total, 'الأرصدة الافتتاحية']);
+
+                    $postedTotals = dbFetchOne(
+                        "SELECT COALESCE(SUM(debit),0) debit_total,
+                                COALESCE(SUM(credit),0) credit_total,
+                                COUNT(*) line_count
+                         FROM journal_lines WHERE entry_id = ?",
+                        [$eid]
+                    );
+                    if ((int)$postedTotals['line_count'] < 2 ||
+                        round((float)$postedTotals['debit_total'], 2) !== round((float)$postedTotals['credit_total'], 2) ||
+                        round((float)$postedTotals['debit_total'], 2) !== round($total, 2)) {
+                        throw new RuntimeException('فشل التحقق من توازن الرصيد الافتتاحي بعد الحفظ.');
+                    }
+
+                    try {
+                        dbExecute(
+                            "INSERT INTO audit_log (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent)
+                             VALUES (?, 'CREATE_OPENING_BALANCE', 'journal_entries', ?, NULL, ?, ?, ?)",
+                            [$uid, $eid, json_encode(['cash' => $cash, 'bank' => $bank, 'wallet' => $wallet], JSON_UNESCAPED_UNICODE),
+                             $_SERVER['REMOTE_ADDR'] ?? '', $_SERVER['HTTP_USER_AGENT'] ?? '']
+                        );
+                    } catch (Throwable $auditError) {}
+
+                    $pdo->commit();
+                    flash('success', 'تم تسجيل الرصيد الافتتاحي بنجاح: ' . number_format($total, 2) . ' ج.س (' . $code . ')');
+                    header('Location: ' . APP_URL . 'modules/accounting/journal.php?view=' . $eid); exit();
+                } catch (Throwable $e) {
+                    if ($pdo->inTransaction()) $pdo->rollBack();
+                    $errors[] = 'تعذر تسجيل الرصيد الافتتاحي بالكامل. لم يتم حفظ أي جزء منه.';
+                }
             }
         }
     }
