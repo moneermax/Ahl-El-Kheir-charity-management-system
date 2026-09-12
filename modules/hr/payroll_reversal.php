@@ -5,10 +5,12 @@ require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../config/functions.php';
 require_once __DIR__ . '/../../config/session.php';
 require_once __DIR__ . '/lib_contract_salary.php';
+require_once dirname(__DIR__) . '/accounting/lib.php';
 Session::start();
 $userRole = Session::getUserRole();
 if (!Session::isLoggedIn() || !in_array($userRole, ['hr_manager', 'admin'], true)) { header('Location: ' . APP_URL . 'index.php'); exit(); }
 $pdo = db(); $message = ''; $msgType = 'success';
+
 dbExecute("CREATE TABLE IF NOT EXISTS hr_payroll_reversals (
  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
  payroll_id INT UNSIGNED NOT NULL,
@@ -20,6 +22,133 @@ dbExecute("CREATE TABLE IF NOT EXISTS hr_payroll_reversals (
  UNIQUE KEY uq_hr_payroll_reversal_payroll (payroll_id),
  KEY idx_hr_payroll_reversal_entry (reversal_entry_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+function hrReversePaidPayroll(int $payrollId, int $userId, string $reason): int
+{
+    if ($payrollId <= 0) throw new RuntimeException('سجل مسير الراتب غير صالح.');
+    if ($userId <= 0) throw new RuntimeException('المستخدم المنفذ غير صالح.');
+    $reason = trim($reason);
+    if ($reason === '') throw new RuntimeException('سبب العكس مطلوب لأغراض التدقيق المحاسبي.');
+
+    ak_ensure_tables();
+    ak_seed_accounts();
+    $pdo = db();
+    $startedHere = false;
+    if (!$pdo->inTransaction()) {
+        $pdo->beginTransaction();
+        $startedHere = true;
+    }
+
+    try {
+        $payroll = dbFetchOne(
+            "SELECT id, status, accounting_status FROM payroll WHERE id=? LIMIT 1 FOR UPDATE",
+            [$payrollId]
+        );
+        if (!$payroll) throw new RuntimeException('سجل مسير الراتب غير موجود.');
+        if ($payroll['status'] !== 'paid') throw new RuntimeException('لا يمكن عكس مسير غير مصروف.');
+
+        if (dbFetchOne("SELECT id FROM hr_payroll_reversals WHERE payroll_id=? LIMIT 1 FOR UPDATE", [$payrollId])) {
+            throw new RuntimeException('تم عكس هذا المسير مسبقاً ولا يمكن إنشاء عكس ثانٍ.');
+        }
+
+        $original = dbFetchOne(
+            "SELECT id, entry_code, entry_date, description, created_by
+             FROM journal_entries
+             WHERE reference_type='payroll' AND reference_id=? AND status='posted'
+             ORDER BY id ASC LIMIT 1 FOR UPDATE",
+            [$payrollId]
+        );
+        if (!$original) throw new RuntimeException('لا يوجد قيد محاسبي مرحّل يمكن عكسه لهذا المسير.');
+
+        $existingReversal = dbFetchOne(
+            "SELECT id FROM journal_entries
+             WHERE reference_type='manual_void' AND reference_id=?
+             LIMIT 1 FOR UPDATE",
+            [(int)$original['id']]
+        );
+        if ($existingReversal) throw new RuntimeException('يوجد قيد عكس محاسبي سابق لهذا المسير.');
+
+        $lines = dbFetchAll(
+            "SELECT account_id, debit, credit, description
+             FROM journal_lines WHERE entry_id=? ORDER BY id",
+            [(int)$original['id']]
+        );
+        if (count($lines) < 2) throw new RuntimeException('القيد الأصلي لا يحتوي على أسطر محاسبية كافية للعكس.');
+
+        $totalDebit = 0.0;
+        $totalCredit = 0.0;
+        foreach ($lines as $line) {
+            $debit = round((float)$line['debit'], 2);
+            $credit = round((float)$line['credit'], 2);
+            if ($debit < 0 || $credit < 0 || ($debit > 0 && $credit > 0)) {
+                throw new RuntimeException('سطر القيد الأصلي غير صالح للعكس.');
+            }
+            $totalDebit += $debit;
+            $totalCredit += $credit;
+        }
+        if (round($totalDebit, 2) !== round($totalCredit, 2) || round($totalDebit, 2) <= 0) {
+            throw new RuntimeException('القيد الأصلي غير متوازن أو صفري ولا يمكن عكسه.');
+        }
+
+        $entryCode = 'JE-REV-PAY-' . $payrollId . '-' . date('YmdHis');
+        dbExecute(
+            "INSERT INTO journal_entries
+                (entry_code, entry_date, description, reference_type, reference_id, status, created_by)
+             VALUES (?,?,?,?,?,'posted',?)",
+            [
+                $entryCode,
+                $original['entry_date'],
+                'عكس مسير راتب: ' . $payrollId . ' — ' . $reason,
+                'manual_void',
+                (int)$original['id'],
+                $userId
+            ]
+        );
+        $reversalId = (int)(dbFetchOne("SELECT LAST_INSERT_ID() id")['id'] ?? 0);
+        if ($reversalId <= 0) throw new RuntimeException('تعذر إنشاء قيد العكس.');
+
+        foreach ($lines as $line) {
+            dbExecute(
+                "INSERT INTO journal_lines (entry_id, account_id, debit, credit, description)
+                 VALUES (?,?,?,?,?)",
+                [
+                    $reversalId,
+                    (int)$line['account_id'],
+                    round((float)$line['credit'], 2),
+                    round((float)$line['debit'], 2),
+                    'عكس: ' . ((string)($line['description'] ?? ''))
+                ]
+            );
+        }
+
+        $check = dbFetchOne(
+            "SELECT ROUND(SUM(debit),2) AS debit_total, ROUND(SUM(credit),2) AS credit_total,
+                    COUNT(*) AS line_count
+             FROM journal_lines WHERE entry_id=?",
+            [$reversalId]
+        );
+        if ((int)($check['line_count'] ?? 0) < 2 ||
+            round((float)$check['debit_total'], 2) !== round((float)$check['credit_total'], 2) ||
+            round((float)$check['debit_total'], 2) <= 0) {
+            throw new RuntimeException('قيد العكس الناتج غير متوازن أو صفري.');
+        }
+
+        $updated = dbExecute(
+            "UPDATE journal_entries
+             SET status='voided', voided_at=NOW(), voided_by=?, void_reason=?
+             WHERE id=? AND status='posted'",
+            [$userId, $reason, (int)$original['id']]
+        );
+        if ($updated !== 1) throw new RuntimeException('تعذر إغلاق القيد المحاسبي الأصلي.');
+
+        if ($startedHere) $pdo->commit();
+        return $reversalId;
+    } catch (Throwable $e) {
+        if ($startedHere && $pdo->inTransaction()) $pdo->rollBack();
+        throw $e;
+    }
+}
+
 try {
  if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'reverse') {
   $payrollId=(int)($_POST['payroll_id']??0); $reason=trim((string)($_POST['reason']??''));
