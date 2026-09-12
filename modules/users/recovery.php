@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             dbExecute("UPDATE password_recovery_requests SET status='approved', reviewed_by=?, reviewed_at=NOW(), expires_at=DATE_ADD(NOW(), INTERVAL 24 HOUR) WHERE id=? AND status='pending'", [Session::getUserId(), $rid]);
 
             try {
-                dbExecute("INSERT INTO notifications (recipient_user_id, type, title, body, link, is_read) VALUES (?, 'recovery', ?, ?, ?, 0)", [(int)$req['user_id'], 'تمت الموافقة على طلب استعادة كلمة المرور', 'تمت الموافقة على طلبك. تواصل مع مسؤول الموارد البشرية أو مسؤول النظام لاستلام كلمة المرور المؤقتة.', 'modules/users/change_password.php?forced=1']);
+                dbExecute("INSERT INTO notifications (recipient_user_id, type, title, body, link, is_read) VALUES (?, 'recovery', ?, ?, ?, 0)", [(int)$req['user_id'], 'تمت الموافقة على طلب استعادة كلمة المرور', 'تمت الموافقة على طلبك. تواصل مع مسؤول الموارد البشرية أو مسؤول النظام لاستلام كلمة المرور المؤقتة.', APP_URL . 'modules/users/change_password.php?forced=1']);
             } catch (Throwable $e) {}
 
             try {
@@ -52,7 +52,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('error', 'تعذر تنفيذ استعادة كلمة المرور. لم يتم تغيير الحساب.');
         }
     } elseif (isset($_POST['reject'])) {
-        dbExecute("UPDATE password_recovery_requests SET status='rejected', reviewed_by=?, reviewed_at=NOW() WHERE id=? AND status='pending'", [Session::getUserId(), $rid]);
+        $rejected = dbExecute("UPDATE password_recovery_requests SET status='rejected', reviewed_by=?, reviewed_at=NOW() WHERE id=? AND status='pending'", [Session::getUserId(), $rid]);
+        if ($rejected === 1) {
+            try {
+                dbExecute("INSERT INTO notifications (recipient_user_id, type, title, body, link, is_read) VALUES (?, 'recovery', ?, ?, ?, 0)", [
+                    (int)$req['user_id'],
+                    'تم رفض طلب استعادة كلمة المرور',
+                    'تم رفض طلبك لاستعادة كلمة المرور. يرجى التواصل مع الموارد البشرية أو مسؤول النظام إذا كنت بحاجة إلى مساعدة.',
+                    APP_URL . 'modules/users/password_recovery_request.php'
+                ]);
+            } catch (Throwable $e) {}
+        }
         flash('success', 'تم رفض طلب استعادة كلمة المرور.');
     }
 
