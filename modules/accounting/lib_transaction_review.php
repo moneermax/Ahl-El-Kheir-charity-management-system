@@ -45,13 +45,14 @@ function ak_transaction_review_notify_event(int $userId, string $title, string $
     try {
         if ($referenceId !== null && trim((string)$referenceType) !== '') {
             $existing = dbFetchOne(
-                "SELECT id FROM notifications
-                 WHERE recipient_user_id = ?
-                   AND reference_id = ?
-                   AND reference_type = ?
-                 LIMIT 1",
-                [$userId, $referenceId, $referenceType]
-            );
+    "SELECT id FROM notifications
+     WHERE recipient_user_id = ?
+       AND reference_id = ?
+       AND reference_type = ?
+       AND is_read = 0
+     LIMIT 1",
+    [$userId, $referenceId, $referenceType]
+);
         } else {
             $existing = dbFetchOne(
                 "SELECT id FROM notifications
