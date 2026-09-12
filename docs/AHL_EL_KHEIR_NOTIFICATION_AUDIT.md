@@ -46,6 +46,12 @@ Notifications are classified as required workflow notifications, operational not
 
 Fix commit: `21362ef456db73303734acdede3e332f330aedf0`
 
+### Transaction-review notification infrastructure — fixed
+
+The accounting transaction-review notification path now uses the current notification schema, active financial-manager role codes, event/reference-aware delivery, and notification-error isolation. Supervisor payment approval/return paths were also repaired, and an FM-targeted event helper was added for remaining supervisor submission paths.
+
+Relevant commits include `3ca3814cf01a676536c2cf91b89f3842fc07cbe5`, `717ed19104bf94ea1a6a4114bad7c5dce8b57898`, `0d06152736b2b905d63c07ee9f6fc7e49614d5cb`, and `5f7fc01e2c884f42d604f4b12be67027613e6377`.
+
 ## Confirmed remaining findings
 
 ### HR leave notifications — finding pending
@@ -63,16 +69,29 @@ Required correction: restrict role recipients to active users without changing t
 
 The event-aware FM helper already exists in `modules/accounting/lib_transaction_review.php` and should be used for both paths with payment-specific reference IDs/types and actionable FM review links.
 
-### Disbursement notifications — workflow gap identified
+### Disbursement notifications — detailed workflow audit
 
-`modules/accounting/disbursements.php` performs the major state transitions but does not currently provide system notifications for recipient-driven steps such as:
+`modules/accounting/disbursements.php` was inspected across its principal state transitions. The file currently performs the state changes and audit logging but contains no notification delivery for the recipient-driven transitions below.
 
-- newly created/assigned batch becoming actionable for the nanny;
-- completed transfer becoming actionable for the nanny;
-- accountant reopening a batch/item for nanny action;
-- nanny closing a batch with a return requiring accountant/management awareness.
+| Action | State change | Recipient | Classification | Finding |
+|---|---|---|---|---|
+| Create batch | `monthly_disbursements` → `pending_approval` | Reviewer/manager | Required if this is a human approval queue | No notification currently sent. The exact reviewer scope must follow the existing authorization model rather than a blanket broadcast. |
+| Transfer with receipt | `pending_approval` → `transferred` | Assigned nanny (`monthly_disbursements.nanny_id`) | **Required workflow notification** | Nanny immediately becomes able to confirm family items, so the nanny must be notified. |
+| Confirm family item | item `pending` → `paid` | No downstream actor required by this transition | No notification | Correct to avoid notification spam; this is the nanny's own action. |
+| Fully close batch | `transferred` → `received` | Accountant/manager | Operational / likely required for monitoring | No notification currently sent. Recipient scope needs to follow the assigned-accountant relationship where applicable. |
+| Close with return | batch `transferred` → `returned`; pending items → `returned`; reversal journal posted | Assigned accountant/financial oversight | **Required workflow notification** | The nanny's return creates a financial/accounting follow-up event. The responsible accountant/financial role must be notified. |
+| Reopen whole batch | `received`/`returned` → `transferred` | Assigned nanny | **Required workflow notification** | Nanny becomes actionable again, but no notification is sent. |
+| Reopen family item | item `paid`/`returned` → `pending` | Assigned nanny | **Required workflow notification** | Nanny becomes actionable again, but no notification is sent. |
+| Void batch | active batch → `voided` | Assigned nanny when the batch had become actionable; otherwise no nanny action | Conditional operational notification | If a transferred/received/returned batch is voided, the nanny should be informed that the previously actionable batch is no longer valid. A pending-approval void does not require a nanny notification. |
 
-These must be mapped against actual assignment/authorization scope before implementation; do not broadcast blindly.
+Important authorization facts from the implementation:
+
+- Nanny access is restricted to batches where `monthly_disbursements.nanny_id` equals the logged-in nanny.
+- `accountant_staff` scope is restricted through `accountant_nanny_assignments`.
+- Manager-level users are not a safe reason by themselves to broadcast every event; recipient selection must follow the actual workflow responsibility.
+- Notification delivery must not be implemented by changing accounting state logic or by using database triggers.
+
+The disbursement audit therefore establishes **at least four mandatory recipient-driven notification events**: transfer→nanny, return→responsible accounting user(s), reopen-batch→nanny, and reopen-item→nanny. A fifth conditional event exists for voiding an already-actionable batch. Batch creation/approval and final receipt require a recipient-scope decision based on the existing operational responsibility before code is added.
 
 ### Payroll — no mandatory recipient notification established yet
 
@@ -82,11 +101,23 @@ Payroll approval and payment are currently HR-controlled state transitions, with
 
 `config/messaging.php::send_system_notification()` accepts type/reference parameters but currently stores only recipient/title/body/link and derives the link from the reference ID as a message-center URL. Before changing it, all active callers must be audited to determine whether it is legacy, incorrectly implemented, or intentionally limited.
 
+### Notification read state — pending
+
+`config/messaging.php` already has recipient-scoped `mark_notification_read()` support, while the notification widget currently provides mark-all-read. Individual notification links do not yet have a dedicated POST+CSRF mark-read action. This should be addressed after required workflow delivery is complete so read-state work does not obscure missing business notifications.
+
+## 2026-09-12 repository re-check
+
+The current `main` branch was re-read directly from the repository before continuing implementation work. The re-check confirms that the two previously identified sponsor-payment gaps are still present in `modules/transactions/create.php`: the returned `sponsor_payments` resubmission path changes the state back to `pending` but sends no FM notification, and the new supervisor `sponsor_payments` creation path has no FM notification delivery. The existing `ak_transaction_review_notify_fm_event()` helper remains available for the safe implementation.
+
+The same repository re-check confirms that `modules/hr/leaves.php::notifyLeaveRoleUsers()` still selects users by role without `u.is_active = 1`, so the HR leave recipient-scope finding remains open.
+
+No code in these large files was replaced during this re-check. The repository write interface requires a complete replacement body for an existing file; because the connector's retrieval response truncates these large source files, blindly reconstructing and replacing them would risk deleting unrelated working code. Therefore these findings remain explicitly **open**, rather than being falsely reported as fixed. The existing audit document is the only file updated in this checkpoint.
+
 ## Next exact work
 
-1. Wire supervisor sponsor-payment submit/resubmit → active FM notifications.
-2. Correct HR leave recipient filtering to active users.
-3. Audit disbursement recipient/action notifications and implement only workflow-required events.
+1. Safely patch supervisor sponsor-payment submit/resubmit → active FM notifications.
+2. Safely patch HR leave recipient filtering → active users only.
+3. Implement the confirmed disbursement notifications using existing authorization scope and event/reference-aware helpers.
 4. Audit remaining direct notification writers and generic helper callers.
 5. Add individual notification mark-read behavior where appropriate.
 6. Run only targeted end-to-end notification tests for newly changed workflows.
