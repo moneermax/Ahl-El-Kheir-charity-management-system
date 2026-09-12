@@ -46,6 +46,14 @@ Notifications are classified as required workflow notifications, operational not
 
 Fix commit: `21362ef456db73303734acdede3e332f330aedf0`
 
+### Password recovery GET-mutation audit — fixed
+
+The recovery page previously executed a notification state mutation during ordinary page GET by marking all `type='recovery'` notifications for the current user as read. This violated the notification audit rule that state-changing notification actions must not be performed by GET.
+
+The block was removed from `modules/users/recovery.php`. Opening the recovery page no longer changes notification read state. Existing notifications remain unread until an explicit notification read action is implemented.
+
+Fix commit: `2559b05f757aa408ddab2a4b4c8660a6af68b97b`
+
 ### Transaction-review notification infrastructure — fixed
 
 The accounting transaction-review notification path now uses the current notification schema, active financial-manager role codes, event/reference-aware delivery, and notification-error isolation. Supervisor payment approval/return paths were also repaired, and an FM-targeted event helper was added for remaining supervisor submission paths.
@@ -140,13 +148,31 @@ The HR leave recipient-scope finding is also now **closed in source**: `notifyLe
 
 The disbursement source was re-read directly from the current repository blob. No disbursement notification calls were found in the transfer, final-receipt, return, reopen, or void transitions described above. No old accounting fixtures or verification tests were repeated.
 
+## 2026-09-12 notification-writer / GET-mutation re-check
+
+The current repository was re-checked for the notification infrastructure and the known direct notification writers. The notification module contains only the POST+CSRF mark-all-read endpoint. `includes/header.php` still constructs the legacy `mark_notif_read` URL, but `config/functions.php` explicitly strips that parameter from non-POST requests, so the legacy GET mutation is inert. The header therefore does not currently perform a notification state change through GET.
+
+Two direct workflow notification writers were confirmed in source:
+
+- `modules/users/recovery.php` writes approval/rejection notifications with current `recipient_user_id`, `type`, `title`, `body`, `link`, and `is_read` columns.
+- `modules/hr/leaves.php` uses its local `createLeaveNotification()` writer and active-role recipient query.
+
+The recovery workflow had an additional GET-side mutation that marked all recovery notifications read whenever the recovery-management page was opened. That mutation has now been removed. The business approval/rejection notifications themselves remain unchanged and continue to be generated only from POST workflow actions.
+
+`config/messaging.php::send_system_notification()` remains a legacy/general helper whose current implementation does not persist `type`, `reference_id`, or `reference_type` even though those arguments are accepted. Repository code-search through the available GitHub index did not return active callers for this helper, so it has **not** been changed speculatively. The event-aware helper used by active accounting workflows remains the authoritative path for reference-aware workflow notifications.
+
+### Leave notification isolation — still requires source patch
+
+The leave notification writer itself is not internally exception-isolated. Its caller is inside the workflow `try/catch`, so a notification database failure cannot roll back the already-executed leave state change, but it can make the completed workflow fall into the generic error path instead of cleanly redirecting. This is a remaining notification-resilience finding and should be patched when the complete current `modules/hr/leaves.php` blob can be safely edited without reconstructing the truncated source.
+
 ## Next exact work
 
-1. Apply the complete-file disbursement notification patch safely, without reconstructing or truncating the large workflow/UI file.
-2. Re-read the resulting source and verify each notification is after the successful state transition/commit, uses the correct recipient scope, event/reference, and actionable link, and is isolated from business-state failure.
-3. Audit remaining direct notification writers and generic helper callers.
-4. Add individual notification mark-read behavior where appropriate.
-5. Run only targeted end-to-end notification tests for newly changed workflows, including the disbursement transitions and the already-fixed supervisor sponsor-payment submit/resubmit paths.
+1. Safely patch the complete current disbursement file with the required post-commit notification calls, preserving the full 96 KB workflow/UI file.
+2. Patch leave notification delivery so notification failures are isolated from the user-facing workflow result as well as from the business state mutation.
+3. Re-read the resulting sources and verify recipient scope, active-user filtering, self-notification exclusion, event/reference values, actionable links, and post-commit ordering.
+4. Audit remaining direct notification writers/callers that can be recovered from the repository source without relying on incomplete code-search indexing.
+5. Add individual notification mark-read behavior through a dedicated POST+CSRF action.
+6. Run only targeted end-to-end notification tests for newly changed workflows, including disbursement transitions and the already-fixed supervisor sponsor-payment submit/resubmit paths.
 
 ## Protected principle
 
