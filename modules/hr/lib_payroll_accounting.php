@@ -99,6 +99,30 @@ function hrPayrollPostAccounting(PDO $pdo, array $payroll): int
 
     if ($existing) {
         $entryId = (int)$existing['id'];
+
+        // Never silently reuse an existing posted journal unless it is a
+        // structurally valid, balanced payroll journal for the same amount.
+        $journalCheckStmt = $pdo->prepare(
+            "SELECT COUNT(*) AS line_count,
+                    ROUND(SUM(debit), 2) AS debit_total,
+                    ROUND(SUM(credit), 2) AS credit_total
+             FROM journal_lines
+             WHERE entry_id = ?"
+        );
+        $journalCheckStmt->execute([$entryId]);
+        $journalCheck = $journalCheckStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+        $lineCount = (int)($journalCheck['line_count'] ?? 0);
+        $debitTotal = round((float)($journalCheck['debit_total'] ?? 0), 2);
+        $creditTotal = round((float)($journalCheck['credit_total'] ?? 0), 2);
+        $expectedAmount = round($amount, 2);
+
+        if ($lineCount < 2 ||
+            $debitTotal <= 0 ||
+            $debitTotal !== $creditTotal ||
+            $debitTotal !== $expectedAmount) {
+            throw new RuntimeException('يوجد قيد رواتب مرحّل سابق لكنه غير متوازن أو لا يطابق صافي المسير؛ تم إيقاف إعادة استخدامه لحماية سلامة المحاسبة.');
+        }
     } else {
         $entryCode = 'PAY-' . (int)$payroll['id'];
         $entryDate = !empty($payroll['payment_date']) ? (string)$payroll['payment_date'] : date('Y-m-d');
