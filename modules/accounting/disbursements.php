@@ -5,6 +5,7 @@ require_once dirname(__DIR__, 2) . '/config/database.php';
 require_once dirname(__DIR__, 2) . '/config/functions.php';
 require_once dirname(__DIR__, 2) . '/config/session.php';
 require_once dirname(__DIR__, 2) . '/modules/accounting/lib_group_workflow.php';
+require_once dirname(__DIR__, 2) . '/modules/accounting/lib_transaction_review.php';
 Session::start();
 if (!Session::isLoggedIn() || !in_array(Session::getUserRole(), ['admin', 'accountant_staff', 'financial_manager', 'general_manager', 'vice_general_manager', 'nanny'], true)) {
     header('Location: ' . APP_URL . 'index.php');
@@ -409,8 +410,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
                             dbExecute("INSERT INTO journal_lines (entry_id, account_id, debit, credit, description) VALUES (?, ?, 0, ?, ?)", [$journalEntryId, $cashAccount['id'], $b['total_amount'], 'خصم من الصندوق/البنك']);
                         }
                         dbExecute("UPDATE monthly_disbursements SET transaction_id = ? WHERE id = ?", [$transactionId, $id]);
-                        dbExecute("COMMIT");
-                        flash('success', 'تم رفع الإيصال وتأكيد التحويل وخصم المبلغ من الصندوق بنجاح.');
+                        dbExecute('COMMIT');
+
+ak_transaction_review_notify_event(
+    (int)$b['nanny_id'],
+    'تم تحويل دفعة الكفالة وأصبحت متاحة للتنفيذ',
+    'تم اعتماد تحويل دفعة الكفالة ويمكنك الآن متابعة وتأكيد بنود الأسر.',
+    APP_URL . 'modules/accounting/disbursements.php?view=' . $id,
+    $id,
+    'disbursement_transferred'
+);
+
+flash('success', 'تم رفع الإيصال وتأكيد التحويل وخصم المبلغ من الصندوق بنجاح.');
                     } catch (Exception $e) {
                         dbExecute("ROLLBACK");
                         error_log('Transfer error: ' . $e->getMessage());
@@ -486,7 +497,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
             } else {
                 $result = closeDisbursementWithReturn($id, $uid, $reason, $uploadResult['path'], $uid);
                 if ($result['success']) {
-                    flash('success', $result['message'] . ' المبلغ المعاد: ' . number_format((float)$result['return_amount'], 0) . ' ج.س.');
+    ak_transaction_review_notify_fm_event(
+        $id,
+        'disbursement_returned',
+        'تم إرجاع دفعة كفالة إلى الصندوق',
+        'أقفلت الحاضنة الدفعة جزئياً وأُعيد المبلغ غير المصروف إلى الصندوق. يرجى مراجعة الإجراء.',
+        APP_URL . 'modules/accounting/disbursements.php?view=' . $id,
+        $uid
+    );
+
+    flash('success', $result['message'] . ' المبلغ المعاد: ' . number_format((float)$result['return_amount'], 0) . ' ج.س.');
                 } else {
                     // The database was rolled back; remove the uploaded file so we don't leave orphan files.
                     if (!empty($uploadResult['absolute_path']) && is_file($uploadResult['absolute_path'])) {
@@ -548,7 +568,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
                 // partial-return path already does. This locks the whole group from further
                 // nanny edits until the accountant explicitly reopens it (below).
                 if ($markedReceived && !empty($b['group_id'])) {
-                    dbExecute("UPDATE orphan_groups SET verification_status = 'closed', closed_at = NOW(), closed_by = ? WHERE id = ?", [$uid, $b['group_id']]);
+    dbExecute("UPDATE orphan_groups SET verification_status = 'closed', closed_at = NOW(), closed_by = ? WHERE id = ?", [$uid, $b['group_id']]);
+
+    try {
+        $assignedAccountants = dbFetchAll(
+            "SELECT u.id
+             FROM accountant_nanny_assignments ana
+             JOIN users u ON u.id = ana.accountant_id
+             JOIN roles r ON r.id = u.role_id
+             WHERE ana.nanny_id = ?
+               AND u.is_active = 1
+               AND r.code IN ('accountant_staff', 'accountant')",
+            [(int)$b['nanny_id']]
+        );
+
+        foreach ($assignedAccountants as $accountant) {
+            ak_transaction_review_notify_event(
+                (int)$accountant['id'],
+                'تم إقفال دفعة الكفالة بالكامل',
+                'تم تأكيد استلام جميع بنود دفعة الكفالة وإقفالها من قبل الحاضنة. يرجى مراجعة الدفعة عند الحاجة.',
+                APP_URL . 'modules/accounting/disbursements.php?view=' . $id,
+                $id,
+                'disbursement_received'
+            );
+        }
+    } catch (Throwable $e) {
+        // Notification delivery must never affect the completed disbursement closure.
+    }
                     // Note: group_workflow_audit_log.action_type has no enum value for "fully closed"
                     // (only group_reopened/family_reopened/etc.), so this event is recorded in the
                     // general audit_log via disb_audit() above instead of being mislabeled here.
@@ -580,7 +626,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
                 log_group_action($b['group_id'] ?: null, null, $b['month'], 'group_reopened', $uid, $role, $oldStatus, 'transferred', $reason);
                 disb_audit($uid, 'REOPEN_BATCH', $id, ['from' => $oldStatus, 'to' => 'transferred', 'reason' => $reason]);
                 dbExecute('COMMIT');
-                flash('success', 'تم إعادة فتح الدفعة والمجموعة بالكامل. يمكن للحاضنة الآن تعديل السجلات.');
+
+ak_transaction_review_notify_event(
+    (int)$b['nanny_id'],
+    'تم إعادة فتح دفعة الكفالة',
+    'تمت إعادة فتح الدفعة ويمكنك الآن تعديل سجلات الأسر ومتابعة التأكيد.',
+    APP_URL . 'modules/accounting/disbursements.php?view=' . $id,
+    $id,
+    'disbursement_reopened'
+);
+
+flash('success', 'تم إعادة فتح الدفعة والمجموعة بالكامل. يمكن للحاضنة الآن تعديل السجلات.');
             } catch (Throwable $e) {
                 dbExecute('ROLLBACK');
                 error_log('Reopen batch error: ' . $e->getMessage());
@@ -629,7 +685,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
                 log_group_action($item['group_id'] ?: null, (int)$item['family_id'], $item['month'], 'family_reopened', $uid, $role, $oldItemStatus, 'pending', $reason);
                 disb_audit($uid, 'REOPEN_ITEM', (int)$item['disbursement_id'], ['item_id' => $itemId, 'family_id' => $item['family_id'], 'from' => $oldItemStatus, 'reason' => $reason]);
                 dbExecute('COMMIT');
-                flash('success', 'تم إعادة فتح سجل الأسرة للتعديل بنجاح.');
+
+ak_transaction_review_notify_event(
+    (int)$item['nanny_id'],
+    'تم إعادة فتح سجل أسرة في دفعة الكفالة',
+    'تمت إعادة فتح سجل الأسرة ويمكنك الآن تأكيده وإرفاق الإيصال من جديد.',
+    APP_URL . 'modules/accounting/disbursements.php?view=' . $item['disbursement_id'],
+    $itemId,
+    'disbursement_item_reopened'
+);
+
+flash('success', 'تم إعادة فتح سجل الأسرة للتعديل بنجاح.');
             } catch (Throwable $e) {
                 dbExecute('ROLLBACK');
                 error_log('Reopen item error: ' . $e->getMessage());
@@ -689,7 +755,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
                     'journal_entry_voided' => $je['id'] ?? null, 'transaction_voided' => $tx['id'] ?? null,
                 ]);
                 dbExecute('COMMIT');
-                flash('success', 'تم إبطال الدفعة والقيد المحاسبي المرتبط بها بنجاح. يمكن الآن إنشاء دفعة جديدة صحيحة لهذه المجموعة.');
+
+if (in_array($oldStatus, ['transferred', 'received'], true) && !empty($b['nanny_id'])) {
+    ak_transaction_review_notify_event(
+        (int)$b['nanny_id'],
+        'تم إبطال دفعة الكفالة',
+        'تم إبطال هذه الدفعة من قبل الإدارة ولم تعد متاحة للتنفيذ.',
+        APP_URL . 'modules/accounting/disbursements.php?view=' . $id,
+        $id,
+        'disbursement_voided'
+    );
+}
+
+flash('success', 'تم إبطال الدفعة والقيد المحاسبي المرتبط بها بنجاح. يمكن الآن إنشاء دفعة جديدة صحيحة لهذه المجموعة.');
             } catch (Throwable $e) {
                 dbExecute('ROLLBACK');
                 error_log('Void batch error: ' . $e->getMessage());
