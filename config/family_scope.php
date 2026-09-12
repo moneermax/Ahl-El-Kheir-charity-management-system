@@ -32,7 +32,7 @@ function ak_family_user_in_scope(array $family, string $role, int $userId): bool
     $rows = dbFetchAll(
         "SELECT l.code
          FROM supervisor_letters sl
-         JOIN letters l ON l.id = sl.letter_id
+         JOIN letters l ON l.id = supervisor_letters.letter_id
          WHERE sl.supervisor_id = ?",
         [$userId]
     );
@@ -44,4 +44,63 @@ function ak_family_user_in_scope(array $family, string $role, int $userId): bool
     }
 
     return false;
+}
+
+/**
+ * Enforce the same family record boundary on direct-ID family/child routes
+ * that historically did not repeat the family/view.php scope check locally.
+ *
+ * This hook is intentionally limited to the affected routes. It runs after
+ * Session::start() so the authenticated user and database helpers are ready.
+ */
+function ak_enforce_family_request_scope(): void
+{
+    if (!class_exists('Session') || !Session::isLoggedIn()) {
+        return;
+    }
+
+    $script = basename((string)($_SERVER['SCRIPT_FILENAME'] ?? ''));
+    $protectedScripts = ['documents.php', 'orphan_form.php', 'orphan_profile.php'];
+    if (!in_array($script, $protectedScripts, true)) {
+        return;
+    }
+
+    $role = Session::getUserRole();
+    if (!in_array($role, ['supervisor', 'nanny'], true)) {
+        return;
+    }
+
+    $familyId = 0;
+
+    if ($script === 'documents.php') {
+        $familyId = (int)($_GET['id'] ?? 0);
+    } else {
+        $childId = (int)($_GET['child'] ?? $_GET['id'] ?? $_GET['photo'] ?? 0);
+        if ($childId > 0) {
+            $child = dbFetchOne("SELECT family_id FROM family_children WHERE id = ?", [$childId]);
+            if ($child) {
+                $familyId = (int)$child['family_id'];
+            }
+        } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $familyId = (int)($_POST['family_id'] ?? 0);
+        }
+    }
+
+    if ($familyId <= 0) {
+        return;
+    }
+
+    $family = dbFetchOne(
+        "SELECT id, nanny_id, supervisor_id, legacy_mother_first_letter FROM families WHERE id = ?",
+        [$familyId]
+    );
+    if (!$family) {
+        return;
+    }
+
+    if (!ak_family_user_in_scope($family, $role, Session::getUserId())) {
+        flash('error', 'هذه الأسرة ليست ضمن نطاقك.');
+        redirect('modules/families/index.php');
+        exit();
+    }
 }
