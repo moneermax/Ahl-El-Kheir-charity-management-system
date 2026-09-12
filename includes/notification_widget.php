@@ -8,8 +8,23 @@
  */
 if (Session::isLoggedIn()) {
     $akNotifUnread = isset($notifUnread) ? (int)$notifUnread : 0;
-    $akNotifItems = isset($notifItems) && is_array($notifItems) ? $notifItems : [];
+    $akNotifItems = [];
+
+    try {
+        $akNotifItems = dbFetchAll(
+            "SELECT id, title, body, link, created_at
+             FROM notifications
+             WHERE recipient_user_id = ?
+             ORDER BY id DESC
+             LIMIT 8",
+            [current_user_id()]
+        );
+    } catch (Throwable $e) {
+        $akNotifItems = [];
+    }
+
     $akNotifMarkReadUrl = APP_URL . 'modules/notifications/mark_all_read.php';
+    $akNotifIndividualReadUrl = APP_URL . 'modules/notifications/mark_read.php';
     $akNotifRedirect = (string)($_SERVER['REQUEST_URI'] ?? APP_URL);
 ?>
 <style>
@@ -21,14 +36,15 @@ if (Session::isLoggedIn()) {
 #akNotificationBell.open .ak-notif-panel{display:block}
 .ak-notif-panel-head{padding:12px 14px;background:#1b4d8f;color:#fff;display:flex;justify-content:space-between;align-items:center}
 .ak-notif-panel-body{max-height:360px;overflow:auto}
-.ak-notif-item{display:block;padding:11px 14px;border-bottom:1px solid #eef1f5;text-decoration:none;color:#21315b}
+.ak-notif-item{display:block;width:100%;padding:11px 14px;border:0;border-bottom:1px solid #eef1f5;background:#fff;text-decoration:none;color:#21315b;text-align:inherit;cursor:pointer}
 .ak-notif-item:hover{background:#f6f9fd}
 .ak-notif-item strong{display:block;font-size:.8rem;margin-bottom:3px}
 .ak-notif-item .ak-notif-body{font-size:.7rem;line-height:1.7;color:#657286}
 .ak-notif-item small{display:block;margin-top:4px;color:#9aa4b2;font-size:.58rem}
 .ak-notif-empty{padding:30px 15px;text-align:center;color:#6c757d;font-size:.72rem}
-.ak-notif-mark{font-size:.6rem;color:#fff;text-decoration:none;opacity:.9}
+.ak-notif-mark{font-size:.6rem;color:#fff;opacity:.9}
 .ak-notif-mark:hover{opacity:1;color:#fff}
+.ak-notif-read-form{margin:0;padding:0}
 @media(max-width:991px){#akNotificationBell .ak-notif-panel{inset-inline-end:-90px}}
 @media(max-width:576px){#akNotificationBell .ak-notif-panel{position:fixed;top:62px;inset-inline-end:10px;width:calc(100vw - 20px)}}
 </style>
@@ -52,12 +68,29 @@ if (Session::isLoggedIn()) {
    <?php if (!$akNotifItems): ?>
     <div class="ak-notif-empty">لا توجد إشعارات.</div>
    <?php else: foreach ($akNotifItems as $ni): ?>
-    <?php $notifLink = trim((string)($ni['link'] ?? '')); ?>
-    <?php if ($notifLink !== ''): ?><a class="ak-notif-item" href="<?php echo e($notifLink); ?>"><?php else: ?><div class="ak-notif-item"><?php endif; ?>
+    <?php
+    $notifId = (int)($ni['id'] ?? 0);
+    $notifLink = trim((string)($ni['link'] ?? ''));
+    $notifRedirect = $notifLink !== '' ? $notifLink : $akNotifRedirect;
+    ?>
+    <?php if ($notifId > 0): ?>
+    <form method="post" action="<?php echo e($akNotifIndividualReadUrl); ?>" class="ak-notif-read-form">
+     <?php echo csrf_field(); ?>
+     <input type="hidden" name="notification_id" value="<?php echo $notifId; ?>">
+     <input type="hidden" name="redirect" value="<?php echo e($notifRedirect); ?>">
+     <button type="submit" class="ak-notif-item">
+      <strong><?php echo e($ni['title'] ?? ''); ?></strong>
+      <div class="ak-notif-body"><?php echo e($ni['body'] ?? ''); ?></div>
+      <small><?php echo e($ni['created_at'] ?? ''); ?></small>
+     </button>
+    </form>
+    <?php else: ?>
+    <div class="ak-notif-item">
      <strong><?php echo e($ni['title'] ?? ''); ?></strong>
      <div class="ak-notif-body"><?php echo e($ni['body'] ?? ''); ?></div>
      <small><?php echo e($ni['created_at'] ?? ''); ?></small>
-    <?php if ($notifLink !== ''): ?></a><?php else: ?></div><?php endif; ?>
+    </div>
+    <?php endif; ?>
    <?php endforeach; endif; ?>
   </div>
  </div>
