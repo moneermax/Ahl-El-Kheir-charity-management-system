@@ -48,24 +48,32 @@ function createLeaveNotification(int $recipientUserId, string $title, string $bo
         return;
     }
 
-    $existing = dbFetchOne(
-        "SELECT id
-         FROM notifications
-         WHERE recipient_user_id = ?
-           AND title = ?
-           AND link = ?
-         LIMIT 1",
-        [$recipientUserId, $title, $link]
-    );
+    try {
+        $existing = dbFetchOne(
+            "SELECT id
+             FROM notifications
+             WHERE recipient_user_id = ?
+               AND title = ?
+               AND link = ?
+             LIMIT 1",
+            [$recipientUserId, $title, $link]
+        );
 
-    if ($existing) {
-        return;
+        if ($existing) {
+            return;
+        }
+
+        db()->prepare(
+            "INSERT INTO notifications (recipient_user_id, title, body, link)
+             VALUES (?, ?, ?, ?)"
+        )->execute([$recipientUserId, $title, $body, $link]);
+    } catch (Throwable $e) {
+        // Notification delivery must never roll back or alter
+        // the already-completed leave workflow.
+        error_log(
+            'Leave notification delivery failed: ' . $e->getMessage()
+        );
     }
-
-    db()->prepare(
-        "INSERT INTO notifications (recipient_user_id, title, body, link)
-         VALUES (?, ?, ?, ?)"
-    )->execute([$recipientUserId, $title, $body, $link]);
 }
 
 /**
