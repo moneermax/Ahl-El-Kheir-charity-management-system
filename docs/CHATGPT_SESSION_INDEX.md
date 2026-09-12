@@ -20,21 +20,6 @@ Follow:
 
 ---
 
-# PROJECT / ARCHITECTURE
-
-- Windows + XAMPP + Apache
-- PHP 8.2+
-- MariaDB/MySQL
-- Procedural PHP only — **NO OOP**
-- Vanilla JavaScript only
-- Bootstrap 5.3 RTL
-- Font Awesome 6
-- Google Fonts Cairo
-
-The current repository and actual database schema are authoritative. Never guess table or column names.
-
----
-
 # HR STATUS
 
 **HR foundation/audit: COMPLETE AND CLOSED.**
@@ -172,11 +157,37 @@ No user-side test is required from this documentation-only closure.
 
 ---
 
+# AUTHENTICATION / SESSION SECURITY — CHECKPOINT 2026-09-12
+
+The next unfinished system area after the closed Accounting and Notification audits was identified as **Authentication / Session Security**, with session fixation as the concrete finding.
+
+A narrow hardening change was applied directly to `main`:
+
+- `config/session.php` now rotates the session identifier on the first authenticated request after login.
+- Rotation uses `session_regenerate_id(true)` and preserves the existing session data.
+- A session flag prevents repeated rotation during the same authenticated session.
+- No database schema, trigger, view, accounting evidence, notification evidence or test fixture was changed.
+
+Fix commit:
+
+`9cdf89d30fdee147a919c7cc1056457b1b9d20f3`
+
+Runtime verification was then completed successfully:
+
+- normal login succeeded;
+- the expected authenticated dashboard was reached;
+- logout succeeded;
+- a subsequent login succeeded normally.
+
+**Authentication/session hardening: CODE CORRECT + BEHAVIOR VERIFIED.**
+
+---
+
 # CURRENT AUDIT DIRECTION
 
-The Notification Audit source-level sweep is complete at the current repository-evidence boundary.
+Accounting and Notification audits are closed at their current evidence boundaries. Authentication/session hardening is verified and documented.
 
-The next audit area should proceed directly from the project's existing audit sequence. Do not restart Notification Audit work unless a new notification regression or reliable legacy-helper caller evidence appears.
+The next area must be selected from the existing repository/documentation state, not by restarting a completed audit. Inspect `main` and the canonical current-state documentation, identify the highest-priority genuinely unfinished system/module task, and continue from that exact checkpoint.
 
 Before starting the next area, use the existing audit documents as the authoritative record rather than recreating fixtures or rerunning completed checks.
 
