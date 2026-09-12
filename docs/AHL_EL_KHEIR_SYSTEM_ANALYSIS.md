@@ -3,7 +3,7 @@
 
 **Arabic name:** نظام أهل الخير لإدارة الجمعيات الخيرية  
 **Document type:** System Analysis + Functional Specification + Technical Architecture + Developer/AI Handoff  
-**Documentation version:** 1.0  
+**Documentation version:** 1.1  
 **Baseline implementation:** `b3267ba306c81b25cff06b32ff8f5719fa7565ac`  
 **Repository:** `moneermax/Ahl-El-Kheir-charity-management-system`  
 **Current development environment:** Windows / XAMPP / Apache / PHP / MariaDB/MySQL  
@@ -965,4 +965,143 @@ Repository: `moneermax/Ahl-El-Kheir-charity-management-system`
 Known-good baseline: `b3267ba306c81b25cff06b32ff8f5719fa7565ac`  
 Documentation branch: `documentation/system-analysis-v1`
 
-This document was added as a documentation-only change and does not intentionally modify application behavior.
+This document was originally added as a documentation-only change and does not intentionally modify application behavior.
+
+---
+
+# 31. Consolidated 2026-09-12 Implementation and Architecture Update
+
+This section incorporates the former `AHL_EL_KHEIR_SYSTEM_ANALYSIS_UPDATE_2026-09-12.md` addendum into the canonical system analysis. The dated addendum is now retired; this document is the single current system-analysis record.
+
+## 31.1 Accounting architecture — current implementation clarification
+
+The accounting subsystem is documented as a controlled journal architecture rather than a generic CRUD ledger.
+
+The authoritative accounting relationship is:
+
+```text
+journal_entries
+      │
+      └── journal_lines.entry_id
+              │
+              └── accounts.id
+```
+
+A journal header represents the accounting event. Journal lines represent its debit/credit effect. Account identity is resolved through the `accounts` table.
+
+Financial history must preserve the original event and create a separate reversal/void event when a posted event is reversed.
+
+## 31.2 Automated journal reference model
+
+The current protected automated/reversal reference types are:
+
+```text
+transaction
+transaction_void
+disbursement
+disbursement_return
+disbursement_void
+item_return
+voucher
+payroll
+manual_void
+```
+
+These references carry business meaning and must not be exposed to a generic manual-void mutation path.
+
+- `transaction` represents an approved/postable financial transaction.
+- `transaction_void` represents its accounting reversal.
+- `disbursement` represents the accounting effect of a disbursement.
+- `disbursement_return` represents a batch/group return event.
+- `disbursement_void` represents a disbursement void/reversal event.
+- `item_return` represents a partial item-level return/reversal.
+- `voucher` represents a voucher-linked accounting event.
+- `payroll` represents a payroll-linked accounting event.
+- `manual_void` represents a controlled reversal of a manual journal.
+
+## 31.3 Financial history and reversal architecture
+
+The implemented accounting principle is:
+
+```text
+POSTED SOURCE EVENT
+      │
+      ├── original journal preserved
+      ├── source record status updated coherently
+      └── separate balanced reversal journal created
+```
+
+Original posted journals are not silently deleted or overwritten merely because the business event was voided or reversed. Reversal journals must themselves be balanced and independently inspectable.
+
+## 31.4 Voucher accounting clarification
+
+The active voucher void workflow is transactional and validates the relationship between the voucher and its original journal before creating a separate `voucher_void` reversal. It locks the source records, prevents duplicate reversals, validates balances, preserves the original journal, updates voucher state, records audit history, and rolls back on failure.
+
+The legacy `ak_void_journal_for_voucher()` helper remains in the accounting library but repository inspection found no current caller. The active voucher workflow is authoritative.
+
+## 31.5 Payroll accounting clarification
+
+Payroll accounting is an automated cross-module workflow. Payroll journals use `reference_type = payroll` and `reference_id = payroll.id`; the payroll record stores its accounting relationship through `accounting_entry_id` and `accounting_status`.
+
+Recent hardening made payroll reversal operations atomic and validates existing payroll journals before reuse. Generic manual-void access is prohibited for payroll journals.
+
+## 31.6 Disbursement accounting clarification
+
+Batch voids use:
+
+```text
+reference_type = disbursement_void
+reference_id   = monthly_disbursements.id
+```
+
+Partial item returns use:
+
+```text
+reference_type = item_return
+reference_id   = disbursement_items.id
+```
+
+The item-level reversal journal is linked through `disbursement_items.reversal_journal_id`. These relationships are intentionally distinct and must not be merged merely to simplify reporting.
+
+## 31.7 Security and authorization clarification
+
+Journal protection has two independent layers:
+
+```text
+UI protection
+    +
+Server-side authorization/validation
+    +
+Source-module state validation
+    +
+Database transaction/rollback
+```
+
+Hiding a Void button is not sufficient. The backend must independently reject an automated journal presented to a generic manual-void endpoint.
+
+## 31.8 Audit and development methodology update
+
+Accounting work follows an evidence-preserving sequence:
+
+```text
+Inspect current repository
+→ identify actual accounting routes
+→ distinguish active vs legacy/dead helpers
+→ patch only genuine alternate mutation paths
+→ verify behavior
+→ preserve existing evidence
+→ document exact checkpoint
+→ continue from the remaining control
+```
+
+Completed audit fixtures are protected evidence. Historical anomalies are interpreted against the actual schema and code and are not rewritten merely to make an audit query appear clean.
+
+## 31.9 Current accounting architecture status
+
+The 2026-09-12 Accounting Audit reached a completed checkpoint. Account-ledger integrity was statically passed; voucher, payroll, transaction, disbursement, and journal mutation relationships were reviewed; the final read-only consistency sweep identified one historical orphaned `disbursement_void` journal (`journal_entries.id = 7`, reference `3`) that was corroborated by audit-log history and deliberately preserved as accounting evidence.
+
+The current protected disbursement-void evidence remains batch `11`, transaction `23`, and reversal journal `43`. These are completed fixtures and must not be recreated or reused.
+
+## 31.10 Current system-analysis rule
+
+This document is now the canonical system-analysis record. Future implementation deltas should be incorporated here when practical rather than maintained as a parallel dated addendum. Accounting audit evidence belongs in `docs/AHL_EL_KHEIR_ACCOUNTING_AUDIT.md`.
