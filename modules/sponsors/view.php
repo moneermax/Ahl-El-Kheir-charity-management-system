@@ -41,9 +41,17 @@ $sp = dbFetchOne("SELECT s.*, l.code AS letter, u.full_name AS supervisor_name
 if (!$sp) { flash('error', t('sponsors.view_not_found')); redirect('modules/sponsors/index.php'); }
 
 if ($role === 'supervisor') {
-    $myLetterIds = array_map('intval', array_column(dbFetchAll("SELECT letter_id FROM supervisor_letters WHERE supervisor_id = ?", [Session::getUserId()]), 'letter_id'));
-    $mine = ((int)($sp['supervisor_id'] ?? 0) === Session::getUserId())
-          || ($sp['first_letter_id'] && in_array((int)$sp['first_letter_id'], $myLetterIds, true));
+    $matrixRows = dbFetchAll("SELECT letter_id, gender FROM supervisor_letters WHERE supervisor_id = ?", [Session::getUserId()]);
+    $mine = ((int)($sp['supervisor_id'] ?? 0) === Session::getUserId());
+    if (!$mine && $sp['first_letter_id']) {
+        $sponsorGender = strtolower(trim((string)($sp['gender'] ?? '')));
+        foreach ($matrixRows as $matrixRow) {
+            if ((int)$matrixRow['letter_id'] !== (int)$sp['first_letter_id']) continue;
+            $scopeGender = strtolower(trim((string)($matrixRow['gender'] ?? '')));
+            $scopeGender = in_array($scopeGender, ['male','m','ذكر'], true) ? 'male' : (in_array($scopeGender, ['female','f','أنثى','انثى'], true) ? 'female' : 'both');
+            if ($scopeGender === 'both' || $scopeGender === $sponsorGender) { $mine = true; break; }
+        }
+    }
     if (!$mine) { flash('error', t('sponsors.view_no_permission')); redirect('modules/sponsors/index.php'); }
 }
 
