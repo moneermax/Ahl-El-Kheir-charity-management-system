@@ -165,16 +165,32 @@ A dedicated `modules/notifications/mark_read.php` endpoint now provides the indi
 - POST only;
 - CSRF protected;
 - updates only the matching unread notification belonging to the current user;
-- redirects only to an `APP_URL`-validated destination;
+- safely normalizes legacy relative application links against `APP_BASE_PATH`;
+- preserves valid absolute `APP_URL` links;
+- rejects external and protocol-relative redirects;
 - catches notification-update failures so the endpoint does not expose a fatal error.
 
-The notification widget now renders individual notification items as POST forms carrying the notification ID and actionable redirect. The widget also loads the notification IDs directly so the existing header query does not need to be reconstructed or altered.
+The notification widget renders individual notification items as POST forms carrying the notification ID and actionable redirect. The widget also loads the notification IDs directly so the existing header query does not need to be reconstructed or altered.
 
-Endpoint commit: `50b4d27991d85c329ffeab884a52cd5d3eb3bcc5`
+The mark-all endpoint applies the same safe redirect normalization so its normal relative `REQUEST_URI` destination remains on the current page instead of falling back to the dashboard.
 
-Widget integration commit: `6d87c6d2496d33c1d4cb1c5f12c8b289906be50a`
+Initial individual-read integration commits: `50b4d27991d85c329ffeab884a52cd5d3eb3bcc5` and `6d87c6d2496d33c1d4cb1c5f12c8b289906be50a`.  
+Global widget inclusion commit: `96ea51abbef748e1b5122de66f7b2d0e94369049`.  
+Legacy-relative redirect normalization commits: `ac13745f7888347423614e38047e37348b6ffb5d` and `3a567bfc48f98f1ea645c51d2fb1e46d4f412b81`.
 
-Global widget inclusion commit: `96ea51abbef748e1b5122de66f7b2d0e94369049`
+## 2026-09-12 targeted password-recovery notification regression — fixed and user-tested
+
+A targeted regression was found after the initial relative-link compatibility fix. Existing password-recovery notification rows could contain a legacy link beginning with the application directory itself, such as `AhlElKheir/modules/users/recovery.php`. The first normalization pass prepended `APP_URL` without removing the already-present application base path, producing the invalid duplicated path:
+
+`/AhlElKheir/AhlElKheir/modules/users/recovery.php`
+
+`modules/notifications/mark_read.php` and `modules/notifications/mark_all_read.php` were corrected to detect `APP_BASE_PATH`, remove it from a relative destination when already present, and then prepend the current `APP_URL`. Absolute application URLs remain unchanged, while external and protocol-relative redirects remain rejected.
+
+The user subsequently retested the existing HR password-recovery notification and confirmed that it now opens the correct recovery page successfully at:
+
+`http://localhost:8081/AhlElKheir/modules/users/recovery.php`
+
+No notification rows were manually rewritten and no old accounting fixtures or tests were recreated.
 
 ## 2026-09-12 notification-writer / GET-mutation re-check
 
@@ -188,9 +204,9 @@ The recovery workflow had an additional GET-side mutation that marked all recove
 
 ## Current checkpoint
 
-The notification UI/read-state layer is integrated in source. The leave notification resilience finding is closed. The remaining notification architecture finding is the legacy generic helper described above; it is intentionally deferred until an active caller can be established with reliable repository evidence.
+The notification UI/read-state layer is integrated in source and the legacy-relative-link compatibility issue is now closed and user-tested. The leave notification resilience finding is closed. The remaining notification architecture finding is the legacy generic helper described above; it is intentionally deferred until an active caller can be established with reliable repository evidence.
 
-No user-side workflow test is required merely to continue this source audit. Testing should be performed only after a newly changed business-notification workflow or when a targeted regression requires confirmation.
+No additional user-side workflow test is required at this checkpoint. Testing should be performed only after a newly changed business-notification workflow or when a targeted regression requires confirmation.
 
 ## Next exact work
 
