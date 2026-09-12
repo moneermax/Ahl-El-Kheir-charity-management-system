@@ -16,6 +16,15 @@ if (!class_exists('Session', false)) {
                 ]);
                 session_name('AhlElKheirSession');
                 session_start();
+
+                // Rotate the session identifier on the first authenticated request.
+                // This preserves the existing session data while preventing a pre-login
+                // session identifier from becoming the long-lived authenticated ID.
+                if (isset($_SESSION['user_id']) && !isset($_SESSION['_auth_session_rotated'])) {
+                    if (session_regenerate_id(true)) {
+                        $_SESSION['_auth_session_rotated'] = true;
+                    }
+                }
             }
         }
 
