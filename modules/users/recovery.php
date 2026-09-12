@@ -72,10 +72,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-try {
-    dbExecute("UPDATE notifications SET is_read = 1 WHERE recipient_user_id = ? AND type = 'recovery'", [Session::getUserId()]);
-} catch (Throwable $e) {}
-
 $requests = dbFetchAll("SELECT r.*, u.username, u.full_name, rev.full_name AS reviewer_name FROM password_recovery_requests r JOIN users u ON u.id = r.user_id LEFT JOIN users rev ON rev.id = r.reviewed_by ORDER BY (r.status = 'pending') DESC, r.id DESC LIMIT 50");
 
 include dirname(__DIR__, 2) . '/includes/header.php';

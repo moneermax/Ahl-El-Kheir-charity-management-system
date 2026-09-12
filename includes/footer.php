@@ -15,6 +15,7 @@
 </div>
 <div id="sidebarOverlay" class="sidebar-overlay"></div>
 <?php include __DIR__ . '/age_alert.php'; ?>
+<?php include __DIR__ . '/notification_widget.php'; ?>
 <?php include __DIR__ . '/messaging_widget.php'; ?>
 
 <style>
