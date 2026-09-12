@@ -116,6 +116,30 @@ function ak_transaction_review_notify_fm(int $count, string $creatorName = ''): 
 }
 }
 
+if (!function_exists('ak_transaction_review_notify_fm_event')) {
+function ak_transaction_review_notify_fm_event(int $referenceId, string $referenceType, string $title, string $body, string $link, ?int $excludeUserId = null): void {
+    if ($referenceId <= 0 || trim($referenceType) === '' || trim($title) === '') return;
+
+    try {
+        $users = dbFetchAll(
+            "SELECT u.id
+             FROM users u
+             JOIN roles r ON u.role_id = r.id
+             WHERE r.code IN ('financial_manager', 'fm', 'finance')
+               AND u.is_active = 1"
+        );
+
+        foreach ($users as $u) {
+            $userId = (int)$u['id'];
+            if ($excludeUserId !== null && $userId === $excludeUserId) continue;
+            ak_transaction_review_notify_event($userId, $title, $body, $link, $referenceId, $referenceType);
+        }
+    } catch (Throwable $e) {
+        // Notification delivery must never roll back the completed payment workflow.
+    }
+}
+}
+
 if (!function_exists('ak_transaction_review_audit')) {
 function ak_transaction_review_audit(int $userId, string $action, int $entityId, $old, $new): void {
     try {
