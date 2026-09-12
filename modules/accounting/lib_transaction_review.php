@@ -38,33 +38,55 @@ function ak_transaction_review_delete_receipt_if_unreferenced(?string $path): vo
 }
 }
 
-if (!function_exists('ak_transaction_review_notify_user')) {
-function ak_transaction_review_notify_user(int $userId, string $title, string $body, string $link): void {
+if (!function_exists('ak_transaction_review_notify_event')) {
+function ak_transaction_review_notify_event(int $userId, string $title, string $body, string $link, ?int $referenceId = null, ?string $referenceType = null): void {
     if ($userId <= 0 || trim($title) === '') return;
 
     try {
-        // The notifications table is recipient_user_id/title/body/link/is_read/created_at.
-        // Avoid duplicate delivery when a workflow POST is replayed or retried.
-        $existing = dbFetchOne(
-            "SELECT id
-             FROM notifications
-             WHERE recipient_user_id = ?
-               AND title = ?
-               AND link = ?
-             LIMIT 1",
-            [$userId, $title, $link]
-        );
+        if ($referenceId !== null && trim((string)$referenceType) !== '') {
+            $existing = dbFetchOne(
+                "SELECT id FROM notifications
+                 WHERE recipient_user_id = ?
+                   AND reference_id = ?
+                   AND reference_type = ?
+                 LIMIT 1",
+                [$userId, $referenceId, $referenceType]
+            );
+        } else {
+            $existing = dbFetchOne(
+                "SELECT id FROM notifications
+                 WHERE recipient_user_id = ?
+                   AND title = ?
+                   AND link = ?
+                 LIMIT 1",
+                [$userId, $title, $link]
+            );
+        }
 
         if ($existing) return;
 
-        dbExecute(
-            "INSERT INTO notifications (recipient_user_id, title, body, link, is_read, created_at)
-             VALUES (?, ?, ?, ?, 0, NOW())",
-            [$userId, $title, $body, $link]
-        );
+        if ($referenceId !== null && trim((string)$referenceType) !== '') {
+            dbExecute(
+                "INSERT INTO notifications (recipient_user_id, title, body, link, type, reference_id, reference_type, is_read, created_at)
+                 VALUES (?, ?, ?, ?, 'workflow', ?, ?, 0, NOW())",
+                [$userId, $title, $body, $link, $referenceId, $referenceType]
+            );
+        } else {
+            dbExecute(
+                "INSERT INTO notifications (recipient_user_id, title, body, link, is_read, created_at)
+                 VALUES (?, ?, ?, ?, 0, NOW())",
+                [$userId, $title, $body, $link]
+            );
+        }
     } catch (Throwable $e) {
         // Notification delivery must never roll back an already-completed business action.
     }
+}
+}
+
+if (!function_exists('ak_transaction_review_notify_user')) {
+function ak_transaction_review_notify_user(int $userId, string $title, string $body, string $link): void {
+    ak_transaction_review_notify_event($userId, $title, $body, $link);
 }
 }
 
