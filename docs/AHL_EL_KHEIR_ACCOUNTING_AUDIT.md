@@ -4,7 +4,7 @@
 **Repository:** `moneermax/Ahl-El-Kheir-charity-management-system`  
 **Branch:** `main`  
 **Document type:** Canonical Accounting Audit Record  
-**Last verified:** 2026-09-11
+**Last verified:** 2026-09-12
 
 This is the canonical Accounting audit record. Historical evidence is preserved here; the current continuation point is maintained at the end of this document.
 
@@ -28,7 +28,7 @@ Accounting Phase 1 has completed and passed the following controls:
 12. Journal listing/filtering integrity.
 13. Journal detail/history consistency.
 
-The remaining Journal Integrity / Accounting History Interaction controls are the relationship/auditability items listed in Section 11.
+The remaining Journal Integrity / Accounting History Interaction controls are the relationship/auditability items listed in Section 11 and the consolidated 2026-09-12 continuation sections below.
 
 ---
 
@@ -309,8 +309,6 @@ reference_id   = disbursement_items.id
 
 The corresponding `disbursement_items.reversal_journal_id` stores that journal ID. This is semantically distinct from the batch-level `disbursement_return` relationship and must not be silently relabeled merely to satisfy an audit query.
 
-Before this checkpoint, `item_return` was also **not** in the journal page's automated protection list, leaving the same alternate manual-void route available.
-
 ### `payroll`
 
 `modules/hr/lib_payroll_accounting.php` creates payroll journals with:
@@ -409,3 +407,150 @@ After every meaningful milestone:
 **Code is correct → behavior verified → documentation updated → session index updated → exact next continuation point clear.**
 
 This document is an existing-audit continuation record. Never restart the project or accounting audit from zero.
+
+---
+
+# 14. Consolidated 2026-09-12 Accounting Audit Continuation
+
+This section merges the dated accounting documentation updates that previously existed as separate files. The separate dated files are now retired; this canonical document is the single accounting-audit source of truth.
+
+## 14.1 Payroll accounting hardening
+
+Recent repository hardening relevant to accounting:
+
+- `52438233008269be3f26314f15f2f6d5ae62cfd7` — Fix payroll reversal journal workflow.
+- `4a5bc10ddc04b7afbad544f95f8f87ceea55161c` — Make payroll reversal workflow atomic.
+- `6731228776446c8ddca8b3346e7291de44ed252a` — Validate existing payroll journals before reuse.
+
+Current interpretation:
+
+- Payroll journals are automated records.
+- Payroll reversal is a distinct accounting event.
+- Multi-record payroll reversal handling is transactional.
+- Existing payroll journal reuse is validated before reuse.
+- Generic manual-void access is prohibited for `reference_type = payroll`.
+
+## 14.2 Voucher accounting
+
+The active voucher void route in `modules/accounting/vouchers.php` is transactional and validates the voucher/journal relationship, prevents duplicate reversals, validates the original and reversal balances, preserves the original journal, marks the voucher voided, writes an audit event, and rolls back on failure.
+
+The legacy helper `ak_void_journal_for_voucher()` remains unused by current repository call sites and was not changed unnecessarily. Voucher reversal journals are protected from the generic manual-void path.
+
+## 14.3 Account ledger integrity — STATIC PASS
+
+`modules/accounting/account_ledger.php` restricts access to `admin` and `financial_manager` and reads the authoritative chain:
+
+```text
+accounts.id
+   ↑
+journal_lines.account_id
+   ↑
+journal_entries.id = journal_lines.entry_id
+```
+
+The ledger includes only posted journals, excludes voided originals while retaining independently posted reversals, calculates opening/period/closing/running balances using debit-minus-credit, uses authoritative account IDs, and contains no journal mutation path.
+
+Result: **Account Ledger Integrity — STATIC PASS.**
+
+Minor architectural observation: the page invokes existing `ak_ensure_tables()` / `ak_seed_accounts()` initialization; writes occur only when the accounts table is empty. This is not an observed accounting defect.
+
+## 14.4 Cross-module accounting mutation review
+
+The active disbursement void route was confirmed to enforce role/CSRF controls, lock the batch, validate source state and original journal, reject duplicate reversal, require balanced lines, create a balanced `disbursement_void` reversal, void the original journal and linked transaction, update and verify the batch, record `DISBURSEMENT_VOID`, and roll back on failure.
+
+The transaction FM-review workflow atomically posts the transaction and accounting journal. Returned transactions can be edited/resubmitted while posted transactions remain immutable through the normal edit path.
+
+The active disbursement-return route creates a distinct `disbursement_return` accounting event. No separate active `item_return` route was invented beyond the implementation already represented by `reference_type = item_return`.
+
+## 14.5 Final live consistency sweep — CLASSIFIED
+
+A read-only final consistency sweep returned exactly one anomaly:
+
+```text
+ORPHAN_DISBURSEMENT_REVERSAL
+reference_type = disbursement_void
+journal_id = 7
+reference_id = 3
+```
+
+Targeted inspection established:
+
+```text
+journal 3: JE-000003
+reference_type = transaction
+reference_id = 3
+status = posted
+2 lines
+10000.00 debit / 10000.00 credit
+
+journal 7: JE-REV-000003
+reference_type = disbursement_void
+reference_id = 3
+status = posted
+2 lines
+195000.00 debit / 195000.00 credit
+```
+
+The source `monthly_disbursements.id = 3` row is no longer present, but the audit log preserves the lifecycle:
+
+- `815` CREATE disbursement `3` — 2026-08-18 07:02:11.
+- `816` SUBMIT.
+- `819` APPROVE.
+- `823` TRANSFER.
+- `828` AUTO_CLOSE.
+- `835` DATA_FIX on monthly disbursement `3`.
+- `843` VOID disbursement `3` — 2026-08-18 09:49:39.
+
+Therefore journal `7` is classified as a **legitimate historical orphaned disbursement reversal**, not a malformed accounting journal and not an active workflow defect.
+
+The journal is balanced, posted, has two lines, and has corroborating audit-log evidence. It must be preserved; deleting or rewriting it merely to make an orphan query return zero rows would damage accounting history.
+
+No database modification was required for this classification.
+
+## 14.6 Final audit status
+
+The Accounting Audit is **COMPLETE at the 2026-09-12 checkpoint**.
+
+All current consistency checks are clean except for the single historical orphan described above, which has been investigated and explicitly classified as preserved historical accounting evidence.
+
+Current protected evidence remains:
+
+- batch `11`
+- transaction `23`
+- original journal `JE-AUDIT-DISB-11`
+- reversal journal `43`
+- reversal reference type `disbursement_void`
+
+These records remain protected and must not be recreated, modified, or reused for unrelated tests.
+
+### Closed controls
+
+- Creator → FM review.
+- FM return/resubmission.
+- FM approval → posted balanced journal.
+- Returned transaction cancellation with no journal.
+- Authorized transaction void + balanced reversal.
+- Manual journal integrity.
+- Trial Balance integrity.
+- Accountant Staff financial/report authorization.
+- Accountant Staff disbursement authorization.
+- Receipt/closure workflow.
+- Journal listing/filtering.
+- Journal detail/history consistency.
+- Preservation of original entries.
+- Legacy disbursement `void_batch` protection.
+- Controlled disbursement-void evidence.
+- Voucher void static integrity.
+- Voucher reversal separation/protection.
+- Payroll accounting hardening review.
+- Account ledger integrity static review.
+- Cross-module accounting mutation review.
+- Final read-only accounting consistency sweep and historical anomaly classification.
+
+### Deferred / future auditability enhancement
+
+Direct UI navigation between source records, original journals, and reversal journals remains a future enhancement. This is not an accounting-integrity failure and does not reopen the completed audit.
+
+### Continuation rule
+
+Future accounting work must begin from new code/database evidence. Do not restart Phase 1, recreate fixtures, or repeat completed tests unless a genuine regression is identified.
