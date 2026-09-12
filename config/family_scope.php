@@ -32,7 +32,7 @@ function ak_family_user_in_scope(array $family, string $role, int $userId): bool
     $rows = dbFetchAll(
         "SELECT l.code
          FROM supervisor_letters sl
-         JOIN letters l ON l.id = supervisor_letters.letter_id
+         JOIN letters l ON l.id = sl.letter_id
          WHERE sl.supervisor_id = ?",
         [$userId]
     );
