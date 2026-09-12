@@ -183,13 +183,56 @@ Runtime verification was then completed successfully:
 
 ---
 
+# PERMISSION GOVERNANCE / AUTHORIZATION CONSISTENCY — CHECKPOINT 2026-09-12
+
+Permission Governance was selected as the next genuinely unfinished system-wide area after Authentication/session hardening.
+
+The current inspection established that authorization is intentionally distributed across centralized guards plus module-specific server-side scope checks. No organization-wide permission/action matrix exists yet, but no confirmed authorization bypass was established at the current evidence boundary.
+
+A concrete sponsorship scope inconsistency was identified and corrected narrowly:
+
+- Sponsor gender is a **basic system requirement** and must be specified when sponsor data is added.
+- Sponsor creation now rejects missing/invalid gender server-side and the UI requires it.
+- Supervisor sponsor visibility is governed by the existing letter + gender assignment matrix.
+- Supervisor sponsor view authorization now enforces the same letter + gender scope.
+- Supervisor sponsor edit authorization now enforces the same letter + gender scope.
+- Existing legacy sponsors with `unknown` gender were not mass-modified; valid gender is required when their data is edited.
+
+Relevant fixes were pushed directly to `main` in commits:
+
+- `ecb6bdaeb0eefff76d9dfac94e955e6d68992395`
+- `61d0957fe60ffc238718fcdd98ff1f2b71491a3f`
+- `ea2c531fc707e28290ace70d70ecc02ffec69b44`
+
+Runtime verification of the affected scope produced the expected denial message:
+
+`هذه الأسرة ليست ضمن نطاقك.`
+
+This confirms the tested supervisor scope boundary is actively enforced by the downstream family workflow.
+
+**Permission Governance remains open for source inspection of other record-level authorization boundaries. Do not treat the above sponsorship finding as an organization-wide permission audit closure.**
+
+---
+
+# NEXT MODULE AUDIT QUEUE
+
+**Supervisor Module Audit — NEXT MODULE TO AUDIT**
+
+The supervisor module is explicitly queued as the next module-level audit after the current Permission Governance continuation.
+
+Scope should include the existing supervisor lifecycle, creation/editing, letter and gender assignment/reassignment, workload/ownership calculations, suspension/reactivation/final departure/return flows, and all linked record-level authorization boundaries.
+
+This queue entry does **not** start the supervisor audit yet. Continue the current Permission Governance audit first, then move to the Supervisor Module Audit without restarting prior work.
+
+---
+
 # CURRENT AUDIT DIRECTION
 
-Accounting and Notification audits are closed at their current evidence boundaries. Authentication/session hardening is verified and documented.
+Accounting and Notification audits are closed at their current evidence boundaries. Authentication/session hardening is verified and documented. Permission Governance is the current open system-wide audit area.
 
-The next area must be selected from the existing repository/documentation state, not by restarting a completed audit. Inspect `main` and the canonical current-state documentation, identify the highest-priority genuinely unfinished system/module task, and continue from that exact checkpoint.
+Continue Permission Governance from the existing sponsorship scope checkpoint. Inspect remaining record-level authorization boundaries, identify only concrete risks, fix narrowly where evidence establishes a defect, test affected behavior, and document the result.
 
-Before starting the next area, use the existing audit documents as the authoritative record rather than recreating fixtures or rerunning completed checks.
+Before starting the Supervisor Module Audit, use the existing audit documents and this session index as the authoritative continuation record.
 
 ---
 
@@ -217,20 +260,3 @@ Read/use these together as applicable:
 5. `docs/AHL_EL_KHEIR_REPOSITORY_AUDIT.md`
 6. `docs/AHL_EL_KHEIR_SYSTEM_ANALYSIS.md`
 7. `docs/CHATGPT_SESSION_INDEX.md`
-
-Historical audit documents remain historical and must not override the current checkpoint.
-
----
-
-# IMPORTANT CONTINUATION RULES
-
-- Existing project + existing audits — never restart.
-- Do not ask for information already present in the repository/documentation.
-- Do not repeat old SQL verification.
-- Do not recreate known fixtures merely to rerun passed tests.
-- Never guess table/column names; inspect actual schema if SQL is required.
-- Keep SQL to the minimum necessary.
-- Prefer safe functional browser testing.
-- If code modification is needed, make it narrow and verify the resulting repository file.
-- Preserve procedural PHP, Vanilla JS, Bootstrap 5.3 RTL, Font Awesome 6, Cairo, MariaDB/MySQL/PDO.
-- Historical test records are evidence; do not modify them to make queries cleaner.
