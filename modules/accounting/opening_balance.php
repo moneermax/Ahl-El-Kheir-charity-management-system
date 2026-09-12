@@ -81,9 +81,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_opening_balance'
                     // all journal lines, and the source audit record must succeed together.
                     $pdo->beginTransaction();
 
+                    // Opening-balance codes share the numeric sequence with ordinary JE-XXXXXX
+                    // codes so a later opening balance can never reuse the previous OB code.
                     $lastNo = (int)(dbFetchOne(
-                        "SELECT COALESCE(MAX(CAST(SUBSTRING(entry_code, 4) AS UNSIGNED)), 0) AS max_no
-                         FROM journal_entries WHERE entry_code REGEXP '^JE-[0-9]+$'"
+                        "SELECT COALESCE(MAX(
+                            CASE
+                                WHEN entry_code REGEXP '^JE-[0-9]+$' THEN CAST(SUBSTRING(entry_code, 4) AS UNSIGNED)
+                                WHEN entry_code REGEXP '^JE-OB-[0-9]+$' THEN CAST(SUBSTRING(entry_code, 7) AS UNSIGNED)
+                                ELSE 0
+                            END
+                        ), 0) AS max_no
+                         FROM journal_entries"
                     )['max_no'] ?? 0);
                     $n = $lastNo + 1;
                     $code = 'JE-OB-' . str_pad((string)$n, 6, '0', STR_PAD_LEFT);
