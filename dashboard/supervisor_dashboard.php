@@ -10,7 +10,19 @@ $pageTitle = t('dashboard.supervisor_title');
 $active = 'dashboard';
 $uid = Session::getUserId();
 $myLetters = dbFetchAll("SELECT l.code, l.name_ar FROM supervisor_letters sl JOIN letters l ON l.id = sl.letter_id WHERE sl.supervisor_id = ? ORDER BY l.sort_order", [$uid]);
-$s = dbFetchOne("SELECT (SELECT COUNT(*) FROM sponsors WHERE supervisor_id = ? OR first_letter_id IN(SELECT letter_id FROM supervisor_letters WHERE supervisor_id = ?)) AS my_sponsors,(SELECT COUNT(*) FROM sponsorships WHERE status = 'active' AND sponsor_id IN(SELECT id FROM sponsors WHERE supervisor_id = ? OR first_letter_id IN(SELECT letter_id FROM supervisor_letters WHERE supervisor_id = ?))) AS my_active_sponsorships,(SELECT COUNT(DISTINCT sp.child_id) FROM sponsorships sp WHERE sp.status = 'active' AND sp.sponsor_id IN(SELECT id FROM sponsors WHERE supervisor_id = ? OR first_letter_id IN(SELECT letter_id FROM supervisor_letters WHERE supervisor_id = ?))) AS my_orphans,(SELECT COALESCE(SUM(amount),0) FROM sponsor_payments WHERE supervisor_id = ? AND DATE_FORMAT(created_at,'%Y-%m') = DATE_FORMAT(CURDATE(),'%Y-%m')) AS month_collected", [$uid,$uid,$uid,$uid,$uid,$uid,$uid]);
+$scopeSql = "(s.supervisor_id = ? OR EXISTS (
+    SELECT 1 FROM supervisor_letters sl
+    JOIN letters l ON l.id = sl.letter_id
+    WHERE sl.supervisor_id = ?
+      AND sl.letter_id = s.first_letter_id
+      AND l.gender = s.gender
+))";
+$s = dbFetchOne("SELECT
+    (SELECT COUNT(*) FROM sponsors s WHERE $scopeSql) AS my_sponsors,
+    (SELECT COUNT(*) FROM sponsorships sp JOIN sponsors s ON s.id = sp.sponsor_id WHERE sp.status = 'active' AND $scopeSql) AS my_active_sponsorships,
+    (SELECT COUNT(DISTINCT sp.child_id) FROM sponsorships sp JOIN sponsors s ON s.id = sp.sponsor_id WHERE sp.status = 'active' AND $scopeSql) AS my_orphans,
+    (SELECT COALESCE(SUM(amount),0) FROM sponsor_payments WHERE supervisor_id = ? AND DATE_FORMAT(created_at,'%Y-%m') = DATE_FORMAT(CURDATE(),'%Y-%m')) AS month_collected",
+    [$uid,$uid, $uid,$uid, $uid,$uid, $uid]);
 include __DIR__ . '/../includes/header.php';
 ?>
 <style>.sup-stat{border:none;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,.05);transition:transform .2s}.sup-stat:hover{transform:translateY(-3px)}.sup-stat .v{font-size:2rem;font-weight:700;color:#1b4d8f}</style>
