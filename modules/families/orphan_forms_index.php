@@ -8,11 +8,31 @@ $role=Session::getUserRole(); $viewRoles=['admin','vice_general_manager','genera
 if(!in_array($role,$viewRoles,true)){header('Location: '.APP_URL.'index.php');exit();}
 $uid=(int)Session::getUserId(); $canEdit=in_array($role,['admin','vice_general_manager','supervisor','nanny'],true); $canSeeFinancial=in_array($role,['admin','vice_general_manager','general_manager','supervisor','nanny'],true);
 $pageTitle=t('forms.orphan_title'); $active='orphan_forms'; $q=trim((string)($_GET['q']??'')); $search=mb_substr($q,0,60);
-$scopeSql='';$params=[];
-if($role==='nanny'){$scopeSql=' AND f.nanny_id = ? ';$params[]=$uid;}elseif($role==='supervisor'){$scopeSql=' AND f.supervisor_id = ? ';$params[]=$uid;}
-$searchSql='';if($search!==''){$like='%'.$search.'%';$searchSql=' AND ( fc.child_name LIKE ? OR f.mother_name LIKE ? OR f.family_code LIKE ? OR fc.form_serial LIKE ? ) ';$params[]=$like;$params[]=$like;$params[]=$like;$params[]=$like;}
-$sql="SELECT fc.id, fc.child_name, fc.gender, fc.form_serial, f.family_code, f.mother_name, f.status AS family_status FROM family_children fc JOIN families f ON f.id = fc.family_id WHERE 1=1".$scopeSql.$searchSql." ORDER BY fc.id DESC LIMIT 200";
-$rows=dbFetchAll($sql,$params);
+$scopeFamilyIds=null;
+$norm=function(string $s):string{$s=preg_replace('/[\x{064B}-\x{0652}\x{0640}\x{200B}-\x{200D}\x{FEFF}]/u','',$s);$s=str_replace(['أ','إ','آ','ٱ'],'ا',$s);$s=str_replace(['ة'],'ه',$s);return mb_strtolower(preg_replace('/\s+/u',' ',trim($s)),'UTF-8');};
+if($role==='nanny'){
+    $scopeFamilyIds=array_map('intval',array_column(dbFetchAll("SELECT id FROM families WHERE nanny_id=?",[$uid]),'id'));
+}elseif($role==='supervisor'){
+    $myNormCodes=array_map(fn($r)=>$norm((string)$r['code']),dbFetchAll("SELECT l.code FROM supervisor_letters sl JOIN letters l ON l.id=sl.letter_id WHERE sl.supervisor_id=?",[$uid]));
+    $scopeFamilyIds=[];
+    $scopeFamilies=dbFetchAll("SELECT id,supervisor_id,legacy_mother_first_letter FROM families");
+    foreach($scopeFamilies as $sf){
+        if((int)($sf['supervisor_id']??0)===$uid || in_array($norm((string)($sf['legacy_mother_first_letter']??'')),$myNormCodes,true))$scopeFamilyIds[]=(int)$sf['id'];
+    }
+}
+$searchSql='';$params=[];
+if($search!==''){$like='%'.$search.'%';$searchSql=' AND ( fc.child_name LIKE ? OR f.mother_name LIKE ? OR f.family_code LIKE ? OR fc.form_serial LIKE ? ) ';$params[]=$like;$params[]=$like;$params[]=$like;$params[]=$like;}
+if($scopeFamilyIds!==null){
+    if(!$scopeFamilyIds){$rows=[];}else{
+        $ph=implode(',',array_fill(0,count($scopeFamilyIds),'?'));
+        $params=array_merge($scopeFamilyIds,$params);
+        $sql="SELECT fc.id, fc.child_name, fc.gender, fc.form_serial, f.family_code, f.mother_name, f.status AS family_status FROM family_children fc JOIN families f ON f.id = fc.family_id WHERE f.id IN ($ph)".$searchSql." ORDER BY fc.id DESC LIMIT 200";
+        $rows=dbFetchAll($sql,$params);
+    }
+}else{
+    $sql="SELECT fc.id, fc.child_name, fc.gender, fc.form_serial, f.family_code, f.mother_name, f.status AS family_status FROM family_children fc JOIN families f ON f.id = fc.family_id WHERE 1=1".$searchSql." ORDER BY fc.id DESC LIMIT 200";
+    $rows=dbFetchAll($sql,$params);
+}
 $akCss='#ak-ofi-page{--navy:#1b4d8f;--line:#e3e8ef;--muted:#6b7280;font-size:.95rem}#ak-ofi-page .ak-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}#ak-ofi-page .ak-title{font-size:1.3rem;font-weight:800;color:var(--navy);margin:0}#ak-ofi-page .ak-card{background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:16px;overflow:hidden}#ak-ofi-page .ak-card-head{background:var(--navy);color:#fff;padding:10px 14px;font-weight:700;font-size:.9rem}#ak-ofi-page .ak-table{width:100%;border-collapse:collapse;background:#fff}#ak-ofi-page .ak-table th{background:var(--navy);color:#fff;font-weight:600;font-size:.83rem;padding:10px 12px;text-align:right}#ak-ofi-page .ak-table td{padding:9px 12px;border-bottom:1px solid var(--line);font-size:.88rem;vertical-align:middle}#ak-ofi-page .ak-table tr:hover td{background:#f8fafc}#ak-ofi-page .ak-btn{border:0;border-radius:8px;padding:6px 12px;font-size:.8rem;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block}#ak-ofi-page .ak-btn-navy{background:var(--navy);color:#fff}#ak-ofi-page .ak-btn-green{background:#16a34a;color:#fff}#ak-ofi-page .ak-btn-ghost{background:#fff;border:1px solid var(--line);color:#374151}#ak-ofi-page .ak-btn-ghost:hover{background:#f3f4f6}#ak-ofi-page .ak-input{border:1px solid var(--line);border-radius:8px;padding:7px 12px;font-size:.9rem;background:#fff;color:#111827}#ak-ofi-page .ak-badge{border-radius:99px;padding:3px 10px;font-size:.72rem;font-weight:700;display:inline-block}#ak-ofi-page .ak-b-green{background:#dcfce7;color:#166534}#ak-ofi-page .ak-b-gray{background:#e5e7eb;color:#374151}';
 $akHeader=dirname(__DIR__,2).'/includes/header.php';$akFooter=dirname(__DIR__,2).'/includes/footer.php';$useLayout=is_file($akHeader)&&is_file($akFooter);
 if($useLayout){require $akHeader;echo '<main id="ak-ofi-page" class="container-fluid py-4"><style>'.$akCss.'</style>';}else{echo '<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8"><title>'.e(t('forms.orphan_title')).'</title></head><body style="background:#f4f7fb"><main id="ak-ofi-page" class="container-fluid py-4"><style>'.$akCss.'</style>';}
