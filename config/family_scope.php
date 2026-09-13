@@ -6,7 +6,9 @@ declare(strict_types=1);
  *
  * A supervisor can access a family when either:
  * 1) the family is explicitly assigned to that supervisor, or
- * 2) the family has a sponsorship whose sponsor falls under the supervisor's
+ * 2) the family has a sponsorship whose sponsor is explicitly assigned to
+ *    that supervisor, or
+ * 3) the family has a sponsorship whose sponsor falls under the supervisor's
  *    first-letter + gender responsibility matrix.
  *
  * Nannies remain restricted to their directly assigned families. Other roles
@@ -19,7 +21,29 @@ function ak_family_user_in_scope(array $family, string $role, int $userId): bool
     if ($role === 'supervisor') {
         if ((int)($family['supervisor_id'] ?? 0) === $userId) return true;
 
-        /* Sponsor responsibility is independent from family assignment. */
+        /*
+         * Sponsor responsibility is independent from family assignment.
+         * An explicitly assigned sponsor is authoritative and must grant
+         * access to every family/orphan connected to that sponsor.
+         */
+        $linkedSponsor = dbFetchOne(
+            "SELECT sp.id
+             FROM sponsorships s
+             JOIN family_children fc ON fc.id = s.child_id
+             JOIN sponsors sp ON sp.id = s.sponsor_id
+             WHERE fc.family_id = ?
+               AND sp.supervisor_id = ?
+             LIMIT 1",
+            [(int)($family['id'] ?? 0), $userId]
+        );
+
+        if (!empty($linkedSponsor)) return true;
+
+        /*
+         * Otherwise fall back to the supervisor letter + gender matrix.
+         * This keeps matrix-based responsibility working for non-manual
+         * sponsor assignments and preserves the existing scope model.
+         */
         $linkedSponsor = dbFetchOne(
             "SELECT sp.id
              FROM sponsorships s
