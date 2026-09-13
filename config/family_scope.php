@@ -93,13 +93,27 @@ function ak_family_user_in_scope(array $family, string $role, int $userId): bool
  * Enforce the family record boundary on direct-ID family/child routes.
  * Supervisor access includes both explicit family assignment and families
  * related to sponsors inside the supervisor's responsibility matrix.
+ *
+ * IMPORTANT: this helper is loaded globally and Session::start() invokes it
+ * for every authenticated request. Therefore route detection MUST be scoped
+ * to the actual families module. A generic basename() check would incorrectly
+ * treat unrelated routes such as modules/sponsors/view.php?id=942 as a family
+ * request and interpret the sponsor ID as a family ID.
  */
 function ak_enforce_family_request_scope(): void
 {
     if (!class_exists('Session') || !Session::isLoggedIn()) return;
-    $script = basename((string)($_SERVER['SCRIPT_FILENAME'] ?? ''));
+
+    $scriptName = str_replace('\\', '/', (string)($_SERVER['SCRIPT_NAME'] ?? ''));
+    $familyModulePath = rtrim(APP_BASE_PATH, '/') . '/modules/families/';
+
+    /* Only the families module is allowed to trigger this family-ID guard. */
+    if (strpos($scriptName, $familyModulePath) !== 0) return;
+
+    $script = basename($scriptName);
     $protectedScripts = ['documents.php', 'edit.php', 'view.php', 'orphan_form.php', 'orphan_profile.php'];
     if (!in_array($script, $protectedScripts, true)) return;
+
     $role = Session::getUserRole();
     if (!in_array($role, ['supervisor', 'nanny'], true)) return;
 
