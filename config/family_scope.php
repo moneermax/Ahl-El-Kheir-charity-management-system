@@ -4,11 +4,12 @@ declare(strict_types=1);
 /**
  * Centralized family-level authorization for operational roles.
  *
- * This preserves the existing family/view.php and family/edit.php supervisor
- * rule: direct family assignment OR an assigned supervisor letter matching
- * the family's legacy mother first letter. Nannies remain restricted to their
- * directly assigned families. Other already-authorized roles are not narrowed
- * by this helper; their module-level role guards remain authoritative.
+ * Family access is based on an explicit family assignment. A supervisor's
+ * sponsor responsibility is a separate business rule and is NOT derived from
+ * the family's mother name or first letter.
+ *
+ * Nannies remain restricted to their directly assigned families. Other roles
+ * already authorized by their module guards are not narrowed by this helper.
  */
 function ak_family_user_in_scope(array $family, string $role, int $userId): bool
 {
@@ -16,34 +17,11 @@ function ak_family_user_in_scope(array $family, string $role, int $userId): bool
         return (int)($family['nanny_id'] ?? 0) === $userId;
     }
 
-    if ($role !== 'supervisor') {
-        return true;
+    if ($role === 'supervisor') {
+        return (int)($family['supervisor_id'] ?? 0) === $userId;
     }
 
-    if ((int)($family['supervisor_id'] ?? 0) === $userId) {
-        return true;
-    }
-
-    $legacyCode = normalize_arabic_letter((string)($family['legacy_mother_first_letter'] ?? ''));
-    if ($legacyCode === '') {
-        return false;
-    }
-
-    $rows = dbFetchAll(
-        "SELECT l.code
-         FROM supervisor_letters sl
-         JOIN letters l ON l.id = sl.letter_id
-         WHERE sl.supervisor_id = ?",
-        [$userId]
-    );
-
-    foreach ($rows as $row) {
-        if (normalize_arabic_letter((string)($row['code'] ?? '')) === $legacyCode) {
-            return true;
-        }
-    }
-
-    return false;
+    return true;
 }
 
 /**
@@ -91,7 +69,7 @@ function ak_enforce_family_request_scope(): void
     }
 
     $family = dbFetchOne(
-        "SELECT id, nanny_id, supervisor_id, legacy_mother_first_letter FROM families WHERE id = ?",
+        "SELECT id, nanny_id, supervisor_id FROM families WHERE id = ?",
         [$familyId]
     );
     if (!$family) {
