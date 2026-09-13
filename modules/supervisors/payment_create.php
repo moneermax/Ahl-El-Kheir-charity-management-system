@@ -24,11 +24,15 @@ if($_SERVER['REQUEST_METHOD']==='POST'&&verify_csrf()){
     if(!$errors){
         try{
             db()->beginTransaction();
+            $lockedSp=dbFetchOne("SELECT id FROM sponsorships WHERE id=? FOR UPDATE",[$sp_id]);
+            if(!$lockedSp)throw new RuntimeException('الكفالة غير موجودة.');
+            $duplicate=dbFetchOne("SELECT id,status FROM sponsor_payments WHERE sponsorship_id=? AND payment_period=? AND status IN ('pending','approved') ORDER BY id DESC LIMIT 1",[$sp_id,$input['payment_period']]);
+            if($duplicate)throw new RuntimeException('يوجد بالفعل تحصيل مسجل أو معلق لهذه الكفالة لنفس الفترة.');
             dbExecute("INSERT INTO sponsor_payments (sponsorship_id,supervisor_id,payment_period,amount,currency_code,payment_method,receipt_file_path,notes) VALUES (?,?,?,?,'SDG',?,?,?)",[$sp_id,$uid,$input['payment_period'],$input['amount'],$input['payment_method'],$receiptPath,$input['notes']!==''?$input['notes']:null]);
             $newId=dbLastInsertId();
             dbExecute("INSERT INTO audit_log (user_id,action,entity_type,entity_id,old_values,new_values,ip_address,user_agent) VALUES (?, 'CREATE','sponsor_payments',?,NULL,?,?,?)",[$uid,$newId,json_encode(['period'=>$input['payment_period'],'amount'=>$input['amount'],'currency'=>'SDG','payment_method'=>$input['payment_method']],JSON_UNESCAPED_UNICODE),$_SERVER['REMOTE_ADDR']??'',$_SERVER['HTTP_USER_AGENT']??'']);
             db()->commit();flash('success',t('supervisors.payment_saved'));redirect('modules/sponsors/view.php?id='.$sp['sponsor_id']);
-        }catch(Throwable $e){if(db()->inTransaction())db()->rollBack();$errors[]='تعذر حفظ التحصيل. لم يتم تسجيل أي جزء من العملية.';}
+        }catch(Throwable $e){if(db()->inTransaction())db()->rollBack();$errors[]=$e instanceof RuntimeException?$e->getMessage():'تعذر حفظ التحصيل. لم يتم تسجيل أي جزء من العملية.';}
     }
 }
 $prev_payments=dbFetchAll("SELECT sp.*,u.full_name supervisor_name FROM sponsor_payments sp LEFT JOIN users u ON u.id=sp.supervisor_id WHERE sp.sponsorship_id=? ORDER BY sp.created_at DESC LIMIT 10",[$sp_id]);
