@@ -82,16 +82,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['project_fm_review']))
             if ($budgetAmount <= 0) throw new RuntimeException(t('fm.no_budget_amount'));
             $accountIds = array_map('intval', array_keys($postedFundingAmounts));
             $allowedAccounts = dbFetchAll("SELECT a.id, a.code,
-                    COALESCE(SUM(
-    CASE
-        WHEN je.status = 'posted' THEN jl.debit - jl.credit
-        ELSE 0
-    END
-), 0) AS ledger_balance,
-...
-FROM accounts a
-LEFT JOIN journal_lines jl ON jl.account_id = a.id
-LEFT JOIN journal_entries je ON je.id = jl.entry_id
+                    COALESCE(SUM(jl.debit - jl.credit), 0) AS ledger_balance,
+                    COALESCE((SELECT SUM(f.amount) FROM project_funding_allocations f WHERE f.source_account_id = a.id AND f.status = 'approved'), 0) AS reserved_amount
+                FROM accounts a LEFT JOIN journal_lines jl ON jl.account_id = a.id
+                LEFT JOIN journal_entries je ON je.id = jl.entry_id AND je.status = 'posted'
                 WHERE a.code IN ('1100','1200','1300') AND a.is_active = 1
                 GROUP BY a.id, a.code ORDER BY a.code");
             $accountsById = [];
@@ -165,16 +159,10 @@ $projectApprovalQueue = dbFetchAll("SELECT
     ORDER BY pa.submitted_at ASC, p.id ASC");
 $projectApprovalCount = count($projectApprovalQueue);
 $fundingAccounts = dbFetchAll("SELECT a.id, a.code, a.name_ar, a.name_en,
-        COALESCE(SUM(
-    CASE
-        WHEN je.status = 'posted' THEN jl.debit - jl.credit
-        ELSE 0
-    END
-), 0) AS ledger_balance,
-...
-FROM accounts a
-LEFT JOIN journal_lines jl ON jl.account_id = a.id
-LEFT JOIN journal_entries je ON je.id = jl.entry_id
+        COALESCE(SUM(jl.debit - jl.credit), 0) AS ledger_balance,
+        COALESCE((SELECT SUM(f.amount) FROM project_funding_allocations f WHERE f.source_account_id = a.id AND f.status = 'approved'), 0) AS reserved_amount
+    FROM accounts a LEFT JOIN journal_lines jl ON jl.account_id = a.id
+    LEFT JOIN journal_entries je ON je.id = jl.entry_id AND je.status = 'posted'
     WHERE a.code IN ('1100','1200','1300') AND a.is_active = 1
     GROUP BY a.id, a.code, a.name_ar, a.name_en ORDER BY a.code");
 
