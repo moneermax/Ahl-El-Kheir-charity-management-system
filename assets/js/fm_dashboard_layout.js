@@ -30,14 +30,26 @@
         });
     }
 
+    function prepareTreasuryRow(treasuryGrid) {
+        treasuryGrid.style.gridTemplateColumns = 'repeat(5, minmax(0, 1fr))';
+        treasuryGrid.style.gap = '10px';
+
+        var treasuryCards = treasuryGrid.querySelectorAll('.stat-box');
+        for (var i = 0; i < treasuryCards.length; i++) {
+            treasuryCards[i].style.minWidth = '0';
+            treasuryCards[i].style.padding = '14px 10px';
+        }
+    }
+
     function buildTreasuryAdminFeeCard(value) {
         var card = document.createElement('div');
         card.className = 'stat-box purple';
         card.id = 'fm-treasury-admin-fee';
         card.style.minWidth = '0';
+        card.style.padding = '14px 10px';
         card.innerHTML = '' +
             '<div class="stat-label" style="font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">💼 الرسوم الإدارية المحصلة</div>' +
-            '<div class="stat-value" style="font-size:1.55rem;white-space:nowrap">' + formatAmount(value) + '</div>' +
+            '<div class="stat-value" data-admin-fee-value style="font-size:1.55rem;white-space:nowrap">' + (value === null ? '…' : formatAmount(value)) + '</div>' +
             '<div class="stat-sub" style="font-size:.72rem;white-space:nowrap">حساب 4200 · SDG</div>';
         return card;
     }
@@ -87,13 +99,25 @@
 
     function loadAccountingKpis() {
         var main = document.querySelector('main.container-fluid');
-        if (!main || document.getElementById('fm-accounting-kpis')) return;
+        if (!main) return;
 
         var treasuryGrid = main.querySelector('.fm-top-right > .grid-4');
-        if (!treasuryGrid || document.getElementById('fm-treasury-admin-fee')) return;
+        if (!treasuryGrid) return;
+
+        // The fifth card is structural and must appear even if the KPI endpoint fails.
+        prepareTreasuryRow(treasuryGrid);
+        var adminFeeCard = document.getElementById('fm-treasury-admin-fee');
+        if (!adminFeeCard) {
+            adminFeeCard = buildTreasuryAdminFeeCard(null);
+            treasuryGrid.appendChild(adminFeeCard);
+        }
 
         var endpoint = new URL('fm_dashboard_kpis.php', window.location.href).toString();
-        fetch(endpoint, { credentials: 'same-origin', headers: { 'Accept': 'application/json' } })
+        fetch(endpoint, {
+            credentials: 'same-origin',
+            headers: { 'Accept': 'application/json' },
+            cache: 'no-store'
+        })
             .then(function (response) {
                 if (!response.ok) throw new Error('KPI request failed: ' + response.status);
                 return response.json();
@@ -101,21 +125,18 @@
             .then(function (data) {
                 if (!data || !data.ok) throw new Error(data && data.message ? data.message : 'KPI response failed');
 
-                // The treasury row is intentionally five compact cards on desktop:
-                // cash, bank, wallet, total treasury, and total administrative fees.
-                treasuryGrid.style.gridTemplateColumns = 'repeat(5, minmax(0, 1fr))';
-                treasuryGrid.style.gap = '10px';
-                var treasuryCards = treasuryGrid.querySelectorAll('.stat-box');
-                for (var i = 0; i < treasuryCards.length; i++) {
-                    treasuryCards[i].style.minWidth = '0';
-                    treasuryCards[i].style.padding = '14px 10px';
-                }
-                treasuryGrid.appendChild(buildTreasuryAdminFeeCard(data.admin_fees_total));
+                var valueNode = adminFeeCard.querySelector('[data-admin-fee-value]');
+                if (valueNode) valueNode.textContent = formatAmount(data.admin_fees_total);
 
-                var card = buildLedgerKpiCard(data);
-                treasuryGrid.parentNode.insertBefore(card, treasuryGrid.nextSibling);
+                if (!document.getElementById('fm-accounting-kpis')) {
+                    var card = buildLedgerKpiCard(data);
+                    treasuryGrid.parentNode.insertBefore(card, treasuryGrid.nextSibling);
+                }
             })
             .catch(function (error) {
+                var valueNode = adminFeeCard.querySelector('[data-admin-fee-value]');
+                if (valueNode) valueNode.textContent = '—';
+                adminFeeCard.title = 'تعذر تحميل إجمالي الرسوم الإدارية من دفتر الأستاذ: ' + error.message;
                 console.error('FM accounting KPI load failed:', error);
             });
     }
