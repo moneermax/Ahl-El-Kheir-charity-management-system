@@ -86,6 +86,12 @@ foreach (dbFetchAll("SELECT letter_id, gender FROM supervisor_letters WHERE supe
 }
 $codeById = [];
 foreach (dbFetchAll("SELECT id, code FROM letters") as $L) $codeById[(int)$L['id']] = $L['code'];
+$myFamilyLetterCodes = [];
+foreach (array_keys($myLetterGenders) as $letterId) {
+    $code = normalize_arabic_letter((string)($codeById[$letterId] ?? ''));
+    if ($code !== '') $myFamilyLetterCodes[] = $code;
+}
+$scopeActive = ($role === 'supervisor');
 
 $mySponsorIds = null; // null = unrestricted
 if ($role === 'supervisor') {
@@ -101,7 +107,6 @@ if ($role === 'supervisor') {
     }
     $mySponsorIds = array_values(array_unique($mySponsorIds));
 }
-$scopeActive = ($role === 'supervisor');
 
 /* ---------- SAVE ---------- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save'])) {
@@ -151,7 +156,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save'])) {
             try {
                 $created = [];
                 foreach ($valid as $v) {
-                                        dbExecute(
+                    dbExecute(
                         "INSERT INTO sponsorships (sponsor_id, child_id, monthly_amount, currency_code, start_date, status, notes, created_by)
                          VALUES (?, ?, ?, 'SDG', CURDATE(), 'active', ?, ?)",
                         [$input['sponsor_id'], $v['id'], $v['amount'], $input['notes'], $uid]
@@ -201,7 +206,7 @@ $manual = [];
 if ($oq !== '') {
     $manual = dbFetchAll(
         "SELECT fc.id, fc.child_name, fc.gender, fc.is_critical, fc.match_status,
-                f.mother_name, f.family_code, f.legacy_mother_first_letter,
+                f.id AS family_id, f.supervisor_id, f.mother_name, f.family_code, f.legacy_mother_first_letter,
                 sp.id AS active_sp_id
          FROM family_children fc
          JOIN families f ON f.id = fc.family_id
@@ -210,6 +215,13 @@ if ($oq !== '') {
          ORDER BY fc.id LIMIT 50",
         ["%$oq%", "%$oq%", "%$oq%"]
     );
+    if ($scopeActive) {
+        $manual = array_values(array_filter($manual, function (array $r) use ($uid, $myFamilyLetterCodes): bool {
+            if ((int)($r['supervisor_id'] ?? 0) === $uid) return true;
+            $legacy = normalize_arabic_letter((string)($r['legacy_mother_first_letter'] ?? ''));
+            return $legacy !== '' && in_array($legacy, $myFamilyLetterCodes, true);
+        }));
+    }
 }
 
 include dirname(__DIR__, 2) . '/includes/header.php';
