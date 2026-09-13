@@ -277,3 +277,26 @@ Before moving to another audit area, complete the Supervisor Module audit and pr
 ---
 
 # PARKED TODO LATER
+
+1. Direct original ↔ reversal/source navigation in journal detail.
+2. Missing/stale receipt same-page modal UX.
+3. Broader accounting auditability enhancements after underlying mutation routes are fully audited.
+4. Formal organization-wide permission/action matrix.
+5. Formal report/source/calculation catalog.
+6. Final notification event/recipient catalog where not already captured by the dedicated Notification Audit.
+
+These are parked items, not reasons to reopen completed audit areas without evidence.
+
+---
+
+# AUTHORITATIVE DOCUMENTATION FOR CONTINUATION
+
+Read/use these together as applicable:
+
+1. `docs/AHL_EL_KHEIR_NOTIFICATION_AUDIT.md`
+2. `docs/AHL_EL_KHEIR_ACCOUNTING_AUDIT.md`
+3. `docs/AHL_EL_KHEIR_CURRENT_SYSTEM_STATUS_2026-09-08.md`
+4. `docs/AHL_EL_KHEIR_COMPLETE_REPOSITORY_AUDIT.md`
+5. `docs/AHL_EL_KHEIR_REPOSITORY_AUDIT.md`
+6. `docs/AHL_EL_KHEIR_SYSTEM_ANALYSIS.md`
+7. `docs/CHATGPT_SESSION_INDEX.md`
