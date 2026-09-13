@@ -89,6 +89,30 @@ define('TABLE_TRANSACTIONS', 'transactions');
 define('TABLE_SETTINGS', 'settings');
 define('TABLE_AUDIT_LOG', 'audit_log');
 
+/* Standard orphan profile choices shared by orphan profile/form pages. */
+$AK_ORPHAN_OPTS = [
+    'health' => [
+        'سليم',
+        'مرض مزمن',
+        'إعاقة حركية',
+        'إعاقة سمعية',
+        'إعاقة بصرية',
+        'إعاقة ذهنية',
+        'مرض آخر',
+        'أخرى'
+    ],
+    'psych' => [
+        'سليم',
+        'مستقر',
+        'قلق',
+        'اكتئاب',
+        'اضطراب سلوكي',
+        'تأخر نفسي/نمائي',
+        'حالة نفسية أخرى',
+        'أخرى'
+    ]
+];
+
 /* Storage */
 define('BACKUP_DIR', APP_DIR . '/storage/backups');
 define('LOG_DIR', APP_DIR . '/storage/logs');
