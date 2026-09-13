@@ -34,6 +34,21 @@ try {
           AND jl.credit > 0
           AND je.status = 'posted'", [$monthStart, $monthEnd]);
 
+    // Monthly flow is calculated from the posted ledger using normal double-entry direction:
+    // revenue = credits, expenses = debits. Voided journals are excluded.
+    $monthlyFlow = dbFetchOne("SELECT
+        COALESCE(SUM(CASE WHEN a.account_type = 'revenue' AND jl.credit > 0 THEN jl.credit ELSE 0 END), 0) AS income_total,
+        COALESCE(SUM(CASE WHEN a.code = '4100' AND jl.credit > 0 THEN jl.credit ELSE 0 END), 0) AS income_sponsorship,
+        COALESCE(SUM(CASE WHEN a.code = '4200' AND jl.credit > 0 THEN jl.credit ELSE 0 END), 0) AS income_admin_fee,
+        COALESCE(SUM(CASE WHEN a.account_type = 'expense' AND jl.debit > 0 THEN jl.debit ELSE 0 END), 0) AS outgoing_total,
+        COALESCE(SUM(CASE WHEN a.code = '5100' AND jl.debit > 0 THEN jl.debit ELSE 0 END), 0) AS outgoing_programs,
+        COALESCE(SUM(CASE WHEN a.code = '5200' AND jl.debit > 0 THEN jl.debit ELSE 0 END), 0) AS outgoing_salaries
+        FROM journal_lines jl
+        JOIN journal_entries je ON je.id = jl.entry_id
+        JOIN accounts a ON a.id = jl.account_id
+        WHERE je.entry_date BETWEEN ? AND ?
+          AND je.status = 'posted'", [$monthStart, $monthEnd]);
+
     // Sponsorship reconciliation is restricted to posted journals generated from sponsorship transactions.
     // Gross = debit collected into cash/bank/mobile; net = credit to 4100; fees = credit to 4200.
     $sponsorship = dbFetchOne("SELECT
@@ -58,6 +73,12 @@ try {
         'month' => date('Y-m'),
         'admin_fees_total' => round((float)($adminFees['total'] ?? 0), 2),
         'admin_fees_month' => round((float)($adminFees['month_total'] ?? 0), 2),
+        'monthly_income_total' => round((float)($monthlyFlow['income_total'] ?? 0), 2),
+        'monthly_income_sponsorship' => round((float)($monthlyFlow['income_sponsorship'] ?? 0), 2),
+        'monthly_income_admin_fee' => round((float)($monthlyFlow['income_admin_fee'] ?? 0), 2),
+        'monthly_expense_total' => round((float)($monthlyFlow['outgoing_total'] ?? 0), 2),
+        'monthly_expense_programs' => round((float)($monthlyFlow['outgoing_programs'] ?? 0), 2),
+        'monthly_expense_salaries' => round((float)($monthlyFlow['outgoing_salaries'] ?? 0), 2),
         'sponsorship_gross' => $gross,
         'sponsorship_net' => $net,
         'sponsorship_admin_fees' => $sponsorshipFees,
