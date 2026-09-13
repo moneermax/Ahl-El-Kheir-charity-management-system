@@ -9,16 +9,11 @@ if(!in_array($role,$viewRoles,true)){header('Location: '.APP_URL.'index.php');ex
 $uid=(int)Session::getUserId(); $canEdit=in_array($role,['admin','vice_general_manager','supervisor','nanny'],true); $canSeeFinancial=in_array($role,['admin','vice_general_manager','general_manager','supervisor','nanny'],true);
 $pageTitle=t('forms.orphan_title'); $active='orphan_forms'; $q=trim((string)($_GET['q']??'')); $search=mb_substr($q,0,60);
 $scopeFamilyIds=null;
-$norm=function(string $s):string{$s=preg_replace('/[\x{064B}-\x{0652}\x{0640}\x{200B}-\x{200D}\x{FEFF}]/u','',$s);$s=str_replace(['أ','إ','آ','ٱ'],'ا',$s);$s=str_replace(['ة'],'ه',$s);return mb_strtolower(preg_replace('/\s+/u',' ',trim($s)),'UTF-8');};
 if($role==='nanny'){
     $scopeFamilyIds=array_map('intval',array_column(dbFetchAll("SELECT id FROM families WHERE nanny_id=?",[$uid]),'id'));
 }elseif($role==='supervisor'){
-    $myNormCodes=array_map(fn($r)=>$norm((string)$r['code']),dbFetchAll("SELECT l.code FROM supervisor_letters sl JOIN letters l ON l.id=sl.letter_id WHERE sl.supervisor_id=?",[$uid]));
-    $scopeFamilyIds=[];
-    $scopeFamilies=dbFetchAll("SELECT id,supervisor_id,legacy_mother_first_letter FROM families");
-    foreach($scopeFamilies as $sf){
-        if((int)($sf['supervisor_id']??0)===$uid || in_array($norm((string)($sf['legacy_mother_first_letter']??'')),$myNormCodes,true))$scopeFamilyIds[]=(int)$sf['id'];
-    }
+    /* Supervisor scope is explicit family ownership only. Sponsor letter responsibility is separate. */
+    $scopeFamilyIds=array_map('intval',array_column(dbFetchAll("SELECT id FROM families WHERE supervisor_id=?",[$uid]),'id'));
 }
 $searchSql='';$params=[];
 if($search!==''){$like='%'.$search.'%';$searchSql=' AND ( fc.child_name LIKE ? OR f.mother_name LIKE ? OR f.family_code LIKE ? OR fc.form_serial LIKE ? ) ';$params[]=$like;$params[]=$like;$params[]=$like;$params[]=$like;}
