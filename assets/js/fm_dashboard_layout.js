@@ -97,6 +97,44 @@
         return card;
     }
 
+    function updateMonthlyFlowCard(data) {
+        var main = document.querySelector('main.container-fluid');
+        if (!main) return;
+
+        var cards = main.querySelectorAll('.fm-card');
+        var incomeCard = null;
+        var expenseCard = null;
+
+        for (var i = 0; i < cards.length; i++) {
+            var head = cards[i].querySelector('.fm-card-head');
+            if (!head) continue;
+            var text = head.textContent || '';
+            if (!incomeCard && /Monthly Income|الدخل الشهري/.test(text)) incomeCard = cards[i];
+            if (!expenseCard && /Monthly Expenses|المصروفات الشهرية/.test(text)) expenseCard = cards[i];
+        }
+
+        if (!incomeCard || !expenseCard) return;
+
+        function setFlowValues(card, values, labels) {
+            var rows = card.querySelectorAll('.flow-row');
+            for (var j = 0; j < rows.length; j++) {
+                var label = rows[j].querySelector('.flow-label');
+                var value = rows[j].querySelector('.flow-value');
+                if (label && labels[j]) label.textContent = labels[j];
+                if (value && values[j] !== undefined) value.textContent = formatAmount(values[j]);
+            }
+        }
+
+        // Revenue is credited; expenses are debited. Display the same ledger truth used by the KPI endpoint.
+        setFlowValues(incomeCard,
+            [data.monthly_income_total, data.monthly_income_sponsorship, data.monthly_income_admin_fee],
+            ['إجمالي الإيرادات', '💰 إيرادات الكفالات — حساب 4100', '💼 الرسوم الإدارية — حساب 4200']);
+
+        setFlowValues(expenseCard,
+            [data.monthly_expense_total, data.monthly_expense_programs, data.monthly_expense_salaries],
+            ['إجمالي المصروفات', '🧾 مصروفات البرامج والمساعدات — حساب 5100', '👥 الرواتب والأجور — حساب 5200']);
+    }
+
     function loadAccountingKpis() {
         var main = document.querySelector('main.container-fluid');
         if (!main) return;
@@ -127,6 +165,8 @@
 
                 var valueNode = adminFeeCard.querySelector('[data-admin-fee-value]');
                 if (valueNode) valueNode.textContent = formatAmount(data.admin_fees_total);
+
+                updateMonthlyFlowCard(data);
 
                 if (!document.getElementById('fm-accounting-kpis')) {
                     var card = buildLedgerKpiCard(data);
