@@ -32,18 +32,17 @@ $fStatus = trim($_GET['status'] ?? '');
 $page = max(1, (int)($_GET['page'] ?? 1));
 $perPage = 50;
 
-/* - supervisor scope - */
+/* - supervisor scope: direct assignment OR assigned letter + matching gender - */
 $mySponsorIds = null;
 if ($role === 'supervisor') {
-    $myLetterIds = array_map('intval', array_column(dbFetchAll("SELECT letter_id FROM supervisor_letters WHERE supervisor_id = ?", [Session::getUserId()]), 'letter_id'));
-    $sql = "SELECT id FROM sponsors WHERE supervisor_id = ?";
-    $params = [Session::getUserId()];
-    if ($myLetterIds) {
-        $ph = implode(',', array_fill(0, count($myLetterIds), '?'));
-        $sql .= " OR first_letter_id IN ($ph)";
-        $params = array_merge($params, $myLetterIds);
-    }
-    $mySponsorIds = array_map('intval', array_column(dbFetchAll($sql, $params), 'id'));
+    $uid = Session::getUserId();
+    $sql = "SELECT DISTINCT s.id
+            FROM sponsors s
+            LEFT JOIN supervisor_letters sl ON sl.supervisor_id = ? AND sl.letter_id = s.first_letter_id
+            LEFT JOIN letters l ON l.id = sl.letter_id
+            WHERE s.supervisor_id = ?
+               OR (sl.id IS NOT NULL AND l.gender = s.gender)";
+    $mySponsorIds = array_map('intval', array_column(dbFetchAll($sql, [$uid, $uid]), 'id'));
 }
 
 /* - NEW ORPHAN-LEVEL QUERY - */
