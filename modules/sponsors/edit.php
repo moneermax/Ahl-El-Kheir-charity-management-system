@@ -3,6 +3,7 @@ require_once dirname(__DIR__, 2) . '/config/config.php';
 require_once dirname(__DIR__, 2) . '/config/database.php';
 require_once dirname(__DIR__, 2) . '/config/functions.php';
 require_once dirname(__DIR__, 2) . '/config/session.php';
+require_once dirname(__DIR__, 2) . '/config/sponsor_assignments.php';
 
 Session::start();
 if (!Session::isLoggedIn()) { header('Location: ' . APP_URL . 'index.php'); exit(); }
@@ -37,7 +38,7 @@ if (!$sp) { flash('error', 'الكفيل غير موجود.'); redirect('modules
 /* Load the sponsor's existing orphan sponsorships for display on this page. */
 $ships = dbFetchAll(
     "SELECT sp.id,
-            COALESCE(NULLIF(TRIM(sp.sponsorship_code), ''), CONCAT('SH-', LPAD(sp.id, 6, '0'))) AS sponsorship_code,
+            COALESCE(NULLIF(TRIM(sp.sponsorship_code, ''), CONCAT('SH-', LPAD(sp.id, 6, '0'))) AS sponsorship_code,
             sp.monthly_amount, sp.start_date,
             sp.status, fc.child_name, f.mother_name, f.family_code
      FROM sponsorships sp
@@ -81,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $input['alt_phone_purpose'] = in_array($_POST['alt_phone_purpose'] ?? '', ['call','whatsapp','both'], true) ? $_POST['alt_phone_purpose'] : 'both';
     $input['address'] = trim($_POST['address'] ?? '');
     $input['sponsor_type'] = in_array($_POST['sponsor_type'] ?? '', ['individual','company','organization'], true) ? $_POST['sponsor_type'] : 'individual';
-    $input['gender'] = in_array($_POST['gender'] ?? '', ['male','female','organization'], true) ? $_POST['gender'] : '';
+    $input['gender'] = in_array($_POST['gender'] ?? '', ['male','female'], true) ? $_POST['gender'] : '';
     $input['payment'] = in_array($_POST['payment'] ?? '', ['cash','bank_transfer','credit_card','mobile','other'], true) ? $_POST['payment'] : 'cash';
     $input['status'] = in_array($_POST['status'] ?? '', ['active','inactive','suspended','cancelled'], true) ? $_POST['status'] : 'active';
     $input['desired_orphans'] = trim($_POST['desired_orphans'] ?? '');
@@ -91,24 +92,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($input['full_name'] === '') $errors[] = 'اسم الكفيل مطلوب.';
     if ($input['email'] !== '' && !filter_var($input['email'], FILTER_VALIDATE_EMAIL)) $errors[] = 'البريد الإلكتروني غير صالح.';
-    if ($input['gender'] === '') $errors[] = 'جنس الكفيل مطلوب.';
+    if ($input['gender'] === '') $errors[] = 'جنس الكفيل مطلوب ويجب أن يكون ذكراً أو أنثى.';
 
     if (!$errors && verify_csrf()) {
         $letterMap = [];
         foreach (dbFetchAll("SELECT id, code FROM letters WHERE is_active = 1") as $L) $letterMap[normalize_arabic_letter($L['code'])] = (int)$L['id'];
         [$raw, $norm] = first_letter_of($input['full_name']);
         $letterId = $letterMap[$norm] ?? null;
-        $matrixSupId = null;
-        $matrix = [];
-        foreach (dbFetchAll("SELECT sl.supervisor_id, l.code, sl.gender FROM supervisor_letters sl JOIN letters l ON l.id = sl.letter_id") as $r) {
-            $n = normalize_arabic_letter($r['code']); $matrix[$n][$r['gender']] = (int)$r['supervisor_id'];
-        }
-        if (isset($matrix[$norm])) {
-            $g = $input['gender'];
-            if (in_array($g, ['male', 'female'])) $matrixSupId = $matrix[$norm][$g] ?? $matrix[$norm]['both'] ?? null;
-            else $matrixSupId = $matrix[$norm]['both'] ?? $matrix[$norm]['male'] ?? $matrix[$norm]['female'] ?? null;
-        }
-        $finalSupId = (int)($sp['supervisor_id'] ?? 0) ?: $matrixSupId;
+        $matrixSupId = resolveSponsorSupervisorId($input['full_name'], $input['gender']);
+
+        /* Supervisor ownership is derived from the sponsor's own name letter + gender. */
+        recordSponsorAssignment($id, $matrixSupId, Session::getUserId(), 'sponsor_letter_gender_reassignment');
 
         dbExecute(
             "UPDATE sponsors SET full_name=?, first_letter_raw=?, first_letter_id=?, phone=?, phone_purpose=?, alt_phone=?, alt_phone_purpose=?,
@@ -122,11 +116,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $input['email'] !== '' ? $input['email'] : null, $input['address'] !== '' ? $input['address'] : null,
                 $input['sponsor_type'], $input['gender'], $input['payment'], $input['status'],
                 $input['notes'] !== '' ? $input['notes'] : null, $input['desired_orphans'] !== '' ? (int)$input['desired_orphans'] : null,
-                $finalSupId, 0, Session::getUserId(), Session::getUserId(),
+                $matrixSupId, 0, Session::getUserId(), Session::getUserId(),
                 $input['acquisition_source'] !== '' ? $input['acquisition_source'] : null,
                 $input['brought_by_name'] !== '' ? $input['brought_by_name'] : null, $id
             ]
         );
+        if ($matrixSupId) ensureActiveSponsorAssignmentHistory($id, $matrixSupId, Session::getUserId());
         flash('success', 'تم تحديث بيانات الكفيل.');
         redirect('modules/sponsors/view.php?id=' . $id . '&return=' . rawurlencode($returnQuery));
     }
@@ -158,7 +153,7 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
                 <div class="col-md-3"><label class="form-label">هاتف بديل</label><input type="text" name="alt_phone" class="form-control" dir="ltr" value="<?php echo e($input['alt_phone']); ?>"></div>
                 <div class="col-md-3"><label class="form-label">نوع الاستخدام</label><select name="alt_phone_purpose" class="form-select"><option value="call" <?php echo $input['alt_phone_purpose'] === 'call' ? 'selected' : ''; ?>>للاتصال</option><option value="whatsapp" <?php echo $input['alt_phone_purpose'] === 'whatsapp' ? 'selected' : ''; ?>>واتساب</option><option value="both" <?php echo $input['alt_phone_purpose'] === 'both' ? 'selected' : ''; ?>>للاتصال وواتساب</option></select></div>
                 <div class="col-md-3"><label class="form-label">النوع</label><select name="sponsor_type" class="form-select"><option value="individual" <?php echo $input['sponsor_type'] === 'individual' ? 'selected' : ''; ?>>فرد</option><option value="company" <?php echo $input['sponsor_type'] === 'company' ? 'selected' : ''; ?>>شركة</option><option value="organization" <?php echo $input['sponsor_type'] === 'organization' ? 'selected' : ''; ?>>منظمة</option></select></div>
-                <div class="col-md-3"><label class="form-label">الجنس *</label><select name="gender" class="form-select" required><option value="">— اختر الجنس —</option><option value="male" <?php echo $input['gender'] === 'male' ? 'selected' : ''; ?>>ذكر</option><option value="female" <?php echo $input['gender'] === 'female' ? 'selected' : ''; ?>>أنثى</option><option value="organization" <?php echo $input['gender'] === 'organization' ? 'selected' : ''; ?>>منظمة</option></select></div>
+                <div class="col-md-3"><label class="form-label">الجنس *</label><select name="gender" class="form-select" required><option value="">— اختر الجنس —</option><option value="male" <?php echo $input['gender'] === 'male' ? 'selected' : ''; ?>>ذكر</option><option value="female" <?php echo $input['gender'] === 'female' ? 'selected' : ''; ?>>أنثى</option></select></div>
                 <div class="col-md-3"><label class="form-label">طريقة الدفع المفضلة</label><select name="payment" class="form-select"><option value="cash" <?php echo $input['payment'] === 'cash' ? 'selected' : ''; ?>>نقدي</option><option value="bank_transfer" <?php echo $input['payment'] === 'bank_transfer' ? 'selected' : ''; ?>>تحويل بنكي</option><option value="mobile" <?php echo $input['payment'] === 'mobile' ? 'selected' : ''; ?>>محفظة إلكترونية</option><option value="other" <?php echo $input['payment'] === 'other' ? 'selected' : ''; ?>>أخرى</option></select></div>
                 <div class="col-md-3"><label class="form-label">الحالة</label><select name="status" class="form-select"><option value="active" <?php echo $input['status'] === 'active' ? 'selected' : ''; ?>>نشط</option><option value="inactive" <?php echo $input['status'] === 'inactive' ? 'selected' : ''; ?>>غير نشط</option><option value="suspended" <?php echo $input['status'] === 'suspended' ? 'selected' : ''; ?>>موقوف</option><option value="cancelled" <?php echo $input['status'] === 'cancelled' ? 'selected' : ''; ?>>ملغي</option></select></div>
                 <div class="col-md-6"><label class="form-label">العنوان</label><input type="text" name="address" class="form-control" value="<?php echo e($input['address']); ?>"></div>
