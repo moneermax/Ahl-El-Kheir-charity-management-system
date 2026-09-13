@@ -79,7 +79,7 @@
         var main = document.querySelector('main.container-fluid');
         if (!main || document.getElementById('fm-accounting-kpis')) return;
 
-        var treasuryGrid = main.querySelector('.grid-4');
+        var treasuryGrid = main.querySelector('.fm-top-right > .grid-4');
         if (!treasuryGrid) return;
 
         var endpoint = new URL('fm_dashboard_kpis.php', window.location.href).toString();
