@@ -4,6 +4,7 @@ require_once dirname(__DIR__, 2) . '/config/config.php';
 require_once dirname(__DIR__, 2) . '/config/database.php';
 require_once dirname(__DIR__, 2) . '/config/functions.php';
 require_once dirname(__DIR__, 2) . '/config/session.php';
+require_once dirname(__DIR__, 2) . '/config/sponsor_assignments.php';
 Session::start();
 if (!Session::isLoggedIn()) { header('Location: ' . APP_URL . 'index.php'); exit(); }
 $role = Session::getUserRole();
@@ -33,9 +34,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
         } else {
             $req = dbFetchOne("SELECT * FROM sponsor_requests WHERE id = ?", [$id]);
             if ($req && $req['status'] !== 'converted') {
+                $name = trim((string)$req['sponsor_name']);
+                [$rawLetter, $normalizedLetter] = first_letter_of($name);
+                $letterRow = dbFetchOne("SELECT id FROM letters WHERE is_active = 1 AND code = ? LIMIT 1", [$normalizedLetter]);
+                $letterId = $letterRow ? (int)$letterRow['id'] : null;
+                $supervisorId = resolveSponsorSupervisorId($name, $gender);
                 $n = (int)(dbFetchOne("SELECT COUNT(*) c FROM sponsors")['c'] ?? 0) + 1; $code = 'SP-' . str_pad((string)$n, 6, '0', STR_PAD_LEFT);
-                dbExecute("INSERT INTO sponsors (full_name, phone, sponsor_code, status, sponsor_type, gender, preferred_payment_method, acquisition_source, brought_by_user_id, created_by) VALUES (?, ?, ?, 'active', 'individual', ?, 'cash', ?, ?, ?)", [$req['sponsor_name'], $req['phone'], $code, $gender, $req['source'], $req['brought_by'], Session::getUserId()]);
-                $newId = (int)dbLastInsertId(); dbExecute("UPDATE sponsor_requests SET status = 'converted', created_sponsor_id = ? WHERE id = ?", [$newId, $id]);
+                dbExecute("INSERT INTO sponsors (full_name, first_letter_raw, first_letter_id, phone, sponsor_code, status, sponsor_type, gender, preferred_payment_method, acquisition_source, brought_by_user_id, created_by, supervisor_id, assigned_by, assigned_at, is_manual_override) VALUES (?, ?, ?, ?, ?, 'active', 'individual', ?, 'cash', ?, ?, ?, ?, ?, NOW(), 0)", [$name, $rawLetter, $letterId, $req['phone'], $code, $gender, $req['source'], $req['brought_by'], Session::getUserId(), $supervisorId, Session::getUserId()]);
+                $newId = (int)dbLastInsertId(); if ($supervisorId) ensureActiveSponsorAssignmentHistory($newId, $supervisorId, Session::getUserId());
+                dbExecute("UPDATE sponsor_requests SET status = 'converted', created_sponsor_id = ? WHERE id = ?", [$newId, $id]);
                 dbExecute("INSERT INTO audit_log (user_id, action, entity_type, entity_id, ip_address, user_agent) VALUES (?, 'CONVERT', 'sponsor_request', ?, ?, ?)", [Session::getUserId(), $id, $_SERVER['REMOTE_ADDR'] ?? '', $_SERVER['HTTP_USER_AGENT'] ?? '']);
                 flash('success', t('sponsors.request_converted_success')); header('Location: ' . APP_URL . 'modules/sponsors/view.php?id=' . $newId); exit();
             }
@@ -44,9 +51,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
 }
 $leads = dbFetchAll("SELECT r.*, u.full_name AS brought_by_user FROM sponsor_requests r LEFT JOIN users u ON u.id = r.brought_by ORDER BY r.created_at DESC");
 $statusKeys = ['new'=>'sponsors.request_new','contacted'=>'sponsors.request_contacted','converted'=>'sponsors.request_converted','lost'=>'sponsors.request_lost'];
-include dirname(__DIR__, 2) . '/includes/header.php'; ?>
+include dirname(__DIR__, 2).'/includes/header.php'; ?>
 <div class="welcome-section fade-in"><h2><i class="fas fa-bullhorn me-2"></i><?php echo e(t('sponsors.requests_title')); ?></h2><p><?php echo e(t('sponsors.requests_intro')); ?></p></div>
-<?php include dirname(__DIR__, 2) . '/includes/alerts.php'; ?>
+<?php include dirname(__DIR__, 2).'/includes/alerts.php'; ?>
 <div class="d-flex justify-content-end mb-3 fade-in"><button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addLeadModal"><i class="fas fa-plus me-1"></i><?php echo e(t('sponsors.request_add')); ?></button></div>
 <div class="card mb-4 fade-in"><div class="card-body p-2"><div class="table-responsive"><table class="table table-hover align-middle bg-white mb-0"><thead><tr>
 <th><?php echo e(t('sponsors.request_date')); ?></th><th><?php echo e(t('sponsors.request_sponsor_name')); ?></th><th><?php echo e(t('sponsors.request_phone')); ?></th><th><?php echo e(t('sponsors.request_source')); ?></th><th><?php echo e(t('sponsors.request_brought_by')); ?></th><th><?php echo e(t('sponsors.request_status')); ?></th><th><?php echo e(t('sponsors.request_notes')); ?></th><th class="text-center"><?php echo e(t('sponsors.request_actions')); ?></th>
@@ -59,4 +66,4 @@ include dirname(__DIR__, 2) . '/includes/header.php'; ?>
 <div class="modal-body"><div class="mb-3"><label class="form-label"><?php echo e(t('sponsors.request_sponsor_name')); ?> *</label><input type="text" name="sponsor_name" class="form-control" required></div><div class="mb-3"><label class="form-label"><?php echo e(t('sponsors.request_phone')); ?></label><input type="text" name="phone" class="form-control" dir="ltr"></div><div class="mb-3"><label class="form-label"><?php echo e(t('sponsors.request_source')); ?> *</label><div class="d-flex flex-wrap gap-2"><?php foreach ($sourceOptions as $val=>$meta): $sid='src_'.md5($val); ?><input type="radio" class="btn-check" name="source" id="<?php echo $sid; ?>" value="<?php echo e($val); ?>" required><label class="btn btn-outline-secondary d-inline-flex align-items-center gap-2" for="<?php echo $sid; ?>"><i class="<?php echo e($meta['icon']); ?>"></i><span><?php echo e(t($meta['key'])); ?></span></label><?php endforeach; ?></div></div>
 <div class="mb-3"><label class="form-label"><?php echo e(t('sponsors.request_brought_by')); ?></label><input type="text" name="brought_by_name" class="form-control" value="<?php echo e($currentUserName); ?>"><div class="form-text"><?php echo e(t('sponsors.request_default_brought_by')); ?></div></div><div class="mb-3"><label class="form-label"><?php echo e(t('sponsors.request_notes')); ?></label><textarea name="notes" class="form-control" rows="2"></textarea></div></div>
 <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php echo e(t('sponsors.request_cancel')); ?></button><button type="submit" class="btn btn-primary"><?php echo e(t('sponsors.request_save')); ?></button></div></form></div></div></div>
-<?php include dirname(__DIR__, 2) . '/includes/footer.php'; ?>
+<?php include dirname(__DIR__, 2).'/includes/footer.php'; ?>
