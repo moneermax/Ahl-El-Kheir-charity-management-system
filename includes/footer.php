@@ -44,6 +44,47 @@ window.AK_TRANSLATIONS=<?php echo json_encode(ak_dict(),JSON_UNESCAPED_UNICODE|J
 <script src="<?php echo asset('js/messaging_attachments.js'); ?>"></script>
 <script src="<?php echo asset('js/messaging_message_delete.js'); ?>"></script>
 <?php if (($active ?? '') === 'fm_dashboard'): ?><script src="<?php echo asset('js/fm_dashboard_layout.js'); ?>"></script><?php endif; ?>
+<?php if (($active ?? '') === 'fm_dashboard'): ?>
+<script>
+(function () {
+    'use strict';
+    function formatAmount(value) {
+        return Number(value || 0).toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+    }
+    function ensureTreasuryAdminFeeCard() {
+        var main = document.querySelector('main.container-fluid');
+        if (!main) return;
+        var grid = main.querySelector('.fm-top-right > .grid-4');
+        if (!grid) return;
+        grid.style.gridTemplateColumns = 'repeat(5, minmax(0, 1fr))';
+        grid.style.gap = '10px';
+        var existing = document.getElementById('fm-treasury-admin-fee');
+        if (!existing) {
+            existing = document.createElement('div');
+            existing.id = 'fm-treasury-admin-fee';
+            existing.className = 'stat-box purple';
+            existing.style.minWidth = '0';
+            existing.style.padding = '14px 10px';
+            existing.innerHTML = '<div class="stat-label" style="font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">💼 الرسوم الإدارية المحصلة</div><div class="stat-value" data-fm-admin-fee style="white-space:nowrap;font-size:1.55rem">—</div><div class="stat-sub" style="font-size:.72rem;white-space:nowrap">حساب 4200 · SDG</div>';
+            grid.appendChild(existing);
+        }
+        var valueNode = existing.querySelector('[data-fm-admin-fee]');
+        fetch(new URL('fm_dashboard_kpis.php', window.location.href).toString(), {credentials:'same-origin', headers:{'Accept':'application/json'}, cache:'no-store'})
+            .then(function (response) { if (!response.ok) throw new Error('HTTP ' + response.status); return response.json(); })
+            .then(function (data) {
+                if (!data || !data.ok) throw new Error(data && data.message ? data.message : 'KPI response failed');
+                if (valueNode) valueNode.textContent = formatAmount(data.admin_fees_total);
+            })
+            .catch(function (error) {
+                if (valueNode) valueNode.textContent = '—';
+                existing.title = 'تعذر تحميل الرسوم الإدارية من دفتر الأستاذ: ' + error.message;
+            });
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ensureTreasuryAdminFeeCard);
+    else ensureTreasuryAdminFeeCard();
+})();
+</script>
+<?php endif; ?>
 <script>
 (function(){var leaveLink=document.querySelector('a[href*="modules/hr/leaves.php?action=request"]');var userMenu=document.querySelector('#userDropdown .ak-dd-menu');if(leaveLink&&userMenu){leaveLink.classList.remove('qa-btn');leaveLink.classList.add('ak-dd-item','ak-leave-request-moving');leaveLink.removeAttribute('style');leaveLink.setAttribute('title','طلب إجازة');var icon=leaveLink.querySelector('i');if(icon)icon.className='fas fa-calendar-plus me-2';var divider=document.createElement('div');divider.className='dropdown-divider';userMenu.insertBefore(divider,userMenu.firstChild);userMenu.insertBefore(leaveLink,divider.nextSibling);requestAnimationFrame(function(){leaveLink.classList.remove('ak-leave-request-moving')})}})();
 
