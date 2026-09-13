@@ -53,9 +53,18 @@ $fam_code = $family['family_code'] ?? ($family['code'] ?? 'FAM' . $family['id'])
 $fam_code_safe = preg_replace('/[^A-Za-z0-9_-]/', '', $fam_code);
 if (empty($fam_code_safe)) $fam_code_safe = 'FAM' . $family['id'];
 
+function ak_document_require_csrf(string $redirectUrl): void
+{
+    if (!verify_csrf()) {
+        flash('error', t('Session expired.'));
+        redirect($redirectUrl);
+        exit();
+    }
+}
+
 // Handle Upload
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload_documents'])) {
-    verify_csrf();
+    ak_document_require_csrf(url('modules/families/documents.php?id=' . $family['id']));
     $doc_type = $_POST['doc_type'] ?? 'other';
     if (!array_key_exists($doc_type, $doc_types)) {
         $doc_type = 'other';
@@ -139,7 +148,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload_documents'])) 
 
 // Handle Reorganize Archive (Admin Only)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reorganize_archive'])) {
-    verify_csrf();
+    ak_document_require_csrf(url('modules/families/documents.php?id=' . $family['id']));
     if (Session::getUserRole() !== 'admin') {
         flash('error', t('غير مصرح / Unauthorized'));
         redirect(url('modules/families/documents.php?id=' . $family['id']));
@@ -198,7 +207,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reorganize_archive'])
 
 // Handle Update Document (Rename / Change Type)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_document'])) {
-    verify_csrf();
+    ak_document_require_csrf(url('modules/families/documents.php?id=' . $family['id']));
     $doc_id = (int)$_POST['doc_id'];
     $new_type = $_POST['new_doc_type'] ?? 'other';
     $new_name = trim($_POST['new_file_name'] ?? '');
@@ -228,7 +237,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_document'])) {
 
 // Handle Delete (Supervisor + Nanny allowed)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_document'])) {
-    verify_csrf();
+    ak_document_require_csrf(url('modules/families/documents.php?id=' . $family['id']));
     $doc_id = (int)$_POST['doc_id'];
     $doc = dbFetchOne("SELECT * FROM family_documents WHERE id = ?", [$doc_id]);
 
