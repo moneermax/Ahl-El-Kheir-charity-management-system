@@ -66,6 +66,15 @@ if ($tab === 'cash') {
                              JOIN journal_entries je ON je.id = jl.entry_id AND je.status = 'posted'
                              WHERE jl.account_id = ? $where
                              ORDER BY je.entry_date, je.id", $params);
+    $openingBalance = 0.0;
+    if ($from !== '') {
+        $openingRow = dbFetchOne("SELECT COALESCE(SUM(jl.debit - jl.credit), 0) AS opening_balance
+                                  FROM journal_lines jl
+                                  JOIN journal_entries je ON je.id = jl.entry_id AND je.status = 'posted'
+                                  WHERE jl.account_id = ?
+                                    AND je.entry_date < ?", [$cashId, $from]);
+        $openingBalance = (float)($openingRow['opening_balance'] ?? 0);
+    }
     $cashAcc = dbFetchOne("SELECT code, name_ar FROM accounts WHERE id = ?", [$cashId]);
     $cashAccounts = dbFetchAll("SELECT id, code, name_ar FROM accounts WHERE code IN ('1100','1200','1300') ORDER BY code");
 }
@@ -78,7 +87,7 @@ if ($export) {
     fwrite($out, "\xEF\xBB\xBF");
     if ($tab === 'cash') {
         fputcsv($out, ['التاريخ', 'القيد', 'البيان', 'داخل', 'خارج', 'الرصيد']);
-        $bal = 0;
+        $bal = $openingBalance ?? 0.0;
         foreach ($cashLines as $l) { $bal += (float)$l['debit'] - (float)$l['credit']; fputcsv($out, [$l['entry_date'], $l['entry_code'], $l['description'], $l['debit'], $l['credit'], number_format($bal, 2, '.', '')]); }
     } else {
         fputcsv($out, ['الحساب', 'الاسم', 'مدين', 'دائن', 'الرصيد']);
@@ -134,7 +143,10 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         <table class="table table-sm table-hover align-middle">
             <thead><tr><th>التاريخ</th><th>القيد</th><th>البيان</th><th>داخل</th><th>خارج</th><th>الرصيد</th></tr></thead>
             <tbody>
-            <?php $bal = 0; if (!$cashLines): ?><tr><td colspan="6" class="text-center text-muted py-3">لا حركات.</td></tr><?php endif; ?>
+            <?php $bal = $openingBalance ?? 0.0; if (!$cashLines): ?><tr><td colspan="6" class="text-center text-muted py-3">لا حركات.</td></tr><?php endif; ?>
+            <?php if ($from !== ''): ?>
+                <tr class="table-light"><td colspan="5">الرصيد الافتتاحي قبل <?php echo e($from); ?></td><td><strong><?php echo number_format($bal, 2); ?></strong></td></tr>
+            <?php endif; ?>
             <?php foreach ($cashLines as $l): $bal += (float)$l['debit'] - (float)$l['credit']; ?>
                 <tr>
                     <td><?php echo e($l['entry_date']); ?></td>
@@ -145,7 +157,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     <td><strong><?php echo number_format($bal, 2); ?></strong></td>
                 </tr>
             <?php endforeach; ?>
-            <?php if ($cashLines): ?><tr class="table-active fw-bold"><td colspan="5">الرصيد الختامي</td><td><?php echo number_format($bal, 2); ?></td></tr><?php endif; ?>
+            <?php if ($cashLines || $from !== ''): ?><tr class="table-active fw-bold"><td colspan="5">الرصيد الختامي</td><td><?php echo number_format($bal, 2); ?></td></tr><?php endif; ?>
             </tbody>
         </table>
     </div>
