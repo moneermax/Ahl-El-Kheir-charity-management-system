@@ -82,10 +82,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['project_fm_review']))
             if ($budgetAmount <= 0) throw new RuntimeException(t('fm.no_budget_amount'));
             $accountIds = array_map('intval', array_keys($postedFundingAmounts));
             $allowedAccounts = dbFetchAll("SELECT a.id, a.code,
-                    COALESCE(SUM(jl.debit - jl.credit), 0) AS ledger_balance,
-                    COALESCE((SELECT SUM(f.amount) FROM project_funding_allocations f WHERE f.source_account_id = a.id AND f.status = 'approved'), 0) AS reserved_amount
-                FROM accounts a LEFT JOIN journal_lines jl ON jl.account_id = a.id
-                LEFT JOIN journal_entries je ON je.id = jl.entry_id AND je.status = 'posted'
+                    COALESCE(SUM(
+                        CASE
+                            WHEN je.status = 'posted' THEN jl.debit - jl.credit
+                            ELSE 0
+                        END
+                    ), 0) AS ledger_balance,
+                    COALESCE((SELECT SUM(f.amount)
+                        FROM project_funding_allocations f
+                        WHERE f.source_account_id = a.id AND f.status = 'approved'), 0) AS reserved_amount
+                FROM accounts a
+                LEFT JOIN journal_lines jl ON jl.account_id = a.id
+                LEFT JOIN journal_entries je ON je.id = jl.entry_id
                 WHERE a.code IN ('1100','1200','1300') AND a.is_active = 1
                 GROUP BY a.id, a.code ORDER BY a.code");
             $accountsById = [];
@@ -159,10 +167,18 @@ $projectApprovalQueue = dbFetchAll("SELECT
     ORDER BY pa.submitted_at ASC, p.id ASC");
 $projectApprovalCount = count($projectApprovalQueue);
 $fundingAccounts = dbFetchAll("SELECT a.id, a.code, a.name_ar, a.name_en,
-        COALESCE(SUM(jl.debit - jl.credit), 0) AS ledger_balance,
-        COALESCE((SELECT SUM(f.amount) FROM project_funding_allocations f WHERE f.source_account_id = a.id AND f.status = 'approved'), 0) AS reserved_amount
-    FROM accounts a LEFT JOIN journal_lines jl ON jl.account_id = a.id
-    LEFT JOIN journal_entries je ON je.id = jl.entry_id AND je.status = 'posted'
+        COALESCE(SUM(
+            CASE
+                WHEN je.status = 'posted' THEN jl.debit - jl.credit
+                ELSE 0
+            END
+        ), 0) AS ledger_balance,
+        COALESCE((SELECT SUM(f.amount)
+            FROM project_funding_allocations f
+            WHERE f.source_account_id = a.id AND f.status = 'approved'), 0) AS reserved_amount
+    FROM accounts a
+    LEFT JOIN journal_lines jl ON jl.account_id = a.id
+    LEFT JOIN journal_entries je ON je.id = jl.entry_id
     WHERE a.code IN ('1100','1200','1300') AND a.is_active = 1
     GROUP BY a.id, a.code, a.name_ar, a.name_en ORDER BY a.code");
 
@@ -176,12 +192,12 @@ $treasury = dbFetchOne("SELECT
 
 $monthStart = date('Y-m-01'); $monthEnd = date('Y-m-t');
 $monthlyFlow = dbFetchOne("SELECT
-    COALESCE(SUM(CASE WHEN a.account_type = 'revenue' AND jl.debit > 0 THEN jl.debit ELSE 0 END), 0) AS income_total,
-    COALESCE(SUM(CASE WHEN a.account_type = 'revenue' AND a.code = '4100' AND jl.debit > 0 THEN jl.debit ELSE 0 END), 0) AS income_cash,
-    COALESCE(SUM(CASE WHEN a.account_type = 'revenue' AND a.code = '4200' AND jl.debit > 0 THEN jl.debit ELSE 0 END), 0) AS income_bank,
-    COALESCE(SUM(CASE WHEN a.account_type = 'expense' AND jl.credit > 0 THEN jl.credit ELSE 0 END), 0) AS outgoing_total,
-    COALESCE(SUM(CASE WHEN a.account_type = 'expense' AND a.code = '5100' AND jl.credit > 0 THEN jl.credit ELSE 0 END), 0) AS outgoing_cash,
-    COALESCE(SUM(CASE WHEN a.account_type = 'expense' AND a.code = '5200' AND jl.credit > 0 THEN jl.credit ELSE 0 END), 0) AS outgoing_bank
+    COALESCE(SUM(CASE WHEN a.account_type = 'revenue' AND jl.credit > 0 THEN jl.credit ELSE 0 END), 0) AS income_total,
+    COALESCE(SUM(CASE WHEN a.code = '4100' AND jl.credit > 0 THEN jl.credit ELSE 0 END), 0) AS income_cash,
+    COALESCE(SUM(CASE WHEN a.code = '4200' AND jl.credit > 0 THEN jl.credit ELSE 0 END), 0) AS income_bank,
+    COALESCE(SUM(CASE WHEN a.account_type = 'expense' AND jl.debit > 0 THEN jl.debit ELSE 0 END), 0) AS outgoing_total,
+    COALESCE(SUM(CASE WHEN a.code = '5100' AND jl.debit > 0 THEN jl.debit ELSE 0 END), 0) AS outgoing_cash,
+    COALESCE(SUM(CASE WHEN a.code = '5200' AND jl.debit > 0 THEN jl.debit ELSE 0 END), 0) AS outgoing_bank
     FROM journal_lines jl JOIN journal_entries je ON je.id = jl.entry_id JOIN accounts a ON a.id = jl.account_id
     WHERE je.entry_date BETWEEN ? AND ? AND je.status = 'posted'", [$monthStart, $monthEnd]);
 
