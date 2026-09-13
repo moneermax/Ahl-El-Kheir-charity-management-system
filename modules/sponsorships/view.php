@@ -27,14 +27,25 @@ $sp = dbFetchOne("SELECT sp.*, s.full_name AS sponsor_name, s.sponsor_code, s.id
 
 if (!$sp) { flash('error', t('common.no_data')); redirect('modules/sponsorships/index.php'); }
 
-/* - supervisor ownership - */
+/* - supervisor ownership / visibility - */
 $canManage = in_array($role, ['admin', 'vice_general_manager'], true);
 if ($role === 'supervisor') {
-    $myLetterIds = array_map('intval', array_column(dbFetchAll("SELECT letter_id FROM supervisor_letters WHERE supervisor_id = ?", [Session::getUserId()]), 'letter_id'));
-    $own = dbFetchOne("SELECT id FROM sponsors WHERE id = ? AND (supervisor_id = ?" . 
-        ($myLetterIds ? " OR first_letter_id IN (" . implode(',', $myLetterIds) . ")" : '') . ")", 
-        array_merge([(int)$sp['sponsor_id'], Session::getUserId()]));
-    $canManage = (bool)$own;
+    $uid = Session::getUserId();
+    $own = dbFetchOne(
+        "SELECT s.id
+         FROM sponsors s
+         LEFT JOIN supervisor_letters sl ON sl.supervisor_id = ? AND sl.letter_id = s.first_letter_id
+         LEFT JOIN letters l ON l.id = sl.letter_id
+         WHERE s.id = ?
+           AND (s.supervisor_id = ? OR (sl.id IS NOT NULL AND l.gender = s.gender))
+         LIMIT 1",
+        [$uid, (int)$sp['sponsor_id'], $uid]
+    );
+    if (!$own) {
+        flash('error', t('common.no_data'));
+        redirect('modules/sponsorships/index.php');
+    }
+    $canManage = true;
 }
 
 /* - POST actions - */
