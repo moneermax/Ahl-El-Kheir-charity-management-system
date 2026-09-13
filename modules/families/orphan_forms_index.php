@@ -12,8 +12,8 @@ $scopeFamilyIds=null;
 if($role==='nanny'){
     $scopeFamilyIds=array_map('intval',array_column(dbFetchAll("SELECT id FROM families WHERE nanny_id=?",[$uid]),'id'));
 }elseif($role==='supervisor'){
-    /* Supervisor scope is explicit family ownership only. Sponsor letter responsibility is separate. */
-    $scopeFamilyIds=array_map('intval',array_column(dbFetchAll("SELECT id FROM families WHERE supervisor_id=?",[$uid]),'id'));
+    /* Supervisor scope: direct family assignment OR a family related to a sponsor in the supervisor's letter+gender responsibility matrix. */
+    $scopeFamilyIds=array_map('intval',array_column(dbFetchAll("SELECT DISTINCT f.id FROM families f LEFT JOIN family_children fc ON fc.family_id=f.id LEFT JOIN sponsorships s ON s.child_id=fc.id LEFT JOIN sponsors sp ON sp.id=s.sponsor_id LEFT JOIN supervisor_letters sl ON sl.supervisor_id=? AND sl.letter_id=sp.first_letter_id WHERE f.supervisor_id=? OR (sl.id IS NOT NULL AND (CONVERT(sl.gender USING utf8mb4) COLLATE utf8mb4_unicode_ci=CONVERT(sp.gender USING utf8mb4) COLLATE utf8mb4_unicode_ci OR CONVERT(sl.gender USING utf8mb4) COLLATE utf8mb4_unicode_ci='both'))",[$uid,$uid]),'id'));
 }
 $searchSql='';$params=[];
 if($search!==''){$like='%'.$search.'%';$searchSql=' AND ( fc.child_name LIKE ? OR f.mother_name LIKE ? OR f.family_code LIKE ? OR fc.form_serial LIKE ? ) ';$params[]=$like;$params[]=$like;$params[]=$like;$params[]=$like;}
