@@ -19,12 +19,17 @@ function ak_family_user_in_scope(array $family, string $role, int $userId): bool
     if ($role === 'nanny') return (int)($family['nanny_id'] ?? 0) === $userId;
 
     if ($role === 'supervisor') {
+        $familyId = (int)($family['id'] ?? 0);
+        if ($familyId <= 0) return false;
+
+        /* Direct family assignment always grants access. */
         if ((int)($family['supervisor_id'] ?? 0) === $userId) return true;
 
         /*
-         * Sponsor responsibility is independent from family assignment.
-         * An explicitly assigned sponsor is authoritative and must grant
-         * access to every family/orphan connected to that sponsor.
+         * Explicit sponsor assignment is authoritative. A supervisor who is
+         * responsible for a sponsor must be able to see every family/orphan
+         * connected to that sponsor, regardless of the family's own
+         * supervisor assignment.
          */
         $linkedSponsor = dbFetchOne(
             "SELECT sp.id
@@ -34,34 +39,51 @@ function ak_family_user_in_scope(array $family, string $role, int $userId): bool
              WHERE fc.family_id = ?
                AND sp.supervisor_id = ?
              LIMIT 1",
-            [(int)($family['id'] ?? 0), $userId]
+            [$familyId, $userId]
         );
 
         if (!empty($linkedSponsor)) return true;
 
         /*
-         * Otherwise fall back to the supervisor letter + gender matrix.
-         * This keeps matrix-based responsibility working for non-manual
-         * sponsor assignments and preserves the existing scope model.
+         * Matrix responsibility is checked in PHP rather than comparing the
+         * database strings directly. This deliberately avoids collation
+         * differences between supervisor_letters.gender and sponsors.gender
+         * and accepts the same male/female/Arabic/both values used elsewhere.
          */
-        $linkedSponsor = dbFetchOne(
-            "SELECT sp.id
+        $matrixSponsors = dbFetchAll(
+            "SELECT sp.gender AS sponsor_gender, sl.gender AS matrix_gender
              FROM sponsorships s
              JOIN family_children fc ON fc.id = s.child_id
              JOIN sponsors sp ON sp.id = s.sponsor_id
-             JOIN supervisor_letters sl ON sl.supervisor_id = ?
-                                      AND sl.letter_id = sp.first_letter_id
-             WHERE fc.family_id = ?
-               AND (
-                    CONVERT(sl.gender USING utf8mb4) COLLATE utf8mb4_unicode_ci =
-                    CONVERT(sp.gender USING utf8mb4) COLLATE utf8mb4_unicode_ci
-                    OR CONVERT(sl.gender USING utf8mb4) COLLATE utf8mb4_unicode_ci = 'both'
-               )
-             LIMIT 1",
-            [$userId, (int)($family['id'] ?? 0)]
+             JOIN supervisor_letters sl
+               ON sl.supervisor_id = ?
+              AND sl.letter_id = sp.first_letter_id
+             WHERE fc.family_id = ?",
+            [$userId, $familyId]
         );
 
-        return !empty($linkedSponsor);
+        foreach ($matrixSponsors as $row) {
+            $sponsorGender = strtolower(trim((string)($row['sponsor_gender'] ?? '')));
+            $sponsorGender = match ($sponsorGender) {
+                'm', 'male', 'ذكر' => 'male',
+                'f', 'female', 'أنثى', 'انثى' => 'female',
+                default => 'other',
+            };
+
+            $matrixGender = strtolower(trim((string)($row['matrix_gender'] ?? '')));
+            $matrixGender = match ($matrixGender) {
+                'm', 'male', 'ذكر' => 'male',
+                'f', 'female', 'أنثى', 'انثى' => 'female',
+                'both', 'all', 'كلاهما', 'الكل' => 'both',
+                default => 'other',
+            };
+
+            if ($matrixGender === 'both' || $matrixGender === $sponsorGender) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     return true;
