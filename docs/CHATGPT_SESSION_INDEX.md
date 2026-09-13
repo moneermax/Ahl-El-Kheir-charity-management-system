@@ -219,16 +219,19 @@ A separate family-management scope may exist where a family is explicitly assign
 
 Implementation correction commits on `main`:
 
-- `7f3856eb49b206dae913539f25baead32b559694` — family scope no longer derives supervisor access from mother's first letter; supervisor family access is explicit family assignment.
-- `5088e69083d17dce7714d39e3bb87e834f0b868b` — centralized sponsor supervisor resolution by sponsor first letter + gender.
-- `da3024cc1f914ab116d893e43289219100c4590a` — sponsor creation uses the authoritative assignment rule and male/female gender requirement.
-- `c9d3f7f8b9dc4881fa1ba9663bc4360f333288ed` — sponsor editing recomputes supervisor ownership from sponsor name letter + gender instead of retaining an unrelated previous supervisor.
-- `af25a3520f97df2994b420ddc39321794e338dc2` — sponsor-request conversion now assigns the converted sponsor through the same rule.
+- `e8e238fa2ae122b6a0a3be352cc505a924d2dafd` — centralized family scope now uses explicit family assignment only and covers family edit/view routes.
+- `d689e071dae547802d21cefb4cbe3894c40d66bf` — centralized sponsor supervisor resolution by sponsor first letter + gender.
+- `3eb48c3f279eb6672fd887b0b2533e1093c9b7f2` — sponsor creation uses the authoritative assignment rule and male/female gender requirement.
+- `9c7db4c63f09db54cd6d252aaedbd8b7d0a26ff9` — sponsor editing recomputes supervisor ownership from sponsor name letter + gender instead of retaining an unrelated previous supervisor.
+- `dab2acde25026b0ff220f1782f63440c5f98acba` — sponsor-request conversion now assigns the converted sponsor through the same rule.
 - `3a75d84a42520e86f9804024f949fa2c6bfa50f9` — sponsorship creation no longer filters eligible orphans by their mother's/family first letter; supervisor scope is applied to the sponsor, not the orphan family.
 - `1d01556900552bc584135371b797eff6537d1081` — sponsor list scope no longer grants access through direct family/sponsor assignment; it follows the letter + gender matrix.
 - `fc166a67e0b8d8225e585e318496c461d50c8446` — sponsor detail scope follows the letter + gender matrix only.
 - `b6d120b015674836094fbb82fa6da7abbc8e7f07` — sponsorship detail scope follows the sponsor letter + gender matrix only.
+- `00ca4bbe3dc444842e220fbac872943a461ba2d4` — sponsorship list scope follows the sponsor letter + gender matrix only.
 - `b2f55bb90020a123439c7de78a8e3917665a8bfb` — supervisor dashboard sponsor/sponsorship/orphan counts follow the same sponsor-only scope.
+- `f756427d4fae4f92594a79145621977f5bfd2775` — family list no longer derives supervisor family scope from the mother's first letter.
+- `b761b6520c50f58862dc89cbe8982e01ec098c6f` — family detail no longer derives supervisor family scope from the mother's first letter.
 
 This correction supersedes earlier checkpoint statements that used a family mother's first letter as part of the supervisor's **sponsor** scope. Do not restore that logic.
 
