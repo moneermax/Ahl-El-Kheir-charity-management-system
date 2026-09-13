@@ -2,6 +2,34 @@
 // Sponsor supervisor assignment history and lifecycle-safe assignment handling.
 require_once __DIR__ . '/database.php';
 
+/**
+ * Resolve the supervisor responsible for a sponsor from the authoritative
+ * sponsor assignment matrix: sponsor-name first letter + sponsor gender.
+ * The family/mother name is intentionally not consulted here.
+ */
+function resolveSponsorSupervisorId(string $fullName, string $gender): ?int
+{
+    [$raw, $normalized] = first_letter_of($fullName);
+    if ($normalized === '') return null;
+
+    $gender = strtolower(trim($gender));
+    if (!in_array($gender, ['male', 'female'], true)) return null;
+
+    $row = dbFetchOne(
+        "SELECT sl.supervisor_id
+         FROM supervisor_letters sl
+         JOIN letters l ON l.id = sl.letter_id
+         WHERE l.is_active = 1
+           AND l.code = ?
+           AND sl.gender IN (?, 'both')
+         ORDER BY CASE WHEN sl.gender = ? THEN 0 ELSE 1 END, sl.id ASC
+         LIMIT 1",
+        [$normalized, $gender, $gender]
+    );
+
+    return $row ? (int)$row['supervisor_id'] : null;
+}
+
 function ensureSponsorAssignmentHistoryTable(): void
 {
     dbExecute("CREATE TABLE IF NOT EXISTS sponsor_supervisor_assignments (
