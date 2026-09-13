@@ -183,6 +183,57 @@ Runtime verification was then completed successfully:
 
 ---
 
+# SPONSOR / SUPERVISOR BUSINESS RULE — AUTHORITATIVE CORRECTION 2026-09-13
+
+The previous checkpoint wording that connected a supervisor's sponsor responsibility to a family's mother name/first letter was **incorrect and is superseded**.
+
+The authoritative business rule is:
+
+> **A supervisor is responsible for sponsors based solely on the sponsor's own first name letter and the sponsor's gender (male or female). The mother's name and the family's first letter are irrelevant to sponsor ownership.**
+
+A sponsor is assigned to a specific supervisor through the `supervisor_letters` assignment matrix using:
+
+```text
+Sponsor full name
+      ↓
+Sponsor first letter
+      +
+Sponsor gender (male / female)
+      ↓
+Assigned Supervisor
+```
+
+The supervisor's operational responsibility includes:
+
+- communicating with their assigned sponsors;
+- assigning their sponsors to sponsorships for new orphans in addition to existing sponsorships;
+- ending/removing an orphan from a sponsor's sponsorship when required;
+- transferring an orphan's sponsorship responsibility to another sponsor when required by the workflow;
+- following up on the sponsor's committed monthly dues;
+- receiving/following up on additional payments the sponsor wishes to make for an orphan's additional needs or to support other organizational activities;
+- maintaining the sponsor relationship and ensuring sponsorship/payment commitments are followed through the applicable financial workflow.
+
+The supervisor's sponsor scope therefore **must never be inferred from the orphan's family, mother's name, or mother's first letter**.
+
+A separate family-management scope may exist where a family is explicitly assigned to a supervisor. That family scope is independent of sponsor ownership and does not grant sponsor responsibility based on the mother's name.
+
+Implementation correction commits on `main`:
+
+- `7f3856eb49b206dae913539f25baead32b559694` — family scope no longer derives supervisor access from mother's first letter; supervisor family access is explicit family assignment.
+- `5088e69083d17dce7714d39e3bb87e834f0b868b` — centralized sponsor supervisor resolution by sponsor first letter + gender.
+- `da3024cc1f914ab116d893e43289219100c4590a` — sponsor creation uses the authoritative assignment rule and male/female gender requirement.
+- `c9d3f7f8b9dc4881fa1ba9663bc4360f333288ed` — sponsor editing recomputes supervisor ownership from sponsor name letter + gender instead of retaining an unrelated previous supervisor.
+- `af25a3520f97df2994b420ddc39321794e338dc2` — sponsor-request conversion now assigns the converted sponsor through the same rule.
+- `3a75d84a42520e86f9804024f949fa2c6bfa50f9` — sponsorship creation no longer filters eligible orphans by their mother's/family first letter; supervisor scope is applied to the sponsor, not the orphan family.
+- `1d01556900552bc584135371b797eff6537d1081` — sponsor list scope no longer grants access through direct family/sponsor assignment; it follows the letter + gender matrix.
+- `fc166a67e0b8d8225e585e318496c461d50c8446` — sponsor detail scope follows the letter + gender matrix only.
+- `b6d120b015674836094fbb82fa6da7abbc8e7f07` — sponsorship detail scope follows the sponsor letter + gender matrix only.
+- `b2f55bb90020a123439c7de78a8e3917665a8bfb` — supervisor dashboard sponsor/sponsorship/orphan counts follow the same sponsor-only scope.
+
+This correction supersedes earlier checkpoint statements that used a family mother's first letter as part of the supervisor's **sponsor** scope. Do not restore that logic.
+
+---
+
 # PERMISSION GOVERNANCE / AUTHORIZATION CONSISTENCY — CHECKPOINT 2026-09-13
 
 Permission Governance was selected as the next genuinely unfinished system-wide area after Authentication/session hardening.
@@ -193,56 +244,38 @@ A concrete sponsorship scope inconsistency was identified and corrected narrowly
 
 - Sponsor gender is a **basic system requirement** and must be specified when sponsor data is added.
 - Sponsor creation now rejects missing/invalid gender server-side and the UI requires it.
-- Supervisor sponsor visibility is governed by the existing letter + gender assignment matrix.
-- Supervisor sponsor view authorization now enforces the same letter + gender scope.
-- Supervisor sponsor edit authorization now enforces the same letter + gender scope.
-- Existing legacy sponsors with `unknown` gender were not mass-modified; valid gender is required when their data is edited.
+- Supervisor sponsor visibility is governed by the sponsor's own first-letter + gender assignment matrix.
+- Supervisor sponsor view authorization now enforces the same sponsor-only letter + gender scope.
+- Supervisor sponsor edit authorization now enforces the same sponsor-only letter + gender scope.
+- Existing legacy sponsors with `unknown` gender were not mass-modified; valid male/female gender is required when their data is edited.
 
-Relevant fixes were pushed directly to `main` in commits:
+Relevant earlier fixes:
 
 - `ecb6bdaeb0eefff76d9dfac94e955e6d68992395`
 - `61d0957fe60ffc238718fcdd98ff1f2b71491a3f`
 - `ea2c531fc707e28290ace70d70ecc02ffec69b44`
 
-Runtime verification of the affected scope produced the expected denial message:
+The sponsor/sponsorship boundary was then rechecked against the corrected business rule above. The earlier family-mother-letter interpretation is no longer authoritative.
 
-`هذه الأسرة ليست ضمن نطاقك.`
-
-This confirms the tested supervisor scope boundary is actively enforced by the downstream family workflow.
-
-The Permission Governance audit then expanded into the Supervisor Module boundary review. The supervisor dashboard was inspected first and its actual quick links established the initial navigation sequence:
+The Supervisor Module Audit dashboard navigation remains:
 
 1. `modules/sponsors/index.php`
 2. `modules/families/index.php`
 3. `modules/sponsorships/index.php`
 
-The first Supervisor-linked page, `modules/sponsors/index.php`, and its linked sponsor/sponsorship workflows were source-audited for role guards, record scope, direct-ID behavior, CSRF, validation, lifecycle side effects, and UI consistency.
+The sponsor/sponsorship area has now been corrected so that supervisor sponsor responsibility is consistently based on sponsor first letter + gender, while family access remains a separate explicit family-assignment concern.
 
-Confirmed Supervisor boundary findings and narrow fixes:
+The existing family-document CSRF fix remains valid and unchanged.
 
-- Supervisor sponsorship-list scope was inconsistent with the established sponsor letter + gender rule. The list previously admitted sponsors by letter without requiring matching gender. Fixed in `modules/sponsorships/index.php`.
-- Supervisor sponsorship detail visibility was only controlling management actions; a supervisor could still reach an out-of-scope sponsorship by direct ID and see sponsor/child/family/payment information. Fixed in `modules/sponsorships/view.php` by enforcing the same visibility boundary before rendering the record.
-- Supervisor sponsorship manual orphan search returned out-of-scope family/child records and merely disabled them in the UI, which leaked record information. Fixed in `modules/sponsorships/create.php` so manual results are restricted to the established family scope: direct family assignment OR matching assigned supervisor letter.
-- Supervisor dashboard sponsor/sponsorship/orphan counts did not apply the sponsor gender dimension used by the actual sponsor scope. Fixed in `dashboard/supervisor_dashboard.php` so aggregate counts use the same direct-assignment OR matching-letter+gender rule.
-- Sponsor request conversion was found to create sponsors with `gender='unknown'`, which was a direct regression against the already-established mandatory sponsor-gender requirement. Fixed in `modules/sponsors/requests.php` by requiring and validating male/female gender during conversion before sponsor creation.
+Important unresolved item:
 
-Fix commits created during this Supervisor audit continuation:
-
-- `edf2b56ccd56e70abc093fcc2d715022b5d68c72` — supervisor sponsorship list gender scope
-- `bbf8083ee4acc615577c288e88dae5f6bfde63e5` — supervisor sponsorship direct-ID visibility scope
-- `daf920402a43d419f41ad54ffa941e0778ea5122` — supervisor manual sponsorship search family scope
-- `44efb3f3c47978c21a4c656f61cc55f4c9d70042` — supervisor dashboard scope-aligned counts
-- `5cfda89d3806a314765f3a697f7eae3e05e9bb48` — mandatory gender on sponsor-request conversion
-
-Important unresolved item from this checkpoint:
-
-- `modules/sponsors/index.php` still performs `ALTER TABLE sponsors ADD COLUMN IF NOT EXISTS brought_by_name ...` during normal page rendering. This is a schema-management concern, but it was **not removed speculatively** because the current runtime/database schema could not be independently verified from the connector. It remains a controlled follow-up item for schema-evidence review, not an unverified claim of data corruption.
+- `modules/sponsors/index.php` still performs `ALTER TABLE sponsors ADD COLUMN IF NOT EXISTS brought_by_name ...` during normal page rendering. This remains a controlled schema-management follow-up because the runtime database schema has not been independently verified through the connector. It was not removed speculatively.
 
 Also not yet closed:
 
 - The exact role/business scope for supervisor access to the general sponsor-request queue remains to be confirmed from the System Analysis/workflow evidence. No speculative restriction was introduced.
 
-**Supervisor Module Audit: OPEN — first linked navigation area audited and concrete boundary defects fixed. Continue from the next actual Supervisor dashboard link (`modules/families/index.php`) without repeating the sponsor/sponsorship findings above unless a regression is demonstrated.**
+**Supervisor Module Audit: OPEN.** Continue from the actual Supervisor dashboard navigation without re-opening completed accounting, notification, authentication, or unrelated audit work.
 
 ---
 
@@ -256,17 +289,15 @@ Next page:
 
 `modules/families/index.php`
 
-Continue with functionality + authorization + data flow + UI/UX, then follow its actual Supervisor-accessible detail/action/document links. Preserve the existing family rule:
+Family-management authorization must remain conceptually separate from sponsor ownership. For families, a supervisor may access a family when it is explicitly assigned to that supervisor; the family's mother name/first letter must not be used as a proxy for sponsor responsibility.
 
-**Supervisor may access a family when directly assigned OR when the family's legacy mother first letter matches one of the supervisor's assigned letters.**
-
-Do not restart sponsor/sponsorship testing already completed in this checkpoint.
+Do not restart sponsor/sponsorship testing already completed in this checkpoint unless a regression is demonstrated.
 
 ---
 
 # CURRENT AUDIT DIRECTION
 
-Accounting, Notification, Authentication/session hardening and the previously completed sponsorship authorization hardening remain closed at their current evidence boundaries.
+Accounting, Notification, Authentication/session hardening and the sponsorship authorization hardening remain closed at their current evidence boundaries.
 
 **Supervisor Module Audit is now the current open audit.**
 
