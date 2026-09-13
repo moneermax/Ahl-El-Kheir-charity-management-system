@@ -4,9 +4,10 @@ declare(strict_types=1);
 /**
  * Centralized family-level authorization for operational roles.
  *
- * Family access is based on an explicit family assignment. A supervisor's
- * sponsor responsibility is a separate business rule and is NOT derived from
- * the family's mother name or first letter.
+ * A supervisor can access a family when either:
+ * 1) the family is explicitly assigned to that supervisor, or
+ * 2) the family has a sponsorship whose sponsor falls under the supervisor's
+ *    first-letter + gender responsibility matrix.
  *
  * Nannies remain restricted to their directly assigned families. Other roles
  * already authorized by their module guards are not narrowed by this helper.
@@ -14,14 +15,38 @@ declare(strict_types=1);
 function ak_family_user_in_scope(array $family, string $role, int $userId): bool
 {
     if ($role === 'nanny') return (int)($family['nanny_id'] ?? 0) === $userId;
-    if ($role === 'supervisor') return (int)($family['supervisor_id'] ?? 0) === $userId;
+
+    if ($role === 'supervisor') {
+        if ((int)($family['supervisor_id'] ?? 0) === $userId) return true;
+
+        /* Sponsor responsibility is independent from family assignment. */
+        $linkedSponsor = dbFetchOne(
+            "SELECT sp.id
+             FROM sponsorships s
+             JOIN family_children fc ON fc.id = s.child_id
+             JOIN sponsors sp ON sp.id = s.sponsor_id
+             JOIN supervisor_letters sl ON sl.supervisor_id = ?
+                                      AND sl.letter_id = sp.first_letter_id
+             WHERE fc.family_id = ?
+               AND (
+                    CONVERT(sl.gender USING utf8mb4) COLLATE utf8mb4_unicode_ci =
+                    CONVERT(sp.gender USING utf8mb4) COLLATE utf8mb4_unicode_ci
+                    OR CONVERT(sl.gender USING utf8mb4) COLLATE utf8mb4_unicode_ci = 'both'
+               )
+             LIMIT 1",
+            [$userId, (int)($family['id'] ?? 0)]
+        );
+
+        return !empty($linkedSponsor);
+    }
+
     return true;
 }
 
 /**
  * Enforce the family record boundary on direct-ID family/child routes.
- * Supervisor family access is explicit assignment only. Sponsor ownership is
- * handled separately by the sponsor first-letter + gender matrix.
+ * Supervisor access includes both explicit family assignment and families
+ * related to sponsors inside the supervisor's responsibility matrix.
  */
 function ak_enforce_family_request_scope(): void
 {
