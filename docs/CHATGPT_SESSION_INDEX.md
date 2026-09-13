@@ -4,11 +4,11 @@
 **Local project:** `D:\xampp\htdocs\AhlElKheir`  
 **Local URL:** `http://localhost:8081/AhlElKheir/`  
 **Database:** `ahl_el_kheir`  
-**Last maintained:** 2026-09-12
+**Last maintained:** 2026-09-13
 
 ---
 
-# CURRENT AUTHORITATIVE CHECKPOINT — 2026-09-12
+# CURRENT AUTHORITATIVE CHECKPOINT — 2026-09-13
 
 This is an **existing project and existing audit continuation**.
 
@@ -161,7 +161,7 @@ No user-side test is required from this documentation-only closure.
 
 The next unfinished system area after the closed Accounting and Notification audits was identified as **Authentication / Session Security**, with session fixation as the concrete finding.
 
-A narrow hardening change was applied directly to `main`:
+A narrow hardening change was applied directly to `config/session.php`:
 
 - `config/session.php` now rotates the session identifier on the first authenticated request after login.
 - Rotation uses `session_regenerate_id(true)` and preserves the existing session data.
@@ -183,7 +183,7 @@ Runtime verification was then completed successfully:
 
 ---
 
-# PERMISSION GOVERNANCE / AUTHORIZATION CONSISTENCY — CHECKPOINT 2026-09-12
+# PERMISSION GOVERNANCE / AUTHORIZATION CONSISTENCY — CHECKPOINT 2026-09-13
 
 Permission Governance was selected as the next genuinely unfinished system-wide area after Authentication/session hardening.
 
@@ -210,53 +210,70 @@ Runtime verification of the affected scope produced the expected denial message:
 
 This confirms the tested supervisor scope boundary is actively enforced by the downstream family workflow.
 
-**Permission Governance remains open for source inspection of other record-level authorization boundaries. Do not treat the above sponsorship finding as an organization-wide permission audit closure.**
+The Permission Governance audit then expanded into the Supervisor Module boundary review. The supervisor dashboard was inspected first and its actual quick links established the initial navigation sequence:
+
+1. `modules/sponsors/index.php`
+2. `modules/families/index.php`
+3. `modules/sponsorships/index.php`
+
+The first Supervisor-linked page, `modules/sponsors/index.php`, and its linked sponsor/sponsorship workflows were source-audited for role guards, record scope, direct-ID behavior, CSRF, validation, lifecycle side effects, and UI consistency.
+
+Confirmed Supervisor boundary findings and narrow fixes:
+
+- Supervisor sponsorship-list scope was inconsistent with the established sponsor letter + gender rule. The list previously admitted sponsors by letter without requiring matching gender. Fixed in `modules/sponsorships/index.php`.
+- Supervisor sponsorship detail visibility was only controlling management actions; a supervisor could still reach an out-of-scope sponsorship by direct ID and see sponsor/child/family/payment information. Fixed in `modules/sponsorships/view.php` by enforcing the same visibility boundary before rendering the record.
+- Supervisor sponsorship manual orphan search returned out-of-scope family/child records and merely disabled them in the UI, which leaked record information. Fixed in `modules/sponsorships/create.php` so manual results are restricted to the established family scope: direct family assignment OR matching assigned supervisor letter.
+- Supervisor dashboard sponsor/sponsorship/orphan counts did not apply the sponsor gender dimension used by the actual sponsor scope. Fixed in `dashboard/supervisor_dashboard.php` so aggregate counts use the same direct-assignment OR matching-letter+gender rule.
+- Sponsor request conversion was found to create sponsors with `gender='unknown'`, which was a direct regression against the already-established mandatory sponsor-gender requirement. Fixed in `modules/sponsors/requests.php` by requiring and validating male/female gender during conversion before sponsor creation.
+
+Fix commits created during this Supervisor audit continuation:
+
+- `edf2b56ccd56e70abc093fcc2d715022b5d68c72` — supervisor sponsorship list gender scope
+- `bbf8083ee4acc615577c288e88dae5f6bfde63e5` — supervisor sponsorship direct-ID visibility scope
+- `daf920402a43d419f41ad54ffa941e0778ea5122` — supervisor manual sponsorship search family scope
+- `44efb3f3c47978c21a4c656f61cc55f4c9d70042` — supervisor dashboard scope-aligned counts
+- `5cfda89d3806a314765f3a697f7eae3e05e9bb48` — mandatory gender on sponsor-request conversion
+
+Important unresolved item from this checkpoint:
+
+- `modules/sponsors/index.php` still performs `ALTER TABLE sponsors ADD COLUMN IF NOT EXISTS brought_by_name ...` during normal page rendering. This is a schema-management concern, but it was **not removed speculatively** because the current runtime/database schema could not be independently verified from the connector. It remains a controlled follow-up item for schema-evidence review, not an unverified claim of data corruption.
+
+Also not yet closed:
+
+- The exact role/business scope for supervisor access to the general sponsor-request queue remains to be confirmed from the System Analysis/workflow evidence. No speculative restriction was introduced.
+
+**Supervisor Module Audit: OPEN — first linked navigation area audited and concrete boundary defects fixed. Continue from the next actual Supervisor dashboard link (`modules/families/index.php`) without repeating the sponsor/sponsorship findings above unless a regression is demonstrated.**
 
 ---
 
 # NEXT MODULE AUDIT QUEUE
 
-**Supervisor Module Audit — NEXT MODULE TO AUDIT**
+**Supervisor Module Audit — CURRENT OPEN AUDIT**
 
-The supervisor module is explicitly queued as the next module-level audit after the current Permission Governance continuation.
+Continue page-by-page from the Supervisor dashboard navigation.
 
-Scope should include the existing supervisor lifecycle, creation/editing, letter and gender assignment/reassignment, workload/ownership calculations, suspension/reactivation/final departure/return flows, and all linked record-level authorization boundaries.
+Next page:
 
-This queue entry does **not** start the supervisor audit yet. Continue the current Permission Governance audit first, then move to the Supervisor Module Audit without restarting prior work.
+`modules/families/index.php`
+
+Continue with functionality + authorization + data flow + UI/UX, then follow its actual Supervisor-accessible detail/action/document links. Preserve the existing family rule:
+
+**Supervisor may access a family when directly assigned OR when the family's legacy mother first letter matches one of the supervisor's assigned letters.**
+
+Do not restart sponsor/sponsorship testing already completed in this checkpoint.
 
 ---
 
 # CURRENT AUDIT DIRECTION
 
-Accounting and Notification audits are closed at their current evidence boundaries. Authentication/session hardening is verified and documented. Permission Governance is the current open system-wide audit area.
+Accounting, Notification, Authentication/session hardening and the previously completed sponsorship authorization hardening remain closed at their current evidence boundaries.
 
-Continue Permission Governance from the existing sponsorship scope checkpoint. Inspect remaining record-level authorization boundaries, identify only concrete risks, fix narrowly where evidence establishes a defect, test affected behavior, and document the result.
+**Supervisor Module Audit is now the current open audit.**
 
-Before starting the Supervisor Module Audit, use the existing audit documents and this session index as the authoritative continuation record.
+Continue from `modules/families/index.php`, following the actual Supervisor dashboard navigation and auditing each page completely. Do not invent a page list. Fix only confirmed defects and document each meaningful result here.
+
+Before moving to another audit area, complete the Supervisor Module audit and preserve this checkpoint as the continuation record.
 
 ---
 
 # PARKED TODO LATER
-
-1. Direct original ↔ reversal/source navigation in journal detail.
-2. Missing/stale receipt same-page modal UX.
-3. Broader accounting auditability enhancements after underlying mutation routes are fully audited.
-4. Formal organization-wide permission/action matrix.
-5. Formal report/source/calculation catalog.
-6. Final notification event/recipient catalog where not already captured by the dedicated Notification Audit.
-
-These are parked items, not reasons to reopen completed audit areas without evidence.
-
----
-
-# AUTHORITATIVE DOCUMENTATION FOR CONTINUATION
-
-Read/use these together as applicable:
-
-1. `docs/AHL_EL_KHEIR_NOTIFICATION_AUDIT.md`
-2. `docs/AHL_EL_KHEIR_ACCOUNTING_AUDIT.md`
-3. `docs/AHL_EL_KHEIR_CURRENT_SYSTEM_STATUS_2026-09-08.md`
-4. `docs/AHL_EL_KHEIR_COMPLETE_REPOSITORY_AUDIT.md`
-5. `docs/AHL_EL_KHEIR_REPOSITORY_AUDIT.md`
-6. `docs/AHL_EL_KHEIR_SYSTEM_ANALYSIS.md`
-7. `docs/CHATGPT_SESSION_INDEX.md`
