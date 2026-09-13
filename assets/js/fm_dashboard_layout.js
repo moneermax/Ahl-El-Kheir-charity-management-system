@@ -17,8 +17,8 @@
         }
         if (!quickStats) return;
 
-        var treasuryGrid = main.querySelector('.grid-4');
-        if (!treasuryGrid || treasuryGrid === quickStats || quickStats.contains(treasuryGrid)) return;
+        var treasuryGrid = main.querySelector('.fm-top-right > .grid-4');
+        if (!treasuryGrid || quickStats === treasuryGrid || quickStats.contains(treasuryGrid)) return;
 
         main.insertBefore(quickStats, treasuryGrid);
     }
@@ -28,6 +28,18 @@
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
         });
+    }
+
+    function buildTreasuryAdminFeeCard(value) {
+        var card = document.createElement('div');
+        card.className = 'stat-box purple';
+        card.id = 'fm-treasury-admin-fee';
+        card.style.minWidth = '0';
+        card.innerHTML = '' +
+            '<div class="stat-label" style="font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">💼 الرسوم الإدارية المحصلة</div>' +
+            '<div class="stat-value" style="font-size:1.55rem;white-space:nowrap">' + formatAmount(value) + '</div>' +
+            '<div class="stat-sub" style="font-size:.72rem;white-space:nowrap">حساب 4200 · SDG</div>';
+        return card;
     }
 
     function buildLedgerKpiCard(data) {
@@ -43,7 +55,6 @@
             '</div>' +
             '<div class="fm-card-body">' +
                 '<div class="grid-4" style="margin-bottom:15px">' +
-                    '<div class="stat-box purple"><div class="stat-label">💼 إجمالي الرسوم الإدارية المحصلة</div><div class="stat-value" data-kpi="admin_fees_total"></div><div class="stat-sub">4200 — الرسوم الإدارية · SDG</div></div>' +
                     '<div class="stat-box amber"><div class="stat-label">📅 رسوم إدارية هذا الشهر</div><div class="stat-value" data-kpi="admin_fees_month"></div><div class="stat-sub" data-kpi-month></div></div>' +
                     '<div class="stat-box blue"><div class="stat-label">💰 إجمالي تحصيل الكفالات</div><div class="stat-value" data-kpi="sponsorship_gross"></div><div class="stat-sub">إجمالي المدين في حسابات التحصيل · SDG</div></div>' +
                     '<div class="stat-box green"><div class="stat-label">📈 صافي إيرادات الكفالات</div><div class="stat-value" data-kpi="sponsorship_net"></div><div class="stat-sub">4100 — إيرادات الكفالات · SDG</div></div>' +
@@ -59,7 +70,6 @@
                 '</div>' +
             '</div>';
 
-        card.querySelector('[data-kpi="admin_fees_total"]').textContent = formatAmount(data.admin_fees_total) + ' SDG';
         card.querySelector('[data-kpi="admin_fees_month"]').textContent = formatAmount(data.admin_fees_month) + ' SDG';
         card.querySelector('[data-kpi-month]').textContent = 'الشهر ' + data.month + ' · حساب 4200';
         card.querySelector('[data-kpi="sponsorship_gross"]').textContent = formatAmount(data.sponsorship_gross) + ' SDG';
@@ -80,7 +90,7 @@
         if (!main || document.getElementById('fm-accounting-kpis')) return;
 
         var treasuryGrid = main.querySelector('.fm-top-right > .grid-4');
-        if (!treasuryGrid) return;
+        if (!treasuryGrid || document.getElementById('fm-treasury-admin-fee')) return;
 
         var endpoint = new URL('fm_dashboard_kpis.php', window.location.href).toString();
         fetch(endpoint, { credentials: 'same-origin', headers: { 'Accept': 'application/json' } })
@@ -90,8 +100,20 @@
             })
             .then(function (data) {
                 if (!data || !data.ok) throw new Error(data && data.message ? data.message : 'KPI response failed');
+
+                // The treasury row is intentionally five compact cards on desktop:
+                // cash, bank, wallet, total treasury, and total administrative fees.
+                treasuryGrid.style.gridTemplateColumns = 'repeat(5, minmax(0, 1fr))';
+                treasuryGrid.style.gap = '10px';
+                var treasuryCards = treasuryGrid.querySelectorAll('.stat-box');
+                for (var i = 0; i < treasuryCards.length; i++) {
+                    treasuryCards[i].style.minWidth = '0';
+                    treasuryCards[i].style.padding = '14px 10px';
+                }
+                treasuryGrid.appendChild(buildTreasuryAdminFeeCard(data.admin_fees_total));
+
                 var card = buildLedgerKpiCard(data);
-                treasuryGrid.insertAdjacentElement('afterend', card);
+                treasuryGrid.parentNode.insertBefore(card, treasuryGrid.nextSibling);
             })
             .catch(function (error) {
                 console.error('FM accounting KPI load failed:', error);
