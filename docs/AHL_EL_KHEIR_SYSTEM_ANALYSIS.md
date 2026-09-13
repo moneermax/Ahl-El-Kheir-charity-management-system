@@ -3,7 +3,7 @@
 
 **Arabic name:** نظام أهل الخير لإدارة الجمعيات الخيرية  
 **Document type:** System Analysis + Functional Specification + Technical Architecture + Developer/AI Handoff  
-**Documentation version:** 1.1  
+**Documentation version:** 1.2  
 **Baseline implementation:** `b3267ba306c81b25cff06b32ff8f5719fa7565ac`  
 **Repository:** `moneermax/Ahl-El-Kheir-charity-management-system`  
 **Current development environment:** Windows / XAMPP / Apache / PHP / MariaDB/MySQL  
@@ -150,7 +150,7 @@ The current organizational model includes the following roles:
 | Vice General Manager | Executive support, delegated management and approvals |
 | Financial Manager / Accountant | Financial oversight, accounting control, reconciliation and financial approvals |
 | Accountant Staff | Operational accounting and financial processing under controlled permissions |
-| Supervisor | Operational supervision of beneficiaries/groups and related follow-up |
+| Supervisor | Sponsor relationship management, sponsorship assignment/follow-up, and operational beneficiary oversight where explicitly assigned |
 | Nanny | Direct operational follow-up and monthly beneficiary/payment confirmation |
 | Administration | Administrative records and organizational operations |
 | HR Manager | Human resources management and oversight |
@@ -217,6 +217,8 @@ Families represent the household/case-management level. A family can contain mul
 
 Important principle: family-level identity and child-level sponsorship must not be conflated.
 
+Family authorization for a supervisor is a separate concern from sponsor ownership. Where a supervisor is explicitly assigned to a family, that assignment can govern family/case-management access. The family's mother name or first letter is **not** a proxy for the supervisor's sponsor responsibility.
+
 ## 8.4 Children / beneficiaries / orphans
 
 Children are the beneficiary level used by sponsorship and monthly operational workflows.
@@ -229,15 +231,49 @@ The sponsor domain stores sponsor information and supports sponsorship relations
 
 Sponsor and child are distinct business entities. A sponsor should not be represented as a property of the family itself when the underlying business rule is child-level sponsorship.
 
+### Authoritative sponsor-supervisor assignment rule
+
+A supervisor's responsibility for sponsors is determined **solely by the sponsor's own name first letter and sponsor gender (male or female)** through the configured `supervisor_letters` assignment matrix.
+
+The assignment model is:
+
+```text
+Sponsor full name
+      ↓
+Sponsor first letter
+      +
+Sponsor gender (male / female)
+      ↓
+Supervisor assigned for that letter + gender
+```
+
+The mother's name, mother's first letter, family code, and orphan family are **irrelevant to sponsor ownership**.
+
+A supervisor is responsible for the sponsors assigned by this matrix, including:
+
+- communicating with those sponsors;
+- assigning their sponsors to new orphan sponsorships in addition to existing sponsorships;
+- ending/removing an orphan from a sponsor's sponsorship when required;
+- transferring an orphan's sponsorship to another sponsor when required by the workflow;
+- following up on monthly dues committed by the sponsor;
+- following up on additional payments the sponsor wishes to make for an orphan's additional needs or to support other organizational purposes and activities;
+- maintaining the sponsor relationship through the applicable financial and sponsorship workflows.
+
+A family assignment, if present, is a separate family/case-management responsibility and must never be used to infer sponsor ownership.
+
 ## 8.6 Sponsorships
 
 A sponsorship represents the relationship and financial/support commitment between a sponsor and a sponsored child.
 
 The authoritative business relationship is child-level. This allows siblings in the same family to have different sponsors and therefore different sponsorship/payment contexts.
 
+Supervisor sponsorship operations are therefore sponsor-scoped: a supervisor may operate on sponsorships belonging to sponsors within that supervisor's letter + gender matrix. The orphan's family/mother letter must not be used as a substitute scope test for sponsor responsibility.
+
 ## 8.7 Supervisors and nannies
 
-Supervisors provide operational oversight. Nannies perform direct beneficiary follow-up and, where assigned, monthly payment confirmation.
+Supervisors provide sponsor relationship management, sponsorship assignment/follow-up, and operational oversight where a family or beneficiary responsibility is explicitly assigned. Nannies perform direct beneficiary follow-up and, where assigned, monthly payment confirmation.
+
+Supervisor sponsor scope is always derived from the **sponsor's first letter + sponsor gender**. Supervisor family/case scope, when applicable, is a separate explicit family assignment. These two concepts must not be conflated.
 
 The exact operational scope of each role must be enforced server-side.
 
@@ -866,6 +902,13 @@ The project is an Arabic RTL charity organizational management system. It is imp
 - Respect foreign keys.
 - Do not create redundant relationships merely because a conceptual model seems simpler.
 
+### Supervisor sponsor rule
+
+- Sponsor ownership is based only on sponsor first letter + sponsor gender.
+- Never derive sponsor ownership from an orphan's family, mother name, or family first letter.
+- A supervisor's family assignment is separate from sponsor ownership.
+- Sponsor relationship, sponsorship assignment/transfer, monthly dues, and additional-support payment follow-up belong to the supervisor's sponsor responsibility within the applicable financial controls.
+
 ### Change workflow
 
 `Inspect → Diagnose → Explain → Patch minimally → Test → Review diff → Commit → Push`
@@ -886,6 +929,7 @@ A significant change includes:
 - Major storage/security change.
 - New integration.
 - Major reporting architecture change.
+- Correction to an explicit organizational business rule.
 
 Each update should record the implementation baseline/commit where practical.
 
@@ -898,6 +942,7 @@ The intended final state of Ahl El Kheir is a controlled organizational platform
 - Every beneficiary has a reliable identity and case history.
 - Every sponsorship is traceable to the correct child and sponsor.
 - Operational responsibilities are assigned to appropriate staff.
+- Sponsor ownership is deterministic from the sponsor's own first letter and gender assignment matrix.
 - Monthly financial assistance is generated through a controlled workflow.
 - Financial approval, transfer, confirmation, return, and reconciliation are distinguishable events.
 - Receipts and supporting documents are securely stored and traceable.
@@ -922,7 +967,8 @@ Users / Roles
      └── Operational Staff
              │
              ├── Supervisors
-             │       └── Groups / Beneficiary follow-up
+             │       ├── Sponsor responsibility by sponsor first letter + gender
+             │       └── Explicitly assigned family/case responsibility where applicable
              │
              └── Nannies
                      └── Monthly confirmation
@@ -942,6 +988,8 @@ Families
                                       └── Return / Reversal evidence
 
 Sponsors
+   │
+   ├── Supervisor assignment = sponsor first letter + gender
    │
    └── Sponsorships ───────────────┘
 
@@ -1105,3 +1153,83 @@ The current protected disbursement-void evidence remains batch `11`, transaction
 ## 31.10 Current system-analysis rule
 
 This document is now the canonical system-analysis record. Future implementation deltas should be incorporated here when practical rather than maintained as a parallel dated addendum. Accounting audit evidence belongs in `docs/AHL_EL_KHEIR_ACCOUNTING_AUDIT.md`.
+
+---
+
+# 32. Supervisor Sponsor Responsibility — Authoritative Business Rule Correction 2026-09-13
+
+The supervisor sponsor-responsibility model is explicitly defined here to prevent a recurrence of the previously incorrect family/mother-letter interpretation.
+
+## 32.1 Sponsor ownership
+
+A supervisor is responsible for sponsors **solely according to the sponsor's own first name letter and the sponsor's gender (male or female)**.
+
+The authoritative chain is:
+
+```text
+Sponsor full name
+        ↓
+First letter of sponsor name
+        +
+Sponsor gender
+        ↓
+Configured supervisor_letters assignment
+        ↓
+Responsible supervisor
+```
+
+The following values must **not** be used to determine sponsor ownership:
+
+- mother's name;
+- mother's first letter;
+- family code;
+- orphan's family;
+- orphan's gender;
+- family supervisor assignment.
+
+A family may have a separately assigned supervisor for family/case-management work. That is a different relationship and must not be treated as sponsor ownership.
+
+## 32.2 Supervisor sponsor responsibilities
+
+Within the applicable authorization and financial controls, the responsible supervisor manages the sponsor relationship and sponsorship workflow, including:
+
+1. Communicating with assigned sponsors.
+2. Assigning an assigned sponsor to sponsorships for new orphans in addition to sponsorships they already have.
+3. Removing/ending an orphan's sponsorship with a sponsor when required.
+4. Transferring an orphan from one sponsor to another through the sponsorship workflow.
+5. Following up on monthly dues the sponsor committed to pay.
+6. Following up on additional payments the sponsor wishes to make for an orphan's additional needs.
+7. Following up on additional support the sponsor wishes to provide for other organizational purposes and activities.
+8. Maintaining the sponsor relationship and ensuring the resulting payment activity proceeds through the organization's controlled financial workflow.
+
+## 32.3 Authorization implications
+
+Supervisor sponsor list, sponsor detail, sponsor edit, sponsorship list, sponsorship detail, dashboard sponsor/sponsorship counts, sponsor-request conversion, and sponsorship creation must apply the same sponsor-first-letter + gender assignment model.
+
+Supervisor sponsorship selection is **not** constrained by the orphan's mother's first letter or family first letter. A supervisor selects eligible orphan records for an assigned sponsor according to the sponsorship workflow; the orphan's family is not the basis of sponsor ownership.
+
+## 32.4 Current implementation alignment
+
+The 2026-09-13 correction is implemented across the relevant current routes:
+
+- `config/sponsor_assignments.php` centralizes sponsor-to-supervisor resolution from sponsor name first letter + gender.
+- `modules/sponsors/create.php` uses that resolution and requires male/female sponsor gender.
+- `modules/sponsors/edit.php` recomputes the supervisor when sponsor name/gender changes instead of retaining an unrelated previous supervisor.
+- `modules/sponsors/requests.php` applies the same assignment during request conversion.
+- `modules/sponsors/index.php` limits supervisor sponsor visibility by sponsor first letter + gender only.
+- `modules/sponsors/view.php` enforces the same sponsor-only scope.
+- `modules/sponsorships/index.php` uses the sponsor-only scope.
+- `modules/sponsorships/view.php` uses the sponsor-only scope.
+- `modules/sponsorships/create.php` limits the supervisor's sponsor choices by sponsor assignment but does not filter orphan choices by the orphan family's mother/first letter.
+- `dashboard/supervisor_dashboard.php` calculates sponsor/sponsorship/orphan counts from the sponsor-only scope.
+- `config/family_scope.php` no longer treats a family's legacy mother first letter as a supervisor authorization proxy; explicit family assignment is separate.
+
+## 32.5 Documentation precedence
+
+This section supersedes any earlier documentation, checkpoint, comment, or implementation note that describes supervisor **sponsor** ownership using a family's mother name or first letter.
+
+The authoritative sponsor rule is:
+
+> **Sponsor first letter + sponsor gender → responsible supervisor.**
+
+No mother/family-name inference is permitted for sponsor ownership.
