@@ -1,5 +1,6 @@
 <?php
 // modules/accounting/lib.php - Accounting core (tables, COA seed, auto-posting, tafqit, projects)
+require_once __DIR__ . '/lib_admin_fee_policy.php';
 
 if (!function_exists('ak_ensure_tables')) {
 function ak_ensure_tables(): void {
@@ -59,6 +60,7 @@ function ak_ensure_tables(): void {
         UNIQUE KEY uq_vouchers_no (voucher_no),
         KEY idx_vouchers_type (voucher_type), KEY idx_vouchers_date (voucher_date)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    ak_ensure_admin_fee_policy_table();
 }
 }
 
@@ -89,19 +91,13 @@ function ak_sync_project_accounts(int $projectId, string $name): void {
         $code = '4400-' . $projectId;
         $ex = dbFetchOne("SELECT id FROM accounts WHERE code = ?", [$code]);
         if ($ex) { $revId = (int)$ex['id']; }
-        else {
-            dbExecute("INSERT INTO accounts (code, name_ar, account_type) VALUES (?, ?, 'revenue')", [$code, 'إيرادات مشروع: ' . $name]);
-            $revId = (int)(dbFetchOne("SELECT LAST_INSERT_ID() id")['id']);
-        }
+        else { dbExecute("INSERT INTO accounts (code, name_ar, account_type) VALUES (?, ?, 'revenue')", [$code, 'إيرادات مشروع: ' . $name]); $revId = (int)(dbFetchOne("SELECT LAST_INSERT_ID() id")['id']); }
     }
     if ($expId <= 0) {
         $code = '5100-' . $projectId;
         $ex = dbFetchOne("SELECT id FROM accounts WHERE code = ?", [$code]);
         if ($ex) { $expId = (int)$ex['id']; }
-        else {
-            dbExecute("INSERT INTO accounts (code, name_ar, account_type) VALUES (?, ?, 'expense')", [$code, 'مصروفات مشروع: ' . $name]);
-            $expId = (int)(dbFetchOne("SELECT LAST_INSERT_ID() id")['id']);
-        }
+        else { dbExecute("INSERT INTO accounts (code, name_ar, account_type) VALUES (?, ?, 'expense')", [$code, 'مصروفات مشروع: ' . $name]); $expId = (int)(dbFetchOne("SELECT LAST_INSERT_ID() id")['id']); }
     }
     dbExecute("UPDATE other_projects SET revenue_account_id = ?, expense_account_id = ? WHERE id = ?", [$revId, $expId, $projectId]);
 }
@@ -111,38 +107,21 @@ if (!function_exists('ak_seed_accounts')) {
 function ak_seed_accounts(): void {
     if ((int)(dbFetchOne("SELECT COUNT(*) c FROM accounts")['c'] ?? 0) > 0) return;
     $seed = [
-        ['1100','الصندوق (نقدي)','Cash','asset'],
-        ['1200','البنك','Bank','asset'],
-        ['1300','المحافظ الإلكترونية','Mobile Wallets','asset'],
-        ['1400','ذمم مدينة (مستحقات قبض)','Receivables','asset'],
-        ['2100','ذمم دائنة (مستحقات دفع)','Payables','liability'],
-        ['2200','إيرادات مؤجلة (كفالات مقدماً)','Deferred Revenue','liability'],
-        ['3100','الأرصدة الافتتاحية','Opening Balances','equity'],
-        ['3200','فائض مدور','Retained Surplus','equity'],
-        ['4100','إيرادات الكفالات','Sponsorship Revenue','revenue'],
-        ['4200','الرسوم الإدارية','Admin Fees Revenue','revenue'],
-        ['4300','التبرعات العامة','General Donations','revenue'],
-        ['4400','إيرادات المشاريع','Projects Revenue','revenue'],
-        ['5100','مصروفات البرامج والمساعدات','Programs & Aid Expenses','expense'],
-        ['5200','الرواتب والأجور','Salaries','expense'],
-        ['5300','المصروفات التشغيلية','Operating Expenses','expense'],
-        ['5400','المصروفات الإدارية','Admin Expenses','expense'],
+        ['1100','الصندوق (نقدي)','Cash','asset'], ['1200','البنك','Bank','asset'], ['1300','المحافظ الإلكترونية','Mobile Wallets','asset'],
+        ['1400','ذمم مدينة (مستحقات قبض)','Receivables','asset'], ['2100','ذمم دائنة (مستحقات دفع)','Payables','liability'], ['2200','إيرادات مؤجلة (كفالات مقدماً)','Deferred Revenue','liability'],
+        ['3100','الأرصدة الافتتاحية','Opening Balances','equity'], ['3200','فائض مدور','Retained Surplus','equity'], ['4100','إيرادات الكفالات','Sponsorship Revenue','revenue'],
+        ['4200','الرسوم الإدارية','Admin Fees Revenue','revenue'], ['4300','التبرعات العامة','General Donations','revenue'], ['4400','إيرادات المشاريع','Projects Revenue','revenue'],
+        ['5100','مصروفات البرامج والمساعدات','Programs & Aid Expenses','expense'], ['5200','الرواتب والأجور','Salaries','expense'], ['5300','المصروفات التشغيلية','Operating Expenses','expense'], ['5400','المصروفات الإدارية','Admin Expenses','expense'],
     ];
     foreach ($seed as $s) dbExecute("INSERT INTO accounts (code, name_ar, name_en, account_type) VALUES (?,?,?,?)", $s);
 }
 }
 
 if (!function_exists('ak_account_id')) {
-function ak_account_id(string $code): int {
-    $r = dbFetchOne("SELECT id FROM accounts WHERE code = ?", [$code]);
-    return $r ? (int)$r['id'] : 0;
+function ak_account_id(string $code): int { $r = dbFetchOne("SELECT id FROM accounts WHERE code = ?", [$code]); return $r ? (int)$r['id'] : 0; }
 }
-}
-
 if (!function_exists('ak_cash_code')) {
-function ak_cash_code(string $method): string {
-    return ['cash'=>'1100','bank_transfer'=>'1200','credit_card'=>'1200','mobile'=>'1300','other'=>'1100'][$method] ?? '1100';
-}
+function ak_cash_code(string $method): string { return ['cash'=>'1100','bank_transfer'=>'1200','credit_card'=>'1200','mobile'=>'1300','other'=>'1100'][$method] ?? '1100'; }
 }
 
 if (!function_exists('ak_post_transaction_journal')) {
@@ -152,9 +131,16 @@ function ak_post_transaction_journal(int $txnId): int {
     if (!$t || $t['status'] !== 'posted') return 0;
     $ex = dbFetchOne("SELECT id FROM journal_entries WHERE reference_type='transaction' AND reference_id=? AND status='posted'", [$txnId]);
     if ($ex) return (int)$ex['id'];
-    $amount = (float)$t['amount']; $fee = (float)$t['admin_fee_amount'];
-    $net = (float)$t['net_amount'] > 0 ? (float)$t['net_amount'] : ($amount - $fee);
+
+    // Apply and permanently snapshot the active organization policy before posting.
+    $snapshot = ak_apply_admin_fee_snapshot($txnId);
+    $t = dbFetchOne("SELECT * FROM transactions WHERE id = ?", [$txnId]);
+    $amount = round((float)$t['amount'], 2);
+    $fee = round((float)$snapshot['amount'], 2);
+    $net = round((float)$snapshot['net_amount'], 2);
     $type = (string)($t['transaction_type'] ?? 'sponsorship_payment');
+    if ($amount <= 0 || $fee < 0 || $net < 0 || round($fee + $net,2) !== $amount) throw new RuntimeException('تفاصيل الرسوم الإدارية للمعاملة غير متوافقة مع إجمالي التحصيل.');
+
     $lines = [[ak_cash_code((string)$t['payment_method']), $amount, 0.0, 'تحصيل ' . $t['transaction_code']]];
     if ($type === 'general_donation') {
         $lines[] = ['4300', 0.0, $amount, 'تبرع عام ' . $t['transaction_code']];
@@ -162,49 +148,31 @@ function ak_post_transaction_journal(int $txnId): int {
         $revCode = '4400';
         if (!empty($t['project_id'])) {
             $prj = dbFetchOne("SELECT revenue_account_id FROM other_projects WHERE id = ?", [(int)$t['project_id']]);
-            if ($prj && !empty($prj['revenue_account_id'])) {
-                $acc = dbFetchOne("SELECT code FROM accounts WHERE id = ?", [(int)$prj['revenue_account_id']]);
-                if ($acc) $revCode = $acc['code'];
-            }
+            if ($prj && !empty($prj['revenue_account_id'])) { $acc = dbFetchOne("SELECT code FROM accounts WHERE id = ?", [(int)$prj['revenue_account_id']]); if ($acc) $revCode = $acc['code']; }
         }
         $lines[] = [$revCode, 0.0, $amount, 'إيراد مشروع ' . $t['transaction_code']];
+    } elseif ($type === 'admin_fee') {
+        $lines[] = ['4200', 0.0, $amount, 'رسوم إدارية ' . $t['transaction_code']];
     } else {
         $lines[] = ['4100', 0.0, $net, 'إيراد كفالات ' . $t['transaction_code']];
         if ($fee > 0) $lines[] = ['4200', 0.0, $fee, 'رسوم إدارية ' . $t['transaction_code']];
     }
 
-    // A posted transaction must never produce a partial journal. Missing accounts
-    // are a hard failure so the caller can roll back the surrounding operation.
-    $resolvedLines = [];
-    $totalDebit = 0.0;
-    $totalCredit = 0.0;
+    $resolvedLines = []; $totalDebit = 0.0; $totalCredit = 0.0;
     foreach ($lines as $l) {
-        $aid = ak_account_id($l[0]);
-        if ($aid <= 0) {
-            throw new RuntimeException('الحساب المحاسبي غير موجود: ' . $l[0]);
-        }
-        $debit = round((float)$l[1], 2);
-        $credit = round((float)$l[2], 2);
-        if ($debit < 0 || $credit < 0 || ($debit > 0 && $credit > 0)) {
-            throw new RuntimeException('سطر قيد محاسبي غير صالح للمعاملة ' . $txnId);
-        }
-        $resolvedLines[] = [$aid, $debit, $credit, $l[3]];
-        $totalDebit += $debit;
-        $totalCredit += $credit;
+        $aid = ak_account_id($l[0]); if ($aid <= 0) throw new RuntimeException('الحساب المحاسبي غير موجود: ' . $l[0]);
+        $debit = round((float)$l[1],2); $credit = round((float)$l[2],2);
+        if ($debit < 0 || $credit < 0 || ($debit > 0 && $credit > 0)) throw new RuntimeException('سطر قيد محاسبي غير صالح للمعاملة ' . $txnId);
+        $resolvedLines[] = [$aid,$debit,$credit,$l[3]]; $totalDebit += $debit; $totalCredit += $credit;
     }
-    if (round($totalDebit, 2) !== round($totalCredit, 2)) {
-        throw new RuntimeException('القيد المحاسبي غير متوازن للمعاملة ' . $txnId);
-    }
+    if (round($totalDebit,2) !== round($totalCredit,2)) throw new RuntimeException('القيد المحاسبي غير متوازن للمعاملة ' . $txnId);
 
-    $n = (int)(dbFetchOne("SELECT COUNT(*) c FROM journal_entries")['c'] ?? 0) + 1;
+    $n = (int)(dbFetchOne("SELECT COALESCE(MAX(CASE WHEN entry_code REGEXP '^JE-[0-9]+$' THEN CAST(SUBSTRING(entry_code,4) AS UNSIGNED) ELSE 0 END),0) n FROM journal_entries")['n'] ?? 0) + 1;
     $code = 'JE-' . str_pad((string)$n, 6, '0', STR_PAD_LEFT);
-    dbExecute("INSERT INTO journal_entries (entry_code, entry_date, description, reference_type, reference_id, status, created_by)
-               VALUES (?,?,?,'transaction',?,'posted',?)",
-        [$code, $t['transaction_date'], 'قيد آلي من ' . $t['transaction_code'], $txnId, Session::getUserId()]);
-    $eid = (int)(dbFetchOne("SELECT LAST_INSERT_ID() id")['id']);
-    foreach ($resolvedLines as $l) {
-        dbExecute("INSERT INTO journal_lines (entry_id, account_id, debit, credit, description) VALUES (?,?,?,?,?)", [$eid, $l[0], $l[1], $l[2], $l[3]]);
-    }
+    dbExecute("INSERT INTO journal_entries (entry_code, entry_date, description, reference_type, reference_id, status, created_by) VALUES (?,?,?,'transaction',?,'posted',?)",
+        [$code,$t['transaction_date'],'قيد آلي من ' . $t['transaction_code'],$txnId,Session::getUserId()]);
+    $eid = (int)dbLastInsertId(); if ($eid <= 0) throw new RuntimeException('تعذر إنشاء رأس القيد المحاسبي.');
+    foreach ($resolvedLines as $l) dbExecute("INSERT INTO journal_lines (entry_id, account_id, debit, credit, description) VALUES (?,?,?,?,?)", [$eid,$l[0],$l[1],$l[2],$l[3]]);
     return $eid;
 }
 }
@@ -212,95 +180,40 @@ function ak_post_transaction_journal(int $txnId): int {
 if (!function_exists('ak_void_journal_for_transaction')) {
 function ak_void_journal_for_transaction(int $txnId, string $reason): void {
     ak_ensure_tables();
-    $original = dbFetchOne("SELECT id, entry_code, entry_date, description, status FROM journal_entries
-                            WHERE reference_type='transaction' AND reference_id=?
-                            ORDER BY id ASC LIMIT 1 FOR UPDATE", [$txnId]);
-    if (!$original) {
-        throw new RuntimeException('لا يوجد قيد محاسبي مرحّل للمعاملة ' . $txnId);
-    }
-    if ($original['status'] !== 'posted') {
-        throw new RuntimeException('القيد المحاسبي للمعاملة ' . $txnId . ' ليس في حالة مرحّلة.');
-    }
-
-    $existingReversal = dbFetchOne("SELECT id FROM journal_entries
-                                    WHERE reference_type='transaction_void' AND reference_id=?
-                                    LIMIT 1 FOR UPDATE", [$txnId]);
-    if ($existingReversal) {
-        throw new RuntimeException('يوجد قيد إلغاء محاسبي سابق للمعاملة ' . $txnId . '.');
-    }
-
-    $lines = dbFetchAll("SELECT account_id, debit, credit, description
-                         FROM journal_lines WHERE entry_id=? ORDER BY id", [(int)$original['id']]);
-    if (!$lines) {
-        throw new RuntimeException('القيد المحاسبي للمعاملة ' . $txnId . ' لا يحتوي على أسطر.');
-    }
-
-    $totalDebit = 0.0; $totalCredit = 0.0;
-    foreach ($lines as $line) {
-        $debit = round((float)$line['debit'], 2);
-        $credit = round((float)$line['credit'], 2);
-        if ($debit < 0 || $credit < 0 || ($debit > 0 && $credit > 0)) {
-            throw new RuntimeException('سطر القيد الأصلي غير صالح للمعاملة ' . $txnId);
-        }
-        $totalDebit += $debit; $totalCredit += $credit;
-    }
-    if (round($totalDebit, 2) !== round($totalCredit, 2) || round($totalDebit, 2) <= 0) {
-        throw new RuntimeException('القيد الأصلي للمعاملة ' . $txnId . ' غير متوازن أو صفري.');
-    }
-
-    // Preserve the original posted entry for audit/history, then post a separate
-    // balanced reversal with every debit/credit swapped. The two entries net to zero.
-    dbExecute("UPDATE journal_entries SET status='voided', voided_at=NOW(), voided_by=?, void_reason=? WHERE id=? AND status='posted'",
-        [Session::getUserId(), $reason, (int)$original['id']]);
-    if (db()->rowCount() !== 1) {
-        throw new RuntimeException('تعذر إبطال القيد الأصلي للمعاملة ' . $txnId);
-    }
-
-    $code = 'JE-VOID-TXN-' . $txnId;
-    $codeExists = dbFetchOne("SELECT id FROM journal_entries WHERE entry_code=? LIMIT 1", [$code]);
-    if ($codeExists) {
-        throw new RuntimeException('رمز قيد الإلغاء موجود مسبقاً للمعاملة ' . $txnId . '.');
-    }
-    dbExecute("INSERT INTO journal_entries (entry_code, entry_date, description, reference_type, reference_id, status, created_by)
-               VALUES (?,?,?,?,?,'posted',?)",
-        [$code, $original['entry_date'], 'عكس القيد بسبب إبطال المعاملة ' . $txnId, 'transaction_void', $txnId, Session::getUserId()]);
-    $reversalId = (int)(dbFetchOne("SELECT LAST_INSERT_ID() id")['id']);
-    foreach ($lines as $line) {
-        dbExecute("INSERT INTO journal_lines (entry_id, account_id, debit, credit, description) VALUES (?,?,?,?,?)",
-            [$reversalId, (int)$line['account_id'], round((float)$line['credit'], 2), round((float)$line['debit'], 2), 'عكس: ' . ($line['description'] ?? '')]);
-    }
+    $original = dbFetchOne("SELECT id, entry_code, entry_date, description, status FROM journal_entries WHERE reference_type='transaction' AND reference_id=? ORDER BY id ASC LIMIT 1 FOR UPDATE", [$txnId]);
+    if (!$original) throw new RuntimeException('لا يوجد قيد محاسبي مرحّل للمعاملة ' . $txnId);
+    if ($original['status'] !== 'posted') throw new RuntimeException('القيد المحاسبي للمعاملة ' . $txnId . ' ليس في حالة مرحّلة.');
+    $existingReversal = dbFetchOne("SELECT id FROM journal_entries WHERE reference_type='transaction_void' AND reference_id=? LIMIT 1 FOR UPDATE", [$txnId]);
+    if ($existingReversal) throw new RuntimeException('يوجد قيد إلغاء محاسبي سابق للمعاملة ' . $txnId . '.');
+    $lines = dbFetchAll("SELECT account_id, debit, credit, description FROM journal_lines WHERE entry_id=? ORDER BY id", [(int)$original['id']);
+    if (!$lines) throw new RuntimeException('القيد المحاسبي للمعاملة ' . $txnId . ' لا يحتوي على أسطر.');
+    $totalDebit=0.0;$totalCredit=0.0;
+    foreach($lines as $line){$debit=round((float)$line['debit'],2);$credit=round((float)$line['credit'],2);if($debit<0||$credit<0||($debit>0&&$credit>0))throw new RuntimeException('سطر القيد الأصلي غير صالح للمعاملة '.$txnId);$totalDebit+=$debit;$totalCredit+=$credit;}
+    if(round($totalDebit,2)!==round($totalCredit,2)||round($totalDebit,2)<=0)throw new RuntimeException('القيد الأصلي للمعاملة '.$txnId.' غير متوازن أو صفري.');
+    dbExecute("UPDATE journal_entries SET status='voided', voided_at=NOW(), voided_by=?, void_reason=? WHERE id=? AND status='posted'", [Session::getUserId(),$reason,(int)$original['id']]);
+    if(db()->rowCount()!==1)throw new RuntimeException('تعذر إبطال القيد الأصلي للمعاملة '.$txnId);
+    $code='JE-VOID-TXN-'.$txnId; if(dbFetchOne("SELECT id FROM journal_entries WHERE entry_code=? LIMIT 1",[$code]))throw new RuntimeException('رمز قيد الإلغاء موجود مسبقاً للمعاملة '.$txnId.'.');
+    dbExecute("INSERT INTO journal_entries (entry_code, entry_date, description, reference_type, reference_id, status, created_by) VALUES (?,?,?,?,?,'posted',?)", [$code,$original['entry_date'],'عكس القيد بسبب إبطال المعاملة '.$txnId,'transaction_void',$txnId,Session::getUserId()]);
+    $reversalId=(int)dbLastInsertId();
+    foreach($lines as $line)dbExecute("INSERT INTO journal_lines (entry_id, account_id, debit, credit, description) VALUES (?,?,?,?,?)",[$reversalId,(int)$line['account_id'],round((float)$line['credit'],2),round((float)$line['debit'],2),'عكس: '.($line['description']??'')]);
 }
 }
 
 if (!function_exists('ak_void_journal_for_voucher')) {
-function ak_void_journal_for_voucher(int $voucherId, string $reason): void {
-    dbExecute("UPDATE journal_entries SET status='voided', voided_at=NOW(), voided_by=?, void_reason=?
-               WHERE reference_type='voucher' AND reference_id=? AND status='posted'",
-        [Session::getUserId(), $reason, $voucherId]);
-}
+function ak_void_journal_for_voucher(int $voucherId, string $reason): void { dbExecute("UPDATE journal_entries SET status='voided', voided_at=NOW(), voided_by=?, void_reason=? WHERE reference_type='voucher' AND reference_id=? AND status='posted'", [Session::getUserId(),$reason,$voucherId]); }
 }
 
 if (!function_exists('ak_tafqit')) {
 function ak_tafqit(int $n): string {
-    if ($n === 0) return 'صفر';
-    $ones = ['','واحد','اثنان','ثلاثة','أربعة','خمسة','ستة','سبعة','ثمانية','تسعة','عشرة','أحد عشر','اثنا عشر','ثلاثة عشر','أربعة عشر','خمسة عشر','ستة عشر','سبعة عشر','ثمانية عشر','تسعة عشر'];
-    $tens = ['','عشرة','عشرون','ثلاثون','أربعون','خمسون','ستون','سبعون','ثمانون','تسعون'];
-    $hunds = ['','مائة','مائتان','ثلاثمائة','أربعمائة','خمسمائة','ستمائة','سبعمائة','ثمانمائة','تسعمائة'];
-    $three = function (int $x) use ($ones, $tens, $hunds): string {
-        $parts = [];
-        $h = intdiv($x, 100); $r = $x % 100;
-        if ($h) $parts[] = $hunds[$h];
-        if ($r) {
-            if ($r < 20) $parts[] = $ones[$r];
-            else { $o = $r % 10; $t = intdiv($r, 10); $parts[] = $o ? $ones[$o] . ' و' . $tens[$t] : $tens[$t]; }
-        }
-        return implode(' و', $parts);
-    };
-    $parts = [];
-    $m = intdiv($n, 1000000); $th = intdiv($n % 1000000, 1000); $rest = $n % 1000;
-    if ($m)  $parts[] = $m === 1 ? 'مليون' : ($m === 2 ? 'مليونان' : $three($m) . ' مليون');
-    if ($th) $parts[] = $th === 1 ? 'ألف' : ($th === 2 ? 'ألفان' : $three($th) . ' ألف');
-    if ($rest) $parts[] = $three($rest);
-    return implode(' و', $parts);
+    if ($n===0)return 'صفر';
+    $ones=['','واحد','اثنان','ثلاثة','أربعة','خمسة','ستة','سبعة','ثمانية','تسعة','عشرة','أحد عشر','اثنا عشر','ثلاثة عشر','أربعة عشر','خمسة عشر','ستة عشر','سبعة عشر','ثمانية عشر','تسعة عشر'];
+    $tens=['','عشرة','عشرون','ثلاثون','أربعون','خمسون','ستون','سبعون','ثمانون','تسعون'];
+    $hunds=['','مائة','مائتان','ثلاثمائة','أربعمائة','خمسمائة','ستمائة','سبعمائة','ثمانمائة','تسعمائة'];
+    $three=function(int $x)use($ones,$tens,$hunds):string{$parts=[];$h=intdiv($x,100);$r=$x%100;if($h)$parts[]=$hunds[$h];if($r){if($r<20)$parts[]=$ones[$r];else{$o=$r%10;$t=intdiv($r,10);$parts[]=$o?$ones[$o].' و'.$tens[$t]:$tens[$t];}}return implode(' و',$parts);};
+    $parts=[];$m=intdiv($n,1000000);$th=intdiv($n%1000000,1000);$rest=$n%1000;
+    if($m)$parts[]=$m===1?'مليون':($m===2?'مليونان':$three($m).' مليون');
+    if($th)$parts[]=$th===1?'ألف':($th===2?'ألفان':$three($th).' ألف');
+    if($rest)$parts[]=$three($rest);
+    return implode(' و',$parts);
 }
 }
