@@ -1,5 +1,5 @@
-﻿<?php
-// Accounting Staff Dashboard â€” unified operational + accounting overview
+<?php
+// Accounting Staff Dashboard — unified operational + accounting overview
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/functions.php';
@@ -57,9 +57,9 @@ include __DIR__ . '/../includes/header.php';
     <h2><?php echo e(t('dashboard.welcome_user', ['name' => $me['full_name'] ?? ''])); ?></h2>
     <p><?php echo e(t('dashboard.accountant_intro')); ?></p>
     <div class="quick-actions mt-3">
-        <a href="<?php echo url('modules/reports/my_financial.php'); ?>" class="btn btn-outline-primary btn-sm me-2"><i class="fas fa-file-invoice-dollar me-1"></i>ØªÙ‚Ø§Ø±ÙŠØ±ÙŠ Ø§Ù„Ù…Ø§Ù„ÙŠØ©</a>
+        <a href="<?php echo url('modules/reports/my_financial.php'); ?>" class="btn btn-outline-primary btn-sm me-2"><i class="fas fa-file-invoice-dollar me-1"></i>تقاريري المالية</a>
         <a href="<?php echo url('modules/accounting/group_disbursements.php'); ?>" class="btn btn-success btn-sm me-2"><i class="fas fa-users-cog me-1"></i><?php echo e(t('accounting.group_disbursements')); ?></a>
-        <a href="<?php echo url('modules/accounting/disbursements.php'); ?>" class="btn btn-primary btn-sm me-2"><i class="fas fa-money-check-dollar me-1"></i><?php echo e(t('accounting.individual_disbursements')); ?></a><a href="<?php echo url('modules/accounting/returned_funds.php'); ?>" class="btn btn-warning btn-sm me-2"><i class="fas fa-rotate-left me-1"></i>المبالغ المرتجعة</a>
+        <a href="<?php echo url('modules/accounting/disbursements.php'); ?>" class="btn btn-primary btn-sm me-2"><i class="fas fa-money-check-dollar me-1"></i><?php echo e(t('accounting.individual_disbursements')); ?></a>
     </div>
 </div>
 
@@ -67,9 +67,9 @@ include __DIR__ . '/../includes/header.php';
 
 <!-- Row 1: Accounting Stats -->
 <div class="row g-3 mb-4 fade-in">
-    <div class="col-md-3 col-sm-6"><div class="card stat-card border border-primary h-100"><div class="card-body"><div class="d-flex justify-content-between align-items-center"><div><h6 class="text-muted mb-1"><?php echo e(t('accounting.total_transactions')); ?></h6><h3 class="mb-0"><?php echo (int)($accountingStats['tx_count'] ?? 0); ?></h3><small class="text-muted">Ù…Ø¹Ø§Ù…Ù„Ø©</small></div><div class="stat-icon bg-primary bg-opacity-10 text-primary"><i class="fas fa-receipt"></i></div></div></div></div></div>
+    <div class="col-md-3 col-sm-6"><div class="card stat-card border border-primary h-100"><div class="card-body"><div class="d-flex justify-content-between align-items-center"><div><h6 class="text-muted mb-1"><?php echo e(t('accounting.total_transactions')); ?></h6><h3 class="mb-0"><?php echo (int)($accountingStats['tx_count'] ?? 0); ?></h3><small class="text-muted">معاملة</small></div><div class="stat-icon bg-primary bg-opacity-10 text-primary"><i class="fas fa-receipt"></i></div></div></div></div></div>
     <div class="col-md-3 col-sm-6"><div class="card stat-card border border-success h-100"><div class="card-body"><div class="d-flex justify-content-between align-items-center"><div><h6 class="text-muted mb-1"><?php echo e(t('accounting.month_collection')); ?></h6><h3 class="mb-0"><?php echo number_format((float)($accountingStats['month_total'] ?? 0), 0); ?></h3><small class="text-muted"><?php echo e(t('accounting.currency_sdg')); ?></small></div><div class="stat-icon bg-success bg-opacity-10 text-success"><i class="fas fa-coins"></i></div></div></div></div></div>
-    <div class="col-md-3 col-sm-6"><div class="card stat-card border border-warning h-100"><div class="card-body"><div class="d-flex justify-content-between align-items-center"><div><h6 class="text-muted mb-1"><?php echo e(t('accounting.pending_income')); ?></h6><h3 class="mb-0"><?php echo (int)($accountingStats['pending_inflows'] ?? 0); ?></h3><small class="text-muted">Ù…Ø¹Ø§Ù…Ù„Ø©</small></div><div class="stat-icon bg-warning bg-opacity-10 text-warning"><i class="fas fa-hourglass-half"></i></div></div></div></div></div>
+    <div class="col-md-3 col-sm-6"><div class="card stat-card border border-warning h-100"><div class="card-body"><div class="d-flex justify-content-between align-items-center"><div><h6 class="text-muted mb-1"><?php echo e(t('accounting.pending_income')); ?></h6><h3 class="mb-0"><?php echo (int)($accountingStats['pending_inflows'] ?? 0); ?></h3><small class="text-muted">معاملة</small></div><div class="stat-icon bg-warning bg-opacity-10 text-warning"><i class="fas fa-hourglass-half"></i></div></div></div></div></div>
     <div class="col-md-3 col-sm-6"><div class="card stat-card border border-danger h-100"><div class="card-body"><div class="d-flex justify-content-between align-items-center"><div><h6 class="text-muted mb-1"><?php echo e(t('accounting.pending_outflows')); ?></h6><h3 class="mb-0"><?php echo (int)($accountingStats['pending_outflows'] ?? 0); ?></h3><small class="text-muted"><?php echo number_format((float)($accountingStats['outflow_amount_pending'] ?? 0), 0); ?> <?php echo e(t('accounting.currency_sdg')); ?></small></div><div class="stat-icon bg-danger bg-opacity-10 text-danger"><i class="fas fa-money-check-dollar"></i></div></div></div></div></div>
 </div>
 
@@ -98,14 +98,13 @@ document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('a').forEach(function (link) {
         var label = (link.textContent || '').trim();
         var href = link.getAttribute('href') || '';
-        if (label === 'Ø¯ÙØªØ± Ø§Ù„Ù†Ù‚Ø¯' || href.indexOf('modules/accounting/reports.php?tab=cash') !== -1) {
+        if (label === 'دفتر النقد' || href.indexOf('modules/accounting/reports.php?tab=cash') !== -1) {
             link.href = '<?php echo e(url('modules/reports/my_financial.php')); ?>';
-            link.textContent = 'ØªÙ‚Ø§Ø±ÙŠØ±ÙŠ Ø§Ù„Ù…Ø§Ù„ÙŠØ©';
-            link.title = 'ØªÙ‚Ø§Ø±ÙŠØ±ÙŠ Ø§Ù„Ù…Ø§Ù„ÙŠØ©';
+            link.textContent = 'تقاريري المالية';
+            link.title = 'تقاريري المالية';
         }
     });
 });
 </script>
 
 <?php include __DIR__ . '/../includes/footer.php'; ?>
-
