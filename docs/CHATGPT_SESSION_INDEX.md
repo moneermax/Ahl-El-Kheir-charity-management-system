@@ -43,16 +43,17 @@ Current governance items are documented in the master status/audit. Do not treat
 - Supervisor sponsor authorization was centralized across sponsor/sponsorship routes.
 - Family orphan sponsorship status display regression fixed: `9901c6318225163ca851fbaeb92514d1774bb681`.
 - Master continuation prompt added to `docs/CHATGPT_MASTER_CONTINUATION_PROMPT.md`.
+- Supervisor dashboard sponsor KPI scope aligned with the authoritative direct-assignment + letter/gender matrix rule: `2a82dd87482544ecd6f5edbf61b095b2c23b39f8`.
 
 ### Current open task
 
 Continue the **Supervisor Module Audit** from the actual current repository code and dashboard/navigation.
 
 Priority order:
-1. formal organization-wide permission/action matrix;
-2. exact supervisor scope for the general sponsor-request queue;
-3. controlled review of runtime schema synchronization in remaining sponsor routes;
-4. consistent scope enforcement across supervisor sponsor/family/sponsorship routes.
+1. exact supervisor scope for the general sponsor-request queue;
+2. controlled review of runtime schema synchronization in remaining sponsor routes;
+3. consistent scope enforcement across supervisor sponsor/family/sponsorship routes;
+4. formal organization-wide permission/action matrix.
 
 ### Do not repeat
 
