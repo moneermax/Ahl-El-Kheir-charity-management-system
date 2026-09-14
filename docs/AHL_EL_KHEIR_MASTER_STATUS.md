@@ -80,11 +80,29 @@ Continue page-by-page from the actual Supervisor dashboard/navigation. The famil
 Current governance items:
 
 1. Formal organization-wide permission/action matrix.
-2. Exact role/business scope for supervisor access to the general sponsor-request queue.
-3. Controlled review of runtime schema synchronization such as `modules/sponsors/index.php` performing `ALTER TABLE ... ADD COLUMN IF NOT EXISTS ...` during normal page rendering.
-4. Review supervisor sponsor/family/sponsorship routes for consistent enforcement of the authoritative scope rules.
+2. Controlled review of remaining supervisor sponsor/family/sponsorship route scope.
+3. Runtime schema synchronization review — sponsor runtime DDL cleanup is now implemented for the reviewed sponsor routes.
+4. Verify/apply the explicit sponsor workflow migration locally before exercising assignment/request workflows.
 
-Do not make speculative restrictions or schema rewrites for these parked items.
+### Sponsor runtime schema synchronization — completed code cleanup
+
+The following request-time schema mutations were removed:
+
+- `modules/sponsors/create.php` and `edit.php`: runtime `ALTER TABLE sponsors ... brought_by_name` removed; explicit migration retained.
+- `modules/sponsors/view.php`: runtime `ALTER TABLE sponsors ... brought_by_name` removed.
+- `config/sponsor_assignments.php`: runtime `CREATE TABLE IF NOT EXISTS sponsor_supervisor_assignments` removed.
+- `modules/sponsors/assign.php`: no longer triggers request-time assignment-history table creation.
+- `modules/sponsors/requests.php`: runtime `CREATE TABLE IF NOT EXISTS sponsor_requests` and dynamic `ALTER TABLE ... created_sponsor_id` removed.
+
+Explicit migration: `database/migrations/2026-09-14_sponsor_workflow_runtime_ddl_cleanup.sql`.
+
+The local database has already been verified to contain `sponsors.brought_by_name VARCHAR(255) NULL`.
+
+### Sponsor request authorization/navigation
+
+`modules/sponsors/requests.php` remains restricted to `admin`, `vice_general_manager`, `general_manager`, and `social_media`. The Supervisor role is not authorized for this general queue, and the sponsor list no longer displays the queue button to Supervisor. This is least-privilege alignment, not a change to the authoritative sponsor ownership matrix.
+
+Do not make speculative restrictions or schema rewrites for these completed findings.
 
 ## 7. Other parked work
 
