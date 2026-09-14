@@ -8,7 +8,7 @@ require_once dirname(__DIR__, 2) . '/config/sponsor_assignments.php';
 Session::start();
 if (!Session::isLoggedIn()) { header('Location: ' . APP_URL . 'index.php'); exit(); }
 $role = Session::getUserRole();
-if (!in_array($role, ['admin', 'vice_general_manager', 'general_manager', 'supervisor', 'social_media'], true)) { header('Location: ' . APP_URL . 'index.php'); exit(); }
+if (!in_array($role, ['admin', 'vice_general_manager', 'general_manager', 'social_media'], true)) { header('Location: ' . APP_URL . 'index.php'); exit(); }
 $pageTitle = t('sponsors.requests_title'); $active = 'sponsors';
 $sourceOptions = [
     'تيك توك' => ['icon'=>'fab fa-tiktok text-danger','key'=>'sponsors.request_source_tiktok'],
