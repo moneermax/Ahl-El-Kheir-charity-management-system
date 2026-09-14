@@ -1,7 +1,7 @@
 <?php
 require_once dirname(__DIR__,2).'/config/config.php';require_once dirname(__DIR__,2).'/config/database.php';require_once dirname(__DIR__,2).'/config/functions.php';require_once dirname(__DIR__,2).'/config/session.php';require_once dirname(__DIR__,2).'/config/sponsor_assignments.php';Session::start();
 $role=Session::getUserRole();if(!Session::isLoggedIn()||!in_array($role,['admin','vice_general_manager','general_manager'],true)){header('Location: '.APP_URL.'index.php');exit();}
-ensureSponsorAssignmentHistoryTable();$errors=[];
+$errors=[];
 if($_SERVER['REQUEST_METHOD']==='POST'){
  if(!verify_csrf())$errors[]=t('sponsors.session_expired');
  $sponsorId=(int)($_POST['sponsor_id']??0);$supervisorId=(int)($_POST['supervisor_id']??0);$sponsor=dbFetchOne('SELECT id,full_name,supervisor_id FROM sponsors WHERE id=?',[$sponsorId]);$supervisor=dbFetchOne("SELECT u.id FROM users u JOIN roles r ON r.id=u.role_id WHERE u.id=? AND r.code='supervisor' AND u.is_active=1",[$supervisorId]);
