@@ -49,6 +49,7 @@ Current governance items are documented in the master status/audit. Do not treat
 - Local database verification confirmed `sponsors.brought_by_name` exists as `VARCHAR(255) NULL`.
 - Remaining sponsor runtime-DDL cleanup completed: `modules/sponsors/view.php` no longer alters the `sponsors` table at request time; `config/sponsor_assignments.php` no longer creates `sponsor_supervisor_assignments` at request time; `modules/sponsors/assign.php` no longer depends on request-time table creation; `modules/sponsors/requests.php` no longer creates/alters `sponsor_requests` during normal requests. Explicit migration added at `database/migrations/2026-09-14_sponsor_workflow_runtime_ddl_cleanup.sql`. Commits: `6c54d41e461e59f7ec4cd490e0ed3aaaaefbc9ca`, `c4caa8310d4c20d7aad433472d394e0c0faa8b5d`, `c3b675e21b6f00ab16cf2356957d1e328232c896`, `ebe254bda7f6c5a959a8e5a71244c17515da2fc4`, `e72c7fc07cda048273fa1f63db6de04edf251317`.
 - Sponsor list navigation was aligned with the request-route authorization: the Supervisor no longer sees the Sponsor Requests button because the route does not authorize Supervisor. Management roles that can access the queue retain the button. Commit: `527140f9fd1ea082f4e7f4a0ef20eb5492f119fb`.
+- VGM dashboard now exposes the sponsor reassignment task at `modules/sponsors/assign.php`. VGM, Supervisor-protection, and FM-isolation tests all passed. Commit: `48fc2db0ac9e5585127b65c17eacb5e3dd285ce0`.
 
 ### Current open task
 
