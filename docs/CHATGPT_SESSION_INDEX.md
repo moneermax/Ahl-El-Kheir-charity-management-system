@@ -18,9 +18,7 @@ This index is the short handoff document. The repository and these documents are
 
 **Supervisor Module Audit**.
 
-Continue page-by-page from the actual Supervisor dashboard/navigation. The restored supervisor sponsor/family scope rule is completed and must be preserved.
-
-Current governance items are documented in the master status/audit. Do not treat parked items as bugs without current code/evidence.
+Continue page-by-page from the actual Supervisor dashboard/navigation. Authoritative sponsor responsibility is **Sponsor first-name letter + sponsor gender → Supervisor**, with direct sponsor assignment retained as an access path. Family access is separate and may follow direct family assignment or sponsor-linked/matrix responsibility.
 
 ## NON-NEGOTIABLE CONTINUATION RULES
 
@@ -47,36 +45,31 @@ Current governance items are documented in the master status/audit. Do not treat
 - General sponsor-request queue authorization narrowed: Supervisor is no longer an authorized role for `modules/sponsors/requests.php`; the route remains available to its designated management/social-media roles. Commit: `ba21c3415158787e2fb294eaf746cf37d7d845bc`.
 - Runtime schema synchronization review found sponsor create/edit routes were executing `ALTER TABLE sponsors ADD COLUMN IF NOT EXISTS brought_by_name ...` during normal page requests. The DDL was removed from both routes, and an explicit idempotent migration was added at `database/migrations/2026-09-14_sponsors_brought_by_name.sql`. Commits: `cd23c78e6f72faba60a5e71c1cc024d4000ca7ff`, `a7228ab22d22f1a55ef077f7a31ebe267a45c356`, `30fed415857a4189fe8487652ad1c44f1e56a1b6`.
 - Local database verification confirmed `sponsors.brought_by_name` exists as `VARCHAR(255) NULL`.
-- Remaining sponsor runtime-DDL cleanup completed: `modules/sponsors/view.php` no longer alters the `sponsors` table at request time; `config/sponsor_assignments.php` no longer creates `sponsor_supervisor_assignments` at request time; `modules/sponsors/assign.php` no longer depends on request-time table creation; `modules/sponsors/requests.php` no longer creates/alters `sponsor_requests` during normal requests. Explicit migration added at `database/migrations/2026-09-14_sponsor_workflow_runtime_ddl_cleanup.sql`. Commits: `6c54d41e461e59f7ec4cd490e0ed3aaaaefbc9ca`, `c4caa8310d4c20d7aad433472d394e0c0faa8b5d`, `c3b675e21b6f00ab16cf2356957d1e328232c896`, `ebe254bda7f6c5a959a8e5a71244c17515da2fc4`, `e72c7fc07cda048273fa1f63db6de04edf251317`.
-- Sponsor list navigation was aligned with the request-route authorization: the Supervisor no longer sees the Sponsor Requests button because the route does not authorize Supervisor. Management roles that can access the queue retain the button. Commit: `527140f9fd1ea082f4e7f4a0ef20eb5492f119fb`.
+- Remaining sponsor runtime-DDL cleanup completed: `modules/sponsors/view.php` no longer alters the `sponsors` table at request time; `config/sponsor_assignments.php` no longer creates `sponsor_supervisor_assignments` at request time; `modules/sponsors/assign.php` no longer depends on request-time table creation; `modules/sponsors/requests.php` no longer creates/alters `sponsor_requests` during normal requests. Explicit migration added at `database/migrations/2026-09-14_sponsor_workflow_runtime_ddl_cleanup.sql`.
+- Sponsor list navigation was aligned with the request-route authorization: the Supervisor no longer sees the Sponsor Requests button because the route does not authorize Supervisor. Management roles that can access the queue retain the button.
 - VGM dashboard now exposes the sponsor reassignment task at `modules/sponsors/assign.php`. VGM, Supervisor-protection, and FM-isolation tests all passed. Commit: `48fc2db0ac9e5585127b65c17eacb5e3dd285ce0`.
+- **New Supervisor scope regression fixed:** `modules/sponsorships/index.php` previously filtered Supervisor sponsorships only by the letter+gender matrix and omitted direct sponsor assignment. It now applies **direct sponsor assignment OR letter+gender responsibility**, matching the Sponsor list, Family list, and Supervisor dashboard. Commit: `76be77a4d2e6e337485d3f3c9980780b9de73df0`.
 
-### Current open task
+## REQUIRED TEST FOR THE LATEST FIX
 
-Continue the **Supervisor Module Audit** from the actual current repository code and dashboard/navigation.
+After pulling `main`:
 
-Priority order:
-1. apply/verify the new sponsor workflow migration in the local database before exercising assignment/request workflows;
-2. controlled review of remaining sponsor/family/sponsorship routes for runtime schema synchronization or other unsafe request-time DDL;
-3. consistent scope enforcement across supervisor sponsor/family/sponsorship routes;
-4. formal organization-wide permission/action matrix;
-5. revisit sponsor-request access only if new business/code evidence indicates another role scope is required.
+1. Log in as Supervisor.
+2. Open `http://localhost:8081/AhlElKheir/modules/sponsorships/index.php`.
+3. Confirm the page loads normally.
+4. Confirm a sponsorship whose sponsor is **directly assigned to this Supervisor** remains visible even if that sponsor is outside the Supervisor's current letter+gender matrix.
+5. Confirm matrix-authorized sponsorships remain visible.
+6. Confirm sponsorships outside both direct assignment and the letter+gender matrix remain hidden.
 
-### Do not repeat
+Report PASS/FAIL for these three scope cases. Do not create new test data unless an existing controlled record cannot demonstrate the behavior.
 
-Do not rerun closed HR, Accounting Phase 1, notification, ACC1, FM dashboard, or restored family/sponsor-scope audits unless current evidence shows a regression.
+## NEXT AUDIT DIRECTION
 
-### Protected local files
+After this sponsorship-list scope fix passes, continue checking individual sponsorship/family routes for the same authoritative Supervisor scope, especially direct-record access versus list filtering. Do not alter the business rule unless current code/evidence requires it.
+
+## PROTECTED LOCAL FILES
 
 Do not delete/reset/stash/overwrite:
 
 - `modules/accounting/fm_dashboard.php.pre-fix-backup-20260914`
 - `modules/accounting/fm_dashboard.php.regression-backup-20260914-111900`
-
-### Session handoff rule
-
-After every meaningful milestone, update this file with the new exact checkpoint and update the master status/audit when the project-level state changes.
-
-A new chat can then start with only:
-
-> Continue the Ahl El Kheir project from the repository. Read `docs/CHATGPT_SESSION_INDEX.md` and the master status first. Do not restart completed work. Continue from the current checkpoint. My immediate task is: **[task]**.
