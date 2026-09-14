@@ -19,8 +19,8 @@ $s=dbFetchOne("SELECT
     (SELECT COUNT(*) FROM sponsors s WHERE $scopeSql) AS my_sponsors,
     (SELECT COUNT(*) FROM sponsorships sp JOIN sponsors s ON s.id=sp.sponsor_id WHERE sp.status='active' AND $scopeSql) AS my_active_sponsorships,
     (SELECT COUNT(DISTINCT sp.child_id) FROM sponsorships sp JOIN sponsors s ON s.id=sp.sponsor_id WHERE sp.status='active' AND $scopeSql) AS my_orphans,
-    (SELECT COALESCE(SUM(amount),0) FROM sponsor_payments WHERE supervisor_id=? AND DATE_FORMAT(created_at,'%Y-%m')=DATE_FORMAT(CURDATE(),'%Y-%m')) AS month_collected",
-    [$uid,$uid,$uid,$uid,$uid,$uid,$uid]);
+    (SELECT COALESCE(SUM(sp.amount),0) FROM sponsor_payments sp JOIN sponsors s ON s.id=sp.sponsor_id WHERE DATE_FORMAT(sp.created_at,'%Y-%m')=DATE_FORMAT(CURDATE(),'%Y-%m') AND $scopeSql) AS month_collected",
+    [$uid,$uid,$uid,$uid,$uid,$uid,$uid,$uid]);
 include __DIR__.'/../includes/header.php'; ?>
 <style>
 /* Supervisor dashboard: the page cards replace the global quick-action buttons. */
