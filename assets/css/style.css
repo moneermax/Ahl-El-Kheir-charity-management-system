@@ -93,5 +93,5 @@ a { text-decoration: none; }
 .org-header-banner .org-flag,.app-footer .org-flag { display: inline-block; position: relative; width: 1.5em; height: 1em; min-width: 1.5em; margin-inline: 6px; vertical-align: -.12em; overflow: hidden; border-radius: .08em; font-size: 0 !important; line-height: 1; background: linear-gradient(to bottom,#d71920 0 33.333%,#fff 33.333% 66.666%,#000 66.666% 100%); box-shadow: 0 0 0 1px rgba(0,0,0,.12); }
 .org-header-banner .org-flag::before,.app-footer .org-flag::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 42%; background: #087a3b; clip-path: polygon(0 0,100% 50%,0 100%); }
 
-/* Orphan form placeholder: force the placeholder itself to occupy the complete photo square. */
-.ak-photo img[src*="orphan-placeholder.jpg"] { width: 30mm !important; height: 30mm !important; object-fit: cover !important; object-position: center center !important; transform: scale(1.22); transform-origin: center center; }
+/* Orphan form placeholder: enlarge only the built-in placeholder; uploaded photos keep the normal image rule. */
+.ak-photo img[src*="orphan-placeholder.jpg"] { display:block !important; width:30mm !important; height:30mm !important; max-width:none !important; max-height:none !important; object-fit:cover !important; object-position:center center !important; transform:scale(1.60) !important; transform-origin:center center !important; }
