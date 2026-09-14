@@ -1,0 +1,53 @@
+name: Apply orphan photo placeholder
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/orphan-placeholder-fix.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Update orphan form
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path('modules/families/orphan_form.php')
+          text = path.read_text(encoding='utf-8')
+
+          old = "$photoUrl = ($child && !empty($child['photo_path'])) ? APP_URL . 'modules/families/orphan_form.php?photo=' . $childId : null;"
+          new = """$hasPhoto = ($child && !empty($child['photo_path']));
+          $photoUrl = $hasPhoto
+              ? APP_URL . 'modules/families/orphan_form.php?photo=' . $childId
+              : ($child ? asset('img/orphan-placeholder.jpg') : null);"""
+          if old not in text:
+              raise SystemExit('Expected photoUrl line was not found; no changes made.')
+          text = text.replace(old, new, 1)
+
+          old = '''<?php if ($photoUrl): ?><img src="<?php echo e($photoUrl); ?>" alt="" style="width:64px;height:64px;object-fit:cover;border-radius:6px;border:1px solid #ccc"><label class="form-check-label small ms-2"><input type="checkbox" name="remove_photo" value="1" class="form-check-input"> <?php echo t('Remove Photo'); ?></label><?php else: ?><span class="text-muted small"><?php echo t('No photo uploaded yet.'); ?></span><?php endif; ?>'''
+          new = '''<?php if ($hasPhoto): ?><img src="<?php echo e($photoUrl); ?>" alt="" style="width:64px;height:64px;object-fit:cover;border-radius:6px;border:1px solid #ccc"><label class="form-check-label small ms-2"><input type="checkbox" name="remove_photo" value="1" class="form-check-input"> <?php echo t('Remove Photo'); ?></label><?php elseif ($child): ?><img src="<?php echo e($photoUrl); ?>" alt="<?php echo t('No photo uploaded yet.'); ?>" style="width:64px;height:64px;object-fit:cover;border-radius:6px;border:1px solid #ccc"><?php else: ?><span class="text-muted small"><?php echo t('No photo uploaded yet.'); ?></span><?php endif; ?>'''
+          if old not in text:
+              raise SystemExit('Expected photo edit block was not found; no changes made.')
+          text = text.replace(old, new, 1)
+
+          path.write_text(text, encoding='utf-8', newline='\n')
+
+      - name: Commit and remove temporary workflow
+        shell: bash
+        run: |
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm -f .github/workflows/orphan-placeholder-fix.yml
+          git add modules/families/orphan_form.php .github/workflows/orphan-placeholder-fix.yml
+          git commit -m "feat: use orphan photo placeholder automatically"
+          git push
