@@ -8,7 +8,6 @@ Session::start();
 if (!Session::isLoggedIn()) { header('Location: ' . APP_URL . 'index.php'); exit(); }
 $role = Session::getUserRole();
 if (!in_array($role, ['admin', 'vice_general_manager', 'supervisor'], true)) { header('Location: ' . APP_URL . 'index.php'); exit(); }
-dbExecute("ALTER TABLE sponsors ADD COLUMN IF NOT EXISTS brought_by_name VARCHAR(255) NULL");
 $pageTitle = t('sponsors.create_title'); $active = 'sponsors'; $errors = [];
 $input = ['full_name'=>'','email'=>'','phone'=>'','phone_purpose'=>'both','alt_phone'=>'','alt_phone_purpose'=>'both','address'=>'','sponsor_type'=>'individual','gender'=>'','payment'=>'cash','status'=>'active','desired_orphans'=>'','notes'=>'','acquisition_source'=>'','brought_by_name'=>''];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
