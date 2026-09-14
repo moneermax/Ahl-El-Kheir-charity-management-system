@@ -4,7 +4,7 @@
 **Branch:** `main`  
 **Current checkpoint:** 2026-09-14
 
-This is the single high-level **START HERE** status and continuation summary for the existing project. The detailed audit record is now consolidated into exactly one file: `docs/AHL_EL_KHEIR_MASTER_AUDIT.md`.
+This is the single high-level **START HERE** status and continuation summary for the existing project. The detailed audit record is consolidated into `docs/AHL_EL_KHEIR_MASTER_AUDIT.md`.
 
 ## 1. Project rule
 
@@ -81,8 +81,9 @@ Current governance items:
 
 1. Formal organization-wide permission/action matrix.
 2. Controlled review of remaining supervisor sponsor/family/sponsorship route scope.
-3. Runtime schema synchronization review — sponsor runtime DDL cleanup is now implemented for the reviewed sponsor routes.
+3. Runtime schema synchronization review — sponsor runtime DDL cleanup is implemented for the reviewed sponsor routes.
 4. Verify/apply the explicit sponsor workflow migration locally before exercising assignment/request workflows.
+5. VGM sponsor assignment/reassignment is confirmed as a VGM task. The VGM dashboard now exposes `modules/sponsors/assign.php`; Supervisor direct access is blocked and FM has no sponsor-assignment action. All three runtime checks passed.
 
 ### Sponsor runtime schema synchronization — completed code cleanup
 
@@ -135,7 +136,7 @@ Commit `f7051ded6fe4c8e346cf7bcb08f48d0535945d01` was inspected and does not rep
 
 ## 11. Documentation map
 
-- **`docs/AHL_EL_KHEIR_MASTER_AUDIT.md`** — **SINGLE MASTER AUDIT**: all detailed system review, Accounting, Notification, organizational lifecycle, HR navigation, completed evidence, and open audit findings.
+- **`docs/AHL_EL_KHEIR_MASTER_AUDIT.md`** — **SINGLE MASTER AUDIT**: all detailed system review, Accounting, Notification, organizational lifecycle, HR navigation, completed evidence, open audit findings, and continuation rules.
 - **This file** — high-level START HERE status and continuation summary.
 - `CHATGPT_SESSION_INDEX.md` — short continuation index.
 - `I18N.md` — internationalization reference.
