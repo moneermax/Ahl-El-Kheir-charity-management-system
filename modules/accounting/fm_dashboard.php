@@ -201,6 +201,22 @@ $monthlyFlow = dbFetchOne("SELECT
     FROM journal_lines jl JOIN journal_entries je ON je.id = jl.entry_id JOIN accounts a ON a.id = jl.account_id
     WHERE je.entry_date BETWEEN ? AND ? AND je.status = 'posted'", [$monthStart, $monthEnd]);
 
+$adminFees = dbFetchOne("SELECT
+    COALESCE(SUM(CASE WHEN a.code = '4200' AND jl.credit > 0 THEN jl.credit ELSE 0 END), 0) AS admin_fees_total,
+    COALESCE(SUM(CASE WHEN je.entry_date BETWEEN ? AND ? AND a.code = '4200' AND jl.credit > 0 THEN jl.credit ELSE 0 END), 0) AS admin_fees_month
+    FROM journal_entries je
+    JOIN journal_lines jl ON jl.entry_id = je.id
+    JOIN accounts a ON a.id = jl.account_id
+    WHERE je.status = 'posted'
+      AND EXISTS (
+          SELECT 1
+          FROM journal_lines sponsor_line
+          JOIN accounts sponsor_account ON sponsor_account.id = sponsor_line.account_id
+          WHERE sponsor_line.entry_id = je.id
+            AND sponsor_account.code = '4100'
+            AND sponsor_line.credit > 0
+      )", [$monthStart, $monthEnd]);
+
 $disbStats = dbFetchOne("SELECT COUNT(*) AS total,
     SUM(CASE WHEN status = 'pending_approval' THEN 1 ELSE 0 END) AS pending_approval,
     SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) AS approved,
@@ -210,7 +226,8 @@ $disbStats = dbFetchOne("SELECT COUNT(*) AS total,
     SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled,
     SUM(CASE WHEN status = 'returned' THEN 1 ELSE 0 END) AS returned,
     COALESCE(SUM(CASE WHEN status = 'pending_approval' THEN total_amount ELSE 0 END), 0) AS pending_amount,
-    COALESCE(SUM(CASE WHEN status = 'transferred' THEN total_amount ELSE 0 END), 0) AS transferred_amount
+    COALESCE(SUM(CASE WHEN status = 'transferred' THEN total_amount ELSE 0 END), 0) AS transferred_amount,
+    COALESCE(SUM(CASE WHEN status = 'returned' THEN total_amount ELSE 0 END), 0) AS returned_amount
     FROM monthly_disbursements");
 
 $openBatches = dbFetchAll("SELECT d.*, u.full_name AS nanny_name,
@@ -419,7 +436,25 @@ if (is_array($fl)) {
 
 <div class="fm-card"><div class="fm-card-head"><span>📊 <?php echo e(t('fm.net_monthly_flow')); ?></span></div><div class="fm-card-body"><?php $netFlow = (float)$monthlyFlow['income_total'] - (float)$monthlyFlow['outgoing_total']; $netClass = $netFlow >= 0 ? 'income' : 'outgoing'; $netLabel = $netFlow >= 0 ? t('fm.surplus') : t('fm.deficit'); ?><div style="display:flex; justify-content:space-around; align-items:center; flex-wrap:wrap; gap:20px"><div style="text-align:center"><div class="stat-label"><?php echo e(t('fm.income')); ?></div><div class="stat-value income"><?php echo number_format((float)$monthlyFlow['income_total'], 0); ?></div></div><div style="font-size:2rem; color:#999">−</div><div style="text-align:center"><div class="stat-label"><?php echo e(t('fm.total_expenses')); ?></div><div class="stat-value outgoing"><?php echo number_format((float)$monthlyFlow['outgoing_total'], 0); ?></div></div><div style="font-size:2rem; color:#999">=</div><div style="text-align:center"><div class="stat-label"><?php echo e(t('fm.net_result', ['status' => $netLabel])); ?></div><div class="stat-value <?php echo $netClass; ?>"><?php echo number_format(abs($netFlow), 0); ?></div></div></div></div></div>
 
-<div class="fm-card"><div class="fm-card-head"><span>📋 <?php echo e(t('fm.monthly_disbursement_status')); ?></span><a href="<?php echo APP_URL; ?>modules/accounting/disbursements.php" class="btn-fm btn-ghost" style="background:#fff; color:#1b4d8f; font-size:0.8rem"><?php echo e(t('fm.view_all')); ?></a></div><div class="fm-card-body"><div class="grid-4"><div class="stat-box amber"><div class="stat-value"><?php echo (int)$disbStats['pending_approval']; ?></div><div class="stat-label"><?php echo e(t('fm.pending_approval')); ?></div><div class="stat-sub"><?php echo number_format((float)$disbStats['pending_amount'], 0); ?> <?php echo e(t('fm.currency_sdg')); ?></div></div><div class="stat-box blue"><div class="stat-value"><?php echo (int)$disbStats['transferred']; ?></div><div class="stat-label"><?php echo e(t('fm.transferred_open')); ?></div><div class="stat-sub"><?php echo number_format((float)$disbStats['transferred_amount'], 0); ?> <?php echo e(t('fm.currency_sdg')); ?></div></div><div class="stat-box green"><div class="stat-value"><?php echo (int)$disbStats['received']; ?></div><div class="stat-label"><?php echo e(t('fm.received_closed')); ?></div><div class="stat-sub"><?php echo e(t('fm.fully_disbursed')); ?></div></div><div class="stat-box red"><div class="stat-value"><?php echo (int)$disbStats['voided']; ?></div><div class="stat-label"><?php echo e(t('fm.voided')); ?></div><div class="stat-sub"><?php echo e(t('fm.posted_reversal')); ?></div></div></div></div></div>
+<div class="fm-card">
+    <div class="fm-card-head"><span>💳 الرسوم الإدارية المحصلة</span></div>
+    <div class="fm-card-body">
+        <div class="grid-4">
+            <div class="stat-box blue">
+                <div class="stat-value"><?php echo number_format((float)$adminFees['admin_fees_total'], 0); ?></div>
+                <div class="stat-label">إجمالي الرسوم الإدارية المحصلة</div>
+                <div class="stat-sub">الحساب 4200 — القيود المرحلة</div>
+            </div>
+            <div class="stat-box green">
+                <div class="stat-value"><?php echo number_format((float)$adminFees['admin_fees_month'], 0); ?></div>
+                <div class="stat-label">رسوم إدارية هذا الشهر</div>
+                <div class="stat-sub"><?php echo e(date('Y-m')); ?></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="fm-card"><div class="fm-card-head"><span>📋 <?php echo e(t('fm.monthly_disbursement_status')); ?></span><a href="<?php echo APP_URL; ?>modules/accounting/disbursements.php" class="btn-fm btn-ghost" style="background:#fff; color:#1b4d8f; font-size:0.8rem"><?php echo e(t('fm.view_all')); ?></a></div><div class="fm-card-body"><div class="grid-4"><div class="stat-box amber"><div class="stat-value"><?php echo (int)$disbStats['pending_approval']; ?></div><div class="stat-label"><?php echo e(t('fm.pending_approval')); ?></div><div class="stat-sub"><?php echo number_format((float)$disbStats['pending_amount'], 0); ?> <?php echo e(t('fm.currency_sdg')); ?></div></div><div class="stat-box blue"><div class="stat-value"><?php echo (int)$disbStats['transferred']; ?></div><div class="stat-label"><?php echo e(t('fm.transferred_open')); ?></div><div class="stat-sub"><?php echo number_format((float)$disbStats['transferred_amount'], 0); ?> <?php echo e(t('fm.currency_sdg')); ?></div></div><div class="stat-box green"><div class="stat-value"><?php echo (int)$disbStats['received']; ?></div><div class="stat-label"><?php echo e(t('fm.received_closed')); ?></div><div class="stat-sub"><?php echo e(t('fm.fully_disbursed')); ?></div></div><div class="stat-box red"><div class="stat-value"><?php echo (int)$disbStats['voided']; ?></div><div class="stat-label"><?php echo e(t('fm.voided')); ?></div><div class="stat-sub"><?php echo e(t('fm.posted_reversal')); ?></div></div><div class="stat-box amber"><div class="stat-value"><?php echo (int)$disbStats['returned']; ?></div><div class="stat-label">المبالغ المرتجعة</div><div class="stat-sub"><?php echo number_format((float)$disbStats['returned_amount'], 0); ?> <?php echo e(t('fm.currency_sdg')); ?></div></div></div></div></div>
 
 <?php if ($pendingQueue): ?><div class="fm-card"><div class="fm-card-head"><span>⏳ <?php echo e(t('fm.disbursement_approval_queue', ['count' => count($pendingQueue)])); ?></span></div><div class="fm-card-body"><div style="overflow-x:auto"><table class="fm-table"><thead><tr><th>#</th><th><?php echo e(t('common.month')); ?></th><th><?php echo e(t('fm.nanny')); ?></th><th><?php echo e(t('fm.created_by')); ?></th><th><?php echo e(t('accounting.amount')); ?></th><th><?php echo e(t('fm.submission_date')); ?></th><th><?php echo e(t('fm.action')); ?></th></tr></thead><tbody><?php foreach ($pendingQueue as $pq): ?><tr><td><strong>#<?php echo (int)$pq['id']; ?></strong></td><td><?php echo e($pq['month']); ?></td><td><?php echo e($pq['nanny_name'] ?? '-'); ?></td><td><?php echo e($pq['created_by_name'] ?? '-'); ?></td><td><strong><?php echo number_format((float)$pq['total_amount'], 0); ?></strong></td><td><?php echo e($pq['submitted_at'] ?? '-'); ?></td><td><a href="<?php echo APP_URL; ?>modules/accounting/disbursements.php?view=<?php echo (int)$pq['id']; ?>" class="btn-fm btn-navy"><?php echo e(t('fm.review')); ?></a></td></tr><?php endforeach; ?></tbody></table></div></div></div><?php endif; ?>
 
