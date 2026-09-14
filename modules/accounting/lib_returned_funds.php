@@ -235,14 +235,8 @@ function returned_funds_redeliver(int $reissueId, int $nannyId, int $userId, str
 
         dbExecute("UPDATE disbursement_items SET status = 'paid', confirmed_at = NOW(), receipt_file_path = ? WHERE id = ? AND status = 'returned'",
             [$receiptPath, (int)$reissue['disbursement_item_id']]);
-        if (db()->rowCount() !== 1) {
-            throw new RuntimeException('تعذر تحديث سجل الصرف بعد إعادة التسليم.');
-        }
         dbExecute("UPDATE returned_disbursement_reissues SET status = 'redelivered', redelivered_by = ?, redelivered_at = NOW(), redelivery_receipt_path = ?, redelivery_transaction_id = ?, redelivery_journal_id = ? WHERE id = ? AND status = 'authorized'",
             [$userId, $receiptPath, $transactionId, $journalId, $reissueId]);
-        if (db()->rowCount() !== 1) {
-            throw new RuntimeException('تعذر تحديث سجل إعادة الصرف.');
-        }
 
         dbExecute('COMMIT');
         return ['success' => true, 'transaction_id' => $transactionId, 'journal_id' => $journalId];
