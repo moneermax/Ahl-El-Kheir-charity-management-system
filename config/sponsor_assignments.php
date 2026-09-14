@@ -30,6 +30,42 @@ function resolveSponsorSupervisorId(string $fullName, string $gender): ?int
     return $row ? (int)$row['supervisor_id'] : null;
 }
 
+/**
+ * Authoritative supervisor scope for an individual sponsor.
+ * A supervisor may access a sponsor when either:
+ * 1) the sponsor is directly assigned to that supervisor; or
+ * 2) the supervisor's first-letter/gender responsibility matrix covers it.
+ */
+function supervisorCanAccessSponsor(int $supervisorId, array $sponsor): bool
+{
+    if ($supervisorId <= 0) return false;
+    if ((int)($sponsor['supervisor_id'] ?? 0) === $supervisorId) return true;
+
+    $letterId = (int)($sponsor['first_letter_id'] ?? 0);
+    if ($letterId <= 0) return false;
+
+    $gender = strtolower(trim((string)($sponsor['gender'] ?? '')));
+    $gender = in_array($gender, ['m', 'male', 'ذكر'], true)
+        ? 'male'
+        : (in_array($gender, ['f', 'female', 'أنثى', 'انثى'], true) ? 'female' : 'other');
+    if ($gender === 'other') return false;
+
+    $rows = dbFetchAll(
+        "SELECT gender FROM supervisor_letters WHERE supervisor_id = ? AND letter_id = ?",
+        [$supervisorId, $letterId]
+    );
+    foreach ($rows as $row) {
+        $scopeGender = strtolower(trim((string)($row['gender'] ?? '')));
+        $scopeGender = in_array($scopeGender, ['m', 'male', 'ذكر'], true)
+            ? 'male'
+            : (in_array($scopeGender, ['f', 'female', 'أنثى', 'انثى'], true)
+                ? 'female'
+                : (in_array($scopeGender, ['both', 'all', 'كلاهما', 'الكل'], true) ? 'both' : 'other'));
+        if ($scopeGender === 'both' || $scopeGender === $gender) return true;
+    }
+    return false;
+}
+
 function ensureSponsorAssignmentHistoryTable(): void
 {
     dbExecute("CREATE TABLE IF NOT EXISTS sponsor_supervisor_assignments (
