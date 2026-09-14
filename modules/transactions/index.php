@@ -4,6 +4,7 @@ require_once dirname(__DIR__, 2) . '/config/config.php';
 require_once dirname(__DIR__, 2) . '/config/database.php';
 require_once dirname(__DIR__, 2) . '/config/functions.php';
 require_once dirname(__DIR__, 2) . '/config/session.php';
+require_once dirname(__DIR__, 2) . '/config/sponsor_assignments.php';
 require_once dirname(__DIR__, 2) . '/modules/accounting/lib.php';
 require_once dirname(__DIR__, 2) . '/modules/accounting/lib_transaction_void.php';
 Session::start();
@@ -26,30 +27,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['void_tx']) && $canVoi
             $financialCommitted = false;
             try {
                 db()->beginTransaction();
-
-                // The journal reversal and transaction state change share one
-                // transaction. If either step fails, neither is persisted.
                 ak_void_transaction_journal_atomic($tid, $reason);
-
-                $affected = dbExecute(
-                    "UPDATE transactions SET status='voided',voided_at=NOW(),voided_by=?,void_reason=? WHERE id=? AND status='posted'",
-                    [Session::getUserId(),$reason,$tid]
-                );
-                if ($affected !== 1) {
-                    throw new RuntimeException('تعذر إبطال حالة المعاملة ' . $tid . '.');
-                }
-
-                db()->commit();
-                $financialCommitted = true;
+                $affected = dbExecute("UPDATE transactions SET status='voided',voided_at=NOW(),voided_by=?,void_reason=? WHERE id=? AND status='posted'", [Session::getUserId(),$reason,$tid]);
+                if ($affected !== 1) throw new RuntimeException('تعذر إبطال حالة المعاملة ' . $tid . '.');
+                db()->commit(); $financialCommitted = true;
             } catch (Throwable $e) {
                 if (db()->inTransaction()) db()->rollBack();
                 error_log('Transaction void failed for #' . $tid . ': ' . $e->getMessage());
                 flash('error','تعذر إبطال المعاملة وقيدها. لم يتم حفظ أي جزء من العملية.');
             }
             if ($financialCommitted) {
-                try {
-                    dbExecute("INSERT INTO audit_log (user_id,action,entity_type,entity_id,old_values,new_values,ip_address,user_agent) VALUES (?, 'VOID','transactions',?,?,?,?,?)", [Session::getUserId(),$tid,json_encode(['code'=>$t['transaction_code'],'status'=>'posted'],JSON_UNESCAPED_UNICODE),json_encode(['status'=>'voided','reason'=>$reason],JSON_UNESCAPED_UNICODE),$_SERVER['REMOTE_ADDR']??'',$_SERVER['HTTP_USER_AGENT']??'']);
-                } catch (Throwable $e) {}
+                try { dbExecute("INSERT INTO audit_log (user_id,action,entity_type,entity_id,old_values,new_values,ip_address,user_agent) VALUES (?, 'VOID','transactions',?,?,?,?,?)", [Session::getUserId(),$tid,json_encode(['code'=>$t['transaction_code'],'status'=>'posted'],JSON_UNESCAPED_UNICODE),json_encode(['status'=>'voided','reason'=>$reason],JSON_UNESCAPED_UNICODE),$_SERVER['REMOTE_ADDR']??'',$_SERVER['HTTP_USER_AGENT']??'']); } catch (Throwable $e) {}
                 flash('success','تم إبطال المعاملة وقيدها.');
             }
         }
@@ -60,33 +48,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['void_tx']) && $canVoi
 $q=trim($_GET['q']??''); $from=trim($_GET['from']??''); $to=trim($_GET['to']??''); $fStatus=trim($_GET['tstatus']??'');
 $page=max(1,(int)($_GET['page']??1)); $perPage=50; $mySponsorIds=null;
 if($role==='supervisor'){
-    $myLetterIds=array_map('intval',array_column(dbFetchAll("SELECT letter_id FROM supervisor_letters WHERE supervisor_id=?",[Session::getUserId()]),'letter_id'));
-    $sql="SELECT id FROM sponsors WHERE supervisor_id=?"; $params=[Session::getUserId()];
-    if($myLetterIds){$ph=implode(',',array_fill(0,count($myLetterIds),'?'));$sql.=" OR first_letter_id IN ($ph)";$params=array_merge($params,$myLetterIds);}
-    $mySponsorIds=array_map('intval',array_column(dbFetchAll($sql,$params),'id'));
+    $scopeRows=dbFetchAll("SELECT id, supervisor_id, first_letter_id, gender FROM sponsors WHERE supervisor_id=? OR first_letter_id IN (SELECT letter_id FROM supervisor_letters WHERE supervisor_id=?)",[Session::getUserId(),Session::getUserId()]);
+    $mySponsorIds=[];
+    foreach($scopeRows as $scopeRow){if(supervisorCanAccessSponsor((int)Session::getUserId(),$scopeRow))$mySponsorIds[]=(int)$scopeRow['id'];}
+    $mySponsorIds=array_values(array_unique($mySponsorIds));
 }
 if ($role === 'accountant_staff') {
-    $all = dbFetchAll(
-        "SELECT t.*,s.full_name sponsor,f.mother_name family
-         FROM transactions t
-         LEFT JOIN sponsors s ON s.id=t.sponsor_id
-         LEFT JOIN families f ON f.id=t.family_id
-         WHERE t.created_by=?
-         ORDER BY t.transaction_date DESC,t.id DESC",
-        [Session::getUserId()]
-    );
+    $all = dbFetchAll("SELECT t.*,s.full_name sponsor,f.mother_name family FROM transactions t LEFT JOIN sponsors s ON s.id=t.sponsor_id LEFT JOIN families f ON f.id=t.family_id WHERE t.created_by=? ORDER BY t.transaction_date DESC,t.id DESC", [Session::getUserId()]);
+} elseif ($role === 'supervisor') {
+    if (!$mySponsorIds) $all=[];
+    else { $ph=implode(',',array_fill(0,count($mySponsorIds),'?')); $all=dbFetchAll("SELECT t.*,s.full_name sponsor,f.mother_name family FROM transactions t LEFT JOIN sponsors s ON s.id=t.sponsor_id LEFT JOIN families f ON f.id=t.family_id WHERE t.sponsor_id IN ($ph) ORDER BY t.transaction_date DESC,t.id DESC", $mySponsorIds); }
 } else {
-    $all = dbFetchAll(
-        "SELECT t.*,s.full_name sponsor,f.mother_name family
-         FROM transactions t
-         LEFT JOIN sponsors s ON s.id=t.sponsor_id
-         LEFT JOIN families f ON f.id=t.family_id
-         ORDER BY t.transaction_date DESC,t.id DESC"
-    );
+    $all = dbFetchAll("SELECT t.*,s.full_name sponsor,f.mother_name family FROM transactions t LEFT JOIN sponsors s ON s.id=t.sponsor_id LEFT JOIN families f ON f.id=t.family_id ORDER BY t.transaction_date DESC,t.id DESC");
 }
 $filtered=[];
 foreach($all as $row){
-    if($mySponsorIds!==null&&!in_array((int)($row['sponsor_id']??0),$mySponsorIds,true))continue;
     if($fStatus!==''&&$row['status']!==$fStatus)continue;
     if($from!==''&&$row['transaction_date']<$from)continue;
     if($to!==''&&$row['transaction_date']>$to)continue;
@@ -108,7 +84,7 @@ include dirname(__DIR__,2).'/includes/header.php'; ?>
 <form method="post" action="<?php echo APP_URL; ?>modules/accounting/fm_transaction_review.php" class="d-inline ak-pending-approve-form"><?php echo csrf_field(); ?><input type="hidden" name="approve_transaction" value="<?php echo (int)$r['id']; ?>"><button class="btn btn-sm btn-success" type="submit" title="اعتماد وترحيل"><i class="fas fa-check"></i></button></form>
 <form method="post" action="<?php echo APP_URL; ?>modules/accounting/fm_transaction_review.php" class="d-inline ak-pending-return-form" data-id="<?php echo (int)$r['id']; ?>"><?php echo csrf_field(); ?><input type="hidden" name="return_transaction" value="<?php echo (int)$r['id']; ?>"><input type="hidden" name="return_reason_<?php echo (int)$r['id']; ?>" value=""><button class="btn btn-sm btn-danger" type="submit" title="إرجاع للتعديل"><i class="fas fa-undo"></i></button></form>
 <?php endif; ?>
-<?php if($canViewJournal&&isset($jeMap[(int)$r['id']])): ?><a class="btn btn-sm btn-info" title="القيد المحاسبي" href="<?php echo APP_URL; ?>modules/accounting/journal.php?view=<?php echo $jeMap[(int)$r['id']]; ?>"><i class="fas fa-book"></i></a><?php endif; ?>
+<?php if($canViewJournal&&isset($jeMap[(int)$r['id']])): ?><a class="btn btn-sm btn-info" title="القيد المحاسبي" href="<?php echo APP_URL; ?>modules/accounting/journal.php?view=<?php echo $jeMap[(int)$r['id']; ?>"><i class="fas fa-book"></i></a><?php endif; ?>
 <?php if($canEditReturned&&$r['status']==='returned'&&(int)$r['created_by']===(int)Session::getUserId()): ?><a class="btn btn-sm btn-warning" href="<?php echo APP_URL; ?>modules/transactions/edit_returned.php?id=<?php echo (int)$r['id']; ?>" title="تعديل وإعادة إرسال"><i class="fas fa-pen"></i></a><form method="post" action="<?php echo APP_URL; ?>modules/transactions/cancel_returned.php" class="d-inline ak-cancel-returned-form"><?php echo csrf_field(); ?><input type="hidden" name="transaction_id" value="<?php echo (int)$r['id']; ?>"><input type="hidden" name="cancel_reason" value="إلغاء من المنشئ بعد الإرجاع"><button type="submit" class="btn btn-sm btn-outline-danger" title="إلغاء الدفعة المُعادة"><i class="fas fa-xmark"></i></button></form><?php endif; ?>
 <?php if($canVoid&&$r['status']==='posted'): ?><form method="post" class="d-inline ak-void-form" data-confirm-msg="هل أنت متأكد من إبطال هذه المعاملة وقيدها؟"><?php echo csrf_field(); ?><input type="hidden" name="void_tx" value="<?php echo (int)$r['id']; ?>"><input type="text" name="void_reason" class="form-control form-control-sm d-inline-block" style="width:110px" placeholder="السبب" required><button type="submit" class="btn btn-sm btn-danger" title="إبطال وقيد عكسي"><i class="fas fa-ban"></i></button></form><?php endif; ?>
 </td></tr>
