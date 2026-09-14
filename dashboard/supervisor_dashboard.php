@@ -7,8 +7,20 @@ require_once __DIR__ . '/../config/session.php';
 Session::start();
 if (!Session::isLoggedIn() || Session::getUserRole() !== 'supervisor') { header('Location: ' . APP_URL . 'index.php'); exit(); }
 $pageTitle=t('dashboard.supervisor_title');$active='dashboard';$uid=Session::getUserId();$myLetters=dbFetchAll("SELECT l.code,l.name_ar FROM supervisor_letters sl JOIN letters l ON l.id=sl.letter_id WHERE sl.supervisor_id=? ORDER BY l.sort_order",[$uid]);
-$scopeSql="EXISTS (SELECT 1 FROM supervisor_letters sl WHERE sl.supervisor_id=? AND sl.letter_id=s.first_letter_id AND (CONVERT(sl.gender USING utf8mb4) COLLATE utf8mb4_unicode_ci=CONVERT(s.gender USING utf8mb4) COLLATE utf8mb4_unicode_ci OR CONVERT(sl.gender USING utf8mb4) COLLATE utf8mb4_unicode_ci='both'))";
-$s=dbFetchOne("SELECT (SELECT COUNT(*) FROM sponsors s WHERE $scopeSql) AS my_sponsors,(SELECT COUNT(*) FROM sponsorships sp JOIN sponsors s ON s.id=sp.sponsor_id WHERE sp.status='active' AND $scopeSql) AS my_active_sponsorships,(SELECT COUNT(DISTINCT sp.child_id) FROM sponsorships sp JOIN sponsors s ON s.id=sp.sponsor_id WHERE sp.status='active' AND $scopeSql) AS my_orphans,(SELECT COALESCE(SUM(amount),0) FROM sponsor_payments WHERE supervisor_id=? AND DATE_FORMAT(created_at,'%Y-%m')=DATE_FORMAT(CURDATE(),'%Y-%m')) AS month_collected",[$uid,$uid,$uid,$uid]);
+
+/*
+ * Dashboard sponsor scope must match the authoritative supervisor rule used by
+ * sponsor/family work screens: direct sponsor assignment OR first-letter +
+ * sponsor-gender responsibility matrix. Direct assignment is intentionally
+ * retained even when the sponsor does not currently match the matrix.
+ */
+$scopeSql="(s.supervisor_id=? OR EXISTS (SELECT 1 FROM supervisor_letters sl WHERE sl.supervisor_id=? AND sl.letter_id=s.first_letter_id AND (CONVERT(sl.gender USING utf8mb4) COLLATE utf8mb4_unicode_ci=CONVERT(s.gender USING utf8mb4) COLLATE utf8mb4_unicode_ci OR CONVERT(sl.gender USING utf8mb4) COLLATE utf8mb4_unicode_ci='both')))";
+$s=dbFetchOne("SELECT
+    (SELECT COUNT(*) FROM sponsors s WHERE $scopeSql) AS my_sponsors,
+    (SELECT COUNT(*) FROM sponsorships sp JOIN sponsors s ON s.id=sp.sponsor_id WHERE sp.status='active' AND $scopeSql) AS my_active_sponsorships,
+    (SELECT COUNT(DISTINCT sp.child_id) FROM sponsorships sp JOIN sponsors s ON s.id=sp.sponsor_id WHERE sp.status='active' AND $scopeSql) AS my_orphans,
+    (SELECT COALESCE(SUM(amount),0) FROM sponsor_payments WHERE supervisor_id=? AND DATE_FORMAT(created_at,'%Y-%m')=DATE_FORMAT(CURDATE(),'%Y-%m')) AS month_collected",
+    [$uid,$uid,$uid,$uid,$uid,$uid,$uid]);
 include __DIR__.'/../includes/header.php'; ?>
 <style>
 /* Supervisor dashboard: the page cards replace the global quick-action buttons. */
