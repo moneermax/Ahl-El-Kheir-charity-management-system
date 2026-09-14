@@ -117,23 +117,31 @@ Do not weaken authorization merely to make a page accessible.
 
 ## BUSINESS RULES THAT MUST NOT REGRESS
 
-### Supervisor sponsor ownership
+### Supervisor sponsor responsibility — authoritative rule
 
 `Sponsor first-name letter + Sponsor gender → Supervisor`
 
-Sponsor responsibility is based on the sponsor's own first-name letter and sponsor gender through the configured responsibility matrix.
+Supervisor sponsor responsibility is determined by the sponsor's own first-name letter and sponsor gender through the configured responsibility matrix.
+
+A Sponsor outside that Supervisor's letter+gender responsibility scope must not be visible or accessible to that Supervisor merely through a direct record URL or related list.
 
 It is not based on the orphan, family, mother, mother's first letter, or family code.
 
-### Supervisor family access
+The repository also contains historical/direct sponsor assignment paths using `sponsor.supervisor_id`. Do not automatically treat that field as a separate business-rule authorization grant. Before changing such logic, inspect its documented workflow and actual current usage to determine whether it is an operational assignment mechanism or an authorization grant.
 
-Family access is broader than `families.supervisor_id` alone. It may be granted by:
+### Supervisor data visibility
 
-- direct family assignment;
-- sponsor assigned to the supervisor, giving access to that sponsor's related family/orphan data;
-- the established supervisor letter + gender responsibility matrix for linked sponsor/family/orphan data.
+Within legitimate scope, the Supervisor may access the operational chain:
 
-Do not narrow this established rule without explicit new business evidence.
+`Sponsor → Sponsorship → Child/Orphan → Family`
+
+subject to each destination's own server-side record authorization.
+
+### Supervisor vs Accounting
+
+Supervisor is an operational oversight role, not an Accounting role. A workflow having a financial consequence does not by itself grant Supervisor Accounting permissions.
+
+Supervisor must not gain Accounting journal/ledger/financial-control authority merely because Supervisor creates or submits an operational sponsorship/payment workflow. Any Supervisor → Accounting integration must preserve separation of duties and route financial approval/posting through the authorized Accounting roles.
 
 ### Disbursement / returned funds
 
@@ -147,7 +155,7 @@ Do not rewrite or relabel historical accounting evidence merely to satisfy a que
 
 Development/test accounting data is not production financial data.
 
-## CURRENT PROJECT BOUNDARY
+## CURRENT PROJECT BOUNDARY — 2026-09-14
 
 At the current checkpoint:
 
@@ -157,15 +165,25 @@ At the current checkpoint:
 - Accountant Staff financial/reporting and disbursement authorization work is completed at the documented checkpoint.
 - FM dashboard treasury/admin-fee regression is fixed and closed.
 - Supervisor sponsor ownership and sponsor-linked family access restoration is completed and must be preserved.
-- **Supervisor Module Audit is the active development/audit direction.**
+- Supervisor sponsorship-list scope regression was fixed at `76be77a4d2e6e337485d3f3c9980780b9de73df0` and the three scope tests passed.
+- VGM sponsor assignment/reassignment is confirmed as a VGM task; VGM, Supervisor-protection, and FM-isolation tests passed at commit `48fc2db0ac9e5585127b65c17eacb5e3dd285ce0`.
+- **The next work is NOT a broad Supervisor re-audit. The next work is a focused Supervisor ↔ Accounting integration review.**
 
-Current Supervisor governance items include:
-1. formal organization-wide permission/action matrix;
-2. exact supervisor scope for the general sponsor-request queue;
-3. controlled review of runtime schema synchronization in sponsor routes;
-4. consistent scope enforcement across supervisor sponsor/family/sponsorship routes.
+## NEXT TASK — SUPERVISOR ↔ ACCOUNTING INTEGRATION
 
-Do not assume these are bugs until current code/evidence demonstrates the issue.
+Inspect the actual repository and documentation for every real integration point between Supervisor operational workflows and Accounting.
+
+Answer these questions from code/evidence before changing anything:
+
+1. Can Supervisor access any Accounting page/action directly or indirectly?
+2. Does any Supervisor operational workflow create, submit, return, or otherwise mutate an Accounting-controlled record?
+3. What financial status/result is appropriate for Supervisor to see without granting Accounting authority?
+4. Are Supervisor submissions routed to FM/Accounting using the correct actor and scope rules?
+5. Are Accounting notifications/results exposed only to the correct Supervisor?
+6. Does any Accounting query accidentally expose data outside the Supervisor's operational Sponsor scope?
+7. Does any dashboard KPI or summary shown to Supervisor contain Accounting data that is broader than the Supervisor's legitimate operational scope?
+
+Do not repeat the closed Accounting Audit. Reuse its findings as the baseline and investigate only the integration boundary.
 
 ## DOCUMENTATION RULES
 
