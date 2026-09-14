@@ -4,6 +4,7 @@ require_once dirname(__DIR__,2).'/config/database.php';
 require_once dirname(__DIR__,2).'/config/functions.php';
 require_once dirname(__DIR__,2).'/config/session.php';
 require_once dirname(__DIR__,2).'/config/family_scope.php';
+require_once dirname(__DIR__,2).'/config/sponsor_assignments.php';
 Session::start();
 if(!Session::isLoggedIn()){header('Location: '.APP_URL.'index.php');exit();}
 $role=Session::getUserRole();
@@ -15,21 +16,7 @@ $backUrl=APP_URL.'modules/sponsors/index.php';
 if($returnQuery!==''){$returnParams=[];parse_str(rawurldecode($returnQuery),$parsedReturnParams);foreach(['q','status','sup','page'] as $key)if(isset($parsedReturnParams[$key])&&$parsedReturnParams[$key]!=='')$returnParams[$key]=$key==='page'||$key==='sup'?(int)$parsedReturnParams[$key]:trim((string)$parsedReturnParams[$key]);if($returnParams)$backUrl.='?'.http_build_query($returnParams);}
 $sp=dbFetchOne("SELECT s.*,l.code AS letter,u.full_name AS supervisor_name FROM sponsors s LEFT JOIN letters l ON l.id=s.first_letter_id LEFT JOIN users u ON u.id=s.supervisor_id WHERE s.id=?",[$id]);
 if(!$sp){flash('error',t('sponsors.view_not_found'));redirect('modules/sponsors/index.php');}
-if($role==='supervisor'){
-    $uid=Session::getUserId();
-    $allowed=((int)($sp['supervisor_id']??0)===$uid);
-    if(!$allowed){
-        $matrixRows=dbFetchAll("SELECT gender FROM supervisor_letters WHERE supervisor_id=? AND letter_id=?",[$uid,(int)$sp['first_letter_id']]);
-        $sg=strtolower(trim((string)($sp['gender']??'')));
-        $sg=$sg==='m'||$sg==='male'||$sg==='ذكر'?'male':($sg==='f'||$sg==='female'||$sg==='أنثى'||$sg==='انثى'?'female':'other');
-        foreach($matrixRows as $mr){
-            $mg=strtolower(trim((string)($mr['gender']??'')));
-            $mg=$mg==='m'||$mg==='male'||$mg==='ذكر'?'male':($mg==='f'||$mg==='female'||$mg==='أنثى'||$mg==='انثى'?'female':($mg==='both'||$mg==='all'||$mg==='كلاهما'||$mg==='الكل'?'both':'other'));
-            if($mg==='both'||$mg===$sg){$allowed=true;break;}
-        }
-    }
-    if(!$allowed){flash('error',t('sponsors.view_no_permission'));redirect('modules/sponsors/index.php');}
-}
+if($role==='supervisor'&&!supervisorCanAccessSponsor(Session::getUserId(),$sp)){flash('error',t('sponsors.view_no_permission'));redirect('modules/sponsors/index.php');}
 $ships=dbFetchAll("SELECT sp.id,COALESCE(NULLIF(TRIM(sp.sponsorship_code),''),CONCAT('SH-',LPAD(sp.id,6,'0'))) AS sponsorship_code,sp.monthly_amount,sp.start_date,sp.status,fc.child_name,f.mother_name,f.family_code FROM sponsorships sp JOIN family_children fc ON fc.id=sp.child_id JOIN families f ON f.id=fc.family_id WHERE sp.sponsor_id=? ORDER BY sp.status ASC,sp.id DESC",[$id]);
 $gLabel=['male'=>t('sponsors.view_male'),'female'=>t('sponsors.view_female'),'organization'=>t('sponsors.view_organization'),'unknown'=>t('sponsors.view_unknown')][$sp['gender']]??t('sponsors.view_not_available');
 include dirname(__DIR__,2).'/includes/header.php'; ?>
