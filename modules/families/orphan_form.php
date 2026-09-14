@@ -129,7 +129,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $canEdit && $child) {
 /* - display values - */
 $editTab = isset($_GET['tab']) && $_GET['tab'] === 'edit' && $child && $canEdit;
 $dmy = function ($d) { return $d ? date('d/m/Y', strtotime($d)) : ''; };
-$photoUrl = ($child && !empty($child['photo_path'])) ? APP_URL . 'modules/families/orphan_form.php?photo=' . $childId : null;
+$hasPhoto = ($child && !empty($child['photo_path']));
+$photoUrl = $hasPhoto
+    ? APP_URL . 'modules/families/orphan_form.php?photo=' . $childId
+    : ($child ? asset('img/orphan-placeholder.jpg') : null);
 $ships = []; $totalMonthly = 0; $firstStart = '';
 if ($child) {
     $healthShow = $child['health_status'] ?? 'سليم';
@@ -219,7 +222,7 @@ table.ak-main th{width:18%;font-weight:700}
 <div class="col-md-4"><label class="form-label"><?php echo t('Father Cause of Death'); ?></label><input type="text" name="father_death_cause" class="form-control" value="<?php echo e($fam['father_death_cause'] ?? ''); ?>"></div>
 <div class="col-md-6"><label class="form-label"><?php echo t('Orphan Photo (JPG/PNG ≤ 10MB)'); ?></label><input type="file" name="photo" class="form-control" accept=".jpg,.jpeg,.png"></div>
 <div class="col-md-6 d-flex align-items-center gap-2">
-<?php if ($photoUrl): ?><img src="<?php echo e($photoUrl); ?>" alt="" style="width:64px;height:64px;object-fit:cover;border-radius:6px;border:1px solid #ccc"><label class="form-check-label small ms-2"><input type="checkbox" name="remove_photo" value="1" class="form-check-input"> <?php echo t('Remove Photo'); ?></label><?php else: ?><span class="text-muted small"><?php echo t('No photo uploaded yet.'); ?></span><?php endif; ?>
+<?php if ($hasPhoto): ?><img src="<?php echo e($photoUrl); ?>" alt="" style="width:64px;height:64px;object-fit:cover;border-radius:6px;border:1px solid #ccc"><label class="form-check-label small ms-2"><input type="checkbox" name="remove_photo" value="1" class="form-check-input"> <?php echo t('Remove Photo'); ?></label><?php elseif ($child): ?><img src="<?php echo e($photoUrl); ?>" alt="<?php echo t('No photo uploaded yet.'); ?>" style="width:64px;height:64px;object-fit:cover;border-radius:6px;border:1px solid #ccc"><?php else: ?><span class="text-muted small"><?php echo t('No photo uploaded yet.'); ?></span><?php endif; ?>
 </div>
 <div class="col-12"><button class="btn btn-primary"><i class="fas fa-save me-1"></i><?php echo t('Save'); ?></button>
 <a class="btn btn-success" href="<?php echo APP_URL; ?>modules/families/orphan_form.php?child=<?php echo $childId; ?>"><i class="fas fa-file-signature me-1"></i><?php echo t('View Form'); ?></a></div>
