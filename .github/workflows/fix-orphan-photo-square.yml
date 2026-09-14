@@ -1,0 +1,35 @@
+name: Fix orphan photo square fit
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Adjust photo box sizing
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('modules/families/orphan_form.php')
+          s = p.read_text(encoding='utf-8')
+          old = ".ak-photo{width:30mm;background:#fff;text-align:center;padding:2px}\n.ak-photo img{width:100%;height:100%;object-fit:cover}"
+          new = ".ak-photo{width:30mm;height:30mm;background:#fff;text-align:center;padding:2px;vertical-align:middle;box-sizing:border-box;overflow:hidden}\n.ak-photo img{display:block;width:100%;height:100%;object-fit:cover}"
+          if old not in s:
+              raise SystemExit('Expected photo CSS block not found; no change made.')
+          p.write_text(s.replace(old, new, 1), encoding='utf-8')
+          PY
+      - name: Commit fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add modules/families/orphan_form.php
+          git diff --cached --check
+          git commit -m "fix: fit orphan photo placeholder in square"
+          git push origin HEAD:main
+      - name: Remove temporary workflow
+        run: |
+          git rm .github/workflows/fix-orphan-photo-square.yml
+          git commit -m "chore: remove temporary photo fix workflow"
+          git push origin HEAD:main
