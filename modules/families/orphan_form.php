@@ -174,7 +174,6 @@ table.ak-main th,table.ak-main td{border:1px solid #000;padding:4px 7px;text-ali
 table.ak-main th{width:18%;font-weight:700}
 .ak-photo{width:30mm;height:30mm;background:#fff;text-align:center;padding:2px;vertical-align:middle;box-sizing:border-box;overflow:hidden}
 .ak-photo img{display:block;width:100%;height:100%;object-fit:cover}
-.ak-photo img[src*="orphan-placeholder.jpg"]{object-fit:contain}
 .ak-blank{display:inline-block;min-width:28mm;min-height:4mm;border-bottom:1px dotted #000}
 .ak-motto td{color:#d00000;font-weight:800;text-align:center;font-size:11.5px}
 .ak-red{color:#d00000;font-weight:700;font-size:11px;margin-top:5px}
