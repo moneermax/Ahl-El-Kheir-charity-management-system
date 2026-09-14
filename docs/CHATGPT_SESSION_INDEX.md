@@ -46,16 +46,20 @@ Current governance items are documented in the master status/audit. Do not treat
 - Supervisor dashboard sponsor KPI scope aligned with the authoritative direct-assignment + letter/gender matrix rule: `2a82dd87482544ecd6f5edbf61b095b2c23b39f8`.
 - General sponsor-request queue authorization narrowed: Supervisor is no longer an authorized role for `modules/sponsors/requests.php`; the route remains available to its designated management/social-media roles. Commit: `ba21c3415158787e2fb294eaf746cf37d7d845bc`.
 - Runtime schema synchronization review found sponsor create/edit routes were executing `ALTER TABLE sponsors ADD COLUMN IF NOT EXISTS brought_by_name ...` during normal page requests. The DDL was removed from both routes, and an explicit idempotent migration was added at `database/migrations/2026-09-14_sponsors_brought_by_name.sql`. Commits: `cd23c78e6f72faba60a5e71c1cc024d4000ca7ff`, `a7228ab22d22f1a55ef077f7a31ebe267a45c356`, `30fed415857a4189fe8487652ad1c44f1e56a1b6`.
+- Local database verification confirmed `sponsors.brought_by_name` exists as `VARCHAR(255) NULL`.
+- Remaining sponsor runtime-DDL cleanup completed: `modules/sponsors/view.php` no longer alters the `sponsors` table at request time; `config/sponsor_assignments.php` no longer creates `sponsor_supervisor_assignments` at request time; `modules/sponsors/assign.php` no longer depends on request-time table creation; `modules/sponsors/requests.php` no longer creates/alters `sponsor_requests` during normal requests. Explicit migration added at `database/migrations/2026-09-14_sponsor_workflow_runtime_ddl_cleanup.sql`. Commits: `6c54d41e461e59f7ec4cd490e0ed3aaaaefbc9ca`, `c4caa8310d4c20d7aad433472d394e0c0faa8b5d`, `c3b675e21b6f00ab16cf2356957d1e328232c896`, `ebe254bda7f6c5a959a8e5a71244c17515da2fc4`, `e72c7fc07cda048273fa1f63db6de04edf251317`.
+- Sponsor list navigation was aligned with the request-route authorization: the Supervisor no longer sees the Sponsor Requests button because the route does not authorize Supervisor. Management roles that can access the queue retain the button. Commit: `527140f9fd1ea082f4e7f4a0ef20eb5492f119fb`.
 
 ### Current open task
 
 Continue the **Supervisor Module Audit** from the actual current repository code and dashboard/navigation.
 
 Priority order:
-1. controlled review of remaining sponsor/family/sponsorship routes for runtime schema synchronization or other unsafe request-time DDL;
-2. consistent scope enforcement across supervisor sponsor/family/sponsorship routes;
-3. formal organization-wide permission/action matrix;
-4. revisit sponsor-request access only if new business/code evidence indicates another role scope is required.
+1. apply/verify the new sponsor workflow migration in the local database before exercising assignment/request workflows;
+2. controlled review of remaining sponsor/family/sponsorship routes for runtime schema synchronization or other unsafe request-time DDL;
+3. consistent scope enforcement across supervisor sponsor/family/sponsorship routes;
+4. formal organization-wide permission/action matrix;
+5. revisit sponsor-request access only if new business/code evidence indicates another role scope is required.
 
 ### Do not repeat
 
