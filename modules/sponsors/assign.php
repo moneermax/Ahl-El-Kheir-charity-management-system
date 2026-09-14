@@ -1,6 +1,9 @@
 <?php
 require_once dirname(__DIR__,2).'/config/config.php';require_once dirname(__DIR__,2).'/config/database.php';require_once dirname(__DIR__,2).'/config/functions.php';require_once dirname(__DIR__,2).'/config/session.php';require_once dirname(__DIR__,2).'/config/sponsor_assignments.php';Session::start();
-$role=Session::getUserRole();if(!Session::isLoggedIn()||!in_array($role,['admin','vice_general_manager','general_manager'],true)){header('Location: '.APP_URL.'index.php');exit();}
+$role=Session::getUserRole();
+if(!Session::isLoggedIn()){header('Location: '.APP_URL.'index.php');exit();}
+if($role==='supervisor'){header('Location: '.APP_URL.'dashboard/supervisor_dashboard.php');exit();}
+if(!in_array($role,['admin','vice_general_manager','general_manager'],true)){header('Location: '.APP_URL.'index.php');exit();}
 $errors=[];
 if($_SERVER['REQUEST_METHOD']==='POST'){
  if(!verify_csrf())$errors[]=t('sponsors.session_expired');
