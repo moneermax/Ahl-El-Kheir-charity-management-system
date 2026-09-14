@@ -29,27 +29,47 @@ Working rule:
 
 ## 3. Supervisor rules that must not regress
 
-### Sponsor ownership
+### Authoritative Sponsor responsibility
 
-Supervisor responsibility is determined by:
+Supervisor sponsor responsibility is determined by:
 
 `Sponsor first-name letter + Sponsor gender → Supervisor`
 
-It is **not** determined by the orphan's family, mother's name, or mother's first letter.
+This is the authoritative business rule for Sponsor responsibility. A Sponsor outside the Supervisor's letter+gender responsibility scope must not be visible or accessible to that Supervisor merely through a direct record URL or related list.
+
+It is **not** determined by the orphan's family, mother's name, mother's first letter, family code, or orphan identity.
+
+### Supervisor operational visibility
+
+Within legitimate scope, the Supervisor may follow the operational chain:
+
+`Sponsor → Sponsorship → Child/Orphan → Family`
+
+subject to each destination's own server-side record-level authorization.
+
+### Direct sponsor assignment clarification
+
+The repository contains historical/direct assignment paths using `sponsor.supervisor_id`, and some existing routes have treated that assignment as an additional access path. The current business-rule clarification is that Sponsor Letter + Sponsor Gender is the authoritative responsibility rule. Therefore `sponsor.supervisor_id` must not be treated as a new independent authorization grant without confirming its documented operational purpose and current workflow usage.
+
+Do not make a speculative change. Inspect the documented workflow and actual repository usage before changing any existing direct-assignment behavior.
 
 ### Family access
 
-Family access is a separate concern and includes:
+Family access is a separate concern. Existing implementation/documentation contains direct family assignment and sponsor-linked/matrix-based family/orphan access paths. Do not narrow family access to `families.supervisor_id` alone, and do not use family/mother information as a substitute for the Sponsor responsibility rule.
 
-- direct family assignment → access;
-- sponsor assigned to a supervisor → access to that sponsor and the sponsor's related family/orphan data;
-- supervisor letter + gender responsibility matrix → linked sponsor/family/orphan access where applicable.
+## 4. Supervisor dashboard boundary
 
-Restoration commit: `448fa0bfee7fdcd5ce3e7608304de6b1c7f9ba73`.
+The Supervisor dashboard/navigation is operational, not an Accounting control surface. It may expose scoped operational indicators and links for:
 
-Do not narrow this to `families.supervisor_id` only.
+- Sponsors
+- Families
+- Orphan/child forms
+- Sponsorships
+- related operational follow-up
 
-## 4. FM dashboard
+Dashboard counts and lists must use the Supervisor's legitimate record scope. A financial consequence of an operational workflow does not by itself grant Supervisor Accounting authority.
+
+## 5. FM dashboard
 
 The treasury row must contain:
 
@@ -63,7 +83,7 @@ Fix commit: `783b160a60ce50f0f661a65a112aea7469979ca4`.
 
 This regression is closed and must not be reopened without new runtime evidence.
 
-## 5. Accountant Staff / ACC1
+## 6. Accountant Staff / ACC1
 
 Known controlled assignment: Accountant Staff user `17` → nanny `16`.
 
@@ -71,19 +91,37 @@ The substantial ACC1/nanny accounting integration is already completed, includin
 
 The Arabic encoding issue is already solved. Do not restart old ACC1 tests unless a documented open item or genuine regression appears.
 
-## 6. Current open audit direction
+## 7. Current open audit direction
 
-**Supervisor Module Audit** remains the active audit direction.
+**Supervisor ↔ Accounting integration review** is now the immediate active direction within the broader Supervisor Module Audit boundary.
 
-Continue page-by-page from the actual Supervisor dashboard/navigation. The family-scope restoration itself is complete and must not be re-audited as unfinished.
+The Supervisor module itself has been working correctly in the tested areas. Do not broaden this into a fresh Supervisor-module audit unless a real integration dependency requires it.
 
-Current governance items:
+The next review must inspect actual repository integration points and answer:
 
-1. Formal organization-wide permission/action matrix.
-2. Controlled review of remaining supervisor sponsor/family/sponsorship route scope.
-3. Runtime schema synchronization review — sponsor runtime DDL cleanup is implemented for the reviewed sponsor routes.
-4. Verify/apply the explicit sponsor workflow migration locally before exercising assignment/request workflows.
-5. VGM sponsor assignment/reassignment is confirmed as a VGM task. The VGM dashboard now exposes `modules/sponsors/assign.php`; Supervisor direct access is blocked and FM has no sponsor-assignment action. All three runtime checks passed.
+1. Can Supervisor access any Accounting page/action directly or indirectly?
+2. Does any Supervisor operational workflow create, submit, return, or otherwise mutate an Accounting-controlled record?
+3. What financial status/result is appropriate for Supervisor to see without granting Accounting authority?
+4. Are Supervisor submissions routed to FM/Accounting using the correct actor and scope rules?
+5. Are Accounting notifications/results exposed only to the correct Supervisor?
+6. Does any Accounting query accidentally expose data outside the Supervisor's legitimate Sponsor scope?
+7. Does any Supervisor dashboard KPI/summary expose Accounting data broader than the Supervisor's operational scope?
+
+Do not repeat the closed Accounting Audit. Reuse its findings as the baseline and investigate only the integration boundary.
+
+## 8. Recent completed Supervisor findings
+
+### VGM sponsor assignment/reassignment
+
+VGM is the operational owner of `modules/sponsors/assign.php`. VGM dashboard exposes the task. Supervisor direct access is blocked. FM has no sponsor-assignment action. All three runtime checks passed.
+
+Commit: `48fc2db0ac9e5585127b65c17eacb5e3dd285ce0`.
+
+### Sponsor request authorization/navigation
+
+`modules/sponsors/requests.php` remains restricted to `admin`, `vice_general_manager`, `general_manager`, and `social_media`. Supervisor is not authorized for this general queue, and the Sponsor list no longer displays the queue button to Supervisor.
+
+Commit: `ba21c3415158787e2fb294eaf746cf37d7d845bc`.
 
 ### Sponsor runtime schema synchronization — completed code cleanup
 
@@ -99,13 +137,21 @@ Explicit migration: `database/migrations/2026-09-14_sponsor_workflow_runtime_ddl
 
 The local database has already been verified to contain `sponsors.brought_by_name VARCHAR(255) NULL`.
 
-### Sponsor request authorization/navigation
+### Supervisor sponsorship-list scope regression
 
-`modules/sponsors/requests.php` remains restricted to `admin`, `vice_general_manager`, `general_manager`, and `social_media`. The Supervisor role is not authorized for this general queue, and the sponsor list no longer displays the queue button to Supervisor. This is least-privilege alignment, not a change to the authoritative sponsor ownership matrix.
+`modules/sponsorships/index.php` previously filtered Supervisor sponsorships only by the letter+gender matrix and omitted direct sponsor assignment. It was aligned with the existing implementation by adding direct assignment as an access path alongside the matrix.
 
-Do not make speculative restrictions or schema rewrites for these completed findings.
+Commit: `76be77a4d2e6e337485d3f3c9980780b9de73df0`.
 
-## 7. Other parked work
+The user tested the three scope cases after that fix:
+
+1. Direct-assignment case — PASS.
+2. Letter+gender matrix case — PASS.
+3. Outside both scopes — PASS.
+
+This test is complete. Because the user subsequently clarified that Letter + Gender is the authoritative business rule, the direct-assignment path must now be treated as a documented behavior requiring workflow clarification, not automatically as a separate business rule.
+
+## 9. Other parked work
 
 - Targeted accounting runtime verification of newly protected automated journal reference types.
 - Remaining direct journal mutation callers and cross-module accounting auditability.
@@ -115,17 +161,17 @@ Do not make speculative restrictions or schema rewrites for these completed find
 - Formal report/source/calculation catalog.
 - Production preparation and deployment hardening.
 
-## 8. Production/data status
+## 10. Production/data status
 
 The application is still under development. Development/test operational data is not to be treated as production financial data.
 
 Production preparation remains governed by `docs/PRODUCTION_PREPARATION.md` and `database/production/prepare_production_database.sql`.
 
-## 9. Internationalization
+## 11. Internationalization
 
 Arabic is the default language and English is the alternate language. Stable key-based i18n is authoritative.
 
-## 10. Local Git safety
+## 12. Local Git safety
 
 Intentional local backup files that must not be deleted/reset/stashed/overwritten:
 
@@ -134,7 +180,7 @@ Intentional local backup files that must not be deleted/reset/stashed/overwritte
 
 Commit `f7051ded6fe4c8e346cf7bcb08f48d0535945d01` was inspected and does not represent an active rollback of the tracked Accountant Staff dashboard.
 
-## 11. Documentation map
+## 13. Documentation map
 
 - **`docs/AHL_EL_KHEIR_MASTER_AUDIT.md`** — **SINGLE MASTER AUDIT**: all detailed system review, Accounting, Notification, organizational lifecycle, HR navigation, completed evidence, open audit findings, and continuation rules.
 - **This file** — high-level START HERE status and continuation summary.
@@ -144,7 +190,7 @@ Commit `f7051ded6fe4c8e346cf7bcb08f48d0535945d01` was inspected and does not rep
 
 There should be no second detailed audit/checkpoint file for the same project-wide audit history.
 
-## 12. Continuation rule
+## 14. Continuation rule
 
 Every meaningful milestone ends with:
 
