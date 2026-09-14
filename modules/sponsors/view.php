@@ -9,7 +9,6 @@ Session::start();
 if(!Session::isLoggedIn()){header('Location: '.APP_URL.'index.php');exit();}
 $role=Session::getUserRole();
 if(!in_array($role,['admin','vice_general_manager','general_manager','supervisor','financial_manager','accountant'],true)){header('Location: '.APP_URL.'index.php');exit();}
-dbExecute("ALTER TABLE sponsors ADD COLUMN IF NOT EXISTS brought_by_name VARCHAR(255) NULL");
 $pageTitle=t('sponsors.view_title');$active='sponsors';$id=(int)($_GET['id']??0);
 $returnQuery=trim((string)($_GET['return']??''));
 $backUrl=APP_URL.'modules/sponsors/index.php';
