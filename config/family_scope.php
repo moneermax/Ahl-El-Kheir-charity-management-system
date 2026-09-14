@@ -4,12 +4,12 @@ declare(strict_types=1);
 /**
  * Centralized family-level authorization for operational roles.
  *
- * A supervisor can access a family only when that family is explicitly
- * assigned to the supervisor through families.supervisor_id.
- *
- * Sponsor responsibility is intentionally separate from family-management
- * scope. A supervisor's sponsor letter+gender matrix must never grant access
- * to an otherwise unassigned family.
+ * A supervisor can access a family when either:
+ * 1) the family is explicitly assigned to that supervisor, or
+ * 2) the family has a sponsorship whose sponsor is explicitly assigned to
+ *    that supervisor, or
+ * 3) the family has a sponsorship whose sponsor falls under the supervisor's
+ *    first-letter + gender responsibility matrix.
  *
  * Nannies remain restricted to their directly assigned families. Other roles
  * already authorized by their module guards are not narrowed by this helper.
@@ -19,7 +19,71 @@ function ak_family_user_in_scope(array $family, string $role, int $userId): bool
     if ($role === 'nanny') return (int)($family['nanny_id'] ?? 0) === $userId;
 
     if ($role === 'supervisor') {
-        return (int)($family['supervisor_id'] ?? 0) === $userId;
+        $familyId = (int)($family['id'] ?? 0);
+        if ($familyId <= 0) return false;
+
+        /* Direct family assignment always grants access. */
+        if ((int)($family['supervisor_id'] ?? 0) === $userId) return true;
+
+        /*
+         * Explicit sponsor assignment is authoritative. A supervisor who is
+         * responsible for a sponsor must be able to see every family/orphan
+         * connected to that sponsor, regardless of the family's own
+         * supervisor assignment.
+         */
+        $linkedSponsor = dbFetchOne(
+            "SELECT sp.id
+             FROM sponsorships s
+             JOIN family_children fc ON fc.id = s.child_id
+             JOIN sponsors sp ON sp.id = s.sponsor_id
+             WHERE fc.family_id = ?
+               AND sp.supervisor_id = ?
+             LIMIT 1",
+            [$familyId, $userId]
+        );
+
+        if (!empty($linkedSponsor)) return true;
+
+        /*
+         * Matrix responsibility is checked in PHP rather than comparing the
+         * database strings directly. This deliberately avoids collation
+         * differences between supervisor_letters.gender and sponsors.gender
+         * and accepts the same male/female/Arabic/both values used elsewhere.
+         */
+        $matrixSponsors = dbFetchAll(
+            "SELECT sp.gender AS sponsor_gender, sl.gender AS matrix_gender
+             FROM sponsorships s
+             JOIN family_children fc ON fc.id = s.child_id
+             JOIN sponsors sp ON sp.id = s.sponsor_id
+             JOIN supervisor_letters sl
+               ON sl.supervisor_id = ?
+              AND sl.letter_id = sp.first_letter_id
+             WHERE fc.family_id = ?",
+            [$userId, $familyId]
+        );
+
+        foreach ($matrixSponsors as $row) {
+            $sponsorGender = strtolower(trim((string)($row['sponsor_gender'] ?? '')));
+            $sponsorGender = match ($sponsorGender) {
+                'm', 'male', 'ذكر' => 'male',
+                'f', 'female', 'أنثى', 'انثى' => 'female',
+                default => 'other',
+            };
+
+            $matrixGender = strtolower(trim((string)($row['matrix_gender'] ?? '')));
+            $matrixGender = match ($matrixGender) {
+                'm', 'male', 'ذكر' => 'male',
+                'f', 'female', 'أنثى', 'انثى' => 'female',
+                'both', 'all', 'كلاهما', 'الكل' => 'both',
+                default => 'other',
+            };
+
+            if ($matrixGender === 'both' || $matrixGender === $sponsorGender) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     return true;
@@ -27,9 +91,8 @@ function ak_family_user_in_scope(array $family, string $role, int $userId): bool
 
 /**
  * Enforce the family record boundary on direct-ID family/child routes.
- * Supervisor family access is based only on explicit family assignment.
- * Sponsor ownership is governed separately by the sponsor letter+gender
- * responsibility matrix and does not grant family-management access.
+ * Supervisor access includes both explicit family assignment and families
+ * related to sponsors inside the supervisor's responsibility matrix.
  *
  * IMPORTANT: this helper is loaded globally and Session::start() invokes it
  * for every authenticated request. Therefore route detection MUST be scoped
