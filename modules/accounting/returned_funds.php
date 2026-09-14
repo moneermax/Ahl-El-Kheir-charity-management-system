@@ -46,7 +46,7 @@ $rows = dbFetchAll("SELECT
     INNER JOIN users n ON n.id = d.nanny_id
     INNER JOIN families f ON f.id = i.family_id
     LEFT JOIN returned_disbursement_reissues r ON r.disbursement_item_id = i.id
-    WHERE i.status = 'returned' $scope
+    WHERE (i.status = 'returned' OR r.id IS NOT NULL) $scope
     ORDER BY
         CASE WHEN r.status = 'redelivered' THEN 2 WHEN r.status = 'authorized' THEN 1 ELSE 0 END,
         i.returned_at DESC, i.id DESC", $params);
