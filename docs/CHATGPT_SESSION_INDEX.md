@@ -45,13 +45,14 @@ Current governance items are documented in the master status/audit. Do not treat
 - Master continuation prompt added to `docs/CHATGPT_MASTER_CONTINUATION_PROMPT.md`.
 - Supervisor dashboard sponsor KPI scope aligned with the authoritative direct-assignment + letter/gender matrix rule: `2a82dd87482544ecd6f5edbf61b095b2c23b39f8`.
 - General sponsor-request queue authorization narrowed: Supervisor is no longer an authorized role for `modules/sponsors/requests.php`; the route remains available to its designated management/social-media roles. Commit: `ba21c3415158787e2fb294eaf746cf37d7d845bc`.
+- Runtime schema synchronization review found sponsor create/edit routes were executing `ALTER TABLE sponsors ADD COLUMN IF NOT EXISTS brought_by_name ...` during normal page requests. The DDL was removed from both routes, and an explicit idempotent migration was added at `database/migrations/2026-09-14_sponsors_brought_by_name.sql`. Commits: `cd23c78e6f72faba60a5e71c1cc024d4000ca7ff`, `a7228ab22d22f1a55ef077f7a31ebe267a45c356`, `30fed415857a4189fe8487652ad1c44f1e56a1b6`.
 
 ### Current open task
 
 Continue the **Supervisor Module Audit** from the actual current repository code and dashboard/navigation.
 
 Priority order:
-1. controlled review of runtime schema synchronization in remaining sponsor routes;
+1. controlled review of remaining sponsor/family/sponsorship routes for runtime schema synchronization or other unsafe request-time DDL;
 2. consistent scope enforcement across supervisor sponsor/family/sponsorship routes;
 3. formal organization-wide permission/action matrix;
 4. revisit sponsor-request access only if new business/code evidence indicates another role scope is required.
