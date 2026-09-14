@@ -30,6 +30,11 @@
         });
     }
 
+    function findTreasuryGrid(main) {
+        if (!main) return null;
+        return main.querySelector('.fm-top-right > .grid-4') || main.querySelector('.fm-top-right .grid-4');
+    }
+
     function prepareTreasuryRow(treasuryGrid) {
         treasuryGrid.style.gridTemplateColumns = 'repeat(5, minmax(0, 1fr))';
         treasuryGrid.style.gap = '10px';
@@ -52,6 +57,26 @@
             '<div class="stat-value" data-admin-fee-value style="font-size:1.55rem;white-space:nowrap">' + (value === null ? '…' : formatAmount(value)) + '</div>' +
             '<div class="stat-sub" style="font-size:.72rem;white-space:nowrap">حساب 4200 · SDG</div>';
         return card;
+    }
+
+    function ensureTreasuryAdminFeeCard(treasuryGrid) {
+        if (!treasuryGrid) return null;
+
+        var adminFeeCard = treasuryGrid.querySelector('#fm-treasury-admin-fee');
+        if (!adminFeeCard) {
+            adminFeeCard = document.getElementById('fm-treasury-admin-fee');
+            if (adminFeeCard && adminFeeCard.parentNode !== treasuryGrid) {
+                adminFeeCard.parentNode.removeChild(adminFeeCard);
+                adminFeeCard = null;
+            }
+        }
+
+        if (!adminFeeCard) {
+            adminFeeCard = buildTreasuryAdminFeeCard(null);
+            treasuryGrid.appendChild(adminFeeCard);
+        }
+
+        return adminFeeCard;
     }
 
     function buildLedgerKpiCard(data) {
@@ -139,16 +164,13 @@
         var main = document.querySelector('main.container-fluid');
         if (!main) return;
 
-        var treasuryGrid = main.querySelector('.fm-top-right > .grid-4');
+        var treasuryGrid = findTreasuryGrid(main);
         if (!treasuryGrid) return;
 
         // The fifth card is structural and must appear even if the KPI endpoint fails.
         prepareTreasuryRow(treasuryGrid);
-        var adminFeeCard = document.getElementById('fm-treasury-admin-fee');
-        if (!adminFeeCard) {
-            adminFeeCard = buildTreasuryAdminFeeCard(null);
-            treasuryGrid.appendChild(adminFeeCard);
-        }
+        var adminFeeCard = ensureTreasuryAdminFeeCard(treasuryGrid);
+        if (!adminFeeCard) return;
 
         var endpoint = new URL('fm_dashboard_kpis.php', window.location.href).toString();
         fetch(endpoint, {
@@ -184,6 +206,11 @@
     function init() {
         moveQuickStats();
         loadAccountingKpis();
+
+        // Re-assert the structural fifth card after any late DOM/layout manipulation.
+        var main = document.querySelector('main.container-fluid');
+        var treasuryGrid = findTreasuryGrid(main);
+        if (treasuryGrid) ensureTreasuryAdminFeeCard(treasuryGrid);
     }
 
     if (document.readyState === 'loading') {
@@ -191,4 +218,13 @@
     } else {
         init();
     }
+
+    window.addEventListener('load', function () {
+        var main = document.querySelector('main.container-fluid');
+        var treasuryGrid = findTreasuryGrid(main);
+        if (treasuryGrid) {
+            prepareTreasuryRow(treasuryGrid);
+            ensureTreasuryAdminFeeCard(treasuryGrid);
+        }
+    });
 })();
