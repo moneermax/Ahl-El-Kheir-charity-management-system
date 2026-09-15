@@ -93,7 +93,7 @@ The Arabic encoding issue is already solved. Do not restart old ACC1 tests unles
 
 ## 7. Current active direction
 
-**Supervisor ↔ Accounting integration review** remains the broader audit direction. The latest completed work was a fresh bank-transfer/payment-method/accounting-path test, including the administrative-fee policy check.
+**Supervisor ↔ Accounting integration review** remains the broader audit direction. The latest completed work includes fresh Supervisor bank-transfer and mobile-wallet/payment-method/accounting-path tests, including the administrative-fee policy check for the bank-transfer transaction.
 
 The next substantive audit work must inspect actual repository integration points and answer:
 
@@ -105,7 +105,7 @@ The next substantive audit work must inspect actual repository integration point
 6. Does any Accounting query accidentally expose data outside the Supervisor's legitimate Sponsor scope?
 7. Does any Supervisor dashboard KPI/summary expose Accounting data broader than the Supervisor's operational scope?
 
-The fresh bank-transfer test is now closed and should not be repeated. Its verified payment method, posting account, bank reconciliation, and administrative-fee result are recorded below.
+The fresh bank-transfer and mobile-wallet tests are now closed and should not be repeated. Their verified payment methods, posting accounts, and balance reconciliations are recorded below.
 
 ## 8. Recent completed Supervisor findings
 
@@ -137,17 +137,11 @@ The local database has already been verified to contain `sponsors.brought_by_nam
 
 ### Supervisor sponsorship-list scope regression
 
-`modules/sponsorships/index.php` previously filtered Supervisor sponsorships only by the letter+gender matrix and omitted direct sponsor assignment. It was aligned with the existing implementation by adding direct assignment as an access path alongside the matrix.
+The Supervisor sponsorship list and sponsor routes were aligned with the authoritative Letter + Gender rule; direct `sponsor.supervisor_id` is not an independent authorization grant.
 
-Commit: `76be77a4d2e6e337485d3f3c9980780b9de73df0`.
+Commits: `e2a5a23b2aa3b5797cb7298641c5fd5bc85e76b6`, `5f8e5e0848261ab6cd6edf841a21e9193f1bc123`.
 
-The user tested the three scope cases after that fix:
-
-1. Direct-assignment case — PASS.
-2. Letter+gender matrix case — PASS.
-3. Outside both scopes — PASS.
-
-This test is complete. Because the user subsequently clarified that Letter + Gender is the authoritative business rule, the direct-assignment path must now be treated as a documented behavior requiring workflow clarification, not automatically as a separate business rule.
+The user has previously completed the relevant scope tests. Do not rerun them unless a genuine regression appears.
 
 ### Receipt-file regression — fixed and runtime-confirmed
 
@@ -261,6 +255,6 @@ A new chat/session must continue from this master status and the single master a
 - Bank posting: account `1200` debit `10,000.00`; sponsorship revenue account `4100` credit `10,000.00`; journal `JE-000029` / ID `52` posted and balanced.
 - Bank balance increased exactly `10,000` during FM confirmation (`24,786,000` → `24,796,000`).
 - Administrative-fee check for this transaction: **PASS** — `admin_fee_method = none`, `admin_fee_amount = 0`, `net_amount = 10,000`, `admin_fee_policy_id = NULL`, and no `4200` line. No historical fee/method inference or manual correction is permitted.
-- The existing accounting design is expected to deduct/split administrative fees when an applicable `fixed` or `percentage` policy is attached; this specific test does not claim to test that active-policy calculation path.
-- Next runtime test: fresh Supervisor mobile-wallet submission → FM confirmation → verify journal debit reaches Electronic Wallet `1300`.
-- Do not rerun closed bank-transfer, admin-fee `none`, notification, receipt, Supervisor ownership/scope, or completed Accounting tests unless genuine regression evidence appears.
+- **Fresh mobile-wallet test: PASS.** E-wallet balance increased from `25,050,000` before FM confirmation to `25,060,000` after FM confirmation, exactly `10,000`. This confirms the Supervisor-selected `mobile` payment method reaches Electronic Wallet account `1300` through FM confirmation/accounting posting.
+- Do not rerun closed bank-transfer, mobile-wallet, admin-fee `none`, notification, receipt, Supervisor ownership/scope, or completed Accounting tests unless genuine regression evidence appears.
+- **Next audit work:** continue with the remaining Supervisor ↔ Accounting integration controls, starting with Supervisor payment-history scope and direct/indirect exposure of Accounting-only journal/ledger/approval/posting controls. Inspect repository code before creating any new test data or SQL.
