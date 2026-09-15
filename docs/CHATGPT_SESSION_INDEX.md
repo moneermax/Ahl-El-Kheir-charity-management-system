@@ -106,23 +106,50 @@ Commits:
 
 Supervisor payments already submitted before this fix may have `payment_method='cash'` because the selected method was never stored. The application cannot safely reconstruct the user's original selection from the database alone. Do **not** invent or bulk-change historical payment methods. Existing posted transactions must be treated as requiring evidence-based accounting correction only if the actual original payment method can be established.
 
+## ADMINISTRATIVE-FEE / BANK-TRANSFER CHECKPOINT — 2026-09-15
+
+The fresh Supervisor bank-transfer test was completed through FM confirmation and Accounting posting.
+
+Verified transaction:
+
+- Transaction `SP-000010` / ID `28`.
+- Date: `2026-09-15`.
+- Gross amount: `10,000.00`.
+- Stored payment method: `bank_transfer`.
+- Admin-fee method: `none`.
+- Admin-fee amount: `0.00`.
+- Net amount: `10,000.00`.
+- `admin_fee_policy_id` is `NULL`; no administrative-fee policy was attached to this transaction.
+- Posted journal: `JE-000029` / ID `52`.
+- Journal lines: account `1200` Bank debit `10,000.00`; account `4100` Sponsorship Revenue credit `10,000.00`.
+- No `4200` Administrative Fees line was expected or posted.
+
+Runtime bank-balance evidence also passed: the bank balance increased from `24,786,000` to `24,796,000`, exactly `10,000`.
+
+**Result: PASS.** This transaction is correctly accounted for because the transaction has no applicable administrative-fee policy. If a transaction falls under an applicable `fixed` or `percentage` administrative-fee policy, the existing accounting design is expected to split the gross receipt into the bank/cash/wallet debit, net sponsorship revenue credit (`4100`), and administrative-fee credit (`4200`). This specific test does not prove the active-policy calculation path; it proves that a `none` policy is not incorrectly deducting a fee.
+
+Do not modify SP-000010 or infer a historical fee/method for older transactions.
+
 ## REQUIRED TESTS ALREADY COMPLETED
 
 The previously completed sponsorship-list scope tests remain closed and PASS. Do not repeat them unless a genuine regression appears.
 
 ## NEXT AUDIT DIRECTION — SUPERVISOR ↔ ACCOUNTING
 
-Continue only with the remaining real integration controls:
+The fresh bank-transfer/payment-method/accounting-path test is now closed. Continue only with the remaining real integration controls:
 
-1. Verify a new Supervisor bank-transfer submission is stored as `bank_transfer` in `sponsor_payments` and appears as **تحويل بنكي** in the FM queue.
-2. Verify FM approval of that new payment posts the debit to account `1200` (Bank), not `1100` (Cash).
-3. Verify a new Supervisor mobile-wallet submission is stored as `mobile` and posts to account `1300` (Electronic Wallet).
-4. Verify Supervisor history shows only that Supervisor's own in-scope Sponsor submissions.
-5. Do not rerun closed Accounting tests or recreate old fixtures.
+1. Verify a new Supervisor mobile-wallet submission is stored as `mobile` and posts to account `1300` (Electronic Wallet).
+2. Verify Supervisor history shows only that Supervisor's own in-scope Sponsor submissions.
+3. Verify no Supervisor route exposes Accounting-only journal/ledger/approval/posting controls indirectly.
+4. Inspect the remaining cross-module Accounting reference/mutation points only where repository evidence identifies a genuinely untested control.
+
+Do not rerun the closed bank-transfer test, admin-fee `none` verification, or completed Accounting tests.
 
 ## LATEST CHECKPOINT — 2026-09-15
 
-The latest genuine regression is the Supervisor payment-method persistence defect described above. It has been fixed in the repository. The next runtime test is the smallest possible new payment-method test using a fresh Supervisor submission; no historical fixture recreation is required.
+The Supervisor payment-method persistence defect is fixed and runtime-confirmed. The fresh bank-transfer submission is correctly stored, routed to FM, posted to Bank `1200`, and reconciles with the bank balance. The administrative-fee check also passed for this transaction because no policy was attached (`none`, fee `0`).
+
+The next runtime test is the smallest genuinely new payment-method test: a fresh Supervisor mobile-wallet submission, followed by FM confirmation and verification that the journal debit reaches Electronic Wallet `1300`.
 
 ## PROTECTED LOCAL FILES
 
