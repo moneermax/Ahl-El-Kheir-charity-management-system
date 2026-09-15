@@ -81,6 +81,31 @@ The treasury row must contain:
 
 Fix commit: `783b160a60ce50f0f661a65a112aea7469979ca4`.
 
+### Treasury total calculation — runtime verified 2026-09-15
+
+Repository inspection confirmed that `modules/accounting/fm_dashboard.php` calculates the treasury row directly from posted journal lines, restricted to active accounts `1100`, `1200`, and `1300`:
+
+- Cash = posted ledger balance of `1100` (`debit - credit`).
+- Bank = posted ledger balance of `1200` (`debit - credit`).
+- Electronic wallet = posted ledger balance of `1300` (`debit - credit`).
+- Total treasury = posted ledger movement for those same three accounts.
+
+Therefore the displayed total is mathematically `cash + bank + wallet`, and the query is executed live on the dashboard request rather than using a cached/stale total. Only `je.status = 'posted'` and active treasury accounts are included.
+
+Runtime verification passed on 2026-09-15:
+
+- Cash `1100`: `48,721,100`.
+- Bank `1200`: `24,796,000`.
+- Electronic wallet `1300`: `25,060,000`.
+- Total treasury: `98,577,100`.
+- Arithmetic: `48,721,100 + 24,796,000 + 25,060,000 = 98,577,100`.
+
+The wallet had previously been `25,050,000`; the fresh mobile-wallet accounting test increased it to `25,060,000`, exactly `10,000`. The displayed total includes that posted movement.
+
+The reconciliation section's `397,000` inflow, `2,419,900` outflow, `98,577,100` net treasury movement, and `-2,022,900` difference are a separate flow/reconciliation view and must not be confused with the current treasury asset balance. This is **not a defect**.
+
+**Result: PASS / CLOSED.** Do not modify or rerun this treasury calculation test unless new regression evidence appears.
+
 This regression is closed and must not be reopened without new runtime evidence.
 
 ## 6. Accountant Staff / ACC1
@@ -93,7 +118,7 @@ The Arabic encoding issue is already solved. Do not restart old ACC1 tests unles
 
 ## 7. Current active direction
 
-**Supervisor ↔ Accounting integration review** remains the broader audit direction. The latest completed work includes fresh Supervisor bank-transfer and mobile-wallet/payment-method/accounting-path tests, including the administrative-fee policy check for the bank-transfer transaction.
+**Supervisor ↔ Accounting integration review** remains the broader audit direction. The latest completed work includes fresh Supervisor bank-transfer and mobile-wallet/payment-method/accounting-path tests, including the administrative-fee policy check for the bank-transfer transaction and the FM treasury reconciliation test.
 
 The next substantive audit work must inspect actual repository integration points and answer:
 
@@ -105,7 +130,7 @@ The next substantive audit work must inspect actual repository integration point
 6. Does any Accounting query accidentally expose data outside the Supervisor's legitimate Sponsor scope?
 7. Does any Supervisor dashboard KPI/summary expose Accounting data broader than the Supervisor's operational scope?
 
-The fresh bank-transfer and mobile-wallet tests are now closed and should not be repeated. Their verified payment methods, posting accounts, and balance reconciliations are recorded below.
+The fresh bank-transfer, mobile-wallet, admin-fee `none`, and FM treasury calculation tests are now closed and should not be repeated. Their verified payment methods, posting accounts, balance reconciliations, and treasury-total evidence are recorded below.
 
 ## 8. Recent completed Supervisor findings
 
@@ -256,5 +281,6 @@ A new chat/session must continue from this master status and the single master a
 - Bank balance increased exactly `10,000` during FM confirmation (`24,786,000` → `24,796,000`).
 - Administrative-fee check for this transaction: **PASS** — `admin_fee_method = none`, `admin_fee_amount = 0`, `net_amount = 10,000`, `admin_fee_policy_id = NULL`, and no `4200` line. No historical fee/method inference or manual correction is permitted.
 - **Fresh mobile-wallet test: PASS.** E-wallet balance increased from `25,050,000` before FM confirmation to `25,060,000` after FM confirmation, exactly `10,000`. This confirms the Supervisor-selected `mobile` payment method reaches Electronic Wallet account `1300` through FM confirmation/accounting posting.
-- Do not rerun closed bank-transfer, mobile-wallet, admin-fee `none`, notification, receipt, Supervisor ownership/scope, or completed Accounting tests unless genuine regression evidence appears.
+- **FM treasury calculation: PASS / CLOSED.** The FM dashboard reads live posted-ledger balances for `1100`, `1200`, and `1300`; runtime values were Cash `48,721,100`, Bank `24,796,000`, E-wallet `25,060,000`, Total Treasury `98,577,100`, and the displayed total exactly equals their sum. The reconciliation flow figures are a separate report and are not the current treasury balance.
+- Do not rerun closed bank-transfer, mobile-wallet, admin-fee `none`, FM treasury calculation, notification, receipt, Supervisor ownership/scope, or completed Accounting tests unless genuine regression evidence appears.
 - **Next audit work:** continue with the remaining Supervisor ↔ Accounting integration controls, starting with Supervisor payment-history scope and direct/indirect exposure of Accounting-only journal/ledger/approval/posting controls. Inspect repository code before creating any new test data or SQL.
