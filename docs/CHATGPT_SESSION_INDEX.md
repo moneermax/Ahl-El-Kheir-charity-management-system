@@ -2,7 +2,7 @@
 
 **Repository:** `moneermax/Ahl-El-Kheir-charity-management-system`  
 **Branch:** `main`  
-**Current checkpoint:** 2026-09-14
+**Current checkpoint:** 2026-09-15
 
 ## START HERE
 
@@ -59,6 +59,7 @@ A historical implementation also contains `sponsor.supervisor_id` direct-assignm
 - VGM sponsor assignment/reassignment is confirmed as a VGM task. VGM dashboard exposes `modules/sponsors/assign.php`; Supervisor direct access is blocked and FM has no sponsor-assignment action. All three runtime checks passed. Commit: `48fc2db0ac9e5585127b65c17eacb5e3dd285ce0`.
 - **Supervisor sponsorship-list scope regression fixed:** `modules/sponsorships/index.php` had omitted direct assignment while filtering Supervisor sponsorships. The route was aligned with the established implementation pending final business-rule clarification. Commit: `76be77a4d2e6e337485d3f3c9980780b9de73df0`.
 - User tested the sponsorship list after that fix: direct-assignment case PASS, matrix-authorized case PASS, outside-both-scopes case PASS.
+- **Receipt-file regression fixed and runtime-confirmed:** `modules/transactions/receipt_file.php` now presents a normal Arabic application message when a transaction has no receipt attachment or its referenced file is unavailable, while preserving authorization and valid receipt streaming. Code commit: `ddd5e91e6f90935cd3a7e328f480ae1f8d906e34`; documentation commit: `cd78fe373c72ce4063ff0b1a9c9a66e59a245961`.
 
 ## IMPORTANT BUSINESS-RULE CLARIFICATION FROM USER — 2026-09-14
 
@@ -92,6 +93,14 @@ Next inspect the repository for actual Supervisor → Accounting integration poi
 6. Does any Accounting query accidentally expose data outside the Supervisor's operational Sponsor scope?
 
 Use existing code and documentation first. Do not recreate old Accounting tests or fixtures unless a genuine integration regression is found.
+
+## LATEST CHECKPOINT — 2026-09-15
+
+Last completed item: receipt-file missing/stale-file regression was fixed and the user confirmed the local test passed.
+
+Current active task: inspect the remaining real Supervisor → Accounting integration points and select the next genuinely untested control.
+
+Do not rerun the receipt regression or any other closed audit test unless new evidence shows a regression.
 
 ## PROTECTED LOCAL FILES
 
