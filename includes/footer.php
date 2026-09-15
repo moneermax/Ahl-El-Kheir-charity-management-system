@@ -26,7 +26,7 @@
 .org-header-banner .org-flag::after,.app-footer .org-flag::after {content:"";display:block !important;position:absolute;inset:0;background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.28) 18%,transparent 34%,rgba(0,0,0,.16) 48%,transparent 63%,rgba(255,255,255,.22) 78%,transparent 100%);z-index:3;pointer-events:none;animation:ak-sudan-flag-folds 2.8s ease-in-out infinite}
 @keyframes ak-sudan-flag-wave{0%,100%{transform:perspective(120px) rotateY(0deg) skewY(0deg) scaleX(1)}25%{transform:perspective(120px) rotateY(-12deg) skewY(1.5deg) scaleX(.96)}50%{transform:perspective(120px) rotateY(10deg) skewY(-1deg) scaleX(.98)}75%{transform:perspective(120px) rotateY(-7deg) skewY(.8deg) scaleX(.97)}}
 @keyframes ak-sudan-flag-folds{0%,100%{transform:translateX(-12%)}50%{transform:translateX(12%)}}
-@media (prefers-reduced-motion:reduce){.org-header-banner .org-flag,.app-footer .org-flag,.org-header-banner .org-flag::after,.app-footer .org-flag::after{animation:none}}
+@media (prefers-reduced-motion:reduce){.org-header-banner .org-flag,.org-header-banner .org-flag::after,.app-footer .org-flag,.app-footer .org-flag::after{animation:none}}
 .ak-leave-request-moving{visibility:hidden}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -44,6 +44,7 @@ window.AK_TRANSLATIONS=<?php echo json_encode(ak_dict(),JSON_UNESCAPED_UNICODE|J
 <script src="<?php echo asset('js/messaging_attachments.js'); ?>"></script>
 <script src="<?php echo asset('js/messaging_message_delete.js'); ?>"></script>
 <script src="<?php echo asset('js/searchable_sponsorship_select.js'); ?>"></script>
+<script src="<?php echo asset('js/notification_unread_indicator.js'); ?>"></script>
 <?php if (($active ?? '') === 'fm_dashboard'): ?><script src="<?php echo asset('js/fm_dashboard_layout.js'); ?>"></script><?php endif; ?>
 <?php if (($active ?? '') === 'fm_dashboard'): ?>
 <?php endif; ?>
