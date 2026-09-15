@@ -1,13 +1,35 @@
 <?php
-require_once dirname(__DIR__, 2) . '/config/config.php'; require_once dirname(__DIR__, 2) . '/config/database.php'; require_once dirname(__DIR__, 2) . '/config/functions.php'; require_once dirname(__DIR__, 2) . '/config/session.php'; require_once dirname(__DIR__, 2) . '/config/sponsor_assignments.php';
-Session::start(); if (!Session::isLoggedIn()) { header('Location: ' . APP_URL . 'index.php'); exit(); } $role = Session::getUserRole(); if (!in_array($role, ['admin','vice_general_manager','general_manager','supervisor'], true)) { header('Location: ' . APP_URL . 'index.php'); exit(); }
+require_once dirname(__DIR__, 2) . '/config/config.php';
+require_once dirname(__DIR__, 2) . '/config/database.php';
+require_once dirname(__DIR__, 2) . '/config/functions.php';
+require_once dirname(__DIR__, 2) . '/config/session.php';
+require_once dirname(__DIR__, 2) . '/config/sponsor_assignments.php';
+Session::start();
+if (!Session::isLoggedIn()) { header('Location: ' . APP_URL . 'index.php'); exit(); }
+$role = Session::getUserRole();
+if (!in_array($role, ['admin','vice_general_manager','general_manager','supervisor'], true)) { header('Location: ' . APP_URL . 'index.php'); exit(); }
 $pageTitle=t('sponsors.title'); $active='sponsors'; $q=trim($_GET['q']??''); $fStatus=trim($_GET['status']??''); $fSup=(int)($_GET['sup']??0); $fLink=trim($_GET['link_status']??''); $page=max(1,(int)($_GET['page']??1)); $perPage=50;
 $supervisors=dbFetchAll("SELECT u.id,u.full_name FROM users u JOIN roles r ON r.id=u.role_id WHERE r.code IN ('supervisor','admin','vice_general_manager') ORDER BY u.full_name");
 $activeSponsorshipExists="EXISTS (SELECT 1 FROM sponsorships ss JOIN family_children fcc ON fcc.id=ss.child_id WHERE ss.sponsor_id=s.id AND ss.status='active')";
 $activeSponsorshipCount="(SELECT COUNT(*) FROM sponsorships ss JOIN family_children fcc ON fcc.id=ss.child_id WHERE ss.sponsor_id=s.id AND ss.status='active')";
 $sql="SELECT s.id,COALESCE(NULLIF(TRIM(s.sponsor_code),''),CONCAT('SP-',LPAD(s.id,6,'0'))) AS sponsor_code,s.full_name,s.phone,s.status,s.gender,s.supervisor_id,s.first_letter_id,$activeSponsorshipCount AS active_sponsorship_count FROM sponsors s WHERE 1=1"; $params=[];
-if($role==='supervisor'){ $uid=Session::getUserId(); $scopeParts=['s.supervisor_id=?']; $scopeParams=[$uid]; $matrixRows=dbFetchAll("SELECT letter_id,gender FROM supervisor_letters WHERE supervisor_id=?",[$uid]); $letterGenderMap=[]; foreach($matrixRows as $matrixRow){$letterId=(int)$matrixRow['letter_id'];$rawGender=strtolower(trim((string)($matrixRow['gender']??'')));if(in_array($rawGender,['male','m','ذكر'],true))$gender='male';elseif(in_array($rawGender,['female','f','أنثى','انثى'],true))$gender='female';else$gender='both';$letterGenderMap[$letterId][]=$gender;} foreach($letterGenderMap as $letterId=>$genders){$genders=array_values(array_unique($genders));if(in_array('both',$genders,true)){$scopeParts[]='s.first_letter_id=?';$scopeParams[]=$letterId;continue;}$ph=implode(',',array_fill(0,count($genders),'?'));$scopeParts[]="(s.first_letter_id=? AND s.gender IN ($ph))";$scopeParams[]=$letterId;foreach($genders as $gender)$scopeParams[]=$gender;} $sql.=' AND ('.implode(' OR ',$scopeParts).')';$params=array_merge($params,$scopeParams);}elseif($fSup>0){$sql.=" AND s.supervisor_id=?";$params[]=$fSup;}
-if($fStatus!==''){$sql.=" AND s.status=?";$params[]=$fStatus;} if($q!==''){$sql.=" AND (s.full_name LIKE ? OR s.sponsor_code LIKE ? OR s.phone LIKE ?)";$params[]="%$q%";$params[]="%$q%";$params[]="%$q%";}
+if($role==='supervisor'){
+    $uid=Session::getUserId();
+    $matrixRows=dbFetchAll("SELECT letter_id FROM supervisor_letters WHERE supervisor_id=?",[$uid]);
+    $letterIds=array_values(array_unique(array_map('intval',array_column($matrixRows,'letter_id'))));
+    $allowedSponsorIds=[];
+    if($letterIds){
+        $ph=implode(',',array_fill(0,count($letterIds),'?'));
+        $candidateSponsors=dbFetchAll("SELECT id,first_letter_id,gender FROM sponsors WHERE first_letter_id IN ($ph)",$letterIds);
+        foreach($candidateSponsors as $candidateSponsor){
+            if(supervisorCanAccessSponsor($uid,$candidateSponsor))$allowedSponsorIds[]=(int)$candidateSponsor['id'];
+        }
+    }
+    if(!$allowedSponsorIds){$sql.=' AND 0=1';}
+    else{$ph=implode(',',array_fill(0,count($allowedSponsorIds),'?'));$sql.=" AND s.id IN ($ph)";$params=$allowedSponsorIds;}
+}elseif($fSup>0){$sql.=" AND s.supervisor_id=?";$params[]=$fSup;}
+if($fStatus!==''){$sql.=" AND s.status=?";$params[]=$fStatus;}
+if($q!==''){$sql.=" AND (s.full_name LIKE ? OR s.sponsor_code LIKE ? OR s.phone LIKE ?)";$params[]="%$q%";$params[]="%$q%";$params[]="%$q%";}
 if($fLink==='linked'){$sql.=" AND $activeSponsorshipExists";}elseif($fLink==='unlinked'){$sql.=" AND NOT $activeSponsorshipExists";}
 $sql.=" ORDER BY s.id DESC"; $all=dbFetchAll($sql,$params); $total=count($all); $pages=max(1,(int)ceil($total/$perPage)); $page=min($page,$pages); $rows=array_slice($all,($page-1)*$perPage,$perPage); $qs=fn(array $extra)=>APP_URL.'modules/sponsors/index.php?'.http_build_query(array_merge($_GET,$extra)); $returnParams=[];if($q!=='')$returnParams['q']=$q;if($fStatus!=='')$returnParams['status']=$fStatus;if($fSup>0)$returnParams['sup']=$fSup;if($fLink!=='')$returnParams['link_status']=$fLink;$returnParams['page']=$page;$returnUrl=rawurlencode(http_build_query($returnParams)); include dirname(__DIR__,2).'/includes/header.php'; ?>
 <div class="welcome-section fade-in"><h2><?php echo e(t('sponsors.title')); ?></h2><p><?php echo e(t('common.sponsors')); ?>: <?php echo $total; ?></p><div class="quick-actions mt-3"><?php if(in_array($role,['admin','vice_general_manager','supervisor'],true)): ?><a href="<?php echo APP_URL; ?>modules/sponsors/create.php" class="btn btn-primary btn-sm"><i class="fas fa-plus me-1"></i> <?php echo e(t('sponsors.add')); ?></a><?php endif; ?><?php if(in_array($role,['admin','vice_general_manager','general_manager'],true)): ?><a href="<?php echo APP_URL; ?>modules/sponsors/requests.php" class="btn btn-info btn-sm text-white"><i class="fas fa-bullhorn me-1"></i> <?php echo e(t('navigation.join_requests')); ?></a><?php endif; ?></div></div>
