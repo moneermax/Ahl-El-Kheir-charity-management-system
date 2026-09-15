@@ -46,6 +46,7 @@ window.AK_TRANSLATIONS=<?php echo json_encode(ak_dict(),JSON_UNESCAPED_UNICODE|J
 <script src="<?php echo asset('js/searchable_sponsorship_select.js'); ?>"></script>
 <script src="<?php echo asset('js/notification_unread_indicator.js'); ?>"></script>
 <script src="<?php echo asset('js/transaction_details_localization.js'); ?>"></script>
+<?php if (basename($_SERVER['SCRIPT_FILENAME'] ?? '') === 'create.php'): ?><script src="<?php echo asset('js/fina_payment_allocation.js'); ?>"></script><?php endif; ?>
 <?php if (($active ?? '') === 'fm_dashboard'): ?><script src="<?php echo asset('js/fm_dashboard_layout.js'); ?>"></script><?php endif; ?>
 <?php if (($active ?? '') === 'fm_dashboard'): ?>
 <?php endif; ?>
