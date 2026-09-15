@@ -60,3 +60,7 @@ The production baseline is not a second development database. Schema changes mus
 ## Repository hygiene
 
 Database backups and runtime-generated files must not be committed to the repository. Local backup locations remain available through `.gitignore`; the repository should contain schema/migration scripts and the production cleanup procedure, not live database dumps or runtime logs.
+
+## Documentation checkpoint — 2026-09-15
+
+This document remains the authoritative production-preparation procedure. No production cleanup or deployment action was performed as part of the current Supervisor ↔ Accounting integration review. Development/test accounting data remains non-production data.
