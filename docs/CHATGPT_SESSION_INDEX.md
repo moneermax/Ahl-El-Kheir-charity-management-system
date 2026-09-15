@@ -61,6 +61,30 @@ A historical implementation also contains `sponsor.supervisor_id` direct-assignm
 - User tested the sponsorship list after that fix: direct-assignment case PASS, matrix-authorized case PASS, outside-both-scopes case PASS.
 - **Receipt-file regression fixed and runtime-confirmed:** `modules/transactions/receipt_file.php` now presents a normal Arabic application message when a transaction has no receipt attachment or its referenced file is unavailable, while preserving authorization and valid receipt streaming. Code commit: `ddd5e91e6f90935cd3a7e328f480ae1f8d906e34`; documentation commit: `cd78fe373c72ce4063ff0b1a9c9a66e59a245961`.
 
+## NOTIFICATION CHECKPOINT — 2026-09-15
+
+The shared notification behavior is now confirmed and should not be changed casually:
+
+- Live polling is centralized in the shared notification widget and refreshes every 5 seconds, so new workflow notifications appear without manual page refresh or logout/login.
+- Dynamic notification click forms preserve CSRF protection.
+- Applicable dashboards share the same unread visual behavior, including a clear red dot beside unread notification titles.
+- A full notification history page exists at `modules/notifications/index.php`, and the bell includes `عرض الكل`.
+- `مسح الكل` is **menu-only** and **must never delete notification records**. `clear_all.php` records a browser-local cutoff and the shared indicator hides those cleared menu entries while keeping the records available in full history.
+- Real notification scenarios already tested include HR leave approval/rejection and password recovery/change-request flows; both work correctly.
+
+Relevant commits:
+
+- `ecc82aa6af0a8201adbb6d6de0c7dbb087e77305` — polling endpoint.
+- `b82bd4effca75ffbde5a2f8e1930f326fc3b9664` — live shared notification widget.
+- `2ff8f331e575fab9dce9916c783ad3d7d3e63097` — CSRF fix for dynamically rendered notifications.
+- `c9b151b960b962c6cddbb1b135ceef6ddd5b4e16` — unread red-dot indicator.
+- `01f161ac59c97e033626ba5c447e7793fe52da4c` — full notifications page.
+- `0e830c3851eb2efd83f27881ff0b6c998f2d27ca` — bell `عرض الكل` link.
+- `391474e6ea894812b9b3eba6e636bba238e8c66a` — non-destructive clear-all backend.
+- `ddd9796896c49f4e2aaa150c3182253a6fa42d05` — client-side menu filtering after clear-all.
+
+The user has explicitly tested and confirmed the latest clear-all behavior as correct. Do not rerun these notification tests unless a genuine regression appears.
+
 ## IMPORTANT BUSINESS-RULE CLARIFICATION FROM USER — 2026-09-14
 
 The user explicitly confirmed that the system must follow the **Sponsor Letter + Sponsor Gender** responsibility rule as the authoritative Supervisor business rule:
@@ -90,17 +114,17 @@ Next inspect the repository for actual Supervisor → Accounting integration poi
 3. What financial status/result is appropriate for Supervisor to see without granting Accounting authority?
 4. Are Supervisor submissions routed to FM/Accounting using correct actor and scope rules?
 5. Are Accounting notifications/results exposed to the correct Supervisor only?
-6. Does any Accounting query accidentally expose data outside the Supervisor's operational Sponsor scope?
+6. Does any Accounting query accidentally expose data outside the Supervisor's legitimate Sponsor scope?
 
 Use existing code and documentation first. Do not recreate old Accounting tests or fixtures unless a genuine integration regression is found.
 
 ## LATEST CHECKPOINT — 2026-09-15
 
-Last completed item: receipt-file missing/stale-file regression was fixed and the user confirmed the local test passed.
+Last completed item: notification menu clearing was corrected so **مسح الكل** no longer deletes database notification records; the user confirmed the corrected behavior.
 
-Current active task: inspect the remaining real Supervisor → Accounting integration points and select the next genuinely untested control.
+Current active task: continue the focused Supervisor ↔ Accounting integration review by inspecting the remaining real integration points and selecting the next genuinely untested control.
 
-Do not rerun the receipt regression or any other closed audit test unless new evidence shows a regression.
+Do not rerun the receipt regression, notification workflow tests, or any other closed audit test unless new evidence shows a regression.
 
 ## PROTECTED LOCAL FILES
 
