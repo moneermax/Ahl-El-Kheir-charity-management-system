@@ -11,6 +11,21 @@ SELECT '2300', 'مستحقات لصالح Fina Al-Khair', 'Funds Payable to Fina
        'أموال طرف ثالث مخصصة لصالح Fina Al-Khair ولا تمثل إيراداً لأهل الخير.'
 WHERE NOT EXISTS (SELECT 1 FROM accounts WHERE code = '2300');
 
+CREATE TABLE IF NOT EXISTS fina_payment_intakes (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    sponsor_payment_id INT UNSIGNED NOT NULL,
+    allocation_mode ENUM('ahl_only','fina_only','shared') NOT NULL,
+    fina_share_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+    integration_reference VARCHAR(100) NOT NULL,
+    created_by INT UNSIGNED NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_fina_intake_payment (sponsor_payment_id),
+    UNIQUE KEY uq_fina_intake_reference (integration_reference),
+    KEY idx_fina_intake_mode (allocation_mode),
+    CONSTRAINT fk_fina_intake_payment FOREIGN KEY (sponsor_payment_id) REFERENCES sponsor_payments(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_fina_intake_created_by FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS fina_payment_allocations (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     transaction_id INT UNSIGNED NOT NULL,
