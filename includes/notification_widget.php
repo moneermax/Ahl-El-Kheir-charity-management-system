@@ -51,7 +51,7 @@ if (Session::isLoggedIn()) {
 @media(max-width:991px){#akNotificationBell .ak-notif-panel{inset-inline-end:-90px}}
 @media(max-width:576px){#akNotificationBell .ak-notif-panel{position:fixed;top:62px;inset-inline-end:10px;width:calc(100vw - 20px)}}
 </style>
-<div id="akNotificationBell" data-poll-url="<?php echo e($akNotifPollUrl); ?>" data-mark-read-url="<?php echo e($akNotifIndividualReadUrl); ?>" data-current-url="<?php echo e($akNotifRedirect); ?>">
+<div id="akNotificationBell" data-poll-url="<?php echo e($akNotifPollUrl); ?>" data-mark-read-url="<?php echo e($akNotifIndividualReadUrl); ?>" data-current-url="<?php echo e($akNotifRedirect); ?>" data-csrf-token="<?php echo e(csrf_token()); ?>">
  <button type="button" class="ak-notif-toggle" aria-label="الإشعارات" title="الإشعارات" onclick="document.getElementById('akNotificationBell').classList.toggle('open')">
   <i class="fas fa-bell"></i>
   <?php if ($akNotifUnread > 0): ?><span class="ak-notif-badge"><?php echo $akNotifUnread > 99 ? '99+' : $akNotifUnread; ?></span><?php endif; ?>
@@ -110,6 +110,7 @@ if (Session::isLoggedIn()) {
 
  const pollUrl=root.getAttribute('data-poll-url');
  const markReadUrl=root.getAttribute('data-mark-read-url');
+ const csrfToken=root.getAttribute('data-csrf-token') || '';
  const currentUrl=root.getAttribute('data-current-url') || window.location.href;
  const panelBody=root.querySelector('.ak-notif-panel-body');
  const panelHead=root.querySelector('.ak-notif-panel-head');
@@ -125,7 +126,7 @@ if (Session::isLoggedIn()) {
  function esc(value){
      return String(value == null ? '' : value)
          .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-         .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+         .replace(/>/g,'&gt;').replace(/\"/g,'&quot;').replace(/'/g,'&#039;');
  }
 
  function render(data){
@@ -139,6 +140,7 @@ if (Session::isLoggedIn()) {
              const link=String(item.link||'').trim() || currentUrl;
              if(!id) return '<div class="ak-notif-item"><strong>'+esc(item.title)+'</strong><div class="ak-notif-body">'+esc(item.body)+'</div><small>'+esc(item.created_at)+'</small></div>';
              return '<form method="post" action="'+esc(markReadUrl)+'" class="ak-notif-read-form">'
+                 +'<input type="hidden" name="csrf_token" value="'+esc(csrfToken)+'">'
                  +'<input type="hidden" name="notification_id" value="'+id+'">'
                  +'<input type="hidden" name="redirect" value="'+esc(link)+'">'
                  +'<button type="submit" class="ak-notif-item"><strong>'+esc(item.title)+'</strong><div class="ak-notif-body">'+esc(item.body)+'</div><small>'+esc(item.created_at)+'</small></button>'
