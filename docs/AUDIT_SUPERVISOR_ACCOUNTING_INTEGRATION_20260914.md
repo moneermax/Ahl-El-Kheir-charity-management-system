@@ -67,6 +67,13 @@ The Accounting policy implementation remains anchored to Opening Balance:
 - Sponsorship accounting remains gross treasury debit, net sponsorship revenue to 4100, and administrative-fee revenue to 4200 when applicable.
 - There is no longer a manual fee-percentage input on the transaction entry form.
 
+## Receipt-file regression fix — 2026-09-15
+
+- `modules/transactions/receipt_file.php` previously returned a bare `404 Not found` response when a transaction had no receipt attachment or when the referenced receipt file was no longer available.
+- The missing-receipt path now uses the normal application header and a clear Arabic system message instead of a white/plain error page.
+- The existing authentication, role checks, Supervisor Sponsor-scope authorization, and secure real-path validation are preserved.
+- Existing valid receipt files continue to be streamed inline with their detected MIME type.
+
 ## Separation-of-duties result
 
 Supervisor remains an operational oversight role. Financial approval/posting remains with FM/Accounting.
@@ -85,5 +92,7 @@ Targeted testing should confirm:
 8. Supervisor transaction list opens without a PHP parse error.
 9. Transaction entry no longer offers a manual administrative-fee percentage field.
 10. Orphan profile edit can upload/replace/remove a photo and the orphan form displays the saved photo.
+11. A transaction with no receipt attachment opens a normal system message instead of a white/plain `Not found` page.
+12. An existing receipt attachment still opens normally.
 
 No completed Accounting Audit tests or historical fixtures need to be rerun unless one of these targeted checks exposes a regression.
