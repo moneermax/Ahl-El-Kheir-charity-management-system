@@ -43,6 +43,7 @@ window.AK_TRANSLATIONS=<?php echo json_encode(ak_dict(),JSON_UNESCAPED_UNICODE|J
 <script src="<?php echo asset('js/messaging_ui_cleanup.js'); ?>"></script>
 <script src="<?php echo asset('js/messaging_attachments.js'); ?>"></script>
 <script src="<?php echo asset('js/messaging_message_delete.js'); ?>"></script>
+<script src="<?php echo asset('js/searchable_sponsorship_select.js'); ?>"></script>
 <?php if (($active ?? '') === 'fm_dashboard'): ?><script src="<?php echo asset('js/fm_dashboard_layout.js'); ?>"></script><?php endif; ?>
 <?php if (($active ?? '') === 'fm_dashboard'): ?>
 <?php endif; ?>
