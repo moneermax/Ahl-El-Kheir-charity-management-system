@@ -93,7 +93,7 @@ The Arabic encoding issue is already solved. Do not restart old ACC1 tests unles
 
 ## 7. Current active direction
 
-**Supervisor ↔ Accounting integration review** remains the broader audit direction. The latest completed work was a notification UX/live-behavior refinement that affected shared dashboards but did not change Accounting authorization.
+**Supervisor ↔ Accounting integration review** remains the broader audit direction. The latest completed work was a fresh bank-transfer/payment-method/accounting-path test, including the administrative-fee policy check.
 
 The next substantive audit work must inspect actual repository integration points and answer:
 
@@ -105,7 +105,7 @@ The next substantive audit work must inspect actual repository integration point
 6. Does any Accounting query accidentally expose data outside the Supervisor's legitimate Sponsor scope?
 7. Does any Supervisor dashboard KPI/summary expose Accounting data broader than the Supervisor's operational scope?
 
-Do not repeat the closed Accounting Audit. Reuse its findings as the baseline and investigate only the integration boundary.
+The fresh bank-transfer test is now closed and should not be repeated. Its verified payment method, posting account, bank reconciliation, and administrative-fee result are recorded below.
 
 ## 8. Recent completed Supervisor findings
 
@@ -256,9 +256,11 @@ A new chat/session must continue from this master status and the single master a
 ## 16. Latest checkpoint — 2026-09-15
 
 - Active phase: **Supervisor ↔ Accounting integration review**.
-- Last completed regression: missing/stale transaction receipt handling.
-- Latest completed notification refinement: shared live notification behavior, unread red-dot indicator, full-history link, and non-destructive bell-menu clear behavior.
-- Latest notification fix commits: `391474e6ea894812b9b3eba6e636bba238e8c66a` and `ddd9796896c49f4e2aaa150c3182253a6fa42d05`.
-- Last substantive Supervisor integration documentation commit before notification refinements: `cd78fe373c72ce4063ff0b1a9c9a66e59a245961`.
-- Current next task: inspect the remaining real Supervisor → Accounting integration points and select the next genuinely untested control.
-- Do not rerun closed Accounting, Accountant Staff, FM dashboard, Supervisor ownership, sponsorship-list scope, notification workflow, or receipt regression tests unless new evidence shows a regression.
+- Supervisor payment-method persistence defect: **FIXED / RUNTIME VERIFIED**.
+- Fresh bank-transfer test `SP-000010` / transaction ID `28`: **PASS**.
+- Bank posting: account `1200` debit `10,000.00`; sponsorship revenue account `4100` credit `10,000.00`; journal `JE-000029` / ID `52` posted and balanced.
+- Bank balance increased exactly `10,000` during FM confirmation (`24,786,000` → `24,796,000`).
+- Administrative-fee check for this transaction: **PASS** — `admin_fee_method = none`, `admin_fee_amount = 0`, `net_amount = 10,000`, `admin_fee_policy_id = NULL`, and no `4200` line. No historical fee/method inference or manual correction is permitted.
+- The existing accounting design is expected to deduct/split administrative fees when an applicable `fixed` or `percentage` policy is attached; this specific test does not claim to test that active-policy calculation path.
+- Next runtime test: fresh Supervisor mobile-wallet submission → FM confirmation → verify journal debit reaches Electronic Wallet `1300`.
+- Do not rerun closed bank-transfer, admin-fee `none`, notification, receipt, Supervisor ownership/scope, or completed Accounting tests unless genuine regression evidence appears.
