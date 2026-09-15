@@ -9,18 +9,17 @@ if (!Session::isLoggedIn() || Session::getUserRole() !== 'supervisor') { header(
 $pageTitle=t('dashboard.supervisor_title');$active='dashboard';$uid=Session::getUserId();$myLetters=dbFetchAll("SELECT l.code,l.name_ar FROM supervisor_letters sl JOIN letters l ON l.id=sl.letter_id WHERE sl.supervisor_id=? ORDER BY l.sort_order",[$uid]);
 
 /*
- * Dashboard sponsor scope must match the authoritative supervisor rule used by
- * sponsor/family work screens: direct sponsor assignment OR first-letter +
- * sponsor-gender responsibility matrix. Direct assignment is intentionally
- * retained even when the sponsor does not currently match the matrix.
+ * Dashboard sponsor scope follows the authoritative sponsor first-letter +
+ * sponsor-gender responsibility matrix. sponsor.supervisor_id is an
+ * operational assignment/history field, not an independent authorization grant.
  */
-$scopeSql="(s.supervisor_id=? OR EXISTS (SELECT 1 FROM supervisor_letters sl WHERE sl.supervisor_id=? AND sl.letter_id=s.first_letter_id AND (CONVERT(sl.gender USING utf8mb4) COLLATE utf8mb4_unicode_ci=CONVERT(s.gender USING utf8mb4) COLLATE utf8mb4_unicode_ci OR CONVERT(sl.gender USING utf8mb4) COLLATE utf8mb4_unicode_ci='both')))";
+$scopeSql="EXISTS (SELECT 1 FROM supervisor_letters sl WHERE sl.supervisor_id=? AND sl.letter_id=s.first_letter_id AND (CONVERT(sl.gender USING utf8mb4) COLLATE utf8mb4_unicode_ci=CONVERT(s.gender USING utf8mb4) COLLATE utf8mb4_unicode_ci OR CONVERT(sl.gender USING utf8mb4) COLLATE utf8mb4_unicode_ci IN ('both','all','كلاهما','الكل')))";
 $s=dbFetchOne("SELECT
     (SELECT COUNT(*) FROM sponsors s WHERE $scopeSql) AS my_sponsors,
     (SELECT COUNT(*) FROM sponsorships sp JOIN sponsors s ON s.id=sp.sponsor_id WHERE sp.status='active' AND $scopeSql) AS my_active_sponsorships,
     (SELECT COUNT(DISTINCT sp.child_id) FROM sponsorships sp JOIN sponsors s ON s.id=sp.sponsor_id WHERE sp.status='active' AND $scopeSql) AS my_orphans,
-    (SELECT COALESCE(SUM(sp.amount),0) FROM sponsor_payments sp JOIN sponsors s ON s.id=sp.sponsor_id WHERE DATE_FORMAT(sp.created_at,'%Y-%m')=DATE_FORMAT(CURDATE(),'%Y-%m') AND $scopeSql) AS month_collected",
-    [$uid,$uid,$uid,$uid,$uid,$uid,$uid,$uid]);
+    (SELECT COALESCE(SUM(sp.amount),0) FROM sponsor_payments sp JOIN sponsors s ON s.id=sp.sponsor_id WHERE sp.status='approved' AND DATE_FORMAT(sp.created_at,'%Y-%m')=DATE_FORMAT(CURDATE(),'%Y-%m') AND $scopeSql) AS month_collected",
+    [$uid,$uid,$uid,$uid]);
 include __DIR__.'/../includes/header.php'; ?>
 <style>
 /* Supervisor dashboard: the page cards replace the global quick-action buttons. */
