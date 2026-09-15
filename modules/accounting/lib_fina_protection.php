@@ -1,0 +1,7 @@
+<?php
+// Fina funds protection helpers. Physical asset balances and third-party economic ownership are kept separate.
+require_once __DIR__.'/lib.php';
+require_once __DIR__.'/lib_fina.php';
+if(!function_exists('ak_fina_protected_balance')){function ak_fina_protected_balance(string $currencyCode):float{$r=dbFetchOne("SELECT COALESCE(SUM(fina_share_amount-settled_amount),0) protected_amount FROM fina_payment_allocations WHERE currency_code=? AND status IN ('protected','partially_settled')",[strtoupper(trim($currencyCode))]);return round((float)($r['protected_amount']??0),2);}}
+if(!function_exists('ak_fina_available_ahl_asset')){function ak_fina_available_ahl_asset(string $accountCode,string $currencyCode):float{$asset=0.0;$aid=ak_account_id($accountCode);if($aid>0){$r=dbFetchOne("SELECT COALESCE(SUM(jl.debit-jl.credit),0) balance FROM journal_lines jl JOIN journal_entries je ON je.id=jl.entry_id WHERE jl.account_id=? AND je.status='posted'",[$aid]);$asset=round((float)($r['balance']??0),2);}$protected=ak_fina_protected_balance($currencyCode);return round(max(0,$asset-$protected),2);}}
+if(!function_exists('ak_fina_assert_ahl_outgoing_available')){function ak_fina_assert_ahl_outgoing_available(string $accountCode,string $currencyCode,float $amount):void{$amount=round($amount,2);if($amount<=0)throw new RuntimeException('مبلغ الصرف يجب أن يكون أكبر من صفر.');$available=ak_fina_available_ahl_asset($accountCode,$currencyCode);if($amount>$available)throw new RuntimeException('الرصيد المتاح لأهل الخير بعد حماية أموال فينا الخير غير كافٍ لهذه العملية.');}}
