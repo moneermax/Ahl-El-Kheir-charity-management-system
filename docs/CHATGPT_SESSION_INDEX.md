@@ -16,9 +16,9 @@ This index is the short handoff document. The repository and these documents are
 
 ## CURRENT ACTIVE AUDIT
 
-**Supervisor ↔ Accounting integration review**, within the broader Supervisor Module Audit boundary.
+**Accounting journal cross-module integrity review**, continuing from the completed Supervisor ↔ Accounting integration review.
 
-The immediate goal is NOT to re-audit the Supervisor module. The Supervisor module has been working correctly in the tested areas. The next work is to inspect only the actual integration points between Supervisor operational workflows and Accounting authorization/visibility.
+The Supervisor ↔ Accounting integration boundary is now **PASS / CLOSED at the tested evidence boundary**. Do not restart the Supervisor audit or repeat its completed runtime tests.
 
 ## AUTHORITATIVE SUPERVISOR SCOPE RULE
 
@@ -50,14 +50,14 @@ A historical implementation also contains `sponsor.supervisor_id` direct-assignm
 ## COMPLETED CURRENT-CHECKPOINT WORK
 
 - FM dashboard treasury/admin-fee regression fixed and closed: `783b160a60ce50f0f661a65a112aea7469979ca4`.
-- **FM dashboard treasury calculation is now runtime-verified and closed:** Cash `1100` = `48,721,100`; Bank `1200` = `24,796,000`; E-wallet `1300` = `25,060,000`; Total Treasury = `98,577,100`; exact arithmetic match confirmed.
+- **FM dashboard treasury calculation is runtime-verified and closed:** Cash `1100` = `48,721,100`; Bank `1200` = `24,796,000`; E-wallet `1300` = `25,060,000`; Total Treasury = `98,577,100`; exact arithmetic match confirmed.
 - Supervisor sponsor ownership/family-scope restoration completed and preserved.
 - Supervisor sponsor authorization was centralized across sponsor/sponsorship routes.
 - Family orphan sponsorship status display regression fixed: `9901c6318225163ca851fbaeb92514d1774bb681`.
 - Supervisor dashboard sponsor KPI scope aligned with the established sponsor scope rule: `2a82dd87482544ecd6f5edbf61b095b2c23b39f8`.
 - General sponsor-request queue authorization narrowed: Supervisor is not authorized for `modules/sponsors/requests.php`; commit: `ba21c3415158787e2fb294eaf746cf37d7d845bc`.
 - Sponsor runtime schema synchronization cleanup completed; explicit migration added for sponsor workflow schema requirements.
-- VGM sponsor assignment/reassignment is confirmed as a VGM task. VGM dashboard exposes `modules/sponsors/assign.php`; Supervisor direct access is blocked and FM has no sponsor-assignment action. All three runtime checks passed. Commit: `48fc2db0ac9e5585127b65c17eacb5e3dd285ce0`.
+- VGM sponsor assignment/reassignment is confirmed as a VGM task. Supervisor direct access is blocked and FM has no sponsor-assignment action. All three runtime checks passed. Commit: `48fc2db0ac9e5585127b65c17eacb5e3dd285ce0`.
 - **Supervisor sponsorship-list scope was aligned with the authoritative Letter + Gender rule:** direct `sponsor.supervisor_id` is no longer an independent authorization path. Commit: `e2a5a23b2aa3b5797cb7298641c5fd5bc85e76b6`.
 - **Supervisor sponsor authorization helper was aligned with Letter + Gender:** `supervisorCanAccessSponsor()` no longer grants access from `sponsor.supervisor_id`. Commit: `5f8e5e0848261ab6cd6edf841a21e9193f1bc123`.
 - User's previously completed sponsorship-list matrix tests remain closed; do not rerun unless regression evidence appears.
@@ -67,115 +67,116 @@ A historical implementation also contains `sponsor.supervisor_id` direct-assignm
 
 The shared notification behavior is now confirmed and should not be changed casually:
 
-- Live polling is centralized in the shared notification widget and refreshes every 5 seconds, so new workflow notifications appear without manual page refresh or logout/login.
+- Live polling is centralized in the shared notification widget and refreshes every 5 seconds.
 - Dynamic notification click forms preserve CSRF protection.
 - Applicable dashboards share the same unread visual behavior, including a clear red dot beside unread notification titles.
 - A full notification history page exists at `modules/notifications/index.php`, and the bell includes `عرض الكل`.
-- `مسح الكل` is **menu-only** and **must never delete notification records**. `clear_all.php` records a browser-local cutoff and the shared indicator hides those cleared menu entries while keeping the records available in full history.
+- `مسح الكل` is menu-only and never deletes notification records. `clear_all.php` records a browser-local cutoff and the shared indicator hides those cleared menu entries while keeping the records available in full history.
 - Real notification scenarios already tested include HR leave approval/rejection and password recovery/change-request flows; both work correctly.
 
 Relevant commits:
 
-- `ecc82aa6af0a8201adbb6d6de0c7dbb087e77305` — polling endpoint.
-- `b82bd4effca75ffbde5a2f8e1930f326fc3b9664` — live shared notification widget.
-- `2ff8f331e575fab9dce9916c783ad3d7d3e63097` — CSRF fix for dynamically rendered notifications.
-- `c9b151b960b962c6cddbb1b135ceef6ddd5b4e16` — unread red-dot indicator.
-- `01f161ac59c97e033626ba5c447e7793fe52da4c` — full notifications page.
-- `0e830c3851eb2efd83f27881ff0b6c998f2d27ca` — bell `عرض الكل` link.
-- `391474e6ea894812b9b3eba6e636bba238e8c66a` — non-destructive clear-all backend.
-- `ddd9796896c49f4e2aaa150c3182253a6fa42d05` — client-side menu filtering after clear-all.
+- `ecc82aa6af0a8201adbb6d6de0c7dbb087e77305`
+- `b82bd4effca75ffbde5a2f8e1930f326fc3b9664`
+- `2ff8f331e575fab9dce9916c783ad3d7d3e63097`
+- `c9b151b960b962c6cddbb1b135ceef6ddd5b4e16`
+- `01f161ac59c97e033626ba5c447e7793fe52da4c`
+- `0e830c3851eb2efd83f27881ff0b6c998f2d27ca`
+- `391474e6ea894812b9b3eba6e636bba238e8c66a`
+- `ddd9796896c49f4e2aaa150c3182253a6fa42d05`
 
-The user has explicitly tested and confirmed the latest clear-all behavior as correct. Do not rerun these notification tests unless a genuine regression appears.
+The user explicitly tested and confirmed the latest clear-all behavior as correct. Do not rerun these notification tests unless a genuine regression appears.
 
-## SUPERVISOR ↔ ACCOUNTING PAYMENT-METHOD FINDING — 2026-09-15
+## SUPERVISOR ↔ ACCOUNTING INTEGRATION — 2026-09-15 — PASS / CLOSED
 
-A genuine integration defect was identified from runtime evidence: Supervisor payment entry displayed a payment-method selector (`cash`, `bank_transfer`, `mobile`, `credit_card`, `other`), but the Supervisor branch that inserted records into `sponsor_payments` did **not** persist `payment_method`. The database therefore retained its default method (`cash`). The FM review queue correctly displayed the stored value, and Accounting journal posting correctly maps stored methods through `ak_cash_code()` (`cash` → `1100`, `bank_transfer`/`credit_card` → `1200`, `mobile` → `1300`).
+The Supervisor ↔ Accounting integration boundary was inspected in repository code and then runtime-tested by the user.
 
-This explains why Supervisor-submitted payments selected as bank/wallet appeared in the FM queue as cash and were posted to the cash account.
+### Runtime result
 
-Fix:
+**All requested runtime checks passed.** No source-code change was required for this integration boundary.
 
-- `modules/transactions/create.php` now persists the Supervisor-selected `payment_method` for both monthly sponsorship and non-monthly Supervisor payment submissions.
-- `dashboard/supervisor_dashboard.php` now includes a scoped **سجل آخر التحصيلات التي أرسلتها** showing date, Sponsor, period, payment method, amount, and operational review status. The query is restricted to the logged-in Supervisor's own submissions and the authoritative Sponsor Letter + Gender scope.
+Verified controls included:
 
-Commits:
+- Supervisor collection-history visibility is limited to the Supervisor's own legitimate Sponsor-scope submissions.
+- No unauthorized cross-Supervisor financial exposure was observed.
+- Supervisor cannot create Accounting journal entries.
+- Supervisor cannot modify or void journals.
+- Supervisor cannot access the Accounting ledger.
+- Supervisor cannot access Accounting reports/accounts as an Accounting role.
+- Supervisor cannot access FM review/approval controls.
+- Direct URL/server-side authorization also held for the tested Accounting-only routes.
 
-- `8255b4c1a205eb978920ade5dc15d21af498d478` — persist Supervisor payment method for FM accounting.
-- `a5c31a65fea68a2a52141f591f0ac93e30cb023f` — add scoped Supervisor collection history.
+Repository inspection also confirmed:
 
-### Historical data limitation
+- `modules/accounting/journal.php` excludes Supervisor.
+- `modules/accounting/journal_create.php` is restricted to Accounting-authorized roles.
+- `modules/accounting/account_ledger.php` excludes Supervisor.
+- `modules/accounting/accounts.php` and `reports.php` exclude Supervisor.
+- `modules/accounting/fm_review_queue.php` and `fm_transaction_review.php` exclude Supervisor.
+- `modules/accounting/serve_receipt.php` and `voucher_print.php` exclude Supervisor.
+- `modules/transactions/create.php` Supervisor submissions route through `supervisorCanAccessSponsor()`, persist the Supervisor actor, start as pending, and notify FM; it does not directly create a journal.
 
-Supervisor payments already submitted before this fix may have `payment_method='cash'` because the selected method was never stored. The application cannot safely reconstruct the user's original selection from the database alone. Do **not** invent or bulk-change historical payment methods. Existing posted transactions must be treated as requiring evidence-based accounting correction only if the actual original payment method can be established.
+The broader Supervisor audit must not be restarted from this point.
 
-## ADMINISTRATIVE-FEE / BANK-TRANSFER CHECKPOINT — 2026-09-15
+## SUPERVISOR PAYMENT / ACCOUNTING CHECKPOINTS — 2026-09-15
 
-The fresh Supervisor bank-transfer test was completed through FM confirmation and Accounting posting.
-
-Verified transaction:
+### Bank transfer — PASS / CLOSED
 
 - Transaction `SP-000010` / ID `28`.
-- Date: `2026-09-15`.
-- Gross amount: `10,000.00`.
-- Stored payment method: `bank_transfer`.
-- Admin-fee method: `none`.
-- Admin-fee amount: `0.00`.
-- Net amount: `10,000.00`.
-- `admin_fee_policy_id` is `NULL`; no administrative-fee policy was attached to this transaction.
-- Posted journal: `JE-000029` / ID `52`.
-- Journal lines: account `1200` Bank debit `10,000.00`; account `4100` Sponsorship Revenue credit `10,000.00`.
-- No `4200` Administrative Fees line was expected or posted.
+- Gross `10,000.00`.
+- Stored method `bank_transfer`.
+- Administrative-fee method `none`; amount `0.00`; policy ID `NULL`.
+- Posted journal `JE-000029` / ID `52`.
+- Bank `1200` debit `10,000.00`.
+- Sponsorship revenue `4100` credit `10,000.00`.
+- No `4200` line.
+- Bank balance `24,786,000` → `24,796,000`.
 
-Runtime bank-balance evidence also passed: the bank balance increased from `24,786,000` to `24,796,000`, exactly `10,000`.
+### Mobile wallet — PASS / CLOSED
 
-**Result: PASS.** This transaction is correctly accounted for because the transaction has no applicable administrative-fee policy. If a transaction falls under an applicable `fixed` or `percentage` administrative-fee policy, the existing accounting design is expected to split the gross receipt into the bank/cash/wallet debit, net sponsorship revenue credit (`4100`), and administrative-fee credit (`4200`). This specific test does not prove the active-policy calculation path; it proves that a `none` policy is not incorrectly deducting a fee.
+- Supervisor selected `mobile`.
+- E-wallet `1300` balance `25,050,000` → `25,060,000`.
+- Increase exactly `10,000`.
 
-Do not modify SP-000010 or infer a historical fee/method for older transactions.
-
-## MOBILE-WALLET CHECKPOINT — 2026-09-15
-
-The fresh Supervisor mobile-wallet test was completed through FM confirmation and Accounting posting.
-
-Verified runtime evidence:
-
-- Supervisor selected `mobile` as the payment method.
-- E-wallet account `1300` balance before FM confirmation: `25,050,000`.
-- E-wallet account `1300` balance after FM confirmation: `25,060,000`.
-- Increase: exactly `10,000`.
-- Result: **PASS**.
-
-This confirms the stored Supervisor payment method reaches the FM confirmation/accounting posting path and maps to Electronic Wallet `1300`.
-
-Do not repeat this closed mobile-wallet test unless genuine regression evidence appears.
-
-## FM TREASURY CALCULATION CHECKPOINT — 2026-09-15
-
-Repository inspection of `modules/accounting/fm_dashboard.php` confirmed that the FM treasury values are calculated live from posted journal lines for active accounts `1100`, `1200`, and `1300`.
-
-Runtime values:
+### FM treasury — PASS / CLOSED
 
 - Cash `1100`: `48,721,100`.
 - Bank `1200`: `24,796,000`.
 - E-wallet `1300`: `25,060,000`.
 - Total Treasury: `98,577,100`.
+- Exact arithmetic match confirmed.
+- The reconciliation flow figures are a separate report and are not the current treasury asset balance.
 
-Exact arithmetic:
+Do not repeat these closed tests unless genuine regression evidence appears.
 
-`48,721,100 + 24,796,000 + 25,060,000 = 98,577,100`
+## ACCOUNTING JOURNAL CROSS-MODULE INTEGRITY — NEXT
 
-Result: **PASS / CLOSED**.
+The next substantive audit target is the remaining protected automated journal reference types:
 
-The reconciliation flow values shown on the dashboard are a separate flow report and are not expected to equal the current treasury asset balance. Do not treat that difference as a treasury calculation defect.
+- `payroll`
+- `disbursement_void`
+- `item_return`
 
-## NEXT AUDIT DIRECTION — SUPERVISOR ↔ ACCOUNTING
+Existing semantics are authoritative:
 
-The payment-method and FM treasury verification work is now closed. Continue only with the remaining real integration controls:
+- `disbursement_void` is created by the batch-void workflow and references the monthly disbursement.
+- `item_return` is created by the partial item-return workflow and references the disbursement item.
+- `payroll` is created by `modules/hr/lib_payroll_accounting.php` and links to the payroll record.
 
-1. Verify Supervisor payment-history scope using the already implemented scoped collection history; do not recreate old fixtures unnecessarily.
-2. Verify no Supervisor route exposes Accounting-only journal/ledger/approval/posting controls directly or indirectly.
-3. Inspect remaining cross-module Accounting reference/mutation points only where repository evidence identifies a genuinely untested control.
-4. Continue with evidence-based test data only when a new control requires it; inspect the actual schema/code before any SQL.
+The existing protection commit is `8e3ee6fd7d95c0efef834a284ed428d125064bfc`.
 
-Do not rerun the closed bank-transfer, mobile-wallet, admin-fee `none`, FM treasury calculation, notification, receipt, Supervisor ownership/scope, or completed Accounting tests.
+### Next workflow
+
+1. Inspect actual current callers/workflows for the three reference types.
+2. Inspect the actual schema before any SQL or test fixture creation.
+3. Reuse existing evidence if a control is already genuinely proven.
+4. Create only new controlled test data when a missing runtime control requires it.
+5. Verify server-side protection against manual journal void/mutation.
+6. Verify journal creation, linkage, balance, and source record state for each newly tested automated route.
+7. Inspect remaining callers of `ak_void_journal_for_voucher()` and direct journal mutation routes.
+8. Document each result in the single master audit and this index.
+
+Do not relabel reference types or alter historical accounting evidence merely to make an audit query pass.
 
 ## PROTECTED LOCAL FILES
 
@@ -183,3 +184,7 @@ Do not delete/reset/stash/overwrite:
 
 - `modules/accounting/fm_dashboard.php.pre-fix-backup-20260914`
 - `modules/accounting/fm_dashboard.php.regression-backup-20260914-111900`
+
+## GIT / LOCAL SAFETY
+
+The connected GitHub view cannot inspect the user's Windows working tree. Preserve any intentional local uncommitted work. Do not use destructive reset/restore/clean/stash operations or force-push as part of continuation.
