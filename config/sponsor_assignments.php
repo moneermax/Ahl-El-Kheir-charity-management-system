@@ -32,14 +32,15 @@ function resolveSponsorSupervisorId(string $fullName, string $gender): ?int
 
 /**
  * Authoritative supervisor scope for an individual sponsor.
- * A supervisor may access a sponsor when either:
- * 1) the sponsor is directly assigned to that supervisor; or
- * 2) the supervisor's first-letter/gender responsibility matrix covers it.
+ * A supervisor may access a sponsor only when the sponsor's own first-letter
+ * + gender falls within that supervisor's configured responsibility matrix.
+ *
+ * sponsor.supervisor_id remains an operational assignment/history field. It
+ * is intentionally NOT an independent authorization grant.
  */
 function supervisorCanAccessSponsor(int $supervisorId, array $sponsor): bool
 {
     if ($supervisorId <= 0) return false;
-    if ((int)($sponsor['supervisor_id'] ?? 0) === $supervisorId) return true;
 
     $letterId = (int)($sponsor['first_letter_id'] ?? 0);
     if ($letterId <= 0) return false;
