@@ -35,17 +35,37 @@ The Supervisor dashboard monthly-receipts KPI also used `sponsor_payments.superv
 - Validates a direct `sponsor_id` against the same scope before displaying or processing it.
 - Revalidates Sponsor scope on POST before creating a Supervisor payment.
 - Protects returned Sponsor-payment editing with the same Sponsor scope.
+- The manual administrative-fee percentage input was removed. The form now explicitly tells the operator that administrative fees are applied automatically from the FM-controlled policy when the transaction is posted.
+- Submission and returned-transaction editing no longer calculate or trust a manually entered fee percentage; the accounting posting layer remains the authoritative fee calculation point.
 
 ### `modules/transactions/index.php`
 
 - Reuses the authoritative Sponsor-scope helper.
 - Supervisor transaction results are limited to Sponsors the Supervisor can legitimately access.
 - Accounting journal visibility remains unchanged and still requires the existing authorized Accounting/management roles.
+- Fixed a syntax regression in the journal-link expression that caused a PHP parse error for Supervisors on this page.
 
 ### `dashboard/supervisor_dashboard.php`
 
 - Monthly receipts are now calculated by joining `sponsor_payments` to `sponsors` and applying the same Sponsor scope used by the dashboard.
 - No Accounting authority was added to the Supervisor dashboard.
+
+### `modules/families/orphan_profile.php`
+
+- Added a photo upload field to the orphan profile/edit page.
+- Supports JPG/PNG uploads up to 10 MB.
+- Existing photos can be replaced or removed from the profile page.
+- The saved `family_children.photo_path` is the same field already consumed by the orphan form/photo display path.
+
+## Administrative-fee policy control
+
+The Accounting policy implementation remains anchored to Opening Balance:
+
+- FM/admin configures `none`, `fixed`, or `percentage` before the opening balance becomes live.
+- Once active, the policy is locked for historical consistency.
+- At transaction posting, Accounting applies the active policy snapshot automatically.
+- Sponsorship accounting remains gross treasury debit, net sponsorship revenue to 4100, and administrative-fee revenue to 4200 when applicable.
+- There is no longer a manual fee-percentage input on the transaction entry form.
 
 ## Separation-of-duties result
 
@@ -62,5 +82,8 @@ Targeted testing should confirm:
 5. The Supervisor monthly-receipts KPI reflects only legitimately scoped Sponsor payments.
 6. FM can still receive and process a legitimate Supervisor submission.
 7. Supervisor still has no Accounting journal/ledger approval authority.
+8. Supervisor transaction list opens without a PHP parse error.
+9. Transaction entry no longer offers a manual administrative-fee percentage field.
+10. Orphan profile edit can upload/replace/remove a photo and the orphan form displays the saved photo.
 
 No completed Accounting Audit tests or historical fixtures need to be rerun unless one of these targeted checks exposes a regression.
