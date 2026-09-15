@@ -28,9 +28,9 @@ This is an existing project and an existing audit/development history.
 
 The current repository and these documents are authoritative over old chat history:
 
-1. `docs/AHL_EL_KHEIR_MASTER_STATUS.md` — high-level START HERE status.
-2. `docs/AHL_EL_KHEIR_MASTER_AUDIT.md` — single detailed master audit.
-3. `docs/CHATGPT_SESSION_INDEX.md` — short handoff/current checkpoint.
+1. `docs/CHATGPT_SESSION_INDEX.md` — short handoff/current checkpoint.
+2. `docs/AHL_EL_KHEIR_MASTER_STATUS.md` — high-level START HERE status.
+3. `docs/AHL_EL_KHEIR_MASTER_AUDIT.md` — single detailed master audit.
 4. `docs/CHATGPT_MASTER_CONTINUATION_PROMPT.md` — these permanent continuation rules.
 5. Read only the module-specific documentation relevant to the immediate task.
 
@@ -168,7 +168,33 @@ At the current checkpoint:
 - Supervisor sponsorship-list scope regression was fixed at `76be77a4d2e6e337485d3f3c9980780b9de73df0` and the three scope tests passed.
 - VGM sponsor assignment/reassignment is confirmed as a VGM task; VGM, Supervisor-protection, and FM-isolation tests passed at commit `48fc2db0ac9e5585127b65c17eacb5e3dd285ce0`.
 - Missing/stale transaction receipt handling regression was fixed at `modules/transactions/receipt_file.php` and runtime-confirmed by the user. Code commit: `ddd5e91e6f90935cd3a7e328f480ae1f8d906e34`; documentation commit: `cd78fe373c72ce4063ff0b1a9c9a66e59a245961`.
-- **The next work is NOT a broad Supervisor re-audit. The next work is a focused Supervisor ↔ Accounting integration review.**
+- Shared notification live behavior, unread visual indicator, full notification history link, and non-destructive menu clearing are completed and user-confirmed.
+
+## NOTIFICATION CHECKPOINT — 2026-09-15
+
+The shared notification behavior is centralized and must be preserved:
+
+- `modules/notifications/poll.php` provides authenticated polling for unread/recent notifications.
+- The bell polls every 5 seconds, so new notifications appear without manual refresh or logout/login.
+- Dynamic notification actions retain CSRF tokens.
+- Applicable dashboards share the same unread visual behavior, including the red dot beside unread notification titles.
+- `modules/notifications/index.php` provides full notification history and the bell has `عرض الكل`.
+- `مسح الكل` is strictly **menu-only**. It must never delete records from `notifications`.
+- `modules/notifications/clear_all.php` now records a browser-local notification-ID cutoff instead of deleting rows.
+- `assets/js/notification_unread_indicator.js` hides menu entries at/below the cutoff and recalculates the visible unread badge after live polling.
+- Notification records remain available in full history for audit/history purposes.
+- Real workflow scenarios already tested and working include HR leave approval/rejection and password recovery/change-request notifications.
+
+Relevant commits:
+
+- `ecc82aa6af0a8201adbb6d6de0c7dbb087e77305` — polling endpoint.
+- `b82bd4effca75ffbde5a2f8e1930f326fc3b9664` — live shared widget.
+- `2ff8f331e575fab9dce9916c783ad3d7d3e63097` — dynamic notification CSRF fix.
+- `c9b151b960b962c6cddbb1b135ceef6ddd5b4e16` — unread red-dot indicator.
+- `01f161ac59c97e033626ba5c447e7793fe52da4c` — full notifications page.
+- `0e830c3851eb2efd83f27881ff0b6c998f2d27ca` — bell `عرض الكل` link.
+- `391474e6ea894812b9b3eba6e636bba238e8c66a` — non-destructive clear-all backend.
+- `ddd9796896c49f4e2aaa150c3182253a6fa42d05` — menu filtering after clear-all.
 
 ## NEXT TASK — SUPERVISOR ↔ ACCOUNTING INTEGRATION
 
@@ -270,4 +296,4 @@ Do not require the user to paste the entire historical audit into the new chat.
 
 ## LATEST DOCUMENTATION CHECKPOINT — 2026-09-15
 
-The documentation set was synchronized after the receipt-file regression was runtime-confirmed. The detailed receipt regression entry remains in `docs/AUDIT_SUPERVISOR_ACCOUNTING_INTEGRATION_20260914.md`; the master status, session index, and this continuation prompt now carry the same current checkpoint and next-task direction.
+The documentation handoff has been synchronized with the latest confirmed notification work: live polling, shared unread red-dot indicator, full notification history access, CSRF-safe dynamic notification actions, and non-destructive `مسح الكل`. The next substantive task remains the focused Supervisor ↔ Accounting integration review.
