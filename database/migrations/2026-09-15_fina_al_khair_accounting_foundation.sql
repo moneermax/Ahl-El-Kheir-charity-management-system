@@ -1,7 +1,7 @@
 -- AHL EL KHEIR
--- Fina Al-Khair (فينا الخير) third-party funds accounting foundation.
+-- فينا الخير (Fina Al-Khair) third-party funds accounting foundation.
 -- The sponsor's incoming payment remains the historical gross amount.
--- Fina's share is tracked separately as a liability and never as Ahl El Kheir revenue.
+-- فينا الخير's share is tracked separately as a liability and never as Ahl El Kheir revenue.
 -- Monthly sponsor obligations are separate from actual payment records so later payments
 -- can be linked without overwriting historical payments.
 
@@ -9,6 +9,11 @@ INSERT INTO accounts (code, name_ar, name_en, account_type, is_active, descripti
 SELECT '2300', 'مستحقات لصالح فينا الخير', 'Funds Payable to Fina Al-Khair', 'liability', 1,
        'أموال طرف ثالث مخصصة لصالح فينا الخير ولا تمثل إيراداً لأهل الخير.'
 WHERE NOT EXISTS (SELECT 1 FROM accounts WHERE code = '2300');
+
+-- The existing sponsor_payments table has created_at but no explicit payment date.
+-- Keep the actual collection date separate from record creation time.
+ALTER TABLE sponsor_payments
+    ADD COLUMN IF NOT EXISTS payment_date DATE NULL AFTER payment_period;
 
 CREATE TABLE IF NOT EXISTS fina_payment_intakes (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -67,8 +72,8 @@ CREATE TABLE IF NOT EXISTS sponsor_payment_obligations (
     UNIQUE KEY uq_sponsor_obligation_period (sponsorship_id, payment_period),
     KEY idx_sponsor_obligation_sponsor (sponsor_id),
     KEY idx_sponsor_obligation_status (status),
-    CONSTRAINT fk_sponsor_obligation_sponsorship FOREIGN KEY (sponsorship_id) REFERENCES sponsorships(id) ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT fk_sponsor_obligation_sponsor FOREIGN KEY (sponsor_id) REFERENCES sponsors(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_sponsor_obligation_sponsorship FOREIGN KEY (sponsorship_id) REFERENCES sponsorships(id) ON DELETE CASCADE,
+    CONSTRAINT fk_sponsor_obligation_sponsor FOREIGN KEY (sponsor_id) REFERENCES sponsors(id) ON DELETE CASCADE,
     CONSTRAINT fk_sponsor_obligation_currency FOREIGN KEY (currency_code) REFERENCES currencies(code) ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
