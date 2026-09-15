@@ -15,66 +15,9 @@ PREPARE stmt FROM @fk_sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
--- The existing disbursement workflow changes monthly_disbursements to transferred
--- before creating its outgoing transaction/journal. At that point the original
--- disbursement journal does not yet exist, so compare the requested disbursement
--- against the live posted treasury balance minus protected Fina funds.
-DROP TRIGGER IF EXISTS trg_fina_protect_disbursement_transfer;
-DELIMITER $$
-CREATE TRIGGER trg_fina_protect_disbursement_transfer
-BEFORE UPDATE ON monthly_disbursements
-FOR EACH ROW
-BEGIN
-    DECLARE protected_amount DECIMAL(14,2) DEFAULT 0.00;
-    DECLARE treasury_balance DECIMAL(14,2) DEFAULT 0.00;
-
-    IF NEW.status = 'transferred' AND COALESCE(OLD.status,'') <> 'transferred' THEN
-        SET protected_amount = COALESCE((
-            SELECT SUM(fina_share_amount - settled_amount)
-            FROM fina_payment_allocations
-            WHERE currency_code = 'SDG'
-              AND status IN ('protected','partially_settled')
-        ),0.00);
-
-        SET treasury_balance = COALESCE((
-            SELECT SUM(jl.debit - jl.credit)
-            FROM journal_lines jl
-            JOIN journal_entries je ON je.id = jl.entry_id
-            JOIN accounts a ON a.id = jl.account_id
-            WHERE je.status = 'posted'
-              AND a.code IN ('1100','1200','1300')
-        ),0.00);
-
-        IF ROUND(COALESCE(NEW.total_amount,0),2) > ROUND(treasury_balance - protected_amount,2) THEN
-            SIGNAL SQLSTATE '45000'
-                SET MESSAGE_TEXT = 'لا يمكن تنفيذ الصرف: المبلغ يتجاوز أموال أهل الخير المتاحة بعد حماية أموال فينا الخير.';
-        END IF;
-    END IF;
-END$$
-DELIMITER ;
-
--- Defense-in-depth: a direct insertion of a disbursement transaction is allowed
--- only when its monthly disbursement batch is already in the transferred state.
-DROP TRIGGER IF EXISTS trg_fina_validate_disbursement_transaction;
-DELIMITER $$
-CREATE TRIGGER trg_fina_validate_disbursement_transaction
-BEFORE INSERT ON transactions
-FOR EACH ROW
-BEGIN
-    DECLARE batch_status VARCHAR(30) DEFAULT NULL;
-    DECLARE batch_id INT UNSIGNED DEFAULT NULL;
-
-    IF NEW.transaction_type = 'disbursement' AND NEW.reference_number LIKE 'DISB-OUT-%' THEN
-        SET batch_id = CAST(SUBSTRING(NEW.reference_number,10) AS UNSIGNED);
-        SELECT status INTO batch_status
-        FROM monthly_disbursements
-        WHERE id = batch_id
-        LIMIT 1;
-
-        IF batch_status IS NULL OR batch_status <> 'transferred' THEN
-            SIGNAL SQLSTATE '45000'
-                SET MESSAGE_TEXT = 'لا يمكن إنشاء قيد صرف مباشر قبل اعتماد وتحويل دفعة الصرف.';
-        END IF;
-    END IF;
-END$$
-DELIMITER ;
+-- IMPORTANT DATABASE RULE:
+-- Do not create database triggers or views for this project.
+-- Fina protected-funds enforcement and disbursement workflow validation belong
+-- in the procedural PHP application layer, where the authorization, business
+-- rules, audit trail, and user-facing error handling are explicit and testable.
+-- This migration therefore contains schema/FK work only.
