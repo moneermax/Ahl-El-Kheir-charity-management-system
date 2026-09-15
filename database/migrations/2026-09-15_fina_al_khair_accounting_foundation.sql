@@ -1,14 +1,13 @@
 -- AHL EL KHEIR
--- Fina Al-Khair third-party funds accounting foundation.
---
+-- Fina Al-Khair (فينا الخير) third-party funds accounting foundation.
 -- The sponsor's incoming payment remains the historical gross amount.
 -- Fina's share is tracked separately as a liability and never as Ahl El Kheir revenue.
 -- Monthly sponsor obligations are separate from actual payment records so later payments
 -- can be linked without overwriting historical payments.
 
 INSERT INTO accounts (code, name_ar, name_en, account_type, is_active, description)
-SELECT '2300', 'مستحقات لصالح Fina Al-Khair', 'Funds Payable to Fina Al-Khair', 'liability', 1,
-       'أموال طرف ثالث مخصصة لصالح Fina Al-Khair ولا تمثل إيراداً لأهل الخير.'
+SELECT '2300', 'مستحقات لصالح فينا الخير', 'Funds Payable to Fina Al-Khair', 'liability', 1,
+       'أموال طرف ثالث مخصصة لصالح فينا الخير ولا تمثل إيراداً لأهل الخير.'
 WHERE NOT EXISTS (SELECT 1 FROM accounts WHERE code = '2300');
 
 CREATE TABLE IF NOT EXISTS fina_payment_intakes (
@@ -80,7 +79,7 @@ CREATE TABLE IF NOT EXISTS fina_settlements (
     amount DECIMAL(12,2) NOT NULL,
     currency_code CHAR(3) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
     transfer_method ENUM('bank_transfer','cash','other') NOT NULL DEFAULT 'bank_transfer',
-    destination_name VARCHAR(150) NOT NULL DEFAULT 'Fina Al-Khair',
+    destination_name VARCHAR(150) NOT NULL DEFAULT 'فينا الخير',
     destination_reference VARCHAR(150) DEFAULT NULL,
     external_reference VARCHAR(100) DEFAULT NULL,
     evidence_path VARCHAR(255) DEFAULT NULL,
