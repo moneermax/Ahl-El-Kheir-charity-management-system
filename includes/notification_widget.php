@@ -26,6 +26,7 @@ if (Session::isLoggedIn()) {
     }
 
     $akNotifMarkReadUrl = APP_URL . 'modules/notifications/mark_all_read.php';
+    $akNotifClearUrl = APP_URL . 'modules/notifications/clear_all.php';
     $akNotifIndividualReadUrl = APP_URL . 'modules/notifications/mark_read.php';
     $akNotifPollUrl = APP_URL . 'modules/notifications/poll.php';
     $akNotifRedirect = (string)($_SERVER['REQUEST_URI'] ?? APP_URL);
@@ -37,7 +38,8 @@ if (Session::isLoggedIn()) {
 #akNotificationBell .ak-notif-badge{position:absolute;top:-5px;inset-inline-end:-6px;min-width:18px;height:18px;padding:0 4px;border-radius:9px;background:#ffc107;color:#172338;font:700 10px/18px Cairo,sans-serif;text-align:center}
 #akNotificationBell .ak-notif-panel{display:none;position:absolute;top:calc(100% + 7px);inset-inline-end:0;width:360px;max-width:calc(100vw - 24px);background:#fff;border:1px solid #e3e7ee;border-radius:12px;box-shadow:0 10px 35px rgba(10,31,68,.2);overflow:hidden;color:#21315b}
 #akNotificationBell.open .ak-notif-panel{display:block}
-.ak-notif-panel-head{padding:12px 14px;background:#1b4d8f;color:#fff;display:flex;justify-content:space-between;align-items:center}
+.ak-notif-panel-head{padding:12px 14px;background:#1b4d8f;color:#fff;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.ak-notif-panel-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
 .ak-notif-panel-body{max-height:360px;overflow:auto}
 .ak-notif-item{display:block;width:100%;padding:11px 14px;border:0;border-bottom:1px solid #eef1f5;background:#fff;text-decoration:none;color:#21315b;text-align:inherit;cursor:pointer}
 .ak-notif-item:hover{background:#f6f9fd}
@@ -50,7 +52,9 @@ if (Session::isLoggedIn()) {
 .ak-notif-empty{padding:30px 15px;text-align:center;color:#6c757d;font-size:.72rem}
 .ak-notif-mark{font-size:.6rem;color:#fff;opacity:.9}
 .ak-notif-mark:hover{opacity:1;color:#fff}
-.ak-notif-read-form{margin:0;padding:0}
+.ak-notif-clear{font-size:.6rem;color:#ffdddd;opacity:.95}
+.ak-notif-clear:hover{opacity:1;color:#fff}
+.ak-notif-read-form,.ak-notif-action-form{margin:0;padding:0}
 @media(max-width:991px){#akNotificationBell .ak-notif-panel{inset-inline-end:-90px}}
 @media(max-width:576px){#akNotificationBell .ak-notif-panel{position:fixed;top:62px;inset-inline-end:10px;width:calc(100vw - 20px)}}
 </style>
@@ -62,13 +66,22 @@ if (Session::isLoggedIn()) {
  <div class="ak-notif-panel">
   <div class="ak-notif-panel-head">
    <strong><i class="fas fa-bell me-1"></i>الإشعارات</strong>
+   <div class="ak-notif-panel-actions">
    <?php if ($akNotifUnread > 0 && $akNotifMarkReadUrl): ?>
-    <form method="post" action="<?php echo e($akNotifMarkReadUrl); ?>" class="d-inline">
+    <form method="post" action="<?php echo e($akNotifMarkReadUrl); ?>" class="d-inline ak-notif-action-form">
      <?php echo csrf_field(); ?>
      <input type="hidden" name="redirect" value="<?php echo e($akNotifRedirect); ?>">
      <button type="submit" class="ak-notif-mark border-0 bg-transparent p-0">تحديد الكل كمقروء</button>
     </form>
    <?php endif; ?>
+   <?php if ($akNotifItems && $akNotifClearUrl): ?>
+    <form method="post" action="<?php echo e($akNotifClearUrl); ?>" class="d-inline ak-notif-action-form" onsubmit="return confirm('هل أنت متأكد من مسح جميع الإشعارات؟');">
+     <?php echo csrf_field(); ?>
+     <input type="hidden" name="redirect" value="<?php echo e($akNotifRedirect); ?>">
+     <button type="submit" class="ak-notif-clear border-0 bg-transparent p-0">مسح الكل</button>
+    </form>
+   <?php endif; ?>
+   </div>
   </div>
   <div class="ak-notif-panel-body">
    <?php if (!$akNotifItems): ?>
