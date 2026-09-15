@@ -16,8 +16,9 @@ EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
 -- The existing disbursement workflow changes monthly_disbursements to transferred
--- before creating its outgoing transaction/journal. Block that transition when
--- protected فينا الخير funds would be consumed.
+-- before creating its outgoing transaction/journal. At that point the original
+-- disbursement journal does not yet exist, so compare the requested disbursement
+-- against the live posted treasury balance minus protected Fina funds.
 DROP TRIGGER IF EXISTS trg_fina_protect_disbursement_transfer;
 DELIMITER $$
 CREATE TRIGGER trg_fina_protect_disbursement_transfer
@@ -25,28 +26,28 @@ BEFORE UPDATE ON monthly_disbursements
 FOR EACH ROW
 BEGIN
     DECLARE protected_amount DECIMAL(14,2) DEFAULT 0.00;
-    DECLARE currency_code_value CHAR(3) DEFAULT 'SDG';
+    DECLARE treasury_balance DECIMAL(14,2) DEFAULT 0.00;
 
     IF NEW.status = 'transferred' AND COALESCE(OLD.status,'') <> 'transferred' THEN
         SET protected_amount = COALESCE((
             SELECT SUM(fina_share_amount - settled_amount)
             FROM fina_payment_allocations
-            WHERE currency_code = currency_code_value
+            WHERE currency_code = 'SDG'
               AND status IN ('protected','partially_settled')
         ),0.00);
 
-        IF ROUND(COALESCE(NEW.total_amount,0),2) > ROUND(protected_amount + (
-            SELECT COALESCE(SUM(jl.debit - jl.credit),0)
+        SET treasury_balance = COALESCE((
+            SELECT SUM(jl.debit - jl.credit)
             FROM journal_lines jl
             JOIN journal_entries je ON je.id = jl.entry_id
             JOIN accounts a ON a.id = jl.account_id
-            WHERE je.reference_type = 'disbursement'
-              AND je.reference_id = NEW.id
-              AND je.status = 'posted'
+            WHERE je.status = 'posted'
               AND a.code IN ('1100','1200','1300')
-        ),2) THEN
+        ),0.00);
+
+        IF ROUND(COALESCE(NEW.total_amount,0),2) > ROUND(treasury_balance - protected_amount,2) THEN
             SIGNAL SQLSTATE '45000'
-                SET MESSAGE_TEXT = 'لا يمكن تنفيذ الصرف: العملية ستستهلك أموالاً محمية ومستحقة لفينا الخير.';
+                SET MESSAGE_TEXT = 'لا يمكن تنفيذ الصرف: المبلغ يتجاوز أموال أهل الخير المتاحة بعد حماية أموال فينا الخير.';
         END IF;
     END IF;
 END$$
