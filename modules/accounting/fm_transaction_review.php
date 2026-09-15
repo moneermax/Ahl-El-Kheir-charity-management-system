@@ -5,6 +5,7 @@ require_once dirname(__DIR__, 2) . '/config/database.php';
 require_once dirname(__DIR__, 2) . '/config/functions.php';
 require_once dirname(__DIR__, 2) . '/config/session.php';
 require_once __DIR__ . '/lib.php';
+require_once __DIR__ . '/lib_fina.php';
 require_once __DIR__ . '/lib_transaction_review.php';
 Session::start();
 
@@ -34,8 +35,9 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && verify_csrf()) {
                 $old=['status'=>$t['status'],'fm_reviewed_by'=>$t['fm_reviewed_by'],'fm_reviewed_at'=>$t['fm_reviewed_at'],'fm_review_reason'=>$t['fm_review_reason']];
                 $affected = dbExecute("UPDATE transactions SET status='posted', fm_reviewed_by=?, fm_reviewed_at=NOW(), fm_review_reason=NULL WHERE id=? AND status='pending_fm_review'",[$uid,$tid]);
                 if ($affected!==1) throw new RuntimeException('تعذر اعتماد الدفعة.');
-                $journalId=ak_post_transaction_journal($tid);
+                $journalId=ak_post_transaction_journal_fina_aware($tid);
                 if ($journalId<=0) throw new RuntimeException('فشل إنشاء القيد المحاسبي.');
+                ak_fina_update_obligation($tid);
                 ak_transaction_review_audit($uid,'FM_APPROVE',$tid,$old,['status'=>'posted','journal_id'=>$journalId]);
                 db()->commit();
                 ak_transaction_review_notify_user((int)$t['created_by'],'تم اعتماد الدفعة','تم اعتماد الدفعة ' . ($t['transaction_code']??('#'.$tid)) . ' وترحيلها للقيد المحاسبي.','modules/transactions/index.php');
