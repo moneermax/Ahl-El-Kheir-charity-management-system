@@ -155,7 +155,7 @@ Do not rewrite or relabel historical accounting evidence merely to satisfy a que
 
 Development/test accounting data is not production financial data.
 
-## CURRENT PROJECT BOUNDARY — 2026-09-14
+## CURRENT PROJECT BOUNDARY — 2026-09-15
 
 At the current checkpoint:
 
@@ -167,6 +167,7 @@ At the current checkpoint:
 - Supervisor sponsor ownership and sponsor-linked family access restoration is completed and must be preserved.
 - Supervisor sponsorship-list scope regression was fixed at `76be77a4d2e6e337485d3f3c9980780b9de73df0` and the three scope tests passed.
 - VGM sponsor assignment/reassignment is confirmed as a VGM task; VGM, Supervisor-protection, and FM-isolation tests passed at commit `48fc2db0ac9e5585127b65c17eacb5e3dd285ce0`.
+- Missing/stale transaction receipt handling regression was fixed at `modules/transactions/receipt_file.php` and runtime-confirmed by the user. Code commit: `ddd5e91e6f90935cd3a7e328f480ae1f8d906e34`; documentation commit: `cd78fe373c72ce4063ff0b1a9c9a66e59a245961`.
 - **The next work is NOT a broad Supervisor re-audit. The next work is a focused Supervisor ↔ Accounting integration review.**
 
 ## NEXT TASK — SUPERVISOR ↔ ACCOUNTING INTEGRATION
@@ -266,3 +267,7 @@ The user should only need to provide the immediate new request, for example:
 > Continue the Ahl El Kheir project from the repository. Read `docs/CHATGPT_SESSION_INDEX.md` and the master status first. Do not restart completed work. Continue from the current checkpoint. My immediate task is: **[task]**.
 
 Do not require the user to paste the entire historical audit into the new chat.
+
+## LATEST DOCUMENTATION CHECKPOINT — 2026-09-15
+
+The documentation set was synchronized after the receipt-file regression was runtime-confirmed. The detailed receipt regression entry remains in `docs/AUDIT_SUPERVISOR_ACCOUNTING_INTEGRATION_20260914.md`; the master status, session index, and this continuation prompt now carry the same current checkpoint and next-task direction.
