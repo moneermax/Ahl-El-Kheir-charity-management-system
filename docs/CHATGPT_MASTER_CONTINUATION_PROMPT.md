@@ -4,13 +4,12 @@ Use this prompt when starting a new ChatGPT session for the existing Ahl El Khei
 
 ## PROJECT IDENTITY
 
-Project: **Ahl El Kheir Charity Management System — نظام أهل الخير لإدارة الجمعيات الخيرية**
-
-Repository: `moneermax/Ahl-El-Kheir-charity-management-system`
-Branch: `main`
-Local path: `D:\xampp\htdocs\AhlElKheir`
-Local URL: `http://localhost:8081/AhlElKheir/`
-Database: `ahl_el_kheir`
+Project: **Ahl El Kheir Charity Management System — نظام أهل الخير لإدارة الجمعيات الخيرية**  
+Repository: `moneermax/Ahl-El-Kheir-charity-management-system`  
+Branch: `main`  
+Local path: `D:\xampp\htdocs\AhlElKheir`  
+Local URL: `http://localhost:8081/AhlElKheir/`  
+Database: `ahl_el_kheir`  
 Environment: Windows + XAMPP + Apache + PHP 8.2 + MariaDB/MySQL
 
 Architecture:
@@ -96,6 +95,19 @@ Before proposing or executing SQL:
 5. do not recreate protected audit fixtures unnecessarily.
 
 Prefer repository/code changes and controlled test-data setup over asking the user to manually edit application files.
+
+### Permanent database architecture rule — NO TRIGGERS / NO VIEWS
+
+**This project must not create or use database triggers or database views.**
+
+- Do not add `CREATE TRIGGER`, trigger-based business rules, or trigger-based workflow enforcement to migrations or the live database.
+- Do not add `CREATE VIEW` or database-view-based application logic to migrations or the live database.
+- Business validation, protected-funds enforcement, workflow sequencing, authorization, and related business rules must be implemented in the procedural PHP application layer.
+- Database migrations may create/alter tables, columns, indexes, foreign keys, and other ordinary schema structures required by the application, but must not introduce triggers or views.
+- If an older migration introduced a trigger or view, revise the migration so a fresh installation will not create it, and provide a one-time cleanup migration when an already-upgraded development database needs the obsolete object removed.
+- When auditing the database, explicitly check for accidental trigger/view introduction before proceeding with further schema work.
+
+This rule exists because hidden database behavior previously caused development/runtime problems and made the application's business rules harder to inspect and test.
 
 Runtime schema mutation such as `ALTER TABLE` during normal page rendering is a review concern and must not be introduced casually.
 
@@ -235,7 +247,6 @@ The checkpoint should make clear:
 - current date;
 - active phase/module;
 - last completed work;
-- last commit;
 - current open task;
 - exact next task;
 - what must not be repeated;
