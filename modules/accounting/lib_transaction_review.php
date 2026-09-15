@@ -43,36 +43,45 @@ function ak_transaction_review_notify_event(int $userId, string $title, string $
     if ($userId <= 0 || trim($title) === '') return;
 
     try {
+        // Newer notification schemas may have workflow reference columns.
+        // If they are unavailable in an existing installation, fall back to
+        // the long-standing notification columns so business notifications
+        // are still delivered instead of being silently discarded.
         if ($referenceId !== null && trim((string)$referenceType) !== '') {
-            $existing = dbFetchOne(
-    "SELECT id FROM notifications
-     WHERE recipient_user_id = ?
-       AND reference_id = ?
-       AND reference_type = ?
-       AND is_read = 0
-     LIMIT 1",
-    [$userId, $referenceId, $referenceType]
-);
-        } else {
-            $existing = dbFetchOne(
-                "SELECT id FROM notifications
-                 WHERE recipient_user_id = ?
-                   AND title = ?
-                   AND link = ?
-                 LIMIT 1",
-                [$userId, $title, $link]
-            );
+            try {
+                $existing = dbFetchOne(
+                    "SELECT id FROM notifications
+                     WHERE recipient_user_id = ?
+                       AND reference_id = ?
+                       AND reference_type = ?
+                       AND is_read = 0
+                     LIMIT 1",
+                    [$userId, $referenceId, $referenceType]
+                );
+
+                if (!$existing) {
+                    dbExecute(
+                        "INSERT INTO notifications (recipient_user_id, title, body, link, type, reference_id, reference_type, is_read, created_at)
+                         VALUES (?, ?, ?, ?, 'workflow', ?, ?, 0, NOW())",
+                        [$userId, $title, $body, $link, $referenceId, $referenceType]
+                    );
+                }
+                return;
+            } catch (Throwable $referenceError) {
+                // Fall through to the legacy notification shape below.
+            }
         }
 
-        if ($existing) return;
+        $existing = dbFetchOne(
+            "SELECT id FROM notifications
+             WHERE recipient_user_id = ?
+               AND title = ?
+               AND link = ?
+             LIMIT 1",
+            [$userId, $title, $link]
+        );
 
-        if ($referenceId !== null && trim((string)$referenceType) !== '') {
-            dbExecute(
-                "INSERT INTO notifications (recipient_user_id, title, body, link, type, reference_id, reference_type, is_read, created_at)
-                 VALUES (?, ?, ?, ?, 'workflow', ?, ?, 0, NOW())",
-                [$userId, $title, $body, $link, $referenceId, $referenceType]
-            );
-        } else {
+        if (!$existing) {
             dbExecute(
                 "INSERT INTO notifications (recipient_user_id, title, body, link, is_read, created_at)
                  VALUES (?, ?, ?, ?, 0, NOW())",
