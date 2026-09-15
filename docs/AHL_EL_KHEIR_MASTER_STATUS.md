@@ -2,7 +2,7 @@
 
 **Repository:** `moneermax/Ahl-El-Kheir-charity-management-system`  
 **Branch:** `main`  
-**Current checkpoint:** 2026-09-14
+**Current checkpoint:** 2026-09-15
 
 This is the single high-level **START HERE** status and continuation summary for the existing project. The detailed audit record is consolidated into `docs/AHL_EL_KHEIR_MASTER_AUDIT.md`.
 
@@ -151,6 +151,15 @@ The user tested the three scope cases after that fix:
 
 This test is complete. Because the user subsequently clarified that Letter + Gender is the authoritative business rule, the direct-assignment path must now be treated as a documented behavior requiring workflow clarification, not automatically as a separate business rule.
 
+### Receipt-file regression — fixed and runtime-confirmed
+
+On 2026-09-15, a genuine regression was identified in `modules/transactions/receipt_file.php`: a transaction with no receipt attachment returned a bare `404 Not found` page. The route was narrowed so missing or stale receipt files now use the normal application UI and Arabic system message, while authentication, role checks, Supervisor Sponsor-scope authorization, and valid receipt streaming remain protected.
+
+Code commit: `ddd5e91e6f90935cd3a7e328f480ae1f8d906e34`  
+Documentation commit: `cd78fe373c72ce4063ff0b1a9c9a66e59a245961`
+
+The user confirmed the local regression test passed. Do not repeat the old receipt regression test unless new evidence indicates another regression.
+
 ## 9. Other parked work
 
 - Targeted accounting runtime verification of newly protected automated journal reference types.
@@ -197,3 +206,12 @@ Every meaningful milestone ends with:
 `Code correct → behavior verified → documentation updated → exact next continuation point recorded`.
 
 A new chat/session must continue from this master status and the single master audit rather than restarting the project or searching through obsolete audit files.
+
+## 15. Latest checkpoint — 2026-09-15
+
+- Active phase: **Supervisor ↔ Accounting integration review**.
+- Last completed regression: missing/stale transaction receipt handling.
+- Last code commit: `ddd5e91e6f90935cd3a7e328f480ae1f8d906e34`.
+- Last documentation commit before this synchronization: `cd78fe373c72ce4063ff0b1a9c9a66e59a245961`.
+- Current next task: inspect the remaining real Supervisor → Accounting integration points and select the next genuinely untested control.
+- Do not rerun closed Accounting, Accountant Staff, FM dashboard, Supervisor ownership, sponsorship-list scope, or receipt regression tests unless new evidence shows a regression.
