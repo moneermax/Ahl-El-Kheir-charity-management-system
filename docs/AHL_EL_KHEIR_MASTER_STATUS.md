@@ -18,7 +18,7 @@ Working rule:
 
 - HR foundation and HR audit — **COMPLETE / CLOSED at current boundary**.
 - Accounting Audit — **COMPLETE / CLOSED at current documented boundary**.
-- Notification Integrity Audit — **CLOSED at current evidence boundary**.
+- Notification Integrity Audit — **CLOSED at current evidence boundary**; current notification UI/live-behavior refinements are completed and preserved.
 - Authentication/session hardening — **CODE CORRECT + RUNTIME VERIFIED**.
 - Accountant Staff financial/reporting authorization and accounting integration — **COMPLETED at current checkpoint**.
 - Accountant Staff Arabic dashboard encoding issue — **SOLVED / CLOSED**.
@@ -91,13 +91,11 @@ The substantial ACC1/nanny accounting integration is already completed, includin
 
 The Arabic encoding issue is already solved. Do not restart old ACC1 tests unless a documented open item or genuine regression appears.
 
-## 7. Current open audit direction
+## 7. Current active direction
 
-**Supervisor ↔ Accounting integration review** is now the immediate active direction within the broader Supervisor Module Audit boundary.
+**Supervisor ↔ Accounting integration review** remains the broader audit direction. The latest completed work was a notification UX/live-behavior refinement that affected shared dashboards but did not change Accounting authorization.
 
-The Supervisor module itself has been working correctly in the tested areas. Do not broaden this into a fresh Supervisor-module audit unless a real integration dependency requires it.
-
-The next review must inspect actual repository integration points and answer:
+The next substantive audit work must inspect actual repository integration points and answer:
 
 1. Can Supervisor access any Accounting page/action directly or indirectly?
 2. Does any Supervisor operational workflow create, submit, return, or otherwise mutate an Accounting-controlled record?
@@ -160,7 +158,55 @@ Documentation commit: `cd78fe373c72ce4063ff0b1a9c9a66e59a245961`
 
 The user confirmed the local regression test passed. Do not repeat the old receipt regression test unless new evidence indicates another regression.
 
-## 9. Other parked work
+## 9. Notification UI/live-behavior checkpoint — 2026-09-15
+
+The shared notification system is now confirmed to behave consistently across applicable dashboards through the common header/footer notification widget.
+
+### Live notifications
+
+- `modules/notifications/poll.php` provides authenticated JSON polling for unread notifications and recent items.
+- The shared notification widget polls every 5 seconds, so newly created workflow notifications appear without manual refresh or logout/login.
+- Existing real workflow notifications were tested and confirmed, including HR leave approval/rejection and password recovery/change-request flows.
+- The notification click flow retains CSRF protection, including dynamically rendered live-polling notification forms.
+
+Relevant commits:
+
+- `ecc82aa6af0a8201adbb6d6de0c7dbb087e77305` — notification polling endpoint.
+- `b82bd4effca75ffbde5a2f8e1930f326fc3b9664` — shared live notification widget/polling.
+- `2ff8f331e575fab9dce9916c783ad3d7d3e63097` — CSRF token preserved in dynamically rendered notification actions.
+
+### Unread visual indicator
+
+Unread notifications in the shared bell menu show a clear red dot icon next to the notification title, plus the existing unread visual treatment. This behavior is centralized so applicable dashboards use the same indicator.
+
+Commit: `c9b151b960b962c6cddbb1b135ceef6ddd5b4e16`.
+
+### Full notification history
+
+A full notifications page was added at `modules/notifications/index.php`, with history, unread count, mark-all-read, and navigation to notification destinations. The bell menu also provides `عرض الكل`.
+
+Commits:
+
+- `01f161ac59c97e033626ba5c447e7793fe52da4c` — full notifications page.
+- `0e830c3851eb2efd83f27881ff0b6c998f2d27ca` — bell `عرض الكل` link.
+
+### Clear-all behavior — menu only, never destructive
+
+The user explicitly confirmed that **مسح الكل** must clear the bell menu without deleting notification records. The implementation was corrected:
+
+- `modules/notifications/clear_all.php` no longer executes `DELETE FROM notifications`.
+- It records a browser-local notification-ID cutoff in `ak_notif_menu_cleared_before`.
+- `assets/js/notification_unread_indicator.js` hides cleared menu entries and recalculates the visible unread badge after live polling.
+- Notification records remain intact and available in the full notification history page for audit/history purposes.
+
+Commits:
+
+- `391474e6ea894812b9b3eba6e636bba238e8c66a` — non-destructive clear-all behavior.
+- `ddd9796896c49f4e2aaa150c3182253a6fa42d05` — client-side menu filtering after clear-all.
+
+The user tested this behavior and **confirmed it is correct**.
+
+## 10. Other parked work
 
 - Targeted accounting runtime verification of newly protected automated journal reference types.
 - Remaining direct journal mutation callers and cross-module accounting auditability.
@@ -170,17 +216,17 @@ The user confirmed the local regression test passed. Do not repeat the old recei
 - Formal report/source/calculation catalog.
 - Production preparation and deployment hardening.
 
-## 10. Production/data status
+## 11. Production/data status
 
 The application is still under development. Development/test operational data is not to be treated as production financial data.
 
 Production preparation remains governed by `docs/PRODUCTION_PREPARATION.md` and `database/production/prepare_production_database.sql`.
 
-## 11. Internationalization
+## 12. Internationalization
 
 Arabic is the default language and English is the alternate language. Stable key-based i18n is authoritative.
 
-## 12. Local Git safety
+## 13. Local Git safety
 
 Intentional local backup files that must not be deleted/reset/stashed/overwritten:
 
@@ -189,7 +235,7 @@ Intentional local backup files that must not be deleted/reset/stashed/overwritte
 
 Commit `f7051ded6fe4c8e346cf7bcb08f48d0535945d01` was inspected and does not represent an active rollback of the tracked Accountant Staff dashboard.
 
-## 13. Documentation map
+## 14. Documentation map
 
 - **`docs/AHL_EL_KHEIR_MASTER_AUDIT.md`** — **SINGLE MASTER AUDIT**: all detailed system review, Accounting, Notification, organizational lifecycle, HR navigation, completed evidence, open audit findings, and continuation rules.
 - **This file** — high-level START HERE status and continuation summary.
@@ -199,7 +245,7 @@ Commit `f7051ded6fe4c8e346cf7bcb08f48d0535945d01` was inspected and does not rep
 
 There should be no second detailed audit/checkpoint file for the same project-wide audit history.
 
-## 14. Continuation rule
+## 15. Continuation rule
 
 Every meaningful milestone ends with:
 
@@ -207,11 +253,12 @@ Every meaningful milestone ends with:
 
 A new chat/session must continue from this master status and the single master audit rather than restarting the project or searching through obsolete audit files.
 
-## 15. Latest checkpoint — 2026-09-15
+## 16. Latest checkpoint — 2026-09-15
 
 - Active phase: **Supervisor ↔ Accounting integration review**.
 - Last completed regression: missing/stale transaction receipt handling.
-- Last code commit: `ddd5e91e6f90935cd3a7e328f480ae1f8d906e34`.
-- Last documentation commit before this synchronization: `cd78fe373c72ce4063ff0b1a9c9a66e59a245961`.
+- Latest completed notification refinement: shared live notification behavior, unread red-dot indicator, full-history link, and non-destructive bell-menu clear behavior.
+- Latest notification fix commits: `391474e6ea894812b9b3eba6e636bba238e8c66a` and `ddd9796896c49f4e2aaa150c3182253a6fa42d05`.
+- Last substantive Supervisor integration documentation commit before notification refinements: `cd78fe373c72ce4063ff0b1a9c9a66e59a245961`.
 - Current next task: inspect the remaining real Supervisor → Accounting integration points and select the next genuinely untested control.
-- Do not rerun closed Accounting, Accountant Staff, FM dashboard, Supervisor ownership, sponsorship-list scope, or receipt regression tests unless new evidence shows a regression.
+- Do not rerun closed Accounting, Accountant Staff, FM dashboard, Supervisor ownership, sponsorship-list scope, notification workflow, or receipt regression tests unless new evidence shows a regression.
