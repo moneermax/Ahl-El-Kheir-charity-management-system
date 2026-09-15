@@ -32,7 +32,7 @@
 
     function updateVisibility() {
         var type = document.getElementById('payType');
-        var form = document.querySelector('form[enctype="multipart/form-data"]');
+        var form = type ? type.closest('form') : null;
         if (!type || !form) return;
         var monthly = type.value === 'monthly_sponsorship';
         if (monthly) {
@@ -45,10 +45,10 @@
     }
 
     document.addEventListener('DOMContentLoaded', function () {
-        var form = document.querySelector('form[enctype="multipart/form-data"]');
-        if (!form || !document.getElementById('payType')) return;
-        updateVisibility();
         var type = document.getElementById('payType');
+        var form = type ? type.closest('form') : null;
+        if (!form || !type) return;
+        updateVisibility();
         type.addEventListener('change', updateVisibility);
         var wrap = document.getElementById('linesWrap');
         if (wrap) new MutationObserver(syncLines).observe(wrap, { childList: true, subtree: true });
