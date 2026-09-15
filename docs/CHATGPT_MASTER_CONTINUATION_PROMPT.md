@@ -111,6 +111,23 @@ This rule exists because hidden database behavior previously caused development/
 
 Runtime schema mutation such as `ALTER TABLE` during normal page rendering is a review concern and must not be introduced casually.
 
+## HIGH-PRIORITY FOLLOW-UP — LEGACY HR DATABASE TRIGGERS
+
+**Immediately after the current Fina Al-Khair work is finished, audit and remove/replace the remaining legacy HR-related database triggers in a controlled manner. This is a highly required follow-up, not optional cleanup.**
+
+The HR audit itself is already **CLOSED** and must not be restarted. This task is specifically an architectural cleanup of the remaining database triggers so their business behavior is moved into the procedural PHP application layer without breaking the already-verified HR workflows.
+
+Required sequence:
+
+1. Inventory every remaining database trigger and identify its source migration/history.
+2. Inspect the HR PHP callers and determine exactly what behavior each trigger currently provides.
+3. Preserve equivalent validation/synchronization behavior in procedural PHP.
+4. Revise the original migrations so fresh installations do not recreate the triggers.
+5. Add controlled one-time cleanup migrations for already-upgraded development databases.
+6. Run only targeted HR regression tests required to prove the trigger replacement; do not restart the completed HR audit.
+
+**Do not start this HR trigger cleanup until the current Fina Al-Khair integration work is complete.**
+
 ## AUTHORIZATION AND SECURITY
 
 Server-side authorization is the security boundary. UI visibility alone is never sufficient.
@@ -176,53 +193,41 @@ At the current checkpoint:
 - Notification Audit is closed at its documented evidence boundary.
 - Accountant Staff financial/reporting and disbursement authorization work is completed at the documented checkpoint.
 - FM dashboard treasury/admin-fee regression is fixed and closed.
-- Supervisor sponsor ownership and sponsor-linked family access restoration is completed and must be preserved.
-- Supervisor sponsorship-list scope regression was fixed at `76be77a4d2e6e337485d3f3c9980780b9de73df0` and the three scope tests passed.
-- VGM sponsor assignment/reassignment is confirmed as a VGM task; VGM, Supervisor-protection, and FM-isolation tests passed at commit `48fc2db0ac9e5585127b65c17eacb5e3dd285ce0`.
-- Missing/stale transaction receipt handling regression was fixed at `modules/transactions/receipt_file.php` and runtime-confirmed by the user. Code commit: `ddd5e91e6f90935cd3a7e328f480ae1f8d906e34`; documentation commit: `cd78fe373c72ce4063ff0b1a9c9a66e59a245961`.
-- Shared notification live behavior, unread visual indicator, full notification history link, and non-destructive menu clearing are completed and user-confirmed.
+- Supervisor sponsor ownership and scope is completed and must be preserved.
+- Supervisor ↔ Accounting integration boundary is PASS / CLOSED at the tested evidence boundary.
+- The active substantive work is the Fina Al-Khair integration and accounting-control implementation/audit.
 
-## NOTIFICATION CHECKPOINT — 2026-09-15
+## FINA AL-KHAIR INTEGRATION — CURRENT WORK
 
-The shared notification behavior is centralized and must be preserved:
+Fina Al-Khair is a joint operational/accounting partner. Its share of a sponsor payment is third-party protected funds and **never Ahl El Kheir revenue**. Ahl administrative fees apply only to the Ahl share. Settlement to Fina reduces the Fina payable and is not an Ahl expense.
 
-- `modules/notifications/poll.php` provides authenticated polling for unread/recent notifications.
-- The bell polls every 5 seconds, so new notifications appear without manual refresh or logout/login.
-- Dynamic notification actions retain CSRF tokens.
-- Applicable dashboards share the same unread visual behavior, including the red dot beside unread notification titles.
-- `modules/notifications/index.php` provides full notification history and the bell has `عرض الكل`.
-- `مسح الكل` is strictly **menu-only**. It must never delete records from `notifications`.
-- `modules/notifications/clear_all.php` now records a browser-local notification-ID cutoff instead of deleting rows.
-- `assets/js/notification_unread_indicator.js` hides menu entries at/below the cutoff and recalculates the visible unread badge after live polling.
-- Notification records remain available in full history for audit/history purposes.
-- Real workflow scenarios already tested and working include HR leave approval/rejection and password recovery/change-request notifications.
+Current foundation includes:
 
-Relevant commits:
+- liability account `2300` — `مستحقات لصالح فينا الخير`;
+- structured Fina payment intake/allocation tables;
+- sponsor monthly obligation model separate from actual payments and payment allocation;
+- Fina settlement and settlement-allocation structures;
+- procedural PHP Fina-aware transaction/journal logic;
+- Fina payment Supervisor intake and FM approval workflow;
+- Fina outstanding and settlement/evidence pages;
+- one-time cleanup migration removing the obsolete Fina database triggers.
 
-- `ecc82aa6af0a8201adbb6d6de0c7dbb087e77305` — polling endpoint.
-- `b82bd4effca75ffbde5a2f8e1930f326fc3b9664` — live shared widget.
-- `2ff8f331e575fab9dce9916c783ad3d7d3e63097` — dynamic notification CSRF fix.
-- `c9b151b960b962c6cddbb1b135ceef6ddd5b4e16` — unread red-dot indicator.
-- `01f161ac59c97e033626ba5c447e7793fe52da4c` — full notifications page.
-- `0e830c3851eb2efd83f27881ff0b6c998f2d27ca` — bell `عرض الكل` link.
-- `391474e6ea894812b9b3eba6e636bba238e8c66a` — non-destructive clear-all backend.
-- `ddd9796896c49f4e2aaa150c3182253a6fa42d05` — menu filtering after clear-all.
+**No database triggers and no database views are permitted.** Fina protected-funds enforcement and workflow rules must remain in procedural PHP.
 
-## NEXT TASK — SUPERVISOR ↔ ACCOUNTING INTEGRATION
+Current Fina runtime audit order:
 
-Inspect the actual repository and documentation for every real integration point between Supervisor operational workflows and Accounting.
+1. Supervisor Fina intake.
+2. FM approval/posting and balanced Fina-aware journal.
+3. Sponsor obligation partial-payment then completion behavior.
+4. Fina outstanding balance.
+5. Fina settlement separation of duties and settlement journal.
+6. Settlement evidence.
+7. Protected-funds enforcement in PHP.
+8. Disbursement transaction validation in PHP.
+9. Targeted non-Fina regression only where needed.
+10. Access/security checks.
 
-Answer these questions from code/evidence before changing anything:
-
-1. Can Supervisor access any Accounting page/action directly or indirectly?
-2. Does any Supervisor operational workflow create, submit, return, or otherwise mutate an Accounting-controlled record?
-3. What financial status/result is appropriate for Supervisor to see without granting Accounting authority?
-4. Are Supervisor submissions routed to FM/Accounting using the correct actor and scope rules?
-5. Are Accounting notifications/results exposed only to the correct Supervisor?
-6. Does any Accounting query accidentally expose data outside the Supervisor's operational Sponsor scope?
-7. Does any dashboard KPI or summary shown to Supervisor contain Accounting data that is broader than the Supervisor's legitimate operational scope?
-
-Do not repeat the closed Accounting Audit. Reuse its findings as the baseline and investigate only the integration boundary.
+Do not jump ahead or recreate completed Supervisor/Accounting fixtures. Inspect the actual current schema/code before any new SQL or test-data setup.
 
 ## DOCUMENTATION RULES
 
@@ -307,4 +312,4 @@ Do not require the user to paste the entire historical audit into the new chat.
 
 ## LATEST DOCUMENTATION CHECKPOINT — 2026-09-15
 
-The documentation handoff has been synchronized with the latest confirmed notification work: live polling, shared unread red-dot indicator, full notification history access, CSRF-safe dynamic notification actions, and non-destructive `مسح الكل`. The next substantive task remains the focused Supervisor ↔ Accounting integration review.
+The documentation handoff is now synchronized with the Fina Al-Khair foundation work and the permanent no-trigger/no-view architecture rule. The remaining legacy HR database triggers are explicitly marked as a **HIGH-PRIORITY / HIGHLY REQUIRED follow-up immediately after the current Fina work is completed**. The HR audit remains closed and must not be restarted; only the trigger architectural cleanup and targeted regression tests remain.
