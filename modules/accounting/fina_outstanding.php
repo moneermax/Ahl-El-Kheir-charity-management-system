@@ -1,0 +1,20 @@
+<?php
+// modules/accounting/fina_outstanding.php - Sponsor monthly obligations and outstanding balances
+require_once dirname(__DIR__,2).'/config/config.php';
+require_once dirname(__DIR__,2).'/config/database.php';
+require_once dirname(__DIR__,2).'/config/functions.php';
+require_once dirname(__DIR__,2).'/config/session.php';
+Session::start();
+if(!Session::isLoggedIn()){header('Location: '.APP_URL.'index.php');exit();}
+$role=Session::getUserRole();
+if(!in_array($role,['financial_manager','accountant_staff','admin','supervisor'],true)){header('Location: '.APP_URL.'index.php');exit();}
+$pageTitle='المبالغ المستحقة على الكفلاء';$active='transactions';
+$rows=dbFetchAll("SELECT o.id,o.sponsorship_id,o.sponsor_id,o.payment_period,o.due_amount,o.paid_amount,ROUND(o.due_amount-o.paid_amount,2) outstanding_amount,o.currency_code,o.status,s.full_name sponsor_name,s.sponsor_code,sp.sponsorship_code,sp.monthly_amount FROM sponsor_payment_obligations o JOIN sponsors s ON s.id=o.sponsor_id JOIN sponsorships sp ON sp.id=o.sponsorship_id WHERE o.due_amount>o.paid_amount ORDER BY o.payment_period DESC,s.full_name ASC");
+$totals=dbFetchAll("SELECT currency_code,COUNT(*) obligations,ROUND(SUM(due_amount),2) due_amount,ROUND(SUM(paid_amount),2) paid_amount,ROUND(SUM(due_amount-paid_amount),2) outstanding_amount FROM sponsor_payment_obligations WHERE due_amount>paid_amount GROUP BY currency_code ORDER BY currency_code");
+include dirname(__DIR__,2).'/includes/header.php';
+?>
+<div class="welcome-section fade-in"><h2><i class="fas fa-hourglass-half me-2"></i>المبالغ المستحقة على الكفلاء</h2><p>يعرض هذا التقرير ما تبقى من التزام الكفيل لكل كفالة وشهر. لا يتم تعديل سجل الدفعة السابقة؛ أي تحصيل لاحق يضاف إلى نفس الالتزام.</p></div>
+<?php include dirname(__DIR__,2).'/includes/alerts.php'; ?>
+<div class="card mb-4"><div class="card-header">ملخص المبالغ المفتوحة</div><div class="card-body"><div class="row g-3"><?php foreach($totals as $t):?><div class="col-md-4"><div class="border rounded p-3"><div class="text-muted"><?php echo e($t['currency_code']);?></div><div>الالتزامات: <strong><?php echo (int)$t['obligations'];?></strong></div><div>المستحق: <strong><?php echo number_format((float)$t['due_amount'],2);?></strong></div><div>المحصّل: <strong><?php echo number_format((float)$t['paid_amount'],2);?></strong></div><div>المتبقي: <strong class="text-danger"><?php echo number_format((float)$t['outstanding_amount'],2);?></strong></div></div></div><?php endforeach;if(!$totals):?><div class="text-muted">لا توجد مبالغ مستحقة حالياً.</div><?php endif;?></div></div></div>
+<div class="card"><div class="card-header">تفاصيل المتابعة</div><div class="card-body p-0"><div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead class="table-light"><tr><th>الكفيل</th><th>الكفالة</th><th>الفترة</th><th>المطلوب</th><th>المحصّل</th><th>المتبقي</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody><?php if(!$rows):?><tr><td colspan="8" class="text-center text-muted py-4">لا توجد التزامات مفتوحة.</td></tr><?php else:foreach($rows as $r):?><tr><td><?php echo e($r['sponsor_name']);?><br><small class="text-muted"><?php echo e($r['sponsor_code']);?></small></td><td><?php echo e($r['sponsorship_code']);?></td><td><?php echo e($r['payment_period']);?></td><td><?php echo number_format((float)$r['due_amount'],2).' '.e($r['currency_code']);?></td><td><?php echo number_format((float)$r['paid_amount'],2);?></td><td><strong class="text-danger"><?php echo number_format((float)$r['outstanding_amount'],2);?></strong></td><td><span class="badge bg-warning text-dark"><?php echo $r['status']==='partially_paid'?'مدفوع جزئياً':'مفتوح';?></span></td><td><a class="btn btn-sm btn-outline-primary" href="<?php echo APP_URL;?>modules/transactions/create.php?sponsor_id=<?php echo (int)$r['sponsor_id'];?>&sponsorship_id=<?php echo (int)$r['sponsorship_id'];?>">تسجيل دفعة لاحقة</a></td></tr><?php endforeach;endif;?></tbody></table></div></div></div>
+<?php include dirname(__DIR__,2).'/includes/footer.php'; ?>
