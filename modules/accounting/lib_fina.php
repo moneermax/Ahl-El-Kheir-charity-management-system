@@ -1,88 +1,32 @@
 <?php
-// modules/accounting/lib_fina.php - Fina Al-Khair third-party funds integration
+// modules/accounting/lib_fina.php - فينا الخير third-party funds accounting integration
 require_once __DIR__ . '/lib.php';
 
 if (!function_exists('ak_fina_get_allocation')) {
-    function ak_fina_get_allocation(int $transactionId): ?array {
-        return dbFetchOne("SELECT * FROM fina_payment_allocations WHERE transaction_id = ? LIMIT 1", [$transactionId]);
-    }
+    function ak_fina_get_allocation(int $transactionId): ?array { return dbFetchOne("SELECT * FROM fina_payment_allocations WHERE transaction_id = ? LIMIT 1", [$transactionId]); }
 }
-
 if (!function_exists('ak_fina_validate_amounts')) {
     function ak_fina_validate_amounts(float $gross, float $finaShare): array {
-        $gross = round($gross, 2); $finaShare = round($finaShare, 2);
-        if ($gross <= 0) throw new RuntimeException('إجمالي التحصيل يجب أن يكون أكبر من صفر.');
-        if ($finaShare < 0 || $finaShare > $gross) throw new RuntimeException('حصة Fina يجب أن تكون بين صفر وإجمالي التحصيل.');
-        $ahlShare = round($gross - $finaShare, 2);
-        $mode = $finaShare <= 0 ? 'ahl_only' : ($ahlShare <= 0 ? 'fina_only' : 'shared');
-        return [$mode, $ahlShare, $finaShare];
+        $gross=round($gross,2);$finaShare=round($finaShare,2);if($gross<=0)throw new RuntimeException('إجمالي التحصيل يجب أن يكون أكبر من صفر.');if($finaShare<0||$finaShare>$gross)throw new RuntimeException('حصة فينا الخير يجب أن تكون بين صفر وإجمالي التحصيل.');$ahlShare=round($gross-$finaShare,2);return [$finaShare<=0?'ahl_only':($ahlShare<=0?'fina_only':'shared'),$ahlShare,$finaShare];
     }
 }
-
 if (!function_exists('ak_fina_calculate_fee')) {
-    function ak_fina_calculate_fee(float $gross, float $finaShare, ?array $policy): array {
-        [, $ahlShare, $finaShare] = ak_fina_validate_amounts($gross, $finaShare);
-        if ($ahlShare <= 0 || !$policy) return ['method'=>'none','value'=>0.00,'amount'=>0.00,'net_amount'=>$ahlShare,'policy_id'=>null];
-        $calc = ak_calculate_admin_fee($ahlShare, $policy);
-        $calc['amount'] = round((float)$calc['amount'], 2); $calc['net_amount'] = round((float)$calc['net_amount'], 2);
-        return $calc;
-    }
+    function ak_fina_calculate_fee(float $gross,float $finaShare,?array $policy): array { [, $ahlShare, $finaShare]=ak_fina_validate_amounts($gross,$finaShare);if($ahlShare<=0||!$policy)return ['method'=>'none','value'=>0.00,'amount'=>0.00,'net_amount'=>$ahlShare,'policy_id'=>null];$calc=ak_calculate_admin_fee($ahlShare,$policy);$calc['amount']=round((float)$calc['amount'],2);$calc['net_amount']=round((float)$calc['net_amount'],2);return $calc; }
 }
-
 if (!function_exists('ak_fina_apply_transaction_snapshot')) {
     function ak_fina_apply_transaction_snapshot(int $transactionId): array {
-        $t = dbFetchOne("SELECT * FROM transactions WHERE id = ? FOR UPDATE", [$transactionId]);
-        if (!$t) throw new RuntimeException('المعاملة غير موجودة.');
-        $allocation = ak_fina_get_allocation($transactionId); $gross = round((float)$t['amount'], 2);
-        if (!$allocation) {
-            $policy = ak_get_admin_fee_policy((string)$t['transaction_date']); $calc = ak_calculate_admin_fee($gross, $policy);
-            if (($t['transaction_type'] ?? '') !== 'sponsorship_payment' && ($t['transaction_type'] ?? '') !== 'admin_fee') $calc=['method'=>'none','value'=>0.00,'amount'=>0.00,'net_amount'=>$gross,'policy_id'=>null];
-            return ['gross'=>$gross,'ahl_share'=>$gross,'fina_share'=>0.00,'fee'=>$calc['amount'],'net'=>$calc['net_amount'],'mode'=>'ahl_only','allocation'=>null,'calc'=>$calc];
-        }
-        [$mode,$ahlShare,$finaShare] = ak_fina_validate_amounts($gross,(float)$allocation['fina_share_amount']);
-        $policy = ak_get_admin_fee_policy((string)$t['transaction_date']); $calc = ak_fina_calculate_fee($gross,$finaShare,$policy);
-        if (($t['transaction_type'] ?? '') !== 'sponsorship_payment' && $calc['amount'] > 0) throw new RuntimeException('لا يجوز تطبيق الرسوم الإدارية على هذا النوع من معاملات Fina.');
-        if (($t['transaction_type'] ?? '') === 'admin_fee' && $finaShare > 0) throw new RuntimeException('لا يمكن تخصيص رسوم إدارية لصالح Fina.');
-        dbExecute("UPDATE transactions SET admin_fee_percent=?, admin_fee_amount=?, net_amount=?, admin_fee_method=?, admin_fee_value=?, admin_fee_policy_id=? WHERE id=?",[0.00,$calc['amount'],round($gross-$calc['amount'],2),$calc['method'],$calc['value'],$calc['policy_id'],$transactionId]);
-        return ['gross'=>$gross,'ahl_share'=>$ahlShare,'fina_share'=>$finaShare,'fee'=>$calc['amount'],'net'=>$calc['net_amount'],'mode'=>$mode,'allocation'=>$allocation,'calc'=>$calc];
+        $t=dbFetchOne("SELECT * FROM transactions WHERE id=? FOR UPDATE",[$transactionId]);if(!$t)throw new RuntimeException('المعاملة غير موجودة.');$allocation=ak_fina_get_allocation($transactionId);$gross=round((float)$t['amount'],2);
+        if(!$allocation){$policy=ak_get_admin_fee_policy((string)$t['transaction_date']);$calc=ak_calculate_admin_fee($gross,$policy);if(!in_array(($t['transaction_type']??''),['sponsorship_payment','admin_fee'],true))$calc=['method'=>'none','value'=>0.00,'amount'=>0.00,'net_amount'=>$gross,'policy_id'=>null];return ['gross'=>$gross,'ahl_share'=>$gross,'fina_share'=>0.00,'fee'=>$calc['amount'],'net'=>$calc['net_amount'],'mode'=>'ahl_only','allocation'=>null,'calc'=>$calc];}
+        [$mode,$ahlShare,$finaShare]=ak_fina_validate_amounts($gross,(float)$allocation['fina_share_amount']);$policy=ak_get_admin_fee_policy((string)$t['transaction_date']);$calc=ak_fina_calculate_fee($gross,$finaShare,$policy);if(($t['transaction_type']??'')!=='sponsorship_payment'&&$calc['amount']>0)throw new RuntimeException('لا يجوز تطبيق الرسوم الإدارية على هذا النوع من معاملات فينا الخير.');dbExecute("UPDATE transactions SET admin_fee_percent=?,admin_fee_amount=?,net_amount=?,admin_fee_method=?,admin_fee_value=?,admin_fee_policy_id=? WHERE id=?",[0.00,$calc['amount'],round($gross-$calc['amount'],2),$calc['method'],$calc['value'],$calc['policy_id'],$transactionId]);return ['gross'=>$gross,'ahl_share'=>$ahlShare,'fina_share'=>$finaShare,'fee'=>$calc['amount'],'net'=>$calc['net_amount'],'mode'=>$mode,'allocation'=>$allocation,'calc'=>$calc];
     }
 }
-
 if (!function_exists('ak_fina_post_transaction_journal')) {
-    function ak_fina_post_transaction_journal(int $txnId): int {
-        ak_ensure_tables(); $t=dbFetchOne("SELECT * FROM transactions WHERE id=?",[$txnId]);
-        if(!$t||$t['status']!=='posted')return 0;
-        $existing=dbFetchOne("SELECT id FROM journal_entries WHERE reference_type='transaction' AND reference_id=? AND status='posted'",[$txnId]); if($existing)return (int)$existing['id'];
-        $snapshot=ak_fina_apply_transaction_snapshot($txnId); $gross=$snapshot['gross'];$ahl=$snapshot['ahl_share'];$fina=$snapshot['fina_share'];$fee=$snapshot['fee'];$type=(string)($t['transaction_type']??'sponsorship_payment');
-        if($gross<=0||round($ahl+$fina,2)!==$gross||$fee<0||$fee>$ahl)throw new RuntimeException('تفاصيل توزيع معاملة Fina غير متوافقة.');
-        $lines=[[ak_cash_code((string)$t['payment_method']),$gross,0.0,'تحصيل '.$t['transaction_code']]]; $ahlNet=round($ahl-$fee,2);
-        if($type==='general_donation'){if($ahlNet>0)$lines[]=['4300',0.0,$ahlNet,'تبرع عام لأهل الخير '.$t['transaction_code']];}
-        elseif($type==='project_donation'){
-            if($ahlNet>0){$revCode='4400';if(!empty($t['project_id'])){$prj=dbFetchOne("SELECT revenue_account_id FROM other_projects WHERE id=?",[(int)$t['project_id']]);if($prj&&!empty($prj['revenue_account_id'])){$acc=dbFetchOne("SELECT code FROM accounts WHERE id=?",[(int)$prj['revenue_account_id']]);if($acc)$revCode=$acc['code'];}}}$lines[]=[$revCode,0.0,$ahlNet,'إيراد مشروع لأهل الخير '.$t['transaction_code']];}
-        } elseif($type==='admin_fee'){if($ahlNet>0)$lines[]=['4200',0.0,$ahlNet,'رسوم إدارية '.$t['transaction_code']];}
-        else {if($ahlNet>0)$lines[]=['4100',0.0,$ahlNet,'إيراد كفالات لأهل الخير '.$t['transaction_code']];if($fee>0)$lines[]=['4200',0.0,$fee,'رسوم إدارية على حصة أهل الخير '.$t['transaction_code']];}
-        if($fina>0)$lines[]=['2300',0.0,$fina,'مستحق لصالح Fina Al-Khair '.$t['transaction_code']];
-        $resolved=[];$debit=0.0;$credit=0.0;foreach($lines as $line){$aid=ak_account_id($line[0]);if($aid<=0)throw new RuntimeException('الحساب المحاسبي غير موجود: '.$line[0]);$d=round((float)$line[1],2);$c=round((float)$line[2],2);if($d<0||$c<0||($d>0&&$c>0))throw new RuntimeException('سطر قيد غير صالح.');$resolved[]=[$aid,$d,$c,$line[3]];$debit+=$d;$credit+=$c;}
-        if(round($debit,2)!==round($credit,2)||round($debit,2)<=0)throw new RuntimeException('القيد المحاسبي لمعاملة Fina غير متوازن.');
-        $n=(int)(dbFetchOne("SELECT COALESCE(MAX(CASE WHEN entry_code REGEXP '^JE-[0-9]+$' THEN CAST(SUBSTRING(entry_code,4) AS UNSIGNED) ELSE 0 END),0) n FROM journal_entries")['n']??0)+1;$code='JE-'.str_pad((string)$n,6,'0','0');
-        dbExecute("INSERT INTO journal_entries (entry_code,entry_date,description,reference_type,reference_id,status,created_by) VALUES (?,?,?,'transaction',?,'posted',?)",[$code,$t['transaction_date'],'قيد آلي لتحصيل يتضمن أموال Fina: '.$t['transaction_code'],$txnId,Session::getUserId()]);$eid=(int)dbLastInsertId();if($eid<=0)throw new RuntimeException('تعذر إنشاء القيد المحاسبي.');
-        foreach($resolved as $line)dbExecute("INSERT INTO journal_lines (entry_id,account_id,debit,credit,description) VALUES (?,?,?,?,?)",[$eid,$line[0],$line[1],$line[2],$line[3]]);
-        if($snapshot['allocation'])dbExecute("UPDATE fina_payment_allocations SET ahl_share_amount=?,fina_share_amount=?,ahl_admin_fee_amount=?,ahl_net_amount=?,status='protected' WHERE id=?",[$ahl,$fina,$fee,$ahlNet,(int)$snapshot['allocation']['id']]);
-        return $eid;
-    }
-}
-
-if (!function_exists('ak_post_transaction_journal_fina_aware')) {
-    function ak_post_transaction_journal_fina_aware(int $txnId): int { return ak_fina_get_allocation($txnId) ? ak_fina_post_transaction_journal($txnId) : ak_post_transaction_journal($txnId); }
-}
-
+function ak_fina_post_transaction_journal(int $txnId): int {
+    ak_ensure_tables();$t=dbFetchOne("SELECT * FROM transactions WHERE id=?",[$txnId]);if(!$t||$t['status']!=='posted')return 0;$existing=dbFetchOne("SELECT id FROM journal_entries WHERE reference_type='transaction' AND reference_id=? AND status='posted'",[$txnId]);if($existing)return(int)$existing['id'];$s=ak_fina_apply_transaction_snapshot($txnId);$gross=$s['gross'];$ahl=$s['ahl_share'];$fina=$s['fina_share'];$fee=$s['fee'];$type=(string)($t['transaction_type']??'sponsorship_payment');if(round($ahl+$fina,2)!==$gross||$fee<0||$fee>$ahl)throw new RuntimeException('تفاصيل توزيع معاملة فينا الخير غير متوافقة.');$lines=[[ak_cash_code((string)$t['payment_method']),$gross,0.0,'تحصيل '.$t['transaction_code']]];$ahlNet=round($ahl-$fee,2);
+    if($type==='general_donation'){if($ahlNet>0)$lines[]=['4300',0.0,$ahlNet,'تبرع عام لأهل الخير '.$t['transaction_code']];}elseif($type==='project_donation'){if($ahlNet>0){$revCode='4400';if(!empty($t['project_id'])){$prj=dbFetchOne("SELECT revenue_account_id FROM other_projects WHERE id=?",[(int)$t['project_id']]);if($prj&&!empty($prj['revenue_account_id'])){$acc=dbFetchOne("SELECT code FROM accounts WHERE id=?",[(int)$prj['revenue_account_id']]);if($acc)$revCode=$acc['code'];}}}$lines[]=[$revCode,0.0,$ahlNet,'إيراد مشروع لأهل الخير '.$t['transaction_code']];}elseif($type==='admin_fee'){if($ahlNet>0)$lines[]=['4200',0.0,$ahlNet,'رسوم إدارية '.$t['transaction_code']];}else{if($ahlNet>0)$lines[]=['4100',0.0,$ahlNet,'إيراد كفالات لأهل الخير '.$t['transaction_code']];if($fee>0)$lines[]=['4200',0.0,$fee,'رسوم إدارية على حصة أهل الخير '.$t['transaction_code']];}if($fina>0)$lines[]=['2300',0.0,$fina,'مستحق لصالح فينا الخير '.$t['transaction_code']];
+    $resolved=[];$debit=0.0;$credit=0.0;foreach($lines as $line){$aid=ak_account_id($line[0]);if($aid<=0)throw new RuntimeException('الحساب المحاسبي غير موجود: '.$line[0]);$d=round((float)$line[1],2);$c=round((float)$line[2],2);if($d<0||$c<0||($d>0&&$c>0))throw new RuntimeException('سطر قيد غير صالح.');$resolved[]=[$aid,$d,$c,$line[3]];$debit+=$d;$credit+=$c;}if(round($debit,2)!==round($credit,2)||$debit<=0)throw new RuntimeException('القيد المحاسبي لمعاملة فينا الخير غير متوازن.');$n=(int)(dbFetchOne("SELECT COALESCE(MAX(CASE WHEN entry_code REGEXP '^JE-[0-9]+$' THEN CAST(SUBSTRING(entry_code,4) AS UNSIGNED) ELSE 0 END),0) n FROM journal_entries")['n']??0)+1;$code='JE-'.str_pad((string)$n,6,'0','0');dbExecute("INSERT INTO journal_entries (entry_code,entry_date,description,reference_type,reference_id,status,created_by) VALUES (?,?,?,'transaction',?,'posted',?)",[$code,$t['transaction_date'],'قيد آلي لتحصيل يتضمن أموال فينا الخير: '.$t['transaction_code'],$txnId,Session::getUserId()]);$eid=(int)dbLastInsertId();foreach($resolved as $line)dbExecute("INSERT INTO journal_lines (entry_id,account_id,debit,credit,description) VALUES (?,?,?,?,?)",[$eid,$line[0],$line[1],$line[2],$line[3]]);if($s['allocation'])dbExecute("UPDATE fina_payment_allocations SET ahl_share_amount=?,fina_share_amount=?,ahl_admin_fee_amount=?,ahl_net_amount=?,status='protected' WHERE id=?",[$ahl,$fina,$fee,$ahlNet,(int)$s['allocation']['id']]);return$eid;
+}}
+if (!function_exists('ak_post_transaction_journal_fina_aware')) { function ak_post_transaction_journal_fina_aware(int $txnId): int { return ak_fina_get_allocation($txnId)?ak_fina_post_transaction_journal($txnId):ak_post_transaction_journal($txnId); } }
 if (!function_exists('ak_fina_update_obligation')) {
-    function ak_fina_update_obligation(int $transactionId): void {
-        $t=dbFetchOne("SELECT sponsorship_id,sponsor_id,payment_period,currency_code,transaction_type FROM transactions WHERE id=?",[$transactionId]);
-        if(!$t||empty($t['sponsorship_id'])||($t['transaction_type']??'')!=='sponsorship_payment'||empty($t['payment_period']))return;
-        $sp=dbFetchOne("SELECT monthly_amount FROM sponsorships WHERE id=?",[(int)$t['sponsorship_id']]);if(!$sp)return;
-        dbExecute("INSERT INTO sponsor_payment_obligations (sponsorship_id,sponsor_id,payment_period,due_amount,paid_amount,currency_code,status) VALUES (?,?,?,?,0,?,'open') ON DUPLICATE KEY UPDATE due_amount=VALUES(due_amount),sponsor_id=VALUES(sponsor_id),currency_code=VALUES(currency_code)",[(int)$t['sponsorship_id'],(int)$t['sponsor_id'],$t['payment_period'],(float)$sp['monthly_amount'],$t['currency_code']]);
-        $paid=dbFetchOne("SELECT COALESCE(SUM(amount),0) paid FROM transactions WHERE sponsorship_id=? AND payment_period=? AND transaction_type='sponsorship_payment' AND status='posted'",[(int)$t['sponsorship_id'],$t['payment_period']]);$paidAmount=round((float)($paid['paid']??0),2);$due=round((float)$sp['monthly_amount'],2);$status=$paidAmount<=0?'open':($paidAmount<$due?'partially_paid':'paid');
-        dbExecute("UPDATE sponsor_payment_obligations SET paid_amount=?,status=? WHERE sponsorship_id=? AND payment_period=?",[$paidAmount,$status,(int)$t['sponsorship_id'],$t['payment_period']]);
-    }
+function ak_fina_update_obligation(int $transactionId): void {$t=dbFetchOne("SELECT sponsorship_id,sponsor_id,payment_period,currency_code,transaction_type FROM transactions WHERE id=?",[$transactionId]);if(!$t||empty($t['sponsorship_id'])||($t['transaction_type']??'')!=='sponsorship_payment'||empty($t['payment_period']))return;$sp=dbFetchOne("SELECT monthly_amount FROM sponsorships WHERE id=?",[(int)$t['sponsorship_id']]);if(!$sp)return;dbExecute("INSERT INTO sponsor_payment_obligations (sponsorship_id,sponsor_id,payment_period,due_amount,paid_amount,currency_code,status) VALUES (?,?,?,?,0,?,'open') ON DUPLICATE KEY UPDATE due_amount=VALUES(due_amount),sponsor_id=VALUES(sponsor_id),currency_code=VALUES(currency_code)",[(int)$t['sponsorship_id'],(int)$t['sponsor_id'],$t['payment_period'],(float)$sp['monthly_amount'],$t['currency_code']]);$paid=dbFetchOne("SELECT COALESCE(SUM(amount),0) paid FROM transactions WHERE sponsorship_id=? AND payment_period=? AND transaction_type='sponsorship_payment' AND status='posted'",[(int)$t['sponsorship_id'],$t['payment_period']]);$paidAmount=round((float)($paid['paid']??0),2);$due=round((float)$sp['monthly_amount'],2);$status=$paidAmount<=0?'open':($paidAmount<$due?'partially_paid':'paid');dbExecute("UPDATE sponsor_payment_obligations SET paid_amount=?,status=? WHERE sponsorship_id=? AND payment_period=?",[$paidAmount,$status,(int)$t['sponsorship_id'],$t['payment_period']]);}
 }
