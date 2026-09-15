@@ -10,10 +10,13 @@ Sponsor-originated payments remain part of the normal sponsor payment business f
 
 1. Normal transaction creation
    - Sponsor/sponsorship information remains available for sponsor-originated payments.
-   - Structured Ahl/Fina allocation must be supported in the normal payment-entry experience.
+   - Structured Ahl/Fina allocation is now supported in the normal payment-entry experience without replacing the existing `modules/transactions/create.php` workflow.
+   - The normal payment form exposes a Fina-share amount for each payment line (or the single amount for non-monthly entries).
+   - Server-side allocation capture is performed during the existing `SUBMIT_FM` review/audit step, using the transaction ID already created by the normal workflow.
    - Fina share is recorded as liability to account 2300.
    - Ahl administrative fee applies only to the Ahl share.
-   - Sponsor obligations are linked only to applicable sponsorship payments.
+   - Sponsor obligations are linked only to applicable sponsorship payments and count the Ahl share rather than the protected Fina share.
+   - A sponsor and sponsorship are required when a Fina share is entered from the normal sponsor payment screen; external Fina money uses the dedicated Fina intake screen.
 
 2. Dedicated Fina payment intake
    - External source only: person, organization, or other.
@@ -29,11 +32,14 @@ Sponsor-originated payments remain part of the normal sponsor payment business f
 
 ## Current implementation checkpoint
 
-- `modules/transactions/fina_payment_create.php` is now the dedicated external Fina-only intake screen.
+- `modules/transactions/fina_payment_create.php` is the dedicated external Fina-only intake screen.
 - `modules/accounting/fina_payment_review.php` handles FM approval/return for Fina intake records and distinguishes external sources from sponsors.
-- `modules/transactions/fina_shared_payment_create.php` has been added as a controlled sponsor-originated shared Ahl/Fina intake path while the existing large `modules/transactions/create.php` is preserved intact.
-- The shared path records the sponsor payment plus structured Fina allocation and sends it through the Fina FM review path, where the Fina-aware journal and sponsor-obligation logic are applied.
-- The existing `modules/transactions/create.php` itself has **not** been replaced or rewritten. Its direct in-form Fina allocation integration remains the next implementation step; no destructive reconstruction of that large existing file is permitted.
+- `modules/accounting/fm_transaction_review.php` uses the Fina-aware journal path for normal transactions.
+- `modules/accounting/lib_fina.php` validates the allocation, calculates any Ahl-only administrative fee, posts Fina share to liability account 2300, and updates sponsor obligation paid amounts using the Ahl share.
+- `modules/accounting/lib_transaction_review.php` captures the structured Fina allocation during the existing normal `SUBMIT_FM` path, after the transaction ID is known and before the surrounding transaction creation transaction commits.
+- `assets/js/fina_payment_allocation.js` adds the Fina-share controls to the existing normal payment form without reconstructing or replacing `modules/transactions/create.php`.
+- `includes/footer.php` loads that control script only for `modules/transactions/create.php`.
+- The temporary `modules/transactions/fina_shared_payment_create.php` screen has been removed because sponsor-originated shared payments now use the normal payment-entry experience.
 
 ## Audit test correction
 
