@@ -50,6 +50,7 @@ A historical implementation also contains `sponsor.supervisor_id` direct-assignm
 ## COMPLETED CURRENT-CHECKPOINT WORK
 
 - FM dashboard treasury/admin-fee regression fixed and closed: `783b160a60ce50f0f661a65a112aea7469979ca4`.
+- **FM dashboard treasury calculation is now runtime-verified and closed:** Cash `1100` = `48,721,100`; Bank `1200` = `24,796,000`; E-wallet `1300` = `25,060,000`; Total Treasury = `98,577,100`; exact arithmetic match confirmed.
 - Supervisor sponsor ownership/family-scope restoration completed and preserved.
 - Supervisor sponsor authorization was centralized across sponsor/sponsorship routes.
 - Family orphan sponsorship status display regression fixed: `9901c6318225163ca851fbaeb92514d1774bb681`.
@@ -130,26 +131,51 @@ Runtime bank-balance evidence also passed: the bank balance increased from `24,7
 
 Do not modify SP-000010 or infer a historical fee/method for older transactions.
 
-## REQUIRED TESTS ALREADY COMPLETED
+## MOBILE-WALLET CHECKPOINT — 2026-09-15
 
-The previously completed sponsorship-list scope tests remain closed and PASS. Do not repeat them unless a genuine regression appears.
+The fresh Supervisor mobile-wallet test was completed through FM confirmation and Accounting posting.
+
+Verified runtime evidence:
+
+- Supervisor selected `mobile` as the payment method.
+- E-wallet account `1300` balance before FM confirmation: `25,050,000`.
+- E-wallet account `1300` balance after FM confirmation: `25,060,000`.
+- Increase: exactly `10,000`.
+- Result: **PASS**.
+
+This confirms the stored Supervisor payment method reaches the FM confirmation/accounting posting path and maps to Electronic Wallet `1300`.
+
+Do not repeat this closed mobile-wallet test unless genuine regression evidence appears.
+
+## FM TREASURY CALCULATION CHECKPOINT — 2026-09-15
+
+Repository inspection of `modules/accounting/fm_dashboard.php` confirmed that the FM treasury values are calculated live from posted journal lines for active accounts `1100`, `1200`, and `1300`.
+
+Runtime values:
+
+- Cash `1100`: `48,721,100`.
+- Bank `1200`: `24,796,000`.
+- E-wallet `1300`: `25,060,000`.
+- Total Treasury: `98,577,100`.
+
+Exact arithmetic:
+
+`48,721,100 + 24,796,000 + 25,060,000 = 98,577,100`
+
+Result: **PASS / CLOSED**.
+
+The reconciliation flow values shown on the dashboard are a separate flow report and are not expected to equal the current treasury asset balance. Do not treat that difference as a treasury calculation defect.
 
 ## NEXT AUDIT DIRECTION — SUPERVISOR ↔ ACCOUNTING
 
-The fresh bank-transfer/payment-method/accounting-path test is now closed. Continue only with the remaining real integration controls:
+The payment-method and FM treasury verification work is now closed. Continue only with the remaining real integration controls:
 
-1. Verify a new Supervisor mobile-wallet submission is stored as `mobile` and posts to account `1300` (Electronic Wallet).
-2. Verify Supervisor history shows only that Supervisor's own in-scope Sponsor submissions.
-3. Verify no Supervisor route exposes Accounting-only journal/ledger/approval/posting controls indirectly.
-4. Inspect the remaining cross-module Accounting reference/mutation points only where repository evidence identifies a genuinely untested control.
+1. Verify Supervisor payment-history scope using the already implemented scoped collection history; do not recreate old fixtures unnecessarily.
+2. Verify no Supervisor route exposes Accounting-only journal/ledger/approval/posting controls directly or indirectly.
+3. Inspect remaining cross-module Accounting reference/mutation points only where repository evidence identifies a genuinely untested control.
+4. Continue with evidence-based test data only when a new control requires it; inspect the actual schema/code before any SQL.
 
-Do not rerun the closed bank-transfer test, admin-fee `none` verification, or completed Accounting tests.
-
-## LATEST CHECKPOINT — 2026-09-15
-
-The Supervisor payment-method persistence defect is fixed and runtime-confirmed. The fresh bank-transfer submission is correctly stored, routed to FM, posted to Bank `1200`, and reconciles with the bank balance. The administrative-fee check also passed for this transaction because no policy was attached (`none`, fee `0`).
-
-The next runtime test is the smallest genuinely new payment-method test: a fresh Supervisor mobile-wallet submission, followed by FM confirmation and verification that the journal debit reaches Electronic Wallet `1300`.
+Do not rerun the closed bank-transfer, mobile-wallet, admin-fee `none`, FM treasury calculation, notification, receipt, Supervisor ownership/scope, or completed Accounting tests.
 
 ## PROTECTED LOCAL FILES
 
