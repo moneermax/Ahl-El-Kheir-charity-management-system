@@ -27,6 +27,7 @@ if (Session::isLoggedIn()) {
 
     $akNotifMarkReadUrl = APP_URL . 'modules/notifications/mark_all_read.php';
     $akNotifClearUrl = APP_URL . 'modules/notifications/clear_all.php';
+    $akNotifPageUrl = APP_URL . 'modules/notifications/index.php';
     $akNotifIndividualReadUrl = APP_URL . 'modules/notifications/mark_read.php';
     $akNotifPollUrl = APP_URL . 'modules/notifications/poll.php';
     $akNotifRedirect = (string)($_SERVER['REQUEST_URI'] ?? APP_URL);
@@ -40,6 +41,8 @@ if (Session::isLoggedIn()) {
 #akNotificationBell.open .ak-notif-panel{display:block}
 .ak-notif-panel-head{padding:12px 14px;background:#1b4d8f;color:#fff;display:flex;justify-content:space-between;align-items:center;gap:10px}
 .ak-notif-panel-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.ak-notif-panel-link{font-size:.6rem;color:#fff;text-decoration:none;opacity:.95;white-space:nowrap}
+.ak-notif-panel-link:hover{color:#fff;text-decoration:underline;opacity:1}
 .ak-notif-panel-body{max-height:360px;overflow:auto}
 .ak-notif-item{display:block;width:100%;padding:11px 14px;border:0;border-bottom:1px solid #eef1f5;background:#fff;text-decoration:none;color:#21315b;text-align:inherit;cursor:pointer}
 .ak-notif-item:hover{background:#f6f9fd}
@@ -67,6 +70,7 @@ if (Session::isLoggedIn()) {
   <div class="ak-notif-panel-head">
    <strong><i class="fas fa-bell me-1"></i>الإشعارات</strong>
    <div class="ak-notif-panel-actions">
+    <a href="<?php echo e($akNotifPageUrl); ?>" class="ak-notif-panel-link"><i class="fas fa-list me-1"></i>عرض الكل</a>
    <?php if ($akNotifUnread > 0 && $akNotifMarkReadUrl): ?>
     <form method="post" action="<?php echo e($akNotifMarkReadUrl); ?>" class="d-inline ak-notif-action-form">
      <?php echo csrf_field(); ?>
@@ -122,9 +126,7 @@ if (Session::isLoggedIn()) {
  const messageBell=document.getElementById('akMessagingBell');
  if(root && controls){controls.insertBefore(root,messageBell || document.getElementById('userDropdown') || controls.firstChild)}
  document.addEventListener('click',function(e){if(root && !root.contains(e.target))root.classList.remove('open')});
-
  if(!root) return;
-
  const pollUrl=root.getAttribute('data-poll-url');
  const markReadUrl=root.getAttribute('data-mark-read-url');
  const csrfToken=root.getAttribute('data-csrf-token') || '';
@@ -134,79 +136,34 @@ if (Session::isLoggedIn()) {
  const knownIds={};
  let initialized=false;
  let busy=false;
-
  <?php foreach ($akNotifItems as $ni): ?>
  knownIds[<?php echo (int)($ni['id'] ?? 0); ?>]=true;
  <?php endforeach; ?>
-
- function esc(value){
-     return String(value == null ? '' : value)
-         .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-         .replace(/>/g,'&gt;').replace(/\"/g,'&quot;').replace(/'/g,'&#039;');
- }
-
+ function esc(value){return String(value == null ? '' : value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;').replace(/'/g,'&#039;');}
  function render(data){
      if(!panelBody) return;
      const items=Array.isArray(data.items) ? data.items : [];
-     if(!items.length){
-         panelBody.innerHTML='<div class="ak-notif-empty">لا توجد إشعارات.</div>';
-     } else {
-         panelBody.innerHTML=items.map(function(item){
-             const id=Number(item.id||0);
-             const link=String(item.link||'').trim() || currentUrl;
-             const unread=Number(item.is_read||0)===0;
-             const unreadClass=unread?' ak-notif-unread':'';
-             const newBadge=unread?'<span class="ak-notif-new">جديد</span>':'';
-             if(!id) return '<div class="ak-notif-item'+unreadClass+'"><strong>'+esc(item.title)+newBadge+'</strong><div class="ak-notif-body">'+esc(item.body)+'</div><small>'+esc(item.created_at)+'</small></div>';
-             return '<form method="post" action="'+esc(markReadUrl)+'" class="ak-notif-read-form">'
-                 +'<input type="hidden" name="csrf_token" value="'+esc(csrfToken)+'">'
-                 +'<input type="hidden" name="notification_id" value="'+id+'">'
-                 +'<input type="hidden" name="redirect" value="'+esc(link)+'">'
-                 +'<button type="submit" class="ak-notif-item'+unreadClass+'"><strong>'+esc(item.title)+newBadge+'</strong><div class="ak-notif-body">'+esc(item.body)+'</div><small>'+esc(item.created_at)+'</small></button>'
-                 +'</form>';
-         }).join('');
-     }
+     if(!items.length){panelBody.innerHTML='<div class="ak-notif-empty">لا توجد إشعارات.</div>';return;}
+     panelBody.innerHTML=items.map(function(item){
+         const id=Number(item.id||0); const link=String(item.link||'').trim() || currentUrl; const unread=Number(item.is_read||0)===0; const unreadClass=unread?' ak-notif-unread':''; const newBadge=unread?'<span class="ak-notif-new">جديد</span>':'';
+         if(!id) return '<div class="ak-notif-item'+unreadClass+'"><strong>'+esc(item.title)+newBadge+'</strong><div class="ak-notif-body">'+esc(item.body)+'</div><small>'+esc(item.created_at)+'</small></div>';
+         return '<form method="post" action="'+esc(markReadUrl)+'" class="ak-notif-read-form"><input type="hidden" name="csrf_token" value="'+esc(csrfToken)+'"><input type="hidden" name="notification_id" value="'+id+'"><input type="hidden" name="redirect" value="'+esc(link)+'"><button type="submit" class="ak-notif-item'+unreadClass+'"><strong>'+esc(item.title)+newBadge+'</strong><div class="ak-notif-body">'+esc(item.body)+'</div><small>'+esc(item.created_at)+'</small></button></form>';
+     }).join('');
  }
-
- function updateBadge(unread){
-     const count=Number(unread||0);
-     let badge=toggle ? toggle.querySelector('.ak-notif-badge') : null;
-     if(count<=0){ if(badge) badge.remove(); return; }
-     if(!badge){ badge=document.createElement('span'); badge.className='ak-notif-badge'; toggle.appendChild(badge); }
-     badge.textContent=count>99?'99+':String(count);
- }
-
+ function updateBadge(unread){const count=Number(unread||0);let badge=toggle ? toggle.querySelector('.ak-notif-badge') : null;if(count<=0){if(badge) badge.remove();return;}if(!badge){badge=document.createElement('span');badge.className='ak-notif-badge';toggle.appendChild(badge);}badge.textContent=count>99?'99+':String(count);}
  function poll(){
-     if(busy || !pollUrl) return;
-     busy=true;
+     if(busy || !pollUrl) return; busy=true;
      fetch(pollUrl+'?t='+Date.now(),{credentials:'same-origin',cache:'no-store',headers:{'Accept':'application/json'}})
-         .then(function(response){ if(!response.ok) throw new Error('notification poll failed'); return response.json(); })
-         .then(function(data){
-             if(!data || data.ok!==true) return;
-             const items=Array.isArray(data.items) ? data.items : [];
-             if(initialized){
-                 items.slice().reverse().forEach(function(item){
-                     const id=Number(item.id||0);
-                     if(id>0 && !knownIds[id]){
-                         knownIds[id]=true;
-                         if(window.AKNotify && typeof window.AKNotify.toast==='function'){
-                             window.AKNotify.toast('info',(item.title||'إشعار جديد')+' — '+(item.body||''));
-                         }
-                     }
-                 });
-             } else {
-                 items.forEach(function(item){ const id=Number(item.id||0); if(id>0) knownIds[id]=true; });
-                 initialized=true;
-             }
-             updateBadge(data.unread);
-             render(data);
-         })
-         .catch(function(){})
-         .finally(function(){busy=false;});
+       .then(function(response){if(!response.ok) throw new Error('notification poll failed');return response.json();})
+       .then(function(data){
+         if(!data || data.ok!==true) return;
+         const items=Array.isArray(data.items) ? data.items : [];
+         if(initialized){items.slice().reverse().forEach(function(item){const id=Number(item.id||0);if(id>0&&!knownIds[id]){knownIds[id]=true;if(window.AKNotify&&typeof window.AKNotify.toast==='function'){window.AKNotify.toast('info',(item.title||'إشعار جديد')+' — '+(item.body||''));}}});}
+         else {items.forEach(function(item){const id=Number(item.id||0);if(id>0) knownIds[id]=true;});initialized=true;}
+         updateBadge(data.unread); render(data);
+       }).catch(function(){}).finally(function(){busy=false;});
  }
-
- poll();
- window.setInterval(poll,5000);
+ poll(); window.setInterval(poll,5000);
 })();
 </script>
 <?php } ?>
