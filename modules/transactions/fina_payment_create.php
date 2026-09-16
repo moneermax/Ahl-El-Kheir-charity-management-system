@@ -1,0 +1,72 @@
+<?php
+// modules/transactions/fina_payment_create.php - External Fina Al-Khair payment intake
+require_once dirname(__DIR__,2).'/config/config.php';
+require_once dirname(__DIR__,2).'/config/database.php';
+require_once dirname(__DIR__,2).'/config/functions.php';
+require_once dirname(__DIR__,2).'/config/session.php';
+Session::start();
+if(!Session::isLoggedIn()){header('Location: '.APP_URL.'index.php');exit();}
+$role=Session::getUserRole();
+$uid=(int)Session::getUserId();
+if($role!=='supervisor'){header('Location: '.APP_URL.'index.php');exit();}
+$pageTitle='تسجيل تحصيل خارجي لصالح فينا الخير';$active='transactions';$errors=[];
+$currencies=dbFetchAll("SELECT code,name FROM currencies ORDER BY code");
+$input=['source_type'=>'person','source_name'=>'','source_details'=>'','amount'=>'','currency_code'=>'SDG','method'=>'cash','date'=>date('Y-m-d'),'purpose_note'=>'','description'=>''];
+if($_SERVER['REQUEST_METHOD']==='POST'){
+    $input['source_type']=$_POST['source_type']??'person';
+    $input['source_name']=trim($_POST['source_name']??'');
+    $input['source_details']=trim($_POST['source_details']??'');
+    $input['amount']=trim($_POST['amount']??'');
+    $input['currency_code']=trim($_POST['currency_code']??'SDG');
+    $input['method']=$_POST['method']??'cash';
+    $input['date']=trim($_POST['date']??'')?:date('Y-m-d');
+    $input['purpose_note']=trim($_POST['purpose_note']??'');
+    $input['description']=trim($_POST['description']??'');
+    if(!verify_csrf())$errors[]='انتهت صلاحية الجلسة.';
+    if(!in_array($input['source_type'],['person','organization','other'],true))$errors[]='تصنيف مصدر الأموال غير صالح.';
+    if($input['source_name']==='')$errors[]='اسم مصدر الأموال مطلوب.';
+    if($input['amount']===''||round((float)str_replace(',','',$input['amount']),2)<=0)$errors[]='المبلغ يجب أن يكون أكبر من صفر.';
+    if(!$currencies||!in_array($input['currency_code'],array_column($currencies,'code'),true))$errors[]='العملة المحددة غير صالحة.';
+    if(!in_array($input['method'],['cash','bank_transfer','credit_card','mobile','other'],true))$errors[]='طريقة الدفع غير صالحة.';
+    if(!preg_match('/^\d{4}-\d{2}-\d{2}$/',$input['date']))$errors[]='تاريخ التحصيل غير صالح.';
+    $amount=round((float)str_replace(',','',$input['amount']),2);
+    $receiptPath=null;
+    if(isset($_FILES['receipt_file'])&&$_FILES['receipt_file']['error']===UPLOAD_ERR_OK){
+        $file=$_FILES['receipt_file'];$ext=strtolower(pathinfo($file['name'],PATHINFO_EXTENSION));
+        if(!in_array($ext,['jpg','jpeg','png','pdf'],true))$errors[]='صيغة الإيصال يجب أن تكون JPG أو PNG أو PDF.';
+        elseif($file['size']>10*1024*1024)$errors[]='حجم الإيصال يتجاوز 10 ميجابايت.';
+        else{$dir=dirname(__DIR__,2).'/storage/receipts';if(!is_dir($dir))@mkdir($dir,0777,true);$fn='FINA-EXT-'.date('YmdHis').'-'.bin2hex(random_bytes(3)).'.'.$ext;if(move_uploaded_file($file['tmp_name'],$dir.'/'.$fn))$receiptPath='storage/receipts/'.$fn;else$errors[]='فشل حفظ الإيصال على الخادم.';}
+    }elseif(isset($_FILES['receipt_file'])&&$_FILES['receipt_file']['error']!==UPLOAD_ERR_NO_FILE)$errors[]='حدث خطأ أثناء رفع الإيصال.';
+    if(!$errors){
+        try{
+            db()->beginTransaction();
+            $sourceNote=json_encode(['source_type'=>$input['source_type'],'source_name'=>$input['source_name'],'source_details'=>$input['source_details']],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
+            dbExecute("INSERT INTO sponsor_payments (sponsorship_id,supervisor_id,payment_type,sponsor_id,project_id,other_source_note,purpose_note,payment_period,payment_date,amount,currency_code,payment_method,receipt_file_path,notes,status) VALUES (NULL,?, 'other', NULL, NULL, ?, ?, NULL, ?, ?, ?, ?, ?, ?, 'pending')",[$uid,$sourceNote,$input['purpose_note']!==''?$input['purpose_note']:null,$input['date'],$amount,$input['currency_code'],$input['method'],$receiptPath,$input['description']!==''?$input['description']:null]);
+            $spId=(int)dbLastInsertId();
+            if($spId<=0)throw new RuntimeException('تعذر إنشاء سجل التحصيل.');
+            dbExecute("INSERT INTO fina_payment_intakes (sponsor_payment_id,allocation_mode,fina_share_amount,integration_reference,created_by) VALUES (?,?,?,?,?)",[$spId,'fina_only',$amount,'FINA-EXT-INTAKE-SP-'.$spId,$uid]);
+            db()->commit();
+            flash('success','تم تسجيل تحصيل خارجي لصالح فينا الخير وإرساله للمدير المالي للمراجعة.');
+            header('Location: '.APP_URL.'modules/accounting/fina_payment_review.php');exit();
+        }catch(Throwable $e){if(db()->inTransaction())db()->rollBack();if($receiptPath&&is_file(dirname(__DIR__,2).'/'.$receiptPath))@unlink(dirname(__DIR__,2).'/'.$receiptPath);$errors[]='تعذر حفظ تحصيل فينا الخير بشكل ذري. لم يتم حفظ أي جزء من العملية.';}
+    }
+}
+include dirname(__DIR__,2).'/includes/header.php';
+?>
+<div class="welcome-section fade-in"><h2><i class="fas fa-hand-holding-dollar me-2"></i>تسجيل تحصيل خارجي لصالح فينا الخير</h2><p>هذه الشاشة مخصصة فقط للأموال الواردة من مصدر خارجي لصالح فينا الخير. لا يوجد هنا كفيل أو كفالة، ولا تنشئ هذه العملية أي التزام كفالة.</p></div>
+<?php include dirname(__DIR__,2).'/includes/alerts.php';?>
+<?php if($errors):?><div class="alert alert-danger"><ul class="mb-0"><?php foreach($errors as $e):?><li><?php echo e($e);?></li><?php endforeach;?></ul></div><?php endif;?>
+<div class="card fade-in"><div class="card-header text-white" style="background:#1b4d8f">بيانات مصدر الأموال والتحصيل</div><div class="card-body"><form method="post" enctype="multipart/form-data"><?php echo csrf_field();?><div class="row g-3">
+<div class="col-md-4"><label class="form-label">نوع المصدر *</label><select name="source_type" class="form-select" required><option value="person" <?php echo $input['source_type']==='person'?'selected':'';?>>شخص</option><option value="organization" <?php echo $input['source_type']==='organization'?'selected':'';?>>منظمة / جهة</option><option value="other" <?php echo $input['source_type']==='other'?'selected':'';?>>أخرى</option></select></div>
+<div class="col-md-8"><label class="form-label">اسم مصدر الأموال *</label><input type="text" name="source_name" class="form-control" required value="<?php echo e($input['source_name']);?>"></div>
+<div class="col-12"><label class="form-label">تفاصيل المصدر / مرجع الجهة</label><input type="text" name="source_details" class="form-control" value="<?php echo e($input['source_details']);?>" placeholder="رقم خطاب، جهة اتصال، أو أي مرجع مفيد"></div>
+<div class="col-md-4"><label class="form-label">المبلغ *</label><input type="number" step="0.01" min="0.01" name="amount" class="form-control" required value="<?php echo e($input['amount']);?>"></div>
+<div class="col-md-4"><label class="form-label">العملة *</label><select name="currency_code" class="form-select" required><?php foreach($currencies as $c):?><option value="<?php echo e($c['code']);?>" <?php echo $input['currency_code']===$c['code']?'selected':'';?>><?php echo e($c['code']);?> — <?php echo e($c['name']);?></option><?php endforeach;?></select></div>
+<div class="col-md-4"><label class="form-label">طريقة الدفع *</label><select name="method" class="form-select"><option value="cash" <?php echo $input['method']==='cash'?'selected':'';?>>نقدي / كاش</option><option value="bank_transfer" <?php echo $input['method']==='bank_transfer'?'selected':'';?>>تحويل بنكي</option><option value="mobile" <?php echo $input['method']==='mobile'?'selected':'';?>>محفظة إلكترونية</option><option value="credit_card" <?php echo $input['method']==='credit_card'?'selected':'';?>>بطاقة</option><option value="other" <?php echo $input['method']==='other'?'selected':'';?>>أخرى</option></select></div>
+<div class="col-md-4"><label class="form-label">تاريخ التحصيل *</label><input type="date" name="date" class="form-control" required value="<?php echo e($input['date']);?>"></div>
+<div class="col-md-8"><label class="form-label">إيصال التحصيل</label><input type="file" name="receipt_file" class="form-control" accept=".jpg,.jpeg,.png,.pdf"><div class="form-text">JPG / PNG / PDF حتى 10MB.</div></div>
+<div class="col-12"><label class="form-label">الغرض / التخصيص</label><input type="text" name="purpose_note" class="form-control" value="<?php echo e($input['purpose_note']);?>"></div>
+<div class="col-12"><label class="form-label">ملاحظات</label><textarea name="description" class="form-control" rows="2"><?php echo e($input['description']);?></textarea></div>
+<div class="col-12"><div class="alert alert-warning mb-0"><strong>تنبيه محاسبي:</strong> 100% من هذا التحصيل مخصص لفينا الخير، ويسجل كالتزام مستحق لفينا الخير في حساب 2300. لا يسجل كإيراد لأهل الخير، ولا تحسب عليه رسوم إدارية، ولا ينشئ التزام كفالة.</div></div>
+</div><div class="mt-4"><button class="btn btn-primary btn-lg"><i class="fas fa-paper-plane me-1"></i> إرسال للمدير المالي</button></div></form></div></div>
+<?php include dirname(__DIR__,2).'/includes/footer.php';?>
