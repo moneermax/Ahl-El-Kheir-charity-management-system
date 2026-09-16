@@ -8,7 +8,8 @@ Session::start();
 if(!Session::isLoggedIn()){header('Location: '.APP_URL.'index.php');exit();}
 $role=Session::getUserRole();
 $uid=(int)Session::getUserId();
-if($role!=='supervisor'){header('Location: '.APP_URL.'index.php');exit();}
+// Fina collection entry follows the same operational authorization as the normal sponsor-payment entry point.
+if(!in_array($role,['admin','accountant_staff','financial_manager','supervisor','vice_general_manager'],true)){header('Location: '.APP_URL.'index.php');exit();}
 $pageTitle='تسجيل تحصيل خارجي لصالح فينا الخير';$active='transactions';$errors=[];
 $currencies=dbFetchAll("SELECT code,name FROM currencies ORDER BY code");
 $input=['source_type'=>'person','source_name'=>'','source_details'=>'','amount'=>'','currency_code'=>'SDG','method'=>'cash','date'=>date('Y-m-d'),'purpose_note'=>'','description'=>''];
@@ -28,7 +29,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
     if($input['amount']===''||round((float)str_replace(',','',$input['amount']),2)<=0)$errors[]='المبلغ يجب أن يكون أكبر من صفر.';
     if(!$currencies||!in_array($input['currency_code'],array_column($currencies,'code'),true))$errors[]='العملة المحددة غير صالحة.';
     if(!in_array($input['method'],['cash','bank_transfer','credit_card','mobile','other'],true))$errors[]='طريقة الدفع غير صالحة.';
-    if(!preg_match('/^\d{4}-\d{2}-\d{2}$/',$input['date']))$errors[]='تاريخ التحصيل غير صالح.';
+    if(!preg_match('/^\\d{4}-\\d{2}-\\d{2}$/',$input['date']))$errors[]='تاريخ التحصيل غير صالح.';
     $amount=round((float)str_replace(',','',$input['amount']),2);
     $receiptPath=null;
     if(isset($_FILES['receipt_file'])&&$_FILES['receipt_file']['error']===UPLOAD_ERR_OK){
