@@ -6,6 +6,26 @@
 
 Fina money is therefore not Ahl El Kheir revenue, sponsorship revenue, or administrative-fee revenue. It must not be used to absorb a shortfall in a sponsor's normal sponsorship obligation.
 
+## Data isolation
+
+Fina uses its own data model:
+
+- `fina_sources` — the source of Fina money.
+- `fina_collections` — the actual Fina collection records.
+
+A Fina source may be:
+
+- an existing Ahl El Kheir sponsor;
+- an external individual;
+- an organization/company;
+- another external source.
+
+When the source is an existing sponsor, `fina_sources.sponsor_id` stores the relationship to the existing sponsor. Sponsor name, phone, alternate phone, email, and address are read from the existing `sponsors` record; they are not duplicated into the Fina source record.
+
+For an external source, the Fina source record stores its own contact and identification information. This keeps external Fina data separate from the normal sponsor database.
+
+The Fina collection does not use `sponsor_payments` and does not create a normal sponsorship transaction. Its accounting relationship is through the dedicated Fina journal/control flow.
+
 ## Entry point
 
 All users authorized by the application to directly enter sponsor-facing payments may use:
@@ -23,13 +43,15 @@ The current authorization set is:
 
 The Supervisor is a primary operational user of this workflow.
 
+When **كفيل من أهل الخير** is selected as the source, the sponsor selector auto-populates the sponsor's existing information into read-only fields to make data entry faster and prevent duplicate typing.
+
 ## Review
 
 Fina submissions are reviewed through:
 
 `modules/accounting/fina_payment_review.php`
 
-The review/approval stage remains controlled by the financial-management workflow.
+The review/approval stage remains controlled by the financial-management workflow. Approval creates the standalone Fina accounting journal and records its journal ID on the Fina collection.
 
 ## Accounting treatment
 
@@ -42,6 +64,8 @@ For a Fina-only collection of X:
 - Sponsorship obligation: 0.
 
 Any future remittance/settlement to Fina is a separate controlled event that reduces the Fina liability; it is not an Ahl El Kheir expense.
+
+The current journal schema does not carry a dedicated currency column. Therefore, the Fina collection retains its currency, while the accounting journal records the numeric amount and includes the currency code in the journal description.
 
 ## Separation from normal sponsor payments
 
