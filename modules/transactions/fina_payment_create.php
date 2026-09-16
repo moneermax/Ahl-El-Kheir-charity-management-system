@@ -8,10 +8,8 @@ Session::start();
 if(!Session::isLoggedIn()){header('Location: '.APP_URL.'index.php');exit();}
 $role=Session::getUserRole();
 $uid=(int)Session::getUserId();
-// Fina collection entry follows the sponsor-facing payment-entry authorization used by the application.
 if(!in_array($role,['admin','accountant','accountant_staff','financial_manager','supervisor','vice_general_manager'],true)){header('Location: '.APP_URL.'index.php');exit();}
 $pageTitle='تسجيل تحصيل خارجي لصالح فينا الخير';$active='transactions';$errors=[];
-// currencies is a code/reference table in the live schema; do not assume a display-name column.
 $currencies=dbFetchAll("SELECT code FROM currencies ORDER BY code");
 $input=['source_type'=>'person','source_name'=>'','source_details'=>'','amount'=>'','currency_code'=>'SDG','method'=>'cash','date'=>date('Y-m-d'),'purpose_note'=>'','description'=>''];
 if($_SERVER['REQUEST_METHOD']==='POST'){
@@ -30,7 +28,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
     if($input['amount']===''||round((float)str_replace(',','',$input['amount']),2)<=0)$errors[]='المبلغ يجب أن يكون أكبر من صفر.';
     if(!$currencies||!in_array($input['currency_code'],array_column($currencies,'code'),true))$errors[]='العملة المحددة غير صالحة.';
     if(!in_array($input['method'],['cash','bank_transfer','credit_card','mobile','other'],true))$errors[]='طريقة الدفع غير صالحة.';
-    if(!preg_match('/^\\d{4}-\\d{2}-\\d{2}$/',$input['date']))$errors[]='تاريخ التحصيل غير صالح.';
+    if(!preg_match('/^\d{4}-\d{2}-\d{2}$/',$input['date']))$errors[]='تاريخ التحصيل غير صالح.';
     $amount=round((float)str_replace(',','',$input['amount']),2);
     $receiptPath=null;
     if(isset($_FILES['receipt_file'])&&$_FILES['receipt_file']['error']===UPLOAD_ERR_OK){
@@ -43,10 +41,10 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
         try{
             db()->beginTransaction();
             $sourceNote=json_encode(['source_type'=>$input['source_type'],'source_name'=>$input['source_name'],'source_details'=>$input['source_details']],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
-            dbExecute("INSERT INTO sponsor_payments (sponsorship_id,supervisor_id,payment_type,sponsor_id,project_id,other_source_note,purpose_note,payment_period,payment_date,amount,currency_code,payment_method,receipt_file_path,notes,status) VALUES (NULL,?, 'other', NULL, NULL, ?, ?, NULL, ?, ?, ?, ?, ?, ?, 'pending')",[$uid,$sourceNote,$input['purpose_note']!==''?$input['purpose_note']:null,$input['date'],$amount,$input['currency_code'],$input['method'],$receiptPath,$input['description']!==''?$input['description']:null]);
+            $storedNotes='FINA_ONLY|'.($input['description']!==''?$input['description']:'تحصيل خارجي لصالح فينا الخير');
+            dbExecute("INSERT INTO sponsor_payments (sponsorship_id,supervisor_id,payment_type,sponsor_id,project_id,other_source_note,purpose_note,payment_period,payment_date,amount,currency_code,payment_method,receipt_file_path,notes,status) VALUES (NULL?, 'other', NULL, NULL, ?, ?, NULL, ?, ?, ?, ?, ?, ?, 'pending')",[$uid,$sourceNote,$input['purpose_note']!==''?$input['purpose_note']:null,$input['date'],$amount,$input['currency_code'],$input['method'],$receiptPath,$storedNotes]);
             $spId=(int)dbLastInsertId();
             if($spId<=0)throw new RuntimeException('تعذر إنشاء سجل التحصيل.');
-            dbExecute("INSERT INTO fina_payment_intakes (sponsor_payment_id,allocation_mode,fina_share_amount,integration_reference,created_by) VALUES (?,?,?,?,?)",[$spId,'fina_only',$amount,'FINA-EXT-INTAKE-SP-'.$spId,$uid]);
             db()->commit();
             flash('success','تم تسجيل تحصيل خارجي لصالح فينا الخير وإرساله للمدير المالي للمراجعة.');
             header('Location: '.APP_URL.'modules/accounting/fina_payment_review.php');exit();
