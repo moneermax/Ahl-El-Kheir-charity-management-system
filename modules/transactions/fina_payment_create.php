@@ -16,7 +16,18 @@ $pageTitle = 'تسجيل تحصيل لصالح فينا الخير';
 $active = 'transactions';
 $errors = [];
 $currencies = dbFetchAll("SELECT code FROM currencies ORDER BY code");
-$sponsors = dbFetchAll("SELECT id,sponsor_code,full_name,phone,alt_phone,email,address FROM sponsors WHERE status='active' ORDER BY full_name LIMIT 1000");
+
+// Dedicated server-side sponsor lookup. This avoids the old 1000-row client-side limitation
+// and makes partial-name / first-name / phone / email searching use the actual DB data.
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['fina_sponsor_search'])) {
+    header('Content-Type: application/json; charset=utf-8');
+    $q = trim((string)($_GET['fina_sponsor_search'] ?? ''));
+    $like = '%' . $q . '%';
+    $params = [$like, $like, $like, $like, $like];
+    $rows = dbFetchAll("SELECT id,sponsor_code,full_name,phone,alt_phone,email,address FROM sponsors WHERE status='active' AND (sponsor_code LIKE ? OR full_name LIKE ? OR phone LIKE ? OR alt_phone LIKE ? OR email LIKE ?) ORDER BY full_name LIMIT 30", $params);
+    echo json_encode($rows, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    exit();
+}
 
 $input = [
     'source_type'=>'person','sponsor_id'=>'','source_name'=>'','source_phone'=>'','source_alt_phone'=>'','source_email'=>'','source_address'=>'',
@@ -123,16 +134,17 @@ include dirname(__DIR__,2).'/includes/header.php';
 </form></div></div>
 <script>
 (function(){
-const sponsors=<?php echo json_encode($sponsors,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES); ?>;
 const type=document.getElementById('finaSourceType'),picker=document.getElementById('finaSponsorPicker'),external=document.getElementById('finaExternalName'),search=document.getElementById('finaSponsorSearch'),hidden=document.getElementById('finaSponsorId'),results=document.getElementById('finaSponsorResults'),selected=document.getElementById('finaSponsorSelected');
 const fields={name:document.getElementById('finaSourceName'),phone:document.getElementById('finaSourcePhone'),altPhone:document.getElementById('finaSourceAltPhone'),email:document.getElementById('finaSourceEmail'),address:document.getElementById('finaSourceAddress')};
+let requestSerial=0;
 function norm(v){return String(v||'').toLocaleLowerCase('ar').normalize('NFKC').replace(/[\u064B-\u065F\u0670]/g,'').trim();}
 function label(s){return [s.sponsor_code,s.full_name,s.phone].filter(Boolean).join(' — ');}
 function fill(s){hidden.value=s.id||'';search.value=label(s);fields.name.value=s.full_name||'';fields.phone.value=s.phone||'';fields.altPhone.value=s.alt_phone||'';fields.email.value=s.email||'';fields.address.value=s.address||'';selected.textContent='تم اختيار: '+label(s);selected.className='form-text text-success';Object.values(fields).forEach(e=>{e.readOnly=true;e.classList.add('bg-light');});results.style.display='none';}
 function clearSponsor(){hidden.value='';selected.textContent='';Object.values(fields).forEach(e=>{e.readOnly=false;e.classList.remove('bg-light');});}
-function render(q){const nq=norm(q);const matches=sponsors.filter(s=>{const hay=[s.sponsor_code,s.full_name,s.phone,s.alt_phone,s.email].map(norm);return !nq||hay.some(v=>v.includes(nq));}).slice(0,30);results.innerHTML='';if(!matches.length){results.innerHTML='<div class="list-group-item text-muted">لا توجد نتائج مطابقة</div>';results.style.display='block';return;}matches.forEach(s=>{const b=document.createElement('button');b.type='button';b.className='list-group-item list-group-item-action text-start';b.textContent=label(s);b.addEventListener('mousedown',function(e){e.preventDefault();fill(s);});results.appendChild(b);});results.style.display='block';}
-function mode(){const sponsor=type.value==='sponsor';picker.style.display=sponsor?'block':'none';external.style.display=sponsor?'none':'block';if(sponsor){if(hidden.value){const s=sponsors.find(x=>String(x.id)===String(hidden.value));if(s)fill(s);else clearSponsor();}else clearSponsor();}else{results.style.display='none';Object.values(fields).forEach(e=>{e.readOnly=false;e.classList.remove('bg-light');});}}
-type.addEventListener('change',mode);search.addEventListener('input',function(){if(type.value!=='sponsor')return;clearSponsor();render(search.value);});search.addEventListener('focus',function(){if(type.value==='sponsor')render(search.value);});search.addEventListener('keydown',function(e){if(e.key==='Escape')results.style.display='none';});document.addEventListener('click',function(e){if(!picker.contains(e.target))results.style.display='none';});mode();
+function render(rows){results.innerHTML='';if(!rows.length){results.innerHTML='<div class="list-group-item text-muted">لا توجد نتائج مطابقة</div>';results.style.display='block';return;}rows.forEach(s=>{const b=document.createElement('button');b.type='button';b.className='list-group-item list-group-item-action text-start';b.textContent=label(s);b.addEventListener('click',function(e){e.preventDefault();fill(s);});results.appendChild(b);});results.style.display='block';}
+async function searchSponsors(q){const serial=++requestSerial;const url=new URL(window.location.href);url.search='';url.searchParams.set('fina_sponsor_search',q);try{const response=await fetch(url.toString(),{headers:{'Accept':'application/json'},cache:'no-store'});if(!response.ok)throw new Error('HTTP '+response.status);const rows=await response.json();if(serial!==requestSerial)return;render(Array.isArray(rows)?rows:[]);}catch(error){if(serial!==requestSerial)return;results.innerHTML='<div class="list-group-item text-danger">تعذر تحميل نتائج الكفلاء</div>';results.style.display='block';}}
+function mode(){const sponsor=type.value==='sponsor';picker.style.display=sponsor?'block':'none';external.style.display=sponsor?'none':'block';if(sponsor){clearSponsor();}else{results.style.display='none';Object.values(fields).forEach(e=>{e.readOnly=false;e.classList.remove('bg-light');});}}
+type.addEventListener('change',mode);search.addEventListener('input',function(){if(type.value!=='sponsor')return;clearSponsor();searchSponsors(norm(search.value));});search.addEventListener('focus',function(){if(type.value==='sponsor')searchSponsors(norm(search.value));});search.addEventListener('keydown',function(e){if(e.key==='Escape')results.style.display='none';});document.addEventListener('click',function(e){if(!picker.contains(e.target))results.style.display='none';});mode();
 })();
 </script>
 <?php include dirname(__DIR__,2).'/includes/footer.php'; ?>
