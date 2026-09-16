@@ -57,6 +57,7 @@ include __DIR__ . '/../includes/header.php';
     <h2><?php echo e(t('dashboard.welcome_user', ['name' => $me['full_name'] ?? ''])); ?></h2>
     <p><?php echo e(t('dashboard.accountant_intro')); ?></p>
     <div class="quick-actions mt-3">
+        <a href="<?php echo url('modules/transactions/fina_payment_create.php'); ?>" class="btn btn-warning btn-sm me-2"><i class="fas fa-hand-holding-dollar me-1"></i>تحصيل فينا الخير</a>
         <a href="<?php echo url('modules/reports/my_financial.php'); ?>" class="btn btn-outline-primary btn-sm me-2"><i class="fas fa-file-invoice-dollar me-1"></i>تقاريري المالية</a>
         <a href="<?php echo url('modules/accounting/group_disbursements.php'); ?>" class="btn btn-success btn-sm me-2"><i class="fas fa-users-cog me-1"></i><?php echo e(t('accounting.group_disbursements')); ?></a>
         <a href="<?php echo url('modules/accounting/disbursements.php'); ?>" class="btn btn-primary btn-sm me-2"><i class="fas fa-money-check-dollar me-1"></i><?php echo e(t('accounting.individual_disbursements')); ?></a>
