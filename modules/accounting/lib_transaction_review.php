@@ -88,7 +88,7 @@ function ak_transaction_review_capture_fina_intake(int $paymentId): void {
     $finaShare = round((float)str_replace(',', '', (string)$rawShare), 2);
     if ($finaShare <= 0) return;
 
-    $sp = dbFetchOne("SELECT id, amount, currency_code, sponsor_id, sponsorship_id FROM sponsor_payments WHERE id = ? FOR UPDATE", [$paymentId]);
+    $sp = dbFetchOne("SELECT id, amount, sponsor_id, sponsorship_id FROM sponsor_payments WHERE id = ? FOR UPDATE", [$paymentId]);
     if (!$sp) throw new RuntimeException('تعذر قراءة التحصيل لإنشاء حماية أموال فينا الخير.');
     $gross = round((float)$sp['amount'], 2);
     if ($gross <= 0 || $finaShare > $gross) throw new RuntimeException('حصة فينا الخير يجب أن تكون بين صفر وإجمالي التحصيل.');
@@ -108,16 +108,15 @@ function ak_transaction_review_apply_fina_intake(int $paymentId, int $transactio
     $intake = dbFetchOne("SELECT * FROM fina_payment_intakes WHERE sponsor_payment_id = ? FOR UPDATE", [$paymentId]);
     if (!$intake) return;
 
-    $t = dbFetchOne("SELECT id, amount, currency_code, sponsor_id, sponsorship_id FROM transactions WHERE id = ? FOR UPDATE", [$transactionId]);
+    $t = dbFetchOne("SELECT id, amount, currency_code, transaction_date FROM transactions WHERE id = ? FOR UPDATE", [$transactionId]);
     if (!$t) throw new RuntimeException('تعذر قراءة المعاملة لإنشاء توزيع فينا الخير.');
+    require_once __DIR__ . '/lib_fina.php';
     [$mode, $ahlShare, $finaShare] = ak_fina_validate_amounts((float)$t['amount'], (float)$intake['fina_share_amount']);
     if ($mode !== $intake['allocation_mode']) throw new RuntimeException('توزيع فينا الخير لا يطابق إجمالي التحصيل.');
-    if ((string)$t['currency_code'] !== (string)$intake['currency_code'] && isset($intake['currency_code'])) throw new RuntimeException('عملة توزيع فينا الخير لا تطابق عملة التحصيل.');
 
     $existing = dbFetchOne("SELECT id FROM fina_payment_allocations WHERE transaction_id = ? LIMIT 1", [$transactionId]);
     if ($existing) throw new RuntimeException('يوجد بالفعل توزيع فينا الخير لهذه المعاملة.');
 
-    require_once __DIR__ . '/lib_fina.php';
     $policy = ak_get_admin_fee_policy((string)date('Y-m-d', strtotime($t['transaction_date'] ?? date('Y-m-d'))));
     $calc = ak_fina_calculate_fee((float)$t['amount'], $finaShare, $policy);
     dbExecute("INSERT INTO fina_payment_allocations (transaction_id, sponsor_payment_id, allocation_mode, gross_amount, ahl_share_amount, fina_share_amount, ahl_admin_fee_amount, ahl_net_amount, settled_amount, currency_code, status, integration_reference, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0.00, ?, 'protected', ?, ?)", [$transactionId, $paymentId, $mode, round((float)$t['amount'], 2), $ahlShare, $finaShare, $calc['amount'], $calc['net_amount'], $t['currency_code'], 'FPA-TXN-' . $transactionId, (int)Session::getUserId()]);
@@ -127,6 +126,7 @@ function ak_transaction_review_apply_fina_intake(int $paymentId, int $transactio
 if (!function_exists('ak_transaction_review_notify_fm_event')) {
 function ak_transaction_review_notify_fm_event(int $referenceId, string $referenceType, string $title, string $body, string $link, ?int $excludeUserId = null): void {
     if ($referenceId <= 0 || trim($referenceType) === '' || trim($title) === '') return;
+    if ($referenceType === 'sponsor_payment_submitted') ak_transaction_review_capture_fina_intake($referenceId);
     try {
         $users = dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id = r.id WHERE r.code IN ('financial_manager', 'fm', 'finance') AND u.is_active = 1");
         foreach ($users as $u) {
