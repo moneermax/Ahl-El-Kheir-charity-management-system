@@ -74,7 +74,81 @@ include dirname(__DIR__,2).'/includes/header.php';
 ?>
 <div class="welcome-section fade-in"><h2><i class="fas fa-clipboard-check me-2"></i>طابور المراجعة المالية</h2><p>مراجعة واعتماد تحصيلات المشرفين. لا تصبح الدفعة معتمدة إلا بعد نجاح المعاملة والقيد المحاسبي معاً.</p></div>
 <?php include dirname(__DIR__,2).'/includes/alerts.php'; ?>
-<div class="card mb-4 fade-in"><div class="card-header text-white" style="background:#1b4d8f"><i class="fas fa-hourglass-half me-2"></i>التحصيلات المعلقة بانتظار الاعتماد (<?php echo count($payments); ?>)</div><div class="card-body p-0"><div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead class="table-light"><tr><th>التاريخ</th><th>المشرف</th><th>الكفيل / اليتيم</th><th>الغرض / الفترة</th><th>طريقة التحصيل</th><th>توزيع المبلغ</th><th>الإيصالات</th><th class="text-center" style="width:25%">المراجعة</th></tr></thead><tbody>
-<?php if(!$payments): ?><tr><td colspan="8" class="text-center text-muted py-4">لا توجد تحصيلات معلقة حالياً.</td></tr><?php else: foreach($payments as $p): ?><tr><td><?php echo date('Y-m-d H:i',strtotime($p['created_at'])); ?></td><td><strong><?php echo e($p['supervisor_name']); ?></strong></td><td><?php if($p['sponsor_name']): ?><small class="text-muted">كفيل:</small> <?php echo e($p['sponsor_name']); ?> <code><?php echo e($p['sponsor_code']??''); ?></code><br><?php endif; ?><?php if(!empty($p['child_name'])):?><small class="text-muted">يتيم:</small> <?php echo e($p['child_name']); ?><?php endif; ?></td><td><small><?php echo e($purposeLabels[$p['payment_type']]??$p['payment_type']); ?></small><?php if(!empty($p['payment_period'])):?><small class="text-muted d-block"><?php echo e($p['payment_period']); ?></small><?php endif; ?></td><td><?php echo e($methodLabels[$p['payment_method']??'cash']??'نقدي'); ?></td><td><strong><?php echo number_format((float)$p['amount'],2); ?></strong> ج.س<?php if(!empty($p['fina_share_amount'])&&((float)$p['fina_share_amount'])>0): ?><small class="d-block text-muted">أهل الخير: <?php echo number_format((float)$p['amount']-(float)$p['fina_share_amount'],2); ?> — فينا الخير: <?php echo number_format((float)$p['fina_share_amount'],2); ?></small><?php else: ?><small class="d-block text-muted">كل المبلغ لأهل الخير</small><?php endif; ?></td><td><?php if($p['receipt_file_path']):?><a href="<?php echo APP_URL.'modules/transactions/receipt_sp.php?id='.(int)$p['id']; ?>" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-eye"></i></a><?php endif;?><?php if(!empty($p['unified_receipt_path'])):?><a href="<?php echo APP_URL.'modules/transactions/receipt_sp.php?id='.(int)$p['id'].'&kind=unified'; ?>" target="_blank" class="btn btn-sm btn-outline-secondary"><i class="fas fa-layer-group"></i></a><?php endif;?></td><td><form method="post" class="mb-1"><?php echo csrf_field(); ?><input type="hidden" name="approve_payment" value="<?php echo (int)$p['id']; ?>"><button type="submit" class="btn btn-sm btn-success w-100" onclick="return confirm('اعتماد الدفعة وإنشاء القيد المحاسبي؟')"><i class="fas fa-check"></i> اعتماد وترحيل</button></form><form method="post" class="d-flex gap-1"><?php echo csrf_field(); ?><input type="text" name="return_note_<?php echo (int)$p['id']; ?>" class="form-control form-control-sm" placeholder="سبب الإرجاع..." required><button type="submit" name="return_payment" value="<?php echo (int)$p['id']; ?>" class="btn btn-sm btn-danger"><i class="fas fa-undo"></i></button></form></td></tr><?php endforeach; endif; ?></tbody></table></div></div></div>
+<div class="card mb-4 fade-in">
+    <div class="card-header text-white" style="background:#1b4d8f"><i class="fas fa-hourglass-half me-2"></i>التحصيلات المعلقة بانتظار الاعتماد (<?php echo count($payments); ?>)</div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>التاريخ / المشرف</th>
+                        <th>الكفيل / اليتيم</th>
+                        <th>الغرض / الفترة</th>
+                        <th>طريقة التحصيل</th>
+                        <th>الإيصالات</th>
+                        <th class="text-center" style="width:22%">المراجعة</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php if(!$payments): ?>
+                    <tr><td colspan="6" class="text-center text-muted py-4">لا توجد تحصيلات معلقة حالياً.</td></tr>
+                <?php else: foreach($payments as $p):
+                    $gross=(float)$p['amount'];
+                    $finaShare=(float)($p['fina_share_amount']??0);
+                    $ahlShare=max(0,$gross-$finaShare);
+                    $isFina=$finaShare>0;
+                ?>
+                    <tr class="border-bottom-0">
+                        <td>
+                            <div class="fw-semibold"><?php echo e(date('Y-m-d H:i',strtotime($p['created_at']))); ?></div>
+                            <small class="text-muted d-block">دفعة <code>SP-<?php echo str_pad((string)$p['id'],6,'0',STR_PAD_LEFT); ?></code></small>
+                            <strong class="d-block mt-1"><?php echo e($p['supervisor_name']); ?></strong>
+                        </td>
+                        <td>
+                            <?php if($p['sponsor_name']): ?>
+                                <div><small class="text-muted">كفيل</small><br><strong><?php echo e($p['sponsor_name']); ?></strong></div>
+                                <?php if(!empty($p['sponsor_code'])):?><small class="text-muted"><code><?php echo e($p['sponsor_code']); ?></code></small><?php endif; ?>
+                            <?php endif; ?>
+                            <?php if(!empty($p['child_name'])): ?>
+                                <div class="mt-1"><small class="text-muted">يتيم</small><br><?php echo e($p['child_name']); ?></div>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                            <div class="fw-semibold"><?php echo e($purposeLabels[$p['payment_type']]??$p['payment_type']); ?></div>
+                            <?php if(!empty($p['payment_period'])):?><small class="text-muted d-block mt-1"><?php echo e($p['payment_period']); ?></small><?php endif; ?>
+                            <?php if(!empty($p['purpose_note'])):?><small class="text-muted d-block mt-1"><?php echo e($p['purpose_note']); ?></small><?php endif; ?>
+                        </td>
+                        <td><span class="badge bg-light text-dark border"><?php echo e($methodLabels[$p['payment_method']??'cash']??'نقدي'); ?></span></td>
+                        <td>
+                            <?php if($p['receipt_file_path']):?><a href="<?php echo APP_URL.'modules/transactions/receipt_sp.php?id='.(int)$p['id']; ?>" target="_blank" class="btn btn-sm btn-outline-primary" title="عرض إيصال التحصيل"><i class="fas fa-eye"></i> الإيصال</a><?php endif;?>
+                            <?php if(!empty($p['unified_receipt_path'])):?><a href="<?php echo APP_URL.'modules/transactions/receipt_sp.php?id='.(int)$p['id'].'&kind=unified'; ?>" target="_blank" class="btn btn-sm btn-outline-secondary" title="عرض الإيصال الموحد"><i class="fas fa-layer-group"></i></a><?php endif;?>
+                            <?php if(!$p['receipt_file_path']&&!$p['unified_receipt_path']):?><span class="text-muted small">لا يوجد</span><?php endif;?>
+                        </td>
+                        <td rowspan="2" class="text-center align-middle">
+                            <form method="post" class="mb-2"><?php echo csrf_field(); ?><input type="hidden" name="approve_payment" value="<?php echo (int)$p['id']; ?>"><button type="submit" class="btn btn-sm btn-success w-100" onclick="return confirm('اعتماد الدفعة وإنشاء القيد المحاسبي؟')"><i class="fas fa-check"></i> اعتماد وترحيل</button></form>
+                            <form method="post" class="d-flex gap-1"><?php echo csrf_field(); ?><input type="text" name="return_note_<?php echo (int)$p['id']; ?>" class="form-control form-control-sm" placeholder="سبب الإرجاع..." required><button type="submit" name="return_payment" value="<?php echo (int)$p['id']; ?>" class="btn btn-sm btn-danger" title="إرجاع للمشرف"><i class="fas fa-undo"></i></button></form>
+                        </td>
+                    </tr>
+                    <tr class="table-light">
+                        <td colspan="5" class="py-2">
+                            <div class="d-flex flex-wrap align-items-center gap-2">
+                                <span class="fw-semibold">التوزيع المالي:</span>
+                                <span class="badge bg-dark">الإجمالي: <?php echo number_format($gross,2); ?> ج.س</span>
+                                <span class="badge bg-success">أهل الخير: <?php echo number_format($ahlShare,2); ?> ج.س</span>
+                                <?php if($isFina): ?>
+                                    <span class="badge bg-warning text-dark">فينا الخير: <?php echo number_format($finaShare,2); ?> ج.س</span>
+                                    <span class="badge bg-info text-dark">تقسيم مشترك</span>
+                                <?php else: ?>
+                                    <span class="badge bg-secondary">كامل المبلغ لأهل الخير</span>
+                                <?php endif; ?>
+                            </div>
+                        </td>
+                    </tr>
+                <?php endforeach; endif; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 <div class="card fade-in"><div class="card-header"><i class="fas fa-history me-2"></i>سجل المراجعات الأخيرة</div><div class="card-body p-0"><div class="table-responsive"><table class="table table-sm table-hover align-middle mb-0"><thead class="table-light"><tr><th>التاريخ</th><th>المشرف</th><th>الكفيل</th><th>الغرض</th><th>طريقة التحصيل</th><th>المبلغ</th><th>الحالة</th><th>المراجع</th><th>ملاحظات</th></tr></thead><tbody><?php if(!$history):?><tr><td colspan="9" class="text-center text-muted py-3">لا يوجد سجل.</td></tr><?php else:foreach($history as $h):?><tr><td><?php echo e($h['reviewed_at']??''); ?></td><td><?php echo e($h['supervisor_name']); ?></td><td><?php echo e($h['sponsor_name']??'—'); ?></td><td><?php echo e($purposeLabels[$h['payment_type']]??$h['payment_type']); ?></td><td><?php echo e($methodLabels[$h['payment_method']??'cash']??'نقدي'); ?></td><td><?php echo number_format((float)$h['amount'],2); ?> ج.س</td><td><?php echo $h['status']==='approved'?'<span class="badge bg-success">معتمد</span>':'<span class="badge bg-danger">مرتجع</span>'; ?></td><td><?php echo e($h['reviewer_name']??'—'); ?></td><td><?php echo e($h['return_note']??'—'); ?></td></tr><?php endforeach;endif;?></tbody></table></div></div></div>
 <?php include dirname(__DIR__,2).'/includes/footer.php'; ?>
