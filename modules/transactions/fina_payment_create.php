@@ -8,8 +8,8 @@ Session::start();
 if(!Session::isLoggedIn()){header('Location: '.APP_URL.'index.php');exit();}
 $role=Session::getUserRole();
 $uid=(int)Session::getUserId();
-// Fina collection entry follows the same operational authorization as the normal sponsor-payment entry point.
-if(!in_array($role,['admin','accountant_staff','financial_manager','supervisor','vice_general_manager'],true)){header('Location: '.APP_URL.'index.php');exit();}
+// Fina collection entry follows the sponsor-facing payment-entry authorization used by the application.
+if(!in_array($role,['admin','accountant','accountant_staff','financial_manager','supervisor','vice_general_manager'],true)){header('Location: '.APP_URL.'index.php');exit();}
 $pageTitle='تسجيل تحصيل خارجي لصالح فينا الخير';$active='transactions';$errors=[];
 $currencies=dbFetchAll("SELECT code,name FROM currencies ORDER BY code");
 $input=['source_type'=>'person','source_name'=>'','source_details'=>'','amount'=>'','currency_code'=>'SDG','method'=>'cash','date'=>date('Y-m-d'),'purpose_note'=>'','description'=>''];
