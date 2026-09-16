@@ -11,7 +11,8 @@ $uid=(int)Session::getUserId();
 // Fina collection entry follows the sponsor-facing payment-entry authorization used by the application.
 if(!in_array($role,['admin','accountant','accountant_staff','financial_manager','supervisor','vice_general_manager'],true)){header('Location: '.APP_URL.'index.php');exit();}
 $pageTitle='تسجيل تحصيل خارجي لصالح فينا الخير';$active='transactions';$errors=[];
-$currencies=dbFetchAll("SELECT code,name FROM currencies ORDER BY code");
+// currencies is a code/reference table in the live schema; do not assume a display-name column.
+$currencies=dbFetchAll("SELECT code FROM currencies ORDER BY code");
 $input=['source_type'=>'person','source_name'=>'','source_details'=>'','amount'=>'','currency_code'=>'SDG','method'=>'cash','date'=>date('Y-m-d'),'purpose_note'=>'','description'=>''];
 if($_SERVER['REQUEST_METHOD']==='POST'){
     $input['source_type']=$_POST['source_type']??'person';
@@ -62,7 +63,7 @@ include dirname(__DIR__,2).'/includes/header.php';
 <div class="col-md-8"><label class="form-label">اسم مصدر الأموال *</label><input type="text" name="source_name" class="form-control" required value="<?php echo e($input['source_name']);?>"></div>
 <div class="col-12"><label class="form-label">تفاصيل المصدر / مرجع الجهة</label><input type="text" name="source_details" class="form-control" value="<?php echo e($input['source_details']);?>" placeholder="رقم خطاب، جهة اتصال، أو أي مرجع مفيد"></div>
 <div class="col-md-4"><label class="form-label">المبلغ *</label><input type="number" step="0.01" min="0.01" name="amount" class="form-control" required value="<?php echo e($input['amount']);?>"></div>
-<div class="col-md-4"><label class="form-label">العملة *</label><select name="currency_code" class="form-select" required><?php foreach($currencies as $c):?><option value="<?php echo e($c['code']);?>" <?php echo $input['currency_code']===$c['code']?'selected':'';?>><?php echo e($c['code']);?> — <?php echo e($c['name']);?></option><?php endforeach;?></select></div>
+<div class="col-md-4"><label class="form-label">العملة *</label><select name="currency_code" class="form-select" required><?php foreach($currencies as $c):?><option value="<?php echo e($c['code']);?>" <?php echo $input['currency_code']===$c['code']?'selected':'';?>><?php echo e($c['code']);?></option><?php endforeach;?></select></div>
 <div class="col-md-4"><label class="form-label">طريقة الدفع *</label><select name="method" class="form-select"><option value="cash" <?php echo $input['method']==='cash'?'selected':'';?>>نقدي / كاش</option><option value="bank_transfer" <?php echo $input['method']==='bank_transfer'?'selected':'';?>>تحويل بنكي</option><option value="mobile" <?php echo $input['method']==='mobile'?'selected':'';?>>محفظة إلكترونية</option><option value="credit_card" <?php echo $input['method']==='credit_card'?'selected':'';?>>بطاقة</option><option value="other" <?php echo $input['method']==='other'?'selected':'';?>>أخرى</option></select></div>
 <div class="col-md-4"><label class="form-label">تاريخ التحصيل *</label><input type="date" name="date" class="form-control" required value="<?php echo e($input['date']);?>"></div>
 <div class="col-md-8"><label class="form-label">إيصال التحصيل</label><input type="file" name="receipt_file" class="form-control" accept=".jpg,.jpeg,.png,.pdf"><div class="form-text">JPG / PNG / PDF حتى 10MB.</div></div>
