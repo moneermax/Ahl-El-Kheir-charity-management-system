@@ -23,6 +23,11 @@ include __DIR__ . '/../includes/header.php';
     <p><?php echo e(t('admin.dashboard_description')); ?></p>
 
     <div class="quick-actions mt-3">
+        <a href="<?php echo url('modules/transactions/fina_payment_create.php'); ?>" class="btn btn-warning btn-sm">
+            <i class="fas fa-hand-holding-dollar me-1"></i>
+            تحصيل فينا الخير
+        </a>
+
         <a href="<?php echo url('modules/system/backup.php'); ?>" class="btn btn-light btn-sm">
             <i class="fas fa-database me-1"></i>
             <?php echo e(t('admin.backup')); ?>
