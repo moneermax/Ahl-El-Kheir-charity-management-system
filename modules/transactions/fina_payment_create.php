@@ -133,20 +133,109 @@ include dirname(__DIR__,2).'/includes/header.php';
 </form></div></div>
 <script>
 (function(){
-const type=document.getElementById('finaSourceType'),picker=document.getElementById('finaSponsorPicker'),search=document.getElementById('finaSponsorSearch'),hidden=document.getElementById('finaSponsorId'),results=document.getElementById('finaSponsorResults'),selected=document.getElementById('finaSponsorSelected');
-const fields={name:document.getElementById('finaSourceName'),phone:document.getElementById('finaSourcePhone'),altPhone:document.getElementById('finaSourceAltPhone'),email:document.getElementById('finaSourceEmail'),address:document.getElementById('finaSourceAddress')};
+const type=document.getElementById('finaSourceType');
+const picker=document.getElementById('finaSponsorPicker');
+const search=document.getElementById('finaSponsorSearch');
+const hidden=document.getElementById('finaSponsorId');
+const results=document.getElementById('finaSponsorResults');
+const selected=document.getElementById('finaSponsorSelected');
+const fieldIds={name:'finaSourceName',phone:'finaSourcePhone',altPhone:'finaSourceAltPhone',email:'finaSourceEmail',address:'finaSourceAddress'};
 let requestSerial=0;
+let controller=null;
+
+function field(key){return document.getElementById(fieldIds[key]);}
 function label(s){return [s.sponsor_code,s.full_name,s.phone].filter(Boolean).join(' — ');}
-function setAutoFields(readonly){Object.values(fields).forEach(e=>{e.readOnly=readonly;if(readonly)e.classList.add('bg-light');else e.classList.remove('bg-light');});}
-function clearSelectedFields(){hidden.value='';selected.textContent='';selected.className='form-text';Object.values(fields).forEach(e=>e.value='');}
-function fill(s){hidden.value=s.id||'';search.value=s.full_name||'';fields.name.value=s.full_name||'';fields.phone.value=s.phone||'';fields.altPhone.value=s.alt_phone||'';fields.email.value=s.email||'';fields.address.value=s.address||'';selected.textContent='تم اختيار الكفيل: '+label(s);selected.className='form-text text-success';setAutoFields(true);results.style.display='none';}
+function setAutoFields(readonly){
+    Object.keys(fieldIds).forEach(function(key){
+        const el=field(key);
+        if(!el)return;
+        el.readOnly=readonly;
+        el.classList.toggle('bg-light',readonly);
+    });
+}
+function clearSelectedFields(){
+    hidden.value='';
+    selected.textContent='';
+    selected.className='form-text';
+    Object.keys(fieldIds).forEach(function(key){const el=field(key);if(el)el.value='';});
+}
+function fill(s){
+    const values={
+        name:s.full_name || '',
+        phone:s.phone || '',
+        altPhone:s.alt_phone || '',
+        email:s.email || '',
+        address:s.address || ''
+    };
+    hidden.value=String(s.id || '');
+    search.value=s.full_name || '';
+    Object.keys(values).forEach(function(key){
+        const el=field(key);
+        if(el)el.value=values[key];
+    });
+    selected.textContent='تم اختيار الكفيل: '+label(s);
+    selected.className='form-text text-success';
+    setAutoFields(true);
+    results.style.display='none';
+}
 function clearSponsor(){clearSelectedFields();setAutoFields(true);}
-function render(rows){results.innerHTML='';if(!rows.length){results.innerHTML='<div class="list-group-item text-muted">لا توجد نتائج مطابقة للاسم الأول</div>';results.style.display='block';return;}rows.forEach(s=>{const b=document.createElement('button');b.type='button';b.className='list-group-item list-group-item-action text-start';b.innerHTML='<strong>'+String(s.full_name||'')+'</strong><br><small>'+String(s.sponsor_code||'')+(s.phone?' — '+String(s.phone):'')+'</small>';b.addEventListener('click',function(e){e.preventDefault();fill(s);});results.appendChild(b);});results.style.display='block';}
-async function searchSponsors(q){const serial=++requestSerial;if(!q){results.style.display='none';return;}const url=new URL(window.location.href);url.search='';url.searchParams.set('fina_sponsor_search',q);try{const response=await fetch(url.toString(),{headers:{'Accept':'application/json'},cache:'no-store'});if(!response.ok)throw new Error('HTTP '+response.status);const rows=await response.json();if(serial!==requestSerial)return;render(Array.isArray(rows)?rows:[]);}catch(error){if(serial!==requestSerial)return;results.innerHTML='<div class="list-group-item text-danger">تعذر تحميل نتائج الكفلاء</div>';results.style.display='block';}}
-function mode(){const sponsor=type.value==='sponsor';picker.style.display=sponsor?'block':'none';if(sponsor){clearSponsor();}else{results.style.display='none';setAutoFields(false);}}
+function render(rows){
+    results.innerHTML='';
+    if(!rows.length){
+        results.innerHTML='<div class="list-group-item text-muted">لا توجد نتائج مطابقة للاسم الأول</div>';
+        results.style.display='block';
+        return;
+    }
+    rows.forEach(function(s){
+        const b=document.createElement('button');
+        b.type='button';
+        b.className='list-group-item list-group-item-action text-start';
+        b.innerHTML='<strong>'+String(s.full_name||'')+'</strong><br><small>'+String(s.sponsor_code||'')+(s.phone?' — '+String(s.phone):'')+'</small>';
+        b.addEventListener('click',function(e){e.preventDefault();fill(s);});
+        results.appendChild(b);
+    });
+    results.style.display='block';
+}
+async function searchSponsors(q){
+    const serial=++requestSerial;
+    if(controller)controller.abort();
+    if(!q){results.innerHTML='';results.style.display='none';return;}
+    controller=new AbortController();
+    const url=new URL(window.location.href);
+    url.search='';
+    url.searchParams.set('fina_sponsor_search',q);
+    try{
+        const response=await fetch(url.toString(),{headers:{'Accept':'application/json'},cache:'no-store',signal:controller.signal});
+        if(!response.ok)throw new Error('HTTP '+response.status);
+        const rows=await response.json();
+        if(serial!==requestSerial)return;
+        render(Array.isArray(rows)?rows:[]);
+    }catch(error){
+        if(error.name==='AbortError'||serial!==requestSerial)return;
+        results.innerHTML='<div class="list-group-item text-danger">تعذر تحميل نتائج الكفلاء</div>';
+        results.style.display='block';
+    }
+}
+function mode(){
+    const sponsor=type.value==='sponsor';
+    picker.style.display=sponsor?'block':'none';
+    if(sponsor){
+        clearSponsor();
+    }else{
+        results.style.display='none';
+        setAutoFields(false);
+    }
+}
 type.addEventListener('change',mode);
-search.addEventListener('input',function(){if(type.value==='sponsor'){clearSelectedFields();setAutoFields(true);searchSponsors(search.value.trim());}});
-search.addEventListener('focus',function(){if(type.value==='sponsor'&&search.value.trim())searchSponsors(search.value.trim());});
+search.addEventListener('input',function(){
+    if(type.value!=='sponsor')return;
+    clearSelectedFields();
+    setAutoFields(true);
+    searchSponsors(search.value.trim());
+});
+search.addEventListener('focus',function(){
+    if(type.value==='sponsor'&&search.value.trim())searchSponsors(search.value.trim());
+});
 search.addEventListener('keydown',function(e){if(e.key==='Escape')results.style.display='none';});
 document.addEventListener('click',function(e){if(!picker.contains(e.target))results.style.display='none';});
 mode();
