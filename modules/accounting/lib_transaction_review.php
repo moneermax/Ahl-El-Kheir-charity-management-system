@@ -72,11 +72,15 @@ function ak_transaction_review_notify_event(int $userId, string $title, string $
             }
         }
 
+        // Suppress duplicates only while an equivalent notification is still
+        // unread. Once the FM has read it, a later workflow event must create
+        // a fresh notification so the new pending transaction is visible.
         $existing = dbFetchOne(
             "SELECT id FROM notifications
              WHERE recipient_user_id = ?
                AND title = ?
                AND link = ?
+               AND is_read = 0
              LIMIT 1",
             [$userId, $title, $link]
         );
