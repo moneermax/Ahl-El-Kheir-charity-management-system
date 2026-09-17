@@ -116,6 +116,22 @@ Implementation commit:
 
 The storage `.htaccess` deny rule remains intact; it must not be weakened merely to make receipt links work.
 
+### Supervisor dashboard placement
+
+The Supervisor dashboard's Fina section has been moved below the four primary action cards, in the requested order:
+
+1. Sponsors — الكفلاء
+2. Families — الأسر
+3. Sponsorships — الكفالات
+4. Fina collection entry — تحصيل فينا الخير
+5. Fina statistics and links — إحصاءات تحصيل فينا الخير الخاصة بك
+
+The Fina statistics remain restricted to the logged-in Supervisor's own `fina_collections`, and the three existing review/history/report links were preserved. No duplicate Fina workflow or new intake was introduced.
+
+Implementation commit:
+
+- `d5ad2075a2f4791d016685b6a90f2a0d3f68e012` — move Fina section below Supervisor action cards.
+
 ## Verification status
 
 - Standalone Fina data model: implemented and preserved.
@@ -123,5 +139,7 @@ The storage `.htaccess` deny rule remains intact; it must not be weakened merely
 - Fina accounting isolation through liability account `2300`: preserved.
 - Direct receipt exposure: prevented; authenticated receipt viewer is runtime-confirmed working.
 - Request-time Fina schema mutation: removed in code; migration added.
+- Supervisor Fina ownership filtering: preserved.
+- Supervisor Fina dashboard placement: implemented; runtime visual confirmation is the remaining UI check for this latest layout-only change.
 
-The next audit task remains the targeted Accounting Journal Cross-Module Integrity review for the protected automated reference types `payroll`, `disbursement_void`, and `item_return`. Do not restart the completed Supervisor ↔ Accounting integration audit or repeat closed Fina receipt/authorization tests unless new regression evidence appears.
+The next audit task is the targeted Accounting Journal Cross-Module Integrity review for the protected automated reference types `payroll`, `disbursement_void`, and `item_return`. Do not restart the completed Supervisor ↔ Accounting integration audit or repeat closed Fina receipt/authorization tests unless new regression evidence appears.
