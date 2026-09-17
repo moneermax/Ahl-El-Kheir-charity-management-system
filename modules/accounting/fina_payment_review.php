@@ -11,6 +11,7 @@ $role = Session::getUserRole();
 $uid = (int) Session::getUserId();
 $canReview = ak_transaction_review_is_fm($role);
 $canView = in_array($role, ['financial_manager', 'fm', 'supervisor', 'admin', 'vice_general_manager'], true);
+$supervisorOwnOnly = ($role === 'supervisor');
 
 if (!$canView) {
     header('Location: ' . APP_URL . 'index.php');
@@ -120,6 +121,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $canReview && verify_csrf() && isse
     exit();
 }
 
+$pendingWhere = "fc.status = 'pending'";
+$pendingParams = [];
+if ($supervisorOwnOnly) {
+    $pendingWhere .= ' AND fc.created_by = ?';
+    $pendingParams[] = $uid;
+}
 $pending = dbFetchAll(
     "SELECT fc.*, fs.source_type, fs.source_name, fs.source_phone, fs.source_alt_phone, fs.source_email,
             fs.source_address, fs.source_id_number, fs.source_reference, fs.contact_person, fs.source_details,
@@ -128,10 +135,17 @@ $pending = dbFetchAll(
      JOIN fina_sources fs ON fs.id = fc.fina_source_id
      LEFT JOIN sponsors s ON s.id = fs.sponsor_id
      JOIN users u ON u.id = fc.created_by
-     WHERE fc.status = 'pending'
-     ORDER BY fc.collection_date ASC, fc.id ASC"
+     WHERE {$pendingWhere}
+     ORDER BY fc.collection_date ASC, fc.id ASC",
+    $pendingParams
 );
 
+$historyWhere = "fc.status IN ('approved', 'returned')";
+$historyParams = [];
+if ($supervisorOwnOnly) {
+    $historyWhere .= ' AND fc.created_by = ?';
+    $historyParams[] = $uid;
+}
 $history = dbFetchAll(
     "SELECT fc.*, fs.source_type, fs.source_name, s.full_name sponsor_name, s.sponsor_code,
             u.full_name creator_name, r.full_name reviewer_name
@@ -140,9 +154,10 @@ $history = dbFetchAll(
      LEFT JOIN sponsors s ON s.id = fs.sponsor_id
      JOIN users u ON u.id = fc.created_by
      LEFT JOIN users r ON r.id = fc.reviewed_by
-     WHERE fc.status IN ('approved', 'returned')
+     WHERE {$historyWhere}
      ORDER BY fc.reviewed_at DESC, fc.id DESC
-     LIMIT 50"
+     LIMIT 50",
+    $historyParams
 );
 
 include dirname(__DIR__, 2) . '/includes/header.php';
@@ -168,12 +183,13 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     <?php if (!$canReview): ?>
         <div class="alert alert-info">
             <i class="fas fa-eye me-1"></i>وضع عرض فقط. اعتماد أو إرجاع تحصيلات فينا الخير متاح للمدير المالي فقط.
+            <?php if ($supervisorOwnOnly): ?> أنت ترى فقط التحصيلات التي سجلتها بنفسك.<?php endif; ?>
         </div>
     <?php endif; ?>
 
     <div class="card mb-4">
         <div class="card-header text-white" style="background:#1b4d8f">
-            طلبات بانتظار الاعتماد <span class="badge bg-light text-dark"><?php echo count($pending); ?></span>
+            <?php echo $supervisorOwnOnly ? 'تحصيلاتك بانتظار المراجعة' : 'طلبات بانتظار الاعتماد'; ?> <span class="badge bg-light text-dark"><?php echo count($pending); ?></span>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -216,7 +232,13 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                                         <?php echo e($p['description'] ?: ''); ?>
                                     </td>
                                     <td>
-                                        <?php echo $p['receipt_path'] ? '<span class="text-success"><i class="fas fa-paperclip"></i> مرفق</span>' : '—'; ?>
+                                        <?php if ($p['receipt_path']): ?>
+                                            <a href="<?php echo APP_URL . e($p['receipt_path']); ?>" target="_blank" rel="noopener" class="btn btn-outline-primary btn-sm">
+                                                <i class="fas fa-paperclip me-1"></i>عرض الإيصال
+                                            </a>
+                                        <?php else: ?>
+                                            —
+                                        <?php endif; ?>
                                     </td>
                                     <td>
                                         <?php if ($canReview): ?>
@@ -244,7 +266,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     </div>
 
     <div class="card">
-        <div class="card-header">آخر التحصيلات التي تمت مراجعتها</div>
+        <div class="card-header"><?php echo $supervisorOwnOnly ? 'آخر تحصيلاتك التي تمت مراجعتها' : 'آخر التحصيلات التي تمت مراجعتها'; ?></div>
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-sm table-hover mb-0">
