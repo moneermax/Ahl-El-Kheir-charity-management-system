@@ -67,7 +67,9 @@ send_system_notification(
     (int) $q['created_by'],
     'تم إرجاع تحصيل فينا الخير',
     'تم إرجاع تحصيل فينا الخير رقم #' . $id . ' بمبلغ ' . number_format((float) $q['amount'], 2) . ' ' . $q['currency_code'] . '. سبب الإرجاع: ' . $note,
-    'warning'
+    'warning',
+    'fina_collection',
+    $id
 );
 
 flash('success', 'تم إرجاع تحصيل فينا الخير وإرسال إشعار للمستخدم المنشئ.');
