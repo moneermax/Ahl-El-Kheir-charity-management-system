@@ -5,10 +5,6 @@ require_once dirname(__DIR__,2).'/config/database.php';
 require_once __DIR__.'/lib.php';
 require_once __DIR__.'/lib_transaction_review.php';
 
-/**
- * Verify that the standalone Fina schema has been provisioned by the database
- * migration. Normal web requests must never create or alter application schema.
- */
 function fina_ensure_tables(): void{
     $sources = dbFetchOne("SELECT COUNT(*) AS n FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='fina_sources'");
     $collections = dbFetchOne("SELECT COUNT(*) AS n FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='fina_collections'");
@@ -34,21 +30,8 @@ function fina_ensure_liability_account(): int{
 
 function fina_post_collection_journal(array $collection,int $reviewerId): int{
     $collectionId=(int)$collection['id'];
-    $notifyApproval=function(float $amount,string $currency) use($collectionId,$collection): void{
-        ak_transaction_review_notify_event(
-            (int)($collection['created_by'] ?? 0),
-            'تم اعتماد تحصيل فينا الخير',
-            'تم اعتماد تحصيل فينا الخير رقم #'.$collectionId.' بمبلغ '.number_format($amount,2).' '.$currency.' وترحيله كالتزام مستقل بنسبة 100% لصالح فينا الخير.',
-            APP_URL.'modules/accounting/fina_payment_review.php',
-            $collectionId,
-            'fina_collection_approved'
-        );
-    };
     $existing=dbFetchOne("SELECT id FROM journal_entries WHERE reference_type='fina_collection' AND reference_id=? AND status='posted' LIMIT 1",[$collectionId]);
-    if($existing){
-        $notifyApproval((float)$collection['amount'],(string)($collection['currency_code'] ?? APP_CURRENCY_CODE));
-        return (int)$existing['id'];
-    }
+    if($existing)return (int)$existing['id'];
     $liabilityId=fina_ensure_liability_account();
     $assetCode=ak_cash_code((string)$collection['payment_method']);
     $assetId=ak_account_id($assetCode);
@@ -64,6 +47,5 @@ function fina_post_collection_journal(array $collection,int $reviewerId): int{
     if($entryId<=0)throw new RuntimeException('تعذر إنشاء رأس القيد المحاسبي لفينا الخير.');
     dbExecute("INSERT INTO journal_lines (entry_id,account_id,debit,credit,description) VALUES (?,?,?,?,?)",[$entryId,$assetId,$amount,0,'استلام أموال مخصصة لفينا الخير']);
     dbExecute("INSERT INTO journal_lines (entry_id,account_id,debit,credit,description) VALUES (?,?,?,?,?)",[$entryId,$liabilityId,0,$amount,'التزام مستحق لفينا الخير']);
-    $notifyApproval($amount,$currency);
     return $entryId;
 }
