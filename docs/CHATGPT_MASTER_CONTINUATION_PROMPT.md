@@ -207,7 +207,7 @@ At the current checkpoint:
 - Fina authenticated receipt viewer is runtime-confirmed working.
 - Fina currency selector was removed and system-wide SDG is enforced by the entry workflow.
 - Fina entry form compact horizontal label/field layout is implemented; visual runtime check remains pending.
-- A genuine live notification-toast regression was fixed on 2026-09-17; runtime verification remains pending.
+- The live right-corner notification toast regression was fixed, and its persistence-until-read behavior is now restored in code; runtime verification remains pending.
 
 ## NOTIFICATION CHECKPOINT — 2026-09-17
 
@@ -224,29 +224,45 @@ The shared notification behavior is centralized and must be preserved:
 - Notification records remain available in full history for audit/history purposes.
 - Real workflow scenarios already tested and working include HR leave approval/rejection and password recovery/change-request notifications.
 
-### Live right-corner toast regression — fixed
+### Live right-corner toast — restored to the original persistence behavior
 
-On 2026-09-17, the shared widget still detected newly polled notification IDs but attempted to call `window.AKNotify.toast()` even though the current repository contained no toast implementation. Therefore the unread/menu state could update while the former small right-corner pop-up no longer appeared.
+The previous regression had two related symptoms: the toast implementation was missing, and the desired persistence behavior was absent. The required behavior is:
 
-`includes/notification_widget.php` now provides its own lightweight `AKNotify.toast()` implementation. It creates a small right/top-corner notification pop-up, displays the notification title/body, supports dismissal and auto-close, and follows the actionable notification destination when clicked.
+1. A newly received notification produces the small right/top-corner pop-up while the user is on an open dashboard/page.
+2. If the notification remains **unread**, opening the dashboard again or refreshing the page must show that unread notification pop-up again.
+3. The pop-up may be dismissed visually, but dismissing it does **not** mark the notification as read.
+4. The pop-up stops reappearing only after that specific notification is actually opened/read.
+5. Clicking the pop-up marks that specific notification as read through the existing CSRF-protected `mark_read.php` action and then follows its actionable destination.
+6. New notifications discovered by the existing 5-second polling continue to produce a pop-up immediately.
+7. This behavior applies to the shared notification widget, including the FM dashboard and other applicable dashboards; it is not a Fina-only behavior.
 
-This fix does not alter notification storage, recipient rules, accounting workflow, read state, CSRF handling, or notification polling.
+Implementation:
 
-Commit:
+- `includes/notification_widget.php` provides the lightweight `AKNotify.toast()` implementation.
+- Initial polling now displays unread notifications so an unread notification survives page refresh/new-tab navigation as a visible reminder.
+- Toast click marks the specific notification read before following its destination.
+- Close/dismiss only hides the current toast; it deliberately does not mark the notification read.
 
-- `e248ae74f6a69ea69ec1781df63a42b09cbd9699` — restore live right-corner notification toast.
+Latest commit:
+
+- `908efe8c688316a3b7c4c637da4424fb6d6500af` — restore persistent unread notification toast behavior.
+
+The earlier toast-only implementation commit was `e248ae74f6a69ea69ec1781df63a42b09cbd9699`; `908efe8c...` supersedes it for the complete required behavior.
 
 ### Immediate runtime verification — pending
 
-On the FM dashboard, keep the page open and have the Supervisor submit a new Fina payment that creates the normal FM notification.
+Use the FM dashboard and a new Fina payment submitted by the Supervisor as the test scenario.
 
-Expected:
-
-1. Within the existing 5-second polling interval, the FM unread indicator updates.
-2. The small notification pop-up appears at the right/top corner without page refresh.
-3. The pop-up shows the new notification title/body.
-4. Clicking it follows the actionable notification destination.
-5. The notification remains available in the bell/history under the existing rules.
+1. Have the Supervisor submit a new Fina payment that creates the normal FM notification.
+2. Keep the FM dashboard open and wait for the existing polling interval.
+3. Confirm the small right/top-corner pop-up appears without refreshing.
+4. **Do not open/read the notification yet.** Refresh the FM dashboard.
+5. Confirm the same unread notification pop-up appears again.
+6. Open the dashboard in a new browser tab while the notification is still unread and confirm the pop-up appears again.
+7. Close/dismiss the pop-up without opening the notification; refresh once more and confirm it still appears.
+8. Finally click/open the notification.
+9. Confirm it is marked read and the pop-up does not return after another refresh/new tab.
+10. Confirm the notification remains correctly represented in the bell/history according to the existing rules.
 
 This is a targeted regression test only. Do not repeat the closed notification audit scenarios.
 
@@ -281,7 +297,7 @@ Do not repeat unless genuine regression evidence appears:
 - Disbursement/reissue test batch #12.
 - Transaction void test `TR-000016` / `JE-VOID-TXN-22`.
 - Manual journal `JE-000027` and its balance/authorization checks.
-- Existing notification audit scenarios, except the current missing-toast regression test.
+- Existing notification audit scenarios, except the current missing-toast persistence regression test.
 
 ## NEXT ACCOUNTING AUDIT — JOURNAL CROSS-MODULE INTEGRITY
 
@@ -410,4 +426,4 @@ Do not require the user to paste the entire historical audit into the new chat.
 
 ## LATEST DOCUMENTATION CHECKPOINT — 2026-09-17
 
-The handoff is synchronized with the latest Fina SDG-only policy, compact horizontal Fina entry-form layout, and the restored live right-corner notification toast. The immediate runtime checkpoint is to pull the latest repository changes and verify the Fina submission notification on the FM dashboard without repeating closed notification tests. After that, continue the targeted Accounting Journal Cross-Module Integrity review for `payroll`, `disbursement_void`, and `item_return`.
+The handoff is synchronized with the latest Fina SDG-only policy, compact horizontal Fina entry-form layout, and the restored persistent-until-read right-corner notification toast. The immediate runtime checkpoint is to pull the latest repository changes and test that an unread FM notification reappears after refresh/new-tab until that specific notification is opened/read. After that, continue the targeted Accounting Journal Cross-Module Integrity review for `payroll`, `disbursement_void`, and `item_return`.
