@@ -91,12 +91,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 include dirname(__DIR__,2).'/includes/header.php';
 ?>
+<style>
+/* Compact horizontal field layout: labels sit beside their controls and controls are sized to their data. */
+.fina-form-inline > [class*="col-"] { display:flex; align-items:center; gap:.55rem; flex:0 0 auto; width:auto; }
+.fina-form-inline > [class*="col-"] > .form-label { margin:0; white-space:nowrap; flex:0 0 auto; }
+.fina-form-inline > [class*="col-"] > .form-control,
+.fina-form-inline > [class*="col-"] > .form-select { flex:0 0 auto; width:auto; }
+.fina-form-inline #finaSponsorPicker .position-relative { width:280px; flex:0 0 280px; }
+.fina-form-inline #finaSponsorSearch { width:280px; }
+.fina-form-inline #finaSourceName { width:260px; }
+.fina-form-inline #finaSourcePhone,
+.fina-form-inline #finaSourceAltPhone { width:180px; }
+.fina-form-inline #finaSourceEmail { width:260px; }
+.fina-form-inline #finaSourceAddress { width:300px; }
+.fina-form-inline input[name="source_id_number"],
+.fina-form-inline input[name="source_reference"] { width:180px; }
+.fina-form-inline input[name="contact_person"] { width:220px; }
+.fina-form-inline input[name="source_details"] { width:350px; }
+.fina-form-inline input[name="amount"] { width:150px; }
+.fina-form-inline select[name="source_type"] { width:185px; }
+.fina-form-inline select[name="method"] { width:180px; }
+.fina-form-inline input[name="date"] { width:170px; }
+.fina-form-inline input[name="receipt_file"] { width:300px; }
+.fina-form-inline input[name="purpose_note"] { width:350px; }
+.fina-form-inline textarea[name="description"] { width:500px; }
+.fina-form-inline .form-text { flex:0 0 auto; margin:0; }
+@media (max-width: 767.98px) {
+    .fina-form-inline > [class*="col-"] { width:100%; flex-wrap:wrap; align-items:center; }
+    .fina-form-inline > [class*="col-"] > .form-label { min-width:120px; }
+    .fina-form-inline > [class*="col-"] > .form-control,
+    .fina-form-inline > [class*="col-"] > .form-select,
+    .fina-form-inline #finaSponsorPicker .position-relative,
+    .fina-form-inline #finaSponsorSearch { max-width:100%; width:auto; flex:1 1 180px; }
+}
+</style>
 <div class="welcome-section fade-in"><h2><i class="fas fa-hand-holding-dollar me-2"></i>تسجيل تحصيل لصالح فينا الخير</h2><p>تحصيل مستقل مملوك بنسبة 100% لفينا الخير. يمكن أن يكون المصدر كفيلاً من النظام أو مصدراً خارجياً.</p></div>
 <?php include dirname(__DIR__,2).'/includes/alerts.php'; ?>
 <?php if ($errors): ?><div class="alert alert-danger"><ul class="mb-0"><?php foreach ($errors as $e): ?><li><?php echo e($e); ?></li><?php endforeach; ?></ul></div><?php endif; ?>
 <div class="card fade-in"><div class="card-header text-white" style="background:#1b4d8f">بيانات مصدر الأموال والتحصيل</div><div class="card-body"><form method="post" enctype="multipart/form-data">
 <?php echo csrf_field(); ?>
-<div class="row g-3">
+<div class="row g-3 fina-form-inline">
 <div class="col-md-4"><label class="form-label">مصدر الأموال *</label><select name="source_type" id="finaSourceType" class="form-select" required><option value="sponsor" <?php echo $input['source_type']==='sponsor'?'selected':''; ?>>كفيل من أهل الخير</option><option value="person" <?php echo $input['source_type']==='person'?'selected':''; ?>>شخص خارجي</option><option value="organization" <?php echo $input['source_type']==='organization'?'selected':''; ?>>منظمة / جهة</option><option value="other" <?php echo $input['source_type']==='other'?'selected':''; ?>>أخرى</option></select></div>
 <div class="col-md-8" id="finaSponsorPicker"><label class="form-label">اختيار الكفيل *</label><div class="position-relative"><input type="text" id="finaSponsorSearch" class="form-control" autocomplete="off" placeholder="اكتب الاسم للبحث" value=""><input type="hidden" name="sponsor_id" id="finaSponsorId" value="<?php echo e($input['sponsor_id']); ?>"><div id="finaSponsorResults" class="list-group position-absolute w-100 shadow-sm" style="z-index:1050;max-height:280px;overflow-y:auto;display:none"></div></div><div id="finaSponsorSelected" class="form-text"></div></div>
 <div class="col-md-8"><label class="form-label">اسم مصدر الأموال *</label><input type="text" name="source_name" id="finaSourceName" class="form-control" value="<?php echo e($input['source_name']); ?>"></div>
