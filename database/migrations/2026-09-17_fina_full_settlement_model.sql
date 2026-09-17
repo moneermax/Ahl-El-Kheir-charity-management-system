@@ -46,7 +46,7 @@ INSERT INTO journal_entries (entry_code,entry_date,description,reference_type,re
 SELECT CONCAT('JE-FINA-TEST-RESTORE-',LPAD(s.id,6,'0')),
        CURRENT_DATE,
        CONCAT('استعادة أثر سجل اختبار تسوية فينا الخير ',s.settlement_code,' — سجل اختبار محفوظ'),
-       'fina_settlement_test_restore',s.id,'posted',COALESCE(s.created_by,1)
+       'fina_settlement_test_restore',s.id,'posted',s.created_by
   FROM fina_settlements s
  WHERE s.is_test=1
    AND s.settlement_journal_id IS NOT NULL
@@ -62,10 +62,7 @@ SELECT r.id,l.account_id,l.credit,l.debit,CONCAT('عكس محاسبي لسجل �
   JOIN journal_entries r ON r.reference_type='fina_settlement_test_restore' AND r.reference_id=s.id
   JOIN journal_lines l ON l.entry_id=s.settlement_journal_id
  WHERE s.is_test=1
-   AND NOT EXISTS (
-       SELECT 1 FROM journal_lines x
-        WHERE x.entry_id=r.id
-   );
+   AND NOT EXISTS (SELECT 1 FROM journal_lines x WHERE x.entry_id=r.id);
 
 INSERT INTO journal_entries (entry_code,entry_date,description,reference_type,reference_id,status,created_by)
 SELECT CONCAT('JE-FINA-HOLDING-',LPAD(c.id,6,'0')),
@@ -88,19 +85,12 @@ SELECT r.id,@fina_holding_id,l.debit,0,'أموال فينا الخير المح�
   JOIN journal_entries oj ON oj.id=c.accounting_journal_id
   JOIN journal_lines l ON l.entry_id=oj.id AND l.debit>0
  WHERE c.status='approved'
-   AND NOT EXISTS (
-       SELECT 1 FROM journal_lines x
-        WHERE x.entry_id=r.id
-   );
-
-INSERT INTO journal_lines (entry_id,account_id,debit,credit,description)
+   AND NOT EXISTS (SELECT 1 FROM journal_lines x WHERE x.entry_id=r.id)
+UNION ALL
 SELECT r.id,l.account_id,0,l.debit,'إخراج أموال فينا الخير من حساب أموال أهل الخير التشغيلي'
   FROM fina_collections c
   JOIN journal_entries r ON r.reference_type='fina_collection_holding_reclass' AND r.reference_id=c.id
   JOIN journal_entries oj ON oj.id=c.accounting_journal_id
   JOIN journal_lines l ON l.entry_id=oj.id AND l.debit>0
  WHERE c.status='approved'
-   AND NOT EXISTS (
-       SELECT 1 FROM journal_lines x
-        WHERE x.entry_id=r.id
-   );
+   AND NOT EXISTS (SELECT 1 FROM journal_lines x WHERE x.entry_id=r.id);
