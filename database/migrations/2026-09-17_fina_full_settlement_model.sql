@@ -13,9 +13,6 @@ UPDATE fina_settlements
    SET is_test=1
  WHERE settlement_code IN ('FINA-SET-000001','FINA-SET-000002');
 
--- The Fina-held funds account is a custody/control asset, not an Ahl treasury account.
--- Its numeric code is selected from the reserved 1400-1499 asset range without
--- overwriting an existing account. The stable lookup key is name_en.
 SET @fina_holding_id := (
     SELECT id FROM accounts
      WHERE name_en='Fina Al-Khair Held Funds'
@@ -45,14 +42,11 @@ SET @fina_holding_id := (
      LIMIT 1
 );
 
--- Restore the permanent 2300 liability from the two retained Stage 3 development
--- settlement journals. The original test journals remain untouched; compensating
--- posted entries neutralize their accounting effect while preserving their history.
 INSERT INTO journal_entries (entry_code,entry_date,description,reference_type,reference_id,status,created_by)
 SELECT CONCAT('JE-FINA-TEST-RESTORE-',LPAD(s.id,6,'0')),
        CURRENT_DATE,
        CONCAT('استعادة أثر سجل اختبار تسوية فينا الخير ',s.settlement_code,' — سجل اختبار محفوظ'),
-       'fina_settlement_test_restore',s.id,'posted',s.created_by
+       'fina_settlement_test_restore',s.id,'posted',COALESCE(s.created_by,1)
   FROM fina_settlements s
  WHERE s.is_test=1
    AND s.settlement_journal_id IS NOT NULL
@@ -63,27 +57,24 @@ SELECT CONCAT('JE-FINA-TEST-RESTORE-',LPAD(s.id,6,'0')),
    );
 
 INSERT INTO journal_lines (entry_id,account_id,debit,credit,description)
-SELECT r.id,
-       l.account_id,
-       l.credit,
-       l.debit,
-       CONCAT('عكس محاسبي لسجل اختبار التسوية ',s.settlement_code)
+SELECT r.id,l.account_id,l.credit,l.debit,CONCAT('عكس محاسبي لسجل اختبار التسوية ',s.settlement_code)
   FROM fina_settlements s
-  JOIN journal_entries r
-    ON r.reference_type='fina_settlement_test_restore'
-   AND r.reference_id=s.id
+  JOIN journal_entries r ON r.reference_type='fina_settlement_test_restore' AND r.reference_id=s.id
   JOIN journal_lines l ON l.entry_id=s.settlement_journal_id
- WHERE s.is_test=1;
+ WHERE s.is_test=1
+   AND NOT EXISTS (
+       SELECT 1 FROM journal_lines x
+        WHERE x.entry_id=r.id
+   );
 
--- Reclassify the original Fina collection debit from the Ahl payment-method asset
--- into the dedicated Fina-held funds asset. Original collection journals remain intact.
 INSERT INTO journal_entries (entry_code,entry_date,description,reference_type,reference_id,status,created_by)
 SELECT CONCAT('JE-FINA-HOLDING-',LPAD(c.id,6,'0')),
        c.collection_date,
        CONCAT('إعادة تصنيف أموال تحصيل فينا الخير إلى حساب الأموال المحتفظ بها — تحصيل #',c.id),
-       'fina_collection_holding_reclass',c.id,'posted',c.reviewed_by
+       'fina_collection_holding_reclass',c.id,'posted',c.created_by
   FROM fina_collections c
  WHERE c.status='approved'
+   AND c.accounting_journal_id IS NOT NULL
    AND NOT EXISTS (
        SELECT 1 FROM journal_entries j
         WHERE j.reference_type='fina_collection_holding_reclass'
@@ -93,19 +84,23 @@ SELECT CONCAT('JE-FINA-HOLDING-',LPAD(c.id,6,'0')),
 INSERT INTO journal_lines (entry_id,account_id,debit,credit,description)
 SELECT r.id,@fina_holding_id,l.debit,0,'أموال فينا الخير المحتفظ بها — إعادة تصنيف'
   FROM fina_collections c
-  JOIN journal_entries r
-    ON r.reference_type='fina_collection_holding_reclass'
-   AND r.reference_id=c.id
+  JOIN journal_entries r ON r.reference_type='fina_collection_holding_reclass' AND r.reference_id=c.id
   JOIN journal_entries oj ON oj.id=c.accounting_journal_id
   JOIN journal_lines l ON l.entry_id=oj.id AND l.debit>0
- WHERE c.status='approved';
+ WHERE c.status='approved'
+   AND NOT EXISTS (
+       SELECT 1 FROM journal_lines x
+        WHERE x.entry_id=r.id
+   );
 
 INSERT INTO journal_lines (entry_id,account_id,debit,credit,description)
 SELECT r.id,l.account_id,0,l.debit,'إخراج أموال فينا الخير من حساب أموال أهل الخير التشغيلي'
   FROM fina_collections c
-  JOIN journal_entries r
-    ON r.reference_type='fina_collection_holding_reclass'
-   AND r.reference_id=c.id
+  JOIN journal_entries r ON r.reference_type='fina_collection_holding_reclass' AND r.reference_id=c.id
   JOIN journal_entries oj ON oj.id=c.accounting_journal_id
   JOIN journal_lines l ON l.entry_id=oj.id AND l.debit>0
- WHERE c.status='approved';
+ WHERE c.status='approved'
+   AND NOT EXISTS (
+       SELECT 1 FROM journal_lines x
+        WHERE x.entry_id=r.id
+   );
