@@ -33,17 +33,18 @@ document.addEventListener('DOMContentLoaded', function () {
                 '<div class="grid-4">' +
                     '<div class="stat-box amber"><div class="stat-value">'+p.count+'</div><div class="stat-label">طلبات بانتظار المراجعة</div><div class="stat-sub">يجب مراجعتها من المدير المالي</div></div>' +
                     '<div class="stat-box green"><div class="stat-value">'+a.count+'</div><div class="stat-label">تحصيلات معتمدة</div><div class="stat-sub">لا تشمل إيرادات أهل الخير</div></div>' +
-                    '<div class="stat-box red"><div class="stat-value">'+ret.count+'</div><div class="stat-label">تحصيلات مرتجعة</div><div class="stat-sub">تظهر في السجل التاريخي</div></div>' +
-                    '<div class="stat-box purple"><div class="stat-value">'+Number(a.amount || 0).toLocaleString()+' SDG</div><div class="stat-label">إجمالي تحصيلات فينا</div><div class="stat-sub">الرصيد المعتمد المرتبط بالتزام 2300</div></div>' +
+                    '<div class="stat-box red"><div class="stat-value">'+ret.count+'</div><div class="stat-label">تحصيلات مرتجعة</div><div class="stat-sub">مستبعدة من إجمالي المعتمد</div></div>' +
+                    '<div class="stat-box purple"><div class="stat-value">'+Number(a.amount || 0).toLocaleString()+' SDG</div><div class="stat-label">إجمالي التحصيلات المعتمدة للتسوية</div><div class="stat-sub">التحصيلات المعتمدة فقط — المرتجعات مستبعدة</div></div>' +
                 '</div>' +
                 '<div class="small text-muted mt-2"><strong>الحركة حسب العملة:</strong> '+currencyText+'</div>' +
                 '<div class="d-flex flex-wrap gap-2 mt-3">' +
                     '<a class="btn-fm btn-navy" href="'+base+'modules/accounting/fina_payment_review.php"><i class="fas fa-clipboard-check me-1"></i>مراجعة فينا</a>' +
+                    '<a class="btn-fm btn-ghost" href="'+base+'modules/accounting/fina_settlements.php"><i class="fas fa-money-bill-transfer me-1"></i>تسويات فينا</a>' +
                     '<a class="btn-fm btn-ghost" href="'+base+'modules/accounting/fina_payment_history.php"><i class="fas fa-clock-rotate-left me-1"></i>سجل فينا</a>' +
                     '<a class="btn-fm btn-ghost" href="'+base+'modules/accounting/fina_payment_report.php"><i class="fas fa-file-chart-column me-1"></i>تقرير فينا</a>' +
                     '<a class="btn-fm btn-ghost" href="'+base+'modules/accounting/accounts.php"><i class="fas fa-scale-balanced me-1"></i>حساب 2300</a>' +
                 '</div>' +
-                '<div class="small text-muted mt-2">أموال فينا الخير مستقلة عن إيرادات الكفالات والرسوم الإدارية.</div>' +
+                '<div class="small text-muted mt-2">إجمالي المعتمد هنا هو مجموع التحصيلات ذات الحالة «معتمد» فقط؛ وهو يختلف عن الرصيد غير المسدد في شاشة التسويات. أموال فينا الخير مستقلة عن إيرادات الكفالات والرسوم الإدارية.</div>' +
                 '</div>';
             var anchor = main.querySelector('.fm-top-layout');
             if (anchor) anchor.insertAdjacentElement('afterend', card);
