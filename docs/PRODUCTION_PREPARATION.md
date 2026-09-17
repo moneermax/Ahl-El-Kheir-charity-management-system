@@ -57,10 +57,22 @@ The SQL cleanup removes database records only. Files physically stored under `st
 
 The production baseline is not a second development database. Schema changes must be recorded as migrations under `database/migrations/`. When the application reaches production, the migration history is applied to the production baseline so its schema remains synchronized with the code.
 
+## Fina production transition
+
+Fina is a protected third-party liability and must remain separate from Ahl El Kheir revenue and expenses. The production Fina workflow uses liability/control account `2300`.
+
+Before production, the organization must define and approve the actual settlement agreement with Fina. The software must record that real agreement rather than invent a settlement date, threshold, or frequency.
+
+The current recommended design is documented in:
+
+`docs/FINA_SETTLEMENT_PROCESS.md`
+
+The recommended default is monthly settlement with controlled early settlement when operationally justified. Settlement is a separate liability-reduction event and must not delete or rewrite historical Fina collection records.
+
 ## Repository hygiene
 
 Database backups and runtime-generated files must not be committed to the repository. Local backup locations remain available through `.gitignore`; the repository should contain schema/migration scripts and the production cleanup procedure, not live database dumps or runtime logs.
 
-## Documentation checkpoint — 2026-09-15
+## Documentation checkpoint — 2026-09-17
 
-This document remains the authoritative production-preparation procedure. No production cleanup or deployment action was performed as part of the current Supervisor ↔ Accounting integration review. Development/test accounting data remains non-production data.
+This document remains the authoritative production-preparation procedure. No production cleanup, deployment, or Fina settlement action was performed as part of the current work. Development/test accounting data remains non-production data.
