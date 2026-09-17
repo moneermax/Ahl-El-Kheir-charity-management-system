@@ -47,8 +47,7 @@ window.AK_TRANSLATIONS=<?php echo json_encode(ak_dict(),JSON_UNESCAPED_UNICODE|J
 <script src="<?php echo asset('js/notification_unread_indicator.js'); ?>"></script>
 <script src="<?php echo asset('js/transaction_details_localization.js'); ?>"></script>
 <?php if (($active ?? '') === 'fm_dashboard'): ?><script src="<?php echo asset('js/fm_dashboard_layout.js'); ?>"></script><?php endif; ?>
-<?php if (($active ?? '') === 'fm_dashboard'): ?>
-<?php endif; ?>
+<?php if (($active ?? '') === 'fm_dashboard'): ?><script src="<?php echo asset('js/fina_dashboard_widget.js'); ?>"></script><?php endif; ?>
 <script>
 (function(){var leaveLink=document.querySelector('a[href*="modules/hr/leaves.php?action=request"]');var userMenu=document.querySelector('#userDropdown .ak-dd-menu');if(leaveLink&&userMenu){leaveLink.classList.remove('qa-btn');leaveLink.classList.add('ak-dd-item','ak-leave-request-moving');leaveLink.removeAttribute('style');leaveLink.setAttribute('title','طلب إجازة');var icon=leaveLink.querySelector('i');if(icon)icon.className='fas fa-calendar-plus me-2';var divider=document.createElement('div');divider.className='dropdown-divider';userMenu.insertBefore(divider,userMenu.firstChild);userMenu.insertBefore(leaveLink,divider.nextSibling);requestAnimationFrame(function(){leaveLink.classList.remove('ak-leave-request-moving')})}})();
 
