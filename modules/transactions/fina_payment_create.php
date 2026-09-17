@@ -17,15 +17,20 @@ $active = 'transactions';
 $errors = [];
 $currencies = dbFetchAll("SELECT code FROM currencies ORDER BY code");
 
-// Sponsor lookup: first-name prefix only. The same result row is used for autofill;
-// no second request is needed after the user selects a sponsor.
+// Sponsor lookup: first-name prefix plus additional full-name token narrowing.
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['fina_sponsor_search'])) {
     header('Content-Type: application/json; charset=utf-8');
     $q = trim((string)$_GET['fina_sponsor_search']);
-    $firstName = preg_split('/\s+/u', $q, 2)[0] ?? '';
+    $tokens = preg_split('/\s+/u', $q, -1, PREG_SPLIT_NO_EMPTY);
+    $firstName = $tokens[0] ?? '';
     if ($firstName === '') { echo json_encode([], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); exit(); }
-    $like = $firstName . '%';
-    $rows = dbFetchAll("SELECT id,sponsor_code,full_name,phone,alt_phone,email,address FROM sponsors WHERE status='active' AND SUBSTRING_INDEX(TRIM(full_name),' ',1) LIKE ? ORDER BY full_name LIMIT 30", [$like]);
+    $conditions = ["SUBSTRING_INDEX(TRIM(full_name),' ',1) LIKE ?"];
+    $params = [$firstName . '%'];
+    for ($i = 1; $i < count($tokens); $i++) {
+        $conditions[] = "full_name LIKE ?";
+        $params[] = '%' . $tokens[$i] . '%';
+    }
+    $rows = dbFetchAll("SELECT id,sponsor_code,full_name,phone,alt_phone,email,address FROM sponsors WHERE status='active' AND " . implode(' AND ', $conditions) . " ORDER BY full_name LIMIT 30", $params);
     echo json_encode($rows, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); exit();
 }
 
@@ -79,7 +84,7 @@ include dirname(__DIR__,2).'/includes/header.php';
 <?php echo csrf_field(); ?>
 <div class="row g-3">
 <div class="col-md-4"><label class="form-label">مصدر الأموال *</label><select name="source_type" id="finaSourceType" class="form-select" required><option value="sponsor" <?php echo $input['source_type']==='sponsor'?'selected':''; ?>>كفيل من أهل الخير</option><option value="person" <?php echo $input['source_type']==='person'?'selected':''; ?>>شخص خارجي</option><option value="organization" <?php echo $input['source_type']==='organization'?'selected':''; ?>>منظمة / جهة</option><option value="other" <?php echo $input['source_type']==='other'?'selected':''; ?>>أخرى</option></select></div>
-<div class="col-md-8" id="finaSponsorPicker"><label class="form-label">اختيار الكفيل *</label><div class="position-relative"><input type="text" id="finaSponsorSearch" class="form-control" autocomplete="off" placeholder="اكتب الاسم الأول للبحث" value=""><input type="hidden" name="sponsor_id" id="finaSponsorId" value="<?php echo e($input['sponsor_id']); ?>"><div id="finaSponsorResults" class="list-group position-absolute w-100 shadow-sm" style="z-index:1050;max-height:280px;overflow-y:auto;display:none"></div></div><div id="finaSponsorSelected" class="form-text"></div></div>
+<div class="col-md-8" id="finaSponsorPicker"><label class="form-label">اختيار الكفيل *</label><div class="position-relative"><input type="text" id="finaSponsorSearch" class="form-control" autocomplete="off" placeholder="اكتب الاسم للبحث" value=""><input type="hidden" name="sponsor_id" id="finaSponsorId" value="<?php echo e($input['sponsor_id']); ?>"><div id="finaSponsorResults" class="list-group position-absolute w-100 shadow-sm" style="z-index:1050;max-height:280px;overflow-y:auto;display:none"></div></div><div id="finaSponsorSelected" class="form-text"></div></div>
 <div class="col-md-8"><label class="form-label">اسم مصدر الأموال *</label><input type="text" name="source_name" id="finaSourceName" class="form-control" value="<?php echo e($input['source_name']); ?>"></div>
 <div class="col-md-4"><label class="form-label">الهاتف</label><input type="tel" name="source_phone" id="finaSourcePhone" class="form-control" value="<?php echo e($input['source_phone']); ?>"></div>
 <div class="col-md-4"><label class="form-label">هاتف إضافي</label><input type="tel" name="source_alt_phone" id="finaSourceAltPhone" class="form-control" value="<?php echo e($input['source_alt_phone']); ?>"></div>
@@ -96,8 +101,8 @@ include dirname(__DIR__,2).'/includes/header.php';
 <div class="col-md-8"><label class="form-label">إيصال التحصيل</label><input type="file" name="receipt_file" class="form-control" accept=".jpg,.jpeg,.png,.pdf"></div>
 <div class="col-12"><label class="form-label">الغرض / التخصيص</label><input type="text" name="purpose_note" class="form-control" value="<?php echo e($input['purpose_note']); ?>"></div>
 <div class="col-12"><label class="form-label">ملاحظات</label><textarea name="description" class="form-control" rows="2"><?php echo e($input['description']); ?></textarea></div>
-<div class="col-12"><div class="alert alert-warning mb-0"><strong>تنبيه محاسبي:</strong> 100% من هذا التحصيل مخصص لفينا الخير، ويسجل كالتزام مستحق لفينا الخير في حساب 2300. لا يسجل كإيراد لأهل الخير، ولا تحسب عليه رسوم إدارية، ولا ينشئ التزام كفالة.</div></div>
-</div><div class="mt-4"><button class="btn btn-primary btn-lg"><i class="fas fa-paper-plane me-1"></i> إرسال للمدير المالي</button></div>
+</div>
+<div class="mt-4 d-flex gap-2"><button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i> تسجيل التحصيل</button><a href="<?php echo APP_URL; ?>modules/accounting/fina_payment_review.php" class="btn btn-secondary">إلغاء</a></div>
 </form></div></div>
 <script>
 (function(){
@@ -119,18 +124,18 @@ include dirname(__DIR__,2).'/includes/header.php';
     }
     function render(rows){
         results.innerHTML='';
-        if(!rows.length){results.innerHTML='<div class="list-group-item text-muted">لا توجد نتائج مطابقة للاسم الأول</div>'; results.style.display='block'; return;}
+        if(!rows.length){results.innerHTML='<div class="list-group-item text-muted">لا توجد نتائج مطابقة للاسم</div>'; results.style.display='block'; return;}
         rows.forEach(s=>{const b=document.createElement('button'); b.type='button'; b.className='list-group-item list-group-item-action text-start'; const strong=document.createElement('strong'); strong.textContent=s.full_name||''; const small=document.createElement('small'); small.textContent=(s.sponsor_code||'')+(s.phone?' — '+s.phone:''); b.appendChild(strong); b.appendChild(document.createElement('br')); b.appendChild(small); b.addEventListener('click',()=>selectSponsor(s)); results.appendChild(b);});
         results.style.display='block';
     }
     async function searchSponsors(raw){
-        const first=(raw.trim().split(/\s+/u)[0]||''); const my=++serial;
+        const q=raw.trim(); const my=++serial;
         if(controller) controller.abort(); controller=new AbortController();
-        if(!first){results.style.display='none'; return;}
-        const url=new URL(window.location.href); url.search=''; url.searchParams.set('fina_sponsor_search',first);
+        if(!q){results.style.display='none'; return;}
+        const url=new URL(window.location.href); url.search=''; url.searchParams.set('fina_sponsor_search',q);
         try{const r=await fetch(url.toString(),{headers:{Accept:'application/json'},cache:'no-store',signal:controller.signal}); if(!r.ok) throw new Error('HTTP '+r.status); const data=await r.json(); if(my===serial) render(Array.isArray(data)?data:[]);}catch(e){if(e.name==='AbortError'||my!==serial)return; results.innerHTML='<div class="list-group-item text-danger">تعذر تحميل نتائج الكفلاء</div>'; results.style.display='block';}
     }
-    function mode(){const sponsor=type.value==='sponsor'; picker.style.display=sponsor?'block':'none'; setReadonly(sponsor); if(!sponsor) results.style.display='none';}
+    function mode(){const sponsor=type.value==='sponsor'; picker.style.display=sponsor?'block':'none'; setReadonly(sponsor); if(!sponsor) results.style.display='none'; }
     type.addEventListener('change',()=>{clearFields(); mode();});
     search.addEventListener('input',()=>{hidden.value=''; selected.textContent=''; selected.className='form-text'; setReadonly(true); clearTimeout(timer); timer=setTimeout(()=>searchSponsors(search.value),120);});
     search.addEventListener('focus',()=>{if(type.value==='sponsor'&&search.value.trim()) searchSponsors(search.value);});
@@ -138,4 +143,3 @@ include dirname(__DIR__,2).'/includes/header.php';
     mode();
 })();
 </script>
-<?php include dirname(__DIR__,2).'/includes/footer.php'; ?>
