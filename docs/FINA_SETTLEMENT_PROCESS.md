@@ -118,6 +118,12 @@ Repository implementation now includes:
   - no allocation grid for user selection;
   - clearly shows the current full balance and the permanent 2300 cycle.
 
+### Database-structure decision at this checkpoint
+
+The project will **not spend additional time dropping or cleaning the existing `fina_settlements` and `fina_settlement_allocations` tables**. They are current dependencies of the implemented settlement engine/UI and are useful for settlement history/audit evidence. Leaving them in place does not alter the finalized business flow and does not require restarting or refactoring the work.
+
+The obsolete item was the separate old migration file and the old production partial-settlement behavior; the old migration definition has already been consolidated into the final full-settlement migration. No triggers or views are being introduced by this work.
+
 The implementation is committed to `main`, but **local runtime acceptance has not yet been performed**.
 
 ## 6. Stage 5 — Dashboard/report updates
@@ -165,19 +171,20 @@ Verify that FM can complete the workflow and that Supervisor, GM, and VGM cannot
 
 Do not repeat the obsolete partial-settlement acceptance suite. Perform only targeted acceptance for the finalized model:
 
-1. Apply the new full-settlement migration safely.
-2. Verify the dedicated Fina-held-funds account exists and is an active asset/control account.
-3. Verify current production Fina liability is **250,000 SDG** despite the retained Stage 3 test settlement records.
-4. Verify account `2300` represents the current 250,000 SDG liability.
-5. Verify no Ahl treasury account is offered/required by the settlement UI.
-6. Create one full settlement for exactly 250,000 SDG.
-7. Verify the journal is balanced `Dr 2300 / Cr Fina-held funds`.
-8. Verify `2300` becomes zero after the full settlement.
-9. Verify `2300` remains permanently present in the chart.
-10. Verify the two historical Stage 3 settlement records remain present and identifiable as test evidence.
-11. Create/approve a new Fina payment after settlement and verify the same 2300 account increases again.
-12. Verify evidence/reference/lifecycle controls and FM-only authorization.
-13. Verify original Fina collection journals remain unchanged.
+1. Safely synchronize the repository after checking the local working tree; do not discard intentional local files.
+2. Confirm the local database is at the finalized settlement-model state; do not drop the existing settlement tables.
+3. Verify the dedicated Fina-held-funds account exists and is an active asset/control account.
+4. Verify current production Fina liability is **250,000 SDG** despite the retained Stage 3 test settlement records.
+5. Verify account `2300` represents the current 250,000 SDG liability.
+6. Verify no Ahl treasury account is offered/required by the settlement UI.
+7. Create one full settlement for exactly 250,000 SDG.
+8. Verify the journal is balanced `Dr 2300 / Cr Fina-held funds`.
+9. Verify `2300` becomes zero after the full settlement.
+10. Verify `2300` remains permanently present in the chart.
+11. Verify the two historical Stage 3 settlement records remain present and identifiable as test evidence.
+12. Create/approve a new Fina payment after settlement and verify the same 2300 account increases again.
+13. Verify evidence/reference/lifecycle controls and FM-only authorization.
+14. Verify original Fina collection journals remain unchanged.
 
 Runtime verification is **not complete** until the local application/database produces the actual results.
 
@@ -193,4 +200,6 @@ Production deployment, management policy confirmation, evidence retention, backu
 **Stage 3 — COMPLETE / original runtime evidence VERIFIED and CLOSED; partial behavior is historical only.**  
 **Stage 4 — IMPLEMENTED IN REPOSITORY / LOCAL RUNTIME ACCEPTANCE PENDING: full current-balance settlement, permanent `2300`, separate Fina-held funds, no partial settlement.**
 
-Next step: pull the repository safely, inspect local status before any merge, apply the new migration, then run the targeted runtime acceptance above. Preserve intentional local uncommitted receipt files and never use destructive reset/clean/stash operations.
+**Database cleanup decision:** retain `fina_settlements` and `fina_settlement_allocations`; do not spend additional audit time dropping them. The next work is runtime acceptance, not schema cleanup.
+
+Next step: continue in a new ChatGPT session from this checkpoint, inspect local Git status first, then perform only the targeted runtime acceptance. Preserve intentional local uncommitted receipt files and never use destructive reset/clean/stash operations.
