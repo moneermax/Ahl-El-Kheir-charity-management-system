@@ -34,14 +34,19 @@ function fina_ensure_liability_account(): int{
 
 function fina_post_collection_journal(array $collection,int $reviewerId): int{
     $collectionId=(int)$collection['id'];
-    $existing=dbFetchOne("SELECT id FROM journal_entries WHERE reference_type='fina_collection' AND reference_id=? AND status='posted' LIMIT 1",[$collectionId]);
-    if($existing){
-        ak_transaction_review_notify_user(
+    $notifyApproval=function(float $amount,string $currency): void use($collectionId,$collection){
+        ak_transaction_review_notify_event(
             (int)($collection['created_by'] ?? 0),
             'تم اعتماد تحصيل فينا الخير',
-            'تم اعتماد تحصيل فينا الخير رقم #'.$collectionId.' بمبلغ '.number_format((float)$collection['amount'],2).' '.($collection['currency_code'] ?? APP_CURRENCY_CODE).' وترحيله كالتزام مستقل بنسبة 100% لصالح فينا الخير.',
-            APP_URL.'modules/accounting/fina_payment_review.php'
+            'تم اعتماد تحصيل فينا الخير رقم #'.$collectionId.' بمبلغ '.number_format($amount,2).' '.$currency.' وترحيله كالتزام مستقل بنسبة 100% لصالح فينا الخير.',
+            APP_URL.'modules/accounting/fina_payment_review.php',
+            $collectionId,
+            'fina_collection_approved'
         );
+    };
+    $existing=dbFetchOne("SELECT id FROM journal_entries WHERE reference_type='fina_collection' AND reference_id=? AND status='posted' LIMIT 1",[$collectionId]);
+    if($existing){
+        $notifyApproval((float)$collection['amount'],(string)($collection['currency_code'] ?? APP_CURRENCY_CODE));
         return (int)$existing['id'];
     }
     $liabilityId=fina_ensure_liability_account();
@@ -59,11 +64,6 @@ function fina_post_collection_journal(array $collection,int $reviewerId): int{
     if($entryId<=0)throw new RuntimeException('تعذر إنشاء رأس القيد المحاسبي لفينا الخير.');
     dbExecute("INSERT INTO journal_lines (entry_id,account_id,debit,credit,description) VALUES (?,?,?,?,?)",[$entryId,$assetId,$amount,0,'استلام أموال مخصصة لفينا الخير']);
     dbExecute("INSERT INTO journal_lines (entry_id,account_id,debit,credit,description) VALUES (?,?,?,?,?)",[$entryId,$liabilityId,0,$amount,'التزام مستحق لفينا الخير']);
-    ak_transaction_review_notify_user(
-        (int)($collection['created_by'] ?? 0),
-        'تم اعتماد تحصيل فينا الخير',
-        'تم اعتماد تحصيل فينا الخير رقم #'.$collectionId.' بمبلغ '.number_format($amount,2).' '.$currency.' وترحيله كالتزام مستقل بنسبة 100% لصالح فينا الخير.',
-        APP_URL.'modules/accounting/fina_payment_review.php'
-    );
+    $notifyApproval($amount,$currency);
     return $entryId;
 }
