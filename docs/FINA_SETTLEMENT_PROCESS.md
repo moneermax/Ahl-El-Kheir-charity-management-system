@@ -1,7 +1,7 @@
 # Fina Al-Khair — Settlement Process, Deployment Plan & Checklist
 
 **Checkpoint:** 2026-09-17  
-**Status:** DESIGN APPROVED — implementation not yet started.
+**Status:** STAGE 2 COMPLETE — schema migration prepared; live migration/workflow implementation not yet started.
 
 ## 1. Locked business rule
 
@@ -57,7 +57,7 @@ Credit  Cash / Bank / Wallet      X
 
 Settlement is **not** Ahl El Kheir revenue and is **not** an expense. It is repayment of an existing third-party liability.
 
-The actual remitting asset account must be selected from the real chart of accounts after schema/code inspection; no account is assumed by this document.
+The actual remitting asset account must be selected from the real chart of accounts; no account is assumed by this document.
 
 ## 4. Dashboard balance semantics after settlement
 
@@ -125,38 +125,49 @@ The actual settlement date is the date the money is actually transferred to Fina
 
 ## 6. Settlement record/batch requirements
 
-The implementation should use a dedicated settlement record/batch. It must not zero or overwrite amounts in `fina_collections`.
+The implementation uses a dedicated settlement record/batch plus collection-level allocation. It must not zero or overwrite amounts in `fina_collections`.
 
-After current schema inspection, the settlement feature should preserve at least:
+Stage 2 design is now fixed as:
 
-- settlement identifier/reference;
-- actual settlement/transfer date;
-- amount settled;
-- currency;
-- payment method and actual remitting account;
+### `fina_settlements`
+
+One row represents one FM settlement event/batch. The schema preserves:
+
+- settlement identifier/reference (`settlement_code`);
+- actual settlement date (`settlement_date`);
+- amount and currency;
+- payment method;
+- actual remitting account (`remitting_account_id`);
 - transfer/reference number;
-- supporting transfer/payment evidence;
-- FM actor and timestamps for settlement actions;
-- accounting journal reference;
+- supporting evidence path;
 - settlement status;
-- allocation to the underlying approved Fina collections, including partial allocations;
-- reconciliation notes/evidence where required.
+- settlement journal reference;
+- reconciliation/cancellation notes;
+- FM actor/timestamps for creation, approval, transfer, reconciliation, and cancellation.
 
-Exact table/column names are intentionally deferred until the existing schema and accounting journal design are inspected.
+### `fina_settlement_allocations`
+
+One row represents an amount of a specific Fina collection allocated to a settlement.
+
+This explicitly supports partial settlement without modifying the original collection. A collection may therefore be allocated across multiple settlement batches over time, subject to runtime controls preventing allocation above its approved/unsettled amount.
+
+The migration also enforces one allocation row per settlement/collection pair and preserves foreign-key linkage to both the settlement and the original Fina collection.
+
+### Accounting linkage
+
+`fina_settlements.settlement_journal_id` will point to the separate settlement journal. The original `fina_collections.accounting_journal_id` remains unchanged.
 
 ## 7. Settlement lifecycle
 
-Initial target lifecycle:
+For the implementation, the dedicated settlement record supports:
 
 ```text
-draft → approved → transferred → reconciled/closed
+draft → approved → transferred → reconciled → closed
                      ↓
                   cancelled
 ```
 
-The final state model will be confirmed during implementation after inspecting the existing workflow/status conventions.
-
-Because the FM is the sole settlement operator, any additional approval/release step must not accidentally grant settlement execution to another role. If management notification is required, it is a notification/oversight event, not a second Fina settlement operator.
+All settlement actions remain FM-only. The `approved` state is an internal settlement lifecycle state and must not grant settlement execution to another role.
 
 ## 8. Notifications — locked rule
 
@@ -215,27 +226,38 @@ A settlement must never:
 - [x] Actual settlement date means the date money is actually transferred to Fina.
 - [x] Settlement notifications go to GM and VGM, not Supervisors.
 
-### Stage 1 — Existing-system/schema inspection
+### Stage 1 — Existing-system/schema inspection — COMPLETE
 
-- [ ] Inspect actual `fina_collections` schema and current status semantics.
-- [ ] Inspect actual account `2300` and posted-journal structure.
-- [ ] Inspect all existing Fina collection journal creation paths.
-- [ ] Inspect available cash/bank/wallet accounts and payment-method semantics for outgoing settlement.
-- [ ] Inspect existing transaction/reference-number/evidence patterns.
-- [ ] Inspect existing role/authorization helpers for FM, GM, and VGM.
-- [ ] Inspect existing notification recipient helpers.
-- [ ] Confirm whether a settlement/allocation structure already exists before creating anything new.
+- [x] Inspect actual `fina_collections` schema and current status semantics.
+- [x] Inspect actual account `2300` and posted-journal structure.
+- [x] Inspect all existing Fina collection journal creation paths.
+- [x] Inspect available cash/bank/wallet accounts and payment-method semantics for outgoing settlement.
+- [x] Inspect existing transaction/reference-number/evidence patterns relevant to accounting implementation.
+- [x] Inspect existing role/authorization helpers for FM, GM, and VGM at the repository level.
+- [x] Inspect existing notification infrastructure relevant to management notifications.
+- [x] Confirm that no existing Fina settlement/allocation structure exists.
 
-### Stage 2 — Data model design
+**Live database evidence:** `fina_collections` currently has only `pending / approved / returned`; account `2300` is an active liability; treasury accounts are `1100`, `1200`, and `1300`; existing Fina collection journals use the expected asset → `2300` pattern; existing Fina tables are `fina_sources` and `fina_collections` only.
 
-- [ ] Design the settlement batch/record using the actual current schema conventions.
-- [ ] Design collection-to-settlement allocation, including partial allocation.
-- [ ] Preserve historical `fina_collections` amounts/statuses.
-- [ ] Define settlement status lifecycle.
-- [ ] Define evidence and transfer-reference fields.
-- [ ] Define actor/timestamp audit fields.
-- [ ] Define reconciliation fields if required.
-- [ ] Produce a migration only after the schema design is reviewed and confirmed.
+### Stage 2 — Data model design — COMPLETE
+
+- [x] Design dedicated settlement batch/record using the actual current schema conventions.
+- [x] Design collection-to-settlement allocation, including partial allocation.
+- [x] Preserve historical `fina_collections` amounts/statuses.
+- [x] Define settlement status lifecycle.
+- [x] Define evidence and transfer-reference fields.
+- [x] Define actor/timestamp audit fields.
+- [x] Define reconciliation/cancellation fields.
+- [x] Produce migration after actual schema inspection.
+- [x] Keep original collection journals separate from settlement journals.
+
+Migration created:
+
+`database/migrations/2026-09-17_fina_settlement_schema.sql`
+
+The migration creates only the new settlement/allocation structures. It does **not** modify existing Fina collections or journals.
+
+**Important:** the migration has been committed to the repository but has **not yet been applied to the live database**. Live schema execution will occur as part of the controlled implementation step.
 
 ### Stage 3 — Accounting engine
 
@@ -342,8 +364,13 @@ The accounting result of a full settlement will naturally make the outstanding `
 
 Likewise, do not add a simple `settled = yes/no` flag to `fina_collections` without considering partial settlement and allocation. The settlement event and its allocation must remain auditable.
 
-## 12. Current status
+## 12. Current status / next continuation point
 
-**Approved design — implementation not started.**
+**Stage 0 — COMPLETE.**  
+**Stage 1 — COMPLETE / live schema inspected.**  
+**Stage 2 — COMPLETE / settlement and allocation schema committed.**  
+**Stage 3 — NEXT: accounting engine.**
 
-All business decisions recorded in this document are agreed for the next implementation phase. The next technical action is **Stage 1: inspect the actual repository/schema**, followed by Stage 2 data-model design. No settlement tables, SQL, or runtime workflow should be created before that inspection.
+The live database has not yet received the new settlement tables. The next implementation step is to apply the new migration through the controlled deployment process, verify the resulting live schema, then implement the FM-only settlement accounting engine.
+
+No existing Fina collection record or original Fina collection journal is to be modified as part of that migration.
