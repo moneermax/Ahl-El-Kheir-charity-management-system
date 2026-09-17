@@ -26,6 +26,16 @@ For an external source, the Fina source record stores its own contact and identi
 
 The Fina collection does not use `sponsor_payments` and does not create a normal sponsorship transaction. Its accounting relationship is through the dedicated Fina journal/control flow.
 
+## Schema lifecycle
+
+The standalone Fina schema is provisioned through the explicit migration:
+
+`database/migrations/2026-09-17_fina_standalone_schema.sql`
+
+Normal Fina web requests no longer create `fina_sources` or `fina_collections`. The shared helper `fina_ensure_tables()` only verifies that both tables exist and raises an application error if the migration has not been applied.
+
+This follows the established project rule that application pages must not execute request-time `CREATE TABLE` or `ALTER TABLE` operations. Schema lifecycle belongs to migrations/deployment, not normal page rendering.
+
 ## Entry point
 
 All users authorized by the application to directly enter sponsor-facing payments may use:
@@ -55,6 +65,8 @@ The review/approval stage remains controlled by the financial-management workflo
 
 The review page uses separate POST branches for approval and return. The redirect after each mutation is scoped inside the corresponding POST branch; a normal GET request does not redirect back to itself. The Supervisor remains read-only because mutation branches require the FM review authorization check.
 
+The receipt attachment is served through the authenticated `modules/accounting/fina_receipt.php` endpoint rather than by exposing `storage/receipts` directly. This preserves the storage directory's deny rule while enforcing application authentication and Supervisor ownership checks.
+
 ## Accounting treatment
 
 For a Fina-only collection of X:
@@ -81,6 +93,35 @@ The existing Fina review page remains the review/history surface rather than int
 
 ## 2026-09-17 implementation checkpoint
 
-The existing `modules/accounting/fina_payment_review.php` had an unmatched closing brace after the return POST branch, leaving its redirect/exit outside the intended control-flow structure and causing a PHP parse error. The review page was reformatted into explicit, separate approval and return POST branches; each mutation branch now owns its own redirect and `exit()`, while normal GET processing falls through to the pending/history queries and page rendering.
+### Schema lifecycle hardening
 
-The corrected file was syntax-validated with PHP 8.x (`php -l`) before runtime testing. No database schema change was introduced by this fix.
+The Fina standalone tables were moved from request-time schema creation to an explicit database migration:
+
+- `database/migrations/2026-09-17_fina_standalone_schema.sql`
+- `modules/accounting/fina_lib.php` no longer executes `CREATE TABLE IF NOT EXISTS` during normal requests.
+- `fina_ensure_tables()` now performs a read-only existence check against `information_schema.tables` and reports a clear setup error if the migration has not been applied.
+
+Implementation commits:
+
+- `59fd2e3717e627a4f80b47fcedb32e27800cb60e` — add standalone Fina schema migration.
+- `5e11531c7a9c75b24ef1c08d7be9138719886b35` — remove request-time Fina schema creation.
+
+### Receipt protection regression
+
+The Fina review receipt link was corrected to use the authenticated `modules/accounting/fina_receipt.php?id=...` endpoint instead of linking directly into `storage/receipts`. The user runtime-tested the corrected link and confirmed the receipt opens successfully.
+
+Implementation commit:
+
+- `1080367531c037600141be3d3d97b8f104eeae10` — fix Fina review receipt link to authenticated viewer.
+
+The storage `.htaccess` deny rule remains intact; it must not be weakened merely to make receipt links work.
+
+## Verification status
+
+- Standalone Fina data model: implemented and preserved.
+- Fina review/approval separation: preserved.
+- Fina accounting isolation through liability account `2300`: preserved.
+- Direct receipt exposure: prevented; authenticated receipt viewer is runtime-confirmed working.
+- Request-time Fina schema mutation: removed in code; migration added.
+
+The next audit task remains the targeted Accounting Journal Cross-Module Integrity review for the protected automated reference types `payroll`, `disbursement_void`, and `item_return`. Do not restart the completed Supervisor ↔ Accounting integration audit or repeat closed Fina receipt/authorization tests unless new regression evidence appears.
