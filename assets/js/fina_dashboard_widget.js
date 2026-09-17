@@ -1,11 +1,13 @@
 document.addEventListener('DOMContentLoaded', function () {
     var main = document.querySelector('main.container-fluid');
-    if (!main || !window.APP_URL && !document.querySelector('meta[name="app-url"]')) return;
+    if (!main) return;
 
     var base = (window.APP_URL || '').replace(/\/$/, '/');
     if (!base) {
-        var link = document.querySelector('a[href*="modules/accounting/fina_payment_review.php"]');
-        if (link) base = link.href.split('modules/accounting/fina_payment_review.php')[0];
+        var marker = '/modules/accounting/';
+        var path = window.location.pathname;
+        var markerPos = path.indexOf(marker);
+        if (markerPos >= 0) base = window.location.origin + path.substring(0, markerPos + 1);
     }
     if (!base) return;
 
