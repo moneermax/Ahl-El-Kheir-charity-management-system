@@ -1,0 +1,4 @@
+RewriteEngine On
+RewriteRule ^(.+)$ ../../../modules/accounting/fina_settlement_evidence.php?path=$1 [END,QSA,NE]
+Require all denied
+Deny from all
