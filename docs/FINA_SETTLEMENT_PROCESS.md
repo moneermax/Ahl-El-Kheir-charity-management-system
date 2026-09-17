@@ -1,264 +1,349 @@
-# Fina Al-Khair — Settlement Process and Balance Semantics
+# Fina Al-Khair — Settlement Process, Deployment Plan & Checklist
 
 **Checkpoint:** 2026-09-17  
-**Status:** DESIGN / AUDIT DECISION — settlement workflow is not yet implemented.
+**Status:** DESIGN APPROVED — implementation not yet started.
 
-## 1. Purpose
+## 1. Locked business rule
 
-Fina Al-Khair money is a protected third-party fund. Ahl El Kheir collects and holds the money on Fina's behalf. The dedicated liability/control account is `2300`.
+**All Fina settlement processing is performed by the Financial Manager (FM) only.**
 
-The existing collection workflow recognizes the obligation when a Fina collection is approved. Settlement to Fina is a separate accounting event and must not be treated as Ahl El Kheir revenue or expense.
+Supervisors may submit Fina collections and view only their own scoped collection information. They do not prepare, authorize, execute, record, or close Fina settlements.
 
-## 2. Recommended settlement model
+The system has no direct integration/contact with a Fina system. Settlement is recorded in Ahl El Kheir as an internal Accounting event representing the actual transfer of money to Fina.
 
-The recommended operational policy is **monthly settlement with controlled early settlement when justified**.
+Fina is a protected third-party fund. Account `2300` is the dedicated Fina liability/control account.
 
-A practical cycle is:
+## 2. Agreed settlement policy
 
-1. Supervisors submit Fina collections.
-2. FM reviews and approves or returns each submission.
-3. Approved collections are posted as Fina liability in account `2300`.
-4. At the monthly cutoff, FM reconciles the approved/unsettled Fina balance to the underlying collection records and posted journals.
-5. A settlement batch is prepared for the amount actually due to Fina.
-6. The authorized settlement payment is made to Fina.
-7. The settlement is recorded as a separate accounting event that reduces liability `2300`.
-8. Transfer/payment evidence and settlement reference are attached to the settlement record.
-9. The settlement is closed only after the amount, bank/cash movement, liability reduction, and evidence reconcile.
+### 2.1 Normal settlement
 
-Monthly settlement should be the normal operating rhythm because it gives Fina a predictable remittance schedule and gives Accounting a clean period-end reconciliation. The system should still permit an authorized **early/manual settlement** when the balance becomes material, Fina requests an earlier remittance, or operational circumstances justify it.
+The normal operating cycle is **monthly**.
 
-The system should not require settlement merely because a collection was approved; approval establishes the payable liability, while settlement is the later remittance event.
+At the end of the defined monthly cutoff, the FM reconciles all approved but unsettled Fina collections and settles the amount due to Fina.
 
-## 3. Accounting treatment
+### 2.2 Early settlement
 
-If approved Fina collections total X and the money is currently held in the relevant Ahl El Kheir asset account:
+The FM may initiate a settlement **at any time** when Fina requests the money or management/operational circumstances require it. The system must not force the FM to wait for month-end.
 
-### Collection approval
+### 2.3 Partial settlement
+
+Settlement amount is flexible. The FM may settle the full outstanding balance or a smaller amount.
+
+Example:
+
+```text
+Outstanding liability: 250,000 SDG
+Settlement:            150,000 SDG
+Remaining liability:   100,000 SDG
+```
+
+A partial settlement must not mark the full underlying collection as settled unless its full amount has actually been remitted.
+
+## 3. Accounting meaning
+
+Approval of a Fina collection establishes the payable third-party liability:
 
 ```text
 Debit   Cash / Bank / Wallet       X
 Credit  Fina Liability 2300        X
 ```
 
-### Settlement/remittance to Fina
+Actual transfer/settlement is a separate accounting event:
 
 ```text
 Debit   Fina Liability 2300       X
 Credit  Cash / Bank / Wallet      X
 ```
 
-The settlement is **not** an Ahl El Kheir expense. It is the payment of an existing third-party liability.
+Settlement is **not** Ahl El Kheir revenue and is **not** an expense. It is repayment of an existing third-party liability.
 
-The actual credit asset account must correspond to the payment method/account from which the remittance is made. No account should be assumed until the current chart of accounts and settlement payment method are inspected.
+The actual remitting asset account must be selected from the real chart of accounts after schema/code inspection; no account is assumed by this document.
 
-## 4. What the dashboard should mean after settlement
+## 4. Dashboard balance semantics after settlement
 
-The current dashboard value representing Fina money must not simply disappear or be reset. Historical financial information must remain auditable.
+The current approved Fina amount must not simply disappear from history.
 
-The preferred dashboard model is to distinguish four concepts:
+The live FM balance should distinguish:
 
-- **Pending:** submitted to FM but not approved.
-- **Approved / Unsettled:** approved and posted to liability `2300`, but not yet remitted to Fina.
-- **Settled to Fina:** amounts already remitted to Fina.
-- **Returned:** submissions rejected/returned and therefore not part of the payable Fina liability.
-
-For the current example:
-
-```text
-Before settlement:
-Approved / unsettled Fina balance = 250,000 SDG
-
-After settling the full 250,000 SDG:
-Approved / unsettled Fina balance = 0 SDG
-Settled to Fina (cumulative)       = 250,000 SDG
-```
-
-The historical approved collections remain approved and remain visible in reports/history. Settlement changes their **settlement state**, not their original collection history.
-
-## 5. Recommended FM dashboard cards
-
-The current card labelled as the amount associated with liability `2300` should ultimately be made explicit as:
-
-**الرصيد غير المسدد لفينا — حساب الالتزام 2300**
-
-This should represent the current outstanding Fina liability, not lifetime approved collections.
-
-Additional cards/figures should distinguish:
-
-- إجمالي التحصيلات المعتمدة — cumulative approved collections.
-- الرصيد غير المسدد — current liability still owed to Fina.
-- إجمالي ما تم تسديده لفينا — cumulative settled amount.
-- تحصيلات معلقة — pending FM review.
-- تحصيلات مرتجعة — returned collections.
-
-This prevents the common misunderstanding that a historical approved total is still money currently held by Ahl El Kheir.
-
-## 6. Supervisor dashboard semantics
-
-Supervisor figures must remain Supervisor-scoped.
-
-A Supervisor should see only that Supervisor's own Fina collections. Settlement is an FM/Accounting responsibility and must not become a Supervisor financial-control action.
-
-A future Supervisor dashboard may show useful scoped information such as:
-
-- approved Fina collections submitted by this Supervisor;
-- this Supervisor's approved amount still unsettled;
-- this Supervisor's historical amount settled to Fina.
-
-It must not expose the organization-wide Fina liability or another Supervisor's collections merely because the Supervisor is viewing a dashboard.
-
-## 7. Settlement batch design
-
-A future settlement feature should use a dedicated settlement record/batch rather than editing `fina_collections` amounts or changing historical collection records in place.
-
-The settlement record should, after the actual schema is inspected and designed, be able to preserve at least:
-
-- settlement identifier/reference;
-- settlement date;
-- amount settled;
-- currency;
-- recipient Fina information where appropriate;
-- payment method/account used for the remittance;
-- authorized/prepared/released actors according to separation of duties;
-- supporting transfer/payment evidence;
-- accounting journal reference;
-- included Fina collections or an auditable allocation basis;
-- settlement status and timestamps;
-- reconciliation/notes where required.
-
-Exact table and column names must be decided only after inspecting the current schema. No schema is prescribed by this document.
-
-## 8. Partial settlement
-
-Partial settlement should be supported if operationally useful.
+1. **Pending** — submitted but not approved.
+2. **Approved / Unsettled** — approved and posted to liability `2300`, but not yet remitted.
+3. **Settled to Fina** — amount actually transferred to Fina; retained as historical cumulative settlement information.
+4. **Returned** — returned/rejected collection; not part of the outstanding Fina liability.
 
 Example:
 
 ```text
-Outstanding Fina liability: 250,000 SDG
-Settlement #1:                150,000 SDG
-Remaining liability:          100,000 SDG
+Before settlement:
+2300 outstanding = 250,000 SDG
+
+After full settlement:
+2300 outstanding = 0 SDG
+Historical settled amount = 250,000 SDG
 ```
 
-The dashboard must then show 100,000 SDG as the outstanding liability while retaining 150,000 SDG as settled history.
+The system must never erase the collection or rewrite its original amount merely because it has been settled.
 
-A collection-level settlement allocation is preferable to a vague aggregate adjustment because it makes later reconciliation possible. If a settlement is partial, the system should never mark the entire underlying collection as settled unless its full amount has actually been remitted.
+### Supervisor dashboard
 
-## 9. Reconciliation controls
+Supervisor Fina amounts remain **Supervisor-scoped**. The dashboard must not expose organization-wide Fina liability merely because the Supervisor is viewing the dashboard.
 
-Before closing a settlement, FM should be able to reconcile:
+Future Supervisor figures may distinguish that Supervisor's own:
 
-`Approved collections not previously settled`
+- approved collections;
+- approved/unsettled amount;
+- historical amount settled to Fina.
 
-against
+Settlement controls remain unavailable to Supervisors.
 
-`Settlement amount`
+## 5. Agreed settlement workflow
 
-and then verify:
+```text
+Supervisor collections
+        ↓
+FM review
+        ↓
+Approved Fina collections
+        ↓
+Fina liability 2300
+        ↓
+FM settlement preparation/reconciliation
+        ↓
+FM settlement authorization/release
+        ↓
+Actual transfer to Fina
+        ↓
+FM records actual settlement date + transfer reference/evidence
+        ↓
+Settlement journal
+        ↓
+2300 liability reduced
+        ↓
+Settlement closed/reconciled
+```
 
-`Previous outstanding liability + new approved liability - settlement = new outstanding liability`
+The actual settlement date is the date the money is actually transferred to Fina. It must not be replaced by the collection date or approval date.
 
-The settlement must not:
+## 6. Settlement record/batch requirements
 
-- create Fina revenue for Ahl El Kheir;
+The implementation should use a dedicated settlement record/batch. It must not zero or overwrite amounts in `fina_collections`.
+
+After current schema inspection, the settlement feature should preserve at least:
+
+- settlement identifier/reference;
+- actual settlement/transfer date;
+- amount settled;
+- currency;
+- payment method and actual remitting account;
+- transfer/reference number;
+- supporting transfer/payment evidence;
+- FM actor and timestamps for settlement actions;
+- accounting journal reference;
+- settlement status;
+- allocation to the underlying approved Fina collections, including partial allocations;
+- reconciliation notes/evidence where required.
+
+Exact table/column names are intentionally deferred until the existing schema and accounting journal design are inspected.
+
+## 7. Settlement lifecycle
+
+Initial target lifecycle:
+
+```text
+draft → approved → transferred → reconciled/closed
+                     ↓
+                  cancelled
+```
+
+The final state model will be confirmed during implementation after inspecting the existing workflow/status conventions.
+
+Because the FM is the sole settlement operator, any additional approval/release step must not accidentally grant settlement execution to another role. If management notification is required, it is a notification/oversight event, not a second Fina settlement operator.
+
+## 8. Notifications — locked rule
+
+Settlement notifications are **not** sent to Supervisors.
+
+The FM performs the complete settlement process.
+
+After the FM completes the actual settlement, the system should notify:
+
+- **General Manager (GM)**
+- **Vice General Manager (VGM)**
+
+The notification should contain the settlement reference, actual transfer date, amount, and relevant accounting/reference information without implying that the recipients performed the settlement.
+
+There is **no direct Fina-system notification/integration**. The Ahl El Kheir notification is internal management oversight.
+
+## 9. Reports and reconciliation
+
+The Fina report must ultimately distinguish:
+
+- submitted/pending collections;
+- approved collections;
+- returned collections;
+- outstanding liability;
+- settlements made to Fina;
+- remaining balance after settlement.
+
+FM must be able to reconcile:
+
+`Previous outstanding liability + newly approved liability - settlement = new outstanding liability`
+
+and reconcile the resulting outstanding balance to posted account `2300`.
+
+A settlement must never:
+
+- create Ahl El Kheir Fina revenue;
+- become an expense;
 - reduce sponsor obligations;
 - absorb sponsor-payment shortfalls;
 - alter historical collection amounts;
 - delete approved collection records;
-- silently change a returned collection into an approved collection;
+- settle the same amount twice;
 - create an unbalanced journal;
-- settle the same collection amount twice.
+- settle a returned collection as though it were approved.
 
-## 10. Separation of duties
+## 10. Deployment plan and completion checklist
 
-The preferred control is:
+### Stage 0 — Business rule freeze
 
-```text
-Collection creator / Supervisor
-        ↓
-FM review and approval
-        ↓
-Fina liability 2300
-        ↓
-Settlement preparation / reconciliation
-        ↓
-Authorized settlement release
-        ↓
-Settlement journal + evidence
-```
+- [x] Monthly settlement is the normal cycle.
+- [x] Early settlement is allowed at any time when Fina requests the money or management requires it.
+- [x] Full and partial settlement are supported.
+- [x] FM is the **only** role that performs the entire settlement process.
+- [x] Supervisors have no settlement action.
+- [x] Settlement is an internal Ahl El Kheir accounting event; there is no direct Fina-system integration.
+- [x] Actual settlement date means the date money is actually transferred to Fina.
+- [x] Settlement notifications go to GM and VGM, not Supervisors.
 
-Where organizational roles permit, preparation and release should be separated. At minimum, the settlement must require an authorized Accounting/FM actor and retain actor/time/evidence information.
+### Stage 1 — Existing-system/schema inspection
 
-## 11. Settlement frequency policy
+- [ ] Inspect actual `fina_collections` schema and current status semantics.
+- [ ] Inspect actual account `2300` and posted-journal structure.
+- [ ] Inspect all existing Fina collection journal creation paths.
+- [ ] Inspect available cash/bank/wallet accounts and payment-method semantics for outgoing settlement.
+- [ ] Inspect existing transaction/reference-number/evidence patterns.
+- [ ] Inspect existing role/authorization helpers for FM, GM, and VGM.
+- [ ] Inspect existing notification recipient helpers.
+- [ ] Confirm whether a settlement/allocation structure already exists before creating anything new.
 
-Recommended default:
+### Stage 2 — Data model design
 
-**Monthly settlement at a defined cutoff.**
+- [ ] Design the settlement batch/record using the actual current schema conventions.
+- [ ] Design collection-to-settlement allocation, including partial allocation.
+- [ ] Preserve historical `fina_collections` amounts/statuses.
+- [ ] Define settlement status lifecycle.
+- [ ] Define evidence and transfer-reference fields.
+- [ ] Define actor/timestamp audit fields.
+- [ ] Define reconciliation fields if required.
+- [ ] Produce a migration only after the schema design is reviewed and confirmed.
 
-Recommended exceptions:
+### Stage 3 — Accounting engine
 
-- early settlement when Fina requests it;
-- early settlement when the outstanding amount becomes materially large;
-- special settlement for an agreed event or reporting period.
+- [ ] Implement settlement journal creation as a separate accounting event.
+- [ ] Debit liability `2300` by the settled amount.
+- [ ] Credit the actual remitting asset account.
+- [ ] Enforce balanced journal creation.
+- [ ] Prevent settlement above the eligible outstanding balance.
+- [ ] Prevent duplicate settlement of the same allocated amount.
+- [ ] Support partial settlement.
+- [ ] Preserve the original collection journal(s).
+- [ ] Ensure settlement rollback/cancellation cannot silently corrupt account `2300`.
 
-The system should support a configurable policy later rather than hard-coding an arbitrary amount or date before the organization's actual agreement with Fina is known.
+### Stage 4 — FM-only settlement UI
 
-The final operational policy should be agreed with Fina/management before production deployment because the software should record the organization's real settlement agreement rather than invent one.
+- [ ] Add FM settlement entry/list page.
+- [ ] Show current outstanding liability from posted accounting/eligible collections.
+- [ ] Allow FM to choose full or partial settlement.
+- [ ] Capture actual transfer date.
+- [ ] Capture payment method/remitting account.
+- [ ] Capture transfer reference.
+- [ ] Capture supporting evidence.
+- [ ] Show eligible collections and allocation.
+- [ ] Make settlement controls server-side FM-only.
+- [ ] Ensure Supervisors cannot access settlement actions by direct URL.
+- [ ] Ensure GM/VGM notification does not grant settlement authority.
 
-## 12. Reports after settlement
+### Stage 5 — Dashboard/report updates
 
-The Fina report should eventually separate:
+- [ ] Change FM primary live Fina balance to **outstanding/unsettled liability**.
+- [ ] Keep cumulative settled amount visible separately.
+- [ ] Keep pending and returned counts separate.
+- [ ] Update Fina report to distinguish collections, outstanding liability, and settlements.
+- [ ] Keep Supervisor totals scoped to the individual Supervisor.
+- [ ] Never display a settled amount as still outstanding.
 
-1. Submitted/pending activity.
-2. Approved collections.
-3. Returned collections.
-4. Outstanding liability.
-5. Settlements made to Fina.
-6. Remaining balance after settlements.
+### Stage 6 — Management notifications
 
-For any selected period, the report should make clear whether an amount is a **collection**, a **liability still outstanding**, or a **remittance already paid to Fina**.
+- [ ] On completed settlement, notify GM.
+- [ ] On completed settlement, notify VGM.
+- [ ] Do not notify Supervisors about settlement completion.
+- [ ] Notification must identify amount, settlement reference, and actual transfer date.
+- [ ] Notification must use the existing CSRF/read/unread/history model where applicable.
+- [ ] Notification failure must not undo a successfully completed accounting settlement.
 
-The current correction that report financial totals are based on approved collections remains valid. Settlement is a subsequent layer and must not be confused with approval.
+### Stage 7 — Reconciliation and audit controls
 
-## 13. Current example — 250,000 SDG
+- [ ] Reconcile eligible approved/unsettled collections to settlement amount.
+- [ ] Reconcile settlement journal to actual remitting account movement.
+- [ ] Reconcile closing Fina liability to account `2300`.
+- [ ] Verify full settlement produces zero outstanding `2300` for the settled portion.
+- [ ] Verify partial settlement leaves the correct remaining liability.
+- [ ] Verify historical settlement records remain searchable.
+- [ ] Verify evidence/reference remains attached.
+- [ ] Verify duplicate settlement is blocked.
+- [ ] Verify returned/pending collections cannot be settled.
 
-The FM dashboard currently shows the approved Fina amount associated with liability `2300` as `250,000 SDG`.
+### Stage 8 — Security and separation-of-duties tests
 
-That means, under the current accounting model, Ahl El Kheir has an approved Fina liability of 250,000 SDG represented by the posted Fina collections.
+- [ ] FM can perform the complete settlement workflow.
+- [ ] Supervisor cannot create/approve/release/close a settlement.
+- [ ] GM cannot accidentally acquire settlement execution rights merely by receiving notification.
+- [ ] VGM cannot accidentally acquire settlement execution rights merely by receiving notification.
+- [ ] Direct URL/API-style attempts against settlement actions are server-side blocked for non-FM users.
+- [ ] Settlement actions retain actor/time audit evidence.
 
-It does **not** mean that 250,000 SDG should be erased after payment to Fina. Instead:
+### Stage 9 — Runtime acceptance tests
 
-```text
-Before settlement
------------------
-2300 outstanding liability = 250,000 SDG
+- [ ] Full monthly settlement.
+- [ ] Early settlement before month-end.
+- [ ] Partial settlement.
+- [ ] Attempted over-settlement.
+- [ ] Attempted duplicate settlement.
+- [ ] Attempted settlement of pending collection.
+- [ ] Attempted settlement of returned collection.
+- [ ] Correct `2300` reduction.
+- [ ] Correct remitting asset-account reduction.
+- [ ] Balanced settlement journal.
+- [ ] Actual transfer date recorded correctly.
+- [ ] GM notification received.
+- [ ] VGM notification received.
+- [ ] Supervisor receives no settlement notification.
+- [ ] Dashboard outstanding balance changes correctly after settlement.
+- [ ] Historical settled amount remains visible.
+- [ ] Report reconciles with the ledger and settlement records.
 
-Settlement payment
-------------------
-Dr 2300 liability          250,000
-Cr remitting cash/bank     250,000
+### Stage 10 — Production readiness / closure
 
-After full settlement
----------------------
-2300 outstanding liability = 0 SDG
-Historical settled total  = 250,000 SDG
-```
+- [ ] Migration reviewed and executed in the correct deployment process.
+- [ ] Production settlement policy/configuration confirmed by management.
+- [ ] Transfer evidence retention confirmed.
+- [ ] Backup/recovery considerations reviewed.
+- [ ] Final audit evidence recorded.
+- [ ] Master audit updated.
+- [ ] Session index updated.
+- [ ] Continuation prompt updated if any permanent rule changed.
+- [ ] Settlement feature marked COMPLETE only after code + runtime verification.
 
-The exact settlement asset account and settlement evidence workflow remain to be implemented after schema/code inspection.
+## 11. Important implementation rule
 
-## 14. Implementation status
+Do **not** implement settlement by simply setting account `2300` to zero in isolation.
 
-This document records the recommended business/accounting design only.
+The accounting result of a full settlement will naturally make the outstanding `2300` balance zero **through a posted settlement journal**. Historical collection and settlement records remain intact.
 
-**Not yet implemented:**
+Likewise, do not add a simple `settled = yes/no` flag to `fina_collections` without considering partial settlement and allocation. The settlement event and its allocation must remain auditable.
 
-- settlement tables/fields;
-- settlement creation UI;
-- settlement approval/release workflow;
-- settlement journal creation;
-- settlement-to-collection allocation;
-- dashboard outstanding/settled split;
-- settlement report/history;
-- settlement-specific notifications.
+## 12. Current status
 
-No existing Fina collection data should be modified merely to prepare for this future feature.
+**Approved design — implementation not started.**
+
+All business decisions recorded in this document are agreed for the next implementation phase. The next technical action is **Stage 1: inspect the actual repository/schema**, followed by Stage 2 data-model design. No settlement tables, SQL, or runtime workflow should be created before that inspection.
