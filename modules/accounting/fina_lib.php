@@ -34,7 +34,7 @@ function fina_ensure_liability_account(): int{
 
 function fina_post_collection_journal(array $collection,int $reviewerId): int{
     $collectionId=(int)$collection['id'];
-    $notifyApproval=function(float $amount,string $currency): void use($collectionId,$collection){
+    $notifyApproval=function(float $amount,string $currency) use($collectionId,$collection): void{
         ak_transaction_review_notify_event(
             (int)($collection['created_by'] ?? 0),
             'تم اعتماد تحصيل فينا الخير',
