@@ -28,7 +28,19 @@ This index is the short handoff document. The repository and these documents are
 
 ## FINA SETTLEMENT — CURRENT ACTIVE WORK
 
-Fina is a protected third-party fund. It is not Ahl El Kheir revenue, sponsorship revenue, administrative-fee revenue, or an Ahl expense. Dedicated liability/control account: `2300`.
+Fina is a protected third-party fund. It is not Ahl El Kheir revenue, sponsorship revenue, administrative-fee revenue, or an Ahl expense. Dedicated liability/control account: **`2300`**, and this account is **permanent**.
+
+### Finalized Fina settlement cycle
+
+- New approved Fina payments accumulate in the same permanent `2300` liability account.
+- When Fina requests settlement, the **entire current outstanding Fina liability is settled in full**.
+- **Partial settlement is not part of the production model.** No partial amount or allocation workflow is to be exposed.
+- The settlement does not use Ahl operating treasury accounts `1100`, `1200`, or `1300`.
+- Fina-held money is represented separately from Ahl operating funds through the correct dedicated Fina-held-funds accounting control/asset account, to be confirmed from the actual chart/schema before implementation.
+- Full settlement posts `Dr 2300 / Cr Fina-held funds`.
+- After successful settlement, `2300` returns to zero but remains permanently available.
+- The next Fina payment increases the same `2300` again, repeating the cycle.
+- Historical Fina collection journals remain unchanged.
 
 All settlement processing is **Financial Manager (FM) only**. Supervisors, GM, and VGM do not gain settlement execution authority through links, notifications, or direct URLs.
 
@@ -37,39 +49,39 @@ All settlement processing is **Financial Manager (FM) only**. Supervisors, GM, a
 - Stage 0 — business rules: **COMPLETE**.
 - Stage 1 — existing-system/schema inspection: **COMPLETE**.
 - Stage 2 — settlement data model/migration: **COMPLETE**; migration applied successfully to live DB on 2026-09-17.
-- Stage 3 — accounting engine: **COMPLETE / RUNTIME VERIFIED / CLOSED** on 2026-09-17.
+- Stage 3 — original accounting engine: **COMPLETE / RUNTIME VERIFIED / CLOSED** on 2026-09-17 as historical development evidence.
 
 Stage 3 implementation:
 
 - `modules/accounting/fina_settlement_lib.php`
 - commit `580a9b2c9991d29a8a06fe6f56ee74ac2216a506`
 
-Controlled runtime evidence retained:
+### Historical Stage 3 test evidence — preserve, do not treat as current business settlement
 
 - `FINA-SET-000001` — 50,000 SDG, full settlement of collection #3, closed, journal 56.
 - `FINA-SET-000002` — 100,000 SDG, partial settlement of collection #4, closed, journal 57.
 - Original collection #3/journal 54 and collection #4/journal 55 remained unchanged/posted.
-- Remaining approved/unsettled Fina liability after the controlled test: **100,000 SDG**.
-- Over-allocation and missing-transfer-reference negative controls were rejected as required.
 
-Do not repeat the Stage 3 acceptance suite unless a genuine regression appears. The temporary Stage 3 runtime harness was removed from the repository after verification.
+These settlement records and journals are retained as development/test evidence. They **must not consume or reduce the current production Fina liability**. The old test result of 100,000 SDG remaining is not the current business balance.
 
-### Stage 4 — ACTIVE
+Do not delete these records merely to clean development data, and do not rerun the closed Stage 3 acceptance suite. Only targeted regression/runtime acceptance for the revised full-settlement model is required.
 
-Production FM-only settlement UI is now the active implementation stage. Build on the tested engine; do not duplicate accounting rules in the UI.
+### Stage 4 — ACTIVE / MODEL REVISION
 
-Current UI implementation:
+The FM-only settlement UI is being revised to the finalized model. Required continuation:
 
-- `modules/accounting/fina_settlements.php` — FM-only settlement list, entry, detail, allocation, approval, transfer, reconciliation, closure, cancellation, transfer-reference, and evidence controls.
-
-Required continuation:
-
-1. Add/confirm FM dashboard navigation to the settlement screen.
-2. Review UI against existing FM accounting patterns and Arabic RTL styling.
-3. Confirm evidence serving/path handling follows existing application conventions.
-4. Inspect and preserve server-side FM-only protection on every action.
-5. Run local UI/runtime acceptance only after the repository changes are pulled locally.
-6. Update this index, the Fina process document, and the master audit after meaningful verified milestones.
+1. Inspect the complete current settlement library/UI before changing behavior.
+2. Inspect the actual accounts chart/schema for an existing dedicated Fina-held-funds account or established custody-account pattern.
+3. Remove production partial-settlement/allocation behavior.
+4. Remove the Ahl treasury-account selector (`1100`/`1200`/`1300`) from Fina settlement.
+5. Make the settlement amount equal to the complete current Fina liability.
+6. Post the full settlement as `Dr 2300 / Cr Fina-held funds`.
+7. Ensure the resulting `2300` balance is zero after settlement while keeping the account permanently.
+8. Ensure subsequent Fina payments reuse the same `2300` cycle.
+9. Preserve historical Stage 3 test records/journals without letting them reduce the current liability.
+10. Preserve FM-only server-side protection, evidence/reference controls, reconciliation, closure, cancellation, and audit history.
+11. Update dashboards/reports only after the core accounting model is corrected.
+12. Run local runtime acceptance only after the repository changes are pulled locally and do not claim verification until actual results are supplied.
 
 ## FINA STANDALONE PAYMENT
 
@@ -100,7 +112,7 @@ Do not alter historical Fina collection amounts or original collection journals 
 
 ## PARKED / LATER AUDIT WORK
 
-The accounting journal cross-module integrity review remains a separate parked direction unless explicitly resumed after the Fina settlement UI work. Previously completed Supervisor ↔ Accounting integration tests and other closed runtime tests must not be repeated without regression evidence.
+The accounting journal cross-module integrity review remains a separate parked direction unless explicitly resumed after the Fina settlement work. Previously completed Supervisor ↔ Accounting integration tests and other closed runtime tests must not be repeated without regression evidence.
 
 ## LOCAL GIT SAFETY
 
@@ -115,5 +127,5 @@ Then use a safe pull appropriate to the actual local state. Never discard local 
 
 ## CURRENT CONTINUATION POINT
 
-**Stage 3 Fina accounting engine: COMPLETE / RUNTIME VERIFIED / CLOSED.**  
-**Stage 4 Fina FM-only settlement UI: ACTIVE.**
+**Stage 3 original Fina accounting engine: COMPLETE / RUNTIME VERIFIED / CLOSED as historical evidence.**  
+**Stage 4 Fina FM-only settlement model/UI: ACTIVE — full current-balance settlement only, permanent `2300`, separate Fina-held funds, no partial settlement.**
