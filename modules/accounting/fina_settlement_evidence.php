@@ -11,12 +11,22 @@ if (!Session::isLoggedIn() || Session::getUserRole() !== 'financial_manager') {
 }
 
 $id = (int) ($_GET['id'] ?? 0);
-if ($id <= 0) {
+$requestedPath = trim((string) ($_GET['path'] ?? ''));
+
+if ($id > 0) {
+    $row = dbFetchOne("SELECT evidence_path FROM fina_settlements WHERE id=? LIMIT 1", [$id]);
+} elseif ($requestedPath !== '') {
+    $variants = [$requestedPath, ltrim($requestedPath, '/\\')];
+    $row = null;
+    foreach (array_unique($variants) as $path) {
+        $row = dbFetchOne("SELECT evidence_path FROM fina_settlements WHERE evidence_path=? LIMIT 1", [$path]);
+        if ($row) break;
+    }
+} else {
     http_response_code(400);
     exit('Invalid evidence reference');
 }
 
-$row = dbFetchOne("SELECT evidence_path FROM fina_settlements WHERE id=? LIMIT 1", [$id]);
 if (!$row || trim((string) ($row['evidence_path'] ?? '')) === '') {
     http_response_code(404);
     exit('Evidence not found');
