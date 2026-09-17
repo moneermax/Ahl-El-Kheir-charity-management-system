@@ -2,7 +2,7 @@
 
 **Repository:** `moneermax/Ahl-El-Kheir-charity-management-system`  
 **Branch:** `main`  
-**Current checkpoint:** 2026-09-15
+**Current checkpoint:** 2026-09-17
 
 ## START HERE
 
@@ -148,6 +148,35 @@ The broader Supervisor audit must not be restarted from this point.
 - The reconciliation flow figures are a separate report and are not the current treasury asset balance.
 
 Do not repeat these closed tests unless genuine regression evidence appears.
+
+## FINA STANDALONE PAYMENT — 2026-09-17
+
+The Fina Al-Khair workflow remains standalone and isolated from normal sponsor accounting:
+
+- Fina collections use `fina_sources` and `fina_collections`.
+- Fina money is 100% Fina money; it is not Ahl El Kheir revenue, sponsorship revenue, or admin-fee revenue.
+- Fina accounting uses dedicated liability/control account `2300`.
+- Fina receipt attachments are served through authenticated `modules/accounting/fina_receipt.php`; direct storage exposure remains denied.
+- The user runtime-tested the corrected Fina receipt link and confirmed it works.
+
+### Schema lifecycle hardening
+
+Request-time Fina schema creation was removed. The standalone schema is now provisioned through:
+
+`database/migrations/2026-09-17_fina_standalone_schema.sql`
+
+`modules/accounting/fina_lib.php::fina_ensure_tables()` now performs only a read-only table-existence check and does not execute `CREATE TABLE` or `ALTER TABLE` during a normal request.
+
+Commits:
+
+- `59fd2e3717e627a4f80b47fcedb32e27800cb60e` — standalone Fina schema migration.
+- `5e11531c7a9c75b24ef1c08d7be9138719886b35` — remove request-time schema creation.
+- `745db04c08d1f58821be1728986504074321872c` — update Fina documentation.
+- `1080367531c037600141be3d3d97b8f104eeae10` — authenticated Fina receipt viewer link.
+
+Do not weaken `storage/receipts/.htaccess` to bypass receipt authorization.
+
+The detailed Fina model and checkpoint are recorded in `docs/FINA_STANDALONE_PAYMENT_MODEL.md`.
 
 ## ACCOUNTING JOURNAL CROSS-MODULE INTEGRITY — NEXT
 
