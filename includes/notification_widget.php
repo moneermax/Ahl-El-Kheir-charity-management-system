@@ -58,8 +58,15 @@ if (Session::isLoggedIn()) {
 .ak-notif-clear{font-size:.6rem;color:#ffdddd;opacity:.95}
 .ak-notif-clear:hover{opacity:1;color:#fff}
 .ak-notif-read-form,.ak-notif-action-form{margin:0;padding:0}
+#akNotificationToastContainer{position:fixed;top:72px;inset-inline-end:20px;width:min(360px,calc(100vw - 30px));z-index:2000;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.ak-notif-toast{pointer-events:auto;background:#fff;color:#21315b;border:1px solid #dfe5ee;border-inline-start:4px solid #1b4d8f;border-radius:10px;box-shadow:0 8px 28px rgba(10,31,68,.2);padding:11px 13px;opacity:0;transform:translateY(-8px);transition:opacity .18s ease,transform .18s ease;font-family:Cairo,sans-serif;cursor:pointer}
+.ak-notif-toast.ak-notif-toast-show{opacity:1;transform:translateY(0)}
+.ak-notif-toast-title{font-size:.78rem;font-weight:700;margin-bottom:3px}
+.ak-notif-toast-body{font-size:.68rem;line-height:1.7;color:#657286}
+.ak-notif-toast-close{float:inline-start;border:0;background:transparent;color:#9aa4b2;font-size:.9rem;line-height:1;padding:0 0 0 8px;cursor:pointer}
+.ak-notif-toast-close:hover{color:#21315b}
 @media(max-width:991px){#akNotificationBell .ak-notif-panel{inset-inline-end:-90px}}
-@media(max-width:576px){#akNotificationBell .ak-notif-panel{position:fixed;top:62px;inset-inline-end:10px;width:calc(100vw - 20px)}}
+@media(max-width:576px){#akNotificationBell .ak-notif-panel{position:fixed;top:62px;inset-inline-end:10px;width:calc(100vw - 20px)}#akNotificationToastContainer{top:62px;inset-inline-end:10px;width:calc(100vw - 20px)}}
 </style>
 <div id="akNotificationBell" data-poll-url="<?php echo e($akNotifPollUrl); ?>" data-mark-read-url="<?php echo e($akNotifIndividualReadUrl); ?>" data-current-url="<?php echo e($akNotifRedirect); ?>" data-notification-page-url="<?php echo e($akNotifPageUrl); ?>" data-csrf-token="<?php echo e(csrf_token()); ?>">
  <button type="button" class="ak-notif-toggle" aria-label="الإشعارات" title="الإشعارات" onclick="document.getElementById('akNotificationBell').classList.toggle('open')">
@@ -119,6 +126,7 @@ if (Session::isLoggedIn()) {
   </div>
  </div>
 </div>
+<div id="akNotificationToastContainer" aria-live="polite" aria-atomic="true"></div>
 <script>
 (function(){
  const root=document.getElementById('akNotificationBell');
@@ -126,6 +134,22 @@ if (Session::isLoggedIn()) {
  const messageBell=document.getElementById('akMessagingBell');
  if(root && controls){controls.insertBefore(root,messageBell || document.getElementById('userDropdown') || controls.firstChild)}
  document.addEventListener('click',function(e){if(root && !root.contains(e.target))root.classList.remove('open')});
+ const toastContainer=document.getElementById('akNotificationToastContainer');
+ window.AKNotify=window.AKNotify||{};
+ window.AKNotify.toast=function(type,title,body,link){
+     if(!toastContainer) return;
+     const toast=document.createElement('div');
+     toast.className='ak-notif-toast';
+     const safeTitle=esc(title||'إشعار جديد');
+     const safeBody=esc(body||'');
+     toast.innerHTML='<button type="button" class="ak-notif-toast-close" aria-label="إغلاق">×</button><div class="ak-notif-toast-title">'+safeTitle+'</div><div class="ak-notif-toast-body">'+safeBody+'</div>';
+     const close=function(){toast.classList.remove('ak-notif-toast-show');window.setTimeout(function(){if(toast.parentNode)toast.parentNode.removeChild(toast)},180)};
+     toast.querySelector('.ak-notif-toast-close').addEventListener('click',function(e){e.stopPropagation();close()});
+     if(link){toast.addEventListener('click',function(){window.location.href=link})}
+     toastContainer.appendChild(toast);
+     window.requestAnimationFrame(function(){toast.classList.add('ak-notif-toast-show')});
+     window.setTimeout(close,7000);
+ };
  if(!root) return;
  const pollUrl=root.getAttribute('data-poll-url');
  const markReadUrl=root.getAttribute('data-mark-read-url');
@@ -159,7 +183,7 @@ if (Session::isLoggedIn()) {
        .then(function(data){
          if(!data || data.ok!==true) return;
          const items=Array.isArray(data.items) ? data.items : [];
-         if(initialized){items.slice().reverse().forEach(function(item){const id=Number(item.id||0);if(id>0&&!knownIds[id]){knownIds[id]=true;if(window.AKNotify&&typeof window.AKNotify.toast==='function'){window.AKNotify.toast('info',(item.title||'إشعار جديد')+' — '+(item.body||''));}}});}
+         if(initialized){items.slice().reverse().forEach(function(item){const id=Number(item.id||0);if(id>0&&!knownIds[id]){knownIds[id]=true;if(window.AKNotify&&typeof window.AKNotify.toast==='function'){window.AKNotify.toast('info',item.title||'إشعار جديد',item.body||'',String(item.link||'').trim() || notificationPageUrl || currentUrl);}}});}
          else {items.forEach(function(item){const id=Number(item.id||0);if(id>0) knownIds[id]=true;});initialized=true;}
          updateBadge(data.unread); render(data);
        }).catch(function(){}).finally(function(){busy=false;});
