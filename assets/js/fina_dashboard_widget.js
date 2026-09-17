@@ -20,8 +20,9 @@ document.addEventListener('DOMContentLoaded', function () {
             var ret = data.returned || {count:0};
             var acc = data.account || {};
             var currencies = data.currencies || [];
+            var statusLabels = { pending:'معلق', approved:'معتمد', returned:'مرتجع' };
             var currencyText = currencies.length ? currencies.map(function (row) {
-                return row.currency_code + ': ' + Number(row.amount).toLocaleString() + ' (' + row.status + ')';
+                return row.currency_code + ': ' + Number(row.amount).toLocaleString() + ' (' + (statusLabels[row.status] || row.status) + ')';
             }).join(' — ') : 'لا توجد حركة مسجلة';
             var card = document.createElement('div');
             card.className = 'fm-card fina-dashboard-card';
