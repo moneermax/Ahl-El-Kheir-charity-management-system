@@ -4,6 +4,7 @@ require_once dirname(__DIR__, 2) . '/config/database.php';
 require_once dirname(__DIR__, 2) . '/config/functions.php';
 require_once dirname(__DIR__, 2) . '/config/session.php';
 require_once dirname(__DIR__, 2) . '/modules/accounting/fina_lib.php';
+require_once dirname(__DIR__, 2) . '/modules/accounting/lib_transaction_review.php';
 
 Session::start();
 if (!Session::isLoggedIn()) { header('Location: ' . APP_URL . 'index.php'); exit(); }
@@ -69,8 +70,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($sourceId<=0) { $isSponsor=$input['source_type']==='sponsor'; dbExecute("INSERT INTO fina_sources (source_type,sponsor_id,source_name,source_phone,source_alt_phone,source_email,source_address,source_id_number,source_reference,contact_person,source_details,created_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",[$input['source_type'],$isSponsor?(int)$input['sponsor_id']:null,$isSponsor?null:($input['source_name']?:null),$isSponsor?null:($input['source_phone']?:null),$isSponsor?null:($input['source_alt_phone']?:null),$isSponsor?null:($input['source_email']?:null),$isSponsor?null:($input['source_address']?:null),$isSponsor?null:($input['source_id_number']?:null),$isSponsor?null:($input['source_reference']?:null),$isSponsor?null:($input['contact_person']?:null),$isSponsor?null:($input['source_details']?:null),$uid]); $sourceId=(int)dbLastInsertId(); }
             if ($sourceId<=0) throw new RuntimeException('تعذر إنشاء مصدر فينا الخير.');
             dbExecute("INSERT INTO fina_collections (fina_source_id,amount,currency_code,payment_method,collection_date,receipt_path,purpose_note,description,status,created_by) VALUES (?,?,?,?,?,?,?,?,'pending',?)",[$sourceId,$amount,$input['currency_code'],$input['method'],$input['date'],$receiptPath,$input['purpose_note']?:null,$input['description']?:null,$uid]);
-            if ((int)dbLastInsertId()<=0) throw new RuntimeException('تعذر إنشاء سجل التحصيل.');
-            db()->commit(); flash('success','تم تسجيل تحصيل فينا الخير وإرساله للمدير المالي للمراجعة.'); header('Location: '.APP_URL.'modules/accounting/fina_payment_review.php'); exit();
+            $collectionId = (int)dbLastInsertId();
+            if ($collectionId<=0) throw new RuntimeException('تعذر إنشاء سجل التحصيل.');
+            db()->commit();
+
+            // Fina collections use the existing global FM notification workflow.
+            // This is notification-only: it does not create or alter any sponsor accounting transaction.
+            ak_transaction_review_notify_fm_event(
+                $collectionId,
+                'fina_collection',
+                'تحصيل فينا الخير بانتظار المراجعة',
+                'يوجد تحصيل جديد لصالح فينا الخير بانتظار مراجعة واعتماد المدير المالي.',
+                APP_URL . 'modules/accounting/fina_payment_review.php',
+                $uid
+            );
+
+            flash('success','تم تسجيل تحصيل فينا الخير وإرساله للمدير المالي للمراجعة.'); header('Location: '.APP_URL.'modules/accounting/fina_payment_review.php'); exit();
         } catch (Throwable $e) { if (db()->inTransaction()) db()->rollBack(); if ($receiptPath && is_file(dirname(__DIR__,2).'/'.$receiptPath)) @unlink(dirname(__DIR__,2).'/'.$receiptPath); $errors[]='تعذر حفظ تحصيل فينا الخير. لم يتم حفظ أي جزء من العملية.'; }
     }
 }
