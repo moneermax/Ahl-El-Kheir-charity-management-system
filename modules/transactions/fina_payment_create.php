@@ -17,12 +17,25 @@ $active = 'transactions';
 $errors = [];
 $currencies = dbFetchAll("SELECT code FROM currencies ORDER BY code");
 
-// Sponsor search is restricted to the FIRST NAME (the first token of full_name).
-if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['fina_sponsor_search'])) {
+// Sponsor lookup is based ONLY on the sponsor's first name.
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && (isset($_GET['fina_sponsor_search']) || isset($_GET['fina_sponsor_id']))) {
     header('Content-Type: application/json; charset=utf-8');
+
+    if (isset($_GET['fina_sponsor_id'])) {
+        $sponsorId = (int)($_GET['fina_sponsor_id'] ?? 0);
+        if ($sponsorId <= 0) { echo json_encode(null, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); exit(); }
+        $row = dbFetchOne("SELECT id,sponsor_code,full_name,phone,alt_phone,email,address FROM sponsors WHERE id=? AND status='active' LIMIT 1", [$sponsorId]);
+        echo json_encode($row ?: null, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        exit();
+    }
+
     $q = trim((string)($_GET['fina_sponsor_search'] ?? ''));
-    if ($q === '') { echo json_encode([], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); exit(); }
-    $like = $q . '%';
+    // Ignore everything after the first whitespace so entering a second name
+    // never breaks the first-name search. The first-name prefix is still sent
+    // again on every input event, so A -> Ah -> Ahl continuously narrows.
+    $firstName = preg_split('/\s+/u', $q, 2)[0] ?? '';
+    if ($firstName === '') { echo json_encode([], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); exit(); }
+    $like = $firstName . '%';
     $rows = dbFetchAll("SELECT id,sponsor_code,full_name,phone,alt_phone,email,address FROM sponsors WHERE status='active' AND SUBSTRING_INDEX(TRIM(full_name),' ',1) LIKE ? ORDER BY full_name LIMIT 30", [$like]);
     echo json_encode($rows, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     exit();
@@ -133,112 +146,173 @@ include dirname(__DIR__,2).'/includes/header.php';
 </form></div></div>
 <script>
 (function(){
-const type=document.getElementById('finaSourceType');
-const picker=document.getElementById('finaSponsorPicker');
-const search=document.getElementById('finaSponsorSearch');
-const hidden=document.getElementById('finaSponsorId');
-const results=document.getElementById('finaSponsorResults');
-const selected=document.getElementById('finaSponsorSelected');
-const fieldIds={name:'finaSourceName',phone:'finaSourcePhone',altPhone:'finaSourceAltPhone',email:'finaSourceEmail',address:'finaSourceAddress'};
-let requestSerial=0;
-let controller=null;
-
-function field(key){return document.getElementById(fieldIds[key]);}
-function label(s){return [s.sponsor_code,s.full_name,s.phone].filter(Boolean).join(' — ');}
-function setAutoFields(readonly){
-    Object.keys(fieldIds).forEach(function(key){
-        const el=field(key);
-        if(!el)return;
-        el.readOnly=readonly;
-        el.classList.toggle('bg-light',readonly);
-    });
-}
-function clearSelectedFields(){
-    hidden.value='';
-    selected.textContent='';
-    selected.className='form-text';
-    Object.keys(fieldIds).forEach(function(key){const el=field(key);if(el)el.value='';});
-}
-function fill(s){
-    const values={
-        name:s.full_name || '',
-        phone:s.phone || '',
-        altPhone:s.alt_phone || '',
-        email:s.email || '',
-        address:s.address || ''
+    const type = document.getElementById('finaSourceType');
+    const picker = document.getElementById('finaSponsorPicker');
+    const search = document.getElementById('finaSponsorSearch');
+    const hidden = document.getElementById('finaSponsorId');
+    const results = document.getElementById('finaSponsorResults');
+    const selected = document.getElementById('finaSponsorSelected');
+    const fieldIds = {
+        name: 'finaSourceName',
+        phone: 'finaSourcePhone',
+        altPhone: 'finaSourceAltPhone',
+        email: 'finaSourceEmail',
+        address: 'finaSourceAddress'
     };
-    hidden.value=String(s.id || '');
-    search.value=s.full_name || '';
-    Object.keys(values).forEach(function(key){
-        const el=field(key);
-        if(el)el.value=values[key];
+    let requestSerial = 0;
+    let controller = null;
+
+    function field(key){ return document.getElementById(fieldIds[key]); }
+
+    function setAutoFields(readonly){
+        Object.keys(fieldIds).forEach(function(key){
+            const el = field(key);
+            if (!el) return;
+            el.readOnly = readonly;
+            el.classList.toggle('bg-light', readonly);
+        });
+    }
+
+    function clearSelectedFields(){
+        hidden.value = '';
+        selected.textContent = '';
+        selected.className = 'form-text';
+        Object.keys(fieldIds).forEach(function(key){
+            const el = field(key);
+            if (el) el.value = '';
+        });
+    }
+
+    function fillFields(s){
+        const values = [
+            ['finaSourceName', s.full_name],
+            ['finaSourcePhone', s.phone],
+            ['finaSourceAltPhone', s.alt_phone],
+            ['finaSourceEmail', s.email],
+            ['finaSourceAddress', s.address]
+        ];
+        hidden.value = String(s.id || '');
+        search.value = s.full_name || '';
+        values.forEach(function(pair){
+            const el = document.getElementById(pair[0]);
+            if (el) el.value = pair[1] == null ? '' : String(pair[1]);
+        });
+        selected.textContent = 'تم اختيار الكفيل: ' + [s.sponsor_code, s.full_name, s.phone].filter(Boolean).join(' — ');
+        selected.className = 'form-text text-success';
+        setAutoFields(true);
+        results.style.display = 'none';
+    }
+
+    async function loadSponsor(id){
+        const url = new URL(window.location.href);
+        url.search = '';
+        url.searchParams.set('fina_sponsor_id', String(id));
+        const response = await fetch(url.toString(), {
+            headers: {'Accept':'application/json'},
+            cache: 'no-store'
+        });
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        const sponsor = await response.json();
+        if (!sponsor || !sponsor.id) throw new Error('Sponsor not found');
+        fillFields(sponsor);
+    }
+
+    function render(rows){
+        results.innerHTML = '';
+        if (!rows.length) {
+            results.innerHTML = '<div class="list-group-item text-muted">لا توجد نتائج مطابقة للاسم الأول</div>';
+            results.style.display = 'block';
+            return;
+        }
+        rows.forEach(function(s){
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'list-group-item list-group-item-action text-start';
+            b.innerHTML = '<strong>' + String(s.full_name || '') + '</strong><br><small>' + String(s.sponsor_code || '') + (s.phone ? ' — ' + String(s.phone) : '') + '</small>';
+            b.addEventListener('click', async function(e){
+                e.preventDefault();
+                results.style.display = 'none';
+                try {
+                    await loadSponsor(s.id);
+                } catch (error) {
+                    selected.textContent = 'تعذر تحميل بيانات الكفيل';
+                    selected.className = 'form-text text-danger';
+                }
+            });
+            results.appendChild(b);
+        });
+        results.style.display = 'block';
+    }
+
+    async function searchSponsors(q){
+        const serial = ++requestSerial;
+        if (controller) controller.abort();
+        controller = new AbortController();
+        if (!q) {
+            results.style.display = 'none';
+            return;
+        }
+        const url = new URL(window.location.href);
+        url.search = '';
+        url.searchParams.set('fina_sponsor_search', q);
+        try {
+            const response = await fetch(url.toString(), {
+                headers: {'Accept':'application/json'},
+                cache: 'no-store',
+                signal: controller.signal
+            });
+            if (!response.ok) throw new Error('HTTP ' + response.status);
+            const rows = await response.json();
+            if (serial !== requestSerial) return;
+            render(Array.isArray(rows) ? rows : []);
+        } catch (error) {
+            if (error.name === 'AbortError' || serial !== requestSerial) return;
+            results.innerHTML = '<div class="list-group-item text-danger">تعذر تحميل نتائج الكفلاء</div>';
+            results.style.display = 'block';
+        }
+    }
+
+    function clearSponsor(){
+        clearSelectedFields();
+        setAutoFields(true);
+    }
+
+    function mode(){
+        const sponsor = type.value === 'sponsor';
+        picker.style.display = sponsor ? 'block' : 'none';
+        if (sponsor) {
+            clearSponsor();
+        } else {
+            results.style.display = 'none';
+            setAutoFields(false);
+        }
+    }
+
+    type.addEventListener('change', mode);
+
+    search.addEventListener('input', function(){
+        if (type.value !== 'sponsor') return;
+        // A new search means no sponsor is selected until the user clicks one.
+        hidden.value = '';
+        selected.textContent = '';
+        selected.className = 'form-text';
+        setAutoFields(true);
+        searchSponsors(search.value.trim());
     });
-    selected.textContent='تم اختيار الكفيل: '+label(s);
-    selected.className='form-text text-success';
-    setAutoFields(true);
-    results.style.display='none';
-}
-function clearSponsor(){clearSelectedFields();setAutoFields(true);}
-function render(rows){
-    results.innerHTML='';
-    if(!rows.length){
-        results.innerHTML='<div class="list-group-item text-muted">لا توجد نتائج مطابقة للاسم الأول</div>';
-        results.style.display='block';
-        return;
-    }
-    rows.forEach(function(s){
-        const b=document.createElement('button');
-        b.type='button';
-        b.className='list-group-item list-group-item-action text-start';
-        b.innerHTML='<strong>'+String(s.full_name||'')+'</strong><br><small>'+String(s.sponsor_code||'')+(s.phone?' — '+String(s.phone):'')+'</small>';
-        b.addEventListener('click',function(e){e.preventDefault();fill(s);});
-        results.appendChild(b);
+
+    search.addEventListener('focus', function(){
+        if (type.value === 'sponsor' && search.value.trim()) searchSponsors(search.value.trim());
     });
-    results.style.display='block';
-}
-async function searchSponsors(q){
-    const serial=++requestSerial;
-    if(controller)controller.abort();
-    if(!q){results.innerHTML='';results.style.display='none';return;}
-    controller=new AbortController();
-    const url=new URL(window.location.href);
-    url.search='';
-    url.searchParams.set('fina_sponsor_search',q);
-    try{
-        const response=await fetch(url.toString(),{headers:{'Accept':'application/json'},cache:'no-store',signal:controller.signal});
-        if(!response.ok)throw new Error('HTTP '+response.status);
-        const rows=await response.json();
-        if(serial!==requestSerial)return;
-        render(Array.isArray(rows)?rows:[]);
-    }catch(error){
-        if(error.name==='AbortError'||serial!==requestSerial)return;
-        results.innerHTML='<div class="list-group-item text-danger">تعذر تحميل نتائج الكفلاء</div>';
-        results.style.display='block';
-    }
-}
-function mode(){
-    const sponsor=type.value==='sponsor';
-    picker.style.display=sponsor?'block':'none';
-    if(sponsor){
-        clearSponsor();
-    }else{
-        results.style.display='none';
-        setAutoFields(false);
-    }
-}
-type.addEventListener('change',mode);
-search.addEventListener('input',function(){
-    if(type.value!=='sponsor')return;
-    clearSelectedFields();
-    setAutoFields(true);
-    searchSponsors(search.value.trim());
-});
-search.addEventListener('focus',function(){
-    if(type.value==='sponsor'&&search.value.trim())searchSponsors(search.value.trim());
-});
-search.addEventListener('keydown',function(e){if(e.key==='Escape')results.style.display='none';});
-document.addEventListener('click',function(e){if(!picker.contains(e.target))results.style.display='none';});
-mode();
+
+    search.addEventListener('keydown', function(e){
+        if (e.key === 'Escape') results.style.display = 'none';
+    });
+
+    document.addEventListener('click', function(e){
+        if (!picker.contains(e.target)) results.style.display = 'none';
+    });
+
+    mode();
 })();
 </script>
 <?php include dirname(__DIR__,2).'/includes/footer.php'; ?>
