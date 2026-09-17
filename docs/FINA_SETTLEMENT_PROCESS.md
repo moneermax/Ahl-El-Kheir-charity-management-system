@@ -1,7 +1,7 @@
 # Fina Al-Khair — Settlement Process, Deployment Plan & Checklist
 
 **Checkpoint:** 2026-09-17  
-**Status:** STAGE 2 COMPLETE — schema migration prepared; live migration/workflow implementation not yet started.
+**Status:** **STAGE 3 IMPLEMENTED — accounting engine committed; runtime verification pending.**
 
 ## 1. Locked business rule
 
@@ -17,17 +17,15 @@ Fina is a protected third-party fund. Account `2300` is the dedicated Fina liabi
 
 ### 2.1 Normal settlement
 
-The normal operating cycle is **monthly**.
-
-At the end of the defined monthly cutoff, the FM reconciles all approved but unsettled Fina collections and settles the amount due to Fina.
+The normal operating cycle is **monthly**. At the monthly cutoff, FM reconciles approved but unsettled Fina collections and settles the amount due.
 
 ### 2.2 Early settlement
 
-The FM may initiate a settlement **at any time** when Fina requests the money or management/operational circumstances require it. The system must not force the FM to wait for month-end.
+FM may initiate settlement **at any time** when Fina requests the money or circumstances require it. The system does not force month-end settlement.
 
 ### 2.3 Partial settlement
 
-Settlement amount is flexible. The FM may settle the full outstanding balance or a smaller amount.
+FM may settle the full outstanding balance or a smaller amount. Partial settlement must not mark the full underlying collection as settled unless its full amount has actually been remitted.
 
 Example:
 
@@ -36,8 +34,6 @@ Outstanding liability: 250,000 SDG
 Settlement:            150,000 SDG
 Remaining liability:   100,000 SDG
 ```
-
-A partial settlement must not mark the full underlying collection as settled unless its full amount has actually been remitted.
 
 ## 3. Accounting meaning
 
@@ -57,43 +53,22 @@ Credit  Cash / Bank / Wallet      X
 
 Settlement is **not** Ahl El Kheir revenue and is **not** an expense. It is repayment of an existing third-party liability.
 
-The actual remitting asset account must be selected from the real chart of accounts; no account is assumed by this document.
+The actual remitting asset account is selected from the real chart of accounts. The current engine permits active asset accounts `1100`, `1200`, and `1300` for the settlement transfer.
 
 ## 4. Dashboard balance semantics after settlement
 
 The current approved Fina amount must not simply disappear from history.
 
-The live FM balance should distinguish:
+The live FM balance must distinguish:
 
 1. **Pending** — submitted but not approved.
 2. **Approved / Unsettled** — approved and posted to liability `2300`, but not yet remitted.
-3. **Settled to Fina** — amount actually transferred to Fina; retained as historical cumulative settlement information.
+3. **Settled to Fina** — actually transferred; retained as historical cumulative settlement information.
 4. **Returned** — returned/rejected collection; not part of the outstanding Fina liability.
 
-Example:
+A full settlement reduces the outstanding liability through its posted settlement journal; it does not erase the collection record.
 
-```text
-Before settlement:
-2300 outstanding = 250,000 SDG
-
-After full settlement:
-2300 outstanding = 0 SDG
-Historical settled amount = 250,000 SDG
-```
-
-The system must never erase the collection or rewrite its original amount merely because it has been settled.
-
-### Supervisor dashboard
-
-Supervisor Fina amounts remain **Supervisor-scoped**. The dashboard must not expose organization-wide Fina liability merely because the Supervisor is viewing the dashboard.
-
-Future Supervisor figures may distinguish that Supervisor's own:
-
-- approved collections;
-- approved/unsettled amount;
-- historical amount settled to Fina.
-
-Settlement controls remain unavailable to Supervisors.
+Supervisor Fina amounts remain Supervisor-scoped. Settlement controls remain unavailable to Supervisors.
 
 ## 5. Agreed settlement workflow
 
@@ -127,17 +102,15 @@ The actual settlement date is the date the money is actually transferred to Fina
 
 The implementation uses a dedicated settlement record/batch plus collection-level allocation. It must not zero or overwrite amounts in `fina_collections`.
 
-Stage 2 design is now fixed as:
-
 ### `fina_settlements`
 
-One row represents one FM settlement event/batch. The schema preserves:
+One row represents one FM settlement event/batch and preserves:
 
-- settlement identifier/reference (`settlement_code`);
-- actual settlement date (`settlement_date`);
+- settlement identifier/reference;
+- actual settlement date;
 - amount and currency;
 - payment method;
-- actual remitting account (`remitting_account_id`);
+- actual remitting account;
 - transfer/reference number;
 - supporting evidence path;
 - settlement status;
@@ -149,17 +122,9 @@ One row represents one FM settlement event/batch. The schema preserves:
 
 One row represents an amount of a specific Fina collection allocated to a settlement.
 
-This explicitly supports partial settlement without modifying the original collection. A collection may therefore be allocated across multiple settlement batches over time, subject to runtime controls preventing allocation above its approved/unsettled amount.
-
-The migration also enforces one allocation row per settlement/collection pair and preserves foreign-key linkage to both the settlement and the original Fina collection.
-
-### Accounting linkage
-
-`fina_settlements.settlement_journal_id` will point to the separate settlement journal. The original `fina_collections.accounting_journal_id` remains unchanged.
+This supports partial settlement without modifying the original collection. A collection can therefore be allocated across multiple settlement batches over time, subject to runtime controls preventing allocation above its approved/unsettled amount.
 
 ## 7. Settlement lifecycle
-
-For the implementation, the dedicated settlement record supports:
 
 ```text
 draft → approved → transferred → reconciled → closed
@@ -167,24 +132,67 @@ draft → approved → transferred → reconciled → closed
                   cancelled
 ```
 
-All settlement actions remain FM-only. The `approved` state is an internal settlement lifecycle state and must not grant settlement execution to another role.
+All settlement actions remain FM-only. The `approved` state is an internal settlement lifecycle state and does not grant execution rights to another role.
 
-## 8. Notifications — locked rule
+## 8. Stage 3 accounting engine — IMPLEMENTED
+
+Implementation file:
+
+`modules/accounting/fina_settlement_lib.php`
+
+Implementation commit:
+
+`580a9b2c9991d29a8a06fe6f56ee74ac2216a506`
+
+The engine currently provides:
+
+- FM-only server-side authorization for settlement actions;
+- settlement/allocation table readiness checks;
+- strict settlement date validation;
+- SDG/system-currency enforcement;
+- validation of active treasury remitting accounts;
+- draft settlement creation;
+- collection-level allocation validation;
+- full and partial settlement support;
+- prevention of allocation above the approved/unsettled collection balance;
+- rejection of pending/returned/non-approved collections;
+- verification that the approved collection has a posted Fina collection journal;
+- settlement approval;
+- actual transfer recording with required transfer reference;
+- settlement journal creation as a separate accounting event;
+- `Dr 2300 / Cr actual remitting asset` accounting;
+- balanced-journal verification before completion;
+- preservation of original Fina collection records and journals;
+- reconciliation and closure transitions;
+- cancellation of draft/approved settlements with a mandatory reason;
+- outstanding-liability calculation from approved collections minus non-cancelled settlement allocations.
+
+### Atomicity
+
+Settlement creation, approval, and transfer accounting use database transactions. If the operation fails, its database changes are rolled back rather than leaving a partial settlement or partial journal.
+
+### Historical preservation
+
+The engine does not rewrite, zero, delete, or replace the original Fina collection amount or its original collection journal. Settlement is represented by its own header, allocations, and journal.
+
+### Runtime status
+
+Stage 3 is **implemented in repository code but not yet runtime-verified** against the live local application. No Stage 3 runtime acceptance result is claimed until the controlled tests are completed.
+
+## 9. Notifications — locked rule
 
 Settlement notifications are **not** sent to Supervisors.
 
-The FM performs the complete settlement process.
-
-After the FM completes the actual settlement, the system should notify:
+After FM completes the actual settlement, the system should notify:
 
 - **General Manager (GM)**
 - **Vice General Manager (VGM)**
 
-The notification should contain the settlement reference, actual transfer date, amount, and relevant accounting/reference information without implying that the recipients performed the settlement.
-
 There is **no direct Fina-system notification/integration**. The Ahl El Kheir notification is internal management oversight.
 
-## 9. Reports and reconciliation
+Management notification delivery will be implemented/verified as a separate stage after the accounting engine and UI workflow are established.
+
+## 10. Reports and reconciliation
 
 The Fina report must ultimately distinguish:
 
@@ -201,93 +209,79 @@ FM must be able to reconcile:
 
 and reconcile the resulting outstanding balance to posted account `2300`.
 
-A settlement must never:
+A settlement must never create Ahl revenue, become an expense, reduce sponsor obligations, absorb sponsor-payment shortfalls, alter historical collection amounts, delete approved collection records, settle the same amount twice, create an unbalanced journal, or settle a returned/pending collection as though approved.
 
-- create Ahl El Kheir Fina revenue;
-- become an expense;
-- reduce sponsor obligations;
-- absorb sponsor-payment shortfalls;
-- alter historical collection amounts;
-- delete approved collection records;
-- settle the same amount twice;
-- create an unbalanced journal;
-- settle a returned collection as though it were approved.
+## 11. Deployment plan and completion checklist
 
-## 10. Deployment plan and completion checklist
-
-### Stage 0 — Business rule freeze
+### Stage 0 — Business rule freeze — COMPLETE
 
 - [x] Monthly settlement is the normal cycle.
-- [x] Early settlement is allowed at any time when Fina requests the money or management requires it.
+- [x] Early settlement is allowed at any time.
 - [x] Full and partial settlement are supported.
-- [x] FM is the **only** role that performs the entire settlement process.
+- [x] FM is the only role that performs the entire settlement process.
 - [x] Supervisors have no settlement action.
-- [x] Settlement is an internal Ahl El Kheir accounting event; there is no direct Fina-system integration.
+- [x] Settlement is an internal Ahl accounting event; no direct Fina-system integration.
 - [x] Actual settlement date means the date money is actually transferred to Fina.
 - [x] Settlement notifications go to GM and VGM, not Supervisors.
 
 ### Stage 1 — Existing-system/schema inspection — COMPLETE
 
-- [x] Inspect actual `fina_collections` schema and current status semantics.
-- [x] Inspect actual account `2300` and posted-journal structure.
-- [x] Inspect all existing Fina collection journal creation paths.
-- [x] Inspect available cash/bank/wallet accounts and payment-method semantics for outgoing settlement.
-- [x] Inspect existing transaction/reference-number/evidence patterns relevant to accounting implementation.
-- [x] Inspect existing role/authorization helpers for FM, GM, and VGM at the repository level.
-- [x] Inspect existing notification infrastructure relevant to management notifications.
-- [x] Confirm that no existing Fina settlement/allocation structure exists.
+- [x] Actual `fina_collections` schema inspected.
+- [x] Actual account `2300` and posted-journal structure inspected.
+- [x] Existing Fina collection journal creation paths inspected.
+- [x] Treasury accounts and payment-method semantics inspected.
+- [x] Relevant accounting/reference/evidence patterns inspected.
+- [x] Relevant role/authorization and notification infrastructure inspected.
+- [x] Confirmed no prior Fina settlement/allocation structure existed.
 
-**Live database evidence:** `fina_collections` currently has only `pending / approved / returned`; account `2300` is an active liability; treasury accounts are `1100`, `1200`, and `1300`; existing Fina collection journals use the expected asset → `2300` pattern; existing Fina tables are `fina_sources` and `fina_collections` only.
+**Live evidence used for implementation:** `fina_collections` uses `pending / approved / returned`; account `2300` is an active liability; treasury accounts are `1100`, `1200`, and `1300`; existing Fina collection journals follow asset → `2300`; existing Fina tables were `fina_sources` and `fina_collections` before Stage 2.
 
-### Stage 2 — Data model design — COMPLETE
+### Stage 2 — Data model — COMPLETE
 
-- [x] Design dedicated settlement batch/record using the actual current schema conventions.
-- [x] Design collection-to-settlement allocation, including partial allocation.
-- [x] Preserve historical `fina_collections` amounts/statuses.
-- [x] Define settlement status lifecycle.
-- [x] Define evidence and transfer-reference fields.
-- [x] Define actor/timestamp audit fields.
-- [x] Define reconciliation/cancellation fields.
-- [x] Produce migration after actual schema inspection.
-- [x] Keep original collection journals separate from settlement journals.
+- [x] Dedicated settlement batch created by migration.
+- [x] Collection-to-settlement allocation created.
+- [x] Partial allocation model established.
+- [x] Historical collection amounts/journals preserved.
+- [x] Settlement lifecycle defined.
+- [x] Evidence/reference fields defined.
+- [x] Actor/timestamp audit fields defined.
+- [x] Reconciliation/cancellation fields defined.
+- [x] Migration committed and **applied successfully to the live database by the user on 2026-09-17, with no SQL errors**.
 
-Migration created:
+Migration:
 
 `database/migrations/2026-09-17_fina_settlement_schema.sql`
 
-The migration creates only the new settlement/allocation structures. It does **not** modify existing Fina collections or journals.
+### Stage 3 — Accounting engine — IMPLEMENTED / RUNTIME PENDING
 
-**Important:** the migration has been committed to the repository but has **not yet been applied to the live database**. Live schema execution will occur as part of the controlled implementation step.
+- [x] Settlement journal creation implemented as a separate accounting event.
+- [x] Debit liability `2300` by the settled amount.
+- [x] Credit the selected actual remitting asset account.
+- [x] Balanced journal verification implemented.
+- [x] Allocation above eligible outstanding balance blocked server-side.
+- [x] Duplicate/over-allocation control implemented through allocation-balance checks.
+- [x] Partial settlement implemented.
+- [x] Original collection journals preserved.
+- [x] Transactional rollback implemented for settlement creation/approval/transfer.
+- [ ] Runtime verify all Stage 3 controls against the live application.
 
-### Stage 3 — Accounting engine
-
-- [ ] Implement settlement journal creation as a separate accounting event.
-- [ ] Debit liability `2300` by the settled amount.
-- [ ] Credit the actual remitting asset account.
-- [ ] Enforce balanced journal creation.
-- [ ] Prevent settlement above the eligible outstanding balance.
-- [ ] Prevent duplicate settlement of the same allocated amount.
-- [ ] Support partial settlement.
-- [ ] Preserve the original collection journal(s).
-- [ ] Ensure settlement rollback/cancellation cannot silently corrupt account `2300`.
-
-### Stage 4 — FM-only settlement UI
+### Stage 4 — FM-only settlement UI — NEXT
 
 - [ ] Add FM settlement entry/list page.
-- [ ] Show current outstanding liability from posted accounting/eligible collections.
+- [ ] Show current outstanding liability from eligible approved collections.
 - [ ] Allow FM to choose full or partial settlement.
 - [ ] Capture actual transfer date.
 - [ ] Capture payment method/remitting account.
 - [ ] Capture transfer reference.
 - [ ] Capture supporting evidence.
 - [ ] Show eligible collections and allocation.
-- [ ] Make settlement controls server-side FM-only.
+- [ ] Enforce FM-only access server-side on every settlement action.
 - [ ] Ensure Supervisors cannot access settlement actions by direct URL.
-- [ ] Ensure GM/VGM notification does not grant settlement authority.
+- [ ] Ensure GM/VGM notifications do not grant settlement authority.
 
 ### Stage 5 — Dashboard/report updates
 
-- [ ] Change FM primary live Fina balance to **outstanding/unsettled liability**.
+- [ ] Change FM primary live Fina balance to outstanding/unsettled liability.
 - [ ] Keep cumulative settled amount visible separately.
 - [ ] Keep pending and returned counts separate.
 - [ ] Update Fina report to distinguish collections, outstanding liability, and settlements.
@@ -299,16 +293,16 @@ The migration creates only the new settlement/allocation structures. It does **n
 - [ ] On completed settlement, notify GM.
 - [ ] On completed settlement, notify VGM.
 - [ ] Do not notify Supervisors about settlement completion.
-- [ ] Notification must identify amount, settlement reference, and actual transfer date.
-- [ ] Notification must use the existing CSRF/read/unread/history model where applicable.
-- [ ] Notification failure must not undo a successfully completed accounting settlement.
+- [ ] Include settlement reference, amount, and actual transfer date.
+- [ ] Use existing notification/read/history infrastructure where applicable.
+- [ ] Notification failure must not undo completed accounting settlement.
 
 ### Stage 7 — Reconciliation and audit controls
 
 - [ ] Reconcile eligible approved/unsettled collections to settlement amount.
 - [ ] Reconcile settlement journal to actual remitting account movement.
 - [ ] Reconcile closing Fina liability to account `2300`.
-- [ ] Verify full settlement produces zero outstanding `2300` for the settled portion.
+- [ ] Verify full settlement produces the expected zero outstanding balance for the settled portion.
 - [ ] Verify partial settlement leaves the correct remaining liability.
 - [ ] Verify historical settlement records remain searchable.
 - [ ] Verify evidence/reference remains attached.
@@ -319,9 +313,9 @@ The migration creates only the new settlement/allocation structures. It does **n
 
 - [ ] FM can perform the complete settlement workflow.
 - [ ] Supervisor cannot create/approve/release/close a settlement.
-- [ ] GM cannot accidentally acquire settlement execution rights merely by receiving notification.
-- [ ] VGM cannot accidentally acquire settlement execution rights merely by receiving notification.
-- [ ] Direct URL/API-style attempts against settlement actions are server-side blocked for non-FM users.
+- [ ] GM cannot acquire settlement execution rights merely by receiving notification.
+- [ ] VGM cannot acquire settlement execution rights merely by receiving notification.
+- [ ] Direct URL/action attempts by non-FM users are server-side blocked.
 - [ ] Settlement actions retain actor/time audit evidence.
 
 ### Stage 9 — Runtime acceptance tests
@@ -342,12 +336,12 @@ The migration creates only the new settlement/allocation structures. It does **n
 - [ ] Supervisor receives no settlement notification.
 - [ ] Dashboard outstanding balance changes correctly after settlement.
 - [ ] Historical settled amount remains visible.
-- [ ] Report reconciles with the ledger and settlement records.
+- [ ] Report reconciles with ledger and settlement records.
 
 ### Stage 10 — Production readiness / closure
 
-- [ ] Migration reviewed and executed in the correct deployment process.
-- [ ] Production settlement policy/configuration confirmed by management.
+- [ ] Production deployment process confirmed.
+- [ ] Settlement policy/configuration confirmed by management.
 - [ ] Transfer evidence retention confirmed.
 - [ ] Backup/recovery considerations reviewed.
 - [ ] Final audit evidence recorded.
@@ -356,21 +350,20 @@ The migration creates only the new settlement/allocation structures. It does **n
 - [ ] Continuation prompt updated if any permanent rule changed.
 - [ ] Settlement feature marked COMPLETE only after code + runtime verification.
 
-## 11. Important implementation rule
+## 12. Important implementation rule
 
 Do **not** implement settlement by simply setting account `2300` to zero in isolation.
 
-The accounting result of a full settlement will naturally make the outstanding `2300` balance zero **through a posted settlement journal**. Historical collection and settlement records remain intact.
+The accounting result of a full settlement naturally reduces the outstanding `2300` balance through a posted settlement journal. Historical collection and settlement records remain intact.
 
-Likewise, do not add a simple `settled = yes/no` flag to `fina_collections` without considering partial settlement and allocation. The settlement event and its allocation must remain auditable.
+Do not add a simple `settled = yes/no` flag to `fina_collections` without considering partial settlement and allocation. The settlement event and allocation remain auditable.
 
-## 12. Current status / next continuation point
+## 13. Current continuation point
 
 **Stage 0 — COMPLETE.**  
 **Stage 1 — COMPLETE / live schema inspected.**  
-**Stage 2 — COMPLETE / settlement and allocation schema committed.**  
-**Stage 3 — NEXT: accounting engine.**
+**Stage 2 — COMPLETE / migration applied successfully to live DB.**  
+**Stage 3 — IMPLEMENTED / runtime verification pending.**  
+**Stage 4 — NEXT: FM-only settlement UI.**
 
-The live database has not yet received the new settlement tables. The next implementation step is to apply the new migration through the controlled deployment process, verify the resulting live schema, then implement the FM-only settlement accounting engine.
-
-No existing Fina collection record or original Fina collection journal is to be modified as part of that migration.
+The next session should first perform the controlled Stage 3 runtime verification of the new accounting engine. Once those tests pass, continue directly into Stage 4 UI implementation. Do not recreate the migration or modify existing Fina collection records/journals.
