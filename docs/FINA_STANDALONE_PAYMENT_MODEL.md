@@ -121,13 +121,18 @@ Fina submission notifications use the existing shared notification workflow. The
 
 The shared notification widget polls every 5 seconds. New notifications are intended to produce both the unread bell indicator and a small right-corner toast without requiring page refresh or logout/login.
 
-A live-toast regression was identified on 2026-09-17: the polling widget attempted to call `window.AKNotify.toast()` but no toast implementation was present in the current repository. The shared widget was corrected to provide its own lightweight `AKNotify.toast()` implementation and restore the right-corner pop-up behavior without changing notification storage, recipient rules, or accounting logic.
+The required toast behavior is persistent until the specific notification is opened/read:
+
+- a new unread notification produces the right/top-corner pop-up;
+- if it remains unread, refreshing the page or opening the dashboard in a new browser tab shows the pop-up again;
+- dismissing/closing the toast does not mark the notification read;
+- clicking the toast marks that specific notification read through the existing CSRF-protected notification action and then follows its destination;
+- once that notification has been opened/read, its toast no longer reappears on refresh/new-tab;
+- the same shared behavior applies to FM and other applicable dashboards, not only Fina.
 
 Implementation commit:
 
-- `e248ae74f6a69ea69ec1781df63a42b09cbd9699` — restore live right-corner notification toast.
-
-Runtime verification of the restored toast remains the immediate user test before the next chat/session.
+- `908efe8c688316a3b7c4c637da4424fb6d6500af` — restore persistent unread notification toast behavior.
 
 ## UI direction
 
@@ -187,6 +192,6 @@ Implementation commit:
 - Supervisor Fina dashboard placement: implemented; runtime visual confirmation remains the UI check for the latest layout-only change.
 - Fina entry currency selection: removed; server uses system-wide SDG.
 - Fina entry form: compact horizontal label/field layout implemented; runtime visual confirmation remains pending.
-- Live notification toast: code fix implemented; runtime confirmation remains pending.
+- Live notification toast: persistent-until-read behavior implemented; runtime confirmation remains pending.
 
 The next audit task after these immediate UI/runtime checks is the targeted Accounting Journal Cross-Module Integrity review for the protected automated reference types `payroll`, `disbursement_void`, and `item_return`. Do not restart the completed Supervisor ↔ Accounting integration audit or repeat closed Fina receipt/authorization tests unless new regression evidence appears.
