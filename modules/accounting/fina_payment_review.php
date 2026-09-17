@@ -233,7 +233,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                                     </td>
                                     <td>
                                         <?php if ($p['receipt_path']): ?>
-                                            <a href="<?php echo APP_URL . e($p['receipt_path']); ?>" target="_blank" rel="noopener" class="btn btn-outline-primary btn-sm">
+                                            <a href="<?php echo APP_URL; ?>modules/accounting/fina_receipt.php?id=<?php echo (int) $p['id']; ?>" target="_blank" rel="noopener" class="btn btn-outline-primary btn-sm">
                                                 <i class="fas fa-paperclip me-1"></i>عرض الإيصال
                                             </a>
                                         <?php else: ?>
@@ -309,5 +309,4 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         </div>
     </div>
 </div>
-
 <?php include dirname(__DIR__, 2) . '/includes/footer.php'; ?>
