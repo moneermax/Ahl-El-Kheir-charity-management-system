@@ -155,22 +155,61 @@ Do not rewrite or relabel historical accounting evidence merely to satisfy a que
 
 Development/test accounting data is not production financial data.
 
-## CURRENT PROJECT BOUNDARY — 2026-09-15
+## CURRENCY POLICY — SDG ONLY
+
+The system-wide application currency is:
+
+- `APP_CURRENCY_CODE = 'SDG'`
+- `APP_CURRENCY_NAME_AR = 'الجنيه السوداني'`
+- `APP_CURRENCY_SYMBOL = 'ج.س'`
+
+Individual transaction/Fina entry forms must not ask users to choose a currency when the application already has the system-wide currency policy.
+
+For Fina:
+- no visible currency selector;
+- no redundant hidden browser currency field;
+- server-side creation uses `APP_CURRENCY_CODE`;
+- `fina_collections.currency_code` remains in the database for historical/accounting evidence.
+
+## UI FORM STANDARD — CURRENT DIRECTION
+
+When forms are created or touched during normal work:
+
+- place label + field inline/horizontally where practical;
+- size controls according to expected data length;
+- keep short fields such as phone, date, amount, and IDs compact;
+- give longer fields such as address, purpose, source details, and descriptions more width;
+- preserve responsive/mobile usability.
+
+Do **not** blindly redesign every form during the accounting audit. If a systematic/global redesign is later justified, inspect shared CSS/components first and implement it consistently rather than duplicating ad-hoc page CSS.
+
+The Fina entry form is the first current implementation of this direction:
+
+- `3d84d57e2de0acb3fefb1fe4fdcc2ed9c4b703c9` — remove redundant Fina currency field.
+- `e2ea1ab741da709e6b5543c85556fcbc7a15c765` — improve Fina form field layout and sizing.
+
+Runtime visual confirmation of the latest Fina form remains pending.
+
+## CURRENT PROJECT BOUNDARY — 2026-09-17
 
 At the current checkpoint:
 
 - HR foundation/audit is closed at its documented boundary.
 - Accounting Audit is closed at its documented boundary, with only targeted follow-up items documented in the master audit.
-- Notification Audit is closed at its documented evidence boundary.
+- Supervisor ↔ Accounting integration is PASS / CLOSED at the tested evidence boundary.
 - Accountant Staff financial/reporting and disbursement authorization work is completed at the documented checkpoint.
 - FM dashboard treasury/admin-fee regression is fixed and closed.
 - Supervisor sponsor ownership and sponsor-linked family access restoration is completed and must be preserved.
-- Supervisor sponsorship-list scope regression was fixed at `76be77a4d2e6e337485d3f3c9980780b9de73df0` and the three scope tests passed.
-- VGM sponsor assignment/reassignment is confirmed as a VGM task; VGM, Supervisor-protection, and FM-isolation tests passed at commit `48fc2db0ac9e5585127b65c17eacb5e3dd285ce0`.
-- Missing/stale transaction receipt handling regression was fixed at `modules/transactions/receipt_file.php` and runtime-confirmed by the user. Code commit: `ddd5e91e6f90935cd3a7e328f480ae1f8d906e34`; documentation commit: `cd78fe373c72ce4063ff0b1a9c9a66e59a245961`.
-- Shared notification live behavior, unread visual indicator, full notification history link, and non-destructive menu clearing are completed and user-confirmed.
+- Supervisor sponsorship-list scope regression was fixed and its scope tests passed.
+- VGM sponsor assignment/reassignment is confirmed as a VGM task; VGM, Supervisor-protection, and FM-isolation tests passed.
+- Missing/stale transaction receipt handling regression was fixed and runtime-confirmed by the user.
+- Fina standalone schema lifecycle hardening is implemented.
+- Fina authenticated receipt viewer is runtime-confirmed working.
+- Fina currency selector was removed and system-wide SDG is enforced by the entry workflow.
+- Fina entry form compact horizontal label/field layout is implemented; visual runtime check remains pending.
+- A genuine live notification-toast regression was fixed on 2026-09-17; runtime verification remains pending.
 
-## NOTIFICATION CHECKPOINT — 2026-09-15
+## NOTIFICATION CHECKPOINT — 2026-09-17
 
 The shared notification behavior is centralized and must be preserved:
 
@@ -180,37 +219,98 @@ The shared notification behavior is centralized and must be preserved:
 - Applicable dashboards share the same unread visual behavior, including the red dot beside unread notification titles.
 - `modules/notifications/index.php` provides full notification history and the bell has `عرض الكل`.
 - `مسح الكل` is strictly **menu-only**. It must never delete records from `notifications`.
-- `modules/notifications/clear_all.php` now records a browser-local notification-ID cutoff instead of deleting rows.
+- `modules/notifications/clear_all.php` records a browser-local notification-ID cutoff instead of deleting rows.
 - `assets/js/notification_unread_indicator.js` hides menu entries at/below the cutoff and recalculates the visible unread badge after live polling.
 - Notification records remain available in full history for audit/history purposes.
 - Real workflow scenarios already tested and working include HR leave approval/rejection and password recovery/change-request notifications.
 
-Relevant commits:
+### Live right-corner toast regression — fixed
 
-- `ecc82aa6af0a8201adbb6d6de0c7dbb087e77305` — polling endpoint.
-- `b82bd4effca75ffbde5a2f8e1930f326fc3b9664` — live shared widget.
-- `2ff8f331e575fab9dce9916c783ad3d7d3e63097` — dynamic notification CSRF fix.
-- `c9b151b960b962c6cddbb1b135ceef6ddd5b4e16` — unread red-dot indicator.
-- `01f161ac59c97e033626ba5c447e7793fe52da4c` — full notifications page.
-- `0e830c3851eb2efd83f27881ff0b6c998f2d27ca` — bell `عرض الكل` link.
-- `391474e6ea894812b9b3eba6e636bba238e8c66a` — non-destructive clear-all backend.
-- `ddd9796896c49f4e2aaa150c3182253a6fa42d05` — menu filtering after clear-all.
+On 2026-09-17, the shared widget still detected newly polled notification IDs but attempted to call `window.AKNotify.toast()` even though the current repository contained no toast implementation. Therefore the unread/menu state could update while the former small right-corner pop-up no longer appeared.
 
-## NEXT TASK — SUPERVISOR ↔ ACCOUNTING INTEGRATION
+`includes/notification_widget.php` now provides its own lightweight `AKNotify.toast()` implementation. It creates a small right/top-corner notification pop-up, displays the notification title/body, supports dismissal and auto-close, and follows the actionable notification destination when clicked.
 
-Inspect the actual repository and documentation for every real integration point between Supervisor operational workflows and Accounting.
+This fix does not alter notification storage, recipient rules, accounting workflow, read state, CSRF handling, or notification polling.
 
-Answer these questions from code/evidence before changing anything:
+Commit:
 
-1. Can Supervisor access any Accounting page/action directly or indirectly?
-2. Does any Supervisor operational workflow create, submit, return, or otherwise mutate an Accounting-controlled record?
-3. What financial status/result is appropriate for Supervisor to see without granting Accounting authority?
-4. Are Supervisor submissions routed to FM/Accounting using the correct actor and scope rules?
-5. Are Accounting notifications/results exposed only to the correct Supervisor?
-6. Does any Accounting query accidentally expose data outside the Supervisor's operational Sponsor scope?
-7. Does any dashboard KPI or summary shown to Supervisor contain Accounting data that is broader than the Supervisor's legitimate operational scope?
+- `e248ae74f6a69ea69ec1781df63a42b09cbd9699` — restore live right-corner notification toast.
 
-Do not repeat the closed Accounting Audit. Reuse its findings as the baseline and investigate only the integration boundary.
+### Immediate runtime verification — pending
+
+On the FM dashboard, keep the page open and have the Supervisor submit a new Fina payment that creates the normal FM notification.
+
+Expected:
+
+1. Within the existing 5-second polling interval, the FM unread indicator updates.
+2. The small notification pop-up appears at the right/top corner without page refresh.
+3. The pop-up shows the new notification title/body.
+4. Clicking it follows the actionable notification destination.
+5. The notification remains available in the bell/history under the existing rules.
+
+This is a targeted regression test only. Do not repeat the closed notification audit scenarios.
+
+## FINA STANDALONE PAYMENT
+
+Fina is a third-party protected fund:
+
+- Fina money is not Ahl El Kheir revenue.
+- Fina share is a protected liability/control amount.
+- Dedicated control/liability account: `2300`.
+- Fina uses `fina_sources` and `fina_collections`.
+- Entry: `modules/transactions/fina_payment_create.php`.
+- Review: `modules/accounting/fina_payment_review.php`.
+- Authenticated receipt serving: `modules/accounting/fina_receipt.php`.
+- Normal request-time schema creation is removed; migration is authoritative.
+- Supervisor is a primary operational user but remains read-only at FM approval/posting.
+
+Do not confuse Fina liability with sponsor obligation. A sponsor obligation shortfall must remain a sponsor-accounting issue and must not be absorbed into Fina money.
+
+## CLOSED ACCOUNTING / NOTIFICATION AREAS
+
+Do not repeat unless genuine regression evidence appears:
+
+- HR/payroll audit baseline.
+- FM treasury calculation and admin-fee regression tests.
+- Supervisor bank-transfer and mobile-wallet posting tests.
+- Supervisor sponsor scope tests.
+- VGM sponsor assignment/reassignment tests.
+- Receipt-file regression test already confirmed by user.
+- Fina receipt authorization test already confirmed by user.
+- Fina authorization/scope tests already completed.
+- Disbursement/reissue test batch #12.
+- Transaction void test `TR-000016` / `JE-VOID-TXN-22`.
+- Manual journal `JE-000027` and its balance/authorization checks.
+- Existing notification audit scenarios, except the current missing-toast regression test.
+
+## NEXT ACCOUNTING AUDIT — JOURNAL CROSS-MODULE INTEGRITY
+
+After the immediate notification-toast runtime check and Fina form visual check, continue the targeted remaining automated journal reference types:
+
+- `payroll`
+- `disbursement_void`
+- `item_return`
+
+Existing semantics are authoritative:
+
+- `disbursement_void` is created by the batch-void workflow and references the monthly disbursement.
+- `item_return` is created by the partial item-return workflow and references the disbursement item.
+- `payroll` is created by `modules/hr/lib_payroll_accounting.php` and links to the payroll record.
+
+The existing protection commit is `8e3ee6fd7d95c0efef834a284ed428d125064bfc`.
+
+### Next workflow
+
+1. Inspect actual current callers/workflows for the three reference types.
+2. Inspect the actual schema before any SQL or test fixture creation.
+3. Reuse existing evidence if a control is already genuinely proven.
+4. Create only new controlled test data when a missing runtime control requires it.
+5. Verify server-side protection against manual journal void/mutation.
+6. Verify journal creation, linkage, balance, and source record state for each newly tested automated route.
+7. Inspect remaining callers of `ak_void_journal_for_voucher()` and direct journal mutation routes.
+8. Document each result in the single master audit and continuation index.
+
+Do not relabel reference types or alter historical accounting evidence merely to make an audit query pass.
 
 ## DOCUMENTATION RULES
 
@@ -241,6 +341,20 @@ The checkpoint should make clear:
 - what must not be repeated;
 - protected evidence/fixtures;
 - important local Git warnings.
+
+## FUTURE UI CHECKLIST — PARKED FOR LATER
+
+The broader form UX improvement is intentionally parked for systematic handling later:
+
+- labels + fields inline where practical;
+- control widths matched to expected data;
+- phone/date/amount/ID fields compact;
+- long text/address/purpose fields wider;
+- responsive/mobile behavior preserved;
+- apply the standard when touching a form during normal work;
+- if a global redesign is warranted, inspect shared CSS/components first instead of adding duplicated page-specific CSS.
+
+Do not interrupt the accounting audit to redesign unrelated forms unless the user explicitly asks for that work.
 
 ## REGRESSION RULE
 
@@ -294,6 +408,6 @@ The user should only need to provide the immediate new request, for example:
 
 Do not require the user to paste the entire historical audit into the new chat.
 
-## LATEST DOCUMENTATION CHECKPOINT — 2026-09-15
+## LATEST DOCUMENTATION CHECKPOINT — 2026-09-17
 
-The documentation handoff has been synchronized with the latest confirmed notification work: live polling, shared unread red-dot indicator, full notification history access, CSRF-safe dynamic notification actions, and non-destructive `مسح الكل`. The next substantive task remains the focused Supervisor ↔ Accounting integration review.
+The handoff is synchronized with the latest Fina SDG-only policy, compact horizontal Fina entry-form layout, and the restored live right-corner notification toast. The immediate runtime checkpoint is to pull the latest repository changes and verify the Fina submission notification on the FM dashboard without repeating closed notification tests. After that, continue the targeted Accounting Journal Cross-Module Integrity review for `payroll`, `disbursement_void`, and `item_return`.
