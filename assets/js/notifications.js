@@ -31,10 +31,7 @@
     if (!window.Swal) {
         window.AKNotify = {
             toast: fallbackToast,
-            // Never fall back to browser-native confirm(). The application has
-            // one confirmation language and pages must not silently switch to
-            // a browser dialog when SweetAlert2 is unavailable.
-            confirm: function (message, onConfirm) {
+            confirm: function () {
                 fallbackToast('تعذر فتح نافذة التأكيد الخاصة بالنظام.');
                 return Promise.resolve({ isConfirmed: false, isDismissed: true });
             }
@@ -62,7 +59,6 @@
             if (!['success', 'error', 'warning', 'info', 'question'].includes(icon)) icon = 'info';
             return Toast.fire({ icon: icon, title: message || '' });
         },
-
         modal: function (options) {
             options = options || {};
             options.rtl = true;
@@ -72,7 +68,6 @@
             options.reverseButtons = true;
             return window.Swal.fire(options);
         },
-
         confirm: function (message, onConfirm, options) {
             options = options || {};
             return window.Swal.fire({
@@ -116,18 +111,13 @@
             delete form.dataset.akConfirmBypass;
             return;
         }
-
         var message = form.getAttribute('data-confirm');
         var inlineHandler = form.getAttribute('onsubmit');
-        if (!message && inlineHandler && /\bconfirm\s*\(/i.test(inlineHandler)) {
-            message = extractConfirmMessage(inlineHandler);
-        }
+        if (!message && inlineHandler && /\bconfirm\s*\(/i.test(inlineHandler)) message = extractConfirmMessage(inlineHandler);
         if (!message) return;
-
         event.preventDefault();
         event.stopImmediatePropagation();
         if (inlineHandler && /\bconfirm\s*\(/i.test(inlineHandler)) form.removeAttribute('onsubmit');
-
         var submitter = event.submitter || null;
         showConfirmation(message, function () {
             form.dataset.akConfirmBypass = '1';
@@ -143,65 +133,42 @@
     document.addEventListener('click', function (event) {
         var target = event.target && event.target.closest
             ? event.target.closest('[data-confirm], [onclick*="confirm("]') : null;
-
-        /*
-         * Legacy inline onclick="return confirm(...)" is still capable of
-         * opening the browser's native dialog because the inline handler is
-         * attached directly to a form control. Intercept it before the normal
-         * form-control early return and route it through AKNotify instead.
-         */
         if (target) {
             var targetInlineHandler = target.getAttribute('onclick');
             var targetMessage = target.getAttribute('data-confirm');
-            if (!targetMessage && targetInlineHandler && /\bconfirm\s*\(/i.test(targetInlineHandler)) {
-                targetMessage = extractConfirmMessage(targetInlineHandler);
-            }
-
+            if (!targetMessage && targetInlineHandler && /\bconfirm\s*\(/i.test(targetInlineHandler)) targetMessage = extractConfirmMessage(targetInlineHandler);
             if (targetMessage && targetInlineHandler && /\bconfirm\s*\(/i.test(targetInlineHandler)) {
                 if (target.dataset.akConfirmBypass === '1') {
                     delete target.dataset.akConfirmBypass;
                     return;
                 }
-
                 event.preventDefault();
                 event.stopImmediatePropagation();
                 target.removeAttribute('onclick');
-
                 showConfirmation(targetMessage, function () {
                     target.dataset.akConfirmBypass = '1';
                     if (target.tagName === 'BUTTON' && target.type === 'submit' && target.form) {
                         if (typeof target.form.requestSubmit === 'function') target.form.requestSubmit(target);
                         else HTMLFormElement.prototype.submit.call(target.form);
-                    } else if (typeof target.click === 'function') {
-                        target.click();
-                    }
+                    } else if (typeof target.click === 'function') target.click();
                 });
                 return;
             }
         }
-
-        // Form controls are otherwise never confirmation targets. This is
-        // especially important for select elements: opening/changing a
-        // dropdown must not trigger a confirmation before a value is chosen.
         var control = event.target && event.target.closest
             ? event.target.closest('select, option, input, textarea, button') : null;
         if (control) return;
-
         if (!target || target.dataset.akConfirmBypass === '1') {
             if (target) delete target.dataset.akConfirmBypass;
             return;
         }
-
-        // A form-level data-confirm is handled only by the submit listener.
         if (target.tagName === 'FORM') return;
-
         var message = target.getAttribute('data-confirm');
         var inlineHandler = target.getAttribute('onclick');
         if (!message && inlineHandler && /\bconfirm\s*\(/i.test(inlineHandler)) message = extractConfirmMessage(inlineHandler);
         if (!message) return;
         if (target.tagName === 'BUTTON' && target.type === 'submit' && target.form) return;
         if (target.tagName === 'INPUT' && target.type === 'submit' && target.form) return;
-
         event.preventDefault();
         event.stopImmediatePropagation();
         if (inlineHandler && /\bconfirm\s*\(/i.test(inlineHandler)) target.removeAttribute('onclick');
@@ -211,20 +178,64 @@
         });
     }, true);
 
-    /*
-     * Compatibility bridge for the existing VGM supervisor table while its
-     * lifecycle controls are being migrated. The visible dashboard buttons
-     * continue to work, but server-side execution now goes through the
-     * lifecycle-safe endpoints instead of the legacy action handler.
-     */
+    /* Fina return uses a reason. Replace browser prompt() with the same
+       centralized SweetAlert2 modal language used everywhere else. */
+    document.addEventListener('click', function (event) {
+        var button = event.target && event.target.closest
+            ? event.target.closest('button[name="return_fina"]') : null;
+        if (!button) return;
+        if (button.dataset.akFinaReturnBypass === '1') {
+            delete button.dataset.akFinaReturnBypass;
+            return;
+        }
+
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        button.removeAttribute('onclick');
+
+        var form = button.form;
+        if (!form) return;
+
+        window.Swal.fire({
+            title: 'سبب إرجاع تحصيل فينا الخير',
+            input: 'textarea',
+            inputLabel: 'سبب الإرجاع',
+            inputPlaceholder: 'اكتب سبب الإرجاع هنا...',
+            inputAttributes: { 'aria-label': 'سبب الإرجاع' },
+            showCancelButton: true,
+            confirmButtonText: 'إرجاع التحصيل',
+            cancelButtonText: 'إلغاء',
+            reverseButtons: true,
+            allowOutsideClick: false,
+            rtl: true,
+            heightAuto: false,
+            icon: 'warning',
+            inputValidator: function (value) {
+                return !String(value || '').trim() ? 'يجب كتابة سبب الإرجاع.' : undefined;
+            }
+        }).then(function (result) {
+            if (!result.isConfirmed) return;
+            var note = form.querySelector('input[name="return_note"]');
+            if (!note) {
+                note = document.createElement('input');
+                note.type = 'hidden';
+                note.name = 'return_note';
+                form.appendChild(note);
+            }
+            note.value = String(result.value || '').trim();
+            form.action = 'fina_return.php';
+            button.dataset.akFinaReturnBypass = '1';
+            if (typeof form.requestSubmit === 'function') form.requestSubmit(button);
+            else HTMLFormElement.prototype.submit.call(form);
+        });
+    }, true);
+
     document.addEventListener('DOMContentLoaded', function () {
         document.querySelectorAll('form.js-supervisor-action').forEach(function (form) {
             var button = form.querySelector('button[name="supervisor_action"]');
             if (!button) return;
-
             var idInput = form.querySelector('input[name="supervisor_id"]');
             if (!idInput || !idInput.value) return;
-
             var hiddenId = form.querySelector('input[name="id"]');
             if (!hiddenId) {
                 hiddenId = document.createElement('input');
@@ -233,12 +244,8 @@
                 form.appendChild(hiddenId);
             }
             hiddenId.value = idInput.value;
-
-            if (button.value === 'delete_account') {
-                form.action = '../modules/users/supervisor_departure.php';
-            } else if (button.value === 'toggle_status') {
-                form.action = '../modules/users/supervisor_status.php';
-            }
+            if (button.value === 'delete_account') form.action = '../modules/users/supervisor_departure.php';
+            else if (button.value === 'toggle_status') form.action = '../modules/users/supervisor_status.php';
         });
 
         document.querySelectorAll('[data-ak-flash]').forEach(function (node) {
