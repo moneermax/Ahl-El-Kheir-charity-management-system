@@ -136,7 +136,7 @@ if (Session::isLoggedIn()) {
  document.addEventListener('click',function(e){if(root && !root.contains(e.target))root.classList.remove('open')});
  const toastContainer=document.getElementById('akNotificationToastContainer');
  window.AKNotify=window.AKNotify||{};
- window.AKNotify.toast=function(type,title,body,link){
+ window.AKNotify.toast=function(type,title,body,link,notificationId){
      if(!toastContainer) return;
      const toast=document.createElement('div');
      toast.className='ak-notif-toast';
@@ -145,7 +145,19 @@ if (Session::isLoggedIn()) {
      toast.innerHTML='<button type="button" class="ak-notif-toast-close" aria-label="إغلاق">×</button><div class="ak-notif-toast-title">'+safeTitle+'</div><div class="ak-notif-toast-body">'+safeBody+'</div>';
      const close=function(){toast.classList.remove('ak-notif-toast-show');window.setTimeout(function(){if(toast.parentNode)toast.parentNode.removeChild(toast)},180)};
      toast.querySelector('.ak-notif-toast-close').addEventListener('click',function(e){e.stopPropagation();close()});
-     if(link){toast.addEventListener('click',function(){window.location.href=link})}
+     if(link){
+         toast.addEventListener('click',function(){
+             if(notificationId && markReadUrl){
+                 const formData=new FormData();
+                 formData.append('csrf_token',csrfToken);
+                 formData.append('notification_id',String(notificationId));
+                 formData.append('redirect',String(link));
+                 fetch(markReadUrl,{method:'POST',credentials:'same-origin',body:formData,headers:{'Accept':'text/html'}}).then(function(){window.location.href=link}).catch(function(){window.location.href=link});
+             } else {
+                 window.location.href=link;
+             }
+         });
+     }
      toastContainer.appendChild(toast);
      window.requestAnimationFrame(function(){toast.classList.add('ak-notif-toast-show')});
      window.setTimeout(close,7000);
@@ -176,6 +188,14 @@ if (Session::isLoggedIn()) {
      }).join('');
  }
  function updateBadge(unread){const count=Number(unread||0);let badge=toggle ? toggle.querySelector('.ak-notif-badge') : null;if(count<=0){if(badge) badge.remove();return;}if(!badge){badge=document.createElement('span');badge.className='ak-notif-badge';toggle.appendChild(badge);}badge.textContent=count>99?'99+':String(count);}
+ function showUnreadToasts(items){
+     items.slice().reverse().forEach(function(item){
+         const id=Number(item.id||0);
+         if(id>0 && Number(item.is_read||0)===0 && window.AKNotify && typeof window.AKNotify.toast==='function'){
+             window.AKNotify.toast('info',item.title||'إشعار جديد',item.body||'',String(item.link||'').trim() || notificationPageUrl || currentUrl,id);
+         }
+     });
+ }
  function poll(){
      if(busy || !pollUrl) return; busy=true;
      fetch(pollUrl+'?t='+Date.now(),{credentials:'same-origin',cache:'no-store',headers:{'Accept':'application/json'}})
@@ -183,8 +203,21 @@ if (Session::isLoggedIn()) {
        .then(function(data){
          if(!data || data.ok!==true) return;
          const items=Array.isArray(data.items) ? data.items : [];
-         if(initialized){items.slice().reverse().forEach(function(item){const id=Number(item.id||0);if(id>0&&!knownIds[id]){knownIds[id]=true;if(window.AKNotify&&typeof window.AKNotify.toast==='function'){window.AKNotify.toast('info',item.title||'إشعار جديد',item.body||'',String(item.link||'').trim() || notificationPageUrl || currentUrl);}}});}
-         else {items.forEach(function(item){const id=Number(item.id||0);if(id>0) knownIds[id]=true;});initialized=true;}
+         if(initialized){
+             items.slice().reverse().forEach(function(item){
+                 const id=Number(item.id||0);
+                 if(id>0&&!knownIds[id]){
+                     knownIds[id]=true;
+                     if(Number(item.is_read||0)===0 && window.AKNotify&&typeof window.AKNotify.toast==='function'){
+                         window.AKNotify.toast('info',item.title||'إشعار جديد',item.body||'',String(item.link||'').trim() || notificationPageUrl || currentUrl,id);
+                     }
+                 }
+             });
+         } else {
+             items.forEach(function(item){const id=Number(item.id||0);if(id>0) knownIds[id]=true;});
+             showUnreadToasts(items);
+             initialized=true;
+         }
          updateBadge(data.unread); render(data);
        }).catch(function(){}).finally(function(){busy=false;});
  }
