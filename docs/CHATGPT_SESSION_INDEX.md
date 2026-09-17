@@ -34,9 +34,9 @@ Fina is a protected third-party fund. It is not Ahl El Kheir revenue, sponsorshi
 
 - New approved Fina payments accumulate in the same permanent `2300` liability account.
 - When Fina requests settlement, the **entire current outstanding Fina liability is settled in full**.
-- **Partial settlement is not part of the production model.** No partial amount or allocation workflow is to be exposed.
+- **Partial settlement is not part of the production model.** No partial amount or allocation workflow is exposed.
 - The settlement does not use Ahl operating treasury accounts `1100`, `1200`, or `1300`.
-- Fina-held money is represented separately from Ahl operating funds through the correct dedicated Fina-held-funds accounting control/asset account, to be confirmed from the actual chart/schema before implementation.
+- Fina-held money is represented separately through the dedicated `Fina Al-Khair Held Funds` asset/control account created by the new settlement-model migration. This is a custody/control account for Fina money, not Ahl operating treasury.
 - Full settlement posts `Dr 2300 / Cr Fina-held funds`.
 - After successful settlement, `2300` returns to zero but remains permanently available.
 - The next Fina payment increases the same `2300` again, repeating the cycle.
@@ -48,40 +48,41 @@ All settlement processing is **Financial Manager (FM) only**. Supervisors, GM, a
 
 - Stage 0 — business rules: **COMPLETE**.
 - Stage 1 — existing-system/schema inspection: **COMPLETE**.
-- Stage 2 — settlement data model/migration: **COMPLETE**; migration applied successfully to live DB on 2026-09-17.
+- Stage 2 — original settlement data model: **COMPLETE**; original migration applied successfully to live DB on 2026-09-17.
 - Stage 3 — original accounting engine: **COMPLETE / RUNTIME VERIFIED / CLOSED** on 2026-09-17 as historical development evidence.
-
-Stage 3 implementation:
-
-- `modules/accounting/fina_settlement_lib.php`
-- commit `580a9b2c9991d29a8a06fe6f56ee74ac2216a506`
+- Revised settlement-model code/migration: **IMPLEMENTED IN REPOSITORY; LOCAL RUNTIME ACCEPTANCE PENDING**.
 
 ### Historical Stage 3 test evidence — preserve, do not treat as current business settlement
 
 - `FINA-SET-000001` — 50,000 SDG, full settlement of collection #3, closed, journal 56.
 - `FINA-SET-000002` — 100,000 SDG, partial settlement of collection #4, closed, journal 57.
-- Original collection #3/journal 54 and collection #4/journal 55 remained unchanged/posted.
+- Original collection #3/journal 54 and collection #4/journal 55 remain historical evidence.
 
-These settlement records and journals are retained as development/test evidence. They **must not consume or reduce the current production Fina liability**. The old test result of 100,000 SDG remaining is not the current business balance.
+The revised migration marks these two settlement records as historical test fixtures and creates compensating posted restore entries so their old partial-settlement test effect does not reduce the current production liability. Their original journals are not edited or deleted. Do not clean or recreate these fixtures.
 
-Do not delete these records merely to clean development data, and do not rerun the closed Stage 3 acceptance suite. Only targeted regression/runtime acceptance for the revised full-settlement model is required.
+### Revised Stage 4 — ACTIVE / LOCAL ACCEPTANCE PENDING
 
-### Stage 4 — ACTIVE / MODEL REVISION
+Repository implementation now includes:
 
-The FM-only settlement UI is being revised to the finalized model. Required continuation:
+- `database/migrations/2026-09-17_fina_full_settlement_model.sql` — permanent 2300/full-cycle model, dedicated Fina-held-funds account, historical test-fixture neutralization, and historical collection-funds reclassification.
+- `modules/accounting/fina_lib.php` — new Fina collections post to the dedicated Fina-held-funds asset instead of Ahl treasury accounts.
+- `modules/accounting/fina_settlement_lib.php` — production settlement is full-current-balance only; no partial amount; no Ahl remitting account; settlement journal is `Dr 2300 / Cr Fina-held funds`.
+- `modules/accounting/fina_settlements.php` — FM-only UI with no treasury-account selector and no partial-allocation controls.
 
-1. Inspect the complete current settlement library/UI before changing behavior.
-2. Inspect the actual accounts chart/schema for an existing dedicated Fina-held-funds account or established custody-account pattern.
-3. Remove production partial-settlement/allocation behavior.
-4. Remove the Ahl treasury-account selector (`1100`/`1200`/`1300`) from Fina settlement.
-5. Make the settlement amount equal to the complete current Fina liability.
-6. Post the full settlement as `Dr 2300 / Cr Fina-held funds`.
-7. Ensure the resulting `2300` balance is zero after settlement while keeping the account permanently.
-8. Ensure subsequent Fina payments reuse the same `2300` cycle.
-9. Preserve historical Stage 3 test records/journals without letting them reduce the current liability.
-10. Preserve FM-only server-side protection, evidence/reference controls, reconciliation, closure, cancellation, and audit history.
-11. Update dashboards/reports only after the core accounting model is corrected.
-12. Run local runtime acceptance only after the repository changes are pulled locally and do not claim verification until actual results are supplied.
+### Required local acceptance
+
+1. Pull safely after checking the local working tree.
+2. Apply the new migration after confirming the local database matches the documented schema assumptions.
+3. Verify the dedicated Fina-held-funds account exists and is an asset/control account.
+4. Verify current production Fina liability is **250,000 SDG** despite the retained Stage 3 test records.
+5. Verify 2300 represents the current 250,000 SDG liability.
+6. Create one full settlement for exactly 250,000 SDG — no partial amount and no Ahl treasury account selection.
+7. Verify the settlement journal is balanced `Dr 2300 / Cr Fina-held funds` and 2300 becomes zero.
+8. Verify the historical Stage 3 records remain present and unchanged as records.
+9. Create/approve a new Fina payment after settlement and verify the same 2300 account increases again.
+10. Verify FM-only authorization and evidence/reference/lifecycle controls.
+
+Do not claim this revised runtime acceptance is complete until the user runs the local application/database and provides the actual results.
 
 ## FINA STANDALONE PAYMENT
 
@@ -128,4 +129,4 @@ Then use a safe pull appropriate to the actual local state. Never discard local 
 ## CURRENT CONTINUATION POINT
 
 **Stage 3 original Fina accounting engine: COMPLETE / RUNTIME VERIFIED / CLOSED as historical evidence.**  
-**Stage 4 Fina FM-only settlement model/UI: ACTIVE — full current-balance settlement only, permanent `2300`, separate Fina-held funds, no partial settlement.**
+**Stage 4 revised Fina settlement model/UI: IMPLEMENTED IN REPOSITORY; LOCAL RUNTIME ACCEPTANCE PENDING — full current-balance settlement only, permanent `2300`, separate Fina-held funds, no partial settlement.**
