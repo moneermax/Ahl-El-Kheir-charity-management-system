@@ -32,9 +32,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 '<div class="fm-card-body">' +
                 '<div class="grid-4">' +
                     '<div class="stat-box amber"><div class="stat-value">'+p.count+'</div><div class="stat-label">طلبات بانتظار المراجعة</div><div class="stat-sub">يجب مراجعتها من المدير المالي</div></div>' +
-                    '<div class="stat-box green"><div class="stat-value">'+Number(a.amount || 0).toLocaleString()+' SDG</div><div class="stat-label">إجمالي التحصيلات المعتمدة</div><div class="stat-sub">'+a.count+' تحصيلات — لا تشمل إيرادات أهل الخير</div></div>' +
+                    '<div class="stat-box green"><div class="stat-value">'+a.count+'</div><div class="stat-label">تحصيلات معتمدة</div><div class="stat-sub">لا تشمل إيرادات أهل الخير</div></div>' +
                     '<div class="stat-box red"><div class="stat-value">'+ret.count+'</div><div class="stat-label">تحصيلات مرتجعة</div><div class="stat-sub">تظهر في السجل التاريخي</div></div>' +
-                    '<div class="stat-box purple"><div class="stat-value">'+Number(a.amount || 0).toLocaleString()+' SDG</div><div class="stat-label">إجمالي التزام فينا</div><div class="stat-sub">الحساب 2300 — '+(acc.is_active ? 'نشط' : 'موقوف')+'</div></div>' +
+                    '<div class="stat-box purple"><div class="stat-value">'+Number(a.amount || 0).toLocaleString()+' SDG</div><div class="stat-label">إجمالي تحصيلات فينا</div><div class="stat-sub">الرصيد المعتمد المرتبط بالتزام 2300</div></div>' +
                 '</div>' +
                 '<div class="small text-muted mt-2"><strong>الحركة حسب العملة:</strong> '+currencyText+'</div>' +
                 '<div class="d-flex flex-wrap gap-2 mt-3">' +
