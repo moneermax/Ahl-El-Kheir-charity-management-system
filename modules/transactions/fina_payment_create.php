@@ -35,14 +35,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['fina_sponsor_search']))
     echo json_encode($rows, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); exit();
 }
 
-$input = ['source_type'=>'person','sponsor_id'=>'','source_name'=>'','source_phone'=>'','source_alt_phone'=>'','source_email'=>'','source_address'=>'','source_id_number'=>'','source_reference'=>'','contact_person'=>'','source_details'=>'','amount'=>'','currency_code'=>APP_CURRENCY_CODE,'method'=>'cash','date'=>date('Y-m-d'),'purpose_note'=>'','description'=>''];
+$input = ['source_type'=>'person','sponsor_id'=>'','source_name'=>'','source_phone'=>'','source_alt_phone'=>'','source_email'=>'','source_address'=>'','source_id_number'=>'','source_reference'=>'','contact_person'=>'','source_details'=>'','amount'=>'','method'=>'cash','date'=>date('Y-m-d'),'purpose_note'=>'','description'=>''];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $input['source_type'] = $_POST['source_type'] ?? 'person';
     $input['sponsor_id'] = (string)(int)($_POST['sponsor_id'] ?? 0);
     foreach (['source_name','source_phone','source_alt_phone','source_email','source_address','source_id_number','source_reference','contact_person','source_details','amount','method','date','purpose_note','description'] as $k) $input[$k] = trim($_POST[$k] ?? '');
-    // Currency is system-wide and is never accepted from the browser.
-    $input['currency_code'] = $systemCurrency;
     if (!verify_csrf()) $errors[] = 'انتهت صلاحية الجلسة.';
     if (!in_array($input['source_type'], ['sponsor','person','organization','other'], true)) $errors[] = 'تصنيف مصدر الأموال غير صالح.';
     $sponsor = null;
@@ -54,7 +52,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     } elseif ($input['source_name'] === '') $errors[] = 'اسم مصدر الأموال مطلوب.';
     if ($input['amount'] === '' || round((float)str_replace(',','',$input['amount']),2) <= 0) $errors[] = 'المبلغ يجب أن يكون أكبر من صفر.';
-    if (!in_array($input['currency_code'], [$systemCurrency], true)) $errors[] = 'عملة النظام غير صالحة.';
     if (!in_array($input['method'], ['cash','bank_transfer','credit_card','mobile','other'], true)) $errors[] = 'طريقة الدفع غير صالحة.';
     if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $input['date'])) $errors[] = 'تاريخ التحصيل غير صالح.';
     if ($input['source_email'] !== '' && !filter_var($input['source_email'], FILTER_VALIDATE_EMAIL)) $errors[] = 'البريد الإلكتروني لمصدر الأموال غير صالح.';
@@ -71,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($input['source_type']==='sponsor') $sourceId=(int)(dbFetchOne("SELECT id FROM fina_sources WHERE source_type='sponsor' AND sponsor_id=? LIMIT 1",[(int)$input['sponsor_id']])['id'] ?? 0);
             if ($sourceId<=0) { $isSponsor=$input['source_type']==='sponsor'; dbExecute("INSERT INTO fina_sources (source_type,sponsor_id,source_name,source_phone,source_alt_phone,source_email,source_address,source_id_number,source_reference,contact_person,source_details,created_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",[$input['source_type'],$isSponsor?(int)$input['sponsor_id']:null,$isSponsor?null:($input['source_name']?:null),$isSponsor?null:($input['source_phone']?:null),$isSponsor?null:($input['source_alt_phone']?:null),$isSponsor?null:($input['source_email']?:null),$isSponsor?null:($input['source_address']?:null),$isSponsor?null:($input['source_id_number']?:null),$isSponsor?null:($input['source_reference']?:null),$isSponsor?null:($input['contact_person']?:null),$isSponsor?null:($input['source_details']?:null),$uid]); $sourceId=(int)dbLastInsertId(); }
             if ($sourceId<=0) throw new RuntimeException('تعذر إنشاء مصدر فينا الخير.');
-            dbExecute("INSERT INTO fina_collections (fina_source_id,amount,currency_code,payment_method,collection_date,receipt_path,purpose_note,description,status,created_by) VALUES (?,?,?,?,?,?,?,?,'pending',?)",[$sourceId,$amount,$input['currency_code'],$input['method'],$input['date'],$receiptPath,$input['purpose_note']?:null,$input['description']?:null,$uid]);
+            dbExecute("INSERT INTO fina_collections (fina_source_id,amount,currency_code,payment_method,collection_date,receipt_path,purpose_note,description,status,created_by) VALUES (?,?,?,?,?,?,?,?,'pending',?)",[$sourceId,$amount,$systemCurrency,$input['method'],$input['date'],$receiptPath,$input['purpose_note']?:null,$input['description']?:null,$uid]);
             $collectionId = (int)dbLastInsertId();
             if ($collectionId<=0) throw new RuntimeException('تعذر إنشاء سجل التحصيل.');
             db()->commit();
@@ -112,7 +109,6 @@ include dirname(__DIR__,2).'/includes/header.php';
 <div class="col-md-4"><label class="form-label">اسم جهة الاتصال</label><input type="text" name="contact_person" class="form-control" value="<?php echo e($input['contact_person']); ?>"></div>
 <div class="col-md-8"><label class="form-label">تفاصيل إضافية عن المصدر / الجهة</label><input type="text" name="source_details" class="form-control" value="<?php echo e($input['source_details']); ?>"></div>
 <div class="col-md-4"><label class="form-label">المبلغ *</label><input type="number" step="0.01" min="0.01" name="amount" class="form-control" required value="<?php echo e($input['amount']); ?>"></div>
-<div class="col-md-4"><label class="form-label">العملة</label><input type="text" class="form-control bg-light" value="<?php echo e($systemCurrency); ?>" readonly aria-readonly="true"><div class="form-text">عملة النظام الموحدة — لا يمكن تغييرها من شاشة التحصيل.</div></div>
 <div class="col-md-4"><label class="form-label">طريقة الدفع *</label><select name="method" class="form-select"><option value="cash">نقدي / كاش</option><option value="bank_transfer">تحويل بنكي</option><option value="mobile">محفظة إلكترونية</option><option value="credit_card">بطاقة</option><option value="other">أخرى</option></select></div>
 <div class="col-md-4"><label class="form-label">تاريخ التحصيل *</label><input type="date" name="date" class="form-control" required value="<?php echo e($input['date']); ?>"></div>
 <div class="col-md-8"><label class="form-label">إيصال التحصيل</label><input type="file" name="receipt_file" class="form-control" accept=".jpg,.jpeg,.png,.pdf"></div>
