@@ -26,6 +26,18 @@ For an external source, the Fina source record stores its own contact and identi
 
 The Fina collection does not use `sponsor_payments` and does not create a normal sponsorship transaction. Its accounting relationship is through the dedicated Fina journal/control flow.
 
+## Currency policy — SDG only
+
+The application uses one system-wide currency:
+
+- `APP_CURRENCY_CODE = 'SDG'`
+- `APP_CURRENCY_NAME_AR = 'الجنيه السوداني'`
+- `APP_CURRENCY_SYMBOL = 'ج.س'`
+
+Users must not select or enter a currency on the Fina collection entry form. The server uses `APP_CURRENCY_CODE` when creating the collection.
+
+The database field `fina_collections.currency_code` remains intentionally present because it preserves the currency attached to each historical/accounting collection record. Removing the field from the UI does not mean removing historical currency evidence from the database.
+
 ## Schema lifecycle
 
 The standalone Fina schema is provisioned through the explicit migration:
@@ -54,6 +66,24 @@ The current authorization set is:
 The Supervisor is a primary operational user of this workflow.
 
 When **كفيل من أهل الخير** is selected as the source, the sponsor selector auto-populates the sponsor's existing information into read-only fields to make data entry faster and prevent duplicate typing.
+
+## Entry form UI standard
+
+The Fina collection entry form no longer exposes a redundant currency field because currency is system-wide SDG.
+
+The form also follows the current UI direction for practical data entry:
+
+- label + field are horizontally aligned where practical;
+- short fields such as phone, date, amount, and IDs use compact widths appropriate to their data;
+- longer fields such as address, purpose, source details, and description receive more width;
+- the layout remains responsive on small screens.
+
+Implementation commits:
+
+- `3d84d57e2de0acb3fefb1fe4fdcc2ed9c4b703c9` — remove redundant Fina collection currency field.
+- `e2ea1ab741da709e6b5543c85556fcbc7a15c765` — improve Fina collection form field layout and sizing.
+
+This UI standard should be applied carefully to forms touched during future work; it is not permission to blindly redesign unrelated forms.
 
 ## Review
 
@@ -84,6 +114,20 @@ The current journal schema does not carry a dedicated currency column. Therefore
 ## Separation from normal sponsor payments
 
 Normal sponsor/sponsorship payments continue through the existing payment workflow. A sponsor obligation shortfall remains a sponsor-accounting issue and must never be reclassified as Fina money merely to balance the transaction.
+
+## Notifications
+
+Fina submission notifications use the existing shared notification workflow. The recipient must be the appropriate active Financial Manager reviewer; Supervisor must not receive a self-notification merely because the Supervisor submitted the collection.
+
+The shared notification widget polls every 5 seconds. New notifications are intended to produce both the unread bell indicator and a small right-corner toast without requiring page refresh or logout/login.
+
+A live-toast regression was identified on 2026-09-17: the polling widget attempted to call `window.AKNotify.toast()` but no toast implementation was present in the current repository. The shared widget was corrected to provide its own lightweight `AKNotify.toast()` implementation and restore the right-corner pop-up behavior without changing notification storage, recipient rules, or accounting logic.
+
+Implementation commit:
+
+- `e248ae74f6a69ea69ec1781df63a42b09cbd9699` — restore live right-corner notification toast.
+
+Runtime verification of the restored toast remains the immediate user test before the next chat/session.
 
 ## UI direction
 
@@ -140,6 +184,9 @@ Implementation commit:
 - Direct receipt exposure: prevented; authenticated receipt viewer is runtime-confirmed working.
 - Request-time Fina schema mutation: removed in code; migration added.
 - Supervisor Fina ownership filtering: preserved.
-- Supervisor Fina dashboard placement: implemented; runtime visual confirmation is the remaining UI check for this latest layout-only change.
+- Supervisor Fina dashboard placement: implemented; runtime visual confirmation remains the UI check for the latest layout-only change.
+- Fina entry currency selection: removed; server uses system-wide SDG.
+- Fina entry form: compact horizontal label/field layout implemented; runtime visual confirmation remains pending.
+- Live notification toast: code fix implemented; runtime confirmation remains pending.
 
-The next audit task is the targeted Accounting Journal Cross-Module Integrity review for the protected automated reference types `payroll`, `disbursement_void`, and `item_return`. Do not restart the completed Supervisor ↔ Accounting integration audit or repeat closed Fina receipt/authorization tests unless new regression evidence appears.
+The next audit task after these immediate UI/runtime checks is the targeted Accounting Journal Cross-Module Integrity review for the protected automated reference types `payroll`, `disbursement_void`, and `item_return`. Do not restart the completed Supervisor ↔ Accounting integration audit or repeat closed Fina receipt/authorization tests unless new regression evidence appears.
