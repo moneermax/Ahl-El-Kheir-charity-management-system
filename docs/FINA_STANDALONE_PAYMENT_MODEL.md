@@ -53,6 +53,8 @@ Fina submissions are reviewed through:
 
 The review/approval stage remains controlled by the financial-management workflow. Approval creates the standalone Fina accounting journal and records its journal ID on the Fina collection.
 
+The review page uses separate POST branches for approval and return. The redirect after each mutation is scoped inside the corresponding POST branch; a normal GET request does not redirect back to itself. The Supervisor remains read-only because mutation branches require the FM review authorization check.
+
 ## Accounting treatment
 
 For a Fina-only collection of X:
@@ -76,3 +78,9 @@ Normal sponsor/sponsorship payments continue through the existing payment workfl
 The Fina payment entry page should be surfaced from dashboards used by the authorized sponsor-facing roles, with the Supervisor dashboard treated as the primary operational entry point.
 
 The existing Fina review page remains the review/history surface rather than introducing a second entry mechanism.
+
+## 2026-09-17 implementation checkpoint
+
+The existing `modules/accounting/fina_payment_review.php` had an unmatched closing brace after the return POST branch, leaving its redirect/exit outside the intended control-flow structure and causing a PHP parse error. The review page was reformatted into explicit, separate approval and return POST branches; each mutation branch now owns its own redirect and `exit()`, while normal GET processing falls through to the pending/history queries and page rendering.
+
+The corrected file was syntax-validated with PHP 8.x (`php -l`) before runtime testing. No database schema change was introduced by this fix.
