@@ -20,17 +20,42 @@ if (!$allowed) {
 }
 
 $id = (int) ($_GET['id'] ?? 0);
-if ($id <= 0) {
-    http_response_code(400);
-    exit('Invalid ID');
-}
+$requestedPath = trim((string) ($_GET['path'] ?? ''));
 
-$row = dbFetchOne(
-    "SELECT id, created_by, receipt_path
-     FROM fina_collections
-     WHERE id = ?",
-    [$id]
-);
+if ($id > 0) {
+    $row = dbFetchOne(
+        "SELECT id, created_by, receipt_path
+         FROM fina_collections
+         WHERE id = ?",
+        [$id]
+    );
+} elseif ($requestedPath !== '') {
+    // Direct receipt URLs are rewritten here by storage/receipts/.htaccess.
+    // Resolve the collection from the exact stored path; never serve an
+    // arbitrary file merely because its path exists on disk.
+    $pathVariants = [$requestedPath];
+    $normalizedPath = ltrim($requestedPath, '/\\');
+    if ($normalizedPath !== $requestedPath) {
+        $pathVariants[] = $normalizedPath;
+    }
+
+    $row = null;
+    foreach ($pathVariants as $pathVariant) {
+        $row = dbFetchOne(
+            "SELECT id, created_by, receipt_path
+             FROM fina_collections
+             WHERE receipt_path = ?
+             LIMIT 1",
+            [$pathVariant]
+        );
+        if ($row) {
+            break;
+        }
+    }
+} else {
+    http_response_code(400);
+    exit('Invalid receipt reference');
+}
 
 if (!$row) {
     http_response_code(404);
