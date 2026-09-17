@@ -30,7 +30,7 @@ if (Session::isLoggedIn()) {
     $akNotifPageUrl = APP_URL . 'modules/notifications/index.php';
     $akNotifIndividualReadUrl = APP_URL . 'modules/notifications/mark_read.php';
     $akNotifPollUrl = APP_URL . 'modules/notifications/poll.php';
-    $akNotifRedirect = (string)($_SERVER['REQUEST_URI'] ?? APP_URL);
+    $akNotifRedirect = (string)($_SERVER['REQUEST_URI'] ?? $akNotifPageUrl);
 ?>
 <style>
 #akNotificationBell{position:relative;z-index:1061;display:inline-flex;align-items:center;flex-shrink:0}
@@ -61,7 +61,7 @@ if (Session::isLoggedIn()) {
 @media(max-width:991px){#akNotificationBell .ak-notif-panel{inset-inline-end:-90px}}
 @media(max-width:576px){#akNotificationBell .ak-notif-panel{position:fixed;top:62px;inset-inline-end:10px;width:calc(100vw - 20px)}}
 </style>
-<div id="akNotificationBell" data-poll-url="<?php echo e($akNotifPollUrl); ?>" data-mark-read-url="<?php echo e($akNotifIndividualReadUrl); ?>" data-current-url="<?php echo e($akNotifRedirect); ?>" data-csrf-token="<?php echo e(csrf_token()); ?>">
+<div id="akNotificationBell" data-poll-url="<?php echo e($akNotifPollUrl); ?>" data-mark-read-url="<?php echo e($akNotifIndividualReadUrl); ?>" data-current-url="<?php echo e($akNotifRedirect); ?>" data-notification-page-url="<?php echo e($akNotifPageUrl); ?>" data-csrf-token="<?php echo e(csrf_token()); ?>">
  <button type="button" class="ak-notif-toggle" aria-label="الإشعارات" title="الإشعارات" onclick="document.getElementById('akNotificationBell').classList.toggle('open')">
   <i class="fas fa-bell"></i>
   <?php if ($akNotifUnread > 0): ?><span class="ak-notif-badge"><?php echo $akNotifUnread > 99 ? '99+' : $akNotifUnread; ?></span><?php endif; ?>
@@ -94,7 +94,7 @@ if (Session::isLoggedIn()) {
     <?php
     $notifId = (int)($ni['id'] ?? 0);
     $notifLink = trim((string)($ni['link'] ?? ''));
-    $notifRedirect = $notifLink !== '' ? $notifLink : $akNotifRedirect;
+    $notifRedirect = $notifLink !== '' ? $notifLink : $akNotifPageUrl;
     $notifUnread = (int)($ni['is_read'] ?? 0) === 0;
     ?>
     <?php if ($notifId > 0): ?>
@@ -130,7 +130,8 @@ if (Session::isLoggedIn()) {
  const pollUrl=root.getAttribute('data-poll-url');
  const markReadUrl=root.getAttribute('data-mark-read-url');
  const csrfToken=root.getAttribute('data-csrf-token') || '';
- const currentUrl=root.getAttribute('data-current-url') || window.location.href;
+ const notificationPageUrl=root.getAttribute('data-notification-page-url') || '';
+ const currentUrl=root.getAttribute('data-current-url') || notificationPageUrl || window.location.href;
  const panelBody=root.querySelector('.ak-notif-panel-body');
  const toggle=root.querySelector('.ak-notif-toggle');
  const knownIds={};
@@ -145,7 +146,7 @@ if (Session::isLoggedIn()) {
      const items=Array.isArray(data.items) ? data.items : [];
      if(!items.length){panelBody.innerHTML='<div class="ak-notif-empty">لا توجد إشعارات.</div>';return;}
      panelBody.innerHTML=items.map(function(item){
-         const id=Number(item.id||0); const link=String(item.link||'').trim() || currentUrl; const unread=Number(item.is_read||0)===0; const unreadClass=unread?' ak-notif-unread':''; const newBadge=unread?'<span class="ak-notif-new">جديد</span>':'';
+         const id=Number(item.id||0); const link=String(item.link||'').trim() || notificationPageUrl || currentUrl; const unread=Number(item.is_read||0)===0; const unreadClass=unread?' ak-notif-unread':''; const newBadge=unread?'<span class="ak-notif-new">جديد</span>':'';
          if(!id) return '<div class="ak-notif-item'+unreadClass+'"><strong>'+esc(item.title)+newBadge+'</strong><div class="ak-notif-body">'+esc(item.body)+'</div><small>'+esc(item.created_at)+'</small></div>';
          return '<form method="post" action="'+esc(markReadUrl)+'" class="ak-notif-read-form"><input type="hidden" name="csrf_token" value="'+esc(csrfToken)+'"><input type="hidden" name="notification_id" value="'+id+'"><input type="hidden" name="redirect" value="'+esc(link)+'"><button type="submit" class="ak-notif-item'+unreadClass+'"><strong>'+esc(item.title)+newBadge+'</strong><div class="ak-notif-body">'+esc(item.body)+'</div><small>'+esc(item.created_at)+'</small></button></form>';
      }).join('');
