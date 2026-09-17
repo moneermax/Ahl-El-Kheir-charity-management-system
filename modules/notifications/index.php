@@ -61,6 +61,12 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     $id = (int)($item['id'] ?? 0);
                     $isUnread = (int)($item['is_read'] ?? 0) === 0;
                     $link = trim((string)($item['link'] ?? ''));
+                    if ($link === '' && ($item['title'] ?? '') === 'تم إرجاع تحصيل فينا الخير') {
+                        $body = (string)($item['body'] ?? '');
+                        if (preg_match('/رقم\s*#(\d+)/u', $body, $m)) {
+                            $link = APP_URL . 'modules/accounting/fina_payment_history.php?id=' . (int)$m[1];
+                        }
+                    }
                     $redirect = $link !== '' ? $link : APP_URL . 'modules/notifications/index.php';
                 ?>
                     <form method="post" action="<?php echo e(APP_URL); ?>modules/notifications/mark_read.php" class="m-0">
