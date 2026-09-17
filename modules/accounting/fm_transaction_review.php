@@ -61,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && verify_csrf()) {
                     if($affected!==1) throw new RuntimeException('تعذر إرجاع الدفعة.');
                     ak_transaction_review_audit($uid,'FM_RETURN',$tid,['status'=>'pending_fm_review'],['status'=>'returned','reason'=>$reason]);
                     db()->commit();
-                    ak_transaction_review_notify_user((int)$t['created_by'],'تم إرجاع الدفعة للتعديل','تم إرجاع الدفعة ' . ($t['transaction_code']??('#'.$tid)) . ' للتعديل. السبب: '.$reason,'modules/transactions/create.php?sponsor_id='.(int)($t['sponsor_id']??0));
+                    ak_transaction_review_notify_user((int)$t['created_by'],'تم إرجاع الدفعة للتعديل','تم إرجاع الدفعة ' . ($t['transaction_code']??('#'.$tid)) . ' للتعديل. السبب: '.$reason,APP_URL.'modules/transactions/edit_returned.php?id='.(int)$tid);
                     flash('success','تم إرجاع الدفعة للمنشئ مع حفظ سبب الإرجاع.');
                 } catch(Throwable $e) {
                     if(db()->inTransaction()) db()->rollBack();
@@ -74,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && verify_csrf()) {
 }
 
 $pending=dbFetchAll("SELECT t.*, s.full_name AS sponsor_name, u.full_name AS creator_name FROM transactions t LEFT JOIN sponsors s ON s.id=t.sponsor_id LEFT JOIN users u ON u.id=t.created_by WHERE t.status='pending_fm_review' ORDER BY t.submitted_at ASC, t.id ASC");
-$history=dbFetchAll("SELECT t.*, s.full_name AS sponsor_name, u.full_name AS creator_name, r.full_name AS reviewer_name FROM transactions t LEFT JOIN sponsors s ON s.id=t.sponsor_id LEFT JOIN users u ON u.id=t.created_by LEFT JOIN users r ON r.id=t.fm_reviewed_by WHERE t.status IN ('returned','posted','cancelled') AND t.fm_reviewed_at IS NOT NULL ORDER BY t.fm_reviewed_at DESC LIMIT 50");
+$history=dbFetchAll("SELECT t.*, s.full_name AS sponsor_name, u.full_name AS creator_name, r.full_name AS reviewer_name FROM transactions t LEFT JOIN sponsors s ON s.id=t.sponsor_id LEFT JOIN users r ON r.id=t.fm_reviewed_by WHERE t.status IN ('returned','posted','cancelled') AND t.fm_reviewed_at IS NOT NULL ORDER BY t.fm_reviewed_at DESC LIMIT 50");
 
 include dirname(__DIR__,2).'/includes/header.php';
 ?>
