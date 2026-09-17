@@ -12,14 +12,16 @@ if (!Session::isLoggedIn()) {
     exit;
 }
 
+$notificationPageUrl = APP_URL . 'modules/notifications/index.php';
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: ' . APP_URL);
+    header('Location: ' . $notificationPageUrl);
     exit;
 }
 
 if (!verify_csrf()) {
     flash('error', 'انتهت جلسة الأمان. يرجى المحاولة مرة أخرى.');
-    header('Location: ' . APP_URL);
+    header('Location: ' . $notificationPageUrl);
     exit;
 }
 
@@ -43,7 +45,7 @@ try {
 $redirect = (string)($_POST['redirect'] ?? '');
 
 if ($redirect === '') {
-    $redirect = APP_URL;
+    $redirect = $notificationPageUrl;
 } elseif (strpos($redirect, APP_URL) === 0) {
     // Keep existing absolute application URLs unchanged.
 } else {
@@ -58,10 +60,12 @@ if ($redirect === '') {
             $relativeRedirect = ltrim(substr($relativeRedirect, strlen($relativeBase)), '/');
         }
 
-        $redirect = APP_URL . $relativeRedirect;
+        $redirect = $relativeRedirect !== ''
+            ? APP_URL . $relativeRedirect
+            : $notificationPageUrl;
     } else {
         // Reject external and protocol-relative redirects.
-        $redirect = APP_URL;
+        $redirect = $notificationPageUrl;
     }
 }
 
