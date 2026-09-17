@@ -1,10 +1,70 @@
 <?php
-require_once dirname(__DIR__,2).'/config/config.php';require_once dirname(__DIR__,2).'/config/database.php';require_once dirname(__DIR__,2).'/config/functions.php';require_once dirname(__DIR__,2).'/config/session.php';require_once __DIR__.'/lib_transaction_review.php';require_once __DIR__.'/fina_lib.php';Session::start();
-$role=Session::getUserRole();$uid=(int)Session::getUserId();if(!ak_transaction_review_is_fm($role)){header('Location: '.APP_URL.'index.php');exit();}fina_ensure_tables();$pageTitle='مراجعة تحصيلات فينا الخير';$active='fm_review';
-function fina_review_source(array $p):string{return ($p['source_type']??'')==='sponsor'?'كفيل من أهل الخير — '.($p['sponsor_code']??'').' — '.($p['sponsor_name']??''):(['person'=>'شخص خارجي','organization'=>'منظمة / جهة','other'=>'أخرى'][$p['source_type']??'other']??'أخرى').' — '.($p['source_name']??'');}
-if($_SERVER['REQUEST_METHOD']==='POST'&&verify_csrf()&&isset($_POST['approve_fina'])){$id=(int)$_POST['approve_fina'];$pdo=db();try{$pdo->beginTransaction();$q=dbFetchOne("SELECT fc.*,fs.source_type,fs.sponsor_id,fs.source_name,fs.source_phone,fs.source_alt_phone,fs.source_email,fs.source_address,fs.source_id_number,fs.source_reference,fs.contact_person,fs.source_details,s.full_name sponsor_name,s.sponsor_code FROM fina_collections fc JOIN fina_sources fs ON fs.id=fc.fina_source_id LEFT JOIN sponsors s ON s.id=fs.sponsor_id WHERE fc.id=? AND fc.status='pending' FOR UPDATE",[$id]);if(!$q)throw new RuntimeException('طلب فينا الخير غير موجود أو تمت معالجته.');if((int)$q['created_by']===$uid)throw new RuntimeException('لا يجوز للمنشئ اعتماد تحصيله بنفسه.');$journalId=fina_post_collection_journal($q,$uid);if(dbExecute("UPDATE fina_collections SET status='approved',reviewed_by=?,reviewed_at=NOW(),accounting_journal_id=? WHERE id=? AND status='pending'",[$uid,$journalId,$id])!==1)throw new RuntimeException('تعذر اعتماد سجل تحصيل فينا الخير.');$pdo->commit();flash('success','تم اعتماد تحصيل فينا الخير وترحيله كالتزام مستقل بنسبة 100%.');}catch(Throwable $e){if($pdo->inTransaction())$pdo->rollBack();flash('error','تعذر اعتماد تحصيل فينا الخير والقيد المحاسبي بشكل ذري.');}header('Location: '.APP_URL.'modules/accounting/fina_payment_review.php');exit();}
-if($_SERVER['REQUEST_METHOD']==='POST'&&verify_csrf()&&isset($_POST['return_fina'])){$id=(int)$_POST['return_fina'];$note=trim($_POST['return_note']??'');if($note==='')flash('error','يجب كتابة سبب الإرجاع.');else{$q=dbFetchOne("SELECT id,created_by FROM fina_collections WHERE id=? AND status='pending'",[$id]);if(!$q)flash('error','طلب فينا الخير غير موجود أو تمت معالجته.');elseif((int)$q['created_by']===$uid)flash('error','لا يجوز للمنشئ إرجاع تحصيله بنفسه.');else{dbExecute("UPDATE fina_collections SET status='returned',reviewed_by=?,reviewed_at=NOW(),return_note=? WHERE id=? AND status='pending'",[$uid,$note,$id]);flash('success','تم إرجاع تحصيل فينا الخير للمستخدم المنشئ.');}}}header('Location: '.APP_URL.'modules/accounting/fina_payment_review.php');exit();}
-$pending=dbFetchAll("SELECT fc.*,fs.source_type,fs.source_name,fs.source_phone,fs.source_alt_phone,fs.source_email,fs.source_address,fs.source_id_number,fs.source_reference,fs.contact_person,fs.source_details,s.full_name sponsor_name,s.sponsor_code,u.full_name creator_name FROM fina_collections fc JOIN fina_sources fs ON fs.id=fc.fina_source_id LEFT JOIN sponsors s ON s.id=fs.sponsor_id JOIN users u ON u.id=fc.created_by WHERE fc.status='pending' ORDER BY fc.collection_date ASC,fc.id ASC");$history=dbFetchAll("SELECT fc.*,fs.source_type,fs.source_name,s.full_name sponsor_name,s.sponsor_code,u.full_name creator_name,r.full_name reviewer_name FROM fina_collections fc JOIN fina_sources fs ON fs.id=fc.fina_source_id LEFT JOIN sponsors s ON s.id=fs.sponsor_id JOIN users u ON u.id=fc.created_by LEFT JOIN users r ON r.id=fc.reviewed_by WHERE fc.status IN ('approved','returned') ORDER BY fc.reviewed_at DESC,fc.id DESC LIMIT 50");include dirname(__DIR__,2).'/includes/header.php';?>
+require_once dirname(__DIR__,2).'/config/config.php';
+require_once dirname(__DIR__,2).'/config/database.php';
+require_once dirname(__DIR__,2).'/config/functions.php';
+require_once dirname(__DIR__,2).'/config/session.php';
+require_once __DIR__.'/lib_transaction_review.php';
+require_once __DIR__.'/fina_lib.php';
+Session::start();
+
+$role=Session::getUserRole();
+$uid=(int)Session::getUserId();
+if(!ak_transaction_review_is_fm($role)){
+    header('Location: '.APP_URL.'index.php');
+    exit();
+}
+fina_ensure_tables();
+$pageTitle='مراجعة تحصيلات فينا الخير';
+$active='fm_review';
+
+function fina_review_source(array $p):string{
+    return ($p['source_type']??'')==='sponsor'
+        ? 'كفيل من أهل الخير — '.($p['sponsor_code']??'').' — '.($p['sponsor_name']??'')
+        : (['person'=>'شخص خارجي','organization'=>'منظمة / جهة','other'=>'أخرى'][$p['source_type']??'other']??'أخرى').' — '.($p['source_name']??'');
+}
+
+if($_SERVER['REQUEST_METHOD']==='POST'&&verify_csrf()&&isset($_POST['approve_fina'])){
+    $id=(int)$_POST['approve_fina'];
+    $pdo=db();
+    try{
+        $pdo->beginTransaction();
+        $q=dbFetchOne("SELECT fc.*,fs.source_type,fs.sponsor_id,fs.source_name,fs.source_phone,fs.source_alt_phone,fs.source_email,fs.source_address,fs.source_id_number,fs.source_reference,fs.contact_person,fs.source_details,s.full_name sponsor_name,s.sponsor_code FROM fina_collections fc JOIN fina_sources fs ON fs.id=fc.fina_source_id LEFT JOIN sponsors s ON s.id=fs.sponsor_id WHERE fc.id=? AND fc.status='pending' FOR UPDATE",[$id]);
+        if(!$q) throw new RuntimeException('طلب فينا الخير غير موجود أو تمت معالجته.');
+        if((int)$q['created_by']===$uid) throw new RuntimeException('لا يجوز للمنشئ اعتماد تحصيله بنفسه.');
+        $journalId=fina_post_collection_journal($q,$uid);
+        if(dbExecute("UPDATE fina_collections SET status='approved',reviewed_by=?,reviewed_at=NOW(),accounting_journal_id=? WHERE id=? AND status='pending'",[$uid,$journalId,$id])!==1) throw new RuntimeException('تعذر اعتماد سجل تحصيل فينا الخير.');
+        $pdo->commit();
+        flash('success','تم اعتماد تحصيل فينا الخير وترحيله كالتزام مستقل بنسبة 100%.');
+    }catch(Throwable $e){
+        if($pdo->inTransaction()) $pdo->rollBack();
+        flash('error','تعذر اعتماد تحصيل فينا الخير والقيد المحاسبي بشكل ذري.');
+    }
+    header('Location: '.APP_URL.'modules/accounting/fina_payment_review.php');
+    exit();
+}
+
+if($_SERVER['REQUEST_METHOD']==='POST'&&verify_csrf()&&isset($_POST['return_fina'])){
+    $id=(int)$_POST['return_fina'];
+    $note=trim($_POST['return_note']??'');
+    if($note===''){
+        flash('error','يجب كتابة سبب الإرجاع.');
+    }else{
+        $q=dbFetchOne("SELECT id,created_by FROM fina_collections WHERE id=? AND status='pending'",[$id]);
+        if(!$q) flash('error','طلب فينا الخير غير موجود أو تمت معالجته.');
+        elseif((int)$q['created_by']===$uid) flash('error','لا يجوز للمنشئ إرجاع تحصيله بنفسه.');
+        else{
+            dbExecute("UPDATE fina_collections SET status='returned',reviewed_by=?,reviewed_at=NOW(),return_note=? WHERE id=? AND status='pending'",[$uid,$note,$id]);
+            flash('success','تم إرجاع تحصيل فينا الخير للمستخدم المنشئ.');
+        }
+    }
+    header('Location: '.APP_URL.'modules/accounting/fina_payment_review.php');
+    exit();
+}
+
+$pending=dbFetchAll("SELECT fc.*,fs.source_type,fs.source_name,fs.source_phone,fs.source_alt_phone,fs.source_email,fs.source_address,fs.source_id_number,fs.source_reference,fs.contact_person,fs.source_details,s.full_name sponsor_name,s.sponsor_code,u.full_name creator_name FROM fina_collections fc JOIN fina_sources fs ON fs.id=fc.fina_source_id LEFT JOIN sponsors s ON s.id=fs.sponsor_id JOIN users u ON u.id=fc.created_by WHERE fc.status='pending' ORDER BY fc.collection_date ASC,fc.id ASC");
+$history=dbFetchAll("SELECT fc.*,fs.source_type,fs.source_name,s.full_name sponsor_name,s.sponsor_code,u.full_name creator_name,r.full_name reviewer_name FROM fina_collections fc JOIN fina_sources fs ON fs.id=fc.fina_source_id LEFT JOIN sponsors s ON s.id=fs.sponsor_id JOIN users u ON u.id=fc.created_by LEFT JOIN users r ON r.id=fc.reviewed_by WHERE fc.status IN ('approved','returned') ORDER BY fc.reviewed_at DESC,fc.id DESC LIMIT 50");
+include dirname(__DIR__,2).'/includes/header.php';
+?>
 <div class="welcome-section fade-in"><h2><i class="fas fa-building-columns me-2"></i>مراجعة تحصيلات فينا الخير</h2><p>تحصيلات مستقلة مملوكة 100% لفينا الخير. لا تنشئ كفالة ولا إيراداً لأهل الخير.</p></div><?php include dirname(__DIR__,2).'/includes/alerts.php';?>
 <div class="card mb-4"><div class="card-header text-white" style="background:#1b4d8f">طلبات بانتظار الاعتماد (<?php echo count($pending);?>)</div><div class="card-body p-0"><div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead class="table-light"><tr><th>المصدر</th><th>بيانات الاتصال</th><th>التحصيل</th><th>الغرض / الملاحظات</th><th>الإيصال</th><th>المراجعة</th></tr></thead><tbody><?php if(!$pending):?><tr><td colspan="6" class="text-center text-muted py-4">لا توجد تحصيلات فينا الخير معلقة.</td></tr><?php else:foreach($pending as $p):?><tr><td><strong><?php echo e(fina_review_source($p));?></strong><?php if(($p['source_type']??'')==='sponsor'):?><div class="small text-muted mt-1">بيانات الكفيل تُقرأ مباشرة من سجل الكفيل ولا تُنسخ إلى Fina.</div><?php endif;?></td><td class="small"><?php echo e($p['source_phone']??'—');?><br><?php echo e($p['source_alt_phone']??'');?><br><?php echo e($p['source_email']??'');?></td><td><strong><?php echo number_format((float)$p['amount'],2);?> <?php echo e($p['currency_code']);?></strong><br><span class="small"><?php echo e($p['payment_method']);?> — <?php echo e($p['collection_date']);?></span></td><td class="small"><?php echo e($p['purpose_note']?:'—');?><br><?php echo e($p['description']?:'');?></td><td><?php echo $p['receipt_path']?'<span class="text-success"><i class="fas fa-paperclip"></i> مرفق</span>':'—';?></td><td><form method="post" class="d-grid gap-2"><?php echo csrf_field();?><button name="approve_fina" value="<?php echo(int)$p['id'];?>" class="btn btn-success btn-sm" onclick="return confirm('اعتماد هذا التحصيل وترحيله كالتزام لفينا الخير؟');"><i class="fas fa-check me-1"></i>اعتماد وترحيل</button><button name="return_fina" value="<?php echo(int)$p['id'];?>" class="btn btn-outline-danger btn-sm" onclick="var n=prompt('سبب الإرجاع:');if(!n)return false;var i=document.createElement('input');i.type='hidden';i.name='return_note';i.value=n;this.form.appendChild(i);return true;"><i class="fas fa-rotate-left me-1"></i>إرجاع</button></form><div class="small text-muted mt-1">المنشئ: <?php echo e($p['creator_name']);?></div></td></tr><?php endforeach;endif;?></tbody></table></div></div></div>
 <div class="card"><div class="card-header">سجل تحصيلات فينا الأخيرة</div><div class="card-body p-0"><div class="table-responsive"><table class="table table-sm table-hover mb-0"><thead><tr><th>#</th><th>المصدر</th><th>المبلغ</th><th>التاريخ</th><th>الحالة</th><th>المراجع</th><th>القيد</th></tr></thead><tbody><?php if(!$history):?><tr><td colspan="7" class="text-center text-muted py-4">لا يوجد سجل سابق.</td></tr><?php else:foreach($history as $h):?><tr><td><?php echo(int)$h['id'];?></td><td><?php echo e(fina_review_source($h));?></td><td><?php echo number_format((float)$h['amount'],2).' '.e($h['currency_code']);?></td><td><?php echo e($h['collection_date']);?></td><td><?php echo $h['status']==='approved'?'<span class="badge bg-success">معتمد</span>':'<span class="badge bg-danger">مرتجع</span>';?></td><td><?php echo e($h['reviewer_name']??'—');?></td><td><?php echo $h['accounting_journal_id']?'<span class="badge bg-primary">#'.(int)$h['accounting_journal_id'].'</span>':'—';?></td></tr><?php endforeach;endif;?></tbody></table></div></div></div><?php include dirname(__DIR__,2).'/includes/footer.php';?>
