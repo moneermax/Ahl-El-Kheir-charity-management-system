@@ -138,6 +138,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
 }
 
 $accounts = dbFetchAll("SELECT id,code,name_ar FROM accounts WHERE is_active=1 AND account_type='asset' AND code IN ('1100','1200','1300') ORDER BY FIELD(code,'1100','1200','1300')");
+$approvedTotal = (float) (dbFetchOne(
+    "SELECT COALESCE(SUM(amount),0) total
+       FROM fina_collections
+      WHERE status='approved' AND currency_code=?",
+    [APP_CURRENCY_CODE]
+)['total'] ?? 0);
 $outstanding = fina_settlement_outstanding_total();
 
 $settlements = dbFetchAll(
@@ -216,7 +222,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     <?php include dirname(__DIR__, 2) . '/includes/alerts.php'; ?>
 
     <div class="row g-3 mb-4">
-        <div class="col-md-4"><div class="card border-warning h-100"><div class="card-body"><div class="text-muted">الالتزام المعتمد غير المسدد</div><div class="fs-3 fw-bold"><?php echo number_format($outstanding, 2); ?> <?php echo e(APP_CURRENCY_CODE); ?></div><div class="small text-muted">من التحصيلات المعتمدة مطروحاً منها تخصيصات التسويات غير الملغاة.</div></div></div></div>
+        <div class="col-md-4"><div class="card border-warning h-100"><div class="card-body"><div class="text-muted">إجمالي التحصيلات المعتمدة للتسوية</div><div class="fs-3 fw-bold"><?php echo number_format($approvedTotal, 2); ?> <?php echo e(APP_CURRENCY_CODE); ?></div><div class="small text-muted">من التحصيلات المعتمدة فقط.</div></div></div></div>
         <div class="col-md-4"><div class="card h-100"><div class="card-body"><div class="text-muted">عدد التسويات المسجلة</div><div class="fs-3 fw-bold"><?php echo count($settlements); ?></div><div class="small text-muted">السجل يعرض آخر 100 تسوية.</div></div></div></div>
         <div class="col-md-4"><div class="card border-success h-100"><div class="card-body"><div class="text-muted">قاعدة المحاسبة</div><div class="fs-5 fw-bold">مدين 2300 ← دائن الخزينة</div><div class="small text-muted">التسوية ليست إيراداً ولا مصروفاً لأهل الخير.</div></div></div></div>
     </div>
