@@ -147,3 +147,66 @@ Then use a safe pull appropriate to the actual local state. Never discard local 
 **Stage 3 original Fina accounting engine: COMPLETE / RUNTIME VERIFIED / CLOSED as historical evidence.**  
 **Stage 4 revised Fina settlement model/UI: IMPLEMENTED IN REPOSITORY; CORE ACCEPTANCE COMPLETE — two production cycles verified through close, permanent `2300`, separate Fina-held funds, no partial settlement, FM-only authorization, and original collection journals preserved.**  
 **Database cleanup decision: retain `fina_settlements` and `fina_settlement_allocations`; do not spend additional audit time dropping them. Next work is targeted runtime acceptance.**
+
+
+## DASHBOARD / NAVIGATION REVIEW — CURRENT HANDOFF 2026-09-18
+
+Accounting audit is intentionally parked. Current active work is the dashboard UX and role-safe navigation review, with special attention to the Administration/Staff/Social Media dashboard.
+
+### Universal Reports
+
+The project now uses one universal Reports Dashboard at modules/reports/index.php, backed by modules/reports/report_registry.php. Sidebar report navigation is a single Reports entry, not a dropdown. Direct report URLs use the same central authorization.
+
+Important business rule:
+- GM and VGM need broad organizational reporting visibility for management decisions, including financial reports where authorized by the report catalog.
+- FM keeps financial workflow/control authority.
+- Reporting access and workflow authority must not be conflated.
+
+### Current Administration dashboard
+
+dashboard/staff_dashboard.php was developed from its previous placeholder into an Administration/Staff/Social Media operational dashboard.
+
+The user has now runtime-tested it and confirmed it loads without errors after the latest fixes.
+
+Verified database relationship:
+families.id ← family_children.family_id ← family_children.id ← sponsorships.child_id
+
+There is no sponsorships.family_id and no children table.
+
+The dashboard and Winback page were corrected to use the real relationship.
+
+Current related commits:
+- 11c978de7da1f90166c0aad9677f69989be2d105 — Administration dashboard development.
+- 6c7a08fed514a2090a56e3ee30b16edafd6c134c — Administration sidebar Dashboard entry.
+- ba934c6cce0bf17eced9f9d1769a2a5908df0915 — sponsor-request role authorization.
+- 754a53b467e8e027543c1e089ae5e74586b10e — Administration Winback sidebar link.
+- 8a2dabea8b7a7a6854c2a08ecad2c9d106e36a86 — dashboard family sponsorship query correction.
+- 0d26093b53864b205ee42e4d91fe04cc7dfaee2c — Winback family sponsorship query correction.
+- 1257b54f8718c5c4546f6006191f51921518836f — role/link alignment and removal of invalid Administration Reports/families shortcuts.
+
+Runtime status:
+- Administration dashboard: loads without errors.
+- Winback link/page: no longer errors after the relationship fix.
+- Invalid direct Families link and unauthorized Reports shortcut were removed/repointed rather than weakening authorization.
+
+### OPEN WORK — DO NOT MARK COMPLETE
+
+The Administration dashboard still needs UX/functional review. The user explicitly said there are more fixes/work to do on the same dashboard.
+
+Next session should inspect:
+1. KPI meanings and whether each number is useful/actionable for Administration.
+2. Sponsor-request table fields, status presentation, and links/actions.
+3. Winback workflow integration and whether the dashboard exposes the right Administration actions.
+4. Orphan-form workflow link and whether it is valid for the role.
+5. Reports visibility for Administration/Staff/Social Media based on the actual report catalog; do not add unauthorized links just to fill space.
+6. Sidebar/dashboard consistency.
+7. Role differences between administration, staff, and social_media so users do not see inappropriate actions.
+8. Any remaining schema assumptions in the dashboard. Verify actual schema before SQL.
+9. Arabic labels/encoding and responsive UX.
+10. Any runtime errors the user reports.
+
+Do not restart the dashboard. Do not repeat the already-fixed sponsorship-family schema investigation.
+
+### CONTINUATION RULE
+
+Start by reading this index, then master status, then relevant master-audit sections, and inspect the current dashboard/staff_dashboard.php and linked pages before changing anything.
