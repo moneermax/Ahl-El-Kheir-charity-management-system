@@ -427,3 +427,11 @@ Two common UX issues were corrected:
 Runtime verification is required after pull.
 
 Messaging send/reply is currently under investigation. The repository code shows both actions pass through `config/messaging.php` and the same POST endpoint in `modules/messages/index.php`; no messaging schema change will be invented until the actual runtime failure is identified.
+
+
+## Cross-dashboard legal-age alert and notification menu refinement — 2026-09-18
+
+- Legal-age alert quick action now remains available in the header after the modal is closed; the automatic modal remains suppressed across refreshes and additional tabs using a user-specific localStorage key.
+- Full Notifications page retains the permanent **حذف الكل** action for the current user's notification history.
+- Header notification dropdown no longer exposes a destructive delete-all action. Its **مسح** action only clears the dropdown display/interaction and does not delete notification records; users can use **عرض الكل** for the full notification history and permanent deletion.
+- Internal messaging send/reply remains unresolved. No speculative messaging schema or database changes were made; runtime failure evidence is still required before changing the messaging persistence path.
