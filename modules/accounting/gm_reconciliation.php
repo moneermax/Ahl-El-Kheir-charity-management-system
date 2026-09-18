@@ -12,7 +12,7 @@ Session::start();
 if (!Session::isLoggedIn()) { header('Location: ' . APP_URL . 'index.php'); exit(); }
 $role = Session::getUserRole();
 $uid = (int)Session::getUserId();
-if (!in_array($role, ['admin', 'financial_manager','general_manager'], true)) { header('Location: ' . APP_URL . 'index.php'); exit(); }
+if (!in_array($role, ['admin', 'financial_manager','general_manager','vice_general_manager'], true)) { header('Location: ' . APP_URL . 'index.php'); exit(); }
 $pageTitle = 'تقرير المصالحة';
 $active = 'reconciliation';
 ak_out_ensure_schema();
