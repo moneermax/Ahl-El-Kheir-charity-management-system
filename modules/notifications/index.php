@@ -42,10 +42,10 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             </form>
             <?php endif; ?>
             <?php if ($total > 0): ?>
-            <form method="post" action="<?php echo e(APP_URL); ?>modules/notifications/clear_all.php" class="m-0" onsubmit="return confirm('هل أنت متأكد من مسح جميع الإشعارات؟');">
+            <form method="post" action="<?php echo e(APP_URL); ?>modules/notifications/clear_all.php" class="m-0" onsubmit="return confirm('هل أنت متأكد من حذف جميع الإشعارات القديمة؟');">
                 <?php echo csrf_field(); ?>
                 <input type="hidden" name="redirect" value="<?php echo e(APP_URL); ?>modules/notifications/index.php">
-                <button type="submit" class="btn btn-outline-danger btn-sm"><i class="fas fa-trash-can me-1"></i>مسح الكل</button>
+                <button type="submit" class="btn btn-outline-danger btn-sm"><i class="fas fa-trash-can me-1"></i>حذف الكل</button>
             </form>
             <?php endif; ?>
         </div>
