@@ -96,6 +96,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
         header('Location: ' . APP_URL . 'modules/administration/winback.php'); exit();
     }
 
+    if (isset($_POST['reopen_case'])) {
+        $cid = (int)$_POST['reopen_case'];
+        $c = dbFetchOne("SELECT * FROM winback_campaigns WHERE id = ?", [$cid]);
+        if ($c && $c['status'] === 'declined') {
+            dbExecute("UPDATE winback_campaigns SET status='open', closed_at=NULL, handled_by=? WHERE id = ?", [$uid, $cid]);
+            wb_audit($uid, 'REOPEN', $cid, ['sponsor_id' => $c['sponsor_id']]);
+            flash('success', t('تمت إعادة فتح متابعة الكفيل ويمكن تسجيل التواصل الجديد.'));
+        }
+        header('Location: ' . APP_URL . 'modules/administration/winback.php?view=' . $cid); exit();
+    }
+
     if (isset($_POST['mark_declined'])) {
         $cid = (int)$_POST['mark_declined'];
         dbExecute("UPDATE winback_campaigns SET status='declined', closed_at=NOW(), handled_by=? WHERE id = ?", [$uid, $cid]);
@@ -215,6 +226,21 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             </table>
         </div>
 
+        <?php if ($view['status'] === 'declined'): ?>
+        <div class="alert alert-warning d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+                <i class="fas fa-rotate-left me-2"></i>
+                <strong><?php echo t('هذه المتابعة مغلقة لأن الكفيل اعتذر سابقاً.'); ?></strong>
+                <div class="small mt-1"><?php echo t('إذا تم التواصل معه لاحقاً ووافق على العودة، أعد فتح نفس المتابعة بدلاً من إنشاء متابعة جديدة لنفس الكفيل.'); ?></div>
+            </div>
+            <form method="post" class="m-0"><?php echo csrf_field(); ?>
+                <button name="reopen_case" value="<?php echo (int)$view['id']; ?>" class="btn btn-warning" onclick="return confirm('إعادة فتح متابعة هذا الكفيل؟')">
+                    <i class="fas fa-folder-open me-1"></i><?php echo t('إعادة فتح المتابعة'); ?>
+                </button>
+            </form>
+        </div>
+        <?php endif; ?>
+
         <?php if (in_array($view['status'], ['open','contacted'], true)): ?>
         <div class="row g-3">
             <div class="col-md-8">
@@ -323,7 +349,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
-                <thead class="table-dark"><tr><th>#</th><th><?php echo t('الكفيل'); ?></th><th><?php echo t('المسؤول'); ?></th><th><?php echo t('آخر تواصل'); ?></th><th><?php echo t('الحالة'); ?></th><th class="text-center"><?php echo t('عرض'); ?></th></tr></thead>
+                <thead class="table-dark"><tr><th>#</th><th><?php echo t('الكفيل'); ?></th><th><?php echo t('المسؤول'); ?></th><th><?php echo t('آخر تواصل'); ?></th><th><?php echo t('الحالة'); ?></th><th class="text-center"><?php echo t('إجراء'); ?></th></tr></thead>
                 <tbody>
                 <?php if (!$cases): ?>
                 <tr><td colspan="6" class="text-center text-muted py-4"><?php echo t('لا توجد متابعات بعد.'); ?></td></tr>
@@ -334,7 +360,14 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     <td><?php echo e($c['handler_name'] ?? '—'); ?></td>
                     <td><small><?php echo e($c['last_contact_at'] ?? '—'); ?></small></td>
                     <td><?php [$sl, $sc] = $caseStatus[$c['status']] ?? [$c['status'], 'bg-secondary']; ?><span class="badge <?php echo $sc; ?>"><?php echo $sl; ?></span></td>
-                    <td class="text-center"><a href="?view=<?php echo (int)$c['id']; ?>" class="btn btn-sm btn-outline-primary"><i class="fas fa-eye"></i></a></td>
+                    <td class="text-center">
+                        <a href="?view=<?php echo (int)$c['id']; ?>" class="btn btn-sm btn-outline-primary"><i class="fas fa-eye me-1"></i><?php echo t('عرض'); ?></a>
+                        <?php if ($c['status'] === 'declined'): ?>
+                        <form method="post" class="d-inline"><?php echo csrf_field(); ?>
+                            <button name="reopen_case" value="<?php echo (int)$c['id']; ?>" class="btn btn-sm btn-outline-warning" title="<?php echo t('إعادة فتح المتابعة'); ?>" onclick="return confirm('إعادة فتح متابعة هذا الكفيل؟')"><i class="fas fa-folder-open"></i></button>
+                        </form>
+                        <?php endif; ?>
+                    </td>
                 </tr>
                 <?php endforeach; endif; ?>
                 </tbody>
