@@ -32,6 +32,7 @@ $winbackItem = ['active' => 'winback', 'label_key' => 'navigation.winback', 'ico
 $sponsorReportItem = ['active' => 'sponsor_reports', 'label_key' => 'navigation.sponsor_reports', 'icon' => 'fa-file-pdf', 'url' => 'modules/transactions/sponsor-monthly-report.php'];
 $lostContactReportItem = ['active' => 'lost_contact_report', 'label_key' => 'navigation.lost_contact_report', 'icon' => 'fa-exclamation-triangle', 'url' => 'modules/reports/lost_contact_report.php'];
 $confirmedDisbReportItem = ['active' => 'confirmed_disbursements_report', 'label_key' => 'navigation.confirmed_transfers_report', 'icon' => 'fa-check-circle', 'url' => 'modules/reports/confirmed_disbursements_report.php'];
+$reportsItem = ['active' => 'reports', 'label_key' => 'navigation.reports', 'icon' => 'fa-chart-line', 'url' => 'modules/reports/index.php'];
 
 /* Menus per role */
 $menus = [
@@ -43,13 +44,7 @@ $menus = [
         ['active' => 'sponsors', 'label_key' => 'navigation.sponsor_register', 'icon' => 'fa-hand-holding-heart', 'url' => 'modules/sponsors/index.php'],
         ['active' => 'families', 'label_key' => 'navigation.family_register', 'icon' => 'fa-house-chimney', 'url' => 'modules/families/index.php'],
         ['active' => 'sponsorships', 'label_key' => 'navigation.sponsorship_register', 'icon' => 'fa-file-contract', 'url' => 'modules/sponsorships/index.php'],
-        [
-            'type' => 'dropdown', 'label_key' => 'navigation.reports', 'icon' => 'fa-chart-line',
-            'items' => [
-                ['active' => 'reports', 'label_key' => 'navigation.general_reports', 'icon' => 'fa-file-lines', 'url' => 'modules/reports/index.php'],
-                $lostContactReportItem, $confirmedDisbReportItem, $sponsorReportItem,
-            ]
-        ],
+        $reportsItem,
         ['active' => 'audit', 'label_key' => 'navigation.audit_log', 'icon' => 'fa-file-lines', 'url' => 'modules/logs/audit.php'],
         ['active' => 'database', 'label_key' => 'navigation.database_management', 'icon' => 'fa-database', 'url' => 'modules/system/database.php'],
         ['active' => 'settings', 'label_key' => 'navigation.system_settings', 'icon' => 'fa-gear', 'url' => 'modules/settings/index.php'],
@@ -66,13 +61,7 @@ $menus = [
         ['active' => 'orphan_groups', 'label_key' => 'navigation.orphan_groups', 'icon' => 'fa-people-group', 'url' => 'modules/deputy_gm/groups.php'],
         ['active' => 'sponsorships', 'label_key' => 'navigation.sponsorship_register', 'icon' => 'fa-file-contract', 'url' => 'modules/sponsorships/index.php'],
         $suspItem,
-        [
-            'type' => 'dropdown', 'label_key' => 'navigation.reports', 'icon' => 'fa-chart-line',
-            'items' => [
-                ['active' => 'reports', 'label_key' => 'navigation.general_reports', 'icon' => 'fa-file-lines', 'url' => 'modules/reports/index.php'],
-                $lostContactReportItem, $confirmedDisbReportItem, $sponsorReportItem, $reconItem,
-            ]
-        ],
+        $reportsItem,
     ],
 
     'financial_manager' => [
@@ -98,20 +87,14 @@ $menus = [
         ['active' => 'dashboard', 'label_key' => 'navigation.dashboard', 'icon' => 'fa-gauge-high', 'url' => 'dashboard/accountant_staff_dashboard.php'],
         $transactionsItem, $disbItem, $orphanFormsItem,
         ['active' => 'my_nannies', 'label_key' => 'navigation.assigned_nannies', 'icon' => 'fa-user-nurse', 'url' => 'modules/accounting/my_nannies.php'],
-        [
-            'type' => 'dropdown', 'label_key' => 'navigation.reports', 'icon' => 'fa-chart-line',
-            'items' => [$lostContactReportItem, $confirmedDisbReportItem]
-        ],
+        $reportsItem,
     ],
 
     'nanny' => [
         ['active' => 'dashboard', 'label_key' => 'navigation.dashboard', 'icon' => 'fa-gauge-high', 'url' => 'dashboard/nanny_dashboard.php'],
         ['active' => 'families', 'label_key' => 'navigation.family_register', 'icon' => 'fa-house-chimney', 'url' => 'modules/families/index.php'],
         $disbItem, $orphanFormsItem,
-        [
-            'type' => 'dropdown', 'label_key' => 'navigation.reports', 'icon' => 'fa-file-lines',
-            'items' => [$sponsorReportItem, $lostContactReportItem, $confirmedDisbReportItem]
-        ],
+        $reportsItem,
     ],
 
     'supervisor' => [
@@ -120,13 +103,7 @@ $menus = [
         ['active' => 'families', 'label_key' => 'navigation.family_register', 'icon' => 'fa-house-chimney', 'url' => 'modules/families/index.php'],
         $orphanFormsItem,
         ['active' => 'sponsorships', 'label_key' => 'navigation.sponsorship_register', 'icon' => 'fa-file-contract', 'url' => 'modules/sponsorships/index.php'],
-        [
-            'type' => 'dropdown', 'label_key' => 'navigation.reports', 'icon' => 'fa-chart-line',
-            'items' => [
-                ['active' => 'reports', 'label_key' => 'navigation.general_reports', 'icon' => 'fa-file-lines', 'url' => 'modules/reports/index.php'],
-                $sponsorReportItem,
-            ]
-        ],
+        $reportsItem,
     ],
 
     'staff' => [
@@ -204,23 +181,6 @@ $menu = array_merge($menus[$role] ?? [], $personal);
 </aside>
 
 <style>
-.sidebar-dropdown { position: relative; }
-.sidebar-dropdown .dropdown-trigger { display:flex; align-items:center; padding:.75rem 1.25rem; color:rgba(255,255,255,.85); text-decoration:none; transition:all .2s ease; cursor:pointer; }
-.sidebar-dropdown .dropdown-trigger:hover { background:rgba(255,255,255,.1); color:#fff; }
-.sidebar-dropdown .dropdown-trigger i:first-child { width:24px; margin-left:.5rem; font-size:1rem; }
-.sidebar-dropdown .sidebar-dropdown-menu { list-style:none; margin:0; padding:0; background:rgba(0,0,0,.25); border-radius:0; max-height:0; overflow:hidden; transition:max-height .35s ease,padding .35s ease; }
-.sidebar-dropdown:hover .sidebar-dropdown-menu { max-height:500px; padding:.5rem 0; }
-.sidebar-dropdown .sidebar-dropdown-menu li { list-style:none; }
-.sidebar-dropdown .sidebar-dropdown-menu .sub-link { display:flex; align-items:center; padding:.6rem 1.25rem .6rem 3rem; color:rgba(255,255,255,.8); text-decoration:none; transition:all .2s ease; font-size:.9rem; }
-.sidebar-dropdown .sidebar-dropdown-menu .sub-link i { width:20px; margin-left:.5rem; font-size:.85rem; }
-.sidebar-dropdown .sidebar-dropdown-menu .sub-link:hover { background:rgba(255,255,255,.08); color:#fff; padding-right:3.25rem; }
-.sidebar-dropdown .sidebar-dropdown-menu .sub-link.active { background:rgba(13,110,253,.3); color:#fff; border-right:3px solid #0d6efd; }
-.sidebar-dropdown:hover .dropdown-trigger, .sidebar-dropdown .sidebar-dropdown-menu .sub-link.active ~ .dropdown-trigger, .sidebar-dropdown:has(.sub-link.active) .dropdown-trigger { background:rgba(255,255,255,.08); color:#fff; }
-[dir="rtl"] .sidebar-dropdown .sidebar-dropdown-menu .sub-link { padding:.6rem 3rem .6rem 1.25rem; }
-[dir="rtl"] .sidebar-dropdown .sidebar-dropdown-menu .sub-link:hover { padding-left:3.25rem; padding-right:3rem; }
-[dir="rtl"] .sidebar-dropdown .sidebar-dropdown-menu .sub-link.active { border-right:none; border-left:3px solid #0d6efd; }
-[dir="rtl"] .sidebar-dropdown .dropdown-trigger i:first-child { margin-left:0; margin-right:.5rem; }
-[dir="rtl"] .sidebar-dropdown .sidebar-dropdown-menu .sub-link i { margin-left:0; margin-right:.5rem; }
 .sidebar-link { display:flex; align-items:center; padding:.75rem 1.25rem; color:rgba(255,255,255,.85); text-decoration:none; transition:all .2s ease; }
 .sidebar-link:hover { background:rgba(255,255,255,.1); color:#fff; }
 .sidebar-link.active { background:rgba(13,110,253,.3); color:#fff; border-right:3px solid #0d6efd; }
