@@ -284,3 +284,72 @@ A new chat/session must continue from this master status and the single master a
 - **FM treasury calculation: PASS / CLOSED.** The FM dashboard reads live posted-ledger balances for `1100`, `1200`, and `1300`; runtime values were Cash `48,721,100`, Bank `24,796,000`, E-wallet `25,060,000`, Total Treasury `98,577,100`, and the displayed total exactly equals their sum. The reconciliation flow figures are a separate report and are not the current treasury balance.
 - Do not rerun closed bank-transfer, mobile-wallet, admin-fee `none`, FM treasury calculation, notification, receipt, Supervisor ownership/scope, or completed Accounting tests unless genuine regression evidence appears.
 - **Next audit work:** continue with the remaining Supervisor ↔ Accounting integration controls, starting with Supervisor payment-history scope and direct/indirect exposure of Accounting-only journal/ledger/approval/posting controls. Inspect repository code before creating any new test data or SQL.
+
+
+## 17. Dashboard / Navigation Review — 2026-09-18
+
+The current active development phase is dashboard UX and role-safe navigation. Accounting audit work is intentionally parked.
+
+### Universal Reports architecture
+
+The system now uses a universal Reports Dashboard at modules/reports/index.php, backed by modules/reports/report_registry.php. Sidebar navigation exposes one Reports entry rather than a report-specific dropdown, while direct report URLs enforce the same centralized authorization.
+
+Management reporting must remain distinct from workflow authority:
+- GM/VGM require broad organizational report visibility for management decisions.
+- FM retains financial workflow/control authority.
+- Removing FM workflow access from VGM must not remove VGM's management reporting access.
+
+### Administration / Staff / Social Media dashboard
+
+dashboard/staff_dashboard.php was developed from the former placeholder into an operational Administration/Staff/Social Media dashboard.
+
+The user runtime-tested the current Administration dashboard and confirmed it loads without errors.
+
+The dashboard currently includes:
+- new sponsor requests;
+- contacted sponsor requests;
+- open winback follow-ups;
+- families without an active sponsorship;
+- latest sponsor requests;
+- role-relevant quick actions.
+
+The Administration sidebar now includes Dashboard, sponsor requests, orphan forms, and Winback follow-ups.
+
+modules/sponsors/requests.php now authorizes Administration and Staff in addition to its previously authorized roles.
+
+### Verified schema used by the dashboard
+
+The live database inspection established:
+- sponsorships.child_id → family_children.id;
+- family_children.family_id → the family record;
+- sponsorships.family_id does not exist;
+- children table does not exist.
+
+All current dashboard/Winback family-sponsorship queries must follow the verified sponsorships → family_children → families relationship.
+
+### Recent commits
+
+- 11c978de7da1f90166c0aad9677f69989be2d105 — Administration dashboard development.
+- ba934c6cce0bf17eced9f9d1769a2a5908df0915 — sponsor request role authorization.
+- 754a53b467e8e027543c1e089ae5e74586b10e — Administration Winback sidebar link.
+- 8a2dabea8b7a7a6854c2a08ecad2c9d106e36a86 — dashboard sponsorship-family query correction.
+- 0d26093b53864b205ee42e4d91fe04cc7dfaee2c — Winback sponsorship-family query correction.
+- 1257b54f8718c5c4546f6006191f51921518836f — Administration dashboard role/link alignment.
+
+### Open dashboard work
+
+This phase is in progress, not closed.
+
+Continue with:
+- Administration dashboard UX review;
+- KPI/business meaning review;
+- sponsor-request table/action review;
+- Winback integration;
+- orphan-form navigation;
+- role-specific differences for Administration/Staff/Social Media;
+- Reports visibility according to actual registry authorization;
+- Arabic labels/encoding;
+- responsive layout;
+- remaining runtime/schema issues.
+
+Do not weaken authorization simply to make a link work. Do not invent schema. Do not repeat the completed sponsorship-family schema investigation.
