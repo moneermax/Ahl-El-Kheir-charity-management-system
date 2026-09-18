@@ -70,7 +70,7 @@ $menus = [
             'type' => 'dropdown', 'label_key' => 'navigation.reports', 'icon' => 'fa-chart-line',
             'items' => [
                 ['active' => 'reports', 'label_key' => 'navigation.general_reports', 'icon' => 'fa-file-lines', 'url' => 'modules/reports/index.php'],
-                $lostContactReportItem, $confirmedDisbReportItem,
+                $lostContactReportItem, $confirmedDisbReportItem, $sponsorReportItem, $reconItem,
             ]
         ],
     ],
