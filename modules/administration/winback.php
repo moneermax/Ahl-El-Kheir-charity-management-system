@@ -257,7 +257,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 <?php else: ?>
 
 <div class="row g-4 mb-4">
-    <div class="col-lg-8">
+    <div class="col-lg-8" id="open-cases">
         <div class="card fade-in h-100">
             <div class="card-header"><i class="fas fa-hourglass-half me-2"></i><?php echo t('الكفلاء المتوقفون المؤهلون'); ?> (<?php echo count($queue); ?>)</div>
             <div class="card-body p-0">
