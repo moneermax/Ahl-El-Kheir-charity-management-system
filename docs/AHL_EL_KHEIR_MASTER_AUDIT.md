@@ -749,3 +749,24 @@ The Administration dashboard Winback KPI links now use distinct anchors: open fo
 ### Winback KPI destination and list UX refinement — 2026-09-18
 
 The Administration dashboard no longer uses two anchors into the same Winback page for the two different KPI concepts. Open Winback follow-ups use the Winback open-cases section; uncovered families use a dedicated Administration page. The Winback available-family list was also refined with an action/view column and centered monthly-need values while retaining its current placement and sticky header.
+
+
+### Administration sponsorship-safe family/orphan view — 2026-09-18
+
+The dashboard/navigation review identified a business requirement: Administration must be able to review enough orphan/family information to make a complete sponsorship proposal and avoid later disputes about undisclosed sponsorship-relevant conditions, especially during Winback. That requirement does not justify unrestricted access to the full internal family case record.
+
+A dedicated page was added:
+`modules/administration/sponsorship_family_view.php`
+
+The controlled profile reads only known existing fields from `families`, `family_children`, and `sponsorships`. It shows sponsorship-relevant family summary data and child information including health status, psychological state, education level, critical flag, current monthly sponsorship value, extra allowance, and the latest prior sponsorship amount/status/start date.
+
+It does not expose direct family phone numbers, exact address, registration identifiers, family bank accounts, documents, internal family notes, or edit controls.
+
+Navigation/authorization was aligned:
+- available-family actions in `modules/administration/available_families.php` route to the controlled sponsorship profile;
+- available-family actions in `modules/administration/winback.php` route to the controlled sponsorship profile;
+- `administration` was removed from the unrestricted `modules/families/view.php` role list once the controlled page existed.
+
+This keeps the business rule explicit: **sponsorship information visibility is broader than internal case-management authority, but narrower than unrestricted family-file access.**
+
+Runtime acceptance is pending.
