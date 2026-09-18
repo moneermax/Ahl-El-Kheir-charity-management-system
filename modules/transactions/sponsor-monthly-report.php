@@ -4,15 +4,11 @@ require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../config/functions.php';
 require_once __DIR__ . '/../../config/session.php';
+require_once __DIR__ . '/../reports/report_registry.php';
 Session::start();
 
 // Access guard
-$allowedRoles = ['nanny', 'financial_manager', 'admin', 'general_manager', 'vice_general_manager'];
-if (!Session::isLoggedIn() || !in_array(Session::getUserRole(), $allowedRoles, true)) {
-    flash(['type' => 'error', 'message' => 'ليس لديك صلاحية الوصول لهذه الصفحة']);
-    header('Location: ' . APP_URL . 'index.php');
-    exit();
-}
+ak_report_require_access('sponsor_monthly');
 
 $pageTitle = 'تقرير الكفيل الشهري';
 $active = 'sponsor_reports';
