@@ -106,6 +106,12 @@ $menus = [
         $reportsItem,
     ],
 
+    'administration' => [
+        ['active' => 'dashboard', 'label_key' => 'navigation.dashboard', 'icon' => 'fa-gauge-high', 'url' => 'dashboard/staff_dashboard.php'],
+        ['active' => 'requests', 'label_key' => 'navigation.join_requests', 'icon' => 'fa-user-plus', 'url' => 'modules/sponsors/requests.php'],
+        $orphanFormsItem,
+    ],
+
     'staff' => [
         ['active' => 'dashboard', 'label_key' => 'navigation.dashboard', 'icon' => 'fa-gauge-high', 'url' => 'dashboard/staff_dashboard.php'],
         ['active' => 'requests', 'label_key' => 'navigation.join_requests', 'icon' => 'fa-user-plus', 'url' => 'modules/sponsors/requests.php'],
