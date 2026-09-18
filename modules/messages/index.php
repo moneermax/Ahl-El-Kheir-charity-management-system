@@ -174,6 +174,330 @@ include dirname(__DIR__,2).'/includes/header.php';
  </div><div class="modal-footer"><div class="compose-footer-actions"><button type="button" class="compose-cancel" data-bs-dismiss="modal">إلغاء</button><div class="d-flex align-items-center gap-2"><span id="composeStatus" class="msg-status"><i class="fas fa-circle-notch fa-spin"></i> جارٍ الإرسال...</span><button type="submit" class="compose-send"><i class="fas fa-paper-plane me-1"></i>إرسال الرسالة</button></div></div></div></form>
  </div></div></div>
 <div id="msgToast" class="msg-toast"></div>
+<style id="msg-redesign-v3">
+/* ============================================================
+   Messaging V3 — clean Outlook/Gmail-inspired workspace
+   Visual-only redesign; existing PHP/JS message functionality stays intact.
+   ============================================================ */
+.messages-shell{
+  --mail-ink:#17202a;
+  --mail-muted:#66717f;
+  --mail-line:#dfe3e8;
+  --mail-line-soft:#eceff2;
+  --mail-bg:#f5f6f8;
+  --mail-surface:#fff;
+  --mail-accent:#2b4c73;
+  --mail-accent-soft:#edf2f7;
+  --mail-accent-dark:#1f3856;
+  font-family:'Cairo',sans-serif!important;
+  color:var(--mail-ink)!important;
+}
+.messages-shell .msg-toolbar{
+  margin-bottom:10px!important;
+  padding:0 2px!important;
+}
+.messages-shell .msg-title{gap:10px!important}
+.messages-shell .msg-title-icon{
+  width:38px!important;height:38px!important;border-radius:9px!important;
+  background:var(--mail-accent)!important;box-shadow:none!important;font-size:16px!important;
+}
+.messages-shell .msg-title h2{font-size:1.05rem!important;letter-spacing:-.15px}
+.messages-shell .msg-title p{font-size:.67rem!important;color:#7b8591!important}
+.messages-shell .msg-settings{gap:6px!important}
+.messages-shell .msg-settings select{
+  width:88px!important;height:29px!important;background:#fff!important;
+  border:1px solid var(--mail-line)!important;border-radius:7px!important;
+}
+
+/* Main workspace */
+.messages-shell .msg-layout{
+  grid-template-columns:178px 365px minmax(430px,1fr)!important;
+  height:calc(100vh - 188px)!important;
+  min-height:570px!important;
+  background:var(--mail-surface)!important;
+  border:1px solid #d8dde3!important;
+  border-radius:7px!important;
+  box-shadow:0 2px 10px rgba(16,24,40,.055)!important;
+  overflow:hidden!important;
+}
+.messages-shell .msg-layout.no-thread{
+  grid-template-columns:178px minmax(0,1fr)!important;
+}
+
+/* Folder rail */
+.messages-shell .msg-sidebar{
+  background:#f8f9fa!important;
+  border-inline-end:1px solid var(--mail-line)!important;
+  padding:13px 9px!important;
+}
+.messages-shell .msg-compose-btn{
+  background:var(--mail-accent)!important;
+  border-radius:7px!important;
+  box-shadow:none!important;
+  padding:9px 10px!important;
+  margin-bottom:12px!important;
+  font-size:.72rem!important;
+}
+.messages-shell .msg-compose-btn:hover{background:var(--mail-accent-dark)!important}
+.messages-shell .msg-nav{gap:1px!important}
+.messages-shell .msg-nav a,
+.messages-shell .msg-nav button{
+  min-height:36px!important;
+  padding:7px 9px!important;
+  border-radius:6px!important;
+  color:#4e5966!important;
+  font-size:.69rem!important;
+}
+.messages-shell .msg-nav a:hover,
+.messages-shell .msg-nav button:hover{
+  background:#eef1f4!important;color:var(--mail-accent)!important;
+}
+.messages-shell .msg-nav a.active{
+  background:#e7edf3!important;color:var(--mail-accent)!important;font-weight:850!important;
+}
+.messages-shell .msg-nav i{font-size:.72rem!important;width:18px!important}
+.messages-shell .msg-count{
+  background:#64748b!important;color:#fff!important;
+  min-width:19px!important;height:19px!important;line-height:19px!important;
+  padding:0!important;border-radius:10px!important;font-size:.54rem!important;
+}
+.messages-shell .msg-section-label{
+  margin:19px 8px 6px!important;
+  color:#9aa3ad!important;font-size:.58rem!important;text-transform:uppercase;
+  letter-spacing:.25px;
+}
+
+/* Message list */
+.messages-shell .msg-list-pane{
+  background:#fff!important;
+  border-inline-end:1px solid var(--mail-line)!important;
+}
+.messages-shell .msg-list-head{
+  min-height:68px!important;
+  padding:10px 12px!important;
+  background:#fff!important;
+  border-bottom:1px solid var(--mail-line)!important;
+  flex-wrap:wrap!important;
+}
+.messages-shell .msg-list-head h3{
+  font-size:.78rem!important;color:#202a35!important;letter-spacing:.1px;
+}
+.messages-shell .msg-search-wrap{
+  order:3!important;flex-basis:100%!important;max-width:none!important;
+}
+.messages-shell .msg-search{
+  height:30px!important;
+  background:#f5f6f8!important;
+  border:1px solid #e2e5e9!important;
+  border-radius:6px!important;
+  font-size:.63rem!important;
+}
+.messages-shell .msg-search:focus{
+  background:#fff!important;border-color:#aab6c3!important;
+  box-shadow:0 0 0 2px rgba(43,76,115,.07)!important;
+}
+.messages-shell .msg-filter{
+  margin-inline-start:auto!important;
+}
+.messages-shell .msg-filter a{
+  font-size:.57rem!important;padding:4px 7px!important;border-radius:5px!important;
+}
+.messages-shell .msg-filter a.active{
+  background:#edf1f5!important;color:var(--mail-accent)!important;
+}
+
+/* Rows: compact, dense, email-client feel */
+.messages-shell .msg-list{background:#fff!important}
+.messages-shell .msg-row{
+  min-height:72px!important;
+  padding:10px 12px!important;
+  gap:9px!important;
+  border-bottom:1px solid var(--mail-line-soft)!important;
+  background:#fff!important;
+}
+.messages-shell .msg-row:hover{background:#f6f8fa!important}
+.messages-shell .msg-row.active{
+  background:#eef3f7!important;
+  box-shadow:inset -3px 0 0 var(--mail-accent)!important;
+}
+.messages-shell .msg-row.unread{
+  background:#fafcff!important;
+}
+.messages-shell .msg-row.unread:before{
+  width:3px!important;background:#2b4c73!important;
+}
+.messages-shell .msg-avatar{
+  width:34px!important;height:34px!important;flex-basis:34px!important;
+  border:0!important;background:#e8edf2!important;color:#344d68!important;
+  font-size:.68rem!important;
+}
+.messages-shell .msg-name{font-size:.68rem!important;font-weight:750!important}
+.messages-shell .msg-row.unread .msg-name,
+.messages-shell .msg-row.unread .msg-subject{font-weight:900!important;color:#182432!important}
+.messages-shell .msg-time{font-size:.54rem!important;color:#8b949e!important}
+.messages-shell .msg-subject{font-size:.69rem!important;margin-top:2px!important}
+.messages-shell .msg-preview{
+  font-size:.58rem!important;color:#7c8792!important;margin-top:2px!important;
+}
+.messages-shell .msg-new{
+  background:#e5ebf1!important;color:#344d68!important;
+  font-size:.48rem!important;padding:2px 4px!important;border-radius:4px!important;
+}
+
+/* Reading pane — clean document/email view */
+.messages-shell .msg-reading-pane{
+  background:#f6f7f9!important;
+  position:relative!important;
+}
+.messages-shell .msg-reading-head{
+  min-height:66px!important;
+  padding:10px 18px!important;
+  background:#fff!important;
+  border-bottom:1px solid var(--mail-line)!important;
+}
+.messages-shell .msg-conv-person .msg-avatar{
+  width:38px!important;height:38px!important;flex-basis:38px!important;
+}
+.messages-shell .msg-conv-name{font-size:.75rem!important;color:#202a35!important}
+.messages-shell .msg-conv-meta{font-size:.55rem!important;color:#87919c!important}
+.messages-shell .msg-icon-btn{
+  width:31px!important;height:31px!important;
+  border:0!important;background:#f2f4f6!important;color:#596674!important;
+  border-radius:6px!important;
+}
+.messages-shell .msg-icon-btn:hover{
+  background:#e8edf2!important;color:var(--mail-accent)!important;
+}
+
+/* Message body */
+.messages-shell .msg-thread{
+  padding:25px 32px 30px!important;
+  background:#f6f7f9!important;
+}
+.messages-shell .msg-root{
+  max-width:850px!important;
+  margin:0 auto 14px!important;
+  padding:21px 24px!important;
+  border:0!important;
+  border-radius:5px!important;
+  background:#fff!important;
+  box-shadow:0 1px 3px rgba(16,24,40,.07)!important;
+}
+.messages-shell .msg-subject-large{
+  font-size:1.03rem!important;
+  font-weight:850!important;
+  color:#17202a!important;
+  margin-bottom:9px!important;
+}
+.messages-shell .msg-root-meta{
+  font-size:.57rem!important;color:#78838e!important;
+}
+.messages-shell .msg-root hr{
+  border-color:#e8ebee!important;margin:15px 0!important;
+}
+.messages-shell .msg-body{
+  font-size:.76rem!important;
+  line-height:2!important;
+  color:#2f3945!important;
+}
+.messages-shell .msg-bubble{
+  max-width:850px!important;
+  margin:8px auto!important;
+  padding:12px 15px!important;
+  border:1px solid #e0e4e8!important;
+  border-radius:5px!important;
+  background:#fff!important;
+  box-shadow:0 1px 2px rgba(16,24,40,.035)!important;
+}
+.messages-shell .msg-bubble.mine{
+  background:#edf3f8!important;border-color:#d5e0ea!important;
+}
+.messages-shell .msg-bubble-name{font-size:.61rem!important;color:#34485d!important}
+.messages-shell .msg-bubble-time{font-size:.52rem!important;color:#8b949e!important}
+
+/* Reply composer */
+.messages-shell .msg-reply{
+  padding:10px 15px 12px!important;
+  background:#fff!important;
+  border-top:1px solid var(--mail-line)!important;
+}
+.messages-shell .msg-reply-inner{max-width:850px!important}
+.messages-shell .msg-reply-box{
+  border:1px solid #ccd3da!important;
+  border-radius:6px!important;
+  box-shadow:none!important;
+}
+.messages-shell .msg-reply textarea{
+  min-height:66px!important;padding:10px 12px!important;
+  font-size:.72rem!important;
+}
+.messages-shell .msg-reply-tools{
+  padding:5px 7px!important;background:#fafbfc!important;
+  border-top:1px solid #edf0f2!important;
+}
+.messages-shell .msg-tool{
+  width:29px!important;height:29px!important;border-radius:5px!important;
+}
+.messages-shell .msg-send{
+  background:var(--mail-accent)!important;
+  border-radius:5px!important;
+  font-size:.64rem!important;padding:7px 12px!important;
+}
+.messages-shell .msg-send:hover{background:var(--mail-accent-dark)!important}
+
+/* Empty reading state */
+.messages-shell .msg-reading-pane.empty{background:#f6f7f9!important}
+.messages-shell .msg-read-empty{text-align:center!important;color:#89939e!important}
+.messages-shell .msg-read-empty-icon{
+  width:64px!important;height:64px!important;border-radius:50%!important;
+  background:#e9edf1!important;color:#687786!important;
+  margin:0 auto 12px!important;
+}
+.messages-shell .msg-read-empty strong{
+  display:block!important;color:#4a5662!important;font-size:.76rem!important;margin-bottom:3px!important;
+}
+.messages-shell .msg-read-empty span{font-size:.61rem!important}
+
+/* Compose modal matches the new neutral mail chrome */
+.messages-shell ~ .compose-modal .modal-content,
+.compose-modal .modal-content{
+  border-radius:7px!important;box-shadow:0 15px 45px rgba(16,24,40,.20)!important;
+}
+.compose-modal .modal-header{
+  padding:12px 16px!important;border-bottom:1px solid var(--mail-line)!important;
+}
+.compose-head-icon{
+  width:34px!important;height:34px!important;border-radius:7px!important;
+  background:#e9eef3!important;color:var(--mail-accent)!important;
+}
+.compose-modal .modal-body{padding:15px 17px!important}
+.compose-modal .modal-footer{padding:9px 17px!important;background:#fafbfc!important}
+.compose-modal .form-control,.compose-modal .form-select{
+  border-radius:6px!important;font-size:.7rem!important;
+}
+.compose-send{background:var(--mail-accent)!important;border-radius:5px!important}
+.compose-cancel{border-radius:5px!important}
+
+/* Responsive */
+@media(max-width:1100px){
+  .messages-shell .msg-layout.has-thread{
+    grid-template-columns:165px 325px minmax(340px,1fr)!important;
+  }
+}
+@media(max-width:900px){
+  .messages-shell .msg-layout.has-thread{
+    grid-template-columns:165px minmax(0,1fr)!important;
+  }
+  .messages-shell .msg-list-pane{min-width:0}
+  .messages-shell .msg-reading-pane{position:absolute!important;inset:0!important;z-index:20!important}
+}
+@media(max-width:767px){
+  .messages-shell .msg-layout{display:block!important;height:auto!important}
+  .messages-shell .msg-sidebar{border-bottom:1px solid var(--mail-line)!important}
+  .messages-shell .msg-thread{padding:15px 10px 20px!important}
+  .messages-shell .msg-root{padding:16px!important}
+}
+</style>
 <script>
 const msgCsrf=<?php echo json_encode(csrf_token());?>; const msgUrl=<?php echo json_encode($msgUrl);?>;
 const attachmentApiUrl=msgUrl.replace('index.php','attachment.php');
