@@ -498,6 +498,591 @@ include dirname(__DIR__,2).'/includes/header.php';
   .messages-shell .msg-root{padding:16px!important}
 }
 </style>
+<style id="msg-gmail-inspired-v4">
+/* Gmail-inspired mail client — structural visual redesign.
+   Keep application logic and existing message controls intact. */
+.messages-shell{
+  --g-blue:#1a73e8;
+  --g-blue-soft:#e8f0fe;
+  --g-text:#202124;
+  --g-muted:#5f6368;
+  --g-line:#dadce0;
+  --g-bg:#f6f8fc;
+  --g-hover:#f2f6fc;
+  --g-selected:#d3e3fd;
+  --g-unread:#fff;
+  background:var(--g-bg)!important;
+  color:var(--g-text)!important;
+  font-family:'Cairo',Arial,sans-serif!important;
+  font-size:13px!important;
+}
+.messages-shell .msg-toolbar{
+  display:grid!important;
+  grid-template-columns:auto minmax(280px,680px) auto!important;
+  align-items:center!important;
+  gap:18px!important;
+  height:58px!important;
+  margin:0!important;
+  padding:0 12px!important;
+  background:transparent!important;
+}
+.messages-shell .msg-title{
+  gap:9px!important;
+  min-width:180px!important;
+}
+.messages-shell .msg-title-icon{
+  width:32px!important;height:32px!important;
+  border-radius:50%!important;
+  background:#fff!important;
+  color:var(--g-blue)!important;
+  box-shadow:none!important;
+  font-size:16px!important;
+}
+.messages-shell .msg-title h2{
+  font-size:1rem!important;
+  font-weight:700!important;
+  color:#3c4043!important;
+}
+.messages-shell .msg-title p{display:none!important}
+.messages-shell .msg-settings{
+  justify-self:end!important;
+  font-size:0!important;
+}
+.messages-shell .msg-settings i,
+.messages-shell .msg-settings span{display:none!important}
+.messages-shell .msg-settings select{
+  width:28px!important;height:28px!important;
+  padding:0!important;border:0!important;
+  background:transparent!important;
+  font-size:0!important;
+}
+
+/* The search box becomes the primary Gmail-style app search. */
+.messages-shell .msg-toolbar:after{
+  content:'بحث في الرسائل'!important;
+  position:absolute!important;
+  top:71px!important;
+  right:calc(50% - 340px)!important;
+  width:0!important;height:0!important;
+  overflow:hidden!important;
+}
+
+/* Workspace */
+.messages-shell .msg-layout,
+.messages-shell .msg-layout.no-thread,
+.messages-shell .msg-layout.has-thread{
+  display:grid!important;
+  grid-template-columns:205px minmax(0,1fr)!important;
+  height:calc(100vh - 178px)!important;
+  min-height:590px!important;
+  margin:0!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  background:var(--g-bg)!important;
+  overflow:hidden!important;
+}
+
+/* Left Gmail-like navigation */
+.messages-shell .msg-sidebar{
+  background:var(--g-bg)!important;
+  border:0!important;
+  padding:8px 10px 15px 7px!important;
+}
+.messages-shell .msg-compose-btn{
+  width:auto!important;
+  min-width:135px!important;
+  min-height:46px!important;
+  margin:0 0 12px 7px!important;
+  padding:0 17px!important;
+  border-radius:15px!important;
+  background:#c2e7ff!important;
+  color:#001d35!important;
+  box-shadow:0 1px 2px rgba(60,64,67,.16)!important;
+  font-size:.72rem!important;
+  font-weight:700!important;
+  text-align:center!important;
+}
+.messages-shell .msg-compose-btn i{color:#001d35!important}
+.messages-shell .msg-compose-btn:hover{background:#b6ddf5!important}
+.messages-shell .msg-nav{gap:1px!important}
+.messages-shell .msg-nav a,
+.messages-shell .msg-nav button{
+  min-height:34px!important;
+  padding:6px 12px!important;
+  border-radius:0 17px 17px 0!important;
+  color:#3c4043!important;
+  font-size:.68rem!important;
+  font-weight:500!important;
+}
+.messages-shell .msg-nav a:hover,
+.messages-shell .msg-nav button:hover{
+  background:#e9eef6!important;
+  color:#202124!important;
+}
+.messages-shell .msg-nav a.active{
+  background:#d3e3fd!important;
+  color:#0b57d0!important;
+  font-weight:800!important;
+}
+.messages-shell .msg-nav i{
+  width:21px!important;
+  font-size:.75rem!important;
+  color:inherit!important;
+}
+.messages-shell .msg-count{
+  background:#0b57d0!important;
+  color:#fff!important;
+  min-width:18px!important;
+  height:18px!important;
+  line-height:18px!important;
+  padding:0 5px!important;
+  border-radius:9px!important;
+  font-size:.52rem!important;
+}
+.messages-shell .msg-section-label{
+  margin:20px 12px 6px!important;
+  font-size:.58rem!important;
+  color:#5f6368!important;
+  font-weight:700!important;
+}
+.messages-shell .msg-sidebar .small.text-muted{
+  padding:0 12px!important;
+  color:#80868b!important;
+  line-height:1.7!important;
+}
+
+/* Main Gmail surface */
+.messages-shell .msg-list-pane{
+  min-width:0!important;
+  display:flex!important;
+  flex-direction:column!important;
+  background:#fff!important;
+  border:0!important;
+  border-radius:18px 0 0 0!important;
+  overflow:hidden!important;
+}
+.messages-shell .msg-list-head{
+  min-height:52px!important;
+  padding:7px 12px!important;
+  border:0!important;
+  border-bottom:1px solid #e7e9ec!important;
+  background:#fff!important;
+  display:flex!important;
+  align-items:center!important;
+  gap:10px!important;
+}
+.messages-shell .msg-list-head h3{
+  order:0!important;
+  width:72px!important;
+  font-size:.76rem!important;
+  font-weight:700!important;
+  color:#3c4043!important;
+}
+.messages-shell .msg-search-wrap{
+  order:1!important;
+  flex:1!important;
+  flex-basis:auto!important;
+  max-width:none!important;
+}
+.messages-shell .msg-search{
+  width:100%!important;
+  max-width:none!important;
+  height:40px!important;
+  border:0!important;
+  border-radius:20px!important;
+  background:#eaf0f8!important;
+  box-shadow:none!important;
+  color:#202124!important;
+  font-size:.68rem!important;
+  padding-inline-start:38px!important;
+}
+.messages-shell .msg-search:focus{
+  background:#fff!important;
+  box-shadow:0 1px 4px rgba(60,64,67,.25)!important;
+}
+.messages-shell .msg-search-wrap i{
+  inset-inline-start:15px!important;
+  font-size:.75rem!important;
+  color:#5f6368!important;
+}
+.messages-shell .msg-filter{
+  order:2!important;
+  margin:0!important;
+  display:flex!important;
+  gap:0!important;
+}
+.messages-shell .msg-filter a{
+  padding:7px 10px!important;
+  border-radius:0!important;
+  font-size:.61rem!important;
+  color:#5f6368!important;
+  border-bottom:2px solid transparent!important;
+}
+.messages-shell .msg-filter a.active{
+  background:transparent!important;
+  color:#0b57d0!important;
+  border-bottom-color:#0b57d0!important;
+  font-weight:800!important;
+}
+
+/* Inbox rows */
+.messages-shell .msg-list{
+  background:#fff!important;
+  overflow:auto!important;
+}
+.messages-shell .msg-row{
+  min-height:52px!important;
+  height:52px!important;
+  padding:0 12px!important;
+  gap:9px!important;
+  align-items:center!important;
+  border-bottom:1px solid #edf0f2!important;
+  background:#fff!important;
+  color:#202124!important;
+  box-shadow:none!important;
+}
+.messages-shell .msg-row:hover{
+  background:#f2f6fc!important;
+  box-shadow:0 1px 3px rgba(60,64,67,.10)!important;
+  z-index:1!important;
+}
+.messages-shell .msg-row.unread{
+  background:#fff!important;
+}
+.messages-shell .msg-row.active{
+  background:#c2dbff!important;
+  box-shadow:none!important;
+}
+.messages-shell .msg-row.unread:before{display:none!important}
+.messages-shell .msg-avatar{
+  width:30px!important;height:30px!important;
+  flex:0 0 30px!important;
+  border:0!important;
+  border-radius:50%!important;
+  background:#e8eaed!important;
+  color:#5f6368!important;
+  font-size:.62rem!important;
+}
+.messages-shell .msg-row-main{
+  display:grid!important;
+  grid-template-columns:145px minmax(0,1fr)!important;
+  grid-template-rows:24px 24px!important;
+  align-items:center!important;
+  min-width:0!important;
+}
+.messages-shell .msg-row-top,
+.messages-shell .msg-row-bottom{display:contents!important}
+.messages-shell .msg-name{
+  grid-column:1!important;grid-row:1!important;
+  min-width:0!important;
+  font-size:.66rem!important;
+  font-weight:600!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+.messages-shell .msg-row.unread .msg-name{
+  font-weight:800!important;
+  color:#202124!important;
+}
+.messages-shell .msg-subject{
+  grid-column:2!important;grid-row:1!important;
+  min-width:0!important;
+  font-size:.66rem!important;
+  font-weight:600!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  margin:0!important;
+}
+.messages-shell .msg-row.unread .msg-subject{font-weight:800!important}
+.messages-shell .msg-preview{
+  grid-column:2!important;grid-row:2!important;
+  min-width:0!important;
+  font-size:.59rem!important;
+  color:#5f6368!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  margin:0!important;
+}
+.messages-shell .msg-time{
+  position:absolute!important;
+  top:6px!important;
+  inset-inline-end:12px!important;
+  font-size:.53rem!important;
+  color:#5f6368!important;
+}
+.messages-shell .msg-new{
+  position:absolute!important;
+  inset-inline-end:12px!important;
+  bottom:6px!important;
+  background:transparent!important;
+  color:#0b57d0!important;
+  font-size:.49rem!important;
+  padding:0!important;
+}
+.messages-shell .msg-urgent{
+  position:absolute!important;
+  inset-inline-end:44px!important;
+}
+.messages-shell .msg-empty{
+  background:#fff!important;
+}
+
+/* When a message is opened, Gmail-like reading page replaces the inbox list. */
+.messages-shell .msg-layout.has-thread .msg-list-pane{
+  display:none!important;
+}
+.messages-shell .msg-layout.has-thread .msg-reading-pane{
+  grid-column:2!important;
+}
+.messages-shell .msg-reading-pane{
+  min-width:0!important;
+  display:flex!important;
+  flex-direction:column!important;
+  background:#fff!important;
+  position:relative!important;
+  border-radius:18px 0 0 0!important;
+  overflow:hidden!important;
+}
+.messages-shell .msg-reading-pane.empty{
+  align-items:center!important;
+  justify-content:center!important;
+  background:#fff!important;
+}
+.messages-shell .msg-reading-head{
+  min-height:58px!important;
+  padding:6px 18px!important;
+  border-bottom:1px solid #e7e9ec!important;
+  background:#fff!important;
+}
+.messages-shell .msg-conv-person .msg-avatar{
+  width:38px!important;height:38px!important;flex-basis:38px!important;
+  background:#e8eaed!important;color:#5f6368!important;
+}
+.messages-shell .msg-conv-name{
+  font-size:.73rem!important;
+  font-weight:700!important;
+  color:#202124!important;
+}
+.messages-shell .msg-conv-meta{
+  font-size:.56rem!important;
+  color:#5f6368!important;
+}
+.messages-shell .msg-conv-actions{gap:2px!important}
+.messages-shell .msg-icon-btn{
+  width:32px!important;height:32px!important;
+  border:0!important;
+  background:transparent!important;
+  color:#5f6368!important;
+  border-radius:50%!important;
+}
+.messages-shell .msg-icon-btn:hover{
+  background:#edf1f7!important;
+  color:#202124!important;
+}
+
+/* Actual Gmail-like message reading surface */
+.messages-shell .msg-thread{
+  padding:22px 42px 30px!important;
+  background:#fff!important;
+}
+.messages-shell .msg-root{
+  max-width:900px!important;
+  margin:0 auto 18px!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:#fff!important;
+  box-shadow:none!important;
+}
+.messages-shell .msg-subject-large{
+  font-size:1.15rem!important;
+  font-weight:500!important;
+  color:#202124!important;
+  margin:0 0 13px!important;
+  line-height:1.45!important;
+}
+.messages-shell .msg-root-meta{
+  font-size:.58rem!important;
+  color:#5f6368!important;
+}
+.messages-shell .msg-root hr{
+  border:0!important;
+  border-top:1px solid #f0f1f2!important;
+  margin:16px 0 20px!important;
+}
+.messages-shell .msg-body{
+  max-width:820px!important;
+  font-size:.78rem!important;
+  line-height:2.05!important;
+  color:#202124!important;
+}
+.messages-shell .msg-bubble{
+  max-width:820px!important;
+  margin:16px auto!important;
+  padding:15px 0!important;
+  border:0!important;
+  border-top:1px solid #f0f1f2!important;
+  border-radius:0!important;
+  background:#fff!important;
+  box-shadow:none!important;
+}
+.messages-shell .msg-bubble.mine{
+  background:#fff!important;
+  border-color:#f0f1f2!important;
+}
+.messages-shell .msg-bubble-head{margin-bottom:7px!important}
+.messages-shell .msg-bubble-name{
+  font-size:.66rem!important;
+  color:#202124!important;
+  font-weight:700!important;
+}
+.messages-shell .msg-bubble-time{
+  font-size:.53rem!important;
+  color:#5f6368!important;
+}
+
+/* Reply area */
+.messages-shell .msg-reply{
+  padding:10px 28px 15px!important;
+  border-top:1px solid #e7e9ec!important;
+  background:#fff!important;
+}
+.messages-shell .msg-reply-inner{max-width:900px!important}
+.messages-shell .msg-reply-box{
+  border:1px solid #dadce0!important;
+  border-radius:8px!important;
+  box-shadow:0 1px 2px rgba(60,64,67,.10)!important;
+}
+.messages-shell .msg-reply textarea{
+  min-height:62px!important;
+  font-size:.72rem!important;
+  padding:10px 13px!important;
+}
+.messages-shell .msg-reply-tools{
+  padding:5px 7px!important;
+  background:#fff!important;
+  border-top:1px solid #f0f1f2!important;
+}
+.messages-shell .msg-tool{
+  width:30px!important;height:30px!important;
+  border-radius:50%!important;
+}
+.messages-shell .msg-send{
+  background:#0b57d0!important;
+  border-radius:16px!important;
+  padding:7px 15px!important;
+  font-size:.63rem!important;
+}
+.messages-shell .msg-send:hover{background:#0842a0!important}
+
+/* Compose window — Gmail-style floating composer */
+.messages-shell + .compose-modal .modal-dialog,
+.compose-modal .modal-dialog{max-width:560px!important;margin:0 28px 0 auto!important;align-self:flex-end!important}
+.compose-modal .modal-content{
+  border:0!important;
+  border-radius:9px!important;
+  box-shadow:0 8px 35px rgba(60,64,67,.35)!important;
+  overflow:hidden!important;
+}
+.compose-modal .modal-header{
+  min-height:40px!important;
+  padding:7px 11px!important;
+  background:#404040!important;
+  color:#fff!important;
+  border:0!important;
+}
+.compose-modal .modal-header .btn-close{filter:invert(1)!important;opacity:.9!important}
+.compose-head-icon{
+  display:none!important;
+}
+.compose-modal .modal-header h5{
+  font-size:.72rem!important;
+  color:#fff!important;
+}
+.compose-modal .modal-header small{display:none!important}
+.compose-modal .modal-body{padding:11px 13px!important}
+.compose-recipient{
+  padding:0!important;
+  border:0!important;
+  background:#fff!important;
+}
+.compose-modal .form-label{font-size:.62rem!important}
+.compose-modal .form-control,
+.compose-modal .form-select{
+  border:0!important;
+  border-bottom:1px solid #e5e7e9!important;
+  border-radius:0!important;
+  font-size:.69rem!important;
+  padding:.48rem .2rem!important;
+}
+.compose-modal textarea{
+  min-height:190px!important;
+  border:0!important;
+}
+.compose-modal .modal-footer{
+  padding:8px 12px!important;
+  background:#fff!important;
+  border-top:1px solid #f0f1f2!important;
+}
+.compose-send{
+  background:#0b57d0!important;
+  border-radius:16px!important;
+  padding:7px 16px!important;
+}
+.compose-cancel{
+  border:0!important;
+  background:transparent!important;
+}
+
+/* Hide page-level decorative text and use the available space like Gmail. */
+.messages-shell .msg-list-pane + .msg-reading-pane.empty .msg-read-empty-icon{
+  width:56px!important;height:56px!important;
+  border-radius:50%!important;
+  background:#f1f3f4!important;
+  color:#9aa0a6!important;
+}
+.messages-shell .msg-read-empty strong{
+  font-size:.74rem!important;
+  color:#5f6368!important;
+}
+.messages-shell .msg-read-empty span{
+  font-size:.59rem!important;
+  color:#9aa0a6!important;
+}
+
+/* RTL details */
+.messages-shell .msg-nav a,
+.messages-shell .msg-nav button{text-align:start!important}
+@media(max-width:900px){
+  .messages-shell .msg-toolbar{grid-template-columns:auto minmax(0,1fr) auto!important}
+  .messages-shell .msg-title{min-width:auto!important}
+  .messages-shell .msg-title h2{display:none!important}
+  .messages-shell .msg-layout,
+  .messages-shell .msg-layout.no-thread,
+  .messages-shell .msg-layout.has-thread{grid-template-columns:175px minmax(0,1fr)!important}
+  .messages-shell .msg-row-main{grid-template-columns:120px minmax(0,1fr)!important}
+  .messages-shell .msg-thread{padding:20px!important}
+}
+@media(max-width:700px){
+  .messages-shell .msg-toolbar{height:52px!important}
+  .messages-shell .msg-layout,
+  .messages-shell .msg-layout.no-thread,
+  .messages-shell .msg-layout.has-thread{display:block!important;height:calc(100vh - 130px)!important}
+  .messages-shell .msg-sidebar{height:auto!important;padding:5px!important}
+  .messages-shell .msg-compose-btn{min-height:38px!important;margin:0 0 5px 0!important}
+  .messages-shell .msg-nav{display:flex!important;flex-direction:row!important}
+  .messages-shell .msg-nav a,.messages-shell .msg-nav button{flex:1!important;justify-content:center!important;border-radius:18px!important}
+  .messages-shell .msg-section-label,.messages-shell .msg-sidebar .small.text-muted{display:none!important}
+  .messages-shell .msg-list-pane{height:calc(100% - 48px)!important;border-radius:0!important}
+  .messages-shell .msg-layout.has-thread .msg-reading-pane{display:flex!important;height:100%!important}
+  .messages-shell .msg-thread{padding:15px!important}
+  .messages-shell .msg-reply{padding:8px!important}
+}
+</style>
 <script>
 const msgCsrf=<?php echo json_encode(csrf_token());?>; const msgUrl=<?php echo json_encode($msgUrl);?>;
 const attachmentApiUrl=msgUrl.replace('index.php','attachment.php');
