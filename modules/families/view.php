@@ -7,7 +7,7 @@ require_once dirname(__DIR__, 2) . '/config/session.php';
 Session::start();
 if (!Session::isLoggedIn()) { header('Location: ' . APP_URL . 'index.php'); exit(); }
 $role = Session::getUserRole();
-if (!in_array($role, ['admin', 'vice_general_manager', 'general_manager', 'supervisor', 'nanny'], true)) { header('Location: ' . APP_URL . 'index.php'); exit(); }
+if (!in_array($role, ['admin', 'vice_general_manager', 'general_manager', 'administration', 'supervisor', 'nanny'], true)) { header('Location: ' . APP_URL . 'index.php'); exit(); }
 $pageTitle='ملف الأسرة'; $active='families'; $uid=Session::getUserId(); $id=(int)($_GET['id']??0);
 $fam=dbFetchOne("SELECT f.*, n.full_name AS nanny_name, s.full_name AS supervisor_name FROM families f LEFT JOIN users n ON n.id=f.nanny_id LEFT JOIN users s ON s.id=f.supervisor_id WHERE f.id=?",[$id]); if(!$fam){flash('error','الأسرة غير موجودة.');redirect('modules/families/index.php');}
 if($role==='nanny'&&(int)($fam['nanny_id']??0)!==$uid){flash('error','هذه الأسرة ليست ضمن نطاقك.');redirect('modules/families/index.php');}
