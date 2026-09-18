@@ -461,3 +461,9 @@ Commits:
 - ddc680bec703747239f6161c4dbaff04b2c8ae98 — Remove admin sidebar links duplicated by control panel
 
 Runtime verification is required after pulling. For the admin role, verify that the sidebar is intentionally minimal and that the dashboard itself exposes the expected admin control-panel destinations.
+
+
+### Audit Log Retention / Cleanup
+The audit log page at `modules/logs/audit.php` now includes an **administrator-only bulk cleanup control** for retention management. The control deletes audit records on or before a selected date, requires an explicit confirmation string, and leaves General Manager access read-only. The cleanup is intentionally date-based rather than an unrestricted “clear everything” button.
+The existing audit-log viewing/filtering/pagination behavior remains unchanged.
+The separate request to remove the SQL/query display from the audit page is **not yet implemented** because the current repository version of `modules/logs/audit.php` does not contain a SQL-debug/query panel; it renders the audit record's previous/new values instead. Do not remove those audit details by assumption. Runtime screenshot/source comparison is required before changing that part.
