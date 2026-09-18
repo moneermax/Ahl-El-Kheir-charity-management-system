@@ -511,3 +511,24 @@ The implementation is CSS-only at the presentation layer and preserves the exist
 **CODE IMPLEMENTED — RUNTIME VISUAL VERIFICATION PENDING.**
 
 Do not reopen completed messaging functionality/security work unless runtime verification demonstrates a regression.
+
+
+## 2026-09-18 — Messaging Gmail Visual Model V6
+
+V5 introduced a custom blue-gray color system. User feedback was that the colors still did not feel sufficiently like Gmail. The direction was therefore changed to the actual Gmail visual model rather than continuing the custom color palette.
+
+Commit: `66d5acfa9dd919c84a5c689b1a2cf632d4bca7c9` — `Match messaging workspace to Gmail visual design v6`.
+
+V6 characteristics:
+- Gmail-style light application chrome;
+- light sidebar with blue selected-folder treatment;
+- Gmail-style Compose button;
+- white inbox surface;
+- pale Gmail search field;
+- white message-reading surface;
+- Google/Gmail blue for primary actions;
+- subtle gray separators;
+- outlined reply editor;
+- dark floating compose header.
+
+Status: CODE IMPLEMENTED; RUNTIME VERIFICATION PENDING.
