@@ -26,7 +26,6 @@ if (Session::isLoggedIn()) {
     }
 
     $akNotifMarkReadUrl = APP_URL . 'modules/notifications/mark_all_read.php';
-    $akNotifClearUrl = APP_URL . 'modules/notifications/clear_all.php';
     $akNotifPageUrl = APP_URL . 'modules/notifications/index.php';
     $akNotifIndividualReadUrl = APP_URL . 'modules/notifications/mark_read.php';
     $akNotifPollUrl = APP_URL . 'modules/notifications/poll.php';
@@ -85,12 +84,8 @@ if (Session::isLoggedIn()) {
      <button type="submit" class="ak-notif-mark border-0 bg-transparent p-0">تحديد الكل كمقروء</button>
     </form>
    <?php endif; ?>
-   <?php if ($akNotifItems && $akNotifClearUrl): ?>
-    <form method="post" action="<?php echo e($akNotifClearUrl); ?>" class="d-inline ak-notif-action-form" onsubmit="return confirm('هل أنت متأكد من مسح جميع الإشعارات؟');">
-     <?php echo csrf_field(); ?>
-     <input type="hidden" name="redirect" value="<?php echo e($akNotifRedirect); ?>">
-     <button type="submit" class="ak-notif-clear border-0 bg-transparent p-0">مسح الكل</button>
-    </form>
+   <?php if ($akNotifItems): ?>
+    <button type="button" class="ak-notif-clear border-0 bg-transparent p-0" id="akNotifClearMenu">مسح</button>
    <?php endif; ?>
    </div>
   </div>
@@ -170,6 +165,17 @@ if (Session::isLoggedIn()) {
  const currentUrl=root.getAttribute('data-current-url') || notificationPageUrl || window.location.href;
  const panelBody=root.querySelector('.ak-notif-panel-body');
  const toggle=root.querySelector('.ak-notif-toggle');
+ const clearMenuBtn=root.querySelector('#akNotifClearMenu');
+ let panelCleared=false;
+
+ clearMenuBtn?.addEventListener('click',function(){
+     // Header "مسح" only clears the dropdown display. It does NOT delete
+     // notification records; the full notifications page remains the place
+     // for permanent deletion.
+     panelCleared=true;
+     if(panelBody) panelBody.innerHTML='<div class="ak-notif-empty">تم مسح القائمة من القائمة المنسدلة. يمكنك رؤية الإشعارات من عرض الكل.</div>';
+     root.classList.remove('open');
+ });
  const knownIds={};
  let initialized=false;
  let busy=false;
@@ -204,6 +210,7 @@ if (Session::isLoggedIn()) {
          if(!data || data.ok!==true) return;
          const items=Array.isArray(data.items) ? data.items : [];
          if(initialized){
+             panelCleared=false;
              items.slice().reverse().forEach(function(item){
                  const id=Number(item.id||0);
                  if(id>0&&!knownIds[id]){
@@ -218,7 +225,8 @@ if (Session::isLoggedIn()) {
              showUnreadToasts(items);
              initialized=true;
          }
-         updateBadge(data.unread); render(data);
+         updateBadge(data.unread);
+         if(!panelCleared) render(data);
        }).catch(function(){}).finally(function(){busy=false;});
  }
  poll(); window.setInterval(poll,5000);
