@@ -85,10 +85,37 @@ try {
 */
 
 $dbOnline = false;
+$diskTotal = (float)@disk_total_space(__DIR__);
+$diskFree = (float)@disk_free_space(__DIR__);
+$diskUsed = max(0, $diskTotal - $diskFree);
+$memoryLimit = ini_get('memory_limit') ?: 'غير محدد';
+$uploadLimit = ini_get('upload_max_filesize') ?: 'غير محدد';
+$executionLimit = ini_get('max_execution_time');
+$executionLimit = ($executionLimit === false || $executionLimit === '') ? 'غير محدد' : $executionLimit . ' ثانية';
+$httpsEnabled = !empty($_SERVER['HTTPS']) && strtolower((string)$_SERVER['HTTPS']) !== 'off';
 
 try {
     dbFetchOne("SELECT 1 AS ok");
     $dbOnline = true;
+} catch (Throwable $e) {}
+
+$formatBytes = static function (float $bytes): string {
+    if ($bytes <= 0) return '0 B';
+    $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    $i = min((int)floor(log($bytes, 1024)), count($units) - 1);
+    return number_format($bytes / (1024 ** $i), $i === 0 ? 0 : 1) . ' ' . $units[$i];
+};
+
+$diskUsedPercent = $diskTotal > 0 ? ($diskUsed / $diskTotal) * 100 : 0;
+$recentAudit = [];
+try {
+    $recentAudit = dbFetchAll(
+        "SELECT a.id, a.created_at, a.action, a.entity_type, a.entity_id, u.username
+         FROM audit_log a
+         LEFT JOIN users u ON u.id = a.user_id
+         ORDER BY a.id DESC
+         LIMIT 6"
+    );
 } catch (Throwable $e) {}
 
 $systemCards = [
@@ -516,6 +543,49 @@ include __DIR__ . '/../includes/header.php';
     font-size: .72rem;
 }
 
+.admin-system-grid {
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:12px;
+    margin-bottom:22px;
+}
+.admin-system-card {
+    min-height:96px;
+    display:flex;
+    align-items:flex-start;
+    gap:12px;
+    padding:14px;
+    border:1px solid var(--ac-line);
+    border-radius:14px;
+    background:var(--ac-panel);
+    box-shadow:0 6px 18px rgba(15,23,42,.04);
+}
+.admin-system-icon {
+    width:36px;height:36px;border-radius:10px;display:grid;place-items:center;flex:0 0 auto;
+}
+.admin-system-card strong {display:block;font-size:.8rem;margin-bottom:4px}
+.admin-system-card span {display:block;color:#4b5563;font-size:.74rem;font-weight:700}
+.admin-system-card small {display:block;color:var(--ac-muted);font-size:.66rem;margin-top:4px}
+.admin-system-green {background:#dceee2;color:#3e8055}
+.admin-system-blue {background:#e3edfb;color:#3d67a8}
+.admin-system-violet {background:#e8e4f7;color:#6457ad}
+.admin-system-amber {background:#f8e5c9;color:#b96d1e}
+.admin-system-orange {background:#f5e1d8;color:#b95e35}
+.admin-system-ok {color:#3e8055 !important}
+.admin-system-bad {color:#b42318 !important}
+.admin-recent-grid {margin-bottom:22px}
+.admin-recent-card {
+    border:1px solid var(--ac-line);border-radius:16px;background:var(--ac-panel);
+    box-shadow:0 8px 22px rgba(15,23,42,.04);overflow:hidden;
+}
+.admin-recent-heading {
+    display:flex;justify-content:space-between;align-items:center;gap:12px;
+    padding:14px 17px;border-bottom:1px solid var(--ac-line);background:#fff;
+}
+.admin-recent-heading strong {display:block;font-size:.86rem}
+.admin-recent-heading span {display:block;color:var(--ac-muted);font-size:.7rem;margin-top:3px}
+.admin-recent-heading a {font-size:.72rem;font-weight:800;text-decoration:none;color:#4b78c2;white-space:nowrap}
+.admin-recent-card .table {font-size:.72rem}
 .admin-alert-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -582,7 +652,8 @@ include __DIR__ . '/../includes/header.php';
 @media (max-width: 1100px) {
     .admin-stat-grid,
     .admin-tool-grid,
-    .admin-tool-grid.admin-tool-grid-3 {
+    .admin-tool-grid.admin-tool-grid-3,
+    .admin-system-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
@@ -608,8 +679,14 @@ include __DIR__ . '/../includes/header.php';
     .admin-stat-grid,
     .admin-tool-grid,
     .admin-tool-grid.admin-tool-grid-3,
+    .admin-system-grid,
     .admin-alert-grid {
         grid-template-columns: 1fr;
+    }
+
+    .admin-recent-heading {
+        align-items:flex-start;
+        flex-direction:column;
     }
 
     .admin-tool,
@@ -669,6 +746,74 @@ include __DIR__ . '/../includes/header.php';
     </section>
 
     <div class="admin-section-title">
+        <div>
+            <h2>حالة النظام والبيئة</h2>
+            <p>مؤشرات تقنية للمدير لمراقبة بيئة تشغيل النظام دون تكرار أدوات الإدارة الموجودة في الوحدات.</p>
+        </div>
+    </div>
+
+    <section class="admin-system-grid">
+        <div class="admin-system-card">
+            <div class="admin-system-icon admin-system-green"><i class="fas fa-database"></i></div>
+            <div><strong>قاعدة البيانات</strong><span class="<?php echo $dbOnline ? 'admin-system-ok' : 'admin-system-bad'; ?>"><?php echo $dbOnline ? 'متصلة' : 'غير متاحة'; ?></span></div>
+        </div>
+        <div class="admin-system-card">
+            <div class="admin-system-icon admin-system-blue"><i class="fas fa-server"></i></div>
+            <div><strong>إصدار PHP</strong><span><?php echo e(PHP_VERSION); ?></span></div>
+        </div>
+        <div class="admin-system-card">
+            <div class="admin-system-icon admin-system-violet"><i class="fas fa-hard-drive"></i></div>
+            <div><strong>مساحة التخزين</strong><span><?php echo e($formatBytes($diskFree)); ?> متاحة من <?php echo e($formatBytes($diskTotal)); ?></span><small><?php echo number_format($diskUsedPercent, 1); ?>% مستخدمة</small></div>
+        </div>
+        <div class="admin-system-card">
+            <div class="admin-system-icon admin-system-amber"><i class="fas fa-memory"></i></div>
+            <div><strong>حد ذاكرة PHP</strong><span><?php echo e($memoryLimit); ?></span></div>
+        </div>
+        <div class="admin-system-card">
+            <div class="admin-system-icon admin-system-orange"><i class="fas fa-upload"></i></div>
+            <div><strong>حد رفع الملفات</strong><span><?php echo e($uploadLimit); ?></span></div>
+        </div>
+        <div class="admin-system-card">
+            <div class="admin-system-icon admin-system-blue"><i class="fas fa-stopwatch"></i></div>
+            <div><strong>حد تنفيذ PHP</strong><span><?php echo e($executionLimit); ?></span></div>
+        </div>
+        <div class="admin-system-card">
+            <div class="admin-system-icon <?php echo $httpsEnabled ? 'admin-system-green' : 'admin-system-amber'; ?>"><i class="fas fa-lock"></i></div>
+            <div><strong>HTTPS</strong><span><?php echo $httpsEnabled ? 'مفعّل' : 'غير مفعّل'; ?></span><small><?php echo $httpsEnabled ? 'الاتصال الحالي يستخدم HTTPS' : 'الاتصال الحالي يستخدم HTTP'; ?></small></div>
+        </div>
+        <div class="admin-system-card">
+            <div class="admin-system-icon admin-system-violet"><i class="fas fa-shield-halved"></i></div>
+            <div><strong>صلاحية اللوحة</strong><span>Admin فقط</span><small>الحماية الفعلية تبقى على مستوى كل صفحة</small></div>
+        </div>
+    </section>
+
+    <section class="admin-recent-grid">
+        <div class="admin-recent-card">
+            <div class="admin-recent-heading">
+                <div><strong><i class="fas fa-clock-rotate-left me-1"></i> آخر نشاط إداري</strong><span>آخر 6 أحداث مسجلة في سجل التدقيق</span></div>
+                <a href="<?php echo e(url('modules/logs/audit.php')); ?>">فتح السجل <i class="fas fa-arrow-left"></i></a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead><tr><th>التاريخ</th><th>المستخدم</th><th>الإجراء</th><th>الكيان</th></tr></thead>
+                    <tbody>
+                    <?php if (!$recentAudit): ?>
+                        <tr><td colspan="4" class="text-center text-muted py-3">لا توجد أحداث مسجلة.</td></tr>
+                    <?php else: foreach ($recentAudit as $event): ?>
+                        <tr>
+                            <td><small><?php echo e($event['created_at']); ?></small></td>
+                            <td><?php echo e($event['username'] ?? '—'); ?></td>
+                            <td><span class="badge bg-light text-dark border"><?php echo e($event['action']); ?></span></td>
+                            <td><small><?php echo e($event['entity_type']); ?><?php echo $event['entity_id'] !== null ? ' #' . e((string)$event['entity_id']) : ''; ?></small></td>
+                        </tr>
+                    <?php endforeach; endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <div class="admin-alert-grid">
         <div>
             <h2>نظرة سريعة على النظام</h2>
             <p>أرقام تشغيلية مباشرة تساعدك على معرفة حجم النظام قبل الدخول إلى أي وحدة.</p>
