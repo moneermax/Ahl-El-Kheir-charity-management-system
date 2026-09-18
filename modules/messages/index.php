@@ -52,12 +52,15 @@ include dirname(__DIR__,2).'/includes/header.php';
 
 
 <style id="msg-mail-client-v1">
-body:has(.messages-shell){background:#f6f8fc!important}
-body:has(.messages-shell) .sidebar,body:has(.messages-shell) .header-sticky-wrapper{display:none!important}
-body:has(.messages-shell) .main-area{width:100%;min-width:0}
-body:has(.messages-shell) .content{padding:0!important;background:#f6f8fc!important}
-
+/* Keep the application's global header, sidebar and footer intact.
+   The mail client lives inside the normal .content area. */
 .messages-shell{
+ margin:0;
+ width:100%;
+ max-width:100%;
+ min-height:0;
+ background:#f6f8fc;
+ color:#202124;
  --mail-bg:#f6f8fc;--mail-surface:#fff;--mail-side:#f6f8fc;--mail-text:#202124;
  --mail-muted:#5f6368;--mail-line:#e0e3e7;--mail-hover:#f2f6fc;--mail-selected:#d3e3fd;
  --mail-blue:#0b57d0;--mail-compose:#c2e7ff;--mail-danger:#b3261e;
@@ -67,6 +70,12 @@ body:has(.messages-shell) .content{padding:0!important;background:#f6f8fc!import
 .messages-shell *{box-sizing:border-box}.messages-shell a{text-decoration:none;color:inherit}
 .messages-shell button,.messages-shell input,.messages-shell select,.messages-shell textarea{font-family:inherit}
 
+.mail-pagebar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 4px 14px}
+.mail-page-title{display:flex;align-items:center;gap:10px;font-size:1.05rem;font-weight:700;color:#202124}
+.mail-page-title i{color:#d93025;font-size:1rem}
+.mail-page-subtitle{margin-top:2px;color:#6b7280;font-size:.66rem}
+.mail-back-dashboard{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 14px;border:1px solid #dadce0;border-radius:18px;background:#fff;color:#3c4043;font-size:.67rem;font-weight:600;box-shadow:0 1px 2px rgba(60,64,67,.08)}
+.mail-back-dashboard:hover{background:#f1f3f4;color:#202124}
 .mail-appbar{height:64px;display:grid;grid-template-columns:240px minmax(300px,720px) 1fr;align-items:center;gap:24px;padding:8px 18px;background:var(--mail-bg)}
 .mail-brand{display:flex;align-items:center;gap:12px;font-size:18px;font-weight:500;color:#3c4043}
 .mail-brand-icon{font-size:22px;color:#d93025}.mail-search{position:relative}.mail-search i{position:absolute;right:17px;top:50%;transform:translateY(-50%);color:var(--mail-muted)}
@@ -74,7 +83,7 @@ body:has(.messages-shell) .content{padding:0!important;background:#f6f8fc!import
 .mail-search input:focus{background:#fff;box-shadow:0 1px 3px rgba(60,64,67,.25),0 0 0 1px #d7dbe0}
 .mail-tools{display:flex;justify-content:flex-start;align-items:center;gap:8px;color:var(--mail-muted);font-size:.66rem}.mail-tools select{height:32px;border:1px solid var(--mail-line);border-radius:8px;background:#fff;padding:0 8px;font-size:.65rem}
 
-.mail-workspace{display:grid;grid-template-areas:"reader list folders";grid-template-columns:minmax(0,1fr) 420px 238px;height:calc(100vh - 136px);min-height:600px;overflow:hidden;padding:0 10px 10px;gap:0}
+.mail-workspace{display:grid;grid-template-areas:"reader list folders";grid-template-columns:minmax(0,1fr) 420px 238px;height:min(720px,calc(100vh - 300px));min-height:520px;overflow:hidden;padding:0 0 10px;gap:0}
 .mail-folders{grid-area:folders;background:var(--mail-side);padding:10px 8px 0;border-radius:0 16px 16px 0;overflow:auto}
 .mail-compose{height:56px;min-width:150px;margin:2px 6px 16px;padding:0 22px;border:0;border-radius:16px;background:var(--mail-compose);color:#001d35;font-size:.78rem;font-weight:700;box-shadow:0 1px 2px rgba(60,64,67,.2);cursor:pointer}
 .mail-compose:hover{box-shadow:0 2px 5px rgba(60,64,67,.25)}
@@ -108,6 +117,15 @@ body:has(.messages-shell) .content{padding:0!important;background:#f6f8fc!import
 @media(max-width:767px){.mail-appbar{height:auto;grid-template-columns:1fr auto;gap:8px;padding:8px 10px}.mail-search{grid-column:1/-1;grid-row:2}.mail-tools span,.mail-tools select{display:none}.mail-workspace{display:block;height:auto;min-height:0;padding:0}.mail-folders{border-radius:0;padding:8px}.mail-compose{height:44px;margin:0 0 8px}.mail-nav{display:grid;grid-template-columns:repeat(3,1fr)}.mail-nav a,.mail-nav button{height:auto;min-height:48px;justify-content:center;flex-direction:column;gap:3px;border-radius:8px;font-size:.58rem}.mail-side-note{display:none}.mail-list{border:0;border-radius:0}.mail-reader{position:fixed;inset:0;z-index:3000;border:0;border-radius:0}.mail-thread{padding:20px 14px}.mail-reply{padding:8px}.compose-modal .modal-dialog{max-width:none;margin:0}.compose-modal .modal-content{min-height:100vh;border-radius:0}}
 </style>
 <div class="messages-shell">
+ <div class="mail-pagebar">
+  <div>
+   <div class="mail-page-title"><i class="fas fa-envelope-open-text"></i><span>الرسائل الداخلية</span></div>
+   <div class="mail-page-subtitle">البريد والمراسلات داخل النظام</div>
+  </div>
+  <a class="mail-back-dashboard" href="javascript:void(0)" onclick="if(window.history.length>1){window.history.back();}else{window.location.href='<?php echo e(APP_URL); ?>';}" title="العودة إلى الصفحة السابقة">
+   <i class="fas fa-arrow-right"></i><span>العودة</span>
+  </a>
+ </div>
  <header class="mail-appbar">
   <div class="mail-brand"><i class="fas fa-envelope mail-brand-icon"></i><span>البريد</span></div>
   <div class="mail-search"><i class="fas fa-magnifying-glass"></i><input type="search" id="msgSearch" placeholder="البحث في البريد" autocomplete="off"></div>
