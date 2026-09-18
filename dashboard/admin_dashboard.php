@@ -131,6 +131,7 @@ $controlGroups = [
         'title' => 'إدارة النظام',
         'subtitle' => 'الهوية والصلاحيات والبنية الأساسية',
         'icon' => 'fa-sliders',
+        'color' => '#7567c7',
         'items' => [
             ['title' => 'المستخدمون', 'description' => 'إنشاء الحسابات وإدارة المستخدمين', 'icon' => 'fa-users-gear', 'url' => 'modules/users/index.php'],
             ['title' => 'الأدوار والصلاحيات', 'description' => 'إدارة الأدوار ومستويات الوصول', 'icon' => 'fa-user-shield', 'url' => 'modules/users/roles.php'],
@@ -142,6 +143,7 @@ $controlGroups = [
         'title' => 'البيانات الأساسية',
         'subtitle' => 'السجلات التشغيلية الرئيسية',
         'icon' => 'fa-database',
+        'color' => '#4b78c2',
         'items' => [
             ['title' => 'الكفلاء', 'description' => 'سجل الكفلاء وبياناتهم', 'icon' => 'fa-hand-holding-heart', 'url' => 'modules/sponsors/index.php'],
             ['title' => 'الأسر', 'description' => 'سجل الأسر والبيانات المرتبطة بها', 'icon' => 'fa-house-chimney', 'url' => 'modules/families/index.php'],
@@ -153,6 +155,7 @@ $controlGroups = [
         'title' => 'المالية',
         'subtitle' => 'وصول المدير إلى أدوات المتابعة المالية',
         'icon' => 'fa-coins',
+        'color' => '#d88a2d',
         'items' => [
             ['title' => 'لوحة المالية', 'description' => 'ملخص ومؤشرات الإدارة المالية', 'icon' => 'fa-chart-line', 'url' => 'modules/accounting/fm_dashboard.php'],
             ['title' => 'دليل الحسابات', 'description' => 'مراجعة الحسابات المحاسبية', 'icon' => 'fa-sitemap', 'url' => 'modules/accounting/accounts.php'],
@@ -165,6 +168,7 @@ $controlGroups = [
         'title' => 'الحماية والصيانة',
         'subtitle' => 'أدوات التحكم الحساسة — استخدمها بعناية',
         'icon' => 'fa-shield-halved',
+        'color' => '#c95d70',
         'items' => [
             ['title' => 'النسخ الاحتياطي', 'description' => 'إنشاء وإدارة نسخ قاعدة البيانات', 'icon' => 'fa-database', 'url' => 'modules/system/backup.php'],
             ['title' => 'إدارة قاعدة البيانات', 'description' => 'أدوات إدارة قاعدة البيانات', 'icon' => 'fa-table', 'url' => 'modules/system/database.php'],
@@ -178,23 +182,27 @@ include __DIR__ . '/../includes/header.php';
 
 <style>
 .admin-control-panel {
-    --ac-bg: #eef2f7;
-    --ac-ink: #172033;
-    --ac-muted: #68758a;
-    --ac-panel: #ffffff;
-    --ac-line: #dce3ed;
-    --ac-dark: #111827;
-    --ac-dark-2: #1f2937;
-    --ac-cyan: #22d3ee;
-    --ac-green: #34d399;
-    --ac-amber: #fbbf24;
-    --ac-violet: #a78bfa;
+    --ac-bg: #f3f0ea;
+    --ac-ink: #24201c;
+    --ac-muted: #766e64;
+    --ac-panel: #fffdf9;
+    --ac-line: #e5ddd1;
+    --ac-dark: #181512;
+    --ac-dark-2: #2d2822;
+    --ac-cyan: #27b3b0;
+    --ac-green: #4f9d69;
+    --ac-amber: #d88a2d;
+    --ac-violet: #7567c7;
+    --ac-blue: #4b78c2;
+    --ac-rose: #c95d70;
+    --ac-orange: #cf6f3e;
+    --ac-teal: #238f88;
     margin: -24px;
     padding: 24px;
     min-height: calc(100vh - 120px);
     background:
-        radial-gradient(circle at 100% 0%, rgba(34,211,238,.12), transparent 32%),
-        radial-gradient(circle at 0% 20%, rgba(167,139,250,.10), transparent 28%),
+        radial-gradient(circle at 100% 0%, rgba(207,111,62,.13), transparent 30%),
+        radial-gradient(circle at 0% 20%, rgba(117,103,199,.10), transparent 28%),
         var(--ac-bg);
     color: var(--ac-ink);
 }
@@ -206,8 +214,8 @@ include __DIR__ . '/../includes/header.php';
     padding: 28px 30px;
     color: #fff;
     background:
-        radial-gradient(circle at 85% 20%, rgba(34,211,238,.24), transparent 26%),
-        linear-gradient(135deg, #0b1220 0%, #172033 55%, #24324a 100%);
+        radial-gradient(circle at 85% 20%, rgba(207,111,62,.28), transparent 26%),
+        linear-gradient(135deg, #211b18 0%, #352a24 55%, #4a392f 100%);
     box-shadow: 0 18px 45px rgba(17,24,39,.18);
     margin-bottom: 22px;
 }
@@ -384,10 +392,10 @@ include __DIR__ . '/../includes/header.php';
     font-weight: 700;
 }
 
-.admin-cyan .admin-stat-icon { background: #cffafe; color: #0891b2; }
-.admin-amber .admin-stat-icon { background: #fef3c7; color: #d97706; }
-.admin-green .admin-stat-icon { background: #d1fae5; color: #059669; }
-.admin-violet .admin-stat-icon { background: #ede9fe; color: #7c3aed; }
+.admin-cyan .admin-stat-icon { background: #d9f2ef; color: #238f88; }
+.admin-amber .admin-stat-icon { background: #f8e5c9; color: #b96d1e; }
+.admin-green .admin-stat-icon { background: #dceee2; color: #3e8055; }
+.admin-violet .admin-stat-icon { background: #e8e4f7; color: #6457ad; }
 
 .admin-control-section {
     margin-top: 22px;
@@ -400,11 +408,22 @@ include __DIR__ . '/../includes/header.php';
 
 .admin-control-heading {
     display: flex;
+    position: relative;
     align-items: center;
     gap: 13px;
     padding: 17px 19px;
     border-bottom: 1px solid var(--ac-line);
-    background: #fbfcfe;
+    background: #fffaf3;
+}
+
+.admin-control-heading:before {
+    content: "";
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 6px;
+    background: var(--section-color, var(--ac-blue));
 }
 
 .admin-control-heading-icon {
@@ -413,8 +432,8 @@ include __DIR__ . '/../includes/header.php';
     border-radius: 10px;
     display: grid;
     place-items: center;
-    background: #e8eef7;
-    color: #334155;
+    background: color-mix(in srgb, var(--section-color, var(--ac-blue)) 14%, white);
+    color: var(--section-color, var(--ac-blue));
 }
 
 .admin-control-heading h3 {
@@ -451,7 +470,12 @@ include __DIR__ . '/../includes/header.php';
 .admin-tool:nth-child(4n + 1) { border-left: 0; }
 
 .admin-tool:hover {
-    background: #f7faff;
+    background: #fbf6ee;
+}
+
+.admin-tool:hover .admin-tool-icon {
+    background: color-mix(in srgb, var(--section-color, #4b78c2) 12%, white);
+    color: var(--section-color, #4b78c2);
 }
 
 .admin-tool-icon {
@@ -460,8 +484,8 @@ include __DIR__ . '/../includes/header.php';
     display: grid;
     place-items: center;
     border-radius: 9px;
-    background: #eef2f7;
-    color: #334155;
+    background: #f1ece4;
+    color: #5f574e;
 }
 
 .admin-tool-title {
@@ -697,7 +721,7 @@ include __DIR__ . '/../includes/header.php';
     </div>
 
     <?php foreach ($controlGroups as $group): ?>
-        <section class="admin-control-section">
+        <section class="admin-control-section" style="--section-color: <?php echo $group['color'] ?? '#4b78c2'; ?>;">
             <div class="admin-control-heading">
                 <div class="admin-control-heading-icon">
                     <i class="fas <?php echo e($group['icon']); ?>"></i>
