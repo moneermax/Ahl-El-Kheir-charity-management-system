@@ -409,3 +409,25 @@ After pulling the latest `main`, verify:
 7. Arabic text, spacing, desktop layout, and responsive behavior remain correct.
 
 Do not reopen the removed dashboard navigation groups unless a specific missing administrator control is identified from the real system workflow.
+
+### Admin Control Panel navigation correction — 2026-09-18
+
+The previous navigation-duplication cleanup was corrected after clarifying the intended UX direction.
+
+The intended design is:
+- **Admin Control Panel dashboard = the main admin control/navigation surface.**
+- **Admin sidebar = minimal shell navigation**, not a second copy of the control panel.
+
+The earlier navigation-duplication cleanup commit was reversed because it moved too many destinations out of the dashboard.
+
+Current implementation:
+- dashboard/admin_dashboard.php restored the full control-panel groups from the accepted prior baseline.
+- includes/sidebar.php admin menu was reduced to the Admin Dashboard entry; profile/logout remain global personal controls.
+- This removes the duplicated admin navigation from the sidebar while preserving the richer control-panel dashboard.
+- The nonexistent modules/users/roles.php remains removed; the dashboard uses the real modules/users/index.php destination for user/role administration.
+
+Commits:
+- 0ba244d46b6bcea14070baf21cbafe94fd8b9875 — Restore full admin control panel navigation surface
+- ddc680bec703747239f6161c4dbaff04b2c8ae98 — Remove admin sidebar links duplicated by control panel
+
+Runtime verification is required after pulling. For the admin role, verify that the sidebar is intentionally minimal and that the dashboard itself exposes the expected admin control-panel destinations.
