@@ -97,6 +97,25 @@ if (!function_exists('ak_report_can_access')) {
     }
 }
 
+if (!function_exists('ak_report_require_access')) {
+    function ak_report_require_access(string $reportKey, string $fallback = 'modules/reports/index.php'): void
+    {
+        if (!class_exists('Session') || !Session::isLoggedIn()) {
+            header('Location: ' . APP_URL . 'index.php');
+            exit();
+        }
+
+        if (!ak_report_can_access($reportKey, Session::getUserRole())) {
+            $_SESSION['flash'][] = [
+                'type' => 'error',
+                'message' => t('reports.permission_denied'),
+            ];
+            header('Location: ' . APP_URL . $fallback);
+            exit();
+        }
+    }
+}
+
 if (!function_exists('ak_report_allowed_catalog')) {
     function ak_report_allowed_catalog(?string $role = null): array
     {
