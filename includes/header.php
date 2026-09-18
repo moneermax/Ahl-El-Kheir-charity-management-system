@@ -411,6 +411,13 @@ $qaMap = [
     'vice_general_manager' => [
 
         [
+            'label' => 'تقرير المصالحة',
+            'url' => 'modules/accounting/gm_reconciliation.php',
+            'icon' => 'fa-scale-balanced',
+            'color' => '#17a2b8'
+        ],
+
+        [
             'label' => 'التقارير العامة',
             'url' => 'modules/reports/index.php',
             'icon' => 'fa-chart-line',
