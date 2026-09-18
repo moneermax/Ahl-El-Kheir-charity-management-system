@@ -35,7 +35,7 @@ require_once __DIR__ . '/../includes/header.php';
 </style>
 <div class="fm-header"><h1><?php echo e(t('dashboard.welcome_user',['name'=>Session::getUserName() ?? t('hr.dashboard_title')])); ?></h1><p><?php echo e(t('hr.overview_today',['date'=>date('Y-m-d')])); ?></p></div>
 
-<div class="hr-dashboard-actions">
+<div class="hr-dashboard-actions">\n<a href="<?php echo APP_URL; ?>modules/reports/index.php" class="hr-action-card"><span class="hr-action-icon text-primary"><i class="fas fa-chart-line"></i></span><span class="hr-action-content"><span class="hr-action-title">التقارير</span><span class="hr-action-subtitle">التقارير المتاحة لدورك</span></span></a>
 <a href="<?php echo APP_URL; ?>modules/hr/employees.php" class="hr-action-card"><span class="hr-action-icon text-navy"><i class="fas fa-user-plus"></i></span><span class="hr-action-content"><span class="hr-action-title"><?php echo e(t('hr.add_employee')); ?></span><span class="hr-action-subtitle">إدارة بيانات الموظفين</span></span></a>
 <a href="<?php echo APP_URL; ?>modules/hr/employment_states.php" class="hr-action-card"><span class="hr-action-icon text-primary"><i class="fas fa-id-badge"></i></span><span class="hr-action-content"><span class="hr-action-title">حالات التوظيف</span><span class="hr-action-subtitle">إدارة دورة حياة الموظف</span></span></a>
 <a href="<?php echo APP_URL; ?>modules/hr/attendance.php" class="hr-action-card"><span class="hr-action-icon text-secondary"><i class="fas fa-clock"></i></span><span class="hr-action-content"><span class="hr-action-title"><?php echo e(t('hr.attendance')); ?></span><span class="hr-action-subtitle">متابعة الحضور والانصراف</span></span></a>
