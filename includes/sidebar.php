@@ -44,16 +44,16 @@ $menus = [
         ['active' => 'sponsors', 'label_key' => 'navigation.sponsor_register', 'icon' => 'fa-hand-holding-heart', 'url' => 'modules/sponsors/index.php'],
         ['active' => 'families', 'label_key' => 'navigation.family_register', 'icon' => 'fa-house-chimney', 'url' => 'modules/families/index.php'],
         ['active' => 'sponsorships', 'label_key' => 'navigation.sponsorship_register', 'icon' => 'fa-file-contract', 'url' => 'modules/sponsorships/index.php'],
-        $reportsItem,
         ['active' => 'audit', 'label_key' => 'navigation.audit_log', 'icon' => 'fa-file-lines', 'url' => 'modules/logs/audit.php'],
         ['active' => 'database', 'label_key' => 'navigation.database_management', 'icon' => 'fa-database', 'url' => 'modules/system/database.php'],
         ['active' => 'settings', 'label_key' => 'navigation.system_settings', 'icon' => 'fa-gear', 'url' => 'modules/settings/index.php'],
+        $reportsItem,
     ], $acctView, [$fmDashItem, $fmReviewItem, $disbItem, $reconItem, $openingBalanceItem]),
 
     'general_manager' => array_merge([
         ['active' => 'dashboard', 'label_key' => 'navigation.dashboard', 'icon' => 'fa-gauge-high', 'url' => 'dashboard/gm_dashboard.php'],
         $projectsItem, $orphanFormsItem,
-    ], $acctView, [$reportsItem, $fmDashItem, $fmReviewItem, $disbItem, $reconItem]),
+    ], $acctView, [$fmDashItem, $fmReviewItem, $disbItem, $reconItem, $reportsItem]),
 
     'vice_general_manager' => [
         ['active' => 'dashboard', 'label_key' => 'navigation.dashboard', 'icon' => 'fa-gauge-high', 'url' => 'dashboard/vgm_dashboard.php'],
@@ -77,12 +77,11 @@ $menus = [
 
     'accountant' => array_merge([
         ['active' => 'dashboard', 'label_key' => 'navigation.dashboard', 'icon' => 'fa-gauge-high', 'url' => 'dashboard/accountant_dashboard.php'],
-        $reportsItem,
         ['active' => 'journal', 'label_key' => 'navigation.journal', 'icon' => 'fa-book', 'url' => 'modules/accounting/journal.php'],
         ['active' => 'accounts', 'label_key' => 'navigation.chart_of_accounts', 'icon' => 'fa-sitemap', 'url' => 'modules/accounting/accounts.php'],
         ['active' => 'transactions', 'label_key' => 'navigation.transaction_register', 'icon' => 'fa-money-bill-transfer', 'url' => 'modules/transactions/index.php'],
         ['active' => 'my_nannies', 'label_key' => 'navigation.assigned_nannies', 'icon' => 'fa-user-nurse', 'url' => 'modules/accounting/my_nannies.php'],
-    ], $acctManage, [$disbItem, $fmDashItem, $fmReviewItem, $reconItem]),
+    ], $acctManage, [$disbItem, $fmDashItem, $fmReviewItem, $reconItem, $reportsItem]),
 
     'accountant_staff' => [
         ['active' => 'dashboard', 'label_key' => 'navigation.dashboard', 'icon' => 'fa-gauge-high', 'url' => 'dashboard/accountant_staff_dashboard.php'],
@@ -129,13 +128,13 @@ $menus = [
     ],
     'hr_manager' => [
         ['active' => 'dashboard', 'label_key' => 'navigation.dashboard', 'icon' => 'fa-gauge-high', 'url' => 'dashboard/hr_dashboard.php'],
-        $reportsItem,
         ['active' => 'employees', 'label_key' => 'navigation.employees', 'icon' => 'fa-users', 'url' => 'modules/hr/employees.php'],
         ['active' => 'employment_states', 'label_key' => 'navigation.employment_states', 'icon' => 'fa-id-badge', 'url' => 'modules/hr/employment_states.php'],
         ['active' => 'attendance', 'label_key' => 'navigation.attendance', 'icon' => 'fa-clock', 'url' => 'modules/hr/attendance.php'],
         ['active' => 'leaves', 'label_key' => 'navigation.leave_requests', 'icon' => 'fa-calendar-alt', 'url' => 'modules/hr/leaves.php'],
         ['active' => 'payroll', 'label_key' => 'navigation.payroll', 'icon' => 'fa-money-bill-wave', 'url' => 'modules/hr/payroll.php'],
         ['active' => 'contracts', 'label_key' => 'navigation.contracts', 'icon' => 'fa-file-contract', 'url' => 'modules/hr/contracts.php'],
+        $reportsItem,
     ],
     'hr_staff' => [
         ['active' => 'dashboard', 'label_key' => 'navigation.dashboard', 'icon' => 'fa-gauge-high', 'url' => 'dashboard/hr_dashboard.php'],
@@ -146,6 +145,7 @@ $menus = [
         ['active' => 'leaves', 'label_key' => 'navigation.leave_requests', 'icon' => 'fa-calendar-alt', 'url' => 'modules/hr/leaves.php'],
         ['active' => 'payroll', 'label_key' => 'navigation.payroll', 'icon' => 'fa-money-bill-wave', 'url' => 'modules/hr/payroll.php'],
         ['active' => 'contracts', 'label_key' => 'navigation.contracts', 'icon' => 'fa-file-contract', 'url' => 'modules/hr/contracts.php'],
+        $reportsItem,
     ],
 ];
 
