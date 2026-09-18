@@ -36,19 +36,9 @@ $reportsItem = ['active' => 'reports', 'label_key' => 'navigation.reports', 'ico
 
 /* Menus per role */
 $menus = [
-    'admin' => array_merge([
+    'admin' => [
         ['active' => 'dashboard', 'label_key' => 'navigation.dashboard', 'icon' => 'fa-gauge-high', 'url' => 'dashboard/admin_dashboard.php'],
-        ['active' => 'users', 'label_key' => 'navigation.users_management', 'icon' => 'fa-users-gear', 'url' => 'modules/users/index.php'],
-        ['active' => 'roles', 'label_key' => 'navigation.permissions', 'icon' => 'fa-user-shield', 'url' => 'modules/users/roles.php'],
-        ['active' => 'departments', 'label_key' => 'navigation.departments', 'icon' => 'fa-building', 'url' => 'modules/departments/index.php'],
-        ['active' => 'sponsors', 'label_key' => 'navigation.sponsor_register', 'icon' => 'fa-hand-holding-heart', 'url' => 'modules/sponsors/index.php'],
-        ['active' => 'families', 'label_key' => 'navigation.family_register', 'icon' => 'fa-house-chimney', 'url' => 'modules/families/index.php'],
-        ['active' => 'sponsorships', 'label_key' => 'navigation.sponsorship_register', 'icon' => 'fa-file-contract', 'url' => 'modules/sponsorships/index.php'],
-        ['active' => 'audit', 'label_key' => 'navigation.audit_log', 'icon' => 'fa-file-lines', 'url' => 'modules/logs/audit.php'],
-        ['active' => 'database', 'label_key' => 'navigation.database_management', 'icon' => 'fa-database', 'url' => 'modules/system/database.php'],
-        ['active' => 'settings', 'label_key' => 'navigation.system_settings', 'icon' => 'fa-gear', 'url' => 'modules/settings/index.php'],
-        $reportsItem,
-    ], $acctView, [$fmDashItem, $fmReviewItem, $disbItem, $reconItem, $openingBalanceItem]),
+    ],
 
     // GM keeps the primary navigation intentionally executive-level.
     // Operational/accounting drill-downs are reached from the GM dashboard and Reports Center.
