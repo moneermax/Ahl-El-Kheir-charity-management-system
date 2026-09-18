@@ -237,3 +237,27 @@ The Administration dashboard Winback KPI links now use distinct anchors: open fo
 ### Winback dashboard/list UX refinement — 2026-09-18
 
 The previous anchor-only KPI destinations were confusing because both KPIs still opened the same Winback page. The `أسر بلا كفالة نشطة` KPI now opens the dedicated `modules/administration/available_families.php` page, while `متابعات استرجاع مفتوحة` opens the Winback open-cases section. The available-family table on Winback remains in its current location below the eligible stopped sponsors, keeps the sticky header, and now has an `إجراء` column with a family `عرض` action; `الاحتياج الشهري` and its values are centered. Dedicated page commit: `b28a334019ba0a6ce9620c88fb5ae46082348c13`; Winback table commit: `48036218e776e1b366e5e7161634c3878b541cb8`; dashboard target commit: `fc7b55e506fd98ad2f99dfbf1f13e5901310af58`.
+
+
+### Administration sponsorship-safe family profile — 2026-09-18
+
+A dedicated sponsorship-review page now exists at `modules/administration/sponsorship_family_view.php` for `admin`, `general_manager`, `vice_general_manager`, and `administration`.
+
+Purpose: Administration needs enough information to truthfully present a proposed orphan/family to a new or returning sponsor, including factors that can affect acceptance (health status, psychological state, education level, critical flag, current sponsorship value, extra allowance, and latest previous sponsorship value/status/start date), without opening the complete confidential family case file.
+
+Privacy boundary preserved:
+- shown: family code, mother name, general city, family monthly need, child identity/basic demographics, health/psychological/education information relevant to sponsorship, current sponsorship requirement, extra allowance, latest prior sponsorship amount/status/start;
+- not shown: mother phone/alternate phone, exact address, registration number, bank accounts, family documents, internal family notes, internal case-management controls.
+
+Routing changes:
+- `modules/administration/available_families.php` now opens the sponsorship-safe profile.
+- the available-family list inside `modules/administration/winback.php` now opens the sponsorship-safe profile.
+- `administration` was removed again from the unrestricted `modules/families/view.php` authorization after the dedicated profile was introduced.
+
+Relevant commits:
+- `f30656098422e9bf6e107a6c18c44daa4d8bebd6` — add sponsorship-safe family profile.
+- `783e1aae150e81c20186182716ab1d74104ccd56` — route available families to sponsorship profile.
+- `6604dcaa3c17c51c08ffcae6a6495bec3a3c8a5e` — keep Administration out of the full family case profile.
+- `90fbc18cf40cbe4aff58ea3b0c2fffb04161861c` — route Winback family review to sponsorship profile.
+
+Runtime verification is still required after the user pulls current `main`.
