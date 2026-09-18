@@ -222,7 +222,7 @@ document.querySelectorAll('[data-message-open]').forEach(a=>a.addEventListener('
 const msgSearch=document.getElementById('msgSearch');
 msgSearch?.addEventListener('input',function(){
  const q=this.value.trim().toLocaleLowerCase();
- document.querySelectorAll('.msg-row[data-message-search]').forEach(row=>{
+ document.querySelectorAll('.mail-row[data-message-search]').forEach(row=>{
    row.style.display=!q||row.dataset.messageSearch.toLocaleLowerCase().includes(q)?'flex':'none';
  });
 });
