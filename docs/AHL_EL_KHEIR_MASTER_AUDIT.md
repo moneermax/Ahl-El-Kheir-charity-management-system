@@ -770,3 +770,23 @@ Navigation/authorization was aligned:
 This keeps the business rule explicit: **sponsorship information visibility is broader than internal case-management authority, but narrower than unrestricted family-file access.**
 
 Runtime acceptance is pending.
+
+
+### Winback case lifecycle — reopening a previous decline — 2026-09-18
+
+Business requirement: a sponsor may initially decline returning to sponsorship and later, after another contact, agree to return. The Winback workflow therefore must not treat `declined` as permanently closed.
+
+Implemented behavior:
+- `declined` cases show `إعادة فتح المتابعة`;
+- reopening changes the same campaign row from `declined` to `open`;
+- `closed_at` is cleared;
+- the current user becomes the active handler;
+- an `REOPEN` audit event is recorded;
+- existing contact history remains intact;
+- no duplicate Winback campaign is created for the sponsor.
+
+This preserves one continuous campaign history while allowing a later contact cycle. The sponsor remains inactive until the normal `تأكيد العودة وتفعيل الكفيل` action is completed.
+
+Implementation commit: `8ab5cbacdca806bd20c7afffb92dc1e826903aae`.
+
+Runtime acceptance is pending.
