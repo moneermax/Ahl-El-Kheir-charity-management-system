@@ -662,3 +662,80 @@ This is a continuation of an existing project and existing audit.
 **Never recreate protected fixtures unnecessarily.**  
 **Never ask the user to manually edit repository files when the repository can be changed directly.**  
 **Inspect current code/schema first, then make the smallest safe change.**
+
+
+## DASHBOARD / NAVIGATION REVIEW — 2026-09-18
+
+### Scope
+
+Accounting audit is intentionally parked. This review covers dashboard UX, role-safe navigation, universal reporting access, and the current Administration/Staff/Social Media dashboard.
+
+### Universal Reports
+
+A universal Reports Dashboard was implemented at modules/reports/index.php, with role catalog/authorization centralized in modules/reports/report_registry.php. Sidebar report navigation was consolidated to one Reports entry. Direct report pages use the central guard.
+
+The design rule is:
+- reporting visibility is not the same as workflow authority;
+- GM/VGM require broad organizational reporting visibility for decisions;
+- FM retains financial workflow/control authority;
+- VGM must not receive FM workflow actions/notifications merely because VGM can view management reports.
+
+### Administration dashboard development
+
+dashboard/staff_dashboard.php was previously a generic "under development" page. It was expanded for Administration/Staff/Social Media to show sponsor-request and winback operational indicators and recent sponsor requests.
+
+Relevant implementation:
+- sponsor request counts;
+- contacted-request count;
+- open winback count;
+- uncovered-family count;
+- latest sponsor-request table;
+- role-relevant quick actions.
+
+modules/administration/winback.php is the existing Administration winback workflow and was linked from the Administration sidebar/dashboard.
+
+modules/sponsors/requests.php was updated to authorize administration and staff for the sponsor-request workflow.
+
+### Schema evidence and corrections
+
+The live database was inspected rather than guessing:
+
+SHOW COLUMNS FROM sponsorships confirmed child_id but no family_id.
+
+SHOW CREATE TABLE sponsorships confirmed:
+sponsorships.child_id → family_children.id via foreign key fk_sponsorship_child.
+
+SHOW COLUMNS FROM family_children confirmed family_id.
+
+The children table does not exist.
+
+The incorrect sponsorships.family_id queries were corrected in:
+- dashboard/staff_dashboard.php;
+- modules/administration/winback.php.
+
+This is now the authoritative relationship for dashboard family sponsorship calculations:
+families.id ← family_children.family_id ← family_children.id ← sponsorships.child_id
+
+### Runtime status
+
+The user tested the Administration dashboard after the corrections and reported:
+- dashboard loads without errors;
+- Winback no longer produces the previous schema error;
+- the invalid direct Families link and unauthorized Reports shortcut were removed/repointed instead of bypassing authorization.
+
+### Remaining dashboard work
+
+The Administration dashboard remains OPEN / IN PROGRESS.
+
+Next review items:
+1. KPI semantics and usefulness.
+2. Sponsor-request table/status/action UX.
+3. Winback integration and role-appropriate actions.
+4. Orphan-form navigation.
+5. Role-specific differences between Administration, Staff, and Social Media.
+6. Reports visibility according to the actual report registry.
+7. Arabic labels/encoding.
+8. Responsive/mobile layout.
+9. Remaining schema assumptions and linked-page runtime behavior.
+
+Do not repeat the completed sponsorship-family schema investigation unless new evidence indicates a regression.
