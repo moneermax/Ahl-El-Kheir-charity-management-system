@@ -66,7 +66,6 @@ $menus = [
 
     'financial_manager' => [
         ['active' => 'dashboard', 'label_key' => 'navigation.dashboard', 'icon' => 'fa-gauge-high', 'url' => 'modules/accounting/fm_dashboard.php'],
-        $reportsItem,
         ['active' => 'journal', 'label_key' => 'navigation.journal', 'icon' => 'fa-book', 'url' => 'modules/accounting/journal.php'],
         ['active' => 'projects', 'label_key' => 'navigation.organization_projects', 'icon' => 'fa-diagram-project', 'url' => 'modules/projects/index.php'],
         $openingBalanceItem,
@@ -74,6 +73,7 @@ $menus = [
         ['active' => 'my_nannies', 'label_key' => 'navigation.assigned_nannies', 'icon' => 'fa-user-nurse', 'url' => 'modules/accounting/my_nannies.php'],
         ['active' => 'review', 'label_key' => 'navigation.financial_review_queue', 'icon' => 'fa-clipboard-check', 'url' => 'modules/accounting/fm_review_queue.php'],
         ['active' => 'reconciliation', 'label_key' => 'navigation.reconciliation_report', 'icon' => 'fa-scale-balanced', 'url' => 'modules/accounting/gm_reconciliation.php'],
+        $reportsItem,
     ],
 
     'accountant' => array_merge([
