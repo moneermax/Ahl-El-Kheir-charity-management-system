@@ -435,3 +435,26 @@ Messaging send/reply is currently under investigation. The repository code shows
 - Full Notifications page retains the permanent **حذف الكل** action for the current user's notification history.
 - Header notification dropdown no longer exposes a destructive delete-all action. Its **مسح** action only clears the dropdown display/interaction and does not delete notification records; users can use **عرض الكل** for the full notification history and permanent deletion.
 - Internal messaging send/reply remains unresolved. No speculative messaging schema or database changes were made; runtime failure evidence is still required before changing the messaging persistence path.
+
+
+## Internal messaging UX redesign — 2026-09-18
+
+The internal messaging runtime was re-verified during the dashboard review:
+- Direct send, receive, and reply are working correctly.
+- The previously suspected legacy GM/Admin thread was inspected; message 26 belongs to root message 6 and the thread contains successful replies, including new replies created on 2026-09-18.
+- The apparent failure was therefore identified as a conversation-view usability problem rather than a messaging persistence/send defect.
+
+The Messages page was redesigned toward a professional Gmail/Outlook-style mail experience:
+- stronger email-style visual hierarchy and contrast
+- clearer message-list rows with sender, subject, preview, timestamp, unread state, and selection styling
+- right-side reading pane on desktop instead of the previous centered modal presentation
+- clearer conversation root and reply cards
+- substantially clearer attachment presentation
+- inline message-list search across sender, subject, and preview text
+- existing send, receive, reply, attachment, read-state, broadcast, and font-size controls remain intact
+- no messaging database/schema changes were introduced
+
+Implementation commit:
+- `285d390c00f983b82e8bb59248a555b7997cfd3e` — Redesign internal messages as a professional email inbox
+
+Runtime verification after pulling this commit is required before considering the messaging UX redesign complete.
