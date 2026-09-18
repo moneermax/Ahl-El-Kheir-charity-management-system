@@ -384,11 +384,35 @@ The page intentionally excludes private/internal case data such as direct family
 
 Both `modules/administration/available_families.php` and the available-family list in `modules/administration/winback.php` now route to this controlled profile. Administration was removed from the unrestricted `modules/families/view.php` authorization after the controlled profile was added.
 
-Runtime verification remains pending after pull.
+The user runtime-tested the controlled profile flow after pull; no authorization bypass was introduced.
 
 
 ## Winback declined-case reopening — 2026-09-18
 
 A closed Winback case with status `declined` can now be reopened when a sponsor later changes their decision. The system reuses the original `winback_campaigns` row, changes its status back to `open`, clears `closed_at`, assigns the current handler, and records an `REOPEN` audit event. No duplicate campaign is created.
 
-The action is available from the declined case detail and the Winback history list. Runtime verification remains pending.
+The action is available from the declined case detail and the Winback history list. The user runtime-tested the declined-case reopening workflow and confirmed the test passed.
+
+
+### GM executive dashboard redesign — 2026-09-18
+
+The General Manager dashboard was redesigned as an executive decision surface rather than a second operational navigation hub.
+
+Changes:
+- replaced the dense KPI/chart dashboard with a focused executive snapshot;
+- retained high-value organizational KPIs and clearly defined the financial KPI as posted transaction totals;
+- changed family coverage to use active + pending families as the population, avoiding the previous denominator mismatch;
+- added a management attention panel for uncovered families, paused sponsorships, pending families, open Winback cases, unassigned supervisor letters, and open sponsor requests;
+- removed low-value operational charts (letter distribution, supervisor collection ranking, medical-needs overlap) from the GM dashboard;
+- retained only the collection trend, family-status, and sponsorship-status views as strategic trend/context visuals;
+- added direct executive drill-down cards into the centralized financial, sponsorship, operational, HR, and reconciliation reports;
+- centralized report visibility is respected through the existing report registry;
+- simplified the GM sidebar to Dashboard, Organization Projects, and Reports. Accounting workflow pages and specialized operational pages are no longer repeated in the GM primary navigation; management access remains available through the dashboard and authorized Reports Center;
+- no accounting workflow authority was granted to the GM by this redesign.
+
+Commits:
+- `df5132b6f6d07a4ea17acd07aa2cde6c990cd6d6` — redesign GM dashboard for executive UX.
+- `160fad609b953578b4a6660ece0eaae3a1d04f01` — simplify GM sidebar to executive navigation.
+- `[follow-up commit]` — load centralized report authorization on the GM dashboard.
+
+Runtime verification after pull is the next required step. Do not add SQL or schema changes for this dashboard work unless runtime evidence identifies a real data-definition issue.
