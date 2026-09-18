@@ -561,3 +561,16 @@ V5 visual model:
 Do not replace or rewrite the messaging PHP/JS behavior merely to alter the visual design. If the user reports a functional regression, inspect the actual current code and fix the specific regression narrowly.
 
 Runtime verification remains pending after pulling commit `743b186f2167ec195a60b73fb88659c147ba71f6`.
+
+
+## MESSAGING UI — CURRENT GMAIL V6 CHECKPOINT — 2026-09-18
+
+The current messaging visual target is Gmail, fitted to the existing Ahl El Kheir Arabic/RTL messaging functionality.
+
+Latest commit: `66d5acfa9dd919c84a5c689b1a2cf632d4bca7c9` — `Match messaging workspace to Gmail visual design v6`.
+
+Important design decision: do not continue the previous custom blue-panel aesthetic. Gmail's actual visual language is intentionally restrained: light gray/white surfaces, subtle borders, pale blue selected states, and restrained Gmail blue for primary actions.
+
+Preserve existing application functionality. Future visual iterations should change presentation only unless the user explicitly requests functional changes.
+
+Runtime verification is the immediate checkpoint.
