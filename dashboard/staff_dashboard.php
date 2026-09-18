@@ -53,7 +53,7 @@ $stats = [
 ];
 if ($role === 'administration') {
     $stats[] = ['open_winback', 'متابعات استرجاع مفتوحة', 'text-warning', 'modules/administration/winback.php'];
-    $stats[] = ['uncovered_families', 'أسر بلا كفالة نشطة', 'text-success', 'modules/administration/winback.php#uncovered'];
+    $stats[] = ['uncovered_families', 'أسر بلا كفالة نشطة', 'text-success', 'modules/administration/available_families.php'];
 }
 foreach ($stats as $stat):
 ?>
