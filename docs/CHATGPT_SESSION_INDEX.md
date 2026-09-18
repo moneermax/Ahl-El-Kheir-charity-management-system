@@ -261,3 +261,14 @@ Relevant commits:
 - `90fbc18cf40cbe4aff58ea3b0c2fffb04161861c` — route Winback family review to sponsorship profile.
 
 Runtime verification is still required after the user pulls current `main`.
+
+
+### Winback declined-case reopening — 2026-09-18
+
+Winback now supports reopening an existing `declined` campaign when a sponsor who previously declined later agrees to reconsider. The existing campaign is reopened to `open`, `closed_at` is cleared, the current handler is recorded, and an audit entry is written with action `REOPEN`. This avoids creating a duplicate campaign for the same sponsor and preserves the original contact history.
+
+The Winback case detail and history list provide an `إعادة فتح المتابعة` action for declined cases.
+
+Implementation commit: `8ab5cbacdca806bd20c7afffb92dc1e826903aae`.
+
+Runtime verification is pending.
