@@ -272,3 +272,43 @@ The Winback case detail and history list provide an `إعادة فتح المت�
 Implementation commit: `8ab5cbacdca806bd20c7afffb92dc1e826903aae`.
 
 Runtime verification is pending.
+
+
+## MESSAGING MODULE — COLOR-FORWARD DESIGN CHECKPOINT 2026-09-18
+
+The active UI work is the internal messaging inbox at `modules/messages/index.php`.
+
+### Previous design iteration
+
+Commit `2349c884566cbb206aabad468f2808feab4f4cd9` — `Rebuild messaging UI as Gmail-inspired professional mail client` — introduced a structural Gmail-inspired mail workspace while preserving the existing PHP/JS message controls.
+
+The visual result was still too neutral: the main messaging surface and surrounding page/background were visually too similar. The user explicitly requested another design version with real color separation rather than another neutral restyling.
+
+### Current design iteration
+
+Commit `743b186f2167ec195a60b73fb88659c147ba71f6` — `Create color-forward messaging workspace design v5`.
+
+V5 is intentionally color-forward while remaining professional:
+
+- blue-gray outer mail workspace;
+- distinct tinted navigation rail;
+- white inbox surface with clearer row hierarchy;
+- blue selected/unread states;
+- separate pale-blue reading header;
+- warm-white message document card on a contrasting reading background;
+- green-tinted sent/reply bubbles for visual differentiation;
+- blue-tinted reply composer;
+- matching blue identity in the compose dialog.
+
+The change is visual-only. Existing message routing, send/reply/read behavior, attachments, search, filters, and role-based recipient controls were not intentionally changed.
+
+### Runtime verification pending
+
+After pulling `743b186f2167ec195a60b73fb88659c147ba71f6`, verify:
+
+1. `http://localhost:8081/AhlElKheir/modules/messages/index.php` has clearly separated colored surfaces rather than a page-background-colored message box.
+2. Inbox rows remain clickable and opening a message still shows the reading pane.
+3. Close reading returns to the inbox.
+4. Compose, reply, attachment, search, and unread controls remain usable.
+
+Do not restart the messaging audit or replace working message logic merely for visual experimentation.
