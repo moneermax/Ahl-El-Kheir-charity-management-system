@@ -369,3 +369,12 @@ The dashboard was corrected without creating a duplicate roles page or changing 
 Commit: `124c8970b6511ae930ddd025da96f7fb555ffe1b`.
 
 Runtime verification is required after pulling this commit. Continue checking the remaining Admin Control Panel links against actual existing repository destinations; do not invent missing endpoints.
+
+
+### Admin Control Panel duplicate-destination correction — 2026-09-18
+
+During continued runtime review, the user identified that the separate tiles `المستخدمون` and `أدوار المستخدمين` both opened the same `modules/users/index.php` page. Repository inspection confirmed there is no separate roles-management destination, so keeping two tiles would be misleading. The duplicate `أدوار المستخدمين` tile was removed rather than inventing another endpoint. The `إدارة النظام` group now contains the three real destinations: users, departments, and system settings, with a three-column desktop layout for that group.
+
+Commit: `b40b8fd8e3ead0ad17c24c3af08a11f01b0adc21` — `Remove duplicate admin roles destination`.
+
+Runtime verification is still required after pulling the latest `main`.
