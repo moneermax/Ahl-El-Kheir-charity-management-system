@@ -15,14 +15,7 @@ if (!Session::isLoggedIn()) {
 $role = Session::getUserRole();
 $uid = Session::getUserId();
 
-/* Accountant Staff keeps its existing deliberately restricted reporting entry point. */
-if ($role === 'accountant_staff') {
-    header('Location: ' . APP_URL . 'modules/reports/my_financial.php');
-    exit();
-}
-
 $allowed_reports = ak_report_allowed_catalog($role);
-unset($allowed_reports['my_financial']);
 
 $from = trim($_GET['from'] ?? date('Y-m-01'));
 $to = trim($_GET['to'] ?? date('Y-m-d'));
