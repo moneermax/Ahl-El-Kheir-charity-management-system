@@ -835,3 +835,31 @@ Required targeted browser check:
 5. Confirm compose/reply/attachment/search/read controls remain available.
 
 Do not repeat previously completed message send/attachment debugging unless this visual change produces a regression.
+
+
+# 2026-09-18 — Messaging Gmail Visual Model V6
+
+## User-directed design decision
+
+The V5 custom color-forward design was rejected visually. The user specifically requested the Gmail design and asked that it be fitted to the existing Ahl El Kheir messaging system.
+
+## Implementation
+
+Commit `66d5acfa9dd919c84a5c689b1a2cf632d4bca7c9` applies a Gmail visual model as a presentation layer to `modules/messages/index.php`.
+
+The implementation deliberately avoids decorative blue panels. Gmail's visual identity is primarily white surfaces, light gray chrome, subtle borders, pale blue selection states, and a restrained Google blue for actions. This distinction is important: matching Gmail means using its restrained palette, not adding more saturated colors.
+
+Existing application functionality is preserved. No database, PHP workflow, message routing, attachment logic, recipient authorization, or JavaScript behavior was intentionally changed.
+
+## Runtime check
+
+Open `http://localhost:8081/AhlElKheir/modules/messages/index.php` after pulling the commit and verify:
+1. Gmail-style light sidebar and selected folder.
+2. Gmail-style Compose button.
+3. White inbox with pale blue search field.
+4. White reading panel with subtle separators.
+5. Gmail-blue primary actions.
+6. Existing message opening still works.
+7. Reply and compose still work.
+
+Do not restart prior messaging functionality audits unless a regression is observed.
