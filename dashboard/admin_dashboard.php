@@ -43,7 +43,7 @@ include __DIR__ . '/../includes/header.php';
             <?php echo e(t('admin.logs')); ?>
         </a>
 
-        <a href="<?php echo url('modules/settings/index.php'); ?>" class="btn btn-light btn-sm">
+        <a href="<?php echo url('modules/reports/index.php'); ?>" class="btn btn-light btn-sm">\n            <i class="fas fa-chart-line me-1"></i>\n            التقارير\n        </a>\n\n        <a href="<?php echo url('modules/settings/index.php'); ?>" class="btn btn-light btn-sm">
             <i class="fas fa-gear me-1"></i>
             <?php echo e(t('admin.settings')); ?>
         </a>
