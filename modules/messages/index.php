@@ -91,13 +91,40 @@ include dirname(__DIR__,2).'/includes/header.php';
 @media(max-width:1100px){.msg-dialog{width:68vw}.msg-layout{grid-template-columns:195px minmax(320px,1fr)}}
 @media(max-width:767px){.msg-toolbar{align-items:flex-start}.msg-settings{display:none}.msg-layout{display:block;height:auto;min-height:0}.msg-sidebar{border:0;border-bottom:1px solid var(--msg-border)}.msg-nav{display:grid;grid-template-columns:repeat(3,1fr)}.msg-nav a,.msg-nav button{justify-content:center;flex-direction:column;gap:3px;padding:8px 4px;text-align:center;font-size:.59rem}.msg-section-label{display:none}.msg-compose-btn{margin-bottom:10px}.msg-list{min-height:520px}.msg-list-head{flex-wrap:wrap}.msg-search-wrap{order:3;flex-basis:100%;max-width:none}.msg-overlay{padding:0;background:rgba(18,35,57,.22)}.msg-dialog{width:100%;height:100%;min-height:100%;border-radius:0;border:0}.msg-conv-head{padding:11px 13px}.msg-thread{padding:15px 11px 20px}.msg-root{padding:15px}.msg-bubble{max-width:94%}.msg-reply{padding:10px}.msg-reply textarea{min-height:74px}.msg-conv-meta{font-size:.57rem}}
 </style>
-
+<style>
+/* Professional mail workspace override */
+.messages-shell{font-family:'Cairo',sans-serif;color:#172033}
+.msg-layout{grid-template-columns:190px 340px minmax(430px,1fr)!important;height:calc(100vh - 190px);min-height:600px;background:#fff;border:1px solid #dfe4ea;border-radius:12px;box-shadow:0 4px 20px rgba(15,23,42,.07);overflow:hidden}
+.msg-layout.no-thread{grid-template-columns:190px minmax(0,1fr)!important}
+.msg-sidebar{background:#fbfcfe!important;border-inline-end:1px solid #dfe4ea!important;padding:14px 10px!important}
+.msg-compose-btn{background:#2563eb!important;border-radius:9px!important;box-shadow:0 3px 10px rgba(37,99,235,.18)!important}
+.msg-nav a,.msg-nav button{color:#475467!important;border-radius:8px!important}.msg-nav a.active{background:#e8f1ff!important;color:#2563eb!important;font-weight:850}
+.msg-list-pane{background:#fff!important;border-inline-end:1px solid #dfe4ea!important}
+.msg-list-head{background:#fff!important;border-bottom:1px solid #dfe4ea!important}
+.msg-row{padding:12px 11px!important;border-bottom:1px solid #edf0f4!important}.msg-row:hover{background:#f7f9fc!important}.msg-row.unread{background:#f8fbff!important}
+.msg-reading-pane{min-width:0;display:flex;flex-direction:column;background:#f4f6f9;position:relative}
+.msg-reading-pane.empty{grid-column:1/-1;align-items:center;justify-content:center}
+.msg-reading-head{min-height:70px;padding:11px 16px;background:#fff;border-bottom:1px solid #dfe4ea;display:flex;align-items:center;justify-content:space-between}
+.msg-thread{padding:18px 22px 24px;background:#f4f6f9!important;overflow:auto;flex:1}
+.msg-root{border:1px solid #d7dee7!important;background:#fff!important;border-radius:10px!important;box-shadow:0 1px 3px rgba(16,24,40,.05)!important}
+.msg-bubble{border:1px solid #dce2e9!important;background:#fff!important;border-radius:10px!important;box-shadow:0 1px 3px rgba(16,24,40,.045)!important}
+.msg-bubble.mine{background:#eaf3ff!important;border-color:#c8dcf6!important}
+.msg-reply{background:#fff!important;border-top:1px solid #dfe4ea!important;padding:10px 15px 13px!important}
+.msg-reply-box{border:1px solid #cbd5e1!important;border-radius:9px!important}
+.msg-send{background:#2563eb!important}.msg-send:hover{background:#1d4ed8!important}
+.msg-icon-btn{border-color:#dfe4ea!important}.msg-icon-btn:hover{background:#eff6ff!important;color:#2563eb!important}
+.msg-read-empty-icon{background:#e9eef5!important;color:#64748b!important}
+.msg-attachment-item{background:#f8fafc!important;border:1px solid #d8e0e9!important}
+@media(max-width:1100px){.msg-layout.has-thread{grid-template-columns:175px 320px minmax(360px,1fr)!important}}
+@media(max-width:900px){.msg-layout.has-thread{grid-template-columns:170px 1fr!important;position:relative}.msg-reading-pane{position:absolute;inset:0;z-index:50}}
+@media(max-width:767px){.msg-layout,.msg-layout.no-thread{display:block;height:auto;min-height:0}.msg-reading-pane{position:fixed;inset:0;z-index:3000}.msg-thread{padding:12px 10px 18px}.msg-bubble{max-width:94%}}
+</style>
 <div class="messages-shell">
  <div class="msg-toolbar">
   <div class="msg-title"><div class="msg-title-icon"><i class="fas fa-envelope-open-text"></i></div><div><h2>الرسائل الداخلية</h2><p>مراسلات آمنة بين مستخدمي النظام والأدوار الإدارية</p></div></div>
   <div class="msg-settings"><i class="fas fa-text-height"></i><span>حجم النص</span><select id="msgFontSize" class="form-select form-select-sm"><option value="13px">صغير</option><option value="14px" selected>متوسط</option><option value="15px">كبير</option><option value="16px">كبير جداً</option></select></div>
  </div>
- <div class="msg-layout">
+ <div class="msg-layout <?php echo $thread['root']?'has-thread':'no-thread';?>">
   <aside class="msg-sidebar">
    <button type="button" class="msg-compose-btn" data-bs-toggle="modal" data-bs-target="#composeModal"><i class="fas fa-pen-to-square me-2"></i>رسالة جديدة</button>
    <nav class="msg-nav">
@@ -122,7 +149,7 @@ include dirname(__DIR__,2).'/includes/header.php';
 <?php if($thread['root']): $m=$thread['root']; mark_message_read($uid,(int)$m['id']); $rootName=$m['sender_name']; $rootInitial=mb_substr($rootName!==''?$rootName:'?',0,1,'UTF-8'); ?>
 <div class="msg-overlay open" id="messageOverlay" role="dialog" aria-modal="true" aria-labelledby="messageOverlayTitle">
  <div class="msg-dialog">
-  <div class="msg-conv-head">
+  <div class="msg-reading-head">
    <div class="msg-conv-person"><div class="msg-avatar"><?php echo e($rootInitial);?></div><div><div class="msg-conv-name" id="messageOverlayTitle"><?php echo e($rootName);?></div><div class="msg-conv-meta">مراسلة داخلية · <?php echo e($m['created_at']);?></div></div></div>
    <div class="msg-conv-actions"><button class="msg-icon-btn" type="button" onclick="focusReply()" title="الرد"><i class="fas fa-reply"></i></button><a class="msg-icon-btn msg-close-btn" href="<?php echo $msgUrl;?>" title="إغلاق"><i class="fas fa-xmark"></i></a></div>
   </div>
