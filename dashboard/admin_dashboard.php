@@ -129,12 +129,11 @@ $systemCards = [
 $controlGroups = [
     [
         'title' => 'إدارة النظام',
-        'subtitle' => 'حسابات المستخدمين والأدوار والبنية الأساسية',
+        'subtitle' => 'حسابات المستخدمين والبنية الأساسية',
         'icon' => 'fa-sliders',
         'color' => '#7567c7',
         'items' => [
             ['title' => 'المستخدمون', 'description' => 'إنشاء الحسابات وإدارة المستخدمين', 'icon' => 'fa-users-gear', 'url' => 'modules/users/index.php'],
-            ['title' => 'أدوار المستخدمين', 'description' => 'تعيين أدوار المستخدمين ومستويات الوصول المتاحة', 'icon' => 'fa-user-shield', 'url' => 'modules/users/index.php'],
             ['title' => 'الأقسام', 'description' => 'إدارة أقسام المنظمة', 'icon' => 'fa-building', 'url' => 'modules/departments/index.php'],
             ['title' => 'إعدادات النظام', 'description' => 'بيانات المنظمة والإعدادات العامة', 'icon' => 'fa-gear', 'url' => 'modules/settings/index.php'],
         ],
@@ -461,6 +460,10 @@ include __DIR__ . '/../includes/header.php';
     grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+.admin-tool-grid.admin-tool-grid-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .admin-tool {
     min-height: 126px;
     display: flex;
@@ -578,7 +581,8 @@ include __DIR__ . '/../includes/header.php';
 
 @media (max-width: 1100px) {
     .admin-stat-grid,
-    .admin-tool-grid {
+    .admin-tool-grid,
+    .admin-tool-grid.admin-tool-grid-3 {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
@@ -603,6 +607,7 @@ include __DIR__ . '/../includes/header.php';
 
     .admin-stat-grid,
     .admin-tool-grid,
+    .admin-tool-grid.admin-tool-grid-3,
     .admin-alert-grid {
         grid-template-columns: 1fr;
     }
@@ -740,7 +745,7 @@ include __DIR__ . '/../includes/header.php';
                 </div>
             </div>
 
-            <div class="admin-tool-grid">
+            <div class="admin-tool-grid <?php echo count($group['items']) === 3 ? 'admin-tool-grid-3' : ''; ?>">
                 <?php foreach ($group['items'] as $item): ?>
                     <a class="admin-tool" href="<?php echo e(url($item['url'])); ?>">
                         <div>
