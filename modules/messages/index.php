@@ -1083,6 +1083,237 @@ include dirname(__DIR__,2).'/includes/header.php';
   .messages-shell .msg-reply{padding:8px!important}
 }
 </style>
+<style id="msg-color-forward-v5">
+/*
+ * Messaging V5 — color-forward professional mail workspace.
+ * Visual redesign only: preserve PHP workflow, URLs, controls and JS behavior.
+ * Goal: make the mail workspace visually distinct from the page background.
+ */
+.messages-shell{
+  --v5-page:#e8eef7;
+  --v5-sidebar:#dbe7f5;
+  --v5-sidebar-border:#c5d4e6;
+  --v5-blue:#2563eb;
+  --v5-blue-dark:#1d4ed8;
+  --v5-blue-soft:#dbeafe;
+  --v5-ink:#172033;
+  --v5-muted:#66758a;
+  --v5-line:#d7e0eb;
+  --v5-reading:#f5f7fb;
+  --v5-warm:#fffdf8;
+  background:var(--v5-page)!important;
+  color:var(--v5-ink)!important;
+}
+
+/* The whole mail module now reads as a colored application surface. */
+.messages-shell .msg-toolbar{
+  background:var(--v5-page)!important;
+  padding:8px 14px!important;
+  height:64px!important;
+}
+.messages-shell .msg-title-icon{
+  background:var(--v5-blue)!important;
+  color:#fff!important;
+  box-shadow:0 5px 14px rgba(37,99,235,.22)!important;
+}
+.messages-shell .msg-title h2{color:#172033!important;font-weight:850!important}
+.messages-shell .msg-title p{color:#66758a!important}
+
+/* Strong contrast between navigation, inbox and reading areas. */
+.messages-shell .msg-layout,
+.messages-shell .msg-layout.no-thread,
+.messages-shell .msg-layout.has-thread{
+  background:var(--v5-page)!important;
+  border:1px solid #c9d6e6!important;
+  border-radius:14px!important;
+  box-shadow:0 10px 30px rgba(31,55,84,.12)!important;
+  overflow:hidden!important;
+}
+.messages-shell .msg-sidebar{
+  background:var(--v5-sidebar)!important;
+  border-inline-end:1px solid var(--v5-sidebar-border)!important;
+  padding:14px 10px!important;
+}
+.messages-shell .msg-compose-btn{
+  background:var(--v5-blue)!important;
+  color:#fff!important;
+  border-radius:11px!important;
+  box-shadow:0 5px 14px rgba(37,99,235,.20)!important;
+}
+.messages-shell .msg-compose-btn i{color:#fff!important}
+.messages-shell .msg-compose-btn:hover{background:var(--v5-blue-dark)!important}
+.messages-shell .msg-nav a,
+.messages-shell .msg-nav button{color:#33445b!important}
+.messages-shell .msg-nav a:hover,
+.messages-shell .msg-nav button:hover{background:#cbdcf1!important;color:#174ea6!important}
+.messages-shell .msg-nav a.active{
+  background:#bcd3f2!important;
+  color:#174ea6!important;
+  box-shadow:inset 3px 0 0 #174ea6!important;
+}
+.messages-shell .msg-count{background:#174ea6!important;color:#fff!important}
+.messages-shell .msg-section-label{color:#536982!important}
+.messages-shell .msg-sidebar .small.text-muted{color:#5f7087!important}
+
+/* Inbox card: crisp white against the blue-gray shell. */
+.messages-shell .msg-list-pane{
+  background:#fff!important;
+  border-inline-end:1px solid var(--v5-line)!important;
+}
+.messages-shell .msg-list-head{
+  background:#fff!important;
+  border-bottom:1px solid var(--v5-line)!important;
+  padding:9px 13px!important;
+}
+.messages-shell .msg-list-head h3{color:#26364d!important}
+.messages-shell .msg-search{
+  background:#eef4fb!important;
+  border:1px solid #d5e1ef!important;
+  color:#172033!important;
+}
+.messages-shell .msg-search:focus{
+  background:#fff!important;
+  border-color:#7da5df!important;
+  box-shadow:0 0 0 3px rgba(37,99,235,.10)!important;
+}
+.messages-shell .msg-search-wrap i{color:#6b7c92!important}
+.messages-shell .msg-filter a{color:#66758a!important}
+.messages-shell .msg-filter a.active{
+  color:#174ea6!important;
+  background:#e8f1ff!important;
+  border-bottom-color:#2563eb!important;
+}
+
+/* Email rows get visible hierarchy and a clearer unread signal. */
+.messages-shell .msg-row{background:#fff!important;border-bottom:1px solid #e8edf3!important}
+.messages-shell .msg-row:hover{background:#f1f6fd!important}
+.messages-shell .msg-row.unread{background:#f7fbff!important}
+.messages-shell .msg-row.active{
+  background:#dceafe!important;
+  box-shadow:inset -4px 0 0 #2563eb!important;
+}
+.messages-shell .msg-row.unread:before{display:block!important;background:#2563eb!important;width:4px!important}
+.messages-shell .msg-avatar{
+  background:#dbeafe!important;
+  color:#1d4ed8!important;
+  border:1px solid #c6dbf8!important;
+}
+.messages-shell .msg-row.unread .msg-name,
+.messages-shell .msg-row.unread .msg-subject{color:#172033!important}
+.messages-shell .msg-new{
+  color:#174ea6!important;
+  background:#dbeafe!important;
+  border-radius:8px!important;
+  padding:2px 6px!important;
+}
+.messages-shell .msg-urgent{color:#d97706!important}
+
+/* Reading pane is deliberately NOT white-on-white anymore. */
+.messages-shell .msg-reading-pane,
+.messages-shell .msg-reading-pane.empty{
+  background:var(--v5-reading)!important;
+}
+.messages-shell .msg-reading-head{
+  background:#edf5ff!important;
+  border-bottom:1px solid #cddded!important;
+  min-height:68px!important;
+}
+.messages-shell .msg-conv-person .msg-avatar{
+  background:#cfe1fb!important;
+  color:#174ea6!important;
+}
+.messages-shell .msg-conv-name{color:#172033!important}
+.messages-shell .msg-conv-meta{color:#66758a!important}
+.messages-shell .msg-icon-btn{
+  background:#fff!important;
+  border:1px solid #d4dfeb!important;
+  color:#53667e!important;
+}
+.messages-shell .msg-icon-btn:hover{background:#dbeafe!important;color:#174ea6!important;border-color:#9fc0e8!important}
+
+/* Message document: warm white card gives the reading area a second visual layer. */
+.messages-shell .msg-thread{
+  background:var(--v5-reading)!important;
+  padding:22px 34px 28px!important;
+}
+.messages-shell .msg-root{
+  background:var(--v5-warm)!important;
+  border:1px solid #d9dfd7!important;
+  border-top:4px solid #2563eb!important;
+  border-radius:12px!important;
+  box-shadow:0 5px 18px rgba(43,58,77,.08)!important;
+  padding:20px 22px!important;
+}
+.messages-shell .msg-subject-large{color:#172033!important;font-weight:850!important}
+.messages-shell .msg-root-meta{color:#718096!important}
+.messages-shell .msg-root hr{border-top-color:#e3e8e3!important}
+.messages-shell .msg-body{color:#26364d!important}
+.messages-shell .msg-bubble{
+  background:#fff!important;
+  border:1px solid #d9e1ea!important;
+  border-radius:12px!important;
+  box-shadow:0 3px 10px rgba(43,58,77,.055)!important;
+}
+.messages-shell .msg-bubble.mine{
+  background:#e8f5ef!important;
+  border-color:#b9dfcf!important;
+}
+.messages-shell .msg-bubble.mine .msg-bubble-name{color:#18704f!important}
+.messages-shell .msg-bubble-name{color:#294765!important}
+.messages-shell .msg-bubble-time{color:#7a8798!important}
+
+/* Reply composer is a distinct blue-tinted work area. */
+.messages-shell .msg-reply{
+  background:#edf5ff!important;
+  border-top:1px solid #cddded!important;
+}
+.messages-shell .msg-reply-box{
+  background:#fff!important;
+  border:1px solid #b9cce2!important;
+  box-shadow:0 3px 12px rgba(43,72,105,.08)!important;
+}
+.messages-shell .msg-reply textarea{background:#fff!important;color:#172033!important}
+.messages-shell .msg-reply-tools{background:#f7fbff!important;border-top:1px solid #e1eaf3!important}
+.messages-shell .msg-tool:hover{background:#dbeafe!important;color:#174ea6!important}
+.messages-shell .msg-send{background:#2563eb!important;border-radius:9px!important}
+.messages-shell .msg-send:hover{background:#1d4ed8!important}
+
+/* Compose dialog follows the same blue identity instead of the old neutral gray. */
+.compose-modal .modal-content{
+  border:1px solid #bfd0e5!important;
+  border-radius:13px!important;
+  box-shadow:0 18px 55px rgba(25,52,84,.24)!important;
+}
+.compose-modal .modal-header{
+  background:#edf5ff!important;
+  color:#172033!important;
+  border-bottom:1px solid #cddded!important;
+}
+.compose-modal .modal-header h5{color:#172033!important}
+.compose-modal .modal-header .btn-close{filter:none!important}
+.compose-head-icon{background:#dbeafe!important;color:#174ea6!important}
+.compose-modal .modal-body{background:#fff!important}
+.compose-recipient{background:#f4f8fd!important;border-color:#d9e4ef!important}
+.compose-modal .form-control,
+.compose-modal .form-select{border-color:#d3deea!important;background:#fff!important}
+.compose-modal .form-control:focus,
+.compose-modal .form-select:focus{border-color:#7da5df!important;box-shadow:0 0 0 3px rgba(37,99,235,.10)!important}
+.compose-modal .modal-footer{background:#f7fbff!important;border-top:1px solid #dce6f0!important}
+.compose-send{background:#2563eb!important;border-radius:9px!important}
+.compose-send:hover{background:#1d4ed8!important}
+
+/* Empty state remains clearly inside the colored reading surface. */
+.messages-shell .msg-read-empty-icon{background:#dbeafe!important;color:#2563eb!important}
+.messages-shell .msg-read-empty strong{color:#34455d!important}
+.messages-shell .msg-read-empty span{color:#728198!important}
+
+@media(max-width:767px){
+  .messages-shell .msg-toolbar{background:var(--v5-page)!important}
+  .messages-shell .msg-sidebar{background:var(--v5-sidebar)!important}
+  .messages-shell .msg-reading-pane{background:var(--v5-reading)!important}
+}
+</style>
+
 <script>
 const msgCsrf=<?php echo json_encode(csrf_token());?>; const msgUrl=<?php echo json_encode($msgUrl);?>;
 const attachmentApiUrl=msgUrl.replace('index.php','attachment.php');
