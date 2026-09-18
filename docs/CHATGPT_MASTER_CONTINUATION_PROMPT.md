@@ -531,3 +531,33 @@ Commit: `916758bf205bebbd43805eee010f1dc6163dbe7e` — `Refine administration st
 The user must pull and runtime-test this refinement. Do not treat the dashboard as finished yet. Continue reviewing KPI meaning, sponsor-request workflow usability, orphan-form navigation, role separation, sidebar consistency, Arabic encoding, responsive behavior, and remaining runtime issues.
 
 Documentation was updated in `docs/CHATGPT_SESSION_INDEX.md` by commit `a14ee88f7e26844f7bcbfad434231f8ac21d31ad`.
+
+
+## MESSAGING UI — CURRENT 2026-09-18 CHECKPOINT
+
+The internal messaging module is undergoing a visual design refinement, not a functional rewrite.
+
+Primary file: `modules/messages/index.php`.
+
+Previous structural redesign:
+- `2349c884566cbb206aabad468f2808feab4f4cd9` — `Rebuild messaging UI as Gmail-inspired professional mail client`.
+
+Current V5 design:
+- `743b186f2167ec195a60b73fb88659c147ba71f6` — `Create color-forward messaging workspace design v5`.
+
+The reason for V5 is explicit user feedback: the messaging workspace was too close in color to the page background. The current design therefore uses clearly separated colored surfaces while preserving the existing message functionality.
+
+V5 visual model:
+- blue-gray outer mail workspace;
+- tinted navigation rail;
+- white inbox/list surface;
+- blue selected/unread states;
+- pale-blue reading header;
+- warm-white message card on a contrasting reading background;
+- green-tinted outgoing/reply bubbles;
+- blue-tinted reply composer;
+- matching compose dialog.
+
+Do not replace or rewrite the messaging PHP/JS behavior merely to alter the visual design. If the user reports a functional regression, inspect the actual current code and fix the specific regression narrowly.
+
+Runtime verification remains pending after pulling commit `743b186f2167ec195a60b73fb88659c147ba71f6`.
