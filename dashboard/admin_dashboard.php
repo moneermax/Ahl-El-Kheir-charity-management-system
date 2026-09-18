@@ -97,82 +97,33 @@ $systemCards = [
         'value' => number_format($stats['users']),
         'icon' => 'fa-users',
         'class' => 'admin-cyan',
-        'url' => url('modules/users/index.php'),
-        'action' => 'إدارة المستخدمين',
     ],
     [
         'label' => 'الكفلاء',
         'value' => number_format($stats['sponsors']),
         'icon' => 'fa-hand-holding-heart',
         'class' => 'admin-amber',
-        'url' => url('modules/sponsors/index.php'),
-        'action' => 'فتح سجل الكفلاء',
     ],
     [
         'label' => 'الأسر',
         'value' => number_format($stats['families']),
         'icon' => 'fa-house-chimney',
         'class' => 'admin-green',
-        'url' => url('modules/families/index.php'),
-        'action' => 'فتح سجل الأسر',
     ],
     [
         'label' => 'الكفالات',
         'value' => number_format($stats['sponsorships']),
         'icon' => 'fa-file-contract',
         'class' => 'admin-violet',
-        'url' => url('modules/sponsorships/index.php'),
-        'action' => 'إدارة الكفالات',
     ],
 ];
 
-$controlGroups = [
+$adminTools = [
     [
-        'title' => 'إدارة النظام',
-        'subtitle' => 'حسابات المستخدمين والبنية الأساسية',
-        'icon' => 'fa-sliders',
-        'color' => '#7567c7',
-        'items' => [
-            ['title' => 'المستخدمون', 'description' => 'إنشاء الحسابات وإدارة المستخدمين', 'icon' => 'fa-users-gear', 'url' => 'modules/users/index.php'],
-            ['title' => 'الأقسام', 'description' => 'إدارة أقسام المنظمة', 'icon' => 'fa-building', 'url' => 'modules/departments/index.php'],
-            ['title' => 'إعدادات النظام', 'description' => 'بيانات المنظمة والإعدادات العامة', 'icon' => 'fa-gear', 'url' => 'modules/settings/index.php'],
-        ],
-    ],
-    [
-        'title' => 'البيانات الأساسية',
-        'subtitle' => 'السجلات التشغيلية الرئيسية',
+        'title' => 'النسخ الاحتياطي',
+        'description' => 'إنشاء وإدارة نسخ قاعدة البيانات كإجراء صيانة إداري.',
         'icon' => 'fa-database',
-        'color' => '#4b78c2',
-        'items' => [
-            ['title' => 'الكفلاء', 'description' => 'سجل الكفلاء وبياناتهم', 'icon' => 'fa-hand-holding-heart', 'url' => 'modules/sponsors/index.php'],
-            ['title' => 'الأسر', 'description' => 'سجل الأسر والبيانات المرتبطة بها', 'icon' => 'fa-house-chimney', 'url' => 'modules/families/index.php'],
-            ['title' => 'الكفالات', 'description' => 'سجل الكفالات وعلاقاتها', 'icon' => 'fa-file-contract', 'url' => 'modules/sponsorships/index.php'],
-            ['title' => 'التقارير', 'description' => 'مركز التقارير الموحد', 'icon' => 'fa-chart-line', 'url' => 'modules/reports/index.php'],
-        ],
-    ],
-    [
-        'title' => 'المالية',
-        'subtitle' => 'وصول المدير إلى أدوات المتابعة المالية',
-        'icon' => 'fa-coins',
-        'color' => '#d88a2d',
-        'items' => [
-            ['title' => 'لوحة المالية', 'description' => 'ملخص ومؤشرات الإدارة المالية', 'icon' => 'fa-chart-line', 'url' => 'modules/accounting/fm_dashboard.php'],
-            ['title' => 'دليل الحسابات', 'description' => 'مراجعة الحسابات المحاسبية', 'icon' => 'fa-sitemap', 'url' => 'modules/accounting/accounts.php'],
-            ['title' => 'سجل المعاملات', 'description' => 'متابعة سجل المعاملات المالية', 'icon' => 'fa-money-bill-transfer', 'url' => 'modules/transactions/index.php'],
-            ['title' => 'التحويلات الشهرية', 'description' => 'متابعة دفعات الأسر الشهرية', 'icon' => 'fa-money-check-dollar', 'url' => 'modules/accounting/disbursements.php'],
-            ['title' => 'تحصيل فينا الخير', 'description' => 'فتح مسار تحصيل فينا الخير', 'icon' => 'fa-hand-holding-dollar', 'url' => 'modules/transactions/fina_payment_create.php'],
-        ],
-    ],
-    [
-        'title' => 'الحماية والصيانة',
-        'subtitle' => 'أدوات التحكم الحساسة — استخدمها بعناية',
-        'icon' => 'fa-shield-halved',
-        'color' => '#c95d70',
-        'items' => [
-            ['title' => 'النسخ الاحتياطي', 'description' => 'إنشاء وإدارة نسخ قاعدة البيانات', 'icon' => 'fa-database', 'url' => 'modules/system/backup.php'],
-            ['title' => 'إدارة قاعدة البيانات', 'description' => 'أدوات إدارة قاعدة البيانات', 'icon' => 'fa-table', 'url' => 'modules/system/database.php'],
-            ['title' => 'سجل التدقيق', 'description' => 'مراجعة الأحداث الإدارية المسجلة', 'icon' => 'fa-file-lines', 'url' => 'modules/logs/audit.php'],
-        ],
+        'url' => 'modules/system/backup.php',
     ],
 ];
 
@@ -412,108 +363,70 @@ include __DIR__ . '/../includes/header.php';
     overflow: hidden;
 }
 
-.admin-control-heading {
-    display: flex;
-    position: relative;
-    align-items: center;
-    gap: 13px;
-    padding: 17px 19px;
+.admin-special-tools-heading {
+    padding: 16px 19px;
     border-bottom: 1px solid var(--ac-line);
-    background: color-mix(in srgb, var(--section-color, var(--ac-blue)) 8%, white);
+    background: linear-gradient(90deg, #fff 0%, #f6f2ea 100%);
+    border-right: 6px solid var(--ac-orange);
 }
 
-.admin-control-heading:before {
-    content: "";
-    position: absolute;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    width: 6px;
-    background: var(--section-color, var(--ac-blue));
-}
-
-.admin-control-heading-icon {
-    width: 38px;
-    height: 38px;
-    border-radius: 10px;
-    display: grid;
-    place-items: center;
-    background: color-mix(in srgb, var(--section-color, var(--ac-blue)) 14%, white);
-    color: var(--section-color, var(--ac-blue));
-}
-
-.admin-control-heading h3 {
+.admin-special-tools-heading h3 {
     margin: 0;
-    font-size: .98rem;
+    font-size: .96rem;
     font-weight: 800;
-    color: color-mix(in srgb, var(--section-color, var(--ac-blue)) 72%, #222);
+    color: #8d4b27;
 }
 
-.admin-control-heading p {
-    margin: 2px 0 0;
+.admin-special-tools-heading p {
+    margin: 3px 0 0;
     color: var(--ac-muted);
-    font-size: .73rem;
+    font-size: .72rem;
 }
 
-.admin-tool-grid {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+.admin-special-tools-body {
+    padding: 10px;
 }
 
-.admin-tool-grid.admin-tool-grid-3 {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.admin-tool {
-    min-height: 126px;
+.admin-special-tool {
     display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    gap: 13px;
-    padding: 17px 18px;
+    align-items: center;
+    gap: 12px;
+    min-height: 66px;
+    padding: 10px 12px;
     color: inherit;
     text-decoration: none;
-    border-left: 1px solid var(--ac-line);
-    border-bottom: 1px solid var(--ac-line);
-    transition: background .18s ease, transform .18s ease;
+    border-radius: 11px;
 }
 
-.admin-tool:nth-child(4n + 1) { border-left: 0; }
-
-.admin-tool:hover {
+.admin-special-tool:hover {
     background: #fbf6ee;
 }
 
-.admin-tool:hover .admin-tool-icon {
-    background: color-mix(in srgb, var(--section-color, #4b78c2) 12%, white);
-    color: var(--section-color, #4b78c2);
-}
-
-.admin-tool-icon {
-    width: 34px;
-    height: 34px;
+.admin-special-tool-icon {
+    width: 38px;
+    height: 38px;
     display: grid;
     place-items: center;
-    border-radius: 9px;
-    background: #f1ece4;
-    color: #5f574e;
+    border-radius: 10px;
+    background: #f8e8dc;
+    color: #b45f31;
 }
 
-.admin-tool-title {
-    font-size: .86rem;
-    font-weight: 800;
+.admin-special-tool strong {
+    display: block;
+    font-size: .84rem;
 }
 
-.admin-tool-description {
+.admin-special-tool small {
+    display: block;
+    margin-top: 2px;
     color: var(--ac-muted);
     font-size: .7rem;
-    line-height: 1.65;
-    margin-top: 2px;
 }
 
-.admin-tool-arrow {
+.admin-special-tool > .fa-arrow-left {
+    margin-right: auto;
     color: #94a3b8;
-    font-size: .72rem;
 }
 
 .admin-alert-grid {
@@ -580,14 +493,9 @@ include __DIR__ . '/../includes/header.php';
 }
 
 @media (max-width: 1100px) {
-    .admin-stat-grid,
-    .admin-tool-grid,
-    .admin-tool-grid.admin-tool-grid-3 {
+    .admin-stat-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
-
-    .admin-tool:nth-child(4n + 1) { border-left: 1px solid var(--ac-line); }
-    .admin-tool:nth-child(2n + 1) { border-left: 0; }
 }
 
 @media (max-width: 768px) {
@@ -606,16 +514,8 @@ include __DIR__ . '/../includes/header.php';
     }
 
     .admin-stat-grid,
-    .admin-tool-grid,
-    .admin-tool-grid.admin-tool-grid-3,
     .admin-alert-grid {
         grid-template-columns: 1fr;
-    }
-
-    .admin-tool,
-    .admin-tool:nth-child(2n + 1),
-    .admin-tool:nth-child(4n + 1) {
-        border-left: 0;
     }
 
     .admin-stat {
@@ -640,8 +540,8 @@ include __DIR__ . '/../includes/header.php';
                 </div>
                 <h1>مركز التحكم الرئيسي</h1>
                 <p>
-                    نقطة الإدارة المركزية للنظام: المستخدمون، الصلاحيات، البيانات، المالية،
-                    التقارير، النسخ الاحتياطي، وإعدادات المنصة — في مساحة واحدة مخصصة للمدير.
+                    لوحة متابعة مركزية للمدير: حالة النظام، المؤشرات العامة، والتنبيهات التي تتطلب انتباهاً.
+                    أما التنقل إلى الوحدات التشغيلية فيبقى من القائمة الجانبية.
                 </p>
             </div>
 
@@ -677,7 +577,7 @@ include __DIR__ . '/../includes/header.php';
 
     <section class="admin-stat-grid">
         <?php foreach ($systemCards as $card): ?>
-            <a class="admin-stat <?php echo e($card['class']); ?>" href="<?php echo e($card['url']); ?>">
+            <div class="admin-stat <?php echo e($card['class']); ?>">
                 <div class="admin-stat-top">
                     <div>
                         <div class="admin-stat-label"><?php echo e($card['label']); ?></div>
@@ -687,11 +587,7 @@ include __DIR__ . '/../includes/header.php';
                         <i class="fas <?php echo e($card['icon']); ?>"></i>
                     </div>
                 </div>
-                <div class="admin-stat-action">
-                    <?php echo e($card['action']); ?>
-                    <i class="fas fa-arrow-left ms-1"></i>
-                </div>
-            </a>
+            </div>
         <?php endforeach; ?>
     </section>
 
@@ -733,42 +629,26 @@ include __DIR__ . '/../includes/header.php';
         </div>
     </div>
 
-    <?php foreach ($controlGroups as $group): ?>
-        <section class="admin-control-section" style="--section-color: <?php echo $group['color'] ?? '#4b78c2'; ?>;">
-            <div class="admin-control-heading">
-                <div class="admin-control-heading-icon">
-                    <i class="fas <?php echo e($group['icon']); ?>"></i>
-                </div>
-                <div>
-                    <h3><?php echo e($group['title']); ?></h3>
-                    <p><?php echo e($group['subtitle']); ?></p>
-                </div>
+    <section class="admin-control-section admin-special-tools">
+        <div class="admin-special-tools-heading">
+            <div>
+                <h3><i class="fas fa-toolbox me-1"></i> أدوات إدارية خاصة</h3>
+                <p>إجراءات صيانة لا تمثل وحدات تشغيلية موجودة في القائمة الجانبية.</p>
             </div>
-
-            <div class="admin-tool-grid <?php echo count($group['items']) === 3 ? 'admin-tool-grid-3' : ''; ?>">
-                <?php foreach ($group['items'] as $item): ?>
-                    <a class="admin-tool" href="<?php echo e(url($item['url'])); ?>">
-                        <div>
-                            <div class="admin-tool-icon">
-                                <i class="fas <?php echo e($item['icon']); ?>"></i>
-                            </div>
-                        </div>
-                        <div>
-                            <div class="admin-tool-title">
-                                <?php echo e($item['title']); ?>
-                            </div>
-                            <div class="admin-tool-description">
-                                <?php echo e($item['description']); ?>
-                            </div>
-                        </div>
-                        <div class="admin-tool-arrow">
-                            فتح <i class="fas fa-arrow-left ms-1"></i>
-                        </div>
-                    </a>
-                <?php endforeach; ?>
-            </div>
-        </section>
-    <?php endforeach; ?>
+        </div>
+        <div class="admin-special-tools-body">
+            <?php foreach ($adminTools as $item): ?>
+                <a class="admin-special-tool" href="<?php echo e(url($item['url'])); ?>">
+                    <span class="admin-special-tool-icon"><i class="fas <?php echo e($item['icon']); ?>"></i></span>
+                    <span>
+                        <strong><?php echo e($item['title']); ?></strong>
+                        <small><?php echo e($item['description']); ?></small>
+                    </span>
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+            <?php endforeach; ?>
+        </div>
+    </section>
 
     <div class="admin-footer-strip">
         <span>
