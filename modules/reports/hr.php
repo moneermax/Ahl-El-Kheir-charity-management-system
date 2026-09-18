@@ -4,6 +4,7 @@ require_once dirname(__DIR__,2) . '/config/config.php';
 require_once dirname(__DIR__,2) . '/config/database.php';
 require_once dirname(__DIR__,2) . '/config/functions.php';
 require_once dirname(__DIR__,2) . '/config/session.php';
+require_once __DIR__ . '/report_registry.php';
 Session::start();
 if(!Session::isLoggedIn()){header('Location: '.APP_URL.'index.php');exit();}
 $role = Session::getUserRole();
