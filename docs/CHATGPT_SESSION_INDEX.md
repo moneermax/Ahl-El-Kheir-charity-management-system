@@ -355,3 +355,17 @@ After runtime verification, continue the audit from the actual screenshot/behavi
 - desktop/mobile spacing;
 - sidebar/header relationship with the new control-panel surface;
 - whether additional system-health indicators can be added only after verifying their real data sources.
+
+
+### Admin Control Panel broken-link correction — 2026-09-18
+
+During runtime review of `dashboard/admin_dashboard.php`, the dashboard tile `الأدوار والصلاحيات` was found to target the nonexistent `modules/users/roles.php`. Repository inspection confirmed that role assignment is already implemented inside the admin-only `modules/users/index.php`, where administrators load the existing roles from the `roles` table and assign them while creating/editing users. No separate roles page exists in the current repository.
+
+The dashboard was corrected without creating a duplicate roles page or changing the permission model:
+- tile renamed to `أدوار المستخدمين`;
+- description now reflects the actual function: assigning available user roles/access levels;
+- destination changed to the existing `modules/users/index.php` user-management page.
+
+Commit: `124c8970b6511ae930ddd025da96f7fb555ffe1b`.
+
+Runtime verification is required after pulling this commit. Continue checking the remaining Admin Control Panel links against actual existing repository destinations; do not invent missing endpoints.
