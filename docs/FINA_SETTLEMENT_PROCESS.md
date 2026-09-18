@@ -1,7 +1,7 @@
 # Fina Al-Khair — Settlement Process, Deployment Plan & Checklist
 
-**Checkpoint:** 2026-09-17  
-**Status:** **STAGE 3 ORIGINAL ENGINE CLOSED AS HISTORICAL DEVELOPMENT EVIDENCE. REVISED STAGE 4 FULL-SETTLEMENT MODEL IMPLEMENTED IN REPOSITORY; LOCAL RUNTIME ACCEPTANCE PENDING.**
+**Checkpoint:** 2026-09-18  
+**Status:** **STAGE 3 ORIGINAL ENGINE CLOSED AS HISTORICAL DEVELOPMENT EVIDENCE. REVISED STAGE 4 FULL-SETTLEMENT MODEL IMPLEMENTED AND FULL-SETTLEMENT RUNTIME-VERIFIED THROUGH CLOSE; NEXT-CYCLE AND SECURITY ACCEPTANCE REMAINING.**
 
 ## 1. Locked business rules
 
@@ -124,7 +124,23 @@ The project will **not spend additional time dropping or cleaning the existing `
 
 The obsolete item was the separate old migration file and the old production partial-settlement behavior; the old migration definition has already been consolidated into the final full-settlement migration. No triggers or views are being introduced by this work.
 
-The implementation is committed to `main`, but **local runtime acceptance has not yet been performed**.
+The implementation is committed to `main`. Targeted local runtime acceptance has now verified the complete 250,000 SDG full-settlement cycle through closure; the remaining acceptance work is the post-settlement next-cycle proof, authorization/security checks, and preservation checks.
+
+## Future development — settlement workflow simplification
+
+The current production lifecycle remains intentionally unchanged for this audit:
+
+```text
+draft → approved → transferred → reconciled → closed
+```
+
+After the settlement process and acceptance work are fully completed, a future development item is to evaluate reducing the user-facing workflow to fewer steps, potentially:
+
+```text
+مسودة → معتمدة → مغلقة
+```
+
+Transfer and reconciliation would remain recorded as audit events/data rather than necessarily being separate user-facing statuses. This is a **future UX/workflow simplification only**. It is not part of the current finalized accounting model and must not interrupt or alter the current settlement acceptance work.
 
 ## 6. Stage 5 — Dashboard/report updates
 
@@ -163,42 +179,42 @@ Full settlement → 2300 returns to 0
 Next Fina payment → 2300 increases again
 ```
 
-## 9. Stage 8 — Security / separation of duties
+## 10. Stage 8 — Security / separation of duties
 
 Verify that FM can complete the workflow and that Supervisor, GM, and VGM cannot acquire settlement execution authority through direct URLs, notifications, or UI navigation. Settlement actions must retain actor/time audit evidence.
 
-## 10. Stage 9 — Revised runtime acceptance — PENDING
+## 11. Stage 9 — Revised runtime acceptance — IN PROGRESS
 
 Do not repeat the obsolete partial-settlement acceptance suite. Perform only targeted acceptance for the finalized model:
 
-1. Safely synchronize the repository after checking the local working tree; do not discard intentional local files.
-2. Confirm the local database is at the finalized settlement-model state; do not drop the existing settlement tables.
-3. Verify the dedicated Fina-held-funds account exists and is an active asset/control account.
-4. Verify current production Fina liability is **250,000 SDG** despite the retained Stage 3 test settlement records.
-5. Verify account `2300` represents the current 250,000 SDG liability.
-6. Verify no Ahl treasury account is offered/required by the settlement UI.
-7. Create one full settlement for exactly 250,000 SDG.
-8. Verify the journal is balanced `Dr 2300 / Cr Fina-held funds`.
-9. Verify `2300` becomes zero after the full settlement.
-10. Verify `2300` remains permanently present in the chart.
-11. Verify the two historical Stage 3 settlement records remain present and identifiable as test evidence.
-12. Create/approve a new Fina payment after settlement and verify the same 2300 account increases again.
-13. Verify evidence/reference/lifecycle controls and FM-only authorization.
-14. Verify original Fina collection journals remain unchanged.
+1. Safely synchronize the repository after checking the local working tree; do not discard intentional local files. — **COMPLETE**.
+2. Confirm the local database is at the finalized settlement-model state; do not drop the existing settlement tables. — **COMPLETE**.
+3. Verify the dedicated Fina-held-funds account exists and is an active asset/control account. — **COMPLETE** (`1401`).
+4. Verify current production Fina liability is **250,000 SDG** despite the retained Stage 3 test settlement records. — **COMPLETE**.
+5. Verify account `2300` represents the current 250,000 SDG liability. — **COMPLETE**.
+6. Verify no Ahl treasury account is offered/required by the settlement UI. — **COMPLETE during settlement creation**; the UI used the dedicated Fina-held-funds account.
+7. Create one full settlement for exactly 250,000 SDG. — **COMPLETE** (`FINA-SET-000003`).
+8. Verify the journal is balanced `Dr 2300 / Cr Fina-held funds`. — **COMPLETE** (`JE-000035`, journal id 63).
+9. Verify `2300` becomes zero after the full settlement. — **COMPLETE**.
+10. Verify `2300` remains permanently present in the chart. — **COMPLETE**; account `2300` remains active.
+11. Verify the two historical Stage 3 settlement records remain present and identifiable as test evidence. — **COMPLETE**.
+12. Create/approve a new Fina payment after settlement and verify the same 2300 account increases again. — **PENDING**.
+13. Verify evidence/reference/lifecycle controls and FM-only authorization. — **Lifecycle/reference through close COMPLETE**; dedicated security/authorization acceptance remains **PENDING**.
+14. Verify original Fina collection journals remain unchanged. — **PENDING final verification**.
 
 Runtime verification is **not complete** until the local application/database produces the actual results.
 
-## 11. Stage 10 — Production readiness
+## 12. Stage 10 — Production readiness
 
 Production deployment, management policy confirmation, evidence retention, backup/recovery review, final audit evidence, master audit/session index updates, and final feature closure remain pending until the revised code and runtime acceptance are complete.
 
-## 12. Current continuation point
+## 13. Current continuation point
 
 **Stage 0 — COMPLETE.**  
 **Stage 1 — COMPLETE / live schema inspected.**  
 **Stage 2 — COMPLETE / original migration applied successfully to live DB on 2026-09-17.**  
 **Stage 3 — COMPLETE / original runtime evidence VERIFIED and CLOSED; partial behavior is historical only.**  
-**Stage 4 — IMPLEMENTED IN REPOSITORY / LOCAL RUNTIME ACCEPTANCE PENDING: full current-balance settlement, permanent `2300`, separate Fina-held funds, no partial settlement.**
+**Stage 4 — IMPLEMENTED IN REPOSITORY / TARGETED RUNTIME VERIFIED THROUGH FULL SETTLEMENT CLOSE: `FINA-SET-000003` settled 250,000 SDG in full; journal `JE-000035` posted `Dr 2300 / Cr 1401`; both balances are zero afterward. Remaining Stage 4 acceptance: next-cycle collection, final authorization/security checks, and original-journal preservation verification.**
 
 **Database cleanup decision:** retain `fina_settlements` and `fina_settlement_allocations`; do not spend additional audit time dropping them. The next work is runtime acceptance, not schema cleanup.
 
