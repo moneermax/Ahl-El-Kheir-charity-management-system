@@ -22,21 +22,114 @@ include dirname(__DIR__) . '/includes/header.php';
 <?php if (in_array($role, ['administration','staff','social_media'], true)): ?>
 <?php
 $adminStats = [
- 'new_requests'=>(int)(dbFetchOne("SELECT COUNT(*) c FROM sponsor_requests WHERE status = 'new'")['c'] ?? 0),
- 'contacted_requests'=>(int)(dbFetchOne("SELECT COUNT(*) c FROM sponsor_requests WHERE status = 'contacted'")['c'] ?? 0),
- 'open_winback'=>(int)(dbFetchOne("SELECT COUNT(*) c FROM winback_campaigns WHERE status IN ('open','contacted')")['c'] ?? 0),
- 'uncovered_families'=>(int)(dbFetchOne("SELECT COUNT(*) c FROM families f WHERE f.status IN ('active','pending') AND NOT EXISTS (SELECT 1 FROM sponsorships sp JOIN family_children fc ON fc.id = sp.child_id WHERE fc.family_id = f.id AND sp.status = 'active')")['c'] ?? 0)
+    'new_requests' => (int)(dbFetchOne("SELECT COUNT(*) c FROM sponsor_requests WHERE status = 'new'")['c'] ?? 0),
+    'contacted_requests' => (int)(dbFetchOne("SELECT COUNT(*) c FROM sponsor_requests WHERE status = 'contacted'")['c'] ?? 0),
 ];
+
+if ($role === 'administration') {
+    $adminStats['open_winback'] = (int)(dbFetchOne("SELECT COUNT(*) c FROM winback_campaigns WHERE status IN ('open','contacted')")['c'] ?? 0);
+    $adminStats['uncovered_families'] = (int)(dbFetchOne("SELECT COUNT(*) c FROM families f WHERE f.status IN ('active','pending') AND NOT EXISTS (SELECT 1 FROM sponsorships sp JOIN family_children fc ON fc.id = sp.child_id WHERE fc.family_id = f.id AND sp.status = 'active')")['c'] ?? 0);
+}
+
 $recentRequests = dbFetchAll("SELECT id, sponsor_name, phone, source, status, created_at FROM sponsor_requests ORDER BY created_at DESC LIMIT 8");
+$requestStatusLabels = [
+    'new' => 'جديد',
+    'contacted' => 'تم التواصل',
+    'converted' => 'تم التحويل إلى كفيل',
+    'lost' => 'مغلق / لم يكتمل',
+];
+$requestStatusBadges = [
+    'new' => 'bg-info',
+    'contacted' => 'bg-warning text-dark',
+    'converted' => 'bg-success',
+    'lost' => 'bg-secondary',
+];
 ?>
 <div class="row g-3 mb-4">
-<?php foreach ([['new_requests','طلبات رعاية جديدة','text-primary','modules/sponsors/requests.php'],['contacted_requests','طلبات تم التواصل معها','text-info','modules/sponsors/requests.php'],['open_winback','متابعات استرجاع مفتوحة','text-warning','modules/administration/winback.php'],['uncovered_families','أسر بلا كفالة نشطة','text-success','modules/administration/winback.php#uncovered']] as $stat): ?>
-<div class="col-6 col-xl-3"><div class="card h-100 border-0 shadow-sm fade-in"><div class="card-body"><div class="text-muted small"><?php echo e($stat[1]); ?></div><div class="fs-3 fw-bold <?php echo e($stat[2]); ?>"><?php echo $adminStats[$stat[0]]; ?></div><a href="<?php echo url($stat[3]); ?>" class="small text-decoration-none">فتح التفاصيل <i class="fas fa-arrow-left"></i></a></div></div></div>
+<?php
+$stats = [
+    ['new_requests', 'طلبات رعاية جديدة', 'text-primary', 'modules/sponsors/requests.php'],
+    ['contacted_requests', 'طلبات تم التواصل معها', 'text-info', 'modules/sponsors/requests.php'],
+];
+if ($role === 'administration') {
+    $stats[] = ['open_winback', 'متابعات استرجاع مفتوحة', 'text-warning', 'modules/administration/winback.php'];
+    $stats[] = ['uncovered_families', 'أسر بلا كفالة نشطة', 'text-success', 'modules/administration/winback.php#uncovered'];
+}
+foreach ($stats as $stat):
+?>
+<div class="col-6 <?php echo $role === 'administration' ? 'col-xl-3' : 'col-xl-6'; ?>">
+    <div class="card h-100 border-0 shadow-sm fade-in">
+        <div class="card-body">
+            <div class="text-muted small"><?php echo e($stat[1]); ?></div>
+            <div class="fs-3 fw-bold <?php echo e($stat[2]); ?>"><?php echo (int)$adminStats[$stat[0]]; ?></div>
+            <a href="<?php echo url($stat[3]); ?>" class="small text-decoration-none">فتح التفاصيل <i class="fas fa-arrow-left"></i></a>
+        </div>
+    </div>
+</div>
 <?php endforeach; ?>
 </div>
+
 <div class="row g-4">
-<div class="col-lg-8"><div class="card fade-in"><div class="card-header d-flex justify-content-between align-items-center"><span><i class="fas fa-bullhorn me-2"></i>أحدث طلبات الرعاية</span><a href="<?php echo url('modules/sponsors/requests.php'); ?>" class="btn btn-sm btn-outline-primary">كل الطلبات</a></div><div class="card-body p-0"><div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr><th>التاريخ</th><th>الاسم</th><th>الهاتف</th><th>المصدر</th><th>الحالة</th></tr></thead><tbody><?php if (!$recentRequests): ?><tr><td colspan="5" class="text-center text-muted py-4">لا توجد طلبات حالياً.</td></tr><?php else: foreach ($recentRequests as $req): $badge=['new'=>'bg-info','contacted'=>'bg-warning text-dark','converted'=>'bg-success','lost'=>'bg-secondary'][$req['status']] ?? 'bg-secondary'; ?><tr><td><small><?php echo e(date('Y-m-d', strtotime($req['created_at']))); ?></small></td><td><?php echo e($req['sponsor_name']); ?></td><td dir="ltr"><?php echo e($req['phone'] ?? '—'); ?></td><td><?php echo e($req['source']); ?></td><td><span class="badge <?php echo $badge; ?>"><?php echo e($req['status']); ?></span></td></tr><?php endforeach; endif; ?></tbody></table></div></div></div></div>
-<div class="col-lg-4"><div class="card fade-in h-100"><div class="card-header"><i class="fas fa-bolt me-2"></i>إجراءات سريعة</div><div class="card-body d-grid gap-2"><a href="<?php echo url('modules/sponsors/requests.php'); ?>" class="btn btn-primary"><i class="fas fa-user-plus me-1"></i>طلبات الانضمام / الرعاية</a><a href="<?php echo url('modules/administration/winback.php'); ?>" class="btn btn-outline-primary"><i class="fas fa-rotate-left me-1"></i>متابعات الاسترجاع</a><a href="<?php echo url('modules/families/orphan_forms_index.php'); ?>" class="btn btn-outline-secondary"><i class="fas fa-file-signature me-1"></i>استمارات الأيتام</a></div></div></div>
+<div class="col-lg-8">
+    <div class="card fade-in">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="fas fa-bullhorn me-2"></i>أحدث طلبات الرعاية</span>
+            <a href="<?php echo url('modules/sponsors/requests.php'); ?>" class="btn btn-sm btn-outline-primary">كل الطلبات</a>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead><tr><th>التاريخ</th><th>الاسم</th><th>الهاتف</th><th>المصدر</th><th>الحالة</th><th class="text-center">إجراء</th></tr></thead>
+                    <tbody>
+                    <?php if (!$recentRequests): ?>
+                        <tr><td colspan="6" class="text-center text-muted py-4">لا توجد طلبات حالياً.</td></tr>
+                    <?php else: foreach ($recentRequests as $req):
+                        $status = (string)$req['status'];
+                        $badge = $requestStatusBadges[$status] ?? 'bg-secondary';
+                        $statusLabel = $requestStatusLabels[$status] ?? $status;
+                    ?>
+                        <tr>
+                            <td><small><?php echo e(date('Y-m-d', strtotime($req['created_at']))); ?></small></td>
+                            <td><?php echo e($req['sponsor_name']); ?></td>
+                            <td dir="ltr">
+                                <?php if (!empty($req['phone'])): ?>
+                                    <a href="tel:<?php echo e($req['phone']); ?>" class="text-decoration-none"><?php echo e($req['phone']); ?></a>
+                                <?php else: ?>—<?php endif; ?>
+                            </td>
+                            <td><?php echo e($req['source'] ?? '—'); ?></td>
+                            <td><span class="badge <?php echo e($badge); ?>"><?php echo e($statusLabel); ?></span></td>
+                            <td class="text-center">
+                                <a href="<?php echo url('modules/sponsors/requests.php'); ?>" class="btn btn-sm btn-outline-primary" title="فتح طلبات الرعاية">
+                                    <i class="fas fa-arrow-up-right-from-square"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    <?php endforeach; endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="col-lg-4">
+    <div class="card fade-in h-100">
+        <div class="card-header"><i class="fas fa-bolt me-2"></i>إجراءات سريعة</div>
+        <div class="card-body d-grid gap-2">
+            <a href="<?php echo url('modules/sponsors/requests.php'); ?>" class="btn btn-primary">
+                <i class="fas fa-user-plus me-1"></i>طلبات الانضمام / الرعاية
+            </a>
+            <?php if ($role === 'administration'): ?>
+                <a href="<?php echo url('modules/administration/winback.php'); ?>" class="btn btn-outline-primary">
+                    <i class="fas fa-rotate-left me-1"></i>متابعات الاسترجاع
+                </a>
+            <?php endif; ?>
+            <a href="<?php echo url('modules/families/orphan_forms_index.php'); ?>" class="btn btn-outline-secondary">
+                <i class="fas fa-file-signature me-1"></i>استمارات الأيتام
+            </a>
+        </div>
+    </div>
+</div>
 </div>
 <?php else: ?>
 <div class="row g-4">
