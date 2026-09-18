@@ -480,3 +480,34 @@ Implementation commits:
 - `c969c49ab6272eb44f25d1279ec98331f62bda20`
 
 The current implementation requires runtime review before being called final.
+
+
+## 2026-09-18 — Messaging UI Color-Forward Redesign
+
+### Context
+
+The internal messaging page `modules/messages/index.php` had already been structurally redesigned toward a Gmail/Outlook-style professional mail workspace in commit `2349c884566cbb206aabad468f2808feab4f4cd9`. The user then identified a concrete visual problem: the messaging workspace remained too close in color to the surrounding page background and therefore did not read as a distinct mail application surface.
+
+### Implemented
+
+Commit `743b186f2167ec195a60b73fb88659c147ba71f6` — `Create color-forward messaging workspace design v5`.
+
+The new V5 visual layer deliberately establishes separate visual surfaces:
+
+- blue-gray mail workspace;
+- tinted navigation sidebar;
+- white inbox/list surface;
+- blue selected/unread states;
+- pale-blue reading header;
+- warm-white message card against a contrasting reading surface;
+- green-tinted outgoing/reply bubbles;
+- blue-tinted reply composer;
+- matching compose-dialog visual identity.
+
+The implementation is CSS-only at the presentation layer and preserves the existing message PHP/JavaScript workflow.
+
+### Status
+
+**CODE IMPLEMENTED — RUNTIME VISUAL VERIFICATION PENDING.**
+
+Do not reopen completed messaging functionality/security work unless runtime verification demonstrates a regression.
