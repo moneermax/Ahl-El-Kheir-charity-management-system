@@ -427,26 +427,9 @@ $qaMap = [
     ],
 
 
-    'financial_manager' => [
-        [
-            'label' => 'لوحة المحاسبة',
-            'url' => 'modules/accounting/',
-            'icon' => 'fas fa-calculator',
-            'color' => '#d3701fcc'
-        ],
-        [
-    'label' => 'التقارير المالية',
-    'url' => 'modules/accounting/reports.php',
-    'icon' => 'fa-chart-pie',
-    'color' => '#0d6efd'
-],
-        [
-            'label' => 'سجل المعاملات',
-            'url' => 'modules/transactions/index.php',
-            'icon' => 'fa-money-bill-transfer',
-            'color' => '#2daf79'
-        ],
-    ],
+    // FM navigation is intentionally kept in the sidebar.
+    // The header remains focused on global controls to avoid duplicate destinations.
+    'financial_manager' => [],
 
 
     'accountant' => [
