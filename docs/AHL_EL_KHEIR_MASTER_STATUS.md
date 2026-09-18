@@ -481,54 +481,29 @@ Implementation commits:
 
 The current implementation requires runtime review before being called final.
 
+## MESSAGING MODULE — ORIGINAL WORKING DESIGN RESTORED — 2026-09-18
 
-## 2026-09-18 — Messaging UI Color-Forward Redesign
+The internal messaging UI is now restored to the exact version immediately before the user-identified redesign commit.
 
-### Context
+- Redesign commit used as the historical anchor: `285d390c00f983b82e8bb59248a555b7997cfd3e`
+- Restored source: `9520bd3284bbf4060711f101be1f6518fbd6f087` — the immediate parent of `285d390...`
+- Restoration commit: `baacaa5a9812ff4f89c498b2380623342c226d2e`
+- Primary restored file: `modules/messages/index.php`
 
-The internal messaging page `modules/messages/index.php` had already been structurally redesigned toward a Gmail/Outlook-style professional mail workspace in commit `2349c884566cbb206aabad468f2808feab4f4cd9`. The user then identified a concrete visual problem: the messaging workspace remained too close in color to the surrounding page background and therefore did not read as a distinct mail application surface.
+### Decision
 
-### Implemented
+The user rejected the later Gmail/custom visual redesigns and explicitly requested the original working design. The correct historical version was therefore restored exactly from the immediate parent of `285d390...`, rather than approximated through another CSS redesign.
 
-Commit `743b186f2167ec195a60b73fb88659c147ba71f6` — `Create color-forward messaging workspace design v5`.
+**Do not redesign the messaging workspace again unless the user explicitly requests a new design.**
 
-The new V5 visual layer deliberately establishes separate visual surfaces:
+### Preserved functionality
 
-- blue-gray mail workspace;
-- tinted navigation sidebar;
-- white inbox/list surface;
-- blue selected/unread states;
-- pale-blue reading header;
-- warm-white message card against a contrasting reading surface;
-- green-tinted outgoing/reply bubbles;
-- blue-tinted reply composer;
-- matching compose-dialog visual identity.
+The restored version retains the established messaging functionality and global application shell, including inbox/sent navigation, message list and conversation overlay, compose and reply, attachments, emoji button, font-size control, unread filters, mark-all-read, role broadcast, and the existing messaging backend actions.
 
-The implementation is CSS-only at the presentation layer and preserves the existing message PHP/JavaScript workflow.
+The later CSS that hid the global application sidebar/header and converted messaging into a full-page Gmail-style workspace is no longer part of the restored version.
 
-### Status
+### Current status
 
-**CODE IMPLEMENTED — RUNTIME VISUAL VERIFICATION PENDING.**
+**Messaging original-design restoration: COMPLETE / ACCEPTED by user.**
 
-Do not reopen completed messaging functionality/security work unless runtime verification demonstrates a regression.
-
-
-## 2026-09-18 — Messaging Gmail Visual Model V6
-
-V5 introduced a custom blue-gray color system. User feedback was that the colors still did not feel sufficiently like Gmail. The direction was therefore changed to the actual Gmail visual model rather than continuing the custom color palette.
-
-Commit: `66d5acfa9dd919c84a5c689b1a2cf632d4bca7c9` — `Match messaging workspace to Gmail visual design v6`.
-
-V6 characteristics:
-- Gmail-style light application chrome;
-- light sidebar with blue selected-folder treatment;
-- Gmail-style Compose button;
-- white inbox surface;
-- pale Gmail search field;
-- white message-reading surface;
-- Google/Gmail blue for primary actions;
-- subtle gray separators;
-- outlined reply editor;
-- dark floating compose header.
-
-Status: CODE IMPLEMENTED; RUNTIME VERIFICATION PENDING.
+Future messaging work must preserve this visual baseline and address only explicitly requested changes.
