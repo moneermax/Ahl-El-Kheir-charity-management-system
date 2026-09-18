@@ -287,13 +287,18 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         </div>
     </div>
 
-    <div class="col-lg-4" id="uncovered">
-        <div class="card fade-in h-100 border-success">
-            <div class="card-header bg-success text-white"><i class="fas fa-house-circle-check me-2"></i><?php echo t('أسر متاحة للتكليف حالياً'); ?></div>
+    <div class="col-12" id="uncovered">
+        <div class="card fade-in border-success">
+            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-house-circle-check me-2"></i><?php echo t('أسر متاحة للتكليف حالياً'); ?></span>
+                <span class="badge bg-light text-success"><?php echo count($uncovered); ?></span>
+            </div>
             <div class="card-body p-0">
-                <div class="table-responsive">
+                <div class="table-responsive" style="max-height:420px; overflow-y:auto;">
                     <table class="table table-sm table-hover align-middle mb-0">
-                        <thead><tr><th><?php echo t('اسم الأم'); ?></th><th class="text-center"><?php echo t('الأطفال'); ?></th><th class="text-end"><?php echo t('الاحتياج الشهري'); ?></th></tr></thead>
+                        <thead class="table-success" style="position:sticky; top:0; z-index:2;">
+                            <tr><th><?php echo t('اسم الأم'); ?></th><th class="text-center"><?php echo t('الأطفال'); ?></th><th class="text-end"><?php echo t('الاحتياج الشهري'); ?></th></tr>
+                        </thead>
                         <tbody>
                         <?php if (!$uncovered): ?>
                         <tr><td colspan="3" class="text-center text-muted py-3"><?php echo t('لا توجد أسر متاحة.'); ?></td></tr>
@@ -307,10 +312,6 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                         </tbody>
                     </table>
                 </div>
-            </div>
-            <div class="card-footer small text-muted">
-                <i class="fas fa-circle-info me-1"></i><?php echo t('مرجع سريع أثناء المكالمات — القائمة الكاملة في مركز التقارير.'); ?>
-                <a href="<?php echo APP_URL; ?>modules/administration/winback.php#uncovered" class="ms-1 fw-bold" style="color:#1b4d8f"><?php echo t('القائمة الكاملة'); ?></a>
             </div>
         </div>
     </div>
