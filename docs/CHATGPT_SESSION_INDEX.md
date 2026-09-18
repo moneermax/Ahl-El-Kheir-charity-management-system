@@ -312,3 +312,26 @@ After pulling `743b186f2167ec195a60b73fb88659c147ba71f6`, verify:
 4. Compose, reply, attachment, search, and unread controls remain usable.
 
 Do not restart the messaging audit or replace working message logic merely for visual experimentation.
+
+
+## MESSAGING MODULE — GMAIL VISUAL MODEL V6 — 2026-09-18
+
+User feedback on V5 was explicit: the reading panel improved, but the overall colors still did not feel like Gmail. The requested direction is now the Gmail visual design model fitted to the Ahl El Kheir messaging system, rather than a custom blue-themed mail UI.
+
+Implemented in commit `66d5acfa9dd919c84a5c689b1a2cf632d4bca7c9` — `Match messaging workspace to Gmail visual design v6`.
+
+V6 uses Gmail's restrained visual language:
+- very light Gmail-style application background;
+- light navigation rail with Gmail-style selected folder blue tint;
+- Gmail-style floating Compose button;
+- white inbox/list canvas;
+- pale blue-gray search field;
+- white reading/message canvas;
+- Gmail blue `#0b57d0` for actions and selected states;
+- subtle gray borders instead of decorative colored cards;
+- Gmail-style outlined reply composer;
+- Gmail-style dark floating compose header.
+
+This is presentation-only and keeps the existing Ahl El Kheir message functionality, Arabic/RTL structure, recipient controls, attachments, search, read state, reply, and compose workflow.
+
+Runtime verification is required before another visual iteration is judged complete.
