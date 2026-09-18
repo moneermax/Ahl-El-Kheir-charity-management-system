@@ -385,3 +385,10 @@ The page intentionally excludes private/internal case data such as direct family
 Both `modules/administration/available_families.php` and the available-family list in `modules/administration/winback.php` now route to this controlled profile. Administration was removed from the unrestricted `modules/families/view.php` authorization after the controlled profile was added.
 
 Runtime verification remains pending after pull.
+
+
+## Winback declined-case reopening — 2026-09-18
+
+A closed Winback case with status `declined` can now be reopened when a sponsor later changes their decision. The system reuses the original `winback_campaigns` row, changes its status back to `open`, clears `closed_at`, assigns the current handler, and records an `REOPEN` audit event. No duplicate campaign is created.
+
+The action is available from the declined case detail and the Winback history list. Runtime verification remains pending.
