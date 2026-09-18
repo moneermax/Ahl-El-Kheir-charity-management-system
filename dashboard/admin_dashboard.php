@@ -214,8 +214,8 @@ include __DIR__ . '/../includes/header.php';
     padding: 28px 30px;
     color: #fff;
     background:
-        radial-gradient(circle at 85% 20%, rgba(207,111,62,.28), transparent 26%),
-        linear-gradient(135deg, #211b18 0%, #352a24 55%, #4a392f 100%);
+        radial-gradient(circle at 85% 20%, rgba(39,179,176,.24), transparent 26%),
+        linear-gradient(135deg, #172554 0%, #1e3a8a 55%, #2563eb 100%);
     box-shadow: 0 18px 45px rgba(17,24,39,.18);
     margin-bottom: 22px;
 }
@@ -309,21 +309,28 @@ include __DIR__ . '/../includes/header.php';
 
 .admin-section-title {
     display: flex;
-    align-items: end;
+    align-items: center;
     justify-content: space-between;
     gap: 16px;
     margin: 28px 0 13px;
+    padding: 15px 18px;
+    border: 1px solid #c9d8ee;
+    border-right: 6px solid var(--ac-blue);
+    border-radius: 14px;
+    background: linear-gradient(90deg, #ffffff 0%, #eef5ff 100%);
+    box-shadow: 0 6px 18px rgba(75,120,194,.08);
 }
 
 .admin-section-title h2 {
     font-size: 1.12rem;
     margin: 0;
     font-weight: 800;
+    color: #234a86;
 }
 
 .admin-section-title p {
     margin: 4px 0 0;
-    color: var(--ac-muted);
+    color: #5f6f84;
     font-size: .8rem;
 }
 
@@ -413,7 +420,7 @@ include __DIR__ . '/../includes/header.php';
     gap: 13px;
     padding: 17px 19px;
     border-bottom: 1px solid var(--ac-line);
-    background: #fffaf3;
+    background: color-mix(in srgb, var(--section-color, var(--ac-blue)) 8%, white);
 }
 
 .admin-control-heading:before {
@@ -440,6 +447,7 @@ include __DIR__ . '/../includes/header.php';
     margin: 0;
     font-size: .98rem;
     font-weight: 800;
+    color: color-mix(in srgb, var(--section-color, var(--ac-blue)) 72%, #222);
 }
 
 .admin-control-heading p {
