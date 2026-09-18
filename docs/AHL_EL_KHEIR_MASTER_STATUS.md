@@ -416,3 +416,14 @@ Commits:
 - `[follow-up commit]` — load centralized report authorization on the GM dashboard.
 
 Runtime verification after pull is the next required step. Do not add SQL or schema changes for this dashboard work unless runtime evidence identifies a real data-definition issue.
+
+
+### Cross-dashboard legal-age alert and notifications cleanup — 2026-09-18
+
+Two common UX issues were corrected:
+- The legal-age alert now uses browser `localStorage` rather than tab-scoped `sessionStorage`, so once the user closes the alert it does not automatically reappear after refresh or in another browser tab. The existing manual quick-action button remains available when the alert exists.
+- The Notifications Center `حذف الكل` action now actually deletes notification records belonging to the current user only. It does not delete another user's notifications.
+
+Runtime verification is required after pull.
+
+Messaging send/reply is currently under investigation. The repository code shows both actions pass through `config/messaging.php` and the same POST endpoint in `modules/messages/index.php`; no messaging schema change will be invented until the actual runtime failure is identified.
