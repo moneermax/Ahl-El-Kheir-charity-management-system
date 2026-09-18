@@ -15,25 +15,6 @@ $active = 'messages';
 $canBroadcast = in_array($role,['admin','general_manager','vice_general_manager','financial_manager','hr_manager'],true);
 $msgUrl = APP_URL.'modules/messages/index.php';
 
-$dashboardMap = [
-    'admin' => 'dashboard/admin_dashboard.php',
-    'general_manager' => 'dashboard/gm_dashboard.php',
-    'vice_general_manager' => 'dashboard/vgm_dashboard.php',
-    'financial_manager' => 'modules/accounting/fm_dashboard.php',
-    'accountant' => 'dashboard/accountant_dashboard.php',
-    'accountant_staff' => 'dashboard/accountant_staff_dashboard.php',
-    'nanny' => 'dashboard/nanny_dashboard.php',
-    'supervisor' => 'dashboard/supervisor_dashboard.php',
-    'administration' => 'dashboard/staff_dashboard.php',
-    'staff' => 'dashboard/staff_dashboard.php',
-    'social_media' => 'dashboard/staff_dashboard.php',
-    'projects_manager' => 'dashboard/projects_dashboard.php',
-    'project_supervisor' => 'dashboard/projects_dashboard.php',
-    'hr_manager' => 'dashboard/hr_dashboard.php',
-    'hr_staff' => 'dashboard/hr_dashboard.php'
-];
-$dashboardUrl = APP_URL . ($dashboardMap[$role] ?? '');
-
 if ($_SERVER['REQUEST_METHOD']==='POST') {
     header('Content-Type: application/json; charset=utf-8');
     if (!verify_csrf()) { http_response_code(419); echo json_encode(['ok'=>false,'message'=>'انتهت صلاحية الجلسة.'],JSON_UNESCAPED_UNICODE); exit; }
@@ -68,168 +49,120 @@ $messages=$view==='sent'?get_sent_messages($uid):get_messages($uid,$role,$filter
 $users=get_messaging_users($uid); $roles=$canBroadcast?get_broadcast_roles():[]; $unread=get_unread_message_count($uid,$role);
 include dirname(__DIR__,2).'/includes/header.php';
 ?>
-
-
-<style id="msg-mail-client-v1">
-/* Keep the application's global header, sidebar and footer intact.
-   The mail client lives inside the normal .content area. */
-.messages-shell{
- margin:0;
- width:100%;
- max-width:100%;
- min-height:0;
- background:#f6f8fc;
- color:#202124;
- --mail-bg:#f6f8fc;--mail-surface:#fff;--mail-side:#f6f8fc;--mail-text:#202124;
- --mail-muted:#5f6368;--mail-line:#e0e3e7;--mail-hover:#f2f6fc;--mail-selected:#d3e3fd;
- --mail-blue:#0b57d0;--mail-compose:#c2e7ff;--mail-danger:#b3261e;
- direction:rtl;background:var(--mail-bg);color:var(--mail-text);
- font-family:'Cairo',Arial,sans-serif;font-size:14px
+<style>
+:root{
+ --msg-primary:#1f5fae;--msg-primary-dark:#174a8b;--msg-primary-soft:#eaf3ff;
+ --msg-surface:#fff;--msg-page:#f3f6fa;--msg-border:#dfe5ed;--msg-border-strong:#cfd8e4;
+ --msg-text:#172338;--msg-muted:#718096;--msg-font:'Cairo',sans-serif;--msg-size:14px;
 }
-.messages-shell *{box-sizing:border-box}.messages-shell a{text-decoration:none;color:inherit}
-.messages-shell button,.messages-shell input,.messages-shell select,.messages-shell textarea{font-family:inherit}
-
-.mail-pagebar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 4px 14px}
-.mail-page-title{display:flex;align-items:center;gap:10px;font-size:1.05rem;font-weight:700;color:#202124}
-.mail-page-title i{color:#d93025;font-size:1rem}
-.mail-page-subtitle{margin-top:2px;color:#6b7280;font-size:.66rem}
-.mail-back-dashboard{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 14px;border:1px solid #dadce0;border-radius:18px;background:#fff;color:#3c4043;font-size:.67rem;font-weight:600;box-shadow:0 1px 2px rgba(60,64,67,.08)}
-.mail-back-dashboard:hover{background:#f1f3f4;color:#202124}
-.mail-appbar{height:64px;display:grid;grid-template-columns:240px minmax(300px,720px) 1fr;align-items:center;gap:24px;padding:8px 18px;background:var(--mail-bg)}
-.mail-brand{display:flex;align-items:center;gap:12px;font-size:18px;font-weight:500;color:#3c4043}
-.mail-brand-icon{font-size:22px;color:#d93025}.mail-search{position:relative}.mail-search i{position:absolute;right:17px;top:50%;transform:translateY(-50%);color:var(--mail-muted)}
-.mail-search input{width:100%;height:46px;border:0;border-radius:24px;background:#eaf1fb;padding:0 48px 0 18px;outline:0;font-size:.78rem}
-.mail-search input:focus{background:#fff;box-shadow:0 1px 3px rgba(60,64,67,.25),0 0 0 1px #d7dbe0}
-.mail-tools{display:flex;justify-content:flex-start;align-items:center;gap:8px;color:var(--mail-muted);font-size:.66rem}.mail-tools select{height:32px;border:1px solid var(--mail-line);border-radius:8px;background:#fff;padding:0 8px;font-size:.65rem}
-
-.mail-workspace{display:grid;grid-template-areas:"reader list folders";grid-template-columns:minmax(0,1fr) 420px 238px;height:min(720px,calc(100vh - 300px));min-height:520px;overflow:hidden;padding:0 0 10px;gap:0}
-.mail-folders{grid-area:folders;background:var(--mail-side);padding:10px 8px 0;border-radius:0 16px 16px 0;overflow:auto}
-.mail-compose{height:56px;min-width:150px;margin:2px 6px 16px;padding:0 22px;border:0;border-radius:16px;background:var(--mail-compose);color:#001d35;font-size:.78rem;font-weight:700;box-shadow:0 1px 2px rgba(60,64,67,.2);cursor:pointer}
-.mail-compose:hover{box-shadow:0 2px 5px rgba(60,64,67,.25)}
-.mail-nav{display:flex;flex-direction:column;gap:2px}.mail-nav a,.mail-nav button{height:34px;display:flex;align-items:center;gap:14px;width:100%;border:0;border-radius:17px 0 0 17px;background:transparent;padding:0 16px;color:#3c4043;text-align:right;font-size:.73rem;cursor:pointer}
-.mail-nav a:hover,.mail-nav button:hover{background:#e8eaed}.mail-nav a.active{background:var(--mail-selected);font-weight:700;color:#001d35}.mail-nav i{width:19px;text-align:center}.mail-nav .count{margin-inline-start:auto;font-size:.65rem;font-weight:700}
-.mail-side-note{margin:22px 16px 0;color:var(--mail-muted);font-size:.62rem;line-height:1.8}
-
-.mail-list{grid-area:list;display:flex;min-width:0;flex-direction:column;background:#fff;border:1px solid var(--mail-line);border-left:0;border-radius:0 16px 16px 0;overflow:hidden}
-.mail-list-toolbar{height:54px;display:flex;align-items:center;gap:8px;padding:0 14px;border-bottom:1px solid var(--mail-line);background:#fff}
-.mail-list-toolbar h3{margin:0;flex:1;font-size:.83rem;font-weight:600}.mail-filter{display:flex;gap:4px}.mail-filter a{padding:7px 8px;border-radius:7px;color:var(--mail-muted);font-size:.62rem}.mail-filter a:hover{background:#f1f3f4}.mail-filter a.active{background:#e8f0fe;color:var(--mail-blue);font-weight:700}
-.mail-rows{min-height:0;flex:1;overflow:auto}.mail-row{position:relative;display:grid;grid-template-columns:38px minmax(0,1fr);gap:10px;min-height:76px;padding:10px 14px;border-bottom:1px solid #edf0f2;background:#fff}
-.mail-row:hover{background:var(--mail-hover);box-shadow:inset 0 1px #e7eaed,inset 0 -1px #e7eaed}.mail-row.unread{background:#f8fbff}.mail-row.selected{background:var(--mail-selected)}
-.mail-row.unread:before{content:"";position:absolute;right:0;top:0;bottom:0;width:3px;background:var(--mail-blue)}
-.mail-avatar{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#e8eaed;color:#5f6368;font-size:.72rem;font-weight:700}.mail-row-content{min-width:0}
-.mail-line1,.mail-line2{display:flex;align-items:center;gap:8px}.mail-line1{justify-content:space-between}.mail-sender,.mail-subject,.mail-snippet{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mail-sender{font-size:.72rem}.mail-time{font-size:.56rem;color:var(--mail-muted);white-space:nowrap}.mail-subject{margin-top:3px;font-size:.7rem}.mail-snippet{margin-top:3px;font-size:.61rem;color:var(--mail-muted)}.mail-row.unread .mail-sender,.mail-row.unread .mail-subject{font-weight:700}.mail-badge-new{margin-inline-start:auto;color:var(--mail-blue);font-size:.52rem;font-weight:700}.mail-urgent{position:absolute;left:12px;bottom:10px;color:var(--mail-danger);font-size:.62rem}
-
-.mail-reader{grid-area:reader;min-width:0;display:flex;flex-direction:column;background:#fff;border:1px solid var(--mail-line);border-right:0;border-radius:16px 0 0 16px;overflow:hidden}
-.mail-reader.empty{align-items:center;justify-content:center;color:var(--mail-muted)}.mail-empty{text-align:center}.mail-empty i{font-size:40px;color:#bdc1c6;margin-bottom:12px}.mail-empty strong{display:block;font-size:.82rem;font-weight:500}.mail-empty span{display:block;margin-top:4px;font-size:.64rem;color:#9aa0a6}
-.mail-reader-toolbar{height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;border-bottom:1px solid var(--mail-line)}
-.mail-person{display:flex;align-items:center;gap:10px;min-width:0}.mail-person-name{font-size:.77rem;font-weight:700}.mail-person-meta{margin-top:2px;color:var(--mail-muted);font-size:.58rem}.mail-reader-actions{display:flex;gap:2px}.mail-icon-btn{width:34px;height:34px;border:0;border-radius:50%;display:grid;place-items:center;background:transparent;color:var(--mail-muted);cursor:pointer}.mail-icon-btn:hover{background:#f1f3f4;color:#202124}
-.mail-thread{min-height:0;flex:1;overflow:auto;padding:28px 38px}.mail-subject-large{margin:0 0 18px;font-size:1.3rem;font-weight:400}.mail-message{padding:0 0 24px;margin-bottom:18px;border-bottom:1px solid #edf0f2}.mail-message:last-child{margin-bottom:0}.mail-message-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.mail-message-from{font-size:.7rem;font-weight:700}.mail-message-time{font-size:.59rem;color:var(--mail-muted)}.mail-body{white-space:pre-wrap;font-size:.79rem;line-height:1.95;color:#202124}
-.msg-attachments{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}.msg-attachment-item{display:flex;align-items:center;gap:7px;max-width:270px;border:1px solid var(--mail-line);border-radius:8px;background:#f8fafd;padding:8px 10px;font-size:.63rem}.msg-attachment-item a{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--mail-blue)}.msg-attachment-size{color:var(--mail-muted)}.msg-attachment-del{border:0;background:transparent;color:var(--mail-muted)}
-.mail-reply{padding:12px 20px 16px;border-top:1px solid var(--mail-line);background:#fff}.mail-reply-box{overflow:hidden;border:1px solid var(--mail-line);border-radius:12px;box-shadow:0 1px 2px rgba(60,64,67,.1)}.mail-reply textarea{display:block;width:100%;min-height:86px;max-height:190px;border:0;padding:12px 14px;resize:vertical;outline:0;font-size:.76rem}.mail-reply-tools{display:flex;align-items:center;justify-content:space-between;padding:6px 8px;border-top:1px solid #edf0f2}.msg-tools{display:flex;align-items:center;gap:2px}.msg-tool{width:30px;height:30px;border:0;border-radius:50%;background:transparent;color:var(--mail-muted)}.msg-tool:hover{background:#f1f3f4}.msg-send,.compose-send{border:0;border-radius:18px;background:var(--mail-blue);color:#fff;padding:8px 18px;font-size:.68rem;font-weight:700}.mail-no-reply{padding:14px 20px;border-top:1px solid var(--mail-line);color:var(--mail-muted);font-size:.64rem}
-.msg-status,.msg-attachment-chip{display:none}.msg-status.show{display:inline;color:var(--mail-muted);font-size:.6rem}.msg-attachment-chip:not(:empty){display:inline;color:var(--mail-blue);font-size:.62rem}.msg-reply-error,.compose-error{display:none}.msg-reply-error.show,.compose-error.show{display:block}
-
-.compose-modal .modal-dialog{max-width:620px;margin:1.75rem 1.75rem 1.75rem auto}.compose-modal .modal-content{overflow:hidden;border:0;border-radius:10px;box-shadow:0 8px 35px rgba(60,64,67,.35)}.compose-modal .modal-header{padding:9px 12px;background:#404040;color:#fff;border:0}.compose-modal .modal-header h5{font-size:.78rem;color:#fff}.compose-modal .modal-header small{color:#d6d6d6!important}.compose-modal .modal-body{padding:0}.compose-recipient{padding:12px 14px}.compose-modal .form-label{font-size:.64rem;color:var(--mail-muted)}.compose-modal .form-control,.compose-modal .form-select{border:0;border-bottom:1px solid #e5e7e9;border-radius:0;font-size:.72rem}.compose-modal .form-control:focus,.compose-modal .form-select:focus{box-shadow:none;border-bottom-color:var(--mail-blue)}.compose-modal textarea{min-height:200px;padding:12px 14px}.compose-modal .modal-body>.mb-3,.compose-modal .modal-body>.mb-2{margin-inline:14px}.compose-modal .modal-footer{padding:8px 12px;border-top:1px solid #edf0f2}.compose-cancel{border:0;background:transparent;color:var(--mail-muted)}.msg-attach-btn{border:1px solid var(--mail-line);border-radius:8px;background:#fff;padding:7px 10px;color:var(--mail-muted);font-size:.65rem}.compose-urgent{margin-inline:14px;font-size:.64rem;color:var(--mail-muted)}.compose-urgent i{color:var(--mail-danger)}
-.msg-toast{position:fixed;right:24px;bottom:24px;z-index:5000;display:none;padding:10px 16px;border-radius:5px;background:#323232;color:#fff;font-size:.7rem}.msg-toast.show{display:block}
-
-@media(max-width:1180px){.mail-workspace{grid-template-columns:minmax(0,1fr) 360px 205px}.mail-appbar{grid-template-columns:205px minmax(260px,1fr) auto}.mail-thread{padding-inline:26px}}
-@media(max-width:900px){.mail-workspace{grid-template-areas:"list folders";grid-template-columns:minmax(0,1fr) 190px}.mail-reader{position:fixed;inset:0;z-index:3000;border:0;border-radius:0}.mail-reader.empty{display:none}}
-@media(max-width:767px){.mail-appbar{height:auto;grid-template-columns:1fr auto;gap:8px;padding:8px 10px}.mail-search{grid-column:1/-1;grid-row:2}.mail-tools span,.mail-tools select{display:none}.mail-workspace{display:block;height:auto;min-height:0;padding:0}.mail-folders{border-radius:0;padding:8px}.mail-compose{height:44px;margin:0 0 8px}.mail-nav{display:grid;grid-template-columns:repeat(3,1fr)}.mail-nav a,.mail-nav button{height:auto;min-height:48px;justify-content:center;flex-direction:column;gap:3px;border-radius:8px;font-size:.58rem}.mail-side-note{display:none}.mail-list{border:0;border-radius:0}.mail-reader{position:fixed;inset:0;z-index:3000;border:0;border-radius:0}.mail-thread{padding:20px 14px}.mail-reply{padding:8px}.compose-modal .modal-dialog{max-width:none;margin:0}.compose-modal .modal-content{min-height:100vh;border-radius:0}}
+.messages-shell{font-family:var(--msg-font);font-size:var(--msg-size);color:var(--msg-text)}
+.msg-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:16px}
+.msg-title{display:flex;align-items:center;gap:12px}.msg-title-icon{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:var(--msg-primary);color:#fff;font-size:18px;box-shadow:0 5px 16px rgba(31,95,174,.2)}
+.msg-title h2{font-size:1.18rem;font-weight:800;margin:0}.msg-title p{font-size:.72rem;color:var(--msg-muted);margin:3px 0 0}
+.msg-settings{display:flex;align-items:center;gap:7px;color:#687589;font-size:.68rem}.msg-settings select{width:96px;font-size:.68rem;border-radius:8px;border-color:var(--msg-border)}
+.msg-layout{display:grid;grid-template-columns:210px minmax(360px,1fr);height:calc(100vh - 225px);min-height:620px;background:#fff;border:1px solid var(--msg-border);border-radius:14px;box-shadow:0 7px 28px rgba(24,45,72,.08);overflow:hidden}
+.msg-sidebar{background:#f8fafc;border-inline-end:1px solid var(--msg-border);padding:15px 12px}
+.msg-compose-btn{width:100%;border:0;border-radius:10px;padding:10px 12px;font-weight:800;background:var(--msg-primary);color:#fff;box-shadow:0 5px 13px rgba(31,95,174,.18);margin-bottom:14px}.msg-compose-btn:hover{background:var(--msg-primary-dark)}
+.msg-nav{display:flex;flex-direction:column;gap:3px}.msg-nav a,.msg-nav button{display:flex;align-items:center;gap:10px;width:100%;border:0;background:transparent;color:#526176;text-decoration:none;border-radius:9px;padding:9px 10px;font-size:.76rem;text-align:start}.msg-nav a:hover,.msg-nav button:hover{background:#edf3fb;color:var(--msg-primary)}.msg-nav a.active{background:#e4effd;color:var(--msg-primary);font-weight:800}.msg-nav i{width:20px;text-align:center}.msg-count{margin-inline-start:auto;min-width:22px;font-size:.6rem}.msg-section-label{font-size:.62rem;font-weight:800;color:#98a4b5;margin:22px 9px 7px}
+.msg-list-pane{min-width:0;display:flex;flex-direction:column;background:#fff}
+.msg-list-head{padding:10px 12px;border-bottom:1px solid var(--msg-border);display:flex;align-items:center;justify-content:space-between;gap:9px;background:#fff}
+.msg-list-head h3{font-size:.84rem;font-weight:800;margin:0;white-space:nowrap}.msg-filter{display:flex;gap:3px}.msg-filter a{font-size:.61rem;padding:5px 8px;border-radius:7px;text-decoration:none;color:var(--msg-muted)}.msg-filter a.active{background:var(--msg-primary-soft);color:var(--msg-primary);font-weight:800}
+.msg-search{height:32px;min-width:170px;max-width:300px;flex:1;border:1px solid var(--msg-border);border-radius:9px;background:#f8fafc;padding:0 10px;font-family:var(--msg-font);font-size:.67rem;outline:none}.msg-search:focus{background:#fff;border-color:#a9c5e8;box-shadow:0 0 0 3px rgba(31,95,174,.08)}.msg-search-wrap{position:relative;flex:1;display:flex;align-items:center}.msg-search-wrap i{position:absolute;inset-inline-start:10px;color:#9aa5b5;font-size:.68rem}.msg-search{padding-inline-start:28px}
+.msg-list{overflow:auto;flex:1;background:#fff}.msg-row{position:relative;display:flex;gap:11px;padding:13px 15px;border:0;border-bottom:1px solid #edf1f5;text-decoration:none;color:inherit;transition:background .14s,box-shadow .14s;cursor:pointer}.msg-row:hover{background:#f7faff}.msg-row.active{background:#edf5ff;box-shadow:inset -3px 0 0 var(--msg-primary)}.msg-row.unread{background:#f4f8fe}.msg-row.unread .msg-name,.msg-row.unread .msg-subject{font-weight:900}.msg-row.unread:before{content:'';position:absolute;inset-inline-end:auto;inset-inline-start:0;top:0;bottom:0;width:3px;background:var(--msg-primary)}
+.msg-avatar{width:40px;height:40px;flex:0 0 40px;border-radius:50%;display:grid;place-items:center;background:#e6eef8;color:var(--msg-primary);font-weight:800;border:1px solid #d5e1ef}.msg-row-main{min-width:0;flex:1}.msg-row-top,.msg-row-bottom{display:flex;align-items:center;justify-content:space-between;gap:7px}.msg-name{font-size:.75rem;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.msg-time{font-size:.59rem;color:#8d98a8;white-space:nowrap}.msg-subject{font-size:.76rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px}.msg-preview{font-size:.66rem;color:#7b8798;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px}.msg-new{font-size:.53rem;padding:3px 5px;border-radius:5px;background:#dceaff;color:var(--msg-primary);font-weight:800}.msg-urgent{color:#c0392b;font-size:.64rem}.msg-attachment-mark{color:#8a97a8;font-size:.63rem;margin-inline-start:5px}
+.msg-empty{height:100%;display:grid;place-items:center;text-align:center;color:var(--msg-muted);padding:50px 20px}.msg-empty-icon{width:58px;height:58px;border-radius:16px;display:grid;place-items:center;background:#edf3fa;color:#8ca0b8;font-size:22px;margin:0 auto 12px}.msg-empty strong{display:block;color:#536176;font-size:.8rem;margin-bottom:3px}
+.msg-overlay{position:fixed;inset:0;z-index:1080;display:none;align-items:stretch;justify-content:flex-end;padding:0;background:rgba(18,35,57,.12)}
+.msg-overlay.open{display:flex}
+.msg-dialog{width:min(920px,62vw);height:100vh;min-height:100%;background:#fff;border:0;border-inline-start:1px solid var(--msg-border);border-radius:0;box-shadow:-18px 0 50px rgba(12,35,62,.18);display:flex;flex-direction:column;overflow:hidden;animation:msgPaneIn .18s ease-out}
+.msg-conv-head{min-height:76px;padding:13px 18px;border-bottom:1px solid var(--msg-border);display:flex;align-items:center;justify-content:space-between;gap:14px;background:#fff}
+.msg-conv-person{display:flex;align-items:center;gap:11px;min-width:0}.msg-conv-person .msg-avatar{width:44px;height:44px;flex-basis:44px}
+.msg-conv-name{font-weight:850;font-size:.86rem}.msg-conv-meta{font-size:.61rem;color:var(--msg-muted);margin-top:3px}
+.msg-conv-actions{display:flex;gap:6px}.msg-icon-btn{width:34px;height:34px;border:1px solid var(--msg-border);background:#fff;color:#657286;border-radius:8px;display:grid;place-items:center;text-decoration:none}.msg-icon-btn:hover{background:#f3f7fc;color:var(--msg-primary);border-color:#c9d8ea}.msg-close-btn{background:#f7f8fa}
+.msg-thread{padding:22px 30px 28px;overflow:auto;flex:1;background:#f5f7fa;scroll-behavior:smooth}
+.msg-root{max-width:820px;margin:0 auto 13px;border:1px solid var(--msg-border-strong);border-radius:11px;padding:18px 20px;background:#fff;box-shadow:0 2px 8px rgba(20,43,70,.06)}
+.msg-subject-large{font-size:1rem;font-weight:850;margin-bottom:5px;color:#152238}.msg-root-meta{font-size:.62rem;color:#778398}.msg-root hr{border-color:#e8edf3}.msg-body{white-space:pre-wrap;line-height:1.9;font-size:.81rem;word-break:break-word;color:#25344a}
+.msg-bubble{max-width:min(78%,800px);border-radius:11px;padding:12px 15px;margin:9px auto 9px 0;border:1px solid #dce3eb;background:#fff;box-shadow:0 2px 7px rgba(25,47,73,.045)}.msg-bubble.mine{margin-left:auto;margin-right:0;background:#e8f2ff;border-color:#c9dcf2}.msg-bubble-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:5px}.msg-bubble-name{font-weight:850;font-size:.68rem;color:#2b4665}.msg-bubble.mine .msg-bubble-name{color:#1f5fae}.msg-bubble-time{font-size:.57rem;color:#8995a5}
+.msg-reply{padding:12px 18px 15px;border-top:1px solid var(--msg-border);background:#fff}.msg-reply-inner{max-width:820px;margin:0 auto}.msg-reply-box{border:1px solid #cbd6e2;border-radius:11px;background:#fff;overflow:hidden;box-shadow:0 2px 10px rgba(20,50,90,.05)}.msg-reply textarea{display:block;width:100%;border:0!important;background:#fff;resize:none;min-height:76px;max-height:190px;padding:12px 14px;font-family:var(--msg-font);font-size:.79rem;line-height:1.8;box-shadow:none!important;outline:none}.msg-reply textarea:focus{background:#fff}.msg-reply-tools{display:flex;align-items:center;justify-content:space-between;padding:6px 8px;border-top:1px solid #e8edf2;background:#fafbfd}.msg-tools{display:flex;align-items:center;gap:2px}.msg-tool{border:0;background:transparent;color:#7c8796;width:31px;height:31px;border-radius:7px}.msg-tool:hover{background:#e9f1fa;color:var(--msg-primary)}.msg-send{border:0;border-radius:8px;background:var(--msg-primary);color:#fff;font-size:.68rem;font-weight:850;padding:8px 14px}.msg-send:hover{background:var(--msg-primary-dark)}.msg-status{display:none;font-size:.61rem;color:#7c8796}.msg-status.show{display:inline-flex;align-items:center;gap:5px}.msg-reply-error{display:none;font-size:.67rem;margin-bottom:7px;padding:7px 10px;border-radius:8px}.msg-reply-error.show{display:block}.msg-no-reply{padding:13px 20px;text-align:center;color:var(--msg-muted);font-size:.66rem;border-top:1px solid var(--msg-border)}
+.compose-modal .modal-dialog{max-width:710px}.compose-modal .modal-content{border:0;border-radius:16px;overflow:hidden;box-shadow:0 18px 55px rgba(10,31,68,.25)}.compose-modal .modal-header{padding:14px 18px;background:#fff;color:var(--msg-text);border-bottom:1px solid var(--msg-border)}.compose-head-icon{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;background:var(--msg-primary-soft);color:var(--msg-primary)}.compose-modal .modal-body{padding:17px 19px}.compose-modal .modal-footer{padding:10px 19px;border-top:1px solid var(--msg-border);background:#fbfcfe}.compose-modal .form-label{font-size:.68rem;font-weight:850;color:#59677a;margin-bottom:5px}.compose-modal .form-control,.compose-modal .form-select{border-radius:8px;border-color:#dfe5ed;font-family:var(--msg-font);font-size:.75rem;padding:.52rem .68rem}.compose-modal textarea{min-height:145px;resize:vertical}.compose-recipient{padding:11px;background:#f7f9fc;border:1px solid #e8edf3;border-radius:11px}.compose-error{display:none;border-radius:8px;font-size:.7rem}.compose-error.show{display:block}.compose-urgent{font-size:.68rem;color:#667386}.compose-urgent input{accent-color:#c0392b}.compose-footer-actions{display:flex;align-items:center;justify-content:space-between;width:100%}.compose-send{border:0;background:var(--msg-primary);color:#fff;border-radius:8px;padding:8px 15px;font-size:.71rem;font-weight:850}.compose-send:hover{background:var(--msg-primary-dark)}.compose-cancel{border:1px solid #dfe5ed;background:#fff;color:#687589;border-radius:8px;padding:8px 13px;font-size:.7rem}
+.msg-toast{position:fixed;bottom:22px;inset-inline-end:22px;z-index:1090;display:none;padding:9px 13px;border-radius:9px;background:#202938;color:#fff;font-size:.7rem;box-shadow:0 8px 25px rgba(0,0,0,.18)}.msg-toast.show{display:block}
+.msg-attach-btn{display:inline-flex;align-items:center;gap:6px;font-size:.67rem;color:#59677a;background:#f4f7fb;border:1px solid #e3e9f1;border-radius:8px;padding:7px 11px;cursor:pointer}.msg-attach-btn:hover{background:#eaf2ff;color:var(--msg-primary)}
+.msg-attachment-chip{font-size:.67rem;color:var(--msg-muted);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.msg-attachments{margin-top:.65rem;display:flex;flex-direction:column;gap:.4rem}.msg-attachment-item{display:flex;align-items:center;gap:.45rem;font-size:.7rem;background:#f7f9fc;border:1px solid #dce4ed;border-radius:8px;padding:.45rem .6rem}.msg-attachment-item a{color:var(--msg-primary);text-decoration:none;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700}.msg-attachment-item a:hover{text-decoration:underline}.msg-attachment-size{color:var(--msg-muted);font-size:.61rem;white-space:nowrap}.msg-attachment-del{border:0;background:none;color:#c0392b;cursor:pointer;padding:0 .2rem;font-size:.7rem}
+@keyframes msgPaneIn{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:none}}
+@media(max-width:1100px){.msg-dialog{width:68vw}.msg-layout{grid-template-columns:195px minmax(320px,1fr)}}
+@media(max-width:767px){.msg-toolbar{align-items:flex-start}.msg-settings{display:none}.msg-layout{display:block;height:auto;min-height:0}.msg-sidebar{border:0;border-bottom:1px solid var(--msg-border)}.msg-nav{display:grid;grid-template-columns:repeat(3,1fr)}.msg-nav a,.msg-nav button{justify-content:center;flex-direction:column;gap:3px;padding:8px 4px;text-align:center;font-size:.59rem}.msg-section-label{display:none}.msg-compose-btn{margin-bottom:10px}.msg-list{min-height:520px}.msg-list-head{flex-wrap:wrap}.msg-search-wrap{order:3;flex-basis:100%;max-width:none}.msg-overlay{padding:0;background:rgba(18,35,57,.22)}.msg-dialog{width:100%;height:100%;min-height:100%;border-radius:0;border:0}.msg-conv-head{padding:11px 13px}.msg-thread{padding:15px 11px 20px}.msg-root{padding:15px}.msg-bubble{max-width:94%}.msg-reply{padding:10px}.msg-reply textarea{min-height:74px}.msg-conv-meta{font-size:.57rem}}
+</style>
+<style>
+/* Professional mail workspace override */
+.messages-shell{font-family:'Cairo',sans-serif;color:#172033}
+.msg-layout{grid-template-columns:190px 340px minmax(430px,1fr)!important;height:calc(100vh - 190px);min-height:600px;background:#fff;border:1px solid #dfe4ea;border-radius:12px;box-shadow:0 4px 20px rgba(15,23,42,.07);overflow:hidden}
+.msg-layout.no-thread{grid-template-columns:190px minmax(0,1fr)!important}
+.msg-sidebar{background:#fbfcfe!important;border-inline-end:1px solid #dfe4ea!important;padding:14px 10px!important}
+.msg-compose-btn{background:#2563eb!important;border-radius:9px!important;box-shadow:0 3px 10px rgba(37,99,235,.18)!important}
+.msg-nav a,.msg-nav button{color:#475467!important;border-radius:8px!important}.msg-nav a.active{background:#e8f1ff!important;color:#2563eb!important;font-weight:850}
+.msg-list-pane{background:#fff!important;border-inline-end:1px solid #dfe4ea!important}
+.msg-list-head{background:#fff!important;border-bottom:1px solid #dfe4ea!important}
+.msg-row{padding:12px 11px!important;border-bottom:1px solid #edf0f4!important}.msg-row:hover{background:#f7f9fc!important}.msg-row.unread{background:#f8fbff!important}
+.msg-reading-pane{min-width:0;display:flex;flex-direction:column;background:#f4f6f9;position:relative}
+.msg-reading-pane.empty{grid-column:1/-1;align-items:center;justify-content:center}
+.msg-reading-head{min-height:70px;padding:11px 16px;background:#fff;border-bottom:1px solid #dfe4ea;display:flex;align-items:center;justify-content:space-between}
+.msg-thread{padding:18px 22px 24px;background:#f4f6f9!important;overflow:auto;flex:1}
+.msg-root{border:1px solid #d7dee7!important;background:#fff!important;border-radius:10px!important;box-shadow:0 1px 3px rgba(16,24,40,.05)!important}
+.msg-bubble{border:1px solid #dce2e9!important;background:#fff!important;border-radius:10px!important;box-shadow:0 1px 3px rgba(16,24,40,.045)!important}
+.msg-bubble.mine{background:#eaf3ff!important;border-color:#c8dcf6!important}
+.msg-reply{background:#fff!important;border-top:1px solid #dfe4ea!important;padding:10px 15px 13px!important}
+.msg-reply-box{border:1px solid #cbd5e1!important;border-radius:9px!important}
+.msg-send{background:#2563eb!important}.msg-send:hover{background:#1d4ed8!important}
+.msg-icon-btn{border-color:#dfe4ea!important}.msg-icon-btn:hover{background:#eff6ff!important;color:#2563eb!important}
+.msg-read-empty-icon{background:#e9eef5!important;color:#64748b!important}
+.msg-attachment-item{background:#f8fafc!important;border:1px solid #d8e0e9!important}
+@media(max-width:1100px){.msg-layout.has-thread{grid-template-columns:175px 320px minmax(360px,1fr)!important}}
+@media(max-width:900px){.msg-layout.has-thread{grid-template-columns:170px 1fr!important;position:relative}.msg-reading-pane{position:absolute;inset:0;z-index:50}}
+@media(max-width:767px){.msg-layout,.msg-layout.no-thread{display:block;height:auto;min-height:0}.msg-reading-pane{position:fixed;inset:0;z-index:3000}.msg-thread{padding:12px 10px 18px}.msg-bubble{max-width:94%}}
 </style>
 <div class="messages-shell">
- <div class="mail-pagebar">
-  <div>
-   <div class="mail-page-title"><i class="fas fa-envelope-open-text"></i><span>الرسائل الداخلية</span></div>
-   <div class="mail-page-subtitle">البريد والمراسلات داخل النظام</div>
-  </div>
-  <a class="mail-back-dashboard" href="javascript:void(0)" onclick="window.location.href='<?php echo e($dashboardUrl); ?>'" title="العودة إلى لوحة التحكم">
-   <i class="fas fa-arrow-right"></i><span>لوحة التحكم</span>
-  </a>
+ <div class="msg-toolbar">
+  <div class="msg-title"><div class="msg-title-icon"><i class="fas fa-envelope-open-text"></i></div><div><h2>الرسائل الداخلية</h2><p>مراسلات آمنة بين مستخدمي النظام والأدوار الإدارية</p></div></div>
+  <div class="msg-settings"><i class="fas fa-text-height"></i><span>حجم النص</span><select id="msgFontSize" class="form-select form-select-sm"><option value="13px">صغير</option><option value="14px" selected>متوسط</option><option value="15px">كبير</option><option value="16px">كبير جداً</option></select></div>
  </div>
- <header class="mail-appbar">
-  <div class="mail-brand"><i class="fas fa-envelope mail-brand-icon"></i><span>البريد</span></div>
-  <div class="mail-search"><i class="fas fa-magnifying-glass"></i><input type="search" id="msgSearch" placeholder="البحث في البريد" autocomplete="off"></div>
-  <div class="mail-tools"><i class="fas fa-text-height"></i><span>حجم النص</span><select id="msgFontSize"><option value="13px">صغير</option><option value="14px" selected>متوسط</option><option value="15px">كبير</option><option value="16px">كبير جداً</option></select></div>
- </header>
-
- <main class="mail-workspace">
-  <aside class="mail-folders">
-   <button type="button" class="mail-compose" data-bs-toggle="modal" data-bs-target="#composeModal"><i class="fas fa-pen me-2"></i>إنشاء</button>
-   <nav class="mail-nav">
-    <a class="<?php echo $view==='inbox'?'active':'';?>" href="<?php echo $msgUrl;?>"><i class="fas fa-inbox"></i><span>الوارد</span><span class="count"><?php echo $unread;?></span></a>
+ <div class="msg-layout <?php echo $thread['root']?'has-thread':'no-thread';?>">
+  <aside class="msg-sidebar">
+   <button type="button" class="msg-compose-btn" data-bs-toggle="modal" data-bs-target="#composeModal"><i class="fas fa-pen-to-square me-2"></i>رسالة جديدة</button>
+   <nav class="msg-nav">
+    <a class="<?php echo $view==='inbox'?'active':'';?>" href="<?php echo $msgUrl;?>"><i class="fas fa-inbox"></i><span>الوارد</span><span class="badge bg-primary msg-count"><?php echo $unread;?></span></a>
     <a class="<?php echo $view==='sent'?'active':'';?>" href="<?php echo $msgUrl;?>?view=sent"><i class="fas fa-paper-plane"></i><span>المرسل</span></a>
     <button type="button" onclick="markAllRead()"><i class="fas fa-check-double"></i><span>تحديد الكل كمقروء</span></button>
    </nav>
-   <div class="mail-side-note">يتم تحديث حالة الرسائل والإشعارات تلقائياً داخل النظام.</div>
+   <div class="msg-section-label">حالة المراسلات</div><div class="small text-muted px-2" style="font-size:.65rem;line-height:1.8">يتم تحديث الإشعارات والرسائل الجديدة تلقائياً دون الحاجة إلى إعادة تحميل الصفحة.</div>
   </aside>
-
-  <section class="mail-list">
-   <div class="mail-list-toolbar">
-    <h3><?php echo $view==='sent'?'الرسائل المرسلة':'صندوق الوارد';?></h3>
-    <div class="mail-filter">
-     <a class="<?php echo $filter==='all'?'active':'';?>" href="?view=<?php echo e($view);?>&filter=all">الكل</a>
-     <a class="<?php echo $filter==='unread'?'active':'';?>" href="?view=<?php echo e($view);?>&filter=unread">غير مقروء</a>
-    </div>
-   </div>
-   <div class="mail-rows">
-    <?php if(!$messages): ?>
-     <div class="mail-empty" style="padding:70px 20px"><i class="fas fa-inbox"></i><strong>لا توجد رسائل</strong><span>ستظهر الرسائل الجديدة هنا.</span></div>
-    <?php endif; ?>
-    <?php foreach($messages as $m):
-      $isUnread=isset($m['is_read'])&&(int)$m['is_read']===0;
-      $name=$view==='sent'?($m['recipient_name']??''):$m['sender_name'];
-      $initial=mb_substr($name!==''?$name:'?',0,1,'UTF-8');
-      $openUrl=$msgUrl.'?view='.urlencode((string)$view).'&filter='.urlencode((string)$filter).'&message='.(int)$m['id'];
-    ?>
-     <a href="<?php echo e($openUrl);?>" class="mail-row <?php echo $isUnread?'unread ':'';?><?php echo $messageId===(int)$m['id']?'selected':'';?>" data-message-open="<?php echo (int)$m['id'];?>" data-message-search="<?php echo e(($name??'').' '.($m['subject']??'').' '.($m['body_preview']??$m['body']??''));?>">
-      <div class="mail-avatar"><?php echo e($initial);?></div>
-      <div class="mail-row-content">
-       <div class="mail-line1"><span class="mail-sender"><?php echo e($name);?></span><span class="mail-time"><?php echo e($m['created_at']);?></span></div>
-       <div class="mail-line2"><span class="mail-subject"><?php echo e($m['subject']);?></span><?php if($isUnread):?><span class="mail-badge-new">جديد</span><?php endif;?></div>
-       <div class="mail-snippet"><?php echo $view==='sent'?'إلى: ':'من: '; echo e($name);?><?php if(!empty($m['recipient_role'])):?> · <?php echo e($m['recipient_role']);?><?php endif;?> · <?php echo e($m['body_preview']??mb_substr($m['body']??'',0,150,'UTF-8'));?></div>
-      </div>
-      <?php if(!empty($m['is_urgent'])):?><i class="fas fa-triangle-exclamation mail-urgent" title="عاجل"></i><?php endif;?>
-     </a>
+  <section class="msg-list-pane">
+   <div class="msg-list-head"><h3><?php echo $view==='sent'?'الرسائل المرسلة':'صندوق الوارد';?></h3><div class="msg-search-wrap"><i class="fas fa-magnifying-glass"></i><input type="search" id="msgSearch" class="msg-search" placeholder="بحث في المرسل والموضوع ونص الرسالة" autocomplete="off"></div><div class="msg-filter"><a class="<?php echo $filter==='all'?'active':'';?>" href="?view=<?php echo e($view);?>&filter=all">الكل</a><a class="<?php echo $filter==='unread'?'active':'';?>" href="?view=<?php echo e($view);?>&filter=unread">غير مقروء</a></div></div>
+   <div class="msg-list">
+    <?php if(!$messages): ?><div class="msg-empty"><div><div class="msg-empty-icon"><i class="fas fa-inbox"></i></div><strong>لا توجد رسائل</strong><span>ستظهر الرسائل الجديدة هنا.</span></div></div><?php endif; ?>
+    <?php foreach($messages as $m): $isUnread=isset($m['is_read'])&&(int)$m['is_read']===0; $name=$view==='sent'?($m['recipient_name']??''):$m['sender_name']; $initial=mb_substr($name!==''?$name:'?',0,1,'UTF-8'); ?>
+     <a href="<?php echo $msgUrl;?>?message=<?php echo (int)$m['id'];?>" class="msg-row <?php echo $isUnread?'unread':'';?>" data-message-open="<?php echo (int)$m['id'];?>" data-message-search="<?php echo e(($name??'').' '.($m['subject']??'').' '.($m['body_preview']??$m['body']??''));?>"><div class="msg-avatar"><?php echo e($initial);?></div><div class="msg-row-main"><div class="msg-row-top"><span class="msg-name"><?php echo e($name);?></span><span class="msg-time"><?php echo e($m['created_at']);?></span></div><div class="msg-row-bottom"><span class="msg-subject"><?php echo e($m['subject']);?></span><?php if($isUnread):?><span class="msg-new">جديد</span><?php endif;?></div><div class="msg-preview"><?php echo $view==='sent'?'إلى: ':'من: '; echo e($name);?><?php if(!empty($m['recipient_role'])):?> · <?php echo e($m['recipient_role']);?><?php endif;?> · <?php echo e($m['body_preview']??mb_substr($m['body']??'',0,150,'UTF-8'));?></div></div><?php if(!empty($m['is_urgent'])):?><i class="fas fa-triangle-exclamation msg-urgent" title="عاجل"></i><?php endif;?></a>
     <?php endforeach; ?>
    </div>
   </section>
 
-  <?php if($thread['root']): $m=$thread['root']; mark_message_read($uid,(int)$m['id']); $rootName=$m['sender_name']; $rootInitial=mb_substr($rootName!==''?$rootName:'?',0,1,'UTF-8'); ?>
-   <section class="mail-reader" id="messageOverlay" aria-labelledby="messageOverlayTitle">
-    <div class="mail-reader-toolbar">
-     <div class="mail-person">
-      <div class="mail-avatar"><?php echo e($rootInitial);?></div>
-      <div><div class="mail-person-name" id="messageOverlayTitle"><?php echo e($rootName);?></div><div class="mail-person-meta"><?php echo e($m['created_at']);?> · <?php echo count($thread['replies'])+1;?> رسائل</div></div>
-     </div>
-     <div class="mail-reader-actions">
-      <button class="mail-icon-btn" type="button" onclick="focusReply()" title="الرد"><i class="fas fa-reply"></i></button>
-      <a class="mail-icon-btn" href="<?php echo $msgUrl;?>?view=<?php echo e($view);?>&filter=<?php echo e($filter);?>" title="إغلاق"><i class="fas fa-xmark"></i></a>
-     </div>
-    </div>
-    <div class="mail-thread" id="messageThread">
-     <h1 class="mail-subject-large"><?php echo e($m['subject']);?></h1>
-     <article class="mail-message" data-message-id="<?php echo (int)$m['id'];?>">
-      <div class="mail-message-head"><span class="mail-message-from"><?php echo e($rootName);?></span><span class="mail-message-time"><?php echo e($m['created_at']);?></span></div>
-      <div class="mail-body"><?php echo e($m['body']);?></div>
-      <div class="msg-attachments" id="attachments-<?php echo (int)$m['id'];?>"></div>
-     </article>
-     <?php foreach($thread['replies'] as $r): ?>
-      <article class="mail-message" data-message-id="<?php echo (int)$r['id'];?>">
-       <div class="mail-message-head"><span class="mail-message-from"><?php echo e($r['sender_name']);?></span><span class="mail-message-time"><?php echo e($r['created_at']);?></span></div>
-       <div class="mail-body"><?php echo e($r['body']);?></div>
-       <div class="msg-attachments" id="attachments-<?php echo (int)$r['id'];?>"></div>
-      </article>
-     <?php endforeach; ?>
-    </div>
-
-    <?php if(($m['recipient_user_id']!==null||(int)$m['sender_id']!==$uid)&&!($m['recipient_role']!==null)): ?>
-     <div class="mail-reply"><form id="replyForm"><input type="hidden" name="action" value="reply"><input type="hidden" name="message_id" value="<?php echo (int)$m['id'];?>"><?php echo csrf_field();?><div id="replyError" class="alert alert-danger msg-reply-error"></div><div class="mail-reply-box"><textarea name="body" maxlength="10000" placeholder="اكتب ردك هنا..." required></textarea><div class="mail-reply-tools"><div class="msg-tools"><input type="file" id="replyAttachment" name="attachment" hidden accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.jpg,.jpeg,.png,.gif,.webp,.zip"><button type="button" class="msg-tool" title="إرفاق ملف" onclick="document.getElementById('replyAttachment').click()"><i class="fas fa-paperclip"></i></button><span id="replyAttachmentName" class="msg-attachment-chip"></span></div><div class="d-flex align-items-center gap-2"><span id="replyStatus" class="msg-status"><i class="fas fa-circle-notch fa-spin"></i> جارٍ الإرسال...</span><button class="msg-send" type="submit"><i class="fas fa-paper-plane me-1"></i>إرسال</button></div></div></div></form></div>
-    <?php else: ?><div class="mail-no-reply">هذه الرسالة جماعية ولا يمكن الرد عليها مباشرة من هذه المحادثة.</div><?php endif; ?>
-   </section>
-  <?php else: ?>
-   <section class="mail-reader empty"><div class="mail-empty"><i class="far fa-envelope-open"></i><strong>اختر رسالة لقراءتها</strong><span>ستظهر الرسالة والمحادثة هنا.</span></div></section>
-  <?php endif; ?>
- </main>
-</div>
+<?php if($thread['root']): $m=$thread['root']; mark_message_read($uid,(int)$m['id']); $rootName=$m['sender_name']; $rootInitial=mb_substr($rootName!==''?$rootName:'?',0,1,'UTF-8'); ?>
+ <section class="msg-reading-pane" id="messageOverlay" aria-labelledby="messageOverlayTitle">
+  <div class="msg-reading-head">
+   <div class="msg-conv-person"><div class="msg-avatar"><?php echo e($rootInitial);?></div><div><div class="msg-conv-name" id="messageOverlayTitle"><?php echo e($rootName);?></div><div class="msg-conv-meta">مراسلة داخلية · <?php echo e($m['created_at']);?> · <?php echo count($thread['replies'])+1;?> رسائل</div></div></div>
+   <div class="msg-conv-actions"><button class="msg-icon-btn" type="button" onclick="focusReply()" title="الرد"><i class="fas fa-reply"></i></button><a class="msg-icon-btn" href="<?php echo $msgUrl;?>" title="إغلاق القراءة"><i class="fas fa-xmark"></i></a></div>
+  </div>
+  <div class="msg-thread" id="messageThread">
+   <article class="msg-root" data-message-id="<?php echo (int)$m['id'];?>"><div class="msg-subject-large"><?php echo e($m['subject']);?></div><div class="msg-root-meta"><i class="fas fa-user me-1"></i><?php echo e($rootName);?> · <?php echo e($m['created_at']);?></div><hr class="my-3"><div class="msg-body"><?php echo e($m['body']);?></div><div class="msg-attachments" id="attachments-<?php echo (int)$m['id'];?>"></div></article>
+   <?php foreach($thread['replies'] as $r): $mine=(int)$r['sender_id']===$uid; ?><article class="msg-bubble <?php echo $mine?'mine':'';?>" data-message-id="<?php echo (int)$r['id'];?>"><div class="msg-bubble-head"><span class="msg-bubble-name"><?php echo e($r['sender_name']);?></span><span class="msg-bubble-time"><?php echo e($r['created_at']);?></span></div><div class="msg-body"><?php echo e($r['body']);?></div><div class="msg-attachments" id="attachments-<?php echo (int)$r['id'];?>"></div></article><?php endforeach; ?>
+  </div>
+  <?php if(($m['recipient_user_id']!==null||(int)$m['sender_id']!==$uid)&&!($m['recipient_role']!==null)): ?>
+  <div class="msg-reply"><div class="msg-reply-inner"><form id="replyForm"><input type="hidden" name="action" value="reply"><input type="hidden" name="message_id" value="<?php echo (int)$m['id'];?>"><?php echo csrf_field();?><div id="replyError" class="alert alert-danger msg-reply-error"></div><div class="msg-reply-box"><textarea name="body" maxlength="10000" placeholder="اكتب ردك هنا..." required></textarea><div class="msg-reply-tools"><div class="msg-tools"><input type="file" id="replyAttachment" name="attachment" hidden accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.jpg,.jpeg,.png,.gif,.webp,.zip"><button type="button" class="msg-tool" title="إرفاق ملف" onclick="document.getElementById('replyAttachment').click()"><i class="fas fa-paperclip"></i></button><button type="button" class="msg-tool" title="رمز تعبيري"><i class="far fa-face-smile"></i></button><span id="replyAttachmentName" class="msg-attachment-chip"></span></div><div class="d-flex align-items-center gap-2"><span id="replyStatus" class="msg-status"><i class="fas fa-circle-notch fa-spin"></i> جارٍ الإرسال...</span><button class="msg-send" type="submit"><i class="fas fa-paper-plane me-1"></i>إرسال الرد</button></div></div></div></form></div></div>
+  <?php else: ?><div class="msg-no-reply">هذه الرسالة جماعية ولا يمكن الرد عليها مباشرة من هذه المحادثة.</div><?php endif; ?>
+ </section>
+<?php else: ?>
+ <section class="msg-reading-pane empty"><div class="msg-read-empty"><div class="msg-read-empty-icon"><i class="fas fa-envelope-open"></i></div><strong>اختر رسالة لقراءتها</strong><span>ستظهر تفاصيل المحادثة والردود والمرفقات هنا.</span></div></section>
+<?php endif; ?>
+  </div>
+ </div>
 
 <div class="modal fade compose-modal" id="composeModal" tabindex="-1" aria-labelledby="composeModalLabel" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content">
  <div class="modal-header"><div class="d-flex align-items-center gap-2"><div class="compose-head-icon"><i class="fas fa-pen-to-square"></i></div><div><h5 class="modal-title mb-0 fw-bold" id="composeModalLabel">رسالة جديدة</h5><small class="text-muted" style="font-size:.62rem">مراسلة داخلية آمنة</small></div></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button></div>
@@ -241,12 +174,330 @@ include dirname(__DIR__,2).'/includes/header.php';
  </div><div class="modal-footer"><div class="compose-footer-actions"><button type="button" class="compose-cancel" data-bs-dismiss="modal">إلغاء</button><div class="d-flex align-items-center gap-2"><span id="composeStatus" class="msg-status"><i class="fas fa-circle-notch fa-spin"></i> جارٍ الإرسال...</span><button type="submit" class="compose-send"><i class="fas fa-paper-plane me-1"></i>إرسال الرسالة</button></div></div></div></form>
  </div></div></div>
 <div id="msgToast" class="msg-toast"></div>
+<style id="msg-redesign-v3">
+/* ============================================================
+   Messaging V3 — clean Outlook/Gmail-inspired workspace
+   Visual-only redesign; existing PHP/JS message functionality stays intact.
+   ============================================================ */
+.messages-shell{
+  --mail-ink:#17202a;
+  --mail-muted:#66717f;
+  --mail-line:#dfe3e8;
+  --mail-line-soft:#eceff2;
+  --mail-bg:#f5f6f8;
+  --mail-surface:#fff;
+  --mail-accent:#2b4c73;
+  --mail-accent-soft:#edf2f7;
+  --mail-accent-dark:#1f3856;
+  font-family:'Cairo',sans-serif!important;
+  color:var(--mail-ink)!important;
+}
+.messages-shell .msg-toolbar{
+  margin-bottom:10px!important;
+  padding:0 2px!important;
+}
+.messages-shell .msg-title{gap:10px!important}
+.messages-shell .msg-title-icon{
+  width:38px!important;height:38px!important;border-radius:9px!important;
+  background:var(--mail-accent)!important;box-shadow:none!important;font-size:16px!important;
+}
+.messages-shell .msg-title h2{font-size:1.05rem!important;letter-spacing:-.15px}
+.messages-shell .msg-title p{font-size:.67rem!important;color:#7b8591!important}
+.messages-shell .msg-settings{gap:6px!important}
+.messages-shell .msg-settings select{
+  width:88px!important;height:29px!important;background:#fff!important;
+  border:1px solid var(--mail-line)!important;border-radius:7px!important;
+}
 
+/* Main workspace */
+.messages-shell .msg-layout{
+  grid-template-columns:178px 365px minmax(430px,1fr)!important;
+  height:calc(100vh - 188px)!important;
+  min-height:570px!important;
+  background:var(--mail-surface)!important;
+  border:1px solid #d8dde3!important;
+  border-radius:7px!important;
+  box-shadow:0 2px 10px rgba(16,24,40,.055)!important;
+  overflow:hidden!important;
+}
+.messages-shell .msg-layout.no-thread{
+  grid-template-columns:178px minmax(0,1fr)!important;
+}
 
+/* Folder rail */
+.messages-shell .msg-sidebar{
+  background:#f8f9fa!important;
+  border-inline-end:1px solid var(--mail-line)!important;
+  padding:13px 9px!important;
+}
+.messages-shell .msg-compose-btn{
+  background:var(--mail-accent)!important;
+  border-radius:7px!important;
+  box-shadow:none!important;
+  padding:9px 10px!important;
+  margin-bottom:12px!important;
+  font-size:.72rem!important;
+}
+.messages-shell .msg-compose-btn:hover{background:var(--mail-accent-dark)!important}
+.messages-shell .msg-nav{gap:1px!important}
+.messages-shell .msg-nav a,
+.messages-shell .msg-nav button{
+  min-height:36px!important;
+  padding:7px 9px!important;
+  border-radius:6px!important;
+  color:#4e5966!important;
+  font-size:.69rem!important;
+}
+.messages-shell .msg-nav a:hover,
+.messages-shell .msg-nav button:hover{
+  background:#eef1f4!important;color:var(--mail-accent)!important;
+}
+.messages-shell .msg-nav a.active{
+  background:#e7edf3!important;color:var(--mail-accent)!important;font-weight:850!important;
+}
+.messages-shell .msg-nav i{font-size:.72rem!important;width:18px!important}
+.messages-shell .msg-count{
+  background:#64748b!important;color:#fff!important;
+  min-width:19px!important;height:19px!important;line-height:19px!important;
+  padding:0!important;border-radius:10px!important;font-size:.54rem!important;
+}
+.messages-shell .msg-section-label{
+  margin:19px 8px 6px!important;
+  color:#9aa3ad!important;font-size:.58rem!important;text-transform:uppercase;
+  letter-spacing:.25px;
+}
 
+/* Message list */
+.messages-shell .msg-list-pane{
+  background:#fff!important;
+  border-inline-end:1px solid var(--mail-line)!important;
+}
+.messages-shell .msg-list-head{
+  min-height:68px!important;
+  padding:10px 12px!important;
+  background:#fff!important;
+  border-bottom:1px solid var(--mail-line)!important;
+  flex-wrap:wrap!important;
+}
+.messages-shell .msg-list-head h3{
+  font-size:.78rem!important;color:#202a35!important;letter-spacing:.1px;
+}
+.messages-shell .msg-search-wrap{
+  order:3!important;flex-basis:100%!important;max-width:none!important;
+}
+.messages-shell .msg-search{
+  height:30px!important;
+  background:#f5f6f8!important;
+  border:1px solid #e2e5e9!important;
+  border-radius:6px!important;
+  font-size:.63rem!important;
+}
+.messages-shell .msg-search:focus{
+  background:#fff!important;border-color:#aab6c3!important;
+  box-shadow:0 0 0 2px rgba(43,76,115,.07)!important;
+}
+.messages-shell .msg-filter{
+  margin-inline-start:auto!important;
+}
+.messages-shell .msg-filter a{
+  font-size:.57rem!important;padding:4px 7px!important;border-radius:5px!important;
+}
+.messages-shell .msg-filter a.active{
+  background:#edf1f5!important;color:var(--mail-accent)!important;
+}
 
+/* Rows: compact, dense, email-client feel */
+.messages-shell .msg-list{background:#fff!important}
+.messages-shell .msg-row{
+  min-height:72px!important;
+  padding:10px 12px!important;
+  gap:9px!important;
+  border-bottom:1px solid var(--mail-line-soft)!important;
+  background:#fff!important;
+}
+.messages-shell .msg-row:hover{background:#f6f8fa!important}
+.messages-shell .msg-row.active{
+  background:#eef3f7!important;
+  box-shadow:inset -3px 0 0 var(--mail-accent)!important;
+}
+.messages-shell .msg-row.unread{
+  background:#fafcff!important;
+}
+.messages-shell .msg-row.unread:before{
+  width:3px!important;background:#2b4c73!important;
+}
+.messages-shell .msg-avatar{
+  width:34px!important;height:34px!important;flex-basis:34px!important;
+  border:0!important;background:#e8edf2!important;color:#344d68!important;
+  font-size:.68rem!important;
+}
+.messages-shell .msg-name{font-size:.68rem!important;font-weight:750!important}
+.messages-shell .msg-row.unread .msg-name,
+.messages-shell .msg-row.unread .msg-subject{font-weight:900!important;color:#182432!important}
+.messages-shell .msg-time{font-size:.54rem!important;color:#8b949e!important}
+.messages-shell .msg-subject{font-size:.69rem!important;margin-top:2px!important}
+.messages-shell .msg-preview{
+  font-size:.58rem!important;color:#7c8792!important;margin-top:2px!important;
+}
+.messages-shell .msg-new{
+  background:#e5ebf1!important;color:#344d68!important;
+  font-size:.48rem!important;padding:2px 4px!important;border-radius:4px!important;
+}
 
+/* Reading pane — clean document/email view */
+.messages-shell .msg-reading-pane{
+  background:#f6f7f9!important;
+  position:relative!important;
+}
+.messages-shell .msg-reading-head{
+  min-height:66px!important;
+  padding:10px 18px!important;
+  background:#fff!important;
+  border-bottom:1px solid var(--mail-line)!important;
+}
+.messages-shell .msg-conv-person .msg-avatar{
+  width:38px!important;height:38px!important;flex-basis:38px!important;
+}
+.messages-shell .msg-conv-name{font-size:.75rem!important;color:#202a35!important}
+.messages-shell .msg-conv-meta{font-size:.55rem!important;color:#87919c!important}
+.messages-shell .msg-icon-btn{
+  width:31px!important;height:31px!important;
+  border:0!important;background:#f2f4f6!important;color:#596674!important;
+  border-radius:6px!important;
+}
+.messages-shell .msg-icon-btn:hover{
+  background:#e8edf2!important;color:var(--mail-accent)!important;
+}
 
+/* Message body */
+.messages-shell .msg-thread{
+  padding:25px 32px 30px!important;
+  background:#f6f7f9!important;
+}
+.messages-shell .msg-root{
+  max-width:850px!important;
+  margin:0 auto 14px!important;
+  padding:21px 24px!important;
+  border:0!important;
+  border-radius:5px!important;
+  background:#fff!important;
+  box-shadow:0 1px 3px rgba(16,24,40,.07)!important;
+}
+.messages-shell .msg-subject-large{
+  font-size:1.03rem!important;
+  font-weight:850!important;
+  color:#17202a!important;
+  margin-bottom:9px!important;
+}
+.messages-shell .msg-root-meta{
+  font-size:.57rem!important;color:#78838e!important;
+}
+.messages-shell .msg-root hr{
+  border-color:#e8ebee!important;margin:15px 0!important;
+}
+.messages-shell .msg-body{
+  font-size:.76rem!important;
+  line-height:2!important;
+  color:#2f3945!important;
+}
+.messages-shell .msg-bubble{
+  max-width:850px!important;
+  margin:8px auto!important;
+  padding:12px 15px!important;
+  border:1px solid #e0e4e8!important;
+  border-radius:5px!important;
+  background:#fff!important;
+  box-shadow:0 1px 2px rgba(16,24,40,.035)!important;
+}
+.messages-shell .msg-bubble.mine{
+  background:#edf3f8!important;border-color:#d5e0ea!important;
+}
+.messages-shell .msg-bubble-name{font-size:.61rem!important;color:#34485d!important}
+.messages-shell .msg-bubble-time{font-size:.52rem!important;color:#8b949e!important}
+
+/* Reply composer */
+.messages-shell .msg-reply{
+  padding:10px 15px 12px!important;
+  background:#fff!important;
+  border-top:1px solid var(--mail-line)!important;
+}
+.messages-shell .msg-reply-inner{max-width:850px!important}
+.messages-shell .msg-reply-box{
+  border:1px solid #ccd3da!important;
+  border-radius:6px!important;
+  box-shadow:none!important;
+}
+.messages-shell .msg-reply textarea{
+  min-height:66px!important;padding:10px 12px!important;
+  font-size:.72rem!important;
+}
+.messages-shell .msg-reply-tools{
+  padding:5px 7px!important;background:#fafbfc!important;
+  border-top:1px solid #edf0f2!important;
+}
+.messages-shell .msg-tool{
+  width:29px!important;height:29px!important;border-radius:5px!important;
+}
+.messages-shell .msg-send{
+  background:var(--mail-accent)!important;
+  border-radius:5px!important;
+  font-size:.64rem!important;padding:7px 12px!important;
+}
+.messages-shell .msg-send:hover{background:var(--mail-accent-dark)!important}
+
+/* Empty reading state */
+.messages-shell .msg-reading-pane.empty{background:#f6f7f9!important}
+.messages-shell .msg-read-empty{text-align:center!important;color:#89939e!important}
+.messages-shell .msg-read-empty-icon{
+  width:64px!important;height:64px!important;border-radius:50%!important;
+  background:#e9edf1!important;color:#687786!important;
+  margin:0 auto 12px!important;
+}
+.messages-shell .msg-read-empty strong{
+  display:block!important;color:#4a5662!important;font-size:.76rem!important;margin-bottom:3px!important;
+}
+.messages-shell .msg-read-empty span{font-size:.61rem!important}
+
+/* Compose modal matches the new neutral mail chrome */
+.messages-shell ~ .compose-modal .modal-content,
+.compose-modal .modal-content{
+  border-radius:7px!important;box-shadow:0 15px 45px rgba(16,24,40,.20)!important;
+}
+.compose-modal .modal-header{
+  padding:12px 16px!important;border-bottom:1px solid var(--mail-line)!important;
+}
+.compose-head-icon{
+  width:34px!important;height:34px!important;border-radius:7px!important;
+  background:#e9eef3!important;color:var(--mail-accent)!important;
+}
+.compose-modal .modal-body{padding:15px 17px!important}
+.compose-modal .modal-footer{padding:9px 17px!important;background:#fafbfc!important}
+.compose-modal .form-control,.compose-modal .form-select{
+  border-radius:6px!important;font-size:.7rem!important;
+}
+.compose-send{background:var(--mail-accent)!important;border-radius:5px!important}
+.compose-cancel{border-radius:5px!important}
+
+/* Responsive */
+@media(max-width:1100px){
+  .messages-shell .msg-layout.has-thread{
+    grid-template-columns:165px 325px minmax(340px,1fr)!important;
+  }
+}
+@media(max-width:900px){
+  .messages-shell .msg-layout.has-thread{
+    grid-template-columns:165px minmax(0,1fr)!important;
+  }
+  .messages-shell .msg-list-pane{min-width:0}
+  .messages-shell .msg-reading-pane{position:absolute!important;inset:0!important;z-index:20!important}
+}
+@media(max-width:767px){
+  .messages-shell .msg-layout{display:block!important;height:auto!important}
+  .messages-shell .msg-sidebar{border-bottom:1px solid var(--mail-line)!important}
+  .messages-shell .msg-thread{padding:15px 10px 20px!important}
+  .messages-shell .msg-root{padding:16px!important}
+}
+</style>
 <script>
 const msgCsrf=<?php echo json_encode(csrf_token());?>; const msgUrl=<?php echo json_encode($msgUrl);?>;
 const attachmentApiUrl=msgUrl.replace('index.php','attachment.php');
@@ -259,7 +510,7 @@ document.querySelectorAll('[data-message-open]').forEach(a=>a.addEventListener('
 const msgSearch=document.getElementById('msgSearch');
 msgSearch?.addEventListener('input',function(){
  const q=this.value.trim().toLocaleLowerCase();
- document.querySelectorAll('.mail-row[data-message-search]').forEach(row=>{
+ document.querySelectorAll('.msg-row[data-message-search]').forEach(row=>{
    row.style.display=!q||row.dataset.messageSearch.toLocaleLowerCase().includes(q)?'flex':'none';
  });
 });
