@@ -273,65 +273,29 @@ Implementation commit: `8ab5cbacdca806bd20c7afffb92dc1e826903aae`.
 
 Runtime verification is pending.
 
+## MESSAGING MODULE — ORIGINAL WORKING DESIGN RESTORED — 2026-09-18
 
-## MESSAGING MODULE — COLOR-FORWARD DESIGN CHECKPOINT 2026-09-18
+The internal messaging UI is now restored to the exact version immediately before the user-identified redesign commit.
 
-The active UI work is the internal messaging inbox at `modules/messages/index.php`.
+- Redesign commit used as the historical anchor: `285d390c00f983b82e8bb59248a555b7997cfd3e`
+- Restored source: `9520bd3284bbf4060711f101be1f6518fbd6f087` — the immediate parent of `285d390...`
+- Restoration commit: `baacaa5a9812ff4f89c498b2380623342c226d2e`
+- Primary restored file: `modules/messages/index.php`
 
-### Previous design iteration
+### Decision
 
-Commit `2349c884566cbb206aabad468f2808feab4f4cd9` — `Rebuild messaging UI as Gmail-inspired professional mail client` — introduced a structural Gmail-inspired mail workspace while preserving the existing PHP/JS message controls.
+The user rejected the later Gmail/custom visual redesigns and explicitly requested the original working design. The correct historical version was therefore restored exactly from the immediate parent of `285d390...`, rather than approximated through another CSS redesign.
 
-The visual result was still too neutral: the main messaging surface and surrounding page/background were visually too similar. The user explicitly requested another design version with real color separation rather than another neutral restyling.
+**Do not redesign the messaging workspace again unless the user explicitly requests a new design.**
 
-### Current design iteration
+### Preserved functionality
 
-Commit `743b186f2167ec195a60b73fb88659c147ba71f6` — `Create color-forward messaging workspace design v5`.
+The restored version retains the established messaging functionality and global application shell, including inbox/sent navigation, message list and conversation overlay, compose and reply, attachments, emoji button, font-size control, unread filters, mark-all-read, role broadcast, and the existing messaging backend actions.
 
-V5 is intentionally color-forward while remaining professional:
+The later CSS that hid the global application sidebar/header and converted messaging into a full-page Gmail-style workspace is no longer part of the restored version.
 
-- blue-gray outer mail workspace;
-- distinct tinted navigation rail;
-- white inbox surface with clearer row hierarchy;
-- blue selected/unread states;
-- separate pale-blue reading header;
-- warm-white message document card on a contrasting reading background;
-- green-tinted sent/reply bubbles for visual differentiation;
-- blue-tinted reply composer;
-- matching blue identity in the compose dialog.
+### Current status
 
-The change is visual-only. Existing message routing, send/reply/read behavior, attachments, search, filters, and role-based recipient controls were not intentionally changed.
+**Messaging original-design restoration: COMPLETE / ACCEPTED by user.**
 
-### Runtime verification pending
-
-After pulling `743b186f2167ec195a60b73fb88659c147ba71f6`, verify:
-
-1. `http://localhost:8081/AhlElKheir/modules/messages/index.php` has clearly separated colored surfaces rather than a page-background-colored message box.
-2. Inbox rows remain clickable and opening a message still shows the reading pane.
-3. Close reading returns to the inbox.
-4. Compose, reply, attachment, search, and unread controls remain usable.
-
-Do not restart the messaging audit or replace working message logic merely for visual experimentation.
-
-
-## MESSAGING MODULE — GMAIL VISUAL MODEL V6 — 2026-09-18
-
-User feedback on V5 was explicit: the reading panel improved, but the overall colors still did not feel like Gmail. The requested direction is now the Gmail visual design model fitted to the Ahl El Kheir messaging system, rather than a custom blue-themed mail UI.
-
-Implemented in commit `66d5acfa9dd919c84a5c689b1a2cf632d4bca7c9` — `Match messaging workspace to Gmail visual design v6`.
-
-V6 uses Gmail's restrained visual language:
-- very light Gmail-style application background;
-- light navigation rail with Gmail-style selected folder blue tint;
-- Gmail-style floating Compose button;
-- white inbox/list canvas;
-- pale blue-gray search field;
-- white reading/message canvas;
-- Gmail blue `#0b57d0` for actions and selected states;
-- subtle gray borders instead of decorative colored cards;
-- Gmail-style outlined reply composer;
-- Gmail-style dark floating compose header.
-
-This is presentation-only and keeps the existing Ahl El Kheir message functionality, Arabic/RTL structure, recipient controls, attachments, search, read state, reply, and compose workflow.
-
-Runtime verification is required before another visual iteration is judged complete.
+Future messaging work must preserve this visual baseline and address only explicitly requested changes.
