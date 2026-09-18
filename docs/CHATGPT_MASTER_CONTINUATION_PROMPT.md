@@ -427,3 +427,90 @@ Do not require the user to paste the entire historical audit into the new chat.
 ## LATEST DOCUMENTATION CHECKPOINT — 2026-09-17
 
 The handoff is synchronized with the latest Fina SDG-only policy, compact horizontal Fina entry-form layout, and the restored persistent-until-read right-corner notification toast. The immediate runtime checkpoint is to pull the latest repository changes and test that an unread FM notification reappears after refresh/new-tab until that specific notification is opened/read. After that, continue the targeted Accounting Journal Cross-Module Integrity review for `payroll`, `disbursement_void`, and `item_return`.
+
+
+## DASHBOARD / NAVIGATION REVIEW — 2026-09-18
+
+The current active development direction is dashboard UX and role-safe navigation, after parking the accounting audit.
+
+### Universal Reports architecture
+
+A single role-aware Reports Dashboard is now the intended entry point:
+
+- modules/reports/index.php
+- central registry: modules/reports/report_registry.php
+- sidebar uses one Reports link rather than a report-specific dropdown;
+- direct report URLs enforce the same central authorization;
+- reports are separate from workflow authority;
+- GM and VGM must retain access to organizational reports needed for management decisions;
+- FM retains financial workflow/control authority;
+- do not remove management reporting visibility merely because a report concerns finance.
+
+Relevant commits include:
+- e2a7fd77c6a98c60fa3ab52a22babfc023871e2b — central report registry.
+- e78cc78311da10757ef9f48de9ad3c3790cd75e3 — universal Reports Dashboard.
+- 75b75a7a551e9e721a94eae91b653dac7e928e80 — global header navigation cleanup.
+- d8500d69d8361e74873408159bb8bd7079613a6e — sidebar navigation consistency.
+- 075b255e4b0360612624ab5779858a7149f32c88 — remove VGM direct reconciliation shortcut in favor of Reports Center.
+
+### VGM / FM navigation separation
+
+VGM no longer receives FM workflow notification/action navigation for supervisor collection review. VGM retains management/reporting access, including reconciliation through the reporting architecture.
+
+FM sidebar is intentionally streamlined:
+لوحة التحكم المالية → اليومية → مشاريع المنظمة → الرصيد الافتتاحي → التحويلات الشهرية → الحاضنات المكلفات → طابور المراجعة المالية → التقارير → ملفي الشخصي → تسجيل الخروج
+
+Do not reintroduce duplicate report/reconciliation links merely for convenience.
+
+### Other dashboard review completed
+
+The following dashboards were reviewed/updated:
+- Accountant Staff: direct my_financial.php shortcut replaced by universal Reports entry.
+- Nanny: direct sponsor-monthly-report shortcut replaced by universal Reports entry.
+- Admin: Reports shortcut added while preserving system/admin tools.
+- HR dashboard: Reports shortcut added; duplicate HR Staff sidebar Reports entry removed.
+- Projects Manager / Project Supervisor: retained as dedicated project workspace; no speculative Reports access was added because their current role catalog does not authorize it.
+- Administration/Staff/Social Media: dashboard/staff_dashboard.php was developed beyond its former "under development" placeholder for Administration/Staff/Social Media operational needs.
+
+### Administration / Staff dashboard — current state
+
+dashboard/staff_dashboard.php now provides Administration/Staff/Social Media operational indicators and recent sponsor-request visibility, plus quick access to:
+- sponsor requests;
+- winback follow-ups;
+- orphan forms;
+- Reports only where the role's report authorization actually permits it.
+
+The Administration sidebar includes:
+- Dashboard;
+- sponsor requests;
+- orphan forms;
+- winback follow-ups.
+
+modules/sponsors/requests.php was updated to allow administration and staff in addition to its existing authorized roles:
+admin, vice_general_manager, general_manager, administration, staff, social_media.
+
+### Schema corrections made during Administration dashboard work
+
+The live schema established:
+- sponsorships.child_id references family_children.id;
+- family_children.family_id references the family;
+- sponsorships has no family_id;
+- there is no children table in the current database.
+
+Therefore family sponsorship queries must use:
+sponsorships → family_children → families.
+
+This was applied to:
+- dashboard/staff_dashboard.php;
+- modules/administration/winback.php.
+
+Latest relevant commits:
+- 8a2dabea8b7a7a6854c2a08ecad2c9d106e36a86 — Administration dashboard sponsorship-family query correction.
+- 0d26093b53864b205ee42e4d91fe04cc7dfaee2c — Winback sponsorship-family query correction.
+- 1257b54f8718c5c4546f6006191f51921518836f — Administration dashboard link/role alignment.
+
+The user runtime-tested the Administration dashboard after these fixes and confirmed it now loads without errors. The remaining dashboard work is not closed: the next session must continue reviewing the same dashboard for UX, functional correctness, role-appropriate links, labels, statistics, and any remaining runtime issues.
+
+### Immediate next task
+
+Continue the Administration/Staff/Social Media dashboard review from the current working state. Do not restart the dashboard implementation. First inspect the current repository code and preserve the existing fixes. Then address the remaining issues the user identifies, verifying actual schema/code before any SQL assumption.
