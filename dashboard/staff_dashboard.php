@@ -7,7 +7,7 @@ require_once dirname(__DIR__) . '/config/session.php';
 Session::start();
 if (!Session::isLoggedIn()) { header('Location: ' . APP_URL . 'index.php'); exit(); }
 $role = Session::getUserRole();
-$allowed = ['financial_manager', 'nanny', 'administration', 'social_media'];
+$allowed = ['financial_manager', 'nanny', 'administration', 'staff', 'social_media'];
 if (!in_array($role, $allowed, true)) { header('Location: ' . APP_URL . dashboard_for_role($role)); exit(); }
 $pageTitle = t('common.home');
 $active = 'dashboard';
@@ -25,7 +25,7 @@ $adminStats = [
  'new_requests'=>(int)(dbFetchOne("SELECT COUNT(*) c FROM sponsor_requests WHERE status = 'new'")['c'] ?? 0),
  'contacted_requests'=>(int)(dbFetchOne("SELECT COUNT(*) c FROM sponsor_requests WHERE status = 'contacted'")['c'] ?? 0),
  'open_winback'=>(int)(dbFetchOne("SELECT COUNT(*) c FROM winback_campaigns WHERE status IN ('open','contacted')")['c'] ?? 0),
- 'uncovered_families'=>(int)(dbFetchOne("SELECT COUNT(*) c FROM families f WHERE f.status IN ('active','pending') AND NOT EXISTS (SELECT 1 FROM sponsorships sp WHERE sp.family_id = f.id AND sp.status = 'active')")['c'] ?? 0)
+ 'uncovered_families'=>(int)(dbFetchOne("SELECT COUNT(*) c FROM families f WHERE f.status IN ('active','pending') AND NOT EXISTS (SELECT 1 FROM sponsorships sp JOIN family_children fc ON fc.id = sp.child_id WHERE fc.family_id = f.id AND sp.status = 'active')")['c'] ?? 0)
 ];
 $recentRequests = dbFetchAll("SELECT id, sponsor_name, phone, source, status, created_at FROM sponsor_requests ORDER BY created_at DESC LIMIT 8");
 ?>
