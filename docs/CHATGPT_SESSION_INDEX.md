@@ -204,9 +204,26 @@ Next session should inspect:
 8. Any remaining schema assumptions in the dashboard. Verify actual schema before SQL.
 9. Arabic labels/encoding and responsive UX.
 10. Any runtime errors the user reports.
+11. Role-specific dashboard behavior: Administration retains Winback/uncovered-family actions; Staff and Social Media must not see or reach Winback-only actions from this shared dashboard.
+12. Sponsor-request status labels and row actions should be directly useful and Arabic; do not invent an individual-request route that the workflow does not implement.
 
 Do not restart the dashboard. Do not repeat the already-fixed sponsorship-family schema investigation.
 
 ### CONTINUATION RULE
 
 Start by reading this index, then master status, then relevant master-audit sections, and inspect the current dashboard/staff_dashboard.php and linked pages before changing anything.
+
+
+### Latest Administration dashboard refinement — 2026-09-18
+
+Commit: `916758bf205bebbd43805eee010f1dc6163dbe7e` — `Refine administration staff social dashboard role-specific UX`.
+
+The shared `dashboard/staff_dashboard.php` was narrowed by role without changing server-side authorization:
+- Administration retains the Winback and uncovered-family KPIs/actions.
+- Staff and Social Media no longer receive Winback-only KPIs or links they cannot use.
+- Sponsor-request status labels on the dashboard are now Arabic rather than raw internal status values.
+- Sponsor phone numbers are actionable `tel:` links when present.
+- The recent-request table now includes a clear action back to the authorized sponsor-request workflow.
+- Quick actions remain role-appropriate; Winback is shown only to Administration.
+
+This is a dashboard UX/role-separation refinement, not a reopening of the completed schema investigation. Runtime verification by the user is still required after pulling the commit.
