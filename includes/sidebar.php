@@ -138,7 +138,6 @@ $menus = [
     ],
     'hr_staff' => [
         ['active' => 'dashboard', 'label_key' => 'navigation.dashboard', 'icon' => 'fa-gauge-high', 'url' => 'dashboard/hr_dashboard.php'],
-        $reportsItem,
         ['active' => 'employees', 'label_key' => 'navigation.employees', 'icon' => 'fa-users', 'url' => 'modules/hr/employees.php'],
         ['active' => 'employment_states', 'label_key' => 'navigation.employment_states', 'icon' => 'fa-id-badge', 'url' => 'modules/hr/employment_states.php'],
         ['active' => 'attendance', 'label_key' => 'navigation.attendance', 'icon' => 'fa-clock', 'url' => 'modules/hr/attendance.php'],
