@@ -9,7 +9,7 @@ require_once dirname(__DIR__, 2) . '/modules/accounting/lib_outflows.php';
 Session::start();
 $role = Session::getUserRole();
 
-if (!Session::isLoggedIn() || !in_array($role, ['admin', 'accountant', 'accountant_staff', 'nanny'])) {
+if (!Session::isLoggedIn() || !in_array($role, ['admin', 'general_manager', 'vice_general_manager', 'accountant', 'accountant_staff', 'nanny'])) {
     header('Location: ' . APP_URL . 'index.php');
     exit();
 }
