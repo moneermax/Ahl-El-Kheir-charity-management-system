@@ -58,7 +58,7 @@ include __DIR__ . '/../includes/header.php';
     <p><?php echo e(t('dashboard.accountant_intro')); ?></p>
     <div class="quick-actions mt-3">
         <a href="<?php echo url('modules/transactions/fina_payment_create.php'); ?>" class="btn btn-warning btn-sm me-2"><i class="fas fa-hand-holding-dollar me-1"></i>تحصيل فينا الخير</a>
-        <a href="<?php echo url('modules/reports/my_financial.php'); ?>" class="btn btn-outline-primary btn-sm me-2"><i class="fas fa-file-invoice-dollar me-1"></i>تقاريري المالية</a>
+        <a href="<?php echo url('modules/reports/index.php'); ?>" class="btn btn-outline-primary btn-sm me-2"><i class="fas fa-chart-line me-1"></i>التقارير</a>
         <a href="<?php echo url('modules/accounting/group_disbursements.php'); ?>" class="btn btn-success btn-sm me-2"><i class="fas fa-users-cog me-1"></i><?php echo e(t('accounting.group_disbursements')); ?></a>
         <a href="<?php echo url('modules/accounting/disbursements.php'); ?>" class="btn btn-primary btn-sm me-2"><i class="fas fa-money-check-dollar me-1"></i><?php echo e(t('accounting.individual_disbursements')); ?></a>
     </div>
@@ -91,21 +91,5 @@ include __DIR__ . '/../includes/header.php';
 <?php endforeach; endif; ?>
 </tbody></table></div></div></div></div></div>
 
-<script>
-/* Accountant Staff: the global header must expose the authorized personal report,
- * not the organization-wide Cash Book. This is scoped to this dashboard because
- * the header quick-action map is shared globally by multiple roles. */
-document.addEventListener('DOMContentLoaded', function () {
-    document.querySelectorAll('a').forEach(function (link) {
-        var label = (link.textContent || '').trim();
-        var href = link.getAttribute('href') || '';
-        if (label === 'دفتر النقد' || href.indexOf('modules/accounting/reports.php?tab=cash') !== -1) {
-            link.href = '<?php echo e(url('modules/reports/my_financial.php')); ?>';
-            link.textContent = 'تقاريري المالية';
-            link.title = 'تقاريري المالية';
-        }
-    });
-});
-</script>
 
 <?php include __DIR__ . '/../includes/footer.php'; ?>
