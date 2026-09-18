@@ -378,3 +378,34 @@ During continued runtime review, the user identified that the separate tiles `ا
 Commit: `b40b8fd8e3ead0ad17c24c3af08a11f01b0adc21` — `Remove duplicate admin roles destination`.
 
 Runtime verification is still required after pulling the latest `main`.
+
+
+### Admin Control Panel navigation-duplication cleanup — 2026-09-18
+
+After reviewing the actual admin sidebar together with `dashboard/admin_dashboard.php`, the dashboard was found to duplicate too much of the sidebar's navigation. The sidebar already provides the administrator's complete navigation for users, departments, sponsors, families, sponsorships, audit, database management, settings, reports, accounting, and related workflows.
+
+The Admin Control Panel was therefore narrowed to preserve its role as a **control/overview surface rather than a second navigation menu**:
+
+- The four overview KPI cards remain, but are now informational cards rather than navigation links.
+- The large duplicated groups for system administration, core data, and finance were removed from the dashboard.
+- Audit/database/settings and other sidebar destinations are no longer repeated as dashboard tiles.
+- Action-required cards remain for pending password-recovery requests and unread administrator notifications because these represent attention items rather than general navigation.
+- A small **أدوات إدارية خاصة** section remains only for the backup function, which is an administrator maintenance action and is not currently represented in the admin sidebar.
+- The existing admin-only guard, statistics queries, database health check, application shell, and responsive behavior were preserved.
+
+Commit:
+- `ea1b2a02c4a2cb8e3138233f44c433f7ed7af2f5` — `Reduce admin dashboard navigation duplication`
+
+### Runtime verification required
+
+After pulling the latest `main`, verify:
+
+1. `dashboard/admin_dashboard.php` loads without PHP/SQL errors.
+2. The sidebar remains the primary navigation and is not duplicated by a large dashboard menu.
+3. The four KPI cards display correctly and no longer behave as navigation links.
+4. Password-recovery and unread-notification action cards still open their existing authorized destinations.
+5. The backup action opens the existing backup page.
+6. The admin-only dashboard remains inaccessible to non-admin roles.
+7. Arabic text, spacing, desktop layout, and responsive behavior remain correct.
+
+Do not reopen the removed dashboard navigation groups unless a specific missing administrator control is identified from the real system workflow.
