@@ -114,13 +114,13 @@ if ($viewId) {
     if ($view) {
         $contacts = dbFetchAll("SELECT c.*, u.full_name by_name FROM winback_contacts c LEFT JOIN users u ON u.id = c.contacted_by WHERE c.campaign_id = ? ORDER BY c.id DESC", [$viewId]);
         $pastFamilies = dbFetchAll("SELECT f.id, f.family_code, f.mother_name,
-            (SELECT COUNT(*) FROM sponsorships x WHERE x.family_id = f.id AND x.status = 'active') active_now
-            FROM sponsorships sp JOIN families f ON f.id = sp.family_id
+            (SELECT COUNT(*) FROM sponsorships x JOIN family_children xfc ON xfc.id = x.child_id WHERE xfc.family_id = f.id AND x.status = 'active') active_now
+            FROM sponsorships sp JOIN family_children pfc ON pfc.id = sp.child_id JOIN families f ON f.id = pfc.family_id
             WHERE sp.sponsor_id = ? GROUP BY f.id ORDER BY f.mother_name", [$view['sponsor_id']]);
     }
 }
 
-// Eligible lapsed sponsors (stopped > 90 days, no open follow-up yet)
+/* Eligible lapsed sponsors (stopped > 90 days, no open follow-up yet) */
 $queue = dbFetchAll("SELECT s.id, s.full_name, s.phone, s.status, s.sponsor_code,
     (SELECT COUNT(*) FROM sponsorships sp WHERE sp.sponsor_id = s.id) total_ships,
     (SELECT MAX(COALESCE(sp.pause_start_date, sp.end_date, sp.updated_at)) FROM sponsorships sp WHERE sp.sponsor_id = s.id AND sp.status IN ('cancelled','paused')) last_stop
@@ -130,11 +130,17 @@ $queue = dbFetchAll("SELECT s.id, s.full_name, s.phone, s.status, s.sponsor_code
     HAVING (last_stop IS NULL OR last_stop < DATE_SUB(NOW(), INTERVAL 90 DAY))
     ORDER BY last_stop ASC");
 
-// Quick reference: top families currently available for assignment
+/* Quick reference: top families currently available for assignment */
 $uncovered = dbFetchAll("SELECT f.id, f.family_code, f.mother_name, f.children_count, f.monthly_need_amount, f.city
     FROM families f
     WHERE f.status IN ('active','pending')
-      AND NOT EXISTS (SELECT 1 FROM sponsorships sp WHERE sp.family_id = f.id AND sp.status = 'active')
+      AND NOT EXISTS (
+          SELECT 1
+          FROM sponsorships sp
+          JOIN family_children fc ON fc.id = sp.child_id
+          WHERE fc.family_id = f.id
+            AND sp.status = 'active'
+      )
     ORDER BY f.children_count DESC, f.monthly_need_amount DESC
     LIMIT 10");
 
@@ -151,7 +157,6 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 <?php include dirname(__DIR__, 2) . '/includes/alerts.php'; ?>
 
 <?php if ($view): ?>
-<!-- ══════════ Follow-up details ══════════ -->
 <div class="card mb-4 fade-in">
     <div class="card-header d-flex justify-content-between align-items-center">
         <span><i class="fas fa-file-lines me-2"></i><?php echo e($view['sponsor_name']); ?> — <?php echo e($view['sponsor_code']); ?></span>
@@ -252,7 +257,6 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 <?php else: ?>
 
 <div class="row g-4 mb-4">
-    <!-- ══════════ Queue ══════════ -->
     <div class="col-lg-8">
         <div class="card fade-in h-100">
             <div class="card-header"><i class="fas fa-hourglass-half me-2"></i><?php echo t('الكفلاء المتوقفون المؤهلون'); ?> (<?php echo count($queue); ?>)</div>
@@ -283,8 +287,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         </div>
     </div>
 
-    <!-- ══════════ Available families quick reference ══════════ -->
-    <div class="col-lg-4">
+    <div class="col-lg-4" id="uncovered">
         <div class="card fade-in h-100 border-success">
             <div class="card-header bg-success text-white"><i class="fas fa-house-circle-check me-2"></i><?php echo t('أسر متاحة للتكليف حالياً'); ?></div>
             <div class="card-body p-0">
@@ -307,13 +310,12 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             </div>
             <div class="card-footer small text-muted">
                 <i class="fas fa-circle-info me-1"></i><?php echo t('مرجع سريع أثناء المكالمات — القائمة الكاملة في مركز التقارير.'); ?>
-                <a href="<?php echo APP_URL; ?>modules/reports/index.php?tab=orphaned" class="ms-1 fw-bold" style="color:#1b4d8f"><?php echo t('القائمة الكاملة'); ?></a>
+                <a href="<?php echo APP_URL; ?>modules/administration/winback.php#uncovered" class="ms-1 fw-bold" style="color:#1b4d8f"><?php echo t('القائمة الكاملة'); ?></a>
             </div>
         </div>
     </div>
 </div>
 
-<!-- ══════════ Follow-ups log ══════════ -->
 <div class="card fade-in">
     <div class="card-header"><i class="fas fa-list me-2"></i><?php echo t('سجل المتابعات'); ?> (<?php echo count($cases); ?>)</div>
     <div class="card-body p-0">
