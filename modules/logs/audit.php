@@ -12,6 +12,35 @@ if (!Session::isLoggedIn() || !in_array(Session::getUserRole(), ['admin', 'gener
 $pageTitle = t('navigation.audit_log');
 $active    = 'logs';
 
+// Audit-log deletion is intentionally restricted to administrators.
+// General Manager retains read-only audit-log access.
+$deleteMessage = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['audit_action'] ?? '') === 'delete_old') {
+    if (Session::getUserRole() !== 'admin') {
+        $deleteMessage = ['type' => 'danger', 'text' => 'ليس لديك صلاحية حذف سجلات التدقيق.'];
+    } else {
+        $deleteBefore = trim((string)($_POST['delete_before'] ?? ''));
+        $confirm = (string)($_POST['confirm_delete'] ?? '');
+        $isValidDate = (bool)preg_match('/^\\d{4}-\\d{2}-\\d{2}$/', $deleteBefore);
+
+        if (!$isValidDate || $confirm !== 'DELETE_OLD_AUDIT') {
+            $deleteMessage = ['type' => 'danger', 'text' => 'حدد تاريخًا صحيحًا وأكد عملية الحذف.'];
+        } else {
+            try {
+                // The selected date is inclusive: delete records created on or before it.
+                $cutoff = $deleteBefore . ' 23:59:59';
+                $deleted = dbExecute('DELETE FROM audit_log WHERE created_at <= ?', [$cutoff]);
+                $deleteMessage = [
+                    'type' => 'success',
+                    'text' => 'تم حذف ' . number_format($deleted) . ' سجل تدقيق حتى تاريخ ' . $deleteBefore . '.',
+                ];
+            } catch (Throwable $e) {
+                $deleteMessage = ['type' => 'danger', 'text' => 'تعذر حذف سجلات التدقيق.'];
+            }
+        }
+    }
+}
+
 $fAction = trim($_GET['action'] ?? '');
 $fUser   = (int)($_GET['user'] ?? 0);
 $from    = trim($_GET['from'] ?? '');
@@ -50,6 +79,39 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     <h2><?php echo e(t('navigation.audit_log')); ?></h2>
     <p><?php echo $total; ?> <?php echo e(t('common.completed')); ?></p>
 </div>
+
+<?php if ($deleteMessage): ?>
+<div class="alert alert-<?php echo e($deleteMessage['type']); ?> fade-in" role="alert">
+    <?php echo e($deleteMessage['text']); ?>
+</div>
+<?php endif; ?>
+
+<?php if (Session::getUserRole() === 'admin'): ?>
+<div class="card mb-3 border-danger fade-in">
+    <div class="card-header text-danger fw-bold">
+        <i class="fas fa-trash-can me-2"></i>تنظيف سجلات التدقيق القديمة
+    </div>
+    <div class="card-body">
+        <form method="post" class="row g-2 align-items-end" onsubmit="return confirm('سيتم حذف جميع سجلات التدقيق حتى التاريخ المحدد نهائيًا. هل تريد المتابعة؟');">
+            <input type="hidden" name="audit_action" value="delete_old">
+            <div class="col-md-4">
+                <label class="form-label">حذف السجلات حتى تاريخ</label>
+                <input type="date" name="delete_before" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">تأكيد الحذف</label>
+                <input type="text" name="confirm_delete" class="form-control" placeholder="اكتب DELETE_OLD_AUDIT" autocomplete="off" required>
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-danger w-100">
+                    <i class="fas fa-trash-can me-1"></i>حذف السجلات القديمة
+                </button>
+            </div>
+        </form>
+        <div class="form-text text-danger mt-2">هذه العملية نهائية. مدير النظام فقط يستطيع تنفيذها، والمدير العام يستطيع عرض السجلات دون حذفها.</div>
+    </div>
+</div>
+<?php endif; ?>
 
 <div class="card mb-3 fade-in">
     <div class="card-body">
