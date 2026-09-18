@@ -129,12 +129,12 @@ $systemCards = [
 $controlGroups = [
     [
         'title' => 'إدارة النظام',
-        'subtitle' => 'الهوية والصلاحيات والبنية الأساسية',
+        'subtitle' => 'حسابات المستخدمين والأدوار والبنية الأساسية',
         'icon' => 'fa-sliders',
         'color' => '#7567c7',
         'items' => [
             ['title' => 'المستخدمون', 'description' => 'إنشاء الحسابات وإدارة المستخدمين', 'icon' => 'fa-users-gear', 'url' => 'modules/users/index.php'],
-            ['title' => 'الأدوار والصلاحيات', 'description' => 'إدارة الأدوار ومستويات الوصول', 'icon' => 'fa-user-shield', 'url' => 'modules/users/roles.php'],
+            ['title' => 'أدوار المستخدمين', 'description' => 'تعيين أدوار المستخدمين ومستويات الوصول المتاحة', 'icon' => 'fa-user-shield', 'url' => 'modules/users/index.php'],
             ['title' => 'الأقسام', 'description' => 'إدارة أقسام المنظمة', 'icon' => 'fa-building', 'url' => 'modules/departments/index.php'],
             ['title' => 'إعدادات النظام', 'description' => 'بيانات المنظمة والإعدادات العامة', 'icon' => 'fa-gear', 'url' => 'modules/settings/index.php'],
         ],
