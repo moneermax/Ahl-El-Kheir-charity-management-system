@@ -143,8 +143,6 @@ include dirname(__DIR__,2).'/includes/header.php';
     <?php endforeach; ?>
    </div>
   </section>
- </div>
-</div>
 
 <?php if($thread['root']): $m=$thread['root']; mark_message_read($uid,(int)$m['id']); $rootName=$m['sender_name']; $rootInitial=mb_substr($rootName!==''?$rootName:'?',0,1,'UTF-8'); ?>
  <section class="msg-reading-pane" id="messageOverlay" aria-labelledby="messageOverlayTitle">
@@ -163,6 +161,8 @@ include dirname(__DIR__,2).'/includes/header.php';
 <?php else: ?>
  <section class="msg-reading-pane empty"><div class="msg-read-empty"><div class="msg-read-empty-icon"><i class="fas fa-envelope-open"></i></div><strong>اختر رسالة لقراءتها</strong><span>ستظهر تفاصيل المحادثة والردود والمرفقات هنا.</span></div></section>
 <?php endif; ?>
+  </div>
+ </div>
 
 <div class="modal fade compose-modal" id="composeModal" tabindex="-1" aria-labelledby="composeModalLabel" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content">
  <div class="modal-header"><div class="d-flex align-items-center gap-2"><div class="compose-head-icon"><i class="fas fa-pen-to-square"></i></div><div><h5 class="modal-title mb-0 fw-bold" id="composeModalLabel">رسالة جديدة</h5><small class="text-muted" style="font-size:.62rem">مراسلة داخلية آمنة</small></div></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button></div>
