@@ -50,10 +50,13 @@ $menus = [
         $reportsItem,
     ], $acctView, [$fmDashItem, $fmReviewItem, $disbItem, $reconItem, $openingBalanceItem]),
 
-    'general_manager' => array_merge([
+    // GM keeps the primary navigation intentionally executive-level.
+    // Operational/accounting drill-downs are reached from the GM dashboard and Reports Center.
+    'general_manager' => [
         ['active' => 'dashboard', 'label_key' => 'navigation.dashboard', 'icon' => 'fa-gauge-high', 'url' => 'dashboard/gm_dashboard.php'],
-        $projectsItem, $orphanFormsItem,
-    ], $acctView, [$fmDashItem, $fmReviewItem, $disbItem, $reconItem, $reportsItem]),
+        $projectsItem,
+        $reportsItem,
+    ],
 
     'vice_general_manager' => [
         ['active' => 'dashboard', 'label_key' => 'navigation.dashboard', 'icon' => 'fa-gauge-high', 'url' => 'dashboard/vgm_dashboard.php'],
