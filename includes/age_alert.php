@@ -187,15 +187,23 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     var modalEl = document.getElementById('ageAlertModal');
-    modalEl.addEventListener('hidden.bs.modal', function () {
-        var langSwitchBtn = document.querySelector('.qa-user-controls a[href*="lang="]');
-        if (langSwitchBtn) {
-            langSwitchBtn.insertAdjacentElement('beforebegin', btn);
-        }
-    });
 
-    var modalShownKey = 'ak_age_alert_modal_shown';
-    // localStorage intentionally survives refreshes and additional tabs in the same browser.
+    // Keep the alert available in the header after the modal is closed.
+    // Insert it immediately so it never disappears from the header.
+    var langSwitchBtn = document.querySelector('.qa-user-controls a[href*="lang="]');
+    if (langSwitchBtn) {
+        langSwitchBtn.insertAdjacentElement('beforebegin', btn);
+    } else {
+        var userControls = document.querySelector('.qa-user-controls');
+        if (userControls) {
+            userControls.insertBefore(btn, userControls.firstChild);
+        }
+    }
+
+    // The quick-action button remains available after the modal is closed.
+    // localStorage prevents the automatic popup from returning on refreshes
+    // or in additional tabs in the same browser.
+    var modalShownKey = 'ak_age_alert_modal_shown_<?php echo (int)current_user_id(); ?>';
     if (!localStorage.getItem(modalShownKey)) {
         localStorage.setItem(modalShownKey, '1');
         var modal = new bootstrap.Modal(modalEl);
