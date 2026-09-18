@@ -1314,6 +1314,155 @@ include dirname(__DIR__,2).'/includes/header.php';
 }
 </style>
 
+<style id="msg-gmail-exact-v6">
+/* Gmail visual model V6 — fitted to Ahl El Kheir messaging.
+   Presentation only. Existing PHP, routes, forms and JS remain untouched. */
+.messages-shell{
+  --gm-bg:#f6f8fc;
+  --gm-sidebar:#f2f6fc;
+  --gm-sidebar-active:#d3e3fd;
+  --gm-sidebar-hover:#e8f0fe;
+  --gm-white:#fff;
+  --gm-border:#e0e3e7;
+  --gm-text:#202124;
+  --gm-muted:#5f6368;
+  --gm-blue:#0b57d0;
+  --gm-blue-hover:#0842a0;
+  --gm-blue-soft:#e8f0fe;
+  --gm-unread:#f2f6fc;
+  background:var(--gm-bg)!important;
+  color:var(--gm-text)!important;
+}
+
+/* Gmail's restrained chrome: no artificial card framing. */
+.messages-shell .msg-toolbar{
+  height:64px!important;
+  padding:8px 18px!important;
+  background:var(--gm-bg)!important;
+  border:0!important;
+}
+.messages-shell .msg-title-icon{
+  width:40px!important;height:40px!important;
+  border-radius:50%!important;
+  background:var(--gm-blue)!important;
+  color:#fff!important;
+  box-shadow:none!important;
+}
+.messages-shell .msg-title h2{color:var(--gm-text)!important;font-weight:500!important}
+.messages-shell .msg-title p{color:var(--gm-muted)!important}
+
+/* Gmail-style application frame. */
+.messages-shell .msg-layout,
+.messages-shell .msg-layout.no-thread,
+.messages-shell .msg-layout.has-thread{
+  background:var(--gm-white)!important;
+  border:1px solid var(--gm-border)!important;
+  border-radius:0 16px 16px 0!important;
+  box-shadow:0 1px 3px rgba(60,64,67,.12)!important;
+  overflow:hidden!important;
+}
+.messages-shell .msg-sidebar{
+  background:var(--gm-sidebar)!important;
+  border-inline-end:1px solid var(--gm-border)!important;
+  padding:12px 8px!important;
+}
+.messages-shell .msg-compose-btn{
+  min-height:48px!important;
+  padding:0 20px!important;
+  border:0!important;
+  border-radius:16px!important;
+  background:#c2e7ff!important;
+  color:#001d35!important;
+  box-shadow:0 1px 3px rgba(60,64,67,.20)!important;
+  font-weight:600!important;
+}
+.messages-shell .msg-compose-btn i{color:#001d35!important}
+.messages-shell .msg-compose-btn:hover{background:#b3dcf5!important}
+.messages-shell .msg-nav a,
+.messages-shell .msg-nav button{color:#202124!important;border-radius:0 18px 18px 0!important}
+.messages-shell .msg-nav a:hover,
+.messages-shell .msg-nav button:hover{background:var(--gm-sidebar-hover)!important;color:#202124!important}
+.messages-shell .msg-nav a.active{
+  background:var(--gm-sidebar-active)!important;
+  color:#001d35!important;
+  box-shadow:none!important;
+  font-weight:700!important;
+}
+.messages-shell .msg-count{background:transparent!important;color:#5f6368!important;font-weight:700!important}
+.messages-shell .msg-section-label{color:var(--gm-muted)!important}
+
+/* Inbox = pure Gmail white canvas. */
+.messages-shell .msg-list-pane{background:#fff!important;border-inline-end:1px solid var(--gm-border)!important}
+.messages-shell .msg-list-head{background:#fff!important;border-bottom:1px solid var(--gm-border)!important;padding:10px 14px!important}
+.messages-shell .msg-list-head h3{color:var(--gm-text)!important;font-weight:500!important}
+.messages-shell .msg-search{
+  background:#eaf1fb!important;
+  border:0!important;
+  border-radius:24px!important;
+  color:var(--gm-text)!important;
+}
+.messages-shell .msg-search:focus{background:#fff!important;box-shadow:0 1px 3px rgba(60,64,67,.25)!important;outline:1px solid #d3e3fd!important}
+.messages-shell .msg-search-wrap i{color:var(--gm-muted)!important}
+.messages-shell .msg-filter a{color:var(--gm-muted)!important}
+.messages-shell .msg-filter a.active{color:var(--gm-blue)!important;background:transparent!important;border-bottom:2px solid var(--gm-blue)!important}
+
+.messages-shell .msg-row{background:#fff!important;border-bottom:1px solid #f1f3f4!important}
+.messages-shell .msg-row:hover{background:#f2f6fc!important;box-shadow:inset 1px 0 0 #d3e3fd,inset -1px 0 0 #d3e3fd!important}
+.messages-shell .msg-row.unread{background:#f2f6fc!important}
+.messages-shell .msg-row.active{background:#d3e3fd!important;box-shadow:none!important}
+.messages-shell .msg-row.unread:before{background:#0b57d0!important;width:3px!important}
+.messages-shell .msg-avatar{background:#e8eaed!important;color:#5f6368!important;border:0!important}
+.messages-shell .msg-row.unread .msg-name,.messages-shell .msg-row.unread .msg-subject{color:#202124!important}
+.messages-shell .msg-new{background:transparent!important;color:#0b57d0!important;padding:0!important}
+.messages-shell .msg-urgent{color:#d93025!important}
+
+/* Reading pane: Gmail message view. */
+.messages-shell .msg-reading-pane,
+.messages-shell .msg-reading-pane.empty{background:#fff!important;border-radius:0!important}
+.messages-shell .msg-reading-head{background:#fff!important;border-bottom:1px solid var(--gm-border)!important;min-height:58px!important}
+.messages-shell .msg-conv-person .msg-avatar{background:#e8eaed!important;color:#5f6368!important}
+.messages-shell .msg-conv-name{color:#202124!important}
+.messages-shell .msg-conv-meta{color:#5f6368!important}
+.messages-shell .msg-icon-btn{background:transparent!important;border:0!important;color:#5f6368!important;border-radius:50%!important}
+.messages-shell .msg-icon-btn:hover{background:#f1f3f4!important;color:#202124!important}
+
+.messages-shell .msg-thread{background:#fff!important;padding:22px 42px 30px!important}
+.messages-shell .msg-root{background:#fff!important;border:0!important;border-radius:0!important;box-shadow:none!important;padding:0!important}
+.messages-shell .msg-subject-large{color:#202124!important;font-weight:400!important}
+.messages-shell .msg-root-meta{color:#5f6368!important}
+.messages-shell .msg-root hr{border-top-color:#f1f3f4!important}
+.messages-shell .msg-body{color:#202124!important}
+.messages-shell .msg-bubble{background:#fff!important;border:0!important;border-top:1px solid #f1f3f4!important;border-radius:0!important;box-shadow:none!important}
+.messages-shell .msg-bubble.mine{background:#fff!important;border-color:#f1f3f4!important}
+.messages-shell .msg-bubble-name{color:#202124!important}
+.messages-shell .msg-bubble-time{color:#5f6368!important}
+
+/* Reply composer follows Gmail's compact outlined editor. */
+.messages-shell .msg-reply{background:#fff!important;border-top:1px solid var(--gm-border)!important;padding:10px 28px 15px!important}
+.messages-shell .msg-reply-box{background:#fff!important;border:1px solid #dadce0!important;border-radius:8px!important;box-shadow:0 1px 2px rgba(60,64,67,.12)!important}
+.messages-shell .msg-reply textarea{background:#fff!important;color:#202124!important}
+.messages-shell .msg-reply-tools{background:#fff!important;border-top:1px solid #f1f3f4!important}
+.messages-shell .msg-tool:hover{background:#f1f3f4!important;color:#202124!important}
+.messages-shell .msg-send{background:#0b57d0!important;border-radius:16px!important;box-shadow:none!important}
+.messages-shell .msg-send:hover{background:#0842a0!important}
+
+/* Gmail floating compose window. */
+.compose-modal .modal-content{border:0!important;border-radius:8px!important;box-shadow:0 8px 35px rgba(60,64,67,.35)!important;overflow:hidden!important}
+.compose-modal .modal-header{background:#404040!important;color:#fff!important;border:0!important}
+.compose-modal .modal-header h5{color:#fff!important}
+.compose-head-icon{display:none!important}
+.compose-modal .modal-body{background:#fff!important}
+.compose-recipient{background:#fff!important;border:0!important}
+.compose-modal .form-control,.compose-modal .form-select{background:#fff!important;border:0!important;border-bottom:1px solid #e5e7e9!important;border-radius:0!important}
+.compose-modal .form-control:focus,.compose-modal .form-select:focus{box-shadow:none!important;border-bottom-color:#0b57d0!important}
+.compose-modal .modal-footer{background:#fff!important;border-top:1px solid #f1f3f4!important}
+.compose-send{background:#0b57d0!important;border-radius:16px!important}
+
+.messages-shell .msg-read-empty-icon{background:#f1f3f4!important;color:#9aa0a6!important}
+.messages-shell .msg-read-empty strong{color:#5f6368!important}
+.messages-shell .msg-read-empty span{color:#9aa0a6!important}
+</style>
+
 <script>
 const msgCsrf=<?php echo json_encode(csrf_token());?>; const msgUrl=<?php echo json_encode($msgUrl);?>;
 const attachmentApiUrl=msgUrl.replace('index.php','attachment.php');
