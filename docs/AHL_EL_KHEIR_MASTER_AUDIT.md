@@ -790,3 +790,48 @@ This preserves one continuous campaign history while allowing a later contact cy
 Implementation commit: `8ab5cbacdca806bd20c7afffb92dc1e826903aae`.
 
 Runtime acceptance is pending.
+
+
+# 2026-09-18 — Messaging UI Visual Design Iteration
+
+## Finding
+
+The internal messaging module had already received a structural Gmail-inspired redesign in commit `2349c884566cbb206aabad468f2808feab4f4cd9`. The user reported that the messaging box still visually blended into the page background and requested a genuinely different, color-bearing design rather than another neutral polish pass.
+
+## Root cause
+
+The previous Gmail-inspired layer deliberately used a very light neutral workspace (`#f6f8fc`) with a white main surface and white reading surface. This preserved a restrained mail-client aesthetic but did not provide enough visual separation from the application's surrounding light page background.
+
+## Targeted fix
+
+Commit `743b186f2167ec195a60b73fb88659c147ba71f6` adds a V5 presentation layer to `modules/messages/index.php`.
+
+The visual hierarchy now uses:
+
+- blue-gray outer workspace;
+- distinct blue-tinted navigation rail;
+- white inbox surface;
+- blue selected/unread indicators;
+- pale-blue reading header;
+- warm-white message document card on a contrasting reading background;
+- green-tinted outgoing reply bubbles;
+- blue-tinted reply composer;
+- matching compose-dialog styling.
+
+The change is presentation-only. Existing message actions and JavaScript/PHP workflow were preserved intentionally.
+
+## Verification status
+
+**CODE REVIEW: PASS for intended visual-only scope.**
+
+**RUNTIME: PENDING USER BROWSER VERIFICATION.**
+
+Required targeted browser check:
+
+1. Open `modules/messages/index.php` after pulling the commit.
+2. Confirm the mail workspace is visibly distinct from the surrounding page background.
+3. Open an existing message and confirm the reading pane appears.
+4. Close the reading pane and return to the inbox.
+5. Confirm compose/reply/attachment/search/read controls remain available.
+
+Do not repeat previously completed message send/attachment debugging unless this visual change produces a regression.
