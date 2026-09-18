@@ -1,5 +1,5 @@
 <?php
-// modules/notifications/clear_all.php - Clear the current user's bell menu without deleting notification history
+// modules/notifications/clear_all.php - Delete all notification history for the current user
 require_once dirname(__DIR__, 2) . '/config/config.php';
 require_once dirname(__DIR__, 2) . '/config/database.php';
 require_once dirname(__DIR__, 2) . '/config/functions.php';
@@ -24,29 +24,15 @@ if (!verify_csrf()) {
 }
 
 try {
-    $row = dbFetchOne(
-        "SELECT MAX(id) AS max_id
-         FROM notifications
-         WHERE recipient_user_id = ?",
+    // Delete only this user's notification records. This does not affect
+    // notifications belonging to any other user.
+    dbExecute(
+        "DELETE FROM notifications WHERE recipient_user_id = ?",
         [current_user_id()]
     );
-    $maxId = (int)($row['max_id'] ?? 0);
 
-    // The bell is only being cleared visually. Notification records remain
-    // available on the full notifications page for history/audit purposes.
-    setcookie(
-        'ak_notif_menu_cleared_before',
-        (string)$maxId,
-        [
-            'expires' => time() + 31536000,
-            'path' => defined('APP_BASE_PATH') && APP_BASE_PATH !== '' ? '/' . trim(APP_BASE_PATH, '/') . '/' : '/',
-            'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
-            'httponly' => false,
-            'samesite' => 'Lax',
-        ]
-    );
 } catch (Throwable $e) {
-    // Do not expose database details to the user.
+    flash('error', 'تعذر حذف الإشعارات. يرجى المحاولة مرة أخرى.');
 }
 
 $redirect = (string)($_POST['redirect'] ?? '');
