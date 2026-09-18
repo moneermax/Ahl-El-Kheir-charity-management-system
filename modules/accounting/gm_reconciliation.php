@@ -8,11 +8,12 @@ require_once dirname(__DIR__, 2) . '/config/functions.php';
 require_once dirname(__DIR__, 2) . '/config/session.php';
 require_once dirname(__DIR__, 2) . '/modules/accounting/lib.php';
 require_once dirname(__DIR__, 2) . '/modules/accounting/lib_outflows.php';
+require_once dirname(__DIR__, 2) . '/modules/reports/report_registry.php';
 Session::start();
 if (!Session::isLoggedIn()) { header('Location: ' . APP_URL . 'index.php'); exit(); }
 $role = Session::getUserRole();
 $uid = (int)Session::getUserId();
-if (!in_array($role, ['admin', 'financial_manager','general_manager','vice_general_manager'], true)) { header('Location: ' . APP_URL . 'index.php'); exit(); }
+ak_report_require_access('reconciliation');
 $pageTitle = 'تقرير المصالحة';
 $active = 'reconciliation';
 ak_out_ensure_schema();
