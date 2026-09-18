@@ -299,3 +299,59 @@ The later CSS that hid the global application sidebar/header and converted messa
 **Messaging original-design restoration: COMPLETE / ACCEPTED by user.**
 
 Future messaging work must preserve this visual baseline and address only explicitly requested changes.
+
+
+## ADMIN CONTROL PANEL — 2026-09-18
+
+The active dashboard work has now moved to the dedicated `dashboard/admin_dashboard.php` for the `admin` role.
+
+### Direction
+
+This dashboard is intentionally different from the operational dashboards. It is the system owner's control panel, inspired by hosting/control-panel patterns: high-level system statistics, action-required items, grouped tools, infrastructure status, and direct administration controls.
+
+The dashboard keeps the existing application shell and server-side admin guard, but the dashboard surface itself uses a distinct dark control-panel hero, neutral/slate panels, colored status/stat accents, grouped tool grids, and responsive behavior.
+
+### Implementation
+
+Commit:
+- `ebc6ba9278b9c7efdb9293d24b5b3a4acd8b43d8` — Redesign admin dashboard as dedicated control panel
+
+The new dashboard:
+- remains restricted to `admin`;
+- shows safe counts for users, sponsors, families, sponsorships, settings, and audit records;
+- shows the current admin's unread notifications;
+- shows pending password-recovery requests;
+- checks basic database connectivity with `SELECT 1`;
+- provides grouped controls for system administration, core data, finance, and protection/maintenance;
+- preserves existing authorized destinations rather than creating new workflow endpoints;
+- removes the previous generic system-information table that exposed internal path/database-user details unnecessarily;
+- is responsive for tablet/mobile widths;
+- keeps the existing application footer/age-alert behavior.
+
+### Important verification state
+
+Repository implementation is complete for this first Admin Control Panel pass.
+
+**Runtime verification is still required by the user after pulling `main`.**
+
+Do not mark the Admin Control Panel finished until the user verifies:
+1. admin dashboard loads without PHP/SQL errors;
+2. the new visual hierarchy works as intended;
+3. every control-panel link opens the expected existing page;
+4. counts render correctly;
+5. pending password-recovery and unread-notification cards behave correctly;
+6. database health shows the expected connected state;
+7. responsive layout is usable;
+8. the dashboard remains inaccessible to non-admin roles.
+
+### Next Admin dashboard review
+
+After runtime verification, continue the audit from the actual screenshot/behavior. Focus on:
+- whether the control-panel grouping matches the administrator's real daily workflow;
+- whether any important system-control area is missing;
+- whether any displayed KPI is misleading or too low-value;
+- whether any linked page is inappropriate for admin or needs a better destination;
+- Arabic encoding and typography;
+- desktop/mobile spacing;
+- sidebar/header relationship with the new control-panel surface;
+- whether additional system-health indicators can be added only after verifying their real data sources.
