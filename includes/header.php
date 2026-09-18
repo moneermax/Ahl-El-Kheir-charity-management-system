@@ -435,25 +435,6 @@ $qaMap = [
             'color' => '#d3701fcc'
         ],
         [
-            'label' => 'التحويلات الشهرية',
-            'url' => 'modules/accounting/disbursements.php',
-            'icon' => 'fa-money-check-dollar',
-            'color' => '#28a745'
-        ],
-        [
-            'label' => ' دليل الحسابات',
-            'url' => 'modules/accounting/accounts.php',
-            'icon' => 'fa-sitemap',
-            'color' => '#2195c4'
-        ],
-        [
-            'label' => 'مراجعة ميزانيات المشاريع',
-            'url' => 'modules/accounting/fm_dashboard.php#project-budget-review',
-            'icon' => 'fa-clipboard-check',
-            'color' => '#ffc107'
-        ],
-
-        [
     'label' => 'التقارير المالية',
     'url' => 'modules/accounting/reports.php',
     'icon' => 'fa-chart-pie',
