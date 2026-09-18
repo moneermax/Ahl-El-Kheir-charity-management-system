@@ -194,9 +194,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    var modalShownKey = 'ageAlertModalShown';
-    if (!sessionStorage.getItem(modalShownKey)) {
-        sessionStorage.setItem(modalShownKey, '1');
+    var modalShownKey = 'ak_age_alert_modal_shown';
+    // localStorage intentionally survives refreshes and additional tabs in the same browser.
+    if (!localStorage.getItem(modalShownKey)) {
+        localStorage.setItem(modalShownKey, '1');
         var modal = new bootstrap.Modal(modalEl);
         setTimeout(function() {
             modal.show();
