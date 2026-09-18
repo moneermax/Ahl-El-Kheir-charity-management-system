@@ -307,7 +307,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                             <td><strong><?php echo e($uf['mother_name']); ?></strong><br><small class="text-muted"><?php echo e($uf['family_code']); ?><?php echo !empty($uf['city']) ? ' — ' . e($uf['city']) : ''; ?></small></td>
                             <td class="text-center"><span class="badge bg-warning text-dark"><?php echo (int)$uf['children_count']; ?></span></td>
                             <td class="text-center"><?php echo number_format((float)$uf['monthly_need_amount'], 0); ?></td>
-                            <td class="text-center"><a href="<?php echo APP_URL; ?>modules/families/view.php?id=<?php echo (int)$uf['id']; ?>" class="btn btn-sm btn-outline-primary" title="<?php echo t('عرض الأسرة'); ?>"><i class="fas fa-eye me-1"></i><?php echo t('عرض'); ?></a></td>
+                            <td class="text-center"><a href="<?php echo APP_URL; ?>modules/administration/sponsorship_family_view.php?id=<?php echo (int)$uf['id']; ?>" class="btn btn-sm btn-outline-primary" title="<?php echo t('عرض ملف الكفالة'); ?>"><i class="fas fa-eye me-1"></i><?php echo t('عرض'); ?></a></td>
                         </tr>
                         <?php endforeach; endif; ?>
                         </tbody>
