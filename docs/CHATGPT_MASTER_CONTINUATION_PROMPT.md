@@ -514,3 +514,20 @@ The user runtime-tested the Administration dashboard after these fixes and confi
 ### Immediate next task
 
 Continue the Administration/Staff/Social Media dashboard review from the current working state. Do not restart the dashboard implementation. First inspect the current repository code and preserve the existing fixes. Then address the remaining issues the user identifies, verifying actual schema/code before any SQL assumption.
+
+
+### LATEST DASHBOARD REFINEMENT — 2026-09-18
+
+Commit: `916758bf205bebbd43805eee010f1dc6163dbe7e` — `Refine administration staff social dashboard role-specific UX`.
+
+`dashboard/staff_dashboard.php` now keeps the shared operational dashboard role-aware:
+- Administration sees Winback/uncovered-family indicators and Winback actions.
+- Staff and Social Media do not see Winback-only indicators/actions from this shared dashboard.
+- Sponsor-request status values are presented with Arabic labels.
+- Sponsor phone numbers are clickable when available.
+- Recent sponsor-request rows include an action back to the authorized sponsor-request workflow.
+- Quick actions remain limited to workflows available to the current role.
+
+The user must pull and runtime-test this refinement. Do not treat the dashboard as finished yet. Continue reviewing KPI meaning, sponsor-request workflow usability, orphan-form navigation, role separation, sidebar consistency, Arabic encoding, responsive behavior, and remaining runtime issues.
+
+Documentation was updated in `docs/CHATGPT_SESSION_INDEX.md` by commit `a14ee88f7e26844f7bcbfad434231f8ac21d31ad`.
