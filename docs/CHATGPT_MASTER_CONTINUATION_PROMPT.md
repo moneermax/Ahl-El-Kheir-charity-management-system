@@ -532,45 +532,29 @@ The user must pull and runtime-test this refinement. Do not treat the dashboard 
 
 Documentation was updated in `docs/CHATGPT_SESSION_INDEX.md` by commit `a14ee88f7e26844f7bcbfad434231f8ac21d31ad`.
 
+## MESSAGING MODULE — ORIGINAL WORKING DESIGN RESTORED — 2026-09-18
 
-## MESSAGING UI — CURRENT 2026-09-18 CHECKPOINT
+The internal messaging UI is now restored to the exact version immediately before the user-identified redesign commit.
 
-The internal messaging module is undergoing a visual design refinement, not a functional rewrite.
+- Redesign commit used as the historical anchor: `285d390c00f983b82e8bb59248a555b7997cfd3e`
+- Restored source: `9520bd3284bbf4060711f101be1f6518fbd6f087` — the immediate parent of `285d390...`
+- Restoration commit: `baacaa5a9812ff4f89c498b2380623342c226d2e`
+- Primary restored file: `modules/messages/index.php`
 
-Primary file: `modules/messages/index.php`.
+### Decision
 
-Previous structural redesign:
-- `2349c884566cbb206aabad468f2808feab4f4cd9` — `Rebuild messaging UI as Gmail-inspired professional mail client`.
+The user rejected the later Gmail/custom visual redesigns and explicitly requested the original working design. The correct historical version was therefore restored exactly from the immediate parent of `285d390...`, rather than approximated through another CSS redesign.
 
-Current V5 design:
-- `743b186f2167ec195a60b73fb88659c147ba71f6` — `Create color-forward messaging workspace design v5`.
+**Do not redesign the messaging workspace again unless the user explicitly requests a new design.**
 
-The reason for V5 is explicit user feedback: the messaging workspace was too close in color to the page background. The current design therefore uses clearly separated colored surfaces while preserving the existing message functionality.
+### Preserved functionality
 
-V5 visual model:
-- blue-gray outer mail workspace;
-- tinted navigation rail;
-- white inbox/list surface;
-- blue selected/unread states;
-- pale-blue reading header;
-- warm-white message card on a contrasting reading background;
-- green-tinted outgoing/reply bubbles;
-- blue-tinted reply composer;
-- matching compose dialog.
+The restored version retains the established messaging functionality and global application shell, including inbox/sent navigation, message list and conversation overlay, compose and reply, attachments, emoji button, font-size control, unread filters, mark-all-read, role broadcast, and the existing messaging backend actions.
 
-Do not replace or rewrite the messaging PHP/JS behavior merely to alter the visual design. If the user reports a functional regression, inspect the actual current code and fix the specific regression narrowly.
+The later CSS that hid the global application sidebar/header and converted messaging into a full-page Gmail-style workspace is no longer part of the restored version.
 
-Runtime verification remains pending after pulling commit `743b186f2167ec195a60b73fb88659c147ba71f6`.
+### Current status
 
+**Messaging original-design restoration: COMPLETE / ACCEPTED by user.**
 
-## MESSAGING UI — CURRENT GMAIL V6 CHECKPOINT — 2026-09-18
-
-The current messaging visual target is Gmail, fitted to the existing Ahl El Kheir Arabic/RTL messaging functionality.
-
-Latest commit: `66d5acfa9dd919c84a5c689b1a2cf632d4bca7c9` — `Match messaging workspace to Gmail visual design v6`.
-
-Important design decision: do not continue the previous custom blue-panel aesthetic. Gmail's actual visual language is intentionally restrained: light gray/white surfaces, subtle borders, pale blue selected states, and restrained Gmail blue for primary actions.
-
-Preserve existing application functionality. Future visual iterations should change presentation only unless the user explicitly requests functional changes.
-
-Runtime verification is the immediate checkpoint.
+Future messaging work must preserve this visual baseline and address only explicitly requested changes.
