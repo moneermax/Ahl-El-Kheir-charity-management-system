@@ -50,7 +50,7 @@ All settlement processing is **Financial Manager (FM) only**. Supervisors, GM, a
 - Stage 1 — existing-system/schema inspection: **COMPLETE**.
 - Stage 2 — original settlement data model: **COMPLETE**; original migration applied successfully to live DB on 2026-09-17.
 - Stage 3 — original accounting engine: **COMPLETE / RUNTIME VERIFIED / CLOSED** on 2026-09-17 as historical development evidence.
-- Revised settlement-model code/migration: **IMPLEMENTED IN REPOSITORY; FULL 250,000 SDG SETTLEMENT CYCLE RUNTIME-VERIFIED THROUGH CLOSE; NEXT-CYCLE/SECURITY ACCEPTANCE REMAINING**.
+- Revised settlement-model code/migration: **IMPLEMENTED IN REPOSITORY; CORE FINA SETTLEMENT ACCEPTANCE COMPLETE**. Two production cycles, reusable 2300 behavior, FM-only access, and original-journal preservation are runtime-verified.
 
 ### Historical Stage 3 test evidence — preserve, do not treat as current business settlement
 
@@ -60,7 +60,7 @@ All settlement processing is **Financial Manager (FM) only**. Supervisors, GM, a
 
 The revised migration marks these two settlement records as historical test fixtures and creates compensating posted restore entries so their old partial-settlement test effect does not reduce the current production liability. Their original journals are not edited or deleted. Do not clean or recreate these fixtures.
 
-### Revised Stage 4 — ACTIVE / TARGETED RUNTIME VERIFIED THROUGH FULL SETTLEMENT CLOSE
+### Revised Stage 4 — CORE ACCEPTANCE COMPLETE
 
 Repository implementation now includes:
 
@@ -75,7 +75,7 @@ The existing `fina_settlements` and `fina_settlement_allocations` tables are **r
 
 The obsolete item was the separate old migration file and the old production partial-settlement behavior; the old migration definition has already been consolidated into the final full-settlement migration. No triggers or views are being introduced by this work.
 
-### Runtime acceptance — completed portion and NEXT WORK
+### Runtime acceptance — CORE ACCEPTANCE COMPLETE
 
 1. Check local Git status before synchronization; preserve intentional uncommitted files. — **COMPLETE**.
 2. Confirm the local database is at the finalized settlement-model state; do not drop the existing settlement tables. — **COMPLETE**.
@@ -86,9 +86,9 @@ The obsolete item was the separate old migration file and the old production par
 7. Create one full settlement for exactly 250,000 SDG — **COMPLETE** (`FINA-SET-000003`).
 8. Verify the settlement journal is balanced `Dr 2300 / Cr Fina-held funds` and 2300 becomes zero. — **COMPLETE** (`JE-000035`; both `1401` and `2300` are 0 afterward).
 9. Verify the historical Stage 3 records remain present and identifiable as test evidence. — **COMPLETE**.
-10. Create/approve a new Fina payment after settlement and verify the same 2300 account increases again. — **NEXT**.
-11. Verify FM-only authorization and evidence/reference/lifecycle controls. — **Lifecycle/reference through close verified; final authorization/security acceptance remains NEXT**.
-12. Verify original Fina collection journals remain unchanged. — **NEXT final verification**.
+10. Create/approve a new Fina payment after settlement and verify the same 2300 account increases again. — **COMPLETE** (`JE-000036`, collection #5, 600,000 SDG).
+11. Verify FM-only authorization and evidence/reference/lifecycle controls. — **COMPLETE**; Supervisor `sv2` direct access was denied.
+12. Verify original Fina collection journals remain unchanged. — **COMPLETE**; journals #54 and #55 remain posted and unchanged.
 
 ### Future development — workflow simplification
 
@@ -98,7 +98,7 @@ The current production lifecycle remains intentionally unchanged for this audit:
 
 After the settlement process and acceptance work are fully completed, evaluate a shorter user-facing workflow, potentially `مسودة → معتمدة → مغلقة`, while retaining transfer/reconciliation information as audit data/events. This is a future UX/workflow simplification and must not interrupt the current acceptance work.
 
-Do not claim the entire revised runtime acceptance is complete until the remaining local application/database checks are actually run.
+**Core Fina settlement accounting acceptance is complete. No further financial transactions are required for this audit area.**
 
 ## FINA STANDALONE PAYMENT
 
@@ -145,5 +145,5 @@ Then use a safe pull appropriate to the actual local state. Never discard local 
 ## CURRENT CONTINUATION POINT
 
 **Stage 3 original Fina accounting engine: COMPLETE / RUNTIME VERIFIED / CLOSED as historical evidence.**  
-**Stage 4 revised Fina settlement model/UI: IMPLEMENTED IN REPOSITORY; FULL 250,000 SDG SETTLEMENT RUNTIME-VERIFIED THROUGH CLOSE — permanent `2300`, separate Fina-held funds, no partial settlement. Remaining work is the next-cycle proof and final security/preservation checks.**  
+**Stage 4 revised Fina settlement model/UI: IMPLEMENTED IN REPOSITORY; CORE ACCEPTANCE COMPLETE — two production cycles verified through close, permanent `2300`, separate Fina-held funds, no partial settlement, FM-only authorization, and original collection journals preserved.**  
 **Database cleanup decision: retain `fina_settlements` and `fina_settlement_allocations`; do not spend additional audit time dropping them. Next work is targeted runtime acceptance.**
