@@ -458,3 +458,25 @@ Implementation commit:
 - `285d390c00f983b82e8bb59248a555b7997cfd3e` — Redesign internal messages as a professional email inbox
 
 Runtime verification after pulling this commit is required before considering the messaging UX redesign complete.
+
+
+### Messaging visual redesign correction — 2026-09-18
+
+The first messaging visual pass was rejected during runtime review because the conversation remained visually too close to the application background and the reading pane conflicted with the global application chrome. The design was revised again based on the runtime screenshot.
+
+The current direction is a true enterprise-mail workspace:
+- three-pane desktop layout: mailbox navigation, message list, and reading/conversation pane
+- no full-screen floating conversation overlay on desktop
+- stronger white/soft-gray surfaces and borders for clear message separation
+- restrained enterprise blue as the interaction/accent color
+- clear selected/unread states
+- reading pane header, conversation count, root message, separated replies, and anchored reply composer
+- attachment areas remain visibly bounded
+- responsive behavior switches to an overlaid reading pane only on narrower screens
+- no messaging send/receive/reply persistence changes
+
+Implementation commits:
+- `a454b912d8f992ec78ee8ae32f47b95af1d2b228`
+- `c969c49ab6272eb44f25d1279ec98331f62bda20`
+
+The current implementation requires runtime review before being called final.
