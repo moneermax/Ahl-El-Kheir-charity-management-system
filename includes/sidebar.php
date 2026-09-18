@@ -53,7 +53,7 @@ $menus = [
     'general_manager' => array_merge([
         ['active' => 'dashboard', 'label_key' => 'navigation.dashboard', 'icon' => 'fa-gauge-high', 'url' => 'dashboard/gm_dashboard.php'],
         $projectsItem, $orphanFormsItem,
-    ], $acctView, [$fmDashItem, $fmReviewItem, $disbItem, $reconItem]),
+    ], $acctView, [$reportsItem, $fmDashItem, $fmReviewItem, $disbItem, $reconItem]),
 
     'vice_general_manager' => [
         ['active' => 'dashboard', 'label_key' => 'navigation.dashboard', 'icon' => 'fa-gauge-high', 'url' => 'dashboard/vgm_dashboard.php'],
@@ -66,6 +66,7 @@ $menus = [
 
     'financial_manager' => [
         ['active' => 'dashboard', 'label_key' => 'navigation.dashboard', 'icon' => 'fa-gauge-high', 'url' => 'modules/accounting/fm_dashboard.php'],
+        $reportsItem,
         ['active' => 'journal', 'label_key' => 'navigation.journal', 'icon' => 'fa-book', 'url' => 'modules/accounting/journal.php'],
         ['active' => 'projects', 'label_key' => 'navigation.organization_projects', 'icon' => 'fa-diagram-project', 'url' => 'modules/projects/index.php'],
         $openingBalanceItem,
@@ -77,6 +78,7 @@ $menus = [
 
     'accountant' => array_merge([
         ['active' => 'dashboard', 'label_key' => 'navigation.dashboard', 'icon' => 'fa-gauge-high', 'url' => 'dashboard/accountant_dashboard.php'],
+        $reportsItem,
         ['active' => 'journal', 'label_key' => 'navigation.journal', 'icon' => 'fa-book', 'url' => 'modules/accounting/journal.php'],
         ['active' => 'accounts', 'label_key' => 'navigation.chart_of_accounts', 'icon' => 'fa-sitemap', 'url' => 'modules/accounting/accounts.php'],
         ['active' => 'transactions', 'label_key' => 'navigation.transaction_register', 'icon' => 'fa-money-bill-transfer', 'url' => 'modules/transactions/index.php'],
@@ -128,6 +130,7 @@ $menus = [
     ],
     'hr_manager' => [
         ['active' => 'dashboard', 'label_key' => 'navigation.dashboard', 'icon' => 'fa-gauge-high', 'url' => 'dashboard/hr_dashboard.php'],
+        $reportsItem,
         ['active' => 'employees', 'label_key' => 'navigation.employees', 'icon' => 'fa-users', 'url' => 'modules/hr/employees.php'],
         ['active' => 'employment_states', 'label_key' => 'navigation.employment_states', 'icon' => 'fa-id-badge', 'url' => 'modules/hr/employment_states.php'],
         ['active' => 'attendance', 'label_key' => 'navigation.attendance', 'icon' => 'fa-clock', 'url' => 'modules/hr/attendance.php'],
