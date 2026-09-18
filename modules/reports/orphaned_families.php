@@ -5,6 +5,7 @@ require_once dirname(__DIR__, 2) . '/config/config.php';
 require_once dirname(__DIR__, 2) . '/config/database.php';
 require_once dirname(__DIR__, 2) . '/config/functions.php';
 require_once dirname(__DIR__, 2) . '/config/session.php';
+require_once __DIR__ . '/report_registry.php';
 
 Session::start();
 if (!Session::isLoggedIn()) {
@@ -13,14 +14,7 @@ if (!Session::isLoggedIn()) {
 }
 
 $role = Session::getUserRole();
-$uid = Session::getUserId();
-
-$allowed_roles = ['admin', 'general_manager', 'vice_general_manager', 'supervisor', 'nanny'];
-if (!in_array($role, $allowed_roles, true)) {
-    $_SESSION['flash'][] = ['type' => 'error', 'message' => t('common.no_data')];
-    header('Location: ' . APP_URL . 'modules/reports/index.php');
-    exit();
-}
+ak_report_require_access('orphaned');
 
 $city_filter = trim($_GET['city'] ?? '');
 $status_filter = trim($_GET['status'] ?? 'active');
