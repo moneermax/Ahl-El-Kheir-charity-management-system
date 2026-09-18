@@ -15,6 +15,25 @@ $active = 'messages';
 $canBroadcast = in_array($role,['admin','general_manager','vice_general_manager','financial_manager','hr_manager'],true);
 $msgUrl = APP_URL.'modules/messages/index.php';
 
+$dashboardMap = [
+    'admin' => 'dashboard/admin_dashboard.php',
+    'general_manager' => 'dashboard/gm_dashboard.php',
+    'vice_general_manager' => 'dashboard/vgm_dashboard.php',
+    'financial_manager' => 'modules/accounting/fm_dashboard.php',
+    'accountant' => 'dashboard/accountant_dashboard.php',
+    'accountant_staff' => 'dashboard/accountant_staff_dashboard.php',
+    'nanny' => 'dashboard/nanny_dashboard.php',
+    'supervisor' => 'dashboard/supervisor_dashboard.php',
+    'administration' => 'dashboard/staff_dashboard.php',
+    'staff' => 'dashboard/staff_dashboard.php',
+    'social_media' => 'dashboard/staff_dashboard.php',
+    'projects_manager' => 'dashboard/projects_dashboard.php',
+    'project_supervisor' => 'dashboard/projects_dashboard.php',
+    'hr_manager' => 'dashboard/hr_dashboard.php',
+    'hr_staff' => 'dashboard/hr_dashboard.php'
+];
+$dashboardUrl = APP_URL . ($dashboardMap[$role] ?? '');
+
 if ($_SERVER['REQUEST_METHOD']==='POST') {
     header('Content-Type: application/json; charset=utf-8');
     if (!verify_csrf()) { http_response_code(419); echo json_encode(['ok'=>false,'message'=>'انتهت صلاحية الجلسة.'],JSON_UNESCAPED_UNICODE); exit; }
@@ -64,7 +83,7 @@ include dirname(__DIR__,2).'/includes/header.php';
  --mail-bg:#f6f8fc;--mail-surface:#fff;--mail-side:#f6f8fc;--mail-text:#202124;
  --mail-muted:#5f6368;--mail-line:#e0e3e7;--mail-hover:#f2f6fc;--mail-selected:#d3e3fd;
  --mail-blue:#0b57d0;--mail-compose:#c2e7ff;--mail-danger:#b3261e;
- direction:rtl;min-height:calc(100vh - 72px);background:var(--mail-bg);color:var(--mail-text);
+ direction:rtl;background:var(--mail-bg);color:var(--mail-text);
  font-family:'Cairo',Arial,sans-serif;font-size:14px
 }
 .messages-shell *{box-sizing:border-box}.messages-shell a{text-decoration:none;color:inherit}
@@ -122,8 +141,8 @@ include dirname(__DIR__,2).'/includes/header.php';
    <div class="mail-page-title"><i class="fas fa-envelope-open-text"></i><span>الرسائل الداخلية</span></div>
    <div class="mail-page-subtitle">البريد والمراسلات داخل النظام</div>
   </div>
-  <a class="mail-back-dashboard" href="javascript:void(0)" onclick="if(window.history.length>1){window.history.back();}else{window.location.href='<?php echo e(APP_URL); ?>';}" title="العودة إلى الصفحة السابقة">
-   <i class="fas fa-arrow-right"></i><span>العودة</span>
+  <a class="mail-back-dashboard" href="javascript:void(0)" onclick="window.location.href='<?php echo e($dashboardUrl); ?>'" title="العودة إلى لوحة التحكم">
+   <i class="fas fa-arrow-right"></i><span>لوحة التحكم</span>
   </a>
  </div>
  <header class="mail-appbar">
