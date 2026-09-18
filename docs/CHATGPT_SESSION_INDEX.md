@@ -410,6 +410,36 @@ After pulling the latest `main`, verify:
 
 Do not reopen the removed dashboard navigation groups unless a specific missing administrator control is identified from the real system workflow.
 
+### Admin Control Panel system-health enhancement — 2026-09-18
+
+The administrator dashboard was enhanced using selected concepts from the newly added root-level sudo_dashboard.php, while deliberately adapting them to the real Ahl El Kheir architecture instead of copying its unrelated schema or workflows.
+
+Added to dashboard/admin_dashboard.php:
+- system/DB connectivity status;
+- PHP version;
+- available/total disk space and usage percentage;
+- PHP memory limit;
+- PHP upload limit;
+- PHP execution-time limit;
+- current HTTPS state;
+- explicit admin-only dashboard protection indicator;
+- a compact preview of the six most recent audit_log events with a link to the existing full audit log.
+
+The dashboard remains the main Admin Control Panel and the sidebar remains intentionally minimal. No duplicate settings, backup, database-management, user-management, or other workflow screens were introduced.
+
+Implementation commit:
+- 07f87ade2c36105887292ec80846f3ed98371df4 — Enhance admin dashboard with system health and recent activity
+
+Runtime verification is required after pulling. Pay particular attention to:
+1. no PHP/SQL errors;
+2. disk-space values;
+3. PHP limits;
+4. HTTPS status under the local XAMPP HTTP URL;
+5. recent audit events rendering correctly;
+6. mobile/tablet layout;
+7. existing dashboard navigation remaining intact.
+
+
 ### Admin Control Panel navigation correction — 2026-09-18
 
 The previous navigation-duplication cleanup was corrected after clarifying the intended UX direction.
