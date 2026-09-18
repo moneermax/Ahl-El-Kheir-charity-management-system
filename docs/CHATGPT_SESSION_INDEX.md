@@ -2,7 +2,7 @@
 
 **Repository:** `moneermax/Ahl-El-Kheir-charity-management-system`  
 **Branch:** `main`  
-**Current checkpoint:** 2026-09-17
+**Current checkpoint:** 2026-09-18
 
 ## START HERE
 
@@ -50,7 +50,7 @@ All settlement processing is **Financial Manager (FM) only**. Supervisors, GM, a
 - Stage 1 — existing-system/schema inspection: **COMPLETE**.
 - Stage 2 — original settlement data model: **COMPLETE**; original migration applied successfully to live DB on 2026-09-17.
 - Stage 3 — original accounting engine: **COMPLETE / RUNTIME VERIFIED / CLOSED** on 2026-09-17 as historical development evidence.
-- Revised settlement-model code/migration: **IMPLEMENTED IN REPOSITORY; LOCAL RUNTIME ACCEPTANCE PENDING**.
+- Revised settlement-model code/migration: **IMPLEMENTED IN REPOSITORY; FULL 250,000 SDG SETTLEMENT CYCLE RUNTIME-VERIFIED THROUGH CLOSE; NEXT-CYCLE/SECURITY ACCEPTANCE REMAINING**.
 
 ### Historical Stage 3 test evidence — preserve, do not treat as current business settlement
 
@@ -60,7 +60,7 @@ All settlement processing is **Financial Manager (FM) only**. Supervisors, GM, a
 
 The revised migration marks these two settlement records as historical test fixtures and creates compensating posted restore entries so their old partial-settlement test effect does not reduce the current production liability. Their original journals are not edited or deleted. Do not clean or recreate these fixtures.
 
-### Revised Stage 4 — ACTIVE / LOCAL ACCEPTANCE PENDING
+### Revised Stage 4 — ACTIVE / TARGETED RUNTIME VERIFIED THROUGH FULL SETTLEMENT CLOSE
 
 Repository implementation now includes:
 
@@ -75,22 +75,30 @@ The existing `fina_settlements` and `fina_settlement_allocations` tables are **r
 
 The obsolete item was the separate old migration file and the old production partial-settlement behavior; the old migration definition has already been consolidated into the final full-settlement migration. No triggers or views are being introduced by this work.
 
-### Required local acceptance — NEXT WORK
+### Runtime acceptance — completed portion and NEXT WORK
 
-1. Check local Git status before synchronization; preserve intentional uncommitted files.
-2. Confirm the local database is at the finalized settlement-model state; do not drop the existing settlement tables.
-3. Verify the dedicated Fina-held-funds account exists and is an asset/control account.
-4. Verify current production Fina liability is **250,000 SDG** despite the retained Stage 3 test records.
-5. Verify 2300 represents the current 250,000 SDG liability.
-6. Verify no Ahl treasury account is offered/required by the settlement UI.
-7. Create one full settlement for exactly 250,000 SDG — no partial amount and no Ahl treasury account selection.
-8. Verify the settlement journal is balanced `Dr 2300 / Cr Fina-held funds` and 2300 becomes zero.
-9. Verify the historical Stage 3 records remain present and identifiable as test evidence.
-10. Create/approve a new Fina payment after settlement and verify the same 2300 account increases again.
-11. Verify FM-only authorization and evidence/reference/lifecycle controls.
-12. Verify original Fina collection journals remain unchanged.
+1. Check local Git status before synchronization; preserve intentional uncommitted files. — **COMPLETE**.
+2. Confirm the local database is at the finalized settlement-model state; do not drop the existing settlement tables. — **COMPLETE**.
+3. Verify the dedicated Fina-held-funds account exists and is an asset/control account. — **COMPLETE** (`1401`).
+4. Verify current production Fina liability is **250,000 SDG** despite the retained Stage 3 test records. — **COMPLETE**.
+5. Verify 2300 represents the current 250,000 SDG liability. — **COMPLETE**.
+6. Verify no Ahl treasury account is offered/required by the settlement UI. — **COMPLETE during `FINA-SET-000003` creation**.
+7. Create one full settlement for exactly 250,000 SDG — **COMPLETE** (`FINA-SET-000003`).
+8. Verify the settlement journal is balanced `Dr 2300 / Cr Fina-held funds` and 2300 becomes zero. — **COMPLETE** (`JE-000035`; both `1401` and `2300` are 0 afterward).
+9. Verify the historical Stage 3 records remain present and identifiable as test evidence. — **COMPLETE**.
+10. Create/approve a new Fina payment after settlement and verify the same 2300 account increases again. — **NEXT**.
+11. Verify FM-only authorization and evidence/reference/lifecycle controls. — **Lifecycle/reference through close verified; final authorization/security acceptance remains NEXT**.
+12. Verify original Fina collection journals remain unchanged. — **NEXT final verification**.
 
-Do not claim this revised runtime acceptance is complete until the user runs the local application/database and provides the actual results.
+### Future development — workflow simplification
+
+The current production lifecycle remains intentionally unchanged for this audit:
+
+`مسودة → معتمدة للتحويل → تم التحويل → تمت المطابقة → مغلقة`
+
+After the settlement process and acceptance work are fully completed, evaluate a shorter user-facing workflow, potentially `مسودة → معتمدة → مغلقة`, while retaining transfer/reconciliation information as audit data/events. This is a future UX/workflow simplification and must not interrupt the current acceptance work.
+
+Do not claim the entire revised runtime acceptance is complete until the remaining local application/database checks are actually run.
 
 ## FINA STANDALONE PAYMENT
 
@@ -137,5 +145,5 @@ Then use a safe pull appropriate to the actual local state. Never discard local 
 ## CURRENT CONTINUATION POINT
 
 **Stage 3 original Fina accounting engine: COMPLETE / RUNTIME VERIFIED / CLOSED as historical evidence.**  
-**Stage 4 revised Fina settlement model/UI: IMPLEMENTED IN REPOSITORY; LOCAL RUNTIME ACCEPTANCE PENDING — full current-balance settlement only, permanent `2300`, separate Fina-held funds, no partial settlement.**  
+**Stage 4 revised Fina settlement model/UI: IMPLEMENTED IN REPOSITORY; FULL 250,000 SDG SETTLEMENT RUNTIME-VERIFIED THROUGH CLOSE — permanent `2300`, separate Fina-held funds, no partial settlement. Remaining work is the next-cycle proof and final security/preservation checks.**  
 **Database cleanup decision: retain `fina_settlements` and `fina_settlement_allocations`; do not spend additional audit time dropping them. Next work is targeted runtime acceptance.**
