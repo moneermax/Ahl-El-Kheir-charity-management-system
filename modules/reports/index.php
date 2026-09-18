@@ -14,6 +14,7 @@ if (!Session::isLoggedIn()) {
 
 $role = Session::getUserRole();
 $uid = Session::getUserId();
+ak_report_require_access('overview');
 
 $allowed_reports = ak_report_allowed_catalog($role);
 
