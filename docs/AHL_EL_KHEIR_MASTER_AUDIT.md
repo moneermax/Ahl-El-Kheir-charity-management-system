@@ -791,75 +791,29 @@ Implementation commit: `8ab5cbacdca806bd20c7afffb92dc1e826903aae`.
 
 Runtime acceptance is pending.
 
+# MESSAGING MODULE — ORIGINAL WORKING DESIGN RESTORED — 2026-09-18
 
-# 2026-09-18 — Messaging UI Visual Design Iteration
+The internal messaging UI is now restored to the exact version immediately before the user-identified redesign commit.
 
-## Finding
+- Redesign commit used as the historical anchor: `285d390c00f983b82e8bb59248a555b7997cfd3e`
+- Restored source: `9520bd3284bbf4060711f101be1f6518fbd6f087` — the immediate parent of `285d390...`
+- Restoration commit: `baacaa5a9812ff4f89c498b2380623342c226d2e`
+- Primary restored file: `modules/messages/index.php`
 
-The internal messaging module had already received a structural Gmail-inspired redesign in commit `2349c884566cbb206aabad468f2808feab4f4cd9`. The user reported that the messaging box still visually blended into the page background and requested a genuinely different, color-bearing design rather than another neutral polish pass.
+### Decision
 
-## Root cause
+The user rejected the later Gmail/custom visual redesigns and explicitly requested the original working design. The correct historical version was therefore restored exactly from the immediate parent of `285d390...`, rather than approximated through another CSS redesign.
 
-The previous Gmail-inspired layer deliberately used a very light neutral workspace (`#f6f8fc`) with a white main surface and white reading surface. This preserved a restrained mail-client aesthetic but did not provide enough visual separation from the application's surrounding light page background.
+**Do not redesign the messaging workspace again unless the user explicitly requests a new design.**
 
-## Targeted fix
+### Preserved functionality
 
-Commit `743b186f2167ec195a60b73fb88659c147ba71f6` adds a V5 presentation layer to `modules/messages/index.php`.
+The restored version retains the established messaging functionality and global application shell, including inbox/sent navigation, message list and conversation overlay, compose and reply, attachments, emoji button, font-size control, unread filters, mark-all-read, role broadcast, and the existing messaging backend actions.
 
-The visual hierarchy now uses:
+The later CSS that hid the global application sidebar/header and converted messaging into a full-page Gmail-style workspace is no longer part of the restored version.
 
-- blue-gray outer workspace;
-- distinct blue-tinted navigation rail;
-- white inbox surface;
-- blue selected/unread indicators;
-- pale-blue reading header;
-- warm-white message document card on a contrasting reading background;
-- green-tinted outgoing reply bubbles;
-- blue-tinted reply composer;
-- matching compose-dialog styling.
+### Current status
 
-The change is presentation-only. Existing message actions and JavaScript/PHP workflow were preserved intentionally.
+**Messaging original-design restoration: COMPLETE / ACCEPTED by user.**
 
-## Verification status
-
-**CODE REVIEW: PASS for intended visual-only scope.**
-
-**RUNTIME: PENDING USER BROWSER VERIFICATION.**
-
-Required targeted browser check:
-
-1. Open `modules/messages/index.php` after pulling the commit.
-2. Confirm the mail workspace is visibly distinct from the surrounding page background.
-3. Open an existing message and confirm the reading pane appears.
-4. Close the reading pane and return to the inbox.
-5. Confirm compose/reply/attachment/search/read controls remain available.
-
-Do not repeat previously completed message send/attachment debugging unless this visual change produces a regression.
-
-
-# 2026-09-18 — Messaging Gmail Visual Model V6
-
-## User-directed design decision
-
-The V5 custom color-forward design was rejected visually. The user specifically requested the Gmail design and asked that it be fitted to the existing Ahl El Kheir messaging system.
-
-## Implementation
-
-Commit `66d5acfa9dd919c84a5c689b1a2cf632d4bca7c9` applies a Gmail visual model as a presentation layer to `modules/messages/index.php`.
-
-The implementation deliberately avoids decorative blue panels. Gmail's visual identity is primarily white surfaces, light gray chrome, subtle borders, pale blue selection states, and a restrained Google blue for actions. This distinction is important: matching Gmail means using its restrained palette, not adding more saturated colors.
-
-Existing application functionality is preserved. No database, PHP workflow, message routing, attachment logic, recipient authorization, or JavaScript behavior was intentionally changed.
-
-## Runtime check
-
-Open `http://localhost:8081/AhlElKheir/modules/messages/index.php` after pulling the commit and verify:
-1. Gmail-style light sidebar and selected folder.
-2. Gmail-style Compose button.
-3. White inbox with pale blue search field.
-4. White reading panel with subtle separators.
-5. Gmail-blue primary actions.
-6. Existing message opening still works.
-7. Reply and compose still work.
-
-Do not restart prior messaging functionality audits unless a regression is observed.
+Future messaging work must preserve this visual baseline and address only explicitly requested changes.
