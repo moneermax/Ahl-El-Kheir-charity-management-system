@@ -6,9 +6,8 @@ require_once dirname(__DIR__,2) . '/config/functions.php';
 require_once dirname(__DIR__,2) . '/config/session.php';
 Session::start();
 if(!Session::isLoggedIn()){header('Location: '.APP_URL.'index.php');exit();}
-$role=Session::getUserRole();
-$allowed_roles=['admin','general_manager','vice_general_manager','hr_manager','hr_staff'];
-if(!in_array($role,$allowed_roles,true)){$_SESSION['flash'][]=['type'=>'error','message'=>t('hr.permission_denied')];header('Location: '.APP_URL.'modules/reports/index.php');exit();}
+$role = Session::getUserRole();
+ak_report_require_access('hr');
 $from=trim($_GET['from']??date('Y-m-01'));$to=trim($_GET['to']??date('Y-m-d'));$report_type=trim($_GET['report']??'headcount');$pageTitle=t('hr.report_title');$active='reports';
 $headcount_data=[];$attendance_data=[];$leave_data=[];$payroll_data=[];
 if($report_type==='headcount'){
