@@ -297,16 +297,17 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 <div class="table-responsive" style="max-height:420px; overflow-y:auto;">
                     <table class="table table-sm table-hover align-middle mb-0">
                         <thead class="table-success" style="position:sticky; top:0; z-index:2;">
-                            <tr><th><?php echo t('اسم الأم'); ?></th><th class="text-center"><?php echo t('الأطفال'); ?></th><th class="text-end"><?php echo t('الاحتياج الشهري'); ?></th></tr>
+                            <tr><th><?php echo t('اسم الأم'); ?></th><th class="text-center"><?php echo t('الأطفال'); ?></th><th class="text-center"><?php echo t('الاحتياج الشهري'); ?></th><th class="text-center"><?php echo t('إجراء'); ?></th></tr>
                         </thead>
                         <tbody>
                         <?php if (!$uncovered): ?>
-                        <tr><td colspan="3" class="text-center text-muted py-3"><?php echo t('لا توجد أسر متاحة.'); ?></td></tr>
+                        <tr><td colspan="4" class="text-center text-muted py-3"><?php echo t('لا توجد أسر متاحة.'); ?></td></tr>
                         <?php else: foreach ($uncovered as $uf): ?>
                         <tr>
                             <td><strong><?php echo e($uf['mother_name']); ?></strong><br><small class="text-muted"><?php echo e($uf['family_code']); ?><?php echo !empty($uf['city']) ? ' — ' . e($uf['city']) : ''; ?></small></td>
                             <td class="text-center"><span class="badge bg-warning text-dark"><?php echo (int)$uf['children_count']; ?></span></td>
-                            <td class="text-end"><?php echo number_format((float)$uf['monthly_need_amount'], 0); ?></td>
+                            <td class="text-center"><?php echo number_format((float)$uf['monthly_need_amount'], 0); ?></td>
+                            <td class="text-center"><a href="<?php echo APP_URL; ?>modules/families/view.php?id=<?php echo (int)$uf['id']; ?>" class="btn btn-sm btn-outline-primary" title="<?php echo t('عرض الأسرة'); ?>"><i class="fas fa-eye me-1"></i><?php echo t('عرض'); ?></a></td>
                         </tr>
                         <?php endforeach; endif; ?>
                         </tbody>
