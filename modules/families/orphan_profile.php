@@ -397,7 +397,16 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     <div class="alert alert-light border"><strong>اليتيم:</strong> <?php echo e($child['child_name'] ?? ''); ?> <span class="text-muted">(<?php echo (int)$childId; ?>)</span></div>
                     <?php if ($availableSponsors): ?>
                     <div class="row g-3">
-                        <div class="col-md-7"><label class="form-label fw-bold">الكفيل <span class="text-danger">*</span></label><select name="sponsor_id" class="form-select" required><option value="">اختر الكفيل</option><?php foreach ($availableSponsors as $availableSponsor): ?><option value="<?php echo (int)$availableSponsor['id']; ?>"><?php echo e($availableSponsor['full_name']); ?> (<?php echo e($availableSponsor['sponsor_code']); ?>)</option><?php endforeach; ?></select></div>
+                        <div class="col-md-7">
+                            <label class="form-label fw-bold">الكفيل <span class="text-danger">*</span></label>
+                            <div class="position-relative">
+                                <input type="text" id="sponsorSearchInput" class="form-control" placeholder="ابحث باسم الكفيل أو كود الكفيل..." autocomplete="off" aria-label="البحث عن الكفيل">
+                                <input type="hidden" name="sponsor_id" id="selectedSponsorId" required>
+                                <div id="sponsorSearchResults" class="list-group position-absolute w-100 shadow-sm" style="z-index:1080;max-height:260px;overflow-y:auto;display:none;"></div>
+                            </div>
+                            <div id="selectedSponsorHint" class="form-text">ابدأ بكتابة اسم الكفيل أو كوده، ثم اختر النتيجة.</div>
+                            <div id="sponsorNoResults" class="small text-danger mt-1" style="display:none;">لا توجد نتائج مطابقة.</div>
+                        </div>
                         <div class="col-md-5"><label class="form-label fw-bold">المبلغ الشهري <span class="text-danger">*</span></label><div class="input-group"><input type="number" name="sponsorship_amount" class="form-control" min="0.01" step="0.01" required><span class="input-group-text">ج.س</span></div></div>
                         <div class="col-md-5"><label class="form-label fw-bold">تاريخ بداية الكفالة <span class="text-danger">*</span></label><input type="date" name="sponsorship_start_date" class="form-control" value="<?php echo e(date('Y-m-d')); ?>" required></div>
                         <div class="col-12"><label class="form-label fw-bold">ملاحظات</label><textarea name="sponsorship_notes" class="form-control" rows="2"></textarea></div>
@@ -412,6 +421,115 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 <script>
 (function() {
     'use strict';
+
+    const sponsorInput = document.getElementById('sponsorSearchInput');
+    const sponsorIdInput = document.getElementById('selectedSponsorId');
+    const sponsorResults = document.getElementById('sponsorSearchResults');
+    const sponsorHint = document.getElementById('selectedSponsorHint');
+    const sponsorNoResults = document.getElementById('sponsorNoResults');
+
+    const sponsors = <?php echo json_encode(array_map(static function(array $sponsor): array {
+        return [
+            'id' => (int)$sponsor['id'],
+            'name' => (string)($sponsor['full_name'] ?? ''),
+            'code' => (string)($sponsor['sponsor_code'] ?? '')
+        ];
+    }, $availableSponsors), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+
+    function normalizeSearch(value) {
+        return String(value || '').trim().toLocaleLowerCase();
+    }
+
+    function closeSponsorResults() {
+        if (sponsorResults) sponsorResults.style.display = 'none';
+    }
+
+    function renderSponsorResults() {
+        if (!sponsorInput || !sponsorResults) return;
+
+        const query = normalizeSearch(sponsorInput.value);
+        sponsorResults.innerHTML = '';
+
+        if (!query) {
+            sponsorNoResults.style.display = 'none';
+            closeSponsorResults();
+            return;
+        }
+
+        const matches = sponsors.filter(function(sponsor) {
+            return normalizeSearch(sponsor.name).includes(query) ||
+                   normalizeSearch(sponsor.code).includes(query);
+        }).slice(0, 80);
+
+        if (!matches.length) {
+            sponsorNoResults.style.display = '';
+            closeSponsorResults();
+            return;
+        }
+
+        sponsorNoResults.style.display = 'none';
+        matches.forEach(function(sponsor) {
+            const item = document.createElement('button');
+            item.type = 'button';
+            item.className = 'list-group-item list-group-item-action text-end';
+            item.innerHTML = '<strong>' + escapeHtml(sponsor.name) + '</strong> <span class="text-muted">(' + escapeHtml(sponsor.code) + ')</span>';
+            item.addEventListener('click', function() {
+                sponsorInput.value = sponsor.name + ' (' + sponsor.code + ')';
+                sponsorIdInput.value = String(sponsor.id);
+                sponsorHint.textContent = 'تم اختيار الكفيل: ' + sponsor.name + ' (' + sponsor.code + ')';
+                sponsorHint.className = 'form-text text-success';
+                sponsorResults.innerHTML = '';
+                closeSponsorResults();
+            });
+            sponsorResults.appendChild(item);
+        });
+
+        sponsorResults.style.display = '';
+    }
+
+    function escapeHtml(value) {
+        const div = document.createElement('div');
+        div.textContent = String(value || '');
+        return div.innerHTML;
+    }
+
+    if (sponsorInput) {
+        sponsorInput.addEventListener('input', function() {
+            sponsorIdInput.value = '';
+            sponsorHint.textContent = 'ابدأ بكتابة اسم الكفيل أو كوده، ثم اختر النتيجة.';
+            sponsorHint.className = 'form-text';
+            renderSponsorResults();
+        });
+        sponsorInput.addEventListener('focus', renderSponsorResults);
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('#sponsorSearchInput') && !event.target.closest('#sponsorSearchResults')) {
+                closeSponsorResults();
+            }
+        });
+    }
+
+    const sponsorshipForm = sponsorInput ? sponsorInput.closest('form') : null;
+    if (sponsorshipForm) {
+        sponsorshipForm.addEventListener('submit', function(event) {
+            if (!sponsorIdInput.value) {
+                event.preventDefault();
+                sponsorInput.classList.add('is-invalid');
+                sponsorHint.textContent = 'يجب اختيار كفيل من نتائج البحث.';
+                sponsorHint.className = 'form-text text-danger';
+            } else {
+                sponsorInput.classList.remove('is-invalid');
+            }
+        });
+    }
+
+    const forms = document.querySelectorAll('.needs-validation');
+    Array.from(forms).forEach(function(form) {
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) { event.preventDefault(); event.stopPropagation(); }
+            form.classList.add('was-validated');
+        }, false);
+    });
+})();
     const forms = document.querySelectorAll('.needs-validation');
     Array.from(forms).forEach(function(form) {
         form.addEventListener('submit', function(event) {
