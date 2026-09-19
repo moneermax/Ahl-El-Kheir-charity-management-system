@@ -832,7 +832,7 @@ Commit: `68d5db9e76add648933b2874fb5f349bdee0e535` — Ensure two Back buttons o
 
 The shared application header was redesigned so the full header action area is centered directly beneath the organization name banner.
 
-The previous split top-bar arrangement and user dropdown were replaced with a single centered action toolbar. It now presents the existing role-aware quick actions, global search, language switch, pending password-recovery indicator when applicable, current-user identity, Profile, Settings, and Logout as direct header controls. The user dropdown itself is no longer used for these actions.
+The previous split top-bar arrangement was replaced with a centered action toolbar. The current-user identity now uses a compact dropdown for Profile, Settings, and Logout. It now presents the existing role-aware quick actions, global search, language switch, pending password-recovery indicator when applicable, current-user identity, Profile, Settings, and Logout as direct header controls. The user dropdown itself is no longer used for these actions.
 
 The change is presentation/navigation only. Existing destination URLs, role-aware quick-action generation, search permissions, language switching, password-recovery visibility, avatar loading, authentication/logout behavior, and sidebar/back-button logic remain unchanged.
 
