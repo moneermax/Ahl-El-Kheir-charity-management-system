@@ -48,8 +48,8 @@ $requestStatusBadges = [
 <div class="row g-3 mb-4">
 <?php
 $stats = [
-    ['new_requests', 'طلبات رعاية جديدة', 'text-primary', 'modules/sponsors/requests.php'],
-    ['contacted_requests', 'طلبات تم التواصل معها', 'text-info', 'modules/sponsors/requests.php'],
+    ['new_requests', 'طلبات رعاية جديدة', 'text-primary', 'modules/sponsors/requests.php?status=new'],
+    ['contacted_requests', 'طلبات تم التواصل معها', 'text-info', 'modules/sponsors/requests.php?status=contacted'],
 ];
 if ($role === 'administration') {
     $stats[] = ['open_winback', 'متابعات استرجاع مفتوحة', 'text-warning', 'modules/administration/winback.php'];
@@ -99,7 +99,7 @@ foreach ($stats as $stat):
                             <td><?php echo e($req['source'] ?? '—'); ?></td>
                             <td><span class="badge <?php echo e($badge); ?>"><?php echo e($statusLabel); ?></span></td>
                             <td class="text-center">
-                                <a href="<?php echo url('modules/sponsors/requests.php'); ?>" class="btn btn-sm btn-outline-primary" title="فتح طلبات الرعاية">
+                                <a href="<?php echo url('modules/sponsors/requests.php?status=' . urlencode($status)); ?>" class="btn btn-sm btn-outline-primary" title="فتح طلبات الرعاية حسب الحالة">
                                     <i class="fas fa-arrow-up-right-from-square"></i>
                                 </a>
                             </td>
