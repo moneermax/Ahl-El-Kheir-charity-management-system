@@ -1146,11 +1146,7 @@ if (Session::isLoggedIn()) {
 
                     <?php if (!empty($currentQuickActions)): ?>
                         <div class="qa-group qa-group-primary">
-                            <span class="qa-group-label">
-                                <?php echo e(AK_LANG === 'ar' ? 'الوصول السريع' : 'Quick access'); ?>
-                            </span>
-
-                            <?php foreach ($currentQuickActions as $qa): ?>
+                                            <?php foreach ($currentQuickActions as $qa): ?>
                         <a
                             href="<?php echo APP_URL . e($qa['url']); ?>"
                             class="qa-btn"
@@ -1164,10 +1160,6 @@ if (Session::isLoggedIn()) {
                     <?php endif; ?>
 
                     <div class="qa-group qa-group-tools">
-                        <span class="qa-group-label">
-                            <?php echo e(AK_LANG === 'ar' ? 'النظام' : 'System'); ?>
-                        </span>
-
                     <?php if ($canGlobalSearch): ?>
                         <a
                             href="<?php echo APP_URL; ?>modules/search/index.php"
