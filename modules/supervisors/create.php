@@ -135,4 +135,6 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 <script>
 function genPassword(){var chars='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789@#';var p='';for(var i=0;i<10;i++){p+=chars[Math.floor(Math.random()*chars.length)];}document.getElementById('password').value=p;}
 </script>
+
+<div class="container-fluid px-3 pb-4"><div class="d-flex justify-content-start"><a href="<?php echo APP_URL+'modules/supervisors/index.php'; ?>" class="btn btn-outline-secondary" onclick="return akGoBack(this.href);"><i class="fa-solid fa-arrow-right me-1"></i> العودة</a></div></div>
 <?php include dirname(__DIR__, 2) . '/includes/footer.php'; ?>
