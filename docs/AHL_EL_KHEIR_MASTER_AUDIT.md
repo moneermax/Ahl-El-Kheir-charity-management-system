@@ -1110,12 +1110,15 @@ Commit: `0557218daa28d2ce78ff8e9f0bbaf8bacd2f0769` — Add top-left Back button 
 
 ## 2026-09-19 — Shared header action-toolbar redesign
 
-The shared header was changed into a centered action toolbar positioned immediately beneath the organization name, while the current-user dropdown was restored for account actions.
+The shared header redesign is now accepted at the current visual boundary. The organization name remains the header anchor, with centered controls directly beneath it using the available horizontal space. Role-aware quick actions and system controls remain directly visible. The current-user identity is a restored compact dropdown containing Profile, Settings, and Logout. The visible group labels **الوصول السريع** and **النظام** were removed; the controls remain grouped structurally without those text labels.
 
-The toolbar keeps the existing role-aware quick actions and global controls directly visible. The current-user identity/avatar opens a dropdown containing Profile, Settings, and Logout.
+The existing global search, language switching, conditional password-recovery control, role-aware actions, sidebar behavior, and system-wide Back controls remain unchanged. Sidebar remains closed by default and must not be disturbed unless a regression is reported.
 
-Global Search, language switching, and conditional password-recovery access remain direct controls. Existing URLs and authorization boundaries were not changed.
+Code commits:
+- ca3a30f7c26b3196b6a1a428a98ab5c8a06c2874 — initial centered header action toolbar.
+- 894664fac80374f8d86c7192d8962a099b557719 — restore current-user dropdown.
+- 2729522546929b09488ac244857d388ff8d51b1a — remove the visible action-group labels.
 
-The redesign is limited to includes/header.php; no database, schema, accounting, HR, authorization, workflow, sidebar, or Back-navigation logic was changed by this visual phase.
+Runtime checkpoint: user confirmed the final header appearance is acceptable after removing the two labels. No database/schema, authorization, workflow, sidebar, or Back-navigation behavior was changed.
 
-Commit: ca3a30f7c26b3196b6a1a428a98ab5c8a06c2874.
+Next continuation point: proceed with the next system-wide/dashboard change requested by the user. Inspect the current documentation and repository state first; do not reopen completed audits or repeat passed tests without regression evidence.
