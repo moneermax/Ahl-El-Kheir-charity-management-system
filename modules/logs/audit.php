@@ -19,30 +19,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['audit_action'] ?? '') === 
     if (Session::getUserRole() !== 'admin') {
         $deleteMessage = ['type' => 'danger', 'text' => 'ليس لديك صلاحية حذف سجلات التدقيق.'];
     } else {
-        $deleteBefore = trim((string)($_POST['delete_before'] ?? ''));
+        $deleteFrom = trim((string)($_POST['delete_from'] ?? ''));
+        $deleteTo = trim((string)($_POST['delete_to'] ?? ''));
         $confirmed = isset($_POST['confirm_delete']) && $_POST['confirm_delete'] === '1';
-        $isValidDate = (bool)preg_match('/^\\d{4}-\\d{2}-\\d{2}$/', $deleteBefore);
+        $isValidFrom = (bool)preg_match('/^\\d{4}-\\d{2}-\\d{2}$/', $deleteFrom);
+        $isValidTo = (bool)preg_match('/^\\d{4}-\\d{2}-\\d{2}$/', $deleteTo);
 
-        if (!$isValidDate || !$confirmed) {
-            $deleteMessage = ['type' => 'danger', 'text' => 'حدد تاريخًا صحيحًا ثم فعّل مربع تأكيد الحذف.'];
+        if (!$isValidFrom || !$isValidTo || $deleteFrom > $deleteTo || !$confirmed) {
+            $deleteMessage = ['type' => 'danger', 'text' => 'حدد تاريخ بداية ونهاية صحيحين، وتأكد أن تاريخ البداية لا يتجاوز تاريخ النهاية، ثم فعّل مربع تأكيد الحذف.'];
         } else {
             try {
-                // The selected date is inclusive: delete records created on or before it.
+                // Both dates are inclusive: delete records from the start date through the end date.
                 // Count first so the result message reflects what was actually present
                 // before cleanup, rather than relying only on PDO's DELETE rowCount().
                 $beforeCount = (int)(dbFetchOne(
-                    'SELECT COUNT(*) c FROM audit_log WHERE created_at < DATE_ADD(?, INTERVAL 1 DAY)',
-                    [$deleteBefore]
+                    'SELECT COUNT(*) c FROM audit_log WHERE created_at >= ? AND created_at < DATE_ADD(?, INTERVAL 1 DAY)',
+                    [$deleteFrom . ' 00:00:00', $deleteTo]
                 )['c'] ?? 0);
 
                 dbExecute(
-                    'DELETE FROM audit_log WHERE created_at < DATE_ADD(?, INTERVAL 1 DAY)',
-                    [$deleteBefore]
+                    'DELETE FROM audit_log WHERE created_at >= ? AND created_at < DATE_ADD(?, INTERVAL 1 DAY)',
+                    [$deleteFrom . ' 00:00:00', $deleteTo]
                 );
 
                 $remaining = (int)(dbFetchOne(
-                    'SELECT COUNT(*) c FROM audit_log WHERE created_at < DATE_ADD(?, INTERVAL 1 DAY)',
-                    [$deleteBefore]
+                    'SELECT COUNT(*) c FROM audit_log WHERE created_at >= ? AND created_at < DATE_ADD(?, INTERVAL 1 DAY)',
+                    [$deleteFrom . ' 00:00:00', $deleteTo]
                 )['c'] ?? 0);
 
                 if ($remaining > 0) {
@@ -53,20 +55,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['audit_action'] ?? '') === 
                 } elseif ($beforeCount > 0) {
                     $deleteMessage = [
                         'type' => 'success',
-                        'text' => 'تم حذف ' . number_format($beforeCount) . ' سجل تدقيق حتى تاريخ ' . $deleteBefore . '، وتم التحقق من عدم بقاء سجلات ضمن هذا النطاق.',
+                        'text' => 'تم حذف ' . number_format($beforeCount) . ' سجل تدقيق من ' . $deleteFrom . ' إلى ' . $deleteTo . '، وتم التحقق من عدم بقاء سجلات ضمن هذا النطاق.',
                     ];
                 } else {
                     $deleteMessage = [
                         'type' => 'info',
-                        'text' => 'لم تكن هناك سجلات تدقيق ضمن نطاق الحذف حتى تاريخ ' . $deleteBefore . '؛ لذلك لم تكن هناك سجلات جديدة للحذف.',
+                        'text' => 'لم تكن هناك سجلات تدقيق ضمن الفترة من ' . $deleteFrom . ' إلى ' . $deleteTo . '؛ لذلك لم تكن هناك سجلات للحذف.',
                     ];
                 }
             } catch (Throwable $e) {
                 $deleteMessage = ['type' => 'danger', 'text' => 'تعذر حذف سجلات التدقيق.'];
             }
         }
-    }
-}
 
 $fAction = trim($_GET['action'] ?? '');
 $fUser   = (int)($_GET['user'] ?? 0);
@@ -129,25 +129,29 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         <i class="fas fa-trash-can me-2"></i>تنظيف سجلات التدقيق القديمة
     </div>
     <div class="card-body">
-        <form method="post" class="row g-2 align-items-end" onsubmit="return confirm('سيتم حذف جميع سجلات التدقيق حتى التاريخ المحدد نهائيًا. هل تريد المتابعة؟');">
+        <form method="post" class="row g-2 align-items-end" onsubmit="return confirm('سيتم حذف جميع سجلات التدقيق من تاريخ البداية إلى تاريخ النهاية نهائيًا، بما في ذلك اليومان المحددان. هل تريد المتابعة؟');">
             <input type="hidden" name="audit_action" value="delete_old">
-            <div class="col-md-4">
-                <label class="form-label">حذف السجلات حتى تاريخ</label>
-                <input type="date" name="delete_before" class="form-control" required>
+            <div class="col-md-3">
+                <label class="form-label">من تاريخ</label>
+                <input type="date" name="delete_from" class="form-control" required>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
+                <label class="form-label">إلى تاريخ</label>
+                <input type="date" name="delete_to" class="form-control" required>
+            </div>
+            <div class="col-md-3">
                 <div class="form-check mb-2">
                     <input class="form-check-input" type="checkbox" name="confirm_delete" value="1" id="confirmAuditDelete" required>
                     <label class="form-check-label text-danger" for="confirmAuditDelete">أؤكد حذف جميع سجلات التدقيق حتى التاريخ المحدد</label>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <button type="submit" class="btn btn-danger w-100">
                     <i class="fas fa-trash-can me-1"></i>حذف السجلات القديمة
                 </button>
             </div>
         </form>
-        <div class="form-text text-danger mt-2">هذه العملية نهائية. مدير النظام فقط يستطيع تنفيذها، والمدير العام يستطيع عرض السجلات دون حذفها.</div>
+        <div class="form-text text-danger mt-2">سيتم حذف السجلات التي تقع داخل الفترة المحددة فقط، مع احتساب تاريخ البداية والنهاية. هذه العملية نهائية. مدير النظام فقط يستطيع تنفيذها، والمدير العام يستطيع عرض السجلات دون حذفها.</div>
     </div>
 </div>
 <?php endif; ?>
