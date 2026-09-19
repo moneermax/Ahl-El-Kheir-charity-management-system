@@ -787,3 +787,7 @@ Continue by auditing the remaining user-facing modules for: broken Back links, B
 
 ## Navigation acceptance rule — 2026-09-19
 For the active system-wide Back/navigation audit, follow this explicit user rule: **every user-facing page must have a Back button returning to the previous/originating page, unless the page is a dashboard**. Do not treat index/list pages as exceptions. Preserve pagination/search/filter context where applicable. Use akGoBack(fallback) or an equivalent contextual mechanism with a deterministic application fallback; never use a blind global history.back() as the only destination. TCPDF remains out of scope, as do API/JSON endpoints, file streams, redirect-only compatibility entries, and print-only output.
+
+
+### 2026-09-19 — final navigation sweep additions
+A further sweep covered remaining user-facing HR integrity and system maintenance pages that render HTML. API/JSON actions, file streams, redirect-only compatibility endpoints, and print-only output remain excluded because they are not navigable HTML pages. The acceptance rule remains: every user-facing HTML page has Back unless it is a dashboard.
