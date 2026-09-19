@@ -596,3 +596,21 @@ This has been corrected narrowly:
 - Implementation commits: `67576f02e2642ec018d5aeb053f6db75dae925bb` and `6ff62b70528d7a10738a73e90250be1b937ba7e2`.
 
 **Runtime status:** code correction is committed; local migration application and Winback runtime verification are still pending. Do not mark the Administration dashboard review complete until the migration is applied and the linked Winback workflow is tested.
+
+### Administration dashboard review — Staff orphan-forms authorization correction — 2026-09-19
+
+A linked-page authorization mismatch was found and fixed. `dashboard/staff_dashboard.php` intentionally exposes **استمارات الأيتام** to Administration, Staff, and Social Media, but `modules/families/orphan_forms_index.php` allowed Administration and Social Media while omitting `staff`. The Staff dashboard link therefore did not have matching server-side page authorization.
+
+Fixed narrowly by adding `staff` to the existing `$viewRoles` list in `modules/families/orphan_forms_index.php`.
+
+Commit: `223c462528cc0e69d62bcf5f76094cea6ce821e2`.
+
+No edit or financial-profile privileges were added to Staff; the existing `$canEdit` and `$canSeeFinancial` rules remain unchanged.
+
+### Administration sponsorship-family header visual fix — 2026-09-19
+
+The orphan/child section header on `modules/administration/sponsorship_family_view.php` now uses the same actual application header background (`--navy`) directly on the page. The earlier shared-CSS attempt had no effect because `includes/header.php` does not load `assets/css/style.css`.
+
+Commit: `2e4673a9a432e80ffb9cdccddadb4cbffd08b450`.
+
+The user confirmed the visual result is correct.
