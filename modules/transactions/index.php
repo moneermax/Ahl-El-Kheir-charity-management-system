@@ -96,4 +96,6 @@ document.querySelectorAll('.ak-pending-return-form').forEach(function(form){form
 document.querySelectorAll('.ak-cancel-returned-form').forEach(function(form){form.addEventListener('submit',function(e){e.preventDefault();akSwalConfirm({title:'تأكيد الإلغاء',text:'هل أنت متأكد من إلغاء هذه الدفعة المُعادة؟',icon:'warning',showCancelButton:true,confirmButtonText:'نعم، إلغاء',cancelButtonText:'تراجع',reverseButtons:true},true,form);});});
 document.querySelectorAll('.ak-void-form').forEach(function(form){form.addEventListener('submit',function(e){e.preventDefault();akSwalConfirm({title:'تأكيد الإبطال',text:form.dataset.confirmMsg||'هل أنت متأكد؟',icon:'warning',showCancelButton:true,confirmButtonColor:'#dc3545',cancelButtonColor:'#6c757d',confirmButtonText:'نعم، إبطال',cancelButtonText:'إلغاء',reverseButtons:true},true,form);});});
 </script>
+
+<div class="container-fluid px-3 pb-4"><div class="d-flex justify-content-start"><a href="<?php echo APP_URL+'modules/transactions/index.php'; ?>" class="btn btn-outline-secondary" onclick="return akGoBack(this.href);"><i class="fa-solid fa-arrow-right me-1"></i> العودة</a></div></div>
 <?php include dirname(__DIR__,2).'/includes/footer.php'; ?>
