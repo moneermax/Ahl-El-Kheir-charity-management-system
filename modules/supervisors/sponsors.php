@@ -52,4 +52,6 @@ include dirname(__DIR__, 2) . '/includes/header.php'; ?>
 <td><?php echo $r['status'] === 'active' ? '<span class="badge bg-success">' . e(t('supervisors.active')) . '</span>' : '<span class="badge bg-secondary">' . e(t('supervisors.suspended')) . '</span>'; ?></td>
 <td><a class="btn btn-sm btn-primary" title="<?php echo e(t('supervisors.view')); ?>" href="<?php echo APP_URL; ?>modules/sponsors/view.php?id=<?php echo (int)$r['id']; ?>"><i class="fas fa-eye"></i></a></td>
 </tr><?php endforeach; endif; ?></tbody></table></div></div></div>
+
+<div class="container-fluid px-3 pb-4"><div class="d-flex justify-content-start"><a href="<?php echo APP_URL+'modules/supervisors/index.php'; ?>" class="btn btn-outline-secondary" onclick="return akGoBack(this.href);"><i class="fa-solid fa-arrow-right me-1"></i> العودة</a></div></div>
 <?php include dirname(__DIR__, 2) . '/includes/footer.php'; ?>
