@@ -793,3 +793,22 @@ A second batch added contextual Back actions across remaining HR, Users, Setting
 
 ### 2026-09-19 — final navigation sweep additions
 A further sweep covered remaining user-facing HR integrity and system maintenance pages that render HTML. API/JSON actions, file streams, redirect-only compatibility endpoints, and print-only output remain excluded because they are not navigable HTML pages. The acceptance rule remains: every user-facing HTML page has Back unless it is a dashboard.
+
+## Legal-age alert — Nanny Dashboard — 2026-09-19
+
+The shared legal-age alert was extended to the Nanny Dashboard without creating a second implementation.
+
+- dashboard/nanny_dashboard.php now includes includes/age_alert.php before the shared footer.
+- The shared alert applies the Nanny's scope server-side using families.nanny_id = current_user_id().
+- The alert therefore never loads legal-age children belonging to another Nanny.
+- The existing child suspension workflow in modules/families/suspensions.php was verified: suspending a child sets family_children.is_active = 0 and pauses active sponsorships linked to that child.
+- Because the shared legal-age query requires fc.is_active = 1, a suspended child disappears from the legal-age popup after refresh on all dashboards using the shared alert (Nanny, GM, VGM, and Admin where applicable).
+- The Nanny Dashboard's existing separate near-legal-age card also uses fc.is_active = 1, so the suspended child is removed there as well.
+- The popup now shows once per authenticated PHP session using sessionStorage keyed by a hash of the PHP session ID, rather than persisting indefinitely in localStorage. Bootstrap initialization is immediate with a bounded retry loop because the alert is rendered near the bottom of the page.
+
+Implementation commits:
+- 474741e4f094b264e033af89f690838765c7e4a5 — Add legal age alert to nanny dashboard.
+- 44e873fa548aa15142a4d3548437bae8371d1c6d — Improve legal age alert popup initialization.
+- ab489dfa5ab5c00d52b76d3e0a8a97be2d2e6cd8 — Make legal age alert show once per login session.
+
+Temporary legal-age test DOBs were restored to their original values after verification. No schema change was made. The feature is COMPLETE / CLOSED at the current boundary; do not reopen unless regression evidence appears.
