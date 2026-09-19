@@ -748,8 +748,15 @@ Next checkpoint: user-side visual verification of one ordinary audited page and 
 
 ## 2026-09-19 — Shared header action-toolbar redesign
 
-The current shared header now uses the full horizontal header space as a centered action toolbar directly below the organization name. The current-user identity now uses a restored dropdown containing Profile, Settings, and Logout; role-aware quick actions and system controls remain directly visible. Existing role-aware quick actions, global search, language switching, and conditional password-recovery controls remain available in the same shared header.
+The shared header redesign is now accepted at the current visual boundary. The organization name remains the header anchor, with centered controls directly beneath it using the available horizontal space. Role-aware quick actions and system controls remain directly visible. The current-user identity is a restored compact dropdown containing Profile, Settings, and Logout. The visible group labels **الوصول السريع** and **النظام** were removed; the controls remain grouped structurally without those text labels.
 
-Code commit: ca3a30f7c26b3196b6a1a428a98ab5c8a06c2874.
+The existing global search, language switching, conditional password-recovery control, role-aware actions, sidebar behavior, and system-wide Back controls remain unchanged. Sidebar remains closed by default and must not be disturbed unless a regression is reported.
 
-The sidebar remains closed by default on page navigation and the system-wide Back controls remain active. The centered header is the next runtime UX checkpoint; verify desktop spacing and narrow-screen wrapping before considering the redesign final.
+Code commits:
+- ca3a30f7c26b3196b6a1a428a98ab5c8a06c2874 — initial centered header action toolbar.
+- 894664fac80374f8d86c7192d8962a099b557719 — restore current-user dropdown.
+- 2729522546929b09488ac244857d388ff8d51b1a — remove the visible action-group labels.
+
+Runtime checkpoint: user confirmed the final header appearance is acceptable after removing the two labels. No database/schema, authorization, workflow, sidebar, or Back-navigation behavior was changed.
+
+Next continuation point: proceed with the next system-wide/dashboard change requested by the user. Inspect the current documentation and repository state first; do not reopen completed audits or repeat passed tests without regression evidence.
