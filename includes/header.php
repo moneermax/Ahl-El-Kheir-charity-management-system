@@ -757,6 +757,16 @@ if (Session::isLoggedIn()) {
             font-size: 0.75rem;
             font-weight: 700;
             cursor: pointer;
+            min-width: 92px;
+            line-height: 1.2;
+        }
+
+        .ak-mobile-menu-icon {
+            display: inline-block;
+            font-family: Arial, sans-serif;
+            font-size: 1.15rem;
+            line-height: 1;
+            font-weight: 700;
         }
 
         .ak-mobile-menu-btn:hover,
@@ -1060,7 +1070,7 @@ if (Session::isLoggedIn()) {
                         aria-expanded="false"
                         title="<?php echo e(AK_LANG === 'ar' ? 'فتح القائمة' : 'Open menu'); ?>"
                     >
-                        <i class="fas fa-bars" aria-hidden="true"></i>
+                        <span class="ak-mobile-menu-icon" aria-hidden="true">☰</span>
                         <span><?php echo e(AK_LANG === 'ar' ? 'القائمة' : 'Menu'); ?></span>
                     </button>
 
