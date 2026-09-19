@@ -892,3 +892,21 @@ This has been corrected narrowly:
 - Implementation commits: `67576f02e2642ec018d5aeb053f6db75dae925bb` and `6ff62b70528d7a10738a73e90250be1b937ba7e2`.
 
 **Runtime status:** code correction is committed; local migration application and Winback runtime verification are still pending. Do not mark the Administration dashboard review complete until the migration is applied and the linked Winback workflow is tested.
+
+### Administration dashboard review — linked-page authorization finding — 2026-09-19
+
+`dashboard/staff_dashboard.php` provides an **استمارات الأيتام** quick action for `administration`, `staff`, and `social_media`. Inspection of the target `modules/families/orphan_forms_index.php` showed its existing `$viewRoles` list omitted `staff`. This created a concrete navigation/authorization mismatch: Staff could see the dashboard action but the target page did not authorize the role.
+
+**Fix:** added `staff` to `$viewRoles` only. Existing Staff restrictions remain intact: `$canEdit` is still limited to `admin`, `vice_general_manager`, `supervisor`, and `nanny`; `$canSeeFinancial` is still limited to `admin`, `vice_general_manager`, `general_manager`, `supervisor`, and `nanny`.
+
+Commit: `223c462528cc0e69d62bcf5f76094cea6ce821e2`.
+
+**Runtime verification:** pending user pull/test.
+
+### Administration sponsorship-family header visual correction — 2026-09-19
+
+The sponsorship-safe family profile child/orphan section header was styled directly in `modules/administration/sponsorship_family_view.php` using the application's actual `--navy` variable. The earlier `assets/css/style.css` change could not affect the rendered page because `includes/header.php` does not load that stylesheet.
+
+Commit: `2e4673a9a432e80ffb9cdccddadb4cbffd08b450`.
+
+**Runtime verification:** user confirmed the visual result is correct.
