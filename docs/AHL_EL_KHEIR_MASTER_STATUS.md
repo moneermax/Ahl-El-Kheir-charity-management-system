@@ -812,3 +812,10 @@ Implementation commits:
 - ab489dfa5ab5c00d52b76d3e0a8a97be2d2e6cd8 — Make legal age alert show once per login session.
 
 Temporary legal-age test DOBs were restored to their original values after verification. No schema change was made. The feature is COMPLETE / CLOSED at the current boundary; do not reopen unless regression evidence appears.
+
+
+## 2026-09-19 — Second Back button at top-left
+
+The existing contextual Back-button implementation remains unchanged. A shared enhancement was added in `includes/footer.php`: any user-facing HTML page that already contains the audited contextual Back button now receives a second cloned Back button at the top-left of the page content. Both buttons use the same existing `akGoBack(fallback)` behavior, so originating-page context and deterministic fallback remain identical. Dashboards and excluded non-HTML/stream/print endpoints are unaffected. The existing bottom Back button remains in place.
+
+Commit: `0557218daa28d2ce78ff8e9f0bbaf8bacd2f0769` — Add top-left Back button to pages with contextual Back.
