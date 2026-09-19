@@ -360,7 +360,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                                         <td><?php echo number_format((float)$spRow['monthly_amount'], 2); ?> ج.س</td>
                                         <td><?php echo e($spRow['start_date'] ?? '—'); ?></td>
                                         <td><?php $spStatusLabels=['active'=>'نشطة','paused'=>'موقوفة','completed'=>'مكتملة','cancelled'=>'ملغاة']; $spStatusClasses=['active'=>'bg-success','paused'=>'bg-warning text-dark','completed'=>'bg-info text-dark','cancelled'=>'bg-danger']; ?><span class="badge <?php echo $spStatusClasses[$spRow['status']] ?? 'bg-secondary'; ?>"><?php echo e($spStatusLabels[$spRow['status']] ?? $spRow['status']); ?></span></td>
-                                        <td class="text-center"><a href="<?php echo APP_URL; ?>modules/sponsorships/index.php?sponsorship=<?php echo (int)$spRow['sponsorship_id']; ?>" class="btn btn-sm btn-outline-primary" target="_blank"><i class="fas fa-edit me-1"></i>تعديل</a></td>
+                                        <td class="text-center"><a href="<?php echo APP_URL; ?>modules/sponsorships/view.php?id=<?php echo (int)$spRow['sponsorship_id']; ?>" class="btn btn-sm btn-outline-primary" target="_blank"><i class="fas fa-edit me-1"></i>تعديل</a></td>
                                     </tr>
                                 <?php endforeach; ?>
                                 </tbody>
