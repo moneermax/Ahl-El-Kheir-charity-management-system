@@ -749,6 +749,23 @@ if (Session::isLoggedIn()) {
         }
 
         @media (max-width: 768px) {
+            .qa-top-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .qa-actions {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .qa-user-controls {
+                width: 100%;
+                justify-content: center;
+                margin-right: 0 !important;
+                margin-left: 0 !important;
+            }
+
             .ak-header-search-btn span {
                 display: none;
             }
