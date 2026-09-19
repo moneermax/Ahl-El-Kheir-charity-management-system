@@ -429,21 +429,108 @@ if (Session::isLoggedIn()) {
 
 
         .app-wrapper {
-            display: flex;
             min-height: 100vh;
         }
 
 
+        :root {
+            --ak-sidebar-width: clamp(260px, 22vw, 320px);
+        }
+
+
         .sidebar {
-            width: 260px;
+            width: var(--ak-sidebar-width);
             background: var(--navy);
             color: #fff;
-            flex-shrink: 0;
-            position: sticky;
+            position: fixed;
             top: 0;
+            right: 0;
+            left: auto;
             height: 100vh;
             overflow-y: auto;
-            z-index: 1020;
+            z-index: 1200;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.22);
+            transform: translateX(0);
+            transition: transform 0.28s cubic-bezier(.22,.61,.36,1);
+            will-change: transform;
+        }
+
+
+        [dir="ltr"] .sidebar {
+            right: auto;
+            left: 0;
+            box-shadow: 10px 0 30px rgba(0,0,0,0.22);
+        }
+
+
+        body:not(.sidebar-open) .sidebar {
+            transform: translateX(100%);
+        }
+
+
+        [dir="ltr"] body:not(.sidebar-open) .sidebar {
+            transform: translateX(-100%);
+        }
+
+
+        .ak-sidebar-toggle {
+            position: fixed;
+            top: 50%;
+            right: 10px;
+            transform: translateY(-50%);
+            z-index: 1202;
+            width: 42px;
+            height: 74px;
+            border: 0;
+            border-radius: 12px 0 0 12px;
+            background: var(--navy);
+            color: #fff;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.24);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: right 0.28s cubic-bezier(.22,.61,.36,1),
+                        left 0.28s cubic-bezier(.22,.61,.36,1),
+                        background .2s ease,
+                        box-shadow .2s ease;
+        }
+
+
+        .ak-sidebar-toggle:hover,
+        .ak-sidebar-toggle:focus-visible {
+            background: var(--navy-dark);
+            color: #fff;
+            outline: none;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.30);
+        }
+
+
+        .ak-sidebar-toggle:focus-visible {
+            outline: 3px solid rgba(255,255,255,.72);
+            outline-offset: 2px;
+        }
+
+
+        body.sidebar-open .ak-sidebar-toggle {
+            right: var(--ak-sidebar-width);
+        }
+
+
+        [dir="ltr"] .ak-sidebar-toggle {
+            right: auto;
+            left: 10px;
+            border-radius: 0 12px 12px 0;
+        }
+
+
+        [dir="ltr"] body.sidebar-open .ak-sidebar-toggle {
+            left: var(--ak-sidebar-width);
+        }
+
+
+        .ak-sidebar-toggle i {
+            font-size: 1.05rem;
         }
 
 
@@ -781,60 +868,12 @@ if (Session::isLoggedIn()) {
         }
 
         @media (max-width: 991.98px) {
-            .ak-mobile-menu-btn {
-                position: fixed;
-                top: 10px;
-                right: 10px;
-                z-index: 1201;
-                min-width: 48px;
-                min-height: 44px;
-                padding: 7px 12px;
-                border: 2px solid rgba(255,255,255,0.65);
-                border-radius: 8px;
-                background: var(--navy-dark);
-                color: #fff;
-                box-shadow: 0 4px 14px rgba(0,0,0,0.28);
-            }
-
-            [dir="ltr"] .ak-mobile-menu-btn {
-                right: auto;
-                left: 10px;
-            }
-
-            .ak-mobile-menu-btn .ak-mobile-menu-icon {
-                font-size: 1.35rem;
-            }
-
-            .sidebar {
-                position: fixed;
-                top: 0;
-                right: 0;
-                left: auto;
-                width: min(84vw, 300px);
-                height: 100vh;
-                transform: translateX(100%);
-                transition: transform 0.25s ease;
-                box-shadow: -8px 0 24px rgba(0,0,0,0.22);
-                z-index: 1100;
-            }
-
-            [dir="ltr"] .sidebar {
-                right: auto;
-                left: 0;
-                transform: translateX(-100%);
-                box-shadow: 8px 0 24px rgba(0,0,0,0.22);
-            }
-
-            body.sidebar-open .sidebar {
-                transform: translateX(0);
-            }
-
             .sidebar-overlay {
                 display: block;
                 position: fixed;
                 inset: 0;
                 background: rgba(0,0,0,0.45);
-                z-index: 1090;
+                z-index: 1190;
                 opacity: 0;
                 visibility: hidden;
                 pointer-events: none;
@@ -847,13 +886,14 @@ if (Session::isLoggedIn()) {
                 pointer-events: auto;
             }
 
+            .ak-sidebar-toggle {
+                width: 44px;
+                height: 68px;
+            }
+
             .main-area {
                 width: 100%;
                 min-width: 0;
-            }
-
-            .ak-mobile-menu-btn {
-                display: inline-flex;
             }
         }
 
@@ -986,6 +1026,17 @@ if (Session::isLoggedIn()) {
 
 <div class="app-wrapper">
 
+    <button
+        type="button"
+        class="ak-sidebar-toggle"
+        id="akSidebarToggle"
+        aria-controls="sidebar"
+        aria-expanded="true"
+        title="<?php echo e(AK_LANG === 'ar' ? 'إخفاء القائمة' : 'Hide menu'); ?>"
+    >
+        <i class="fas fa-chevron-right" aria-hidden="true"></i>
+        <span class="visually-hidden"><?php echo e(AK_LANG === 'ar' ? 'إخفاء القائمة' : 'Hide menu'); ?></span>
+    </button>
 
     <?php
     include __DIR__ . '/sidebar.php';
@@ -1085,18 +1136,6 @@ if (Session::isLoggedIn()) {
                      ===================================================== -->
 
                 <div class="qa-user-controls">
-
-                    <button
-                        type="button"
-                        class="ak-mobile-menu-btn"
-                        id="akMobileMenuBtn"
-                        aria-controls="sidebar"
-                        aria-expanded="false"
-                        title="<?php echo e(AK_LANG === 'ar' ? 'فتح القائمة' : 'Open menu'); ?>"
-                    >
-                        <span class="ak-mobile-menu-icon" aria-hidden="true">☰</span>
-                        <span><?php echo e(AK_LANG === 'ar' ? 'القائمة' : 'Menu'); ?></span>
-                    </button>
 
                     <?php if ($canGlobalSearch): ?>
                         <a
