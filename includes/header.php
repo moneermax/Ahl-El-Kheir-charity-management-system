@@ -479,13 +479,13 @@ if (Session::isLoggedIn()) {
             right: 0;
             transform: translateY(-50%);
             z-index: 1202;
-            width: 34px;
+            width: 28px;
             height: 118px;
             border: 0;
             border-radius: 18px 0 0 18px;
             background: var(--navy);
             color: #fff;
-            box-shadow: 0 8px 22px rgba(0,0,0,.18);
+            box-shadow: none;
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -501,7 +501,7 @@ if (Session::isLoggedIn()) {
 
         .ak-sidebar-toggle:hover {
             background: var(--navy-dark);
-            box-shadow: 0 10px 28px rgba(0,0,0,.30);
+            box-shadow: none;
         }
 
 
@@ -875,10 +875,10 @@ if (Session::isLoggedIn()) {
 
         @media (max-width: 991.98px) {
             .ak-sidebar-toggle {
-                width: 32px;
+                width: 28px;
                 height: 104px;
                 right: 0;
-                border-radius: 16px 0 0 16px;
+                border-radius: 14px 0 0 14px;
             }
 
             body.sidebar-open .ak-sidebar-toggle {
@@ -916,22 +916,24 @@ if (Session::isLoggedIn()) {
             }
 
             .ak-sidebar-toggle {
-                width: 48px;
-                height: 48px;
-                right: 12px;
+                width: 28px;
+                height: 104px;
+                right: 0;
+                border-radius: 14px 0 0 14px;
             }
 
             body.sidebar-open .ak-sidebar-toggle {
-                right: calc(var(--ak-sidebar-width) + 10px);
+                right: var(--ak-sidebar-width);
             }
 
             [dir="ltr"] .ak-sidebar-toggle {
                 right: auto;
-                left: 12px;
+                left: 0;
+                border-radius: 0 14px 14px 0;
             }
 
             [dir="ltr"] body.sidebar-open .ak-sidebar-toggle {
-                left: calc(var(--ak-sidebar-width) + 10px);
+                left: var(--ak-sidebar-width);
             }
 
             .main-area {
