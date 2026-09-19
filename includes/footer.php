@@ -50,14 +50,31 @@ window.AK_TRANSLATIONS=<?php echo json_encode(ak_dict(),JSON_UNESCAPED_UNICODE|J
 <?php if (($active ?? '') === 'fm_dashboard'): ?><script src="<?php echo asset('js/fina_dashboard_widget.js'); ?>"></script><?php endif; ?>
 <script>
 (function(){
-    var btn = document.getElementById('akMobileMenuBtn');
+    var btn = document.getElementById('akSidebarToggle');
     var overlay = document.getElementById('sidebarOverlay');
+    var mobileQuery = window.matchMedia('(max-width: 991.98px)');
 
     function setSidebar(open) {
         document.body.classList.toggle('sidebar-open', open);
-        document.body.style.overflow = open ? 'hidden' : '';
-        if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+
+        if (btn) {
+            btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            btn.setAttribute('title', open
+                ? (window.AK_LANG === 'ar' ? 'إخفاء القائمة' : 'Hide menu')
+                : (window.AK_LANG === 'ar' ? 'إظهار القائمة' : 'Show menu'));
+
+            var icon = btn.querySelector('i');
+            if (icon) {
+                icon.className = 'fas ' + (open
+                    ? (document.documentElement.dir === 'rtl' ? 'fa-chevron-right' : 'fa-chevron-left')
+                    : 'fa-bars');
+            }
+        }
+
+        document.body.style.overflow = mobileQuery.matches && open ? 'hidden' : '';
     }
+
+    setSidebar(!mobileQuery.matches);
 
     if (btn) {
         btn.addEventListener('click', function () {
@@ -67,25 +84,28 @@ window.AK_TRANSLATIONS=<?php echo json_encode(ak_dict(),JSON_UNESCAPED_UNICODE|J
 
     if (overlay) {
         overlay.addEventListener('click', function () {
-            setSidebar(false);
+            if (mobileQuery.matches) setSidebar(false);
         });
     }
 
     document.addEventListener('keydown', function (event) {
-        if (event.key === 'Escape') setSidebar(false);
+        if (event.key === 'Escape' && document.body.classList.contains('sidebar-open')) {
+            setSidebar(false);
+            if (btn) btn.focus();
+        }
     });
 
     document.querySelectorAll('#sidebar a').forEach(function (link) {
         link.addEventListener('click', function () {
-            if (window.matchMedia('(max-width: 991.98px)').matches) {
-                setSidebar(false);
-            }
+            if (mobileQuery.matches) setSidebar(false);
         });
     });
 
     window.addEventListener('resize', function () {
-        if (!window.matchMedia('(max-width: 991.98px)').matches) {
-            setSidebar(false);
+        if (mobileQuery.matches) {
+            if (document.body.classList.contains('sidebar-open')) setSidebar(false);
+        } else if (!document.body.classList.contains('sidebar-open')) {
+            setSidebar(true);
         }
     });
 })();
