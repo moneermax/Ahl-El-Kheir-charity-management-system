@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
     $action = $_POST['action'] ?? '';
     if ($action === 'add') {
         $name = trim($_POST['sponsor_name'] ?? ''); $phone = trim($_POST['phone'] ?? ''); $source = trim($_POST['source'] ?? ''); $gender = strtolower(trim((string)($_POST['gender'] ?? ''))); $notes = trim($_POST['notes'] ?? ''); $byName = trim($_POST['brought_by_name'] ?? ''); if ($byName === '') $byName = $currentUserName;
-        if ($name !== '' && $source !== '' && in_array($gender, ['male', 'female'], true)) { dbExecute("INSERT INTO sponsor_requests (sponsor_name, phone, gender, source, brought_by, brought_by_name, notes) VALUES (?,?,?,?,?,?,?)", [$name, $phone !== '' ? $phone : null, $gender, $source, Session::getUserId(), $byName, $notes !== '' ? $notes : null]); flash('success', t('sponsors.request_added')); header('Location: ' . APP_URL . 'modules/sponsors/requests.php'); exit(); } else { flash('error', $name === '' ? t('sponsors.request_name_required') : t('sponsors.create_gender') . ': ' . t('sponsors.create_male') . ' / ' . t('sponsors.create_female')); }
+        if ($name !== '' && $source !== '' && in_array($gender, ['male', 'female'], true)) { dbExecute("INSERT INTO sponsor_requests (sponsor_name, phone, gender, source, brought_by, brought_by_name, notes) VALUES (?,?,?,?,?,?,?)", [$name, $phone !== '' ? $phone : null, $gender, $source, Session::getUserId(), $byName, $notes !== '' ? $notes : null]); flash('success', t('sponsors.request_added')); header('Location: ' . APP_URL . ($forcedStatusFilter === 'new' ? 'modules/sponsors/new_requests.php' : ($forcedStatusFilter === 'contacted' ? 'modules/sponsors/contacted_requests.php' : 'modules/sponsors/requests.php'))); exit(); } else { flash('error', $name === '' ? t('sponsors.request_name_required') : t('sponsors.create_gender') . ': ' . t('sponsors.create_male') . ' / ' . t('sponsors.create_female')); }
     }
     if ($action === 'set_status' && !empty($_POST['id'])) {
         $id = (int)$_POST['id'];
@@ -74,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
             dbExecute("DELETE FROM sponsor_requests WHERE id = ? AND status = 'new' AND assigned_supervisor_id IS NULL", [$id]);
             flash('success', 'تم حذف طلب الرعاية نهائياً.');
         }
-        header('Location: ' . APP_URL . 'modules/sponsors/requests.php');
+        header('Location: ' . APP_URL . ($forcedStatusFilter === 'new' ? 'modules/sponsors/new_requests.php' : ($forcedStatusFilter === 'contacted' ? 'modules/sponsors/contacted_requests.php' : 'modules/sponsors/requests.php')));
         exit();
     }
     if ($action === 'convert' && !empty($_POST['id'])) {
@@ -82,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
             $req = dbFetchOne("SELECT * FROM sponsor_requests WHERE id = ?", [$id]);
             if ($req && $req['status'] !== 'converted') {
                 $gender = strtolower(trim((string)($req['gender'] ?? '')));
-                if (!in_array($gender, ['male', 'female'], true)) { flash('error', t('sponsors.create_gender') . ': ' . t('sponsors.create_male') . ' / ' . t('sponsors.create_female')); header('Location: ' . APP_URL . 'modules/sponsors/requests.php'); exit(); }
+                if (!in_array($gender, ['male', 'female'], true)) { flash('error', t('sponsors.create_gender') . ': ' . t('sponsors.create_male') . ' / ' . t('sponsors.create_female')); header('Location: ' . APP_URL . ($forcedStatusFilter === 'new' ? 'modules/sponsors/new_requests.php' : ($forcedStatusFilter === 'contacted' ? 'modules/sponsors/contacted_requests.php' : 'modules/sponsors/requests.php'))); exit(); }
                 $name = trim((string)$req['sponsor_name']);
                 [$rawLetter, $normalizedLetter] = first_letter_of($name);
                 $letterRow = dbFetchOne("SELECT id FROM letters WHERE is_active = 1 AND code = ? LIMIT 1", [$normalizedLetter]);
