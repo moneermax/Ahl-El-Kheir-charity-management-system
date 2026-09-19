@@ -12,7 +12,7 @@ if(!in_array($role,['admin','vice_general_manager','general_manager','supervisor
 $pageTitle=t('sponsors.view_title');$active='sponsors';$id=(int)($_GET['id']??0);
 $returnQuery=trim((string)($_GET['return']??''));
 $backUrl=APP_URL.'modules/sponsors/index.php';
-if($returnQuery!==''){$returnParams=[];parse_str(rawurldecode($returnQuery),$parsedReturnParams);foreach(['q','status','sup','page'] as $key)if(isset($parsedReturnParams[$key])&&$parsedReturnParams[$key]!=='')$returnParams[$key]=$key==='page'||$key==='sup'?(int)$parsedReturnParams[$key]:trim((string)$parsedReturnParams[$key]);if($returnParams)$backUrl.='?'.http_build_query($returnParams);}
+if($returnQuery!==''){$returnParams=[];parse_str(rawurldecode($returnQuery),$parsedReturnParams);foreach(['q','status','sup','link_status','page'] as $key)if(isset($parsedReturnParams[$key])&&$parsedReturnParams[$key]!=='')$returnParams[$key]=$key==='page'||$key==='sup'?(int)$parsedReturnParams[$key]:trim((string)$parsedReturnParams[$key]);if($returnParams)$backUrl.='?'.http_build_query($returnParams);}
 $sp=dbFetchOne("SELECT s.*,l.code AS letter,u.full_name AS supervisor_name FROM sponsors s LEFT JOIN letters l ON l.id=s.first_letter_id LEFT JOIN users u ON u.id=s.supervisor_id WHERE s.id=?",[$id]);
 if(!$sp){flash('error',t('sponsors.view_not_found'));redirect('modules/sponsors/index.php');}
 if($role==='supervisor'&&!supervisorCanAccessSponsor(Session::getUserId(),$sp)){flash('error',t('sponsors.view_no_permission'));redirect('modules/sponsors/index.php');}
