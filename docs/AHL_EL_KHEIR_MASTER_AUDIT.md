@@ -1020,6 +1020,16 @@ A concrete responsive defect was identified in the shared header: `.qa-top-bar` 
 
 ## Mobile navigation responsive audit — 2026-09-19
 
+### Final mobile navigation refinement
+
+After real-device testing over the local network, the user confirmed the mobile navigation is now substantially improved and usable. The dedicated fixed `☰ القائمة` control is visible on the phone and opens the existing off-canvas sidebar.
+
+A small follow-up UX refinement was added in commit `af03d9dd775930be865c2b03a470665f3dab610b`: while the mobile sidebar is open, the page background is locked against scrolling. This prevents accidental horizontal/vertical movement of the underlying page while the drawer is active. Closing the drawer restores normal page scrolling.
+
+The user considers the current mobile layout acceptable for this audit phase. A more app-like mobile redesign is intentionally deferred to a later phase.
+
+## Mobile navigation responsive audit — 2026-09-19
+
 ### Finding
 
 The previous responsive header adjustment was insufficient. On narrow screens the sidebar still remained a 260px flex child, so the main content was compressed and the sidebar visually consumed most of the viewport. This is a concrete shared-layout defect, not merely a visual preference.
