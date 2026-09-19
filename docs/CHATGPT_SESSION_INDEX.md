@@ -724,3 +724,7 @@ The current active task is a system-wide Back/navigation audit. TCPDF is explici
 
 ## 2026-09-19 — Back/navigation audit expanded
 The active navigation audit now follows the user's explicit rule: every user-facing page must have a Back button unless it is a dashboard. Module index/list pages are included. The audit excludes TCPDF and non-HTML endpoints/streams. akGoBack(fallback) is the shared implementation, preserving same-origin originating context and using a deterministic fallback for direct entry.
+
+
+### 2026-09-19 — final navigation sweep additions
+A further sweep covered remaining user-facing HR integrity and system maintenance pages that render HTML. API/JSON actions, file streams, redirect-only compatibility endpoints, and print-only output remain excluded because they are not navigable HTML pages. The acceptance rule remains: every user-facing HTML page has Back unless it is a dashboard.
