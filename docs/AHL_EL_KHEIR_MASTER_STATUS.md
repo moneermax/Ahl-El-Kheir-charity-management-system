@@ -536,3 +536,16 @@ Relevant implementation/documentation history:
 Runtime status: **PASS / CLOSED at this boundary**. The user confirmed the page opens and works after the final fix.
 
 Do not repeat the cleanup tests or alter the retention behavior unless new regression evidence or an explicit new retention requirement appears.
+
+
+## ORPHAN PROFILE — ADDITIONAL SPONSORSHIP UX — 2026-09-19
+
+A targeted sponsorship UX improvement was implemented at `modules/families/orphan_profile.php`.
+
+Commit: `b0ba3f92d1ee9ea542936f9ce8b381c03f964b45`.
+
+An orphan may now have multiple sponsorship records, consistent with the actual `sponsorships.child_id` schema and the absence of a uniqueness constraint on that relationship. The orphan profile now lists all sponsorships and provides an inline **إضافة كفيل آخر** modal for authorized roles. The modal keeps the orphan context, captures sponsor/monthly amount/start date/notes, applies the existing supervisor sponsor-scope rule server-side, excludes already active/paused sponsors for that orphan, and writes the normal sponsorship audit record.
+
+This is a workflow simplification only; it does not weaken sponsor authorization or replace the existing sponsorship editing workflow.
+
+**Runtime verification pending after pull.**
