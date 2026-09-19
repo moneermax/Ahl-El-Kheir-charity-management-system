@@ -38,7 +38,7 @@ if (!$child) {
     exit();
 }
 
-$likeTerm = '%' . str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $searchTerm) . '%';
+$likeTerm = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $searchTerm) . '%';
 
 $where = [
     "s.status = 'active'",
