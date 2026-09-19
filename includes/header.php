@@ -776,9 +776,78 @@ if (Session::isLoggedIn()) {
             margin: 0 2px;
         }
 
-        .ak-dd,
+        .ak-dd {
+            position: relative;
+            display: inline-flex;
+        }
+
         .ak-dd-menu {
-            display: none !important;
+            display: none;
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            right: auto;
+            min-width: 190px;
+            background: #fff;
+            border: 1px solid #e3e7ee;
+            border-radius: 9px;
+            box-shadow: 0 10px 28px rgba(10,31,68,.20);
+            z-index: 1205;
+            padding: 5px;
+            color: #333;
+            text-align: start;
+        }
+
+        [dir="ltr"] .ak-dd-menu {
+            left: auto;
+            right: 0;
+        }
+
+        .ak-dd.open .ak-dd-menu {
+            display: block;
+        }
+
+        .ak-dd-item {
+            display: block;
+            padding: 8px 10px;
+            border-radius: 6px;
+            color: #21315b;
+            text-decoration: none;
+            font-size: .78rem;
+            font-weight: 600;
+        }
+
+        .ak-dd-item:hover {
+            background: #eef2f9;
+        }
+
+        .ak-dd-item.text-danger {
+            color: #dc3545;
+        }
+
+        .ak-dd-item.text-danger:hover {
+            background: #ffe5e5;
+        }
+
+        .dropdown-divider {
+            height: 0;
+            margin: 4px 0;
+            overflow: hidden;
+            border-top: 1px solid #e3e7ee;
+        }
+
+        .qa-user-btn {
+            cursor: pointer;
+        }
+
+        .qa-user-btn .qa-user-chevron {
+            font-size: .62rem;
+            opacity: .75;
+            transition: transform .18s ease;
+        }
+
+        .ak-dd.open .qa-user-chevron {
+            transform: rotate(180deg);
         }
 
         @media (max-width: 991.98px) {
@@ -933,6 +1002,49 @@ if (Session::isLoggedIn()) {
 
     </style>
 
+
+    <script>
+    function akToggleUserMenu(event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        var menu = document.getElementById('userDropdown');
+        if (!menu) return;
+
+        var willOpen = !menu.classList.contains('open');
+        menu.classList.toggle('open', willOpen);
+
+        var button = menu.querySelector('.qa-user-btn');
+        if (button) {
+            button.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+        }
+    }
+
+    document.addEventListener('click', function (event) {
+        var menu = document.getElementById('userDropdown');
+        if (!menu || !menu.classList.contains('open')) return;
+
+        if (!menu.contains(event.target)) {
+            menu.classList.remove('open');
+            var button = menu.querySelector('.qa-user-btn');
+            if (button) button.setAttribute('aria-expanded', 'false');
+        }
+    });
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key !== 'Escape') return;
+
+        var menu = document.getElementById('userDropdown');
+        if (!menu || !menu.classList.contains('open')) return;
+
+        menu.classList.remove('open');
+        var button = menu.querySelector('.qa-user-btn');
+        if (button) {
+            button.setAttribute('aria-expanded', 'false');
+            button.focus();
+        }
+    });
+    </script>
 
     <!-- Apply saved theme -->
 
@@ -1093,49 +1205,52 @@ if (Session::isLoggedIn()) {
 
                         </div>
 
-                    <div class="qa-group qa-group-account">
-                        <span class="qa-group-label">
-                            <?php echo e(AK_LANG === 'ar' ? 'الحساب' : 'Account'); ?>
-                        </span>
+                    <div class="ak-dd" id="userDropdown">
+                        <button
+                            type="button"
+                            class="qa-user-btn"
+                            aria-haspopup="true"
+                            aria-expanded="false"
+                            onclick="akToggleUserMenu(event)"
+                        >
+                            <?php if ($avatarUrl): ?>
+                                <img src="<?php echo e($avatarUrl); ?>" alt="" aria-hidden="true">
+                            <?php else: ?>
+                                <i class="fas fa-user-circle" aria-hidden="true"></i>
+                            <?php endif; ?>
+                            <span><?php echo e(current_user_name()); ?></span>
+                            <i class="fas fa-chevron-down qa-user-chevron" aria-hidden="true"></i>
+                        </button>
 
-                        <div class="qa-user-controls">
+                        <div class="ak-dd-menu" role="menu">
+                            <a
+                                href="<?php echo APP_URL; ?>modules/users/profile.php"
+                                class="ak-dd-item"
+                                role="menuitem"
+                            >
+                                <i class="fas fa-id-card me-2"></i>
+                                <?php echo e(AK_LANG === 'ar' ? 'الملف الشخصي' : 'Profile'); ?>
+                            </a>
 
-                    <span class="qa-user-btn" aria-label="<?php echo e(current_user_name()); ?>">
-                        <?php if ($avatarUrl): ?>
-                            <img src="<?php echo e($avatarUrl); ?>" alt="" aria-hidden="true">
-                        <?php else: ?>
-                            <i class="fas fa-user-circle" aria-hidden="true"></i>
-                        <?php endif; ?>
-                        <span><?php echo e(current_user_name()); ?></span>
-                    </span>
+                            <a
+                                href="<?php echo APP_URL; ?>modules/users/settings.php"
+                                class="ak-dd-item"
+                                role="menuitem"
+                            >
+                                <i class="fas fa-cog me-2"></i>
+                                <?php echo e(AK_LANG === 'ar' ? 'الإعدادات' : 'Settings'); ?>
+                            </a>
 
-                    <a
-                        href="<?php echo APP_URL; ?>modules/users/profile.php"
-                        class="qa-btn ak-header-action-profile"
-                        title="<?php echo e(AK_LANG === 'ar' ? 'الملف الشخصي' : 'Profile'); ?>"
-                    >
-                        <i class="fas fa-id-card" aria-hidden="true"></i>
-                        <span><?php echo e(AK_LANG === 'ar' ? 'الملف الشخصي' : 'Profile'); ?></span>
-                    </a>
+                            <div class="dropdown-divider"></div>
 
-                    <a
-                        href="<?php echo APP_URL; ?>modules/users/settings.php"
-                        class="qa-btn ak-header-action-settings"
-                        title="<?php echo e(AK_LANG === 'ar' ? 'الإعدادات' : 'Settings'); ?>"
-                    >
-                        <i class="fas fa-cog" aria-hidden="true"></i>
-                        <span><?php echo e(AK_LANG === 'ar' ? 'الإعدادات' : 'Settings'); ?></span>
-                    </a>
-
-                    <a
-                        href="<?php echo APP_URL; ?>logout.php"
-                        class="qa-btn ak-header-action-logout"
-                        title="<?php echo e(AK_LANG === 'ar' ? 'تسجيل الخروج' : 'Logout'); ?>"
-                    >
-                        <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
-                        <span><?php echo e(AK_LANG === 'ar' ? 'تسجيل الخروج' : 'Logout'); ?></span>
-                    </a>
-
+                            <a
+                                href="<?php echo APP_URL; ?>logout.php"
+                                class="ak-dd-item text-danger"
+                                role="menuitem"
+                            >
+                                <i class="fas fa-sign-out-alt me-2"></i>
+                                <?php echo e(AK_LANG === 'ar' ? 'تسجيل الخروج' : 'Logout'); ?>
+                            </a>
                         </div>
                     </div>
 
