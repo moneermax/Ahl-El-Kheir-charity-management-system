@@ -723,3 +723,12 @@ Continue the Administration/Staff/Social Media dashboard audit after verifying t
 - The two KPI cards now behave as separate destinations: new requests use `modules/sponsors/new_requests.php`, and contacted requests use `modules/sponsors/contacted_requests.php`.
 - This checkpoint is complete. No schema changes were made.
 - Next audit area: Reports visibility and sidebar/dashboard consistency for Administration, Staff, and Social Media, followed by role differences, Arabic/encoding/responsive UX, KPI semantics, and remaining runtime/link checks.
+
+
+### Latest dashboard UX checkpoint — 2026-09-19
+
+After completing the dedicated sponsor-request dashboard views and the Reports/sidebar consistency review, the next UX review covered Arabic/encoding and responsive behavior. Current source inspection found no concrete Arabic encoding issue in the Administration/Staff/Social Media dashboard, sidebar, or sponsor-request language files. The dashboard request table is already responsive and the KPI grid is responsive.
+
+A concrete mobile header issue was fixed in `includes/header.php`: the top quick-action/user-control bar now stacks at <=768px instead of remaining a single non-wrapping row. Commit: `4536623afcea14852aac5d1ea1d3b2ec2f70e0b8`. Runtime verification is still required.
+
+Next after runtime confirmation: continue the remaining dashboard review with KPI semantics/actionability and remaining linked-page/runtime checks. Do not repeat already-passed sponsor-request, Winback, orphan-form, or dedicated-queue tests unless regression evidence appears.
