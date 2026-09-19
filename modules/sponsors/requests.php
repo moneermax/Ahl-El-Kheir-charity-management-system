@@ -9,6 +9,11 @@ Session::start();
 if (!Session::isLoggedIn()) { header('Location: ' . APP_URL . 'index.php'); exit(); }
 $role = Session::getUserRole();
 if (!in_array($role, ['admin', 'vice_general_manager', 'general_manager', 'administration', 'staff', 'social_media'], true)) { header('Location: ' . APP_URL . 'index.php'); exit(); }
+$forcedStatusFilter = isset($forcedStatusFilter) ? trim((string)$forcedStatusFilter) : '';
+$allowedStatusFilters = ['new', 'contacted', 'converted', 'lost'];
+if ($forcedStatusFilter !== '' && !in_array($forcedStatusFilter, $allowedStatusFilters, true)) {
+    $forcedStatusFilter = '';
+}
 $pageTitle = t('sponsors.requests_title'); $active = 'sponsors';
 $sourceOptions = [
     'تيك توك' => ['icon'=>'fab fa-tiktok text-danger','key'=>'sponsors.request_source_tiktok'],
@@ -41,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
                 flash('success', $newStatus === 'contacted' ? t('sponsors.request_marked_contacted') : t('sponsors.request_marked_lost'));
             }
         }
-        header('Location: ' . APP_URL . 'modules/sponsors/requests.php');
+        header('Location: ' . APP_URL . ($forcedStatusFilter === 'new' ? 'modules/sponsors/new_requests.php' : ($forcedStatusFilter === 'contacted' ? 'modules/sponsors/contacted_requests.php' : 'modules/sponsors/requests.php')));
         exit();
     }
     if ($action === 'reopen' && !empty($_POST['id'])) {
@@ -55,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
             dbExecute("UPDATE sponsor_requests SET status = 'contacted' WHERE id = ? AND status = 'lost'", [$id]);
             flash('success', t('sponsors.request_reopened'));
         }
-        header('Location: ' . APP_URL . 'modules/sponsors/requests.php?status=contacted');
+        header('Location: ' . APP_URL . ($forcedStatusFilter === 'contacted' ? 'modules/sponsors/contacted_requests.php' : 'modules/sponsors/requests.php?status=contacted'));
         exit();
     }
     if ($action === 'delete' && !empty($_POST['id'])) {
@@ -92,8 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
             }
         }
     }
-$statusFilter = trim((string)($_GET['status'] ?? ''));
-$allowedStatusFilters = ['new', 'contacted', 'converted', 'lost'];
+$statusFilter = $forcedStatusFilter !== '' ? $forcedStatusFilter : trim((string)($_GET['status'] ?? ''));
 if (!in_array($statusFilter, $allowedStatusFilters, true)) {
     $statusFilter = '';
 }
