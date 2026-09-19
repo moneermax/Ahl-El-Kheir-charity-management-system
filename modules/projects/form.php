@@ -36,6 +36,7 @@ if ($id && !akp_can_edit_section('general', $id)) {
     redirect('modules/projects/view.php?id=' . $id);
 }
 
+$returnQuery=trim((string)($_GET['return']??$_POST['return']??'')); $backUrl=APP_URL.'modules/projects/index.php'; if($returnQuery!==''){$backUrl.='?'.ltrim(rawurldecode($returnQuery),'?');}
 $pageTitle = $id ? 'تعديل البيانات الأساسية للمشروع' : 'مشروع جديد';
 $active = 'projects';
 
@@ -2015,7 +2016,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 
 
                 <a
-                    href="<?php echo APP_URL; ?>modules/projects/index.php"
+                    href="<?php echo e($backUrl); ?>" onclick="return akGoBack(this.href);"
                     class="btn btn-secondary"
                 >
                     إلغاء
