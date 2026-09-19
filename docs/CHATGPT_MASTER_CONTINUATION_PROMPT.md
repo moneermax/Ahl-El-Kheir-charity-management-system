@@ -558,3 +558,27 @@ The later CSS that hid the global application sidebar/header and converted messa
 **Messaging original-design restoration: COMPLETE / ACCEPTED by user.**
 
 Future messaging work must preserve this visual baseline and address only explicitly requested changes.
+
+
+## AUDIT LOG CLEANUP — COMPLETED 2026-09-19
+
+The audit-log retention control at `modules/logs/audit.php` is complete at the current boundary.
+
+Current behavior:
+- admin-only deletion;
+- explicit inclusive start/end date range;
+- required checkbox + browser confirmation;
+- server validation;
+- pre-delete count + post-delete verification;
+- accurate result messaging;
+- General Manager remains read-only;
+- `old_values` / `new_values` remain available as collapsed JSON audit evidence.
+
+Final fix:
+`4b2bdcb75faf0dc6c004c48c14fb9e0d44ac4b46`.
+
+The user has confirmed the page now opens and works. Do not repeat this audit unless a regression or new retention requirement is reported.
+
+## CURRENT ACTIVE DIRECTION
+
+Continue from the latest repository/documentation checkpoint. The completed audit-log cleanup is not the next audit area. When the user identifies the next dashboard/module to audit, read the session index and relevant master-audit section, inspect the current code and actual schema, and continue that area without reopening closed work.
