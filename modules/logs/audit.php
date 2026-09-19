@@ -28,8 +28,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['audit_action'] ?? '') === 
         } else {
             try {
                 // The selected date is inclusive: delete records created on or before it.
-                // Use an exclusive next-day boundary so the whole selected day is covered.
-                $deleted = dbExecute(
+                // Count first so the result message reflects what was actually present
+                // before cleanup, rather than relying only on PDO's DELETE rowCount().
+                $beforeCount = (int)(dbFetchOne(
+                    'SELECT COUNT(*) c FROM audit_log WHERE created_at < DATE_ADD(?, INTERVAL 1 DAY)',
+                    [$deleteBefore]
+                )['c'] ?? 0);
+
+                dbExecute(
                     'DELETE FROM audit_log WHERE created_at < DATE_ADD(?, INTERVAL 1 DAY)',
                     [$deleteBefore]
                 );
@@ -42,12 +48,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['audit_action'] ?? '') === 
                 if ($remaining > 0) {
                     $deleteMessage = [
                         'type' => 'danger',
-                        'text' => 'لم تكتمل عملية التنظيف: ما زال هناك ' . number_format($remaining) . ' سجل ضمن نطاق الحذف. لم يتم اعتبار العملية ناجحة.',
+                        'text' => 'لم تكتمل عملية التنظيف: كان هناك ' . number_format($beforeCount) . ' سجل ضمن النطاق، وما زال هناك ' . number_format($remaining) . ' سجل بعد المحاولة.',
+                    ];
+                } elseif ($beforeCount > 0) {
+                    $deleteMessage = [
+                        'type' => 'success',
+                        'text' => 'تم حذف ' . number_format($beforeCount) . ' سجل تدقيق حتى تاريخ ' . $deleteBefore . '، وتم التحقق من عدم بقاء سجلات ضمن هذا النطاق.',
                     ];
                 } else {
                     $deleteMessage = [
-                        'type' => 'success',
-                        'text' => 'تم حذف ' . number_format($deleted) . ' سجل تدقيق حتى تاريخ ' . $deleteBefore . '، وتم التحقق من عدم بقاء سجلات ضمن هذا النطاق.',
+                        'type' => 'info',
+                        'text' => 'لم تكن هناك سجلات تدقيق ضمن نطاق الحذف حتى تاريخ ' . $deleteBefore . '؛ لذلك لم تكن هناك سجلات جديدة للحذف.',
                     ];
                 }
             } catch (Throwable $e) {
