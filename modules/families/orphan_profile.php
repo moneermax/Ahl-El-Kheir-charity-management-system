@@ -596,64 +596,6 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         }
     }
 
-    function renderSponsorResults() {
-        if (!sponsorInput || !sponsorResults) return;
-
-        const query = normalizeSearch(sponsorInput.value);
-        sponsorResults.innerHTML = '';
-
-        if (!query) {
-            sponsorNoResults.style.display = 'none';
-            closeSponsorResults();
-            return;
-        }
-
-        const matches = sponsors.filter(function(sponsor) {
-            const name = normalizeSearch(sponsor.name);
-            const code = normalizeSearch(sponsor.code);
-            return name.startsWith(query) || code.startsWith(query);
-        }).slice(0, 80);
-
-        if (!matches.length) {
-            sponsorNoResults.style.display = '';
-            closeSponsorResults();
-            return;
-        }
-
-        sponsorNoResults.style.display = 'none';
-
-        matches.forEach(function(sponsor) {
-            const item = document.createElement('button');
-            item.type = 'button';
-            item.className = 'list-group-item list-group-item-action text-end';
-            item.innerHTML = '<strong>' + escapeHtml(sponsor.name) + '</strong> <span class="text-muted">(' + escapeHtml(sponsor.code) + ')</span>';
-
-            item.addEventListener('mousedown', function(event) {
-                event.preventDefault();
-            });
-
-            item.addEventListener('click', function() {
-                sponsorInput.value = sponsor.name + ' (' + sponsor.code + ')';
-                sponsorIdInput.value = String(sponsor.id);
-                sponsorHint.textContent = 'تم اختيار الكفيل: ' + sponsor.name + ' (' + sponsor.code + ')';
-                sponsorHint.className = 'form-text text-success';
-                sponsorInput.classList.remove('is-invalid');
-                sponsorResults.innerHTML = '';
-                closeSponsorResults();
-            });
-
-            sponsorResults.appendChild(item);
-        });
-
-        sponsorResults.style.display = 'block';
-    }
-
-    function escapeHtml(value) {
-        const div = document.createElement('div');
-        div.textContent = String(value || '');
-        return div.innerHTML;
-    }
-
     if (sponsorInput) {
         sponsorInput.addEventListener('input', function(event) {
             if (event.isComposing) return;
