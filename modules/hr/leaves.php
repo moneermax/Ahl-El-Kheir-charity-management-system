@@ -430,7 +430,9 @@ if ($isRequestMode) {
         </div>
     <?php endif; ?>
 
-    <?php require_once __DIR__ . '/../../includes/footer.php'; ?>
+    
+<div class="container-fluid px-3 pb-4"><div class="d-flex justify-content-start"><a href="modules/hr/index.php" class="btn btn-outline-secondary" onclick="return akGoBack(this.href);"><i class="fa-solid fa-arrow-right me-1"></i> العودة</a></div></div>
+<?php require_once __DIR__ . '/../../includes/footer.php'; ?>
     <?php exit();
 }
 
