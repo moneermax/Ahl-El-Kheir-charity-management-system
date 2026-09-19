@@ -910,3 +910,13 @@ The sponsorship-safe family profile child/orphan section header was styled direc
 Commit: `2e4673a9a432e80ffb9cdccddadb4cbffd08b450`.
 
 **Runtime verification:** user confirmed the visual result is correct.
+
+### Winback POST-action authorization hardening — 2026-09-19
+
+During linked-page security review, three concrete workflow authorization gaps were found in `modules/administration/winback.php`: submitted sponsor IDs for `open_case` were not independently checked against queue eligibility; `add_contact` could target a campaign outside the active workflow states; and `mark_declined` could update a campaign without checking its current state.
+
+The handlers now enforce the corresponding server-side conditions before mutation. The `open_case` check mirrors the queue's eligibility rule; contact logging and decline are restricted to `open`/`contacted` campaigns.
+
+Commit: `776da4470010d27c8758fd116843d3d06f9c94b9`.
+
+**Runtime verification:** pending.
