@@ -570,3 +570,11 @@ Repository inspection found a concrete role mismatch: `dashboard/staff_dashboard
 The sponsorship-family orphan header visual fix is also complete in commit `2e4673a9a432e80ffb9cdccddadb4cbffd08b450`; it uses the actual application header `--navy` background directly on the page because `assets/css/style.css` is not loaded by `includes/header.php`.
 
 **Next runtime checks:** pull current `main`, then verify Staff can open `modules/families/orphan_forms_index.php` from the dashboard while Administration and Social Media retain their existing behavior. Continue the dashboard review afterward; do not reopen completed Winback schema or sponsorship-family investigations.
+
+### DASHBOARD REVIEW — Winback workflow authorization hardening — 2026-09-19
+
+Security review of the Administration Winback linked workflow found three POST authorization gaps. `open_case`, `add_contact`, and `mark_declined` now validate the sponsor/campaign eligibility or current workflow state server-side before mutation.
+
+Commit: `776da4470010d27c8758fd116843d3d06f9c94b9`.
+
+Runtime verification is the next required step before continuing to other dashboard UX findings.
