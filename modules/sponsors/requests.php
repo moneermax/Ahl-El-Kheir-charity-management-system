@@ -22,8 +22,8 @@ $currentUser = dbFetchOne("SELECT full_name FROM users WHERE id = ?", [Session::
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
     $action = $_POST['action'] ?? '';
     if ($action === 'add') {
-        $name = trim($_POST['sponsor_name'] ?? ''); $phone = trim($_POST['phone'] ?? ''); $source = trim($_POST['source'] ?? ''); $notes = trim($_POST['notes'] ?? ''); $byName = trim($_POST['brought_by_name'] ?? ''); if ($byName === '') $byName = $currentUserName;
-        if ($name !== '' && $source !== '') { dbExecute("INSERT INTO sponsor_requests (sponsor_name, phone, source, brought_by, brought_by_name, notes) VALUES (?,?,?,?,?,?)", [$name, $phone !== '' ? $phone : null, $source, Session::getUserId(), $byName, $notes !== '' ? $notes : null]); flash('success', t('sponsors.request_added')); header('Location: ' . APP_URL . 'modules/sponsors/requests.php'); exit(); } else { flash('error', t('sponsors.request_name_required')); }
+        $name = trim($_POST['sponsor_name'] ?? ''); $phone = trim($_POST['phone'] ?? ''); $source = trim($_POST['source'] ?? ''); $gender = strtolower(trim((string)($_POST['gender'] ?? ''))); $notes = trim($_POST['notes'] ?? ''); $byName = trim($_POST['brought_by_name'] ?? ''); if ($byName === '') $byName = $currentUserName;
+        if ($name !== '' && $source !== '' && in_array($gender, ['male', 'female'], true)) { dbExecute("INSERT INTO sponsor_requests (sponsor_name, phone, gender, source, brought_by, brought_by_name, notes) VALUES (?,?,?,?,?,?,?)", [$name, $phone !== '' ? $phone : null, $gender, $source, Session::getUserId(), $byName, $notes !== '' ? $notes : null]); flash('success', t('sponsors.request_added')); header('Location: ' . APP_URL . 'modules/sponsors/requests.php'); exit(); } else { flash('error', $name === '' ? t('sponsors.request_name_required') : t('sponsors.create_gender') . ': ' . t('sponsors.create_male') . ' / ' . t('sponsors.create_female')); }
     }
     if ($action === 'set_status' && !empty($_POST['id'])) {
         $id = (int)$_POST['id'];
@@ -45,12 +45,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
         exit();
     }
     if ($action === 'convert' && !empty($_POST['id'])) {
-        $id = (int)$_POST['id']; $gender = strtolower(trim((string)($_POST['gender'] ?? '')));
-        if (!in_array($gender, ['male', 'female'], true)) {
-            flash('error', t('sponsors.create_gender') . ': ' . t('sponsors.create_male') . ' / ' . t('sponsors.create_female'));
-        } else {
+        $id = (int)$_POST['id'];
             $req = dbFetchOne("SELECT * FROM sponsor_requests WHERE id = ?", [$id]);
             if ($req && $req['status'] !== 'converted') {
+                $gender = strtolower(trim((string)($req['gender'] ?? '')));
+                if (!in_array($gender, ['male', 'female'], true)) { flash('error', t('sponsors.create_gender') . ': ' . t('sponsors.create_male') . ' / ' . t('sponsors.create_female')); header('Location: ' . APP_URL . 'modules/sponsors/requests.php'); exit(); }
                 $name = trim((string)$req['sponsor_name']);
                 [$rawLetter, $normalizedLetter] = first_letter_of($name);
                 $letterRow = dbFetchOne("SELECT id FROM letters WHERE is_active = 1 AND code = ? LIMIT 1", [$normalizedLetter]);
@@ -83,22 +82,8 @@ include dirname(__DIR__, 2) . '/includes/header.php'; ?>
 <button type="button" class="btn btn-sm btn-outline-success" title="<?php echo e(t('sponsors.request_convert_title')); ?>" data-bs-toggle="modal" data-bs-target="#convertLeadModal" data-request-id="<?php echo (int)$lead['id']; ?>"><i class="fas fa-user-check"></i> <?php echo e(t('sponsors.request_convert')); ?></button>
 <?php else: ?><span class="badge bg-light text-muted"><i class="fas fa-<?php echo $lead['status'] === 'converted' ? 'check-circle' : 'ban'; ?>"></i> <?php echo e($lead['status'] === 'converted' ? t('sponsors.request_complete') : t('sponsors.request_closed')); ?></span><?php endif; ?>
 </td></tr><?php endforeach; endif; ?></tbody></table></div></div></div>
-<div class="modal fade" id="convertLeadModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form method="post" id="convertLeadForm"><?php echo csrf_field(); ?><input type="hidden" name="action" value="convert"><input type="hidden" name="id" id="convertLeadRequestId" value=""><div class="modal-header" style="background:#1b4d8f;color:#fff"><h5 class="modal-title"><i class="fas fa-user-check me-2"></i><?php echo e(t('sponsors.request_convert')); ?></h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body"><p class="mb-3"><?php echo e(t('sponsors.create_gender')); ?></p><select name="gender" class="form-select" required><option value=""><?php echo e(t('sponsors.create_gender')); ?></option><option value="male"><?php echo e(t('sponsors.create_male')); ?></option><option value="female"><?php echo e(t('sponsors.create_female')); ?></option></select></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php echo e(t('sponsors.request_cancel')); ?></button><button type="submit" class="btn btn-success"><i class="fas fa-user-check me-1"></i><?php echo e(t('sponsors.request_convert')); ?></button></div></form></div></div></div>
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    var modal = document.getElementById('convertLeadModal');
-    if (!modal) return;
-    modal.addEventListener('show.bs.modal', function (event) {
-        var button = event.relatedTarget;
-        var id = button ? button.getAttribute('data-request-id') : '';
-        document.getElementById('convertLeadRequestId').value = id || '';
-        var gender = modal.querySelector('select[name="gender"]');
-        if (gender) gender.value = '';
-    });
-});
-</script>
 <div class="modal fade" id="addLeadModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form method="post"><?php echo csrf_field(); ?><input type="hidden" name="action" value="add"><div class="modal-header" style="background:#1b4d8f;color:#fff"><h5 class="modal-title"><i class="fas fa-plus-circle me-2"></i><?php echo e(t('sponsors.request_add_title')); ?></h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
-<div class="modal-body"><div class="mb-3"><label class="form-label"><?php echo e(t('sponsors.request_sponsor_name')); ?> *</label><input type="text" name="sponsor_name" class="form-control" required></div><div class="mb-3"><label class="form-label"><?php echo e(t('sponsors.request_phone')); ?></label><input type="text" name="phone" class="form-control" dir="ltr"></div><div class="mb-3"><label class="form-label"><?php echo e(t('sponsors.request_source')); ?> *</label><div class="d-flex flex-wrap gap-2"><?php foreach ($sourceOptions as $val=>$meta): $sid='src_'.md5($val); ?><input type="radio" class="btn-check" name="source" id="<?php echo $sid; ?>" value="<?php echo e($val); ?>" required><label class="btn btn-outline-secondary d-inline-flex align-items-center gap-2" for="<?php echo $sid; ?>"><i class="<?php echo e($meta['icon']); ?>"></i><span><?php echo e(t($meta['key'])); ?></span></label><?php endforeach; ?></div></div>
+<div class="modal-body"><div class="mb-3"><label class="form-label"><?php echo e(t('sponsors.request_sponsor_name')); ?> *</label><input type="text" name="sponsor_name" class="form-control" required></div><div class="mb-3"><label class="form-label"><?php echo e(t('sponsors.request_phone')); ?></label><input type="text" name="phone" class="form-control" dir="ltr"></div><div class="mb-3"><label class="form-label"><?php echo e(t('sponsors.create_gender')); ?> *</label><select name="gender" class="form-select" required><option value=""><?php echo e(t('sponsors.create_gender')); ?></option><option value="male"><?php echo e(t('sponsors.create_male')); ?></option><option value="female"><?php echo e(t('sponsors.create_female')); ?></option></select></div><div class="mb-3"><label class="form-label"><?php echo e(t('sponsors.request_source')); ?> *</label><div class="d-flex flex-wrap gap-2"><?php foreach ($sourceOptions as $val=>$meta): $sid='src_'.md5($val); ?><input type="radio" class="btn-check" name="source" id="<?php echo $sid; ?>" value="<?php echo e($val); ?>" required><label class="btn btn-outline-secondary d-inline-flex align-items-center gap-2" for="<?php echo $sid; ?>"><i class="<?php echo e($meta['icon']); ?>"></i><span><?php echo e(t($meta['key'])); ?></span></label><?php endforeach; ?></div></div>
 <div class="mb-3"><label class="form-label"><?php echo e(t('sponsors.request_brought_by')); ?></label><input type="text" name="brought_by_name" class="form-control" value="<?php echo e($currentUserName); ?>"><div class="form-text"><?php echo e(t('sponsors.request_default_brought_by')); ?></div></div><div class="mb-3"><label class="form-label"><?php echo e(t('sponsors.request_notes')); ?></label><textarea name="notes" class="form-control" rows="2"></textarea></div></div>
 <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php echo e(t('sponsors.request_cancel')); ?></button><button type="submit" class="btn btn-primary"><?php echo e(t('sponsors.request_save')); ?></button></div></form></div></div></div>
 <?php include dirname(__DIR__, 2) . '/includes/footer.php'; ?>
