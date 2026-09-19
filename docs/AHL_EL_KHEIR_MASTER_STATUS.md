@@ -770,3 +770,16 @@ The user explicitly considers this **temporary done** rather than a final visual
 ### Immediate continuation
 
 Move to the next system-wide fix requested by the user. Inspect the relevant documentation and current repository code before making changes; do not reopen closed audit areas or repeat passed tests without regression evidence.
+
+
+## 10. System-wide Back/navigation audit — 2026-09-19
+
+A system-wide navigation audit was started to correct broken/context-losing Back actions and identify contextual pages that need a return action. The scope explicitly excludes the entire `TCPDF/` directory and infrastructure-only files.
+
+Implementation now uses a shared client-side `akGoBack(fallback)` helper in `includes/footer.php`: when a same-origin previous page exists, the browser returns to the actual originating page; otherwise the page uses its explicit safe fallback. This avoids blindly sending users to a generic index while retaining a deterministic destination for direct access.
+
+The first navigation-fix batch preserves list/search context for Families, Sponsors, Sponsorships, Projects, returned Transactions, child/orphan navigation, Search Center results, and Accounting Disbursements. Existing Sponsor return handling was also corrected to retain `link_status`.
+
+No database schema, authorization rules, business workflow, or sidebar behavior was changed by this navigation work.
+
+The audit remains active until the remaining user-facing modules are reviewed and runtime checks confirm the important list → detail → back, filtered/paginated list → detail → back, nested detail → parent, and edit/form → parent flows.
