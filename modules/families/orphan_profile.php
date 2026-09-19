@@ -19,6 +19,7 @@ if (!in_array($role, ['admin', 'vice_general_manager', 'general_manager', 'super
 }
 
 $uid = Session::getUserId();
+$returnQuery=trim((string)($_GET['return']??'')); $backUrl=APP_URL.'modules/families/index.php'; if($returnQuery!==''){$backUrl.='?'.ltrim(rawurldecode($returnQuery),'?');}
 $pageTitle = 'بيانات اليتيم';
 $active = 'families';
 
@@ -285,7 +286,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 <i class="fas fa-arrow-left me-1"></i>رجوع للملف
             </a>
         <?php endif; ?>
-        <a href="<?php echo APP_URL; ?>modules/families/index.php" class="btn btn-outline-secondary btn-sm">
+        <a href="<?php echo e($backUrl); ?>" class="btn btn-outline-secondary btn-sm" onclick="return akGoBack(this.href);">
             <i class="fas fa-arrow-right me-1"></i>رجوع للأسر
         </a>
     </div>
