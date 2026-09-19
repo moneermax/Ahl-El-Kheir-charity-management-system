@@ -744,3 +744,12 @@ The Back/navigation audit remains COMPLETE. The user requested a second Back but
 Commit: `0557218daa28d2ce78ff8e9f0bbaf8bacd2f0769`.
 
 Next checkpoint: user-side visual verification of one ordinary audited page and one contextual detail page, then continue with the next requested system-wide change.
+
+
+## 2026-09-19 — Shared header action-toolbar redesign
+
+The current shared header now uses the full horizontal header space as a centered action toolbar directly below the organization name. The former user dropdown was removed from the active header layout; Profile, Settings, and Logout are now direct buttons beside the current-user identity/avatar. Existing role-aware quick actions, global search, language switching, and conditional password-recovery controls remain available in the same shared header.
+
+Code commit: ca3a30f7c26b3196b6a1a428a98ab5c8a06c2874.
+
+The sidebar remains closed by default on page navigation and the system-wide Back controls remain active. The centered header is the next runtime UX checkpoint; verify desktop spacing and narrow-screen wrapping before considering the redesign final.
