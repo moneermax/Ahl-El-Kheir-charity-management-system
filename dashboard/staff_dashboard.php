@@ -48,8 +48,8 @@ $requestStatusBadges = [
 <div class="row g-3 mb-4">
 <?php
 $stats = [
-    ['new_requests', 'طلبات رعاية جديدة', 'text-primary', 'modules/sponsors/requests.php?status=new'],
-    ['contacted_requests', 'طلبات تم التواصل معها', 'text-info', 'modules/sponsors/requests.php?status=contacted'],
+    ['new_requests', 'طلبات رعاية جديدة', 'text-primary', 'modules/sponsors/new_requests.php'],
+    ['contacted_requests', 'طلبات تم التواصل معها', 'text-info', 'modules/sponsors/contacted_requests.php'],
 ];
 if ($role === 'administration') {
     $stats[] = ['open_winback', 'متابعات استرجاع مفتوحة', 'text-warning', 'modules/administration/winback.php'];
