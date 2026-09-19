@@ -723,3 +723,12 @@ The Administration/Staff/Social Media dashboard review continued into Arabic/enc
 A concrete shared-header mobile responsiveness issue was found and fixed: `includes/header.php` now stacks the top quick-action/user-control bar on screens up to 768px instead of keeping the desktop row layout. Commit: `4536623afcea14852aac5d1ea1d3b2ec2f70e0b8`.
 
 Runtime verification is pending user confirmation.
+
+
+## Mobile navigation UX — 2026-09-19
+
+A genuine responsive defect was identified during mobile testing: the shared 260px sidebar stayed inside the flex layout on narrow screens, leaving too little room for the page and causing the sidebar to cover/consume most of the viewport. The shared layout was corrected to use an off-canvas mobile drawer below 992px, with a header menu button, overlay, Escape-to-close, automatic close after navigation, and full-width main content.
+
+Commits: 726d766f8075b2a55a0dcfd0ccc1cb5ec75c64d1, 0530c69c6e80b320577ac50dcd852ea4633431f6.
+
+Status: CODE IMPLEMENTED; REAL MOBILE RUNTIME VERIFICATION PENDING.
