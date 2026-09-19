@@ -82,9 +82,19 @@ $users   = dbFetchAll("SELECT id, username FROM users ORDER BY username");
 
 $pretty = function (?string $json): string {
     if (!$json) return '—';
+
     $d = json_decode($json, true);
-    return '<pre class="mb-0 small" dir="ltr" style="max-height:160px;overflow:auto">'
-         . e(json_encode($d, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)) . '</pre>';
+    $formatted = json_last_error() === JSON_ERROR_NONE
+        ? json_encode($d, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
+        : $json;
+
+    $id = 'audit-details-' . bin2hex(random_bytes(4));
+
+    return '<details class="audit-details">'
+         . '<summary class="small text-primary" role="button"><i class="fas fa-eye me-1"></i>عرض التفاصيل</summary>'
+         . '<pre id="' . e($id) . '" class="mb-0 small mt-2 p-2 border rounded bg-light" dir="ltr" style="max-height:220px;overflow:auto">'
+         . e((string)$formatted) . '</pre>'
+         . '</details>';
 };
 
 $qs = fn(array $extra) => APP_URL . 'modules/logs/audit.php?' . http_build_query(array_merge($_GET, $extra));
