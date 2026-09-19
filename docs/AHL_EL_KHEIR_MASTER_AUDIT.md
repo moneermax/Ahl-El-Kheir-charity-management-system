@@ -1082,3 +1082,9 @@ Do not implement a blind global `history.back()` as the only destination mechani
 ### Remaining audit boundary
 
 Continue reviewing the remaining user-facing modules for missing contextual Back actions and context loss. Do not modify TCPDF. Do not reopen completed business/authentication/accounting controls merely because a page links to them.
+
+
+### 2026-09-19 — Back-button acceptance rule expanded
+The user clarified that the required behavior is broader than detail pages: **every user-facing page gets a Back button unless it is a dashboard**. Therefore module index/list pages are no longer treated as automatic exceptions. The implementation uses akGoBack(fallback) with same-origin history plus an explicit application fallback; it does not rely on blind global history.back().
+
+The second implementation batch added Back actions to the remaining user-facing HR, Users, Settings/System, Supervisors, Transactions, Reports, Accounting, Families, Sponsors, Sponsorships, Projects, Departments, Search, Notifications, Messages, and Logs pages. API/JSON endpoints, authenticated file streams, redirect-only compatibility entries, and printable/stream-only output are not treated as ordinary HTML pages.
