@@ -1000,3 +1000,10 @@ Continue the Administration/Staff/Social Media dashboard audit after verifying t
 - Implementation commits: `5a464785702dc4fee83268c497beefc29a0eb2a7`, `8591b4865a9fa790b7ba9f0b75a00dcb9b71072`, `b33fd2dfc39175459da749c600b2e3650e3f424e`, `4facf6602b07fcc2bbab61498ee72e9daf58f8ff`.
 - Runtime verification is pending user confirmation.
 - After verification, continue with the remaining dashboard audit areas: Reports visibility, sidebar/dashboard consistency, role differences, Arabic/encoding/responsive UX, KPI semantics, and remaining runtime/link checks.
+
+
+## Dedicated sponsor-request dashboard views — runtime verification — 2026-09-19
+- User confirmed the dedicated dashboard-view change passes runtime verification.
+- The two KPI cards now behave as separate destinations: new requests use `modules/sponsors/new_requests.php`, and contacted requests use `modules/sponsors/contacted_requests.php`.
+- This checkpoint is complete. No schema changes were made.
+- Next audit area: Reports visibility and sidebar/dashboard consistency for Administration, Staff, and Social Media, followed by role differences, Arabic/encoding/responsive UX, KPI semantics, and remaining runtime/link checks.
