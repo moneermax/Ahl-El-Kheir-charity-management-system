@@ -859,3 +859,24 @@ The cleanup was progressively hardened through:
 **Status: COMPLETE / CLOSED at current boundary.**
 
 Do not delete, recreate, or modify historical audit evidence outside an explicitly selected retention range. Do not treat `old_values` / `new_values` as SQL.
+
+
+# 17. Additional Sponsorship Searchable Selector — 2026-09-19
+
+The direct additional-sponsorship workflow in `modules/families/orphan_profile.php` is preserved. Its dedicated endpoint `modules/families/sponsor_search.php` was refined in commit `46c3b0213a2e769f07158214d87575c39ebaade5` so multi-word sponsor-name searches narrow by corresponding name-word prefixes rather than using one broad contains match for the whole phrase.
+
+Examples of the intended behavior:
+- `أمل` → first name word begins with `أمل`;
+- `أمل ب` → first word remains `أمل`, second word begins with `ب`;
+- `أمل بيومي` → the first two name words match the typed sequence;
+- sponsor-code queries retain partial/contains matching.
+
+Security/eligibility controls remain server-side: authenticated role check, Supervisor Letter + Gender scope, final `supervisorCanAccessSponsor()` validation, active sponsor status, and exclusion of existing active/paused sponsorships for the same orphan.
+
+Runtime evidence on 2026-09-19 confirms the actual additional-sponsorship submission path worked for child `234`: **ابراهيم تاج السر ابراهيم**, sponsor code `IMP-SP-002363`, was added successfully at `2,000.00 ج.س` from `2026-09-19`, while the existing **مؤيد محمد احمد محمد** sponsorship remained active. This confirms sponsorship creation, not yet the separate autocomplete keystroke behavior.
+
+**Status:** implementation complete; sponsorship submission runtime-confirmed; multi-word autocomplete runtime confirmation pending explicit keystroke testing.
+
+## 18. Immediate Next Audit Direction — Administration Dashboard
+
+The next task is the already-open UX/functional review of `dashboard/staff_dashboard.php` for Administration/Staff/Social Media. Do not restart the dashboard or repeat the completed sponsorship-family schema investigation. Inspect the current code and linked-page authorization first, then review KPI semantics, sponsor-request table/actions, Winback integration, orphan-form navigation, role separation, Reports visibility, Arabic labels/encoding, responsive behavior, and any runtime issues.
