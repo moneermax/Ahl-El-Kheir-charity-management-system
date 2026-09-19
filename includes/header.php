@@ -476,16 +476,16 @@ if (Session::isLoggedIn()) {
         .ak-sidebar-toggle {
             position: fixed;
             top: 50%;
-            right: 10px;
+            right: 0;
             transform: translateY(-50%);
             z-index: 1202;
-            width: 38px;
-            height: 92px;
-            border: 1px solid rgba(255,255,255,.18);
-            border-radius: 19px;
-            background: rgba(20, 35, 58, .96);
+            width: 34px;
+            height: 118px;
+            border: 0;
+            border-radius: 18px 0 0 18px;
+            background: var(--navy);
             color: #fff;
-            box-shadow: 0 8px 24px rgba(0,0,0,.22);
+            box-shadow: 0 8px 22px rgba(0,0,0,.18);
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -494,7 +494,8 @@ if (Session::isLoggedIn()) {
                         left .28s cubic-bezier(.22,.61,.36,1),
                         transform .18s ease,
                         background .18s ease,
-                        box-shadow .18s ease;
+                        box-shadow .18s ease,
+                        border-radius .18s ease;
         }
 
 
@@ -516,18 +517,21 @@ if (Session::isLoggedIn()) {
 
 
         body.sidebar-open .ak-sidebar-toggle {
-            right: calc(var(--ak-sidebar-width) + 10px);
+            right: var(--ak-sidebar-width);
+            border-radius: 0;
         }
 
 
         [dir="ltr"] .ak-sidebar-toggle {
             right: auto;
-            left: 14px;
+            left: 0;
+            border-radius: 0 18px 18px 0;
         }
 
 
         [dir="ltr"] body.sidebar-open .ak-sidebar-toggle {
-            left: calc(var(--ak-sidebar-width) + 10px);
+            left: var(--ak-sidebar-width);
+            border-radius: 0;
         }
 
 
@@ -871,23 +875,26 @@ if (Session::isLoggedIn()) {
 
         @media (max-width: 991.98px) {
             .ak-sidebar-toggle {
-                width: 36px;
-                height: 84px;
-                right: 8px;
-                border-radius: 18px;
+                width: 32px;
+                height: 104px;
+                right: 0;
+                border-radius: 16px 0 0 16px;
             }
 
             body.sidebar-open .ak-sidebar-toggle {
-                right: calc(var(--ak-sidebar-width) + 8px);
+                right: var(--ak-sidebar-width);
+                border-radius: 0;
             }
 
             [dir="ltr"] .ak-sidebar-toggle {
                 right: auto;
-                left: 8px;
+                left: 0;
+                border-radius: 0 16px 16px 0;
             }
 
             [dir="ltr"] body.sidebar-open .ak-sidebar-toggle {
-                left: calc(var(--ak-sidebar-width) + 8px);
+                left: var(--ak-sidebar-width);
+                border-radius: 0;
             }
 
             .sidebar-overlay {
