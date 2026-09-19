@@ -578,3 +578,23 @@ Security review of the Administration Winback linked workflow found three POST a
 Commit: `776da4470010d27c8758fd116843d3d06f9c94b9`.
 
 Runtime verification is the next required step before continuing to other dashboard UX findings.
+
+
+### DASHBOARD REVIEW — Sponsor-request workflow actionability — 2026-09-19
+
+Repository inspection found a concrete UX/functional gap in `modules/sponsors/requests.php`: the dashboard and request queue displayed the existing `new`, `contacted`, `converted`, and `lost` states, but the request page only provided conversion and had no normal UI action to move a live request from `new` to `contacted` or to close it as `lost`. This made the Administration/Staff/Social Media dashboard's contacted-request KPI dependent on status changes outside the visible workflow.
+
+The request workflow was tightened without adding a new route or changing the database schema:
+- `new` requests can now be marked **تم التواصل**.
+- `new` and `contacted` requests can be closed as **مغلق / لم يكتمل**.
+- conversion remains available for `new` and `contacted` requests.
+- converted/closed requests no longer expose mutation controls.
+- every status mutation is POST + CSRF protected and server-side validated against the current request state.
+- Arabic and English labels/confirmation messages were added to the existing sponsor-request language files.
+
+Commits:
+- `c03b15cbc1830437657edd8bb2aed26bf60e2b64` — Make sponsor request statuses actionable.
+- `65037e97c5acef92caf5290e9f8d8cb95be20d99` — Add Arabic sponsor request status action labels.
+- `03eaf05faec5c90e4d61041ef04f83d03a5b6e2e` — Add English sponsor request status action labels.
+
+**Runtime verification required:** after pulling current `main`, open the sponsor-request queue as Administration or Staff and verify a new request can be marked contacted, a new/contacted request can be closed, converted requests remain complete/read-only, and the dashboard contacted/new counts reflect the changed statuses. Do not create unnecessary test data if existing requests can exercise the workflow.
