@@ -1106,3 +1106,20 @@ Commits: 474741e4f094b264e033af89f690838765c7e4a5, 44e873fa548aa15142a4d3548437b
 The completed navigation audit remains closed with its original acceptance rule. A presentation enhancement was added centrally in `includes/footer.php`: pages that already contain the audited contextual Back link now receive a second Back button at the top-left of the page content. The generated button is a clone of the existing contextual control and therefore calls the same `akGoBack(fallback)` logic. No second navigation mechanism, fallback rule, authorization rule, or page-specific navigation logic was introduced. The existing bottom Back button remains unchanged. Dashboards and the previously excluded API/JSON, file-stream, redirect-only, and print-only outputs remain unaffected.
 
 Commit: `0557218daa28d2ce78ff8e9f0bbaf8bacd2f0769` — Add top-left Back button to pages with contextual Back.
+
+
+## 2026-09-19 — Shared header action-toolbar redesign
+
+The shared header was changed from a split quick-action/user-control bar with a user dropdown into a centered direct-action toolbar positioned immediately beneath the organization name.
+
+The toolbar keeps the existing role-aware quick actions and global controls while converting the former user-menu destinations into direct buttons:
+- Current user identity/avatar
+- Profile
+- Settings
+- Logout
+
+Global Search, language switching, and conditional password-recovery access remain direct controls. Existing URLs and authorization boundaries were not changed.
+
+The redesign is limited to includes/header.php; no database, schema, accounting, HR, authorization, workflow, sidebar, or Back-navigation logic was changed by this visual phase.
+
+Commit: ca3a30f7c26b3196b6a1a428a98ab5c8a06c2874.
