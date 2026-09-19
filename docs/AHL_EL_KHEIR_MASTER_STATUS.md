@@ -614,3 +614,16 @@ The orphan/child section header on `modules/administration/sponsorship_family_vi
 Commit: `2e4673a9a432e80ffb9cdccddadb4cbffd08b450`.
 
 The user confirmed the visual result is correct.
+
+### Winback POST-action authorization hardening — 2026-09-19
+
+A security audit of `modules/administration/winback.php` found that POST handlers trusted submitted IDs without independently enforcing the workflow state/eligibility represented by the page.
+
+Fixed narrowly:
+- `open_case` now re-checks the same inactive/suspended/cancelled + 90-day lapsed + no-open-follow-up eligibility used by the displayed queue before creating a campaign.
+- `add_contact` now requires the campaign to be `open` or `contacted` before inserting a contact.
+- `mark_declined` now requires the campaign to be `open` or `contacted` before closing it.
+
+Commit: `776da4470010d27c8758fd116843d3d06f9c94b9`.
+
+Runtime verification is pending. No schema changes were introduced.
