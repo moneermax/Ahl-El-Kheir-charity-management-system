@@ -52,6 +52,9 @@ a { text-decoration: none; }
 .card { border: none; border-radius: 16px; box-shadow: 0 2px 15px rgba(0,0,0,.06); }
 .card-header { background: #fff; border-bottom: 1px solid var(--border); font-weight: 700; border-radius: 16px 16px 0 0 !important; padding: 18px 22px; }
 .card-body { padding: 22px; }
+.sponsorship-child-header { background: linear-gradient(135deg,var(--navy-950),var(--navy-600)); color: #fff; border-bottom: none; }
+.sponsorship-child-header .text-muted { color: rgba(255,255,255,.9) !important; }
+
 .stat-card { background: var(--white); border-radius: 16px; padding: 22px; box-shadow: 0 2px 15px rgba(0,0,0,.06); border-inline-start: 4px solid var(--navy-600); transition: all .3s ease; }
 .stat-card:hover { transform: translateY(-4px); box-shadow: 0 10px 30px rgba(0,0,0,.1); }
 .stat-number { font-size: 26px; font-weight: 800; color: var(--navy-900); }
