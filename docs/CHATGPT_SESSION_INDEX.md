@@ -748,7 +748,7 @@ Next checkpoint: user-side visual verification of one ordinary audited page and 
 
 ## 2026-09-19 — Shared header action-toolbar redesign
 
-The current shared header now uses the full horizontal header space as a centered action toolbar directly below the organization name. The former user dropdown was removed from the active header layout; Profile, Settings, and Logout are now direct buttons beside the current-user identity/avatar. Existing role-aware quick actions, global search, language switching, and conditional password-recovery controls remain available in the same shared header.
+The current shared header now uses the full horizontal header space as a centered action toolbar directly below the organization name. The current-user identity now uses a restored dropdown containing Profile, Settings, and Logout; role-aware quick actions and system controls remain directly visible. Existing role-aware quick actions, global search, language switching, and conditional password-recovery controls remain available in the same shared header.
 
 Code commit: ca3a30f7c26b3196b6a1a428a98ab5c8a06c2874.
 
