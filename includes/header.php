@@ -476,16 +476,16 @@ if (Session::isLoggedIn()) {
         .ak-sidebar-toggle {
             position: fixed;
             top: 50%;
-            right: 14px;
+            right: 0;
             transform: translateY(-50%);
             z-index: 1202;
-            width: 50px;
-            height: 50px;
-            border: 1px solid rgba(255,255,255,.18);
-            border-radius: 16px;
-            background: rgba(20, 35, 58, .96);
+            width: 28px;
+            height: 118px;
+            border: 0;
+            border-radius: 18px 0 0 18px;
+            background: var(--navy);
             color: #fff;
-            box-shadow: 0 8px 24px rgba(0,0,0,.24);
+            box-shadow: none;
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -501,7 +501,7 @@ if (Session::isLoggedIn()) {
 
         .ak-sidebar-toggle:hover {
             background: var(--navy-dark);
-            box-shadow: 0 10px 28px rgba(0,0,0,.30);
+            box-shadow: none;
         }
 
 
@@ -517,24 +517,26 @@ if (Session::isLoggedIn()) {
 
 
         body.sidebar-open .ak-sidebar-toggle {
-            right: calc(var(--ak-sidebar-width) + 12px);
-            border-radius: 50%;
+            right: var(--ak-sidebar-width);
+            border-radius: 0;
         }
 
 
         [dir="ltr"] .ak-sidebar-toggle {
             right: auto;
-            left: 14px;
+            left: 0;
+            border-radius: 0 18px 18px 0;
         }
 
 
         [dir="ltr"] body.sidebar-open .ak-sidebar-toggle {
-            left: calc(var(--ak-sidebar-width) + 12px);
+            left: var(--ak-sidebar-width);
+            border-radius: 0;
         }
 
 
         .ak-sidebar-toggle i {
-            font-size: 1.05rem;
+            font-size: 1rem;
         }
 
 
