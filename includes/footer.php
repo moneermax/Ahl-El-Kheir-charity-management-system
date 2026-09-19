@@ -55,6 +55,7 @@ window.AK_TRANSLATIONS=<?php echo json_encode(ak_dict(),JSON_UNESCAPED_UNICODE|J
 
     function setSidebar(open) {
         document.body.classList.toggle('sidebar-open', open);
+        document.body.style.overflow = open ? 'hidden' : '';
         if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
     }
 
