@@ -283,7 +283,7 @@ include __DIR__ . '/../../includes/header.php';
             <i class="fas fa-folder-open me-2 text-primary"></i>
             <?php echo t('أرشيف مستندات الأسرة / Family Document Archive'); ?>
         </h3>
-        <a href="<?php echo url('modules/families/view.php?id=' . $family['id']); ?>" class="btn btn-outline-secondary">
+        <a href="<?php echo url('modules/families/view.php?id=' . $family['id']); ?>" class="btn btn-outline-secondary" onclick="return akGoBack(this.href);">
             <i class="fas fa-arrow-<?php echo (defined('AK_DIR') && AK_DIR === 'rtl') ? 'right' : 'left'; ?> me-1"></i> <?php echo t('العودة للأسرة / Back to Family'); ?>
         </a>
     </div>
