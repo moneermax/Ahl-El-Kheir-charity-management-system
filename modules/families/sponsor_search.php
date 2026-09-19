@@ -38,11 +38,33 @@ if (!$child) {
     exit();
 }
 
-$likeTerm = '%' . str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $searchTerm) . '%';
+/*
+ * Multi-word autocomplete:
+ * - Each typed word must match the beginning of the corresponding sponsor-name word.
+ * - This makes "أمل ب" narrow to names beginning with "أمل" then a second word beginning with "ب".
+ * - A complete multi-word query therefore narrows progressively instead of using one broad
+ *   contains match against the whole query.
+ * - Sponsor codes keep contains matching so partial codes remain easy to find.
+ *
+ * Arabic normalization is applied in PHP after the database has returned the authorized
+ * candidate set. Authorization and duplicate-sponsorship exclusion remain enforced in SQL
+ * before candidates reach this matcher.
+ */
+$normalizeSearchValue = static function (string $value): string {
+    $value = trim($value);
+    $value = preg_replace('/\s+/u', ' ', $value);
+    $value = mb_strtolower($value, 'UTF-8');
+    $value = preg_replace('/[\x{064B}-\x{065F}\x{0670}]/u', '', $value);
+    $value = str_replace(['إ', 'أ', 'آ', 'ٱ'], 'ا', $value);
+    $value = str_replace(['ى'], 'ي', $value);
+    return trim($value);
+};
+
+$query = $normalizeSearchValue($searchTerm);
+$queryTokens = preg_split('/\s+/u', $query, -1, PREG_SPLIT_NO_EMPTY);
 
 $where = [
     "s.status = 'active'",
-    "(s.full_name LIKE ? ESCAPE '\\\\' OR s.sponsor_code LIKE ? ESCAPE '\\\\')",
     "NOT EXISTS (
         SELECT 1
         FROM sponsorships sx
@@ -51,7 +73,7 @@ $where = [
           AND sx.status IN ('active', 'paused')
     )"
 ];
-$params = [$likeTerm, $likeTerm, $childId];
+$params = [$childId];
 
 if ($role === 'supervisor') {
     $uid = Session::getUserId();
@@ -90,16 +112,43 @@ $sql = "SELECT s.id, s.full_name, s.sponsor_code, s.gender, s.first_letter_id
         FROM sponsors s
         WHERE " . implode(' AND ', $where) . "
         ORDER BY s.full_name
-        LIMIT 80";
+        LIMIT 500";
 
-$searchSponsors = dbFetchAll($sql, $params);
+$candidateSponsors = dbFetchAll($sql, $params);
 
 if ($role === 'supervisor') {
     $uid = Session::getUserId();
-    $searchSponsors = array_values(array_filter(
-        $searchSponsors,
+    $candidateSponsors = array_values(array_filter(
+        $candidateSponsors,
         static fn(array $sponsor): bool => supervisorCanAccessSponsor($uid, $sponsor)
     ));
+}
+
+$matches = [];
+
+foreach ($candidateSponsors as $sponsor) {
+    $name = $normalizeSearchValue((string)($sponsor['full_name'] ?? ''));
+    $code = $normalizeSearchValue((string)($sponsor['sponsor_code'] ?? ''));
+
+    $nameWords = preg_split('/\s+/u', $name, -1, PREG_SPLIT_NO_EMPTY);
+
+    $nameMatches = true;
+    foreach ($queryTokens as $index => $token) {
+        if (!isset($nameWords[$index]) || mb_strpos($nameWords[$index], $token, 0, 'UTF-8') !== 0) {
+            $nameMatches = false;
+            break;
+        }
+    }
+
+    $codeMatches = $query !== '' && mb_strpos($code, $query, 0, 'UTF-8') !== false;
+
+    if ($nameMatches || $codeMatches) {
+        $matches[] = $sponsor;
+    }
+
+    if (count($matches) >= 80) {
+        break;
+    }
 }
 
 $results = array_map(static function (array $sponsor): array {
@@ -108,6 +157,6 @@ $results = array_map(static function (array $sponsor): array {
         'name' => (string)($sponsor['full_name'] ?? ''),
         'code' => (string)($sponsor['sponsor_code'] ?? '')
     ];
-}, $searchSponsors);
+}, $matches);
 
 echo json_encode($results, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE);
