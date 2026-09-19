@@ -240,4 +240,6 @@ $totLE = array_sum(array_column($liabs, 2)) + $equity + $net;
     <?php echo abs($totA - $totLE) < 0.01 ? 'المعادلة محققة: الأصول = الالتزامات + الحقوق ✔' : 'تنبيه: فرق ' . number_format(abs($totA - $totLE), 2) . ' — راجع الأرصدة الافتتاحية.'; ?>
 </div>
 <?php endif; ?>
+
+<div class="container-fluid px-3 pb-4"><div class="d-flex justify-content-start"><a href="<?php echo APP_URL; ?>modules/accounting/index.php" class="btn btn-outline-secondary" onclick="return akGoBack(this.href);"><i class="fa-solid fa-arrow-right me-1"></i> العودة</a></div></div>
 <?php include dirname(__DIR__, 2) . '/includes/footer.php'; ?>
