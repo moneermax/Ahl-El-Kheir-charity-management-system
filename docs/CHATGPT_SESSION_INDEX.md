@@ -532,3 +532,25 @@ Final syntax-fix commit:
 **Runtime status:** User confirmed the page now opens and works after pulling the fix.
 
 Do not reopen this cleanup work unless a genuine regression appears or the user explicitly requests another retention-policy change.
+
+
+## ORPHAN PROFILE — ADDITIONAL SPONSORSHIP UX — 2026-09-19
+
+The orphan profile at `modules/families/orphan_profile.php` was enhanced so authorized users can add an additional sponsor directly from the orphan profile instead of leaving the page and manually restarting the sponsorship creation workflow.
+
+Implementation commit: `b0ba3f92d1ee9ea542936f9ce8b381c03f964b45` — `Simplify adding additional orphan sponsorships`.
+
+Current behavior:
+- The profile displays all sponsorship records for the orphan, with sponsor, code, monthly amount, start date, status, and edit action.
+- Active sponsorships are totaled as a monthly amount for visibility.
+- `admin`, `vice_general_manager`, and `supervisor` can use **إضافة كفيل آخر** directly on the profile.
+- The add form is a modal tied to the current orphan; the user does not need to search for the orphan again.
+- The form captures sponsor, monthly amount, start date, and optional notes.
+- Server-side authorization is enforced. Supervisor sponsor selection uses the authoritative Sponsor first-name letter + Sponsor gender responsibility rule through `supervisorCanAccessSponsor()`.
+- Sponsors already having an active/paused sponsorship for the same orphan are excluded from the selector and rejected server-side if submitted directly.
+- New sponsorships use the application's SDG currency policy and create the normal sponsorship code/audit record.
+- Existing sponsorship editing remains available through the existing sponsorships workflow.
+
+Database verification completed before implementation: `sponsorships` has `child_id` as an indexed nullable foreign key to `family_children.id`, with no unique constraint preventing multiple sponsorship rows for one orphan. Therefore multiple sponsorship relationships are structurally supported by the current schema.
+
+**Runtime verification pending:** after pulling the commit, test the orphan profile with a real orphan that already has sponsorship #2713 (the user's example is orphan #1582), add a second sponsor, confirm both sponsorships remain visible, verify the combined active monthly total, and verify the new sponsorship appears in the existing sponsorship list/workflow.
