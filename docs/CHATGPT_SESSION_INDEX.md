@@ -563,3 +563,10 @@ Implementation commit: `95089efedd84f05c1f8753ca1aabfd9bff1f1711`.
 
 Runtime verification remains pending: open orphan #1582, open **إضافة كفيل آخر**, search by a sponsor name/code, select a result, and verify the selected sponsor can be saved.
 
+### DASHBOARD REVIEW — 2026-09-19 — Staff orphan-forms authorization correction
+
+Repository inspection found a concrete role mismatch: `dashboard/staff_dashboard.php` exposes the orphan-forms workflow to `staff`, but `modules/families/orphan_forms_index.php` did not include `staff` in its `$viewRoles`, so a Staff user could be sent to a page that redirected them away. Fixed in commit `223c462528cc0e69d62bcf5f76094cea6ce821e2`.
+
+The sponsorship-family orphan header visual fix is also complete in commit `2e4673a9a432e80ffb9cdccddadb4cbffd08b450`; it uses the actual application header `--navy` background directly on the page because `assets/css/style.css` is not loaded by `includes/header.php`.
+
+**Next runtime checks:** pull current `main`, then verify Staff can open `modules/families/orphan_forms_index.php` from the dashboard while Administration and Social Media retain their existing behavior. Continue the dashboard review afterward; do not reopen completed Winback schema or sponsorship-family investigations.
