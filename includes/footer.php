@@ -49,6 +49,46 @@ window.AK_TRANSLATIONS=<?php echo json_encode(ak_dict(),JSON_UNESCAPED_UNICODE|J
 <?php if (($active ?? '') === 'fm_dashboard'): ?><script src="<?php echo asset('js/fm_dashboard_layout.js'); ?>"></script><?php endif; ?>
 <?php if (($active ?? '') === 'fm_dashboard'): ?><script src="<?php echo asset('js/fina_dashboard_widget.js'); ?>"></script><?php endif; ?>
 <script>
+(function(){
+    var btn = document.getElementById('akMobileMenuBtn');
+    var overlay = document.getElementById('sidebarOverlay');
+
+    function setSidebar(open) {
+        document.body.classList.toggle('sidebar-open', open);
+        if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+
+    if (btn) {
+        btn.addEventListener('click', function () {
+            setSidebar(!document.body.classList.contains('sidebar-open'));
+        });
+    }
+
+    if (overlay) {
+        overlay.addEventListener('click', function () {
+            setSidebar(false);
+        });
+    }
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') setSidebar(false);
+    });
+
+    document.querySelectorAll('#sidebar a').forEach(function (link) {
+        link.addEventListener('click', function () {
+            if (window.matchMedia('(max-width: 991.98px)').matches) {
+                setSidebar(false);
+            }
+        });
+    });
+
+    window.addEventListener('resize', function () {
+        if (!window.matchMedia('(max-width: 991.98px)').matches) {
+            setSidebar(false);
+        }
+    });
+})();
+
 (function(){var leaveLink=document.querySelector('a[href*="modules/hr/leaves.php?action=request"]');var userMenu=document.querySelector('#userDropdown .ak-dd-menu');if(leaveLink&&userMenu){leaveLink.classList.remove('qa-btn');leaveLink.classList.add('ak-dd-item','ak-leave-request-moving');leaveLink.removeAttribute('style');leaveLink.setAttribute('title','طلب إجازة');var icon=leaveLink.querySelector('i');if(icon)icon.className='fas fa-calendar-plus me-2';var divider=document.createElement('div');divider.className='dropdown-divider';userMenu.insertBefore(divider,userMenu.firstChild);userMenu.insertBefore(leaveLink,divider.nextSibling);requestAnimationFrame(function(){leaveLink.classList.remove('ak-leave-request-moving')})}})();
 
 (function(){var deferred=null;var btn=document.getElementById('akInstallBtn');window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferred=e;if(btn)btn.classList.remove('d-none')});if(btn)btn.addEventListener('click',function(){if(!deferred)return;deferred.prompt();deferred.userChoice.then(function(){deferred=null;btn.classList.add('d-none')})});window.addEventListener('appinstalled',function(){if(btn)btn.classList.add('d-none')})})();
