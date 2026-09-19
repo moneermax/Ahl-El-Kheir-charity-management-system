@@ -1045,3 +1045,17 @@ Code commits: 726d766f8075b2a55a0dcfd0ccc1cb5ec75c64d1, 0530c69c6e80b320577ac50d
 ### Verification boundary
 
 Real-device verification is still pending. Chrome device emulation is useful for an initial check, but this fix must not be marked runtime-verified until the user confirms the actual mobile layout.
+
+## Shared floating sidebar UX — 2026-09-19
+
+The shared sidebar floating navigation and its edge-mounted handler were refined; the handler is intentionally treated as temporary UX, not a closed final design.
+
+The shared navigation remains a fixed floating/off-canvas sidebar. The handler is flush with the page edge, uses the shared navy header/sidebar color, has rounded inner corners, and was narrowed to 28px on desktop/mobile. The current implementation is in `includes/header.php`.
+
+Commit: `97f5d394ee0370be436351a4d4696bbf5c0b5a5d` — **Refine sidebar handler width and page-edge alignment**.
+
+The user explicitly considers this **temporary done** rather than a final visual design. Do not spend further work refining the handler unless the user returns to it. No database, schema, authorization, role, or workflow logic changed.
+
+### Immediate continuation
+
+Move to the next system-wide fix requested by the user. Inspect the relevant documentation and current repository code before making changes; do not reopen closed audit areas or repeat passed tests without regression evidence.
