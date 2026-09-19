@@ -467,7 +467,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         const matches = sponsors.filter(function(sponsor) {
             const name = normalizeSearch(sponsor.name);
             const code = normalizeSearch(sponsor.code);
-            return name.indexOf(query) !== -1 || code.indexOf(query) !== -1;
+            return name === query || code === query;
         }).slice(0, 80);
 
         if (!matches.length) {
