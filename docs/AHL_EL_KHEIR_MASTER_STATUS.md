@@ -819,3 +819,10 @@ Temporary legal-age test DOBs were restored to their original values after verif
 The existing contextual Back-button implementation remains unchanged. A shared enhancement was added in `includes/footer.php`: any user-facing HTML page that already contains the audited contextual Back button now receives a second cloned Back button at the top-left of the page content. Both buttons use the same existing `akGoBack(fallback)` behavior, so originating-page context and deterministic fallback remain identical. Dashboards and excluded non-HTML/stream/print endpoints are unaffected. The existing bottom Back button remains in place.
 
 Commit: `0557218daa28d2ce78ff8e9f0bbaf8bacd2f0769` — Add top-left Back button to pages with contextual Back.
+
+
+## 2026-09-19 — Back-button coverage correction
+
+The first centralized enhancement only added a top button where an existing contextual Back button was already present. That left some audited HTML pages without either button. The implementation was corrected in `includes/footer.php`: non-dashboard HTML pages now receive both a top-left and bottom Back button when they do not already contain an audited contextual Back control; pages with an existing contextual control receive the top copy while retaining their existing bottom control. The generated controls use the role's existing dashboard route as deterministic fallback and the same `akGoBack()` history/context behavior. Dashboards remain excluded.
+
+Commit: `68d5db9e76add648933b2874fb5f349bdee0e535` — Ensure two Back buttons on all audited HTML pages.
