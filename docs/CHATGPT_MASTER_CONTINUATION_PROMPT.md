@@ -628,3 +628,11 @@ The Administration/Staff/Social Media dashboard review found and fixed a linked-
 The sponsorship-safe family profile orphan header visual issue is also resolved in commit `2e4673a9a432e80ffb9cdccddadb4cbffd08b450`; the fix is page-local because `includes/header.php` does not load `assets/css/style.css`.
 
 **Immediate next runtime check:** pull current `main` and verify Staff can open the orphan-forms page from the dashboard. Then continue the same dashboard review for remaining KPI, sponsor-request, Winback, role-separation, Reports, Arabic/encoding, responsive, and runtime issues. Do not restart completed investigations.
+
+### LATEST WINBACK SECURITY CHECKPOINT — 2026-09-19
+
+The Administration dashboard linked Winback workflow received a narrow server-side authorization hardening. `open_case` now rechecks the same queue eligibility before creating a case; `add_contact` only accepts `open`/`contacted` campaigns; `mark_declined` only accepts `open`/`contacted` campaigns.
+
+Commit: `776da4470010d27c8758fd116843d3d06f9c94b9`.
+
+**Next:** pull and runtime-test the Winback workflow. Do not move to unrelated dashboard UX findings until this linked-page correction is verified.
