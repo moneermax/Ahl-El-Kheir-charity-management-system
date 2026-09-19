@@ -275,7 +275,7 @@ function closeDisbursementWithReturn(int $disbursementId, int $nannyId, string $
         return ['success' => false, 'message' => $e->getMessage()];
     }
 }
-$viewId = isset($_GET['view']) ? (int)$_GET['view'] : null;
+$viewId = isset($_GET['view']) ? (int)$_GET['view'] : null; $returnQuery=trim((string)($_GET['return']??'')); $backUrl=APP_URL.'modules/accounting/disbursements.php'; if($returnQuery!==''){$backUrl.='?'.ltrim(rawurldecode($returnQuery),'?');}
 $batches = [];
 $groups = [];
 // ==========================================
@@ -915,7 +915,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 <div class="card mb-4 fade-in">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0"><i class="fas fa-folder-open me-2"></i>دفعة #<?php echo (int)$viewBatch['id']; ?> - <?php echo e($viewBatch['month']); ?></h5>
-        <a href="<?php echo APP_URL; ?>modules/accounting/disbursements.php" class="btn btn-sm btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i> رجوع</a>
+        <a href="<?php echo e($backUrl); ?>" class="btn btn-sm btn-outline-secondary" onclick="return akGoBack(this.href);"><i class="fas fa-arrow-left me-1"></i> رجوع</a>
     </div>
     <div class="card-body">
         <div class="row mb-4">
@@ -1409,7 +1409,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                             <span class="badge bg-<?php echo $color; ?>"><?php echo $label; ?></span>
                         </td>
                         <td class="text-center">
-                            <a href="?view=<?php echo (int)$b['id']; ?>" class="btn btn-sm btn-outline-primary"><i class="fas fa-eye"></i> عرض</a>
+                            <a href="?view=<?php echo (int)$b['id']; ?>&return=<?php echo rawurlencode(http_build_query($_GET)); ?>" class="btn btn-sm btn-outline-primary"><i class="fas fa-eye"></i> عرض</a>
                             <?php if ($canManage && $b['status'] === 'pending_approval'): ?>
                             <a href="?view=<?php echo (int)$b['id']; ?>" class="btn btn-sm btn-warning"><i class="fas fa-upload me-1"></i> تحويل</a>
                             <?php endif; ?>
