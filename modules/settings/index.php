@@ -168,4 +168,6 @@ function previewLogo(input){const preview=document.getElementById('logoPreview')
 function clearLogoSelection(){const input=document.getElementById('site_logo');input.value='';document.getElementById('logoFileName').style.display='none';document.getElementById('logoPreview').src=<?php echo json_encode(APP_URL . $current_logo); ?>}
 document.addEventListener('DOMContentLoaded',()=>{const preview=document.getElementById('logoPreview');if(preview)preview.onerror=function(){this.src=<?php echo json_encode(APP_URL . 'assets/img/placeholder-logo.png'); ?>}});
 </script>
+
+<div class="container-fluid px-3 pb-4"><div class="d-flex justify-content-start"><a href="modules/admin_dashboard.php" class="btn btn-outline-secondary" onclick="return akGoBack(this.href);"><i class="fa-solid fa-arrow-right me-1"></i> العودة</a></div></div>
 <?php include dirname(__DIR__, 2) . '/includes/footer.php'; ?>
