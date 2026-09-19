@@ -147,8 +147,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf() && isset($_POST['add_
 
     $errors = [];
     if (empty($data['child_name'])) $errors[] = 'اسم اليتيم مطلوب';
-    if (empty($data['gender'])) $errors[] = 'الجنس مطلوب';
-    if (empty($data['birth_date'])) $errors[] = 'تاريخ الميلاد مطلوب';
+    if (empty($data['gender'])) $errors[] = 'الجنس مطلوب';    if (empty($data['birth_date'])) $errors[] = 'تاريخ الميلاد مطلوب';
     if ($data['family_id'] <= 0) $errors[] = 'الأسرة مطلوبة';
 
     if (empty($errors)) {
@@ -297,8 +296,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 <div class="card">
     <div class="card-header">
     <i class="fas fa-<?php echo $isViewMode ? 'eye' : ($isEditMode ? 'edit' : 'plus'); ?> me-1"></i>
-    <?php if ($isViewMode): ?>عرض بيانات اليتيم<?php elseif ($isEditMode): ?>تحديث بيانات اليتيم<?php else: ?>إضافة يتيم جديد<?php endif; ?>
-    </div>
+    <?php if ($isViewMode): ?>عرض بيانات اليتيم<?php elseif ($isEditMode): ?>تحديث بيانات اليتيم<?php else: ?>إضافة يتيم جديد<?php endif; ?>    </div>
     <div class="card-body">
         <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
             <?php echo csrf_field(); ?>
@@ -447,8 +445,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     }
 
     function closeSponsorResults() {
-        if (sponsorResults) {
-            sponsorResults.style.display = 'none';
+        if (sponsorResults) {            sponsorResults.style.display = 'none';
         }
     }
 
@@ -467,7 +464,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         const matches = sponsors.filter(function(sponsor) {
             const name = normalizeSearch(sponsor.name);
             const code = normalizeSearch(sponsor.code);
-            return name === query || code === query;
+            return name.startsWith(query) || code.startsWith(query);
         }).slice(0, 80);
 
         if (!matches.length) {
