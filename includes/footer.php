@@ -112,6 +112,7 @@ window.AK_TRANSLATIONS=<?php echo json_encode(ak_dict(),JSON_UNESCAPED_UNICODE|J
 
 (function(){var deferred=null;var btn=document.getElementById('akInstallBtn');window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferred=e;if(btn)btn.classList.remove('d-none')});if(btn)btn.addEventListener('click',function(){if(!deferred)return;deferred.prompt();deferred.userChoice.then(function(){deferred=null;btn.classList.add('d-none')})});window.addEventListener('appinstalled',function(){if(btn)btn.classList.add('d-none')})})();
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('<?php echo APP_URL; ?>sw.js').catch(function(){})});}
+function akGoBack(fallback){try{var ref=document.referrer;if(ref&&ref.indexOf(window.location.origin)===0&&window.history.length>1){window.history.back();return false;}}catch(e){} if(fallback){window.location.href=fallback;} return false;}
 </script>
 </body>
 </html>
