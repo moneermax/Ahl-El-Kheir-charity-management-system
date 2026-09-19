@@ -774,3 +774,12 @@ The user explicitly considers this **temporary done** rather than a final visual
 ### Immediate continuation
 
 Move to the next system-wide fix requested by the user. Inspect the relevant documentation and current repository code before making changes; do not reopen closed audit areas or repeat passed tests without regression evidence.
+
+
+## Current continuation checkpoint — 2026-09-19
+
+Continue the **existing** Ahl El Kheir project. Current active task: **system-wide Back/navigation audit and fix**. The entire `TCPDF/` directory is explicitly out of scope.
+
+First inspect the current repository/docs state; do not restart completed work. The first navigation batch has already introduced `akGoBack(fallback)` in `includes/footer.php` and corrected contextual Back/list-return behavior across Families, Sponsors, Sponsorships, Projects, orphan/child navigation, returned Transactions, Search Center results, and Accounting Disbursements. Sponsor return handling now retains `link_status`.
+
+Continue by auditing the remaining user-facing modules for: broken Back links, Back links that lose pagination/search/filter context, and contextual pages that genuinely need a Back action but do not have one. Do not use a blind global `history.back()` without a deterministic application fallback. Do not alter authorization, business workflows, database schema, or the shared sidebar unless a genuine regression requires it. After completion, runtime-test representative list → detail → back and nested/edit/form flows, then update all four required documentation files.
