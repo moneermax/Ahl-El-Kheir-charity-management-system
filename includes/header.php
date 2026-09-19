@@ -781,6 +781,30 @@ if (Session::isLoggedIn()) {
         }
 
         @media (max-width: 991.98px) {
+            .ak-mobile-menu-btn {
+                position: fixed;
+                top: 10px;
+                right: 10px;
+                z-index: 1201;
+                min-width: 48px;
+                min-height: 44px;
+                padding: 7px 12px;
+                border: 2px solid rgba(255,255,255,0.65);
+                border-radius: 8px;
+                background: var(--navy-dark);
+                color: #fff;
+                box-shadow: 0 4px 14px rgba(0,0,0,0.28);
+            }
+
+            [dir="ltr"] .ak-mobile-menu-btn {
+                right: auto;
+                left: 10px;
+            }
+
+            .ak-mobile-menu-btn .ak-mobile-menu-icon {
+                font-size: 1.35rem;
+            }
+
             .sidebar {
                 position: fixed;
                 top: 0;
