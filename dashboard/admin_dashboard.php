@@ -333,30 +333,39 @@ include __DIR__ . '/../includes/header.php';
 .admin-online { color: var(--ac-green); }
 .admin-neutral { color: #d1d5db; }
 
-.admin-section-title {
+.admin-section-title,
+.admin-recent-heading,
+.admin-section-heading {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    margin: 28px 0 13px;
     padding: 15px 18px;
-    border: 1px solid #c9d8ee;
-    border-right: 6px solid var(--ac-blue);
+    color: #fff;
+    background:
+        radial-gradient(circle at 85% 20%, rgba(39,179,176,.24), transparent 26%),
+        linear-gradient(135deg, #172554 0%, #1e3a8a 55%, #2563eb 100%);
+    border: 1px solid rgba(255,255,255,.10);
     border-radius: 14px;
-    background: linear-gradient(90deg, #ffffff 0%, #eef5ff 100%);
-    box-shadow: 0 6px 18px rgba(75,120,194,.08);
+    box-shadow: 0 8px 22px rgba(17,24,39,.12);
 }
 
-.admin-section-title h2 {
+.admin-section-title {
+    margin: 28px 0 13px;
+}
+
+.admin-section-title h2,
+.admin-section-heading h2 {
     font-size: 1.12rem;
     margin: 0;
     font-weight: 800;
-    color: #234a86;
+    color: #fff;
 }
 
-.admin-section-title p {
+.admin-section-title p,
+.admin-section-heading p {
     margin: 4px 0 0;
-    color: #5f6f84;
+    color: rgba(255,255,255,.72);
     font-size: .8rem;
 }
 
@@ -445,8 +454,11 @@ include __DIR__ . '/../includes/header.php';
     align-items: center;
     gap: 13px;
     padding: 17px 19px;
-    border-bottom: 1px solid var(--ac-line);
-    background: color-mix(in srgb, var(--section-color, var(--ac-blue)) 8%, white);
+    color: #fff;
+    border-bottom: 1px solid rgba(255,255,255,.10);
+    background:
+        radial-gradient(circle at 85% 20%, rgba(39,179,176,.24), transparent 26%),
+        linear-gradient(135deg, #172554 0%, #1e3a8a 55%, #2563eb 100%);
 }
 
 .admin-control-heading:before {
@@ -456,7 +468,7 @@ include __DIR__ . '/../includes/header.php';
     top: 0;
     bottom: 0;
     width: 6px;
-    background: var(--section-color, var(--ac-blue));
+    background: rgba(39,179,176,.85);
 }
 
 .admin-control-heading-icon {
@@ -465,20 +477,21 @@ include __DIR__ . '/../includes/header.php';
     border-radius: 10px;
     display: grid;
     place-items: center;
-    background: color-mix(in srgb, var(--section-color, var(--ac-blue)) 14%, white);
-    color: var(--section-color, var(--ac-blue));
+    background: rgba(255,255,255,.10);
+    border: 1px solid rgba(255,255,255,.12);
+    color: #fff;
 }
 
 .admin-control-heading h3 {
     margin: 0;
     font-size: .98rem;
     font-weight: 800;
-    color: color-mix(in srgb, var(--section-color, var(--ac-blue)) 72%, #222);
+    color: #fff;
 }
 
 .admin-control-heading p {
     margin: 2px 0 0;
-    color: var(--ac-muted);
+    color: rgba(255,255,255,.72);
     font-size: .73rem;
 }
 
@@ -579,12 +592,16 @@ include __DIR__ . '/../includes/header.php';
     box-shadow:0 8px 22px rgba(15,23,42,.04);overflow:hidden;
 }
 .admin-recent-heading {
-    display:flex;justify-content:space-between;align-items:center;gap:12px;
-    padding:14px 17px;border-bottom:1px solid var(--ac-line);background:#fff;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    padding:14px 17px;
+    border-bottom:1px solid rgba(255,255,255,.10);
 }
-.admin-recent-heading strong {display:block;font-size:.86rem}
-.admin-recent-heading span {display:block;color:var(--ac-muted);font-size:.7rem;margin-top:3px}
-.admin-recent-heading a {font-size:.72rem;font-weight:800;text-decoration:none;color:#4b78c2;white-space:nowrap}
+.admin-recent-heading strong {display:block;font-size:.86rem;color:#fff}
+.admin-recent-heading span {display:block;color:rgba(255,255,255,.72);font-size:.7rem;margin-top:3px}
+.admin-recent-heading a {font-size:.72rem;font-weight:800;text-decoration:none;color:#fff;white-space:nowrap}
 .admin-recent-card .table {font-size:.72rem}
 .admin-alert-grid {
     display: grid;
@@ -813,7 +830,7 @@ include __DIR__ . '/../includes/header.php';
         </div>
     </section>
 
-    <div class="admin-alert-grid">
+    <div class="admin-section-heading" style="margin-top: 22px;">
         <div>
             <h2>نظرة سريعة على النظام</h2>
             <p>أرقام تشغيلية مباشرة تساعدك على معرفة حجم النظام قبل الدخول إلى أي وحدة.</p>
