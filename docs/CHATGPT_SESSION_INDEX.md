@@ -687,3 +687,17 @@ A runtime mobile-emulation review exposed a genuine responsive defect: the share
 Code commits: 726d766f8075b2a55a0dcfd0ccc1cb5ec75c64d1, 0530c69c6e80b320577ac50dcd852ea4633431f6.
 
 Runtime verification on a real phone is pending; do not mark this item verified until the user confirms the mobile layout works.
+
+
+## Mobile navigation UX — final runtime checkpoint — 2026-09-19
+
+Real-device mobile testing is now confirmed passed by the user. The mobile sidebar is an off-canvas drawer, the dedicated fixed `☰ القائمة` control is visible, and the user confirmed the result is much better. The user intentionally deferred making the application look like a native mobile app.
+
+A final small refinement in `includes/footer.php` locks background scrolling while the drawer is open and restores it when the drawer closes.
+
+Commits:
+- `ca88f2aa1d5ac0e41af1861905c4bd67cc5646c9`
+- `0c7d51c640519b3814c8e0e6f9220cc41097e530`
+- `af03d9dd775930be865c2b03a470665f3dab610b`
+
+Current phase boundary: mobile navigation is accepted for now. Further app-like mobile UX is deferred. Continue with remaining system-wide changes.
