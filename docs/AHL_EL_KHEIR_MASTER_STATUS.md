@@ -557,3 +557,30 @@ The direct additional-sponsorship modal now uses a searchable sponsor selector i
 Implementation commit: `95089efedd84f05c1f8753ca1aabfd9bff1f1711`.
 
 Runtime verification pending after pull.
+
+
+## 18. Additional Sponsorship Search — 2026-09-19
+
+The additional-sponsorship workflow in `modules/families/orphan_profile.php` now uses a dedicated authorized autocomplete endpoint at `modules/families/sponsor_search.php`.
+
+Latest implementation commit: `46c3b0213a2e769f07158214d87575c39ebaade5` — Improve multi-word sponsor autocomplete matching.
+
+The search behavior was refined so multi-word Arabic sponsor names narrow progressively by name-word position instead of applying one broad contains match to the entire typed phrase. For example, `أمل` matches the first name word, `أمل ب` narrows the second word to a prefix beginning with `ب`, and additional characters continue narrowing the same sequence. Sponsor-code searches retain partial/contains matching.
+
+The endpoint continues to enforce:
+- authenticated authorized roles;
+- Supervisor Letter + Gender responsibility scope;
+- final `supervisorCanAccessSponsor()` authorization;
+- active sponsor status;
+- exclusion of sponsors already active/paused for the same orphan;
+- submitted sponsor ID rather than free-text sponsor name.
+
+Runtime evidence on 2026-09-19 confirmed the underlying additional-sponsorship submission works for orphan child `234`: sponsor **ابراهيم تاج السر ابراهيم**, code `IMP-SP-002363`, was added successfully with an active sponsorship of `2,000.00 ج.س` starting `2026-09-19`. Existing sponsorship **مؤيد محمد احمد محمد** remained active and intact.
+
+The sponsorship creation result is confirmed. The multi-word autocomplete behavior itself must only be marked runtime-verified after the dedicated search keystroke tests are explicitly observed; do not infer search success from successful form submission.
+
+## 19. Immediate Next Task — Administration/Staff/Social Media Dashboard
+
+The next active work remains the open dashboard UX/functional review of `dashboard/staff_dashboard.php` and its linked Administration/Staff/Social Media workflows.
+
+Start by inspecting the current repository code and actual linked-page authorization. Review KPI meaning, sponsor-request table/action usability, Winback integration, orphan-form navigation, role differences, Reports visibility, Arabic labels/encoding, responsive behavior, and remaining runtime errors. Preserve all completed schema and authorization fixes.
