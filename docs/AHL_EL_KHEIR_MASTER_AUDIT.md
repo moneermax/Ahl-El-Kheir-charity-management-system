@@ -1088,3 +1088,7 @@ Continue reviewing the remaining user-facing modules for missing contextual Back
 The user clarified that the required behavior is broader than detail pages: **every user-facing page gets a Back button unless it is a dashboard**. Therefore module index/list pages are no longer treated as automatic exceptions. The implementation uses akGoBack(fallback) with same-origin history plus an explicit application fallback; it does not rely on blind global history.back().
 
 The second implementation batch added Back actions to the remaining user-facing HR, Users, Settings/System, Supervisors, Transactions, Reports, Accounting, Families, Sponsors, Sponsorships, Projects, Departments, Search, Notifications, Messages, and Logs pages. API/JSON endpoints, authenticated file streams, redirect-only compatibility entries, and printable/stream-only output are not treated as ordinary HTML pages.
+
+
+### 2026-09-19 — final navigation sweep additions
+A further sweep covered remaining user-facing HR integrity and system maintenance pages that render HTML. API/JSON actions, file streams, redirect-only compatibility endpoints, and print-only output remain excluded because they are not navigable HTML pages. The acceptance rule remains: every user-facing HTML page has Back unless it is a dashboard.
