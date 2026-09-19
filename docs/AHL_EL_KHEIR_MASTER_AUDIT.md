@@ -1059,3 +1059,26 @@ The user explicitly considers this **temporary done** rather than a final visual
 ### Immediate continuation
 
 Move to the next system-wide fix requested by the user. Inspect the relevant documentation and current repository code before making changes; do not reopen closed audit areas or repeat passed tests without regression evidence.
+
+
+## System-wide Back/navigation audit — 2026-09-19
+
+### Scope
+
+The audit covers user-facing PHP application pages outside `TCPDF/`. TCPDF is explicitly out of scope for Back/navigation fixes. Infrastructure-only PHP is not treated as normal user navigation.
+
+### Findings and fixes started
+
+- Existing hard-coded Back links were found on contextual detail pages that always returned to page 1/default indexes.
+- List/detail flows were found where pagination, search, and filters were not propagated into the detail URL.
+- Sponsor navigation already had a return mechanism; its whitelist omitted `link_status`, so that filter could be lost on return. This was corrected.
+- A shared `akGoBack(fallback)` helper was added to the common footer. It only uses browser history when the referrer is same-origin; otherwise it follows the supplied application fallback.
+- Families, Sponsors, Sponsorships, Projects, orphan/child pages, returned Transactions, Search Center results, and Accounting Disbursements received the first contextual-navigation corrections.
+
+### Security/navigation rule
+
+Do not implement a blind global `history.back()` as the only destination mechanism. Contextual Back actions must have an application fallback, and user-controlled return targets must not become unrestricted external redirects.
+
+### Remaining audit boundary
+
+Continue reviewing the remaining user-facing modules for missing contextual Back actions and context loss. Do not modify TCPDF. Do not reopen completed business/authentication/accounting controls merely because a page links to them.
