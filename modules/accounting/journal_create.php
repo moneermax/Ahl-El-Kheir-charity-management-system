@@ -11,6 +11,7 @@ if (!Session::isLoggedIn() || !in_array(Session::getUserRole(), ['admin','financ
     exit();
 }
 
+$returnQuery=trim((string)($_GET['return']??$_POST['return']??'')); $backUrl=APP_URL.'modules/accounting/journal.php'; if($returnQuery!==''){$backUrl.='?'.ltrim(rawurldecode($returnQuery),'?');}
 $pageTitle = t('accounting.new_manual_entry');
 $active = 'journal';
 ak_ensure_tables();
@@ -156,7 +157,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $pdo->commit();
                 flash('success', t('accounting.entry_posted', ['code' => $code]));
-                header('Location: ' . APP_URL . 'modules/accounting/journal.php?view=' . $eid);
+                header('Location: ' . APP_URL . 'modules/accounting/journal.php?view=' . $eid . ($returnQuery !== '' ? '&return=' . rawurlencode($returnQuery) : ''));
                 exit();
             } catch (Throwable $e) {
                 if ($pdo->inTransaction()) {
@@ -176,14 +177,14 @@ include dirname(__DIR__,2).'/includes/header.php'; ?>
 <div class="welcome-section fade-in"><h2><?php echo e($pageTitle); ?></h2><p><?php echo e(t('accounting.entry_balance_rule')); ?></p></div>
 <?php include dirname(__DIR__,2).'/includes/alerts.php'; ?>
 <?php if ($errors): ?><div class="alert alert-danger fade-in"><ul class="mb-0"><?php foreach ($errors as $er) { $params = $er === 'accounting.unbalanced' ? ($balanceParams ?? []) : []; echo '<li>' . e(t($er, $params)) . '</li>'; } ?></ul></div><?php endif; ?>
-<div class="card fade-in"><div class="card-body"><form method="post" id="jeForm">
+<div class="card fade-in"><div class="card-body"><form method="post" id="jeForm"><?php echo '<input type="hidden" name="return" value="' . e($returnQuery) . '">'; ?>
 <?php echo csrf_field(); ?>
 <div class="row g-2 mb-3"><div class="col-md-3"><label class="form-label"><?php echo e(t('accounting.date')); ?> *</label><input type="date" name="entry_date" class="form-control" value="<?php echo e(date('Y-m-d')); ?>" required></div><div class="col-md-9"><label class="form-label"><?php echo e(t('accounting.description')); ?> *</label><input type="text" name="description" class="form-control" required placeholder="<?php echo e(t('accounting.example_description')); ?>"></div></div>
 <div class="table-responsive"><table class="table align-middle" id="linesTable"><thead><tr><th style="width:40%"><?php echo e(t('accounting.account')); ?></th><th><?php echo e(t('accounting.amount')); ?></th><th><?php echo e(t('accounting.amount')); ?></th><th><?php echo e(t('accounting.line_description')); ?></th><th></th></tr></thead><tbody>
 <?php for ($i = 0; $i < 2; $i++): ?><tr class="je-line"><td><select name="account_id[]" class="form-select" required><option value=""><?php echo e(t('accounting.choose')); ?></option><?php foreach ($accounts as $a): ?><option value="<?php echo (int)$a['id']; ?>"><?php echo e($a['code']); ?> — <?php echo e($a['name_ar']); ?></option><?php endforeach; ?></select></td><td><input type="number" step="0.01" min="0" name="debit[]" class="form-control amt" placeholder="0.00"></td><td><input type="number" step="0.01" min="0" name="credit[]" class="form-control amt" placeholder="0.00"></td><td><input type="text" name="line_desc[]" class="form-control"></td><td><button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('tr').remove();recalc();"><i class="fas fa-trash"></i></button></td></tr><?php endfor; ?>
 </tbody><tfoot><tr class="table-active fw-bold"><td><?php echo e(t('accounting.total')); ?></td><td id="totD">0.00</td><td id="totC">0.00</td><td id="diff" colspan="2"><?php echo e(t('accounting.balanced')); ?></td></tr></table></div>
 <div class="d-flex gap-2"><button type="button" class="btn btn-secondary" onclick="addLine()"><i class="fas fa-plus me-1"></i><?php echo e(t('accounting.add_line')); ?></button><button class="btn btn-primary"><i class="fas fa-save me-1"></i><?php echo e(t('accounting.post_entry')); ?></button></div>
-</form></div></div>
+<div class="mt-3"><a href="<?php echo e($backUrl); ?>" class="btn btn-secondary" onclick="return akGoBack(this.href);"><?php echo e(t('common.cancel')); ?></a></div></form></div></div>
 <script>
 function addLine(){var tbody=document.querySelector('#linesTable tbody'),row=tbody.querySelector('tr.je-line').cloneNode(true);row.querySelectorAll('input').forEach(function(i){i.value='';});row.querySelector('select').value='';tbody.appendChild(row);}
 function recalc(){var d=0,c=0;document.querySelectorAll('#linesTable tbody tr').forEach(function(tr){var i=tr.querySelectorAll('.amt');d+=parseFloat(i[0].value||0);c+=parseFloat(i[1].value||0);});document.getElementById('totD').textContent=d.toFixed(2);document.getElementById('totC').textContent=c.toFixed(2);var diff=Math.abs(d-c),el=document.getElementById('diff');el.textContent=diff<.01?<?php echo json_encode(t('accounting.balanced')); ?>:<?php echo json_encode(t('accounting.difference',['amount'=>'__DIFF__'])); ?>.replace('__DIFF__',diff.toFixed(2));}
