@@ -30,4 +30,6 @@ include dirname(__DIR__,2).'/includes/header.php'; ?>
 <div class="mb-3"><label class="form-label"><?php echo e(t('users.confirm_password')); ?></label><div class="input-group"><input type="password" name="confirm_password" id="ak_conf" class="form-control" minlength="6" required autocomplete="new-password"><button class="btn btn-outline-secondary" type="button" onclick="var i=document.getElementById('ak_conf');i.type=i.type==='password'?'text':'password';"><i class="fas fa-eye"></i></button></div></div>
 <div class="d-flex gap-2"><button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i><?php echo e(t('users.save_password')); ?></button><?php if(!$forced): ?><a href="<?php echo e(url('modules/users/profile.php')); ?>" class="btn btn-outline-secondary"><?php echo e(t('users.back')); ?></a><?php endif; ?></div>
 </form></div></div>
+
+<div class="container-fluid px-3 pb-4"><div class="d-flex justify-content-start"><a href="modules/users/profile.php" class="btn btn-outline-secondary" onclick="return akGoBack(this.href);"><i class="fa-solid fa-arrow-right me-1"></i> العودة</a></div></div>
 <?php include dirname(__DIR__,2).'/includes/footer.php'; ?>
