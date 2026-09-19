@@ -107,7 +107,6 @@ window.AK_BACK_FALLBACK=<?php echo json_encode(APP_URL . dashboard_for_role(curr
         document.body.style.overflow = mobileQuery.matches && open ? 'hidden' : '';
     }
 
-    /* Keep the existing desktop-open/mobile-closed behavior independent of Back-button logic. */
     setSidebar(!mobileQuery.matches);
 
     if (btn) {
@@ -138,9 +137,11 @@ window.AK_BACK_FALLBACK=<?php echo json_encode(APP_URL . dashboard_for_role(curr
     window.addEventListener('resize', function () {
         if (mobileQuery.matches) {
             if (document.body.classList.contains('sidebar-open')) setSidebar(false);
+        } else if (!document.body.classList.contains('sidebar-open')) {
+            setSidebar(true);
         }
     });
-})();
+})();})();
 
 (function(){var leaveLink=document.querySelector('a[href*="modules/hr/leaves.php?action=request"]');var userMenu=document.querySelector('#userDropdown .ak-dd-menu');if(leaveLink&&userMenu){leaveLink.classList.remove('qa-btn');leaveLink.classList.add('ak-dd-item','ak-leave-request-moving');leaveLink.removeAttribute('style');leaveLink.setAttribute('title','طلب إجازة');var icon=leaveLink.querySelector('i');if(icon)icon.className='fas fa-calendar-plus me-2';var divider=document.createElement('div');divider.className='dropdown-divider';userMenu.insertBefore(divider,userMenu.firstChild);userMenu.insertBefore(leaveLink,divider.nextSibling);requestAnimationFrame(function(){leaveLink.classList.remove('ak-leave-request-moving')})}})();
 
