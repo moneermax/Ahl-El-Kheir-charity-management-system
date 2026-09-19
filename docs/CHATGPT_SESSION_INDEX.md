@@ -720,3 +720,7 @@ Move to the next system-wide fix requested by the user. Inspect the relevant doc
 ## 2026-09-19 — System-wide Back/navigation audit started
 
 The current active task is a system-wide Back/navigation audit. TCPDF is explicitly excluded. The first implementation batch added the shared `akGoBack(fallback)` helper and corrected contextual navigation across Families, Sponsors, Sponsorships, Projects, orphan/child pages, returned Transactions, Search Center result links, and Accounting Disbursements. Continue from the current remote main state and inspect remaining user-facing modules before declaring the audit complete.
+
+
+## 2026-09-19 — Back/navigation audit expanded
+The active navigation audit now follows the user's explicit rule: every user-facing page must have a Back button unless it is a dashboard. Module index/list pages are included. The audit excludes TCPDF and non-HTML endpoints/streams. akGoBack(fallback) is the shared implementation, preserving same-origin originating context and using a deterministic fallback for direct entry.
