@@ -549,3 +549,11 @@ An orphan may now have multiple sponsorship records, consistent with the actual 
 This is a workflow simplification only; it does not weaken sponsor authorization or replace the existing sponsorship editing workflow.
 
 **Runtime verification pending after pull.**
+
+### Additional Sponsorship — Searchable Sponsor Selector — 2026-09-19
+
+The direct additional-sponsorship modal now uses a searchable sponsor selector instead of rendering the full sponsor list as a native dropdown. Search matches sponsor name and sponsor code. Only sponsors already present in the server-generated eligible list are searchable, so existing authorization, supervisor scope, and active/paused duplicate exclusion remain enforced.
+
+Implementation commit: `95089efedd84f05c1f8753ca1aabfd9bff1f1711`.
+
+Runtime verification pending after pull.
