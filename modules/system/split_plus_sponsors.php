@@ -193,4 +193,6 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 </div>
 </div>
 </div>
+
+<div class="container-fluid px-3 pb-4"><div class="d-flex justify-content-start"><a href="<?php echo APP_URL+'modules/settings/index.php'; ?>" class="btn btn-outline-secondary" onclick="return akGoBack(this.href);"><i class="fa-solid fa-arrow-right me-1"></i> العودة</a></div></div>
 <?php include dirname(__DIR__, 2) . '/includes/footer.php'; ?>
