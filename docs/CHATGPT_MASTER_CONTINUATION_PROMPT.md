@@ -582,3 +582,23 @@ The user has confirmed the page now opens and works. Do not repeat this audit un
 ## CURRENT ACTIVE DIRECTION
 
 Continue from the latest repository/documentation checkpoint. The completed audit-log cleanup is not the next audit area. When the user identifies the next dashboard/module to audit, read the session index and relevant master-audit section, inspect the current code and actual schema, and continue that area without reopening closed work.
+
+
+## ORPHAN PROFILE SPONSORSHIP UX — 2026-09-19
+
+A direct additional-sponsorship workflow is now implemented in `modules/families/orphan_profile.php`.
+
+Do not regress this behavior: when an orphan already has one or more sponsorships, authorized users should be able to add another sponsor from the same orphan profile through **إضافة كفيل آخر**, without leaving the profile to search for the orphan again.
+
+Preserve:
+- multiple sponsorship rows per orphan;
+- server-side sponsor authorization;
+- Supervisor scope based on Sponsor first-name letter + Sponsor gender via `supervisorCanAccessSponsor()`;
+- exclusion/rejection of sponsors already active/paused for the same orphan;
+- SDG system currency policy;
+- sponsorship code generation and audit logging;
+- existing sponsorship edit/view workflow.
+
+Implementation commit: `b0ba3f92d1ee9ea542936f9ce8b381c03f964b45`.
+
+Runtime verification is pending after the user pulls the commit.
