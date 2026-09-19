@@ -35,10 +35,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
 
     if (isset($_POST['open_case'])) {
         $sid = (int)$_POST['open_case'];
-        if (!dbFetchOne("SELECT id FROM winback_campaigns WHERE sponsor_id = ? AND status IN ('open','contacted')", [$sid])) {
+        $eligible = dbFetchOne("SELECT s.id
+            FROM sponsors s
+            WHERE s.id = ?
+              AND s.status IN ('inactive','suspended','cancelled')
+              AND NOT EXISTS (SELECT 1 FROM winback_campaigns wc WHERE wc.sponsor_id = s.id AND wc.status IN ('open','contacted'))
+              AND NOT EXISTS (
+                  SELECT 1 FROM sponsorships sp
+                  WHERE sp.sponsor_id = s.id
+                    AND sp.status = 'active'
+              )
+            HAVING (
+                SELECT MAX(COALESCE(sp2.pause_start_date, sp2.end_date, sp2.updated_at))
+                FROM sponsorships sp2
+                WHERE sp2.sponsor_id = s.id
+                  AND sp2.status IN ('cancelled','paused')
+            ) IS NULL
+            OR (
+                SELECT MAX(COALESCE(sp3.pause_start_date, sp3.end_date, sp3.updated_at))
+                FROM sponsorships sp3
+                WHERE sp3.sponsor_id = s.id
+                  AND sp3.status IN ('cancelled','paused')
+            ) < DATE_SUB(NOW(), INTERVAL 90 DAY)", [$sid]);
+        if ($eligible) {
             dbExecute("INSERT INTO winback_campaigns (sponsor_id, handled_by) VALUES (?, ?)", [$sid, $uid]);
             wb_audit($uid, 'OPEN', $sid, []);
             flash('success', t('تم بدء المتابعة.'));
+        } else {
+            flash('error', t('الكفيل المحدد غير مؤهل لبدء متابعة الاسترجاع.'));
         }
         header('Location: ' . APP_URL . 'modules/administration/winback.php'); exit();
     }
@@ -48,6 +72,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
         $method  = in_array($_POST['method'] ?? '', ['phone','whatsapp','visit'], true) ? $_POST['method'] : 'phone';
         $outcome = trim($_POST['outcome'] ?? '') ?: 'no_answer';
         $notes   = trim($_POST['notes'] ?? '');
+        $campaign = dbFetchOne("SELECT id, status FROM winback_campaigns WHERE id = ?", [$cid]);
+        if (!$campaign || !in_array($campaign['status'], ['open','contacted'], true)) {
+            flash('error', t('لا يمكن تسجيل تواصل لهذه المتابعة في حالتها الحالية.'));
+            header('Location: ' . APP_URL . 'modules/administration/winback.php'); exit();
+        }
         dbExecute("INSERT INTO winback_contacts (campaign_id, contacted_by, method, outcome, notes) VALUES (?, ?, ?, ?, ?)",
             [$cid, $uid, $method, $outcome, $notes !== '' ? $notes : null]);
         dbExecute("UPDATE winback_campaigns SET last_contact_at = NOW(), status = IF(status='open','contacted',status), handled_by = ? WHERE id = ?", [$uid, $cid]);
@@ -81,9 +110,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
 
     if (isset($_POST['mark_declined'])) {
         $cid = (int)$_POST['mark_declined'];
-        dbExecute("UPDATE winback_campaigns SET status='declined', closed_at=NOW(), handled_by=? WHERE id = ?", [$uid, $cid]);
-        wb_audit($uid, 'DECLINED', $cid, []);
-        flash('success', t('تم إغلاق المتابعة (اعتذر عن العودة).'));
+        $campaign = dbFetchOne("SELECT id, status FROM winback_campaigns WHERE id = ?", [$cid]);
+        if ($campaign && in_array($campaign['status'], ['open','contacted'], true)) {
+            dbExecute("UPDATE winback_campaigns SET status='declined', closed_at=NOW(), handled_by=? WHERE id = ?", [$uid, $cid]);
+            wb_audit($uid, 'DECLINED', $cid, []);
+            flash('success', t('تم إغلاق المتابعة (اعتذر عن العودة).'));
+        } else {
+            flash('error', t('لا يمكن إغلاق هذه المتابعة في حالتها الحالية.'));
+        }
         header('Location: ' . APP_URL . 'modules/administration/winback.php'); exit();
     }
 }
