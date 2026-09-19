@@ -124,7 +124,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $canEdit && $child) {
              $_SERVER['REMOTE_ADDR'] ?? '', $_SERVER['HTTP_USER_AGENT'] ?? '']); } catch (Throwable $e) {}
         flash('success', t('Form data saved successfully.'));
     }
-    redirect('modules/families/orphan_form.php?child=' . $childId . (isset($_GET['tab']) ? '&tab=' . e($_GET['tab']) : ''));
+    redirect('modules/families/orphan_form.php?child=' . $childId . (isset($_GET['tab']) ? '&tab=' . e($_GET['tab']) : '') . ($returnQuery !== '' ? '&return=' . rawurlencode($returnQuery) : ''));
 }
 
 /* - display values - */
