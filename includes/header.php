@@ -645,22 +645,56 @@ if (Session::isLoggedIn()) {
         .qa-top-bar {
             background: var(--navy);
             color: #fff;
-            padding: 9px 20px 11px;
+            padding: 8px 20px 10px;
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.10);
         }
 
-        .qa-actions,
-        .qa-user-controls {
+        .qa-actions {
+            width: min(100%, 1180px);
             display: flex;
-            flex-wrap: wrap;
             align-items: center;
             justify-content: center;
-            gap: 7px;
-            width: 100%;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .qa-group {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 6px;
+            padding: 3px;
+            border: 1px solid rgba(255,255,255,.12);
+            border-radius: 10px;
+            background: rgba(255,255,255,.045);
+        }
+
+        .qa-group-label {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 28px;
+            padding: 0 7px;
+            color: rgba(255,255,255,.58);
+            font-size: .62rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .qa-user-controls {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .qa-user-controls .qa-user-btn {
+            margin-inline-end: 2px;
         }
 
         .qa-btn,
@@ -821,7 +855,19 @@ if (Session::isLoggedIn()) {
                 padding: 8px 10px 10px;
             }
 
-            .qa-actions,
+            .qa-actions {
+                gap: 6px;
+            }
+
+            .qa-group {
+                width: auto;
+                max-width: 100%;
+            }
+
+            .qa-group-label {
+                display: none;
+            }
+
             .qa-user-controls {
                 gap: 5px;
             }
@@ -986,7 +1032,13 @@ if (Session::isLoggedIn()) {
             <div class="qa-top-bar">
                 <div class="qa-actions">
 
-                    <?php foreach ($currentQuickActions as $qa): ?>
+                    <?php if (!empty($currentQuickActions)): ?>
+                        <div class="qa-group qa-group-primary">
+                            <span class="qa-group-label">
+                                <?php echo e(AK_LANG === 'ar' ? 'الوصول السريع' : 'Quick access'); ?>
+                            </span>
+
+                            <?php foreach ($currentQuickActions as $qa): ?>
                         <a
                             href="<?php echo APP_URL . e($qa['url']); ?>"
                             class="qa-btn"
@@ -995,7 +1047,14 @@ if (Session::isLoggedIn()) {
                             <i class="fas <?php echo e($qa['icon']); ?>" aria-hidden="true"></i>
                             <span><?php echo e($qa['label']); ?></span>
                         </a>
-                    <?php endforeach; ?>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+
+                    <div class="qa-group qa-group-tools">
+                        <span class="qa-group-label">
+                            <?php echo e(AK_LANG === 'ar' ? 'النظام' : 'System'); ?>
+                        </span>
 
                     <?php if ($canGlobalSearch): ?>
                         <a
@@ -1032,7 +1091,14 @@ if (Session::isLoggedIn()) {
                         </a>
                     <?php endif; ?>
 
-                    <span class="ak-header-actions-divider" aria-hidden="true"></span>
+                        </div>
+
+                    <div class="qa-group qa-group-account">
+                        <span class="qa-group-label">
+                            <?php echo e(AK_LANG === 'ar' ? 'الحساب' : 'Account'); ?>
+                        </span>
+
+                        <div class="qa-user-controls">
 
                     <span class="qa-user-btn" aria-label="<?php echo e(current_user_name()); ?>">
                         <?php if ($avatarUrl): ?>
@@ -1069,6 +1135,9 @@ if (Session::isLoggedIn()) {
                         <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
                         <span><?php echo e(AK_LANG === 'ar' ? 'تسجيل الخروج' : 'Logout'); ?></span>
                     </a>
+
+                        </div>
+                    </div>
 
                 </div>
             </div>
