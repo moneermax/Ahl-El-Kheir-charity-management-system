@@ -620,3 +620,11 @@ This has been corrected narrowly:
 - Implementation commits: `67576f02e2642ec018d5aeb053f6db75dae925bb` and `6ff62b70528d7a10738a73e90250be1b937ba7e2`.
 
 **Runtime status:** code correction is committed; local migration application and Winback runtime verification are still pending. Do not mark the Administration dashboard review complete until the migration is applied and the linked Winback workflow is tested.
+
+### LATEST DASHBOARD REVIEW CHECKPOINT — 2026-09-19
+
+The Administration/Staff/Social Media dashboard review found and fixed a linked-page authorization mismatch. `dashboard/staff_dashboard.php` exposes the orphan-forms workflow to `administration`, `staff`, and `social_media`, while `modules/families/orphan_forms_index.php` previously omitted `staff` from `$viewRoles`. Commit `223c462528cc0e69d62bcf5f76094cea6ce821e2` adds `staff` without changing Staff edit or financial-profile privileges.
+
+The sponsorship-safe family profile orphan header visual issue is also resolved in commit `2e4673a9a432e80ffb9cdccddadb4cbffd08b450`; the fix is page-local because `includes/header.php` does not load `assets/css/style.css`.
+
+**Immediate next runtime check:** pull current `main` and verify Staff can open the orphan-forms page from the dashboard. Then continue the same dashboard review for remaining KPI, sponsor-request, Winback, role-separation, Reports, Arabic/encoding, responsive, and runtime issues. Do not restart completed investigations.
