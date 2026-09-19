@@ -74,7 +74,7 @@ window.AK_TRANSLATIONS=<?php echo json_encode(ak_dict(),JSON_UNESCAPED_UNICODE|J
         document.body.style.overflow = mobileQuery.matches && open ? 'hidden' : '';
     }
 
-    setSidebar(!mobileQuery.matches);
+    setSidebar(false);
 
     if (btn) {
         btn.addEventListener('click', function () {
@@ -104,8 +104,6 @@ window.AK_TRANSLATIONS=<?php echo json_encode(ak_dict(),JSON_UNESCAPED_UNICODE|J
     window.addEventListener('resize', function () {
         if (mobileQuery.matches) {
             if (document.body.classList.contains('sidebar-open')) setSidebar(false);
-        } else if (!document.body.classList.contains('sidebar-open')) {
-            setSidebar(true);
         }
     });
 })();
