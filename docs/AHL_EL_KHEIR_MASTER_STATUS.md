@@ -789,3 +789,7 @@ The audit remains active until the remaining user-facing modules are reviewed an
 The user clarified the acceptance rule for this audit: **every user-facing page must provide a Back button that returns to the originating/previous page, unless the page is a dashboard**. This applies to module list/index pages as well; dashboards and non-HTML endpoints/streams remain excluded. The audit was expanded accordingly.
 
 A second batch added contextual Back actions across remaining HR, Users, Settings/System, Supervisors, Transactions, Reports, Accounting, Families, Sponsors, Sponsorships, Projects, Departments, Search, Notifications, Messages, and Logs pages. akGoBack(fallback) remains the common navigation mechanism so same-origin referrer context is preserved while direct access still has a deterministic fallback. TCPDF remains explicitly out of scope.
+
+
+### 2026-09-19 — final navigation sweep additions
+A further sweep covered remaining user-facing HR integrity and system maintenance pages that render HTML. API/JSON actions, file streams, redirect-only compatibility endpoints, and print-only output remain excluded because they are not navigable HTML pages. The acceptance rule remains: every user-facing HTML page has Back unless it is a dashboard.
