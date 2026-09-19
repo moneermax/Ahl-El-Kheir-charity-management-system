@@ -715,3 +715,8 @@ The user explicitly considers this **temporary done** rather than a final visual
 ### Immediate continuation
 
 Move to the next system-wide fix requested by the user. Inspect the relevant documentation and current repository code before making changes; do not reopen closed audit areas or repeat passed tests without regression evidence.
+
+
+## 2026-09-19 — System-wide Back/navigation audit started
+
+The current active task is a system-wide Back/navigation audit. TCPDF is explicitly excluded. The first implementation batch added the shared `akGoBack(fallback)` helper and corrected contextual navigation across Families, Sponsors, Sponsorships, Projects, orphan/child pages, returned Transactions, Search Center result links, and Accounting Disbursements. Continue from the current remote main state and inspect remaining user-facing modules before declaring the audit complete.
