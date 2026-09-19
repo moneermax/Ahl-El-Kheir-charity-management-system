@@ -99,6 +99,16 @@ function ak_sponsorship_age(?string $birthDate): string
 
 include dirname(__DIR__, 2) . '/includes/header.php';
 ?>
+<style>
+.sponsorship-child-header {
+    background: var(--navy) !important;
+    color: #fff !important;
+    border-bottom: none !important;
+}
+.sponsorship-child-header .text-muted {
+    color: rgba(255,255,255,0.9) !important;
+}
+</style>
 <div class="welcome-section fade-in">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
         <div>
