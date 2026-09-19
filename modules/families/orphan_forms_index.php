@@ -4,7 +4,7 @@ error_reporting(E_ALL); ini_set('display_errors', '1');
 require_once dirname(__DIR__, 2) . '/config/config.php'; require_once dirname(__DIR__, 2) . '/config/database.php'; require_once dirname(__DIR__, 2) . '/config/functions.php'; require_once dirname(__DIR__, 2) . '/config/session.php';
 Session::start();
 if (!Session::isLoggedIn()) { header('Location: ' . APP_URL . 'index.php'); exit(); }
-$role=Session::getUserRole(); $viewRoles=['admin','vice_general_manager','general_manager','supervisor','nanny','accountant','accountant_staff','administration','social_media'];
+$role=Session::getUserRole(); $viewRoles=['admin','vice_general_manager','general_manager','supervisor','nanny','accountant','accountant_staff','administration','staff','social_media'];
 if(!in_array($role,$viewRoles,true)){header('Location: '.APP_URL.'index.php');exit();}
 $uid=(int)Session::getUserId(); $canEdit=in_array($role,['admin','vice_general_manager','supervisor','nanny'],true); $canSeeFinancial=in_array($role,['admin','vice_general_manager','general_manager','supervisor','nanny'],true);
 $pageTitle=t('forms.orphan_title'); $active='orphan_forms'; $q=trim((string)($_GET['q']??'')); $search=mb_substr($q,0,60);
