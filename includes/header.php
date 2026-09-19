@@ -301,9 +301,8 @@ $langSwitchUrl =
 | HEADER ACTIONS
 |--------------------------------------------------------------------------
 |
-| Navigation belongs to the sidebar. The header is reserved for global
-| controls and contextual actions, so role-specific destinations are not
-| duplicated here.
+| Navigation belongs to the sidebar. The header contains the centered
+| global controls and direct user actions for quick access without a menu.
 |--------------------------------------------------------------------------
 */
 
@@ -646,231 +645,106 @@ if (Session::isLoggedIn()) {
         .qa-top-bar {
             background: var(--navy);
             color: #fff;
-            padding: 8px 15px;
+            padding: 9px 20px 11px;
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             align-items: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            gap: 10px;
-            flex-wrap: nowrap;
+            gap: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.10);
         }
 
-
-        .qa-actions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px;
-            align-items: center;
-            flex-grow: 1;
-            justify-content: flex-start;
-        }
-
-
+        .qa-actions,
         .qa-user-controls {
             display: flex;
+            flex-wrap: wrap;
             align-items: center;
-            gap: 6px;
-            flex-shrink: 0;
-
-            <?php if (AK_DIR === 'rtl'): ?>
-
-            margin-right: auto;
-            margin-left: 0;
-
-            <?php else: ?>
-
-            margin-left: auto;
-            margin-right: 0;
-
-            <?php endif; ?>
+            justify-content: center;
+            gap: 7px;
+            width: 100%;
         }
 
-
-        .qa-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            padding: 4px 8px;
-            border-radius: 4px;
-            text-decoration: none;
-            font-size: 0.7rem;
-            font-weight: 600;
-            color: #fff !important;
-            transition: all 0.2s;
-            border: 1px solid rgba(255,255,255,0.2);
-            white-space: nowrap;
-        }
-
-
-        .qa-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            filter: brightness(1.15);
-        }
-
-
-        .qa-user-btn {
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
-            color: #fff;
-            padding: 4px 8px;
-            border-radius: 4px;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 0.75rem;
-            text-decoration: none;
-            white-space: nowrap;
-        }
-
-
-        .qa-user-btn:hover {
-            background: rgba(255,255,255,0.2);
-            color: #fff;
-        }
-
-
-        .ak-dd {
-            position: relative;
-        }
-
-
-        .ak-dd-menu {
-            display: none;
-            position: absolute;
-            top: calc(100% + 5px);
-
-            <?php if (AK_DIR === 'rtl'): ?>
-
-            left: 0;
-            right: auto;
-
-            <?php else: ?>
-
-            right: 0;
-            left: auto;
-
-            <?php endif; ?>
-
-            min-width: 180px;
-            background: #fff;
-            border: 1px solid #e3e7ee;
-            border-radius: 8px;
-            box-shadow: 0 8px 24px rgba(10,31,68,.18);
-            z-index: 1050;
-            padding: 0.3rem;
-            color: #333;
-        }
-
-
-        .ak-dd.open .ak-dd-menu {
-            display: block;
-        }
-
-
-        .ak-dd-item {
-            display: block;
-            padding: 0.4rem 0.6rem;
-            border-radius: 4px;
-            color: #21315b;
-            text-decoration: none;
-            font-size: 0.8rem;
-        }
-
-
-        .ak-dd-item:hover {
-            background: #eef2f9;
-        }
-
-
-        .ak-dd-item.text-danger {
-            color: #dc3545;
-        }
-
-
-        .ak-dd-item.text-danger:hover {
-            background: #ffe5e5;
-        }
-
-
-        .dropdown-divider {
-            height: 0;
-            margin: 0.2rem 0;
-            overflow: hidden;
-            border-top: 1px solid #e3e7ee;
-        }
-
-
+        .qa-btn,
+        .qa-user-btn,
         .ak-header-search-btn {
             display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 6px;
-            min-height: 32px;
-            padding: 4px 11px;
-            border: 1px solid rgba(255,255,255,0.22);
-            border-radius: 6px;
-            background: rgba(255,255,255,0.12);
-            color: #fff !important;
+            min-height: 34px;
+            padding: 5px 11px;
+            border-radius: 7px;
             text-decoration: none;
-            font-size: 0.72rem;
+            font-size: 0.73rem;
             font-weight: 700;
-            white-space: nowrap;
-            transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .ak-header-search-btn:hover {
-            background: rgba(255,255,255,0.22);
             color: #fff !important;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.16);
+            border: 1px solid rgba(255,255,255,0.22);
+            white-space: nowrap;
+            transition: transform .18s ease, background .18s ease, box-shadow .18s ease, filter .18s ease;
         }
 
-        .ak-header-search-btn:focus-visible {
-            outline: 3px solid rgba(255,255,255,0.72);
+        .qa-btn:hover,
+        .qa-user-btn:hover,
+        .ak-header-search-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(0,0,0,.16);
+            filter: brightness(1.08);
+            color: #fff !important;
+        }
+
+        .qa-user-btn {
+            background: rgba(255,255,255,0.12);
+            cursor: default;
+        }
+
+        .qa-user-btn img {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1px solid rgba(255,255,255,.45);
+        }
+
+        .qa-user-btn i.fa-user-circle {
+            font-size: 1.15rem;
+        }
+
+        .ak-header-search-btn {
+            background: rgba(255,255,255,0.12);
+        }
+
+        .ak-header-search-btn:focus-visible,
+        .qa-btn:focus-visible {
+            outline: 3px solid rgba(255,255,255,.72);
             outline-offset: 2px;
         }
 
-        .ak-header-search-btn i {
-            font-size: 0.82rem;
+        .ak-header-action-profile {
+            background: rgba(255,255,255,0.10);
         }
 
-        .ak-mobile-menu-btn {
-            display: none;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            min-height: 32px;
-            padding: 4px 10px;
-            border: 1px solid rgba(255,255,255,0.22);
-            border-radius: 6px;
-            background: rgba(255,255,255,0.12);
-            color: #fff;
-            font-size: 0.75rem;
-            font-weight: 700;
-            cursor: pointer;
-            min-width: 92px;
-            line-height: 1.2;
+        .ak-header-action-settings {
+            background: rgba(255,255,255,0.10);
         }
 
-        .ak-mobile-menu-icon {
-            display: inline-block;
-            font-family: Arial, sans-serif;
-            font-size: 1.15rem;
-            line-height: 1;
-            font-weight: 700;
+        .ak-header-action-logout {
+            background: rgba(220,53,69,.88);
+            border-color: rgba(255,255,255,.28);
         }
 
-        .ak-mobile-menu-btn:hover,
-        .ak-mobile-menu-btn:focus-visible {
-            background: rgba(255,255,255,0.22);
-            color: #fff;
+        .ak-header-action-logout:hover {
+            background: #dc3545;
         }
 
-        body.theme-dark .ak-header-search-btn {
-            background: rgba(255,255,255,0.09);
-            border-color: rgba(255,255,255,0.28);
+        .ak-header-actions-divider {
+            width: 1px;
+            height: 25px;
+            background: rgba(255,255,255,.20);
+            margin: 0 2px;
+        }
+
+        .ak-dd,
+        .ak-dd-menu {
+            display: none !important;
         }
 
         @media (max-width: 991.98px) {
@@ -944,29 +818,30 @@ if (Session::isLoggedIn()) {
 
         @media (max-width: 768px) {
             .qa-top-bar {
-                flex-direction: column;
-                align-items: stretch;
+                padding: 8px 10px 10px;
             }
 
-            .qa-actions {
-                width: 100%;
-                justify-content: center;
-            }
-
+            .qa-actions,
             .qa-user-controls {
-                width: 100%;
-                justify-content: center;
-                margin-right: 0 !important;
-                margin-left: 0 !important;
+                gap: 5px;
             }
 
-            .ak-header-search-btn span {
-                display: none;
-            }
-
+            .qa-btn,
+            .qa-user-btn,
             .ak-header-search-btn {
-                width: 32px;
-                padding: 4px;
+                min-height: 32px;
+                padding: 4px 8px;
+                font-size: 0.68rem;
+            }
+
+            .qa-user-btn span {
+                max-width: 120px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .ak-header-actions-divider {
+                display: none;
             }
         }
 
@@ -1076,11 +951,11 @@ if (Session::isLoggedIn()) {
         class="ak-sidebar-toggle"
         id="akSidebarToggle"
         aria-controls="sidebar"
-        aria-expanded="true"
-        title="<?php echo e(AK_LANG === 'ar' ? 'إخفاء القائمة' : 'Hide menu'); ?>"
+        aria-expanded="false"
+        title="<?php echo e(AK_LANG === 'ar' ? 'إظهار القائمة' : 'Show menu'); ?>"
     >
-        <i class="fas fa-chevron-right" aria-hidden="true"></i>
-        <span class="visually-hidden"><?php echo e(AK_LANG === 'ar' ? 'إخفاء القائمة' : 'Hide menu'); ?></span>
+        <i class="fas fa-bars" aria-hidden="true"></i>
+        <span class="visually-hidden"><?php echo e(AK_LANG === 'ar' ? 'إظهار القائمة' : 'Show menu'); ?></span>
     </button>
 
     <?php
@@ -1106,81 +981,21 @@ if (Session::isLoggedIn()) {
             </div>
 
             <!-- =========================================================
-                 TOP BAR
+                 CENTERED HEADER ACTIONS
                  ========================================================= -->
-
             <div class="qa-top-bar">
-
                 <div class="qa-actions">
 
-                    <?php
-                    foreach (
-                        $currentQuickActions
-                        as $qa
-                    ):
-                    ?>
-
-                        <?php
-                        if (!empty($qa['is_universal'])):
-                        ?>
-
-                            <a
-                                href="<?php
-                                    echo APP_URL .
-                                        e($qa['url']);
-                                ?>"
-                                class="qa-btn"
-                                style="background: rgba(255,255,255,0.15);"
-                            >
-
-                                <i
-                                    class="fas <?php
-                                        echo e($qa['icon']);
-                                    ?>"
-                                ></i>
-
-                                <?php
-                                echo e($qa['label']);
-                                ?>
-
-                            </a>
-
-                        <?php else: ?>
-
-                            <a
-                                href="<?php
-                                    echo APP_URL .
-                                        e($qa['url']);
-                                ?>"
-                                class="qa-btn"
-                                style="background: <?php
-                                    echo e($qa['color']);
-                                ?>;"
-                            >
-
-                                <i
-                                    class="fas <?php
-                                        echo e($qa['icon']);
-                                    ?>"
-                                ></i>
-
-                                <?php
-                                echo e($qa['label']);
-                                ?>
-
-                            </a>
-
-                        <?php endif; ?>
-
+                    <?php foreach ($currentQuickActions as $qa): ?>
+                        <a
+                            href="<?php echo APP_URL . e($qa['url']); ?>"
+                            class="qa-btn"
+                            style="background: <?php echo !empty($qa['is_universal']) ? 'rgba(255,255,255,0.12)' : e($qa['color']); ?>;"
+                        >
+                            <i class="fas <?php echo e($qa['icon']); ?>" aria-hidden="true"></i>
+                            <span><?php echo e($qa['label']); ?></span>
+                        </a>
                     <?php endforeach; ?>
-
-                </div>
-
-                <!-- =====================================================
-                     USER CONTROLS
-                     ===================================================== -->
-
-                <div class="qa-user-controls">
 
                     <?php if ($canGlobalSearch): ?>
                         <a
@@ -1198,159 +1013,65 @@ if (Session::isLoggedIn()) {
                     <a
                         href="<?php echo e($langSwitchUrl); ?>"
                         class="qa-btn"
-                        style="background: rgba(255,255,255,0.1);"
+                        style="background: rgba(255,255,255,0.10);"
+                        title="<?php echo e(AK_LANG === 'ar' ? 'تغيير اللغة' : 'Change language'); ?>"
                     >
-
-                        <i class="fas fa-globe"></i>
-
-                        <?php
-                        echo AK_LANG === 'ar'
-                            ? 'EN'
-                            : 'عربي';
-                        ?>
-
+                        <i class="fas fa-globe" aria-hidden="true"></i>
+                        <span><?php echo AK_LANG === 'ar' ? 'EN' : 'عربي'; ?></span>
                     </a>
 
                     <?php if ($pendingRecoveries > 0): ?>
-
                         <a
-                            href="<?php
-                                echo APP_URL;
-                            ?>modules/users/recovery.php"
+                            href="<?php echo APP_URL; ?>modules/users/recovery.php"
                             class="qa-btn"
                             style="background: #dc3545;"
+                            title="<?php echo e(AK_LANG === 'ar' ? 'طلبات استعادة كلمة المرور المعلقة' : 'Pending password recoveries'); ?>"
                         >
-
-                            <i class="fas fa-key"></i>
-
-                            <span class="badge bg-white text-danger">
-
-                                <?php
-                                echo $pendingRecoveries;
-                                ?>
-
-                            </span>
-
+                            <i class="fas fa-key" aria-hidden="true"></i>
+                            <span><?php echo $pendingRecoveries; ?></span>
                         </a>
-
                     <?php endif; ?>
 
-                    <!-- =================================================
-                         USER DROPDOWN
-                         ================================================= -->
+                    <span class="ak-header-actions-divider" aria-hidden="true"></span>
 
-                    <div
-                        class="ak-dd"
-                        id="userDropdown"
+                    <span class="qa-user-btn" aria-label="<?php echo e(current_user_name()); ?>">
+                        <?php if ($avatarUrl): ?>
+                            <img src="<?php echo e($avatarUrl); ?>" alt="" aria-hidden="true">
+                        <?php else: ?>
+                            <i class="fas fa-user-circle" aria-hidden="true"></i>
+                        <?php endif; ?>
+                        <span><?php echo e(current_user_name()); ?></span>
+                    </span>
+
+                    <a
+                        href="<?php echo APP_URL; ?>modules/users/profile.php"
+                        class="qa-btn ak-header-action-profile"
+                        title="<?php echo e(AK_LANG === 'ar' ? 'الملف الشخصي' : 'Profile'); ?>"
                     >
+                        <i class="fas fa-id-card" aria-hidden="true"></i>
+                        <span><?php echo e(AK_LANG === 'ar' ? 'الملف الشخصي' : 'Profile'); ?></span>
+                    </a>
 
-                        <button
-                            class="qa-user-btn"
-                            onclick="
-                                document
-                                    .getElementById('userDropdown')
-                                    .classList
-                                    .toggle('open')
-                            "
-                        >
+                    <a
+                        href="<?php echo APP_URL; ?>modules/users/settings.php"
+                        class="qa-btn ak-header-action-settings"
+                        title="<?php echo e(AK_LANG === 'ar' ? 'الإعدادات' : 'Settings'); ?>"
+                    >
+                        <i class="fas fa-cog" aria-hidden="true"></i>
+                        <span><?php echo e(AK_LANG === 'ar' ? 'الإعدادات' : 'Settings'); ?></span>
+                    </a>
 
-                            <?php if ($avatarUrl): ?>
-
-                                <img
-                                    src="<?php
-                                        echo e($avatarUrl);
-                                    ?>"
-                                    alt="Avatar"
-                                    style="
-                                        width:22px;
-                                        height:22px;
-                                        border-radius:50%;
-                                        object-fit:cover;
-                                    "
-                                >
-
-                            <?php else: ?>
-
-                                <i
-                                    class="fas fa-user-circle fa-lg"
-                                ></i>
-
-                            <?php endif; ?>
-
-                            <span>
-
-                                <?php
-                                echo e(
-                                    current_user_name()
-                                );
-                                ?>
-
-                            </span>
-
-                            <i
-                                class="fas fa-chevron-down"
-                                style="font-size:0.65rem;"
-                            ></i>
-
-                        </button>
-
-                        <div class="ak-dd-menu">
-
-                            <a
-                                href="<?php
-                                    echo APP_URL;
-                                ?>modules/users/profile.php"
-                                class="ak-dd-item"
-                            >
-
-                                <i
-                                    class="fas fa-id-card me-2"
-                                ></i>
-
-                                الملف الشخصي
-
-                            </a>
-
-                            <a
-                                href="<?php
-                                    echo APP_URL;
-                                ?>modules/users/settings.php"
-                                class="ak-dd-item"
-                            >
-
-                                <i
-                                    class="fas fa-cog me-2"
-                                ></i>
-
-                                الإعدادات
-
-                            </a>
-
-                            <div class="dropdown-divider"></div>
-
-                            <a
-                                href="<?php
-                                    echo APP_URL;
-                                ?>logout.php"
-                                class="ak-dd-item text-danger"
-                            >
-
-                                <i
-                                    class="fas fa-sign-out-alt me-2"
-                                ></i>
-
-                                تسجيل الخروج
-
-                            </a>
-
-                        </div>
-
-                    </div>
+                    <a
+                        href="<?php echo APP_URL; ?>logout.php"
+                        class="qa-btn ak-header-action-logout"
+                        title="<?php echo e(AK_LANG === 'ar' ? 'تسجيل الخروج' : 'Logout'); ?>"
+                    >
+                        <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
+                        <span><?php echo e(AK_LANG === 'ar' ? 'تسجيل الخروج' : 'Logout'); ?></span>
+                    </a>
 
                 </div>
-
             </div>
-
 
         </div>
         <!-- END header-sticky-wrapper -->
