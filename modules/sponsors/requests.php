@@ -44,6 +44,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
         header('Location: ' . APP_URL . 'modules/sponsors/requests.php');
         exit();
     }
+    if ($action === 'delete' && !empty($_POST['id'])) {
+        $id = (int)$_POST['id'];
+        $request = dbFetchOne("SELECT id, status, assigned_supervisor_id FROM sponsor_requests WHERE id = ?", [$id]);
+        if (!$request) {
+            flash('error', 'طلب الرعاية غير موجود.');
+        } elseif ((string)$request['status'] !== 'new' || !empty($request['assigned_supervisor_id'])) {
+            flash('error', 'لا يمكن حذف هذا الطلب بعد بدء التواصل أو تحويله إلى المشرف المختص.');
+        } else {
+            dbExecute("DELETE FROM sponsor_requests WHERE id = ? AND status = 'new' AND assigned_supervisor_id IS NULL", [$id]);
+            flash('success', 'تم حذف طلب الرعاية نهائياً.');
+        }
+        header('Location: ' . APP_URL . 'modules/sponsors/requests.php');
+        exit();
+    }
     if ($action === 'convert' && !empty($_POST['id'])) {
         $id = (int)$_POST['id'];
             $req = dbFetchOne("SELECT * FROM sponsor_requests WHERE id = ?", [$id]);
@@ -64,7 +78,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
             }
         }
     }
-}
 $leads = dbFetchAll("SELECT r.*, u.full_name AS brought_by_user FROM sponsor_requests r LEFT JOIN users u ON u.id = r.brought_by ORDER BY r.created_at DESC");
 $statusKeys = ['new'=>'sponsors.request_new','contacted'=>'sponsors.request_contacted','converted'=>'sponsors.request_converted','lost'=>'sponsors.request_lost'];
 include dirname(__DIR__, 2) . '/includes/header.php'; ?>
@@ -77,6 +90,7 @@ include dirname(__DIR__, 2) . '/includes/header.php'; ?>
 <?php if (!$leads): ?><tr><td colspan="8" class="text-center text-muted py-4"><?php echo e(t('sponsors.request_no_results')); ?></td></tr><?php else: foreach ($leads as $lead): $badges=['new'=>'bg-info','contacted'=>'bg-warning text-dark','converted'=>'bg-success','lost'=>'bg-secondary']; $byDisplay=trim((string)($lead['brought_by_name']??''))!==''?$lead['brought_by_name']:($lead['brought_by_user']??'—'); $sourceMeta=$sourceOptions[$lead['source']]??['icon'=>'fas fa-question-circle text-muted','key'=>'sponsors.request_source_other']; ?>
 <tr><td><?php echo date('Y-m-d',strtotime($lead['created_at'])); ?></td><td><?php echo e($lead['sponsor_name']); ?></td><td dir="ltr"><?php echo e($lead['phone']??'-'); ?></td><td><i class="<?php echo e($sourceMeta['icon']); ?> me-1"></i><?php echo e(t($sourceMeta['key'])); ?></td><td><?php echo e($byDisplay); ?></td><td><span class="badge <?php echo $badges[$lead['status']]??'bg-secondary'; ?>"><?php echo e(t($statusKeys[$lead['status']]??'sponsors.request_lost')); ?></span></td><td class="small text-muted"><?php echo e($lead['notes']??''); ?></td><td class="text-center">
 <?php if ($lead['status'] === 'new' || $lead['status'] === 'contacted'): ?>
+<?php if ($lead['status'] === 'new' && empty($lead['assigned_supervisor_id'])): ?><form method="post" class="d-inline" onsubmit="return confirm(<?php echo e(json_encode(t('sponsors.request_delete_confirm'), JSON_UNESCAPED_UNICODE)); ?>);"><?php echo csrf_field(); ?><input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="<?php echo (int)$lead['id']; ?>"><button type="submit" class="btn btn-sm btn-outline-danger" title="<?php echo e(t('sponsors.request_delete')); ?>"><i class="fas fa-trash"></i> <?php echo e(t('sponsors.request_delete')); ?></button></form><?php endif; ?>
 <?php if ($lead['status'] === 'new'): ?><form method="post" class="d-inline" onsubmit="return confirm(<?php echo e(json_encode(t('sponsors.request_contacted_confirm'), JSON_UNESCAPED_UNICODE)); ?>);"><?php echo csrf_field(); ?><input type="hidden" name="action" value="set_status"><input type="hidden" name="status" value="contacted"><input type="hidden" name="id" value="<?php echo (int)$lead['id']; ?>"><button type="submit" class="btn btn-sm btn-outline-info" title="<?php echo e(t('sponsors.request_mark_contacted')); ?>"><i class="fas fa-phone"></i> <?php echo e(t('sponsors.request_mark_contacted')); ?></button></form><?php endif; ?>
 <form method="post" class="d-inline" onsubmit="return confirm(<?php echo e(json_encode(t('sponsors.request_lost_confirm'), JSON_UNESCAPED_UNICODE)); ?>);"><?php echo csrf_field(); ?><input type="hidden" name="action" value="set_status"><input type="hidden" name="status" value="lost"><input type="hidden" name="id" value="<?php echo (int)$lead['id']; ?>"><button type="submit" class="btn btn-sm btn-outline-secondary" title="<?php echo e(t('sponsors.request_mark_lost')); ?>"><i class="fas fa-xmark"></i> <?php echo e(t('sponsors.request_mark_lost')); ?></button></form>
 <button type="button" class="btn btn-sm btn-outline-success" title="<?php echo e(t('sponsors.request_convert_title')); ?>" data-bs-toggle="modal" data-bs-target="#convertLeadModal" data-request-id="<?php echo (int)$lead['id']; ?>"><i class="fas fa-user-check"></i> <?php echo e(t('sponsors.request_convert')); ?></button>
