@@ -464,6 +464,6 @@ Runtime verification is required after pulling. For the admin role, verify that 
 
 
 ### Audit Log Retention / Cleanup
-The audit log page at `modules/logs/audit.php` now includes an **administrator-only bulk cleanup control** for retention management. The control deletes audit records on or before a selected date, requires an explicit confirmation string, and leaves General Manager access read-only. The cleanup is intentionally date-based rather than an unrestricted “clear everything” button.
+The audit log page at `modules/logs/audit.php` now includes an **administrator-only bulk cleanup control** for retention management. The control deletes audit records on or before a selected date, uses a required confirmation checkbox plus a final browser confirmation, verifies that no records remain within the requested cutoff after deletion, and leaves General Manager access read-only. The cleanup is intentionally date-based rather than an unrestricted “clear everything” button.
 The existing audit-log viewing/filtering/pagination behavior remains unchanged.
 The separate request to remove the SQL/query display from the audit page is **not yet implemented** because the current repository version of `modules/logs/audit.php` does not contain a SQL-debug/query panel; it renders the audit record's previous/new values instead. Do not remove those audit details by assumption. Runtime screenshot/source comparison is required before changing that part.
