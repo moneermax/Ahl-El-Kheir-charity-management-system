@@ -12,6 +12,7 @@ if (!in_array($role, ['admin', 'vice_general_manager', 'general_manager', 'super
     header('Location: ' . APP_URL . 'index.php'); exit();
 }
 $canEdit = in_array($role, ['admin', 'vice_general_manager', 'supervisor', 'nanny'], true);
+$returnQuery=trim((string)($_GET['return']??$_POST['return']??'')); $backUrl=APP_URL.'modules/families/index.php'; if($returnQuery!==''){$backUrl.='?'.ltrim(rawurldecode($returnQuery),'?');}
 $pageTitle = t('Orphan Registration Form');
 $active = 'families';
 $isEn = ($_SESSION['lang'] ?? 'ar') === 'en';
@@ -197,7 +198,7 @@ table.ak-main th{width:18%;font-weight:700}
 
 <div class="ak-toolbar no-print d-flex gap-2 flex-wrap justify-content-center">
 <?php if ($child): ?>
-<a class="btn btn-secondary btn-sm" href="<?php echo APP_URL; ?>modules/families/view.php?id=<?php echo (int)$fam['id']; ?>"><i class="fas fa-arrow-right me-1"></i><?php echo t('Family'); ?></a>
+<a class="btn btn-secondary btn-sm" href="<?php echo e($backUrl); ?>" onclick="return akGoBack(this.href);"><i class="fas fa-arrow-right me-1"></i><?php echo t('Family'); ?></a>
 <a class="btn <?php echo $editTab ? 'btn-primary' : 'btn-outline-primary'; ?> btn-sm" href="<?php echo APP_URL; ?>modules/families/orphan_form.php?child=<?php echo $childId; ?>&tab=edit"><i class="fas fa-pen me-1"></i><?php echo t('Fill Data'); ?></a>
 <a class="btn <?php echo !$editTab ? 'btn-primary' : 'btn-outline-primary'; ?> btn-sm" href="<?php echo APP_URL; ?>modules/families/orphan_form.php?child=<?php echo $childId; ?>"><i class="fas fa-file-signature me-1"></i><?php echo t('Form View'); ?></a>
 <?php if (!$editTab): ?><button class="btn btn-success btn-sm" onclick="window.print()"><i class="fas fa-print me-1"></i><?php echo t('Print / PDF'); ?></button><?php endif; ?>
