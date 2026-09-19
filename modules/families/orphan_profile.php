@@ -437,11 +437,19 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     }, $availableSponsors), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
 
     function normalizeSearch(value) {
-        return String(value || '').trim().toLocaleLowerCase();
+        return String(value || '')
+            .toLowerCase()
+            .replace(/[\u064B-\u065F\u0670]/g, '')
+            .replace(/[إأآا]/g, 'ا')
+            .replace(/ى/g, 'ي')
+            .replace(/ة/g, 'ه')
+            .trim();
     }
 
     function closeSponsorResults() {
-        if (sponsorResults) sponsorResults.style.display = 'none';
+        if (sponsorResults) {
+            sponsorResults.style.display = 'none';
+        }
     }
 
     function renderSponsorResults() {
@@ -457,8 +465,9 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         }
 
         const matches = sponsors.filter(function(sponsor) {
-            return normalizeSearch(sponsor.name).includes(query) ||
-                   normalizeSearch(sponsor.code).includes(query);
+            const name = normalizeSearch(sponsor.name);
+            const code = normalizeSearch(sponsor.code);
+            return name.indexOf(query) !== -1 || code.indexOf(query) !== -1;
         }).slice(0, 80);
 
         if (!matches.length) {
@@ -468,23 +477,31 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         }
 
         sponsorNoResults.style.display = 'none';
+
         matches.forEach(function(sponsor) {
             const item = document.createElement('button');
             item.type = 'button';
             item.className = 'list-group-item list-group-item-action text-end';
             item.innerHTML = '<strong>' + escapeHtml(sponsor.name) + '</strong> <span class="text-muted">(' + escapeHtml(sponsor.code) + ')</span>';
+
+            item.addEventListener('mousedown', function(event) {
+                event.preventDefault();
+            });
+
             item.addEventListener('click', function() {
                 sponsorInput.value = sponsor.name + ' (' + sponsor.code + ')';
                 sponsorIdInput.value = String(sponsor.id);
                 sponsorHint.textContent = 'تم اختيار الكفيل: ' + sponsor.name + ' (' + sponsor.code + ')';
                 sponsorHint.className = 'form-text text-success';
+                sponsorInput.classList.remove('is-invalid');
                 sponsorResults.innerHTML = '';
                 closeSponsorResults();
             });
+
             sponsorResults.appendChild(item);
         });
 
-        sponsorResults.style.display = '';
+        sponsorResults.style.display = 'block';
     }
 
     function escapeHtml(value) {
@@ -494,15 +511,24 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     }
 
     if (sponsorInput) {
-        sponsorInput.addEventListener('input', function() {
-            sponsorIdInput.value = '';
-            sponsorHint.textContent = 'ابدأ بكتابة اسم الكفيل أو كوده، ثم اختر النتيجة.';
-            sponsorHint.className = 'form-text';
-            renderSponsorResults();
+        ['input', 'keyup', 'search'].forEach(function(eventName) {
+            sponsorInput.addEventListener(eventName, function() {
+                sponsorIdInput.value = '';
+                sponsorHint.textContent = 'ابدأ بكتابة اسم الكفيل أو كوده، ثم اختر النتيجة.';
+                sponsorHint.className = 'form-text';
+                renderSponsorResults();
+            });
         });
-        sponsorInput.addEventListener('focus', renderSponsorResults);
+
+        sponsorInput.addEventListener('focus', function() {
+            if (normalizeSearch(sponsorInput.value)) {
+                renderSponsorResults();
+            }
+        });
+
         document.addEventListener('click', function(event) {
-            if (!event.target.closest('#sponsorSearchInput') && !event.target.closest('#sponsorSearchResults')) {
+            if (!event.target.closest('#sponsorSearchInput') &&
+                !event.target.closest('#sponsorSearchResults')) {
                 closeSponsorResults();
             }
         });
