@@ -674,3 +674,16 @@ Inspected the current Administration/Staff/Social Media dashboard, sidebar, spon
 One concrete responsive issue was found in the shared `includes/header.php`: the top header bar used a non-wrapping desktop layout while containing variable-length Arabic quick-action labels and user controls. This could compress/overflow on narrow screens. Fixed in commit `4536623afcea14852aac5d1ea1d3b2ec2f70e0b8` by making the top bar stack on screens up to 768px, giving both action groups full width, centering them, and clearing the desktop auto margins. No authorization or workflow behavior changed.
 
 Runtime verification of the mobile header fix is still required after pulling the commit. Do not mark this item runtime-verified until the user confirms it.
+
+
+## Mobile navigation UX — 2026-09-19
+
+A runtime mobile-emulation review exposed a genuine responsive defect: the shared sidebar remained a 260px flex item on narrow screens, consuming most of the viewport instead of behaving like a mobile navigation drawer. The fix is now implemented in the shared layout.
+
+- includes/header.php: below 992px the sidebar becomes a fixed off-canvas drawer; a dedicated mobile menu button is shown in the header; the main area uses the full viewport width; an overlay is used while the drawer is open.
+- includes/footer.php: the mobile menu button opens/closes the drawer, the overlay closes it, Escape closes it, navigation links close it on mobile, and resizing back to desktop closes it.
+- No authorization, database, workflow, or role rules changed.
+
+Code commits: 726d766f8075b2a55a0dcfd0ccc1cb5ec75c64d1, 0530c69c6e80b320577ac50dcd852ea4633431f6.
+
+Runtime verification on a real phone is pending; do not mark this item verified until the user confirms the mobile layout works.
