@@ -10,6 +10,7 @@ $role = Session::getUserRole();
 if (!in_array($role, ['admin', 'vice_general_manager', 'supervisor', 'nanny'], true)) {
 header('Location: ' . APP_URL . 'index.php'); exit();
 }
+$returnQuery=trim((string)($_GET['return']??$_POST['return']??'')); $backUrl=APP_URL.'modules/families/index.php'; if($returnQuery!==''){$backUrl.='?'.ltrim(rawurldecode($returnQuery),'?');}
 $pageTitle = 'تعديل أسرة';
 $active = 'families';
 $uid = Session::getUserId();
@@ -244,7 +245,7 @@ input[type=number]{ -moz-appearance:textfield; appearance:textfield; }
 <div class="quick-actions mt-3" style="position:static; margin-bottom:1.25rem;">
 <a href="<?php echo APP_URL; ?>modules/families/view.php?id=<?php echo $id; ?>" class="btn btn-primary btn-sm"><i class="fas fa-eye me-1"></i>عرض</a>
 <a href="<?php echo APP_URL; ?>modules/families/documents.php?id=<?php echo $id; ?>" class="btn btn-info btn-sm"><i class="fas fa-folder-open me-1"></i>الوثائق</a>
-<a href="<?php echo APP_URL; ?>modules/families/index.php" class="btn btn-secondary btn-sm"><i class="fas fa-arrow-right me-1"></i>رجوع</a>
+<a href="<?php echo e($backUrl); ?>" class="btn btn-secondary btn-sm" onclick="return akGoBack(this.href);"><i class="fas fa-arrow-right me-1"></i>رجوع</a>
 </div>
 </div>
 <?php include dirname(__DIR__, 2) . '/includes/alerts.php'; ?>
@@ -266,7 +267,7 @@ input[type=number]{ -moz-appearance:textfield; appearance:textfield; }
 <div class="card-body">
 <form method="post" class="family-details-form">
 <?php echo csrf_field(); ?>
-<input type="hidden" name="id" value="<?php echo $id; ?>">
+<input type="hidden" name="id" value="<?php echo $id; ?>"><input type="hidden" name="return" value="<?php echo e($returnQuery); ?>">
 <div class="row g-3">
 <div class="col-md-4"><label class="form-label">تاريخ الإنضمام</label><input type="date" name="registration_date" class="form-control" value="<?php echo e($fam['registration_date'] ?? ''); ?>"></div>
 <div class="col-md-6"><label class="form-label">اسم الأم *</label><input type="text" name="mother_name" class="form-control" required value="<?php echo e($fam['mother_name']); ?>"></div>
