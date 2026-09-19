@@ -609,3 +609,14 @@ The **إضافة كفيل آخر** modal in `modules/families/orphan_profile.php
 
 Implementation commit: `95089efedd84f05c1f8753ca1aabfd9bff1f1711`.
 \n\n### LATEST SPONSOR AUTOCOMPLETE REFINEMENT — 2026-09-19\n\nCommit: `46c3b0213a2e769f07158214d87575c39ebaade5` — `Improve multi-word sponsor autocomplete matching`.\n\nThe authorized sponsor autocomplete endpoint now performs progressive multi-word name matching: each typed word must match the beginning of the corresponding sponsor-name word, while sponsor-code searches retain partial/contains matching. Supervisor authorization, Letter + Gender scope, final `supervisorCanAccessSponsor()` check, and active/paused duplicate exclusion remain enforced.\n\nRuntime confirmation currently covers successful additional sponsorship creation for child `234` (ابراهيم تاج السر ابراهيم / `IMP-SP-002363` / 2,000.00 SDG / active / 2026-09-19). Do not claim the autocomplete keystroke test itself is runtime-verified until it is explicitly observed.\n\n### NEXT TASK\n\nContinue the open Administration/Staff/Social Media dashboard review at `dashboard/staff_dashboard.php`. Inspect the current code and linked pages before changing anything. Focus on KPI semantics, sponsor-request table/action UX, Winback integration, orphan-form navigation, role-specific visibility, Reports authorization, Arabic encoding, responsive UX, and runtime issues.\n
+
+### Administration dashboard review — first linked-page finding — 2026-09-19
+
+Repository inspection of `modules/administration/winback.php` found request-time schema mutation code that contradicted the documented runtime-DDL cleanup rule. The page was dropping legacy blacklist triggers/table and creating `winback_campaigns` / `winback_contacts` on normal page requests.
+
+This has been corrected narrowly:
+- `modules/administration/winback.php` no longer creates, drops, or alters schema during a web request.
+- Explicit migration added: `database/migrations/2026-09-19_winback_schema.sql`.
+- Implementation commits: `67576f02e2642ec018d5aeb053f6db75dae925bb` and `6ff62b70528d7a10738a73e90250be1b937ba7e2`.
+
+**Runtime status:** code correction is committed; local migration application and Winback runtime verification are still pending. Do not mark the Administration dashboard review complete until the migration is applied and the linked Winback workflow is tested.
