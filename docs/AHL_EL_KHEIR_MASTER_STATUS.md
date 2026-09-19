@@ -732,3 +732,27 @@ A genuine responsive defect was identified during mobile testing: the shared 260
 Commits: 726d766f8075b2a55a0dcfd0ccc1cb5ec75c64d1, 0530c69c6e80b320577ac50dcd852ea4633431f6.
 
 Status: CODE IMPLEMENTED; REAL MOBILE RUNTIME VERIFICATION PENDING.
+
+
+## Mobile navigation UX — final runtime checkpoint — 2026-09-19
+
+The user tested the mobile navigation on a real phone over the local network and confirmed the shared mobile navigation is now substantially improved and usable.
+
+Final behavior:
+- Below 992px the sidebar operates as an off-canvas drawer rather than consuming the mobile viewport.
+- A dedicated fixed `☰ القائمة` control is visible and opens the drawer.
+- The drawer overlay and existing close behaviors remain active.
+- The mobile menu control was made independent of Font Awesome rendering and given a fixed, prominent mobile position.
+- While the drawer is open, background page scrolling is locked; closing the drawer restores normal scrolling.
+- The user considers the current mobile layout acceptable for this audit phase. A more app-like mobile redesign is intentionally deferred to a later system-wide UX phase.
+
+Final relevant commits:
+- `726d766f8075b2a55a0dcfd0ccc1cb5ec75c64d1`
+- `0530c69c6e80b320577ac50dcd852ea4633431f6`
+- `ca88f2aa1d5ac0e41af1861905c4bd67cc5646c9`
+- `0c7d51c640519b3814c8e0e6f9220cc41097e530`
+- `af03d9dd775930be865c2b03a470665f3dab610b`
+
+No database, schema, authorization, role, or workflow logic changed.
+
+Next direction: defer further mobile-app-style redesign and continue the remaining system-wide changes/audit work. Avoid repeating already-passed mobile navigation, sponsor-request, Winback, orphan-form, and dedicated-queue tests unless regression evidence appears.
