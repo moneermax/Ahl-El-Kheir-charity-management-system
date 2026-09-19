@@ -128,4 +128,6 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     <div class="col-md-3"><div class="card border-0 shadow-sm h-100" style="border-right:4px solid #6f42c1 !important;"><div class="card-body text-center"><div class="display-6 fw-bold" style="color:#6f42c1;font-size:1.8rem;"><?php echo number_format($stats['monthly_commitment'],0); ?> <span class="fs-6"><?php echo e(t('accounting.currency_sdg')); ?></span></div><div class="text-muted small fw-bold"><?php echo e(t('families.monthly_commitment')); ?></div></div></div></div>
 </div>
 
+
+<div class="container-fluid px-3 pb-4"><div class="d-flex justify-content-start"><a href="<?php echo APP_URL; ?>modules/reports/index.php" class="btn btn-outline-secondary" onclick="return akGoBack(this.href);"><i class="fa-solid fa-arrow-right me-1"></i> العودة</a></div></div>
 <?php include dirname(__DIR__, 2) . '/includes/footer.php'; ?>
