@@ -78,12 +78,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
             }
         }
     }
-$leads = dbFetchAll("SELECT r.*, u.full_name AS brought_by_user FROM sponsor_requests r LEFT JOIN users u ON u.id = r.brought_by ORDER BY r.created_at DESC");
+$statusFilter = trim((string)($_GET['status'] ?? ''));
+$allowedStatusFilters = ['new', 'contacted', 'converted', 'lost'];
+if (!in_array($statusFilter, $allowedStatusFilters, true)) {
+    $statusFilter = '';
+}
+if ($statusFilter !== '') {
+    $leads = dbFetchAll("SELECT r.*, u.full_name AS brought_by_user FROM sponsor_requests r LEFT JOIN users u ON u.id = r.brought_by WHERE r.status = ? ORDER BY r.created_at DESC", [$statusFilter]);
+} else {
+    $leads = dbFetchAll("SELECT r.*, u.full_name AS brought_by_user FROM sponsor_requests r LEFT JOIN users u ON u.id = r.brought_by ORDER BY r.created_at DESC");
+}
 $statusKeys = ['new'=>'sponsors.request_new','contacted'=>'sponsors.request_contacted','converted'=>'sponsors.request_converted','lost'=>'sponsors.request_lost'];
 include dirname(__DIR__, 2) . '/includes/header.php'; ?>
 <div class="welcome-section fade-in"><h2><i class="fas fa-bullhorn me-2"></i><?php echo e(t('sponsors.requests_title')); ?></h2><p><?php echo e(t('sponsors.requests_intro')); ?></p></div>
 <?php include dirname(__DIR__, 2) . '/includes/alerts.php'; ?>
 <div class="d-flex justify-content-end mb-3 fade-in"><button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addLeadModal"><i class="fas fa-plus me-1"></i><?php echo e(t('sponsors.request_add')); ?></button></div>
+<div class="card mb-3 fade-in"><div class="card-body"><form method="get" class="row g-2 align-items-end"><div class="col-md-4"><label class="form-label mb-1">تصفية حسب الحالة</label><select name="status" class="form-select"><option value="">كل الطلبات</option><option value="new" <?php echo $statusFilter === 'new' ? 'selected' : ''; ?>>جديد</option><option value="contacted" <?php echo $statusFilter === 'contacted' ? 'selected' : ''; ?>>تم التواصل</option><option value="converted" <?php echo $statusFilter === 'converted' ? 'selected' : ''; ?>>تم التحويل إلى كفيل</option><option value="lost" <?php echo $statusFilter === 'lost' ? 'selected' : ''; ?>>مغلق / لم يكتمل</option></select></div><div class="col-md-auto"><button type="submit" class="btn btn-outline-primary"><i class="fas fa-filter me-1"></i>تطبيق</button></div><div class="col-md-auto"><a href="<?php echo url('modules/sponsors/requests.php'); ?>" class="btn btn-outline-secondary">إظهار الكل</a></div></form></div></div>
 <div class="card mb-4 fade-in"><div class="card-body p-2"><div class="table-responsive"><table class="table table-hover align-middle bg-white mb-0"><thead><tr>
 <th><?php echo e(t('sponsors.request_date')); ?></th><th><?php echo e(t('sponsors.request_sponsor_name')); ?></th><th><?php echo e(t('sponsors.request_phone')); ?></th><th><?php echo e(t('sponsors.request_source')); ?></th><th><?php echo e(t('sponsors.request_brought_by')); ?></th><th><?php echo e(t('sponsors.request_status')); ?></th><th><?php echo e(t('sponsors.request_notes')); ?></th><th class="text-center"><?php echo e(t('sponsors.request_actions')); ?></th>
 </tr></thead><tbody>
