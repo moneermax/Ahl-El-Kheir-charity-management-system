@@ -210,13 +210,23 @@ if (in_array($resolved_role, ['nanny', 'admin', 'vice_general_manager', 'general
             }
         }
 
-        var modalShownKey = 'ak_age_alert_modal_shown_<?php echo (int)current_user_id(); ?>';
-        if (!localStorage.getItem(modalShownKey)) {
-            localStorage.setItem(modalShownKey, '1');
+        // Show once per authenticated PHP session, not once per browser forever.
+        // This ensures a fresh login can receive the alert again without requiring
+        // the user to clear browser storage manually.
+        var modalShownKey = 'ak_age_alert_modal_shown_<?php echo hash('sha256', session_id()); ?>';
+        var wasShown = false;
+        try {
+            wasShown = sessionStorage.getItem(modalShownKey) === '1';
+        } catch (e) {}
 
+        if (!wasShown) {
             var attempts = 0;
             var tryShow = function() {
-                if (showModal() || attempts++ >= 100) {
+                if (showModal()) {
+                    try { sessionStorage.setItem(modalShownKey, '1'); } catch (e) {}
+                    return;
+                }
+                if (attempts++ >= 120) {
                     return;
                 }
                 setTimeout(tryShow, 50);
@@ -225,11 +235,10 @@ if (in_array($resolved_role, ['nanny', 'admin', 'vice_general_manager', 'general
         }
     }
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', akInitAgeAlert, { once: true });
-    } else {
-        akInitAgeAlert();
-    }
+    // This file is rendered at the bottom of the page, after the modal HTML.
+    // Initialize immediately; the retry loop waits for Bootstrap if its script
+    // has not finished loading yet.
+    akInitAgeAlert();
 })();
 </script>
 <?php endif; ?>
