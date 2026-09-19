@@ -467,7 +467,7 @@ body.theme-dark .filter-bar { background: #2d3748; }
                         <td><?php echo (int)($f['actual_children_count'] ?? 0); ?></td>
                         <td><?php echo e($f['nanny_name']); ?></td>
                         <td><span class="badge bg-light text-dark border"><?php echo e($FAMILY_STATUS_LABELS[$f['status']] ?? $f['status']); ?></span></td>
-                        <td><a href="<?php echo APP_URL; ?>modules/families/view.php?id=<?php echo (int)$f['id']; ?>" class="btn btn-sm btn-outline-primary"><i class="fas fa-eye"></i></a></td>
+                        <td><a href="<?php echo APP_URL; ?>modules/families/view.php?id=<?php echo (int)$f['id']; ?>&return=<?php echo rawurlencode(http_build_query($_GET)); ?>" class="btn btn-sm btn-outline-primary"><i class="fas fa-eye"></i></a></td>
                     </tr>
                     <?php endforeach; ?>
                     </tbody>
@@ -494,7 +494,7 @@ body.theme-dark .filter-bar { background: #2d3748; }
             <tbody><?php foreach ($sponsors as $s): ?><tr>
                 <td><?php echo e($s['sponsor_code'] ?? '—'); ?></td><td><?php echo e($s['full_name']); ?></td><td><?php echo e($s['phone'] ?? '—'); ?></td><td><?php echo e($s['sponsor_type']); ?></td><td><?php echo (int)$s['active_count']; ?></td>
                 <td><span class="badge bg-light text-dark border"><?php echo e($SPONSOR_STATUS_LABELS[$s['status']] ?? $s['status']); ?></span></td>
-                <td><a href="<?php echo APP_URL; ?>modules/sponsors/view.php?id=<?php echo (int)$s['id']; ?>" class="btn btn-sm btn-outline-primary"><i class="fas fa-eye"></i></a></td>
+                <td><a href="<?php echo APP_URL; ?>modules/sponsors/view.php?id=<?php echo (int)$s['id']; ?>&return=<?php echo rawurlencode(http_build_query($_GET)); ?>" class="btn btn-sm btn-outline-primary"><i class="fas fa-eye"></i></a></td>
             </tr><?php endforeach; ?></tbody>
         </table></div>
         <?php if ($sponsorsData['totalPages'] > 1): ?><?php echo renderPagination($sponsorsData['totalPages'], $page, 'sponsors', $q, $status, $month); ?><?php endif; ?>
@@ -514,7 +514,7 @@ body.theme-dark .filter-bar { background: #2d3748; }
             <tbody><?php foreach ($sponsorships as $sp): ?><tr>
                 <td><?php echo e($sp['sponsorship_code'] ?? '—'); ?></td><td><?php echo e($sp['sponsor_name']); ?></td><td><?php echo e($sp['child_name'] ?? '—'); ?></td><td><?php echo e($sp['family_code'] ?? '—'); ?></td><td><?php echo number_format((float)$sp['monthly_amount'], 0); ?> ج.س</td>
                 <td><span class="badge bg-light text-dark border"><?php echo e($SPONSORSHIP_STATUS_LABELS[$sp['status']] ?? $sp['status']); ?></span></td>
-                <td><a href="<?php echo APP_URL; ?>modules/sponsorships/view.php?id=<?php echo (int)$sp['id']; ?>" class="btn btn-sm btn-outline-primary"><i class="fas fa-eye"></i></a></td>
+                <td><a href="<?php echo APP_URL; ?>modules/sponsorships/view.php?id=<?php echo (int)$sp['id']; ?>&return=<?php echo rawurlencode(http_build_query($_GET)); ?>" class="btn btn-sm btn-outline-primary"><i class="fas fa-eye"></i></a></td>
             </tr><?php endforeach; ?></tbody>
         </table></div>
         <?php if ($sponsorshipsData['totalPages'] > 1): ?><?php echo renderPagination($sponsorshipsData['totalPages'], $page, 'sponsorships', $q, $status, $month); ?><?php endif; ?>
@@ -534,7 +534,7 @@ body.theme-dark .filter-bar { background: #2d3748; }
             <tbody><?php foreach ($payments as $p): [$pl, $pc] = $PAYMENT_STATUS_LABELS[$p['status']] ?? [$p['status'], 'secondary']; ?><tr>
                 <td><?php echo e($p['month']); ?></td><td><?php echo e($p['group_name'] ?? '—'); ?></td><td><?php echo e($p['nanny_name']); ?></td><td><?php echo number_format((float)$p['total_amount'], 0); ?> ج.س</td>
                 <td><span class="badge bg-<?php echo $pc; ?>"><?php echo e($pl); ?></span></td>
-                <td><a href="<?php echo APP_URL; ?>modules/accounting/disbursements.php?view=<?php echo (int)$p['id']; ?>" class="btn btn-sm btn-outline-primary"><i class="fas fa-eye"></i></a></td>
+                <td><a href="<?php echo APP_URL; ?>modules/accounting/disbursements.php?view=<?php echo (int)$p['id']; ?>&return=<?php echo rawurlencode(http_build_query($_GET)); ?>" class="btn btn-sm btn-outline-primary"><i class="fas fa-eye"></i></a></td>
             </tr><?php endforeach; ?></tbody>
         </table></div>
         <?php if ($paymentsData['totalPages'] > 1): ?><?php echo renderPagination($paymentsData['totalPages'], $page, 'payments', $q, $status, $month); ?><?php endif; ?>
