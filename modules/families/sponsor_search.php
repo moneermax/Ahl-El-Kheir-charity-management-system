@@ -40,23 +40,59 @@ if (!$child) {
 
 $likeTerm = '%' . str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $searchTerm) . '%';
 
-$sql = "
-    SELECT s.id, s.full_name, s.sponsor_code, s.gender, s.first_letter_id
-    FROM sponsors s
-    WHERE s.status = 'active'
-      AND (s.full_name LIKE ? ESCAPE '\\' OR s.sponsor_code LIKE ? ESCAPE '\\')
-      AND NOT EXISTS (
-          SELECT 1
-          FROM sponsorships sx
-          WHERE sx.sponsor_id = s.id
-            AND sx.child_id = ?
-            AND sx.status IN ('active', 'paused')
-      )
-    ORDER BY s.full_name
-    LIMIT 80
-";
+$where = [
+    "s.status = 'active'",
+    "(s.full_name LIKE ? ESCAPE '\\\\' OR s.sponsor_code LIKE ? ESCAPE '\\\\')",
+    "NOT EXISTS (
+        SELECT 1
+        FROM sponsorships sx
+        WHERE sx.sponsor_id = s.id
+          AND sx.child_id = ?
+          AND sx.status IN ('active', 'paused')
+    )"
+];
+$params = [$likeTerm, $likeTerm, $childId];
 
-$searchSponsors = dbFetchAll($sql, [$likeTerm, $likeTerm, $childId]);
+if ($role === 'supervisor') {
+    $uid = Session::getUserId();
+    $scopeRows = dbFetchAll(
+        "SELECT letter_id, gender FROM supervisor_letters WHERE supervisor_id = ?",
+        [$uid]
+    );
+
+    $scopeParts = [];
+    foreach ($scopeRows as $scopeRow) {
+        $letterId = (int)($scopeRow['letter_id'] ?? 0);
+        $scopeGender = strtolower(trim((string)($scopeRow['gender'] ?? '')));
+        if ($letterId <= 0) continue;
+
+        if (in_array($scopeGender, ['both', 'all', 'كلاهما', 'الكل'], true)) {
+            $scopeParts[] = "(s.first_letter_id = ? AND LOWER(TRIM(s.gender)) IN ('male','female','m','f','ذكر','أنثى','انثى'))";
+            $params[] = $letterId;
+        } elseif (in_array($scopeGender, ['male', 'm', 'ذكر'], true)) {
+            $scopeParts[] = "(s.first_letter_id = ? AND LOWER(TRIM(s.gender)) IN ('male','m','ذكر'))";
+            $params[] = $letterId;
+        } elseif (in_array($scopeGender, ['female', 'f', 'أنثى', 'انثى'], true)) {
+            $scopeParts[] = "(s.first_letter_id = ? AND LOWER(TRIM(s.gender)) IN ('female','f','أنثى','انثى'))";
+            $params[] = $letterId;
+        }
+    }
+
+    if (!$scopeParts) {
+        echo json_encode([], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        exit();
+    }
+
+    $where[] = '(' . implode(' OR ', $scopeParts) . ')';
+}
+
+$sql = "SELECT s.id, s.full_name, s.sponsor_code, s.gender, s.first_letter_id
+        FROM sponsors s
+        WHERE " . implode(' AND ', $where) . "
+        ORDER BY s.full_name
+        LIMIT 80";
+
+$searchSponsors = dbFetchAll($sql, $params);
 
 if ($role === 'supervisor') {
     $uid = Session::getUserId();
