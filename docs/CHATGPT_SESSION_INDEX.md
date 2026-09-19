@@ -509,3 +509,26 @@ Both dates are required. The server validates the date format and rejects a rang
 
 Implementation commit:
 - 354a149b75bd8a26716358bab24adb8379dff998 — Use explicit audit cleanup date range
+
+
+### Audit Log Cleanup — final current state 2026-09-19
+
+The audit log cleanup feature at `modules/logs/audit.php` is now implemented and the page syntax/runtime issue introduced during the final date-range change has been corrected.
+
+Current behavior:
+- Admin-only bulk deletion.
+- Explicit inclusive **من تاريخ / إلى تاريخ** range.
+- Required confirmation checkbox plus final browser confirmation.
+- Server-side validation rejects invalid dates and start > end.
+- Counts matching records before deletion rather than relying on PDO DELETE rowCount().
+- Verifies that no records remain inside the selected range after deletion.
+- General Manager remains read-only.
+- Audit `old_values` / `new_values` remain available as collapsed **عرض التفاصيل** JSON evidence; they are not SQL code and were not removed.
+- The confirmation checkbox wording now correctly refers to the selected period.
+
+Final syntax-fix commit:
+- `4b2bdcb75faf0dc6c004c48c14fb9e0d44ac4b46` — Fix audit log cleanup parse error
+
+**Runtime status:** User confirmed the page now opens and works after pulling the fix.
+
+Do not reopen this cleanup work unless a genuine regression appears or the user explicitly requests another retention-policy change.
