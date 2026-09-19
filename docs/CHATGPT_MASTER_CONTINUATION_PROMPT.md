@@ -602,3 +602,9 @@ Preserve:
 Implementation commit: `b0ba3f92d1ee9ea542936f9ce8b381c03f964b45`.
 
 Runtime verification is pending after the user pulls the commit.
+
+### Additional Sponsorship — Searchable Sponsor Selector
+
+The **إضافة كفيل آخر** modal in `modules/families/orphan_profile.php` uses a searchable sponsor selector. Preserve this UX rather than reverting to a long native `select`. Search must match sponsor name or sponsor code, while the submitted value remains the sponsor database ID. Do not weaken the server-side sponsor authorization, Supervisor scope, or duplicate active/paused sponsorship checks.
+
+Implementation commit: `95089efedd84f05c1f8753ca1aabfd9bff1f1711`.
