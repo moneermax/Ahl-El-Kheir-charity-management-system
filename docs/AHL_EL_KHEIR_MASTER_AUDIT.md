@@ -978,3 +978,13 @@ Commits:
 
 ### Current next review area
 Continue the Administration/Staff/Social Media dashboard audit after verifying the new sponsor-request status filtering. The remaining documented review areas are Reports visibility, sidebar/dashboard consistency, role differences, Arabic/encoding/responsive UX, KPI semantics, and remaining runtime/link checks. Do not reopen completed Winback, orphan-form authorization, sponsorship-family header, sponsorship autocomplete, or accounting/HR audits unless a regression is found.
+
+
+## Sponsor request filtered queues + reopen workflow — 2026-09-19
+- The Administration/Staff/Social Media dashboard KPI links continue to use the single sponsor-request workflow page, but the page heading now reflects the active validated status filter so `status=new` and `status=contacted` are visibly distinct queues.
+- Closed/incomplete sponsor requests (`status='lost'`) now expose an **إعادة فتح** action.
+- Reopen is POST + CSRF protected and server-side restricted to records whose current status is `lost`.
+- Reopened requests move to `contacted`, not `new`, so an old request cannot regain the pre-contact deletion privilege.
+- No database schema change was made.
+- Implementation commits: `92030f7604308f8d062ceae3d873dd12918c02bd`, `0491ee8c7982ac9fd8c50320d5eae064a676f211`, `49fbce22d917ecaf5c8ab5e0954d6068e6972f73`.
+- Runtime verification is pending user confirmation.
