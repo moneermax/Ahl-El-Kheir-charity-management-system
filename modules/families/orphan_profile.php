@@ -61,6 +61,67 @@ if ($childId > 0 && in_array($role, ['admin', 'vice_general_manager', 'superviso
     $availableSponsors = array_values(array_filter($availableSponsors, static fn(array $sponsor): bool => !in_array((int)$sponsor['id'], $activeSponsorIds, true)));
 }
 
+/*
+ * Sponsor search endpoint:
+ * Search is performed against the same active-sponsor source used by the form,
+ * while supervisor scope and existing active/paused sponsorships remain enforced.
+ */
+if (isset($_GET['sponsor_search'])) {
+    header('Content-Type: application/json; charset=UTF-8');
+
+    $searchTerm = trim((string)$_GET['sponsor_search']);
+    $searchTerm = preg_replace('/\s+/u', ' ', $searchTerm);
+
+    if (
+        $childId <= 0 ||
+        !$child ||
+        !in_array($role, ['admin', 'vice_general_manager', 'supervisor'], true) ||
+        $searchTerm === ''
+    ) {
+        echo json_encode([], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        exit();
+    }
+
+    $likeTerm = '%' . str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $searchTerm) . '%';
+
+    $searchSql = "
+        SELECT id, full_name, sponsor_code
+        FROM sponsors
+        WHERE status = 'active'
+          AND (full_name LIKE ? ESCAPE '\\' OR sponsor_code LIKE ? ESCAPE '\\')
+        ORDER BY full_name
+    ";
+    $searchSponsors = dbFetchAll($searchSql, [$likeTerm, $likeTerm]);
+
+    if ($activeSponsorIds) {
+        $searchSponsors = array_values(array_filter(
+            $searchSponsors,
+            static fn(array $sponsor): bool => !in_array((int)$sponsor['id'], $activeSponsorIds, true)
+        ));
+    }
+
+    if ($role === 'supervisor') {
+        $searchSponsors = array_values(array_filter(
+            $searchSponsors,
+            static fn(array $sponsor): bool => supervisorCanAccessSponsor($uid, $sponsor)
+        ));
+    }
+
+    $searchSponsors = array_slice(array_map(static function (array $sponsor): array {
+        return [
+            'id' => (int)$sponsor['id'],
+            'name' => (string)($sponsor['full_name'] ?? ''),
+            'code' => (string)($sponsor['sponsor_code'] ?? '')
+        ];
+    }, $searchSponsors), 0, 80);
+
+    echo json_encode(
+        $searchSponsors,
+        JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE
+    );
+    exit();
+}
+
 function ak_orphan_profile_save_photo(int $childId): ?string
 {
     if ($childId <= 0 || empty($_FILES['photo']['name'])) return null;
@@ -426,22 +487,108 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     const sponsorHint = document.getElementById('selectedSponsorHint');
     const sponsorNoResults = document.getElementById('sponsorNoResults');
 
-    const sponsors = <?php echo json_encode(array_map(static function(array $sponsor): array {
-        return [
-            'id' => (int)$sponsor['id'],
-            'name' => (string)($sponsor['full_name'] ?? ''),
-            'code' => (string)($sponsor['sponsor_code'] ?? '')
-        ];
-    }, $availableSponsors), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+    let sponsorSearchRequest = 0;
 
     function normalizeSearch(value) {
         return String(value || '')
             .toLowerCase()
             .replace(/[\u064B-\u065F\u0670]/g, '')
-            .replace(/[إأآا]/g, 'ا')
+            .replace(/[إأآ]/g, 'ا')
             .replace(/ى/g, 'ي')
-            .replace(/ة/g, 'ه')
             .trim();
+    }
+
+    function showSponsorNoResults(message) {
+        if (sponsorNoResults) {
+            sponsorNoResults.textContent = message || 'لا توجد نتائج مطابقة.';
+            sponsorNoResults.style.display = '';
+        }
+        closeSponsorResults();
+    }
+
+    function renderSponsorResults(matches) {
+        if (!sponsorInput || !sponsorResults) return;
+
+        sponsorResults.innerHTML = '';
+
+        if (!matches.length) {
+            showSponsorNoResults();
+            return;
+        }
+
+        if (sponsorNoResults) sponsorNoResults.style.display = 'none';
+
+        matches.forEach(function(sponsor) {
+            const item = document.createElement('button');
+            item.type = 'button';
+            item.className = 'list-group-item list-group-item-action text-end';
+            item.innerHTML = '<strong>' + escapeHtml(sponsor.name) + '</strong> <span class="text-muted">(' + escapeHtml(sponsor.code) + ')</span>';
+
+            item.addEventListener('mousedown', function(event) {
+                event.preventDefault();
+            });
+
+            item.addEventListener('click', function() {
+                sponsorInput.value = sponsor.name + ' (' + sponsor.code + ')';
+                sponsorIdInput.value = String(sponsor.id);
+                sponsorHint.textContent = 'تم اختيار الكفيل: ' + sponsor.name + ' (' + sponsor.code + ')';
+                sponsorHint.className = 'form-text text-success';
+                sponsorInput.classList.remove('is-invalid');
+                sponsorResults.innerHTML = '';
+                closeSponsorResults();
+            });
+
+            sponsorResults.appendChild(item);
+        });
+
+        sponsorResults.style.display = 'block';
+    }
+
+    async function searchSponsors() {
+        if (!sponsorInput || !sponsorResults) return;
+
+        const rawQuery = sponsorInput.value.trim();
+        const query = normalizeSearch(rawQuery);
+
+        if (!query) {
+            if (sponsorNoResults) sponsorNoResults.style.display = 'none';
+            sponsorResults.innerHTML = '';
+            closeSponsorResults();
+            return;
+        }
+
+        const requestId = ++sponsorSearchRequest;
+
+        try {
+            const url = new URL(window.location.href);
+            url.searchParams.set('sponsor_search', rawQuery);
+            url.searchParams.set('child', '<?php echo (int)$childId; ?>');
+
+            const response = await fetch(url.toString(), {
+                method: 'GET',
+                credentials: 'same-origin',
+                headers: { 'Accept': 'application/json' }
+            });
+
+            if (!response.ok) {
+                throw new Error('Sponsor search request failed.');
+            }
+
+            const matches = await response.json();
+
+            if (requestId !== sponsorSearchRequest) return;
+
+            renderSponsorResults(Array.isArray(matches) ? matches : []);
+        } catch (error) {
+            if (requestId !== sponsorSearchRequest) return;
+            showSponsorNoResults('تعذر تحميل نتائج البحث. حاول مرة أخرى.');
+        }
+    }
+
+    function escapeHtml(value) {
+        const div = document.createElement('div');
+        div.textContent = String(value || '');
+        return div.innerHTML;
     }
 
     function closeSponsorResults() {
@@ -508,18 +655,29 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     }
 
     if (sponsorInput) {
-        ['input', 'keyup', 'search'].forEach(function(eventName) {
-            sponsorInput.addEventListener(eventName, function() {
-                sponsorIdInput.value = '';
-                sponsorHint.textContent = 'ابدأ بكتابة اسم الكفيل أو كوده، ثم اختر النتيجة.';
-                sponsorHint.className = 'form-text';
-                renderSponsorResults();
-            });
+        sponsorInput.addEventListener('input', function(event) {
+            if (event.isComposing) return;
+            sponsorIdInput.value = '';
+            sponsorHint.textContent = 'ابدأ بكتابة اسم الكفيل أو كوده، ثم اختر النتيجة.';
+            sponsorHint.className = 'form-text';
+            searchSponsors();
+        });
+
+        sponsorInput.addEventListener('compositionend', function() {
+            sponsorIdInput.value = '';
+            sponsorHint.textContent = 'ابدأ بكتابة اسم الكفيل أو كوده، ثم اختر النتيجة.';
+            sponsorHint.className = 'form-text';
+            searchSponsors();
+        });
+
+        sponsorInput.addEventListener('search', function() {
+            sponsorIdInput.value = '';
+            searchSponsors();
         });
 
         sponsorInput.addEventListener('focus', function() {
             if (normalizeSearch(sponsorInput.value)) {
-                renderSponsorResults();
+                searchSponsors();
             }
         });
 
