@@ -10,4 +10,6 @@ $checks[]=[t('system.port_check'),str_contains(APP_URL,':8081'),APP_URL];$checks
 include dirname(__DIR__,2).'/includes/header.php';?>
 <div class="welcome-section fade-in"><h2><?php echo e(t('system.health_title')); ?></h2><p><?php echo e(t('system.health_intro')); ?></p></div>
 <div class="card fade-in"><div class="card-body"><table class="table align-middle"><thead><tr><th><?php echo e(t('system.check')); ?></th><th><?php echo e(t('system.result')); ?></th><th><?php echo e(t('system.details')); ?></th></tr></thead><tbody><?php foreach($checks as $c): ?><tr><td><?php echo e($c[0]); ?></td><td><?php echo $c[1]?'<span class="badge bg-success">'.e(t('system.healthy')).'</span>':'<span class="badge bg-danger">'.e(t('system.problem')).'</span>'; ?></td><td><small><?php echo e($c[2]); ?></small></td></tr><?php endforeach; ?></tbody></table></div></div>
+
+<div class="container-fluid px-3 pb-4"><div class="d-flex justify-content-start"><a href="modules/settings/index.php" class="btn btn-outline-secondary" onclick="return akGoBack(this.href);"><i class="fa-solid fa-arrow-right me-1"></i> العودة</a></div></div>
 <?php include dirname(__DIR__,2).'/includes/footer.php'; ?>
