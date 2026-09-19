@@ -20,20 +20,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['audit_action'] ?? '') === 
         $deleteMessage = ['type' => 'danger', 'text' => 'ليس لديك صلاحية حذف سجلات التدقيق.'];
     } else {
         $deleteBefore = trim((string)($_POST['delete_before'] ?? ''));
-        $confirm = (string)($_POST['confirm_delete'] ?? '');
+        $confirmed = isset($_POST['confirm_delete']) && $_POST['confirm_delete'] === '1';
         $isValidDate = (bool)preg_match('/^\\d{4}-\\d{2}-\\d{2}$/', $deleteBefore);
 
-        if (!$isValidDate || $confirm !== 'DELETE_OLD_AUDIT') {
-            $deleteMessage = ['type' => 'danger', 'text' => 'حدد تاريخًا صحيحًا وأكد عملية الحذف.'];
+        if (!$isValidDate || !$confirmed) {
+            $deleteMessage = ['type' => 'danger', 'text' => 'حدد تاريخًا صحيحًا ثم فعّل مربع تأكيد الحذف.'];
         } else {
             try {
                 // The selected date is inclusive: delete records created on or before it.
-                $cutoff = $deleteBefore . ' 23:59:59';
-                $deleted = dbExecute('DELETE FROM audit_log WHERE created_at <= ?', [$cutoff]);
-                $deleteMessage = [
-                    'type' => 'success',
-                    'text' => 'تم حذف ' . number_format($deleted) . ' سجل تدقيق حتى تاريخ ' . $deleteBefore . '.',
-                ];
+                // Use an exclusive next-day boundary so the whole selected day is covered.
+                $deleted = dbExecute(
+                    'DELETE FROM audit_log WHERE created_at < DATE_ADD(?, INTERVAL 1 DAY)',
+                    [$deleteBefore]
+                );
+
+                $remaining = (int)(dbFetchOne(
+                    'SELECT COUNT(*) c FROM audit_log WHERE created_at < DATE_ADD(?, INTERVAL 1 DAY)',
+                    [$deleteBefore]
+                )['c'] ?? 0);
+
+                if ($remaining > 0) {
+                    $deleteMessage = [
+                        'type' => 'danger',
+                        'text' => 'لم تكتمل عملية التنظيف: ما زال هناك ' . number_format($remaining) . ' سجل ضمن نطاق الحذف. لم يتم اعتبار العملية ناجحة.',
+                    ];
+                } else {
+                    $deleteMessage = [
+                        'type' => 'success',
+                        'text' => 'تم حذف ' . number_format($deleted) . ' سجل تدقيق حتى تاريخ ' . $deleteBefore . '، وتم التحقق من عدم بقاء سجلات ضمن هذا النطاق.',
+                    ];
+                }
             } catch (Throwable $e) {
                 $deleteMessage = ['type' => 'danger', 'text' => 'تعذر حذف سجلات التدقيق.'];
             }
@@ -99,8 +115,10 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 <input type="date" name="delete_before" class="form-control" required>
             </div>
             <div class="col-md-4">
-                <label class="form-label">تأكيد الحذف</label>
-                <input type="text" name="confirm_delete" class="form-control" placeholder="اكتب DELETE_OLD_AUDIT" autocomplete="off" required>
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" name="confirm_delete" value="1" id="confirmAuditDelete" required>
+                    <label class="form-check-label text-danger" for="confirmAuditDelete">أؤكد حذف جميع سجلات التدقيق حتى التاريخ المحدد</label>
+                </div>
             </div>
             <div class="col-md-4">
                 <button type="submit" class="btn btn-danger w-100">
