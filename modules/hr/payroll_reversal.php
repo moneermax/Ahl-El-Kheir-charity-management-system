@@ -228,5 +228,5 @@ function openReverse(id,employee,period,amount){document.getElementById('reverse
 function validateReverse(){const reason=document.getElementById('reverseReason').value.trim();if(!reason){document.getElementById('reverseReason').focus();return false;}return true;}
 </script>
 
-<div class="container-fluid px-3 pb-4"><div class="d-flex justify-content-start"><a href="modules/hr/payroll.php" class="btn btn-outline-secondary" onclick="return akGoBack(this.href);"><i class="fa-solid fa-arrow-right me-1"></i> العودة</a></div></div>
+<div class="container-fluid px-3 pb-4"><div class="d-flex justify-content-start"><a href="<?php echo APP_URL; ?>modules/hr/index.php" class="btn btn-outline-secondary" onclick="return akGoBack(this.href);"><i class="fa-solid fa-arrow-right me-1"></i> العودة</a></div></div>
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>
