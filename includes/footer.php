@@ -107,8 +107,8 @@ window.AK_BACK_FALLBACK=<?php echo json_encode(APP_URL . dashboard_for_role(curr
         document.body.style.overflow = mobileQuery.matches && open ? 'hidden' : '';
     }
 
-    /* Keep the existing desktop-open/mobile-closed behavior independent of Back-button logic. */
-    setSidebar(!mobileQuery.matches);
+    /* Keep the sidebar closed by default on every page; opening it remains user-controlled. */
+    setSidebar(false);
 
     if (btn) {
         btn.addEventListener('click', function () {
