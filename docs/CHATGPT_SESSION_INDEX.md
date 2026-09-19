@@ -605,3 +605,10 @@ Commits:
 - Gender is now requested only when the user explicitly clicks **تحويل**; a conversion modal carries the request ID and requires male/female before submitting the existing server-side `convert` action.
 - No database/schema changes were made.
 - Runtime verification is pending user confirmation.
+
+
+## Sponsor Request Gender Workflow — 2026-09-19
+- Live `sponsor_requests` schema confirmed `gender varchar(10) NULL`; no schema migration was required.
+- Commit `2b95e6bf40f8f0520c0e778ca5eddb7caa2d6553` moves gender capture into the Add Sponsor Request form, validates it server-side, stores it in `sponsor_requests.gender`, and removes the conversion-time gender prompt.
+- Conversion now reads the stored request gender and copies it to `sponsors.gender`; legacy requests with missing/invalid gender are blocked from conversion with a clear message rather than guessed.
+- Runtime verification is pending user confirmation.
