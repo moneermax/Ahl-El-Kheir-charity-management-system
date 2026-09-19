@@ -817,3 +817,45 @@ The later CSS that hid the global application sidebar/header and converted messa
 **Messaging original-design restoration: COMPLETE / ACCEPTED by user.**
 
 Future messaging work must preserve this visual baseline and address only explicitly requested changes.
+
+
+# 16. Audit Log Retention and Audit-Detail Presentation — 2026-09-19
+
+## 16.1 Controlled retention cleanup
+
+`modules/logs/audit.php` now supports administrator-only bulk deletion of audit records within an explicit inclusive date range.
+
+Control boundary:
+- Admin may delete selected audit records.
+- General Manager may view/filter audit records but cannot delete them.
+- Both **من تاريخ** and **إلى تاريخ** are required.
+- The server validates the YYYY-MM-DD values and requires start <= end.
+- The selected dates are inclusive.
+- A required confirmation checkbox and a final browser confirmation are both required.
+- The implementation counts matching records before deletion and verifies the range is empty afterward.
+- If records remain, the UI reports incomplete cleanup rather than claiming success.
+
+The final syntax correction was committed as:
+`4b2bdcb75faf0dc6c004c48c14fb9e0d44ac4b46` — Fix audit log cleanup parse error.
+
+The user subsequently confirmed the audit page opens and works.
+
+## 16.2 Audit detail presentation
+
+The `old_values` and `new_values` fields contain JSON audit evidence. They are **not SQL code**. To keep the audit table usable, these payloads are collapsed by default behind **عرض التفاصيل** and expand on demand. Arabic JSON remains readable and safely escaped.
+
+Relevant UI refinement:
+`ff7b35eacc7059b0052e80dad1c8622ce638efb9` — Improve audit log detail display.
+
+## 16.3 Cleanup history
+
+The cleanup was progressively hardened through:
+- `88c721d2da4c1b27004531e9368b2f5cb124c8e3` — initial admin cleanup
+- `42f21d8ee7683057ce473f3c0b42b31cd5777a55` — confirmation and verification hardening
+- `13c849f7cc77d7445f2e372da9e7418850d87682` — accurate count reporting
+- `354a149b75bd8a26716358bab24adb8379dff998` — explicit date-range UX
+- `4b2bdcb75faf0dc6c004c48c14fb9e0d44ac4b46` — syntax-error correction
+
+**Status: COMPLETE / CLOSED at current boundary.**
+
+Do not delete, recreate, or modify historical audit evidence outside an explicitly selected retention range. Do not treat `old_values` / `new_values` as SQL.
