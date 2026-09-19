@@ -164,7 +164,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 ?>
                 <div class="col-12">
                     <div class="card border shadow-sm">
-                        <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+                        <div class="card-header sponsorship-child-header d-flex flex-wrap justify-content-between align-items-center gap-2">
                             <div>
                                 <strong class="fs-5"><?php echo e($child['child_name']); ?></strong>
                                 <span class="badge <?php echo e($match[1]); ?> ms-2"><?php echo e($match[0]); ?></span>
