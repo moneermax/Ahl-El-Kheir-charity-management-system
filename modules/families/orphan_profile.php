@@ -61,67 +61,6 @@ if ($childId > 0 && in_array($role, ['admin', 'vice_general_manager', 'superviso
     $availableSponsors = array_values(array_filter($availableSponsors, static fn(array $sponsor): bool => !in_array((int)$sponsor['id'], $activeSponsorIds, true)));
 }
 
-/*
- * Sponsor search endpoint:
- * Search is performed against the same active-sponsor source used by the form,
- * while supervisor scope and existing active/paused sponsorships remain enforced.
- */
-if (isset($_GET['sponsor_search'])) {
-    header('Content-Type: application/json; charset=UTF-8');
-
-    $searchTerm = trim((string)$_GET['sponsor_search']);
-    $searchTerm = preg_replace('/\s+/u', ' ', $searchTerm);
-
-    if (
-        $childId <= 0 ||
-        !$child ||
-        !in_array($role, ['admin', 'vice_general_manager', 'supervisor'], true) ||
-        $searchTerm === ''
-    ) {
-        echo json_encode([], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-        exit();
-    }
-
-    $likeTerm = '%' . str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $searchTerm) . '%';
-
-    $searchSql = "
-        SELECT id, full_name, sponsor_code
-        FROM sponsors
-        WHERE status = 'active'
-          AND (full_name LIKE ? ESCAPE '\\' OR sponsor_code LIKE ? ESCAPE '\\')
-        ORDER BY full_name
-    ";
-    $searchSponsors = dbFetchAll($searchSql, [$likeTerm, $likeTerm]);
-
-    if ($activeSponsorIds) {
-        $searchSponsors = array_values(array_filter(
-            $searchSponsors,
-            static fn(array $sponsor): bool => !in_array((int)$sponsor['id'], $activeSponsorIds, true)
-        ));
-    }
-
-    if ($role === 'supervisor') {
-        $searchSponsors = array_values(array_filter(
-            $searchSponsors,
-            static fn(array $sponsor): bool => supervisorCanAccessSponsor($uid, $sponsor)
-        ));
-    }
-
-    $searchSponsors = array_slice(array_map(static function (array $sponsor): array {
-        return [
-            'id' => (int)$sponsor['id'],
-            'name' => (string)($sponsor['full_name'] ?? ''),
-            'code' => (string)($sponsor['sponsor_code'] ?? '')
-        ];
-    }, $searchSponsors), 0, 80);
-
-    echo json_encode(
-        $searchSponsors,
-        JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE
-    );
-    exit();
-}
-
 function ak_orphan_profile_save_photo(int $childId): ?string
 {
     if ($childId <= 0 || empty($_FILES['photo']['name'])) return null;
@@ -560,9 +499,9 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         const requestId = ++sponsorSearchRequest;
 
         try {
-            const url = new URL(window.location.href);
-            url.searchParams.set('sponsor_search', rawQuery);
-            url.searchParams.set('child', '<?php echo (int)$childId; ?>');
+            const url = new URL('<?php echo APP_URL; ?>modules/families/sponsor_search.php');
+            url.searchParams.set('q', rawQuery);
+            url.searchParams.set('child_id', '<?php echo (int)$childId; ?>');
 
             const response = await fetch(url.toString(), {
                 method: 'GET',
