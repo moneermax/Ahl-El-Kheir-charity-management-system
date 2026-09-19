@@ -484,3 +484,16 @@ Runtime verification required after pulling:
 3. Clicking **عرض التفاصيل** expands the corresponding JSON safely and preserves Arabic text.
 4. Audit filtering and pagination remain unchanged.
 5. Admin-only old-log cleanup remains available; General Manager remains read-only.
+
+
+### Audit Log cleanup count-message correction — 2026-09-19
+
+The audit cleanup result message was corrected so it no longer reports **0 deleted** merely because the database driver's DELETE row-count is not the desired reporting source. The cleanup now counts matching audit records before deletion, performs the same verified deletion, then checks the remaining count.
+
+Result behavior:
+- records existed before cleanup → reports the number that was actually in the deletion range;
+- no records existed → reports that there was nothing new to delete;
+- records remain afterward → reports the before-count and remaining-count as an incomplete cleanup.
+
+Implementation commit:
+- 13c849f7cc77d7445f2e372da9e7418850d87682 — Report audit cleanup counts accurately
