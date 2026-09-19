@@ -168,50 +168,69 @@ if (in_array($resolved_role, ['nanny', 'admin', 'vice_general_manager', 'general
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    var existingBtn = document.getElementById('akAgeReopenBtn');
-    if (existingBtn) {
-        existingBtn.remove();
-    }
+(function() {
+    function akInitAgeAlert() {
+        var existingBtn = document.getElementById('akAgeReopenBtn');
+        if (existingBtn) {
+            existingBtn.remove();
+        }
 
-    var btn = document.createElement('button');
-    btn.id = 'akAgeReopenBtn';
-    btn.className = 'qa-btn position-relative';
-    btn.style.cssText = 'background: #ffc107; color: #000 !important; font-weight: 700;';
-    btn.innerHTML = '<i class="fas fa-user-clock me-1"></i><span class="d-none d-md-inline"><?php echo t('بلغوا السن'); ?></span><span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.65rem;"><?php echo $akAgeCount; ?></span>';
-    btn.title = '<?php echo t('أطفال بلغوا السن القانوني'); ?>';
+        var modalEl = document.getElementById('ageAlertModal');
+        if (!modalEl) {
+            return;
+        }
 
-    btn.addEventListener('click', function() {
-        var modal = new bootstrap.Modal(document.getElementById('ageAlertModal'));
-        modal.show();
-    });
+        var btn = document.createElement('button');
+        btn.id = 'akAgeReopenBtn';
+        btn.className = 'qa-btn position-relative';
+        btn.style.cssText = 'background: #ffc107; color: #000 !important; font-weight: 700;';
+        btn.innerHTML = '<i class="fas fa-user-clock me-1"></i><span class="d-none d-md-inline"><?php echo t('بلغوا السن'); ?></span><span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.65rem;"><?php echo $akAgeCount; ?></span>';
+        btn.title = '<?php echo t('أطفال بلغوا السن القانوني'); ?>';
 
-    var modalEl = document.getElementById('ageAlertModal');
+        var showModal = function() {
+            if (typeof bootstrap === 'undefined' || !bootstrap.Modal) {
+                return false;
+            }
+            var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.show();
+            return true;
+        };
 
-    // Keep the alert available in the header after the modal is closed.
-    // Insert it immediately so it never disappears from the header.
-    var langSwitchBtn = document.querySelector('.qa-user-controls a[href*="lang="]');
-    if (langSwitchBtn) {
-        langSwitchBtn.insertAdjacentElement('beforebegin', btn);
-    } else {
-        var userControls = document.querySelector('.qa-user-controls');
-        if (userControls) {
-            userControls.insertBefore(btn, userControls.firstChild);
+        btn.addEventListener('click', function() {
+            showModal();
+        });
+
+        var langSwitchBtn = document.querySelector('.qa-user-controls a[href*="lang="]');
+        if (langSwitchBtn) {
+            langSwitchBtn.insertAdjacentElement('beforebegin', btn);
+        } else {
+            var userControls = document.querySelector('.qa-user-controls');
+            if (userControls) {
+                userControls.insertBefore(btn, userControls.firstChild);
+            }
+        }
+
+        var modalShownKey = 'ak_age_alert_modal_shown_<?php echo (int)current_user_id(); ?>';
+        if (!localStorage.getItem(modalShownKey)) {
+            localStorage.setItem(modalShownKey, '1');
+
+            var attempts = 0;
+            var tryShow = function() {
+                if (showModal() || attempts++ >= 100) {
+                    return;
+                }
+                setTimeout(tryShow, 50);
+            };
+            tryShow();
         }
     }
 
-    // The quick-action button remains available after the modal is closed.
-    // localStorage prevents the automatic popup from returning on refreshes
-    // or in additional tabs in the same browser.
-    var modalShownKey = 'ak_age_alert_modal_shown_<?php echo (int)current_user_id(); ?>';
-    if (!localStorage.getItem(modalShownKey)) {
-        localStorage.setItem(modalShownKey, '1');
-        var modal = new bootstrap.Modal(modalEl);
-        setTimeout(function() {
-            modal.show();
-        }, 500);
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', akInitAgeAlert, { once: true });
+    } else {
+        akInitAgeAlert();
     }
-});
+})();
 </script>
 <?php endif; ?>
 <?php
