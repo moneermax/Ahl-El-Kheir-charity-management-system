@@ -554,3 +554,12 @@ Current behavior:
 Database verification completed before implementation: `sponsorships` has `child_id` as an indexed nullable foreign key to `family_children.id`, with no unique constraint preventing multiple sponsorship rows for one orphan. Therefore multiple sponsorship relationships are structurally supported by the current schema.
 
 **Runtime verification pending:** after pulling the commit, test the orphan profile with a real orphan that already has sponsorship #2713 (the user's example is orphan #1582), add a second sponsor, confirm both sponsorships remain visible, verify the combined active monthly total, and verify the new sponsorship appears in the existing sponsorship list/workflow.
+
+### Additional Sponsorship — Searchable Sponsor Selector — 2026-09-19
+
+Follow-up UX fix: the inline **إضافة كفيل آخر** modal no longer uses a long native sponsor dropdown. The sponsor field is now a searchable selector that filters active, authorized, and otherwise-eligible sponsors by sponsor name or sponsor code while typing. The selected sponsor ID remains the actual submitted value, and server-side validation/authorization is unchanged.
+
+Implementation commit: `95089efedd84f05c1f8753ca1aabfd9bff1f1711`.
+
+Runtime verification remains pending: open orphan #1582, open **إضافة كفيل آخر**, search by a sponsor name/code, select a result, and verify the selected sponsor can be saved.
+
