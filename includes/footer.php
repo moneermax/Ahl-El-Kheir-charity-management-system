@@ -19,6 +19,28 @@
 <?php include __DIR__ . '/messaging_widget.php'; ?>
 
 <style>
+/* Top Back button — mirrors the existing bottom contextual Back button. */
+.ak-top-back-wrap {
+    display: flex;
+    justify-content: flex-start;
+    direction: ltr;
+    width: 100%;
+    margin: 0 0 1rem;
+}
+.ak-top-back-wrap .ak-top-back-btn {
+    direction: rtl;
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    white-space: nowrap;
+}
+@media (max-width: 575.98px) {
+    .ak-top-back-wrap {
+        margin-bottom: .75rem;
+    }
+}
+</style>
+<style>
 /* Real CSS Sudan flag with a subtle fabric-wave animation. */
 .org-header-banner .org-flag,
 .app-footer .org-flag { display:inline-block !important;position:relative;width:34px !important;height:23px !important;min-width:34px !important;margin-inline:7px;vertical-align:middle;overflow:hidden;border-radius:2px;font-size:0 !important;line-height:0;background:linear-gradient(to bottom,#d71920 0 33.333%,#fff 33.333% 66.666%,#000 66.666% 100%) !important;box-shadow:0 1px 3px rgba(0,0,0,.28);transform-origin:left center;animation:ak-sudan-flag-wave 2.8s ease-in-out infinite }
@@ -112,7 +134,28 @@ window.AK_TRANSLATIONS=<?php echo json_encode(ak_dict(),JSON_UNESCAPED_UNICODE|J
 
 (function(){var deferred=null;var btn=document.getElementById('akInstallBtn');window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferred=e;if(btn)btn.classList.remove('d-none')});if(btn)btn.addEventListener('click',function(){if(!deferred)return;deferred.prompt();deferred.userChoice.then(function(){deferred=null;btn.classList.add('d-none')})});window.addEventListener('appinstalled',function(){if(btn)btn.classList.add('d-none')})})();
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('<?php echo APP_URL; ?>sw.js').catch(function(){})});}
+function akInstallTopBackButton(){
+    var content = document.querySelector('.content');
+    if (!content) return;
+    if (content.querySelector('.ak-top-back-wrap')) return;
+
+    var source = content.querySelector('a[onclick*="akGoBack("]');
+    if (!source) return;
+
+    var wrap = document.createElement('div');
+    wrap.className = 'ak-top-back-wrap';
+
+    var button = source.cloneNode(true);
+    button.classList.add('ak-top-back-btn');
+    button.removeAttribute('id');
+    button.setAttribute('aria-label', window.AK_LANG === 'ar' ? 'العودة إلى الصفحة السابقة' : 'Back to previous page');
+
+    wrap.appendChild(button);
+    content.insertBefore(wrap, content.firstChild);
+}
 function akGoBack(fallback){try{var ref=document.referrer;if(ref&&ref.indexOf(window.location.origin)===0&&window.history.length>1){window.history.back();return false;}}catch(e){} if(fallback){window.location.href=fallback;} return false;}
+document.addEventListener('DOMContentLoaded', akInstallTopBackButton);
+
 </script>
 </body>
 </html>
