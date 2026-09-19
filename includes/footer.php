@@ -27,7 +27,15 @@
     width: 100%;
     margin: 0 0 1rem;
 }
-.ak-top-back-wrap .ak-top-back-btn {
+.ak-bottom-back-wrap {
+    display: flex;
+    justify-content: flex-start;
+    direction: ltr;
+    width: 100%;
+    margin: 1.5rem 0 0;
+}
+.ak-top-back-wrap .ak-top-back-btn,
+.ak-bottom-back-wrap .ak-bottom-back-btn {
     direction: rtl;
     display: inline-flex;
     align-items: center;
@@ -38,8 +46,10 @@
     .ak-top-back-wrap {
         margin-bottom: .75rem;
     }
-}
-</style>
+    .ak-bottom-back-wrap {
+        margin-top: 1.25rem;
+    }
+}</style>
 <style>
 /* Real CSS Sudan flag with a subtle fabric-wave animation. */
 .org-header-banner .org-flag,
@@ -56,6 +66,7 @@
 <script>
 window.AK_LANG=<?php echo json_encode(AK_LANG,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES); ?>;
 window.AK_TRANSLATIONS=<?php echo json_encode(ak_dict(),JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES); ?>;
+window.AK_BACK_FALLBACK=<?php echo json_encode(APP_URL . dashboard_for_role(current_user_role()), JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES); ?>;
 </script>
 <script src="<?php echo asset('js/language.js'); ?>"></script>
 <script src="<?php echo asset('js/app.js'); ?>"></script>
@@ -134,27 +145,53 @@ window.AK_TRANSLATIONS=<?php echo json_encode(ak_dict(),JSON_UNESCAPED_UNICODE|J
 
 (function(){var deferred=null;var btn=document.getElementById('akInstallBtn');window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferred=e;if(btn)btn.classList.remove('d-none')});if(btn)btn.addEventListener('click',function(){if(!deferred)return;deferred.prompt();deferred.userChoice.then(function(){deferred=null;btn.classList.add('d-none')})});window.addEventListener('appinstalled',function(){if(btn)btn.classList.add('d-none')})})();
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('<?php echo APP_URL; ?>sw.js').catch(function(){})});}
-function akInstallTopBackButton(){
+function akCreateBackButton(fallback, extraClass, label){
+    var button = document.createElement('a');
+    button.href = fallback || '#';
+    button.className = extraClass;
+    button.setAttribute('onclick', 'return akGoBack(this.href);');
+    button.setAttribute('aria-label', label);
+    button.innerHTML = '<i class="fa-solid fa-arrow-right" aria-hidden="true"></i><span>' + label + '</span>';
+    return button;
+}
+function akInstallBackButtons(){
     var content = document.querySelector('.content');
     if (!content) return;
-    if (content.querySelector('.ak-top-back-wrap')) return;
 
-    var source = content.querySelector('a[onclick*="akGoBack("]');
-    if (!source) return;
+    var path = window.location.pathname.replace(/\\/g, '/');
+    var isDashboard = /(^|\\/)dashboard\\//i.test(path) || /(^|\\/)modules\\/accounting\\/fm_dashboard\\.php$/i.test(path);
+    if (isDashboard) return;
 
-    var wrap = document.createElement('div');
-    wrap.className = 'ak-top-back-wrap';
+    var existing = content.querySelector('a[onclick*="akGoBack("]');
+    var fallback = window.AK_BACK_FALLBACK || window.location.origin + '/';
+    var label = window.AK_LANG === 'ar' ? 'العودة' : 'Back';
 
-    var button = source.cloneNode(true);
-    button.classList.add('ak-top-back-btn');
-    button.removeAttribute('id');
-    button.setAttribute('aria-label', window.AK_LANG === 'ar' ? 'العودة إلى الصفحة السابقة' : 'Back to previous page');
+    if (existing) {
+        if (!content.querySelector('.ak-top-back-wrap')) {
+            var topWrap = document.createElement('div');
+            topWrap.className = 'ak-top-back-wrap';
+            var topButton = existing.cloneNode(true);
+            topButton.classList.add('ak-top-back-btn');
+            topButton.removeAttribute('id');
+            topButton.setAttribute('aria-label', label);
+            topWrap.appendChild(topButton);
+            content.insertBefore(topWrap, content.firstChild);
+        }
+        return;
+    }
 
-    wrap.appendChild(button);
-    content.insertBefore(wrap, content.firstChild);
+    var topWrap = document.createElement('div');
+    topWrap.className = 'ak-top-back-wrap';
+    topWrap.appendChild(akCreateBackButton(fallback, 'btn btn-outline-secondary ak-top-back-btn', label));
+    content.insertBefore(topWrap, content.firstChild);
+
+    var bottomWrap = document.createElement('div');
+    bottomWrap.className = 'ak-bottom-back-wrap';
+    bottomWrap.appendChild(akCreateBackButton(fallback, 'btn btn-outline-secondary ak-bottom-back-btn', label));
+    content.appendChild(bottomWrap);
 }
 function akGoBack(fallback){try{var ref=document.referrer;if(ref&&ref.indexOf(window.location.origin)===0&&window.history.length>1){window.history.back();return false;}}catch(e){} if(fallback){window.location.href=fallback;} return false;}
-document.addEventListener('DOMContentLoaded', akInstallTopBackButton);
+document.addEventListener('DOMContentLoaded', akInstallBackButtons);
 
 </script>
 </body>
