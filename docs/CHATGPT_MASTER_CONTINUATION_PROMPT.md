@@ -798,3 +798,10 @@ A further sweep covered remaining user-facing HR integrity and system maintenanc
 The shared legal-age alert is now included on the Nanny Dashboard. Its query is server-side scoped to families assigned to the logged-in Nanny via families.nanny_id, while GM/VGM/Admin continue using the same shared implementation. The alert was verified to initialize reliably and show once per authenticated PHP session using sessionStorage keyed from the PHP session ID. The existing child suspension workflow was inspected and confirmed to set family_children.is_active = 0 and pause linked active sponsorships; therefore suspended children disappear from the shared legal-age popup after refresh on all dashboards using it. The Nanny Dashboard's separate near-legal-age card also uses is_active = 1. Temporary test DOBs were restored. No schema change was made.
 
 Commits: 474741e4f094b264e033af89f690838765c7e4a5, 44e873fa548aa15142a4d3548437bae8371d1c6d, ab489dfa5ab5c00d52b76d3e0a8a97be2d2e6cd8. Documentation update: 8a3a963d01703db115faacccd23247f55016c7f1.
+
+
+## 2026-09-19 — Back button top-left enhancement
+
+The Back/navigation audit is closed and must not be restarted. The accepted layout now intentionally has two Back buttons on audited user-facing HTML pages: the existing bottom Back button plus a second top-left Back button. The top button is generated centrally from the existing contextual Back control in `includes/footer.php` and uses the same `akGoBack(fallback)` function. Do not introduce a second navigation implementation or change dashboard/excluded endpoint scope unless regression evidence or an explicit new request requires it.
+
+Commit: `0557218daa28d2ce78ff8e9f0bbaf8bacd2f0769`.
