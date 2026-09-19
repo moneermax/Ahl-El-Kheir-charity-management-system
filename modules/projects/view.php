@@ -695,7 +695,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             <?php endif; ?>
         </div>
         <div class="d-flex gap-2">
-            <a href="index.php" class="btn btn-secondary"><i class="fas fa-arrow-right me-1"></i> رجوع</a>
+            <a href="<?php echo e($backUrl); ?>" class="btn btn-secondary" onclick="return akGoBack(this.href);"><i class="fas fa-arrow-right me-1"></i> رجوع</a>
             <?php if ($role === 'projects_manager' && in_array($approval['approval_status'], ['draft', 'rejected'], true)): ?>
                 <form method="post" class="d-inline">
                     <?php echo csrf_field(); ?>
