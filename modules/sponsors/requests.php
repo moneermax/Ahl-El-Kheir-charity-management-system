@@ -44,6 +44,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
         header('Location: ' . APP_URL . 'modules/sponsors/requests.php');
         exit();
     }
+    if ($action === 'reopen' && !empty($_POST['id'])) {
+        $id = (int)$_POST['id'];
+        $request = dbFetchOne("SELECT id, status FROM sponsor_requests WHERE id = ?", [$id]);
+        if (!$request) {
+            flash('error', 'طلب الرعاية غير موجود.');
+        } elseif ((string)$request['status'] !== 'lost') {
+            flash('error', 'يمكن إعادة فتح الطلبات المغلقة فقط.');
+        } else {
+            dbExecute("UPDATE sponsor_requests SET status = 'contacted' WHERE id = ? AND status = 'lost'", [$id]);
+            flash('success', t('sponsors.request_reopened'));
+        }
+        header('Location: ' . APP_URL . 'modules/sponsors/requests.php?status=contacted');
+        exit();
+    }
     if ($action === 'delete' && !empty($_POST['id'])) {
         $id = (int)$_POST['id'];
         $request = dbFetchOne("SELECT id, status, assigned_supervisor_id FROM sponsor_requests WHERE id = ?", [$id]);
@@ -89,8 +103,15 @@ if ($statusFilter !== '') {
     $leads = dbFetchAll("SELECT r.*, u.full_name AS brought_by_user FROM sponsor_requests r LEFT JOIN users u ON u.id = r.brought_by ORDER BY r.created_at DESC");
 }
 $statusKeys = ['new'=>'sponsors.request_new','contacted'=>'sponsors.request_contacted','converted'=>'sponsors.request_converted','lost'=>'sponsors.request_lost'];
+$queueTitleKeys = [
+    'new' => 'sponsors.request_queue_new',
+    'contacted' => 'sponsors.request_queue_contacted',
+    'converted' => 'sponsors.request_queue_converted',
+    'lost' => 'sponsors.request_queue_lost',
+];
+$queueTitle = $statusFilter !== '' ? t($queueTitleKeys[$statusFilter]) : t('sponsors.requests_title');
 include dirname(__DIR__, 2) . '/includes/header.php'; ?>
-<div class="welcome-section fade-in"><h2><i class="fas fa-bullhorn me-2"></i><?php echo e(t('sponsors.requests_title')); ?></h2><p><?php echo e(t('sponsors.requests_intro')); ?></p></div>
+<div class="welcome-section fade-in"><h2><i class="fas fa-bullhorn me-2"></i><?php echo e($queueTitle); ?></h2><p><?php echo e(t('sponsors.requests_intro')); ?></p></div>
 <?php include dirname(__DIR__, 2) . '/includes/alerts.php'; ?>
 <div class="d-flex justify-content-end mb-3 fade-in"><button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addLeadModal"><i class="fas fa-plus me-1"></i><?php echo e(t('sponsors.request_add')); ?></button></div>
 <div class="card mb-3 fade-in"><div class="card-body"><form method="get" class="row g-2 align-items-end"><div class="col-md-4"><label class="form-label mb-1">تصفية حسب الحالة</label><select name="status" class="form-select"><option value="">كل الطلبات</option><option value="new" <?php echo $statusFilter === 'new' ? 'selected' : ''; ?>>جديد</option><option value="contacted" <?php echo $statusFilter === 'contacted' ? 'selected' : ''; ?>>تم التواصل</option><option value="converted" <?php echo $statusFilter === 'converted' ? 'selected' : ''; ?>>تم التحويل إلى كفيل</option><option value="lost" <?php echo $statusFilter === 'lost' ? 'selected' : ''; ?>>مغلق / لم يكتمل</option></select></div><div class="col-md-auto"><button type="submit" class="btn btn-outline-primary"><i class="fas fa-filter me-1"></i>تطبيق</button></div><div class="col-md-auto"><a href="<?php echo url('modules/sponsors/requests.php'); ?>" class="btn btn-outline-secondary">إظهار الكل</a></div></form></div></div>
@@ -104,7 +125,8 @@ include dirname(__DIR__, 2) . '/includes/header.php'; ?>
 <?php if ($lead['status'] === 'new'): ?><form method="post" class="d-inline" onsubmit="return confirm(<?php echo e(json_encode(t('sponsors.request_contacted_confirm'), JSON_UNESCAPED_UNICODE)); ?>);"><?php echo csrf_field(); ?><input type="hidden" name="action" value="set_status"><input type="hidden" name="status" value="contacted"><input type="hidden" name="id" value="<?php echo (int)$lead['id']; ?>"><button type="submit" class="btn btn-sm btn-outline-info" title="<?php echo e(t('sponsors.request_mark_contacted')); ?>"><i class="fas fa-phone"></i> <?php echo e(t('sponsors.request_mark_contacted')); ?></button></form><?php endif; ?>
 <form method="post" class="d-inline" onsubmit="return confirm(<?php echo e(json_encode(t('sponsors.request_lost_confirm'), JSON_UNESCAPED_UNICODE)); ?>);"><?php echo csrf_field(); ?><input type="hidden" name="action" value="set_status"><input type="hidden" name="status" value="lost"><input type="hidden" name="id" value="<?php echo (int)$lead['id']; ?>"><button type="submit" class="btn btn-sm btn-outline-secondary" title="<?php echo e(t('sponsors.request_mark_lost')); ?>"><i class="fas fa-xmark"></i> <?php echo e(t('sponsors.request_mark_lost')); ?></button></form>
 <button type="button" class="btn btn-sm btn-outline-success" title="<?php echo e(t('sponsors.request_convert_title')); ?>" data-bs-toggle="modal" data-bs-target="#convertLeadModal" data-request-id="<?php echo (int)$lead['id']; ?>"><i class="fas fa-user-check"></i> <?php echo e(t('sponsors.request_convert')); ?></button>
-<?php else: ?><span class="badge bg-light text-muted"><i class="fas fa-<?php echo $lead['status'] === 'converted' ? 'check-circle' : 'ban'; ?>"></i> <?php echo e($lead['status'] === 'converted' ? t('sponsors.request_complete') : t('sponsors.request_closed')); ?></span><?php endif; ?>
+<?php elseif ($lead['status'] === 'lost'): ?><form method="post" class="d-inline" onsubmit="return confirm(<?php echo e(json_encode(t('sponsors.request_reopen_confirm'), JSON_UNESCAPED_UNICODE)); ?>);"><?php echo csrf_field(); ?><input type="hidden" name="action" value="reopen"><input type="hidden" name="id" value="<?php echo (int)$lead['id']; ?>"><button type="submit" class="btn btn-sm btn-outline-primary" title="<?php echo e(t('sponsors.request_reopen')); ?>"><i class="fas fa-rotate-left"></i> <?php echo e(t('sponsors.request_reopen')); ?></button></form>
+<?php else: ?><span class="badge bg-light text-muted"><i class="fas fa-check-circle"></i> <?php echo e(t('sponsors.request_complete')); ?></span><?php endif; ?>
 </td></tr><?php endforeach; endif; ?></tbody></table></div></div></div>
 <div class="modal fade" id="addLeadModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form method="post"><?php echo csrf_field(); ?><input type="hidden" name="action" value="add"><div class="modal-header" style="background:#1b4d8f;color:#fff"><h5 class="modal-title"><i class="fas fa-plus-circle me-2"></i><?php echo e(t('sponsors.request_add_title')); ?></h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
 <div class="modal-body"><div class="mb-3"><label class="form-label"><?php echo e(t('sponsors.request_sponsor_name')); ?> *</label><input type="text" name="sponsor_name" class="form-control" required></div><div class="mb-3"><label class="form-label"><?php echo e(t('sponsors.request_phone')); ?></label><input type="text" name="phone" class="form-control" dir="ltr"></div><div class="mb-3"><label class="form-label"><?php echo e(t('sponsors.create_gender')); ?> *</label><select name="gender" class="form-select" required><option value=""><?php echo e(t('sponsors.create_gender')); ?></option><option value="male"><?php echo e(t('sponsors.create_male')); ?></option><option value="female"><?php echo e(t('sponsors.create_female')); ?></option></select></div><div class="mb-3"><label class="form-label"><?php echo e(t('sponsors.request_source')); ?> *</label><div class="d-flex flex-wrap gap-2"><?php foreach ($sourceOptions as $val=>$meta): $sid='src_'.md5($val); ?><input type="radio" class="btn-check" name="source" id="<?php echo $sid; ?>" value="<?php echo e($val); ?>" required><label class="btn btn-outline-secondary d-inline-flex align-items-center gap-2" for="<?php echo $sid; ?>"><i class="<?php echo e($meta['icon']); ?>"></i><span><?php echo e(t($meta['key'])); ?></span></label><?php endforeach; ?></div></div>
