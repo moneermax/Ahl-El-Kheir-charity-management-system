@@ -1016,3 +1016,22 @@ Reviewed the current `dashboard/staff_dashboard.php`, `includes/sidebar.php`, `i
 A concrete responsive defect was identified in the shared header: `.qa-top-bar` was explicitly non-wrapping and contained variable-length quick-action labels plus user controls. On narrow screens this could force compression or horizontal overflow. The fix in commit `4536623afcea14852aac5d1ea1d3b2ec2f70e0b8` adds a <=768px mobile layout that stacks the two header groups, gives them full width, centers their contents, and removes the desktop auto margins from the user-control group. This is presentation-only; no role, authorization, SQL, or workflow logic changed.
 
 **Verification state:** code fix committed; runtime mobile-width verification remains pending.
+
+
+## Mobile navigation responsive audit — 2026-09-19
+
+### Finding
+
+The previous responsive header adjustment was insufficient. On narrow screens the sidebar still remained a 260px flex child, so the main content was compressed and the sidebar visually consumed most of the viewport. This is a concrete shared-layout defect, not merely a visual preference.
+
+### Corrective implementation
+
+The shared layout now treats the sidebar as an off-canvas drawer below 992px. The drawer slides from the appropriate side for RTL/LTR, the main area expands to the full viewport, a dark overlay prevents interaction with the page behind the drawer, and a dedicated mobile menu button provides the navigation entry point. Drawer state is closed by the overlay, Escape, navigation links on mobile, or resizing back to desktop.
+
+No role, authorization, SQL, or workflow behavior was changed.
+
+Code commits: 726d766f8075b2a55a0dcfd0ccc1cb5ec75c64d1, 0530c69c6e80b320577ac50dcd852ea4633431f6.
+
+### Verification boundary
+
+Real-device verification is still pending. Chrome device emulation is useful for an initial check, but this fix must not be marked runtime-verified until the user confirms the actual mobile layout.
