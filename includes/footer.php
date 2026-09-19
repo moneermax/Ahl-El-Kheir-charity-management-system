@@ -107,7 +107,8 @@ window.AK_BACK_FALLBACK=<?php echo json_encode(APP_URL . dashboard_for_role(curr
         document.body.style.overflow = mobileQuery.matches && open ? 'hidden' : '';
     }
 
-    setSidebar(false);
+    /* Keep the existing desktop-open/mobile-closed behavior independent of Back-button logic. */
+    setSidebar(!mobileQuery.matches);
 
     if (btn) {
         btn.addEventListener('click', function () {
@@ -166,29 +167,49 @@ function akInstallBackButtons(){
     var fallback = window.AK_BACK_FALLBACK || window.location.origin + '/';
     var label = window.AK_LANG === 'ar' ? 'العودة' : 'Back';
 
+    /*
+     * Every audited HTML page must have two shared Back controls:
+     * one at the top-left and one at the bottom-left.
+     *
+     * If the page already supplies a contextual Back control, keep it in
+     * place.  It is used as the source for the top clone, and only create
+     * a shared bottom control when the existing control is not already
+     * positioned in the lower part of the content.
+     */
+    var existingIsNearBottom = false;
     if (existing) {
-        if (!content.querySelector('.ak-top-back-wrap')) {
-            var topWrap = document.createElement('div');
-            topWrap.className = 'ak-top-back-wrap';
-            var topButton = existing.cloneNode(true);
-            topButton.classList.add('ak-top-back-btn');
-            topButton.removeAttribute('id');
-            topButton.setAttribute('aria-label', label);
-            topWrap.appendChild(topButton);
-            content.insertBefore(topWrap, content.firstChild);
-        }
-        return;
+        var contentRect = content.getBoundingClientRect();
+        var existingRect = existing.getBoundingClientRect();
+        existingIsNearBottom = existingRect.top >= contentRect.top + (contentRect.height * 0.60);
     }
 
-    var topWrap = document.createElement('div');
-    topWrap.className = 'ak-top-back-wrap';
-    topWrap.appendChild(akCreateBackButton(fallback, 'btn btn-outline-secondary ak-top-back-btn', label));
-    content.insertBefore(topWrap, content.firstChild);
+    if (!content.querySelector('.ak-top-back-wrap')) {
+        var topWrap = document.createElement('div');
+        topWrap.className = 'ak-top-back-wrap';
+        var topButton = existing
+            ? existing.cloneNode(true)
+            : akCreateBackButton(fallback, 'btn btn-outline-secondary ak-top-back-btn', label);
+        topButton.classList.add('ak-top-back-btn');
+        topButton.removeAttribute('id');
+        topButton.setAttribute('aria-label', label);
+        topWrap.appendChild(topButton);
+        content.insertBefore(topWrap, content.firstChild);
+    }
 
-    var bottomWrap = document.createElement('div');
-    bottomWrap.className = 'ak-bottom-back-wrap';
-    bottomWrap.appendChild(akCreateBackButton(fallback, 'btn btn-outline-secondary ak-bottom-back-btn', label));
-    content.appendChild(bottomWrap);
+    if (!existingIsNearBottom && !content.querySelector('.ak-bottom-back-wrap')) {
+        var bottomWrap = document.createElement('div');
+        bottomWrap.className = 'ak-bottom-back-wrap';
+        bottomWrap.appendChild(existing
+            ? existing.cloneNode(true)
+            : akCreateBackButton(fallback, 'btn btn-outline-secondary ak-bottom-back-btn', label));
+        var bottomButton = bottomWrap.querySelector('a');
+        if (bottomButton) {
+            bottomButton.classList.add('ak-bottom-back-btn');
+            bottomButton.removeAttribute('id');
+            bottomButton.setAttribute('aria-label', label);
+        }
+        content.appendChild(bottomWrap);
+    }
 }
 function akGoBack(fallback){try{var ref=document.referrer;if(ref&&ref.indexOf(window.location.origin)===0&&window.history.length>1){window.history.back();return false;}}catch(e){} if(fallback){window.location.href=fallback;} return false;}
 document.addEventListener('DOMContentLoaded', akInstallBackButtons);
