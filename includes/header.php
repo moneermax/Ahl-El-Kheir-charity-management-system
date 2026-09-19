@@ -476,16 +476,16 @@ if (Session::isLoggedIn()) {
         .ak-sidebar-toggle {
             position: fixed;
             top: 50%;
-            right: 14px;
+            right: 10px;
             transform: translateY(-50%);
             z-index: 1202;
-            width: 50px;
-            height: 50px;
+            width: 38px;
+            height: 92px;
             border: 1px solid rgba(255,255,255,.18);
-            border-radius: 16px;
+            border-radius: 19px;
             background: rgba(20, 35, 58, .96);
             color: #fff;
-            box-shadow: 0 8px 24px rgba(0,0,0,.24);
+            box-shadow: 0 8px 24px rgba(0,0,0,.22);
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -494,8 +494,7 @@ if (Session::isLoggedIn()) {
                         left .28s cubic-bezier(.22,.61,.36,1),
                         transform .18s ease,
                         background .18s ease,
-                        box-shadow .18s ease,
-                        border-radius .18s ease;
+                        box-shadow .18s ease;
         }
 
 
@@ -517,8 +516,7 @@ if (Session::isLoggedIn()) {
 
 
         body.sidebar-open .ak-sidebar-toggle {
-            right: calc(var(--ak-sidebar-width) + 12px);
-            border-radius: 50%;
+            right: calc(var(--ak-sidebar-width) + 10px);
         }
 
 
@@ -529,12 +527,12 @@ if (Session::isLoggedIn()) {
 
 
         [dir="ltr"] body.sidebar-open .ak-sidebar-toggle {
-            left: calc(var(--ak-sidebar-width) + 12px);
+            left: calc(var(--ak-sidebar-width) + 10px);
         }
 
 
         .ak-sidebar-toggle i {
-            font-size: 1.05rem;
+            font-size: 1rem;
         }
 
 
@@ -872,6 +870,26 @@ if (Session::isLoggedIn()) {
         }
 
         @media (max-width: 991.98px) {
+            .ak-sidebar-toggle {
+                width: 36px;
+                height: 84px;
+                right: 8px;
+                border-radius: 18px;
+            }
+
+            body.sidebar-open .ak-sidebar-toggle {
+                right: calc(var(--ak-sidebar-width) + 8px);
+            }
+
+            [dir="ltr"] .ak-sidebar-toggle {
+                right: auto;
+                left: 8px;
+            }
+
+            [dir="ltr"] body.sidebar-open .ak-sidebar-toggle {
+                left: calc(var(--ak-sidebar-width) + 8px);
+            }
+
             .sidebar-overlay {
                 display: block;
                 position: fixed;
