@@ -761,3 +761,16 @@ Final refinements:
 
 **Current continuation point:** mobile navigation is accepted for this phase. The next session should continue the broader system-wide changes/audit work, not reopen the mobile navigation unless new regression evidence appears.
 
+## Shared floating sidebar UX — 2026-09-19
+
+The latest shared sidebar handler refinement is temporarily accepted; continue with the next system-wide change rather than reopening its visual design unless the user asks.
+
+The shared navigation remains a fixed floating/off-canvas sidebar. The handler is flush with the page edge, uses the shared navy header/sidebar color, has rounded inner corners, and was narrowed to 28px on desktop/mobile. The current implementation is in `includes/header.php`.
+
+Commit: `97f5d394ee0370be436351a4d4696bbf5c0b5a5d` — **Refine sidebar handler width and page-edge alignment**.
+
+The user explicitly considers this **temporary done** rather than a final visual design. Do not spend further work refining the handler unless the user returns to it. No database, schema, authorization, role, or workflow logic changed.
+
+### Immediate continuation
+
+Move to the next system-wide fix requested by the user. Inspect the relevant documentation and current repository code before making changes; do not reopen closed audit areas or repeat passed tests without regression evidence.
