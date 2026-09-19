@@ -743,9 +743,84 @@ if (Session::isLoggedIn()) {
             font-size: 0.82rem;
         }
 
+        .ak-mobile-menu-btn {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            min-height: 32px;
+            padding: 4px 10px;
+            border: 1px solid rgba(255,255,255,0.22);
+            border-radius: 6px;
+            background: rgba(255,255,255,0.12);
+            color: #fff;
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .ak-mobile-menu-btn:hover,
+        .ak-mobile-menu-btn:focus-visible {
+            background: rgba(255,255,255,0.22);
+            color: #fff;
+        }
+
         body.theme-dark .ak-header-search-btn {
             background: rgba(255,255,255,0.09);
             border-color: rgba(255,255,255,0.28);
+        }
+
+        @media (max-width: 991.98px) {
+            .sidebar {
+                position: fixed;
+                top: 0;
+                right: 0;
+                left: auto;
+                width: min(84vw, 300px);
+                height: 100vh;
+                transform: translateX(100%);
+                transition: transform 0.25s ease;
+                box-shadow: -8px 0 24px rgba(0,0,0,0.22);
+                z-index: 1100;
+            }
+
+            [dir="ltr"] .sidebar {
+                right: auto;
+                left: 0;
+                transform: translateX(-100%);
+                box-shadow: 8px 0 24px rgba(0,0,0,0.22);
+            }
+
+            body.sidebar-open .sidebar {
+                transform: translateX(0);
+            }
+
+            .sidebar-overlay {
+                display: block;
+                position: fixed;
+                inset: 0;
+                background: rgba(0,0,0,0.45);
+                z-index: 1090;
+                opacity: 0;
+                visibility: hidden;
+                pointer-events: none;
+                transition: opacity 0.25s ease, visibility 0.25s ease;
+            }
+
+            body.sidebar-open .sidebar-overlay {
+                opacity: 1;
+                visibility: visible;
+                pointer-events: auto;
+            }
+
+            .main-area {
+                width: 100%;
+                min-width: 0;
+            }
+
+            .ak-mobile-menu-btn {
+                display: inline-flex;
+            }
         }
 
         @media (max-width: 768px) {
@@ -976,6 +1051,18 @@ if (Session::isLoggedIn()) {
                      ===================================================== -->
 
                 <div class="qa-user-controls">
+
+                    <button
+                        type="button"
+                        class="ak-mobile-menu-btn"
+                        id="akMobileMenuBtn"
+                        aria-controls="sidebar"
+                        aria-expanded="false"
+                        title="<?php echo e(AK_LANG === 'ar' ? 'فتح القائمة' : 'Open menu'); ?>"
+                    >
+                        <i class="fas fa-bars" aria-hidden="true"></i>
+                        <span><?php echo e(AK_LANG === 'ar' ? 'القائمة' : 'Menu'); ?></span>
+                    </button>
 
                     <?php if ($canGlobalSearch): ?>
                         <a
