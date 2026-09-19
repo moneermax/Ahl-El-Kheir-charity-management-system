@@ -826,3 +826,18 @@ Commit: `0557218daa28d2ce78ff8e9f0bbaf8bacd2f0769` — Add top-left Back button 
 The first centralized enhancement only added a top button where an existing contextual Back button was already present. That left some audited HTML pages without either button. The implementation was corrected in `includes/footer.php`: non-dashboard HTML pages now receive both a top-left and bottom Back button when they do not already contain an audited contextual Back control; pages with an existing contextual control receive the top copy while retaining their existing bottom control. The generated controls use the role's existing dashboard route as deterministic fallback and the same `akGoBack()` history/context behavior. Dashboards remain excluded.
 
 Commit: `68d5db9e76add648933b2874fb5f349bdee0e535` — Ensure two Back buttons on all audited HTML pages.
+
+
+## Shared header action toolbar — 2026-09-19
+
+The shared application header was redesigned so the full header action area is centered directly beneath the organization name banner.
+
+The previous split top-bar arrangement and user dropdown were replaced with a single centered action toolbar. It now presents the existing role-aware quick actions, global search, language switch, pending password-recovery indicator when applicable, current-user identity, Profile, Settings, and Logout as direct header controls. The user dropdown itself is no longer used for these actions.
+
+The change is presentation/navigation only. Existing destination URLs, role-aware quick-action generation, search permissions, language switching, password-recovery visibility, avatar loading, authentication/logout behavior, and sidebar/back-button logic remain unchanged.
+
+Implementation:
+- includes/header.php
+- Commit: ca3a30f7c26b3196b6a1a428a98ab5c8a06c2874
+
+The sidebar remains closed by default when a new page loads, and the shared Back buttons remain active. Further visual tuning should wait for runtime review of the new centered header on desktop and narrow screens.
