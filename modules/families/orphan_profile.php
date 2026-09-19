@@ -4,6 +4,7 @@ require_once dirname(__DIR__, 2) . '/config/config.php';
 require_once dirname(__DIR__, 2) . '/config/database.php';
 require_once dirname(__DIR__, 2) . '/config/functions.php';
 require_once dirname(__DIR__, 2) . '/config/session.php';
+require_once dirname(__DIR__, 2) . '/config/sponsor_assignments.php';
 
 Session::start();
 if (!Session::isLoggedIn()) {
@@ -35,24 +36,29 @@ if ($childId > 0) {
     $family_id = $child['family_id'];
 }
 
-$sponsorInfo = null;
+$sponsorships = [];
 if ($childId > 0) {
-    $sponsorInfo = dbFetchOne("
-        SELECT 
-            s.id as sponsorship_id,
-            s.monthly_amount,
-            s.start_date,
-            s.status,
-            sp.full_name as sponsor_name,
-            sp.phone as sponsor_phone,
-            sp.email as sponsor_email,
-            sp.sponsor_code
+    $sponsorships = dbFetchAll("
+        SELECT s.id AS sponsorship_id, s.sponsor_id, s.monthly_amount, s.start_date,
+               s.end_date, s.status, s.notes,
+               sp.full_name AS sponsor_name, sp.phone AS sponsor_phone,
+               sp.email AS sponsor_email, sp.sponsor_code,
+               sp.first_letter_id, sp.gender
         FROM sponsorships s
         LEFT JOIN sponsors sp ON sp.id = s.sponsor_id
-        WHERE s.child_id = ? AND s.status = 'active'
-        ORDER BY s.id DESC
-        LIMIT 1
+        WHERE s.child_id = ?
+        ORDER BY CASE WHEN s.status = 'active' THEN 0 WHEN s.status = 'paused' THEN 1 ELSE 2 END, s.id DESC
     ", [$childId]);
+}
+$activeSponsorships = array_values(array_filter($sponsorships, static fn(array $row): bool => in_array($row['status'], ['active', 'paused'], true)));
+$activeSponsorIds = array_values(array_unique(array_map(static fn(array $row): int => (int)$row['sponsor_id'], $activeSponsorships)));
+$availableSponsors = [];
+if ($childId > 0 && in_array($role, ['admin', 'vice_general_manager', 'supervisor'], true)) {
+    $availableSponsors = dbFetchAll("SELECT id, full_name, sponsor_code, phone, gender, first_letter_id FROM sponsors WHERE status = 'active' ORDER BY full_name");
+    if ($role === 'supervisor') {
+        $availableSponsors = array_values(array_filter($availableSponsors, static fn(array $sponsor): bool => supervisorCanAccessSponsor($uid, $sponsor)));
+    }
+    $availableSponsors = array_values(array_filter($availableSponsors, static fn(array $sponsor): bool => !in_array((int)$sponsor['id'], $activeSponsorIds, true)));
 }
 
 function ak_orphan_profile_save_photo(int $childId): ?string
@@ -74,7 +80,54 @@ function ak_orphan_profile_save_photo(int $childId): ?string
     return null;
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf() && isset($_POST['add_sponsorship'])) {
+    $errors = [];
+    if ($childId <= 0 || !$child) $errors[] = 'اليتيم غير موجود.';
+    if (!in_array($role, ['admin', 'vice_general_manager', 'supervisor'], true)) $errors[] = 'ليس لديك صلاحية لإضافة كفالة.';
+
+    $newSponsorId = (int)($_POST['sponsor_id'] ?? 0);
+    $newAmount = round((float)str_replace(',', '', (string)($_POST['sponsorship_amount'] ?? 0)), 2);
+    $newStartDate = trim((string)($_POST['sponsorship_start_date'] ?? ''));
+    $newNotes = trim((string)($_POST['sponsorship_notes'] ?? ''));
+
+    if ($newSponsorId <= 0) $errors[] = 'اختر الكفيل.';
+    if ($newAmount <= 0) $errors[] = 'أدخل مبلغ الكفالة الشهري.';
+    if ($newStartDate === '') $newStartDate = date('Y-m-d');
+    if (!preg_match('/^\\d{4}-\\d{2}-\\d{2}$/', $newStartDate)) $errors[] = 'تاريخ بداية الكفالة غير صحيح.';
+
+    $newSponsor = $newSponsorId > 0
+        ? dbFetchOne("SELECT id, full_name, sponsor_code, phone, email, gender, first_letter_id FROM sponsors WHERE id = ? AND status = 'active'", [$newSponsorId])
+        : null;
+    if (!$newSponsor) $errors[] = 'الكفيل غير موجود أو غير نشط.';
+    elseif ($role === 'supervisor' && !supervisorCanAccessSponsor($uid, $newSponsor)) $errors[] = 'هذا الكفيل ليس من كفلائك.';
+
+    if (!$errors && in_array($newSponsorId, $activeSponsorIds, true)) {
+        $errors[] = 'هذا الكفيل لديه كفالة نشطة أو موقوفة لهذا اليتيم بالفعل.';
+    }
+
+    if (!$errors) {
+        try {
+            db()->beginTransaction();
+            dbExecute("INSERT INTO sponsorships (sponsor_id, child_id, monthly_amount, currency_code, start_date, status, notes, created_by) VALUES (?, ?, ?, 'SDG', ?, 'active', ?, ?)",
+                [$newSponsorId, $childId, $newAmount, $newStartDate, $newNotes, $uid]);
+            $newSponsorshipId = (int)dbLastInsertId();
+            $newCode = 'SH-' . str_pad((string)$newSponsorshipId, 6, '0', STR_PAD_LEFT);
+            dbExecute("UPDATE sponsorships SET sponsorship_code = ? WHERE id = ?", [$newCode, $newSponsorshipId]);
+            try {
+                dbExecute("INSERT INTO audit_log (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent) VALUES (?, 'CREATE', 'sponsorships', ?, NULL, ?, ?, ?)",
+                    [$uid, $newSponsorshipId, json_encode(['code'=>$newCode,'sponsor_id'=>$newSponsorId,'child_id'=>$childId,'amount'=>$newAmount,'start_date'=>$newStartDate,'source'=>'orphan_profile'], JSON_UNESCAPED_UNICODE), $_SERVER['REMOTE_ADDR'] ?? '', $_SERVER['HTTP_USER_AGENT'] ?? '']);
+            } catch (Throwable $e) {}
+            db()->commit();
+            flash('success', 'تمت إضافة الكفالة بنجاح للكفيل ' . ($newSponsor['full_name'] ?? '') . ' برقم ' . $newCode . '.');
+            redirect('modules/families/orphan_profile.php?child=' . $childId);
+        } catch (Throwable $e) {
+            if (db()->inTransaction()) db()->rollBack();
+            flash('error', 'تعذر إضافة الكفالة: ' . $e->getMessage());
+        }
+    } else {
+        flash('error', implode(', ', $errors));
+    }
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
     $data = [
         'family_id' => (int)$_POST['family_id'],
         'child_name' => trim($_POST['child_name'] ?? ''),
@@ -294,18 +347,36 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 <div class="col-md-4"><label class="form-label fw-bold">قيمة الكفالة الشهرية</label><input type="number" step="0.01" name="monthly_sponsorship_value" class="form-control" value="<?php echo e($child['monthly_sponsorship_value'] ?? ''); ?>" <?php echo $isViewMode ? 'readonly' : ''; ?>></div>
                 <div class="col-md-4"><label class="form-label fw-bold">مخصص إضافي</label><input type="number" step="0.01" name="extra_allowance" class="form-control" value="<?php echo e($child['extra_allowance'] ?? ''); ?>" <?php echo $isViewMode ? 'readonly' : ''; ?>></div>
 
-                <div class="col-12 mt-3"><h5 class="border-bottom pb-2 text-success">معلومات الكفيل</h5></div>
-                <?php if ($sponsorInfo): ?>
-                    <div class="col-md-4"><label class="form-label fw-bold">اسم الكفيل</label><input type="text" class="form-control" value="<?php echo e($sponsorInfo['sponsor_name'] ?? '—'); ?>" readonly></div>
-                    <div class="col-md-4"><label class="form-label fw-bold">رقم هاتف الكفيل</label><input type="text" class="form-control" value="<?php echo e($sponsorInfo['sponsor_phone'] ?? '—'); ?>" readonly></div>
-                    <div class="col-md-4"><label class="form-label fw-bold">البريد الإلكتروني</label><input type="text" class="form-control" value="<?php echo e($sponsorInfo['sponsor_email'] ?? '—'); ?>" readonly></div>
-                    <div class="col-md-4"><label class="form-label fw-bold">كود الكفيل</label><input type="text" class="form-control" value="<?php echo e($sponsorInfo['sponsor_code'] ?? '—'); ?>" readonly></div>
-                    <div class="col-md-4"><label class="form-label fw-bold">المبلغ الشهري</label><input type="text" class="form-control" value="<?php echo number_format((float)($sponsorInfo['monthly_amount'] ?? 0), 2); ?>" readonly></div>
-                    <div class="col-md-4"><label class="form-label fw-bold">تاريخ بداية الكفالة</label><input type="text" class="form-control" value="<?php echo e($sponsorInfo['start_date'] ?? '—'); ?>" readonly></div>
-                    <div class="col-md-12 mt-2"><div class="alert alert-info"><i class="fas fa-info-circle me-2"></i><?php if ($sponsorInfo['status'] === 'active'): ?><span class="badge bg-success">كفالة نشطة</span><?php else: ?><span class="badge bg-secondary">كفالة غير نشطة</span><?php endif; ?><span class="ms-2">رقم الكفالة: <strong>#<?php echo e($sponsorInfo['sponsorship_id']); ?></strong></span><?php if ($isEditMode && !$isViewMode): ?><a href="<?php echo APP_URL; ?>modules/sponsorships/index.php?sponsorship=<?php echo $sponsorInfo['sponsorship_id']; ?>" class="btn btn-sm btn-outline-primary ms-2" target="_blank"><i class="fas fa-edit me-1"></i>تعديل الكفالة</a><?php endif; ?></div></div>
-                <?php else: ?>
-                    <div class="col-12"><div class="alert alert-warning"><i class="fas fa-exclamation-triangle me-2"></i>لا توجد كفالة نشطة لهذا اليتيم.<?php if ($isEditMode && !$isViewMode): ?><a href="<?php echo APP_URL; ?>modules/sponsorships/index.php?child=<?php echo $childId; ?>" class="btn btn-sm btn-primary ms-2"><i class="fas fa-plus me-1"></i>إضافة كفالة</a><?php endif; ?></div></div>
-                <?php endif; ?>
+                <div class="col-12 mt-3"><h5 class="border-bottom pb-2 text-success">معلومات الكفالة</h5></div>
+                <div class="col-12">
+                    <?php if ($sponsorships): ?>
+                        <?php $activeTotal = 0.0; foreach ($sponsorships as $spRow) if ($spRow['status'] === 'active') $activeTotal += (float)$spRow['monthly_amount']; ?>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover align-middle mb-2">
+                                <thead class="table-light"><tr><th>الكفيل</th><th>كود الكفيل</th><th>المبلغ الشهري</th><th>تاريخ البداية</th><th>الحالة</th><th class="text-center">الإجراء</th></tr></thead>
+                                <tbody>
+                                <?php foreach ($sponsorships as $spRow): ?>
+                                    <tr>
+                                        <td><strong><?php echo e($spRow['sponsor_name'] ?? '—'); ?></strong><?php if (!empty($spRow['sponsor_phone'])): ?><div class="small text-muted"><?php echo e($spRow['sponsor_phone']); ?></div><?php endif; ?></td>
+                                        <td><?php echo e($spRow['sponsor_code'] ?? '—'); ?></td>
+                                        <td><?php echo number_format((float)$spRow['monthly_amount'], 2); ?> ج.س</td>
+                                        <td><?php echo e($spRow['start_date'] ?? '—'); ?></td>
+                                        <td><?php $spStatusLabels=['active'=>'نشطة','paused'=>'موقوفة','completed'=>'مكتملة','cancelled'=>'ملغاة']; $spStatusClasses=['active'=>'bg-success','paused'=>'bg-warning text-dark','completed'=>'bg-info text-dark','cancelled'=>'bg-danger']; ?><span class="badge <?php echo $spStatusClasses[$spRow['status']] ?? 'bg-secondary'; ?>"><?php echo e($spStatusLabels[$spRow['status']] ?? $spRow['status']); ?></span></td>
+                                        <td class="text-center"><a href="<?php echo APP_URL; ?>modules/sponsorships/index.php?sponsorship=<?php echo (int)$spRow['sponsorship_id']; ?>" class="btn btn-sm btn-outline-primary" target="_blank"><i class="fas fa-edit me-1"></i>تعديل</a></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                        <?php if ($activeTotal > 0): ?><div class="alert alert-info py-2 mb-2"><i class="fas fa-calculator me-1"></i><strong>إجمالي الكفالة الشهرية النشطة:</strong> <?php echo number_format($activeTotal, 2); ?> ج.س</div><?php endif; ?>
+                    <?php else: ?>
+                        <div class="alert alert-warning mb-2"><i class="fas fa-exclamation-triangle me-2"></i>لا توجد كفالات مسجلة لهذا اليتيم حالياً.</div>
+                    <?php endif; ?>
+
+                    <?php if ($isEditMode && !$isViewMode && in_array($role, ['admin', 'vice_general_manager', 'supervisor'], true)): ?>
+                        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addSponsorshipModal"><i class="fas fa-user-plus me-1"></i><?php echo $sponsorships ? 'إضافة كفيل آخر' : 'إضافة كفيل'; ?></button>
+                    <?php endif; ?>
+                </div>
 
                 <div class="col-12 mt-4">
                     <?php if ($isEditMode): ?><button type="submit" class="btn btn-primary btn-lg"><i class="fas fa-save me-1"></i>حفظ التغييرات</button><a href="<?php echo APP_URL; ?>modules/families/orphan_profile.php?child=<?php echo $childId; ?>" class="btn btn-secondary btn-lg"><i class="fas fa-times me-1"></i>إلغاء</a><a href="<?php echo APP_URL; ?>modules/families/orphan_form.php?child=<?php echo $childId; ?>&tab=view" class="btn btn-outline-info btn-lg"><i class="fas fa-eye me-1"></i>عرض البيانات</a>
@@ -314,6 +385,28 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 </div>
             </div>
         </form>
+    </div>
+</div>
+<div class="modal fade" id="addSponsorshipModal" tabindex="-1" aria-labelledby="addSponsorshipModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title" id="addSponsorshipModalLabel"><i class="fas fa-hand-holding-heart me-2 text-success"></i>إضافة كفيل لليتيم</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button></div>
+            <form method="post">
+                <?php echo csrf_field(); ?><input type="hidden" name="add_sponsorship" value="1">
+                <div class="modal-body">
+                    <div class="alert alert-light border"><strong>اليتيم:</strong> <?php echo e($child['child_name'] ?? ''); ?> <span class="text-muted">(<?php echo (int)$childId; ?>)</span></div>
+                    <?php if ($availableSponsors): ?>
+                    <div class="row g-3">
+                        <div class="col-md-7"><label class="form-label fw-bold">الكفيل <span class="text-danger">*</span></label><select name="sponsor_id" class="form-select" required><option value="">اختر الكفيل</option><?php foreach ($availableSponsors as $availableSponsor): ?><option value="<?php echo (int)$availableSponsor['id']; ?>"><?php echo e($availableSponsor['full_name']); ?> (<?php echo e($availableSponsor['sponsor_code']); ?>)</option><?php endforeach; ?></select></div>
+                        <div class="col-md-5"><label class="form-label fw-bold">المبلغ الشهري <span class="text-danger">*</span></label><div class="input-group"><input type="number" name="sponsorship_amount" class="form-control" min="0.01" step="0.01" required><span class="input-group-text">ج.س</span></div></div>
+                        <div class="col-md-5"><label class="form-label fw-bold">تاريخ بداية الكفالة <span class="text-danger">*</span></label><input type="date" name="sponsorship_start_date" class="form-control" value="<?php echo e(date('Y-m-d')); ?>" required></div>
+                        <div class="col-12"><label class="form-label fw-bold">ملاحظات</label><textarea name="sponsorship_notes" class="form-control" rows="2"></textarea></div>
+                    </div>
+                    <?php else: ?><div class="alert alert-warning mb-0"><i class="fas fa-info-circle me-2"></i>لا يوجد كفلاء نشطون متاحون للإضافة ضمن نطاق صلاحيتك لهذا اليتيم.</div><?php endif; ?>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button><?php if ($availableSponsors): ?><button type="submit" class="btn btn-success"><i class="fas fa-save me-1"></i>حفظ الكفالة</button><?php endif; ?></div>
+            </form>
+        </div>
     </div>
 </div>
 <script>
