@@ -1110,7 +1110,7 @@ Commit: `0557218daa28d2ce78ff8e9f0bbaf8bacd2f0769` — Add top-left Back button 
 
 ## 2026-09-19 — Shared header action-toolbar redesign
 
-The shared header was changed from a split quick-action/user-control bar with a user dropdown into a centered direct-action toolbar positioned immediately beneath the organization name.
+The shared header was changed into a centered action toolbar positioned immediately beneath the organization name, while the current-user dropdown was restored for account actions.
 
 The toolbar keeps the existing role-aware quick actions and global controls while converting the former user-menu destinations into direct buttons:
 - Current user identity/avatar
