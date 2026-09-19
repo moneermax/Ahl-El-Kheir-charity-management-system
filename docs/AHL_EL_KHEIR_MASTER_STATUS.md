@@ -783,3 +783,9 @@ The first navigation-fix batch preserves list/search context for Families, Spons
 No database schema, authorization rules, business workflow, or sidebar behavior was changed by this navigation work.
 
 The audit remains active until the remaining user-facing modules are reviewed and runtime checks confirm the important list → detail → back, filtered/paginated list → detail → back, nested detail → parent, and edit/form → parent flows.
+
+
+### 2026-09-19 navigation rule clarified and second Back-button batch
+The user clarified the acceptance rule for this audit: **every user-facing page must provide a Back button that returns to the originating/previous page, unless the page is a dashboard**. This applies to module list/index pages as well; dashboards and non-HTML endpoints/streams remain excluded. The audit was expanded accordingly.
+
+A second batch added contextual Back actions across remaining HR, Users, Settings/System, Supervisors, Transactions, Reports, Accounting, Families, Sponsors, Sponsorships, Projects, Departments, Search, Notifications, Messages, and Logs pages. akGoBack(fallback) remains the common navigation mechanism so same-origin referrer context is preserved while direct access still has a deterministic fallback. TCPDF remains explicitly out of scope.
