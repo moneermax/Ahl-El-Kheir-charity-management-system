@@ -11,7 +11,7 @@ if (!Session::isLoggedIn() || !in_array($role, $portfolioRoles, true)) {
     exit();
 }
 
-$pageTitle = t('projects.title');
+$pageTitle = t('projects.title'); $returnQuery = http_build_query(array_merge($_GET, ['page' => (int)($_GET['page'] ?? 1)]));
 $active = 'projects';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['set_status'])) {
@@ -103,8 +103,8 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 <td><?php echo (int)$project['beneficiary_count']; ?></td>
 <td><span class="badge <?php echo $badge; ?>"><?php echo e($statusKey ? t($statusKey) : $status); ?></span></td>
 <td class="text-center" style="white-space:nowrap;">
-<a class="btn btn-sm btn-primary" title="<?php echo e(t('projects.view_file')); ?>" href="<?php echo APP_URL; ?>modules/projects/view.php?id=<?php echo (int)$project['id']; ?>"><i class="fas fa-eye"></i></a>
-<?php if (akp_can_edit_section('general', (int)$project['id'])): ?><a class="btn btn-sm btn-warning" title="<?php echo e(t('projects.edit_basic')); ?>" href="<?php echo APP_URL; ?>modules/projects/form.php?id=<?php echo (int)$project['id']; ?>"><i class="fas fa-pen"></i></a><?php endif; ?>
+<a class="btn btn-sm btn-primary" title="<?php echo e(t('projects.view_file')); ?>" href="<?php echo APP_URL; ?>modules/projects/view.php?id=<?php echo (int)$project['id']; ?>&return=<?php echo rawurlencode($returnQuery); ?>"><i class="fas fa-eye"></i></a>
+<?php if (akp_can_edit_section('general', (int)$project['id'])): ?><a class="btn btn-sm btn-warning" title="<?php echo e(t('projects.edit_basic')); ?>" href="<?php echo APP_URL; ?>modules/projects/form.php?id=<?php echo (int)$project['id']; ?>&return=<?php echo rawurlencode($returnQuery); ?>"><i class="fas fa-pen"></i></a><?php endif; ?>
 <?php if (akp_can_edit_section('operations', (int)$project['id']) && $status !== 'closed'): ?><form method="post" class="d-inline"><?php echo csrf_field(); ?><input type="hidden" name="set_status" value="<?php echo (int)$project['id']; ?>"><select name="new_status" class="form-select form-select-sm d-inline-block w-auto" onchange="this.form.submit()" aria-label="<?php echo e(t('projects.change_status')); ?>">
 <?php foreach (['planned'=>'projects.planned','active'=>'projects.active','under_review'=>'projects.under_review','completed'=>'projects.completed','cancelled'=>'projects.cancelled'] as $key => $labelKey): ?><option value="<?php echo $key; ?>" <?php echo $status === $key ? 'selected' : ''; ?>><?php echo e(t($labelKey)); ?></option><?php endforeach; ?>
 </select></form><?php endif; ?>
