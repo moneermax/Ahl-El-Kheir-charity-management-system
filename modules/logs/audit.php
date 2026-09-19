@@ -67,6 +67,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['audit_action'] ?? '') === 
                 $deleteMessage = ['type' => 'danger', 'text' => 'تعذر حذف سجلات التدقيق.'];
             }
         }
+    }
+}
 
 $fAction = trim($_GET['action'] ?? '');
 $fUser   = (int)($_GET['user'] ?? 0);
@@ -142,7 +144,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             <div class="col-md-3">
                 <div class="form-check mb-2">
                     <input class="form-check-input" type="checkbox" name="confirm_delete" value="1" id="confirmAuditDelete" required>
-                    <label class="form-check-label text-danger" for="confirmAuditDelete">أؤكد حذف جميع سجلات التدقيق حتى التاريخ المحدد</label>
+                    <label class="form-check-label text-danger" for="confirmAuditDelete">أؤكد حذف جميع سجلات التدقيق داخل الفترة المحددة</label>
                 </div>
             </div>
             <div class="col-md-3">
