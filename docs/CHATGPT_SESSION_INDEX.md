@@ -497,3 +497,15 @@ Result behavior:
 
 Implementation commit:
 - 13c849f7cc77d7445f2e372da9e7418850d87682 — Report audit cleanup counts accurately
+
+
+### Audit Log cleanup date-range UX — 2026-09-19
+
+The administrator audit-log cleanup control was changed from a single cutoff date to an explicit inclusive date range:
+- **من تاريخ**
+- **إلى تاريخ**
+
+Both dates are required. The server validates the date format and rejects a range where the start date is after the end date. Deletion and post-delete verification are limited strictly to the selected inclusive range. The confirmation text now explicitly states that both boundary dates are included.
+
+Implementation commit:
+- 354a149b75bd8a26716358bab24adb8379dff998 — Use explicit audit cleanup date range
