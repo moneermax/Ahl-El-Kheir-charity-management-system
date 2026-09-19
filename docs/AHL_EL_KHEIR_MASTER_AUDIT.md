@@ -1007,3 +1007,12 @@ Continue the Administration/Staff/Social Media dashboard audit after verifying t
 - The two KPI cards now behave as separate destinations: new requests use `modules/sponsors/new_requests.php`, and contacted requests use `modules/sponsors/contacted_requests.php`.
 - This checkpoint is complete. No schema changes were made.
 - Next audit area: Reports visibility and sidebar/dashboard consistency for Administration, Staff, and Social Media, followed by role differences, Arabic/encoding/responsive UX, KPI semantics, and remaining runtime/link checks.
+
+
+## Administration dashboard UX — Arabic/encoding and responsive review — 2026-09-19
+
+Reviewed the current `dashboard/staff_dashboard.php`, `includes/sidebar.php`, `includes/header.php`, and sponsor-request Arabic/English language files. The inspected source files contain valid Arabic text and the sponsor-request language files are UTF-8; no concrete encoding corruption was found in this dashboard area. The dashboard's main request table is already responsive through Bootstrap's `table-responsive`, and the KPI grid uses responsive column classes.
+
+A concrete responsive defect was identified in the shared header: `.qa-top-bar` was explicitly non-wrapping and contained variable-length quick-action labels plus user controls. On narrow screens this could force compression or horizontal overflow. The fix in commit `4536623afcea14852aac5d1ea1d3b2ec2f70e0b8` adds a <=768px mobile layout that stacks the two header groups, gives them full width, centers their contents, and removes the desktop auto margins from the user-control group. This is presentation-only; no role, authorization, SQL, or workflow logic changed.
+
+**Verification state:** code fix committed; runtime mobile-width verification remains pending.
