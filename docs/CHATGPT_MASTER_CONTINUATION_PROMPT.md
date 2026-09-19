@@ -732,3 +732,18 @@ After completing the dedicated sponsor-request dashboard views and the Reports/s
 A concrete mobile header issue was fixed in `includes/header.php`: the top quick-action/user-control bar now stacks at <=768px instead of remaining a single non-wrapping row. Commit: `4536623afcea14852aac5d1ea1d3b2ec2f70e0b8`. Runtime verification is still required.
 
 Next after runtime confirmation: continue the remaining dashboard review with KPI semantics/actionability and remaining linked-page/runtime checks. Do not repeat already-passed sponsor-request, Winback, orphan-form, or dedicated-queue tests unless regression evidence appears.
+
+
+## Current mobile navigation checkpoint — 2026-09-19
+
+The user reported that the application did not resemble a normal mobile website: the shared sidebar occupied/covered most of the mobile viewport and page elements overlapped. Repository inspection confirmed the root cause: the .sidebar was a 260px flex item even on narrow screens.
+
+A shared off-canvas mobile navigation fix was implemented:
+
+- includes/header.php: mobile menu button + off-canvas drawer/overlay responsive CSS below 992px.
+- includes/footer.php: drawer open/close behavior, overlay/Escape close, mobile navigation auto-close, and desktop-resize cleanup.
+- No database/schema, authorization, role, or workflow changes.
+
+Commits: 726d766f8075b2a55a0dcfd0ccc1cb5ec75c64d1, 0530c69c6e80b320577ac50dcd852ea4633431f6.
+
+Next required step: pull these commits locally and test the actual application on the user's mobile device. Verify that the sidebar is hidden by default, the menu button opens it as a drawer, the overlay closes it, the page uses the full mobile width, and dashboard cards/content no longer overlap. Do not mark this as passed until the user confirms.
