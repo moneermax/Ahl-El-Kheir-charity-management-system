@@ -227,4 +227,6 @@ $pageTitle='عكس مسيرات الرواتب'; require_once __DIR__ . '/../../
 function openReverse(id,employee,period,amount){document.getElementById('reversePayrollId').value=id;document.getElementById('reverseEmployee').textContent=employee;document.getElementById('reversePeriod').textContent='الفترة: '+period;document.getElementById('reverseAmount').textContent=amount;document.getElementById('reverseReason').value='';bootstrap.Modal.getOrCreateInstance(document.getElementById('reverseModal')).show();}
 function validateReverse(){const reason=document.getElementById('reverseReason').value.trim();if(!reason){document.getElementById('reverseReason').focus();return false;}return true;}
 </script>
+
+<div class="container-fluid px-3 pb-4"><div class="d-flex justify-content-start"><a href="modules/hr/payroll.php" class="btn btn-outline-secondary" onclick="return akGoBack(this.href);"><i class="fa-solid fa-arrow-right me-1"></i> العودة</a></div></div>
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>
