@@ -841,3 +841,18 @@ Implementation:
 - Commit: ca3a30f7c26b3196b6a1a428a98ab5c8a06c2874
 
 The sidebar remains closed by default when a new page loads, and the shared Back buttons remain active. Further visual tuning should wait for runtime review of the new centered header on desktop and narrow screens.
+
+## 2026-09-19 — Shared header action-toolbar redesign
+
+The shared header redesign is now accepted at the current visual boundary. The organization name remains the header anchor, with centered controls directly beneath it using the available horizontal space. Role-aware quick actions and system controls remain directly visible. The current-user identity is a restored compact dropdown containing Profile, Settings, and Logout. The visible group labels **الوصول السريع** and **النظام** were removed; the controls remain grouped structurally without those text labels.
+
+The existing global search, language switching, conditional password-recovery control, role-aware actions, sidebar behavior, and system-wide Back controls remain unchanged. Sidebar remains closed by default and must not be disturbed unless a regression is reported.
+
+Code commits:
+- ca3a30f7c26b3196b6a1a428a98ab5c8a06c2874 — initial centered header action toolbar.
+- 894664fac80374f8d86c7192d8962a099b557719 — restore current-user dropdown.
+- 2729522546929b09488ac244857d388ff8d51b1a — remove the visible action-group labels.
+
+Runtime checkpoint: user confirmed the final header appearance is acceptable after removing the two labels. No database/schema, authorization, workflow, sidebar, or Back-navigation behavior was changed.
+
+Next continuation point: proceed with the next system-wide/dashboard change requested by the user. Inspect the current documentation and repository state first; do not reopen completed audits or repeat passed tests without regression evidence.
