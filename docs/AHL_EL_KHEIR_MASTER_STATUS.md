@@ -584,3 +584,15 @@ The sponsorship creation result is confirmed. The multi-word autocomplete behavi
 The next active work remains the open dashboard UX/functional review of `dashboard/staff_dashboard.php` and its linked Administration/Staff/Social Media workflows.
 
 Start by inspecting the current repository code and actual linked-page authorization. Review KPI meaning, sponsor-request table/action usability, Winback integration, orphan-form navigation, role differences, Reports visibility, Arabic labels/encoding, responsive behavior, and remaining runtime errors. Preserve all completed schema and authorization fixes.
+
+
+### Administration dashboard review — first linked-page finding — 2026-09-19
+
+Repository inspection of `modules/administration/winback.php` found request-time schema mutation code that contradicted the documented runtime-DDL cleanup rule. The page was dropping legacy blacklist triggers/table and creating `winback_campaigns` / `winback_contacts` on normal page requests.
+
+This has been corrected narrowly:
+- `modules/administration/winback.php` no longer creates, drops, or alters schema during a web request.
+- Explicit migration added: `database/migrations/2026-09-19_winback_schema.sql`.
+- Implementation commits: `67576f02e2642ec018d5aeb053f6db75dae925bb` and `6ff62b70528d7a10738a73e90250be1b937ba7e2`.
+
+**Runtime status:** code correction is committed; local migration application and Winback runtime verification are still pending. Do not mark the Administration dashboard review complete until the migration is applied and the linked Winback workflow is tested.
