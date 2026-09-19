@@ -1112,11 +1112,7 @@ Commit: `0557218daa28d2ce78ff8e9f0bbaf8bacd2f0769` — Add top-left Back button 
 
 The shared header was changed into a centered action toolbar positioned immediately beneath the organization name, while the current-user dropdown was restored for account actions.
 
-The toolbar keeps the existing role-aware quick actions and global controls while converting the former user-menu destinations into direct buttons:
-- Current user identity/avatar
-- Profile
-- Settings
-- Logout
+The toolbar keeps the existing role-aware quick actions and global controls directly visible. The current-user identity/avatar opens a dropdown containing Profile, Settings, and Logout.
 
 Global Search, language switching, and conditional password-recovery access remain direct controls. Existing URLs and authorization boundaries were not changed.
 
