@@ -507,3 +507,32 @@ The later CSS that hid the global application sidebar/header and converted messa
 **Messaging original-design restoration: COMPLETE / ACCEPTED by user.**
 
 Future messaging work must preserve this visual baseline and address only explicitly requested changes.
+
+
+## 10. Audit Log Retention / Cleanup — COMPLETE AT CURRENT BOUNDARY
+
+The administrator audit-log page now provides controlled retention cleanup at `modules/logs/audit.php`.
+
+Verified implementation boundary:
+- deletion is restricted to `admin`;
+- General Manager remains read-only;
+- cleanup uses an explicit inclusive start/end date range;
+- both dates are required and validated server-side;
+- the start date cannot exceed the end date;
+- a confirmation checkbox and final browser confirmation are required;
+- matching rows are counted before deletion;
+- deletion is followed by a remaining-row verification within the same range;
+- the UI reports the actual pre-delete count instead of relying on PDO DELETE row-count behavior;
+- large `old_values` / `new_values` JSON payloads are collapsed behind **عرض التفاصيل** and remain available as audit evidence;
+- no SQL-debug/query panel was removed because the displayed JSON is audit evidence, not SQL.
+
+Relevant implementation/documentation history:
+- `88c721d2da4c1b27004531e9368b2f5cb124c8e3` — initial admin cleanup control
+- `42f21d8ee7683057ce473f3c0b42b31cd5777a55` — hardened confirmation/verification
+- `13c849f7cc77d7445f2e372da9e7418850d87682` — accurate cleanup count reporting
+- `354a149b75bd8a26716358bab24adb8379dff998` — explicit date-range UX
+- `4b2bdcb75faf0dc6c004c48c14fb9e0d44ac4b46` — final syntax-error correction
+
+Runtime status: **PASS / CLOSED at this boundary**. The user confirmed the page opens and works after the final fix.
+
+Do not repeat the cleanup tests or alter the retention behavior unless new regression evidence or an explicit new retention requirement appears.
