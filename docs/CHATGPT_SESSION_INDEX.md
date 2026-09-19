@@ -646,3 +646,15 @@ Continue the Administration/Staff/Social Media dashboard audit after verifying t
 - No database schema change was made.
 - Implementation commits: `92030f7604308f8d062ceae3d873dd12918c02bd`, `0491ee8c7982ac9fd8c50320d5eae064a676f211`, `49fbce22d917ecaf5c8ab5e0954d6068e6972f73`.
 - Runtime verification is pending user confirmation.
+
+
+## Dedicated sponsor-request dashboard views — 2026-09-19
+- The Administration/Staff/Social Media dashboard no longer routes the two sponsor-request KPI cards to the same workflow URL with different query parameters.
+- New sponsor requests now open the dedicated view `modules/sponsors/new_requests.php`.
+- Contacted sponsor requests now open the dedicated view `modules/sponsors/contacted_requests.php`.
+- Both dedicated views reuse `modules/sponsors/requests.php` as the single business-logic/rendering implementation through a validated forced status, avoiding duplicated workflow code.
+- POST actions preserve the dedicated queue context where applicable; reopening a lost request from the contacted queue remains contextual.
+- No database schema change was made.
+- Implementation commits: `5a464785702dc4fee83268c497beefc29a0eb2a7`, `8591b4865a9fa790b7ba9f0b75a00dcb9b71072`, `b33fd2dfc39175459da749c600b2e3650e3f424e`, `4facf6602b07fcc2bbab61498ee72e9daf58f8ff`.
+- Runtime verification is pending user confirmation.
+- After verification, continue with the remaining dashboard audit areas: Reports visibility, sidebar/dashboard consistency, role differences, Arabic/encoding/responsive UX, KPI semantics, and remaining runtime/link checks.
