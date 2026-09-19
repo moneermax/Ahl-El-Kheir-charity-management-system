@@ -747,3 +747,17 @@ A shared off-canvas mobile navigation fix was implemented:
 Commits: 726d766f8075b2a55a0dcfd0ccc1cb5ec75c64d1, 0530c69c6e80b320577ac50dcd852ea4633431f6.
 
 Next required step: pull these commits locally and test the actual application on the user's mobile device. Verify that the sidebar is hidden by default, the menu button opens it as a drawer, the overlay closes it, the page uses the full mobile width, and dashboard cards/content no longer overlap. Do not mark this as passed until the user confirms.
+
+
+### Final mobile navigation checkpoint — 2026-09-19
+
+The user completed real-device testing over the LAN and confirmed the mobile navigation is now substantially improved. The shared sidebar is an off-canvas drawer on narrow screens, and the fixed `☰ القائمة` control is clearly visible and usable.
+
+Final refinements:
+- `ca88f2aa1d5ac0e41af1861905c4bd67cc5646c9`: replace the critical mobile menu icon dependency with a native visible `☰`.
+- `0c7d51c640519b3814c8e0e6f9220cc41097e530`: make the mobile menu control fixed, prominent, and independent of the crowded header layout.
+- `af03d9dd775930be865c2b03a470665f3dab610b`: lock background scrolling while the drawer is open.
+- User confirmed the real-phone result is much better. A native-app-style redesign is deliberately deferred.
+
+**Current continuation point:** mobile navigation is accepted for this phase. The next session should continue the broader system-wide changes/audit work, not reopen the mobile navigation unless new regression evidence appears.
+
