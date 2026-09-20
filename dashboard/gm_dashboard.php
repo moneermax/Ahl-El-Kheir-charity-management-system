@@ -88,8 +88,8 @@ $quickReports = [
 include __DIR__ . '/../includes/header.php';
 ?>
 <style>
-.gm-hero{background:linear-gradient(135deg,#173f73,#1b4d8f);color:#fff;border-radius:16px;padding:1.35rem 1.5rem;box-shadow:0 6px 22px rgba(10,31,68,.14)}
-.gm-hero .sub{opacity:.86;font-size:.9rem}
+.gm-hero{background:linear-gradient(135deg,#173f73,#1b4d8f);color:#fff;border-radius:14px;padding:1rem 1.25rem;box-shadow:0 6px 22px rgba(10,31,68,.14)}
+.gm-hero h2{font-size:1.35rem;line-height:1.25}.gm-hero .sub{opacity:.86;font-size:.82rem;line-height:1.4}
 .gm-kpi{border:0;border-radius:14px;box-shadow:0 3px 14px rgba(10,31,68,.08);height:100%}
 .gm-kpi .value{font-size:1.65rem;font-weight:800;color:#173f73}
 .gm-kpi .label{font-size:.82rem;font-weight:700;color:#667085}
@@ -103,7 +103,7 @@ include __DIR__ . '/../includes/header.php';
 .gm-report:hover{border-color:#1b4d8f;box-shadow:0 5px 16px rgba(27,77,143,.10);transform:translateY(-2px);color:inherit}
 .gm-report i{font-size:1.25rem;color:#1b4d8f}
 .chart-box{height:260px;position:relative}
-@media(max-width:576px){.gm-hero{padding:1rem}.gm-kpi .value{font-size:1.35rem}}
+@media(max-width:576px){.gm-hero{padding:.85rem 1rem}.gm-kpi .value{font-size:1.35rem}}
 </style>
 
 <div class="gm-hero fade-in mb-4">
