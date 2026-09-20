@@ -942,6 +942,20 @@ $langSwitchUrl =
             font-size: .74rem;
         }
 
+        /* Outline quick-actions need a solid surface and contrasting text on the dark welcome section. */
+        .welcome-section .quick-actions .btn[class*="btn-outline-"] {
+            background: #fff;
+            color: var(--navy) !important;
+            border-color: #fff;
+        }
+
+        .welcome-section .quick-actions .btn[class*="btn-outline-"]:hover,
+        .welcome-section .quick-actions .btn[class*="btn-outline-"]:focus-visible {
+            background: #eef2f7;
+            color: var(--navy-dark) !important;
+            border-color: #eef2f7;
+        }
+
 
         .fade-in {
             animation: fadeIn 0.4s ease-in-out;
