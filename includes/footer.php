@@ -30,7 +30,7 @@
     justify-content: flex-start;
     direction: ltr;
     width: 100%;
-    margin: 1.5rem 0 0;
+    margin: 1.5rem 0 1.5rem;
 }
 .ak-top-back-wrap .ak-top-back-btn,
 .ak-bottom-back-wrap .ak-bottom-back-btn {
@@ -174,11 +174,33 @@ function akInstallBackButtons(){
      * a shared bottom control when the existing control is not already
      * positioned in the lower part of the content.
      */
+    /*
+     * The shared footer sits inside .content (the "</main>" that opens this
+     * file closes nothing), so appending to .content would put the bottom
+     * Back control AFTER the footer.  Find the footer's direct-child block so
+     * the bottom control can be inserted before it instead.
+     */
+    var footer = document.querySelector('.app-footer');
+    var footerBlock = null;
+    if (footer && content.contains(footer)) {
+        footerBlock = footer;
+        while (footerBlock.parentElement && footerBlock.parentElement !== content) {
+            footerBlock = footerBlock.parentElement;
+        }
+    }
+
     var existingIsNearBottom = false;
     if (existing) {
-        var contentRect = content.getBoundingClientRect();
         var existingRect = existing.getBoundingClientRect();
-        existingIsNearBottom = existingRect.top >= contentRect.top + (contentRect.height * 0.60);
+        if (footer) {
+            /* Existing Back control sits directly above the footer. */
+            var footerRect = footer.getBoundingClientRect();
+            existingIsNearBottom = existingRect.top < footerRect.top &&
+                (footerRect.top - existingRect.bottom) <= 200;
+        } else {
+            var contentRect = content.getBoundingClientRect();
+            existingIsNearBottom = existingRect.top >= contentRect.top + (contentRect.height * 0.60);
+        }
     }
 
     if (!content.querySelector('.ak-top-back-wrap')) {
@@ -206,7 +228,11 @@ function akInstallBackButtons(){
             bottomButton.removeAttribute('id');
             bottomButton.setAttribute('aria-label', label);
         }
-        content.appendChild(bottomWrap);
+        if (footerBlock) {
+            content.insertBefore(bottomWrap, footerBlock);
+        } else {
+            content.appendChild(bottomWrap);
+        }
     }
 }
 function akGoBack(fallback){try{var ref=document.referrer;if(ref&&ref.indexOf(window.location.origin)===0&&window.history.length>1){window.history.back();return false;}}catch(e){} if(fallback){window.location.href=fallback;} return false;}
