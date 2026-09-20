@@ -1123,6 +1123,9 @@ $langSwitchUrl =
                         </a>
                     <?php endif; ?>
 
+                    <?php include __DIR__ . '/notification_widget.php'; ?>
+                    <?php include __DIR__ . '/messaging_widget.php'; ?>
+
                         </div>
 
                     <div class="ak-dd" id="userDropdown">
