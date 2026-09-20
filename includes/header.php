@@ -903,7 +903,7 @@ $langSwitchUrl =
         }
 
         .content {
-            padding: 10px 24px 24px;
+            padding: 16px 24px 24px;
             flex-grow: 1;
             background: #f4f7fb;
         }
@@ -914,6 +914,7 @@ $langSwitchUrl =
             color: #fff;
             border-radius: 14px;
             padding: 16px 20px;
+            margin-top: -6px;
             margin-bottom: 16px;
         }
 
@@ -939,13 +940,6 @@ $langSwitchUrl =
         .welcome-section .quick-actions .btn {
             padding: .25rem .55rem;
             font-size: .74rem;
-        }
-
-
-        .welcome-section h2 {
-            font-weight: 800;
-            color: var(--navy);
-            margin-bottom: 4px;
         }
 
 
