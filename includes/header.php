@@ -373,9 +373,10 @@ $qaMap = [
     ],
 ];
 
-$currentQuickActions =
-    $qaMap[$resolved_role]
-    ?? [];
+$currentQuickActions = [];
+if (($active ?? '') === 'fm_dashboard') {
+    $currentQuickActions = $qaMap[$resolved_role] ?? [];
+}
 
 
 /*
@@ -1212,6 +1213,16 @@ if (Session::isLoggedIn()) {
                             <span><?php echo e(AK_LANG === 'ar' ? 'البحث' : 'Search'); ?></span>
                         </a>
                     <?php endif; ?>
+
+                    <a
+                        href="<?php echo e($langSwitchUrl); ?>"
+                        class="qa-btn"
+                        style="background: rgba(255,255,255,0.10);"
+                        title="<?php echo e(AK_LANG === 'ar' ? 'تغيير اللغة' : 'Change language'); ?>"
+                    >
+                        <i class="fas fa-globe" aria-hidden="true"></i>
+                        <span><?php echo AK_LANG === 'ar' ? 'EN' : 'عربي'; ?></span>
+                    </a>
 
                     <?php if ($pendingRecoveries > 0): ?>
                         <a
