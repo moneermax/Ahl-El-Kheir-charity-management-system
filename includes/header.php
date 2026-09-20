@@ -1159,7 +1159,8 @@ if (Session::isLoggedIn()) {
                         </div>
                     <?php endif; ?>
 
-                    <div class="qa-group qa-group-tools">
+                    <div class="qa-user-controls">
+                        <div class="qa-group qa-group-tools">
                     <?php if ($canGlobalSearch): ?>
                         <a
                             href="<?php echo APP_URL; ?>modules/search/index.php"
@@ -1244,6 +1245,8 @@ if (Session::isLoggedIn()) {
                                 <?php echo e(AK_LANG === 'ar' ? 'تسجيل الخروج' : 'Logout'); ?>
                             </a>
                         </div>
+                    </div>
+
                     </div>
 
                 </div>
