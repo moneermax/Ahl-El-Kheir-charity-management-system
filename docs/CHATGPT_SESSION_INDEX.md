@@ -777,3 +777,15 @@ Commits:
 - `95d706de3bad5dbf6bc9a0ac248a9fc3c26f45c7` — keep shared header actions visible on HR dashboard.
 
 Static repository verification confirmed the role-action map is no longer empty and no inspected primary dashboard contains a local rule that hides the shared header actions. Runtime verification is required after pulling current `main`, starting with FM and then spot-checking another dashboard role.
+
+
+## 2026-09-20 — New active audit phase: Back-button consistency
+
+The previous Back-navigation work is now being re-verified module by module. Runtime review found inconsistent Back-button presentation and behavior: single buttons, duplicate buttons, missing buttons, and some Back actions that can interfere with the page/sidebar state.
+
+The required target for applicable user-facing HTML pages is exactly two Back controls: **top-left and bottom-right**. The audit is intentionally module-by-module. For each module, inspect the actual page-local and shared implementations first, classify every page, make the smallest safe correction, and runtime-test Back navigation together with sidebar opening, refresh, and relevant list/search/filter context. Do not create competing Back-button generators or redesign unrelated shared UI.
+
+The last confirmed FM controls checkpoint is 4a7982a2f7ca831318870393943f6612d583b0c7 on fix/fm-controls-stable. Dashboard-card styling work remains abandoned.
+
+### Branch housekeeping
+Completed FM-control work is being consolidated into main. Temporary/abandoned dashboard-card branches are retained only as historical references until branch-deletion capability is available; their changes are not part of the active codebase.
