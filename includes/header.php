@@ -762,26 +762,11 @@ if (Session::isLoggedIn()) {
 
         .qa-actions {
             width: min(100%, 1180px);
-            display: flex !important;
+            display: flex;
             align-items: center;
             justify-content: center;
             flex-wrap: wrap;
             gap: 8px;
-            visibility: visible !important;
-            opacity: 1 !important;
-        }
-
-        /*
-         * The shared header controls are authoritative.
-         * Dashboard-specific styles must never hide or fade them.
-         */
-        .qa-top-bar,
-        .qa-group,
-        .qa-btn,
-        .qa-user-btn,
-        .ak-header-search-btn {
-            visibility: visible !important;
-            opacity: 1 !important;
         }
 
         .qa-group {
@@ -794,28 +779,6 @@ if (Session::isLoggedIn()) {
             border: 1px solid rgba(255,255,255,.12);
             border-radius: 10px;
             background: rgba(255,255,255,.045);
-        }
-
-        /*
-         * Keep the shared utility controls (search/language) and user menu
-         * available even when a role has many quick-action buttons.
-         * The primary role actions may wrap; utility controls must not be
-         * pushed out of the visible header.
-         */
-        .qa-group-primary {
-            flex: 1 1 auto;
-            min-width: 0;
-            order: 1;
-        }
-
-        .qa-group-tools {
-            flex: 0 0 auto;
-            order: 2;
-        }
-
-        .qa-actions > .ak-dd {
-            flex: 0 0 auto;
-            order: 3;
         }
 
         .qa-group-label {
