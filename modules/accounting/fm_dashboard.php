@@ -310,9 +310,9 @@ $recentJournals = dbFetchAll("SELECT je.entry_code, je.entry_date, je.descriptio
 <?php require_once dirname(__DIR__, 2) . '/includes/header.php'; ?>
 
 <style>
-.fm-header { background: linear-gradient(135deg, #1b4d8f 0%, #2c5aa0 100%); color: #fff; padding: 25px; border-radius: 12px; margin-bottom: 25px; }
-.fm-header h1 { margin: 0; font-size: 1.8rem; }
-.fm-header p { margin: 5px 0 0; opacity: 0.9; }
+.fm-header { background: linear-gradient(135deg, #1b4d8f 0%, #2c5aa0 100%); color: #fff; padding: 16px 20px; border-radius: 14px; margin-bottom: 16px; }
+.fm-header h1 { margin: 0; font-size: 1.35rem; line-height: 1.25; }
+.fm-header p { margin: 4px 0 0; opacity: 0.9; font-size: .82rem; line-height: 1.4; }
 .fm-card { background: #fff; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); margin-bottom: 20px; overflow: hidden; }
 .fm-card-head { background: #1b4d8f; color: #fff; padding: 12px 18px; font-weight: 700; font-size: 1rem; display: flex; justify-content: space-between; align-items: center; }
 .fm-card-body { padding: 20px; }
