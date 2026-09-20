@@ -910,7 +910,35 @@ $langSwitchUrl =
 
 
         .welcome-section {
-            margin-bottom: 24px;
+            background: linear-gradient(135deg, var(--navy), #2c5aa0);
+            color: #fff;
+            border-radius: 14px;
+            padding: 16px 20px;
+            margin-bottom: 16px;
+        }
+
+        .welcome-section h2 {
+            font-weight: 800;
+            color: #fff;
+            margin: 0 0 4px;
+            font-size: 1.35rem;
+            line-height: 1.25;
+        }
+
+        .welcome-section p {
+            margin: 0;
+            color: rgba(255,255,255,.9);
+            font-size: .82rem;
+            line-height: 1.4;
+        }
+
+        .welcome-section .quick-actions {
+            margin-top: .65rem !important;
+        }
+
+        .welcome-section .quick-actions .btn {
+            padding: .25rem .55rem;
+            font-size: .74rem;
         }
 
 
