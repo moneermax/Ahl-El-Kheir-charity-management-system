@@ -33,9 +33,6 @@ if (Session::isLoggedIn()) {
  const endpoint=<?php echo json_encode(APP_URL.'modules/messages/realtime.php');?>;
  const newMessageText=<?php echo json_encode(t('messages.new_message')); ?>;
  if(!root)return;
- const controls=document.querySelector('.qa-user-controls');
- const userDropdown=document.getElementById('userDropdown');
- if(controls){controls.insertBefore(root,userDropdown||controls.firstChild)}
  function setBadge(n){n=parseInt(n||0,10);if(!badge)return;if(n>0){badge.textContent=n>99?'99+':n;badge.classList.remove('d-none')}else{badge.textContent='';badge.classList.add('d-none')}}
  document.addEventListener('click',function(e){if(!root.contains(e.target))root.classList.remove('open')});
  try{
