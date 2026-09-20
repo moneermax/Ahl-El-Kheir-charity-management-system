@@ -35,6 +35,8 @@ if (!function_exists('ak_search_allowed_types')) {
             'social_media' => [],
             'hr_manager' => ['families', 'sponsors', 'sponsorships'],
             'hr_staff' => ['families', 'sponsors', 'sponsorships'],
+            'projects_manager' => ['families', 'sponsors', 'sponsorships'],
+            'project_supervisor' => ['families', 'sponsors', 'sponsorships'],
             'staff' => ['families', 'sponsors', 'sponsorships'],
         ][$role] ?? [];
     }
