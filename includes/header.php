@@ -796,6 +796,28 @@ if (Session::isLoggedIn()) {
             background: rgba(255,255,255,.045);
         }
 
+        /*
+         * Keep the shared utility controls (search/language) and user menu
+         * available even when a role has many quick-action buttons.
+         * The primary role actions may wrap; utility controls must not be
+         * pushed out of the visible header.
+         */
+        .qa-group-primary {
+            flex: 1 1 auto;
+            min-width: 0;
+            order: 1;
+        }
+
+        .qa-group-tools {
+            flex: 0 0 auto;
+            order: 2;
+        }
+
+        .qa-actions > .ak-dd {
+            flex: 0 0 auto;
+            order: 3;
+        }
+
         .qa-group-label {
             display: inline-flex;
             align-items: center;
