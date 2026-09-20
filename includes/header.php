@@ -332,7 +332,40 @@ $resolved_role =
     ?? $raw_role;
 
 
-$currentQuickActions = [];
+$qaMap = [];
+
+$currentQuickActions =
+    $qaMap[$resolved_role]
+    ?? [];
+
+
+/*
+|--------------------------------------------------------------------------
+| Universal Request Leave button
+|--------------------------------------------------------------------------
+*/
+
+if (Session::isLoggedIn()) {
+
+    $currentQuickActions[] = [
+
+        'label' =>
+            'طلب إجازة',
+
+        'url' =>
+            'modules/hr/leaves.php?action=request',
+
+        'icon' =>
+            'fa-calendar-plus',
+
+        'color' =>
+            '#17a2b8',
+
+        'is_universal' =>
+            true
+
+    ];
+}
 
 ?>
 
@@ -1111,6 +1144,22 @@ $currentQuickActions = [];
             <div class="qa-top-bar">
                 <div class="qa-actions">
 
+                    <?php if (!empty($currentQuickActions)): ?>
+                        <div class="qa-group qa-group-primary">
+                                            <?php foreach ($currentQuickActions as $qa): ?>
+                        <a
+                            href="<?php echo APP_URL . e($qa['url']); ?>"
+                            class="qa-btn"
+                            style="background: <?php echo !empty($qa['is_universal']) ? 'rgba(255,255,255,0.12)' : e($qa['color']); ?>;"
+                        >
+                            <i class="fas <?php echo e($qa['icon']); ?>" aria-hidden="true"></i>
+                            <span><?php echo e($qa['label']); ?></span>
+                        </a>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+
+                    <div class="qa-group qa-group-tools">
                     <?php if ($canGlobalSearch): ?>
                         <a
                             href="<?php echo APP_URL; ?>modules/search/index.php"
@@ -1134,6 +1183,20 @@ $currentQuickActions = [];
                         <span><?php echo AK_LANG === 'ar' ? 'EN' : 'عربي'; ?></span>
                     </a>
 
+                    <?php if ($pendingRecoveries > 0): ?>
+                        <a
+                            href="<?php echo APP_URL; ?>modules/users/recovery.php"
+                            class="qa-btn"
+                            style="background: #dc3545;"
+                            title="<?php echo e(AK_LANG === 'ar' ? 'طلبات استعادة كلمة المرور المعلقة' : 'Pending password recoveries'); ?>"
+                        >
+                            <i class="fas fa-key" aria-hidden="true"></i>
+                            <span><?php echo $pendingRecoveries; ?></span>
+                        </a>
+                    <?php endif; ?>
+
+                        </div>
+
                     <div class="ak-dd" id="userDropdown">
                         <button
                             type="button"
@@ -1152,16 +1215,31 @@ $currentQuickActions = [];
                         </button>
 
                         <div class="ak-dd-menu" role="menu">
-                            <a href="<?php echo APP_URL; ?>modules/users/profile.php" class="ak-dd-item" role="menuitem">
+                            <a
+                                href="<?php echo APP_URL; ?>modules/users/profile.php"
+                                class="ak-dd-item"
+                                role="menuitem"
+                            >
                                 <i class="fas fa-id-card me-2"></i>
                                 <?php echo e(AK_LANG === 'ar' ? 'الملف الشخصي' : 'Profile'); ?>
                             </a>
-                            <a href="<?php echo APP_URL; ?>modules/users/settings.php" class="ak-dd-item" role="menuitem">
+
+                            <a
+                                href="<?php echo APP_URL; ?>modules/users/settings.php"
+                                class="ak-dd-item"
+                                role="menuitem"
+                            >
                                 <i class="fas fa-cog me-2"></i>
                                 <?php echo e(AK_LANG === 'ar' ? 'الإعدادات' : 'Settings'); ?>
                             </a>
+
                             <div class="dropdown-divider"></div>
-                            <a href="<?php echo APP_URL; ?>logout.php" class="ak-dd-item text-danger" role="menuitem">
+
+                            <a
+                                href="<?php echo APP_URL; ?>logout.php"
+                                class="ak-dd-item text-danger"
+                                role="menuitem"
+                            >
                                 <i class="fas fa-sign-out-alt me-2"></i>
                                 <?php echo e(AK_LANG === 'ar' ? 'تسجيل الخروج' : 'Logout'); ?>
                             </a>
