@@ -25,8 +25,8 @@ if (!in_array($urole, ['financial_manager', 'admin', 'general_manager', 'vice_ge
 $active = 'fm_dashboard';
 $pageTitle = t('fm.page_title');
 
-// FM dashboard-only header navigation. The shared header does not define
-// role navigation; other pages keep only their normal global controls.
+// FM dashboard-only navigation cards. These are rendered directly on this
+// page and never moved out of, or into, the shared global header.
 $headerQuickActions = [
     [
         'label' => 'لوحة المحاسبة',
@@ -354,9 +354,25 @@ $recentJournals = dbFetchAll("SELECT je.entry_code, je.entry_date, je.descriptio
 .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; }
 .fm-top-layout { display: grid; grid-template-columns: minmax(300px, 0.34fr) minmax(0, 1fr); gap: 20px; align-items: start; margin-bottom: 20px; }
 .fm-review-card { align-self: start; height: auto !important; min-height: 0 !important; margin: 0; }
- .fm-review-card .fm-card-body { display: block; height: auto; min-height: 0; padding: 16px 20px 20px; }
-.fm-dashboard-nav { display:flex; justify-content:center; width:100%; margin:0 0 20px; }
-.fm-dashboard-nav .qa-group { max-width:100%; }
+.fm-review-card .fm-card-body { display: block; height: auto; min-height: 0; padding: 16px 20px 20px; }
+
+/* Original FM dashboard action-card design, now rendered server-side so
+   the global header is never used as a temporary navigation source. */
+.ak-fm-action-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.75rem; margin:0 auto 1.25rem; max-width:960px; }
+.ak-fm-action-card { min-height:104px; height:104px; border:0; border-radius:10px; box-shadow:0 2px 8px rgba(10,31,68,.08); text-decoration:none; color:inherit; background:#fff; display:flex; align-items:center; justify-content:center; transition:transform .18s,box-shadow .18s; }
+.ak-fm-action-card:hover { transform:translateY(-3px); box-shadow:0 5px 14px rgba(10,31,68,.14); color:inherit; }
+.ak-fm-action-icon { font-size:1.45rem; margin-bottom:.35rem; }
+.ak-fm-action-title { font-size:.82rem; font-weight:700; line-height:1.35; }
+.ak-fm-action-desc { font-size:.66rem; line-height:1.3; color:#6c757d; margin-top:.18rem; }
+.ak-fm-action-card.ak-fm-action-1 { border-top:3px solid #d3701f; }
+.ak-fm-action-card.ak-fm-action-2 { border-top:3px solid #28a745; }
+.ak-fm-action-card.ak-fm-action-3 { border-top:3px solid #2195c4; }
+.ak-fm-action-card.ak-fm-action-4 { border-top:3px solid #ffc107; }
+.ak-fm-action-card.ak-fm-action-5 { border-top:3px solid #0d6efd; }
+.ak-fm-action-card.ak-fm-action-6 { border-top:3px solid #2daf79; }
+@media(max-width:767.98px) { .ak-fm-action-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:420px) { .ak-fm-action-grid { grid-template-columns:1fr; } .ak-fm-action-card { height:96px; min-height:96px; } }
+
 .fm-top-right { align-self: start; min-width: 0; }
 .fm-top-right > .grid-4 { margin-bottom: 20px; }
 .fm-top-right > .fm-card { margin-bottom: 0; }
@@ -383,15 +399,28 @@ if (is_array($fl)) {
 }
 ?>
 
-<div class="fm-dashboard-nav" aria-label="تنقل المحاسبة">
-    <div class="qa-group">
-        <?php foreach ($headerQuickActions as $qa): ?>
-            <a href="<?php echo APP_URL . e($qa['url']); ?>" class="qa-btn" style="background: <?php echo e($qa['color']); ?>;">
-                <i class="fas <?php echo e($qa['icon']); ?>" aria-hidden="true"></i>
-                <span><?php echo e($qa['label']); ?></span>
-            </a>
-        <?php endforeach; ?>
-    </div>
+<?php
+$fmActionDescriptions = [
+    'إدارة ومتابعة العمليات المحاسبية',
+    'متابعة التحويلات والصرف الشهري',
+    'عرض وإدارة دليل الحسابات',
+    'مراجعة واعتماد ميزانيات المشاريع',
+    'عرض التقارير والحركة المالية',
+    'مراجعة سجل المعاملات المالية',
+];
+?>
+<div class="ak-fm-action-grid fade-in" aria-label="إجراءات سريعة">
+    <?php foreach ($headerQuickActions as $index => $qa): ?>
+        <a href="<?php echo APP_URL . e($qa['url']); ?>" class="ak-fm-action-card ak-fm-action-<?php echo (int)$index + 1; ?>">
+            <div class="text-center px-2">
+                <div class="ak-fm-action-icon">
+                    <i class="fas <?php echo e($qa['icon']); ?>" aria-hidden="true"></i>
+                </div>
+                <div class="ak-fm-action-title"><?php echo e($qa['label']); ?></div>
+                <div class="ak-fm-action-desc"><?php echo e($fmActionDescriptions[$index] ?? ''); ?></div>
+            </div>
+        </a>
+    <?php endforeach; ?>
 </div>
 
     <div class="fm-top-right">
