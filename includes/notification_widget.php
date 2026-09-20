@@ -125,9 +125,6 @@ if (Session::isLoggedIn()) {
 <script>
 (function(){
  const root=document.getElementById('akNotificationBell');
- const controls=document.querySelector('.qa-user-controls');
- const messageBell=document.getElementById('akMessagingBell');
- if(root && controls){controls.insertBefore(root,messageBell || document.getElementById('userDropdown') || controls.firstChild)}
  document.addEventListener('click',function(e){if(root && !root.contains(e.target))root.classList.remove('open')});
  const toastContainer=document.getElementById('akNotificationToastContainer');
  window.AKNotify=window.AKNotify||{};

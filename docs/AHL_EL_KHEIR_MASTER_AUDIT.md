@@ -1139,3 +1139,24 @@ Commits:
 - `95d706de3bad5dbf6bc9a0ac248a9fc3c26f45c7` — keep shared header actions visible on HR dashboard.
 
 Static repository verification confirmed the role-action map is no longer empty and no inspected primary dashboard contains a local rule that hides the shared header actions. Runtime verification is required after pulling current `main`, starting with FM and then spot-checking another dashboard role.
+
+
+## 2026-09-20 — Back-button consistency corrective audit
+
+The earlier Back/navigation implementation established akGoBack(fallback) and attempted to provide a top-left and bottom-right Back control on audited pages. Runtime review has now identified four concrete consistency classes: **single button, duplicate buttons, missing buttons, and Back actions that interfere with page/sidebar behavior**.
+
+The audit is therefore reopened as a corrective phase, not as a restart of the navigation work. The target is exactly two controls per applicable user-facing HTML page: **top-left + bottom-right**, with one safe shared navigation mechanism and preserved originating context.
+
+### Module-by-module method
+- inspect the selected module's complete user-facing HTML page set;
+- identify where each Back button is produced (page-local markup, shared footer, or both);
+- trace akGoBack() and any page-specific JavaScript before editing;
+- classify each page as missing / single / duplicate / correct / broken-on-navigation;
+- fix the smallest responsible layer and avoid duplicate global generators;
+- verify Back navigation plus sidebar/header interaction after navigation and refresh;
+- commit the verified module before moving to the next module.
+
+### Acceptance criteria
+A module is not considered complete until every applicable page has exactly two Back buttons in the required positions, no duplicate generator is responsible for them, the Back destination preserves relevant list/search/filter context, and the shared sidebar still opens normally after navigation. Dashboards and previously excluded non-HTML endpoints remain out of scope.
+
+This corrective phase supersedes the earlier "audit complete" wording until the affected modules are re-verified.
