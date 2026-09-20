@@ -733,6 +733,31 @@ if (Session::isLoggedIn()) {
             gap: 6px;
         }
 
+        /*
+         * FM dashboard has its own role quick-action group. Keep the global
+         * user controls on a dedicated row so the larger FM action set cannot
+         * squeeze, wrap, or visually displace search/language/notifications/
+         * messages/user controls.
+         */
+        .qa-top-bar-fm-dashboard {
+            flex-wrap: wrap;
+        }
+
+        .qa-top-bar-fm-dashboard .qa-actions {
+            width: min(100%, 1180px);
+        }
+
+        .qa-top-bar-fm-dashboard .qa-group-primary {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .qa-top-bar-fm-dashboard .qa-user-controls {
+            width: 100%;
+            flex: 0 0 100%;
+            justify-content: center;
+        }
+
         .qa-user-controls .qa-user-btn {
             margin-inline-end: 2px;
         }
@@ -1181,7 +1206,7 @@ if (Session::isLoggedIn()) {
             <!-- =========================================================
                  CENTERED HEADER ACTIONS
                  ========================================================= -->
-            <div class="qa-top-bar">
+            <div class="qa-top-bar<?php echo (($active ?? '') === 'fm_dashboard') ? ' qa-top-bar-fm-dashboard' : ''; ?>">
                 <div class="qa-actions">
 
                     <?php if (!empty($currentQuickActions)): ?>
