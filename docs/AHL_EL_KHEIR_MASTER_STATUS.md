@@ -874,3 +874,36 @@ Commits:
 - `95d706de3bad5dbf6bc9a0ac248a9fc3c26f45c7` — keep shared header actions visible on HR dashboard.
 
 Static repository verification confirmed the role-action map is no longer empty and no inspected primary dashboard contains a local rule that hides the shared header actions. Runtime verification is required after pulling current `main`, starting with FM and then spot-checking another dashboard role.
+
+
+## 2026-09-20 — Back-button consistency corrective audit (new active phase)
+
+The previously accepted two-button Back layout is now reopened for a **corrective consistency audit** because runtime review has identified inconsistent results across user-facing pages:
+
+- some pages show only one Back button;
+- some pages show the Back button twice;
+- some pages have no Back button;
+- some Back implementations can leave the page in a broken/stuck state where the shared sidebar will not open.
+
+The required target for this phase is explicit: **every user-facing HTML page must have exactly two Back buttons — one at the top-left of the page content and one at the bottom-right — unless the page is a dashboard or another previously excluded non-page endpoint.** Both controls must use one safe, shared navigation mechanism and must not interfere with sidebar/header JavaScript.
+
+### Work plan
+1. **Freeze and verify the repository checkpoint** before touching Back-button code.
+2. **Audit one module at a time**, starting with the module selected by the user.
+3. For every page in that module, record top-left presence, bottom-right presence, destination/context behavior, sidebar/header behavior after Back, and preservation of pagination/search/filter/return context where applicable.
+4. **Trace the actual implementation before changing it**: page-local Back markup, shared footer, akGoBack(), scripts, and any module-specific navigation code.
+5. **Fix the smallest responsible layer**. Do not add another global Back generator when an existing page-local/shared control can be corrected safely.
+6. Keep **one navigation implementation** for the behavior; do not create competing Back handlers.
+7. Runtime-test the repaired page, including opening the sidebar, navigating Back, returning to the originating page, and refreshing.
+8. Only after the module passes, commit it and move to the next module.
+9. At the end of the system-wide audit, update the documentation and close only the verified scope.
+
+### Safety rules for this phase
+- Do not use destructive Git commands.
+- Do not alter database/schema/business logic/authorization unless a separate defect proves it is required.
+- Do not redesign the sidebar/header while fixing Back buttons.
+- Do not assume a missing/duplicate button is caused by the shared footer; inspect the page first.
+- Do not declare a Back fix complete until runtime behavior is verified.
+- TCPDF, API/JSON endpoints, file streams, redirect-only compatibility endpoints, print-only output, and dashboards remain excluded unless the user explicitly changes the scope.
+
+This phase supersedes the earlier documentation statement that the Back-button audit was fully closed; the earlier implementation remains the baseline to inspect, not a reason to assume current runtime consistency.
