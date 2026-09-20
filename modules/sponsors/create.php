@@ -46,5 +46,5 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
 <div class="col-12 mt-3"><label class="form-label"><?php echo e(t('sponsors.create_notes')); ?></label><textarea name="notes" class="form-control" rows="2"><?php echo e($input['notes']); ?></textarea></div>
 </div><div class="mt-4"><button class="btn btn-primary"><i class="fas fa-save me-1"></i><?php echo e(t('sponsors.create_save')); ?></button> <a href="<?php echo APP_URL; ?>modules/sponsors/index.php" class="btn btn-secondary"><?php echo e(t('sponsors.create_cancel')); ?></a></div></form></div></div>
 
-<div class="container-fluid px-3 pb-4"><div class="d-flex justify-content-start"><a href="<?php echo APP_URL+'modules/sponsors/index.php'; ?>" class="btn btn-outline-secondary" onclick="return akGoBack(this.href);"><i class="fa-solid fa-arrow-right me-1"></i> العودة</a></div></div>
+<div class="container-fluid px-3 pb-4"><div class="d-flex justify-content-start"><a href="<?php echo APP_URL . 'modules/sponsors/index.php'; ?>" class="btn btn-outline-secondary" onclick="return akGoBack(this.href);"><i class="fa-solid fa-arrow-right me-1"></i> العودة</a></div></div>
 <?php include dirname(__DIR__,2).'/includes/footer.php'; ?>
