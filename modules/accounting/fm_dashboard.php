@@ -308,7 +308,6 @@ $recentJournals = dbFetchAll("SELECT je.entry_code, je.entry_date, je.descriptio
 ?>
 
 <?php require_once dirname(__DIR__, 2) . '/includes/header.php'; ?>
-<?php require_once dirname(__DIR__, 2) . '/includes/sidebar.php'; ?>
 
 <style>
 .fm-header { background: linear-gradient(135deg, #1b4d8f 0%, #2c5aa0 100%); color: #fff; padding: 25px; border-radius: 12px; margin-bottom: 25px; }
