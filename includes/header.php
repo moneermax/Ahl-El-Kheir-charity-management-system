@@ -332,148 +332,7 @@ $resolved_role =
     ?? $raw_role;
 
 
-$qaMap = [
-
-    'admin' => [
-        ['label' => 'إدارة المستخدمين', 'url' => 'modules/users/index.php', 'icon' => 'fa-users-gear', 'color' => '#0d6efd'],
-        ['label' => 'سجل التدقيق', 'url' => 'modules/logs/audit.php', 'icon' => 'fa-file-lines', 'color' => '#6c757d'],
-        ['label' => 'إدارة قاعدة البيانات', 'url' => 'modules/system/database.php', 'icon' => 'fa-database', 'color' => '#dc3545'],
-        ['label' => 'إعدادات النظام', 'url' => 'modules/settings/index.php', 'icon' => 'fa-gear', 'color' => '#6610f2'],
-    ],
-
-    'general_manager' => [
-        ['label' => 'التقارير العامة', 'url' => 'modules/reports/index.php', 'icon' => 'fa-chart-line', 'color' => '#0d6efd'],
-        ['label' => 'مشاريع المنظمة', 'url' => 'modules/projects/index.php', 'icon' => 'fa-diagram-project', 'color' => '#17a2b8'],
-    ],
-
-    'vice_general_manager' => [
-        ['label' => 'سجل الأسر', 'url' => 'modules/families/index.php', 'icon' => 'fa-house-chimney', 'color' => '#20c997'],
-        ['label' => 'مجموعات الأيتام', 'url' => 'modules/deputy_gm/groups.php', 'icon' => 'fa-people-group', 'color' => '#6f42c1'],
-        ['label' => 'سجل الكفالات', 'url' => 'modules/sponsorships/index.php', 'icon' => 'fa-file-contract', 'color' => '#6f42c1'],
-        ['label' => 'حالات الإيقاف', 'url' => 'modules/families/suspensions.php', 'icon' => 'fa-user-slash', 'color' => '#dc3545'],
-        ['label' => 'التقارير العامة', 'url' => 'modules/reports/index.php', 'icon' => 'fa-chart-line', 'color' => '#0d6efd'],
-    ],
-
-    'financial_manager' => [
-        ['label' => 'دفتر اليومية', 'url' => 'modules/accounting/journal.php', 'icon' => 'fa-book', 'color' => '#1b4d8f'],
-        ['label' => 'مشاريع المنظمة', 'url' => 'modules/projects/index.php', 'icon' => 'fa-diagram-project', 'color' => '#17a2b8'],
-        ['label' => 'الأرصدة الافتتاحية', 'url' => 'modules/accounting/opening_balance.php', 'icon' => 'fa-vault', 'color' => '#6f42c1'],
-        ['label' => 'التحويلات الشهرية', 'url' => 'modules/accounting/disbursements.php', 'icon' => 'fa-money-check-dollar', 'color' => '#28a745'],
-        ['label' => 'الحاضنات المسندة', 'url' => 'modules/accounting/my_nannies.php', 'icon' => 'fa-user-nurse', 'color' => '#20c997'],
-        ['label' => 'طابور المراجعة المالية', 'url' => 'modules/accounting/fm_review_queue.php', 'icon' => 'fa-clipboard-check', 'color' => '#ffc107'],
-        ['label' => 'التقارير', 'url' => 'modules/reports/index.php', 'icon' => 'fa-chart-line', 'color' => '#0d6efd'],
-    ],
-
-    'accountant' => [
-        ['label' => 'دفتر اليومية', 'url' => 'modules/accounting/journal.php', 'icon' => 'fa-book', 'color' => '#1b4d8f'],
-        ['label' => 'دليل الحسابات', 'url' => 'modules/accounting/accounts.php', 'icon' => 'fa-sitemap', 'color' => '#2195c4'],
-        ['label' => 'سجل المعاملات', 'url' => 'modules/transactions/index.php', 'icon' => 'fa-money-bill-transfer', 'color' => '#20c997'],
-        ['label' => 'التحويلات الشهرية', 'url' => 'modules/accounting/disbursements.php', 'icon' => 'fa-money-check-dollar', 'color' => '#28a745'],
-        ['label' => 'الحاضنات المسندة', 'url' => 'modules/accounting/my_nannies.php', 'icon' => 'fa-user-nurse', 'color' => '#6f42c1'],
-        ['label' => 'التقارير', 'url' => 'modules/reports/index.php', 'icon' => 'fa-chart-line', 'color' => '#0d6efd'],
-    ],
-
-    'accountant_staff' => [
-        ['label' => 'سجل المعاملات', 'url' => 'modules/transactions/index.php', 'icon' => 'fa-money-bill-transfer', 'color' => '#20c997'],
-        ['label' => 'التحويلات الشهرية', 'url' => 'modules/accounting/disbursements.php', 'icon' => 'fa-money-check-dollar', 'color' => '#28a745'],
-        ['label' => 'استمارات الأيتام', 'url' => 'modules/families/orphan_forms_index.php', 'icon' => 'fa-file-signature', 'color' => '#fd7e14'],
-        ['label' => 'الحاضنات المسندة', 'url' => 'modules/accounting/my_nannies.php', 'icon' => 'fa-user-nurse', 'color' => '#6f42c1'],
-        ['label' => 'التقارير', 'url' => 'modules/reports/index.php', 'icon' => 'fa-chart-line', 'color' => '#0d6efd'],
-    ],
-
-    'supervisor' => [
-        ['label' => 'سجل الكفلاء', 'url' => 'modules/sponsors/index.php', 'icon' => 'fa-hand-holding-heart', 'color' => '#e83e8c'],
-        ['label' => 'سجل الأسر', 'url' => 'modules/families/index.php', 'icon' => 'fa-house-chimney', 'color' => '#20c997'],
-        ['label' => 'استمارات الأيتام', 'url' => 'modules/families/orphan_forms_index.php', 'icon' => 'fa-file-signature', 'color' => '#fd7e14'],
-        ['label' => 'سجل الكفالات', 'url' => 'modules/sponsorships/index.php', 'icon' => 'fa-file-contract', 'color' => '#6f42c1'],
-        ['label' => 'التقارير', 'url' => 'modules/reports/index.php', 'icon' => 'fa-chart-line', 'color' => '#0d6efd'],
-    ],
-
-    'nanny' => [
-        ['label' => 'سجل الأسر', 'url' => 'modules/families/index.php', 'icon' => 'fa-house-chimney', 'color' => '#20c997'],
-        ['label' => 'التحويلات الشهرية', 'url' => 'modules/accounting/disbursements.php', 'icon' => 'fa-money-check-dollar', 'color' => '#28a745'],
-        ['label' => 'استمارات الأيتام', 'url' => 'modules/families/orphan_forms_index.php', 'icon' => 'fa-file-signature', 'color' => '#fd7e14'],
-        ['label' => 'التقارير', 'url' => 'modules/reports/index.php', 'icon' => 'fa-chart-line', 'color' => '#0d6efd'],
-    ],
-
-    'administration' => [
-        ['label' => 'طلبات الانضمام / الرعاية', 'url' => 'modules/sponsors/requests.php', 'icon' => 'fa-user-plus', 'color' => '#0d6efd'],
-        ['label' => 'استمارات الأيتام', 'url' => 'modules/families/orphan_forms_index.php', 'icon' => 'fa-file-signature', 'color' => '#fd7e14'],
-        ['label' => 'متابعة الاسترجاع', 'url' => 'modules/administration/winback.php', 'icon' => 'fa-rotate-left', 'color' => '#6f42c1'],
-    ],
-
-    'staff' => [
-        ['label' => 'طلبات الانضمام / الرعاية', 'url' => 'modules/sponsors/requests.php', 'icon' => 'fa-user-plus', 'color' => '#0d6efd'],
-        ['label' => 'استمارات الأيتام', 'url' => 'modules/families/orphan_forms_index.php', 'icon' => 'fa-file-signature', 'color' => '#fd7e14'],
-    ],
-
-    'social_media' => [
-        ['label' => 'طلبات الانضمام / الرعاية', 'url' => 'modules/sponsors/requests.php', 'icon' => 'fa-user-plus', 'color' => '#0d6efd'],
-        ['label' => 'استمارات الأيتام', 'url' => 'modules/families/orphan_forms_index.php', 'icon' => 'fa-file-signature', 'color' => '#fd7e14'],
-    ],
-
-    'projects_manager' => [
-        ['label' => 'مشاريع المنظمة', 'url' => 'modules/projects/index.php', 'icon' => 'fa-diagram-project', 'color' => '#17a2b8'],
-    ],
-
-    'project_supervisor' => [
-        ['label' => 'مشاريعي', 'url' => 'modules/projects/index.php', 'icon' => 'fa-folder-open', 'color' => '#17a2b8'],
-    ],
-
-    'hr_manager' => [
-        ['label' => 'الموظفون', 'url' => 'modules/hr/employees.php', 'icon' => 'fa-users', 'color' => '#1b4d8f'],
-        ['label' => 'حالات التوظيف', 'url' => 'modules/hr/employment_states.php', 'icon' => 'fa-id-badge', 'color' => '#6f42c1'],
-        ['label' => 'الحضور والانصراف', 'url' => 'modules/hr/attendance.php', 'icon' => 'fa-clock', 'color' => '#6c757d'],
-        ['label' => 'طلبات الإجازة', 'url' => 'modules/hr/leaves.php', 'icon' => 'fa-calendar-alt', 'color' => '#ffc107'],
-        ['label' => 'كشف الرواتب', 'url' => 'modules/hr/payroll.php', 'icon' => 'fa-money-bill-wave', 'color' => '#28a745'],
-        ['label' => 'العقود', 'url' => 'modules/hr/contracts.php', 'icon' => 'fa-file-contract', 'color' => '#17a2b8'],
-        ['label' => 'التقارير', 'url' => 'modules/reports/index.php', 'icon' => 'fa-chart-line', 'color' => '#0d6efd'],
-    ],
-
-    'hr_staff' => [
-        ['label' => 'الموظفون', 'url' => 'modules/hr/employees.php', 'icon' => 'fa-users', 'color' => '#1b4d8f'],
-        ['label' => 'حالات التوظيف', 'url' => 'modules/hr/employment_states.php', 'icon' => 'fa-id-badge', 'color' => '#6f42c1'],
-        ['label' => 'الحضور والانصراف', 'url' => 'modules/hr/attendance.php', 'icon' => 'fa-clock', 'color' => '#6c757d'],
-        ['label' => 'طلبات الإجازة', 'url' => 'modules/hr/leaves.php', 'icon' => 'fa-calendar-alt', 'color' => '#ffc107'],
-        ['label' => 'كشف الرواتب', 'url' => 'modules/hr/payroll.php', 'icon' => 'fa-money-bill-wave', 'color' => '#28a745'],
-        ['label' => 'العقود', 'url' => 'modules/hr/contracts.php', 'icon' => 'fa-file-contract', 'color' => '#17a2b8'],
-        ['label' => 'التقارير', 'url' => 'modules/reports/index.php', 'icon' => 'fa-chart-line', 'color' => '#0d6efd'],
-    ],
-
-];
-
-$currentQuickActions =
-    $qaMap[$resolved_role]
-    ?? [];
-
-
-/*
-|--------------------------------------------------------------------------
-| Universal Request Leave button
-|--------------------------------------------------------------------------
-*/
-
-if (Session::isLoggedIn()) {
-
-    $currentQuickActions[] = [
-
-        'label' =>
-            'طلب إجازة',
-
-        'url' =>
-            'modules/hr/leaves.php?action=request',
-
-        'icon' =>
-            'fa-calendar-plus',
-
-        'color' =>
-            '#17a2b8',
-
-        'is_universal' =>
-            true
-
-    ];
-}
+$currentQuickActions = [];
 
 ?>
 
@@ -1252,22 +1111,6 @@ if (Session::isLoggedIn()) {
             <div class="qa-top-bar">
                 <div class="qa-actions">
 
-                    <?php if (!empty($currentQuickActions)): ?>
-                        <div class="qa-group qa-group-primary">
-                                            <?php foreach ($currentQuickActions as $qa): ?>
-                        <a
-                            href="<?php echo APP_URL . e($qa['url']); ?>"
-                            class="qa-btn"
-                            style="background: <?php echo !empty($qa['is_universal']) ? 'rgba(255,255,255,0.12)' : e($qa['color']); ?>;"
-                        >
-                            <i class="fas <?php echo e($qa['icon']); ?>" aria-hidden="true"></i>
-                            <span><?php echo e($qa['label']); ?></span>
-                        </a>
-                            <?php endforeach; ?>
-                        </div>
-                    <?php endif; ?>
-
-                    <div class="qa-group qa-group-tools">
                     <?php if ($canGlobalSearch): ?>
                         <a
                             href="<?php echo APP_URL; ?>modules/search/index.php"
@@ -1291,20 +1134,6 @@ if (Session::isLoggedIn()) {
                         <span><?php echo AK_LANG === 'ar' ? 'EN' : 'عربي'; ?></span>
                     </a>
 
-                    <?php if ($pendingRecoveries > 0): ?>
-                        <a
-                            href="<?php echo APP_URL; ?>modules/users/recovery.php"
-                            class="qa-btn"
-                            style="background: #dc3545;"
-                            title="<?php echo e(AK_LANG === 'ar' ? 'طلبات استعادة كلمة المرور المعلقة' : 'Pending password recoveries'); ?>"
-                        >
-                            <i class="fas fa-key" aria-hidden="true"></i>
-                            <span><?php echo $pendingRecoveries; ?></span>
-                        </a>
-                    <?php endif; ?>
-
-                        </div>
-
                     <div class="ak-dd" id="userDropdown">
                         <button
                             type="button"
@@ -1323,31 +1152,16 @@ if (Session::isLoggedIn()) {
                         </button>
 
                         <div class="ak-dd-menu" role="menu">
-                            <a
-                                href="<?php echo APP_URL; ?>modules/users/profile.php"
-                                class="ak-dd-item"
-                                role="menuitem"
-                            >
+                            <a href="<?php echo APP_URL; ?>modules/users/profile.php" class="ak-dd-item" role="menuitem">
                                 <i class="fas fa-id-card me-2"></i>
                                 <?php echo e(AK_LANG === 'ar' ? 'الملف الشخصي' : 'Profile'); ?>
                             </a>
-
-                            <a
-                                href="<?php echo APP_URL; ?>modules/users/settings.php"
-                                class="ak-dd-item"
-                                role="menuitem"
-                            >
+                            <a href="<?php echo APP_URL; ?>modules/users/settings.php" class="ak-dd-item" role="menuitem">
                                 <i class="fas fa-cog me-2"></i>
                                 <?php echo e(AK_LANG === 'ar' ? 'الإعدادات' : 'Settings'); ?>
                             </a>
-
                             <div class="dropdown-divider"></div>
-
-                            <a
-                                href="<?php echo APP_URL; ?>logout.php"
-                                class="ak-dd-item text-danger"
-                                role="menuitem"
-                            >
+                            <a href="<?php echo APP_URL; ?>logout.php" class="ak-dd-item text-danger" role="menuitem">
                                 <i class="fas fa-sign-out-alt me-2"></i>
                                 <?php echo e(AK_LANG === 'ar' ? 'تسجيل الخروج' : 'Logout'); ?>
                             </a>
