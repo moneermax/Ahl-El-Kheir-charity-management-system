@@ -332,51 +332,11 @@ $resolved_role =
     ?? $raw_role;
 
 
-$qaMap = [
-    'financial_manager' => [
-        [
-            'label' => 'لوحة المحاسبة',
-            'url' => 'modules/accounting/',
-            'icon' => 'fas fa-calculator',
-            'color' => '#d3701fcc'
-        ],
-        [
-            'label' => 'التحويلات الشهرية',
-            'url' => 'modules/accounting/disbursements.php',
-            'icon' => 'fa-money-check-dollar',
-            'color' => '#28a745'
-        ],
-        [
-            'label' => ' دليل الحسابات',
-            'url' => 'modules/accounting/accounts.php',
-            'icon' => 'fa-sitemap',
-            'color' => '#2195c4'
-        ],
-        [
-            'label' => 'مراجعة ميزانيات المشاريع',
-            'url' => 'modules/accounting/fm_dashboard.php#project-budget-review',
-            'icon' => 'fa-clipboard-check',
-            'color' => '#ffc107'
-        ],
-        [
-            'label' => 'التقارير المالية',
-            'url' => 'modules/reports/financial.php',
-            'icon' => 'fa-chart-pie',
-            'color' => '#0d6efd'
-        ],
-        [
-            'label' => 'سجل المعاملات',
-            'url' => 'modules/transactions/index.php',
-            'icon' => 'fa-money-bill-transfer',
-            'color' => '#2daf79'
-        ],
-    ],
-];
+$headerQuickActions = isset($headerQuickActions) && is_array($headerQuickActions)
+    ? $headerQuickActions
+    : [];
 
-$currentQuickActions = [];
-if (($active ?? '') === 'fm_dashboard') {
-    $currentQuickActions = $qaMap[$resolved_role] ?? [];
-}
+$currentQuickActions = $headerQuickActions;
 
 
 /*
@@ -734,25 +694,25 @@ if (Session::isLoggedIn()) {
         }
 
         /*
-         * FM dashboard has its own role quick-action group. Keep the global
-         * user controls on a dedicated row so the larger FM action set cannot
-         * squeeze, wrap, or visually displace search/language/notifications/
-         * messages/user controls.
+         * Dashboard-specific quick actions and global controls are kept in
+         * separate rows. The header itself contains no role navigation map;
+         * pages opt in by supplying $headerQuickActions before including it.
          */
-        .qa-top-bar-fm-dashboard {
+        .qa-top-bar-page-actions {
             flex-wrap: wrap;
         }
 
-        .qa-top-bar-fm-dashboard .qa-actions {
+        .qa-top-bar-page-actions .qa-actions {
             width: min(100%, 1180px);
+            flex-direction: column;
         }
 
-        .qa-top-bar-fm-dashboard .qa-group-primary {
+        .qa-top-bar-page-actions .qa-group-primary {
             width: 100%;
             justify-content: center;
         }
 
-        .qa-top-bar-fm-dashboard .qa-user-controls {
+        .qa-top-bar-page-actions .qa-user-controls {
             width: 100%;
             flex: 0 0 100%;
             justify-content: center;
@@ -1206,7 +1166,7 @@ if (Session::isLoggedIn()) {
             <!-- =========================================================
                  CENTERED HEADER ACTIONS
                  ========================================================= -->
-            <div class="qa-top-bar<?php echo (($active ?? '') === 'fm_dashboard') ? ' qa-top-bar-fm-dashboard' : ''; ?>">
+            <div class="qa-top-bar<?php echo !empty($currentQuickActions) ? ' qa-top-bar-page-actions' : ''; ?>">
                 <div class="qa-actions">
 
                     <?php if (!empty($currentQuickActions)): ?>
