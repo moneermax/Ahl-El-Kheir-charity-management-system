@@ -354,7 +354,9 @@ $recentJournals = dbFetchAll("SELECT je.entry_code, je.entry_date, je.descriptio
 .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; }
 .fm-top-layout { display: grid; grid-template-columns: minmax(300px, 0.34fr) minmax(0, 1fr); gap: 20px; align-items: start; margin-bottom: 20px; }
 .fm-review-card { align-self: start; height: auto !important; min-height: 0 !important; margin: 0; }
-.fm-review-card .fm-card-body { display: block; height: auto; min-height: 0; padding: 16px 20px 20px; }
+ .fm-review-card .fm-card-body { display: block; height: auto; min-height: 0; padding: 16px 20px 20px; }
+.fm-dashboard-nav { display:flex; justify-content:center; width:100%; margin:0 0 20px; }
+.fm-dashboard-nav .qa-group { max-width:100%; }
 .fm-top-right { align-self: start; min-width: 0; }
 .fm-top-right > .grid-4 { margin-bottom: 20px; }
 .fm-top-right > .fm-card { margin-bottom: 0; }
@@ -381,7 +383,16 @@ if (is_array($fl)) {
 }
 ?>
 
-
+<div class="fm-dashboard-nav" aria-label="تنقل المحاسبة">
+    <div class="qa-group">
+        <?php foreach ($headerQuickActions as $qa): ?>
+            <a href="<?php echo APP_URL . e($qa['url']); ?>" class="qa-btn" style="background: <?php echo e($qa['color']); ?>;">
+                <i class="fas <?php echo e($qa['icon']); ?>" aria-hidden="true"></i>
+                <span><?php echo e($qa['label']); ?></span>
+            </a>
+        <?php endforeach; ?>
+    </div>
+</div>
 
     <div class="fm-top-right">
         <!-- ══════════ TREASURY BALANCE ══════════ -->
