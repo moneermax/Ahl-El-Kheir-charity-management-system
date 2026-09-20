@@ -15,8 +15,6 @@
 </div>
 <div id="sidebarOverlay" class="sidebar-overlay"></div>
 <?php include __DIR__ . '/age_alert.php'; ?>
-<?php include __DIR__ . '/notification_widget.php'; ?>
-<?php include __DIR__ . '/messaging_widget.php'; ?>
 
 <style>
 /* Top Back button — mirrors the existing bottom contextual Back button. */
@@ -142,7 +140,7 @@ window.AK_BACK_FALLBACK=<?php echo json_encode(APP_URL . dashboard_for_role(curr
     });
 })();
 
-(function(){var leaveLink=document.querySelector('a[href*="modules/hr/leaves.php?action=request"]');var userMenu=document.querySelector('#userDropdown .ak-dd-menu');if(leaveLink&&userMenu){leaveLink.classList.remove('qa-btn');leaveLink.classList.add('ak-dd-item','ak-leave-request-moving');leaveLink.removeAttribute('style');leaveLink.setAttribute('title','طلب إجازة');var icon=leaveLink.querySelector('i');if(icon)icon.className='fas fa-calendar-plus me-2';var divider=document.createElement('div');divider.className='dropdown-divider';userMenu.insertBefore(divider,userMenu.firstChild);userMenu.insertBefore(leaveLink,divider.nextSibling);requestAnimationFrame(function(){leaveLink.classList.remove('ak-leave-request-moving')})}})();
+
 
 (function(){var deferred=null;var btn=document.getElementById('akInstallBtn');window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferred=e;if(btn)btn.classList.remove('d-none')});if(btn)btn.addEventListener('click',function(){if(!deferred)return;deferred.prompt();deferred.userChoice.then(function(){deferred=null;btn.classList.add('d-none')})});window.addEventListener('appinstalled',function(){if(btn)btn.classList.add('d-none')})})();
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('<?php echo APP_URL; ?>sw.js').catch(function(){})});}
