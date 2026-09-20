@@ -298,74 +298,16 @@ $langSwitchUrl =
 
 /*
 |--------------------------------------------------------------------------
-| HEADER ACTIONS
+| HEADER GLOBAL CONTROLS
 |--------------------------------------------------------------------------
 |
-| Navigation belongs to the sidebar. The header contains the centered
-| global controls and direct user actions for quick access without a menu.
+| Navigation is intentionally NOT rendered by the shared header.
+| Dashboard/module navigation belongs to the sidebar or to the specific
+| page that owns it. Keeping role navigation out of this shared include
+| prevents page-specific navigation from flashing and then being moved,
+| hidden, or replaced by other header scripts.
 |--------------------------------------------------------------------------
 */
-
-$raw_role =
-    (string)current_user_role();
-
-
-$aliasMap = [
-
-    'sudo' =>
-        'admin',
-
-    'gm' =>
-        'general_manager',
-
-    'vgm' =>
-        'vice_general_manager',
-
-    'fm' =>
-        'financial_manager'
-
-];
-
-
-$resolved_role =
-    $aliasMap[$raw_role]
-    ?? $raw_role;
-
-
-$headerQuickActions = isset($headerQuickActions) && is_array($headerQuickActions)
-    ? $headerQuickActions
-    : [];
-
-$currentQuickActions = $headerQuickActions;
-
-
-/*
-|--------------------------------------------------------------------------
-| Universal Request Leave button
-|--------------------------------------------------------------------------
-*/
-
-if (Session::isLoggedIn()) {
-
-    $currentQuickActions[] = [
-
-        'label' =>
-            'طلب إجازة',
-
-        'url' =>
-            'modules/hr/leaves.php?action=request',
-
-        'icon' =>
-            'fa-calendar-plus',
-
-        'color' =>
-            '#17a2b8',
-
-        'is_universal' =>
-            true
-
-    ];
-}
 
 ?>
 
@@ -691,31 +633,6 @@ if (Session::isLoggedIn()) {
             justify-content: center;
             flex-wrap: wrap;
             gap: 6px;
-        }
-
-        /*
-         * Dashboard-specific quick actions and global controls are kept in
-         * separate rows. The header itself contains no role navigation map;
-         * pages opt in by supplying $headerQuickActions before including it.
-         */
-        .qa-top-bar-page-actions {
-            flex-wrap: wrap;
-        }
-
-        .qa-top-bar-page-actions .qa-actions {
-            width: min(100%, 1180px);
-            flex-direction: column;
-        }
-
-        .qa-top-bar-page-actions .qa-group-primary {
-            width: 100%;
-            justify-content: center;
-        }
-
-        .qa-top-bar-page-actions .qa-user-controls {
-            width: 100%;
-            flex: 0 0 100%;
-            justify-content: center;
         }
 
         .qa-user-controls .qa-user-btn {
@@ -1166,23 +1083,8 @@ if (Session::isLoggedIn()) {
             <!-- =========================================================
                  CENTERED HEADER ACTIONS
                  ========================================================= -->
-            <div class="qa-top-bar<?php echo !empty($currentQuickActions) ? ' qa-top-bar-page-actions' : ''; ?>">
+            <div class="qa-top-bar">
                 <div class="qa-actions">
-
-                    <?php if (!empty($currentQuickActions)): ?>
-                        <div class="qa-group qa-group-primary">
-                                            <?php foreach ($currentQuickActions as $qa): ?>
-                        <a
-                            href="<?php echo APP_URL . e($qa['url']); ?>"
-                            class="qa-btn"
-                            style="background: <?php echo !empty($qa['is_universal']) ? 'rgba(255,255,255,0.12)' : e($qa['color']); ?>;"
-                        >
-                            <i class="fas <?php echo e($qa['icon']); ?>" aria-hidden="true"></i>
-                            <span><?php echo e($qa['label']); ?></span>
-                        </a>
-                            <?php endforeach; ?>
-                        </div>
-                    <?php endif; ?>
 
                     <div class="qa-user-controls">
                         <div class="qa-group qa-group-tools">
