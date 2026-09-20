@@ -217,3 +217,5 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     <?php endif; ?>
     </div>
 </div>
+
+<?php include dirname(__DIR__, 2) . '/includes/footer.php'; ?>
