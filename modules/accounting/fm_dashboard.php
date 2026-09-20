@@ -25,6 +25,47 @@ if (!in_array($urole, ['financial_manager', 'admin', 'general_manager', 'vice_ge
 $active = 'fm_dashboard';
 $pageTitle = t('fm.page_title');
 
+// FM dashboard-only header navigation. The shared header does not define
+// role navigation; other pages keep only their normal global controls.
+$headerQuickActions = [
+    [
+        'label' => 'لوحة المحاسبة',
+        'url' => 'modules/accounting/',
+        'icon' => 'fas fa-calculator',
+        'color' => '#d3701fcc'
+    ],
+    [
+        'label' => 'التحويلات الشهرية',
+        'url' => 'modules/accounting/disbursements.php',
+        'icon' => 'fa-money-check-dollar',
+        'color' => '#28a745'
+    ],
+    [
+        'label' => ' دليل الحسابات',
+        'url' => 'modules/accounting/accounts.php',
+        'icon' => 'fa-sitemap',
+        'color' => '#2195c4'
+    ],
+    [
+        'label' => 'مراجعة ميزانيات المشاريع',
+        'url' => 'modules/accounting/fm_dashboard.php#project-budget-review',
+        'icon' => 'fa-clipboard-check',
+        'color' => '#ffc107'
+    ],
+    [
+        'label' => 'التقارير المالية',
+        'url' => 'modules/reports/financial.php',
+        'icon' => 'fa-chart-pie',
+        'color' => '#0d6efd'
+    ],
+    [
+        'label' => 'سجل المعاملات',
+        'url' => 'modules/transactions/index.php',
+        'icon' => 'fa-money-bill-transfer',
+        'color' => '#2daf79'
+    ],
+];
+
 ak_ensure_tables();
 ak_seed_accounts();
 ak_out_ensure_schema();
