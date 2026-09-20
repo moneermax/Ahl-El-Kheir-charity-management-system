@@ -903,7 +903,7 @@ $langSwitchUrl =
         }
 
         .content {
-            padding: 16px 24px 24px;
+            padding: 10px 24px 24px;
             flex-grow: 1;
             background: #f4f7fb;
         }
