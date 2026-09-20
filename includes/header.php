@@ -1213,16 +1213,6 @@ if (Session::isLoggedIn()) {
                         </a>
                     <?php endif; ?>
 
-                    <a
-                        href="<?php echo e($langSwitchUrl); ?>"
-                        class="qa-btn"
-                        style="background: rgba(255,255,255,0.10);"
-                        title="<?php echo e(AK_LANG === 'ar' ? 'تغيير اللغة' : 'Change language'); ?>"
-                    >
-                        <i class="fas fa-globe" aria-hidden="true"></i>
-                        <span><?php echo AK_LANG === 'ar' ? 'EN' : 'عربي'; ?></span>
-                    </a>
-
                     <?php if ($pendingRecoveries > 0): ?>
                         <a
                             href="<?php echo APP_URL; ?>modules/users/recovery.php"
