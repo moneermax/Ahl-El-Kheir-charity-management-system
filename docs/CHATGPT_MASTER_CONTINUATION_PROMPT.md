@@ -805,3 +805,22 @@ Commits: 474741e4f094b264e033af89f690838765c7e4a5, 44e873fa548aa15142a4d3548437b
 The Back/navigation audit is closed and must not be restarted. The accepted layout now intentionally has two Back buttons on audited user-facing HTML pages: the existing bottom Back button plus a second top-left Back button. The top button is generated centrally from the existing contextual Back control in `includes/footer.php` and uses the same `akGoBack(fallback)` function. Do not introduce a second navigation implementation or change dashboard/excluded endpoint scope unless regression evidence or an explicit new request requires it.
 
 Commit: `0557218daa28d2ce78ff8e9f0bbaf8bacd2f0769`.
+
+
+## 2026-09-20 — Current continuation checkpoint: module-by-module Back-button consistency audit
+
+The active task is now a **module-by-module Back-button consistency audit**. The earlier Back implementation is the baseline; do not assume it is currently consistent.
+
+User-reported runtime classes to investigate:
+- some pages have only one Back button;
+- some pages have duplicated Back buttons;
+- some pages have no Back button;
+- some Back buttons can cause the page to become stuck/broken and prevent the shared sidebar from opening.
+
+Required target for applicable user-facing HTML pages: **exactly two Back buttons — top-left and bottom-right**. Dashboards and previously excluded non-HTML/stream/redirect-only/print endpoints remain excluded unless explicitly brought into scope.
+
+Work strictly one module at a time. Before changing a module, inspect its actual page set and the shared Back implementation (includes/footer.php, akGoBack(), related scripts) and classify the existing state. Fix the smallest responsible layer, preserve originating context, and avoid creating competing Back-button generators. After each fix, runtime-test Back navigation, sidebar opening, refresh, and relevant pagination/search/filter context before marking that module complete.
+
+Do not use destructive Git commands. Do not change database/schema/business/authorization logic or redesign the sidebar/header as part of this audit unless a verified regression requires it.
+
+The repository checkpoint currently being consolidated is 4a7982a2f7ca831318870393943f6612d583b0c7 (fix/fm-controls-stable), which preserves the last user-confirmed FM header/navigation state. The abandoned dashboard-card styling experiment is not part of the active work.
