@@ -236,14 +236,14 @@ include __DIR__ . '/../includes/header.php';
 .admin-hero {
     position: relative;
     overflow: hidden;
-    border-radius: 22px;
-    padding: 28px 30px;
+    border-radius: 14px;
+    padding: 16px 20px;
     color: #fff;
     background:
         radial-gradient(circle at 85% 20%, rgba(39,179,176,.24), transparent 26%),
         linear-gradient(135deg, #172554 0%, #1e3a8a 55%, #2563eb 100%);
     box-shadow: 0 18px 45px rgba(17,24,39,.18);
-    margin-bottom: 22px;
+    margin-bottom: 16px;
 }
 
 .admin-hero:after {
@@ -263,7 +263,7 @@ include __DIR__ . '/../includes/header.php';
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 24px;
+    gap: 16px;
 }
 
 .admin-kicker {
@@ -275,12 +275,13 @@ include __DIR__ . '/../includes/header.php';
     font-weight: 800;
     letter-spacing: .08em;
     text-transform: uppercase;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
 }
 
 .admin-hero h1 {
-    margin: 0 0 8px;
-    font-size: clamp(1.55rem, 3vw, 2.25rem);
+    margin: 0 0 4px;
+    font-size: 1.35rem;
+    line-height: 1.25;
     font-weight: 800;
 }
 
@@ -288,21 +289,23 @@ include __DIR__ . '/../includes/header.php';
     margin: 0;
     color: rgba(255,255,255,.72);
     max-width: 760px;
+    font-size: .82rem;
+    line-height: 1.4;
 }
 
 .admin-health {
-    min-width: 230px;
+    min-width: 205px;
     background: rgba(255,255,255,.07);
     border: 1px solid rgba(255,255,255,.11);
-    border-radius: 16px;
-    padding: 15px 17px;
+    border-radius: 12px;
+    padding: 10px 12px;
     backdrop-filter: blur(10px);
 }
 
 .admin-health-title {
-    font-size: .76rem;
+    font-size: .7rem;
     color: rgba(255,255,255,.58);
-    margin-bottom: 9px;
+    margin-bottom: 5px;
 }
 
 .admin-health-row {
@@ -310,8 +313,8 @@ include __DIR__ . '/../includes/header.php';
     justify-content: space-between;
     align-items: center;
     gap: 12px;
-    font-size: .88rem;
-    margin-top: 7px;
+    font-size: .78rem;
+    margin-top: 4px;
 }
 
 .admin-status {
