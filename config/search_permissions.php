@@ -33,8 +33,9 @@ if (!function_exists('ak_search_allowed_types')) {
             'accountant_staff' => ['families', 'sponsorships', 'payments'],
             'administration' => ['families', 'sponsors', 'sponsorships'],
             'social_media' => [],
-            'hr_manager' => [],
-            'hr_staff' => [],
+            'hr_manager' => ['families', 'sponsors', 'sponsorships'],
+            'hr_staff' => ['families', 'sponsors', 'sponsorships'],
+            'staff' => ['families', 'sponsors', 'sponsorships'],
         ][$role] ?? [];
     }
 }
