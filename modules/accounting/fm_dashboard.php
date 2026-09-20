@@ -310,7 +310,7 @@ $recentJournals = dbFetchAll("SELECT je.entry_code, je.entry_date, je.descriptio
 <?php require_once dirname(__DIR__, 2) . '/includes/header.php'; ?>
 
 <style>
-.fm-header { background: linear-gradient(135deg, #1b4d8f 0%, #2c5aa0 100%); color: #fff; padding: 16px 20px; border-radius: 14px; margin-bottom: 16px; }
+.fm-header { background: linear-gradient(135deg, #1b4d8f 0%, #2c5aa0 100%); color: #fff; padding: 16px 20px; border-radius: 14px; margin-top: -6px; margin-bottom: 16px; }
 .fm-header h1 { margin: 0; font-size: 1.35rem; line-height: 1.25; }
 .fm-header p { margin: 4px 0 0; opacity: 0.9; font-size: .82rem; line-height: 1.4; }
 .fm-card { background: #fff; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); margin-bottom: 20px; overflow: hidden; }
@@ -382,7 +382,7 @@ $recentJournals = dbFetchAll("SELECT je.entry_code, je.entry_date, je.descriptio
 }
 </style>
 
-<main class="container-fluid py-4">
+<main class="container-fluid">
 <div class="fm-header">
     <h1><?php echo e(t('fm.welcome')); ?></h1>
     <p><?php echo e(t('fm.overview', ['date' => date('Y-m-d')])); ?></p>
