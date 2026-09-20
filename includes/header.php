@@ -762,11 +762,26 @@ if (Session::isLoggedIn()) {
 
         .qa-actions {
             width: min(100%, 1180px);
-            display: flex;
+            display: flex !important;
             align-items: center;
             justify-content: center;
             flex-wrap: wrap;
             gap: 8px;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+
+        /*
+         * The shared header controls are authoritative.
+         * Dashboard-specific styles must never hide or fade them.
+         */
+        .qa-top-bar,
+        .qa-group,
+        .qa-btn,
+        .qa-user-btn,
+        .ak-header-search-btn {
+            visibility: visible !important;
+            opacity: 1 !important;
         }
 
         .qa-group {
