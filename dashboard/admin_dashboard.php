@@ -933,6 +933,40 @@ include __DIR__ . '/../includes/header.php';
     </div>
 
 
+    <?php foreach ($controlGroups as $group): ?>
+        <?php if ($group['title'] === 'الحماية والصيانة') continue; ?>
+        <section class="admin-control-section" style="--section-color: <?php echo $group['color'] ?? '#4b78c2'; ?>;">
+            <div class="admin-control-heading">
+                <div class="admin-control-heading-icon">
+                    <i class="fas <?php echo e($group['icon']); ?>"></i>
+                </div>
+                <div>
+                    <h3><?php echo e($group['title']); ?></h3>
+                    <p><?php echo e($group['subtitle']); ?></p>
+                </div>
+            </div>
+
+            <div class="admin-tool-grid <?php echo count($group['items']) === 3 ? 'admin-tool-grid-3' : ''; ?>">
+                <?php foreach ($group['items'] as $item): ?>
+                    <a class="admin-tool" href="<?php echo e(url($item['url'])); ?>">
+                        <div>
+                            <div class="admin-tool-icon">
+                                <i class="fas <?php echo e($item['icon']); ?>"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="admin-tool-title">
+                                <?php echo e($item['title']); ?>
+                            </div>
+                            <div class="admin-tool-description">
+                                <?php echo e($item['description']); ?>
+                            </div>
+                        </div>
+                        <div class="admin-tool-arrow">
+                            فتح <i class="fas fa-arrow-left ms-1"></i>
+                        </div>
+                    </a>
+                <?php endforeach; ?>
             </div>
         </section>
     <?php endforeach; ?>
