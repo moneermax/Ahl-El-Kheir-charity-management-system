@@ -114,7 +114,6 @@ function akp_money_to_cents($value)
 
 $input = [
     'name' => $project['name'] ?? '',
-    'project_code' => $project['project_code'] ?? '',
     'project_type' => $project['project_type'] ?? '',
     'description' => $project['description'] ?? '',
     'objectives' => '',
@@ -270,29 +269,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             )
         ) {
             $errors[] = 'البريد الإلكتروني غير صالح.';
-        }
-
-
-        /*
-         * Project code.
-         *
-         * Existing codes may be edited, but a non-empty code must remain unique.
-         * The database currently provides only a normal index, so enforce this
-         * rule server-side rather than changing the schema blindly.
-         */
-        if ($input['project_code'] !== '') {
-            $codeExists = dbFetchOne(
-                'SELECT id
-                 FROM other_projects
-                 WHERE project_code = ?
-                   AND id <> ?
-                 LIMIT 1',
-                [$input['project_code'], $id]
-            );
-
-            if ($codeExists) {
-                $errors[] = 'كود المشروع مستخدم بالفعل لمشروع آخر.';
-            }
         }
 
 
@@ -617,7 +593,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     "UPDATE other_projects
                      SET
                         name = ?,
-                        project_code = ?,
                         description = ?,
                         target_amount = ?,
                         currency_code = ?,
@@ -632,10 +607,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                      WHERE id = ?",
                     [
                         $input['name'],
-
-                        $input['project_code'] !== ''
-                            ? $input['project_code']
-                            : null,
 
                         $input['description'] !== ''
                             ? $input['description']
@@ -1373,23 +1344,6 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                         class="form-control"
                         required
                         value="<?php echo e($input['name']); ?>"
-                    >
-
-                </div>
-
-
-                <div class="col-md-3">
-
-                    <label class="form-label">
-                        كود المشروع
-                    </label>
-
-                    <input
-                        type="text"
-                        name="project_code"
-                        class="form-control"
-                        value="<?php echo e($input['project_code']); ?>"
-                        placeholder="يُنشأ تلقائياً للمشروع الجديد"
                     >
 
                 </div>
