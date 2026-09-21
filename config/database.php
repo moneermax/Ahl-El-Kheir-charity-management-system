@@ -21,7 +21,12 @@ function db(): PDO
             ]);
         } catch (PDOException $e) {
             http_response_code(500);
-            exit('Database connection failed: ' . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8'));
+
+            if (defined('APP_ENV') && APP_ENV === 'development') {
+                exit('Database connection failed: ' . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8'));
+            }
+
+            exit('Database connection failed. Please contact the system administrator.');
         }
     }
 
