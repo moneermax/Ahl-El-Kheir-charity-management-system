@@ -16,9 +16,8 @@ if (!akp_can_view_project($id)) {
     exit();
 }
 
-akp_sync_lifecycle_row($id);
 $project = akp_get_project($id);
-$totals = akp_sync_closure_totals($id);
+$totals = akp_project_totals($id);
 $details = dbFetchOne('SELECT * FROM project_details WHERE project_id = ?', [$id]) ?: [];
 $budgets = dbFetchAll("SELECT b.*, COALESCE(SUM(bl.estimated_amount),0) AS line_total, COUNT(bl.id) AS line_count FROM project_budgets b LEFT JOIN project_budget_lines bl ON bl.budget_id = b.id WHERE b.project_id = ? GROUP BY b.id ORDER BY b.version_no DESC", [$id]);
 $approvedBudgetId = 0; 
@@ -251,6 +250,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $userId = (int)($_POST['team_user_id'] ?? 0);
             $section = akp_post_value('team_section');
             if (!$userId || $section === '') throw new RuntimeException('بيانات التكليف غير مكتملة.');
+            if (!in_array($section, ['finance', 'operations', 'documents', 'closure'], true)) throw new RuntimeException('قسم التكليف غير صالح.');
             $already = dbFetchOne('SELECT id FROM project_team WHERE project_id = ? AND user_id = ? AND section_code = ? AND unassigned_at IS NULL', [$id, $userId, $section]);
             if (!$already) dbExecute('INSERT INTO project_team (project_id, user_id, section_code, is_lead, assigned_by, notes) VALUES (?,?,?,?,?,?)', [$id, $userId, $section, (int)($_POST['team_is_lead'] ?? 0), akp_user_id(), akp_post_value('team_notes') ?: null]);
             akp_audit('ASSIGN', 'project_team', $id, null, ['user_id' => $userId, 'section' => $section]);
@@ -568,6 +568,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!akp_can_edit_section('documents', $id) || $closed) throw new RuntimeException('لا تملك صلاحية إضافة وثائق لهذا المشروع.');
             if (empty($_FILES['document']) || $_FILES['document']['error'] !== UPLOAD_ERR_OK) throw new RuntimeException('فشل في رفع الملف.');
             $file = $_FILES['document'];
+            if ((int)($file['size'] ?? 0) > 10 * 1024 * 1024) throw new RuntimeException('حجم وثيقة المشروع يجب ألا يتجاوز 10 ميجابايت.');
             $mime = mime_content_type($file['tmp_name']);
             $allowed = ['application/pdf'=>'pdf','image/jpeg'=>'jpg','image/png'=>'png','application/vnd.openxmlformats-officedocument.wordprocessingml.document'=>'docx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'=>'xlsx'];
             if (!isset($allowed[$mime])) throw new RuntimeException('نوع الملف غير مسموح. استخدم PDF أو JPG أو PNG أو DOCX أو XLSX.');
@@ -588,9 +589,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $documentId = (int)($_POST['document_id'] ?? 0);
             $verification = akp_post_value('verification_status');
             if (!in_array($verification, ['verified','rejected'], true)) throw new RuntimeException('حالة التحقق غير صالحة.');
+            $rejectionReason = akp_post_value('rejection_reason');
+            if ($verification === 'rejected' && $rejectionReason === '') throw new RuntimeException('سبب رفض الوثيقة مطلوب.');
             $doc = dbFetchOne('SELECT * FROM project_documents WHERE id = ? AND project_id = ?', [$documentId, $id]);
             if (!$doc) throw new RuntimeException('الوثيقة غير موجودة.');
-            dbExecute('UPDATE project_documents SET verification_status = ?, verified_by = ?, verified_at = NOW(), rejection_reason = ? WHERE id = ? AND project_id = ?', [$verification, akp_user_id(), $verification === 'rejected' ? akp_post_value('rejection_reason') : null, $documentId, $id]);
+            dbExecute('UPDATE project_documents SET verification_status = ?, verified_by = ?, verified_at = NOW(), rejection_reason = ? WHERE id = ? AND project_id = ?', [$verification, akp_user_id(), $verification === 'rejected' ? $rejectionReason : null, $documentId, $id]);
             akp_audit('VERIFY', 'project_document', $documentId, ['verification_status' => $doc['verification_status']], ['verification_status' => $verification]);
             flash('success', 'تم تحديث حالة الوثيقة.');
             
@@ -602,9 +605,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $workDescription = akp_post_value('labor_work_description');
             $workers = max(1, (int)($_POST['labor_number_of_workers'] ?? 1));
             $amount = max(0, (float)($_POST['labor_payment_amount'] ?? 0));
+            $paymentTiming = akp_post_value('labor_payment_timing', 'upon_completion');
+            $laborStatus = akp_post_value('labor_status', 'planned');
             if (!in_array($providerType, ['individual', 'company'], true) || $providerName === '' || $workDescription === '' || $amount <= 0) throw new RuntimeException('نوع مقدم الخدمة والاسم ووصف العمل والمبلغ مطلوبة.');
+            if (!in_array($paymentTiming, ['upfront', 'daily', 'weekly', 'monthly', 'upon_completion'], true)) throw new RuntimeException('توقيت الدفع غير صالح.');
+            if (!in_array($laborStatus, ['planned', 'in_progress', 'completed'], true)) throw new RuntimeException('حالة العمالة غير صالحة.');
             if ($providerType === 'company' && akp_post_value('labor_contact_person_name') === '') throw new RuntimeException('اسم جهة الاتصال مطلوب للشركة.');
-            dbExecute('INSERT INTO project_labor_helpers (project_id, supervisor_user_id, provider_type, provider_name, phone, contact_person_name, contact_person_phone, number_of_workers, work_description, payment_amount, currency_code, payment_timing, status, notes, created_by, updated_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', [$id, akp_user_id(), $providerType, $providerName, akp_post_value('labor_phone') ?: null, akp_post_value('labor_contact_person_name') ?: null, akp_post_value('labor_contact_person_phone') ?: null, $workers, $workDescription, $amount, akp_post_value('labor_currency', $project['currency_code'] ?: 'SDG'), akp_post_value('labor_payment_timing', 'upon_completion'), akp_post_value('labor_status', 'planned'), akp_post_value('labor_notes') ?: null, akp_user_id(), akp_user_id()]);
+            dbExecute('INSERT INTO project_labor_helpers (project_id, supervisor_user_id, provider_type, provider_name, phone, contact_person_name, contact_person_phone, number_of_workers, work_description, payment_amount, currency_code, payment_timing, status, notes, created_by, updated_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', [$id, akp_user_id(), $providerType, $providerName, akp_post_value('labor_phone') ?: null, akp_post_value('labor_contact_person_name') ?: null, akp_post_value('labor_contact_person_phone') ?: null, $workers, $workDescription, $amount, akp_post_value('labor_currency', $project['currency_code'] ?: 'SDG'), $paymentTiming, $laborStatus, akp_post_value('labor_notes') ?: null, akp_user_id(), akp_user_id()]);
             $laborId = (int)(dbFetchOne('SELECT LAST_INSERT_ID() AS id')['id'] ?? 0);
             akp_audit('CREATE', 'project_labor_helper', $laborId, null, ['project_id' => $id, 'provider_name' => $providerName, 'amount' => $amount]);
             flash('success', 'تم حفظ بيانات العامل/الجهة الخارجية.');
@@ -632,15 +639,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // ... (Original add_progress logic preserved exactly)
             if (!akp_can_edit_section('operations', $id) || $closed) throw new RuntimeException('لا تملك صلاحية إضافة تحديث تشغيلي.');
             $summary = akp_post_value('progress_summary');
+            $progressPercentRaw = akp_post_value('progress_percent');
+            $progressPercent = $progressPercentRaw === '' ? 0.0 : (float)$progressPercentRaw;
+            if ($progressPercent < 0 || $progressPercent > 100) throw new RuntimeException('نسبة الإنجاز يجب أن تكون بين 0 و100.');
             if ($summary === '') throw new RuntimeException('ملخص التقدم مطلوب.');
-            dbExecute('INSERT INTO project_progress_updates (project_id, update_date, completion_percent, summary, achievements, issues, next_steps, submitted_by) VALUES (?,?,?,?,?,?,?,?)', [$id, akp_post_value('update_date') ?: date('Y-m-d'), (float)(akp_post_value('progress_percent') ?: 0), $summary, akp_post_value('achievements') ?: null, akp_post_value('issues') ?: null, akp_post_value('next_steps') ?: null, akp_user_id()]);
+            dbExecute('INSERT INTO project_progress_updates (project_id, update_date, completion_percent, summary, achievements, issues, next_steps, submitted_by) VALUES (?,?,?,?,?,?,?,?)', [$id, akp_post_value('update_date') ?: date('Y-m-d'), $progressPercent, $summary, akp_post_value('achievements') ?: null, akp_post_value('issues') ?: null, akp_post_value('next_steps') ?: null, akp_user_id()]);
             akp_audit('CREATE', 'project_progress_update', (int)dbFetchOne('SELECT LAST_INSERT_ID() AS id')['id'], null, ['project_id' => $id]);
             flash('success', 'تم حفظ تحديث التقدم.');
             
         } elseif ($action === 'add_beneficiary_record') {
             // ... (Original add_beneficiary_record logic preserved exactly)
             if (!akp_can_edit_section('operations', $id) || $closed) throw new RuntimeException('لا تملك صلاحية إضافة مستفيدين.');
-            dbExecute('INSERT INTO project_beneficiary_records (project_id, beneficiary_name, beneficiary_type, beneficiary_phone, beneficiary_location, household_count, planned_support_amount, delivered_support_amount, support_date, notes, created_by) VALUES (?,?,?,?,?,?,?,?,?,?,?)', [$id, akp_post_value('record_beneficiary_name'), akp_post_value('beneficiary_type') ?: null, akp_post_value('beneficiary_phone') ?: null, akp_post_value('beneficiary_location') ?: null, (int)($_POST['household_count'] ?? 0) ?: null, $_POST['planned_support_amount'] !== '' ? (float)($_POST['planned_support_amount'] ?? 0) : null, $_POST['delivered_support_amount'] !== '' ? (float)($_POST['delivered_support_amount'] ?? 0) : null, akp_post_value('support_date') ?: null, akp_post_value('beneficiary_notes') ?: null, akp_user_id()]);
+            $beneficiaryName = akp_post_value('record_beneficiary_name');
+            $householdCount = (int)($_POST['household_count'] ?? 0);
+            $plannedSupport = $_POST['planned_support_amount'] !== '' ? (float)($_POST['planned_support_amount'] ?? 0) : null;
+            $deliveredSupport = $_POST['delivered_support_amount'] !== '' ? (float)($_POST['delivered_support_amount'] ?? 0) : null;
+            if ($beneficiaryName === '') throw new RuntimeException('اسم المستفيد مطلوب.');
+            if ($householdCount < 0 || ($plannedSupport !== null && $plannedSupport < 0) || ($deliveredSupport !== null && $deliveredSupport < 0)) throw new RuntimeException('بيانات المستفيد المالية أو عدد الأفراد لا يمكن أن تكون سالبة.');
+            dbExecute('INSERT INTO project_beneficiary_records (project_id, beneficiary_name, beneficiary_type, beneficiary_phone, beneficiary_location, household_count, planned_support_amount, delivered_support_amount, support_date, notes, created_by) VALUES (?,?,?,?,?,?,?,?,?,?,?)', [$id, $beneficiaryName, akp_post_value('beneficiary_type') ?: null, akp_post_value('beneficiary_phone') ?: null, akp_post_value('beneficiary_location') ?: null, $householdCount ?: null, $plannedSupport, $deliveredSupport, akp_post_value('support_date') ?: null, akp_post_value('beneficiary_notes') ?: null, akp_user_id()]);
             flash('success', 'تمت إضافة سجل المستفيد.');
             
         } elseif ($action === 'close_project') {
@@ -650,8 +666,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ((int)($pending['n'] ?? 0) > 0) throw new RuntimeException('لا يمكن الإغلاق مع وجود مصروفات غير مرحلة.');
             $summary = akp_post_value('closure_summary');
             $varianceExplanation = akp_post_value('variance_explanation');
-            $totals = akp_sync_closure_totals($id);
             if ($summary === '') throw new RuntimeException('ملخص الإغلاق مطلوب.');
+            $totals = akp_sync_closure_totals($id);
             dbExecute("UPDATE project_lifecycle SET lifecycle_status = 'closed', closed_at = NOW(), closed_by = ?, close_reason = ?, closure_summary = ?, variance_explanation = ? WHERE project_id = ?", [akp_user_id(), akp_post_value('closure_reason', 'other'), $summary, $varianceExplanation, $id]);
             dbExecute("UPDATE other_projects SET status = 'completed', updated_by = ? WHERE id = ?", [akp_user_id(), $id]);
             dbExecute("INSERT INTO project_status_history (project_id, old_status, new_status, reason, changed_by) VALUES (?, ?, 'closed', ?, ?)", [$id, $project['lifecycle_status'] ?: $project['status'], $summary, akp_user_id()]);
