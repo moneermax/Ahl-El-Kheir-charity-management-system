@@ -198,6 +198,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$approvalCheck || $approvalCheck['approval_status'] !== 'submitted') throw new RuntimeException('المشروع ليس في حالة انتظار الاعتماد المالي.');
             dbExecute("UPDATE project_approval SET approval_status = 'fm_approved', fm_reviewed_by = ?, fm_reviewed_at = NOW() WHERE project_id = ?", [akp_user_id(), $id]);
             akp_audit('FM_APPROVE_PROJECT', 'project_approval', $id, ['approval_status' => 'submitted'], ['approval_status' => 'fm_approved']);
+
+            // Notify active General Manager recipients through the existing notification infrastructure.
+            // Notification delivery is isolated so it cannot roll back the completed FM approval.
+            try {
+                $gmUsers = dbFetchAll(
+                    "SELECT u.id
+                     FROM users u
+                     JOIN roles r ON u.role_id = r.id
+                     WHERE r.code = 'general_manager'
+                       AND u.is_active = 1"
+                );
+                foreach ($gmUsers as $gmUser) {
+                    ak_transaction_review_notify_event(
+                        (int)$gmUser['id'],
+                        'مشروع بانتظار الاعتماد النهائي',
+                        'المشروع «' . (string)($project['name'] ?? '') . '» (' . (string)($project['project_code'] ?? '') . ') تم اعتماده مالياً وبانتظار اعتماد المدير العام.',
+                        APP_URL . 'modules/projects/view.php?id=' . $id,
+                        $id,
+                        'project_fm_approval'
+                    );
+                }
+            } catch (Throwable $notificationError) {
+                // Notification delivery must never roll back the completed FM approval.
+            }
+
             flash('success', 'تم اعتماد المشروع مالياً. المشروع الآن بانتظار اعتماد المدير العام.');
             
         } elseif ($action === 'fm_reject_project') {
