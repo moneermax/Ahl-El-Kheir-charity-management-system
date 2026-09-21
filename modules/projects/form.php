@@ -560,9 +560,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (!$errors) {
 
-            /*
-             * Convert values.
-             */
+            $projectCreateTransaction = !$id;
+            if ($projectCreateTransaction) {
+                db()->beginTransaction();
+            }
+
+            try {
+                /*
+                 * Convert values.
+                 */
             $target =
                 $targetCents !== null
                     ? ($targetCents / 100)
@@ -1225,7 +1231,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $projectId
             );
 
+            if ($projectCreateTransaction && db()->inTransaction()) {
+                db()->commit();
+            }
+
             exit();
+
+            } catch (Throwable $e) {
+                if ($projectCreateTransaction && db()->inTransaction()) {
+                    db()->rollBack();
+                }
+
+                $errors[] = APP_ENV === 'development'
+                    ? 'تعذر حفظ المشروع: ' . $e->getMessage()
+                    : 'تعذر حفظ المشروع بسبب خطأ داخلي. لم يتم حفظ أي جزء من عملية الإنشاء.';
+            }
         }
     }
 }
