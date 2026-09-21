@@ -1352,6 +1352,23 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 <div class="col-md-3">
 
                     <label class="form-label">
+                        كود المشروع
+                    </label>
+
+                    <div class="form-control bg-light text-muted" aria-readonly="true">
+                        <?php echo $id ? e($project['project_code'] ?? 'سيُنشأ تلقائياً') : 'سيُنشأ تلقائياً عند إنشاء المشروع'; ?>
+                    </div>
+
+                    <div class="form-text">
+                        يتم إنشاء كود المشروع تلقائياً ولا يمكن تعديله.
+                    </div>
+
+                </div>
+
+
+                <div class="col-md-3">
+
+                    <label class="form-label">
                         نوع المشروع
                     </label>
 
