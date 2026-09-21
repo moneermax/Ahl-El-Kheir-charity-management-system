@@ -1273,3 +1273,14 @@ Every fix must be runtime-verified before being marked complete. Existing Back/s
 - Added server-side validation for project team sections, labor enumerations, progress range, beneficiary inputs, document rejection reason, and a 10 MB project-document limit.
 - Runtime certification remains pending; project-code uniqueness/concurrency still requires verification against the actual deployed schema.
 - Remediation commits: `251c7c4`, `5bb36f8`, `af59a1b`.
+
+
+## 2026-09-21 — Projects FM → GM notification gap fixed
+
+Runtime testing of Project 6 confirmed that Project Manager submission now notifies the active Financial Manager and the notification opens correctly. The next workflow gap was then confirmed in the repository: Financial Manager approval changed `submitted` → `fm_approved` but did not notify the General Manager.
+
+The fix reuses the existing event-aware notification writer in `modules/accounting/lib_transaction_review.php`, targets active users with the existing `general_manager` role, uses project ID/reference type `project_fm_approval`, includes the project name/code, and links to the existing project view. Notification failure is isolated from the completed FM approval. No schema change was introduced.
+
+Code commit: `b7a655512c1234fb1459c068aba07e494355f023` — **Notify GM when project is financially approved**.
+
+Runtime verification is pending; Project 6 is the controlled test case for FM approval → GM notification.
