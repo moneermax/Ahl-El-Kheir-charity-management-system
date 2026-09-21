@@ -63,8 +63,8 @@ function uploadFamilyReceipt($file, $itemId, $familyId) {
     if (!isset($allowed[$mime])) {
         return ['success' => false, 'message' => 'نوع الملف غير مسموح. يُسمح فقط بـ JPG, PNG, GIF.'];
     }
-    if ($file['size'] > 5 * 1024 * 1024) {
-        return ['success' => false, 'message' => 'حجم الملف يجب أن لا يتجاوز 5 ميجابايت.'];
+    if ($file['size'] > 10 * 1024 * 1024) {
+        return ['success' => false, 'message' => 'حجم الملف يجب أن لا يتجاوز 10 ميجابايت.'];
     }
     $ext = $allowed[$mime];
     $fname = 'family_receipt_item_' . $itemId . '_' . $familyId . '_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
@@ -98,8 +98,8 @@ function uploadReturnReceipt($file, $disbursementId) {
     if (!isset($allowed[$mime])) {
         return ['success' => false, 'message' => 'نوع الملف غير مسموح. استخدم PDF أو JPG أو PNG أو GIF فقط.'];
     }
-    if ((int)$file['size'] > 5 * 1024 * 1024) {
-        return ['success' => false, 'message' => 'حجم ملف الإرجاع يجب ألا يتجاوز 5 ميجابايت.'];
+    if ((int)$file['size'] > 10 * 1024 * 1024) {
+        return ['success' => false, 'message' => 'حجم ملف الإرجاع يجب ألا يتجاوز 10 ميجابايت.'];
     }
     $dir = dirname(__DIR__, 2) . '/storage/receipts/returns';
     if (!is_dir($dir) && !mkdir($dir, 0777, true)) {
@@ -381,8 +381,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
             $allowed = ['application/pdf' => 'pdf', 'image/jpeg' => 'jpg', 'image/png' => 'png'];
             if (!isset($allowed[$mime])) {
                 flash('error', 'نوع الملف غير مسموح. استخدم PDF أو JPG أو PNG فقط.');
-            } elseif ($_FILES['transfer_receipt']['size'] > 5 * 1024 * 1024) {
-                flash('error', 'حجم الملف يجب أن لا يتجاوز 5 ميجابايت.');
+            } elseif ($_FILES['transfer_receipt']['size'] > 10 * 1024 * 1024) {
+                flash('error', 'حجم الملف يجب أن لا يتجاوز 10 ميجابايت.');
             } else {
                 $ext = $allowed[$mime];
                 $fname = 'transfer_receipt_' . $id . '_' . time() . '.' . $ext;
@@ -545,8 +545,8 @@ flash('success', 'تم رفع الإيصال وتأكيد التحويل وخص�
                     $allowed = ['application/pdf' => 'pdf', 'image/jpeg' => 'jpg', 'image/png' => 'png', 'image/gif' => 'gif'];
                     if (!isset($allowed[$mime])) {
                         flash('error', 'نوع الملف غير مسموح. يُسمح فقط بـ PDF, JPG, PNG, GIF.');
-                    } elseif ($_FILES['final_receipt']['size'] > 5 * 1024 * 1024) {
-                        flash('error', 'حجم الملف يجب أن لا يتجاوز 5 ميجابايت.');
+                    } elseif ($_FILES['final_receipt']['size'] > 10 * 1024 * 1024) {
+                        flash('error', 'حجم الملف يجب أن لا يتجاوز 10 ميجابايت.');
                     } else {
                         $ext = $allowed[$mime];
                         $fname = 'final_receipt_' . $id . '_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
@@ -1197,7 +1197,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 <div class="col-md-6">
                     <label class="form-label"><strong>إيصال التحويل (مطلوب)</strong> <span class="text-danger">*</span></label>
                     <input type="file" name="transfer_receipt" class="form-control" accept=".pdf,.jpg,.jpeg,.png" required>
-                    <small class="text-muted">PDF, JPG, PNG - الحد الأقصى 5 ميجابايت</small>
+                    <small class="text-muted">PDF, JPG, PNG - الحد الأقصى 10 ميجابايت</small>
                 </div>
                 <div class="col-md-3">
                     <div class="border rounded p-2 text-center bg-white">
@@ -1254,7 +1254,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     <div class="col-md-4">
                         <label class="form-label fw-bold">إيصال إرجاع المبلغ <span class="text-danger">*</span></label>
                         <input type="file" name="return_receipt" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.gif" required>
-                        <small class="text-muted">PDF, JPG, PNG, GIF — الحد الأقصى 5 ميجابايت</small>
+                        <small class="text-muted">PDF, JPG, PNG, GIF — الحد الأقصى 10 ميجابايت</small>
                     </div>
                     <div class="col-12">
                         <div class="d-flex flex-wrap gap-2 justify-content-end align-items-center">
