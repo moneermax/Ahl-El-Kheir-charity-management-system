@@ -342,13 +342,26 @@ $recentJournals = dbFetchAll("SELECT je.entry_code, je.entry_date, je.descriptio
 @media(max-width:991.98px) { .ak-fm-action-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media(max-width:420px) { .ak-fm-action-grid { grid-template-columns:1fr; } .ak-fm-action-card { height:96px; min-height:96px; } }
 
-.project-review-list { display: grid; gap: 12px; }
-.project-review-item { border: 1px solid #e5e7eb; border-radius: 10px; background: #fff; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.04); }
-.project-review-item-head { display:flex; justify-content:space-between; align-items:center; gap:14px; padding:12px 14px; }
-.project-review-title { font-size:.95rem; font-weight:700; color:#1b4d8f; }
-.project-review-code { font-size:.76rem; color:#6c757d; margin-top:2px; }
-.project-review-actions { display:flex; justify-content:flex-end; align-items:center; flex-wrap:wrap; gap:7px; padding:0 14px 12px; }
+.project-review-list { display:grid; gap:10px; }
+.project-review-item { display:flex; align-items:center; gap:14px; border:1px solid #e5e7eb; border-radius:10px; background:#fff; padding:10px 12px; box-shadow:0 1px 4px rgba(0,0,0,.04); }
+.project-review-main { display:flex; align-items:center; gap:16px; min-width:0; flex:1 1 auto; }
+.project-review-title { font-size:.95rem; font-weight:700; color:#1b4d8f; white-space:nowrap; }
+.project-review-code { font-size:.76rem; color:#6c757d; white-space:nowrap; }
+.project-review-budget { font-size:.9rem; font-weight:700; color:#856404; white-space:nowrap; }
+.project-review-actions { display:flex; align-items:center; gap:6px; flex:0 0 auto; }
 .project-review-actions form { margin:0; }
+@media (max-width:991.98px) {
+    .project-review-item { flex-wrap:wrap; }
+    .project-review-main { flex-wrap:wrap; }
+}
+@media (max-width:575.98px) {
+    .project-review-item { align-items:stretch; }
+    .project-review-main { display:grid; grid-template-columns:1fr; gap:4px; }
+    .project-review-actions { width:100%; }
+    .project-review-actions .btn-fm,
+    .project-review-actions form,
+    .project-review-actions form .btn-fm { width:100%; text-align:center; }
+}
 @media (max-width: 991.98px) {
     .project-review-meta { grid-template-columns:repeat(2,minmax(0,1fr)); }
     .project-review-funding-grid { grid-template-columns:1fr; }
@@ -428,14 +441,11 @@ $fmActionDescriptions = [
                     <?php foreach ($projectApprovalQueue as $projectRequest): ?>
                         <?php $approvalFormId = 'fm-project-' . (int)$projectRequest['project_id']; ?>
                         <section class="project-review-item">
-                            <div class="project-review-item-head">
-                                <div>
-                                    <div class="project-review-title"><?php echo e($projectRequest['project_name']); ?></div>
-                                    <div class="project-review-code">Project ID: <?php echo (int)$projectRequest['project_id']; ?> · <code><?php echo e($projectRequest['project_code'] ?? ''); ?></code></div>
-                                </div>
-                                <span class="badge-fm badge-amber"><?php echo number_format((float)$projectRequest['budget_amount'], 2); ?> <?php echo e($projectRequest['currency_code'] ?: t('fm.currency_sdg')); ?></span>
+                            <div class="project-review-main">
+                                <div class="project-review-title"><?php echo e($projectRequest['project_name']); ?></div>
+                                <div class="project-review-code">Project ID: <?php echo (int)$projectRequest['project_id']; ?> · <code><?php echo e($projectRequest['project_code'] ?? ''); ?></code></div>
+                                <div class="project-review-budget"><?php echo number_format((float)$projectRequest['budget_amount'], 2); ?> <?php echo e($projectRequest['currency_code'] ?: t('fm.currency_sdg')); ?></div>
                             </div>
-
                             <div class="project-review-actions">
                                 <a class="btn-fm btn-ghost" href="<?php echo APP_URL; ?>modules/projects/view.php?id=<?php echo (int)$projectRequest['project_id']; ?>"><?php echo e(t('fm.view_project')); ?></a>
                                 <form id="<?php echo e($approvalFormId); ?>" method="post" onsubmit="return confirm('<?php echo e(t('fm.approve_project_confirm')); ?>');">
