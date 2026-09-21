@@ -42,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['set_status'])) {
 
 $projects = dbFetchAll("SELECT p.*, COALESCE(l.lifecycle_status, p.status) AS current_status,
     COALESCE((SELECT SUM(t.amount) FROM transactions t WHERE t.project_id = p.id AND t.status = 'posted'), 0) AS donation_total,
-    COALESCE((SELECT SUM(f.amount) FROM project_funding_allocations f WHERE f.project_id = p.id AND f.status = 'posted'), 0) AS allocation_total,
+    COALESCE((SELECT SUM(f.amount) FROM project_funding_allocations f WHERE f.project_id = p.id AND f.status = 'posted' AND (f.transaction_id IS NULL OR NOT EXISTS (SELECT 1 FROM transactions t WHERE t.id = f.transaction_id AND t.status = 'posted'))), 0) AS allocation_total,
     COALESCE((SELECT SUM(COALESCE(bl.approved_amount, bl.estimated_amount)) FROM project_budgets b JOIN project_budget_lines bl ON bl.budget_id = b.id WHERE b.project_id = p.id AND b.status = 'approved'), 0) AS approved_budget,
     COALESCE((SELECT SUM(e.amount) FROM project_expenses e WHERE e.project_id = p.id AND e.status = 'posted'), 0) AS expense_total,
     COALESCE((SELECT COUNT(*) FROM project_beneficiaries pb WHERE pb.project_id = p.id), 0) + COALESCE((SELECT COUNT(*) FROM project_beneficiary_records pbr WHERE pbr.project_id = p.id), 0) AS beneficiary_count,
