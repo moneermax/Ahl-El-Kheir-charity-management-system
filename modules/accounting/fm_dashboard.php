@@ -31,6 +31,7 @@ $headerQuickActions = [
     ['label'=>'التحويلات الشهرية','url'=>'modules/accounting/disbursements.php','icon'=>'fa-money-check-dollar','color'=>'#28a745'],
     ['label'=>' دليل الحسابات','url'=>'modules/accounting/accounts.php','icon'=>'fa-sitemap','color'=>'#2195c4'],
     ['label'=>'مراجعة ميزانيات المشاريع','url'=>'modules/accounting/fm_dashboard.php#project-budget-review','icon'=>'fa-clipboard-check','color'=>'#ffc107'],
+    ['label'=>'مراجعة المعاملات المالية','url'=>'modules/accounting/fm_transaction_review.php','icon'=>'fa-file-invoice-dollar','color'=>'#6c757d'],
     ['label'=>'التقارير المالية','url'=>'modules/reports/financial.php','icon'=>'fa-chart-pie','color'=>'#0d6efd'],
     ['label'=>'سجل المعاملات','url'=>'modules/transactions/index.php','icon'=>'fa-money-bill-transfer','color'=>'#2daf79'],
     ['label'=>'منظمة فينا الخير','url'=>'modules/accounting/fina_dashboard.php','icon'=>'fina-logo','color'=>'#6f42c1'],
@@ -322,13 +323,29 @@ $recentJournals = dbFetchAll("SELECT je.entry_code, je.entry_date, je.descriptio
 .empty-state { text-align: center; padding: 30px; color: #999; }
 .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 20px; }
 .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; }
-.fm-top-layout { display: grid; grid-template-columns: minmax(300px, 0.34fr) minmax(0, 1fr); gap: 20px; align-items: start; margin-bottom: 20px; }
-.fm-review-card { align-self: start; height: auto !important; min-height: 0 !important; margin: 0; }
-.fm-review-card .fm-card-body { display: block; height: auto; min-height: 0; padding: 16px 20px 20px; }
+.fm-top-layout { margin-bottom: 20px; }
+.project-review-list { display: grid; gap: 16px; }
+.project-review-item { border: 1px solid #e5e7eb; border-radius: 12px; background: #fff; overflow: hidden; box-shadow: 0 1px 5px rgba(0,0,0,.04); }
+.project-review-item-head { display:flex; justify-content:space-between; align-items:flex-start; gap:14px; padding:14px 16px; background:#fbfcfe; border-bottom:1px solid #edf0f4; }
+.project-review-title { font-size:1rem; font-weight:700; color:#1b4d8f; }
+.project-review-code { font-size:.78rem; color:#6c757d; margin-top:3px; }
+.project-review-meta { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:12px; padding:14px 16px; border-bottom:1px solid #edf0f4; }
+.project-review-meta-item { min-width:0; }
+.project-review-meta-label { display:block; color:#7a828b; font-size:.72rem; margin-bottom:3px; }
+.project-review-meta-value { display:block; color:#26313d; font-size:.86rem; font-weight:700; overflow-wrap:anywhere; }
+.project-review-funding { padding:14px 16px; background:#fcfcfd; border-bottom:1px solid #edf0f4; }
+.project-review-funding-title { font-size:.84rem; font-weight:700; color:#1b4d8f; margin-bottom:10px; }
+.project-review-funding-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+.project-review-account { border:1px solid #e5e7eb; border-radius:9px; padding:10px; background:#fff; }
+.project-review-account label { display:block; margin:0; }
+.project-review-account-name { display:block; font-size:.78rem; font-weight:700; color:#374151; margin-bottom:3px; }
+.project-review-account-available { display:block; font-size:.7rem; color:#6c757d; margin-bottom:7px; }
+.project-review-actions { display:flex; justify-content:flex-end; align-items:center; flex-wrap:wrap; gap:8px; padding:12px 16px; }
+.project-review-actions form { margin:0; }
 
 /* Original FM dashboard action-card design, now rendered server-side so
    the global header is never used as a temporary navigation source. */
-.ak-fm-action-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.75rem; margin:0 auto 1.25rem; max-width:960px; }
+.ak-fm-action-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.75rem; margin:0 auto 1.25rem; max-width:1180px; }
 .ak-fm-action-card { min-height:104px; height:104px; border:0; border-radius:10px; box-shadow:0 2px 8px rgba(10,31,68,.08); text-decoration:none; color:inherit; background:#fff; display:flex; align-items:center; justify-content:center; transition:transform .18s,box-shadow .18s; }
 .ak-fm-action-card:hover { transform:translateY(-3px); box-shadow:0 5px 14px rgba(10,31,68,.14); color:inherit; }
 .ak-fm-action-icon { font-size:1.45rem; margin-bottom:.35rem; display:flex; align-items:center; justify-content:center; min-height:38px; }
@@ -341,6 +358,8 @@ $recentJournals = dbFetchAll("SELECT je.entry_code, je.entry_date, je.descriptio
 .ak-fm-action-card.ak-fm-action-4 { border-top:3px solid #ffc107; }
 .ak-fm-action-card.ak-fm-action-5 { border-top:3px solid #0d6efd; }
 .ak-fm-action-card.ak-fm-action-6 { border-top:3px solid #2daf79; }
+.ak-fm-action-card.ak-fm-action-7 { border-top:3px solid #6f42c1; }
+@media(max-width:991.98px) { .ak-fm-action-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media(max-width:767.98px) { .ak-fm-action-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media(max-width:420px) { .ak-fm-action-grid { grid-template-columns:1fr; } .ak-fm-action-card { height:96px; min-height:96px; } }
 
@@ -348,8 +367,16 @@ $recentJournals = dbFetchAll("SELECT je.entry_code, je.entry_date, je.descriptio
 .fm-top-right > .grid-4 { margin-bottom: 20px; }
 .fm-top-right > .fm-card { margin-bottom: 0; }
 @media (max-width: 991.98px) {
-    .fm-top-layout { grid-template-columns: 1fr; }
-    .fm-review-card { margin-bottom: 20px; }
+    .project-review-meta { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .project-review-funding-grid { grid-template-columns:1fr; }
+}
+@media (max-width: 575.98px) {
+    .project-review-item-head { flex-direction:column; }
+    .project-review-meta { grid-template-columns:1fr; }
+    .project-review-actions { justify-content:stretch; }
+    .project-review-actions .btn-fm,
+    .project-review-actions form,
+    .project-review-actions form .btn-fm { width:100%; text-align:center; }
 }
 </style>
 
@@ -375,6 +402,7 @@ $fmActionDescriptions = [
     'متابعة التحويلات والصرف الشهري',
     'عرض وإدارة دليل الحسابات',
     'مراجعة واعتماد ميزانيات المشاريع',
+    'مراجعة واعتماد المعاملات المالية',
     'عرض التقارير والحركة المالية',
     'مراجعة سجل المعاملات المالية',
     'لوحة مستقلة لتحصيلات وتسويات منظمة فينا الخير',
@@ -402,79 +430,89 @@ $fmActionDescriptions = [
             <div class="stat-box purple"><div class="stat-label">📱 <?php echo e(t('fm.wallet')); ?></div><div class="stat-value"><?php echo number_format((float)$treasury['wallet'], 0); ?></div><div class="stat-sub"><?php echo e(t('fm.account_1300')); ?></div></div>
             <div class="stat-box green"><div class="stat-label">💰 <?php echo e(t('fm.total_treasury')); ?></div><div class="stat-value"><?php echo number_format((float)$treasury['total'], 0); ?></div><div class="stat-sub"><?php echo e(t('fm.currency_sdg')); ?></div></div>
         </div>
-<!-- ══════════ TOP FINANCIAL OVERSIGHT LAYOUT ══════════ -->
+<!-- ══════════ PROJECT BUDGETS PENDING FM REVIEW ══════════ -->
 <div class="fm-top-layout">
-    <div class="fm-card fm-review-card" id="fm-transaction-review">
+    <div id="project-budget-review" class="fm-card" style="border-right:5px solid #ffc107;">
         <div class="fm-card-head">
-            <span>🧾 مراجعة المعاملات المالية</span>
-            <span class="badge-fm badge-blue"><i class="fas fa-clipboard-check"></i></span>
+            <span>📁 <?php echo e(t('fm.project_budget_review')); ?></span>
+            <span class="badge-fm <?php echo $projectApprovalCount ? 'badge-amber' : 'badge-green'; ?>"><?php echo e(t('fm.request_count', ['count' => $projectApprovalCount])); ?></span>
         </div>
         <div class="fm-card-body">
-            <div style="width:100%;">
-                <div style="font-size:1.15rem; font-weight:700; color:#1b4d8f; margin-bottom:10px;">مراجعة واعتماد المعاملات المالية</div>
-                <a href="<?php echo APP_URL; ?>modules/accounting/fm_transaction_review.php" class="btn-fm btn-navy" style="width:100%; text-align:center; padding:12px 16px;">
-                    <i class="fas fa-clipboard-check"></i>
-                    فتح شاشة مراجعة المعاملات
-                </a>
-            </div>
-        </div>
-    </div>
-        <!-- ══════════ PROJECT BUDGETS PENDING FM REVIEW ══════════ -->
-        <div id="project-budget-review" class="fm-card" style="border-right:5px solid #ffc107;">
-            <div class="fm-card-head">
-                <span>📁 <?php echo e(t('fm.project_budget_review')); ?></span>
-                <span class="badge-fm <?php echo $projectApprovalCount ? 'badge-amber' : 'badge-green'; ?>"><?php echo e(t('fm.request_count', ['count' => $projectApprovalCount])); ?></span>
-            </div>
-            <div class="fm-card-body">
-                <?php if (!$projectApprovalQueue): ?>
-                    <div class="empty-state"><?php echo e(t('fm.no_project_budgets')); ?></div>
-                <?php else: ?>
-                    <div style="overflow-x:auto">
-                        <table class="fm-table">
-                            <thead><tr><th><?php echo e(t('fm.project')); ?></th><th><?php echo e(t('fm.project_type')); ?></th><th><?php echo e(t('fm.created_by')); ?></th><th><?php echo e(t('fm.budget')); ?></th><th><?php echo e(t('fm.items')); ?></th><th><?php echo e(t('fm.submission_date')); ?></th><th><?php echo e(t('fm.funding_source_distribution')); ?></th><th><?php echo e(t('fm.action')); ?></th></tr></thead>
-                            <tbody>
-                            <?php foreach ($projectApprovalQueue as $projectRequest): ?>
-                                <tr>
-                                    <td><strong><?php echo e($projectRequest['project_name']); ?></strong><br><small class="text-muted"><code><?php echo e($projectRequest['project_code'] ?? ''); ?></code></small></td>
-                                    <td><?php echo e($projectRequest['project_type'] ?? '-'); ?></td>
-                                    <td><?php echo e($projectRequest['submitted_by_name'] ?? '-'); ?></td>
-                                    <td><strong><?php echo number_format((float)$projectRequest['budget_amount'], 2); ?> <?php echo e($projectRequest['currency_code'] ?: t('fm.currency_sdg')); ?></strong><br><small class="text-muted"><?php echo e(t('fm.version', ['version' => (int)$projectRequest['budget_version']])); ?></small></td>
-                                    <td><?php echo (int)$projectRequest['budget_line_count']; ?></td>
-                                    <td><?php echo e($projectRequest['submitted_at'] ?? '-'); ?></td>
-                                    <td style="min-width:260px">
-                                        <?php $approvalFormId = 'fm-project-' . (int)$projectRequest['project_id']; ?>
-                                        <?php foreach ($fundingAccounts as $fundingAccount): $available = max(0, round((float)$fundingAccount['ledger_balance'] - (float)$fundingAccount['reserved_amount'], 2)); ?>
-                                            <label style="display:block; margin-bottom:5px; font-size:.8rem">
-                                                <span><?php echo e($fundingAccount['code'] . ' — ' . ($fundingAccount['name_ar'] ?: $fundingAccount['name_en'])); ?> (<?php echo e(t('fm.available', ['amount' => number_format($available, 2)])); ?>)</span>
+            <?php if (!$projectApprovalQueue): ?>
+                <div class="empty-state"><?php echo e(t('fm.no_project_budgets')); ?></div>
+            <?php else: ?>
+                <div class="project-review-list">
+                    <?php foreach ($projectApprovalQueue as $projectRequest): ?>
+                        <?php $approvalFormId = 'fm-project-' . (int)$projectRequest['project_id']; ?>
+                        <section class="project-review-item">
+                            <div class="project-review-item-head">
+                                <div>
+                                    <div class="project-review-title"><?php echo e($projectRequest['project_name']); ?></div>
+                                    <div class="project-review-code"><code><?php echo e($projectRequest['project_code'] ?? ''); ?></code></div>
+                                </div>
+                                <span class="badge-fm badge-amber"><?php echo number_format((float)$projectRequest['budget_amount'], 2); ?> <?php echo e($projectRequest['currency_code'] ?: t('fm.currency_sdg')); ?></span>
+                            </div>
+
+                            <div class="project-review-meta">
+                                <div class="project-review-meta-item">
+                                    <span class="project-review-meta-label"><?php echo e(t('fm.project_type')); ?></span>
+                                    <span class="project-review-meta-value"><?php echo e($projectRequest['project_type'] ?? '-'); ?></span>
+                                </div>
+                                <div class="project-review-meta-item">
+                                    <span class="project-review-meta-label"><?php echo e(t('fm.created_by')); ?></span>
+                                    <span class="project-review-meta-value"><?php echo e($projectRequest['submitted_by_name'] ?? '-'); ?></span>
+                                </div>
+                                <div class="project-review-meta-item">
+                                    <span class="project-review-meta-label"><?php echo e(t('fm.budget')); ?></span>
+                                    <span class="project-review-meta-value"><?php echo number_format((float)$projectRequest['budget_amount'], 2); ?> <?php echo e($projectRequest['currency_code'] ?: t('fm.currency_sdg')); ?></span>
+                                </div>
+                                <div class="project-review-meta-item">
+                                    <span class="project-review-meta-label"><?php echo e(t('fm.items')); ?></span>
+                                    <span class="project-review-meta-value"><?php echo (int)$projectRequest['budget_line_count']; ?> · <?php echo e(t('fm.version', ['version' => (int)$projectRequest['budget_version']])); ?></span>
+                                </div>
+                                <div class="project-review-meta-item">
+                                    <span class="project-review-meta-label"><?php echo e(t('fm.submission_date')); ?></span>
+                                    <span class="project-review-meta-value"><?php echo e($projectRequest['submitted_at'] ?? '-'); ?></span>
+                                </div>
+                            </div>
+
+                            <div class="project-review-funding">
+                                <div class="project-review-funding-title"><?php echo e(t('fm.funding_source_distribution')); ?></div>
+                                <div class="project-review-funding-grid">
+                                    <?php foreach ($fundingAccounts as $fundingAccount): $available = max(0, round((float)$fundingAccount['ledger_balance'] - (float)$fundingAccount['reserved_amount'], 2)); ?>
+                                        <div class="project-review-account">
+                                            <label>
+                                                <span class="project-review-account-name"><?php echo e($fundingAccount['code'] . ' — ' . ($fundingAccount['name_ar'] ?: $fundingAccount['name_en'])); ?></span>
+                                                <span class="project-review-account-available"><?php echo e(t('fm.available', ['amount' => number_format($available, 2)])); ?></span>
                                                 <input form="<?php echo e($approvalFormId); ?>" type="number" step="0.01" min="0" max="<?php echo e((string)$available); ?>" name="funding_amounts[<?php echo (int)$projectRequest['project_id']; ?>][<?php echo (int)$fundingAccount['id']; ?>]" class="form-control form-control-sm" value="0" placeholder="<?php echo e(t('fm.amount_from_account')); ?>">
                                             </label>
-                                        <?php endforeach; ?>
-                                    </td>
-                                    <td style="white-space:nowrap">
-                                        <a class="btn-fm btn-navy" href="<?php echo APP_URL; ?>modules/projects/view.php?id=<?php echo (int)$projectRequest['project_id']; ?>"><?php echo e(t('fm.view_project')); ?></a>
-                                        <form id="<?php echo e($approvalFormId); ?>" method="post" style="display:inline-block" onsubmit="return confirm('<?php echo e(t('fm.approve_project_confirm')); ?>');">
-                                            <?php echo csrf_field(); ?>
-                                            <input type="hidden" name="project_fm_review" value="1">
-                                            <input type="hidden" name="project_id" value="<?php echo (int)$projectRequest['project_id']; ?>">
-                                            <input type="hidden" name="project_fm_decision" value="approve">
-                                            <button class="btn-fm btn-navy" type="submit"><?php echo e(t('fm.financial_approval')); ?></button>
-                                        </form>
-                                        <form method="post" style="display:inline-block" onsubmit="var r=prompt('<?php echo e(t('fm.reject_reason_prompt')); ?>'); if (!r || !r.trim()) return false; this.fm_rejection_reason.value=r; return true;">
-                                            <?php echo csrf_field(); ?>
-                                            <input type="hidden" name="project_fm_review" value="1">
-                                            <input type="hidden" name="project_id" value="<?php echo (int)$projectRequest['project_id']; ?>">
-                                            <input type="hidden" name="project_fm_decision" value="reject">
-                                            <input type="hidden" name="fm_rejection_reason" value="">
-                                            <button class="btn-fm btn-ghost" type="submit"><?php echo e(t('fm.reject')); ?></button>
-                                        </form>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                <?php endif; ?>
-            </div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+
+                            <div class="project-review-actions">
+                                <a class="btn-fm btn-ghost" href="<?php echo APP_URL; ?>modules/projects/view.php?id=<?php echo (int)$projectRequest['project_id']; ?>"><?php echo e(t('fm.view_project')); ?></a>
+                                <form id="<?php echo e($approvalFormId); ?>" method="post" onsubmit="return confirm('<?php echo e(t('fm.approve_project_confirm')); ?>');">
+                                    <?php echo csrf_field(); ?>
+                                    <input type="hidden" name="project_fm_review" value="1">
+                                    <input type="hidden" name="project_id" value="<?php echo (int)$projectRequest['project_id']; ?>">
+                                    <input type="hidden" name="project_fm_decision" value="approve">
+                                    <button class="btn-fm btn-navy" type="submit"><?php echo e(t('fm.financial_approval')); ?></button>
+                                </form>
+                                <form method="post" onsubmit="var r=prompt('<?php echo e(t('fm.reject_reason_prompt')); ?>'); if (!r || !r.trim()) return false; this.fm_rejection_reason.value=r; return true;">
+                                    <?php echo csrf_field(); ?>
+                                    <input type="hidden" name="project_fm_review" value="1">
+                                    <input type="hidden" name="project_id" value="<?php echo (int)$projectRequest['project_id']; ?>">
+                                    <input type="hidden" name="project_fm_decision" value="reject">
+                                    <input type="hidden" name="fm_rejection_reason" value="">
+                                    <button class="btn-fm btn-ghost" type="submit"><?php echo e(t('fm.reject')); ?></button>
+                                </form>
+                            </div>
+                        </section>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
 </div>
