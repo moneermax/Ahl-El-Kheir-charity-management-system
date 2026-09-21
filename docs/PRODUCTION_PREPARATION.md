@@ -94,3 +94,11 @@ Environment-aware production hardening was added without changing business workf
 ## Documentation checkpoint — 2026-09-17
 
 This document remains the authoritative production-preparation procedure. No production cleanup, deployment, or Fina settlement action was performed as part of the current work. Development/test accounting data remains non-production data.
+
+## 2026-09-21 — Hosting database object restriction
+
+For the current hosting target, the database architecture is permanently restricted to hosting-compatible objects. **No MySQL/MariaDB triggers or views may ever be added again.** Stored procedures, stored functions, and scheduled database events are also excluded from the hosting-compatible baseline unless the platform decision is formally changed.
+
+The current `database/ahl_el_kheir.sql` export and repository SQL migration set were scanned and contain no `CREATE TRIGGER`, `CREATE VIEW`, `CREATE PROCEDURE`, `CREATE FUNCTION`, or `CREATE EVENT` statements. The earlier `attendance` trigger import failure came from an older export. Future exports and migrations must be scanned before deployment.
+
+Trigger-derived business rules that remain required must be enforced by the appropriate PHP workflow rather than recreated as database triggers.
