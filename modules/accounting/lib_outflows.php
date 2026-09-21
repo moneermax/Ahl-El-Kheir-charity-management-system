@@ -498,6 +498,7 @@ function ak_out_upload_receipt(array $file, int $id): string {
     $allowed = ['application/pdf' => 'pdf', 'image/jpeg' => 'jpg', 'image/png' => 'png'];
     $mime = (string)($file['type'] ?? '');
     if (!isset($allowed[$mime]) || ($file['error'] ?? 1) !== UPLOAD_ERR_OK) throw new RuntimeException('نوع ملف غير مسموح.');
+    if ((int)($file['size'] ?? 0) > 10 * 1024 * 1024) throw new RuntimeException('حجم الإيصال يجب ألا يتجاوز 10 ميجابايت.');
     $dir = dirname(__DIR__, 2) . '/storage/receipts';
     if (!is_dir($dir)) @mkdir($dir, 0777, true);
     $fname = 'receipt_' . $id . '_' . time() . '_' . bin2hex(random_bytes(3)) . '.' . $allowed[$mime];
