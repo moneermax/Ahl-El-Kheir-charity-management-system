@@ -837,3 +837,11 @@ Work strictly one module at a time. Before changing a module, inspect its actual
 Do not use destructive Git commands. Do not change database/schema/business/authorization logic or redesign the sidebar/header as part of this audit unless a verified regression requires it.
 
 The repository checkpoint currently being consolidated is 4a7982a2f7ca831318870393943f6612d583b0c7 (fix/fm-controls-stable), which preserves the last user-confirmed FM header/navigation state. The abandoned dashboard-card styling experiment is not part of the active work.
+
+## PERMANENT HOSTING DATABASE RULE — 2026-09-21
+
+**Never add MySQL/MariaDB triggers or views to the database again.** This is a permanent project rule for the hosting-compatible architecture. Trigger business logic must be implemented in procedural PHP with equivalent server-side validation and authorization. View/reporting logic must query the real underlying tables. Stored procedures, functions, and scheduled database events are also excluded unless this rule is explicitly revised.
+
+Before any schema migration or database export, inspect it for `CREATE TRIGGER`, `CREATE VIEW`, `CREATE PROCEDURE`, `CREATE FUNCTION`, and `CREATE EVENT`. A migration/export containing these objects is not acceptable for the current hosting baseline.
+
+When replacing an old trigger, do not merely remove it: inspect its business rule and verify that the responsible PHP workflow enforces the same rule.
