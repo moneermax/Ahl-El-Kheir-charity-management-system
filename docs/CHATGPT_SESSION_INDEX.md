@@ -787,5 +787,18 @@ The required target for applicable user-facing HTML pages is exactly two Back co
 
 The last confirmed FM controls checkpoint is 4a7982a2f7ca831318870393943f6612d583b0c7 on fix/fm-controls-stable. Dashboard-card styling work remains abandoned.
 
+### 2026-09-21 — Repository changes reviewed after Claude work
+
+The current `main` branch is six commits ahead of the last dashboard-button-contrast checkpoint `642f7397f48c8ddb84315130ae32cf22847476b1`. The reviewed changes cover:
+
+1. Arabic/English compatibility bridges and punctuation-tolerant translation lookup.
+2. Native JavaScript `alert()/confirm()/prompt()` message translation.
+3. Translation patterns for Arabic text containing live values.
+4. A role-aware Home shortcut in the shared header, hidden on dashboards.
+5. Shared blue-bar/white-text section titles for dashboards and applicable white/light card headers elsewhere.
+6. Removal of obsolete `sudo_dashboard.php`.
+
+Detailed i18n behavior is documented in `docs/I18N.md`. The changes contain no database/schema modifications. Runtime acceptance remains pending unless separately confirmed by the user.
+
 ### Branch housekeeping
 Completed FM-control work is being consolidated into main. Temporary/abandoned dashboard-card branches are retained only as historical references until branch-deletion capability is available; their changes are not part of the active codebase.
