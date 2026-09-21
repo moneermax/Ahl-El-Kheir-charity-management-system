@@ -10,7 +10,7 @@ The application now derives its environment automatically when no explicit envir
 - non-local hosts default to `production`;
 - `AHL_ENV` may explicitly select `development` or `production` when a controlled staging/development environment requires it.
 
-Production database connection values are read from `AHL_DB_HOST`, `AHL_DB_PORT`, `AHL_DB_NAME`, `AHL_DB_USER`, and `AHL_DB_PASS`. The existing XAMPP defaults remain available for local development. A production configuration without a database password is rejected rather than silently using the local `root`/empty-password configuration.
+Production database connection values are read from `AHL_DB_HOST`, `AHL_DB_PORT`, `AHL_DB_NAME`, `AHL_DB_USER`, and `AHL_DB_PASS` when the hosting platform exposes environment variables. For shared hosting that does not expose custom environment variables, the deployment-only `config/hosting.php` file may provide the same values. That file is ignored by Git and must never be committed. The repository provides `config/hosting.example.php` as the safe template. The existing XAMPP defaults remain available for local development. A production configuration without complete database credentials is rejected rather than silently using the local `root`/empty-password configuration.
 
 Session cookies automatically use the `Secure` flag in production, while remaining compatible with the current local HTTP/XAMPP environment. PHP error details and database exception details are shown only in development; production returns generic error messages.
 
