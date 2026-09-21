@@ -978,6 +978,42 @@ $langSwitchUrl =
 
 
 
+    
+        /* =========================================================
+           DASHBOARDS: one section-title design (blue bar, white text)
+           Same look as the FM dashboard. Applies to the 10 dashboards
+           only (body.ak-dashboard). Change #1b4d8f here to re-color all.
+           ========================================================= */
+        body.ak-dashboard .card > .card-header,
+        body.ak-dashboard .fm-card-head,
+        body.ak-dashboard .sup-fina-heading {
+            background: #1b4d8f !important;
+            color: #fff !important;
+            border-bottom: 0 !important;
+            font-weight: 700;
+        }
+        body.ak-dashboard .card > .card-header,
+        body.ak-dashboard .fm-card-head {
+            padding: 12px 18px;
+            font-size: 1rem;
+        }
+        body.ak-dashboard .sup-fina-heading {
+            display: block;
+            padding: 12px 18px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+        }
+        /* every text/icon inside a title bar follows the bar's white color */
+        body.ak-dashboard :is(.card > .card-header, .fm-card-head, .sup-fina-heading)
+            :is(h1, h2, h3, h4, h5, h6, p, div, span, strong, b, small, i, label, a):not(.btn):not(.btn-fm):not(.badge):not(.badge-fm) {
+            color: inherit !important;
+        }
+        /* outline buttons inside a title bar: white outline instead of blue-on-blue */
+        body.ak-dashboard :is(.card > .card-header, .fm-card-head)
+            .btn:is(.btn-outline-primary, .btn-outline-secondary, .btn-outline-info, .btn-outline-dark, .btn-outline-success) {
+            color: #fff !important;
+            border-color: rgba(255, 255, 255, .75) !important;
+        }
     </style>
 
 
@@ -1077,7 +1113,12 @@ $langSwitchUrl =
 </head>
 
 
-<body>
+<?php
+// Marks the 10 dashboards so their section titles get the shared blue-bar design (see CSS above).
+$akBodyScript   = str_replace('\\', '/', (string)($_SERVER['SCRIPT_NAME'] ?? ''));
+$akIsDashboardPage = preg_match('~/dashboard/~i', $akBodyScript) === 1 || str_ends_with($akBodyScript, '/fm_dashboard.php');
+?>
+<body<?php echo $akIsDashboardPage ? ' class="ak-dashboard"' : ''; ?>>
 
 
 <div class="app-wrapper">
