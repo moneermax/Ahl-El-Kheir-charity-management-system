@@ -9,7 +9,7 @@ declare(strict_types=1);
 
 define('APP_NAME', 'Ahl El Kheir');
 define('APP_NAME_AR', 'أهل الخير');
-define('APP_ENV', 'development');
+require_once __DIR__ . '/environment.php';
 
 /* System-wide monetary configuration. */
 define('APP_CURRENCY_CODE', 'SDG');
@@ -64,17 +64,7 @@ if ($appBasePath === '//') $appBasePath = '/';
 define('APP_BASE_PATH', $appBasePath);
 define('APP_URL', $appScheme . '://' . $appHost . APP_BASE_PATH);
 
-/*
-|--------------------------------------------------------------------------
-| Database
-|--------------------------------------------------------------------------
-*/
-define('DB_HOST', '127.0.0.1');
-define('DB_PORT', '3306');
-define('DB_NAME', 'ahl_el_kheir');
-define('DB_USER', 'root');
-define('DB_PASS', '');
-
+/* Database connection settings are loaded by config/environment.php. */
 /* Tables */
 define('TABLE_USERS', 'users');
 define('TABLE_ROLES', 'roles');
