@@ -83,7 +83,7 @@ window.AK_BACK_FALLBACK=<?php echo json_encode(APP_URL . dashboard_for_role(curr
 <script src="<?php echo asset('js/notification_unread_indicator.js'); ?>"></script>
 <script src="<?php echo asset('js/transaction_details_localization.js'); ?>"></script>
 <?php if (($active ?? '') === 'fm_dashboard'): ?><script src="<?php echo asset('js/fm_dashboard_layout.js'); ?>"></script><?php endif; ?>
-<?php if (($active ?? '') === 'fm_dashboard'): ?><script src="<?php echo asset('js/fina_dashboard_widget.js'); ?>"></script><?php endif; ?>
+
 <script>
 (function(){
     var btn = document.getElementById('akSidebarToggle');
