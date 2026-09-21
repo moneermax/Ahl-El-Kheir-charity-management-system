@@ -331,7 +331,7 @@ $recentJournals = dbFetchAll("SELECT je.entry_code, je.entry_date, je.descriptio
 .ak-fm-action-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.75rem; margin:0 auto 1.25rem; max-width:960px; }
 .ak-fm-action-card { min-height:104px; height:104px; border:0; border-radius:10px; box-shadow:0 2px 8px rgba(10,31,68,.08); text-decoration:none; color:inherit; background:#fff; display:flex; align-items:center; justify-content:center; transition:transform .18s,box-shadow .18s; }
 .ak-fm-action-card:hover { transform:translateY(-3px); box-shadow:0 5px 14px rgba(10,31,68,.14); color:inherit; }
-.ak-fm-action-icon { font-size:1.45rem; margin-bottom:.35rem; display:flex; align-items:center; justify-content:center; min-height:38px; }\n.ak-fm-action-fina-logo { width:38px; height:38px; object-fit:contain; border-radius:7px; background:#fff; border:1px solid #e9ecef; padding:2px; display:block; margin:0 auto .35rem; }
+.ak-fm-action-icon { font-size:1.45rem; margin-bottom:.35rem; display:flex; align-items:center; justify-content:center; min-height:38px; }\n.ak-fm-action-fina-logo { width:38px !important; height:38px !important; max-width:38px !important; max-height:38px !important; object-fit:contain; border-radius:7px; background:#fff; border:1px solid #e9ecef; padding:2px; display:block; margin:0 auto .35rem; box-sizing:border-box; }
 .ak-fm-action-title { font-size:.82rem; font-weight:700; line-height:1.35; }
 .ak-fm-action-desc { font-size:.66rem; line-height:1.3; color:#6c757d; margin-top:.18rem; }
 .ak-fm-action-card.ak-fm-action-1 { border-top:3px solid #d3701f; }
