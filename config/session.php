@@ -10,7 +10,7 @@ if (!class_exists('Session', false)) {
                     'lifetime' => 0,
                     'path' => '/',
                     'domain' => '',
-                    'secure' => false,
+                    'secure' => (defined('APP_ENV') && APP_ENV === 'production'),
                     'httponly' => true,
                     'samesite' => 'Lax',
                 ]);
