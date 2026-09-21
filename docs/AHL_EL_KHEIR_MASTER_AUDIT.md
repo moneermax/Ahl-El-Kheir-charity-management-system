@@ -1194,3 +1194,25 @@ Outline buttons inside these blue title bars are explicitly kept white/contrasti
 ## Evidence boundary
 
 This review establishes what is present in the repository. It does **not** mark the new i18n coverage, Home shortcut, or section-title changes as runtime-verified. Local runtime testing remains the authority for behavioral/visual acceptance.
+
+# 15. Hosting Database Compatibility Rule — 2026-09-21
+
+## Permanent rule: no database triggers or views
+
+> **No MySQL/MariaDB triggers or views may ever be added to the Ahl El Kheir database again.**
+
+Business logic that would otherwise be implemented through database triggers must be implemented and enforced in the appropriate procedural PHP workflow, with server-side validation and authorization preserved. Reporting/query logic that would otherwise use database views must remain in PHP/query code using the real underlying tables and relationships.
+
+Stored procedures, stored functions, and scheduled database events are likewise not part of the hosting-compatible application architecture unless this rule is explicitly revised after a future hosting/platform decision.
+
+### Hosting migration requirement
+
+The database export used for hosting must contain tables, columns, indexes, constraints, required reference data, and application data, but must not attempt to create unsupported triggers or views.
+
+The original development database must not silently lose business protections when database triggers are removed. Before removing or replacing any trigger-derived behavior, inspect the trigger definition and identify the corresponding PHP workflow that must enforce the same rule.
+
+### Current 2026-09-21 inventory checkpoint
+
+The current repository search found no application PHP page containing CREATE TRIGGER or CREATE VIEW, and the current database/ahl_el_kheir.sql export now contains no CREATE TRIGGER or CREATE VIEW statements. The previously observed attendance trigger import failure therefore belongs to the earlier database export and is not to be reintroduced into a future dump.
+
+This rule applies to all future schema changes and migrations. A migration that introduces a trigger or view is considered incompatible with the project's hosting baseline and must not be added.
