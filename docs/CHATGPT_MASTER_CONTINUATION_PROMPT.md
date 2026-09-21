@@ -845,3 +845,8 @@ The repository checkpoint currently being consolidated is 4a7982a2f7ca8313188703
 Before any schema migration or database export, inspect it for `CREATE TRIGGER`, `CREATE VIEW`, `CREATE PROCEDURE`, `CREATE FUNCTION`, and `CREATE EVENT`. A migration/export containing these objects is not acceptable for the current hosting baseline.
 
 When replacing an old trigger, do not merely remove it: inspect its business rule and verify that the responsible PHP workflow enforces the same rule.
+
+
+## 2026-09-21 — Projects Module Audit Continuation
+
+The Projects module is now an active audit area. Read `docs/PROJECTS_MODULE_AUDIT_AND_REMEDIATION_PLAN.md` before changing Projects code. First-pass findings include non-transactional project creation, inconsistent portfolio/detail funding totals, read-time lifecycle writes, count-based project codes, server-side validation gaps, upload-size validation, transaction-boundary review, and expense separation-of-duties review. Inspect current code/schema first; do not assume any finding is already fixed. No Projects code has been changed yet.
