@@ -356,7 +356,24 @@ Active accounting/disbursement/sponsor-payment review paths use the event/refere
 
 `config/messaging.php::send_system_notification()` remains a legacy/general compatibility helper. It accepts type/reference arguments but does not fully persist them. No reliable active production caller was established, so it has not been modernized speculatively.
 
-### Notification next work
+### Project submission notification — fixed 2026-09-21
+
+The Projects workflow had a specific notification gap: `modules/projects/view.php` changed `project_approval.approval_status` from `draft/rejected` to `submitted`, recorded the audit event, and flashed success, but did not create a system notification for Financial Manager users.
+
+Root cause: the project submission handler had no notification call. The existing notification infrastructure was already capable of workflow/event references and active-recipient selection, so no new notification table or schema change was required.
+
+Implementation:
+- Reused `modules/accounting/lib_transaction_review.php::ak_transaction_review_notify_fm_event()` rather than creating a second notification mechanism.
+- Recipients are selected by the existing helper as active users whose role code is `financial_manager`, `fm`, or `finance`.
+- Event/reference: `project_submission` + the project ID.
+- Notification identifies the project name and project code and links to `modules/projects/view.php?id=<project_id>`, where the existing FM review controls are displayed for a submitted project.
+- Delivery is isolated from the completed project state transition. The existing event-aware helper suppresses an equivalent unread notification, while a later resubmission after the previous notification has been read can generate a fresh notification.
+
+Code commit: `951dec73f88326f8b516dca7b5e4732329d53de7`.
+
+Runtime certification remains dependent on the local XAMPP test described in the current continuation task; no browser/runtime result is claimed here.
+
+## Notification next work
 
 - Establish reliable caller evidence for the legacy generic helper if possible.
 - Continue targeted source review only where repository evidence is reliable.
