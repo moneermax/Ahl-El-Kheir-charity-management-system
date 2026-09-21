@@ -204,11 +204,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
              */
             } elseif (
                 $_FILES['avatar']['size'] >
-                2 * 1024 * 1024
+                10 * 1024 * 1024
             ) {
 
                 $errors[] =
-                    'حجم الصورة يجب ألا يتجاوز 2MB.';
+                    'حجم الصورة يجب ألا يتجاوز 10MB.';
 
 
             } else {
