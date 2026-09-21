@@ -197,3 +197,26 @@ Code commit: `951dec73f88326f8b516dca7b5e4732329d53de7`.
 The remaining acceptance step is local XAMPP/browser verification: submit a project as Project Manager, confirm `submitted`, confirm the active FM recipient sees the notification in the existing bell/page UI, open it and verify the project destination, then verify refresh/reload does not create duplicates and that a rejection/resubmission behaves according to the existing unread/read deduplication rule.
 
 No runtime result is recorded here until that local test is actually performed.
+
+
+## 2026-09-21 — FM → GM project approval notification fixed
+
+A second Projects notification gap was identified during runtime testing. After the Financial Manager changed a project's approval state from `submitted` to `fm_approved`, the business workflow completed correctly but the General Manager was not notified.
+
+### Implementation
+
+The smallest safe fix was applied in `modules/projects/view.php`:
+- reuse the existing notification writer `ak_transaction_review_notify_event()`;
+- select only active users with the existing `general_manager` role code;
+- send the project name and project code with the message that the project was financially approved and is awaiting final GM approval;
+- link directly to the existing project view;
+- use project ID + reference type `project_fm_approval` for event-aware deduplication;
+- isolate notification failures so the completed FM approval is never rolled back.
+
+No notification table, column, helper system, or database change was introduced.
+
+Code commit: `b7a655512c1234fb1459c068aba07e494355f023` — **Notify GM when project is financially approved**.
+
+### Runtime verification status
+
+Not yet runtime-tested. The next controlled test is Project 6: after pulling the commit, verify that FM approval succeeds and the active General Manager receives and can open the notification. Do not repeat the already-passed Project Manager → FM notification test unless a regression is observed.
