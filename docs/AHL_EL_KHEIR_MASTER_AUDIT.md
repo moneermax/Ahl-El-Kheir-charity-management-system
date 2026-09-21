@@ -1216,3 +1216,34 @@ The original development database must not silently lose business protections wh
 The current repository search found no application PHP page containing CREATE TRIGGER or CREATE VIEW, and the current database/ahl_el_kheir.sql export now contains no CREATE TRIGGER or CREATE VIEW statements. The previously observed attendance trigger import failure therefore belongs to the earlier database export and is not to be reintroduced into a future dump.
 
 This rule applies to all future schema changes and migrations. A migration that introduces a trigger or view is considered incompatible with the project's hosting baseline and must not be added.
+
+
+# 2026-09-21 — Projects Module Deep Audit Started
+
+A dedicated page-by-page/static review of the Organization Projects module has started. The current repository was inspected rather than relying on older audit assumptions. The dedicated execution plan is documented in `docs/PROJECTS_MODULE_AUDIT_AND_REMEDIATION_PLAN.md`.
+
+## Current findings
+
+High-priority findings:
+1. New-project creation is a multi-table write sequence without one enclosing transaction; partial project state is possible if a later write fails.
+2. `modules/projects/index.php` calculates posted funding allocations differently from `modules/projects/project_lib.php`; the portfolio query does not exclude allocation rows already represented by posted transactions, while the shared helper does. This can produce inconsistent funded totals.
+
+Medium-priority findings:
+3. `modules/projects/view.php` performs lifecycle synchronization and closure-total updates during GET rendering, so a read can mutate `project_lifecycle`.
+4. Project-code generation uses a count-based sequence and requires schema/constraint verification before deciding on a replacement.
+5. General project editing can alter important project/financial basis fields after workflow activity; the intended business rule must be verified before adding restrictions.
+6. Several project POST handlers require a full server-side validation review independent of HTML/JavaScript constraints.
+7. Project document upload needs an explicit application-level size limit consistent with current deployment policy.
+8. Rejection/return actions and required reasons require field-level server-side validation review.
+9. Budget/funding/approval multi-step mutations require transaction-boundary review.
+10. Project-expense separation of duties requires explicit role-matrix verification before any authorization change.
+
+## Audit boundaries
+
+No Projects code was changed as part of this first-pass audit. No schema change was made. Existing test evidence is protected. The permanent no-trigger/no-view/no-stored-routine rule remains in force.
+
+## Planned sequence
+
+Static completeness → schema/reference verification → smallest safe data-integrity fixes → validation/authorization hardening → runtime workflow → accounting reconciliation → documentation/acceptance.
+
+Every fix must be runtime-verified before being marked complete. Existing Back/sidebar/header behavior is preserved unless a Projects-specific regression is demonstrated.
