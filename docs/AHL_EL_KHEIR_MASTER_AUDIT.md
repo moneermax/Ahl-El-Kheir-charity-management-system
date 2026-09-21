@@ -1247,3 +1247,12 @@ No Projects code was changed as part of this first-pass audit. No schema change 
 Static completeness → schema/reference verification → smallest safe data-integrity fixes → validation/authorization hardening → runtime workflow → accounting reconciliation → documentation/acceptance.
 
 Every fix must be runtime-verified before being marked complete. Existing Back/sidebar/header behavior is preserved unless a Projects-specific regression is demonstrated.
+
+
+## Projects remediation update — 2026-09-21
+- Atomic new-project creation added in `modules/projects/form.php`.
+- Portfolio funding totals aligned with the authoritative posted-allocation exclusion rule.
+- Project detail GET no longer mutates lifecycle/closure totals; closure synchronization remains in the closure POST workflow.
+- Added server-side validation for project team sections, labor enumerations, progress range, beneficiary inputs, document rejection reason, and a 10 MB project-document limit.
+- Runtime certification remains pending; project-code uniqueness/concurrency still requires verification against the actual deployed schema.
+- Remediation commits: `251c7c4`, `5bb36f8`, `af59a1b`.
