@@ -1344,90 +1344,115 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             <?php endif; ?>
 
 
-            <div class="row g-3">
+            <style>
+                .project-form-section {
+                    border: 1px solid rgba(0,0,0,.08);
+                    border-radius: .65rem;
+                    padding: 1rem;
+                    background: #fff;
+                }
+                .project-form-section-title {
+                    display: flex;
+                    align-items: center;
+                    gap: .5rem;
+                    margin: 0 0 .9rem;
+                    padding-bottom: .55rem;
+                    border-bottom: 1px solid rgba(0,0,0,.08);
+                    font-size: 1rem;
+                    font-weight: 700;
+                }
+                .project-field .form-label {
+                    margin-bottom: .3rem;
+                    font-size: .88rem;
+                    font-weight: 600;
+                }
+                .project-field .form-control,
+                .project-field .form-select {
+                    min-height: 40px;
+                }
+                .project-field textarea.form-control {
+                    min-height: 78px;
+                    resize: vertical;
+                }
+                .project-code-box {
+                    background: #f8f9fa;
+                    color: #6c757d;
+                    font-weight: 600;
+                }
+                .project-help {
+                    margin-top: .3rem;
+                    font-size: .78rem;
+                    color: #6c757d;
+                }
+                .budget-line-item {
+                    background: #f8f9fa;
+                }
+                @media (max-width: 767.98px) {
+                    .project-form-section {
+                        padding: .8rem;
+                    }
+                }
+            </style>
 
-                <div class="col-md-4 order-0">
-                    <div class="row align-items-center g-2">
-                        <div class="col-sm-5">
-                            <label class="form-label mb-0">كود المشروع</label>
-                        </div>
-                        <div class="col-sm-7">
-                            <div class="form-control bg-light text-muted" aria-readonly="true">
+            <div class="d-flex flex-column gap-3">
+
+                <section class="project-form-section">
+                    <h5 class="project-form-section-title">
+                        <i class="fas fa-circle-info text-primary"></i>
+                        البيانات الأساسية
+                    </h5>
+
+                    <div class="row g-3">
+                        <div class="col-md-4 project-field">
+                            <label class="form-label">كود المشروع</label>
+                            <div class="form-control project-code-box" aria-readonly="true">
                                 <?php echo $id ? e($project['project_code'] ?? 'سيُنشأ تلقائياً') : 'سيُنشأ تلقائياً عند إنشاء المشروع'; ?>
                             </div>
+                            <div class="project-help">يتم إنشاء الكود تلقائياً ولا يمكن تعديله.</div>
                         </div>
-                    </div>
-                    <div class="form-text text-end">يتم إنشاء الكود تلقائياً ولا يمكن تعديله.</div>
-                </div>
 
-                <div class="col-md-8">
-                    <div class="row align-items-center g-2">
-                        <div class="col-sm-3">
-                            <label class="form-label mb-0">اسم المشروع *</label>
-                        </div>
-                        <div class="col-sm-9">
+                        <div class="col-md-8 project-field">
+                            <label class="form-label">اسم المشروع <span class="text-danger">*</span></label>
                             <input type="text" name="name" class="form-control" required value="<?php echo e($input['name']); ?>">
                         </div>
-                    </div>
-                </div>
 
-                <div class="col-md-4">
-                    <div class="row align-items-center g-2">
-                        <div class="col-sm-5"><label class="form-label mb-0">نوع المشروع</label></div>
-                        <div class="col-sm-7">
+                        <div class="col-md-4 project-field">
+                            <label class="form-label">نوع المشروع</label>
                             <input type="text" name="project_type" class="form-control" placeholder="مثال: تأهيل مركز مجتمعي" value="<?php echo e($input['project_type']); ?>">
                         </div>
-                    </div>
-                </div>
 
-                <div class="col-md-4">
-                    <div class="row align-items-center g-2">
-                        <div class="col-sm-5"><label class="form-label mb-0">تاريخ البداية</label></div>
-                        <div class="col-sm-7"><input type="date" name="start_date" class="form-control" value="<?php echo e($input['start_date']); ?>"></div>
-                    </div>
-                </div>
-
-                <div class="col-md-4">
-                    <div class="row align-items-center g-2">
-                        <div class="col-sm-5"><label class="form-label mb-0">تاريخ النهاية</label></div>
-                        <div class="col-sm-7"><input type="date" name="end_date" class="form-control" value="<?php echo e($input['end_date']); ?>"></div>
-                    </div>
-                </div>
-
-                <div class="col-md-4">
-                    <div class="row align-items-center g-2">
-                        <div class="col-sm-4"><label class="form-label mb-0">الموقع</label></div>
-                        <div class="col-sm-8"><input type="text" name="location" class="form-control" value="<?php echo e($input['location']); ?>"></div>
-                    </div>
-                </div>
-
-                <div class="col-md-4">
-                    <div class="row align-items-center g-2">
-                        <div class="col-sm-4"><label class="form-label mb-0">المدينة</label></div>
-                        <div class="col-sm-8"><input type="text" name="city" class="form-control" value="<?php echo e($input['city']); ?>"></div>
-                    </div>
-                </div>
-
-                <div class="col-md-4">
-                    <div class="row align-items-center g-2">
-                        <div class="col-sm-4"><label class="form-label mb-0">المنطقة</label></div>
-                        <div class="col-sm-8"><input type="text" name="district" class="form-control" value="<?php echo e($input['district']); ?>"></div>
-                    </div>
-                </div>
-
-                <div class="col-md-4">
-                    <div class="row align-items-center g-2">
-                        <div class="col-sm-5"><label class="form-label mb-0">عدد المستفيدين</label></div>
-                        <div class="col-sm-7"><input type="number" min="0" name="total_beneficiaries" class="form-control" value="<?php echo e($input['total_beneficiaries']); ?>"></div>
-                    </div>
-                </div>
-
-                <div class="col-md-8">
-                    <div class="row align-items-center g-2">
-                        <div class="col-sm-3">
-                            <label class="form-label mb-0">مشرف المشروع الأساسي<?php echo !$id ? ' *' : ''; ?></label>
+                        <div class="col-md-4 project-field">
+                            <label class="form-label">تاريخ البداية</label>
+                            <input type="date" name="start_date" class="form-control" value="<?php echo e($input['start_date']); ?>">
                         </div>
-                        <div class="col-sm-9">
+
+                        <div class="col-md-4 project-field">
+                            <label class="form-label">تاريخ النهاية</label>
+                            <input type="date" name="end_date" class="form-control" value="<?php echo e($input['end_date']); ?>">
+                        </div>
+
+                        <div class="col-md-6 project-field">
+                            <label class="form-label">الموقع</label>
+                            <input type="text" name="location" class="form-control" value="<?php echo e($input['location']); ?>">
+                        </div>
+
+                        <div class="col-md-3 project-field">
+                            <label class="form-label">المدينة</label>
+                            <input type="text" name="city" class="form-control" value="<?php echo e($input['city']); ?>">
+                        </div>
+
+                        <div class="col-md-3 project-field">
+                            <label class="form-label">المنطقة</label>
+                            <input type="text" name="district" class="form-control" value="<?php echo e($input['district']); ?>">
+                        </div>
+
+                        <div class="col-md-4 project-field">
+                            <label class="form-label">عدد المستفيدين</label>
+                            <input type="number" min="0" name="total_beneficiaries" class="form-control" value="<?php echo e($input['total_beneficiaries']); ?>">
+                        </div>
+
+                        <div class="col-md-8 project-field">
+                            <label class="form-label">مشرف المشروع الأساسي<?php echo !$id ? ' <span class="text-danger">*</span>' : ''; ?></label>
                             <select name="supervisor_user_id" class="form-select" <?php echo !$id ? 'required' : ''; ?>>
                                 <option value="">اختر مشرف المشروع</option>
                                 <?php foreach ($supervisors as $supervisor): ?>
@@ -1436,175 +1461,180 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                                     </option>
                                 <?php endforeach; ?>
                             </select>
+                            <div class="project-help">يتولى المشرف متابعة التنفيذ والتقدم والمستفيدين والعمالة الخارجية وطلبات المصروفات.</div>
+                        </div>
+
+                        <div class="col-12 project-field">
+                            <label class="form-label">الوصف</label>
+                            <textarea name="description" class="form-control" rows="3"><?php echo e($input['description']); ?></textarea>
                         </div>
                     </div>
-                    <div class="form-text">يتولى المشرف متابعة التنفيذ والتقدم والمستفيدين والعمالة الخارجية وطلبات المصروفات.</div>
-                </div>
+                </section>
 
-                <div class="col-12">
-                    <label class="form-label">الوصف</label>
-                    <textarea name="description" class="form-control" rows="2"><?php echo e($input['description']); ?></textarea>
-                </div>
+                <section class="project-form-section">
+                    <h5 class="project-form-section-title">
+                        <i class="fas fa-bullseye text-primary"></i>
+                        نطاق المشروع وأهدافه
+                    </h5>
 
-                <div class="col-md-6">
-                    <label class="form-label">الأهداف</label>
-                    <textarea name="objectives" class="form-control" rows="2"><?php echo e($input['objectives']); ?></textarea>
-                </div>
+                    <div class="row g-3">
+                        <div class="col-md-6 project-field">
+                            <label class="form-label">الأهداف</label>
+                            <textarea name="objectives" class="form-control" rows="3"><?php echo e($input['objectives']); ?></textarea>
+                        </div>
 
-                <div class="col-md-6">
-                    <label class="form-label">مبررات المشروع</label>
-                    <textarea name="justification" class="form-control" rows="2"><?php echo e($input['justification']); ?></textarea>
-                </div>
+                        <div class="col-md-6 project-field">
+                            <label class="form-label">مبررات المشروع</label>
+                            <textarea name="justification" class="form-control" rows="3"><?php echo e($input['justification']); ?></textarea>
+                        </div>
 
-                <div class="col-md-6">
-                    <label class="form-label">النتائج المتوقعة</label>
-                    <textarea name="expected_outcomes" class="form-control" rows="2"><?php echo e($input['expected_outcomes']); ?></textarea>
-                </div>
+                        <div class="col-md-6 project-field">
+                            <label class="form-label">النتائج المتوقعة</label>
+                            <textarea name="expected_outcomes" class="form-control" rows="3"><?php echo e($input['expected_outcomes']); ?></textarea>
+                        </div>
 
-                <div class="col-md-6">
-                    <label class="form-label">وصف الفئة المستفيدة</label>
-                    <textarea name="target_beneficiary_description" class="form-control" rows="2"><?php echo e($input['target_beneficiary_description']); ?></textarea>
-                </div>
-
-                <div class="col-md-6">
-                    <div class="row align-items-center g-2">
-                        <div class="col-sm-4"><label class="form-label mb-0">الجهة المنفذة أو الشريك</label></div>
-                        <div class="col-sm-8">
-                            <textarea name="implementing_partner" class="form-control" rows="2" maxlength="255" placeholder="أدخل كل شريك في سطر مستقل"><?php echo e($input['implementing_partner']); ?></textarea>
+                        <div class="col-md-6 project-field">
+                            <label class="form-label">وصف الفئة المستفيدة</label>
+                            <textarea name="target_beneficiary_description" class="form-control" rows="3"><?php echo e($input['target_beneficiary_description']); ?></textarea>
                         </div>
                     </div>
-                    <div class="form-text">يمكن إدخال أكثر من شريك، شريك واحد في كل سطر.</div>
-                </div>
+                </section>
 
-                <div class="col-md-6">
-                    <div class="row align-items-center g-2">
-                        <div class="col-sm-4"><label class="form-label mb-0">طريقة الشراء أو التوريد</label></div>
-                        <div class="col-sm-8">
-                            <textarea name="procurement_method" class="form-control" rows="2" maxlength="100" placeholder="مثال: شراء مباشر&#10;مناقصة"><?php echo e($input['procurement_method']); ?></textarea>
+                <section class="project-form-section">
+                    <h5 class="project-form-section-title">
+                        <i class="fas fa-people-group text-primary"></i>
+                        التنفيذ والشركاء
+                    </h5>
+
+                    <div class="row g-3">
+                        <div class="col-md-6 project-field">
+                            <label class="form-label">الجهة المنفذة أو الشركاء</label>
+                            <textarea name="implementing_partner" class="form-control" rows="3" maxlength="255" placeholder="شريك واحد في كل سطر"><?php echo e($input['implementing_partner']); ?></textarea>
+                            <div class="project-help">يمكن إدخال أكثر من شريك، شريك واحد في كل سطر.</div>
+                        </div>
+
+                        <div class="col-md-6 project-field">
+                            <label class="form-label">طرق الشراء أو التوريد</label>
+                            <textarea name="procurement_method" class="form-control" rows="3" maxlength="100" placeholder="طريقة واحدة في كل سطر"><?php echo e($input['procurement_method']); ?></textarea>
+                            <div class="project-help">يمكن إدخال أكثر من طريقة، كل طريقة في سطر مستقل.</div>
+                        </div>
+
+                        <div class="col-md-8 project-field">
+                            <label class="form-label">المتطلبات الحكومية الأولية</label>
+                            <textarea name="government_requirements" class="form-control" rows="3"><?php echo e($input['government_requirements']); ?></textarea>
+                        </div>
+
+                        <div class="col-md-4 project-field">
+                            <label class="form-label">الرسوم الحكومية <span class="text-muted">(SDG)</span></label>
+                            <input type="number" step="0.01" min="0" name="government_fees" class="form-control" value="<?php echo e($input['government_fees']); ?>" placeholder="0.00">
+                            <div class="project-help">يمكن تركه فارغاً إذا لم توجد رسوم.</div>
+                        </div>
+
+                        <div class="col-md-6 project-field">
+                            <label class="form-label">خطة الاستدامة</label>
+                            <textarea name="sustainability_plan" class="form-control" rows="3"><?php echo e($input['sustainability_plan']); ?></textarea>
+                        </div>
+
+                        <div class="col-md-6 project-field">
+                            <label class="form-label">المخاطر وإجراءات الحد منها</label>
+                            <textarea name="risk_mitigation" class="form-control" rows="3"><?php echo e($input['risk_mitigation']); ?></textarea>
+                        </div>
+
+                        <div class="col-md-6 project-field">
+                            <label class="form-label">قيود المانحين أو التمويل</label>
+                            <textarea name="donor_restrictions" class="form-control" rows="3"><?php echo e($input['donor_restrictions']); ?></textarea>
+                        </div>
+
+                        <div class="col-md-6 project-field">
+                            <label class="form-label">ملاحظات داخلية</label>
+                            <textarea name="notes" class="form-control" rows="3"><?php echo e($input['notes']); ?></textarea>
                         </div>
                     </div>
-                    <div class="form-text">يمكن إدخال أكثر من طريقة، كل طريقة في سطر مستقل (حتى 100 حرفاً).</div>
-                </div>
+                </section>
 
-                <div class="col-md-6">
-                    <div class="row align-items-center g-2">
-                        <div class="col-sm-4"><label class="form-label mb-0">متطلبات حكومية أولية</label></div>
-                        <div class="col-sm-8"><textarea name="government_requirements" class="form-control" rows="2"><?php echo e($input['government_requirements']); ?></textarea></div>
+                <section class="project-form-section">
+                    <h5 class="project-form-section-title">
+                        <i class="fas fa-address-book text-primary"></i>
+                        بيانات الاتصال
+                    </h5>
+
+                    <div class="row g-3">
+                        <div class="col-md-4 project-field">
+                            <label class="form-label">جهة الاتصال</label>
+                            <input type="text" name="contact_person" class="form-control" value="<?php echo e($input['contact_person']); ?>">
+                        </div>
+
+                        <div class="col-md-4 project-field">
+                            <label class="form-label">هاتف الاتصال</label>
+                            <input type="text" name="contact_phone" class="form-control" value="<?php echo e($input['contact_phone']); ?>">
+                        </div>
+
+                        <div class="col-md-4 project-field">
+                            <label class="form-label">البريد الإلكتروني</label>
+                            <input type="email" name="contact_email" class="form-control" value="<?php echo e($input['contact_email']); ?>">
+                        </div>
                     </div>
-                </div>
-
-                <div class="col-md-6">
-                    <div class="row align-items-center g-2">
-                        <div class="col-sm-4"><label class="form-label mb-0">الرسوم الحكومية</label></div>
-                        <div class="col-sm-8"><input type="number" step="0.01" min="0" name="government_fees" class="form-control" value="<?php echo e($input['government_fees']); ?>" placeholder="0.00"></div>
-                    </div>
-                    <div class="form-text">بالجنيه السوداني، ويمكن تركه فارغاً إذا لم توجد رسوم.</div>
-                </div>
-
-                <div class="col-md-4">
-                    <div class="row align-items-center g-2">
-                        <div class="col-sm-4"><label class="form-label mb-0">جهة الاتصال</label></div>
-                        <div class="col-sm-8"><input type="text" name="contact_person" class="form-control" value="<?php echo e($input['contact_person']); ?>"></div>
-                    </div>
-                </div>
-
-                <div class="col-md-4">
-                    <div class="row align-items-center g-2">
-                        <div class="col-sm-4"><label class="form-label mb-0">هاتف الاتصال</label></div>
-                        <div class="col-sm-8"><input type="text" name="contact_phone" class="form-control" value="<?php echo e($input['contact_phone']); ?>"></div>
-                    </div>
-                </div>
-
-                <div class="col-md-4">
-                    <div class="row align-items-center g-2">
-                        <div class="col-sm-4"><label class="form-label mb-0">البريد الإلكتروني</label></div>
-                        <div class="col-sm-8"><input type="email" name="contact_email" class="form-control" value="<?php echo e($input['contact_email']); ?>"></div>
-                    </div>
-                </div>
-
-                <div class="col-md-6">
-                    <label class="form-label">خطة الاستدامة</label>
-                    <textarea name="sustainability_plan" class="form-control" rows="2"><?php echo e($input['sustainability_plan']); ?></textarea>
-                </div>
-
-                <div class="col-md-6">
-                    <label class="form-label">المخاطر وإجراءات الحد منها</label>
-                    <textarea name="risk_mitigation" class="form-control" rows="2"><?php echo e($input['risk_mitigation']); ?></textarea>
-                </div>
-
-                <div class="col-md-6">
-                    <label class="form-label">قيود المانحين أو التمويل</label>
-                    <textarea name="donor_restrictions" class="form-control" rows="2"><?php echo e($input['donor_restrictions']); ?></textarea>
-                </div>
-
-                <div class="col-md-6">
-                    <label class="form-label">ملاحظات داخلية</label>
-                    <textarea name="notes" class="form-control" rows="2"><?php echo e($input['notes']); ?></textarea>
-                </div>
+                </section>
 
                 <?php if (!$id): ?>
+                <section class="project-form-section">
+                    <h5 class="project-form-section-title">
+                        <i class="fas fa-coins text-primary"></i>
+                        الميزانية التقديرية والميزانية الأولية
+                    </h5>
 
-                <div class="col-12">
-                    <hr>
-                    <h5><i class="fas fa-coins me-2"></i>الميزانية التقديرية وبنود الميزانية الأولية</h5>
-                    <p class="text-muted small mb-2">العملة ثابتة على الجنيه السوداني (SDG)، ويجب أن يساوي إجمالي بنود الميزانية الميزانية التقديرية تماماً.</p>
+                    <p class="text-muted small mb-3">
+                        العملة ثابتة على الجنيه السوداني (SDG)، ويجب أن يساوي إجمالي بنود الميزانية الميزانية التقديرية تماماً.
+                    </p>
 
-                    <div class="row g-2 mb-3">
-                        <div class="col-md-4">
-                            <div class="row align-items-center g-2">
-                                <div class="col-sm-5"><label class="form-label mb-0">الميزانية التقديرية</label></div>
-                                <div class="col-sm-7"><input type="number" step="0.01" min="0" name="target_amount" id="target_amount" class="form-control" value="<?php echo e($input['target_amount']); ?>"></div>
-                            </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-5 project-field">
+                            <label class="form-label">الميزانية التقديرية <span class="text-danger">*</span></label>
+                            <input type="number" step="0.01" min="0" name="target_amount" id="target_amount" class="form-control" value="<?php echo e($input['target_amount']); ?>">
                         </div>
-                        <div class="col-md-4">
-                            <div class="form-control bg-light text-muted">العملة: الجنيه السوداني (SDG)</div>
+
+                        <div class="col-md-3 project-field">
+                            <label class="form-label">العملة</label>
+                            <div class="form-control project-code-box">الجنيه السوداني (SDG)</div>
                         </div>
                     </div>
 
-                    <div id="budget-validation-message" class="alert alert-info py-2 d-none"></div>
-                </div>
+                    <div id="budget-validation-message" class="alert alert-info py-2 d-none mb-3"></div>
 
-                <div class="col-12" id="budget-lines-container">
-                    <div class="budget-line-item row g-2 mb-2 border rounded p-2 bg-light">
-                        <div class="col-md-4">
-                            <div class="row align-items-center g-2">
-                                <div class="col-sm-5"><label class="form-label small mb-0">فئة البند</label></div>
-                                <div class="col-sm-7"><input type="text" name="budget_lines[0][category]" class="form-control form-control-sm" placeholder="مثال: مواد بناء، عمالة، معدات" required></div>
+                    <div id="budget-lines-container">
+                        <div class="budget-line-item row g-2 mb-2 border rounded p-2">
+                            <div class="col-md-4 project-field">
+                                <label class="form-label small">فئة البند</label>
+                                <input type="text" name="budget_lines[0][category]" class="form-control form-control-sm" placeholder="مثال: مواد بناء، عمالة، معدات" required>
                             </div>
-                        </div>
-                        <div class="col-md-5">
-                            <div class="row align-items-center g-2">
-                                <div class="col-sm-4"><label class="form-label small mb-0">وصف البند</label></div>
-                                <div class="col-sm-8"><input type="text" name="budget_lines[0][description]" class="form-control form-control-sm" placeholder="وصف تفصيلي" required></div>
+                            <div class="col-md-5 project-field">
+                                <label class="form-label small">وصف البند</label>
+                                <input type="text" name="budget_lines[0][description]" class="form-control form-control-sm" placeholder="وصف تفصيلي" required>
                             </div>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="row align-items-center g-2">
-                                <div class="col-sm-6"><label class="form-label small mb-0">المبلغ التقديري</label></div>
-                                <div class="col-sm-6"><input type="number" step="0.01" min="0.01" name="budget_lines[0][amount]" class="form-control form-control-sm budget-amount" placeholder="0.00" required></div>
+                            <div class="col-md-2 project-field">
+                                <label class="form-label small">المبلغ التقديري</label>
+                                <input type="number" step="0.01" min="0.01" name="budget_lines[0][amount]" class="form-control form-control-sm budget-amount" placeholder="0.00" required>
                             </div>
-                        </div>
-                        <div class="col-md-1 d-flex align-items-center">
-                            <button type="button" class="btn btn-sm btn-outline-danger w-100 remove-budget-line" disabled title="حذف البند">
-                                <i class="fas fa-trash"></i>
-                            </button>
+                            <div class="col-md-1 d-flex align-items-end">
+                                <button type="button" class="btn btn-sm btn-outline-danger w-100 remove-budget-line" disabled title="حذف البند">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="col-12">
-                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="addBudgetLine()">
+                    <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="addBudgetLine()">
                         <i class="fas fa-plus me-1"></i>إضافة بند آخر
                     </button>
-                    <div class="mt-2 p-3 rounded border" id="budget-summary">
-                        <div class="row">
+
+                    <div class="mt-3 p-3 rounded border" id="budget-summary">
+                        <div class="row g-2">
                             <div class="col-md-4"><strong>الميزانية التقديرية:</strong> <span id="target-budget-display" class="fw-bold">0.00</span> <span class="text-muted">SDG</span></div>
                             <div class="col-md-4"><strong>إجمالي بنود الميزانية:</strong> <span id="total-budget-display" class="fs-5 fw-bold">0.00</span> <span class="text-muted">SDG</span></div>
                             <div class="col-md-4"><strong>الفرق:</strong> <span id="budget-difference-display" class="fs-5 fw-bold">0.00</span> <span class="text-muted">SDG</span></div>
                         </div>
                     </div>
-                </div>
-
+                </section>
                 <?php endif; ?>
 
             </div>
