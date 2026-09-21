@@ -4,7 +4,7 @@
 **Arabic name:** نظام أهل الخير لإدارة الجمعيات الخيرية  
 **Repository:** `moneermax/Ahl-El-Kheir-charity-management-system`  
 **Branch:** `main`  
-**Current checkpoint:** 2026-09-14  
+**Current checkpoint:** 2026-09-21  
 **Environment:** Windows / XAMPP / Apache / PHP 8.2 / MariaDB/MySQL  
 **Application style:** Procedural PHP + Bootstrap 5.3 RTL + Vanilla JavaScript + Font Awesome 6 + Cairo  
 **Document role:** **Single master audit record** for system review, architecture, Accounting Audit, Notification Audit, organizational lifecycle, HR navigation, completed evidence, open findings, and continuation rules.  
@@ -1160,3 +1160,37 @@ The audit is therefore reopened as a corrective phase, not as a restart of the n
 A module is not considered complete until every applicable page has exactly two Back buttons in the required positions, no duplicate generator is responsible for them, the Back destination preserves relevant list/search/filter context, and the shared sidebar still opens normally after navigation. Dashboards and previously excluded non-HTML endpoints remain out of scope.
 
 This corrective phase supersedes the earlier "audit complete" wording until the affected modules are re-verified.
+
+
+# 2026-09-21 — Repository changes review: i18n and dashboard visual consistency
+
+A repository-level review was completed for the six commits added after `642f7397f48c8ddb84315130ae32cf22847476b1`. The changes are coherent and confined to shared UI/i18n behavior plus removal of an obsolete dashboard file.
+
+## Internationalization implementation now present
+
+The repository now has a compatibility layer for legacy/static Arabic UI text while stable-key translation remains authoritative. The implementation includes:
+
+- `lang/bridge/ar_to_en.php` — large server-side Arabic→English compatibility bridge.
+- `lang/bridge/ar_to_en_js.php` — smaller browser-side dictionary for JavaScript/native dialogs.
+- `lang/bridge/ar_to_en_patterns.php` — patterns for text containing live values.
+- `lang/bridge/en_to_ar.php` — page-scoped English→Arabic compatibility mappings.
+- `lang/common_fixes_ar.php` and `lang/common_fixes_en.php` — common compatibility corrections.
+- `config/lang.php` — cached dictionaries, server/browser bridge loading, punctuation-tolerant core lookup, and reverse page-scoped lookup.
+- `assets/js/language.js` — matching punctuation-tolerant lookup and translation wrappers for native `alert()`, `confirm()`, and `prompt()` dialogs.
+- `tools/i18n_gap.php` — CLI gap-report tool.
+
+Stable-key catalogs remain the preferred source for new UI text. Compatibility bridges are a migration layer and must not be mistaken for a replacement for stable-key `t()` usage.
+
+## Dashboard/header visual consistency
+
+The shared header now provides a role-aware Home shortcut on non-dashboard pages. Dashboard pages are marked with `body.ak-dashboard`, allowing shared CSS to normalize section titles across the ten dashboards to a blue bar with white text. A subsequent shared rule also normalizes applicable `.card-header.bg-white`, `.card-header.bg-light`, and inline `#1b4d8f` section headers on other pages.
+
+Outline buttons inside these blue title bars are explicitly kept white/contrasting rather than inheriting the blue title color. This is a presentation rule only; it does not change workflow authorization.
+
+## Obsolete dashboard removal
+
+`sudo_dashboard.php` was removed from the repository in the reviewed change set. It should not be treated as an active dashboard or used as a navigation target. Any future reference to it should be verified against current routing before being restored.
+
+## Evidence boundary
+
+This review establishes what is present in the repository. It does **not** mark the new i18n coverage, Home shortcut, or section-title changes as runtime-verified. Local runtime testing remains the authority for behavioral/visual acceptance.
