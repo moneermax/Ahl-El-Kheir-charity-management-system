@@ -324,48 +324,13 @@ $recentJournals = dbFetchAll("SELECT je.entry_code, je.entry_date, je.descriptio
 .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 20px; }
 .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; }
 .fm-top-layout { margin-bottom: 20px; }
-.project-review-list { display: grid; gap: 16px; }
-.project-review-item { border: 1px solid #e5e7eb; border-radius: 12px; background: #fff; overflow: hidden; box-shadow: 0 1px 5px rgba(0,0,0,.04); }
-.project-review-item-head { display:flex; justify-content:space-between; align-items:flex-start; gap:14px; padding:14px 16px; background:#fbfcfe; border-bottom:1px solid #edf0f4; }
-.project-review-title { font-size:1rem; font-weight:700; color:#1b4d8f; }
-.project-review-code { font-size:.78rem; color:#6c757d; margin-top:3px; }
-.project-review-meta { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:12px; padding:14px 16px; border-bottom:1px solid #edf0f4; }
-.project-review-meta-item { min-width:0; }
-.project-review-meta-label { display:block; color:#7a828b; font-size:.72rem; margin-bottom:3px; }
-.project-review-meta-value { display:block; color:#26313d; font-size:.86rem; font-weight:700; overflow-wrap:anywhere; }
-.project-review-funding { padding:14px 16px; background:#fcfcfd; border-bottom:1px solid #edf0f4; }
-.project-review-funding-title { font-size:.84rem; font-weight:700; color:#1b4d8f; margin-bottom:10px; }
-.project-review-funding-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
-.project-review-account { border:1px solid #e5e7eb; border-radius:9px; padding:10px; background:#fff; }
-.project-review-account label { display:block; margin:0; }
-.project-review-account-name { display:block; font-size:.78rem; font-weight:700; color:#374151; margin-bottom:3px; }
-.project-review-account-available { display:block; font-size:.7rem; color:#6c757d; margin-bottom:7px; }
-.project-review-actions { display:flex; justify-content:flex-end; align-items:center; flex-wrap:wrap; gap:8px; padding:12px 16px; }
+.project-review-list { display: grid; gap: 12px; }
+.project-review-item { border: 1px solid #e5e7eb; border-radius: 10px; background: #fff; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.04); }
+.project-review-item-head { display:flex; justify-content:space-between; align-items:center; gap:14px; padding:12px 14px; }
+.project-review-title { font-size:.95rem; font-weight:700; color:#1b4d8f; }
+.project-review-code { font-size:.76rem; color:#6c757d; margin-top:2px; }
+.project-review-actions { display:flex; justify-content:flex-end; align-items:center; flex-wrap:wrap; gap:7px; padding:0 14px 12px; }
 .project-review-actions form { margin:0; }
-
-/* Original FM dashboard action-card design, now rendered server-side so
-   the global header is never used as a temporary navigation source. */
-.ak-fm-action-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.75rem; margin:0 auto 1.25rem; max-width:1180px; }
-.ak-fm-action-card { min-height:104px; height:104px; border:0; border-radius:10px; box-shadow:0 2px 8px rgba(10,31,68,.08); text-decoration:none; color:inherit; background:#fff; display:flex; align-items:center; justify-content:center; transition:transform .18s,box-shadow .18s; }
-.ak-fm-action-card:hover { transform:translateY(-3px); box-shadow:0 5px 14px rgba(10,31,68,.14); color:inherit; }
-.ak-fm-action-icon { font-size:1.45rem; margin-bottom:.35rem; display:flex; align-items:center; justify-content:center; min-height:38px; }
-.ak-fm-action-fina-logo { width:38px !important; height:38px !important; max-width:38px !important; max-height:38px !important; object-fit:contain; border-radius:7px; background:#fff; border:1px solid #e9ecef; padding:2px; display:block; margin:0 auto .35rem; box-sizing:border-box; }
-.ak-fm-action-title { font-size:.82rem; font-weight:700; line-height:1.35; }
-.ak-fm-action-desc { font-size:.66rem; line-height:1.3; color:#6c757d; margin-top:.18rem; }
-.ak-fm-action-card.ak-fm-action-1 { border-top:3px solid #d3701f; }
-.ak-fm-action-card.ak-fm-action-2 { border-top:3px solid #28a745; }
-.ak-fm-action-card.ak-fm-action-3 { border-top:3px solid #2195c4; }
-.ak-fm-action-card.ak-fm-action-4 { border-top:3px solid #ffc107; }
-.ak-fm-action-card.ak-fm-action-5 { border-top:3px solid #0d6efd; }
-.ak-fm-action-card.ak-fm-action-6 { border-top:3px solid #2daf79; }
-.ak-fm-action-card.ak-fm-action-7 { border-top:3px solid #6f42c1; }
-@media(max-width:991.98px) { .ak-fm-action-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
-@media(max-width:767.98px) { .ak-fm-action-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
-@media(max-width:420px) { .ak-fm-action-grid { grid-template-columns:1fr; } .ak-fm-action-card { height:96px; min-height:96px; } }
-
-.fm-top-right { align-self: start; min-width: 0; }
-.fm-top-right > .grid-4 { margin-bottom: 20px; }
-.fm-top-right > .fm-card { margin-bottom: 0; }
 @media (max-width: 991.98px) {
     .project-review-meta { grid-template-columns:repeat(2,minmax(0,1fr)); }
     .project-review-funding-grid { grid-template-columns:1fr; }
@@ -448,47 +413,9 @@ $fmActionDescriptions = [
                             <div class="project-review-item-head">
                                 <div>
                                     <div class="project-review-title"><?php echo e($projectRequest['project_name']); ?></div>
-                                    <div class="project-review-code"><code><?php echo e($projectRequest['project_code'] ?? ''); ?></code></div>
+                                    <div class="project-review-code">Project ID: <?php echo (int)$projectRequest['project_id']; ?> · <code><?php echo e($projectRequest['project_code'] ?? ''); ?></code></div>
                                 </div>
                                 <span class="badge-fm badge-amber"><?php echo number_format((float)$projectRequest['budget_amount'], 2); ?> <?php echo e($projectRequest['currency_code'] ?: t('fm.currency_sdg')); ?></span>
-                            </div>
-
-                            <div class="project-review-meta">
-                                <div class="project-review-meta-item">
-                                    <span class="project-review-meta-label"><?php echo e(t('fm.project_type')); ?></span>
-                                    <span class="project-review-meta-value"><?php echo e($projectRequest['project_type'] ?? '-'); ?></span>
-                                </div>
-                                <div class="project-review-meta-item">
-                                    <span class="project-review-meta-label"><?php echo e(t('fm.created_by')); ?></span>
-                                    <span class="project-review-meta-value"><?php echo e($projectRequest['submitted_by_name'] ?? '-'); ?></span>
-                                </div>
-                                <div class="project-review-meta-item">
-                                    <span class="project-review-meta-label"><?php echo e(t('fm.budget')); ?></span>
-                                    <span class="project-review-meta-value"><?php echo number_format((float)$projectRequest['budget_amount'], 2); ?> <?php echo e($projectRequest['currency_code'] ?: t('fm.currency_sdg')); ?></span>
-                                </div>
-                                <div class="project-review-meta-item">
-                                    <span class="project-review-meta-label"><?php echo e(t('fm.items')); ?></span>
-                                    <span class="project-review-meta-value"><?php echo (int)$projectRequest['budget_line_count']; ?> · <?php echo e(t('fm.version', ['version' => (int)$projectRequest['budget_version']])); ?></span>
-                                </div>
-                                <div class="project-review-meta-item">
-                                    <span class="project-review-meta-label"><?php echo e(t('fm.submission_date')); ?></span>
-                                    <span class="project-review-meta-value"><?php echo e($projectRequest['submitted_at'] ?? '-'); ?></span>
-                                </div>
-                            </div>
-
-                            <div class="project-review-funding">
-                                <div class="project-review-funding-title"><?php echo e(t('fm.funding_source_distribution')); ?></div>
-                                <div class="project-review-funding-grid">
-                                    <?php foreach ($fundingAccounts as $fundingAccount): $available = max(0, round((float)$fundingAccount['ledger_balance'] - (float)$fundingAccount['reserved_amount'], 2)); ?>
-                                        <div class="project-review-account">
-                                            <label>
-                                                <span class="project-review-account-name"><?php echo e($fundingAccount['code'] . ' — ' . ($fundingAccount['name_ar'] ?: $fundingAccount['name_en'])); ?></span>
-                                                <span class="project-review-account-available"><?php echo e(t('fm.available', ['amount' => number_format($available, 2)])); ?></span>
-                                                <input form="<?php echo e($approvalFormId); ?>" type="number" step="0.01" min="0" max="<?php echo e((string)$available); ?>" name="funding_amounts[<?php echo (int)$projectRequest['project_id']; ?>][<?php echo (int)$fundingAccount['id']; ?>]" class="form-control form-control-sm" value="0" placeholder="<?php echo e(t('fm.amount_from_account')); ?>">
-                                            </label>
-                                        </div>
-                                    <?php endforeach; ?>
-                                </div>
                             </div>
 
                             <div class="project-review-actions">
