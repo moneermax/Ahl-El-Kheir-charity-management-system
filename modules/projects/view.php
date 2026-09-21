@@ -2,6 +2,7 @@
 // modules/projects/view.php - Project profile, financial controls, documents, operations, closure
 require_once dirname(__DIR__, 2) . '/modules/projects/project_lib.php';
 require_once dirname(__DIR__, 2) . '/modules/accounting/lib.php';
+require_once dirname(__DIR__, 2) . '/modules/accounting/lib_transaction_review.php';
 Session::start();
 
 $id = (int)($_GET['id'] ?? $_POST['project_id'] ?? 0);
@@ -177,6 +178,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$approvalCheck || !in_array($approvalCheck['approval_status'], ['draft', 'rejected'], true)) throw new RuntimeException('المشروع ليس في حالة تسمح بالإرسال.');
             dbExecute("UPDATE project_approval SET approval_status = 'submitted', submitted_by = ?, submitted_at = NOW(), rejection_reason = NULL, fm_rejection_reason = NULL WHERE project_id = ?", [akp_user_id(), $id]);
             akp_audit('SUBMIT_APPROVAL', 'project_approval', $id, ['approval_status' => $approvalCheck['approval_status']], ['approval_status' => 'submitted']);
+
+            // Reuse the existing event-aware FM notification infrastructure.
+            // Delivery is isolated from the completed project state transition,
+            // and unread notifications are deduplicated by project/event reference.
+            ak_transaction_review_notify_fm_event(
+                $id,
+                'project_submission',
+                'مشروع بانتظار المراجعة المالية',
+                'المشروع «' . (string)($project['name'] ?? '') . '» (' . (string)($project['project_code'] ?? '') . ') بانتظار مراجعة المدير المالي.',
+                APP_URL . 'modules/projects/view.php?id=' . $id
+            );
+
             flash('success', 'تم إرسال المشروع إلى المدير المالي للمراجعة والاعتماد المبدئي.');
             
         } elseif ($action === 'fm_approve_project') {
