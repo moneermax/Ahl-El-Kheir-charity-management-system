@@ -94,11 +94,53 @@
         'لا توجد ميزانيات مشاريع بانتظار المراجعة المالية.': 'No project budgets are pending financial review.'
     };
 
+    /*
+     * Punctuation-tolerant lookup (mirrors ak_core_lookup() in config/lang.php): "الاسم *", "الاسم:"
+     * and "هل أنت متأكد؟" reuse the entry for the bare phrase and keep their own punctuation.
+     */
+    var decorationPattern = /^([\s*:：.…\-—–!؟?()\[\]«»"'،,؛;\p{Nd}#]*)([\s\S]*?)([\s*:：.…\-—–!؟?()\[\]«»"'،,؛;\p{Nd}#]*)$/u;
+    var punctuationMap = { '؟': '?', '،': ',', '؛': ';' };
+    var coreIndex = null;
+
+    function splitDecoration(value) {
+        var match = decorationPattern.exec(value);
+        return match ? [match[1], match[2], match[3]] : ['', value, ''];
+    }
+
+    function convertPunctuation(value) {
+        return value.replace(/[؟،؛]/g, function (mark) { return punctuationMap[mark]; });
+    }
+
+    function buildCoreIndex() {
+        var exact = {}, decorated = {};
+        Object.keys(dictionary).forEach(function (source) {
+            if (!/[\u0600-\u06ff]/.test(source) || typeof dictionary[source] !== 'string') return;
+            var parts = splitDecoration(normalizeText(source));
+            if (!parts[1]) return;
+            if (!parts[0] && !parts[2]) { exact[parts[1]] = dictionary[source]; return; }
+            if (!Object.prototype.hasOwnProperty.call(decorated, parts[1])) {
+                var targetCore = splitDecoration(dictionary[source])[1];
+                if (targetCore) decorated[parts[1]] = targetCore;
+            }
+        });
+        coreIndex = Object.assign({}, decorated, exact);
+    }
+
+    function translateByCore(text) {
+        if (coreIndex === null) buildCoreIndex();
+        var parts = splitDecoration(text);
+        if (!parts[1] || (!parts[0] && !parts[2])) return null;
+        if (!Object.prototype.hasOwnProperty.call(coreIndex, parts[1])) return null;
+        return convertPunctuation(parts[0]) + coreIndex[parts[1]] + convertPunctuation(parts[2]);
+    }
+
     function translateKnownPhrase(value) {
         if (window.AK_LANG !== 'en') return null;
         var text = normalizeText(value);
         if (Object.prototype.hasOwnProperty.call(dictionary, text)) return dictionary[text];
         if (Object.prototype.hasOwnProperty.call(fmPhrases, text)) return fmPhrases[text];
+        var byCore = translateByCore(text);
+        if (byCore !== null) return byCore;
 
         /* Dynamic FM headings containing counts/months. */
         var match = text.match(/^📈\s*إيرادات الشهر\s*\(([^)]+)\)$/u);
@@ -174,6 +216,26 @@
             });
         });
     }
+
+    /* Native alert()/confirm()/prompt() dialogs are not DOM nodes, so translate their message here. */
+    function wrapNativeDialogs() {
+        if (window.AK_LANG !== 'en') return;
+        ['alert', 'confirm', 'prompt'].forEach(function (name) {
+            var original = window[name];
+            if (typeof original !== 'function' || original.akWrapped) return;
+            var wrapped = function () {
+                var args = Array.prototype.slice.call(arguments);
+                if (typeof args[0] === 'string' && /[\u0600-\u06ff]/.test(args[0])) {
+                    var translated = translateKnownPhrase(args[0]);
+                    if (translated !== null) args[0] = translated;
+                }
+                return original.apply(window, args);
+            };
+            wrapped.akWrapped = true;
+            window[name] = wrapped;
+        });
+    }
+    wrapNativeDialogs();
 
     function prepareLanguageUrl(href, target) {
         try {

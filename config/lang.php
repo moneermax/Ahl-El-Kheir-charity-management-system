@@ -59,7 +59,9 @@ function ak_legacy_target(string $value): string {
  * pages benefit from the authoritative catalogs instead of requiring legacy data.
  */
 function ak_dict(): array {
-    if (AK_LANG !== 'en') return ak_catalog('ar');
+    static $cached = null;
+    if ($cached !== null) return $cached;
+    if (AK_LANG !== 'en') return $cached = ak_catalog('ar');
 
     $ar = ak_catalog('ar');
     $en = ak_catalog('en');
@@ -81,7 +83,66 @@ function ak_dict(): array {
 
     // Preserve stable key lookups first. Exact Arabic text mappings are
     // compatibility aliases, with stable catalog text taking precedence.
-    return array_merge($legacyNormalized, $stableText, $en);
+    // Lowest priority: text produced by JavaScript / native dialogs (small; sent to the browser).
+    return $cached = array_merge(ak_bridge('ar_to_en_js'), $legacyNormalized, $stableText, $en);
+}
+
+/** Load a compatibility bridge file from lang/bridge/. Bridges are never stable-key catalogs. */
+function ak_bridge(string $name): array {
+    static $cache = [];
+    if (isset($cache[$name])) return $cache[$name];
+    $file = __DIR__ . '/../lang/bridge/' . $name . '.php';
+    $data = is_file($file) ? require $file : [];
+    return $cache[$name] = is_array($data) ? $data : [];
+}
+
+/**
+ * Server-only English dictionary: everything ak_dict() has, plus the large Arabic -> English
+ * bridge for static page text. It is NOT sent to the browser, so page weight does not grow.
+ */
+function ak_server_dict(): array {
+    static $cached = null;
+    if ($cached !== null) return $cached;
+    return $cached = array_merge(ak_bridge('ar_to_en'), ak_dict());
+}
+
+/** Dictionary for the Arabic UI (English -> Arabic): global entries plus this page's entries. */
+function ak_reverse_dict(): array {
+    static $cached = null;
+    if ($cached !== null) return $cached;
+    $bridge = ak_bridge('en_to_ar');
+    $page = strtolower(basename((string)($_SERVER['SCRIPT_NAME'] ?? '')));
+    $dict = [];
+    foreach ([(array)($bridge['*'] ?? []), (array)($bridge[$page] ?? [])] as $part) $dict = array_merge($dict, $part);
+    return $cached = $dict;
+}
+
+/** Split leading/trailing punctuation off a UI string: [prefix, core, suffix]. */
+function ak_split_decoration(string $value): array {
+    if (preg_match('/^([\s*:：.…\-—–!؟?()\[\]«»"\'،,؛;\p{Nd}#]*)(.*?)([\s*:：.…\-—–!؟?()\[\]«»"\'،,؛;\p{Nd}#]*)$/us', $value, $m)) return [$m[1], $m[2], $m[3]];
+    return ['', $value, ''];
+}
+
+/** Index Arabic dictionary keys by their punctuation-free core so "الاسم *" and "الاسم:" reuse "الاسم". */
+function ak_core_index(array $dict): array {
+    $exact = []; $decorated = [];
+    foreach ($dict as $source => $target) {
+        if (!is_string($source) || !is_string($target) || !preg_match('/[\x{0600}-\x{06FF}]/u', $source)) continue;
+        [$prefix, $core, $suffix] = ak_split_decoration(ak_legacy_normalize($source));
+        if ($core === '') continue;
+        if ($prefix === '' && $suffix === '') { $exact[$core] = $target; continue; }
+        if (!isset($decorated[$core])) { [, $targetCore] = ak_split_decoration($target); if ($targetCore !== '') $decorated[$core] = $targetCore; }
+    }
+    return $exact + $decorated;
+}
+
+/** Translate a string that differs from a known one only by leading/trailing punctuation. */
+function ak_core_lookup(string $value, array $coreIndex): ?string {
+    if (!$coreIndex) return null;
+    [$prefix, $core, $suffix] = ak_split_decoration(ak_legacy_normalize($value));
+    if ($core === '' || ($prefix === '' && $suffix === '') || !isset($coreIndex[$core])) return null;
+    $marks = ['؟' => '?', '،' => ',', '؛' => ';'];
+    return strtr($prefix, $marks) . $coreIndex[$core] . strtr($suffix, $marks);
 }
 
 function ak_interpolate(string $value, array $params): string { foreach ($params as $name => $replacement) $value = str_replace(':' . $name, (string)$replacement, $value); return $value; }
@@ -116,13 +177,14 @@ function ak_legacy_lookup(string $value, array $legacy): ?string {
     return array_key_exists($normalized, $normalizedCache) ? $normalizedCache[$normalized] : null;
 }
 function ak_translate_page(string $html): string {
-    if (AK_LANG !== 'en' || $html === '' || !preg_match('/^\s*(<!DOCTYPE|<html)/i', $html)) return $html;
-    $legacy = ak_dict();
+    if ($html === '' || !preg_match('/^\s*(<!DOCTYPE|<html)/i', $html)) return $html;
+    $legacy = AK_LANG === 'en' ? ak_server_dict() : ak_reverse_dict();
     if (!$legacy) return $html;
+    $coreIndex = AK_LANG === 'en' ? ak_core_index($legacy) : [];
     $protected = [];
     $html = preg_replace_callback('/<(script|style|pre|code|textarea)\b[^>]*>.*?<\/\1\s*>/is', static function($m) use (&$protected) { $token = '__AK_I18N_PROTECTED_' . count($protected) . '__'; $protected[$token] = $m[0]; return $token; }, $html) ?? $html;
-    $html = preg_replace_callback('/>([^<>]+)</u', static function($m) use ($legacy) { $translated = ak_legacy_lookup($m[1], $legacy); if ($translated === null) return $m[0]; $leading = preg_match('/^\s*/u', $m[1], $lm) ? $lm[0] : ''; $trailing = preg_match('/\s*$/u', $m[1], $tm) ? $tm[0] : ''; return '>' . $leading . $translated . $trailing . '<'; }, $html) ?? $html;
-    $html = preg_replace_callback('/\b(placeholder|title|aria-label|aria-description|data-bs-title|alt|data-confirm|data-reassign-confirm)=([' . "\"'" . '])(.*?)\2/iu', static function($m) use ($legacy) { $translated = ak_legacy_lookup($m[3], $legacy); if ($translated === null) return $m[0]; return $m[1] . '=' . $m[2] . htmlspecialchars($translated, ENT_QUOTES | ENT_HTML5, 'UTF-8') . $m[2]; }, $html) ?? $html;
+    $html = preg_replace_callback('/>([^<>]+)</u', static function($m) use ($legacy, $coreIndex) { $translated = ak_legacy_lookup($m[1], $legacy) ?? ak_core_lookup($m[1], $coreIndex); if ($translated === null) return $m[0]; $leading = preg_match('/^\s*/u', $m[1], $lm) ? $lm[0] : ''; $trailing = preg_match('/\s*$/u', $m[1], $tm) ? $tm[0] : ''; return '>' . $leading . $translated . $trailing . '<'; }, $html) ?? $html;
+    $html = preg_replace_callback('/\b(placeholder|title|aria-label|aria-description|data-bs-title|alt|data-confirm|data-reassign-confirm)=([' . "\"'" . '])(.*?)\2/iu', static function($m) use ($legacy, $coreIndex) { $translated = ak_legacy_lookup($m[3], $legacy) ?? ak_core_lookup($m[3], $coreIndex); if ($translated === null) return $m[0]; return $m[1] . '=' . $m[2] . htmlspecialchars($translated, ENT_QUOTES | ENT_HTML5, 'UTF-8') . $m[2]; }, $html) ?? $html;
     foreach ($protected as $token => $original) $html = str_replace($token, $original, $html);
     return $html;
 }
