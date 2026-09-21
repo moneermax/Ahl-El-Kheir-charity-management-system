@@ -51,4 +51,8 @@ return [
 'إبطال الدفعة #{n}' => 'Void payment #{1}',
 'المحصّل (مرحّل): {n} ج.س' => 'Collected by (posted): {1} SDG',
 'المتوقع: {n} ج.س' => 'Expected: {1} SDG',
+'الرصيد غير كافٍ في الحساب المختار. المتاح: {n} ج.س' => 'Insufficient balance in the selected account. Available: {1} SDG',
+'لا يمكن إبطال سند القبض: رصيد الحساب الحالي ({n} ج.س) أقل من مبلغ السند' => 'Cannot void the receipt voucher: the current account balance ({1} SDG) is less than the voucher amount',
+'تم إبطال السند {n} وإنشاء القيد العكسي {n}' => 'Voucher {1} was voided and the reversal entry {2} was created',
+'سند قبض {n} — {n}' => 'Receipt voucher {1} — {2}',
 ];

@@ -20,6 +20,7 @@ if (in_array($role, ['admin', 'financial_manager', 'accountant'], true)) {
     $acctManage = [['active' => 'accounts', 'label_key' => 'navigation.chart_of_accounts', 'icon' => 'fa-sitemap', 'url' => 'modules/accounting/accounts.php']];
 }
 $projectsItem = ['active' => 'projects', 'label_key' => 'navigation.organization_projects', 'icon' => 'fa-diagram-project', 'url' => 'modules/projects/index.php'];
+$vouchersItem = ['active' => 'vouchers', 'label_key' => 'navigation.vouchers', 'icon' => 'fa-file-invoice-dollar', 'url' => 'modules/accounting/vouchers.php'];
 $transactionsItem = ['active' => 'transactions', 'label_key' => 'navigation.transaction_register', 'icon' => 'fa-money-bill-transfer', 'url' => 'modules/transactions/index.php'];
 $fmDashItem = ['active' => 'fm_dashboard', 'label_key' => 'navigation.financial_manager_dashboard', 'icon' => 'fa-chart-line', 'url' => 'modules/accounting/fm_dashboard.php'];
 $fmReviewItem = ['active' => 'fm_review', 'label_key' => 'navigation.financial_review_queue', 'icon' => 'fa-clipboard-check', 'url' => 'modules/accounting/fm_review_queue.php'];
@@ -60,6 +61,7 @@ $menus = [
     'financial_manager' => [
         ['active' => 'dashboard', 'label_key' => 'navigation.dashboard', 'icon' => 'fa-gauge-high', 'url' => 'modules/accounting/fm_dashboard.php'],
         ['active' => 'journal', 'label_key' => 'navigation.journal', 'icon' => 'fa-book', 'url' => 'modules/accounting/journal.php'],
+        $vouchersItem,
         ['active' => 'projects', 'label_key' => 'navigation.organization_projects', 'icon' => 'fa-diagram-project', 'url' => 'modules/projects/index.php'],
         $openingBalanceItem,
         ['active' => 'disbursements', 'label_key' => 'navigation.monthly_transfers', 'icon' => 'fa-money-check-dollar', 'url' => 'modules/accounting/disbursements.php'],
@@ -78,7 +80,7 @@ $menus = [
 
     'accountant_staff' => [
         ['active' => 'dashboard', 'label_key' => 'navigation.dashboard', 'icon' => 'fa-gauge-high', 'url' => 'dashboard/accountant_staff_dashboard.php'],
-        $transactionsItem, $disbItem, $orphanFormsItem,
+        $transactionsItem, $vouchersItem, $disbItem, $orphanFormsItem,
         ['active' => 'my_nannies', 'label_key' => 'navigation.assigned_nannies', 'icon' => 'fa-user-nurse', 'url' => 'modules/accounting/my_nannies.php'],
         $reportsItem,
     ],
