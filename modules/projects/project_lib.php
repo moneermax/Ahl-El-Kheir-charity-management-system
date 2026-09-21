@@ -77,7 +77,21 @@ if (!function_exists('akp_can_edit_section')) {
             return false;
         }
         if ($section === 'general') {
-            return in_array($role, ['general_manager', 'vice_general_manager', 'projects_manager'], true);
+            if (in_array($role, ['general_manager', 'vice_general_manager', 'projects_manager'], true)) {
+                return true;
+            }
+
+            // The primary project supervisor may edit the general project data
+            // only while the project is still a draft or has been returned/rejected.
+            if ($projectId > 0 && akp_is_primary_supervisor($projectId)) {
+                $approval = dbFetchOne(
+                    'SELECT approval_status FROM project_approval WHERE project_id = ?',
+                    [$projectId]
+                );
+                return $approval && in_array($approval['approval_status'], ['draft', 'rejected'], true);
+            }
+
+            return false;
         }
         if ($section === 'finance') {
             return in_array($role, ['general_manager', 'vice_general_manager', 'accountant', 'financial_manager'], true)
