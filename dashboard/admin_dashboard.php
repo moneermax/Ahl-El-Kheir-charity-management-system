@@ -804,6 +804,7 @@ include __DIR__ . '/../includes/header.php';
                 <?php endforeach; ?>
             </div>
         </section>
+    <?php endforeach; ?>
 
     <section class="admin-system-grid">
         <div class="admin-system-card">
@@ -840,8 +841,8 @@ include __DIR__ . '/../includes/header.php';
         </div>
     </section>
 
-
-
+    <?php foreach ($controlGroups as $group): ?>
+        <?php if ($group['title'] !== 'إدارة النظام') continue; ?>
         <section class="admin-control-section" style="--section-color: <?php echo $group['color'] ?? '#4b78c2'; ?>;">
             <div class="admin-control-heading">
                 <div class="admin-control-heading-icon">
@@ -876,6 +877,7 @@ include __DIR__ . '/../includes/header.php';
                 <?php endforeach; ?>
             </div>
         </section>
+    <?php endforeach; ?>
 
     <div class="admin-section-heading" style="margin-top: 22px;">
         <div>
@@ -945,6 +947,8 @@ include __DIR__ . '/../includes/header.php';
 
 
 
+
+
     <?php foreach ($controlGroups as $group): ?>
         <?php if ($group['title'] === 'الحماية والصيانة' || $group['title'] === 'إدارة النظام') continue; ?>
         <section class="admin-control-section" style="--section-color: <?php echo $group['color'] ?? '#4b78c2'; ?>;">
@@ -985,6 +989,8 @@ include __DIR__ . '/../includes/header.php';
 
 
 
+
+
     <section class="admin-recent-grid">
         <div class="admin-recent-card">
             <div class="admin-recent-heading">
@@ -1010,6 +1016,8 @@ include __DIR__ . '/../includes/header.php';
             </div>
         </div>
     </section>
+
+
 
 
 
