@@ -804,7 +804,6 @@ include __DIR__ . '/../includes/header.php';
                 <?php endforeach; ?>
             </div>
         </section>
-    <?php endforeach; ?>
 
     <section class="admin-system-grid">
         <div class="admin-system-card">
@@ -841,31 +840,42 @@ include __DIR__ . '/../includes/header.php';
         </div>
     </section>
 
-    <section class="admin-recent-grid">
-        <div class="admin-recent-card">
-            <div class="admin-recent-heading">
-                <div><strong><i class="fas fa-clock-rotate-left me-1"></i> آخر نشاط إداري</strong><span>آخر 6 أحداث مسجلة في سجل التدقيق</span></div>
-                <a href="<?php echo e(url('modules/logs/audit.php')); ?>">فتح السجل <i class="fas fa-arrow-left"></i></a>
+
+
+        <section class="admin-control-section" style="--section-color: <?php echo $group['color'] ?? '#4b78c2'; ?>;">
+            <div class="admin-control-heading">
+                <div class="admin-control-heading-icon">
+                    <i class="fas <?php echo e($group['icon']); ?>"></i>
+                </div>
+                <div>
+                    <h3><?php echo e($group['title']); ?></h3>
+                    <p><?php echo e($group['subtitle']); ?></p>
+                </div>
             </div>
-            <div class="table-responsive">
-                <table class="table table-sm align-middle mb-0">
-                    <thead><tr><th>التاريخ</th><th>المستخدم</th><th>الإجراء</th><th>الكيان</th></tr></thead>
-                    <tbody>
-                    <?php if (!$recentAudit): ?>
-                        <tr><td colspan="4" class="text-center text-muted py-3">لا توجد أحداث مسجلة.</td></tr>
-                    <?php else: foreach ($recentAudit as $event): ?>
-                        <tr>
-                            <td><small><?php echo e($event['created_at']); ?></small></td>
-                            <td><?php echo e($event['username'] ?? '—'); ?></td>
-                            <td><span class="badge bg-light text-dark border"><?php echo e($event['action']); ?></span></td>
-                            <td><small><?php echo e($event['entity_type']); ?><?php echo $event['entity_id'] !== null ? ' #' . e((string)$event['entity_id']) : ''; ?></small></td>
-                        </tr>
-                    <?php endforeach; endif; ?>
-                    </tbody>
-                </table>
+
+            <div class="admin-tool-grid <?php echo count($group['items']) === 3 ? 'admin-tool-grid-3' : ''; ?>">
+                <?php foreach ($group['items'] as $item): ?>
+                    <a class="admin-tool" href="<?php echo e(url($item['url'])); ?>">
+                        <div>
+                            <div class="admin-tool-icon">
+                                <i class="fas <?php echo e($item['icon']); ?>"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="admin-tool-title">
+                                <?php echo e($item['title']); ?>
+                            </div>
+                            <div class="admin-tool-description">
+                                <?php echo e($item['description']); ?>
+                            </div>
+                        </div>
+                        <div class="admin-tool-arrow">
+                            فتح <i class="fas fa-arrow-left ms-1"></i>
+                        </div>
+                    </a>
+                <?php endforeach; ?>
             </div>
-        </div>
-    </section>
+        </section>
 
     <div class="admin-section-heading" style="margin-top: 22px;">
         <div>
@@ -933,8 +943,10 @@ include __DIR__ . '/../includes/header.php';
     </div>
 
 
+
+
     <?php foreach ($controlGroups as $group): ?>
-        <?php if ($group['title'] === 'الحماية والصيانة') continue; ?>
+        <?php if ($group['title'] === 'الحماية والصيانة' || $group['title'] === 'إدارة النظام') continue; ?>
         <section class="admin-control-section" style="--section-color: <?php echo $group['color'] ?? '#4b78c2'; ?>;">
             <div class="admin-control-heading">
                 <div class="admin-control-heading-icon">
@@ -970,6 +982,36 @@ include __DIR__ . '/../includes/header.php';
             </div>
         </section>
     <?php endforeach; ?>
+
+
+
+    <section class="admin-recent-grid">
+        <div class="admin-recent-card">
+            <div class="admin-recent-heading">
+                <div><strong><i class="fas fa-clock-rotate-left me-1"></i> آخر نشاط إداري</strong><span>آخر 6 أحداث مسجلة في سجل التدقيق</span></div>
+                <a href="<?php echo e(url('modules/logs/audit.php')); ?>">فتح السجل <i class="fas fa-arrow-left"></i></a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead><tr><th>التاريخ</th><th>المستخدم</th><th>الإجراء</th><th>الكيان</th></tr></thead>
+                    <tbody>
+                    <?php if (!$recentAudit): ?>
+                        <tr><td colspan="4" class="text-center text-muted py-3">لا توجد أحداث مسجلة.</td></tr>
+                    <?php else: foreach ($recentAudit as $event): ?>
+                        <tr>
+                            <td><small><?php echo e($event['created_at']); ?></small></td>
+                            <td><?php echo e($event['username'] ?? '—'); ?></td>
+                            <td><span class="badge bg-light text-dark border"><?php echo e($event['action']); ?></span></td>
+                            <td><small><?php echo e($event['entity_type']); ?><?php echo $event['entity_id'] !== null ? ' #' . e((string)$event['entity_id']) : ''; ?></small></td>
+                        </tr>
+                    <?php endforeach; endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+
 
     <div class="admin-footer-strip">
         <span>
