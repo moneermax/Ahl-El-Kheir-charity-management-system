@@ -929,3 +929,8 @@ No database/schema change is represented by these six commits. The changes are a
 A permanent hosting-compatibility rule is now in force: **no MySQL/MariaDB triggers or views may ever be added to the database again**. Business rules formerly enforced by triggers must be enforced in procedural PHP workflows, and view-style reporting must use the underlying tables directly. Stored procedures/functions/events are also excluded from the hosting-compatible architecture unless the rule is explicitly revised.
 
 The current repository scan found no `CREATE TRIGGER` or `CREATE VIEW` statements in the application SQL/PHP or current database export. The previously observed InfinityFree `attendance` trigger import failure came from the earlier export and must not be reintroduced.
+
+
+## 2026-09-21 — Projects Module Deep Audit
+
+The Organization Projects module has entered a dedicated deep audit. The first static pass identified two high-priority integrity findings and several medium-priority validation, transaction-boundary, authorization, and read-side-effect items. No Projects code or database schema has been changed yet. The detailed execution plan is `docs/PROJECTS_MODULE_AUDIT_AND_REMEDIATION_PLAN.md`. Runtime certification has not started.
