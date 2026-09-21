@@ -13,3 +13,6 @@
 /storage/logs/*
 !/storage/logs/.gitkeep
 /storage/avatar_debug.log
+
+# Hosting-local secrets (never commit real credentials)
+/config/hosting.php
