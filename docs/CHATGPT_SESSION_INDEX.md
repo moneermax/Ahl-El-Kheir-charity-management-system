@@ -807,3 +807,12 @@ Completed FM-control work is being consolidated into main. Temporary/abandoned d
 ## 2026-09-21 — Projects Module Deep Audit
 
 Active audit area: Organization Projects. Dedicated plan: `docs/PROJECTS_MODULE_AUDIT_AND_REMEDIATION_PLAN.md`. First static pass found non-transactional creation, inconsistent funding-total calculations, read-time lifecycle writes, count-based project-code generation, validation/upload gaps, transaction-boundary questions, and expense separation-of-duties requiring verification. No Projects code has been changed yet. Continue with page-by-page/schema/reference verification, then implement the smallest safe fixes and runtime-test each workflow.
+
+
+## Projects remediation update — 2026-09-21
+- Atomic new-project creation added in `modules/projects/form.php`.
+- Portfolio funding totals aligned with the authoritative posted-allocation exclusion rule.
+- Project detail GET no longer mutates lifecycle/closure totals; closure synchronization remains in the closure POST workflow.
+- Added server-side validation for project team sections, labor enumerations, progress range, beneficiary inputs, document rejection reason, and a 10 MB project-document limit.
+- Runtime certification remains pending; project-code uniqueness/concurrency still requires verification against the actual deployed schema.
+- Remediation commits: `251c7c4`, `5bb36f8`, `af59a1b`.
