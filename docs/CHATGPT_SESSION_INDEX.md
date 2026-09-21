@@ -802,3 +802,8 @@ Detailed i18n behavior is documented in `docs/I18N.md`. The changes contain no d
 
 ### Branch housekeeping
 Completed FM-control work is being consolidated into main. Temporary/abandoned dashboard-card branches are retained only as historical references until branch-deletion capability is available; their changes are not part of the active codebase.
+
+
+## 2026-09-21 — Projects Module Deep Audit
+
+Active audit area: Organization Projects. Dedicated plan: `docs/PROJECTS_MODULE_AUDIT_AND_REMEDIATION_PLAN.md`. First static pass found non-transactional creation, inconsistent funding-total calculations, read-time lifecycle writes, count-based project-code generation, validation/upload gaps, transaction-boundary questions, and expense separation-of-duties requiring verification. No Projects code has been changed yet. Continue with page-by-page/schema/reference verification, then implement the smallest safe fixes and runtime-test each workflow.
