@@ -2,6 +2,20 @@
 
 This document records the production-baseline procedure for the Ahl El Kheir Charity Management System.
 
+## Environment-aware deployment configuration
+
+The application now derives its environment automatically when no explicit environment variable is supplied:
+
+- local hosts (`localhost`, `127.0.0.1`, `::1`) default to `development`;
+- non-local hosts default to `production`;
+- `AHL_ENV` may explicitly select `development` or `production` when a controlled staging/development environment requires it.
+
+Production database connection values are read from `AHL_DB_HOST`, `AHL_DB_PORT`, `AHL_DB_NAME`, `AHL_DB_USER`, and `AHL_DB_PASS`. The existing XAMPP defaults remain available for local development. A production configuration without a database password is rejected rather than silently using the local `root`/empty-password configuration.
+
+Session cookies automatically use the `Secure` flag in production, while remaining compatible with the current local HTTP/XAMPP environment. PHP error details and database exception details are shown only in development; production returns generic error messages.
+
+Before the first production deployment, configure the hosting environment with the real database credentials and verify that HTTPS is active. No application PHP file should need to be edited merely because the hostname, port, or database credentials change.
+
 ## Current policy
 
 The application is still under development. The development database contains a mixture of real master data and test operational data.
@@ -72,6 +86,10 @@ The recommended default is monthly settlement with controlled early settlement w
 ## Repository hygiene
 
 Database backups and runtime-generated files must not be committed to the repository. Local backup locations remain available through `.gitignore`; the repository should contain schema/migration scripts and the production cleanup procedure, not live database dumps or runtime logs.
+
+## Documentation checkpoint — 2026-09-21
+
+Environment-aware production hardening was added without changing business workflows or database schema. A remote pre-change checkpoint branch was created from the previous `main` commit before the configuration changes.
 
 ## Documentation checkpoint — 2026-09-17
 
