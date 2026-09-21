@@ -141,3 +141,21 @@ Static first-pass audit: **IN PROGRESS**
 Projects code changes from this audit: **NONE YET**  
 Runtime Projects workflow certification: **NOT YET STARTED**  
 Next action: continue the page-by-page static scan and schema/reference verification, then implement the first smallest safe fix batch.
+
+
+## 2026-09-21 — First remediation pass completed
+
+The first targeted fixes were applied after the initial static scan:
+
+1. **Atomic project creation** — new-project creation in `modules/projects/form.php` now runs inside a PDO transaction and rolls back the complete creation sequence if a later insert/update fails. Existing edit behavior is not wrapped in this creation-only transaction.
+2. **Portfolio funding reconciliation** — `modules/projects/index.php` now applies the same posted-allocation exclusion rule used by `akp_project_totals()`, preventing an allocation already represented by a posted transaction from being counted twice in portfolio totals.
+3. **Read-only project view** — `modules/projects/view.php` no longer synchronizes lifecycle rows or closure totals merely because a user opens the project page. Totals are calculated from current source data; closure synchronization remains an explicit closure workflow operation.
+4. **Server-side workflow validation** — team section allow-list, labor timing/status allow-lists, progress percentage bounds, beneficiary required/non-negative values, document rejection reason, and a 10 MB project-document application limit were added.
+5. **Closure validation order** — closure summary is validated before closure totals are synchronized.
+
+Commits:
+- `251c7c4933cb9f223f1b2b6d509c09e5e2c929d0` — Make project creation atomic
+- `5bb36f8b87be644ac35fddf9b02e2f1f80b98432` — Align project portfolio funding totals
+- `af59a1bce2a2ce46fa4b37ae44e5eb251f6b266f` — Harden project workflow validation
+
+**Not yet certified:** project-code uniqueness/concurrency still requires actual production schema verification; full runtime workflow testing is also still pending.
