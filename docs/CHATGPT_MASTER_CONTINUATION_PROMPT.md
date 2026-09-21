@@ -807,6 +807,19 @@ The Back/navigation audit is closed and must not be restarted. The accepted layo
 Commit: `0557218daa28d2ce78ff8e9f0bbaf8bacd2f0769`.
 
 
+## 2026-09-21 — Repository checkpoint after Claude/i18n/dashboard work
+
+The latest `main` state includes six reviewed commits after `642f7397f48c8ddb84315130ae32cf22847476b1`:
+
+- i18n compatibility bridges for legacy Arabic text, JavaScript/native dialogs, punctuation variants, and live-value patterns;
+- page-scoped English→Arabic compatibility mappings;
+- a CLI i18n gap report at `tools/i18n_gap.php`;
+- a role-aware Home shortcut in the shared header, hidden on dashboards;
+- shared blue-bar/white-text section-title styling for dashboards and applicable light/white card headers;
+- removal of obsolete `sudo_dashboard.php`.
+
+`docs/I18N.md` contains the detailed i18n architecture. New UI text should continue to use stable-key catalogs/`t()`; bridges are compatibility/migration layers. No database/schema changes were introduced by this change set. Runtime/visual acceptance still requires local verification.
+
 ## 2026-09-20 — Current continuation checkpoint: module-by-module Back-button consistency audit
 
 The active task is now a **module-by-module Back-button consistency audit**. The earlier Back implementation is the baseline; do not assume it is currently consistent.
