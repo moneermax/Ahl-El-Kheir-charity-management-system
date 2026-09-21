@@ -934,3 +934,12 @@ The current repository scan found no `CREATE TRIGGER` or `CREATE VIEW` statement
 ## 2026-09-21 — Projects Module Deep Audit
 
 The Organization Projects module has entered a dedicated deep audit. The first static pass identified two high-priority integrity findings and several medium-priority validation, transaction-boundary, authorization, and read-side-effect items. No Projects code or database schema has been changed yet. The detailed execution plan is `docs/PROJECTS_MODULE_AUDIT_AND_REMEDIATION_PLAN.md`. Runtime certification has not started.
+
+
+## Projects remediation update — 2026-09-21
+- Atomic new-project creation added in `modules/projects/form.php`.
+- Portfolio funding totals aligned with the authoritative posted-allocation exclusion rule.
+- Project detail GET no longer mutates lifecycle/closure totals; closure synchronization remains in the closure POST workflow.
+- Added server-side validation for project team sections, labor enumerations, progress range, beneficiary inputs, document rejection reason, and a 10 MB project-document limit.
+- Runtime certification remains pending; project-code uniqueness/concurrency still requires verification against the actual deployed schema.
+- Remediation commits: `251c7c4`, `5bb36f8`, `af59a1b`.
