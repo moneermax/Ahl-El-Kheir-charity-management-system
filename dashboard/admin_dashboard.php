@@ -764,13 +764,41 @@ include __DIR__ . '/../includes/header.php';
             </div>
         </div>
     </section>
-
-    <div class="admin-section-title">
-        <div>
-            <h2>حالة النظام والبيئة</h2>
-            <p>مؤشرات تقنية للمدير لمراقبة بيئة تشغيل النظام دون تكرار أدوات الإدارة الموجودة في الوحدات.</p>
+<section class="admin-system-grid">
+        <div class="admin-system-card">
+            <div class="admin-system-icon admin-system-green"><i class="fas fa-database"></i></div>
+            <div><strong>قاعدة البيانات</strong><span class="<?php echo $dbOnline ? 'admin-system-ok' : 'admin-system-bad'; ?>"><?php echo $dbOnline ? 'متصلة' : 'غير متاحة'; ?></span></div>
         </div>
-    </div>
+        <div class="admin-system-card">
+            <div class="admin-system-icon admin-system-blue"><i class="fas fa-server"></i></div>
+            <div><strong>إصدار PHP</strong><span><?php echo e(PHP_VERSION); ?></span></div>
+        </div>
+        <div class="admin-system-card">
+            <div class="admin-system-icon admin-system-violet"><i class="fas fa-hard-drive"></i></div>
+            <div><strong>مساحة التخزين</strong><span><?php echo e($formatBytes($diskFree)); ?> متاحة من <?php echo e($formatBytes($diskTotal)); ?></span><small><?php echo number_format($diskUsedPercent, 1); ?>% مستخدمة</small></div>
+        </div>
+        <div class="admin-system-card">
+            <div class="admin-system-icon admin-system-amber"><i class="fas fa-memory"></i></div>
+            <div><strong>حد ذاكرة PHP</strong><span><?php echo e($memoryLimit); ?></span></div>
+        </div>
+        <div class="admin-system-card">
+            <div class="admin-system-icon admin-system-orange"><i class="fas fa-upload"></i></div>
+            <div><strong>حد رفع الملفات</strong><span><?php echo e($uploadLimit); ?></span></div>
+        </div>
+        <div class="admin-system-card">
+            <div class="admin-system-icon admin-system-blue"><i class="fas fa-stopwatch"></i></div>
+            <div><strong>حد تنفيذ PHP</strong><span><?php echo e($executionLimit); ?></span></div>
+        </div>
+        <div class="admin-system-card">
+            <div class="admin-system-icon <?php echo $httpsEnabled ? 'admin-system-green' : 'admin-system-amber'; ?>"><i class="fas fa-lock"></i></div>
+            <div><strong>HTTPS</strong><span><?php echo $httpsEnabled ? 'مفعّل' : 'غير مفعّل'; ?></span><small><?php echo $httpsEnabled ? 'الاتصال الحالي يستخدم HTTPS' : 'الاتصال الحالي يستخدم HTTP'; ?></small></div>
+        </div>
+        <div class="admin-system-card">
+            <div class="admin-system-icon admin-system-violet"><i class="fas fa-shield-halved"></i></div>
+            <div><strong>صلاحية اللوحة</strong><span>Admin فقط</span><small>الحماية الفعلية تبقى على مستوى كل صفحة</small></div>
+        </div>
+    </section>
+    
 
     <?php foreach ($controlGroups as $group): ?>
         <?php if ($group['title'] !== 'الحماية والصيانة') continue; ?>
@@ -806,40 +834,7 @@ include __DIR__ . '/../includes/header.php';
         </section>
     <?php endforeach; ?>
 
-    <section class="admin-system-grid">
-        <div class="admin-system-card">
-            <div class="admin-system-icon admin-system-green"><i class="fas fa-database"></i></div>
-            <div><strong>قاعدة البيانات</strong><span class="<?php echo $dbOnline ? 'admin-system-ok' : 'admin-system-bad'; ?>"><?php echo $dbOnline ? 'متصلة' : 'غير متاحة'; ?></span></div>
-        </div>
-        <div class="admin-system-card">
-            <div class="admin-system-icon admin-system-blue"><i class="fas fa-server"></i></div>
-            <div><strong>إصدار PHP</strong><span><?php echo e(PHP_VERSION); ?></span></div>
-        </div>
-        <div class="admin-system-card">
-            <div class="admin-system-icon admin-system-violet"><i class="fas fa-hard-drive"></i></div>
-            <div><strong>مساحة التخزين</strong><span><?php echo e($formatBytes($diskFree)); ?> متاحة من <?php echo e($formatBytes($diskTotal)); ?></span><small><?php echo number_format($diskUsedPercent, 1); ?>% مستخدمة</small></div>
-        </div>
-        <div class="admin-system-card">
-            <div class="admin-system-icon admin-system-amber"><i class="fas fa-memory"></i></div>
-            <div><strong>حد ذاكرة PHP</strong><span><?php echo e($memoryLimit); ?></span></div>
-        </div>
-        <div class="admin-system-card">
-            <div class="admin-system-icon admin-system-orange"><i class="fas fa-upload"></i></div>
-            <div><strong>حد رفع الملفات</strong><span><?php echo e($uploadLimit); ?></span></div>
-        </div>
-        <div class="admin-system-card">
-            <div class="admin-system-icon admin-system-blue"><i class="fas fa-stopwatch"></i></div>
-            <div><strong>حد تنفيذ PHP</strong><span><?php echo e($executionLimit); ?></span></div>
-        </div>
-        <div class="admin-system-card">
-            <div class="admin-system-icon <?php echo $httpsEnabled ? 'admin-system-green' : 'admin-system-amber'; ?>"><i class="fas fa-lock"></i></div>
-            <div><strong>HTTPS</strong><span><?php echo $httpsEnabled ? 'مفعّل' : 'غير مفعّل'; ?></span><small><?php echo $httpsEnabled ? 'الاتصال الحالي يستخدم HTTPS' : 'الاتصال الحالي يستخدم HTTP'; ?></small></div>
-        </div>
-        <div class="admin-system-card">
-            <div class="admin-system-icon admin-system-violet"><i class="fas fa-shield-halved"></i></div>
-            <div><strong>صلاحية اللوحة</strong><span>Admin فقط</span><small>الحماية الفعلية تبقى على مستوى كل صفحة</small></div>
-        </div>
-    </section>
+    
 
     <?php foreach ($controlGroups as $group): ?>
         <?php if ($group['title'] !== 'إدارة النظام') continue; ?>
