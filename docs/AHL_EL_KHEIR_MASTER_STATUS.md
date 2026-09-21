@@ -2,7 +2,7 @@
 
 **Repository:** `moneermax/Ahl-El-Kheir-charity-management-system`  
 **Branch:** `main`  
-**Current checkpoint:** 2026-09-15
+**Current checkpoint:** 2026-09-21
 
 This is the single high-level **START HERE** status and continuation summary for the existing project. The detailed audit record is consolidated into `docs/AHL_EL_KHEIR_MASTER_AUDIT.md`.
 
@@ -907,3 +907,19 @@ The required target for this phase is explicit: **every user-facing HTML page mu
 - TCPDF, API/JSON endpoints, file streams, redirect-only compatibility endpoints, print-only output, and dashboards remain excluded unless the user explicitly changes the scope.
 
 This phase supersedes the earlier documentation statement that the Back-button audit was fully closed; the earlier implementation remains the baseline to inspect, not a reason to assume current runtime consistency.
+
+
+## 2026-09-21 — Claude/i18n and dashboard visual consistency checkpoint
+
+Repository review of the changes added after the 2026-09-20 dashboard spacing work found six commits on `main` after checkpoint `642f7397f48c8ddb84315130ae32cf22847476b1`:
+
+- `42a107dd871b36bfaa165df3115895b6cafbf788` — expanded i18n compatibility handling with Arabic→English bridges, punctuation-tolerant lookup, native dialog translation, and the i18n gap-report tooling.
+- `f4a44d6b32c628366e41b4c3fd077e51bb8236d2` — translated Arabic text that mixes fixed UI text with live values through dedicated patterns.
+- `e78b5c7ba4406b10abbbad125770bc0c0963e31e` — added a role-aware Home shortcut icon to the shared header, hidden on dashboard pages.
+- `9e815399232c9b36813d2e0ceb495aa0b5617698` — unified dashboard section titles as blue bars with white text and marked dashboard pages with `body.ak-dashboard`.
+- `681134433e52ef14f87ce98724a25d94ac9f57d7` — extended the blue-bar/white-text section-title treatment to applicable white/light card headers across non-dashboard pages.
+- `4994389906d29cb59eb71120a8925b34dab737ee` — removed the obsolete `sudo_dashboard.php` page.
+
+The current i18n implementation also includes `lang/bridge/ar_to_en.php`, `ar_to_en_js.php`, `ar_to_en_patterns.php`, `en_to_ar.php`, common-fix dictionaries, punctuation-aware lookup in `config/lang.php` and `assets/js/language.js`, and `tools/i18n_gap.php`. `docs/I18N.md` was already updated by this work and remains the detailed i18n reference.
+
+No database/schema change is represented by these six commits. The changes are application/UI/i18n/documentation-related. Runtime status for the newly added behavior should be recorded only after local testing; repository inspection alone does not constitute runtime verification.
