@@ -40,7 +40,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 .fina-note{background:#f8f5fc;border:1px solid #e5d9f2;border-radius:10px;padding:13px 15px;color:#5b4670}
 @media(max-width:991.98px){.fina-stat-grid,.fina-actions{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:575.98px){.fina-stat-grid,.fina-actions{grid-template-columns:1fr}.fina-brand-logo{width:56px;height:56px}.fina-name-ar{font-size:1.15rem}}
 </style>
-<main class="container-fluid">
+<div class="container-fluid">
 <div class="fina-page-header"><div class="fina-brand">
 <img src="<?php echo APP_URL; ?>assets/img/Feen_logo.jpeg" alt="منظمة فينا الخير — Feena Al-Khair" class="fina-brand-logo">
 <div><div class="fina-name-ar">منظمة فينا الخير</div><div class="fina-name-en">Feena Al-Khair</div><p>لوحة مستقلة لمتابعة تحصيلات وتسويات أموال منظمة فينا الخير.</p></div>
@@ -59,5 +59,5 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 </div>
 <div class="fina-note"><i class="fas fa-circle-info me-1"></i>أموال منظمة فينا الخير مستقلة عن إيرادات الكفالات والرسوم الإدارية، ويظل حساب الالتزام <?php echo e($account['code'] ?? '2300'); ?> مخصصاً لها.</div>
 <div class="container-fluid px-0 pb-4 mt-4"><div class="d-flex justify-content-start"><a href="<?php echo APP_URL; ?>modules/accounting/fm_dashboard.php" class="btn btn-outline-secondary" onclick="return akGoBack(this.href);"><i class="fa-solid fa-arrow-right me-1"></i> العودة إلى المدير المالي</a></div></div>
-</main>
+</div>
 <?php include dirname(__DIR__, 2) . '/includes/footer.php'; ?>
