@@ -159,3 +159,41 @@ Commits:
 - `af59a1bce2a2ce46fa4b37ae44e5eb251f6b266f` — Harden project workflow validation
 
 **Not yet certified:** project-code uniqueness/concurrency still requires actual production schema verification; full runtime workflow testing is also still pending.
+
+## 2026-09-21 — Project submission notification gap identified and fixed
+
+The Project Manager → FM submission workflow was working at the business-state level, but it did not notify the Financial Manager when `project_approval.approval_status` changed from `draft/rejected` to `submitted`.
+
+### Root cause
+
+`modules/projects/view.php` performed the approval-state update and audit logging but contained no system-notification writer in the `submit_project` handler.
+
+### Existing notification mechanism used
+
+No new notification table, column, or notification system was introduced. The fix reuses the existing event-aware helper:
+
+`modules/accounting/lib_transaction_review.php::ak_transaction_review_notify_fm_event()`
+
+That helper already:
+- selects active users by the existing Financial Manager role codes (`financial_manager`, `fm`, `finance`);
+- supports workflow reference ID/type when the installed notification schema supports them;
+- falls back to the existing notification fields when reference columns are unavailable;
+- suppresses an equivalent unread notification to avoid duplicate delivery;
+- isolates notification failures so a completed business transition is not rolled back.
+
+### Implementation
+
+After a successful project submission state update and audit entry, `view.php` now sends:
+- reference ID: project ID;
+- reference type: `project_submission`;
+- title: `مشروع بانتظار المراجعة المالية`;
+- body containing the project name and project code;
+- link to the existing project view, which already exposes the FM review controls when the project is `submitted`.
+
+Code commit: `951dec73f88326f8b516dca7b5e4732329d53de7`.
+
+### Runtime verification required
+
+The remaining acceptance step is local XAMPP/browser verification: submit a project as Project Manager, confirm `submitted`, confirm the active FM recipient sees the notification in the existing bell/page UI, open it and verify the project destination, then verify refresh/reload does not create duplicates and that a rejection/resubmission behaves according to the existing unread/read deduplication rule.
+
+No runtime result is recorded here until that local test is actually performed.
