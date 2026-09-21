@@ -923,3 +923,9 @@ Repository review of the changes added after the 2026-09-20 dashboard spacing wo
 The current i18n implementation also includes `lang/bridge/ar_to_en.php`, `ar_to_en_js.php`, `ar_to_en_patterns.php`, `en_to_ar.php`, common-fix dictionaries, punctuation-aware lookup in `config/lang.php` and `assets/js/language.js`, and `tools/i18n_gap.php`. `docs/I18N.md` was already updated by this work and remains the detailed i18n reference.
 
 No database/schema change is represented by these six commits. The changes are application/UI/i18n/documentation-related. Runtime status for the newly added behavior should be recorded only after local testing; repository inspection alone does not constitute runtime verification.
+
+## 2026-09-21 — Permanent hosting database compatibility rule
+
+A permanent hosting-compatibility rule is now in force: **no MySQL/MariaDB triggers or views may ever be added to the database again**. Business rules formerly enforced by triggers must be enforced in procedural PHP workflows, and view-style reporting must use the underlying tables directly. Stored procedures/functions/events are also excluded from the hosting-compatible architecture unless the rule is explicitly revised.
+
+The current repository scan found no `CREATE TRIGGER` or `CREATE VIEW` statements in the application SQL/PHP or current database export. The previously observed InfinityFree `attendance` trigger import failure came from the earlier export and must not be reintroduced.
