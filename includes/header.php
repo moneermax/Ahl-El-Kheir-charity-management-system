@@ -1014,6 +1014,28 @@ $langSwitchUrl =
             color: #fff !important;
             border-color: rgba(255, 255, 255, .75) !important;
         }
+
+        /* =========================================================
+           ALL PAGES: section titles that were a white bar with blue text
+           (bg-white / bg-light card headers, or an inline #1b4d8f color)
+           get the same blue bar with white text as the dashboards.
+           ========================================================= */
+        .card > .card-header.bg-white,
+        .card > .card-header.bg-light,
+        .card > .card-header[style*="1b4d8f" i] {
+            background: #1b4d8f !important;
+            color: #fff !important;
+            border-bottom: 0 !important;
+        }
+        :is(.card > .card-header.bg-white, .card > .card-header.bg-light, .card > .card-header[style*="1b4d8f" i])
+            :is(h1, h2, h3, h4, h5, h6, p, div, span, strong, b, small, i, label, a):not(.btn):not(.btn-fm):not(.badge):not(.badge-fm) {
+            color: inherit !important;
+        }
+        :is(.card > .card-header.bg-white, .card > .card-header.bg-light, .card > .card-header[style*="1b4d8f" i])
+            .btn:is(.btn-outline-primary, .btn-outline-secondary, .btn-outline-info, .btn-outline-dark, .btn-outline-success) {
+            color: #fff !important;
+            border-color: rgba(255, 255, 255, .75) !important;
+        }
     </style>
 
 
