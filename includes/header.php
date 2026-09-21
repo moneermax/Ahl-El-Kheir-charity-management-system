@@ -1124,6 +1124,24 @@ $langSwitchUrl =
 
                     <div class="qa-user-controls">
                         <div class="qa-group qa-group-tools">
+                    <?php
+                    // Home shortcut: jumps to the user's main dashboard; hidden on the dashboards themselves.
+                    $akHomePath   = dashboard_for_role(current_user_role());
+                    $akScriptPath = str_replace('\\', '/', (string)($_SERVER['SCRIPT_NAME'] ?? ''));
+                    $akOnDashboard = str_ends_with($akScriptPath, '/' . $akHomePath) || preg_match('~/dashboard/~i', $akScriptPath) === 1;
+                    ?>
+                    <?php if (!$akOnDashboard): ?>
+                        <a
+                            href="<?php echo APP_URL . e($akHomePath); ?>"
+                            class="qa-btn ak-header-home-btn"
+                            style="background: rgba(255,255,255,0.10);"
+                            aria-label="<?php echo e(AK_LANG === 'ar' ? 'الرئيسية' : 'Home'); ?>"
+                            title="<?php echo e(AK_LANG === 'ar' ? 'الرئيسية' : 'Home'); ?>"
+                        >
+                            <i class="fas fa-house" aria-hidden="true"></i>
+                        </a>
+                    <?php endif; ?>
+
                     <?php if ($canGlobalSearch): ?>
                         <a
                             href="<?php echo APP_URL; ?>modules/search/index.php"
