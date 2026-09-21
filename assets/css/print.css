@@ -1,0 +1,237 @@
+/* =============================================================================
+   Ahl El Kheir - UNIFIED PRINT DESIGN (all pages)
+   One place that controls what paper looks like:
+     [ unified print header ]   .ak-print-header  (emitted by includes/header.php)
+     [ the page's own content ] the area between header and footer
+     [ unified print footer ]   .ak-print-footer  (emitted by includes/footer.php)
+   The application chrome (sidebar, top bar, buttons, social footer, ...) is never printed.
+
+   A page that already has its own official letterhead (for example the orphan form or the
+   sponsor report) sets  $akPrintOwnLetterhead = true;  BEFORE including includes/header.php.
+   It then keeps its own design, and only the application chrome is removed.
+   ============================================================================= */
+
+/* on screen: the print-only blocks are invisible */
+.ak-print-header,
+.ak-print-footer { display: none; }
+
+/* a page can opt into a borderless full-sheet page (used by official forms) */
+@page ak-full { margin: 0; }
+
+@media print {
+
+    @page {
+        size: A4 portrait;
+        margin: 12mm 10mm 16mm;
+        @bottom-center {
+            content: counter(page) " / " counter(pages);
+            font-family: 'Cairo', sans-serif;
+            font-size: 8pt;
+            color: #555;
+        }
+    }
+
+    * {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    html, body {
+        background: #fff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: auto !important;
+        height: auto !important;
+        min-height: 0 !important;
+        overflow: visible !important;
+        color: #000;
+    }
+
+    /* ---- 1. never print the application chrome and page controls ---- */
+    .sidebar,
+    .sidebar-overlay,
+    #sidebarOverlay,
+    .ak-sidebar-toggle,
+    .header-sticky-wrapper,
+    .org-header-banner,
+    .qa-top-bar,
+    .app-footer,
+    .ak-top-back-wrap,
+    .ak-bottom-back-wrap,
+    .ak-toolbar,
+    .ak-report-actions,
+    .no-print,
+    .d-print-none,
+    .alert-dismissible,
+    .breadcrumb,
+    .page-title-section,
+    .pagination,
+    .dropdown-menu,
+    .modal,
+    .modal-backdrop,
+    .toast-container,
+    .swal2-container,
+    .btn,
+    button,
+    input[type="submit"],
+    input[type="button"] {
+        display: none !important;
+    }
+
+    /* ---- 2. reset the page layout so the content uses the whole sheet ---- */
+    .app-wrapper,
+    .main-area,
+    main {
+        display: block !important;
+        position: static !important;
+        width: 100% !important;
+        max-width: none !important;
+        min-width: 0 !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        transform: none !important;
+        background: #fff !important;
+        box-shadow: none !important;
+    }
+
+    /* .content is a column as tall as the printable area: the footer sinks to the bottom of a short page */
+    .content {
+        display: flex !important;
+        flex-direction: column !important;
+        position: static !important;
+        width: 100% !important;
+        max-width: none !important;
+        min-width: 0 !important;
+        min-height: 267mm !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #fff !important;
+        box-shadow: none !important;
+    }
+    .content > * { flex: 0 0 auto; }
+    .content > .ak-print-footer { margin-top: auto; }
+
+    .container,
+    .container-fluid {
+        max-width: none !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+
+    /* page headings that are decorative banners on screen become plain headings on paper */
+    .welcome-section,
+    .fm-header {
+        background: #fff !important;
+        color: #000 !important;
+        border: 0 !important;
+        border-bottom: 1px solid #999 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        padding: 0 0 3mm !important;
+        margin: 0 0 4mm !important;
+    }
+    .welcome-section *,
+    .fm-header * {
+        color: #000 !important;
+    }
+
+    /* ---- 3. print-friendly content ---- */
+    .card {
+        box-shadow: none !important;
+        border: 1px solid #c9ced6 !important;
+        border-radius: 2mm !important;
+        break-inside: auto;
+        margin-bottom: 4mm !important;
+    }
+    .card-header { break-after: avoid; }
+    .table-responsive { overflow: visible !important; }
+    table { border-collapse: collapse; }
+    thead { display: table-header-group; }
+    tfoot { display: table-footer-group; }
+    tr, img { break-inside: avoid; }
+    h1, h2, h3, h4, h5, h6 { break-after: avoid; }
+    a, a:visited { color: inherit !important; text-decoration: none !important; }
+    .fade-in, .card { opacity: 1 !important; animation: none !important; transform: none !important; }
+
+    /* ---- 4. UNIFIED PRINT HEADER ---- */
+    .ak-print-header {
+        display: block;
+        margin: 0 0 5mm;
+        break-after: avoid;
+        color: #000;
+        font-family: 'Cairo', sans-serif;
+    }
+    .ak-print-header .ak-ph-row {
+        display: flex;
+        align-items: center;
+        gap: 6mm;
+        padding-bottom: 3mm;
+        border-bottom: 2px solid #1b4d8f;
+    }
+    .ak-print-header .ak-ph-logo {
+        width: 20mm;
+        height: 20mm;
+        flex: 0 0 20mm;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 1px solid #bbb;
+    }
+    .ak-print-header .ak-ph-org {
+        flex: 1 1 auto;
+        text-align: center;
+    }
+    .ak-print-header .ak-ph-org strong {
+        display: block;
+        font-size: 15pt;
+        font-weight: 800;
+        line-height: 1.3;
+        color: #1b4d8f;
+    }
+    .ak-print-header .ak-ph-org span {
+        display: block;
+        font-size: 9pt;
+        color: #444;
+    }
+    .ak-print-header .ak-ph-meta {
+        flex: 0 0 auto;
+        min-width: 44mm;
+        font-size: 8.5pt;
+        line-height: 1.7;
+        color: #333;
+    }
+    .ak-print-header .ak-ph-meta b { color: #000; }
+    .ak-print-header .ak-ph-title {
+        margin-top: 3mm;
+        padding: 2mm 4mm;
+        background: #1b4d8f !important;
+        color: #fff !important;
+        text-align: center;
+        font-size: 12pt;
+        font-weight: 700;
+        border-radius: 2mm;
+    }
+
+    /* the page already prints its own heading: do not repeat it as a title bar */
+    .content:has(.welcome-section, .fm-header) .ak-print-header .ak-ph-title { display: none; }
+
+    /* ---- 5. UNIFIED PRINT FOOTER ---- */
+    .ak-print-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 6mm;
+        margin-top: 8mm;
+        padding-top: 2mm;
+        border-top: 2px solid #1b4d8f;
+        font-family: 'Cairo', sans-serif;
+        font-size: 8.5pt;
+        color: #444;
+        break-inside: avoid;
+    }
+
+    /* ---- 6. pages with their own official letterhead: no unified header/footer ---- */
+    body.ak-print-own .ak-print-header,
+    body.ak-print-own .ak-print-footer { display: none !important; }
+    body.ak-print-own .ak-sheet { page: ak-full; }
+}

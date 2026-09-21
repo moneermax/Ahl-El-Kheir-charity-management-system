@@ -1132,6 +1132,8 @@ $langSwitchUrl =
 
     </script>
 
+    <link rel="stylesheet" href="<?php echo APP_URL; ?>assets/css/print.css?v=<?php echo (int)@filemtime(__DIR__ . '/../assets/css/print.css'); ?>">
+
 </head>
 
 
@@ -1140,7 +1142,13 @@ $langSwitchUrl =
 $akBodyScript   = str_replace('\\', '/', (string)($_SERVER['SCRIPT_NAME'] ?? ''));
 $akIsDashboardPage = preg_match('~/dashboard/~i', $akBodyScript) === 1 || str_ends_with($akBodyScript, '/fm_dashboard.php');
 ?>
-<body<?php echo $akIsDashboardPage ? ' class="ak-dashboard"' : ''; ?>>
+<?php
+// Body classes: ak-dashboard (dashboard section titles), ak-print-own (page has its own printed letterhead).
+$akBodyClasses = [];
+if ($akIsDashboardPage) $akBodyClasses[] = 'ak-dashboard';
+if (!empty($akPrintOwnLetterhead)) $akBodyClasses[] = 'ak-print-own';
+?>
+<body<?php echo $akBodyClasses ? ' class="' . e(implode(' ', $akBodyClasses)) . '"' : ''; ?>>
 
 
 <div class="app-wrapper">
@@ -1307,6 +1315,35 @@ $akIsDashboardPage = preg_match('~/dashboard/~i', $akBodyScript) === 1 || str_en
              ========================================================= -->
 
         <div class="content">
+
+            <?php
+            // Unified PRINT header (invisible on screen). Styled in assets/css/print.css.
+            $akPhTitle = trim((string)($pageTitle ?? ''));
+            ?>
+            <?php
+            // Running header on pages 2+ (browsers that support @page margin boxes; page 1 has the full letterhead).
+            $akRunning = addcslashes(t('common.organization_name') . ($akPhTitle !== '' ? '  |  ' . $akPhTitle : ''), "\\\"\r\n");
+            ?>
+            <style media="print">
+                @page { @top-center { content: "<?php echo $akRunning; ?>"; font-family: 'Cairo', sans-serif; font-size: 8pt; color: #555; } }
+                @page :first { @top-center { content: none; } }
+            </style>
+            <div class="ak-print-header" aria-hidden="true">
+                <div class="ak-ph-row">
+                    <img class="ak-ph-logo" src="<?php echo APP_URL; ?>assets/img/logo.png" alt="">
+                    <div class="ak-ph-org">
+                        <strong><?php echo e(t('common.organization_name')); ?></strong>
+                        <span><?php echo e(t('common.copyright')); ?></span>
+                    </div>
+                    <div class="ak-ph-meta">
+                        <div><b><?php echo e(t('print.date')); ?>:</b> <?php echo e(date('Y-m-d H:i')); ?></div>
+                        <div><b><?php echo e(t('print.printed_by')); ?>:</b> <?php echo e(current_user_name()); ?></div>
+                    </div>
+                </div>
+                <?php if ($akPhTitle !== ''): ?>
+                    <div class="ak-ph-title"><?php echo e($akPhTitle); ?></div>
+                <?php endif; ?>
+            </div>
 
 
             <?php

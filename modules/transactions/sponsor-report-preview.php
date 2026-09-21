@@ -132,6 +132,7 @@ foreach ($sponsorships as $sp) {
 
 $pageTitle = 'معاينة تقرير الكفيل';
 $active = 'sponsor_reports';
+$akPrintOwnLetterhead = true; // this report has its own letterhead: see assets/css/print.css
 include __DIR__ . '/../../includes/header.php';
 ?>
 

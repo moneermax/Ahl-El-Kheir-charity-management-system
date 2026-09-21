@@ -1,3 +1,8 @@
+<?php /* Unified PRINT footer (invisible on screen). Styled in assets/css/print.css. */ ?>
+<div class="ak-print-footer" aria-hidden="true">
+    <span><?php echo e(t('common.copyright')); ?> &copy; <?php echo date('Y'); ?></span>
+    <span><?php echo e(t('common.organization_name')); ?></span>
+</div>
 </main>
 <footer class="app-footer text-center text-muted py-3">
     <div class="container">

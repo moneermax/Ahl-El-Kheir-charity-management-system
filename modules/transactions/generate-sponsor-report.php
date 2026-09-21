@@ -65,6 +65,7 @@ foreach ($transactions as $t) {
 }
 
 $pageTitle = 'معاينة تقرير الكفيل';
+$akPrintOwnLetterhead = true; // this report has its own letterhead: see assets/css/print.css
 include __DIR__ . '/../../includes/header.php';
 ?>
 

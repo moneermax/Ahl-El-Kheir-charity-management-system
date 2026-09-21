@@ -151,6 +151,7 @@ if ($child) {
     foreach ($ships as $sh) { $totalMonthly += (float)$sh['monthly_amount']; if ($firstStart === '') $firstStart = $sh['start_date']; }
 }
 $V = function ($x) { return ($x !== null && $x !== '') ? e($x) : '<span class="ak-blank"></span>'; };
+$akPrintOwnLetterhead = true; // official layout with its own letterhead: see assets/css/print.css
 include dirname(__DIR__, 2) . '/includes/header.php';
 ?>
 <style>
