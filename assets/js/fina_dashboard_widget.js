@@ -27,8 +27,8 @@ document.addEventListener('DOMContentLoaded', function () {
             var card = document.createElement('div');
             card.className = 'fm-card fina-dashboard-card';
             card.style.borderRight = '5px solid #6f42c1';
-            card.innerHTML = '<style>.fina-dashboard-card .grid-4{grid-template-columns:repeat(4,minmax(140px,1fr));gap:10px}.fina-dashboard-card .stat-box{padding:10px 8px;border-radius:8px}.fina-dashboard-card .stat-value{font-size:1.25rem;margin:4px 0}.fina-dashboard-card .stat-label{font-size:.76rem;line-height:1.25}.fina-dashboard-card .stat-sub{font-size:.68rem;line-height:1.2}.fina-dashboard-card .fina-account-line{font-size:.82rem;color:#6c757d;margin-top:3px}@media(max-width:767px){.fina-dashboard-card .grid-4{grid-template-columns:repeat(2,minmax(0,1fr))}}</style>' +
-                '<div class="fm-card-head"><div><span>💠 تحصيلات فينا الخير</span><div class="fina-account-line">حساب الالتزام: 2300 — '+(acc.is_active ? 'الحساب نشط' : 'الحساب موقوف')+'</div></div><span class="badge-fm badge-blue">'+p.count+' بانتظار المراجعة</span></div>' +
+            card.innerHTML = '<style>.fina-dashboard-card .grid-4{grid-template-columns:repeat(4,minmax(140px,1fr));gap:10px}.fina-dashboard-card .stat-box{padding:10px 8px;border-radius:8px}.fina-dashboard-card .stat-value{font-size:1.25rem;margin:4px 0}.fina-dashboard-card .stat-label{font-size:.76rem;line-height:1.25}.fina-dashboard-card .stat-sub{font-size:.68rem;line-height:1.2}.fina-dashboard-card .fina-brand{display:flex;align-items:center;gap:10px}.fina-dashboard-card .fina-logo{width:52px;height:52px;object-fit:contain;border-radius:8px;background:#fff;border:1px solid #e9ecef;padding:3px}.fina-dashboard-card .fina-name-en{font-size:.72rem;color:#6c757d;font-weight:600;margin-top:1px}.fina-dashboard-card .fina-account-line{font-size:.82rem;color:#6c757d;margin-top:3px}@media(max-width:767px){.fina-dashboard-card .grid-4{grid-template-columns:repeat(2,minmax(0,1fr))}}</style>' +
+                '<div class="fm-card-head"><div class="fina-brand"><img src="'+base+'assets/img/Feen_logo.jpeg" alt="منظمة فينا الخير — Feena Al-Khair" class="fina-logo"><div><span>منظمة فينا الخير</span><div class="fina-name-en">Feena Al-Khair</div><div class="fina-account-line">حساب الالتزام: 2300 — '+(acc.is_active ? 'الحساب نشط' : 'الحساب موقوف')+'</div></div></div><span class="badge-fm badge-blue">'+p.count+' بانتظار المراجعة</span></div>' +
                 '<div class="fm-card-body">' +
                 '<div class="grid-4">' +
                     '<div class="stat-box amber"><div class="stat-value">'+p.count+'</div><div class="stat-label">طلبات بانتظار المراجعة</div><div class="stat-sub">يجب مراجعتها من المدير المالي</div></div>' +
@@ -38,13 +38,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 '</div>' +
                 '<div class="small text-muted mt-2"><strong>الحركة حسب العملة:</strong> '+currencyText+'</div>' +
                 '<div class="d-flex flex-wrap gap-2 mt-3">' +
-                    '<a class="btn-fm btn-navy" href="'+base+'modules/accounting/fina_payment_review.php"><i class="fas fa-clipboard-check me-1"></i>مراجعة فينا</a>' +
-                    '<a class="btn-fm btn-ghost" href="'+base+'modules/accounting/fina_settlements.php"><i class="fas fa-money-bill-transfer me-1"></i>تسويات فينا</a>' +
-                    '<a class="btn-fm btn-ghost" href="'+base+'modules/accounting/fina_payment_history.php"><i class="fas fa-clock-rotate-left me-1"></i>سجل فينا</a>' +
-                    '<a class="btn-fm btn-ghost" href="'+base+'modules/accounting/fina_payment_report.php"><i class="fas fa-file-chart-column me-1"></i>تقرير فينا</a>' +
+                    '<a class="btn-fm btn-navy" href="'+base+'modules/accounting/fina_payment_review.php"><i class="fas fa-clipboard-check me-1"></i>مراجعة منظمة فينا الخير</a>' +
+                    '<a class="btn-fm btn-ghost" href="'+base+'modules/accounting/fina_settlements.php"><i class="fas fa-money-bill-transfer me-1"></i>تسويات منظمة فينا الخير</a>' +
+                    '<a class="btn-fm btn-ghost" href="'+base+'modules/accounting/fina_payment_history.php"><i class="fas fa-clock-rotate-left me-1"></i>سجل منظمة فينا الخير</a>' +
+                    '<a class="btn-fm btn-ghost" href="'+base+'modules/accounting/fina_payment_report.php"><i class="fas fa-file-chart-column me-1"></i>تقرير منظمة فينا الخير</a>' +
                     '<a class="btn-fm btn-ghost" href="'+base+'modules/accounting/accounts.php"><i class="fas fa-scale-balanced me-1"></i>حساب 2300</a>' +
                 '</div>' +
-                '<div class="small text-muted mt-2">إجمالي المعتمد هنا هو مجموع التحصيلات ذات الحالة «معتمد» فقط؛ وهو يختلف عن الرصيد غير المسدد في شاشة التسويات. أموال فينا الخير مستقلة عن إيرادات الكفالات والرسوم الإدارية.</div>' +
+                '<div class="small text-muted mt-2">إجمالي المعتمد هنا هو مجموع التحصيلات ذات الحالة «معتمد» فقط؛ وهو يختلف عن الرصيد غير المسدد في شاشة التسويات. أموال منظمة فينا الخير مستقلة عن إيرادات الكفالات والرسوم الإدارية.</div>' +
                 '</div>';
             var anchor = main.querySelector('.fm-top-layout');
             if (anchor) anchor.insertAdjacentElement('afterend', card);
