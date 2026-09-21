@@ -324,6 +324,24 @@ $recentJournals = dbFetchAll("SELECT je.entry_code, je.entry_date, je.descriptio
 .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 20px; }
 .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; }
 .fm-top-layout { margin-bottom: 20px; }
+/* FM quick-action cards */
+.ak-fm-action-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.75rem; margin:0 auto 1.25rem; max-width:1180px; }
+.ak-fm-action-card { min-height:104px; height:104px; border:0; border-radius:10px; box-shadow:0 2px 8px rgba(10,31,68,.08); text-decoration:none; color:inherit; background:#fff; display:flex; align-items:center; justify-content:center; transition:transform .18s,box-shadow .18s; }
+.ak-fm-action-card:hover { transform:translateY(-3px); box-shadow:0 5px 14px rgba(10,31,68,.14); color:inherit; }
+.ak-fm-action-icon { font-size:1.45rem; margin-bottom:.35rem; display:flex; align-items:center; justify-content:center; min-height:38px; }
+.ak-fm-action-fina-logo { width:38px !important; height:38px !important; max-width:38px !important; max-height:38px !important; object-fit:contain; border-radius:7px; background:#fff; border:1px solid #e9ecef; padding:2px; display:block; margin:0 auto .35rem; box-sizing:border-box; }
+.ak-fm-action-title { font-size:.82rem; font-weight:700; line-height:1.35; }
+.ak-fm-action-desc { font-size:.66rem; line-height:1.3; color:#6c757d; margin-top:.18rem; }
+.ak-fm-action-card.ak-fm-action-1 { border-top:3px solid #d3701f; }
+.ak-fm-action-card.ak-fm-action-2 { border-top:3px solid #28a745; }
+.ak-fm-action-card.ak-fm-action-3 { border-top:3px solid #2195c4; }
+.ak-fm-action-card.ak-fm-action-4 { border-top:3px solid #ffc107; }
+.ak-fm-action-card.ak-fm-action-5 { border-top:3px solid #0d6efd; }
+.ak-fm-action-card.ak-fm-action-6 { border-top:3px solid #2daf79; }
+.ak-fm-action-card.ak-fm-action-7 { border-top:3px solid #6f42c1; }
+@media(max-width:991.98px) { .ak-fm-action-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:420px) { .ak-fm-action-grid { grid-template-columns:1fr; } .ak-fm-action-card { height:96px; min-height:96px; } }
+
 .project-review-list { display: grid; gap: 12px; }
 .project-review-item { border: 1px solid #e5e7eb; border-radius: 10px; background: #fff; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.04); }
 .project-review-item-head { display:flex; justify-content:space-between; align-items:center; gap:14px; padding:12px 14px; }
