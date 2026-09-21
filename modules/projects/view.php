@@ -712,7 +712,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         </div>
         <div class="d-flex gap-2">
             <?php if ($role === 'projects_manager' && in_array($approval['approval_status'], ['draft', 'rejected'], true)): ?>
-                <a href="<?php echo e(APP_URL . 'modules/projects/form.php?id=' . $id . '&return=' . rawurlencode(ltrim(parse_url($backUrl, PHP_URL_QUERY) ?? '', '?'))); ?>" class="btn btn-outline-primary">
+                <a href="<?php echo e(APP_URL . 'modules/projects/form.php?id=' . $id); ?>" class="btn btn-primary text-white">
                     <i class="fas fa-edit me-1"></i> تعديل المشروع
                 </a>
                 <form method="post" class="d-inline">
