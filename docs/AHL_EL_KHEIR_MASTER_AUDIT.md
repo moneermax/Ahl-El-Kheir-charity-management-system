@@ -1326,3 +1326,18 @@ The project form now supports repeatable records for government requirements/fee
 
 Migration: `database/migrations/2026-09-22_project_repeatable_details.sql`.
 Form commits: `06af8a25e460194ddef392ceb21f43b76e0636e1` and `daae330a0d4ede9c04d128cf81a8c2536e47111a`. Runtime verification remains pending.
+
+
+## 2026-09-22 — Project repeatable-detail view support
+
+Following the repeatable project form-field migration, `modules/projects/view.php` was audited. The edit form already handled the new child records; the detail page did not yet display them and still exposed only the legacy single **الشريك المنفذ** value.
+
+The project view now displays the new read-only records for:
+- government requirements with their individual fees and listed-fee total;
+- implementing partners and roles;
+- procurement methods and notes;
+- contact records and their available contact details.
+
+No new schema, trigger, view, runtime DDL, workflow action, or authorization change was introduced.
+
+Implementation commit: `9cff782107e4c04abe7803d7d84830930dcc933b`. Runtime verification remains pending.
