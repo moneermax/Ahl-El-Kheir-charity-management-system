@@ -461,3 +461,20 @@ The project creation/edit form was expanded to support repeatable planning/detai
 
 Implementation commits: `8f7274ed65202ad34d3dd305a6e8dce130a25125` (migration) and `06af8a25e460194ddef392ceb21f43b76e0636e1` / `daae330a0d4ede9c04d128cf81a8c2536e47111a` (form handling/UI).
 Runtime verification and migration execution are still pending locally.
+
+
+## 2026-09-22 — Repeatable project details added to project view
+
+The project detail page was audited after the repeatable form fields were introduced. The edit flow already loaded, validated, deleted, and reinserted the repeatable records correctly; the missing piece was read-only display on `modules/projects/view.php`.
+
+The project view now reads and displays:
+- each government requirement with its associated fee and a total of the listed government fees;
+- all implementing partners with their roles;
+- all procurement methods with their notes;
+- all contact records with role, phone, email, and notes.
+
+The existing legacy **الشريك المنفذ** summary remains intact for compatibility. No POST action, authorization rule, schema change, trigger, view, or runtime DDL was added.
+
+Implementation commit: `9cff782107e4c04abe7803d7d84830930dcc933b`.
+
+The repeatable-details migration has been applied to the local database. Runtime UI verification of both edit and view pages remains the next required test.
