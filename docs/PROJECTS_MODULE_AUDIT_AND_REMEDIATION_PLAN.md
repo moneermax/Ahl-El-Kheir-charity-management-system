@@ -368,3 +368,41 @@ Static repository verification confirms the new guard is used by the targeted bu
 
 The next local test must first verify the Project Manager can prepare/modify budget and funding while the project is `draft`/returned, then submit it, and verify the FM sees the package as read-only financial review data with Approve/Reject controls and no budget/funding entry controls.
 
+
+
+
+## 2026-09-22 — Projects UI design implementation batch
+
+The Projects UI is now being aligned with the approved visual reference artifacts:
+- `docs/code_artifact.html` is the visual/UI reference.
+- `docs/code_artifact.md` is the functional/product reference.
+- The implementation remains Bootstrap-based to preserve the existing application shell; the reference's visual language is adapted rather than replacing the system-wide framework.
+
+### Implemented in this batch
+
+- Added scoped shared Projects styling in `assets/css/projects-ui.css`.
+- Updated `modules/projects/form.php` with:
+  - reference-style project banner and section cards;
+  - clearer field hierarchy and rounded form controls;
+  - dynamic project-type guidance using the existing `project_type` field;
+  - category-aware guidance for orphan, water, food/relief, economic, and custom projects;
+  - budget template helper that adds descriptive budget lines without inventing monetary values;
+  - preserved server-side budget equality validation.
+- Updated `modules/projects/view.php` so existing workflow forms use the same visual language, while retaining their current POST actions and authorization conditions.
+- Updated `modules/projects/index.php` so the project portfolio/listing uses the same visual language.
+- No new database columns, tables, triggers, views, or runtime DDL were introduced.
+
+### Important workflow boundary discovered during UI review
+
+The user explicitly clarified that **funding entry/allocation is not a Projects Manager task**. Therefore the UI must not expose a funding-entry form to the Projects Manager merely because a project is in a preparation state.
+
+The current code still contains a deeper pre-approval funding workflow contradiction: FM financial approval requires draft funding allocations to equal the approved budget, while the current role ownership of creating those allocations is not yet established by the authoritative workflow rules. This must be resolved before assigning the funding-entry form to any role. Do not infer the owner from the prototype or invent a new role responsibility.
+
+### Verification status
+
+Static repository checks completed:
+- project form/view/index form tag counts remain balanced;
+- the shared Projects stylesheet is loaded by all three user-facing Projects pages;
+- existing POST actions were preserved in this UI batch.
+
+Runtime visual verification is **pending**.
