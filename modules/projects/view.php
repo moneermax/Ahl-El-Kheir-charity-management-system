@@ -788,7 +788,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
         } elseif ($action === 'comment_labor') {
             // ... (Original comment_labor logic preserved exactly)
-            if (!akp_is_projects_manager() && !akp_is_executive()) throw new RuntimeException('التعليق على العمالة الخارجية متاح لمدير المشاريع والإدارة التنفيذية فقط.');
+            if (!akp_is_executive()) throw new RuntimeException('التعليق الإداري على العمالة الخارجية متاح للإدارة التنفيذية فقط.');
             $laborId = (int)($_POST['labor_id'] ?? 0);
             $comment = akp_post_value('labor_manager_comment');
             if (!$laborId || $comment === '' || !dbFetchOne('SELECT id FROM project_labor_helpers WHERE id = ? AND project_id = ?', [$laborId, $id])) throw new RuntimeException('سجل العمالة أو التعليق غير صالح.');
@@ -1482,7 +1482,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                         <?php if ($labor['manager_comment']): ?>
                             <div class="alert alert-light border small mb-2"><strong>تعليق الإدارة:</strong> <?php echo nl2br(e($labor['manager_comment'])); ?></div>
                         <?php endif; ?>
-                        <?php if ((akp_is_projects_manager() || akp_is_executive()) && !$closed): ?>
+                        <?php if (akp_is_executive() && !$closed): ?>
                             <form method="post" class="project-inline-form input-group-sm">
                                 <?php echo csrf_field(); ?>
                                 <input type="hidden" name="action" value="comment_labor">
