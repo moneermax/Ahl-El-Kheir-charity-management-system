@@ -982,7 +982,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             </div>
         </div>
     </div>
-    <div class="col-6 col-xl-3">
+    <div class="project-summary-card">
         <div class="card text-center">
             <div class="card-body py-2">
                 <div class="fs-5 fw-bold text-success"><?php echo akp_money($totals['total_funded'] ?? 0); ?></div>
@@ -990,7 +990,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             </div>
         </div>
     </div>
-    <div class="col-6 col-xl-3">
+    <div class="project-summary-card">
         <div class="card text-center">
             <div class="card-body py-2">
                 <div class="fs-5 fw-bold text-danger"><?php echo akp_money($totals['total_expensed'] ?? 0); ?></div>
@@ -998,7 +998,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             </div>
         </div>
     </div>
-    <div class="col-6 col-xl-3">
+    <div class="project-summary-card">
         <div class="card text-center">
             <div class="card-body py-2">
                 <div class="fs-5 fw-bold <?php echo $varianceClass; ?>"><?php echo akp_money($totals['variance']); ?></div>
