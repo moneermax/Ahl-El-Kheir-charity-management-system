@@ -86,31 +86,30 @@
 .project-module-page .project-badge { display:inline-flex; align-items:center; gap:.3rem; padding:.25rem .6rem; border-radius:999px; font-size:.72rem; font-weight:800; }
 
 
-/* Project details: distribute the existing main and side sections across the page. */
+/* Project details: keep the existing main/side structure, but force a stable two-column page layout. */
 .project-module-page .project-view-sections-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: grid !important;
+    grid-template-columns: minmax(0, 1.7fr) minmax(320px, 1fr);
     gap: 1rem;
     margin-right: 0;
     margin-left: 0;
     align-items: start;
 }
 
-/*
- * The PHP page keeps the existing main/side wrappers for structure and
- * permissions, but the visual layout should not keep those wrappers as
- * two long vertical stacks. Make only these two project wrappers transparent
- * to the grid so every existing section/card becomes a page-level grid item.
- */
-.project-module-page .project-view-main-column,
-.project-module-page .project-view-side-column {
-    display: contents;
+.project-module-page .project-view-sections-grid > .project-view-main-column,
+.project-module-page .project-view-sections-grid > .project-view-side-column {
+    display: block !important;
+    width: auto !important;
+    max-width: none !important;
+    flex: none !important;
+    min-width: 0;
+    padding-right: 0;
+    padding-left: 0;
 }
 
-.project-module-page .project-view-sections-grid > .card,
-.project-module-page .project-view-sections-grid > .alert,
 .project-module-page .project-view-main-column > .card,
-.project-module-page .project-view-side-column > .card {
+.project-module-page .project-view-side-column > .card,
+.project-module-page .project-view-sections-grid > .alert {
     width: 100%;
     min-width: 0;
 }
