@@ -220,3 +220,99 @@ Code commit: `b7a655512c1234fb1459c068aba07e494355f023` — **Notify GM when pro
 ### Runtime verification status
 
 Not yet runtime-tested. The next controlled test is Project 6: after pulling the commit, verify that FM approval succeeds and the active General Manager receives and can open the notification. Do not repeat the already-passed Project Manager → FM notification test unless a regression is observed.
+
+## 2026-09-22 — Projects Module Working Plan: Complete Workflow and Role Audit
+
+The Projects Module is now explicitly under a **complete workflow and role audit**. This supersedes treating individual UI/permission defects as isolated fixes. The objective is a reliable end-to-end project workflow with clear separation of duties, correct lifecycle timing, and correct financial/accounting behavior.
+
+### Authoritative role boundaries for this audit
+
+**Project Supervisor**
+- Enters project and operational data.
+- Maintains operational planning and execution information.
+- Adds/follows operational progress, beneficiaries, external labor, milestones, and supporting documents as permitted by the workflow.
+
+**Projects Manager**
+- Reviews/follows up Project Supervisor work.
+- Manages project workflow/readiness.
+- Prepares and submits the project for financial review.
+- Does not replace FM financial approval authority.
+
+**Financial Manager (FM)**
+- Financial review/control role at the approval stage.
+- Reviews approved budget, funding allocation, financial warnings, and relevant supporting information.
+- Approves or rejects the project financially.
+- Must not enter operational project data.
+- Operational sections in FM view should be read-only or presented as concise quick-report summaries.
+- After final project approval, performs authorized project payment/disbursement actions when the workflow requires FM execution and prints payment receipts where applicable, especially for cash payments.
+- Payment execution must remain distinct from operational data entry and from approval authority where separation of duties requires it.
+
+**GM/VGM**
+- Final project approval according to the existing authority rules.
+
+**Accountant**
+- Accounting execution/posting responsibilities where the existing accounting workflow assigns them.
+
+### Required audit model
+
+Every Projects section/action must be classified as one of:
+
+A. **Pre-approval preparation**
+B. **Approval / financial review**
+C. **Post-approval execution**
+D. **Management / reporting**
+
+For every page and POST action, verify both:
+- server-side authorization and lifecycle guards; and
+- frontend visibility/editability/read-only presentation.
+
+### Target FM experience
+
+Before final approval, FM should have a **financial review/control view**, not an operational data-entry workspace. It should expose, as appropriate:
+- project summary;
+- approved budget and budget lines;
+- funding allocations by source;
+- total funded amount and remaining amount;
+- financial warnings/validation state;
+- relevant project documents as read-only;
+- concise operational summaries as read-only;
+- approval history;
+- clear financial Approve / Reject actions.
+
+After final approval, FM should have a **financial project execution view** where applicable:
+- approved budget;
+- funded amount;
+- paid amount;
+- actual expenses;
+- remaining budget;
+- pending payments;
+- payment history;
+- financial documents;
+- authorized payment/disbursement actions;
+- receipt/print actions where required.
+
+### Required audit questions
+
+1. Which project pages/endpoints exist and what does each POST action mutate?
+2. Which roles can view, create, edit, approve, reject, fund, spend, close, reopen, upload/verify documents, manage teams, and execute payments?
+3. Which sections should be Supervisor-editable, Projects-Manager-editable, FM read-only, FM financial-actionable, GM/VGM review-only, or Accountant-controlled?
+4. Are lifecycle states enforcing the same separation of duties on the server as the UI suggests?
+5. Are operational forms accidentally exposed to FM or other financial roles?
+6. Is expense entry distinct from payment/disbursement execution and accounting posting?
+7. Is the final-approval journal an actual payment/expenditure event or a funding/allocation/reservation event? These meanings must not be conflated.
+8. Could final approval and later expense/payment posting recognize the same financial event twice?
+9. Are project notifications routed to the correct role at each transition?
+10. Do dashboards, lists, detail pages, direct URLs, and POST endpoints all enforce the same workflow rules?
+11. Can an FM payment/receipt action occur only after the project is in the appropriate approved lifecycle state and only for an authorized financial event?
+12. Are audit logs and accounting references preserved throughout the workflow?
+
+### Implementation rule
+
+Do **not** implement role changes from assumptions. First complete the repository/page/schema/reference audit and produce the role matrix and section-visibility matrix. Then implement the smallest safe changes in controlled batches, with runtime verification after each batch.
+
+Do not create new schema objects, triggers, views, stored procedures, functions, or events. Do not alter existing accounting test evidence merely to make the new workflow appear correct.
+
+### Current status
+
+**Working plan accepted — audit/design phase.**
+No implementation should begin from this plan until the next session completes the requested static audit and confirms the proposed target workflow against the actual repository code and schema.
