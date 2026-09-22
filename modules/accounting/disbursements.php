@@ -727,10 +727,15 @@ flash('success', 'تم إعادة فتح سجل الأسرة للتعديل بن
 
                 // Void the linked journal entry, if one was actually posted (a batch that
                 // never reached the transfer step won't have one — that's fine, skip it).
+                // Unreachable in practice: modules/accounting/disbursement_void_guard.php intercepts
+                // this exact POST earlier (see config/config.php) and always exit()s first, so this
+                // block never runs. Fixed anyway as defense in depth: it never created an offsetting
+                // reversal entry, so flipping the original to 'voided' here would have removed its
+                // effect from every balance with no correcting entry at all.
                 $je = dbFetchOne("SELECT id FROM journal_entries WHERE reference_type = 'disbursement' AND reference_id = ? AND status = 'posted'", [$id]);
                 if ($je) {
                     dbExecute(
-                        "UPDATE journal_entries SET status = 'voided', voided_at = NOW(), voided_by = ?, void_reason = ? WHERE id = ?",
+                        "UPDATE journal_entries SET voided_at = NOW(), voided_by = ?, void_reason = ? WHERE id = ? AND voided_at IS NULL",
                         [$uid, $reason, $je['id']]
                     );
                 }

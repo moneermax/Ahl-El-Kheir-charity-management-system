@@ -133,10 +133,12 @@ function hrReversePaidPayroll(int $payrollId, int $userId, string $reason): int
             throw new RuntimeException('قيد العكس الناتج غير متوازن أو صفري.');
         }
 
+        // The original entry stays 'posted' (see lib_transaction_void.php for why); only the
+        // audit metadata changes. $existingReversal above already guards against a double reversal.
         $updated = dbExecute(
             "UPDATE journal_entries
-             SET status='voided', voided_at=NOW(), voided_by=?, void_reason=?
-             WHERE id=? AND status='posted'",
+             SET voided_at=NOW(), voided_by=?, void_reason=?
+             WHERE id=? AND status='posted' AND voided_at IS NULL",
             [$userId, $reason, (int)$original['id']]
         );
         if ($updated !== 1) throw new RuntimeException('تعذر إغلاق القيد المحاسبي الأصلي.');
@@ -151,6 +153,9 @@ function hrReversePaidPayroll(int $payrollId, int $userId, string $reason): int
 
 try {
  if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'reverse') {
+  // This POST handler had no CSRF check at all: a page on another site could submit this form
+  // on the admin's behalf and reverse a payroll run's accounting entry without their consent.
+  if (!verify_csrf()) throw new RuntimeException('انتهت صلاحية الجلسة. يرجى إعادة تحميل الصفحة والمحاولة مرة أخرى.');
   $payrollId=(int)($_POST['payroll_id']??0); $reason=trim((string)($_POST['reason']??''));
   if($payrollId<=0) throw new RuntimeException('سجل مسير الراتب غير صالح.');
   if($reason==='') throw new RuntimeException('سبب العكس مطلوب لأغراض التدقيق المحاسبي.');
@@ -221,7 +226,7 @@ $pageTitle='عكس مسيرات الرواتب'; require_once __DIR__ . '/../../
 </div></div></div>
 <div class="modal fade" id="reverseModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content" dir="rtl">
 <div class="modal-header"><h5 class="modal-title"><i class="fas fa-triangle-exclamation text-danger me-2"></i> تأكيد عكس مسير الراتب</h5><button type="button" class="btn-close ms-0 me-auto" data-bs-dismiss="modal"></button></div>
-<form method="POST" onsubmit="return validateReverse()"><div class="modal-body"><input type="hidden" name="action" value="reverse"><input type="hidden" name="payroll_id" id="reversePayrollId"><p class="mb-2">سيتم إنشاء قيد محاسبي عكسي للمسير:</p><div class="bg-light rounded p-3 mb-3"><strong id="reverseEmployee"></strong><div id="reversePeriod" class="prr-muted"></div><div class="mt-1">الصافي: <strong id="reverseAmount"></strong> <?php echo htmlspecialchars(APP_CURRENCY_CODE); ?></div></div><div class="alert alert-warning py-2 small"><i class="fas fa-info-circle me-1"></i> لا يمكن التراجع عن هذا الإجراء من خلال إعادة فتح المسير. سيتم الاحتفاظ بالقيد الأصلي وسجل التدقيق.</div><label class="form-label fw-bold">سبب العكس <span class="text-danger">*</span></label><textarea class="form-control" name="reason" id="reverseReason" rows="3" maxlength="255" required placeholder="مثال: تصحيح خطأ في صرف الراتب"></textarea></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button><button type="submit" class="btn btn-danger"><i class="fas fa-rotate-left me-1"></i> تنفيذ العكس</button></div></form>
+<form method="POST" onsubmit="return validateReverse()"><?php echo csrf_field(); ?><div class="modal-body"><input type="hidden" name="action" value="reverse"><input type="hidden" name="payroll_id" id="reversePayrollId"><p class="mb-2">سيتم إنشاء قيد محاسبي عكسي للمسير:</p><div class="bg-light rounded p-3 mb-3"><strong id="reverseEmployee"></strong><div id="reversePeriod" class="prr-muted"></div><div class="mt-1">الصافي: <strong id="reverseAmount"></strong> <?php echo htmlspecialchars(APP_CURRENCY_CODE); ?></div></div><div class="alert alert-warning py-2 small"><i class="fas fa-info-circle me-1"></i> لا يمكن التراجع عن هذا الإجراء من خلال إعادة فتح المسير. سيتم الاحتفاظ بالقيد الأصلي وسجل التدقيق.</div><label class="form-label fw-bold">سبب العكس <span class="text-danger">*</span></label><textarea class="form-control" name="reason" id="reverseReason" rows="3" maxlength="255" required placeholder="مثال: تصحيح خطأ في صرف الراتب"></textarea></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button><button type="submit" class="btn btn-danger"><i class="fas fa-rotate-left me-1"></i> تنفيذ العكس</button></div></form>
 </div></div></div>
 <script>
 function openReverse(id,employee,period,amount){document.getElementById('reversePayrollId').value=id;document.getElementById('reverseEmployee').textContent=employee;document.getElementById('reversePeriod').textContent='الفترة: '+period;document.getElementById('reverseAmount').textContent=amount;document.getElementById('reverseReason').value='';bootstrap.Modal.getOrCreateInstance(document.getElementById('reverseModal')).show();}

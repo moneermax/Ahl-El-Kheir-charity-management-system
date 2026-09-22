@@ -55,16 +55,19 @@ function ak_void_transaction_journal_atomic(int $txnId, string $reason): void {
         throw new RuntimeException('القيد الأصلي للمعاملة ' . $txnId . ' غير متوازن أو صفري.');
     }
 
-    // Mark the original entry voided, then create a separate balanced reversal.
-    // The caller owns the surrounding DB transaction, so any failure rolls both back.
+    // The original entry stays 'posted' forever: every balance/report query filters on
+    // status='posted', so flipping it to 'voided' here would silently drop it from every
+    // balance while the reversal below still counts, over-correcting by double the amount.
+    // Only the audit metadata (voided_at/voided_by/void_reason) changes; $existingReversal
+    // above is the real guard against voiding the same entry twice.
     $affected = dbExecute(
         "UPDATE journal_entries
-         SET status='voided', voided_at=NOW(), voided_by=?, void_reason=?
-         WHERE id=? AND status='posted'",
+         SET voided_at=NOW(), voided_by=?, void_reason=?
+         WHERE id=? AND status='posted' AND voided_at IS NULL",
         [Session::getUserId(), $reason, (int)$original['id']]
     );
     if ($affected !== 1) {
-        throw new RuntimeException('تعذر إبطال القيد الأصلي للمعاملة ' . $txnId);
+        throw new RuntimeException('تعذر تسجيل بيانات إبطال القيد الأصلي للمعاملة ' . $txnId);
     }
 
     $code = 'JE-VOID-TXN-' . $txnId;

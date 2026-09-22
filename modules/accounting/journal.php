@@ -43,8 +43,14 @@ if($_SERVER['REQUEST_METHOD']==='POST'&&isset($_POST['void_entry'])&&$canVoidMan
             $existingReversal=dbFetchOne("SELECT id FROM journal_entries WHERE reference_type='manual_void' AND reference_id=? LIMIT 1 FOR UPDATE",[$eid]);
             if($existingReversal) throw new RuntimeException('يوجد قيد إلغاء سابق لهذا القيد المحاسبي.');
 
-            dbExecute("UPDATE journal_entries SET status='voided',voided_at=NOW(),voided_by=?,void_reason=? WHERE id=? AND status='posted'",[Session::getUserId(),$reason,$eid]);
-            if(db()->rowCount()!==1) throw new RuntimeException('تعذر إبطال القيد المحاسبي الأصلي.');
+            // The original entry stays 'posted' (see lib_transaction_void.php for why); only the
+            // audit metadata changes. $existingReversal above already guards against a double void.
+            // NOTE: dbExecute() already returns the affected row count (see config/database.php);
+            // db()->rowCount() does not exist on the PDO connection object (only on a PDOStatement)
+            // and previously made EVERY void attempt here fail with a fatal error, silently caught
+            // below and shown as a generic error - the manual journal void feature never worked.
+            $voidAffected = dbExecute("UPDATE journal_entries SET voided_at=NOW(),voided_by=?,void_reason=? WHERE id=? AND status='posted' AND voided_at IS NULL",[Session::getUserId(),$reason,$eid]);
+            if($voidAffected!==1) throw new RuntimeException('تعذر تسجيل بيانات إبطال القيد المحاسبي الأصلي.');
 
             $code='JE-VOID-MANUAL-'.$eid;
             $codeExists=dbFetchOne("SELECT id FROM journal_entries WHERE entry_code=? LIMIT 1 FOR UPDATE",[$code]);

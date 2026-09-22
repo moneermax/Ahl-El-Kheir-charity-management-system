@@ -144,10 +144,12 @@ try {
             throw new RuntimeException('فشل التحقق من توازن القيد العكسي.');
         }
 
+        // The original entry stays 'posted' (see lib_transaction_void.php for why); only the
+        // audit metadata changes. $batch['reversal_journal_id'] above already guards against voiding twice.
         dbExecute(
             "UPDATE journal_entries
-             SET status = 'voided', voided_at = NOW(), voided_by = ?, void_reason = ?
-             WHERE id = ? AND status = 'posted'",
+             SET voided_at = NOW(), voided_by = ?, void_reason = ?
+             WHERE id = ? AND status = 'posted' AND voided_at IS NULL",
             [$uid, $reason, (int)$original['id']]
         );
     }

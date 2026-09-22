@@ -91,8 +91,10 @@ function ak_void_journal_for_transaction(int $txnId, string $reason): void {
     $totalDebit=0.0;$totalCredit=0.0;
     foreach($lines as $line){$debit=round((float)$line['debit'],2);$credit=round((float)$line['credit'],2);if($debit<0||$credit<0||($debit>0&&$credit>0))throw new RuntimeException('سطر القيد الأصلي غير صالح للمعاملة '.$txnId);$totalDebit+=$debit;$totalCredit+=$credit;}
     if(round($totalDebit,2)!==round($totalCredit,2)||round($totalDebit,2)<=0)throw new RuntimeException('القيد الأصلي للمعاملة '.$txnId.' غير متوازن أو صفري.');
-    dbExecute("UPDATE journal_entries SET status='voided', voided_at=NOW(), voided_by=?, void_reason=? WHERE id=? AND status='posted'", [Session::getUserId(),$reason,(int)$original['id']]);
-    if(db()->rowCount()!==1)throw new RuntimeException('تعذر إبطال القيد الأصلي للمعاملة '.$txnId);
+    // Kept 'posted' (see lib_transaction_void.php for why) - only audit metadata changes here.
+    // dbExecute() already returns the affected row count; db()->rowCount() does not exist on PDO.
+    $voidAffected = dbExecute("UPDATE journal_entries SET voided_at=NOW(), voided_by=?, void_reason=? WHERE id=? AND status='posted' AND voided_at IS NULL", [Session::getUserId(),$reason,(int)$original['id']]);
+    if($voidAffected!==1)throw new RuntimeException('تعذر تسجيل بيانات إبطال القيد الأصلي للمعاملة '.$txnId);
     $code='JE-VOID-TXN-'.$txnId; if(dbFetchOne("SELECT id FROM journal_entries WHERE entry_code=? LIMIT 1",[$code]))throw new RuntimeException('رمز قيد الإلغاء موجود مسبقاً للمعاملة '.$txnId.'.');
     dbExecute("INSERT INTO journal_entries (entry_code, entry_date, description, reference_type, reference_id, status, created_by) VALUES (?,?,?,?,?,'posted',?)", [$code,$original['entry_date'],'عكس القيد بسبب إبطال المعاملة '.$txnId,'transaction_void',$txnId,Session::getUserId()]);
     $reversalId=(int)dbLastInsertId();
@@ -101,7 +103,7 @@ function ak_void_journal_for_transaction(int $txnId, string $reason): void {
 }
 
 if (!function_exists('ak_void_journal_for_voucher')) {
-function ak_void_journal_for_voucher(int $voucherId, string $reason): void { dbExecute("UPDATE journal_entries SET status='voided', voided_at=NOW(), voided_by=?, void_reason=? WHERE reference_type='voucher' AND reference_id=? AND status='posted'", [Session::getUserId(),$reason,$voucherId]); }
+function ak_void_journal_for_voucher(int $voucherId, string $reason): void { dbExecute("UPDATE journal_entries SET voided_at=NOW(), voided_by=?, void_reason=? WHERE reference_type='voucher' AND reference_id=? AND status='posted' AND voided_at IS NULL", [Session::getUserId(),$reason,$voucherId]); }
 }
 
 if (!function_exists('ak_tafqit')) {
