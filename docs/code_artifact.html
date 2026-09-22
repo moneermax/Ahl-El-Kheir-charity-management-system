@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام إدارة المشاريع والاعتماد المالي - منظمة لكفالة الأيتام والأعمال الخيرية</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Cairo & Tajawal -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
+                        },
+                        navy: {
+                            700: '#1d2939',
+                            800: '#101828',
+                            900: '#0c111d'
+                        }
+                    },
+                    fontFamily: {
+                        cairo: ['Cairo', 'sans-serif'],
+                        tajawal: ['Tajawal', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Cairo', 'Tajawal', sans-serif;
+            background-color: #f8fafc;
+        }
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- Top Bar Navigation -->
+    <header class="bg-navy-800 text-white shadow-lg sticky top-0 z-50 border-b border-emerald-600/30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <!-- Logo & System Title -->
+                <div class="flex items-center space-x-4 space-x-reverse">
+                    <div class="w-12 h-12 bg-emerald-600 rounded-xl flex items-center justify-center text-white shadow-md shadow-emerald-900/40 border border-emerald-400/30">
+                        <i class="fa-solid font-bold text-2xl fa-hand-holding-heart"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-white font-cairo">منظمة الأمل لكفالة الأيتام والتنمية</h1>
+                        <p class="text-xs text-emerald-400 font-medium">نظام إدارة المشاريع والاعتماد المالي الذكي (e-NGO Project System)</p>
+                    </div>
+                </div>
+
+                <!-- User Profile & Quick Status -->
+                <div class="hidden md:flex items-center space-x-4 space-x-reverse bg-navy-700/60 px-4 py-2 rounded-xl border border-slate-700/50">
+                    <div class="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center font-bold">
+                        أ.م
+                    </div>
+                    <div class="text-right text-xs">
+                        <div class="font-bold text-slate-200">أحمد المحمود</div>
+                        <div class="text-slate-400">مدير المشاريع الميدانية</div>
+                    </div>
+                    <div class="h-6 w-px bg-slate-700 mx-1"></div>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 ml-1.5 animate-pulse"></span>
+                        النظام متصل
+                    </span>
+                </div>
+            </div>
+
+            <!-- Navigation Tabs -->
+            <nav class="flex space-x-2 space-x-reverse overflow-x-auto pt-2 border-t border-slate-800" id="mainTabs">
+                <button onclick="switchTab('tab-create')" id="btn-tab-create" class="tab-btn active text-emerald-400 border-emerald-500 bg-slate-800/80 px-5 py-3 border-b-2 font-bold text-sm flex items-center gap-2 rounded-t-lg transition-all duration-200">
+                    <i class="fa-solid fa-file-circle-plus"></i>
+                    <span>استمارة إنشاء مشروع ذكية</span>
+                </button>
+
+                <button onclick="switchTab('tab-approval')" id="btn-tab-approval" class="tab-btn text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-800/40 px-5 py-3 border-b-2 font-bold text-sm flex items-center gap-2 rounded-t-lg transition-all duration-200">
+                    <i class="fa-solid fa-user-check"></i>
+                    <span>شاشة المدير المالي</span>
+                    <span class="bg-amber-500/20 text-amber-300 text-xs px-2 py-0.5 rounded-full border border-amber-500/30 font-sans">1 بانتظار الاعتماد</span>
+                </button>
+
+                <button onclick="switchTab('tab-report')" id="btn-tab-report" class="tab-btn text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-800/40 px-5 py-3 border-b-2 font-bold text-sm flex items-center gap-2 rounded-t-lg transition-all duration-200">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>التقرير المالي اللاحق</span>
+                </button>
+
+                <button onclick="switchTab('tab-guide')" id="btn-tab-guide" class="tab-btn text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-800/40 px-5 py-3 border-b-2 font-bold text-sm flex items-center gap-2 rounded-t-lg transition-all duration-200">
+                    <i class="fa-solid fa-lightbulb text-amber-400"></i>
+                    <span>دليل الميزات المتقدمة</span>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+        
+        <!-- Global Notification Toast Container -->
+        <div id="toastContainer" class="fixed bottom-5 left-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+        <!-- ================= TAB 1: DYNAMIC PROJECT CREATION FORM ================= -->
+        <section id="tab-create" class="tab-content animate-fade-in space-y-6">
+            <!-- Header banner -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <div class="flex items-center gap-3">
+                        <span class="bg-emerald-100 text-emerald-800 font-mono font-bold text-xs px-3 py-1 rounded-full border border-emerald-200" id="displayProjectCode">#PRJ-2026-089</span>
+                        <span class="bg-slate-100 text-slate-600 font-semibold text-xs px-2.5 py-1 rounded-full">حالة المسودة (Draft)</span>
+                    </div>
+                    <h2 class="text-2xl font-bold text-slate-800 mt-2">إنشاء طلب مشروع جديد</h2>
+                    <p class="text-sm text-slate-500 mt-1">قم بتعبئة الاستمارة الديناميكية لرفع الطلب تلقائياً إلى إدارة الاعتماد المالي.</p>
+                </div>
+                <div class="flex items-center gap-2 w-full md:w-auto justify-end">
+                    <button type="button" onclick="resetForm()" class="px-4 py-2 text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition">
+                        <i class="fa-solid fa-rotate-right ml-1"></i> إعادة ضبط
+                    </button>
+                    <button type="button" onclick="loadSampleData()" class="px-4 py-2 text-sm font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-xl transition">
+                        <i class="fa-solid fa-magic ml-1"></i> تعبئة تجريبية
+                    </button>
+                </div>
+            </div>
+
+            <!-- Form Body -->
+            <form id="projectForm" onsubmit="handleFormSubmit(event)" class="space-y-6">
+                
+                <!-- Section 1: Basic Information -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-6">
+                    <div class="flex items-center gap-3 border-b border-slate-100 pb-4">
+                        <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">1</div>
+                        <h3 class="text-lg font-bold text-slate-800">البيانات التعريفية والإستراتيجية للمشروع</h3>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                        <!-- Project Title -->
+                        <div class="lg:col-span-2">
+                            <label class="block text-xs font-bold text-slate-700 mb-2">اسم المشروع <span class="text-red-500">*</span></label>
+                            <input type="text" id="projectTitle" required placeholder="مثال: مشروع كسوة وهدايا عيد الفطر للأيتام المسجلين" 
+                                class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm transition">
+                        </div>
+
+                        <!-- Project Category (Triggers Dynamic Fields & Templates) -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-2">تصنيف المشروع <span class="text-red-500">*</span> <span class="text-emerald-600 font-normal">(يغير الحقول تلقائياً)</span></label>
+                            <select id="projectCategory" onchange="handleCategoryChange()" required 
+                                class="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm transition font-medium">
+                                <option value="orphans">كفالة ورعاية الأيتام</option>
+                                <option value="water">مشاريع المياه وتجهيز الآبار</option>
+                                <option value="food">سلال غذائية وإغاثة عاجلة</option>
+                                <option value="economic">تمكين اقتصادي وأسر متعففة</option>
+                            </select>
+                        </div>
+
+                        <!-- Location -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-2">الموقع الجغرافي / المنطقة <span class="text-red-500">*</span></label>
+                            <input type="text" id="projectLocation" required placeholder="المدينة، المحافظة، المخيم" 
+                                class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 text-sm">
+                        </div>
+
+                        <!-- Strategic Goal Alignment -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-2">الربط بالهدف الإستراتيجي السنوي</label>
+                            <select id="strategicGoal" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-emerald-500 text-sm">
+                                <option value="goal1">الهدف 1: تحسين جودة حياة الأيتام وتوفير الكفالة الشاملة</option>
+                                <option value="goal2">الهدف 2: الاستجابة الطارئة والإغاثة الغذائية</option>
+                                <option value="goal3">الهدف 3: الاستدامة المائية والتنموية للمناطق النائية</option>
+                                <option value="goal4">الهدف 4: تحويل الأسر المستهلكة إلى أسر منتجة</option>
+                            </select>
+                        </div>
+
+                        <!-- Target Beneficiaries -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-2">عدد المستفيدين المباشرين المتوقع</label>
+                            <input type="number" id="beneficiariesCount" min="1" placeholder="مثال: 250 يتيم" 
+                                class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 text-sm">
+                        </div>
+
+                        <!-- Start Date -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-2">تاريخ بداية التنفيذ المتوقع</label>
+                            <input type="date" id="startDate" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm">
+                        </div>
+
+                        <!-- End Date -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-2">تاريخ نهاية التنفيذ المتوقع</label>
+                            <input type="date" id="endDate" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm">
+                        </div>
+
+                        <!-- Project Manager Name -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-2">مدير المشروع المسؤول</label>
+                            <input type="text" id="pmName" value="أحمد المحمود (مدير مشاريع الأيتام)" readonly 
+                                class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 text-sm font-medium">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 2: DYNAMIC CUSTOM FIELDS (Changes according to Category) -->
+                <div class="bg-gradient-to-r from-emerald-50/60 to-slate-50 rounded-2xl p-6 shadow-sm border border-emerald-200/80 space-y-4">
+                    <div class="flex items-center justify-between border-b border-emerald-200/60 pb-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold">2</div>
+                            <div>
+                                <h3 class="text-base font-bold text-slate-800">حقول التخصص الديناميكية (Dynamic Domain Fields)</h3>
+                                <p class="text-xs text-slate-500">تتغير هذه الحقول تلقائياً حسب نوع المشروع المختار لتوفير وقت الإدخال</p>
+                            </div>
+                        </div>
+                        <span class="text-xs font-bold text-emerald-700 bg-emerald-100 px-3 py-1 rounded-full" id="categoryBadgeText">تخصص: كفالة الأيتام</span>
+                    </div>
+
+                    <!-- Dynamic Fields Container -->
+                    <div id="dynamicFieldsContainer" class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                        <!-- Default: Orphan Category Dynamic Fields -->
+                        <!-- Rendered dynamically by JS -->
+                    </div>
+                </div>
+
+                <!-- Section 3: ITEMISED BUDGET TABLE & PRESET TEMPLATES -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-5">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">3</div>
+                            <div>
+                                <h3 class="text-lg font-bold text-slate-800">تفاصيل الميزانية المقترحة والتكلفة التقديرية</h3>
+                                <p class="text-xs text-slate-500">يمكنك استخدام القوالب المسبقة للتحميل التلقائي أو إضافة البنود يدويًا</p>
+                            </div>
+                        </div>
+
+                        <!-- Template Load Button -->
+                        <button type="button" onclick="loadBudgetTemplate()" class="w-full md:w-auto px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2 transition">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            <span>تحميل قالب الميزانية المسبق لهذا التصنيف</span>
+                        </button>
+                    </div>
+
+                    <!-- Budget Items Table -->
+                    <div class="overflow-x-auto rounded-xl border border-slate-200">
+                        <table class="w-full text-right text-sm">
+                            <thead class="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
+                                <tr>
+                                    <th class="p-3 w-12 text-center">#</th>
+                                    <th class="p-3">بيان البند / التكلفة</th>
+                                    <th class="p-3 w-28">الوحدة</th>
+                                    <th class="p-3 w-24">الكمية</th>
+                                    <th class="p-3 w-32">سعر الوحدة ($)</th>
+                                    <th class="p-3 w-36">الإجمالي الفرعي ($)</th>
+                                    <th class="p-3 w-16 text-center">إجراء</th>
+                                </tr>
+                            </thead>
+                            <tbody id="budgetRowsContainer" class="divide-y divide-slate-100">
+                                <!-- Dynamic Budget Rows Inserted Here -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Add Row & Budget Summary Bar -->
+                    <div class="flex flex-col sm:flex-row justify-between items-center gap-4 pt-2">
+                        <button type="button" onclick="addBudgetRow()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs flex items-center gap-2 transition">
+                            <i class="fa-solid fa-plus text-emerald-600"></i> إضافة بند جديد
+                        </button>
+
+                        <div class="flex items-center gap-4 bg-slate-900 text-white px-6 py-3 rounded-2xl w-full sm:w-auto justify-between sm:justify-end">
+                            <span class="text-xs text-slate-400 font-medium">إجمالي الميزانية المقترحة:</span>
+                            <span class="text-2xl font-extrabold text-emerald-400 font-sans" id="grandTotalDisplay">$0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 4: Funding Source & Attachments -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-5">
+                    <div class="flex items-center gap-3 border-b border-slate-100 pb-4">
+                        <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">4</div>
+                        <h3 class="text-lg font-bold text-slate-800">مصدر التمويل وطريقة الصرف والمرفقات</h3>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Funding Source Selection -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-3">مصدر التمويل المقترح <span class="text-red-500">*</span></label>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <label class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 bg-slate-50 cursor-pointer hover:bg-emerald-50/50 transition">
+                                    <input type="radio" name="fundingSource" value="restricted_grant" checked class="text-emerald-600 focus:ring-emerald-500">
+                                    <div>
+                                        <div class="text-xs font-bold text-slate-800">تبرع مخصص / كافل معين</div>
+                                        <div class="text-[11px] text-slate-500">حساب كفالات الأيتام</div>
+                                    </div>
+                                </label>
+                                <label class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 bg-slate-50 cursor-pointer hover:bg-emerald-50/50 transition">
+                                    <input type="radio" name="fundingSource" value="general_fund" class="text-emerald-600 focus:ring-emerald-500">
+                                    <div>
+                                        <div class="text-xs font-bold text-slate-800">الصندوق العام للمنظمة</div>
+                                        <div class="text-[11px] text-slate-500">أموال الصدقات العامة</div>
+                                    </div>
+                                </label>
+                                <label class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 bg-slate-50 cursor-pointer hover:bg-emerald-50/50 transition">
+                                    <input type="radio" name="fundingSource" value="zakat" class="text-emerald-600 focus:ring-emerald-500">
+                                    <div>
+                                        <div class="text-xs font-bold text-slate-800">مصرف الزكاة الشرعية</div>
+                                        <div class="text-[11px] text-slate-500">للفئات المستحقة للزكاة</div>
+                                    </div>
+                                </label>
+                                <label class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 bg-slate-50 cursor-pointer hover:bg-emerald-50/50 transition">
+                                    <input type="radio" name="fundingSource" value="institutional_donor" class="text-emerald-600 focus:ring-emerald-500">
+                                    <div>
+                                        <div class="text-xs font-bold text-slate-800">منحة من منظمة شريكة</div>
+                                        <div class="text-[11px] text-slate-500">تمويل دولي / مؤسسي</div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Payment Method & Attachments -->
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-2">طريقة الصرف المطلوبة للميدان</label>
+                                <select id="paymentSchedule" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-sm">
+                                    <option value="single">دفعة واحدة كاملة قبل التنفيذ</option>
+                                    <option value="two_stages" selected>على دفعتين (50% مقدم، 50% بعد تقرير انجاز المرحلة الأولى)</option>
+                                    <option value="milestones">دفعات متعددة بحسب مراحل الانجاز الميداني</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-2">المرفقات والوثائق الداعمة (عروض أسعار / دراسة احتياج)</label>
+                                <div class="border-2 border-dashed border-slate-300 hover:border-emerald-500 rounded-xl p-4 text-center bg-slate-50/50 transition cursor-pointer">
+                                    <i class="fa-solid fa-cloud-arrow-up text-2xl text-slate-400 mb-1"></i>
+                                    <div class="text-xs font-semibold text-slate-700">اضغط لرفع الملفات أو اسحبها هنا</div>
+                                    <div class="text-[10px] text-slate-400 mt-0.5">PDF, PNG, XLSX (الحد الأقصى 10 ميجابايت)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Submit Action Bar -->
+                <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
+                    <button type="button" onclick="saveAsDraft()" class="px-6 py-3 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-bold rounded-xl text-sm transition">
+                        <i class="fa-solid fa-floppy-disk ml-1.5 text-slate-400"></i> حفظ كمسودة
+                    </button>
+                    <button type="submit" class="px-8 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-sm shadow-lg shadow-emerald-600/30 transition flex items-center gap-2">
+                        <i class="fa-solid fa-paper-plane"></i>
+                        <span>إرسال للتصديق المالي المباشر</span>
+                    </button>
+                </div>
+
+            </form>
+        </section>
+
+        <!-- ================= TAB 2: FINANCIAL APPROVAL DASHBOARD ================= -->
+        <section id="tab-approval" class="tab-content hidden animate-fade-in space-y-6">
+            
+            <!-- Liquidity & Financial Overview KPI Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+                    <div>
+                        <span class="text-xs font-bold text-slate-500 block">سيولة حساب كفالات الأيتام</span>
+                        <span class="text-2xl font-extrabold text-emerald-600 font-sans mt-1 block">$48,500.00</span>
+                        <span class="text-[11px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full mt-2 inline-block font-medium">رصيد متاح للتصديق</span>
+                    </div>
+                    <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-vault"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+                    <div>
+                        <span class="text-xs font-bold text-slate-500 block">طلبات بانتظار التصديق</span>
+                        <span class="text-2xl font-extrabold text-amber-600 font-sans mt-1 block" id="pendingCountDisplay">1</span>
+                        <span class="text-[11px] text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full mt-2 inline-block font-medium">تتطلب قرارك المالي</span>
+                    </div>
+                    <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+                    <div>
+                        <span class="text-xs font-bold text-slate-500 block">المسار السريع (Fast-Track)</span>
+                        <span class="text-2xl font-extrabold text-slate-800 font-sans mt-1 block">&lt; $500</span>
+                        <span class="text-[11px] text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full mt-2 inline-block font-medium">اعتماد فوري تلقائي</span>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-bolt"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+                    <div>
+                        <span class="text-xs font-bold text-slate-500 block">المعتمد هذا الشهر</span>
+                        <span class="text-2xl font-extrabold text-slate-800 font-sans mt-1 block">$18,200.00</span>
+                        <span class="text-[11px] text-slate-500 mt-2 block">عبر 6 مشاريع منفذة</span>
+                    </div>
+                    <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Project Approval Card (Interactive Joint Review) -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <!-- Approval Header -->
+                <div class="bg-slate-900 text-white p-6 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                    <div>
+                        <div class="flex items-center gap-3">
+                            <span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-xs font-mono px-3 py-1 rounded-full font-bold" id="approvalProjectCode">#PRJ-2026-089</span>
+                            <span class="bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs px-2.5 py-1 rounded-full font-semibold">بانتظار الاعتماد المالي</span>
+                        </div>
+                        <h3 class="text-xl font-bold mt-2 text-white" id="approvalProjectTitle">مشروع كسوة وهدايا عيد الفطر للأيتام المسجلين</h3>
+                        <div class="flex flex-wrap items-center gap-4 text-xs text-slate-400 mt-2">
+                            <span><i class="fa-solid fa-user ml-1 text-slate-500"></i> المقدم: أحمد المحمود</span>
+                            <span><i class="fa-solid fa-layer-group ml-1 text-slate-500"></i> التصنيف: كفالة أيتام</span>
+                            <span><i class="fa-solid fa-location-dot ml-1 text-slate-500"></i> الموقع: مدينة إدلب وريفها</span>
+                        </div>
+                    </div>
+
+                    <!-- Budget Impact Widget -->
+                    <div class="bg-slate-800/90 border border-slate-700/80 p-4 rounded-xl text-right w-full lg:w-auto min-w-[240px]">
+                        <div class="text-xs text-slate-400 mb-1">الميزانية المطلوبة للتصديق:</div>
+                        <div class="text-2xl font-black text-emerald-400 font-sans" id="approvalGrandTotal">$4,850.00</div>
+                        <div class="text-[11px] text-emerald-300/80 mt-1 flex items-center gap-1">
+                            <i class="fa-solid fa-circle-info"></i>
+                            <span>تغطي 10.0% من سيولة الحساب المتاحة</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Review Content Grid -->
+                <div class="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    
+                    <!-- Left 2 Cols: Itemized Budget Audit & Editable Table -->
+                    <div class="lg:col-span-2 space-y-5">
+                        <div class="flex items-center justify-between">
+                            <h4 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-list-check text-emerald-600"></i>
+                                <span>تدقيق بنود الميزانية والأسعار المرجعية</span>
+                            </h4>
+                            <span class="text-xs bg-slate-100 text-slate-600 px-3 py-1 rounded-full">المدير المالي يمكنه التعديل المباشر على البنود</span>
+                        </div>
+
+                        <!-- Audit Table -->
+                        <div class="overflow-x-auto rounded-xl border border-slate-200">
+                            <table class="w-full text-right text-xs">
+                                <thead class="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
+                                    <tr>
+                                        <th class="p-3">البند / البيان</th>
+                                        <th class="p-3 w-16">الكمية</th>
+                                        <th class="p-3 w-24">السعر المقترح</th>
+                                        <th class="p-3 w-28">الإجمالي</th>
+                                        <th class="p-3">مؤشر السعر المرجعي النظامي</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="approvalTableBody" class="divide-y divide-slate-100">
+                                    <!-- Rendered dynamically via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- System Price Benchmark Alert -->
+                        <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 text-xs text-blue-900 flex items-start gap-3">
+                            <i class="fa-solid fa-shield-halved text-blue-600 text-lg mt-0.5"></i>
+                            <div>
+                                <span class="font-bold block text-blue-950 mb-0.5">تأكيد المراجعة الذكية للأسعار التاريخية:</span>
+                                <span>جميع أسعار الوحدات المدخلة تطابق متوسط التكلفة المعتمدة في المشاريع المماثلة خلال الـ 6 أشهر الماضية مع وجود وفر بنسبة 3% في بند الكسوة.</span>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Right Col: Joint Discussion & Action Decision Box -->
+                    <div class="bg-slate-50 rounded-2xl p-5 border border-slate-200 space-y-5 flex flex-col justify-between">
+                        
+                        <div class="space-y-4">
+                            <h4 class="font-bold text-slate-800 text-sm flex items-center gap-2 border-b border-slate-200 pb-3">
+                                <i class="fa-solid fa-comments text-emerald-600"></i>
+                                <span>المراجعة التشاركية والتعليقات المضمنة</span>
+                            </h4>
+
+                            <!-- Comments Thread -->
+                            <div class="space-y-3 max-h-56 overflow-y-auto pr-1" id="commentsThread">
+                                <div class="bg-white p-3 rounded-xl border border-slate-200 text-xs space-y-1">
+                                    <div class="flex justify-between font-bold text-slate-700">
+                                        <span>أحمد المحمود (مدير المشاريع)</span>
+                                        <span class="text-[10px] text-slate-400 font-normal">منذ 30 دقيقة</span>
+                                    </div>
+                                    <p class="text-slate-600">تم جلب 3 عروض أسعار للكسوة وتم اختيار المورد الأقل سعراً والأعلى جودة.</p>
+                                </div>
+                            </div>
+
+                            <!-- New Comment Input -->
+                            <div class="space-y-2">
+                                <textarea id="newCommentInput" rows="2" placeholder="أضف ملاحظة أو استفسار موجه لمدير المشاريع..." 
+                                    class="w-full p-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-emerald-500 bg-white"></textarea>
+                                <button type="button" onclick="addInlineComment()" class="w-full py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-lg text-xs transition">
+                                    إضافة تعليق مضمن
+                                </button>
+                            </div>
+
+                            <!-- Cost Center Selection for Accounting GL -->
+                            <div class="pt-2 border-t border-slate-200">
+                                <label class="block text-xs font-bold text-slate-700 mb-1.5">تحديد مركز التكلفة (Cost Center / Account Code)</label>
+                                <select id="costCenterSelect" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs font-medium">
+                                    <option value="CC-101">CC-101 (حساب كفالات الأيتام الموسمية)</option>
+                                    <option value="CC-102">CC-102 (صندوق الإغاثة والطوارئ)</option>
+                                    <option value="CC-103">CC-103 (حساب التمكين التنموي)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Action Decision Buttons -->
+                        <div class="space-y-2 pt-4 border-t border-slate-200">
+                            <button type="button" onclick="approveProject()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-sm shadow-md shadow-emerald-600/20 transition flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-circle-check"></i>
+                                <span>تصديق الميزانية واعتماد الصرف</span>
+                            </button>
+
+                            <div class="grid grid-cols-2 gap-2">
+                                <button type="button" onclick="requestRevision()" class="py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 font-bold rounded-xl text-xs transition">
+                                    <i class="fa-solid fa-pen-to-square ml-1"></i> طلب تعديل
+                                </button>
+                                <button type="button" onclick="rejectProject()" class="py-2.5 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 font-bold rounded-xl text-xs transition">
+                                    <i class="fa-solid fa-ban ml-1"></i> رفض الطلب
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= TAB 3: POST-EXECUTION FINANCIAL REPORT ================= -->
+        <section id="tab-report" class="tab-content hidden animate-fade-in space-y-6">
+            
+            <!-- Report Header -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <div class="flex items-center gap-3">
+                        <span class="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full">تقرير تسوية مالي لاحق</span>
+                        <span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1">
+                            <i class="fa-solid fa-lock text-xs"></i> مغلق ومطابق بالكامل (Reconciled)
+                        </span>
+                    </div>
+                    <h2 class="text-2xl font-bold text-slate-800 mt-2">تقرير تحليل انحراف الميزانية (Post-Execution Variance Analysis)</h2>
+                    <p class="text-sm text-slate-500 mt-1">مشروع: كسوة وهدايا عيد الفطر للأيتام - رمز المرجع `#PRJ-2026-089`</p>
+                </div>
+                <button onclick="window.print()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-xl transition flex items-center gap-2">
+                    <i class="fa-solid fa-print"></i> طباعة / تصدير PDF
+                </button>
+            </div>
+
+            <!-- Summary Variance Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <span class="text-xs text-slate-500 font-bold block">الميزانية المعتمدة المخططة</span>
+                    <span class="text-2xl font-black text-slate-800 font-sans mt-1 block">$4,850.00</span>
+                    <span class="text-[11px] text-slate-400 mt-1 block">المبلغ المصدق من المالية</span>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <span class="text-xs text-slate-500 font-bold block">المصروف الفعلي الميداني</span>
+                    <span class="text-2xl font-black text-blue-600 font-sans mt-1 block">$4,720.00</span>
+                    <span class="text-[11px] text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full mt-1 inline-block">تغطية كافة الفواتير والسندات</span>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <span class="text-xs text-slate-500 font-bold block">وفر الميزانية الفعلي (Savings)</span>
+                    <span class="text-2xl font-black text-emerald-600 font-sans mt-1 block">+$130.00</span>
+                    <span class="text-[11px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full mt-1 inline-block font-semibold">وفر بنسبة +2.68%</span>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <span class="text-xs text-slate-500 font-bold block">المبلغ المرجع لصندوق الجمعية</span>
+                    <span class="text-2xl font-black text-purple-600 font-sans mt-1 block">$130.00</span>
+                    <span class="text-[11px] text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full mt-1 inline-block">تمت التصفية المحاسبية</span>
+                </div>
+            </div>
+
+            <!-- Variance Breakdown Table -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-4">
+                <h3 class="font-bold text-slate-800 text-base">مقارنة البنود المخططة بالمصروفات الفعلية الميدانية</h3>
+
+                <div class="overflow-x-auto rounded-xl border border-slate-200">
+                    <table class="w-full text-right text-xs">
+                        <thead class="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
+                            <tr>
+                                <th class="p-3">البند المالي</th>
+                                <th class="p-3">المخطط (Planned)</th>
+                                <th class="p-3">الفعلي (Actual)</th>
+                                <th class="p-3">الانحراف (Variance)</th>
+                                <th class="p-3">نسبة الانحراف</th>
+                                <th class="p-3">ملاحظات التصفية الميدانية</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            <tr>
+                                <td class="p-3 font-semibold text-slate-800">كسوة عيد كاملة للأيتام (ملابس)</td>
+                                <td class="p-3 font-sans font-medium">$3,750.00</td>
+                                <td class="p-3 font-sans font-medium text-blue-700">$3,600.00</td>
+                                <td class="p-3 font-sans font-bold text-emerald-600">+$150.00 (وفر)</td>
+                                <td class="p-3"><span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-mono font-bold">-4.0%</span></td>
+                                <td class="p-3 text-slate-500">تم الحصول على خصم كمية إضافي من مورد الألبسة</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-semibold text-slate-800">حزم هدايا وألعاب للأيتام</td>
+                                <td class="p-3 font-sans font-medium">$500.00</td>
+                                <td class="p-3 font-sans font-medium text-blue-700">$520.00</td>
+                                <td class="p-3 font-sans font-bold text-red-600">-$20.00 (تجاوز)</td>
+                                <td class="p-3"><span class="bg-red-100 text-red-800 px-2 py-0.5 rounded font-mono font-bold">+4.0%</span></td>
+                                <td class="p-3 text-slate-500">زيادة طفيفة في أسعار التغليف وتمت تغطيتها من وفر الكسوة</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-semibold text-slate-800">أجور نقل وتوزيع ميداني</td>
+                                <td class="p-3 font-sans font-medium">$300.00</td>
+                                <td class="p-3 font-sans font-medium text-blue-700">$300.00</td>
+                                <td class="p-3 font-sans font-bold text-slate-600">$0.00</td>
+                                <td class="p-3"><span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-mono">0.0%</span></td>
+                                <td class="p-3 text-slate-500">مطابق للوصل المسلم بالكامل</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-semibold text-slate-800">مكافآت فريق التنفيذ الميداني</td>
+                                <td class="p-3 font-sans font-medium">$300.00</td>
+                                <td class="p-3 font-sans font-medium text-blue-700">$300.00</td>
+                                <td class="p-3 font-sans font-bold text-slate-600">$0.00</td>
+                                <td class="p-3"><span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-mono">0.0%</span></td>
+                                <td class="p-3 text-slate-500">مسلم بحسب كشف التوقيعات</td>
+                            </tr>
+                        </tbody>
+                        <tfoot class="bg-slate-900 text-white font-bold">
+                            <tr>
+                                <td class="p-3">الإجمالي العام للمشروع</td>
+                                <td class="p-3 font-sans text-emerald-400">$4,850.00</td>
+                                <td class="p-3 font-sans text-blue-300">$4,720.00</td>
+                                <td class="p-3 font-sans text-emerald-400">+$130.00 وفر إجمالي</td>
+                                <td class="p-3 font-sans text-emerald-300">+2.68%</td>
+                                <td class="p-3 text-xs text-slate-300 font-normal">تمت إحالة الوفر لحساب الأيتام العام</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <!-- Budget Utilization Visual Bar -->
+                <div class="pt-3">
+                    <div class="flex justify-between text-xs font-bold text-slate-700 mb-1.5">
+                        <span>مؤشر استهلاك الميزانية المعتمدة:</span>
+                        <span>97.32% مستهلك (وفر 2.68%)</span>
+                    </div>
+                    <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden p-0.5 border border-slate-200">
+                        <div class="bg-emerald-500 h-full rounded-full transition-all duration-500" style="width: 97.32%"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= TAB 4: STRATEGIC OVERVIEW & FEATURES ================= -->
+        <section id="tab-guide" class="tab-content hidden animate-fade-in space-y-6">
+            
+            <div class="bg-gradient-to-r from-navy-800 to-navy-900 text-white rounded-2xl p-8 shadow-md">
+                <span class="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs px-3 py-1 rounded-full font-bold">الموديل المطور والمرن</span>
+                <h2 class="text-2xl sm:text-3xl font-extrabold mt-3 font-cairo">لماذا هذا النموذج أسرع بـ 70% وأعلى احترافية؟</h2>
+                <p class="text-slate-300 text-sm mt-2 max-w-3xl leading-relaxed">
+                    تم تحويل نظام الاعتماد المالي من دورة خطية صلبة (إرسال ← رفض ← إعادة كتابة) إلى **بيئة عمل تشاركية مرنة** تعتمد على الذكاء التشغيلي وقوالب الميزانيات المسبقة.
+                </p>
+            </div>
+
+            <!-- Comparison Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Traditional Model -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-red-200/80 space-y-4">
+                    <div class="flex items-center gap-3 border-b border-red-100 pb-3 text-red-600 font-bold">
+                        <i class="fa-solid fa-circle-xmark text-xl"></i>
+                        <span>النموذج التقليدي القديم (الخط الصليب)</span>
+                    </div>
+                    <ul class="space-y-3 text-xs text-slate-600">
+                        <li class="flex items-start gap-2">
+                            <i class="fa-solid fa-minus text-red-400 mt-0.5"></i>
+                            <span>استمارة ثابتة طويلة جداً لجميع أنواع المشاريع تدعو للملل والأخطاء.</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i class="fa-solid fa-minus text-red-400 mt-0.5"></i>
+                            <span>إدخال بنود الميزانية يدويًا من الصفر في كل مرة يستهلك وقتاً طويلاً.</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i class="fa-solid fa-minus text-red-400 mt-0.5"></i>
+                            <span>أي تعديل بسيط من المدير المالي يتطلب رفض الطلب وإعادته لمدير المشاريع.</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i class="fa-solid fa-minus text-red-400 mt-0.5"></i>
+                            <span>غياب الربط بمؤشرات السيولة الحالية ومراكز التكلفة المحاسبية.</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Modern Dynamic Model -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-emerald-300 space-y-4 relative overflow-hidden">
+                    <div class="absolute top-0 left-0 bg-emerald-500 text-white text-[10px] font-bold px-3 py-1 rounded-br-lg">المطبق حالياً</div>
+                    <div class="flex items-center gap-3 border-b border-emerald-100 pb-3 text-emerald-700 font-bold">
+                        <i class="fa-solid fa-circle-check text-xl"></i>
+                        <span>النموذج المرن المطور (المطبّق في هذا النظام)</span>
+                    </div>
+                    <ul class="space-y-3 text-xs text-slate-700 font-medium">
+                        <li class="flex items-start gap-2">
+                            <i class="fa-solid fa-check text-emerald-600 mt-0.5"></i>
+                            <span><strong>استمارة ديناميكية:</strong> تظهر الحقول الخاصة بكفالة الأيتام أو الآبار تلقائياً.</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i class="fa-solid fa-check text-emerald-600 mt-0.5"></i>
+                            <span><strong>قوالب ميزانيات مسبقة:</strong> كبسة زر واحدة تُحمل جميع بنود المشروع الشائعة.</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i class="fa-solid fa-check text-emerald-600 mt-0.5"></i>
+                            <span><strong>مراجعة تشاركية مضمنة:</strong> تعليقات وتعديلات مباشرة على البنود دون رفض الطلب.</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i class="fa-solid fa-check text-emerald-600 mt-0.5"></i>
+                            <span><strong>ربط محاسبي واستراتيجي:</strong> ربط تلقائي بمراكز التكلفة ومؤشرات سيولة الحساب.</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Features Cards Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 space-y-2">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-lg">
+                        <i class="fa-solid fa-sliders"></i>
+                    </div>
+                    <h4 class="font-bold text-slate-800 text-sm">حقول حساسة للتصنيف</h4>
+                    <p class="text-xs text-slate-500 leading-relaxed">عند اختيار "كفالة أيتام" يتم طلب قائمة الأيتام وفترة الكفالة، بينما يطلب النظام العمق والمضخة لمشاريع الآبار.</p>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 space-y-2">
+                    <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-lg">
+                        <i class="fa-solid fa-calculator"></i>
+                    </div>
+                    <h4 class="font-bold text-slate-800 text-sm">حسابات تلقائية دقيقة</h4>
+                    <p class="text-xs text-slate-500 leading-relaxed">إجمالي البنود والضرب التلقائي (الكمية × السعر) ومجموع الميزانية النهائي يحسب لحظياً بدون أخطاء بشرية.</p>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 space-y-2">
+                    <div class="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-lg">
+                        <i class="fa-solid fa-scale-balanced"></i>
+                    </div>
+                    <h4 class="font-bold text-slate-800 text-sm">تحليل انحراف الميزانية</h4>
+                    <p class="text-xs text-slate-500 leading-relaxed">تقارير إغلاق مالية تقارن المقترح بالفعلي وتحدد الوفر أو التجاوز مع تسوية حسابات الصندوق.</p>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- App JavaScript Logic -->
+    <script>
+        // State Management
+        let currentProject = {
+            code: 'PRJ-2026-089',
+            title: '',
+            category: 'orphans',
+            location: '',
+            beneficiaries: '',
+            startDate: '',
+            endDate: '',
+            budgetItems: [],
+            fundingSource: 'restricted_grant',
+            status: 'draft',
+            comments: [
+                { author: 'أحمد المحمود (مدير المشاريع)', text: 'تم جلب 3 عروض أسعار للكسوة وتم اختيار المورد الأقل سعراً والأعلى جودة.', time: 'منذ 30 دقيقة' }
+            ]
+        };
+
+        // Preset Budget Templates Data
+        const budgetTemplates = {
+            orphans: [
+                { description: 'كسوة عيد كاملة للأيتام (ملابس ولادي/بناتي)', unit: 'طقم', qty: 150, price: 25 },
+                { description: 'حزم هدايا وألعاب للأيتام', unit: 'حزمة', qty: 150, price: 3.33 },
+                { description: 'أجور نقل وتوزيع ميداني للأسر', unit: 'جولة', qty: 3, price: 100 },
+                { description: 'مكافآت فريق التنفيذ الميداني', unit: 'شخص', qty: 5, price: 60 }
+            ],
+            water: [
+                { description: 'حفر وتجهيز بئر ارتوازي (عمق 120م)', unit: 'متر', qty: 120, price: 45 },
+                { description: 'مضخة مياه غاطسة بقوة 15 حصان', unit: 'جهاز', qty: 1, price: 1800 },
+                { description: 'خزان مياه خرساني سعة 50,000 لتر', unit: 'خزان', qty: 1, price: 3200 },
+                { description: 'شبكة أنابيب وتمديدات سكنية', unit: 'مجموعة', qty: 1, price: 1100 }
+            ],
+            food: [
+                { description: 'سلة غذائية متكاملة (أرز، زيت، سكر، طحين، معلبات)', unit: 'سلة', qty: 300, price: 35 },
+                { description: 'أجور تعبئة وتغليف كرتوني', unit: 'كرتونة', qty: 300, price: 1.5 },
+                { description: 'ترحيل ونقل بري للمناطق المستهدفة', unit: 'شاحنة', qty: 2, price: 250 }
+            ],
+            economic: [
+                { description: 'ماكينة خياطة صناعية حديثة للأسر المتعففة', unit: 'ماكينة', qty: 5, price: 450 },
+                { description: 'مواد أقمشة ومستلزمات بدء النشاط', unit: 'حقيبة', qty: 5, price: 200 },
+                { description: 'دورة تدريبية مكثفة في التفصيل والخياطة', unit: 'دورة', qty: 1, price: 500 }
+            ]
+        };
+
+        // Tab Navigation Function
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active', 'text-emerald-400', 'border-emerald-500', 'bg-slate-800/80');
+                btn.classList.add('text-slate-400', 'border-transparent');
+            });
+
+            document.getElementById(tabId).classList.remove('hidden');
+            const activeBtn = document.getElementById('btn-' + tabId);
+            if (activeBtn) {
+                activeBtn.classList.add('active', 'text-emerald-400', 'border-emerald-500', 'bg-slate-800/80');
+                activeBtn.classList.remove('text-slate-400', 'border-transparent');
+            }
+        }
+
+        // Handle Category Switch & Update Dynamic Fields
+        function handleCategoryChange() {
+            const category = document.getElementById('projectCategory').value;
+            currentProject.category = category;
+            const container = document.getElementById('dynamicFieldsContainer');
+            const badge = document.getElementById('categoryBadgeText');
+
+            if (category === 'orphans') {
+                badge.innerText = 'تخصص: كفالة الأيتام';
+                container.innerHTML = `
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">الفئة العمرية للأيتام</label>
+                        <select class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white">
+                            <option>جميع الأعمار (من 1 إلى 18 سنة)</option>
+                            <option>أيتام مرحلة الابتدائي (6 - 12 سنة)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">تكرار تقديم الخدمة/الكفالة</label>
+                        <select class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white">
+                            <option>موسمية (مرة واحدة - كسوة/عيد)</option>
+                            <option>كفالة شهرية دورية مستمرة</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">متوسط تكلفة كفالة الفرد المقترحة</label>
+                        <input type="text" value="$32.33 لكل يتيم" readonly class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-emerald-800">
+                    </div>
+                `;
+            } else if (category === 'water') {
+                badge.innerText = 'تخصص: مشاريع المياه';
+                container.innerHTML = `
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">العمق المتوقع للحفر (بالمتر)</label>
+                        <input type="number" value="120" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">نوع المضخة المطلوبة</label>
+                        <select class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white">
+                            <option>مضخة غاطسة تعمل بالطاقة الشمسية</option>
+                            <option>مضخة تعمل بالكهرباء/الديزل</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">نتائج دراسة الصلاحية الهندسية</label>
+                        <input type="text" placeholder="رقم دراسة المسح الجيولوجي" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs">
+                    </div>
+                `;
+            } else if (category === 'food') {
+                badge.innerText = 'تخصص: سلال غذائية وإغاثة';
+                container.innerHTML = `
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">مكونات السلة الرئيسية</label>
+                        <input type="text" value="أرز، زيت، سكر، طحين، معلبات" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">وزن السلة الإجمالي</label>
+                        <input type="text" value="45 كجم لكل سلة" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">مكان التخزين والتعبئة</label>
+                        <input type="text" placeholder="مستودع المنظمة المركزي" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs">
+                    </div>
+                `;
+            } else {
+                badge.innerText = 'تخصص: التمكين الاقتصادي';
+                container.innerHTML = `
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">نوع المشروع التنموي</label>
+                        <input type="text" value="ورش خياطة ومشاريع صغيرة" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">معيار اختيار الأسرة المستفيدة</label>
+                        <input type="text" value="أسر أرامل بدون معيل ثابت" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">فترة التدريب والتدقيق اللاحق</label>
+                        <input type="text" value="3 أشهر متابعة ميدانية" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs">
+                    </div>
+                `;
+            }
+        }
+
+        // Add a Budget Row Dynamically
+        function addBudgetRow(desc = '', unit = '', qty = 1, price = 0) {
+            const tbody = document.getElementById('budgetRowsContainer');
+            const rowCount = tbody.children.length + 1;
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-slate-50 transition';
+            
+            tr.innerHTML = `
+                <td class="p-3 text-center font-bold text-slate-400 row-number">${rowCount}</td>
+                <td class="p-3">
+                    <input type="text" value="${desc}" placeholder="بيان التكلفة" required
+                        class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs focus:ring-1 focus:ring-emerald-500 item-desc">
+                </td>
+                <td class="p-3">
+                    <input type="text" value="${unit}" placeholder="طقم/سلة" 
+                        class="w-full px-2 py-1.5 rounded-lg border border-slate-200 text-xs item-unit">
+                </td>
+                <td class="p-3">
+                    <input type="number" min="1" value="${qty}" oninput="calculateBudgetTotals()" required
+                        class="w-full px-2 py-1.5 rounded-lg border border-slate-200 text-xs font-sans font-bold text-center item-qty">
+                </td>
+                <td class="p-3">
+                    <input type="number" step="0.01" min="0" value="${price}" oninput="calculateBudgetTotals()" required
+                        class="w-full px-2 py-1.5 rounded-lg border border-slate-200 text-xs font-sans font-bold text-left item-price">
+                </td>
+                <td class="p-3 font-sans font-bold text-slate-800 item-subtotal text-left pl-4">$0.00</td>
+                <td class="p-3 text-center">
+                    <button type="button" onclick="removeBudgetRow(this)" class="text-red-400 hover:text-red-600 p-1 transition">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </td>
+            `;
+
+            tbody.appendChild(tr);
+            calculateBudgetTotals();
+        }
+
+        // Remove Budget Row
+        function removeBudgetRow(btn) {
+            const tbody = document.getElementById('budgetRowsContainer');
+            if (tbody.children.length <= 1) {
+                showToast('يجب إبقاء بند مالي واحد على الأقل في الميزانية', 'amber');
+                return;
+            }
+            btn.closest('tr').remove();
+            // Re-index row numbers
+            Array.from(tbody.children).forEach((tr, idx) => {
+                tr.querySelector('.row-number').innerText = idx + 1;
+            });
+            calculateBudgetTotals();
+        }
+
+        // Load Preset Budget Template based on Selected Category
+        function loadBudgetTemplate() {
+            const category = document.getElementById('projectCategory').value;
+            const template = budgetTemplates[category] || [];
+            
+            const tbody = document.getElementById('budgetRowsContainer');
+            tbody.innerHTML = ''; // Clear existing
+            
+            template.forEach(item => {
+                addBudgetRow(item.description, item.unit, item.qty, item.price);
+            });
+
+            showToast('تم تحميل قالب الميزانية المسبق بنجاح!', 'emerald');
+        }
+
+        // Calculate Totals Real-time
+        function calculateBudgetTotals() {
+            let grandTotal = 0;
+            const rows = document.querySelectorAll('#budgetRowsContainer tr');
+
+            rows.forEach(tr => {
+                const qty = parseFloat(tr.querySelector('.item-qty').value) || 0;
+                const price = parseFloat(tr.querySelector('.item-price').value) || 0;
+                const subtotal = qty * price;
+                
+                tr.querySelector('.item-subtotal').innerText = '$' + subtotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                grandTotal += subtotal;
+            });
+
+            document.getElementById('grandTotalDisplay').innerText = '$' + grandTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            return grandTotal;
+        }
+
+        // Pre-fill Sample Data for Demo
+        function loadSampleData() {
+            document.getElementById('projectTitle').value = 'مشروع كسوة وهدايا عيد الفطر للأيتام المسجلين';
+            document.getElementById('projectCategory').value = 'orphans';
+            handleCategoryChange();
+            document.getElementById('projectLocation').value = 'مدينة إدلب والبلدات المجاورة';
+            document.getElementById('beneficiariesCount').value = 150;
+            document.getElementById('startDate').value = '2026-03-20';
+            document.getElementById('endDate').value = '2026-03-30';
+            loadBudgetTemplate();
+            showToast('تم تعبئة الاستمارة بالبيانات التجريبية', 'emerald');
+        }
+
+        // Reset Form
+        function resetForm() {
+            document.getElementById('projectForm').reset();
+            handleCategoryChange();
+            document.getElementById('budgetRowsContainer').innerHTML = '';
+            addBudgetRow();
+            calculateBudgetTotals();
+            showToast('تمت إعادة ضبط الاستمارة', 'slate');
+        }
+
+        // Save as Draft
+        function saveAsDraft() {
+            showToast('تم حفظ المشروع كمسودة بنجاح (#PRJ-2026-089)', 'slate');
+        }
+
+        // Form Submit -> Sends to Financial Manager Dashboard
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            const title = document.getElementById('projectTitle').value;
+            const grandTotal = calculateBudgetTotals();
+
+            // Sync with Financial Approval Tab
+            document.getElementById('approvalProjectTitle').innerText = title;
+            document.getElementById('approvalGrandTotal').innerText = '$' + grandTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            
+            // Build Approval Table Body
+            const tbody = document.getElementById('approvalTableBody');
+            tbody.innerHTML = '';
+            
+            const rows = document.querySelectorAll('#budgetRowsContainer tr');
+            rows.forEach(tr => {
+                const desc = tr.querySelector('.item-desc').value;
+                const qty = tr.querySelector('.item-qty').value;
+                const price = parseFloat(tr.querySelector('.item-price').value) || 0;
+                const subtotal = qty * price;
+
+                const newTr = document.createElement('tr');
+                newTr.innerHTML = `
+                    <td class="p-3 font-semibold text-slate-800">${desc}</td>
+                    <td class="p-3 font-sans font-bold">${qty}</td>
+                    <td class="p-3 font-sans">$${price.toFixed(2)}</td>
+                    <td class="p-3 font-sans font-bold text-emerald-700">$${subtotal.toFixed(2)}</td>
+                    <td class="p-3">
+                        <span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                            <i class="fa-solid fa-check"></i> مطابق للأسعار التاريخية
+                        </span>
+                    </td>
+                `;
+                tbody.appendChild(newTr);
+            });
+
+            showToast('تم إرسال المشروع بنجاح إلى شاشة المدير المالي!', 'emerald');
+            
+            // Auto switch to Financial Approval Tab to show workflow
+            setTimeout(() => {
+                switchTab('tab-approval');
+            }, 800);
+        }
+
+        // Inline Comments in Approval Screen
+        function addInlineComment() {
+            const text = document.getElementById('newCommentInput').value.trim();
+            if (!text) return;
+
+            const thread = document.getElementById('commentsThread');
+            const div = document.createElement('div');
+            div.className = 'bg-emerald-50/80 p-3 rounded-xl border border-emerald-200 text-xs space-y-1 animate-fade-in';
+            div.innerHTML = `
+                <div class="flex justify-between font-bold text-emerald-950">
+                    <span>المدير المالي (مراجعة تشاركية)</span>
+                    <span class="text-[10px] text-emerald-700 font-normal">الآن</span>
+                </div>
+                <p class="text-emerald-900">${text}</p>
+            `;
+            thread.appendChild(div);
+            document.getElementById('newCommentInput').value = '';
+            thread.scrollTop = thread.scrollHeight;
+            showToast('تم تسجيل الملاحظة المضمنة', 'emerald');
+        }
+
+        // Workflow Decisions
+        function approveProject() {
+            showToast('تم تصديق الميزانية واعتماها رسمياً للصرف!', 'emerald');
+            document.getElementById('pendingCountDisplay').innerText = '0';
+        }
+
+        function requestRevision() {
+            showToast('تم إعادة الطلب لمدير المشاريع لإجراء التعديلات المطلوب', 'amber');
+        }
+
+        function rejectProject() {
+            showToast('تم رفض طلب المشروع وتسجيل السبب بالشهادة المالية', 'red');
+        }
+
+        // Notification Toast System
+        function showToast(message, color = 'emerald') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            
+            let bgClass = 'bg-emerald-800 text-white border-emerald-600';
+            if (color === 'amber') bgClass = 'bg-amber-800 text-white border-amber-600';
+            if (color === 'red') bgClass = 'bg-red-800 text-white border-red-600';
+            if (color === 'slate') bgClass = 'bg-slate-800 text-white border-slate-600';
+
+            toast.className = `px-4 py-3 rounded-xl shadow-xl border text-xs font-bold flex items-center gap-2 pointer-events-auto transition-all duration-300 animate-fade-in ${bgClass}`;
+            toast.innerHTML = `
+                <i class="fa-solid fa-bell"></i>
+                <span>${message}</span>
+            `;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(10px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        // Initialize App on Window Load
+        window.onload = function() {
+            handleCategoryChange();
+            loadSampleData();
+        };
+    </script>
+</body>
+</html>
