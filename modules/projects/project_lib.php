@@ -54,6 +54,24 @@ if (!function_exists('akp_can_create_project')) {
     }
 }
 
+if (!function_exists('akp_can_prepare_finance')) {
+    /**
+     * Financial preparation before FM review belongs to the Projects Manager.
+     * FM reviews/approves/rejects the prepared financial package; FM does not
+     * create or edit the pre-approval budget/funding data.
+     */
+    function akp_can_prepare_finance(int $projectId = 0): bool
+    {
+        if (akp_role() !== 'projects_manager') {
+            return false;
+        }
+        if ($projectId > 0 && akp_project_is_closed($projectId)) {
+            return false;
+        }
+        return true;
+    }
+}
+
 if (!function_exists('akp_can_view_project')) {
     function akp_can_view_project(int $projectId): bool
     {
