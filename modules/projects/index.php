@@ -63,8 +63,8 @@ foreach ($projects as $project) {
 }
 
 include dirname(__DIR__, 2) . '/includes/header.php';
-<link rel="stylesheet" href="<?php echo e(APP_URL . 'assets/css/projects-ui.css'); ?>">
 ?>
+<link rel="stylesheet" href="<?php echo e(APP_URL . 'assets/css/projects-ui.css'); ?>">
 <div class="project-module-page">
 <div class="project-page-banner fade-in">
     <h2><?php echo e(t('projects.title')); ?></h2>
