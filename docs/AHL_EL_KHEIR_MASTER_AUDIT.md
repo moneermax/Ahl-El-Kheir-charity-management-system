@@ -1319,3 +1319,10 @@ Implementation commit: `6f02a8ed9e72a316c470e886b3c7658c83a24593`.
 The Projects Manager dashboard `active_budget` metric was corrected to use the approved project budget for active/reopened projects, with `target_amount` only as fallback when no approved budget exists. This aligns the dashboard with the Projects portfolio calculation. No workflow, authorization, schema, or accounting behavior changed.
 
 Implementation commit: `561c6d9f49ee5381e8846490ca57f5eb5b6b1816`. Runtime verification remains pending.
+
+## 2026-09-22 — Project form repeatable detail fields
+
+The project form now supports repeatable records for government requirements/fees, implementing partners, procurement methods, and contact details. Government fees are stored per requirement rather than as one unrelated total. The implementation uses new migration-managed child tables, preserves legacy scalar fields for compatibility, and provides user-controlled **إضافة** buttons for each repeatable group. No triggers, views, or runtime DDL were introduced.
+
+Migration: `database/migrations/2026-09-22_project_repeatable_details.sql`.
+Form commits: `06af8a25e460194ddef392ceb21f43b76e0636e1` and `daae330a0d4ede9c04d128cf81a8c2536e47111a`. Runtime verification remains pending.
