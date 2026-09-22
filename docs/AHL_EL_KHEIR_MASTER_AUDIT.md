@@ -1307,3 +1307,9 @@ The underlying distinction remains:
 
 Implementation commit: `85dfa3f65725ade865be80824a7d340cdcbcf1db`.
 Runtime verification remains pending.
+
+## 2026-09-22 — Budget approval control removed from detail page
+
+A follow-up workflow review corrected the previous budget-view change. The detail-page explanatory note and the **اعتماد نسخة الميزانية** control were removed because the page should not expose a separate approval action that can be confused with the FM financial approval workflow. The obsolete `approve_budget` POST branch in `modules/projects/view.php` was also removed. No database schema or accounting logic was changed.
+
+Implementation commit: `6f02a8ed9e72a316c470e886b3c7658c83a24593`.
