@@ -97,7 +97,7 @@ function akp_reverse_project_journal(int $originalEntryId, int $projectId, strin
     return $reversalId;
 }
 
-/** Create the current project approval journal using current funding total, budget as fallback. */
+/** Create the project approval journal from explicit FM funding allocations. */
 function akp_create_project_approval_journal(int $projectId, string $projectName, float $budgetFallbackAmount): int {
     $fundingRows = dbFetchAll(
         'SELECT source_account_id, SUM(amount) AS amount FROM project_funding_allocations WHERE project_id = ? GROUP BY source_account_id',
@@ -109,8 +109,10 @@ function akp_create_project_approval_journal(int $projectId, string $projectName
         $fundingTotal += (float)$row['amount'];
     }
 
-    $journalAmount = $fundingTotal > 0.009 ? $fundingTotal : $budgetFallbackAmount;
-    if ($journalAmount <= 0.009) return 0;
+    if ($fundingTotal <= 0.009) {
+        throw new RuntimeException('لا يمكن إنشاء قيد اعتماد المشروع قبل تسجيل تخصيصات تمويل صريحة من حسابات المؤسسة.');
+    }
+    $journalAmount = $fundingTotal;
 
     $projectAccount = dbFetchOne('SELECT id FROM accounts WHERE code = \'5100\'');
     if (!$projectAccount) throw new RuntimeException('حساب مصروفات البرامج والمساعدات (5100) غير موجود.');
@@ -144,12 +146,6 @@ function akp_create_project_approval_journal(int $projectId, string $projectName
                 $entryId, $sourceAccountId, 0, $sourceAmount, 'تمويل مشروع من مصدر التمويل'
             ]);
         }
-    } else {
-        $cashAccount = dbFetchOne('SELECT id FROM accounts WHERE code = \'1100\'');
-        if (!$cashAccount) throw new RuntimeException('حساب النقدية (1100) غير موجود.');
-        dbExecute('INSERT INTO journal_lines (entry_id, account_id, debit, credit, description) VALUES (?, ?, ?, ?, ?)', [
-            $entryId, $cashAccount['id'], 0, $journalAmount, 'تخصيص ميزانية مشروع'
-        ]);
     }
 
     akp_audit('CREATE_PROJECT_JOURNAL', 'journal_entries', $entryId, null, [
@@ -215,6 +211,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $approvedBudgetTotal = (float)($approvedBudgetCheck['budget_total'] ?? 0);
             if (!$approvedBudgetCheck || $approvedBudgetTotal <= 0) {
                 throw new RuntimeException('لا يمكن اعتماد المشروع مالياً قبل اعتماد نسخة ميزانية سارية بمبلغ أكبر من صفر.');
+            }
+
+            $fundingTotal = (float)(dbFetchOne(
+                "SELECT COALESCE(SUM(amount), 0) AS n
+                 FROM project_funding_allocations
+                 WHERE project_id = ? AND status = 'draft'",
+                [$id]
+            )['n'] ?? 0);
+            if (abs($fundingTotal - $approvedBudgetTotal) > 0.01) {
+                $remaining = max(0, $approvedBudgetTotal - $fundingTotal);
+                throw new RuntimeException('لا يمكن اعتماد المشروع مالياً قبل اكتمال تخصيص التمويل من حسابات المؤسسة. الميزانية: ' . number_format($approvedBudgetTotal, 2) . '، المخصص: ' . number_format($fundingTotal, 2) . '، المتبقي: ' . number_format($remaining, 2) . '.');
             }
 
             dbExecute("UPDATE project_approval SET approval_status = 'fm_approved', fm_reviewed_by = ?, fm_reviewed_at = NOW() WHERE project_id = ?", [akp_user_id(), $id]);
@@ -288,8 +295,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                  WHERE project_id = ?",
                 [$id]
             )['n'] ?? 0);
-            if ($fundingTotal > $budgetAmount + 0.01) {
-                throw new RuntimeException('إجمالي تخصيصات التمويل يتجاوز الميزانية المعتمدة للمشروع.');
+            if (abs($fundingTotal - $budgetAmount) > 0.01) {
+                throw new RuntimeException('لا يمكن اعتماد المشروع نهائياً قبل أن يساوي إجمالي تخصيصات التمويل الميزانية المعتمدة.');
             }
             
             try {
@@ -300,7 +307,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 dbExecute('UPDATE project_lifecycle SET final_budget_amount = ? WHERE project_id = ?', [$budgetAmount, $id]);
 
-                $entryId = akp_create_project_approval_journal($id, $project['name'], $budgetAmount);
+                $entryId = akp_create_project_approval_journal($id, $project['name'], 0);
                 
                 dbExecute('COMMIT');
                 akp_audit('GM_APPROVE_PROJECT', 'project_approval', $id, ['approval_status' => 'fm_approved'], ['approval_status' => 'approved']);
@@ -418,13 +425,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             );
             $proposedBudget = (float)($approvedBudgetRow['n'] ?? 0);
             if ($proposedBudget <= 0) {
-                $proposedBudget = (float)(dbFetchOne(
-                    "SELECT COALESCE(SUM(bl.estimated_amount),0) AS n
-                     FROM project_budgets b
-                     JOIN project_budget_lines bl ON bl.budget_id = b.id
-                     WHERE b.project_id = ? AND b.status = 'draft'",
-                    [$id]
-                )['n'] ?? 0);
+                throw new RuntimeException('لا يمكن تسجيل التمويل قبل اعتماد نسخة الميزانية.');
             }
             $existingTotal = (float)(dbFetchOne("SELECT COALESCE(SUM(amount),0) AS n FROM project_funding_allocations WHERE project_id = ? AND status = 'draft'", [$id])['n'] ?? 0);
             if ($existingTotal + $amount > $proposedBudget + 0.01) {
@@ -432,7 +433,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw new RuntimeException('لا يمكن أن يتجاوز إجمالي التمويل الميزانية المقترحة (' . number_format($proposedBudget, 2) . '). المتبقي المتاح للتخصيص: ' . number_format($remaining, 2) . '.');
             }
 
-            $activeBudgetId = (int)(dbFetchOne("SELECT id FROM project_budgets WHERE project_id = ? AND status IN ('draft','approved') ORDER BY (status = 'approved') DESC, version_no DESC LIMIT 1", [$id])['id'] ?? 0) ?: null;
+            $activeBudgetId = (int)(dbFetchOne("SELECT id FROM project_budgets WHERE project_id = ? AND status = 'approved' ORDER BY version_no DESC LIMIT 1", [$id])['id'] ?? 0) ?: null;
 
             dbExecute('INSERT INTO project_funding_allocations (project_id, budget_id, source_type, source_account_id, destination_account_id, transaction_id, amount, currency_code, allocation_date, reference_number, description, status, created_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)', [
                 $id, $activeBudgetId, $sourceAccount['code'], $sourceAccount['id'], null, null, $amount,
@@ -476,13 +477,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             );
             $proposedBudget = (float)($approvedBudgetRow['n'] ?? 0);
             if ($proposedBudget <= 0) {
-                $proposedBudget = (float)(dbFetchOne(
-                    "SELECT COALESCE(SUM(bl.estimated_amount),0) AS n
-                     FROM project_budgets b
-                     JOIN project_budget_lines bl ON bl.budget_id = b.id
-                     WHERE b.project_id = ? AND b.status = 'draft'",
-                    [$id]
-                )['n'] ?? 0);
+                throw new RuntimeException('لا يمكن تسجيل التمويل قبل اعتماد نسخة الميزانية.');
             }
 
             $otherTotal = (float)(dbFetchOne(
@@ -859,7 +854,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     <div class="card mb-4 fade-in border-primary">
         <div class="card-header bg-primary text-white"><i class="fas fa-money-check-alt me-2"></i>مراجعة المدير المالي</div>
         <div class="card-body">
-            <p class="mb-3">يرجى مراجعة الميزانية والتمويل والتأكد من توفر الرصيد الكافي قبل الاعتماد المبدئي.</p>
+            <p class="mb-3">راجع الميزانية المعتمدة وتخصيصات التمويل. يجب تحديد حسابات التمويل الفعلية (1100 النقدية، 1200 البنك، 1300 المحفظة الإلكترونية) وتخصيص كامل مبلغ الميزانية قبل الاعتماد.</p>
             <form method="post" class="d-inline">
                 <?php echo csrf_field(); ?>
                 <input type="hidden" name="action" value="fm_approve_project">
@@ -879,7 +874,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     <div class="card mb-4 fade-in border-success">
         <div class="card-header bg-success text-white"><i class="fas fa-user-tie me-2"></i>اعتماد المدير العام</div>
         <div class="card-body">
-            <p class="mb-3">المشروع معتمد مالياً. بالضغط على اعتماد نهائي، سيتم تفعيل المشروع وترحيل قيد التخصيص المحاسبي وفق إجمالي تخصيصات التمويل الحالية، أو الميزانية المعتمدة إذا لم توجد تخصيصات تمويل.</p>
+            <p class="mb-3">المشروع معتمد مالياً. راجع مصادر التمويل والمبالغ المسجلة أدناه، ثم اعتمد نهائياً. سيُنشأ القيد المحاسبي من حسابات التمويل التي اعتمدها المدير المالي فقط.</p>
             <form method="post" class="d-inline">
                 <?php echo csrf_field(); ?>
                 <input type="hidden" name="action" value="approve_project">
@@ -1023,36 +1018,21 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                         <input type="hidden" name="action" value="add_funding">
                         <?php echo csrf_field(); ?>
                         <div class="row g-2">
-                            <div class="col-md-3">
-                                <select name="funding_source_type" class="form-select form-select-sm" required>
-                                    <option value="internal">صندوق داخلي</option>
-                                    <option value="donor">مانح</option>
-                                    <option value="bank">حساب بنكي</option>
-                                    <option value="electronic_wallet">محفظة إلكترونية</option>
-                                    <option value="other">أخرى</option>
-                                </select>
-                            </div>
-                            <div class="col-md-2"><input type="number" step="0.01" min="0.01" name="funding_amount" class="form-control form-control-sm" placeholder="المبلغ" required></div>
-                            <div class="col-md-2"><input type="date" name="allocation_date" class="form-control form-control-sm" value="<?php echo date('Y-m-d'); ?>"></div>
-                            <div class="col-md-2"><input name="funding_reference" class="form-control form-control-sm" placeholder="المرجع"></div>
-                            <div class="col-md-3"><input name="funding_description" class="form-control form-control-sm" placeholder="الوصف"></div>
                             <div class="col-md-6">
-                                <select name="source_account_id" class="form-select form-select-sm">
-                                    <option value="">حساب المصدر</option>
-                                    <?php foreach (dbFetchAll('SELECT id, code, name_ar FROM accounts WHERE is_active = 1 ORDER BY code') as $account): ?>
+                                <label class="form-label small">حساب التمويل</label>
+                                <select name="source_account_id" class="form-select form-select-sm" required>
+                                    <option value="">اختر الحساب الذي سيموّل المشروع</option>
+                                    <?php foreach (dbFetchAll("SELECT id, code, name_ar FROM accounts WHERE is_active = 1 AND code IN ('1100','1200','1300') ORDER BY code") as $account): ?>
                                         <option value="<?php echo (int)$account['id']; ?>"><?php echo e($account['code'] . ' · ' . $account['name_ar']); ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
-                            <div class="col-md-6">
-                                <select name="destination_account_id" class="form-select form-select-sm">
-                                    <option value="">حساب الوجهة</option>
-                                    <?php foreach (dbFetchAll('SELECT id, code, name_ar FROM accounts WHERE is_active = 1 ORDER BY code') as $account): ?>
-                                        <option value="<?php echo (int)$account['id']; ?>"><?php echo e($account['code'] . ' · ' . $account['name_ar']); ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                            <div class="col-12"><button class="btn btn-sm btn-primary">حفظ التمويل</button></div>
+                            <div class="col-md-3"><input type="number" step="0.01" min="0.01" name="funding_amount" class="form-control form-control-sm" placeholder="المبلغ" required></div>
+                            <div class="col-md-3"><input type="date" name="allocation_date" class="form-control form-control-sm" value="<?php echo date('Y-m-d'); ?>"></div>
+                            <div class="col-md-6"><input name="funding_reference" class="form-control form-control-sm" placeholder="المرجع"></div>
+                            <div class="col-md-6"><input name="funding_description" class="form-control form-control-sm" placeholder="الوصف"></div>
+                            <div class="col-12 small text-muted">يمكن توزيع التمويل على أكثر من حساب. يجب أن يساوي إجمالي التخصيصات الميزانية المعتمدة قبل الاعتماد المالي.</div>
+                            <div class="col-12"><button class="btn btn-sm btn-primary">حفظ تخصيص التمويل</button></div>
                         </div>
                     </form>
                 <?php endif; ?>
