@@ -478,3 +478,11 @@ The existing legacy **الشريك المنفذ** summary remains intact for com
 Implementation commit: `9cff782107e4c04abe7803d7d84830930dcc933b`.
 
 The repeatable-details migration has been applied to the local database. Runtime UI verification of both edit and view pages remains the next required test.
+
+
+### 2026-09-22 — Project form category selector and budget activation guard
+- Improved **تصنيف استرشادي** as a clearly identifiable dropdown and expanded the dynamic-template categories to include education/training, health/medical care, housing/rehabilitation, seasonal projects, plus **أخرى / مشروع مخصص** for projects outside the predefined categories.
+- Dynamic budget templates now have matching category guidance/template definitions; the custom category remains available for non-listed project types.
+- **الميزانية التقديرية** must be greater than zero before the budget template loader, budget-line fields, and add-line action become active.
+- A zero or empty estimated budget keeps those budget-dependent controls locked and prevents saving until a positive budget is entered and the budget-line total matches it.
+- No schema change, runtime DDL, trigger, or view was added.
