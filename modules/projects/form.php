@@ -1276,27 +1276,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 include dirname(__DIR__, 2) . '/includes/header.php';
 ?>
 
-<div class="welcome-section fade-in">
-
-    <h2>
-        <?php
-        echo $id
-            ? 'تعديل البيانات الأساسية: ' . e($project['name'])
-            : 'مشروع جديد';
-        ?>
-    </h2>
-
-    <p>
-        <?php
-        echo $id
-            ? 'هذه الصفحة مخصصة للبيانات العامة. الميزانية والمصروفات والوثائق والتشغيل تُدار من ملف المشروع.'
-            : 'أنشئ مشروعاً جديداً مع ميزانيته الأولية في خطوة واحدة. يجب أن يساوي إجمالي بنود الميزانية الميزانية التقديرية تماماً.';
-        ?>
-    </p>
-
-</div>
-
-
 <?php include dirname(__DIR__, 2) . '/includes/alerts.php'; ?>
 
 
