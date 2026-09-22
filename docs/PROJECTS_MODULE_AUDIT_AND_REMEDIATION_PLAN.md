@@ -438,3 +438,12 @@ The detail page was corrected to:
 - remove the obsolete `approve_budget` POST handler from `modules/projects/view.php`.
 
 This is a UI/workflow-boundary cleanup. No database schema or accounting entries were changed. Budget preparation/editing remains outside this detail-page review surface.
+
+## 2026-09-22 — Projects dashboard audit correction
+
+The Projects Manager dashboard was reviewed against the authoritative project totals. The `active_budget` statistic was using each active/reopened project's `target_amount` even when an approved budget existed. This could make the dashboard disagree with the Projects portfolio, which uses the approved budget when available.
+
+The dashboard statistic now uses the approved budget total for active/reopened projects, falling back to `target_amount` only when no approved budget exists. No workflow, authorization, database schema, or accounting behavior was changed.
+
+Implementation commit: `561c6d9f49ee5381e8846490ca57f5eb5b6b1816`.
+Runtime verification remains pending.
