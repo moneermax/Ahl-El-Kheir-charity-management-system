@@ -253,6 +253,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             flash('success', 'تم اعتماد المشروع مالياً. المشروع الآن بانتظار اعتماد المدير العام.');
             
+        } elseif ($action === 'fm_return_to_review') {
+            if ($role !== 'financial_manager') throw new RuntimeException('إعادة المشروع للمراجعة المالية متاحة للمدير المالي فقط.');
+            $reason = akp_post_value('return_reason');
+            if ($reason === '') throw new RuntimeException('سبب إعادة المشروع للمراجعة المالية مطلوب.');
+            $approvalCheck = dbFetchOne('SELECT approval_status FROM project_approval WHERE project_id = ?', [$id]);
+            if (!$approvalCheck || $approvalCheck['approval_status'] !== 'fm_approved') throw new RuntimeException('المشروع ليس في حالة اعتماد مالي تسمح بإعادته للمراجعة.');
+            dbExecute("UPDATE project_approval SET approval_status = 'submitted' WHERE project_id = ?", [$id]);
+            akp_audit('FM_RETURN_TO_REVIEW', 'project_approval', $id, ['approval_status' => 'fm_approved'], ['approval_status' => 'submitted', 'reason' => $reason]);
+            flash('success', 'تمت إعادة المشروع إلى مرحلة المراجعة المالية لاستكمال تخصيص التمويل.');
+
         } elseif ($action === 'fm_reject_project') {
             if ($role !== 'financial_manager') throw new RuntimeException('رفض المشروع مالياً محصور بالمدير المالي.');
             $reason = akp_post_value('rejection_reason');
@@ -865,6 +875,23 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 <input type="hidden" name="action" value="fm_reject_project">
                 <input type="text" name="rejection_reason" class="form-control d-inline-block" style="width: 300px;" placeholder="سبب الرفض المالي (مطلوب)" required>
                 <button class="btn btn-danger ms-2"><i class="fas fa-times me-1"></i> رفض</button>
+            </form>
+        </div>
+    </div>
+<?php endif; ?>
+
+<?php if ($role === 'financial_manager' && $approval['approval_status'] === 'fm_approved'): ?>
+    <div class="card mb-4 fade-in border-warning">
+        <div class="card-header bg-warning text-dark"><i class="fas fa-rotate-left me-2"></i>استكمال تخصيص التمويل</div>
+        <div class="card-body">
+            <p class="mb-3">هذا المشروع تم اعتماده مالياً قبل تطبيق شرط تخصيص التمويل الصريح. أعده للمراجعة المالية، ثم سجّل حسابات التمويل الفعلية قبل إعادة الاعتماد.</p>
+            <form method="post">
+                <?php echo csrf_field(); ?>
+                <input type="hidden" name="action" value="fm_return_to_review">
+                <div class="input-group">
+                    <input type="text" name="return_reason" class="form-control" placeholder="سبب إعادة المراجعة (مطلوب)" required value="استكمال تخصيص حسابات تمويل المشروع">
+                    <button class="btn btn-warning" onclick="return confirm('سيُعاد المشروع إلى مرحلة المراجعة المالية. هل تريد المتابعة؟')"><i class="fas fa-rotate-left me-1"></i> إعادة للمراجعة المالية</button>
+                </div>
             </form>
         </div>
     </div>
@@ -1498,75 +1525,3 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 ?>
                 
                 <?php foreach ($beneficiaryRecords as $record): ?>
-                    <div class="border-bottom py-2 small">
-                        <strong><?php echo e($record['beneficiary_name']); ?></strong><br>
-                        <?php echo e($record['beneficiary_type'] ?: ''); ?> · <?php echo e($record['location'] ?: ''); ?>
-                    </div>
-                <?php endforeach; ?>
-                
-                <?php if ($legacyBeneficiaries): ?>
-                    <hr><small class="text-muted">السجلات القديمة</small>
-                    <?php foreach ($legacyBeneficiaries as $record): ?>
-                        <div class="border-bottom py-1 small">
-                            <?php echo e($record['beneficiary_name']); ?>
-                            <?php if ($record['amount'] !== null): ?> · <?php echo akp_money($record['amount']); ?><?php endif; ?>
-                        </div>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-                
-                <?php if (!$beneficiaryRecords && !$legacyBeneficiaries): ?>
-                    <div class="text-muted small">لا توجد سجلات مستفيدين.</div>
-                <?php endif; ?>
-            </div>
-        </div>
-
-        <div class="card mb-4 fade-in">
-            <div class="card-header"><i class="fas fa-lock me-2"></i>الإغلاق وإعادة الفتح</div>
-            <div class="card-body">
-                <?php if ($status !== 'closed' && akp_can_edit_section('closure', $id)): ?>
-                    <p class="small">إغلاق المشروع يمنع أي تعديلات أو مصروفات جديدة. تأكد من ترحيل جميع القيود.</p>
-                    <form method="post">
-                        <input type="hidden" name="action" value="close_project">
-                        <?php echo csrf_field(); ?>
-                        <textarea name="closure_summary" class="form-control form-control-sm mb-2" rows="3" placeholder="ملخص الإنجاز والأسباب *" required></textarea>
-                        <select name="closure_reason" class="form-select form-select-sm mb-2">
-                            <option value="completed_successfully">إنجاز كامل</option>
-                            <option value="cancelled">إلغاء</option>
-                            <option value="transferred_to_another_project">نقل لمشروع آخر</option>
-                            <option value="retained_for_followup">احتفاظ للمتابعة</option>
-                            <option value="other">أخرى</option>
-                        </select>
-                        <button class="btn btn-sm btn-dark w-100">إغلاق المشروع</button>
-                    </form>
-                <?php elseif ($status === 'closed' && akp_is_dg()): ?>
-                    <p class="small">إعادة الفتح تعد استثناءً إدارياً وتحتاج سبباً واضحاً.</p>
-                    <form method="post">
-                        <input type="hidden" name="action" value="reopen_project">
-                        <?php echo csrf_field(); ?>
-                        <textarea name="reopen_reason" class="form-control form-control-sm mb-2" rows="3" placeholder="سبب إعادة الفتح *" required></textarea>
-                        <button class="btn btn-sm btn-warning w-100">إعادة فتح المشروع</button>
-                    </form>
-                <?php else: ?>
-                    <div class="text-muted small">
-                        <?php if ($status === 'closed'): ?>المشروع مغلق. إعادة الفتح متاحة للمدير العام فقط.<?php else: ?>لا تملك صلاحية الإغلاق.<?php endif; ?>
-                    </div>
-                <?php endif; ?>
-            </div>
-        </div>
-
-        <div class="card mb-4 fade-in">
-            <div class="card-header"><i class="fas fa-history me-2"></i>سجل التغييرات</div>
-            <div class="card-body">
-                <?php foreach ($history as $h): ?>
-                    <div class="small border-bottom pb-2 mb-2">
-                        <div><strong><?php echo e($h['old_status']); ?></strong> → <strong><?php echo e($h['new_status']); ?></strong></div>
-                        <div class="text-muted"><?php echo e($h['full_name'] ?? 'نظام'); ?> · <?php echo e($h['created_at']); ?></div>
-                        <?php if ($h['reason']): ?><div class="fst-italic">"<?php echo e($h['reason']); ?>"</div><?php endif; ?>
-                <?php endforeach; ?>
-                <?php if (!$history): ?><div class="text-muted small">لا يوجد سجل تغييرات.</div><?php endif; ?>
-            </div>
-        </div>
-    </div>
-</div>
-
-<?php include dirname(__DIR__, 2) . '/includes/footer.php'; ?>
