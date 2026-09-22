@@ -1428,27 +1428,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     </div>
                 </section>
 
-                <section class="project-form-section project-template-panel">
-                    <h5 class="project-form-section-title">
-                        <i class="fas fa-wand-magic-sparkles"></i>
-                        المساعد الديناميكي للمشروع
-                    </h5>
-                    <div class="row g-3 align-items-end">
-                        <div class="col-lg-5 project-field">
-                            <label class="form-label">تصنيف استرشادي</label>
-                            <select id="project-category-preset" class="form-select" onchange="updateProjectTypeExperience(true)">
-                                <option value="other">نوع مشروع مخصص</option>
-                                <option value="orphans">كفالة الأيتام</option>
-                                <option value="water">مشاريع المياه</option>
-                                <option value="food">الإغاثة والسلال الغذائية</option>
-                                <option value="economic">التمكين الاقتصادي</option>
-                            </select>
-                        </div>
-                        <div class="col-lg-7">
-                            <div id="project-category-guidance" class="small text-muted">اختر تصنيفاً لاستعراض الحقول والإرشادات المناسبة. لا يتم إنشاء أي أعمدة أو بيانات جديدة في قاعدة البيانات.</div>
-                        </div>
-                    </div>
-                </section>
+
 
                 <section class="project-form-section">
                     <h5 class="project-form-section-title">
@@ -1623,6 +1603,28 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                             <div class="col-md-4"><strong>الميزانية التقديرية:</strong> <span id="target-budget-display" class="fw-bold">0.00</span> <span class="text-muted">SDG</span></div>
                             <div class="col-md-4"><strong>إجمالي بنود الميزانية:</strong> <span id="total-budget-display" class="fs-5 fw-bold">0.00</span> <span class="text-muted">SDG</span></div>
                             <div class="col-md-4"><strong>الفرق:</strong> <span id="budget-difference-display" class="fs-5 fw-bold">0.00</span> <span class="text-muted">SDG</span></div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="project-form-section project-template-panel">
+                    <h5 class="project-form-section-title">
+                        <i class="fas fa-wand-magic-sparkles"></i>
+                        المساعد الديناميكي للمشروع
+                    </h5>
+                    <div class="row g-3 align-items-end">
+                        <div class="col-lg-5 project-field">
+                            <label class="form-label">تصنيف استرشادي</label>
+                            <select id="project-category-preset" class="form-select" onchange="updateProjectTypeExperience(true)">
+                                <option value="other">نوع مشروع مخصص</option>
+                                <option value="orphans">كفالة الأيتام</option>
+                                <option value="water">مشاريع المياه</option>
+                                <option value="food">الإغاثة والسلال الغذائية</option>
+                                <option value="economic">التمكين الاقتصادي</option>
+                            </select>
+                        </div>
+                        <div class="col-lg-7">
+                            <div id="project-category-guidance" class="small text-muted">اختر تصنيفاً لاستعراض الحقول والإرشادات المناسبة. لا يتم إنشاء أي أعمدة أو بيانات جديدة في قاعدة البيانات.</div>
                         </div>
                     </div>
                 </section>
