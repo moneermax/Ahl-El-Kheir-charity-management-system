@@ -400,20 +400,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             akp_audit('CREATE', 'project_budget_line', $budgetId, null, ['project_id' => $id, 'category' => $category, 'amount' => $estimate]);
             flash('success', 'تمت إضافة بند الميزانية.');
             
-        } elseif ($action === 'approve_budget') {
-            // ... (Original approve_budget logic preserved exactly)
-            if (!akp_can_prepare_finance($id) || $closed) throw new RuntimeException('اعتماد الميزانية التحضيرية قبل المراجعة المالية محصور بمدير المشاريع.');
-            $budgetId = (int)($_POST['budget_id'] ?? 0);
-            $budget = dbFetchOne('SELECT * FROM project_budgets WHERE id = ? AND project_id = ?', [$budgetId, $id]);
-            if (!$budget || $budget['status'] !== 'draft') throw new RuntimeException('لا يمكن اعتماد هذه النسخة.');
-            $sum = dbFetchOne('SELECT COALESCE(SUM(estimated_amount),0) AS n FROM project_budget_lines WHERE budget_id = ?', [$budgetId]);
-            if ((float)($sum['n'] ?? 0) <= 0) throw new RuntimeException('لا يمكن اعتماد ميزانية بلا بنود.');
-            dbExecute("UPDATE project_budgets SET status = 'superseded' WHERE project_id = ? AND status = 'approved'", [$id]);
-            dbExecute("UPDATE project_budgets SET status = 'approved', approved_at = NOW(), approved_by = ? WHERE id = ? AND project_id = ?", [akp_user_id(), $budgetId, $id]);
-            dbExecute('UPDATE project_lifecycle SET final_budget_amount = ? WHERE project_id = ?', [(float)($sum['n'] ?? 0), $id]);
-            akp_audit('APPROVE', 'project_budget', $budgetId, ['status' => $budget['status']], ['status' => 'approved']);
-            flash('success', 'تم اعتماد نسخة الميزانية وأصبحت هي النسخة السارية.');
-            
         } elseif ($action === 'add_funding') {
             if (!akp_can_edit_section('finance', $id) || $closed) throw new RuntimeException('لا تملك صلاحية إضافة تمويل.');
             $approvalCheck = dbFetchOne('SELECT approval_status FROM project_approval WHERE project_id = ?', [$id]);
@@ -1121,11 +1107,6 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     </script>
                 <?php endif; ?>
 
-                <div class="project-module-note mt-3 mb-3">
-                    <i class="fas fa-info-circle me-1"></i>
-                    إعداد وتعديل بنود الميزانية يتم من خلال شاشة تعديل المشروع أثناء مرحلة الإعداد. بعد اعتماد نسخة الميزانية، تظهر هنا للعرض والمراجعة فقط. الاعتماد المالي للمشروع من اختصاص المدير المالي.
-                </div>
-
                 <div class="table-responsive mt-3">
                     <table class="table table-sm">
                         <thead><tr><th>النسخة</th><th>الاسم</th><th>عدد البنود</th><th>الإجمالي</th><th>الحالة</th><th>إجراء</th></tr></thead>
@@ -1138,14 +1119,6 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                                     <td><?php echo number_format((float)$budget['line_total'], 2) . ' ' . e($budget['currency_code']); ?></td>
                                     <td><span class="badge <?php echo $budget['status'] === 'approved' ? 'bg-success' : ($budget['status'] === 'superseded' ? 'bg-secondary' : 'bg-warning text-dark'); ?>"><?php echo e($budget['status']); ?></span></td>
                                     <td>
-                                        <?php if (akp_can_prepare_finance($id) && in_array($approval['approval_status'], ['draft', 'rejected'], true) && !$closed && $budget['status'] === 'draft'): ?>
-                                            <form method="post" class="project-action-form d-inline">
-                                                <?php echo csrf_field(); ?>
-                                                <input type="hidden" name="action" value="approve_budget">
-                                                <input type="hidden" name="budget_id" value="<?php echo (int)$budget['id']; ?>">
-                                                <button class="btn btn-sm btn-outline-success" title="اعتماد نسخة الميزانية التحضيرية">اعتماد نسخة الميزانية</button>
-                                            </form>
-                                        <?php endif; ?>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
