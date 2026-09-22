@@ -871,7 +871,9 @@ $varianceClass = $totals['variance'] > 0 ? 'text-danger' : 'text-success';
 include dirname(__DIR__, 2) . '/includes/header.php';
 ?>
 
-<div class="welcome-section fade-in">
+<div class="project-module-page">
+
+<div class="project-page-banner fade-in">
     <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
         <div>
             <h2><?php echo e($project['name']); ?></h2>
@@ -885,7 +887,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 <a href="<?php echo e(APP_URL . 'modules/projects/form.php?id=' . $id); ?>" class="btn btn-primary text-white">
                     <i class="fas fa-edit me-1"></i> تعديل المشروع
                 </a>
-                <form method="post" class="d-inline">
+                <form method="post" class="project-action-form d-inline">
                     <?php echo csrf_field(); ?>
                     <input type="hidden" name="action" value="submit_project">
                     <button class="btn btn-primary"><i class="fas fa-paper-plane me-1"></i> إرسال للمدير المالي</button>
@@ -916,13 +918,13 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     <div class="card mb-4 fade-in border-primary">
         <div class="card-header bg-primary text-white"><i class="fas fa-money-check-alt me-2"></i>مراجعة المدير المالي</div>
         <div class="card-body">
-            <p class="mb-3">راجع الميزانية المعتمدة وتخصيصات التمويل. يجب تحديد حسابات التمويل الفعلية (1100 النقدية، 1200 البنك، 1300 المحفظة الإلكترونية) وتخصيص كامل مبلغ الميزانية قبل الاعتماد.</p>
+            <div class="project-module-note mb-3">راجع الميزانية المعتمدة وتخصيصات التمويل. يجب تحديد حسابات التمويل الفعلية (1100 النقدية، 1200 البنك، 1300 المحفظة الإلكترونية) وتخصيص كامل مبلغ الميزانية قبل الاعتماد.</p>
             <form method="post" class="d-inline">
                 <?php echo csrf_field(); ?>
                 <input type="hidden" name="action" value="fm_approve_project">
                 <button class="btn btn-success" onclick="return confirm('هل أنت متأكد من اعتماد هذا المشروع مالياً؟')"><i class="fas fa-check me-1"></i> اعتماد مالي</button>
             </form>
-            <form method="post" class="d-inline ms-2">
+            <form method="post" class="project-action-form d-inline ms-2">
                 <?php echo csrf_field(); ?>
                 <input type="hidden" name="action" value="fm_reject_project">
                 <input type="text" name="rejection_reason" class="form-control d-inline-block" style="width: 300px;" placeholder="سبب الرفض المالي (مطلوب)" required>
@@ -970,8 +972,8 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 <?php endif; ?>
 
 <!-- Rest of the original UI continues exactly as it was -->
-<div class="row mb-4">
-    <div class="col-6 col-xl-3">
+<div class="project-summary-grid mb-4">
+    <div class="project-summary-card">
         <div class="card text-center">
             <div class="card-body py-2">
                 <div class="fs-5 fw-bold text-primary"><?php echo akp_money($totals['approved_budget'] ?? 0); ?></div>
@@ -1033,7 +1035,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     <div class="card-header bg-primary text-white"><i class="fas fa-file-invoice-dollar me-2"></i>الميزانية</div>
                     <div class="card-body">
                 <?php if ($approvedBudgetId && akp_can_manage_funding($role, (string)$approval['approval_status']) && !$closed): ?>
-                    <form method="post" class="border rounded p-3 mb-3 bg-light" id="projectFundingForm">
+                    <form method="post" class="project-form-panel" id="projectFundingForm">
                         <input type="hidden" name="action" value="add_funding">
                         <?php echo csrf_field(); ?>
                         <div id="fundingRows">
@@ -1119,7 +1121,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 <?php endif; ?>
                 
                 <?php if ($draftBudgetId && akp_can_prepare_finance($id) && in_array($approval['approval_status'], ['draft', 'rejected'], true) && !$closed): ?>
-                    <form method="post" class="border rounded p-2 mt-3">
+                    <form method="post" class="project-form-panel mt-3">
                         <input type="hidden" name="action" value="add_budget_line">
                         <input type="hidden" name="budget_id" value="<?php echo $draftBudgetId; ?>">
                         <?php echo csrf_field(); ?>
@@ -1196,7 +1198,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                                                     data-description="<?php echo e((string)($funding['description'] ?? '')); ?>">
                                                 <i class="fas fa-edit"></i> تعديل
                                             </button>
-                                            <form method="post" class="d-inline" onsubmit="return confirm('هل أنت متأكد من حذف تخصيص التمويل هذا؟');">
+                                            <form method="post" class="project-action-form d-inline" onsubmit="return confirm('هل أنت متأكد من حذف تخصيص التمويل هذا؟');">
                                                 <?php echo csrf_field(); ?>
                                                 <input type="hidden" name="action" value="delete_funding">
                                                 <input type="hidden" name="allocation_id" value="<?php echo (int)$funding['id']; ?>">
@@ -1293,7 +1295,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             <div class="card-header"><i class="fas fa-receipt me-2"></i>المصروفات</div>
             <div class="card-body">
                 <?php if (akp_can_edit_section('finance', $id) && !$closed): ?>
-                    <form method="post" class="border rounded p-3 mb-3 bg-light">
+                    <form method="post" class="project-form-panel">
                         <input type="hidden" name="action" value="add_expense">
                         <?php echo csrf_field(); ?>
                         <div class="row g-2">
@@ -1451,7 +1453,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             <div class="card-header"><i class="fas fa-hard-hat me-2"></i>العمالة الخارجية والمساعدون</div>
             <div class="card-body">
                 <?php if ($role === 'project_supervisor' && (akp_is_primary_supervisor($id) || akp_has_project_section($id, 'operations')) && !$closed): ?>
-                    <form method="post" class="row g-2 mb-3">
+                    <form method="post" class="project-form-panel row g-2 mb-3">
                         <input type="hidden" name="action" value="add_labor">
                         <?php echo csrf_field(); ?>
                         <div class="col-5"><select name="labor_provider_type" class="form-select form-select-sm"><option value="individual">فرد</option><option value="company">شركة</option></select></div>
@@ -1480,7 +1482,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                             <div class="alert alert-light border small mb-2"><strong>تعليق الإدارة:</strong> <?php echo nl2br(e($labor['manager_comment'])); ?></div>
                         <?php endif; ?>
                         <?php if ((akp_is_projects_manager() || akp_is_executive()) && !$closed): ?>
-                            <form method="post" class="input-group input-group-sm">
+                            <form method="post" class="project-inline-form input-group-sm">
                                 <?php echo csrf_field(); ?>
                                 <input type="hidden" name="action" value="comment_labor">
                                 <input type="hidden" name="labor_id" value="<?php echo (int)$labor['id']; ?>">
@@ -1499,7 +1501,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             <div class="card-header"><i class="fas fa-list-check me-2"></i>التشغيل والتقدم</div>
             <div class="card-body">
                 <?php if (akp_can_edit_section('operations', $id) && !$closed): ?>
-                    <form method="post" class="mb-3">
+                    <form method="post" class="project-form-panel mb-3">
                         <input type="hidden" name="action" value="add_milestone">
                         <?php echo csrf_field(); ?>
                         <div class="row g-2">
@@ -1600,7 +1602,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                         <strong><?php echo e($member['full_name']); ?></strong> · <?php echo e($member['section_code']); ?>
                         <?php if ($member['is_lead']): ?> <span class="badge bg-primary">مسؤول</span><?php endif; ?>
                         <?php if (akp_can_edit_section('team', $id) && !$closed): ?>
-                            <form method="post" class="d-inline float-end">
+                            <form method="post" class="project-inline-form d-inline float-end">
                                 <?php echo csrf_field(); ?>
                                 <input type="hidden" name="action" value="unassign_team">
                                 <input type="hidden" name="team_id" value="<?php echo (int)$member['id']; ?>">
@@ -1669,7 +1671,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             <div class="card-body">
                 <?php if ($status !== 'closed' && akp_can_edit_section('closure', $id)): ?>
                     <p class="small">إغلاق المشروع يمنع أي تعديلات أو مصروفات جديدة. تأكد من ترحيل جميع القيود.</p>
-                    <form method="post">
+                    <form method="post" class="project-form-panel">
                         <input type="hidden" name="action" value="close_project">
                         <?php echo csrf_field(); ?>
                         <textarea name="closure_summary" class="form-control form-control-sm mb-2" rows="3" placeholder="ملخص الإنجاز والأسباب *" required></textarea>
@@ -1684,7 +1686,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     </form>
                 <?php elseif ($status === 'closed' && akp_is_dg()): ?>
                     <p class="small">إعادة الفتح تعد استثناءً إدارياً وتحتاج سبباً واضحاً.</p>
-                    <form method="post">
+                    <form method="post" class="project-form-panel">
                         <input type="hidden" name="action" value="reopen_project">
                         <?php echo csrf_field(); ?>
                         <textarea name="reopen_reason" class="form-control form-control-sm mb-2" rows="3" placeholder="سبب إعادة الفتح *" required></textarea>
@@ -1711,6 +1713,8 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             </div>
         </div>
     </div>
+</div>
+
 </div>
 
 <?php include dirname(__DIR__, 2) . '/includes/footer.php'; ?>
