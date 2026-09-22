@@ -406,3 +406,10 @@ Static repository checks completed:
 - existing POST actions were preserved in this UI batch.
 
 Runtime visual verification is **pending**.
+
+
+### 2026-09-22 — Operational data-entry boundary clarification
+- Project Supervisor is the operational data-entry owner for project documents/receipts/certificates, external labor/helpers, milestones, and progress updates.
+- Projects Manager follows up and manages workflow but must see these sections as read-only and must not add or edit their operational records.
+- The implementation now enforces this boundary server-side for the `operations` and `documents` sections; the Project Manager labor-comment action is also no longer available.
+- This clarification does not assign ownership of pre-approval funding entry; that ownership remains unresolved and must not be inferred.
