@@ -918,7 +918,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     <div class="card mb-4 fade-in border-primary">
         <div class="card-header bg-primary text-white"><i class="fas fa-money-check-alt me-2"></i>مراجعة المدير المالي</div>
         <div class="card-body">
-            <div class="project-module-note mb-3">راجع الميزانية المعتمدة وتخصيصات التمويل. يجب تحديد حسابات التمويل الفعلية (1100 النقدية، 1200 البنك، 1300 المحفظة الإلكترونية) وتخصيص كامل مبلغ الميزانية قبل الاعتماد.</p>
+            <div class="project-module-note mb-3">راجع الميزانية المعتمدة وتخصيصات التمويل. يجب تحديد حسابات التمويل الفعلية (1100 النقدية، 1200 البنك، 1300 المحفظة الإلكترونية) وتخصيص كامل مبلغ الميزانية قبل الاعتماد.</div>
             <form method="post" class="project-action-form d-inline">
                 <?php echo csrf_field(); ?>
                 <input type="hidden" name="action" value="fm_approve_project">
@@ -939,7 +939,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         <div class="card-header bg-warning text-dark"><i class="fas fa-rotate-left me-2"></i>استكمال تخصيص التمويل</div>
         <div class="card-body">
             <p class="mb-3">هذا المشروع تم اعتماده مالياً قبل تطبيق شرط تخصيص التمويل الصريح. أعده للمراجعة المالية، ثم سجّل حسابات التمويل الفعلية قبل إعادة الاعتماد.</p>
-            <form method="post">
+            <form method="post" class="project-action-form">
                 <?php echo csrf_field(); ?>
                 <input type="hidden" name="action" value="fm_return_to_review">
                 <div class="input-group">
