@@ -965,3 +965,19 @@ A key accounting question is explicitly open for verification: whether the final
 ## 2026-09-22 — Projects workflow audit checkpoint
 
 Projects remediation Batch 1 is now implemented: pre-approval budget/budget-line preparation and funding allocation preparation are server-authorized to the Projects Manager, while the FM pre-approval funding UI is read-only and reserved for financial review/approve/reject. Runtime verification remains pending. See `docs/PROJECTS_MODULE_AUDIT_AND_REMEDIATION_PLAN.md` for the detailed change and remaining accounting/payment audit items.
+
+
+
+## 2026-09-22 — Projects UI reference implementation
+
+The Projects module UI is being aligned with `docs/code_artifact.html` and the functional requirements in `docs/code_artifact.md`, using the existing Bootstrap application framework rather than introducing a second frontend framework.
+
+Implemented:
+- scoped shared Projects UI stylesheet;
+- redesigned project creation/edit form presentation;
+- dynamic project-type guidance and non-financial budget templates;
+- consistent styling for project workflow forms, action panels, tables, and project listing.
+
+No schema/database changes were introduced. Runtime visual acceptance is still pending.
+
+Important workflow note: the user clarified that **funding entry is not a Projects Manager task**. The current pre-approval funding ownership is therefore treated as unresolved until the workflow audit establishes the responsible role; no PM funding-entry responsibility should be added.
