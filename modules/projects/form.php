@@ -1490,29 +1490,48 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     </h5>
 
                     <div class="row g-3">
-                        <div class="col-md-6 project-field">
+                        <div class="col-12 project-field">
                             <label class="form-label">الجهة المنفذة أو الشركاء</label>
-                            <textarea name="implementing_partner" class="form-control" rows="3" maxlength="255" placeholder="شريك واحد في كل سطر"><?php echo e($input['implementing_partner']); ?></textarea>
-                            <div class="project-help">يمكن إدخال أكثر من شريك، شريك واحد في كل سطر.</div>
+                            <div id="project-partners-container">
+                                <?php if (!$partnerRows) $partnerRows = [['partner_name' => '', 'role_description' => '']]; ?>
+                                <?php foreach ($partnerRows as $index => $row): ?>
+                                <div class="repeatable-row row g-2 align-items-end mb-2">
+                                    <div class="col-md-6"><label class="form-label small">الجهة / الشريك</label><input type="text" name="partners[<?php echo (int)$index; ?>][name]" class="form-control" value="<?php echo e($row['partner_name'] ?? ''); ?>" placeholder="اسم الجهة أو الشريك"></div>
+                                    <div class="col-md-5"><label class="form-label small">الدور / نوع المشاركة</label><input type="text" name="partners[<?php echo (int)$index; ?>][role]" class="form-control" value="<?php echo e($row['role_description'] ?? ''); ?>" placeholder="مثال: تنفيذ، تمويل، إشراف"></div>
+                                    <div class="col-md-1"><button type="button" class="btn btn-outline-danger w-100" onclick="removeRepeatableRow(this,'project-partners-container')" title="حذف"><i class="fas fa-trash"></i></button></div>
+                                </div>
+                                <?php endforeach; ?>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="addPartnerRow()"><i class="fas fa-plus me-1"></i>إضافة جهة / شريك</button>
                         </div>
-
-                        <div class="col-md-6 project-field">
+                        <div class="col-12 project-field">
                             <label class="form-label">طرق الشراء أو التوريد</label>
-                            <textarea name="procurement_method" class="form-control" rows="3" maxlength="100" placeholder="طريقة واحدة في كل سطر"><?php echo e($input['procurement_method']); ?></textarea>
-                            <div class="project-help">يمكن إدخال أكثر من طريقة، كل طريقة في سطر مستقل.</div>
+                            <div id="project-procurement-container">
+                                <?php if (!$procurementRows) $procurementRows = [['method_name' => '', 'notes' => '']]; ?>
+                                <?php foreach ($procurementRows as $index => $row): ?>
+                                <div class="repeatable-row row g-2 align-items-end mb-2">
+                                    <div class="col-md-5"><label class="form-label small">طريقة الشراء / التوريد</label><input type="text" name="procurement_methods[<?php echo (int)$index; ?>][method]" class="form-control" value="<?php echo e($row['method_name'] ?? ''); ?>" placeholder="مثال: شراء مباشر، مناقصة، طلب عروض"></div>
+                                    <div class="col-md-6"><label class="form-label small">ملاحظات</label><input type="text" name="procurement_methods[<?php echo (int)$index; ?>][notes]" class="form-control" value="<?php echo e($row['notes'] ?? ''); ?>" placeholder="تفاصيل أو شروط مرتبطة بالطريقة"></div>
+                                    <div class="col-md-1"><button type="button" class="btn btn-outline-danger w-100" onclick="removeRepeatableRow(this,'project-procurement-container')" title="حذف"><i class="fas fa-trash"></i></button></div>
+                                </div>
+                                <?php endforeach; ?>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="addProcurementRow()"><i class="fas fa-plus me-1"></i>إضافة طريقة</button>
                         </div>
-
-                        <div class="col-md-8 project-field">
+                        <div class="col-12 project-field">
                             <label class="form-label">المتطلبات الحكومية الأولية</label>
-                            <textarea name="government_requirements" class="form-control" rows="3"><?php echo e($input['government_requirements']); ?></textarea>
+                            <div id="government-requirements-container">
+                                <?php if (!$governmentRequirementRows) $governmentRequirementRows = [['requirement_text' => '', 'fee_amount' => '']]; ?>
+                                <?php foreach ($governmentRequirementRows as $index => $row): ?>
+                                <div class="repeatable-row row g-2 align-items-end mb-2">
+                                    <div class="col-md-8"><label class="form-label small">المتطلب الحكومي</label><input type="text" name="government_requirements[<?php echo (int)$index; ?>][requirement]" class="form-control" value="<?php echo e($row['requirement_text'] ?? ''); ?>" placeholder="مثال: تصريح من الجهة المختصة"></div>
+                                    <div class="col-md-3"><label class="form-label small">الرسوم الحكومية (SDG)</label><input type="number" step="0.01" min="0" name="government_requirements[<?php echo (int)$index; ?>][fee]" class="form-control" value="<?php echo e($row['fee_amount'] ?? ''); ?>" placeholder="0.00"></div>
+                                    <div class="col-md-1"><button type="button" class="btn btn-outline-danger w-100" onclick="removeRepeatableRow(this,'government-requirements-container')" title="حذف"><i class="fas fa-trash"></i></button></div>
+                                </div>
+                                <?php endforeach; ?>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="addGovernmentRequirementRow()"><i class="fas fa-plus me-1"></i>إضافة متطلب</button>
                         </div>
-
-                        <div class="col-md-4 project-field project-field-inline">
-                            <label class="form-label">الرسوم الحكومية <span class="text-muted">(SDG)</span></label>
-                            <input type="number" step="0.01" min="0" name="government_fees" class="form-control" value="<?php echo e($input['government_fees']); ?>" placeholder="0.00">
-                            <div class="project-help">يمكن تركه فارغاً إذا لم توجد رسوم.</div>
-                        </div>
-
                         <div class="col-md-6 project-field">
                             <label class="form-label">خطة الاستدامة</label>
                             <textarea name="sustainability_plan" class="form-control" rows="3"><?php echo e($input['sustainability_plan']); ?></textarea>
@@ -1541,22 +1560,20 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                         بيانات الاتصال
                     </h5>
 
-                    <div class="row g-3">
-                        <div class="col-md-4 project-field project-field-inline">
-                            <label class="form-label">جهة الاتصال</label>
-                            <input type="text" name="contact_person" class="form-control" value="<?php echo e($input['contact_person']); ?>">
+                    <div id="project-contacts-container">
+                        <?php if (!$contactRows) $contactRows = [['contact_name' => '', 'role_description' => '', 'phone' => '', 'email' => '', 'notes' => '']]; ?>
+                        <?php foreach ($contactRows as $index => $row): ?>
+                        <div class="repeatable-row row g-2 align-items-end mb-2">
+                            <div class="col-md-3"><label class="form-label small">اسم جهة الاتصال</label><input type="text" name="contacts[<?php echo (int)$index; ?>][name]" class="form-control" value="<?php echo e($row['contact_name'] ?? ''); ?>" placeholder="الاسم"></div>
+                            <div class="col-md-2"><label class="form-label small">الصفة / الدور</label><input type="text" name="contacts[<?php echo (int)$index; ?>][role]" class="form-control" value="<?php echo e($row['role_description'] ?? ''); ?>" placeholder="مثال: مدير الموقع"></div>
+                            <div class="col-md-2"><label class="form-label small">الهاتف</label><input type="text" name="contacts[<?php echo (int)$index; ?>][phone]" class="form-control" value="<?php echo e($row['phone'] ?? ''); ?>" placeholder="رقم الهاتف"></div>
+                            <div class="col-md-2"><label class="form-label small">البريد الإلكتروني</label><input type="email" name="contacts[<?php echo (int)$index; ?>][email]" class="form-control" value="<?php echo e($row['email'] ?? ''); ?>" placeholder="البريد الإلكتروني"></div>
+                            <div class="col-md-2"><label class="form-label small">ملاحظات</label><input type="text" name="contacts[<?php echo (int)$index; ?>][notes]" class="form-control" value="<?php echo e($row['notes'] ?? ''); ?>" placeholder="ملاحظات"></div>
+                            <div class="col-md-1"><button type="button" class="btn btn-outline-danger w-100" onclick="removeRepeatableRow(this,'project-contacts-container')" title="حذف"><i class="fas fa-trash"></i></button></div>
                         </div>
-
-                        <div class="col-md-4 project-field project-field-inline">
-                            <label class="form-label">هاتف الاتصال</label>
-                            <input type="text" name="contact_phone" class="form-control" value="<?php echo e($input['contact_phone']); ?>">
-                        </div>
-
-                        <div class="col-md-4 project-field project-field-inline">
-                            <label class="form-label">البريد الإلكتروني</label>
-                            <input type="email" name="contact_email" class="form-control" value="<?php echo e($input['contact_email']); ?>">
-                        </div>
+                        <?php endforeach; ?>
                     </div>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="addContactRow()"><i class="fas fa-plus me-1"></i>إضافة جهة اتصال</button>
                 </section>
 
                 <?php if (!$id): ?>
@@ -1688,6 +1705,33 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 <?php if (!$id): ?>
 
 <script>
+
+function addRepeatableRow(containerId, html) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const index = container.querySelectorAll('.repeatable-row').length;
+    container.insertAdjacentHTML('beforeend', html.replace(/__INDEX__/g, index));
+}
+function removeRepeatableRow(button, containerId) {
+    const container = document.getElementById(containerId);
+    const row = button ? button.closest('.repeatable-row') : null;
+    if (!container || !row) return;
+    const rows = container.querySelectorAll('.repeatable-row');
+    if (rows.length === 1) { row.querySelectorAll('input').forEach(input => input.value = ''); return; }
+    row.remove();
+}
+function addPartnerRow() {
+    addRepeatableRow('project-partners-container', '<div class="repeatable-row row g-2 align-items-end mb-2"><div class="col-md-6"><input type="text" name="partners[__INDEX__][name]" class="form-control" placeholder="اسم الجهة أو الشريك"></div><div class="col-md-5"><input type="text" name="partners[__INDEX__][role]" class="form-control" placeholder="الدور / نوع المشاركة"></div><div class="col-md-1"><button type="button" class="btn btn-outline-danger w-100" onclick="removeRepeatableRow(this,\'project-partners-container\')"><i class="fas fa-trash"></i></button></div></div>');
+}
+function addProcurementRow() {
+    addRepeatableRow('project-procurement-container', '<div class="repeatable-row row g-2 align-items-end mb-2"><div class="col-md-5"><input type="text" name="procurement_methods[__INDEX__][method]" class="form-control" placeholder="طريقة الشراء / التوريد"></div><div class="col-md-6"><input type="text" name="procurement_methods[__INDEX__][notes]" class="form-control" placeholder="ملاحظات"></div><div class="col-md-1"><button type="button" class="btn btn-outline-danger w-100" onclick="removeRepeatableRow(this,\'project-procurement-container\')"><i class="fas fa-trash"></i></button></div></div>');
+}
+function addGovernmentRequirementRow() {
+    addRepeatableRow('government-requirements-container', '<div class="repeatable-row row g-2 align-items-end mb-2"><div class="col-md-8"><input type="text" name="government_requirements[__INDEX__][requirement]" class="form-control" placeholder="المتطلب الحكومي"></div><div class="col-md-3"><input type="number" step="0.01" min="0" name="government_requirements[__INDEX__][fee]" class="form-control" placeholder="0.00"></div><div class="col-md-1"><button type="button" class="btn btn-outline-danger w-100" onclick="removeRepeatableRow(this,\'government-requirements-container\')"><i class="fas fa-trash"></i></button></div></div>');
+}
+function addContactRow() {
+    addRepeatableRow('project-contacts-container', '<div class="repeatable-row row g-2 align-items-end mb-2"><div class="col-md-3"><input type="text" name="contacts[__INDEX__][name]" class="form-control" placeholder="الاسم"></div><div class="col-md-2"><input type="text" name="contacts[__INDEX__][role]" class="form-control" placeholder="الصفة / الدور"></div><div class="col-md-2"><input type="text" name="contacts[__INDEX__][phone]" class="form-control" placeholder="الهاتف"></div><div class="col-md-2"><input type="email" name="contacts[__INDEX__][email]" class="form-control" placeholder="البريد الإلكتروني"></div><div class="col-md-2"><input type="text" name="contacts[__INDEX__][notes]" class="form-control" placeholder="ملاحظات"></div><div class="col-md-1"><button type="button" class="btn btn-outline-danger w-100" onclick="removeRepeatableRow(this,\'project-contacts-container\')"><i class="fas fa-trash"></i></button></div></div>');
+}
 
 const projectBudgetTemplates = {
     orphans: [
