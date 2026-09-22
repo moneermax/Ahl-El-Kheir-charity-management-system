@@ -427,3 +427,14 @@ A targeted UI cleanup was applied to `modules/projects/view.php` after review of
 Implementation commit: `85dfa3f65725ade865be80824a7d340cdcbcf1db`.
 
 Runtime verification is required after pulling the commit.
+
+## 2026-09-22 — Budget view correction after workflow review
+
+Follow-up review showed that the budget-version **اعتماد** control should not remain on the project detail page because it introduced a second approval concept alongside the FM project financial approval. The explanatory note was also unnecessary on the user-facing page.
+
+The detail page was corrected to:
+- remove the explanatory budget note;
+- remove the **اعتماد نسخة الميزانية** button;
+- remove the obsolete `approve_budget` POST handler from `modules/projects/view.php`.
+
+This is a UI/workflow-boundary cleanup. No database schema or accounting entries were changed. Budget preparation/editing remains outside this detail-page review surface.
