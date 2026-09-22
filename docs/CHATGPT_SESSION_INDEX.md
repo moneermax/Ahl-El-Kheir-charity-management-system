@@ -837,3 +837,19 @@ Do not implement role changes until this audit is complete and confirmed. Preser
 ## 2026-09-22 — Projects workflow audit checkpoint
 
 Projects remediation Batch 1 is now implemented: pre-approval budget/budget-line preparation and funding allocation preparation are server-authorized to the Projects Manager, while the FM pre-approval funding UI is read-only and reserved for financial review/approve/reject. Runtime verification remains pending. See `docs/PROJECTS_MODULE_AUDIT_AND_REMEDIATION_PLAN.md` for the detailed change and remaining accounting/payment audit items.
+
+
+
+## 2026-09-22 — Projects UI reference implementation
+
+The Projects module UI implementation now uses `docs/code_artifact.html` as its visual reference and `docs/code_artifact.md` as its functional reference, adapted to the existing Bootstrap/RTL application shell.
+
+Changed:
+- `assets/css/projects-ui.css`
+- `modules/projects/form.php`
+- `modules/projects/view.php`
+- `modules/projects/index.php`
+
+Runtime visual verification remains pending.
+
+Authoritative clarification from the user: funding entry/allocation is **not** a Projects Manager task. Do not reintroduce PM funding-entry controls; the responsible pre-approval funding role remains an open workflow question until explicitly established.
