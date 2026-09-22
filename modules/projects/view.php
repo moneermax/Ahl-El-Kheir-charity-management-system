@@ -418,13 +418,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $approvalCheck = dbFetchOne('SELECT approval_status FROM project_approval WHERE project_id = ?', [$id]);
             if (!$approvalCheck || $approvalCheck['approval_status'] !== 'submitted') throw new RuntimeException('يمكن تسجيل مصادر التمويل فقط أثناء المراجعة المالية (حالة: مُرسَل).');
 
-            $sourceAccountId = (int)($_POST['source_account_id'] ?? 0);
-            $amount = (float)($_POST['funding_amount'] ?? 0);
-            $sourceAccount = $sourceAccountId ? dbFetchOne('SELECT id, code, name_ar FROM accounts WHERE id = ?', [$sourceAccountId]) : null;
-            if (!$sourceAccount || !in_array($sourceAccount['code'], ['1100', '1200', '1300'], true)) {
-                throw new RuntimeException('يجب اختيار مصدر تمويل صالح: الصندوق النقدي (1100)، البنك (1200)، أو المحفظة الإلكترونية (1300).');
-            }
-            if ($amount <= 0) throw new RuntimeException('مبلغ التمويل يجب أن يكون أكبر من صفر.');
+            $sourceAccountIds = $_POST['funding_source_account_id'] ?? [];
+            $amounts = $_POST['funding_amount'] ?? [];
+            $dates = $_POST['funding_allocation_date'] ?? [];
+            $references = $_POST['funding_reference'] ?? [];
+            $descriptions = $_POST['funding_description'] ?? [];
+
+            if (!is_array($sourceAccountIds)) $sourceAccountIds = [$sourceAccountIds];
+            if (!is_array($amounts)) $amounts = [$amounts];
+            if (!is_array($dates)) $dates = [$dates];
+            if (!is_array($references)) $references = [$references];
+            if (!is_array($descriptions)) $descriptions = [$descriptions];
 
             $approvedBudgetRow = dbFetchOne(
                 "SELECT COALESCE(SUM(bl.estimated_amount), 0) AS n
@@ -433,29 +437,76 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                  WHERE b.project_id = ? AND b.status = 'approved'",
                 [$id]
             );
-            $proposedBudget = (float)($approvedBudgetRow['n'] ?? 0);
-            if ($proposedBudget <= 0) {
+            $approvedBudgetTotal = (float)($approvedBudgetRow['n'] ?? 0);
+            if ($approvedBudgetTotal <= 0) {
                 throw new RuntimeException('لا يمكن تسجيل التمويل قبل اعتماد نسخة الميزانية.');
             }
-            $existingTotal = (float)(dbFetchOne("SELECT COALESCE(SUM(amount),0) AS n FROM project_funding_allocations WHERE project_id = ? AND status = 'draft'", [$id])['n'] ?? 0);
-            if ($existingTotal + $amount > $proposedBudget + 0.01) {
-                $remaining = max(0, $proposedBudget - $existingTotal);
-                throw new RuntimeException('لا يمكن أن يتجاوز إجمالي التمويل الميزانية المقترحة (' . number_format($proposedBudget, 2) . '). المتبقي المتاح للتخصيص: ' . number_format($remaining, 2) . '.');
+
+            $existingTotal = (float)(dbFetchOne(
+                "SELECT COALESCE(SUM(amount),0) AS n
+                 FROM project_funding_allocations
+                 WHERE project_id = ? AND status = 'draft'",
+                [$id]
+            )['n'] ?? 0);
+
+            $rowsToInsert = [];
+            $batchTotal = 0.0;
+            $rowCount = max(count($sourceAccountIds), count($amounts));
+            if ($rowCount <= 0) {
+                throw new RuntimeException('يجب إضافة مصدر تمويل واحد على الأقل.');
             }
 
-            $activeBudgetId = (int)(dbFetchOne("SELECT id FROM project_budgets WHERE project_id = ? AND status = 'approved' ORDER BY version_no DESC LIMIT 1", [$id])['id'] ?? 0) ?: null;
+            for ($i = 0; $i < $rowCount; $i++) {
+                $sourceAccountId = (int)($sourceAccountIds[$i] ?? 0);
+                $amount = (float)($amounts[$i] ?? 0);
+                $sourceAccount = $sourceAccountId ? dbFetchOne('SELECT id, code, name_ar FROM accounts WHERE id = ?', [$sourceAccountId]) : null;
 
-            dbExecute('INSERT INTO project_funding_allocations (project_id, budget_id, source_type, source_account_id, destination_account_id, transaction_id, amount, currency_code, allocation_date, reference_number, description, status, created_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)', [
-                $id, $activeBudgetId, $sourceAccount['code'], $sourceAccount['id'], null, null, $amount,
-                akp_post_value('funding_currency', $project['currency_code'] ?: 'SDG'),
-                akp_post_value('allocation_date', date('Y-m-d')),
-                akp_post_value('funding_reference') ?: null,
-                akp_post_value('funding_description') ?: null,
-                'draft', akp_user_id()
-            ]);
-            $allocationId = (int)(dbFetchOne('SELECT LAST_INSERT_ID() AS id')['id'] ?? 0);
-            akp_audit('CREATE', 'project_funding_allocation', $allocationId, null, ['project_id' => $id, 'amount' => $amount, 'source_account' => $sourceAccount['code']]);
-            flash('success', 'تم تسجيل مصدر التمويل. المتبقي من الميزانية المقترحة: ' . number_format(max(0, $proposedBudget - $existingTotal - $amount), 2) . '.');
+                if (!$sourceAccount || !in_array($sourceAccount['code'], ['1100', '1200', '1300'], true)) {
+                    throw new RuntimeException('كل تخصيص يجب أن يستخدم أحد مصادر التمويل التالية: الصندوق النقدي (1100)، البنك (1200)، أو المحفظة الإلكترونية (1300).');
+                }
+                if ($amount <= 0) {
+                    throw new RuntimeException('يجب أن يكون مبلغ كل تخصيص تمويل أكبر من صفر.');
+                }
+
+                $rowsToInsert[] = [
+                    'account' => $sourceAccount,
+                    'amount' => $amount,
+                    'date' => trim((string)($dates[$i] ?? '')) ?: date('Y-m-d'),
+                    'reference' => trim((string)($references[$i] ?? '')) ?: null,
+                    'description' => trim((string)($descriptions[$i] ?? '')) ?: null
+                ];
+                $batchTotal += $amount;
+            }
+
+            if ($existingTotal + $batchTotal > $approvedBudgetTotal + 0.01) {
+                $remaining = max(0, $approvedBudgetTotal - $existingTotal);
+                throw new RuntimeException('لا يمكن أن يتجاوز إجمالي التمويل الميزانية المعتمدة (' . number_format($approvedBudgetTotal, 2) . '). المتبقي المتاح للتخصيص: ' . number_format($remaining, 2) . '.');
+            }
+
+            $activeBudgetId = (int)(dbFetchOne(
+                "SELECT id FROM project_budgets WHERE project_id = ? AND status = 'approved' ORDER BY version_no DESC LIMIT 1",
+                [$id]
+            )['id'] ?? 0) ?: null;
+
+            foreach ($rowsToInsert as $row) {
+                dbExecute('INSERT INTO project_funding_allocations (project_id, budget_id, source_type, source_account_id, destination_account_id, transaction_id, amount, currency_code, allocation_date, reference_number, description, status, created_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)', [
+                    $id, $activeBudgetId, $row['account']['code'], $row['account']['id'], null, null, $row['amount'],
+                    $project['currency_code'] ?: 'SDG',
+                    $row['date'],
+                    $row['reference'],
+                    $row['description'],
+                    'draft', akp_user_id()
+                ]);
+                $allocationId = (int)(dbFetchOne('SELECT LAST_INSERT_ID() AS id')['id'] ?? 0);
+                akp_audit('CREATE', 'project_funding_allocation', $allocationId, null, [
+                    'project_id' => $id,
+                    'amount' => $row['amount'],
+                    'source_account' => $row['account']['code']
+                ]);
+            }
+
+            $remainingAfter = max(0, $approvedBudgetTotal - $existingTotal - $batchTotal);
+            flash('success', 'تم تسجيل تخصيصات التمويل بنجاح. المتبقي من الميزانية المعتمدة: ' . number_format($remainingAfter, 2) . '.');
 
         } elseif ($action === 'edit_funding') {
             $approvalStatus = (string)(dbFetchOne('SELECT approval_status FROM project_approval WHERE project_id = ?', [$id])['approval_status'] ?? '');
@@ -981,25 +1032,89 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     <div class="card-header bg-primary text-white"><i class="fas fa-file-invoice-dollar me-2"></i>الميزانية</div>
                     <div class="card-body">
                 <?php if (!$approvedBudgetId && akp_can_edit_section('finance', $id) && !$closed): ?>
-                    <form method="post" class="border rounded p-3 mb-3 bg-light">
-                        <input type="hidden" name="action" value="add_budget">
+                    <form method="post" class="border rounded p-3 mb-3 bg-light" id="projectFundingForm">
+                        <input type="hidden" name="action" value="add_funding">
                         <?php echo csrf_field(); ?>
-                        <h6 class="mb-3">إنشاء نسخة ميزانية مسودة</h6>
-                        <div class="row g-2">
-                            <div class="col-md-4"><input name="budget_name" class="form-control form-control-sm" placeholder="اسم النسخة *" required></div>
-                            <div class="col-md-2">
-                                <label class="form-label small">العملة</label>
-                                <input type="text" class="form-control form-control-sm bg-light" value="<?php echo e($currency); ?>" readonly aria-readonly="true">
-                                <input type="hidden" name="budget_currency" value="<?php echo e($currency); ?>">
+                        <div id="fundingRows">
+                            <div class="funding-row border rounded p-2 mb-2 bg-white">
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-md-5">
+                                        <label class="form-label small">حساب التمويل</label>
+                                        <select name="funding_source_account_id[]" class="form-select form-select-sm" required>
+                                            <option value="">اختر الحساب الذي سيموّل المشروع</option>
+                                            <?php foreach (dbFetchAll("SELECT id, code, name_ar FROM accounts WHERE is_active = 1 AND code IN ('1100','1200','1300') ORDER BY code") as $account): ?>
+                                                <option value="<?php echo (int)$account['id']; ?>"><?php echo e($account['code'] . ' · ' . $account['name_ar']); ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label small">المبلغ</label>
+                                        <input type="number" step="0.01" min="0.01" name="funding_amount[]" class="form-control form-control-sm" placeholder="المبلغ" required>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label small">التاريخ</label>
+                                        <input type="date" name="funding_allocation_date[]" class="form-control form-control-sm" value="<?php echo date('Y-m-d'); ?>">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label small">المرجع</label>
+                                        <input name="funding_reference[]" class="form-control form-control-sm" placeholder="المرجع">
+                                    </div>
+                                    <div class="col-md-1 d-flex justify-content-end">
+                                        <button type="button" class="btn btn-sm btn-outline-danger remove-funding-row d-none" title="حذف مصدر التمويل"><i class="fas fa-times"></i></button>
+                                    </div>
+                                    <div class="col-12">
+                                        <input name="funding_description[]" class="form-control form-control-sm" placeholder="الوصف">
+                                    </div>
+                                </div>
                             </div>
-                            <div class="col-md-2"><input type="date" name="effective_date" class="form-control form-control-sm"></div>
-                            <div class="col-md-4"><input name="budget_notes" class="form-control form-control-sm" placeholder="ملاحظات"></div>
-                            <div class="col-md-3"><input name="line_category" class="form-control form-control-sm" placeholder="فئة البند *" required></div>
-                            <div class="col-md-5"><input name="line_description" class="form-control form-control-sm" placeholder="وصف البند *" required></div>
-                            <div class="col-md-2"><input type="number" step="0.01" min="0.01" name="estimated_amount" class="form-control form-control-sm" placeholder="المبلغ *" required></div>
-                            <div class="col-md-2"><button class="btn btn-sm btn-primary w-100">حفظ وإضافة</button></div>
                         </div>
+                        <div class="d-flex flex-wrap gap-2 align-items-center">
+                            <button type="button" class="btn btn-sm btn-outline-success" id="addFundingRow"><i class="fas fa-plus me-1"></i> إضافة مصدر تمويل آخر</button>
+                            <span class="small text-muted">يمكن إضافة أكثر من مصدر في نفس العملية، من الصندوق أو البنك أو المحفظة الإلكترونية.</span>
+                        </div>
+                        <div class="mt-2 small">
+                            إجمالي التخصيصات الحالية: <strong><?php echo akp_money(array_sum(array_map('floatval', array_column($fundings, 'amount')))); ?> <?php echo e($project['currency_code'] ?: 'SDG'); ?></strong>
+                        </div>
+                        <div class="col-12 mt-2 small text-muted">يجب أن يساوي مجموع التخصيصات الميزانية المعتمدة قبل الاعتماد المالي.</div>
+                        <div class="col-12 mt-2"><button class="btn btn-sm btn-primary">حفظ تخصيصات التمويل</button></div>
                     </form>
+                    <script>
+                    document.addEventListener('DOMContentLoaded', function () {
+                        const rows = document.getElementById('fundingRows');
+                        const addButton = document.getElementById('addFundingRow');
+                        if (!rows || !addButton) return;
+
+                        function refreshRemoveButtons() {
+                            const items = rows.querySelectorAll('.funding-row');
+                            items.forEach(function (item) {
+                                const remove = item.querySelector('.remove-funding-row');
+                                if (remove) remove.classList.toggle('d-none', items.length === 1);
+                            });
+                        }
+
+                        addButton.addEventListener('click', function () {
+                            const source = rows.querySelector('.funding-row');
+                            const clone = source.cloneNode(true);
+                            clone.querySelectorAll('input').forEach(function (input) {
+                                if (input.name === 'funding_allocation_date[]') input.value = '<?php echo date('Y-m-d'); ?>';
+                                else input.value = '';
+                            });
+                            clone.querySelectorAll('select').forEach(function (select) { select.selectedIndex = 0; });
+                            rows.appendChild(clone);
+                            refreshRemoveButtons();
+                        });
+
+                        rows.addEventListener('click', function (event) {
+                            const button = event.target.closest('.remove-funding-row');
+                            if (!button) return;
+                            const row = button.closest('.funding-row');
+                            if (row) row.remove();
+                            refreshRemoveButtons();
+                        });
+
+                        refreshRemoveButtons();
+                    });
+                    </script>
                 <?php endif; ?>
                 
                 <?php if ($draftBudgetId && akp_can_edit_section('finance', $id) && !$closed): ?>
@@ -1189,7 +1304,8 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             </div>
         </div>
 
-        <div class="card mb-4 fade-in">
+        <?php if ($approval['approval_status'] === 'approved'): ?>
+<div class="card mb-4 fade-in">
             <div class="card-header"><i class="fas fa-receipt me-2"></i>المصروفات</div>
             <div class="card-body">
                 <?php if (akp_can_edit_section('finance', $id) && !$closed): ?>
@@ -1451,6 +1567,11 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         </div>
     </div>
 
+<?php else: ?>
+        <div class="alert alert-light border mb-4 small text-muted">
+            <i class="fas fa-lock me-2"></i>تظهر المصروفات والوثائق والعمالة والتشغيل والتقدم بعد اعتماد المشروع نهائياً من المدير العام.
+        </div>
+<?php endif; ?>
     <div class="col-lg-4">
         <div class="card mb-4 fade-in">
             <div class="card-header"><i class="fas fa-user-shield me-2"></i>فريق المشروع وصلاحيات الأقسام</div>
