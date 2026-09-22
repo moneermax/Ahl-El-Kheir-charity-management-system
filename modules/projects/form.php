@@ -1274,6 +1274,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 */
 
 include dirname(__DIR__, 2) . '/includes/header.php';
+<link rel="stylesheet" href="<?php echo e(APP_URL . 'assets/css/projects-ui.css'); ?>">
 ?>
 
 <?php include dirname(__DIR__, 2) . '/includes/alerts.php'; ?>
