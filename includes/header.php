@@ -368,6 +368,19 @@ $langSwitchUrl =
             margin: 0;
         }
 
+        /* Hide native number-field spinner arrows throughout the application.
+           Numeric fields remain fully editable by typing or using the keyboard. */
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input[type="number"] {
+            -moz-appearance: textfield;
+            appearance: textfield;
+        }
+
 
         .app-wrapper {
             min-height: 100vh;
