@@ -126,7 +126,7 @@ if (!function_exists('akp_can_edit_section')) {
         if ($section === 'closure') {
             // Project closure is a Projects Manager workflow responsibility.
             // FM may review the closure section but must not execute close/reopen actions.
-            return $role === 'projects_manager' || akp_has_project_section($projectId, 'closure');
+            return $role === 'projects_manager';
         }
         if ($section === 'team') {
             return in_array($role, ['general_manager', 'vice_general_manager', 'projects_manager'], true);
