@@ -28,7 +28,7 @@ foreach ($budgets as $budget) {
     if ($budget['status'] === 'draft' && !$draftBudgetId) $draftBudgetId = (int)$budget['id']; 
 }
 
-$fundings = dbFetchAll("SELECT * FROM project_funding_allocations WHERE project_id = ? ORDER BY created_at DESC", [$id]);
+$fundings = dbFetchAll("SELECT f.*, a.code AS source_account_code, a.name_ar AS source_account_name FROM project_funding_allocations f LEFT JOIN accounts a ON a.id = f.source_account_id WHERE f.project_id = ? ORDER BY f.created_at DESC", [$id]);
 $expenses = dbFetchAll("SELECT e.*, je.entry_code FROM project_expenses e LEFT JOIN journal_entries je ON je.id = e.journal_entry_id WHERE e.project_id = ? ORDER BY e.expense_date DESC, e.id DESC", [$id]);
 $documents = dbFetchAll('SELECT d.*, u.full_name AS uploader_name FROM project_documents d LEFT JOIN users u ON u.id = d.uploaded_by WHERE d.project_id = ? ORDER BY d.id DESC', [$id]);
 $milestones = dbFetchAll('SELECT * FROM project_milestones WHERE project_id = ? ORDER BY planned_date, id', [$id]);
@@ -949,7 +949,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         </div>
 
         <div class="card mb-4 fade-in">
-            <div class="card-header"><i class="fas fa-coins me-2"></i>الميزانيات والتمويل</div>
+            <div class="card-header"><i class="fas fa-coins me-2"></i>الميزانية وتخصيص التمويل</div>
             <div class="card-body">
                 <?php if (akp_can_edit_section('finance', $id) && !$closed): ?>
                     <form method="post" class="border rounded p-3 mb-3 bg-light">
@@ -1013,7 +1013,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 
                 <hr>
                 <h6>تخصيصات التمويل</h6>
-                <?php if (akp_can_edit_section('finance', $id) && !$closed): ?>
+                <?php if ($role === 'financial_manager' && $approval['approval_status'] === 'submitted' && !$closed): ?>
                     <form method="post" class="border rounded p-3 mb-3 bg-light">
                         <input type="hidden" name="action" value="add_funding">
                         <?php echo csrf_field(); ?>
@@ -1039,14 +1039,14 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 
                 <div class="table-responsive">
                     <table class="table table-sm">
-                        <thead><tr><th>التاريخ</th><th>المصدر</th><th>المبلغ</th><th>الحسابات</th><th>الحالة</th><th></th></tr></thead>
+                        <thead><tr><th>التاريخ</th><th>حساب التمويل</th><th>المبلغ</th><th>المرجع/الوصف</th><th>الحالة</th><th></th></tr></thead>
                         <tbody>
                             <?php foreach ($fundings as $funding): ?>
                                 <tr>
                                     <td><?php echo e($funding['allocation_date']); ?></td>
-                                    <td><?php echo e($funding['source_type']); ?></td>
+                                    <td><?php echo e((string)($funding['source_account_code'] ?? $funding['source_type'])); ?> · <?php echo e((string)($funding['source_account_name'] ?? '')); ?></td>
                                     <td><?php echo akp_money($funding['amount']); ?></td>
-                                    <td><small><?php echo e((string)$funding['source_account_id']); ?> → <?php echo e((string)$funding['destination_account_id']); ?></small></td>
+                                    <td><small><?php echo e((string)($funding['reference_number'] ?? '')); ?><?php if (!empty($funding['description'])): ?><br><?php echo e((string)$funding['description']); ?><?php endif; ?></small></td>
                                     <td><?php echo e($funding['status']); ?></td>
                                     <td>
                                         <?php if (akp_can_manage_funding($role, (string)$approval['approval_status']) && !$closed): ?>
@@ -1070,7 +1070,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                                     </td>
                                 </tr>
                             <?php endforeach; if (!$fundings): ?>
-                                <tr><td colspan="6" class="text-center text-muted">لا توجد تخصيصات تمويل.</td></tr>
+                                <tr><td colspan="6" class="text-center text-muted">لا توجد تخصيصات تمويل مسجلة بعد.</td></tr>
                             <?php endif; ?>
                         </tbody>
                     </table>
@@ -1099,8 +1099,8 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                                             <div class="col-md-6">
                                                 <label class="form-label small">حساب المصدر</label>
                                                 <select name="source_account_id" id="editFundingSourceAccount" class="form-select form-select-sm" required>
-                                                    <option value="">اختر الحساب</option>
-                                                    <?php foreach (dbFetchAll('SELECT id, code, name_ar FROM accounts WHERE is_active = 1 ORDER BY code') as $account): ?>
+                                                    <option value="">اختر حساب التمويل</option>
+                                                    <?php foreach (dbFetchAll("SELECT id, code, name_ar FROM accounts WHERE is_active = 1 AND code IN ('1100','1200','1300') ORDER BY code") as $account): ?>
                                                         <option value="<?php echo (int)$account['id']; ?>"><?php echo e($account['code'] . ' · ' . $account['name_ar']); ?></option>
                                                     <?php endforeach; ?>
                                                 </select>
