@@ -816,3 +816,19 @@ Active audit area: Organization Projects. Dedicated plan: `docs/PROJECTS_MODULE_
 - Added server-side validation for project team sections, labor enumerations, progress range, beneficiary inputs, document rejection reason, and a 10 MB project-document limit.
 - Runtime certification remains pending; project-code uniqueness/concurrency still requires verification against the actual deployed schema.
 - Remediation commits: `251c7c4`, `5bb36f8`, `af59a1b`.
+
+## 2026-09-22 — Next continuation point: Complete Projects workflow and role audit
+
+The next new-chat session must continue with the **Projects Module Workflow / Role Audit** working plan.
+
+The immediate task is NOT another isolated UI fix. Inspect the complete current Projects module and related payment/accounting surfaces, then produce:
+1. a page/action inventory;
+2. a role/permission matrix;
+3. a lifecycle/state-action matrix;
+4. a section visibility/editability matrix;
+5. a payment/disbursement/receipt workflow map;
+6. an accounting-event map, including verification of the meaning of the final-approval journal;
+7. notification routing checkpoints;
+8. identified contradictions/gaps and a proposed implementation order.
+
+Do not implement role changes until this audit is complete and confirmed. Preserve existing test evidence and do not invent schema. No triggers/views/stored procedures/functions/events.
