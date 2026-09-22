@@ -853,3 +853,8 @@ Changed:
 Runtime visual verification remains pending.
 
 Authoritative clarification from the user: funding entry/allocation is **not** a Projects Manager task. Do not reintroduce PM funding-entry controls; the responsible pre-approval funding role remains an open workflow question until explicitly established.
+
+
+### Projects — 2026-09-22 operational role clarification
+- Project Supervisor owns operational data entry for project documents/receipts/certificates, external labor/helpers, milestones, and progress updates.
+- Projects Manager is follow-up/workflow only for these sections and sees them read-only; no operational data-entry action is exposed or accepted for the Projects Manager.
