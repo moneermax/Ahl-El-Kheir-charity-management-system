@@ -850,3 +850,68 @@ When replacing an old trigger, do not merely remove it: inspect its business rul
 ## 2026-09-21 — Projects Module Audit Continuation
 
 The Projects module is now an active audit area. Read `docs/PROJECTS_MODULE_AUDIT_AND_REMEDIATION_PLAN.md` before changing Projects code. First-pass findings include non-transactional project creation, inconsistent portfolio/detail funding totals, read-time lifecycle writes, count-based project codes, server-side validation gaps, upload-size validation, transaction-boundary review, and expense separation-of-duties review. Inspect current code/schema first; do not assume any finding is already fixed. No Projects code has been changed yet.
+
+## PROJECTS MODULE — CURRENT WORKING PLAN (2026-09-22)
+
+The immediate next task is a **complete Projects Module workflow and role audit**, not another isolated UI fix.
+
+Authoritative role boundaries:
+- Project Supervisor: operational/project data entry and execution follow-up.
+- Projects Manager: reviews/follows up Supervisor work, manages readiness/workflow, prepares and submits for financial review.
+- FM: financial review/control; approve/reject financially; operational sections must be read-only or quick-report summaries; after final approval, FM may perform authorized project payment/disbursement execution and print payment receipts where required, especially cash payments. FM must not enter operational project data.
+- GM/VGM: final approval according to existing authority.
+- Accountant: accounting execution/posting where applicable.
+
+Audit every Projects page/action as:
+A. pre-approval preparation
+B. approval/financial review
+C. post-approval execution
+D. management/reporting
+
+Before implementation, inspect:
+- all Projects pages/endpoints and POST actions;
+- project_lib.php permission helpers and all role checks;
+- budget/funding/expense/payment/disbursement/receipt code;
+- documents, labor, milestones, progress, beneficiaries, closure/reopen workflows;
+- dashboards/lists/detail pages and direct URLs;
+- notifications;
+- accounting journal creation/posting/reversal semantics;
+- actual schema/references.
+
+Produce first:
+1. page/action inventory;
+2. role matrix;
+3. lifecycle/state-action matrix;
+4. section visibility/editability matrix;
+5. payment/disbursement/receipt workflow map;
+6. accounting-event map;
+7. notification routing map;
+8. contradictions/gaps;
+9. safe implementation order.
+
+Critical accounting question: determine whether the final-approval project journal represents an actual payment/expenditure event or a funding/allocation/reservation event. Do not conflate these, and verify that later expense/payment posting cannot recognize the same event twice.
+
+FM target experience:
+- pre-final-approval: financial review/control view with project summary, approved budget, budget lines, funding, financial warnings, read-only documents/operational summaries, approval history, Approve/Reject;
+- post-final-approval: financial execution view with budget/funded/paid/expense/remaining amounts, pending payments, payment history, financial documents, authorized payment/disbursement and receipt actions.
+
+Rules:
+- Do not implement speculative role changes before the audit is complete.
+- Do not invent tables/columns/statuses.
+- No new triggers, views, stored procedures, functions, or events.
+- Preserve existing accounting/test evidence.
+- Use the smallest safe implementation units after the audit.
+- Runtime verification is required before marking workflow changes complete.
+- Create a safe Git checkpoint before implementation.
+- Commit completed changes to main and update documentation.
+- Do not use destructive Git commands.
+- Do not ask for SQL unless truly unavoidable; inspect existing code/schema first.
+- Preserve accepted header/sidebar/Back behavior unless a genuine Projects regression is demonstrated.
+
+Start by reading:
+- docs/CHATGPT_SESSION_INDEX.md
+- docs/AHL_EL_KHEIR_MASTER_STATUS.md
+- docs/AHL_EL_KHEIR_MASTER_AUDIT.md
+- docs/PROJECTS_MODULE_AUDIT_AND_REMEDIATION_PLAN.md
+
+Then inspect the actual current repository. Do not restart completed work.
