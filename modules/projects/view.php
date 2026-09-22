@@ -55,9 +55,10 @@ function akp_post_value(string $name, string $default = ''): string {
 
 /** Funding allocation permissions. */
 function akp_can_manage_funding(string $role, string $approvalStatus): bool {
-    return $approvalStatus === 'approved'
-        ? $role === 'general_manager'
-        : $role === 'financial_manager';
+    if (in_array($approvalStatus, ['draft', 'rejected'], true)) {
+        return $role === 'projects_manager';
+    }
+    return $approvalStatus === 'approved' && $role === 'general_manager';
 }
 
 /** Create a balanced reversal entry while preserving the original posted entry. */
@@ -372,7 +373,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
         } elseif ($action === 'add_budget') {
             // ... (Original add_budget logic preserved exactly)
-            if (!akp_can_edit_section('finance', $id) || $closed) throw new RuntimeException('لا تملك صلاحية إضافة ميزانية.');
+            if (!akp_can_prepare_finance($id) || $closed) throw new RuntimeException('إعداد الميزانية قبل المراجعة المالية محصور بمدير المشاريع.');
             $name = akp_post_value('budget_name');
             $lineCategory = akp_post_value('line_category');
             $lineDescription = akp_post_value('line_description');
@@ -387,7 +388,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
         } elseif ($action === 'add_budget_line') {
             // ... (Original add_budget_line logic preserved exactly)
-            if (!akp_can_edit_section('finance', $id) || $closed) throw new RuntimeException('لا تملك صلاحية إضافة بنود.');
+            if (!akp_can_prepare_finance($id) || $closed) throw new RuntimeException('إعداد بنود الميزانية قبل المراجعة المالية محصور بمدير المشاريع.');
             $budgetId = (int)($_POST['budget_id'] ?? 0);
             $budget = dbFetchOne('SELECT * FROM project_budgets WHERE id = ? AND project_id = ?', [$budgetId, $id]);
             if (!$budget || $budget['status'] !== 'draft') throw new RuntimeException('لا يمكن تعديل نسخة ميزانية معتمدة.');
@@ -401,7 +402,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
         } elseif ($action === 'approve_budget') {
             // ... (Original approve_budget logic preserved exactly)
-            if (!akp_can_edit_section('finance', $id) || $closed) throw new RuntimeException('لا تملك صلاحية اعتماد الميزانية.');
+            if (!akp_can_prepare_finance($id) || $closed) throw new RuntimeException('اعتماد الميزانية التحضيرية قبل المراجعة المالية محصور بمدير المشاريع.');
             $budgetId = (int)($_POST['budget_id'] ?? 0);
             $budget = dbFetchOne('SELECT * FROM project_budgets WHERE id = ? AND project_id = ?', [$budgetId, $id]);
             if (!$budget || $budget['status'] !== 'draft') throw new RuntimeException('لا يمكن اعتماد هذه النسخة.');
@@ -641,7 +642,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
         } elseif ($action === 'edit_budget_line') {
-            if (!akp_can_edit_section('finance', $id) || $closed) throw new RuntimeException('لا تملك صلاحية تعديل بنود الميزانية.');
+            if (!akp_can_prepare_finance($id) || $closed) throw new RuntimeException('تعديل بنود الميزانية قبل المراجعة المالية محصور بمدير المشاريع.');
             $lineId = (int)($_POST['line_id'] ?? 0);
             $line = dbFetchOne('SELECT bl.*, b.status AS budget_status, b.project_id FROM project_budget_lines bl JOIN project_budgets b ON b.id = bl.budget_id WHERE bl.id = ?', [$lineId]);
             if (!$line || (int)$line['project_id'] !== $id) throw new RuntimeException('بند الميزانية غير موجود.');
@@ -655,7 +656,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('success', 'تم تعديل بند الميزانية.');
 
         } elseif ($action === 'delete_budget_line') {
-            if (!akp_can_edit_section('finance', $id) || $closed) throw new RuntimeException('لا تملك صلاحية حذف بنود الميزانية.');
+            if (!akp_can_prepare_finance($id) || $closed) throw new RuntimeException('حذف بنود الميزانية قبل المراجعة المالية محصور بمدير المشاريع.');
             $lineId = (int)($_POST['line_id'] ?? 0);
             $line = dbFetchOne('SELECT bl.*, b.status AS budget_status, b.project_id FROM project_budget_lines bl JOIN project_budgets b ON b.id = bl.budget_id WHERE bl.id = ?', [$lineId]);
             if (!$line || (int)$line['project_id'] !== $id) throw new RuntimeException('بند الميزانية غير موجود.');
@@ -1031,7 +1032,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 <div class="card border-primary mb-4">
                     <div class="card-header bg-primary text-white"><i class="fas fa-file-invoice-dollar me-2"></i>الميزانية</div>
                     <div class="card-body">
-                <?php if (!$approvedBudgetId && akp_can_edit_section('finance', $id) && !$closed): ?>
+                <?php if (!$approvedBudgetId && akp_can_prepare_finance($id) && in_array($approval['approval_status'], ['draft', 'rejected'], true) && !$closed): ?>
                     <form method="post" class="border rounded p-3 mb-3 bg-light" id="projectFundingForm">
                         <input type="hidden" name="action" value="add_funding">
                         <?php echo csrf_field(); ?>
@@ -1117,7 +1118,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     </script>
                 <?php endif; ?>
                 
-                <?php if ($draftBudgetId && akp_can_edit_section('finance', $id) && !$closed): ?>
+                <?php if ($draftBudgetId && akp_can_prepare_finance($id) && in_array($approval['approval_status'], ['draft', 'rejected'], true) && !$closed): ?>
                     <form method="post" class="border rounded p-2 mt-3">
                         <input type="hidden" name="action" value="add_budget_line">
                         <input type="hidden" name="budget_id" value="<?php echo $draftBudgetId; ?>">
@@ -1143,7 +1144,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                                     <td><?php echo number_format((float)$budget['line_total'], 2) . ' ' . e($budget['currency_code']); ?></td>
                                     <td><span class="badge <?php echo $budget['status'] === 'approved' ? 'bg-success' : ($budget['status'] === 'superseded' ? 'bg-secondary' : 'bg-warning text-dark'); ?>"><?php echo e($budget['status']); ?></span></td>
                                     <td>
-                                        <?php if (akp_can_edit_section('finance', $id) && !$closed && $budget['status'] === 'draft'): ?>
+                                        <?php if (akp_can_prepare_finance($id) && in_array($approval['approval_status'], ['draft', 'rejected'], true) && !$closed && $budget['status'] === 'draft'): ?>
                                             <form method="post" class="d-inline">
                                                 <?php echo csrf_field(); ?>
                                                 <input type="hidden" name="action" value="approve_budget">
@@ -1166,27 +1167,10 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     <div class="card-header bg-success text-white"><i class="fas fa-money-bill-transfer me-2"></i>تخصيص التمويل</div>
                     <div class="card-body">
                 <?php if ($role === 'financial_manager' && $approval['approval_status'] === 'submitted' && !$closed): ?>
-                    <form method="post" class="border rounded p-3 mb-3 bg-light">
-                        <input type="hidden" name="action" value="add_funding">
-                        <?php echo csrf_field(); ?>
-                        <div class="row g-2">
-                            <div class="col-md-6">
-                                <label class="form-label small">حساب التمويل</label>
-                                <select name="source_account_id" class="form-select form-select-sm" required>
-                                    <option value="">اختر الحساب الذي سيموّل المشروع</option>
-                                    <?php foreach (dbFetchAll("SELECT id, code, name_ar FROM accounts WHERE is_active = 1 AND code IN ('1100','1200','1300') ORDER BY code") as $account): ?>
-                                        <option value="<?php echo (int)$account['id']; ?>"><?php echo e($account['code'] . ' · ' . $account['name_ar']); ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                            <div class="col-md-3"><input type="number" step="0.01" min="0.01" name="funding_amount" class="form-control form-control-sm" placeholder="المبلغ" required></div>
-                            <div class="col-md-3"><input type="date" name="allocation_date" class="form-control form-control-sm" value="<?php echo date('Y-m-d'); ?>"></div>
-                            <div class="col-md-6"><input name="funding_reference" class="form-control form-control-sm" placeholder="المرجع"></div>
-                            <div class="col-md-6"><input name="funding_description" class="form-control form-control-sm" placeholder="الوصف"></div>
-                            <div class="col-12 small text-muted">يمكن توزيع التمويل على أكثر من حساب. يجب أن يساوي إجمالي التخصيصات الميزانية المعتمدة قبل الاعتماد المالي.</div>
-                            <div class="col-12"><button class="btn btn-sm btn-primary">حفظ تخصيص التمويل</button></div>
-                        </div>
-                    </form>
+                    <div class="alert alert-info small mb-3">
+                        <i class="fas fa-eye me-1"></i>
+                        تم إعداد تخصيصات التمويل قبل الإرسال. دور المدير المالي هنا هو المراجعة المالية والاعتماد أو الرفض، دون تعديل بيانات التمويل.
+                    </div>
                 <?php endif; ?>
 
                 <div class="table-responsive">
