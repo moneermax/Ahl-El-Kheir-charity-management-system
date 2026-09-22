@@ -1120,20 +1120,11 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     });
                     </script>
                 <?php endif; ?>
-                
-                <?php if ($draftBudgetId && akp_can_prepare_finance($id) && in_array($approval['approval_status'], ['draft', 'rejected'], true) && !$closed): ?>
-                    <form method="post" class="project-form-panel mt-3">
-                        <input type="hidden" name="action" value="add_budget_line">
-                        <input type="hidden" name="budget_id" value="<?php echo $draftBudgetId; ?>">
-                        <?php echo csrf_field(); ?>
-                        <div class="row g-2">
-                            <div class="col-md-3"><input name="line_category" class="form-control form-control-sm" placeholder="فئة البند" required></div>
-                            <div class="col-md-5"><input name="line_description" class="form-control form-control-sm" placeholder="وصف البند" required></div>
-                            <div class="col-md-2"><input type="number" step="0.01" min="0.01" name="estimated_amount" class="form-control form-control-sm" placeholder="المبلغ" required></div>
-                            <div class="col-md-2"><button class="btn btn-sm btn-outline-primary w-100">إضافة بند</button></div>
-                        </div>
-                    </form>
-                <?php endif; ?>
+
+                <div class="project-module-note mt-3 mb-3">
+                    <i class="fas fa-info-circle me-1"></i>
+                    إعداد وتعديل بنود الميزانية يتم من خلال شاشة تعديل المشروع أثناء مرحلة الإعداد. بعد اعتماد نسخة الميزانية، تظهر هنا للعرض والمراجعة فقط. الاعتماد المالي للمشروع من اختصاص المدير المالي.
+                </div>
 
                 <div class="table-responsive mt-3">
                     <table class="table table-sm">
@@ -1152,7 +1143,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                                                 <?php echo csrf_field(); ?>
                                                 <input type="hidden" name="action" value="approve_budget">
                                                 <input type="hidden" name="budget_id" value="<?php echo (int)$budget['id']; ?>">
-                                                <button class="btn btn-sm btn-outline-success">اعتماد</button>
+                                                <button class="btn btn-sm btn-outline-success" title="اعتماد نسخة الميزانية التحضيرية">اعتماد نسخة الميزانية</button>
                                             </form>
                                         <?php endif; ?>
                                     </td>
