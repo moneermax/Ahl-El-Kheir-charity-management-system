@@ -1709,6 +1709,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                         <div><strong><?php echo e($h['old_status']); ?></strong> → <strong><?php echo e($h['new_status']); ?></strong></div>
                         <div class="text-muted"><?php echo e($h['full_name'] ?? 'نظام'); ?> · <?php echo e($h['created_at']); ?></div>
                         <?php if ($h['reason']): ?><div class="fst-italic">"<?php echo e($h['reason']); ?>"</div><?php endif; ?>
+                    </div>
                 <?php endforeach; ?>
                 <?php if (!$history): ?><div class="text-muted small">لا يوجد سجل تغييرات.</div><?php endif; ?>
             </div>
