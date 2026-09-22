@@ -1032,7 +1032,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 <div class="card border-primary mb-4">
                     <div class="card-header bg-primary text-white"><i class="fas fa-file-invoice-dollar me-2"></i>الميزانية</div>
                     <div class="card-body">
-                <?php if (!$approvedBudgetId && akp_can_prepare_finance($id) && in_array($approval['approval_status'], ['draft', 'rejected'], true) && !$closed): ?>
+                <?php if ($approvedBudgetId && akp_can_manage_funding($role, (string)$approval['approval_status']) && !$closed): ?>
                     <form method="post" class="border rounded p-3 mb-3 bg-light" id="projectFundingForm">
                         <input type="hidden" name="action" value="add_funding">
                         <?php echo csrf_field(); ?>
