@@ -1366,6 +1366,18 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 
             <style>
                 .project-form-section { scroll-margin-top: 1rem; }
+                .project-category-select-wrap { position: relative; }
+                .project-category-select-wrap .project-category-select { padding-inline-start: 2.5rem; font-weight: 600; }
+                .project-category-select-wrap .project-category-select-icon {
+                    position: absolute;
+                    inset-inline-start: .85rem;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    pointer-events: none;
+                    color: var(--bs-primary);
+                    z-index: 2;
+                }
+                .budget-dependent.is-locked { opacity: .62; }
             </style>
 
             <div class="d-flex flex-column gap-3">
@@ -1591,9 +1603,9 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                         <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
                             <div>
                                 <div class="fw-bold">قالب ميزانية استرشادي</div>
-                                <div class="project-help">القالب يضيف أوصاف البنود فقط؛ الأسعار الفعلية يجب أن يدخلها المستخدم وفق بيانات المشروع.</div>
+                                <div class="project-help">يستخدم التصنيف الاسترشادي المحدد أعلاه لاختيار بنود مقترحة. القالب لا يضع أسعاراً تلقائياً؛ الأسعار الفعلية يجب أن يدخلها المستخدم.</div>
                             </div>
-                            <button type="button" class="btn btn-sm btn-outline-success" onclick="loadProjectBudgetTemplate()">
+                            <button type="button" id="load-budget-template-button" class="btn btn-sm btn-outline-success" onclick="loadProjectBudgetTemplate()" disabled>
                                 <i class="fas fa-table-list me-1"></i> تحميل القالب
                             </button>
                         </div>
@@ -1607,13 +1619,21 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     <div class="row g-3 align-items-end">
                         <div class="col-lg-5 project-field project-field-inline">
                             <label class="form-label">تصنيف استرشادي</label>
-                            <select id="project-category-preset" class="form-select" onchange="updateProjectTypeExperience(true)">
-                                <option value="other">نوع مشروع مخصص</option>
-                                <option value="orphans">كفالة الأيتام</option>
-                                <option value="water">مشاريع المياه</option>
-                                <option value="food">الإغاثة والسلال الغذائية</option>
-                                <option value="economic">التمكين الاقتصادي</option>
-                            </select>
+                            <div class="project-category-select-wrap">
+                                <select id="project-category-preset" class="form-select project-category-select" onchange="updateProjectTypeExperience(true)" aria-label="تصنيف استرشادي">
+                                    <option value="other">أخرى / مشروع مخصص</option>
+                                    <option value="orphans">كفالة الأيتام</option>
+                                    <option value="water">مشاريع المياه</option>
+                                    <option value="food">الإغاثة والسلال الغذائية</option>
+                                    <option value="economic">التمكين الاقتصادي</option>
+                                    <option value="education">التعليم والتدريب</option>
+                                    <option value="health">الصحة والرعاية الطبية</option>
+                                    <option value="housing">الإيواء والتأهيل السكني</option>
+                                    <option value="seasonal">المشاريع الموسمية</option>
+                                </select>
+                                <i class="fas fa-chevron-down project-category-select-icon" aria-hidden="true"></i>
+                            </div>
+                            <div class="project-help">هذا التصنيف استرشادي ويحدد الإرشادات والقالب الديناميكي المقترح فقط. يمكنك استخدام «أخرى / مشروع مخصص» للمشاريع غير المدرجة.</div>
                         </div>
                         <div class="col-lg-7">
                             <div id="project-category-guidance" class="small text-muted">اختر تصنيفاً لاستعراض الحقول والإرشادات المناسبة. لا يتم إنشاء أي أعمدة أو بيانات جديدة في قاعدة البيانات.</div>
@@ -1635,7 +1655,8 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 
                     <div id="budget-validation-message" class="alert alert-info py-2 d-none mb-3"></div>
 
-                    <div id="budget-lines-container">
+                    <div id="budget-lines-lock-wrapper" class="budget-dependent is-locked" aria-disabled="true">
+                        <fieldset id="budget-lines-fieldset" disabled>
                         <div class="budget-line-item row g-2 mb-2 border rounded p-2">
                             <div class="col-md-4 project-field">
                                 <label class="form-label small">فئة البند</label>
@@ -1656,8 +1677,10 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                             </div>
                         </div>
                     </div>
+                        </fieldset>
+                    </div>
 
-                    <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="addBudgetLine()">
+                    <button type="button" id="add-budget-line-button" class="btn btn-sm btn-outline-primary mt-2 budget-dependent" onclick="addBudgetLine()" disabled>
                         <i class="fas fa-plus me-1"></i>إضافة بند آخر
                     </button>
 
@@ -1754,6 +1777,26 @@ const projectBudgetTemplates = {
         ['مواد تشغيل', 'المواد الأولية ومستلزمات البدء', ''],
         ['تدريب', 'التدريب والمتابعة الفنية', '']
     ],
+    education: [
+        ['مستلزمات تعليمية', 'كتب وقرطاسية ومستلزمات تعليمية', ''],
+        ['تدريب', 'تدريب وتعليم المستفيدين', ''],
+        ['تجهيزات', 'تجهيز الفصول أو المرافق التعليمية', '']
+    ],
+    health: [
+        ['أدوية ومستلزمات', 'أدوية ومستلزمات طبية', ''],
+        ['خدمات طبية', 'فحوصات أو علاج أو خدمات صحية', ''],
+        ['تجهيزات', 'أجهزة ومعدات طبية أساسية', '']
+    ],
+    housing: [
+        ['أعمال إنشائية', 'أعمال البناء أو التأهيل الأساسية', ''],
+        ['مواد بناء', 'مواد ومستلزمات البناء والتأهيل', ''],
+        ['أعمال كهرباء/سباكة', 'أعمال وخدمات البنية الأساسية', '']
+    ],
+    seasonal: [
+        ['مواد/مساعدات', 'المواد أو المساعدات الموسمية', ''],
+        ['تعبئة وتجهيز', 'التعبئة والتجهيز والتخزين', ''],
+        ['نقل وتوزيع', 'النقل والتوزيع للمستفيدين', '']
+    ],
     other: [
         ['تنفيذ', 'تكلفة تنفيذ رئيسية', ''],
         ['تشغيل', 'تكاليف تشغيلية مرتبطة بالمشروع', ''],
@@ -1767,6 +1810,10 @@ function projectCategoryFromType() {
     if (value.includes('مياه') || value.includes('water')) return 'water';
     if (value.includes('غذاء') || value.includes('إغاث') || value.includes('food')) return 'food';
     if (value.includes('اقتصاد') || value.includes('تمكين') || value.includes('economic')) return 'economic';
+    if (value.includes('تعليم') || value.includes('تدريب') || value.includes('education')) return 'education';
+    if (value.includes('صح') || value.includes('طبي') || value.includes('health') || value.includes('medical')) return 'health';
+    if (value.includes('إيواء') || value.includes('سكن') || value.includes('تأهيل سكن') || value.includes('housing')) return 'housing';
+    if (value.includes('موسم') || value.includes('رمضان') || value.includes('أضحية') || value.includes('seasonal')) return 'seasonal';
     return 'other';
 }
 
@@ -1775,7 +1822,16 @@ function updateProjectTypeExperience(fromPreset = false) {
     const type = document.getElementById('project_type');
     const category = fromPreset ? (preset?.value || 'other') : projectCategoryFromType();
     if (fromPreset && preset && type && category !== 'other') {
-        const labels = {orphans:'كفالة الأيتام',water:'مشاريع المياه',food:'الإغاثة والسلال الغذائية',economic:'التمكين الاقتصادي'};
+        const labels = {
+            orphans: 'كفالة الأيتام',
+            water: 'مشاريع المياه',
+            food: 'الإغاثة والسلال الغذائية',
+            economic: 'التمكين الاقتصادي',
+            education: 'التعليم والتدريب',
+            health: 'الصحة والرعاية الطبية',
+            housing: 'الإيواء والتأهيل السكني',
+            seasonal: 'المشاريع الموسمية'
+        };
         type.value = labels[category] || type.value;
     }
     if (preset) preset.value = category;
@@ -1786,7 +1842,11 @@ function updateProjectTypeExperience(fromPreset = false) {
             water: 'ركّز على المصدر، الأعمال الهندسية، المعدات، الموقع، ودراسة الصلاحية والمتطلبات الحكومية.',
             food: 'ركّز على مكونات السلة، الكميات، التعبئة، التخزين، والنقل والتوزيع.',
             economic: 'ركّز على النشاط الاقتصادي، المعدات والمواد، التدريب، ومعايير اختيار الأسر المستفيدة.',
-            other: 'استخدم الحقول العامة للمشروع، وأضف فقط البيانات الفعلية التي تخص المشروع.'
+            education: 'ركّز على الفئة المستهدفة، المراحل التعليمية، المستلزمات، التدريب، وتجهيز البيئة التعليمية.',
+            health: 'ركّز على نوع الخدمة الصحية، الفئة المستفيدة، الأدوية والمستلزمات، والتجهيزات الطبية.',
+            housing: 'ركّز على حالة السكن، أعمال التأهيل أو البناء، المواد، والخدمات الأساسية.',
+            seasonal: 'ركّز على المناسبة أو الموسم، نوع المساعدة، الكميات، التعبئة، والتوزيع.',
+            other: 'استخدم الحقول العامة للمشروع، وأضف فقط البيانات الفعلية التي تخص المشروع. لا يوجد قالب متخصص لهذا التصنيف.'
         };
         guidance.textContent = messages[category] || messages.other;
     }
@@ -2084,14 +2144,48 @@ function calculateTotalBudget() {
 
 
     /*
-     * No target yet.
+     * Budget must be greater than zero before any budget-dependent
+     * fields/actions become active.
      */
 
-    if (targetCents === null) {
+    const budgetIsActive =
+        targetCents !== null &&
+        targetCents > 0;
+
+    const budgetFieldset =
+        document.getElementById('budget-lines-fieldset');
+
+    const budgetLockWrapper =
+        document.getElementById('budget-lines-lock-wrapper');
+
+    const addBudgetLineButton =
+        document.getElementById('add-budget-line-button');
+
+    const loadTemplateButton =
+        document.getElementById('load-budget-template-button');
+
+    if (budgetFieldset) {
+        budgetFieldset.disabled = !budgetIsActive;
+    }
+
+    if (addBudgetLineButton) {
+        addBudgetLineButton.disabled = !budgetIsActive;
+    }
+
+    if (loadTemplateButton) {
+        loadTemplateButton.disabled = !budgetIsActive;
+    }
+
+    if (budgetLockWrapper) {
+        budgetLockWrapper.classList.toggle('is-locked', !budgetIsActive);
+        budgetLockWrapper.setAttribute('aria-disabled', budgetIsActive ? 'false' : 'true');
+    }
+
+    if (!budgetIsActive) {
 
         if (targetDisplay) {
             targetDisplay.textContent =
-                'غير محدد';
+                targetCents === 0 ? '0.00' : 'غير محدد';
         }
 
         if (differenceDisplay) {
@@ -2104,8 +2198,7 @@ function calculateTotalBudget() {
             message.classList.remove(
                 'd-none',
                 'alert-success',
-                'alert-danger',
-                'alert-warning'
+                'alert-danger'
             );
 
             message.classList.add(
@@ -2113,7 +2206,9 @@ function calculateTotalBudget() {
             );
 
             message.textContent =
-                'أدخل الميزانية التقديرية حتى يتم التحقق من تطابق إجمالي بنود الميزانية.';
+                targetCents === 0
+                    ? 'يجب أن تكون الميزانية التقديرية أكبر من صفر حتى يتم تفعيل قالب وبنود الميزانية.'
+                    : 'أدخل الميزانية التقديرية بقيمة أكبر من صفر حتى يتم تفعيل قالب وبنود الميزانية.';
         }
 
         if (saveButton) {
@@ -2363,6 +2458,7 @@ document
 
             if (
                 targetCents === null ||
+                targetCents <= 0 ||
                 totalCents !== targetCents
             ) {
 
