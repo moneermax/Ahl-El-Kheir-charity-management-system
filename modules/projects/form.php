@@ -1325,7 +1325,23 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 <?php endif; ?>
 
 
-<div class="card fade-in">
+<div class="project-module-page">
+
+<div class="project-page-banner fade-in">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+        <div>
+            <span class="project-code"><i class="fas fa-diagram-project me-1"></i><?php echo $id ? e($project['project_code'] ?? 'PROJECT') : 'PROJECT'; ?></span>
+            <h2><?php echo $id ? 'تعديل بيانات المشروع' : 'إنشاء مشروع جديد'; ?></h2>
+            <p><?php echo $id ? 'تحديث البيانات الأساسية مع الحفاظ على دورة الاعتماد الحالية.' : 'استمارة مشروع ديناميكية منظمة حسب نطاق المشروع والميزانية الأولية.'; ?></p>
+        </div>
+        <div class="text-end small text-white-50">
+            <div><i class="fas fa-coins me-1"></i>العملة: SDG</div>
+            <div><i class="fas fa-shield-halved me-1"></i>التحقق المالي يتم من الخادم</div>
+        </div>
+    </div>
+</div>
+
+<div class="card fade-in project-card">
 
     <div class="card-body">
 
@@ -1345,53 +1361,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 
 
             <style>
-                .project-form-section {
-                    border: 1px solid rgba(0,0,0,.08);
-                    border-radius: .65rem;
-                    padding: 1rem;
-                    background: #fff;
-                }
-                .project-form-section-title {
-                    display: flex;
-                    align-items: center;
-                    gap: .5rem;
-                    margin: 0 0 .9rem;
-                    padding-bottom: .55rem;
-                    border-bottom: 1px solid rgba(0,0,0,.08);
-                    font-size: 1rem;
-                    font-weight: 700;
-                }
-                .project-field .form-label {
-                    margin-bottom: .3rem;
-                    font-size: .88rem;
-                    font-weight: 600;
-                }
-                .project-field .form-control,
-                .project-field .form-select {
-                    min-height: 40px;
-                }
-                .project-field textarea.form-control {
-                    min-height: 78px;
-                    resize: vertical;
-                }
-                .project-code-box {
-                    background: #f8f9fa;
-                    color: #6c757d;
-                    font-weight: 600;
-                }
-                .project-help {
-                    margin-top: .3rem;
-                    font-size: .78rem;
-                    color: #6c757d;
-                }
-                .budget-line-item {
-                    background: #f8f9fa;
-                }
-                @media (max-width: 767.98px) {
-                    .project-form-section {
-                        padding: .8rem;
-                    }
-                }
+                .project-form-section { scroll-margin-top: 1rem; }
             </style>
 
             <div class="d-flex flex-column gap-3">
@@ -1418,7 +1388,14 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 
                         <div class="col-md-4 project-field">
                             <label class="form-label">نوع المشروع</label>
-                            <input type="text" name="project_type" class="form-control" placeholder="مثال: تأهيل مركز مجتمعي" value="<?php echo e($input['project_type']); ?>">
+                            <input type="text" name="project_type" id="project_type" list="project-type-options" class="form-control" placeholder="مثال: تأهيل مركز مجتمعي" value="<?php echo e($input['project_type']); ?>" oninput="updateProjectTypeExperience()">
+                            <datalist id="project-type-options">
+                                <option value="كفالة الأيتام"></option>
+                                <option value="مشاريع المياه"></option>
+                                <option value="الإغاثة والسلال الغذائية"></option>
+                                <option value="التمكين الاقتصادي"></option>
+                            </datalist>
+                            <div class="project-help">يمكنك الكتابة بحرية أو اختيار نوع شائع. الاختيار يغيّر الإرشادات وقالب الميزانية فقط.</div>
                         </div>
 
                         <div class="col-md-4 project-field">
@@ -1467,6 +1444,28 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                         <div class="col-12 project-field">
                             <label class="form-label">الوصف</label>
                             <textarea name="description" class="form-control" rows="3"><?php echo e($input['description']); ?></textarea>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="project-form-section project-template-panel">
+                    <h5 class="project-form-section-title">
+                        <i class="fas fa-wand-magic-sparkles"></i>
+                        المساعد الديناميكي للمشروع
+                    </h5>
+                    <div class="row g-3 align-items-end">
+                        <div class="col-lg-5 project-field">
+                            <label class="form-label">تصنيف استرشادي</label>
+                            <select id="project-category-preset" class="form-select" onchange="updateProjectTypeExperience(true)">
+                                <option value="other">نوع مشروع مخصص</option>
+                                <option value="orphans">كفالة الأيتام</option>
+                                <option value="water">مشاريع المياه</option>
+                                <option value="food">الإغاثة والسلال الغذائية</option>
+                                <option value="economic">التمكين الاقتصادي</option>
+                            </select>
+                        </div>
+                        <div class="col-lg-7">
+                            <div id="project-category-guidance" class="small text-muted">اختر تصنيفاً لاستعراض الحقول والإرشادات المناسبة. لا يتم إنشاء أي أعمدة أو بيانات جديدة في قاعدة البيانات.</div>
                         </div>
                     </div>
                 </section>
@@ -1587,6 +1586,18 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                         العملة ثابتة على الجنيه السوداني (SDG)، ويجب أن يساوي إجمالي بنود الميزانية الميزانية التقديرية تماماً.
                     </p>
 
+                    <div class="project-template-panel mb-3">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                            <div>
+                                <div class="fw-bold">قالب ميزانية استرشادي</div>
+                                <div class="project-help">القالب يضيف أوصاف البنود فقط؛ الأسعار الفعلية يجب أن يدخلها المستخدم وفق بيانات المشروع.</div>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-success" onclick="loadProjectBudgetTemplate()">
+                                <i class="fas fa-table-list me-1"></i> تحميل القالب
+                            </button>
+                        </div>
+                    </div>
+
                     <div class="row g-3 mb-3">
                         <div class="col-md-5 project-field">
                             <label class="form-label">الميزانية التقديرية <span class="text-danger">*</span></label>
@@ -1639,7 +1650,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 
             </div>
 
-            <div class="mt-4">
+            <div class="project-bottom-actions mt-4">
 
                 <button
                     class="btn btn-primary"
@@ -1669,6 +1680,83 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 <?php if (!$id): ?>
 
 <script>
+
+const projectBudgetTemplates = {
+    orphans: [
+        ['مساعدات/كفالات', 'كفالة أو مساعدة للأيتام', ''],
+        ['ملابس/كسوة', 'كسوة أو احتياجات موسمية', ''],
+        ['دعم تعليمي', 'مستلزمات أو دعم تعليمي', '']
+    ],
+    water: [
+        ['أعمال إنشائية', 'حفر وتجهيز مصدر المياه', ''],
+        ['معدات', 'مضخة ومعدات التشغيل', ''],
+        ['تمديدات', 'شبكة الأنابيب والتمديدات', '']
+    ],
+    food: [
+        ['مواد غذائية', 'السلال أو المواد الغذائية الأساسية', ''],
+        ['تعبئة', 'التعبئة والتغليف', ''],
+        ['نقل وتوزيع', 'النقل والتوزيع للمستفيدين', '']
+    ],
+    economic: [
+        ['معدات', 'معدات وأدوات النشاط الاقتصادي', ''],
+        ['مواد تشغيل', 'المواد الأولية ومستلزمات البدء', ''],
+        ['تدريب', 'التدريب والمتابعة الفنية', '']
+    ],
+    other: [
+        ['تنفيذ', 'تكلفة تنفيذ رئيسية', ''],
+        ['تشغيل', 'تكاليف تشغيلية مرتبطة بالمشروع', ''],
+        ['نقل/خدمات', 'نقل أو خدمات مساندة', '']
+    ]
+};
+
+function projectCategoryFromType() {
+    const value = String(document.getElementById('project_type')?.value || '').trim().toLowerCase();
+    if (value.includes('كفالة') || value.includes('أيتام') || value.includes('orphan')) return 'orphans';
+    if (value.includes('مياه') || value.includes('water')) return 'water';
+    if (value.includes('غذاء') || value.includes('إغاث') || value.includes('food')) return 'food';
+    if (value.includes('اقتصاد') || value.includes('تمكين') || value.includes('economic')) return 'economic';
+    return 'other';
+}
+
+function updateProjectTypeExperience(fromPreset = false) {
+    const preset = document.getElementById('project-category-preset');
+    const type = document.getElementById('project_type');
+    const category = fromPreset ? (preset?.value || 'other') : projectCategoryFromType();
+    if (fromPreset && preset && type && category !== 'other') {
+        const labels = {orphans:'كفالة الأيتام',water:'مشاريع المياه',food:'الإغاثة والسلال الغذائية',economic:'التمكين الاقتصادي'};
+        type.value = labels[category] || type.value;
+    }
+    if (preset) preset.value = category;
+    const guidance = document.getElementById('project-category-guidance');
+    if (guidance) {
+        const messages = {
+            orphans: 'ركّز على الفئة العمرية، نوع الكفالة/الخدمة، وعدد المستفيدين والدعم التعليمي أو الموسمي.',
+            water: 'ركّز على المصدر، الأعمال الهندسية، المعدات، الموقع، ودراسة الصلاحية والمتطلبات الحكومية.',
+            food: 'ركّز على مكونات السلة، الكميات، التعبئة، التخزين، والنقل والتوزيع.',
+            economic: 'ركّز على النشاط الاقتصادي، المعدات والمواد، التدريب، ومعايير اختيار الأسر المستفيدة.',
+            other: 'استخدم الحقول العامة للمشروع، وأضف فقط البيانات الفعلية التي تخص المشروع.'
+        };
+        guidance.textContent = messages[category] || messages.other;
+    }
+}
+
+function loadProjectBudgetTemplate() {
+    const category = document.getElementById('project-category-preset')?.value || projectCategoryFromType();
+    const template = projectBudgetTemplates[category] || projectBudgetTemplates.other;
+    const container = document.getElementById('budget-lines-container');
+    if (!container) return;
+    container.innerHTML = '';
+    budgetLineCount = 0;
+    template.forEach((item) => {
+        addBudgetLine();
+        const line = container.lastElementChild;
+        line.querySelector('[name$="[category]"]').value = item[0];
+        line.querySelector('[name$="[description]"]').value = item[1];
+        line.querySelector('[name$="[amount]"]').value = item[2];
+    });
+    updateRemoveButtons();
+    calculateTotalBudget();
+}
 
 let budgetLineCount = 1;
 
@@ -2240,5 +2328,7 @@ document
 
 <?php endif; ?>
 
+
+</div>
 
 <?php include dirname(__DIR__, 2) . '/includes/footer.php'; ?>
