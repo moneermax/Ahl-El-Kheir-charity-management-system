@@ -1012,8 +1012,8 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     <div class="alert alert-dark"><strong>المشروع مغلق.</strong> لا يمكن تعديل أي قسم أو إضافة مستندات أو مصروفات. إعادة الفتح متاحة للمدير العام فقط.</div>
 <?php endif; ?>
 
-<div class="row g-4">
-    <div class="col-lg-8">
+<div class="row g-4 project-view-sections-grid">
+    <div class="col-lg-8 project-view-main-column">
         <div class="card mb-4 fade-in">
             <div class="card-header"><i class="fas fa-circle-info me-2"></i>ملخص المشروع</div>
             <div class="card-body">
@@ -1559,7 +1559,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             <i class="fas fa-lock me-2"></i>تظهر المصروفات والوثائق والعمالة والتشغيل والتقدم بعد اعتماد المشروع نهائياً من المدير العام.
         </div>
 <?php endif; ?>
-    <div class="col-lg-4">
+    <div class="col-lg-4 project-view-side-column">
         <div class="card mb-4 fade-in">
             <div class="card-header"><i class="fas fa-user-shield me-2"></i>فريق المشروع وصلاحيات الأقسام</div>
             <div class="card-body">
