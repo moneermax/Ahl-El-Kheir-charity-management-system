@@ -943,3 +943,20 @@ The Organization Projects module has entered a dedicated deep audit. The first s
 - Added server-side validation for project team sections, labor enumerations, progress range, beneficiary inputs, document rejection reason, and a 10 MB project-document limit.
 - Runtime certification remains pending; project-code uniqueness/concurrency still requires verification against the actual deployed schema.
 - Remediation commits: `251c7c4`, `5bb36f8`, `af59a1b`.
+
+## 2026-09-22 — Projects Module Workflow / Role Audit accepted as working plan
+
+The Projects Module audit has been expanded from isolated remediation items into a **complete workflow and role audit**.
+
+The authoritative working boundaries are now:
+- **Project Supervisor:** operational/project data entry and execution follow-up.
+- **Projects Manager:** operational follow-up, workflow management, readiness, and submission to financial review.
+- **FM:** financial review/control; approve or reject financially; operational sections must be read-only or concise quick-report summaries from the FM point of view. After final approval, FM may perform authorized project payment/disbursement execution and print payment receipts where required, especially cash payments.
+- **GM/VGM:** final approval according to existing authority.
+- **Accountant:** accounting execution/posting where applicable.
+
+Every Projects page/action must be classified as pre-approval preparation, approval/financial review, post-approval execution, or management/reporting. The audit must verify server-side authorization, lifecycle guards, frontend visibility/editability, notifications, accounting integration, payment/disbursement behavior, and auditability together.
+
+A key accounting question is explicitly open for verification: whether the final-approval project journal represents an actual payment/expenditure event or a funding/allocation/reservation event. These meanings must not be conflated, and later expense/payment posting must not duplicate the same economic event.
+
+**Current status:** working plan accepted; next step is a repository-wide static Projects workflow/role audit before further implementation. Do not make speculative authorization changes before the audit produces the role matrix and section-visibility matrix.
