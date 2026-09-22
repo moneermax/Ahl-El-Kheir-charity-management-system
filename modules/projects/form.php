@@ -119,7 +119,6 @@ $input = [
     'sustainability_plan' => '',
     'risk_mitigation' => '',
     'government_requirements' => '',
-    'government_fees' => '',
     'contact_person' => '',
     'contact_phone' => '',
     'contact_email' => '',
@@ -134,6 +133,11 @@ $input = [
     'total_beneficiaries' => (string)($project['total_beneficiaries'] ?? ''),
     'supervisor_user_id' => '',
 ];
+
+$governmentRequirementRows = [];
+$partnerRows = [];
+$procurementRows = [];
+$contactRows = [];
 
 
 /*
@@ -171,6 +175,11 @@ if ($id) {
             }
         }
     }
+
+    $governmentRequirementRows = dbFetchAll('SELECT requirement_text, fee_amount FROM project_government_requirements WHERE project_id = ? ORDER BY id ASC', [$id]);
+    $partnerRows = dbFetchAll('SELECT partner_name, role_description FROM project_partners WHERE project_id = ? ORDER BY id ASC', [$id]);
+    $procurementRows = dbFetchAll('SELECT method_name, notes FROM project_procurement_methods WHERE project_id = ? ORDER BY id ASC', [$id]);
+    $contactRows = dbFetchAll('SELECT contact_name, role_description, phone, email, notes FROM project_contacts WHERE project_id = ? ORDER BY id ASC', [$id]);
 }
 
 
@@ -249,31 +258,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
          */
         $input['currency_code'] = 'SDG';
 
-        /*
-         * Government fees.
-         */
-        $governmentFeesCents = null;
-        if ($input['government_fees'] !== '') {
-            $governmentFeesCents = akp_money_to_cents($input['government_fees']);
-            if ($governmentFeesCents === false) {
-                $errors[] = 'الرسوم الحكومية يجب أن تكون رقماً صحيحاً أو رقماً يحتوي على منزلتين عشريتين كحد أقصى.';
-            } elseif ($governmentFeesCents < 0) {
-                $errors[] = 'الرسوم الحكومية لا يمكن أن تكون سالبة.';
-            }
+        $governmentRequirementRows = [];
+        foreach ((array)($_POST['government_requirements'] ?? []) as $index => $row) {
+            if (!is_array($row)) continue;
+            $requirement = trim((string)($row['requirement'] ?? ''));
+            $feeRaw = trim((string)($row['fee'] ?? ''));
+            if ($requirement === '' && $feeRaw === '') continue;
+            if ($requirement === '') { $errors[] = 'المتطلب الحكومي رقم ' . ((int)$index + 1) . ': اسم المتطلب مطلوب.'; continue; }
+            $feeCents = $feeRaw === '' ? 0 : akp_money_to_cents($feeRaw);
+            if ($feeCents === false || $feeCents < 0) { $errors[] = 'المتطلب الحكومي رقم ' . ((int)$index + 1) . ': الرسوم الحكومية غير صالحة.'; continue; }
+            $governmentRequirementRows[] = ['requirement_text' => $requirement, 'fee_amount' => $feeCents / 100];
         }
 
+        $partnerRows = [];
+        foreach ((array)($_POST['partners'] ?? []) as $index => $row) {
+            if (!is_array($row)) continue;
+            $name = trim((string)($row['name'] ?? '')); $role = trim((string)($row['role'] ?? ''));
+            if ($name === '' && $role === '') continue;
+            if ($name === '') { $errors[] = 'الجهة المنفذة أو الشريك رقم ' . ((int)$index + 1) . ': اسم الجهة مطلوب.'; continue; }
+            $partnerRows[] = ['partner_name' => $name, 'role_description' => $role];
+        }
 
-        /*
-         * Email.
-         */
-        if (
-            $input['contact_email'] !== '' &&
-            !filter_var(
-                $input['contact_email'],
-                FILTER_VALIDATE_EMAIL
-            )
-        ) {
-            $errors[] = 'البريد الإلكتروني غير صالح.';
+        $procurementRows = [];
+        foreach ((array)($_POST['procurement_methods'] ?? []) as $index => $row) {
+            if (!is_array($row)) continue;
+            $method = trim((string)($row['method'] ?? '')); $notes = trim((string)($row['notes'] ?? ''));
+            if ($method === '' && $notes === '') continue;
+            if ($method === '') { $errors[] = 'طريقة الشراء أو التوريد رقم ' . ((int)$index + 1) . ': الطريقة مطلوبة.'; continue; }
+            $procurementRows[] = ['method_name' => $method, 'notes' => $notes];
+        }
+
+        $contactRows = [];
+        foreach ((array)($_POST['contacts'] ?? []) as $index => $row) {
+            if (!is_array($row)) continue;
+            $name = trim((string)($row['name'] ?? '')); $role = trim((string)($row['role'] ?? ''));
+            $phone = trim((string)($row['phone'] ?? '')); $email = trim((string)($row['email'] ?? '')); $notes = trim((string)($row['notes'] ?? ''));
+            if ($name === '' && $role === '' && $phone === '' && $email === '' && $notes === '') continue;
+            if ($name === '') { $errors[] = 'جهة الاتصال رقم ' . ((int)$index + 1) . ': الاسم مطلوب.'; continue; }
+            if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) { $errors[] = 'جهة الاتصال رقم ' . ((int)$index + 1) . ': البريد الإلكتروني غير صالح.'; continue; }
+            $contactRows[] = ['contact_name' => $name, 'role_description' => $role, 'phone' => $phone, 'email' => $email, 'notes' => $notes];
         }
 
 
@@ -578,11 +601,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ? ($targetCents / 100)
                     : null;
 
-            $governmentFees =
-                $governmentFeesCents !== null
-                    ? ($governmentFeesCents / 100)
-                    : null;
-
             $beneficiaries =
                 $input['total_beneficiaries'] !== ''
                     ? (int)$input['total_beneficiaries']
@@ -873,17 +891,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ? $input['target_beneficiary_description']
                     : null,
 
-                $input['implementing_partner'] !== ''
-                    ? $input['implementing_partner']
-                    : null,
+                implode("\n", array_map(static fn($row) => $row['partner_name'], $partnerRows)) ?: null,
 
                 $input['donor_restrictions'] !== ''
                     ? $input['donor_restrictions']
                     : null,
 
-                $input['procurement_method'] !== ''
-                    ? $input['procurement_method']
-                    : null,
+                implode("\n", array_map(static fn($row) => $row['method_name'], $procurementRows)) ?: null,
 
                 $input['sustainability_plan'] !== ''
                     ? $input['sustainability_plan']
@@ -893,23 +907,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ? $input['risk_mitigation']
                     : null,
 
-                $input['government_requirements'] !== ''
-                    ? $input['government_requirements']
-                    : null,
+                implode("\n", array_map(static function ($row) {
+                    $fee = (float)($row['fee_amount'] ?? 0);
+                    return $fee > 0 ? $row['requirement_text'] . ' — ' . number_format($fee, 2, '.', '') . ' SDG' : $row['requirement_text'];
+                }, $governmentRequirementRows)) ?: null,
 
-                $governmentFees,
+                ($contactRows[0]['contact_name'] ?? '') !== '' ? $contactRows[0]['contact_name'] : null,
 
-                $input['contact_person'] !== ''
-                    ? $input['contact_person']
-                    : null,
+                ($contactRows[0]['phone'] ?? '') !== '' ? $contactRows[0]['phone'] : null,
 
-                $input['contact_phone'] !== ''
-                    ? $input['contact_phone']
-                    : null,
-
-                $input['contact_email'] !== ''
-                    ? $input['contact_email']
-                    : null,
+                ($contactRows[0]['email'] ?? '') !== '' ? $contactRows[0]['email'] : null,
 
                 $input['notes'] !== ''
                     ? $input['notes']
@@ -934,7 +941,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     sustainability_plan,
                     risk_mitigation,
                     government_requirements,
-                    government_fees,
                     contact_person,
                     contact_phone,
                     contact_email,
@@ -942,7 +948,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     updated_by,
                     project_id
                 )
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
 
                 ON DUPLICATE KEY UPDATE
 
@@ -956,7 +962,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     sustainability_plan = VALUES(sustainability_plan),
                     risk_mitigation = VALUES(risk_mitigation),
                     government_requirements = VALUES(government_requirements),
-                    government_fees = VALUES(government_fees),
                     contact_person = VALUES(contact_person),
                     contact_phone = VALUES(contact_phone),
                     contact_email = VALUES(contact_email),
@@ -964,6 +969,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     updated_by = VALUES(updated_by)",
                 $detailValues
             );
+
+            if ($id) {
+                dbExecute('DELETE FROM project_government_requirements WHERE project_id = ?', [$projectId]);
+                dbExecute('DELETE FROM project_partners WHERE project_id = ?', [$projectId]);
+                dbExecute('DELETE FROM project_procurement_methods WHERE project_id = ?', [$projectId]);
+                dbExecute('DELETE FROM project_contacts WHERE project_id = ?', [$projectId]);
+            }
+            foreach ($governmentRequirementRows as $row) {
+                dbExecute('INSERT INTO project_government_requirements (project_id, requirement_text, fee_amount, created_by) VALUES (?,?,?,?)', [$projectId, $row['requirement_text'], $row['fee_amount'], akp_user_id()]);
+            }
+            foreach ($partnerRows as $row) {
+                dbExecute('INSERT INTO project_partners (project_id, partner_name, role_description, created_by) VALUES (?,?,?,?)', [$projectId, $row['partner_name'], $row['role_description'] !== '' ? $row['role_description'] : null, akp_user_id()]);
+            }
+            foreach ($procurementRows as $row) {
+                dbExecute('INSERT INTO project_procurement_methods (project_id, method_name, notes, created_by) VALUES (?,?,?,?)', [$projectId, $row['method_name'], $row['notes'] !== '' ? $row['notes'] : null, akp_user_id()]);
+            }
+            foreach ($contactRows as $row) {
+                dbExecute('INSERT INTO project_contacts (project_id, contact_name, role_description, phone, email, notes, created_by) VALUES (?,?,?,?,?,?,?)', [$projectId, $row['contact_name'], $row['role_description'] !== '' ? $row['role_description'] : null, $row['phone'] !== '' ? $row['phone'] : null, $row['email'] !== '' ? $row['email'] : null, $row['notes'] !== '' ? $row['notes'] : null, akp_user_id()]);
+            }
 
 
             /*
