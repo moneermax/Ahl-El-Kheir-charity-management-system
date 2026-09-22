@@ -1552,13 +1552,13 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 <?php endforeach; ?>
             </div>
         </div>
-    </div>
-
 <?php else: ?>
         <div class="alert alert-light border mb-4 small text-muted">
             <i class="fas fa-lock me-2"></i>تظهر المصروفات والوثائق والعمالة والتشغيل والتقدم بعد اعتماد المشروع نهائياً من المدير العام.
         </div>
 <?php endif; ?>
+    </div>
+
     <div class="col-lg-4 project-view-side-column">
         <div class="card mb-4 fade-in">
             <div class="card-header"><i class="fas fa-user-shield me-2"></i>فريق المشروع وصلاحيات الأقسام</div>
