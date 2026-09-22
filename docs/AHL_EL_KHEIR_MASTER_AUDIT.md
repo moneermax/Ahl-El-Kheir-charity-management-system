@@ -1289,3 +1289,21 @@ Runtime verification is pending; Project 6 is the controlled test case for FM ap
 ## 2026-09-22 — Projects workflow audit checkpoint
 
 Projects remediation Batch 1 is now implemented: pre-approval budget/budget-line preparation and funding allocation preparation are server-authorized to the Projects Manager, while the FM pre-approval funding UI is read-only and reserved for financial review/approve/reject. Runtime verification remains pending. See `docs/PROJECTS_MODULE_AUDIT_AND_REMEDIATION_PLAN.md` for the detailed change and remaining accounting/payment audit items.
+
+
+## 2026-09-22 — Projects budget-view UI clarification
+
+The project detail **الميزانية** section was reviewed against the current workflow. The inline budget-line entry controls were duplicating preparation/editing functionality already available through the project editing flow, while the short **اعتماد** label could be mistaken for FM's financial project approval.
+
+The UI was corrected without changing business logic:
+- removed the duplicate inline budget-line add form from the detail page;
+- renamed the budget-version action to **اعتماد نسخة الميزانية**;
+- added an explanatory note separating budget-version preparation/approval from FM's **اعتماد مالي** action.
+
+The underlying distinction remains:
+- **اعتماد نسخة الميزانية** = budget-version state change during preparation;
+- **اعتماد مالي** = FM's project-level financial approval;
+- **اعتماد نهائي** = final executive approval.
+
+Implementation commit: `85dfa3f65725ade865be80824a7d340cdcbcf1db`.
+Runtime verification remains pending.
