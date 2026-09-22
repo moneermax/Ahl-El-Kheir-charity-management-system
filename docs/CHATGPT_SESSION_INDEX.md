@@ -863,3 +863,9 @@ Authoritative clarification from the user: funding entry/allocation is **not** a
 ### 2026-09-22 — Projects budget-view UI cleanup
 
 The project detail budget section received a narrow UI clarification: duplicate inline budget-line entry fields were removed, and the budget-version approval action was renamed to **اعتماد نسخة الميزانية** so it is clearly distinct from FM's **اعتماد مالي** project approval. No workflow/database authorization behavior was changed in this UI-only fix. Commit: `85dfa3f65725ade865be80824a7d340cdcbcf1db`. Runtime verification pending.
+
+### 2026-09-22 — Projects budget-view follow-up correction
+
+After workflow review, the project detail **الميزانية** section was simplified further: the explanatory note and the separate **اعتماد نسخة الميزانية** button were removed, and the obsolete `approve_budget` POST handler was removed from `modules/projects/view.php`. The detail page no longer exposes a second budget approval action alongside FM's project financial approval. No database schema or accounting logic was changed.
+
+Implementation commit: `6f02a8ed9e72a316c470e886b3c7658c83a24593`. Runtime verification pending.
