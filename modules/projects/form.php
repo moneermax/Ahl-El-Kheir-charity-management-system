@@ -1377,6 +1377,33 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     color: var(--bs-primary);
                     z-index: 2;
                 }
+
+                /* Basic project fields: stable top alignment and full use of each Bootstrap column. */
+                .project-basic-fields .project-field {
+                    display: block;
+                }
+                .project-basic-fields .project-field > .form-label {
+                    display: block;
+                    margin-bottom: .4rem;
+                }
+                .project-basic-fields .project-field > .form-control,
+                .project-basic-fields .project-field > .form-select,
+                .project-basic-fields .project-field > .project-code-box {
+                    width: 100%;
+                    min-width: 0;
+                    max-width: none;
+                }
+                .project-basic-fields .project-name-field .form-control {
+                    width: 100%;
+                }
+                .project-basic-fields .project-type-select {
+                    min-height: 46px;
+                    padding-top: .55rem;
+                    padding-bottom: .55rem;
+                    font-weight: 600;
+                    cursor: pointer;
+                }
+
                 .budget-dependent.is-locked { opacity: .62; }
             </style>
 
@@ -1388,8 +1415,8 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                         البيانات الأساسية
                     </h5>
 
-                    <div class="row g-3">
-                        <div class="col-md-4 project-field project-field-inline">
+                    <div class="row g-3 project-basic-fields">
+                        <div class="col-md-4 project-field">
                             <label class="form-label">كود المشروع</label>
                             <div class="form-control project-code-box" aria-readonly="true">
                                 <?php echo $id ? e($project['project_code'] ?? 'سيُنشأ تلقائياً') : 'سيُنشأ تلقائياً عند إنشاء المشروع'; ?>
@@ -1397,54 +1424,71 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                             <div class="project-help">يتم إنشاء الكود تلقائياً ولا يمكن تعديله.</div>
                         </div>
 
-                        <div class="col-md-8 project-field project-field-inline">
+                        <div class="col-md-8 project-field project-name-field">
                             <label class="form-label">اسم المشروع <span class="text-danger">*</span></label>
                             <input type="text" name="name" class="form-control" required value="<?php echo e($input['name']); ?>">
                         </div>
 
-                        <div class="col-md-4 project-field project-field-inline">
-                            <label class="form-label">نوع المشروع</label>
-                            <input type="text" name="project_type" id="project_type" list="project-type-options" class="form-control" placeholder="مثال: تأهيل مركز مجتمعي" value="<?php echo e($input['project_type']); ?>" oninput="updateProjectTypeExperience()">
-                            <datalist id="project-type-options">
-                                <option value="كفالة الأيتام"></option>
-                                <option value="مشاريع المياه"></option>
-                                <option value="الإغاثة والسلال الغذائية"></option>
-                                <option value="التمكين الاقتصادي"></option>
-                            </datalist>
-                            <div class="project-help">يمكنك الكتابة بحرية أو اختيار نوع شائع. الاختيار يغيّر الإرشادات وقالب الميزانية فقط.</div>
+                        <div class="col-md-4 project-field">
+                            <label class="form-label" for="project_type">نوع المشروع</label>
+                            <select name="project_type" id="project_type" class="form-select project-type-select" onchange="updateProjectTypeExperience()">
+                                <option value="">اختر نوع المشروع</option>
+                                <?php
+                                $projectTypeOptions = [
+                                    'كفالة الأيتام',
+                                    'مشاريع المياه',
+                                    'الإغاثة والسلال الغذائية',
+                                    'التمكين الاقتصادي',
+                                    'التعليم والتدريب',
+                                    'الصحة والرعاية الطبية',
+                                    'الإيواء والتأهيل السكني',
+                                    'المشاريع الموسمية',
+                                    'أخرى / مشروع مخصص',
+                                ];
+                                if ($input['project_type'] !== '' && !in_array($input['project_type'], $projectTypeOptions, true)):
+                                ?>
+                                    <option value="<?php echo e($input['project_type']); ?>" selected><?php echo e($input['project_type']); ?></option>
+                                <?php endif; ?>
+                                <?php foreach ($projectTypeOptions as $projectTypeOption): ?>
+                                    <option value="<?php echo e($projectTypeOption); ?>" <?php echo $input['project_type'] === $projectTypeOption ? 'selected' : ''; ?>>
+                                        <?php echo e($projectTypeOption); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                            <div class="project-help">اختر نوع المشروع من القائمة. الاختيار يغيّر الإرشادات وقالب الميزانية فقط.</div>
                         </div>
 
-                        <div class="col-md-4 project-field project-field-inline">
+                        <div class="col-md-4 project-field">
                             <label class="form-label">تاريخ البداية</label>
                             <input type="date" name="start_date" class="form-control" value="<?php echo e($input['start_date']); ?>">
                         </div>
 
-                        <div class="col-md-4 project-field project-field-inline">
+                        <div class="col-md-4 project-field">
                             <label class="form-label">تاريخ النهاية</label>
                             <input type="date" name="end_date" class="form-control" value="<?php echo e($input['end_date']); ?>">
                         </div>
 
-                        <div class="col-md-6 project-field project-field-inline">
+                        <div class="col-md-6 project-field">
                             <label class="form-label">الموقع</label>
                             <input type="text" name="location" class="form-control" value="<?php echo e($input['location']); ?>">
                         </div>
 
-                        <div class="col-md-3 project-field project-field-inline">
+                        <div class="col-md-3 project-field">
                             <label class="form-label">المدينة</label>
                             <input type="text" name="city" class="form-control" value="<?php echo e($input['city']); ?>">
                         </div>
 
-                        <div class="col-md-3 project-field project-field-inline">
+                        <div class="col-md-3 project-field">
                             <label class="form-label">المنطقة</label>
                             <input type="text" name="district" class="form-control" value="<?php echo e($input['district']); ?>">
                         </div>
 
-                        <div class="col-md-4 project-field project-field-inline">
+                        <div class="col-md-4 project-field">
                             <label class="form-label">عدد المستفيدين</label>
                             <input type="number" min="0" name="total_beneficiaries" class="form-control" value="<?php echo e($input['total_beneficiaries']); ?>">
                         </div>
 
-                        <div class="col-md-8 project-field project-field-inline">
+                        <div class="col-md-8 project-field">
                             <label class="form-label">مشرف المشروع الأساسي<?php echo !$id ? ' <span class="text-danger">*</span>' : ''; ?></label>
                             <select name="supervisor_user_id" class="form-select" <?php echo !$id ? 'required' : ''; ?>>
                                 <option value="">اختر مشرف المشروع</option>
