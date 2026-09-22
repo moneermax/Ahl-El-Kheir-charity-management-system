@@ -413,3 +413,17 @@ Runtime visual verification is **pending**.
 - Projects Manager follows up and manages workflow but must see these sections as read-only and must not add or edit their operational records.
 - The implementation now enforces this boundary server-side for the `operations` and `documents` sections; the Project Manager labor-comment action is also no longer available.
 - This clarification does not assign ownership of pre-approval funding entry; that ownership remains unresolved and must not be inferred.
+
+
+## 2026-09-22 — Budget view UI clarification
+
+A targeted UI cleanup was applied to `modules/projects/view.php` after review of the project detail page:
+
+- Removed the inline **إضافة بند** budget-line entry fields from the project detail page. Budget-line preparation/editing belongs in the project editing/preparation flow rather than being duplicated inside the read/review page.
+- Renamed the remaining budget-version action from the ambiguous **اعتماد** to **اعتماد نسخة الميزانية** so it cannot be confused with FM's separate **اعتماد مالي** project approval.
+- Added a short explanatory note distinguishing budget-version preparation/approval from the project's financial approval.
+- No POST action, database schema, authorization rule, funding ownership, accounting behavior, or lifecycle state was changed in this UI-only correction.
+
+Implementation commit: `85dfa3f65725ade865be80824a7d340cdcbcf1db`.
+
+Runtime verification is required after pulling the commit.
