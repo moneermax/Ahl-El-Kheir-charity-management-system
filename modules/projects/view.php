@@ -976,16 +976,22 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         </div>
 
         <div class="card mb-4 fade-in">
-            <div class="card-header"><i class="fas fa-coins me-2"></i>الميزانية وتخصيص التمويل</div>
             <div class="card-body">
-                <?php if (akp_can_edit_section('finance', $id) && !$closed): ?>
+                <div class="card border-primary mb-4">
+                    <div class="card-header bg-primary text-white"><i class="fas fa-file-invoice-dollar me-2"></i>الميزانية</div>
+                    <div class="card-body">
+                <?php if (!$approvedBudgetId && akp_can_edit_section('finance', $id) && !$closed): ?>
                     <form method="post" class="border rounded p-3 mb-3 bg-light">
                         <input type="hidden" name="action" value="add_budget">
                         <?php echo csrf_field(); ?>
-                        <h6>إنشاء نسخة ميزانية مسودة</h6>
+                        <h6 class="mb-3">إنشاء نسخة ميزانية مسودة</h6>
                         <div class="row g-2">
                             <div class="col-md-4"><input name="budget_name" class="form-control form-control-sm" placeholder="اسم النسخة *" required></div>
-                            <div class="col-md-2"><input name="budget_currency" class="form-control form-control-sm" value="<?php echo e($currency); ?>" placeholder="العملة"></div>
+                            <div class="col-md-2">
+                                <label class="form-label small">العملة</label>
+                                <input type="text" class="form-control form-control-sm bg-light" value="<?php echo e($currency); ?>" readonly aria-readonly="true">
+                                <input type="hidden" name="budget_currency" value="<?php echo e($currency); ?>">
+                            </div>
                             <div class="col-md-2"><input type="date" name="effective_date" class="form-control form-control-sm"></div>
                             <div class="col-md-4"><input name="budget_notes" class="form-control form-control-sm" placeholder="ملاحظات"></div>
                             <div class="col-md-3"><input name="line_category" class="form-control form-control-sm" placeholder="فئة البند *" required></div>
@@ -1038,8 +1044,12 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     </table>
                 </div>
 
-                <hr>
-                <h6>تخصيصات التمويل</h6>
+                    </div>
+                </div>
+
+                <div class="card border-success mb-0">
+                    <div class="card-header bg-success text-white"><i class="fas fa-money-bill-transfer me-2"></i>تخصيص التمويل</div>
+                    <div class="card-body">
                 <?php if ($role === 'financial_manager' && $approval['approval_status'] === 'submitted' && !$closed): ?>
                     <form method="post" class="border rounded p-3 mb-3 bg-light">
                         <input type="hidden" name="action" value="add_funding">
@@ -1174,6 +1184,8 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     });
                     </script>
                 <?php endif; ?>
+                    </div>
+                </div>
             </div>
         </div>
 
