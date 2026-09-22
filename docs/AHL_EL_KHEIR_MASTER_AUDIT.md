@@ -1341,3 +1341,11 @@ The project view now displays the new read-only records for:
 No new schema, trigger, view, runtime DDL, workflow action, or authorization change was introduced.
 
 Implementation commit: `9cff782107e4c04abe7803d7d84830930dcc933b`. Runtime verification remains pending.
+
+
+### 2026-09-22 — Project form category selector and budget activation guard
+- Improved **تصنيف استرشادي** as a clearly identifiable dropdown and expanded the dynamic-template categories to include education/training, health/medical care, housing/rehabilitation, seasonal projects, plus **أخرى / مشروع مخصص** for projects outside the predefined categories.
+- Dynamic budget templates now have matching category guidance/template definitions; the custom category remains available for non-listed project types.
+- **الميزانية التقديرية** must be greater than zero before the budget template loader, budget-line fields, and add-line action become active.
+- A zero or empty estimated budget keeps those budget-dependent controls locked and prevents saving until a positive budget is entered and the budget-line total matches it.
+- No schema change, runtime DDL, trigger, or view was added.
