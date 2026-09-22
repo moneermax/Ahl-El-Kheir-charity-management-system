@@ -124,8 +124,9 @@ if (!function_exists('akp_can_edit_section')) {
                 && (akp_is_primary_supervisor($projectId) || akp_has_project_section($projectId, 'documents'));
         }
         if ($section === 'closure') {
-            return in_array($role, ['general_manager', 'vice_general_manager', 'projects_manager', 'accountant', 'financial_manager'], true)
-                || akp_has_project_section($projectId, 'closure');
+            // Project closure is a Projects Manager workflow responsibility.
+            // FM may review the closure section but must not execute close/reopen actions.
+            return $role === 'projects_manager' || akp_has_project_section($projectId, 'closure');
         }
         if ($section === 'team') {
             return in_array($role, ['general_manager', 'vice_general_manager', 'projects_manager'], true);
