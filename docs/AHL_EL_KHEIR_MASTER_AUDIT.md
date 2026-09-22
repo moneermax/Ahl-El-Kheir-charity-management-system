@@ -1313,3 +1313,9 @@ Runtime verification remains pending.
 A follow-up workflow review corrected the previous budget-view change. The detail-page explanatory note and the **اعتماد نسخة الميزانية** control were removed because the page should not expose a separate approval action that can be confused with the FM financial approval workflow. The obsolete `approve_budget` POST branch in `modules/projects/view.php` was also removed. No database schema or accounting logic was changed.
 
 Implementation commit: `6f02a8ed9e72a316c470e886b3c7658c83a24593`.
+
+## 2026-09-22 — Projects dashboard metric correction
+
+The Projects Manager dashboard `active_budget` metric was corrected to use the approved project budget for active/reopened projects, with `target_amount` only as fallback when no approved budget exists. This aligns the dashboard with the Projects portfolio calculation. No workflow, authorization, schema, or accounting behavior changed.
+
+Implementation commit: `561c6d9f49ee5381e8846490ca57f5eb5b6b1816`. Runtime verification remains pending.
