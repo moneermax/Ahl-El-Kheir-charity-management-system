@@ -1284,3 +1284,8 @@ The fix reuses the existing event-aware notification writer in `modules/accounti
 Code commit: `b7a655512c1234fb1459c068aba07e494355f023` — **Notify GM when project is financially approved**.
 
 Runtime verification is pending; Project 6 is the controlled test case for FM approval → GM notification.
+
+
+## 2026-09-22 — Projects workflow audit checkpoint
+
+Projects remediation Batch 1 is now implemented: pre-approval budget/budget-line preparation and funding allocation preparation are server-authorized to the Projects Manager, while the FM pre-approval funding UI is read-only and reserved for financial review/approve/reject. Runtime verification remains pending. See `docs/PROJECTS_MODULE_AUDIT_AND_REMEDIATION_PLAN.md` for the detailed change and remaining accounting/payment audit items.
