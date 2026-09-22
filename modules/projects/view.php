@@ -1525,3 +1525,75 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 ?>
                 
                 <?php foreach ($beneficiaryRecords as $record): ?>
+                    <div class="border-bottom py-2 small">
+                        <strong><?php echo e($record['beneficiary_name']); ?></strong><br>
+                        <?php echo e($record['beneficiary_type'] ?: ''); ?> · <?php echo e($record['location'] ?: ''); ?>
+                    </div>
+                <?php endforeach; ?>
+                
+                <?php if ($legacyBeneficiaries): ?>
+                    <hr><small class="text-muted">السجلات القديمة</small>
+                    <?php foreach ($legacyBeneficiaries as $record): ?>
+                        <div class="border-bottom py-1 small">
+                            <?php echo e($record['beneficiary_name']); ?>
+                            <?php if ($record['amount'] !== null): ?> · <?php echo akp_money($record['amount']); ?><?php endif; ?>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+                
+                <?php if (!$beneficiaryRecords && !$legacyBeneficiaries): ?>
+                    <div class="text-muted small">لا توجد سجلات مستفيدين.</div>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <div class="card mb-4 fade-in">
+            <div class="card-header"><i class="fas fa-lock me-2"></i>الإغلاق وإعادة الفتح</div>
+            <div class="card-body">
+                <?php if ($status !== 'closed' && akp_can_edit_section('closure', $id)): ?>
+                    <p class="small">إغلاق المشروع يمنع أي تعديلات أو مصروفات جديدة. تأكد من ترحيل جميع القيود.</p>
+                    <form method="post">
+                        <input type="hidden" name="action" value="close_project">
+                        <?php echo csrf_field(); ?>
+                        <textarea name="closure_summary" class="form-control form-control-sm mb-2" rows="3" placeholder="ملخص الإنجاز والأسباب *" required></textarea>
+                        <select name="closure_reason" class="form-select form-select-sm mb-2">
+                            <option value="completed_successfully">إنجاز كامل</option>
+                            <option value="cancelled">إلغاء</option>
+                            <option value="transferred_to_another_project">نقل لمشروع آخر</option>
+                            <option value="retained_for_followup">احتفاظ للمتابعة</option>
+                            <option value="other">أخرى</option>
+                        </select>
+                        <button class="btn btn-sm btn-dark w-100">إغلاق المشروع</button>
+                    </form>
+                <?php elseif ($status === 'closed' && akp_is_dg()): ?>
+                    <p class="small">إعادة الفتح تعد استثناءً إدارياً وتحتاج سبباً واضحاً.</p>
+                    <form method="post">
+                        <input type="hidden" name="action" value="reopen_project">
+                        <?php echo csrf_field(); ?>
+                        <textarea name="reopen_reason" class="form-control form-control-sm mb-2" rows="3" placeholder="سبب إعادة الفتح *" required></textarea>
+                        <button class="btn btn-sm btn-warning w-100">إعادة فتح المشروع</button>
+                    </form>
+                <?php else: ?>
+                    <div class="text-muted small">
+                        <?php if ($status === 'closed'): ?>المشروع مغلق. إعادة الفتح متاحة للمدير العام فقط.<?php else: ?>لا تملك صلاحية الإغلاق.<?php endif; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <div class="card mb-4 fade-in">
+            <div class="card-header"><i class="fas fa-history me-2"></i>سجل التغييرات</div>
+            <div class="card-body">
+                <?php foreach ($history as $h): ?>
+                    <div class="small border-bottom pb-2 mb-2">
+                        <div><strong><?php echo e($h['old_status']); ?></strong> → <strong><?php echo e($h['new_status']); ?></strong></div>
+                        <div class="text-muted"><?php echo e($h['full_name'] ?? 'نظام'); ?> · <?php echo e($h['created_at']); ?></div>
+                        <?php if ($h['reason']): ?><div class="fst-italic">"<?php echo e($h['reason']); ?>"</div><?php endif; ?>
+                <?php endforeach; ?>
+                <?php if (!$history): ?><div class="text-muted small">لا يوجد سجل تغييرات.</div><?php endif; ?>
+            </div>
+        </div>
+    </div>
+</div>
+
+<?php include dirname(__DIR__, 2) . '/includes/footer.php'; ?>
