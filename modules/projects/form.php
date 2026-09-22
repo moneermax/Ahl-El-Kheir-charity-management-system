@@ -2239,6 +2239,7 @@ document.addEventListener(
         calculateTotalBudget();
 
         updateRemoveButtons();
+        updateProjectTypeExperience(false);
     }
 );
 
