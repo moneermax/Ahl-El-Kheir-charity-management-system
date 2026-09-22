@@ -59,61 +59,42 @@
     font-weight: 700;
 }
 
-/* Compact horizontal fields: short inputs stay on the same line as their labels. */
-.project-module-page .project-field:not(:has(> textarea)) {
-    display: grid;
-    grid-template-columns: max-content minmax(0, 1fr);
+/* Horizontal layout is opt-in on form fields that contain short data. */
+.project-module-page .project-field-inline {
+    display: flex;
     align-items: center;
-    column-gap: .75rem;
-    row-gap: .35rem;
+    gap: .75rem;
+    flex-wrap: wrap;
 }
 
-.project-module-page .project-field:not(:has(> textarea)) > .form-label {
-    grid-column: 1;
+.project-module-page .project-field-inline > .form-label {
     margin: 0;
     white-space: nowrap;
+    flex: 0 0 auto;
 }
 
-.project-module-page .project-field:not(:has(> textarea)) > .form-control,
-.project-module-page .project-field:not(:has(> textarea)) > .form-select,
-.project-module-page .project-field:not(:has(> textarea)) > .project-code-box {
-    grid-column: 2;
+.project-module-page .project-field-inline > .form-control,
+.project-module-page .project-field-inline > .form-select,
+.project-module-page .project-field-inline > .project-code-box {
     width: auto;
-    min-width: 10rem;
-    max-width: 100%;
-    justify-self: start;
-}
-
-.project-module-page .project-field:not(:has(> textarea)) > .project-help {
-    grid-column: 1 / -1;
-    margin-top: 0;
-}
-
-/* Size short fields according to their data type rather than stretching every field equally. */
-.project-module-page .project-field:not(:has(> textarea)) > input[type="date"] {
-    min-width: 10.5rem;
-    max-width: 12rem;
-}
-
-.project-module-page .project-field:not(:has(> textarea)) > input[type="number"] {
-    min-width: 10rem;
-    max-width: 16rem;
-}
-
-.project-module-page .project-field:not(:has(> textarea)) > input[type="email"],
-.project-module-page .project-field:not(:has(> textarea)) > input[type="text"],
-.project-module-page .project-field:not(:has(> textarea)) > .form-select,
-.project-module-page .project-field:not(:has(> textarea)) > .project-code-box {
+    flex: 0 1 auto;
     min-width: 12rem;
     max-width: 28rem;
 }
 
-@supports (field-sizing: content) {
-    .project-module-page .project-field:not(:has(> textarea)) > input[type="text"],
-    .project-module-page .project-field:not(:has(> textarea)) > input[type="email"],
-    .project-module-page .project-field:not(:has(> textarea)) > input[type="number"] {
-        field-sizing: content;
-    }
+.project-module-page .project-field-inline > input[type="date"] {
+    min-width: 10.5rem;
+    max-width: 12rem;
+}
+
+.project-module-page .project-field-inline > input[type="number"] {
+    min-width: 10rem;
+    max-width: 16rem;
+}
+
+.project-module-page .project-field-inline > .project-help {
+    flex-basis: 100%;
+    margin-top: 0;
 }
 
 .project-module-page .project-field .form-control,
@@ -155,12 +136,12 @@
 }
 
 .project-module-page .project-page-banner {
-    padding: 1.35rem 1.5rem;
-    margin-bottom: 1rem;
-    border-radius: var(--project-radius);
-    background: linear-gradient(135deg, var(--navy-950), var(--navy-600));
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #081527, #1f4e8c);
     color: #fff;
-    box-shadow: 0 8px 24px rgba(16,24,40,.14);
+    box-shadow: none;
 }
 
 .project-module-page .project-page-banner .project-code {
