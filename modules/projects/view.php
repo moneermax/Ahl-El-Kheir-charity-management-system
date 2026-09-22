@@ -196,6 +196,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($role !== 'financial_manager') throw new RuntimeException('اعتماد المشروع مالياً محصور بالمدير المالي.');
             $approvalCheck = dbFetchOne('SELECT approval_status FROM project_approval WHERE project_id = ?', [$id]);
             if (!$approvalCheck || $approvalCheck['approval_status'] !== 'submitted') throw new RuntimeException('المشروع ليس في حالة انتظار الاعتماد المالي.');
+
+            // Financial approval is only valid against an explicitly approved budget.
+            // The lifecycle amount may contain an initial proposal and must not be
+            // treated as an approved accounting basis.
+            $approvedBudgetCheck = dbFetchOne(
+                "SELECT b.id,
+                        COALESCE(SUM(bl.estimated_amount), 0) AS budget_total
+                 FROM project_budgets b
+                 LEFT JOIN project_budget_lines bl ON bl.budget_id = b.id
+                 WHERE b.project_id = ?
+                   AND b.status = 'approved'
+                 GROUP BY b.id
+                 ORDER BY b.version_no DESC
+                 LIMIT 1",
+                [$id]
+            );
+            $approvedBudgetTotal = (float)($approvedBudgetCheck['budget_total'] ?? 0);
+            if (!$approvedBudgetCheck || $approvedBudgetTotal <= 0) {
+                throw new RuntimeException('لا يمكن اعتماد المشروع مالياً قبل اعتماد نسخة ميزانية سارية بمبلغ أكبر من صفر.');
+            }
+
             dbExecute("UPDATE project_approval SET approval_status = 'fm_approved', fm_reviewed_by = ?, fm_reviewed_at = NOW() WHERE project_id = ?", [akp_user_id(), $id]);
             akp_audit('FM_APPROVE_PROJECT', 'project_approval', $id, ['approval_status' => 'submitted'], ['approval_status' => 'fm_approved']);
 
@@ -239,6 +260,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!in_array($role, ['admin', 'general_manager', 'vice_general_manager'], true)) throw new RuntimeException('اعتماد المشروع نهائياً محصور بالمدير العام أو نائبه.');
             $approvalCheck = dbFetchOne('SELECT approval_status FROM project_approval WHERE project_id = ?', [$id]);
             if (!$approvalCheck || $approvalCheck['approval_status'] !== 'fm_approved') throw new RuntimeException('المشروع لم يتم اعتماده مالياً بعد.');
+
+            // Final approval must use the currently approved budget, never a draft
+            // budget or a stale/proposed lifecycle amount.
+            $approvedBudgetCheck = dbFetchOne(
+                "SELECT b.id,
+                        COALESCE(SUM(bl.estimated_amount), 0) AS budget_total
+                 FROM project_budgets b
+                 LEFT JOIN project_budget_lines bl ON bl.budget_id = b.id
+                 WHERE b.project_id = ?
+                   AND b.status = 'approved'
+                 GROUP BY b.id
+                 ORDER BY b.version_no DESC
+                 LIMIT 1",
+                [$id]
+            );
+            $budgetAmount = (float)($approvedBudgetCheck['budget_total'] ?? 0);
+            if (!$approvedBudgetCheck || $budgetAmount <= 0) {
+                throw new RuntimeException('لا يمكن اعتماد المشروع نهائياً قبل وجود نسخة ميزانية سارية ومعتمدة بمبلغ أكبر من صفر.');
+            }
+
+            // Keep funding within the approved budget before creating the
+            // final accounting allocation.
+            $fundingTotal = (float)(dbFetchOne(
+                "SELECT COALESCE(SUM(amount), 0) AS n
+                 FROM project_funding_allocations
+                 WHERE project_id = ?",
+                [$id]
+            )['n'] ?? 0);
+            if ($fundingTotal > $budgetAmount + 0.01) {
+                throw new RuntimeException('إجمالي تخصيصات التمويل يتجاوز الميزانية المعتمدة للمشروع.');
+            }
             
             try {
                 dbExecute('START TRANSACTION');
@@ -246,9 +298,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 dbExecute('UPDATE other_projects SET status = \'active\' WHERE id = ?', [$id]);
                 dbExecute('UPDATE project_lifecycle SET lifecycle_status = \'active\' WHERE project_id = ?', [$id]);
                 
-                $lifecycle = dbFetchOne('SELECT final_budget_amount FROM project_lifecycle WHERE project_id = ?', [$id]);
-                $budgetAmount = (float)($lifecycle['final_budget_amount'] ?? 0);
-                
+                dbExecute('UPDATE project_lifecycle SET final_budget_amount = ? WHERE project_id = ?', [$budgetAmount, $id]);
+
                 $entryId = akp_create_project_approval_journal($id, $project['name'], $budgetAmount);
                 
                 dbExecute('COMMIT');
@@ -358,10 +409,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             if ($amount <= 0) throw new RuntimeException('مبلغ التمويل يجب أن يكون أكبر من صفر.');
 
-            $lifecycle = dbFetchOne('SELECT final_budget_amount FROM project_lifecycle WHERE project_id = ?', [$id]);
-            $proposedBudget = (float)($lifecycle['final_budget_amount'] ?? 0);
+            $approvedBudgetRow = dbFetchOne(
+                "SELECT COALESCE(SUM(bl.estimated_amount), 0) AS n
+                 FROM project_budgets b
+                 JOIN project_budget_lines bl ON bl.budget_id = b.id
+                 WHERE b.project_id = ? AND b.status = 'approved'",
+                [$id]
+            );
+            $proposedBudget = (float)($approvedBudgetRow['n'] ?? 0);
             if ($proposedBudget <= 0) {
-                $proposedBudget = (float)(dbFetchOne("SELECT COALESCE(SUM(bl.estimated_amount),0) AS n FROM project_budgets b JOIN project_budget_lines bl ON bl.budget_id = b.id WHERE b.project_id = ? AND b.status = 'draft'", [$id])['n'] ?? 0);
+                $proposedBudget = (float)(dbFetchOne(
+                    "SELECT COALESCE(SUM(bl.estimated_amount),0) AS n
+                     FROM project_budgets b
+                     JOIN project_budget_lines bl ON bl.budget_id = b.id
+                     WHERE b.project_id = ? AND b.status = 'draft'",
+                    [$id]
+                )['n'] ?? 0);
             }
             $existingTotal = (float)(dbFetchOne("SELECT COALESCE(SUM(amount),0) AS n FROM project_funding_allocations WHERE project_id = ? AND status = 'draft'", [$id])['n'] ?? 0);
             if ($existingTotal + $amount > $proposedBudget + 0.01) {
@@ -404,10 +467,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             if ($amount <= 0) throw new RuntimeException('مبلغ التمويل يجب أن يكون أكبر من صفر.');
 
-            $lifecycle = dbFetchOne('SELECT final_budget_amount FROM project_lifecycle WHERE project_id = ?', [$id]);
-            $proposedBudget = (float)($lifecycle['final_budget_amount'] ?? 0);
+            $approvedBudgetRow = dbFetchOne(
+                "SELECT COALESCE(SUM(bl.estimated_amount), 0) AS n
+                 FROM project_budgets b
+                 JOIN project_budget_lines bl ON bl.budget_id = b.id
+                 WHERE b.project_id = ? AND b.status = 'approved'",
+                [$id]
+            );
+            $proposedBudget = (float)($approvedBudgetRow['n'] ?? 0);
             if ($proposedBudget <= 0) {
-                $proposedBudget = (float)(dbFetchOne("SELECT COALESCE(SUM(bl.estimated_amount),0) AS n FROM project_budgets b JOIN project_budget_lines bl ON bl.budget_id = b.id WHERE b.project_id = ? AND b.status = 'draft'", [$id])['n'] ?? 0);
+                $proposedBudget = (float)(dbFetchOne(
+                    "SELECT COALESCE(SUM(bl.estimated_amount),0) AS n
+                     FROM project_budgets b
+                     JOIN project_budget_lines bl ON bl.budget_id = b.id
+                     WHERE b.project_id = ? AND b.status = 'draft'",
+                    [$id]
+                )['n'] ?? 0);
             }
 
             $otherTotal = (float)(dbFetchOne(
