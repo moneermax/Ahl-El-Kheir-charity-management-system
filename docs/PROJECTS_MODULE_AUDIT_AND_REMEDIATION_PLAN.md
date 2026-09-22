@@ -316,3 +316,55 @@ Do not create new schema objects, triggers, views, stored procedures, functions,
 
 **Working plan accepted — audit/design phase.**
 No implementation should begin from this plan until the next session completes the requested static audit and confirms the proposed target workflow against the actual repository code and schema.
+
+
+## 2026-09-22 — Remediation Batch 1: Separate pre-approval financial preparation from FM review
+
+The first controlled workflow-boundary change from the accepted Projects working plan is implemented.
+
+### Implemented boundary
+
+Before a project is submitted to the FM:
+
+- **Projects Manager** is the server-authorized role for preparing the project budget, budget lines, and pre-approval funding allocations.
+- Budget preparation/approval and budget-line add/edit/delete handlers now use the dedicated `akp_can_prepare_finance()` guard.
+- Pre-approval funding creation now requires the Projects Manager and an approval state of `draft` or `rejected`.
+- The previous FM funding-entry form during `submitted` review has been removed from the actionable UI and replaced with a read-only explanation.
+- FM therefore receives the prepared financial package for review instead of entering the package during financial review.
+- The existing final-approval/post-approval funding correction path for the General Manager was not removed in this batch because its accounting implications require the separate accounting-event decision.
+
+### Code changes
+
+- `modules/projects/project_lib.php`
+  - added `akp_can_prepare_finance()`;
+  - this helper is deliberately limited to `projects_manager` and respects closed projects.
+- `modules/projects/view.php`
+  - moved budget preparation mutations to the new preparation guard;
+  - moved pre-approval funding creation to the Projects Manager and `draft/rejected` states;
+  - moved budget preparation UI to the same guard;
+  - removed FM's pre-approval funding-entry controls and replaced them with read-only review text.
+
+Commits:
+- `94e31c6a9ed41ef0d8d952f7ffab8ea5af6113a9` — Separate project financial preparation from FM review authority
+- `f385d36bd29ec6e8771282e7b39238b9ab085c91` — Move project pre-approval budget and funding preparation to Projects Manager
+- `04a45fd0ab802dc72ec1adc728c7c39214cc1692` — Enforce pre-review project funding preparation boundary
+
+### Deliberately not changed in this batch
+
+- Project expense entry/approval/posting.
+- Post-approval payment/disbursement architecture.
+- Final-approval project journal semantics.
+- Post-approval funding correction/reversal behavior.
+- GM/VGM final approval.
+- Project notification routing beyond the already identified gaps.
+
+Those remain separate audit items because changing them without resolving the accounting event and payment boundary could create duplicate or incorrectly timed accounting recognition.
+
+### Verification status
+
+Static repository verification confirms the new guard is used by the targeted budget and pre-approval funding mutations and that the FM pre-approval funding form is no longer actionable.
+
+**Runtime verification: NOT YET PERFORMED.**
+
+The next local test must first verify the Project Manager can prepare/modify budget and funding while the project is `draft`/returned, then submit it, and verify the FM sees the package as read-only financial review data with Approve/Reject controls and no budget/funding entry controls.
+
