@@ -981,3 +981,8 @@ Implemented:
 No schema/database changes were introduced. Runtime visual acceptance is still pending.
 
 Important workflow note: the user clarified that **funding entry is not a Projects Manager task**. The current pre-approval funding ownership is therefore treated as unresolved until the workflow audit establishes the responsible role; no PM funding-entry responsibility should be added.
+
+
+### Projects — 2026-09-22 operational role clarification
+- Project Supervisor owns operational project data entry for documents/receipts/certificates, external labor/helpers, milestones, and progress updates.
+- Projects Manager follows up and manages workflow; those operational sections are read-only for the Projects Manager.
