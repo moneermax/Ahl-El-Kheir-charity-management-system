@@ -1353,7 +1353,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     </h5>
 
                     <div class="row g-3">
-                        <div class="col-md-4 project-field">
+                        <div class="col-md-4 project-field project-field-inline">
                             <label class="form-label">كود المشروع</label>
                             <div class="form-control project-code-box" aria-readonly="true">
                                 <?php echo $id ? e($project['project_code'] ?? 'سيُنشأ تلقائياً') : 'سيُنشأ تلقائياً عند إنشاء المشروع'; ?>
@@ -1361,12 +1361,12 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                             <div class="project-help">يتم إنشاء الكود تلقائياً ولا يمكن تعديله.</div>
                         </div>
 
-                        <div class="col-md-8 project-field">
+                        <div class="col-md-8 project-field project-field-inline">
                             <label class="form-label">اسم المشروع <span class="text-danger">*</span></label>
                             <input type="text" name="name" class="form-control" required value="<?php echo e($input['name']); ?>">
                         </div>
 
-                        <div class="col-md-4 project-field">
+                        <div class="col-md-4 project-field project-field-inline">
                             <label class="form-label">نوع المشروع</label>
                             <input type="text" name="project_type" id="project_type" list="project-type-options" class="form-control" placeholder="مثال: تأهيل مركز مجتمعي" value="<?php echo e($input['project_type']); ?>" oninput="updateProjectTypeExperience()">
                             <datalist id="project-type-options">
@@ -1378,37 +1378,37 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                             <div class="project-help">يمكنك الكتابة بحرية أو اختيار نوع شائع. الاختيار يغيّر الإرشادات وقالب الميزانية فقط.</div>
                         </div>
 
-                        <div class="col-md-4 project-field">
+                        <div class="col-md-4 project-field project-field-inline">
                             <label class="form-label">تاريخ البداية</label>
                             <input type="date" name="start_date" class="form-control" value="<?php echo e($input['start_date']); ?>">
                         </div>
 
-                        <div class="col-md-4 project-field">
+                        <div class="col-md-4 project-field project-field-inline">
                             <label class="form-label">تاريخ النهاية</label>
                             <input type="date" name="end_date" class="form-control" value="<?php echo e($input['end_date']); ?>">
                         </div>
 
-                        <div class="col-md-6 project-field">
+                        <div class="col-md-6 project-field project-field-inline">
                             <label class="form-label">الموقع</label>
                             <input type="text" name="location" class="form-control" value="<?php echo e($input['location']); ?>">
                         </div>
 
-                        <div class="col-md-3 project-field">
+                        <div class="col-md-3 project-field project-field-inline">
                             <label class="form-label">المدينة</label>
                             <input type="text" name="city" class="form-control" value="<?php echo e($input['city']); ?>">
                         </div>
 
-                        <div class="col-md-3 project-field">
+                        <div class="col-md-3 project-field project-field-inline">
                             <label class="form-label">المنطقة</label>
                             <input type="text" name="district" class="form-control" value="<?php echo e($input['district']); ?>">
                         </div>
 
-                        <div class="col-md-4 project-field">
+                        <div class="col-md-4 project-field project-field-inline">
                             <label class="form-label">عدد المستفيدين</label>
                             <input type="number" min="0" name="total_beneficiaries" class="form-control" value="<?php echo e($input['total_beneficiaries']); ?>">
                         </div>
 
-                        <div class="col-md-8 project-field">
+                        <div class="col-md-8 project-field project-field-inline">
                             <label class="form-label">مشرف المشروع الأساسي<?php echo !$id ? ' <span class="text-danger">*</span>' : ''; ?></label>
                             <select name="supervisor_user_id" class="form-select" <?php echo !$id ? 'required' : ''; ?>>
                                 <option value="">اختر مشرف المشروع</option>
@@ -1483,7 +1483,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                             <textarea name="government_requirements" class="form-control" rows="3"><?php echo e($input['government_requirements']); ?></textarea>
                         </div>
 
-                        <div class="col-md-4 project-field">
+                        <div class="col-md-4 project-field project-field-inline">
                             <label class="form-label">الرسوم الحكومية <span class="text-muted">(SDG)</span></label>
                             <input type="number" step="0.01" min="0" name="government_fees" class="form-control" value="<?php echo e($input['government_fees']); ?>" placeholder="0.00">
                             <div class="project-help">يمكن تركه فارغاً إذا لم توجد رسوم.</div>
@@ -1518,17 +1518,17 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     </h5>
 
                     <div class="row g-3">
-                        <div class="col-md-4 project-field">
+                        <div class="col-md-4 project-field project-field-inline">
                             <label class="form-label">جهة الاتصال</label>
                             <input type="text" name="contact_person" class="form-control" value="<?php echo e($input['contact_person']); ?>">
                         </div>
 
-                        <div class="col-md-4 project-field">
+                        <div class="col-md-4 project-field project-field-inline">
                             <label class="form-label">هاتف الاتصال</label>
                             <input type="text" name="contact_phone" class="form-control" value="<?php echo e($input['contact_phone']); ?>">
                         </div>
 
-                        <div class="col-md-4 project-field">
+                        <div class="col-md-4 project-field project-field-inline">
                             <label class="form-label">البريد الإلكتروني</label>
                             <input type="email" name="contact_email" class="form-control" value="<?php echo e($input['contact_email']); ?>">
                         </div>
@@ -1564,7 +1564,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                         المساعد الديناميكي للمشروع
                     </h5>
                     <div class="row g-3 align-items-end">
-                        <div class="col-lg-5 project-field">
+                        <div class="col-lg-5 project-field project-field-inline">
                             <label class="form-label">تصنيف استرشادي</label>
                             <select id="project-category-preset" class="form-select" onchange="updateProjectTypeExperience(true)">
                                 <option value="other">نوع مشروع مخصص</option>
@@ -1581,12 +1581,12 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 </section>
 
                     <div class="row g-3 mb-3">
-                        <div class="col-md-5 project-field">
+                        <div class="col-md-5 project-field project-field-inline">
                             <label class="form-label">الميزانية التقديرية <span class="text-danger">*</span></label>
                             <input type="number" step="0.01" min="0" name="target_amount" id="target_amount" class="form-control" value="<?php echo e($input['target_amount']); ?>">
                         </div>
 
-                        <div class="col-md-3 project-field">
+                        <div class="col-md-3 project-field project-field-inline">
                             <label class="form-label">العملة</label>
                             <div class="form-control project-code-box">الجنيه السوداني (SDG)</div>
                         </div>
