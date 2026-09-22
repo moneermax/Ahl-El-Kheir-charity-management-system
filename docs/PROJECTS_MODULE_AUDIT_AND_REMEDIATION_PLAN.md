@@ -447,3 +447,17 @@ The dashboard statistic now uses the approved budget total for active/reopened p
 
 Implementation commit: `561c6d9f49ee5381e8846490ca57f5eb5b6b1816`.
 Runtime verification remains pending.
+
+## 2026-09-22 — Project form repeatable detail fields
+
+The project creation/edit form was expanded to support repeatable planning/detail records instead of forcing multiple values into single text fields:
+- **المتطلبات الحكومية الأولية** is now a repeatable requirement + individual **الرسوم الحكومية (SDG)** pair, so each fee remains attached to its requirement.
+- **الجهة المنفذة أو الشركاء** is repeatable with a role/participation field.
+- **طرق الشراء أو التوريد** is repeatable with notes.
+- **بيانات الاتصال** is repeatable with name, role, phone, email, and notes.
+- Each group uses an explicit **إضافة** button; users can add or remove rows as needed.
+- New child tables are introduced through `database/migrations/2026-09-22_project_repeatable_details.sql`; no triggers or views are used.
+- Legacy single-value `project_details` fields remain populated for backward compatibility, and existing newline-separated values are backfilled into the new tables.
+
+Implementation commits: `8f7274ed65202ad34d3dd305a6e8dce130a25125` (migration) and `06af8a25e460194ddef392ceb21f43b76e0636e1` / `daae330a0d4ede9c04d128cf81a8c2536e47111a` (form handling/UI).
+Runtime verification and migration execution are still pending locally.
