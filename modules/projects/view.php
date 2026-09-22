@@ -869,8 +869,8 @@ $badge = ['planned'=>'bg-secondary','active'=>'bg-success','completed'=>'bg-info
 $varianceClass = $totals['variance'] > 0 ? 'text-danger' : 'text-success';
 
 include dirname(__DIR__, 2) . '/includes/header.php';
-<link rel="stylesheet" href="<?php echo e(APP_URL . 'assets/css/projects-ui.css'); ?>">
 ?>
+<link rel="stylesheet" href="<?php echo e(APP_URL . 'assets/css/projects-ui.css'); ?>">
 
 <div class="project-module-page">
 
