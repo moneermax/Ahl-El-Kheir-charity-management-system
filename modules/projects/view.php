@@ -20,6 +20,36 @@ if (!akp_can_view_project($id)) {
 $project = akp_get_project($id);
 $totals = akp_project_totals($id);
 $details = dbFetchOne('SELECT * FROM project_details WHERE project_id = ?', [$id]) ?: [];
+
+$governmentRequirementRows = dbFetchAll(
+    'SELECT requirement_text, fee_amount
+     FROM project_government_requirements
+     WHERE project_id = ?
+     ORDER BY id ASC',
+    [$id]
+);
+$partnerRows = dbFetchAll(
+    'SELECT partner_name, role_description
+     FROM project_partners
+     WHERE project_id = ?
+     ORDER BY id ASC',
+    [$id]
+);
+$procurementRows = dbFetchAll(
+    'SELECT method_name, notes
+     FROM project_procurement_methods
+     WHERE project_id = ?
+     ORDER BY id ASC',
+    [$id]
+);
+$contactRows = dbFetchAll(
+    'SELECT contact_name, role_description, phone, email, notes
+     FROM project_contacts
+     WHERE project_id = ?
+     ORDER BY id ASC',
+    [$id]
+);
+
 $budgets = dbFetchAll("SELECT b.*, COALESCE(SUM(bl.estimated_amount),0) AS line_total, COUNT(bl.id) AS line_count FROM project_budgets b LEFT JOIN project_budget_lines bl ON bl.budget_id = b.id WHERE b.project_id = ? GROUP BY b.id ORDER BY b.version_no DESC", [$id]);
 $approvedBudgetId = 0; 
 $draftBudgetId = 0; 
@@ -1012,6 +1042,107 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     <div class="col-md-6"><strong>الشريك المنفذ</strong><div><?php echo e($details['implementing_partner'] ?? '—'); ?></div></div>
                     <div class="col-md-6"><strong>الاستدامة</strong><div><?php echo nl2br(e($details['sustainability_plan'] ?? '—')); ?></div></div>
                     <div class="col-md-6"><strong>المخاطر والحد منها</strong><div><?php echo nl2br(e($details['risk_mitigation'] ?? '—')); ?></div></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4 fade-in">
+            <div class="card-header"><i class="fas fa-people-group me-2"></i>التنفيذ والشركاء والتوريد</div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <h6 class="fw-bold">الجهات المنفذة أو الشركاء</h6>
+                        <?php if ($partnerRows): ?>
+                            <?php foreach ($partnerRows as $partner): ?>
+                                <div class="border-bottom py-2 small">
+                                    <strong><?php echo e($partner['partner_name']); ?></strong>
+                                    <?php if (!empty($partner['role_description'])): ?>
+                                        <div class="text-muted"><?php echo e($partner['role_description']); ?></div>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <div class="text-muted small">لا توجد جهات منفذة أو شركاء مسجلون.</div>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="col-md-6">
+                        <h6 class="fw-bold">طرق الشراء أو التوريد</h6>
+                        <?php if ($procurementRows): ?>
+                            <?php foreach ($procurementRows as $procurement): ?>
+                                <div class="border-bottom py-2 small">
+                                    <strong><?php echo e($procurement['method_name']); ?></strong>
+                                    <?php if (!empty($procurement['notes'])): ?>
+                                        <div class="text-muted"><?php echo e($procurement['notes']); ?></div>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <div class="text-muted small">لا توجد طرق شراء أو توريد مسجلة.</div>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="fw-bold mb-0">المتطلبات الحكومية الأولية</h6>
+                            <?php
+                            $governmentFeesTotal = 0.0;
+                            foreach ($governmentRequirementRows as $requirement) {
+                                $governmentFeesTotal += (float)($requirement['fee_amount'] ?? 0);
+                            }
+                            ?>
+                            <?php if ($governmentRequirementRows): ?>
+                                <span class="small text-muted">إجمالي الرسوم: <strong><?php echo akp_money($governmentFeesTotal); ?> SDG</strong></span>
+                            <?php endif; ?>
+                        </div>
+                        <?php if ($governmentRequirementRows): ?>
+                            <div class="table-responsive">
+                                <table class="table table-sm align-middle mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>المتطلب</th>
+                                            <th class="text-nowrap">الرسوم (SDG)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($governmentRequirementRows as $requirement): ?>
+                                            <tr>
+                                                <td><?php echo e($requirement['requirement_text']); ?></td>
+                                                <td class="text-nowrap"><?php echo akp_money($requirement['fee_amount']); ?></td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <?php else: ?>
+                            <div class="text-muted small">لا توجد متطلبات حكومية مسجلة.</div>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="col-md-6">
+                        <h6 class="fw-bold">بيانات الاتصال</h6>
+                        <?php if ($contactRows): ?>
+                            <?php foreach ($contactRows as $contact): ?>
+                                <div class="border-bottom py-2 small">
+                                    <strong><?php echo e($contact['contact_name']); ?></strong>
+                                    <?php if (!empty($contact['role_description'])): ?>
+                                        <div class="text-muted"><?php echo e($contact['role_description']); ?></div>
+                                    <?php endif; ?>
+                                    <?php if (!empty($contact['phone'])): ?>
+                                        <div>الهاتف: <?php echo e($contact['phone']); ?></div>
+                                    <?php endif; ?>
+                                    <?php if (!empty($contact['email'])): ?>
+                                        <div>البريد: <?php echo e($contact['email']); ?></div>
+                                    <?php endif; ?>
+                                    <?php if (!empty($contact['notes'])): ?>
+                                        <div class="text-muted"><?php echo e($contact['notes']); ?></div>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <div class="text-muted small">لا توجد جهات اتصال مسجلة.</div>
+                        <?php endif; ?>
+                    </div>
                 </div>
             </div>
         </div>
