@@ -64,7 +64,8 @@ foreach ($projects as $project) {
 
 include dirname(__DIR__, 2) . '/includes/header.php';
 ?>
-<div class="welcome-section fade-in">
+<div class="project-module-page">
+<div class="project-page-banner fade-in">
     <h2><?php echo e(t('projects.title')); ?></h2>
     <p><?php echo e(t('projects.subtitle')); ?></p>
     <div class="quick-actions mt-3">
@@ -80,7 +81,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     <div class="col-6 col-xl-3"><div class="card text-center" style="border-right:4px solid #c94f4f"><div class="card-body py-2"><div class="fs-5 fw-bold" style="color:#c94f4f"><?php echo number_format($totExpenses, 2); ?></div><div class="text-muted small"><?php echo e(t('projects.posted_expenses')); ?></div></div></div></div>
 </div>
 
-<div class="card fade-in"><div class="card-body"><div class="table-responsive"><table class="table table-hover align-middle">
+<div class="card fade-in project-card"><div class="card-body"><div class="project-table table-responsive"><table class="table table-hover align-middle">
 <thead><tr><th><?php echo e(t('projects.code')); ?></th><th><?php echo e(t('projects.project')); ?></th><th><?php echo e(t('projects.type')); ?></th><th><?php echo e(t('projects.supervisor')); ?></th><th><?php echo e(t('projects.budget')); ?></th><th><?php echo e(t('projects.funded')); ?></th><th><?php echo e(t('projects.expenses')); ?></th><th><?php echo e(t('projects.financial_progress')); ?></th><th><?php echo e(t('projects.beneficiaries')); ?></th><th><?php echo e(t('projects.status_approval')); ?></th><th class="text-center"><?php echo e(t('projects.actions')); ?></th></tr></thead>
 <tbody>
 <?php if (!$projects): ?><tr><td colspan="11" class="text-center text-muted py-4"><?php echo e(t('projects.no_projects')); ?></td></tr>
@@ -105,7 +106,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 <td class="text-center" style="white-space:nowrap;">
 <a class="btn btn-sm btn-primary" title="<?php echo e(t('projects.view_file')); ?>" href="<?php echo APP_URL; ?>modules/projects/view.php?id=<?php echo (int)$project['id']; ?>&return=<?php echo rawurlencode($returnQuery); ?>"><i class="fas fa-eye"></i></a>
 <?php if (akp_can_edit_section('general', (int)$project['id'])): ?><a class="btn btn-sm btn-warning" title="<?php echo e(t('projects.edit_basic')); ?>" href="<?php echo APP_URL; ?>modules/projects/form.php?id=<?php echo (int)$project['id']; ?>&return=<?php echo rawurlencode($returnQuery); ?>"><i class="fas fa-pen"></i></a><?php endif; ?>
-<?php if (akp_can_edit_section('operations', (int)$project['id']) && $status !== 'closed'): ?><form method="post" class="d-inline"><?php echo csrf_field(); ?><input type="hidden" name="set_status" value="<?php echo (int)$project['id']; ?>"><select name="new_status" class="form-select form-select-sm d-inline-block w-auto" onchange="this.form.submit()" aria-label="<?php echo e(t('projects.change_status')); ?>">
+<?php if (akp_can_edit_section('operations', (int)$project['id']) && $status !== 'closed'): ?><form method="post" class="project-inline-form d-inline"><?php echo csrf_field(); ?><input type="hidden" name="set_status" value="<?php echo (int)$project['id']; ?>"><select name="new_status" class="form-select form-select-sm d-inline-block w-auto" onchange="this.form.submit()" aria-label="<?php echo e(t('projects.change_status')); ?>">
 <?php foreach (['planned'=>'projects.planned','active'=>'projects.active','under_review'=>'projects.under_review','completed'=>'projects.completed','cancelled'=>'projects.cancelled'] as $key => $labelKey): ?><option value="<?php echo $key; ?>" <?php echo $status === $key ? 'selected' : ''; ?>><?php echo e(t($labelKey)); ?></option><?php endforeach; ?>
 </select></form><?php endif; ?>
 </td></tr>
@@ -113,4 +114,5 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 </tbody></table></div></div></div>
 
 <div class="container-fluid px-3 pb-4"><div class="d-flex justify-content-start"><a href="<?php echo APP_URL; ?>" class="btn btn-outline-secondary" onclick="return akGoBack(this.href);"><i class="fa-solid fa-arrow-right me-1"></i> العودة</a></div></div>
+</div>
 <?php include dirname(__DIR__, 2) . '/includes/footer.php'; ?>
