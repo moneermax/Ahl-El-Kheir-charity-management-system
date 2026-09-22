@@ -869,3 +869,7 @@ The project detail budget section received a narrow UI clarification: duplicate 
 After workflow review, the project detail **الميزانية** section was simplified further: the explanatory note and the separate **اعتماد نسخة الميزانية** button were removed, and the obsolete `approve_budget` POST handler was removed from `modules/projects/view.php`. The detail page no longer exposes a second budget approval action alongside FM's project financial approval. No database schema or accounting logic was changed.
 
 Implementation commit: `6f02a8ed9e72a316c470e886b3c7658c83a24593`. Runtime verification pending.
+
+### 2026-09-22 — Projects form repeatable fields
+
+The Projects form now uses repeatable rows for government requirements + per-requirement fees, implementing partners, procurement/supply methods, and contact records, with explicit **إضافة** buttons. The change is backed by a migration and preserves legacy scalar project-detail values for compatibility. Migration execution and local runtime testing are pending.
