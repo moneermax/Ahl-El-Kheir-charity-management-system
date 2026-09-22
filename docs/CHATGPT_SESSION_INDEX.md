@@ -858,3 +858,8 @@ Authoritative clarification from the user: funding entry/allocation is **not** a
 ### Projects — 2026-09-22 operational role clarification
 - Project Supervisor owns operational data entry for project documents/receipts/certificates, external labor/helpers, milestones, and progress updates.
 - Projects Manager is follow-up/workflow only for these sections and sees them read-only; no operational data-entry action is exposed or accepted for the Projects Manager.
+
+
+### 2026-09-22 — Projects budget-view UI cleanup
+
+The project detail budget section received a narrow UI clarification: duplicate inline budget-line entry fields were removed, and the budget-version approval action was renamed to **اعتماد نسخة الميزانية** so it is clearly distinct from FM's **اعتماد مالي** project approval. No workflow/database authorization behavior was changed in this UI-only fix. Commit: `85dfa3f65725ade865be80824a7d340cdcbcf1db`. Runtime verification pending.
