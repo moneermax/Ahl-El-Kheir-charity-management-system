@@ -1425,8 +1425,46 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         </div>
 
         <?php if ($approval['approval_status'] === 'approved'): ?>
+        <div class="card mb-4 fade-in border-success">
+            <div class="card-header bg-success text-white"><i class="fas fa-money-check-dollar me-2"></i>إثبات صرف تمويل المشروع</div>
+            <div class="card-body">
+                <div class="alert alert-light border">بعد اعتماد المدير العام أصبح صرف التمويل موثقاً محاسبياً. المدير المالي يستكمل مستند الصرف: سند صرف مطبوع للنقد، أو إيصال التحويل/المحفظة الإلكترونية. مدير المشاريع يستطيع الاطلاع على المستندات قبل بدء التنفيذ الفعلي.</div>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle">
+                        <thead><tr><th>حساب التمويل</th><th>طريقة الدفع</th><th>المبلغ</th><th>المرجع</th><th>المستند</th></tr></thead>
+                        <tbody>
+                        <?php if ($paymentEvidence): ?>
+                            <?php foreach ($paymentEvidence as $payment): ?>
+                                <?php $paymentMethodLabels = ['cash' => 'نقدي', 'bank_transfer' => 'تحويل بنكي', 'e_wallet' => 'محفظة إلكترونية']; $methodLabel = $paymentMethodLabels[$payment['payment_method']] ?? $payment['payment_method']; ?>
+                                <tr>
+                                    <td><?php echo e(($payment['source_account_code'] ?? '') . ' · ' . ($payment['source_account_name'] ?? '')); ?></td>
+                                    <td><?php echo e($methodLabel); ?></td>
+                                    <td><?php echo number_format((float)$payment['amount'], 2) . ' ' . e($payment['currency_code'] ?: ($project['currency_code'] ?: 'SDG')); ?></td>
+                                    <td><?php echo !empty($payment['reference_number']) ? e($payment['reference_number']) : '<span class="text-muted">—</span>'; ?></td>
+                                    <td class="text-nowrap">
+                                        <?php if ($payment['payment_method'] === 'cash' && $payment['status'] === 'documented'): ?>
+                                            <a class="btn btn-sm btn-outline-primary" target="_blank" href="<?php echo APP_URL; ?>modules/accounting/voucher_print.php?project_payment_id=<?php echo (int)$payment['id']; ?>"><i class="fas fa-print me-1"></i>طباعة سند الصرف</a>
+                                        <?php elseif ($payment['payment_method'] !== 'cash' && !empty($payment['receipt_file_path'])): ?>
+                                            <a class="btn btn-sm btn-outline-primary" target="_blank" href="<?php echo APP_URL; ?>modules/projects/project_payment_receipt.php?id=<?php echo (int)$payment['id']; ?>"><i class="fas fa-paperclip me-1"></i>عرض الإيصال</a>
+                                        <?php else: ?>
+                                            <span class="text-muted"><?php echo $payment['payment_method'] === 'cash' ? 'بانتظار سند الصرف' : 'بانتظار إيصال التحويل'; ?></span>
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <tr><td colspan="5" class="text-center text-muted">لا توجد سجلات صرف مرتبطة بتخصيصات التمويل بعد.</td></tr>
+                        <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
+
+        <?php if ($approval['approval_status'] === 'approved'): ?>
 <div class="card mb-4 fade-in">
-            <div class="card-header"><i class="fas fa-receipt me-2"></i>المصروفات</div>
+            <div class="card-header><i class="fas fa-receipt me-2"></i>المصروفات</div>
             <div class="card-body">
                 <?php if (akp_can_edit_section('finance', $id) && !$closed): ?>
                     <form method="post" class="project-form-panel">
