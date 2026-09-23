@@ -83,14 +83,6 @@ function akp_post_value(string $name, string $default = ''): string {
 }
 
 
-/** Funding allocation permissions. */
-function akp_can_manage_funding(string $role, string $approvalStatus): bool {
-    if (in_array($approvalStatus, ['draft', 'rejected'], true)) {
-        return $role === 'projects_manager';
-    }
-    return $approvalStatus === 'approved' && $role === 'general_manager';
-}
-
 /** Create a balanced reversal entry while preserving the original posted entry. */
 function akp_reverse_project_journal(int $originalEntryId, int $projectId, string $projectName, string $reason): int {
     $original = dbFetchOne('SELECT * FROM journal_entries WHERE id = ?', [$originalEntryId]);
@@ -431,13 +423,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('success', 'تمت إضافة بند الميزانية.');
             
         } elseif ($action === 'add_funding') {
-            // FM reviews the prepared funding package but must not create funding allocations.
-            if ($role === 'financial_manager') {
-                throw new RuntimeException('دور المدير المالي في هذه المرحلة هو مراجعة تخصيصات التمويل والاعتماد أو الرفض فقط، ولا يملك صلاحية إضافة تخصيص تمويل.');
+            if (!akp_can_manage_funding($id) || $closed) {
+                throw new RuntimeException('إضافة تخصيصات التمويل واختيار حسابات المصدر محصوران بالمدير المالي.');
             }
-            if (!akp_can_edit_section('finance', $id) || $closed) throw new RuntimeException('لا تملك صلاحية إضافة تمويل.');
             $approvalCheck = dbFetchOne('SELECT approval_status FROM project_approval WHERE project_id = ?', [$id]);
-            if (!$approvalCheck || $approvalCheck['approval_status'] !== 'submitted') throw new RuntimeException('يمكن تسجيل مصادر التمويل فقط أثناء المراجعة المالية (حالة: مُرسَل).');
+            if (!$approvalCheck || !in_array($approvalCheck['approval_status'], ['submitted', 'rejected'], true)) {
+                throw new RuntimeException('يمكن للمدير المالي تسجيل مصادر التمويل فقط أثناء المراجعة المالية أو بعد الرفض المالي.');
+            }
 
             $sourceAccountIds = $_POST['funding_source_account_id'] ?? [];
             $amounts = $_POST['funding_amount'] ?? [];
@@ -532,10 +524,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ($action === 'edit_funding') {
             $approvalStatus = (string)(dbFetchOne('SELECT approval_status FROM project_approval WHERE project_id = ?', [$id])['approval_status'] ?? '');
             if ($closed) throw new RuntimeException('لا يمكن تعديل تخصيص تمويل لمشروع مغلق.');
-            if (!akp_can_manage_funding($role, $approvalStatus)) {
-                throw new RuntimeException($approvalStatus === 'approved'
-                    ? 'بعد اعتماد المدير العام، تعديل تخصيصات التمويل متاح للمدير العام فقط.'
-                    : 'تعديل تخصيصات التمويل قبل اعتماد المدير العام متاح للمدير المالي فقط.');
+            if (!in_array($approvalStatus, ['submitted', 'rejected'], true) || !akp_can_manage_funding($id)) {
+                throw new RuntimeException('تعديل تخصيصات التمويل أثناء المراجعة المالية أو بعد الرفض المالي محصور بالمدير المالي.');
             }
 
             $allocationId = (int)($_POST['allocation_id'] ?? 0);
@@ -617,10 +607,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ($action === 'delete_funding') {
             $approvalStatus = (string)(dbFetchOne('SELECT approval_status FROM project_approval WHERE project_id = ?', [$id])['approval_status'] ?? '');
             if ($closed) throw new RuntimeException('لا يمكن حذف تخصيص تمويل من مشروع مغلق.');
-            if (!akp_can_manage_funding($role, $approvalStatus)) {
-                throw new RuntimeException($approvalStatus === 'approved'
-                    ? 'بعد اعتماد المدير العام، حذف تخصيصات التمويل متاح للمدير العام فقط.'
-                    : 'حذف تخصيصات التمويل قبل اعتماد المدير العام متاح للمدير المالي فقط.');
+            if (!in_array($approvalStatus, ['submitted', 'rejected'], true) || !akp_can_manage_funding($id)) {
+                throw new RuntimeException('حذف تخصيصات التمويل أثناء المراجعة المالية أو بعد الرفض المالي محصور بالمدير المالي.');
             }
 
             $allocationId = (int)($_POST['allocation_id'] ?? 0);
@@ -1156,7 +1144,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 <div class="card border-primary mb-4">
                     <div class="card-header bg-primary text-white"><i class="fas fa-file-invoice-dollar me-2"></i>الميزانية</div>
                     <div class="card-body">
-                <?php if ($approvedBudgetId && akp_can_manage_funding($role, (string)$approval['approval_status']) && !$closed): ?>
+                <?php if ($approvedBudgetId && in_array((string)$approval['approval_status'], ['submitted', 'rejected'], true) && akp_can_manage_funding($id) && !$closed): ?>
                     <form method="post" class="project-form-panel" id="projectFundingForm">
                         <input type="hidden" name="action" value="add_funding">
                         <?php echo csrf_field(); ?>
@@ -1287,7 +1275,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                                     <td><small><?php echo e((string)($funding['reference_number'] ?? '')); ?><?php if (!empty($funding['description'])): ?><br><?php echo e((string)$funding['description']); ?><?php endif; ?></small></td>
                                     <td><?php echo e($funding['status']); ?></td>
                                     <td>
-                                        <?php if (akp_can_manage_funding($role, (string)$approval['approval_status']) && !$closed): ?>
+                                        <?php if (in_array((string)$approval['approval_status'], ['submitted', 'rejected'], true) && akp_can_manage_funding($id) && !$closed): ?>
                                             <button type="button" class="btn btn-sm btn-outline-primary"
                                                     data-bs-toggle="modal" data-bs-target="#editFundingModal"
                                                     data-id="<?php echo (int)$funding['id']; ?>"
@@ -1314,7 +1302,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     </table>
                 </div>
 
-                <?php if (akp_can_manage_funding($role, (string)$approval['approval_status']) && !$closed): ?>
+                <?php if (in_array((string)$approval['approval_status'], ['submitted', 'rejected'], true) && akp_can_manage_funding($id) && !$closed): ?>
                     <div class="modal fade" id="editFundingModal" tabindex="-1" aria-hidden="true">
                         <div class="modal-dialog modal-lg modal-dialog-centered">
                             <div class="modal-content">
