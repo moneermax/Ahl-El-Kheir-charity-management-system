@@ -117,11 +117,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $row=$allocationId?dbFetchOne("SELECT * FROM project_funding_allocations WHERE id=? AND project_id=? AND status='draft'",[$allocationId,$id]):null;
             if(!$row || !$account || !in_array($account['code'],['1100','1200','1300'],true)) throw new RuntimeException('تخصيص التمويل المطلوب غير صالح.');
             if($amount<=0) throw new RuntimeException('مبلغ التمويل يجب أن يكون أكبر من صفر.');
+            $budgetTotal=(float)(dbFetchOne("SELECT COALESCE(SUM(bl.estimated_amount),0) total
+                FROM project_budgets b LEFT JOIN project_budget_lines bl ON bl.budget_id=b.id
+                WHERE b.project_id=? AND b.status='approved'
+                GROUP BY b.id ORDER BY b.version_no DESC LIMIT 1",[$id])['total']??0);
+            if($budgetTotal<=0) throw new RuntimeException('اعتمد الميزانية أولاً.');
             $totalWithout=(float)(dbFetchOne("SELECT COALESCE(SUM(amount),0) n FROM project_funding_allocations WHERE project_id=? AND status='draft' AND id<>?",[$id,$allocationId])['n']??0);
-            if($totalWithout+$amount>$budgetTotal+0.01) throw new RuntimeException('إجمالي التمويل لا يمكن أن يتجاوز الميزانية المعتمدة.');
             $duplicateRows=dbFetchAll("SELECT id,amount FROM project_funding_allocations WHERE project_id=? AND source_account_id=? AND status='draft' AND id<>?",[$id,$accountId,$allocationId]);
             $mergedAmount=$amount; foreach($duplicateRows as $duplicate) $mergedAmount+=(float)$duplicate['amount'];
-            if($totalWithout+$amount>$budgetTotal+0.01) throw new RuntimeException('إجمالي التمويل لا يمكن أن يتجاوز الميزانية المعتمدة.');
+            if($totalWithout+$mergedAmount>$budgetTotal+0.01) throw new RuntimeException('إجمالي التمويل لا يمكن أن يتجاوز الميزانية المعتمدة.');
             dbExecute("UPDATE project_funding_allocations SET source_type=?,source_account_id=?,amount=?,currency_code=?,allocation_date=?,description=?,created_by=? WHERE id=? AND project_id=?",[$account['code'],$accountId,$mergedAmount,$project['currency_code']?:'SDG',$date,$description?:null,akp_user_id(),$allocationId,$id]);
             foreach($duplicateRows as $duplicate) dbExecute("DELETE FROM project_funding_allocations WHERE id=? AND project_id=? AND status='draft'",[(int)$duplicate['id'],$id]);
             akp_audit('UPDATE','project_funding_allocation',$allocationId,['amount'=>$row['amount']],['amount'=>$mergedAmount,'source_account'=>$account['code'],'fm_review'=>true]);
