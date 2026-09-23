@@ -71,6 +71,12 @@ foreach ($budgets as $budget) {
 }
 
 $fundings = dbFetchAll("SELECT f.*, a.code AS source_account_code, a.name_ar AS source_account_name FROM project_funding_allocations f LEFT JOIN accounts a ON a.id = f.source_account_id WHERE f.project_id = ? ORDER BY f.created_at DESC", [$id]);
+$paymentEvidence = dbFetchAll("SELECT pe.*, a.code AS source_account_code, a.name_ar AS source_account_name, je.entry_code, u.full_name AS documented_by_name
+    FROM project_payment_evidence pe
+    LEFT JOIN accounts a ON a.id = pe.source_account_id
+    LEFT JOIN journal_entries je ON je.id = pe.journal_entry_id
+    LEFT JOIN users u ON u.id = pe.documented_by
+    WHERE pe.project_id = ? ORDER BY pe.id DESC", [$id]);
 $expenses = dbFetchAll("SELECT e.*, je.entry_code FROM project_expenses e LEFT JOIN journal_entries je ON je.id = e.journal_entry_id WHERE e.project_id = ? ORDER BY e.expense_date DESC, e.id DESC", [$id]);
 $documents = dbFetchAll('SELECT d.*, u.full_name AS uploader_name FROM project_documents d LEFT JOIN users u ON u.id = d.uploaded_by WHERE d.project_id = ? ORDER BY d.id DESC', [$id]);
 $milestones = dbFetchAll('SELECT * FROM project_milestones WHERE project_id = ? ORDER BY planned_date, id', [$id]);
@@ -353,7 +359,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 dbExecute('UPDATE project_lifecycle SET final_budget_amount = ? WHERE project_id = ?', [$budgetAmount, $id]);
 
                 $entryId = akp_create_project_approval_journal($id, $project['name'], 0);
-                
+
+                // The GM approval journal is the single accounting release event.
+                // Create one documentary payment-evidence row per approved funding source.
+                $paymentRows = dbFetchAll(
+                    "SELECT f.id, f.source_account_id, f.amount, f.currency_code, f.allocation_date, a.code AS source_code
+                     FROM project_funding_allocations f
+                     INNER JOIN accounts a ON a.id = f.source_account_id
+                     WHERE f.project_id = ?",
+                    [$id]
+                );
+                foreach ($paymentRows as $paymentRow) {
+                    $method = akp_project_payment_method_from_account_code((string)$paymentRow['source_code']);
+                    if ($method === null) {
+                        throw new RuntimeException('مصدر تمويل المشروع لا يملك طريقة دفع معروفة.');
+                    }
+                    $existingEvidence = dbFetchOne(
+                        'SELECT id FROM project_payment_evidence WHERE funding_allocation_id = ? LIMIT 1',
+                        [(int)$paymentRow['id']]
+                    );
+                    if (!$existingEvidence) {
+                        dbExecute(
+                            "INSERT INTO project_payment_evidence
+                             (project_id, funding_allocation_id, source_account_id, journal_entry_id, payment_method, amount, currency_code, payment_date, status, created_at)
+                             VALUES (?,?,?,?,?,?,?,CURDATE(),'pending',NOW())",
+                            [$id, (int)$paymentRow['id'], (int)$paymentRow['source_account_id'], $entryId, $method, (float)$paymentRow['amount'], $paymentRow['currency_code'] ?: ($project['currency_code'] ?: 'SDG')]
+                        );
+                    }
+                }
+
                 dbExecute('COMMIT');
                 akp_audit('GM_APPROVE_PROJECT', 'project_approval', $id, ['approval_status' => 'fm_approved'], ['approval_status' => 'approved']);
                 flash('success', 'تم اعتماد المشروع نهائياً وتخصيص الميزانية في الدفاتر.');
