@@ -486,3 +486,67 @@ The repeatable-details migration has been applied to the local database. Runtime
 - **الميزانية التقديرية** must be greater than zero before the budget template loader, budget-line fields, and add-line action become active.
 - A zero or empty estimated budget keeps those budget-dependent controls locked and prevents saving until a positive budget is entered and the budget-line total matches it.
 - No schema change, runtime DDL, trigger, or view was added.
+
+
+## 2026-09-23 — Post-GM project payment evidence workflow
+
+The Projects payment boundary is now defined around the existing final-approval accounting event:
+
+### Accounting/payment boundary
+
+- GM/VGM final approval remains the point at which the project funding release is posted to the ledger through the existing project approval journal.
+- No second accounting journal is created when payment evidence is documented.
+- The new payment-evidence records are documentary records tied to the approved funding allocation and the GM approval journal.
+- The existing FM funding-allocation **المرجع** field is no longer exposed in the dedicated FM funding UI. Existing database values are preserved.
+
+### Post-GM evidence by source
+
+For each approved funding allocation, the system derives the payment evidence method from the source account:
+
+- 1100 — **نقدي**: FM confirms the cash payment evidence and can print the existing bilingual outgoing payment-voucher design through the existing voucher-print surface.
+- 1200 — **تحويل بنكي**: FM attaches the transfer receipt and may record the bank transaction reference.
+- 1300 — **محفظة إلكترونية**: FM attaches the wallet payment receipt and may record the transaction reference.
+
+These controls are only actionable after project_approval.approval_status = 'approved'.
+
+### Projects Manager visibility
+
+After GM/VGM final approval, the Projects Manager's project view shows the same payment evidence status and allows read-only access to:
+- the printed cash payment voucher;
+- the bank-transfer receipt;
+- the e-wallet receipt.
+
+The PM does not issue the payment, upload FM evidence, or create an accounting entry.
+
+### Schema
+
+Migration added:
+
+- database/migrations/2026-09-23_project_payment_evidence.sql
+- table: project_payment_evidence
+
+The table stores one documentary evidence record per funding allocation, including payment method, amount, source account, GM approval journal reference, status, reference number, and receipt metadata.
+
+No triggers, views, stored procedures, events, or request-time schema creation were introduced.
+
+### Implementation
+
+- modules/projects/project_lib.php — payment-method mapping for funding source accounts.
+- modules/projects/view.php — creates documentary payment-evidence rows during GM final approval and displays them to project viewers/PM.
+- modules/projects/view_fm.php — FM-only post-GM cash-voucher confirmation and bank/e-wallet receipt upload.
+- modules/projects/project_payment_receipt.php — authenticated receipt viewer.
+- modules/accounting/voucher_print.php — reuses the existing outgoing payment-voucher print design for project cash-payment evidence.
+
+### Verification status
+
+**Runtime verification is required after applying the migration.**
+
+Controlled test order:
+1. Prepare a project with an approved budget and funding allocation.
+2. Verify the FM funding page no longer contains the funding **المرجع** field.
+3. Verify the project cannot expose payment-evidence actions before GM/VGM final approval.
+4. Complete GM/VGM final approval and verify payment-evidence rows are created for each funding source.
+5. For a cash source, FM confirms the cash payment evidence and prints the outgoing voucher; verify the existing voucher design and project data.
+6. For bank/wallet sources, FM uploads a PDF/JPG/PNG receipt and optional transaction reference; verify the authenticated receipt viewer.
+7. Open the PM project view and verify the PM can see the documented evidence but cannot modify it.
+8. Verify no second journal is created when the voucher is printed or a receipt is uploaded.
