@@ -4,6 +4,7 @@ require_once dirname(__DIR__, 2) . '/config/config.php';
 require_once dirname(__DIR__, 2) . '/config/database.php';
 require_once dirname(__DIR__, 2) . '/config/functions.php';
 require_once dirname(__DIR__, 2) . '/config/session.php';
+require_once dirname(__DIR__, 2) . '/modules/accounting/lib_transaction_review.php';
 
 if (!function_exists('akp_role')) {
     function akp_role(): string
@@ -155,6 +156,37 @@ if (!function_exists('akp_audit')) {
                 $newValues === null ? null : json_encode($newValues, JSON_UNESCAPED_UNICODE),
                 $_SERVER['REMOTE_ADDR'] ?? '', $_SERVER['HTTP_USER_AGENT'] ?? ''
             ]);
+
+            // FM rejection is a workflow transition that requires the Projects
+            // Manager's attention. Reuse the existing notification infrastructure
+            // after the audit/state change, with event-aware deduplication.
+            if ($action === 'FM_REJECT_PROJECT' && $entityType === 'project_approval') {
+                try {
+                    $project = dbFetchOne('SELECT project_code, name FROM other_projects WHERE id = ?', [$entityId]);
+                    if ($project) {
+                        $projectManagers = dbFetchAll(
+                            "SELECT u.id
+                             FROM users u
+                             JOIN roles r ON u.role_id = r.id
+                             WHERE r.code = 'projects_manager'
+                               AND u.is_active = 1"
+                        );
+                        $reason = trim((string)($newValues['reason'] ?? ''));
+                        foreach ($projectManagers as $projectManager) {
+                            ak_transaction_review_notify_event(
+                                (int)$projectManager['id'],
+                                'تم رفض المشروع مالياً',
+                                'المشروع «' . (string)($project['name'] ?? '') . '» (' . (string)($project['project_code'] ?? '') . ') تم رفضه مالياً وإعادته للمراجعة. السبب: ' . $reason,
+                                APP_URL . 'modules/projects/view.php?id=' . $entityId,
+                                $entityId,
+                                'project_fm_rejection'
+                            );
+                        }
+                    }
+                } catch (Throwable $notificationError) {
+                    // Notification delivery must never roll back or invalidate the audit entry.
+                }
+            }
         } catch (Throwable $e) {
             // Auditing must not expose internal errors to the end user.
         }
