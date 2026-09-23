@@ -941,8 +941,26 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 <link rel="stylesheet" href="<?php echo e(APP_URL . 'assets/css/projects-ui.css'); ?>">
 <style>
 @media (min-width: 992px) {
+    .project-view-main-column {
+        flex: 0 0 72%;
+        max-width: 72%;
+    }
+
+    .project-view-side-column {
+        flex: 0 0 28%;
+        max-width: 28%;
+    }
+
     .project-finance-card {
-        width: 104%;
+        width: 100%;
+    }
+
+    .project-finance-card .table {
+        min-width: 900px;
+    }
+
+    .project-finance-card .budget-details-row table {
+        min-width: 1050px;
     }
 }
 </style>
