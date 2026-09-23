@@ -47,16 +47,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             akp_audit('UPDATE','project_budget_line',$lineId,['amount'=>$line['estimated_amount']],['amount'=>$amount,'fm_review'=>true]);
             flash('success','تم تعديل بند الميزانية بواسطة المدير المالي.');
 
-        } elseif ($action === 'fm_add_budget_line') {
-            $budgetId=(int)($_POST['budget_id']??0);
-            $budget=dbFetchOne('SELECT * FROM project_budgets WHERE id=? AND project_id=?',[$budgetId,$id]);
-            if (!$budget || $budget['status']!=='draft') throw new RuntimeException('لا يمكن إضافة بند إلا إلى ميزانية مسودة.');
-            $category=fm_post('line_category'); $description=fm_post('line_description'); $amount=(float)($_POST['estimated_amount']??0);
-            if ($category===''||$description===''||$amount<=0) throw new RuntimeException('الفئة والوصف والمبلغ التقديري مطلوبة.');
-            dbExecute('INSERT INTO project_budget_lines (budget_id,category,description,account_id,estimated_amount,notes,created_by) VALUES (?,?,?,?,?,?,?)',[$budgetId,$category,$description,(int)($_POST['budget_account_id']??0)?:null,$amount,fm_post('line_notes')?:null,akp_user_id()]);
-            akp_audit('CREATE','project_budget_line',$budgetId,null,['project_id'=>$id,'amount'=>$amount,'fm_review'=>true]);
-            flash('success','تمت إضافة بند إلى الميزانية.');
-
         } elseif ($action === 'fm_delete_budget_line') {
             $lineId=(int)($_POST['line_id']??0);
             $line=dbFetchOne('SELECT bl.*,b.status AS budget_status,b.project_id FROM project_budget_lines bl JOIN project_budgets b ON b.id=bl.budget_id WHERE bl.id=?',[$lineId]);
@@ -144,7 +134,6 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             <?php foreach($budgetLines as $line): ?><tr><td><?php echo e($line['category']); ?></td><td><?php echo e($line['description']); ?></td><td><?php echo number_format((float)$line['estimated_amount'],2).' '.e($project['currency_code']?:'SDG'); ?></td><td><?php if($activeBudget['status']==='draft'): ?><button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editBudget<?php echo (int)$line['id']; ?>">تعديل</button> <form method="post" class="d-inline" onsubmit="return confirm('حذف هذا البند؟');"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_delete_budget_line"><input type="hidden" name="line_id" value="<?php echo (int)$line['id']; ?>"><button class="btn btn-sm btn-outline-danger">حذف</button></form><?php endif; ?></td></tr>
             <?php endforeach; ?><?php if(!$budgetLines): ?><tr><td colspan="4" class="text-center text-muted">لا توجد بنود.</td></tr><?php endif; ?></tbody></table></div>
             <?php if($activeBudget['status']==='draft'): ?>
-                <form method="post" class="border rounded p-3 mb-3"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_add_budget_line"><input type="hidden" name="budget_id" value="<?php echo (int)$activeBudget['id']; ?>"><div class="row g-2"><div class="col-md-4"><input name="line_category" class="form-control" placeholder="الفئة" required></div><div class="col-md-5"><input name="line_description" class="form-control" placeholder="الوصف" required></div><div class="col-md-3"><input type="number" step="0.01" min="0.01" name="estimated_amount" class="form-control" placeholder="المبلغ" required></div><div class="col-12"><textarea name="line_notes" class="form-control" placeholder="ملاحظات"></textarea></div></div><button class="btn btn-sm btn-outline-primary mt-2">إضافة البند</button></form>
                 <div class="d-flex gap-2"><form method="post"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_approve_budget"><input type="hidden" name="budget_id" value="<?php echo (int)$activeBudget['id']; ?>"><button class="btn btn-success">اعتماد الميزانية</button></form><button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejectBudget">رفض الميزانية</button></div>
             <?php endif; ?>
         <?php endif; ?>
