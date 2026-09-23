@@ -275,7 +275,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     "SELECT u.id
                      FROM users u
                      JOIN roles r ON u.role_id = r.id
-                     WHERE r.code = 'general_manager'
+                     WHERE r.code IN ('general_manager', 'vice_general_manager')
                        AND u.is_active = 1"
                 );
                 foreach ($gmUsers as $gmUser) {
