@@ -37,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         if ($closed) throw new RuntimeException('لا يمكن تعديل مشروع مغلق.');
 
-        } elseif ($action === 'fm_approve_budget') {
+        if ($action === 'fm_approve_budget') {
             $budgetId=(int)($_POST['budget_id']??0);
             $budget=dbFetchOne('SELECT * FROM project_budgets WHERE id=? AND project_id=?',[$budgetId,$id]);
             if (!$budget || $budget['status']!=='draft') throw new RuntimeException('نسخة الميزانية ليست مسودة.');
