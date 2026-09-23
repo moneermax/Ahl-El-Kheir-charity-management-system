@@ -230,9 +230,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             dbExecute("UPDATE project_approval SET approval_status = 'submitted', submitted_by = ?, submitted_at = NOW(), rejection_reason = NULL, fm_rejection_reason = NULL WHERE project_id = ?", [akp_user_id(), $id]);
             akp_audit('SUBMIT_APPROVAL', 'project_approval', $id, ['approval_status' => $approvalCheck['approval_status']], ['approval_status' => 'submitted']);
 
-            // Reuse the existing event-aware FM notification infrastructure.
-            // Delivery is isolated from the completed project state transition,
-            // and unread notifications are deduplicated by project/event reference.
             ak_transaction_review_notify_fm_event(
                 $id,
                 'project_submission',
@@ -248,9 +245,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $approvalCheck = dbFetchOne('SELECT approval_status FROM project_approval WHERE project_id = ?', [$id]);
             if (!$approvalCheck || $approvalCheck['approval_status'] !== 'submitted') throw new RuntimeException('المشروع ليس في حالة انتظار الاعتماد المالي.');
 
-            // Financial approval is only valid against an explicitly approved budget.
-            // The lifecycle amount may contain an initial proposal and must not be
-            // treated as an approved accounting basis.
             $approvedBudgetCheck = dbFetchOne(
                 "SELECT b.id,
                         COALESCE(SUM(bl.estimated_amount), 0) AS budget_total
@@ -282,8 +276,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             dbExecute("UPDATE project_approval SET approval_status = 'fm_approved', fm_reviewed_by = ?, fm_reviewed_at = NOW() WHERE project_id = ?", [akp_user_id(), $id]);
             akp_audit('FM_APPROVE_PROJECT', 'project_approval', $id, ['approval_status' => 'submitted'], ['approval_status' => 'fm_approved']);
 
-            // Notify active General Manager recipients through the existing notification infrastructure.
-            // Notification delivery is isolated so it cannot roll back the completed FM approval.
             try {
                 $gmUsers = dbFetchAll(
                     "SELECT u.id
@@ -303,7 +295,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     );
                 }
             } catch (Throwable $notificationError) {
-                // Notification delivery must never roll back the completed FM approval.
             }
 
             flash('success', 'تم اعتماد المشروع مالياً. المشروع الآن بانتظار اعتماد المدير العام.');
@@ -333,8 +324,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $approvalCheck = dbFetchOne('SELECT approval_status FROM project_approval WHERE project_id = ?', [$id]);
             if (!$approvalCheck || $approvalCheck['approval_status'] !== 'fm_approved') throw new RuntimeException('المشروع لم يتم اعتماده مالياً بعد.');
 
-            // Final approval must use the currently approved budget, never a draft
-            // budget or a stale/proposed lifecycle amount.
             $approvedBudgetCheck = dbFetchOne(
                 "SELECT b.id,
                         COALESCE(SUM(bl.estimated_amount), 0) AS budget_total
@@ -352,8 +341,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw new RuntimeException('لا يمكن اعتماد المشروع نهائياً قبل وجود نسخة ميزانية سارية ومعتمدة بمبلغ أكبر من صفر.');
             }
 
-            // Keep funding within the approved budget before creating the
-            // final accounting allocation.
             $fundingTotal = (float)(dbFetchOne(
                 "SELECT COALESCE(SUM(amount), 0) AS n
                  FROM project_funding_allocations
@@ -374,8 +361,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $entryId = akp_create_project_approval_journal($id, $project['name'], 0);
 
-                // The GM approval journal is the single accounting release event.
-                // Create one documentary payment-evidence row per approved funding source.
                 $paymentRows = dbFetchAll(
                     "SELECT f.id, f.source_account_id, f.amount, f.currency_code, f.allocation_date, a.code AS source_code
                      FROM project_funding_allocations f
@@ -421,7 +406,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('success', 'تم رفض المشروع نهائياً وإعادته لمدير المشاريع.');
             
         } elseif ($action === 'change_status') {
-            // ... (Original change_status logic preserved exactly)
             $newStatus = akp_post_value('new_status');
             if (!akp_can_edit_section('operations', $id) || $closed) throw new RuntimeException('لا تملك صلاحية تغيير حالة هذا المشروع.');
             if (!in_array($newStatus, ['planned','active','completed','under_review','cancelled'], true)) throw new RuntimeException('الحالة غير صالحة.');
@@ -434,7 +418,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('success', 'تم تحديث حالة المشروع.');
             
         } elseif ($action === 'assign_team') {
-            // ... (Original assign_team logic preserved exactly)
             if (!akp_can_edit_section('team', $id) || $closed) throw new RuntimeException('إدارة فريق المشروع متاحة للإدارة التنفيذية فقط.');
             $userId = (int)($_POST['team_user_id'] ?? 0);
             $section = akp_post_value('team_section');
@@ -446,7 +429,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('success', 'تمت إضافة المستخدم إلى القسم المحدد.');
             
         } elseif ($action === 'unassign_team') {
-            // ... (Original unassign_team logic preserved exactly)
             if (!akp_can_edit_section('team', $id) || $closed) throw new RuntimeException('لا تملك صلاحية إزالة التكليف.');
             $teamId = (int)($_POST['team_id'] ?? 0);
             dbExecute('UPDATE project_team SET unassigned_at = NOW(), unassigned_by = ? WHERE id = ? AND project_id = ?', [akp_user_id(), $teamId, $id]);
@@ -454,7 +436,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('success', 'تمت إزالة تكليف المستخدم.');
             
         } elseif ($action === 'add_budget') {
-            // ... (Original add_budget logic preserved exactly)
             if (!akp_can_prepare_finance($id) || $closed) throw new RuntimeException('إعداد الميزانية قبل المراجعة المالية محصور بمدير المشاريع.');
             $name = akp_post_value('budget_name');
             $lineCategory = akp_post_value('line_category');
@@ -469,7 +450,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('success', 'تم إنشاء نسخة ميزانية وإضافة البند الأول.');
             
         } elseif ($action === 'add_budget_line') {
-            // ... (Original add_budget_line logic preserved exactly)
             if (!akp_can_prepare_finance($id) || $closed) throw new RuntimeException('إعداد بنود الميزانية قبل المراجعة المالية محصور بمدير المشاريع.');
             $budgetId = (int)($_POST['budget_id'] ?? 0);
             $budget = dbFetchOne('SELECT * FROM project_budgets WHERE id = ? AND project_id = ?', [$budgetId, $id]);
@@ -741,7 +721,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('success', 'تم ترحيل تخصيص التمويل بقيد مزدوج متوازن.');
             
         } elseif ($action === 'add_expense') {
-            // ... (Original add_expense logic preserved exactly)
             if (!akp_can_edit_section('finance', $id) || $closed) throw new RuntimeException('لا تملك صلاحية إدخال مصروف.');
             $amount = (float)($_POST['expense_amount'] ?? 0);
             $description = akp_post_value('expense_description');
@@ -758,7 +737,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('success', 'تم حفظ المصروف كمسودة. أرفق المستند ثم أرسله للاعتماد.');
             
         } elseif ($action === 'submit_expense') {
-            // ... (Original submit_expense logic preserved exactly)
             if (!akp_can_edit_section('finance', $id) || $closed) throw new RuntimeException('لا تملك صلاحية إرسال المصروف.');
             $expenseId = (int)($_POST['expense_id'] ?? 0);
             $expense = dbFetchOne('SELECT * FROM project_expenses WHERE id = ? AND project_id = ?', [$expenseId, $id]);
@@ -768,7 +746,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('success', 'تم إرسال المصروف للاعتماد.');
             
         } elseif ($action === 'approve_expense') {
-            // ... (Original approve_expense logic preserved exactly)
             if (!akp_can_edit_section('finance', $id) || $closed) throw new RuntimeException('لا تملك صلاحية اعتماد المصروف.');
             $expenseId = (int)($_POST['expense_id'] ?? 0);
             $expense = dbFetchOne('SELECT * FROM project_expenses WHERE id = ? AND project_id = ?', [$expenseId, $id]);
@@ -778,7 +755,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('success', 'تم اعتماد المصروف ويمكن ترحيله محاسبياً.');
             
         } elseif ($action === 'post_expense') {
-            // ... (Original post_expense logic preserved exactly)
             if (!in_array($role, ['admin', 'accountant', 'general_manager'], true) || $closed) throw new RuntimeException('ترحيل المصروفات محصور بالمحاسب أو المدير العام.');
             $expenseId = (int)($_POST['expense_id'] ?? 0);
             $expense = dbFetchOne('SELECT * FROM project_expenses WHERE id = ? AND project_id = ?', [$expenseId, $id]);
@@ -802,7 +778,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('success', 'تم ترحيل المصروف بقيد مزدوج متوازن.');
             
         } elseif ($action === 'upload_document') {
-            // ... (Original upload_document logic preserved exactly)
             if (!akp_can_edit_section('documents', $id) || $closed) throw new RuntimeException('لا تملك صلاحية إضافة وثائق لهذا المشروع.');
             if (empty($_FILES['document']) || $_FILES['document']['error'] !== UPLOAD_ERR_OK) throw new RuntimeException('فشل في رفع الملف.');
             $file = $_FILES['document'];
@@ -822,7 +797,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('success', 'تم حفظ الوثيقة في التخزين المحمي.');
             
         } elseif ($action === 'verify_document') {
-            // ... (Original verify_document logic preserved exactly)
             if (!akp_can_edit_section('documents', $id) || $closed) throw new RuntimeException('لا تملك صلاحية التحقق من الوثائق.');
             $documentId = (int)($_POST['document_id'] ?? 0);
             $verification = akp_post_value('verification_status');
@@ -836,7 +810,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('success', 'تم تحديث حالة الوثيقة.');
             
         } elseif ($action === 'add_labor') {
-            // ... (Original add_labor logic preserved exactly)
             if ($role !== 'project_supervisor' || (!akp_is_primary_supervisor($id) && !akp_has_project_section($id, 'operations')) || $closed) throw new RuntimeException('إضافة بيانات العمالة الخارجية متاحة لمشرف المشروع المكلّف فقط.');
             $providerType = akp_post_value('labor_provider_type', 'individual');
             $providerName = akp_post_value('labor_provider_name');
@@ -855,7 +828,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('success', 'تم حفظ بيانات العامل/الجهة الخارجية.');
             
         } elseif ($action === 'comment_labor') {
-            // ... (Original comment_labor logic preserved exactly)
             if (!akp_is_executive()) throw new RuntimeException('التعليق الإداري على العمالة الخارجية متاح للإدارة التنفيذية فقط.');
             $laborId = (int)($_POST['labor_id'] ?? 0);
             $comment = akp_post_value('labor_manager_comment');
@@ -866,7 +838,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('success', 'تم حفظ تعليق مدير المشاريع.');
             
         } elseif ($action === 'add_milestone') {
-            // ... (Original add_milestone logic preserved exactly)
             if (!akp_can_edit_section('operations', $id) || $closed) throw new RuntimeException('لا تملك صلاحية إضافة مراحل.');
             $title = akp_post_value('milestone_title');
             if ($title === '') throw new RuntimeException('عنوان المرحلة مطلوب.');
@@ -874,7 +845,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('success', 'تمت إضافة المرحلة.');
             
         } elseif ($action === 'add_progress') {
-            // ... (Original add_progress logic preserved exactly)
             if (!akp_can_edit_section('operations', $id) || $closed) throw new RuntimeException('لا تملك صلاحية إضافة تحديث تشغيلي.');
             $summary = akp_post_value('progress_summary');
             $progressPercentRaw = akp_post_value('progress_percent');
@@ -886,7 +856,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('success', 'تم حفظ تحديث التقدم.');
             
         } elseif ($action === 'add_beneficiary_record') {
-            // ... (Original add_beneficiary_record logic preserved exactly)
             if (!akp_can_edit_section('operations', $id) || $closed) throw new RuntimeException('لا تملك صلاحية إضافة مستفيدين.');
             $beneficiaryName = akp_post_value('record_beneficiary_name');
             $householdCount = (int)($_POST['household_count'] ?? 0);
@@ -898,7 +867,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('success', 'تمت إضافة سجل المستفيد.');
             
         } elseif ($action === 'close_project') {
-            // ... (Original close_project logic preserved exactly)
             if (!akp_can_edit_section('closure', $id) || $closed) throw new RuntimeException('لا تملك صلاحية إغلاق المشروع أو أنه مغلق مسبقاً.');
             $pending = dbFetchOne("SELECT COUNT(*) AS n FROM project_expenses WHERE project_id = ? AND status IN ('draft','submitted','approved')", [$id]);
             if ((int)($pending['n'] ?? 0) > 0) throw new RuntimeException('لا يمكن الإغلاق مع وجود مصروفات غير مرحلة.');
@@ -913,12 +881,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('success', 'تم إغلاق المشروع. لن يستطيع تعديله بعد ذلك إلا المدير العام.');
             
         } elseif ($action === 'reopen_project') {
-            // ... (Original reopen_project logic preserved exactly)
             if (!akp_is_dg()) throw new RuntimeException('إعادة فتح المشروع محصورة بالمدير العام.');
             if (!$closed) throw new RuntimeException('المشروع ليس مغلقاً.');
             $reason = akp_post_value('reopen_reason');
             if ($reason === '') throw new RuntimeException('سبب إعادة الفتح مطلوب.');
-            dbExecute("UPDATE project_lifecycle SET lifecycle_status = 'reopened', reopened_at = NOW(), reopened_by = ?, reopen_reason = ? WHERE project_id = ?", [akp_user_id(), $reason, $id]);
+            dbExecute("UPDATE project_lifecycle SET lifecycle_status = 'reopened', reopened_at = NOW(), reopened_by = ?, reopen_reason = ? WHERE project_id = ?", [$id, $reason, $id]);
             dbExecute("UPDATE other_projects SET status = 'active', updated_by = ? WHERE id = ?", [akp_user_id(), $id]);
             dbExecute("INSERT INTO project_status_history (project_id, old_status, new_status, reason, changed_by) VALUES (?, 'closed', 'reopened', ?, ?)", [$id, $reason, akp_user_id()]);
             akp_audit('REOPEN', 'project_lifecycle', $id, ['status' => 'closed'], ['status' => 'reopened', 'reason' => $reason]);
@@ -941,79 +908,31 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 <link rel="stylesheet" href="<?php echo e(APP_URL . 'assets/css/projects-ui.css'); ?>">
 <style>
 @media (min-width: 992px) {
-    .project-view-main-column {
-        flex: 0 0 80%;
-        max-width: 80%;
-    }
-
-    .project-view-side-column {
-        flex: 0 0 20%;
-        max-width: 20%;
-    }
-
-    .project-finance-card {
-        width: 100%;
-    }
-
-    .project-finance-card .table {
-        width: 100%;
-        table-layout: auto;
-    }
-
-    .project-finance-card .budget-details-row table {
-        width: 100%;
-        table-layout: auto;
-    }
-
-    .project-finance-card th,
-    .project-finance-card td {
-        white-space: normal;
-        word-break: normal;
-        overflow-wrap: anywhere;
-        vertical-align: middle;
-    }
-
-    .project-finance-card .budget-details-row th:nth-child(1) {
-        width: 16%;
-    }
-
-    .project-finance-card .budget-details-row th:nth-child(2) {
-        width: 28%;
-    }
-
-    .project-finance-card .budget-details-row th:nth-child(3),
-    .project-finance-card .budget-details-row th:nth-child(4) {
-        width: 16%;
-    }
-
-    .project-finance-card .budget-details-row th:nth-child(5) {
-        width: 24%;
-    }
+    .project-view-main-column { flex: 0 0 80%; max-width: 80%; }
+    .project-view-side-column { flex: 0 0 20%; max-width: 20%; }
+    .project-finance-card { width: 100%; }
+    .project-finance-card .table { width: 100%; table-layout: auto; }
+    .project-finance-card .budget-details-row table { width: 100%; table-layout: auto; }
+    .project-finance-card th, .project-finance-card td { white-space: normal; word-break: normal; overflow-wrap: anywhere; vertical-align: middle; }
+    .project-finance-card .budget-details-row th:nth-child(1) { width: 16%; }
+    .project-finance-card .budget-details-row th:nth-child(2) { width: 28%; }
+    .project-finance-card .budget-details-row th:nth-child(3), .project-finance-card .budget-details-row th:nth-child(4) { width: 16%; }
+    .project-finance-card .budget-details-row th:nth-child(5) { width: 24%; }
 }
 </style>
 
-
 <div class="project-module-page">
-
 <div class="project-page-banner fade-in">
     <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
         <div>
             <h2><?php echo e($project['name']); ?></h2>
             <p><code><?php echo e($project['project_code'] ?? ''); ?></code> · <?php echo e($project['project_type'] ?? ''); ?> · <span class="badge <?php echo $badge; ?>"><?php echo e(akp_status_label($status)); ?></span> · اعتماد: <span class="badge bg-light text-dark"><?php echo e($approval['approval_status']); ?></span></p>
-            <?php if ($primarySupervisor): ?>
-                <p class="small mb-0"><i class="fas fa-user-tie me-1"></i>مشرف المشروع: <strong><?php echo e($primarySupervisor['full_name']); ?></strong></p>
-            <?php endif; ?>
+            <?php if ($primarySupervisor): ?><p class="small mb-0"><i class="fas fa-user-tie me-1"></i>مشرف المشروع: <strong><?php echo e($primarySupervisor['full_name']); ?></strong></p><?php endif; ?>
         </div>
         <div class="d-flex gap-2">
             <?php if ($role === 'projects_manager' && in_array($approval['approval_status'], ['draft', 'rejected'], true)): ?>
-                <a href="<?php echo e(APP_URL . 'modules/projects/form.php?id=' . $id); ?>" class="btn btn-primary text-white">
-                    <i class="fas fa-edit me-1"></i> تعديل المشروع
-                </a>
-                <form method="post" class="project-action-form d-inline">
-                    <?php echo csrf_field(); ?>
-                    <input type="hidden" name="action" value="submit_project">
-                    <button class="btn btn-primary"><i class="fas fa-paper-plane me-1"></i> إرسال للمدير المالي</button>
-                </form>
+                <a href="<?php echo e(APP_URL . 'modules/projects/form.php?id=' . $id); ?>" class="btn btn-primary text-white"><i class="fas fa-edit me-1"></i> تعديل المشروع</a>
+                <form method="post" class="project-action-form d-inline"><?php echo csrf_field(); ?><input type="hidden" name="action" value="submit_project"><button class="btn btn-primary"><i class="fas fa-paper-plane me-1"></i> إرسال للمدير المالي</button></form>
             <?php endif; ?>
         </div>
     </div>
@@ -1026,968 +945,114 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 <?php elseif ($approval['approval_status'] === 'fm_approved'): ?>
     <div class="alert alert-warning fade-in"><i class="fas fa-clock me-2"></i>تم اعتماد المشروع مالياً. بانتظار الاعتماد النهائي من المدير العام.</div>
 <?php elseif ($approval['approval_status'] === 'rejected'): ?>
-    <div class="alert alert-danger fade-in">
-        <i class="fas fa-exclamation-triangle me-2"></i>تم رفض المشروع.
-        <?php if (!empty($approval['fm_rejection_reason'])): ?>
-            <br><strong>سبب الرفض المالي:</strong> <?php echo e($approval['fm_rejection_reason']); ?>
-        <?php elseif (!empty($approval['rejection_reason'])): ?>
-            <br><strong>سبب الرفض النهائي:</strong> <?php echo e($approval['rejection_reason']); ?>
-        <?php endif; ?>
-    </div>
+    <div class="alert alert-danger fade-in"><i class="fas fa-exclamation-triangle me-2"></i>تم رفض المشروع.<?php if (!empty($approval['fm_rejection_reason'])): ?><br><strong>سبب الرفض المالي:</strong> <?php echo e($approval['fm_rejection_reason']); ?><?php elseif (!empty($approval['rejection_reason'])): ?><br><strong>سبب الرفض النهائي:</strong> <?php echo e($approval['rejection_reason']); ?><?php endif; ?></div>
 <?php endif; ?>
 
 <?php if ($role === 'financial_manager' && $approval['approval_status'] === 'submitted'): ?>
-    <div class="card mb-4 fade-in border-primary">
-        <div class="card-header bg-primary text-white"><i class="fas fa-money-check-alt me-2"></i>مراجعة المدير المالي</div>
-        <div class="card-body">
-            <div class="project-module-note mb-3">راجع الميزانية المعتمدة وتخصيصات التمويل. يجب تحديد حسابات التمويل الفعلية (1100 النقدية، 1200 البنك، 1300 المحفظة الإلكترونية) وتخصيص كامل مبلغ الميزانية قبل الاعتماد.</div>
-            <form method="post" class="project-action-form d-inline">
-                <?php echo csrf_field(); ?>
-                <input type="hidden" name="action" value="fm_approve_project">
-                <button class="btn btn-success" onclick="return confirm('هل أنت متأكد من اعتماد هذا المشروع مالياً؟')"><i class="fas fa-check me-1"></i> اعتماد مالي</button>
-            </form>
-            <form method="post" class="project-action-form d-inline ms-2">
-                <?php echo csrf_field(); ?>
-                <input type="hidden" name="action" value="fm_reject_project">
-                <input type="text" name="rejection_reason" class="form-control d-inline-block" style="width: 300px;" placeholder="سبب الرفض المالي (مطلوب)" required>
-                <button class="btn btn-danger ms-2"><i class="fas fa-times me-1"></i> رفض</button>
-            </form>
-        </div>
-    </div>
+    <div class="card mb-4 fade-in border-primary"><div class="card-header bg-primary text-white"><i class="fas fa-money-check-alt me-2"></i>مراجعة المدير المالي</div><div class="card-body">
+        <div class="project-module-note mb-3">راجع الميزانية المعتمدة وتخصيصات التمويل. يجب تحديد حسابات التمويل الفعلية (1100 النقدية، 1200 البنك، 1300 المحفظة الإلكترونية) وتخصيص كامل مبلغ الميزانية قبل الاعتماد.</div>
+        <form method="post" class="project-action-form d-inline"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_approve_project"><button class="btn btn-success" onclick="return confirm('هل أنت متأكد من اعتماد هذا المشروع مالياً؟')"><i class="fas fa-check me-1"></i> اعتماد مالي</button></form>
+        <form method="post" class="project-action-form d-inline ms-2"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_reject_project"><input type="text" name="rejection_reason" class="form-control d-inline-block" style="width: 300px;" placeholder="سبب الرفض المالي (مطلوب)" required><button class="btn btn-danger ms-2"><i class="fas fa-times me-1"></i> رفض</button></form>
+    </div></div>
 <?php endif; ?>
 
 <?php if ($role === 'financial_manager' && $approval['approval_status'] === 'fm_approved'): ?>
-    <div class="card mb-4 fade-in border-warning">
-        <div class="card-header bg-warning text-dark"><i class="fas fa-rotate-left me-2"></i>استكمال تخصيص التمويل</div>
-        <div class="card-body">
-            <p class="mb-3">هذا المشروع تم اعتماده مالياً قبل تطبيق شرط تخصيص التمويل الصريح. أعده للمراجعة المالية، ثم سجّل حسابات التمويل الفعلية قبل إعادة الاعتماد.</p>
-            <form method="post" class="project-action-form">
-                <?php echo csrf_field(); ?>
-                <input type="hidden" name="action" value="fm_return_to_review">
-                <div class="input-group">
-                    <input type="text" name="return_reason" class="form-control" placeholder="سبب إعادة المراجعة (مطلوب)" required value="استكمال تخصيص حسابات تمويل المشروع">
-                    <button class="btn btn-warning" onclick="return confirm('سيُعاد المشروع إلى مرحلة المراجعة المالية. هل تريد المتابعة؟')"><i class="fas fa-rotate-left me-1"></i> إعادة للمراجعة المالية</button>
-                </div>
-            </form>
-        </div>
-    </div>
+    <div class="card mb-4 fade-in border-warning"><div class="card-header bg-warning text-dark"><i class="fas fa-rotate-left me-2"></i>استكمال تخصيص التمويل</div><div class="card-body">
+        <p class="mb-3">هذا المشروع تم اعتماده مالياً قبل تطبيق شرط تخصيص التمويل الصريح. أعده للمراجعة المالية، ثم سجّل حسابات التمويل الفعلية قبل إعادة الاعتماد.</p>
+        <form method="post" class="project-action-form"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_return_to_review"><div class="input-group"><input type="text" name="return_reason" class="form-control" placeholder="سبب إعادة المراجعة (مطلوب)" required value="استكمال تخصيص حسابات تمويل المشروع"><button class="btn btn-warning" onclick="return confirm('سيُعاد المشروع إلى مرحلة المراجعة المالية. هل تريد المتابعة؟')"><i class="fas fa-rotate-left me-1"></i> إعادة للمراجعة المالية</button></div></form>
+    </div></div>
 <?php endif; ?>
 
 <?php if (in_array($role, ['admin', 'general_manager', 'vice_general_manager'], true) && $approval['approval_status'] === 'fm_approved'): ?>
-    <div class="card mb-4 fade-in border-success">
-        <div class="card-header bg-success text-white"><i class="fas fa-user-tie me-2"></i>اعتماد المدير العام</div>
-        <div class="card-body">
-            <p class="mb-3">المشروع معتمد مالياً. راجع مصادر التمويل والمبالغ المسجلة أدناه، ثم اعتمد نهائياً. سيُنشأ القيد المحاسبي من حسابات التمويل التي اعتمدها المدير المالي فقط.</p>
-            <form method="post" class="project-action-form d-inline">
-                <?php echo csrf_field(); ?>
-                <input type="hidden" name="action" value="approve_project">
-                <button class="btn btn-success" onclick="return confirm('هل أنت متأكد من الاعتماد النهائي وإنشاء القيد المحاسبي؟')"><i class="fas fa-check-double me-1"></i> اعتماد نهائي وإنشاء قيد</button>
-            </form>
-            <form method="post" class="project-action-form d-inline ms-2">
-                <?php echo csrf_field(); ?>
-                <input type="hidden" name="action" value="reject_project">
-                <input type="text" name="rejection_reason" class="form-control d-inline-block" style="width: 300px;" placeholder="سبب الرفض النهائي (مطلوب)" required>
-                <button class="btn btn-danger ms-2"><i class="fas fa-times me-1"></i> رفض</button>
-            </form>
-        </div>
-    </div>
+    <div class="card mb-4 fade-in border-success"><div class="card-header bg-success text-white"><i class="fas fa-user-tie me-2"></i>اعتماد المدير العام</div><div class="card-body">
+        <p class="mb-3">المشروع معتمد مالياً. راجع مصادر التمويل والمبالغ المسجلة أدناه، ثم اعتمد نهائياً. سيُنشأ القيد المحاسبي من حسابات التمويل التي اعتمدها المدير المالي فقط.</p>
+        <form method="post" class="project-action-form d-inline"><?php echo csrf_field(); ?><input type="hidden" name="action" value="approve_project"><button class="btn btn-success" onclick="return confirm('هل أنت متأكد من الاعتماد النهائي وإنشاء القيد المحاسبي؟')"><i class="fas fa-check-double me-1"></i> اعتماد نهائي وإنشاء قيد</button></form>
+        <form method="post" class="project-action-form d-inline ms-2"><?php echo csrf_field(); ?><input type="hidden" name="action" value="reject_project"><input type="text" name="rejection_reason" class="form-control d-inline-block" style="width: 300px;" placeholder="سبب الرفض النهائي (مطلوب)" required><button class="btn btn-danger ms-2"><i class="fas fa-times me-1"></i> رفض</button></form>
+    </div></div>
 <?php endif; ?>
 
-<!-- Rest of the original UI continues exactly as it was -->
 <div class="project-summary-grid mb-4">
-    <div class="project-summary-card">
-        <div class="card text-center">
-            <div class="card-body py-2">
-                <div class="fs-5 fw-bold text-primary"><?php echo akp_money($totals['approved_budget'] ?? 0); ?></div>
-                <div class="text-muted small">الميزانية النهائية</div>
-            </div>
-        </div>
-    </div>
-    <div class="project-summary-card">
-        <div class="card text-center">
-            <div class="card-body py-2">
-                <div class="fs-5 fw-bold text-success"><?php echo akp_money($totals['total_funded'] ?? 0); ?></div>
-                <div class="text-muted small">التمويل المعتمد</div>
-            </div>
-        </div>
-    </div>
-    <div class="project-summary-card">
-        <div class="card text-center">
-            <div class="card-body py-2">
-                <div class="fs-5 fw-bold text-danger"><?php echo akp_money($totals['total_expensed'] ?? 0); ?></div>
-                <div class="text-muted small">المصروفات المرحلة</div>
-            </div>
-        </div>
-    </div>
-    <div class="project-summary-card">
-        <div class="card text-center">
-            <div class="card-body py-2">
-                <div class="fs-5 fw-bold <?php echo $varianceClass; ?>"><?php echo akp_money($totals['variance']); ?></div>
-                <div class="text-muted small">فرق الميزانية</div>
-            </div>
-        </div>
-    </div>
+    <div class="project-summary-card"><div class="card text-center"><div class="card-body py-2"><div class="fs-5 fw-bold text-primary"><?php echo akp_money($totals['approved_budget'] ?? 0); ?></div><div class="text-muted small">الميزانية النهائية</div></div></div></div>
+    <div class="project-summary-card"><div class="card text-center"><div class="card-body py-2"><div class="fs-5 fw-bold text-success"><?php echo akp_money($totals['total_funded'] ?? 0); ?></div><div class="text-muted small">التمويل المعتمد</div></div></div></div>
+    <div class="project-summary-card"><div class="card text-center"><div class="card-body py-2"><div class="fs-5 fw-bold text-danger"><?php echo akp_money($totals['total_expensed'] ?? 0); ?></div><div class="text-muted small">المصروفات المرحلة</div></div></div></div>
+    <div class="project-summary-card"><div class="card text-center"><div class="card-body py-2"><div class="fs-5 fw-bold <?php echo $varianceClass; ?>"><?php echo akp_money($totals['variance']); ?></div><div class="text-muted small">فرق الميزانية</div></div></div></div>
 </div>
 
-<?php if ($status === 'closed'): ?>
-    <div class="alert alert-dark"><strong>المشروع مغلق.</strong> لا يمكن تعديل أي قسم أو إضافة مستندات أو مصروفات. إعادة الفتح متاحة للمدير العام فقط.</div>
-<?php endif; ?>
+<?php if ($status === 'closed'): ?><div class="alert alert-dark"><strong>المشروع مغلق.</strong> لا يمكن تعديل أي قسم أو إضافة مستندات أو مصروفات. إعادة الفتح متاحة للمدير العام فقط.</div><?php endif; ?>
 
 <div class="row g-4 project-view-sections-grid">
     <div class="col-lg-8 project-view-main-column">
-        <div class="card mb-4 fade-in">
-            <div class="card-header"><i class="fas fa-circle-info me-2"></i>ملخص المشروع</div>
-            <div class="card-body">
-                <div class="row g-3 small">
-                    <div class="col-md-6"><strong>الوصف</strong><div><?php echo nl2br(e($project['description'] ?? '—')); ?></div></div>
-                    <div class="col-md-6"><strong>الأهداف</strong><div><?php echo nl2br(e($details['objectives'] ?? '—')); ?></div></div>
-                    <div class="col-md-6"><strong>الموقع</strong><div><?php echo e(implode(' · ', array_filter([$project['location'], $project['city'], $project['district']])) ?: '—'); ?></div></div>
-                    <div class="col-md-6"><strong>الفترة</strong><div><?php echo e(($project['start_date'] ?: '—') . ' → ' . ($project['end_date'] ?: '—')); ?></div></div>
-                    <div class="col-md-6"><strong>النتائج المتوقعة</strong><div><?php echo nl2br(e($details['expected_outcomes'] ?? '—')); ?></div></div>
-                    <div class="col-md-6"><strong>الشريك المنفذ</strong><div><?php echo e($details['implementing_partner'] ?? '—'); ?></div></div>
-                    <div class="col-md-6"><strong>الاستدامة</strong><div><?php echo nl2br(e($details['sustainability_plan'] ?? '—')); ?></div></div>
-                    <div class="col-md-6"><strong>المخاطر والحد منها</strong><div><?php echo nl2br(e($details['risk_mitigation'] ?? '—')); ?></div></div>
-                </div>
-            </div>
-        </div>
+        <div class="card mb-4 fade-in"><div class="card-header"><i class="fas fa-circle-info me-2"></i>ملخص المشروع</div><div class="card-body"><div class="row g-3 small">
+            <div class="col-md-6"><strong>الوصف</strong><div><?php echo nl2br(e($project['description'] ?? '—')); ?></div></div><div class="col-md-6"><strong>الأهداف</strong><div><?php echo nl2br(e($details['objectives'] ?? '—')); ?></div></div><div class="col-md-6"><strong>الموقع</strong><div><?php echo e(implode(' · ', array_filter([$project['location'], $project['city'], $project['district']])) ?: '—'); ?></div></div><div class="col-md-6"><strong>الفترة</strong><div><?php echo e(($project['start_date'] ?: '—') . ' → ' . ($project['end_date'] ?: '—')); ?></div></div><div class="col-md-6"><strong>النتائج المتوقعة</strong><div><?php echo nl2br(e($details['expected_outcomes'] ?? '—')); ?></div></div><div class="col-md-6"><strong>الشريك المنفذ</strong><div><?php echo e($details['implementing_partner'] ?? '—'); ?></div></div><div class="col-md-6"><strong>الاستدامة</strong><div><?php echo nl2br(e($details['sustainability_plan'] ?? '—')); ?></div></div><div class="col-md-6"><strong>المخاطر والحد منها</strong><div><?php echo nl2br(e($details['risk_mitigation'] ?? '—')); ?></div></div>
+        </div></div></div>
 
-        <div class="card mb-4 fade-in">
-            <div class="card-header"><i class="fas fa-people-group me-2"></i>التنفيذ والشركاء والتوريد</div>
-            <div class="card-body">
-                <div class="row g-4">
-                    <div class="col-md-6">
-                        <h6 class="fw-bold">الجهات المنفذة أو الشركاء</h6>
-                        <?php if ($partnerRows): ?>
-                            <?php foreach ($partnerRows as $partner): ?>
-                                <div class="border-bottom py-2 small">
-                                    <strong><?php echo e($partner['partner_name']); ?></strong>
-                                    <?php if (!empty($partner['role_description'])): ?>
-                                        <div class="text-muted"><?php echo e($partner['role_description']); ?></div>
-                                    <?php endif; ?>
-                                </div>
-                            <?php endforeach; ?>
-                        <?php else: ?>
-                            <div class="text-muted small">لا توجد جهات منفذة أو شركاء مسجلون.</div>
-                        <?php endif; ?>
-                    </div>
+        <div class="card mb-4 fade-in"><div class="card-header"><i class="fas fa-people-group me-2"></i>التنفيذ والشركاء والتوريد</div><div class="card-body"><div class="row g-4">
+            <div class="col-md-6"><h6 class="fw-bold">الجهات المنفذة أو الشركاء</h6><?php if ($partnerRows): ?><?php foreach ($partnerRows as $partner): ?><div class="border-bottom py-2 small"><strong><?php echo e($partner['partner_name']); ?></strong><?php if (!empty($partner['role_description'])): ?><div class="text-muted"><?php echo e($partner['role_description']); ?></div><?php endif; ?></div><?php endforeach; ?><?php else: ?><div class="text-muted small">لا توجد جهات منفذة أو شركاء مسجلون.</div><?php endif; ?></div>
+            <div class="col-md-6"><h6 class="fw-bold">طرق الشراء أو التوريد</h6><?php if ($procurementRows): ?><?php foreach ($procurementRows as $procurement): ?><div class="border-bottom py-2 small"><strong><?php echo e($procurement['method_name']); ?></strong><?php if (!empty($procurement['notes'])): ?><div class="text-muted"><?php echo e($procurement['notes']); ?></div><?php endif; ?></div><?php endforeach; ?><?php else; ?><div class="text-muted small">لا توجد طرق شراء أو توريد مسجلة.</div><?php endif; ?></div>
+            <div class="col-md-6"><div class="d-flex justify-content-between align-items-center mb-2"><h6 class="fw-bold mb-0">المتطلبات الحكومية الأولية</h6><?php $governmentFeesTotal = 0.0; foreach ($governmentRequirementRows as $requirement) { $governmentFeesTotal += (float)($requirement['fee_amount'] ?? 0); } ?><?php if ($governmentRequirementRows): ?><span class="small text-muted">إجمالي الرسوم: <strong><?php echo akp_money($governmentFeesTotal); ?> SDG</strong></span><?php endif; ?></div><?php if ($governmentRequirementRows): ?><div class="table-responsive"><table class="table table-sm align-middle mb-0"><thead><tr><th>المتطلب</th><th class="text-nowrap">الرسوم (SDG)</th></tr></thead><tbody><?php foreach ($governmentRequirementRows as $requirement): ?><tr><td><?php echo e($requirement['requirement_text']); ?></td><td class="text-nowrap"><?php echo akp_money($requirement['fee_amount']); ?></td></tr><?php endforeach; ?></tbody></table></div><?php else: ?><div class="text-muted small">لا توجد متطلبات حكومية مسجلة.</div><?php endif; ?></div>
+            <div class="col-md-6"><h6 class="fw-bold">بيانات الاتصال</h6><?php if ($contactRows): ?><?php foreach ($contactRows as $contact): ?><div class="border-bottom py-2 small"><strong><?php echo e($contact['contact_name']); ?></strong><?php if (!empty($contact['role_description'])): ?><div class="text-muted"><?php echo e($contact['role_description']); ?></div><?php endif; ?><?php if (!empty($contact['phone'])): ?><div>الهاتف: <?php echo e($contact['phone']); ?></div><?php endif; ?><?php if (!empty($contact['email'])): ?><div>البريد: <?php echo e($contact['email']); ?></div><?php endif; ?><?php if (!empty($contact['notes'])): ?><div class="text-muted"><?php echo e($contact['notes']); ?></div><?php endif; ?></div><?php endforeach; ?><?php else; ?><div class="text-muted small">لا توجد جهات اتصال مسجلة.</div><?php endif; ?></div>
+        </div></div></div>
 
-                    <div class="col-md-6">
-                        <h6 class="fw-bold">طرق الشراء أو التوريد</h6>
-                        <?php if ($procurementRows): ?>
-                            <?php foreach ($procurementRows as $procurement): ?>
-                                <div class="border-bottom py-2 small">
-                                    <strong><?php echo e($procurement['method_name']); ?></strong>
-                                    <?php if (!empty($procurement['notes'])): ?>
-                                        <div class="text-muted"><?php echo e($procurement['notes']); ?></div>
-                                    <?php endif; ?>
-                                </div>
-                            <?php endforeach; ?>
-                        <?php else: ?>
-                            <div class="text-muted small">لا توجد طرق شراء أو توريد مسجلة.</div>
-                        <?php endif; ?>
-                    </div>
-
-                    <div class="col-md-6">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h6 class="fw-bold mb-0">المتطلبات الحكومية الأولية</h6>
-                            <?php
-                            $governmentFeesTotal = 0.0;
-                            foreach ($governmentRequirementRows as $requirement) {
-                                $governmentFeesTotal += (float)($requirement['fee_amount'] ?? 0);
-                            }
-                            ?>
-                            <?php if ($governmentRequirementRows): ?>
-                                <span class="small text-muted">إجمالي الرسوم: <strong><?php echo akp_money($governmentFeesTotal); ?> SDG</strong></span>
-                            <?php endif; ?>
-                        </div>
-                        <?php if ($governmentRequirementRows): ?>
-                            <div class="table-responsive">
-                                <table class="table table-sm align-middle mb-0">
-                                    <thead>
-                                        <tr>
-                                            <th>المتطلب</th>
-                                            <th class="text-nowrap">الرسوم (SDG)</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php foreach ($governmentRequirementRows as $requirement): ?>
-                                            <tr>
-                                                <td><?php echo e($requirement['requirement_text']); ?></td>
-                                                <td class="text-nowrap"><?php echo akp_money($requirement['fee_amount']); ?></td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                        <?php else: ?>
-                            <div class="text-muted small">لا توجد متطلبات حكومية مسجلة.</div>
-                        <?php endif; ?>
-                    </div>
-
-                    <div class="col-md-6">
-                        <h6 class="fw-bold">بيانات الاتصال</h6>
-                        <?php if ($contactRows): ?>
-                            <?php foreach ($contactRows as $contact): ?>
-                                <div class="border-bottom py-2 small">
-                                    <strong><?php echo e($contact['contact_name']); ?></strong>
-                                    <?php if (!empty($contact['role_description'])): ?>
-                                        <div class="text-muted"><?php echo e($contact['role_description']); ?></div>
-                                    <?php endif; ?>
-                                    <?php if (!empty($contact['phone'])): ?>
-                                        <div>الهاتف: <?php echo e($contact['phone']); ?></div>
-                                    <?php endif; ?>
-                                    <?php if (!empty($contact['email'])): ?>
-                                        <div>البريد: <?php echo e($contact['email']); ?></div>
-                                    <?php endif; ?>
-                                    <?php if (!empty($contact['notes'])): ?>
-                                        <div class="text-muted"><?php echo e($contact['notes']); ?></div>
-                                    <?php endif; ?>
-                                </div>
-                            <?php endforeach; ?>
-                        <?php else: ?>
-                            <div class="text-muted small">لا توجد جهات اتصال مسجلة.</div>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="card mb-4 fade-in">
-            <div class="card-body">
-                <div class="card border-primary mb-4 project-finance-card">
-                    <div class="card-header bg-primary text-white"><i class="fas fa-file-invoice-dollar me-2"></i>الميزانية</div>
-                    <div class="card-body">
+        <div class="card mb-4 fade-in"><div class="card-body">
+            <div class="card border-primary mb-4 project-finance-card"><div class="card-header bg-primary text-white"><i class="fas fa-file-invoice-dollar me-2"></i>الميزانية</div><div class="card-body">
                 <?php if ($approvedBudgetId && in_array((string)$approval['approval_status'], ['submitted', 'rejected'], true) && akp_can_manage_funding($id) && !$closed): ?>
-                    <form method="post" class="project-form-panel" id="projectFundingForm">
-                        <input type="hidden" name="action" value="add_funding">
-                        <?php echo csrf_field(); ?>
-                        <div id="fundingRows">
-                            <div class="funding-row border rounded p-2 mb-2 bg-white">
-                                <div class="row g-2 align-items-end">
-                                    <div class="col-md-5">
-                                        <label class="form-label small">حساب التمويل</label>
-                                        <select name="funding_source_account_id[]" class="form-select form-select-sm" required>
-                                            <option value="">اختر الحساب الذي سيموّل المشروع</option>
-                                            <?php foreach (dbFetchAll("SELECT id, code, name_ar FROM accounts WHERE is_active = 1 AND code IN ('1100','1200','1300') ORDER BY code") as $account): ?>
-                                                <option value="<?php echo (int)$account['id']; ?>"><?php echo e($account['code'] . ' · ' . $account['name_ar']); ?></option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-2">
-                                        <label class="form-label small">المبلغ</label>
-                                        <input type="number" step="0.01" min="0.01" name="funding_amount[]" class="form-control form-control-sm" placeholder="المبلغ" required>
-                                    </div>
-                                    <div class="col-md-2">
-                                        <label class="form-label small">التاريخ</label>
-                                        <input type="date" name="funding_allocation_date[]" class="form-control form-control-sm" value="<?php echo date('Y-m-d'); ?>">
-                                    </div>
-                                    <div class="col-md-2">
-                                        <label class="form-label small">المرجع</label>
-                                        <input name="funding_reference[]" class="form-control form-control-sm" placeholder="المرجع">
-                                    </div>
-                                    <div class="col-md-1 d-flex justify-content-end">
-                                        <button type="button" class="btn btn-sm btn-outline-danger remove-funding-row d-none" title="حذف مصدر التمويل"><i class="fas fa-times"></i></button>
-                                    </div>
-                                    <div class="col-12">
-                                        <input name="funding_description[]" class="form-control form-control-sm" placeholder="الوصف">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="d-flex flex-wrap gap-2 align-items-center">
-                            <button type="button" class="btn btn-sm btn-outline-success" id="addFundingRow"><i class="fas fa-plus me-1"></i> إضافة مصدر تمويل آخر</button>
-                            <span class="small text-muted">يمكن إضافة أكثر من مصدر في نفس العملية، من الصندوق أو البنك أو المحفظة الإلكترونية.</span>
-                        </div>
-                        <div class="mt-2 small">
-                            إجمالي التخصيصات الحالية: <strong><?php echo akp_money(array_sum(array_map('floatval', array_column($fundings, 'amount')))); ?> <?php echo e($project['currency_code'] ?: 'SDG'); ?></strong>
-                        </div>
-                        <div class="col-12 mt-2 small text-muted">يجب أن يساوي مجموع التخصيصات الميزانية المعتمدة قبل الاعتماد المالي.</div>
-                        <div class="col-12 mt-2"><button class="btn btn-sm btn-primary">حفظ تخصيصات التمويل</button></div>
-                    </form>
-                    <script>
-                    document.addEventListener('DOMContentLoaded', function () {
-                        const rows = document.getElementById('fundingRows');
-                        const addButton = document.getElementById('addFundingRow');
-                        if (!rows || !addButton) return;
-
-                        function refreshRemoveButtons() {
-                            const items = rows.querySelectorAll('.funding-row');
-                            items.forEach(function (item) {
-                                const remove = item.querySelector('.remove-funding-row');
-                                if (remove) remove.classList.toggle('d-none', items.length === 1);
-                            });
-                        }
-
-                        addButton.addEventListener('click', function () {
-                            const source = rows.querySelector('.funding-row');
-                            const clone = source.cloneNode(true);
-                            clone.querySelectorAll('input').forEach(function (input) {
-                                if (input.name === 'funding_allocation_date[]') input.value = '<?php echo date('Y-m-d'); ?>';
-                                else input.value = '';
-                            });
-                            clone.querySelectorAll('select').forEach(function (select) { select.selectedIndex = 0; });
-                            rows.appendChild(clone);
-                            refreshRemoveButtons();
-                        });
-
-                        rows.addEventListener('click', function (event) {
-                            const button = event.target.closest('.remove-funding-row');
-                            if (!button) return;
-                            const row = button.closest('.funding-row');
-                            if (row) row.remove();
-                            refreshRemoveButtons();
-                        });
-
-                        refreshRemoveButtons();
-                    });
-                    </script>
+                    <form method="post" class="project-form-panel" id="projectFundingForm"><input type="hidden" name="action" value="add_funding"><?php echo csrf_field(); ?><div id="fundingRows"><div class="funding-row border rounded p-2 mb-2 bg-white"><div class="row g-2 align-items-end"><div class="col-md-5"><label class="form-label small">حساب التمويل</label><select name="funding_source_account_id[]" class="form-select form-select-sm" required><option value="">اختر الحساب الذي سيموّل المشروع</option><?php foreach (dbFetchAll("SELECT id, code, name_ar FROM accounts WHERE is_active = 1 AND code IN ('1100','1200','1300') ORDER BY code") as $account): ?><option value="<?php echo (int)$account['id']; ?>"><?php echo e($account['code'] . ' · ' . $account['name_ar']); ?></option><?php endforeach; ?></select></div><div class="col-md-2"><label class="form-label small">المبلغ</label><input type="number" step="0.01" min="0.01" name="funding_amount[]" class="form-control form-control-sm" placeholder="المبلغ" required></div><div class="col-md-2"><label class="form-label small">التاريخ</label><input type="date" name="funding_allocation_date[]" class="form-control form-control-sm" value="<?php echo date('Y-m-d'); ?>"></div><div class="col-md-2"><label class="form-label small">المرجع</label><input name="funding_reference[]" class="form-control form-control-sm" placeholder="المرجع"></div><div class="col-md-1 d-flex justify-content-end"><button type="button" class="btn btn-sm btn-outline-danger remove-funding-row d-none" title="حذف مصدر التمويل"><i class="fas fa-times"></i></button></div><div class="col-12"><input name="funding_description[]" class="form-control form-control-sm" placeholder="الوصف"></div></div></div></div><div class="d-flex flex-wrap gap-2 align-items-center"><button type="button" class="btn btn-sm btn-outline-success" id="addFundingRow"><i class="fas fa-plus me-1"></i> إضافة مصدر تمويل آخر</button><span class="small text-muted">يمكن إضافة أكثر من مصدر في نفس العملية، من الصندوق أو البنك أو المحفظة الإلكترونية.</span></div><div class="mt-2 small">إجمالي التخصيصات الحالية: <strong><?php echo akp_money(array_sum(array_map('floatval', array_column($fundings, 'amount')))); ?> <?php echo e($project['currency_code'] ?: 'SDG'); ?></strong></div><div class="col-12 mt-2 small text-muted">يجب أن يساوي مجموع التخصيصات الميزانية المعتمدة قبل الاعتماد المالي.</div><div class="col-12 mt-2"><button class="btn btn-sm btn-primary">حفظ تخصيصات التمويل</button></div></form>
+                    <script>document.addEventListener('DOMContentLoaded', function () { const rows = document.getElementById('fundingRows'); const addButton = document.getElementById('addFundingRow'); if (!rows || !addButton) return; function refreshRemoveButtons() { const items = rows.querySelectorAll('.funding-row'); items.forEach(function (item) { const remove = item.querySelector('.remove-funding-row'); if (remove) remove.classList.toggle('d-none', items.length === 1); }); } addButton.addEventListener('click', function () { const source = rows.querySelector('.funding-row'); const clone = source.cloneNode(true); clone.querySelectorAll('input').forEach(function (input) { if (input.name === 'funding_allocation_date[]') input.value = '<?php echo date('Y-m-d'); ?>'; else input.value = ''; }); clone.querySelectorAll('select').forEach(function (select) { select.selectedIndex = 0; }); rows.appendChild(clone); refreshRemoveButtons(); }); rows.addEventListener('click', function (event) { const button = event.target.closest('.remove-funding-row'); if (!button) return; const row = button.closest('.funding-row'); if (row) row.remove(); refreshRemoveButtons(); }); refreshRemoveButtons(); });</script>
                 <?php endif; ?>
-
-                <div class="table-responsive mt-3">
-                    <table class="table table-sm">
-                        <thead><tr><th>النسخة</th><th>الاسم</th><th>عدد البنود</th><th>الإجمالي</th><th>الحالة</th><th>إجراء</th></tr></thead>
-                        <tbody>
-                            <?php foreach ($budgets as $budget): ?>
-                                <tr>
-                                    <td><?php echo (int)$budget['version_no']; ?></td>
-                                    <td><?php echo e($budget['budget_name']); ?></td>
-                                    <td><?php echo (int)$budget['line_count']; ?></td>
-                                    <td><?php echo number_format((float)$budget['line_total'], 2) . ' ' . e($budget['currency_code']); ?></td>
-                                    <td><span class="badge <?php echo $budget['status'] === 'approved' ? 'bg-success' : ($budget['status'] === 'superseded' ? 'bg-secondary' : 'bg-warning text-dark'); ?>"><?php echo e($budget['status']); ?></span></td>
-                                    <td></td>
-                                </tr>
-                                <tr class="budget-details-row">
-                                    <td colspan="6" class="bg-light">
-                                        <?php $budgetLines = $budgetLinesByBudgetId[(int)$budget['id']] ?? []; ?>
-                                        <?php if ($budgetLines): ?>
-                                            <div class="small fw-bold mb-2">تفاصيل الميزانية</div>
-                                            <div class="table-responsive">
-                                                <table class="table table-sm table-bordered align-middle mb-0 bg-white">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>الفئة</th>
-                                                            <th>الوصف</th>
-                                                            <th>المبلغ التقديري</th>
-                                                            <th>المبلغ المعتمد</th>
-                                                            <th>ملاحظات</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        <?php foreach ($budgetLines as $budgetLine): ?>
-                                                            <tr>
-                                                                <td><?php echo e($budgetLine['category']); ?></td>
-                                                                <td><?php echo e($budgetLine['description']); ?></td>
-                                                                <td><?php echo akp_money($budgetLine['estimated_amount']); ?></td>
-                                                                <td><?php echo $budgetLine['approved_amount'] !== null ? akp_money($budgetLine['approved_amount']) : '<span class="text-muted">—</span>'; ?></td>
-                                                                <td><?php echo !empty($budgetLine['notes']) ? nl2br(e($budgetLine['notes'])) : '<span class="text-muted">—</span>'; ?></td>
-                                                            </tr>
-                                                        <?php endforeach; ?>
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        <?php else: ?>
-                                            <div class="text-muted small">لا توجد بنود تفصيلية لهذه النسخة.</div>
-                                        <?php endif; ?>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                            <?php if (!$budgets): ?><tr><td colspan="6" class="text-center text-muted">لا توجد نسخ ميزانية.</td></tr><?php endif; ?>
-                        </tbody>
-                    </table>
-                </div>
-
-                    </div>
-                </div>
-
-                <div class="card border-success mb-0 project-finance-card">
-                    <div class="card-header bg-success text-white"><i class="fas fa-money-bill-transfer me-2"></i>تخصيص التمويل</div>
-                    <div class="card-body">
-                <?php if ($role === 'financial_manager' && $approval['approval_status'] === 'submitted' && !$closed): ?>
-                    <div class="alert alert-info small mb-3">
-                        <i class="fas fa-eye me-1"></i>
-                        تم إعداد تخصيصات التمويل قبل الإرسال. دور المدير المالي هنا هو المراجعة المالية والاعتماد أو الرفض، دون تعديل بيانات التمويل.
-                    </div>
-                <?php endif; ?>
-
-                <div class="table-responsive">
-                    <table class="table table-sm">
-                        <thead><tr><th>التاريخ</th><th>حساب التمويل</th><th>المبلغ</th><th>المرجع/الوصف</th><th>الحالة</th><th></th></tr></thead>
-                        <tbody>
-                            <?php foreach ($fundings as $funding): ?>
-                                <tr>
-                                    <td><?php echo e($funding['allocation_date']); ?></td>
-                                    <td><?php echo e((string)($funding['source_account_code'] ?? $funding['source_type'])); ?> · <?php echo e((string)($funding['source_account_name'] ?? '')); ?></td>
-                                    <td><?php echo akp_money($funding['amount']); ?></td>
-                                    <td><small><?php echo e((string)($funding['reference_number'] ?? '')); ?><?php if (!empty($funding['description'])): ?><br><?php echo e((string)$funding['description']); ?><?php endif; ?></small></td>
-                                    <td><?php echo e($funding['status']); ?></td>
-                                    <td>
-                                        <?php if (in_array((string)$approval['approval_status'], ['submitted', 'rejected'], true) && akp_can_manage_funding($id) && !$closed): ?>
-                                            <button type="button" class="btn btn-sm btn-outline-primary"
-                                                    data-bs-toggle="modal" data-bs-target="#editFundingModal"
-                                                    data-id="<?php echo (int)$funding['id']; ?>"
-                                                    data-source-account="<?php echo (int)$funding['source_account_id']; ?>"
-                                                    data-amount="<?php echo e((string)$funding['amount']); ?>"
-                                                    data-date="<?php echo e((string)$funding['allocation_date']); ?>"
-                                                    data-reference="<?php echo e((string)($funding['reference_number'] ?? '')); ?>"
-                                                    data-description="<?php echo e((string)($funding['description'] ?? '')); ?>">
-                                                <i class="fas fa-edit"></i> تعديل
-                                            </button>
-                                            <form method="post" class="project-action-form d-inline" onsubmit="return confirm('هل أنت متأكد من حذف تخصيص التمويل هذا؟');">
-                                                <?php echo csrf_field(); ?>
-                                                <input type="hidden" name="action" value="delete_funding">
-                                                <input type="hidden" name="allocation_id" value="<?php echo (int)$funding['id']; ?>">
-                                                <button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i> حذف</button>
-                                            </form>
-                                        <?php endif; ?>
-                                    </td>
-                                </tr>
-                            <?php endforeach; if (!$fundings): ?>
-                                <tr><td colspan="6" class="text-center text-muted">لا توجد تخصيصات تمويل مسجلة بعد.</td></tr>
-                            <?php endif; ?>
-                        </tbody>
-                    </table>
-                </div>
-
-                <?php if (in_array((string)$approval['approval_status'], ['submitted', 'rejected'], true) && akp_can_manage_funding($id) && !$closed): ?>
-                    <div class="modal fade" id="editFundingModal" tabindex="-1" aria-hidden="true">
-                        <div class="modal-dialog modal-lg modal-dialog-centered">
-                            <div class="modal-content">
-                                <form method="post">
-                                    <?php echo csrf_field(); ?>
-                                    <input type="hidden" name="action" value="edit_funding">
-                                    <input type="hidden" name="allocation_id" id="editFundingId">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title"><i class="fas fa-edit me-2"></i>تعديل تخصيص التمويل</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <?php if ($approval['approval_status'] === 'approved'): ?>
-                                            <div class="alert alert-warning small">
-                                                <i class="fas fa-calculator me-1"></i>
-                                                هذا المشروع معتمد من المدير العام. عند حفظ التعديل سيتم عكس قيد الاعتماد السابق وإنشاء قيد جديد بالقيمة الصحيحة تلقائياً.
-                                            </div>
-                                        <?php endif; ?>
-                                        <div class="row g-2">
-                                            <div class="col-md-6">
-                                                <label class="form-label small">حساب المصدر</label>
-                                                <select name="source_account_id" id="editFundingSourceAccount" class="form-select form-select-sm" required>
-                                                    <option value="">اختر حساب التمويل</option>
-                                                    <?php foreach (dbFetchAll("SELECT id, code, name_ar FROM accounts WHERE is_active = 1 AND code IN ('1100','1200','1300') ORDER BY code") as $account): ?>
-                                                        <option value="<?php echo (int)$account['id']; ?>"><?php echo e($account['code'] . ' · ' . $account['name_ar']); ?></option>
-                                                    <?php endforeach; ?>
-                                                </select>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label small">المبلغ</label>
-                                                <input type="number" step="0.01" min="0.01" name="funding_amount" id="editFundingAmount" class="form-control form-control-sm" required>
-                                            </div>
-                                            <div class="col-md-4">
-                                                <label class="form-label small">تاريخ التخصيص</label>
-                                                <input type="date" name="allocation_date" id="editFundingDate" class="form-control form-control-sm" required>
-                                            </div>
-                                            <div class="col-md-4">
-                                                <label class="form-label small">المرجع</label>
-                                                <input name="funding_reference" id="editFundingReference" class="form-control form-control-sm">
-                                            </div>
-                                            <div class="col-md-4">
-                                                <label class="form-label small">الوصف</label>
-                                                <input name="funding_description" id="editFundingDescription" class="form-control form-control-sm">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
-                                        <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i> حفظ التعديل</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                    <script>
-                    document.addEventListener('DOMContentLoaded', function () {
-                        var modal = document.getElementById('editFundingModal');
-                        if (!modal) return;
-                        modal.addEventListener('show.bs.modal', function (event) {
-                            var button = event.relatedTarget;
-                            document.getElementById('editFundingId').value = button.getAttribute('data-id') || '';
-                            document.getElementById('editFundingSourceAccount').value = button.getAttribute('data-source-account') || '';
-                            document.getElementById('editFundingAmount').value = button.getAttribute('data-amount') || '';
-                            document.getElementById('editFundingDate').value = button.getAttribute('data-date') || '';
-                            document.getElementById('editFundingReference').value = button.getAttribute('data-reference') || '';
-                            document.getElementById('editFundingDescription').value = button.getAttribute('data-description') || '';
-                        });
-                    });
-                    </script>
-                <?php endif; ?>
-                    </div>
-                </div>
-            </div>
+                <div class="table-responsive mt-3"><table class="table table-sm"><thead><tr><th>النسخة</th><th>الاسم</th><th>عدد البنود</th><th>الإجمالي</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody><?php foreach ($budgets as $budget): ?><tr><td><?php echo (int)$budget['version_no']; ?></td><td><?php echo e($budget['budget_name']); ?></td><td><?php echo (int)$budget['line_count']; ?></td><td><?php echo number_format((float)$budget['line_total'], 2) . ' ' . e($budget['currency_code']); ?></td><td><span class="badge <?php echo $budget['status'] === 'approved' ? 'bg-success' : ($budget['status'] === 'superseded' ? 'bg-secondary' : 'bg-warning text-dark'); ?>"><?php echo e($budget['status']); ?></span></td><td></td></tr><tr class="budget-details-row"><td colspan="6" class="bg-light"><?php $budgetLines = $budgetLinesByBudgetId[(int)$budget['id']] ?? []; ?><?php if ($budgetLines): ?><div class="small fw-bold mb-2">تفاصيل الميزانية</div><div class="table-responsive"><table class="table table-sm table-bordered align-middle mb-0 bg-white"><thead><tr><th>الفئة</th><th>الوصف</th><th>المبلغ التقديري</th><th>المبلغ المعتمد</th><th>ملاحظات</th></tr></thead><tbody><?php foreach ($budgetLines as $budgetLine): ?><tr><td><?php echo e($budgetLine['category']); ?></td><td><?php echo e($budgetLine['description']); ?></td><td><?php echo akp_money($budgetLine['estimated_amount']); ?></td><td><?php echo $budgetLine['approved_amount'] !== null ? akp_money($budgetLine['approved_amount']) : '<span class="text-muted">—</span>'; ?></td><td><?php echo !empty($budgetLine['notes']) ? nl2br(e($budgetLine['notes'])) : '<span class="text-muted">—</span>'; ?></td></tr><?php endforeach; ?></tbody></table></div><?php else: ?><div class="text-muted small">لا توجد بنود تفصيلية لهذه النسخة.</div><?php endif; ?></td></tr><?php endforeach; ?><?php if (!$budgets): ?><tr><td colspan="6" class="text-center text-muted">لا توجد نسخ ميزانية.</td></tr><?php endif; ?></tbody></table></div>
+            </div></div>
+            <div class="card border-success mb-0 project-finance-card"><div class="card-header bg-success text-white"><i class="fas fa-money-bill-transfer me-2"></i>تخصيص التمويل</div><div class="card-body">
+                <?php if ($role === 'financial_manager' && $approval['approval_status'] === 'submitted' && !$closed): ?><div class="alert alert-info small mb-3"><i class="fas fa-eye me-1"></i>تم إعداد تخصيصات التمويل قبل الإرسال. دور المدير المالي هنا هو المراجعة المالية والاعتماد أو الرفض، دون تعديل بيانات التمويل.</div><?php endif; ?>
+                <div class="table-responsive"><table class="table table-sm"><thead><tr><th>التاريخ</th><th>حساب التمويل</th><th>المبلغ</th><th>المرجع/الوصف</th><th>الحالة</th><th></th></tr></thead><tbody><?php foreach ($fundings as $funding): ?><tr><td><?php echo e($funding['allocation_date']); ?></td><td><?php echo e((string)($funding['source_account_code'] ?? $funding['source_type'])); ?> · <?php echo e((string)($funding['source_account_name'] ?? '')); ?></td><td><?php echo akp_money($funding['amount']); ?></td><td><small><?php echo e(implode(' · ', array_filter([(string)($funding['reference_number'] ?? ''), (string)($funding['description'] ?? '')]))); ?></small></td><td><?php echo e($funding['status']); ?></td><td><?php if (in_array((string)$approval['approval_status'], ['submitted', 'rejected'], true) && akp_can_manage_funding($id) && !$closed): ?><button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editFundingModal" data-id="<?php echo (int)$funding['id']; ?>" data-source-account="<?php echo (int)$funding['source_account_id']; ?>" data-amount="<?php echo e((string)$funding['amount']); ?>" data-date="<?php echo e((string)$funding['allocation_date']); ?>" data-reference="<?php echo e((string)($funding['reference_number'] ?? '')); ?>" data-description="<?php echo e((string)($funding['description'] ?? '')); ?>"><i class="fas fa-edit"></i> تعديل</button><form method="post" class="project-action-form d-inline" onsubmit="return confirm('هل أنت متأكد من حذف تخصيص التمويل هذا؟');"><?php echo csrf_field(); ?><input type="hidden" name="action" value="delete_funding"><input type="hidden" name="allocation_id" value="<?php echo (int)$funding['id']; ?>"><button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i> حذف</button></form><?php endif; ?></td></tr><?php endforeach; ?><?php if (!$fundings): ?><tr><td colspan="6" class="text-center text-muted">لا توجد تخصيصات تمويل مسجلة بعد.</td></tr><?php endif; ?></tbody></table></div>
+                <?php if (in_array((string)$approval['approval_status'], ['submitted', 'rejected'], true) && akp_can_manage_funding($id) && !$closed): ?><div class="modal fade" id="editFundingModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-lg modal-dialog-centered"><div class="modal-content"><form method="post"><?php echo csrf_field(); ?><input type="hidden" name="action" value="edit_funding"><input type="hidden" name="allocation_id" id="editFundingId"><div class="modal-header"><h5 class="modal-title"><i class="fas fa-edit me-2"></i>تعديل تخصيص التمويل</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button></div><div class="modal-body"><div class="row g-2"><div class="col-md-6"><label class="form-label small">حساب المصدر</label><select name="source_account_id" id="editFundingSourceAccount" class="form-select form-select-sm" required><option value="">اختر حساب التمويل</option><?php foreach (dbFetchAll("SELECT id, code, name_ar FROM accounts WHERE is_active = 1 AND code IN ('1100','1200','1300') ORDER BY code") as $account): ?><option value="<?php echo (int)$account['id']; ?>"><?php echo e($account['code'] . ' · ' . $account['name_ar']); ?></option><?php endforeach; ?></select></div><div class="col-md-6"><label class="form-label small">المبلغ</label><input type="number" step="0.01" min="0.01" name="funding_amount" id="editFundingAmount" class="form-control form-control-sm" required></div><div class="col-md-4"><label class="form-label small">تاريخ التخصيص</label><input type="date" name="allocation_date" id="editFundingDate" class="form-control form-control-sm" required></div><div class="col-md-4"><label class="form-label small">المرجع</label><input name="funding_reference" id="editFundingReference" class="form-control form-control-sm"></div><div class="col-md-4"><label class="form-label small">الوصف</label><input name="funding_description" id="editFundingDescription" class="form-control form-control-sm"></div></div></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button><button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i> حفظ التعديل</button></div></form></div></div></div><script>document.addEventListener('DOMContentLoaded', function () { var modal = document.getElementById('editFundingModal'); if (!modal) return; modal.addEventListener('show.bs.modal', function (event) { var button = event.relatedTarget; document.getElementById('editFundingId').value = button.getAttribute('data-id') || ''; document.getElementById('editFundingSourceAccount').value = button.getAttribute('data-source-account') || ''; document.getElementById('editFundingAmount').value = button.getAttribute('data-amount') || ''; document.getElementById('editFundingDate').value = button.getAttribute('data-date') || ''; document.getElementById('editFundingReference').value = button.getAttribute('data-reference') || ''; document.getElementById('editFundingDescription').value = button.getAttribute('data-description') || ''; }); });</script><?php endif; ?>
+            </div></div>
         </div>
 
-        <?php if ($approval['approval_status'] === 'approved'): ?>
-        <div class="card mb-4 fade-in border-success">
-            <div class="card-header bg-success text-white"><i class="fas fa-money-check-dollar me-2"></i>إثبات صرف تمويل المشروع</div>
-            <div class="card-body">
-                <div class="alert alert-light border">بعد اعتماد المدير العام أصبح صرف التمويل موثقاً محاسبياً. المدير المالي يستكمل مستند الصرف: سند صرف مطبوع للنقد، أو إيصال التحويل/المحفظة الإلكترونية. مدير المشاريع يستطيع الاطلاع على المستندات قبل بدء التنفيذ الفعلي.</div>
-                <div class="table-responsive">
-                    <table class="table table-sm align-middle">
-                        <thead><tr><th>حساب التمويل</th><th>طريقة الدفع</th><th>المبلغ</th><th>المرجع</th><th>المستند</th></tr></thead>
-                        <tbody>
-                        <?php if ($paymentEvidence): ?>
-                            <?php foreach ($paymentEvidence as $payment): ?>
-                                <?php $paymentMethodLabels = ['cash' => 'نقدي', 'bank_transfer' => 'تحويل بنكي', 'e_wallet' => 'محفظة إلكترونية']; $methodLabel = $paymentMethodLabels[$payment['payment_method']] ?? $payment['payment_method']; ?>
-                                <tr>
-                                    <td><?php echo e(($payment['source_account_code'] ?? '') . ' · ' . ($payment['source_account_name'] ?? '')); ?></td>
-                                    <td><?php echo e($methodLabel); ?></td>
-                                    <td><?php echo number_format((float)$payment['amount'], 2) . ' ' . e($payment['currency_code'] ?: ($project['currency_code'] ?: 'SDG')); ?></td>
-                                    <td><?php echo !empty($payment['reference_number']) ? e($payment['reference_number']) : '<span class="text-muted">—</span>'; ?></td>
-                                    <td class="text-nowrap">
-                                        <?php if ($payment['payment_method'] === 'cash' && $payment['status'] === 'documented'): ?>
-                                            <a class="btn btn-sm btn-outline-primary" target="_blank" href="<?php echo APP_URL; ?>modules/accounting/voucher_print.php?project_payment_id=<?php echo (int)$payment['id']; ?>"><i class="fas fa-print me-1"></i>طباعة سند الصرف</a>
-                                        <?php elseif ($payment['payment_method'] !== 'cash' && !empty($payment['receipt_file_path'])): ?>
-                                            <a class="btn btn-sm btn-outline-primary" target="_blank" href="<?php echo APP_URL; ?>modules/projects/project_payment_receipt.php?id=<?php echo (int)$payment['id']; ?>"><i class="fas fa-paperclip me-1"></i>عرض الإيصال</a>
-                                        <?php else: ?>
-                                            <span class="text-muted"><?php echo $payment['payment_method'] === 'cash' ? 'بانتظار سند الصرف' : 'بانتظار إيصال التحويل'; ?></span>
-                                        <?php endif; ?>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        <?php else: ?>
-                            <tr><td colspan="5" class="text-center text-muted">لا توجد سجلات صرف مرتبطة بتخصيصات التمويل بعد.</td></tr>
-                        <?php endif; ?>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-        <?php endif; ?>
+        <?php if ($approval['approval_status'] === 'approved'): ?><div class="card mb-4 fade-in border-success"><div class="card-header bg-success text-white"><i class="fas fa-money-check-dollar me-2"></i>إثبات صرف تمويل المشروع</div><div class="card-body"><div class="alert alert-light border">بعد اعتماد المدير العام أصبح صرف التمويل موثقاً محاسبياً. المدير المالي يستكمل مستند الصرف: سند صرف مطبوع للنقد، أو إيصال التحويل/المحفظة الإلكترونية. مدير المشاريع يستطيع الاطلاع على المستندات قبل بدء التنفيذ الفعلي.</div><div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>حساب التمويل</th><th>طريقة الدفع</th><th>المبلغ</th><th>المرجع</th><th>المستند</th></tr></thead><tbody><?php if ($paymentEvidence): ?><?php foreach ($paymentEvidence as $payment): ?><?php $paymentMethodLabels = ['cash' => 'نقدي', 'bank_transfer' => 'تحويل بنكي', 'e_wallet' => 'محفظة إلكترونية']; $methodLabel = $paymentMethodLabels[$payment['payment_method']] ?? $payment['payment_method']; ?><tr><td><?php echo e(($payment['source_account_code'] ?? '') . ' · ' . ($payment['source_account_name'] ?? '')); ?></td><td><?php echo e($methodLabel); ?></td><td><?php echo number_format((float)$payment['amount'], 2) . ' ' . e($payment['currency_code'] ?: ($project['currency_code'] ?: 'SDG')); ?></td><td><?php echo !empty($payment['reference_number']) ? e($payment['reference_number']) : '<span class="text-muted">—</span>'; ?></td><td class="text-nowrap"><?php if ($payment['payment_method'] === 'cash' && $payment['status'] === 'documented'): ?><a class="btn btn-sm btn-outline-primary" target="_blank" href="<?php echo APP_URL; ?>modules/accounting/voucher_print.php?project_payment_id=<?php echo (int)$payment['id']; ?>"><i class="fas fa-print me-1"></i>طباعة سند الصرف</a><?php elseif ($payment['payment_method'] !== 'cash' && !empty($payment['receipt_file_path'])): ?><a class="btn btn-sm btn-outline-primary" target="_blank" href="<?php echo APP_URL; ?>modules/projects/project_payment_receipt.php?id=<?php echo (int)$payment['id']; ?>"><i class="fas fa-paperclip me-1"></i>عرض الإيصال</a><?php else: ?><span class="text-muted"><?php echo $payment['payment_method'] === 'cash' ? 'بانتظار سند الصرف' : 'بانتظار إيصال التحويل'; ?></span><?php endif; ?></td></tr><?php endforeach; ?><?php else: ?><tr><td colspan="5" class="text-center text-muted">لا توجد سجلات صرف مرتبطة بتخصيصات التمويل بعد.</td></tr><?php endif; ?></tbody></table></div></div></div><?php endif; ?>
 
-        <?php if ($approval['approval_status'] === 'approved'): ?>
-<div class="card mb-4 fade-in">
-            <div class="card-header"><i class="fas fa-receipt me-2"></i>المصروفات</div>
-            <div class="card-body">
-                <?php if (akp_can_edit_section('finance', $id) && !$closed): ?>
-                    <form method="post" class="project-form-panel">
-                        <input type="hidden" name="action" value="add_expense">
-                        <?php echo csrf_field(); ?>
-                        <div class="row g-2">
-                            <div class="col-md-2"><input type="date" name="expense_date" class="form-control form-control-sm" value="<?php echo date('Y-m-d'); ?>"></div>
-                            <div class="col-md-2"><input name="expense_category" class="form-control form-control-sm" placeholder="الفئة" required></div>
-                            <div class="col-md-2"><input type="number" step="0.01" min="0.01" name="expense_amount" class="form-control form-control-sm" placeholder="المبلغ" required></div>
-                            <div class="col-md-6"><input name="expense_description" class="form-control form-control-sm" placeholder="وصف المصروف *" required></div>
-                            <div class="col-md-3"><input name="vendor_name" class="form-control form-control-sm" placeholder="اسم المورد"></div>
-                            <div class="col-md-3"><input name="invoice_number" class="form-control form-control-sm" placeholder="رقم الفاتورة"></div>
-                            <div class="col-md-3"><input name="government_fee_type" class="form-control form-control-sm" placeholder="نوع الرسم الحكومي"></div>
-                            <div class="col-md-3"><input name="transaction_reference" class="form-control form-control-sm" placeholder="مرجع الدفع"></div>
-                            <div class="col-md-6">
-                                <select name="expense_account_id" class="form-select form-select-sm" required>
-                                    <option value="">حساب المصروف *</option>
-                                    <?php foreach (dbFetchAll('SELECT id, code, name_ar FROM accounts WHERE is_active = 1 ORDER BY code') as $account): ?>
-                                        <option value="<?php echo (int)$account['id']; ?>"><?php echo e($account['code'] . ' · ' . $account['name_ar']); ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <select name="payment_account_id" class="form-select form-select-sm" required>
-                                    <option value="">حساب الدفع *</option>
-                                    <?php foreach (dbFetchAll('SELECT id, code, name_ar FROM accounts WHERE is_active = 1 ORDER BY code') as $account): ?>
-                                        <option value="<?php echo (int)$account['id']; ?>"><?php echo e($account['code'] . ' · ' . $account['name_ar']); ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <select name="primary_document_id" class="form-select form-select-sm">
-                                    <option value="">إيصال/مستند المصروف (اختياري)</option>
-                                    <?php foreach ($documents as $doc): ?>
-                                        <option value="<?php echo (int)$doc['id']; ?>"><?php echo e($doc['title']); ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                            <div class="col-12"><button class="btn btn-sm btn-primary">حفظ المصروف</button></div>
-                        </div>
-                    </form>
-                <?php endif; ?>
+        <?php if ($approval['approval_status'] === 'approved'): ?><div class="card mb-4 fade-in"><div class="card-header"><i class="fas fa-receipt me-2"></i>المصروفات</div><div class="card-body">
+                <?php if (akp_can_edit_section('finance', $id) && !$closed): ?><form method="post" class="project-form-panel"><input type="hidden" name="action" value="add_expense"><?php echo csrf_field(); ?><div class="row g-2"><div class="col-md-2"><input type="date" name="expense_date" class="form-control form-control-sm" value="<?php echo date('Y-m-d'); ?>"></div><div class="col-md-2"><input name="expense_category" class="form-control form-control-sm" placeholder="الفئة" required></div><div class="col-md-2"><input type="number" step="0.01" min="0.01" name="expense_amount" class="form-control form-control-sm" placeholder="المبلغ" required></div><div class="col-md-6"><input name="expense_description" class="form-control form-control-sm" placeholder="وصف المصروف *" required></div><div class="col-md-3"><input name="vendor_name" class="form-control form-control-sm" placeholder="اسم المورد"></div><div class="col-md-3"><input name="invoice_number" class="form-control form-control-sm" placeholder="رقم الفاتورة"></div><div class="col-md-3"><input name="government_fee_type" class="form-control form-control-sm" placeholder="نوع الرسم الحكومي"></div><div class="col-md-3"><input name="transaction_reference" class="form-control form-control-sm" placeholder="مرجع الدفع"></div><div class="col-md-6"><select name="expense_account_id" class="form-select form-select-sm" required><option value="">حساب المصروف *</option><?php foreach (dbFetchAll('SELECT id, code, name_ar FROM accounts WHERE is_active = 1 ORDER BY code') as $account): ?><option value="<?php echo (int)$account['id']; ?>"><?php echo e($account['code'] . ' · ' . $account['name_ar']); ?></option><?php endforeach; ?></select></div><div class="col-md-6"><select name="payment_account_id" class="form-select form-select-sm" required><option value="">حساب الدفع *</option><?php foreach (dbFetchAll('SELECT id, code, name_ar FROM accounts WHERE is_active = 1 ORDER BY code') as $account): ?><option value="<?php echo (int)$account['id']; ?>"><?php echo e($account['code'] . ' · ' . $account['name_ar']); ?></option><?php endforeach; ?></select></div><div class="col-md-6"><select name="primary_document_id" class="form-select form-select-sm"><option value="">إيصال/مستند المصروف (اختياري)</option><?php foreach ($documents as $doc): ?><option value="<?php echo (int)$doc['id']; ?>"><?php echo e($doc['title']); ?></option><?php endforeach; ?></select></div><div class="col-12"><button class="btn btn-sm btn-primary">حفظ المصروف</button></div></div></form><?php endif; ?>
+                <div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>التاريخ</th><th>الوصف</th><th>المورد/الفاتورة</th><th>المبلغ</th><th>الحالة</th><th>القيد</th><th></th></tr></thead><tbody><?php foreach ($expenses as $expense): ?><tr><td><?php echo e($expense['expense_date']); ?></td><td><?php echo e($expense['description']); ?><?php if ($expense['government_fee_type']): ?><br><small class="text-muted">رسم: <?php echo e($expense['government_fee_type']); ?></small><?php endif; ?></td><td><?php echo e($expense['vendor_name'] ?: '—'); ?><br><small><?php echo e($expense['invoice_number'] ?: ''); ?></small></td><td><?php echo akp_money($expense['amount']); ?></td><td><span class="badge bg-<?php echo $expense['status'] === 'posted' ? 'dark' : ($expense['status'] === 'approved' ? 'success' : 'warning'); ?>"><?php echo e($expense['status']); ?></span></td><td><small class="text-muted"><?php echo e($expense['entry_code'] ?: '—'); ?></small></td><td><?php if ($expense['status'] === 'draft' && akp_can_edit_section('finance', $id) && !$closed): ?><form method="post" class="project-action-form d-inline"><?php echo csrf_field(); ?><input type="hidden" name="action" value="submit_expense"><input type="hidden" name="expense_id" value="<?php echo (int)$expense['id']; ?>"><button class="btn btn-sm btn-outline-primary">إرسال</button></form><?php elseif ($expense['status'] === 'submitted' && akp_can_edit_section('finance', $id) && !$closed): ?><form method="post" class="project-action-form d-inline"><?php echo csrf_field(); ?><input type="hidden" name="action" value="approve_expense"><input type="hidden" name="expense_id" value="<?php echo (int)$expense['id']; ?>"><button class="btn btn-sm btn-outline-success">اعتماد</button></form><?php elseif ($expense['status'] === 'approved' && in_array($role, ['admin','accountant','general_manager'], true) && !$closed): ?><form method="post" class="project-action-form d-inline"><?php echo csrf_field(); ?><input type="hidden" name="action" value="post_expense"><input type="hidden" name="expense_id" value="<?php echo (int)$expense['id']; ?>"><button class="btn btn-sm btn-outline-dark">ترحيل</button></form><?php endif; ?></td></tr><?php endforeach; ?><?php if (!$expenses): ?><tr><td colspan="7" class="text-center text-muted">لا توجد مصروفات.</td></tr><?php endif; ?></tbody></table></div>
+            </div></div><?php endif; ?>
 
-                <div class="table-responsive">
-                    <table class="table table-sm align-middle">
-                        <thead><tr><th>التاريخ</th><th>الوصف</th><th>المورد/الفاتورة</th><th>المبلغ</th><th>الحالة</th><th>القيد</th><th></th></tr></thead>
-                        <tbody>
-                            <?php foreach ($expenses as $expense): ?>
-                                <tr>
-                                    <td><?php echo e($expense['expense_date']); ?></td>
-                                    <td><?php echo e($expense['description']); ?><?php if ($expense['government_fee_type']): ?><br><small class="text-muted">رسم: <?php echo e($expense['government_fee_type']); ?></small><?php endif; ?></td>
-                                    <td><?php echo e($expense['vendor_name'] ?: '—'); ?><br><small><?php echo e($expense['invoice_number'] ?: ''); ?></small></td>
-                                    <td><?php echo akp_money($expense['amount']); ?></td>
-                                    <td><span class="badge bg-<?php echo $expense['status'] === 'posted' ? 'dark' : ($expense['status'] === 'approved' ? 'success' : 'warning'); ?>"><?php echo e($expense['status']); ?></span></td>
-                                    <td><small class="text-muted"><?php echo e($expense['entry_code'] ?: '—'); ?></small></td>
-                                    <td>
-                                        <?php if ($expense['status'] === 'draft' && akp_can_edit_section('finance', $id) && !$closed): ?>
-                                            <form method="post" class="project-action-form d-inline">
-                                                <?php echo csrf_field(); ?>
-                                                <input type="hidden" name="action" value="submit_expense">
-                                                <input type="hidden" name="expense_id" value="<?php echo (int)$expense['id']; ?>">
-                                                <button class="btn btn-sm btn-outline-primary">إرسال</button>
-                                            </form>
-                                        <?php elseif ($expense['status'] === 'submitted' && akp_can_edit_section('finance', $id) && !$closed): ?>
-                                            <form method="post" class="project-action-form d-inline">
-                                                <?php echo csrf_field(); ?>
-                                                <input type="hidden" name="action" value="approve_expense">
-                                                <input type="hidden" name="expense_id" value="<?php echo (int)$expense['id']; ?>">
-                                                <button class="btn btn-sm btn-outline-success">اعتماد</button>
-                                            </form>
-                                        <?php elseif ($expense['status'] === 'approved' && in_array($role, ['admin','accountant','general_manager'], true) && !$closed): ?>
-                                            <form method="post" class="project-action-form d-inline">
-                                                <?php echo csrf_field(); ?>
-                                                <input type="hidden" name="action" value="post_expense">
-                                                <input type="hidden" name="expense_id" value="<?php echo (int)$expense['id']; ?>">
-                                                <button class="btn btn-sm btn-outline-dark">ترحيل</button>
-                                            </form>
-                                        <?php endif; ?>
-                                    </td>
-                                </tr>
-                            <?php endforeach; if (!$expenses): ?>
-                                <tr><td colspan="7" class="text-center text-muted">لا توجد مصروفات.</td></tr>
-                            <?php endif; ?>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+        <div class="card mb-4 fade-in"><div class="card-header"><i class="fas fa-file-shield me-2"></i>الوثائق والإيصالات والشهادات</div><div class="card-body">
+                <?php if (akp_can_edit_section('documents', $id) && !$closed): ?><form method="post" enctype="multipart/form-data" class="project-form-panel"><input type="hidden" name="action" value="upload_document"><?php echo csrf_field(); ?><div class="row g-2"><div class="col-md-3"><select name="document_type" class="form-select form-select-sm"><option value="receipt">إيصال</option><option value="invoice">فاتورة</option><option value="certificate">شهادة</option><option value="government_fee">رسم حكومي</option><option value="permit">تصريح</option><option value="contract">عقد</option><option value="quotation">عرض سعر</option><option value="progress_report">تقرير تقدم</option><option value="closure_report">تقرير إغلاق</option><option value="other">أخرى</option></select></div><div class="col-md-5"><input name="document_title" class="form-control form-control-sm" placeholder="عنوان الوثيقة" required></div><div class="col-md-4"><input type="file" name="document" class="form-control form-control-sm" required accept=".pdf,.jpg,.jpeg,.png,.docx,.xlsx"></div><div class="col-md-4"><input name="document_issuer" class="form-control form-control-sm" placeholder="الجهة المصدرة"></div><div class="col-md-4"><input name="document_reference" class="form-control form-control-sm" placeholder="رقم الوثيقة/المرجع"></div><div class="col-md-4"><input type="date" name="document_date" class="form-control form-control-sm"></div><div class="col-12"><input name="document_notes" class="form-control form-control-sm" placeholder="ملاحظات"></div><div class="col-12"><button class="btn btn-sm btn-primary">رفع الوثيقة</button></div></div></form><?php endif; ?>
+                <div class="row"><?php foreach ($documents as $doc): ?><div class="col-md-4 mb-3"><div class="card h-100"><div class="card-body"><h6 class="card-title"><?php echo e($doc['title']); ?></h6><p class="card-text small text-muted mb-1"><span class="badge bg-secondary"><?php echo e($doc['document_type']); ?></span><span class="badge bg-<?php echo $doc['verification_status'] === 'verified' ? 'success' : ($doc['verification_status'] === 'rejected' ? 'danger' : 'warning'); ?>"><?php echo e($doc['verification_status']); ?></span></p><p class="small mb-1">رفع بواسطة: <?php echo e($doc['uploader_name'] ?? '—'); ?></p><div class="d-flex gap-2 mt-2"><a href="modules/projects/serve_project_document.php?id=<?php echo (int)$doc['id']; ?>" class="btn btn-sm btn-outline-primary" target="_blank">عرض</a><?php if ($doc['verification_status'] === 'unverified' && akp_can_edit_section('documents', $id) && !$closed): ?><form method="post" class="project-action-form d-inline"><?php echo csrf_field(); ?><input type="hidden" name="action" value="verify_document"><input type="hidden" name="document_id" value="<?php echo (int)$doc['id']; ?>"><input type="hidden" name="verification_status" value="verified"><button class="btn btn-sm btn-outline-success">تحقق</button></form><?php endif; ?></div></div></div></div><?php endforeach; ?><?php if (!$documents): ?><div class="col-12 text-center text-muted">لا توجد وثائق مرفقة.</div><?php endif; ?></div>
+            </div></div>
 
-        <div class="card mb-4 fade-in">
-            <div class="card-header"><i class="fas fa-file-shield me-2"></i>الوثائق والإيصالات والشهادات</div>
-            <div class="card-body">
-                <?php if (akp_can_edit_section('documents', $id) && !$closed): ?>
-                    <form method="post" enctype="multipart/form-data" class="project-form-panel">
-                        <input type="hidden" name="action" value="upload_document">
-                        <?php echo csrf_field(); ?>
-                        <div class="row g-2">
-                            <div class="col-md-3">
-                                <select name="document_type" class="form-select form-select-sm">
-                                    <option value="receipt">إيصال</option>
-                                    <option value="invoice">فاتورة</option>
-                                    <option value="certificate">شهادة</option>
-                                    <option value="government_fee">رسم حكومي</option>
-                                    <option value="permit">تصريح</option>
-                                    <option value="contract">عقد</option>
-                                    <option value="quotation">عرض سعر</option>
-                                    <option value="progress_report">تقرير تقدم</option>
-                                    <option value="closure_report">تقرير إغلاق</option>
-                                    <option value="other">أخرى</option>
-                                </select>
-                            </div>
-                            <div class="col-md-5"><input name="document_title" class="form-control form-control-sm" placeholder="عنوان الوثيقة" required></div>
-                            <div class="col-md-4"><input type="file" name="document" class="form-control form-control-sm" required accept=".pdf,.jpg,.jpeg,.png,.docx,.xlsx"></div>
-                            <div class="col-md-4"><input name="document_issuer" class="form-control form-control-sm" placeholder="الجهة المصدرة"></div>
-                            <div class="col-md-4"><input name="document_reference" class="form-control form-control-sm" placeholder="رقم الوثيقة/المرجع"></div>
-                            <div class="col-md-4"><input type="date" name="document_date" class="form-control form-control-sm"></div>
-                            <div class="col-12"><input name="document_notes" class="form-control form-control-sm" placeholder="ملاحظات"></div>
-                            <div class="col-12"><button class="btn btn-sm btn-primary">رفع الوثيقة</button></div>
-                        </div>
-                    </form>
-                <?php endif; ?>
+        <div class="card mb-4 fade-in"><div class="card-header"><i class="fas fa-hard-hat me-2"></i>العمالة الخارجية والمساعدون</div><div class="card-body">
+                <?php if ($role === 'project_supervisor' && (akp_is_primary_supervisor($id) || akp_has_project_section($id, 'operations')) && !$closed): ?><form method="post" class="project-form-panel row g-2 mb-3"><input type="hidden" name="action" value="add_labor"><?php echo csrf_field(); ?><div class="col-5"><select name="labor_provider_type" class="form-select form-select-sm"><option value="individual">فرد</option><option value="company">شركة</option></select></div><div class="col-7"><input name="labor_provider_name" class="form-control form-control-sm" placeholder="اسم العامل/الشركة *" required></div><div class="col-6"><input name="labor_phone" class="form-control form-control-sm" placeholder="الهاتف"></div><div class="col-6"><input name="labor_number_of_workers" type="number" min="1" value="1" class="form-control form-control-sm" placeholder="عدد العمال"></div><div class="col-6"><input name="labor_contact_person_name" class="form-control form-control-sm" placeholder="جهة الاتصال للشركة"></div><div class="col-6"><input name="labor_contact_person_phone" class="form-control form-control-sm" placeholder="هاتف جهة الاتصال"></div><div class="col-12"><input name="labor_work_description" class="form-control form-control-sm" placeholder="وصف العمل/المساعدة *" required></div><div class="col-5"><input name="labor_payment_amount" type="number" step="0.01" min="0.01" class="form-control form-control-sm" placeholder="إجمالي المبلغ *" required></div><div class="col-4"><select name="labor_payment_timing" class="form-select form-select-sm"><option value="upfront">مقدم</option><option value="daily">يومي</option><option value="weekly">أسبوعي</option><option value="monthly">شهري</option><option value="upon_completion">عند الإنجاز</option></select></div><div class="col-3"><select name="labor_status" class="form-select form-select-sm"><option value="planned">مخطط</option><option value="in_progress">قيد التنفيذ</option><option value="completed">مكتمل</option></select></div><div class="col-12"><textarea name="labor_notes" class="form-control form-control-sm" rows="2" placeholder="ملاحظة المشرف"></textarea></div><div class="col-12"><button class="btn btn-sm btn-primary">حفظ بيانات العمالة</button></div></form><?php endif; ?>
+                <?php foreach ($labors as $labor): ?><div class="border rounded p-3 mb-2"><div class="d-flex justify-content-between"><strong><?php echo e($labor['provider_name']); ?></strong><span class="badge bg-<?php echo $labor['status'] === 'completed' ? 'success' : 'primary'; ?>"><?php echo e($labor['status']); ?></span></div><div class="small text-muted mb-2"><?php echo e($labor['work_description']); ?> · <?php echo akp_money($labor['payment_amount']); ?> <?php echo e($labor['currency_code']); ?></div><?php if ($labor['manager_comment']): ?><div class="alert alert-light border small mb-2"><strong>تعليق الإدارة:</strong> <?php echo nl2br(e($labor['manager_comment'])); ?></div><?php endif; ?><?php if (akp_is_executive() && !$closed): ?><form method="post" class="project-inline-form input-group-sm"><?php echo csrf_field(); ?><input type="hidden" name="action" value="comment_labor"><input type="hidden" name="labor_id" value="<?php echo (int)$labor['id']; ?>"><input name="labor_manager_comment" class="form-control" placeholder="تعليق مدير المشاريع"><button class="btn btn-outline-primary">تعليق</button></form><?php endif; ?></div><?php endforeach; ?><?php if (!$labors): ?><div class="text-muted small">لا توجد عمالة أو مساعدون مسجلون.</div><?php endif; ?>
+            </div></div>
 
-                <div class="row">
-                    <?php foreach ($documents as $doc): ?>
-                        <div class="col-md-4 mb-3">
-                            <div class="card h-100">
-                                <div class="card-body">
-                                    <h6 class="card-title"><?php echo e($doc['title']); ?></h6>
-                                    <p class="card-text small text-muted mb-1">
-                                        <span class="badge bg-secondary"><?php echo e($doc['document_type']); ?></span>
-                                        <span class="badge bg-<?php echo $doc['verification_status'] === 'verified' ? 'success' : ($doc['verification_status'] === 'rejected' ? 'danger' : 'warning'); ?>"><?php echo e($doc['verification_status']); ?></span>
-                                    </p>
-                                    <p class="small mb-1">رفع بواسطة: <?php echo e($doc['uploader_name'] ?? '—'); ?></p>
-                                    <div class="d-flex gap-2 mt-2">
-                                        <a href="modules/projects/serve_project_document.php?id=<?php echo (int)$doc['id']; ?>" class="btn btn-sm btn-outline-primary" target="_blank">عرض</a>
-                                        <?php if ($doc['verification_status'] === 'unverified' && akp_can_edit_section('documents', $id) && !$closed): ?>
-                                            <form method="post" class="project-action-form d-inline">
-                                                <?php echo csrf_field(); ?>
-                                                <input type="hidden" name="action" value="verify_document">
-                                                <input type="hidden" name="document_id" value="<?php echo (int)$doc['id']; ?>">
-                                                <input type="hidden" name="verification_status" value="verified">
-                                                <button class="btn btn-sm btn-outline-success">تحقق</button>
-                                            </form>
-                                        <?php endif; ?>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                    <?php if (!$documents): ?>
-                        <div class="col-12 text-center text-muted">لا توجد وثائق مرفقة.</div>
-                    <?php endif; ?>
-                </div>
-            </div>
-        </div>
-
-        <div class="card mb-4 fade-in">
-            <div class="card-header"><i class="fas fa-hard-hat me-2"></i>العمالة الخارجية والمساعدون</div>
-            <div class="card-body">
-                <?php if ($role === 'project_supervisor' && (akp_is_primary_supervisor($id) || akp_has_project_section($id, 'operations')) && !$closed): ?>
-                    <form method="post" class="project-form-panel row g-2 mb-3">
-                        <input type="hidden" name="action" value="add_labor">
-                        <?php echo csrf_field(); ?>
-                        <div class="col-5"><select name="labor_provider_type" class="form-select form-select-sm"><option value="individual">فرد</option><option value="company">شركة</option></select></div>
-                        <div class="col-7"><input name="labor_provider_name" class="form-control form-control-sm" placeholder="اسم العامل/الشركة *" required></div>
-                        <div class="col-6"><input name="labor_phone" class="form-control form-control-sm" placeholder="الهاتف"></div>
-                        <div class="col-6"><input name="labor_number_of_workers" type="number" min="1" value="1" class="form-control form-control-sm" placeholder="عدد العمال"></div>
-                        <div class="col-6"><input name="labor_contact_person_name" class="form-control form-control-sm" placeholder="جهة الاتصال للشركة"></div>
-                        <div class="col-6"><input name="labor_contact_person_phone" class="form-control form-control-sm" placeholder="هاتف جهة الاتصال"></div>
-                        <div class="col-12"><input name="labor_work_description" class="form-control form-control-sm" placeholder="وصف العمل/المساعدة *" required></div>
-                        <div class="col-5"><input name="labor_payment_amount" type="number" step="0.01" min="0.01" class="form-control form-control-sm" placeholder="إجمالي المبلغ *" required></div>
-                        <div class="col-4"><select name="labor_payment_timing" class="form-select form-select-sm"><option value="upfront">مقدم</option><option value="daily">يومي</option><option value="weekly">أسبوعي</option><option value="monthly">شهري</option><option value="upon_completion">عند الإنجاز</option></select></div>
-                        <div class="col-3"><select name="labor_status" class="form-select form-select-sm"><option value="planned">مخطط</option><option value="in_progress">قيد التنفيذ</option><option value="completed">مكتمل</option></select></div>
-                        <div class="col-12"><textarea name="labor_notes" class="form-control form-control-sm" rows="2" placeholder="ملاحظة المشرف"></textarea></div>
-                        <div class="col-12"><button class="btn btn-sm btn-primary">حفظ بيانات العمالة</button></div>
-                    </form>
-                <?php endif; ?>
-
-                <?php foreach ($labors as $labor): ?>
-                    <div class="border rounded p-3 mb-2">
-                        <div class="d-flex justify-content-between">
-                            <strong><?php echo e($labor['provider_name']); ?></strong>
-                            <span class="badge bg-<?php echo $labor['status'] === 'completed' ? 'success' : 'primary'; ?>"><?php echo e($labor['status']); ?></span>
-                        </div>
-                        <div class="small text-muted mb-2"><?php echo e($labor['work_description']); ?> · <?php echo akp_money($labor['payment_amount']); ?> <?php echo e($labor['currency_code']); ?></div>
-                        <?php if ($labor['manager_comment']): ?>
-                            <div class="alert alert-light border small mb-2"><strong>تعليق الإدارة:</strong> <?php echo nl2br(e($labor['manager_comment'])); ?></div>
-                        <?php endif; ?>
-                        <?php if (akp_is_executive() && !$closed): ?>
-                            <form method="post" class="project-inline-form input-group-sm">
-                                <?php echo csrf_field(); ?>
-                                <input type="hidden" name="action" value="comment_labor">
-                                <input type="hidden" name="labor_id" value="<?php echo (int)$labor['id']; ?>">
-                                <input name="labor_manager_comment" class="form-control" placeholder="تعليق مدير المشاريع">
-                                <button class="btn btn-outline-primary">تعليق</button>
-                            </form>
-                        <?php endif; ?>
-                    </div>
-                <?php endforeach; if (!$labors): ?>
-                    <div class="text-muted small">لا توجد عمالة أو مساعدون مسجلون.</div>
-                <?php endif; ?>
-            </div>
-        </div>
-
-        <div class="card mb-4 fade-in">
-            <div class="card-header"><i class="fas fa-list-check me-2"></i>التشغيل والتقدم</div>
-            <div class="card-body">
-                <?php if (akp_can_edit_section('operations', $id) && !$closed): ?>
-                    <form method="post" class="project-form-panel mb-3">
-                        <input type="hidden" name="action" value="add_milestone">
-                        <?php echo csrf_field(); ?>
-                        <div class="row g-2">
-                            <div class="col-6"><input name="milestone_title" class="form-control form-control-sm" placeholder="عنوان المرحلة *" required></div>
-                            <div class="col-4"><input type="date" name="planned_date" class="form-control form-control-sm"></div>
-                            <div class="col-2"><input type="number" min="0" max="100" name="completion_percent" class="form-control form-control-sm" placeholder="%"></div>
-                            <div class="col-12"><textarea name="milestone_description" class="form-control form-control-sm" rows="2" placeholder="وصف المرحلة"></textarea></div>
-                        </div>
-                        <button class="btn btn-sm btn-outline-primary mt-2">إضافة مرحلة</button>
-                    </form>
-                <?php endif; ?>
-                
-                <?php foreach ($milestones as $milestone): ?>
-                    <div class="border-bottom pb-2 mb-2">
-                        <strong><?php echo e($milestone['title']); ?></strong><br>
-                        <small><?php echo e($milestone['planned_date'] ?: 'بدون تاريخ'); ?> · <?php echo e($milestone['status']); ?> · <?php echo akp_money($milestone['completion_percent']); ?>%</small>
-                        <div class="progress mt-1" style="height:6px"><div class="progress-bar" style="width:<?php echo (float)$milestone['completion_percent']; ?>%"></div></div>
-                    </div>
-                <?php endforeach; if (!$milestones): ?>
-                    <div class="text-muted small">لا توجد مراحل بعد.</div>
-                <?php endif; ?>
-
-                <hr>
-                <h6>تحديث تقدم</h6>
-                <?php if (akp_can_edit_section('operations', $id) && !$closed): ?>
-                    <form method="post">
-                        <input type="hidden" name="action" value="add_progress">
-                        <?php echo csrf_field(); ?>
-                        <div class="row g-2">
-                            <div class="col-6"><input type="date" name="update_date" class="form-control form-control-sm" value="<?php echo date('Y-m-d'); ?>"></div>
-                            <div class="col-6"><input type="number" min="0" max="100" name="progress_percent" class="form-control form-control-sm" placeholder="% الإنجاز"></div>
-                            <div class="col-12"><textarea name="progress_summary" class="form-control form-control-sm" rows="2" placeholder="ملخص التقدم *" required></textarea></div>
-                            <div class="col-6"><textarea name="achievements" class="form-control form-control-sm" rows="2" placeholder="الإنجازات"></textarea></div>
-                            <div class="col-6"><textarea name="issues" class="form-control form-control-sm" rows="2" placeholder="المعوقات"></textarea></div>
-                            <div class="col-12"><textarea name="next_steps" class="form-control form-control-sm" rows="2" placeholder="الخطوات القادمة"></textarea></div>
-                            <div class="col-12"><button class="btn btn-sm btn-outline-primary">حفظ التحديث</button></div>
-                        </div>
-                    </form>
-                <?php endif; ?>
-                
-                <?php foreach ($progressUpdates as $update): ?>
-                    <div class="border-top mt-3 pt-2 small">
-                        <strong><?php echo e($update['update_date']); ?> · <?php echo akp_money($update['completion_percent']); ?>%</strong>
-                        <div><?php echo nl2br(e($update['summary'])); ?></div>
-                        <?php if ($update['submitter_name']): ?><small class="text-muted"><?php echo e($update['submitter_name']); ?></small><?php endif; ?>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-        </div>
-<?php else: ?>
-        <div class="alert alert-light border mb-4 small text-muted">
-            <i class="fas fa-lock me-2"></i>تظهر المصروفات والوثائق والعمالة والتشغيل والتقدم بعد اعتماد المشروع نهائياً من المدير العام.
-        </div>
-<?php endif; ?>
+        <div class="card mb-4 fade-in"><div class="card-header"><i class="fas fa-list-check me-2"></i>التشغيل والتقدم</div><div class="card-body">
+                <?php if (akp_can_edit_section('operations', $id) && !$closed): ?><form method="post" class="project-form-panel mb-3"><input type="hidden" name="action" value="add_milestone"><?php echo csrf_field(); ?><div class="row g-2"><div class="col-6"><input name="milestone_title" class="form-control form-control-sm" placeholder="عنوان المرحلة *" required></div><div class="col-4"><input type="date" name="planned_date" class="form-control form-control-sm"></div><div class="col-2"><input type="number" min="0" max="100" name="completion_percent" class="form-control form-control-sm" placeholder="%"></div><div class="col-12"><textarea name="milestone_description" class="form-control form-control-sm" rows="2" placeholder="وصف المرحلة"></textarea></div></div><button class="btn btn-sm btn-outline-primary mt-2">إضافة مرحلة</button></form><?php endif; ?>
+                <?php foreach ($milestones as $milestone): ?><div class="border-bottom pb-2 mb-2"><strong><?php echo e($milestone['title']); ?></strong><br><small><?php echo e($milestone['planned_date'] ?: 'بدون تاريخ'); ?> · <?php echo e($milestone['status']); ?> · <?php echo akp_money($milestone['completion_percent']); ?>%</small><div class="progress mt-1" style="height:6px"><div class="progress-bar" style="width:<?php echo (float)$milestone['completion_percent']; ?>%"></div></div></div><?php endforeach; ?><?php if (!$milestones): ?><div class="text-muted small">لا توجد مراحل بعد.</div><?php endif; ?><hr><h6>تحديث تقدم</h6>
+                <?php if (akp_can_edit_section('operations', $id) && !$closed): ?><form method="post"><input type="hidden" name="action" value="add_progress"><?php echo csrf_field(); ?><div class="row g-2"><div class="col-6"><input type="date" name="update_date" class="form-control form-control-sm" value="<?php echo date('Y-m-d'); ?>"></div><div class="col-6"><input type="number" min="0" max="100" name="progress_percent" class="form-control form-control-sm" placeholder="% الإنجاز"></div><div class="col-12"><textarea name="progress_summary" class="form-control form-control-sm" rows="2" placeholder="ملخص التقدم *" required></textarea></div><div class="col-6"><textarea name="achievements" class="form-control form-control-sm" rows="2" placeholder="الإنجازات"></textarea></div><div class="col-6"><textarea name="issues" class="form-control form-control-sm" rows="2" placeholder="المعوقات"></textarea></div><div class="col-12"><textarea name="next_steps" class="form-control form-control-sm" rows="2" placeholder="الخطوات القادمة"></textarea></div><div class="col-12"><button class="btn btn-sm btn-outline-primary">حفظ التحديث</button></div></div></form><?php endif; ?>
+                <?php foreach ($progressUpdates as $update): ?><div class="border-top mt-3 pt-2 small"><strong><?php echo e($update['update_date']); ?> · <?php echo akp_money($update['completion_percent']); ?>%</strong><div><?php echo nl2br(e($update['summary'])); ?></div><?php if ($update['submitter_name']): ?><small class="text-muted"><?php echo e($update['submitter_name']); ?></small><?php endif; ?></div><?php endforeach; ?>
+            </div></div>
+<?php else: ?><div class="alert alert-light border mb-4 small text-muted"><i class="fas fa-lock me-2"></i>تظهر المصروفات والوثائق والعمالة والتشغيل والتقدم بعد اعتماد المشروع نهائياً من المدير العام.</div><?php endif; ?>
     </div>
 
     <div class="col-lg-4 project-view-side-column">
-        <div class="card mb-4 fade-in">
-            <div class="card-header"><i class="fas fa-user-shield me-2"></i>فريق المشروع وصلاحيات الأقسام</div>
-            <div class="card-body">
-                <p class="small text-muted">المستخدم المكلّف بقسم يستطيع تعديل ذلك القسم فقط. إغلاق المشروع يلغي جميع صلاحيات التعديل، ولا يعيدها إلا المدير العام عند إعادة الفتح.</p>
-                <?php if (akp_can_edit_section('team', $id) && !$closed && !in_array(akp_role(), ['general_manager','vice_general_manager'], true)): ?>
-                    <form method="post" class="project-form-panel mb-3">
-                        <input type="hidden" name="action" value="assign_team">
-                        <?php echo csrf_field(); ?>
-                        <div class="row g-2">
-                            <div class="col-12">
-                                <select name="team_user_id" class="form-select form-select-sm" required>
-                                    <option value="">اختر المستخدم</option>
-                                    <?php foreach (dbFetchAll('SELECT id, full_name FROM users WHERE is_active = 1 ORDER BY full_name') as $user): ?>
-                                        <option value="<?php echo (int)$user['id']; ?>"><?php echo e($user['full_name']); ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                            <div class="col-8">
-                                <select name="team_section" class="form-select form-select-sm" required>
-                                    <option value="">القسم</option>
-                                    <option value="finance">المالية</option>
-                                    <option value="operations">التشغيل</option>
-                                    <option value="documents">المستندات</option>
-                                    <option value="closure">الإغلاق</option>
-                                </select>
-                            </div>
-                            <div class="col-4">
-                                <div class="form-check mt-2">
-                                    <input class="form-check-input" type="checkbox" name="team_is_lead" value="1" id="team_is_lead">
-                                    <label class="form-check-label small" for="team_is_lead">مسؤول</label>
-                                </div>
-                            </div>
-                            <div class="col-12"><input name="team_notes" class="form-control form-control-sm" placeholder="ملاحظات التكليف"></div>
-                            <div class="col-12"><button class="btn btn-sm btn-primary w-100">إضافة تكليف</button></div>
-                        </div>
-                    </form>
-                <?php endif; ?>
-
-                <?php foreach ($team as $member): ?>
-                    <div class="border-bottom py-2 small">
-                        <strong><?php echo e($member['full_name']); ?></strong> · <?php echo e($member['section_code']); ?>
-                        <?php if ($member['is_lead']): ?> <span class="badge bg-primary">مسؤول</span><?php endif; ?>
-                        <?php if (akp_can_edit_section('team', $id) && !$closed && !in_array(akp_role(), ['general_manager','vice_general_manager'], true)): ?>
-                            <form method="post" class="project-inline-form d-inline float-end">
-                                <?php echo csrf_field(); ?>
-                                <input type="hidden" name="action" value="unassign_team">
-                                <input type="hidden" name="team_id" value="<?php echo (int)$member['id']; ?>">
-                                <button class="btn btn-sm btn-outline-danger py-0 px-1">×</button>
-                            </form>
-                        <?php endif; ?>
-                    </div>
-                <?php endforeach; ?>
-                <?php if (!$team): ?><div class="text-muted small">لا يوجد فريق مكلف.</div><?php endif; ?>
-            </div>
-        </div>
-
-        <div class="card mb-4 fade-in">
-            <div class="card-header"><i class="fas fa-users me-2"></i>المستفيدون</div>
-            <div class="card-body">
-                <?php if (akp_can_edit_section('operations', $id) && !$closed): ?>
-                    <form method="post" class="project-form-panel mb-3">
-                        <input type="hidden" name="action" value="add_beneficiary_record">
-                        <?php echo csrf_field(); ?>
-                        <input name="record_beneficiary_name" class="form-control form-control-sm mb-2" placeholder="اسم المستفيد" required>
-                        <div class="row g-2">
-                            <div class="col-6"><input name="beneficiary_type" class="form-control form-control-sm" placeholder="الفئة"></div>
-                            <div class="col-6"><input name="beneficiary_phone" class="form-control form-control-sm" placeholder="الهاتف"></div>
-                            <div class="col-6"><input name="beneficiary_location" class="form-control form-control-sm" placeholder="الموقع"></div>
-                            <div class="col-6"><input type="number" min="0" name="household_count" class="form-control form-control-sm" placeholder="عدد الأفراد"></div>
-                            <div class="col-6"><input type="number" step="0.01" name="planned_support_amount" class="form-control form-control-sm" placeholder="المبلغ المخطط"></div>
-                            <div class="col-6"><input type="number" step="0.01" name="delivered_support_amount" class="form-control form-control-sm" placeholder="المبلغ المسلم"></div>
-                            <div class="col-6"><input type="date" name="support_date" class="form-control form-control-sm"></div>
-                            <div class="col-12"><textarea name="beneficiary_notes" class="form-control form-control-sm" rows="2" placeholder="ملاحظات"></textarea></div>
-                            <div class="col-12"><button class="btn btn-sm btn-primary w-100">إضافة مستفيد</button></div>
-                        </div>
-                    </form>
-                <?php endif; ?>
-
-                <?php 
-                $beneficiaryRecords = dbFetchAll('SELECT * FROM project_beneficiary_records WHERE project_id = ? ORDER BY created_at DESC', [$id]);
-                // Legacy fallback if needed, though new system uses project_beneficiary_records
-                $legacyBeneficiaries = []; 
-                ?>
-                
-                <?php foreach ($beneficiaryRecords as $record): ?>
-                    <div class="border-bottom py-2 small">
-                        <strong><?php echo e($record['beneficiary_name']); ?></strong><br>
-                        <?php echo e($record['beneficiary_type'] ?: ''); ?> · <?php echo e($record['location'] ?: ''); ?>
-                    </div>
-                <?php endforeach; ?>
-                
-                <?php if ($legacyBeneficiaries): ?>
-                    <hr><small class="text-muted">السجلات القديمة</small>
-                    <?php foreach ($legacyBeneficiaries as $record): ?>
-                        <div class="border-bottom py-1 small">
-                            <?php echo e($record['beneficiary_name']); ?>
-                            <?php if ($record['amount'] !== null): ?> · <?php echo akp_money($record['amount']); ?><?php endif; ?>
-                        </div>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-                
-                <?php if (!$beneficiaryRecords && !$legacyBeneficiaries): ?>
-                    <div class="text-muted small">لا توجد سجلات مستفيدين.</div>
-                <?php endif; ?>
-            </div>
-        </div>
-
-        <div class="card mb-4 fade-in">
-            <div class="card-header"><i class="fas fa-lock me-2"></i>الإغلاق وإعادة الفتح</div>
-            <div class="card-body">
-                <?php if ($status !== 'closed' && akp_can_edit_section('closure', $id)): ?>
-                    <p class="small">إغلاق المشروع يمنع أي تعديلات أو مصروفات جديدة. تأكد من ترحيل جميع القيود.</p>
-                    <form method="post" class="project-form-panel">
-                        <input type="hidden" name="action" value="close_project">
-                        <?php echo csrf_field(); ?>
-                        <textarea name="closure_summary" class="form-control form-control-sm mb-2" rows="3" placeholder="ملخص الإنجاز والأسباب *" required></textarea>
-                        <select name="closure_reason" class="form-select form-select-sm mb-2">
-                            <option value="completed_successfully">إنجاز كامل</option>
-                            <option value="cancelled">إلغاء</option>
-                            <option value="transferred_to_another_project">نقل لمشروع آخر</option>
-                            <option value="retained_for_followup">احتفاظ للمتابعة</option>
-                            <option value="other">أخرى</option>
-                        </select>
-                        <button class="btn btn-sm btn-dark w-100">إغلاق المشروع</button>
-                    </form>
-                <?php elseif ($status === 'closed' && akp_is_dg()): ?>
-                    <p class="small">إعادة الفتح تعد استثناءً إدارياً وتحتاج سبباً واضحاً.</p>
-                    <form method="post" class="project-form-panel">
-                        <input type="hidden" name="action" value="reopen_project">
-                        <?php echo csrf_field(); ?>
-                        <textarea name="reopen_reason" class="form-control form-control-sm mb-2" rows="3" placeholder="سبب إعادة الفتح *" required></textarea>
-                        <button class="btn btn-sm btn-warning w-100">إعادة فتح المشروع</button>
-                    </form>
-                <?php else: ?>
-                    <div class="text-muted small">
-                        <?php if ($status === 'closed'): ?>المشروع مغلق. إعادة الفتح متاحة للمدير العام فقط.<?php else: ?>لا تملك صلاحية الإغلاق.<?php endif; ?>
-                    </div>
-                <?php endif; ?>
-            </div>
-        </div>
-
-        <div class="card mb-4 fade-in">
-            <div class="card-header"><i class="fas fa-history me-2"></i>سجل التغييرات</div>
-            <div class="card-body">
-                <?php foreach ($history as $h): ?>
-                    <div class="small border-bottom pb-2 mb-2">
-                        <div><strong><?php echo e($h['old_status']); ?></strong> → <strong><?php echo e($h['new_status']); ?></strong></div>
-                        <div class="text-muted"><?php echo e($h['full_name'] ?? 'نظام'); ?> · <?php echo e($h['created_at']); ?></div>
-                        <?php if ($h['reason']): ?><div class="fst-italic">"<?php echo e($h['reason']); ?>"</div><?php endif; ?>
-                    </div>
-                <?php endforeach; ?>
-                <?php if (!$history): ?><div class="text-muted small">لا يوجد سجل تغييرات.</div><?php endif; ?>
-            </div>
-        </div>
+        <div class="card mb-4 fade-in"><div class="card-header"><i class="fas fa-user-shield me-2"></i>فريق المشروع وصلاحيات الأقسام</div><div class="card-body"><p class="small text-muted">المستخدم المكلّف بقسم يستطيع تعديل ذلك القسم فقط. إغلاق المشروع يلغي جميع صلاحيات التعديل، ولا يعيدها إلا المدير العام عند إعادة الفتح.</p>
+                <?php if (akp_can_edit_section('team', $id) && !$closed && !in_array(akp_role(), ['general_manager','vice_general_manager'], true)): ?><form method="post" class="project-form-panel mb-3"><input type="hidden" name="action" value="assign_team"><?php echo csrf_field(); ?><div class="row g-2"><div class="col-12"><select name="team_user_id" class="form-select form-select-sm" required><option value="">اختر المستخدم</option><?php foreach (dbFetchAll('SELECT id, full_name FROM users WHERE is_active = 1 ORDER BY full_name') as $user): ?><option value="<?php echo (int)$user['id']; ?>"><?php echo e($user['full_name']); ?></option><?php endforeach; ?></select></div><div class="col-8"><select name="team_section" class="form-select form-select-sm" required><option value="">القسم</option><option value="finance">المالية</option><option value="operations">التشغيل</option><option value="documents">المستندات</option><option value="closure">الإغلاق</option></select></div><div class="col-4"><div class="form-check mt-2"><input class="form-check-input" type="checkbox" name="team_is_lead" value="1" id="team_is_lead"><label class="form-check-label small" for="team_is_lead">مسؤول</label></div></div><div class="col-12"><input name="team_notes" class="form-control form-control-sm" placeholder="ملاحظات التكليف"></div><div class="col-12"><button class="btn btn-sm btn-primary w-100">إضافة تكليف</button></div></div></form><?php endif; ?>
+                <?php foreach ($team as $member): ?><div class="border-bottom py-2 small"><strong><?php echo e($member['full_name']); ?></strong> · <?php echo e($member['section_code']); ?><?php if ($member['is_lead']): ?> <span class="badge bg-primary">مسؤول</span><?php endif; ?><?php if (akp_can_edit_section('team', $id) && !$closed && !in_array(akp_role(), ['general_manager','vice_general_manager'], true)): ?><form method="post" class="project-inline-form d-inline float-end"><?php echo csrf_field(); ?><input type="hidden" name="action" value="unassign_team"><input type="hidden" name="team_id" value="<?php echo (int)$member['id']; ?>"><button class="btn btn-sm btn-outline-danger py-0 px-1">×</button></form><?php endif; ?></div><?php endforeach; ?><?php if (!$team): ?><div class="text-muted small">لا يوجد فريق مكلف.</div><?php endif; ?>
+            </div></div>
+        <div class="card mb-4 fade-in"><div class="card-header"><i class="fas fa-users me-2"></i>المستفيدون</div><div class="card-body">
+                <?php if (akp_can_edit_section('operations', $id) && !$closed): ?><form method="post" class="project-form-panel mb-3"><input type="hidden" name="action" value="add_beneficiary_record"><?php echo csrf_field(); ?><input name="record_beneficiary_name" class="form-control form-control-sm mb-2" placeholder="اسم المستفيد" required><div class="row g-2"><div class="col-6"><input name="beneficiary_type" class="form-control form-control-sm" placeholder="الفئة"></div><div class="col-6"><input name="beneficiary_phone" class="form-control form-control-sm" placeholder="الهاتف"></div><div class="col-6"><input name="beneficiary_location" class="form-control form-control-sm" placeholder="الموقع"></div><div class="col-6"><input type="number" min="0" name="household_count" class="form-control form-control-sm" placeholder="عدد الأفراد"></div><div class="col-6"><input type="number" step="0.01" name="planned_support_amount" class="form-control form-control-sm" placeholder="المبلغ المخطط"></div><div class="col-6"><input type="number" step="0.01" name="delivered_support_amount" class="form-control form-control-sm" placeholder="المبلغ المسلم"></div><div class="col-6"><input type="date" name="support_date" class="form-control form-control-sm"></div><div class="col-12"><textarea name="beneficiary_notes" class="form-control form-control-sm" rows="2" placeholder="ملاحظات"></textarea></div><div class="col-12"><button class="btn btn-sm btn-primary w-100">إضافة مستفيد</button></div></div></form><?php endif; ?>
+                <?php $beneficiaryRecords = dbFetchAll('SELECT * FROM project_beneficiary_records WHERE project_id = ? ORDER BY created_at DESC', [$id]); $legacyBeneficiaries = []; ?>
+                <?php foreach ($beneficiaryRecords as $record): ?><div class="border-bottom py-2 small"><strong><?php echo e($record['beneficiary_name']); ?></strong><br><?php echo e($record['beneficiary_type'] ?: ''); ?> · <?php echo e($record['location'] ?: ''); ?></div><?php endforeach; ?>
+                <?php if ($legacyBeneficiaries): ?><hr><small class="text-muted">السجلات القديمة</small><?php foreach ($legacyBeneficiaries as $record): ?><div class="border-bottom py-1 small"><?php echo e($record['beneficiary_name']); ?><?php if ($record['amount'] !== null): ?> · <?php echo akp_money($record['amount']); ?><?php endif; ?></div><?php endforeach; ?><?php endif; ?>
+                <?php if (!$beneficiaryRecords && !$legacyBeneficiaries): ?><div class="text-muted small">لا توجد سجلات مستفيدين.</div><?php endif; ?>
+            </div></div>
+        <div class="card mb-4 fade-in"><div class="card-header"><i class="fas fa-lock me-2"></i>الإغلاق وإعادة الفتح</div><div class="card-body">
+                <?php if ($status !== 'closed' && akp_can_edit_section('closure', $id)): ?><p class="small">إغلاق المشروع يمنع أي تعديلات أو مصروفات جديدة. تأكد من ترحيل جميع القيود.</p><form method="post" class="project-form-panel"><input type="hidden" name="action" value="close_project"><?php echo csrf_field(); ?><textarea name="closure_summary" class="form-control form-control-sm mb-2" rows="3" placeholder="ملخص الإنجاز والأسباب *" required></textarea><select name="closure_reason" class="form-select form-select-sm mb-2"><option value="completed_successfully">إنجاز كامل</option><option value="cancelled">إلغاء</option><option value="transferred_to_another_project">نقل لمشروع آخر</option><option value="retained_for_followup">احتفاظ للمتابعة</option><option value="other">أخرى</option></select><button class="btn btn-sm btn-dark w-100">إغلاق المشروع</button></form>
+                <?php elseif ($status === 'closed' && akp_is_dg()): ?><p class="small">إعادة الفتح تعد استثناءً إدارياً وتحتاج سبباً واضحاً.</p><form method="post" class="project-form-panel"><input type="hidden" name="action" value="reopen_project"><?php echo csrf_field(); ?><textarea name="reopen_reason" class="form-control form-control-sm mb-2" rows="3" placeholder="سبب إعادة الفتح *" required></textarea><button class="btn btn-sm btn-warning w-100">إعادة فتح المشروع</button></form>
+                <?php else: ?><div class="text-muted small"><?php if ($status === 'closed'): ?>المشروع مغلق. إعادة الفتح متاحة للمدير العام فقط.<?php else: ?>لا تملك صلاحية الإغلاق.<?php endif; ?></div><?php endif; ?>
+            </div></div>
+        <div class="card mb-4 fade-in"><div class="card-header"><i class="fas fa-history me-2"></i>سجل التغييرات</div><div class="card-body"><?php foreach ($history as $h): ?><div class="small border-bottom pb-2 mb-2"><div><strong><?php echo e($h['old_status']); ?></strong> → <strong><?php echo e($h['new_status']); ?></strong></div><div class="text-muted"><?php echo e($h['full_name'] ?? 'نظام'); ?> · <?php echo e($h['created_at']); ?></div><?php if ($h['reason']): ?><div class="fst-italic">"<?php echo e($h['reason']); ?>"</div><?php endif; ?></div><?php endforeach; ?><?php if (!$history): ?><div class="text-muted small">لا يوجد سجل تغييرات.</div><?php endif; ?></div></div>
     </div>
 </div>
-
 </div>
-
 <?php include dirname(__DIR__, 2) . '/includes/footer.php'; ?>
