@@ -83,6 +83,14 @@ function akp_post_value(string $name, string $default = ''): string {
 }
 
 
+/** Funding allocation permissions. */
+function akp_can_manage_funding(string $role, string $approvalStatus): bool {
+    if (in_array($approvalStatus, ['draft', 'rejected'], true)) {
+        return $role === 'projects_manager';
+    }
+    return $approvalStatus === 'approved' && $role === 'general_manager';
+}
+
 /** Create a balanced reversal entry while preserving the original posted entry. */
 function akp_reverse_project_journal(int $originalEntryId, int $projectId, string $projectName, string $reason): int {
     $original = dbFetchOne('SELECT * FROM journal_entries WHERE id = ?', [$originalEntryId]);
@@ -423,13 +431,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('success', 'تمت إضافة بند الميزانية.');
             
         } elseif ($action === 'add_funding') {
-            // Funding-source selection and allocation are owned by the FM.
-            if ($role !== 'financial_manager' || $closed) {
-                throw new RuntimeException('إضافة تخصيصات التمويل واختيار حسابات المصدر محصوران بالمدير المالي.');
+            // FM reviews the prepared funding package but must not create funding allocations.
+            if ($role === 'financial_manager') {
+                throw new RuntimeException('دور المدير المالي في هذه المرحلة هو مراجعة تخصيصات التمويل والاعتماد أو الرفض فقط، ولا يملك صلاحية إضافة تخصيص تمويل.');
             }
-            if (!akp_can_manage_funding($id)) throw new RuntimeException('لا تملك صلاحية إضافة تخصيص تمويل.');
+            if (!akp_can_edit_section('finance', $id) || $closed) throw new RuntimeException('لا تملك صلاحية إضافة تمويل.');
             $approvalCheck = dbFetchOne('SELECT approval_status FROM project_approval WHERE project_id = ?', [$id]);
-            if (!$approvalCheck || !in_array($approvalCheck['approval_status'], ['submitted', 'rejected'], true)) throw new RuntimeException('يمكن تسجيل مصادر التمويل أثناء إعداد المشروع بعد الرفض أو أثناء المراجعة المالية.');
+            if (!$approvalCheck || $approvalCheck['approval_status'] !== 'submitted') throw new RuntimeException('يمكن تسجيل مصادر التمويل فقط أثناء المراجعة المالية (حالة: مُرسَل).');
 
             $sourceAccountIds = $_POST['funding_source_account_id'] ?? [];
             $amounts = $_POST['funding_amount'] ?? [];
@@ -524,8 +532,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ($action === 'edit_funding') {
             $approvalStatus = (string)(dbFetchOne('SELECT approval_status FROM project_approval WHERE project_id = ?', [$id])['approval_status'] ?? '');
             if ($closed) throw new RuntimeException('لا يمكن تعديل تخصيص تمويل لمشروع مغلق.');
-            if ($role !== 'financial_manager' || !in_array($approvalStatus, ['submitted', 'rejected'], true) || !akp_can_manage_funding($id)) {
-                throw new RuntimeException('تعديل تخصيصات التمويل محصور بالمدير المالي أثناء مرحلة المراجعة المالية أو بعد الرفض لإعادة ضبط التمويل.');
+            if (!akp_can_manage_funding($role, $approvalStatus)) {
+                throw new RuntimeException($approvalStatus === 'approved'
+                    ? 'بعد اعتماد المدير العام، تعديل تخصيصات التمويل متاح للمدير العام فقط.'
+                    : 'تعديل تخصيصات التمويل قبل اعتماد المدير العام متاح للمدير المالي فقط.');
             }
 
             $allocationId = (int)($_POST['allocation_id'] ?? 0);
@@ -607,8 +617,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ($action === 'delete_funding') {
             $approvalStatus = (string)(dbFetchOne('SELECT approval_status FROM project_approval WHERE project_id = ?', [$id])['approval_status'] ?? '');
             if ($closed) throw new RuntimeException('لا يمكن حذف تخصيص تمويل من مشروع مغلق.');
-            if ($role !== 'financial_manager' || !in_array($approvalStatus, ['submitted', 'rejected'], true) || !akp_can_manage_funding($id)) {
-                throw new RuntimeException('حذف تخصيصات التمويل محصور بالمدير المالي أثناء مرحلة المراجعة المالية أو بعد الرفض لإعادة ضبط التمويل.');
+            if (!akp_can_manage_funding($role, $approvalStatus)) {
+                throw new RuntimeException($approvalStatus === 'approved'
+                    ? 'بعد اعتماد المدير العام، حذف تخصيصات التمويل متاح للمدير العام فقط.'
+                    : 'حذف تخصيصات التمويل قبل اعتماد المدير العام متاح للمدير المالي فقط.');
             }
 
             $allocationId = (int)($_POST['allocation_id'] ?? 0);
@@ -1258,13 +1270,8 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     <div class="card-body">
                 <?php if ($role === 'financial_manager' && $approval['approval_status'] === 'submitted' && !$closed): ?>
                     <div class="alert alert-info small mb-3">
-                        <i class="fas fa-university me-1"></i>
-                        المدير المالي يحدد حسابات المؤسسة التي سيخرج منها تمويل المشروع (الصندوق النقدي أو البنك أو المحفظة الإلكترونية) ويحدد مبالغ التخصيص قبل الاعتماد المالي.
-                    </div>
-                <?php elseif ($role === 'projects_manager' && in_array($approval['approval_status'], ['draft', 'rejected'], true)): ?>
-                    <div class="alert alert-secondary small mb-3">
                         <i class="fas fa-eye me-1"></i>
-                        تخصيص التمويل واختيار حسابات المصدر من اختصاص المدير المالي. يمكنك مراجعة التخصيصات دون تعديلها.
+                        تم إعداد تخصيصات التمويل قبل الإرسال. دور المدير المالي هنا هو المراجعة المالية والاعتماد أو الرفض، دون تعديل بيانات التمويل.
                     </div>
                 <?php endif; ?>
 
