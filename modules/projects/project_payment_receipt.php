@@ -35,7 +35,7 @@ if (!$path || !is_file($path) || strpos($path, $expectedPrefix) !== 0) {
 $mime = (string)($payment['receipt_mime_type'] ?: 'application/octet-stream');
 $downloadName = preg_replace('/[^A-Za-z0-9._-]+/', '_', (string)($payment['receipt_original_name'] ?: basename($path))) ?: 'project-payment-receipt';
 header('Content-Type: ' . $mime);
-header('Content-Length: (string)filesize($path));
+header('Content-Length: ' . (string)filesize($path));
 header('Content-Disposition: inline; filename="' . $downloadName . '"');
 header('X-Content-Type-Options: nosniff');
 readfile($path);
