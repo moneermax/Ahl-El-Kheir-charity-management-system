@@ -20,6 +20,11 @@ $budgetLines = $activeBudget ? dbFetchAll('SELECT bl.* FROM project_budget_lines
 $fundings = dbFetchAll("SELECT f.*, a.code AS source_account_code, a.name_ar AS source_account_name
     FROM project_funding_allocations f LEFT JOIN accounts a ON a.id=f.source_account_id
     WHERE f.project_id=? ORDER BY f.created_at DESC", [$id]);
+$paymentEvidence = dbFetchAll("SELECT pe.*, a.code AS source_account_code, a.name_ar AS source_account_name, je.entry_code
+    FROM project_payment_evidence pe
+    LEFT JOIN accounts a ON a.id=pe.source_account_id
+    LEFT JOIN journal_entries je ON je.id=pe.journal_entry_id
+    WHERE pe.project_id=? ORDER BY pe.id DESC", [$id]);
 $accounts = dbFetchAll("SELECT id, code, name_ar FROM accounts WHERE is_active=1 AND code IN ('1100','1200','1300') ORDER BY code");
 
 function fm_redirect_project(int $id): void {
@@ -64,8 +69,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $budgetTotal=(float)($budget['total']??0);
             if ($budgetTotal<=0) throw new RuntimeException('اعتمد الميزانية أولاً.');
 
-            $sourceIds=$_POST['source_account_id']??[]; $amounts=$_POST['funding_amount']??[]; $dates=$_POST['allocation_date']??[]; $refs=$_POST['funding_reference']??[]; $descs=$_POST['funding_description']??[];
-            if (!is_array($sourceIds)) $sourceIds=[$sourceIds]; if (!is_array($amounts)) $amounts=[$amounts]; if (!is_array($dates)) $dates=[$dates]; if (!is_array($refs)) $refs=[$refs]; if (!is_array($descs)) $descs=[$descs];
+            $sourceIds=$_POST['source_account_id']??[]; $amounts=$_POST['funding_amount']??[]; $dates=$_POST['allocation_date']??[]; $descs=$_POST['funding_description']??[];
+            if (!is_array($sourceIds)) $sourceIds=[$sourceIds]; if (!is_array($amounts)) $amounts=[$amounts]; if (!is_array($dates)) $dates=[$dates]; if (!is_array($descs)) $descs=[$descs];
 
             $batchByAccount=[];
             $rowCount=max(count($sourceIds),count($amounts));
@@ -76,11 +81,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if(!$account || !in_array($account['code'],['1100','1200','1300'],true)) throw new RuntimeException('اختر حساب تمويل صالحاً لكل بند.');
                 if($amount<=0) throw new RuntimeException('مبلغ التمويل يجب أن يكون أكبر من صفر لكل بند.');
                 $code=(string)$account['code'];
-                if(!isset($batchByAccount[$code])) $batchByAccount[$code]=['account'=>$account,'amount'=>0.0,'date'=>trim((string)($dates[$i]??''))?:date('Y-m-d'),'reference'=>'','description'=>''];
+                if(!isset($batchByAccount[$code])) $batchByAccount[$code]=['account'=>$account,'amount'=>0.0,'date'=>trim((string)($dates[$i]??''))?:date('Y-m-d'),'description'=>''];
                 $batchByAccount[$code]['amount']+=$amount;
-                $extraDate=trim((string)($dates[$i]??'')); $extraRef=trim((string)($refs[$i]??'')); $extraDesc=trim((string)($descs[$i]??''));
+                $extraDate=trim((string)($dates[$i]??'')); $extraDesc=trim((string)($descs[$i]??''));
                 if($extraDate!=='') $batchByAccount[$code]['date']=$extraDate;
-                if($extraRef!=='') $batchByAccount[$code]['reference']=trim($batchByAccount[$code]['reference'].' / '.$extraRef,' /');
                 if($extraDesc!=='') $batchByAccount[$code]['description']=trim($batchByAccount[$code]['description'].' / '.$extraDesc,' /');
             }
             if(!$batchByAccount) throw new RuntimeException('أضف مصدراً واحداً على الأقل مع مبلغ صحيح.');
@@ -94,7 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $existingAmount=0.0; foreach($existingRows as $row) $existingAmount+=(float)$row['amount'];
                 if($existingRows){
                     $primaryId=(int)$existingRows[0]['id']; $newAmount=$existingAmount+$item['amount'];
-                    dbExecute("UPDATE project_funding_allocations SET budget_id=?,source_type=?,amount=?,currency_code=?,allocation_date=?,reference_number=?,description=?,created_by=? WHERE id=? AND project_id=?",[$budget['id'],$item['account']['code'],$newAmount,$project['currency_code']?:'SDG',$item['date'],$item['reference']?:null,$item['description']?:null,akp_user_id(),$primaryId,$id]);
+                    dbExecute("UPDATE project_funding_allocations SET budget_id=?,source_type=?,amount=?,currency_code=?,allocation_date=?,description=?,created_by=? WHERE id=? AND project_id=?",[$budget['id'],$item['account']['code'],$newAmount,$project['currency_code']?:'SDG',$item['date'],$item['description']?:null,akp_user_id(),$primaryId,$id]);
                     foreach(array_slice($existingRows,1) as $duplicate) dbExecute("DELETE FROM project_funding_allocations WHERE id=? AND project_id=? AND status='draft'",[(int)$duplicate['id'],$id]);
                     akp_audit('UPDATE','project_funding_allocation',$primaryId,['amount'=>$existingAmount],['amount'=>$newAmount,'source_account'=>$item['account']['code'],'fm_review'=>true]);
                 }else{
@@ -108,7 +112,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!akp_can_manage_funding($id)) throw new RuntimeException('تخصيص التمويل محصور بالمدير المالي.');
             if ((string)$approval['approval_status']!=='submitted') throw new RuntimeException('لا يمكن تعديل التمويل بعد انتهاء المراجعة المالية.');
             $allocationId=(int)($_POST['allocation_id']??0); $accountId=(int)($_POST['source_account_id']??0); $amount=(float)($_POST['funding_amount']??0);
-            $date=fm_post('allocation_date',date('Y-m-d')); $reference=fm_post('funding_reference'); $description=fm_post('funding_description');
+            $date=fm_post('allocation_date',date('Y-m-d')); $description=fm_post('funding_description');
             $account=$accountId?dbFetchOne('SELECT id,code,name_ar FROM accounts WHERE id=? AND is_active=1',[$accountId]):null;
             $row=$allocationId?dbFetchOne("SELECT * FROM project_funding_allocations WHERE id=? AND project_id=? AND status='draft'",[$allocationId,$id]):null;
             if(!$row || !$account || !in_array($account['code'],['1100','1200','1300'],true)) throw new RuntimeException('تخصيص التمويل المطلوب غير صالح.');
@@ -118,7 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $duplicateRows=dbFetchAll("SELECT id,amount FROM project_funding_allocations WHERE project_id=? AND source_account_id=? AND status='draft' AND id<>?",[$id,$accountId,$allocationId]);
             $mergedAmount=$amount; foreach($duplicateRows as $duplicate) $mergedAmount+=(float)$duplicate['amount'];
             if($totalWithout+$amount>$budgetTotal+0.01) throw new RuntimeException('إجمالي التمويل لا يمكن أن يتجاوز الميزانية المعتمدة.');
-            dbExecute("UPDATE project_funding_allocations SET source_type=?,source_account_id=?,amount=?,currency_code=?,allocation_date=?,reference_number=?,description=?,created_by=? WHERE id=? AND project_id=?",[$account['code'],$accountId,$mergedAmount,$project['currency_code']?:'SDG',$date,$reference?:null,$description?:null,akp_user_id(),$allocationId,$id]);
+            dbExecute("UPDATE project_funding_allocations SET source_type=?,source_account_id=?,amount=?,currency_code=?,allocation_date=?,description=?,created_by=? WHERE id=? AND project_id=?",[$account['code'],$accountId,$mergedAmount,$project['currency_code']?:'SDG',$date,$description?:null,akp_user_id(),$allocationId,$id]);
             foreach($duplicateRows as $duplicate) dbExecute("DELETE FROM project_funding_allocations WHERE id=? AND project_id=? AND status='draft'",[(int)$duplicate['id'],$id]);
             akp_audit('UPDATE','project_funding_allocation',$allocationId,['amount'=>$row['amount']],['amount'=>$mergedAmount,'source_account'=>$account['code'],'fm_review'=>true]);
             flash('success','تم تعديل تخصيص التمويل وتجميع المصدر نفسه.');
@@ -133,6 +137,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             akp_audit('DELETE','project_funding_allocation',$allocationId,['project_id'=>$id,'source_account'=>$row['source_account_id'],'amount'=>$row['amount']],null);
             flash('success','تم حذف تخصيص مصدر التمويل بالكامل.');
 
+        } elseif ($action === 'fm_confirm_cash_payment') {
+            if (akp_role() !== 'financial_manager') throw new RuntimeException('إصدار سند صرف المشروع محصور بالمدير المالي.');
+            if ((string)$approval['approval_status'] !== 'approved') throw new RuntimeException('لا يمكن إصدار سند الصرف قبل الاعتماد النهائي من المدير العام.');
+            $paymentId=(int)($_POST['payment_id']??0);
+            $payment=dbFetchOne("SELECT * FROM project_payment_evidence WHERE id=? AND project_id=? AND payment_method='cash'",[$paymentId,$id]);
+            if(!$payment) throw new RuntimeException('سجل صرف النقد المطلوب غير موجود.');
+            if($payment['status']==='documented') throw new RuntimeException('تم إصدار سند الصرف لهذا المبلغ مسبقاً.');
+            dbExecute("UPDATE project_payment_evidence SET status='documented',voucher_confirmed_at=NOW(),documented_by=?,documented_at=NOW() WHERE id=? AND project_id=? AND status='pending'",[akp_user_id(),$paymentId,$id]);
+            akp_audit('DOCUMENT_PROJECT_CASH_PAYMENT','project_payment_evidence',$paymentId,['status'=>'pending'],['status'=>'documented','payment_method'=>'cash']);
+            flash('success','تم توثيق سند الصرف النقدي. يمكنك طباعته الآن.');
+        } elseif ($action === 'fm_upload_payment_receipt') {
+            if (akp_role() !== 'financial_manager') throw new RuntimeException('إرفاق إيصال التحويل محصور بالمدير المالي.');
+            if ((string)$approval['approval_status'] !== 'approved') throw new RuntimeException('لا يمكن إرفاق إيصال قبل الاعتماد النهائي من المدير العام.');
+            $paymentId=(int)($_POST['payment_id']??0);
+            $reference=trim((string)($_POST['payment_reference']??''));
+            $payment=dbFetchOne("SELECT * FROM project_payment_evidence WHERE id=? AND project_id=? AND payment_method IN ('bank_transfer','e_wallet')",[$paymentId,$id]);
+            if(!$payment) throw new RuntimeException('سجل التحويل المطلوب غير موجود.');
+            if(!isset($_FILES['payment_receipt']) || $_FILES['payment_receipt']['error']!==UPLOAD_ERR_OK) throw new RuntimeException('إيصال التحويل مطلوب.');
+            $file=$_FILES['payment_receipt'];
+            if((int)$file['size']>10*1024*1024) throw new RuntimeException('حجم الإيصال يجب ألا يتجاوز 10 ميجابايت.');
+            $mime=(new finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']);
+            $allowed=['application/pdf'=>'pdf','image/jpeg'=>'jpg','image/png'=>'png'];
+            if(!isset($allowed[$mime])) throw new RuntimeException('نوع الإيصال غير مسموح. استخدم PDF أو JPG أو PNG.');
+            $dir=dirname(__DIR__,2).'/storage/documents/projects/'.$id.'/payments';
+            if(!is_dir($dir) && !mkdir($dir,0777,true)) throw new RuntimeException('تعذر إنشاء مجلد إيصالات المشروع.');
+            $name='payment_'.$paymentId.'_'.date('YmdHis').'_'.bin2hex(random_bytes(4)).'.'.$allowed[$mime];
+            $dest=$dir.'/'.$name;
+            if(!move_uploaded_file($file['tmp_name'],$dest)) throw new RuntimeException('فشل حفظ إيصال التحويل.');
+            $relative='storage/documents/projects/'.$id.'/payments/'.$name;
+            dbExecute("UPDATE project_payment_evidence SET status='documented',reference_number=?,receipt_file_path=?,receipt_original_name=?,receipt_mime_type=?,documented_by=?,documented_at=NOW() WHERE id=? AND project_id=? AND status='pending'",[$reference!==''?$reference:null,$relative,$file['name'],$mime,akp_user_id(),$paymentId,$id]);
+            akp_audit('DOCUMENT_PROJECT_PAYMENT_RECEIPT','project_payment_evidence',$paymentId,['status'=>'pending'],['status'=>'documented','payment_method'=>$payment['payment_method'],'reference'=>$reference,'receipt'=>$relative]);
+            flash('success','تم إرفاق إيصال التحويل وتوثيق عملية الدفع.');
         } elseif ($action === 'fm_approve_project') {
             if ((string)$approval['approval_status']!=='submitted') throw new RuntimeException('المشروع ليس في حالة انتظار الاعتماد المالي.');
             $budget=dbFetchOne("SELECT b.id,COALESCE(SUM(bl.estimated_amount),0) total FROM project_budgets b LEFT JOIN project_budget_lines bl ON bl.budget_id=b.id WHERE b.project_id=? AND b.status='approved' GROUP BY b.id ORDER BY b.version_no DESC LIMIT 1",[$id]);
@@ -217,7 +253,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                             <div class="col-md-4"><label class="form-label">حساب التمويل</label><select name="source_account_id[]" class="form-select" required><option value="">اختر الحساب</option><?php foreach($accounts as $a): ?><option value="<?php echo (int)$a['id']; ?>"><?php echo e($a['code'].' · '.$a['name_ar']); ?></option><?php endforeach; ?></select></div>
                             <div class="col-md-2"><label class="form-label">المبلغ</label><input type="number" step="0.01" min="0.01" name="funding_amount[]" class="form-control" required></div>
                             <div class="col-md-2"><label class="form-label">التاريخ</label><input type="date" name="allocation_date[]" class="form-control" value="<?php echo date('Y-m-d'); ?>"></div>
-                            <div class="col-md-2"><label class="form-label">المرجع</label><input name="funding_reference[]" class="form-control"></div>
+                            
                             <div class="col-md-2"><label class="form-label">الوصف</label><input name="funding_description[]" class="form-control"></div>
                         </div></div>
                     </div>
@@ -225,8 +261,8 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 </form>
             <?php endif; ?>
             <div class="small mb-2">إجمالي التخصيص الحالي: <strong><?php echo number_format($fundingTotal,2); ?> <?php echo e($project['currency_code']?:'SDG'); ?></strong></div>
-            <div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>التاريخ</th><th>الحساب</th><th>المبلغ</th><th>المرجع/الوصف</th><th>إجراء</th></tr></thead><tbody>
-            <?php foreach($fundings as $f): ?><tr><td class="align-middle"><?php echo e($f['allocation_date']); ?></td><td class="align-middle"><?php echo e(($f['source_account_code']??$f['source_type']).' · '.($f['source_account_name']??'')); ?></td><td class="align-middle"><?php echo number_format((float)$f['amount'],2); ?></td><td class="align-middle"><?php if(!empty($f['reference_number'])): ?><div><?php echo e($f['reference_number']); ?></div><?php endif; ?><?php if(!empty($f['description'])): ?><div class="text-muted"><?php echo e($f['description']); ?></div><?php endif; ?><?php if(empty($f['reference_number']) && empty($f['description'])): ?><span class="text-muted">—</span><?php endif; ?></td><td class="align-middle text-nowrap"><?php if($approval['approval_status']==='submitted' && !$closed): ?><button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editFunding<?php echo (int)$f['id']; ?>">تعديل</button> <form method="post" class="d-inline" onsubmit="return confirm('هل تريد حذف تخصيص هذا المصدر بالكامل؟');"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_delete_funding"><input type="hidden" name="allocation_id" value="<?php echo (int)$f['id']; ?>"><button class="btn btn-sm btn-outline-danger">حذف</button></form><?php endif; ?></td></tr>
+            <div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>التاريخ</th><th>الحساب</th><th>المبلغ</th><th>الوصف</th><th>إجراء</th></tr></thead><tbody>
+            <?php foreach($fundings as $f): ?><tr><td class="align-middle"><?php echo e($f['allocation_date']); ?></td><td class="align-middle"><?php echo e(($f['source_account_code']??$f['source_type']).' · '.($f['source_account_name']??'')); ?></td><td class="align-middle"><?php echo number_format((float)$f['amount'],2); ?></td><td class="align-middle"><?php echo !empty($f['description']) ? e($f['description']) : '<span class="text-muted">—</span>'; ?></td><td class="align-middle text-nowrap"><?php if($approval['approval_status']==='submitted' && !$closed): ?><button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editFunding<?php echo (int)$f['id']; ?>">تعديل</button> <form method="post" class="d-inline" onsubmit="return confirm('هل تريد حذف تخصيص هذا المصدر بالكامل؟');"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_delete_funding"><input type="hidden" name="allocation_id" value="<?php echo (int)$f['id']; ?>"><button class="btn btn-sm btn-outline-danger">حذف</button></form><?php endif; ?></td></tr>
             <?php endforeach; ?><?php if(!$fundings): ?><tr><td colspan="5" class="text-center text-muted">لا توجد تخصيصات تمويل مسجلة بعد.</td></tr><?php endif; ?></tbody></table></div>
             <script>
             document.addEventListener('DOMContentLoaded',function(){
@@ -247,7 +283,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 
     <?php if($approval['approval_status']==='submitted' && $approvedExists): ?><div class="card mb-4 border-primary"><div class="card-body"><h5>الاعتماد المالي للمشروع</h5><div class="alert alert-light border mb-3"><div class="text-muted small mb-1">إجمالي الميزانية المعتمدة</div><div class="fs-4 fw-bold"><?php echo number_format((float)($activeBudget['line_total'] ?? 0),2); ?> <?php echo e($project['currency_code']?:'SDG'); ?></div></div><p class="text-muted">يجب أن يساوي إجمالي تخصيص التمويل الميزانية المعتمدة.</p><div class="d-flex gap-2"><form method="post"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_approve_project"><button class="btn btn-success">اعتماد المشروع مالياً</button></form><button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#rejectProject">رفض المشروع مالياً</button></div></div></div><?php endif; ?>
 
-    <?php foreach($fundings as $f): ?><div class="modal fade" id="editFunding<?php echo (int)$f['id']; ?>"><div class="modal-dialog modal-lg"><div class="modal-content"><form method="post"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_edit_funding"><input type="hidden" name="allocation_id" value="<?php echo (int)$f['id']; ?>"><div class="modal-header"><h5 class="modal-title">تعديل تخصيص التمويل</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="row g-3"><div class="col-md-6"><label class="form-label">حساب التمويل</label><select name="source_account_id" class="form-select" required><?php foreach($accounts as $a): ?><option value="<?php echo (int)$a['id']; ?>" <?php echo ((int)$a['id']===(int)$f['source_account_id'])?'selected':''; ?>><?php echo e($a['code'].' · '.$a['name_ar']); ?></option><?php endforeach; ?></select></div><div class="col-md-6"><label class="form-label">المبلغ</label><input type="number" step="0.01" min="0.01" name="funding_amount" class="form-control" value="<?php echo e((string)$f['amount']); ?>" required></div><div class="col-md-6"><label class="form-label">التاريخ</label><input type="date" name="allocation_date" class="form-control" value="<?php echo e((string)$f['allocation_date']); ?>"></div><div class="col-md-6"><label class="form-label">المرجع</label><input name="funding_reference" class="form-control" value="<?php echo e((string)($f['reference_number']??'')); ?>"></div><div class="col-12"><label class="form-label">الوصف</label><input name="funding_description" class="form-control" value="<?php echo e((string)($f['description']??'')); ?>"></div></div></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button><button class="btn btn-primary">حفظ التعديل</button></div></form></div></div></div><?php endforeach; ?>
+    <?php foreach($fundings as $f): ?><div class="modal fade" id="editFunding<?php echo (int)$f['id']; ?>"><div class="modal-dialog modal-lg"><div class="modal-content"><form method="post"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_edit_funding"><input type="hidden" name="allocation_id" value="<?php echo (int)$f['id']; ?>"><div class="modal-header"><h5 class="modal-title">تعديل تخصيص التمويل</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="row g-3"><div class="col-md-6"><label class="form-label">حساب التمويل</label><select name="source_account_id" class="form-select" required><?php foreach($accounts as $a): ?><option value="<?php echo (int)$a['id']; ?>" <?php echo ((int)$a['id']===(int)$f['source_account_id'])?'selected':''; ?>><?php echo e($a['code'].' · '.$a['name_ar']); ?></option><?php endforeach; ?></select></div><div class="col-md-6"><label class="form-label">المبلغ</label><input type="number" step="0.01" min="0.01" name="funding_amount" class="form-control" value="<?php echo e((string)$f['amount']); ?>" required></div><div class="col-md-6"><label class="form-label">التاريخ</label><input type="date" name="allocation_date" class="form-control" value="<?php echo e((string)$f['allocation_date']); ?>"></div><div class="col-12"><label class="form-label">الوصف</label><input name="funding_description" class="form-control" value="<?php echo e((string)($f['description']??'')); ?>"></div></div></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button><button class="btn btn-primary">حفظ التعديل</button></div></form></div></div></div><?php endforeach; ?>
 
     <div class="modal fade" id="rejectBudget"><div class="modal-dialog"><div class="modal-content"><form method="post"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_reject_budget"><input type="hidden" name="budget_id" value="<?php echo (int)($activeBudget['id']??0); ?>"><div class="modal-header"><h5>رفض الميزانية</h5></div><div class="modal-body"><textarea name="rejection_reason" class="form-control" required placeholder="سبب الرفض"></textarea></div><div class="modal-footer"><button class="btn btn-danger">تأكيد الرفض</button></div></form></div></div></div>
     <div class="modal fade" id="rejectProject"><div class="modal-dialog"><div class="modal-content"><form method="post"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_reject_project"><div class="modal-header"><h5>رفض المشروع مالياً</h5></div><div class="modal-body"><textarea name="rejection_reason" class="form-control" required placeholder="سبب الرفض"></textarea></div><div class="modal-footer"><button class="btn btn-danger">تأكيد الرفض</button></div></form></div></div></div>
