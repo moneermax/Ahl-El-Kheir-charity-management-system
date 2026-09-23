@@ -1735,7 +1735,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             <div class="card-header"><i class="fas fa-user-shield me-2"></i>فريق المشروع وصلاحيات الأقسام</div>
             <div class="card-body">
                 <p class="small text-muted">المستخدم المكلّف بقسم يستطيع تعديل ذلك القسم فقط. إغلاق المشروع يلغي جميع صلاحيات التعديل، ولا يعيدها إلا المدير العام عند إعادة الفتح.</p>
-                <?php if (akp_can_edit_section('team', $id) && !$closed): ?>
+                <?php if (akp_can_edit_section('team', $id) && !$closed && !in_array(akp_role(), ['general_manager','vice_general_manager'], true)): ?>
                     <form method="post" class="project-form-panel mb-3">
                         <input type="hidden" name="action" value="assign_team">
                         <?php echo csrf_field(); ?>
@@ -1773,7 +1773,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     <div class="border-bottom py-2 small">
                         <strong><?php echo e($member['full_name']); ?></strong> · <?php echo e($member['section_code']); ?>
                         <?php if ($member['is_lead']): ?> <span class="badge bg-primary">مسؤول</span><?php endif; ?>
-                        <?php if (akp_can_edit_section('team', $id) && !$closed): ?>
+                        <?php if (akp_can_edit_section('team', $id) && !$closed && !in_array(akp_role(), ['general_manager','vice_general_manager'], true)): ?>
                             <form method="post" class="project-inline-form d-inline float-end">
                                 <?php echo csrf_field(); ?>
                                 <input type="hidden" name="action" value="unassign_team">
