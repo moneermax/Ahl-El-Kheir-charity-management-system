@@ -118,7 +118,17 @@ if (!function_exists('akp_audit')) {
                                 ak_transaction_review_notify_event((int)$projectManager['id'], 'تم رفض المشروع مالياً', 'المشروع «' . (string)($project['name'] ?? '') . '» (' . (string)($project['project_code'] ?? '') . ') تم رفضه مالياً وإعادته للمراجعة. السبب: ' . $reason, APP_URL . 'modules/projects/view.php?id=' . $entityId, $entityId, 'project_fm_rejection');
                             }
                         } else {
-                            ak_transaction_review_notify_fm_event($entityId, 'project_final_rejection', 'تم رفض المشروع نهائياً من المدير العام', 'المشروع «' . (string)($project['name'] ?? '') . '» (' . (string)($project['project_code'] ?? '') . ') تم رفضه نهائياً بعد الاعتماد المالي. السبب: ' . $reason, APP_URL . 'modules/projects/view.php?id=' . $entityId);
+                            $projectManagers = dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id = r.id WHERE r.code = 'projects_manager' AND u.is_active = 1");
+                            foreach ($projectManagers as $projectManager) {
+                                ak_transaction_review_notify_event(
+                                    (int)$projectManager['id'],
+                                    'تم رفض المشروع نهائياً من المدير العام',
+                                    'المشروع «' . (string)($project['name'] ?? '') . '» (' . (string)($project['project_code'] ?? '') . ') تم رفضه نهائياً بعد الاعتماد المالي. السبب: ' . $reason,
+                                    APP_URL . 'modules/projects/view.php?id=' . $entityId,
+                                    $entityId,
+                                    'project_final_rejection'
+                                );
+                            }
                         }
                     }
                 } catch (Throwable $notificationError) {}
