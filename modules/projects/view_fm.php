@@ -92,8 +92,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             dbExecute("UPDATE project_approval SET approval_status='rejected',fm_rejection_reason=?,fm_reviewed_by=?,fm_reviewed_at=NOW() WHERE project_id=?",[$reason,akp_user_id(),$id]);
             akp_audit('FM_REJECT_PROJECT','project_approval',$id,['approval_status'=>'submitted'],['approval_status'=>'rejected','reason'=>$reason]);
 
-            // Notify active Projects Manager users through the existing event-aware notification infrastructure.
-            // Notification delivery is isolated so it cannot roll back the completed rejection.
             try {
                 $pmUsers = dbFetchAll(
                     "SELECT u.id
@@ -113,7 +111,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     );
                 }
             } catch (Throwable $notificationError) {
-                // Notification delivery must never roll back the completed rejection.
             }
 
             flash('success','تم رفض المشروع مالياً وإعادته لمدير المشاريع.');
@@ -130,15 +127,19 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div><h3 class="mb-1"><i class="fas fa-coins me-2"></i>المراجعة المالية للمشروع</h3><div class="text-muted"><?php echo e($project['project_code'] ?? ''); ?> · <?php echo e($project['name'] ?? ''); ?></div></div>
     </div>
-    <div class="alert alert-primary"><strong>دور المدير المالي:</strong> مراجعة الميزانية، تعديلها عند الحاجة، اعتمادها، ثم تحديد حسابات التمويل وتخصيص المبلغ قبل الاعتماد المالي.</div>
+    <div class="alert alert-primary"><strong>دور المدير المالي:</strong> مراجعة الميزانية، اعتمادها عند قبولها، ثم تحديد حسابات التمويل وتخصيص المبلغ قبل الاعتماد المالي. إذا احتاج المشروع إلى تعديل، يتم رفضه وإعادته لمدير المشاريع مع توضيح السبب.</div>
 
-    <div class="card mb-4"><div class="card-header"><strong>الميزانية</strong></div><div class="card-body">
-        <?php if (!$activeBudget): ?><div class="alert alert-warning">لا توجد ميزانية للمراجعة.</div>
+    <div class="card mb-4"><div class="card-header"><strong>الميزانية المقترحة</strong></div><div class="card-body">
+        <?php if (!$activeBudget): ?><div class="alert alert-warning">لا توجد ميزانية مقترحة للمراجعة.</div>
         <?php else: ?>
             <div class="mb-3"><strong><?php echo e($activeBudget['budget_name']); ?></strong> · النسخة <?php echo (int)$activeBudget['version_no']; ?> · الحالة <span class="badge bg-<?php echo $activeBudget['status']==='approved'?'success':'warning text-dark'; ?>"><?php echo e($activeBudget['status']); ?></span></div>
-            <div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>الفئة</th><th>الوصف</th><th>المبلغ</th><th>إجراء</th></tr></thead><tbody>
+            <div class="alert alert-light border d-flex justify-content-between align-items-center mb-3">
+                <span class="text-muted">إجمالي الميزانية المقترحة</span>
+                <strong class="fs-5"><?php echo number_format((float)($activeBudget['line_total'] ?? 0),2); ?> <?php echo e($project['currency_code']?:'SDG'); ?></strong>
+            </div>
+            <div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>الفئة</th><th>الوصف</th><th>المبلغ</th></tr></thead><tbody>
             <?php foreach($budgetLines as $line): ?><tr><td><?php echo e($line['category']); ?></td><td><?php echo e($line['description']); ?></td><td><?php echo number_format((float)$line['estimated_amount'],2).' '.e($project['currency_code']?:'SDG'); ?></td></tr>
-            <?php endforeach; ?><?php if(!$budgetLines): ?><tr><td colspan="4" class="text-center text-muted">لا توجد بنود.</td></tr><?php endif; ?></tbody></table></div>
+            <?php endforeach; ?><?php if(!$budgetLines): ?><tr><td colspan="3" class="text-center text-muted">لا توجد بنود.</td></tr><?php endif; ?></tbody></table></div>
             <?php if($activeBudget['status']==='draft'): ?>
                 <div class="d-flex gap-2"><form method="post"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_approve_budget"><input type="hidden" name="budget_id" value="<?php echo (int)$activeBudget['id']; ?>"><button class="btn btn-success">اعتماد الميزانية</button></form><button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejectBudget">رفض الميزانية</button></div>
             <?php endif; ?>
