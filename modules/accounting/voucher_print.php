@@ -8,9 +8,19 @@ require_once dirname(__DIR__, 2) . '/config/functions.php';
 require_once dirname(__DIR__, 2) . '/config/session.php';
 require_once __DIR__ . '/lib.php';
 require_once __DIR__ . '/lib_vouchers.php';
+require_once dirname(__DIR__, 2) . '/modules/projects/project_lib.php';
 Session::start();
 
-if (!Session::isLoggedIn() || !ak_voucher_can('view', Session::getUserRole())) {
+$projectPaymentId = (int)($_GET['project_payment_id'] ?? 0);
+$viewerRole = Session::getUserRole();
+if (!Session::isLoggedIn()) {
+    header('Location: ' . APP_URL . 'index.php'); exit();
+}
+if ($projectPaymentId > 0) {
+    if (!in_array($viewerRole, ['admin','financial_manager','general_manager','vice_general_manager','projects_manager','accountant','accountant_staff'], true)) {
+        http_response_code(403); exit('Forbidden');
+    }
+} elseif (!ak_voucher_can('view', $viewerRole)) {
     header('Location: ' . APP_URL . 'index.php'); exit();
 }
 ak_ensure_tables();
@@ -19,15 +29,48 @@ while (ob_get_level() > 0) { ob_end_clean(); }
 // The "voucher issued" flash message is shown by this page itself, so do not leave it for the next page.
 if (function_exists('get_flashes')) { get_flashes(); }
 
-$v = dbFetchOne("SELECT v.*, c1.code cash_code, c1.name_ar cash_name, c2.code other_code, c2.name_ar other_name,
-                        u.full_name creator, je.entry_code
-                 FROM vouchers v
-                 JOIN accounts c1 ON c1.id = v.cash_account_id
-                 JOIN accounts c2 ON c2.id = v.other_account_id
-                 LEFT JOIN users u ON u.id = v.created_by
-                 LEFT JOIN journal_entries je ON je.id = v.entry_id
-                 WHERE v.id = ?", [(int)($_GET['id'] ?? 0)]);
-if (!$v) { http_response_code(404); echo 'السند غير موجود / Voucher not found'; exit(); }
+$isProjectPayment = $projectPaymentId > 0;
+if ($isProjectPayment) {
+    $v = dbFetchOne(
+        "SELECT pe.*, p.project_code, p.name AS project_name,
+                c.code AS cash_code, c.name_ar AS cash_name,
+                COALESCE(pa.id, 0) AS other_id, COALESCE(pa.code, '5100') AS other_code,
+                COALESCE(pa.name_ar, 'مصروفات البرامج والمساعدات') AS other_name,
+                je.entry_code,
+                du.full_name AS creator
+         FROM project_payment_evidence pe
+         INNER JOIN other_projects p ON p.id = pe.project_id
+         INNER JOIN accounts c ON c.id = pe.source_account_id
+         LEFT JOIN other_projects op ON op.id = pe.project_id
+         LEFT JOIN accounts pa ON pa.id = op.expense_account_id
+         LEFT JOIN journal_entries je ON je.id = pe.journal_entry_id
+         LEFT JOIN users du ON du.id = pe.documented_by
+         WHERE pe.id = ? AND pe.payment_method = 'cash' AND pe.status = 'documented'",
+        [$projectPaymentId]
+    );
+    if (!$v || !akp_can_view_project((int)$v['project_id'])) {
+        http_response_code(404); echo 'سند صرف المشروع غير موجود / Project payment voucher not found'; exit();
+    }
+    $v['voucher_type'] = 'payment';
+    $v['voucher_no'] = 'PRJ-PV-' . (string)$v['project_code'] . '-' . (int)$v['id'];
+    $v['voucher_date'] = $v['payment_date'];
+    $v['party_name'] = 'مدير المشاريع — ' . (string)$v['project_name'];
+    $v['description'] = 'صرف تمويل مشروع: ' . (string)$v['project_name'];
+    $v['reference_number'] = (string)($v['reference_number'] ?: ('PROJECT-PAY-' . (int)$v['id']));
+    $v['amount'] = (float)$v['amount'];
+    $v['status'] = 'posted';
+    $v['created_by'] = (int)($v['documented_by'] ?? 0);
+} else {
+    $v = dbFetchOne("SELECT v.*, c1.code cash_code, c1.name_ar cash_name, c2.code other_code, c2.name_ar other_name,
+                            u.full_name creator, je.entry_code
+                     FROM vouchers v
+                     JOIN accounts c1 ON c1.id = v.cash_account_id
+                     JOIN accounts c2 ON c2.id = v.other_account_id
+                     LEFT JOIN users u ON u.id = v.created_by
+                     LEFT JOIN journal_entries je ON je.id = v.entry_id
+                     WHERE v.id = ?", [(int)($_GET['id'] ?? 0)]);
+    if (!$v) { http_response_code(404); echo 'السند غير موجود / Voucher not found'; exit(); }
+}
 
 $void = null;
 if ($v['status'] === 'voided') {
@@ -47,8 +90,10 @@ $amount = (float)$v['amount'];
 $words = ak_voucher_amount_words($amount);
 $printedBy = (string)(dbFetchOne("SELECT full_name FROM users WHERE id = ?", [(int)Session::getUserId()])['full_name'] ?? '');
 $printedAt = date('Y-m-d H:i');
-$self = APP_URL . 'modules/accounting/voucher_print.php?id=' . (int)$v['id'];
-$canIssue = ak_voucher_can('issue', Session::getUserRole());
+$self = $isProjectPayment
+    ? APP_URL . 'modules/accounting/voucher_print.php?project_payment_id=' . (int)$v['id']
+    : APP_URL . 'modules/accounting/voucher_print.php?id=' . (int)$v['id'];
+$canIssue = !$isProjectPayment && ak_voucher_can('issue', Session::getUserRole());
 
 $row = static function (string $ar, string $en, string $value, bool $strong = false): string {
     return '<tr><th><span class="ar">' . e($ar) . '</span><span class="en">' . e($en) . '</span></th><td' . ($strong ? ' class="strong"' : '') . '>' . ($value !== '' ? e($value) : '&nbsp;') . '</td></tr>';
@@ -181,7 +226,7 @@ $renderVoucher = static function (string $copyLabelAr, string $copyLabelEn) use 
     <button class="btn primary" onclick="window.print()">🖨 طباعة / Print</button>
     <?php if ($copies === 1): ?><a class="btn" href="<?php echo e($self); ?>&copies=2">نسختان في الصفحة / 2 copies</a>
     <?php else: ?><a class="btn" href="<?php echo e($self); ?>">نسخة واحدة / 1 copy</a><?php endif; ?>
-    <a class="btn" href="<?php echo APP_URL; ?>modules/accounting/vouchers.php?tab=list">سجل السندات / Register</a>
+    <?php if (!$isProjectPayment): ?><a class="btn" href="<?php echo APP_URL; ?>modules/accounting/vouchers.php?tab=list">سجل السندات / Register</a><?php endif; ?>
     <?php if ($canIssue): ?><a class="btn" href="<?php echo APP_URL; ?>modules/accounting/vouchers.php?tab=new">سند جديد / New voucher</a><?php endif; ?>
 </div>
 <div class="sheet<?php echo $copies === 2 ? ' two' : ''; ?>">
