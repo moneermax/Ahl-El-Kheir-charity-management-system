@@ -102,7 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     foreach(array_slice($existingRows,1) as $duplicate) dbExecute("DELETE FROM project_funding_allocations WHERE id=? AND project_id=? AND status='draft'",[(int)$duplicate['id'],$id]);
                     akp_audit('UPDATE','project_funding_allocation',$primaryId,['amount'=>$existingAmount],['amount'=>$newAmount,'source_account'=>$item['account']['code'],'fm_review'=>true]);
                 }else{
-                    dbExecute('INSERT INTO project_funding_allocations (project_id,budget_id,source_type,source_account_id,destination_account_id,transaction_id,amount,currency_code,allocation_date,reference_number,description,status,created_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)',[$id,$budget['id'],$item['account']['code'],$accountId,null,null,$item['amount'],$project['currency_code']?:'SDG',$item['date'],$item['reference']?:null,$item['description']?:null,'draft',akp_user_id()]);
+                    dbExecute('INSERT INTO project_funding_allocations (project_id,budget_id,source_type,source_account_id,destination_account_id,transaction_id,amount,currency_code,allocation_date,reference_number,description,status,created_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)',[$id,$budget['id'],$item['account']['code'],$accountId,null,null,$item['amount'],$project['currency_code']?:'SDG',$item['date'],null,$item['description']?:null,'draft',akp_user_id()]);
                     $allocationId=(int)(dbFetchOne('SELECT LAST_INSERT_ID() id')['id']??0); akp_audit('CREATE','project_funding_allocation',$allocationId,null,['project_id'=>$id,'amount'=>$item['amount'],'source_account'=>$item['account']['code'],'fm_review'=>true]);
                 }
             }
