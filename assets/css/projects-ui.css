@@ -135,3 +135,16 @@
         grid-column: 1;
     }
 }
+
+/* The finance wrapper is nested inside the main grid column. On desktop the
+ * project page uses a 1.7fr / 1fr two-column grid, so the wrapper needs to
+ * span the equivalent of both columns. The wrapper itself is widened in RTL,
+ * extending into the otherwise unused left-side space without adding a
+ * horizontal scrollbar to the tables.
+ */
+@media (min-width: 992px) {
+    .project-module-page .project-view-main-column > .card:has(.project-finance-card) {
+        width: calc(158.824% + 1rem);
+        max-width: none;
+    }
+}
