@@ -47,7 +47,8 @@ $projects = dbFetchAll("SELECT p.*, COALESCE(l.lifecycle_status, p.status) AS cu
     COALESCE((SELECT SUM(e.amount) FROM project_expenses e WHERE e.project_id = p.id AND e.status = 'posted'), 0) AS expense_total,
     COALESCE((SELECT COUNT(*) FROM project_beneficiaries pb WHERE pb.project_id = p.id), 0) + COALESCE((SELECT COUNT(*) FROM project_beneficiary_records pbr WHERE pbr.project_id = p.id), 0) AS beneficiary_count,
     COALESCE((SELECT u.full_name FROM project_supervisor_assignments psa JOIN users u ON u.id = psa.supervisor_user_id WHERE psa.project_id = p.id AND psa.ended_at IS NULL ORDER BY psa.id DESC LIMIT 1), '—') AS supervisor_name,
-    COALESCE((SELECT pa.approval_status FROM project_approval pa WHERE pa.project_id = p.id), 'approved') AS approval_status
+    COALESCE((SELECT pa.approval_status FROM project_approval pa WHERE pa.project_id = p.id), 'approved') AS approval_status,
+    COALESCE((SELECT pa.fm_rejection_reason FROM project_approval pa WHERE pa.project_id = p.id), '') AS fm_rejection_reason
     FROM other_projects p LEFT JOIN project_lifecycle l ON l.project_id = p.id ORDER BY p.id DESC");
 
 $visibleProjects = [];
