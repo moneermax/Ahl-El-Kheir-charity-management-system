@@ -36,6 +36,13 @@ if (!function_exists('akp_can_prepare_finance')) {
         return true;
     }
 }
+if (!function_exists('akp_project_payment_method_from_account_code')) {
+    function akp_project_payment_method_from_account_code(string $code): ?string
+    {
+        return ['1100' => 'cash', '1200' => 'bank_transfer', '1300' => 'e_wallet'][$code] ?? null;
+    }
+}
+
 if (!function_exists('akp_can_manage_funding')) {
     function akp_can_manage_funding(int $projectId = 0): bool
     {
