@@ -2,6 +2,7 @@
 // modules/projects/view_fm.php - Dedicated Financial Manager project review
 require_once dirname(__DIR__, 2) . '/modules/projects/project_lib.php';
 require_once dirname(__DIR__, 2) . '/modules/accounting/lib.php';
+require_once dirname(__DIR__, 2) . '/modules/accounting/lib_transaction_review.php';
 Session::start();
 
 $id = (int)($_GET['id'] ?? $_POST['project_id'] ?? 0);
@@ -35,26 +36,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     try {
         if ($closed) throw new RuntimeException('لا يمكن تعديل مشروع مغلق.');
-
-        if ($action === 'fm_edit_budget_line') {
-            $lineId=(int)($_POST['line_id']??0);
-            $line=dbFetchOne('SELECT bl.*, b.status AS budget_status, b.project_id FROM project_budget_lines bl JOIN project_budgets b ON b.id=bl.budget_id WHERE bl.id=?',[$lineId]);
-            if (!$line || (int)$line['project_id']!==$id) throw new RuntimeException('بند الميزانية غير موجود.');
-            if ($line['budget_status']!=='draft') throw new RuntimeException('لا يمكن تعديل بند من ميزانية معتمدة.');
-            $category=fm_post('line_category'); $description=fm_post('line_description'); $amount=(float)($_POST['estimated_amount']??0);
-            if ($category===''||$description===''||$amount<=0) throw new RuntimeException('الفئة والوصف والمبلغ التقديري مطلوبة.');
-            dbExecute('UPDATE project_budget_lines SET category=?, description=?, estimated_amount=?, notes=? WHERE id=?',[$category,$description,$amount,fm_post('line_notes')?:null,$lineId]);
-            akp_audit('UPDATE','project_budget_line',$lineId,['amount'=>$line['estimated_amount']],['amount'=>$amount,'fm_review'=>true]);
-            flash('success','تم تعديل بند الميزانية بواسطة المدير المالي.');
-
-        } elseif ($action === 'fm_delete_budget_line') {
-            $lineId=(int)($_POST['line_id']??0);
-            $line=dbFetchOne('SELECT bl.*,b.status AS budget_status,b.project_id FROM project_budget_lines bl JOIN project_budgets b ON b.id=bl.budget_id WHERE bl.id=?',[$lineId]);
-            if (!$line || (int)$line['project_id']!==$id) throw new RuntimeException('بند الميزانية غير موجود.');
-            if ($line['budget_status']!=='draft') throw new RuntimeException('لا يمكن حذف بند من ميزانية معتمدة.');
-            dbExecute('DELETE FROM project_budget_lines WHERE id=?',[$lineId]);
-            akp_audit('DELETE','project_budget_line',$lineId,['amount'=>$line['estimated_amount']],['fm_review'=>true]);
-            flash('success','تم حذف بند الميزانية.');
 
         } elseif ($action === 'fm_approve_budget') {
             $budgetId=(int)($_POST['budget_id']??0);
@@ -110,7 +91,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ((string)$approval['approval_status']!=='submitted') throw new RuntimeException('المشروع ليس في انتظار المراجعة المالية.');
             dbExecute("UPDATE project_approval SET approval_status='rejected',fm_rejection_reason=?,fm_reviewed_by=?,fm_reviewed_at=NOW() WHERE project_id=?",[$reason,akp_user_id(),$id]);
             akp_audit('FM_REJECT_PROJECT','project_approval',$id,['approval_status'=>'submitted'],['approval_status'=>'rejected','reason'=>$reason]);
-            flash('success','تم رفض المشروع مالياً وإعادته للمراجعة من مدير المشاريع.');
+
+            // Notify active Projects Manager users through the existing event-aware notification infrastructure.
+            // Notification delivery is isolated so it cannot roll back the completed rejection.
+            try {
+                $pmUsers = dbFetchAll(
+                    "SELECT u.id
+                     FROM users u
+                     JOIN roles r ON u.role_id = r.id
+                     WHERE r.code = 'projects_manager'
+                       AND u.is_active = 1"
+                );
+                foreach ($pmUsers as $pmUser) {
+                    ak_transaction_review_notify_event(
+                        (int)$pmUser['id'],
+                        'تم رفض المشروع مالياً',
+                        'المشروع «' . (string)($project['name'] ?? '') . '» (' . (string)($project['project_code'] ?? '') . ') تم رفضه مالياً. السبب: ' . $reason,
+                        APP_URL . 'modules/projects/view_pm.php?id=' . $id,
+                        $id,
+                        'project_fm_rejection'
+                    );
+                }
+            } catch (Throwable $notificationError) {
+                // Notification delivery must never roll back the completed rejection.
+            }
+
+            flash('success','تم رفض المشروع مالياً وإعادته لمدير المشاريع.');
         }
     } catch (Throwable $e) {
         flash('error',$e->getMessage());
@@ -131,7 +137,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         <?php else: ?>
             <div class="mb-3"><strong><?php echo e($activeBudget['budget_name']); ?></strong> · النسخة <?php echo (int)$activeBudget['version_no']; ?> · الحالة <span class="badge bg-<?php echo $activeBudget['status']==='approved'?'success':'warning text-dark'; ?>"><?php echo e($activeBudget['status']); ?></span></div>
             <div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>الفئة</th><th>الوصف</th><th>المبلغ</th><th>إجراء</th></tr></thead><tbody>
-            <?php foreach($budgetLines as $line): ?><tr><td><?php echo e($line['category']); ?></td><td><?php echo e($line['description']); ?></td><td><?php echo number_format((float)$line['estimated_amount'],2).' '.e($project['currency_code']?:'SDG'); ?></td><td><?php if($activeBudget['status']==='draft'): ?><button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editBudget<?php echo (int)$line['id']; ?>">تعديل</button> <form method="post" class="d-inline" onsubmit="return confirm('حذف هذا البند؟');"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_delete_budget_line"><input type="hidden" name="line_id" value="<?php echo (int)$line['id']; ?>"><button class="btn btn-sm btn-outline-danger">حذف</button></form><?php endif; ?></td></tr>
+            <?php foreach($budgetLines as $line): ?><tr><td><?php echo e($line['category']); ?></td><td><?php echo e($line['description']); ?></td><td><?php echo number_format((float)$line['estimated_amount'],2).' '.e($project['currency_code']?:'SDG'); ?></td></tr>
             <?php endforeach; ?><?php if(!$budgetLines): ?><tr><td colspan="4" class="text-center text-muted">لا توجد بنود.</td></tr><?php endif; ?></tbody></table></div>
             <?php if($activeBudget['status']==='draft'): ?>
                 <div class="d-flex gap-2"><form method="post"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_approve_budget"><input type="hidden" name="budget_id" value="<?php echo (int)$activeBudget['id']; ?>"><button class="btn btn-success">اعتماد الميزانية</button></form><button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejectBudget">رفض الميزانية</button></div>
@@ -149,7 +155,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         <?php else: ?><div class="alert alert-warning">تظهر أدوات تخصيص التمويل بعد اعتماد الميزانية.</div><?php endif; ?>
     </div></div>
 
-    <?php if($approval['approval_status']==='submitted' && $approvedExists): ?><div class="card mb-4 border-primary"><div class="card-body"><h5>الاعتماد المالي للمشروع</h5><p class="text-muted">يجب أن يساوي إجمالي تخصيص التمويل الميزانية المعتمدة.</p><div class="d-flex gap-2"><form method="post"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_approve_project"><button class="btn btn-success">اعتماد المشروع مالياً</button></form><button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#rejectProject">رفض المشروع مالياً</button></div></div></div><?php endif; ?>
+    <?php if($approval['approval_status']==='submitted' && $approvedExists): ?><div class="card mb-4 border-primary"><div class="card-body"><h5>الاعتماد المالي للمشروع</h5><div class="alert alert-light border mb-3"><div class="text-muted small mb-1">إجمالي الميزانية المعتمدة</div><div class="fs-4 fw-bold"><?php echo number_format((float)($activeBudget['line_total'] ?? 0),2); ?> <?php echo e($project['currency_code']?:'SDG'); ?></div></div><p class="text-muted">يجب أن يساوي إجمالي تخصيص التمويل الميزانية المعتمدة.</p><div class="d-flex gap-2"><form method="post"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_approve_project"><button class="btn btn-success">اعتماد المشروع مالياً</button></form><button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#rejectProject">رفض المشروع مالياً</button></div></div></div><?php endif; ?>
 
     <div class="modal fade" id="rejectBudget"><div class="modal-dialog"><div class="modal-content"><form method="post"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_reject_budget"><input type="hidden" name="budget_id" value="<?php echo (int)($activeBudget['id']??0); ?>"><div class="modal-header"><h5>رفض الميزانية</h5></div><div class="modal-body"><textarea name="rejection_reason" class="form-control" required placeholder="سبب الرفض"></textarea></div><div class="modal-footer"><button class="btn btn-danger">تأكيد الرفض</button></div></form></div></div></div>
     <div class="modal fade" id="rejectProject"><div class="modal-dialog"><div class="modal-content"><form method="post"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_reject_project"><div class="modal-header"><h5>رفض المشروع مالياً</h5></div><div class="modal-body"><textarea name="rejection_reason" class="form-control" required placeholder="سبب الرفض"></textarea></div><div class="modal-footer"><button class="btn btn-danger">تأكيد الرفض</button></div></form></div></div></div>
