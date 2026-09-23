@@ -154,6 +154,103 @@ function ak_transaction_review_notify_fm_event(int $referenceId, string $referen
 }
 }
 
+/**
+ * Project approval notifications are registered at request shutdown so they
+ * run only after the project action has completed (including its transaction).
+ * This keeps notification delivery separate from the accounting/business
+ * transition while covering all project approval return paths consistently.
+ */
+if (!function_exists('ak_register_project_approval_notifications')) {
+function ak_register_project_approval_notifications(): void {
+    $path = (string)(parse_url((string)($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH) ?? '');
+    if (!str_ends_with($path, '/modules/projects/view.php')) return;
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
+
+    $action = (string)($_POST['action'] ?? '');
+    if (!in_array($action, ['fm_reject_project', 'approve_project', 'reject_project'], true)) return;
+
+    $projectId = (int)($_POST['project_id'] ?? $_GET['id'] ?? 0);
+    if ($projectId <= 0) return;
+
+    register_shutdown_function(static function () use ($projectId, $action): void {
+        try {
+            $approval = dbFetchOne(
+                'SELECT pa.approval_status, pa.submitted_by, op.name, op.project_code
+                 FROM project_approval pa
+                 JOIN other_projects op ON op.id = pa.project_id
+                 WHERE pa.project_id = ?',
+                [$projectId]
+            );
+            if (!$approval) return;
+
+            $name = (string)($approval['name'] ?? '');
+            $code = (string)($approval['project_code'] ?? '');
+            $label = 'المشروع «' . $name . '» (' . $code . ')';
+            $link = APP_URL . 'modules/projects/view.php?id=' . $projectId;
+            $submittedBy = (int)($approval['submitted_by'] ?? 0);
+
+            if ($action === 'fm_reject_project' && $approval['approval_status'] === 'rejected') {
+                if ($submittedBy > 0) {
+                    $reason = (string)(dbFetchOne('SELECT fm_rejection_reason FROM project_approval WHERE project_id = ?', [$projectId])['fm_rejection_reason'] ?? '');
+                    ak_transaction_review_notify_event(
+                        $submittedBy,
+                        'إعادة المشروع للتعديل',
+                        $label . ' تم رفضه مالياً وإعادته إلى مدير المشاريع للتعديل.' . ($reason !== '' ? ' سبب الرفض: ' . $reason : ''),
+                        $link,
+                        $projectId,
+                        'project_fm_rejection'
+                    );
+                }
+                return;
+            }
+
+            if ($action === 'approve_project' && $approval['approval_status'] === 'approved') {
+                // Final GM/VGM approval means the FM can now execute the actual
+                // payment evidence step. Notify every active FM.
+                ak_transaction_review_notify_fm_event(
+                    $projectId,
+                    'project_gm_approval',
+                    'المشروع معتمد نهائياً — بانتظار تنفيذ الصرف',
+                    $label . ' تم اعتماده نهائياً من الإدارة التنفيذية. يمكن للمدير المالي الآن تنفيذ إجراءات الصرف وإثبات الدفع.',
+                    $link
+                );
+
+                // The PM also needs confirmation because the project may now
+                // proceed to actual execution after payment release.
+                if ($submittedBy > 0) {
+                    ak_transaction_review_notify_event(
+                        $submittedBy,
+                        'تم اعتماد المشروع نهائياً',
+                        $label . ' تم اعتماده نهائياً ويمكن الانتقال إلى إجراءات التنفيذ بعد استكمال الصرف.',
+                        $link,
+                        $projectId,
+                        'project_gm_approval_pm'
+                    );
+                }
+                return;
+            }
+
+            if ($action === 'reject_project' && $approval['approval_status'] === 'rejected') {
+                if ($submittedBy > 0) {
+                    $reason = (string)(dbFetchOne('SELECT rejection_reason FROM project_approval WHERE project_id = ?', [$projectId])['rejection_reason'] ?? '');
+                    ak_transaction_review_notify_event(
+                        $submittedBy,
+                        'إعادة المشروع للتعديل',
+                        $label . ' تم رفضه نهائياً وإعادته إلى مدير المشاريع للتعديل.' . ($reason !== '' ? ' سبب الرفض: ' . $reason : ''),
+                        $link,
+                        $projectId,
+                        'project_gm_rejection'
+                    );
+                }
+            }
+        } catch (Throwable $notificationError) {
+            // Never change the completed project action because notification delivery failed.
+        }
+    });
+}
+}
+ak_register_project_approval_notifications();
+
 if (!function_exists('ak_transaction_review_audit')) {
 function ak_transaction_review_audit(int $userId, string $action, int $entityId, $old, $new): void {
     try {
