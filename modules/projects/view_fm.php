@@ -15,7 +15,7 @@ $closed = akp_project_is_closed($id);
 $budgets = dbFetchAll("SELECT b.*, COALESCE(SUM(bl.estimated_amount),0) AS line_total, COUNT(bl.id) AS line_count
     FROM project_budgets b LEFT JOIN project_budget_lines bl ON bl.budget_id=b.id
     WHERE b.project_id=? GROUP BY b.id ORDER BY b.version_no DESC", [$id]);
-$activeBudget = dbFetchOne("SELECT b.* FROM project_budgets b WHERE b.project_id=? AND b.status IN ('draft','approved') ORDER BY b.version_no DESC LIMIT 1", [$id]);
+$activeBudget = dbFetchOne("SELECT b.*, COALESCE(SUM(bl.estimated_amount),0) AS line_total FROM project_budgets b LEFT JOIN project_budget_lines bl ON bl.budget_id=b.id WHERE b.project_id=? AND b.status IN ('draft','approved') GROUP BY b.id ORDER BY b.version_no DESC LIMIT 1", [$id]);
 $budgetLines = $activeBudget ? dbFetchAll('SELECT bl.* FROM project_budget_lines bl WHERE bl.budget_id=? ORDER BY bl.id', [$activeBudget['id']]) : [];
 $fundings = dbFetchAll("SELECT f.*, a.code AS source_account_code, a.name_ar AS source_account_name
     FROM project_funding_allocations f LEFT JOIN accounts a ON a.id=f.source_account_id
