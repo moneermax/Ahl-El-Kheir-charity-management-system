@@ -65,6 +65,20 @@ $contactRows = dbFetchAll(
 $budgets = dbFetchAll("SELECT b.*, COALESCE(SUM(bl.estimated_amount),0) AS line_total, COUNT(bl.id) AS line_count FROM project_budgets b LEFT JOIN project_budget_lines bl ON bl.budget_id = b.id WHERE b.project_id = ? GROUP BY b.id ORDER BY b.version_no DESC", [$id]);
 $approvedBudgetId = 0; 
 $draftBudgetId = 0; 
+$budgetLinesByBudgetId = [];
+if ($budgets) {
+    $budgetIds = array_map(static function ($budget) { return (int)$budget['id']; }, $budgets);
+    if ($budgetIds) {
+        $placeholders = implode(',', array_fill(0, count($budgetIds), '?'));
+        $budgetLines = dbFetchAll(
+            "SELECT * FROM project_budget_lines WHERE budget_id IN ($placeholders) ORDER BY budget_id, id",
+            $budgetIds
+        );
+        foreach ($budgetLines as $budgetLine) {
+            $budgetLinesByBudgetId[(int)$budgetLine['budget_id']][] = $budgetLine;
+        }
+    }
+}
 foreach ($budgets as $budget) { 
     if ($budget['status'] === 'approved' && !$approvedBudgetId) $approvedBudgetId = (int)$budget['id']; 
     if ($budget['status'] === 'draft' && !$draftBudgetId) $draftBudgetId = (int)$budget['id']; 
@@ -925,6 +939,14 @@ $varianceClass = $totals['variance'] > 0 ? 'text-danger' : 'text-success';
 include dirname(__DIR__, 2) . '/includes/header.php';
 ?>
 <link rel="stylesheet" href="<?php echo e(APP_URL . 'assets/css/projects-ui.css'); ?>">
+<style>
+@media (min-width: 992px) {
+    .project-finance-card {
+        width: 104%;
+    }
+}
+</style>
+
 
 <div class="project-module-page">
 
@@ -1187,7 +1209,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 
         <div class="card mb-4 fade-in">
             <div class="card-body">
-                <div class="card border-primary mb-4">
+                <div class="card border-primary mb-4 project-finance-card">
                     <div class="card-header bg-primary text-white"><i class="fas fa-file-invoice-dollar me-2"></i>الميزانية</div>
                     <div class="card-body">
                 <?php if ($approvedBudgetId && in_array((string)$approval['approval_status'], ['submitted', 'rejected'], true) && akp_can_manage_funding($id) && !$closed): ?>
@@ -1287,7 +1309,40 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                                     <td><?php echo (int)$budget['line_count']; ?></td>
                                     <td><?php echo number_format((float)$budget['line_total'], 2) . ' ' . e($budget['currency_code']); ?></td>
                                     <td><span class="badge <?php echo $budget['status'] === 'approved' ? 'bg-success' : ($budget['status'] === 'superseded' ? 'bg-secondary' : 'bg-warning text-dark'); ?>"><?php echo e($budget['status']); ?></span></td>
-                                    <td>
+                                    <td></td>
+                                </tr>
+                                <tr class="budget-details-row">
+                                    <td colspan="6" class="bg-light">
+                                        <?php $budgetLines = $budgetLinesByBudgetId[(int)$budget['id']] ?? []; ?>
+                                        <?php if ($budgetLines): ?>
+                                            <div class="small fw-bold mb-2">تفاصيل الميزانية</div>
+                                            <div class="table-responsive">
+                                                <table class="table table-sm table-bordered align-middle mb-0 bg-white">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>الفئة</th>
+                                                            <th>الوصف</th>
+                                                            <th>المبلغ التقديري</th>
+                                                            <th>المبلغ المعتمد</th>
+                                                            <th>ملاحظات</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <?php foreach ($budgetLines as $budgetLine): ?>
+                                                            <tr>
+                                                                <td><?php echo e($budgetLine['category']); ?></td>
+                                                                <td><?php echo e($budgetLine['description']); ?></td>
+                                                                <td><?php echo akp_money($budgetLine['estimated_amount']); ?></td>
+                                                                <td><?php echo $budgetLine['approved_amount'] !== null ? akp_money($budgetLine['approved_amount']) : '<span class="text-muted">—</span>'; ?></td>
+                                                                <td><?php echo !empty($budgetLine['notes']) ? nl2br(e($budgetLine['notes'])) : '<span class="text-muted">—</span>'; ?></td>
+                                                            </tr>
+                                                        <?php endforeach; ?>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        <?php else: ?>
+                                            <div class="text-muted small">لا توجد بنود تفصيلية لهذه النسخة.</div>
+                                        <?php endif; ?>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -1299,7 +1354,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     </div>
                 </div>
 
-                <div class="card border-success mb-0">
+                <div class="card border-success mb-0 project-finance-card">
                     <div class="card-header bg-success text-white"><i class="fas fa-money-bill-transfer me-2"></i>تخصيص التمويل</div>
                     <div class="card-body">
                 <?php if ($role === 'financial_manager' && $approval['approval_status'] === 'submitted' && !$closed): ?>
