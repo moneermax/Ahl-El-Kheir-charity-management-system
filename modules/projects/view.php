@@ -1464,7 +1464,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 
         <?php if ($approval['approval_status'] === 'approved'): ?>
 <div class="card mb-4 fade-in">
-            <div class="card-header><i class="fas fa-receipt me-2"></i>المصروفات</div>
+            <div class="card-header"><i class="fas fa-receipt me-2"></i>المصروفات</div>
             <div class="card-body">
                 <?php if (akp_can_edit_section('finance', $id) && !$closed): ?>
                     <form method="post" class="project-form-panel">
