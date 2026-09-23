@@ -942,13 +942,13 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 <style>
 @media (min-width: 992px) {
     .project-view-main-column {
-        flex: 0 0 72%;
-        max-width: 72%;
+        flex: 0 0 80%;
+        max-width: 80%;
     }
 
     .project-view-side-column {
-        flex: 0 0 28%;
-        max-width: 28%;
+        flex: 0 0 20%;
+        max-width: 20%;
     }
 
     .project-finance-card {
