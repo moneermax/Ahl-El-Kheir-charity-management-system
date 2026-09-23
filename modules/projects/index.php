@@ -92,18 +92,27 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     $expense = (float)$project['expense_total'];
     $pct = $budget > 0 ? min(100, round(($expense / $budget) * 100)) : 0;
     $status = (string)$project['current_status'];
+    $approvalStatus = (string)$project['approval_status'];
+    $isFmRejected = $approvalStatus === 'rejected' && trim((string)($project['fm_rejection_reason'] ?? '')) !== '';
     $badge = ['planned'=>'bg-secondary','active'=>'bg-success','completed'=>'bg-info','under_review'=>'bg-warning text-dark','closed'=>'bg-dark','reopened'=>'bg-primary','cancelled'=>'bg-danger'][$status] ?? 'bg-secondary';
     $statusKey = ['planned'=>'projects.planned','active'=>'projects.active','under_review'=>'projects.under_review','completed'=>'projects.completed','cancelled'=>'projects.cancelled'][$status] ?? null;
+    if ($isFmRejected) {
+        $badge = 'bg-danger';
+        $statusKey = null;
+        $statusLabel = 'مرفوض مالياً';
+    } else {
+        $statusLabel = $statusKey ? t($statusKey) : $status;
+    }
 ?>
 <tr>
 <td><code><?php echo e($project['project_code'] ?? ''); ?></code></td>
 <td><strong><?php echo e($project['name']); ?></strong><br><small class="text-muted"><?php echo e($project['city'] ?? ''); ?></small></td>
 <td><?php echo e($project['project_type'] ?? '-'); ?></td>
-<td><?php echo e($project['supervisor_name'] ?? '—'); ?><br><small class="text-muted"><?php echo e($project['approval_status']); ?></small></td>
+<td><?php echo e($project['supervisor_name'] ?? '—'); ?><br><small class="text-muted"><?php echo e($isFmRejected ? 'مرفوض مالياً' : $approvalStatus); ?></small></td>
 <td><?php echo akp_money($budget); ?></td><td><?php echo akp_money($funded); ?></td><td><?php echo akp_money($expense); ?></td>
 <td style="min-width:130px"><div class="progress" style="height:8px"><div class="progress-bar" style="width:<?php echo $pct; ?>%;background:#1b4d8f"></div></div><small class="text-muted"><?php echo $pct; ?>%</small></td>
 <td><?php echo (int)$project['beneficiary_count']; ?></td>
-<td><span class="badge <?php echo $badge; ?>"><?php echo e($statusKey ? t($statusKey) : $status); ?></span></td>
+<td><span class="badge <?php echo $badge; ?>"><?php echo e($statusLabel); ?></span></td>
 <td class="text-center" style="white-space:nowrap;">
 <a class="btn btn-sm btn-primary" title="<?php echo e(t('projects.view_file')); ?>" href="<?php echo APP_URL; ?>modules/projects/view.php?id=<?php echo (int)$project['id']; ?>&return=<?php echo rawurlencode($returnQuery); ?>"><i class="fas fa-eye"></i></a>
 <?php if (akp_can_edit_section('general', (int)$project['id'])): ?><a class="btn btn-sm btn-warning" title="<?php echo e(t('projects.edit_basic')); ?>" href="<?php echo APP_URL; ?>modules/projects/form.php?id=<?php echo (int)$project['id']; ?>&return=<?php echo rawurlencode($returnQuery); ?>"><i class="fas fa-pen"></i></a><?php endif; ?>
