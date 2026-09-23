@@ -662,7 +662,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
         } elseif ($action === 'edit_budget_line') {
-            if (!akp_can_manage_funding($id) || $closed) throw new RuntimeException('تعديل بنود الميزانية قبل المراجعة المالية محصور بمدير المشاريع.');
+            if (!akp_can_prepare_finance($id) || $closed) throw new RuntimeException('تعديل بنود الميزانية قبل المراجعة المالية محصور بمدير المشاريع.');
             $lineId = (int)($_POST['line_id'] ?? 0);
             $line = dbFetchOne('SELECT bl.*, b.status AS budget_status, b.project_id FROM project_budget_lines bl JOIN project_budgets b ON b.id = bl.budget_id WHERE bl.id = ?', [$lineId]);
             if (!$line || (int)$line['project_id'] !== $id) throw new RuntimeException('بند الميزانية غير موجود.');
@@ -676,7 +676,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('success', 'تم تعديل بند الميزانية.');
 
         } elseif ($action === 'delete_budget_line') {
-            if (!akp_can_manage_funding($id) || $closed) throw new RuntimeException('حذف بنود الميزانية قبل المراجعة المالية محصور بمدير المشاريع.');
+            if (!akp_can_prepare_finance($id) || $closed) throw new RuntimeException('حذف بنود الميزانية قبل المراجعة المالية محصور بمدير المشاريع.');
             $lineId = (int)($_POST['line_id'] ?? 0);
             $line = dbFetchOne('SELECT bl.*, b.status AS budget_status, b.project_id FROM project_budget_lines bl JOIN project_budgets b ON b.id = bl.budget_id WHERE bl.id = ?', [$lineId]);
             if (!$line || (int)$line['project_id'] !== $id) throw new RuntimeException('بند الميزانية غير موجود.');
