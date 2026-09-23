@@ -283,6 +283,61 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 
     <?php if($approval['approval_status']==='submitted' && $approvedExists): ?><div class="card mb-4 border-primary"><div class="card-body"><h5>الاعتماد المالي للمشروع</h5><div class="alert alert-light border mb-3"><div class="text-muted small mb-1">إجمالي الميزانية المعتمدة</div><div class="fs-4 fw-bold"><?php echo number_format((float)($activeBudget['line_total'] ?? 0),2); ?> <?php echo e($project['currency_code']?:'SDG'); ?></div></div><p class="text-muted">يجب أن يساوي إجمالي تخصيص التمويل الميزانية المعتمدة.</p><div class="d-flex gap-2"><form method="post"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_approve_project"><button class="btn btn-success">اعتماد المشروع مالياً</button></form><button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#rejectProject">رفض المشروع مالياً</button></div></div></div><?php endif; ?>
 
+    <?php if ($approval['approval_status']==='approved'): ?>
+    <div class="card mb-4 border-success">
+        <div class="card-header bg-success text-white"><i class="fas fa-money-check-dollar me-2"></i>صرف وتمييز مستندات التمويل</div>
+        <div class="card-body">
+            <div class="alert alert-light border mb-3">تظهر هذه الخيارات فقط بعد الاعتماد النهائي من المدير العام. لا تنشئ هذه الإجراءات قيداً محاسبياً جديداً؛ القيد الذي أنشأه الاعتماد النهائي هو حدث خروج الأموال، وهذه الخطوة توثق سند الصرف أو إيصال التحويل.</div>
+            <?php if ($paymentEvidence): ?>
+                <?php foreach ($paymentEvidence as $payment): ?>
+                    <?php $paymentMethodLabels=['cash'=>'نقدي','bank_transfer'=>'تحويل بنكي','e_wallet'=>'محفظة إلكترونية']; ?>
+                    <div class="border rounded p-3 mb-3">
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-3"><div class="small text-muted">حساب التمويل</div><strong><?php echo e(($payment['source_account_code']??'').' · '.($payment['source_account_name']??'')); ?></strong></div>
+                            <div class="col-md-2"><div class="small text-muted">طريقة الدفع</div><strong><?php echo e($paymentMethodLabels[$payment['payment_method']]??$payment['payment_method']); ?></strong></div>
+                            <div class="col-md-2"><div class="small text-muted">المبلغ</div><strong><?php echo number_format((float)$payment['amount'],2).' '.e($payment['currency_code']?:'SDG'); ?></strong></div>
+                            <div class="col-md-2"><div class="small text-muted">المرجع</div><strong><?php echo !empty($payment['reference_number'])?e($payment['reference_number']):'—'; ?></strong></div>
+                            <div class="col-md-3">
+                                <?php if ($payment['status']==='documented'): ?>
+                                    <?php if ($payment['payment_method']==='cash'): ?>
+                                        <a class="btn btn-sm btn-primary" target="_blank" href="<?php echo APP_URL; ?>modules/accounting/voucher_print.php?project_payment_id=<?php echo (int)$payment['id']; ?>"><i class="fas fa-print me-1"></i>طباعة سند الصرف</a>
+                                    <?php else: ?>
+                                        <a class="btn btn-sm btn-outline-primary" target="_blank" href="<?php echo APP_URL; ?>modules/projects/project_payment_receipt.php?id=<?php echo (int)$payment['id']; ?>"><i class="fas fa-paperclip me-1"></i>عرض الإيصال</a>
+                                    <?php endif; ?>
+                                <?php elseif ($payment['payment_method']==='cash'): ?>
+                                    <form method="post" class="d-inline" onsubmit="return confirm('هل تم صرف النقد فعلياً وتريد توثيق سند الصرف؟');"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_confirm_cash_payment"><input type="hidden" name="payment_id" value="<?php echo (int)$payment['id']; ?>"><button class="btn btn-sm btn-success"><i class="fas fa-file-invoice-dollar me-1"></i>تأكيد سند الصرف</button></form>
+                                <?php else: ?>
+                                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#paymentReceipt<?php echo (int)$payment['id']; ?>"><i class="fas fa-paperclip me-1"></i>إرفاق الإيصال</button>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <div class="text-muted">لا توجد سجلات صرف بعد الاعتماد النهائي.</div>
+            <?php endif; ?>
+        </div>
+    </div>
+    <?php foreach($paymentEvidence as $payment): ?>
+        <?php if ($payment['status']==='pending' && $payment['payment_method']!=='cash'): ?>
+        <div class="modal fade" id="paymentReceipt<?php echo (int)$payment['id']; ?>" tabindex="-1">
+            <div class="modal-dialog"><div class="modal-content">
+                <form method="post" enctype="multipart/form-data">
+                    <?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_upload_payment_receipt"><input type="hidden" name="payment_id" value="<?php echo (int)$payment['id']; ?>">
+                    <div class="modal-header"><h5 class="modal-title">إرفاق إيصال <?php echo e($payment['payment_method']==='bank_transfer'?'التحويل البنكي':'المحفظة الإلكترونية'); ?></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                    <div class="modal-body">
+                        <label class="form-label">رقم المرجع</label><input name="payment_reference" class="form-control mb-3" maxlength="100" placeholder="رقم العملية أو المرجع من البنك/المحفظة">
+                        <label class="form-label">الإيصال</label><input type="file" name="payment_receipt" class="form-control" accept="application/pdf,image/jpeg,image/png" required>
+                        <div class="form-text">PDF أو JPG أو PNG — بحد أقصى 10 ميجابايت.</div>
+                    </div>
+                    <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button><button class="btn btn-primary">حفظ الإيصال</button></div>
+                </form>
+            </div></div>
+        </div>
+        <?php endif; ?>
+    <?php endforeach; ?>
+    <?php endif; ?>
+
     <?php foreach($fundings as $f): ?><div class="modal fade" id="editFunding<?php echo (int)$f['id']; ?>"><div class="modal-dialog modal-lg"><div class="modal-content"><form method="post"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_edit_funding"><input type="hidden" name="allocation_id" value="<?php echo (int)$f['id']; ?>"><div class="modal-header"><h5 class="modal-title">تعديل تخصيص التمويل</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="row g-3"><div class="col-md-6"><label class="form-label">حساب التمويل</label><select name="source_account_id" class="form-select" required><?php foreach($accounts as $a): ?><option value="<?php echo (int)$a['id']; ?>" <?php echo ((int)$a['id']===(int)$f['source_account_id'])?'selected':''; ?>><?php echo e($a['code'].' · '.$a['name_ar']); ?></option><?php endforeach; ?></select></div><div class="col-md-6"><label class="form-label">المبلغ</label><input type="number" step="0.01" min="0.01" name="funding_amount" class="form-control" value="<?php echo e((string)$f['amount']); ?>" required></div><div class="col-md-6"><label class="form-label">التاريخ</label><input type="date" name="allocation_date" class="form-control" value="<?php echo e((string)$f['allocation_date']); ?>"></div><div class="col-12"><label class="form-label">الوصف</label><input name="funding_description" class="form-control" value="<?php echo e((string)($f['description']??'')); ?>"></div></div></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button><button class="btn btn-primary">حفظ التعديل</button></div></form></div></div></div><?php endforeach; ?>
 
     <div class="modal fade" id="rejectBudget"><div class="modal-dialog"><div class="modal-content"><form method="post"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_reject_budget"><input type="hidden" name="budget_id" value="<?php echo (int)($activeBudget['id']??0); ?>"><div class="modal-header"><h5>رفض الميزانية</h5></div><div class="modal-body"><textarea name="rejection_reason" class="form-control" required placeholder="سبب الرفض"></textarea></div><div class="modal-footer"><button class="btn btn-danger">تأكيد الرفض</button></div></form></div></div></div>
