@@ -431,6 +431,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('success', 'تمت إضافة بند الميزانية.');
             
         } elseif ($action === 'add_funding') {
+            // FM reviews the prepared funding package but must not create funding allocations.
+            if ($role === 'financial_manager') {
+                throw new RuntimeException('دور المدير المالي في هذه المرحلة هو مراجعة تخصيصات التمويل والاعتماد أو الرفض فقط، ولا يملك صلاحية إضافة تخصيص تمويل.');
+            }
             if (!akp_can_edit_section('finance', $id) || $closed) throw new RuntimeException('لا تملك صلاحية إضافة تمويل.');
             $approvalCheck = dbFetchOne('SELECT approval_status FROM project_approval WHERE project_id = ?', [$id]);
             if (!$approvalCheck || $approvalCheck['approval_status'] !== 'submitted') throw new RuntimeException('يمكن تسجيل مصادر التمويل فقط أثناء المراجعة المالية (حالة: مُرسَل).');
