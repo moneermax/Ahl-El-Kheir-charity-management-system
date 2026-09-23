@@ -956,11 +956,38 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     }
 
     .project-finance-card .table {
-        min-width: 900px;
+        width: 100%;
+        table-layout: auto;
     }
 
     .project-finance-card .budget-details-row table {
-        min-width: 1050px;
+        width: 100%;
+        table-layout: auto;
+    }
+
+    .project-finance-card th,
+    .project-finance-card td {
+        white-space: normal;
+        word-break: normal;
+        overflow-wrap: anywhere;
+        vertical-align: middle;
+    }
+
+    .project-finance-card .budget-details-row th:nth-child(1) {
+        width: 16%;
+    }
+
+    .project-finance-card .budget-details-row th:nth-child(2) {
+        width: 28%;
+    }
+
+    .project-finance-card .budget-details-row th:nth-child(3),
+    .project-finance-card .budget-details-row th:nth-child(4) {
+        width: 16%;
+    }
+
+    .project-finance-card .budget-details-row th:nth-child(5) {
+        width: 24%;
     }
 }
 </style>
