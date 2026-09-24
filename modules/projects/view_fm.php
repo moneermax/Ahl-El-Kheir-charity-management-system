@@ -544,7 +544,9 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     totalNodes.forEach(function (node) { node.textContent = Number(result.funding_total || 0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); });
                     fundingForm.querySelectorAll('select[name="source_account_id[]"]').forEach(function(el){el.value='';});
                     fundingForm.querySelectorAll('input[name="funding_amount[]"], input[name="funding_description[]"]').forEach(function(el){el.value='';});
-                    alert(result.message || 'تم حفظ تخصيص التمويل.');
+                    if (window.AKNotify && typeof window.AKNotify.notificationToast === 'function') {
+                        window.AKNotify.notificationToast('success', 'تم الحفظ', result.message || 'تم حفظ تخصيص التمويل.');
+                    }
                 } catch (error) {
                     alert(error.message || 'تعذر حفظ تخصيص التمويل.');
                 } finally {
