@@ -813,7 +813,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
         } elseif ($action === 'post_expense') {
             // ... (Original post_expense logic preserved exactly)
-            if (!in_array($role, ['admin', 'accountant', 'general_manager'], true) || $closed) throw new RuntimeException('ترحيل المصروفات محصور بالمحاسب أو المدير العام.');
+            if (!in_array($role, ['admin', 'accountant', 'financial_manager'], true) || $closed) throw new RuntimeException('ترحيل المصروفات محصور بالمدير المالي أو المحاسب.');
             $expenseId = (int)($_POST['expense_id'] ?? 0);
             $expense = dbFetchOne('SELECT * FROM project_expenses WHERE id = ? AND project_id = ?', [$expenseId, $id]);
             if (!$expense || $expense['status'] !== 'approved') throw new RuntimeException('المصروف يجب أن يكون معتمداً أولاً.');
