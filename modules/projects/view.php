@@ -432,9 +432,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($reason === '') throw new RuntimeException('سبب الرفض مطلوب.');
             $approvalCheck = dbFetchOne('SELECT approval_status FROM project_approval WHERE project_id = ?', [$id]);
             if (!$approvalCheck || $approvalCheck['approval_status'] !== 'fm_approved') throw new RuntimeException('المشروع ليس في حالة انتظار الاعتماد النهائي.');
-            dbExecute("UPDATE project_approval SET approval_status = 'rejected', rejection_reason = ?, approved_by = NULL, approved_at = NULL WHERE project_id = ?", [$reason, $id]);
-            akp_audit('REJECT_PROJECT', 'project_approval', $id, ['approval_status' => 'fm_approved'], ['approval_status' => 'rejected', 'reason' => $reason]);
-            flash('success', 'تم رفض المشروع نهائياً وإعادته لمدير المشاريع.');
+
+            // GM rejection returns the project to FM review first.
+            // The FM then performs the financial rejection that returns the project to PM.
+            dbExecute("UPDATE project_approval SET approval_status = 'submitted', rejection_reason = ?, approved_by = NULL, approved_at = NULL WHERE project_id = ?", [$reason, $id]);
+            akp_audit('REJECT_PROJECT', 'project_approval', $id, ['approval_status' => 'fm_approved'], ['approval_status' => 'submitted', 'reason' => $reason]);
+
+            try {
+                $fmUsers = dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id = r.id WHERE r.code IN ('financial_manager', 'fm', 'finance') AND u.is_active = 1");
+                foreach ($fmUsers as $fmUser) {
+                    ak_transaction_review_notify_event(
+                        (int)$fmUser['id'],
+                        'المشروع مرفوض من المدير العام ويحتاج مراجعة مالية',
+                        'المشروع «' . (string)($project['name'] ?? '') . '» (' . (string)($project['project_code'] ?? '') . ') رفضه المدير العام ويحتاج مراجعة المدير المالي قبل إعادته لمدير المشاريع. السبب: ' . $reason,
+                        APP_URL . 'modules/projects/view.php?id=' . $id,
+                        $id,
+                        'project_gm_rejection'
+                    );
+                }
+            } catch (Throwable $notificationError) {}
+
+            flash('success', 'تم رفض المشروع من المدير العام وإعادته إلى المدير المالي للمراجعة.');
             
         } elseif ($action === 'change_status') {
             // ... (Original change_status logic preserved exactly)
