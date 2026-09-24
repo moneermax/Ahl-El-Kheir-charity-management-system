@@ -600,8 +600,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ]);
             }
 
-            $remainingAfter = max(0, $approvedBudgetTotal - $existingTotal - $batchTotal);
-            flash('success', 'تم تسجيل تخصيصات التمويل بنجاح. المتبقي من الميزانية المعتمدة: ' . number_format($remainingAfter, 2) . '.');
+            $remainingAfter = max(0, $financialRequirement - $existingTotal - $batchTotal);
+            flash('success', 'تم تسجيل تخصيصات التمويل بنجاح. المتبقي من إجمالي المتطلبات المالية: ' . number_format($remainingAfter, 2) . '.');
 
         } elseif ($action === 'edit_funding') {
             $approvalStatus = (string)(dbFetchOne('SELECT approval_status FROM project_approval WHERE project_id = ?', [$id])['approval_status'] ?? '');
@@ -633,14 +633,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($proposedBudget <= 0) {
                 throw new RuntimeException('لا يمكن تسجيل التمويل قبل اعتماد نسخة الميزانية.');
             }
+            $financialRequirement = akp_project_financial_requirement($id, $proposedBudget)['total_financial_requirement'];
 
             $otherTotal = (float)(dbFetchOne(
                 'SELECT COALESCE(SUM(amount),0) AS n FROM project_funding_allocations WHERE project_id = ? AND id <> ?',
                 [$id, $allocationId]
             )['n'] ?? 0);
-            if ($otherTotal + $amount > $proposedBudget + 0.01) {
-                $remaining = max(0, $proposedBudget - $otherTotal);
-                throw new RuntimeException('لا يمكن أن يتجاوز إجمالي التمويل الميزانية المقترحة (' . number_format($proposedBudget, 2) . '). الحد الأقصى لهذا السجل: ' . number_format($remaining, 2) . '.');
+            if ($otherTotal + $amount > $financialRequirement + 0.01) {
+                $remaining = max(0, $financialRequirement - $otherTotal);
+                throw new RuntimeException('لا يمكن أن يتجاوز إجمالي التمويل إجمالي المتطلبات المالية (' . number_format($financialRequirement, 2) . '). الحد الأقصى لهذا السجل: ' . number_format($remaining, 2) . '.');
             }
 
             dbExecute('START TRANSACTION');
@@ -1062,7 +1063,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     <div class="card mb-4 fade-in border-primary">
         <div class="card-header bg-primary text-white"><i class="fas fa-money-check-alt me-2"></i>مراجعة المدير المالي</div>
         <div class="card-body">
-            <div class="project-module-note mb-3">راجع الميزانية المعتمدة وتخصيصات التمويل. يجب تحديد حسابات التمويل الفعلية (1100 النقدية، 1200 البنك، 1300 المحفظة الإلكترونية) وتخصيص كامل مبلغ الميزانية قبل الاعتماد.</div>
+            <div class="project-module-note mb-3">راجع الميزانية المعتمدة والرسوم الحكومية وتخصيصات التمويل. يجب تحديد حسابات التمويل الفعلية (1100 النقدية، 1200 البنك، 1300 المحفظة الإلكترونية) وتخصيص كامل إجمالي المتطلبات المالية قبل الاعتماد.</div>
             <form method="post" class="project-action-form d-inline">
                 <?php echo csrf_field(); ?>
                 <input type="hidden" name="action" value="fm_approve_project">
@@ -1121,7 +1122,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         <div class="card text-center">
             <div class="card-body py-2">
                 <div class="fs-5 fw-bold text-primary"><?php echo akp_money($totals['approved_budget'] ?? 0); ?></div>
-                <div class="text-muted small">الميزانية النهائية</div>
+                <div class="text-muted small">إجمالي المتطلبات المالية</div>
             </div>
         </div>
     </div>
@@ -1323,7 +1324,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                         <div class="mt-2 small">
                             إجمالي التخصيصات الحالية: <strong><?php echo akp_money(array_sum(array_map('floatval', array_column($fundings, 'amount')))); ?> <?php echo e($project['currency_code'] ?: 'SDG'); ?></strong>
                         </div>
-                        <div class="col-12 mt-2 small text-muted">يجب أن يساوي مجموع التخصيصات الميزانية المعتمدة قبل الاعتماد المالي.</div>
+                        <div class="col-12 mt-2 small text-muted">يجب أن يساوي مجموع التخصيصات إجمالي المتطلبات المالية (الميزانية المعتمدة + الرسوم الحكومية) قبل الاعتماد المالي.</div>
                         <div class="col-12 mt-2"><button class="btn btn-sm btn-primary">حفظ تخصيصات التمويل</button></div>
                     </form>
                     <script>
