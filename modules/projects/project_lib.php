@@ -86,7 +86,7 @@ if (!function_exists('akp_can_edit_section')) {
             }
             return false;
         }
-        if ($section === 'finance') return in_array($role, ['general_manager', 'vice_general_manager', 'accountant', 'financial_manager'], true) || akp_has_project_section($projectId, 'finance');
+        if ($section === 'finance') return in_array($role, ['accountant', 'financial_manager'], true) || akp_has_project_section($projectId, 'finance');
         if ($section === 'operations') return $role === 'project_supervisor' && (akp_is_primary_supervisor($projectId) || akp_has_project_section($projectId, 'operations'));
         if ($section === 'documents') return $role === 'project_supervisor' && (akp_is_primary_supervisor($projectId) || akp_has_project_section($projectId, 'documents'));
         if ($section === 'closure') return $role === 'projects_manager';
