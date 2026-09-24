@@ -174,3 +174,30 @@
         max-width: 100%;
     }
 }
+
+/* Match the FM review title to the navy project-page header used elsewhere. */
+.project-fm-review-page > .card:first-child {
+    border: 0;
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.project-fm-review-page > .card:first-child .card-header {
+    background: linear-gradient(135deg, #081527, #1f4e8c);
+    color: #fff;
+    border-bottom: 0;
+    padding: 16px 20px;
+}
+
+.project-fm-review-page > .card:first-child .card-header h3 {
+    color: #fff;
+    font-weight: 800;
+}
+
+.project-fm-review-page > .card:first-child .card-header .text-muted {
+    color: #d0d5dd !important;
+}
+
+.project-fm-review-page > .card:first-child .card-header i {
+    color: #86efac;
+}
