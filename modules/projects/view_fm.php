@@ -26,6 +26,7 @@ $paymentEvidence = dbFetchAll("SELECT pe.*, a.code AS source_account_code, a.nam
     LEFT JOIN journal_entries je ON je.id=pe.journal_entry_id
     WHERE pe.project_id=? ORDER BY pe.id DESC", [$id]);
 $accounts = dbFetchAll("SELECT id, code, name_ar FROM accounts WHERE is_active=1 AND code IN ('1100','1200','1300') ORDER BY code");
+$financialSummary = akp_project_financial_requirement($id, $activeBudget && $activeBudget['status'] === 'approved' ? (float)$activeBudget['line_total'] : null);
 
 function fm_redirect_project(int $id): void {
     header('Location: ' . APP_URL . 'modules/projects/view_fm.php?id=' . $id);
@@ -91,6 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ((string)$approval['approval_status']!=='submitted') throw new RuntimeException('تخصيص التمويل متاح أثناء المراجعة المالية.');
             $budget=dbFetchOne("SELECT b.id,COALESCE(SUM(bl.estimated_amount),0) total FROM project_budgets b LEFT JOIN project_budget_lines bl ON bl.budget_id=b.id WHERE b.project_id=? AND b.status='approved' GROUP BY b.id ORDER BY b.version_no DESC LIMIT 1",[$id]);
             $budgetTotal=(float)($budget['total']??0);
+            $financialRequirement = akp_project_financial_requirement($id, $budgetTotal)['total_financial_requirement'];
             if ($budgetTotal<=0) throw new RuntimeException('اعتمد الميزانية أولاً.');
 
             $sourceIds=$_POST['source_account_id']??[]; $amounts=$_POST['funding_amount']??[]; $dates=$_POST['allocation_date']??[]; $descs=$_POST['funding_description']??[];
@@ -114,7 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if(!$batchByAccount) throw new RuntimeException('أضف مصدراً واحداً على الأقل مع مبلغ صحيح.');
             $batchTotal=0.0; foreach($batchByAccount as $item) $batchTotal+=$item['amount'];
             $existingTotal=(float)(dbFetchOne("SELECT COALESCE(SUM(amount),0) n FROM project_funding_allocations WHERE project_id=? AND status='draft'",[$id])['n']??0);
-            if($existingTotal+$batchTotal>$budgetTotal+0.01) throw new RuntimeException('إجمالي التمويل لا يمكن أن يتجاوز الميزانية المعتمدة.');
+            if($existingTotal+$batchTotal>$financialRequirement+0.01) throw new RuntimeException('إجمالي التمويل لا يمكن أن يتجاوز إجمالي المتطلبات المالية للمشروع.');
 
             foreach($batchByAccount as $item){
                 $accountId=(int)$item['account']['id'];
@@ -145,11 +147,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 FROM project_budgets b LEFT JOIN project_budget_lines bl ON bl.budget_id=b.id
                 WHERE b.project_id=? AND b.status='approved'
                 GROUP BY b.id ORDER BY b.version_no DESC LIMIT 1",[$id])['total']??0);
+            $financialRequirement = akp_project_financial_requirement($id, $budgetTotal)['total_financial_requirement'];
             if($budgetTotal<=0) throw new RuntimeException('اعتمد الميزانية أولاً.');
             $totalWithout=(float)(dbFetchOne("SELECT COALESCE(SUM(amount),0) n FROM project_funding_allocations WHERE project_id=? AND status='draft' AND id<>?",[$id,$allocationId])['n']??0);
             $duplicateRows=dbFetchAll("SELECT id,amount FROM project_funding_allocations WHERE project_id=? AND source_account_id=? AND status='draft' AND id<>?",[$id,$accountId,$allocationId]);
             $mergedAmount=$amount; foreach($duplicateRows as $duplicate) $mergedAmount+=(float)$duplicate['amount'];
-            if($totalWithout+$mergedAmount>$budgetTotal+0.01) throw new RuntimeException('إجمالي التمويل لا يمكن أن يتجاوز الميزانية المعتمدة.');
+            if($totalWithout+$mergedAmount>$financialRequirement+0.01) throw new RuntimeException('إجمالي التمويل لا يمكن أن يتجاوز إجمالي المتطلبات المالية للمشروع.');
             dbExecute("UPDATE project_funding_allocations SET source_type=?,source_account_id=?,amount=?,currency_code=?,allocation_date=?,description=?,created_by=? WHERE id=? AND project_id=?",[$account['code'],$accountId,$mergedAmount,$project['currency_code']?:'SDG',$date,$description?:null,akp_user_id(),$allocationId,$id]);
             foreach($duplicateRows as $duplicate) dbExecute("DELETE FROM project_funding_allocations WHERE id=? AND project_id=? AND status='draft'",[(int)$duplicate['id'],$id]);
             akp_audit('UPDATE','project_funding_allocation',$allocationId,['amount'=>$row['amount']],['amount'=>$mergedAmount,'source_account'=>$account['code'],'fm_review'=>true]);
@@ -264,9 +267,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ((string)$approval['approval_status']!=='submitted') throw new RuntimeException('المشروع ليس في حالة انتظار الاعتماد المالي.');
             $budget=dbFetchOne("SELECT b.id,COALESCE(SUM(bl.estimated_amount),0) total FROM project_budgets b LEFT JOIN project_budget_lines bl ON bl.budget_id=b.id WHERE b.project_id=? AND b.status='approved' GROUP BY b.id ORDER BY b.version_no DESC LIMIT 1",[$id]);
             $budgetTotal=(float)($budget['total']??0);
+            $financialRequirement = akp_project_financial_requirement($id, $budgetTotal)['total_financial_requirement'];
             $fundingTotal=(float)(dbFetchOne("SELECT COALESCE(SUM(amount),0) n FROM project_funding_allocations WHERE project_id=? AND status='draft'",[$id])['n']??0);
             if ($budgetTotal<=0) throw new RuntimeException('لا يمكن الاعتماد قبل اعتماد الميزانية.');
-            if (abs($fundingTotal-$budgetTotal)>0.01) throw new RuntimeException('يجب أن يساوي إجمالي تخصيص التمويل الميزانية المعتمدة.');
+            if (abs($fundingTotal-$financialRequirement)>0.01) throw new RuntimeException('يجب أن يساوي إجمالي تخصيص التمويل إجمالي المتطلبات المالية للمشروع (الميزانية + الرسوم الحكومية).');
             dbExecute("UPDATE project_approval SET approval_status='fm_approved',fm_reviewed_by=?,fm_reviewed_at=NOW() WHERE project_id=?", [akp_user_id(),$id]);
             akp_audit('FM_APPROVE_PROJECT','project_approval',$id,['approval_status'=>'submitted'],['approval_status'=>'fm_approved']);
 
@@ -354,9 +358,11 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         <?php if (!$activeBudget): ?><div class="alert alert-warning">لا توجد ميزانية مقترحة للمراجعة.</div>
         <?php else: ?>
             <div class="mb-3"><strong><?php echo e($activeBudget['budget_name']); ?></strong> · النسخة <?php echo (int)$activeBudget['version_no']; ?> · الحالة <span class="badge bg-<?php echo $activeBudget['status']==='approved'?'success':'warning text-dark'; ?>"><?php echo e($activeBudget['status']); ?></span></div>
-            <div class="alert alert-light border d-flex justify-content-between align-items-center mb-3">
-                <span class="text-muted">إجمالي الميزانية المقترحة</span>
-                <strong class="fs-5"><?php echo number_format((float)($activeBudget['line_total'] ?? 0),2); ?> <?php echo e($project['currency_code']?:'SDG'); ?></strong>
+            <div class="alert alert-light border mb-3">
+                <div class="d-flex justify-content-between align-items-center"><span class="text-muted">إجمالي الميزانية المقترحة</span><strong><?php echo number_format((float)($activeBudget['line_total'] ?? 0),2); ?> <?php echo e($project['currency_code']?:'SDG'); ?></strong></div>
+                <div class="d-flex justify-content-between align-items-center mt-2"><span class="text-muted">إجمالي الرسوم الحكومية</span><strong><?php echo number_format((float)$financialSummary['government_fees'],2); ?> <?php echo e($project['currency_code']?:'SDG'); ?></strong></div>
+                <hr class="my-2">
+                <div class="d-flex justify-content-between align-items-center"><span class="fw-semibold">إجمالي المتطلبات المالية</span><strong class="fs-5"><?php echo number_format((float)$financialSummary['total_financial_requirement'],2); ?> <?php echo e($project['currency_code']?:'SDG'); ?></strong></div>
             </div>
             <div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>الفئة</th><th>الوصف</th><th>المبلغ</th></tr></thead><tbody>
             <?php foreach($budgetLines as $line): ?><tr><td><?php echo e($line['category']); ?></td><td><?php echo e($line['description']); ?></td><td><?php echo number_format((float)$line['estimated_amount'],2).' '.e($project['currency_code']?:'SDG'); ?></td></tr>
@@ -386,7 +392,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     <div class="d-flex gap-2 mt-2"><button type="button" class="btn btn-outline-secondary" id="addFundingRow"><i class="fas fa-plus me-1"></i>إضافة مصدر آخر</button><button type="submit" class="btn btn-primary">حفظ جميع مصادر التمويل</button></div>
                 </form>
             <?php endif; ?>
-            <div class="small mb-2">إجمالي التخصيص الحالي: <strong><?php echo number_format($fundingTotal,2); ?> <?php echo e($project['currency_code']?:'SDG'); ?></strong></div>
+            <div class="small mb-2">إجمالي المتطلبات المالية: <strong><?php echo number_format((float)$financialSummary['total_financial_requirement'],2); ?> <?php echo e($project['currency_code']?:'SDG'); ?></strong> · إجمالي التخصيص الحالي: <strong><?php echo number_format($fundingTotal,2); ?> <?php echo e($project['currency_code']?:'SDG'); ?></strong></div>
             <div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>التاريخ</th><th>الحساب</th><th>المبلغ</th><th>الوصف</th><th>إجراء</th></tr></thead><tbody>
             <?php foreach($fundings as $f): ?><tr><td class="align-middle"><?php echo e($f['allocation_date']); ?></td><td class="align-middle"><?php echo e(($f['source_account_code']??$f['source_type']).' · '.($f['source_account_name']??'')); ?></td><td class="align-middle"><?php echo number_format((float)$f['amount'],2); ?></td><td class="align-middle"><?php echo !empty($f['description']) ? e($f['description']) : '<span class="text-muted">—</span>'; ?></td><td class="align-middle text-nowrap"><?php if($approval['approval_status']==='submitted' && !$closed): ?><button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editFunding<?php echo (int)$f['id']; ?>">تعديل</button> <form method="post" class="d-inline" onsubmit="return confirm('هل تريد حذف تخصيص هذا المصدر بالكامل؟');"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_delete_funding"><input type="hidden" name="allocation_id" value="<?php echo (int)$f['id']; ?>"><button class="btn btn-sm btn-outline-danger">حذف</button></form><?php endif; ?></td></tr>
             <?php endforeach; ?><?php if(!$fundings): ?><tr><td colspan="5" class="text-center text-muted">لا توجد تخصيصات تمويل مسجلة بعد.</td></tr><?php endif; ?></tbody></table></div>
@@ -407,7 +413,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         <?php else: ?><div class="alert alert-warning">تظهر أدوات تخصيص التمويل بعد اعتماد الميزانية.</div><?php endif; ?>
     </div></div>
 
-    <?php if($approval['approval_status']==='submitted' && $approvedExists): ?><div class="card mb-4 border-primary"><div class="card-body"><h5>الاعتماد المالي للمشروع</h5><div class="alert alert-light border mb-3"><div class="text-muted small mb-1">إجمالي الميزانية المعتمدة</div><div class="fs-4 fw-bold"><?php echo number_format((float)($activeBudget['line_total'] ?? 0),2); ?> <?php echo e($project['currency_code']?:'SDG'); ?></div></div><p class="text-muted">يجب أن يساوي إجمالي تخصيص التمويل الميزانية المعتمدة.</p><div class="d-flex gap-2"><form method="post"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_approve_project"><button class="btn btn-success">اعتماد المشروع مالياً</button></form><button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#rejectProject">رفض المشروع مالياً</button></div></div></div><?php endif; ?>
+    <?php if($approval['approval_status']==='submitted' && $approvedExists): ?><div class="card mb-4 border-primary"><div class="card-body"><h5>الاعتماد المالي للمشروع</h5><div class="alert alert-light border mb-3"><div class="d-flex justify-content-between"><span class="text-muted">الميزانية المعتمدة</span><strong><?php echo number_format((float)($activeBudget['line_total'] ?? 0),2); ?></strong></div><div class="d-flex justify-content-between mt-2"><span class="text-muted">الرسوم الحكومية</span><strong><?php echo number_format((float)$financialSummary['government_fees'],2); ?></strong></div><hr class="my-2"><div class="d-flex justify-content-between"><span class="fw-semibold">إجمالي المتطلبات المالية</span><strong class="fs-4"><?php echo number_format((float)$financialSummary['total_financial_requirement'],2); ?> <?php echo e($project['currency_code']?:'SDG'); ?></strong></div></div><p class="text-muted">يجب أن يساوي إجمالي تخصيص التمويل إجمالي المتطلبات المالية (الميزانية المعتمدة + الرسوم الحكومية).</p><div class="d-flex gap-2"><form method="post"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_approve_project"><button class="btn btn-success">اعتماد المشروع مالياً</button></form><button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#rejectProject">رفض المشروع مالياً</button></div></div></div><?php endif; ?>
 
     <?php if ($approval['approval_status']==='approved'): ?>
     <div class="card mb-4 border-success">
