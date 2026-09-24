@@ -550,3 +550,68 @@ Controlled test order:
 6. For bank/wallet sources, FM uploads a PDF/JPG/PNG receipt and optional transaction reference; verify the authenticated receipt viewer.
 7. Open the PM project view and verify the PM can see the documented evidence but cannot modify it.
 8. Verify no second journal is created when the voucher is printed or a receipt is uploaded.
+
+
+## 2026-09-24 — Project Approval Notification Workflow Correction
+
+The approval/rejection notification chain was re-aligned to the required business workflow.
+
+### Required approval path
+
+```
+Projects Manager
+  → submit / resubmit
+Financial Manager
+  → approve financially
+General Manager / VGM
+  → approve finally
+Projects Manager
+  ← final approval notification
+```
+
+### Required rejection path
+
+```
+General Manager / VGM
+  → reject
+Financial Manager
+  ← GM rejection notification / review
+  → reject financially
+Projects Manager
+  ← final FM rejection notification
+  → edit + resubmit OR close project as rejected
+```
+
+This means a GM rejection is **not** a terminal rejection and must not notify the Projects Manager directly. It returns the approval state to `submitted` so the FM can perform the financial rejection step. The existing FM rejection then moves the state to `rejected` and notifies the Projects Manager.
+
+### Changes implemented
+
+1. Final GM approval now sends an event-aware notification to active Projects Manager users using reference type `project_final_approval`.
+2. GM rejection now changes `fm_approved → submitted`, preserves the GM rejection reason in `rejection_reason`, and sends an event-aware notification to active FM users using reference type `project_gm_rejection`.
+3. The obsolete direct GM-rejection → Projects Manager notification path was removed from `akp_audit()`.
+4. FM rejection remains the terminal rejection transition for this approval cycle: `submitted → rejected`, with the existing Projects Manager notification using `project_fm_rejection`.
+5. Existing notification infrastructure, role-code resolution, deduplication, CSRF, and notification-failure isolation were reused; no schema change was introduced.
+
+Commits:
+- `4d985d094f7bde4d6faa503fa704db55457b9e04` — Notify Projects Manager after final project approval
+- `f0c37431ce67029b36defb7132e43db2c024fbe4` — Route GM project rejection back through FM
+- `58f7c62f6df05f98da7d003fe470c0e616a41eb9` — Remove obsolete final-rejection notification route
+
+### Runtime verification required
+
+Use the existing controlled project test data. Do not create a new project merely for this audit.
+
+Approval case:
+1. PM submits/resubmits → approval status `submitted` → FM receives notification.
+2. FM approves → `fm_approved` → GM/VGM receives notification.
+3. GM approves → `approved` → PM receives final-approval notification.
+
+Rejection case:
+1. PM submits → `submitted` → FM receives notification.
+2. FM approves → `fm_approved` → GM/VGM receives notification.
+3. GM rejects with reason → `submitted` → FM receives GM-rejection notification; PM must not receive a terminal rejection notification at this stage.
+4. FM rejects with reason → `rejected` → PM receives FM-rejection notification.
+5. PM may edit/resubmit from `rejected`, or close the project as rejected according to the existing permitted workflow.
+6. Confirm each expected notification opens the existing project destination and that the same unread event is not duplicated by repeated page loads/actions.
+
+No runtime result is recorded until the user performs the controlled local XAMPP test.
