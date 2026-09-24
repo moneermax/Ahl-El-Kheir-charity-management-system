@@ -131,9 +131,22 @@
 }
 
 @media (min-width: 992px) {
+    /* Finance content stays inside its own column.
+       The previous width expansion crossed into the side column and caused
+       cards/tables to visually overlap with the PM side panel. */
     .project-module-page .project-view-main-column > .card:has(.project-finance-card) {
-        width: calc(158.824% + 1rem);
-        max-width: none;
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .project-module-page .project-finance-card {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .project-module-page .project-finance-card .table-responsive {
+        max-width: 100%;
+        overflow-x: auto;
     }
 }
 
