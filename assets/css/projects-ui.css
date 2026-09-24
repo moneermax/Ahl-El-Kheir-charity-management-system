@@ -161,3 +161,16 @@
 .project-module-page .project-finance-card td small br {
     display: none;
 }
+
+/* Keep the FM project review page at a comfortable reading width. */
+.project-fm-review-page {
+    max-width: 1100px;
+    margin-right: auto;
+    margin-left: auto;
+}
+
+@media (max-width: 1199.98px) {
+    .project-fm-review-page {
+        max-width: 100%;
+    }
+}
