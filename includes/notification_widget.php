@@ -128,7 +128,7 @@ if (Session::isLoggedIn()) {
  document.addEventListener('click',function(e){if(root && !root.contains(e.target))root.classList.remove('open')});
  const toastContainer=document.getElementById('akNotificationToastContainer');
  window.AKNotify=window.AKNotify||{};
- window.AKNotify.notificationToast=function(type,title,body,link,notificationId){
+ function notificationToast(type,title,body,link,notificationId){
      if(!toastContainer) return;
      const toast=document.createElement('div');
      toast.className='ak-notif-toast';
@@ -154,6 +154,7 @@ if (Session::isLoggedIn()) {
      window.requestAnimationFrame(function(){toast.classList.add('ak-notif-toast-show')});
      window.setTimeout(close,7000);
  };
+ window.AKNotify.notificationToast=notificationToast;
  if(!root) return;
  const pollUrl=root.getAttribute('data-poll-url');
  const markReadUrl=root.getAttribute('data-mark-read-url');
@@ -195,7 +196,7 @@ if (Session::isLoggedIn()) {
      items.slice().reverse().forEach(function(item){
          const id=Number(item.id||0);
          if(id>0 && Number(item.is_read||0)===0 && window.AKNotify && typeof window.AKNotify.notificationToast==='function'){
-             window.AKNotify.notificationToast('info',item.title||'إشعار جديد',item.body||'',String(item.link||'').trim() || notificationPageUrl || currentUrl,id);
+             notificationToast('info',item.title||'إشعار جديد',item.body||'',String(item.link||'').trim() || notificationPageUrl || currentUrl,id);
          }
      });
  }
@@ -213,7 +214,7 @@ if (Session::isLoggedIn()) {
                  if(id>0&&!knownIds[id]){
                      knownIds[id]=true;
                      if(Number(item.is_read||0)===0 && window.AKNotify&&typeof window.AKNotify.notificationToast==='function'){
-                         window.AKNotify.notificationToast('info',item.title||'إشعار جديد',item.body||'',String(item.link||'').trim() || notificationPageUrl || currentUrl,id);
+                         notificationToast('info',item.title||'إشعار جديد',item.body||'',String(item.link||'').trim() || notificationPageUrl || currentUrl,id);
                      }
                  }
              });
