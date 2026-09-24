@@ -1414,6 +1414,31 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
+
+                            <?php
+                            $budgetSummaryAmount = (float)($financialSummary['approved_budget'] ?? 0);
+                            $governmentFeesAmount = (float)($financialSummary['government_fees'] ?? 0);
+                            $grandFinancialRequirement = (float)($financialSummary['total_financial_requirement'] ?? ($budgetSummaryAmount + $governmentFeesAmount));
+                            ?>
+
+                            <?php if ($budgets): ?>
+                                <tr class="table-light">
+                                    <td colspan="3" class="fw-semibold">الميزانية المعتمدة</td>
+                                    <td class="fw-semibold"><?php echo akp_money($budgetSummaryAmount) . ' ' . e($project['currency_code']); ?></td>
+                                    <td colspan="2"></td>
+                                </tr>
+                                <tr class="table-warning">
+                                    <td colspan="3" class="fw-semibold">إجمالي الرسوم الحكومية</td>
+                                    <td class="fw-semibold"><?php echo akp_money($governmentFeesAmount) . ' ' . e($project['currency_code']); ?></td>
+                                    <td colspan="2" class="small text-muted">التزام مالي منفصل عن بنود تنفيذ المشروع</td>
+                                </tr>
+                                <tr class="table-primary">
+                                    <td colspan="3" class="fw-bold">الإجمالي الكلي للمتطلبات المالية</td>
+                                    <td class="fw-bold"><?php echo akp_money($grandFinancialRequirement) . ' ' . e($project['currency_code']); ?></td>
+                                    <td colspan="2" class="small fw-semibold">الميزانية + الرسوم الحكومية</td>
+                                </tr>
+                            <?php endif; ?>
+
                             <?php if (!$budgets): ?><tr><td colspan="6" class="text-center text-muted">لا توجد نسخ ميزانية.</td></tr><?php endif; ?>
                         </tbody>
                     </table>
