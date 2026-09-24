@@ -436,7 +436,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                                         <button type="button" class="btn btn-sm btn-outline-secondary ms-2" data-bs-toggle="modal" data-bs-target="#editPaymentEvidence<?php echo (int)$payment['id']; ?>"><i class="fas fa-pen me-1"></i>تعديل</button>
                                     <?php endif; ?>
                                 <?php elseif ($payment['payment_method']==='cash'): ?>
-                                    <form method="post" class="d-inline js-payment-action" onsubmit="return confirm('هل تم صرف النقد فعلياً وتريد توثيق سند الصرف؟');"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_confirm_cash_payment"><input type="hidden" name="payment_id" value="<?php echo (int)$payment['id']; ?>"><button class="btn btn-sm btn-success"><i class="fas fa-file-invoice-dollar me-1"></i>تأكيد سند الصرف</button></form>
+                                    <form method="post" action="<?php echo e(APP_URL . 'modules/projects/view_fm.php?id=' . (int)$id); ?>" class="d-inline js-payment-action" onsubmit="return confirm('هل تم صرف النقد فعلياً وتريد توثيق سند الصرف؟');"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_confirm_cash_payment"><input type="hidden" name="payment_id" value="<?php echo (int)$payment['id']; ?>"><button class="btn btn-sm btn-success"><i class="fas fa-file-invoice-dollar me-1"></i>تأكيد سند الصرف</button></form>
                                 <?php else: ?>
                                     <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#paymentReceipt<?php echo (int)$payment['id']; ?>"><i class="fas fa-paperclip me-1"></i>إرفاق الإيصال</button>
                                 <?php endif; ?>
@@ -453,7 +453,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         <?php if ($payment['status']==='pending' && $payment['payment_method']!=='cash'): ?>
         <div class="modal fade" id="paymentReceipt<?php echo (int)$payment['id']; ?>" tabindex="-1">
             <div class="modal-dialog"><div class="modal-content">
-                <form method="post" enctype="multipart/form-data" class="js-payment-action">
+                <form method="post" action="<?php echo e(APP_URL . 'modules/projects/view_fm.php?id=' . (int)$id); ?>" enctype="multipart/form-data" class="js-payment-action">
                     <?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_upload_payment_receipt"><input type="hidden" name="payment_id" value="<?php echo (int)$payment['id']; ?>">
                     <div class="modal-header"><h5 class="modal-title">إرفاق إيصال <?php echo e($payment['payment_method']==='bank_transfer'?'التحويل البنكي':'المحفظة الإلكترونية'); ?></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
                     <div class="modal-body">
@@ -473,7 +473,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         <?php if ($payment['status']==='documented' && !$finalEvidenceConfirmed && !$closed): ?>
         <div class="modal fade" id="editPaymentEvidence<?php echo (int)$payment['id']; ?>" tabindex="-1">
             <div class="modal-dialog"><div class="modal-content">
-                <form method="post" enctype="multipart/form-data" class="js-payment-action">
+                <form method="post" action="<?php echo e(APP_URL . 'modules/projects/view_fm.php?id=' . (int)$id); ?>" enctype="multipart/form-data" class="js-payment-action">
                     <?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_edit_payment_evidence"><input type="hidden" name="payment_id" value="<?php echo (int)$payment['id']; ?>">
                     <div class="modal-header"><h5 class="modal-title">تعديل مستند التمويل</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
                     <div class="modal-body">
@@ -507,7 +507,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     <?php endif; ?>
                 </div>
                 <?php if (!$finalEvidenceConfirmed && !$closed): ?>
-                    <form method="post" class="js-payment-action">
+                    <form method="post" action="<?php echo e(APP_URL . 'modules/projects/view_fm.php?id=' . (int)$id); ?>" class="js-payment-action">
                         <?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_confirm_payment_evidence">
                         <button class="btn btn-success"><i class="fas fa-check-double me-1"></i>تأكيد اكتمال مستندات التمويل</button>
                     </form>
