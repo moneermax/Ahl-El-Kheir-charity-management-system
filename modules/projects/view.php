@@ -1121,7 +1121,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     <div class="project-summary-card">
         <div class="card text-center">
             <div class="card-body py-2">
-                <div class="fs-5 fw-bold text-primary"><?php echo akp_money($totals['approved_budget'] ?? 0); ?></div>
+                <div class="fs-5 fw-bold text-primary"><?php echo akp_money($totals['total_financial_requirement'] ?? ($totals['approved_budget'] ?? 0)); ?></div>
                 <div class="text-muted small">إجمالي المتطلبات المالية</div>
             </div>
         </div>
