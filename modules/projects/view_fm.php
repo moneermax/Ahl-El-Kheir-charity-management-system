@@ -384,7 +384,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             <?php endif; ?>
             <div class="small mb-2">إجمالي المتطلبات المالية: <strong><?php echo number_format((float)$financialSummary['total_financial_requirement'],2); ?> <?php echo e($project['currency_code']?:'SDG'); ?></strong> · إجمالي التخصيص الحالي: <strong data-funding-total><?php echo number_format($fundingTotal,2); ?></strong> <?php echo e($project['currency_code']?:'SDG'); ?></div>
             <div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>التاريخ</th><th>الحساب</th><th>المبلغ</th><th>الوصف</th><th>إجراء</th></tr></thead><tbody id="fundingTableBody">
-            <?php foreach($fundings as $f): ?><tr><td class="align-middle"><?php echo e($f['allocation_date']); ?></td><td class="align-middle"><?php echo e(($f['source_account_code']??$f['source_type']).' · '.($f['source_account_name']??'')); ?></td><td class="align-middle"><?php echo number_format((float)$f['amount'],2); ?></td><td class="align-middle"><?php echo !empty($f['description']) ? e($f['description']) : '<span class="text-muted">—</span>'; ?></td><td class="align-middle text-nowrap"><?php if($approval['approval_status']==='submitted' && !$closed): ?><button type="button" class="btn btn-sm btn-outline-primary" data-funding-edit-id="<?php echo (int)$f['id']; ?>"><i class="fas fa-pen me-1"></i>تعديل</button> <form method="post" class="d-inline" action="<?php echo e(APP_URL . 'modules/projects/view_fm.php?id=' . (int)$id); ?>" onsubmit="return confirm('هل تريد حذف تخصيص هذا المصدر بالكامل؟');"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_delete_funding"><input type="hidden" name="allocation_id" value="<?php echo (int)$f['id']; ?>"><button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash me-1"></i>حذف</button></form><?php endif; ?></td></tr>
+            <?php foreach($fundings as $f): ?><tr><td class="align-middle"><?php echo e($f['allocation_date']); ?></td><td class="align-middle"><?php echo e(($f['source_account_code']??$f['source_type']).' · '.($f['source_account_name']??'')); ?></td><td class="align-middle"><?php echo number_format((float)$f['amount'],2); ?></td><td class="align-middle"><?php echo !empty($f['description']) ? e($f['description']) : '<span class="text-muted">—</span>'; ?></td><td class="align-middle text-nowrap"><?php if($approval['approval_status']==='submitted' && !$closed): ?><button type="button" class="btn btn-sm btn-outline-primary" data-funding-edit-id="<?php echo (int)$f['id']; ?>"><i class="fas fa-pen me-1"></i>تعديل</button> <form method="post" class="d-inline js-delete-funding" action="<?php echo e(APP_URL . 'modules/projects/view_fm.php?id=' . (int)$id); ?>"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_delete_funding"><input type="hidden" name="allocation_id" value="<?php echo (int)$f['id']; ?>"><button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash me-1"></i>حذف</button></form><?php endif; ?></td></tr>
             <?php endforeach; ?><?php if(!$fundings): ?><tr><td colspan="5" class="text-center text-muted">لا توجد تخصيصات تمويل مسجلة بعد.</td></tr><?php endif; ?></tbody></table></div>
             <?php if($approval['approval_status']==='submitted' && !$closed): ?>
             <div class="modal fade" id="editFundingModal" tabindex="-1" aria-hidden="true">
@@ -592,9 +592,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                             deleteForm.method = 'post';
                             deleteForm.action = <?php echo json_encode(APP_URL . 'modules/projects/view_fm.php?id=' . (int)$id); ?>;
                             deleteForm.className = 'd-inline';
-                            deleteForm.onsubmit = function () {
-                                return confirm('هل تريد حذف تخصيص هذا المصدر بالكامل؟');
-                            };
+                            deleteForm.className = 'd-inline js-delete-funding';
 
                             const csrf = document.createElement('input');
                             csrf.type = 'hidden';
@@ -665,6 +663,35 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 bootstrap.Modal.getOrCreateInstance(editFundingModal).show();
             });
         }
+
+        document.addEventListener('submit', async function (event) {
+            const form = event.target.closest('.js-delete-funding');
+            if (!form) return;
+
+            event.preventDefault();
+
+            if (typeof Swal === 'undefined') {
+                if (window.confirm('هل تريد حذف تخصيص هذا المصدر بالكامل؟')) {
+                    form.submit();
+                }
+                return;
+            }
+
+            const result = await Swal.fire({
+                icon: 'warning',
+                title: 'هل أنت متأكد؟',
+                text: 'سيتم حذف تخصيص هذا المصدر بالكامل.',
+                showCancelButton: true,
+                confirmButtonText: 'نعم، احذف التخصيص',
+                cancelButtonText: 'إلغاء',
+                reverseButtons: true,
+                focusCancel: true
+            });
+
+            if (result.isConfirmed) {
+                form.submit();
+            }
+        });
 
         document.querySelectorAll('.js-payment-action').forEach(function (form) {
             form.addEventListener('submit', async function (event) {
