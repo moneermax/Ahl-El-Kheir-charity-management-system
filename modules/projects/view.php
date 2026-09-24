@@ -1866,7 +1866,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 <?php if (!$history): ?><div class="text-muted small">لا يوجد سجل تغييرات.</div><?php endif; ?>
             </div>
         </div>
-    </
+    </div>
 
     <div class="col-lg-4 project-view-side-column">
         <div class="card mb-4 fade-in">
@@ -1905,9 +1905,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 
     </div>
 
-div>
 </div>
-
 
 </div>
 
