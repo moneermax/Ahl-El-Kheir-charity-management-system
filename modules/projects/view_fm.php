@@ -384,8 +384,29 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             <?php endif; ?>
             <div class="small mb-2">إجمالي المتطلبات المالية: <strong><?php echo number_format((float)$financialSummary['total_financial_requirement'],2); ?> <?php echo e($project['currency_code']?:'SDG'); ?></strong> · إجمالي التخصيص الحالي: <strong data-funding-total><?php echo number_format($fundingTotal,2); ?></strong> <?php echo e($project['currency_code']?:'SDG'); ?></div>
             <div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>التاريخ</th><th>الحساب</th><th>المبلغ</th><th>الوصف</th><th>إجراء</th></tr></thead><tbody id="fundingTableBody">
-            <?php foreach($fundings as $f): ?><tr><td class="align-middle"><?php echo e($f['allocation_date']); ?></td><td class="align-middle"><?php echo e(($f['source_account_code']??$f['source_type']).' · '.($f['source_account_name']??'')); ?></td><td class="align-middle"><?php echo number_format((float)$f['amount'],2); ?></td><td class="align-middle"><?php echo !empty($f['description']) ? e($f['description']) : '<span class="text-muted">—</span>'; ?></td><td class="align-middle text-nowrap"><?php if($approval['approval_status']==='submitted' && !$closed): ?><button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editFunding<?php echo (int)$f['id']; ?>">تعديل</button> <form method="post" class="d-inline" onsubmit="return confirm('هل تريد حذف تخصيص هذا المصدر بالكامل؟');"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_delete_funding"><input type="hidden" name="allocation_id" value="<?php echo (int)$f['id']; ?>"><button class="btn btn-sm btn-outline-danger">حذف</button></form><?php endif; ?></td></tr>
+            <?php foreach($fundings as $f): ?><tr><td class="align-middle"><?php echo e($f['allocation_date']); ?></td><td class="align-middle"><?php echo e(($f['source_account_code']??$f['source_type']).' · '.($f['source_account_name']??'')); ?></td><td class="align-middle"><?php echo number_format((float)$f['amount'],2); ?></td><td class="align-middle"><?php echo !empty($f['description']) ? e($f['description']) : '<span class="text-muted">—</span>'; ?></td><td class="align-middle text-nowrap"><?php if($approval['approval_status']==='submitted' && !$closed): ?><button type="button" class="btn btn-sm btn-outline-primary" data-funding-edit-id="<?php echo (int)$f['id']; ?>"><i class="fas fa-pen me-1"></i>تعديل</button> <form method="post" class="d-inline" action="<?php echo e(APP_URL . 'modules/projects/view_fm.php?id=' . (int)$id); ?>" onsubmit="return confirm('هل تريد حذف تخصيص هذا المصدر بالكامل؟');"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_delete_funding"><input type="hidden" name="allocation_id" value="<?php echo (int)$f['id']; ?>"><button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash me-1"></i>حذف</button></form><?php endif; ?></td></tr>
             <?php endforeach; ?><?php if(!$fundings): ?><tr><td colspan="5" class="text-center text-muted">لا توجد تخصيصات تمويل مسجلة بعد.</td></tr><?php endif; ?></tbody></table></div>
+            <?php if($approval['approval_status']==='submitted' && !$closed): ?>
+            <div class="modal fade" id="editFundingModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-lg"><div class="modal-content">
+                    <form method="post" action="<?php echo e(APP_URL . 'modules/projects/view_fm.php?id=' . (int)$id); ?>">
+                        <?php echo csrf_field(); ?>
+                        <input type="hidden" name="action" value="fm_edit_funding">
+                        <input type="hidden" name="allocation_id" value="">
+                        <div class="modal-header"><h5 class="modal-title">تعديل تخصيص التمويل</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                        <div class="modal-body">
+                            <div class="row g-3">
+                                <div class="col-md-6"><label class="form-label">حساب التمويل</label><select name="source_account_id" class="form-select" required><?php foreach($accounts as $a): ?><option value="<?php echo (int)$a['id']; ?>" data-account-code="<?php echo e($a['code']); ?>"><?php echo e($a['code'].' · '.$a['name_ar']); ?></option><?php endforeach; ?></select></div>
+                                <div class="col-md-6"><label class="form-label">المبلغ</label><input type="number" step="0.01" min="0.01" name="funding_amount" class="form-control" required></div>
+                                <div class="col-md-6"><label class="form-label">التاريخ</label><input type="date" name="allocation_date" class="form-control" required></div>
+                                <div class="col-12"><label class="form-label">الوصف</label><input name="funding_description" class="form-control"></div>
+                            </div>
+                        </div>
+                        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button><button class="btn btn-primary">حفظ التعديل</button></div>
+                    </form>
+                </div></div>
+            </div>
+            <?php endif; ?>
             <script>
             document.addEventListener('DOMContentLoaded',function(){
                 const rows=document.getElementById('fundingRows'), add=document.getElementById('addFundingRow');
@@ -537,7 +558,8 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     const body = document.getElementById('fundingTableBody');
                     if (body && Array.isArray(result.funding_rows)) {
                         body.innerHTML = result.funding_rows.map(function (row) {
-                            return '<tr><td class="align-middle">' + (row.allocation_date || '') + '</td><td class="align-middle">' + (row.source_account_code || '') + ' · ' + (row.source_account_name || '') + '</td><td class="align-middle">' + Number(row.amount || 0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) + '</td><td class="align-middle">' + (row.description ? String(row.description).replace(/[&<>]/g,function(s){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[s];}) : '<span class="text-muted">—</span>') + '</td><td class="align-middle">—</td></tr>';
+                            const description = row.description ? String(row.description).replace(/[&<>]/g,function(s){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[s];}) : '';
+                            return '<tr><td class="align-middle">' + (row.allocation_date || '') + '</td><td class="align-middle">' + (row.source_account_code || '') + ' · ' + (row.source_account_name || '') + '</td><td class="align-middle">' + Number(row.amount || 0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) + '</td><td class="align-middle">' + (description ? description : '<span class="text-muted">—</span>') + '</td><td class="align-middle text-nowrap"><button type="button" class="btn btn-sm btn-outline-primary" data-funding-edit-id="' + Number(row.id || 0) + '"><i class="fas fa-pen me-1"></i>تعديل</button> <form method="post" action="<?php echo e(APP_URL . 'modules/projects/view_fm.php?id=' . (int)$id); ?>" class="d-inline" onsubmit="return confirm(\'هل تريد حذف تخصيص هذا المصدر بالكامل؟\');"><input type="hidden" name="csrf_token" value="<?php echo e((string)($_SESSION['csrf_token'] ?? '')); ?>"><input type="hidden" name="action" value="fm_delete_funding"><input type="hidden" name="allocation_id" value="' + Number(row.id || 0) + '"><button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash me-1"></i>حذف</button></form></td></tr>';
                         }).join('');
                     }
                     const totalNodes = document.querySelectorAll('[data-funding-total]');
@@ -552,6 +574,31 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 } finally {
                     if (submit) submit.disabled = false;
                 }
+            });
+        }
+
+        const fundingTableBody = document.getElementById('fundingTableBody');
+        const editFundingModal = document.getElementById('editFundingModal');
+        if (fundingTableBody && editFundingModal && window.bootstrap) {
+            fundingTableBody.addEventListener('click', function (event) {
+                const button = event.target.closest('[data-funding-edit-id]');
+                if (!button) return;
+                const row = button.closest('tr');
+                const form = editFundingModal.querySelector('form');
+                if (!row || !form) return;
+                const cells = row.querySelectorAll('td');
+                const accountCode = ((cells[1] && cells[1].textContent) || '').split('·')[0].trim();
+                const amountText = ((cells[2] && cells[2].textContent) || '').replace(/,/g, '').trim();
+                const description = ((cells[3] && cells[3].textContent) || '').trim();
+                const option = Array.from(form.querySelectorAll('select[name="source_account_id"] option')).find(function (item) {
+                    return item.dataset.accountCode === accountCode;
+                });
+                form.querySelector('[name="allocation_id"]').value = button.getAttribute('data-funding-edit-id') || '';
+                if (option) form.querySelector('select[name="source_account_id"]').value = option.value;
+                form.querySelector('input[name="funding_amount"]').value = amountText;
+                form.querySelector('input[name="allocation_date"]').value = ((cells[0] && cells[0].textContent) || '').trim();
+                form.querySelector('input[name="funding_description"]').value = description === '—' ? '' : description;
+                bootstrap.Modal.getOrCreateInstance(editFundingModal).show();
             });
         }
 
