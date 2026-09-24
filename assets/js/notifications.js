@@ -28,9 +28,14 @@
         }, 3000);
     }
 
+    var notificationToast = window.AKNotify && typeof window.AKNotify.notificationToast === 'function'
+        ? window.AKNotify.notificationToast
+        : null;
+
     if (!window.Swal) {
         window.AKNotify = {
             toast: fallbackToast,
+            notificationToast: notificationToast,
             confirm: function () {
                 fallbackToast('تعذر فتح نافذة التأكيد الخاصة بالنظام.');
                 return Promise.resolve({ isConfirmed: false, isDismissed: true });
@@ -54,6 +59,7 @@
     });
 
     window.AKNotify = {
+        notificationToast: notificationToast,
         toast: function (type, message) {
             var icon = type === 'danger' || type === 'error' ? 'error' : type;
             if (!['success', 'error', 'warning', 'info', 'question'].includes(icon)) icon = 'info';
