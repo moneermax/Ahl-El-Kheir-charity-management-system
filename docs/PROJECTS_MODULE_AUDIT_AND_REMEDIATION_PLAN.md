@@ -647,3 +647,74 @@ Rejection case:
 6. Confirm each expected notification opens the existing project destination and that the same unread event is not duplicated by repeated page loads/actions.
 
 No runtime result is recorded until the user performs the controlled local XAMPP test.
+
+
+## 2026-09-24 — Governmental Fees Financial Integration
+
+The existing repeatable **المتطلبات الحكومية الأولية / الرسوم الحكومية** records are now treated as an organizational financial obligation throughout the project financial approval chain.
+
+### Business rule
+
+- The normal project budget remains the implementation/project-cost budget.
+- Every recorded governmental fee is an Ahl El Kheir financial obligation; the original source of the organization's funds is not relevant to this calculation.
+- Governmental fees remain a separate component and are **added on top of** the approved project budget.
+- The financial requirement is therefore:
+
+`Total Financial Requirement = Approved Project Budget + Government Fees`
+
+### Workflow impact
+
+The centralized project financial calculation now exposes:
+- approved project budget;
+- total governmental fees;
+- total financial requirement.
+
+The financial requirement is now used for:
+- FM funding-allocation limits;
+- FM financial approval validation;
+- GM final-approval validation;
+- the single GM project accounting release amount, because that journal is created from the complete funding allocations;
+- project closure/final financial variance basis.
+
+The normal project budget itself is not inflated by governmental fees. Budget-line equality remains based on the suggested/approved project budget only.
+
+### Accounting/payment boundary
+
+No second accounting journal is introduced for governmental fees.
+
+Instead, FM must allocate the **full total financial requirement** across the organization's approved project funding accounts before financial approval. The existing GM approval journal then posts the complete funding amount, and the existing post-GM payment-evidence workflow documents the actual payment evidence for those funding allocations.
+
+### Change-control rule
+
+Governmental fees cannot be silently changed after financial approval because the project general-information editing workflow only permits the relevant project edit/resubmission states. A project that returns to PM editing must pass through FM financial review again before GM final approval.
+
+### Implementation
+
+- `modules/projects/project_lib.php`
+  - added centralized governmental-fee total and total-financial-requirement helpers;
+  - closure variance basis now uses the total financial requirement.
+- `modules/projects/view_fm.php`
+  - FM funding limits and financial approval now use budget + governmental fees;
+  - FM review UI explicitly displays the fee total and total financial requirement.
+- `modules/projects/view.php`
+  - pre-approval funding limits/messages use the total financial requirement;
+  - GM final approval requires funding to equal the total financial requirement;
+  - lifecycle final budget basis uses the total financial requirement;
+  - existing GM accounting release remains the single accounting event.
+- No new table, column, trigger, view, or runtime DDL was introduced.
+
+### Verification status
+
+**Runtime verification required.**
+
+Controlled test:
+1. Use an existing test project or a controlled draft project.
+2. Enter a normal suggested/approved project budget, for example 500,000 SDG.
+3. Enter one or more governmental fees, for example 25,000 SDG.
+4. Verify the PM/project view shows the fees separately and the total financial requirement as 525,000 SDG.
+5. Verify FM sees 525,000 SDG as the amount that must be fully allocated.
+6. Verify FM cannot financially approve when funding allocations total only 500,000 SDG.
+7. Add the remaining 25,000 SDG and verify FM approval succeeds at 525,000 SDG.
+8. Verify GM final approval also requires 525,000 SDG and creates the single accounting release for the full allocated amount.
+9. Verify payment-evidence rows still correspond to the actual funding allocations and the existing FM completion workflow remains unchanged.
+10. Verify project closure/financial variance uses the total financial requirement rather than treating governmental fees as an unexplained overspend.
