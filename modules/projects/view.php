@@ -1855,22 +1855,6 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 
     <div class="col-lg-4 project-view-side-column">
         <div class="card mb-4 fade-in">
-            <div class="card-header"><i class="fas fa-history me-2"></i>سجل التغييرات</div>
-            <div class="card-body">
-                <?php foreach ($history as $h): ?>
-                    <div class="small border-bottom pb-2 mb-2">
-                        <div><strong><?php echo e($h['old_status']); ?></strong> → <strong><?php echo e($h['new_status']); ?></strong></div>
-                        <div class="text-muted"><?php echo e($h['full_name'] ?? 'نظام'); ?> · <?php echo e($h['created_at']); ?></div>
-                        <?php if ($h['reason']): ?><div class="fst-italic">"<?php echo e($h['reason']); ?>"</div><?php endif; ?>
-                    </div>
-                <?php endforeach; ?>
-                <?php if (!$history): ?><div class="text-muted small">لا يوجد سجل تغييرات.</div><?php endif; ?>
-            </div>
-        </div>
-    </div>
-</div>
-
-        <div class="card mb-4 fade-in">
             <div class="card-header"><i class="fas fa-lock me-2"></i>الإغلاق وإعادة الفتح</div>
             <div class="card-body">
                 <?php if ($status !== 'closed' && akp_can_edit_section('closure', $id)): ?>
@@ -1886,7 +1870,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                             <option value="retained_for_followup">احتفاظ للمتابعة</option>
                             <option value="other">أخرى</option>
                         </select>
-                        <button class="btn btn-sm btn-dark w-100">إغلاق المشروع</button>
+                        <button class="btn btn-sm btn-dark px-4">إغلاق المشروع</button>
                     </form>
                 <?php elseif ($status === 'closed' && akp_is_dg()): ?>
                     <p class="small">إعادة الفتح تعد استثناءً إدارياً وتحتاج سبباً واضحاً.</p>
@@ -1894,7 +1878,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                         <input type="hidden" name="action" value="reopen_project">
                         <?php echo csrf_field(); ?>
                         <textarea name="reopen_reason" class="form-control form-control-sm mb-2" rows="3" placeholder="سبب إعادة الفتح *" required></textarea>
-                        <button class="btn btn-sm btn-warning w-100">إعادة فتح المشروع</button>
+                        <button class="btn btn-sm btn-warning px-4">إعادة فتح المشروع</button>
                     </form>
                 <?php else: ?>
                     <div class="text-muted small">
@@ -1903,6 +1887,25 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 <?php endif; ?>
             </div>
         </div>
+
+    </div>
+
+    <div class="card mb-4 fade-in">
+            <div class="card-header"><i class="fas fa-history me-2"></i>سجل التغييرات</div>
+            <div class="card-body">
+                <?php foreach ($history as $h): ?>
+                    <div class="small border-bottom pb-2 mb-2">
+                        <div><strong><?php echo e($h['old_status']); ?></strong> → <strong><?php echo e($h['new_status']); ?></strong></div>
+                        <div class="text-muted"><?php echo e($h['full_name'] ?? 'نظام'); ?> · <?php echo e($h['created_at']); ?></div>
+                        <?php if ($h['reason']): ?><div class="fst-italic">"<?php echo e($h['reason']); ?>"</div><?php endif; ?>
+                    </div>
+                <?php endforeach; ?>
+                <?php if (!$history): ?><div class="text-muted small">لا يوجد سجل تغييرات.</div><?php endif; ?>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 </div>
 
