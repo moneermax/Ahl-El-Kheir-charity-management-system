@@ -1781,26 +1781,35 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 
                     <div id="budget-lines-lock-wrapper" class="budget-dependent is-locked" aria-disabled="true">
                         <fieldset id="budget-lines-fieldset" disabled>
-                        <div class="budget-line-item row g-2 mb-2 border rounded p-2">
-                            <div class="col-md-4 project-field">
-                                <label class="form-label small">فئة البند</label>
-                                <input type="text" name="budget_lines[0][category]" class="form-control form-control-sm" placeholder="مثال: مواد بناء، عمالة، معدات" required>
+                            <div id="budget-lines-container">
+<?php
+$budgetDisplayLines = $existingBudgetLines;
+if (!$budgetDisplayLines) {
+    $budgetDisplayLines = [['category' => '', 'description' => '', 'estimated_amount' => '']];
+}
+foreach ($budgetDisplayLines as $index => $line):
+?>
+                                <div class="budget-line-item row g-2 mb-2 border rounded p-2 bg-light">
+                                    <div class="col-md-4 project-field">
+                                        <label class="form-label small">فئة البند</label>
+                                        <input type="text" name="budget_lines[<?php echo (int)$index; ?>][category]" class="form-control form-control-sm" value="<?php echo e($line['category'] ?? ''); ?>" placeholder="مثال: مواد بناء، عمالة، معدات" required>
+                                    </div>
+                                    <div class="col-md-5 project-field">
+                                        <label class="form-label small">وصف البند</label>
+                                        <input type="text" name="budget_lines[<?php echo (int)$index; ?>][description]" class="form-control form-control-sm" value="<?php echo e($line['description'] ?? ''); ?>" placeholder="وصف تفصيلي" required>
+                                    </div>
+                                    <div class="col-md-2 project-field">
+                                        <label class="form-label small">المبلغ التقديري</label>
+                                        <input type="number" step="0.01" min="0.01" name="budget_lines[<?php echo (int)$index; ?>][amount]" class="form-control form-control-sm budget-amount" value="<?php echo e($line['estimated_amount'] ?? ''); ?>" placeholder="0.00" required>
+                                    </div>
+                                    <div class="col-md-1 d-flex align-items-end">
+                                        <button type="button" class="btn btn-sm btn-outline-danger w-100 remove-budget-line" onclick="removeBudgetLine(this)" title="حذف البند">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+<?php endforeach; ?>
                             </div>
-                            <div class="col-md-5 project-field">
-                                <label class="form-label small">وصف البند</label>
-                                <input type="text" name="budget_lines[0][description]" class="form-control form-control-sm" placeholder="وصف تفصيلي" required>
-                            </div>
-                            <div class="col-md-2 project-field">
-                                <label class="form-label small">المبلغ التقديري</label>
-                                <input type="number" step="0.01" min="0.01" name="budget_lines[0][amount]" class="form-control form-control-sm budget-amount" placeholder="0.00" required>
-                            </div>
-                            <div class="col-md-1 d-flex align-items-end">
-                                <button type="button" class="btn btn-sm btn-outline-danger w-100 remove-budget-line" disabled title="حذف البند">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
                         </fieldset>
                     </div>
 
@@ -1994,7 +2003,7 @@ function loadProjectBudgetTemplate() {
     calculateTotalBudget();
 }
 
-let budgetLineCount = 1;
+let budgetLineCount = <?php echo (int)count($budgetDisplayLines); ?>;
 
 
 /*
