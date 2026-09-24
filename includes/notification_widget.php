@@ -195,7 +195,7 @@ if (Session::isLoggedIn()) {
  function showUnreadToasts(items){
      items.slice().reverse().forEach(function(item){
          const id=Number(item.id||0);
-         if(id>0 && Number(item.is_read||0)===0 && window.AKNotify && typeof window.AKNotify.notificationToast==='function'){
+         if(id>0 && Number(item.is_read||0)===0){
              notificationToast('info',item.title||'إشعار جديد',item.body||'',String(item.link||'').trim() || notificationPageUrl || currentUrl,id);
          }
      });
@@ -213,7 +213,7 @@ if (Session::isLoggedIn()) {
                  const id=Number(item.id||0);
                  if(id>0&&!knownIds[id]){
                      knownIds[id]=true;
-                     if(Number(item.is_read||0)===0 && window.AKNotify&&typeof window.AKNotify.notificationToast==='function'){
+                     if(Number(item.is_read||0)===0){
                          notificationToast('info',item.title||'إشعار جديد',item.body||'',String(item.link||'').trim() || notificationPageUrl || currentUrl,id);
                      }
                  }
