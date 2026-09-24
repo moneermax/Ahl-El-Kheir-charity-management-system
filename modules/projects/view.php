@@ -92,6 +92,7 @@ $paymentEvidence = dbFetchAll("SELECT pe.*, a.code AS source_account_code, a.nam
     LEFT JOIN users u ON u.id = pe.documented_by
     WHERE pe.project_id = ? ORDER BY pe.id DESC", [$id]);
 $expenses = dbFetchAll("SELECT e.*, je.entry_code FROM project_expenses e LEFT JOIN journal_entries je ON je.id = e.journal_entry_id WHERE e.project_id = ? ORDER BY e.expense_date DESC, e.id DESC", [$id]);
+$financialSummary = akp_project_financial_requirement($id);
 $documents = dbFetchAll('SELECT d.*, u.full_name AS uploader_name FROM project_documents d LEFT JOIN users u ON u.id = d.uploaded_by WHERE d.project_id = ? ORDER BY d.id DESC', [$id]);
 $milestones = dbFetchAll('SELECT * FROM project_milestones WHERE project_id = ? ORDER BY planned_date, id', [$id]);
 $progressUpdates = dbFetchAll('SELECT p.*, u.full_name AS submitter_name FROM project_progress_updates p LEFT JOIN users u ON p.submitted_by = u.id WHERE p.project_id = ? ORDER BY p.update_date DESC', [$id]);
@@ -351,17 +352,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$approvedBudgetCheck || $budgetAmount <= 0) {
                 throw new RuntimeException('لا يمكن اعتماد المشروع نهائياً قبل وجود نسخة ميزانية سارية ومعتمدة بمبلغ أكبر من صفر.');
             }
+            $financialRequirement = akp_project_financial_requirement($id, $budgetAmount)['total_financial_requirement'];
 
-            // Keep funding within the approved budget before creating the
-            // final accounting allocation.
+            // Funding must cover the approved project budget plus all recorded
+            // governmental fees before the single GM accounting release.
             $fundingTotal = (float)(dbFetchOne(
                 "SELECT COALESCE(SUM(amount), 0) AS n
                  FROM project_funding_allocations
                  WHERE project_id = ?",
                 [$id]
             )['n'] ?? 0);
-            if (abs($fundingTotal - $budgetAmount) > 0.01) {
-                throw new RuntimeException('لا يمكن اعتماد المشروع نهائياً قبل أن يساوي إجمالي تخصيصات التمويل الميزانية المعتمدة.');
+            if (abs($fundingTotal - $financialRequirement) > 0.01) {
+                throw new RuntimeException('لا يمكن اعتماد المشروع نهائياً قبل أن يساوي إجمالي تخصيصات التمويل إجمالي المتطلبات المالية (الميزانية + الرسوم الحكومية).');
             }
             
             try {
@@ -370,7 +372,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 dbExecute('UPDATE other_projects SET status = \'active\' WHERE id = ?', [$id]);
                 dbExecute('UPDATE project_lifecycle SET lifecycle_status = \'active\' WHERE project_id = ?', [$id]);
                 
-                dbExecute('UPDATE project_lifecycle SET final_budget_amount = ? WHERE project_id = ?', [$budgetAmount, $id]);
+                dbExecute('UPDATE project_lifecycle SET final_budget_amount = ? WHERE project_id = ?', [$financialRequirement, $id]);
 
                 $entryId = akp_create_project_approval_journal($id, $project['name'], 0);
 
@@ -533,6 +535,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($approvedBudgetTotal <= 0) {
                 throw new RuntimeException('لا يمكن تسجيل التمويل قبل اعتماد نسخة الميزانية.');
             }
+            $financialRequirement = akp_project_financial_requirement($id, $approvedBudgetTotal)['total_financial_requirement'];
 
             $existingTotal = (float)(dbFetchOne(
                 "SELECT COALESCE(SUM(amount),0) AS n
@@ -570,9 +573,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $batchTotal += $amount;
             }
 
-            if ($existingTotal + $batchTotal > $approvedBudgetTotal + 0.01) {
-                $remaining = max(0, $approvedBudgetTotal - $existingTotal);
-                throw new RuntimeException('لا يمكن أن يتجاوز إجمالي التمويل الميزانية المعتمدة (' . number_format($approvedBudgetTotal, 2) . '). المتبقي المتاح للتخصيص: ' . number_format($remaining, 2) . '.');
+            if ($existingTotal + $batchTotal > $financialRequirement + 0.01) {
+                $remaining = max(0, $financialRequirement - $existingTotal);
+                throw new RuntimeException('لا يمكن أن يتجاوز إجمالي التمويل إجمالي المتطلبات المالية (' . number_format($financialRequirement, 2) . '). المتبقي المتاح للتخصيص: ' . number_format($remaining, 2) . '.');
             }
 
             $activeBudgetId = (int)(dbFetchOne(
