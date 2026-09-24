@@ -63,6 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         fm_redirect_project($id);
     }
     $asyncSuccessMessage = '';
+    $asyncFundingAction = $action === 'fm_save_funding_batch' && (stripos((string)($_SERVER['HTTP_ACCEPT'] ?? ''), 'application/json') !== false || (string)($_POST['async_funding'] ?? '') === '1');
 
     try {
         if ($closed) throw new RuntimeException('لا يمكن تعديل مشروع مغلق.');
@@ -132,7 +133,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $allocationId=(int)(dbFetchOne('SELECT LAST_INSERT_ID() id')['id']??0); akp_audit('CREATE','project_funding_allocation',$allocationId,null,['project_id'=>$id,'amount'=>$item['amount'],'source_account'=>$item['account']['code'],'fm_review'=>true]);
                 }
             }
-            flash('success','تم حفظ تخصيصات التمويل وتجميع كل مصدر تمويل في سجل واحد.');
+            $asyncSuccessMessage='تم حفظ تخصيصات التمويل وتجميع كل مصدر تمويل في سجل واحد.';
 
         } elseif ($action === 'fm_edit_funding') {
             if (!akp_can_manage_funding($id)) throw new RuntimeException('تخصيص التمويل محصور بالمدير المالي.');
@@ -311,8 +312,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('success','تم رفض المشروع مالياً وإعادته لمدير المشاريع.');
         }
     } catch (Throwable $e) {
-        if ($asyncPaymentAction) fm_json_response(false,$e->getMessage(),[],422);
+        if ($asyncPaymentAction || $asyncFundingAction) fm_json_response(false,$e->getMessage(),[],422);
         flash('error',$e->getMessage());
+    }
+    if ($asyncFundingAction) {
+        $fundingRows = dbFetchAll("SELECT f.id, f.amount, f.allocation_date, f.description, a.code AS source_account_code, a.name_ar AS source_account_name FROM project_funding_allocations f LEFT JOIN accounts a ON a.id=f.source_account_id WHERE f.project_id=? ORDER BY f.created_at DESC", [$id]);
+        $fundingTotalNow=(float)(dbFetchOne("SELECT COALESCE(SUM(amount),0) n FROM project_funding_allocations WHERE project_id=?",[$id])['n']??0);
+        fm_json_response(true,$asyncSuccessMessage!==''?$asyncSuccessMessage:'تم تنفيذ العملية بنجاح.', ['funding_rows'=>$fundingRows,'funding_total'=>$fundingTotalNow,'project_id'=>$id]);
     }
     if ($asyncPaymentAction) {
         $asyncData = ['project_id'=>$id];
@@ -376,8 +382,8 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     <div class="d-flex gap-2 mt-2"><button type="button" class="btn btn-outline-secondary" id="addFundingRow"><i class="fas fa-plus me-1"></i>إضافة مصدر آخر</button><button type="submit" class="btn btn-primary">حفظ جميع مصادر التمويل</button></div>
                 </form>
             <?php endif; ?>
-            <div class="small mb-2">إجمالي المتطلبات المالية: <strong><?php echo number_format((float)$financialSummary['total_financial_requirement'],2); ?> <?php echo e($project['currency_code']?:'SDG'); ?></strong> · إجمالي التخصيص الحالي: <strong><?php echo number_format($fundingTotal,2); ?> <?php echo e($project['currency_code']?:'SDG'); ?></strong></div>
-            <div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>التاريخ</th><th>الحساب</th><th>المبلغ</th><th>الوصف</th><th>إجراء</th></tr></thead><tbody>
+            <div class="small mb-2">إجمالي المتطلبات المالية: <strong><?php echo number_format((float)$financialSummary['total_financial_requirement'],2); ?> <?php echo e($project['currency_code']?:'SDG'); ?></strong> · إجمالي التخصيص الحالي: <strong data-funding-total><?php echo number_format($fundingTotal,2); ?></strong> <?php echo e($project['currency_code']?:'SDG'); ?></div>
+            <div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>التاريخ</th><th>الحساب</th><th>المبلغ</th><th>الوصف</th><th>إجراء</th></tr></thead><tbody id="fundingTableBody">
             <?php foreach($fundings as $f): ?><tr><td class="align-middle"><?php echo e($f['allocation_date']); ?></td><td class="align-middle"><?php echo e(($f['source_account_code']??$f['source_type']).' · '.($f['source_account_name']??'')); ?></td><td class="align-middle"><?php echo number_format((float)$f['amount'],2); ?></td><td class="align-middle"><?php echo !empty($f['description']) ? e($f['description']) : '<span class="text-muted">—</span>'; ?></td><td class="align-middle text-nowrap"><?php if($approval['approval_status']==='submitted' && !$closed): ?><button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editFunding<?php echo (int)$f['id']; ?>">تعديل</button> <form method="post" class="d-inline" onsubmit="return confirm('هل تريد حذف تخصيص هذا المصدر بالكامل؟');"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_delete_funding"><input type="hidden" name="allocation_id" value="<?php echo (int)$f['id']; ?>"><button class="btn btn-sm btn-outline-danger">حذف</button></form><?php endif; ?></td></tr>
             <?php endforeach; ?><?php if(!$fundings): ?><tr><td colspan="5" class="text-center text-muted">لا توجد تخصيصات تمويل مسجلة بعد.</td></tr><?php endif; ?></tbody></table></div>
             <script>
@@ -510,6 +516,44 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 
     <script>
     document.addEventListener('DOMContentLoaded', function () {
+        const fundingForm = document.getElementById('fundingForm');
+        if (fundingForm) {
+            fundingForm.addEventListener('submit', async function (event) {
+                event.preventDefault();
+                const data = new FormData(fundingForm);
+                data.set('async_funding', '1');
+                const submit = fundingForm.querySelector('button[type="submit"], button:not([type])');
+                if (submit) submit.disabled = true;
+                try {
+                    const response = await fetch(fundingForm.getAttribute('action') || window.location.href, {
+                        method: 'POST',
+                        headers: { 'Accept': 'application/json' },
+                        body: data
+                    });
+                    const contentType = response.headers.get('content-type') || '';
+                    if (!contentType.toLowerCase().includes('application/json')) throw new Error('تعذر إتمام العملية. استجابة الخادم غير متوقعة (' + response.status + ').');
+                    const result = await response.json();
+                    if (!response.ok || !result.ok) throw new Error(result.message || 'تعذر حفظ تخصيص التمويل.');
+                    const body = document.getElementById('fundingTableBody');
+                    if (body && Array.isArray(result.funding_rows)) {
+                        body.innerHTML = result.funding_rows.map(function (row) {
+                            return '<tr><td class="align-middle">' + (row.allocation_date || '') + '</td><td class="align-middle">' + (row.source_account_code || '') + ' · ' + (row.source_account_name || '') + '</td><td class="align-middle">' + Number(row.amount || 0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) + '</td><td class="align-middle">' + (row.description ? String(row.description).replace(/[&<>]/g,function(s){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[s];}) : '<span class="text-muted">—</span>') + '</td><td class="align-middle">—</td></tr>';
+                        }).join('');
+                    }
+                    const totalNodes = document.querySelectorAll('[data-funding-total]');
+                    totalNodes.forEach(function (node) { node.textContent = Number(result.funding_total || 0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); });
+                    fundingForm.querySelectorAll('select[name="source_account_id[]"]').forEach(function(el){el.value='';});
+                    fundingForm.querySelectorAll('input[name="funding_amount[]"], input[name="funding_description[]"]').forEach(function(el){el.value='';});
+                    alert(result.message || 'تم حفظ تخصيص التمويل.');
+                } catch (error) {
+                    alert(error.message || 'تعذر حفظ تخصيص التمويل.');
+                } finally {
+                    if (submit) submit.disabled = false;
+                }
+            });
+        }
+
+        document.querySelectorAll('.js-payment-action').forEach(function (form) {
         document.querySelectorAll('.js-payment-action').forEach(function (form) {
             form.addEventListener('submit', async function (event) {
                 event.preventDefault();
