@@ -529,7 +529,8 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 const submit = form.querySelector('button[type="submit"], button:not([type])');
                 if (submit) submit.disabled = true;
                 try {
-                    const response = await fetch(form.action || window.location.href, {
+                    const targetUrl = form.getAttribute('action') || window.location.href;
+                    const response = await fetch(targetUrl, {
                         method: 'POST',
                         headers: { 'Accept': 'application/json' },
                         body: data
