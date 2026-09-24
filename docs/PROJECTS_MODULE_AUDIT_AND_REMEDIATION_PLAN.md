@@ -552,6 +552,38 @@ Controlled test order:
 8. Verify no second journal is created when the voucher is printed or a receipt is uploaded.
 
 
+## 2026-09-24 — FM payment-evidence completion workflow
+
+The post-GM **صرف وتمييز مستندات التمويل** stage was refined without changing the accounting boundary.
+
+### Implemented behavior
+
+- FM cash-payment confirmation and bank/e-wallet receipt upload now support an asynchronous submission path so a successful operation does **not** reload the page or jump the user to the top.
+- Successful payment-evidence actions show an inline green check/tick (**تم التوثيق**) in the relevant payment row.
+- Added an FM-only **تعديل** action for documented payment evidence before the final completion confirmation:
+  - cash: correct the payment date;
+  - bank/e-wallet: correct the payment date/reference and optionally replace the receipt file.
+- Added a final **تأكيد اكتمال مستندات التمويل** action.
+- The final confirmation is allowed only when every project_payment_evidence row for the approved project is documented.
+- Final confirmation records an audit event and sends an event-aware notification to active Projects Manager users.
+- After final confirmation, the payment-evidence stage is treated as locked; the FM edit controls are no longer exposed.
+- The final confirmation and payment-evidence documentation actions do **not** create a second accounting journal. The GM final-approval journal remains the accounting release event.
+- No new table, column, trigger, view, or runtime DDL was introduced.
+
+### Verification status
+
+**Runtime verification pending.**
+
+Controlled test should verify:
+1. Upload a bank/e-wallet receipt and confirm the page does not reload/jump to the top; the row shows the green check.
+2. Confirm cash evidence and verify the same inline check behavior.
+3. Use **تعديل** on a documented row and verify the corrected date/reference/receipt appears without a page reload.
+4. Leave one payment evidence row pending and verify final confirmation is blocked.
+5. Document all payment rows and click **تأكيد اكتمال مستندات التمويل**.
+6. Verify the FM sees the final-completion check and edit controls are removed.
+7. Verify the Projects Manager receives the final payment-evidence notification and can open the project evidence read-only.
+8. Verify no second journal entry is created by documentation, editing, or final confirmation.
+
 ## 2026-09-24 — Project Approval Notification Workflow Correction
 
 The approval/rejection notification chain was re-aligned to the required business workflow.
