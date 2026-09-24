@@ -87,7 +87,8 @@
 
 .project-module-page .project-view-sections-grid {
     display: grid !important;
-    grid-template-columns: minmax(0, 1.7fr) minmax(320px, 1fr);
+    grid-template-columns: minmax(0, 1200px);
+    justify-content: center;
     gap: 1rem;
     margin-right: 0;
     margin-left: 0;
@@ -95,14 +96,20 @@
 }
 
 .project-module-page .project-view-sections-grid > .project-view-main-column,
-.project-module-page .project-view-sections-grid > .project-view-side-column {
+.project-module-page .project-view-sections-grid > .project-view-side-column,
+.project-module-page .project-view-sections-grid > .col-12 {
     display: block !important;
-    width: auto !important;
-    max-width: none !important;
+    width: 100% !important;
+    max-width: 1200px !important;
     flex: none !important;
     min-width: 0;
     padding-right: 0;
     padding-left: 0;
+    justify-self: center;
+}
+
+.project-module-page .project-view-sections-grid > .col-12 {
+    grid-column: 1;
 }
 
 .project-module-page .project-view-main-column > .card,
