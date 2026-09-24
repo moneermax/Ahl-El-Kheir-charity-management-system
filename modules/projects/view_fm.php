@@ -557,10 +557,74 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     if (!response.ok || !result.ok) throw new Error(result.message || 'تعذر حفظ تخصيص التمويل.');
                     const body = document.getElementById('fundingTableBody');
                     if (body && Array.isArray(result.funding_rows)) {
-                        body.innerHTML = result.funding_rows.map(function (row) {
-                            const description = row.description ? String(row.description).replace(/[&<>]/g,function(s){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[s];}) : '';
-                            return '<tr><td class="align-middle">' + (row.allocation_date || '') + '</td><td class="align-middle">' + (row.source_account_code || '') + ' · ' + (row.source_account_name || '') + '</td><td class="align-middle">' + Number(row.amount || 0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) + '</td><td class="align-middle">' + (description ? description : '<span class="text-muted">—</span>') + '</td><td class="align-middle text-nowrap"><button type="button" class="btn btn-sm btn-outline-primary" data-funding-edit-id="' + Number(row.id || 0) + '"><i class="fas fa-pen me-1"></i>تعديل</button> <form method="post" action="<?php echo e(APP_URL . 'modules/projects/view_fm.php?id=' . (int)$id); ?>" class="d-inline" onsubmit="return confirm(\'هل تريد حذف تخصيص هذا المصدر بالكامل؟\');"><input type="hidden" name="csrf_token" value="<?php echo e((string)($_SESSION['csrf_token'] ?? '')); ?>"><input type="hidden" name="action" value="fm_delete_funding"><input type="hidden" name="allocation_id" value="' + Number(row.id || 0) + '"><button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash me-1"></i>حذف</button></form></td></tr>';
-                        }).join('');
+                        body.innerHTML = '';
+                        result.funding_rows.forEach(function (row) {
+                            const tr = document.createElement('tr');
+                            [row.allocation_date || '', (row.source_account_code || '') + ' · ' + (row.source_account_name || ''), Number(row.amount || 0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})].forEach(function (value) {
+                                const td = document.createElement('td');
+                                td.className = 'align-middle';
+                                td.textContent = value;
+                                tr.appendChild(td);
+                            });
+                            const descTd = document.createElement('td');
+                            descTd.className = 'align-middle';
+                            if (row.description) {
+                                descTd.textContent = row.description;
+                            } else {
+                                const empty = document.createElement('span');
+                                empty.className = 'text-muted';
+                                empty.textContent = '—';
+                                descTd.appendChild(empty);
+                            }
+                            tr.appendChild(descTd);
+
+                            const actionsTd = document.createElement('td');
+                            actionsTd.className = 'align-middle text-nowrap';
+
+                            const editButton = document.createElement('button');
+                            editButton.type = 'button';
+                            editButton.className = 'btn btn-sm btn-outline-primary';
+                            editButton.setAttribute('data-funding-edit-id', String(row.id || 0));
+                            editButton.innerHTML = '<i class="fas fa-pen me-1"></i>تعديل';
+                            actionsTd.appendChild(editButton);
+
+                            const deleteForm = document.createElement('form');
+                            deleteForm.method = 'post';
+                            deleteForm.action = <?php echo json_encode(APP_URL . 'modules/projects/view_fm.php?id=' . (int)$id); ?>;
+                            deleteForm.className = 'd-inline';
+                            deleteForm.onsubmit = function () {
+                                return confirm('هل تريد حذف تخصيص هذا المصدر بالكامل؟');
+                            };
+
+                            const csrf = document.createElement('input');
+                            csrf.type = 'hidden';
+                            csrf.name = 'csrf_token';
+                            csrf.value = <?php echo json_encode((string)($_SESSION['csrf_token'] ?? '')); ?>;
+                            deleteForm.appendChild(csrf);
+
+                            const actionInput = document.createElement('input');
+                            actionInput.type = 'hidden';
+                            actionInput.name = 'action';
+                            actionInput.value = 'fm_delete_funding';
+                            deleteForm.appendChild(actionInput);
+
+                            const allocationInput = document.createElement('input');
+                            allocationInput.type = 'hidden';
+                            allocationInput.name = 'allocation_id';
+                            allocationInput.value = String(row.id || 0);
+                            deleteForm.appendChild(allocationInput);
+
+                            const deleteButton = document.createElement('button');
+                            deleteButton.type = 'submit';
+                            deleteButton.className = 'btn btn-sm btn-outline-danger';
+                            deleteButton.innerHTML = '<i class="fas fa-trash me-1"></i>حذف';
+                            deleteForm.appendChild(deleteButton);
+                            actionsTd.appendChild(document.createTextNode(' '));
+                            actionsTd.appendChild(deleteForm);
+
+                            tr.appendChild(actionsTd);
+                            body.appendChild(tr);
+                        });
                     }
                     const totalNodes = document.querySelectorAll('[data-funding-total]');
                     totalNodes.forEach(function (node) { node.textContent = Number(result.funding_total || 0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); });
