@@ -873,3 +873,17 @@ Implementation commit: `6f02a8ed9e72a316c470e886b3c7658c83a24593`. Runtime verif
 ### 2026-09-22 — Projects form repeatable fields
 
 The Projects form now uses repeatable rows for government requirements + per-requirement fees, implementing partners, procurement/supply methods, and contact records, with explicit **إضافة** buttons. The change is backed by a migration and preserves legacy scalar project-detail values for compatibility. Migration execution and local runtime testing are pending.
+
+
+## 2026-09-24 — Projects Approval Notification Workflow Checkpoint
+
+The Projects approval notification chain is now aligned with the required two-way workflow:
+
+- Approval: Projects Manager submit/resubmit → FM review/approve → GM/VGM final review/approve → Projects Manager receives final-approval notification.
+- Rejection: GM/VGM reject → project returns to `submitted` and FM is notified → FM rejects → project becomes `rejected` and Projects Manager is notified → PM edits/resubmits or closes as rejected according to the existing workflow.
+
+Implemented without schema changes by reusing the existing event-aware notification infrastructure. GM rejection no longer sends a terminal rejection notification directly to PM. Final GM approval now notifies PM.
+
+Commits: `4d985d094f7bde4d6faa503fa704db55457b9e04`, `f0c37431ce67029b36defb7132e43db2c024fbe4`, `58f7c62f6df05f98da7d003fe470c0e616a41eb9`, documentation `e975fccaa4ebf741babde60831ef2bb825cd299a`.
+
+Runtime certification is pending controlled local testing; no new fixture is required.
