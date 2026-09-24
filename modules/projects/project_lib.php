@@ -155,6 +155,46 @@ if (!function_exists('akp_sync_lifecycle_row')) {
         }
     }
 }
+if (!function_exists('akp_project_government_fees')) {
+    function akp_project_government_fees(int $projectId): float
+    {
+        if ($projectId < 1) return 0.0;
+        $row = dbFetchOne(
+            "SELECT COALESCE(SUM(fee_amount), 0) AS total
+             FROM project_government_requirements
+             WHERE project_id = ?",
+            [$projectId]
+        );
+        return (float)($row['total'] ?? 0);
+    }
+}
+if (!function_exists('akp_project_financial_requirement')) {
+    /**
+     * Total organizational financial obligation for the project:
+     * approved implementation budget + all recorded governmental fees.
+     * Government fees remain a separate component and do not alter the
+     * meaning of the approved project budget itself.
+     */
+    function akp_project_financial_requirement(int $projectId, ?float $approvedBudget = null): array
+    {
+        if ($approvedBudget === null) {
+            $row = dbFetchOne(
+                "SELECT COALESCE(SUM(COALESCE(bl.approved_amount, bl.estimated_amount)), 0) AS total
+                 FROM project_budgets b
+                 JOIN project_budget_lines bl ON bl.budget_id = b.id
+                 WHERE b.project_id = ? AND b.status = 'approved'",
+                [$projectId]
+            );
+            $approvedBudget = (float)($row['total'] ?? 0);
+        }
+        $governmentFees = akp_project_government_fees($projectId);
+        return [
+            'approved_budget' => (float)$approvedBudget,
+            'government_fees' => $governmentFees,
+            'total_financial_requirement' => (float)$approvedBudget + $governmentFees,
+        ];
+    }
+}
 if (!function_exists('akp_project_totals')) {
     function akp_project_totals(int $projectId): array
     {
@@ -164,15 +204,17 @@ if (!function_exists('akp_project_totals')) {
         $budget = dbFetchOne("SELECT COALESCE(SUM(COALESCE(bl.approved_amount, bl.estimated_amount)),0) AS value FROM project_budgets b JOIN project_budget_lines bl ON bl.budget_id = b.id WHERE b.project_id = ? AND b.status = 'approved'", [$projectId]);
         $fundingAllocations = (float)($funded['value'] ?? 0); $donationAmount = (float)($donations['value'] ?? 0); $totalFunded = $fundingAllocations + $donationAmount; $totalExpensed = (float)($expenses['value'] ?? 0); $approvedBudget = (float)($budget['value'] ?? 0);
         if ($approvedBudget <= 0) { $p = dbFetchOne("SELECT target_amount FROM other_projects WHERE id = ?", [$projectId]); $approvedBudget = (float)($p['target_amount'] ?? 0); }
-        $variance = $totalExpensed - $approvedBudget; $percent = $approvedBudget > 0 ? ($variance / $approvedBudget) * 100 : null;
-        return ['approved_budget'=>$approvedBudget,'funding_allocations'=>$fundingAllocations,'donations'=>$donationAmount,'total_funded'=>$totalFunded,'total_expensed'=>$totalExpensed,'variance'=>$variance,'variance_percent'=>$percent,'residual'=>$totalFunded-$totalExpensed];
+        $financial = akp_project_financial_requirement($projectId, $approvedBudget);
+        $financialRequirement = $financial['total_financial_requirement'];
+        $variance = $totalExpensed - $financialRequirement; $percent = $financialRequirement > 0 ? ($variance / $financialRequirement) * 100 : null;
+        return ['approved_budget'=>$approvedBudget,'government_fees'=>$financial['government_fees'],'total_financial_requirement'=>$financialRequirement,'funding_allocations'=>$fundingAllocations,'donations'=>$donationAmount,'total_funded'=>$totalFunded,'total_expensed'=>$totalExpensed,'variance'=>$variance,'variance_percent'=>$percent,'residual'=>$totalFunded-$totalExpensed];
     }
 }
 if (!function_exists('akp_sync_closure_totals')) {
     function akp_sync_closure_totals(int $projectId): array
     {
         $totals = akp_project_totals($projectId);
-        dbExecute("UPDATE project_lifecycle SET final_budget_amount = ?, total_funded_amount = ?, total_expensed_amount = ?, variance_amount = ?, variance_percent = ?, residual_amount = ? WHERE project_id = ?", [$totals['approved_budget'], $totals['total_funded'], $totals['total_expensed'], $totals['variance'], $totals['variance_percent'], $totals['residual'], $projectId]);
+        dbExecute("UPDATE project_lifecycle SET final_budget_amount = ?, total_funded_amount = ?, total_expensed_amount = ?, variance_amount = ?, variance_percent = ?, residual_amount = ? WHERE project_id = ?", [$totals['total_financial_requirement'], $totals['total_funded'], $totals['total_expensed'], $totals['variance'], $totals['variance_percent'], $totals['residual'], $projectId]);
         return $totals;
     }
 }
