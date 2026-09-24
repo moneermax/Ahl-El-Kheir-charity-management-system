@@ -535,14 +535,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
              | Initial budget lines MUST equal suggested budget exactly.
              |--------------------------------------------------------------------------
              */
+            $governmentFeesCents = 0;
+            foreach ($governmentRequirementRows as $governmentRow) {
+                $governmentFeesCents += (int)round(((float)($governmentRow['fee_amount'] ?? 0)) * 100);
+            }
+
+            $grandTotalCents = $targetCents !== null
+                ? $targetCents + $governmentFeesCents
+                : null;
+
             if (
-                $targetCents !== null &&
+                $grandTotalCents !== null &&
                 !empty($budgetLines) &&
-                $totalBudgetCents !== $targetCents
+                $totalBudgetCents !== $grandTotalCents
             ) {
 
                 $differenceCents =
-                    $totalBudgetCents - $targetCents;
+                    $totalBudgetCents - $grandTotalCents;
 
                 $difference =
                     number_format(
@@ -554,7 +563,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $targetDisplay =
                     number_format(
-                        $targetCents / 100,
+                        $grandTotalCents / 100,
                         2,
                         '.',
                         ','
@@ -574,11 +583,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $errors[] =
                         'إجمالي بنود الميزانية (' .
                         $totalDisplay .
-                        ') يتجاوز الميزانية التقديرية (' .
+                        ') يتجاوز الإجمالي المطلوب (' .
                         $targetDisplay .
                         ') بمبلغ ' .
                         $difference .
-                        '. يجب أن يساوي إجمالي البنود الميزانية التقديرية تماماً.';
+                        '. يجب أن يساوي إجمالي البنود الإجمالي المطلوب تماماً.';
 
                 } else {
 
@@ -1723,19 +1732,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                         العملة ثابتة على الجنيه السوداني (SDG)، ويجب أن يساوي إجمالي بنود الميزانية الميزانية التقديرية تماماً.
                     </p>
 
-                    <div class="project-template-panel mb-3">
-                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
-                            <div>
-                                <div class="fw-bold">قالب ميزانية استرشادي</div>
-                                <div class="project-help">يستخدم التصنيف الاسترشادي المحدد أعلاه لاختيار بنود مقترحة. القالب لا يضع أسعاراً تلقائياً؛ الأسعار الفعلية يجب أن يدخلها المستخدم.</div>
-                            </div>
-                            <button type="button" id="load-budget-template-button" class="btn btn-sm btn-outline-success" onclick="loadProjectBudgetTemplate()">
-                                <i class="fas fa-table-list me-1"></i> تحميل القالب
-                            </button>
-                        </div>
-                    </div>
-
-<section class="project-form-section project-template-panel">
+                    <section class="project-form-section project-template-panel">
                     <h5 class="project-form-section-title">
                         <i class="fas fa-wand-magic-sparkles"></i>
                         المساعد الديناميكي للمشروع
@@ -1743,7 +1740,8 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     <div class="row g-3 align-items-end">
                         <div class="col-lg-5 project-field project-field-inline">
                             <label class="form-label">تصنيف استرشادي</label>
-                            <div class="project-category-select-wrap">
+                            <div class="d-flex gap-2 align-items-center">
+                                <div class="project-category-select-wrap flex-grow-1">
                                 <select id="project-category-preset" class="form-select project-category-select" onchange="updateProjectTypeExperience(true)" aria-label="تصنيف استرشادي">
                                     <option value="other">أخرى / مشروع مخصص</option>
                                     <option value="orphans">كفالة الأيتام</option>
@@ -1756,6 +1754,10 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                                     <option value="seasonal">المشاريع الموسمية</option>
                                 </select>
                                 <i class="fas fa-chevron-down project-category-select-icon" aria-hidden="true"></i>
+                                </div>
+                                <button type="button" id="load-budget-template-button" class="btn btn-sm btn-outline-success flex-shrink-0" onclick="loadProjectBudgetTemplate()" title="تحميل قالب الميزانية حسب التصنيف">
+                                    <i class="fas fa-table-list me-1"></i> تحميل القالب
+                                </button>
                             </div>
                             <div class="project-help">هذا التصنيف استرشادي ويحدد الإرشادات والقالب الديناميكي المقترح فقط. يمكنك استخدام «أخرى / مشروع مخصص» للمشاريع غير المدرجة.</div>
                         </div>
@@ -1819,9 +1821,11 @@ foreach ($budgetDisplayLines as $index => $line):
 
                     <div class="mt-3 p-3 rounded border" id="budget-summary">
                         <div class="row g-2">
-                            <div class="col-md-4"><strong>الميزانية التقديرية:</strong> <span id="target-budget-display" class="fw-bold">0.00</span> <span class="text-muted">SDG</span></div>
-                            <div class="col-md-4"><strong>إجمالي بنود الميزانية:</strong> <span id="total-budget-display" class="fs-5 fw-bold">0.00</span> <span class="text-muted">SDG</span></div>
-                            <div class="col-md-4"><strong>الفرق:</strong> <span id="budget-difference-display" class="fs-5 fw-bold">0.00</span> <span class="text-muted">SDG</span></div>
+                            <div class="col-md-3"><strong>الميزانية التقديرية:</strong> <span id="target-budget-display" class="fw-bold">0.00</span> <span class="text-muted">SDG</span></div>
+                            <div class="col-md-3"><strong>إجمالي الرسوم الحكومية:</strong> <span id="government-fees-total-display" class="fw-bold">0.00</span> <span class="text-muted">SDG</span></div>
+                            <div class="col-md-3"><strong>الإجمالي المطلوب:</strong> <span id="grand-total-budget-display" class="fs-5 fw-bold">0.00</span> <span class="text-muted">SDG</span></div>
+                            <div class="col-md-3"><strong>إجمالي بنود الميزانية:</strong> <span id="total-budget-display" class="fs-5 fw-bold">0.00</span> <span class="text-muted">SDG</span></div>
+                            <div class="col-md-12"><strong>الفرق مقابل الإجمالي المطلوب:</strong> <span id="budget-difference-display" class="fs-5 fw-bold">0.00</span> <span class="text-muted">SDG</span></div>
                         </div>
                     </div>
                 </section>
@@ -1884,6 +1888,8 @@ function addProcurementRow() {
 }
 function addGovernmentRequirementRow() {
     addRepeatableRow('government-requirements-container', '<div class="repeatable-row row g-2 align-items-end mb-2"><div class="col-md-8"><input type="text" name="government_requirements[__INDEX__][requirement]" class="form-control" placeholder="المتطلب الحكومي"></div><div class="col-md-3"><input type="number" step="0.01" min="0" name="government_requirements[__INDEX__][fee]" class="form-control" placeholder="0.00"></div><div class="col-md-1"><button type="button" class="btn btn-outline-danger w-100" onclick="removeRepeatableRow(this,\'government-requirements-container\')"><i class="fas fa-trash"></i></button></div></div>');
+    attachGovernmentFeeListeners();
+    calculateTotalBudget();
 }
 function addContactRow() {
     addRepeatableRow('project-contacts-container', '<div class="repeatable-row row g-2 align-items-end mb-2"><div class="col-md-3"><input type="text" name="contacts[__INDEX__][name]" class="form-control" placeholder="الاسم"></div><div class="col-md-2"><input type="text" name="contacts[__INDEX__][role]" class="form-control" placeholder="الصفة / الدور"></div><div class="col-md-2"><input type="text" name="contacts[__INDEX__][phone]" class="form-control" placeholder="الهاتف"></div><div class="col-md-2"><input type="email" name="contacts[__INDEX__][email]" class="form-control" placeholder="البريد الإلكتروني"></div><div class="col-md-2"><input type="text" name="contacts[__INDEX__][notes]" class="form-control" placeholder="ملاحظات"></div><div class="col-md-1"><button type="button" class="btn btn-outline-danger w-100" onclick="removeRepeatableRow(this,\'project-contacts-container\')"><i class="fas fa-trash"></i></button></div></div>');
@@ -2207,6 +2213,24 @@ function formatMoney(cents) {
 |--------------------------------------------------------------------------
 */
 
+function calculateGovernmentFeesTotal() {
+    let totalCents = 0;
+    document.querySelectorAll('input[name$="[fee]"]').forEach(input => {
+        const cents = moneyToCents(input.value);
+        if (cents !== null) totalCents += cents;
+    });
+    return totalCents;
+}
+
+function attachGovernmentFeeListeners() {
+    document.querySelectorAll('input[name$="[fee]"]').forEach(input => {
+        input.removeEventListener('input', calculateTotalBudget);
+        input.removeEventListener('change', calculateTotalBudget);
+        input.addEventListener('input', calculateTotalBudget);
+        input.addEventListener('change', calculateTotalBudget);
+    });
+}
+
 function calculateTotalBudget() {
 
     let totalCents = 0;
@@ -2238,6 +2262,10 @@ function calculateTotalBudget() {
                 : ''
         );
 
+    const governmentFeesCents = calculateGovernmentFeesTotal();
+    const grandTotalCents = targetCents !== null
+        ? targetCents + governmentFeesCents
+        : null;
 
     const totalDisplay =
         document.getElementById(
@@ -2315,6 +2343,12 @@ function calculateTotalBudget() {
         budgetLockWrapper.setAttribute('aria-disabled', 'false');
     }
 
+    const governmentFeesDisplay = document.getElementById('government-fees-total-display');
+    const grandTotalDisplay = document.getElementById('grand-total-budget-display');
+
+    if (governmentFeesDisplay) governmentFeesDisplay.textContent = formatMoney(governmentFeesCents);
+    if (grandTotalDisplay) grandTotalDisplay.textContent = grandTotalCents !== null ? formatMoney(grandTotalCents) : 'غير محدد';
+
     if (!budgetIsActive) {
 
         if (targetDisplay) {
@@ -2365,7 +2399,7 @@ function calculateTotalBudget() {
 
 
     const differenceCents =
-        totalCents - targetCents;
+        totalCents - grandTotalCents;
 
 
     if (differenceDisplay) {
@@ -2396,7 +2430,7 @@ function calculateTotalBudget() {
             );
 
             message.textContent =
-                '✓ إجمالي بنود الميزانية يساوي الميزانية التقديرية تماماً. يمكن حفظ المشروع.';
+                '✓ إجمالي بنود الميزانية يساوي الإجمالي المطلوب (الميزانية التقديرية + الرسوم الحكومية) تماماً. يمكن حفظ المشروع.';
         }
 
         if (saveButton) {
@@ -2518,6 +2552,7 @@ document.addEventListener(
     function () {
 
         attachBudgetAmountListeners();
+        attachGovernmentFeeListeners();
 
         const targetInput =
             document.getElementById(
