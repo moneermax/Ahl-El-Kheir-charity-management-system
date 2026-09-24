@@ -554,7 +554,6 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         }
 
         document.querySelectorAll('.js-payment-action').forEach(function (form) {
-        document.querySelectorAll('.js-payment-action').forEach(function (form) {
             form.addEventListener('submit', async function (event) {
                 event.preventDefault();
                 const data = new FormData(form);
