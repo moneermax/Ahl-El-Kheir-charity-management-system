@@ -307,26 +307,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             dbExecute("UPDATE project_approval SET approval_status='rejected',fm_rejection_reason=?,fm_reviewed_by=?,fm_reviewed_at=NOW() WHERE project_id=?",[$reason,akp_user_id(),$id]);
             akp_audit('FM_REJECT_PROJECT','project_approval',$id,['approval_status'=>'submitted'],['approval_status'=>'rejected','reason'=>$reason]);
 
-            try {
-                $pmUsers = dbFetchAll(
-                    "SELECT u.id
-                     FROM users u
-                     JOIN roles r ON u.role_id = r.id
-                     WHERE r.code = 'projects_manager'
-                       AND u.is_active = 1"
-                );
-                foreach ($pmUsers as $pmUser) {
-                    ak_transaction_review_notify_event(
-                        (int)$pmUser['id'],
-                        'تم رفض المشروع مالياً',
-                        'المشروع «' . (string)($project['name'] ?? '') . '» (' . (string)($project['project_code'] ?? '') . ') تم رفضه مالياً. السبب: ' . $reason,
-                        APP_URL . 'modules/projects/view_pm.php?id=' . $id,
-                        $id,
-                        'project_fm_rejection'
-                    );
-                }
-            } catch (Throwable $notificationError) {
-            }
 
             flash('success','تم رفض المشروع مالياً وإعادته لمدير المشاريع.');
         }
