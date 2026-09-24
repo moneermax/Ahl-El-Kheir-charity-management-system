@@ -330,8 +330,11 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 ?>
 <link rel="stylesheet" href="<?php echo APP_URL; ?>assets/css/projects-ui.css?v=<?php echo (int)@filemtime(__DIR__ . '/../../assets/css/projects-ui.css'); ?>">
 <div class="container-fluid py-4 project-fm-review-page" dir="rtl">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div><h3 class="mb-1"><i class="fas fa-coins me-2"></i>المراجعة المالية للمشروع</h3><div class="text-muted"><?php echo e($project['project_code'] ?? ''); ?> · <?php echo e($project['name'] ?? ''); ?></div></div>
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header py-3">
+            <h3 class="mb-1"><i class="fas fa-coins me-2"></i>المراجعة المالية للمشروع</h3>
+            <div class="text-muted"><?php echo e($project['project_code'] ?? ''); ?> · <?php echo e($project['name'] ?? ''); ?></div>
+        </div>
     </div>
     <div class="alert alert-primary"><strong>دور المدير المالي:</strong> مراجعة الميزانية، اعتمادها عند قبولها، ثم تحديد حسابات التمويل وتخصيص المبلغ قبل الاعتماد المالي. إذا احتاج المشروع إلى تعديل، يتم رفضه وإعادته لمدير المشاريع مع توضيح السبب.</div>
 
