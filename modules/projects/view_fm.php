@@ -328,7 +328,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 include dirname(__DIR__, 2) . '/includes/header.php';
 ?>
-<div class="container-fluid py-4" dir="rtl">
+<div class="container-fluid py-4 project-fm-review-page" dir="rtl">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div><h3 class="mb-1"><i class="fas fa-coins me-2"></i>المراجعة المالية للمشروع</h3><div class="text-muted"><?php echo e($project['project_code'] ?? ''); ?> · <?php echo e($project['name'] ?? ''); ?></div></div>
     </div>
