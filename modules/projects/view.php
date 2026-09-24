@@ -1853,7 +1853,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 <?php endif; ?>
     </div>
 
-    <div class="col-lg-4 project-view-side-column">
+    <div class="col-12">
         <div class="card mb-4 fade-in">
             <div class="card-header"><i class="fas fa-history me-2"></i>سجل التغييرات</div>
             <div class="card-body">
@@ -1868,8 +1868,8 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             </div>
         </div>
     </div>
-</div>
 
+    <div class="col-lg-4 project-view-side-column">
         <div class="card mb-4 fade-in">
             <div class="card-header"><i class="fas fa-lock me-2"></i>الإغلاق وإعادة الفتح</div>
             <div class="card-body">
@@ -1886,7 +1886,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                             <option value="retained_for_followup">احتفاظ للمتابعة</option>
                             <option value="other">أخرى</option>
                         </select>
-                        <button class="btn btn-sm btn-dark w-100">إغلاق المشروع</button>
+                        <button class="btn btn-sm btn-dark px-4">إغلاق المشروع</button>
                     </form>
                 <?php elseif ($status === 'closed' && akp_is_dg()): ?>
                     <p class="small">إعادة الفتح تعد استثناءً إدارياً وتحتاج سبباً واضحاً.</p>
@@ -1894,7 +1894,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                         <input type="hidden" name="action" value="reopen_project">
                         <?php echo csrf_field(); ?>
                         <textarea name="reopen_reason" class="form-control form-control-sm mb-2" rows="3" placeholder="سبب إعادة الفتح *" required></textarea>
-                        <button class="btn btn-sm btn-warning w-100">إعادة فتح المشروع</button>
+                        <button class="btn btn-sm btn-warning px-4">إعادة فتح المشروع</button>
                     </form>
                 <?php else: ?>
                     <div class="text-muted small">
@@ -1903,6 +1903,10 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 <?php endif; ?>
             </div>
         </div>
+
+    </div>
+
+</div>
 
 </div>
 
