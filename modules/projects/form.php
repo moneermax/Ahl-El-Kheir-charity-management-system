@@ -27,7 +27,21 @@ if (!$id && !akp_can_create_project()) {
     exit();
 }
 
-if ($id && !akp_can_edit_section('general', $id)) {
+$canEditRejectedBudget = false;
+$editBudgetId = 0;
+$existingBudgetLines = [];
+
+if ($id) {
+    $editApproval = dbFetchOne(
+        'SELECT approval_status FROM project_approval WHERE project_id = ?',
+        [$id]
+    );
+    $canEditRejectedBudget =
+        akp_role() === 'projects_manager'
+        && (string)($editApproval['approval_status'] ?? '') === 'rejected';
+}
+
+if ($id && !akp_can_edit_section('general', $id) && !$canEditRejectedBudget) {
     flash(
         'error',
         'تعديل البيانات الأساسية متاح للمدير العام ونائبه فقط، وبعد إغلاق المشروع للمدير العام فقط.'
@@ -177,6 +191,24 @@ if ($id) {
     }
 
     $governmentRequirementRows = dbFetchAll('SELECT requirement_text, fee_amount FROM project_government_requirements WHERE project_id = ? ORDER BY id ASC', [$id]);
+
+    if ($canEditRejectedBudget) {
+        $existingBudget = dbFetchOne(
+            'SELECT id FROM project_budgets WHERE project_id = ? ORDER BY version_no DESC, id DESC LIMIT 1',
+            [$id]
+        );
+        $editBudgetId = (int)($existingBudget['id'] ?? 0);
+        if ($editBudgetId > 0) {
+            $existingBudgetLines = dbFetchAll(
+                'SELECT category, description, estimated_amount
+                 FROM project_budget_lines
+                 WHERE budget_id = ?
+                 ORDER BY id ASC',
+                [$editBudgetId]
+            );
+        }
+    }
+
     $partnerRows = dbFetchAll('SELECT partner_name, role_description FROM project_partners WHERE project_id = ? ORDER BY id ASC', [$id]);
     $procurementRows = dbFetchAll('SELECT method_name, notes FROM project_procurement_methods WHERE project_id = ? ORDER BY id ASC', [$id]);
     $contactRows = dbFetchAll('SELECT contact_name, role_description, phone, email, notes FROM project_contacts WHERE project_id = ? ORDER BY id ASC', [$id]);
@@ -348,7 +380,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $budgetLines = [];
         $totalBudgetCents = 0;
 
-        if (!$id) {
+        if (!$id || $canEditRejectedBudget) {
 
             $submittedBudgetLines =
                 $_POST['budget_lines'] ?? [];
@@ -1196,6 +1228,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             /*
              |--------------------------------------------------------------------------
+             | UPDATE EXISTING BUDGET AFTER FM REJECTION
+             |--------------------------------------------------------------------------
+             */
+            if ($canEditRejectedBudget && $editBudgetId > 0 && !empty($budgetLines)) {
+                dbExecute('DELETE FROM project_budget_lines WHERE budget_id = ?', [$editBudgetId]);
+
+                foreach ($budgetLines as $line) {
+                    dbExecute(
+                        "INSERT INTO project_budget_lines
+                        (budget_id, category, description, estimated_amount, created_by)
+                        VALUES (?,?,?,?,?)",
+                        [
+                            $editBudgetId,
+                            $line['category'],
+                            $line['description'],
+                            (float)$line['amount'],
+                            akp_user_id()
+                        ]
+                    );
+                }
+
+                dbExecute(
+                    "UPDATE project_budgets
+                     SET currency_code = ?, status = 'approved'
+                     WHERE id = ? AND project_id = ?",
+                    [$input['currency_code'], $editBudgetId, $projectId]
+                );
+
+                dbExecute(
+                    "UPDATE project_lifecycle SET final_budget_amount = ? WHERE project_id = ?",
+                    [$target, $projectId]
+                );
+
+                akp_audit(
+                    'UPDATE_BUDGET_AFTER_FM_REJECTION',
+                    'project_budget',
+                    $editBudgetId,
+                    null,
+                    [
+                        'project_id' => $projectId,
+                        'total' => $totalBudgetCents / 100,
+                        'target_amount' => $target
+                    ]
+                );
+            }
+
+            /*
+             |--------------------------------------------------------------------------
              | Reset rejected approval back to draft when editing.
              |--------------------------------------------------------------------------
              */
@@ -1632,7 +1712,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     <button type="button" class="btn btn-sm btn-outline-primary" onclick="addContactRow()"><i class="fas fa-plus me-1"></i>إضافة جهة اتصال</button>
                 </section>
 
-                <?php if (!$id): ?>
+                <?php if (!$id || $canEditRejectedBudget): ?>
                 <section class="project-form-section">
                     <h5 class="project-form-section-title">
                         <i class="fas fa-coins text-primary"></i>
@@ -1769,7 +1849,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 </div>
 
 
-<?php if (!$id): ?>
+<?php if (!$id || $canEditRejectedBudget): ?>
 
 <script>
 
