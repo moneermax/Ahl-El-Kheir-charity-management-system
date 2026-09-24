@@ -454,26 +454,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             akp_audit('STATUS_CHANGE', 'project_lifecycle', $id, ['status' => $oldStatus], ['status' => $newStatus]);
             flash('success', 'تم تحديث حالة المشروع.');
             
-        } elseif ($action === 'assign_team') {
-            // ... (Original assign_team logic preserved exactly)
-            if (!akp_can_edit_section('team', $id) || $closed) throw new RuntimeException('إدارة فريق المشروع متاحة للإدارة التنفيذية فقط.');
-            $userId = (int)($_POST['team_user_id'] ?? 0);
-            $section = akp_post_value('team_section');
-            if (!$userId || $section === '') throw new RuntimeException('بيانات التكليف غير مكتملة.');
-            if (!in_array($section, ['finance', 'operations', 'documents', 'closure'], true)) throw new RuntimeException('قسم التكليف غير صالح.');
-            $already = dbFetchOne('SELECT id FROM project_team WHERE project_id = ? AND user_id = ? AND section_code = ? AND unassigned_at IS NULL', [$id, $userId, $section]);
-            if (!$already) dbExecute('INSERT INTO project_team (project_id, user_id, section_code, is_lead, assigned_by, notes) VALUES (?,?,?,?,?,?)', [$id, $userId, $section, (int)($_POST['team_is_lead'] ?? 0), akp_user_id(), akp_post_value('team_notes') ?: null]);
-            akp_audit('ASSIGN', 'project_team', $id, null, ['user_id' => $userId, 'section' => $section]);
-            flash('success', 'تمت إضافة المستخدم إلى القسم المحدد.');
-            
-        } elseif ($action === 'unassign_team') {
-            // ... (Original unassign_team logic preserved exactly)
-            if (!akp_can_edit_section('team', $id) || $closed) throw new RuntimeException('لا تملك صلاحية إزالة التكليف.');
-            $teamId = (int)($_POST['team_id'] ?? 0);
-            dbExecute('UPDATE project_team SET unassigned_at = NOW(), unassigned_by = ? WHERE id = ? AND project_id = ?', [akp_user_id(), $teamId, $id]);
-            akp_audit('UNASSIGN', 'project_team', $teamId, null, ['project_id' => $id]);
-            flash('success', 'تمت إزالة تكليف المستخدم.');
-            
         } elseif ($action === 'add_budget') {
             // ... (Original add_budget logic preserved exactly)
             if (!akp_can_prepare_finance($id) || $closed) throw new RuntimeException('إعداد الميزانية قبل المراجعة المالية محصور بمدير المشاريع.');
@@ -908,18 +888,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             akp_audit('CREATE', 'project_progress_update', (int)dbFetchOne('SELECT LAST_INSERT_ID() AS id')['id'], null, ['project_id' => $id]);
             flash('success', 'تم حفظ تحديث التقدم.');
             
-        } elseif ($action === 'add_beneficiary_record') {
-            // ... (Original add_beneficiary_record logic preserved exactly)
-            if (!akp_can_edit_section('operations', $id) || $closed) throw new RuntimeException('لا تملك صلاحية إضافة مستفيدين.');
-            $beneficiaryName = akp_post_value('record_beneficiary_name');
-            $householdCount = (int)($_POST['household_count'] ?? 0);
-            $plannedSupport = $_POST['planned_support_amount'] !== '' ? (float)($_POST['planned_support_amount'] ?? 0) : null;
-            $deliveredSupport = $_POST['delivered_support_amount'] !== '' ? (float)($_POST['delivered_support_amount'] ?? 0) : null;
-            if ($beneficiaryName === '') throw new RuntimeException('اسم المستفيد مطلوب.');
-            if ($householdCount < 0 || ($plannedSupport !== null && $plannedSupport < 0) || ($deliveredSupport !== null && $deliveredSupport < 0)) throw new RuntimeException('بيانات المستفيد المالية أو عدد الأفراد لا يمكن أن تكون سالبة.');
-            dbExecute('INSERT INTO project_beneficiary_records (project_id, beneficiary_name, beneficiary_type, beneficiary_phone, beneficiary_location, household_count, planned_support_amount, delivered_support_amount, support_date, notes, created_by) VALUES (?,?,?,?,?,?,?,?,?,?,?)', [$id, $beneficiaryName, akp_post_value('beneficiary_type') ?: null, akp_post_value('beneficiary_phone') ?: null, akp_post_value('beneficiary_location') ?: null, $householdCount ?: null, $plannedSupport, $deliveredSupport, akp_post_value('support_date') ?: null, akp_post_value('beneficiary_notes') ?: null, akp_user_id()]);
-            flash('success', 'تمت إضافة سجل المستفيد.');
-            
         } elseif ($action === 'close_project') {
             // ... (Original close_project logic preserved exactly)
             if (!akp_can_edit_section('closure', $id) || $closed) throw new RuntimeException('لا تملك صلاحية إغلاق المشروع أو أنه مغلق مسبقاً.');
@@ -963,6 +931,13 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 ?>
 <link rel="stylesheet" href="<?php echo e(APP_URL . 'assets/css/projects-ui.css'); ?>">
 <style>
+.project-module-page {
+    max-width: 1500px;
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+}
+
 @media (min-width: 992px) {
     .project-view-main-column {
         flex: 0 0 80%;
@@ -1880,111 +1855,20 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 
     <div class="col-lg-4 project-view-side-column">
         <div class="card mb-4 fade-in">
-            <div class="card-header"><i class="fas fa-user-shield me-2"></i>فريق المشروع وصلاحيات الأقسام</div>
+            <div class="card-header"><i class="fas fa-history me-2"></i>سجل التغييرات</div>
             <div class="card-body">
-                <p class="small text-muted">المستخدم المكلّف بقسم يستطيع تعديل ذلك القسم فقط. إغلاق المشروع يلغي جميع صلاحيات التعديل، ولا يعيدها إلا المدير العام عند إعادة الفتح.</p>
-                <?php if (akp_can_edit_section('team', $id) && !$closed && !in_array(akp_role(), ['general_manager','vice_general_manager'], true)): ?>
-                    <form method="post" class="project-form-panel mb-3">
-                        <input type="hidden" name="action" value="assign_team">
-                        <?php echo csrf_field(); ?>
-                        <div class="row g-2">
-                            <div class="col-12">
-                                <select name="team_user_id" class="form-select form-select-sm" required>
-                                    <option value="">اختر المستخدم</option>
-                                    <?php foreach (dbFetchAll('SELECT id, full_name FROM users WHERE is_active = 1 ORDER BY full_name') as $user): ?>
-                                        <option value="<?php echo (int)$user['id']; ?>"><?php echo e($user['full_name']); ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                            <div class="col-8">
-                                <select name="team_section" class="form-select form-select-sm" required>
-                                    <option value="">القسم</option>
-                                    <option value="finance">المالية</option>
-                                    <option value="operations">التشغيل</option>
-                                    <option value="documents">المستندات</option>
-                                    <option value="closure">الإغلاق</option>
-                                </select>
-                            </div>
-                            <div class="col-4">
-                                <div class="form-check mt-2">
-                                    <input class="form-check-input" type="checkbox" name="team_is_lead" value="1" id="team_is_lead">
-                                    <label class="form-check-label small" for="team_is_lead">مسؤول</label>
-                                </div>
-                            </div>
-                            <div class="col-12"><input name="team_notes" class="form-control form-control-sm" placeholder="ملاحظات التكليف"></div>
-                            <div class="col-12"><button class="btn btn-sm btn-primary w-100">إضافة تكليف</button></div>
-                        </div>
-                    </form>
-                <?php endif; ?>
-
-                <?php foreach ($team as $member): ?>
-                    <div class="border-bottom py-2 small">
-                        <strong><?php echo e($member['full_name']); ?></strong> · <?php echo e($member['section_code']); ?>
-                        <?php if ($member['is_lead']): ?> <span class="badge bg-primary">مسؤول</span><?php endif; ?>
-                        <?php if (akp_can_edit_section('team', $id) && !$closed && !in_array(akp_role(), ['general_manager','vice_general_manager'], true)): ?>
-                            <form method="post" class="project-inline-form d-inline float-end">
-                                <?php echo csrf_field(); ?>
-                                <input type="hidden" name="action" value="unassign_team">
-                                <input type="hidden" name="team_id" value="<?php echo (int)$member['id']; ?>">
-                                <button class="btn btn-sm btn-outline-danger py-0 px-1">×</button>
-                            </form>
-                        <?php endif; ?>
+                <?php foreach ($history as $h): ?>
+                    <div class="small border-bottom pb-2 mb-2">
+                        <div><strong><?php echo e($h['old_status']); ?></strong> → <strong><?php echo e($h['new_status']); ?></strong></div>
+                        <div class="text-muted"><?php echo e($h['full_name'] ?? 'نظام'); ?> · <?php echo e($h['created_at']); ?></div>
+                        <?php if ($h['reason']): ?><div class="fst-italic">"<?php echo e($h['reason']); ?>"</div><?php endif; ?>
                     </div>
                 <?php endforeach; ?>
-                <?php if (!$team): ?><div class="text-muted small">لا يوجد فريق مكلف.</div><?php endif; ?>
+                <?php if (!$history): ?><div class="text-muted small">لا يوجد سجل تغييرات.</div><?php endif; ?>
             </div>
         </div>
-
-        <div class="card mb-4 fade-in">
-            <div class="card-header"><i class="fas fa-users me-2"></i>المستفيدون</div>
-            <div class="card-body">
-                <?php if (akp_can_edit_section('operations', $id) && !$closed): ?>
-                    <form method="post" class="project-form-panel mb-3">
-                        <input type="hidden" name="action" value="add_beneficiary_record">
-                        <?php echo csrf_field(); ?>
-                        <input name="record_beneficiary_name" class="form-control form-control-sm mb-2" placeholder="اسم المستفيد" required>
-                        <div class="row g-2">
-                            <div class="col-6"><input name="beneficiary_type" class="form-control form-control-sm" placeholder="الفئة"></div>
-                            <div class="col-6"><input name="beneficiary_phone" class="form-control form-control-sm" placeholder="الهاتف"></div>
-                            <div class="col-6"><input name="beneficiary_location" class="form-control form-control-sm" placeholder="الموقع"></div>
-                            <div class="col-6"><input type="number" min="0" name="household_count" class="form-control form-control-sm" placeholder="عدد الأفراد"></div>
-                            <div class="col-6"><input type="number" step="0.01" name="planned_support_amount" class="form-control form-control-sm" placeholder="المبلغ المخطط"></div>
-                            <div class="col-6"><input type="number" step="0.01" name="delivered_support_amount" class="form-control form-control-sm" placeholder="المبلغ المسلم"></div>
-                            <div class="col-6"><input type="date" name="support_date" class="form-control form-control-sm"></div>
-                            <div class="col-12"><textarea name="beneficiary_notes" class="form-control form-control-sm" rows="2" placeholder="ملاحظات"></textarea></div>
-                            <div class="col-12"><button class="btn btn-sm btn-primary w-100">إضافة مستفيد</button></div>
-                        </div>
-                    </form>
-                <?php endif; ?>
-
-                <?php 
-                $beneficiaryRecords = dbFetchAll('SELECT * FROM project_beneficiary_records WHERE project_id = ? ORDER BY created_at DESC', [$id]);
-                // Legacy fallback if needed, though new system uses project_beneficiary_records
-                $legacyBeneficiaries = []; 
-                ?>
-                
-                <?php foreach ($beneficiaryRecords as $record): ?>
-                    <div class="border-bottom py-2 small">
-                        <strong><?php echo e($record['beneficiary_name']); ?></strong><br>
-                        <?php echo e($record['beneficiary_type'] ?: ''); ?> · <?php echo e($record['location'] ?: ''); ?>
-                    </div>
-                <?php endforeach; ?>
-                
-                <?php if ($legacyBeneficiaries): ?>
-                    <hr><small class="text-muted">السجلات القديمة</small>
-                    <?php foreach ($legacyBeneficiaries as $record): ?>
-                        <div class="border-bottom py-1 small">
-                            <?php echo e($record['beneficiary_name']); ?>
-                            <?php if ($record['amount'] !== null): ?> · <?php echo akp_money($record['amount']); ?><?php endif; ?>
-                        </div>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-                
-                <?php if (!$beneficiaryRecords && !$legacyBeneficiaries): ?>
-                    <div class="text-muted small">لا توجد سجلات مستفيدين.</div>
-                <?php endif; ?>
-            </div>
-        </div>
+    </div>
+</div>
 
         <div class="card mb-4 fade-in">
             <div class="card-header"><i class="fas fa-lock me-2"></i>الإغلاق وإعادة الفتح</div>
@@ -2019,22 +1903,6 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 <?php endif; ?>
             </div>
         </div>
-
-        <div class="card mb-4 fade-in">
-            <div class="card-header"><i class="fas fa-history me-2"></i>سجل التغييرات</div>
-            <div class="card-body">
-                <?php foreach ($history as $h): ?>
-                    <div class="small border-bottom pb-2 mb-2">
-                        <div><strong><?php echo e($h['old_status']); ?></strong> → <strong><?php echo e($h['new_status']); ?></strong></div>
-                        <div class="text-muted"><?php echo e($h['full_name'] ?? 'نظام'); ?> · <?php echo e($h['created_at']); ?></div>
-                        <?php if ($h['reason']): ?><div class="fst-italic">"<?php echo e($h['reason']); ?>"</div><?php endif; ?>
-                    </div>
-                <?php endforeach; ?>
-                <?php if (!$history): ?><div class="text-muted small">لا يوجد سجل تغييرات.</div><?php endif; ?>
-            </div>
-        </div>
-    </div>
-</div>
 
 </div>
 
