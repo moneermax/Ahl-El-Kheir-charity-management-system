@@ -128,7 +128,7 @@ if (Session::isLoggedIn()) {
  document.addEventListener('click',function(e){if(root && !root.contains(e.target))root.classList.remove('open')});
  const toastContainer=document.getElementById('akNotificationToastContainer');
  window.AKNotify=window.AKNotify||{};
- window.AKNotify.toast=function(type,title,body,link,notificationId){
+ window.AKNotify.notificationToast=function(type,title,body,link,notificationId){
      if(!toastContainer) return;
      const toast=document.createElement('div');
      toast.className='ak-notif-toast';
@@ -194,8 +194,8 @@ if (Session::isLoggedIn()) {
  function showUnreadToasts(items){
      items.slice().reverse().forEach(function(item){
          const id=Number(item.id||0);
-         if(id>0 && Number(item.is_read||0)===0 && window.AKNotify && typeof window.AKNotify.toast==='function'){
-             window.AKNotify.toast('info',item.title||'إشعار جديد',item.body||'',String(item.link||'').trim() || notificationPageUrl || currentUrl,id);
+         if(id>0 && Number(item.is_read||0)===0 && window.AKNotify && typeof window.AKNotify.notificationToast==='function'){
+             window.AKNotify.notificationToast('info',item.title||'إشعار جديد',item.body||'',String(item.link||'').trim() || notificationPageUrl || currentUrl,id);
          }
      });
  }
@@ -212,8 +212,8 @@ if (Session::isLoggedIn()) {
                  const id=Number(item.id||0);
                  if(id>0&&!knownIds[id]){
                      knownIds[id]=true;
-                     if(Number(item.is_read||0)===0 && window.AKNotify&&typeof window.AKNotify.toast==='function'){
-                         window.AKNotify.toast('info',item.title||'إشعار جديد',item.body||'',String(item.link||'').trim() || notificationPageUrl || currentUrl,id);
+                     if(Number(item.is_read||0)===0 && window.AKNotify&&typeof window.AKNotify.notificationToast==='function'){
+                         window.AKNotify.notificationToast('info',item.title||'إشعار جديد',item.body||'',String(item.link||'').trim() || notificationPageUrl || currentUrl,id);
                      }
                  }
              });
@@ -226,7 +226,12 @@ if (Session::isLoggedIn()) {
          if(!panelCleared) render(data);
        }).catch(function(){}).finally(function(){busy=false;});
  }
- poll(); window.setInterval(poll,5000);
+ function startPolling(){
+     poll();
+     window.setInterval(poll,5000);
+ }
+ if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded',startPolling,{once:true});
+ else startPolling();
 })();
 </script>
 <?php } ?>
