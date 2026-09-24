@@ -323,7 +323,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($asyncPaymentAction) fm_json_response(false,$e->getMessage(),[],422);
         flash('error',$e->getMessage());
     }
-    if ($asyncPaymentAction) fm_json_response(true,$asyncSuccessMessage!==''?$asyncSuccessMessage:'تم تنفيذ العملية بنجاح.',['project_id'=>$id]);
+    if ($asyncPaymentAction) {
+        $asyncData = ['project_id'=>$id];
+        $asyncPaymentId = (int)($_POST['payment_id'] ?? 0);
+        if ($asyncPaymentId > 0) {
+            $asyncPayment = dbFetchOne('SELECT reference_number FROM project_payment_evidence WHERE id=? AND project_id=?',[$asyncPaymentId,$id]);
+            $asyncData['reference'] = $asyncPayment['reference_number'] ?? '';
+        }
+        fm_json_response(true,$asyncSuccessMessage!==''?$asyncSuccessMessage:'تم تنفيذ العملية بنجاح.',$asyncData);
+    }
     fm_redirect_project($id);
 }
 
@@ -502,6 +510,68 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     <?php endif; ?>
 
     <?php foreach($fundings as $f): ?><div class="modal fade" id="editFunding<?php echo (int)$f['id']; ?>"><div class="modal-dialog modal-lg"><div class="modal-content"><form method="post"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_edit_funding"><input type="hidden" name="allocation_id" value="<?php echo (int)$f['id']; ?>"><div class="modal-header"><h5 class="modal-title">تعديل تخصيص التمويل</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="row g-3"><div class="col-md-6"><label class="form-label">حساب التمويل</label><select name="source_account_id" class="form-select" required><?php foreach($accounts as $a): ?><option value="<?php echo (int)$a['id']; ?>" <?php echo ((int)$a['id']===(int)$f['source_account_id'])?'selected':''; ?>><?php echo e($a['code'].' · '.$a['name_ar']); ?></option><?php endforeach; ?></select></div><div class="col-md-6"><label class="form-label">المبلغ</label><input type="number" step="0.01" min="0.01" name="funding_amount" class="form-control" value="<?php echo e((string)$f['amount']); ?>" required></div><div class="col-md-6"><label class="form-label">التاريخ</label><input type="date" name="allocation_date" class="form-control" value="<?php echo e((string)$f['allocation_date']); ?>"></div><div class="col-12"><label class="form-label">الوصف</label><input name="funding_description" class="form-control" value="<?php echo e((string)($f['description']??'')); ?>"></div></div></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button><button class="btn btn-primary">حفظ التعديل</button></div></form></div></div></div><?php endforeach; ?>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.js-payment-action').forEach(function (form) {
+            form.addEventListener('submit', async function (event) {
+                event.preventDefault();
+                const data = new FormData(form);
+                const action = data.get('action');
+                const submit = form.querySelector('button[type="submit"], button:not([type])');
+                if (submit) submit.disabled = true;
+                try {
+                    const response = await fetch(form.action || window.location.href, {
+                        method: 'POST',
+                        headers: { 'Accept': 'application/json' },
+                        body: data
+                    });
+                    const result = await response.json();
+                    if (!response.ok || !result.ok) throw new Error(result.message || 'تعذر تنفيذ العملية.');
+
+                    if (action === 'fm_confirm_payment_evidence') {
+                        const card = form.closest('.card');
+                        if (card) {
+                            card.innerHTML = '<div class="card-body text-success fw-semibold"><i class="fas fa-circle-check me-1"></i>' + result.message + '<div class="small text-muted mt-1">تم تثبيت النتيجة النهائية لهذه المرحلة ولا يمكن تعديل مستنداتها بعد التأكيد.</div></div>';
+                        }
+                        document.querySelectorAll('.payment-evidence-actions .btn-outline-secondary').forEach(function (button) { button.remove(); });
+                        return;
+                    }
+
+                    const paymentId = data.get('payment_id');
+                    const row = paymentId ? document.querySelector('.payment-evidence-row[data-payment-id="' + paymentId + '"]') : null;
+                    if (row) {
+                        const actions = row.querySelector('.payment-evidence-actions');
+                        if (action === 'fm_confirm_cash_payment' && actions) {
+                            actions.innerHTML = '<span class="text-success fw-semibold payment-success-mark"><i class="fas fa-circle-check me-1"></i>تم التوثيق</span><a class="btn btn-sm btn-primary ms-2" target="_blank" href="<?php echo APP_URL; ?>modules/accounting/voucher_print.php?project_payment_id=' + encodeURIComponent(paymentId) + '"><i class="fas fa-print me-1"></i>طباعة سند الصرف</a><button type="button" class="btn btn-sm btn-outline-secondary ms-2" data-bs-toggle="modal" data-bs-target="#editPaymentEvidence' + paymentId + '"><i class="fas fa-pen me-1"></i>تعديل</button>';
+                        } else if (action === 'fm_upload_payment_receipt' && actions) {
+                            actions.innerHTML = '<span class="text-success fw-semibold payment-success-mark"><i class="fas fa-circle-check me-1"></i>تم التوثيق</span><a class="btn btn-sm btn-outline-primary ms-2" target="_blank" href="<?php echo APP_URL; ?>modules/projects/project_payment_receipt.php?id=' + encodeURIComponent(paymentId) + '"><i class="fas fa-paperclip me-1"></i>عرض الإيصال</a><button type="button" class="btn btn-sm btn-outline-secondary ms-2" data-bs-toggle="modal" data-bs-target="#editPaymentEvidence' + paymentId + '"><i class="fas fa-pen me-1"></i>تعديل</button>';
+                        }
+                        if (result.reference !== undefined) {
+                            const reference = row.querySelector('.payment-reference');
+                            if (reference) reference.textContent = result.reference || '—';
+                        }
+                    }
+
+                    const modalElement = form.closest('.modal');
+                    if (modalElement && window.bootstrap) {
+                        const modal = bootstrap.Modal.getInstance(modalElement);
+                        if (modal) modal.hide();
+                    }
+
+                    if (action === 'fm_edit_payment_evidence') {
+                        const reference = row ? row.querySelector('.payment-reference') : null;
+                        if (reference && result.reference !== undefined) reference.textContent = result.reference || '—';
+                    }
+                } catch (error) {
+                    alert(error.message || 'تعذر تنفيذ العملية.');
+                } finally {
+                    if (submit) submit.disabled = false;
+                }
+            });
+        });
+    });
+    </script>
 
     <div class="modal fade" id="rejectBudget"><div class="modal-dialog"><div class="modal-content"><form method="post"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_reject_budget"><input type="hidden" name="budget_id" value="<?php echo (int)($activeBudget['id']??0); ?>"><div class="modal-header"><h5>رفض الميزانية</h5></div><div class="modal-body"><textarea name="rejection_reason" class="form-control" required placeholder="سبب الرفض"></textarea></div><div class="modal-footer"><button class="btn btn-danger">تأكيد الرفض</button></div></form></div></div></div>
     <div class="modal fade" id="rejectProject"><div class="modal-dialog"><div class="modal-content"><form method="post"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_reject_project"><div class="modal-header"><h5>رفض المشروع مالياً</h5></div><div class="modal-body"><textarea name="rejection_reason" class="form-control" required placeholder="سبب الرفض"></textarea></div><div class="modal-footer"><button class="btn btn-danger">تأكيد الرفض</button></div></form></div></div></div>
