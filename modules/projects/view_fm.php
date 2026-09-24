@@ -402,21 +402,26 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             <?php if ($paymentEvidence): ?>
                 <?php foreach ($paymentEvidence as $payment): ?>
                     <?php $paymentMethodLabels=['cash'=>'نقدي','bank_transfer'=>'تحويل بنكي','e_wallet'=>'محفظة إلكترونية']; ?>
-                    <div class="border rounded p-3 mb-3">
+                    <?php $finalEvidenceConfirmed = fm_payment_evidence_finalized($id); ?>
+                    <div class="border rounded p-3 mb-3 payment-evidence-row" data-payment-id="<?php echo (int)$payment['id']; ?>">
                         <div class="row g-3 align-items-end">
                             <div class="col-md-3"><div class="small text-muted">حساب التمويل</div><strong><?php echo e(($payment['source_account_code']??'').' · '.($payment['source_account_name']??'')); ?></strong></div>
                             <div class="col-md-2"><div class="small text-muted">طريقة الدفع</div><strong><?php echo e($paymentMethodLabels[$payment['payment_method']]??$payment['payment_method']); ?></strong></div>
                             <div class="col-md-2"><div class="small text-muted">المبلغ</div><strong><?php echo number_format((float)$payment['amount'],2).' '.e($payment['currency_code']?:'SDG'); ?></strong></div>
-                            <div class="col-md-2"><div class="small text-muted">المرجع</div><strong><?php echo !empty($payment['reference_number'])?e($payment['reference_number']):'—'; ?></strong></div>
-                            <div class="col-md-3">
+                            <div class="col-md-2"><div class="small text-muted">المرجع</div><strong class="payment-reference"><?php echo !empty($payment['reference_number'])?e($payment['reference_number']):'—'; ?></strong></div>
+                            <div class="col-md-3 payment-evidence-actions">
                                 <?php if ($payment['status']==='documented'): ?>
+                                    <span class="text-success fw-semibold payment-success-mark"><i class="fas fa-circle-check me-1"></i>تم التوثيق</span>
                                     <?php if ($payment['payment_method']==='cash'): ?>
-                                        <a class="btn btn-sm btn-primary" target="_blank" href="<?php echo APP_URL; ?>modules/accounting/voucher_print.php?project_payment_id=<?php echo (int)$payment['id']; ?>"><i class="fas fa-print me-1"></i>طباعة سند الصرف</a>
+                                        <a class="btn btn-sm btn-primary ms-2" target="_blank" href="<?php echo APP_URL; ?>modules/accounting/voucher_print.php?project_payment_id=<?php echo (int)$payment['id']; ?>"><i class="fas fa-print me-1"></i>طباعة سند الصرف</a>
                                     <?php else: ?>
-                                        <a class="btn btn-sm btn-outline-primary" target="_blank" href="<?php echo APP_URL; ?>modules/projects/project_payment_receipt.php?id=<?php echo (int)$payment['id']; ?>"><i class="fas fa-paperclip me-1"></i>عرض الإيصال</a>
+                                        <a class="btn btn-sm btn-outline-primary ms-2" target="_blank" href="<?php echo APP_URL; ?>modules/projects/project_payment_receipt.php?id=<?php echo (int)$payment['id']; ?>"><i class="fas fa-paperclip me-1"></i>عرض الإيصال</a>
+                                    <?php endif; ?>
+                                    <?php if (!$finalEvidenceConfirmed && !$closed): ?>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary ms-2" data-bs-toggle="modal" data-bs-target="#editPaymentEvidence<?php echo (int)$payment['id']; ?>"><i class="fas fa-pen me-1"></i>تعديل</button>
                                     <?php endif; ?>
                                 <?php elseif ($payment['payment_method']==='cash'): ?>
-                                    <form method="post" class="d-inline" onsubmit="return confirm('هل تم صرف النقد فعلياً وتريد توثيق سند الصرف؟');"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_confirm_cash_payment"><input type="hidden" name="payment_id" value="<?php echo (int)$payment['id']; ?>"><button class="btn btn-sm btn-success"><i class="fas fa-file-invoice-dollar me-1"></i>تأكيد سند الصرف</button></form>
+                                    <form method="post" class="d-inline js-payment-action" onsubmit="return confirm('هل تم صرف النقد فعلياً وتريد توثيق سند الصرف؟');"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_confirm_cash_payment"><input type="hidden" name="payment_id" value="<?php echo (int)$payment['id']; ?>"><button class="btn btn-sm btn-success"><i class="fas fa-file-invoice-dollar me-1"></i>تأكيد سند الصرف</button></form>
                                 <?php else: ?>
                                     <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#paymentReceipt<?php echo (int)$payment['id']; ?>"><i class="fas fa-paperclip me-1"></i>إرفاق الإيصال</button>
                                 <?php endif; ?>
@@ -433,7 +438,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         <?php if ($payment['status']==='pending' && $payment['payment_method']!=='cash'): ?>
         <div class="modal fade" id="paymentReceipt<?php echo (int)$payment['id']; ?>" tabindex="-1">
             <div class="modal-dialog"><div class="modal-content">
-                <form method="post" enctype="multipart/form-data">
+                <form method="post" enctype="multipart/form-data" class="js-payment-action">
                     <?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_upload_payment_receipt"><input type="hidden" name="payment_id" value="<?php echo (int)$payment['id']; ?>">
                     <div class="modal-header"><h5 class="modal-title">إرفاق إيصال <?php echo e($payment['payment_method']==='bank_transfer'?'التحويل البنكي':'المحفظة الإلكترونية'); ?></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
                     <div class="modal-body">
@@ -447,6 +452,53 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         </div>
         <?php endif; ?>
     <?php endforeach; ?>
+    <?php endif; ?>
+
+    <?php foreach($paymentEvidence as $payment): ?>
+        <?php if ($payment['status']==='documented' && !$finalEvidenceConfirmed && !$closed): ?>
+        <div class="modal fade" id="editPaymentEvidence<?php echo (int)$payment['id']; ?>" tabindex="-1">
+            <div class="modal-dialog"><div class="modal-content">
+                <form method="post" enctype="multipart/form-data" class="js-payment-action">
+                    <?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_edit_payment_evidence"><input type="hidden" name="payment_id" value="<?php echo (int)$payment['id']; ?>">
+                    <div class="modal-header"><h5 class="modal-title">تعديل مستند التمويل</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                    <div class="modal-body">
+                        <label class="form-label">تاريخ الدفع</label><input type="date" name="payment_date" class="form-control mb-3" value="<?php echo e((string)$payment['payment_date']); ?>" required>
+                        <?php if ($payment['payment_method']!=='cash'): ?>
+                            <label class="form-label">رقم المرجع</label><input name="payment_reference" class="form-control mb-3" maxlength="100" value="<?php echo e((string)($payment['reference_number']??'')); ?>">
+                            <label class="form-label">استبدال الإيصال (اختياري)</label><input type="file" name="payment_receipt" class="form-control" accept="application/pdf,image/jpeg,image/png">
+                            <div class="form-text">اترك الملف فارغاً للاحتفاظ بالإيصال الحالي. PDF أو JPG أو PNG — بحد أقصى 10 ميجابايت.</div>
+                        <?php else: ?>
+                            <div class="alert alert-light border mb-0">يمكن تصحيح تاريخ سند الصرف النقدي قبل التأكيد النهائي.</div>
+                        <?php endif; ?>
+                    </div>
+                    <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button><button class="btn btn-primary">حفظ التعديل</button></div>
+                </form>
+            </div></div>
+        </div>
+        <?php endif; ?>
+    <?php endforeach; ?>
+
+    <?php if ($paymentEvidence): ?>
+        <?php $finalEvidenceConfirmed = fm_payment_evidence_finalized($id); ?>
+        <div class="card mb-4 border-success">
+            <div class="card-body d-flex justify-content-between align-items-center gap-3 flex-wrap">
+                <div>
+                    <?php if ($finalEvidenceConfirmed): ?>
+                        <div class="text-success fw-semibold"><i class="fas fa-circle-check me-1"></i>تم تأكيد اكتمال مستندات التمويل وإبلاغ مدير المشاريع.</div>
+                        <div class="small text-muted mt-1">تم تثبيت النتيجة النهائية لهذه المرحلة ولا يمكن تعديل مستنداتها بعد التأكيد.</div>
+                    <?php else: ?>
+                        <strong>التأكيد النهائي لمستندات التمويل</strong>
+                        <div class="small text-muted mt-1">بعد توثيق جميع عمليات الصرف، اضغط التأكيد النهائي لإبلاغ مدير المشاريع باكتمال النتيجة. هذا الإجراء لا ينشئ أي قيد محاسبي جديد.</div>
+                    <?php endif; ?>
+                </div>
+                <?php if (!$finalEvidenceConfirmed && !$closed): ?>
+                    <form method="post" class="js-payment-action">
+                        <?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_confirm_payment_evidence">
+                        <button class="btn btn-success"><i class="fas fa-check-double me-1"></i>تأكيد اكتمال مستندات التمويل</button>
+                    </form>
+                <?php endif; ?>
+            </div>
+        </div>
     <?php endif; ?>
 
     <?php foreach($fundings as $f): ?><div class="modal fade" id="editFunding<?php echo (int)$f['id']; ?>"><div class="modal-dialog modal-lg"><div class="modal-content"><form method="post"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_edit_funding"><input type="hidden" name="allocation_id" value="<?php echo (int)$f['id']; ?>"><div class="modal-header"><h5 class="modal-title">تعديل تخصيص التمويل</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="row g-3"><div class="col-md-6"><label class="form-label">حساب التمويل</label><select name="source_account_id" class="form-select" required><?php foreach($accounts as $a): ?><option value="<?php echo (int)$a['id']; ?>" <?php echo ((int)$a['id']===(int)$f['source_account_id'])?'selected':''; ?>><?php echo e($a['code'].' · '.$a['name_ar']); ?></option><?php endforeach; ?></select></div><div class="col-md-6"><label class="form-label">المبلغ</label><input type="number" step="0.01" min="0.01" name="funding_amount" class="form-control" value="<?php echo e((string)$f['amount']); ?>" required></div><div class="col-md-6"><label class="form-label">التاريخ</label><input type="date" name="allocation_date" class="form-control" value="<?php echo e((string)$f['allocation_date']); ?>"></div><div class="col-12"><label class="form-label">الوصف</label><input name="funding_description" class="form-control" value="<?php echo e((string)($f['description']??'')); ?>"></div></div></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button><button class="btn btn-primary">حفظ التعديل</button></div></form></div></div></div><?php endforeach; ?>
