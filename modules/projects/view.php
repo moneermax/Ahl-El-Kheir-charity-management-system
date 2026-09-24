@@ -404,6 +404,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 dbExecute('COMMIT');
                 akp_audit('GM_APPROVE_PROJECT', 'project_approval', $id, ['approval_status' => 'fm_approved'], ['approval_status' => 'approved']);
+
+                // Final approval completes the approval chain; notify the Projects Manager.
+                try {
+                    $projectManagers = dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id = r.id WHERE r.code = 'projects_manager' AND u.is_active = 1");
+                    foreach ($projectManagers as $projectManager) {
+                        ak_transaction_review_notify_event(
+                            (int)$projectManager['id'],
+                            'تم اعتماد المشروع نهائياً',
+                            'المشروع «' . (string)($project['name'] ?? '') . '» (' . (string)($project['project_code'] ?? '') . ') تم اعتماده نهائياً من الإدارة.',
+                            APP_URL . 'modules/projects/view.php?id=' . $id,
+                            $id,
+                            'project_final_approval'
+                        );
+                    }
+                } catch (Throwable $notificationError) {}
+
                 flash('success', 'تم اعتماد المشروع نهائياً وتخصيص الميزانية في الدفاتر.');
             } catch (Throwable $e) {
                 dbExecute('ROLLBACK');
