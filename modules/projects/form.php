@@ -1729,7 +1729,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                                 <div class="fw-bold">قالب ميزانية استرشادي</div>
                                 <div class="project-help">يستخدم التصنيف الاسترشادي المحدد أعلاه لاختيار بنود مقترحة. القالب لا يضع أسعاراً تلقائياً؛ الأسعار الفعلية يجب أن يدخلها المستخدم.</div>
                             </div>
-                            <button type="button" id="load-budget-template-button" class="btn btn-sm btn-outline-success" onclick="loadProjectBudgetTemplate()" disabled>
+                            <button type="button" id="load-budget-template-button" class="btn btn-sm btn-outline-success" onclick="loadProjectBudgetTemplate()">
                                 <i class="fas fa-table-list me-1"></i> تحميل القالب
                             </button>
                         </div>
@@ -1780,7 +1780,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     <div id="budget-validation-message" class="alert alert-info py-2 d-none mb-3"></div>
 
                     <div id="budget-lines-lock-wrapper" class="budget-dependent is-locked" aria-disabled="true">
-                        <fieldset id="budget-lines-fieldset" disabled>
+                        <fieldset id="budget-lines-fieldset">
                             <div id="budget-lines-container">
 <?php
 $budgetDisplayLines = $existingBudgetLines;
@@ -1813,7 +1813,7 @@ foreach ($budgetDisplayLines as $index => $line):
                         </fieldset>
                     </div>
 
-                    <button type="button" id="add-budget-line-button" class="btn btn-sm btn-outline-primary mt-2 budget-dependent" onclick="addBudgetLine()" disabled>
+                    <button type="button" id="add-budget-line-button" class="btn btn-sm btn-outline-primary mt-2 budget-dependent" onclick="addBudgetLine()">
                         <i class="fas fa-plus me-1"></i>إضافة بند آخر
                     </button>
 
@@ -2277,8 +2277,9 @@ function calculateTotalBudget() {
 
 
     /*
-     * Budget must be greater than zero before any budget-dependent
-     * fields/actions become active.
+     * Budget lines must remain editable so the user can build the budget
+     * before (or while) entering the target amount. The target amount is
+     * still required for save validation below.
      */
 
     const budgetIsActive =
@@ -2298,20 +2299,20 @@ function calculateTotalBudget() {
         document.getElementById('load-budget-template-button');
 
     if (budgetFieldset) {
-        budgetFieldset.disabled = !budgetIsActive;
+        budgetFieldset.disabled = false;
     }
 
     if (addBudgetLineButton) {
-        addBudgetLineButton.disabled = !budgetIsActive;
+        addBudgetLineButton.disabled = false;
     }
 
     if (loadTemplateButton) {
-        loadTemplateButton.disabled = !budgetIsActive;
+        loadTemplateButton.disabled = false;
     }
 
     if (budgetLockWrapper) {
-        budgetLockWrapper.classList.toggle('is-locked', !budgetIsActive);
-        budgetLockWrapper.setAttribute('aria-disabled', budgetIsActive ? 'false' : 'true');
+        budgetLockWrapper.classList.remove('is-locked');
+        budgetLockWrapper.setAttribute('aria-disabled', 'false');
     }
 
     if (!budgetIsActive) {
