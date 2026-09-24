@@ -1853,6 +1853,21 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 <?php endif; ?>
     </div>
 
+    <div class="card mb-4 fade-in">
+            <div class="card-header"><i class="fas fa-history me-2"></i>سجل التغييرات</div>
+            <div class="card-body">
+                <?php foreach ($history as $h): ?>
+                    <div class="small border-bottom pb-2 mb-2">
+                        <div><strong><?php echo e($h['old_status']); ?></strong> → <strong><?php echo e($h['new_status']); ?></strong></div>
+                        <div class="text-muted"><?php echo e($h['full_name'] ?? 'نظام'); ?> · <?php echo e($h['created_at']); ?></div>
+                        <?php if ($h['reason']): ?><div class="fst-italic">"<?php echo e($h['reason']); ?>"</div><?php endif; ?>
+                    </div>
+                <?php endforeach; ?>
+                <?php if (!$history): ?><div class="text-muted small">لا يوجد سجل تغييرات.</div><?php endif; ?>
+            </div>
+        </div>
+    </
+
     <div class="col-lg-4 project-view-side-column">
         <div class="card mb-4 fade-in">
             <div class="card-header"><i class="fas fa-lock me-2"></i>الإغلاق وإعادة الفتح</div>
@@ -1890,20 +1905,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 
     </div>
 
-    <div class="card mb-4 fade-in">
-            <div class="card-header"><i class="fas fa-history me-2"></i>سجل التغييرات</div>
-            <div class="card-body">
-                <?php foreach ($history as $h): ?>
-                    <div class="small border-bottom pb-2 mb-2">
-                        <div><strong><?php echo e($h['old_status']); ?></strong> → <strong><?php echo e($h['new_status']); ?></strong></div>
-                        <div class="text-muted"><?php echo e($h['full_name'] ?? 'نظام'); ?> · <?php echo e($h['created_at']); ?></div>
-                        <?php if ($h['reason']): ?><div class="fst-italic">"<?php echo e($h['reason']); ?>"</div><?php endif; ?>
-                    </div>
-                <?php endforeach; ?>
-                <?php if (!$history): ?><div class="text-muted small">لا يوجد سجل تغييرات.</div><?php endif; ?>
-            </div>
-        </div>
-    </div>
+div>
 </div>
 
 
