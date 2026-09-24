@@ -1853,7 +1853,8 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 <?php endif; ?>
     </div>
 
-    <div class="card mb-4 fade-in">
+    <div class="col-12">
+        <div class="card mb-4 fade-in">
             <div class="card-header"><i class="fas fa-history me-2"></i>سجل التغييرات</div>
             <div class="card-body">
                 <?php foreach ($history as $h): ?>
