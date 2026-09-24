@@ -50,10 +50,17 @@ function fm_json_response(bool $ok, string $message, array $data = [], int $stat
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (!verify_csrf()) { flash('error', 'انتهت صلاحية الجلسة.'); fm_redirect_project($id); }
     $action = (string)($_POST['action'] ?? '');
     $asyncPaymentAction = in_array($action, ['fm_confirm_cash_payment','fm_upload_payment_receipt','fm_edit_payment_evidence','fm_confirm_payment_evidence'], true)
-        && stripos((string)($_SERVER['HTTP_ACCEPT'] ?? ''), 'application/json') !== false;
+        && (
+            stripos((string)($_SERVER['HTTP_ACCEPT'] ?? ''), 'application/json') !== false
+            || (string)($_POST['async_payment'] ?? '') === '1'
+        );
+    if (!verify_csrf()) {
+        if ($asyncPaymentAction) fm_json_response(false, 'انتهت صلاحية الجلسة. أعد تحميل الصفحة ثم أعد المحاولة.', [], 419);
+        flash('error', 'انتهت صلاحية الجلسة.');
+        fm_redirect_project($id);
+    }
     $asyncSuccessMessage = '';
 
     try {
@@ -517,6 +524,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             form.addEventListener('submit', async function (event) {
                 event.preventDefault();
                 const data = new FormData(form);
+                data.set('async_payment', '1');
                 const action = data.get('action');
                 const submit = form.querySelector('button[type="submit"], button:not([type])');
                 if (submit) submit.disabled = true;
@@ -526,6 +534,11 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                         headers: { 'Accept': 'application/json' },
                         body: data
                     });
+                    const contentType = response.headers.get('content-type') || '';
+                    if (!contentType.toLowerCase().includes('application/json')) {
+                        const bodyText = await response.text();
+                        throw new Error('تعذر إتمام العملية. استجابة الخادم غير متوقعة (' + response.status + ').');
+                    }
                     const result = await response.json();
                     if (!response.ok || !result.ok) throw new Error(result.message || 'تعذر تنفيذ العملية.');
 
