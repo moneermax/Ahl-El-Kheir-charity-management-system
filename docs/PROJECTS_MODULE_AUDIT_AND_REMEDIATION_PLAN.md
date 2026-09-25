@@ -790,3 +790,11 @@ A PHP parse error was identified in modules/projects/view.php after the Project 
 - The correction restores normal parsing of modules/projects/view.php so the project view can render again.
 
 Implementation: modules/projects/view.php.
+
+
+## 2026-09-25 — Project view Back-button and expense feedback polish
+
+- Corrected the shared Back-button logic so audited non-dashboard pages keep exactly two controls: one top Back button and one bottom Back button immediately before the footer; an existing contextual Back button is no longer duplicated at the top.
+- Project Supervisor expense success feedback is now rendered inside the **المصروفات** section instead of the global page alert area, and the page returns the user to that section after a successful save.
+- The expense table header now uses a distinct Bootstrap table color (`table-primary`) for clearer separation from the data rows.
+- No database/schema changes, migrations, triggers, views, stored procedures, or accounting behavior were changed.
