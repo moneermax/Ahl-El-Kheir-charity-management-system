@@ -834,3 +834,11 @@ Implementation: modules/projects/view.php.
 - The **التشغيل والتقدم** progress-history table now uses explicit column widths and a fixed table layout so each header remains in its own visible column.
 - Progress headers and cell contents are allowed to wrap naturally instead of collapsing into a visually concatenated header row.
 - No progress data, database structure, workflow, permissions, accounting behavior, or schema was changed.
+
+
+## 2026-09-25 — Project progress entry row correction
+
+- Restored the **تحديث تقدم** entry controls as a single aligned desktop row, with each label placed directly beside its corresponding input.
+- The six progress fields and the save button remain in one horizontal line on wide screens and wrap only when the available screen width requires it.
+- The progress-history table and its data remain unchanged.
+- No database, workflow, permissions, accounting, or schema changes were introduced.
