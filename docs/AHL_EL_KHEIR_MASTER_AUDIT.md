@@ -1363,3 +1363,27 @@ Implemented without schema changes by reusing the existing event-aware notificat
 Commits: `4d985d094f7bde4d6faa503fa704db55457b9e04`, `f0c37431ce67029b36defb7132e43db2c024fbe4`, `58f7c62f6df05f98da7d003fe470c0e616a41eb9`, documentation `e975fccaa4ebf741babde60831ef2bb825cd299a`.
 
 Runtime certification is pending controlled local testing; no new fixture is required.
+
+
+## 2026-09-25 — Projects workflow / launch-control audit checkpoint
+
+Controlled runtime testing using PRJ-0010 / project ID 10 confirmed the approval notification path through final approval. The remaining lifecycle boundary is intentionally explicit: final GM/VGM approval is not the same thing as project launch.
+
+### Verified design
+- PM submission → FM review/approval.
+- FM approval → GM/VGM final review/approval.
+- GM/VGM final approval → project remains planned and PM is notified.
+- PM must explicitly launch the project.
+- Launch requires an active assigned Project Supervisor.
+- Launch changes project/lifecycle state to active, records status history/audit, and notifies the assigned Project Supervisor.
+- Project Supervisor access/listing is blocked before launch.
+
+### Dashboard integrity finding and resolution
+
+A runtime fatal error exposed a collation incompatibility in dashboard/projects_dashboard.php. The relevant schema design has other_projects.status using utf8mb4_general_ci while project_lifecycle.lifecycle_status and project_approval.approval_status use utf8mb4_unicode_ci. Expressions such as COALESCE(l.lifecycle_status,p.status) therefore require explicit normalization when compared with string literals in this dashboard path.
+
+The fix was made systematically across the PM and Project Supervisor dashboard status/approval comparisons rather than by changing the database schema. Final supervisor-dashboard fix commit: b3c23386fc54d27705df6cc1e3546430935135cd.
+
+### Remaining audit/test item
+
+The next controlled runtime test is the explicit PM launch path for PRJ-0010, followed by Project Supervisor notification, dashboard visibility, direct project access, and operational-section permissions. After that, continue the post-approval payment/disbursement/receipt and accounting-event audit. Do not assume that notification success alone certifies payment or accounting behavior.
