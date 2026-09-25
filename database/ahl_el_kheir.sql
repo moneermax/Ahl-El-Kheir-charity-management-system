@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 24, 2026 at 08:22 AM
+-- Generation Time: Sep 25, 2026 at 12:40 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -121,7 +121,9 @@ INSERT INTO `accounts` (`id`, `code`, `name_ar`, `name_en`, `account_type`, `par
 (31, '4400-7', 'إيرادات مشروع: تأهيل مدرسة السليم', NULL, 'revenue', NULL, 1, NULL, '2026-09-22 08:18:04', '2026-09-22 08:18:04'),
 (32, '5100-7', 'مصروفات مشروع: تأهيل مدرسة السليم', NULL, 'expense', NULL, 1, NULL, '2026-09-22 08:18:04', '2026-09-22 08:18:04'),
 (33, '4400-8', 'إيرادات مشروع: اختبار المشاريع 2026', NULL, 'revenue', NULL, 1, NULL, '2026-09-22 17:38:43', '2026-09-22 17:38:43'),
-(34, '5100-8', 'مصروفات مشروع: اختبار المشاريع 2026', NULL, 'expense', NULL, 1, NULL, '2026-09-22 17:38:43', '2026-09-22 17:38:43');
+(34, '5100-8', 'مصروفات مشروع: اختبار المشاريع 2026', NULL, 'expense', NULL, 1, NULL, '2026-09-22 17:38:43', '2026-09-22 17:38:43'),
+(35, '4400-10', 'إيرادات مشروع: اختبار  المشاريع 2026', NULL, 'revenue', NULL, 1, NULL, '2026-09-25 11:02:12', '2026-09-25 11:02:12'),
+(36, '5100-10', 'مصروفات مشروع: اختبار  المشاريع 2026', NULL, 'expense', NULL, 1, NULL, '2026-09-25 11:02:12', '2026-09-25 11:02:12');
 
 -- --------------------------------------------------------
 
@@ -708,7 +710,99 @@ INSERT INTO `audit_log` (`id`, `user_id`, `action`, `entity_type`, `entity_id`, 
 (1852, 2, 'LOGOUT', 'users', 2, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 09:03:21'),
 (1853, 29, 'LOGIN', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 09:03:28'),
 (1854, 33, 'LOGOUT', 'users', 33, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 09:03:46'),
-(1855, 2, 'LOGIN', 'users', 2, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 09:03:55');
+(1855, 2, 'LOGIN', 'users', 2, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 09:03:55'),
+(1856, 29, 'FM_REJECT_PROJECT', 'project_approval', 8, '{\"approval_status\":\"submitted\"}', '{\"approval_status\":\"rejected\",\"reason\":\"FM project rejection Test\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 09:35:57'),
+(1857, 2, 'LOGOUT', 'users', 2, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 09:36:32'),
+(1858, 33, 'LOGIN', 'users', 33, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 09:36:43'),
+(1859, 33, 'UPDATE_GENERAL', 'other_projects', 8, '{\"name\":\"اختبار المشاريع 2026\",\"status\":\"planned\"}', '{\"name\":\"اختبار المشاريع 2026\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 09:38:58'),
+(1860, 33, 'SUBMIT_APPROVAL', 'project_approval', 8, '{\"approval_status\":\"draft\"}', '{\"approval_status\":\"submitted\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 09:39:04'),
+(1861, 33, 'LOGOUT', 'users', 33, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 09:39:54'),
+(1862, 2, 'LOGIN', 'users', 2, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 09:41:27'),
+(1863, 29, 'FM_APPROVE_PROJECT', 'project_approval', 8, '{\"approval_status\":\"submitted\"}', '{\"approval_status\":\"fm_approved\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 09:43:51'),
+(1864, 2, 'CREATE_PROJECT_JOURNAL', 'journal_entries', 69, NULL, '{\"project_id\":8,\"amount\":400000,\"funding_total\":400000,\"source_accounts\":[{\"source_account_id\":1,\"amount\":\"30000.00\"},{\"source_account_id\":2,\"amount\":\"350000.00\"},{\"source_account_id\":3,\"amount\":\"20000.00\"}]}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 09:48:06'),
+(1865, 2, 'GM_APPROVE_PROJECT', 'project_approval', 8, '{\"approval_status\":\"fm_approved\"}', '{\"approval_status\":\"approved\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 09:48:06'),
+(1866, 29, 'DOCUMENT_PROJECT_PAYMENT_RECEIPT', 'project_payment_evidence', 3, '{\"status\":\"pending\"}', '{\"status\":\"documented\",\"payment_method\":\"e_wallet\",\"reference\":\"123\",\"receipt\":\"storage\\/documents\\/projects\\/8\\/payments\\/payment_3_20260924085459_e1b7ed3c.jpg\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 09:54:59'),
+(1867, 29, 'DOCUMENT_PROJECT_CASH_PAYMENT', 'project_payment_evidence', 2, '{\"status\":\"pending\"}', '{\"status\":\"documented\",\"payment_method\":\"cash\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 09:55:11'),
+(1868, 29, 'DOCUMENT_PROJECT_PAYMENT_RECEIPT', 'project_payment_evidence', 1, '{\"status\":\"pending\"}', '{\"status\":\"documented\",\"payment_method\":\"bank_transfer\",\"reference\":\"54321\",\"receipt\":\"storage\\/documents\\/projects\\/8\\/payments\\/payment_1_20260924085617_43469c39.jpg\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 09:56:17'),
+(1869, 29, 'EDIT_PROJECT_PAYMENT_EVIDENCE', 'project_payment_evidence', 3, '{\"payment_date\":\"2026-09-24\",\"reference\":\"123\",\"receipt\":\"storage\\/documents\\/projects\\/8\\/payments\\/payment_3_20260924085459_e1b7ed3c.jpg\"}', '{\"payment_date\":\"2026-09-24\",\"reference\":\"123\",\"receipt\":\"storage\\/documents\\/projects\\/8\\/payments\\/payment_3_20260924100957_e5747a61.jpg\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 11:09:57'),
+(1870, 29, 'EDIT_PROJECT_PAYMENT_EVIDENCE', 'project_payment_evidence', 1, '{\"payment_date\":\"2026-09-24\",\"reference\":\"54321\",\"receipt\":\"storage\\/documents\\/projects\\/8\\/payments\\/payment_1_20260924085617_43469c39.jpg\"}', '{\"payment_date\":\"2026-09-24\",\"reference\":\"54321\",\"receipt\":\"storage\\/documents\\/projects\\/8\\/payments\\/payment_1_20260924101018_df628d89.jpg\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 11:10:18'),
+(1871, 29, 'FM_CONFIRM_PAYMENT_EVIDENCE', 'project_payment_evidence', 8, '{\"documented\":3,\"total\":3}', '{\"final_confirmed\":true}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 11:10:41'),
+(1872, 2, 'LOGOUT', 'users', 2, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 11:11:34'),
+(1873, 33, 'LOGIN', 'users', 33, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 11:11:44'),
+(1874, 29, 'FM_REJECT_PROJECT', 'project_approval', 7, '{\"approval_status\":\"submitted\"}', '{\"approval_status\":\"rejected\",\"reason\":\"Government Fees Test\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 14:55:20'),
+(1875, 33, 'UPDATE_GENERAL', 'other_projects', 7, '{\"name\":\"تأهيل مدرسة السليم\",\"status\":\"planned\"}', '{\"name\":\"تأهيل مدرسة السليم\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 15:40:34'),
+(1876, 33, 'UPDATE_BUDGET_AFTER_FM_REJECTION', 'project_budget', 5, NULL, '{\"project_id\":7,\"total\":250000,\"target_amount\":250000}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 15:40:34'),
+(1877, 33, 'ASSIGN', 'project_team', 7, NULL, '{\"user_id\":18,\"section\":\"documents\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 15:42:53'),
+(1878, 29, 'FM_REJECT_BUDGET', 'project_budget', 4, '{\"status\":\"draft\"}', '{\"status\":\"draft\",\"reason\":\"rejection notification test\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 16:22:11'),
+(1879, 33, 'SUBMIT_APPROVAL', 'project_approval', 7, '{\"approval_status\":\"draft\"}', '{\"approval_status\":\"submitted\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 16:30:25'),
+(1880, 29, 'CREATE', 'project_funding_allocation', 19, NULL, '{\"project_id\":7,\"amount\":255000,\"source_account\":\"1200\",\"fm_review\":true}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 17:01:05'),
+(1881, 29, 'DELETE', 'project_funding_allocation', 19, '{\"project_id\":7,\"source_account\":2,\"amount\":\"255000.00\"}', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 17:13:16'),
+(1882, 29, 'CREATE', 'project_funding_allocation', 20, NULL, '{\"project_id\":7,\"amount\":255000,\"source_account\":\"1200\",\"fm_review\":true}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 17:13:38'),
+(1883, 29, 'DELETE', 'project_funding_allocation', 20, '{\"project_id\":7,\"source_account\":2,\"amount\":\"255000.00\"}', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 17:22:22'),
+(1884, 29, 'CREATE', 'project_funding_allocation', 21, NULL, '{\"project_id\":7,\"amount\":255000,\"source_account\":\"1200\",\"fm_review\":true}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 17:22:43'),
+(1885, 29, 'DELETE', 'project_funding_allocation', 21, '{\"project_id\":7,\"source_account\":2,\"amount\":\"255000.00\"}', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 17:23:06'),
+(1886, 29, 'CREATE', 'project_funding_allocation', 22, NULL, '{\"project_id\":7,\"amount\":255000,\"source_account\":\"1200\",\"fm_review\":true}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 17:23:20'),
+(1887, 29, 'DELETE', 'project_funding_allocation', 22, '{\"project_id\":7,\"source_account\":2,\"amount\":\"255000.00\"}', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 17:32:45'),
+(1888, 29, 'CREATE', 'project_funding_allocation', 23, NULL, '{\"project_id\":7,\"amount\":255000,\"source_account\":\"1200\",\"fm_review\":true}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 17:33:04'),
+(1889, 29, 'DELETE', 'project_funding_allocation', 23, '{\"project_id\":7,\"source_account\":2,\"amount\":\"255000.00\"}', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 17:38:54'),
+(1890, 29, 'CREATE', 'project_funding_allocation', 24, NULL, '{\"project_id\":7,\"amount\":225000,\"source_account\":\"1200\",\"fm_review\":true}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 17:39:08'),
+(1891, 29, 'DELETE', 'project_funding_allocation', 24, '{\"project_id\":7,\"source_account\":2,\"amount\":\"225000.00\"}', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 17:45:25'),
+(1892, 29, 'CREATE', 'project_funding_allocation', 25, NULL, '{\"project_id\":7,\"amount\":255000,\"source_account\":\"1200\",\"fm_review\":true}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 17:45:42'),
+(1893, 29, 'DELETE', 'project_funding_allocation', 25, '{\"project_id\":7,\"source_account\":2,\"amount\":\"255000.00\"}', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 17:54:34'),
+(1894, 29, 'CREATE', 'project_funding_allocation', 26, NULL, '{\"project_id\":7,\"amount\":255000,\"source_account\":\"1200\",\"fm_review\":true}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 17:54:54'),
+(1895, 29, 'DELETE', 'project_funding_allocation', 26, '{\"project_id\":7,\"source_account\":2,\"amount\":\"255000.00\"}', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 17:55:06'),
+(1896, 29, 'FM_REJECT_PROJECT', 'project_approval', 7, '{\"approval_status\":\"submitted\"}', '{\"approval_status\":\"rejected\",\"reason\":\"single reject notification test to the PM\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 17:55:39'),
+(1897, 33, 'UPDATE_GENERAL', 'other_projects', 7, '{\"name\":\"تأهيل مدرسة السليم\",\"status\":\"planned\"}', '{\"name\":\"تأهيل مدرسة السليم\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 17:57:24'),
+(1898, 33, 'UPDATE_BUDGET_AFTER_FM_REJECTION', 'project_budget', 5, NULL, '{\"project_id\":7,\"total\":255000,\"target_amount\":255000}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 17:57:24'),
+(1899, 33, 'SUBMIT_APPROVAL', 'project_approval', 7, '{\"approval_status\":\"draft\"}', '{\"approval_status\":\"submitted\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 17:57:52'),
+(1900, 29, 'CREATE', 'project_funding_allocation', 27, NULL, '{\"project_id\":7,\"amount\":260000,\"source_account\":\"1200\",\"fm_review\":true}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 19:51:54'),
+(1901, 29, 'FM_APPROVE_PROJECT', 'project_approval', 7, '{\"approval_status\":\"submitted\"}', '{\"approval_status\":\"fm_approved\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 19:51:58'),
+(1902, 29, 'LOGOUT', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 19:52:14'),
+(1903, 2, 'LOGIN', 'users', 2, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 19:52:24'),
+(1904, 2, 'CREATE_PROJECT_JOURNAL', 'journal_entries', 70, NULL, '{\"project_id\":7,\"amount\":260000,\"funding_total\":260000,\"source_accounts\":[{\"source_account_id\":2,\"amount\":\"260000.00\"}]}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 19:53:54'),
+(1905, 2, 'GM_APPROVE_PROJECT', 'project_approval', 7, '{\"approval_status\":\"fm_approved\"}', '{\"approval_status\":\"approved\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 19:53:54'),
+(1906, 2, 'LOGOUT', 'users', 2, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 21:16:25'),
+(1907, 29, 'LOGIN', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 21:16:32'),
+(1908, 29, 'DOCUMENT_PROJECT_PAYMENT_RECEIPT', 'project_payment_evidence', 4, '{\"status\":\"pending\"}', '{\"status\":\"documented\",\"payment_method\":\"bank_transfer\",\"reference\":\"55555\",\"receipt\":\"storage\\/documents\\/projects\\/7\\/payments\\/payment_4_20260924202007_a156d951.jpg\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 21:20:07'),
+(1909, 29, 'FM_CONFIRM_PAYMENT_EVIDENCE', 'project_payment_evidence', 7, '{\"documented\":1,\"total\":1}', '{\"final_confirmed\":true}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 21:24:53'),
+(1910, 33, 'LOGOUT', 'users', 33, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 21:25:15'),
+(1911, 34, 'LOGIN', 'users', 34, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 21:25:25'),
+(1912, 29, 'LOGOUT', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 21:39:25'),
+(1913, 3, 'LOGIN', 'users', 3, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 21:39:34'),
+(1914, 3, 'LOGOUT', 'users', 3, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 22:16:23'),
+(1915, 19, 'LOGIN', 'users', 19, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 22:16:34'),
+(1916, 19, 'LOGOUT', 'users', 19, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 22:18:18'),
+(1917, 29, 'LOGIN', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 22:53:05'),
+(1918, 29, 'LOGOUT', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 23:05:06'),
+(1919, 33, 'LOGIN', 'users', 33, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 23:05:17'),
+(1920, 33, 'LOGOUT', 'users', 33, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 23:07:07'),
+(1921, 29, 'LOGIN', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 23:07:14'),
+(1922, 29, 'LOGOUT', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 23:25:52'),
+(1923, 33, 'LOGIN', 'users', 33, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 23:26:04'),
+(1924, 34, 'LOGOUT', 'users', 34, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 23:26:55'),
+(1925, 29, 'LOGIN', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-24 23:27:02'),
+(1926, 33, 'LOGIN', 'users', 33, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-25 09:10:22'),
+(1927, 29, 'LOGIN', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-25 09:20:12'),
+(1928, 29, 'FM_REJECT_PROJECT_BUDGET', 'project_approval', 9, '{\"approval_status\":\"submitted\"}', '{\"approval_status\":\"rejected\",\"fm_rejection_reason\":\"test\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-25 09:20:50'),
+(1929, 33, 'CREATE', 'other_projects', 10, NULL, '{\"name\":\"اختبار  المشاريع 2026\",\"status\":\"planned\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-25 11:02:12'),
+(1930, 33, 'ASSIGN_PRIMARY_SUPERVISOR', 'project_supervisor_assignment', 10, NULL, '{\"supervisor_user_id\":34}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-25 11:02:12'),
+(1931, 33, 'CREATE_BUDGET', 'project_budget', 7, NULL, '{\"project_id\":10,\"total\":230000,\"target_amount\":200000}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-25 11:02:12'),
+(1932, 33, 'UPDATE_GENERAL', 'other_projects', 10, '{\"name\":\"اختبار  المشاريع 2026\",\"status\":\"planned\"}', '{\"name\":\"اختبار  المشاريع 2026\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-25 11:56:17'),
+(1933, 33, 'UPDATE_INITIAL_BUDGET', 'project_budget', 7, NULL, '{\"project_id\":10,\"total\":230000,\"target_amount\":200000}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-25 11:56:17'),
+(1934, 33, 'SUBMIT_APPROVAL', 'project_approval', 10, '{\"approval_status\":\"draft\"}', '{\"approval_status\":\"submitted\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-25 12:21:07'),
+(1935, 29, 'CREATE', 'project_funding_allocation', 28, NULL, '{\"project_id\":10,\"amount\":150000,\"source_account\":\"1200\",\"fm_review\":true}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-25 13:06:18'),
+(1936, 29, 'CREATE', 'project_funding_allocation', 29, NULL, '{\"project_id\":10,\"amount\":50000,\"source_account\":\"1100\",\"fm_review\":true}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-25 13:06:34'),
+(1937, 29, 'CREATE', 'project_funding_allocation', 30, NULL, '{\"project_id\":10,\"amount\":60000,\"source_account\":\"1300\",\"fm_review\":true}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-25 13:06:52'),
+(1938, 29, 'FM_APPROVE_PROJECT', 'project_approval', 10, '{\"approval_status\":\"submitted\"}', '{\"approval_status\":\"fm_approved\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-25 13:07:30'),
+(1939, 29, 'LOGOUT', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-25 13:08:54'),
+(1940, 2, 'LOGIN', 'users', 2, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-25 13:09:22'),
+(1941, 2, 'GM_APPROVE_PROJECT', 'project_approval', 10, '{\"approval_status\":\"fm_approved\"}', '{\"approval_status\":\"approved\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-25 13:10:25'),
+(1942, 2, 'LOGOUT', 'users', 2, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-25 13:10:49'),
+(1943, 29, 'LOGIN', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-25 13:10:55'),
+(1944, 29, 'DOCUMENT_PROJECT_PAYMENT_RECEIPT', 'project_payment_evidence', 7, '{\"status\":\"pending\"}', '{\"status\":\"documented\",\"payment_method\":\"e_wallet\",\"reference\":\"123456789\",\"receipt\":\"storage\\/documents\\/projects\\/10\\/payments\\/payment_7_20260925121147_aeec1ab6.jpg\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-25 13:11:47'),
+(1945, 29, 'DOCUMENT_PROJECT_CASH_PAYMENT', 'project_payment_evidence', 6, '{\"status\":\"pending\"}', '{\"status\":\"documented\",\"payment_method\":\"cash\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-25 13:11:54'),
+(1946, 29, 'DOCUMENT_PROJECT_PAYMENT_RECEIPT', 'project_payment_evidence', 5, '{\"status\":\"pending\"}', '{\"status\":\"documented\",\"payment_method\":\"bank_transfer\",\"reference\":\"987654321\",\"receipt\":\"storage\\/documents\\/projects\\/10\\/payments\\/payment_5_20260925121214_b3b77a33.jpg\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-25 13:12:14'),
+(1947, 29, 'FM_CONFIRM_PAYMENT_EVIDENCE', 'project_payment_evidence', 10, '{\"documented\":3,\"total\":3}', '{\"final_confirmed\":true}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-25 13:12:30');
 
 -- --------------------------------------------------------
 
@@ -8947,7 +9041,9 @@ INSERT INTO `journal_entries` (`id`, `entry_code`, `entry_date`, `description`, 
 (65, 'JE-000037', '2026-09-18', 'تسوية دورة فينا الخير FINA-SET-000004 — تحويل كامل إلى فينا الخير — SDG', 'fina_settlement', 4, 'posted', NULL, NULL, NULL, 29, '2026-09-18 09:56:23'),
 (66, 'JE-000038', '2026-09-21', 'سند صرف PV-000001 — Test organization', 'voucher', 1, 'posted', NULL, NULL, NULL, 29, '2026-09-21 14:10:24'),
 (67, 'JE-000039', '2026-09-21', 'سند قبض RV-000001 — General donor', 'voucher', 2, 'posted', NULL, NULL, NULL, 29, '2026-09-21 14:14:27'),
-(68, 'JE-PRJ-0006-20260921195029', '2026-09-21', 'تخصيص تمويل مشروع: اختبار تدقيق المشاريع 2026-09-21', 'project', 6, 'posted', NULL, NULL, NULL, 2, '2026-09-21 20:50:29');
+(68, 'JE-PRJ-0006-20260921195029', '2026-09-21', 'تخصيص تمويل مشروع: اختبار تدقيق المشاريع 2026-09-21', 'project', 6, 'posted', NULL, NULL, NULL, 2, '2026-09-21 20:50:29'),
+(69, 'JE-PRJ-0008-20260924084806', '2026-09-24', 'تخصيص تمويل مشروع: اختبار المشاريع 2026', 'project', 8, 'posted', NULL, NULL, NULL, 2, '2026-09-24 09:48:06'),
+(70, 'JE-PRJ-0007-20260924185354', '2026-09-24', 'تخصيص تمويل مشروع: تأهيل مدرسة السليم', 'project', 7, 'posted', NULL, NULL, NULL, 2, '2026-09-24 19:53:54');
 
 -- --------------------------------------------------------
 
@@ -9074,7 +9170,13 @@ INSERT INTO `journal_lines` (`id`, `entry_id`, `account_id`, `debit`, `credit`, 
 (133, 67, 1, 10000.00, 0.00, 'سند قبض RV-000001 — General donor'),
 (134, 67, 25, 0.00, 10000.00, 'سند قبض RV-000001 — General donor'),
 (135, 68, 13, 10000.00, 0.00, 'تخصيص تمويل مشروع'),
-(136, 68, 1, 0.00, 10000.00, 'تخصيص ميزانية مشروع');
+(136, 68, 1, 0.00, 10000.00, 'تخصيص ميزانية مشروع'),
+(137, 69, 13, 400000.00, 0.00, 'تخصيص تمويل مشروع'),
+(138, 69, 1, 0.00, 30000.00, 'تمويل مشروع من مصدر التمويل'),
+(139, 69, 2, 0.00, 350000.00, 'تمويل مشروع من مصدر التمويل'),
+(140, 69, 3, 0.00, 20000.00, 'تمويل مشروع من مصدر التمويل'),
+(141, 70, 13, 260000.00, 0.00, 'تخصيص تمويل مشروع'),
+(142, 70, 2, 0.00, 260000.00, 'تمويل مشروع من مصدر التمويل');
 
 -- --------------------------------------------------------
 
@@ -9615,7 +9717,32 @@ INSERT INTO `notifications` (`id`, `recipient_user_id`, `type`, `title`, `body`,
 (53, 33, 'info', 'إعادة المشروع للتعديل', 'المشروع «اختبار المشاريع 2026» (PRJ-0008) تم رفضه نهائياً وإعادته إلى مدير المشاريع للتعديل. سبب الرفض: test GM rejection', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=8', 1, '2026-09-23 20:11:58'),
 (54, 29, 'info', 'مشروع بانتظار المراجعة المالية', 'المشروع «اختبار المشاريع 2026» (PRJ-0008) بانتظار مراجعة المدير المالي.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=8', 1, '2026-09-24 08:25:13'),
 (55, 29, 'info', 'المشروع مرفوض من المدير العام ويحتاج مراجعة مالية', 'المشروع «اختبار المشاريع 2026» (PRJ-0008) رفضه المدير العام ويحتاج مراجعة المدير المالي قبل إعادته لمدير المشاريع. السبب: test GM rejection notification', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=8', 1, '2026-09-24 08:52:22'),
-(56, 29, 'info', 'المشروع مرفوض من المدير العام ويحتاج مراجعة مالية', 'المشروع «اختبار المشاريع 2026» (PRJ-0008) رفضه المدير العام ويحتاج مراجعة المدير المالي قبل إعادته لمدير المشاريع. السبب: for rejection testing', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=8', 0, '2026-09-24 09:03:15');
+(56, 29, 'info', 'المشروع مرفوض من المدير العام ويحتاج مراجعة مالية', 'المشروع «اختبار المشاريع 2026» (PRJ-0008) رفضه المدير العام ويحتاج مراجعة المدير المالي قبل إعادته لمدير المشاريع. السبب: for rejection testing', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=8', 1, '2026-09-24 09:03:15'),
+(58, 2, 'info', 'TEST_PHP_NOTIFICATION', 'TEST_PHP_NOTIFICATION', 'modules/projects/view.php?id=8', 1, '2026-09-24 09:26:17'),
+(59, 33, 'info', 'تم رفض المشروع مالياً', 'المشروع «اختبار المشاريع 2026» (PRJ-0008) تم رفضه مالياً وإعادته للمراجعة. السبب: FM project rejection Test', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=8', 1, '2026-09-24 09:35:57'),
+(60, 33, 'info', 'تم رفض المشروع مالياً', 'المشروع «اختبار المشاريع 2026» (PRJ-0008) تم رفضه مالياً. السبب: FM project rejection Test', 'http://localhost:8081/AhlElKheir/modules/projects/view_pm.php?id=8', 1, '2026-09-24 09:35:57'),
+(61, 29, 'info', 'مشروع بانتظار المراجعة المالية', 'المشروع «اختبار المشاريع 2026» (PRJ-0008) بانتظار مراجعة المدير المالي.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=8', 1, '2026-09-24 09:39:04'),
+(62, 2, 'info', 'مشروع بانتظار الاعتماد النهائي', 'المشروع «اختبار المشاريع 2026» (PRJ-0008) تم اعتماده مالياً وبانتظار اعتماد المدير العام.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=8', 1, '2026-09-24 09:43:51'),
+(63, 3, 'info', 'مشروع بانتظار الاعتماد النهائي', 'المشروع «اختبار المشاريع 2026» (PRJ-0008) تم اعتماده مالياً وبانتظار اعتماد المدير العام.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=8', 1, '2026-09-24 09:43:51'),
+(64, 33, 'info', 'تم اعتماد المشروع نهائياً', 'المشروع «اختبار المشاريع 2026» (PRJ-0008) تم اعتماده نهائياً من الإدارة.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=8', 1, '2026-09-24 09:48:06'),
+(65, 29, 'info', 'المشروع معتمد نهائياً — بانتظار تنفيذ الصرف', 'المشروع «اختبار المشاريع 2026» (PRJ-0008) تم اعتماده نهائياً من الإدارة التنفيذية. يمكن للمدير المالي الآن تنفيذ إجراءات الصرف وإثبات الدفع.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=8', 1, '2026-09-24 09:48:06'),
+(66, 33, 'info', 'اكتملت مستندات صرف المشروع', 'اكتمل توثيق جميع مستندات صرف وتمويل المشروع «اختبار المشاريع 2026» (PRJ-0008). يمكنكم الاطلاع على النتيجة من صفحة المشروع.', 'http://localhost:8081/AhlElKheir/modules/projects/view_pm.php?id=8', 1, '2026-09-24 11:10:41'),
+(67, 33, 'info', 'تم رفض المشروع مالياً', 'المشروع «تأهيل مدرسة السليم» (PRJ-0007) تم رفضه مالياً وإعادته للمراجعة. السبب: Government Fees Test', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=7', 1, '2026-09-24 14:55:20'),
+(68, 33, 'info', 'تم رفض المشروع مالياً', 'المشروع «تأهيل مدرسة السليم» (PRJ-0007) تم رفضه مالياً. السبب: Government Fees Test', 'http://localhost:8081/AhlElKheir/modules/projects/view_pm.php?id=7', 1, '2026-09-24 14:55:20'),
+(69, 29, 'info', 'مشروع بانتظار المراجعة المالية', 'المشروع «تأهيل مدرسة السليم» (PRJ-0007) بانتظار مراجعة المدير المالي.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=7', 1, '2026-09-24 16:30:25'),
+(70, 33, 'info', 'تم رفض المشروع مالياً', 'المشروع «تأهيل مدرسة السليم» (PRJ-0007) تم رفضه مالياً وإعادته للمراجعة. السبب: single reject notification test to the PM', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=7', 1, '2026-09-24 17:55:39'),
+(71, 29, 'info', 'مشروع بانتظار المراجعة المالية', 'المشروع «تأهيل مدرسة السليم» (PRJ-0007) بانتظار مراجعة المدير المالي.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=7', 1, '2026-09-24 17:57:52'),
+(72, 2, 'info', 'مشروع بانتظار الاعتماد النهائي', 'المشروع «تأهيل مدرسة السليم» (PRJ-0007) تم اعتماده مالياً وبانتظار اعتماد المدير العام.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=7', 1, '2026-09-24 19:51:58'),
+(73, 3, 'info', 'مشروع بانتظار الاعتماد النهائي', 'المشروع «تأهيل مدرسة السليم» (PRJ-0007) تم اعتماده مالياً وبانتظار اعتماد المدير العام.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=7', 1, '2026-09-24 19:51:58'),
+(74, 29, 'info', 'المشروع معتمد نهائياً — بانتظار تنفيذ الصرف', 'المشروع «تأهيل مدرسة السليم» (PRJ-0007) تم اعتماده نهائياً من الإدارة التنفيذية. يمكن للمدير المالي الآن تنفيذ إجراءات الصرف وإثبات الدفع.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=7', 1, '2026-09-24 19:53:54'),
+(75, 33, 'info', 'تم اعتماد المشروع نهائياً', 'المشروع «تأهيل مدرسة السليم» (PRJ-0007) تم اعتماده نهائياً ويمكن الانتقال إلى إجراءات التنفيذ بعد استكمال الصرف.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=7', 1, '2026-09-24 19:53:54'),
+(76, 33, 'info', 'اكتملت مستندات صرف المشروع', 'اكتمل توثيق جميع مستندات صرف وتمويل المشروع «تأهيل مدرسة السليم» (PRJ-0007). يمكنكم الاطلاع على النتيجة من صفحة المشروع.', 'http://localhost:8081/AhlElKheir/modules/projects/view_pm.php?id=7', 1, '2026-09-24 21:24:53'),
+(77, 29, 'info', 'مشروع بانتظار المراجعة المالية', 'المشروع «اختبار  المشاريع 2026» (PRJ-0010) بانتظار مراجعة المدير المالي.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=10', 1, '2026-09-25 12:21:07'),
+(78, 2, 'info', 'مشروع بانتظار الاعتماد النهائي', 'المشروع «اختبار  المشاريع 2026» (PRJ-0010) تم اعتماده مالياً وبانتظار اعتماد المدير العام.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=10', 1, '2026-09-25 13:07:30'),
+(79, 3, 'info', 'مشروع بانتظار الاعتماد النهائي', 'المشروع «اختبار  المشاريع 2026» (PRJ-0010) تم اعتماده مالياً وبانتظار اعتماد المدير العام.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=10', 0, '2026-09-25 13:07:30'),
+(80, 29, 'info', 'المشروع معتمد نهائياً — بانتظار تنفيذ الصرف', 'المشروع «اختبار  المشاريع 2026» (PRJ-0010) تم اعتماده نهائياً من الإدارة التنفيذية. يمكن للمدير المالي الآن تنفيذ إجراءات الصرف وإثبات الدفع.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=10', 1, '2026-09-25 13:10:25'),
+(81, 33, 'info', 'تم اعتماد المشروع نهائياً', 'المشروع «اختبار  المشاريع 2026» (PRJ-0010) تم اعتماده نهائياً ويمكن الانتقال إلى إجراءات التنفيذ بعد استكمال الصرف.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=10', 0, '2026-09-25 13:10:25'),
+(82, 33, 'info', 'اكتملت مستندات صرف المشروع', 'اكتمل توثيق جميع مستندات صرف وتمويل المشروع «اختبار  المشاريع 2026» (PRJ-0010). يمكنكم الاطلاع على النتيجة من صفحة المشروع.', 'http://localhost:8081/AhlElKheir/modules/projects/view_pm.php?id=10', 0, '2026-09-25 13:12:30');
 
 -- --------------------------------------------------------
 
@@ -9706,8 +9833,10 @@ CREATE TABLE `other_projects` (
 INSERT INTO `other_projects` (`id`, `name`, `description`, `target_amount`, `currency_code`, `start_date`, `end_date`, `status`, `created_by`, `created_at`, `updated_at`, `project_code`, `project_type`, `location`, `city`, `district`, `actual_cost`, `total_beneficiaries`, `updated_by`, `revenue_account_id`, `expense_account_id`) VALUES
 (4, 'تجديد ملجأ أيتام الخرطوم', 'تجديد ملجأ أيتام الخرطوم', 450000.00, 'SDG', '2026-09-01', '2026-10-01', 'active', 33, '2026-08-29 18:32:14', '2026-08-29 19:49:54', 'PRJ-0002', 'تجديد ملجأ أيتام الخرطوم', 'Main Street, Khartoum', 'الخرطوم', 'الخرطوم- بحري', NULL, 50, 2, 25, 26),
 (6, 'اختبار تدقيق المشاريع 2026-09-21', 'مشروع اختباري شامل لتدقيق دورة إنشاء وإدارة المشاريع داخل نظام أهل الخير.', NULL, 'SDG', '2026-09-21', '2026-12-31', 'active', 33, '2026-09-21 18:49:42', '2026-09-21 20:50:29', 'PRJ-0006', 'تأهيل مركز مجتمعي', 'مركز مجتمعي تجريبي', 'الخرطوم', 'الخرطوم', NULL, 10, 33, 29, 30),
-(7, 'تأهيل مدرسة السليم', NULL, 250000.00, 'SDG', '2026-09-22', '2026-12-31', 'planned', 33, '2026-09-22 08:18:04', '2026-09-22 08:18:04', 'PRJ-0007', 'تأهيل مدرسة', 'الشماليه', 'دنقلا', 'السليم', NULL, 250, NULL, 31, 32),
-(8, 'اختبار المشاريع 2026', 'توزيع وجبة مركز غسيل الكلي', NULL, 'SDG', '2026-09-22', '2026-09-30', 'planned', 33, '2026-09-22 17:38:43', '2026-09-23 20:45:26', 'PRJ-0008', 'الإغاثة والسلال الغذائية', 'الخرطوم', 'الخرطوم', 'الخرطوم', NULL, 250, 33, 33, 34);
+(7, 'تأهيل مدرسة السليم', NULL, 255000.00, 'SDG', '2026-09-22', '2026-12-31', 'active', 33, '2026-09-22 08:18:04', '2026-09-24 19:53:54', 'PRJ-0007', 'تأهيل مدرسة', 'الشماليه', 'دنقلا', 'السليم', NULL, 250, 33, 31, 32),
+(8, 'اختبار المشاريع 2026', 'توزيع وجبة مركز غسيل الكلي', NULL, 'SDG', '2026-09-22', '2026-09-30', 'active', 33, '2026-09-22 17:38:43', '2026-09-24 09:48:06', 'PRJ-0008', 'الإغاثة والسلال الغذائية', 'الخرطوم', 'الخرطوم', 'الخرطوم', NULL, 250, 33, 33, 34),
+(9, 'اختبار إشعار اعتماد المشروع للمشرف 2026-09-24', 'مشروع اختبار مخصص للتحقق من إشعار المشرف بعد الاعتماد المالي.', 10000.00, 'SDG', '2026-09-24', '2026-12-31', 'planned', 1, '2026-09-24 22:59:38', '2026-09-24 22:59:38', 'PRJ-TEST-0924-PS', 'other', 'اختبار', 'الخرطوم', 'اختبار', 0.00, 0, NULL, NULL, NULL),
+(10, 'اختبار  المشاريع 2026', NULL, 200000.00, 'SDG', '2026-09-25', '2026-09-30', 'planned', 33, '2026-09-25 11:02:12', '2026-09-25 11:56:17', 'PRJ-0010', 'مشاريع المياه', 'الخرطوم', 'الخرطوم', 'الخرطوم', NULL, 1500, 33, 35, 36);
 
 -- --------------------------------------------------------
 
@@ -9930,9 +10059,11 @@ CREATE TABLE `project_approval` (
 
 INSERT INTO `project_approval` (`project_id`, `approval_status`, `submitted_by`, `submitted_at`, `approved_by`, `approved_at`, `fm_reviewed_by`, `fm_reviewed_at`, `fm_rejection_reason`, `rejection_reason`, `updated_at`) VALUES
 (4, 'approved', 33, '2026-08-29 19:27:04', 2, '2026-08-29 19:49:54', 29, '2026-08-29 19:34:27', NULL, NULL, '2026-08-29 19:49:54'),
-(6, 'approved', 33, '2026-09-21 20:29:15', 2, '2026-09-21 20:50:29', 29, '2026-09-21 20:49:59', NULL, NULL, '2026-09-21 20:50:29'),
-(7, 'submitted', 33, '2026-09-23 11:00:32', NULL, NULL, 29, '2026-09-22 23:34:45', NULL, NULL, '2026-09-23 11:00:32'),
-(8, 'submitted', 33, '2026-09-24 08:25:13', NULL, NULL, 29, '2026-09-24 08:59:16', NULL, 'for rejection testing', '2026-09-24 09:03:15');
+(6, 'approved', 33, '2026-09-21 20:29:15', 2, '2026-09-21 20:50:29', 29, '2026-09-21 20:49:59', 'rejection notification test', NULL, '2026-09-24 16:22:11'),
+(7, 'approved', 33, '2026-09-24 17:57:52', 2, '2026-09-24 19:53:54', 29, '2026-09-24 19:51:58', NULL, NULL, '2026-09-24 19:53:54'),
+(8, 'approved', 33, '2026-09-24 09:39:04', 2, '2026-09-24 09:48:06', 29, '2026-09-24 09:43:51', NULL, NULL, '2026-09-24 09:48:06'),
+(9, 'rejected', 1, '2026-09-24 22:59:38', NULL, NULL, 29, '2026-09-25 09:20:50', 'test', NULL, '2026-09-25 09:20:50'),
+(10, 'approved', 33, '2026-09-25 12:21:07', 2, '2026-09-25 13:10:25', 29, '2026-09-25 13:07:30', NULL, NULL, '2026-09-25 13:10:25');
 
 -- --------------------------------------------------------
 
@@ -10009,7 +10140,8 @@ INSERT INTO `project_budgets` (`id`, `project_id`, `version_no`, `budget_name`, 
 (3, 4, 1, 'تجديد ملجأ أيتام الخرطوم - الميزانية الأولية', 'SDG', 'approved', NULL, '2026-08-29 19:34:27', 29, NULL, 33, '2026-08-29 18:32:14', '2026-08-29 19:34:27'),
 (4, 6, 1, 'اختبار تدقيق المشاريع 2026-09-21 - الميزانية الأولية', 'SDG', 'draft', NULL, NULL, NULL, NULL, 33, '2026-09-21 18:49:42', '2026-09-21 18:49:42'),
 (5, 7, 1, 'تأهيل مدرسة السليم - الميزانية الأولية', 'SDG', 'approved', NULL, '2026-09-22 08:25:49', 29, NULL, 33, '2026-09-22 08:18:04', '2026-09-22 08:25:49'),
-(6, 8, 1, 'اختبار المشاريع 2026 - الميزانية الأولية', 'SDG', 'approved', NULL, NULL, NULL, NULL, 33, '2026-09-22 17:38:43', '2026-09-23 15:54:27');
+(6, 8, 1, 'اختبار المشاريع 2026 - الميزانية الأولية', 'SDG', 'approved', NULL, NULL, NULL, NULL, 33, '2026-09-22 17:38:43', '2026-09-23 15:54:27'),
+(7, 10, 1, 'اختبار  المشاريع 2026 - الميزانية الأولية', 'SDG', 'approved', NULL, NULL, NULL, NULL, 33, '2026-09-25 11:02:12', '2026-09-25 11:56:17');
 
 -- --------------------------------------------------------
 
@@ -10043,12 +10175,15 @@ INSERT INTO `project_budget_lines` (`id`, `budget_id`, `category`, `description`
 (12, 3, 'Labor Fees', 'تكاليف العماله', NULL, 50000.00, NULL, NULL, 33, NULL, '2026-08-29 18:32:14', '2026-08-29 18:32:14'),
 (13, 4, 'مواد بناء', 'مواد أوليه للبناء', NULL, 5000.00, NULL, NULL, 33, NULL, '2026-09-21 18:49:42', '2026-09-21 18:49:42'),
 (14, 4, 'مصاريف عماله', 'مصاريف عماله', NULL, 5000.00, NULL, NULL, 33, NULL, '2026-09-21 18:49:42', '2026-09-21 18:49:42'),
-(15, 5, 'مواد بناء', 'مواد أوليه', NULL, 50000.00, NULL, NULL, 33, NULL, '2026-09-22 08:18:04', '2026-09-22 08:18:04'),
-(16, 5, 'أجرة عمال', 'أجرة عمال', NULL, 50000.00, NULL, NULL, 33, NULL, '2026-09-22 08:18:04', '2026-09-22 08:18:04'),
-(17, 5, 'تأهيل وصيانة مباني', 'تأهيل وصيانة مباني', NULL, 150000.00, NULL, NULL, 33, NULL, '2026-09-22 08:18:04', '2026-09-22 08:18:04'),
 (18, 6, 'مواد غذائية', 'السلال أو المواد الغذائية الأساسية', NULL, 350000.00, NULL, NULL, 33, NULL, '2026-09-22 17:38:43', '2026-09-22 17:38:43'),
 (19, 6, 'تعبئة', 'التعبئة والتغليف', NULL, 20000.00, NULL, NULL, 33, NULL, '2026-09-22 17:38:43', '2026-09-22 17:38:43'),
-(20, 6, 'نقل وتوزيع', 'النقل والتوزيع للمستفيدين', NULL, 30000.00, NULL, NULL, 33, NULL, '2026-09-22 17:38:43', '2026-09-22 17:38:43');
+(20, 6, 'نقل وتوزيع', 'النقل والتوزيع للمستفيدين', NULL, 30000.00, NULL, NULL, 33, NULL, '2026-09-22 17:38:43', '2026-09-22 17:38:43'),
+(24, 5, 'مواد بناء', 'مواد أوليه', NULL, 55000.00, NULL, NULL, 33, NULL, '2026-09-24 17:57:24', '2026-09-24 17:57:24'),
+(25, 5, 'أجرة عمال', 'أجرة عمال', NULL, 50000.00, NULL, NULL, 33, NULL, '2026-09-24 17:57:24', '2026-09-24 17:57:24'),
+(26, 5, 'تأهيل وصيانة مباني', 'تأهيل وصيانة مباني', NULL, 150000.00, NULL, NULL, 33, NULL, '2026-09-24 17:57:24', '2026-09-24 17:57:24'),
+(30, 7, 'أعمال إنشائية', 'حفر وتجهيز مصدر المياه', NULL, 80000.00, NULL, NULL, 33, NULL, '2026-09-25 11:56:17', '2026-09-25 11:56:17'),
+(31, 7, 'معدات', 'مضخة ومعدات التشغيل', NULL, 80000.00, NULL, NULL, 33, NULL, '2026-09-25 11:56:17', '2026-09-25 11:56:17'),
+(32, 7, 'تمديدات', 'شبكة الأنابيب والتمديدات', NULL, 70000.00, NULL, NULL, 33, NULL, '2026-09-25 11:56:17', '2026-09-25 11:56:17');
 
 -- --------------------------------------------------------
 
@@ -10074,7 +10209,8 @@ CREATE TABLE `project_contacts` (
 --
 
 INSERT INTO `project_contacts` (`id`, `project_id`, `contact_name`, `role_description`, `phone`, `email`, `notes`, `created_by`, `created_at`, `updated_at`) VALUES
-(2, 8, 'مدير شركة تحضير الطعام', NULL, '3698754236', 'food@food.com', NULL, 33, '2026-09-23 20:45:26', '2026-09-23 20:45:26');
+(3, 8, 'مدير شركة تحضير الطعام', NULL, '3698754236', 'food@food.com', NULL, 33, '2026-09-24 09:38:58', '2026-09-24 09:38:58'),
+(5, 10, 'حسن محمد', 'مدير شركة حفر الآبار', '3698754236', 'foo@food.com', NULL, 33, '2026-09-25 11:56:17', '2026-09-25 11:56:17');
 
 -- --------------------------------------------------------
 
@@ -10111,8 +10247,9 @@ CREATE TABLE `project_details` (
 INSERT INTO `project_details` (`project_id`, `objectives`, `justification`, `expected_outcomes`, `target_beneficiary_description`, `implementing_partner`, `donor_restrictions`, `procurement_method`, `sustainability_plan`, `risk_mitigation`, `government_requirements`, `government_fees`, `contact_person`, `contact_phone`, `contact_email`, `notes`, `updated_by`, `created_at`, `updated_at`) VALUES
 (4, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2, '2026-08-29 18:32:14', '2026-08-29 19:39:53'),
 (6, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1000.00, NULL, NULL, NULL, NULL, 33, '2026-09-21 18:49:42', '2026-09-21 18:49:42'),
-(7, 'تأهيل وصيانة المدرسة\r\nتوفير معينات العمل\r\nتأهيل الكوادر العامله', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 33, '2026-09-22 08:18:04', '2026-09-22 08:18:04'),
-(8, 'توزيع وجبة مركز غسيل الكلي للمرافقين\r\nتوزيع وجبة مركز غسيل الكلي للعاملين', 'إختبار 1\r\nإختبار 2', 'علي مدي ثلاثة أيام توزيع وجبة مركز غسيل الكلي للمرافقين والعاملين', 'المراجعين والعاملين بالمركز', 'شركة طعام\nشركة توصيل', 'تصوير مراحل المشروع مع الفواتير ورفعها علي الموقع الإلكتروني', 'كاش\nعبر التحويل البنكي', 'جعل الموضوع شهري', 'التلوث الطبي وعليه يجب إرتداء الماسكات الطبيه', 'تصريح العمل الطوعي — 1000.00 SDG\nرشوة لإستخراج الوراق المطلوبه — 5000.00 SDG', 25000.00, 'مدير شركة تحضير الطعام', '3698754236', 'food@food.com', 'الفترة الزمنيه ضيقه جدا عليه يجي الإسراع في التصديق والموافقه', 33, '2026-09-22 17:38:43', '2026-09-23 20:45:26');
+(7, 'تأهيل وصيانة المدرسة\r\nتوفير معينات العمل\r\nتأهيل الكوادر العامله', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'تصريح العمل الطوعي — 1500.00 SDG\nرشوة لإستخراج الوراق المطلوبه — 3500.00 SDG', NULL, NULL, NULL, NULL, NULL, 33, '2026-09-22 08:18:04', '2026-09-24 15:40:34'),
+(8, 'توزيع وجبة مركز غسيل الكلي للمرافقين\r\nتوزيع وجبة مركز غسيل الكلي للعاملين', 'إختبار 1\r\nإختبار 2', 'علي مدي ثلاثة أيام توزيع وجبة مركز غسيل الكلي للمرافقين والعاملين', 'المراجعين والعاملين بالمركز', 'شركة طعام\nشركة توصيل', 'تصوير مراحل المشروع مع الفواتير ورفعها علي الموقع الإلكتروني', 'كاش\nعبر التحويل البنكي', 'جعل الموضوع شهري', 'التلوث الطبي وعليه يجب إرتداء الماسكات الطبيه', 'تصريح العمل الطوعي — 1000.00 SDG\nرشوة لإستخراج الوراق المطلوبه — 5000.00 SDG', 25000.00, 'مدير شركة تحضير الطعام', '3698754236', 'food@food.com', 'الفترة الزمنيه ضيقه جدا عليه يجي الإسراع في التصديق والموافقه', 33, '2026-09-22 17:38:43', '2026-09-23 20:45:26'),
+(10, NULL, NULL, NULL, NULL, 'شركة حفر أبار', NULL, 'كاش', NULL, NULL, 'تصريح العمل الطوعي — 10000.00 SDG\nرشوة لإستخراج الوراق المطلوبه — 20000.00 SDG', NULL, 'حسن محمد', '3698754236', 'foo@food.com', NULL, 33, '2026-09-25 11:02:12', '2026-09-25 11:02:12');
 
 -- --------------------------------------------------------
 
@@ -10240,7 +10377,11 @@ INSERT INTO `project_funding_allocations` (`id`, `project_id`, `budget_id`, `sou
 (10, 4, 3, 'electronic_wallet', 3, 17, NULL, NULL, 100000.00, 'SDG', '2026-08-29', 'FM-PRJ-4', 'اعتماد مالي أولي لميزانية المشروع', 'approved', 29, NULL, NULL, NULL, NULL, NULL, 29, '2026-08-29 19:34:27', '2026-08-29 19:34:27'),
 (16, 8, 6, '', 2, NULL, NULL, NULL, 350000.00, 'SDG', '2026-09-23', NULL, 'السلال أو المواد الغذائية الأساسية', 'draft', NULL, NULL, NULL, NULL, NULL, NULL, 29, '2026-09-23 17:48:09', '2026-09-23 17:48:09'),
 (17, 8, 6, '', 1, NULL, NULL, NULL, 30000.00, 'SDG', '2026-09-23', NULL, 'التعبئة والتغليف', 'draft', NULL, NULL, NULL, NULL, NULL, NULL, 29, '2026-09-23 17:48:09', '2026-09-23 17:48:47'),
-(18, 8, 6, '', 3, NULL, NULL, NULL, 20000.00, 'SDG', '2026-09-23', NULL, 'النقل والتوزيع للمستفيدين', 'draft', NULL, NULL, NULL, NULL, NULL, NULL, 29, '2026-09-23 17:49:11', '2026-09-23 17:49:11');
+(18, 8, 6, '', 3, NULL, NULL, NULL, 20000.00, 'SDG', '2026-09-23', NULL, 'النقل والتوزيع للمستفيدين', 'draft', NULL, NULL, NULL, NULL, NULL, NULL, 29, '2026-09-23 17:49:11', '2026-09-23 17:49:11'),
+(27, 7, 5, '', 2, NULL, NULL, NULL, 260000.00, 'SDG', '2026-09-24', NULL, NULL, 'draft', NULL, NULL, NULL, NULL, NULL, NULL, 29, '2026-09-24 19:51:54', '2026-09-24 19:51:54'),
+(28, 10, 7, '', 2, NULL, NULL, NULL, 150000.00, 'SDG', '2026-09-25', NULL, NULL, 'posted', 2, 2, '2026-09-25 13:10:25', NULL, NULL, NULL, 29, '2026-09-25 13:06:18', '2026-09-25 13:10:25'),
+(29, 10, 7, '', 1, NULL, NULL, NULL, 50000.00, 'SDG', '2026-09-25', NULL, NULL, 'posted', 2, 2, '2026-09-25 13:10:25', NULL, NULL, NULL, 29, '2026-09-25 13:06:34', '2026-09-25 13:10:25'),
+(30, 10, 7, '', 3, NULL, NULL, NULL, 60000.00, 'SDG', '2026-09-25', NULL, NULL, 'posted', 2, 2, '2026-09-25 13:10:25', NULL, NULL, NULL, 29, '2026-09-25 13:06:52', '2026-09-25 13:10:25');
 
 -- --------------------------------------------------------
 
@@ -10263,8 +10404,12 @@ CREATE TABLE `project_government_requirements` (
 --
 
 INSERT INTO `project_government_requirements` (`id`, `project_id`, `requirement_text`, `fee_amount`, `created_by`, `created_at`, `updated_at`) VALUES
-(3, 8, 'تصريح العمل الطوعي', 1000.00, 33, '2026-09-23 20:45:26', '2026-09-23 20:45:26'),
-(4, 8, 'رشوة لإستخراج الوراق المطلوبه', 5000.00, 33, '2026-09-23 20:45:26', '2026-09-23 20:45:26');
+(5, 8, 'تصريح العمل الطوعي', 1000.00, 33, '2026-09-24 09:38:58', '2026-09-24 09:38:58'),
+(6, 8, 'رشوة لإستخراج الوراق المطلوبه', 5000.00, 33, '2026-09-24 09:38:58', '2026-09-24 09:38:58'),
+(9, 7, 'تصريح العمل الطوعي', 1500.00, 33, '2026-09-24 17:57:24', '2026-09-24 17:57:24'),
+(10, 7, 'رشوة لإستخراج الوراق المطلوبه', 3500.00, 33, '2026-09-24 17:57:24', '2026-09-24 17:57:24'),
+(13, 10, 'تصريح العمل الطوعي', 10000.00, 33, '2026-09-25 11:56:17', '2026-09-25 11:56:17'),
+(14, 10, 'رشوة لإستخراج الوراق المطلوبه', 20000.00, 33, '2026-09-25 11:56:17', '2026-09-25 11:56:17');
 
 -- --------------------------------------------------------
 
@@ -10348,8 +10493,9 @@ CREATE TABLE `project_lifecycle` (
 INSERT INTO `project_lifecycle` (`project_id`, `lifecycle_status`, `closed_at`, `closed_by`, `reopened_at`, `reopened_by`, `reopen_reason`, `closure_summary`, `final_budget_amount`, `total_funded_amount`, `total_expensed_amount`, `variance_amount`, `variance_percent`, `variance_explanation`, `residual_amount`, `residual_action`, `closing_document_id`, `created_at`, `updated_at`) VALUES
 (4, 'active', NULL, NULL, NULL, NULL, NULL, NULL, 500000.00, 0.00, 0.00, -500000.00, -100.00, NULL, 0.00, NULL, NULL, '2026-08-29 18:32:14', '2026-08-29 19:49:54'),
 (6, 'active', NULL, NULL, NULL, NULL, NULL, NULL, 10000.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-21 18:49:42', '2026-09-21 20:50:29'),
-(7, 'planned', NULL, NULL, NULL, NULL, NULL, NULL, 250000.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-22 08:18:04', '2026-09-22 08:18:04'),
-(8, 'planned', NULL, NULL, NULL, NULL, NULL, NULL, 400000.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-22 17:38:43', '2026-09-22 17:38:43');
+(7, 'active', NULL, NULL, NULL, NULL, NULL, NULL, 260000.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-22 08:18:04', '2026-09-24 19:53:54'),
+(8, 'active', NULL, NULL, NULL, NULL, NULL, NULL, 400000.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-22 17:38:43', '2026-09-24 09:48:06'),
+(10, 'planned', NULL, NULL, NULL, NULL, NULL, NULL, 260000.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-25 11:02:12', '2026-09-25 13:10:25');
 
 -- --------------------------------------------------------
 
@@ -10394,8 +10540,9 @@ CREATE TABLE `project_partners` (
 --
 
 INSERT INTO `project_partners` (`id`, `project_id`, `partner_name`, `role_description`, `created_by`, `created_at`, `updated_at`) VALUES
-(3, 8, 'شركة طعام', NULL, 33, '2026-09-23 20:45:26', '2026-09-23 20:45:26'),
-(4, 8, 'شركة توصيل', NULL, 33, '2026-09-23 20:45:26', '2026-09-23 20:45:26');
+(5, 8, 'شركة طعام', NULL, 33, '2026-09-24 09:38:58', '2026-09-24 09:38:58'),
+(6, 8, 'شركة توصيل', NULL, 33, '2026-09-24 09:38:58', '2026-09-24 09:38:58'),
+(8, 10, 'شركة حفر أبار', 'تنفيذ', 33, '2026-09-25 11:56:17', '2026-09-25 11:56:17');
 
 -- --------------------------------------------------------
 
@@ -10424,6 +10571,19 @@ CREATE TABLE `project_payment_evidence` (
   `created_at` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `project_payment_evidence`
+--
+
+INSERT INTO `project_payment_evidence` (`id`, `project_id`, `funding_allocation_id`, `source_account_id`, `journal_entry_id`, `payment_method`, `amount`, `currency_code`, `payment_date`, `status`, `reference_number`, `receipt_file_path`, `receipt_original_name`, `receipt_mime_type`, `voucher_confirmed_at`, `documented_by`, `documented_at`, `created_at`) VALUES
+(1, 8, 16, 2, 69, 'bank_transfer', 350000.00, 'SDG', '2026-09-24', 'documented', '54321', 'storage/documents/projects/8/payments/payment_1_20260924101018_df628d89.jpg', 'Feen_logo.jpeg', 'image/jpeg', NULL, 29, '2026-09-24 09:56:17', '2026-09-24 09:48:06'),
+(2, 8, 17, 1, 69, 'cash', 30000.00, 'SDG', '2026-09-24', 'documented', NULL, NULL, NULL, NULL, '2026-09-24 09:55:11', 29, '2026-09-24 09:55:11', '2026-09-24 09:48:06'),
+(3, 8, 18, 3, 69, 'e_wallet', 20000.00, 'SDG', '2026-09-24', 'documented', '123', 'storage/documents/projects/8/payments/payment_3_20260924100957_e5747a61.jpg', 'WhatsApp Image 2026-09-21 at 11.09.00 AM.jpeg', 'image/jpeg', NULL, 29, '2026-09-24 09:54:59', '2026-09-24 09:48:06'),
+(4, 7, 27, 2, 70, 'bank_transfer', 260000.00, 'SDG', '2026-09-24', 'documented', '55555', 'storage/documents/projects/7/payments/payment_4_20260924202007_a156d951.jpg', 'seeds_british_school_logo.jpg', 'image/jpeg', NULL, 29, '2026-09-24 21:20:07', '2026-09-24 19:53:54'),
+(5, 10, 28, 2, NULL, 'bank_transfer', 150000.00, 'SDG', '2026-09-25', 'documented', '987654321', 'storage/documents/projects/10/payments/payment_5_20260925121214_b3b77a33.jpg', 'photo.jpeg', 'image/jpeg', NULL, 29, '2026-09-25 13:12:14', '2026-09-25 13:10:25'),
+(6, 10, 29, 1, NULL, 'cash', 50000.00, 'SDG', '2026-09-25', 'documented', NULL, NULL, NULL, NULL, '2026-09-25 13:11:54', 29, '2026-09-25 13:11:54', '2026-09-25 13:10:25'),
+(7, 10, 30, 3, NULL, 'e_wallet', 60000.00, 'SDG', '2026-09-25', 'documented', '123456789', 'storage/documents/projects/10/payments/payment_7_20260925121147_aeec1ab6.jpg', 'Passport.jpeg', 'image/jpeg', NULL, 29, '2026-09-25 13:11:47', '2026-09-25 13:10:25');
+
 -- --------------------------------------------------------
 
 --
@@ -10445,8 +10605,9 @@ CREATE TABLE `project_procurement_methods` (
 --
 
 INSERT INTO `project_procurement_methods` (`id`, `project_id`, `method_name`, `notes`, `created_by`, `created_at`, `updated_at`) VALUES
-(3, 8, 'كاش', NULL, 33, '2026-09-23 20:45:26', '2026-09-23 20:45:26'),
-(4, 8, 'عبر التحويل البنكي', NULL, 33, '2026-09-23 20:45:26', '2026-09-23 20:45:26');
+(5, 8, 'كاش', NULL, 33, '2026-09-24 09:38:58', '2026-09-24 09:38:58'),
+(6, 8, 'عبر التحويل البنكي', NULL, 33, '2026-09-24 09:38:58', '2026-09-24 09:38:58'),
+(8, 10, 'كاش', 'إرسال الإيصال', 33, '2026-09-25 11:56:17', '2026-09-25 11:56:17');
 
 -- --------------------------------------------------------
 
@@ -10508,7 +10669,9 @@ INSERT INTO `project_supervisor_assignments` (`id`, `project_id`, `supervisor_us
 (4, 4, 34, 33, '2026-08-29 18:32:14', NULL, NULL, 'التكليف الأساسي للمشروع'),
 (5, 6, 34, 33, '2026-09-21 18:49:42', NULL, NULL, 'التكليف الأساسي للمشروع'),
 (6, 7, 34, 33, '2026-09-22 08:18:04', NULL, NULL, 'التكليف الأساسي للمشروع'),
-(7, 8, 34, 33, '2026-09-22 17:38:43', NULL, NULL, 'التكليف الأساسي للمشروع');
+(7, 8, 34, 33, '2026-09-22 17:38:43', NULL, NULL, 'التكليف الأساسي للمشروع'),
+(8, 9, 34, NULL, '2026-09-24 22:59:38', NULL, NULL, NULL),
+(9, 10, 34, 33, '2026-09-25 11:02:12', NULL, NULL, 'التكليف الأساسي للمشروع');
 
 -- --------------------------------------------------------
 
@@ -10527,6 +10690,13 @@ CREATE TABLE `project_team` (
   `unassigned_at` datetime DEFAULT NULL,
   `notes` varchar(500) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `project_team`
+--
+
+INSERT INTO `project_team` (`id`, `project_id`, `user_id`, `section_code`, `is_lead`, `assigned_by`, `assigned_at`, `unassigned_at`, `notes`) VALUES
+(1, 7, 18, 'documents', 0, 33, '2026-09-24 15:42:53', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -28359,15 +28529,15 @@ CREATE TABLE `users` (
 
 INSERT INTO `users` (`id`, `role_id`, `username`, `password_hash`, `full_name`, `email`, `phone`, `is_active`, `supervisor_status`, `password_change_required`, `last_login_at`, `created_by`, `created_at`, `updated_at`, `legacy_status`, `avatar_path`, `address`, `birth_date`, `gender`, `department_id`, `manager_id`, `theme_preference`, `language_preference`, `email_notifications`, `push_notifications`, `email_newsletter`) VALUES
 (1, 1, 'sudo', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'منير علي طه صالح', 'sudo@ahlelkheir.org', '0966616614', 1, '', 0, '2026-09-22 08:11:44', NULL, '2026-08-02 16:49:35', '2026-09-22 08:11:44', 'active', 'storage/avatars/user_1_1789753554.png', NULL, NULL, 'male', 1, 1, 'auto', 'ar', 1, 1, 1),
-(2, 2, 'gm', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'المدير العام', 'gm@ahlelkheir.org', NULL, 1, '', 0, '2026-09-24 09:03:55', NULL, '2026-08-02 16:49:35', '2026-09-24 09:03:55', 'active', 'storage/avatars/user_2_1787805764.png', NULL, NULL, NULL, 1, NULL, 'light', 'ar', 1, 1, 1),
-(3, 3, 'vgm', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'لمياء علي طه صالح', 'vgm@ahlelkheir.org', NULL, 1, '', 0, '2026-09-20 20:45:55', NULL, '2026-08-02 16:49:35', '2026-09-20 20:45:55', 'active', 'storage/avatars/user_3_1787556761.png', NULL, NULL, 'female', 1, 2, 'light', 'ar', 1, 1, 1),
+(2, 2, 'gm', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'المدير العام', 'gm@ahlelkheir.org', NULL, 1, '', 0, '2026-09-25 13:09:22', NULL, '2026-08-02 16:49:35', '2026-09-25 13:09:22', 'active', 'storage/avatars/user_2_1787805764.png', NULL, NULL, NULL, 1, NULL, 'light', 'ar', 1, 1, 1),
+(3, 3, 'vgm', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'لمياء علي طه صالح', 'vgm@ahlelkheir.org', NULL, 1, '', 0, '2026-09-24 21:39:34', NULL, '2026-08-02 16:49:35', '2026-09-24 21:39:34', 'active', 'storage/avatars/user_3_1787556761.png', NULL, NULL, 'female', 1, 2, 'light', 'ar', 1, 1, 1),
 (4, 10, 'accountant', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'محاسب (موظف)', 'accountant@ahlelkheir.org', '0123456789', 1, '', 0, '2026-08-17 14:11:48', NULL, '2026-08-08 12:33:29', '2026-08-17 14:30:38', 'active', NULL, NULL, NULL, NULL, 6, 29, 'light', 'ar', 1, 1, 1),
 (14, 4, 'Mad_Max', '$2y$10$2Pps4jCppxKBhdFrBRi94.FmCAYDqhUWd.vOLH4CnCIZDWbWrLhTC', 'أحمد محمد', 'moneerali2000@gmail.com', '0912345100', 0, 'archived', 0, '2026-08-16 09:20:38', 3, '2026-08-09 10:41:43', '2026-09-04 08:02:07', 'active', NULL, NULL, NULL, NULL, NULL, NULL, 'light', 'ar', 1, 1, 1),
 (15, 4, 'medo', '$2y$10$8XL6WcxWHuHZ2MB0XKlWReI28/2VUY0P9TJNWIM1chyov7mi9vZGy', 'مديحه عبد الماجد', 'madiha@example.com', '096664568', 0, 'archived', 0, NULL, 3, '2026-08-10 10:31:56', '2026-09-04 08:01:57', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'light', 'ar', 1, 1, 1),
 (16, 7, 'nany1', '$2y$10$bOs5FR0MQDIWcay4vmcoc.wkTOTt7mU2umWJYHn1AFkAXclPGcZWO', 'nany1', 'nany1@gmail.com', '094449785', 1, '', 0, '2026-09-21 10:40:51', 1, '2026-08-13 18:03:28', '2026-09-21 10:40:51', NULL, 'storage/avatars/user_16_1787805870.png', NULL, NULL, 'female', 2, 3, 'light', 'ar', 1, 1, 1),
 (17, 10, 'acc1', '$2y$10$n6sTBlpffNdZOaN48KkAx.zqkDnrikirhM.HWVBH81qG255EuUqKS', 'acc1', 'acc1@gmail.com', '0945786321', 1, '', 0, '2026-09-20 08:44:20', 1, '2026-08-13 19:47:47', '2026-09-20 08:44:20', NULL, NULL, NULL, NULL, 'male', 6, 4, 'light', 'ar', 1, 1, 1),
 (18, 8, 'ro1', '$2y$10$Rx63s7Lt4lh4IkJwbUKigOAmp0MzhzByWauPrF1HptcVmr4V/MpHq', 'أحمد حسين عبدالكريم', 'ro@gmail.com', '0123456789', 1, '', 0, '2026-09-20 08:43:19', 1, '2026-08-13 20:23:47', '2026-09-20 08:43:19', NULL, 'storage/avatars/user_18_1789729126.jpg', NULL, NULL, NULL, 3, 3, 'light', 'ar', 1, 1, 1),
-(19, 4, 'sv1', '$2y$10$1orOJuoh50H0m8Ow4eKIMOZC18pCFV6XILrjtEZvInwH/M/yGCDUS', 'فاطمه سليمان', 'fatima@gmail.com', '0999999999999', 1, 'active', 0, '2026-09-21 13:56:24', 3, '2026-08-14 08:10:49', '2026-09-21 13:56:24', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
+(19, 4, 'sv1', '$2y$10$1orOJuoh50H0m8Ow4eKIMOZC18pCFV6XILrjtEZvInwH/M/yGCDUS', 'فاطمه سليمان', 'fatima@gmail.com', '0999999999999', 1, 'active', 0, '2026-09-24 22:16:34', 3, '2026-08-14 08:10:49', '2026-09-24 22:16:34', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
 (20, 4, 'sv2', '$2y$10$GlgbXKPFv/Tqz/UYdBF2kOgV.Wwpe6yBpfmzcUSOKOocQuLulV2IW', 'ميادة الحبر', 'mayadah@gmail.com', NULL, 1, 'active', 0, '2026-09-18 09:44:10', 3, '2026-08-14 08:12:16', '2026-09-18 09:44:10', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
 (21, 4, 'sv3', '$2y$10$hi/o4qq4Byzdwq96wvXYPe3JW4lPlbIAwRH.JFjLtLXa7DEAj06ZG', 'هديل عثمان', 'hadeel@gmail.com', '03333333333333', 1, 'active', 0, '2026-08-16 09:14:05', 3, '2026-08-14 08:31:52', '2026-09-03 15:28:42', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
 (22, 4, 'sv4', '$2y$10$aw1SmFzeeI.xEnSbxWPwEOn/3UahrD72EBqhPuDMJ5bPcdtp40Ppy', 'ميساء سليمان', 'mysa@gmail.com', '26498879658', 1, 'active', 0, '2026-08-16 09:14:21', 3, '2026-08-14 09:13:31', '2026-09-03 15:28:42', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
@@ -28376,10 +28546,10 @@ INSERT INTO `users` (`id`, `role_id`, `username`, `password_hash`, `full_name`, 
 (26, 4, 'sv8', '$2y$10$iRZLB9UdIggAJqKsR.eoPuwyMFfS4w3RgVjZ4XjvxxUynOuhMAc/i', 'ساره خلف الله', 'sarah@gmail.com', '015468972', 1, 'active', 0, NULL, 3, '2026-08-14 09:28:14', '2026-09-04 08:38:22', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
 (27, 4, 'sv9', '$2y$10$oBV.8O1UW/yiwOAcPMxbqeH8Xh/PJhNtq.tIkyOqh55v1v7GzjSJW', 'هناء خلف الله', 'hanah@gmail.com', '78999456789', 1, 'active', 0, NULL, 3, '2026-08-14 09:31:19', '2026-09-03 15:28:42', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
 (28, 9, 'sm1', '$2y$10$gtVZcFBfL2yMhNXOPpkr5e7up/SiAnE7KfjJ8tq4JFocePuGjcr0C', 'أحمد حسين', 'ahmed@gmail.com', '8545567865', 1, '', 0, '2026-09-20 08:44:43', 1, '2026-08-14 13:06:45', '2026-09-20 08:44:43', NULL, NULL, NULL, NULL, 'male', 4, 3, 'light', 'ar', 1, 1, 1),
-(29, 6, 'fm', '$2y$10$K2.yA1kpqLaGWrqH/QOQ2uXv0PJhvWTMC55tW5kSkU6u5iaz6JmVW', 'المدير المالي', 'fm@ahlelkheir.org', NULL, 1, '', 0, '2026-09-24 09:03:28', 1, '2026-08-17 14:26:40', '2026-09-24 09:03:28', NULL, 'storage/avatars/user_29_1787555658.jpg', NULL, NULL, 'أنثى', 1, 2, 'light', 'ar', 1, 1, 1),
+(29, 6, 'fm', '$2y$10$K2.yA1kpqLaGWrqH/QOQ2uXv0PJhvWTMC55tW5kSkU6u5iaz6JmVW', 'المدير المالي', 'fm@ahlelkheir.org', NULL, 1, '', 0, '2026-09-25 13:10:55', 1, '2026-08-17 14:26:40', '2026-09-25 13:10:55', NULL, 'storage/avatars/user_29_1787555658.jpg', NULL, NULL, 'أنثى', 1, 2, 'light', 'ar', 1, 1, 1),
 (32, 11, 'hrh', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'مدير الموارد البشرية', 'hr@ahlelkheir.org', '00112233445566', 1, '', 0, '2026-09-20 21:41:53', NULL, '2026-08-18 21:49:04', '2026-09-20 21:41:53', NULL, 'storage/avatars/user_32_1788630391.png', NULL, NULL, NULL, 1, NULL, 'light', 'ar', 1, 1, 1),
-(33, 13, 'gpm', '$2y$10$ftQaFFCk4DF1UrdPlpGtd.OVR.2pyxPxKlIcZ7KhRxa7VMP/FXC/G', 'projects manager', 'pm@gmail.com', '00012344456678', 1, '', 0, '2026-09-24 07:45:12', 1, '2026-08-28 18:33:31', '2026-09-24 07:45:12', NULL, 'storage/avatars/user_33_1787943667.jpg', NULL, NULL, 'male', 8, 2, 'light', 'ar', 1, 1, 1),
-(34, 14, 'ps1', '$2y$10$y6GVpoe/hF9GxE8zyezAPORKNgBn5n65Ct.tUHI0r6lnkyHEdkrZi', 'project supervisor', 'gps@gmail.com', '987654321', 1, '', 0, '2026-09-22 08:09:50', 1, '2026-08-28 18:35:16', '2026-09-22 08:09:50', NULL, NULL, NULL, NULL, 'male', 8, 2, 'light', 'ar', 1, 1, 1),
+(33, 13, 'gpm', '$2y$10$ftQaFFCk4DF1UrdPlpGtd.OVR.2pyxPxKlIcZ7KhRxa7VMP/FXC/G', 'projects manager', 'pm@gmail.com', '00012344456678', 1, '', 0, '2026-09-25 09:10:22', 1, '2026-08-28 18:33:31', '2026-09-25 09:10:22', NULL, 'storage/avatars/user_33_1787943667.jpg', NULL, NULL, 'male', 8, 2, 'light', 'ar', 1, 1, 1),
+(34, 14, 'ps1', '$2y$10$y6GVpoe/hF9GxE8zyezAPORKNgBn5n65Ct.tUHI0r6lnkyHEdkrZi', 'project supervisor', 'gps@gmail.com', '987654321', 1, '', 0, '2026-09-24 21:25:25', 1, '2026-08-28 18:35:16', '2026-09-24 21:25:25', NULL, NULL, NULL, NULL, 'male', 8, 2, 'light', 'ar', 1, 1, 1),
 (35, 10, 'audit_acc2_20260911', '$2y$12$kxUoLJ66pmSWJRDVnkmtUuN5XI6ZhMb41RpeV2cIfN8kUA7.2EWl.', 'ACCOUNTING AUDIT TEMP ACCOUNTANT', NULL, NULL, 1, 'active', 0, '2026-09-11 09:47:45', NULL, '2026-09-11 09:47:04', '2026-09-11 09:47:45', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'light', 'ar', 1, 1, 1),
 (36, 7, 'audit_nany2_20260911', '$2y$12$kxUoLJ66pmSWJRDVnkmtUuN5XI6ZhMb41RpeV2cIfN8kUA7.2EWl.', 'ACCOUNTING AUDIT TEMP NANNY', NULL, NULL, 1, 'active', 0, NULL, NULL, '2026-09-11 09:47:04', '2026-09-11 09:47:04', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'light', 'ar', 1, 1, 1);
 
@@ -29352,7 +29522,7 @@ ALTER TABLE `accounting_admin_fee_policies`
 -- AUTO_INCREMENT for table `accounts`
 --
 ALTER TABLE `accounts`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
 
 --
 -- AUTO_INCREMENT for table `attendance`
@@ -29364,7 +29534,7 @@ ALTER TABLE `attendance`
 -- AUTO_INCREMENT for table `audit_log`
 --
 ALTER TABLE `audit_log`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1856;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1948;
 
 --
 -- AUTO_INCREMENT for table `contracts`
@@ -29496,13 +29666,13 @@ ALTER TABLE `hr_payroll_reversals`
 -- AUTO_INCREMENT for table `journal_entries`
 --
 ALTER TABLE `journal_entries`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=69;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=71;
 
 --
 -- AUTO_INCREMENT for table `journal_lines`
 --
 ALTER TABLE `journal_lines`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=137;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=143;
 
 --
 -- AUTO_INCREMENT for table `leaves`
@@ -29562,7 +29732,7 @@ ALTER TABLE `nanny_group_assignments`
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=57;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=83;
 
 --
 -- AUTO_INCREMENT for table `orphan_documents`
@@ -29580,7 +29750,7 @@ ALTER TABLE `orphan_groups`
 -- AUTO_INCREMENT for table `other_projects`
 --
 ALTER TABLE `other_projects`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `password_recovery_requests`
@@ -29616,19 +29786,19 @@ ALTER TABLE `project_beneficiary_records`
 -- AUTO_INCREMENT for table `project_budgets`
 --
 ALTER TABLE `project_budgets`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `project_budget_lines`
 --
 ALTER TABLE `project_budget_lines`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
 
 --
 -- AUTO_INCREMENT for table `project_contacts`
 --
 ALTER TABLE `project_contacts`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `project_documents`
@@ -29652,13 +29822,13 @@ ALTER TABLE `project_expense_approvals`
 -- AUTO_INCREMENT for table `project_funding_allocations`
 --
 ALTER TABLE `project_funding_allocations`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
 
 --
 -- AUTO_INCREMENT for table `project_government_requirements`
 --
 ALTER TABLE `project_government_requirements`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT for table `project_labor_comments`
@@ -29682,19 +29852,19 @@ ALTER TABLE `project_milestones`
 -- AUTO_INCREMENT for table `project_partners`
 --
 ALTER TABLE `project_partners`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `project_payment_evidence`
 --
 ALTER TABLE `project_payment_evidence`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `project_procurement_methods`
 --
 ALTER TABLE `project_procurement_methods`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `project_progress_updates`
@@ -29712,13 +29882,13 @@ ALTER TABLE `project_status_history`
 -- AUTO_INCREMENT for table `project_supervisor_assignments`
 --
 ALTER TABLE `project_supervisor_assignments`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `project_team`
 --
 ALTER TABLE `project_team`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `returned_disbursement_reissues`
