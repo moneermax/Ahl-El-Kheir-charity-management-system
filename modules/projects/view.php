@@ -2083,35 +2083,35 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 <hr>
                 <h6>تحديث تقدم</h6>
                 <?php if (akp_can_edit_section('operations', $id) && !$closed): ?>
-                    <form method="post">
+                    <form method="post" class="project-progress-entry-form">
                         <input type="hidden" name="action" value="add_progress">
                         <?php echo csrf_field(); ?>
-                        <div class="row g-2 align-items-end">
-                            <div class="col-md-2">
-                                <label for="progress_update_date" class="form-label small fw-semibold mb-1">التاريخ</label>
+                        <div class="project-progress-inline">
+                            <div class="project-progress-field">
+                                <label for="progress_update_date">التاريخ</label>
                                 <input id="progress_update_date" type="date" name="update_date" class="form-control form-control-sm" value="<?php echo date('Y-m-d'); ?>">
                             </div>
-                            <div class="col-md-2">
-                                <label for="progress_percent" class="form-label small fw-semibold mb-1">نسبة الإنجاز (%)</label>
+                            <div class="project-progress-field">
+                                <label for="progress_percent">نسبة الإنجاز (%)</label>
                                 <input id="progress_percent" type="number" min="0" max="100" name="progress_percent" class="form-control form-control-sm" placeholder="مثال: 75">
                             </div>
-                            <div class="col-md-2">
-                                <label for="progress_summary" class="form-label small fw-semibold mb-1">ملخص التقدم *</label>
+                            <div class="project-progress-field">
+                                <label for="progress_summary">ملخص التقدم *</label>
                                 <input id="progress_summary" type="text" name="progress_summary" class="form-control form-control-sm" placeholder="ملخص التقدم" required>
                             </div>
-                            <div class="col-md-2">
-                                <label for="progress_achievements" class="form-label small fw-semibold mb-1">الإنجازات</label>
+                            <div class="project-progress-field">
+                                <label for="progress_achievements">الإنجازات</label>
                                 <input id="progress_achievements" type="text" name="achievements" class="form-control form-control-sm" placeholder="الإنجازات">
                             </div>
-                            <div class="col-md-2">
-                                <label for="progress_issues" class="form-label small fw-semibold mb-1">المعوقات</label>
+                            <div class="project-progress-field">
+                                <label for="progress_issues">المعوقات</label>
                                 <input id="progress_issues" type="text" name="issues" class="form-control form-control-sm" placeholder="المعوقات">
                             </div>
-                            <div class="col-md-2">
-                                <label for="progress_next_steps" class="form-label small fw-semibold mb-1">الخطوات القادمة</label>
+                            <div class="project-progress-field">
+                                <label for="progress_next_steps">الخطوات القادمة</label>
                                 <input id="progress_next_steps" type="text" name="next_steps" class="form-control form-control-sm" placeholder="الخطوات القادمة">
                             </div>
-                            <div class="col-12"><button class="btn btn-sm btn-outline-primary">حفظ التحديث</button></div>
+                            <button class="btn btn-sm btn-outline-primary project-progress-save">حفظ التحديث</button>
                         </div>
                     </form>
                 <?php endif; ?>
