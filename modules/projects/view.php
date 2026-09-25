@@ -288,8 +288,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 dbExecute('START TRANSACTION');
                 dbExecute("UPDATE project_approval SET approval_status = 'approved', approved_by = ?, approved_at = NOW() WHERE project_id = ?", [akp_user_id(), $id]);
-                dbExecute('UPDATE other_projects SET status = \'active\' WHERE id = ?', [$id]);
-                dbExecute('UPDATE project_lifecycle SET lifecycle_status = \'active\' WHERE project_id = ?', [$id]);
+                /*
+                 * Final approval does not launch the project. It returns the
+                 * fully approved project to the Projects Manager for review.
+                 * The PM must explicitly launch it before operational access
+                 * is opened to the assigned Project Supervisor.
+                 */
+                dbExecute('UPDATE other_projects SET status = \'planned\' WHERE id = ?', [$id]);
+                dbExecute('UPDATE project_lifecycle SET lifecycle_status = \'planned\' WHERE project_id = ?', [$id]);
                 
                 dbExecute('UPDATE project_lifecycle SET final_budget_amount = ? WHERE project_id = ?', [$financialRequirement, $id]);
 
@@ -364,6 +370,93 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             flash('success', 'تم رفض المشروع من المدير العام وإعادته إلى المدير المالي للمراجعة.');
             
+        } elseif ($action === 'launch_project') {
+            if ($role !== 'projects_manager') {
+                throw new RuntimeException('إطلاق المشروع متاح لمدير المشاريع فقط.');
+            }
+
+            $approvalCheck = dbFetchOne(
+                'SELECT approval_status, approved_at
+                 FROM project_approval
+                 WHERE project_id = ?',
+                [$id]
+            );
+            if (!$approvalCheck || $approvalCheck['approval_status'] !== 'approved') {
+                throw new RuntimeException('لا يمكن إطلاق المشروع قبل الاعتماد النهائي.');
+            }
+
+            $currentLifecycle = dbFetchOne(
+                'SELECT lifecycle_status
+                 FROM project_lifecycle
+                 WHERE project_id = ?',
+                [$id]
+            );
+            $currentLifecycleStatus = (string)($currentLifecycle['lifecycle_status'] ?? '');
+            if ($currentLifecycleStatus !== 'planned') {
+                throw new RuntimeException('المشروع ليس في حالة انتظار الإطلاق.');
+            }
+
+            $supervisor = dbFetchOne(
+                "SELECT u.id, u.full_name
+                 FROM project_supervisor_assignments psa
+                 JOIN users u ON u.id = psa.supervisor_user_id
+                 JOIN roles r ON r.id = u.role_id
+                 WHERE psa.project_id = ?
+                   AND psa.ended_at IS NULL
+                   AND u.is_active = 1
+                   AND r.code = 'project_supervisor'
+                 ORDER BY psa.id DESC
+                 LIMIT 1",
+                [$id]
+            );
+            if (!$supervisor) {
+                throw new RuntimeException('لا يمكن إطلاق المشروع قبل وجود مشرف مشروع أساسي نشط ومُعيّن.');
+            }
+
+            dbExecute('START TRANSACTION');
+            try {
+                dbExecute(
+                    "UPDATE project_lifecycle
+                     SET lifecycle_status = 'active'
+                     WHERE project_id = ? AND lifecycle_status = 'planned'",
+                    [$id]
+                );
+                dbExecute(
+                    "UPDATE other_projects
+                     SET status = 'active', updated_by = ?
+                     WHERE id = ?",
+                    [akp_user_id(), $id]
+                );
+                dbExecute(
+                    "INSERT INTO project_status_history
+                     (project_id, old_status, new_status, reason, changed_by)
+                     VALUES (?,?,?,?,?)",
+                    [$id, 'planned', 'active', 'تم إطلاق المشروع من مدير المشاريع بعد الاعتماد النهائي.', akp_user_id()]
+                );
+                akp_audit(
+                    'LAUNCH_PROJECT',
+                    'project_lifecycle',
+                    $id,
+                    ['status' => 'planned'],
+                    ['status' => 'active', 'supervisor_user_id' => (int)$supervisor['id']]
+                );
+                dbExecute('COMMIT');
+            } catch (Throwable $e) {
+                dbExecute('ROLLBACK');
+                throw $e;
+            }
+
+            ak_transaction_review_notify_event(
+                (int)$supervisor['id'],
+                'تم إطلاق مشروع جديد للتنفيذ',
+                'المشروع «' . (string)($project['name'] ?? '') . '» (' . (string)($project['project_code'] ?? '') . ') تم إطلاقه وأصبح متاحاً لكم للتنفيذ والمتابعة.',
+                APP_URL . 'modules/projects/view.php?id=' . $id,
+                $id,
+                'project_launch_ps'
+            );
+
+            flash('success', 'تم إطلاق المشروع وإبلاغ المشرف المعيّن به.');
+
         } elseif ($action === 'change_status') {
             // ... (Original change_status logic preserved exactly)
             $newStatus = akp_post_value('new_status');
@@ -895,6 +988,15 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             <?php endif; ?>
         </div>
         <div class="d-flex gap-2">
+            <?php if ($role === 'projects_manager' && $approval['approval_status'] === 'approved' && (string)($project['lifecycle_status'] ?? $project['status']) === 'planned'): ?>
+                <form method="post" class="project-action-form d-inline">
+                    <?php echo csrf_field(); ?>
+                    <input type="hidden" name="action" value="launch_project">
+                    <button class="btn btn-success" onclick="return confirm('هل أنت متأكد من إطلاق المشروع للمشرف المعيّن؟')">
+                        <i class="fas fa-play me-1"></i> إطلاق المشروع
+                    </button>
+                </form>
+            <?php endif; ?>
             <?php if ($role === 'projects_manager' && in_array($approval['approval_status'], ['draft', 'rejected'], true)): ?>
                 <a href="<?php echo e(APP_URL . 'modules/projects/form.php?id=' . $id); ?>" class="btn btn-primary text-white">
                     <i class="fas fa-edit me-1"></i> تعديل المشروع
