@@ -109,22 +109,25 @@ function akGoBack(fallback){try{var ref=document.referrer;if(ref&&ref.indexOf(wi
 function akProjectPageEnhancements(){
     var path=window.location.pathname.replace(/\\/g,'/');
     if(!/(^|\/)modules\/projects\/view\.php$/i.test(path)) return;
-
     var appUrl=<?php echo json_encode(APP_URL, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES); ?>;
     var documentSection=null;
     document.querySelectorAll('.card-header').forEach(function(header){
         if((header.textContent||'').indexOf('الوثائق والتصاريح والشهادات')!==-1) documentSection=header.closest('.card');
     });
     var expenseSection=document.getElementById('project-expenses');
-
     document.querySelectorAll('a[href*="modules/projects/modules/projects/serve_project_document.php"]').forEach(function(link){
-        var match=link.href.match(/[?&]id=(\\d+)/);
+        var match=link.href.match(/[?&]id=(\d+)/);
         if(match) link.href=appUrl+'modules/projects/serve_project_document.php?id='+match[1];
     });
-
     if(documentSection){
         var body=documentSection.querySelector('.card-body');
-        var cardsRow=body ? body.querySelector('.row') : null;
+        var cardsRow=null;
+        if(body){
+            Array.prototype.some.call(body.querySelectorAll('.row'),function(row){
+                if(row.querySelector('.card-title')){cardsRow=row;return true;}
+                return false;
+            });
+        }
         if(cardsRow){
             var cards=Array.prototype.slice.call(cardsRow.children).filter(function(node){return node.querySelector&&node.querySelector('.card-title');});
             if(cards.length){
@@ -154,20 +157,18 @@ function akProjectPageEnhancements(){
             }
         }
     }
-
     var successAlerts=Array.prototype.slice.call(document.querySelectorAll('.alert.alert-success'));
     successAlerts.forEach(function(alert){
         var text=(alert.textContent||'').trim();
-        if(documentSection && text.indexOf('تم حفظ الوثيقة في التخزين المحمي')!==-1){
+        if(documentSection&&text.indexOf('تم حفظ الوثيقة في التخزين المحمي')!==-1){
             var body=documentSection.querySelector('.card-body');
-            if(body){body.insertBefore(alert,body.firstChild);}
+            if(body) body.insertBefore(alert,body.firstChild);
             documentSection.scrollIntoView({behavior:'auto',block:'start'});
-        } else if(expenseSection && (text.indexOf('تم تسجيل المصروف')!==-1 || text.indexOf('تم تعديل المصروف')!==-1 || text.indexOf('تم حذف المصروف')!==-1)){
+        } else if(expenseSection&&(text.indexOf('تم تسجيل المصروف')!==-1||text.indexOf('تم تعديل المصروف')!==-1||text.indexOf('تم حذف المصروف')!==-1)){
             expenseSection.scrollIntoView({behavior:'auto',block:'start'});
         }
     });
 }
-
 document.addEventListener('DOMContentLoaded',function(){akInstallBackButtons();akProjectPageEnhancements();});
 </script>
 </body>
