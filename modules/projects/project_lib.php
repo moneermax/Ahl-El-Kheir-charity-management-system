@@ -104,11 +104,23 @@ if (!function_exists('akp_can_edit_section')) {
         if ($role === 'admin') return true;
         if ($projectId > 0 && akp_project_is_closed($projectId) && !akp_is_dg()) return false;
         if ($section === 'general') {
-            if (in_array($role, ['general_manager', 'vice_general_manager', 'projects_manager'], true)) return true;
-            if ($projectId > 0 && akp_is_primary_supervisor($projectId)) {
-                $approval = dbFetchOne('SELECT approval_status FROM project_approval WHERE project_id = ?', [$projectId]);
-                return $approval && in_array($approval['approval_status'], ['draft', 'rejected'], true);
+            if (in_array($role, ['general_manager', 'vice_general_manager'], true)) return true;
+
+            /*
+             * The Projects Manager owns project creation and pre-approval
+             * corrections. Once the project has been submitted or finally
+             * approved, the PM may review and launch it but must not silently
+             * change general project data outside the approval workflow.
+             */
+            if ($role === 'projects_manager') {
+                if ($projectId < 1) return true;
+                $approval = dbFetchOne(
+                    'SELECT approval_status FROM project_approval WHERE project_id = ?',
+                    [$projectId]
+                );
+                return $approval && in_array((string)$approval['approval_status'], ['draft', 'rejected'], true);
             }
+
             return false;
         }
         if ($section === 'finance') return in_array($role, ['accountant', 'financial_manager'], true) || akp_has_project_section($projectId, 'finance');
