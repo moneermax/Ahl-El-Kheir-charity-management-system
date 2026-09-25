@@ -810,3 +810,11 @@ Implementation: modules/projects/view.php.
 - Both record types now expose **تعديل** and **حذف** controls beside eligible records, with professional confirmation for destructive actions.
 - The shared Back-button helper is now deterministic and idempotent: audited non-dashboard pages render exactly two shared Back controls inside \`.content\`, one top-left and one bottom-right, with no duplicate generated control.
 - No new table, column, migration, trigger, view, stored procedure, or accounting event was introduced. PM/FM/GM approval, funding, payment-evidence, posting, and launch workflows remain unchanged.
+
+
+## 2026-09-25 — Project operations/progress presentation
+
+- The **التشغيل والتقدم** progress-update records are now displayed in a structured responsive table instead of scattered text blocks.
+- The progress-entry form now has an explicit **نسبة الإنجاز (%)** label before the percentage field, with a simple example placeholder.
+- Existing progress-update data and database structure are unchanged.
+- No workflow, permissions, accounting, schema, trigger, view, or stored-procedure changes were introduced.
