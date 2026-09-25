@@ -172,5 +172,75 @@ function akProjectPageEnhancements(){
 }
 document.addEventListener('DOMContentLoaded',function(){akInstallBackButtons();akProjectPageEnhancements();});
 </script>
+<script>
+/* Projects view: render the existing status-history records as a real table. */
+document.addEventListener('DOMContentLoaded', function () {
+    var path = window.location.pathname.replace(/\\/g, '/');
+    if (!/(^|\/)modules\/projects\/view\.php$/i.test(path)) return;
+
+    var historyCard = null;
+    document.querySelectorAll('.card-header').forEach(function (header) {
+        if ((header.textContent || '').indexOf('سجل التغييرات') !== -1) {
+            historyCard = header.closest('.card');
+        }
+    });
+    if (!historyCard) return;
+
+    var body = historyCard.querySelector('.card-body');
+    if (!body || body.querySelector('table')) return;
+
+    var records = Array.prototype.slice.call(body.children).filter(function (node) {
+        return node.classList && node.classList.contains('small') && node.classList.contains('border-bottom');
+    });
+    if (!records.length) return;
+
+    var wrapper = document.createElement('div');
+    wrapper.className = 'table-responsive';
+
+    var table = document.createElement('table');
+    table.className = 'table table-sm table-hover align-middle mb-0';
+    table.innerHTML = '<thead><tr>' +
+        '<th>التاريخ والوقت</th>' +
+        '<th>المستخدم</th>' +
+        '<th>الحالة السابقة</th>' +
+        '<th>الحالة الجديدة</th>' +
+        '<th>السبب / الملاحظات</th>' +
+        '</tr></thead><tbody></tbody>';
+
+    var tbody = table.querySelector('tbody');
+    records.forEach(function (record) {
+        var lines = record.querySelectorAll('div');
+        var transition = lines[0] ? lines[0].textContent.trim() : '';
+        var actorLine = lines[1] ? lines[1].textContent.trim() : '';
+        var reason = record.querySelector('.fst-italic');
+        var statusParts = transition.split('→').map(function (value) { return value.trim(); });
+        var actorParts = actorLine.split('·').map(function (value) { return value.trim(); });
+
+        var tr = document.createElement('tr');
+        var dateTd = document.createElement('td');
+        dateTd.className = 'text-nowrap';
+        dateTd.textContent = actorParts[1] || '—';
+        var userTd = document.createElement('td');
+        userTd.textContent = actorParts[0] || 'نظام';
+        var oldTd = document.createElement('td');
+        oldTd.textContent = statusParts[0] || '—';
+        var newTd = document.createElement('td');
+        newTd.textContent = statusParts[1] || '—';
+        var reasonTd = document.createElement('td');
+        reasonTd.textContent = reason ? reason.textContent.replace(/^"|"$/g, '').trim() : '—';
+
+        tr.appendChild(dateTd);
+        tr.appendChild(userTd);
+        tr.appendChild(oldTd);
+        tr.appendChild(newTd);
+        tr.appendChild(reasonTd);
+        tbody.appendChild(tr);
+    });
+
+    wrapper.appendChild(table);
+    body.innerHTML = '';
+    body.appendChild(wrapper);
+});
+</script>
 </body>
 </html>
