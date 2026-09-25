@@ -755,3 +755,25 @@ Changed: `modules/projects/view.php` (`approve_project`, `edit_funding`, `delete
 removed `akp_create_project_approval_journal()` and `akp_reverse_project_journal()`; added
 `akp_commit_project_funding()`). No schema changes. `akp_project_totals()` and the portfolio
 listing query already filtered on `status = 'posted'` and needed no changes.
+
+
+---
+
+## Resolution — 2026-09-25: Project Supervisor operational expense tracking
+
+After the PM → FM → GM → PM final approval → explicit PM launch workflow was runtime-verified for PRJ-0010, the Project Supervisor project view was narrowed to operational responsibilities.
+
+- Project Supervisors no longer see the **تخصيص التمويل** section.
+- Project Supervisors no longer see the **إثبات صرف تمويل المشروع** section.
+- The existing financial/accounting controls remain available to their authorized roles and were not removed or reassigned.
+- The **المصروفات** section now gives the assigned Project Supervisor a dedicated operational expense-entry form without exposing accounting-account selection.
+- A supervisor expense is stored as a `draft` project expense so later financial/accounting processing remains separate from operational recording.
+- The supervisor can optionally attach a PDF/JPG/PNG receipt directly to the expense; the existing protected project-document storage is reused.
+- The expense view now shows the FM-approved budget total, total recorded project expenses, and the remaining budget after recorded expenses.
+- Server-side validation prevents the assigned Project Supervisor from recording an expense that would exceed the remaining FM-approved project budget.
+- No schema change, runtime DDL, trigger, view, stored procedure, or new accounting event was introduced.
+- Existing PM/FM/GM funding, payment-evidence, expense approval, and posting workflows remain unchanged.
+
+Implementation: modules/projects/view.php.
+
+Runtime verification remains required locally for the new supervisor expense-entry and receipt attachment path before this work unit is marked fully verified.
