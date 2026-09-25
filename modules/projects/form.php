@@ -1722,7 +1722,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     <?php if ($id && !$canEditRejectedBudget): ?>
                     <div class="alert alert-info py-2">
                         <i class="fas fa-lock me-1"></i>
-                        الميزانية الأولية المعتمدة عند إنشاء المشروع للعرض فقط. يمكن تعديلها فقط بعد رفضها من المدير المالي.
+                        الميزانية الأولية ومتطلباتها الحكومية المعتمدة عند إنشاء المشروع للعرض فقط. يمكن تعديلها فقط بعد رفضها من المدير المالي.
                     </div>
                     <fieldset disabled>
                     <?php endif; ?>
@@ -1790,13 +1790,13 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                                 <?php if (!$governmentRequirementRows) $governmentRequirementRows = [['requirement_text' => '', 'fee_amount' => '']]; ?>
                                 <?php foreach ($governmentRequirementRows as $index => $row): ?>
                                 <div class="repeatable-row row g-2 align-items-end mb-2">
-                                    <div class="col-md-8"><label class="form-label small">المتطلب الحكومي</label><input type="text" name="government_requirements[<?php echo (int)$index; ?>][requirement]" class="form-control" value="<?php echo e($row['requirement_text'] ?? ''); ?>" placeholder="مثال: تصريح من الجهة المختصة"></div>
-                                    <div class="col-md-3"><label class="form-label small">الرسوم الحكومية (SDG)</label><input type="number" step="0.01" min="0" name="government_requirements[<?php echo (int)$index; ?>][fee]" class="form-control" value="<?php echo e($row['fee_amount'] ?? ''); ?>" placeholder="0.00"></div>
-                                    <div class="col-md-1"><button type="button" class="btn btn-outline-danger w-100" onclick="removeRepeatableRow(this,'government-requirements-container')" title="حذف"><i class="fas fa-trash"></i></button></div>
+                                    <div class="col-md-8"><label class="form-label small">المتطلب الحكومي</label><input type="text" name="government_requirements[<?php echo (int)$index; ?>][requirement]" class="form-control" value="<?php echo e($row['requirement_text'] ?? ''); ?>" placeholder="مثال: تصريح من الجهة المختصة" <?php echo ($id && !$canEditRejectedBudget) ? 'readonly' : ''; ?>></div>
+                                    <div class="col-md-3"><label class="form-label small">الرسوم الحكومية (SDG)</label><input type="number" step="0.01" min="0" name="government_requirements[<?php echo (int)$index; ?>][fee]" class="form-control" value="<?php echo e($row['fee_amount'] ?? ''); ?>" placeholder="0.00" <?php echo ($id && !$canEditRejectedBudget) ? 'readonly' : ''; ?>></div>
+                                    <div class="col-md-1"><button type="button" class="btn btn-outline-danger w-100" onclick="removeRepeatableRow(this,'government-requirements-container')" title="حذف" <?php echo ($id && !$canEditRejectedBudget) ? 'disabled' : ''; ?>><i class="fas fa-trash"></i></button></div>
                                 </div>
                                 <?php endforeach; ?>
                             </div>
-                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="addGovernmentRequirementRow()"><i class="fas fa-plus me-1"></i>إضافة متطلب</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="addGovernmentRequirementRow()" <?php echo ($id && !$canEditRejectedBudget) ? 'disabled' : ''; ?>><i class="fas fa-plus me-1"></i>إضافة متطلب</button>
                         </div>
 
                     <div id="budget-lines-lock-wrapper" class="budget-dependent is-locked" aria-disabled="true">
