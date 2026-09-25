@@ -158,17 +158,6 @@ function akProjectPageEnhancements(){
             }
         }
     }
-    var successAlerts=Array.prototype.slice.call(document.querySelectorAll('.alert.alert-success'));
-    successAlerts.forEach(function(alert){
-        var text=(alert.textContent||'').trim();
-        if(documentSection&&text.indexOf('تم حفظ الوثيقة في التخزين المحمي')!==-1){
-            var body=documentSection.querySelector('.card-body');
-            if(body) body.insertBefore(alert,body.firstChild);
-            documentSection.scrollIntoView({behavior:'auto',block:'start'});
-        } else if(expenseSection&&(text.indexOf('تم تسجيل المصروف')!==-1||text.indexOf('تم تعديل المصروف')!==-1||text.indexOf('تم حذف المصروف')!==-1)){
-            expenseSection.scrollIntoView({behavior:'auto',block:'start'});
-        }
-    });
 }
 document.addEventListener('DOMContentLoaded',function(){akInstallBackButtons();akProjectPageEnhancements();});
 </script>
