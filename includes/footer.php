@@ -208,12 +208,19 @@ function akInstallBackButtons(){
         }
     }
 
-    if (!content.querySelector('.ak-top-back-wrap')) {
+    if (!content.querySelector('.ak-top-back-wrap') && !existing && !existingIsNearBottom) {
         var topWrap = document.createElement('div');
         topWrap.className = 'ak-top-back-wrap';
-        var topButton = existing
-            ? existing.cloneNode(true)
-            : akCreateBackButton(fallback, 'btn btn-outline-secondary ak-top-back-btn', label);
+        var topButton = akCreateBackButton(fallback, 'btn btn-outline-secondary ak-top-back-btn', label);
+        topButton.classList.add('ak-top-back-btn');
+        topButton.removeAttribute('id');
+        topButton.setAttribute('aria-label', label);
+        topWrap.appendChild(topButton);
+        content.insertBefore(topWrap, content.firstChild);
+    } else if (!content.querySelector('.ak-top-back-wrap') && existingIsNearBottom) {
+        var topWrap = document.createElement('div');
+        topWrap.className = 'ak-top-back-wrap';
+        var topButton = existing.cloneNode(true);
         topButton.classList.add('ak-top-back-btn');
         topButton.removeAttribute('id');
         topButton.setAttribute('aria-label', label);
