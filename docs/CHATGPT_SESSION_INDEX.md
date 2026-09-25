@@ -887,3 +887,22 @@ Implemented without schema changes by reusing the existing event-aware notificat
 Commits: `4d985d094f7bde4d6faa503fa704db55457b9e04`, `f0c37431ce67029b36defb7132e43db2c024fbe4`, `58f7c62f6df05f98da7d003fe470c0e616a41eb9`, documentation `e975fccaa4ebf741babde60831ef2bb825cd299a`.
 
 Runtime certification is pending controlled local testing; no new fixture is required.
+
+
+## 2026-09-25 — Projects workflow runtime checkpoint
+
+Controlled runtime testing progressed successfully through the approval chain using PRJ-0010 / project ID 10 (اختبار المشاريع 2026). Verified notifications: PM submission → FM received financial-review notification; FM approval → GM received final-approval notification; GM final approval → PM received final-approval confirmation; FM also received the existing post-final-approval financial/execution notifications.
+
+The workflow was corrected so GM final approval leaves the project in planned rather than automatically activating it. The PM must explicitly launch the approved project. Launch then activates the project and notifies the assigned Project Supervisor.
+
+Implemented workflow controls: modules/projects/view.php adds PM-only launch_project; launch requires final approval, planned lifecycle, and an active assigned Project Supervisor; launch changes lifecycle/project status to active, records history/audit, and notifies the assigned supervisor. modules/projects/project_lib.php blocks Project Supervisor access until final approval + launch and restricts PM general editing/budget preparation to draft/rejected states. dashboard/projects_dashboard.php adds a PM approved-waiting-for-launch queue and requires final approval + operational launch state for PS assigned-project queries.
+
+Recent implementation commits: 491b47833ea8fe1f60d6bc5a11378ddeafc15efe, ebbdcda866eb741f224e8df3f52fabae47932ab6, 0a4e7eca5edd9779c51215b5dd0b8fcda71585ad, bbde8018a3941a71bf60d76350e8563b6e3008df, 78fe4e85af414fdaf31db4144cc8b8acd69e8bff0, 3fa2b3d622a1c5781ede4d8d2a655ff476add176.
+
+A mixed-collation runtime issue then affected both PM and Project Supervisor dashboards. Root cause was confirmed in dashboard SQL: COALESCE(l.lifecycle_status,p.status) combines columns with different collations, and several status/approval IN/= comparisons were not normalized. The dashboard queries were corrected with explicit binary comparisons. Final supervisor-dashboard fix commit: b3c23386fc54d27705df6cc1e3546430935135cd.
+
+Runtime result as of 2026-09-25: PM dashboard works and Project Supervisor dashboard works.
+
+### Immediate next runtime test
+
+Do not create another project. Continue with PRJ-0010. 1) Log in as PM and confirm the project appears under مشاريع معتمدة بانتظار الإطلاق. 2) Open the project and verify the PM has the explicit إطلاق المشروع action. 3) Confirm the assigned Project Supervisor exists and is active. 4) When ready, PM launches the project. 5) Verify the assigned Project Supervisor receives the launch notification and the project appears on the supervisor dashboard. 6) Verify the supervisor can open the launched project and perform only the intended operational work. 7) Continue later with the payment/disbursement and post-approval workflow audit; do not broaden permissions without first checking the current code/schema.
