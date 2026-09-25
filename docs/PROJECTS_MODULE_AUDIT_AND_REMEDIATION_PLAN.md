@@ -718,3 +718,40 @@ Controlled test:
 8. Verify GM final approval also requires 525,000 SDG and creates the single accounting release for the full allocated amount.
 9. Verify payment-evidence rows still correspond to the actual funding allocations and the existing FM completion workflow remains unchanged.
 10. Verify project closure/financial variance uses the total financial requirement rather than treating governmental fees as an unexplained overspend.
+
+---
+
+## Resolution — 2026-09-24: "Is final approval a spend or a reservation?"
+
+Resolved, per explicit decision: **final approval is a funding reservation, never a spend.** It
+earmarks the project's funding allocations (`project_funding_allocations.status`: `draft` →
+`posted`, with `approved_by`/`posted_by`/`posted_at` set) and does **not** touch the general
+ledger or any cash/bank/wallet balance. Real money only moves later, per individual posted
+`project_expense`, exactly as every other cash-basis flow in this system already works
+(transactions, vouchers, disbursements, payroll).
+
+This closes the "could final approval and later expense posting recognize the same financial
+event twice?" question above: **yes, they did.** Final approval previously posted a journal entry
+debiting account 5100 ("Program and aid expenses") for the *entire* approved budget and crediting
+the chosen funding-source accounts — recognizing the whole budget as spent before a single pound
+had actually left the organization. Editing or deleting a funding allocation after approval then
+reversed and re-posted that same phantom entry. Confirmed against a live copy of the database:
+already-approved projects had drained real cash/bank/wallet with zero posted expenses. A one-time
+correction (`tools/fix_project_approval_journals.php`) reverses any such entry with a proper,
+audited reversing entry (original stays posted; nothing is deleted or altered in place).
+
+A second, related defect was fixed at the same time: `project_funding_allocations.status` could
+never reach `'posted'` (the only actions that transitioned it, `approve_funding`/`post_funding`,
+had already been disabled elsewhere as "no longer needed"), so every project's committed-funding
+total silently displayed as zero regardless of how much funding was actually allocated. Final
+approval now performs that transition directly.
+
+The `project_payment_evidence` documentary-evidence row created per funding source at approval
+time is unaffected: it is created exactly as before, with `journal_entry_id = NULL` (the column
+already allowed this), since no journal entry exists until that funding source's payment is
+actually documented.
+
+Changed: `modules/projects/view.php` (`approve_project`, `edit_funding`, `delete_funding` handlers;
+removed `akp_create_project_approval_journal()` and `akp_reverse_project_journal()`; added
+`akp_commit_project_funding()`). No schema changes. `akp_project_totals()` and the portfolio
+listing query already filtered on `status = 'posted'` and needed no changes.

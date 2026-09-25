@@ -116,101 +116,20 @@ function akp_post_value(string $name, string $default = ''): string {
 }
 
 
-/** Create a balanced reversal entry while preserving the original posted entry. */
-function akp_reverse_project_journal(int $originalEntryId, int $projectId, string $projectName, string $reason): int {
-    $original = dbFetchOne('SELECT * FROM journal_entries WHERE id = ?', [$originalEntryId]);
-    if (!$original) throw new RuntimeException('القيد المحاسبي الأصلي غير موجود.');
 
-    $lines = dbFetchAll('SELECT account_id, debit, credit, description FROM journal_lines WHERE entry_id = ? ORDER BY id', [$originalEntryId]);
-    if (!$lines) throw new RuntimeException('القيد المحاسبي الأصلي لا يحتوي على بنود يمكن عكسها.');
-
-    $entryCode = 'JE-PRJ-' . str_pad((string)$projectId, 4, '0', STR_PAD_LEFT) . '-REV-' . date('YmdHis');
-    dbExecute('INSERT INTO journal_entries (entry_code, entry_date, description, reference_type, reference_id, status, created_by) VALUES (?, ?, ?, ?, ?, \'posted\', ?)', [
-        $entryCode,
-        date('Y-m-d'),
-        'عكس قيد اعتماد مشروع: ' . $projectName . ' - ' . $reason,
-        'project_journal_reversal',
-        $originalEntryId,
-        akp_user_id()
-    ]);
-    $reversalId = (int)(dbFetchOne('SELECT LAST_INSERT_ID() AS id')['id'] ?? 0);
-    if ($reversalId <= 0) throw new RuntimeException('تعذر إنشاء قيد العكس.');
-
-    foreach ($lines as $line) {
-        dbExecute('INSERT INTO journal_lines (entry_id, account_id, debit, credit, description) VALUES (?, ?, ?, ?, ?)', [
-            $reversalId,
-            $line['account_id'],
-            (float)$line['credit'],
-            (float)$line['debit'],
-            'عكس: ' . ($line['description'] ?? '')
-        ]);
-    }
-
-    akp_audit('REVERSE_PROJECT_JOURNAL', 'journal_entries', $reversalId,
-        ['original_entry_id' => $originalEntryId],
-        ['project_id' => $projectId, 'original_entry_id' => $originalEntryId, 'reason' => $reason]
+/**
+ * Final project approval is a funding COMMITMENT, not a spending event: it earmarks the
+ * project's funding allocations (draft -> posted) but never touches the general ledger or
+ * real cash. Only a posted project_expense (see 'post_expense' below) moves real money.
+ * This mirrors how every other module in this system recognizes cash on a cash basis.
+ */
+function akp_commit_project_funding(int $projectId): void {
+    dbExecute(
+        "UPDATE project_funding_allocations
+         SET status = 'posted', approved_by = ?, posted_by = ?, posted_at = NOW()
+         WHERE project_id = ? AND status = 'draft'",
+        [akp_user_id(), akp_user_id(), $projectId]
     );
-    return $reversalId;
-}
-
-/** Create the project approval journal from explicit FM funding allocations. */
-function akp_create_project_approval_journal(int $projectId, string $projectName, float $budgetFallbackAmount): int {
-    $fundingRows = dbFetchAll(
-        'SELECT source_account_id, SUM(amount) AS amount FROM project_funding_allocations WHERE project_id = ? GROUP BY source_account_id',
-        [$projectId]
-    );
-
-    $fundingTotal = 0.0;
-    foreach ($fundingRows as $row) {
-        $fundingTotal += (float)$row['amount'];
-    }
-
-    if ($fundingTotal <= 0.009) {
-        throw new RuntimeException('لا يمكن إنشاء قيد اعتماد المشروع قبل تسجيل تخصيصات تمويل صريحة من حسابات المؤسسة.');
-    }
-    $journalAmount = $fundingTotal;
-
-    $projectAccount = dbFetchOne('SELECT id FROM accounts WHERE code = \'5100\'');
-    if (!$projectAccount) throw new RuntimeException('حساب مصروفات البرامج والمساعدات (5100) غير موجود.');
-
-    $entryCode = 'JE-PRJ-' . str_pad((string)$projectId, 4, '0', STR_PAD_LEFT) . '-' . date('YmdHis');
-    dbExecute('INSERT INTO journal_entries (entry_code, entry_date, description, reference_type, reference_id, status, created_by) VALUES (?, ?, ?, \'project\', ?, \'posted\', ?)', [
-        $entryCode,
-        date('Y-m-d'),
-        'تخصيص تمويل مشروع: ' . $projectName,
-        $projectId,
-        akp_user_id()
-    ]);
-    $entryId = (int)(dbFetchOne('SELECT LAST_INSERT_ID() AS id')['id'] ?? 0);
-    if ($entryId <= 0) throw new RuntimeException('تعذر إنشاء قيد اعتماد المشروع.');
-
-    dbExecute('INSERT INTO journal_lines (entry_id, account_id, debit, credit, description) VALUES (?, ?, ?, ?, ?)', [
-        $entryId, $projectAccount['id'], $journalAmount, 0, 'تخصيص تمويل مشروع'
-    ]);
-
-    if ($fundingTotal > 0.009) {
-        foreach ($fundingRows as $row) {
-            $sourceAccountId = (int)$row['source_account_id'];
-            $sourceAmount = (float)$row['amount'];
-            if ($sourceAccountId <= 0 || $sourceAmount <= 0) {
-                throw new RuntimeException('يوجد تخصيص تمويل بدون حساب مصدر صالح.');
-            }
-            if (!dbFetchOne('SELECT id FROM accounts WHERE id = ?', [$sourceAccountId])) {
-                throw new RuntimeException('أحد حسابات مصادر التمويل غير موجود.');
-            }
-            dbExecute('INSERT INTO journal_lines (entry_id, account_id, debit, credit, description) VALUES (?, ?, ?, ?, ?)', [
-                $entryId, $sourceAccountId, 0, $sourceAmount, 'تمويل مشروع من مصدر التمويل'
-            ]);
-        }
-    }
-
-    akp_audit('CREATE_PROJECT_JOURNAL', 'journal_entries', $entryId, null, [
-        'project_id' => $projectId,
-        'amount' => $journalAmount,
-        'funding_total' => $fundingTotal,
-        'source_accounts' => $fundingRows
-    ]);
-    return $entryId;
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -374,10 +293,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 dbExecute('UPDATE project_lifecycle SET final_budget_amount = ? WHERE project_id = ?', [$financialRequirement, $id]);
 
-                $entryId = akp_create_project_approval_journal($id, $project['name'], 0);
+                // Earmark the funding: no ledger entry, no cash movement. Real cash only moves
+                // later, per actual expense or documented payment — see 'post_expense' below and
+                // project_payment_receipt.php, which is where journal_entry_id below gets filled in.
+                akp_commit_project_funding($id);
+                $entryId = null;
 
-                // The GM approval journal is the single accounting release event.
-                // Create one documentary payment-evidence row per approved funding source.
+                // Create one documentary payment-evidence row per approved funding source, with
+                // no journal entry yet: nothing has actually been paid or documented at this point.
                 $paymentRows = dbFetchAll(
                     "SELECT f.id, f.source_account_id, f.amount, f.currency_code, f.allocation_date, a.code AS source_code
                      FROM project_funding_allocations f
@@ -407,7 +330,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 dbExecute('COMMIT');
                 akp_audit('GM_APPROVE_PROJECT', 'project_approval', $id, ['approval_status' => 'fm_approved'], ['approval_status' => 'approved']);
 
-                flash('success', 'تم اعتماد المشروع نهائياً وتخصيص الميزانية في الدفاتر.');
+                flash('success', 'تم اعتماد المشروع نهائياً. التمويل مخصص ومحجوز للمشروع، ولن يُخصم من السيولة الفعلية إلا عند توثيق كل دفعة فعلية على حدة.');
             } catch (Throwable $e) {
                 dbExecute('ROLLBACK');
                 throw $e;
@@ -627,16 +550,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             dbExecute('START TRANSACTION');
             try {
                 $oldAmount = (float)$allocation['amount'];
-                $oldApprovalJournal = null;
-                $newApprovalJournal = null;
 
-                if ($approvalStatus === 'approved') {
-                    $oldApprovalJournal = dbFetchOne("SELECT id FROM journal_entries WHERE reference_type = 'project' AND reference_id = ? ORDER BY id DESC LIMIT 1", [$id]);
-                    if ($oldApprovalJournal) {
-                        akp_reverse_project_journal((int)$oldApprovalJournal['id'], $id, $project['name'], 'تعديل تخصيص تمويل رقم ' . $allocationId);
-                    }
-                }
-
+                // Funding allocations are earmarks, not ledger entries (see akp_commit_project_funding):
+                // editing one after approval is just a data correction, with no journal to reverse or recreate.
                 dbExecute('UPDATE project_funding_allocations SET source_type = ?, source_account_id = ?, amount = ?, currency_code = ?, allocation_date = ?, reference_number = ?, description = ? WHERE id = ? AND project_id = ?', [
                     $sourceAccount['code'],
                     $sourceAccount['id'],
@@ -649,19 +565,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $id
                 ]);
 
-                if ($approvalStatus === 'approved') {
-                    $newApprovalJournal = akp_create_project_approval_journal($id, $project['name'], $proposedBudget);
-                }
-
                 dbExecute('COMMIT');
                 akp_audit('UPDATE', 'project_funding_allocation', $allocationId,
                     ['project_id' => $id, 'amount' => $oldAmount],
-                    ['project_id' => $id, 'amount' => $amount, 'approval_status' => $approvalStatus,
-                     'replaced_journal_id' => $oldApprovalJournal['id'] ?? null, 'new_journal_id' => $newApprovalJournal]
+                    ['project_id' => $id, 'amount' => $amount, 'approval_status' => $approvalStatus]
                 );
-                flash('success', $approvalStatus === 'approved'
-                    ? 'تم تعديل تخصيص التمويل. تم عكس القيد السابق وإنشاء القيد الجديد تلقائياً.'
-                    : 'تم تعديل تخصيص التمويل بنجاح.');
+                flash('success', 'تم تعديل تخصيص التمويل بنجاح.');
             } catch (Throwable $e) {
                 dbExecute('ROLLBACK');
                 throw $e;
@@ -680,33 +589,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             dbExecute('START TRANSACTION');
             try {
-                $oldApprovalJournal = null;
-                $newApprovalJournal = null;
-
-                if ($approvalStatus === 'approved') {
-                    $oldApprovalJournal = dbFetchOne("SELECT id FROM journal_entries WHERE reference_type = 'project' AND reference_id = ? ORDER BY id DESC LIMIT 1", [$id]);
-                    if ($oldApprovalJournal) {
-                        akp_reverse_project_journal((int)$oldApprovalJournal['id'], $id, $project['name'], 'حذف تخصيص تمويل رقم ' . $allocationId);
-                    }
-                }
-
+                // Funding allocations are earmarks, not ledger entries (see akp_commit_project_funding):
+                // deleting one after approval is just a data correction, with no journal to reverse or recreate.
                 dbExecute('DELETE FROM project_funding_allocations WHERE id = ? AND project_id = ?', [$allocationId, $id]);
-
-                if ($approvalStatus === 'approved') {
-                    $lifecycle = dbFetchOne('SELECT final_budget_amount FROM project_lifecycle WHERE project_id = ?', [$id]);
-                    $budgetFallback = (float)($lifecycle['final_budget_amount'] ?? 0);
-                    $newApprovalJournal = akp_create_project_approval_journal($id, $project['name'], $budgetFallback);
-                }
 
                 dbExecute('COMMIT');
                 akp_audit('DELETE', 'project_funding_allocation', $allocationId,
                     ['project_id' => $id, 'amount' => $allocation['amount']],
-                    ['approval_status' => $approvalStatus,
-                     'replaced_journal_id' => $oldApprovalJournal['id'] ?? null, 'new_journal_id' => $newApprovalJournal]
+                    ['approval_status' => $approvalStatus]
                 );
-                flash('success', $approvalStatus === 'approved'
-                    ? 'تم حذف تخصيص التمويل. تم عكس القيد السابق وإنشاء القيد الجديد تلقائياً.'
-                    : 'تم حذف تخصيص التمويل.');
+                flash('success', 'تم حذف تخصيص التمويل.');
             } catch (Throwable $e) {
                 dbExecute('ROLLBACK');
                 throw $e;
@@ -1075,11 +967,11 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     <div class="card mb-4 fade-in border-success">
         <div class="card-header bg-success text-white"><i class="fas fa-user-tie me-2"></i>اعتماد المدير العام</div>
         <div class="card-body">
-            <p class="mb-3">المشروع معتمد مالياً. راجع مصادر التمويل والمبالغ المسجلة أدناه، ثم اعتمد نهائياً. سيُنشأ القيد المحاسبي من حسابات التمويل التي اعتمدها المدير المالي فقط.</p>
+            <p class="mb-3">المشروع معتمد مالياً. راجع مصادر التمويل والمبالغ المسجلة أدناه، ثم اعتمد نهائياً. سيتم تخصيص التمويل وحجزه للمشروع فوراً، دون أي أثر على السيولة الفعلية أو القيود المحاسبية — لا يُخصم أي مبلغ من الصندوق أو البنك أو المحفظة الإلكترونية إلا عند توثيق كل دفعة فعلية على حدة لاحقاً.</p>
             <form method="post" class="project-action-form d-inline">
                 <?php echo csrf_field(); ?>
                 <input type="hidden" name="action" value="approve_project">
-                <button class="btn btn-success" onclick="return confirm('هل أنت متأكد من الاعتماد النهائي وإنشاء القيد المحاسبي؟')"><i class="fas fa-check-double me-1"></i> اعتماد نهائي وإنشاء قيد</button>
+                <button class="btn btn-success" onclick="return confirm('هل أنت متأكد من الاعتماد النهائي لهذا المشروع؟ سيتم تخصيص التمويل وحجزه للمشروع.')"><i class="fas fa-check-double me-1"></i> اعتماد نهائي وإنشاء قيد</button>
             </form>
             <form method="post" class="project-action-form d-inline ms-2">
                 <?php echo csrf_field(); ?>
