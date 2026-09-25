@@ -1798,11 +1798,13 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                         </div>
                     </div>
 
+                    <div id="budget-validation-message" class="alert alert-info py-2 d-none mb-3"></div>
+
                     <?php if ($id && !$canEditInitialBudget): ?>
                     </fieldset>
                     <?php endif; ?>
 
-                                            <div class="col-12 project-field">
+                    <div class="col-12 project-field">
                             <label class="form-label">المتطلبات الحكومية الأولية</label>
                             <div id="government-requirements-container">
                                 <?php if (!$governmentRequirementRows) $governmentRequirementRows = [['requirement_text' => '', 'fee_amount' => '']]; ?>
@@ -1817,7 +1819,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                             <button type="button" class="btn btn-sm btn-outline-primary" onclick="addGovernmentRequirementRow()" ><i class="fas fa-plus me-1"></i>إضافة متطلب</button>
                         </div>
 
-                    <div id="budget-lines-lock-wrapper" class="budget-dependent is-locked" aria-disabled="true">
+                    <div id="budget-lines-lock-wrapper" class="budget-dependent <?php echo ($id && !$canEditInitialBudget) ? 'is-locked' : ''; ?>" aria-disabled="<?php echo ($id && !$canEditInitialBudget) ? 'true' : 'false'; ?>">
                         <?php if ($id && !$canEditInitialBudget): ?>
                         <fieldset id="budget-lines-fieldset" disabled>
                         <?php else: ?>
