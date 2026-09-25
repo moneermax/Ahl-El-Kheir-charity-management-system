@@ -777,3 +777,16 @@ After the PM → FM → GM → PM final approval → explicit PM launch workflow
 Implementation: modules/projects/view.php.
 
 Runtime verification remains required locally for the new supervisor expense-entry and receipt attachment path before this work unit is marked fully verified.
+
+
+---
+
+## Resolution — 2026-09-25: Project view conditional closure
+
+A PHP parse error was identified in modules/projects/view.php after the Project Supervisor expense/visibility changes. The approved-project payment-evidence block opened an outer approval conditional and a nested Project Supervisor visibility conditional, but only the nested conditional was closed before the following expenses block began.
+
+- Added the missing endif for the outer approved-project conditional.
+- No business logic, permissions, database schema, accounting behavior, or workflow was changed by this correction.
+- The correction restores normal parsing of modules/projects/view.php so the project view can render again.
+
+Implementation: modules/projects/view.php.
