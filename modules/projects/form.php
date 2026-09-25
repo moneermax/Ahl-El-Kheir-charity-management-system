@@ -51,17 +51,6 @@ if ($id && !akp_can_edit_section('general', $id) && !$canEditRejectedBudget) {
 }
 
 $returnQuery=trim((string)($_GET['return']??$_POST['return']??'')); $backUrl=APP_URL.'modules/projects/index.php'; if($returnQuery!==''){$backUrl.='?'.ltrim(rawurldecode($returnQuery),'?');}
-$budgetDisplayTarget = (float)($input['target_amount'] ?? 0);
-$budgetDisplayGovernmentFees = 0.0;
-foreach ($governmentRequirementRows as $governmentRow) {
-    $budgetDisplayGovernmentFees += (float)($governmentRow['fee_amount'] ?? 0);
-}
-$budgetDisplayLinesTotal = 0.0;
-foreach ($existingBudgetLines as $budgetLine) {
-    $budgetDisplayLinesTotal += (float)($budgetLine['estimated_amount'] ?? 0);
-}
-$budgetDisplayGrandTotal = $budgetDisplayTarget + $budgetDisplayGovernmentFees;
-$budgetDisplayDifference = $budgetDisplayLinesTotal - $budgetDisplayGrandTotal;
 
 $pageTitle = $id ? 'تعديل البيانات الأساسية للمشروع' : 'مشروع جديد';
 $active = 'projects';
@@ -218,6 +207,18 @@ if ($id) {
             [$editBudgetId]
         );
     }
+
+    $budgetDisplayTarget = (float)($input['target_amount'] ?? 0);
+    $budgetDisplayGovernmentFees = 0.0;
+    foreach ($governmentRequirementRows as $governmentRow) {
+        $budgetDisplayGovernmentFees += (float)($governmentRow['fee_amount'] ?? 0);
+    }
+    $budgetDisplayLinesTotal = 0.0;
+    foreach ($existingBudgetLines as $budgetLine) {
+        $budgetDisplayLinesTotal += (float)($budgetLine['estimated_amount'] ?? 0);
+    }
+    $budgetDisplayGrandTotal = $budgetDisplayTarget + $budgetDisplayGovernmentFees;
+    $budgetDisplayDifference = $budgetDisplayLinesTotal - $budgetDisplayGrandTotal;
 
     $partnerRows = dbFetchAll('SELECT partner_name, role_description FROM project_partners WHERE project_id = ? ORDER BY id ASC', [$id]);
     $procurementRows = dbFetchAll('SELECT method_name, notes FROM project_procurement_methods WHERE project_id = ? ORDER BY id ASC', [$id]);
@@ -1722,7 +1723,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     <?php if ($id && !$canEditRejectedBudget): ?>
                     <div class="alert alert-info py-2">
                         <i class="fas fa-lock me-1"></i>
-                        الميزانية الأولية ومتطلباتها الحكومية المعتمدة عند إنشاء المشروع للعرض فقط. يمكن تعديلها فقط بعد رفضها من المدير المالي.
+                        الميزانية الأولية المعتمدة عند إنشاء المشروع للعرض فقط. المتطلبات الحكومية والرسوم المرتبطة بها يمكن تحديثها من صفحة التعديل.
                     </div>
                     <fieldset disabled>
                     <?php endif; ?>
@@ -1790,9 +1791,9 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                                 <?php if (!$governmentRequirementRows) $governmentRequirementRows = [['requirement_text' => '', 'fee_amount' => '']]; ?>
                                 <?php foreach ($governmentRequirementRows as $index => $row): ?>
                                 <div class="repeatable-row row g-2 align-items-end mb-2">
-                                    <div class="col-md-8"><label class="form-label small">المتطلب الحكومي</label><input type="text" name="government_requirements[<?php echo (int)$index; ?>][requirement]" class="form-control" value="<?php echo e($row['requirement_text'] ?? ''); ?>" placeholder="مثال: تصريح من الجهة المختصة" <?php echo ($id && !$canEditRejectedBudget) ? 'readonly' : ''; ?>></div>
+                                    <div class="col-md-8"><label class="form-label small">المتطلب الحكومي</label><input type="text" name="government_requirements[<?php echo (int)$index; ?>][requirement]" class="form-control" value="<?php echo e($row['requirement_text'] ?? ''); ?>" placeholder="مثال: تصريح من الجهة المختصة" ?>></div>
                                     <div class="col-md-3"><label class="form-label small">الرسوم الحكومية (SDG)</label><input type="number" step="0.01" min="0" name="government_requirements[<?php echo (int)$index; ?>][fee]" class="form-control" value="<?php echo e($row['fee_amount'] ?? ''); ?>" placeholder="0.00" <?php echo ($id && !$canEditRejectedBudget) ? 'readonly' : ''; ?>></div>
-                                    <div class="col-md-1"><button type="button" class="btn btn-outline-danger w-100" onclick="removeRepeatableRow(this,'government-requirements-container')" title="حذف" <?php echo ($id && !$canEditRejectedBudget) ? 'disabled' : ''; ?>><i class="fas fa-trash"></i></button></div>
+                                    <div class="col-md-1"><button type="button" class="btn btn-outline-danger w-100" onclick="removeRepeatableRow(this,'government-requirements-container')" title="حذف" ?>><i class="fas fa-trash"></i></button></div>
                                 </div>
                                 <?php endforeach; ?>
                             </div>
