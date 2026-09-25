@@ -2118,16 +2118,25 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 
                 <?php if ($progressUpdates): ?>
                     <div class="table-responsive mt-3">
-                        <table class="table table-sm table-bordered align-middle mb-0">
+                        <table class="table table-sm table-bordered align-middle mb-0 project-progress-table">
+                            <colgroup>
+                                <col style="width:11%;">
+                                <col style="width:11%;">
+                                <col style="width:18%;">
+                                <col style="width:16%;">
+                                <col style="width:14%;">
+                                <col style="width:18%;">
+                                <col style="width:12%;">
+                            </colgroup>
                             <thead class="table-primary">
                                 <tr>
-                                    <th>التاريخ</th>
-                                    <th>نسبة الإنجاز</th>
-                                    <th>ملخص التقدم</th>
-                                    <th>الإنجازات</th>
-                                    <th>المعوقات</th>
-                                    <th>الخطوات القادمة</th>
-                                    <th>بواسطة</th>
+                                    <th scope="col">التاريخ</th>
+                                    <th scope="col">نسبة الإنجاز</th>
+                                    <th scope="col">ملخص التقدم</th>
+                                    <th scope="col">الإنجازات</th>
+                                    <th scope="col">المعوقات</th>
+                                    <th scope="col">الخطوات القادمة</th>
+                                    <th scope="col">بواسطة</th>
                                 </tr>
                             </thead>
                             <tbody>
