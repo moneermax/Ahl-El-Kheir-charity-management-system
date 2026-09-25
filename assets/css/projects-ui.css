@@ -67,6 +67,49 @@
 .project-module-page .project-table table { margin-bottom:0; }
 .project-module-page .project-table thead th { background:#f8fafc; color:#475467; font-size:.76rem; font-weight:800; white-space:nowrap; }
 .project-module-page .project-table td { vertical-align:middle; }
+.project-module-page .project-progress-inline {
+    display:flex;
+    align-items:flex-end;
+    gap:.65rem;
+    width:100%;
+    flex-wrap:nowrap;
+}
+.project-module-page .project-progress-field {
+    display:flex;
+    align-items:center;
+    gap:.4rem;
+    min-width:0;
+    flex:1 1 0;
+}
+.project-module-page .project-progress-field label {
+    flex:0 0 auto;
+    margin:0;
+    white-space:nowrap;
+    font-size:.76rem;
+    font-weight:700;
+    color:#344054;
+}
+.project-module-page .project-progress-field .form-control {
+    min-width:0;
+    flex:1 1 auto;
+}
+.project-module-page .project-progress-save {
+    flex:0 0 auto;
+    white-space:nowrap;
+}
+@media (max-width:1199.98px) {
+    .project-module-page .project-progress-inline {
+        flex-wrap:wrap;
+    }
+    .project-module-page .project-progress-field {
+        flex:1 1 calc(33.333% - .65rem);
+    }
+}
+@media (max-width:767.98px) {
+    .project-module-page .project-progress-field {
+        flex:1 1 100%;
+    }
+}
 .project-module-page .project-progress-table {
     width:100%;
     table-layout:fixed;
