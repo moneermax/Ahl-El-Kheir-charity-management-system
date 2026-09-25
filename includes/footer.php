@@ -163,7 +163,7 @@ function akInstallBackButtons(){
     if (!content) return;
 
     var path = window.location.pathname.replace(/\\/g, '/');
-    var isDashboard = /(^|\\/)dashboard\\//i.test(path) || /(^|\\/)modules\\/accounting\\/fm_dashboard\\.php$/i.test(path);
+    var isDashboard = /(^|\/)dashboard\//i.test(path) || /(^|\/)modules\/accounting\/fm_dashboard\.php$/i.test(path);
     if (isDashboard) return;
 
     /*
