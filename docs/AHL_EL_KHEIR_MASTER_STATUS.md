@@ -986,3 +986,18 @@ Important workflow note: the user clarified that **funding entry is not a Projec
 ### Projects — 2026-09-22 operational role clarification
 - Project Supervisor owns operational project data entry for documents/receipts/certificates, external labor/helpers, milestones, and progress updates.
 - Projects Manager follows up and manages workflow; those operational sections are read-only for the Projects Manager.
+
+
+## 2026-09-25 — Projects workflow runtime certification checkpoint
+
+The Projects approval workflow has now passed a controlled notification/runtime test through final approval with PRJ-0010 / project ID 10 (اختبار المشاريع 2026). PM submission, FM financial approval, GM final-approval notification, PM final-approval confirmation, and the existing FM post-final-approval notifications were observed successfully.
+
+The final approval lifecycle was corrected: GM/VGM approval no longer activates the project automatically. It leaves the project in planned; the Projects Manager must explicitly launch the project. Launch requires final approval, planned lifecycle, and an active assigned Project Supervisor, then changes the project/lifecycle to active, records status history/audit, and sends the assigned supervisor a launch notification.
+
+Role/lifecycle enforcement now includes: PM general project editing and budget preparation limited to draft/rejected apart from explicit review/launch actions; Project Supervisor direct access blocked before final approval + launch; Project Supervisor dashboard only lists finally approved projects in operational states; PM dashboard includes a dedicated approved-but-not-launched queue.
+
+Runtime dashboard collation issue is resolved. The cause was the mixed collations of other_projects.status and project_lifecycle.lifecycle_status, combined through COALESCE, plus unnormalized status IN comparisons. Dashboard comparisons were normalized explicitly. Final supervisor-dashboard fix: b3c23386fc54d27705df6cc1e3546430935135cd.
+
+Current runtime status: PM dashboard and Project Supervisor dashboard both open successfully. The explicit PM launch → PS notification → PS dashboard appearance sequence remains the next controlled test and has not yet been certified.
+
+No schema changes, triggers, views, stored procedures, functions, or events were introduced by these workflow/dashboard fixes.
