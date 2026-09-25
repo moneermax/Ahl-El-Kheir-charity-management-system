@@ -798,3 +798,15 @@ Implementation: modules/projects/view.php.
 - Project Supervisor expense success feedback is now rendered inside the **المصروفات** section instead of the global page alert area, and the page returns the user to that section after a successful save.
 - The expense table header now uses a distinct Bootstrap table color (`table-primary`) for clearer separation from the data rows.
 - No database/schema changes, migrations, triggers, views, stored procedures, or accounting behavior were changed.
+
+
+## 2026-09-25 — Project expense/receipt and supporting-document separation
+
+- The Project Supervisor's **المصروفات** section is now the single project-view location for expense receipts. Receipt-type records are excluded from the separate documents list, so an expense receipt is not duplicated under the general documents section.
+- The separate documents section is now labeled **الوثائق والتصاريح والشهادات** and is intended for non-receipt supporting records such as government permits, contracts, certificates, quotations, invoices, progress reports, closure reports, and other project documents.
+- Project Supervisors can edit or delete their own operational expense records while the expense remains in \`draft\`; editing can also replace the attached receipt. Submitted/approved/posted expenses remain protected from destructive edits/deletes.
+- Project Supervisors can edit or delete unverified supporting documents while the project remains editable; verified documents are protected, and documents linked as an expense's primary document cannot be deleted through the general documents section.
+- Edit operations use the existing project document/expense tables and protected project storage. Delete operations remove the associated stored file when appropriate and write audit events.
+- Both record types now expose **تعديل** and **حذف** controls beside eligible records, with professional confirmation for destructive actions.
+- The shared Back-button helper is now deterministic and idempotent: audited non-dashboard pages render exactly two shared Back controls inside \`.content\`, one top-left and one bottom-right, with no duplicate generated control.
+- No new table, column, migration, trigger, view, stored procedure, or accounting event was introduced. PM/FM/GM approval, funding, payment-evidence, posting, and launch workflows remain unchanged.
