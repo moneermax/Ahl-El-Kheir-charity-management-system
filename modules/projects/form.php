@@ -28,6 +28,7 @@ if (!$id && !akp_can_create_project()) {
 }
 
 $canEditRejectedBudget = false;
+$canEditInitialBudget = false;
 $editBudgetId = 0;
 $existingBudgetLines = [];
 
@@ -36,9 +37,20 @@ if ($id) {
         'SELECT approval_status FROM project_approval WHERE project_id = ?',
         [$id]
     );
+    $editApprovalStatus = (string)($editApproval['approval_status'] ?? '');
+
     $canEditRejectedBudget =
         akp_role() === 'projects_manager'
-        && (string)($editApproval['approval_status'] ?? '') === 'rejected';
+        && $editApprovalStatus === 'rejected';
+
+    /*
+     * The Projects Manager may edit the initial budget while the project
+     * is still in draft, before it is sent to FM. A rejected project is
+     * also editable so it can be corrected and resubmitted.
+     */
+    $canEditInitialBudget =
+        akp_role() === 'projects_manager'
+        && in_array($editApprovalStatus, ['draft', 'rejected'], true);
 }
 
 if ($id && !akp_can_edit_section('general', $id) && !$canEditRejectedBudget) {
@@ -392,7 +404,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $budgetLines = [];
         $totalBudgetCents = 0;
 
-        if (!$id || $canEditRejectedBudget) {
+        if (!$id || $canEditInitialBudget) {
 
             $submittedBudgetLines =
                 $_POST['budget_lines'] ?? [];
@@ -1252,7 +1264,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
              | UPDATE EXISTING BUDGET AFTER FM REJECTION
              |--------------------------------------------------------------------------
              */
-            if ($canEditRejectedBudget && $editBudgetId > 0 && !empty($budgetLines)) {
+            if ($id && $canEditInitialBudget && $editBudgetId > 0 && !empty($budgetLines)) {
                 dbExecute('DELETE FROM project_budget_lines WHERE budget_id = ?', [$editBudgetId]);
 
                 foreach ($budgetLines as $line) {
@@ -1283,7 +1295,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 );
 
                 akp_audit(
-                    'UPDATE_BUDGET_AFTER_FM_REJECTION',
+                    'UPDATE_INITIAL_BUDGET',
                     'project_budget',
                     $editBudgetId,
                     null,
@@ -1720,12 +1732,11 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 </section>
 
                 <section class="project-form-section">
-                    <?php if ($id && !$canEditRejectedBudget): ?>
+                    <?php if ($id && !$canEditInitialBudget): ?>
                     <div class="alert alert-info py-2">
                         <i class="fas fa-lock me-1"></i>
-                        الميزانية الأولية المعتمدة عند إنشاء المشروع للعرض فقط. المتطلبات الحكومية والرسوم المرتبطة بها يمكن تحديثها من صفحة التعديل.
+                        تم إرسال المشروع لدورة الاعتماد؛ الميزانية الأولية للعرض فقط. يمكن تعديلها قبل الإرسال للمدير المالي أو بعد الرفض.
                     </div>
-                    <fieldset disabled>
                     <?php endif; ?>
                     <h5 class="project-form-section-title">
                         <i class="fas fa-coins text-primary"></i>
@@ -1771,7 +1782,11 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     </div>
                 </section>
 
-                    <div class="row g-3 mb-3">
+                    <?php if ($id && !$canEditInitialBudget): ?>
+                    <fieldset disabled>
+                    <?php endif; ?>
+
+<div class="row g-3 mb-3">
                         <div class="col-md-5 project-field project-field-inline">
                             <label class="form-label">الميزانية التقديرية <span class="text-danger">*</span></label>
                             <input type="number" step="0.01" min="0" name="target_amount" id="target_amount" class="form-control" value="<?php echo e($input['target_amount']); ?>">
@@ -1783,7 +1798,9 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                         </div>
                     </div>
 
-                    <div id="budget-validation-message" class="alert alert-info py-2 d-none mb-3"></div>
+                    <?php if ($id && !$canEditInitialBudget): ?>
+                    </fieldset>
+                    <?php endif; ?>
 
                                             <div class="col-12 project-field">
                             <label class="form-label">المتطلبات الحكومية الأولية</label>
@@ -1792,16 +1809,20 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                                 <?php foreach ($governmentRequirementRows as $index => $row): ?>
                                 <div class="repeatable-row row g-2 align-items-end mb-2">
                                     <div class="col-md-8"><label class="form-label small">المتطلب الحكومي</label><input type="text" name="government_requirements[<?php echo (int)$index; ?>][requirement]" class="form-control" value="<?php echo e($row['requirement_text'] ?? ''); ?>" placeholder="مثال: تصريح من الجهة المختصة" ?>></div>
-                                    <div class="col-md-3"><label class="form-label small">الرسوم الحكومية (SDG)</label><input type="number" step="0.01" min="0" name="government_requirements[<?php echo (int)$index; ?>][fee]" class="form-control" value="<?php echo e($row['fee_amount'] ?? ''); ?>" placeholder="0.00" <?php echo ($id && !$canEditRejectedBudget) ? 'readonly' : ''; ?>></div>
+                                    <div class="col-md-3"><label class="form-label small">الرسوم الحكومية (SDG)</label><input type="number" step="0.01" min="0" name="government_requirements[<?php echo (int)$index; ?>][fee]" class="form-control" value="<?php echo e($row['fee_amount'] ?? ''); ?>" placeholder="0.00" ></div>
                                     <div class="col-md-1"><button type="button" class="btn btn-outline-danger w-100" onclick="removeRepeatableRow(this,'government-requirements-container')" title="حذف" ?>><i class="fas fa-trash"></i></button></div>
                                 </div>
                                 <?php endforeach; ?>
                             </div>
-                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="addGovernmentRequirementRow()" <?php echo ($id && !$canEditRejectedBudget) ? 'disabled' : ''; ?>><i class="fas fa-plus me-1"></i>إضافة متطلب</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="addGovernmentRequirementRow()" ><i class="fas fa-plus me-1"></i>إضافة متطلب</button>
                         </div>
 
                     <div id="budget-lines-lock-wrapper" class="budget-dependent is-locked" aria-disabled="true">
+                        <?php if ($id && !$canEditInitialBudget): ?>
+                        <fieldset id="budget-lines-fieldset" disabled>
+                        <?php else: ?>
                         <fieldset id="budget-lines-fieldset">
+                        <?php endif; ?>
                             <div id="budget-lines-container">
 <?php
 $budgetDisplayLines = $existingBudgetLines;
@@ -1834,7 +1855,7 @@ foreach ($budgetDisplayLines as $index => $line):
                         </fieldset>
                     </div>
 
-                    <button type="button" id="add-budget-line-button" class="btn btn-sm btn-outline-primary mt-2 budget-dependent" onclick="addBudgetLine()">
+                    <button type="button" id="add-budget-line-button" class="btn btn-sm btn-outline-primary mt-2 budget-dependent" <?php echo ($id && !$canEditInitialBudget) ? 'disabled' : ''; ?> onclick="addBudgetLine()">
                         <i class="fas fa-plus me-1"></i>إضافة بند آخر
                     </button>
 
@@ -1848,9 +1869,6 @@ foreach ($budgetDisplayLines as $index => $line):
                         </div>
                     </div>
                 </section>
-                    <?php if ($id && !$canEditRejectedBudget): ?>
-                    </fieldset>
-                    <?php endif; ?>
 
             </div>
 
@@ -1881,7 +1899,7 @@ foreach ($budgetDisplayLines as $index => $line):
 </div>
 
 
-<?php if (!$id || $canEditRejectedBudget): ?>
+<?php if (!$id || $canEditInitialBudget): ?>
 
 <script>
 
