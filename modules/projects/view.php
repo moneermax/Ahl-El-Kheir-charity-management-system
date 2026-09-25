@@ -97,7 +97,7 @@ $approvedBudgetTotal = 0.0;
 if ($approvedBudgetId > 0) $approvedBudgetTotal = (float)(dbFetchOne('SELECT COALESCE(SUM(estimated_amount), 0) AS total FROM project_budget_lines WHERE budget_id = ?', [$approvedBudgetId])['total'] ?? 0);
 $projectExpenseTotal = (float)(dbFetchOne('SELECT COALESCE(SUM(amount), 0) AS total FROM project_expenses WHERE project_id = ?', [$id])['total'] ?? 0);
 $projectExpenseRemaining = $approvedBudgetTotal - $projectExpenseTotal;
-$documents = dbFetchAll('SELECT d.*, u.full_name AS uploader_name FROM project_documents d LEFT JOIN users u ON u.id = d.uploaded_by WHERE d.project_id = ? ORDER BY d.id DESC', [$id]);
+$documents = dbFetchAll("SELECT d.*, u.full_name AS uploader_name FROM project_documents d LEFT JOIN users u ON u.id = d.uploaded_by WHERE d.project_id = ? AND d.document_type <> 'receipt' ORDER BY d.id DESC", [$id]);
 $milestones = dbFetchAll('SELECT * FROM project_milestones WHERE project_id = ? ORDER BY planned_date, id', [$id]);
 $progressUpdates = dbFetchAll('SELECT p.*, u.full_name AS submitter_name FROM project_progress_updates p LEFT JOIN users u ON p.submitted_by = u.id WHERE p.project_id = ? ORDER BY p.update_date DESC', [$id]);
 $labors = dbFetchAll('SELECT lh.*, u.full_name AS supervisor_name FROM project_labor_helpers lh LEFT JOIN users u ON u.id = lh.supervisor_user_id WHERE lh.project_id = ? ORDER BY lh.id DESC', [$id]);
@@ -777,6 +777,98 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             akp_audit('CREATE', 'project_expense', $expenseId, null, ['project_id'=>$id,'amount'=>$amount,'recorded_by_role'=>'project_supervisor','primary_document_id'=>$primaryDocumentId]);
             $_SESSION['project_expense_success'] = 'تم تسجيل المصروف كمسودة وإرفاق الإيصال إن وُجد.';
 
+        } elseif ($action === 'edit_ps_expense') {
+            if ($role !== 'project_supervisor' || !akp_is_primary_supervisor($id) || $closed) throw new RuntimeException('تعديل مصروفات التنفيذ متاح لمشرف المشروع المكلّف فقط.');
+            $expenseId = (int)($_POST['expense_id'] ?? 0);
+            $expense = dbFetchOne('SELECT * FROM project_expenses WHERE id = ? AND project_id = ?', [$expenseId, $id]);
+            if (!$expense || $expense['status'] !== 'draft') throw new RuntimeException('لا يمكن تعديل المصروف بعد إرساله أو اعتماده.');
+            $amount = (float)($_POST['expense_amount'] ?? 0);
+            $description = akp_post_value('expense_description');
+            $expenseDate = akp_post_value('expense_date', date('Y-m-d'));
+            $category = akp_post_value('expense_category', 'تنفيذ المشروع');
+            if ($amount <= 0 || $description === '') throw new RuntimeException('وصف المصروف والمبلغ مطلوبان.');
+            $approvedBudgetTotal = (float)(dbFetchOne("SELECT COALESCE(SUM(bl.estimated_amount), 0) AS total FROM project_budgets b JOIN project_budget_lines bl ON bl.budget_id = b.id WHERE b.id = (SELECT pb.id FROM project_budgets pb WHERE pb.project_id = ? AND pb.status = 'approved' ORDER BY pb.version_no DESC, pb.id DESC LIMIT 1)", [$id])['total'] ?? 0);
+            $existingExpenseTotal = (float)(dbFetchOne('SELECT COALESCE(SUM(amount), 0) AS total FROM project_expenses WHERE project_id = ? AND id <> ?', [$id, $expenseId])['total'] ?? 0);
+            if ($approvedBudgetTotal <= 0) throw new RuntimeException('لا توجد ميزانية معتمدة من المدير المالي يمكن تسجيل المصروفات عليها.');
+            if (($existingExpenseTotal + $amount) > ($approvedBudgetTotal + 0.01)) {
+                $remaining = max(0, $approvedBudgetTotal - $existingExpenseTotal);
+                throw new RuntimeException('المبلغ يتجاوز الرصيد المتبقي من الميزانية المعتمدة. المتبقي: ' . number_format($remaining, 2) . ' ' . ($project['currency_code'] ?: 'SDG') . '.');
+            }
+
+            $primaryDocumentId = !empty($expense['primary_document_id']) ? (int)$expense['primary_document_id'] : null;
+            $storedAbsolutePath = null;
+            $oldReceiptPath = null;
+            dbExecute('START TRANSACTION');
+            try {
+                if (!empty($_FILES['expense_receipt']['name'])) {
+                    if ($_FILES['expense_receipt']['error'] !== UPLOAD_ERR_OK) throw new RuntimeException('فشل في رفع إيصال المصروف.');
+                    $file = $_FILES['expense_receipt'];
+                    if ((int)($file['size'] ?? 0) > 10 * 1024 * 1024) throw new RuntimeException('حجم إيصال المصروف يجب ألا يتجاوز 10 ميجابايت.');
+                    $mime = mime_content_type($file['tmp_name']);
+                    $allowed = ['application/pdf'=>'pdf','image/jpeg'=>'jpg','image/png'=>'png'];
+                    if (!isset($allowed[$mime])) throw new RuntimeException('نوع إيصال المصروف غير مسموح. استخدم PDF أو JPG أو PNG.');
+                    $relativeDir = 'storage/documents/projects/' . $id;
+                    $absoluteDir = dirname(__DIR__, 2) . '/' . $relativeDir;
+                    if (!is_dir($absoluteDir) && !mkdir($absoluteDir, 0750, true)) throw new RuntimeException('تعذر إنشاء مجلد وثائق المشروع.');
+                    $stored = bin2hex(random_bytes(16)) . '.' . $allowed[$mime];
+                    $storedAbsolutePath = $absoluteDir . '/' . $stored;
+                    if (!move_uploaded_file($file['tmp_name'], $storedAbsolutePath)) throw new RuntimeException('تعذر حفظ إيصال المصروف.');
+                    $relativePath = $relativeDir . '/' . $stored;
+
+                    if ($primaryDocumentId) {
+                        $oldDoc = dbFetchOne('SELECT file_path FROM project_documents WHERE id = ? AND project_id = ? AND document_type = \'receipt\'', [$primaryDocumentId, $id]);
+                        $oldReceiptPath = $oldDoc['file_path'] ?? null;
+                        dbExecute('UPDATE project_documents SET title = ?, file_path = ?, original_name = ?, mime_type = ?, file_size = ?, document_date = ?, issuer = ?, reference_number = ?, amount = ?, currency_code = ?, notes = ? WHERE id = ? AND project_id = ?', ['إيصال مصروف: ' . $description, $relativePath, $file['name'], $mime, $file['size'], $expenseDate ?: null, akp_post_value('vendor_name') ?: null, akp_post_value('invoice_number') ?: null, $amount, $project['currency_code'] ?: 'SDG', 'مرفق مباشرة بالمصروف المسجل بواسطة مشرف المشروع.', $primaryDocumentId, $id]);
+                    } else {
+                        dbExecute('INSERT INTO project_documents (project_id, document_type, title, file_path, original_name, mime_type, file_size, document_date, issuer, reference_number, amount, currency_code, notes, uploaded_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)', [$id,'receipt','إيصال مصروف: '.$description,$relativePath,$file['name'],$mime,$file['size'],$expenseDate ?: null,akp_post_value('vendor_name') ?: null,akp_post_value('invoice_number') ?: null,$amount,$project['currency_code'] ?: 'SDG','مرفق مباشرة بالمصروف المسجل بواسطة مشرف المشروع.',akp_user_id()]);
+                        $primaryDocumentId = (int)(dbFetchOne('SELECT LAST_INSERT_ID() AS id')['id'] ?? 0);
+                    }
+                } elseif ($primaryDocumentId) {
+                    dbExecute('UPDATE project_documents SET title = ?, document_date = ?, issuer = ?, reference_number = ?, amount = ?, currency_code = ?, notes = ? WHERE id = ? AND project_id = ? AND document_type = \'receipt\'', ['إيصال مصروف: ' . $description, $expenseDate ?: null, akp_post_value('vendor_name') ?: null, akp_post_value('invoice_number') ?: null, $amount, $project['currency_code'] ?: 'SDG', 'مرفق مباشرة بالمصروف المسجل بواسطة مشرف المشروع.', $primaryDocumentId, $id]);
+                }
+
+                dbExecute('UPDATE project_expenses SET expense_date = ?, category = ?, description = ?, vendor_name = ?, invoice_number = ?, amount = ?, currency_code = ?, primary_document_id = ? WHERE id = ? AND project_id = ?', [$expenseDate, $category, $description, akp_post_value('vendor_name') ?: null, akp_post_value('invoice_number') ?: null, $amount, $project['currency_code'] ?: 'SDG', $primaryDocumentId, $expenseId, $id]);
+                dbExecute('COMMIT');
+            } catch (Throwable $e) {
+                dbExecute('ROLLBACK');
+                if ($storedAbsolutePath && is_file($storedAbsolutePath)) @unlink($storedAbsolutePath);
+                throw $e;
+            }
+
+            if ($oldReceiptPath && $storedAbsolutePath) {
+                $oldAbsolutePath = dirname(__DIR__, 2) . '/' . $oldReceiptPath;
+                if ($oldAbsolutePath !== $storedAbsolutePath && is_file($oldAbsolutePath)) @unlink($oldAbsolutePath);
+            }
+            akp_audit('UPDATE', 'project_expense', $expenseId, ['project_id'=>$id,'amount'=>(float)$expense['amount']], ['project_id'=>$id,'amount'=>$amount,'primary_document_id'=>$primaryDocumentId]);
+            $_SESSION['project_expense_success'] = 'تم تعديل المصروف بنجاح.';
+        } elseif ($action === 'delete_ps_expense') {
+            if ($role !== 'project_supervisor' || !akp_is_primary_supervisor($id) || $closed) throw new RuntimeException('حذف مصروفات التنفيذ متاح لمشرف المشروع المكلّف فقط.');
+            $expenseId = (int)($_POST['expense_id'] ?? 0);
+            $expense = dbFetchOne('SELECT * FROM project_expenses WHERE id = ? AND project_id = ?', [$expenseId, $id]);
+            if (!$expense || $expense['status'] !== 'draft') throw new RuntimeException('لا يمكن حذف المصروف بعد إرساله أو اعتماده.');
+            $receiptPath = null;
+            if (!empty($expense['primary_document_id'])) {
+                $receipt = dbFetchOne('SELECT file_path FROM project_documents WHERE id = ? AND project_id = ? AND document_type = \'receipt\'', [(int)$expense['primary_document_id'], $id]);
+                $receiptPath = $receipt['file_path'] ?? null;
+            }
+            dbExecute('START TRANSACTION');
+            try {
+                if (!empty($expense['primary_document_id'])) {
+                    dbExecute('DELETE FROM project_documents WHERE id = ? AND project_id = ? AND document_type = \'receipt\'', [(int)$expense['primary_document_id'], $id]);
+                }
+                dbExecute('DELETE FROM project_expenses WHERE id = ? AND project_id = ? AND status = \'draft\'', [$expenseId, $id]);
+                dbExecute('COMMIT');
+            } catch (Throwable $e) {
+                dbExecute('ROLLBACK');
+                throw $e;
+            }
+            if ($receiptPath) {
+                $receiptAbsolutePath = dirname(__DIR__, 2) . '/' . $receiptPath;
+                if (is_file($receiptAbsolutePath)) @unlink($receiptAbsolutePath);
+            }
+            akp_audit('DELETE', 'project_expense', $expenseId, ['project_id'=>$id,'amount'=>(float)$expense['amount']], null);
+            $_SESSION['project_expense_success'] = 'تم حذف المصروف بنجاح.';
+            
         } elseif ($action === 'add_expense') {
             // ... (Original add_expense logic preserved exactly)
             if (!akp_can_edit_section('finance', $id) || $closed) throw new RuntimeException('لا تملك صلاحية إدخال مصروف.');
@@ -857,6 +949,61 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $documentId = (int)(dbFetchOne('SELECT LAST_INSERT_ID() AS id')['id'] ?? 0);
             akp_audit('UPLOAD', 'project_document', $documentId, null, ['project_id' => $id, 'document_type' => akp_post_value('document_type', 'other')]);
             flash('success', 'تم حفظ الوثيقة في التخزين المحمي.');
+            
+        } elseif ($action === 'edit_project_document') {
+            if ($role !== 'project_supervisor' || !akp_can_edit_section('documents', $id) || $closed) throw new RuntimeException('تعديل وثائق المشروع متاح لمشرف المشروع المكلّف فقط.');
+            $documentId = (int)($_POST['document_id'] ?? 0);
+            $doc = dbFetchOne('SELECT * FROM project_documents WHERE id = ? AND project_id = ? AND document_type <> \'receipt\'', [$documentId, $id]);
+            if (!$doc || $doc['verification_status'] !== 'unverified') throw new RuntimeException('لا يمكن تعديل الوثيقة بعد التحقق منها.');
+            $documentType = akp_post_value('document_type', 'other');
+            $allowedTypes = ['invoice','certificate','government_fee','permit','contract','quotation','progress_report','closure_report','other'];
+            if (!in_array($documentType, $allowedTypes, true)) throw new RuntimeException('نوع الوثيقة غير صالح.');
+            $title = akp_post_value('document_title');
+            if ($title === '') throw new RuntimeException('عنوان الوثيقة مطلوب.');
+
+            $newStoredAbsolutePath = null;
+            $oldStoredPath = $doc['file_path'] ?? null;
+            if (!empty($_FILES['document']['name'])) {
+                if ($_FILES['document']['error'] !== UPLOAD_ERR_OK) throw new RuntimeException('فشل في رفع الملف الجديد.');
+                $file = $_FILES['document'];
+                if ((int)($file['size'] ?? 0) > 10 * 1024 * 1024) throw new RuntimeException('حجم وثيقة المشروع يجب ألا يتجاوز 10 ميجابايت.');
+                $mime = mime_content_type($file['tmp_name']);
+                $allowed = ['application/pdf'=>'pdf','image/jpeg'=>'jpg','image/png'=>'png','application/vnd.openxmlformats-officedocument.wordprocessingml.document'=>'docx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'=>'xlsx'];
+                if (!isset($allowed[$mime])) throw new RuntimeException('نوع الملف غير مسموح. استخدم PDF أو JPG أو PNG أو DOCX أو XLSX.');
+                $relativeDir = 'storage/documents/projects/' . $id;
+                $absoluteDir = dirname(__DIR__, 2) . '/' . $relativeDir;
+                if (!is_dir($absoluteDir) && !mkdir($absoluteDir, 0750, true)) throw new RuntimeException('تعذر إنشاء مجلد الوثائق.');
+                $stored = bin2hex(random_bytes(16)) . '.' . $allowed[$mime];
+                $newStoredAbsolutePath = $absoluteDir . '/' . $stored;
+                if (!move_uploaded_file($file['tmp_name'], $newStoredAbsolutePath)) throw new RuntimeException('تعذر حفظ الملف الجديد.');
+                $relativePath = $relativeDir . '/' . $stored;
+                dbExecute('UPDATE project_documents SET document_type = ?, title = ?, file_path = ?, original_name = ?, mime_type = ?, file_size = ?, document_date = ?, issuer = ?, reference_number = ?, notes = ? WHERE id = ? AND project_id = ?', [$documentType, $title, $relativePath, $file['name'], $mime, $file['size'], akp_post_value('document_date') ?: null, akp_post_value('document_issuer') ?: null, akp_post_value('document_reference') ?: null, akp_post_value('document_notes') ?: null, $documentId, $id]);
+            } else {
+                dbExecute('UPDATE project_documents SET document_type = ?, title = ?, document_date = ?, issuer = ?, reference_number = ?, notes = ? WHERE id = ? AND project_id = ?', [$documentType, $title, akp_post_value('document_date') ?: null, akp_post_value('document_issuer') ?: null, akp_post_value('document_reference') ?: null, akp_post_value('document_notes') ?: null, $documentId, $id]);
+            }
+
+            if ($newStoredAbsolutePath && $oldStoredPath) {
+                $oldAbsolutePath = dirname(__DIR__, 2) . '/' . $oldStoredPath;
+                if ($oldAbsolutePath !== $newStoredAbsolutePath && is_file($oldAbsolutePath)) @unlink($oldAbsolutePath);
+            }
+            akp_audit('UPDATE', 'project_document', $documentId, ['project_id'=>$id,'title'=>$doc['title'],'document_type'=>$doc['document_type']], ['project_id'=>$id,'title'=>$title,'document_type'=>$documentType]);
+            $_SESSION['project_document_success'] = 'تم تعديل الوثيقة بنجاح.';
+            
+        } elseif ($action === 'delete_project_document') {
+            if ($role !== 'project_supervisor' || !akp_can_edit_section('documents', $id) || $closed) throw new RuntimeException('حذف وثائق المشروع متاح لمشرف المشروع المكلّف فقط.');
+            $documentId = (int)($_POST['document_id'] ?? 0);
+            $doc = dbFetchOne('SELECT * FROM project_documents WHERE id = ? AND project_id = ? AND document_type <> \'receipt\'', [$documentId, $id]);
+            if (!$doc || $doc['verification_status'] !== 'unverified') throw new RuntimeException('لا يمكن حذف الوثيقة بعد التحقق منها.');
+            $linked = dbFetchOne('SELECT id FROM project_expenses WHERE project_id = ? AND primary_document_id = ? LIMIT 1', [$id, $documentId]);
+            if ($linked) throw new RuntimeException('لا يمكن حذف وثيقة مرتبطة بمصروف.');
+            dbExecute('DELETE FROM project_documents WHERE id = ? AND project_id = ? AND document_type <> \'receipt\' AND verification_status = \'unverified\'', [$documentId, $id]);
+            $storedPath = $doc['file_path'] ?? null;
+            if ($storedPath) {
+                $absolutePath = dirname(__DIR__, 2) . '/' . $storedPath;
+                if (is_file($absolutePath)) @unlink($absolutePath);
+            }
+            akp_audit('DELETE', 'project_document', $documentId, ['project_id'=>$id,'title'=>$doc['title'],'document_type'=>$doc['document_type']], null);
+            $_SESSION['project_document_success'] = 'تم حذف الوثيقة بنجاح.';
             
         } elseif ($action === 'verify_document') {
             // ... (Original verify_document logic preserved exactly)
@@ -959,7 +1106,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $currency = $project['currency_code'] ?: 'SDG';
 $status = $project['lifecycle_status'] ?: $project['status'];
 $projectExpenseSuccess = $_SESSION['project_expense_success'] ?? null;
-unset($_SESSION['project_expense_success']);
+$projectDocumentSuccess = $_SESSION['project_document_success'] ?? null;
+unset($_SESSION['project_expense_success'], $_SESSION['project_document_success']);
 $badge = ['planned'=>'bg-secondary','active'=>'bg-success','completed'=>'bg-info','under_review'=>'bg-warning text-dark','closed'=>'bg-dark','reopened'=>'bg-primary','cancelled'=>'bg-danger'][$status] ?? 'bg-secondary';
 $varianceClass = $totals['variance'] > 0 ? 'text-danger' : 'text-success';
 
@@ -1713,7 +1861,24 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                                         <?php if (!empty($expense['primary_document_id'])): ?>
                                             <a class="btn btn-sm btn-outline-secondary" target="_blank" href="<?php echo APP_URL; ?>modules/projects/serve_project_document.php?id=<?php echo (int)$expense['primary_document_id']; ?>"><i class="fas fa-paperclip me-1"></i>الإيصال</a>
                                         <?php endif; ?>
-                                        <?php if ($expense['status'] === 'draft' && akp_can_edit_section('finance', $id) && !$closed): ?>
+                                        <?php if ($expense['status'] === 'draft' && $role === 'project_supervisor' && akp_is_primary_supervisor($id) && !$closed): ?>
+                                            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editProjectExpenseModal"
+                                                data-expense-id="<?php echo (int)$expense['id']; ?>"
+                                                data-expense-date="<?php echo e($expense['expense_date']); ?>"
+                                                data-expense-category="<?php echo e($expense['category']); ?>"
+                                                data-expense-amount="<?php echo e($expense['amount']); ?>"
+                                                data-expense-description="<?php echo e($expense['description']); ?>"
+                                                data-expense-vendor="<?php echo e($expense['vendor_name'] ?? ''); ?>"
+                                                data-expense-invoice="<?php echo e($expense['invoice_number'] ?? ''); ?>">
+                                                <i class="fas fa-pen me-1"></i>تعديل
+                                            </button>
+                                            <form method="post" class="d-inline project-delete-form">
+                                                <?php echo csrf_field(); ?>
+                                                <input type="hidden" name="action" value="delete_ps_expense">
+                                                <input type="hidden" name="expense_id" value="<?php echo (int)$expense['id']; ?>">
+                                                <button type="button" class="btn btn-sm btn-outline-danger project-delete-btn" data-confirm-title="حذف المصروف" data-confirm-text="سيتم حذف سجل المصروف وإيصال المصروف المرتبط به إن وُجد.">حذف</button>
+                                            </form>
+                                        <?php elseif ($expense['status'] === 'draft' && akp_can_edit_section('finance', $id) && !$closed): ?>
                                             <form method="post" class="project-action-form d-inline">
                                                 <?php echo csrf_field(); ?>
                                                 <input type="hidden" name="action" value="submit_expense">
@@ -1758,10 +1923,24 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             });
             </script>
         <?php endif; ?>
+        <?php if ($projectDocumentSuccess): ?>
+            <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                var documentSection = document.getElementById('project-documents');
+                if (documentSection) documentSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+            </script>
+        <?php endif; ?>
 
-        <div class="card mb-4 fade-in">
-            <div class="card-header"><i class="fas fa-file-shield me-2"></i>الوثائق والإيصالات والشهادات</div>
+        <div class="card mb-4 fade-in" id="project-documents">
+            <div class="card-header"><i class="fas fa-file-shield me-2"></i>الوثائق والتصاريح والشهادات</div>
             <div class="card-body">
+                <?php if ($projectDocumentSuccess): ?>
+                    <div class="alert alert-success d-flex align-items-center gap-2 py-2 mb-3" role="alert">
+                        <i class="fas fa-check-circle"></i>
+                        <span><?php echo e($projectDocumentSuccess); ?></span>
+                    </div>
+                <?php endif; ?>
                 <?php if (akp_can_edit_section('documents', $id) && !$closed): ?>
                     <form method="post" enctype="multipart/form-data" class="project-form-panel">
                         <input type="hidden" name="action" value="upload_document">
@@ -1769,7 +1948,6 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                         <div class="row g-2">
                             <div class="col-md-3">
                                 <select name="document_type" class="form-select form-select-sm">
-                                    <option value="receipt">إيصال</option>
                                     <option value="invoice">فاتورة</option>
                                     <option value="certificate">شهادة</option>
                                     <option value="government_fee">رسم حكومي</option>
@@ -1803,9 +1981,25 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                                         <span class="badge bg-<?php echo $doc['verification_status'] === 'verified' ? 'success' : ($doc['verification_status'] === 'rejected' ? 'danger' : 'warning'); ?>"><?php echo e($doc['verification_status']); ?></span>
                                     </p>
                                     <p class="small mb-1">رفع بواسطة: <?php echo e($doc['uploader_name'] ?? '—'); ?></p>
-                                    <div class="d-flex gap-2 mt-2">
+                                    <div class="d-flex flex-wrap gap-2 mt-2">
                                         <a href="modules/projects/serve_project_document.php?id=<?php echo (int)$doc['id']; ?>" class="btn btn-sm btn-outline-primary" target="_blank">عرض</a>
                                         <?php if ($doc['verification_status'] === 'unverified' && akp_can_edit_section('documents', $id) && !$closed): ?>
+                                            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editProjectDocumentModal"
+                                                data-document-id="<?php echo (int)$doc['id']; ?>"
+                                                data-document-type="<?php echo e($doc['document_type']); ?>"
+                                                data-document-title="<?php echo e($doc['title']); ?>"
+                                                data-document-date="<?php echo e($doc['document_date'] ?? ''); ?>"
+                                                data-document-issuer="<?php echo e($doc['issuer'] ?? ''); ?>"
+                                                data-document-reference="<?php echo e($doc['reference_number'] ?? ''); ?>"
+                                                data-document-notes="<?php echo e($doc['notes'] ?? ''); ?>">
+                                                <i class="fas fa-pen me-1"></i>تعديل
+                                            </button>
+                                            <form method="post" class="d-inline project-delete-form">
+                                                <?php echo csrf_field(); ?>
+                                                <input type="hidden" name="action" value="delete_project_document">
+                                                <input type="hidden" name="document_id" value="<?php echo (int)$doc['id']; ?>">
+                                                <button type="button" class="btn btn-sm btn-outline-danger project-delete-btn" data-confirm-title="حذف الوثيقة" data-confirm-text="سيتم حذف الوثيقة والملف المرفق نهائياً.">حذف</button>
+                                            </form>
                                             <form method="post" class="project-action-form d-inline">
                                                 <?php echo csrf_field(); ?>
                                                 <input type="hidden" name="action" value="verify_document">
@@ -1991,5 +2185,141 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 </div>
 
 </div>
+
+
+<?php if ($role === 'project_supervisor' && akp_is_primary_supervisor($id) && !$closed): ?>
+<div class="modal fade" id="editProjectExpenseModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-pen me-2"></i>تعديل المصروف</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
+            </div>
+            <form method="post" enctype="multipart/form-data">
+                <?php echo csrf_field(); ?>
+                <input type="hidden" name="action" value="edit_ps_expense">
+                <input type="hidden" name="expense_id" id="edit-expense-id">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-4"><label class="form-label">التاريخ</label><input type="date" name="expense_date" id="edit-expense-date" class="form-control" required></div>
+                        <div class="col-md-4"><label class="form-label">الفئة</label><input name="expense_category" id="edit-expense-category" class="form-control" required></div>
+                        <div class="col-md-4"><label class="form-label">المبلغ</label><input type="number" step="0.01" min="0.01" name="expense_amount" id="edit-expense-amount" class="form-control" required></div>
+                        <div class="col-12"><label class="form-label">الوصف</label><input name="expense_description" id="edit-expense-description" class="form-control" required></div>
+                        <div class="col-md-6"><label class="form-label">المورد</label><input name="vendor_name" id="edit-expense-vendor" class="form-control"></div>
+                        <div class="col-md-6"><label class="form-label">رقم الفاتورة</label><input name="invoice_number" id="edit-expense-invoice" class="form-control"></div>
+                        <div class="col-12"><label class="form-label">استبدال الإيصال (اختياري)</label><input type="file" name="expense_receipt" class="form-control" accept=".pdf,.jpg,.jpeg,.png"><div class="form-text">يمكنك تركه فارغاً للاحتفاظ بالإيصال الحالي.</div></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i>حفظ التعديل</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editProjectDocumentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-pen me-2"></i>تعديل الوثيقة</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
+            </div>
+            <form method="post" enctype="multipart/form-data">
+                <?php echo csrf_field(); ?>
+                <input type="hidden" name="action" value="edit_project_document">
+                <input type="hidden" name="document_id" id="edit-document-id">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">نوع الوثيقة</label>
+                            <select name="document_type" id="edit-document-type" class="form-select" required>
+                                <option value="invoice">فاتورة</option>
+                                <option value="certificate">شهادة</option>
+                                <option value="government_fee">رسم حكومي</option>
+                                <option value="permit">تصريح</option>
+                                <option value="contract">عقد</option>
+                                <option value="quotation">عرض سعر</option>
+                                <option value="progress_report">تقرير تقدم</option>
+                                <option value="closure_report">تقرير إغلاق</option>
+                                <option value="other">أخرى</option>
+                            </select>
+                        </div>
+                        <div class="col-md-8"><label class="form-label">عنوان الوثيقة</label><input name="document_title" id="edit-document-title" class="form-control" required></div>
+                        <div class="col-md-4"><label class="form-label">تاريخ الوثيقة</label><input type="date" name="document_date" id="edit-document-date" class="form-control"></div>
+                        <div class="col-md-4"><label class="form-label">الجهة المصدرة</label><input name="document_issuer" id="edit-document-issuer" class="form-control"></div>
+                        <div class="col-md-4"><label class="form-label">رقم الوثيقة/المرجع</label><input name="document_reference" id="edit-document-reference" class="form-control"></div>
+                        <div class="col-12"><label class="form-label">استبدال الملف (اختياري)</label><input type="file" name="document" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.docx,.xlsx"><div class="form-text">يمكنك تركه فارغاً للاحتفاظ بالملف الحالي.</div></div>
+                        <div class="col-12"><label class="form-label">ملاحظات</label><textarea name="document_notes" id="edit-document-notes" class="form-control" rows="3"></textarea></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i>حفظ التعديل</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var expenseModal = document.getElementById('editProjectExpenseModal');
+    if (expenseModal) {
+        expenseModal.addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget;
+            if (!button) return;
+            document.getElementById('edit-expense-id').value = button.dataset.expenseId || '';
+            document.getElementById('edit-expense-date').value = button.dataset.expenseDate || '';
+            document.getElementById('edit-expense-category').value = button.dataset.expenseCategory || '';
+            document.getElementById('edit-expense-amount').value = button.dataset.expenseAmount || '';
+            document.getElementById('edit-expense-description').value = button.dataset.expenseDescription || '';
+            document.getElementById('edit-expense-vendor').value = button.dataset.expenseVendor || '';
+            document.getElementById('edit-expense-invoice').value = button.dataset.expenseInvoice || '';
+        });
+    }
+
+    var documentModal = document.getElementById('editProjectDocumentModal');
+    if (documentModal) {
+        documentModal.addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget;
+            if (!button) return;
+            document.getElementById('edit-document-id').value = button.dataset.documentId || '';
+            document.getElementById('edit-document-type').value = button.dataset.documentType || 'other';
+            document.getElementById('edit-document-title').value = button.dataset.documentTitle || '';
+            document.getElementById('edit-document-date').value = button.dataset.documentDate || '';
+            document.getElementById('edit-document-issuer').value = button.dataset.documentIssuer || '';
+            document.getElementById('edit-document-reference').value = button.dataset.documentReference || '';
+            document.getElementById('edit-document-notes').value = button.dataset.documentNotes || '';
+        });
+    }
+
+    document.querySelectorAll('.project-delete-btn').forEach(function (button) {
+        button.addEventListener('click', function () {
+            var form = button.closest('form');
+            if (!form) return;
+            var title = button.dataset.confirmTitle || 'تأكيد الحذف';
+            var text = button.dataset.confirmText || 'سيتم حذف هذا السجل نهائياً.';
+            if (window.Swal) {
+                Swal.fire({
+                    title: title,
+                    text: text,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'حذف',
+                    cancelButtonText: 'إلغاء',
+                    reverseButtons: true
+                }).then(function (result) {
+                    if (result.isConfirmed) form.submit();
+                });
+            } else if (window.confirm(text)) {
+                form.submit();
+            }
+        });
+    });
+});
+</script>
+<?php endif; ?>
 
 <?php include dirname(__DIR__, 2) . '/includes/footer.php'; ?>
