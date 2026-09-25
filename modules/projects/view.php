@@ -775,7 +775,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw $e;
             }
             akp_audit('CREATE', 'project_expense', $expenseId, null, ['project_id'=>$id,'amount'=>$amount,'recorded_by_role'=>'project_supervisor','primary_document_id'=>$primaryDocumentId]);
-            flash('success', 'تم تسجيل المصروف كمسودة وإرفاق الإيصال إن وُجد.');
+            $_SESSION['project_expense_success'] = 'تم تسجيل المصروف كمسودة وإرفاق الإيصال إن وُجد.';
 
         } elseif ($action === 'add_expense') {
             // ... (Original add_expense logic preserved exactly)
@@ -958,6 +958,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $currency = $project['currency_code'] ?: 'SDG';
 $status = $project['lifecycle_status'] ?: $project['status'];
+$projectExpenseSuccess = $_SESSION['project_expense_success'] ?? null;
+unset($_SESSION['project_expense_success']);
 $badge = ['planned'=>'bg-secondary','active'=>'bg-success','completed'=>'bg-info','under_review'=>'bg-warning text-dark','closed'=>'bg-dark','reopened'=>'bg-primary','cancelled'=>'bg-danger'][$status] ?? 'bg-secondary';
 $varianceClass = $totals['variance'] > 0 ? 'text-danger' : 'text-success';
 
@@ -1632,8 +1634,11 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         <?php endif; ?>
 
         <?php if ($approval['approval_status'] === 'approved'): ?>
-<div class="card mb-4 fade-in">
+<div class="card mb-4 fade-in" id="project-expenses">
             <div class="card-header"><i class="fas fa-receipt me-2"></i>المصروفات</div>
+            <?php if ($projectExpenseSuccess): ?>
+                <div class="alert alert-success m-3 mb-0"><i class="fas fa-check-circle me-2"></i><?php echo e($projectExpenseSuccess); ?></div>
+            <?php endif; ?>
             <div class="card-body">
                 <?php if ($role === 'project_supervisor' && akp_is_primary_supervisor($id) && !$closed): ?>
                     <form method="post" enctype="multipart/form-data" class="project-form-panel border rounded p-3 mb-3">
@@ -1694,7 +1699,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 
                 <div class="table-responsive">
                     <table class="table table-sm align-middle">
-                        <thead><tr><th>التاريخ</th><th>الوصف</th><th>المورد/الفاتورة</th><th>المبلغ</th><th>الحالة</th><th>القيد</th><th></th></tr></thead>
+                        <thead class="table-primary"><tr><th>التاريخ</th><th>الوصف</th><th>المورد/الفاتورة</th><th>المبلغ</th><th>الحالة</th><th>القيد</th><th></th></tr></thead>
                         <tbody>
                             <?php foreach ($expenses as $expense): ?>
                                 <tr>
@@ -1745,6 +1750,14 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 </div>
             </div>
         </div>
+        <?php if ($projectExpenseSuccess): ?>
+            <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                var expenseSection = document.getElementById('project-expenses');
+                if (expenseSection) expenseSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+            </script>
+        <?php endif; ?>
 
         <div class="card mb-4 fade-in">
             <div class="card-header"><i class="fas fa-file-shield me-2"></i>الوثائق والإيصالات والشهادات</div>
