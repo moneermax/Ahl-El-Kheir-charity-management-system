@@ -2103,7 +2103,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                         <?php echo csrf_field(); ?>
                         <div class="row g-2">
                             <div class="col-6"><input type="date" name="update_date" class="form-control form-control-sm" value="<?php echo date('Y-m-d'); ?>"></div>
-                            <div class="col-6"><input type="number" min="0" max="100" name="progress_percent" class="form-control form-control-sm" placeholder="% الإنجاز"></div>
+                            <div class="col-6"><label for="progress_percent" class="form-label small fw-semibold mb-1">نسبة الإنجاز (%)</label><input id="progress_percent" type="number" min="0" max="100" name="progress_percent" class="form-control form-control-sm" placeholder="مثال: 75"></div>
                             <div class="col-12"><textarea name="progress_summary" class="form-control form-control-sm" rows="2" placeholder="ملخص التقدم *" required></textarea></div>
                             <div class="col-6"><textarea name="achievements" class="form-control form-control-sm" rows="2" placeholder="الإنجازات"></textarea></div>
                             <div class="col-6"><textarea name="issues" class="form-control form-control-sm" rows="2" placeholder="المعوقات"></textarea></div>
@@ -2113,13 +2113,36 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     </form>
                 <?php endif; ?>
                 
-                <?php foreach ($progressUpdates as $update): ?>
-                    <div class="border-top mt-3 pt-2 small">
-                        <strong><?php echo e($update['update_date']); ?> · <?php echo akp_money($update['completion_percent']); ?>%</strong>
-                        <div><?php echo nl2br(e($update['summary'])); ?></div>
-                        <?php if ($update['submitter_name']): ?><small class="text-muted"><?php echo e($update['submitter_name']); ?></small><?php endif; ?>
+                <?php if ($progressUpdates): ?>
+                    <div class="table-responsive mt-3">
+                        <table class="table table-sm table-bordered align-middle mb-0">
+                            <thead class="table-primary">
+                                <tr>
+                                    <th>التاريخ</th>
+                                    <th>نسبة الإنجاز</th>
+                                    <th>ملخص التقدم</th>
+                                    <th>الإنجازات</th>
+                                    <th>المعوقات</th>
+                                    <th>الخطوات القادمة</th>
+                                    <th>بواسطة</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($progressUpdates as $update): ?>
+                                    <tr>
+                                        <td><?php echo e($update['update_date']); ?></td>
+                                        <td class="fw-semibold"><?php echo akp_money($update['completion_percent']); ?>%</td>
+                                        <td><?php echo nl2br(e($update['summary'])); ?></td>
+                                        <td><?php echo nl2br(e($update['achievements'] ?? '')); ?></td>
+                                        <td><?php echo nl2br(e($update['issues'] ?? '')); ?></td>
+                                        <td><?php echo nl2br(e($update['next_steps'] ?? '')); ?></td>
+                                        <td><?php echo e($update['submitter_name'] ?? 'نظام'); ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
                     </div>
-                <?php endforeach; ?>
+                <?php endif; ?>
             </div>
         </div>
 <?php else: ?>
