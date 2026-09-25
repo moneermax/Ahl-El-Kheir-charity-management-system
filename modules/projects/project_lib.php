@@ -32,8 +32,20 @@ if (!function_exists('akp_can_prepare_finance')) {
     function akp_can_prepare_finance(int $projectId = 0): bool
     {
         if (akp_role() !== 'projects_manager') return false;
-        if ($projectId > 0 && akp_project_is_closed($projectId)) return false;
-        return true;
+        if ($projectId < 1) return true;
+        if (akp_project_is_closed($projectId)) return false;
+
+        /*
+         * Budget preparation belongs to the PM only before FM submission,
+         * or after a rejection has returned the project for correction.
+         * Once submitted/finally approved, the PM must not modify budget
+         * records through the legacy budget actions.
+         */
+        $approval = dbFetchOne(
+            'SELECT approval_status FROM project_approval WHERE project_id = ?',
+            [$projectId]
+        );
+        return $approval && in_array((string)$approval['approval_status'], ['draft', 'rejected'], true);
     }
 }
 if (!function_exists('akp_project_payment_method_from_account_code')) {
