@@ -1592,6 +1592,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         </div>
         <?php endif; ?>
 
+        <?php endif; ?>
         <?php if ($approval['approval_status'] === 'approved'): ?>
         <?php if ($role !== 'project_supervisor'): ?>
         <div class="card mb-4 fade-in border-success">
