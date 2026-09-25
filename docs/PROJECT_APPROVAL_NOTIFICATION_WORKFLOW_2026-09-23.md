@@ -40,3 +40,18 @@ Use a controlled project test and verify:
 The current controlled project is `PRJ-0008` / project ID `8`.
 
 Because its FM→GM notification was already missed before this routing correction, the clean runtime test is to return the project to the PM/FM workflow state and submit it again, then verify the notification at each transition. Do not manually insert notifications into the database for the test.
+
+
+## 2026-09-25 — Runtime notification checkpoint
+
+The controlled project PRJ-0010 / project ID 10 (اختبار المشاريع 2026) was used to verify the corrected notification routing.
+
+Observed successfully: PM submission → FM financial-review notification; FM approval → GM final-review notification; GM final approval → PM final-approval notification; existing FM post-final-approval execution/completion notifications also arrived.
+
+The GM final approval notification is therefore now observed in the local runtime test.
+
+Important lifecycle clarification: final GM/VGM approval does not launch the project. It leaves the project planned and returns the next action to PM. The next notification event to certify is the explicit PM launch event, which must notify the assigned active Project Supervisor. The Project Supervisor must not receive an execution notification merely from assignment before launch.
+
+### Next controlled notification test
+
+Using the same PRJ-0010 test project: 1) PM confirms the project is approved and waiting for launch. 2) PM explicitly launches the project. 3) Verify one launch notification is created for the assigned Project Supervisor. 4) Verify the project appears on the supervisor dashboard only after launch. 5) Verify direct project access is allowed to the assigned supervisor after launch and remains blocked before launch. 6) Do not manually insert notifications; use the actual workflow action.
