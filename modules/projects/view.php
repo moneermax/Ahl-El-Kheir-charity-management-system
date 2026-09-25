@@ -1629,6 +1629,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             </div>
         </div>
         <?php endif; ?>
+        <?php endif; ?>
 
         <?php if ($approval['approval_status'] === 'approved'): ?>
 <div class="card mb-4 fade-in">
