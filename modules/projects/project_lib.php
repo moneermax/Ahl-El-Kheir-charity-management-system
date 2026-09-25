@@ -67,6 +67,31 @@ if (!function_exists('akp_can_view_project')) {
     function akp_can_view_project(int $projectId): bool
     {
         if (in_array(akp_role(), ['admin', 'general_manager', 'vice_general_manager', 'projects_manager', 'accountant', 'financial_manager'], true)) return true;
+
+        /*
+         * A Project Supervisor must not gain operational access merely because
+         * a supervisor assignment exists. The project becomes available to the
+         * assigned supervisor only after final approval and explicit PM launch.
+         */
+        if (akp_role() === 'project_supervisor') {
+            $launchState = dbFetchOne(
+                "SELECT pa.approval_status, COALESCE(pl.lifecycle_status, op.status) AS lifecycle_status
+                 FROM other_projects op
+                 LEFT JOIN project_approval pa ON pa.project_id = op.id
+                 LEFT JOIN project_lifecycle pl ON pl.project_id = op.id
+                 WHERE op.id = ?",
+                [$projectId]
+            );
+            if (
+                !$launchState ||
+                $launchState['approval_status'] !== 'approved' ||
+                !in_array((string)$launchState['lifecycle_status'], ['active', 'reopened', 'completed', 'under_review', 'closed', 'cancelled'], true)
+            ) {
+                return false;
+            }
+            return akp_is_primary_supervisor($projectId) || akp_has_project_section($projectId, 'operations') || akp_has_project_section($projectId, 'documents');
+        }
+
         $row = dbFetchOne("SELECT 1 AS allowed FROM project_team WHERE project_id = ? AND user_id = ? AND unassigned_at IS NULL LIMIT 1", [$projectId, akp_user_id()]);
         if ($row) return true;
         return akp_is_primary_supervisor($projectId);
