@@ -115,8 +115,9 @@ function akProjectPageEnhancements(){
         if((header.textContent||'').indexOf('الوثائق والتصاريح والشهادات')!==-1) documentSection=header.closest('.card');
     });
     var expenseSection=document.getElementById('project-expenses');
-    document.querySelectorAll('a[href*="modules/projects/modules/projects/serve_project_document.php"]').forEach(function(link){
-        var match=link.href.match(/[?&]id=(\d+)/);
+    document.querySelectorAll('a[href*="serve_project_document.php"]').forEach(function(link){
+        var raw=link.getAttribute('href')||'';
+        var match=raw.match(/[?&]id=(\d+)/);
         if(match) link.href=appUrl+'modules/projects/serve_project_document.php?id='+match[1];
     });
     if(documentSection){
