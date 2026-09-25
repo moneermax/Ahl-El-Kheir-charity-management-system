@@ -67,6 +67,17 @@
 .project-module-page .project-table table { margin-bottom:0; }
 .project-module-page .project-table thead th { background:#f8fafc; color:#475467; font-size:.76rem; font-weight:800; white-space:nowrap; }
 .project-module-page .project-table td { vertical-align:middle; }
+.project-module-page .project-progress-table {
+    width:100%;
+    table-layout:fixed;
+}
+.project-module-page .project-progress-table th,
+.project-module-page .project-progress-table td {
+    vertical-align:middle;
+    white-space:normal;
+    word-break:break-word;
+    overflow-wrap:anywhere;
+}
 .project-module-page .budget-line-item { padding:.85rem!important; border:1px solid var(--project-border)!important; border-radius:14px!important; background:#fbfcfe; }
 .project-module-page .project-bottom-actions { display:flex; flex-wrap:wrap; gap:.6rem; align-items:center; padding-top:.25rem; }
 .project-module-page .btn { border-radius:10px; font-weight:700; }
