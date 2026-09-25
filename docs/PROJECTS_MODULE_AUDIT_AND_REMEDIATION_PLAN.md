@@ -818,3 +818,12 @@ Implementation: modules/projects/view.php.
 - The progress-entry form now has an explicit **نسبة الإنجاز (%)** label before the percentage field, with a simple example placeholder.
 - Existing progress-update data and database structure are unchanged.
 - No workflow, permissions, accounting, schema, trigger, view, or stored-procedure changes were introduced.
+
+
+## 2026-09-25 — Project progress form alignment and success-message behavior
+
+- The **تحديث تقدم** form now presents all six progress fields with explicit labels in one responsive desktop row: التاريخ، نسبة الإنجاز (%)، ملخص التقدم، الإنجازات، المعوقات، والخطوات القادمة. The row wraps naturally on smaller screens.
+- Successful saves on the project view now use a fixed Bootstrap toast instead of an in-flow success alert. This prevents the success message itself from changing document layout or forcing the page to scroll to the top.
+- The project view now preserves the user's scroll position across its normal POST → redirect → GET save cycle using tab-scoped `sessionStorage`, so saving an operational record keeps the user at the same area of the page.
+- The previous project-view JavaScript that searched for success alerts and called `scrollIntoView()` was removed; success feedback is no longer coupled to section scrolling.
+- No database/schema changes, migrations, triggers, views, stored procedures, accounting behavior, or workflow changes were introduced.
