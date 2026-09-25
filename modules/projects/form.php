@@ -1284,7 +1284,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 dbExecute(
                     "UPDATE project_budgets
-                     SET currency_code = ?, status = 'approved'
+                     SET currency_code = ?, status = 'draft'
                      WHERE id = ? AND project_id = ?",
                     [$input['currency_code'], $editBudgetId, $projectId]
                 );
