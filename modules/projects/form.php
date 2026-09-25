@@ -1841,8 +1841,8 @@ foreach ($budgetDisplayLines as $index => $line):
                         <div class="row g-2">
                             <div class="col-md-3"><strong>الميزانية التقديرية:</strong> <span id="target-budget-display" class="fw-bold"><?php echo number_format($budgetDisplayTarget, 2, '.', ','); ?></span> <span class="text-muted">SDG</span></div>
                             <div class="col-md-3"><strong>إجمالي الرسوم الحكومية:</strong> <span id="government-fees-total-display" class="fw-bold"><?php echo number_format($budgetDisplayGovernmentFees, 2, '.', ','); ?></span> <span class="text-muted">SDG</span></div>
-                            <div class="col-md-3"><strong>الإجمالي المطلوب:</strong> <span id="grand-total-budget-display" class="fs-5 fw-bold">0.00</span> <span class="text-muted">SDG</span></div>
-                            <div class="col-md-3"><strong>إجمالي بنود الميزانية:</strong> <span id="total-budget-display" class="fs-5 fw-bold">0.00</span> <span class="text-muted">SDG</span></div>
+                            <div class="col-md-3"><strong>الإجمالي المطلوب:</strong> <span id="grand-total-budget-display" class="fs-5 fw-bold"><?php echo number_format($budgetDisplayGrandTotal, 2, '.', ','); ?></span> <span class="text-muted">SDG</span></div>
+                            <div class="col-md-3"><strong>إجمالي بنود الميزانية:</strong> <span id="total-budget-display" class="fs-5 fw-bold"><?php echo number_format($budgetDisplayLinesTotal, 2, '.', ','); ?></span> <span class="text-muted">SDG</span></div>
                             <div class="col-md-12"><strong>الفرق مقابل الإجمالي المطلوب:</strong> <span id="budget-difference-display" class="fs-5 fw-bold"><?php echo number_format(abs($budgetDisplayDifference), 2, '.', ','); ?></span> <span class="text-muted">SDG</span></div>
                         </div>
                     </div>
