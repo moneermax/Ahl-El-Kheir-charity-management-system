@@ -827,3 +827,10 @@ Implementation: modules/projects/view.php.
 - The project view now preserves the user's scroll position across its normal POST → redirect → GET save cycle using tab-scoped `sessionStorage`, so saving an operational record keeps the user at the same area of the page.
 - The previous project-view JavaScript that searched for success alerts and called `scrollIntoView()` was removed; success feedback is no longer coupled to section scrolling.
 - No database/schema changes, migrations, triggers, views, stored procedures, accounting behavior, or workflow changes were introduced.
+
+
+## 2026-09-25 — Project progress table column alignment
+
+- The **التشغيل والتقدم** progress-history table now uses explicit column widths and a fixed table layout so each header remains in its own visible column.
+- Progress headers and cell contents are allowed to wrap naturally instead of collapsing into a visually concatenated header row.
+- No progress data, database structure, workflow, permissions, accounting behavior, or schema was changed.
