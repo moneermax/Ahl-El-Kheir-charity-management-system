@@ -915,3 +915,36 @@ Start by reading:
 - docs/PROJECTS_MODULE_AUDIT_AND_REMEDIATION_PLAN.md
 
 Then inspect the actual current repository. Do not restart completed work.
+
+
+## 2026-09-25 — Latest continuation checkpoint
+
+The current Projects workflow has been runtime-tested through final approval using PRJ-0010 / project ID 10 (اختبار المشاريع 2026). PM submission, FM approval, GM final-approval notification, PM final-approval confirmation, and existing FM post-final-approval notifications all worked.
+
+Final approval is intentionally NOT project launch. GM/VGM approval leaves the project planned. PM must explicitly launch it. Launch requires final approval, planned lifecycle, and an active assigned Project Supervisor; it then changes the project/lifecycle to active, records history/audit, and sends the assigned supervisor a launch notification. The Project Supervisor must not see/access the project before launch.
+
+The PM and Project Supervisor dashboards had a real runtime collation failure caused by mixed collations in the existing schema and COALESCE/status comparisons. This was fixed in dashboard/projects_dashboard.php using explicit binary comparisons. Final fix commit: b3c23386fc54d27705df6cc1e3546430935135cd. Both dashboards now open successfully.
+
+### NEXT TASK — DO NOT SKIP AHEAD
+
+Continue testing the same PRJ-0010. Do not create a new project.
+1. Log in as PM and verify PRJ-0010 is in مشاريع معتمدة بانتظار الإطلاق.
+2. Open it and verify the explicit إطلاق المشروع action.
+3. Confirm the assigned active Project Supervisor.
+4. PM launches the project.
+5. Verify the Project Supervisor receives the launch notification.
+6. Verify PRJ-0010 appears on the Project Supervisor dashboard only after launch.
+7. Verify direct access and operational permissions for the assigned supervisor.
+8. Then continue the post-approval payment/disbursement/receipt and accounting-event audit.
+
+Do not treat final-approval notification success as payment/accounting certification. Preserve the established boundary: final approval is funding reservation/allocation, not actual spend; actual money movement occurs later through posted project expenses/payment workflows.
+
+### IMPORTANT CURRENT STATE
+
+- No new project is required for the next test.
+- No schema change is required for the launch test.
+- No triggers/views/stored procedures/functions/events are allowed.
+- Main branch only; do not create branches.
+- Never use destructive Git commands.
+- Root-cause-first: if a runtime error occurs, inspect the exact current main code/query and related schema evidence before changing anything; do not guess with repeated one-line fixes.
+- Do not ask the user to run SQL diagnostics unless truly unavoidable; inspect the repository/schema evidence first.
