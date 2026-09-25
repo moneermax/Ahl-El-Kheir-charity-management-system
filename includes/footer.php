@@ -22,7 +22,6 @@
 <?php include __DIR__ . '/age_alert.php'; ?>
 
 <style>
-/* Top Back button — mirrors the existing bottom contextual Back button. */
 .ak-top-back-wrap {
     display: flex;
     justify-content: flex-start;
@@ -32,10 +31,10 @@
 }
 .ak-bottom-back-wrap {
     display: flex;
-    justify-content: flex-start;
+    justify-content: flex-end;
     direction: ltr;
     width: 100%;
-    margin: 1.5rem 0 1.5rem;
+    margin: 1.5rem 0;
 }
 .ak-top-back-wrap .ak-top-back-btn,
 .ak-bottom-back-wrap .ak-bottom-back-btn {
@@ -46,15 +45,11 @@
     white-space: nowrap;
 }
 @media (max-width: 575.98px) {
-    .ak-top-back-wrap {
-        margin-bottom: .75rem;
-    }
-    .ak-bottom-back-wrap {
-        margin-top: 1.25rem;
-    }
-}</style>
+    .ak-top-back-wrap { margin-bottom: .75rem; }
+    .ak-bottom-back-wrap { margin-top: 1.25rem; }
+}
+</style>
 <style>
-/* Real CSS Sudan flag with a subtle fabric-wave animation. */
 .org-header-banner .org-flag,
 .app-footer .org-flag { display:inline-block !important;position:relative;width:34px !important;height:23px !important;min-width:34px !important;margin-inline:7px;vertical-align:middle;overflow:hidden;border-radius:2px;font-size:0 !important;line-height:0;background:linear-gradient(to bottom,#d71920 0 33.333%,#fff 33.333% 66.666%,#000 66.666% 100%) !important;box-shadow:0 1px 3px rgba(0,0,0,.28);transform-origin:left center;animation:ak-sudan-flag-wave 2.8s ease-in-out infinite }
 .org-header-banner .org-flag::before,.app-footer .org-flag::before {content:"";display:block !important;position:absolute;inset:0 auto 0 0;width:43%;height:100%;background:#087a3b !important;clip-path:polygon(0 0,100% 50%,0 100%);z-index:2}
@@ -83,121 +78,59 @@ window.AK_BACK_FALLBACK=<?php echo json_encode(APP_URL . dashboard_for_role(curr
 <script src="<?php echo asset('js/notification_unread_indicator.js'); ?>"></script>
 <script src="<?php echo asset('js/transaction_details_localization.js'); ?>"></script>
 <?php if (($active ?? '') === 'fm_dashboard'): ?><script src="<?php echo asset('js/fm_dashboard_layout.js'); ?>"></script><?php endif; ?>
-
 <script>
 (function(){
     var btn = document.getElementById('akSidebarToggle');
     var overlay = document.getElementById('sidebarOverlay');
     var mobileQuery = window.matchMedia('(max-width: 991.98px)');
-
     function setSidebar(open) {
         document.body.classList.toggle('sidebar-open', open);
-
         if (btn) {
             btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-            btn.setAttribute('title', open
-                ? (window.AK_LANG === 'ar' ? 'إخفاء القائمة' : 'Hide menu')
-                : (window.AK_LANG === 'ar' ? 'إظهار القائمة' : 'Show menu'));
-
+            btn.setAttribute('title', open ? (window.AK_LANG === 'ar' ? 'إخفاء القائمة' : 'Hide menu') : (window.AK_LANG === 'ar' ? 'إظهار القائمة' : 'Show menu'));
             var icon = btn.querySelector('i');
-            if (icon) {
-                icon.className = 'fas ' + (open
-                    ? (document.documentElement.dir === 'rtl' ? 'fa-chevron-right' : 'fa-chevron-left')
-                    : 'fa-bars');
-            }
+            if (icon) icon.className = 'fas ' + (open ? (document.documentElement.dir === 'rtl' ? 'fa-chevron-right' : 'fa-chevron-left') : 'fa-bars');
         }
-
         document.body.style.overflow = mobileQuery.matches && open ? 'hidden' : '';
     }
-
-    /* Keep the sidebar closed by default on every page; opening it remains user-controlled. */
     setSidebar(false);
-
-    if (btn) {
-        btn.addEventListener('click', function () {
-            setSidebar(!document.body.classList.contains('sidebar-open'));
-        });
-    }
-
-    if (overlay) {
-        overlay.addEventListener('click', function () {
-            if (mobileQuery.matches) setSidebar(false);
-        });
-    }
-
-    document.addEventListener('keydown', function (event) {
-        if (event.key === 'Escape' && document.body.classList.contains('sidebar-open')) {
-            setSidebar(false);
-            if (btn) btn.focus();
-        }
-    });
-
-    document.querySelectorAll('#sidebar a').forEach(function (link) {
-        link.addEventListener('click', function () {
-            if (mobileQuery.matches) setSidebar(false);
-        });
-    });
-
-    window.addEventListener('resize', function () {
-        if (mobileQuery.matches) {
-            if (document.body.classList.contains('sidebar-open')) setSidebar(false);
-        }
-    });
+    if (btn) btn.addEventListener('click', function(){ setSidebar(!document.body.classList.contains('sidebar-open')); });
+    if (overlay) overlay.addEventListener('click', function(){ setSidebar(false); });
+    mobileQuery.addEventListener('change', function(){ setSidebar(document.body.classList.contains('sidebar-open')); });
 })();
 
-
-
-(function(){var deferred=null;var btn=document.getElementById('akInstallBtn');window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferred=e;if(btn)btn.classList.remove('d-none')});if(btn)btn.addEventListener('click',function(){if(!deferred)return;deferred.prompt();deferred.userChoice.then(function(){deferred=null;btn.classList.add('d-none')})});window.addEventListener('appinstalled',function(){if(btn)btn.classList.add('d-none')})})();
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('<?php echo APP_URL; ?>sw.js').catch(function(){})});}
-function akCreateBackButton(fallback, extraClass, label){
-    var button = document.createElement('a');
-    button.href = fallback || '#';
-    button.className = extraClass;
-    button.setAttribute('onclick', 'return akGoBack(this.href);');
-    button.setAttribute('aria-label', label);
-    button.innerHTML = '<i class="fa-solid fa-arrow-right" aria-hidden="true"></i><span>' + label + '</span>';
+function akCreateBackButton(fallback, className, label){
+    var button=document.createElement('button');
+    button.type='button';
+    button.className=className;
+    button.innerHTML='<i class="fa-solid fa-arrow-right" aria-hidden="true"></i><span>'+label+'</span>';
+    button.addEventListener('click',function(){ akGoBack(fallback); });
     return button;
 }
 function akInstallBackButtons(){
-    var content = document.querySelector('.content');
-    if (!content) return;
-
-    var path = window.location.pathname.replace(/\\/g, '/');
-    var isDashboard = /(^|\/)dashboard\//i.test(path) || /(^|\/)modules\/accounting\/fm_dashboard\.php$/i.test(path);
-    if (isDashboard) return;
-
-    /*
-     * The project pages do not define a separate page-specific Back control.
-     * Keep this function deterministic and idempotent: remove any controls
-     * previously generated by this helper, then create exactly two:
-     * top-left and bottom-right, both inside .content and above the footer.
-     */
-    content.querySelectorAll('.ak-top-back-wrap, .ak-bottom-back-wrap').forEach(function (node) {
-        node.remove();
-    });
-
-    var fallback = window.AK_BACK_FALLBACK || window.location.origin + '/';
-    var label = window.AK_LANG === 'ar' ? 'العودة' : 'Back';
-
-    var topWrap = document.createElement('div');
-    topWrap.className = 'ak-top-back-wrap';
-    topWrap.setAttribute('data-ak-shared-back', 'top');
-    topWrap.appendChild(
-        akCreateBackButton(fallback, 'btn btn-outline-secondary ak-top-back-btn', label)
-    );
-    content.insertBefore(topWrap, content.firstChild);
-
-    var bottomWrap = document.createElement('div');
-    bottomWrap.className = 'ak-bottom-back-wrap';
-    bottomWrap.setAttribute('data-ak-shared-back', 'bottom');
-    bottomWrap.appendChild(
-        akCreateBackButton(fallback, 'btn btn-outline-secondary ak-bottom-back-btn', label)
-    );
-    content.appendChild(bottomWrap);
+    var content=document.querySelector('.content');
+    if(!content)return;
+    var path=window.location.pathname.replace(/\\/g,'/');
+    var isDashboard=/(^|\/)dashboard\//i.test(path)||/(^|\/)modules\/accounting\/fm_dashboard\.php$/i.test(path);
+    if(isDashboard)return;
+    content.querySelectorAll('.ak-top-back-wrap,.ak-bottom-back-wrap').forEach(function(node){node.remove();});
+    var fallback=window.AK_BACK_FALLBACK||window.location.origin+'/';
+    var label=window.AK_LANG==='ar'?'العودة':'Back';
+    var topWrap=document.createElement('div');
+    topWrap.className='ak-top-back-wrap';
+    topWrap.setAttribute('data-ak-shared-back','top');
+    topWrap.appendChild(akCreateBackButton(fallback,'btn btn-outline-secondary ak-top-back-btn',label));
+    content.insertBefore(topWrap,content.firstChild);
+    var bottomWrap=document.createElement('div');
+    bottomWrap.className='ak-bottom-back-wrap';
+    bottomWrap.setAttribute('data-ak-shared-back','bottom');
+    bottomWrap.appendChild(akCreateBackButton(fallback,'btn btn-outline-secondary ak-bottom-back-btn',label));
+    var footer=document.querySelector('.app-footer');
+    if(footer&&footer.parentNode) footer.parentNode.insertBefore(bottomWrap,footer);
+    else content.appendChild(bottomWrap);
 }
 function akGoBack(fallback){try{var ref=document.referrer;if(ref&&ref.indexOf(window.location.origin)===0&&window.history.length>1){window.history.back();return false;}}catch(e){} if(fallback){window.location.href=fallback;} return false;}
-document.addEventListener('DOMContentLoaded', akInstallBackButtons);
-
+document.addEventListener('DOMContentLoaded',akInstallBackButtons);
 </script>
 </body>
 </html>
