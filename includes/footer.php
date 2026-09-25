@@ -22,32 +22,11 @@
 <?php include __DIR__ . '/age_alert.php'; ?>
 
 <style>
-.ak-top-back-wrap {
-    display: flex;
-    justify-content: flex-start;
-    direction: ltr;
-    width: 100%;
-    margin: 0 0 1rem;
-}
-.ak-bottom-back-wrap {
-    display: flex;
-    justify-content: flex-end;
-    direction: ltr;
-    width: 100%;
-    margin: 1.5rem 0;
-}
+.ak-top-back-wrap { display:flex; justify-content:flex-start; direction:ltr; width:100%; margin:0 0 1rem; }
+.ak-bottom-back-wrap { display:flex; justify-content:flex-end; direction:ltr; width:100%; margin:1.5rem 0; }
 .ak-top-back-wrap .ak-top-back-btn,
-.ak-bottom-back-wrap .ak-bottom-back-btn {
-    direction: rtl;
-    display: inline-flex;
-    align-items: center;
-    gap: .35rem;
-    white-space: nowrap;
-}
-@media (max-width: 575.98px) {
-    .ak-top-back-wrap { margin-bottom: .75rem; }
-    .ak-bottom-back-wrap { margin-top: 1.25rem; }
-}
+.ak-bottom-back-wrap .ak-bottom-back-btn { direction:rtl; display:inline-flex; align-items:center; gap:.35rem; white-space:nowrap; }
+@media (max-width:575.98px) { .ak-top-back-wrap { margin-bottom:.75rem; } .ak-bottom-back-wrap { margin-top:1.25rem; } }
 </style>
 <style>
 .org-header-banner .org-flag,
@@ -78,35 +57,32 @@ window.AK_BACK_FALLBACK=<?php echo json_encode(APP_URL . dashboard_for_role(curr
 <script src="<?php echo asset('js/notification_unread_indicator.js'); ?>"></script>
 <script src="<?php echo asset('js/transaction_details_localization.js'); ?>"></script>
 <?php if (($active ?? '') === 'fm_dashboard'): ?><script src="<?php echo asset('js/fm_dashboard_layout.js'); ?>"></script><?php endif; ?>
+
 <script>
 (function(){
-    var btn = document.getElementById('akSidebarToggle');
-    var overlay = document.getElementById('sidebarOverlay');
-    var mobileQuery = window.matchMedia('(max-width: 991.98px)');
-    function setSidebar(open) {
-        document.body.classList.toggle('sidebar-open', open);
-        if (btn) {
-            btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-            btn.setAttribute('title', open ? (window.AK_LANG === 'ar' ? 'إخفاء القائمة' : 'Hide menu') : (window.AK_LANG === 'ar' ? 'إظهار القائمة' : 'Show menu'));
-            var icon = btn.querySelector('i');
-            if (icon) icon.className = 'fas ' + (open ? (document.documentElement.dir === 'rtl' ? 'fa-chevron-right' : 'fa-chevron-left') : 'fa-bars');
+    var btn=document.getElementById('akSidebarToggle');
+    var overlay=document.getElementById('sidebarOverlay');
+    var mobileQuery=window.matchMedia('(max-width: 991.98px)');
+    function setSidebar(open){
+        document.body.classList.toggle('sidebar-open',open);
+        if(btn){
+            btn.setAttribute('aria-expanded',open?'true':'false');
+            btn.setAttribute('title',open?(window.AK_LANG==='ar'?'إخفاء القائمة':'Hide menu'):(window.AK_LANG==='ar'?'إظهار القائمة':'Show menu'));
+            var icon=btn.querySelector('i');
+            if(icon) icon.className='fas '+(open?(document.documentElement.dir==='rtl'?'fa-chevron-right':'fa-chevron-left'):'fa-bars');
         }
-        document.body.style.overflow = mobileQuery.matches && open ? 'hidden' : '';
+        document.body.style.overflow=mobileQuery.matches&&open?'hidden':'';
     }
     setSidebar(false);
-    if (btn) btn.addEventListener('click', function(){ setSidebar(!document.body.classList.contains('sidebar-open')); });
-    if (overlay) overlay.addEventListener('click', function(){ setSidebar(false); });
-    mobileQuery.addEventListener('change', function(){ setSidebar(document.body.classList.contains('sidebar-open')); });
+    if(btn) btn.addEventListener('click',function(){setSidebar(!document.body.classList.contains('sidebar-open'));});
+    if(overlay) overlay.addEventListener('click',function(){if(mobileQuery.matches)setSidebar(false);});
+    document.addEventListener('keydown',function(event){if(event.key==='Escape'&&document.body.classList.contains('sidebar-open')){setSidebar(false);if(btn)btn.focus();}});
+    document.querySelectorAll('#sidebar a').forEach(function(link){link.addEventListener('click',function(){if(mobileQuery.matches)setSidebar(false);});});
+    window.addEventListener('resize',function(){if(mobileQuery.matches&&document.body.classList.contains('sidebar-open'))setSidebar(false);});
 })();
-
-function akCreateBackButton(fallback, className, label){
-    var button=document.createElement('button');
-    button.type='button';
-    button.className=className;
-    button.innerHTML='<i class="fa-solid fa-arrow-right" aria-hidden="true"></i><span>'+label+'</span>';
-    button.addEventListener('click',function(){ akGoBack(fallback); });
-    return button;
-}
+(function(){var deferred=null;var btn=document.getElementById('akInstallBtn');window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferred=e;if(btn)btn.classList.remove('d-none')});if(btn)btn.addEventListener('click',function(){if(!deferred)return;deferred.prompt();deferred.userChoice.then(function(){deferred=null;btn.classList.add('d-none')})});window.addEventListener('appinstalled',function(){if(btn)btn.classList.add('d-none')})})();
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('<?php echo APP_URL; ?>sw.js').catch(function(){})});}
+function akCreateBackButton(fallback,extraClass,label){var button=document.createElement('a');button.href=fallback||'#';button.className=extraClass;button.setAttribute('onclick','return akGoBack(this.href);');button.setAttribute('aria-label',label);button.innerHTML='<i class="fa-solid fa-arrow-right" aria-hidden="true"></i><span>'+label+'</span>';return button;}
 function akInstallBackButtons(){
     var content=document.querySelector('.content');
     if(!content)return;
@@ -126,10 +102,9 @@ function akInstallBackButtons(){
     bottomWrap.setAttribute('data-ak-shared-back','bottom');
     bottomWrap.appendChild(akCreateBackButton(fallback,'btn btn-outline-secondary ak-bottom-back-btn',label));
     var footer=document.querySelector('.app-footer');
-    if(footer&&footer.parentNode) footer.parentNode.insertBefore(bottomWrap,footer);
-    else content.appendChild(bottomWrap);
+    if(footer&&footer.parentNode) footer.parentNode.insertBefore(bottomWrap,footer); else content.appendChild(bottomWrap);
 }
-function akGoBack(fallback){try{var ref=document.referrer;if(ref&&ref.indexOf(window.location.origin)===0&&window.history.length>1){window.history.back();return false;}}catch(e){} if(fallback){window.location.href=fallback;} return false;}
+function akGoBack(fallback){try{var ref=document.referrer;if(ref&&ref.indexOf(window.location.origin)===0&&window.history.length>1){window.history.back();return false;}}catch(e){}if(fallback){window.location.href=fallback;}return false;}
 document.addEventListener('DOMContentLoaded',akInstallBackButtons);
 </script>
 </body>
