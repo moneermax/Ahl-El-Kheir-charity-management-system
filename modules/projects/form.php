@@ -234,9 +234,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
          * Read normal form fields.
          */
         foreach (array_keys($input) as $field) {
-            $input[$field] = trim(
-                (string)($_POST[$field] ?? '')
-            );
+            $value = $_POST[$field] ?? '';
+            if (is_scalar($value)) {
+                $input[$field] = trim((string)$value);
+            }
         }
 
 
