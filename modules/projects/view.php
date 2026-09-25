@@ -91,8 +91,12 @@ $paymentEvidence = dbFetchAll("SELECT pe.*, a.code AS source_account_code, a.nam
     LEFT JOIN journal_entries je ON je.id = pe.journal_entry_id
     LEFT JOIN users u ON u.id = pe.documented_by
     WHERE pe.project_id = ? ORDER BY pe.id DESC", [$id]);
-$expenses = dbFetchAll("SELECT e.*, je.entry_code FROM project_expenses e LEFT JOIN journal_entries je ON je.id = e.journal_entry_id WHERE e.project_id = ? ORDER BY e.expense_date DESC, e.id DESC", [$id]);
+$expenses = dbFetchAll("SELECT e.*, je.entry_code, pd.title AS primary_document_title FROM project_expenses e LEFT JOIN journal_entries je ON je.id = e.journal_entry_id LEFT JOIN project_documents pd ON pd.id = e.primary_document_id WHERE e.project_id = ? ORDER BY e.expense_date DESC, e.id DESC", [$id]);
 $financialSummary = akp_project_financial_requirement($id);
+$approvedBudgetTotal = 0.0;
+if ($approvedBudgetId > 0) $approvedBudgetTotal = (float)(dbFetchOne('SELECT COALESCE(SUM(estimated_amount), 0) AS total FROM project_budget_lines WHERE budget_id = ?', [$approvedBudgetId])['total'] ?? 0);
+$projectExpenseTotal = (float)(dbFetchOne('SELECT COALESCE(SUM(amount), 0) AS total FROM project_expenses WHERE project_id = ?', [$id])['total'] ?? 0);
+$projectExpenseRemaining = $approvedBudgetTotal - $projectExpenseTotal;
 $documents = dbFetchAll('SELECT d.*, u.full_name AS uploader_name FROM project_documents d LEFT JOIN users u ON u.id = d.uploaded_by WHERE d.project_id = ? ORDER BY d.id DESC', [$id]);
 $milestones = dbFetchAll('SELECT * FROM project_milestones WHERE project_id = ? ORDER BY planned_date, id', [$id]);
 $progressUpdates = dbFetchAll('SELECT p.*, u.full_name AS submitter_name FROM project_progress_updates p LEFT JOIN users u ON p.submitted_by = u.id WHERE p.project_id = ? ORDER BY p.update_date DESC', [$id]);
@@ -728,6 +732,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new RuntimeException('هذه الخطوة لم تعد مطلوبة — يتم ترحيل القيد المحاسبي تلقائياً عند الاعتماد النهائي من المدير العام.');
             flash('success', 'تم ترحيل تخصيص التمويل بقيد مزدوج متوازن.');
             
+        } elseif ($action === 'add_ps_expense') {
+            if ($role !== 'project_supervisor' || !akp_is_primary_supervisor($id) || $closed) throw new RuntimeException('إدخال مصروفات التنفيذ متاح لمشرف المشروع المكلّف فقط.');
+            $amount = (float)($_POST['expense_amount'] ?? 0);
+            $description = akp_post_value('expense_description');
+            $expenseDate = akp_post_value('expense_date', date('Y-m-d'));
+            $category = akp_post_value('expense_category', 'تنفيذ المشروع');
+            if ($amount <= 0 || $description === '') throw new RuntimeException('وصف المصروف والمبلغ مطلوبان.');
+            $approvedBudgetTotal = (float)(dbFetchOne("SELECT COALESCE(SUM(bl.estimated_amount), 0) AS total FROM project_budgets b JOIN project_budget_lines bl ON bl.budget_id = b.id WHERE b.id = (SELECT pb.id FROM project_budgets pb WHERE pb.project_id = ? AND pb.status = 'approved' ORDER BY pb.version_no DESC, pb.id DESC LIMIT 1)", [$id])['total'] ?? 0);
+            $existingExpenseTotal = (float)(dbFetchOne('SELECT COALESCE(SUM(amount), 0) AS total FROM project_expenses WHERE project_id = ?', [$id])['total'] ?? 0);
+            if ($approvedBudgetTotal <= 0) throw new RuntimeException('لا توجد ميزانية معتمدة من المدير المالي يمكن تسجيل المصروفات عليها.');
+            if (($existingExpenseTotal + $amount) > ($approvedBudgetTotal + 0.01)) {
+                $remaining = max(0, $approvedBudgetTotal - $existingExpenseTotal);
+                throw new RuntimeException('المبلغ يتجاوز الرصيد المتبقي من الميزانية المعتمدة. المتبقي: ' . number_format($remaining, 2) . ' ' . ($project['currency_code'] ?: 'SDG') . '.');
+            }
+            $primaryDocumentId = null;
+            $storedAbsolutePath = null;
+            dbExecute('START TRANSACTION');
+            try {
+                if (!empty($_FILES['expense_receipt']['name'])) {
+                    if ($_FILES['expense_receipt']['error'] !== UPLOAD_ERR_OK) throw new RuntimeException('فشل في رفع إيصال المصروف.');
+                    $file = $_FILES['expense_receipt'];
+                    if ((int)($file['size'] ?? 0) > 10 * 1024 * 1024) throw new RuntimeException('حجم إيصال المصروف يجب ألا يتجاوز 10 ميجابايت.');
+                    $mime = mime_content_type($file['tmp_name']);
+                    $allowed = ['application/pdf'=>'pdf','image/jpeg'=>'jpg','image/png'=>'png'];
+                    if (!isset($allowed[$mime])) throw new RuntimeException('نوع إيصال المصروف غير مسموح. استخدم PDF أو JPG أو PNG.');
+                    $relativeDir = 'storage/documents/projects/' . $id;
+                    $absoluteDir = dirname(__DIR__, 2) . '/' . $relativeDir;
+                    if (!is_dir($absoluteDir) && !mkdir($absoluteDir, 0750, true)) throw new RuntimeException('تعذر إنشاء مجلد وثائق المشروع.');
+                    $stored = bin2hex(random_bytes(16)) . '.' . $allowed[$mime];
+                    $storedAbsolutePath = $absoluteDir . '/' . $stored;
+                    if (!move_uploaded_file($file['tmp_name'], $storedAbsolutePath)) throw new RuntimeException('تعذر حفظ إيصال المصروف.');
+                    dbExecute('INSERT INTO project_documents (project_id, document_type, title, file_path, original_name, mime_type, file_size, document_date, issuer, reference_number, amount, currency_code, notes, uploaded_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)', [$id,'receipt','إيصال مصروف: '.$description,$relativeDir.'/'.$stored,$file['name'],$mime,$file['size'],$expenseDate ?: null,akp_post_value('vendor_name') ?: null,akp_post_value('invoice_number') ?: null,$amount,$project['currency_code'] ?: 'SDG','مرفق مباشرة بالمصروف المسجل بواسطة مشرف المشروع.',akp_user_id()]);
+                    $primaryDocumentId = (int)(dbFetchOne('SELECT LAST_INSERT_ID() AS id')['id'] ?? 0);
+                }
+                dbExecute('INSERT INTO project_expenses (project_id, budget_id, budget_line_id, expense_date, category, description, vendor_name, vendor_contact, invoice_number, government_fee_type, amount, currency_code, transaction_reference, expense_account_id, payment_account_id, primary_document_id, status, submitted_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', [$id,$approvedBudgetId > 0 ? $approvedBudgetId : null,null,$expenseDate,$category,$description,akp_post_value('vendor_name') ?: null,null,akp_post_value('invoice_number') ?: null,null,$amount,$project['currency_code'] ?: 'SDG',akp_post_value('transaction_reference') ?: null,null,null,$primaryDocumentId,'draft',akp_user_id()]);
+                $expenseId = (int)(dbFetchOne('SELECT LAST_INSERT_ID() AS id')['id'] ?? 0);
+                dbExecute('COMMIT');
+            } catch (Throwable $e) {
+                dbExecute('ROLLBACK');
+                if ($storedAbsolutePath && is_file($storedAbsolutePath)) @unlink($storedAbsolutePath);
+                throw $e;
+            }
+            akp_audit('CREATE', 'project_expense', $expenseId, null, ['project_id'=>$id,'amount'=>$amount,'recorded_by_role'=>'project_supervisor','primary_document_id'=>$primaryDocumentId]);
+            flash('success', 'تم تسجيل المصروف كمسودة وإرفاق الإيصال إن وُجد.');
+
         } elseif ($action === 'add_expense') {
             // ... (Original add_expense logic preserved exactly)
             if (!akp_can_edit_section('finance', $id) || $closed) throw new RuntimeException('لا تملك صلاحية إدخال مصروف.');
@@ -1416,6 +1465,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     </div>
                 </div>
 
+                <?php if ($role !== 'project_supervisor'): ?>
                 <div class="card border-success mb-0 project-finance-card">
                     <div class="card-header bg-success text-white"><i class="fas fa-money-bill-transfer me-2"></i>تخصيص التمويل</div>
                     <div class="card-body">
@@ -1540,8 +1590,10 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 </div>
             </div>
         </div>
+        <?php endif; ?>
 
         <?php if ($approval['approval_status'] === 'approved'): ?>
+        <?php if ($role !== 'project_supervisor'): ?>
         <div class="card mb-4 fade-in border-success">
             <div class="card-header bg-success text-white"><i class="fas fa-money-check-dollar me-2"></i>إثبات صرف تمويل المشروع</div>
             <div class="card-body">
@@ -1583,7 +1635,22 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 <div class="card mb-4 fade-in">
             <div class="card-header"><i class="fas fa-receipt me-2"></i>المصروفات</div>
             <div class="card-body">
-                <?php if (akp_can_edit_section('finance', $id) && !$closed): ?>
+                <?php if ($role === 'project_supervisor' && akp_is_primary_supervisor($id) && !$closed): ?>
+                    <form method="post" enctype="multipart/form-data" class="project-form-panel border rounded p-3 mb-3">
+                        <input type="hidden" name="action" value="add_ps_expense">
+                        <?php echo csrf_field(); ?>
+                        <div class="row g-2">
+                            <div class="col-md-2"><label class="form-label small">التاريخ</label><input type="date" name="expense_date" class="form-control form-control-sm" value="<?php echo date('Y-m-d'); ?>" required></div>
+                            <div class="col-md-2"><label class="form-label small">الفئة</label><input name="expense_category" class="form-control form-control-sm" placeholder="مثال: مواد / نقل" required></div>
+                            <div class="col-md-2"><label class="form-label small">المبلغ</label><input type="number" step="0.01" min="0.01" max="<?php echo e(number_format(max(0, $projectExpenseRemaining), 2, '.', '')); ?>" name="expense_amount" class="form-control form-control-sm" placeholder="المبلغ" required></div>
+                            <div class="col-md-6"><label class="form-label small">وصف المصروف</label><input name="expense_description" class="form-control form-control-sm" placeholder="وصف المصروف *" required></div>
+                            <div class="col-md-4"><label class="form-label small">المورد</label><input name="vendor_name" class="form-control form-control-sm" placeholder="اسم المورد"></div>
+                            <div class="col-md-4"><label class="form-label small">رقم الفاتورة</label><input name="invoice_number" class="form-control form-control-sm" placeholder="رقم الفاتورة"></div>
+                            <div class="col-md-4"><label class="form-label small">إيصال المصروف</label><input type="file" name="expense_receipt" class="form-control form-control-sm" accept=".pdf,.jpg,.jpeg,.png"></div>
+                            <div class="col-12"><button class="btn btn-sm btn-primary"><i class="fas fa-save me-1"></i>تسجيل المصروف</button><span class="small text-muted ms-2">يمكن إرفاق إيصال PDF أو JPG أو PNG.</span></div>
+                        </div>
+                    </form>
+                <?php elseif (akp_can_edit_section('finance', $id) && !$closed): ?>
                     <form method="post" class="project-form-panel">
                         <input type="hidden" name="action" value="add_expense">
                         <?php echo csrf_field(); ?>
@@ -1638,6 +1705,9 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                                     <td><span class="badge bg-<?php echo $expense['status'] === 'posted' ? 'dark' : ($expense['status'] === 'approved' ? 'success' : 'warning'); ?>"><?php echo e($expense['status']); ?></span></td>
                                     <td><small class="text-muted"><?php echo e($expense['entry_code'] ?: '—'); ?></small></td>
                                     <td>
+                                        <?php if (!empty($expense['primary_document_id'])): ?>
+                                            <a class="btn btn-sm btn-outline-secondary" target="_blank" href="<?php echo APP_URL; ?>modules/projects/serve_project_document.php?id=<?php echo (int)$expense['primary_document_id']; ?>"><i class="fas fa-paperclip me-1"></i>الإيصال</a>
+                                        <?php endif; ?>
                                         <?php if ($expense['status'] === 'draft' && akp_can_edit_section('finance', $id) && !$closed): ?>
                                             <form method="post" class="project-action-form d-inline">
                                                 <?php echo csrf_field(); ?>
@@ -1667,6 +1737,11 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                             <?php endif; ?>
                         </tbody>
                     </table>
+                </div>
+                <div class="row g-3 mt-1">
+                    <div class="col-md-4"><div class="border rounded p-3 h-100 bg-light"><div class="small text-muted">الميزانية المعتمدة من المدير المالي</div><div class="fs-5 fw-bold"><?php echo akp_money($approvedBudgetTotal); ?> <?php echo e($project['currency_code'] ?: 'SDG'); ?></div></div></div>
+                    <div class="col-md-4"><div class="border rounded p-3 h-100 bg-light"><div class="small text-muted">إجمالي المصروفات المسجلة</div><div class="fs-5 fw-bold"><?php echo akp_money($projectExpenseTotal); ?> <?php echo e($project['currency_code'] ?: 'SDG'); ?></div></div></div>
+                    <div class="col-md-4"><div class="border rounded p-3 h-100 <?php echo $projectExpenseRemaining < -0.01 ? 'bg-danger-subtle text-danger' : 'bg-success-subtle'; ?>"><div class="small text-muted">الرصيد المتبقي من الميزانية</div><div class="fs-5 fw-bold"><?php echo akp_money($projectExpenseRemaining); ?> <?php echo e($project['currency_code'] ?: 'SDG'); ?></div></div></div>
                 </div>
             </div>
         </div>
