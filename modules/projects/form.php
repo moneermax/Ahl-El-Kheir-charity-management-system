@@ -192,21 +192,19 @@ if ($id) {
 
     $governmentRequirementRows = dbFetchAll('SELECT requirement_text, fee_amount FROM project_government_requirements WHERE project_id = ? ORDER BY id ASC', [$id]);
 
-    if ($canEditRejectedBudget) {
-        $existingBudget = dbFetchOne(
-            'SELECT id FROM project_budgets WHERE project_id = ? ORDER BY version_no DESC, id DESC LIMIT 1',
-            [$id]
+    $existingBudget = dbFetchOne(
+        'SELECT id FROM project_budgets WHERE project_id = ? ORDER BY version_no DESC, id DESC LIMIT 1',
+        [$id]
+    );
+    $editBudgetId = (int)($existingBudget['id'] ?? 0);
+    if ($editBudgetId > 0) {
+        $existingBudgetLines = dbFetchAll(
+            'SELECT category, description, estimated_amount
+             FROM project_budget_lines
+             WHERE budget_id = ?
+             ORDER BY id ASC',
+            [$editBudgetId]
         );
-        $editBudgetId = (int)($existingBudget['id'] ?? 0);
-        if ($editBudgetId > 0) {
-            $existingBudgetLines = dbFetchAll(
-                'SELECT category, description, estimated_amount
-                 FROM project_budget_lines
-                 WHERE budget_id = ?
-                 ORDER BY id ASC',
-                [$editBudgetId]
-            );
-        }
     }
 
     $partnerRows = dbFetchAll('SELECT partner_name, role_description FROM project_partners WHERE project_id = ? ORDER BY id ASC', [$id]);
@@ -1708,8 +1706,14 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     <button type="button" class="btn btn-sm btn-outline-primary" onclick="addContactRow()"><i class="fas fa-plus me-1"></i>إضافة جهة اتصال</button>
                 </section>
 
-                <?php if (!$id || $canEditRejectedBudget): ?>
                 <section class="project-form-section">
+                    <?php if ($id && !$canEditRejectedBudget): ?>
+                    <div class="alert alert-info py-2">
+                        <i class="fas fa-lock me-1"></i>
+                        الميزانية الأولية المعتمدة عند إنشاء المشروع للعرض فقط. يمكن تعديلها فقط بعد رفضها من المدير المالي.
+                    </div>
+                    <fieldset disabled>
+                    <?php endif; ?>
                     <h5 class="project-form-section-title">
                         <i class="fas fa-coins text-primary"></i>
                         الميزانية التقديرية والميزانية الأولية
@@ -1831,9 +1835,9 @@ foreach ($budgetDisplayLines as $index => $line):
                         </div>
                     </div>
                 </section>
-
-                
-                <?php endif; ?>
+                    <?php if ($id && !$canEditRejectedBudget): ?>
+                    </fieldset>
+                    <?php endif; ?>
 
             </div>
 
