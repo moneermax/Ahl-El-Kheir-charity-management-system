@@ -51,6 +51,18 @@ if ($id && !akp_can_edit_section('general', $id) && !$canEditRejectedBudget) {
 }
 
 $returnQuery=trim((string)($_GET['return']??$_POST['return']??'')); $backUrl=APP_URL.'modules/projects/index.php'; if($returnQuery!==''){$backUrl.='?'.ltrim(rawurldecode($returnQuery),'?');}
+$budgetDisplayTarget = (float)($input['target_amount'] ?? 0);
+$budgetDisplayGovernmentFees = 0.0;
+foreach ($governmentRequirementRows as $governmentRow) {
+    $budgetDisplayGovernmentFees += (float)($governmentRow['fee_amount'] ?? 0);
+}
+$budgetDisplayLinesTotal = 0.0;
+foreach ($existingBudgetLines as $budgetLine) {
+    $budgetDisplayLinesTotal += (float)($budgetLine['estimated_amount'] ?? 0);
+}
+$budgetDisplayGrandTotal = $budgetDisplayTarget + $budgetDisplayGovernmentFees;
+$budgetDisplayDifference = $budgetDisplayLinesTotal - $budgetDisplayGrandTotal;
+
 $pageTitle = $id ? 'تعديل البيانات الأساسية للمشروع' : 'مشروع جديد';
 $active = 'projects';
 
@@ -1827,11 +1839,11 @@ foreach ($budgetDisplayLines as $index => $line):
 
                     <div class="mt-3 p-3 rounded border" id="budget-summary">
                         <div class="row g-2">
-                            <div class="col-md-3"><strong>الميزانية التقديرية:</strong> <span id="target-budget-display" class="fw-bold">0.00</span> <span class="text-muted">SDG</span></div>
-                            <div class="col-md-3"><strong>إجمالي الرسوم الحكومية:</strong> <span id="government-fees-total-display" class="fw-bold">0.00</span> <span class="text-muted">SDG</span></div>
+                            <div class="col-md-3"><strong>الميزانية التقديرية:</strong> <span id="target-budget-display" class="fw-bold"><?php echo number_format($budgetDisplayTarget, 2, '.', ','); ?></span> <span class="text-muted">SDG</span></div>
+                            <div class="col-md-3"><strong>إجمالي الرسوم الحكومية:</strong> <span id="government-fees-total-display" class="fw-bold"><?php echo number_format($budgetDisplayGovernmentFees, 2, '.', ','); ?></span> <span class="text-muted">SDG</span></div>
                             <div class="col-md-3"><strong>الإجمالي المطلوب:</strong> <span id="grand-total-budget-display" class="fs-5 fw-bold">0.00</span> <span class="text-muted">SDG</span></div>
                             <div class="col-md-3"><strong>إجمالي بنود الميزانية:</strong> <span id="total-budget-display" class="fs-5 fw-bold">0.00</span> <span class="text-muted">SDG</span></div>
-                            <div class="col-md-12"><strong>الفرق مقابل الإجمالي المطلوب:</strong> <span id="budget-difference-display" class="fs-5 fw-bold">0.00</span> <span class="text-muted">SDG</span></div>
+                            <div class="col-md-12"><strong>الفرق مقابل الإجمالي المطلوب:</strong> <span id="budget-difference-display" class="fs-5 fw-bold"><?php echo number_format(abs($budgetDisplayDifference), 2, '.', ','); ?></span> <span class="text-muted">SDG</span></div>
                         </div>
                     </div>
                 </section>
