@@ -1002,6 +1002,12 @@ if ($title === '') throw new RuntimeException('عنوان المرحلة مطل�
 $completionPercent = max(0, min(100, (float)($_POST['completion_percent'] ?? 0)));
 $status = $completionPercent >= 100 ? 'completed' : 'in_progress';
 dbExecute('INSERT INTO project_milestones (project_id, title, description, planned_date, status, completion_percent, notes, created_by) VALUES (?,?,?,?,?,?,?,?)', [$id, $title, akp_post_value('milestone_description') ?: null, akp_post_value('planned_date') ?: null, $status, $completionPercent, akp_post_value('milestone_notes') ?: null, akp_user_id()]);
+$milestoneId = (int)(dbFetchOne('SELECT LAST_INSERT_ID() AS id')['id'] ?? 0);
+$plannedDate = akp_post_value('planned_date') ?: '—';
+$milestoneDescription = akp_post_value('milestone_description') ?: '—';
+$historyReason = 'التاريخ المخطط: ' . $plannedDate . ' | نسبة الإنجاز: ' . number_format($completionPercent, 2) . '% | وصف المرحلة: ' . $milestoneDescription;
+dbExecute('INSERT INTO project_status_history (project_id, old_status, new_status, reason, changed_by) VALUES (?, ?, ?, ?, ?)', [$id, 'إضافة مرحلة', $title, $historyReason, akp_user_id()]);
+akp_audit('CREATE', 'project_milestone', $milestoneId, null, ['project_id' => $id, 'title' => $title, 'planned_date' => $plannedDate, 'completion_percent' => $completionPercent, 'description' => $milestoneDescription]);
 $_SESSION['project_toast_success'] = 'تمت إضافة المرحلة.';
 } elseif ($action === 'edit_milestone') {
 if (!akp_can_edit_section('operations', $id) || $closed) throw new RuntimeException('لا تملك صلاحية تعديل المراحل.');
