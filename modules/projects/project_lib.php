@@ -255,7 +255,7 @@ if (!function_exists('akp_project_totals')) {
         if ($approvedBudget <= 0) { $p = dbFetchOne("SELECT target_amount FROM other_projects WHERE id = ?", [$projectId]); $approvedBudget = (float)($p['target_amount'] ?? 0); }
         $financial = akp_project_financial_requirement($projectId, $approvedBudget);
         $financialRequirement = $financial['total_financial_requirement'];
-        $variance = $totalExpensed - $financialRequirement; $percent = $financialRequirement > 0 ? ($variance / $financialRequirement) * 100 : null;
+        $variance = $financialRequirement - $totalExpensed; $percent = $financialRequirement > 0 ? ($variance / $financialRequirement) * 100 : null;
         return ['approved_budget'=>$approvedBudget,'government_fees'=>$financial['government_fees'],'total_financial_requirement'=>$financialRequirement,'funding_allocations'=>$fundingAllocations,'donations'=>$donationAmount,'total_funded'=>$totalFunded,'total_expensed'=>$totalExpensed,'variance'=>$variance,'variance_percent'=>$percent,'residual'=>$totalFunded-$totalExpensed];
     }
 }
