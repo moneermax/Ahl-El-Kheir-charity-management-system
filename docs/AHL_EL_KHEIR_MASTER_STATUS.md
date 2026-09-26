@@ -1001,3 +1001,26 @@ Runtime dashboard collation issue is resolved. The cause was the mixed collation
 Current runtime status: PM dashboard and Project Supervisor dashboard both open successfully. The explicit PM launch → PS notification → PS dashboard appearance sequence remains the next controlled test and has not yet been certified.
 
 No schema changes, triggers, views, stored procedures, functions, or events were introduced by these workflow/dashboard fixes.
+
+
+## 2026-09-26 — Projects expense/payment workflow completed
+
+The Project Supervisor project-expense/payment workflow is now runtime-tested and accepted on PRJ-0010 / project ID 10.
+
+The permanent model is project-funded: the Project Supervisor records payments against the project budget already transferred/allocated to the supervisor. A payment receipt is required; saving the payment records the expense directly as `posted`, deducts it from the approved project budget, and does not create an organization cash/bank/e-wallet journal entry.
+
+Older expenses created under the former draft workflow remain draft until the user explicitly records the payment and supplies the receipt through the existing **تعديل / تسجيل الدفع** action. No automatic retroactive posting is performed.
+
+The assigned primary Project Supervisor is intentionally allowed to **تعديل** and **حذف** both `draft` and `posted` project-funded expenses. The rule is enforced in both UI visibility and server-side POST authorization.
+
+The temporary standalone finalization page was removed. The obsolete organization-account Projects expense path remains blocked and must not be reintroduced.
+
+Final implementation commit: `5dda62c4bc74662fe0e9c415ddbbed88e9263a94`.
+
+Detailed checkpoint: `docs/PROJECTS_RUNTIME_CHECKPOINT_2026-09-26.md`.
+
+### Current Projects stopping point
+
+PRJ-0010 remains intentionally **open/not closed** because one remaining project task is still outstanding. PM closure must wait until that task is completed and the existing closure guards are satisfied.
+
+Do not reopen or redo the completed project-expense workflow. The next session should continue from the remaining project task.
