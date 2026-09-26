@@ -84,7 +84,7 @@ LEFT JOIN accounts a ON a.id = pe.source_account_id
 LEFT JOIN journal_entries je ON je.id = pe.journal_entry_id
 LEFT JOIN users u ON u.id = pe.documented_by
 WHERE pe.project_id = ? ORDER BY pe.id DESC", [$id]);
-$expenses = dbFetchAll("SELECT e.*, je.entry_code, pd.title AS primary_document_title FROM project_expenses e LEFT JOIN journal_entries je ON je.id = e.journal_entry_id LEFT JOIN project_documents pd ON pd.id = e.primary_document_id WHERE e.project_id = ? ORDER BY e.expense_date DESC, e.id DESC", [$id]);
+$expenses = dbFetchAll("SELECT e.*, je.entry_code, pd.title AS primary_document_title, lh.id AS labor_id, lh.provider_name AS labor_provider_name FROM project_expenses e LEFT JOIN journal_entries je ON je.id = e.journal_entry_id LEFT JOIN project_documents pd ON pd.id = e.primary_document_id LEFT JOIN project_labor_helpers lh ON lh.project_id = e.project_id AND e.transaction_reference = CONCAT('LABOR:', lh.id) WHERE e.project_id = ? ORDER BY e.expense_date DESC, e.id DESC", [$id]);
 $financialSummary = akp_project_financial_requirement($id);
 $approvedBudgetTotal = 0.0;
 if ($approvedBudgetId > 0) $approvedBudgetTotal = (float)(dbFetchOne('SELECT COALESCE(SUM(estimated_amount), 0) AS total FROM project_budget_lines WHERE budget_id = ?', [$approvedBudgetId])['total'] ?? 0);
@@ -1778,7 +1778,13 @@ document.getElementById('editFundingDescription').value = button.getAttribute('d
 <?php foreach ($expenses as $expense): ?>
 <tr>
 <td><?php echo e($expense['expense_date']); ?></td>
-<td><?php echo e($expense['description']); ?><?php if ($expense['government_fee_type']): ?><br><small class="text-muted">رسم: <?php echo e($expense['government_fee_type']); ?></small><?php endif; ?></td>
+<td>
+<?php echo e($expense['description']); ?>
+<?php if (!empty($expense['labor_id'])): ?>
+<br><span class="badge bg-info-subtle text-dark mt-1"><i class="fas fa-user-hard-hat me-1"></i>دفعة عمالة خارجية</span>
+<?php endif; ?>
+<?php if ($expense['government_fee_type']): ?><br><small class="text-muted">رسم: <?php echo e($expense['government_fee_type']); ?></small><?php endif; ?>
+</td>
 <td><?php echo e($expense['vendor_name'] ?: '—'); ?><br><small><?php echo e($expense['invoice_number'] ?: ''); ?></small></td>
 <td><?php echo akp_money($expense['amount']); ?></td>
 <td><span class="badge bg-<?php echo $expense['status'] === 'posted' ? 'dark' : ($expense['status'] === 'approved' ? 'success' : 'warning'); ?>"><?php echo e($expense['status']); ?></span></td>
