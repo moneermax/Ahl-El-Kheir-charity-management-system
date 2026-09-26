@@ -842,3 +842,19 @@ Implementation: modules/projects/view.php.
 - The six progress fields and the save button remain in one horizontal line on wide screens and wrap only when the available screen width requires it.
 - The progress-history table and its data remain unchanged.
 - No database, workflow, permissions, accounting, or schema changes were introduced.
+
+## 2026-09-26 — Project view save/navigation regression correction
+
+A targeted correction was applied after runtime review of the Project Supervisor **المصروفات** and **الوثائق والتصاريح والشهادات** sections and the shared Back placement.
+
+- The project-view POST/redirect/GET scroll restoration no longer relies on restoring the raw page Y-position before later DOM enhancements. Each submitted project-view form now records its containing project section ID plus the prior scroll position, then restores the relevant section after the page's DOM transformations have completed. This specifically prevents successful expense/document saves from returning the user to the top of the page.
+- The old section-specific success scripts were removed so they cannot compete with the centralized restoration logic.
+- The obsolete per-action success-session keys are no longer unset/read on the GET path; the existing shared project success toast remains the single success-feedback mechanism.
+- The shared bottom Back button is now appended inside the page content, guaranteeing that it is part of the page content and appears before the shared footer. The target remains exactly two shared Back controls: top-left and bottom-right.
+- No database/schema, authorization, workflow, accounting, trigger, view, stored procedure, or event changes were made.
+
+Implementation commits:
+- `7ab585bb55237ba12a92a94f202d4b2b0139b703` — Fix project view section scroll restoration
+- `c04ec8aff6e39508f090781204913d8493fc80cd` — Keep shared bottom Back button before footer
+
+**Runtime verification required:** pull current `main`, then test saving one expense and one supporting document while scrolled within their respective sections; confirm the page remains at the relevant section and the success toast appears. Also confirm the bottom Back button is immediately before the footer and that exactly two Back buttons remain visible on the page.
