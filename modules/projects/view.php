@@ -1106,7 +1106,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $currency = $project['currency_code'] ?: 'SDG';
 $status = $project['lifecycle_status'] ?: $project['status'];
 $projectToastSuccess = $_SESSION['project_toast_success'] ?? null;
-unset($_SESSION['project_toast_success']);
+unset($_SESSION['project_toast_success'], $_SESSION['project_expense_success'], $_SESSION['project_document_success']);
 $badge = ['planned'=>'bg-secondary','active'=>'bg-success','completed'=>'bg-info','under_review'=>'bg-warning text-dark','closed'=>'bg-dark','reopened'=>'bg-primary','cancelled'=>'bg-danger'][$status] ?? 'bg-secondary';
 $varianceClass = $totals['variance'] > 0 ? 'text-danger' : 'text-success';
 
@@ -1923,6 +1923,23 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 </div>
             </div>
         </div>
+        <?php if ($projectExpenseSuccess): ?>
+            <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                var expenseSection = document.getElementById('project-expenses');
+                if (expenseSection) expenseSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+            </script>
+        <?php endif; ?>
+        <?php if ($projectDocumentSuccess): ?>
+            <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                var documentSection = document.getElementById('project-documents');
+                if (documentSection) documentSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+            </script>
+        <?php endif; ?>
+
         <div class="card mb-4 fade-in" id="project-documents">
             <div class="card-header"><i class="fas fa-file-shield me-2"></i>الوثائق والتصاريح والشهادات</div>
             <div class="card-body">
@@ -2353,43 +2370,25 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 <script>
-/* Project view: preserve the user's working section through the POST/redirect/GET cycle. */
+/* Project view: preserve the user's scroll position through the POST/redirect/GET cycle. */
 document.addEventListener('DOMContentLoaded', function () {
     var projectScrollKey = 'ak_project_view_scroll_' + window.location.pathname + window.location.search;
     try {
         history.scrollRestoration = 'manual';
-
+        var savedScroll = sessionStorage.getItem(projectScrollKey);
+        if (savedScroll !== null) {
+            var scrollY = parseInt(savedScroll, 10);
+            if (!isNaN(scrollY)) {
+                window.scrollTo(0, scrollY);
+                setTimeout(function () { window.scrollTo(0, scrollY); }, 50);
+            }
+            sessionStorage.removeItem(projectScrollKey);
+        }
         document.querySelectorAll('form[method="post"], form[method="POST"]').forEach(function (form) {
             form.addEventListener('submit', function () {
-                var section = form.closest('[id^="project-"]');
-                sessionStorage.setItem(projectScrollKey, JSON.stringify({
-                    scrollY: window.scrollY || window.pageYOffset || 0,
-                    sectionId: section ? section.id : ''
-                }));
+                sessionStorage.setItem(projectScrollKey, String(window.scrollY || window.pageYOffset || 0));
             });
         });
-
-        var saved = sessionStorage.getItem(projectScrollKey);
-        if (saved !== null) {
-            sessionStorage.removeItem(projectScrollKey);
-            var state = null;
-            try { state = JSON.parse(saved); } catch (e) {}
-            var restore = function () {
-                if (state && state.sectionId) {
-                    var section = document.getElementById(state.sectionId);
-                    if (section) {
-                        var top = section.getBoundingClientRect().top + window.scrollY - 16;
-                        window.scrollTo(0, Math.max(0, top));
-                        return;
-                    }
-                }
-                if (state && typeof state.scrollY === 'number' && isFinite(state.scrollY)) {
-                    window.scrollTo(0, state.scrollY);
-                }
-            };
-            setTimeout(restore, 120);
-            setTimeout(restore, 300);
-        }
     } catch (e) {}
 
     var projectToast = document.getElementById('projectSuccessToast');
