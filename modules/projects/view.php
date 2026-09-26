@@ -3,7 +3,6 @@
 require_once dirname(__DIR__, 2) . '/modules/projects/project_lib.php';
 require_once dirname(__DIR__, 2) . '/modules/accounting/lib.php';
 require_once dirname(__DIR__, 2) . '/modules/accounting/lib_transaction_review.php';
-require_once dirname(__DIR__, 2) . '/modules/accounting/lib_vouchers.php';
 Session::start();
 $requestedProjectId = (int)($_GET['id'] ?? $_POST['project_id'] ?? 0);
 if (!isset($_GET['role_view'])) {
@@ -94,7 +93,7 @@ $projectExpenseRemaining = $approvedBudgetTotal - $projectExpenseTotal;
 $documents = dbFetchAll("SELECT d.*, u.full_name AS uploader_name FROM project_documents d LEFT JOIN users u ON u.id = d.uploaded_by WHERE d.project_id = ? AND d.document_type <> 'receipt' ORDER BY d.id DESC", [$id]);
 $milestones = dbFetchAll('SELECT * FROM project_milestones WHERE project_id = ? ORDER BY planned_date, id', [$id]);
 $progressUpdates = dbFetchAll('SELECT p.*, u.full_name AS submitter_name FROM project_progress_updates p LEFT JOIN users u ON p.submitted_by = u.id WHERE p.project_id = ? ORDER BY p.update_date DESC', [$id]);
-$labors = dbFetchAll("SELECT lh.*, u.full_name AS supervisor_name, pe.id AS payment_expense_id, pe.expense_date AS payment_date, pe.amount AS paid_amount, pe.primary_document_id AS payment_receipt_id, je.entry_code AS payment_entry_code, v.id AS voucher_id, v.voucher_no, v.voucher_date FROM project_labor_helpers lh LEFT JOIN users u ON u.id = lh.supervisor_user_id LEFT JOIN project_expenses pe ON pe.project_id = lh.project_id AND pe.transaction_reference = CONCAT('LABOR:', lh.id) AND pe.status = 'posted' LEFT JOIN journal_entries je ON je.id = pe.journal_entry_id LEFT JOIN vouchers v ON v.entry_id = je.id WHERE lh.project_id = ? ORDER BY lh.id DESC", [$id]);
+$labors = dbFetchAll("SELECT lh.*, u.full_name AS supervisor_name, pe.id AS payment_expense_id, pe.expense_date AS payment_date, pe.amount AS paid_amount, pe.primary_document_id AS payment_receipt_id, je.entry_code AS payment_entry_code FROM project_labor_helpers lh LEFT JOIN users u ON u.id = lh.supervisor_user_id LEFT JOIN project_expenses pe ON pe.project_id = lh.project_id AND pe.transaction_reference = CONCAT('LABOR:', lh.id) AND pe.status = 'posted' LEFT JOIN journal_entries je ON je.id = pe.journal_entry_id WHERE lh.project_id = ? ORDER BY lh.id DESC", [$id]);
 $team = dbFetchAll('SELECT pt.*, u.full_name, u.username FROM project_team pt JOIN users u ON u.id = pt.user_id WHERE pt.project_id = ? AND pt.unassigned_at IS NULL ORDER BY pt.section_code, pt.is_lead DESC, u.full_name', [$id]);
 $primarySupervisor = dbFetchOne("SELECT u.id, u.full_name, u.username FROM project_supervisor_assignments psa JOIN users u ON u.id = psa.supervisor_user_id WHERE psa.project_id = ? AND psa.ended_at IS NULL ORDER BY psa.id DESC LIMIT 1", [$id]);
 $history = dbFetchAll('SELECT h.*, u.full_name FROM project_status_history h LEFT JOIN users u ON u.id = h.changed_by WHERE h.project_id = ? ORDER BY h.created_at DESC LIMIT 20', [$id]);
@@ -945,54 +944,47 @@ akp_audit('CREATE', 'project_labor_helper', $laborId, null, ['project_id' => $id
 $_SESSION['project_toast_success'] = 'تم حفظ بيانات العامل/الجهة الخارجية.';
 } elseif ($action === 'record_labor_payment') {
 if ($role !== 'project_supervisor' || !akp_is_primary_supervisor($id) || $closed) throw new RuntimeException('تسجيل دفعات العمالة الخارجية متاح لمشرف المشروع المكلّف فقط.');
-$laborId=(int)($_POST['labor_id']??0); $labor=dbFetchOne('SELECT * FROM project_labor_helpers WHERE id=? AND project_id=?',[$laborId,$id]);
+$laborId=(int)($_POST['labor_id']??0);
+$labor=dbFetchOne('SELECT * FROM project_labor_helpers WHERE id=? AND project_id=?',[$laborId,$id]);
 if(!$labor) throw new RuntimeException('سجل العمالة غير موجود.');
 if(dbFetchOne("SELECT id FROM project_expenses WHERE project_id=? AND transaction_reference=? AND status='posted' LIMIT 1",[$id,'LABOR:'.$laborId])) throw new RuntimeException('تم تسجيل دفعة هذه العمالة مسبقاً.');
-$amount=(float)$labor['payment_amount']; if($amount<=0) throw new RuntimeException('مبلغ دفعة العمالة غير صالح.');
-$paymentDate=akp_post_value('labor_payment_date',date('Y-m-d')); if(!preg_match('/^\d{4}-\d{2}-\d{2}$/',$paymentDate)||$paymentDate>date('Y-m-d')) throw new RuntimeException('تاريخ الدفع غير صالح.');
-$paymentAccountId=(int)($_POST['labor_payment_account_id']??0); $expenseAccountId=(int)($_POST['labor_expense_account_id']??0);
-$paymentAccount=dbFetchOne('SELECT id,code,name_ar,is_active FROM accounts WHERE id=?',[$paymentAccountId]); $expenseAccount=dbFetchOne('SELECT id,code,name_ar,account_type,is_active FROM accounts WHERE id=?',[$expenseAccountId]);
-if(!$paymentAccount||(int)$paymentAccount['is_active']!==1||!in_array((string)$paymentAccount['code'],['1100','1200','1300'],true)) throw new RuntimeException('حساب الدفع يجب أن يكون صندوقاً أو بنكاً أو محفظة نشطة.');
-if(!$expenseAccount||(int)$expenseAccount['is_active']!==1||(string)$expenseAccount['account_type']!=='expense') throw new RuntimeException('حساب العمالة يجب أن يكون حساب مصروف نشط.');
-if(!dbFetchOne("SELECT id FROM project_funding_allocations WHERE project_id=? AND source_account_id=? AND status='posted' LIMIT 1",[$id,$paymentAccountId])) throw new RuntimeException('حساب الدفع يجب أن يكون من حسابات التمويل المرحّلة للمشروع.');
-$fundingAllocated=(float)(dbFetchOne("SELECT COALESCE(SUM(amount),0) total FROM project_funding_allocations WHERE project_id=? AND source_account_id=? AND status='posted'",[$id,$paymentAccountId])['total']??0);
-$accountExpenseTotal=(float)(dbFetchOne("SELECT COALESCE(SUM(amount),0) total FROM project_expenses WHERE project_id=? AND payment_account_id=? AND status='posted'",[$id,$paymentAccountId])['total']??0);
-if(($accountExpenseTotal+$amount)>($fundingAllocated+0.01)) throw new RuntimeException('المبلغ يتجاوز التمويل المرحّل المتاح من حساب الدفع المختار.');
-$approvedBudgetTotal=(float)(dbFetchOne("SELECT COALESCE(SUM(bl.estimated_amount),0) total FROM project_budgets b JOIN project_budget_lines bl ON bl.budget_id=b.id WHERE b.id=(SELECT pb.id FROM project_budgets pb WHERE pb.project_id=? AND pb.status='approved' ORDER BY pb.version_no DESC,pb.id DESC LIMIT 1)",[$id])['total']??0);
-$existingExpenseTotal=(float)(dbFetchOne('SELECT COALESCE(SUM(amount),0) total FROM project_expenses WHERE project_id=?',[$id])['total']??0);
+$amount=(float)$labor['payment_amount'];
+if($amount<=0) throw new RuntimeException('مبلغ دفعة العمالة غير صالح.');
+$paymentDate=akp_post_value('labor_payment_date',date('Y-m-d'));
+if(!preg_match('/^\d{4}-\d{2}-\d{2}$/',$paymentDate)||$paymentDate>date('Y-m-d')) throw new RuntimeException('تاريخ الدفع غير صالح.');
+$approvedBudgetTotal=(float)(dbFetchOne("SELECT COALESCE(SUM(COALESCE(bl.approved_amount,bl.estimated_amount)),0) total FROM project_budgets b JOIN project_budget_lines bl ON bl.budget_id=b.id WHERE b.id=? AND b.status='approved'",[$approvedBudgetId])['total']??0);
+$existingExpenseTotal=(float)(dbFetchOne("SELECT COALESCE(SUM(amount),0) total FROM project_expenses WHERE project_id=? AND status='posted'",[$id])['total']??0);
 if($approvedBudgetTotal<=0) throw new RuntimeException('لا توجد ميزانية معتمدة للمشروع.');
-if(($existingExpenseTotal+$amount)>($approvedBudgetTotal+0.01)) throw new RuntimeException('المبلغ يتجاوز الرصيد المتبقي من الميزانية المعتمدة. المتبقي: '.number_format(max(0,$approvedBudgetTotal-$existingExpenseTotal),2).' '.($project['currency_code']?:'SDG').'.');
-$primaryDocumentId=null; $storedAbsolutePath=null; $voucherId=0; $entryId=0; $expenseId=0; $vNo='';
+$remainingBudget=$approvedBudgetTotal-$existingExpenseTotal;
+if($amount>($remainingBudget+0.01)) throw new RuntimeException('المبلغ يتجاوز الرصيد الحالي المتاح من ميزانية المشروع. المتبقي: '.number_format(max(0,$remainingBudget),2).' '.($project['currency_code']?:'SDG').'.');
+$primaryDocumentId=null; $storedAbsolutePath=null; $voucherNo='PRJ-LPV-'.(string)($project['project_code']??$id).'-'.$laborId;
 dbExecute('START TRANSACTION');
 try {
 if(!empty($_FILES['labor_payment_receipt']['name'])) {
 if($_FILES['labor_payment_receipt']['error']!==UPLOAD_ERR_OK) throw new RuntimeException('فشل في رفع إيصال الدفع.');
-$file=$_FILES['labor_payment_receipt']; if((int)($file['size']??0)>10*1024*1024) throw new RuntimeException('حجم إيصال الدفع يجب ألا يتجاوز 10 ميجابايت.');
-$mime=mime_content_type($file['tmp_name']); $allowed=['application/pdf'=>'pdf','image/jpeg'=>'jpg','image/png'=>'png']; if(!isset($allowed[$mime])) throw new RuntimeException('نوع إيصال الدفع غير مسموح. استخدم PDF أو JPG أو PNG.');
-$relativeDir='storage/documents/projects/'.$id; $absoluteDir=dirname(__DIR__,2).'/'.$relativeDir; if(!is_dir($absoluteDir)&&!mkdir($absoluteDir,0750,true)) throw new RuntimeException('تعذر إنشاء مجلد وثائق المشروع.');
-$stored=bin2hex(random_bytes(16)).'.'.$allowed[$mime]; $storedAbsolutePath=$absoluteDir.'/'.$stored; if(!move_uploaded_file($file['tmp_name'],$storedAbsolutePath)) throw new RuntimeException('تعذر حفظ إيصال الدفع.');
+$file=$_FILES['labor_payment_receipt'];
+if((int)($file['size']??0)>10*1024*1024) throw new RuntimeException('حجم إيصال الدفع يجب ألا يتجاوز 10 ميجابايت.');
+$mime=mime_content_type($file['tmp_name']); $allowed=['application/pdf'=>'pdf','image/jpeg'=>'jpg','image/png'=>'png'];
+if(!isset($allowed[$mime])) throw new RuntimeException('نوع إيصال الدفع غير مسموح. استخدم PDF أو JPG أو PNG.');
+$relativeDir='storage/documents/projects/'.$id; $absoluteDir=dirname(__DIR__,2).'/'.$relativeDir;
+if(!is_dir($absoluteDir)&&!mkdir($absoluteDir,0750,true)) throw new RuntimeException('تعذر إنشاء مجلد وثائق المشروع.');
+$stored=bin2hex(random_bytes(16)).'.'.$allowed[$mime]; $storedAbsolutePath=$absoluteDir.'/'.$stored;
+if(!move_uploaded_file($file['tmp_name'],$storedAbsolutePath)) throw new RuntimeException('تعذر حفظ إيصال الدفع.');
 $relativePath=$relativeDir.'/'.$stored;
-dbExecute('INSERT INTO project_documents (project_id,document_type,title,file_path,original_name,mime_type,file_size,document_date,issuer,reference_number,amount,currency_code,notes,uploaded_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)',[$id,'receipt','إيصال دفعة عمالة: '.$labor['provider_name'],$relativePath,$file['name'],$mime,$file['size'],$paymentDate,$labor['provider_name'],null,$amount,$labor['currency_code']?:($project['currency_code']?:'SDG'),'مرفق مباشرة بدفعة العمالة الخارجية.',akp_user_id()]);
+dbExecute('INSERT INTO project_documents (project_id,document_type,title,file_path,original_name,mime_type,file_size,document_date,issuer,reference_number,amount,currency_code,notes,uploaded_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)',[$id,'receipt','إيصال دفعة عمالة: '.$labor['provider_name'],$relativePath,$file['name'],$mime,$file['size'],$paymentDate,$labor['provider_name'],$voucherNo,$amount,$labor['currency_code']?:($project['currency_code']?:'SDG'),'مرفق مباشرة بدفعة من ميزانية المشروع.',akp_user_id()]);
 $primaryDocumentId=(int)(dbFetchOne('SELECT LAST_INSERT_ID() id')['id']??0);
 }
-if(!ak_voucher_lock()) throw new RuntimeException('تعذر الحصول على قفل ترقيم السند. حاول مرة أخرى.');
-try {
-$vNo=ak_voucher_next_number('payment'); $jeCode=ak_voucher_next_journal_code(); $label='سند صرف '.$vNo.' — عمالة مشروع '.(string)($project['project_code']??$id).' — '.(string)$labor['provider_name'];
-dbExecute("INSERT INTO vouchers (voucher_type,voucher_no,voucher_date,party_name,amount,cash_account_id,other_account_id,description,reference_number,status,created_by) VALUES (?,?,?,?,?,?,?,?,?,'posted',?)",['payment',$vNo,$paymentDate,$labor['provider_name'],$amount,$paymentAccountId,$expenseAccountId,$label,'LABOR:'.$laborId,akp_user_id()]);
-$voucherId=(int)(dbFetchOne('SELECT LAST_INSERT_ID() id')['id']??0); if($voucherId<=0) throw new RuntimeException('تعذر إنشاء سند الصرف.');
-dbExecute("INSERT INTO journal_entries (entry_code,entry_date,description,reference_type,reference_id,status,created_by) VALUES (?,?,?,'voucher',?,'posted',?)",[$jeCode,$paymentDate,mb_substr($label,0,250),$voucherId,akp_user_id()]);
-$entryId=(int)(dbFetchOne('SELECT LAST_INSERT_ID() id')['id']??0); if($entryId<=0) throw new RuntimeException('تعذر إنشاء القيد المحاسبي.');
-dbExecute('INSERT INTO journal_lines (entry_id,account_id,debit,credit,description) VALUES (?,?,?,?,?)',[$entryId,$expenseAccountId,$amount,0,mb_substr($label,0,250)]);
-dbExecute('INSERT INTO journal_lines (entry_id,account_id,debit,credit,description) VALUES (?,?,?,?,?)',[$entryId,$paymentAccountId,0,$amount,mb_substr($label,0,250)]);
-dbExecute('UPDATE vouchers SET entry_id=? WHERE id=?',[$entryId,$voucherId]);
-dbExecute('INSERT INTO project_expenses (project_id,budget_id,budget_line_id,expense_date,category,description,vendor_name,vendor_contact,invoice_number,government_fee_type,amount,currency_code,transaction_reference,expense_account_id,payment_account_id,primary_document_id,status,submitted_by,posted_by,journal_entry_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',[$id,$approvedBudgetId>0?$approvedBudgetId:null,null,$paymentDate,'عمالة خارجية','دفعة عمالة: '.$labor['provider_name'].' — '.$labor['work_description'],$labor['provider_name'],$labor['phone']?:null,null,null,$amount,$labor['currency_code']?:($project['currency_code']?:'SDG'),'LABOR:'.$laborId,$expenseAccountId,$paymentAccountId,$primaryDocumentId,'posted',akp_user_id(),akp_user_id(),$entryId]);
-$expenseId=(int)(dbFetchOne('SELECT LAST_INSERT_ID() id')['id']??0); if($expenseId<=0) throw new RuntimeException('تعذر تسجيل مصروف دفعة العمالة.');
-$check=dbFetchOne("SELECT COUNT(*) n,COALESCE(SUM(debit),0) d,COALESCE(SUM(credit),0) c FROM journal_lines WHERE entry_id=?",[$entryId]); if((int)$check['n']!==2||abs((float)$check['d']-$amount)>0.000001||abs((float)$check['c']-$amount)>0.000001) throw new RuntimeException('فشل التحقق من توازن قيد دفعة العمالة.');
-} finally { ak_voucher_unlock(); }
+dbExecute('INSERT INTO project_expenses (project_id,budget_id,budget_line_id,expense_date,category,description,vendor_name,vendor_contact,invoice_number,government_fee_type,amount,currency_code,transaction_reference,expense_account_id,payment_account_id,primary_document_id,status,submitted_by,posted_by,journal_entry_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',[$id,$approvedBudgetId>0?$approvedBudgetId:null,null,$paymentDate,'عمالة خارجية','دفعة عمالة من ميزانية المشروع: '.$labor['provider_name'].' — '.$labor['work_description'],$labor['provider_name'],$labor['phone']?:null,$voucherNo,null,$amount,$labor['currency_code']?:($project['currency_code']?:'SDG'),'LABOR:'.$laborId,null,null,$primaryDocumentId,'posted',akp_user_id(),akp_user_id(),null]);
+$expenseId=(int)(dbFetchOne('SELECT LAST_INSERT_ID() id')['id']??0);
+if($expenseId<=0) throw new RuntimeException('تعذر تسجيل دفعة العمالة.');
 dbExecute('COMMIT');
-} catch(Throwable $e) { dbExecute('ROLLBACK'); if($storedAbsolutePath&&is_file($storedAbsolutePath)) @unlink($storedAbsolutePath); throw $e; }
-akp_audit('POST','project_labor_helper',$laborId,['payment_status'=>'unpaid'],['payment_status'=>'paid','amount'=>$amount,'expense_id'=>$expenseId,'voucher_id'=>$voucherId,'journal_entry_id'=>$entryId]);
-$_SESSION['project_toast_success']='تم تسجيل الدفع وإصدار سند الصرف '.$vNo.'.';
+} catch(Throwable $e) {
+dbExecute('ROLLBACK');
+if($storedAbsolutePath&&is_file($storedAbsolutePath)) @unlink($storedAbsolutePath);
+throw $e;
+}
+akp_audit('POST','project_labor_helper',$laborId,['payment_status'=>'unpaid'],['payment_status'=>'paid','amount'=>$amount,'expense_id'=>$expenseId,'voucher_no'=>$voucherNo]);
+$_SESSION['project_toast_success']='تم تسجيل الدفع وخصم '.$amount.' من ميزانية المشروع وإصدار سند الصرف '.$voucherNo.'.';
 } elseif ($action === 'comment_labor') {
 // ... (Original comment_labor logic preserved exactly)
 if (!akp_is_executive()) throw new RuntimeException('التعليق الإداري على العمالة الخارجية متاح للإدارة التنفيذية فقط.');
@@ -1983,19 +1975,18 @@ data-document-notes="<?php echo e($doc['notes'] ?? ''); ?>">
 <td><?php echo e($labor['work_description']); ?><br><small class="text-muted"><?php echo e($labor['phone']?:'بدون هاتف'); ?></small></td>
 <td class="fw-semibold"><?php echo akp_money($labor['payment_amount']); ?> <?php echo e($labor['currency_code']); ?></td>
 <td><span class="badge bg-<?php echo $labor['status']==='completed'?'success':($labor['status']==='in_progress'?'primary':'secondary'); ?>"><?php echo e($labor['status']); ?></span></td>
-<td><?php if(!empty($labor['payment_expense_id'])): ?><span class="badge bg-success">مدفوع</span><br><small><?php echo e($labor['voucher_no']); ?> · <?php echo e($labor['payment_date']); ?></small><?php else: ?><span class="badge bg-warning text-dark">غير مدفوع</span><?php endif; ?></td>
-<td><?php if(!empty($labor['voucher_id'])): ?><a class="btn btn-sm btn-outline-dark mb-1" target="_blank" href="<?php echo APP_URL; ?>modules/accounting/voucher_print.php?id=<?php echo (int)$labor['voucher_id']; ?>"><i class="fas fa-file-invoice-dollar me-1"></i>السند</a><?php endif; ?><?php if(!empty($labor['payment_receipt_id'])): ?><a class="btn btn-sm btn-outline-secondary" target="_blank" href="<?php echo APP_URL; ?>modules/projects/serve_project_document.php?id=<?php echo (int)$labor['payment_receipt_id']; ?>"><i class="fas fa-paperclip me-1"></i>الإيصال</a><?php endif; ?></td>
+<td><?php if(!empty($labor['payment_expense_id'])): ?><span class="badge bg-success">مدفوع</span><br><small><?php echo e('PRJ-LPV-' . ($project['project_code'] ?? $id) . '-' . $labor['id']); ?> · <?php echo e($labor['payment_date']); ?></small><?php else: ?><span class="badge bg-warning text-dark">غير مدفوع</span><?php endif; ?></td>
+<td><?php if(!empty($labor['payment_expense_id'])): ?><a class="btn btn-sm btn-outline-dark mb-1" target="_blank" href="<?php echo APP_URL; ?>modules/accounting/voucher_print.php?labor_payment_id=<?php echo (int)$labor['id']; ?>"><i class="fas fa-file-invoice-dollar me-1"></i>السند</a><?php endif; ?><?php if(!empty($labor['payment_receipt_id'])): ?><a class="btn btn-sm btn-outline-secondary" target="_blank" href="<?php echo APP_URL; ?>modules/projects/serve_project_document.php?id=<?php echo (int)$labor['payment_receipt_id']; ?>"><i class="fas fa-paperclip me-1"></i>الإيصال</a><?php endif; ?></td>
 <td class="text-nowrap"><?php if(!$closed&&$role==='project_supervisor'&&akp_is_primary_supervisor($id)&&empty($labor['payment_expense_id'])): ?><button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#recordLaborPaymentModal" data-labor-id="<?php echo (int)$labor['id']; ?>" data-labor-name="<?php echo e($labor['provider_name']); ?>" data-labor-work="<?php echo e($labor['work_description']); ?>" data-labor-amount="<?php echo e($labor['payment_amount']); ?>" data-labor-currency="<?php echo e($labor['currency_code']); ?>"><i class="fas fa-money-bill-wave me-1"></i>تسجيل الدفع</button><?php endif; ?><?php if(akp_is_executive()&&!$closed): ?><form method="post" class="project-inline-form mt-1"><?php echo csrf_field(); ?><input type="hidden" name="action" value="comment_labor"><input type="hidden" name="labor_id" value="<?php echo (int)$labor['id']; ?>"><input name="labor_manager_comment" class="form-control form-control-sm d-inline-block" style="max-width:220px" placeholder="تعليق الإدارة"><button class="btn btn-sm btn-outline-primary mt-1">تعليق</button></form><?php endif; ?></td>
 </tr><?php endforeach; ?></tbody></table></div>
 <?php if(!$labors): ?><div class="text-center text-muted py-4">لا توجد عمالة أو مساعدون مسجلون.</div><?php endif; ?>
 <?php if($role==='project_supervisor'&&akp_is_primary_supervisor($id)&&!$closed): ?>
 <div class="modal fade" id="recordLaborPaymentModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-lg modal-dialog-centered"><div class="modal-content">
-<div class="modal-header"><h5 class="modal-title"><i class="fas fa-money-bill-wave me-2"></i>تسجيل دفعة العمالة وإصدار سند الصرف</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button></div>
+<div class="modal-header"><h5 class="modal-title"><i class="fas fa-money-bill-wave me-2"></i>تسجيل دفعة من ميزانية المشروع</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button></div>
 <form method="post" enctype="multipart/form-data"><?php echo csrf_field(); ?><input type="hidden" name="action" value="record_labor_payment"><input type="hidden" name="labor_id" id="record-labor-id"><div class="modal-body">
 <div class="alert alert-light border"><div class="fw-semibold" id="record-labor-name"></div><div class="small text-muted" id="record-labor-work"></div><div class="mt-1 fw-bold" id="record-labor-amount"></div></div>
+<div class="alert alert-info"><i class="fas fa-circle-info me-1"></i>سيتم خصم هذا المبلغ مباشرة من الرصيد الحالي لميزانية المشروع المعتمدة. لا يتم اختيار صندوق أو بنك أو محفظة، ولا ينشأ قيد إضافي على حسابات المنظمة.</div>
 <div class="row g-3">
-<div class="col-md-6"><label class="form-label small fw-semibold">حساب الدفع من تمويل المشروع *</label><select name="labor_payment_account_id" class="form-select" required><option value="">اختر حساب التمويل</option><?php foreach($fundings as $funding): if($funding['status']==='posted'): ?><option value="<?php echo (int)$funding['source_account_id']; ?>"><?php echo e(($funding['source_account_code']?:'').' · '.($funding['source_account_name']?:'حساب التمويل')); ?></option><?php endif; endforeach; ?></select></div>
-<div class="col-md-6"><label class="form-label small fw-semibold">حساب مصروف العمالة *</label><select name="labor_expense_account_id" class="form-select" required><option value="">اختر حساب المصروف</option><?php foreach(dbFetchAll("SELECT id,code,name_ar FROM accounts WHERE is_active=1 AND account_type='expense' ORDER BY code") as $account): ?><option value="<?php echo (int)$account['id']; ?>"><?php echo e($account['code'].' · '.$account['name_ar']); ?></option><?php endforeach; ?></select></div>
 <div class="col-md-6"><label class="form-label small fw-semibold">تاريخ الدفع *</label><input type="date" name="labor_payment_date" class="form-control" value="<?php echo date('Y-m-d'); ?>" max="<?php echo date('Y-m-d'); ?>" required></div>
 <div class="col-md-6"><label class="form-label small fw-semibold">إيصال الدفع (اختياري)</label><input type="file" name="labor_payment_receipt" class="form-control" accept=".pdf,.jpg,.jpeg,.png"><div class="small text-muted mt-1">PDF أو JPG أو PNG، بحد أقصى 10 ميجابايت.</div></div>
 </div></div>
