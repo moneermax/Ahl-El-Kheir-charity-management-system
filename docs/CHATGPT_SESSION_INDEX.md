@@ -906,3 +906,29 @@ Runtime result as of 2026-09-25: PM dashboard works and Project Supervisor dashb
 ### Immediate next runtime test
 
 Do not create another project. Continue with PRJ-0010. 1) Log in as PM and confirm the project appears under مشاريع معتمدة بانتظار الإطلاق. 2) Open the project and verify the PM has the explicit إطلاق المشروع action. 3) Confirm the assigned Project Supervisor exists and is active. 4) When ready, PM launches the project. 5) Verify the assigned Project Supervisor receives the launch notification and the project appears on the supervisor dashboard. 6) Verify the supervisor can open the launched project and perform only the intended operational work. 7) Continue later with the payment/disbursement and post-approval workflow audit; do not broaden permissions without first checking the current code/schema.
+
+
+## 2026-09-26 — Projects expense/payment workflow completed
+
+The Project Supervisor project-expense workflow was completed and runtime-tested on PRJ-0010 / project ID 10.
+
+Final business rule:
+- Project Supervisor payments are paid from the project budget already transferred/allocated to the supervisor.
+- Recording a payment requires a payment receipt and immediately creates a `posted` project expense.
+- The amount is deducted from the approved project budget.
+- No organization cash/bank/e-wallet account is selected and no organizational journal entry is created.
+- Existing older `draft` expenses are not auto-posted; they are converted through the existing **تعديل / تسجيل الدفع** action after the payment receipt is provided.
+- The assigned primary Project Supervisor can **تعديل** and **حذف** both `draft` and `posted` project-funded expenses.
+
+The temporary standalone `project_expense_finalize.php` bridge was removed. The obsolete organization-account `add_expense` path is blocked and must not be revived.
+
+Final relevant commit: `5dda62c4bc74662fe0e9c415ddbbed88e9263a94`.
+
+A dedicated detailed checkpoint is now stored at:
+`docs/PROJECTS_RUNTIME_CHECKPOINT_2026-09-26.md`.
+
+### Current stopping point
+
+PRJ-0010 is **not yet closed** because one remaining project task is still outstanding. Do not close the project prematurely. Continue with that remaining task in the next session, then perform PM closure/runtime verification when the project is actually ready.
+
+Do not restart the completed expense/payment work.
