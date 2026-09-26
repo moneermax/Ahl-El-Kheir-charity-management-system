@@ -1943,9 +1943,20 @@ if (documentSection) documentSection.scrollIntoView({ behavior: 'smooth', block:
 });
 </script>
 <?php endif; ?>
-<div class="card mb-4 fade-in" id="project-documents">
-<div class="card-header"><i class="fas fa-file-shield me-2"></i>الوثائق والتصاريح والشهادات</div>
-<div class="card-body">
+<div class="card mb-4 fade-in border-0 shadow-sm project-documents-card" id="project-documents">
+<div class="card-header bg-dark text-white py-3">
+<div class="d-flex align-items-center justify-content-between gap-2">
+<div class="d-flex align-items-center">
+<span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-white bg-opacity-10 me-2" style="width:36px;height:36px;"><i class="fas fa-file-shield"></i></span>
+<div>
+<div class="fw-bold">الوثائق والتصاريح والشهادات</div>
+<div class="small text-white-50">حفظ ومراجعة المستندات المرتبطة بالمشروع</div>
+</div>
+</div>
+<span class="badge bg-light text-dark px-3 py-2"><i class="fas fa-folder-open me-1"></i><?php echo count($documents); ?> مستند</span>
+</div>
+</div>
+<div class="card-body p-3 p-lg-4">
 <?php if ($projectDocumentSuccess): ?>
 <div class="alert alert-success d-flex align-items-center gap-2 py-2 mb-3" role="alert">
 <i class="fas fa-check-circle"></i>
@@ -1953,12 +1964,21 @@ if (documentSection) documentSection.scrollIntoView({ behavior: 'smooth', block:
 </div>
 <?php endif; ?>
 <?php if (akp_can_edit_section('documents', $id) && !$closed): ?>
-<form method="post" enctype="multipart/form-data" class="project-form-panel">
+<div class="border rounded-3 p-3 bg-light mb-4">
+<div class="d-flex align-items-center gap-2 mb-3">
+<span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-primary bg-opacity-10 text-primary" style="width:34px;height:34px;"><i class="fas fa-upload"></i></span>
+<div>
+<div class="fw-semibold">إضافة وثيقة جديدة</div>
+<div class="small text-muted">أدخل بيانات الوثيقة وارفع الملف المرتبط بها.</div>
+</div>
+</div>
+<form method="post" enctype="multipart/form-data">
 <input type="hidden" name="action" value="upload_document">
 <?php echo csrf_field(); ?>
-<div class="row g-2">
+<div class="row g-3">
 <div class="col-md-3">
-<select name="document_type" class="form-select form-select-sm">
+<label class="form-label small fw-semibold">نوع الوثيقة</label>
+<select name="document_type" class="form-select" required>
 <option value="invoice">فاتورة</option>
 <option value="certificate">شهادة</option>
 <option value="government_fee">رسم حكومي</option>
@@ -1970,29 +1990,74 @@ if (documentSection) documentSection.scrollIntoView({ behavior: 'smooth', block:
 <option value="other">أخرى</option>
 </select>
 </div>
-<div class="col-md-5"><input name="document_title" class="form-control form-control-sm" placeholder="عنوان الوثيقة" required></div>
-<div class="col-md-4"><input type="file" name="document" class="form-control form-control-sm" required accept=".pdf,.jpg,.jpeg,.png,.docx,.xlsx"></div>
-<div class="col-md-4"><input name="document_issuer" class="form-control form-control-sm" placeholder="الجهة المصدرة"></div>
-<div class="col-md-4"><input name="document_reference" class="form-control form-control-sm" placeholder="رقم الوثيقة/المرجع"></div>
-<div class="col-md-4"><input type="date" name="document_date" class="form-control form-control-sm"></div>
-<div class="col-12"><input name="document_notes" class="form-control form-control-sm" placeholder="ملاحظات"></div>
-<div class="col-12"><button class="btn btn-sm btn-primary">رفع الوثيقة</button></div>
+<div class="col-md-5">
+<label class="form-label small fw-semibold">عنوان الوثيقة <span class="text-danger">*</span></label>
+<input name="document_title" class="form-control" placeholder="عنوان واضح للوثيقة" required>
+</div>
+<div class="col-md-4">
+<label class="form-label small fw-semibold">الملف <span class="text-danger">*</span></label>
+<input type="file" name="document" class="form-control" required accept=".pdf,.jpg,.jpeg,.png,.docx,.xlsx">
+</div>
+<div class="col-md-4">
+<label class="form-label small fw-semibold">الجهة المصدرة</label>
+<input name="document_issuer" class="form-control" placeholder="الجهة المصدرة">
+</div>
+<div class="col-md-4">
+<label class="form-label small fw-semibold">رقم الوثيقة/المرجع</label>
+<input name="document_reference" class="form-control" placeholder="الرقم أو المرجع">
+</div>
+<div class="col-md-4">
+<label class="form-label small fw-semibold">تاريخ الوثيقة</label>
+<input type="date" name="document_date" class="form-control">
+</div>
+<div class="col-12">
+<label class="form-label small fw-semibold">ملاحظات</label>
+<input name="document_notes" class="form-control" placeholder="ملاحظات إضافية (اختياري)">
+</div>
+<div class="col-12 d-flex justify-content-end">
+<button class="btn btn-primary px-4"><i class="fas fa-upload me-1"></i>رفع الوثيقة</button>
+</div>
 </div>
 </form>
+</div>
 <?php endif; ?>
-<div class="row">
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+<div>
+<div class="fw-semibold">المستندات المسجلة</div>
+<div class="small text-muted">يمكن عرض المستند، وتعديل أو حذف المستند غير المتحقق منه حسب الصلاحية.</div>
+</div>
+</div>
+<div class="table-responsive">
+<table class="table table-sm align-middle mb-0">
+<thead class="table-primary">
+<tr>
+<th>النوع</th>
+<th>عنوان الوثيقة</th>
+<th>الجهة المصدرة</th>
+<th>التاريخ</th>
+<th>المرجع</th>
+<th>حالة التحقق</th>
+<th>الملف والإجراءات</th>
+</tr>
+</thead>
+<tbody>
 <?php foreach ($documents as $doc): ?>
-<div class="col-md-4 mb-3">
-<div class="card h-100">
-<div class="card-body">
-<h6 class="card-title"><?php echo e($doc['title']); ?></h6>
-<p class="card-text small text-muted mb-1">
-<span class="badge bg-secondary"><?php echo e($doc['document_type']); ?></span>
-<span class="badge bg-<?php echo $doc['verification_status'] === 'verified' ? 'success' : ($doc['verification_status'] === 'rejected' ? 'danger' : 'warning'); ?>"><?php echo e($doc['verification_status']); ?></span>
-</p>
-<p class="small mb-1">رفع بواسطة: <?php echo e($doc['uploader_name'] ?? '—'); ?></p>
-<div class="d-flex flex-wrap gap-2 mt-2">
-<a href="modules/projects/serve_project_document.php?id=<?php echo (int)$doc['id']; ?>" class="btn btn-sm btn-outline-primary" target="_blank">عرض</a>
+<tr>
+<td><span class="badge bg-secondary"><?php echo e($doc['document_type']); ?></span></td>
+<td>
+<div class="fw-semibold"><?php echo e($doc['title']); ?></div>
+<?php if (!empty($doc['uploader_name'])): ?><small class="text-muted">رفع بواسطة: <?php echo e($doc['uploader_name']); ?></small><?php endif; ?>
+</td>
+<td><?php echo e($doc['issuer'] ?: '—'); ?></td>
+<td><?php echo e($doc['document_date'] ?: '—'); ?></td>
+<td><?php echo e($doc['reference_number'] ?: '—'); ?></td>
+<td>
+<?php $documentStatusClass = $doc['verification_status'] === 'verified' ? 'success' : ($doc['verification_status'] === 'rejected' ? 'danger' : 'warning'); ?>
+<span class="badge bg-<?php echo $documentStatusClass; ?>"><?php echo e($doc['verification_status']); ?></span>
+</td>
+<td>
+<div class="d-flex flex-wrap gap-1">
+<a href="modules/projects/serve_project_document.php?id=<?php echo (int)$doc['id']; ?>" class="btn btn-sm btn-outline-primary" target="_blank"><i class="fas fa-eye me-1"></i>عرض</a>
 <?php if ($doc['verification_status'] === 'unverified' && akp_can_edit_section('documents', $id) && !$closed): ?>
 <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editProjectDocumentModal"
 data-document-id="<?php echo (int)$doc['id']; ?>"
@@ -2008,24 +2073,25 @@ data-document-notes="<?php echo e($doc['notes'] ?? ''); ?>">
 <?php echo csrf_field(); ?>
 <input type="hidden" name="action" value="delete_project_document">
 <input type="hidden" name="document_id" value="<?php echo (int)$doc['id']; ?>">
-<button type="button" class="btn btn-sm btn-outline-danger project-delete-btn" data-confirm-title="حذف الوثيقة" data-confirm-text="سيتم حذف الوثيقة والملف المرفق نهائياً.">حذف</button>
+<button type="button" class="btn btn-sm btn-outline-danger project-delete-btn" data-confirm-title="حذف الوثيقة" data-confirm-text="سيتم حذف الوثيقة والملف المرفق نهائياً."><i class="fas fa-trash me-1"></i>حذف</button>
 </form>
 <form method="post" class="project-action-form d-inline">
 <?php echo csrf_field(); ?>
 <input type="hidden" name="action" value="verify_document">
 <input type="hidden" name="document_id" value="<?php echo (int)$doc['id']; ?>">
 <input type="hidden" name="verification_status" value="verified">
-<button class="btn btn-sm btn-outline-success">تحقق</button>
+<button class="btn btn-sm btn-outline-success"><i class="fas fa-check me-1"></i>تحقق</button>
 </form>
 <?php endif; ?>
 </div>
-</div>
-</div>
-</div>
+</td>
+</tr>
 <?php endforeach; ?>
 <?php if (!$documents): ?>
-<div class="col-12 text-center text-muted">لا توجد وثائق مرفقة.</div>
+<tr><td colspan="7" class="text-center text-muted py-4"><i class="fas fa-folder-open me-1"></i>لا توجد وثائق مرفقة.</td></tr>
 <?php endif; ?>
+</tbody>
+</table>
 </div>
 </div>
 </div>
