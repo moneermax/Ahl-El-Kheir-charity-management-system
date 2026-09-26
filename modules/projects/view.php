@@ -953,12 +953,28 @@ dbExecute('UPDATE project_labor_helpers SET manager_comment = ?, manager_comment
 akp_audit('COMMENT', 'project_labor_helper', $laborId, null, ['project_id' => $id]);
 $_SESSION['project_toast_success'] = 'تم حفظ تعليق مدير المشاريع.';
 } elseif ($action === 'add_milestone') {
-// ... (Original add_milestone logic preserved exactly)
 if (!akp_can_edit_section('operations', $id) || $closed) throw new RuntimeException('لا تملك صلاحية إضافة مراحل.');
 $title = akp_post_value('milestone_title');
 if ($title === '') throw new RuntimeException('عنوان المرحلة مطلوب.');
-dbExecute('INSERT INTO project_milestones (project_id, title, description, planned_date, status, completion_percent, notes, created_by) VALUES (?,?,?,?,?,?,?,?)', [$id, $title, akp_post_value('milestone_description') ?: null, akp_post_value('planned_date') ?: null, akp_post_value('milestone_status', 'pending'), max(0, min(100, (float)($_POST['completion_percent'] ?? 0))), akp_post_value('milestone_notes') ?: null, akp_user_id()]);
+$completionPercent = max(0, min(100, (float)($_POST['completion_percent'] ?? 0)));
+$status = $completionPercent >= 100 ? 'completed' : 'in_progress';
+dbExecute('INSERT INTO project_milestones (project_id, title, description, planned_date, status, completion_percent, notes, created_by) VALUES (?,?,?,?,?,?,?,?)', [$id, $title, akp_post_value('milestone_description') ?: null, akp_post_value('planned_date') ?: null, $status, $completionPercent, akp_post_value('milestone_notes') ?: null, akp_user_id()]);
 $_SESSION['project_toast_success'] = 'تمت إضافة المرحلة.';
+} elseif ($action === 'edit_milestone') {
+if (!akp_can_edit_section('operations', $id) || $closed) throw new RuntimeException('لا تملك صلاحية تعديل المراحل.');
+$milestoneId = (int)($_POST['milestone_id'] ?? 0);
+$title = akp_post_value('milestone_title');
+if (!$milestoneId || $title === '' || !dbFetchOne('SELECT id FROM project_milestones WHERE id = ? AND project_id = ?', [$milestoneId, $id])) throw new RuntimeException('بيانات المرحلة غير صالحة.');
+$completionPercent = max(0, min(100, (float)($_POST['completion_percent'] ?? 0)));
+$status = $completionPercent >= 100 ? 'completed' : 'in_progress';
+dbExecute('UPDATE project_milestones SET title = ?, description = ?, planned_date = ?, status = ?, completion_percent = ? WHERE id = ? AND project_id = ?', [$title, akp_post_value('milestone_description') ?: null, akp_post_value('planned_date') ?: null, $status, $completionPercent, $milestoneId, $id]);
+$_SESSION['project_toast_success'] = 'تم تعديل المرحلة.';
+} elseif ($action === 'delete_milestone') {
+if (!akp_can_edit_section('operations', $id) || $closed) throw new RuntimeException('لا تملك صلاحية حذف المراحل.');
+$milestoneId = (int)($_POST['milestone_id'] ?? 0);
+if (!$milestoneId || !dbFetchOne('SELECT id FROM project_milestones WHERE id = ? AND project_id = ?', [$milestoneId, $id])) throw new RuntimeException('بيانات المرحلة غير صالحة.');
+dbExecute('DELETE FROM project_milestones WHERE id = ? AND project_id = ?', [$milestoneId, $id]);
+$_SESSION['project_toast_success'] = 'تم حذف المرحلة.';
 } elseif ($action === 'add_progress') {
 // ... (Original add_progress logic preserved exactly)
 if (!akp_can_edit_section('operations', $id) || $closed) throw new RuntimeException('لا تملك صلاحية إضافة تحديث تشغيلي.');
@@ -1933,7 +1949,6 @@ data-document-notes="<?php echo e($doc['notes'] ?? ''); ?>">
 <div class="card mb-4 fade-in">
             <div class="card-header"><i class="fas fa-list-check me-2"></i>التشغيل والتقدم</div>
             <div class="card-body">
-                
 <?php if (akp_can_edit_section('operations', $id) && !$closed): ?>
 <form method="post" class="project-form-panel mb-3">
 <input type="hidden" name="action" value="add_milestone">
@@ -1959,56 +1974,42 @@ data-document-notes="<?php echo e($doc['notes'] ?? ''); ?>">
 </div>
 </form>
 <?php endif; ?>
-<?php foreach ($milestones as $milestone): ?>
-<div class="border-bottom pb-2 mb-2">
-<strong><?php echo e($milestone['title']); ?></strong><br>
-<small><?php echo e($milestone['planned_date'] ?: 'بدون تاريخ'); ?> · <?php echo e($milestone['status']); ?> · <?php echo akp_money($milestone['completion_percent']); ?>%</small>
-<div class="progress mt-1" style="height:6px"><div class="progress-bar" style="width:<?php echo (float)$milestone['completion_percent']; ?>%"></div></div>
-</div>
-<?php endforeach; if (!$milestones): ?>
-<div class="text-muted small">لا توجد مراحل بعد.</div>
-<?php endif; ?>
-<hr>
-<h6 class="fw-bold">تحديث تقدم</h6>
-<?php if ($progressUpdates): ?>
-<div class="table-responsive mt-3">
+
+<?php if ($milestones): ?>
+<div class="table-responsive">
 <table class="table table-sm table-bordered align-middle mb-0">
 <thead class="table-primary">
 <tr>
-<th>التاريخ</th>
-<th>نسبة الإنجاز</th>
-<th>ملخص التقدم</th>
-<th>الإنجازات</th>
-<th>المعوقات</th>
-<th>الخطوات القادمة</th>
-<th>بواسطة</th>
+<th>عنوان المرحلة</th><th>التاريخ المخطط</th><th>نسبة الإنجاز (%)</th><th>وصف المرحلة</th>
+<?php if (akp_can_edit_section('operations', $id) && !$closed): ?><th>الإجراءات</th><?php endif; ?>
 </tr>
 </thead>
 <tbody>
-<?php foreach ($progressUpdates as $update): ?>
+<?php foreach ($milestones as $milestone): ?>
 <tr>
-<td><?php echo e($update['update_date']); ?></td>
-<td class="fw-semibold"><?php echo akp_money($update['completion_percent']); ?>%</td>
-<td><?php echo nl2br(e($update['summary'])); ?></td>
-<td><?php echo nl2br(e($update['achievements'] ?? '')); ?></td>
-<td><?php echo nl2br(e($update['issues'] ?? '')); ?></td>
-<td><?php echo nl2br(e($update['next_steps'] ?? '')); ?></td>
-<td><?php echo e($update['submitter_name'] ?? 'نظام'); ?></td>
+<td><?php echo e($milestone['title']); ?></td>
+<td><?php echo e($milestone['planned_date'] ?: 'بدون تاريخ'); ?></td>
+<td class="fw-semibold"><?php echo akp_money($milestone['completion_percent']); ?>%</td>
+<td><?php echo nl2br(e($milestone['description'] ?? '')); ?></td>
+<?php if (akp_can_edit_section('operations', $id) && !$closed): ?>
+<td class="text-nowrap">
+<button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editMilestoneModal" data-milestone-id="<?php echo (int)$milestone['id']; ?>" data-milestone-title="<?php echo e($milestone['title']); ?>" data-milestone-date="<?php echo e($milestone['planned_date'] ?? ''); ?>" data-milestone-percent="<?php echo e($milestone['completion_percent']); ?>" data-milestone-description="<?php echo e($milestone['description'] ?? ''); ?>"><i class="fas fa-pen"></i> تعديل</button>
+<form method="post" class="d-inline">
+<?php echo csrf_field(); ?>
+<input type="hidden" name="action" value="delete_milestone">
+<input type="hidden" name="milestone_id" value="<?php echo (int)$milestone['id']; ?>">
+<button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('هل تريد حذف هذه المرحلة؟');"><i class="fas fa-trash"></i> حذف</button>
+</form>
+</td>
+<?php endif; ?>
 </tr>
 <?php endforeach; ?>
 </tbody>
 </table>
 </div>
-<?php endif; ?>
+<?php else: ?><div class="text-muted small">لا توجد مراحل بعد.</div><?php endif; ?>
 </div>
 </div>
-<?php else: ?>
-<div class="alert alert-light border mb-4 small text-muted">
-<i class="fas fa-lock me-2"></i>تظهر المصروفات والوثائق والعمالة والتشغيل والتقدم بعد اعتماد المشروع نهائياً من المدير العام.
-</div>
-<?php endif; ?>
-</div>
-<div class="col-12">
 <div class="card mb-4 fade-in">
 <div class="card-header"><i class="fas fa-history me-2"></i>سجل التغييرات</div>
 <div class="card-body">
