@@ -270,6 +270,70 @@ if (!function_exists('akp_sync_closure_totals')) {
 if (!function_exists('akp_status_label')) {
     function akp_status_label(string $status): string { return ['planned'=>'مخطط','active'=>'قيد التنفيذ','completed'=>'منجز','under_review'=>'قيد المراجعة الختامية','closed'=>'مغلق','reopened'=>'معاد فتحه','cancelled'=>'ملغي'][$status] ?? $status; }
 }
+if (!function_exists('akp_approval_status_label')) {
+    function akp_approval_status_label(string $status): string { return [
+        'draft'=>'مسودة',
+        'submitted'=>'مرسل للمراجعة',
+        'fm_approved'=>'معتمد مالياً',
+        'approved'=>'معتمد نهائياً',
+        'rejected'=>'مرفوض',
+    ][$status] ?? $status; }
+}
+if (!function_exists('akp_budget_status_label')) {
+    function akp_budget_status_label(string $status): string { return [
+        'draft'=>'مسودة',
+        'approved'=>'معتمدة',
+        'superseded'=>'مستبدلة',
+    ][$status] ?? $status; }
+}
+if (!function_exists('akp_funding_status_label')) {
+    function akp_funding_status_label(string $status): string { return [
+        'draft'=>'مسودة',
+        'posted'=>'معتمد',
+        'documented'=>'موثق',
+    ][$status] ?? $status; }
+}
+if (!function_exists('akp_expense_status_label')) {
+    function akp_expense_status_label(string $status): string { return [
+        'draft'=>'مسودة',
+        'submitted'=>'مرسل',
+        'approved'=>'معتمد',
+        'posted'=>'مرحّل',
+    ][$status] ?? $status; }
+}
+if (!function_exists('akp_document_verification_status_label')) {
+    function akp_document_verification_status_label(string $status): string { return [
+        'unverified'=>'غير متحقق',
+        'verified'=>'متحقق',
+        'rejected'=>'مرفوض',
+    ][$status] ?? $status; }
+}
+if (!function_exists('akp_labor_status_label')) {
+    function akp_labor_status_label(string $status): string { return [
+        'planned'=>'مخطط',
+        'in_progress'=>'قيد التنفيذ',
+        'completed'=>'منجز',
+    ][$status] ?? $status; }
+}
+if (!function_exists('akp_payment_evidence_status_label')) {
+    function akp_payment_evidence_status_label(string $status): string { return [
+        'pending'=>'قيد الانتظار',
+        'documented'=>'موثق',
+    ][$status] ?? $status; }
+}
+if (!function_exists('akp_history_status_label')) {
+    function akp_history_status_label(string $status): string { return [
+        'closure_requested'=>'طلب إغلاق',
+        'reopen_requested'=>'طلب إعادة فتح',
+        'closed'=>'مغلق',
+        'reopened'=>'معاد فتحه',
+        'planned'=>'مخطط',
+        'active'=>'قيد التنفيذ',
+        'completed'=>'منجز',
+        'under_review'=>'قيد المراجعة الختامية',
+        'cancelled'=>'ملغي',
+    ][$status] ?? $status; }
+}
 if (!function_exists('akp_money')) {
     function akp_money($value): string { return number_format((float)$value, 2); }
 }
