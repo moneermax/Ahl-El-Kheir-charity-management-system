@@ -719,14 +719,15 @@ $description = akp_post_value('expense_description');
 $expenseDate = akp_post_value('expense_date', date('Y-m-d'));
 $category = akp_post_value('expense_category', 'تنفيذ المشروع');
 if ($amount <= 0 || $description === '') throw new RuntimeException('وصف المصروف والمبلغ مطلوبان.');
-$approvedBudgetTotal = (float)(dbFetchOne("SELECT COALESCE(SUM(bl.estimated_amount), 0) AS total FROM project_budgets b JOIN project_budget_lines bl ON bl.budget_id = b.id WHERE b.id = (SELECT pb.id FROM project_budgets pb WHERE pb.project_id = ? AND pb.status = 'approved' ORDER BY pb.version_no DESC, pb.id DESC LIMIT 1)", [$id])['total'] ?? 0);
-$existingExpenseTotal = (float)(dbFetchOne('SELECT COALESCE(SUM(amount), 0) AS total FROM project_expenses WHERE project_id = ? AND id <> ?', [$id, $expenseId])['total'] ?? 0);
+$approvedBudgetTotal = (float)(dbFetchOne("SELECT COALESCE(SUM(COALESCE(bl.approved_amount, bl.estimated_amount)), 0) AS total FROM project_budgets b JOIN project_budget_lines bl ON bl.budget_id = b.id WHERE b.id = (SELECT pb.id FROM project_budgets pb WHERE pb.project_id = ? AND pb.status = 'approved' ORDER BY pb.version_no DESC, pb.id DESC LIMIT 1)", [$id])['total'] ?? 0);
+$existingExpenseTotal = (float)(dbFetchOne("SELECT COALESCE(SUM(amount), 0) AS total FROM project_expenses WHERE project_id = ? AND status = 'posted' AND id <> ?", [$id, $expenseId])['total'] ?? 0);
 if ($approvedBudgetTotal <= 0) throw new RuntimeException('لا توجد ميزانية معتمدة من المدير المالي يمكن تسجيل المصروفات عليها.');
 if (($existingExpenseTotal + $amount) > ($approvedBudgetTotal + 0.01)) {
 $remaining = max(0, $approvedBudgetTotal - $existingExpenseTotal);
 throw new RuntimeException('المبلغ يتجاوز الرصيد المتبقي من الميزانية المعتمدة. المتبقي: ' . number_format($remaining, 2) . ' ' . ($project['currency_code'] ?: 'SDG') . '.');
 }
 $primaryDocumentId = !empty($expense['primary_document_id']) ? (int)$expense['primary_document_id'] : null;
+if (!$primaryDocumentId && empty($_FILES['expense_receipt']['name'])) throw new RuntimeException('إيصال الدفع مطلوب عند تسجيل الدفع وترحيل المصروف.');
 $storedAbsolutePath = null;
 $oldReceiptPath = null;
 dbExecute('START TRANSACTION');
@@ -756,7 +757,7 @@ $primaryDocumentId = (int)(dbFetchOne('SELECT LAST_INSERT_ID() AS id')['id'] ?? 
 } elseif ($primaryDocumentId) {
 dbExecute('UPDATE project_documents SET title = ?, document_date = ?, issuer = ?, reference_number = ?, amount = ?, currency_code = ?, notes = ? WHERE id = ? AND project_id = ? AND document_type = \'receipt\'', ['إيصال مصروف: ' . $description, $expenseDate ?: null, akp_post_value('vendor_name') ?: null, akp_post_value('invoice_number') ?: null, $amount, $project['currency_code'] ?: 'SDG', 'مرفق مباشرة بالمصروف المسجل بواسطة مشرف المشروع.', $primaryDocumentId, $id]);
 }
-dbExecute('UPDATE project_expenses SET expense_date = ?, category = ?, description = ?, vendor_name = ?, invoice_number = ?, amount = ?, currency_code = ?, primary_document_id = ? WHERE id = ? AND project_id = ?', [$expenseDate, $category, $description, akp_post_value('vendor_name') ?: null, akp_post_value('invoice_number') ?: null, $amount, $project['currency_code'] ?: 'SDG', $primaryDocumentId, $expenseId, $id]);
+dbExecute('UPDATE project_expenses SET expense_date = ?, category = ?, description = ?, vendor_name = ?, invoice_number = ?, amount = ?, currency_code = ?, primary_document_id = ?, status = 'posted', posted_by = ? WHERE id = ? AND project_id = ?', [$expenseDate, $category, $description, akp_post_value('vendor_name') ?: null, akp_post_value('invoice_number') ?: null, $amount, $project['currency_code'] ?: 'SDG', $primaryDocumentId, akp_user_id(), $expenseId, $id]);
 dbExecute('COMMIT');
 } catch (Throwable $e) {
 dbExecute('ROLLBACK');
@@ -768,7 +769,7 @@ $oldAbsolutePath = dirname(__DIR__, 2) . '/' . $oldReceiptPath;
 if ($oldAbsolutePath !== $storedAbsolutePath && is_file($oldAbsolutePath)) @unlink($oldAbsolutePath);
 }
 akp_audit('UPDATE', 'project_expense', $expenseId, ['project_id'=>$id,'amount'=>(float)$expense['amount']], ['project_id'=>$id,'amount'=>$amount,'primary_document_id'=>$primaryDocumentId]);
-$_SESSION['project_expense_success'] = 'تم تعديل المصروف بنجاح.';
+$_SESSION['project_expense_success'] = 'تم تسجيل الدفع وخصم ' . number_format($amount, 2) . ' ' . ($project['currency_code'] ?: 'SDG') . ' من ميزانية المشروع وترحيل المصروف.';
 } elseif ($action === 'delete_ps_expense') {
 if ($role !== 'project_supervisor' || !akp_is_primary_supervisor($id) || $closed) throw new RuntimeException('حذف مصروفات التنفيذ متاح لمشرف المشروع المكلّف فقط.');
 $expenseId = (int)($_POST['expense_id'] ?? 0);
@@ -1848,9 +1849,6 @@ data-expense-vendor="<?php echo e($expense['vendor_name'] ?? ''); ?>"
 data-expense-invoice="<?php echo e($expense['invoice_number'] ?? ''); ?>">
 <i class="fas fa-pen me-1"></i>تعديل
 </button>
-<a href="<?php echo APP_URL; ?>modules/projects/project_expense_finalize.php?id=<?php echo (int)$id; ?>&expense_id=<?php echo (int)$expense['id']; ?>" class="btn btn-sm btn-success">
-<i class="fas fa-check me-1"></i>تسجيل الدفع وترحيل
-</a>
 <form method="post" class="d-inline project-delete-form">
 <?php echo csrf_field(); ?>
 <input type="hidden" name="action" value="delete_ps_expense">
@@ -2431,12 +2429,12 @@ document.getElementById('edit-milestone-description').value = button.dataset.mil
 <div class="col-12"><label class="form-label">الوصف</label><input name="expense_description" id="edit-expense-description" class="form-control" required></div>
 <div class="col-md-6"><label class="form-label">المورد</label><input name="vendor_name" id="edit-expense-vendor" class="form-control"></div>
 <div class="col-md-6"><label class="form-label">رقم الفاتورة</label><input name="invoice_number" id="edit-expense-invoice" class="form-control"></div>
-<div class="col-12"><label class="form-label">استبدال الإيصال (اختياري)</label><input type="file" name="expense_receipt" class="form-control" accept=".pdf,.jpg,.jpeg,.png"><div class="form-text">يمكنك تركه فارغاً للاحتفاظ بالإيصال الحالي.</div></div>
+<div class="col-12"><label class="form-label">إيصال الدفع</label><input type="file" name="expense_receipt" class="form-control" accept=".pdf,.jpg,.jpeg,.png"><div class="form-text">إذا لم يكن للمصروف إيصال محفوظ، يجب إرفاقه هنا. عند حفظ التعديل يتم تسجيل الدفع وترحيل المصروف مباشرة من ميزانية المشروع.</div></div>
 </div>
 </div>
 <div class="modal-footer">
 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">إلغاء</button>
-<button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i>حفظ التعديل</button>
+<button type="submit" class="btn btn-success"><i class="fas fa-check me-1"></i>حفظ التعديل وتسجيل الدفع</button>
 </div>
 </form>
 </div>
