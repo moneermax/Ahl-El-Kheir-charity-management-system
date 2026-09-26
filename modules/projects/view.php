@@ -2198,8 +2198,10 @@ document.getElementById('edit-milestone-description').value = button.dataset.mil
 </div>
 </div>
 </div>
-<div class="col-lg-7 project-view-side-column">
-<div class="card mb-4 fade-in border-0 shadow-sm overflow-hidden">
+</div>
+<div class="row g-4 project-closure-section">
+<div class="col-12">
+<div class="card mb-4 fade-in border-0 shadow-sm overflow-hidden project-closure-card">
 <div class="card-header bg-dark text-white py-3">
 <div class="d-flex align-items-center justify-content-between gap-2">
 <div class="d-flex align-items-center">
@@ -2331,6 +2333,7 @@ document.getElementById('edit-milestone-description').value = button.dataset.mil
 <?php else: ?>
 <div class="alert alert-light border mb-0 small"><i class="fas fa-info-circle me-1"></i>إجراءات الإغلاق وإعادة الفتح محصورة بمدير المشاريع، وتبدأ بطلب من مشرف المشروع.</div>
 <?php endif; ?>
+</div>
 </div>
 </div>
 <div class="modal fade" id="editProjectExpenseModal" tabindex="-1" aria-hidden="true">
