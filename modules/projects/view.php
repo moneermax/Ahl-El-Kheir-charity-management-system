@@ -1848,7 +1848,7 @@ data-expense-vendor="<?php echo e($expense['vendor_name'] ?? ''); ?>"
 data-expense-invoice="<?php echo e($expense['invoice_number'] ?? ''); ?>">
 <i class="fas fa-pen me-1"></i>تعديل
 </button>
-<a href="<?php echo e(APP_URL . 'modules/projects/project_expense_finalize.php?id=' . $id . '&expense_id=' . (int)$expense['id']); ?>" class="btn btn-sm btn-success">
+<a href="<?php echo APP_URL; ?>modules/projects/project_expense_finalize.php?id=<?php echo (int)$id; ?>&expense_id=<?php echo (int)$expense['id']; ?>" class="btn btn-sm btn-success">
 <i class="fas fa-check me-1"></i>تسجيل الدفع وترحيل
 </a>
 <form method="post" class="d-inline project-delete-form">
