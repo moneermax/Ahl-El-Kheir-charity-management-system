@@ -713,7 +713,7 @@ $_SESSION['project_expense_success'] = 'تم تسجيل الدفع وخصم ' . 
 if ($role !== 'project_supervisor' || !akp_is_primary_supervisor($id) || $closed) throw new RuntimeException('تعديل مصروفات التنفيذ متاح لمشرف المشروع المكلّف فقط.');
 $expenseId = (int)($_POST['expense_id'] ?? 0);
 $expense = dbFetchOne('SELECT * FROM project_expenses WHERE id = ? AND project_id = ?', [$expenseId, $id]);
-if (!$expense || $expense['status'] !== 'draft') throw new RuntimeException('لا يمكن تعديل المصروف بعد إرساله أو اعتماده.');
+if (!$expense || !in_array($expense['status'], ['draft', 'posted'], true)) throw new RuntimeException('لا يمكن تعديل المصروف بعد إرساله أو اعتماده.');
 $amount = (float)($_POST['expense_amount'] ?? 0);
 $description = akp_post_value('expense_description');
 $expenseDate = akp_post_value('expense_date', date('Y-m-d'));
@@ -774,7 +774,7 @@ $_SESSION['project_expense_success'] = 'تم تسجيل الدفع وخصم ' . 
 if ($role !== 'project_supervisor' || !akp_is_primary_supervisor($id) || $closed) throw new RuntimeException('حذف مصروفات التنفيذ متاح لمشرف المشروع المكلّف فقط.');
 $expenseId = (int)($_POST['expense_id'] ?? 0);
 $expense = dbFetchOne('SELECT * FROM project_expenses WHERE id = ? AND project_id = ?', [$expenseId, $id]);
-if (!$expense || $expense['status'] !== 'draft') throw new RuntimeException('لا يمكن حذف المصروف بعد إرساله أو اعتماده.');
+if (!$expense || !in_array($expense['status'], ['draft', 'posted'], true)) throw new RuntimeException('لا يمكن حذف المصروف بعد إرساله أو اعتماده.');
 $receiptPath = null;
 if (!empty($expense['primary_document_id'])) {
 $receipt = dbFetchOne('SELECT file_path FROM project_documents WHERE id = ? AND project_id = ? AND document_type = \'receipt\'', [(int)$expense['primary_document_id'], $id]);
@@ -1840,7 +1840,7 @@ document.getElementById('editFundingDescription').value = button.getAttribute('d
 <a class="btn btn-sm btn-outline-secondary" target="_blank" href="<?php echo APP_URL; ?>modules/projects/serve_project_document.php?id=<?php echo (int)$expense['primary_document_id']; ?>"><i class="fas fa-paperclip me-1"></i>الإيصال</a>
 <?php endif; ?>
 <?php if (!empty($expense['labor_id']) && $role === 'project_supervisor' && akp_is_primary_supervisor($id) && !$closed): ?><button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editLaborModal" data-labor='<?php $linkedLabor=$labors[array_search((int)$expense['labor_id'], array_map('intval', array_column($labors,'id')))] ?? null; echo e(json_encode($linkedLabor ?: ['id'=>(int)$expense['labor_id'],'payment_amount'=>$expense['amount'],'provider_name'=>$expense['vendor_name'],'work_description'=>$expense['description']], JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES)); ?>'><i class="fas fa-pen me-1"></i>تعديل</button><form method="post" class="d-inline project-delete-form"><?php echo csrf_field(); ?><input type="hidden" name="action" value="delete_labor"><input type="hidden" name="labor_id" value="<?php echo (int)$expense['labor_id']; ?>"><button type="button" class="btn btn-sm btn-outline-danger project-delete-btn" data-confirm-title="حذف دفعة العمالة" data-confirm-text="سيتم حذف سجل العمالة والمصروف وسند الدفع والإيصال المرتبط به إن وُجد.">حذف</button></form>
-<?php elseif ($expense['status'] === 'draft' && $role === 'project_supervisor' && akp_is_primary_supervisor($id) && !$closed): ?>
+<?php elseif (in_array($expense['status'], ['draft', 'posted'], true) && $role === 'project_supervisor' && akp_is_primary_supervisor($id) && !$closed): ?>
 <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editProjectExpenseModal"
 data-expense-id="<?php echo (int)$expense['id']; ?>"
 data-expense-date="<?php echo e($expense['expense_date']); ?>"
