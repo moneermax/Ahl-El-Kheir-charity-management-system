@@ -347,7 +347,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     <div class="card mb-4"><div class="card-header"><strong>الميزانية المقترحة</strong></div><div class="card-body">
         <?php if (!$activeBudget): ?><div class="alert alert-warning">لا توجد ميزانية مقترحة للمراجعة.</div>
         <?php else: ?>
-            <div class="mb-3"><strong><?php echo e($activeBudget['budget_name']); ?></strong> · النسخة <?php echo (int)$activeBudget['version_no']; ?> · الحالة <span class="badge bg-<?php echo $activeBudget['status']==='approved'?'success':'warning text-dark'; ?>"><?php echo e($activeBudget['status']); ?></span></div>
+            <div class="mb-3"><strong><?php echo e($activeBudget['budget_name']); ?></strong> · النسخة <?php echo (int)$activeBudget['version_no']; ?> · الحالة <span class="badge bg-<?php echo $activeBudget['status']==='approved'?'success':'warning text-dark'; ?>"><?php echo e(akp_budget_status_label((string)$activeBudget['status'])); ?></span></div>
             <div class="alert alert-light border mb-3">
                 <div class="d-flex justify-content-between align-items-center"><span class="text-muted">إجمالي الميزانية المقترحة</span><strong><?php echo number_format((float)($activeBudget['line_total'] ?? 0),2); ?> <?php echo e($project['currency_code']?:'SDG'); ?></strong></div>
                 <div class="d-flex justify-content-between align-items-center mt-2"><span class="text-muted">إجمالي الرسوم الحكومية</span><strong><?php echo number_format((float)$financialSummary['government_fees'],2); ?> <?php echo e($project['currency_code']?:'SDG'); ?></strong></div>
