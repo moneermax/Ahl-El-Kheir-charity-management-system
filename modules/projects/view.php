@@ -1097,7 +1097,6 @@ if (!akp_can_edit_section('closure', $id) || $closed) throw new RuntimeException
 $pendingRequest = dbFetchOne("SELECT h.* FROM project_status_history h WHERE h.project_id = ? AND h.new_status = 'closure_requested' ORDER BY h.id DESC LIMIT 1", [$id]);
 if (!$pendingRequest) throw new RuntimeException('لا يوجد طلب إغلاق معلق من مشرف المشروع.');
 // ... (Original close_project logic preserved exactly)
-if (!akp_can_edit_section('closure', $id) || $closed) throw new RuntimeException('لا تملك صلاحية إغلاق المشروع أو أنه مغلق مسبقاً.');
 $pending = dbFetchOne("SELECT COUNT(*) AS n FROM project_expenses WHERE project_id = ? AND status IN ('draft','submitted','approved')", [$id]);
 if ((int)($pending['n'] ?? 0) > 0) throw new RuntimeException('لا يمكن الإغلاق مع وجود مصروفات غير مرحلة.');
 $summary = akp_post_value('closure_summary');
