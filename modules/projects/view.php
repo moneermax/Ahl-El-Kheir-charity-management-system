@@ -1933,18 +1933,7 @@ data-document-notes="<?php echo e($doc['notes'] ?? ''); ?>">
 <div class="card mb-4 fade-in">
             <div class="card-header"><i class="fas fa-list-check me-2"></i>التشغيل والتقدم</div>
             <div class="card-body">
-                <?php if (akp_can_edit_section('operations', $id) && !$closed): ?>
-                    <form method="post" class="project-form-panel mb-3">
-                        <input type="hidden" name="action" value="add_milestone">
-                        <?php echo csrf_field(); ?>
-                        <div class="row g-2">
-                            <div class="col-6"><input name="milestone_title" class="form-control form-control-sm" placeholder="عنوان المرحلة *" required></div>
-                            <div class="col-4"><input type="date" name="planned_date" class="form-control form-control-sm"></div>
-                            <div class="col-2"><input type="number" min="0" max="100" name="completion_percent" class="form-control form-control-sm" placeholder="%"></div>
-                            <div class="col-12"><button class="btn btn-sm btn-outline-primary mt-2">حفظ التحديث</button></div>
-</div>
-</form>
-<?php endif; ?>
+                
 <?php if (akp_can_edit_section('operations', $id) && !$closed): ?>
 <form method="post" class="project-form-panel mb-3">
 <input type="hidden" name="action" value="add_milestone">
