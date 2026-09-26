@@ -1106,7 +1106,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $currency = $project['currency_code'] ?: 'SDG';
 $status = $project['lifecycle_status'] ?: $project['status'];
 $projectToastSuccess = $_SESSION['project_toast_success'] ?? null;
-unset($_SESSION['project_toast_success']);
+unset($_SESSION['project_toast_success'], $_SESSION['project_expense_success'], $_SESSION['project_document_success']);
 $badge = ['planned'=>'bg-secondary','active'=>'bg-success','completed'=>'bg-info','under_review'=>'bg-warning text-dark','closed'=>'bg-dark','reopened'=>'bg-primary','cancelled'=>'bg-danger'][$status] ?? 'bg-secondary';
 $varianceClass = $totals['variance'] > 0 ? 'text-danger' : 'text-success';
 
@@ -1923,9 +1923,32 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 </div>
             </div>
         </div>
+        <?php if ($projectExpenseSuccess): ?>
+            <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                var expenseSection = document.getElementById('project-expenses');
+                if (expenseSection) expenseSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+            </script>
+        <?php endif; ?>
+        <?php if ($projectDocumentSuccess): ?>
+            <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                var documentSection = document.getElementById('project-documents');
+                if (documentSection) documentSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+            </script>
+        <?php endif; ?>
+
         <div class="card mb-4 fade-in" id="project-documents">
             <div class="card-header"><i class="fas fa-file-shield me-2"></i>الوثائق والتصاريح والشهادات</div>
             <div class="card-body">
+                <?php if ($projectDocumentSuccess): ?>
+                    <div class="alert alert-success d-flex align-items-center gap-2 py-2 mb-3" role="alert">
+                        <i class="fas fa-check-circle"></i>
+                        <span><?php echo e($projectDocumentSuccess); ?></span>
+                    </div>
+                <?php endif; ?>
                 <?php if (akp_can_edit_section('documents', $id) && !$closed): ?>
                     <form method="post" enctype="multipart/form-data" class="project-form-panel">
                         <input type="hidden" name="action" value="upload_document">
@@ -2083,60 +2106,51 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 <hr>
                 <h6>تحديث تقدم</h6>
                 <?php if (akp_can_edit_section('operations', $id) && !$closed): ?>
-                    <form method="post" class="project-progress-entry-form">
+                    <form method="post">
                         <input type="hidden" name="action" value="add_progress">
                         <?php echo csrf_field(); ?>
-                        <div class="project-progress-inline">
-                            <div class="project-progress-field">
-                                <label for="progress_update_date">التاريخ</label>
+                        <div class="row g-2 align-items-end">
+                            <div class="col-md-2">
+                                <label for="progress_update_date" class="form-label small fw-semibold mb-1">التاريخ</label>
                                 <input id="progress_update_date" type="date" name="update_date" class="form-control form-control-sm" value="<?php echo date('Y-m-d'); ?>">
                             </div>
-                            <div class="project-progress-field">
-                                <label for="progress_percent">نسبة الإنجاز (%)</label>
+                            <div class="col-md-2">
+                                <label for="progress_percent" class="form-label small fw-semibold mb-1">نسبة الإنجاز (%)</label>
                                 <input id="progress_percent" type="number" min="0" max="100" name="progress_percent" class="form-control form-control-sm" placeholder="مثال: 75">
                             </div>
-                            <div class="project-progress-field">
-                                <label for="progress_summary">ملخص التقدم *</label>
+                            <div class="col-md-2">
+                                <label for="progress_summary" class="form-label small fw-semibold mb-1">ملخص التقدم *</label>
                                 <input id="progress_summary" type="text" name="progress_summary" class="form-control form-control-sm" placeholder="ملخص التقدم" required>
                             </div>
-                            <div class="project-progress-field">
-                                <label for="progress_achievements">الإنجازات</label>
+                            <div class="col-md-2">
+                                <label for="progress_achievements" class="form-label small fw-semibold mb-1">الإنجازات</label>
                                 <input id="progress_achievements" type="text" name="achievements" class="form-control form-control-sm" placeholder="الإنجازات">
                             </div>
-                            <div class="project-progress-field">
-                                <label for="progress_issues">المعوقات</label>
+                            <div class="col-md-2">
+                                <label for="progress_issues" class="form-label small fw-semibold mb-1">المعوقات</label>
                                 <input id="progress_issues" type="text" name="issues" class="form-control form-control-sm" placeholder="المعوقات">
                             </div>
-                            <div class="project-progress-field">
-                                <label for="progress_next_steps">الخطوات القادمة</label>
+                            <div class="col-md-2">
+                                <label for="progress_next_steps" class="form-label small fw-semibold mb-1">الخطوات القادمة</label>
                                 <input id="progress_next_steps" type="text" name="next_steps" class="form-control form-control-sm" placeholder="الخطوات القادمة">
                             </div>
-                            <button class="btn btn-sm btn-outline-primary project-progress-save">حفظ التحديث</button>
+                            <div class="col-12"><button class="btn btn-sm btn-outline-primary">حفظ التحديث</button></div>
                         </div>
                     </form>
                 <?php endif; ?>
                 
                 <?php if ($progressUpdates): ?>
                     <div class="table-responsive mt-3">
-                        <table class="table table-sm table-bordered align-middle mb-0 project-progress-table">
-                            <colgroup>
-                                <col style="width:11%;">
-                                <col style="width:11%;">
-                                <col style="width:18%;">
-                                <col style="width:16%;">
-                                <col style="width:14%;">
-                                <col style="width:18%;">
-                                <col style="width:12%;">
-                            </colgroup>
+                        <table class="table table-sm table-bordered align-middle mb-0">
                             <thead class="table-primary">
                                 <tr>
-                                    <th scope="col">التاريخ</th>
-                                    <th scope="col">نسبة الإنجاز</th>
-                                    <th scope="col">ملخص التقدم</th>
-                                    <th scope="col">الإنجازات</th>
-                                    <th scope="col">المعوقات</th>
-                                    <th scope="col">الخطوات القادمة</th>
-                                    <th scope="col">بواسطة</th>
+                                    <th>التاريخ</th>
+                                    <th>نسبة الإنجاز</th>
+                                    <th>ملخص التقدم</th>
+                                    <th>الإنجازات</th>
+                                    <th>المعوقات</th>
+                                    <th>الخطوات القادمة</th>
+                                    <th>بواسطة</th>
                                 </tr>
                             </thead>
                             <tbody>
