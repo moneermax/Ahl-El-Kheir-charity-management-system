@@ -757,7 +757,7 @@ $primaryDocumentId = (int)(dbFetchOne('SELECT LAST_INSERT_ID() AS id')['id'] ?? 
 } elseif ($primaryDocumentId) {
 dbExecute('UPDATE project_documents SET title = ?, document_date = ?, issuer = ?, reference_number = ?, amount = ?, currency_code = ?, notes = ? WHERE id = ? AND project_id = ? AND document_type = \'receipt\'', ['إيصال مصروف: ' . $description, $expenseDate ?: null, akp_post_value('vendor_name') ?: null, akp_post_value('invoice_number') ?: null, $amount, $project['currency_code'] ?: 'SDG', 'مرفق مباشرة بالمصروف المسجل بواسطة مشرف المشروع.', $primaryDocumentId, $id]);
 }
-dbExecute('UPDATE project_expenses SET expense_date = ?, category = ?, description = ?, vendor_name = ?, invoice_number = ?, amount = ?, currency_code = ?, primary_document_id = ?, status = 'posted', posted_by = ? WHERE id = ? AND project_id = ?', [$expenseDate, $category, $description, akp_post_value('vendor_name') ?: null, akp_post_value('invoice_number') ?: null, $amount, $project['currency_code'] ?: 'SDG', $primaryDocumentId, akp_user_id(), $expenseId, $id]);
+dbExecute('UPDATE project_expenses SET expense_date = ?, category = ?, description = ?, vendor_name = ?, invoice_number = ?, amount = ?, currency_code = ?, primary_document_id = ?, status = \'posted\', posted_by = ? WHERE id = ? AND project_id = ?', [$expenseDate, $category, $description, akp_post_value('vendor_name') ?: null, akp_post_value('invoice_number') ?: null, $amount, $project['currency_code'] ?: 'SDG', $primaryDocumentId, akp_user_id(), $expenseId, $id]);
 dbExecute('COMMIT');
 } catch (Throwable $e) {
 dbExecute('ROLLBACK');
