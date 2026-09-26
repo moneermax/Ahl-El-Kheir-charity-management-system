@@ -87,8 +87,8 @@ WHERE pe.project_id = ? ORDER BY pe.id DESC", [$id]);
 $expenses = dbFetchAll("SELECT e.*, je.entry_code, pd.title AS primary_document_title, lh.id AS labor_id, lh.provider_name AS labor_provider_name FROM project_expenses e LEFT JOIN journal_entries je ON je.id = e.journal_entry_id LEFT JOIN project_documents pd ON pd.id = e.primary_document_id LEFT JOIN project_labor_helpers lh ON lh.project_id = e.project_id AND e.transaction_reference = CONCAT('LABOR:', lh.id) WHERE e.project_id = ? ORDER BY e.expense_date DESC, e.id DESC", [$id]);
 $financialSummary = akp_project_financial_requirement($id);
 $approvedBudgetTotal = 0.0;
-if ($approvedBudgetId > 0) $approvedBudgetTotal = (float)(dbFetchOne('SELECT COALESCE(SUM(estimated_amount), 0) AS total FROM project_budget_lines WHERE budget_id = ?', [$approvedBudgetId])['total'] ?? 0);
-$projectExpenseTotal = (float)(dbFetchOne('SELECT COALESCE(SUM(amount), 0) AS total FROM project_expenses WHERE project_id = ?', [$id])['total'] ?? 0);
+if ($approvedBudgetId > 0) $approvedBudgetTotal = (float)(dbFetchOne('SELECT COALESCE(SUM(COALESCE(approved_amount, estimated_amount)), 0) AS total FROM project_budget_lines WHERE budget_id = ?', [$approvedBudgetId])['total'] ?? 0);
+$projectExpenseTotal = (float)(dbFetchOne("SELECT COALESCE(SUM(amount), 0) AS total FROM project_expenses WHERE project_id = ? AND status = 'posted'", [$id])['total'] ?? 0);
 $projectExpenseRemaining = $approvedBudgetTotal - $projectExpenseTotal;
 $documents = dbFetchAll("SELECT d.*, u.full_name AS uploader_name FROM project_documents d LEFT JOIN users u ON u.id = d.uploaded_by WHERE d.project_id = ? AND d.document_type <> 'receipt' ORDER BY d.id DESC", [$id]);
 $milestones = dbFetchAll('SELECT m.*, u.full_name AS creator_name FROM project_milestones m LEFT JOIN users u ON u.id = m.created_by WHERE m.project_id = ? ORDER BY m.planned_date, m.id', [$id]);
@@ -1849,7 +1849,7 @@ data-expense-amount="<?php echo e($expense['amount']); ?>"
 data-expense-description="<?php echo e($expense['description']); ?>"
 data-expense-vendor="<?php echo e($expense['vendor_name'] ?? ''); ?>"
 data-expense-invoice="<?php echo e($expense['invoice_number'] ?? ''); ?>">
-<i class="fas fa-pen me-1"></i>تعديل
+<i class="fas fa-pen me-1"></i>تعديل / تسجيل الدفع
 </button>
 <form method="post" class="d-inline project-delete-form">
 <?php echo csrf_field(); ?>
