@@ -2057,7 +2057,7 @@ if (documentSection) documentSection.scrollIntoView({ behavior: 'smooth', block:
 </td>
 <td>
 <div class="d-flex flex-wrap gap-1">
-<a href="modules/projects/serve_project_document.php?id=<?php echo (int)$doc['id']; ?>" class="btn btn-sm btn-outline-primary" target="_blank"><i class="fas fa-eye me-1"></i>عرض</a>
+<a href="<?php echo APP_URL; ?>modules/projects/serve_project_document.php?id=<?php echo (int)$doc['id']; ?>" class="btn btn-sm btn-outline-primary" target="_blank"><i class="fas fa-eye me-1"></i>عرض</a>
 <?php if ($doc['verification_status'] === 'unverified' && akp_can_edit_section('documents', $id) && !$closed): ?>
 <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editProjectDocumentModal"
 data-document-id="<?php echo (int)$doc['id']; ?>"
