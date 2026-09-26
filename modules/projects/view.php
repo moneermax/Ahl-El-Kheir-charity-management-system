@@ -1352,7 +1352,7 @@ width: 24%;
 <div class="alert alert-dark"><strong>المشروع مغلق.</strong> لا يمكن تعديل أي قسم أو إضافة مستندات أو مصروفات. إعادة الفتح متاحة للمدير العام فقط.</div>
 <?php endif; ?>
 <div class="row g-4 project-view-sections-grid">
-<div class="col-lg-7 project-view-main-column">
+<div class="col-lg-5 project-view-main-column">
 <div class="card mb-4 fade-in">
 <div class="card-header"><i class="fas fa-circle-info me-2"></i>ملخص المشروع</div>
 <div class="card-body">
@@ -2198,7 +2198,7 @@ document.getElementById('edit-milestone-description').value = button.dataset.mil
 </div>
 </div>
 </div>
-<div class="col-lg-5 project-view-side-column">
+<div class="col-lg-7 project-view-side-column">
 <div class="card mb-4 fade-in border-0 shadow-sm overflow-hidden">
 <div class="card-header bg-dark text-white py-3">
 <div class="d-flex align-items-center justify-content-between gap-2">
@@ -2332,7 +2332,75 @@ document.getElementById('edit-milestone-description').value = button.dataset.mil
 <div class="alert alert-light border mb-0 small"><i class="fas fa-info-circle me-1"></i>إجراءات الإغلاق وإعادة الفتح محصورة بمدير المشاريع، وتبدأ بطلب من مشرف المشروع.</div>
 <?php endif; ?>
 </div>
-</div>"submit" class="btn btn-primary"><i class="fas fa-save me-1"></i>حفظ التعديل</button>
+</div>
+<div class="modal fade" id="editProjectExpenseModal" tabindex="-1" aria-hidden="true">
+<div class="modal-dialog modal-lg modal-dialog-centered">
+<div class="modal-content">
+<div class="modal-header">
+<h5 class="modal-title"><i class="fas fa-pen me-2"></i>تعديل المصروف</h5>
+<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
+</div>
+<form method="post" enctype="multipart/form-data">
+<?php echo csrf_field(); ?>
+<input type="hidden" name="action" value="edit_ps_expense">
+<input type="hidden" name="expense_id" id="edit-expense-id">
+<div class="modal-body">
+<div class="row g-3">
+<div class="col-md-4"><label class="form-label">التاريخ</label><input type="date" name="expense_date" id="edit-expense-date" class="form-control" required></div>
+<div class="col-md-4"><label class="form-label">الفئة</label><input name="expense_category" id="edit-expense-category" class="form-control" required></div>
+<div class="col-md-4"><label class="form-label">المبلغ</label><input type="number" step="0.01" min="0.01" name="expense_amount" id="edit-expense-amount" class="form-control" required></div>
+<div class="col-12"><label class="form-label">الوصف</label><input name="expense_description" id="edit-expense-description" class="form-control" required></div>
+<div class="col-md-6"><label class="form-label">المورد</label><input name="vendor_name" id="edit-expense-vendor" class="form-control"></div>
+<div class="col-md-6"><label class="form-label">رقم الفاتورة</label><input name="invoice_number" id="edit-expense-invoice" class="form-control"></div>
+<div class="col-12"><label class="form-label">استبدال الإيصال (اختياري)</label><input type="file" name="expense_receipt" class="form-control" accept=".pdf,.jpg,.jpeg,.png"><div class="form-text">يمكنك تركه فارغاً للاحتفاظ بالإيصال الحالي.</div></div>
+</div>
+</div>
+<div class="modal-footer">
+<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">إلغاء</button>
+<button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i>حفظ التعديل</button>
+</div>
+</form>
+</div>
+</div>
+</div>
+<div class="modal fade" id="editProjectDocumentModal" tabindex="-1" aria-hidden="true">
+<div class="modal-dialog modal-lg modal-dialog-centered">
+<div class="modal-content">
+<div class="modal-header">
+<h5 class="modal-title"><i class="fas fa-pen me-2"></i>تعديل الوثيقة</h5>
+<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
+</div>
+<form method="post" enctype="multipart/form-data">
+<?php echo csrf_field(); ?>
+<input type="hidden" name="action" value="edit_project_document">
+<input type="hidden" name="document_id" id="edit-document-id">
+<div class="modal-body">
+<div class="row g-3">
+<div class="col-md-4">
+<label class="form-label">نوع الوثيقة</label>
+<select name="document_type" id="edit-document-type" class="form-select" required>
+<option value="invoice">فاتورة</option>
+<option value="certificate">شهادة</option>
+<option value="government_fee">رسم حكومي</option>
+<option value="permit">تصريح</option>
+<option value="contract">عقد</option>
+<option value="quotation">عرض سعر</option>
+<option value="progress_report">تقرير تقدم</option>
+<option value="closure_report">تقرير إغلاق</option>
+<option value="other">أخرى</option>
+</select>
+</div>
+<div class="col-md-8"><label class="form-label">عنوان الوثيقة</label><input name="document_title" id="edit-document-title" class="form-control" required></div>
+<div class="col-md-4"><label class="form-label">تاريخ الوثيقة</label><input type="date" name="document_date" id="edit-document-date" class="form-control"></div>
+<div class="col-md-4"><label class="form-label">الجهة المصدرة</label><input name="document_issuer" id="edit-document-issuer" class="form-control"></div>
+<div class="col-md-4"><label class="form-label">رقم الوثيقة/المرجع</label><input name="document_reference" id="edit-document-reference" class="form-control"></div>
+<div class="col-12"><label class="form-label">استبدال الملف (اختياري)</label><input type="file" name="document" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.docx,.xlsx"><div class="form-text">يمكنك تركه فارغاً للاحتفاظ بالملف الحالي.</div></div>
+<div class="col-12"><label class="form-label">ملاحظات</label><textarea name="document_notes" id="edit-document-notes" class="form-control" rows="3"></textarea></div>
+</div>
+</div>
+<div class="modal-footer">
+<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">إلغاء</button>
+<button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i>حفظ التعديل</button>
 </div>
 </form>
 </div>
