@@ -1352,7 +1352,7 @@ width: 24%;
 <div class="alert alert-dark"><strong>المشروع مغلق.</strong> لا يمكن تعديل أي قسم أو إضافة مستندات أو مصروفات. إعادة الفتح متاحة للمدير العام فقط.</div>
 <?php endif; ?>
 <div class="row g-4 project-view-sections-grid">
-<div class="col-lg-8 project-view-main-column">
+<div class="col-lg-7 project-view-main-column">
 <div class="card mb-4 fade-in">
 <div class="card-header"><i class="fas fa-circle-info me-2"></i>ملخص المشروع</div>
 <div class="card-body">
@@ -2198,7 +2198,7 @@ document.getElementById('edit-milestone-description').value = button.dataset.mil
 </div>
 </div>
 </div>
-<div class="col-lg-4 project-view-side-column">
+<div class="col-lg-5 project-view-side-column">
 <div class="card mb-4 fade-in">
 <div class="card-header"><i class="fas fa-lock me-2"></i>الإغلاق وإعادة الفتح</div>
 <div class="card-body">
