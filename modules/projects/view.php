@@ -108,6 +108,7 @@ $history[] = [
 }
 usort($history, static function ($a, $b) { return strcmp((string)($b['created_at'] ?? ''), (string)($a['created_at'] ?? '')); });
 $history = array_slice($history, 0, 20);
+$closureRequest = dbFetchOne("SELECT h.*, u.full_name AS requester_name FROM project_status_history h LEFT JOIN users u ON u.id = h.changed_by WHERE h.project_id = ? AND h.new_status IN ('closure_requested', 'reopen_requested') ORDER BY h.id DESC LIMIT 1", [$id]);
 $closed = akp_project_is_closed($id);
 $role = akp_role();
 $approval = dbFetchOne('SELECT * FROM project_approval WHERE project_id = ?', [$id]) ?: ['approval_status' => 'approved'];
@@ -1060,7 +1061,41 @@ if ($summary === '') throw new RuntimeException('ملخص التقدم مطلو�
 dbExecute('INSERT INTO project_progress_updates (project_id, update_date, completion_percent, summary, achievements, issues, next_steps, submitted_by) VALUES (?,?,?,?,?,?,?,?)', [$id, akp_post_value('update_date') ?: date('Y-m-d'), $progressPercent, $summary, akp_post_value('achievements') ?: null, akp_post_value('issues') ?: null, akp_post_value('next_steps') ?: null, akp_user_id()]);
 akp_audit('CREATE', 'project_progress_update', (int)dbFetchOne('SELECT LAST_INSERT_ID() AS id')['id'], null, ['project_id' => $id]);
 $_SESSION['project_toast_success'] = 'تم حفظ تحديث التقدم.';
+} elseif ($action === 'request_project_closure') {
+if ($role !== 'project_supervisor' || !akp_is_primary_supervisor($id)) throw new RuntimeException('طلب إغلاق المشروع متاح لمشرف المشروع الأساسي فقط.');
+if ($closed) throw new RuntimeException('المشروع مغلق بالفعل.');
+if ($closureRequest && (string)$closureRequest['new_status'] === 'closure_requested') throw new RuntimeException('يوجد بالفعل طلب إغلاق بانتظار مدير المشاريع.');
+$reason = akp_post_value('closure_request_reason');
+if ($reason === '') throw new RuntimeException('ملاحظة طلب الإغلاق مطلوبة.');
+dbExecute("INSERT INTO project_status_history (project_id, old_status, new_status, reason, changed_by) VALUES (?, ?, 'closure_requested', ?, ?)", [$id, $project['lifecycle_status'] ?: $project['status'], 'طلب إغلاق من مشرف المشروع: ' . $reason, akp_user_id()]);
+akp_audit('REQUEST_CLOSE', 'project_lifecycle', $id, ['status' => $project['lifecycle_status'] ?: $project['status']], ['status' => 'closure_requested', 'reason' => $reason]);
+try {
+$projectManagers = dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id = r.id WHERE r.code = 'projects_manager' AND u.is_active = 1");
+foreach ($projectManagers as $projectManager) {
+ak_transaction_review_notify_event((int)$projectManager['id'], 'طلب إغلاق مشروع', 'المشروع «' . (string)($project['name'] ?? '') . '» (' . (string)($project['project_code'] ?? '') . ') لديه طلب إغلاق من مشرف المشروع ويحتاج إجراء مدير المشاريع.', APP_URL . 'modules/projects/view.php?id=' . $id, $id, 'project_closure_request');
+}
+} catch (Throwable $notificationError) {}
+$_SESSION['project_toast_success'] = 'تم إرسال طلب إغلاق المشروع إلى مدير المشاريع.';
+} elseif ($action === 'request_project_reopen') {
+if ($role !== 'project_supervisor' || !akp_is_primary_supervisor($id)) throw new RuntimeException('طلب إعادة فتح المشروع متاح لمشرف المشروع الأساسي فقط.');
+if (!$closed) throw new RuntimeException('المشروع ليس مغلقاً.');
+if ($closureRequest && (string)$closureRequest['new_status'] === 'reopen_requested') throw new RuntimeException('يوجد بالفعل طلب إعادة فتح بانتظار مدير المشاريع.');
+$reason = akp_post_value('reopen_request_reason');
+if ($reason === '') throw new RuntimeException('ملاحظة طلب إعادة الفتح مطلوبة.');
+dbExecute("INSERT INTO project_status_history (project_id, old_status, new_status, reason, changed_by) VALUES (?, 'closed', 'reopen_requested', ?, ?)", [$id, 'طلب إعادة فتح من مشرف المشروع: ' . $reason, akp_user_id()]);
+akp_audit('REQUEST_REOPEN', 'project_lifecycle', $id, ['status' => 'closed'], ['status' => 'reopen_requested', 'reason' => $reason]);
+try {
+$projectManagers = dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id = r.id WHERE r.code = 'projects_manager' AND u.is_active = 1");
+foreach ($projectManagers as $projectManager) {
+ak_transaction_review_notify_event((int)$projectManager['id'], 'طلب إعادة فتح مشروع', 'المشروع «' . (string)($project['name'] ?? '') . '» (' . (string)($project['project_code'] ?? '') . ') لديه طلب إعادة فتح من مشرف المشروع ويحتاج إجراء مدير المشاريع.', APP_URL . 'modules/projects/view.php?id=' . $id, $id, 'project_reopen_request');
+}
+} catch (Throwable $notificationError) {}
+$_SESSION['project_toast_success'] = 'تم إرسال طلب إعادة فتح المشروع إلى مدير المشاريع.';
 } elseif ($action === 'close_project') {
+if ($role !== 'projects_manager') throw new RuntimeException('إغلاق المشروع محصور بمدير المشاريع بعد طلب مشرف المشروع.');
+if (!akp_can_edit_section('closure', $id) || $closed) throw new RuntimeException('لا تملك صلاحية إغلاق المشروع أو أنه مغلق مسبقاً.');
+$pendingRequest = dbFetchOne("SELECT h.* FROM project_status_history h WHERE h.project_id = ? AND h.new_status = 'closure_requested' ORDER BY h.id DESC LIMIT 1", [$id]);
+if (!$pendingRequest) throw new RuntimeException('لا يوجد طلب إغلاق معلق من مشرف المشروع.');
 // ... (Original close_project logic preserved exactly)
 if (!akp_can_edit_section('closure', $id) || $closed) throw new RuntimeException('لا تملك صلاحية إغلاق المشروع أو أنه مغلق مسبقاً.');
 $pending = dbFetchOne("SELECT COUNT(*) AS n FROM project_expenses WHERE project_id = ? AND status IN ('draft','submitted','approved')", [$id]);
@@ -1073,18 +1108,32 @@ dbExecute("UPDATE project_lifecycle SET lifecycle_status = 'closed', closed_at =
 dbExecute("UPDATE other_projects SET status = 'completed', updated_by = ? WHERE id = ?", [akp_user_id(), $id]);
 dbExecute("INSERT INTO project_status_history (project_id, old_status, new_status, reason, changed_by) VALUES (?, ?, 'closed', ?, ?)", [$id, $project['lifecycle_status'] ?: $project['status'], $summary, akp_user_id()]);
 akp_audit('CLOSE', 'project_lifecycle', $id, ['status' => $project['lifecycle_status'] ?: $project['status']], ['status' => 'closed', 'reason' => $summary]);
-$_SESSION['project_toast_success'] = 'تم إغلاق المشروع. لن يستطيع تعديله بعد ذلك إلا المدير العام.';
+try {
+$executiveUsers = dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id = r.id WHERE r.code IN ('general_manager', 'vice_general_manager') AND u.is_active = 1");
+foreach ($executiveUsers as $executiveUser) {
+ak_transaction_review_notify_event((int)$executiveUser['id'], 'تم إغلاق مشروع', 'تم إغلاق المشروع «' . (string)($project['name'] ?? '') . '» (' . (string)($project['project_code'] ?? '') . ') بواسطة مدير المشاريع بعد طلب الإغلاق من مشرف المشروع.', APP_URL . 'modules/projects/view.php?id=' . $id, $id, 'project_closed');
+}
+} catch (Throwable $notificationError) {}
+$_SESSION['project_toast_success'] = 'تم إغلاق المشروع وإبلاغ المدير العام ونائبه.';
 } elseif ($action === 'reopen_project') {
 // ... (Original reopen_project logic preserved exactly)
-if (!akp_is_dg()) throw new RuntimeException('إعادة فتح المشروع محصورة بالمدير العام.');
+if ($role !== 'projects_manager') throw new RuntimeException('إعادة فتح المشروع محصورة بمدير المشاريع بعد طلب مشرف المشروع.');
 if (!$closed) throw new RuntimeException('المشروع ليس مغلقاً.');
+$pendingRequest = dbFetchOne("SELECT h.* FROM project_status_history h WHERE h.project_id = ? AND h.new_status = 'reopen_requested' ORDER BY h.id DESC LIMIT 1", [$id]);
+if (!$pendingRequest) throw new RuntimeException('لا يوجد طلب إعادة فتح معلق من مشرف المشروع.');
 $reason = akp_post_value('reopen_reason');
 if ($reason === '') throw new RuntimeException('سبب إعادة الفتح مطلوب.');
 dbExecute("UPDATE project_lifecycle SET lifecycle_status = 'reopened', reopened_at = NOW(), reopened_by = ?, reopen_reason = ? WHERE project_id = ?", [akp_user_id(), $reason, $id]);
 dbExecute("UPDATE other_projects SET status = 'active', updated_by = ? WHERE id = ?", [akp_user_id(), $id]);
 dbExecute("INSERT INTO project_status_history (project_id, old_status, new_status, reason, changed_by) VALUES (?, 'closed', 'reopened', ?, ?)", [$id, $reason, akp_user_id()]);
 akp_audit('REOPEN', 'project_lifecycle', $id, ['status' => 'closed'], ['status' => 'reopened', 'reason' => $reason]);
-$_SESSION['project_toast_success'] = 'تمت إعادة فتح المشروع.';
+try {
+$executiveUsers = dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id = r.id WHERE r.code IN ('general_manager', 'vice_general_manager') AND u.is_active = 1");
+foreach ($executiveUsers as $executiveUser) {
+ak_transaction_review_notify_event((int)$executiveUser['id'], 'تمت إعادة فتح مشروع', 'تمت إعادة فتح المشروع «' . (string)($project['name'] ?? '') . '» (' . (string)($project['project_code'] ?? '') . ') بواسطة مدير المشاريع بعد طلب إعادة الفتح من مشرف المشروع.', APP_URL . 'modules/projects/view.php?id=' . $id, $id, 'project_reopened');
+}
+} catch (Throwable $notificationError) {}
+$_SESSION['project_toast_success'] = 'تمت إعادة فتح المشروع وإبلاغ المدير العام ونائبه.';
 }
 } catch (Throwable $e) {
 flash('error', $e->getMessage());
@@ -2154,12 +2203,40 @@ document.getElementById('edit-milestone-description').value = button.dataset.mil
 <div class="card mb-4 fade-in">
 <div class="card-header"><i class="fas fa-lock me-2"></i>الإغلاق وإعادة الفتح</div>
 <div class="card-body">
-<?php if ($status !== 'closed' && akp_can_edit_section('closure', $id)): ?>
-<p class="small">إغلاق المشروع يمنع أي تعديلات أو مصروفات جديدة. تأكد من ترحيل جميع القيود.</p>
+<?php if ($role === 'project_supervisor' && akp_is_primary_supervisor($id)): ?>
+<?php if ($status !== 'closed'): ?>
+<?php if ($closureRequest && (string)$closureRequest['new_status'] === 'closure_requested'): ?>
+<div class="alert alert-info small mb-0"><i class="fas fa-clock me-1"></i>تم إرسال طلب إغلاق المشروع إلى مدير المشاريع، وهو بانتظار الإجراء.</div>
+<?php else: ?>
+<p class="small">إغلاق المشروع إجراء إداري أعلى من صلاحيات مشرف المشروع. يمكنك إرسال طلب إلى مدير المشاريع لمراجعته وتنفيذه.</p>
+<form method="post" class="project-form-panel">
+<input type="hidden" name="action" value="request_project_closure">
+<?php echo csrf_field(); ?>
+<textarea name="closure_request_reason" class="form-control form-control-sm mb-2" rows="3" placeholder="ملاحظات ومبررات طلب الإغلاق *" required></textarea>
+<button class="btn btn-sm btn-dark px-4"><i class="fas fa-paper-plane me-1"></i>طلب إغلاق المشروع</button>
+</form>
+<?php endif; ?>
+<?php else: ?>
+<?php if ($closureRequest && (string)$closureRequest['new_status'] === 'reopen_requested'): ?>
+<div class="alert alert-info small mb-0"><i class="fas fa-clock me-1"></i>تم إرسال طلب إعادة فتح المشروع إلى مدير المشاريع، وهو بانتظار الإجراء.</div>
+<?php else: ?>
+<p class="small">إعادة فتح المشروع إجراء إداري أعلى من صلاحيات مشرف المشروع. يمكنك إرسال طلب إلى مدير المشاريع لمراجعته وتنفيذه.</p>
+<form method="post" class="project-form-panel">
+<input type="hidden" name="action" value="request_project_reopen">
+<?php echo csrf_field(); ?>
+<textarea name="reopen_request_reason" class="form-control form-control-sm mb-2" rows="3" placeholder="ملاحظات ومبررات طلب إعادة الفتح *" required></textarea>
+<button class="btn btn-sm btn-warning px-4"><i class="fas fa-paper-plane me-1"></i>طلب إعادة فتح المشروع</button>
+</form>
+<?php endif; ?>
+<?php endif; ?>
+<?php elseif ($role === 'projects_manager'): ?>
+<?php if ($status !== 'closed'): ?>
+<?php if ($closureRequest && (string)$closureRequest['new_status'] === 'closure_requested'): ?>
+<div class="alert alert-warning small"><i class="fas fa-bell me-1"></i><strong>طلب إغلاق معلق</strong><br>من: <?php echo e($closureRequest['requester_name'] ?? 'مشرف المشروع'); ?><br><?php echo e($closureRequest['reason'] ?? ''); ?></div>
 <form method="post" class="project-form-panel">
 <input type="hidden" name="action" value="close_project">
 <?php echo csrf_field(); ?>
-<textarea name="closure_summary" class="form-control form-control-sm mb-2" rows="3" placeholder="ملخص الإنجاز والأسباب *" required></textarea>
+<textarea name="closure_summary" class="form-control form-control-sm mb-2" rows="3" placeholder="ملخص الإغلاق والأسباب *" required></textarea>
 <select name="closure_reason" class="form-select form-select-sm mb-2">
 <option value="completed_successfully">إنجاز كامل</option>
 <option value="cancelled">إلغاء</option>
@@ -2167,20 +2244,29 @@ document.getElementById('edit-milestone-description').value = button.dataset.mil
 <option value="retained_for_followup">احتفاظ للمتابعة</option>
 <option value="other">أخرى</option>
 </select>
-<button class="btn btn-sm btn-dark px-4">إغلاق المشروع</button>
+<textarea name="variance_explanation" class="form-control form-control-sm mb-2" rows="2" placeholder="تفسير فرق الميزانية (اختياري)"></textarea>
+<button class="btn btn-sm btn-dark px-4"><i class="fas fa-lock me-1"></i>تنفيذ إغلاق المشروع</button>
 </form>
-<?php elseif ($status === 'closed' && akp_is_dg()): ?>
-<p class="small">إعادة الفتح تعد استثناءً إدارياً وتحتاج سبباً واضحاً.</p>
+<?php else: ?>
+<div class="text-muted small"><i class="fas fa-info-circle me-1"></i>لا يوجد طلب إغلاق معلق من مشرف المشروع.</div>
+<?php endif; ?>
+<?php else: ?>
+<?php if ($closureRequest && (string)$closureRequest['new_status'] === 'reopen_requested'): ?>
+<div class="alert alert-warning small"><i class="fas fa-bell me-1"></i><strong>طلب إعادة فتح معلق</strong><br>من: <?php echo e($closureRequest['requester_name'] ?? 'مشرف المشروع'); ?><br><?php echo e($closureRequest['reason'] ?? ''); ?></div>
 <form method="post" class="project-form-panel">
 <input type="hidden" name="action" value="reopen_project">
 <?php echo csrf_field(); ?>
 <textarea name="reopen_reason" class="form-control form-control-sm mb-2" rows="3" placeholder="سبب إعادة الفتح *" required></textarea>
-<button class="btn btn-sm btn-warning px-4">إعادة فتح المشروع</button>
+<button class="btn btn-sm btn-warning px-4"><i class="fas fa-lock-open me-1"></i>تنفيذ إعادة فتح المشروع</button>
 </form>
 <?php else: ?>
-<div class="text-muted small">
-<?php if ($status === 'closed'): ?>المشروع مغلق. إعادة الفتح متاحة للمدير العام فقط.<?php else: ?>لا تملك صلاحية الإغلاق.<?php endif; ?>
-</div>
+<div class="text-muted small"><i class="fas fa-info-circle me-1"></i>لا يوجد طلب إعادة فتح معلق من مشرف المشروع.</div>
+<?php endif; ?>
+<?php endif; ?>
+<?php elseif ($status === 'closed'): ?>
+<div class="text-muted small">المشروع مغلق. الإغلاق وإعادة الفتح تتم عبر مدير المشاريع بناءً على طلب مشرف المشروع.</div>
+<?php else: ?>
+<div class="text-muted small">إجراءات الإغلاق وإعادة الفتح محصورة بمدير المشاريع، وتبدأ بطلب من مشرف المشروع.</div>
 <?php endif; ?>
 </div>
 </div>
