@@ -1,74 +1,28 @@
-/* Projects module UI — visual language adapted from docs/code_artifact.html.
- * Bootstrap remains the application framework; this stylesheet only scopes the project module.
- */
-.project-module-page {
-    --project-navy: #101828;
-    --project-navy-soft: #1d2939;
-    --project-green: #16a34a;
-    --project-green-soft: #ecfdf3;
-    --project-border: #e4e7ec;
-    --project-muted: #667085;
-    --project-surface: #ffffff;
-    --project-page: #f8fafc;
-    --project-radius: 16px;
+
+/* Project progress entry: restore the original visual order and six-field layout. */
+.project-module-page .card:has(.fa-list-check) .card-body {
+    display:flex;
+    flex-direction:column;
 }
-
-.project-module-page .project-form-section,
-.project-module-page .project-card,
-.project-module-page .project-form-panel,
-.project-module-page .project-summary-card {
-    background: var(--project-surface);
-    border: 1px solid var(--project-border);
-    border-radius: var(--project-radius);
-    box-shadow: 0 4px 18px rgba(16,24,40,.05);
+.project-module-page .card:has(.fa-list-check) .card-body > .project-form-panel {
+    order:1;
 }
-
-.project-module-page .project-form-section { padding: 1.25rem; }
-.project-module-page .project-form-section-title,
-.project-module-page .project-section-title { display:flex; align-items:center; gap:.65rem; margin:0 0 1rem; padding-bottom:.8rem; border-bottom:1px solid #eef2f6; color:#1d2939; font-size:1rem; font-weight:800; }
-.project-module-page .project-section-title i,
-.project-module-page .project-form-section-title i { width:34px; height:34px; display:inline-flex; align-items:center; justify-content:center; border-radius:10px; background:var(--project-green-soft); color:var(--project-green)!important; }
-.project-module-page .project-field .form-label { margin-bottom:.4rem; color:#344054; font-size:.82rem; font-weight:700; }
-.project-module-page .project-field-inline { display:flex; align-items:center; gap:.75rem; flex-wrap:wrap; }
-.project-module-page .project-field-inline > .form-label { margin:0; white-space:nowrap; flex:0 0 auto; }
-.project-module-page .project-field-inline > .form-control,
-.project-module-page .project-field-inline > .form-select,
-.project-module-page .project-field-inline > .project-code-box { width:auto; flex:0 1 auto; min-width:12rem; max-width:28rem; }
-.project-module-page .project-field-inline > input[type="date"] { min-width:10.5rem; max-width:12rem; }
-.project-module-page .project-field-inline > input[type="number"] { min-width:10rem; max-width:16rem; }
-.project-module-page .project-field-inline > .project-help { flex-basis:100%; margin-top:0; }
-.project-module-page .project-field .form-control,
-.project-module-page .project-field .form-select,
-.project-module-page .project-form-panel .form-control,
-.project-module-page .project-form-panel .form-select { min-height:42px; border-color:#d0d5dd; border-radius:11px; background:#fff; box-shadow:none; }
-.project-module-page textarea.form-control { min-height:92px; resize:vertical; }
-.project-module-page .form-control:focus,
-.project-module-page .form-select:focus { border-color:#22c55e; box-shadow:0 0 0 .2rem rgba(34,197,94,.12); }
-.project-module-page .project-code-box { display:flex; align-items:center; min-height:42px; background:#f8fafc; color:#667085; font-weight:700; }
-.project-module-page .project-help { margin-top:.35rem; color:var(--project-muted); font-size:.76rem; line-height:1.6; }
-.project-module-page .project-page-banner { padding:16px 20px; margin-bottom:16px; border-radius:14px; background:linear-gradient(135deg,#081527,#1f4e8c); color:#fff; box-shadow:none; }
-.project-module-page .project-page-banner .project-code { display:inline-flex; align-items:center; padding:.3rem .65rem; border-radius:999px; background:rgba(34,197,94,.14); border:1px solid rgba(34,197,94,.3); color:#86efac; font-size:.75rem; font-weight:800; }
-.project-module-page .project-page-banner h2 { margin:.55rem 0 .2rem; color:#fff; font-weight:800; }
-.project-module-page .project-page-banner p { margin:0; color:#d0d5dd; font-size:.85rem; }
-.project-module-page .project-template-panel { padding:1rem; border:1px solid #d1fadf; border-radius:14px; background:linear-gradient(180deg,#f6fff9,#fff); }
-.project-module-page .project-template-panel .template-option { min-height:42px; border:1px solid #b7ebc6; border-radius:11px; background:#fff; color:#166534; font-weight:700; }
-.project-module-page .project-form-panel { padding:1rem; margin-bottom:1rem; background:#fbfcfe; }
-.project-module-page .project-action-panel { border:1px solid var(--project-border); border-radius:14px; padding:1rem; background:#fff; }
-.project-module-page .project-action-panel .project-action-title { display:flex; align-items:center; gap:.55rem; margin-bottom:.65rem; font-weight:800; }
-.project-module-page .project-action-panel .project-action-title i { color:var(--project-green); }
-.project-module-page .project-inline-form { display:inline-flex; align-items:center; gap:.4rem; }
-.project-module-page .project-inline-form .form-control,
-.project-module-page .project-inline-form .form-select { border-radius:10px; }
-.project-module-page .project-summary-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.85rem; }
-.project-module-page .project-summary-card { padding:1rem; text-align:center; }
-.project-module-page .project-summary-card .value { font-size:1.2rem; font-weight:800; }
-.project-module-page .project-summary-card .label { margin-top:.2rem; color:var(--project-muted); font-size:.75rem; }
-.project-module-page .project-table { overflow:hidden; border:1px solid var(--project-border); border-radius:14px; }
-.project-module-page .project-table table { margin-bottom:0; }
-.project-module-page .project-table thead th { background:#f8fafc; color:#475467; font-size:.76rem; font-weight:800; white-space:nowrap; }
-.project-module-page .project-table td { vertical-align:middle; }
-
-/* Project progress entry: six labelled fields on one desktop row, matching the original form layout. */
+.project-module-page .card:has(.fa-list-check) .card-body > hr {
+    order:2;
+}
+.project-module-page .card:has(.fa-list-check) .card-body > h6 {
+    order:3;
+}
+.project-module-page .card:has(.fa-list-check) .card-body > .project-progress-entry-form {
+    order:4;
+}
+.project-module-page .card:has(.fa-list-check) .card-body > .border-bottom,
+.project-module-page .card:has(.fa-list-check) .card-body > .text-muted.small {
+    order:5;
+}
+.project-module-page .card:has(.fa-list-check) .card-body > .table-responsive {
+    order:6;
+}
 .project-module-page .project-progress-inline {
     display:grid;
     grid-template-columns:repeat(6,minmax(0,1fr));
@@ -142,37 +96,3 @@
 .project-module-page .project-action-form .form-control { min-width:240px; border-radius:10px; }
 .project-module-page .project-module-note { border-radius:12px; border:1px solid #eaecf0; background:#f8fafc; color:#475467; padding:.75rem .9rem; }
 .project-module-page .project-badge { display:inline-flex; align-items:center; gap:.3rem; padding:.25rem .6rem; border-radius:999px; font-size:.72rem; font-weight:800; }
-
-.project-module-page .project-view-sections-grid {
-    display: grid !important;
-    grid-template-columns: minmax(0, 1200px);
-    justify-content: center;
-    gap: 1rem;
-    margin-right: 0;
-    margin-left: 0;
-    align-items: start;
-}
-
-.project-module-page .project-view-sections-grid > .project-view-main-column,
-.project-module-page .project-view-sections-grid > .project-view-side-column,
-.project-module-page .project-view-sections-grid > .col-12 {
-    display: block !important;
-    width: 100% !important;
-    max-width: 1200px !important;
-    flex: none !important;
-    min-width: 0;
-    padding-right: 0;
-    padding-left: 0;
-    justify-self: center;
-}
-
-.project-module-page .project-view-sections-grid > .col-12 {
-    grid-column: 1;
-}
-
-.project-module-page .project-view-main-column > .card,
-.project-module-page .project-view-side-column > .card,
-.project-module-page .project-view-sections-grid > .alert {
-    width: 100%;
-    min-width: 0;
-}
