@@ -672,8 +672,8 @@ $description = akp_post_value('expense_description');
 $expenseDate = akp_post_value('expense_date', date('Y-m-d'));
 $category = akp_post_value('expense_category', 'تنفيذ المشروع');
 if ($amount <= 0 || $description === '') throw new RuntimeException('وصف المصروف والمبلغ مطلوبان.');
-$approvedBudgetTotal = (float)(dbFetchOne("SELECT COALESCE(SUM(bl.estimated_amount), 0) AS total FROM project_budgets b JOIN project_budget_lines bl ON bl.budget_id = b.id WHERE b.id = (SELECT pb.id FROM project_budgets pb WHERE pb.project_id = ? AND pb.status = 'approved' ORDER BY pb.version_no DESC, pb.id DESC LIMIT 1)", [$id])['total'] ?? 0);
-$existingExpenseTotal = (float)(dbFetchOne('SELECT COALESCE(SUM(amount), 0) AS total FROM project_expenses WHERE project_id = ?', [$id])['total'] ?? 0);
+$approvedBudgetTotal = (float)(dbFetchOne("SELECT COALESCE(SUM(COALESCE(bl.approved_amount, bl.estimated_amount)), 0) AS total FROM project_budgets b JOIN project_budget_lines bl ON bl.budget_id = b.id WHERE b.id = (SELECT pb.id FROM project_budgets pb WHERE pb.project_id = ? AND pb.status = 'approved' ORDER BY pb.version_no DESC, pb.id DESC LIMIT 1)", [$id])['total'] ?? 0);
+$existingExpenseTotal = (float)(dbFetchOne("SELECT COALESCE(SUM(amount), 0) AS total FROM project_expenses WHERE project_id = ? AND status = 'posted'", [$id])['total'] ?? 0);
 if ($approvedBudgetTotal <= 0) throw new RuntimeException('لا توجد ميزانية معتمدة من المدير المالي يمكن تسجيل المصروفات عليها.');
 if (($existingExpenseTotal + $amount) > ($approvedBudgetTotal + 0.01)) {
 $remaining = max(0, $approvedBudgetTotal - $existingExpenseTotal);
@@ -699,7 +699,7 @@ if (!move_uploaded_file($file['tmp_name'], $storedAbsolutePath)) throw new Runti
 dbExecute('INSERT INTO project_documents (project_id, document_type, title, file_path, original_name, mime_type, file_size, document_date, issuer, reference_number, amount, currency_code, notes, uploaded_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)', [$id,'receipt','إيصال مصروف: '.$description,$relativeDir.'/'.$stored,$file['name'],$mime,$file['size'],$expenseDate ?: null,akp_post_value('vendor_name') ?: null,akp_post_value('invoice_number') ?: null,$amount,$project['currency_code'] ?: 'SDG','مرفق مباشرة بالمصروف المسجل بواسطة مشرف المشروع.',akp_user_id()]);
 $primaryDocumentId = (int)(dbFetchOne('SELECT LAST_INSERT_ID() AS id')['id'] ?? 0);
 }
-dbExecute('INSERT INTO project_expenses (project_id, budget_id, budget_line_id, expense_date, category, description, vendor_name, vendor_contact, invoice_number, government_fee_type, amount, currency_code, transaction_reference, expense_account_id, payment_account_id, primary_document_id, status, submitted_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', [$id,$approvedBudgetId > 0 ? $approvedBudgetId : null,null,$expenseDate,$category,$description,akp_post_value('vendor_name') ?: null,null,akp_post_value('invoice_number') ?: null,null,$amount,$project['currency_code'] ?: 'SDG',akp_post_value('transaction_reference') ?: null,null,null,$primaryDocumentId,'draft',akp_user_id()]);
+dbExecute('INSERT INTO project_expenses (project_id, budget_id, budget_line_id, expense_date, category, description, vendor_name, vendor_contact, invoice_number, government_fee_type, amount, currency_code, transaction_reference, expense_account_id, payment_account_id, primary_document_id, status, submitted_by, posted_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', [$id,$approvedBudgetId > 0 ? $approvedBudgetId : null,null,$expenseDate,$category,$description,akp_post_value('vendor_name') ?: null,null,akp_post_value('invoice_number') ?: null,null,$amount,$project['currency_code'] ?: 'SDG',akp_post_value('transaction_reference') ?: null,null,null,$primaryDocumentId,'posted',akp_user_id(),akp_user_id()]);
 $expenseId = (int)(dbFetchOne('SELECT LAST_INSERT_ID() AS id')['id'] ?? 0);
 dbExecute('COMMIT');
 } catch (Throwable $e) {
@@ -708,7 +708,7 @@ if ($storedAbsolutePath && is_file($storedAbsolutePath)) @unlink($storedAbsolute
 throw $e;
 }
 akp_audit('CREATE', 'project_expense', $expenseId, null, ['project_id'=>$id,'amount'=>$amount,'recorded_by_role'=>'project_supervisor','primary_document_id'=>$primaryDocumentId]);
-$_SESSION['project_expense_success'] = 'تم تسجيل المصروف كمسودة وإرفاق الإيصال إن وُجد.';
+$_SESSION['project_expense_success'] = 'تم تسجيل الدفع وخصم ' . number_format($amount, 2) . ' ' . ($project['currency_code'] ?: 'SDG') . ' من ميزانية المشروع وترحيل المصروف.';
 } elseif ($action === 'edit_ps_expense') {
 if ($role !== 'project_supervisor' || !akp_is_primary_supervisor($id) || $closed) throw new RuntimeException('تعديل مصروفات التنفيذ متاح لمشرف المشروع المكلّف فقط.');
 $expenseId = (int)($_POST['expense_id'] ?? 0);
@@ -1806,47 +1806,10 @@ document.getElementById('editFundingDescription').value = button.getAttribute('d
 <div class="col-md-4"><label class="form-label small">المورد</label><input name="vendor_name" class="form-control form-control-sm" placeholder="اسم المورد"></div>
 <div class="col-md-4"><label class="form-label small">رقم الفاتورة</label><input name="invoice_number" class="form-control form-control-sm" placeholder="رقم الفاتورة"></div>
 <div class="col-md-4"><label class="form-label small">إيصال المصروف</label><input type="file" name="expense_receipt" class="form-control form-control-sm" accept=".pdf,.jpg,.jpeg,.png"></div>
-<div class="col-12"><button class="btn btn-sm btn-primary"><i class="fas fa-save me-1"></i>تسجيل المصروف</button><span class="small text-muted ms-2">يمكن إرفاق إيصال PDF أو JPG أو PNG.</span></div>
+<div class="col-12 d-flex align-items-center justify-content-between gap-2 flex-wrap">
+<button class="btn btn-primary"><i class="fas fa-money-bill-transfer me-1"></i>تسجيل الدفع وترحيل المصروف</button>
+<span class="small text-muted">عند حفظ الدفع مع الإيصال يُعتبر المصروف مدفوعاً ومرحّلاً مباشرة من ميزانية المشروع، دون أي قيد على حسابات المنظمة.</span>
 </div>
-</form>
-<?php elseif (akp_can_edit_section('finance', $id) && !$closed): ?>
-<form method="post" class="project-form-panel">
-<input type="hidden" name="action" value="add_expense">
-<?php echo csrf_field(); ?>
-<div class="row g-2">
-<div class="col-md-2"><input type="date" name="expense_date" class="form-control form-control-sm" value="<?php echo date('Y-m-d'); ?>"></div>
-<div class="col-md-2"><input name="expense_category" class="form-control form-control-sm" placeholder="الفئة" required></div>
-<div class="col-md-2"><input type="number" step="0.01" min="0.01" name="expense_amount" class="form-control form-control-sm" placeholder="المبلغ" required></div>
-<div class="col-md-6"><input name="expense_description" class="form-control form-control-sm" placeholder="وصف المصروف *" required></div>
-<div class="col-md-3"><input name="vendor_name" class="form-control form-control-sm" placeholder="اسم المورد"></div>
-<div class="col-md-3"><input name="invoice_number" class="form-control form-control-sm" placeholder="رقم الفاتورة"></div>
-<div class="col-md-3"><input name="government_fee_type" class="form-control form-control-sm" placeholder="نوع الرسم الحكومي"></div>
-<div class="col-md-3"><input name="transaction_reference" class="form-control form-control-sm" placeholder="مرجع الدفع"></div>
-<div class="col-md-6">
-<select name="expense_account_id" class="form-select form-select-sm" required>
-<option value="">حساب المصروف *</option>
-<?php foreach (dbFetchAll('SELECT id, code, name_ar FROM accounts WHERE is_active = 1 ORDER BY code') as $account): ?>
-<option value="<?php echo (int)$account['id']; ?>"><?php echo e($account['code'] . ' · ' . $account['name_ar']); ?></option>
-<?php endforeach; ?>
-</select>
-</div>
-<div class="col-md-6">
-<select name="payment_account_id" class="form-select form-select-sm" required>
-<option value="">حساب الدفع *</option>
-<?php foreach (dbFetchAll('SELECT id, code, name_ar FROM accounts WHERE is_active = 1 ORDER BY code') as $account): ?>
-<option value="<?php echo (int)$account['id']; ?>"><?php echo e($account['code'] . ' · ' . $account['name_ar']); ?></option>
-<?php endforeach; ?>
-</select>
-</div>
-<div class="col-md-6">
-<select name="primary_document_id" class="form-select form-select-sm">
-<option value="">إيصال/مستند المصروف (اختياري)</option>
-<?php foreach ($documents as $doc): ?>
-<option value="<?php echo (int)$doc['id']; ?>"><?php echo e($doc['title']); ?></option>
-<?php endforeach; ?>
-</select>
-</div>
-<div class="col-12"><button class="btn btn-sm btn-primary">حفظ المصروف</button></div>
 </div>
 </form>
 <?php endif; ?>
