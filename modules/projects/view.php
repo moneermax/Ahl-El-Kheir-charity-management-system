@@ -1146,6 +1146,8 @@ $status = $project['lifecycle_status'] ?: $project['status'];
 $projectToastSuccess = $_SESSION['project_toast_success'] ?? null;
 $projectExpenseSuccess = $_SESSION['project_expense_success'] ?? null;
 $projectDocumentSuccess = $_SESSION['project_document_success'] ?? null;
+if ($projectExpenseSuccess) $projectToastSuccess = $projectExpenseSuccess;
+if ($projectDocumentSuccess && !$projectToastSuccess) $projectToastSuccess = $projectDocumentSuccess;
 unset($_SESSION['project_toast_success'], $_SESSION['project_expense_success'], $_SESSION['project_document_success']);
 $badge = ['planned'=>'bg-secondary','active'=>'bg-success','completed'=>'bg-info','under_review'=>'bg-warning text-dark','closed'=>'bg-dark','reopened'=>'bg-primary','cancelled'=>'bg-danger'][$status] ?? 'bg-secondary';
 $varianceClass = $totals['variance'] > 0 ? 'text-danger' : 'text-success';
