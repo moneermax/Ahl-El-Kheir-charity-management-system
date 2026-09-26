@@ -2255,4 +2255,5 @@ bootstrap.Toast.getOrCreateInstance(projectToast, {delay: 4500, autohide: true})
 });
 </script>
 <?php endif; ?>
+<?php endif; ?>
 <?php include dirname(__DIR__, 2) . '/includes/footer.php'; ?>
