@@ -2273,56 +2273,99 @@ document.getElementById('edit-milestone-description').value = button.dataset.mil
 <?php if ($status !== 'closed'): ?>
 <div class="border rounded-3 p-3 bg-warning-subtle">
 <div class="d-flex align-items-start gap-3">
-<div class="text-warning-emphasis fs-4"><i class="fas fa-bell"></i></div>
+<div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-warning bg-opacity-25 text-warning-emphasis" style="width:40px;height:40px;"><i class="fas fa-clipboard-check"></i></div>
 <div class="flex-grow-1">
 <h6 class="fw-bold mb-1">مراجعة طلب الإغلاق</h6>
+<p class="small text-muted mb-3">مراجعة مدير المشاريع لطلب الإغلاق المرسل من مشرف المشروع قبل تنفيذ الإغلاق النهائي.</p>
 <?php if ($closureRequest && (string)$closureRequest['new_status'] === 'closure_requested'): ?>
-<div class="small text-muted mb-3">
-<strong>الطلب مقدم من:</strong> <?php echo e($closureRequest['requester_name'] ?? 'مشرف المشروع'); ?>
-<?php if (!empty($closureRequest['reason'])): ?><br><strong>ملاحظات المشرف:</strong> <?php echo e($closureRequest['reason']); ?><?php endif; ?>
+<div class="card border-0 shadow-sm mb-3">
+<div class="card-body p-3">
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+<span class="badge bg-warning-subtle text-warning-emphasis"><i class="fas fa-clock me-1"></i>طلب إغلاق بانتظار الإجراء</span>
+<span class="small text-muted">من مشرف المشروع</span>
 </div>
-<form method="post">
+<div class="small">
+<div class="mb-1"><strong>مقدم الطلب:</strong> <?php echo e($closureRequest['requester_name'] ?? 'مشرف المشروع'); ?></div>
+<?php if (!empty($closureRequest['reason'])): ?>
+<div><strong>ملاحظات المشرف:</strong><div class="mt-1 p-2 bg-light rounded"><?php echo nl2br(e($closureRequest['reason'])); ?></div></div>
+<?php endif; ?>
+</div>
+</div>
+</div>
+<form method="post" class="border-top pt-3">
 <input type="hidden" name="action" value="close_project">
 <?php echo csrf_field(); ?>
-<div class="row g-2">
-<div class="col-12"><label class="form-label small fw-semibold">ملخص الإغلاق <span class="text-danger">*</span></label><textarea name="closure_summary" class="form-control form-control-sm" rows="3" placeholder="ملخص الإغلاق والأسباب..." required></textarea></div>
-<div class="col-md-6"><label class="form-label small fw-semibold">تصنيف الإغلاق</label>
-<select name="closure_reason" class="form-select form-select-sm">
+<div class="mb-3">
+<label class="form-label small fw-semibold">ملخص الإغلاق <span class="text-danger">*</span></label>
+<textarea name="closure_summary" class="form-control" rows="3" placeholder="اكتب ملخص الإغلاق والأسباب..." required></textarea>
+</div>
+<div class="row g-3">
+<div class="col-md-6">
+<label class="form-label small fw-semibold">تصنيف الإغلاق</label>
+<select name="closure_reason" class="form-select">
 <option value="completed_successfully">إنجاز كامل</option>
 <option value="cancelled">إلغاء</option>
 <option value="transferred_to_another_project">نقل لمشروع آخر</option>
 <option value="retained_for_followup">احتفاظ للمتابعة</option>
 <option value="other">أخرى</option>
-</select></div>
-<div class="col-md-6"><label class="form-label small fw-semibold">تفسير فرق الميزانية <span class="text-muted">(اختياري)</span></label><input name="variance_explanation" class="form-control form-control-sm" placeholder="مثلاً: وفر في التنفيذ أو مصروف إضافي..."></div>
+</select>
 </div>
-<button class="btn btn-dark mt-3 px-4"><i class="fas fa-lock me-1"></i>تنفيذ إغلاق المشروع</button>
+<div class="col-md-6">
+<label class="form-label small fw-semibold">تفسير فرق الميزانية <span class="text-muted">(اختياري)</span></label>
+<input name="variance_explanation" class="form-control" placeholder="مثلاً: وفر في التنفيذ أو مصروف إضافي...">
+</div>
+</div>
+<div class="d-flex justify-content-end mt-3">
+<button class="btn btn-dark px-4"><i class="fas fa-lock me-1"></i>تنفيذ إغلاق المشروع</button>
+</div>
 </form>
 <?php else: ?>
-<div class="d-flex align-items-center gap-2 text-muted small"><i class="fas fa-info-circle"></i><span>لا يوجد طلب إغلاق معلق من مشرف المشروع.</span></div>
+<div class="alert alert-light border d-flex align-items-center gap-2 small mb-0">
+<i class="fas fa-info-circle text-muted"></i>
+<span>لا يوجد طلب إغلاق معلق من مشرف المشروع.</span>
+</div>
 <?php endif; ?>
+</div>
 </div>
 </div>
 <?php else: ?>
 <div class="border rounded-3 p-3 bg-warning-subtle">
 <div class="d-flex align-items-start gap-3">
-<div class="text-warning-emphasis fs-4"><i class="fas fa-bell"></i></div>
+<div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-warning bg-opacity-25 text-warning-emphasis" style="width:40px;height:40px;"><i class="fas fa-lock-open"></i></div>
 <div class="flex-grow-1">
 <h6 class="fw-bold mb-1">مراجعة طلب إعادة الفتح</h6>
+<p class="small text-muted mb-3">مراجعة مدير المشاريع لطلب إعادة الفتح المرسل من مشرف المشروع قبل تنفيذ إعادة الفتح.</p>
 <?php if ($closureRequest && (string)$closureRequest['new_status'] === 'reopen_requested'): ?>
-<div class="small text-muted mb-3">
-<strong>الطلب مقدم من:</strong> <?php echo e($closureRequest['requester_name'] ?? 'مشرف المشروع'); ?>
-<?php if (!empty($closureRequest['reason'])): ?><br><strong>سبب إعادة الفتح:</strong> <?php echo e($closureRequest['reason']); ?><?php endif; ?>
+<div class="card border-0 shadow-sm mb-3">
+<div class="card-body p-3">
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+<span class="badge bg-warning-subtle text-warning-emphasis"><i class="fas fa-clock me-1"></i>طلب إعادة فتح بانتظار الإجراء</span>
+<span class="small text-muted">من مشرف المشروع</span>
 </div>
-<form method="post">
+<div class="small">
+<div class="mb-1"><strong>مقدم الطلب:</strong> <?php echo e($closureRequest['requester_name'] ?? 'مشرف المشروع'); ?></div>
+<?php if (!empty($closureRequest['reason'])): ?>
+<div><strong>سبب إعادة الفتح:</strong><div class="mt-1 p-2 bg-light rounded"><?php echo nl2br(e($closureRequest['reason'])); ?></div></div>
+<?php endif; ?>
+</div>
+</div>
+</div>
+<form method="post" class="border-top pt-3">
 <input type="hidden" name="action" value="reopen_project">
 <?php echo csrf_field(); ?>
-<label class="form-label small fw-semibold">سبب إعادة الفتح <span class="text-danger">*</span></label>
-<textarea name="reopen_reason" class="form-control form-control-sm" rows="3" placeholder="سجل سبب اعتماد إعادة فتح المشروع..." required></textarea>
-<button class="btn btn-warning mt-3 px-4"><i class="fas fa-lock-open me-1"></i>تنفيذ إعادة فتح المشروع</button>
+<div class="mb-3">
+<label class="form-label small fw-semibold">سبب اعتماد إعادة الفتح <span class="text-danger">*</span></label>
+<textarea name="reopen_reason" class="form-control" rows="3" placeholder="سجل سبب اعتماد إعادة فتح المشروع..." required></textarea>
+</div>
+<div class="d-flex justify-content-end">
+<button class="btn btn-warning px-4"><i class="fas fa-lock-open me-1"></i>تنفيذ إعادة فتح المشروع</button>
+</div>
 </form>
 <?php else: ?>
-<div class="d-flex align-items-center gap-2 text-muted small"><i class="fas fa-info-circle"></i><span>لا يوجد طلب إعادة فتح معلق من مشرف المشروع.</span></div>
+<div class="alert alert-light border d-flex align-items-center gap-2 small mb-0">
+<i class="fas fa-info-circle text-muted"></i>
+<span>لا يوجد طلب إعادة فتح معلق من مشرف المشروع.</span>
+</div>
 <?php endif; ?>
 </div>
 </div>
