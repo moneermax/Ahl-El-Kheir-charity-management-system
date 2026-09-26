@@ -1216,7 +1216,7 @@ width: 24%;
 <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
 <div>
 <h2><?php echo e($project['name']); ?></h2>
-<p><code><?php echo e($project['project_code'] ?? ''); ?></code> · <?php echo e($project['project_type'] ?? ''); ?> · <span class="badge <?php echo $badge; ?>"><?php echo e(akp_status_label($status)); ?></span> · اعتماد: <span class="badge bg-light text-dark"><?php echo e($approval['approval_status']); ?></span></p>
+<p><code><?php echo e($project['project_code'] ?? ''); ?></code> · <?php echo e($project['project_type'] ?? ''); ?> · <span class="badge <?php echo $badge; ?>"><?php echo e(akp_status_label($status)); ?></span> · اعتماد: <span class="badge bg-light text-dark"><?php echo e(akp_approval_status_label((string)$approval['approval_status'])); ?></span></p>
 <?php if ($primarySupervisor): ?>
 <p class="small mb-0"><i class="fas fa-user-tie me-1"></i>مشرف المشروع: <strong><?php echo e($primarySupervisor['full_name']); ?></strong></p>
 <?php endif; ?>
@@ -1561,7 +1561,7 @@ refreshRemoveButtons();
 <td><?php echo e($budget['budget_name']); ?></td>
 <td><?php echo (int)$budget['line_count']; ?></td>
 <td><?php echo number_format((float)$budget['line_total'], 2) . ' ' . e($budget['currency_code']); ?></td>
-<td><span class="badge <?php echo $budget['status'] === 'approved' ? 'bg-success' : ($budget['status'] === 'superseded' ? 'bg-secondary' : 'bg-warning text-dark'); ?>"><?php echo e($budget['status']); ?></span></td>
+<td><span class="badge <?php echo $budget['status'] === 'approved' ? 'bg-success' : ($budget['status'] === 'superseded' ? 'bg-secondary' : 'bg-warning text-dark'); ?>"><?php echo e(akp_budget_status_label((string)$budget['status'])); ?></span></td>
 <td></td>
 </tr>
 <tr class="budget-details-row">
@@ -1647,7 +1647,7 @@ $grandFinancialRequirement = (float)($financialSummary['total_financial_requirem
 <td><?php echo e((string)($funding['source_account_code'] ?? $funding['source_type'])); ?> · <?php echo e((string)($funding['source_account_name'] ?? '')); ?></td>
 <td><?php echo akp_money($funding['amount']); ?></td>
 <td><small><?php echo e((string)($funding['reference_number'] ?? '')); ?><?php if (!empty($funding['description'])): ?><br><?php echo e((string)$funding['description']); ?><?php endif; ?></small></td>
-<td><?php echo e($funding['status']); ?></td>
+<td><?php echo e(akp_funding_status_label((string)$funding['status'])); ?></td>
 <td>
 <?php if (in_array((string)$approval['approval_status'], ['submitted', 'rejected'], true) && akp_can_manage_funding($id) && !$closed): ?>
 <button type="button" class="btn btn-sm btn-outline-primary"
@@ -1866,7 +1866,7 @@ document.getElementById('editFundingDescription').value = button.getAttribute('d
 </td>
 <td><?php echo e($expense['vendor_name'] ?: '—'); ?><br><small><?php echo e($expense['invoice_number'] ?: ''); ?></small></td>
 <td><?php echo akp_money($expense['amount']); ?></td>
-<td><span class="badge bg-<?php echo $expense['status'] === 'posted' ? 'dark' : ($expense['status'] === 'approved' ? 'success' : 'warning'); ?>"><?php echo e($expense['status']); ?></span></td>
+<td><span class="badge bg-<?php echo $expense['status'] === 'posted' ? 'dark' : ($expense['status'] === 'approved' ? 'success' : 'warning'); ?>"><?php echo e(akp_expense_status_label((string)$expense['status'])); ?></span></td>
 <td><small class="text-muted"><?php echo e($expense['entry_code'] ?: '—'); ?></small></td>
 <td>
 <?php if (!empty($expense['primary_document_id'])): ?>
@@ -2053,7 +2053,7 @@ if (documentSection) documentSection.scrollIntoView({ behavior: 'smooth', block:
 <td><?php echo e($doc['reference_number'] ?: '—'); ?></td>
 <td>
 <?php $documentStatusClass = $doc['verification_status'] === 'verified' ? 'success' : ($doc['verification_status'] === 'rejected' ? 'danger' : 'warning'); ?>
-<span class="badge bg-<?php echo $documentStatusClass; ?>"><?php echo e($doc['verification_status']); ?></span>
+<span class="badge bg-<?php echo $documentStatusClass; ?>"><?php echo e(akp_document_verification_status_label((string)$doc['verification_status'])); ?></span>
 </td>
 <td>
 <div class="d-flex flex-wrap gap-1">
@@ -2126,7 +2126,7 @@ data-document-notes="<?php echo e($doc['notes'] ?? ''); ?>">
 <td><div class="fw-semibold"><?php echo e($labor['provider_name']); ?></div><small class="text-muted"><?php echo e($labor['provider_type']); ?> · <?php echo (int)$labor['number_of_workers']; ?> عامل</small></td>
 <td><?php echo e($labor['work_description']); ?><br><small class="text-muted"><?php echo e($labor['phone']?:'بدون هاتف'); ?></small></td>
 <td class="fw-semibold"><?php echo akp_money($labor['payment_amount']); ?> <?php echo e($labor['currency_code']); ?></td>
-<td><span class="badge bg-<?php echo $labor['status']==='completed'?'success':($labor['status']==='in_progress'?'primary':'secondary'); ?>"><?php echo e($labor['status']); ?></span></td>
+<td><span class="badge bg-<?php echo $labor['status']==='completed'?'success':($labor['status']==='in_progress'?'primary':'secondary'); ?>"><?php echo e(akp_labor_status_label((string)$labor['status'])); ?></span></td>
 <td><?php if(!empty($labor['payment_expense_id'])): ?><span class="badge bg-success">مدفوع</span><br><small><?php echo e('PRJ-LPV-' . ($project['project_code'] ?? $id) . '-' . $labor['id']); ?> · <?php echo e($labor['payment_date']); ?></small><?php else: ?><span class="badge bg-warning text-dark">غير مدفوع</span><?php endif; ?></td>
 <td><?php if(!empty($labor['payment_expense_id'])): ?><a class="btn btn-sm btn-outline-dark mb-1" target="_blank" href="<?php echo APP_URL; ?>modules/accounting/voucher_print.php?labor_payment_id=<?php echo (int)$labor['payment_expense_id']; ?>"><i class="fas fa-file-invoice-dollar me-1"></i>السند</a><?php endif; ?><?php if(!empty($labor['payment_receipt_id'])): ?><a class="btn btn-sm btn-outline-secondary" target="_blank" href="<?php echo APP_URL; ?>modules/projects/serve_project_document.php?id=<?php echo (int)$labor['payment_receipt_id']; ?>"><i class="fas fa-paperclip me-1"></i>الإيصال</a><?php endif; ?></td>
 <td class="text-nowrap"><?php if(!$closed&&$role==='project_supervisor'&&akp_is_primary_supervisor($id)): ?><button type="button" class="btn btn-sm btn-outline-primary mb-1" data-bs-toggle="modal" data-bs-target="#editLaborModal" data-labor='<?php echo e(json_encode($labor, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES)); ?>'><i class="fas fa-pen me-1"></i>تعديل</button><form method="post" class="d-inline project-delete-form"><?php echo csrf_field(); ?><input type="hidden" name="action" value="delete_labor"><input type="hidden" name="labor_id" value="<?php echo (int)$labor['id']; ?>"><button type="button" class="btn btn-sm btn-outline-danger project-delete-btn mb-1" data-confirm-title="حذف العمالة" data-confirm-text="سيتم حذف سجل العمالة والمصروف وسند الدفع والإيصال المرتبط به إن وُجد، وإعادة المبلغ إلى الرصيد المتاح للمشروع."><i class="fas fa-trash me-1"></i>حذف</button><?php if(empty($labor['payment_expense_id'])): ?><button type="button" class="btn btn-sm btn-primary mb-1" data-bs-toggle="modal" data-bs-target="#recordLaborPaymentModal" data-labor-id="<?php echo (int)$labor['id']; ?>" data-labor-name="<?php echo e($labor['provider_name']); ?>" data-labor-work="<?php echo e($labor['work_description']); ?>" data-labor-amount="<?php echo e($labor['payment_amount']); ?>" data-labor-currency="<?php echo e($labor['currency_code']); ?>"><i class="fas fa-money-bill-wave me-1"></i>تسجيل الدفع</button><?php endif; ?><?php endif; ?><?php if(akp_is_executive()&&!$closed): ?><form method="post" class="project-inline-form mt-1"><?php echo csrf_field(); ?><input type="hidden" name="action" value="comment_labor"><input type="hidden" name="labor_id" value="<?php echo (int)$labor['id']; ?>"><input name="labor_manager_comment" class="form-control form-control-sm d-inline-block" style="max-width:220px" placeholder="تعليق الإدارة"><button class="btn btn-sm btn-outline-primary mt-1">تعليق</button></form><?php endif; ?></td>
@@ -2255,7 +2255,7 @@ document.getElementById('edit-milestone-description').value = button.dataset.mil
 <div class="card-body">
 <?php foreach ($history as $h): ?>
 <div class="small border-bottom pb-2 mb-2">
-<div><strong><?php echo e($h['old_status']); ?></strong> → <strong><?php echo e($h['new_status']); ?></strong></div>
+<div><strong><?php echo e(akp_history_status_label((string)$h['old_status'])); ?></strong> → <strong><?php echo e(akp_history_status_label((string)$h['new_status'])); ?></strong></div>
 <div class="text-muted"><?php echo e($h['full_name'] ?? 'نظام'); ?> · <?php echo e($h['created_at']); ?></div>
 <?php if ($h['reason']): ?><div class="fst-italic">"<?php echo e($h['reason']); ?>"</div><?php endif; ?>
 </div>
