@@ -1934,6 +1934,39 @@ data-document-notes="<?php echo e($doc['notes'] ?? ''); ?>">
 <div class="card-header"><i class="fas fa-list-check me-2"></i>التشغيل والتقدم</div>
 <div class="card-body">
 <?php if (akp_can_edit_section('operations', $id) && !$closed): ?>
+<form method="post">
+<input type="hidden" name="action" value="add_progress">
+<?php echo csrf_field(); ?>
+<div class="row g-2 align-items-end">
+<div class="col-md-2">
+<label for="progress_update_date" class="form-label small fw-semibold mb-1">التاريخ</label>
+<input id="progress_update_date" type="date" name="update_date" class="form-control form-control-sm" value="<?php echo date('Y-m-d'); ?>">
+</div>
+<div class="col-md-2">
+<label for="progress_percent" class="form-label small fw-semibold mb-1">نسبة الإنجاز (%)</label>
+<input id="progress_percent" type="number" min="0" max="100" name="progress_percent" class="form-control form-control-sm" placeholder="مثال: 75">
+</div>
+<div class="col-md-2">
+<label for="progress_summary" class="form-label small fw-semibold mb-1">ملخص التقدم *</label>
+<input id="progress_summary" type="text" name="progress_summary" class="form-control form-control-sm" placeholder="ملخص التقدم" required>
+</div>
+<div class="col-md-2">
+<label for="progress_achievements" class="form-label small fw-semibold mb-1">الإنجازات</label>
+<input id="progress_achievements" type="text" name="achievements" class="form-control form-control-sm" placeholder="الإنجازات">
+</div>
+<div class="col-md-2">
+<label for="progress_issues" class="form-label small fw-semibold mb-1">المعوقات</label>
+<input id="progress_issues" type="text" name="issues" class="form-control form-control-sm" placeholder="المعوقات">
+</div>
+<div class="col-md-2">
+<label for="progress_next_steps" class="form-label small fw-semibold mb-1">الخطوات القادمة</label>
+<input id="progress_next_steps" type="text" name="next_steps" class="form-control form-control-sm" placeholder="الخطوات القادمة">
+</div>
+<div class="col-12"><button class="btn btn-sm btn-outline-primary mt-2">حفظ التحديث</button></div>
+</div>
+</form>
+<?php endif; ?>
+<?php if (akp_can_edit_section('operations', $id) && !$closed): ?>
 <form method="post" class="project-form-panel mb-3">
 <input type="hidden" name="action" value="add_milestone">
 <?php echo csrf_field(); ?>
@@ -1969,39 +2002,6 @@ data-document-notes="<?php echo e($doc['notes'] ?? ''); ?>">
 <?php endif; ?>
 <hr>
 <h6 class="fw-bold">تحديث تقدم</h6>
-<?php if (akp_can_edit_section('operations', $id) && !$closed): ?>
-<form method="post">
-<input type="hidden" name="action" value="add_progress">
-<?php echo csrf_field(); ?>
-<div class="row g-2 align-items-end">
-<div class="col-md-2">
-<label for="progress_update_date" class="form-label small fw-semibold mb-1">التاريخ</label>
-<input id="progress_update_date" type="date" name="update_date" class="form-control form-control-sm" value="<?php echo date('Y-m-d'); ?>">
-</div>
-<div class="col-md-2">
-<label for="progress_percent" class="form-label small fw-semibold mb-1">نسبة الإنجاز (%)</label>
-<input id="progress_percent" type="number" min="0" max="100" name="progress_percent" class="form-control form-control-sm" placeholder="مثال: 75">
-</div>
-<div class="col-md-2">
-<label for="progress_summary" class="form-label small fw-semibold mb-1">ملخص التقدم *</label>
-<input id="progress_summary" type="text" name="progress_summary" class="form-control form-control-sm" placeholder="ملخص التقدم" required>
-</div>
-<div class="col-md-2">
-<label for="progress_achievements" class="form-label small fw-semibold mb-1">الإنجازات</label>
-<input id="progress_achievements" type="text" name="achievements" class="form-control form-control-sm" placeholder="الإنجازات">
-</div>
-<div class="col-md-2">
-<label for="progress_issues" class="form-label small fw-semibold mb-1">المعوقات</label>
-<input id="progress_issues" type="text" name="issues" class="form-control form-control-sm" placeholder="المعوقات">
-</div>
-<div class="col-md-2">
-<label for="progress_next_steps" class="form-label small fw-semibold mb-1">الخطوات القادمة</label>
-<input id="progress_next_steps" type="text" name="next_steps" class="form-control form-control-sm" placeholder="الخطوات القادمة">
-</div>
-<div class="col-12"><button class="btn btn-sm btn-outline-primary mt-2">حفظ التحديث</button></div>
-</div>
-</form>
-<?php endif; ?>
 <?php if ($progressUpdates): ?>
 <div class="table-responsive mt-3">
 <table class="table table-sm table-bordered align-middle mb-0">
