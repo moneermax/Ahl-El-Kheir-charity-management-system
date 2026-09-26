@@ -165,7 +165,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 APP_URL . 'modules/projects/view.php?id=' . $id
             );
 
-            $_SESSION['project_toast_success'] = 'تم إرسال المشروع إلى المدير المالي للمراجعة والاعتماد المبدئي.';
+            $_SESSION['project_toast_success'] = 'تم إرسال المشروع إلى المدير المالي للمراجعة والاعتماد المبدئي.');
             
         } elseif ($action === 'fm_approve_project') {
             if ($role !== 'financial_manager') throw new RuntimeException('اعتماد المشروع مالياً محصور بالمدير المالي.');
@@ -230,7 +230,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Notification delivery must never roll back the completed FM approval.
             }
 
-            $_SESSION['project_toast_success'] = 'تم اعتماد المشروع مالياً. المشروع الآن بانتظار اعتماد المدير العام.';
+            $_SESSION['project_toast_success'] = 'تم اعتماد المشروع مالياً. المشروع الآن بانتظار اعتماد المدير العام.');
             
         } elseif ($action === 'fm_return_to_review') {
             if ($role !== 'financial_manager') throw new RuntimeException('إعادة المشروع للمراجعة المالية متاحة للمدير المالي فقط.');
@@ -240,7 +240,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$approvalCheck || $approvalCheck['approval_status'] !== 'fm_approved') throw new RuntimeException('المشروع ليس في حالة اعتماد مالي تسمح بإعادته للمراجعة.');
             dbExecute("UPDATE project_approval SET approval_status = 'submitted' WHERE project_id = ?", [$id]);
             akp_audit('FM_RETURN_TO_REVIEW', 'project_approval', $id, ['approval_status' => 'fm_approved'], ['approval_status' => 'submitted', 'reason' => $reason]);
-            $_SESSION['project_toast_success'] = 'تمت إعادة المشروع إلى مرحلة المراجعة المالية لاستكمال تخصيص التمويل.';
+            $_SESSION['project_toast_success'] = 'تمت إعادة المشروع إلى مرحلة المراجعة المالية لاستكمال تخصيص التمويل.');
 
         } elseif ($action === 'fm_reject_project') {
             if ($role !== 'financial_manager') throw new RuntimeException('رفض المشروع مالياً محصور بالمدير المالي.');
@@ -250,7 +250,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$approvalCheck || $approvalCheck['approval_status'] !== 'submitted') throw new RuntimeException('المشروع ليس في حالة انتظار الاعتماد المالي.');
             dbExecute("UPDATE project_approval SET approval_status = 'rejected', fm_rejection_reason = ?, fm_reviewed_by = ?, fm_reviewed_at = NOW() WHERE project_id = ?", [$reason, akp_user_id(), $id]);
             akp_audit('FM_REJECT_PROJECT', 'project_approval', $id, ['approval_status' => 'submitted'], ['approval_status' => 'rejected', 'reason' => $reason]);
-            $_SESSION['project_toast_success'] = 'تم رفض المشروع مالياً وإعادته لمدير المشاريع.';
+            $_SESSION['project_toast_success'] = 'تم رفض المشروع مالياً وإعادته لمدير المشاريع.');
             
         } elseif ($action === 'approve_project') {
             if (!in_array($role, ['admin', 'general_manager', 'vice_general_manager'], true)) throw new RuntimeException('اعتماد المشروع نهائياً محصور بالمدير العام أو نائبه.');
@@ -340,7 +340,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 dbExecute('COMMIT');
                 akp_audit('GM_APPROVE_PROJECT', 'project_approval', $id, ['approval_status' => 'fm_approved'], ['approval_status' => 'approved']);
 
-                $_SESSION['project_toast_success'] = 'تم اعتماد المشروع نهائياً. التمويل مخصص ومحجوز للمشروع، ولن يُخصم من السيولة الفعلية إلا عند توثيق كل دفعة فعلية على حدة.';
+                $_SESSION['project_toast_success'] = 'تم اعتماد المشروع نهائياً. التمويل مخصص ومحجوز للمشروع، ولن يُخصم من السيولة الفعلية إلا عند توثيق كل دفعة فعلية على حدة.');
             } catch (Throwable $e) {
                 dbExecute('ROLLBACK');
                 throw $e;
@@ -372,7 +372,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             } catch (Throwable $notificationError) {}
 
-            $_SESSION['project_toast_success'] = 'تم رفض المشروع من المدير العام وإعادته إلى المدير المالي للمراجعة.';
+            $_SESSION['project_toast_success'] = 'تم رفض المشروع من المدير العام وإعادته إلى المدير المالي للمراجعة.');
             
         } elseif ($action === 'launch_project') {
             if ($role !== 'projects_manager') {
@@ -459,7 +459,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'project_launch_ps'
             );
 
-            $_SESSION['project_toast_success'] = 'تم إطلاق المشروع وإبلاغ المشرف المعيّن به.';
+            $_SESSION['project_toast_success'] = 'تم إطلاق المشروع وإبلاغ المشرف المعيّن به.');
 
         } elseif ($action === 'change_status') {
             // ... (Original change_status logic preserved exactly)
@@ -472,7 +472,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             dbExecute('UPDATE project_lifecycle SET lifecycle_status = ? WHERE project_id = ?', [$newStatus, $id]);
             dbExecute('INSERT INTO project_status_history (project_id, old_status, new_status, reason, changed_by) VALUES (?,?,?,?,?)', [$id, $oldStatus, $newStatus, akp_post_value('reason') ?: null, akp_user_id()]);
             akp_audit('STATUS_CHANGE', 'project_lifecycle', $id, ['status' => $oldStatus], ['status' => $newStatus]);
-            $_SESSION['project_toast_success'] = 'تم تحديث حالة المشروع.';
+            $_SESSION['project_toast_success'] = 'تم تحديث حالة المشروع.');
             
         } elseif ($action === 'add_budget') {
             // ... (Original add_budget logic preserved exactly)
@@ -487,7 +487,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $budgetId = (int)(dbFetchOne('SELECT LAST_INSERT_ID() AS id')['id'] ?? 0);
             dbExecute('INSERT INTO project_budget_lines (budget_id, category, description, account_id, estimated_amount, approved_amount, notes, created_by) VALUES (?,?,?,?,?,?,?,?)', [$budgetId, $lineCategory, $lineDescription, (int)($_POST['budget_account_id'] ?? 0) ?: null, $estimate, null, akp_post_value('line_notes') ?: null, akp_user_id()]);
             akp_audit('CREATE', 'project_budget', $budgetId, null, ['project_id' => $id, 'version_no' => $nextVersion, 'amount' => $estimate]);
-            $_SESSION['project_toast_success'] = 'تم إنشاء نسخة ميزانية وإضافة البند الأول.';
+            $_SESSION['project_toast_success'] = 'تم إنشاء نسخة ميزانية وإضافة البند الأول.');
             
         } elseif ($action === 'add_budget_line') {
             // ... (Original add_budget_line logic preserved exactly)
@@ -501,7 +501,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($category === '' || $description === '' || $estimate <= 0) throw new RuntimeException('الفئة والوصف والمبلغ التقديري مطلوبة.');
             dbExecute('INSERT INTO project_budget_lines (budget_id, category, description, account_id, estimated_amount, notes, created_by) VALUES (?,?,?,?,?,?,?)', [$budgetId, $category, $description, (int)($_POST['budget_account_id'] ?? 0) ?: null, $estimate, akp_post_value('line_notes') ?: null, akp_user_id()]);
             akp_audit('CREATE', 'project_budget_line', $budgetId, null, ['project_id' => $id, 'category' => $category, 'amount' => $estimate]);
-            $_SESSION['project_toast_success'] = 'تمت إضافة بند الميزانية.';
+            $_SESSION['project_toast_success'] = 'تمت إضافة بند الميزانية.');
             
         } elseif ($action === 'add_funding') {
             if (!akp_can_manage_funding($id) || $closed) {
@@ -601,7 +601,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             $remainingAfter = max(0, $financialRequirement - $existingTotal - $batchTotal);
-            $_SESSION['project_toast_success'] = 'تم تسجيل تخصيصات التمويل بنجاح. المتبقي من إجمالي المتطلبات المالية: ' . number_format($remainingAfter, 2) . '.';
+            $_SESSION['project_toast_success'] = 'تم تسجيل تخصيصات التمويل بنجاح. المتبقي من إجمالي المتطلبات المالية: ' . number_format($remainingAfter, 2) . '.');
 
         } elseif ($action === 'edit_funding') {
             $approvalStatus = (string)(dbFetchOne('SELECT approval_status FROM project_approval WHERE project_id = ?', [$id])['approval_status'] ?? '');
@@ -667,7 +667,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ['project_id' => $id, 'amount' => $oldAmount],
                     ['project_id' => $id, 'amount' => $amount, 'approval_status' => $approvalStatus]
                 );
-                $_SESSION['project_toast_success'] = 'تم تعديل تخصيص التمويل بنجاح.';
+                $_SESSION['project_toast_success'] = 'تم تعديل تخصيص التمويل بنجاح.');
             } catch (Throwable $e) {
                 dbExecute('ROLLBACK');
                 throw $e;
@@ -695,7 +695,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ['project_id' => $id, 'amount' => $allocation['amount']],
                     ['approval_status' => $approvalStatus]
                 );
-                $_SESSION['project_toast_success'] = 'تم حذف تخصيص التمويل.';
+                $_SESSION['project_toast_success'] = 'تم حذف تخصيص التمويل.');
             } catch (Throwable $e) {
                 dbExecute('ROLLBACK');
                 throw $e;
@@ -713,7 +713,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($category === '' || $description === '' || $estimate <= 0) throw new RuntimeException('الفئة والوصف والمبلغ التقديري مطلوبة.');
             dbExecute('UPDATE project_budget_lines SET category = ?, description = ?, estimated_amount = ?, notes = ? WHERE id = ?', [$category, $description, $estimate, akp_post_value('line_notes') ?: null, $lineId]);
             akp_audit('UPDATE', 'project_budget_line', $lineId, ['amount' => $line['estimated_amount']], ['amount' => $estimate]);
-            $_SESSION['project_toast_success'] = 'تم تعديل بند الميزانية.';
+            $_SESSION['project_toast_success'] = 'تم تعديل بند الميزانية.');
 
         } elseif ($action === 'delete_budget_line') {
             if (!akp_can_prepare_finance($id) || $closed) throw new RuntimeException('حذف بنود الميزانية قبل المراجعة المالية محصور بمدير المشاريع.');
@@ -723,14 +723,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($line['budget_status'] !== 'draft') throw new RuntimeException('لا يمكن حذف بند من نسخة ميزانية معتمدة.');
             dbExecute('DELETE FROM project_budget_lines WHERE id = ?', [$lineId]);
             akp_audit('DELETE', 'project_budget_line', $lineId, ['amount' => $line['estimated_amount']], null);
-            $_SESSION['project_toast_success'] = 'تم حذف بند الميزانية.';
+            $_SESSION['project_toast_success'] = 'تم حذف بند الميزانية.');
 
         } elseif ($action === 'approve_funding') {
             throw new RuntimeException('هذه الخطوة لم تعد مطلوبة — يتم اعتماد كل مصادر التمويل تلقائياً عند الاعتماد المالي للمشروع بالكامل.');
 
         } elseif ($action === 'post_funding') {
             throw new RuntimeException('هذه الخطوة لم تعد مطلوبة — يتم ترحيل القيد المحاسبي تلقائياً عند الاعتماد النهائي من المدير العام.');
-            $_SESSION['project_toast_success'] = 'تم ترحيل تخصيص التمويل بقيد مزدوج متوازن.';
+            $_SESSION['project_toast_success'] = 'تم ترحيل تخصيص التمويل بقيد مزدوج متوازن.');
             
         } elseif ($action === 'add_ps_expense') {
             if ($role !== 'project_supervisor' || !akp_is_primary_supervisor($id) || $closed) throw new RuntimeException('إدخال مصروفات التنفيذ متاح لمشرف المشروع المكلّف فقط.');
@@ -884,7 +884,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             dbExecute('INSERT INTO project_expenses (project_id, budget_id, budget_line_id, expense_date, category, description, vendor_name, vendor_contact, invoice_number, government_fee_type, amount, currency_code, transaction_reference, expense_account_id, payment_account_id, primary_document_id, status, submitted_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', [$id, (int)($_POST['expense_budget_id'] ?? 0) ?: null, (int)($_POST['budget_line_id'] ?? 0) ?: null, akp_post_value('expense_date', date('Y-m-d')), akp_post_value('expense_category', 'عام'), $description, akp_post_value('vendor_name') ?: null, akp_post_value('vendor_contact') ?: null, akp_post_value('invoice_number') ?: null, akp_post_value('government_fee_type') ?: null, $amount, akp_post_value('expense_currency', $project['currency_code'] ?: 'SDG'), akp_post_value('transaction_reference') ?: null, $expenseAccount, $paymentAccount, $primaryDocumentId, 'draft', akp_user_id()]);
             $expenseId = (int)(dbFetchOne('SELECT LAST_INSERT_ID() AS id')['id'] ?? 0);
             akp_audit('CREATE', 'project_expense', $expenseId, null, ['project_id' => $id, 'amount' => $amount]);
-            $_SESSION['project_toast_success'] = 'تم حفظ المصروف كمسودة. أرفق المستند ثم أرسله للاعتماد.';
+            $_SESSION['project_toast_success'] = 'تم حفظ المصروف كمسودة. أرفق المستند ثم أرسله للاعتماد.');
             
         } elseif ($action === 'submit_expense') {
             // ... (Original submit_expense logic preserved exactly)
@@ -894,7 +894,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$expense || $expense['status'] !== 'draft') throw new RuntimeException('المصروف ليس في حالة مسودة.');
             dbExecute("UPDATE project_expenses SET status = 'submitted', submitted_by = ? WHERE id = ? AND project_id = ?", [akp_user_id(), $expenseId, $id]);
             dbExecute("INSERT INTO project_expense_approvals (expense_id, action, actor_id) VALUES (?, 'submitted', ?)", [$expenseId, akp_user_id()]);
-            $_SESSION['project_toast_success'] = 'تم إرسال المصروف للاعتماد.';
+            $_SESSION['project_toast_success'] = 'تم إرسال المصروف للاعتماد.');
             
         } elseif ($action === 'approve_expense') {
             // ... (Original approve_expense logic preserved exactly)
@@ -904,7 +904,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$expense || $expense['status'] !== 'submitted') throw new RuntimeException('المصروف ليس في حالة مرسل.');
             dbExecute("UPDATE project_expenses SET status = 'approved', approved_by = ? WHERE id = ? AND project_id = ?", [akp_user_id(), $expenseId, $id]);
             dbExecute("INSERT INTO project_expense_approvals (expense_id, action, actor_id) VALUES (?, 'approved', ?)", [$expenseId, akp_user_id()]);
-            $_SESSION['project_toast_success'] = 'تم اعتماد المصروف ويمكن ترحيله محاسبياً.';
+            $_SESSION['project_toast_success'] = 'تم اعتماد المصروف ويمكن ترحيله محاسبياً.');
             
         } elseif ($action === 'post_expense') {
             // ... (Original post_expense logic preserved exactly)
@@ -928,7 +928,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw $e;
             }
             akp_audit('POST', 'project_expense', $expenseId, ['status' => 'approved'], ['status' => 'posted', 'journal_entry_id' => $entryId]);
-            $_SESSION['project_toast_success'] = 'تم ترحيل المصروف بقيد مزدوج متوازن.';
+            $_SESSION['project_toast_success'] = 'تم ترحيل المصروف بقيد مزدوج متوازن.');
             
         } elseif ($action === 'upload_document') {
             // ... (Original upload_document logic preserved exactly)
@@ -948,7 +948,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             dbExecute('INSERT INTO project_documents (project_id, document_type, title, file_path, original_name, mime_type, file_size, document_date, issuer, reference_number, amount, currency_code, notes, uploaded_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)', [$id, akp_post_value('document_type', 'other'), akp_post_value('document_title'), $relativePath, $file['name'], $mime, $file['size'], akp_post_value('document_date') ?: null, akp_post_value('document_issuer') ?: null, akp_post_value('document_reference') ?: null, (float)(akp_post_value('document_amount') ?: 0), akp_post_value('document_currency', $project['currency_code'] ?: 'SDG'), akp_post_value('document_notes') ?: null, akp_user_id()]);
             $documentId = (int)(dbFetchOne('SELECT LAST_INSERT_ID() AS id')['id'] ?? 0);
             akp_audit('UPLOAD', 'project_document', $documentId, null, ['project_id' => $id, 'document_type' => akp_post_value('document_type', 'other')]);
-            $_SESSION['project_toast_success'] = 'تم حفظ الوثيقة في التخزين المحمي.';
+            $_SESSION['project_toast_success'] = 'تم حفظ الوثيقة في التخزين المحمي.');
             
         } elseif ($action === 'edit_project_document') {
             if ($role !== 'project_supervisor' || !akp_can_edit_section('documents', $id) || $closed) throw new RuntimeException('تعديل وثائق المشروع متاح لمشرف المشروع المكلّف فقط.');
@@ -1017,7 +1017,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$doc) throw new RuntimeException('الوثيقة غير موجودة.');
             dbExecute('UPDATE project_documents SET verification_status = ?, verified_by = ?, verified_at = NOW(), rejection_reason = ? WHERE id = ? AND project_id = ?', [$verification, akp_user_id(), $verification === 'rejected' ? $rejectionReason : null, $documentId, $id]);
             akp_audit('VERIFY', 'project_document', $documentId, ['verification_status' => $doc['verification_status']], ['verification_status' => $verification]);
-            $_SESSION['project_toast_success'] = 'تم تحديث حالة الوثيقة.';
+            $_SESSION['project_toast_success'] = 'تم تحديث حالة الوثيقة.');
             
         } elseif ($action === 'add_labor') {
             // ... (Original add_labor logic preserved exactly)
@@ -1036,7 +1036,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             dbExecute('INSERT INTO project_labor_helpers (project_id, supervisor_user_id, provider_type, provider_name, phone, contact_person_name, contact_person_phone, number_of_workers, work_description, payment_amount, currency_code, payment_timing, status, notes, created_by, updated_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', [$id, akp_user_id(), $providerType, $providerName, akp_post_value('labor_phone') ?: null, akp_post_value('labor_contact_person_name') ?: null, akp_post_value('labor_contact_person_phone') ?: null, $workers, $workDescription, $amount, akp_post_value('labor_currency', $project['currency_code'] ?: 'SDG'), $paymentTiming, $laborStatus, akp_post_value('labor_notes') ?: null, akp_user_id(), akp_user_id()]);
             $laborId = (int)(dbFetchOne('SELECT LAST_INSERT_ID() AS id')['id'] ?? 0);
             akp_audit('CREATE', 'project_labor_helper', $laborId, null, ['project_id' => $id, 'provider_name' => $providerName, 'amount' => $amount]);
-            $_SESSION['project_toast_success'] = 'تم حفظ بيانات العامل/الجهة الخارجية.';
+            $_SESSION['project_toast_success'] = 'تم حفظ بيانات العامل/الجهة الخارجية.');
             
         } elseif ($action === 'comment_labor') {
             // ... (Original comment_labor logic preserved exactly)
@@ -1047,7 +1047,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             dbExecute('INSERT INTO project_labor_comments (labor_id, manager_user_id, comment) VALUES (?,?,?)', [$laborId, akp_user_id(), $comment]);
             dbExecute('UPDATE project_labor_helpers SET manager_comment = ?, manager_comment_by = ?, manager_comment_at = NOW() WHERE id = ? AND project_id = ?', [$comment, akp_user_id(), $laborId, $id]);
             akp_audit('COMMENT', 'project_labor_helper', $laborId, null, ['project_id' => $id]);
-            $_SESSION['project_toast_success'] = 'تم حفظ تعليق مدير المشاريع.';
+            $_SESSION['project_toast_success'] = 'تم حفظ تعليق مدير المشاريع.');
             
         } elseif ($action === 'add_milestone') {
             // ... (Original add_milestone logic preserved exactly)
@@ -1055,7 +1055,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $title = akp_post_value('milestone_title');
             if ($title === '') throw new RuntimeException('عنوان المرحلة مطلوب.');
             dbExecute('INSERT INTO project_milestones (project_id, title, description, planned_date, status, completion_percent, notes, created_by) VALUES (?,?,?,?,?,?,?,?)', [$id, $title, akp_post_value('milestone_description') ?: null, akp_post_value('planned_date') ?: null, akp_post_value('milestone_status', 'pending'), max(0, min(100, (float)($_POST['completion_percent'] ?? 0))), akp_post_value('milestone_notes') ?: null, akp_user_id()]);
-            $_SESSION['project_toast_success'] = 'تمت إضافة المرحلة.';
+            $_SESSION['project_toast_success'] = 'تمت إضافة المرحلة.');
             
         } elseif ($action === 'add_progress') {
             // ... (Original add_progress logic preserved exactly)
@@ -1067,7 +1067,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($summary === '') throw new RuntimeException('ملخص التقدم مطلوب.');
             dbExecute('INSERT INTO project_progress_updates (project_id, update_date, completion_percent, summary, achievements, issues, next_steps, submitted_by) VALUES (?,?,?,?,?,?,?,?)', [$id, akp_post_value('update_date') ?: date('Y-m-d'), $progressPercent, $summary, akp_post_value('achievements') ?: null, akp_post_value('issues') ?: null, akp_post_value('next_steps') ?: null, akp_user_id()]);
             akp_audit('CREATE', 'project_progress_update', (int)dbFetchOne('SELECT LAST_INSERT_ID() AS id')['id'], null, ['project_id' => $id]);
-            $_SESSION['project_toast_success'] = 'تم حفظ تحديث التقدم.';
+            $_SESSION['project_toast_success'] = 'تم حفظ تحديث التقدم.');
             
         } elseif ($action === 'close_project') {
             // ... (Original close_project logic preserved exactly)
@@ -1082,7 +1082,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             dbExecute("UPDATE other_projects SET status = 'completed', updated_by = ? WHERE id = ?", [akp_user_id(), $id]);
             dbExecute("INSERT INTO project_status_history (project_id, old_status, new_status, reason, changed_by) VALUES (?, ?, 'closed', ?, ?)", [$id, $project['lifecycle_status'] ?: $project['status'], $summary, akp_user_id()]);
             akp_audit('CLOSE', 'project_lifecycle', $id, ['status' => $project['lifecycle_status'] ?: $project['status']], ['status' => 'closed', 'reason' => $summary]);
-            $_SESSION['project_toast_success'] = 'تم إغلاق المشروع. لن يستطيع تعديله بعد ذلك إلا المدير العام.';
+            $_SESSION['project_toast_success'] = 'تم إغلاق المشروع. لن يستطيع تعديله بعد ذلك إلا المدير العام.');
             
         } elseif ($action === 'reopen_project') {
             // ... (Original reopen_project logic preserved exactly)
@@ -1094,7 +1094,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             dbExecute("UPDATE other_projects SET status = 'active', updated_by = ? WHERE id = ?", [akp_user_id(), $id]);
             dbExecute("INSERT INTO project_status_history (project_id, old_status, new_status, reason, changed_by) VALUES (?, 'closed', 'reopened', ?, ?)", [$id, $reason, akp_user_id()]);
             akp_audit('REOPEN', 'project_lifecycle', $id, ['status' => 'closed'], ['status' => 'reopened', 'reason' => $reason]);
-            $_SESSION['project_toast_success'] = 'تمت إعادة فتح المشروع.';
+            $_SESSION['project_toast_success'] = 'تمت إعادة فتح المشروع.');
         }
     } catch (Throwable $e) {
         flash('error', $e->getMessage());
