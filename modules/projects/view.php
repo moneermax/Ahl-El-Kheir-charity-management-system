@@ -2199,148 +2199,140 @@ document.getElementById('edit-milestone-description').value = button.dataset.mil
 </div>
 </div>
 <div class="col-lg-5 project-view-side-column">
-<div class="card mb-4 fade-in">
-<div class="card-header"><i class="fas fa-lock me-2"></i>الإغلاق وإعادة الفتح</div>
-<div class="card-body">
+<div class="card mb-4 fade-in border-0 shadow-sm overflow-hidden">
+<div class="card-header bg-dark text-white py-3">
+<div class="d-flex align-items-center justify-content-between gap-2">
+<div class="d-flex align-items-center">
+<span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-white bg-opacity-10 me-2" style="width:36px;height:36px;"><i class="fas fa-lock"></i></span>
+<div>
+<div class="fw-bold">الإغلاق وإعادة الفتح</div>
+<div class="small text-white-50">إجراء إداري نهائي يمر عبر مدير المشاريع</div>
+</div>
+</div>
+<?php if ($status === 'closed'): ?>
+<span class="badge bg-success-subtle text-success-emphasis px-3 py-2"><i class="fas fa-lock me-1"></i>مغلق</span>
+<?php else: ?>
+<span class="badge bg-warning-subtle text-warning-emphasis px-3 py-2"><i class="fas fa-unlock me-1"></i>مفتوح</span>
+<?php endif; ?>
+</div>
+</div>
+<div class="card-body p-3 p-lg-4">
 <?php if ($role === 'project_supervisor' && akp_is_primary_supervisor($id)): ?>
 <?php if ($status !== 'closed'): ?>
+<div class="border rounded-3 p-3 bg-light-subtle">
+<div class="d-flex align-items-start gap-3">
+<div class="text-primary fs-4"><i class="fas fa-paper-plane"></i></div>
+<div class="flex-grow-1">
+<h6 class="fw-bold mb-1">طلب إغلاق المشروع</h6>
+<p class="small text-muted mb-3">مشرف المشروع لا ينفذ الإغلاق مباشرة. أرسل الطلب إلى مدير المشاريع مع الملاحظات ليقوم بالمراجعة والتنفيذ.</p>
 <?php if ($closureRequest && (string)$closureRequest['new_status'] === 'closure_requested'): ?>
-<div class="alert alert-info small mb-0"><i class="fas fa-clock me-1"></i>تم إرسال طلب إغلاق المشروع إلى مدير المشاريع، وهو بانتظار الإجراء.</div>
+<div class="alert alert-info d-flex align-items-start gap-2 small mb-0">
+<i class="fas fa-clock mt-1"></i>
+<div><strong>الطلب قيد المراجعة.</strong><br>تم إرسال طلب الإغلاق إلى مدير المشاريع.</div>
+</div>
 <?php else: ?>
-<p class="small">إغلاق المشروع إجراء إداري أعلى من صلاحيات مشرف المشروع. يمكنك إرسال طلب إلى مدير المشاريع لمراجعته وتنفيذه.</p>
-<form method="post" class="project-form-panel">
+<form method="post">
 <input type="hidden" name="action" value="request_project_closure">
 <?php echo csrf_field(); ?>
-<textarea name="closure_request_reason" class="form-control form-control-sm mb-2" rows="3" placeholder="ملاحظات ومبررات طلب الإغلاق *" required></textarea>
-<button class="btn btn-sm btn-dark px-4"><i class="fas fa-paper-plane me-1"></i>طلب إغلاق المشروع</button>
+<label class="form-label small fw-semibold">ملاحظات ومبررات الطلب <span class="text-danger">*</span></label>
+<textarea name="closure_request_reason" class="form-control mb-3" rows="3" placeholder="اكتب ملاحظات إتمام المشروع أو أسباب طلب الإغلاق..." required></textarea>
+<button class="btn btn-dark px-4"><i class="fas fa-paper-plane me-1"></i>إرسال طلب الإغلاق</button>
 </form>
 <?php endif; ?>
+</div>
+</div>
+</div>
 <?php else: ?>
+<div class="border rounded-3 p-3 bg-light-subtle">
+<div class="d-flex align-items-start gap-3">
+<div class="text-warning fs-4"><i class="fas fa-lock-open"></i></div>
+<div class="flex-grow-1">
+<h6 class="fw-bold mb-1">طلب إعادة فتح المشروع</h6>
+<p class="small text-muted mb-3">مشرف المشروع لا يعيد فتح المشروع مباشرة. أرسل الطلب إلى مدير المشاريع مع سبب واضح للمراجعة والتنفيذ.</p>
 <?php if ($closureRequest && (string)$closureRequest['new_status'] === 'reopen_requested'): ?>
-<div class="alert alert-info small mb-0"><i class="fas fa-clock me-1"></i>تم إرسال طلب إعادة فتح المشروع إلى مدير المشاريع، وهو بانتظار الإجراء.</div>
+<div class="alert alert-info d-flex align-items-start gap-2 small mb-0">
+<i class="fas fa-clock mt-1"></i>
+<div><strong>الطلب قيد المراجعة.</strong><br>تم إرسال طلب إعادة الفتح إلى مدير المشاريع.</div>
+</div>
 <?php else: ?>
-<p class="small">إعادة فتح المشروع إجراء إداري أعلى من صلاحيات مشرف المشروع. يمكنك إرسال طلب إلى مدير المشاريع لمراجعته وتنفيذه.</p>
-<form method="post" class="project-form-panel">
+<form method="post">
 <input type="hidden" name="action" value="request_project_reopen">
 <?php echo csrf_field(); ?>
-<textarea name="reopen_request_reason" class="form-control form-control-sm mb-2" rows="3" placeholder="ملاحظات ومبررات طلب إعادة الفتح *" required></textarea>
-<button class="btn btn-sm btn-warning px-4"><i class="fas fa-paper-plane me-1"></i>طلب إعادة فتح المشروع</button>
+<label class="form-label small fw-semibold">سبب إعادة الفتح <span class="text-danger">*</span></label>
+<textarea name="reopen_request_reason" class="form-control mb-3" rows="3" placeholder="اكتب سبب الحاجة إلى إعادة فتح المشروع..." required></textarea>
+<button class="btn btn-warning px-4"><i class="fas fa-paper-plane me-1"></i>إرسال طلب إعادة الفتح</button>
 </form>
 <?php endif; ?>
+</div>
+</div>
+</div>
 <?php endif; ?>
 <?php elseif ($role === 'projects_manager'): ?>
 <?php if ($status !== 'closed'): ?>
+<div class="border rounded-3 p-3 bg-warning-subtle">
+<div class="d-flex align-items-start gap-3">
+<div class="text-warning-emphasis fs-4"><i class="fas fa-bell"></i></div>
+<div class="flex-grow-1">
+<h6 class="fw-bold mb-1">مراجعة طلب الإغلاق</h6>
 <?php if ($closureRequest && (string)$closureRequest['new_status'] === 'closure_requested'): ?>
-<div class="alert alert-warning small"><i class="fas fa-bell me-1"></i><strong>طلب إغلاق معلق</strong><br>من: <?php echo e($closureRequest['requester_name'] ?? 'مشرف المشروع'); ?><br><?php echo e($closureRequest['reason'] ?? ''); ?></div>
-<form method="post" class="project-form-panel">
+<div class="small text-muted mb-3">
+<strong>الطلب مقدم من:</strong> <?php echo e($closureRequest['requester_name'] ?? 'مشرف المشروع'); ?>
+<?php if (!empty($closureRequest['reason'])): ?><br><strong>ملاحظات المشرف:</strong> <?php echo e($closureRequest['reason']); ?><?php endif; ?>
+</div>
+<form method="post">
 <input type="hidden" name="action" value="close_project">
 <?php echo csrf_field(); ?>
-<textarea name="closure_summary" class="form-control form-control-sm mb-2" rows="3" placeholder="ملخص الإغلاق والأسباب *" required></textarea>
-<select name="closure_reason" class="form-select form-select-sm mb-2">
+<div class="row g-2">
+<div class="col-12"><label class="form-label small fw-semibold">ملخص الإغلاق <span class="text-danger">*</span></label><textarea name="closure_summary" class="form-control form-control-sm" rows="3" placeholder="ملخص الإغلاق والأسباب..." required></textarea></div>
+<div class="col-md-6"><label class="form-label small fw-semibold">تصنيف الإغلاق</label>
+<select name="closure_reason" class="form-select form-select-sm">
 <option value="completed_successfully">إنجاز كامل</option>
 <option value="cancelled">إلغاء</option>
 <option value="transferred_to_another_project">نقل لمشروع آخر</option>
 <option value="retained_for_followup">احتفاظ للمتابعة</option>
 <option value="other">أخرى</option>
-</select>
-<textarea name="variance_explanation" class="form-control form-control-sm mb-2" rows="2" placeholder="تفسير فرق الميزانية (اختياري)"></textarea>
-<button class="btn btn-sm btn-dark px-4"><i class="fas fa-lock me-1"></i>تنفيذ إغلاق المشروع</button>
+</select></div>
+<div class="col-md-6"><label class="form-label small fw-semibold">تفسير فرق الميزانية <span class="text-muted">(اختياري)</span></label><input name="variance_explanation" class="form-control form-control-sm" placeholder="مثلاً: وفر في التنفيذ أو مصروف إضافي..."></div>
+</div>
+<button class="btn btn-dark mt-3 px-4"><i class="fas fa-lock me-1"></i>تنفيذ إغلاق المشروع</button>
 </form>
 <?php else: ?>
-<div class="text-muted small"><i class="fas fa-info-circle me-1"></i>لا يوجد طلب إغلاق معلق من مشرف المشروع.</div>
+<div class="d-flex align-items-center gap-2 text-muted small"><i class="fas fa-info-circle"></i><span>لا يوجد طلب إغلاق معلق من مشرف المشروع.</span></div>
 <?php endif; ?>
+</div>
+</div>
 <?php else: ?>
+<div class="border rounded-3 p-3 bg-warning-subtle">
+<div class="d-flex align-items-start gap-3">
+<div class="text-warning-emphasis fs-4"><i class="fas fa-bell"></i></div>
+<div class="flex-grow-1">
+<h6 class="fw-bold mb-1">مراجعة طلب إعادة الفتح</h6>
 <?php if ($closureRequest && (string)$closureRequest['new_status'] === 'reopen_requested'): ?>
-<div class="alert alert-warning small"><i class="fas fa-bell me-1"></i><strong>طلب إعادة فتح معلق</strong><br>من: <?php echo e($closureRequest['requester_name'] ?? 'مشرف المشروع'); ?><br><?php echo e($closureRequest['reason'] ?? ''); ?></div>
-<form method="post" class="project-form-panel">
+<div class="small text-muted mb-3">
+<strong>الطلب مقدم من:</strong> <?php echo e($closureRequest['requester_name'] ?? 'مشرف المشروع'); ?>
+<?php if (!empty($closureRequest['reason'])): ?><br><strong>سبب إعادة الفتح:</strong> <?php echo e($closureRequest['reason']); ?><?php endif; ?>
+</div>
+<form method="post">
 <input type="hidden" name="action" value="reopen_project">
 <?php echo csrf_field(); ?>
-<textarea name="reopen_reason" class="form-control form-control-sm mb-2" rows="3" placeholder="سبب إعادة الفتح *" required></textarea>
-<button class="btn btn-sm btn-warning px-4"><i class="fas fa-lock-open me-1"></i>تنفيذ إعادة فتح المشروع</button>
+<label class="form-label small fw-semibold">سبب إعادة الفتح <span class="text-danger">*</span></label>
+<textarea name="reopen_reason" class="form-control form-control-sm" rows="3" placeholder="سجل سبب اعتماد إعادة فتح المشروع..." required></textarea>
+<button class="btn btn-warning mt-3 px-4"><i class="fas fa-lock-open me-1"></i>تنفيذ إعادة فتح المشروع</button>
 </form>
 <?php else: ?>
-<div class="text-muted small"><i class="fas fa-info-circle me-1"></i>لا يوجد طلب إعادة فتح معلق من مشرف المشروع.</div>
+<div class="d-flex align-items-center gap-2 text-muted small"><i class="fas fa-info-circle"></i><span>لا يوجد طلب إعادة فتح معلق من مشرف المشروع.</span></div>
 <?php endif; ?>
+</div>
+</div>
+</div>
 <?php endif; ?>
 <?php elseif ($status === 'closed'): ?>
-<div class="text-muted small">المشروع مغلق. الإغلاق وإعادة الفتح تتم عبر مدير المشاريع بناءً على طلب مشرف المشروع.</div>
+<div class="alert alert-light border mb-0 small"><i class="fas fa-lock me-1 text-success"></i>المشروع مغلق. الإغلاق وإعادة الفتح يتمان عبر مدير المشاريع بناءً على طلب مشرف المشروع.</div>
 <?php else: ?>
-<div class="text-muted small">إجراءات الإغلاق وإعادة الفتح محصورة بمدير المشاريع، وتبدأ بطلب من مشرف المشروع.</div>
+<div class="alert alert-light border mb-0 small"><i class="fas fa-info-circle me-1"></i>إجراءات الإغلاق وإعادة الفتح محصورة بمدير المشاريع، وتبدأ بطلب من مشرف المشروع.</div>
 <?php endif; ?>
 </div>
-</div>
-</div>
-</div>
-</div>
-<?php if ($role === 'project_supervisor' && akp_is_primary_supervisor($id) && !$closed): ?>
-<div class="modal fade" id="editProjectExpenseModal" tabindex="-1" aria-hidden="true">
-<div class="modal-dialog modal-lg modal-dialog-centered">
-<div class="modal-content">
-<div class="modal-header">
-<h5 class="modal-title"><i class="fas fa-pen me-2"></i>تعديل المصروف</h5>
-<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
-</div>
-<form method="post" enctype="multipart/form-data">
-<?php echo csrf_field(); ?>
-<input type="hidden" name="action" value="edit_ps_expense">
-<input type="hidden" name="expense_id" id="edit-expense-id">
-<div class="modal-body">
-<div class="row g-3">
-<div class="col-md-4"><label class="form-label">التاريخ</label><input type="date" name="expense_date" id="edit-expense-date" class="form-control" required></div>
-<div class="col-md-4"><label class="form-label">الفئة</label><input name="expense_category" id="edit-expense-category" class="form-control" required></div>
-<div class="col-md-4"><label class="form-label">المبلغ</label><input type="number" step="0.01" min="0.01" name="expense_amount" id="edit-expense-amount" class="form-control" required></div>
-<div class="col-12"><label class="form-label">الوصف</label><input name="expense_description" id="edit-expense-description" class="form-control" required></div>
-<div class="col-md-6"><label class="form-label">المورد</label><input name="vendor_name" id="edit-expense-vendor" class="form-control"></div>
-<div class="col-md-6"><label class="form-label">رقم الفاتورة</label><input name="invoice_number" id="edit-expense-invoice" class="form-control"></div>
-<div class="col-12"><label class="form-label">استبدال الإيصال (اختياري)</label><input type="file" name="expense_receipt" class="form-control" accept=".pdf,.jpg,.jpeg,.png"><div class="form-text">يمكنك تركه فارغاً للاحتفاظ بالإيصال الحالي.</div></div>
-</div>
-</div>
-<div class="modal-footer">
-<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">إلغاء</button>
-<button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i>حفظ التعديل</button>
-</div>
-</form>
-</div>
-</div>
-</div>
-<div class="modal fade" id="editProjectDocumentModal" tabindex="-1" aria-hidden="true">
-<div class="modal-dialog modal-lg modal-dialog-centered">
-<div class="modal-content">
-<div class="modal-header">
-<h5 class="modal-title"><i class="fas fa-pen me-2"></i>تعديل الوثيقة</h5>
-<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
-</div>
-<form method="post" enctype="multipart/form-data">
-<?php echo csrf_field(); ?>
-<input type="hidden" name="action" value="edit_project_document">
-<input type="hidden" name="document_id" id="edit-document-id">
-<div class="modal-body">
-<div class="row g-3">
-<div class="col-md-4">
-<label class="form-label">نوع الوثيقة</label>
-<select name="document_type" id="edit-document-type" class="form-select" required>
-<option value="invoice">فاتورة</option>
-<option value="certificate">شهادة</option>
-<option value="government_fee">رسم حكومي</option>
-<option value="permit">تصريح</option>
-<option value="contract">عقد</option>
-<option value="quotation">عرض سعر</option>
-<option value="progress_report">تقرير تقدم</option>
-<option value="closure_report">تقرير إغلاق</option>
-<option value="other">أخرى</option>
-</select>
-</div>
-<div class="col-md-8"><label class="form-label">عنوان الوثيقة</label><input name="document_title" id="edit-document-title" class="form-control" required></div>
-<div class="col-md-4"><label class="form-label">تاريخ الوثيقة</label><input type="date" name="document_date" id="edit-document-date" class="form-control"></div>
-<div class="col-md-4"><label class="form-label">الجهة المصدرة</label><input name="document_issuer" id="edit-document-issuer" class="form-control"></div>
-<div class="col-md-4"><label class="form-label">رقم الوثيقة/المرجع</label><input name="document_reference" id="edit-document-reference" class="form-control"></div>
-<div class="col-12"><label class="form-label">استبدال الملف (اختياري)</label><input type="file" name="document" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.docx,.xlsx"><div class="form-text">يمكنك تركه فارغاً للاحتفاظ بالملف الحالي.</div></div>
-<div class="col-12"><label class="form-label">ملاحظات</label><textarea name="document_notes" id="edit-document-notes" class="form-control" rows="3"></textarea></div>
-</div>
-</div>
-<div class="modal-footer">
-<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">إلغاء</button>
-<button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i>حفظ التعديل</button>
+</div>"submit" class="btn btn-primary"><i class="fas fa-save me-1"></i>حفظ التعديل</button>
 </div>
 </form>
 </div>
