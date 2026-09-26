@@ -37,7 +37,7 @@ if (function_exists('get_flashes')) { get_flashes(); }
 $isLaborPayment = $laborPaymentId > 0;
 $isProjectPayment = $projectPaymentId > 0;
 if ($isLaborPayment) {
-    $v = dbFetchOne("SELECT pe.*, p.project_code, p.name AS project_name, lh.provider_name, lh.work_description, u.full_name creator
+    $v = dbFetchOne("SELECT pe.*, p.project_code, p.name AS project_name, lh.id AS labor_id, lh.provider_name, lh.work_description, u.full_name creator
                     FROM project_expenses pe
                     INNER JOIN other_projects p ON p.id = pe.project_id
                     INNER JOIN project_labor_helpers lh ON lh.id = CAST(SUBSTRING(pe.transaction_reference, 7) AS UNSIGNED)
@@ -47,7 +47,7 @@ if ($isLaborPayment) {
         http_response_code(404); echo 'سند دفعة العمالة غير موجود / Labor payment voucher not found'; exit();
     }
     $v['voucher_type'] = 'payment';
-    $v['voucher_no'] = 'PRJ-LPV-' . (string)$v['project_code'] . '-' . (int)$v['id'];
+    $v['voucher_no'] = 'PRJ-LPV-' . (string)$v['project_code'] . '-' . (int)$v['labor_id'];
     $v['voucher_date'] = $v['expense_date'];
     $v['party_name'] = (string)$v['provider_name'];
     $v['description'] = 'دفعة عمالة من الميزانية المعتمدة للمشروع: ' . (string)$v['work_description'];
