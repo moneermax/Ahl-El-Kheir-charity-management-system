@@ -1387,3 +1387,24 @@ The fix was made systematically across the PM and Project Supervisor dashboard s
 ### Remaining audit/test item
 
 The next controlled runtime test is the explicit PM launch path for PRJ-0010, followed by Project Supervisor notification, dashboard visibility, direct project access, and operational-section permissions. After that, continue the post-approval payment/disbursement/receipt and accounting-event audit. Do not assume that notification success alone certifies payment or accounting behavior.
+
+
+## 2026-09-26 — Projects project-funded expense workflow resolved
+
+The Project Supervisor project-funded expense workflow has been completed and runtime-tested on PRJ-0010 / project ID 10.
+
+Resolution:
+- Payment is made from the project budget already transferred/allocated to the Project Supervisor.
+- Payment registration requires a receipt and posts the project expense directly.
+- The posted expense reduces the project's available approved budget.
+- No organization expense account, payment account, cash/bank/e-wallet transaction, or organizational journal is involved.
+- Legacy draft expenses are converted only when the user explicitly records the payment through the existing edit workflow with the required receipt.
+- The assigned primary Project Supervisor may edit or delete both draft and posted project-funded expenses; both UI and server-side rules were updated consistently.
+- The temporary standalone finalization page was removed.
+- The obsolete organization-account expense path is blocked.
+
+Final commit: `5dda62c4bc74662fe0e9c415ddbbed88e9263a94`.
+
+The detailed checkpoint is `docs/PROJECTS_RUNTIME_CHECKPOINT_2026-09-26.md`.
+
+This work unit is complete. PRJ-0010 is still not closed because one remaining project task is outstanding; closure is deliberately deferred until that task is completed and the normal closure guards pass.
