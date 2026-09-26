@@ -67,22 +67,24 @@
 .project-module-page .project-table table { margin-bottom:0; }
 .project-module-page .project-table thead th { background:#f8fafc; color:#475467; font-size:.76rem; font-weight:800; white-space:nowrap; }
 .project-module-page .project-table td { vertical-align:middle; }
+
+/* Project progress entry: six labelled fields on one desktop row, matching the original form layout. */
 .project-module-page .project-progress-inline {
-    display:flex;
-    align-items:flex-end;
-    gap:.65rem;
+    display:grid;
+    grid-template-columns:repeat(6,minmax(0,1fr));
+    gap:.5rem .65rem;
     width:100%;
-    flex-wrap:nowrap;
+    align-items:end;
 }
 .project-module-page .project-progress-field {
     display:flex;
-    align-items:center;
-    gap:.4rem;
+    flex-direction:column;
+    align-items:stretch;
+    gap:.25rem;
     min-width:0;
-    flex:1 1 0;
 }
 .project-module-page .project-progress-field label {
-    flex:0 0 auto;
+    display:block;
     margin:0;
     white-space:nowrap;
     font-size:.76rem;
@@ -90,29 +92,26 @@
     color:#344054;
 }
 .project-module-page .project-progress-field .form-control {
+    width:100%;
     min-width:0;
-    flex:1 1 auto;
 }
-/* The label is the field description; do not repeat the same text as a placeholder. */
 .project-module-page .project-progress-field .form-control::placeholder {
     color:transparent;
     opacity:0;
 }
 .project-module-page .project-progress-save {
-    flex:0 0 auto;
+    grid-column:1 / -1;
+    justify-self:start;
     white-space:nowrap;
 }
 @media (max-width:1199.98px) {
     .project-module-page .project-progress-inline {
-        flex-wrap:wrap;
-    }
-    .project-module-page .project-progress-field {
-        flex:1 1 calc(33.333% - .65rem);
+        grid-template-columns:repeat(3,minmax(0,1fr));
     }
 }
 @media (max-width:767.98px) {
-    .project-module-page .project-progress-field {
-        flex:1 1 100%;
+    .project-module-page .project-progress-inline {
+        grid-template-columns:1fr;
     }
 }
 .project-module-page .project-progress-table {
@@ -130,7 +129,7 @@
 .project-module-page .project-bottom-actions { display:flex; flex-wrap:wrap; gap:.6rem; align-items:center; padding-top:.25rem; }
 .project-module-page .btn { border-radius:10px; font-weight:700; }
 .project-module-page .btn-primary { box-shadow:0 4px 10px rgba(13,110,253,.12); }
-@media (max-width:991.98px) { .project-module-page .project-summary-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width:991.98px) { .project-summary-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media (max-width:575.98px) { .project-module-page .project-form-section,.project-module-page .project-form-panel { padding:.85rem; border-radius:13px; } .project-module-page .project-summary-grid { grid-template-columns:1fr; } }
 .project-module-page > .card,
 .project-module-page .row > [class*="col-"] > .card { border:1px solid var(--project-border); border-radius:var(--project-radius); box-shadow:0 4px 18px rgba(16,24,40,.05); overflow:hidden; }
@@ -176,87 +175,4 @@
 .project-module-page .project-view-sections-grid > .alert {
     width: 100%;
     min-width: 0;
-}
-
-.project-module-page .project-view-main-column > .card:has(.project-finance-card) {
-    grid-column: 1 / -1;
-}
-
-.project-module-page .project-view-main-column > .card:has(.project-finance-card) .project-finance-card {
-    width: 100%;
-}
-
-@media (max-width: 991.98px) {
-    .project-module-page .project-view-sections-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .project-module-page .project-view-main-column > .card:has(.project-finance-card) {
-        grid-column: 1;
-    }
-}
-
-@media (min-width: 992px) {
-    /* Finance content stays inside its own column.
-       The previous width expansion crossed into the side column and caused
-       cards/tables to visually overlap with the PM side panel. */
-    .project-module-page .project-view-main-column > .card:has(.project-finance-card) {
-        width: 100%;
-        max-width: 100%;
-    }
-
-    .project-module-page .project-finance-card {
-        width: 100%;
-        max-width: 100%;
-    }
-
-    .project-module-page .project-finance-card .table-responsive {
-        max-width: 100%;
-        overflow-x: auto;
-    }
-}
-
-/* Keep funding reference/description text on one aligned baseline when the reference is empty. */
-.project-module-page .project-finance-card td small br {
-    display: none;
-}
-
-/* Keep the FM project review page at a comfortable reading width. */
-.project-fm-review-page {
-    max-width: 1100px;
-    margin-right: auto;
-    margin-left: auto;
-}
-
-@media (max-width: 1199.98px) {
-    .project-fm-review-page {
-        max-width: 100%;
-    }
-}
-
-/* Match the FM review title to the navy project-page header used elsewhere. */
-.project-fm-review-page > .card:first-child {
-    border: 0;
-    border-radius: 14px;
-    overflow: hidden;
-}
-
-.project-fm-review-page > .card:first-child .card-header {
-    background: linear-gradient(135deg, #081527, #1f4e8c);
-    color: #fff;
-    border-bottom: 0;
-    padding: 16px 20px;
-}
-
-.project-fm-review-page > .card:first-child .card-header h3 {
-    color: #fff;
-    font-weight: 800;
-}
-
-.project-fm-review-page > .card:first-child .card-header .text-muted {
-    color: #d0d5dd !important;
-}
-
-.project-fm-review-page > .card:first-child .card-header i {
-    color: #86efac;
 }
