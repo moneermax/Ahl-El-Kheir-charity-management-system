@@ -93,6 +93,11 @@
     min-width:0;
     flex:1 1 auto;
 }
+/* The label is the field description; do not repeat the same text as a placeholder. */
+.project-module-page .project-progress-field .form-control::placeholder {
+    color:transparent;
+    opacity:0;
+}
 .project-module-page .project-progress-save {
     flex:0 0 auto;
     white-space:nowrap;
