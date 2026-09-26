@@ -12,11 +12,16 @@ require_once dirname(__DIR__, 2) . '/modules/projects/project_lib.php';
 Session::start();
 
 $projectPaymentId = (int)($_GET['project_payment_id'] ?? 0);
+$laborPaymentId = (int)($_GET['labor_payment_id'] ?? 0);
 $viewerRole = Session::getUserRole();
 if (!Session::isLoggedIn()) {
     header('Location: ' . APP_URL . 'index.php'); exit();
 }
-if ($projectPaymentId > 0) {
+if ($laborPaymentId > 0) {
+    if (!in_array($viewerRole, ['admin','general_manager','vice_general_manager','projects_manager','project_supervisor','accountant','accountant_staff','financial_manager'], true)) {
+        http_response_code(403); exit('Forbidden');
+    }
+} elseif ($projectPaymentId > 0) {
     if (!in_array($viewerRole, ['admin','financial_manager','general_manager','vice_general_manager','projects_manager','accountant','accountant_staff'], true)) {
         http_response_code(403); exit('Forbidden');
     }
@@ -29,8 +34,33 @@ while (ob_get_level() > 0) { ob_end_clean(); }
 // The "voucher issued" flash message is shown by this page itself, so do not leave it for the next page.
 if (function_exists('get_flashes')) { get_flashes(); }
 
+$isLaborPayment = $laborPaymentId > 0;
 $isProjectPayment = $projectPaymentId > 0;
-if ($isProjectPayment) {
+if ($isLaborPayment) {
+    $v = dbFetchOne("SELECT pe.*, p.project_code, p.name AS project_name, lh.provider_name, lh.work_description, u.full_name creator
+                    FROM project_expenses pe
+                    INNER JOIN other_projects p ON p.id = pe.project_id
+                    INNER JOIN project_labor_helpers lh ON lh.id = CAST(SUBSTRING(pe.transaction_reference, 7) AS UNSIGNED)
+                    LEFT JOIN users u ON u.id = pe.posted_by
+                    WHERE pe.id = ? AND pe.transaction_reference = CONCAT('LABOR:', lh.id) AND pe.status = 'posted'", [$laborPaymentId]);
+    if (!$v || !akp_can_view_project((int)$v['project_id'])) {
+        http_response_code(404); echo 'سند دفعة العمالة غير موجود / Labor payment voucher not found'; exit();
+    }
+    $v['voucher_type'] = 'payment';
+    $v['voucher_no'] = 'PRJ-LPV-' . (string)$v['project_code'] . '-' . (int)$v['id'];
+    $v['voucher_date'] = $v['expense_date'];
+    $v['party_name'] = (string)$v['provider_name'];
+    $v['description'] = 'دفعة عمالة من الميزانية المعتمدة للمشروع: ' . (string)$v['work_description'];
+    $v['reference_number'] = (string)($v['invoice_number'] ?: $v['voucher_no']);
+    $v['amount'] = (float)$v['amount'];
+    $v['status'] = 'posted';
+    $v['created_by'] = (int)($v['posted_by'] ?? 0);
+    $v['cash_code'] = 'PROJECT-BUDGET';
+    $v['cash_name'] = 'ميزانية المشروع';
+    $v['other_code'] = 'PROJECT-LABOR';
+    $v['other_name'] = 'العمالة الخارجية';
+    $v['entry_code'] = '';
+} elseif ($isProjectPayment) {
     $v = dbFetchOne(
         "SELECT pe.*, p.project_code, p.name AS project_name,
                 c.code AS cash_code, c.name_ar AS cash_name,
@@ -90,9 +120,11 @@ $amount = (float)$v['amount'];
 $words = ak_voucher_amount_words($amount);
 $printedBy = (string)(dbFetchOne("SELECT full_name FROM users WHERE id = ?", [(int)Session::getUserId()])['full_name'] ?? '');
 $printedAt = date('Y-m-d H:i');
-$self = $isProjectPayment
-    ? APP_URL . 'modules/accounting/voucher_print.php?project_payment_id=' . (int)$v['id']
-    : APP_URL . 'modules/accounting/voucher_print.php?id=' . (int)$v['id'];
+$self = $isLaborPayment
+    ? APP_URL . 'modules/accounting/voucher_print.php?labor_payment_id=' . (int)$v['id']
+    : ($isProjectPayment
+        ? APP_URL . 'modules/accounting/voucher_print.php?project_payment_id=' . (int)$v['id']
+        : APP_URL . 'modules/accounting/voucher_print.php?id=' . (int)$v['id']);
 $canIssue = !$isProjectPayment && ak_voucher_can('issue', Session::getUserRole());
 
 $row = static function (string $ar, string $en, string $value, bool $strong = false): string {
@@ -226,7 +258,7 @@ $renderVoucher = static function (string $copyLabelAr, string $copyLabelEn) use 
     <button class="btn primary" onclick="window.print()">🖨 طباعة / Print</button>
     <?php if ($copies === 1): ?><a class="btn" href="<?php echo e($self); ?>&copies=2">نسختان في الصفحة / 2 copies</a>
     <?php else: ?><a class="btn" href="<?php echo e($self); ?>">نسخة واحدة / 1 copy</a><?php endif; ?>
-    <?php if (!$isProjectPayment): ?><a class="btn" href="<?php echo APP_URL; ?>modules/accounting/vouchers.php?tab=list">سجل السندات / Register</a><?php endif; ?>
+    <?php if (!$isProjectPayment && !$isLaborPayment): ?><a class="btn" href="<?php echo APP_URL; ?>modules/accounting/vouchers.php?tab=list">سجل السندات / Register</a><?php endif; ?>
     <?php if ($canIssue): ?><a class="btn" href="<?php echo APP_URL; ?>modules/accounting/vouchers.php?tab=new">سند جديد / New voucher</a><?php endif; ?>
 </div>
 <div class="sheet<?php echo $copies === 2 ? ' two' : ''; ?>">
