@@ -797,7 +797,8 @@ if (is_file($receiptAbsolutePath)) @unlink($receiptAbsolutePath);
 akp_audit('DELETE', 'project_expense', $expenseId, ['project_id'=>$id,'amount'=>(float)$expense['amount']], null);
 $_SESSION['project_expense_success'] = 'تم حذف المصروف بنجاح.';
 } elseif ($action === 'add_expense') {
-// ... (Original add_expense logic preserved exactly)
+throw new RuntimeException('إدخال مصروفات المشروع يتم مباشرة بواسطة مشرف المشروع من ميزانية المشروع المحوّلة إليه، ولا يتم استخدام حسابات المنظمة لهذا المسار.');
+// ... (Legacy add_expense logic retained for historical compatibility only)
 if (!akp_can_edit_section('finance', $id) || $closed) throw new RuntimeException('لا تملك صلاحية إدخال مصروف.');
 $amount = (float)($_POST['expense_amount'] ?? 0);
 $description = akp_post_value('expense_description');
