@@ -948,3 +948,36 @@ Do not treat final-approval notification success as payment/accounting certifica
 - Never use destructive Git commands.
 - Root-cause-first: if a runtime error occurs, inspect the exact current main code/query and related schema evidence before changing anything; do not guess with repeated one-line fixes.
 - Do not ask the user to run SQL diagnostics unless truly unavoidable; inspect the repository/schema evidence first.
+
+
+## 2026-09-26 — Latest continuation checkpoint: project expense/payment completed
+
+The Projects project-expense/payment work is now complete and runtime-tested on PRJ-0010 / project ID 10. Read `docs/PROJECTS_RUNTIME_CHECKPOINT_2026-09-26.md` for the detailed record.
+
+Permanent expense rule:
+- Project Supervisor payments are paid from the project budget already transferred/allocated to the supervisor.
+- A payment receipt is required.
+- Saving the payment records a `posted` project expense immediately and deducts it from the approved project budget.
+- No organization cash/bank/e-wallet account is selected and no organizational journal entry is created.
+- Older draft expenses are not auto-posted; they are converted through the existing **تعديل / تسجيل الدفع** workflow when the payment is actually recorded and the receipt is supplied.
+- The assigned primary Project Supervisor can edit/delete both `draft` and `posted` project-funded expenses; this is enforced server-side as well as in the UI.
+- Do not revive the removed standalone `project_expense_finalize.php` page.
+- Do not revive the obsolete organization-account Projects expense-entry path.
+
+Final expense-workflow commit: `5dda62c4bc74662fe0e9c415ddbbed88e9263a94`.
+
+### CURRENT NEXT STEP — continue from here
+
+PRJ-0010 is **not closed yet** because one remaining project task is still outstanding.
+
+Do **not** restart the completed expense/payment work and do **not** create another project.
+
+In the new session:
+1. Read the current documentation first, especially `docs/PROJECTS_RUNTIME_CHECKPOINT_2026-09-26.md`, `docs/CHATGPT_SESSION_INDEX.md`, `docs/AHL_EL_KHEIR_MASTER_STATUS.md`, `docs/AHL_EL_KHEIR_MASTER_AUDIT.md`, and `docs/PROJECTS_MODULE_AUDIT_AND_REMEDIATION_PLAN.md`.
+2. Inspect the actual current `main` repository/code before changing anything.
+3. Continue with the **remaining project task that is still marked TODO** on PRJ-0010.
+4. Only after that task is completed, verify the PM closure workflow and close the project when the existing closure guards are satisfied.
+5. Do not invent schema/tables/columns or ask the user to run SQL unless genuinely unavoidable; inspect the repository/schema evidence first.
+6. Preserve the established project/accounting boundary: final approval is funding reservation/allocation, while actual spending occurs through posted project expenses.
+7. No triggers, views, stored procedures, functions, or events. No destructive Git commands.
+8. Use a safe checkpoint before any risky code change, make the smallest root-cause fix, commit to `main`, and update documentation after verified completion.
