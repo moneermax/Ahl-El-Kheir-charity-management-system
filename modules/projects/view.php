@@ -91,12 +91,23 @@ if ($approvedBudgetId > 0) $approvedBudgetTotal = (float)(dbFetchOne('SELECT COA
 $projectExpenseTotal = (float)(dbFetchOne('SELECT COALESCE(SUM(amount), 0) AS total FROM project_expenses WHERE project_id = ?', [$id])['total'] ?? 0);
 $projectExpenseRemaining = $approvedBudgetTotal - $projectExpenseTotal;
 $documents = dbFetchAll("SELECT d.*, u.full_name AS uploader_name FROM project_documents d LEFT JOIN users u ON u.id = d.uploaded_by WHERE d.project_id = ? AND d.document_type <> 'receipt' ORDER BY d.id DESC", [$id]);
-$milestones = dbFetchAll('SELECT * FROM project_milestones WHERE project_id = ? ORDER BY planned_date, id', [$id]);
+$milestones = dbFetchAll('SELECT m.*, u.full_name AS creator_name FROM project_milestones m LEFT JOIN users u ON u.id = m.created_by WHERE m.project_id = ? ORDER BY m.planned_date, m.id', [$id]);
 $progressUpdates = dbFetchAll('SELECT p.*, u.full_name AS submitter_name FROM project_progress_updates p LEFT JOIN users u ON p.submitted_by = u.id WHERE p.project_id = ? ORDER BY p.update_date DESC', [$id]);
 $labors = dbFetchAll("SELECT lh.*, u.full_name AS supervisor_name, pe.id AS payment_expense_id, pe.expense_date AS payment_date, pe.amount AS paid_amount, pe.primary_document_id AS payment_receipt_id, je.entry_code AS payment_entry_code FROM project_labor_helpers lh LEFT JOIN users u ON u.id = lh.supervisor_user_id LEFT JOIN project_expenses pe ON pe.project_id = lh.project_id AND pe.transaction_reference = CONCAT('LABOR:', lh.id) AND pe.status = 'posted' LEFT JOIN journal_entries je ON je.id = pe.journal_entry_id WHERE lh.project_id = ? ORDER BY lh.id DESC", [$id]);
 $team = dbFetchAll('SELECT pt.*, u.full_name, u.username FROM project_team pt JOIN users u ON u.id = pt.user_id WHERE pt.project_id = ? AND pt.unassigned_at IS NULL ORDER BY pt.section_code, pt.is_lead DESC, u.full_name', [$id]);
 $primarySupervisor = dbFetchOne("SELECT u.id, u.full_name, u.username FROM project_supervisor_assignments psa JOIN users u ON u.id = psa.supervisor_user_id WHERE psa.project_id = ? AND psa.ended_at IS NULL ORDER BY psa.id DESC LIMIT 1", [$id]);
 $history = dbFetchAll('SELECT h.*, u.full_name FROM project_status_history h LEFT JOIN users u ON u.id = h.changed_by WHERE h.project_id = ? ORDER BY h.created_at DESC LIMIT 20', [$id]);
+foreach ($milestones as $milestoneHistory) {
+$history[] = [
+'old_status' => 'إضافة مرحلة',
+'new_status' => $milestoneHistory['title'],
+'reason' => 'التاريخ المخطط: ' . ($milestoneHistory['planned_date'] ?: '—') . ' | نسبة الإنجاز: ' . number_format((float)$milestoneHistory['completion_percent'], 2) . '% | وصف المرحلة: ' . ($milestoneHistory['description'] ?: '—'),
+'full_name' => $milestoneHistory['creator_name'] ?? 'نظام',
+'created_at' => $milestoneHistory['created_at'] ?? ($milestoneHistory['planned_date'] ?? '')
+];
+}
+usort($history, static function ($a, $b) { return strcmp((string)($b['created_at'] ?? ''), (string)($a['created_at'] ?? '')); });
+$history = array_slice($history, 0, 20);
 $closed = akp_project_is_closed($id);
 $role = akp_role();
 $approval = dbFetchOne('SELECT * FROM project_approval WHERE project_id = ?', [$id]) ?: ['approval_status' => 'approved'];
