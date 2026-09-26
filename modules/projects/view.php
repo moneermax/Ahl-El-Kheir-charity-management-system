@@ -2008,6 +2008,43 @@ data-document-notes="<?php echo e($doc['notes'] ?? ''); ?>">
 </table>
 </div>
 <?php else: ?><div class="text-muted small">لا توجد مراحل بعد.</div><?php endif; ?>
+
+<?php if (akp_can_edit_section('operations', $id) && !$closed): ?>
+<div class="modal fade" id="editMilestoneModal" tabindex="-1" aria-hidden="true">
+<div class="modal-dialog modal-lg modal-dialog-centered">
+<div class="modal-content">
+<div class="modal-header"><h5 class="modal-title">تعديل المرحلة</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button></div>
+<form method="post">
+<?php echo csrf_field(); ?>
+<input type="hidden" name="action" value="edit_milestone">
+<input type="hidden" name="milestone_id" id="edit-milestone-id">
+<div class="modal-body">
+<div class="row g-2">
+<div class="col-md-6"><label class="form-label small fw-semibold">عنوان المرحلة *</label><input name="milestone_title" id="edit-milestone-title" class="form-control form-control-sm" required></div>
+<div class="col-md-3"><label class="form-label small fw-semibold">التاريخ المخطط</label><input type="date" name="planned_date" id="edit-milestone-date" class="form-control form-control-sm"></div>
+<div class="col-md-3"><label class="form-label small fw-semibold">نسبة الإنجاز (%)</label><input type="number" min="0" max="100" name="completion_percent" id="edit-milestone-percent" class="form-control form-control-sm"></div>
+<div class="col-12"><label class="form-label small fw-semibold">وصف المرحلة</label><textarea name="milestone_description" id="edit-milestone-description" class="form-control form-control-sm" rows="2"></textarea></div>
+</div>
+</div>
+<div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">إلغاء</button><button type="submit" class="btn btn-primary">حفظ التعديل</button></div>
+</form>
+</div>
+</div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+document.querySelectorAll('[data-bs-target="#editMilestoneModal"]').forEach(function (button) {
+button.addEventListener('click', function () {
+document.getElementById('edit-milestone-id').value = button.dataset.milestoneId || '';
+document.getElementById('edit-milestone-title').value = button.dataset.milestoneTitle || '';
+document.getElementById('edit-milestone-date').value = button.dataset.milestoneDate || '';
+document.getElementById('edit-milestone-percent').value = button.dataset.milestonePercent || '0';
+document.getElementById('edit-milestone-description').value = button.dataset.milestoneDescription || '';
+});
+});
+});
+</script>
+<?php endif; ?>
 </div>
 </div>
 <div class="card mb-4 fade-in">
