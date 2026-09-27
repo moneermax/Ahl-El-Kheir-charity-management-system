@@ -136,21 +136,9 @@ try {
     $headerUserId =
         current_user_id();
 
-    /*
-     * Employee quick links in the user dropdown.
-     * These are shown only when the logged-in account is linked to an
-     * employee record. The underlying pages enforce their own access rules.
+    /* Employee request links are available from every authenticated user menu.
+     * The destination pages perform the employee-record/access validation.
      */
-    $headerIsEmployee = false;
-
-    try {
-        $headerIsEmployee = (bool)dbFetchOne(
-            "SELECT id FROM employees WHERE user_id = ? LIMIT 1",
-            [$headerUserId]
-        );
-    } catch (Throwable $e) {
-        $headerIsEmployee = false;
-    }
 
 
     /*
@@ -1309,7 +1297,7 @@ if (!empty($akPrintOwnLetterhead)) $akBodyClasses[] = 'ak-print-own';
                                 <?php echo e(AK_LANG === 'ar' ? 'الملف الشخصي' : 'Profile'); ?>
                             </a>
 
-                            <?php if ($headerIsEmployee): ?>
+                            <?php if (Session::isLoggedIn()): ?>
                                 <a
                                     href="<?php echo APP_URL; ?>modules/hr/leaves.php?action=request"
                                     class="ak-dd-item"
