@@ -143,7 +143,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
-<div class="welcome-section fade-in">
+<div class="welcome-section fade-in"><style>.welcome-section h2,.welcome-section p{color:#fff !important;}</style>
     <h2><i class="fas fa-coins me-2"></i><?php echo e($pageTitle); ?></h2>
     <p class="text-muted"><?php echo e(t('reports.financial_subtitle', ['from' => $from, 'to' => $to])); ?></p>
 </div>
