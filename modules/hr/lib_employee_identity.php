@@ -8,9 +8,9 @@ declare(strict_types=1);
  * person. employees.user_id is the canonical relationship.
  *
  * Legacy employee rows may have a missing user_id, so the resolver also
- * matches the authenticated user's identity fields. A fallback is accepted
- * only when exactly one employee profile matches; ambiguous matches are
- * never guessed.
+ * supports an exact full-name match against the authenticated user's
+ * users.full_name. A fallback is accepted only when exactly one employee
+ * profile matches; ambiguous matches are never guessed.
  */
 function hrGetEmployeeForUser(PDO $pdo, int $userId): ?array
 {
@@ -30,49 +30,28 @@ function hrGetEmployeeForUser(PDO $pdo, int $userId): ?array
         return $employee;
     }
 
+    // Keep the compatibility path limited to the verified users.full_name
+    // field. Do not depend on optional/unverified users.email or users.phone
+    // columns, because an SQL exception here would hide the employee links.
     $user = dbFetchOne(
-        "SELECT full_name, email, phone
+        "SELECT full_name
          FROM users
          WHERE id = ?
          LIMIT 1",
         [$userId]
     );
 
-    if (!$user) {
-        return null;
-    }
-
-    $conditions = [];
-    $params = [];
-
     $fullName = trim((string)($user['full_name'] ?? ''));
-    if ($fullName !== '') {
-        $conditions[] = "TRIM(e.full_name) = TRIM(?)";
-        $params[] = $fullName;
-    }
-
-    $email = trim((string)($user['email'] ?? ''));
-    if ($email !== '') {
-        $conditions[] = "TRIM(e.email) = TRIM(?)";
-        $params[] = $email;
-    }
-
-    $phone = trim((string)($user['phone'] ?? ''));
-    if ($phone !== '') {
-        $conditions[] = "TRIM(e.phone) = TRIM(?)";
-        $params[] = $phone;
-    }
-
-    if (!$conditions) {
+    if ($fullName === '') {
         return null;
     }
 
     $matches = dbFetchAll(
         "SELECT e.*
          FROM employees e
-         WHERE " . implode(' OR ', $conditions) . "
+         WHERE TRIM(e.full_name) = TRIM(?)
          LIMIT 2",
-        $params
+        [$fullName]
     );
 
     // Never guess when more than one employee profile could represent
