@@ -34,8 +34,8 @@ $headerQuickActions = [
     ['label'=>'مراجعة المعاملات المالية','url'=>'modules/accounting/fm_transaction_review.php','icon'=>'fa-file-invoice-dollar','color'=>'#6c757d'],
     ['label'=>'التقارير المالية','url'=>'modules/reports/financial.php','icon'=>'fa-chart-pie','color'=>'#0d6efd'],
     ['label'=>'سجل المعاملات','url'=>'modules/transactions/index.php','icon'=>'fa-money-bill-transfer','color'=>'#2daf79'],
-    ['label'=>'منظمة فينا الخير','url'=>'modules/accounting/fina_dashboard.php','icon'=>'fina-logo','color'=>'#6f42c1'],
     ['label'=>'سياسة السلف على الراتب','url'=>'modules/hr/salary_advance_policy.php','icon'=>'fa-hand-holding-dollar','color'=>'#198754'],
+    ['label'=>'منظمة فينا الخير','url'=>'modules/accounting/fina_dashboard.php','icon'=>'fina-logo','color'=>'#6f42c1'],
 ];
 
 ak_ensure_tables();
@@ -340,6 +340,7 @@ $recentJournals = dbFetchAll("SELECT je.entry_code, je.entry_date, je.descriptio
 .ak-fm-action-card.ak-fm-action-5 { border-top:3px solid #0d6efd; }
 .ak-fm-action-card.ak-fm-action-6 { border-top:3px solid #2daf79; }
 .ak-fm-action-card.ak-fm-action-7 { border-top:3px solid #6f42c1; }
+.ak-fm-action-card.ak-fm-action-8 { border-top:3px solid #198754; }
 @media(max-width:991.98px) { .ak-fm-action-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media(max-width:420px) { .ak-fm-action-grid { grid-template-columns:1fr; } .ak-fm-action-card { height:96px; min-height:96px; } }
 
@@ -402,6 +403,7 @@ $fmActionDescriptions = [
     'مراجعة واعتماد المعاملات المالية',
     'عرض التقارير والحركة المالية',
     'مراجعة سجل المعاملات المالية',
+    'إعدادات سنوية للسلف على الراتب وإصداراتها',
     'لوحة مستقلة لتحصيلات وتسويات منظمة فينا الخير',
 ];
 ?>
