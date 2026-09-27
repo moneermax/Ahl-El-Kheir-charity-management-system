@@ -1408,3 +1408,24 @@ Final commit: `5dda62c4bc74662fe0e9c415ddbbed88e9263a94`.
 The detailed checkpoint is `docs/PROJECTS_RUNTIME_CHECKPOINT_2026-09-26.md`.
 
 This work unit is complete. PRJ-0010 is still not closed because one remaining project task is outstanding; closure is deliberately deferred until that task is completed and the normal closure guards pass.
+
+
+2026-09-27 — Projects closure runtime verification and report-page cleanup
+
+### Closure
+PRJ-0010 closure was runtime-tested successfully after the repository/schema correction adding `project_lifecycle.close_reason`. PM closed the project without errors, and the existing closure notification flow delivered notifications to GM and VGM. This closes the previously pending closure verification item. Migration: `database/migrations/2026-09-27_project_closure_reason.sql`; migration commit `b7bd414fce050b271e9653e47c4becd304622398`.
+
+### Reports UI cleanup
+Four report pages were corrected:
+- `modules/reports/hr.php`
+- `modules/reports/financial.php`
+- `modules/reports/sponsorship.php`
+- `modules/reports/operational.php`
+
+The redundant manual bottom Back controls were removed because `includes/footer.php` already provides the standardized top-left and bottom-right controls. The welcome-section report title/subtitle text was also made explicitly white for contrast. No shared header redesign or database change was introduced.
+
+This is a completed UI cleanup; future Back-button work should continue to use the shared footer mechanism rather than adding page-local duplicate controls.
+
+### Current audit direction
+The Projects deep audit remains the active technical work area. Do not reopen completed expense/payment or closure fixes without regression evidence. The next implementation should be chosen from the unresolved items in the current Projects audit plan after fresh repository/schema inspection, with runtime verification before closure of each work unit.
+
