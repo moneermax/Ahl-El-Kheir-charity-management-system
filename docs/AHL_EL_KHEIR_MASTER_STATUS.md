@@ -1037,3 +1037,8 @@ Relevant report commits are recorded in `docs/PROJECTS_RUNTIME_CHECKPOINT_2026-0
 ### Current Projects continuation point
 The completed closure, expense/payment, and report-page cleanup work must not be reopened without regression evidence. Continue the Projects deep audit from the current repository and `docs/PROJECTS_MODULE_AUDIT_AND_REMEDIATION_PLAN.md`, selecting the next unresolved post-approval/data-integrity/authorization item only after inspecting current code and schema.
 
+## 2026-09-27 — Pre-HR Salary Advance Backup Checkpoint
+
+The user confirmed that the current project/repository and database backups have been completed successfully before beginning the new HR Salary Advance feature. This is the recovery checkpoint for the new feature work.
+
+No Salary Advance implementation or schema change has been made at this checkpoint. The agreed design direction is policy-driven: an annual FM-configured Salary Advance Policy provides defaults, while the FM may override/customize the policy terms for an individual request. The existing HR/payroll/accounting implementation must be inspected before any schema or code changes are made.
