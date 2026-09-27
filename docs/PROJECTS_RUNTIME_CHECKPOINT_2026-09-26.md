@@ -283,3 +283,39 @@ Runtime status:
 - Salary Advance Policy page before UI polish: **opened successfully** as FM.
 - The new UI polish has not yet been runtime-tested.
 - Stage 1 remains **not complete** until the updated page/dashboard are pulled and visually verified, followed by the controlled future-dated policy creation/versioning test.
+
+
+## 2026-09-27 — Salary Advance Stage 2 implementation checkpoint
+
+Stage 2 employee-request foundation is now implemented in the repository.
+
+Implemented:
+- `database/migrations/2026-09-27_hr_salary_advance_request.sql`
+  - Dedicated employee salary-advance request table.
+  - Preserves the employee's original requested amount, repayment method, proposed monthly amount/start month, reason, submitting user, and the policy version used at submission.
+  - Request lifecycle starts at `submitted`; later FM review/approval is a separate stage.
+  - No runtime DDL, triggers, or views.
+- `modules/hr/lib_salary_advance_request.php`
+  - Resolves the employee record linked to the logged-in user.
+  - Validates policy-based employee eligibility.
+  - Validates requested amount and repayment method against the active policy.
+  - Enforces monthly repayment limits and repayment-duration controls when applicable.
+  - Generates request numbers and retrieves the employee's request history.
+- `modules/hr/salary_advance_request.php`
+  - Employee-facing Arabic RTL request page.
+  - Shows the employee identity and active policy.
+  - Captures the original requested amount and proposed repayment terms.
+  - Prevents submission when no policy is active or mandatory eligibility rules fail.
+  - Prevents a second active request when the policy disallows multiple active advances.
+  - Sends an FM workflow notification after successful submission using the existing notification infrastructure.
+
+Important implementation boundary:
+- Stage 2 does not approve, customize, disburse, or create repayment schedules.
+- The original employee request remains immutable through the later FM-review stage; FM customization belongs to Stage 3.
+- The existing annual policy remains unchanged by an employee request.
+
+Current runtime status:
+- Stage 2 migration has not yet been applied to the local database.
+- Employee request page has not yet been runtime-tested.
+- Stage 2 is therefore **IMPLEMENTED / NOT YET RUNTIME VERIFIED**.
+- Do not begin Stage 3 until the migration and controlled employee-request test pass.
