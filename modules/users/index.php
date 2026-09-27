@@ -91,6 +91,8 @@ try {
    ═══════════════════════════════════════════════════════════ */
 $roles       = dbFetchAll("SELECT id, code, name_ar, name_en FROM roles ORDER BY id");
 $departments = dbFetchAll("SELECT id, name_ar, name_en FROM departments ORDER BY id");
+$employeeLinkRoles = ['projects_manager', 'project_supervisor'];
+$unlinkedEmployees = dbFetchAll("SELECT id, employee_code, full_name, position FROM employees WHERE user_id IS NULL AND status NOT IN ('terminated', 'suspended') ORDER BY full_name");
 $managers    = dbFetchAll("SELECT u.id, u.full_name, u.username FROM users u JOIN roles r ON r.id = u.role_id WHERE r.code IN ('admin','sudo','general_manager','vice_general_manager','financial_manager','accountant') AND u.is_active = 1 ORDER BY u.full_name");
 $nannies     = dbFetchAll("SELECT u.id, u.full_name FROM users u JOIN roles r ON r.id = u.role_id WHERE r.code = 'nanny' AND u.is_active = 1 ORDER BY u.full_name");
 $allowedRoles = array_column($roles, 'code');
@@ -134,10 +136,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$manageAcct) {
             if (!in_array($rc, $allowedRoles, true)) $errors[] = 'دور غير صالح.';
             if (!$errors && dbFetchOne("SELECT id FROM users WHERE username = ?", [$un])) $errors[] = 'اسم المستخدم موجود.';
 
+            $linkEmployeeId = !empty($_POST['employee_id']) ? (int)$_POST['employee_id'] : 0;
+            if (!$errors && in_array($rc, $employeeLinkRoles, true)) {
+                if ($linkEmployeeId <= 0) {
+                    $errors[] = 'هذا الدور يمثل موظفاً في النظام، ويجب ربط الحساب بسجل موظف قبل إنشائه.';
+                } elseif (!dbFetchOne("SELECT id FROM employees WHERE id = ? AND user_id IS NULL AND status NOT IN ('terminated','suspended')", [$linkEmployeeId])) {
+                    $errors[] = 'سجل الموظف المختار غير متاح للربط أو مرتبط بحساب آخر.';
+                }
+            } elseif (!$errors && $linkEmployeeId > 0) {
+                $errors[] = 'لا يمكن ربط سجل موظف بهذا الدور من شاشة إنشاء المستخدم.';
+            }
+
             if (!$errors) {
                 $roleId = (int)array_column($roles, 'id', 'code')[$rc];
                 dbExecute("INSERT INTO users (role_id, username, password_hash, full_name, email, phone, is_active, created_by, department_id, manager_id, gender) VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?)",
                     [$roleId, $un, password_hash($pw, PASSWORD_DEFAULT), $fn, $em !== '' ? $em : null, $ph !== '' ? $ph : null, Session::getUserId(), $dept, $mgr, $gn]);
+                $newUserId = (int)db()->lastInsertId();
+                if (in_array($rc, $employeeLinkRoles, true)) {
+                    dbExecute("UPDATE employees SET user_id = ? WHERE id = ? AND user_id IS NULL", [$newUserId, $linkEmployeeId]);
+                }
                 flash('success', 'تم إنشاء المستخدم: ' . $un);
                 header('Location: ' . APP_URL . 'modules/users/index.php'); exit();
             }
@@ -156,6 +173,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$manageAcct) {
 
             if ($fn === '') $errors[] = 'الاسم الكامل مطلوب.';
             if (!in_array($rc, $allowedRoles, true)) $errors[] = 'دور غير صالح.';
+
+            if (!$errors && in_array($rc, $employeeLinkRoles, true) && !dbFetchOne("SELECT id FROM employees WHERE user_id = ? LIMIT 1", [$uid])) {
+                $errors[] = 'لا يمكن تحويل هذا الحساب إلى دور موظف مشاريع قبل ربطه بسجل موظف.';
+            }
 
             if (!$errors) {
                 $roleId = (int)array_column($roles, 'id', 'code')[$rc];
@@ -315,6 +336,16 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                         <option value="<?php echo e($r['code']); ?>"><?php echo e($r[$nameCol]); ?></option>
                         <?php endforeach; ?>
                     </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label"><?php echo t('سجل الموظف للأدوار الوظيفية'); ?></label>
+                    <select name="employee_id" class="form-select form-select-lg">
+                        <option value="">— اختر عند إنشاء مدير/مشرف مشاريع —</option>
+                        <?php foreach ($unlinkedEmployees as $employee): ?>
+                        <option value="<?php echo (int)$employee['id']; ?>"><?php echo e($employee['full_name']); ?> — <?php echo e($employee['employee_code']); ?><?php echo !empty($employee['position']) ? ' — ' . e($employee['position']) : ''; ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <div class="form-text">يُستخدم فقط مع دوري «مدير المشاريع» و«مشرف مشروع». يجب إنشاء سجل الموظف أولاً من الموارد البشرية.</div>
                 </div>
                 <div class="col-md-4">
                     <label class="form-label"><?php echo t('القسم'); ?></label>
