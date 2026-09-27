@@ -229,3 +229,18 @@ A stage is not marked complete until:
 
 ### Stage 1 checkpoint
 No Stage 1 implementation has been committed yet. The next action is to complete the Stage 1 policy model and implementation against the verified current schema.
+
+### Stage 1 implementation checkpoint — 2026-09-27
+
+Stage 1 has now been implemented in the repository as the Salary Advance Policy foundation.
+
+Implemented files:
+- database/migrations/2026-09-27_hr_salary_advance_policy.sql
+- modules/hr/lib_salary_advance_policy.php
+- modules/hr/salary_advance_policy.php
+
+The policy foundation is separate from the existing hr_payroll_policy_versions because salary-advance rules are a distinct business process. The policy is annual/versioned and includes defaults for request amount behavior, repayment methods, monthly deduction controls, repayment timing, insufficient-salary behavior, salary basis, employee eligibility, accounting verification, and early settlement.
+
+FM roles recognized by the existing accounting module are used for access: financial_manager, fm, with admin retained as administrative access.
+
+Important: this is an implementation checkpoint, not a runtime-completion checkpoint. The migration has not yet been applied to the local database and the Stage 1 UI has not yet been runtime-tested. Do not mark Stage 1 complete until migration application, UI validation, and policy creation/versioning are tested successfully.
