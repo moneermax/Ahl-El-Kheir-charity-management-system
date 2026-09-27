@@ -228,7 +228,7 @@ A stage is not marked complete until:
 - Relevant documentation/checkpoint is updated.
 
 ### Stage 1 checkpoint
-No Stage 1 implementation has been committed yet. The next action is to complete the Stage 1 policy model and implementation against the verified current schema.
+Stage 1 implementation is now present in the repository. The remaining Stage 1 gate is controlled runtime validation: apply the committed migration to the local database, open the FM Salary Advance Policy page, create a controlled future-dated test policy, verify that the policy is stored and listed correctly, and then checkpoint the result before moving to Stage 2.
 
 ### Stage 1 implementation checkpoint — 2026-09-27
 
@@ -244,3 +244,23 @@ The policy foundation is separate from the existing hr_payroll_policy_versions b
 FM roles recognized by the existing accounting module are used for access: financial_manager, fm, with admin retained as administrative access.
 
 Important: this is an implementation checkpoint, not a runtime-completion checkpoint. The migration has not yet been applied to the local database and the Stage 1 UI has not yet been runtime-tested. Do not mark Stage 1 complete until migration application, UI validation, and policy creation/versioning are tested successfully.
+
+
+## 2026-09-27 — Salary Advance Stage 1 repository inspection checkpoint
+
+Repository inspection was completed before requesting any user-side runtime action.
+
+Verified:
+- Existing payroll policy uses the same future-effective-date/versioning pattern; the Salary Advance policy remains a separate subsystem.
+- Existing database helper conventions provide `dbFetchOne()` and `dbFetchAll()`, matching the Stage 1 policy library.
+- Existing session role normalization maps `fm` to `financial_manager`; the Salary Advance policy page therefore remains FM-only in practice, with admin retained.
+- The Stage 1 migration is schema-only and contains no runtime DDL, triggers, or views.
+- The Salary Advance Policy page is now reachable from the FM dashboard through a dedicated quick action.
+
+Implementation commit for FM dashboard access:
+- `72b6cb364efad6fcda251742874223a2035162ad`
+
+Runtime status:
+- Migration has **not** yet been applied to the local database.
+- Stage 1 has **not** yet been runtime-tested.
+- No Stage 1 completion claim should be made until the controlled runtime test succeeds.
