@@ -1306,7 +1306,16 @@ if (!empty($akPrintOwnLetterhead)) $akBodyClasses[] = 'ak-print-own';
                                 $headerEmployee = null;
                             }
                             ?>
-                            <?php if ($headerEmployee): ?>
+                            <?php
+                            // Project supervisors are operational employees even when a legacy
+                            // employee row has not yet been linked in older database copies.
+                            // Keep the links visible; the destination pages perform their own
+                            // employee/eligibility validation before accepting a request.
+                            $headerEmployeeLinksVisible =
+                                $headerEmployee
+                                || current_user_role() === 'project_supervisor';
+                            ?>
+                            <?php if ($headerEmployeeLinksVisible): ?>
                                 <a
                                     href="<?php echo APP_URL; ?>modules/hr/leaves.php?action=request"
                                     class="ak-dd-item"
