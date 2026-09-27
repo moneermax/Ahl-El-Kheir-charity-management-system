@@ -7,6 +7,7 @@ require_once __DIR__ . '/../../config/session.php';
 require_once __DIR__ . '/lib_employment.php';
 require_once __DIR__ . '/lib_salary_advance_policy.php';
 require_once __DIR__ . '/lib_salary_advance_request.php';
+require_once __DIR__ . '/../accounting/lib_transaction_review.php';
 
 Session::start();
 if (!Session::isLoggedIn()) { header('Location: ' . APP_URL . 'login.php'); exit; }
@@ -52,6 +53,13 @@ if (!$employee) {
                 $validated['requested_monthly_amount'], $validated['requested_start_month'],
                 $validated['request_reason'], $userId
             ]);
+            ak_transaction_review_notify_fm_event(
+                (int)$pdo->lastInsertId(),
+                'salary_advance_request',
+                'طلب سلفة على الراتب بانتظار المراجعة',
+                'طلب السلفة «' . $requestNo . '» للموظف «' . (string)$employee['full_name'] . '» بانتظار مراجعة المدير المالي.',
+                APP_URL . 'modules/hr/salary_advance_request.php'
+            );
             $message = 'تم إرسال طلب السلفة رقم ' . $requestNo . ' إلى المدير المالي للمراجعة.';
         } catch (Throwable $e) {
             $error = $e->getMessage();
