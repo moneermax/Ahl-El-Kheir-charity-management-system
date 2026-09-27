@@ -136,8 +136,8 @@ try {
     $headerUserId =
         current_user_id();
 
-    /* Employee request links are available from every authenticated user menu.
-     * The destination pages perform the employee-record/access validation.
+    /* Employee-only request links are shown only for accounts linked to an employee record.
+     * The destination pages retain their own access/eligibility validation.
      */
 
 
@@ -1297,7 +1297,18 @@ if (!empty($akPrintOwnLetterhead)) $akBodyClasses[] = 'ak-print-own';
                                 <?php echo e(AK_LANG === 'ar' ? 'الملف الشخصي' : 'Profile'); ?>
                             </a>
 
-                            <?php if (Session::isLoggedIn()): ?>
+                            <?php
+                            $headerEmployee = null;
+                            try {
+                                $headerEmployee = dbFetchOne(
+                                    "SELECT id FROM employees WHERE user_id = ? LIMIT 1",
+                                    [current_user_id()]
+                                );
+                            } catch (Throwable $e) {
+                                $headerEmployee = null;
+                            }
+                            ?>
+                            <?php if ($headerEmployee): ?>
                                 <a
                                     href="<?php echo APP_URL; ?>modules/hr/leaves.php?action=request"
                                     class="ak-dd-item"
@@ -1471,3 +1482,5 @@ if (!empty($akPrintOwnLetterhead)) $akBodyClasses[] = 'ak-print-own';
 
 
             <?php endif; ?>
+
+
