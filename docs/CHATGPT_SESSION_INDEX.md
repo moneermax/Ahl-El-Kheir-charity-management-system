@@ -952,3 +952,13 @@ Implementation/documentation checkpoint commit: `2e7eb684878d2d45e0180a582ee3ff2
 The user confirmed that the current project/repository and database backups have been completed successfully before beginning the new HR Salary Advance feature. This is the recovery checkpoint for the new feature work.
 
 No Salary Advance implementation or schema change has been made at this checkpoint. The agreed design direction is policy-driven: an annual FM-configured Salary Advance Policy provides defaults, while the FM may override/customize the policy terms for an individual request. The existing HR/payroll/accounting implementation must be inspected before any schema or code changes are made.
+
+## 2026-09-27 — Projects posted labor-expense action visibility fix
+
+The Projects expense table had a narrow action-detection weakness for posted labor-payment rows. The expense query normally derives `labor_id` through a SQL join on the `LABOR:<labor_id>` transaction reference. The action renderer depended entirely on that joined value, even though the project already loads the authoritative `project_labor_helpers` rows separately.
+
+The fix now builds a project-local labor map and, when the SQL join does not populate `labor_id`, derives the labor ID from the canonical `LABOR:<id>` transaction reference and validates it against the loaded labor rows. The existing Project Supervisor authorization, edit/delete actions, labor modal, backend actions, and accounting rules are unchanged.
+
+Implementation commit: `ff1f18e48833cae42babcc729a8a5e96f495f650`.
+
+Runtime verification is still required on the affected PRJ-LPV-PRJ-0010-2 / test2 / electrician posted rows. Pull the latest `main` before testing. Do not modify the test records manually before the runtime test.
