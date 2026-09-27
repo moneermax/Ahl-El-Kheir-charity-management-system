@@ -319,3 +319,31 @@ Current runtime status:
 - Employee request page has not yet been runtime-tested.
 - Stage 2 is therefore **IMPLEMENTED / NOT YET RUNTIME VERIFIED**.
 - Do not begin Stage 3 until the migration and controlled employee-request test pass.
+
+
+## 2026-09-27 — Employee identity resolution checkpoint
+
+The shared employee/user identity path was corrected after confirming that the application treats the user account and employee profile as the same person, with `employees.user_id` as the canonical relationship.
+
+Problem identified:
+- The HR employee list reads directly from `employees` and therefore can display an employee even when the employee row is not linked through `employees.user_id`.
+- The shared header, leave request page, and salary advance request library previously relied only on `employees.user_id`.
+- This caused an employee who exists in the HR employee list (including the reported Project Supervisor account) to receive no employee-request links or a "no employee record" message.
+
+Fix implemented:
+- Added `modules/hr/lib_employee_identity.php` with one common employee resolver.
+- The resolver first uses the canonical `employees.user_id` relationship.
+- For legacy/unlinked records, it uses an exact full-name match against the logged-in user's `users.full_name` only when exactly one employee profile matches; it does not guess when names are ambiguous.
+- Shared header now uses this resolver for the Leave Request and Salary Advance Request links.
+- Leave requests use the same resolver.
+- Salary Advance requests use the same resolver while preserving employment-state lookup.
+
+Commits:
+- `1c58e05f5e9b8971e974cccbfe5009320ee31a30` — common employee identity resolver.
+- `9f62808a16507ca1f58a343f33d662b0aa1edc42` — shared header integration.
+- `1f56be95c35950ad7c8627d6441d4364f5b83559` — leave request integration.
+- `7a8bc5fa5ae0a477637322eacabebae3adb227e2` — salary advance integration.
+
+Runtime status:
+- Repository implementation is complete and committed.
+- Runtime verification is pending. The next test should use the reported `ps1` account and verify that both employee-request links appear and that both request pages resolve the same employee identity.
