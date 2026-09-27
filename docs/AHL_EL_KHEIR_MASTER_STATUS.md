@@ -1024,3 +1024,16 @@ Detailed checkpoint: `docs/PROJECTS_RUNTIME_CHECKPOINT_2026-09-26.md`.
 PRJ-0010 remains intentionally **open/not closed** because one remaining project task is still outstanding. PM closure must wait until that task is completed and the existing closure guards are satisfied.
 
 Do not reopen or redo the completed project-expense workflow. The next session should continue from the remaining project task.
+
+
+2026-09-27 — Projects closure and report-page cleanup checkpoint
+
+PRJ-0010 project closure is now **RUNTIME VERIFIED / COMPLETE**. After applying `database/migrations/2026-09-27_project_closure_reason.sql`, PM successfully closed the project and GM/VGM received the expected closure notifications. Closure is no longer a pending runtime item.
+
+Four report pages were also corrected and runtime-reviewed: `modules/reports/hr.php`, `financial.php`, `sponsorship.php`, and `operational.php`. Redundant page-local bottom Back buttons were removed in favor of the shared footer's standardized two-button mechanism, and the welcome-section title/subtitle text was explicitly forced to white for readable contrast. Shared header styling was not changed.
+
+Relevant report commits are recorded in `docs/PROJECTS_RUNTIME_CHECKPOINT_2026-09-26.md`; checkpoint documentation commit: `2e7eb684878d2d45e0180a582ee3ff25bc0dbeff`.
+
+### Current Projects continuation point
+The completed closure, expense/payment, and report-page cleanup work must not be reopened without regression evidence. Continue the Projects deep audit from the current repository and `docs/PROJECTS_MODULE_AUDIT_AND_REMEDIATION_PLAN.md`, selecting the next unresolved post-approval/data-integrity/authorization item only after inspecting current code and schema.
+
