@@ -1307,13 +1307,9 @@ if (!empty($akPrintOwnLetterhead)) $akBodyClasses[] = 'ak-print-own';
                             }
                             ?>
                             <?php
-                            // Project supervisors are operational employees even when a legacy
-                            // employee row has not yet been linked in older database copies.
-                            // Keep the links visible; the destination pages perform their own
-                            // employee/eligibility validation before accepting a request.
-                            $headerEmployeeLinksVisible =
-                                $headerEmployee
-                                || current_user_role() === 'project_supervisor';
+                            // Employee services are available to users who are actually linked
+                            // to an employee record. The account role does not determine employee status.
+                            $headerEmployeeLinksVisible = (bool)$headerEmployee;
                             ?>
                             <?php if ($headerEmployeeLinksVisible): ?>
                                 <a
