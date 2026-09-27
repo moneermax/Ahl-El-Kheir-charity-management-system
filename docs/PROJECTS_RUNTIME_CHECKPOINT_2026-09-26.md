@@ -264,3 +264,22 @@ Runtime status:
 - Migration has **not** yet been applied to the local database.
 - Stage 1 has **not** yet been runtime-tested.
 - No Stage 1 completion claim should be made until the controlled runtime test succeeds.
+
+
+## 2026-09-27 — Salary Advance Stage 1 UI polish and migration checkpoint
+
+The local Stage 1 migration was successfully imported by the user into the local `ahl_el_kheir` database.
+
+Two UI polish fixes were then implemented:
+- `modules/hr/salary_advance_policy.php`: replaced the plain opening card heading with the established HR policy hero/header treatment used by the existing payroll policy page, while preserving the existing Salary Advance content and workflow.
+- `modules/accounting/fm_dashboard.php`: moved the Salary Advance Policy quick-action card before the Feen/فينا الخير card, added its matching description, and added the missing action-card styling so it follows the same visual card treatment as the other FM quick actions.
+
+Commits:
+- Salary Advance Policy header: `41c0707cfd0f46956d950c9ddd06b959232e3495`
+- FM dashboard card order/style: `d877c957db3e734f9b3038a1613e198317d5d400`
+
+Runtime status:
+- Migration import: **successful**.
+- Salary Advance Policy page before UI polish: **opened successfully** as FM.
+- The new UI polish has not yet been runtime-tested.
+- Stage 1 remains **not complete** until the updated page/dashboard are pulled and visually verified, followed by the controlled future-dated policy creation/versioning test.
