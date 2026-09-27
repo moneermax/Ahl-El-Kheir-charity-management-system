@@ -18,6 +18,7 @@ $emp_id = (int)($_GET['id'] ?? $_POST['employee_id'] ?? 0);
 $message = ''; $msg_type = 'success';
 
 $states = hrGetEmploymentStates();
+$unlinkedUsers = dbFetchAll("SELECT u.id, u.username, u.full_name FROM users u LEFT JOIN employees e ON e.user_id = u.id WHERE e.id IS NULL AND u.is_active = 1 ORDER BY u.full_name");
 $statesByCode = [];
 foreach ($states as $state) { $statesByCode[$state['code']] = $state; }
 
@@ -44,6 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($action, ['add','edit','su
             $work_mode = $_POST['work_mode'] ?? 'onsite';
             $basic_salary = (float)($_POST['basic_salary'] ?? 0);
             $bank_account = trim($_POST['bank_account'] ?? '');
+            $existing_user_id = (int)($_POST['existing_user_id'] ?? 0);
 
             if ($action === 'add') {
                 $initialStateCode = $_POST['employment_state'] ?? 'active';
@@ -68,14 +70,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($action, ['add','edit','su
                 } while ($exists);
 
                 $user_id = null;
-                if (isset($_POST['create_account'])) {
+                if ($existing_user_id > 0 && isset($_POST['create_account'])) {
+                    throw new RuntimeException('اختر إما ربط حساب مستخدم موجود أو إنشاء حساب جديد، وليس الاثنين معاً.');
+                }
+                if ($existing_user_id > 0) {
+                    if (!dbFetchOne('SELECT u.id FROM users u LEFT JOIN employees e ON e.user_id = u.id WHERE u.id = ? AND u.is_active = 1 AND e.id IS NULL', [$existing_user_id])) {
+                        throw new RuntimeException('حساب المستخدم المختار غير متاح للربط.');
+                    }
+                    $user_id = $existing_user_id;
+                } elseif (isset($_POST['create_account'])) {
                     $username = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $full_name));
                     $username = substr($username, 0, 20); if (strlen($username) < 3) $username .= '00';
-                    if (!dbFetchOne('SELECT id FROM users WHERE username = ?', [$username])) {
-                        $pass_hash = password_hash('admin123', PASSWORD_DEFAULT);
-                        $stmt = $pdo->prepare('INSERT INTO users (role_id, username, password_hash, full_name, email, phone, department_id, is_active) VALUES (11, ?, ?, ?, ?, ?, ?, 1)');
-                        $stmt->execute([$username,$pass_hash,$full_name,$email,$phone,$department_id]); $user_id = (int)$pdo->lastInsertId();
+                    if (dbFetchOne('SELECT id FROM users WHERE username = ?', [$username])) {
+                        throw new RuntimeException('اسم المستخدم المقترح موجود بالفعل. اختر الحساب الموجود من قائمة ربط حساب مستخدم بدلاً من إنشاء حساب جديد.');
                     }
+                    $pass_hash = password_hash('admin123', PASSWORD_DEFAULT);
+                    $stmt = $pdo->prepare('INSERT INTO users (role_id, username, password_hash, full_name, email, phone, department_id, is_active) VALUES (11, ?, ?, ?, ?, ?, ?, 1)');
+                    $stmt->execute([$username,$pass_hash,$full_name,$email,$phone,$department_id]); $user_id = (int)$pdo->lastInsertId();
                 }
                 $stmt = $pdo->prepare('INSERT INTO employees (user_id, full_name, employee_code, national_id, birth_date, gender, phone, email, address, hire_date, department_id, position, employment_type, work_mode, basic_salary, bank_account, status, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
                 $stmt->execute([$user_id,$full_name,$employee_code,$national_id,$birth_date,$gender,$phone,$email,$address,$hire_date,$department_id,$position,$employment_type,$work_mode,$basic_salary,$bank_account,'active',Session::getUserID()]);
@@ -165,7 +176,8 @@ $pageTitle='إدارة الموظفين'; require_once __DIR__.'/../../includes/
 <div class="col-12"><label class="form-label">العنوان</label><input type="text" name="address" class="form-control" value="<?php echo htmlspecialchars($employee['address']??''); ?>"></div><div class="col-md-3"><label class="form-label">تاريخ التعيين <span class="text-danger">*</span></label><input type="date" name="hire_date" class="form-control" required value="<?php echo htmlspecialchars($employee['hire_date']??''); ?>"></div><div class="col-md-3"><label class="form-label">القسم</label><select name="department_id" class="form-select"><option value="">-- اختر القسم --</option><?php foreach($departments as $dept): ?><option value="<?php echo $dept['id']; ?>" <?php echo ($employee['department_id']??'')==$dept['id']?'selected':''; ?>><?php echo htmlspecialchars($dept['name_ar']); ?></option><?php endforeach; ?></select></div><div class="col-md-3"><label class="form-label">المسمى الوظيفي <span class="text-danger">*</span></label><input type="text" name="position" class="form-control" required value="<?php echo htmlspecialchars($employee['position']??''); ?>"></div>
 <div class="col-md-3"><label class="form-label">نوع التوظيف</label><select name="employment_type" class="form-select"><option value="full_time" <?php echo ($employee['employment_type']??'')==='full_time'?'selected':''; ?>>دوام كامل</option><option value="part_time" <?php echo ($employee['employment_type']??'')==='part_time'?'selected':''; ?>>دوام جزئي</option><option value="contract" <?php echo ($employee['employment_type']??'')==='contract'?'selected':''; ?>>عقد مؤقت</option><option value="volunteer" <?php echo ($employee['employment_type']??'')==='volunteer'?'selected':''; ?>>متطوع</option></select></div><div class="col-md-3"><label class="form-label">نمط العمل</label><select name="work_mode" class="form-select"><option value="remote" <?php echo ($employee['work_mode']??'')==='remote'?'selected':''; ?>>عن بُعد</option><option value="onsite" <?php echo ($employee['work_mode']??'')==='onsite'?'selected':''; ?>>في المقر</option><option value="hybrid" <?php echo ($employee['work_mode']??'')==='hybrid'?'selected':''; ?>>مختلط</option></select></div><div class="col-md-3"><label class="form-label">الراتب الأساسي</label><input type="number" step="0.01" name="basic_salary" class="form-control" value="<?php echo htmlspecialchars($employee['basic_salary']??'0.00'); ?>"></div><div class="col-md-3"><label class="form-label">رقم الحساب البنكي</label><input type="text" name="bank_account" class="form-control" value="<?php echo htmlspecialchars($employee['bank_account']??''); ?>"></div>
 <div class="col-md-6"><label class="form-label">الحالة الوظيفية <span class="text-danger">*</span></label><select name="employment_state" class="form-select" required><?php foreach($states as $state): ?><option value="<?php echo htmlspecialchars($state['code']); ?>" <?php echo ($employee['state_code']??'active')===$state['code']?'selected':''; ?>><?php echo htmlspecialchars($state['name_ar']); ?></option><?php endforeach; ?></select><small class="text-muted">الإجازات لا تُسجل هنا؛ سيتم التعامل معها من خلال وحدة الإجازات.</small></div>
-<div class="col-12"><label class="form-label">صورة العقد (PDF/صورة)</label><input type="file" name="contract_file" class="form-control" accept=".pdf,.jpg,.jpeg,.png"><small class="text-muted">ارفع نسخة من العقد الموقع</small><?php if($employee && !empty($employee['contract_file_path'])): ?><div class="mt-2"><a href="<?php echo APP_URL.$employee['contract_file_path']; ?>" target="_blank" class="btn-fm btn-ghost btn-sm"><i class="fas fa-file-alt me-1"></i> عرض العقد الحالي</a></div><?php endif; ?></div>
+<div class="col-md-6"><label class="form-label">حساب مستخدم موجود (اختياري)</label><select name="existing_user_id" class="form-select"><option value="">— لا يوجد ربط —</option><?php foreach($unlinkedUsers as $u): ?><option value="<?php echo (int)$u['id']; ?>"><?php echo htmlspecialchars($u['full_name']); ?> (<?php echo htmlspecialchars($u['username']); ?>)</option><?php endforeach; ?></select><small class="text-muted">يمكن ربط أي موظف بحساب مستخدم موجود، بغض النظر عن الدور.</small></div>
+<div class="col-md-6"><label class="form-label">صورة العقد (PDF/صورة)</label><input type="file" name="contract_file" class="form-control" accept=".pdf,.jpg,.jpeg,.png"><small class="text-muted">ارفع نسخة من العقد الموقع</small><?php if($employee && !empty($employee['contract_file_path'])): ?><div class="mt-2"><a href="<?php echo APP_URL.$employee['contract_file_path']; ?>" target="_blank" class="btn-fm btn-ghost btn-sm"><i class="fas fa-file-alt me-1"></i> عرض العقد الحالي</a></div><?php endif; ?></div>
 <?php if($action==='add'): ?><div class="col-12"><div class="form-check"><input class="form-check-input" type="checkbox" name="create_account" id="create_account"><label class="form-check-label" for="create_account">إنشاء حساب نظامي للموظف</label></div></div><?php endif; ?></div><div class="mt-4 d-flex gap-2"><button type="submit" class="btn-fm btn-navy"><i class="fas fa-save me-1"></i><?php echo $action==='add'?'حفظ الموظف':'حفظ التعديلات'; ?></button><a href="employees.php" class="btn-fm btn-ghost">إلغاء</a></div><input type="hidden" name="action" value="<?php echo htmlspecialchars($action); ?>"><?php if($action==='edit'): ?><input type="hidden" name="employee_id" value="<?php echo $emp_id; ?>"><?php endif; ?></form></div></div>
 <?php endif; ?>
 <?php require_once __DIR__.'/../../includes/footer.php'; ?>
