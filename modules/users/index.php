@@ -91,7 +91,6 @@ try {
    ═══════════════════════════════════════════════════════════ */
 $roles       = dbFetchAll("SELECT id, code, name_ar, name_en FROM roles ORDER BY id");
 $departments = dbFetchAll("SELECT id, name_ar, name_en FROM departments ORDER BY id");
-$employeeLinkRoles = ['projects_manager', 'project_supervisor'];
 $unlinkedEmployees = dbFetchAll("SELECT id, employee_code, full_name, position FROM employees WHERE user_id IS NULL AND status NOT IN ('terminated', 'suspended') ORDER BY full_name");
 $managers    = dbFetchAll("SELECT u.id, u.full_name, u.username FROM users u JOIN roles r ON r.id = u.role_id WHERE r.code IN ('admin','sudo','general_manager','vice_general_manager','financial_manager','accountant') AND u.is_active = 1 ORDER BY u.full_name");
 $nannies     = dbFetchAll("SELECT u.id, u.full_name FROM users u JOIN roles r ON r.id = u.role_id WHERE r.code = 'nanny' AND u.is_active = 1 ORDER BY u.full_name");
@@ -167,10 +166,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$manageAcct) {
 
             if ($fn === '') $errors[] = 'الاسم الكامل مطلوب.';
             if (!in_array($rc, $allowedRoles, true)) $errors[] = 'دور غير صالح.';
-
-            if (!$errors && in_array($rc, $employeeLinkRoles, true) && !dbFetchOne("SELECT id FROM employees WHERE user_id = ? LIMIT 1", [$uid])) {
-                $errors[] = 'لا يمكن تحويل هذا الحساب إلى دور موظف مشاريع قبل ربطه بسجل موظف.';
-            }
 
             if (!$errors) {
                 $roleId = (int)array_column($roles, 'id', 'code')[$rc];
