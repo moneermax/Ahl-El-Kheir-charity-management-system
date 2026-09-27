@@ -347,3 +347,24 @@ Commits:
 Runtime status:
 - Repository implementation is complete and committed.
 - Runtime verification is pending. The next test should use the reported `ps1` account and verify that both employee-request links appear and that both request pages resolve the same employee identity.
+
+
+## 2026-09-27 — Employee identity fallback refinement
+
+The first resolver refinement did not produce the expected header links for the reported `ps1` account, while the same links continue to work for most other employee users.
+
+The resolver has therefore been strengthened without changing the canonical data model:
+- `employees.user_id` remains the first and authoritative match.
+- If that relationship is missing, the resolver now loads the authenticated user's `full_name`, `email`, and `phone`.
+- It then searches employee records using any available matching identity field, with whitespace normalization.
+- A fallback is accepted only when exactly one employee profile matches.
+- If multiple employee profiles match, the resolver returns no employee rather than guessing.
+- The shared header, Leave Request page, and Salary Advance Request library continue to use this same resolver.
+
+Implementation commit:
+- `56e8754c72724726483032273c5d942f9478428f`
+
+Runtime status:
+- The previous `ps1` runtime result showed that the issue is still not resolved in the user's local environment.
+- The refined resolver is now committed and ready for the next controlled pull/test.
+- No schema change, runtime DDL, trigger, or view was introduced.
