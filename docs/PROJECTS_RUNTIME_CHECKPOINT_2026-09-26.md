@@ -128,3 +128,104 @@ The next active Projects audit area is the remaining **post-closure / Projects-m
 The user confirmed that the current project/repository and database backups have been completed successfully before beginning the new HR Salary Advance feature. This is the recovery checkpoint for the new feature work.
 
 No Salary Advance implementation or schema change has been made at this checkpoint. The agreed design direction is policy-driven: an annual FM-configured Salary Advance Policy provides defaults, while the FM may override/customize the policy terms for an individual request. The existing HR/payroll/accounting implementation must be inspected before any schema or code changes are made.
+
+## 2026-09-27 — HR Salary Advance Feature Working Plan
+
+### Objective
+Introduce a policy-driven Salary Advance feature integrated with the existing HR, payroll, and accounting architecture. The feature must support annual organizational defaults configured by the FM while allowing the FM to override/customize the final terms for an individual request without changing the annual policy.
+
+### Design principles
+- Employee may request any amount; the system does not impose an artificial request ceiling unless the active organizational policy explicitly defines one.
+- Employee selects a proposed repayment method in the request.
+- The active annual Salary Advance Policy supplies defaults.
+- FM may apply policy defaults or customize the terms for the individual request.
+- FM overrides are recorded separately from the annual policy and require an audit trail/reason where applicable.
+- Once approved/disbursed, the advance retains its final approved terms; later policy versions do not rewrite historical advances.
+- Salary advance is an employee receivable, not salary expense.
+- Disbursement must be an explicit accounting event and must produce a printable disbursement receipt.
+- Payroll deductions must be linked to the specific advance and repayment schedule; the generic payroll deduction field must not become the sole source of truth for advance balances.
+- Deduction can never exceed the outstanding advance and cannot make salary negative.
+- Direct/early repayment remains supported.
+- Existing HR/payroll/accounting infrastructure must be reused; no parallel accounting or payroll engine.
+- Schema changes only through migration files; no runtime DDL, triggers, or views.
+
+### Staged implementation plan
+
+#### Stage 1 — Policy and architecture foundation
+Status: **STARTED**
+1. Inspect the existing HR employee, employment-state, contract/salary-history, payroll, payroll-policy, and accounting structures.
+2. Define the dedicated Salary Advance Policy model and its annual/versioned lifecycle.
+3. Define which policy fields are defaults and which are mandatory controls.
+4. Define FM permissions and policy lifecycle: draft → active → closed/versioned.
+5. Define the policy application model for each request, including default-vs-customized terms and audit data.
+6. Design and implement the Stage 1 migration only after the real schema has been verified.
+7. Implement FM policy management UI using existing HR conventions.
+8. Document and checkpoint Stage 1 before proceeding.
+
+#### Stage 2 — Employee salary advance request
+- Employee request screen and permissions.
+- Load current applicable policy defaults.
+- Capture employee-requested amount and proposed repayment method/terms.
+- Preserve the original employee request.
+- Request lifecycle and notifications.
+- Prevent invalid requests according to mandatory policy/system controls.
+
+#### Stage 3 — FM review and per-request customization
+- FM review screen.
+- Side-by-side employee request vs policy defaults.
+- Apply defaults or customize.
+- Record each override and reason.
+- Approve/reject workflow.
+- Freeze final approved terms once approval is completed.
+
+#### Stage 4 — Accounting verification and disbursement
+- Accounting verification workflow.
+- Employee advance receivable accounting.
+- Cash/bank disbursement integration using existing accounting infrastructure.
+- Disbursement status and audit trail.
+- Printable Salary Advance Disbursement Receipt.
+- Prevent duplicate disbursement.
+
+#### Stage 5 — Repayment schedule and payroll integration
+- Generate repayment obligations from final approved terms.
+- Integrate deductions with existing payroll calculation.
+- Support fixed monthly deduction, full eligible-salary deduction, full settlement, and other approved policy methods.
+- Handle insufficient salary according to policy.
+- Prevent negative payroll and over-recovery.
+- Link every payroll recovery to the originating advance.
+
+#### Stage 6 — Direct repayment and settlement
+- Direct cash/bank repayment where permitted.
+- Early/full settlement.
+- Automatic outstanding-balance calculation.
+- Settlement status and receipt/audit trail.
+- Prevent further payroll deductions after settlement.
+
+#### Stage 7 — Exceptional lifecycle cases
+- Repayment-plan change after disbursement through controlled authorization.
+- Employee termination/final settlement treatment.
+- Leave/partial-pay/insufficient-pay scenarios.
+- Multiple active advances if the final policy permits exceptions.
+- Reconciliation and recovery controls.
+
+#### Stage 8 — Reporting, audit, and hardening
+- Employee advance history.
+- Outstanding advances and aging.
+- Policy/override audit.
+- Accounting reconciliation.
+- Payroll reconciliation.
+- Permission/security review.
+- UI/RTL/accessibility review.
+- Full regression testing.
+
+### Stage completion gates
+A stage is not marked complete until:
+- Repository implementation is committed and ready to pull.
+- Required migration(s) are committed.
+- Runtime behavior is tested where applicable.
+- Accounting/payroll totals reconcile where applicable.
+- No known regression remains in the touched workflow.
+- Relevant documentation/checkpoint is updated.
+
+### Stage 1 checkpoint
+No Stage 1 implementation has been committed yet. The next action is to complete the Stage 1 policy model and implementation against the verified current schema.
