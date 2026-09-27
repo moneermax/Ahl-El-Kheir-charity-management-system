@@ -57,14 +57,29 @@ The obsolete legacy `add_expense` path remains blocked in `modules/projects/view
 
 Do not create a new standalone expense-finalization page. The finalization action belongs in the existing project expense edit workflow.
 
+## Project closure workflow — schema correction
+
+The PM closure workflow is already implemented in `modules/projects/view.php` and correctly requires a prior `closure_requested` record from the primary Project Supervisor. It also blocks closure when unposted project expenses remain, records the closure summary/reason, updates the lifecycle and legacy project status, and notifies the GM/VGM.
+
+During the first runtime closure test on PRJ-0010, the closure action failed because `project_lifecycle.close_reason` was missing from the deployed schema while the existing closure handler already writes that field. This was a repository/schema mismatch, not a PRJ-0010 data problem.
+
+A migration was added:
+
+- `database/migrations/2026-09-27_project_closure_reason.sql`
+- Commit: `b7bd414fce050b271e9653e47c4becd304622398`
+
+The migration adds `project_lifecycle.close_reason` as a nullable `VARCHAR(64)` using the project's migration-only schema-change rule. No runtime DDL, trigger, or view was introduced.
+
+**PRJ-0010 must remain open until this migration is applied and the PM closure workflow is runtime-tested successfully.**
+
 ## Current test state
 
 The user has confirmed that the latest project-expense workflow is **done**.
 
-The project is deliberately **not closed yet** because another outstanding task remains. Closure should only be tested after that task is completed and the project has no blocking unposted expense state according to the existing closure rule.
+The project is deliberately **not closed yet**. The next runtime step is to apply the new closure-schema migration, retry PM → إغلاق المشروع on PRJ-0010, and verify the complete closure workflow before treating the project as closed.
 
 ## Next session starting point
 
 Do not restart the completed expense work.
 
-Start by inspecting the current `main` branch and the current documentation. Continue from the remaining Project task, then perform the appropriate final PM closure/runtime verification when the project is actually ready.
+Start by inspecting the current `main` branch and the current documentation. Apply/verify the closure schema migration, then perform the appropriate final PM closure/runtime verification when the project is actually ready.
