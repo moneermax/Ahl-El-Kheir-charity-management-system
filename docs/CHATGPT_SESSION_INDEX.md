@@ -15,6 +15,15 @@ For every new ChatGPT session, read in order:
 
 This index is the short handoff document. The repository and these documents are authoritative over old chat history.
 
+## HR USER ↔ EMPLOYEE LINKAGE — 2026-09-27
+
+- Root cause confirmed from the repository database snapshot: user **ps1** is `users.id = 34`, role `project_supervisor`, but there is **no `employees` row with `user_id = 34`**. The employee table permits `user_id` to be NULL, so this orphan-account state was structurally possible.
+- The user-management workflow (`modules/users/index.php`) previously created a system user without creating/linking an employee record. That is why PS1 could log in and see employee links while Leave and Salary Advance could not resolve an employee.
+- Permanent workflow hardening is now implemented: `projects_manager` and `project_supervisor` accounts created from User Management must be linked to an existing active employee record, and an existing user cannot be changed into either project role without an employee link.
+- PS1 repair migration: `database/migrations/2026-09-27_project_supervisor_employee_link.sql`. It creates the missing employee profile for user 34 using the existing account identity, Projects Department (id 8), position `مشرف مشروع`, and a generated employee code; it is idempotent and does nothing if the employee link already exists.
+- Code commit: `25a1dc4b656e84cfcb791cd1c1d060e1609597c4`.
+- The migration commit was created immediately before the code commit. Apply the new migration to the local development DB before runtime testing. Do not manually create the employee row outside the migration.
+
 ## NON-NEGOTIABLE CONTINUATION RULES
 
 - Do not restart the project or completed audits.
