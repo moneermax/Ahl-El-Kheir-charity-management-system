@@ -35,6 +35,7 @@ $headerQuickActions = [
     ['label'=>'التقارير المالية','url'=>'modules/reports/financial.php','icon'=>'fa-chart-pie','color'=>'#0d6efd'],
     ['label'=>'سجل المعاملات','url'=>'modules/transactions/index.php','icon'=>'fa-money-bill-transfer','color'=>'#2daf79'],
     ['label'=>'منظمة فينا الخير','url'=>'modules/accounting/fina_dashboard.php','icon'=>'fina-logo','color'=>'#6f42c1'],
+    ['label'=>'سياسة السلف على الراتب','url'=>'modules/hr/salary_advance_policy.php','icon'=>'fa-hand-holding-dollar','color'=>'#198754'],
 ];
 
 ak_ensure_tables();
