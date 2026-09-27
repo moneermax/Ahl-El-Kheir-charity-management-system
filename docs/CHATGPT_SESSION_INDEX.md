@@ -946,3 +946,9 @@ Detailed checkpoint: `docs/PROJECTS_RUNTIME_CHECKPOINT_2026-09-26.md`.
 The next Projects work should proceed from the current Projects audit/remediation plan and current repository state. Do not reopen completed expense/payment, closure, or report-page fixes. Start with the remaining post-approval Projects audit items, inspect current code/schema before selecting the next fix, and runtime-verify each change before marking it complete.
 
 Implementation/documentation checkpoint commit: `2e7eb684878d2d45e0180a582ee3ff25bc0dbeff`.
+
+## 2026-09-27 — Pre-HR Salary Advance Backup Checkpoint
+
+The user confirmed that the current project/repository and database backups have been completed successfully before beginning the new HR Salary Advance feature. This is the recovery checkpoint for the new feature work.
+
+No Salary Advance implementation or schema change has been made at this checkpoint. The agreed design direction is policy-driven: an annual FM-configured Salary Advance Policy provides defaults, while the FM may override/customize the policy terms for an individual request. The existing HR/payroll/accounting implementation must be inspected before any schema or code changes are made.
