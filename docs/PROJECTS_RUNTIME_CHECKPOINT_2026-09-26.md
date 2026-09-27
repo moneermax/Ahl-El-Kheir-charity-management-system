@@ -368,3 +368,24 @@ Runtime status:
 - The previous `ps1` runtime result showed that the issue is still not resolved in the user's local environment.
 - The refined resolver is now committed and ready for the next controlled pull/test.
 - No schema change, runtime DDL, trigger, or view was introduced.
+
+
+## 2026-09-27 — Employee identity fallback correction
+
+The previous identity fallback refinement introduced an unnecessary dependency on `users.email` and `users.phone`. Those columns were not verified against the repository schema, and the shared header intentionally catches resolver exceptions; therefore an invalid column reference could silently make the resolver return no employee and hide both employee-request links.
+
+Root cause correction:
+- `employees.user_id` remains the canonical employee/user relationship.
+- The legacy compatibility fallback now uses only the verified `users.full_name` field.
+- The fallback performs an exact, whitespace-normalized `employees.full_name` match.
+- The resolver still refuses to guess when zero or multiple employee profiles match.
+- No schema change was introduced.
+
+Implementation:
+- `modules/hr/lib_employee_identity.php`
+- Commit: `c6a85ed9ad08665889b6cbb03d0faec59c93988a`
+
+Runtime status:
+- Code correction is committed to `main`.
+- Runtime verification is pending.
+- Next controlled test: pull the latest `main`, sign in as `ps1`, open the header user dropdown, and verify that **طلب إجازة** and **طلب سلفة على الراتب** are both present. Stop there and report the result before proceeding to either request page.
