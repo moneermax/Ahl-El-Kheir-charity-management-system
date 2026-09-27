@@ -932,3 +932,17 @@ A dedicated detailed checkpoint is now stored at:
 PRJ-0010 is **not yet closed** because one remaining project task is still outstanding. Do not close the project prematurely. Continue with that remaining task in the next session, then perform PM closure/runtime verification when the project is actually ready.
 
 Do not restart the completed expense/payment work.
+
+
+2026-09-27 — Projects closure and report-page cleanup completed
+
+PRJ-0010 closure was runtime-verified successfully after the `project_lifecycle.close_reason` migration: PM closed the project and GM/VGM received closure notifications. Do not repeat this test unless regression occurs.
+
+Four report pages were also cleaned up: `modules/reports/hr.php`, `financial.php`, `sponsorship.php`, and `operational.php`. Their duplicate page-local bottom Back buttons were removed so the shared footer supplies the standardized two controls, and their welcome-section title/subtitle text was made explicitly white for contrast. These changes are complete and committed.
+
+Detailed checkpoint: `docs/PROJECTS_RUNTIME_CHECKPOINT_2026-09-26.md`.
+
+### Current continuation point
+The next Projects work should proceed from the current Projects audit/remediation plan and current repository state. Do not reopen completed expense/payment, closure, or report-page fixes. Start with the remaining post-approval Projects audit items, inspect current code/schema before selecting the next fix, and runtime-verify each change before marking it complete.
+
+Implementation/documentation checkpoint commit: `2e7eb684878d2d45e0180a582ee3ff25bc0dbeff`.
