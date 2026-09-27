@@ -122,3 +122,9 @@ This report-page cleanup is complete. Future Back-button fixes should continue t
 The PRJ-0010 closure workflow and the four report-page cleanup items above are closed. The next Projects work should continue from the current repository/docs state rather than reopening completed expense, closure, or report fixes.
 
 The next active Projects audit area is the remaining **post-closure / Projects-module audit and remediation work**, using the existing Projects audit plan and current runtime state as the source of truth. Start with repository inspection and the current audit/checkpoint documents before selecting the next concrete fix; do not assume an older pending item is still open if the repository already contains its resolution.
+
+## 2026-09-27 — Pre-HR Salary Advance Backup Checkpoint
+
+The user confirmed that the current project/repository and database backups have been completed successfully before beginning the new HR Salary Advance feature. This is the recovery checkpoint for the new feature work.
+
+No Salary Advance implementation or schema change has been made at this checkpoint. The agreed design direction is policy-driven: an annual FM-configured Salary Advance Policy provides defaults, while the FM may override/customize the policy terms for an individual request. The existing HR/payroll/accounting implementation must be inspected before any schema or code changes are made.
