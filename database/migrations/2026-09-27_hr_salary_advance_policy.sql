@@ -1,0 +1,36 @@
+-- HR Salary Advance Policy foundation
+-- Stage 1: annual/versioned organizational defaults. No runtime DDL, triggers, or views.
+
+CREATE TABLE IF NOT EXISTS hr_salary_advance_policy_versions (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    version_no INT UNSIGNED NOT NULL,
+    policy_name VARCHAR(150) NOT NULL,
+    effective_from DATE NOT NULL,
+    notes VARCHAR(2000) NULL,
+    allow_any_request_amount TINYINT(1) NOT NULL DEFAULT 1,
+    minimum_request_amount DECIMAL(18,2) NULL,
+    maximum_request_amount DECIMAL(18,2) NULL,
+    allow_multiple_active_advances TINYINT(1) NOT NULL DEFAULT 0,
+    allow_fixed_monthly_repayment TINYINT(1) NOT NULL DEFAULT 1,
+    allow_full_eligible_salary_repayment TINYINT(1) NOT NULL DEFAULT 1,
+    allow_full_settlement_from_salary TINYINT(1) NOT NULL DEFAULT 1,
+    allow_direct_repayment TINYINT(1) NOT NULL DEFAULT 1,
+    allow_custom_repayment_terms TINYINT(1) NOT NULL DEFAULT 1,
+    maximum_monthly_deduction DECIMAL(18,2) NULL,
+    maximum_repayment_months INT UNSIGNED NULL,
+    repayment_start_rule ENUM('next_payroll','specified_month') NOT NULL DEFAULT 'next_payroll',
+    insufficient_salary_rule ENUM('available_salary','skip_month') NOT NULL DEFAULT 'available_salary',
+    eligible_salary_basis ENUM('net_before_advance','gross') NOT NULL DEFAULT 'net_before_advance',
+    minimum_service_days INT UNSIGNED NOT NULL DEFAULT 0,
+    probation_allowed TINYINT(1) NOT NULL DEFAULT 1,
+    terminated_employee_allowed TINYINT(1) NOT NULL DEFAULT 0,
+    require_accounting_verification TINYINT(1) NOT NULL DEFAULT 1,
+    allow_early_settlement TINYINT(1) NOT NULL DEFAULT 1,
+    created_by INT UNSIGNED NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_hr_salary_advance_policy_version (version_no),
+    UNIQUE KEY uq_hr_salary_advance_policy_effective (effective_from),
+    KEY idx_hr_salary_advance_policy_effective (effective_from),
+    KEY idx_hr_salary_advance_policy_created_by (created_by)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
