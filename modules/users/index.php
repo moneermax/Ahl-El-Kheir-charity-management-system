@@ -137,14 +137,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$manageAcct) {
             if (!$errors && dbFetchOne("SELECT id FROM users WHERE username = ?", [$un])) $errors[] = 'اسم المستخدم موجود.';
 
             $linkEmployeeId = !empty($_POST['employee_id']) ? (int)$_POST['employee_id'] : 0;
-            if (!$errors && in_array($rc, $employeeLinkRoles, true)) {
-                if ($linkEmployeeId <= 0) {
-                    $errors[] = 'هذا الدور يمثل موظفاً في النظام، ويجب ربط الحساب بسجل موظف قبل إنشائه.';
-                } elseif (!dbFetchOne("SELECT id FROM employees WHERE id = ? AND user_id IS NULL AND status NOT IN ('terminated','suspended')", [$linkEmployeeId])) {
-                    $errors[] = 'سجل الموظف المختار غير متاح للربط أو مرتبط بحساب آخر.';
-                }
-            } elseif (!$errors && $linkEmployeeId > 0) {
-                $errors[] = 'لا يمكن ربط سجل موظف بهذا الدور من شاشة إنشاء المستخدم.';
+            if (!$errors && $linkEmployeeId > 0 && !dbFetchOne("SELECT id FROM employees WHERE id = ? AND user_id IS NULL AND status NOT IN ('terminated','suspended')", [$linkEmployeeId])) {
+                $errors[] = 'سجل الموظف المختار غير متاح للربط أو مرتبط بحساب آخر.';
             }
 
             if (!$errors) {
@@ -152,7 +146,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$manageAcct) {
                 dbExecute("INSERT INTO users (role_id, username, password_hash, full_name, email, phone, is_active, created_by, department_id, manager_id, gender) VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?)",
                     [$roleId, $un, password_hash($pw, PASSWORD_DEFAULT), $fn, $em !== '' ? $em : null, $ph !== '' ? $ph : null, Session::getUserId(), $dept, $mgr, $gn]);
                 $newUserId = (int)db()->lastInsertId();
-                if (in_array($rc, $employeeLinkRoles, true)) {
+                if ($linkEmployeeId > 0) {
                     dbExecute("UPDATE employees SET user_id = ? WHERE id = ? AND user_id IS NULL", [$newUserId, $linkEmployeeId]);
                 }
                 flash('success', 'تم إنشاء المستخدم: ' . $un);
@@ -340,7 +334,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 <div class="col-md-4">
                     <label class="form-label"><?php echo t('سجل الموظف للأدوار الوظيفية'); ?></label>
                     <select name="employee_id" class="form-select form-select-lg">
-                        <option value="">— اختر عند إنشاء مدير/مشرف مشاريع —</option>
+                        <option value="">— لا يوجد ربط —</option>
                         <?php foreach ($unlinkedEmployees as $employee): ?>
                         <option value="<?php echo (int)$employee['id']; ?>"><?php echo e($employee['full_name']); ?> — <?php echo e($employee['employee_code']); ?><?php echo !empty($employee['position']) ? ' — ' . e($employee['position']) : ''; ?></option>
                         <?php endforeach; ?>
