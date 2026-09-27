@@ -94,10 +94,6 @@ $documents = dbFetchAll("SELECT d.*, u.full_name AS uploader_name FROM project_d
 $milestones = dbFetchAll('SELECT m.*, u.full_name AS creator_name FROM project_milestones m LEFT JOIN users u ON u.id = m.created_by WHERE m.project_id = ? ORDER BY m.planned_date, m.id', [$id]);
 $progressUpdates = dbFetchAll('SELECT p.*, u.full_name AS submitter_name FROM project_progress_updates p LEFT JOIN users u ON p.submitted_by = u.id WHERE p.project_id = ? ORDER BY p.update_date DESC', [$id]);
 $labors = dbFetchAll("SELECT lh.*, u.full_name AS supervisor_name, pe.id AS payment_expense_id, pe.expense_date AS payment_date, pe.amount AS paid_amount, pe.primary_document_id AS payment_receipt_id, je.entry_code AS payment_entry_code FROM project_labor_helpers lh LEFT JOIN users u ON u.id = lh.supervisor_user_id LEFT JOIN project_expenses pe ON pe.project_id = lh.project_id AND pe.transaction_reference = CONCAT('LABOR:', lh.id) AND pe.status = 'posted' LEFT JOIN journal_entries je ON je.id = pe.journal_entry_id WHERE lh.project_id = ? ORDER BY lh.id DESC", [$id]);
-$laborsById = [];
-foreach ($labors as $laborRow) {
-    $laborsById[(int)$laborRow['id']] = $laborRow;
-}
 $team = dbFetchAll('SELECT pt.*, u.full_name, u.username FROM project_team pt JOIN users u ON u.id = pt.user_id WHERE pt.project_id = ? AND pt.unassigned_at IS NULL ORDER BY pt.section_code, pt.is_lead DESC, u.full_name', [$id]);
 $primarySupervisor = dbFetchOne("SELECT u.id, u.full_name, u.username FROM project_supervisor_assignments psa JOIN users u ON u.id = psa.supervisor_user_id WHERE psa.project_id = ? AND psa.ended_at IS NULL ORDER BY psa.id DESC LIMIT 1", [$id]);
 $history = dbFetchAll('SELECT h.*, u.full_name FROM project_status_history h LEFT JOIN users u ON u.id = h.changed_by WHERE h.project_id = ? ORDER BY h.created_at DESC LIMIT 20', [$id]);
@@ -1826,18 +1822,6 @@ document.getElementById('editFundingDescription').value = button.getAttribute('d
 <thead class="table-primary"><tr><th>التاريخ</th><th>الوصف</th><th>المورد/الفاتورة</th><th>المبلغ</th><th>الحالة</th><th>القيد</th><th></th></tr></thead>
 <tbody>
 <?php foreach ($expenses as $expense): ?>
-<?php
-$expenseLaborId = (int)($expense['labor_id'] ?? 0);
-if ($expenseLaborId <= 0) {
-    $expenseReference = trim((string)($expense['transaction_reference'] ?? ''));
-    if (str_starts_with($expenseReference, 'LABOR:')) {
-        $candidateLaborId = (int)trim(substr($expenseReference, 6));
-        if ($candidateLaborId > 0 && isset($laborsById[$candidateLaborId])) {
-            $expenseLaborId = $candidateLaborId;
-        }
-    }
-}
-?>
 <tr>
 <td><?php echo e($expense['expense_date']); ?></td>
 <td>
@@ -1855,7 +1839,7 @@ if ($expenseLaborId <= 0) {
 <?php if (!empty($expense['primary_document_id'])): ?>
 <a class="btn btn-sm btn-outline-secondary" target="_blank" href="<?php echo APP_URL; ?>modules/projects/serve_project_document.php?id=<?php echo (int)$expense['primary_document_id']; ?>"><i class="fas fa-paperclip me-1"></i>الإيصال</a>
 <?php endif; ?>
-<?php if ($expenseLaborId > 0 && $role === 'project_supervisor' && akp_is_primary_supervisor($id) && !$closed): ?><button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editLaborModal" data-labor='<?php $linkedLabor=$laborsById[$expenseLaborId] ?? null; echo e(json_encode($linkedLabor ?: ['id'=>$expenseLaborId,'payment_amount'=>$expense['amount'],'provider_name'=>$expense['vendor_name'],'work_description'=>$expense['description']], JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES)); ?>'><i class="fas fa-pen me-1"></i>تعديل</button><form method="post" class="d-inline project-delete-form"><?php echo csrf_field(); ?><input type="hidden" name="action" value="delete_labor"><input type="hidden" name="labor_id" value="<?php echo $expenseLaborId; ?>"><button type="button" class="btn btn-sm btn-outline-danger project-delete-btn" data-confirm-title="حذف دفعة العمالة" data-confirm-text="سيتم حذف سجل العمالة والمصروف وسند الدفع والإيصال المرتبط به إن وُجد.">حذف</button></form>
+<?php if (!empty($expense['labor_id']) && $role === 'project_supervisor' && akp_is_primary_supervisor($id) && !$closed): ?><button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editLaborModal" data-labor='<?php $linkedLabor=$labors[array_search((int)$expense['labor_id'], array_map('intval', array_column($labors,'id')))] ?? null; echo e(json_encode($linkedLabor ?: ['id'=>(int)$expense['labor_id'],'payment_amount'=>$expense['amount'],'provider_name'=>$expense['vendor_name'],'work_description'=>$expense['description']], JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES)); ?>'><i class="fas fa-pen me-1"></i>تعديل</button><form method="post" class="d-inline project-delete-form"><?php echo csrf_field(); ?><input type="hidden" name="action" value="delete_labor"><input type="hidden" name="labor_id" value="<?php echo (int)$expense['labor_id']; ?>"><button type="button" class="btn btn-sm btn-outline-danger project-delete-btn" data-confirm-title="حذف دفعة العمالة" data-confirm-text="سيتم حذف سجل العمالة والمصروف وسند الدفع والإيصال المرتبط به إن وُجد.">حذف</button></form>
 <?php elseif (in_array($expense['status'], ['draft', 'posted'], true) && $role === 'project_supervisor' && akp_is_primary_supervisor($id) && !$closed): ?>
 <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editProjectExpenseModal"
 data-expense-id="<?php echo (int)$expense['id']; ?>"
