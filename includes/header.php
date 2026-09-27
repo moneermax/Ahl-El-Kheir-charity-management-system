@@ -10,6 +10,7 @@
 
 // Centralized role-based permissions for the global search UI.
 require_once dirname(__DIR__) . '/config/search_permissions.php';
+require_once dirname(__DIR__) . '/modules/hr/lib_employee_identity.php';
 
 $allowedSearchTypes = ak_search_allowed_types(current_user_role());
 $canGlobalSearch = !empty($allowedSearchTypes);
@@ -1300,10 +1301,7 @@ if (!empty($akPrintOwnLetterhead)) $akBodyClasses[] = 'ak-print-own';
                             <?php
                             $headerEmployee = null;
                             try {
-                                $headerEmployee = dbFetchOne(
-                                    "SELECT id FROM employees WHERE user_id = ? LIMIT 1",
-                                    [current_user_id()]
-                                );
+                                $headerEmployee = hrGetEmployeeForUser(db(), current_user_id());
                             } catch (Throwable $e) {
                                 $headerEmployee = null;
                             }
