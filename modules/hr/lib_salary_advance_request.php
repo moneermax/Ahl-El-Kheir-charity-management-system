@@ -1,17 +1,37 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__ . '/lib_employee_identity.php';
 
 function hrSalaryAdvanceGetEmployeeForUser(PDO $pdo, int $userId): ?array
 {
-    if ($userId <= 0) return null;
-    return dbFetchOne(
-        "SELECT e.*, s.code AS employment_state_code, s.name_ar AS employment_state_name, s.category AS employment_state_category
-         FROM employees e
-         LEFT JOIN hr_employment_states s ON s.id = e.employment_state_id
-         WHERE e.user_id = ?
+    if ($userId <= 0) {
+        return null;
+    }
+
+    $employee = hrGetEmployeeForUser($pdo, $userId);
+    if (!$employee) {
+        return null;
+    }
+
+    $employee['employment_state_code'] = null;
+    $employee['employment_state_name'] = null;
+    $employee['employment_state_category'] = null;
+
+    $state = dbFetchOne(
+        "SELECT code, name_ar, category
+         FROM hr_employment_states
+         WHERE id = ?
          LIMIT 1",
-        [$userId]
+        [(int)($employee['employment_state_id'] ?? 0)]
     );
+
+    if ($state) {
+        $employee['employment_state_code'] = $state['code'];
+        $employee['employment_state_name'] = $state['name_ar'];
+        $employee['employment_state_category'] = $state['category'];
+    }
+
+    return $employee;
 }
 
 function hrSalaryAdvanceGetRequestPolicy(PDO $pdo, int $policyId): ?array
