@@ -4,6 +4,7 @@ require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../config/functions.php';
 require_once __DIR__ . '/../../config/session.php';
+require_once __DIR__ . '/lib_employee_identity.php';
 
 Session::start();
 
@@ -33,10 +34,7 @@ $msg_type = 'success';
 $filter = $_GET['status'] ?? 'all';
 
 // users stores the role through role_id; the role code lives in roles.code.
-$currentEmployee = dbFetchOne(
-    "SELECT id, full_name FROM employees WHERE user_id = ? LIMIT 1",
-    [Session::getUserID()]
-);
+$currentEmployee = hrGetEmployeeForUser(db(), Session::getUserID());
 
 /**
  * Create one persistent notification without creating duplicates when an
