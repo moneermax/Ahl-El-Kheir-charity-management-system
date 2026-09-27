@@ -83,3 +83,42 @@ The project is deliberately **not closed yet**. The next runtime step is to appl
 Do not restart the completed expense work.
 
 Start by inspecting the current `main` branch and the current documentation. Apply/verify the closure schema migration, then perform the appropriate final PM closure/runtime verification when the project is actually ready.
+
+
+## 2026-09-27 — Project closure runtime verification completed
+
+PRJ-0010 was runtime-tested through the PM closure workflow after applying the repository migration that adds `project_lifecycle.close_reason`.
+
+Verified outcome:
+- PM closed the project successfully without errors.
+- The closure workflow completed its existing guards and state updates.
+- GM and VGM received closure notifications.
+- The closure notifications were confirmed by runtime testing.
+
+The closure work unit is therefore **COMPLETE / RUNTIME VERIFIED / CLOSED**. Do not repeat the closure test unless a regression is reported.
+
+## 2026-09-27 — Reports page UI cleanup completed
+
+Four user-facing report pages were corrected after runtime review:
+- `modules/reports/hr.php`
+- `modules/reports/financial.php`
+- `modules/reports/sponsorship.php`
+- `modules/reports/operational.php`
+
+Fixes:
+- Removed each page's redundant manual bottom **عودة** button because the shared `includes/footer.php` already provides the standardized top-left and bottom-right Back controls. Each page now relies on the shared mechanism and no longer renders a duplicate bottom button.
+- Made the welcome-section report title and subtitle explicitly white against the dark blue welcome background on all four pages. The shared header styling was not changed.
+
+Implementation commits:
+- HR: `45515e3ad1dfca46d362c4e3f023840d3ee7aab1` and `70b5b5dc81dbec38d04ef654ee9f516d32fb5d14`
+- Financial: `2d4598734b23cd81ca109d8e57ff1ae44915aea3` and `d0bb8acc3a5ffe57f87cc43d75ab17c49c8b2617`
+- Sponsorship: `11cf1f3ecd43ebb63dc4cb7f24d2868800d4a6db` and `6bb6e07207fda474e75f3bd9caa23682891cda84`
+- Operational: `292220010ea59f10bc2f8a22c55354858cdd31dd` and `b97f02a5613aedd9c746cc28eda95a1f2dea243f`
+
+This report-page cleanup is complete. Future Back-button fixes should continue to use the shared footer mechanism rather than adding page-local duplicate controls.
+
+## Current Projects continuation point — 2026-09-27
+
+The PRJ-0010 closure workflow and the four report-page cleanup items above are closed. The next Projects work should continue from the current repository/docs state rather than reopening completed expense, closure, or report fixes.
+
+The next active Projects audit area is the remaining **post-closure / Projects-module audit and remediation work**, using the existing Projects audit plan and current runtime state as the source of truth. Start with repository inspection and the current audit/checkpoint documents before selecting the next concrete fix; do not assume an older pending item is still open if the repository already contains its resolution.
