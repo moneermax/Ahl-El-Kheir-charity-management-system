@@ -5,10 +5,12 @@ declare(strict_types=1);
  * Resolve the employee profile for the currently authenticated user.
  *
  * In this system the user account and employee profile represent the same
- * person. The employees.user_id relationship is the canonical link. The
- * exact-name fallback exists only for legacy employee rows that were created
- * before the account/profile link was preserved; it is used only when there
- * is exactly one matching employee profile for the user's full name.
+ * person. employees.user_id is the canonical relationship.
+ *
+ * Legacy employee rows may have a missing user_id, so the resolver also
+ * matches the authenticated user's identity fields. A fallback is accepted
+ * only when exactly one employee profile matches; ambiguous matches are
+ * never guessed.
  */
 function hrGetEmployeeForUser(PDO $pdo, int $userId): ?array
 {
@@ -28,32 +30,56 @@ function hrGetEmployeeForUser(PDO $pdo, int $userId): ?array
         return $employee;
     }
 
-    $employee = dbFetchOne(
-        "SELECT e.*
-         FROM employees e
-         JOIN users u ON u.id = ?
-         WHERE e.full_name = u.full_name
-         LIMIT 2",
+    $user = dbFetchOne(
+        "SELECT full_name, email, phone
+         FROM users
+         WHERE id = ?
+         LIMIT 1",
         [$userId]
     );
 
-    if (!$employee) {
+    if (!$user) {
         return null;
     }
 
-    // Do not guess when more than one employee profile has the same name.
+    $conditions = [];
+    $params = [];
+
+    $fullName = trim((string)($user['full_name'] ?? ''));
+    if ($fullName !== '') {
+        $conditions[] = "TRIM(e.full_name) = TRIM(?)";
+        $params[] = $fullName;
+    }
+
+    $email = trim((string)($user['email'] ?? ''));
+    if ($email !== '') {
+        $conditions[] = "TRIM(e.email) = TRIM(?)";
+        $params[] = $email;
+    }
+
+    $phone = trim((string)($user['phone'] ?? ''));
+    if ($phone !== '') {
+        $conditions[] = "TRIM(e.phone) = TRIM(?)";
+        $params[] = $phone;
+    }
+
+    if (!$conditions) {
+        return null;
+    }
+
     $matches = dbFetchAll(
-        "SELECT e.id
+        "SELECT e.*
          FROM employees e
-         JOIN users u ON u.id = ?
-         WHERE e.full_name = u.full_name
+         WHERE " . implode(' OR ', $conditions) . "
          LIMIT 2",
-        [$userId]
+        $params
     );
 
+    // Never guess when more than one employee profile could represent
+    // the authenticated user.
     if (count($matches) !== 1) {
         return null;
     }
 
-    return $employee;
+    return $matches[0];
 }
