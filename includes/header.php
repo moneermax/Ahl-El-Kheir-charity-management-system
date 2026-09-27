@@ -136,6 +136,22 @@ try {
     $headerUserId =
         current_user_id();
 
+    /*
+     * Employee quick links in the user dropdown.
+     * These are shown only when the logged-in account is linked to an
+     * employee record. The underlying pages enforce their own access rules.
+     */
+    $headerIsEmployee = false;
+
+    try {
+        $headerIsEmployee = (bool)dbFetchOne(
+            "SELECT id FROM employees WHERE user_id = ? LIMIT 1",
+            [$headerUserId]
+        );
+    } catch (Throwable $e) {
+        $headerIsEmployee = false;
+    }
+
 
     /*
      * Get avatar path from database.
@@ -1292,6 +1308,26 @@ if (!empty($akPrintOwnLetterhead)) $akBodyClasses[] = 'ak-print-own';
                                 <i class="fas fa-id-card me-2"></i>
                                 <?php echo e(AK_LANG === 'ar' ? 'الملف الشخصي' : 'Profile'); ?>
                             </a>
+
+                            <?php if ($headerIsEmployee): ?>
+                                <a
+                                    href="<?php echo APP_URL; ?>modules/hr/leaves.php?action=request"
+                                    class="ak-dd-item"
+                                    role="menuitem"
+                                >
+                                    <i class="fas fa-calendar-plus me-2"></i>
+                                    <?php echo e(AK_LANG === 'ar' ? 'طلب إجازة' : 'Leave Request'); ?>
+                                </a>
+
+                                <a
+                                    href="<?php echo APP_URL; ?>modules/hr/salary_advance_request.php"
+                                    class="ak-dd-item"
+                                    role="menuitem"
+                                >
+                                    <i class="fas fa-hand-holding-dollar me-2"></i>
+                                    <?php echo e(AK_LANG === 'ar' ? 'طلب سلفة على الراتب' : 'Salary Advance Request'); ?>
+                                </a>
+                            <?php endif; ?>
 
                             <a
                                 href="<?php echo APP_URL; ?>modules/users/settings.php"
