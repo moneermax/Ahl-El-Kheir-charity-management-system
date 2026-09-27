@@ -1429,3 +1429,8 @@ This is a completed UI cleanup; future Back-button work should continue to use t
 ### Current audit direction
 The Projects deep audit remains the active technical work area. Do not reopen completed expense/payment or closure fixes without regression evidence. The next implementation should be chosen from the unresolved items in the current Projects audit plan after fresh repository/schema inspection, with runtime verification before closure of each work unit.
 
+## 2026-09-27 — Pre-HR Salary Advance Backup Checkpoint
+
+The user confirmed that the current project/repository and database backups have been completed successfully before beginning the new HR Salary Advance feature. This is the recovery checkpoint for the new feature work.
+
+No Salary Advance implementation or schema change has been made at this checkpoint. The agreed design direction is policy-driven: an annual FM-configured Salary Advance Policy provides defaults, while the FM may override/customize the policy terms for an individual request. The existing HR/payroll/accounting implementation must be inspected before any schema or code changes are made.
