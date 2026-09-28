@@ -178,9 +178,11 @@ function hrSalaryAdvanceAccountingDisburse(PDO $pdo, int $requestId, int $userId
         }
 
         $lockedRequest = dbFetchOne(
-            "SELECT r.*, p.require_accounting_verification
+            "SELECT r.*, p.require_accounting_verification,
+                    e.full_name AS employee_name, e.user_id AS employee_user_id
              FROM hr_salary_advance_requests r
              JOIN hr_salary_advance_policy_versions p ON p.id = r.policy_version_id
+             JOIN employees e ON e.id = r.employee_id
              WHERE r.id = ?
              FOR UPDATE",
             [$requestId]
