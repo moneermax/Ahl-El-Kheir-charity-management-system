@@ -123,10 +123,11 @@ function hrSalaryAdvanceValidateRequest(array $input, array $policy = []): array
     ];
 }
 
-function hrSalaryAdvanceGetActiveUnsettledRequest(PDO $pdo, int $employeeId): ?array
+function hrSalaryAdvanceGetActiveUnsettledRequest(PDO $pdo, int $employeeId, bool $allowMultipleActiveAdvances = false): ?array
 {
-    if ($employeeId <= 0) return null;
+    if ($employeeId <= 0 || $allowMultipleActiveAdvances) return null;
 
+    // Policy controls whether another active advance is allowed.
     // Until Stage 4 introduces the disbursement/settlement lifecycle,
     // an approved request is the authoritative active unpaid advance state.
     return dbFetchOne(
