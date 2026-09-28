@@ -44,6 +44,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $reference = trim((string)($_POST['disbursement_reference'] ?? ''));
             $entryId = hrSalaryAdvanceAccountingDisburse($pdo, $requestId, $uid, $cashAccountId, $reference);
             $message = 'تم صرف السلفة وترحيل القيد المحاسبي رقم ' . $entryId . ' بنجاح.';
+        } elseif (isset($_POST['upload_payment_receipt'])) {
+            hrSalaryAdvanceAccountingUploadReceipt(
+                $pdo,
+                $requestId,
+                $uid,
+                $_FILES['payment_receipt'] ?? []
+            );
+            $message = 'تم رفع إيصال الدفع وحفظه في التخزين المحمي.';
         }
     } catch (Throwable $e) {
         $error = $e->getMessage();
@@ -259,6 +267,57 @@ require_once __DIR__ . '/../../includes/header.php';
                 <div class="col-md-6"><strong>المرجع:</strong><br><?php echo e($request['disbursement_reference'] ?? '—'); ?></div>
                 <div class="col-md-6"><strong>الرصيد القائم:</strong><br><?php echo number_format((float)$request['outstanding_balance'], 2); ?> SDG</div>
             </div>
+            <div class="d-flex flex-wrap gap-2 mt-3">
+                <a class="btn btn-outline-primary" target="_blank"
+                   href="<?php echo e(APP_URL . 'modules/hr/salary_advance_voucher_print.php?id=' . (int)$request['id']); ?>">
+                    <i class="fas fa-print me-1"></i>طباعة سند الصرف
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="card fade-in mb-4">
+        <div class="card-header fw-bold">إيصال الدفع</div>
+        <div class="card-body">
+            <?php if (!empty($request['payment_receipt_id'])): ?>
+                <div class="alert alert-success">
+                    تم رفع إيصال الدفع:
+                    <strong><?php echo e($request['payment_receipt_name']); ?></strong>
+                    <?php if (!empty($request['payment_receipt_uploaded_at'])): ?>
+                        — <?php echo e($request['payment_receipt_uploaded_at']); ?>
+                    <?php endif; ?>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                    <a class="btn btn-outline-primary" target="_blank"
+                       href="<?php echo e(APP_URL . 'modules/hr/salary_advance_receipt.php?id=' . (int)$request['payment_receipt_id']); ?>">
+                        <i class="fas fa-file-arrow-up me-1"></i>عرض الإيصال
+                    </a>
+                    <form method="post" enctype="multipart/form-data" class="d-flex flex-wrap gap-2 align-items-center">
+                        <?php echo csrf_field(); ?>
+                        <input type="hidden" name="request_id" value="<?php echo (int)$request['id']; ?>">
+                        <input type="file" name="payment_receipt" class="form-control" accept=".jpg,.jpeg,.png,.pdf" required>
+                        <button type="submit" name="upload_payment_receipt" value="1" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrows-rotate me-1"></i>استبدال الإيصال
+                        </button>
+                    </form>
+                </div>
+            <?php else: ?>
+                <div class="alert alert-warning">لم يتم رفع إيصال الدفع بعد.</div>
+                <form method="post" enctype="multipart/form-data" class="row g-3 align-items-end">
+                    <?php echo csrf_field(); ?>
+                    <input type="hidden" name="request_id" value="<?php echo (int)$request['id']; ?>">
+                    <div class="col-md-8">
+                        <label class="form-label">إيصال الدفع *</label>
+                        <input type="file" name="payment_receipt" class="form-control" accept=".jpg,.jpeg,.png,.pdf" required>
+                        <div class="form-text">JPG / PNG / PDF — بحد أقصى 5 ميجابايت.</div>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="submit" name="upload_payment_receipt" value="1" class="btn btn-success w-100">
+                            <i class="fas fa-upload me-1"></i>رفع الإيصال
+                        </button>
+                    </div>
+                </form>
+            <?php endif; ?>
         </div>
     </div>
     <?php endif; ?>
