@@ -209,3 +209,14 @@ Do not jump to Stage 3 until Stage 2 passes its runtime gate.
   5. Save a harmless change and confirm the same version number is retained.
   6. Verify Delete is available only for an unused future policy; verify active/historical rows are protected.
   7. Then verify the policy activation/request page again on the application's actual date boundary before proceeding to Stage 3 FM review/customization.
+
+## Checkpoint — 2026-09-28: Main-branch consolidation and parse-error correction
+
+- The temporary policy-actions checkpoint was merged into `main` in PR #34.
+- Merge commit: `319d7c3a50bbd24230ba95b7be06da604e26ab99`.
+- A PHP parse regression in `modules/hr/salary_advance_policy.php` was found immediately after the merge: the `create_policy` branch was missing one closing brace before the outer `catch`.
+- The parse error was corrected directly on `main` in commit `b80c9944d5ccd609f73e01868ec05e756d11a063`.
+- No database schema change was made for this correction.
+- The policy activation logic remains intentionally date-based: V1 with `effective_from = 2026-09-29` must not be treated as active before that application date.
+- Before Stage 2 runtime acceptance, pull the latest `main` and verify the policy page loads without a parse error, then verify policy activation at the application's actual date boundary.
+- The Stage 2 request implementation and its migration remain runtime-verification pending; do not advance to Stage 3 until the controlled employee request test passes.
