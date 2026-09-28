@@ -263,7 +263,10 @@ function hrSalaryAdvanceFmPolicyMismatches(PDO $pdo, array $r): array
             "SELECT id FROM hr_salary_advance_requests
              WHERE employee_id = ?
                AND id <> ?
-               AND status IN ('submitted','fm_review','approved')
+               AND (
+                   status IN ('submitted','fm_review','approved')
+                   OR (status = 'disbursed' AND COALESCE(outstanding_balance, 0) > 0)
+               )
              LIMIT 1",
             [(int)$r['employee_id'], (int)$r['id']]
         );
