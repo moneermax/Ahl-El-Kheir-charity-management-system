@@ -144,53 +144,6 @@ require_once __DIR__ . '/../../includes/header.php';
     </div>
 
 
-    <div class="card fade-in mb-4">
-        <div class="card-header fw-bold">سجل السلف المعالجة والطلبات السابقة</div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead>
-                        <tr>
-                            <th>الطلب</th>
-                            <th>الموظف</th>
-                            <th>المبلغ</th>
-                            <th>الحالة</th>
-                            <th>تاريخ المعالجة</th>
-                            <th>الإجراء</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    <?php if (!$history): ?>
-                        <tr><td colspan="6" class="text-center text-muted py-4">لا توجد طلبات معالجة سابقة.</td></tr>
-                    <?php else: foreach ($history as $h): ?>
-                        <?php
-                        $statusMeta = [
-                            'disbursed' => ['تم الصرف', 'success'],
-                            'settled' => ['تمت التسوية', 'primary'],
-                            'rejected' => ['مرفوض', 'danger'],
-                            'cancelled' => ['ملغى', 'secondary'],
-                        ][$h['status']] ?? [$h['status'], 'secondary'];
-                        $processedAt = $h['disbursed_at'] ?: ($h['settled_at'] ?? null);
-                        ?>
-                        <tr>
-                            <td><strong><?php echo e($h['request_no']); ?></strong></td>
-                            <td><?php echo e($h['employee_name']); ?><div class="small text-muted"><?php echo e($h['employee_code']); ?></div></td>
-                            <td><?php echo number_format((float)$h['approved_amount'], 2); ?> SDG</td>
-                            <td><span class="badge bg-<?php echo e($statusMeta[1]); ?>"><?php echo e($statusMeta[0]); ?></span></td>
-                            <td><?php echo e($processedAt ?: '—'); ?></td>
-                            <td>
-                                <a class="btn btn-sm btn-outline-primary" href="<?php echo e(APP_URL . 'modules/hr/salary_advance_accounting.php?id=' . (int)$h['id']); ?>">عرض</a>
-                                <?php if ($h['status'] === 'disbursed' || $h['status'] === 'settled'): ?>
-                                    <a class="btn btn-sm btn-outline-secondary" target="_blank" href="<?php echo e(APP_URL . 'modules/hr/salary_advance_voucher_print.php?id=' . (int)$h['id']); ?>">السند</a>
-                                <?php endif; ?>
-                            </td>
-                        </tr>
-                    <?php endforeach; endif; ?>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
 
     <?php if ($request): ?>
     <div class="card fade-in mb-4">
