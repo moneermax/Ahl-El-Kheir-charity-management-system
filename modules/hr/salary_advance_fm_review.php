@@ -172,13 +172,24 @@ require_once __DIR__ . '/../../includes/header.php';
 <?=csrf_field()?>
 <input type="hidden" name="request_id" value="<?= (int)$request['id']?>">
 <input type="hidden" name="fm_decision_submit" value="1">
-<div class="form-check mb-3"><input class="form-check-input" type="checkbox" name="fm_customized" id="fm_customized" value="1"><label class="form-check-label" for="fm_customized">تخصيص شروط هذا الطلب فقط</label></div>
+<?php if($mismatches): ?>
+<?php if((int)$request['allow_custom_repayment_terms']): ?>
+<div class="alert alert-warning"><strong>الطلب غير متوافق مع السياسة المرجعية.</strong> يجب على FM إما تخصيص شروط هذا الطلب فقط أو رفض الطلب.</div>
+<div class="form-check mb-3">
+<input class="form-check-input" type="checkbox" name="fm_customized" id="fm_customized" value="1" checked>
+<label class="form-check-label" for="fm_customized"><strong>تخصيص شروط هذا الطلب فقط</strong></label>
+</div>
 <div class="row g-3">
 <div class="col-md-3"><label class="form-label">المبلغ المعتمد</label><input type="number" step="0.01" min="0.01" name="approved_amount" class="form-control" value="<?=e((string)$request['requested_amount'])?>"></div>
 <div class="col-md-3"><label class="form-label">طريقة السداد المعتمدة</label><select name="approved_repayment_method" class="form-select"><option value="fixed_monthly">قسط شهري ثابت</option><option value="full_eligible_salary">كامل الراتب المؤهل</option><option value="full_settlement">تسوية كاملة</option><option value="direct_repayment">سداد مباشر</option></select></div>
 <div class="col-md-3"><label class="form-label">القسط الشهري المعتمد</label><input type="number" step="0.01" min="0.01" name="approved_monthly_amount" class="form-control" value="<?=e((string)($request['requested_monthly_amount']??''))?>"></div>
 <div class="col-md-3"><label class="form-label">شهر بدء السداد</label><input type="date" name="approved_start_month" class="form-control" value="<?=e((string)($request['requested_start_month']??''))?>"></div>
 <div class="col-12"><label class="form-label">سبب التخصيص</label><textarea name="fm_customization_reason" class="form-control" rows="2" maxlength="2000"></textarea></div>
+</div>
+<?php else: ?>
+<div class="alert alert-danger">الطلب غير متوافق مع السياسة المرجعية، والسياسة لا تسمح بتخصيص شروط السداد. يمكن رفض الطلب فقط.</div>
+<?php endif; ?>
+<?php endif; ?>
 <div class="col-md-6"><label class="form-label">سبب الرفض <span class="text-muted">(مطلوب عند الرفض)</span></label><textarea name="fm_rejection_reason" class="form-control" rows="2" maxlength="2000"></textarea></div>
 <div class="col-12 d-flex gap-2">
 <button class="btn btn-success" name="decision" value="approve" type="submit">اعتماد الطلب</button>
