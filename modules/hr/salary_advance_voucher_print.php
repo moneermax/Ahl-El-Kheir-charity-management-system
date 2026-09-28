@@ -122,7 +122,6 @@ echo row('مرجع الصرف', 'Disbursement Reference', (string)($r['disbursem
 echo row('القيد المحاسبي', 'Journal Entry', (string)$r['entry_code'], true);
 ?>
 </table>
-<div class="journal"><strong>المعالجة المحاسبية / Accounting Treatment:</strong><br>مدين 1410 — ذمم سلف الموظفين &nbsp; / &nbsp; دائن <?php echo e((string)$r['cash_code']); ?> — <?php echo e((string)$r['cash_name']); ?></div>
 <div class="sign"><div>المستفيد / Employee<br><br>التوقيع: __________________</div><div>المُعد / Prepared by<br><br><?php echo e($r['disburser_name'] ?? ''); ?></div><div>المدير المالي / Financial Manager<br><br>التوقيع: __________________</div></div>
 <footer class="foot"><span>تمت الطباعة بواسطة: <?php echo e($printedBy); ?></span><span>حالة السند: مرحّل / Posted</span><span>القيد: <?php echo e($r['entry_code']); ?></span></footer>
 </section>
