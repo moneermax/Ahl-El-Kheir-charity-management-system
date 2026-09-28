@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-28  
 **Repository:** `moneermax/Ahl-El-Kheir-charity-management-system`  
-**Branch:** `main`  
+**Branch:** `feature/hr-salary-advance-stage4-accounting`  
 **Active area:** HR / Salary Advance  
 **Current stage:** Stage 4 — Accounting Verification & Disbursement (implementation prepared; runtime verification pending)
 
@@ -464,9 +464,11 @@ Reserved scope:
 
 `feature/hr-salary-advance-stage4-accounting`
 
-Latest Stage 4 implementation commit before documentation update:
+Latest Stage 4 implementation commit:
 
 `5ef4c7d144c38fdcd701b269e6b6b540d9e94c53`
+
+Documentation checkpoint commit: `322557364fbd19cc26a879743d48eb15f5bc869c`
 
 **Immediate next task:** review the prepared Stage 4 files, apply the Stage 4 migration in the controlled local development database, and run the Stage 4 runtime/reconciliation gate above.
 
