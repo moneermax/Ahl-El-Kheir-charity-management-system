@@ -71,14 +71,6 @@ $active = 'fm_dashboard';
 require_once __DIR__ . '/../../includes/header.php';
 ?>
 <div class="container-fluid py-2">
-    <div class="d-flex justify-content-start mb-3">
-        <a href="<?php echo e(APP_URL . 'modules/accounting/fm_dashboard.php'); ?>"
-           class="btn btn-outline-secondary"
-           onclick="return akGoBack(this.href);">
-            <i class="fas fa-arrow-right me-1"></i> العودة
-        </a>
-    </div>
-
     <div class="welcome-section fade-in">
         <h2><i class="fas fa-hand-holding-dollar me-2"></i><?php echo e($pageTitle); ?></h2>
         <p class="mb-0">
@@ -273,12 +265,5 @@ require_once __DIR__ . '/../../includes/header.php';
 
     <?php endif; ?>
 
-    <div class="d-flex justify-content-start mt-4 mb-4">
-        <a href="<?php echo e(APP_URL . 'modules/accounting/fm_dashboard.php'); ?>"
-           class="btn btn-outline-secondary"
-           onclick="return akGoBack(this.href);">
-            <i class="fas fa-arrow-right me-1"></i> العودة
-        </a>
-    </div>
 </div>
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>
