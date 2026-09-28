@@ -9,10 +9,14 @@ require_once dirname(__DIR__, 2) . '/modules/accounting/lib_vouchers.php';
 
 Session::start();
 
-if (!Session::isLoggedIn() || !in_array((string)Session::getUserRole(), ['admin','financial_manager','accountant_staff','general_manager','vice_general_manager'], true)) {
+if (!Session::isLoggedIn()) {
     header('Location: ' . APP_URL . 'index.php');
     exit;
 }
+
+$role = (string)Session::getUserRole();
+$allowedRoles = ['admin','financial_manager','accountant_staff','general_manager','vice_general_manager'];
+$isPrivileged = in_array($role, $allowedRoles, true);
 
 $requestId = (int)($_GET['id'] ?? 0);
 if ($requestId <= 0) {
@@ -47,6 +51,25 @@ if (!$r || empty($r['entry_code'])) {
     exit('Salary advance voucher not found');
 }
 
+if (!$isPrivileged) {
+    $employeeAccess = dbFetchOne(
+        "SELECT e.id
+         FROM employees e
+         WHERE e.user_id = ? AND e.id = (
+             SELECT employee_id
+             FROM hr_salary_advance_requests
+             WHERE id = ?
+             LIMIT 1
+         )
+         LIMIT 1",
+        [(int)Session::getUserId(), $requestId]
+    );
+    if (!$employeeAccess) {
+        http_response_code(403);
+        exit('Forbidden');
+    }
+}
+
 $amount = (float)$r['approved_amount'];
 $words = ak_voucher_amount_words($amount);
 $printedBy = (string)(dbFetchOne("SELECT full_name FROM users WHERE id = ?", [(int)Session::getUserId()])['full_name'] ?? '');
@@ -77,7 +100,7 @@ function row(string $ar, string $en, string $value, bool $strong = false): strin
 </style>
 </head>
 <body>
-<div class="controls"><button class="btn primary" onclick="window.print()">طباعة السند / Print</button><?php if ($receiptUrl): ?><a class="btn" href="<?php echo e($receiptUrl); ?>" target="_blank">عرض إيصال الدفع</a><?php endif; ?></div>
+<div class="controls"><button class="btn primary" onclick="window.print()">طباعة السند / Print</button></div>
 <main class="sheet">
 <section class="voucher">
 <header class="head">
@@ -100,7 +123,6 @@ echo row('القيد المحاسبي', 'Journal Entry', (string)$r['entry_code'
 ?>
 </table>
 <div class="journal"><strong>المعالجة المحاسبية / Accounting Treatment:</strong><br>مدين 1410 — ذمم سلف الموظفين &nbsp; / &nbsp; دائن <?php echo e((string)$r['cash_code']); ?> — <?php echo e((string)$r['cash_name']); ?></div>
-<div class="receipt"><strong>إيصال الدفع / Payment Receipt:</strong> <?php echo $r['receipt_id'] ? 'مرفق ومحفوظ في التخزين المحمي.' : 'لم يتم رفع الإيصال بعد.'; ?></div>
 <div class="sign"><div>المستفيد / Employee<br><br>التوقيع: __________________</div><div>المُعد / Prepared by<br><br><?php echo e($r['disburser_name'] ?? ''); ?></div><div>المدير المالي / Financial Manager<br><br>التوقيع: __________________</div></div>
 <footer class="foot"><span>تمت الطباعة بواسطة: <?php echo e($printedBy); ?></span><span>حالة السند: مرحّل / Posted</span><span>القيد: <?php echo e($r['entry_code']); ?></span></footer>
 </section>
