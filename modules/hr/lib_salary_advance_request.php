@@ -68,7 +68,21 @@ function hrSalaryAdvanceValidateEmployeeEligibility(array $employee, array $poli
     return $errors;
 }
 
-function hrSalaryAdvanceValidateRequest(array $input, array $policy): array
+function hrSalaryAdvancePolicyGetRequestReference(PDO $pdo): ?array
+{
+    $active = hrSalaryAdvancePolicyGetActive($pdo);
+    if ($active) return $active;
+
+    return dbFetchOne(
+        "SELECT * FROM hr_salary_advance_policy_versions
+         WHERE effective_from > ?
+         ORDER BY effective_from ASC, version_no ASC
+         LIMIT 1",
+        [date('Y-m-d')]
+    );
+}
+
+function hrSalaryAdvanceValidateRequest(array $input, array $policy = []): array
 {
     $amount = (float)($input['requested_amount'] ?? 0);
     $method = trim((string)($input['requested_repayment_method'] ?? ''));
@@ -77,35 +91,14 @@ function hrSalaryAdvanceValidateRequest(array $input, array $policy): array
     $reason = trim((string)($input['request_reason'] ?? '')) ?: null;
 
     if ($amount <= 0) throw new InvalidArgumentException('مبلغ السلفة المطلوب يجب أن يكون أكبر من صفر.');
-    if (!(int)$policy['allow_any_request_amount']) {
-        $min = $policy['minimum_request_amount'] !== null ? (float)$policy['minimum_request_amount'] : null;
-        $max = $policy['maximum_request_amount'] !== null ? (float)$policy['maximum_request_amount'] : null;
-        if ($min !== null && $amount < $min) throw new InvalidArgumentException('مبلغ السلفة أقل من الحد الأدنى المسموح به في السياسة.');
-        if ($max !== null && $amount > $max) throw new InvalidArgumentException('مبلغ السلفة يتجاوز الحد الأقصى المسموح به في السياسة.');
-    }
-
-    $allowedMethods = [
-        'fixed_monthly' => 'allow_fixed_monthly_repayment',
-        'full_eligible_salary' => 'allow_full_eligible_salary_repayment',
-        'full_settlement' => 'allow_full_settlement_from_salary',
-        'direct_repayment' => 'allow_direct_repayment',
-    ];
-    if (!isset($allowedMethods[$method]) || !(int)$policy[$allowedMethods[$method]]) {
-        throw new InvalidArgumentException('طريقة السداد المختارة غير مسموحة في السياسة السارية.');
+    $allowedMethods = ['fixed_monthly', 'full_eligible_salary', 'full_settlement', 'direct_repayment'];
+    if (!in_array($method, $allowedMethods, true)) {
+        throw new InvalidArgumentException('طريقة السداد المختارة غير صالحة.');
     }
 
     if ($method === 'fixed_monthly') {
         if ($monthly === null || $monthly <= 0) throw new InvalidArgumentException('يجب تحديد قيمة القسط الشهري.');
         if ((float)$monthly > $amount) throw new InvalidArgumentException('القسط الشهري لا يمكن أن يتجاوز مبلغ السلفة.');
-        if ($policy['maximum_monthly_deduction'] !== null && $monthly > (float)$policy['maximum_monthly_deduction']) {
-            throw new InvalidArgumentException('القسط الشهري يتجاوز الحد الأقصى للخصم الشهري في السياسة.');
-        }
-        if ($policy['maximum_repayment_months'] !== null) {
-            $months = (int)ceil($amount / $monthly);
-            if ($months > (int)$policy['maximum_repayment_months']) {
-                throw new InvalidArgumentException('القسط المقترح يؤدي إلى مدة سداد تتجاوز الحد الأقصى في السياسة.');
-            }
-        }
     } else {
         $monthly = null;
     }
@@ -115,11 +108,6 @@ function hrSalaryAdvanceValidateRequest(array $input, array $policy): array
         if (!$d || $d->format('Y-m-d') !== $startMonth || $startMonth < date('Y-m-01')) {
             throw new InvalidArgumentException('شهر بدء السداد غير صالح.');
         }
-        if (($policy['repayment_start_rule'] ?? 'next_payroll') === 'next_payroll' && $startMonth !== date('Y-m-01', strtotime('+1 month'))) {
-            throw new InvalidArgumentException('السياسة تحدد بدء السداد مع المسير التالي.');
-        }
-    } elseif (($policy['repayment_start_rule'] ?? 'next_payroll') === 'specified_month') {
-        throw new InvalidArgumentException('يجب تحديد شهر بدء السداد.');
     }
 
     if (mb_strlen($reason ?? '', 'UTF-8') > 2000) {
