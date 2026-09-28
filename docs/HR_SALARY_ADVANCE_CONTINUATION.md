@@ -4,307 +4,470 @@
 **Repository:** `moneermax/Ahl-El-Kheir-charity-management-system`  
 **Branch:** `main`  
 **Active area:** HR / Salary Advance  
-**Current stage:** Stage 3 — FM Review and Per-Request Customization (implementation ready; runtime verification pending)
+**Current stage:** Stage 4 — Accounting Verification & Disbursement (implementation prepared; runtime verification pending)
 
 ## Purpose
 
-This document records the current Salary Advance development state so a new ChatGPT session can continue from the exact point reached without reopening unrelated completed work.
+This document is the continuation checkpoint for the Salary Advance feature. It records the completed stages, verified runtime evidence, the Stage 4 accounting design decision, the implementation now prepared on the Stage 4 feature branch, and the exact next runtime gate.
 
-The Salary Advance feature is a dedicated HR workflow. It integrates with the existing payroll/accounting engines later; it must not be folded into the existing payroll-policy calculation engine or implemented as an unrelated parallel accounting system.
+Do not reopen Stages 1–3 unless a genuine regression is found.
 
-## Stage 1 — Salary Advance Policy Foundation
+---
 
-**Status: COMPLETE for the current development boundary.**
+## Overall staged plan
 
-Stage 1 established the versioned Salary Advance policy foundation and the FM policy-management UI.
+1. **Stage 1 — Salary Advance Policy Foundation: DONE**
+2. **Stage 2 — Employee Salary Advance Request: DONE / RUNTIME VERIFIED**
+3. **Stage 3 — FM Review & Per-Request Customization: DONE / RUNTIME VERIFIED**
+4. **Stage 4 — Accounting Verification & Disbursement: IMPLEMENTATION PREPARED / RUNTIME VERIFICATION OPEN**
+5. Stage 5 — Repayment Schedule + Payroll Integration: NOT STARTED
+6. Stage 6 — Direct Repayment & Settlement: NOT STARTED
+7. Stage 7 — Exceptional Lifecycle Cases: NOT STARTED
+8. Stage 8 — Reporting / Audit / Hardening: NOT STARTED
 
-Implemented repository components:
+The project completion gate remains:
+
+`Implementation committed → migration committed where required → runtime-tested → reconciliation verified where applicable → no known regression → documentation updated → exact next continuation point recorded`
+
+---
+
+# Stage 1 — Salary Advance Policy Foundation
+
+**Status: DONE**
+
+Implemented:
 
 - `database/migrations/2026-09-27_hr_salary_advance_policy.sql`
 - `modules/hr/lib_salary_advance_policy.php`
 - `modules/hr/salary_advance_policy.php`
 
-The policy model supports:
+Policy capabilities include:
 
-- annual/versioned policies;
-- any-amount requests or configurable minimum/maximum amounts;
-- multiple-active-advance rule;
+- versioned policies;
+- amount rules;
+- multiple-active-advance control;
 - fixed monthly repayment;
-- full eligible-salary repayment;
+- full eligible salary repayment;
 - full settlement from salary;
 - direct repayment;
-- per-request customization permission;
+- request-level customization;
 - maximum monthly deduction;
-- maximum repayment period;
+- maximum repayment months;
 - repayment start rule;
-- insufficient-salary behavior;
-- eligible salary basis;
-- minimum service period;
-- probation eligibility;
-- terminated-employee rule;
-- mandatory accounting verification;
+- employee eligibility;
+- accounting verification;
 - early settlement.
 
-Relevant implementation commits already recorded in the prior checkpoint:
+Current tested policy:
 
-- Migration: `5426c288e5e049c81021f27a225e3d7c2a0d277d`
-- Policy library: `cb9e0169a093e5b911effacf3321800209910a59`
-- Policy UI: `740e9ec940b69cd459fb1280570ed39b826fd910`
-- Earlier documentation checkpoint: `9ddc2dae6d47068a6b3a30704c2cf1d5f30dcfcf`
+- V1
+- effective date: `2026-09-29`
+- `allow_multiple_active_advances = 0`
+- request-level customization enabled
 
-The user has now confirmed that the Stage 1 work we were originally completing is done. Do not reopen Stage 1 unless a genuine regression is found.
+The future-effective policy rule is intentionally preserved. V1 must not be treated as active before its effective date.
 
-## Stage 2 — Employee Salary Advance Request Foundation
+Policy actions were merged to main in PR #34:
 
-**Status: RUNTIME VERIFIED.**
+`319d7c3a50bbd24230ba95b7be06da604e26ab99`
 
-Current repository components include:
+The subsequent policy-page parse correction is:
+
+`b80c9944d5ccd609f73e01868ec05e756d11a063`
+
+Do not reopen Stage 1.
+
+---
+
+# Stage 2 — Employee Salary Advance Request
+
+**Status: DONE / RUNTIME VERIFIED**
+
+Implemented:
 
 - `database/migrations/2026-09-27_hr_salary_advance_request.sql`
 - `modules/hr/lib_salary_advance_request.php`
 - `modules/hr/salary_advance_request.php`
 
-The request table stores the employee, request number, policy version, requested amount, requested repayment method, optional monthly amount, requested start month, reason, status, submitter, and timestamps.
+Business boundary:
 
-The request implementation currently provides:
+- The employee submits the original requested terms.
+- The request preserves those values.
+- Policy compliance is reviewed by FM.
+- Employee submission does not silently rewrite the request to policy defaults.
+- A future policy can be stored as the request reference without being treated as active.
 
-1. Employee resolution through the existing user-to-employee linkage.
-2. Active-policy resolution.
-3. Employee eligibility validation.
-4. Server-side request amount validation.
-5. Server-side repayment-method validation against the active policy.
-6. Fixed-monthly repayment validation, including monthly-deduction and maximum-term rules where configured.
-7. Start-month validation according to the policy start rule.
-8. Multiple-active-request protection when disabled by policy.
-9. Policy-version capture on the request so later policy changes do not rewrite the original request.
-10. Request-number generation using the existing request table sequence.
-11. Employee-facing display of previous requests and their lifecycle status.
-12. Submission toward FM review through the existing notification infrastructure.
+Runtime evidence:
 
-## Important architectural checkpoint
+### `SAR-2026-00001`
 
-The employee request must remain the employee's original request.
+Employee: `فاطمة سليمان`
 
-The later FM-review stage will be responsible for reviewing and, where policy permits, customizing the request. Do not silently overwrite the employee's submitted values during request creation.
+Verified:
 
-Policy defaults are organizational defaults. They do not eliminate the need for server-side validation at request submission and again at FM review/approval.
+- request submitted;
+- request number generated;
+- request stored;
+- FM notification delivered as unread/new;
+- original request preserved;
+- no accounting posting;
+- no payroll posting.
 
-## Stage 2 runtime verification — PASSED
+### Active-advance control
 
-The controlled runtime test was completed on 2026-09-28.
+The policy field `allow_multiple_active_advances` controls whether another request may be submitted while an existing advance remains active/unsettled.
 
-- Employee successfully submitted request `SAR-2026-00001`.
-- Employee page reported successful submission to FM.
-- FM dashboard showed the notification as unread/new.
-- Notification text identified the request and employee `فاطمه سليمان`.
-- No accounting or payroll posting was performed by submission.
-- The employee page no longer exposes the policy-reference details.
-- Policy-compliance rules such as multiple-active-request handling are deferred to FM review rather than blocking employee submission.
+Runtime evidence:
 
-Therefore Stage 2 has passed its runtime gate. Do not repeat the successful submission test unless a regression appears.
+### `SAR-2026-00004`
 
-## Stage 2 runtime gate
+A second request was correctly blocked while the prior approved advance was still active under the temporary pre-Stage-4 lifecycle.
 
-Do **not** mark Stage 2 complete yet.
+PR #43 merged this policy-controlled active-advance behavior:
 
-Before completion, perform a controlled runtime test covering at minimum:
+`6e9299cf4ecec2c4cbdee5f0502f61d0d78c37ab`
 
-1. Apply/verify the Stage 2 migration in the local development database.
-2. Confirm an existing active employee has a valid linked user account.
-3. Confirm an active Salary Advance policy is available.
-4. Open `modules/hr/salary_advance_request.php` as the employee.
-5. Verify the employee sees only their own employee/request context.
-6. Submit one controlled salary-advance request.
-7. Verify the request is stored with the correct employee ID and active policy version.
-8. Verify the submitted amount, repayment method, monthly amount/start month, and reason are preserved exactly.
-9. Verify the request status is initially `submitted`.
-10. Verify the FM notification is created through the intended existing notification mechanism.
-11. Verify invalid values are rejected server-side, not only by HTML controls.
-12. Verify the multiple-active-request rule when it is disabled by policy.
-13. Verify no unrelated payroll/accounting result is changed by merely submitting the request.
+Stage 4 now replaces the temporary `approved = active/unpaid` assumption with the real disbursement/outstanding-balance lifecycle.
 
-Use controlled test data only. Do not modify historical payroll/accounting evidence merely to make the test pass.
+Do not repeat the successful Stage 2 tests unless a regression appears.
 
-## Specific inspection required before runtime acceptance
+---
 
-The current employee-request page calls:
+# Stage 3 — FM Review & Per-Request Customization
 
-`ak_transaction_review_notify_fm_event()`
+**Status: DONE / RUNTIME VERIFIED**
 
-for the FM notification.
+Implemented:
 
-Before accepting this as final architecture, inspect the helper and its existing callers. Confirm that reusing this notification infrastructure is appropriate for an HR salary-advance request and does not accidentally imply accounting transaction authority or create incorrect notification semantics.
+- `database/migrations/2026-09-28_hr_salary_advance_fm_review.sql`
+- `modules/hr/salary_advance_fm_review.php`
+- FM review helpers in `modules/hr/lib_salary_advance_request.php`
+- FM dashboard review shortcut
+- employee decision notifications
+- FM audit logging
 
-Do not replace it speculatively. Inspect first, then fix narrowly if necessary.
+Main merge:
 
-## Stage 3 — FM Review and Per-Request Customization
+`3ca61875dbad96df4f4586827fc61a87689fc37f`
 
-**Status: IMPLEMENTED ON A FEATURE BRANCH; RUNTIME VERIFICATION PENDING.**
+Related completed fixes:
 
-Feature branch: `feature/hr-salary-advance-fm-review`
+- customization visibility: `5c8b9c5528ad2dacae9e9f967e75789a63a96ea0`
+- employee notification recipient mapping: `76ca4224c8b38ed545b83e201eb9699cb9a0e771`
+- notification regression/schema compatibility: `e3d378e33238cc291c82c301041e35de8667bd8f`
 
-Stage 3 implementation currently includes:
+## Verified compliant approval
 
-- migration `database/migrations/2026-09-28_hr_salary_advance_fm_review.sql` for FM decision/customization fields;
-- FM-only review page `modules/hr/salary_advance_fm_review.php`;
-- FM review helpers in `modules/hr/lib_salary_advance_request.php`;
-- FM dashboard shortcut to the review queue;
-- employee submission notification link directed to the FM review page;
-- preservation of all employee-requested values;
-- policy mismatch comparison at FM review;
-- request-level customization without modifying the general policy;
-- approve/reject decision with required rejection reason;
-- employee notification after a committed FM decision;
-- audit-log entry for the FM decision;
-- no accounting disbursement or payroll posting during FM review.
+`SAR-2026-00001`
 
-The implementation intentionally separates the original employee request from FM-approved terms. If the request does not comply with the referenced policy, FM must either customize the request (when the policy permits request-level customization) or reject it. A non-customized request with policy mismatches cannot be approved.
+FM approved successfully.
 
-**Runtime gate for Stage 3:** apply the migration, open the FM review page from the new notification, verify the original request is preserved, test a matching approval, test a rejected request with reason, and test a request-level customization. Confirm the annual policy record is unchanged and no accounting/payroll posting occurs.
+Employee notification was delivered.
 
-## Next development stage
+No accounting/payroll posting occurred during FM review.
 
-After Stage 2 runtime verification passes:
+## Verified mismatch + customization
 
-### Stage 3 — FM Review and Per-Request Customization
+`SAR-2026-00004`
 
-Expected scope:
+Employee: `أحمد حسين`
 
-- FM-only review authorization using the existing FM roles/access model;
-- request review screen;
-- employee-submitted values displayed as the original request;
-- permitted FM customization according to the active policy;
-- approval/rejection workflow;
-- rejection reason;
-- preservation of the employee's original request and FM decision separately;
-- correct notification back to the employee;
-- accounting-verification gate before any financial disbursement stage;
-- no premature payroll/accounting posting during review.
+Amount: `50,000 SDG`
 
-Do not implement repayment schedules, payroll deductions, direct repayment settlement, or accounting disbursement posting as part of Stage 2. Those belong to later stages.
+Monthly repayment: `5,000 SDG`
 
-## Overall Salary Advance staged plan
+Start: `2026-11-01`
 
-1. **Stage 1 — Policy foundation:** COMPLETE.
-2. **Stage 2 — Employee request:** IMPLEMENTED; runtime verification OPEN.
-3. **Stage 3 — FM review and per-request customization:** IMPLEMENTED; runtime verification OPEN.
-4. **Stage 4 — Accounting verification and disbursement:** NOT STARTED.
-5. **Stage 5 — Repayment schedule + payroll integration:** NOT STARTED.
-6. **Stage 6 — Direct repayment and settlement:** NOT STARTED.
-7. **Stage 7 — Exceptional lifecycle cases:** NOT STARTED.
-8. **Stage 8 — Reporting, audit, and hardening:** NOT STARTED.
+Mismatch detected:
 
-Every stage must satisfy the project completion gate:
+`شهر بدء السداد لا يطابق قاعدة بدء السداد في السياسة.`
 
-`Implementation committed → migration committed where required → runtime-tested → reconciliation verified where applicable → no known regression → documentation updated → exact next continuation point recorded`
+FM customized and approved the individual request.
 
-## Project-wide rules that remain in force
+The original employee request remained preserved and the general policy remained unchanged.
 
-- Existing project only; do not rebuild or start a new project.
-- Inspect the repository and actual schema before changing code or SQL.
-- Never invent table or column names.
-- Database structure changes belong in migration files.
-- No runtime `CREATE TABLE`, `ALTER TABLE`, triggers, or views.
-- Do not use destructive Git operations (`reset --hard`, `clean`, `restore`, force-push, etc.).
-- Preserve intentional local work and protected test evidence.
-- Server-side authorization is the security boundary.
-- Do not repeat closed tests unless genuine regression evidence appears.
-- Keep Arabic RTL UI and the existing application architecture.
-- Use procedural PHP; do not introduce OOP into this project.
-- Do not modify verified payroll/accounting results merely to facilitate testing.
-- Documentation is part of implementation.
+No accounting/payroll posting occurred.
 
-## Exact continuation point
+## Verified rejection
 
-**Stage 1 Salary Advance Policy Foundation: COMPLETE.**
+`SAR-2026-00006`
 
-**Stage 2 Employee Salary Advance Request Foundation: RUNTIME VERIFIED.**
+Employee: `ميادة الحبر`
 
-**Stage 3 FM Review and Per-Request Customization: IMPLEMENTED ON FEATURE BRANCH, RUNTIME VERIFICATION OPEN.**
+Code: `EMP-0020`
 
-**Immediate next task:** inspect the current Stage 2 implementation and the existing `ak_transaction_review_notify_fm_event()` notification helper/callers, then apply/verify the Stage 2 migration and perform the first controlled employee request runtime test.
+Basic salary at test time: `0.00 SDG`
 
-Do not jump to Stage 3 until Stage 2 passes its runtime gate.
+Original request:
 
+- Amount: `60,000 SDG`
+- Repayment: `قسط شهري ثابت`
+- Monthly amount: `5,000 SDG`
+- Start month: `2026-11-01`
+- Reason: `policy rejection test`
 
-## Checkpoint — 2026-09-28: Stage 2 request runtime issue + policy actions
+FM detected:
 
-- Stage 1 policy foundation remains complete.
-- Stage 2 employee salary-advance request implementation remains complete in repository; runtime verification is still pending.
-- The current policy record reported during testing is V1 with `effective_from = 2026-09-29`.
-- `config/config.php` centrally sets the application timezone to `Africa/Khartoum`; therefore policy activation uses the application date from that timezone. A policy dated 2026-09-29 is not active while the application date is 2026-09-28. Do not weaken the future-effective policy rule merely to hide this date difference.
-- Added checkpoint branch: `checkpoint/hr-salary-advance-policy-actions`.
-- Added safe Edit/Delete actions to `modules/hr/salary_advance_policy.php`.
-- Safety rules:
-  - Only future policy versions can be edited or deleted.
-  - A policy linked to any `hr_salary_advance_requests` record cannot be edited/deleted.
-  - Active or historical policies are protected; use a new policy version instead of rewriting historical/current policy records.
-  - Edit preserves all existing policy values in the form before saving.
-  - Delete requires CSRF protection and an explicit browser confirmation.
-- No schema change, runtime DDL, trigger, or view was added.
-- Next runtime verification:
-  1. Pull/use the checkpoint changes.
-  2. Open salary advance policy page as FM.
-  3. Confirm the existing future V1 row shows Edit and Delete actions.
-  4. Open Edit and verify every policy field is pre-populated exactly.
-  5. Save a harmless change and confirm the same version number is retained.
-  6. Verify Delete is available only for an unused future policy; verify active/historical rows are protected.
-  7. Then verify the policy activation/request page again on the application's actual date boundary before proceeding to Stage 3 FM review/customization.
+`شهر بدء السداد لا يطابق قاعدة بدء السداد في السياسة.`
 
-## Checkpoint — 2026-09-28: Main-branch consolidation and parse-error correction
+FM rejected the request.
 
-- The temporary policy-actions checkpoint was merged into `main` in PR #34.
-- Merge commit: `319d7c3a50bbd24230ba95b7be06da604e26ab99`.
-- A PHP parse regression in `modules/hr/salary_advance_policy.php` was found immediately after the merge: the `create_policy` branch was missing one closing brace before the outer `catch`.
-- The parse error was corrected directly on `main` in commit `b80c9944d5ccd609f73e01868ec05e756d11a063`.
-- No database schema change was made for this correction.
-- The policy activation logic remains intentionally date-based: V1 with `effective_from = 2026-09-29` must not be treated as active before that application date.
-- Before Stage 2 runtime acceptance, pull the latest `main` and verify the policy page loads without a parse error, then verify policy activation at the application's actual date boundary.
-- The Stage 2 request implementation and its migration remain runtime-verification pending; do not advance to Stage 3 until the controlled employee request test passes.
+Employee side displayed the request as rejected.
 
+## Protected notification decision
 
-## Checkpoint — 2026-09-28: Corrected employee-request / policy relationship
+PR #40 added `database/migrations/2026-09-28_notifications_workflow_references.sql`.
 
-The intended business workflow was clarified and the Stage 2 boundary was corrected accordingly.
+The user explicitly instructed:
 
-The general Salary Advance policy is an organizational default/framework. It does **not** mean an employee request must exactly match the policy before the employee is allowed to submit it.
+**DO NOT APPLY PR #40's notification migration.**
 
-Correct workflow:
+That decision remains in force.
 
-1. Employee submits the request with the amount and repayment terms they are requesting.
-2. The system preserves the employee's original request.
-3. FM reviews the request against the general policy.
-4. If it matches the policy, FM may process it normally and approve or reject it.
-5. If it does not match, FM may either reject it or customize the terms for that individual request and then approve/reject it.
-6. A request-level customization must never silently modify the annual/system-wide policy.
+The current notification implementation was corrected without applying that migration.
 
-Implementation correction on branch `fix/hr-salary-advance-request-policy-flow`:
+Do not reopen Stage 3.
 
-- `modules/hr/lib_salary_advance_request.php`
-  - Added `hrSalaryAdvancePolicyGetRequestReference()`.
-  - Uses the active policy when one is effective.
-  - If no policy is currently effective, uses the nearest published future policy as the request reference.
-  - Employee submission validation is now structural only; policy-compliance rules are intentionally deferred to FM review.
-  - The employee's requested amount, repayment method, monthly amount, and start month are preserved rather than rejected merely because they differ from the general policy.
-- `modules/hr/salary_advance_request.php`
-  - The page now shows the policy as a reference rather than blocking the request because its effective date is tomorrow.
-  - A future policy is visibly identified as a future reference.
-  - The employee can submit the request before the policy effective date.
-  - The request stores the referenced policy version for later FM comparison.
-  - No accounting/payroll posting is performed at submission.
+---
 
-This correction does **not** weaken the annual policy itself and does not make a future policy legally/effectively active early. It only separates request submission from FM policy compliance review.
+# Stage 4 — Accounting Verification & Disbursement
 
-Stage 2 remains runtime-verification pending.
+**Status: IMPLEMENTATION PREPARED / RUNTIME VERIFICATION OPEN**
 
-Immediate runtime test after pulling this branch:
-- Open `modules/hr/salary_advance_request.php` while V1 is still future-dated.
-- Confirm V1 is shown as **السياسة المرجعية** and marked **سياسة مستقبلية**.
-- Confirm the employee request form is available.
-- Submit one controlled request.
-- Verify the request is stored against V1, status is `submitted`, and the original requested values are preserved.
-- Verify the FM notification is created.
-- Verify no payroll/accounting transaction is posted.
-- Then proceed to FM review design, where policy matching and request-level customization will be implemented.
+## Root-cause/design conclusion
 
-Do not treat a future policy as active merely because it is used as the request reference.
+The existing accounting architecture uses:
+
+- `accounts`
+- `journal_entries`
+- `journal_lines`
+- double-entry posting;
+- `journal_entries.reference_type` + `reference_id` for source traceability.
+
+Existing cash-source accounts:
+
+- `1100` — الصندوق (نقدي)
+- `1200` — البنك
+- `1300` — المحافظ الإلكترونية
+
+Existing generic receivable:
+
+- `1400` — ذمم مدينة (مستحقات قبض)
+
+The existing payment-voucher implementation is **not suitable** for salary advances because it deliberately requires an expense account as the counter-account and posts:
+
+`Dr expense / Cr cash`
+
+That would incorrectly recognize a salary advance as an expense.
+
+The correct salary-advance disbursement is:
+
+`Dr employee salary-advance receivable / Cr cash, bank, or e-wallet`
+
+The existing Fina implementation also demonstrates that the accounting architecture supports dedicated control accounts for specialized balances rather than forcing every balance into a generic account.
+
+### Accounting conclusion
+
+A dedicated salary-advance control account is required:
+
+- **1410 — ذمم سلف الموظفين**
+- **Employee Salary Advances Receivable**
+- account type: **asset**
+
+This keeps salary advances separate from:
+
+- ordinary expenses;
+- generic receivables;
+- payroll expense;
+- cash/bank/wallet balances.
+
+The employee/request relationship remains in the HR salary-advance record, while account 1410 provides the accounting control balance.
+
+## Stage 4 lifecycle
+
+The request lifecycle is now extended to support:
+
+`approved → disbursed → settled`
+
+The Stage 4 implementation records:
+
+- accounting verification status;
+- accounting verifier/time;
+- accounting rejection reason;
+- disburser/time;
+- disbursement source account;
+- disbursement journal entry;
+- disbursement reference;
+- outstanding balance;
+- future settlement actor/time fields.
+
+Stage 4 implements only the **approved → disbursed** transition.
+
+Repayment schedules, payroll deductions, direct repayment, and settlement logic remain later stages.
+
+## Stage 4 implementation prepared
+
+Feature branch:
+
+`feature/hr-salary-advance-stage4-accounting`
+
+Prepared files:
+
+- `database/migrations/2026-09-28_hr_salary_advance_accounting.sql`
+- `modules/hr/lib_salary_advance_accounting.php`
+- `modules/hr/salary_advance_accounting.php`
+
+The FM dashboard salary-advance shortcut now points to the accounting verification/disbursement workflow.
+
+The active-advance helper in `modules/hr/lib_salary_advance_request.php` was updated so that:
+
+- an approved request still reserves the employee from submitting another request before disbursement;
+- a disbursed request blocks another request only while `outstanding_balance > 0`;
+- a disbursed request with zero outstanding balance no longer counts as active;
+- the old assumption that `status='approved'` alone means an unpaid advance is no longer the long-term lifecycle rule.
+
+## Stage 4 accounting posting
+
+When the policy requires accounting verification:
+
+1. FM approval produces `status='approved'`.
+2. Accounting verifies the request.
+3. A valid cash source is selected from `1100/1200/1300`.
+4. Available balance is checked.
+5. A dedicated journal entry is created with:
+   - `reference_type = 'salary_advance_disbursement'`
+   - `reference_id = salary advance request ID`
+6. Journal lines are:
+   - Debit `1410` — Employee Salary Advances Receivable
+   - Credit selected cash/bank/e-wallet account
+7. The request becomes `disbursed`.
+8. `outstanding_balance` is initialized to the actual disbursed amount.
+9. The employee receives a disbursement notification.
+10. No expense account is used.
+11. No ordinary payment voucher is created.
+
+The operation is transactional and uses the existing accounting numbering/locking convention.
+
+## Stage 4 runtime gate
+
+Before marking Stage 4 complete, perform a controlled runtime test after applying the migration:
+
+1. Verify migration application succeeds.
+2. Verify account `1410` exists exactly once and is an active asset account.
+3. Open the FM salary-advance accounting workflow.
+4. Confirm an FM-approved request appears in the queue.
+5. Verify accounting rejection works and blocks disbursement.
+6. Verify the same request can subsequently be re-verified.
+7. Select one of `1100/1200/1300`.
+8. Confirm insufficient balance is rejected before posting.
+9. Disburse one controlled approved request.
+10. Verify exactly one posted journal exists with:
+    - reference type `salary_advance_disbursement`;
+    - reference ID equal to the salary-advance request ID;
+    - debit to 1410;
+    - credit to the selected cash/bank/wallet account;
+    - equal debit and credit.
+11. Verify the request changes to `disbursed`.
+12. Verify `outstanding_balance` equals the actual disbursed amount.
+13. Verify the disbursement source account balance decreases by the disbursed amount.
+14. Verify account 1410 increases by the same amount.
+15. Verify employee notification is delivered.
+16. Verify no expense account balance changes because of the salary-advance disbursement.
+17. Verify a second request is blocked while the disbursed outstanding balance is positive.
+18. Do **not** implement or test payroll deductions/repayment schedules as part of this stage.
+
+---
+
+# Stage 5 — Repayment Schedule + Payroll Integration
+
+**Status: NOT STARTED**
+
+Reserved scope:
+
+- repayment schedule generation;
+- fixed monthly repayment;
+- full eligible salary repayment;
+- salary deduction limits;
+- insufficient-salary handling;
+- payroll integration;
+- accounting treatment of repayments.
+
+Do not implement this as part of Stage 4.
+
+---
+
+# Stage 6 — Direct Repayment & Settlement
+
+**Status: NOT STARTED**
+
+Reserved scope:
+
+- direct employee repayment;
+- settlement posting;
+- outstanding-balance reduction;
+- final settlement;
+- transition to `settled`.
+
+---
+
+# Stage 7 — Exceptional Lifecycle Cases
+
+**Status: NOT STARTED**
+
+Reserved scope includes exceptional cases such as cancellation, separation, early settlement, and other policy-approved lifecycle events.
+
+---
+
+# Stage 8 — Reporting / Audit / Hardening
+
+**Status: NOT STARTED**
+
+Reserved scope:
+
+- salary-advance reporting;
+- employee-level outstanding balances;
+- accounting reconciliation;
+- audit completeness;
+- lifecycle integrity checks;
+- final hardening.
+
+---
+
+# Project-wide rules
+
+- Existing repository only; do not rebuild.
+- Inspect repository and actual schema before changes.
+- Never invent table/column names.
+- Database structure changes only through migrations.
+- No runtime CREATE/ALTER.
+- No triggers.
+- No views.
+- No destructive Git commands.
+- Preserve existing architecture.
+- Procedural PHP only.
+- Arabic RTL UI.
+- Exactly two back buttons on user-facing non-dashboard pages.
+- Do not repeat closed runtime tests unless a genuine regression appears.
+- Accounting test data is development/test data only.
+- Do not use the normal expense payment-voucher flow for salary advances.
+- Do not implement Stage 5/6 behavior early.
+- Update this document after every completed milestone.
+- Record exact commit/merge SHA for every completed milestone.
+
+---
+
+# Current exact continuation point
+
+**Stages 1–3 are complete and must not be reopened.**
+
+**Stage 4 implementation is prepared on:**
+
+`feature/hr-salary-advance-stage4-accounting`
+
+Latest Stage 4 implementation commit before documentation update:
+
+`5ef4c7d144c38fdcd701b269e6b6b540d9e94c53`
+
+**Immediate next task:** review the prepared Stage 4 files, apply the Stage 4 migration in the controlled local development database, and run the Stage 4 runtime/reconciliation gate above.
+
+Do not start Stage 5 until Stage 4 is runtime-verified and documented.
