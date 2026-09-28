@@ -34,7 +34,7 @@ $headerQuickActions = [
     ['label'=>'مراجعة المعاملات المالية','url'=>'modules/accounting/fm_transaction_review.php','icon'=>'fa-file-invoice-dollar','color'=>'#6c757d'],
     ['label'=>'التقارير المالية','url'=>'modules/reports/financial.php','icon'=>'fa-chart-pie','color'=>'#0d6efd'],
     ['label'=>'سجل المعاملات','url'=>'modules/transactions/index.php','icon'=>'fa-money-bill-transfer','color'=>'#2daf79'],
-    ['label'=>'إدارة ومراجعة سلف الرواتب','url'=>'#','icon'=>'fa-hand-holding-dollar','color'=>'#198754','salary_advance'=>true],
+    ['label'=>'إدارة سلف الرواتب','url'=>'modules/hr/salary_advance_dashboard.php','icon'=>'fa-hand-holding-dollar','color'=>'#198754','salary_advance'=>true],
     ['label'=>'منظمة فينا الخير','url'=>'modules/accounting/fina_dashboard.php','icon'=>'fina-logo','color'=>'#6f42c1'],
 ];
 
@@ -410,17 +410,13 @@ $fmActionDescriptions = [
 <div class="ak-fm-action-grid fade-in" aria-label="إجراءات سريعة">
     <?php foreach ($headerQuickActions as $index => $qa): ?>
         <?php if (!empty($qa['salary_advance'])): ?>
-        <div class="ak-fm-action-card ak-fm-action-<?php echo (int)$index + 1; ?>">
-            <div class="text-center px-2 w-100">
+        <a href="<?php echo APP_URL; ?>modules/hr/salary_advance_dashboard.php" class="ak-fm-action-card ak-fm-action-<?php echo (int)$index + 1; ?>">
+            <div class="text-center px-2">
                 <div class="ak-fm-action-icon"><i class="fas <?php echo e($qa['icon']); ?>" aria-hidden="true"></i></div>
                 <div class="ak-fm-action-title"><?php echo e($qa['label']); ?></div>
                 <div class="ak-fm-action-desc"><?php echo e($fmActionDescriptions[$index] ?? ''); ?></div>
-                <div class="mt-2 d-flex justify-content-center gap-2 flex-wrap">
-                    <a href="<?php echo APP_URL; ?>modules/hr/salary_advance_policy.php" class="btn-fm btn-ghost py-1 px-2" style="font-size:.72rem">سياسة السلف</a>
-                    <a href="<?php echo APP_URL; ?>modules/hr/salary_advance_fm_review.php" class="btn-fm btn-navy py-1 px-2" style="font-size:.72rem">مراجعة الطلبات</a>
-                </div>
             </div>
-        </div>
+        </a>
         <?php else: ?>
         <a href="<?php echo APP_URL . e($qa['url']); ?>" class="ak-fm-action-card ak-fm-action-<?php echo (int)$index + 1; ?>">
             <div class="text-center px-2">

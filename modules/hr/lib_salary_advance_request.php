@@ -127,14 +127,19 @@ function hrSalaryAdvanceGetActiveUnsettledRequest(PDO $pdo, int $employeeId, boo
 {
     if ($employeeId <= 0 || $allowMultipleActiveAdvances) return null;
 
-    // Policy controls whether another active advance is allowed.
-    // Until Stage 4 introduces the disbursement/settlement lifecycle,
-    // an approved request is the authoritative active unpaid advance state.
+    // After Stage 4, an approved request is still reserved for disbursement and
+    // therefore blocks a second request. Once actually disbursed, the real
+    // outstanding balance becomes authoritative. A disbursed request with a
+    // zero balance is no longer active and does not block a new request.
     return dbFetchOne(
-        "SELECT id, request_no, approved_amount, approved_repayment_method
+        "SELECT id, request_no, approved_amount, approved_repayment_method,
+                status, outstanding_balance
          FROM hr_salary_advance_requests
          WHERE employee_id = ?
-           AND status = 'approved'
+           AND (
+               status = 'approved'
+               OR (status = 'disbursed' AND COALESCE(outstanding_balance, 0) > 0)
+           )
          ORDER BY id DESC
          LIMIT 1",
         [$employeeId]
@@ -258,7 +263,10 @@ function hrSalaryAdvanceFmPolicyMismatches(PDO $pdo, array $r): array
             "SELECT id FROM hr_salary_advance_requests
              WHERE employee_id = ?
                AND id <> ?
-               AND status IN ('submitted','fm_review','approved')
+               AND (
+                   status IN ('submitted','fm_review','approved')
+                   OR (status = 'disbursed' AND COALESCE(outstanding_balance, 0) > 0)
+               )
              LIMIT 1",
             [(int)$r['employee_id'], (int)$r['id']]
         );
