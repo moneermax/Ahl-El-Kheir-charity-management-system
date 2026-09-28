@@ -27,7 +27,7 @@ try {
     )['c'] ?? 0);
 
     $items = dbFetchAll(
-        "SELECT id, title, body, link, reference_id, reference_type, created_at, is_read
+        "SELECT id, title, body, link, created_at, is_read
          FROM notifications
          WHERE recipient_user_id = ?
          ORDER BY id DESC
