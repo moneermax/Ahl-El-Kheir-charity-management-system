@@ -91,7 +91,7 @@ require_once __DIR__ . '/../../includes/header.php';
 
 <?php if($policyReference): ?>
 <div class="card"><div class="card-body">
-<h5 class="mb-3">السياسة السارية</h5>
+<h5 class="mb-3">السياسة المرجعية</h5>
 <div class="row g-3 small">
 <div class="col-md-4"><strong>الإصدار:</strong> V<?= (int)$policyReference['version_no']?></div>
 <div class="col-md-4"><strong>السريان:</strong> <?=e($policyReference['effective_from'])?><?php if($policyReference['effective_from'] > date('Y-m-d')): ?> <span class="badge bg-warning text-dark">سياسة مستقبلية</span><?php else: ?> <span class="badge bg-success">سارية</span><?php endif; ?></div>
