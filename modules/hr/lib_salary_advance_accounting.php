@@ -191,6 +191,9 @@ function hrSalaryAdvanceAccountingDisburse(PDO $pdo, int $requestId, int $userId
             throw new RuntimeException('طلب السلفة لم يعد متاحاً للصرف.');
         }
 
+        if ($lockedRequest['accounting_status'] === 'rejected') {
+            throw new RuntimeException('تم رفض التحقق المحاسبي لهذه السلفة. يجب إعادة التحقق واعتمادها قبل الصرف.');
+        }
         if ((int)$lockedRequest['require_accounting_verification'] === 1 && $lockedRequest['accounting_status'] !== 'verified') {
             throw new RuntimeException('يجب إكمال التحقق المحاسبي قبل صرف السلفة.');
         }
