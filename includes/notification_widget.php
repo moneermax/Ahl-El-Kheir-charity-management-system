@@ -14,7 +14,7 @@ if (Session::isLoggedIn()) {
 
     try {
         $akNotifItems = dbFetchAll(
-            "SELECT id, title, body, link, reference_id, reference_type, created_at, is_read
+            "SELECT id, title, body, link, created_at, is_read
              FROM notifications
              WHERE recipient_user_id = ?
              ORDER BY id DESC
@@ -97,9 +97,6 @@ if (Session::isLoggedIn()) {
     $notifId = (int)($ni['id'] ?? 0);
     $notifLink = trim((string)($ni['link'] ?? ''));
     $notifRedirect = $notifLink !== '' ? $notifLink : $akNotifPageUrl;
-    if (($ni['reference_type'] ?? '') === 'salary_advance_request' && (int)($ni['reference_id'] ?? 0) > 0) {
-        $notifRedirect = APP_URL . 'modules/hr/salary_advance_fm_review.php?id=' . (int)$ni['reference_id'];
-    }
     $notifUnread = (int)($ni['is_read'] ?? 0) === 0;
     ?>
     <?php if ($notifId > 0): ?>
@@ -189,7 +186,7 @@ if (Session::isLoggedIn()) {
      const items=Array.isArray(data.items) ? data.items : [];
      if(!items.length){panelBody.innerHTML='<div class="ak-notif-empty">لا توجد إشعارات.</div>';return;}
      panelBody.innerHTML=items.map(function(item){
-         const id=Number(item.id||0); let link=String(item.link||'').trim() || notificationPageUrl || currentUrl; if(String(item.reference_type||'')==='salary_advance_request' && Number(item.reference_id||0)>0){ link=<?= json_encode(APP_URL) ?>+'modules/hr/salary_advance_fm_review.php?id='+Number(item.reference_id); } const unread=Number(item.is_read||0)===0; const unreadClass=unread?' ak-notif-unread':''; const newBadge=unread?'<span class="ak-notif-new">جديد</span>':'';
+         const id=Number(item.id||0); let link=String(item.link||'').trim() || notificationPageUrl || currentUrl; const unread=Number(item.is_read||0)===0; const unreadClass=unread?' ak-notif-unread':''; const newBadge=unread?'<span class="ak-notif-new">جديد</span>':'';
          if(!id) return '<div class="ak-notif-item'+unreadClass+'"><strong>'+esc(item.title)+newBadge+'</strong><div class="ak-notif-body">'+esc(item.body)+'</div><small>'+esc(item.created_at)+'</small></div>';
          return '<form method="post" action="'+esc(markReadUrl)+'" class="ak-notif-read-form"><input type="hidden" name="csrf_token" value="'+esc(csrfToken)+'"><input type="hidden" name="notification_id" value="'+id+'"><input type="hidden" name="redirect" value="'+esc(link)+'"><button type="submit" class="ak-notif-item'+unreadClass+'"><strong>'+esc(item.title)+newBadge+'</strong><div class="ak-notif-body">'+esc(item.body)+'</div><small>'+esc(item.created_at)+'</small></button></form>';
      }).join('');
