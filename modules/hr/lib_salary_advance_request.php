@@ -167,7 +167,7 @@ function hrSalaryAdvanceGetRequestForFm(PDO $pdo, int $requestId): ?array
                 u.full_name AS submitted_by_name
          FROM hr_salary_advance_requests r
          JOIN hr_salary_advance_policy_versions p ON p.id = r.policy_version_id
-         JOIN hr_employees e ON e.id = r.employee_id
+         JOIN employees e ON e.id = r.employee_id
          LEFT JOIN users u ON u.id = r.submitted_by
          WHERE r.id = ?
          LIMIT 1",
