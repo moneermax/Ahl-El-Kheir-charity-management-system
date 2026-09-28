@@ -250,7 +250,7 @@ function hrSalaryAdvanceFmPolicyMismatches(PDO $pdo, array $r): array
     return array_values(array_unique($m));
 }
 
-function hrSalaryAdvanceFmValidateDecision(array $r, array $input): array
+function hrSalaryAdvanceFmValidateDecision(PDO $pdo, array $r, array $input): array
 {
     $decision = (string)($input['decision'] ?? '');
     if (!in_array($decision, ['approve', 'reject'], true)) {
@@ -308,7 +308,7 @@ function hrSalaryAdvanceFmValidateDecision(array $r, array $input): array
     }
 
     if (!$customized) {
-        $mismatches = hrSalaryAdvanceFmPolicyMismatches($pdo ?? db(), $r);
+        $mismatches = hrSalaryAdvanceFmPolicyMismatches($pdo, $r);
         if ($mismatches) {
             throw new InvalidArgumentException('لا يمكن اعتماد الطلب بصيغته الأصلية لوجود مخالفات للسياسة. فعّل التخصيص وعدّل الشروط، أو ارفض الطلب.');
         }
