@@ -232,7 +232,7 @@ Do not reopen Stage 3.
 
 # Stage 4 — Accounting Verification & Disbursement
 
-**Status: IMPLEMENTATION PREPARED / RUNTIME VERIFICATION OPEN**
+**Status: IMPLEMENTATION PREPARED / RUNTIME VERIFICATION OPEN — RECEIPT/VOUCHER ENHANCEMENTS ADDED**
 
 ## Root-cause/design conclusion
 
@@ -347,6 +347,31 @@ When the policy requires accounting verification:
 11. No ordinary payment voucher is created.
 
 The operation is transactional and uses the existing accounting numbering/locking convention.
+
+## Stage 4 receipt / voucher and action-control enhancements
+
+The Stage 4 accounting workflow now also provides:
+
+- protected payment-receipt upload after successful disbursement;
+- JPG/PNG/PDF validation with a 5 MB limit;
+- replacement of an existing receipt with an audit-log record rather than destructive deletion;
+- authenticated receipt serving through `modules/hr/salary_advance_receipt.php`;
+- a dedicated printable salary-advance payment voucher through `modules/hr/salary_advance_voucher_print.php`;
+- voucher content showing employee, amount, source account, control account 1410, journal entry, reference, and receipt status;
+- print/view-receipt actions on the disbursed request;
+- accounting evidence is intentionally not given a delete action after posting; financial history and supporting evidence remain auditable;
+- editable disbursement reference remains available before posting, while posted financial fields are immutable.
+
+Migration added:
+
+`database/migrations/2026-09-28_hr_salary_advance_receipt.sql`
+
+Supporting files:
+
+- `modules/hr/salary_advance_receipt.php`
+- `modules/hr/salary_advance_voucher_print.php`
+
+These enhancements do not change the accounting entry itself and do not introduce a second voucher-posting mechanism.
 
 ## Stage 4 runtime gate
 
