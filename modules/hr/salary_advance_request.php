@@ -89,18 +89,6 @@ require_once __DIR__ . '/../../includes/header.php';
 </div>
 </div></div>
 
-<?php if($policyReference): ?>
-<div class="card"><div class="card-body">
-<h5 class="mb-3">السياسة المرجعية</h5>
-<div class="row g-3 small">
-<div class="col-md-4"><strong>الإصدار:</strong> V<?= (int)$policyReference['version_no']?></div>
-<div class="col-md-4"><strong>السريان:</strong> <?=e($policyReference['effective_from'])?><?php if($policyReference['effective_from'] > date('Y-m-d')): ?> <span class="badge bg-warning text-dark">سياسة مستقبلية</span><?php else: ?> <span class="badge bg-success">سارية</span><?php endif; ?></div>
-<div class="col-md-4"><strong>المبلغ المرجعي:</strong> <?= (int)$policyReference['allow_any_request_amount'] ? 'أي مبلغ' : number_format((float)$policyReference['minimum_request_amount'],2).' — '.number_format((float)$policyReference['maximum_request_amount'],2)?></div>
-</div>
-<div class="col-12"><div class="alert alert-info mb-0">يمكن للموظف تقديم طلبه وفق احتياجه. تتم مقارنة الطلب بالسياسة المرجعية أثناء مراجعة المدير المالي، ويمكن للمدير المالي اعتماد الطلب أو رفضه أو تخصيص شروط مختلفة لهذا الطلب دون تغيير السياسة العامة.</div></div>
-</div>
-</div></div>
-
 <div class="card"><div class="card-body">
 <h5 class="mb-3">بيانات الطلب</h5>
 <form method="post">
