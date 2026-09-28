@@ -27,6 +27,15 @@ if (!$employee) {
             if (!verify_csrf()) throw new RuntimeException('انتهت صلاحية نموذج الحماية. أعد تحميل الصفحة وحاول مرة أخرى.');
             if (!$policyReference) throw new RuntimeException('لا توجد سياسة سلف منشورة يمكن استخدامها كمرجع للطلب حالياً.');
 
+            $activeUnsettled = hrSalaryAdvanceGetActiveUnsettledRequest($pdo, (int)$employee['id']);
+            if ($activeUnsettled) {
+                throw new RuntimeException(
+                    'لا يمكن تقديم طلب سلفة جديد حالياً. لديك سلفة معتمدة سابقة غير مسددة: ' .
+                    (string)$activeUnsettled['request_no'] .
+                    '. يجب تسوية السلفة السابقة أولاً.'
+                );
+            }
+
             $validated = hrSalaryAdvanceValidateRequest($_POST, $policyReference);
             $requestNo = hrSalaryAdvanceNextRequestNo($pdo);
             $pdo->prepare(
