@@ -4,7 +4,7 @@
 **Repository:** `moneermax/Ahl-El-Kheir-charity-management-system`  
 **Branch:** `feature/hr-salary-advance-stage4-accounting`  
 **Active area:** HR / Salary Advance  
-**Current stage:** Stage 4 — Accounting Verification & Disbursement (implementation prepared; runtime verification pending)
+**Current stage:** Stage 4 — Accounting Verification & Disbursement (runtime verification in progress; core disbursement path verified)
 
 ## Purpose
 
@@ -19,7 +19,7 @@ Do not reopen Stages 1–3 unless a genuine regression is found.
 1. **Stage 1 — Salary Advance Policy Foundation: DONE**
 2. **Stage 2 — Employee Salary Advance Request: DONE / RUNTIME VERIFIED**
 3. **Stage 3 — FM Review & Per-Request Customization: DONE / RUNTIME VERIFIED**
-4. **Stage 4 — Accounting Verification & Disbursement: IMPLEMENTATION PREPARED / RUNTIME VERIFICATION OPEN**
+4. **Stage 4 — Accounting Verification & Disbursement: IN PROGRESS / CORE RUNTIME VERIFIED**
 5. Stage 5 — Repayment Schedule + Payroll Integration: NOT STARTED
 6. Stage 6 — Direct Repayment & Settlement: NOT STARTED
 7. Stage 7 — Exceptional Lifecycle Cases: NOT STARTED
@@ -373,9 +373,81 @@ Supporting files:
 
 These enhancements do not change the accounting entry itself and do not introduce a second voucher-posting mechanism.
 
-## Stage 4 runtime gate
+## Stage 4 runtime verification checkpoint
 
-Before marking Stage 4 complete, perform a controlled runtime test after applying the migration:
+The Stage 4 accounting migration was applied successfully in the local development database with no errors.
+
+### Verified runtime results
+
+1. Accounting queue gate passed.
+2. Accounting rejection was verified on `SAR-2026-00004`:
+   - employee: أحمد حسين / EMP-0028
+   - approved amount: 50,000 SDG
+   - accounting status became `rejected`
+   - rejection reason was stored
+   - no disbursement/journal was created.
+3. The same request was subsequently re-verified successfully:
+   - accounting status became `verified`
+   - request remained `approved`
+   - source accounts 1100/1200/1300 were available.
+4. `SAR-2026-00001` was verified for accounting.
+5. `SAR-2026-00001` was successfully disbursed through account `1100 — الصندوق`:
+   - amount: 10,000 SDG
+   - status: `disbursed`
+   - disbursement timestamp: `2026-09-28 19:06:24`
+   - journal: `JE-000040`
+   - reference: `SAL-ADV-SAR-2026-00001`
+   - outstanding balance: 10,000 SDG
+   - accounting entry: Dr 1410 / Cr 1100.
+6. The protected payment receipt was uploaded successfully:
+   - uploaded at `2026-09-28 19:07:42`
+   - original file name: `WhatsApp Image 2026-09-18 at 1.57.43 PM.jpeg`.
+7. Employee-facing actions were verified:
+   - `عرض/طباعة السند`
+   - `عرض إيصال الدفع` when a receipt exists.
+   - employee ownership checks were added to the voucher and receipt endpoints.
+8. The printable voucher was refined to hide technical accounting treatment from FM/employee-facing output while retaining the accounting entry in the journal.
+9. The salary-advance management portal now contains the processed-history table directly on the main dashboard, below the three clickable management cards. This layout was runtime verified after the final correction.
+
+### Stage 4 implementation / UI checkpoints
+
+Receipt/voucher enhancement PR #44 was merged into the Stage 4 branch with merge commit:
+
+`8fcd9fa9f1eed21b78c0b3ef373ba0aeec1fa5b9`
+
+Employee-facing voucher/receipt actions PR #45:
+
+`ba24c533fbd7be82de4e48f90d9d8f4e52abfe94`
+
+Voucher accounting-treatment removal PR #46:
+
+`512752c8713f6fcd5cb779a94b51ce0ed67fb3e9`
+
+Voucher title/history PR #47:
+
+`1aedec23cab8807f19a2ef92075d941cee432e60`
+
+Dashboard history placement PR #48:
+
+`2f26b2376c91a349f0b5e1b3f2066b2a2fbeb9e4`
+
+Final dashboard PHP/layout correction after the history-placement edit:
+
+`1ecce916b748cc7d79eb3b1fc3a7fbba9aebaf3a`
+
+### Remaining Stage 4 gates
+
+Before marking Stage 4 fully complete:
+
+1. Test that an employee cannot access another employee's voucher.
+2. Test that an employee cannot access another employee's payment receipt.
+3. Test receipt replacement and confirm the replacement is audit logged.
+4. Confirm no duplicate disbursement/journal can be produced for the same salary-advance request.
+5. Confirm the final accounting/reconciliation evidence and notification/audit trail.
+6. Update this checkpoint and the relevant master project documentation.
+7. Only after all gates pass, close Stage 4 and begin Stage 5.
+
+Do not implement or test payroll deductions/repayment schedules as part of this stage.
 
 1. Verify migration application succeeds.
 2. Verify account `1410` exists exactly once and is an active asset account.
@@ -495,6 +567,8 @@ Latest Stage 4 implementation commit:
 
 Documentation checkpoint commit: `322557364fbd19cc26a879743d48eb15f5bc869c`
 
-**Immediate next task:** review the prepared Stage 4 files, apply the Stage 4 migration in the controlled local development database, and run the Stage 4 runtime/reconciliation gate above.
+**Immediate next task:** complete the remaining Stage 4 security/evidence gates: cross-employee voucher/receipt access denial, receipt replacement + audit verification, duplicate-disbursement protection, and final reconciliation/notification/audit confirmation.
 
-Do not start Stage 5 until Stage 4 is runtime-verified and documented.
+The migration and core accounting/disbursement path are already runtime verified. Do not repeat those successful tests unless a regression appears.
+
+Do not start Stage 5 until Stage 4 is fully runtime-verified and documented.
