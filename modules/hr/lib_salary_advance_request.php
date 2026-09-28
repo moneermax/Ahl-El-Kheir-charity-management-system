@@ -123,6 +123,23 @@ function hrSalaryAdvanceValidateRequest(array $input, array $policy = []): array
     ];
 }
 
+function hrSalaryAdvanceGetActiveUnsettledRequest(PDO $pdo, int $employeeId): ?array
+{
+    if ($employeeId <= 0) return null;
+
+    // Until Stage 4 introduces the disbursement/settlement lifecycle,
+    // an approved request is the authoritative active unpaid advance state.
+    return dbFetchOne(
+        "SELECT id, request_no, approved_amount, approved_repayment_method
+         FROM hr_salary_advance_requests
+         WHERE employee_id = ?
+           AND status = 'approved'
+         ORDER BY id DESC
+         LIMIT 1",
+        [$employeeId]
+    );
+}
+
 function hrSalaryAdvanceNextRequestNo(PDO $pdo): string
 {
     $row = dbFetchOne("SELECT id FROM hr_salary_advance_requests ORDER BY id DESC LIMIT 1");
