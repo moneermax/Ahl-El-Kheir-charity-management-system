@@ -28,17 +28,6 @@ if (!$employee) {
             if (!$policyReference) throw new RuntimeException('لا توجد سياسة سلف منشورة يمكن استخدامها كمرجع للطلب حالياً.');
 
             $validated = hrSalaryAdvanceValidateRequest($_POST, $policyReference);
-            if (!(int)$policyReference['allow_multiple_active_advances']) {
-                $existing = dbFetchOne(
-                    "SELECT id FROM hr_salary_advance_requests
-                     WHERE employee_id = ?
-                       AND status IN ('submitted','fm_review','approved')
-                     LIMIT 1",
-                    [(int)$employee['id']]
-                );
-                if ($existing) throw new RuntimeException('لديك سلفة أو طلب سلفة نشط بالفعل وفق السياسة المرجعية.');
-            }
-
             $requestNo = hrSalaryAdvanceNextRequestNo($pdo);
             $pdo->prepare(
                 "INSERT INTO hr_salary_advance_requests
@@ -56,7 +45,7 @@ if (!$employee) {
                 'salary_advance_request',
                 'طلب سلفة على الراتب بانتظار المراجعة',
                 'طلب السلفة «' . $requestNo . '» للموظف «' . (string)$employee['full_name'] . '» بانتظار مراجعة المدير المالي.',
-                APP_URL . 'modules/hr/salary_advance_request.php'
+                APP_URL . 'modules/hr/salary_advance_fm_review.php?id=' . (int)$pdo->lastInsertId()
             );
             $message = 'تم إرسال طلب السلفة رقم ' . $requestNo . ' إلى المدير المالي للمراجعة.';
         } catch (Throwable $e) {
