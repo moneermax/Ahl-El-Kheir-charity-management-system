@@ -53,6 +53,7 @@ try {
    $pdo->commit(); $message='تم إنشاء إصدار سياسة السلف رقم V'.$v.' بتاريخ سريان '.$p['effective_from'].'.';
   } catch(Throwable $e){if($pdo->inTransaction())$pdo->rollBack();throw $e;}
  }
+ }
 } catch(Throwable $e){$error=$e->getMessage();}
 $activePolicy=hrSalaryAdvancePolicyGetActive($pdo); $policies=hrSalaryAdvancePolicyGetAll($pdo);
 $editPolicyId=(int)($_GET['edit']??0);
