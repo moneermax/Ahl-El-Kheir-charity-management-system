@@ -59,7 +59,7 @@ $orgAr = (string)(ak_catalog('ar')['common.organization_name'] ?? 'منظمة أ
 $orgEn = (string)(ak_catalog('en')['common.organization_name'] ?? 'Ahl El Kheir Women Organization for Orphan Sponsorship');
 $orgAddr = trim((string)($org['org_address'] ?? ''));
 $orgTel = trim((string)($org['support_phone'] ?? ''));
-$receiptUrl = !empty($r['receipt_id']) ? APP_URL . 'modules/hr/salary_advance_receipt.php?id=' . (int)$r['receipt_id'] : '';
+
 
 function row(string $ar, string $en, string $value, bool $strong = false): string {
     return '<tr><th>' . e($ar) . '<small>' . e($en) . '</small></th><td' . ($strong ? ' class="strong"' : '') . '>' . ($value !== '' ? e($value) : '—') . '</td></tr>';
