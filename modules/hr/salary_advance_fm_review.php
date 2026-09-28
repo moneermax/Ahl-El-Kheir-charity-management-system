@@ -114,7 +114,7 @@ $queue = dbFetchAll(
             r.requested_start_month, r.status, r.submitted_at,
             e.full_name AS employee_name, e.employee_code
      FROM hr_salary_advance_requests r
-     JOIN hr_employees e ON e.id = r.employee_id
+     JOIN employees e ON e.id = r.employee_id
      WHERE r.status IN ('submitted','fm_review')
      ORDER BY r.submitted_at ASC, r.id ASC"
 );
