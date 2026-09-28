@@ -24,7 +24,10 @@ function hrSalaryAdvanceAccountingGetRequest(PDO $pdo, int $requestId): ?array
                 dv.full_name AS disbursed_by_name,
                 sa.code AS disbursement_account_code,
                 sa.name_ar AS disbursement_account_name,
-                je.entry_code AS disbursement_entry_code
+                je.entry_code AS disbursement_entry_code,
+                d.id AS payment_receipt_id,
+                d.original_name AS payment_receipt_name,
+                d.uploaded_at AS payment_receipt_uploaded_at
          FROM hr_salary_advance_requests r
          JOIN hr_salary_advance_policy_versions p ON p.id = r.policy_version_id
          JOIN employees e ON e.id = r.employee_id
@@ -33,6 +36,9 @@ function hrSalaryAdvanceAccountingGetRequest(PDO $pdo, int $requestId): ?array
          LEFT JOIN users dv ON dv.id = r.disbursed_by
          LEFT JOIN accounts sa ON sa.id = r.disbursement_account_id
          LEFT JOIN journal_entries je ON je.id = r.disbursement_journal_entry_id
+         LEFT JOIN hr_salary_advance_documents d
+           ON d.salary_advance_request_id = r.id
+          AND d.document_type = 'payment_receipt'
          WHERE r.id = ?
          LIMIT 1",
         [$requestId]
@@ -340,6 +346,122 @@ function hrSalaryAdvanceAccountingDisburse(PDO $pdo, int $requestId, int $userId
     } finally {
         if ($lockAcquired) {
             ak_voucher_unlock();
+        }
+    }
+}
+
+
+function hrSalaryAdvanceAccountingUploadReceipt(PDO $pdo, int $requestId, int $userId, array $file): void
+{
+    if ($requestId <= 0 || $userId <= 0) {
+        throw new InvalidArgumentException('بيانات رفع الإيصال غير صالحة.');
+    }
+
+    $request = hrSalaryAdvanceAccountingGetRequest($pdo, $requestId);
+    if (!$request || $request['status'] !== 'disbursed' || (int)($request['disbursement_journal_entry_id'] ?? 0) <= 0) {
+        throw new RuntimeException('لا يمكن رفع إيصال إلا لسلفة تم صرفها وترحيل قيدها.');
+    }
+
+    if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+        throw new RuntimeException('تعذر رفع إيصال الدفع.');
+    }
+
+    $size = (int)($file['size'] ?? 0);
+    if ($size <= 0 || $size > 5 * 1024 * 1024) {
+        throw new RuntimeException('حجم إيصال الدفع يجب أن يكون أكبر من صفر وألا يتجاوز 5 ميجابايت.');
+    }
+
+    $tmp = (string)($file['tmp_name'] ?? '');
+    if ($tmp === '' || !is_uploaded_file($tmp)) {
+        throw new RuntimeException('ملف الإيصال المرفوع غير صالح.');
+    }
+
+    $finfo = new finfo(FILEINFO_MIME_TYPE);
+    $mime = (string)$finfo->file($tmp);
+    $allowed = [
+        'image/jpeg' => 'jpg',
+        'image/png' => 'png',
+        'application/pdf' => 'pdf',
+    ];
+    if (!isset($allowed[$mime])) {
+        throw new RuntimeException('صيغة إيصال الدفع غير مدعومة. المسموح: JPG, PNG, PDF.');
+    }
+
+    $originalName = trim((string)($file['name'] ?? 'receipt'));
+    $originalName = mb_substr($originalName !== '' ? $originalName : 'receipt.' . $allowed[$mime], 0, 255);
+
+    $root = dirname(__DIR__, 2);
+    $dir = $root . '/storage/receipts/salary-advances';
+    if (!is_dir($dir) && !@mkdir($dir, 0775, true) && !is_dir($dir)) {
+        throw new RuntimeException('تعذر إنشاء مجلد تخزين إيصالات السلف.');
+    }
+
+    $filename = 'SAL-ADV-' . $request['request_no'] . '-' . bin2hex(random_bytes(8)) . '.' . $allowed[$mime];
+    $relativePath = 'storage/receipts/salary-advances/' . $filename;
+    $absolutePath = $root . '/' . $relativePath;
+
+    if (!move_uploaded_file($tmp, $absolutePath)) {
+        throw new RuntimeException('فشل حفظ إيصال الدفع على الخادم.');
+    }
+
+    $oldPath = '';
+    try {
+        $pdo->beginTransaction();
+
+        $existing = dbFetchOne(
+            "SELECT id, file_path
+             FROM hr_salary_advance_documents
+             WHERE salary_advance_request_id = ? AND document_type = 'payment_receipt'
+             FOR UPDATE",
+            [$requestId]
+        );
+        $oldPath = (string)($existing['file_path'] ?? '');
+
+        if ($existing) {
+            dbExecute(
+                "UPDATE hr_salary_advance_documents
+                 SET file_path = ?, original_name = ?, mime_type = ?, file_size = ?, uploaded_by = ?, uploaded_at = NOW()
+                 WHERE id = ?",
+                [$relativePath, $originalName, $mime, $size, $userId, (int)$existing['id']]
+            );
+        } else {
+            dbExecute(
+                "INSERT INTO hr_salary_advance_documents
+                 (salary_advance_request_id, document_type, file_path, original_name, mime_type, file_size, uploaded_by)
+                 VALUES (?, 'payment_receipt', ?, ?, ?, ?, ?)",
+                [$requestId, $relativePath, $originalName, $mime, $size, $userId]
+            );
+        }
+
+        try {
+            dbExecute(
+                "INSERT INTO audit_log
+                 (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent)
+                 VALUES (?, 'HR_SALARY_ADVANCE_RECEIPT_UPLOAD', 'hr_salary_advance_request', ?, ?, ?, ?, ?)",
+                [
+                    $userId,
+                    $requestId,
+                    json_encode(['previous_receipt' => $oldPath !== '' ? $oldPath : null], JSON_UNESCAPED_UNICODE),
+                    json_encode(['receipt_path' => $relativePath, 'original_name' => $originalName], JSON_UNESCAPED_UNICODE),
+                    $_SERVER['REMOTE_ADDR'] ?? '',
+                    $_SERVER['HTTP_USER_AGENT'] ?? ''
+                ]
+            );
+        } catch (Throwable $auditError) {}
+
+        $pdo->commit();
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        @unlink($absolutePath);
+        throw $e;
+    }
+
+    if ($oldPath !== '' && $oldPath !== $relativePath) {
+        $oldAbsolute = $root . '/' . ltrim($oldPath, '/\\');
+        if (is_file($oldAbsolute)) {
+            @unlink($oldAbsolute);
         }
     }
 }
