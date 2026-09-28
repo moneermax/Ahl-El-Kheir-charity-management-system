@@ -18,10 +18,7 @@ if (!Session::isLoggedIn()) {
 
 $role = (string)Session::getUserRole();
 $allowed = ['admin', 'financial_manager', 'accountant_staff'];
-if (!in_array($role, $allowed, true)) {
-    http_response_code(403);
-    exit('Forbidden');
-}
+$isPrivileged = in_array($role, $allowed, true);
 
 $documentId = (int)($_GET['id'] ?? 0);
 if ($documentId <= 0) {
@@ -42,6 +39,24 @@ $row = dbFetchOne(
 if (!$row || $row['status'] !== 'disbursed' || (int)$row['disbursement_journal_entry_id'] <= 0) {
     http_response_code(404);
     exit('Receipt not found');
+}
+
+if (!$isPrivileged) {
+    $employeeAccess = dbFetchOne(
+        "SELECT e.id
+         FROM employees e
+         JOIN hr_salary_advance_requests r ON r.employee_id = e.id
+         JOIN hr_salary_advance_documents d ON d.salary_advance_request_id = r.id
+         WHERE e.user_id = ?
+           AND d.id = ?
+           AND d.document_type = 'payment_receipt'
+         LIMIT 1",
+        [(int)Session::getUserId(), $documentId]
+    );
+    if (!$employeeAccess) {
+        http_response_code(403);
+        exit('Forbidden');
+    }
 }
 
 $root = realpath(dirname(__DIR__, 2));
