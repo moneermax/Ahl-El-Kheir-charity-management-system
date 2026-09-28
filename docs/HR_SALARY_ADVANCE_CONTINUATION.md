@@ -184,3 +184,28 @@ Every stage must satisfy the project completion gate:
 **Immediate next task:** inspect the current Stage 2 implementation and the existing `ak_transaction_review_notify_fm_event()` notification helper/callers, then apply/verify the Stage 2 migration and perform the first controlled employee request runtime test.
 
 Do not jump to Stage 3 until Stage 2 passes its runtime gate.
+
+
+## Checkpoint — 2026-09-28: Stage 2 request runtime issue + policy actions
+
+- Stage 1 policy foundation remains complete.
+- Stage 2 employee salary-advance request implementation remains complete in repository; runtime verification is still pending.
+- The current policy record reported during testing is V1 with `effective_from = 2026-09-29`.
+- `config/config.php` centrally sets the application timezone to `Africa/Khartoum`; therefore policy activation uses the application date from that timezone. A policy dated 2026-09-29 is not active while the application date is 2026-09-28. Do not weaken the future-effective policy rule merely to hide this date difference.
+- Added checkpoint branch: `checkpoint/hr-salary-advance-policy-actions`.
+- Added safe Edit/Delete actions to `modules/hr/salary_advance_policy.php`.
+- Safety rules:
+  - Only future policy versions can be edited or deleted.
+  - A policy linked to any `hr_salary_advance_requests` record cannot be edited/deleted.
+  - Active or historical policies are protected; use a new policy version instead of rewriting historical/current policy records.
+  - Edit preserves all existing policy values in the form before saving.
+  - Delete requires CSRF protection and an explicit browser confirmation.
+- No schema change, runtime DDL, trigger, or view was added.
+- Next runtime verification:
+  1. Pull/use the checkpoint changes.
+  2. Open salary advance policy page as FM.
+  3. Confirm the existing future V1 row shows Edit and Delete actions.
+  4. Open Edit and verify every policy field is pre-populated exactly.
+  5. Save a harmless change and confirm the same version number is retained.
+  6. Verify Delete is available only for an unused future policy; verify active/historical rows are protected.
+  7. Then verify the policy activation/request page again on the application's actual date boundary before proceeding to Stage 3 FM review/customization.
