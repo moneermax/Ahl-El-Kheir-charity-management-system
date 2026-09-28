@@ -39,14 +39,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['fm_decision_submit'])
         $notificationType = '';
 
         if ($decision['decision'] === 'reject') {
-            $pdo->prepare(
+            $updateStmt = $pdo->prepare(
                 "UPDATE hr_salary_advance_requests
                  SET status='rejected', fm_decision='rejected', fm_rejection_reason=?,
                      fm_reviewed_by=?, fm_reviewed_at=NOW(), closed_at=NOW(), updated_at=NOW()
                  WHERE id=? AND status IN ('submitted','fm_review') AND closed_at IS NULL"
-            )->execute([$decision['reason'], $uid, $requestId]);
+            );
+            $updateStmt->execute([$decision['reason'], $uid, $requestId]);
 
-            if ($pdo->rowCount() !== 1) {
+            if ($updateStmt->rowCount() !== 1) {
                 throw new RuntimeException('تعذر إغلاق طلب السلفة بعد رفضه.');
             }
 
@@ -55,20 +56,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['fm_decision_submit'])
             $notificationType = 'salary_advance_request_rejection';
             $message = 'تم رفض طلب السلفة وإغلاقه وإبلاغ الموظف.';
         } else {
-            $pdo->prepare(
+            $updateStmt = $pdo->prepare(
                 "UPDATE hr_salary_advance_requests
                  SET status='approved', fm_decision='approved', fm_rejection_reason=NULL,
                      approved_amount=?, approved_repayment_method=?, approved_monthly_amount=?,
                      approved_start_month=?, fm_customized=?, fm_customization_reason=?,
                      fm_reviewed_by=?, fm_reviewed_at=NOW(), updated_at=NOW()
                  WHERE id=? AND status IN ('submitted','fm_review') AND closed_at IS NULL"
-            )->execute([
+            );
+            $updateStmt->execute([
                 $decision['approved_amount'], $decision['approved_repayment_method'],
                 $decision['approved_monthly_amount'], $decision['approved_start_month'],
                 $decision['customized'], $decision['customization_reason'], $uid, $requestId
             ]);
 
-            if ($pdo->rowCount() !== 1) {
+            if ($updateStmt->rowCount() !== 1) {
                 throw new RuntimeException('تعذر حفظ قرار اعتماد طلب السلفة.');
             }
 
