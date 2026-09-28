@@ -111,7 +111,6 @@ require_once __DIR__ . '/../../includes/header.php';
 
 <div class="card"><div class="card-body"><h5>طلباتي السابقة</h5><div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>الطلب</th><th>التاريخ</th><th>المبلغ</th><th>السداد</th><th>الحالة</th></tr></thead><tbody>
 <?php foreach($requests as $r): ?><tr><td><strong><?=e($r['request_no'])?></strong></td><td><?=e($r['submitted_at'])?></td><td><?=number_format((float)$r['requested_amount'],2)?></td><td><?=e(['fixed_monthly'=>'قسط شهري ثابت','full_eligible_salary'=>'كامل الراتب المؤهل','full_settlement'=>'تسوية كاملة','direct_repayment'=>'سداد مباشر'][$r['requested_repayment_method']]??$r['requested_repayment_method'])?></td><td><?=e(['submitted'=>'مرسل','fm_review'=>'قيد مراجعة FM','approved'=>'معتمد','rejected'=>'مرفوض','cancelled'=>'ملغى'][$r['status']]??$r['status'])?></td></tr><?php endforeach; if(!$requests): ?><tr><td colspan="5" class="text-center text-muted py-3">لا توجد طلبات سابقة.</td></tr><?php endif; ?></tbody></table></div></div></div>
-<?php endif; ?>
 </div>
 <script>
 (function(){
