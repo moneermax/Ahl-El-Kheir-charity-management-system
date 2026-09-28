@@ -21,16 +21,14 @@ $error = '';
 if (!$employee) {
     $error = 'لا يوجد ملف موظف مرتبط بحساب المستخدم الحالي.';
 } else {
-    $activePolicy = hrSalaryAdvancePolicyGetActive($pdo);
+    $policyReference = hrSalaryAdvancePolicyGetRequestReference($pdo);
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             if (!verify_csrf()) throw new RuntimeException('انتهت صلاحية نموذج الحماية. أعد تحميل الصفحة وحاول مرة أخرى.');
-            if (!$activePolicy) throw new RuntimeException('لا توجد سياسة سلف سارية حالياً.');
-            $eligibilityErrors = hrSalaryAdvanceValidateEmployeeEligibility($employee, $activePolicy);
-            if ($eligibilityErrors) throw new RuntimeException(implode(' ', $eligibilityErrors));
+            if (!$policyReference) throw new RuntimeException('لا توجد سياسة سلف منشورة يمكن استخدامها كمرجع للطلب حالياً.');
 
-            $validated = hrSalaryAdvanceValidateRequest($_POST, $activePolicy);
-            if (!(int)$activePolicy['allow_multiple_active_advances']) {
+            $validated = hrSalaryAdvanceValidateRequest($_POST, $policyReference);
+            if (!(int)$policyReference['allow_multiple_active_advances']) {
                 $existing = dbFetchOne(
                     "SELECT id FROM hr_salary_advance_requests
                      WHERE employee_id = ?
@@ -38,7 +36,7 @@ if (!$employee) {
                      LIMIT 1",
                     [(int)$employee['id']]
                 );
-                if ($existing) throw new RuntimeException('لديك سلفة أو طلب سلفة نشط بالفعل وفق السياسة السارية.');
+                if ($existing) throw new RuntimeException('لديك سلفة أو طلب سلفة نشط بالفعل وفق السياسة المرجعية.');
             }
 
             $requestNo = hrSalaryAdvanceNextRequestNo($pdo);
@@ -48,7 +46,7 @@ if (!$employee) {
                   requested_monthly_amount, requested_start_month, request_reason, status, submitted_by, submitted_at)
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'submitted', ?, NOW())"
             )->execute([
-                $requestNo, (int)$employee['id'], (int)$activePolicy['id'],
+                $requestNo, (int)$employee['id'], (int)$policyReference['id'],
                 $validated['requested_amount'], $validated['requested_repayment_method'],
                 $validated['requested_monthly_amount'], $validated['requested_start_month'],
                 $validated['request_reason'], $userId
@@ -67,8 +65,6 @@ if (!$employee) {
     }
 
     $requests = hrSalaryAdvanceGetEmployeeRequests($pdo, (int)$employee['id']);
-    $activePolicy = hrSalaryAdvancePolicyGetActive($pdo);
-    $eligibilityErrors = $activePolicy ? hrSalaryAdvanceValidateEmployeeEligibility($employee, $activePolicy) : [];
 }
 
 $pageTitle = 'طلب سلفة على الراتب';
@@ -79,7 +75,7 @@ require_once __DIR__ . '/../../includes/header.php';
 .salary-advance-request{max-width:1100px;margin:0 auto}.salary-advance-request .hero{background:linear-gradient(135deg,#173f73,#2d67ad);color:#fff;border-radius:14px;padding:22px 25px;margin-bottom:16px}.salary-advance-request .hero h1{font-size:1.35rem;font-weight:800;margin:0}.salary-advance-request .hero p{font-size:.74rem;margin:6px 0 0;opacity:.9}.salary-advance-request .card{background:#fff;border:1px solid #e5eaf0;border-radius:12px;box-shadow:0 2px 12px rgba(16,24,40,.05);margin-bottom:15px;overflow:hidden}.salary-advance-request .card-body{padding:16px}
 </style>
 <div class="salary-advance-request">
-<section class="hero"><h1><i class="fas fa-hand-holding-dollar me-2"></i>طلب سلفة على الراتب</h1><p>تقديم طلب سلفة وفق السياسة السارية، مع الاحتفاظ بطلبك الأصلي كما قدمته.</p></section>
+<section class="hero"><h1><i class="fas fa-hand-holding-dollar me-2"></i>طلب سلفة على الراتب</h1><p>تقديم طلب سلفة وفق السياسة العامة، مع الاحتفاظ بطلبك الأصلي كما قدمته.</p></section>
 
 <?php if($message): ?><div class="alert alert-success"><?=e($message)?></div><?php endif; ?>
 <?php if($error): ?><div class="alert alert-danger"><?=e($error)?></div><?php endif; ?>
@@ -93,17 +89,18 @@ require_once __DIR__ . '/../../includes/header.php';
 </div>
 </div></div>
 
-<?php if($activePolicy): ?>
+<?php if($policyReference): ?>
 <div class="card"><div class="card-body">
-<h5 class="mb-3">السياسة السارية</h5>
+<h5 class="mb-3">السياسة المرجعية</h5>
 <div class="row g-3 small">
-<div class="col-md-4"><strong>الإصدار:</strong> V<?= (int)$activePolicy['version_no']?></div>
-<div class="col-md-4"><strong>السريان:</strong> <?=e($activePolicy['effective_from'])?></div>
-<div class="col-md-4"><strong>المبلغ:</strong> <?= (int)$activePolicy['allow_any_request_amount'] ? 'أي مبلغ' : number_format((float)$activePolicy['minimum_request_amount'],2).' — '.number_format((float)$activePolicy['maximum_request_amount'],2)?></div>
+<div class="col-md-4"><strong>الإصدار:</strong> V<?= (int)$policyReference['version_no']?></div>
+<div class="col-md-4"><strong>السريان:</strong> <?=e($policyReference['effective_from'])?><?php if($policyReference['effective_from'] > date('Y-m-d')): ?> <span class="badge bg-warning text-dark">سياسة مستقبلية</span><?php else: ?> <span class="badge bg-success">سارية</span><?php endif; ?></div>
+<div class="col-md-4"><strong>المبلغ المرجعي:</strong> <?= (int)$policyReference['allow_any_request_amount'] ? 'أي مبلغ' : number_format((float)$policyReference['minimum_request_amount'],2).' — '.number_format((float)$policyReference['maximum_request_amount'],2)?></div>
+</div>
+<div class="col-12"><div class="alert alert-info mb-0">يمكن للموظف تقديم طلبه وفق احتياجه. تتم مقارنة الطلب بالسياسة المرجعية أثناء مراجعة المدير المالي، ويمكن للمدير المالي اعتماد الطلب أو رفضه أو تخصيص شروط مختلفة لهذا الطلب دون تغيير السياسة العامة.</div></div>
 </div>
 </div></div>
 
-<?php if(!$eligibilityErrors): ?>
 <div class="card"><div class="card-body">
 <h5 class="mb-3">بيانات الطلب</h5>
 <form method="post">
@@ -122,9 +119,7 @@ require_once __DIR__ . '/../../includes/header.php';
 <div class="col-12"><button class="btn btn-primary" type="submit"><i class="fas fa-paper-plane me-1"></i>إرسال طلب السلفة</button></div>
 </div></form>
 </div></div>
-<?php else: ?><div class="alert alert-warning"><?=e(implode(' ', $eligibilityErrors))?></div><?php endif; ?>
-
-<?php else: ?><div class="alert alert-warning">لا توجد سياسة سلف سارية حالياً. يمكن تقديم الطلب بعد بدء سريان إصدار السياسة.</div><?php endif; ?>
+<?php else: ?><div class="alert alert-warning">لا توجد سياسة سلف منشورة يمكن استخدامها كمرجع للطلب حالياً.</div><?php endif; ?>
 
 <div class="card"><div class="card-body"><h5>طلباتي السابقة</h5><div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>الطلب</th><th>التاريخ</th><th>المبلغ</th><th>السداد</th><th>الحالة</th></tr></thead><tbody>
 <?php foreach($requests as $r): ?><tr><td><strong><?=e($r['request_no'])?></strong></td><td><?=e($r['submitted_at'])?></td><td><?=number_format((float)$r['requested_amount'],2)?></td><td><?=e(['fixed_monthly'=>'قسط شهري ثابت','full_eligible_salary'=>'كامل الراتب المؤهل','full_settlement'=>'تسوية كاملة','direct_repayment'=>'سداد مباشر'][$r['requested_repayment_method']]??$r['requested_repayment_method'])?></td><td><?=e(['submitted'=>'مرسل','fm_review'=>'قيد مراجعة FM','approved'=>'معتمد','rejected'=>'مرفوض','cancelled'=>'ملغى'][$r['status']]??$r['status'])?></td></tr><?php endforeach; if(!$requests): ?><tr><td colspan="5" class="text-center text-muted py-3">لا توجد طلبات سابقة.</td></tr><?php endif; ?></tbody></table></div></div></div>

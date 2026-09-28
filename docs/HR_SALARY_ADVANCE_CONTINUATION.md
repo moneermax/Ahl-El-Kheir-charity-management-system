@@ -220,3 +220,50 @@ Do not jump to Stage 3 until Stage 2 passes its runtime gate.
 - The policy activation logic remains intentionally date-based: V1 with `effective_from = 2026-09-29` must not be treated as active before that application date.
 - Before Stage 2 runtime acceptance, pull the latest `main` and verify the policy page loads without a parse error, then verify policy activation at the application's actual date boundary.
 - The Stage 2 request implementation and its migration remain runtime-verification pending; do not advance to Stage 3 until the controlled employee request test passes.
+
+
+## Checkpoint — 2026-09-28: Corrected employee-request / policy relationship
+
+The intended business workflow was clarified and the Stage 2 boundary was corrected accordingly.
+
+The general Salary Advance policy is an organizational default/framework. It does **not** mean an employee request must exactly match the policy before the employee is allowed to submit it.
+
+Correct workflow:
+
+1. Employee submits the request with the amount and repayment terms they are requesting.
+2. The system preserves the employee's original request.
+3. FM reviews the request against the general policy.
+4. If it matches the policy, FM may process it normally and approve or reject it.
+5. If it does not match, FM may either reject it or customize the terms for that individual request and then approve/reject it.
+6. A request-level customization must never silently modify the annual/system-wide policy.
+
+Implementation correction on branch `fix/hr-salary-advance-request-policy-flow`:
+
+- `modules/hr/lib_salary_advance_request.php`
+  - Added `hrSalaryAdvancePolicyGetRequestReference()`.
+  - Uses the active policy when one is effective.
+  - If no policy is currently effective, uses the nearest published future policy as the request reference.
+  - Employee submission validation is now structural only; policy-compliance rules are intentionally deferred to FM review.
+  - The employee's requested amount, repayment method, monthly amount, and start month are preserved rather than rejected merely because they differ from the general policy.
+- `modules/hr/salary_advance_request.php`
+  - The page now shows the policy as a reference rather than blocking the request because its effective date is tomorrow.
+  - A future policy is visibly identified as a future reference.
+  - The employee can submit the request before the policy effective date.
+  - The request stores the referenced policy version for later FM comparison.
+  - No accounting/payroll posting is performed at submission.
+
+This correction does **not** weaken the annual policy itself and does not make a future policy legally/effectively active early. It only separates request submission from FM policy compliance review.
+
+Stage 2 remains runtime-verification pending.
+
+Immediate runtime test after pulling this branch:
+- Open `modules/hr/salary_advance_request.php` while V1 is still future-dated.
+- Confirm V1 is shown as **السياسة المرجعية** and marked **سياسة مستقبلية**.
+- Confirm the employee request form is available.
+- Submit one controlled request.
+- Verify the request is stored against V1, status is `submitted`, and the original requested values are preserved.
+- Verify the FM notification is created.
+- Verify no payroll/accounting transaction is posted.
+- Then proceed to FM review design, where policy matching and request-level customization will be implemented.
+
+Do not treat a future policy as active merely because it is used as the request reference.
