@@ -4,7 +4,7 @@
 **Repository:** `moneermax/Ahl-El-Kheir-charity-management-system`  
 **Branch:** `main`  
 **Active area:** HR / Salary Advance  
-**Current stage:** Stage 2 — Employee Request Foundation
+**Current stage:** Stage 3 — FM Review and Per-Request Customization (implementation ready; runtime verification pending)
 
 ## Purpose
 
@@ -56,7 +56,7 @@ The user has now confirmed that the Stage 1 work we were originally completing i
 
 ## Stage 2 — Employee Salary Advance Request Foundation
 
-**Status: IMPLEMENTED IN REPOSITORY; RUNTIME VERIFICATION STILL REQUIRED.**
+**Status: RUNTIME VERIFIED.**
 
 Current repository components include:
 
@@ -88,6 +88,20 @@ The employee request must remain the employee's original request.
 The later FM-review stage will be responsible for reviewing and, where policy permits, customizing the request. Do not silently overwrite the employee's submitted values during request creation.
 
 Policy defaults are organizational defaults. They do not eliminate the need for server-side validation at request submission and again at FM review/approval.
+
+## Stage 2 runtime verification — PASSED
+
+The controlled runtime test was completed on 2026-09-28.
+
+- Employee successfully submitted request `SAR-2026-00001`.
+- Employee page reported successful submission to FM.
+- FM dashboard showed the notification as unread/new.
+- Notification text identified the request and employee `فاطمه سليمان`.
+- No accounting or payroll posting was performed by submission.
+- The employee page no longer exposes the policy-reference details.
+- Policy-compliance rules such as multiple-active-request handling are deferred to FM review rather than blocking employee submission.
+
+Therefore Stage 2 has passed its runtime gate. Do not repeat the successful submission test unless a regression appears.
 
 ## Stage 2 runtime gate
 
@@ -123,6 +137,31 @@ Before accepting this as final architecture, inspect the helper and its existing
 
 Do not replace it speculatively. Inspect first, then fix narrowly if necessary.
 
+## Stage 3 — FM Review and Per-Request Customization
+
+**Status: IMPLEMENTED ON A FEATURE BRANCH; RUNTIME VERIFICATION PENDING.**
+
+Feature branch: `feature/hr-salary-advance-fm-review`
+
+Stage 3 implementation currently includes:
+
+- migration `database/migrations/2026-09-28_hr_salary_advance_fm_review.sql` for FM decision/customization fields;
+- FM-only review page `modules/hr/salary_advance_fm_review.php`;
+- FM review helpers in `modules/hr/lib_salary_advance_request.php`;
+- FM dashboard shortcut to the review queue;
+- employee submission notification link directed to the FM review page;
+- preservation of all employee-requested values;
+- policy mismatch comparison at FM review;
+- request-level customization without modifying the general policy;
+- approve/reject decision with required rejection reason;
+- employee notification after a committed FM decision;
+- audit-log entry for the FM decision;
+- no accounting disbursement or payroll posting during FM review.
+
+The implementation intentionally separates the original employee request from FM-approved terms. If the request does not comply with the referenced policy, FM must either customize the request (when the policy permits request-level customization) or reject it. A non-customized request with policy mismatches cannot be approved.
+
+**Runtime gate for Stage 3:** apply the migration, open the FM review page from the new notification, verify the original request is preserved, test a matching approval, test a rejected request with reason, and test a request-level customization. Confirm the annual policy record is unchanged and no accounting/payroll posting occurs.
+
 ## Next development stage
 
 After Stage 2 runtime verification passes:
@@ -148,7 +187,7 @@ Do not implement repayment schedules, payroll deductions, direct repayment settl
 
 1. **Stage 1 — Policy foundation:** COMPLETE.
 2. **Stage 2 — Employee request:** IMPLEMENTED; runtime verification OPEN.
-3. **Stage 3 — FM review and per-request customization:** NOT STARTED.
+3. **Stage 3 — FM review and per-request customization:** IMPLEMENTED; runtime verification OPEN.
 4. **Stage 4 — Accounting verification and disbursement:** NOT STARTED.
 5. **Stage 5 — Repayment schedule + payroll integration:** NOT STARTED.
 6. **Stage 6 — Direct repayment and settlement:** NOT STARTED.
@@ -179,7 +218,9 @@ Every stage must satisfy the project completion gate:
 
 **Stage 1 Salary Advance Policy Foundation: COMPLETE.**
 
-**Stage 2 Employee Salary Advance Request Foundation: IMPLEMENTED IN REPOSITORY, NOT YET RUNTIME-VERIFIED.**
+**Stage 2 Employee Salary Advance Request Foundation: RUNTIME VERIFIED.**
+
+**Stage 3 FM Review and Per-Request Customization: IMPLEMENTED ON FEATURE BRANCH, RUNTIME VERIFICATION OPEN.**
 
 **Immediate next task:** inspect the current Stage 2 implementation and the existing `ak_transaction_review_notify_fm_event()` notification helper/callers, then apply/verify the Stage 2 migration and perform the first controlled employee request runtime test.
 
