@@ -34,7 +34,7 @@ $headerQuickActions = [
     ['label'=>'مراجعة المعاملات المالية','url'=>'modules/accounting/fm_transaction_review.php','icon'=>'fa-file-invoice-dollar','color'=>'#6c757d'],
     ['label'=>'التقارير المالية','url'=>'modules/reports/financial.php','icon'=>'fa-chart-pie','color'=>'#0d6efd'],
     ['label'=>'سجل المعاملات','url'=>'modules/transactions/index.php','icon'=>'fa-money-bill-transfer','color'=>'#2daf79'],
-    ['label'=>'إدارة ومراجعة سلف الرواتب','url'=>'#','icon'=>'fa-hand-holding-dollar','color'=>'#198754','salary_advance'=>true],
+    ['label'=>'التحقق المحاسبي وصرف سلف الرواتب','url'=>'modules/hr/salary_advance_accounting.php','icon'=>'fa-hand-holding-dollar','color'=>'#198754','salary_advance'=>true],
     ['label'=>'منظمة فينا الخير','url'=>'modules/accounting/fina_dashboard.php','icon'=>'fina-logo','color'=>'#6f42c1'],
 ];
 
