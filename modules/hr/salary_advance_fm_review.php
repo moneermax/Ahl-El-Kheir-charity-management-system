@@ -34,6 +34,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['fm_decision_submit'])
         $uid = (int)Session::getUserID();
 
         $pdo->beginTransaction();
+        $notificationTitle = '';
+        $notificationBody = '';
+        $notificationType = '';
+
         if ($decision['decision'] === 'reject') {
             $pdo->prepare(
                 "UPDATE hr_salary_advance_requests
@@ -42,14 +46,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['fm_decision_submit'])
                  WHERE id=? AND status IN ('submitted','fm_review')"
             )->execute([$decision['reason'], $uid, $requestId]);
 
-            ak_transaction_review_notify_user(
-                (int)$request['submitted_by'],
-                'تم رفض طلب السلفة',
-                'تم رفض طلب السلفة «' . (string)$request['request_no'] . '». سبب الرفض: ' . $decision['reason'],
-                APP_URL . 'modules/hr/salary_advance_request.php',
-                $requestId,
-                'salary_advance_request_rejection'
-            );
+            $notificationTitle = 'تم رفض طلب السلفة';
+            $notificationBody = 'تم رفض طلب السلفة «' . (string)$request['request_no'] . '». سبب الرفض: ' . $decision['reason'];
+            $notificationType = 'salary_advance_request_rejection';
             $message = 'تم رفض طلب السلفة وإبلاغ الموظف.';
         } else {
             $pdo->prepare(
@@ -66,14 +65,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['fm_decision_submit'])
             ]);
 
             $customText = $decision['customized'] ? ' بعد تخصيص شروط الطلب من قبل المدير المالي.' : '';
-            ak_transaction_review_notify_user(
-                (int)$request['submitted_by'],
-                'تم اعتماد طلب السلفة',
-                'تم اعتماد طلب السلفة «' . (string)$request['request_no'] . '».' . $customText,
-                APP_URL . 'modules/hr/salary_advance_request.php',
-                $requestId,
-                'salary_advance_request_approval'
-            );
+            $notificationTitle = 'تم اعتماد طلب السلفة';
+            $notificationBody = 'تم اعتماد طلب السلفة «' . (string)$request['request_no'] . '».' . $customText;
+            $notificationType = 'salary_advance_request_approval';
             $message = 'تم اعتماد طلب السلفة وإبلاغ الموظف. لم يتم تنفيذ أي صرف أو قيد محاسبي في هذه المرحلة.';
         }
 
@@ -97,6 +91,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['fm_decision_submit'])
             $_SERVER['HTTP_USER_AGENT'] ?? ''
         ]);
         $pdo->commit();
+
+        // Notify only after the database transaction is committed.
+        ak_transaction_review_notify_event(
+            (int)$request['submitted_by'],
+            $notificationTitle,
+            $notificationBody,
+            APP_URL . 'modules/hr/salary_advance_request.php',
+            $requestId,
+            $notificationType
+        );
     } catch (Throwable $e) {
         if ($pdo->inTransaction()) $pdo->rollBack();
         $error = $e->getMessage();
