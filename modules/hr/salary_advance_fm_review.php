@@ -92,9 +92,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['fm_decision_submit'])
         ]);
         $pdo->commit();
 
-        // Notify only after the database transaction is committed.
+        // Notify the employee account after the database transaction is committed.
+        // Use employees.user_id as the canonical employee-account link. Keep
+        // submitted_by only as a legacy fallback for older employee records.
+        $employeeRecipient = dbFetchOne(
+            "SELECT user_id FROM employees WHERE id = ? LIMIT 1",
+            [(int)$request['employee_id']]
+        );
+        $employeeUserId = (int)($employeeRecipient['user_id'] ?? 0);
+        if ($employeeUserId <= 0) {
+            $employeeUserId = (int)$request['submitted_by'];
+        }
+
         ak_transaction_review_notify_event(
-            (int)$request['submitted_by'],
+            $employeeUserId,
             $notificationTitle,
             $notificationBody,
             APP_URL . 'modules/hr/salary_advance_request.php',
