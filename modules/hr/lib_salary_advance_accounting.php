@@ -465,3 +465,23 @@ function hrSalaryAdvanceAccountingUploadReceipt(PDO $pdo, int $requestId, int $u
         }
     }
 }
+
+function hrSalaryAdvanceAccountingHistory(PDO $pdo): array
+{
+    return dbFetchAll(
+        "SELECT r.id, r.request_no, r.status, r.accounting_status,
+                r.approved_amount, r.outstanding_balance,
+                r.disbursed_at, r.settled_at, r.disbursement_reference,
+                e.employee_code, e.full_name AS employee_name,
+                dv.full_name AS disbursed_by_name,
+                a.code AS disbursement_account_code, a.name_ar AS disbursement_account_name,
+                je.entry_code AS disbursement_entry_code
+         FROM hr_salary_advance_requests r
+         JOIN employees e ON e.id = r.employee_id
+         LEFT JOIN users dv ON dv.id = r.disbursed_by
+         LEFT JOIN accounts a ON a.id = r.disbursement_account_id
+         LEFT JOIN journal_entries je ON je.id = r.disbursement_journal_entry_id
+         WHERE r.status IN ('disbursed', 'settled', 'rejected', 'cancelled')
+         ORDER BY COALESCE(r.disbursed_at, r.settled_at) DESC, r.id DESC"
+    );
+}
