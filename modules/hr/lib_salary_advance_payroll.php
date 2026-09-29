@@ -154,6 +154,218 @@ function hrSalaryAdvancePayrollCalculateDraft(PDO $pdo, array $payroll, string $
     return ['total' => $total, 'allocations' => $allocations];
 }
 
+
+/**
+ * Apply the salary-advance repayment allocations when a payroll is paid.
+ *
+ * This function runs inside the same transaction as payroll status and
+ * accounting posting. It locks the eligible request/schedule rows, rechecks
+ * the draft calculation, writes one authoritative repayment trace per
+ * request/payroll pair, and reduces the request outstanding balance.
+ */
+function hrSalaryAdvancePayrollApply(PDO $pdo, array $payroll, int $accountingEntryId): array
+{
+    $payrollId = (int)($payroll['id'] ?? 0);
+    $employeeId = (int)($payroll['employee_id'] ?? 0);
+    if ($payrollId <= 0 || $employeeId <= 0) {
+        throw new RuntimeException('بيانات مسير الراتب غير صالحة لتطبيق سداد السلفة.');
+    }
+
+    $periodStart = sprintf(
+        '%04d-%02d-01',
+        (int)($payroll['year'] ?? 0),
+        (int)($payroll['month'] ?? 0)
+    );
+
+    $salaryAdvanceDeduction = round((float)($payroll['salary_advance_deduction'] ?? 0), 2);
+    if ($salaryAdvanceDeduction <= 0.00) {
+        return ['total' => 0.00, 'allocations' => []];
+    }
+
+    // Lock the schedule rows before recalculating so a concurrent payroll
+    // action cannot consume the same installment.
+    $locked = dbFetchAll(
+        "SELECT s.id AS schedule_id, s.salary_advance_request_id AS request_id,
+                s.scheduled_amount, s.applied_amount, s.status AS schedule_status,
+                r.status AS request_status, r.outstanding_balance
+         FROM hr_salary_advance_repayment_schedule s
+         JOIN hr_salary_advance_requests r
+           ON r.id = s.salary_advance_request_id
+         WHERE r.employee_id = ?
+           AND r.status = 'disbursed'
+           AND COALESCE(r.outstanding_balance, 0) > 0
+           AND s.scheduled_month = ?
+           AND s.status IN ('pending', 'partial')
+         ORDER BY s.installment_no ASC, s.id ASC
+         FOR UPDATE",
+        [$employeeId, $periodStart]
+    );
+
+    if (!$locked) {
+        throw new RuntimeException('مسير الراتب يحتوي على خصم سلفة، لكن لا يوجد قسط سداد قائم يمكن تطبيقه.');
+    }
+
+    $preview = hrSalaryAdvancePayrollCalculateDraft($pdo, $payroll, $periodStart);
+    $calculatedTotal = round((float)($preview['total'] ?? 0), 2);
+    if ($calculatedTotal !== $salaryAdvanceDeduction) {
+        throw new RuntimeException('خصم السلفة في مسير الراتب لا يطابق إعادة احتساب جدول السداد؛ تم إيقاف الصرف لحماية رصيد السلفة.');
+    }
+
+    $allocations = $preview['allocations'] ?? [];
+    $allocationBySchedule = [];
+    foreach ($allocations as $allocation) {
+        $allocationBySchedule[(int)$allocation['schedule_id']] = $allocation;
+    }
+
+    $insert = $pdo->prepare(
+        "INSERT INTO hr_salary_advance_payroll_repayments
+            (salary_advance_request_id, repayment_schedule_id, payroll_id,
+             employee_id, eligible_salary, maximum_allowed_deduction,
+             scheduled_amount, actual_amount, outcome, outcome_reason,
+             accounting_entry_id, applied_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    );
+
+    $updateSchedule = $pdo->prepare(
+        "UPDATE hr_salary_advance_repayment_schedule
+         SET applied_amount = ?,
+             status = ?,
+             applied_payroll_id = ?,
+             applied_at = ?,
+             skip_reason = ?
+         WHERE id = ?
+           AND status IN ('pending', 'partial')"
+    );
+
+    $updateRequest = $pdo->prepare(
+        "UPDATE hr_salary_advance_requests
+         SET outstanding_balance = ?
+         WHERE id = ?
+           AND status = 'disbursed'"
+    );
+
+    $existingTrace = $pdo->prepare(
+        "SELECT id
+         FROM hr_salary_advance_payroll_repayments
+         WHERE salary_advance_request_id = ?
+           AND payroll_id = ?
+         LIMIT 1
+         FOR UPDATE"
+    );
+
+    $totalApplied = 0.00;
+    $written = 0;
+
+    foreach ($locked as $row) {
+        $scheduleId = (int)$row['schedule_id'];
+        $requestId = (int)$row['request_id'];
+        $allocation = $allocationBySchedule[$scheduleId] ?? [
+            'eligible_salary' => 0.00,
+            'maximum_allowed_deduction' => null,
+            'scheduled_amount' => (float)$row['scheduled_amount'],
+            'remaining_schedule_amount' => max(
+                0.00,
+                (float)$row['scheduled_amount'] - (float)$row['applied_amount']
+            ),
+            'actual_amount' => 0.00,
+            'outcome' => 'skipped',
+            'outcome_reason' => 'لم يتم تحديد خصم لهذا القسط وفق السياسة.',
+        ];
+
+        $actual = round(max(0.00, (float)$allocation['actual_amount']), 2);
+        $oldApplied = round(max(0.00, (float)$row['applied_amount']), 2);
+        $scheduledAmount = round(max(0.00, (float)$row['scheduled_amount']), 2);
+        $newApplied = round($oldApplied + $actual, 2);
+
+        if ($actual > 0.00 && $newApplied + 0.000001 >= $scheduledAmount) {
+            $scheduleStatus = 'paid';
+        } elseif ($actual > 0.00) {
+            $scheduleStatus = 'partial';
+        } else {
+            $scheduleStatus = 'skipped';
+        }
+
+        $now = date('Y-m-d H:i:s');
+        $appliedAt = $actual > 0.00 ? $now : null;
+        $skipReason = $scheduleStatus === 'skipped'
+            ? (string)($allocation['outcome_reason'] ?? 'تم تجاوز القسط وفق سياسة السداد.')
+            : null;
+
+        $existingTrace->execute([$requestId, $payrollId]);
+        if ($existingTrace->fetch(PDO::FETCH_ASSOC)) {
+            throw new RuntimeException('يوجد سجل سداد رواتب سابق لنفس السلفة ومسير الراتب؛ تم إيقاف إعادة التطبيق.');
+        }
+
+        $request = dbFetchOne(
+            "SELECT outstanding_balance
+             FROM hr_salary_advance_requests
+             WHERE id = ?
+               AND employee_id = ?
+               AND status = 'disbursed'
+             LIMIT 1
+             FOR UPDATE",
+            [$requestId, $employeeId]
+        );
+        if (!$request) {
+            throw new RuntimeException('طلب السلفة المرتبط بمسير الراتب غير موجود أو ليس في حالة صرف.');
+        }
+
+        $outstandingBefore = round(max(0.00, (float)$request['outstanding_balance']), 2);
+        if ($actual > $outstandingBefore + 0.000001) {
+            throw new RuntimeException('مبلغ سداد السلفة يتجاوز الرصيد القائم؛ تم إيقاف العملية.');
+        }
+
+        $outstandingAfter = round(max(0.00, $outstandingBefore - $actual), 2);
+
+        $insert->execute([
+            $requestId,
+            $scheduleId,
+            $payrollId,
+            $employeeId,
+            round((float)($allocation['eligible_salary'] ?? 0), 2),
+            $allocation['maximum_allowed_deduction'] !== null
+                ? round((float)$allocation['maximum_allowed_deduction'], 2)
+                : null,
+            $scheduledAmount,
+            $actual,
+            $scheduleStatus === 'skipped' ? 'skipped' : ($actual + 0.000001 >= max(0.00, $scheduledAmount - $oldApplied) ? 'applied' : 'partial'),
+            $skipReason,
+            $actual > 0.00 ? $accountingEntryId : null,
+            $appliedAt,
+        ]);
+
+        $updateSchedule->execute([
+            $newApplied,
+            $scheduleStatus,
+            $payrollId,
+            $appliedAt,
+            $skipReason,
+            $scheduleId,
+        ]);
+        if ($updateSchedule->rowCount() !== 1) {
+            throw new RuntimeException('تعذر تحديث حالة قسط سداد السلفة.');
+        }
+
+        $updateRequest->execute([$outstandingAfter, $requestId]);
+        if ($updateRequest->rowCount() !== 1) {
+            throw new RuntimeException('تعذر تحديث الرصيد القائم للسلفة.');
+        }
+
+        $totalApplied = round($totalApplied + $actual, 2);
+        $written++;
+    }
+
+    if ($totalApplied !== $salaryAdvanceDeduction) {
+        throw new RuntimeException('إجمالي سداد السلفة المطبق لا يطابق خصم السلفة في مسير الراتب.');
+    }
+
+    return [
+        'total' => $totalApplied,
+        'allocations' => $allocations,
+        'trace_rows' => $written,
+    ];
+}
+
 function hrSalaryAdvancePayrollRefreshDraft(PDO $pdo, int $payrollId): void
 {
     if ($payrollId <= 0) {
