@@ -1543,3 +1543,8 @@ Evidence: SAR-2026-00008 maximum-deduction cap; SAR-2026-00009 maximum-month rej
 The CLI verification harness was hardened in commit 9b66315966174a3a892a5760847300007814a0e2 and reran cleanly.
 
 Audit boundary: actual payroll deduction/application, payroll allocation, outstanding-balance reduction, payroll Cr 1410 posting, insufficient-salary handling, and repayment notifications remain to be implemented and runtime-verified in Stage 5. Stage 6 is not started.
+
+
+## 2026-09-29 — HR Salary Advance Stage 5 Payroll Integration Checkpoint
+
+Code audit checkpoint: payroll repayment application is transactional with payroll payment and accounting. Pending schedule rows are locked, the approved-policy deduction is recalculated, one repayment trace is written per request/payroll, schedule state and outstanding balance are updated, Cr 1410 is posted for actual repayment, and old/new balance and schedule values are written to audit_log. Runtime verification remains open; no Stage 6 behavior was introduced.
