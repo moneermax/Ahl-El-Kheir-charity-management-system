@@ -238,4 +238,7 @@ require_once __DIR__ . '/../../includes/header.php';
  c?.addEventListener('change',sync); sync();
 })();
 </script>
+<script>
+window.AK_PAGE_BACK_URL = <?php echo json_encode(APP_URL . 'modules/hr/salary_advance_dashboard.php', JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES); ?>;
+</script>
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>

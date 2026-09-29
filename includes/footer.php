@@ -90,7 +90,7 @@ function akInstallBackButtons(){
     var isDashboard=/(^|\/)dashboard\//i.test(path)||/(^|\/)modules\/accounting\/fm_dashboard\.php$/i.test(path);
     if(isDashboard)return;
     content.querySelectorAll('.ak-top-back-wrap,.ak-bottom-back-wrap').forEach(function(node){node.remove();});
-    var fallback=window.AK_BACK_FALLBACK||window.location.origin+'/';
+    var fallback=window.AK_PAGE_BACK_URL||window.AK_BACK_FALLBACK||window.location.origin+'/';
     var label=window.AK_LANG==='ar'?'العودة':'Back';
     var topWrap=document.createElement('div');
     topWrap.className='ak-top-back-wrap';

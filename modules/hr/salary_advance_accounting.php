@@ -373,4 +373,14 @@ require_once __DIR__ . '/../../includes/header.php';
     <?php endif; ?>
 
 </div>
+<script>
+window.AK_PAGE_BACK_URL = <?php
+echo json_encode(
+    in_array($role, ['financial_manager', 'admin', 'fm'], true)
+        ? APP_URL . 'modules/hr/salary_advance_dashboard.php'
+        : APP_URL . 'dashboard/accountant_staff_dashboard.php',
+    JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES
+);
+?>;
+</script>
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>
