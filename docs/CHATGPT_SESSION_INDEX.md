@@ -970,13 +970,32 @@ Salary Advance Stages 1–4 are complete; Stage 4 is runtime verified and closed
 The next session must begin Stage 5 — Repayment Schedule + Payroll Integration with documentation/repository inspection and design/audit, not with Stage 4 reopening or speculative coding.
 
 
-# 2026-09-29 — Stage 5 Schedule Generation Runtime Checkpoint
+# # 2026-09-29 — Salary Advance Processing Workflow Consolidation
+
+The Stage 5 salary-advance UI workflow was consolidated into one processing page on `feature/hr-salary-advance-stage5-schedule`.
+
+Removed redundant processing pages:
+- `modules/hr/salary_advance_fm_review.php`
+- `modules/hr/salary_advance_processing.php`
+
+Unified page:
+- `modules/hr/salary_advance_processing.php`
+
+The page presents FM review, accounting verification, disbursement, and repayment-schedule result in sequence. Voucher/receipt endpoints remain separate evidence/document endpoints.
+
+Dashboard links and employee approval-notification routing were updated. Accounting staff retain authorized access through their dashboard.
+
+No database schema change was introduced by this consolidation.
+
+Runtime verification of the consolidated page is still pending. PR #52 was already merged into main (merge commit 96ecf58871fe27b32aad2c5d62174c40991a5747). The current branch contains a follow-up workflow-consolidation change and is not yet merged.
+
+2026-09-29 — Stage 5 Schedule Generation Runtime Checkpoint
 
 **Status:** Stage 5 IN PROGRESS — schedule generation/display RUNTIME VERIFIED; edge-case schedule-rule tests pending.
 
 The Stage 5 migration was applied successfully locally with all 5 queries completing without errors. It added payroll.salary_advance_deduction, hr_salary_advance_repayment_schedule, and hr_salary_advance_payroll_repayments.
 
-PR #52 — Stage 5: generate salary advance repayment schedules — remains OPEN and must not be merged until the remaining runtime gates pass.
+PR #52 — Stage 5: generate salary advance repayment schedules — was merged into main on 2026-09-29 (merge commit 96ecf58871fe27b32aad2c5d62174c40991a5747). The current branch is a follow-up consolidation branch and remains unmerged while the consolidated workflow is runtime-tested.
 
 Implemented on feature/hr-salary-advance-stage5-schedule:
 - modules/hr/lib_salary_advance_repayment.php
@@ -985,7 +1004,7 @@ Implemented on feature/hr-salary-advance-stage5-schedule:
 - approved start-rule handling;
 - maximum monthly deduction and maximum repayment-month constraints;
 - duplicate schedule-generation protection;
-- schedule display on modules/hr/salary_advance_accounting.php.
+- schedule display on modules/hr/salary_advance_processing.php.
 
 ## Runtime PASS — SAR-2026-00007
 
@@ -1032,34 +1051,15 @@ Stage 5 currently does NOT implement actual payroll deduction calculation, payro
 Use fresh controlled requests for new tests. Do not alter the already-passed SAR-2026-00007 evidence. If a test fails, stop and inspect the current repository/code/schema root cause before creating another test request.
 
 
-# 2026-09-29 — Stage 5 Test 3 Runtime Checkpoint
+## 2026-09-29 — Stage 5 Schedule-Planning Gates Complete
 
-**Status:** Stage 5 IN PROGRESS — Test 3 (`next_payroll`) **PASS / RUNTIME VERIFIED**.
+The salary-advance schedule-planning work unit is DONE / RUNTIME VERIFIED. All seven gates passed, including maximum deduction, maximum repayment months, next_payroll, specified_month, duplicate protection, full-eligible-salary planning, and failure/rollback safety.
 
-Verified request: **SAR-2026-00011**
+The clean rollback-only harness run confirmed Tests 4–6 PASS with no CLI warning after commit 9b66315966174a3a892a5760847300007814a0e2.
 
-- Employee: مدير الموارد البشرية / EMP-0032
-- Approved/disbursed amount: 30,000 SDG
-- Repayment method: fixed monthly
-- Monthly installment: 10,000 SDG
-- Employee-requested start month: 2026-12-01
-- Disbursed: 2026-09-29 16:06:02
-- Source: 1100 — الصندوق (نقدي)
-- Journal: JE-000044
-- Reference: SAL-ADV-SAR-2026-00011
-- Outstanding balance: 30,000 SDG
-- Generated schedule: 2026-10-01 / 10,000; 2026-11-01 / 10,000; 2026-12-01 / 10,000
-- All schedule rows are pending and total 30,000 SDG.
+Next session: continue Stage 5 payroll integration only. First inspect current payroll deduction/application code, payroll repayment allocation conventions, accounting posting conventions, and schema. Do not start Stage 6 and do not consume another employee/request merely to manufacture test data.
 
-**Conclusion:** the policy-level `next_payroll` rule correctly overrides the employee-requested December start and begins repayment in the first eligible payroll month after the September disbursement.
 
-Protected evidence: do not modify, redisburse, or reuse SAR-2026-00011 for another Stage 5 test.
+## 2026-09-29 — HR Salary Advance Stage 5 Payroll Integration Checkpoint
 
-### Remaining Stage 5 runtime gates
-
-1. specified_month
-2. duplicate schedule generation
-3. full_eligible_salary
-4. failure/rollback safety
-
-Maximum monthly deduction and maximum repayment months are already PASS. Do not start actual payroll deduction/application, payroll accounting, outstanding-balance reduction, repayment notifications, or Stage 6 settlement until the schedule-planning gates are complete.
+Current continuation point: `feature/hr-salary-advance-stage5-schedule`. Schedule-planning gates are complete and runtime verified. Payroll draft integration, repayment allocation, outstanding-balance reduction, Cr 1410 accounting, insufficient-salary handling, duplicate protection, and repayment audit logging are implemented. Controlled runtime verification is the next gate. Stage 6 is not started.
