@@ -104,7 +104,7 @@ function akInstallBackButtons(){
     var footer=document.querySelector('.app-footer');
     if(footer&&footer.parentNode) footer.parentNode.insertBefore(bottomWrap,footer); else content.appendChild(bottomWrap);
 }
-function akGoBack(fallback){try{var ref=document.referrer;if(ref&&ref.indexOf(window.location.origin)===0&&window.history.length>1){window.history.back();return false;}}catch(e){}if(fallback){window.location.href=fallback;}return false;}
+function akGoBack(fallback){try{if(window.AK_PAGE_BACK_URL){window.location.href=fallback||window.AK_PAGE_BACK_URL;return false;}var ref=document.referrer;if(ref&&ref.indexOf(window.location.origin)===0&&window.history.length>1){window.history.back();return false;}}catch(e){}if(fallback){window.location.href=fallback;}return false;
 
 function akProjectPageEnhancements(){
     var path=window.location.pathname.replace(/\\/g,'/');
