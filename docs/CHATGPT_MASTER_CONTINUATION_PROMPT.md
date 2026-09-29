@@ -1253,3 +1253,33 @@ Before coding, inspect the existing repository/schema and identify the canonical
 Do not invent schema, accounts, statuses, or payroll workflows. Inspect actual tables/columns and existing payroll implementation first. Schema changes only through migration files. No runtime CREATE/ALTER, triggers, views, stored procedures, functions, or events. No destructive Git commands (reset --hard, clean, restore, force-push).
 
 Keep the current feature branch until all Stage 5 work is complete and runtime verified. Commit logical changes, keep the branch pullable, and merge to main only after the Stage 5 completion gate. After each verified work unit, update the five project documents with exact runtime evidence and the new continuation checkpoint.
+
+
+# LATEST CONTINUATION PROMPT — 2026-09-29 — Stage 5 Payroll Application Verification
+
+Continue the existing Ahl El Kheir project. Do not rebuild or start a new project.
+
+Environment: repository \`moneermax/Ahl-El-Kheir-charity-management-system\`; local path \`D:\xampp\htdocs\AhlElKheir\`; Windows/XAMPP/PHP 8.2/MariaDB; Arabic RTL; procedural PHP only.
+
+Current status:
+- Salary Advance Stages 1–4: DONE / RUNTIME VERIFIED / CLOSED.
+- Stage 5 schedule planning: DONE / RUNTIME VERIFIED.
+- Stage 5 payroll integration: IMPLEMENTED / RUNTIME VERIFICATION PENDING.
+- Stage 6: NOT STARTED.
+- Current branch: \`feature/hr-salary-advance-stage5-schedule\`.
+
+Implemented payroll integration:
+- draft salary-advance deduction from the approved schedule/policy;
+- transactional repayment allocation at payroll payment;
+- schedule applied/partial/skipped state updates;
+- outstanding-balance reduction by actual repayment;
+- \`hr_salary_advance_payroll_repayments\` trace;
+- payroll accounting Cr 1410 for actual repayment with cash credit for actual net paid;
+- insufficient-salary \`available_salary\` / \`skip_month\` behavior;
+- duplicate repayment protection;
+- audit-log evidence;
+- account 1410 ensured by the existing accounting seed mechanism.
+
+Before merge/closure, run controlled runtime verification for fixed-monthly repayment, available-salary partial repayment, skip-month, balance reduction, schedule state, duplicate protection, payroll regeneration safety, and balanced accounting/traceability. Do not use protected salary-advance requests for destructive testing and do not start Stage 6.
+
+After runtime verification, update the five project documents with exact evidence, then merge the completed Stage 5 branch to \`main\`. Review all remaining remote branches; branches already merged/obsolete should be removed where possible, and any branch that cannot be deleted through the available tooling should be deleted manually from GitHub/local Git without destructive history rewriting.
