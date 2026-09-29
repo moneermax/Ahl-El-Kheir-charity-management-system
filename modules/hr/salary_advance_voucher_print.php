@@ -100,6 +100,22 @@ function row(string $ar, string $en, string $value, bool $strong = false): strin
 </style>
 </head>
 <body>
+<style>
+.back-row{max-width:210mm;margin:12px auto;display:flex;justify-content:flex-start}
+.back-row.bottom{justify-content:flex-end;margin-top:20px}
+.back-row .btn{display:inline-flex;align-items:center;gap:.35rem}
+@media print{.back-row{display:none}}
+</style>
+<script>
+window.AK_VOUCHER_BACK_URL=<?php echo json_encode(
+    $isPrivileged
+        ? APP_URL . 'modules/hr/salary_advance_dashboard.php'
+        : APP_URL . 'modules/hr/salary_advance_request.php',
+    JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES
+); ?>;
+function akVoucherBack(){window.location.href=window.AK_VOUCHER_BACK_URL;return false;}
+</script>
+<div class="back-row"><a class="btn" href="<?php echo e($isPrivileged ? APP_URL . 'modules/hr/salary_advance_dashboard.php' : APP_URL . 'modules/hr/salary_advance_request.php'); ?>" onclick="return akVoucherBack();"><span>العودة</span><span aria-hidden="true">→</span></a></div>
 <div class="controls"><button class="btn primary" onclick="window.print()">طباعة السند / Print</button></div>
 <main class="sheet">
 <section class="voucher">
@@ -126,5 +142,6 @@ echo row('القيد المحاسبي', 'Journal Entry', (string)$r['entry_code'
 <footer class="foot"><span>تمت الطباعة بواسطة: <?php echo e($printedBy); ?></span><span>حالة السند: مرحّل / Posted</span><span>القيد: <?php echo e($r['entry_code']); ?></span></footer>
 </section>
 </main>
+<div class="back-row bottom"><a class="btn" href="<?php echo e($isPrivileged ? APP_URL . 'modules/hr/salary_advance_dashboard.php' : APP_URL . 'modules/hr/salary_advance_request.php'); ?>" onclick="return akVoucherBack();"><span>العودة</span><span aria-hidden="true">→</span></div>
 </body>
 </html>
