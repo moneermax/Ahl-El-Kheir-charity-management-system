@@ -61,7 +61,8 @@ include __DIR__ . '/../includes/header.php';
         <a href="<?php echo url('modules/reports/index.php'); ?>" class="btn btn-outline-primary btn-sm me-2"><i class="fas fa-chart-line me-1"></i>التقارير</a>
         <a href="<?php echo url('modules/accounting/group_disbursements.php'); ?>" class="btn btn-success btn-sm me-2"><i class="fas fa-users-cog me-1"></i><?php echo e(t('accounting.group_disbursements')); ?></a>
         <a href="<?php echo url('modules/accounting/disbursements.php'); ?>" class="btn btn-primary btn-sm me-2"><i class="fas fa-money-check-dollar me-1"></i><?php echo e(t('accounting.individual_disbursements')); ?></a>
-    </div>
+            <a href="<?php echo url('modules/hr/salary_advance_processing.php'); ?>" class="btn btn-outline-success btn-sm me-2"><i class="fas fa-hand-holding-dollar me-1"></i>معالجة سلف الرواتب</a>
+</div>
 </div>
 
 <?php include __DIR__ . '/../includes/alerts.php'; ?>
