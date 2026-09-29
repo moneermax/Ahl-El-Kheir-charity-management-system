@@ -66,6 +66,22 @@ function hrSalaryAdvanceScheduleFirstMonth(array $request): string
     return $nextPayrollMonth;
 }
 
+function hrSalaryAdvanceScheduleGet(PDO $pdo, int $requestId): array
+{
+    if ($requestId <= 0) {
+        return [];
+    }
+
+    return dbFetchAll(
+        "SELECT installment_no, scheduled_month, scheduled_amount, applied_amount, status,
+                applied_payroll_id, applied_at, skip_reason
+         FROM hr_salary_advance_repayment_schedule
+         WHERE salary_advance_request_id = ?
+         ORDER BY installment_no",
+        [$requestId]
+    );
+}
+
 function hrSalaryAdvanceScheduleGenerate(PDO $pdo, int $requestId, ?int $userId = null): int
 {
     if ($requestId <= 0) {
