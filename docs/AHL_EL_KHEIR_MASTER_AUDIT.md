@@ -1532,3 +1532,14 @@ The existing disbursement helper checks for an existing posted salary-advance di
 Stage 5 currently does NOT implement actual payroll deduction calculation, payroll repayment allocation, outstanding-balance reduction from payroll, payroll Cr 1410 accounting, repayment notifications, or Stage 6 direct repayment/settlement.
 
 Use fresh controlled requests for new tests. Do not alter the already-passed SAR-2026-00007 evidence. If a test fails, stop and inspect the current repository/code/schema root cause before creating another test request.
+
+
+# 2026-09-29 — Salary Advance Stage 5 Schedule-Planning Audit Closure
+
+The schedule-planning portion of Stage 5 passed all seven defined runtime/verification gates. This closes the schedule-rule work unit but does not close Stage 5 as a whole.
+
+Evidence: SAR-2026-00008 maximum-deduction cap; SAR-2026-00009 maximum-month rejection and rollback-safe disbursement attempt; SAR-2026-00011 next-payroll scheduling; rollback-only verification for specified-month, duplicate generation, and full-eligible-salary planning; and transaction/code evidence for failure rollback.
+
+The CLI verification harness was hardened in commit 9b66315966174a3a892a5760847300007814a0e2 and reran cleanly.
+
+Audit boundary: actual payroll deduction/application, payroll allocation, outstanding-balance reduction, payroll Cr 1410 posting, insufficient-salary handling, and repayment notifications remain to be implemented and runtime-verified in Stage 5. Stage 6 is not started.
