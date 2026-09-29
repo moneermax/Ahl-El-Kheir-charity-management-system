@@ -961,3 +961,10 @@ Implementation/documentation checkpoint commit: `2e7eb684878d2d45e0180a582ee3ff2
 The user confirmed that the current project/repository and database backups have been completed successfully before beginning the new HR Salary Advance feature. This is the recovery checkpoint for the new feature work.
 
 No Salary Advance implementation or schema change has been made at this checkpoint. The agreed design direction is policy-driven: an annual FM-configured Salary Advance Policy provides defaults, while the FM may override/customize the policy terms for an individual request. The existing HR/payroll/accounting implementation must be inspected before any schema or code changes are made.
+
+
+## 2026-09-29 — Current HR Salary Advance Checkpoint
+
+Salary Advance Stages 1–4 are complete; Stage 4 is runtime verified and closed. The final hardening was mandatory audit enforcement for receipt replacement, followed by a successful replacement test.
+
+The next session must begin Stage 5 — Repayment Schedule + Payroll Integration with documentation/repository inspection and design/audit, not with Stage 4 reopening or speculative coding.

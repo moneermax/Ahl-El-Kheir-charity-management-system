@@ -1042,3 +1042,16 @@ The completed closure, expense/payment, and report-page cleanup work must not be
 The user confirmed that the current project/repository and database backups have been completed successfully before beginning the new HR Salary Advance feature. This is the recovery checkpoint for the new feature work.
 
 No Salary Advance implementation or schema change has been made at this checkpoint. The agreed design direction is policy-driven: an annual FM-configured Salary Advance Policy provides defaults, while the FM may override/customize the policy terms for an individual request. The existing HR/payroll/accounting implementation must be inspected before any schema or code changes are made.
+
+
+## 2026-09-29 — HR Salary Advance Stage 4 CLOSED
+
+Stage 4 — Accounting Verification & Disbursement is DONE / RUNTIME VERIFIED / CLOSED.
+
+Verified evidence: successful accounting verification and disbursement of SAR-2026-00001 for 10,000 SDG from 1100 — الصندوق; journal JE-000040; reference SAL-ADV-SAR-2026-00001; Dr 1410 / Cr 1100; outstanding balance 10,000 SDG; protected receipt upload; voucher/receipt ownership controls; duplicate-disbursement protection; mandatory receipt-replacement audit; and runtime-verified FM rejection closure for SAR-2026-00005.
+
+The final receipt replacement test succeeded with the protected-storage confirmation. The superseded physical receipt is removed only after the DB replacement and mandatory audit record commit succeeds; on failure, the old receipt remains and the new upload is cleaned up.
+
+No payroll repayment schedule, payroll deduction, direct repayment, or settlement logic was implemented in Stage 4.
+
+**Next planned stage: Stage 5 — Repayment Schedule + Payroll Integration. NOT STARTED.**
