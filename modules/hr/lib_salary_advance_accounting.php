@@ -447,7 +447,9 @@ function hrSalaryAdvanceAccountingUploadReceipt(PDO $pdo, int $requestId, int $u
                     $_SERVER['HTTP_USER_AGENT'] ?? ''
                 ]
             );
-        } catch (Throwable $auditError) {}
+        } catch (Throwable $auditError) {
+            throw new RuntimeException('تعذر تسجيل تدقيق استبدال إيصال الدفع. لم يتم حفظ الاستبدال.');
+        }
 
         $pdo->commit();
     } catch (Throwable $e) {
