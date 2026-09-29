@@ -1063,3 +1063,10 @@ Next session: continue Stage 5 payroll integration only. First inspect current p
 ## 2026-09-29 — HR Salary Advance Stage 5 Payroll Integration Checkpoint
 
 Current continuation point: `feature/hr-salary-advance-stage5-schedule`. Schedule-planning gates are complete and runtime verified. Payroll draft integration, repayment allocation, outstanding-balance reduction, Cr 1410 accounting, insufficient-salary handling, duplicate protection, and repayment audit logging are implemented. Controlled runtime verification is the next gate. Stage 6 is not started.
+
+
+## 2026-09-29 — Stage 5 Payroll Integration Merge Checkpoint
+
+The Stage 5 payroll-integration implementation was merged to `main` through PR #56. Merge commit: `7cb7a42a9bb4d90a07d23250f2940473806498c8`.
+
+Status remains **Stage 5 IN PROGRESS / RUNTIME VERIFICATION PENDING**. The code is now on `main`; no Stage 6 behavior has been introduced. The next step is controlled local runtime verification of payroll repayment application, Cr 1410 accounting, balance/schedule updates, insufficient-salary handling, duplicate protection, and audit traceability.
