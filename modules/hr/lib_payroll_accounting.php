@@ -59,19 +59,15 @@ function hrPayrollPostAccounting(PDO $pdo, array $payroll): int
 {
     require_once dirname(__DIR__) . '/accounting/lib.php';
 
-    // IMPORTANT: ak_ensure_tables() contains DDL (CREATE TABLE IF NOT EXISTS).
-    // DDL may implicitly commit a MySQL/MariaDB transaction, so it MUST NOT
-    // be called while the payroll transaction is active. Initialization is
-    // performed by hrPayrollChangeStatus() before beginTransaction().
-
-    $amount = (float)($payroll['net_salary'] ?? 0);
-    if ($amount <= 0) {
-        throw new RuntimeException('لا يمكن ترحيل مسير راتب بصافي راتب غير صالح إلى المحاسبة.');
+    // IMPORTANT: ak_ensure_tables() contains DDL. It must not run while the
+    // payroll transaction is active.
+    $netSalary = round((float)($payroll['net_salary'] ?? 0), 2);
+    $salaryAdvanceDeduction = round((float)($payroll['salary_advance_deduction'] ?? 0), 2);
+    if ($netSalary < 0 || $salaryAdvanceDeduction < 0) {
+        throw new RuntimeException('مبالغ مسير الراتب غير صالحة للمحاسبة.');
     }
 
-    $expenseStmt = $pdo->prepare(
-        "SELECT id FROM accounts WHERE code = '5200' LIMIT 1"
-    );
+    $expenseStmt = $pdo->prepare("SELECT id FROM accounts WHERE code = '5200' LIMIT 1");
     $expenseStmt->execute();
     $expense = $expenseStmt->fetch(PDO::FETCH_ASSOC);
     if (!$expense) {
@@ -79,11 +75,26 @@ function hrPayrollPostAccounting(PDO $pdo, array $payroll): int
     }
     $expenseAccountId = (int)$expense['id'];
 
+    $receivableAccountId = null;
+    if ($salaryAdvanceDeduction > 0) {
+        $receivableStmt = $pdo->prepare(
+            "SELECT id FROM accounts WHERE code = '1410' AND is_active = 1 LIMIT 1"
+        );
+        $receivableStmt->execute();
+        $receivable = $receivableStmt->fetch(PDO::FETCH_ASSOC);
+        if (!$receivable) {
+            throw new RuntimeException('حساب سلف الرواتب 1410 غير موجود أو غير نشط في دليل الحسابات.');
+        }
+        $receivableAccountId = (int)$receivable['id'];
+    }
+
     $requestedPaymentAccount = null;
     if (array_key_exists('payment_account_id', $payroll) && $payroll['payment_account_id'] !== null) {
         $requestedPaymentAccount = (int)$payroll['payment_account_id'];
     }
     $paymentAccountId = hrPayrollResolvePaymentAccount($pdo, $requestedPaymentAccount);
+
+    $expenseAmount = round($netSalary + $salaryAdvanceDeduction, 2);
 
     $existingStmt = $pdo->prepare(
         "SELECT id
@@ -100,8 +111,6 @@ function hrPayrollPostAccounting(PDO $pdo, array $payroll): int
     if ($existing) {
         $entryId = (int)$existing['id'];
 
-        // Never silently reuse an existing posted journal unless it is a
-        // structurally valid, balanced payroll journal for the same amount.
         $journalCheckStmt = $pdo->prepare(
             "SELECT COUNT(*) AS line_count,
                     ROUND(SUM(debit), 2) AS debit_total,
@@ -115,13 +124,25 @@ function hrPayrollPostAccounting(PDO $pdo, array $payroll): int
         $lineCount = (int)($journalCheck['line_count'] ?? 0);
         $debitTotal = round((float)($journalCheck['debit_total'] ?? 0), 2);
         $creditTotal = round((float)($journalCheck['credit_total'] ?? 0), 2);
-        $expectedAmount = round($amount, 2);
-
         if ($lineCount < 2 ||
             $debitTotal <= 0 ||
             $debitTotal !== $creditTotal ||
-            $debitTotal !== $expectedAmount) {
-            throw new RuntimeException('يوجد قيد رواتب مرحّل سابق لكنه غير متوازن أو لا يطابق صافي المسير؛ تم إيقاف إعادة استخدامه لحماية سلامة المحاسبة.');
+            $debitTotal !== $expenseAmount) {
+            throw new RuntimeException('يوجد قيد رواتب مرحّل سابق لكنه غير متوازن أو لا يطابق إجمالي تكلفة الراتب؛ تم إيقاف إعادة استخدامه لحماية سلامة المحاسبة.');
+        }
+
+        if ($salaryAdvanceDeduction > 0) {
+            $repaymentCheckStmt = $pdo->prepare(
+                "SELECT ROUND(COALESCE(SUM(credit), 0), 2) AS repayment_credit
+                 FROM journal_lines
+                 WHERE entry_id = ?
+                   AND account_id = ?"
+            );
+            $repaymentCheckStmt->execute([$entryId, $receivableAccountId]);
+            $repaymentCredit = round((float)($repaymentCheckStmt->fetchColumn() ?? 0), 2);
+            if ($repaymentCredit !== $salaryAdvanceDeduction || $lineCount < 3) {
+                throw new RuntimeException('القيد المرحّل السابق لا يحتوي على تخصيص سداد السلفة الصحيح على حساب 1410.');
+            }
         }
     } else {
         $entryCode = 'PAY-' . (int)$payroll['id'];
@@ -159,8 +180,18 @@ function hrPayrollPostAccounting(PDO $pdo, array $payroll): int
              VALUES (?, ?, ?, ?, ?)"
         );
         $period = (int)$payroll['year'] . '-' . str_pad((string)(int)$payroll['month'], 2, '0', STR_PAD_LEFT);
-        $lineStmt->execute([$entryId, $expenseAccountId, $amount, 0, 'رواتب وأجور - ' . $period]);
-        $lineStmt->execute([$entryId, $paymentAccountId, 0, $amount, 'صرف رواتب - ' . $period]);
+
+        // Payroll expense remains the salary before the salary-advance
+        // receivable recovery. Cash is reduced only by the amount actually
+        // paid to the employee; the repayment portion credits receivable 1410.
+        $lineStmt->execute([$entryId, $expenseAccountId, $expenseAmount, 0, 'رواتب وأجور - ' . $period]);
+
+        if ($netSalary > 0) {
+            $lineStmt->execute([$entryId, $paymentAccountId, 0, $netSalary, 'صرف صافي الرواتب - ' . $period]);
+        }
+        if ($salaryAdvanceDeduction > 0) {
+            $lineStmt->execute([$entryId, $receivableAccountId, 0, $salaryAdvanceDeduction, 'سداد سلفة راتب من مسير - ' . $period]);
+        }
     }
 
     $update = $pdo->prepare(
