@@ -1434,3 +1434,16 @@ The Projects deep audit remains the active technical work area. Do not reopen co
 The user confirmed that the current project/repository and database backups have been completed successfully before beginning the new HR Salary Advance feature. This is the recovery checkpoint for the new feature work.
 
 No Salary Advance implementation or schema change has been made at this checkpoint. The agreed design direction is policy-driven: an annual FM-configured Salary Advance Policy provides defaults, while the FM may override/customize the policy terms for an individual request. The existing HR/payroll/accounting implementation must be inspected before any schema or code changes are made.
+
+
+## 2026-09-29 — HR Salary Advance Stage 4 Closure Audit
+
+Stage 4 reached its completion gate and is closed.
+
+Evidence reviewed: runtime accounting/disbursement evidence for SAR-2026-00001; runtime rejection closure for SAR-2026-00005; successful protected receipt replacement; code-verified employee ownership checks; code-verified duplicate-disbursement protection before posting and after transactional locking; and mandatory receipt-replacement audit enforcement.
+
+Receipt replacement lifecycle was confirmed: after successful DB/audit commit, the superseded physical receipt is removed. If the transaction fails, the old receipt remains and the newly uploaded file is cleaned up.
+
+No artificial duplicate journal or cross-employee access scenario was manufactured because the existing request is already disbursed and the normal UI correctly provides no re-disbursement path; the endpoint authorization and duplicate protection were directly inspected.
+
+Stage 4 is **DONE / CLOSED**. Stage 5 remains **NOT STARTED**.
