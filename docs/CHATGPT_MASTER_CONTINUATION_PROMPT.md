@@ -1283,3 +1283,10 @@ Implemented payroll integration:
 Before merge/closure, run controlled runtime verification for fixed-monthly repayment, available-salary partial repayment, skip-month, balance reduction, schedule state, duplicate protection, payroll regeneration safety, and balanced accounting/traceability. Do not use protected salary-advance requests for destructive testing and do not start Stage 6.
 
 After runtime verification, update the five project documents with exact evidence, then merge the completed Stage 5 branch to \`main\`. Review all remaining remote branches; branches already merged/obsolete should be removed where possible, and any branch that cannot be deleted through the available tooling should be deleted manually from GitHub/local Git without destructive history rewriting.
+
+
+## 2026-09-29 — Stage 5 Payroll Integration Merge Checkpoint
+
+The Stage 5 payroll-integration implementation was merged to `main` through PR #56. Merge commit: `7cb7a42a9bb4d90a07d23250f2940473806498c8`.
+
+Status remains **Stage 5 IN PROGRESS / RUNTIME VERIFICATION PENDING**. The code is now on `main`; no Stage 6 behavior has been introduced. The next step is controlled local runtime verification of payroll repayment application, Cr 1410 accounting, balance/schedule updates, insufficient-salary handling, duplicate protection, and audit traceability.
