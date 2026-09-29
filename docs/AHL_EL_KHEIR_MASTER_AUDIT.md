@@ -1449,6 +1449,29 @@ No artificial duplicate journal or cross-employee access scenario was manufactur
 Stage 4 is **DONE / CLOSED**. Stage 5 remains **NOT STARTED**.
 
 
+# 2026-09-29 — Salary Advance Processing Workflow Consolidation Audit
+
+The two former salary-advance processing pages were reviewed and consolidated into one user-facing workflow.
+
+Removed:
+- `modules/hr/salary_advance_fm_review.php`
+- `modules/hr/salary_advance_processing.php`
+
+Current unified processing page:
+- `modules/hr/salary_advance_processing.php`
+
+The consolidation is UI/workflow-level only. Existing FM decision logic, accounting verification, disbursement controls, journal posting, schedule generation, receipt handling, and role checks remain implemented in the existing procedural libraries.
+
+The salary-advance portal and accounting-staff dashboard now route users to the unified processing page. Employee FM-approval notifications also route to the unified page.
+
+Document/evidence endpoints remain separate:
+- `modules/hr/salary_advance_voucher_print.php`
+- `modules/hr/salary_advance_receipt.php`
+
+These are not duplicate processing pages and were intentionally retained.
+
+**Audit status:** implementation complete; runtime UI verification pending.
+
 # 2026-09-29 — Stage 5 Schedule Generation Runtime Checkpoint
 
 **Status:** Stage 5 IN PROGRESS — schedule generation/display RUNTIME VERIFIED; edge-case schedule-rule tests pending.
@@ -1464,7 +1487,7 @@ Implemented on feature/hr-salary-advance-stage5-schedule:
 - approved start-rule handling;
 - maximum monthly deduction and maximum repayment-month constraints;
 - duplicate schedule-generation protection;
-- schedule display on modules/hr/salary_advance_accounting.php.
+- schedule display on modules/hr/salary_advance_processing.php.
 
 ## Runtime PASS — SAR-2026-00007
 
