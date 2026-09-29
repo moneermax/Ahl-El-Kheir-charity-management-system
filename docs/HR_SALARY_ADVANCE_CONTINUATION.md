@@ -2,9 +2,9 @@
 
 **Date:** 2026-09-29  
 **Repository:** `moneermax/Ahl-El-Kheir-charity-management-system`  
-**Branch:** `main`  
+**Branch:** `feature/hr-salary-advance-stage5-schedule`  
 **Active area:** HR / Salary Advance  
-**Current stage:** Stage 5 — Repayment Schedule + Payroll Integration — **IN PROGRESS / SCHEDULE GENERATION RUNTIME VERIFIED**
+**Current stage:** Stage 5 — Repayment Schedule + Payroll Integration — **IN PROGRESS / PAYROLL INTEGRATION IMPLEMENTED — RUNTIME VERIFICATION PENDING**
 
 ## Purpose
 
@@ -20,7 +20,7 @@ Do not reopen Stages 1–3 unless a genuine regression is found.
 2. **Stage 2 — Employee Salary Advance Request: DONE / RUNTIME VERIFIED**
 3. **Stage 3 — FM Review & Per-Request Customization: DONE / RUNTIME VERIFIED**
 4. **Stage 4 — Accounting Verification & Disbursement: DONE / RUNTIME VERIFIED / CLOSED**
-5. **Stage 5 — Repayment Schedule + Payroll Integration: IN PROGRESS — SCHEDULE GENERATION RUNTIME VERIFIED**
+5. **Stage 5 — Repayment Schedule + Payroll Integration: IN PROGRESS — SCHEDULE RUNTIME VERIFIED / PAYROLL APPLICATION IMPLEMENTED — RUNTIME VERIFICATION PENDING**
 6. Stage 6 — Direct Repayment & Settlement: NOT STARTED
 7. Stage 7 — Exceptional Lifecycle Cases: NOT STARTED
 8. Stage 8 — Reporting / Audit / Hardening: NOT STARTED
@@ -761,3 +761,12 @@ Latest cleanup commit: 9b66315966174a3a892a5760847300007814a0e2.
 The branch is not yet merged into main.
 
 Correction to earlier workflow notes: the removed legacy pages are salary_advance_fm_review.php and salary_advance_accounting.php. salary_advance_processing.php is the new unified page.
+
+
+# Stage 5 — Payroll Integration Implementation Checkpoint (2026-09-29)
+
+**Status: IMPLEMENTED / RUNTIME VERIFICATION PENDING**
+
+Implemented on `feature/hr-salary-advance-stage5-schedule`: payroll draft deduction from the approved schedule/policy; transactional repayment allocation at payroll payment; schedule applied/partial/skipped state updates; outstanding-balance reduction by actual repayment; `hr_salary_advance_payroll_repayments` trace; Cr 1410 repayment accounting with cash credit for actual net paid; insufficient-salary `available_salary` / `skip_month` handling; duplicate request/payroll protection; and audit-log evidence. Account `1410` is ensured by the existing accounting seed mechanism when missing.
+
+Runtime verification is still required for fixed-monthly repayment, partial/available-salary, skip-month, balance reduction, schedule state, duplicate protection, payroll regeneration safety, and balanced journal traceability. Do not start Stage 6.
