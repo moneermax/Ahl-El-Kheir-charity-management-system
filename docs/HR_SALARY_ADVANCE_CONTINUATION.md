@@ -1,10 +1,10 @@
 # HR Salary Advance — Current Development Checkpoint
 
-**Date:** 2026-09-28  
+**Date:** 2026-09-29  
 **Repository:** `moneermax/Ahl-El-Kheir-charity-management-system`  
-**Branch:** `feature/hr-salary-advance-stage4-accounting`  
+**Branch:** `main`  
 **Active area:** HR / Salary Advance  
-**Current stage:** Stage 4 — Accounting Verification & Disbursement (runtime verification in progress; core disbursement path verified)
+**Current stage:** Stage 5 — Repayment Schedule + Payroll Integration — **IN PROGRESS / SCHEDULE GENERATION RUNTIME VERIFIED**
 
 ## Purpose
 
@@ -19,8 +19,8 @@ Do not reopen Stages 1–3 unless a genuine regression is found.
 1. **Stage 1 — Salary Advance Policy Foundation: DONE**
 2. **Stage 2 — Employee Salary Advance Request: DONE / RUNTIME VERIFIED**
 3. **Stage 3 — FM Review & Per-Request Customization: DONE / RUNTIME VERIFIED**
-4. **Stage 4 — Accounting Verification & Disbursement: IN PROGRESS / CORE RUNTIME VERIFIED**
-5. Stage 5 — Repayment Schedule + Payroll Integration: NOT STARTED
+4. **Stage 4 — Accounting Verification & Disbursement: DONE / RUNTIME VERIFIED / CLOSED**
+5. **Stage 5 — Repayment Schedule + Payroll Integration: IN PROGRESS — SCHEDULE GENERATION RUNTIME VERIFIED**
 6. Stage 6 — Direct Repayment & Settlement: NOT STARTED
 7. Stage 7 — Exceptional Lifecycle Cases: NOT STARTED
 8. Stage 8 — Reporting / Audit / Hardening: NOT STARTED
@@ -572,3 +572,132 @@ Documentation checkpoint commit: `322557364fbd19cc26a879743d48eb15f5bc869c`
 The migration and core accounting/disbursement path are already runtime verified. Do not repeat those successful tests unless a regression appears.
 
 Do not start Stage 5 until Stage 4 is fully runtime-verified and documented.
+
+
+# Stage 4 — Final Closure Checkpoint (2026-09-29)
+
+**Status: DONE / RUNTIME VERIFIED / CLOSED**
+
+The final Stage 4 gates are closed. No Stage 4 runtime test remains open.
+
+### Security and ownership
+- Voucher and payment-receipt endpoints enforce authenticated employee ownership server-side.
+- Privileged accounting/management roles retain their authorized access.
+- Cross-employee denial is recorded as code-verified; the already-verified legitimate owner flows were not repeated artificially.
+
+### Duplicate disbursement
+- The accounting helper checks for an existing posted salary-advance disbursement before posting and repeats the protection after acquiring the transactional request lock.
+- An already-disbursed request has no re-disbursement UI path, so no artificial duplicate journal was created.
+- Gate: **PASS / CODE VERIFIED**.
+
+### Receipt replacement
+The final replacement test succeeded with:
+
+تم رفع إيصال الدفع وحفظه في التخزين المحمي.
+
+The replacement lifecycle is:
+1. lock the existing receipt row;
+2. replace its stored metadata inside the transaction;
+3. write a mandatory audit record containing the previous receipt path and new receipt details;
+4. commit the transaction;
+5. remove the superseded physical receipt file after the successful commit.
+
+If the DB/audit transaction fails, the replacement rolls back, the new physical file is cleaned up, and the old receipt remains. Therefore an unaudited replacement cannot commit.
+
+Gate: **PASS / RUNTIME VERIFIED**.
+
+### Rejection closure
+FM rejection was runtime verified on SAR-2026-00005. The rejected request is terminal/closed, remains in history, and is no longer actionable for another approval/rejection cycle.
+
+Gate: **PASS / RUNTIME VERIFIED**.
+
+### Accounting and notification evidence
+- SAR-2026-00001
+- 10,000 SDG
+- source 1100 — الصندوق
+- journal JE-000040
+- reference SAL-ADV-SAR-2026-00001
+- Dr 1410 / Cr 1100
+- outstanding balance: 10,000 SDG
+- employee disbursement notification delivered.
+
+No payroll repayment schedule, payroll deduction, direct repayment, or settlement behavior was implemented in Stage 4.
+
+**Stage 4 is CLOSED. Do not reopen it unless genuine regression evidence appears.**
+
+## Next stage
+
+**Stage 5 — Repayment Schedule + Payroll Integration: NOT STARTED**
+
+Before Stage 5 implementation, inspect the current main repository, payroll/accounting conventions, and actual schema. Define the lifecycle, role boundaries, accounting events, and notification/audit behavior first. Do not invent schema or start coding before that design/audit checkpoint.
+
+
+## Current exact continuation point
+
+Stages 1–4 are complete and must not be reopened without regression evidence.
+
+The final Stage 4 hardening commit was 8b9caaf5c419812fa10d5000773ca6198b896173. The rejection-closure PDO rowCount correction was 5fabd7af14d7ff545998e44cf05c62157dea20a0.
+
+**READY FOR A NEW SESSION — CONTINUE WITH STAGE 5 PLANNING/AUDIT ONLY.**
+
+
+# 2026-09-29 — Stage 5 Schedule Generation Runtime Checkpoint
+
+**Status:** Stage 5 IN PROGRESS — schedule generation/display RUNTIME VERIFIED; edge-case schedule-rule tests pending.
+
+The Stage 5 migration was applied successfully locally with all 5 queries completing without errors. It added payroll.salary_advance_deduction, hr_salary_advance_repayment_schedule, and hr_salary_advance_payroll_repayments.
+
+PR #52 — Stage 5: generate salary advance repayment schedules — remains OPEN and must not be merged until the remaining runtime gates pass.
+
+Implemented on feature/hr-salary-advance-stage5-schedule:
+- modules/hr/lib_salary_advance_repayment.php
+- atomic schedule generation from the existing disbursement transaction;
+- fixed-monthly and full-eligible-salary schedule planning;
+- approved start-rule handling;
+- maximum monthly deduction and maximum repayment-month constraints;
+- duplicate schedule-generation protection;
+- schedule display on modules/hr/salary_advance_accounting.php.
+
+## Runtime PASS — SAR-2026-00007
+
+Employee: هديل عثمان / EMP-0021
+
+- Approved/disbursed amount: 50,000 SDG
+- Method: قسط شهري ثابت
+- Monthly installment: 10,000 SDG
+- Approved start month: 2026-10-01
+- Disbursement source: 1100 — الصندوق (نقدي)
+- Journal: JE-000041
+- Reference: SAL-ADV-SAR-2026-00007
+- Outstanding balance: 50,000 SDG
+
+Exactly 5 pending schedule rows were generated:
+1. 2026-10-01 — 10,000 SDG
+2. 2026-11-01 — 10,000 SDG
+3. 2026-12-01 — 10,000 SDG
+4. 2027-01-01 — 10,000 SDG
+5. 2027-02-01 — 10,000 SDG
+
+Total scheduled = 50,000 SDG. Applied = 0. This confirms the core disbursement → schedule-generation → schedule-display path.
+
+SAR-2026-00004 / JE-000042 is a different request and is not a duplicate of SAR-2026-00007.
+
+## Duplicate-disbursement safety checkpoint
+
+The existing disbursement helper checks for an existing posted salary-advance disbursement journal, locks the request with FOR UPDATE inside the transaction, revalidates state, creates one balanced Dr 1410 / Cr source-account journal, changes the request to disbursed transactionally, and generates the schedule in the same transaction. A schedule-generation failure rolls the disbursement back. No artificial duplicate financial posting should be created merely to test this.
+
+## Remaining Stage 5 runtime gates — NEXT
+
+1. Maximum monthly deduction — verify every generated installment is at or below the saved policy maximum.
+2. Maximum repayment months — verify an impossible schedule is rejected safely and does not leave an unscheduled disbursed request.
+3. next_payroll — verify the first scheduled month is the first payroll month after disbursement.
+4. specified_month — verify the approved start month is honored, but never before the first eligible payroll month after disbursement.
+5. Duplicate schedule generation — verify an existing schedule remains one set of rows.
+6. full_eligible_salary — verify planning respects the saved repayment horizon and maximum deduction; actual salary calculation remains deferred.
+7. Failure/rollback — verify a schedule-generation failure rolls back the disbursement transaction.
+
+## Explicit boundary
+
+Stage 5 currently does NOT implement actual payroll deduction calculation, payroll repayment allocation, outstanding-balance reduction from payroll, payroll Cr 1410 accounting, repayment notifications, or Stage 6 direct repayment/settlement.
+
+Use fresh controlled requests for new tests. Do not alter the already-passed SAR-2026-00007 evidence. If a test fails, stop and inspect the current repository/code/schema root cause before creating another test request.

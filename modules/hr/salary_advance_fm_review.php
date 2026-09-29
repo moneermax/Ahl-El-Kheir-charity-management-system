@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['fm_decision_submit'])
         if (!verify_csrf()) throw new RuntimeException('انتهت صلاحية نموذج الحماية. أعد تحميل الصفحة وحاول مرة أخرى.');
         $request = hrSalaryAdvanceGetRequestForFm($pdo, $requestId);
         if (!$request) throw new RuntimeException('طلب السلفة المطلوب غير موجود.');
-        if (!in_array((string)$request['status'], ['submitted','fm_review'], true)) {
+        if (!in_array((string)$request['status'], ['submitted','fm_review'], true) || !empty($request['closed_at'])) {
             throw new RuntimeException('هذا الطلب لم يعد متاحاً لمراجعة FM.');
         }
 
@@ -39,30 +39,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['fm_decision_submit'])
         $notificationType = '';
 
         if ($decision['decision'] === 'reject') {
-            $pdo->prepare(
+            $updateStmt = $pdo->prepare(
                 "UPDATE hr_salary_advance_requests
                  SET status='rejected', fm_decision='rejected', fm_rejection_reason=?,
-                     fm_reviewed_by=?, fm_reviewed_at=NOW(), updated_at=NOW()
-                 WHERE id=? AND status IN ('submitted','fm_review')"
-            )->execute([$decision['reason'], $uid, $requestId]);
+                     fm_reviewed_by=?, fm_reviewed_at=NOW(), closed_at=NOW(), updated_at=NOW()
+                 WHERE id=? AND status IN ('submitted','fm_review') AND closed_at IS NULL"
+            );
+            $updateStmt->execute([$decision['reason'], $uid, $requestId]);
 
-            $notificationTitle = 'تم رفض طلب السلفة';
-            $notificationBody = 'تم رفض طلب السلفة «' . (string)$request['request_no'] . '». سبب الرفض: ' . $decision['reason'];
+            if ($updateStmt->rowCount() !== 1) {
+                throw new RuntimeException('تعذر إغلاق طلب السلفة بعد رفضه.');
+            }
+
+            $notificationTitle = 'تم رفض وإغلاق طلب السلفة';
+            $notificationBody = 'تم رفض وإغلاق طلب السلفة «' . (string)$request['request_no'] . '». سبب الرفض: ' . $decision['reason'];
             $notificationType = 'salary_advance_request_rejection';
-            $message = 'تم رفض طلب السلفة وإبلاغ الموظف.';
+            $message = 'تم رفض طلب السلفة وإغلاقه وإبلاغ الموظف.';
         } else {
-            $pdo->prepare(
+            $updateStmt = $pdo->prepare(
                 "UPDATE hr_salary_advance_requests
                  SET status='approved', fm_decision='approved', fm_rejection_reason=NULL,
                      approved_amount=?, approved_repayment_method=?, approved_monthly_amount=?,
                      approved_start_month=?, fm_customized=?, fm_customization_reason=?,
                      fm_reviewed_by=?, fm_reviewed_at=NOW(), updated_at=NOW()
-                 WHERE id=? AND status IN ('submitted','fm_review')"
-            )->execute([
+                 WHERE id=? AND status IN ('submitted','fm_review') AND closed_at IS NULL"
+            );
+            $updateStmt->execute([
                 $decision['approved_amount'], $decision['approved_repayment_method'],
                 $decision['approved_monthly_amount'], $decision['approved_start_month'],
                 $decision['customized'], $decision['customization_reason'], $uid, $requestId
             ]);
+
+            if ($updateStmt->rowCount() !== 1) {
+                throw new RuntimeException('تعذر حفظ قرار اعتماد طلب السلفة.');
+            }
 
             $customText = $decision['customized'] ? ' بعد تخصيص شروط الطلب من قبل المدير المالي.' : '';
             $notificationTitle = 'تم اعتماد طلب السلفة';
@@ -81,12 +91,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['fm_decision_submit'])
             $requestId,
             json_encode([
                 'status' => $request['status'],
+                'closed_at' => $request['closed_at'] ?? null,
                 'requested_amount' => $request['requested_amount'],
                 'requested_repayment_method' => $request['requested_repayment_method'],
                 'requested_monthly_amount' => $request['requested_monthly_amount'],
                 'requested_start_month' => $request['requested_start_month'],
             ], JSON_UNESCAPED_UNICODE),
-            json_encode($decision, JSON_UNESCAPED_UNICODE),
+            json_encode(array_merge($decision, $decision['decision'] === 'reject' ? [
+                'status' => 'rejected',
+                'closed' => true,
+            ] : [
+                'status' => 'approved',
+            ]), JSON_UNESCAPED_UNICODE),
             $_SERVER['REMOTE_ADDR'] ?? '',
             $_SERVER['HTTP_USER_AGENT'] ?? ''
         ]);
@@ -127,6 +143,7 @@ $queue = dbFetchAll(
      FROM hr_salary_advance_requests r
      JOIN employees e ON e.id = r.employee_id
      WHERE r.status IN ('submitted','fm_review')
+       AND r.closed_at IS NULL
      ORDER BY r.submitted_at ASC, r.id ASC"
 );
 
@@ -176,7 +193,7 @@ require_once __DIR__ . '/../../includes/header.php';
 <?php if($mismatches): foreach($mismatches as $m): ?><div class="mismatch"><i class="fas fa-triangle-exclamation me-1"></i><?=e($m)?></div><?php endforeach; else: ?><div class="match"><i class="fas fa-check me-1"></i>الطلب متوافق مع القواعد الظاهرة في السياسة المرجعية.</div><?php endif; ?>
 </div></div>
 
-<?php if(in_array((string)$request['status'],['submitted','fm_review'],true)): ?>
+<?php if(in_array((string)$request['status'],['submitted','fm_review'],true) && empty($request['closed_at'])): ?>
 <div class="card"><div class="card-body">
 <h5>قرار المدير المالي</h5>
 <form method="post" id="fmDecisionForm">

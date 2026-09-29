@@ -61,6 +61,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $request = $requestId > 0 ? hrSalaryAdvanceAccountingGetRequest($pdo, $requestId) : null;
 $queue = hrSalaryAdvanceAccountingQueue($pdo);
 $history = hrSalaryAdvanceAccountingHistory($pdo);
+$repaymentSchedule = $request && $request['status'] === 'disbursed'
+    ? hrSalaryAdvanceScheduleGet($pdo, (int)$request['id'])
+    : [];
 
 $cashAccounts = dbFetchAll(
     "SELECT id, code, name_ar
@@ -276,6 +279,48 @@ require_once __DIR__ . '/../../includes/header.php';
                     <i class="fas fa-print me-1"></i>طباعة سند الصرف
                 </a>
             </div>
+        </div>
+    </div>
+
+    <div class="card fade-in mb-4">
+        <div class="card-header fw-bold">جدول السداد</div>
+        <div class="card-body">
+            <?php if (!$repaymentSchedule): ?>
+                <div class="alert alert-warning mb-0">لم يتم إنشاء جدول سداد لهذه السلفة.</div>
+            <?php else: ?>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>القسط</th>
+                                <th>شهر السداد</th>
+                                <th>المبلغ المجدول</th>
+                                <th>المبلغ المطبق</th>
+                                <th>الحالة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        <?php foreach ($repaymentSchedule as $installment): ?>
+                            <?php
+                            $scheduleBadge = [
+                                'pending' => ['معلق', 'secondary'],
+                                'partial' => ['جزئي', 'warning'],
+                                'paid' => ['مسدد', 'success'],
+                                'skipped' => ['متجاوز', 'danger']
+                            ][$installment['status']] ?? [$installment['status'], 'secondary'];
+                            ?>
+                            <tr>
+                                <td><?php echo (int)$installment['installment_no']; ?></td>
+                                <td><?php echo e($installment['scheduled_month']); ?></td>
+                                <td><?php echo number_format((float)$installment['scheduled_amount'], 2); ?> SDG</td>
+                                <td><?php echo number_format((float)($installment['applied_amount'] ?? 0), 2); ?> SDG</td>
+                                <td><span class="badge bg-<?php echo e($scheduleBadge[1]); ?>"><?php echo e($scheduleBadge[0]); ?></span></td>
+                            </tr>
+                        <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
 
