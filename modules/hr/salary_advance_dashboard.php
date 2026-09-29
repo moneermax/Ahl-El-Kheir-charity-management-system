@@ -89,7 +89,7 @@ require_once __DIR__ . '/../../includes/header.php';
     </div>
 
     
-    <div class="row g-4">
+    <div class="row g-4 justify-content-center">
         <div class="col-md-6 col-xl-4">
             <a href="<?php echo e(APP_URL . 'modules/hr/salary_advance_policy.php'); ?>" class="text-decoration-none text-reset">
                 <div class="option-card">
