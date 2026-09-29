@@ -278,6 +278,10 @@ function hrPayrollChangeStatus(PDO $pdo, int $payrollId, string $newStatus, ?int
 
         if ($startedHere) {
             $pdo->commit();
+            if ($newStatus === 'paid') {
+                require_once __DIR__ . '/lib_salary_advance_payroll.php';
+                hrSalaryAdvancePayrollNotifyApplied($pdo, $payrollId);
+            }
         }
     } catch (Throwable $e) {
         if ($startedHere && $pdo->inTransaction()) {
