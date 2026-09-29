@@ -74,11 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['fm_decision_submit'])
                 throw new RuntimeException('تعذر حفظ قرار اعتماد طلب السلفة.');
             }
 
-            $customText = $decision['customized'] ? ' بعد تخصيص شروط الطلب من قبل المدير المالي.' : '';
-            $notificationTitle = 'تم اعتماد طلب السلفة';
-            $notificationBody = 'تم اعتماد طلب السلفة «' . (string)$request['request_no'] . '».' . $customText;
-            $notificationType = 'salary_advance_request_approval';
-            $message = 'تم اعتماد طلب السلفة وإبلاغ الموظف. لم يتم تنفيذ أي صرف أو قيد محاسبي في هذه المرحلة.';
+            $message = 'تم اعتماد طلب السلفة. لم يتم تنفيذ أي صرف أو قيد محاسبي في هذه المرحلة.';
         }
 
         $pdo->prepare(
@@ -108,26 +104,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['fm_decision_submit'])
         ]);
         $pdo->commit();
 
-        // Notify the employee account after the database transaction is committed.
-        // Use employees.user_id as the canonical employee-account link. Keep
-        // submitted_by only as a legacy fallback for older employee records.
-        $employeeRecipient = dbFetchOne(
-            "SELECT user_id FROM employees WHERE id = ? LIMIT 1",
-            [(int)$request['employee_id']]
-        );
-        $employeeUserId = (int)($employeeRecipient['user_id'] ?? 0);
-        if ($employeeUserId <= 0) {
-            $employeeUserId = (int)$request['submitted_by'];
-        }
+        // Employee notifications are intentionally limited to final employee-facing
+        // outcomes: FM rejection or successful disbursement. FM approval is an
+        // internal workflow step and must not notify the employee yet.
+        if ($decision['decision'] === 'reject') {
+            // Notify only after the rejection transaction has committed.
+            $employeeRecipient = dbFetchOne(
+                "SELECT user_id FROM employees WHERE id = ? LIMIT 1",
+                [(int)$request['employee_id']]
+            );
+            $employeeUserId = (int)($employeeRecipient['user_id'] ?? 0);
+            if ($employeeUserId <= 0) {
+                $employeeUserId = (int)$request['submitted_by'];
+            }
 
-        ak_transaction_review_notify_event(
-            $employeeUserId,
-            $notificationTitle,
-            $notificationBody,
-            APP_URL . 'modules/hr/salary_advance_request.php',
-            $requestId,
-            $notificationType
-        );
+            ak_transaction_review_notify_event(
+                $employeeUserId,
+                $notificationTitle,
+                $notificationBody,
+                APP_URL . 'modules/hr/salary_advance_request.php',
+                $requestId,
+                $notificationType
+            );
+        }
     } catch (Throwable $e) {
         if ($pdo->inTransaction()) $pdo->rollBack();
         $error = $e->getMessage();
