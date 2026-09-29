@@ -1058,3 +1058,8 @@ The salary-advance schedule-planning work unit is DONE / RUNTIME VERIFIED. All s
 The clean rollback-only harness run confirmed Tests 4–6 PASS with no CLI warning after commit 9b66315966174a3a892a5760847300007814a0e2.
 
 Next session: continue Stage 5 payroll integration only. First inspect current payroll deduction/application code, payroll repayment allocation conventions, accounting posting conventions, and schema. Do not start Stage 6 and do not consume another employee/request merely to manufacture test data.
+
+
+## 2026-09-29 — HR Salary Advance Stage 5 Payroll Integration Checkpoint
+
+Current continuation point: `feature/hr-salary-advance-stage5-schedule`. Schedule-planning gates are complete and runtime verified. Payroll draft integration, repayment allocation, outstanding-balance reduction, Cr 1410 accounting, insufficient-salary handling, duplicate protection, and repayment audit logging are implemented. Controlled runtime verification is the next gate. Stage 6 is not started.
