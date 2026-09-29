@@ -1068,3 +1068,113 @@ The existing disbursement helper checks for an existing posted salary-advance di
 Stage 5 currently does NOT implement actual payroll deduction calculation, payroll repayment allocation, outstanding-balance reduction from payroll, payroll Cr 1410 accounting, repayment notifications, or Stage 6 direct repayment/settlement.
 
 Use fresh controlled requests for new tests. Do not alter the already-passed SAR-2026-00007 evidence. If a test fails, stop and inspect the current repository/code/schema root cause before creating another test request.
+
+
+# LATEST CONTINUATION PROMPT — 2026-09-29 — Stage 5 Edge-Case Schedule Tests
+
+Continue the existing Ahl El Kheir Charity Management System. Do not rebuild or start a new project.
+
+Environment: repository moneermax/Ahl-El-Kheir-charity-management-system; local path D:\xampp\htdocs\AhlElKheir; local URL http://localhost:8081/AhlElKheir/; database ahl_el_kheir; Windows/XAMPP/Apache/PHP 8.2/MariaDB; Arabic RTL; Bootstrap 5.3 RTL; vanilla JS; procedural PHP only.
+
+Completed: Stages 1–3 DONE/RUNTIME VERIFIED. Stage 4 Accounting Verification & Disbursement DONE/RUNTIME VERIFIED/CLOSED. Do not reopen closed stages without genuine regression evidence.
+
+Current: Stage 5 Repayment Schedule + Payroll Integration IN PROGRESS. The migration was successfully applied locally with all 5 queries completing without errors. PR #52 is OPEN on feature/hr-salary-advance-stage5-schedule and must not be merged yet.
+
+Already implemented: repayment schedule table, payroll repayment allocation table, payroll salary_advance_deduction field, procedural schedule generator, atomic schedule generation during disbursement, schedule display, fixed-monthly planning, full-eligible-salary planning, start-rule handling, maximum deduction/month constraints, and duplicate schedule protection.
+
+Already passed: SAR-2026-00007, employee هديل عثمان / EMP-0021, 50,000 SDG, fixed monthly 10,000 SDG, start 2026-10-01, source 1100, JE-000041. The displayed schedule is exactly five pending installments: 2026-10, 2026-11, 2026-12, 2027-01, 2027-02, each 10,000 SDG, total 50,000 SDG. Do not disturb this evidence. SAR-2026-00004 / JE-000042 is a different request.
+
+IMPORTANT: do not start payroll deduction/application, payroll accounting, balance reduction, repayment notifications, or Stage 6 direct repayment/settlement until the schedule-planning tests below are complete.
+
+## Pull the current files first
+
+Use PowerShell:
+
+cd D:\xampp\htdocs\AhlElKheir
+
+git checkout feature/hr-salary-advance-stage5-schedule
+git pull origin feature/hr-salary-advance-stage5-schedule
+
+Never use reset --hard, clean, restore, force-push, or other destructive Git commands.
+
+## Test 1 — Maximum monthly deduction
+
+1. Create a fresh salary-advance request.
+2. Use a repayment amount/monthly installment that exceeds the policy maximum monthly deduction.
+3. Complete the normal FM approval.
+4. Complete accounting verification.
+5. Disburse through the existing accounting workflow.
+6. Open the disbursed request details.
+7. Inspect every generated schedule row.
+8. PASS: no scheduled installment exceeds the saved policy maximum monthly deduction.
+9. Record the request number and schedule result.
+
+## Test 2 — Maximum repayment months
+
+1. Create a fresh controlled request whose balance cannot be completed within the saved maximum repayment months after applying the maximum monthly deduction.
+2. Complete FM approval and accounting verification normally.
+3. Attempt disbursement.
+4. PASS: the impossible schedule is rejected safely and the transaction does not leave a disbursed request without its required schedule.
+5. If it fails, capture the exact application message and stop. Do not keep retrying.
+
+## Test 3 — next_payroll
+
+1. Create a fresh request using repayment start rule next_payroll.
+2. Complete FM approval.
+3. Complete accounting verification.
+4. Disburse normally.
+5. Open the generated schedule.
+6. PASS: the first scheduled month is the first eligible payroll month after the actual disbursement month, never the disbursement month itself.
+
+## Test 4 — specified_month
+
+1. Create a fresh request using specified_month and an approved future start month.
+2. Complete FM approval.
+3. Complete accounting verification.
+4. Disburse normally.
+5. Open the generated schedule.
+6. PASS: the schedule starts at the approved month, except that a start earlier than the first eligible payroll month must be safely moved forward to that first eligible month.
+
+## Test 5 — Duplicate schedule generation
+
+1. Use already-passed SAR-2026-00007.
+2. Do NOT disburse it again and do NOT create another journal.
+3. Verify that the schedule-generation path is idempotent.
+4. PASS: SAR-2026-00007 remains exactly five rows totaling 50,000 SDG; no second set of schedule rows appears.
+5. Do not manufacture a duplicate payment. The existing disbursement helper already checks existing posted journals and locks the request transactionally.
+
+## Test 6 — full_eligible_salary
+
+1. Create a fresh request using full_eligible_salary.
+2. Ensure the saved policy has the required maximum repayment-month horizon.
+3. Complete FM approval.
+4. Complete accounting verification.
+5. Disburse normally.
+6. Open the generated schedule.
+7. PASS: planning respects the saved maximum repayment horizon and maximum monthly deduction.
+8. Actual eligible-salary calculation is NOT part of this test; that belongs to payroll integration.
+
+## Test 7 — Failure/rollback safety
+
+1. Use a fresh controlled case that exercises a schedule-generation validation failure.
+2. Complete approval/verification only as necessary.
+3. Attempt disbursement.
+4. PASS: when schedule generation fails, the entire disbursement transaction rolls back; there is no posted financial disbursement left without the required schedule.
+5. Do not intentionally corrupt the database or create a destructive failure. Inspect the current implementation first and use the safest existing validation case.
+
+## Rules while testing
+
+- Use fresh controlled requests for Tests 1, 2, 3, 4, 6, and 7.
+- Do not alter the already-passed SAR-2026-00007 evidence.
+- Do not run ad-hoc SQL unless genuinely unavoidable; inspect the repository/schema first.
+- If an error occurs, stop. Inspect the exact current code/schema root cause before another test.
+- Do not invent tables, columns, statuses, accounts, or workflows.
+- No runtime DDL.
+- No triggers, views, stored procedures, functions, or events.
+- Keep accounting test data as development/test data only.
+
+## What to report after each test
+
+Send the request number plus the visible result, including amount, repayment method, monthly amount, start rule/month, disbursement result, journal number if any, generated schedule rows/totals, and whether the PASS condition was met.
+
+After all seven gates pass, update the salary-advance continuation document, master status/audit, session index, and this master continuation prompt with exact results and commit/PR state. Then evaluate PR #52 for merge. Do not mark Stage 5 complete until payroll integration and its runtime verification are actually finished.
