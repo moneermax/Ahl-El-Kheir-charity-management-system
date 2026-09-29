@@ -315,7 +315,7 @@ Prepared files:
 
 - `database/migrations/2026-09-28_hr_salary_advance_accounting.sql`
 - `modules/hr/lib_salary_advance_accounting.php`
-- `modules/hr/salary_advance_accounting.php`
+- `modules/hr/salary_advance_processing.php`
 
 The FM dashboard salary-advance shortcut now points to the accounting verification/disbursement workflow.
 
@@ -641,6 +641,34 @@ The final Stage 4 hardening commit was 8b9caaf5c419812fa10d5000773ca6198b896173.
 **READY FOR A NEW SESSION — CONTINUE WITH STAGE 5 PLANNING/AUDIT ONLY.**
 
 
+# 2026-09-29 — Salary Advance Processing Workflow Consolidation
+
+**Status:** IMPLEMENTED on the Stage 5 feature branch; runtime verification of the consolidated UI is pending.
+
+The former two user-facing FM processing pages have been consolidated into one continuous workflow:
+
+- Removed: `modules/hr/salary_advance_fm_review.php`
+- Removed: `modules/hr/salary_advance_processing.php`
+- Added: `modules/hr/salary_advance_processing.php`
+
+The unified page now presents the salary-advance lifecycle as one sequence:
+
+1. FM review and policy comparison/customization.
+2. Accounting verification.
+3. Disbursement and journal posting.
+4. Disbursement result and repayment schedule.
+5. Protected payment-receipt handling.
+
+The underlying business logic and role boundaries were preserved. FM decision logic remains controlled by `hrSalaryAdvanceFmCanReview()`, while accounting verification/disbursement remains controlled by `hrSalaryAdvanceAccountingCan()`.
+
+The salary-advance portal now exposes one processing entry point instead of separate FM-review and accounting-processing cards. Accounting staff also receive a direct dashboard link to the same unified processing page.
+
+Employee approval notifications now point to the unified processing workflow.
+
+The printable voucher and protected receipt endpoints remain separate because they are document/evidence endpoints, not duplicate processing workflows.
+
+**Important:** do not merge PR #52 or begin payroll deduction/application testing until the remaining Stage 5 schedule-planning runtime gates are completed. The consolidated page must be runtime-tested before relying on it for those gates.
+
 # 2026-09-29 — Stage 5 Schedule Generation Runtime Checkpoint
 
 **Status:** Stage 5 IN PROGRESS — schedule generation/display RUNTIME VERIFIED; edge-case schedule-rule tests pending.
@@ -656,7 +684,7 @@ Implemented on feature/hr-salary-advance-stage5-schedule:
 - approved start-rule handling;
 - maximum monthly deduction and maximum repayment-month constraints;
 - duplicate schedule-generation protection;
-- schedule display on modules/hr/salary_advance_accounting.php.
+- schedule display on modules/hr/salary_advance_processing.php.
 
 ## Runtime PASS — SAR-2026-00007
 
