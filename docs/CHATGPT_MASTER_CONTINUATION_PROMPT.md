@@ -1210,3 +1210,46 @@ Never use reset --hard, clean, restore, force-push, or other destructive Git com
 Send the request number plus the visible result, including amount, repayment method, monthly amount, start rule/month, disbursement result, journal number if any, generated schedule rows/totals, and whether the PASS condition was met.
 
 After all seven gates pass, update the salary-advance continuation document, master status/audit, session index, and this master continuation prompt with exact results and commit/PR state. Then evaluate PR #52 for merge. Do not mark Stage 5 complete until payroll integration and its runtime verification are actually finished.
+
+
+# LATEST CONTINUATION PROMPT — 2026-09-29 — Stage 5 Payroll Integration
+
+Continue the existing Ahl El Kheir Charity Management System. Do not rebuild or start a new project.
+
+Environment: repository moneermax/Ahl-El-Kheir-charity-management-system; local path D:\xampp\htdocs\AhlElKheir; local URL http://localhost:8081/AhlElKheir/; database ahl_el_kheir; Windows/XAMPP/Apache/PHP 8.2/MariaDB; Arabic RTL; Bootstrap 5.3 RTL; vanilla JS; procedural PHP only.
+
+## Current status
+- Salary Advance Stages 1–4: DONE / RUNTIME VERIFIED / CLOSED. Do not reopen without genuine regression evidence.
+- Stage 5 schedule-planning: DONE / RUNTIME VERIFIED.
+- Stage 5 payroll integration: NEXT / IN PROGRESS.
+- Stage 6: NOT STARTED. Do not start it.
+- Current branch: feature/hr-salary-advance-stage5-schedule; not yet merged to main.
+- Latest cleanup commit: 9b66315966174a3a892a5760847300007814a0e2.
+
+## Verified Stage 5 schedule gates
+1. Maximum monthly deduction — PASS: SAR-2026-00008; 50,000 SDG; policy maximum 10,000; generated installments capped at 10,000; JE-000043.
+2. Maximum repayment months — PASS: SAR-2026-00009; impossible 7-month repayment against 6-month policy maximum was blocked; no successful disbursement/journal/schedule.
+3. next_payroll — PASS: SAR-2026-00011; 30,000 SDG; JE-000044; schedule starts 2026-10-01 after 2026-09-29 disbursement, then 2026-11-01 and 2026-12-01.
+4. specified_month — PASS via rollback-only harness.
+5. duplicate schedule generation — PASS via rollback-only harness; second generation added no rows.
+6. full_eligible_salary planning — PASS via rollback-only harness; cap and saved horizon respected.
+7. failure/rollback — PASS via protected validation failure plus transactional code verification.
+
+The rollback-only harness is tools/run_salary_advance_stage5_schedule_tests.php. Its CLI warning was fixed in 9b66315966174a3a892a5760847300007814a0e2; the clean rerun returned all three harness tests PASS.
+
+## Protected evidence
+Do not alter or redisburse SAR-2026-00008, SAR-2026-00009, or SAR-2026-00011. Do not manufacture another salary-advance request just to continue testing; prefer the current temporary rollback-only fixture mechanism.
+
+## Next work — Stage 5 payroll integration
+Before coding, inspect the existing repository/schema and identify the canonical payroll run/deduction flow. Then implement and verify, in controlled steps:
+1. Apply a pending salary-advance schedule row during payroll.
+2. Record the corresponding hr_salary_advance_payroll_repayments allocation.
+3. Update the salary-advance outstanding balance and schedule applied state atomically.
+4. Use the existing payroll.salary_advance_deduction field according to current payroll conventions.
+5. Post the repayment accounting entry with Cr 1410 using existing payroll/accounting transaction conventions.
+6. Handle insufficient eligible salary according to the configured insufficient_salary_rule (available_salary or skip_month).
+7. Implement required notifications and audit trail for successful, skipped, or partially applied repayments.
+
+Do not invent schema, accounts, statuses, or payroll workflows. Inspect actual tables/columns and existing payroll implementation first. Schema changes only through migration files. No runtime CREATE/ALTER, triggers, views, stored procedures, functions, or events. No destructive Git commands (reset --hard, clean, restore, force-push).
+
+Keep the current feature branch until all Stage 5 work is complete and runtime verified. Commit logical changes, keep the branch pullable, and merge to main only after the Stage 5 completion gate. After each verified work unit, update the five project documents with exact runtime evidence and the new continuation checkpoint.
