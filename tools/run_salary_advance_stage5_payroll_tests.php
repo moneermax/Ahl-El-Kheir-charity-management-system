@@ -183,7 +183,53 @@ try {
     $payroll['net_salary'] = $net;
     $payroll['payment_account_id'] = null;
 
-    $entryId = hrPayrollPostAccounting($pdo, $payroll);
+    /*
+     * Diagnostic guard: if the production accounting function reports a
+     * pre-existing posted payroll journal, expose the exact fixture ID and
+     * matching journal row. This distinguishes a true reference collision
+     * from an unexpected database-side mutation without changing production
+     * behavior.
+     */
+    $prePostJournal = dbFetchOne(
+        "SELECT id, entry_code, reference_type, reference_id, status
+         FROM journal_entries
+         WHERE reference_type = 'payroll'
+           AND reference_id = ?
+         ORDER BY id ASC
+         LIMIT 1",
+        [$payrollId]
+    );
+    if ($prePostJournal) {
+        throw new RuntimeException(
+            'Stage 5 fixture collision before accounting: payroll_id=' . $payrollId .
+            ', journal_entry_id=' . (int)$prePostJournal['id'] .
+            ', entry_code=' . (string)$prePostJournal['entry_code'] .
+            ', status=' . (string)$prePostJournal['status']
+        );
+    }
+
+    try {
+        $entryId = hrPayrollPostAccounting($pdo, $payroll);
+    } catch (Throwable $accountingError) {
+        $postErrorJournal = dbFetchOne(
+            "SELECT id, entry_code, reference_type, reference_id, status
+             FROM journal_entries
+             WHERE reference_type = 'payroll'
+               AND reference_id = ?
+             ORDER BY id ASC
+             LIMIT 1",
+            [$payrollId]
+        );
+        if ($postErrorJournal) {
+            throw new RuntimeException(
+                $accountingError->getMessage() .
+                ' [diagnostic payroll_id=' . $payrollId .
+                ', matching_journal_entry_id=' . (int)$postErrorJournal['id'] .
+                ', entry_code=' . (string)$postErrorJournal['entry_code'] . ']'
+            );
+        }
+        throw $accountingError;
+    }
     $result = hrSalaryAdvancePayrollApply($pdo, $payroll, $entryId);
 
     $trace = dbFetchAll(
