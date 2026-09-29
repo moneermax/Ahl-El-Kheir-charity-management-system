@@ -12,7 +12,7 @@ require_once __DIR__ . '/lib_salary_advance_payroll.php';
 
 Session::start();
 $userRole = Session::getUserRole();
-if (!Session::isLoggedIn() || !in_array($userRole, ['hr_manager', 'hr_staff', 'admin'], true)) {
+if (!Session::isLoggedIn() || !in_array($userRole, ['hr_manager', 'hr_staff', 'financial_manager', 'admin'], true)) {
     header('Location: ' . APP_URL . 'index.php');
     exit();
 }
