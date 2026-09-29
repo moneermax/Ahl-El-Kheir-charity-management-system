@@ -101,8 +101,23 @@ try {
      * reference key until a free integer is found.
      */
     $fixtureIdRow = dbFetchOne("SELECT COALESCE(MAX(id), 0) AS max_id FROM payroll");
-    $fixturePayrollId = (int)($fixtureIdRow['max_id'] ?? 0) + 1;
-    if ($fixturePayrollId <= 0) {
+    $journalRefRow = dbFetchOne(
+        "SELECT COALESCE(MAX(reference_id), 0) AS max_id
+         FROM journal_entries
+         WHERE reference_type = 'payroll'"
+    );
+
+    /*
+     * Legacy payroll journal references can be ahead of the current payroll
+     * table's highest ID. Start above both domains so the rollback fixture
+     * cannot collide with a historical journal reference.
+     */
+    $fixturePayrollId = max(
+        (int)($fixtureIdRow['max_id'] ?? 0),
+        (int)($journalRefRow['max_id'] ?? 0)
+    ) + 1;
+
+    if ($fixturePayrollId <= 0 || $fixturePayrollId > 2147483647) {
         throw new RuntimeException('تعذر تخصيص رقم مسير مؤقت آمن لاختبار Stage 5.');
     }
 
