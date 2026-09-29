@@ -490,6 +490,7 @@ require_once __DIR__ . '/../../includes/header.php';
 </div></div>
 <?php endif; ?>
 <?php endif; ?>
+<?php endif; ?>
 
 </div>
 <script>
