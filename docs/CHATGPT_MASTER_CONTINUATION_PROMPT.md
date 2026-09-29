@@ -981,3 +981,28 @@ In the new session:
 6. Preserve the established project/accounting boundary: final approval is funding reservation/allocation, while actual spending occurs through posted project expenses.
 7. No triggers, views, stored procedures, functions, or events. No destructive Git commands.
 8. Use a safe checkpoint before any risky code change, make the smallest root-cause fix, commit to `main`, and update documentation after verified completion.
+
+
+## 2026-09-29 — New-session continuation: HR Salary Advance Stage 5
+
+Continue the existing Ahl El Kheir project from the documented salary-advance checkpoint.
+
+Completed boundary:
+- Stages 1–3: DONE / RUNTIME VERIFIED.
+- Stage 4 — Accounting Verification & Disbursement: DONE / RUNTIME VERIFIED / CLOSED.
+- Do not reopen Stage 4 without genuine regression evidence.
+
+Stage 4 final evidence includes SAR-2026-00001 disbursement (10,000 SDG, 1100, JE-000040, Dr 1410 / Cr 1100), protected receipt upload/replacement, mandatory receipt-replacement audit, duplicate-disbursement protection, and runtime-verified FM rejection closure for SAR-2026-00005.
+
+Immediate task: start Stage 5 — Repayment Schedule + Payroll Integration with an audit/design pass only.
+
+1. Read docs/HR_SALARY_ADVANCE_CONTINUATION.md, docs/AHL_EL_KHEIR_MASTER_STATUS.md, docs/AHL_EL_KHEIR_MASTER_AUDIT.md, and docs/CHATGPT_SESSION_INDEX.md.
+2. Inspect the current main repository and actual payroll/accounting schema/code before proposing changes.
+3. Determine the existing payroll deduction mechanism and accounting conventions; do not invent tables, columns, accounts, or statuses.
+4. Define repayment from the already-posted employee receivable in 1410 through payroll and eventual settlement.
+5. Map fixed monthly repayment, full eligible salary repayment, maximum monthly deduction, repayment start rule, and insufficient-salary handling.
+6. Produce the Stage 5 page/action inventory, role matrix, lifecycle/state-action matrix, payroll integration map, accounting-event map, and notification/audit map before implementation.
+7. Use migrations only for required schema changes; no runtime DDL.
+8. No triggers, views, stored procedures, functions, or events.
+9. Make a safe Git checkpoint before implementation and proceed in small runtime-verifiable units.
+10. Do not implement Stage 6 direct repayment/settlement behavior early.
