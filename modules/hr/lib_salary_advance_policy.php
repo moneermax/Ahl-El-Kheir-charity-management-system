@@ -30,12 +30,17 @@ function hrSalaryAdvancePolicyValidate(array $input): array
     if ($p['policy_name'] === '') throw new InvalidArgumentException('اسم سياسة السلفة مطلوب.');
     $d = DateTime::createFromFormat('!Y-m-d', $p['effective_from']);
     if (!$d || $d->format('Y-m-d') !== $p['effective_from'] || $p['effective_from'] <= date('Y-m-d')) throw new InvalidArgumentException('تاريخ السريان يجب أن يكون تاريخاً مستقبلياً صالحاً.');
-    if ($p['minimum_request_amount'] !== null && $p['minimum_request_amount'] < 0) throw new InvalidArgumentException('الحد الأدنى لا يمكن أن يكون سالباً.');
-    if ($p['maximum_request_amount'] !== null && $p['maximum_request_amount'] < 0) throw new InvalidArgumentException('الحد الأقصى لا يمكن أن يكون سالباً.');
-    if ($p['minimum_request_amount'] !== null && $p['maximum_request_amount'] !== null && $p['maximum_request_amount'] < $p['minimum_request_amount']) throw new InvalidArgumentException('الحد الأقصى يجب ألا يقل عن الحد الأدنى.');
-    if ($p['allow_any_request_amount']) { $p['minimum_request_amount'] = null; $p['maximum_request_amount'] = null; }
-    if ($p['maximum_monthly_deduction'] !== null && $p['maximum_monthly_deduction'] < 0) throw new InvalidArgumentException('الحد الأقصى للخصم الشهري لا يمكن أن يكون سالباً.');
-    if ($p['maximum_repayment_months'] !== null && $p['maximum_repayment_months'] < 1) throw new InvalidArgumentException('الحد الأقصى لعدد الأقساط يجب أن يكون أكبر من صفر.');
+    if ($p['allow_any_request_amount']) {
+        $p['minimum_request_amount'] = null;
+        $p['maximum_request_amount'] = null;
+    } else {
+        if ($p['minimum_request_amount'] === null || $p['maximum_request_amount'] === null) throw new InvalidArgumentException('الحد الأدنى والحد الأقصى لمبلغ السلفة مطلوبان عند إيقاف خيار السماح بأي مبلغ.');
+        if ($p['minimum_request_amount'] < 0) throw new InvalidArgumentException('الحد الأدنى لا يمكن أن يكون سالباً.');
+        if ($p['maximum_request_amount'] < 0) throw new InvalidArgumentException('الحد الأقصى لا يمكن أن يكون سالباً.');
+        if ($p['maximum_request_amount'] < $p['minimum_request_amount']) throw new InvalidArgumentException('الحد الأقصى يجب ألا يقل عن الحد الأدنى.');
+    }
+    if ($p['maximum_monthly_deduction'] === null || $p['maximum_monthly_deduction'] <= 0) throw new InvalidArgumentException('الحد الأقصى للخصم الشهري مطلوب ويجب أن يكون أكبر من صفر.');
+    if ($p['maximum_repayment_months'] === null || $p['maximum_repayment_months'] < 1) throw new InvalidArgumentException('الحد الأقصى لعدد أشهر السداد مطلوب ويجب أن يكون أكبر من صفر.');
     if (!in_array($p['repayment_start_rule'], ['next_payroll','specified_month'], true)) throw new InvalidArgumentException('قاعدة بدء السداد غير صالحة.');
     if (!in_array($p['insufficient_salary_rule'], ['available_salary','skip_month'], true)) throw new InvalidArgumentException('قاعدة عدم كفاية الراتب غير صالحة.');
     if (!in_array($p['eligible_salary_basis'], ['net_before_advance','gross'], true)) throw new InvalidArgumentException('أساس الراتب المؤهل غير صالح.');
