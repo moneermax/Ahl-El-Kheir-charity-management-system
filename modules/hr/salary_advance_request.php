@@ -58,7 +58,7 @@ if (!$employee) {
                 'salary_advance_request',
                 'طلب سلفة على الراتب بانتظار المراجعة',
                 'طلب السلفة «' . $requestNo . '» للموظف «' . (string)$employee['full_name'] . '» بانتظار مراجعة المدير المالي.',
-                APP_URL . 'modules/hr/salary_advance_fm_review.php?id=' . (int)$pdo->lastInsertId()
+                APP_URL . 'modules/hr/salary_advance_processing.php?id=' . (int)$pdo->lastInsertId()
             );
             $message = 'تم إرسال طلب السلفة رقم ' . $requestNo . ' إلى المدير المالي للمراجعة.';
         } catch (Throwable $e) {

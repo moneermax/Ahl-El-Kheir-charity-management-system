@@ -8,10 +8,11 @@ require_once __DIR__ . '/lib_employment.php';
 require_once __DIR__ . '/lib_contract_salary.php';
 require_once __DIR__ . '/lib_payroll_policy.php';
 require_once __DIR__ . '/lib_payroll_accounting.php';
+require_once __DIR__ . '/lib_salary_advance_payroll.php';
 
 Session::start();
 $userRole = Session::getUserRole();
-if (!Session::isLoggedIn() || !in_array($userRole, ['hr_manager', 'hr_staff', 'admin'], true)) {
+if (!Session::isLoggedIn() || !in_array($userRole, ['hr_manager', 'hr_staff', 'financial_manager', 'admin'], true)) {
     header('Location: ' . APP_URL . 'index.php');
     exit();
 }
@@ -61,10 +62,10 @@ function payrollStateAtDate(int $employeeId, string $periodEnd): ?array
 
 function payrollRefreshDraftBaseSalary(PDO $pdo, int $month, int $year): int
 {
-    $periodStart = sprintf('%04d-%02d-01', $year, $month);
-    $periodEnd = date('Y-m-t', strtotime($periodStart));
+    $periodEnd = date('Y-m-t', strtotime(sprintf('%04d-%02d-01', $year, $month)));
     $drafts = dbFetchAll(
-        "SELECT p.id, p.employee_id, p.allowances, p.overtime, p.deductions, s.basic_salary
+        "SELECT p.id, p.employee_id, p.month, p.year, p.allowances, p.overtime,
+                p.deductions, p.salary_advance_deduction, s.basic_salary
          FROM payroll p
          JOIN hr_employee_salary_history s ON s.id = (
              SELECT s2.id FROM hr_employee_salary_history s2
@@ -76,15 +77,20 @@ function payrollRefreshDraftBaseSalary(PDO $pdo, int $month, int $year): int
          WHERE p.month = ? AND p.year = ? AND p.status = 'draft'",
         [$periodEnd, $periodEnd, $month, $year]
     );
+
     $updated = 0;
-    $stmt = $pdo->prepare("UPDATE payroll SET basic_salary = ?, net_salary = ? WHERE id = ? AND status = 'draft'");
+    $salaryStmt = $pdo->prepare(
+        "UPDATE payroll
+         SET basic_salary = ?
+         WHERE id = ? AND status = 'draft'"
+    );
+
     foreach ($drafts as $row) {
-        $basic = (float)$row['basic_salary'];
-        $net = $basic + (float)$row['allowances'] + (float)$row['overtime'] - (float)$row['deductions'];
-        if ($net < 0) $net = 0;
-        $stmt->execute([$basic, $net, (int)$row['id']]);
-        if ($stmt->rowCount() > 0) $updated++;
+        $salaryStmt->execute([(float)$row['basic_salary'], (int)$row['id']]);
+        hrSalaryAdvancePayrollRefreshDraft($pdo, (int)$row['id']);
+        $updated++;
     }
+
     return $updated;
 }
 
@@ -142,10 +148,17 @@ try {
             $overtime = max(0,(float)($_POST['overtime'] ?? 0));
             $deductions = max(0,(float)($_POST['deductions'] ?? 0));
             $basic = (float)$row['basic_salary'];
-            $net = $basic + $allowances + $overtime - $deductions;
-            if ($net < 0) throw new RuntimeException('صافي الراتب لا يمكن أن يكون سالباً.');
-            $pdo->prepare("UPDATE payroll SET allowances=?,overtime=?,deductions=?,net_salary=? WHERE id=? AND status='draft'")->execute([$allowances,$overtime,$deductions,$net,$id]);
-            $message = 'تم تحديث مكونات مسير الراتب.';
+            $netBeforeAdvance = $basic + $allowances + $overtime - $deductions;
+            if ($netBeforeAdvance < 0) throw new RuntimeException('صافي الراتب قبل خصم السلفة لا يمكن أن يكون سالباً.');
+
+            $pdo->prepare(
+                "UPDATE payroll
+                 SET allowances=?, overtime=?, deductions=?, net_salary=?
+                 WHERE id=? AND status='draft'"
+            )->execute([$allowances,$overtime,$deductions,max(0.00,$netBeforeAdvance),$id]);
+
+            hrSalaryAdvancePayrollRefreshDraft($pdo, $id);
+            $message = 'تم تحديث مكونات مسير الراتب؛ واحتُسب خصم السلفة آلياً وفق جدول السداد والسياسة المعتمدة.';
         } elseif ($action === 'update_status') {
             $id = (int)($_POST['payroll_id'] ?? 0);
             $newStatus = (string)($_POST['status'] ?? '');
@@ -199,16 +212,15 @@ require_once __DIR__ . '/../../includes/header.php';
 <div class="pr-card"><div class="pr-body"><form method="GET" class="pr-filter"><div><label>الشهر</label><select name="month" class="form-select form-select-sm"><?php foreach($monthNames as $m=>$name): ?><option value="<?php echo $m; ?>" <?php echo $m===$selectedMonth?'selected':''; ?>><?php echo $name; ?></option><?php endforeach; ?></select></div><div><label>السنة</label><select name="year" class="form-select form-select-sm"><?php for($y=date('Y')-2;$y<=date('Y')+2;$y++): ?><option value="<?php echo $y; ?>" <?php echo $y===$selectedYear?'selected':''; ?>><?php echo $y; ?></option><?php endfor; ?></select></div><button class="pr-btn pr-primary" type="submit"><i class="fas fa-filter me-1"></i> عرض الفترة</button></form></div></div>
 <div class="d-flex gap-2 flex-wrap mb-3"><div class="pr-stat"><small>السجلات</small><strong><?php echo number_format($summary['count']); ?></strong></div><div class="pr-stat"><small>مسودات</small><strong><?php echo number_format($summary['draft']); ?></strong></div><div class="pr-stat"><small>معتمدة</small><strong><?php echo number_format($summary['approved']); ?></strong></div><div class="pr-stat"><small>مصروفة</small><strong><?php echo number_format($summary['paid']); ?></strong></div><div class="pr-stat"><small>إجمالي الصافي</small><strong><?php echo number_format($summary['net'],2); ?> <span style="font-size:.75rem"><?php echo htmlspecialchars(APP_CURRENCY_CODE); ?></span></strong></div></div>
 <div class="pr-card"><div class="pr-head"><div><strong><i class="fas fa-calendar-alt me-1 text-primary"></i> <?php echo $monthNames[$selectedMonth].' '.$selectedYear; ?></strong><div class="text-muted" style="font-size:.75rem">الراتب التاريخي المحتسب حتى <?php echo htmlspecialchars($periodEnd); ?></div></div><div class="d-flex gap-2 flex-wrap"><form method="POST"><input type="hidden" name="action" value="generate"><input type="hidden" name="month" value="<?php echo $selectedMonth; ?>"><input type="hidden" name="year" value="<?php echo $selectedYear; ?>"><button class="pr-btn pr-primary" type="submit"><i class="fas fa-sync-alt me-1"></i> إنشاء المسير</button></form><?php if($summary['draft']>0): ?><form method="POST"><input type="hidden" name="action" value="approve_all"><input type="hidden" name="month" value="<?php echo $selectedMonth; ?>"><input type="hidden" name="year" value="<?php echo $selectedYear; ?>"><button class="pr-btn pr-success" type="submit"><i class="fas fa-check-double me-1"></i> اعتماد المسودات</button></form><?php endif; ?></div></div><div class="pr-body">
-<div class="pr-note mb-3"><i class="fas fa-info-circle me-1"></i> يتم اختيار آخر راتب تاريخي صالح لنهاية الشهر. عند إنشاء مسير جديد يتم ربطه بسياسة الرواتب السارية لنهاية الفترة. العملة النظامية: <strong><?php echo htmlspecialchars(APP_CURRENCY_NAME_AR.' ('.APP_CURRENCY_CODE.')'); ?></strong>. عند الصرف يتم إنشاء القيد المحاسبي آلياً من خلال PHP على حساب الرواتب 5200 وحساب البنك 1200 افتراضياً.</div>
+<div class="pr-note mb-3"><i class="fas fa-info-circle me-1"></i> يتم اختيار آخر راتب تاريخي صالح لنهاية الشهر. عند إنشاء مسير جديد يتم ربطه بسياسة الرواتب السارية لنهاية الفترة. خصم سلفة الراتب يُحتسب آلياً من جدول السداد ولا يدخل في خانة الخصومات العامة. العملة النظامية: <strong><?php echo htmlspecialchars(APP_CURRENCY_NAME_AR.' ('.APP_CURRENCY_CODE.')'); ?></strong>. عند الصرف يتم إنشاء القيد المحاسبي آلياً من خلال PHP على حساب الرواتب 5200 وحساب البنك 1200 افتراضياً.</div>
 <?php if($activePolicy): ?><div class="alert alert-info py-2"><i class="fas fa-gavel me-1"></i> السياسة السارية لهذه الفترة: <strong>رقم <?php echo (int)$activePolicy['version_no']; ?></strong> — من <?php echo htmlspecialchars($activePolicy['effective_from']); ?></div><?php else: ?><div class="alert alert-warning py-2"><i class="fas fa-exclamation-triangle me-1"></i> لا توجد سياسة رواتب سارية حتى <?php echo htmlspecialchars($periodEnd); ?>.</div><?php endif; ?>
-<div class="table-responsive"><table class="pr-table"><thead><tr><th>الموظف</th><th>العقد</th><th>الراتب الأساسي</th><th>السياسة</th><th>البدلات</th><th>الإضافي</th><th>الخصومات</th><th>الصافي</th><th>الحالة</th><th>المحاسبة</th><th>الإجراء</th></tr></thead><tbody>
-<?php if(!$payrolls): ?><tr><td colspan="11" class="text-center py-5 text-muted"><i class="fas fa-file-invoice-dollar fa-2x mb-2 d-block"></i>لا توجد سجلات لهذه الفترة. اضغط «إنشاء المسير».</td></tr><?php else: foreach($payrolls as $p): ?>
+<div class="table-responsive"><table class="pr-table"><thead><tr><th>الموظف</th><th>العقد</th><th>الراتب الأساسي</th><th>السياسة</th><th>البدلات</th><th>الإضافي</th><th>الخصومات</th><th>خصم سلفة الراتب</th><th>الصافي</th><th>الحالة</th><th>المحاسبة</th><th>الإجراء</th></tr></thead><tbody>
+<?php if(!$payrolls): ?><tr><td colspan="12" class="text-center py-5 text-muted"><i class="fas fa-file-invoice-dollar fa-2x mb-2 d-block"></i>لا توجد سجلات لهذه الفترة. اضغط «إنشاء المسير».</td></tr><?php else: foreach($payrolls as $p): ?>
 <tr><td><span class="employee-main"><?php echo htmlspecialchars($p['emp_name']); ?></span><span class="employee-code"><?php echo htmlspecialchars($p['employee_code']??''); ?></span></td><td><?php echo htmlspecialchars($p['contract_number']?:'—'); ?><span class="salary-source"><?php echo htmlspecialchars($p['contract_type']?:''); ?></span></td><td><strong><?php echo number_format((float)$p['basic_salary'],2); ?></strong><span class="salary-source"><?php echo htmlspecialchars(APP_CURRENCY_CODE); ?> · <?php echo htmlspecialchars($p['salary_effective_from']?:''); ?></span></td><td><?php if(!empty($p['payroll_policy_version_no'])): ?><span class="pr-badge b-approved">V<?php echo (int)$p['payroll_policy_version_no']; ?></span><span class="salary-source"><?php echo htmlspecialchars($p['payroll_policy_effective_from']); ?></span><?php else: ?><span class="text-muted">تاريخي</span><?php endif; ?></td>
-<?php if($p['status']==='draft'): ?><form method="POST"><input type="hidden" name="action" value="update_amounts"><input type="hidden" name="payroll_id" value="<?php echo (int)$p['id']; ?>"><input type="hidden" name="month" value="<?php echo $selectedMonth; ?>"><input type="hidden" name="year" value="<?php echo $selectedYear; ?>"><td><input class="money-input" type="number" min="0" step="0.01" name="allowances" value="<?php echo htmlspecialchars((string)$p['allowances']); ?>"></td><td><input class="money-input" type="number" min="0" step="0.01" name="overtime" value="<?php echo htmlspecialchars((string)$p['overtime']); ?>"></td><td><input class="money-input" type="number" min="0" step="0.01" name="deductions" value="<?php echo htmlspecialchars((string)$p['deductions']); ?>"></td><td><strong><?php echo number_format((float)$p['net_salary'],2); ?></strong><span class="salary-source"><?php echo htmlspecialchars(APP_CURRENCY_CODE); ?></span><button class="pr-btn pr-outline" type="submit" style="display:block;margin-top:5px">حفظ المكونات</button></td></form><?php else: ?><td>+<?php echo number_format((float)$p['allowances'],2); ?></td><td>+<?php echo number_format((float)$p['overtime'],2); ?></td><td>-<?php echo number_format((float)$p['deductions'],2); ?></td><td><strong><?php echo number_format((float)$p['net_salary'],2); ?></strong><span class="salary-source"><?php echo htmlspecialchars(APP_CURRENCY_CODE); ?></span></td><?php endif; ?>
+<?php if($p['status']==='draft'): ?><form method="POST"><input type="hidden" name="action" value="update_amounts"><input type="hidden" name="payroll_id" value="<?php echo (int)$p['id']; ?>"><input type="hidden" name="month" value="<?php echo $selectedMonth; ?>"><input type="hidden" name="year" value="<?php echo $selectedYear; ?>"><td><input class="money-input" type="number" min="0" step="0.01" name="allowances" value="<?php echo htmlspecialchars((string)$p['allowances']); ?>"></td><td><input class="money-input" type="number" min="0" step="0.01" name="overtime" value="<?php echo htmlspecialchars((string)$p['overtime']); ?>"></td><td><input class="money-input" type="number" min="0" step="0.01" name="deductions" value="<?php echo htmlspecialchars((string)$p['deductions']); ?>"></td><td><strong><?php echo number_format((float)($p['salary_advance_deduction'] ?? 0),2); ?></strong><span class="salary-source"><?php echo htmlspecialchars(APP_CURRENCY_CODE); ?></span></td><td><strong><?php echo number_format((float)$p['net_salary'],2); ?></strong><span class="salary-source"><?php echo htmlspecialchars(APP_CURRENCY_CODE); ?></span><button class="pr-btn pr-outline" type="submit" style="display:block;margin-top:5px">حفظ المكونات</button></td></form><?php else: ?><td>+<?php echo number_format((float)$p['allowances'],2); ?></td><td>+<?php echo number_format((float)$p['overtime'],2); ?></td><td>-<?php echo number_format((float)$p['deductions'],2); ?></td><td><strong><?php echo number_format((float)($p['salary_advance_deduction'] ?? 0),2); ?></strong><span class="salary-source"><?php echo htmlspecialchars(APP_CURRENCY_CODE); ?></span></td><td><strong><?php echo number_format((float)$p['net_salary'],2); ?></strong><span class="salary-source"><?php echo htmlspecialchars(APP_CURRENCY_CODE); ?></span></td><?php endif; ?>
 <td><?php $map=['draft'=>['b-draft','مسودة'],'approved'=>['b-approved','معتمد'],'paid'=>['b-paid','مصروف']]; $st=$map[$p['status']]??['b-draft',$p['status']]; ?><span class="pr-badge <?php echo $st[0]; ?>"><?php echo $st[1]; ?></span></td>
 <td><?php $as=(string)($p['accounting_status']??'none'); $ac=$as==='posted'?['acct-posted','مرحل']:($as==='ready'?['acct-ready','جاهز']:['acct-none','غير جاهز']); ?><span class="pr-badge <?php echo $ac[0]; ?>"><?php echo $ac[1]; ?></span><?php if(!empty($p['accounting_entry_id'])): ?><span class="salary-source d-block">قيد #<?php echo (int)$p['accounting_entry_id']; ?></span><?php endif; ?></td>
 <td class="text-nowrap"><?php if($p['status']==='draft'): ?><form method="POST" style="display:inline"><input type="hidden" name="action" value="update_status"><input type="hidden" name="payroll_id" value="<?php echo (int)$p['id']; ?>"><input type="hidden" name="status" value="approved"><input type="hidden" name="month" value="<?php echo $selectedMonth; ?>"><input type="hidden" name="year" value="<?php echo $selectedYear; ?>"><button class="pr-btn pr-primary" type="submit">اعتماد</button></form><?php elseif($p['status']==='approved'): ?><form method="POST" style="display:inline"><input type="hidden" name="action" value="update_status"><input type="hidden" name="payroll_id" value="<?php echo (int)$p['id']; ?>"><input type="hidden" name="status" value="paid"><input type="hidden" name="month" value="<?php echo $selectedMonth; ?>"><input type="hidden" name="year" value="<?php echo $selectedYear; ?>"><button class="pr-btn pr-success" type="submit">تسجيل الصرف</button></form><?php else: ?><span class="text-muted">—</span><?php endif; ?></td></tr>
 <?php endforeach; endif; ?></tbody></table></div></div></div></div>
 
-<div class="container-fluid px-3 pb-4"><div class="d-flex justify-content-start"><a href="<?php echo APP_URL; ?>modules/hr/index.php" class="btn btn-outline-secondary" onclick="return akGoBack(this.href);"><i class="fa-solid fa-arrow-right me-1"></i> العودة</a></div></div>
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>
