@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 29, 2026 at 08:48 AM
+-- Generation Time: Sep 29, 2026 at 07:26 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -171,64 +171,6 @@ INSERT INTO `attendance` (`id`, `employee_id`, `date`, `check_in`, `check_out`, 
 (179, 10, '2026-09-08', '10:03:15', NULL, 'remote', NULL, NULL, 'present', NULL, '2026-09-08 11:03:15'),
 (180, 8, '2026-09-08', '10:03:15', NULL, 'remote', NULL, NULL, 'present', NULL, '2026-09-08 11:03:15'),
 (181, 13, '2026-09-08', '10:03:15', NULL, 'remote', NULL, NULL, 'present', NULL, '2026-09-08 11:03:15');
-
---
--- Triggers `attendance`
---
-DELIMITER $$
-CREATE TRIGGER `trg_attendance_employment_state_bi` BEFORE INSERT ON `attendance` FOR EACH ROW BEGIN
-    DECLARE v_category VARCHAR(32) DEFAULT NULL;
-
-    SELECT s.category
-      INTO v_category
-      FROM hr_employee_state_history h
-      INNER JOIN hr_employment_states s
-              ON s.id = h.employment_state_id
-     WHERE h.employee_id = NEW.employee_id
-       AND h.effective_from <= CONCAT(NEW.date, ' 23:59:59')
-       AND (h.effective_to IS NULL OR h.effective_to >= CONCAT(NEW.date, ' 00:00:00'))
-     ORDER BY h.effective_from DESC, h.id DESC
-     LIMIT 1;
-
-    IF v_category IS NULL THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'لا يمكن تسجيل الحضور: لا توجد حالة توظيف معتمدة للموظف في هذا التاريخ.';
-    END IF;
-
-    IF v_category <> 'working' THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'لا يمكن تسجيل الحضور: حالة توظيف الموظف لا تسمح بتسجيل الحضور في هذا التاريخ.';
-    END IF;
-END
-$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `trg_attendance_employment_state_bu` BEFORE UPDATE ON `attendance` FOR EACH ROW BEGIN
-    DECLARE v_category VARCHAR(32) DEFAULT NULL;
-
-    SELECT s.category
-      INTO v_category
-      FROM hr_employee_state_history h
-      INNER JOIN hr_employment_states s
-              ON s.id = h.employment_state_id
-     WHERE h.employee_id = NEW.employee_id
-       AND h.effective_from <= CONCAT(NEW.date, ' 23:59:59')
-       AND (h.effective_to IS NULL OR h.effective_to >= CONCAT(NEW.date, ' 00:00:00'))
-     ORDER BY h.effective_from DESC, h.id DESC
-     LIMIT 1;
-
-    IF v_category IS NULL THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'لا يمكن تعديل الحضور: لا توجد حالة توظيف معتمدة للموظف في هذا التاريخ.';
-    END IF;
-
-    IF v_category <> 'working' THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'لا يمكن تعديل الحضور: حالة توظيف الموظف لا تسمح بتسجيل الحضور في هذا التاريخ.';
-    END IF;
-END
-$$
-DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -907,7 +849,26 @@ INSERT INTO `audit_log` (`id`, `user_id`, `action`, `entity_type`, `entity_id`, 
 (2047, 29, 'HR_SALARY_ADVANCE_SCHEDULE_GENERATE', 'hr_salary_advance_request', 4, '{\"schedule_rows\":0}', '{\"schedule_rows\":10,\"start_month\":\"2026-10-01\",\"repayment_method\":\"fixed_monthly\",\"approved_amount\":50000,\"outstanding_balance\":50000}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-29 08:26:24'),
 (2048, 29, 'HR_SALARY_ADVANCE_DISBURSE', 'hr_salary_advance_request', 4, '{\"status\":\"approved\",\"accounting_status\":\"verified\",\"approved_amount\":50000}', '{\"status\":\"disbursed\",\"disbursed_amount\":50000,\"cash_account_id\":1,\"journal_entry_id\":73,\"reference\":\"SAL-ADV-SAR-2026-00004\",\"outstanding_balance\":50000}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-29 08:26:24'),
 (2049, 21, 'LOGOUT', 'users', 21, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-29 08:59:59'),
-(2050, 3, 'LOGIN', 'users', 3, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-29 09:00:10');
+(2050, 3, 'LOGIN', 'users', 3, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-29 09:00:10'),
+(2051, 29, 'HR_SALARY_ADVANCE_FM_APPROVE', 'hr_salary_advance_request', 8, '{\"status\":\"submitted\",\"closed_at\":null,\"requested_amount\":\"50000.00\",\"requested_repayment_method\":\"fixed_monthly\",\"requested_monthly_amount\":\"15000.00\",\"requested_start_month\":\"2026-10-01\"}', '{\"decision\":\"approve\",\"approved_amount\":50000,\"approved_repayment_method\":\"fixed_monthly\",\"approved_monthly_amount\":15000,\"approved_start_month\":\"2026-10-01\",\"customized\":1,\"customization_reason\":\"repayment schedule generator enforces the policy maximum at disbursement time\",\"status\":\"approved\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-29 10:41:26'),
+(2052, 29, 'HR_SALARY_ADVANCE_ACCOUNTING_VERIFY', 'hr_salary_advance_request', 8, '{\"status\":\"approved\",\"accounting_status\":\"pending\"}', '{\"accounting_status\":\"verified\",\"accounting_rejection_reason\":null}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-29 11:29:30'),
+(2053, 29, 'HR_SALARY_ADVANCE_SCHEDULE_GENERATE', 'hr_salary_advance_request', 8, '{\"schedule_rows\":0}', '{\"schedule_rows\":5,\"start_month\":\"2026-10-01\",\"repayment_method\":\"fixed_monthly\",\"approved_amount\":50000,\"outstanding_balance\":50000}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-29 11:30:36'),
+(2054, 29, 'HR_SALARY_ADVANCE_DISBURSE', 'hr_salary_advance_request', 8, '{\"status\":\"approved\",\"accounting_status\":\"verified\",\"approved_amount\":50000}', '{\"status\":\"disbursed\",\"disbursed_amount\":50000,\"cash_account_id\":1,\"journal_entry_id\":74,\"reference\":\"SAL-ADV-SAR-2026-00008\",\"outstanding_balance\":50000}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-29 11:30:36'),
+(2055, 3, 'LOGOUT', 'users', 3, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-29 11:33:23'),
+(2056, 1, 'LOGIN', 'users', 1, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-29 11:33:32'),
+(2057, 29, 'HR_SALARY_ADVANCE_FM_APPROVE', 'hr_salary_advance_request', 9, '{\"status\":\"submitted\",\"closed_at\":null,\"requested_amount\":\"70000.00\",\"requested_repayment_method\":\"fixed_monthly\",\"requested_monthly_amount\":\"10000.00\",\"requested_start_month\":\"2026-10-01\"}', '{\"decision\":\"approve\",\"approved_amount\":70000,\"approved_repayment_method\":\"fixed_monthly\",\"approved_monthly_amount\":10000,\"approved_start_month\":\"2026-10-01\",\"customized\":1,\"customization_reason\":\"test\",\"status\":\"approved\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-29 11:36:18'),
+(2058, 29, 'HR_SALARY_ADVANCE_ACCOUNTING_VERIFY', 'hr_salary_advance_request', 9, '{\"status\":\"approved\",\"accounting_status\":\"pending\"}', '{\"accounting_status\":\"verified\",\"accounting_rejection_reason\":null}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-29 11:54:19'),
+(2059, 1, 'LOGOUT', 'users', 1, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-29 11:59:02'),
+(2060, 1, 'LOGIN', 'users', 1, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-29 11:59:09'),
+(2061, 1, 'LOGOUT', 'users', 1, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-29 12:02:44'),
+(2062, 33, 'LOGIN', 'users', 33, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-29 12:02:52'),
+(2063, 33, 'LOGOUT', 'users', 33, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-29 12:02:57'),
+(2064, 32, 'LOGIN', 'users', 32, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-29 12:03:09'),
+(2065, 29, 'HR_SALARY_ADVANCE_FM_REJECT', 'hr_salary_advance_request', 10, '{\"status\":\"submitted\",\"closed_at\":null,\"requested_amount\":\"30000.00\",\"requested_repayment_method\":\"fixed_monthly\",\"requested_monthly_amount\":\"10000.00\",\"requested_start_month\":\"2026-11-01\"}', '{\"decision\":\"reject\",\"reason\":\"test\",\"status\":\"rejected\",\"closed\":true}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-29 12:06:06'),
+(2066, 29, 'HR_SALARY_ADVANCE_FM_APPROVE', 'hr_salary_advance_request', 11, '{\"status\":\"submitted\",\"closed_at\":null,\"requested_amount\":\"30000.00\",\"requested_repayment_method\":\"fixed_monthly\",\"requested_monthly_amount\":\"10000.00\",\"requested_start_month\":\"2026-12-01\"}', '{\"decision\":\"approve\",\"approved_amount\":30000,\"approved_repayment_method\":\"fixed_monthly\",\"approved_monthly_amount\":10000,\"approved_start_month\":\"2026-12-01\",\"customized\":1,\"customization_reason\":\"next_payroll\",\"status\":\"approved\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-29 16:05:07'),
+(2067, 29, 'HR_SALARY_ADVANCE_ACCOUNTING_VERIFY', 'hr_salary_advance_request', 11, '{\"status\":\"approved\",\"accounting_status\":\"pending\"}', '{\"accounting_status\":\"verified\",\"accounting_rejection_reason\":null}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-29 16:05:52'),
+(2068, 29, 'HR_SALARY_ADVANCE_SCHEDULE_GENERATE', 'hr_salary_advance_request', 11, '{\"schedule_rows\":0}', '{\"schedule_rows\":3,\"start_month\":\"2026-10-01\",\"repayment_method\":\"fixed_monthly\",\"approved_amount\":30000,\"outstanding_balance\":30000}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-29 16:06:02'),
+(2069, 29, 'HR_SALARY_ADVANCE_DISBURSE', 'hr_salary_advance_request', 11, '{\"status\":\"approved\",\"accounting_status\":\"verified\",\"approved_amount\":30000}', '{\"status\":\"disbursed\",\"disbursed_amount\":30000,\"cash_account_id\":1,\"journal_entry_id\":76,\"reference\":\"SAL-ADV-SAR-2026-00011\",\"outstanding_balance\":30000}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-29 16:06:02');
 
 -- --------------------------------------------------------
 
@@ -1089,176 +1050,6 @@ INSERT INTO `employees` (`id`, `user_id`, `full_name`, `birth_date`, `gender`, `
 (20, 32, 'مدير الموارد البشرية', NULL, NULL, '00112233445566', 'hr@ahlelkheir.org', NULL, 1, 'EMP-0032', NULL, '2026-08-18', 'مدير الموارد البشرية', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-09-06 21:31:44'),
 (21, NULL, 'HR Salary Test', '2000-01-01', 'male', '', '', '', 3, 'EMP-0033', '', '2026-09-07', 'HR Test', 'full_time', 'remote', 7000.00, '', NULL, 'active', 1, '2026-09-07 09:07:51', 32, '2026-09-07 09:07:51', '2026-09-07 16:15:18'),
 (22, 34, 'project supervisor', NULL, 'male', '987654321', 'gps@gmail.com', NULL, 8, 'EMP-0034', NULL, '2026-08-28', 'مشرف مشروع', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-09-27 17:37:12', 1, '2026-09-27 17:37:12', '2026-09-27 17:37:12');
-
---
--- Triggers `employees`
---
-DELIMITER $$
-CREATE TRIGGER `trg_employees_employment_state_ai` AFTER INSERT ON `employees` FOR EACH ROW BEGIN
-    INSERT INTO hr_employee_state_history
-        (employee_id, employment_state_id, effective_from, effective_to, reason, changed_by)
-    SELECT
-        NEW.id,
-        NEW.employment_state_id,
-        COALESCE(NEW.employment_state_changed_at, NOW()),
-        NULL,
-        'Initial employee creation',
-        NEW.created_by
-    WHERE NEW.employment_state_id IS NOT NULL
-      AND NOT EXISTS (
-          SELECT 1 FROM hr_employee_state_history h
-          WHERE h.employee_id = NEW.id
-      );
-END
-$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `trg_employees_employment_state_bi` BEFORE INSERT ON `employees` FOR EACH ROW BEGIN
-    DECLARE v_state_id INT DEFAULT NULL;
-
-    SELECT id INTO v_state_id
-    FROM hr_employment_states
-    WHERE code = CASE
-        WHEN NEW.status = 'suspended' THEN 'suspended'
-        WHEN NEW.status = 'terminated' THEN 'terminated'
-        WHEN NEW.status = 'retired' THEN 'retired'
-        WHEN NEW.status = 'resigned' THEN 'resigned'
-        WHEN NEW.status = 'probation' THEN 'probation'
-        ELSE 'active'
-    END
-      AND is_active = 1
-    LIMIT 1;
-
-    IF NEW.employment_state_id IS NULL OR NEW.employment_state_id = 0 THEN
-        SET NEW.employment_state_id = v_state_id;
-    END IF;
-
-    IF NEW.employment_state_changed_at IS NULL THEN
-        SET NEW.employment_state_changed_at = NOW();
-    END IF;
-END
-$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `trg_employees_employment_state_bu` BEFORE UPDATE ON `employees` FOR EACH ROW BEGIN
-    DECLARE v_state_id INT DEFAULT NULL;
-
-    IF (NEW.employment_state_id <=> OLD.employment_state_id)
-       AND NOT (NEW.status <=> OLD.status) THEN
-
-        SELECT id INTO v_state_id
-        FROM hr_employment_states
-        WHERE code = CASE
-            WHEN NEW.status = 'suspended' THEN 'suspended'
-            WHEN NEW.status = 'terminated' THEN 'terminated'
-            WHEN NEW.status = 'retired' THEN 'retired'
-            WHEN NEW.status = 'resigned' THEN 'resigned'
-            WHEN NEW.status = 'probation' THEN 'probation'
-            ELSE 'active'
-        END
-          AND is_active = 1
-        LIMIT 1;
-
-        IF v_state_id IS NOT NULL AND NOT (v_state_id <=> OLD.employment_state_id) THEN
-            UPDATE hr_employee_state_history
-            SET effective_to = NOW()
-            WHERE employee_id = OLD.id
-              AND effective_to IS NULL;
-
-            INSERT INTO hr_employee_state_history
-                (employee_id, employment_state_id, effective_from, effective_to, reason, changed_by)
-            VALUES
-                (OLD.id, v_state_id, NOW(), NULL,
-                 'Legacy employees.status lifecycle change', NULL);
-
-            SET NEW.employment_state_id = v_state_id;
-            SET NEW.employment_state_changed_at = NOW();
-        END IF;
-    END IF;
-
-    IF NOT (NEW.employment_state_id <=> OLD.employment_state_id)
-       AND NEW.employment_state_id IS NOT NULL
-       AND (NEW.employment_state_changed_at <=> OLD.employment_state_changed_at) THEN
-        SET NEW.employment_state_changed_at = NOW();
-    END IF;
-END
-$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `trg_employees_salary_history_sync_ai` AFTER INSERT ON `employees` FOR EACH ROW BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM hr_employee_salary_history
-        WHERE employee_id = NEW.id
-        LIMIT 1
-    ) THEN
-        INSERT INTO hr_employee_salary_history
-            (employee_id, contract_id, effective_from, effective_to,
-             basic_salary, salary_currency, pay_frequency, reason, notes)
-        VALUES
-            (NEW.id, NULL, COALESCE(NEW.hire_date, CURDATE()), NULL,
-             COALESCE(NEW.basic_salary, 0.00), 'SDG', 'monthly', 'initial',
-             'Initial salary history created from employee record');
-    END IF;
-END
-$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `trg_employees_salary_history_sync_au` AFTER UPDATE ON `employees` FOR EACH ROW BEGIN
-    DECLARE v_future_from DATE DEFAULT NULL;
-    DECLARE v_current_id BIGINT UNSIGNED DEFAULT NULL;
-    DECLARE v_target_to DATE DEFAULT NULL;
-
-    IF COALESCE(@hr_salary_history_sync, 0) <> 1
-       AND NOT (OLD.basic_salary <=> NEW.basic_salary) THEN
-        SELECT id INTO v_current_id
-        FROM hr_employee_salary_history
-        WHERE employee_id = NEW.id
-          AND effective_from <= CURDATE()
-          AND (effective_to IS NULL OR effective_to >= CURDATE())
-        ORDER BY effective_from DESC, id DESC
-        LIMIT 1;
-
-        SELECT MIN(effective_from) INTO v_future_from
-        FROM hr_employee_salary_history
-        WHERE employee_id = NEW.id
-          AND effective_from > CURDATE();
-
-        IF v_current_id IS NOT NULL
-           AND EXISTS (
-               SELECT 1 FROM hr_employee_salary_history
-               WHERE id = v_current_id AND effective_from = CURDATE()
-           ) THEN
-            UPDATE hr_employee_salary_history
-            SET basic_salary = NEW.basic_salary,
-                salary_currency = 'SDG',
-                notes = 'Synchronized from employee record'
-            WHERE id = v_current_id;
-        ELSE
-            IF v_current_id IS NOT NULL THEN
-                UPDATE hr_employee_salary_history
-                SET effective_to = DATE_SUB(CURDATE(), INTERVAL 1 DAY),
-                    salary_currency = 'SDG'
-                WHERE id = v_current_id;
-            END IF;
-
-            SET v_target_to = CASE
-                WHEN v_future_from IS NOT NULL
-                    THEN DATE_SUB(v_future_from, INTERVAL 1 DAY)
-                ELSE NULL
-            END;
-
-            INSERT INTO hr_employee_salary_history
-                (employee_id, contract_id, effective_from, effective_to,
-                 basic_salary, salary_currency, pay_frequency, reason, notes)
-            VALUES
-                (NEW.id, NULL, CURDATE(), v_target_to,
-                 COALESCE(NEW.basic_salary, 0.00), 'SDG', 'monthly',
-                 'adjustment', 'Synchronized from employee record');
-        END IF;
-    END IF;
-END
-$$
-DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -9028,28 +8819,6 @@ INSERT INTO `hr_payroll_policy_versions` (`id`, `version_no`, `effective_from`, 
 (1, 1, '2026-10-01', 1, 100.0000, 1, 100.0000, 0.0000, 0, 0, 0, 1.0000, 'monthly_salary_div_30', 2, 'الإعدادات الافتراضية — يجب اعتمادها من إدارة الجمعية', NULL, '2026-09-07 20:13:55', '2026-09-07 20:13:55'),
 (2, 2, '2026-11-01', 1, 100.0000, 1, 100.0000, 0.0000, 0, 0, 0, 1.0000, 'monthly_salary_div_30', 2, 'الإعدادات الافتراضية — يجب اعتمادها من إدارة الجمعية', 32, '2026-09-08 04:01:32', '2026-09-08 04:01:32');
 
---
--- Triggers `hr_payroll_policy_versions`
---
-DELIMITER $$
-CREATE TRIGGER `trg_hr_payroll_policy_no_delete_effective` BEFORE DELETE ON `hr_payroll_policy_versions` FOR EACH ROW BEGIN
-    IF OLD.effective_from <= CURDATE() THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Effective payroll policy versions cannot be deleted.';
-    END IF;
-END
-$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `trg_hr_payroll_policy_no_update_effective` BEFORE UPDATE ON `hr_payroll_policy_versions` FOR EACH ROW BEGIN
-    IF OLD.effective_from <= CURDATE() THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Effective payroll policy versions are immutable; create a new version instead.';
-    END IF;
-END
-$$
-DELIMITER ;
-
 -- --------------------------------------------------------
 
 --
@@ -9161,7 +8930,7 @@ CREATE TABLE `hr_salary_advance_policy_versions` (
 --
 
 INSERT INTO `hr_salary_advance_policy_versions` (`id`, `version_no`, `policy_name`, `effective_from`, `notes`, `allow_any_request_amount`, `minimum_request_amount`, `maximum_request_amount`, `allow_multiple_active_advances`, `allow_fixed_monthly_repayment`, `allow_full_eligible_salary_repayment`, `allow_full_settlement_from_salary`, `allow_direct_repayment`, `allow_custom_repayment_terms`, `maximum_monthly_deduction`, `maximum_repayment_months`, `repayment_start_rule`, `insufficient_salary_rule`, `eligible_salary_basis`, `minimum_service_days`, `probation_allowed`, `terminated_employee_allowed`, `require_accounting_verification`, `allow_early_settlement`, `created_by`, `created_at`) VALUES
-(1, 1, 'سياسة السلف على الراتب', '2026-09-29', NULL, 1, NULL, NULL, 0, 1, 1, 1, 1, 1, NULL, NULL, 'next_payroll', 'available_salary', 'net_before_advance', 0, 1, 0, 1, 1, 29, '2026-09-27 10:05:48');
+(1, 1, 'سياسة السلف على الراتب', '2026-09-29', NULL, 1, NULL, NULL, 0, 1, 1, 1, 1, 1, 10000.00, 6, 'next_payroll', 'available_salary', 'net_before_advance', 0, 1, 0, 1, 1, 29, '2026-09-27 10:05:48');
 
 -- --------------------------------------------------------
 
@@ -9203,7 +8972,15 @@ INSERT INTO `hr_salary_advance_repayment_schedule` (`id`, `salary_advance_reques
 (12, 4, 7, '2027-04-01', 5000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 08:26:24', '2026-09-29 08:26:24'),
 (13, 4, 8, '2027-05-01', 5000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 08:26:24', '2026-09-29 08:26:24'),
 (14, 4, 9, '2027-06-01', 5000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 08:26:24', '2026-09-29 08:26:24'),
-(15, 4, 10, '2027-07-01', 5000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 08:26:24', '2026-09-29 08:26:24');
+(15, 4, 10, '2027-07-01', 5000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 08:26:24', '2026-09-29 08:26:24'),
+(16, 8, 1, '2026-10-01', 10000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 11:30:36', '2026-09-29 11:30:36'),
+(17, 8, 2, '2026-11-01', 10000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 11:30:36', '2026-09-29 11:30:36'),
+(18, 8, 3, '2026-12-01', 10000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 11:30:36', '2026-09-29 11:30:36'),
+(19, 8, 4, '2027-01-01', 10000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 11:30:36', '2026-09-29 11:30:36'),
+(20, 8, 5, '2027-02-01', 10000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 11:30:36', '2026-09-29 11:30:36'),
+(21, 11, 1, '2026-10-01', 10000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 16:06:02', '2026-09-29 16:06:02'),
+(22, 11, 2, '2026-11-01', 10000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 16:06:02', '2026-09-29 16:06:02'),
+(23, 11, 3, '2026-12-01', 10000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 16:06:02', '2026-09-29 16:06:02');
 
 -- --------------------------------------------------------
 
@@ -9262,7 +9039,11 @@ INSERT INTO `hr_salary_advance_requests` (`id`, `request_no`, `employee_id`, `po
 (4, 'SAR-2026-00004', 17, 1, 50000.00, 'fixed_monthly', 5000.00, '2026-11-01', 'policy test 2', 'disbursed', 28, '2026-09-28 16:11:35', 29, '2026-09-28 16:13:49', NULL, 'approved', NULL, 50000.00, 'fixed_monthly', 5000.00, '2026-11-01', 1, 'استثناء خاص بهذا الطلب لا يغيّر السياسة العامة', 'verified', 29, '2026-09-28 18:24:14', NULL, 29, '2026-09-29 08:26:24', 1, 73, 'SAL-ADV-SAR-2026-00004', 50000.00, NULL, NULL, '2026-09-28 16:11:35', '2026-09-29 08:26:24'),
 (5, 'SAR-2026-00005', 6, 1, 50000.00, 'fixed_monthly', 5000.00, '2026-11-01', 'policy test 3', 'rejected', 19, '2026-09-28 16:17:52', 29, '2026-09-29 07:36:57', '2026-09-29 07:36:57', 'rejected', 'تم رفض طلب السلفة وإغلاقه وإبلاغ الموظف.', NULL, NULL, NULL, NULL, 0, NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-28 16:17:52', '2026-09-29 07:36:57'),
 (6, 'SAR-2026-00006', 7, 1, 60000.00, 'fixed_monthly', 5000.00, '2026-11-01', 'policy rejection test', 'rejected', 20, '2026-09-28 17:26:22', 29, '2026-09-28 17:28:45', '2026-09-28 17:28:45', 'rejected', 'اختبار رفض طلب غير متوافق مع قاعدة بدء السداد', NULL, NULL, NULL, NULL, 0, NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-28 17:26:22', '2026-09-28 21:19:30'),
-(7, 'SAR-2026-00007', 8, 1, 50000.00, 'fixed_monthly', 10000.00, '2026-10-01', 'schedule generation during disbursement test', 'disbursed', 21, '2026-09-29 08:09:37', 29, '2026-09-29 08:14:56', NULL, 'approved', NULL, 50000.00, 'fixed_monthly', 10000.00, '2026-10-01', 0, NULL, 'verified', 29, '2026-09-29 08:17:58', NULL, 29, '2026-09-29 08:19:55', 1, 72, 'SAL-ADV-SAR-2026-00007', 50000.00, NULL, NULL, '2026-09-29 08:09:37', '2026-09-29 08:19:55');
+(7, 'SAR-2026-00007', 8, 1, 50000.00, 'fixed_monthly', 10000.00, '2026-10-01', 'schedule generation during disbursement test', 'disbursed', 21, '2026-09-29 08:09:37', 29, '2026-09-29 08:14:56', NULL, 'approved', NULL, 50000.00, 'fixed_monthly', 10000.00, '2026-10-01', 0, NULL, 'verified', 29, '2026-09-29 08:17:58', NULL, 29, '2026-09-29 08:19:55', 1, 72, 'SAL-ADV-SAR-2026-00007', 50000.00, NULL, NULL, '2026-09-29 08:09:37', '2026-09-29 08:19:55'),
+(8, 'SAR-2026-00008', 3, 1, 50000.00, 'fixed_monthly', 15000.00, '2026-10-01', NULL, 'disbursed', 3, '2026-09-29 10:38:49', 29, '2026-09-29 10:41:26', NULL, 'approved', NULL, 50000.00, 'fixed_monthly', 15000.00, '2026-10-01', 1, 'repayment schedule generator enforces the policy maximum at disbursement time', 'verified', 29, '2026-09-29 11:29:30', NULL, 29, '2026-09-29 11:30:36', 1, 74, 'SAL-ADV-SAR-2026-00008', 50000.00, NULL, NULL, '2026-09-29 10:38:49', '2026-09-29 11:30:36'),
+(9, 'SAR-2026-00009', 1, 1, 70000.00, 'fixed_monthly', 10000.00, '2026-10-01', NULL, 'approved', 1, '2026-09-29 11:35:36', 29, '2026-09-29 11:36:18', NULL, 'approved', NULL, 70000.00, 'fixed_monthly', 10000.00, '2026-10-01', 1, 'test', 'verified', 29, '2026-09-29 11:54:19', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-29 11:35:36', '2026-09-29 11:54:19'),
+(10, 'SAR-2026-00010', 20, 1, 30000.00, 'fixed_monthly', 10000.00, '2026-11-01', 'test', 'rejected', 32, '2026-09-29 12:05:25', 29, '2026-09-29 12:06:06', '2026-09-29 12:06:06', 'rejected', 'test', NULL, NULL, NULL, NULL, 0, NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-29 12:05:25', '2026-09-29 12:06:06'),
+(11, 'SAR-2026-00011', 20, 1, 30000.00, 'fixed_monthly', 10000.00, '2026-12-01', 'next_payroll test', 'disbursed', 32, '2026-09-29 16:03:20', 29, '2026-09-29 16:05:07', NULL, 'approved', NULL, 30000.00, 'fixed_monthly', 10000.00, '2026-12-01', 1, 'next_payroll', 'verified', 29, '2026-09-29 16:05:52', NULL, 29, '2026-09-29 16:06:02', 1, 76, 'SAL-ADV-SAR-2026-00011', 30000.00, NULL, NULL, '2026-09-29 16:03:20', '2026-09-29 16:06:02');
 
 -- --------------------------------------------------------
 
@@ -9345,7 +9126,9 @@ INSERT INTO `journal_entries` (`id`, `entry_code`, `entry_date`, `description`, 
 (70, 'JE-PRJ-0007-20260924185354', '2026-09-24', 'تخصيص تمويل مشروع: تأهيل مدرسة السليم', 'project', 7, 'posted', NULL, NULL, NULL, 2, '2026-09-24 19:53:54'),
 (71, 'JE-000040', '2026-09-28', 'صرف سلفة راتب SAR-2026-00001 — فاطمه سليمان', 'salary_advance_disbursement', 1, 'posted', NULL, NULL, NULL, 29, '2026-09-28 19:06:24'),
 (72, 'JE-000041', '2026-09-29', 'صرف سلفة راتب SAR-2026-00007 — هديل عثمان', 'salary_advance_disbursement', 7, 'posted', NULL, NULL, NULL, 29, '2026-09-29 08:19:55'),
-(73, 'JE-000042', '2026-09-29', 'صرف سلفة راتب SAR-2026-00004 — أحمد حسين', 'salary_advance_disbursement', 4, 'posted', NULL, NULL, NULL, 29, '2026-09-29 08:26:24');
+(73, 'JE-000042', '2026-09-29', 'صرف سلفة راتب SAR-2026-00004 — أحمد حسين', 'salary_advance_disbursement', 4, 'posted', NULL, NULL, NULL, 29, '2026-09-29 08:26:24'),
+(74, 'JE-000043', '2026-09-29', 'صرف سلفة راتب SAR-2026-00008 — لمياء علي طه صالح', 'salary_advance_disbursement', 8, 'posted', NULL, NULL, NULL, 29, '2026-09-29 11:30:36'),
+(76, 'JE-000044', '2026-09-29', 'صرف سلفة راتب SAR-2026-00011 — مدير الموارد البشرية', 'salary_advance_disbursement', 11, 'posted', NULL, NULL, NULL, 29, '2026-09-29 16:06:02');
 
 -- --------------------------------------------------------
 
@@ -9484,7 +9267,11 @@ INSERT INTO `journal_lines` (`id`, `entry_id`, `account_id`, `debit`, `credit`, 
 (145, 72, 37, 50000.00, 0.00, 'صرف سلفة راتب SAR-2026-00007 — هديل عثمان'),
 (146, 72, 1, 0.00, 50000.00, 'صرف سلفة راتب SAR-2026-00007 — هديل عثمان'),
 (147, 73, 37, 50000.00, 0.00, 'صرف سلفة راتب SAR-2026-00004 — أحمد حسين'),
-(148, 73, 1, 0.00, 50000.00, 'صرف سلفة راتب SAR-2026-00004 — أحمد حسين');
+(148, 73, 1, 0.00, 50000.00, 'صرف سلفة راتب SAR-2026-00004 — أحمد حسين'),
+(149, 74, 37, 50000.00, 0.00, 'صرف سلفة راتب SAR-2026-00008 — لمياء علي طه صالح'),
+(150, 74, 1, 0.00, 50000.00, 'صرف سلفة راتب SAR-2026-00008 — لمياء علي طه صالح'),
+(153, 76, 37, 30000.00, 0.00, 'صرف سلفة راتب SAR-2026-00011 — مدير الموارد البشرية'),
+(154, 76, 1, 0.00, 30000.00, 'صرف سلفة راتب SAR-2026-00011 — مدير الموارد البشرية');
 
 -- --------------------------------------------------------
 
@@ -9515,93 +9302,6 @@ CREATE TABLE `leaves` (
 INSERT INTO `leaves` (`id`, `employee_id`, `leave_type`, `start_date`, `end_date`, `days_count`, `reason`, `status`, `manager_approved_by`, `manager_approved_at`, `hr_approved_by`, `hr_approved_at`, `created_at`) VALUES
 (5, 16, 'sick', '2026-09-08', '2026-09-30', 23, 'as per doctor orders', 'hr_approved', NULL, NULL, 32, '2026-09-07 18:07:54', '2026-09-07 18:05:51'),
 (6, 6, 'sick', '2026-09-19', '2026-09-22', 4, 'as doctor requested', 'rejected', NULL, NULL, NULL, NULL, '2026-09-15 09:05:53');
-
---
--- Triggers `leaves`
---
-DELIMITER $$
-CREATE TRIGGER `trg_leaves_validate_insert` BEFORE INSERT ON `leaves` FOR EACH ROW BEGIN
-    DECLARE v_state_category VARCHAR(30) DEFAULT NULL;
-
-    IF NEW.start_date IS NULL OR NEW.end_date IS NULL OR NEW.end_date < NEW.start_date THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'تواريخ الإجازة غير صالحة.';
-    END IF;
-
-    SELECT s.category
-      INTO v_state_category
-      FROM employees e
-      JOIN hr_employment_states s ON s.id = e.employment_state_id
-     WHERE e.id = NEW.employee_id
-     LIMIT 1;
-
-    IF v_state_category IS NULL THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'لا يمكن إنشاء طلب إجازة لموظف بدون حالة توظيف صالحة.';
-    END IF;
-
-    IF v_state_category <> 'working' THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'لا يمكن إنشاء طلب إجازة لموظف خارج حالات العمل.';
-    END IF;
-
-    IF NEW.status IN ('pending', 'manager_approved', 'hr_approved')
-       AND EXISTS (
-           SELECT 1
-             FROM leaves l
-            WHERE l.employee_id = NEW.employee_id
-              AND l.status IN ('pending', 'manager_approved', 'hr_approved')
-              AND NEW.start_date <= l.end_date
-              AND NEW.end_date >= l.start_date
-       ) THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'يوجد طلب إجازة آخر متداخل مع الفترة المحددة.';
-    END IF;
-END
-$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `trg_leaves_validate_update` BEFORE UPDATE ON `leaves` FOR EACH ROW BEGIN
-    DECLARE v_state_category VARCHAR(30) DEFAULT NULL;
-
-    IF NEW.start_date IS NULL OR NEW.end_date IS NULL OR NEW.end_date < NEW.start_date THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'تواريخ الإجازة غير صالحة.';
-    END IF;
-
-    SELECT s.category
-      INTO v_state_category
-      FROM employees e
-      JOIN hr_employment_states s ON s.id = e.employment_state_id
-     WHERE e.id = NEW.employee_id
-     LIMIT 1;
-
-    IF v_state_category IS NULL THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'لا يمكن حفظ طلب إجازة لموظف بدون حالة توظيف صالحة.';
-    END IF;
-
-    IF v_state_category <> 'working' THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'لا يمكن حفظ طلب إجازة لموظف خارج حالات العمل.';
-    END IF;
-
-    IF NEW.status IN ('pending', 'manager_approved', 'hr_approved')
-       AND EXISTS (
-           SELECT 1
-             FROM leaves l
-            WHERE l.id <> NEW.id
-              AND l.employee_id = NEW.employee_id
-              AND l.status IN ('pending', 'manager_approved', 'hr_approved')
-              AND NEW.start_date <= l.end_date
-              AND NEW.end_date >= l.start_date
-       ) THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'يوجد طلب إجازة آخر متداخل مع الفترة المحددة.';
-    END IF;
-END
-$$
-DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -10071,7 +9771,16 @@ INSERT INTO `notifications` (`id`, `recipient_user_id`, `type`, `title`, `body`,
 (100, 29, 'info', 'طلب سلفة على الراتب بانتظار المراجعة', 'طلب السلفة «SAR-2026-00007» للموظف «هديل عثمان» بانتظار مراجعة المدير المالي.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_fm_review.php?id=7', 1, '2026-09-29 08:09:37'),
 (101, 21, 'info', 'تم اعتماد طلب السلفة', 'تم اعتماد طلب السلفة «SAR-2026-00007».', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_request.php', 1, '2026-09-29 08:14:56'),
 (102, 21, 'info', 'تم صرف السلفة', 'تم صرف السلفة «SAR-2026-00007» بمبلغ 50,000.00 ج.س. الرصيد القائم للسلفة: 50,000.00 ج.س.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_request.php', 1, '2026-09-29 08:19:55'),
-(103, 28, 'info', 'تم صرف السلفة', 'تم صرف السلفة «SAR-2026-00004» بمبلغ 50,000.00 ج.س. الرصيد القائم للسلفة: 50,000.00 ج.س.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_request.php', 0, '2026-09-29 08:26:24');
+(103, 28, 'info', 'تم صرف السلفة', 'تم صرف السلفة «SAR-2026-00004» بمبلغ 50,000.00 ج.س. الرصيد القائم للسلفة: 50,000.00 ج.س.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_request.php', 0, '2026-09-29 08:26:24'),
+(104, 29, 'info', 'طلب سلفة على الراتب بانتظار المراجعة', 'طلب السلفة «SAR-2026-00008» للموظف «لمياء علي طه صالح» بانتظار مراجعة المدير المالي.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_fm_review.php?id=8', 1, '2026-09-29 10:38:49'),
+(105, 3, 'info', 'تم اعتماد طلب السلفة', 'تم اعتماد طلب السلفة «SAR-2026-00008». بعد تخصيص شروط الطلب من قبل المدير المالي.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_request.php', 1, '2026-09-29 10:41:26'),
+(106, 3, 'info', 'تم صرف السلفة', 'تم صرف السلفة «SAR-2026-00008» بمبلغ 50,000.00 ج.س. الرصيد القائم للسلفة: 50,000.00 ج.س.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_request.php', 1, '2026-09-29 11:30:36'),
+(107, 29, 'info', 'طلب سلفة على الراتب بانتظار المراجعة', 'طلب السلفة «SAR-2026-00009» للموظف «منير علي طه صالح» بانتظار مراجعة المدير المالي.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_fm_review.php?id=9', 1, '2026-09-29 11:35:36'),
+(108, 29, 'info', 'طلب سلفة على الراتب بانتظار المراجعة', 'طلب السلفة «SAR-2026-00010» للموظف «مدير الموارد البشرية» بانتظار مراجعة المدير المالي.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_fm_review.php?id=10', 1, '2026-09-29 12:05:25'),
+(109, 32, 'info', 'تم رفض وإغلاق طلب السلفة', 'تم رفض وإغلاق طلب السلفة «SAR-2026-00010». سبب الرفض: test', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_request.php', 1, '2026-09-29 12:06:06'),
+(110, 29, 'info', 'طلب سلفة على الراتب بانتظار المراجعة', 'طلب السلفة «SAR-2026-00011» للموظف «مدير الموارد البشرية» بانتظار مراجعة المدير المالي.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_fm_review.php?id=11', 1, '2026-09-29 16:03:20'),
+(111, 32, 'info', 'تم اعتماد طلب السلفة', 'تم اعتماد طلب السلفة «SAR-2026-00011». بعد تخصيص شروط الطلب من قبل المدير المالي.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_request.php', 1, '2026-09-29 16:05:07'),
+(112, 32, 'info', 'تم صرف السلفة', 'تم صرف السلفة «SAR-2026-00011» بمبلغ 30,000.00 ج.س. الرصيد القائم للسلفة: 30,000.00 ج.س.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_request.php', 0, '2026-09-29 16:06:02');
 
 -- --------------------------------------------------------
 
@@ -10250,97 +9959,6 @@ INSERT INTO `payroll` (`id`, `employee_id`, `month`, `year`, `basic_salary`, `al
 (21, 16, 9, 2026, 5000.00, 0.00, 0.00, 0.00, 0.00, 5000.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-07 07:36:14', 'none', NULL, NULL),
 (22, 21, 9, 2026, 7000.00, 0.00, 0.00, 0.00, 0.00, 7000.00, 'paid', NULL, '2026-09-07', NULL, NULL, '2026-09-07 16:24:25', 'posted', 33, NULL),
 (23, 21, 10, 2026, 7000.00, 0.00, 0.00, 0.00, 0.00, 7000.00, 'paid', 1, '2026-09-08', NULL, NULL, '2026-09-08 07:17:26', 'posted', 34, NULL);
-
---
--- Triggers `payroll`
---
-DELIMITER $$
-CREATE TRIGGER `trg_payroll_accounting_before_update` BEFORE UPDATE ON `payroll` FOR EACH ROW BEGIN
-    DECLARE v_entry_id INT UNSIGNED DEFAULT NULL;
-    DECLARE v_expense_account_id INT UNSIGNED DEFAULT NULL;
-    DECLARE v_payment_account_id INT UNSIGNED DEFAULT NULL;
-    DECLARE v_employee_name VARCHAR(150) DEFAULT NULL;
-    DECLARE v_entry_date DATE;
-    DECLARE v_amount DECIMAL(14,2);
-    DECLARE v_entry_code VARCHAR(50);
-
-    IF OLD.status <> 'approved' AND NEW.status = 'approved' THEN
-        SET NEW.accounting_status = 'ready';
-    END IF;
-
-    IF OLD.status <> 'paid' AND NEW.status = 'paid' THEN
-        SET v_amount = COALESCE(NEW.net_salary, 0);
-        IF v_amount <= 0 THEN
-            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'لا يمكن ترحيل مسير راتب بصافي راتب غير صالح إلى المحاسبة.';
-        END IF;
-
-        SELECT id INTO v_expense_account_id FROM accounts WHERE code = '5200' LIMIT 1;
-        IF v_expense_account_id IS NULL THEN
-            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'حساب الرواتب 5200 غير موجود في دليل الحسابات.';
-        END IF;
-
-        SET v_payment_account_id = NEW.payment_account_id;
-        IF v_payment_account_id IS NULL OR v_payment_account_id = 0 THEN
-            SELECT id INTO v_payment_account_id FROM accounts WHERE code = '1200' AND is_active = 1 LIMIT 1;
-        ELSE
-            SELECT id INTO v_payment_account_id FROM accounts WHERE id = v_payment_account_id AND is_active = 1 LIMIT 1;
-        END IF;
-        IF v_payment_account_id IS NULL THEN
-            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'حساب الدفع البنكي غير صالح.';
-        END IF;
-
-        SET v_entry_code = CONCAT('PAY-', NEW.id);
-        SET v_entry_date = COALESCE(NEW.payment_date, CURDATE());
-
-        SELECT id INTO v_entry_id
-        FROM journal_entries
-        WHERE reference_type = 'payroll' AND reference_id = NEW.id AND status = 'posted'
-        LIMIT 1;
-
-        IF v_entry_id IS NULL THEN
-            SELECT full_name INTO v_employee_name FROM employees WHERE id = NEW.employee_id LIMIT 1;
-            INSERT INTO journal_entries
-                (entry_code, entry_date, description, reference_type, reference_id, status, created_by)
-            VALUES
-                (v_entry_code, v_entry_date,
-                 CONCAT('صرف راتب الموظف: ', COALESCE(v_employee_name, CONCAT('ID ', NEW.employee_id)), ' - ', NEW.year, '-', LPAD(NEW.month, 2, '0')),
-                 'payroll', NEW.id, 'posted', NULL);
-            SET v_entry_id = LAST_INSERT_ID();
-
-            INSERT INTO journal_lines (entry_id, account_id, debit, credit, description)
-            VALUES (v_entry_id, v_expense_account_id, v_amount, 0,
-                    CONCAT('رواتب وأجور - ', NEW.year, '-', LPAD(NEW.month, 2, '0')));
-
-            INSERT INTO journal_lines (entry_id, account_id, debit, credit, description)
-            VALUES (v_entry_id, v_payment_account_id, 0, v_amount,
-                    CONCAT('صرف رواتب - ', NEW.year, '-', LPAD(NEW.month, 2, '0')));
-        END IF;
-
-        SET NEW.accounting_entry_id = v_entry_id;
-        SET NEW.accounting_status = 'posted';
-    END IF;
-END
-$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `trg_payroll_immutable_before_update` BEFORE UPDATE ON `payroll` FOR EACH ROW BEGIN
-    IF OLD.status = 'paid' AND (
-        NOT (OLD.employee_id <=> NEW.employee_id) OR
-        NOT (OLD.month <=> NEW.month) OR
-        NOT (OLD.year <=> NEW.year) OR
-        NOT (OLD.basic_salary <=> NEW.basic_salary) OR
-        NOT (OLD.allowances <=> NEW.allowances) OR
-        NOT (OLD.overtime <=> NEW.overtime) OR
-        NOT (OLD.deductions <=> NEW.deductions) OR
-        NOT (OLD.net_salary <=> NEW.net_salary) OR
-        NOT (OLD.status <=> NEW.status) OR
-        NOT (OLD.payment_date <=> NEW.payment_date)
-    ) THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'لا يمكن تعديل مسير راتب بعد صرفه. استخدم إجراء تصحيح/عكس محاسبي مستقل.';
-    END IF;
-END
-$$
-DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -28908,7 +28526,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `role_id`, `username`, `password_hash`, `full_name`, `email`, `phone`, `is_active`, `supervisor_status`, `password_change_required`, `last_login_at`, `created_by`, `created_at`, `updated_at`, `legacy_status`, `avatar_path`, `address`, `birth_date`, `gender`, `department_id`, `manager_id`, `theme_preference`, `language_preference`, `email_notifications`, `push_notifications`, `email_newsletter`) VALUES
-(1, 1, 'sudo', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'منير علي طه صالح', 'sudo@ahlelkheir.org', '0966616614', 1, '', 0, '2026-09-27 17:37:54', NULL, '2026-08-02 16:49:35', '2026-09-27 17:37:54', 'active', 'storage/avatars/user_1_1789753554.png', NULL, NULL, 'male', 1, 1, 'auto', 'ar', 1, 1, 1),
+(1, 1, 'sudo', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'منير علي طه صالح', 'sudo@ahlelkheir.org', '0966616614', 1, '', 0, '2026-09-29 11:59:09', NULL, '2026-08-02 16:49:35', '2026-09-29 11:59:09', 'active', 'storage/avatars/user_1_1789753554.png', NULL, NULL, 'male', 1, 1, 'auto', 'ar', 1, 1, 1),
 (2, 2, 'gm', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'المدير العام', 'gm@ahlelkheir.org', NULL, 1, '', 0, '2026-09-27 08:41:07', NULL, '2026-08-02 16:49:35', '2026-09-27 08:41:07', 'active', 'storage/avatars/user_2_1787805764.png', NULL, NULL, NULL, 1, NULL, 'light', 'ar', 1, 1, 1),
 (3, 3, 'vgm', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'لمياء علي طه صالح', 'vgm@ahlelkheir.org', NULL, 1, '', 0, '2026-09-29 09:00:10', NULL, '2026-08-02 16:49:35', '2026-09-29 09:00:10', 'active', 'storage/avatars/user_3_1787556761.png', NULL, NULL, 'female', 1, 2, 'light', 'ar', 1, 1, 1),
 (4, 10, 'accountant', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'محاسب (موظف)', 'accountant@ahlelkheir.org', '0123456789', 1, '', 0, '2026-08-17 14:11:48', NULL, '2026-08-08 12:33:29', '2026-08-17 14:30:38', 'active', NULL, NULL, NULL, NULL, 6, 29, 'light', 'ar', 1, 1, 1),
@@ -28927,9 +28545,9 @@ INSERT INTO `users` (`id`, `role_id`, `username`, `password_hash`, `full_name`, 
 (27, 4, 'sv9', '$2y$10$oBV.8O1UW/yiwOAcPMxbqeH8Xh/PJhNtq.tIkyOqh55v1v7GzjSJW', 'هناء خلف الله', 'hanah@gmail.com', '78999456789', 1, 'active', 0, NULL, 3, '2026-08-14 09:31:19', '2026-09-03 15:28:42', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
 (28, 9, 'sm1', '$2y$10$gtVZcFBfL2yMhNXOPpkr5e7up/SiAnE7KfjJ8tq4JFocePuGjcr0C', 'أحمد حسين', 'ahmed@gmail.com', '8545567865', 1, '', 0, '2026-09-28 16:38:49', 1, '2026-08-14 13:06:45', '2026-09-28 16:38:49', NULL, NULL, NULL, NULL, 'male', 4, 3, 'light', 'ar', 1, 1, 1),
 (29, 6, 'fm', '$2y$10$K2.yA1kpqLaGWrqH/QOQ2uXv0PJhvWTMC55tW5kSkU6u5iaz6JmVW', 'المدير المالي', 'fm@ahlelkheir.org', NULL, 1, '', 0, '2026-09-29 08:16:30', 1, '2026-08-17 14:26:40', '2026-09-29 08:16:30', NULL, 'storage/avatars/user_29_1787555658.jpg', NULL, NULL, 'أنثى', 1, 2, 'light', 'ar', 1, 1, 1),
-(32, 11, 'hrh', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'مدير الموارد البشرية', 'hr@ahlelkheir.org', '00112233445566', 1, '', 0, '2026-09-28 09:19:35', NULL, '2026-08-18 21:49:04', '2026-09-28 09:19:35', NULL, 'storage/avatars/user_32_1788630391.png', NULL, NULL, NULL, 1, NULL, 'light', 'ar', 1, 1, 1),
-(33, 13, 'gpm', '$2y$10$ftQaFFCk4DF1UrdPlpGtd.OVR.2pyxPxKlIcZ7KhRxa7VMP/FXC/G', 'projects manager', 'pm@gmail.com', '00012344456678', 1, '', 0, '2026-09-28 09:59:03', 1, '2026-08-28 18:33:31', '2026-09-28 09:59:03', NULL, 'storage/avatars/user_33_1787943667.jpg', NULL, NULL, 'male', 8, 2, 'light', 'ar', 1, 1, 1),
-(34, 14, 'ps1', '$2y$10$y6GVpoe/hF9GxE8zyezAPORKNgBn5n65Ct.tUHI0r6lnkyHEdkrZi', 'project supervisor', 'gps@gmail.com', '987654321', 1, '', 0, '2026-09-27 16:25:11', 1, '2026-08-28 18:35:16', '2026-09-27 16:25:11', NULL, NULL, NULL, NULL, 'male', 8, 2, 'light', 'ar', 1, 1, 1),
+(32, 11, 'hrh', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'مدير الموارد البشرية', 'hr@ahlelkheir.org', '00112233445566', 1, '', 0, '2026-09-29 12:03:09', NULL, '2026-08-18 21:49:04', '2026-09-29 12:03:09', NULL, 'storage/avatars/user_32_1788630391.png', NULL, NULL, NULL, 1, NULL, 'light', 'ar', 1, 1, 1),
+(33, 13, 'gpm', '$2y$10$ftQaFFCk4DF1UrdPlpGtd.OVR.2pyxPxKlIcZ7KhRxa7VMP/FXC/G', 'projects manager', 'pm@gmail.com', '00012344456678', 1, '', 0, '2026-09-29 12:02:52', 1, '2026-08-28 18:33:31', '2026-09-29 12:02:52', NULL, 'storage/avatars/user_33_1787943667.jpg', NULL, NULL, 'male', 1, 2, 'light', 'ar', 1, 1, 1),
+(34, 14, 'ps1', '$2y$10$y6GVpoe/hF9GxE8zyezAPORKNgBn5n65Ct.tUHI0r6lnkyHEdkrZi', 'project supervisor', 'gps@gmail.com', '987654321', 1, '', 0, '2026-09-27 16:25:11', 1, '2026-08-28 18:35:16', '2026-09-29 12:02:14', NULL, NULL, NULL, NULL, 'male', 8, NULL, 'light', 'ar', 1, 1, 1),
 (35, 10, 'audit_acc2_20260911', '$2y$12$kxUoLJ66pmSWJRDVnkmtUuN5XI6ZhMb41RpeV2cIfN8kUA7.2EWl.', 'ACCOUNTING AUDIT TEMP ACCOUNTANT', NULL, NULL, 1, 'active', 0, '2026-09-11 09:47:45', NULL, '2026-09-11 09:47:04', '2026-09-11 09:47:45', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'light', 'ar', 1, 1, 1),
 (36, 7, 'audit_nany2_20260911', '$2y$12$kxUoLJ66pmSWJRDVnkmtUuN5XI6ZhMb41RpeV2cIfN8kUA7.2EWl.', 'ACCOUNTING AUDIT TEMP NANNY', NULL, NULL, 1, 'active', 0, NULL, NULL, '2026-09-11 09:47:04', '2026-09-11 09:47:04', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'light', 'ar', 1, 1, 1);
 
@@ -29972,7 +29590,7 @@ ALTER TABLE `attendance`
 -- AUTO_INCREMENT for table `audit_log`
 --
 ALTER TABLE `audit_log`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2051;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2071;
 
 --
 -- AUTO_INCREMENT for table `contracts`
@@ -30110,19 +29728,19 @@ ALTER TABLE `hr_salary_advance_documents`
 -- AUTO_INCREMENT for table `hr_salary_advance_payroll_repayments`
 --
 ALTER TABLE `hr_salary_advance_payroll_repayments`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `hr_salary_advance_policy_versions`
 --
 ALTER TABLE `hr_salary_advance_policy_versions`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `hr_salary_advance_repayment_schedule`
 --
 ALTER TABLE `hr_salary_advance_repayment_schedule`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
 
 --
 -- AUTO_INCREMENT for table `hr_salary_advance_requests`
@@ -30134,13 +29752,13 @@ ALTER TABLE `hr_salary_advance_requests`
 -- AUTO_INCREMENT for table `journal_entries`
 --
 ALTER TABLE `journal_entries`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=74;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=85;
 
 --
 -- AUTO_INCREMENT for table `journal_lines`
 --
 ALTER TABLE `journal_lines`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=149;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=172;
 
 --
 -- AUTO_INCREMENT for table `leaves`
@@ -30200,7 +29818,7 @@ ALTER TABLE `nanny_group_assignments`
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=104;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=113;
 
 --
 -- AUTO_INCREMENT for table `orphan_documents`
@@ -30230,7 +29848,7 @@ ALTER TABLE `password_recovery_requests`
 -- AUTO_INCREMENT for table `payroll`
 --
 ALTER TABLE `payroll`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
 -- AUTO_INCREMENT for table `performance_reviews`
