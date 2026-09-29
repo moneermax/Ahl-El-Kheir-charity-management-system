@@ -1548,3 +1548,10 @@ Audit boundary: actual payroll deduction/application, payroll allocation, outsta
 ## 2026-09-29 — HR Salary Advance Stage 5 Payroll Integration Checkpoint
 
 Code audit checkpoint: payroll repayment application is transactional with payroll payment and accounting. Pending schedule rows are locked, the approved-policy deduction is recalculated, one repayment trace is written per request/payroll, schedule state and outstanding balance are updated, Cr 1410 is posted for actual repayment, and old/new balance and schedule values are written to audit_log. Runtime verification remains open; no Stage 6 behavior was introduced.
+
+
+## 2026-09-29 — Stage 5 Payroll Integration Merge Checkpoint
+
+The Stage 5 payroll-integration implementation was merged to `main` through PR #56. Merge commit: `7cb7a42a9bb4d90a07d23250f2940473806498c8`.
+
+Status remains **Stage 5 IN PROGRESS / RUNTIME VERIFICATION PENDING**. The code is now on `main`; no Stage 6 behavior has been introduced. The next step is controlled local runtime verification of payroll repayment application, Cr 1410 accounting, balance/schedule updates, insufficient-salary handling, duplicate protection, and audit traceability.
