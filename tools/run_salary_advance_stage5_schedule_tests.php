@@ -1,6 +1,9 @@
 <?php
 declare(strict_types=1);
 
+// config/functions.php expects REQUEST_METHOD even when this verification runs from CLI.
+$_SERVER['REQUEST_METHOD'] = $_SERVER['REQUEST_METHOD'] ?? 'CLI';
+
 /**
  * Development-only Stage 5 schedule-rule verification.
  *
