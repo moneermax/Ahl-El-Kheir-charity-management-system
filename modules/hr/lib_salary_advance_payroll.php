@@ -178,8 +178,8 @@ function hrSalaryAdvancePayrollApply(PDO $pdo, array $payroll, int $accountingEn
     );
 
     $salaryAdvanceDeduction = round((float)($payroll['salary_advance_deduction'] ?? 0), 2);
-    if ($salaryAdvanceDeduction <= 0.00) {
-        return ['total' => 0.00, 'allocations' => []];
+    if ($salaryAdvanceDeduction < 0.00) {
+        throw new RuntimeException('خصم سلفة الراتب في مسير الراتب غير صالح.');
     }
 
     // Lock the schedule rows before recalculating so a concurrent payroll
