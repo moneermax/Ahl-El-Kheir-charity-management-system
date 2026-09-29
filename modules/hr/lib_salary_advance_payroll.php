@@ -351,6 +351,39 @@ function hrSalaryAdvancePayrollApply(PDO $pdo, array $payroll, int $accountingEn
             throw new RuntimeException('تعذر تحديث الرصيد القائم للسلفة.');
         }
 
+        $auditUserId = null;
+        if (class_exists('Session')) {
+            $sessionUserId = Session::getUserId();
+            if ($sessionUserId !== null && (int)$sessionUserId > 0) {
+                $auditUserId = (int)$sessionUserId;
+            }
+        }
+        dbExecute(
+            "INSERT INTO audit_log
+             (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent)
+             VALUES (?, 'HR_SALARY_ADVANCE_PAYROLL_REPAYMENT', 'hr_salary_advance_request', ?, ?, ?, ?, ?)",
+            [
+                $auditUserId,
+                $requestId,
+                json_encode([
+                    'outstanding_balance' => $outstandingBefore,
+                    'schedule_status' => (string)$row['schedule_status'],
+                    'applied_amount' => $oldApplied,
+                ], JSON_UNESCAPED_UNICODE),
+                json_encode([
+                    'outstanding_balance' => $outstandingAfter,
+                    'schedule_status' => $scheduleStatus,
+                    'applied_amount' => $newApplied,
+                    'payroll_id' => $payrollId,
+                    'actual_amount' => $actual,
+                    'outcome' => $scheduleStatus === 'skipped' ? 'skipped' : ($actual + 0.000001 >= max(0.00, $scheduledAmount - $oldApplied) ? 'applied' : 'partial'),
+                    'accounting_entry_id' => $actual > 0.00 ? $accountingEntryId : null,
+                ], JSON_UNESCAPED_UNICODE),
+                $_SERVER['REMOTE_ADDR'] ?? '',
+                $_SERVER['HTTP_USER_AGENT'] ?? ''
+            ]
+        );
+
         $totalApplied = round($totalApplied + $actual, 2);
         $written++;
     }
