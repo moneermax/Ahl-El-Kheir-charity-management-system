@@ -233,7 +233,7 @@ try {
     $result = hrSalaryAdvancePayrollApply($pdo, $payroll, $entryId);
 
     $trace = dbFetchAll(
-        "SELECT request_id, repayment_schedule_id, actual_amount, outcome, accounting_entry_id
+        "SELECT salary_advance_request_id AS request_id, repayment_schedule_id, actual_amount, outcome, accounting_entry_id
          FROM hr_salary_advance_payroll_repayments
          WHERE payroll_id = ?",
         [$payrollId]
