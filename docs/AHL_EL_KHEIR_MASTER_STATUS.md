@@ -1074,7 +1074,7 @@ Dashboard links and employee approval-notification routing were updated. Account
 
 No database schema change was introduced by this consolidation.
 
-Runtime verification of the consolidated page is still pending. PR #52 remains open and must not be merged yet.
+Runtime verification of the consolidated page is still pending. PR #52 was already merged into main (merge commit 96ecf58871fe27b32aad2c5d62174c40991a5747). The current branch contains a follow-up workflow-consolidation change and is not yet merged.
 
 2026-09-29 — Stage 5 Schedule Generation Runtime Checkpoint
 
@@ -1082,7 +1082,7 @@ Runtime verification of the consolidated page is still pending. PR #52 remains o
 
 The Stage 5 migration was applied successfully locally with all 5 queries completing without errors. It added payroll.salary_advance_deduction, hr_salary_advance_repayment_schedule, and hr_salary_advance_payroll_repayments.
 
-PR #52 — Stage 5: generate salary advance repayment schedules — remains OPEN and must not be merged until the remaining runtime gates pass.
+PR #52 — Stage 5: generate salary advance repayment schedules — was merged into main on 2026-09-29 (merge commit 96ecf58871fe27b32aad2c5d62174c40991a5747). The current branch is a follow-up consolidation branch and remains unmerged while the consolidated workflow is runtime-tested.
 
 Implemented on feature/hr-salary-advance-stage5-schedule:
 - modules/hr/lib_salary_advance_repayment.php
