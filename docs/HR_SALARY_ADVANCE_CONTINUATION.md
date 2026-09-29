@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-29  
 **Repository:** `moneermax/Ahl-El-Kheir-charity-management-system`  
-**Branch:** `feature/hr-salary-advance-stage5-schedule`  
+**Branch:** `main`  
 **Active area:** HR / Salary Advance  
 **Current stage:** Stage 5 — Repayment Schedule + Payroll Integration — **IN PROGRESS / PAYROLL INTEGRATION IMPLEMENTED — RUNTIME VERIFICATION PENDING**
 
@@ -770,3 +770,10 @@ Correction to earlier workflow notes: the removed legacy pages are salary_advanc
 Implemented on `feature/hr-salary-advance-stage5-schedule`: payroll draft deduction from the approved schedule/policy; transactional repayment allocation at payroll payment; schedule applied/partial/skipped state updates; outstanding-balance reduction by actual repayment; `hr_salary_advance_payroll_repayments` trace; Cr 1410 repayment accounting with cash credit for actual net paid; insufficient-salary `available_salary` / `skip_month` handling; duplicate request/payroll protection; and audit-log evidence. Account `1410` is ensured by the existing accounting seed mechanism when missing.
 
 Runtime verification is still required for fixed-monthly repayment, partial/available-salary, skip-month, balance reduction, schedule state, duplicate protection, payroll regeneration safety, and balanced journal traceability. Do not start Stage 6.
+
+
+## 2026-09-29 — Stage 5 Payroll Integration Merge Checkpoint
+
+The Stage 5 payroll-integration implementation was merged to `main` through PR #56. Merge commit: `7cb7a42a9bb4d90a07d23250f2940473806498c8`.
+
+Status remains **Stage 5 IN PROGRESS / RUNTIME VERIFICATION PENDING**. The code is now on `main`; no Stage 6 behavior has been introduced. The next step is controlled local runtime verification of payroll repayment application, Cr 1410 accounting, balance/schedule updates, insufficient-salary handling, duplicate protection, and audit traceability.
