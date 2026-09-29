@@ -1178,3 +1178,36 @@ Never use reset --hard, clean, restore, force-push, or other destructive Git com
 Send the request number plus the visible result, including amount, repayment method, monthly amount, start rule/month, disbursement result, journal number if any, generated schedule rows/totals, and whether the PASS condition was met.
 
 After all seven gates pass, update the salary-advance continuation document, master status/audit, session index, and this master continuation prompt with exact results and commit/PR state. Then evaluate PR #52 for merge. Do not mark Stage 5 complete until payroll integration and its runtime verification are actually finished.
+
+
+# 2026-09-29 — Stage 5 Test 3 Runtime Checkpoint
+
+**Status:** Stage 5 IN PROGRESS — Test 3 (`next_payroll`) **PASS / RUNTIME VERIFIED**.
+
+Verified request: **SAR-2026-00011**
+
+- Employee: مدير الموارد البشرية / EMP-0032
+- Approved/disbursed amount: 30,000 SDG
+- Repayment method: fixed monthly
+- Monthly installment: 10,000 SDG
+- Employee-requested start month: 2026-12-01
+- Disbursed: 2026-09-29 16:06:02
+- Source: 1100 — الصندوق (نقدي)
+- Journal: JE-000044
+- Reference: SAL-ADV-SAR-2026-00011
+- Outstanding balance: 30,000 SDG
+- Generated schedule: 2026-10-01 / 10,000; 2026-11-01 / 10,000; 2026-12-01 / 10,000
+- All schedule rows are pending and total 30,000 SDG.
+
+**Conclusion:** the policy-level `next_payroll` rule correctly overrides the employee-requested December start and begins repayment in the first eligible payroll month after the September disbursement.
+
+Protected evidence: do not modify, redisburse, or reuse SAR-2026-00011 for another Stage 5 test.
+
+### Remaining Stage 5 runtime gates
+
+1. specified_month
+2. duplicate schedule generation
+3. full_eligible_salary
+4. failure/rollback safety
+
+Maximum monthly deduction and maximum repayment months are already PASS. Do not start actual payroll deduction/application, payroll accounting, outstanding-balance reduction, repayment notifications, or Stage 6 settlement until the schedule-planning gates are complete.
