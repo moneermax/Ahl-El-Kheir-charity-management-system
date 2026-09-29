@@ -1070,3 +1070,10 @@ Current continuation point: `feature/hr-salary-advance-stage5-schedule`. Schedul
 The Stage 5 payroll-integration implementation was merged to `main` through PR #56. Merge commit: `7cb7a42a9bb4d90a07d23250f2940473806498c8`.
 
 Status remains **Stage 5 IN PROGRESS / RUNTIME VERIFICATION PENDING**. The code is now on `main`; no Stage 6 behavior has been introduced. The next step is controlled local runtime verification of payroll repayment application, Cr 1410 accounting, balance/schedule updates, insufficient-salary handling, duplicate protection, and audit traceability.
+
+
+## 2026-09-29 — Stage 5 Repayment Notification Checkpoint
+
+PR #57 was merged to `main` with merge commit `0c01c3a378826b7b7cb260668f8f64b0e6648031`. Employee notifications are now emitted after a committed payroll repayment for applied, partial, skipped, and zero-balance completion outcomes. Notification delivery is informational and cannot roll back the financial transaction.
+
+Stage 5 remains IN PROGRESS pending controlled runtime verification. Stage 6 remains NOT STARTED.
