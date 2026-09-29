@@ -729,3 +729,35 @@ The existing disbursement helper checks for an existing posted salary-advance di
 Stage 5 currently does NOT implement actual payroll deduction calculation, payroll repayment allocation, outstanding-balance reduction from payroll, payroll Cr 1410 accounting, repayment notifications, or Stage 6 direct repayment/settlement.
 
 Use fresh controlled requests for new tests. Do not alter the already-passed SAR-2026-00007 evidence. If a test fails, stop and inspect the current repository/code/schema root cause before creating another test request.
+
+
+# 2026-09-29 — Stage 5 Schedule-Planning Gates CLOSED
+
+**Status:** Stage 5 schedule-planning portion is DONE / RUNTIME VERIFIED. Stage 5 payroll integration remains IN PROGRESS.
+
+All seven schedule-planning gates have passed:
+1. Maximum monthly deduction — PASS: SAR-2026-00008; 50,000 SDG; 15,000 approved monthly was capped at the 10,000 SDG policy maximum; five 10,000 SDG installments; JE-000043.
+2. Maximum repayment months — PASS: SAR-2026-00009; 70,000 SDG with 10,000 monthly against a 6-month policy maximum. Disbursement was blocked with the expected maximum-month validation message; no successful disbursement/journal/schedule was created.
+3. next_payroll — PASS: SAR-2026-00011; 30,000 SDG; fixed 10,000 monthly; disbursed 2026-09-29; JE-000044. Schedule starts 2026-10-01, then 2026-11-01 and 2026-12-01.
+4. specified_month — PASS: rollback-only verification confirmed an approved 2026-12-01 start is honored when eligible.
+5. Duplicate schedule generation — PASS: rollback-only verification confirmed a second generation returns the existing schedule without adding rows.
+6. full_eligible_salary planning — PASS: rollback-only verification confirmed the monthly cap is respected and the full outstanding balance is covered within the saved repayment horizon.
+7. Failure/rollback — PASS: the protected SAR-2026-00009 validation failure was safely rejected; code inspection confirms schedule generation is inside the same disbursement transaction.
+
+The rollback-only harness is tools/run_salary_advance_stage5_schedule_tests.php. Its CLI REQUEST_METHOD warning was removed in commit 9b66315966174a3a892a5760847300007814a0e2. The clean rerun produced all three harness PASS results with no warning.
+
+Protected runtime evidence must not be modified or reused for another disbursement test. No additional employee/request is required for the completed schedule-rule gates.
+
+## Remaining Stage 5 work
+
+Do not start Stage 6. Continue Stage 5 with payroll integration only: actual payroll deduction/application, payroll repayment allocation, outstanding-balance reduction, payroll Cr 1410 accounting, insufficient-salary behavior, and repayment/application notifications and audit behavior.
+
+Before implementation, inspect existing payroll processing/accounting conventions and actual schema. Do not invent schema or use runtime DDL. Prefer controlled rollback-only fixtures because the available employee population has already been exhausted for fresh salary-advance requests.
+
+## Git checkpoint
+
+Current Stage 5 feature branch: feature/hr-salary-advance-stage5-schedule.
+Latest cleanup commit: 9b66315966174a3a892a5760847300007814a0e2.
+The branch is not yet merged into main.
+
+Correction to earlier workflow notes: the removed legacy pages are salary_advance_fm_review.php and salary_advance_accounting.php. salary_advance_processing.php is the new unified page.
