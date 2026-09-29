@@ -271,7 +271,9 @@ function hrPayrollChangeStatus(PDO $pdo, int $payrollId, string $newStatus, ?int
             $row['status'] = 'paid';
             $row['payment_date'] = $paymentDate;
             $row['payment_account_id'] = $paymentAccountId;
-            hrPayrollPostAccounting($pdo, $row);
+            $entryId = hrPayrollPostAccounting($pdo, $row);
+            require_once __DIR__ . '/lib_salary_advance_payroll.php';
+            hrSalaryAdvancePayrollApply($pdo, $row, $entryId);
         }
 
         if ($startedHere) {
