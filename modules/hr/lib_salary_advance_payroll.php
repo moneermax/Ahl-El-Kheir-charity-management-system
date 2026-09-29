@@ -399,6 +399,81 @@ function hrSalaryAdvancePayrollApply(PDO $pdo, array $payroll, int $accountingEn
     ];
 }
 
+
+/**
+ * Notify the employee after a committed payroll repayment allocation.
+ *
+ * Notifications are deliberately emitted after the payroll transaction
+ * commits. They are informational only; the repayment tables and journal
+ * remain authoritative.
+ */
+function hrSalaryAdvancePayrollNotifyApplied(PDO $pdo, int $payrollId): void
+{
+    if ($payrollId <= 0) {
+        return;
+    }
+
+    require_once dirname(__DIR__) . '/accounting/lib_transaction_review.php';
+
+    $rows = dbFetchAll(
+        "SELECT pr.id AS repayment_id,
+                pr.salary_advance_request_id AS request_id,
+                pr.actual_amount,
+                pr.outcome,
+                pr.outcome_reason,
+                r.request_no,
+                r.outstanding_balance,
+                e.user_id AS employee_user_id,
+                e.full_name AS employee_name
+         FROM hr_salary_advance_payroll_repayments pr
+         JOIN hr_salary_advance_requests r
+           ON r.id = pr.salary_advance_request_id
+         JOIN employees e
+           ON e.id = pr.employee_id
+         WHERE pr.payroll_id = ?
+         ORDER BY pr.id ASC",
+        [$payrollId]
+    );
+
+    foreach ($rows as $row) {
+        $employeeUserId = (int)($row['employee_user_id'] ?? 0);
+        if ($employeeUserId <= 0) {
+            continue;
+        }
+
+        $actual = round((float)$row['actual_amount'], 2);
+        $outstanding = round(max(0.00, (float)$row['outstanding_balance']), 2);
+        $outcome = (string)$row['outcome'];
+
+        if ($outcome === 'skipped') {
+            $title = 'تم تجاوز قسط سلفة الراتب';
+            $body = 'تم تجاوز قسط السلفة «' . (string)$row['request_no'] . '» لهذا الشهر وفق سياسة السداد. لم يتم تخفيض الرصيد القائم.';
+        } elseif ($outcome === 'partial') {
+            $title = 'تم خصم جزء من قسط سلفة الراتب';
+            $body = 'تم خصم ' . number_format($actual, 2) . ' ج.س. من السلفة «' . (string)$row['request_no'] . '» وفق الراتب المؤهل المتاح. الرصيد القائم: ' . number_format($outstanding, 2) . ' ج.س.';
+        } elseif ($outstanding <= 0.00) {
+            $title = 'اكتمل سداد سلفة الراتب';
+            $body = 'تم استرداد آخر مبلغ من السلفة «' . (string)$row['request_no'] . '» عبر مسير الراتب. الرصيد القائم الآن صفر.';
+        } else {
+            $title = 'تم خصم قسط سلفة الراتب';
+            $body = 'تم خصم ' . number_format($actual, 2) . ' ج.س. من السلفة «' . (string)$row['request_no'] . '» عبر مسير الراتب. الرصيد القائم: ' . number_format($outstanding, 2) . ' ج.س.';
+        }
+
+        if (trim((string)$row['outcome_reason']) !== '' && $outcome !== 'applied') {
+            $body .= ' ' . trim((string)$row['outcome_reason']);
+        }
+
+        ak_transaction_review_notify_event(
+            $employeeUserId,
+            $title,
+            $body,
+            APP_URL . 'modules/hr/salary_advance_request.php',
+            (int)$row['repayment_id'],
+            'salary_advance_payroll_repayment'
+        );
+    }
+}
+
 function hrSalaryAdvancePayrollRefreshDraft(PDO $pdo, int $payrollId): void
 {
     if ($payrollId <= 0) {
