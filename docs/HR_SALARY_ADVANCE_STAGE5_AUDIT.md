@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-29  
 **Branch:** `feature/hr-salary-advance-stage5-repayment`  
-**Status:** DESIGN/AUDIT COMPLETE — IMPLEMENTATION NOT STARTED
+**Status:** SCHEMA CHECKPOINT PREPARED — RUNTIME MIGRATION APPLICATION NOT YET VERIFIED
 
 ## 1. Stage boundary
 
@@ -353,3 +353,29 @@ Do not implement in Stage 5:
 The first implementation checkpoint should be the schema migration only, after one final repository/schema verification of exact existing payroll columns and current salary-advance request fields.
 
 No application code has been changed on this Stage 5 branch yet.
+
+
+## 17. Schema checkpoint
+
+The first Stage 5 implementation unit is prepared in:
+
+`database/migrations/2026-09-29_hr_salary_advance_repayment.sql`
+
+It adds:
+
+- `payroll.salary_advance_deduction` for the period-level salary-advance deduction total;
+- `hr_salary_advance_repayment_schedule` for planned installments;
+- `hr_salary_advance_payroll_repayments` for payroll-period allocation/audit trace.
+
+No existing payroll values are changed by the migration because the new payroll field defaults to zero.
+
+**This migration has not been applied or runtime-tested yet.**
+
+Before proceeding to application code:
+1. apply the migration through the project's normal migration mechanism;
+2. verify it succeeds without errors;
+3. verify existing payroll rows remain unchanged;
+4. verify the new tables/column exist exactly once;
+5. then implement schedule generation as the next isolated unit.
+
+No Stage 5 payroll behavior is active yet.
