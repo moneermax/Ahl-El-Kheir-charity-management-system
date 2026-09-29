@@ -1,8 +1,8 @@
 # HR Salary Advance — Stage 5 Audit & Design Checkpoint
 
 **Date:** 2026-09-29  
-**Branch:** `feature/hr-salary-advance-stage5-repayment`  
-**Status:** SCHEMA CHECKPOINT PREPARED — RUNTIME MIGRATION APPLICATION NOT YET VERIFIED
+**Branch:** `feature/hr-salary-advance-stage5-schedule`  
+**Status:** SCHEMA MIGRATION APPLIED — SCHEDULE GENERATION IMPLEMENTED / RUNTIME VERIFICATION PENDING
 
 ## 1. Stage boundary
 
@@ -348,11 +348,11 @@ Do not implement in Stage 5:
 
 ## 16. Current decision
 
-**Stage 5 design/audit is complete enough to begin implementation.**
+**Stage 5 design/audit is complete, the schema checkpoint is applied, and the schedule-generation implementation is ready for runtime verification.**
 
-The first implementation checkpoint should be the schema migration only, after one final repository/schema verification of exact existing payroll columns and current salary-advance request fields.
+Schedule generation is the first application-code checkpoint. It is implemented in `modules/hr/lib_salary_advance_repayment.php` and is invoked atomically from the existing salary-advance disbursement workflow in `modules/hr/lib_salary_advance_accounting.php`.
 
-No application code has been changed on this Stage 5 branch yet.
+No payroll deduction, payroll accounting, outstanding-balance reduction, or repayment-allocation application has been implemented yet.
 
 
 ## 17. Schema checkpoint
@@ -369,13 +369,49 @@ It adds:
 
 No existing payroll values are changed by the migration because the new payroll field defaults to zero.
 
-**This migration has not been applied or runtime-tested yet.**
+**The migration was applied successfully on 2026-09-29 with all 5 queries executing without errors.** The new payroll column and both repayment tables are now present, and the new payroll field defaults to zero for existing records.
 
-Before proceeding to application code:
-1. apply the migration through the project's normal migration mechanism;
-2. verify it succeeds without errors;
-3. verify existing payroll rows remain unchanged;
-4. verify the new tables/column exist exactly once;
-5. then implement schedule generation as the next isolated unit.
+### 17.1 Schedule-generation implementation
 
-No Stage 5 payroll behavior is active yet.
+The current checkpoint implements only schedule generation:
+
+- schedule creation is allowed only for a request whose status is `disbursed`;
+- the approved request snapshot and its saved policy version are used;
+- `next_payroll` starts from the first payroll month after the actual disbursement month;
+- `specified_month` uses the approved start month, but never schedules before the first payroll month after disbursement;
+- fixed-monthly schedules use the approved monthly amount, capped by the saved maximum monthly deduction, and terminate at the exact outstanding balance;
+- fixed-monthly generation refuses a schedule that would exceed the saved maximum repayment months;
+- full-eligible-salary schedules require a saved maximum repayment-month horizon and use that horizon plus the saved maximum monthly deduction as the planned schedule ceiling; actual eligible salary is intentionally deferred to payroll integration;
+- duplicate generation is idempotent: an existing schedule is not generated again;
+- schedule creation occurs inside the existing disbursement transaction, so a schedule-generation failure rolls back the disbursement rather than leaving an unscheduled receivable;
+- a schedule-generation audit record is written when a user ID is available.
+
+### 17.2 Explicit current non-goals
+
+This checkpoint does **not** yet:
+
+- calculate actual payroll eligible salary;
+- write `payroll.salary_advance_deduction`;
+- create `hr_salary_advance_payroll_repayments` allocation rows;
+- reduce `hr_salary_advance_requests.outstanding_balance`;
+- post the payroll Cr 1410 accounting leg;
+- send repayment notifications.
+
+Those remain the next controlled Stage 5 units after schedule-generation runtime verification.
+
+### 17.3 Runtime verification required
+
+Before merging/closing this checkpoint, runtime-test at least:
+
+1. a fresh fixed-monthly salary advance that is disbursed successfully;
+2. generated schedule row count and months;
+3. installment amounts never exceeding outstanding balance;
+4. maximum monthly deduction enforcement;
+5. maximum repayment-month enforcement;
+6. `next_payroll` start rule;
+7. `specified_month` start rule;
+8. duplicate schedule-generation protection;
+9. full-eligible-salary schedule behavior when a maximum repayment-month horizon is configured;
+10. failure safety: schedule-generation failure must not leave a disbursed request without the required schedule.
+
+No Stage 6 direct repayment/settlement behavior is part of this checkpoint.
