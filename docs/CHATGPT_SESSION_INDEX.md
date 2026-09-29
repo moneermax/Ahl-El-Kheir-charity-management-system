@@ -970,7 +970,26 @@ Salary Advance Stages 1–4 are complete; Stage 4 is runtime verified and closed
 The next session must begin Stage 5 — Repayment Schedule + Payroll Integration with documentation/repository inspection and design/audit, not with Stage 4 reopening or speculative coding.
 
 
-# 2026-09-29 — Stage 5 Schedule Generation Runtime Checkpoint
+# # 2026-09-29 — Salary Advance Processing Workflow Consolidation
+
+The Stage 5 salary-advance UI workflow was consolidated into one processing page on `feature/hr-salary-advance-stage5-schedule`.
+
+Removed redundant processing pages:
+- `modules/hr/salary_advance_fm_review.php`
+- `modules/hr/salary_advance_processing.php`
+
+Unified page:
+- `modules/hr/salary_advance_processing.php`
+
+The page presents FM review, accounting verification, disbursement, and repayment-schedule result in sequence. Voucher/receipt endpoints remain separate evidence/document endpoints.
+
+Dashboard links and employee approval-notification routing were updated. Accounting staff retain authorized access through their dashboard.
+
+No database schema change was introduced by this consolidation.
+
+Runtime verification of the consolidated page is still pending. PR #52 remains open and must not be merged yet.
+
+2026-09-29 — Stage 5 Schedule Generation Runtime Checkpoint
 
 **Status:** Stage 5 IN PROGRESS — schedule generation/display RUNTIME VERIFIED; edge-case schedule-rule tests pending.
 
@@ -985,7 +1004,7 @@ Implemented on feature/hr-salary-advance-stage5-schedule:
 - approved start-rule handling;
 - maximum monthly deduction and maximum repayment-month constraints;
 - duplicate schedule-generation protection;
-- schedule display on modules/hr/salary_advance_accounting.php.
+- schedule display on modules/hr/salary_advance_processing.php.
 
 ## Runtime PASS — SAR-2026-00007
 
