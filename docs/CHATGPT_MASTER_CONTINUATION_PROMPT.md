@@ -1,3 +1,35 @@
+# LATEST WORKFLOW CHECKPOINT — 2026-09-29 — Salary Advance Processing Consolidation
+
+The salary-advance FM review and accounting/disbursement workflows have been consolidated into one user-facing processing page.
+
+Removed redundant pages:
+- `modules/hr/salary_advance_fm_review.php`
+- `modules/hr/salary_advance_processing.php`
+
+Use only:
+- `modules/hr/salary_advance_processing.php`
+
+The unified page sequence is:
+1. FM review/policy comparison/customization.
+2. Accounting verification.
+3. Disbursement and journal posting.
+4. Disbursement result and repayment schedule.
+5. Payment-receipt evidence.
+
+Underlying role checks and business logic remain separated internally; only the user journey was consolidated. Voucher/receipt serving and printable voucher endpoints remain separate because they are evidence/document endpoints.
+
+Dashboard links and employee approval-notification routing were updated. Accounting staff retain access through `dashboard/accountant_staff_dashboard.php`.
+
+No schema change was introduced.
+
+**Runtime verification of the consolidated page is pending.** PR #52 was already merged into main (merge commit 96ecf58871fe27b32aad2c5d62174c40991a5747). The current branch contains a follow-up workflow-consolidation change and is not yet merged.
+
+### Current Stage 5 testing constraint
+
+The user has already used all available employees for fresh salary-advance requests during testing. Do **not** instruct the user to consume another employee or create another request until the repository/current test data has been inspected for a safe reusable test path or a controlled development fixture.
+
+Do not alter the protected SAR-2026-00007 evidence.
+
 # Ahl El Kheir Charity Management System — Master ChatGPT Continuation Prompt
 
 Use this prompt when starting a new ChatGPT session for the existing Ahl El Kheir project.
@@ -1014,7 +1046,7 @@ Immediate task: start Stage 5 — Repayment Schedule + Payroll Integration with 
 
 The Stage 5 migration was applied successfully locally with all 5 queries completing without errors. It added payroll.salary_advance_deduction, hr_salary_advance_repayment_schedule, and hr_salary_advance_payroll_repayments.
 
-PR #52 — Stage 5: generate salary advance repayment schedules — remains OPEN and must not be merged until the remaining runtime gates pass.
+PR #52 — Stage 5: generate salary advance repayment schedules — was merged into main on 2026-09-29 (merge commit 96ecf58871fe27b32aad2c5d62174c40991a5747). The current branch is a follow-up consolidation branch and remains unmerged while the consolidated workflow is runtime-tested.
 
 Implemented on feature/hr-salary-advance-stage5-schedule:
 - modules/hr/lib_salary_advance_repayment.php
@@ -1023,7 +1055,7 @@ Implemented on feature/hr-salary-advance-stage5-schedule:
 - approved start-rule handling;
 - maximum monthly deduction and maximum repayment-month constraints;
 - duplicate schedule-generation protection;
-- schedule display on modules/hr/salary_advance_accounting.php.
+- schedule display on modules/hr/salary_advance_processing.php.
 
 ## Runtime PASS — SAR-2026-00007
 
@@ -1180,34 +1212,74 @@ Send the request number plus the visible result, including amount, repayment met
 After all seven gates pass, update the salary-advance continuation document, master status/audit, session index, and this master continuation prompt with exact results and commit/PR state. Then evaluate PR #52 for merge. Do not mark Stage 5 complete until payroll integration and its runtime verification are actually finished.
 
 
-# 2026-09-29 — Stage 5 Test 3 Runtime Checkpoint
+# LATEST CONTINUATION PROMPT — 2026-09-29 — Stage 5 Payroll Integration
 
-**Status:** Stage 5 IN PROGRESS — Test 3 (`next_payroll`) **PASS / RUNTIME VERIFIED**.
+Continue the existing Ahl El Kheir Charity Management System. Do not rebuild or start a new project.
 
-Verified request: **SAR-2026-00011**
+Environment: repository moneermax/Ahl-El-Kheir-charity-management-system; local path D:\xampp\htdocs\AhlElKheir; local URL http://localhost:8081/AhlElKheir/; database ahl_el_kheir; Windows/XAMPP/Apache/PHP 8.2/MariaDB; Arabic RTL; Bootstrap 5.3 RTL; vanilla JS; procedural PHP only.
 
-- Employee: مدير الموارد البشرية / EMP-0032
-- Approved/disbursed amount: 30,000 SDG
-- Repayment method: fixed monthly
-- Monthly installment: 10,000 SDG
-- Employee-requested start month: 2026-12-01
-- Disbursed: 2026-09-29 16:06:02
-- Source: 1100 — الصندوق (نقدي)
-- Journal: JE-000044
-- Reference: SAL-ADV-SAR-2026-00011
-- Outstanding balance: 30,000 SDG
-- Generated schedule: 2026-10-01 / 10,000; 2026-11-01 / 10,000; 2026-12-01 / 10,000
-- All schedule rows are pending and total 30,000 SDG.
+## Current status
+- Salary Advance Stages 1–4: DONE / RUNTIME VERIFIED / CLOSED. Do not reopen without genuine regression evidence.
+- Stage 5 schedule-planning: DONE / RUNTIME VERIFIED.
+- Stage 5 payroll integration: NEXT / IN PROGRESS.
+- Stage 6: NOT STARTED. Do not start it.
+- Current branch: feature/hr-salary-advance-stage5-schedule; not yet merged to main.
+- Latest cleanup commit: 9b66315966174a3a892a5760847300007814a0e2.
 
-**Conclusion:** the policy-level `next_payroll` rule correctly overrides the employee-requested December start and begins repayment in the first eligible payroll month after the September disbursement.
+## Verified Stage 5 schedule gates
+1. Maximum monthly deduction — PASS: SAR-2026-00008; 50,000 SDG; policy maximum 10,000; generated installments capped at 10,000; JE-000043.
+2. Maximum repayment months — PASS: SAR-2026-00009; impossible 7-month repayment against 6-month policy maximum was blocked; no successful disbursement/journal/schedule.
+3. next_payroll — PASS: SAR-2026-00011; 30,000 SDG; JE-000044; schedule starts 2026-10-01 after 2026-09-29 disbursement, then 2026-11-01 and 2026-12-01.
+4. specified_month — PASS via rollback-only harness.
+5. duplicate schedule generation — PASS via rollback-only harness; second generation added no rows.
+6. full_eligible_salary planning — PASS via rollback-only harness; cap and saved horizon respected.
+7. failure/rollback — PASS via protected validation failure plus transactional code verification.
 
-Protected evidence: do not modify, redisburse, or reuse SAR-2026-00011 for another Stage 5 test.
+The rollback-only harness is tools/run_salary_advance_stage5_schedule_tests.php. Its CLI warning was fixed in 9b66315966174a3a892a5760847300007814a0e2; the clean rerun returned all three harness tests PASS.
 
-### Remaining Stage 5 runtime gates
+## Protected evidence
+Do not alter or redisburse SAR-2026-00008, SAR-2026-00009, or SAR-2026-00011. Do not manufacture another salary-advance request just to continue testing; prefer the current temporary rollback-only fixture mechanism.
 
-1. specified_month
-2. duplicate schedule generation
-3. full_eligible_salary
-4. failure/rollback safety
+## Next work — Stage 5 payroll integration
+Before coding, inspect the existing repository/schema and identify the canonical payroll run/deduction flow. Then implement and verify, in controlled steps:
+1. Apply a pending salary-advance schedule row during payroll.
+2. Record the corresponding hr_salary_advance_payroll_repayments allocation.
+3. Update the salary-advance outstanding balance and schedule applied state atomically.
+4. Use the existing payroll.salary_advance_deduction field according to current payroll conventions.
+5. Post the repayment accounting entry with Cr 1410 using existing payroll/accounting transaction conventions.
+6. Handle insufficient eligible salary according to the configured insufficient_salary_rule (available_salary or skip_month).
+7. Implement required notifications and audit trail for successful, skipped, or partially applied repayments.
 
-Maximum monthly deduction and maximum repayment months are already PASS. Do not start actual payroll deduction/application, payroll accounting, outstanding-balance reduction, repayment notifications, or Stage 6 settlement until the schedule-planning gates are complete.
+Do not invent schema, accounts, statuses, or payroll workflows. Inspect actual tables/columns and existing payroll implementation first. Schema changes only through migration files. No runtime CREATE/ALTER, triggers, views, stored procedures, functions, or events. No destructive Git commands (reset --hard, clean, restore, force-push).
+
+Keep the current feature branch until all Stage 5 work is complete and runtime verified. Commit logical changes, keep the branch pullable, and merge to main only after the Stage 5 completion gate. After each verified work unit, update the five project documents with exact runtime evidence and the new continuation checkpoint.
+
+
+# LATEST CONTINUATION PROMPT — 2026-09-29 — Stage 5 Payroll Application Verification
+
+Continue the existing Ahl El Kheir project. Do not rebuild or start a new project.
+
+Environment: repository \`moneermax/Ahl-El-Kheir-charity-management-system\`; local path \`D:\xampp\htdocs\AhlElKheir\`; Windows/XAMPP/PHP 8.2/MariaDB; Arabic RTL; procedural PHP only.
+
+Current status:
+- Salary Advance Stages 1–4: DONE / RUNTIME VERIFIED / CLOSED.
+- Stage 5 schedule planning: DONE / RUNTIME VERIFIED.
+- Stage 5 payroll integration: IMPLEMENTED / RUNTIME VERIFICATION PENDING.
+- Stage 6: NOT STARTED.
+- Current branch: \`feature/hr-salary-advance-stage5-schedule\`.
+
+Implemented payroll integration:
+- draft salary-advance deduction from the approved schedule/policy;
+- transactional repayment allocation at payroll payment;
+- schedule applied/partial/skipped state updates;
+- outstanding-balance reduction by actual repayment;
+- \`hr_salary_advance_payroll_repayments\` trace;
+- payroll accounting Cr 1410 for actual repayment with cash credit for actual net paid;
+- insufficient-salary \`available_salary\` / \`skip_month\` behavior;
+- duplicate repayment protection;
+- audit-log evidence;
+- account 1410 ensured by the existing accounting seed mechanism.
+
+Before merge/closure, run controlled runtime verification for fixed-monthly repayment, available-salary partial repayment, skip-month, balance reduction, schedule state, duplicate protection, payroll regeneration safety, and balanced accounting/traceability. Do not use protected salary-advance requests for destructive testing and do not start Stage 6.
+
+After runtime verification, update the five project documents with exact evidence, then merge the completed Stage 5 branch to \`main\`. Review all remaining remote branches; branches already merged/obsolete should be removed where possible, and any branch that cannot be deleted through the available tooling should be deleted manually from GitHub/local Git without destructive history rewriting.
