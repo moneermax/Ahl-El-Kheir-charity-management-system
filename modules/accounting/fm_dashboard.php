@@ -35,6 +35,7 @@ $headerQuickActions = [
     ['label'=>'التقارير المالية','url'=>'modules/reports/financial.php','icon'=>'fa-chart-pie','color'=>'#0d6efd'],
     ['label'=>'سجل المعاملات','url'=>'modules/transactions/index.php','icon'=>'fa-money-bill-transfer','color'=>'#2daf79'],
     ['label'=>'إدارة سلف الرواتب','url'=>'modules/hr/salary_advance_dashboard.php','icon'=>'fa-hand-holding-dollar','color'=>'#198754','salary_advance'=>true],
+    ['label'=>'إدارة الرواتب','url'=>'modules/hr/payroll.php','icon'=>'fa-file-invoice-dollar','color'=>'#0d6efd'],
     ['label'=>'منظمة فينا الخير','url'=>'modules/accounting/fina_dashboard.php','icon'=>'fina-logo','color'=>'#6f42c1'],
 ];
 
@@ -404,6 +405,7 @@ $fmActionDescriptions = [
     'عرض التقارير والحركة المالية',
     'مراجعة سجل المعاملات المالية',
     'إدارة سياسة السلف على الراتب ومراجعة واعتماد طلبات الموظفين',
+    'إنشاء ومراجعة مسيرات الرواتب ومعالجة خصم السلف',
     'لوحة مستقلة لتحصيلات وتسويات منظمة فينا الخير',
 ];
 ?>
