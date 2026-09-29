@@ -1,3 +1,35 @@
+# LATEST WORKFLOW CHECKPOINT — 2026-09-29 — Salary Advance Processing Consolidation
+
+The salary-advance FM review and accounting/disbursement workflows have been consolidated into one user-facing processing page.
+
+Removed redundant pages:
+- `modules/hr/salary_advance_fm_review.php`
+- `modules/hr/salary_advance_processing.php`
+
+Use only:
+- `modules/hr/salary_advance_processing.php`
+
+The unified page sequence is:
+1. FM review/policy comparison/customization.
+2. Accounting verification.
+3. Disbursement and journal posting.
+4. Disbursement result and repayment schedule.
+5. Payment-receipt evidence.
+
+Underlying role checks and business logic remain separated internally; only the user journey was consolidated. Voucher/receipt serving and printable voucher endpoints remain separate because they are evidence/document endpoints.
+
+Dashboard links and employee approval-notification routing were updated. Accounting staff retain access through `dashboard/accountant_staff_dashboard.php`.
+
+No schema change was introduced.
+
+**Runtime verification of the consolidated page is pending.** PR #52 remains OPEN and must not be merged yet.
+
+### Current Stage 5 testing constraint
+
+The user has already used all available employees for fresh salary-advance requests during testing. Do **not** instruct the user to consume another employee or create another request until the repository/current test data has been inspected for a safe reusable test path or a controlled development fixture.
+
+Do not alter the protected SAR-2026-00007 evidence.
+
 # Ahl El Kheir Charity Management System — Master ChatGPT Continuation Prompt
 
 Use this prompt when starting a new ChatGPT session for the existing Ahl El Kheir project.
@@ -1023,7 +1055,7 @@ Implemented on feature/hr-salary-advance-stage5-schedule:
 - approved start-rule handling;
 - maximum monthly deduction and maximum repayment-month constraints;
 - duplicate schedule-generation protection;
-- schedule display on modules/hr/salary_advance_accounting.php.
+- schedule display on modules/hr/salary_advance_processing.php.
 
 ## Runtime PASS — SAR-2026-00007
 
