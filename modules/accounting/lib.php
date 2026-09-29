@@ -35,11 +35,13 @@ function ak_sync_project_accounts(int $projectId, string $name): void {
 
 if (!function_exists('ak_seed_accounts')) {
 function ak_seed_accounts(): void {
-    if ((int)(dbFetchOne("SELECT COUNT(*) c FROM accounts")['c'] ?? 0) > 0) return;
+    $hasAccounts = (int)(dbFetchOne("SELECT COUNT(*) c FROM accounts")['c'] ?? 0) > 0;
     $seed = [
         ['1100','الصندوق (نقدي)','Cash','asset'], ['1200','البنك','Bank','asset'], ['1300','المحافظ الإلكترونية','Mobile Wallets','asset'], ['1400','ذمم مدينة (مستحقات قبض)','Receivables','asset'], ['2100','ذمم دائنة (مستحقات دفع)','Payables','liability'], ['2200','إيرادات مؤجلة (كفالات مقدماً)','Deferred Revenue','liability'], ['3100','الأرصدة الافتتاحية','Opening Balances','equity'], ['3200','فائض مدور','Retained Surplus','equity'], ['4100','إيرادات الكفالات','Sponsorship Revenue','revenue'], ['4200','الرسوم الإدارية','Admin Fees Revenue','revenue'], ['4300','التبرعات العامة','General Donations','revenue'], ['4400','إيرادات المشاريع','Projects Revenue','revenue'], ['5100','مصروفات البرامج والمساعدات','Programs & Aid Expenses','expense'], ['5200','الرواتب والأجور','Salaries','expense'], ['5300','المصروفات التشغيلية','Operating Expenses','expense'], ['5400','المصروفات الإدارية','Admin Expenses','expense'],
     ];
-    foreach ($seed as $s) dbExecute("INSERT INTO accounts (code, name_ar, name_en, account_type) VALUES (?,?,?,?)", $s);
+    if (!$hasAccounts) {
+        foreach ($seed as $s) dbExecute("INSERT INTO accounts (code, name_ar, name_en, account_type) VALUES (?,?,?,?)", $s);
+    }
     if (!dbFetchOne("SELECT id FROM accounts WHERE code = '1410' LIMIT 1")) {
         dbExecute(
             "INSERT INTO accounts (code, name_ar, name_en, account_type) VALUES ('1410', 'سلف رواتب الموظفين', 'Employee Salary Advances', 'asset')"
