@@ -94,31 +94,35 @@ try {
     $pdo->beginTransaction();
 
     /*
-     * The rollback fixture must never collide with a historical payroll
-     * journal reference. Some older databases may contain journal rows whose
-     * referenced payroll row was later removed. Relying on the next payroll
-     * AUTO_INCREMENT value would then make the temporary fixture look like
-     * an existing posted payroll and correctly trigger the accounting
-     * integrity guard.
-     *
-     * Use a temporary, collision-free payroll id above both the payroll table
-     * and any existing posted payroll reference ids. The surrounding
-     * transaction is rolled back, so this id is never committed.
+     * The rollback fixture must never reuse an existing payroll journal
+     * reference. Do not derive the ID from MAX(reference_id): legacy data can
+     * contain gaps and reference values from older payroll rows. Instead,
+     * start above the current payroll IDs and explicitly probe the journal
+     * reference key until a free integer is found.
      */
-    $fixtureIdRow = dbFetchOne(
-        "SELECT GREATEST(
-            COALESCE((SELECT MAX(id) FROM payroll), 0),
-            COALESCE((
-                SELECT MAX(reference_id)
-                FROM journal_entries
-                WHERE reference_type = 'payroll'
-                  AND reference_id IS NOT NULL
-            ), 0)
-         ) + 1 AS fixture_id"
-    );
-    $fixturePayrollId = (int)($fixtureIdRow['fixture_id'] ?? 0);
+    $fixtureIdRow = dbFetchOne("SELECT COALESCE(MAX(id), 0) AS max_id FROM payroll");
+    $fixturePayrollId = (int)($fixtureIdRow['max_id'] ?? 0) + 1;
     if ($fixturePayrollId <= 0) {
         throw new RuntimeException('تعذر تخصيص رقم مسير مؤقت آمن لاختبار Stage 5.');
+    }
+
+    while (true) {
+        $collision = dbFetchOne(
+            "SELECT id
+             FROM journal_entries
+             WHERE reference_type = 'payroll'
+               AND reference_id = ?
+             LIMIT 1",
+            [$fixturePayrollId]
+        );
+        if (!$collision) {
+            break;
+        }
+
+        $fixturePayrollId++;
+        if ($fixturePayrollId >= 2147483647) {
+            throw new RuntimeException('تعذر العثور على رقم مسير مؤقت غير مستخدم لاختبار Stage 5.');
+        }
     }
 
     $pdo->prepare(
