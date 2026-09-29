@@ -1006,3 +1006,65 @@ Immediate task: start Stage 5 — Repayment Schedule + Payroll Integration with 
 8. No triggers, views, stored procedures, functions, or events.
 9. Make a safe Git checkpoint before implementation and proceed in small runtime-verifiable units.
 10. Do not implement Stage 6 direct repayment/settlement behavior early.
+
+
+# 2026-09-29 — Stage 5 Schedule Generation Runtime Checkpoint
+
+**Status:** Stage 5 IN PROGRESS — schedule generation/display RUNTIME VERIFIED; edge-case schedule-rule tests pending.
+
+The Stage 5 migration was applied successfully locally with all 5 queries completing without errors. It added payroll.salary_advance_deduction, hr_salary_advance_repayment_schedule, and hr_salary_advance_payroll_repayments.
+
+PR #52 — Stage 5: generate salary advance repayment schedules — remains OPEN and must not be merged until the remaining runtime gates pass.
+
+Implemented on feature/hr-salary-advance-stage5-schedule:
+- modules/hr/lib_salary_advance_repayment.php
+- atomic schedule generation from the existing disbursement transaction;
+- fixed-monthly and full-eligible-salary schedule planning;
+- approved start-rule handling;
+- maximum monthly deduction and maximum repayment-month constraints;
+- duplicate schedule-generation protection;
+- schedule display on modules/hr/salary_advance_accounting.php.
+
+## Runtime PASS — SAR-2026-00007
+
+Employee: هديل عثمان / EMP-0021
+
+- Approved/disbursed amount: 50,000 SDG
+- Method: قسط شهري ثابت
+- Monthly installment: 10,000 SDG
+- Approved start month: 2026-10-01
+- Disbursement source: 1100 — الصندوق (نقدي)
+- Journal: JE-000041
+- Reference: SAL-ADV-SAR-2026-00007
+- Outstanding balance: 50,000 SDG
+
+Exactly 5 pending schedule rows were generated:
+1. 2026-10-01 — 10,000 SDG
+2. 2026-11-01 — 10,000 SDG
+3. 2026-12-01 — 10,000 SDG
+4. 2027-01-01 — 10,000 SDG
+5. 2027-02-01 — 10,000 SDG
+
+Total scheduled = 50,000 SDG. Applied = 0. This confirms the core disbursement → schedule-generation → schedule-display path.
+
+SAR-2026-00004 / JE-000042 is a different request and is not a duplicate of SAR-2026-00007.
+
+## Duplicate-disbursement safety checkpoint
+
+The existing disbursement helper checks for an existing posted salary-advance disbursement journal, locks the request with FOR UPDATE inside the transaction, revalidates state, creates one balanced Dr 1410 / Cr source-account journal, changes the request to disbursed transactionally, and generates the schedule in the same transaction. A schedule-generation failure rolls the disbursement back. No artificial duplicate financial posting should be created merely to test this.
+
+## Remaining Stage 5 runtime gates — NEXT
+
+1. Maximum monthly deduction — verify every generated installment is at or below the saved policy maximum.
+2. Maximum repayment months — verify an impossible schedule is rejected safely and does not leave an unscheduled disbursed request.
+3. next_payroll — verify the first scheduled month is the first payroll month after disbursement.
+4. specified_month — verify the approved start month is honored, but never before the first eligible payroll month after disbursement.
+5. Duplicate schedule generation — verify an existing schedule remains one set of rows.
+6. full_eligible_salary — verify planning respects the saved repayment horizon and maximum deduction; actual salary calculation remains deferred.
+7. Failure/rollback — verify a schedule-generation failure rolls back the disbursement transaction.
+
+## Explicit boundary
+
+Stage 5 currently does NOT implement actual payroll deduction calculation, payroll repayment allocation, outstanding-balance reduction from payroll, payroll Cr 1410 accounting, repayment notifications, or Stage 6 direct repayment/settlement.
+
+Use fresh controlled requests for new tests. Do not alter the already-passed SAR-2026-00007 evidence. If a test fails, stop and inspect the current repository/code/schema root cause before creating another test request.
