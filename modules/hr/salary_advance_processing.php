@@ -91,10 +91,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     throw new RuntimeException('تعذر حفظ قرار اعتماد طلب السلفة.');
                 }
 
-                $customText = $decision['customized'] ? ' بعد تخصيص شروط الطلب من قبل المدير المالي.' : '';
-                $notificationTitle = 'تم اعتماد طلب السلفة';
-                $notificationBody = 'تم اعتماد طلب السلفة «' . (string)$request['request_no'] . '».' . $customText;
-                $notificationType = 'salary_advance_request_approval';
                 $message = 'تم اعتماد طلب السلفة. انتقل الآن إلى خطوة التحقق المحاسبي والصرف في نفس الصفحة.';
             }
 
@@ -133,15 +129,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($employeeUserId <= 0) {
                 $employeeUserId = (int)$request['submitted_by'];
             }
-
-            ak_transaction_review_notify_event(
-                $employeeUserId,
-                $notificationTitle,
-                $notificationBody,
-                APP_URL . 'modules/hr/salary_advance_request.php',
-                $requestId,
-                $notificationType
-            );
+             if ($decision['decision'] === 'reject') {
+                 ak_transaction_review_notify_event(
+                     $employeeUserId,
+                     $notificationTitle,
+                     $notificationBody,
+                     APP_URL . 'modules/hr/salary_advance_request.php',
+                     $requestId,
+                     $notificationType
+                 );
+             }
         } elseif (isset($_POST['accounting_verify']) || isset($_POST['accounting_reject'])) {
             if (!$canAccounting) {
                 throw new RuntimeException('لا يملك المستخدم الحالي صلاحية التحقق المحاسبي.');
@@ -264,6 +261,7 @@ if ($canAccounting) {
 
 $pageTitle = 'معالجة سلف الرواتب';
 $active = 'salary_advance_portal';
+$salaryAdvanceBackUrl = APP_URL . 'modules/hr/salary_advance_dashboard.php';
 require_once __DIR__ . '/../../includes/header.php';
 ?>
 <style>
@@ -284,6 +282,7 @@ require_once __DIR__ . '/../../includes/header.php';
 .salary-advance-process .stage-accounting{color:#176b3a;font-weight:700}
 </style>
 
+<script>window.AK_PAGE_BACK_URL=<?php echo json_encode($salaryAdvanceBackUrl, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES); ?>;</script>
 <div class="salary-advance-process">
 <section class="hero">
     <h1><i class="fas fa-hand-holding-dollar me-2"></i>معالجة سلف الرواتب</h1>
