@@ -104,26 +104,13 @@ require_once __DIR__ . '/../../includes/header.php';
         </div>
 
         <div class="col-md-6 col-xl-4">
-            <a href="<?php echo e(APP_URL . 'modules/hr/salary_advance_fm_review.php'); ?>" class="text-decoration-none text-reset">
-                <div class="option-card">
-                    <div class="option-body">
-                        <div class="option-icon"><i class="fas fa-user-check"></i></div>
-                        <div class="option-title">مراجعة طلبات الموظفين</div>
-                        <div class="option-desc">مراجعة طلبات السلف المقدمة من الموظفين، التحقق من توافقها مع السياسة، وتخصيص شروط السداد عند الحاجة.</div>
-                        <span class="btn btn-outline-primary btn-sm mt-2">فتح المراجعة <i class="fas fa-arrow-left ms-1"></i></span>
-                    </div>
-                </div>
-            </a>
-        </div>
-
-        <div class="col-md-6 col-xl-4">
-            <a href="<?php echo e(APP_URL . 'modules/hr/salary_advance_accounting.php'); ?>" class="text-decoration-none text-reset">
+            <a href="<?php echo e(APP_URL . 'modules/hr/salary_advance_processing.php'); ?>" class="text-decoration-none text-reset">
                 <div class="option-card" style="border-top-color:#198754">
                     <div class="option-body">
-                        <div class="option-icon" style="background:#eaf7ef;color:#198754"><i class="fas fa-calculator"></i></div>
-                        <div class="option-title">التحقق المحاسبي والصرف</div>
-                        <div class="option-desc">التحقق المحاسبي للسلف المعتمدة، اختيار حساب الصرف، وترحيل قيد السلفة على حساب ذمم سلف الموظفين.</div>
-                        <span class="btn btn-outline-success btn-sm mt-2">فتح المعالجة المحاسبية <i class="fas fa-arrow-left ms-1"></i></span>
+                        <div class="option-icon" style="background:#eaf7ef;color:#198754"><i class="fas fa-route"></i></div>
+                        <div class="option-title">معالجة طلبات السلف</div>
+                        <div class="option-desc">مسار موحد لمراجعة FM، التحقق المحاسبي، الصرف، وترحيل القيد وإنشاء جدول السداد من صفحة واحدة.</div>
+                        <span class="btn btn-outline-success btn-sm mt-2">فتح المعالجة <i class="fas fa-arrow-left ms-1"></i></span>
                     </div>
                 </div>
             </a>
@@ -164,7 +151,7 @@ require_once __DIR__ . '/../../includes/header.php';
                             <td><span class="badge bg-<?php echo e($statusMeta[1]); ?>"><?php echo e($statusMeta[0]); ?></span></td>
                             <td><?php echo e($processedAt ?: '—'); ?></td>
                             <td>
-                                <a class="btn btn-sm btn-outline-primary" href="<?php echo e(APP_URL . 'modules/hr/salary_advance_accounting.php?id=' . (int)$h['id']); ?>">عرض</a>
+                                <a class="btn btn-sm btn-outline-primary" href="<?php echo e(APP_URL . 'modules/hr/salary_advance_processing.php?id=' . (int)$h['id']); ?>">عرض</a>
                                 <?php if ($h['status'] === 'disbursed' || $h['status'] === 'settled'): ?>
                                     <a class="btn btn-sm btn-outline-secondary" target="_blank" href="<?php echo e(APP_URL . 'modules/hr/salary_advance_voucher_print.php?id=' . (int)$h['id']); ?>">السند</a>
                                 <?php endif; ?>
