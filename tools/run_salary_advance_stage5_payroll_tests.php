@@ -93,19 +93,48 @@ $entryId = 0;
 try {
     $pdo->beginTransaction();
 
+    /*
+     * The rollback fixture must never collide with a historical payroll
+     * journal reference. Some older databases may contain journal rows whose
+     * referenced payroll row was later removed. Relying on the next payroll
+     * AUTO_INCREMENT value would then make the temporary fixture look like
+     * an existing posted payroll and correctly trigger the accounting
+     * integrity guard.
+     *
+     * Use a temporary, collision-free payroll id above both the payroll table
+     * and any existing posted payroll reference ids. The surrounding
+     * transaction is rolled back, so this id is never committed.
+     */
+    $fixtureIdRow = dbFetchOne(
+        "SELECT GREATEST(
+            COALESCE((SELECT MAX(id) FROM payroll), 0),
+            COALESCE((
+                SELECT MAX(reference_id)
+                FROM journal_entries
+                WHERE reference_type = 'payroll'
+                  AND reference_id IS NOT NULL
+            ), 0)
+         ) + 1 AS fixture_id"
+    );
+    $fixturePayrollId = (int)($fixtureIdRow['fixture_id'] ?? 0);
+    if ($fixturePayrollId <= 0) {
+        throw new RuntimeException('تعذر تخصيص رقم مسير مؤقت آمن لاختبار Stage 5.');
+    }
+
     $pdo->prepare(
         "INSERT INTO payroll
-            (employee_id, month, year, basic_salary, allowances, overtime,
+            (id, employee_id, month, year, basic_salary, allowances, overtime,
              deductions, salary_advance_deduction, net_salary, status)
-         VALUES (?, ?, ?, ?, 0, 0, 0, 0, ?, 'approved')"
+         VALUES (?, ?, ?, ?, ?, 0, 0, 0, 0, ?, 'approved')"
     )->execute([
+        $fixturePayrollId,
         $employeeId,
         $month,
         $year,
         $basicSalary,
         $basicSalary,
     ]);
-    $payrollId = (int)$pdo->lastInsertId();
+    $payrollId = $fixturePayrollId;
 
     $payroll = dbFetchOne(
         "SELECT p.*, e.full_name AS employee_name, e.employee_code
