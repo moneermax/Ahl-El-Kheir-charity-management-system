@@ -1147,3 +1147,8 @@ Verified gates: maximum monthly deduction, maximum repayment months, next_payrol
 The clean rollback-only harness rerun after commit 9b66315966174a3a892a5760847300007814a0e2 returned all three tests PASS with no CLI warning.
 
 Do not reopen Stages 1–4 and do not start Stage 6. Continue with Stage 5 payroll deduction/application and accounting integration after inspecting existing payroll conventions and schema.
+
+
+## 2026-09-29 — HR Salary Advance Stage 5 Payroll Integration Checkpoint
+
+Stage 5 schedule planning is runtime verified. Payroll-integration implementation is committed on `feature/hr-salary-advance-stage5-schedule` and awaits controlled runtime verification. It applies scheduled deductions at payroll payment, records repayment allocations, reduces outstanding balance transactionally, updates schedule state, posts Cr 1410 for actual repayments, records skipped/partial outcomes, and writes audit-log evidence. Stage 6 remains NOT STARTED.
