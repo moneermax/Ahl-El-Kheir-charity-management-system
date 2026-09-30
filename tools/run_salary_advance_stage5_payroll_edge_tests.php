@@ -4,11 +4,13 @@ declare(strict_types=1);
 /**
  * Stage 5 payroll edge-case verification.
  *
- * Uses only existing disbursed salary-advance schedules. Temporary payroll
- * rows are created inside one transaction and rolled back. No request,
- * employee, schedule, or accounting record is consumed.
+ * Uses existing disbursed salary-advance data. When a required policy
+ * combination is unavailable, the harness may temporarily adapt an existing
+ * protected fixture inside a SAVEPOINT and roll that adaptation back before
+ * continuing. No request, employee, schedule, policy, payroll, or accounting
+ * mutation is committed.
  *
- * Covered when matching existing fixtures are available:
+ * Covered:
  * - fixed_monthly + available_salary with insufficient eligible salary
  * - fixed_monthly + skip_month with insufficient eligible salary
  * - full_eligible_salary with low eligible salary
@@ -85,6 +87,11 @@ function nextFixturePayrollId(PDO $pdo): int
     return $id;
 }
 
+function findRollbackBaseFixture(PDO $pdo): ?array
+{
+    return findEdgeFixture($pdo, 'available_salary', 'fixed_monthly');
+}
+
 function runPreview(PDO $pdo, array $fixture, int $payrollId): array
 {
     $month = (int)date('n', strtotime($fixture['scheduled_month']));
@@ -148,8 +155,38 @@ try {
 
     foreach ($tests as $test) {
         $fixture = findEdgeFixture($pdo, $test['rule'], $test['method']);
+        $syntheticFixture = false;
+
+        if (!$fixture && $test['rule'] === 'skip_month') {
+            $baseFixture = findRollbackBaseFixture($pdo);
+            if ($baseFixture) {
+                $pdo->exec('SAVEPOINT stage5_skip_month_fixture');
+
+                $pdo->prepare(
+                    "UPDATE hr_salary_advance_policy_versions
+                     SET insufficient_salary_rule = 'skip_month'
+                     WHERE id = (
+                         SELECT policy_version_id
+                         FROM hr_salary_advance_requests
+                         WHERE id = ?
+                         LIMIT 1
+                     )"
+                )->execute([(int)$baseFixture['request_id']]);
+
+                $fixture = findEdgeFixture($pdo, 'skip_month', 'fixed_monthly');
+                if (!$fixture) {
+                    $pdo->exec('ROLLBACK TO SAVEPOINT stage5_skip_month_fixture');
+                    $pdo->exec('RELEASE SAVEPOINT stage5_skip_month_fixture');
+                    throw new RuntimeException(
+                        'Rollback-only skip_month fixture could not be prepared from an existing disbursed fixed_monthly fixture.'
+                    );
+                }
+                $syntheticFixture = true;
+            }
+        }
+
         if (!$fixture) {
-            echo "SKIP | {$test['label']} | No existing disbursed fixture matches this policy rule.
+            echo "SKIP | {$test['label']} | No existing disbursed fixture matches this policy rule and no safe rollback-only base fixture was available.
 ";
             continue;
         }
@@ -181,24 +218,67 @@ try {
             }
         }
 
-        echo "PASS | {$test['label']} | request={$fixture['request_no']} | scheduled_remaining={$allocation['remaining_schedule_amount']} | eligible_salary={$allocation['eligible_salary']} | deduction={$total} | outcome={$allocation['outcome']}
+        echo "PASS | {$test['label']} | request={$fixture['request_no']} | scheduled_remaining={$allocation['remaining_schedule_amount']} | eligible_salary={$allocation['eligible_salary']} | deduction={$total} | outcome={$allocation['outcome']}" .
+            ($syntheticFixture ? " | rollback_fixture=existing_request_policy_override" : "") . "
 ";
+
+        if ($syntheticFixture) {
+            $pdo->exec('ROLLBACK TO SAVEPOINT stage5_skip_month_fixture');
+            $pdo->exec('RELEASE SAVEPOINT stage5_skip_month_fixture');
+        }
+    }
+
+    $fullFixture = findEdgeFixture($pdo, 'available_salary', 'full_eligible_salary');
+    $syntheticFullFixture = false;
+
+    if (!$fullFixture) {
+        $baseFixture = findRollbackBaseFixture($pdo);
+        if ($baseFixture) {
+            $pdo->exec('SAVEPOINT stage5_full_eligible_fixture');
+
+            $pdo->prepare(
+                "UPDATE hr_salary_advance_requests
+                 SET approved_repayment_method = 'full_eligible_salary'
+                 WHERE id = ?"
+            )->execute([(int)$baseFixture['request_id']]);
+
+            $fullFixture = findEdgeFixture($pdo, 'available_salary', 'full_eligible_salary');
+            if (!$fullFixture) {
+                $pdo->exec('ROLLBACK TO SAVEPOINT stage5_full_eligible_fixture');
+                $pdo->exec('RELEASE SAVEPOINT stage5_full_eligible_fixture');
+                throw new RuntimeException(
+                    'Rollback-only full_eligible_salary fixture could not be prepared from an existing disbursed fixture.'
+                );
+            }
+            $syntheticFullFixture = true;
+        }
     }
 
     if ($fullFixture) {
         $payrollId = nextFixturePayrollId($pdo);
         [$preview] = runPreview($pdo, $fullFixture, $payrollId);
         $allocation = $preview['allocations'][0] ?? null;
-        if (!$allocation || round((float)$preview['total'], 2) !== 1.00) {
+        $total = round((float)$preview['total'], 2);
+        if (
+            !$allocation ||
+            $total !== 1.00 ||
+            $allocation['outcome'] !== 'partial'
+        ) {
             throw new RuntimeException(
-                'Full eligible salary low-salary behavior did not deduct the available eligible salary.'
+                'Full eligible salary low-salary behavior did not deduct exactly the available eligible salary as a partial repayment.'
             );
         }
-        echo "PASS | Full eligible salary with low eligible salary | request={$fullFixture['request_no']} | deduction={$preview['total']} | outcome={$allocation['outcome']}
+        echo "PASS | Full eligible salary with low eligible salary | request={$fullFixture['request_no']} | deduction={$total} | outcome={$allocation['outcome']}" .
+            ($syntheticFullFixture ? " | rollback_fixture=existing_request_method_override" : "") . "
 ";
     } else {
-        echo "SKIP | Full eligible salary with low eligible salary | No existing disbursed full_eligible_salary fixture matches the required period.
+        echo "SKIP | Full eligible salary with low eligible salary | No existing disbursed full_eligible_salary fixture matches the required period and no safe rollback-only base fixture was available.
 ";
+    }
+
+    if ($syntheticFullFixture) {
+        $pdo->exec('ROLLBACK TO SAVEPOINT stage5_full_eligible_fixture');
+        $pdo->exec('RELEASE SAVEPOINT stage5_full_eligible_fixture');
     }
 
     $pdo->rollBack();
