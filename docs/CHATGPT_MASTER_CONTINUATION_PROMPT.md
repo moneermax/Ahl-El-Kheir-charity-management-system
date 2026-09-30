@@ -1297,3 +1297,47 @@ Status remains **Stage 5 IN PROGRESS / RUNTIME VERIFICATION PENDING**. The code 
 PR #57 was merged to `main` with merge commit `0c01c3a378826b7b7cb260668f8f64b0e6648031`. Employee notifications are now emitted after a committed payroll repayment for applied, partial, skipped, and zero-balance completion outcomes. Notification delivery is informational and cannot roll back the financial transaction.
 
 Stage 5 remains IN PROGRESS pending controlled runtime verification. Stage 6 remains NOT STARTED.
+
+
+# LATEST CONTINUATION PROMPT — 2026-09-30 — Stage 5 Final Runtime Gates
+
+Continue the existing Ahl El Kheir Charity Management System. Do not rebuild or start a new project.
+
+Environment: repository `moneermax/Ahl-El-Kheir-charity-management-system`; local path `D:\\xampp\\htdocs\\AhlElKheir`; local URL `http://localhost:8081/AhlElKheir/`; database `ahl_el_kheir`; Windows/XAMPP/Apache/PHP 8.2/MariaDB; Arabic RTL; Bootstrap 5.3 RTL; vanilla JS; procedural PHP only.
+
+## Current status
+- Salary Advance Stages 1–4: **DONE / RUNTIME VERIFIED / CLOSED**. Do not reopen without genuine regression evidence.
+- Stage 5 schedule planning: **DONE / RUNTIME VERIFIED**.
+- Stage 5 payroll integration: **IMPLEMENTED / CORE RUNTIME VERIFIED**.
+- Stage 5 edge-case verification: **IN PROGRESS**.
+- Stage 6: **NOT STARTED**. Do not start it.
+
+Latest main checkpoint: PR #67 merged; merge commit `49ae654a25a8ec2a80901c86fe9aa009da83b96c`. Edge-case harness: `tools/run_salary_advance_stage5_payroll_edge_tests.php`.
+
+## Latest runtime result
+```
+PASS | Insufficient salary — available_salary | request=SAR-2026-00004 | scheduled_remaining=5000 | eligible_salary=1 | deduction=1 | outcome=partial
+SKIP | Insufficient salary — skip_month | No existing disbursed fixture matches this policy rule.
+SKIP | Full eligible salary with low eligible salary | No existing disbursed fixture matches the required period.
+PASS | Rollback-only cleanup | no payroll/request/schedule/journal mutation was committed.
+```
+
+The two SKIPs are fixture-availability gaps, not failures. Do not create a new real employee/request solely to manufacture fixtures.
+
+## Remaining work
+1. Inspect current repository/schema/policy fixtures for a safe existing `skip_month` fixture.
+2. Inspect for a safe existing low-salary `full_eligible_salary` fixture.
+3. If neither exists, use only a rollback-only fixture strategy that leaves no permanent employee/request/schedule/journal mutation.
+4. Verify the final payroll repayment notification/audit end-to-end gate if not already evidenced.
+5. Do not mark Stage 5 complete until all remaining runtime gates are genuinely verified.
+6. After Stage 5 closure, update all project documentation and prepare the next continuation checkpoint.
+7. Do not start Stage 6.
+
+## Working rules
+- Inspect repo/schema/docs first; do not guess table/column/status names.
+- Schema changes only through migrations; no runtime CREATE/ALTER.
+- No triggers, views, stored procedures, functions, or events.
+- No destructive Git commands: no `reset --hard`, `clean`, `restore`, or force-push.
+- Do not repeat already-passed tests unless a genuine regression appears.
+- Keep accounting/test data controlled and auditable.
+- Commit logical changes and merge only after verification.
