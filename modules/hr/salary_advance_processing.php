@@ -269,10 +269,12 @@ require_once __DIR__ . '/../../includes/header.php';
 .salary-advance-process .hero{background:linear-gradient(135deg,#173f73,#2d67ad);color:#fff;border-radius:14px;padding:22px 25px;margin-bottom:16px}
 .salary-advance-process .hero h1{font-size:1.4rem;font-weight:800;margin:0}
 .salary-advance-process .hero p{font-size:.82rem;margin:6px 0 0;opacity:.92}
-.salary-advance-process .stepper{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
-.salary-advance-process .step{background:#f1f4f8;border:1px solid #dfe5ec;border-radius:10px;padding:9px 14px;font-weight:700;color:#667085}
-.salary-advance-process .step.active{background:#eaf2fb;color:#173f73;border-color:#b9d0ea}
-.salary-advance-process .step.done{background:#edf8f1;color:#176b3a;border-color:#b9e1c8}
+.salary-advance-process .workflow-tabs{margin-bottom:16px;border-bottom:1px solid #dfe5ec}
+.salary-advance-process .workflow-tabs .nav-link{font-weight:700;color:#667085}
+.salary-advance-process .workflow-tabs .nav-link.active{color:#173f73;border-color:#dfe5ec #dfe5ec #fff;background:#fff}
+.salary-advance-process .workflow-tabs .nav-link.done{color:#176b3a}
+.salary-advance-process .workflow-tab-panel{display:none}
+.salary-advance-process .workflow-tab-panel.active{display:block}
 .salary-advance-process .card{background:#fff;border:1px solid #e5eaf0;border-radius:12px;box-shadow:0 2px 12px rgba(16,24,40,.05);margin-bottom:15px;overflow:hidden}
 .salary-advance-process .card-body{padding:16px}
 .salary-advance-process .original{background:#f8f9fa;border-radius:10px;padding:14px}
@@ -292,12 +294,20 @@ require_once __DIR__ . '/../../includes/header.php';
 <?php if($message): ?><div class="alert alert-success"><?=e($message)?></div><?php endif; ?>
 <?php if($error): ?><div class="alert alert-danger"><?=e($error)?></div><?php endif; ?>
 
-<div class="stepper">
-    <div class="step <?=($request && in_array((string)$request['status'],['approved','disbursed','settled'],true))?'done':'active'?>"><i class="fas fa-user-check me-1"></i>1. مراجعة FM</div>
-    <div class="step <?=($request && ($request['accounting_status'] ?? '') === 'verified')?'done':(($request && $request['status']==='approved')?'active':'')?>"><i class="fas fa-calculator me-1"></i>2. التحقق المحاسبي</div>
-    <div class="step <?=($request && in_array((string)$request['status'],['disbursed','settled'],true))?'done':''?>"><i class="fas fa-money-bill-transfer me-1"></i>3. الصرف</div>
-    <div class="step <?=($request && $request['status']==='disbursed')?'done':''?>"><i class="fas fa-calendar-check me-1"></i>4. جدول السداد</div>
-</div>
+<?php
+$workflowStep = 1;
+if ($request && in_array((string)$request['status'], ['disbursed','settled'], true)) {
+    $workflowStep = 4;
+} elseif ($request && (string)$request['status'] === 'approved') {
+    $workflowStep = (($request['accounting_status'] ?? '') === 'verified') ? 3 : 2;
+}
+?>
+<ul class="nav nav-tabs workflow-tabs" role="tablist">
+    <li class="nav-item"><button type="button" class="nav-link <?= $workflowStep === 1 ? 'active' : '' ?> <?= $request && in_array((string)$request['status'], ['approved','disbursed','settled'], true) ? 'done' : '' ?>" data-workflow-tab="1"><i class="fas fa-user-check me-1"></i>1. مراجعة FM</button></li>
+    <li class="nav-item"><button type="button" class="nav-link <?= $workflowStep === 2 ? 'active' : '' ?> <?= $request && ($request['accounting_status'] ?? '') === 'verified' ? 'done' : '' ?>" data-workflow-tab="2"><i class="fas fa-calculator me-1"></i>2. التحقق المحاسبي</button></li>
+    <li class="nav-item"><button type="button" class="nav-link <?= $workflowStep === 3 ? 'active' : '' ?> <?= $request && in_array((string)$request['status'], ['disbursed','settled'], true) ? 'done' : '' ?>" data-workflow-tab="3"><i class="fas fa-money-bill-transfer me-1"></i>3. الصرف</button></li>
+    <li class="nav-item"><button type="button" class="nav-link <?= $workflowStep === 4 ? 'active' : '' ?>" data-workflow-tab="4"><i class="fas fa-calendar-check me-1"></i>4. جدول السداد</button></li>
+</ul>
 
 <div class="card"><div class="card-body">
 <h5 class="mb-3">طلبات السلف التي تتطلب إجراء</h5>
@@ -342,6 +352,7 @@ require_once __DIR__ . '/../../includes/header.php';
 </div></div>
 
 <?php if($canFm && $fmRequest): ?>
+<div class="workflow-tab-panel <?= $workflowStep === 1 ? 'active' : '' ?>" data-workflow-panel="1">
 <div class="card"><div class="card-body">
 <h5>الخطوة 1 — مراجعة FM</h5>
 <div class="small text-muted mb-3">السياسة المستخدمة للمقارنة هي السياسة المرتبطة بالطلب وقت تقديمه. لا يتم تعديل السياسة العامة من هذه الصفحة.</div>
@@ -372,7 +383,8 @@ require_once __DIR__ . '/../../includes/header.php';
 <?php endif; ?>
 <div class="col-md-6 mt-3"><label class="form-label">سبب الرفض <span class="text-muted">(مطلوب عند الرفض)</span></label><textarea name="fm_rejection_reason" class="form-control" rows="2" maxlength="2000"></textarea></div>
 <div class="d-flex gap-2 mt-3">
-<button class="btn btn-success" name="decision" value="approve" type="submit">اعتماد الطلب والانتقال للتحقق المحاسبي</button>
+<?php $fmApproveDisabled = $mismatches && !(int)$fmRequest['allow_custom_repayment_terms']; ?>
+<button class="btn btn-success" name="decision" value="approve" type="submit"<?= $fmApproveDisabled ? ' disabled' : '' ?>>اعتماد الطلب والانتقال للتحقق المحاسبي</button>
 <button class="btn btn-danger" name="decision" value="reject" type="submit">رفض الطلب</button>
 </div>
 </form>
@@ -382,9 +394,11 @@ require_once __DIR__ . '/../../includes/header.php';
 <div class="alert alert-success mb-0 mt-3">تم اعتماد الطلب وصرفه. بيانات الصرف وجدول السداد أدناه.</div>
 <?php endif; ?>
 </div></div>
+</div>
 <?php endif; ?>
 
 <?php if($canAccounting && $request['status']==='approved'): ?>
+<div class="workflow-tab-panel <?= $workflowStep === 2 ? 'active' : '' ?>" data-workflow-panel="2">
 <div class="card"><div class="card-body">
 <h5>الخطوة 2 — التحقق المحاسبي</h5>
 <div class="alert alert-info">
@@ -415,7 +429,9 @@ require_once __DIR__ . '/../../includes/header.php';
 <div class="alert alert-success mt-3 mb-0">تم اعتماد التحقق المحاسبي. السلفة جاهزة للصرف.</div>
 <?php endif; ?>
 </div></div>
+</div>
 
+<div class="workflow-tab-panel <?= $workflowStep === 3 ? 'active' : '' ?>" data-workflow-panel="3">
 <div class="card"><div class="card-body">
 <h5>الخطوة 3 — الصرف والترحيل</h5>
 <?php if((int)$request['require_accounting_verification']===1 && $request['accounting_status']!=='verified'): ?>
@@ -433,9 +449,11 @@ require_once __DIR__ . '/../../includes/header.php';
 </form>
 <?php endif; ?>
 </div></div>
+</div>
 <?php endif; ?>
 
 <?php if($request['status']==='disbursed'): ?>
+<div class="workflow-tab-panel <?= $workflowStep === 4 ? 'active' : '' ?>" data-workflow-panel="4">
 <div class="card"><div class="card-body">
 <h5>النتيجة — تم الصرف</h5>
 <div class="row g-3">
@@ -488,12 +506,20 @@ require_once __DIR__ . '/../../includes/header.php';
 <?php endif; ?>
 </div></div>
 <?php endif; ?>
+</div>
 <?php endif; ?>
 <?php endif; ?>
 
 </div>
 <script>
 (function(){
+ document.querySelectorAll('[data-workflow-tab]').forEach(function(tab){
+   tab.addEventListener('click',function(){
+     const target=this.getAttribute('data-workflow-tab');
+     document.querySelectorAll('[data-workflow-tab]').forEach(function(t){t.classList.toggle('active',t===tab);});
+     document.querySelectorAll('[data-workflow-panel]').forEach(function(panel){panel.classList.toggle('active',panel.getAttribute('data-workflow-panel')===target);});
+   });
+ });
  const c=document.getElementById('fm_customized');
  const fields=['approved_amount','approved_repayment_method','approved_monthly_amount','approved_start_month','fm_customization_reason'];
  function sync(){
