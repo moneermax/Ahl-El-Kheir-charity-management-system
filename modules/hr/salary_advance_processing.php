@@ -91,7 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     throw new RuntimeException('تعذر حفظ قرار اعتماد طلب السلفة.');
                 }
 
-                $message = 'تم اعتماد طلب السلفة. انتقل الآن إلى خطوة التحقق المحاسبي والصرف في نفس الصفحة.';
+                $message = 'تم اعتماد طلب السلفة بنجاح.';
             }
 
             $pdo->prepare(
@@ -153,8 +153,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 trim((string)($_POST['accounting_rejection_reason'] ?? ''))
             );
             $message = $decision === 'verify'
-                ? 'تم اعتماد التحقق المحاسبي. أصبحت السلفة جاهزة للصرف.'
-                : 'تم رفض التحقق المحاسبي. يمكن إعادة التحقق واعتمادها من نفس الصفحة قبل الصرف.';
+                ? 'تم اعتماد التحقق المحاسبي بنجاح.'
+                : 'تم رفض التحقق المحاسبي.';
         } elseif (isset($_POST['disburse_salary_advance'])) {
             if (!$canAccounting) {
                 throw new RuntimeException('لا يملك المستخدم الحالي صلاحية صرف السلفة.');
@@ -169,7 +169,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $cashAccountId,
                 $reference
             );
-            $message = 'تم صرف السلفة وترحيل القيد المحاسبي رقم ' . $entryId . ' بنجاح. تم إنشاء جدول السداد تلقائياً.';
+            $message = 'تم صرف السلفة وترحيل القيد المحاسبي رقم ' . $entryId . ' بنجاح. تم إنشاء جدول السداد.';
         } elseif (isset($_POST['upload_payment_receipt'])) {
             if (!$canAccounting) {
                 throw new RuntimeException('لا يملك المستخدم الحالي صلاحية رفع إيصال الدفع.');
@@ -181,7 +181,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 (int)Session::getUserID(),
                 $_FILES['payment_receipt'] ?? []
             );
-            $message = 'تم رفع إيصال الدفع وحفظه في التخزين المحمي.';
+            $message = 'تم رفع إيصال الدفع بنجاح.';
         }
     } catch (Throwable $e) {
         if ($pdo->inTransaction()) $pdo->rollBack();
@@ -282,6 +282,35 @@ require_once __DIR__ . '/../../includes/header.php';
 .salary-advance-process .match{border-right:4px solid #198754;background:#f3fbf6;padding:10px 12px;border-radius:8px}
 .salary-advance-process .stage-fm{color:#173f73;font-weight:700}
 .salary-advance-process .stage-accounting{color:#176b3a;font-weight:700}
+.salary-advance-process .ak-workflow-toast{
+    position:fixed;
+    top:90px;
+    right:24px;
+    z-index:1080;
+    min-width:320px;
+    max-width:460px;
+    padding:13px 16px;
+    border:1px solid #badbcc;
+    border-radius:10px;
+    background:#f0fff4;
+    color:#146c43;
+    box-shadow:0 8px 24px rgba(16,24,40,.14);
+    font-weight:700;
+    animation:akWorkflowToastIn .2s ease-out;
+}
+@keyframes akWorkflowToastIn{
+    from{opacity:0;transform:translateY(-8px)}
+    to{opacity:1;transform:translateY(0)}
+}
+@media (max-width:576px){
+    .salary-advance-process .ak-workflow-toast{
+        left:16px;
+        right:16px;
+        top:76px;
+        min-width:0;
+        max-width:none;
+    }
+}
 </style>
 
 <script>window.AK_PAGE_BACK_URL=<?php echo json_encode($salaryAdvanceBackUrl, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES); ?>;</script>
@@ -291,7 +320,7 @@ require_once __DIR__ . '/../../includes/header.php';
     <p>مسار موحد لمعالجة الطلب من مراجعة FM، إلى التحقق المحاسبي، ثم الصرف وإنشاء جدول السداد — دون الانتقال بين صفحات معالجة مختلفة.</p>
 </section>
 
-<?php if($message): ?><div class="alert alert-success"><?=e($message)?></div><?php endif; ?>
+<?php if($message): ?><div class="ak-workflow-toast" role="status" aria-live="polite"><i class="fas fa-circle-check me-2"></i><span><?=e($message)?></span></div><?php endif; ?>
 <?php if($error): ?><div class="alert alert-danger"><?=e($error)?></div><?php endif; ?>
 
 <?php
@@ -355,7 +384,6 @@ if ($request && in_array((string)$request['status'], ['disbursed','settled'], tr
 <div class="workflow-tab-panel <?= $workflowStep === 1 ? 'active' : '' ?>" data-workflow-panel="1">
 <div class="card"><div class="card-body">
 <h5>الخطوة 1 — مراجعة FM</h5>
-<div class="small text-muted mb-3">السياسة المستخدمة للمقارنة هي السياسة المرتبطة بالطلب وقت تقديمه. لا يتم تعديل السياسة العامة من هذه الصفحة.</div>
 <h6>مقارنة الطلب بالسياسة المرجعية V<?= (int)$fmRequest['version_no'] ?></h6>
 <?php if($mismatches): foreach($mismatches as $m): ?><div class="mismatch"><i class="fas fa-triangle-exclamation me-1"></i><?=e($m)?></div><?php endforeach; else: ?><div class="match"><i class="fas fa-check me-1"></i>الطلب متوافق مع القواعد الظاهرة في السياسة المرجعية.</div><?php endif; ?>
 
@@ -400,7 +428,6 @@ if ($request && in_array((string)$request['status'], ['disbursed','settled'], tr
 <div class="workflow-tab-panel <?= $workflowStep === 2 ? 'active' : '' ?>" data-workflow-panel="2">
 <div class="card"><div class="card-body">
 <h5>الخطوة 2 — التحقق المحاسبي</h5>
-<div class="alert alert-success mb-3">تم اعتماد الطلب من FM. انتقل الإجراء الآن إلى التحقق المحاسبي.</div>
 <div class="alert alert-info">
 الحساب المستهدف للسلفة: <strong>1410 — ذمم سلف الموظفين</strong>.
 لا يتم استخدام حساب مصروف. الصرف ينشئ ذمة على الموظف مقابل خفض حساب الصندوق/البنك/المحفظة.
@@ -437,7 +464,6 @@ if ($request && in_array((string)$request['status'], ['disbursed','settled'], tr
 <?php if((int)$request['require_accounting_verification']===1 && $request['accounting_status']!=='verified'): ?>
 <div class="alert alert-warning mb-0">لا يمكن الصرف قبل اعتماد التحقق المحاسبي.</div>
 <?php else: ?>
-<div class="alert alert-warning">عند الصرف سيتم ترحيل قيد مزدوج: <strong>مدين 1410 — ذمم سلف الموظفين</strong> / <strong>دائن حساب النقد المختار</strong>.</div>
 <form method="post">
 <?=csrf_field()?>
 <input type="hidden" name="request_id" value="<?= (int)$request['id']?>">
@@ -513,6 +539,15 @@ if ($request && in_array((string)$request['status'], ['disbursed','settled'], tr
 </div>
 <script>
 (function(){
+ const toast=document.querySelector('.ak-workflow-toast');
+ if(toast){
+   window.setTimeout(function(){
+     toast.style.transition='opacity .25s ease, transform .25s ease';
+     toast.style.opacity='0';
+     toast.style.transform='translateY(-8px)';
+     window.setTimeout(function(){toast.remove();},260);
+   },5000);
+ }
  document.querySelectorAll('[data-workflow-tab]').forEach(function(tab){
    tab.addEventListener('click',function(){
      const target=this.getAttribute('data-workflow-tab');
