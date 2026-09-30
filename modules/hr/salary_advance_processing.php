@@ -417,7 +417,6 @@ if ($request && in_array((string)$request['status'], ['disbursed','settled'], tr
 </form>
 <?php elseif($request['status']==='approved'): ?>
 <?php elseif($request['status']==='disbursed'): ?>
-<div class="alert alert-success mb-0 mt-3">تم اعتماد الطلب وصرفه. بيانات الصرف وجدول السداد أدناه.</div>
 <?php endif; ?>
 </div></div>
 </div>
