@@ -293,9 +293,12 @@ function hrSalaryAdvanceAccountingDisburse(PDO $pdo, int $requestId, int $userId
             throw new RuntimeException('تعذر تحديث دورة حياة السلفة بعد الترحيل.');
         }
 
-        // Generate the approved repayment schedule atomically with disbursement.
-        // If schedule generation fails, the financial disbursement transaction is rolled back.
-        hrSalaryAdvanceScheduleGenerate($pdo, $requestId, $userId);
+        // Payroll-based methods receive a Stage 5 schedule at disbursement.
+        // Direct repayment is settled outside payroll, so it intentionally has
+        // no payroll schedule to generate.
+        if (in_array((string)$lockedRequest['approved_repayment_method'], ['fixed_monthly', 'full_eligible_salary'], true)) {
+            hrSalaryAdvanceScheduleGenerate($pdo, $requestId, $userId);
+        }
 
         try {
             dbExecute(
