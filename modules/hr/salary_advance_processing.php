@@ -271,7 +271,7 @@ require_once __DIR__ . '/../../includes/header.php';
 .salary-advance-process .hero p{font-size:.82rem;margin:6px 0 0;opacity:.92}
 .salary-advance-process .workflow-tabs{margin-bottom:16px;border-bottom:1px solid #dfe5ec}
 .salary-advance-process .workflow-tabs .nav-link{font-weight:700;color:#667085}
-.salary-advance-process .workflow-tabs .nav-link.active{color:#173f73;border-color:#dfe5ec #dfe5ec #fff;background:#fff}
+.salary-advance-process .workflow-tabs .nav-link.active{color:#0d6efd;background:#eef5ff;border-color:#0d6efd #0d6efd #eef5ff;font-weight:800;box-shadow:inset 0 -3px 0 #0d6efd}
 .salary-advance-process .workflow-tabs .nav-link.done{color:#176b3a}
 .salary-advance-process .workflow-tab-panel{display:none}
 .salary-advance-process .workflow-tab-panel.active{display:block}
