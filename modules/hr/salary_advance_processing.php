@@ -169,7 +169,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $cashAccountId,
                 $reference
             );
-            $message = 'تم صرف السلفة وترحيل القيد المحاسبي رقم ' . $entryId . ' بنجاح. تم إنشاء جدول السداد.';
+            $message = 'تم صرف السلفة وترحيل القيد المحاسبي رقم ' . $entryId . ' بنجاح.' .
+                (in_array((string)$request['approved_repayment_method'], ['fixed_monthly', 'full_eligible_salary'], true)
+                    ? ' تم إنشاء جدول السداد.'
+                    : ' هذه السلفة لا تستخدم جدول سداد الرواتب.');
+        } elseif (isset($_POST['direct_repayment_submit'])) {
+            if (!$canAccounting) {
+                throw new RuntimeException('لا يملك المستخدم الحالي صلاحية تسجيل السداد المباشر.');
+            }
+
+            $entryId = hrSalaryAdvanceAccountingDirectRepay(
+                $pdo,
+                $requestId,
+                (int)Session::getUserID(),
+                (int)($_POST['repayment_account_id'] ?? 0),
+                (float)($_POST['repayment_amount'] ?? 0),
+                trim((string)($_POST['repayment_reference'] ?? '')),
+                trim((string)($_POST['repayment_notes'] ?? ''))
+            );
+            $message = 'تم تسجيل السداد المباشر وترحيل القيد المحاسبي رقم ' . $entryId . ' بنجاح.';
         } elseif (isset($_POST['upload_payment_receipt'])) {
             if (!$canAccounting) {
                 throw new RuntimeException('لا يملك المستخدم الحالي صلاحية رفع إيصال الدفع.');
@@ -241,8 +259,11 @@ $request = $fmRequest && $accountingRequest
     : ($fmRequest ?: $accountingRequest);
 
 $mismatches = ($request && $fmRequest) ? hrSalaryAdvanceFmPolicyMismatches($pdo, $fmRequest) : [];
-$repaymentSchedule = $request && $request['status'] === 'disbursed'
+$repaymentSchedule = $request && in_array((string)$request['status'], ['disbursed','settled'], true)
     ? hrSalaryAdvanceScheduleGet($pdo, (int)$request['id'])
+    : [];
+$directRepaymentHistory = $request && in_array((string)$request['status'], ['disbursed','settled'], true)
+    ? hrSalaryAdvanceDirectRepaymentHistory($pdo, (int)$request['id'])
     : [];
 
 $cashAccounts = [];
@@ -326,7 +347,9 @@ require_once __DIR__ . '/../../includes/header.php';
 <?php
 $workflowStep = 1;
 if ($request && in_array((string)$request['status'], ['disbursed','settled'], true)) {
-    $workflowStep = 4;
+    $workflowStep = ($request['approved_repayment_method'] ?? '') === 'direct_repayment' || (string)$request['status'] === 'settled'
+        ? 5
+        : 4;
 } elseif ($request && (string)$request['status'] === 'approved') {
     $workflowStep = (($request['accounting_status'] ?? '') === 'verified') ? 3 : 2;
 }
@@ -336,6 +359,7 @@ if ($request && in_array((string)$request['status'], ['disbursed','settled'], tr
     <li class="nav-item"><button type="button" class="nav-link <?= $workflowStep === 2 ? 'active' : '' ?> <?= $request && ($request['accounting_status'] ?? '') === 'verified' ? 'done' : '' ?>" data-workflow-tab="2"><i class="fas fa-calculator me-1"></i>2. التحقق المحاسبي</button></li>
     <li class="nav-item"><button type="button" class="nav-link <?= $workflowStep === 3 ? 'active' : '' ?> <?= $request && in_array((string)$request['status'], ['disbursed','settled'], true) ? 'done' : '' ?>" data-workflow-tab="3"><i class="fas fa-money-bill-transfer me-1"></i>3. الصرف</button></li>
     <li class="nav-item"><button type="button" class="nav-link <?= $workflowStep === 4 ? 'active' : '' ?>" data-workflow-tab="4"><i class="fas fa-calendar-check me-1"></i>4. جدول السداد</button></li>
+    <?php if($canAccounting): ?><li class="nav-item"><button type="button" class="nav-link <?= $workflowStep === 5 ? 'active' : '' ?> <?= $request && (string)$request['status'] === 'settled' ? 'done' : '' ?>" data-workflow-tab="5"><i class="fas fa-hand-holding-dollar me-1"></i>5. السداد المباشر</button></li><?php endif; ?>
 </ul>
 
 <div class="card"><div class="card-body">
@@ -473,7 +497,7 @@ if ($request && in_array((string)$request['status'], ['disbursed','settled'], tr
 </div>
 <?php endif; ?>
 
-<?php if($request['status']==='disbursed'): ?>
+<?php if(in_array((string)$request['status'], ['disbursed','settled'], true)): ?>
 <div class="workflow-tab-panel <?= $workflowStep === 4 ? 'active' : '' ?>" data-workflow-panel="4">
 <div class="card"><div class="card-body">
 <h5>النتيجة — تم الصرف</h5>
@@ -529,6 +553,76 @@ if ($request && in_array((string)$request['status'], ['disbursed','settled'], tr
 <?php endif; ?>
 </div>
 <?php endif; ?>
+
+<?php if($canAccounting): ?>
+<div class="workflow-tab-panel <?= $workflowStep === 5 ? 'active' : '' ?>" data-workflow-panel="5">
+<div class="card"><div class="card-body">
+<h5>السداد المباشر</h5>
+<?php if((int)($request['allow_direct_repayment'] ?? 0) !== 1): ?>
+<div class="alert alert-warning mb-0">السداد المباشر غير مسموح وفق السياسة المرجعية لهذا الطلب.</div>
+<?php elseif((string)$request['status'] === 'settled'): ?>
+<div class="alert alert-success">تمت تسوية السلفة بالكامل. الرصيد القائم: <strong>0.00 SDG</strong>.</div>
+<?php else: ?>
+<div class="row g-3">
+<div class="col-md-4"><strong>الرصيد القائم:</strong><br><?=number_format((float)$request['outstanding_balance'],2)?> SDG</div>
+<div class="col-md-4"><strong>طريقة السداد المعتمدة:</strong><br><?=e(['fixed_monthly'=>'قسط شهري ثابت','full_eligible_salary'=>'كامل الراتب المؤهل','full_settlement'=>'تسوية كاملة','direct_repayment'=>'سداد مباشر'][$request['approved_repayment_method']]??$request['approved_repayment_method'])?></div>
+<div class="col-md-4"><strong>التسوية المبكرة:</strong><br><?=((int)($request['allow_early_settlement'] ?? 0) === 1 ? 'مسموحة' : 'غير مسموحة')?></div>
+</div>
+<hr>
+<form method="post">
+<?=csrf_field()?>
+<input type="hidden" name="request_id" value="<?= (int)$request['id']?>">
+<div class="row g-3">
+<div class="col-md-4">
+<label class="form-label">مبلغ السداد المباشر *</label>
+<input type="number" step="0.01" min="0.01" max="<?=e(number_format((float)$request['outstanding_balance'],2,'.',''))?>" name="repayment_amount" class="form-control" required>
+<div class="form-text">يمكن تسجيل سداد جزئي. لا يمكن تجاوز الرصيد القائم.</div>
+</div>
+<div class="col-md-4">
+<label class="form-label">حساب استلام السداد *</label>
+<select name="repayment_account_id" class="form-select" required>
+<option value="">— اختر الصندوق/البنك/المحفظة —</option>
+<?php foreach($cashAccounts as $cash): ?><option value="<?= (int)$cash['id']?>"><?=e($cash['code'].' — '.$cash['name_ar'])?> — الرصيد <?=number_format((float)$balances[(int)$cash['id']],2)?> SDG</option><?php endforeach; ?>
+</select>
+</div>
+<div class="col-md-4">
+<label class="form-label">مرجع السداد <span class="text-muted">(اختياري)</span></label>
+<input type="text" name="repayment_reference" class="form-control" maxlength="100">
+</div>
+<div class="col-12">
+<label class="form-label">ملاحظات <span class="text-muted">(اختياري)</span></label>
+<textarea name="repayment_notes" class="form-control" rows="2" maxlength="2000"></textarea>
+</div>
+</div>
+<button type="submit" name="direct_repayment_submit" value="1" class="btn btn-success mt-3"><i class="fas fa-hand-holding-dollar me-1"></i>تسجيل السداد وترحيل القيد</button>
+</form>
+<?php endif; ?>
+</div></div>
+
+<div class="card"><div class="card-body">
+<h5>سجل السداد المباشر</h5>
+<?php if(!$directRepaymentHistory): ?>
+<div class="alert alert-light border mb-0">لا توجد عمليات سداد مباشر مسجلة لهذه السلفة.</div>
+<?php else: ?>
+<div class="table-responsive"><table class="table table-hover align-middle mb-0">
+<thead><tr><th>التاريخ</th><th>المبلغ</th><th>حساب الاستلام</th><th>القيد</th><th>المرجع</th><th>بواسطة</th></tr></thead>
+<tbody>
+<?php foreach($directRepaymentHistory as $rep): ?>
+<tr>
+<td><?=e($rep['repayment_date'])?></td>
+<td><?=number_format((float)$rep['repayment_amount'],2)?> SDG</td>
+<td><?=e(($rep['repayment_account_code']??'').' — '.($rep['repayment_account_name']??''))?></td>
+<td><?=e($rep['accounting_entry_code']??'—')?></td>
+<td><?=e($rep['repayment_reference']??'—')?></td>
+<td><?=e($rep['received_by_name']??'—')?></td>
+</tr>
+<?php endforeach; ?>
+</tbody></table></div>
+<?php endif; ?>
+</div></div>
+</div>
+<?php endif; ?>
+
 <?php endif; ?>
 
 </div>
