@@ -784,3 +784,47 @@ Status remains **Stage 5 IN PROGRESS / RUNTIME VERIFICATION PENDING**. The code 
 PR #57 was merged to `main` with merge commit `0c01c3a378826b7b7cb260668f8f64b0e6648031`. Employee notifications are now emitted after a committed payroll repayment for applied, partial, skipped, and zero-balance completion outcomes. Notification delivery is informational and cannot roll back the financial transaction.
 
 Stage 5 remains IN PROGRESS pending controlled runtime verification. Stage 6 remains NOT STARTED.
+
+
+## 2026-09-30 — Stage 5 Payroll Edge-Case Runtime Checkpoint
+
+**Status:** Stage 5 IN PROGRESS — payroll integration runtime verified for the available-salary insufficient-salary branch; two policy branches remain unverified because no suitable existing fixture exists.
+
+The rollback-only edge-case harness was merged to `main` in PR #67 with merge commit `49ae654a25a8ec2a80901c86fe9aa009da83b96c`.
+
+Runtime result from `tools/run_salary_advance_stage5_payroll_edge_tests.php`:
+
+- **PASS — available_salary + fixed_monthly:** `SAR-2026-00004`; scheduled remaining = 5,000 SDG; eligible salary = 1 SDG; calculated deduction = 1 SDG; outcome = `partial`.
+- **SKIP — skip_month + fixed_monthly:** no existing disbursed fixture matching this policy rule.
+- **SKIP — full_eligible_salary with low eligible salary:** no existing disbursed fixture matching the required period.
+- **PASS — rollback-only cleanup:** no payroll/request/schedule/journal mutation was committed.
+
+The PASS confirms that `available_salary` never deducts more than the employee's eligible salary and records a partial repayment when the available amount is below the scheduled installment.
+
+The two SKIPs are intentional and are **not failures**. No new employee, salary-advance request, schedule, or permanent accounting data should be created merely to manufacture these fixtures. Stage 5 must remain open until these branches are either runtime-verified against suitable existing data or explicitly covered by a safer verified fixture strategy.
+
+### Current Stage 5 verification boundary
+
+Already runtime verified:
+- schedule generation and planning rules;
+- maximum monthly deduction;
+- maximum repayment months;
+- `next_payroll`;
+- `specified_month`;
+- duplicate schedule-generation protection;
+- `full_eligible_salary` planning;
+- schedule-generation failure/rollback;
+- payroll repayment application;
+- duplicate payroll repayment protection;
+- balanced payroll accounting with Cr 1410;
+- repayment trace and outstanding-balance reduction;
+- legacy salary-advance notification-link compatibility;
+- voucher child-tab return behavior;
+- `available_salary` insufficient-salary partial repayment.
+
+Still pending:
+- `skip_month` insufficient-salary runtime verification;
+- low-salary `full_eligible_salary` runtime verification;
+- final Stage 5 notification/audit end-to-end gate, if not already evidenced by the existing protected payroll repayment test.
+
+Stage 6 remains **NOT STARTED** and must not be started early.
