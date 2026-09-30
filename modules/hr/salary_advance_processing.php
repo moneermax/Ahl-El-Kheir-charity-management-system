@@ -627,6 +627,8 @@ if ($request && in_array((string)$request['status'], ['disbursed','settled'], tr
 <?php endif; ?>
 </div></div>
 </div>
+<?php endif; ?>
+<?php endif; ?>
 
 </div>
 <script>
