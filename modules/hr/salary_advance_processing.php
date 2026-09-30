@@ -28,6 +28,7 @@ if (!$canFm && !$canAccounting) {
 $pdo = db();
 $message = '';
 $error = '';
+$salaryAdvanceNextTab = 0;
 $requestId = (int)($_GET['id'] ?? $_POST['request_id'] ?? 0);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -92,6 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
                 $message = 'تم اعتماد طلب السلفة. انتقل الآن إلى خطوة التحقق المحاسبي والصرف في نفس الصفحة.';
+                $salaryAdvanceNextTab = 2;
             }
 
             $pdo->prepare(
@@ -155,6 +157,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = $decision === 'verify'
                 ? 'تم اعتماد التحقق المحاسبي. أصبحت السلفة جاهزة للصرف.'
                 : 'تم رفض التحقق المحاسبي. يمكن إعادة التحقق واعتمادها من نفس الصفحة قبل الصرف.';
+            if ($decision === 'verify') $salaryAdvanceNextTab = 3;
+            else $salaryAdvanceNextTab = 2;
         } elseif (isset($_POST['disburse_salary_advance'])) {
             if (!$canAccounting) {
                 throw new RuntimeException('لا يملك المستخدم الحالي صلاحية صرف السلفة.');
@@ -170,6 +174,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $reference
             );
             $message = 'تم صرف السلفة وترحيل القيد المحاسبي رقم ' . $entryId . ' بنجاح. تم إنشاء جدول السداد تلقائياً.';
+            $salaryAdvanceNextTab = 4;
         } elseif (isset($_POST['upload_payment_receipt'])) {
             if (!$canAccounting) {
                 throw new RuntimeException('لا يملك المستخدم الحالي صلاحية رفع إيصال الدفع.');
@@ -312,7 +317,7 @@ if ($request) {
     <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#salary-tab-disbursement" type="button" role="tab" data-tab="3"><span class="tab-number">3</span> الصرف</button></li>
     <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#salary-tab-schedule" type="button" role="tab" data-tab="4"><span class="tab-number">4</span> جدول السداد</button></li>
 </ul>
-<div class="tab-content salary-advance-tab-content" id="salaryAdvanceTabContent" data-initial-tab="<?= (int)$salaryAdvanceInitialTab ?>">
+<div class="tab-content salary-advance-tab-content" id="salaryAdvanceTabContent" data-initial-tab="<?= (int)$salaryAdvanceInitialTab ?>" data-next-tab="<?= (int)$salaryAdvanceNextTab ?>">
 
 <div class="card"><div class="card-body">
 <h5 class="mb-3">طلبات السلف التي تتطلب إجراء</h5>
@@ -531,21 +536,31 @@ if ($request) {
  const content=document.getElementById('salaryAdvanceTabContent');
  const tabs=document.querySelectorAll('#salaryAdvanceTabs .nav-link');
  const initial=parseInt(content?.dataset.initialTab || '1',10);
+ const nextTab=parseInt(content?.dataset.nextTab || '0',10);
  function activate(n){
    const button=document.querySelector('#salaryAdvanceTabs .nav-link[data-tab="'+n+'"]');
-   if(button && window.bootstrap) bootstrap.Tab.getOrCreateInstance(button).show();
+   if(button && !button.disabled && window.bootstrap) bootstrap.Tab.getOrCreateInstance(button).show();
  }
  const status=<?php echo json_encode((string)($request['status'] ?? ''), JSON_UNESCAPED_UNICODE); ?>;
  const accountingStatus=<?php echo json_encode((string)($request['accounting_status'] ?? ''), JSON_UNESCAPED_UNICODE); ?>;
+ const requireAccounting=<?php echo !empty($request) && (int)($request['require_accounting_verification'] ?? 0) === 1 ? 'true' : 'false'; ?>;
  tabs.forEach(function(button){
    const n=parseInt(button.dataset.tab || '1',10);
-   if((n===1 && ['approved','disbursed','settled'].includes(status)) ||
+   const completed=(n===1 && ['approved','disbursed','settled'].includes(status)) ||
       (n===2 && accountingStatus==='verified') ||
-      (n===3 && ['disbursed','settled'].includes(status))){
-     button.classList.add('done');
+      (n===3 && ['disbursed','settled'].includes(status));
+   const available=(n===1) ||
+      (n===2 && ['approved','disbursed','settled'].includes(status)) ||
+      (n===3 && status==='approved' && (!requireAccounting || accountingStatus==='verified')) ||
+      (n===4 && ['disbursed','settled'].includes(status));
+   if(completed) button.classList.add('done');
+   if(!available) {
+     button.disabled=true;
+     button.classList.add('locked');
+     button.setAttribute('aria-disabled','true');
    }
  });
- activate(initial);
+ activate(nextTab || initial);
 })();
 </script>
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>
