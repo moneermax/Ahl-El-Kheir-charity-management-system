@@ -1341,3 +1341,43 @@ The two SKIPs are fixture-availability gaps, not failures. Do not create a new r
 - Do not repeat already-passed tests unless a genuine regression appears.
 - Keep accounting/test data controlled and auditable.
 - Commit logical changes and merge only after verification.
+
+
+# LATEST CONTINUATION PROMPT — 2026-09-30 — Stage 5 CLOSED / Stage 6 Ready
+
+Continue the existing Ahl El Kheir Charity Management System. Do not rebuild or start a new project.
+
+Environment: repository `moneermax/Ahl-El-Kheir-charity-management-system`; local path `D:\xampp\htdocs\AhlElKheir`; local URL `http://localhost:8081/AhlElKheir/`; database `ahl_el_kheir`; Windows/XAMPP/Apache/PHP 8.2/MariaDB; Arabic RTL; Bootstrap 5.3 RTL; vanilla JS; procedural PHP only.
+
+## Current status
+- Salary Advance Stages 1–4: **DONE / RUNTIME VERIFIED / CLOSED**.
+- Stage 5 schedule planning: **DONE / RUNTIME VERIFIED / CLOSED**.
+- Stage 5 payroll integration and edge-case verification: **DONE / RUNTIME VERIFIED / CLOSED**.
+- Stage 6 — Direct Repayment & Settlement: **NOT STARTED**.
+
+## Final Stage 5 evidence
+Main was updated to merge commit `310f52aaae05cd9a86ce2b69c9ea278c3d1deb7d`.
+
+The final post-merge run of `tools/run_salary_advance_stage5_payroll_edge_tests.php` returned:
+- PASS — available_salary + fixed_monthly: SAR-2026-00004; scheduled remaining 5,000 SDG; eligible salary 1 SDG; deduction 1 SDG; outcome partial.
+- PASS — skip_month + fixed_monthly: SAR-2026-00007; scheduled remaining 10,000 SDG; eligible salary 1 SDG; deduction 0 SDG; outcome skipped; rollback-only policy override.
+- PASS — full_eligible_salary with low eligible salary: SAR-2026-00007; deduction 1 SDG; outcome partial; rollback-only method override.
+- PASS — rollback-only cleanup: no payroll/request/schedule/journal mutation was committed.
+
+The two previously unavailable policy branches were verified through SAVEPOINT-based rollback-only fixtures. No permanent test data was created.
+
+Core Stage 5 runtime evidence remains valid for schedule planning, payroll repayment application, balance/schedule updates, duplicate protection, Cr 1410 accounting, audit traceability, and repayment notifications. No Stage 6 behavior was introduced.
+
+## Next work
+Stage 5 is closed. Do not reopen it without genuine regression evidence.
+
+The next work unit is Stage 6 — Direct Repayment & Settlement. Before coding, inspect the current repository, actual schema, accounting conventions, and existing salary-advance lifecycle. Define the Stage 6 lifecycle and role boundaries first. Do not invent tables, columns, statuses, accounts, or workflows.
+
+Maintain all project rules:
+- schema changes only through migrations;
+- no runtime CREATE/ALTER;
+- no triggers, views, stored procedures, functions, or events;
+- no destructive Git commands;
+- procedural PHP only;
+- preserve existing accounting/audit architecture;
+- do not disturb protected Stage 5 evidence.

@@ -4,7 +4,7 @@
 **Repository:** `moneermax/Ahl-El-Kheir-charity-management-system`  
 **Branch:** `main`  
 **Active area:** HR / Salary Advance  
-**Current stage:** Stage 5 — Repayment Schedule + Payroll Integration — **IN PROGRESS / PAYROLL INTEGRATION IMPLEMENTED — RUNTIME VERIFICATION PENDING**
+**Current stage:** Stage 5 — Repayment Schedule + Payroll Integration — **DONE / RUNTIME VERIFIED / CLOSED**
 
 ## Purpose
 
@@ -20,7 +20,7 @@ Do not reopen Stages 1–3 unless a genuine regression is found.
 2. **Stage 2 — Employee Salary Advance Request: DONE / RUNTIME VERIFIED**
 3. **Stage 3 — FM Review & Per-Request Customization: DONE / RUNTIME VERIFIED**
 4. **Stage 4 — Accounting Verification & Disbursement: DONE / RUNTIME VERIFIED / CLOSED**
-5. **Stage 5 — Repayment Schedule + Payroll Integration: IN PROGRESS — SCHEDULE RUNTIME VERIFIED / PAYROLL APPLICATION IMPLEMENTED — RUNTIME VERIFICATION PENDING**
+5. **Stage 5 — Repayment Schedule + Payroll Integration: DONE / RUNTIME VERIFIED / CLOSED**
 6. Stage 6 — Direct Repayment & Settlement: NOT STARTED
 7. Stage 7 — Exceptional Lifecycle Cases: NOT STARTED
 8. Stage 8 — Reporting / Audit / Hardening: NOT STARTED
@@ -828,3 +828,27 @@ Still pending:
 - final Stage 5 notification/audit end-to-end gate, if not already evidenced by the existing protected payroll repayment test.
 
 Stage 6 remains **NOT STARTED** and must not be started early.
+
+
+## 2026-09-30 — Stage 5 Final Runtime Closure
+
+**Status: DONE / RUNTIME VERIFIED / CLOSED**
+
+Post-merge verification was completed on `main` at merge commit `310f52aaae05cd9a86ce2b69c9ea278c3d1deb7d`.
+
+Final edge-case harness:
+`tools/run_salary_advance_stage5_payroll_edge_tests.php`
+
+Final runtime result:
+- **PASS — available_salary + fixed_monthly:** `SAR-2026-00004`; scheduled remaining = 5,000 SDG; eligible salary = 1 SDG; deduction = 1 SDG; outcome = `partial`.
+- **PASS — skip_month + fixed_monthly:** `SAR-2026-00007`; scheduled remaining = 10,000 SDG; eligible salary = 1 SDG; deduction = 0 SDG; outcome = `skipped`; rollback-only existing-request policy override.
+- **PASS — full_eligible_salary with low eligible salary:** `SAR-2026-00007`; deduction = 1 SDG; outcome = `partial`; rollback-only existing-request method override.
+- **PASS — rollback-only cleanup:** no payroll/request/schedule/journal mutation was committed.
+
+These four edge gates passed both before merge and again after the PR was merged to `main`. The two previously unavailable policy branches were covered safely through SAVEPOINT-based rollback-only fixtures; no permanent employee, request, schedule, payroll, or accounting test data was created.
+
+The previously verified Stage 5 core payroll gates remain valid, including payroll repayment application, schedule/balance updates, duplicate protection, balanced Cr 1410 repayment accounting, repayment trace/audit behavior, and repayment notification implementation/runtime coverage. No Stage 6 behavior was introduced.
+
+**Stage 5 is now formally closed.**
+
+Stage 6 — Direct Repayment & Settlement remains **NOT STARTED** and is the next planned work unit. Do not begin it in the same checkpoint unless explicitly proceeding with Stage 6.

@@ -1082,3 +1082,16 @@ Stage 5 remains IN PROGRESS pending controlled runtime verification. Stage 6 rem
 ## 2026-09-30 — Latest Salary Advance Continuation Checkpoint
 
 Stage 5 core payroll integration is runtime verified. Edge-case harness PR #67 is merged to main (`49ae654a25a8ec2a80901c86fe9aa009da83b96c`). Latest run: available-salary partial repayment PASS; skip-month SKIP due to no suitable fixture; low-salary full-eligible-salary SKIP due to no suitable fixture; rollback cleanup PASS. Continue with safe fixture discovery/rollback-only verification of the two skipped branches, then final Stage 5 notification/audit gate. Do not start Stage 6.
+
+
+## 2026-09-30 — Stage 5 Final Runtime Closure
+
+Stage 5 Salary Advance — Repayment Schedule + Payroll Integration is **DONE / RUNTIME VERIFIED / CLOSED**.
+
+Post-merge main verification at `310f52a` passed all four edge-case gates:
+- available_salary partial repayment: PASS — SAR-2026-00004, scheduled remaining 5,000 SDG, eligible salary 1 SDG, deduction 1 SDG, outcome partial.
+- skip_month: PASS — SAR-2026-00007, scheduled remaining 10,000 SDG, eligible salary 1 SDG, deduction 0 SDG, outcome skipped, using a rollback-only policy override.
+- low-salary full_eligible_salary: PASS — SAR-2026-00007, deduction 1 SDG, outcome partial, using a rollback-only method override.
+- rollback-only cleanup: PASS — no payroll/request/schedule/journal mutation committed.
+
+No permanent test data was created for the previously unavailable branches. Core Stage 5 payroll, accounting, balance/schedule, duplicate-protection, audit, and notification verification remains valid. Stage 6 Direct Repayment & Settlement remains **NOT STARTED**.
