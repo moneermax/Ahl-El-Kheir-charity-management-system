@@ -276,6 +276,53 @@ function hrSalaryAdvanceFmPolicyMismatches(PDO $pdo, array $r): array
     return array_values(array_unique($m));
 }
 
+function hrSalaryAdvanceValidateCustomizedRepaymentTerms(array $r, float $amount, string $method, ?float $monthly, ?string $start): array
+{
+    $m = [];
+
+    if (!(int)$r['allow_any_request_amount']) {
+        $min = $r['minimum_request_amount'] !== null ? (float)$r['minimum_request_amount'] : null;
+        $max = $r['maximum_request_amount'] !== null ? (float)$r['maximum_request_amount'] : null;
+        if ($min !== null && $amount < $min) $m[] = 'المبلغ المعتمد أقل من الحد الأدنى للسياسة.';
+        if ($max !== null && $amount > $max) $m[] = 'المبلغ المعتمد يتجاوز الحد الأقصى للسياسة.';
+    }
+
+    $methodAllowed = [
+        'fixed_monthly' => (int)$r['allow_fixed_monthly_repayment'],
+        'full_eligible_salary' => (int)$r['allow_full_eligible_salary_repayment'],
+        'full_settlement' => (int)$r['allow_full_settlement_from_salary'],
+        'direct_repayment' => (int)$r['allow_direct_repayment'],
+    ];
+    if (empty($methodAllowed[$method])) {
+        $m[] = 'طريقة السداد المعتمدة غير مسموحة في السياسة المرجعية.';
+    }
+
+    if ($method === 'fixed_monthly') {
+        if ($monthly === null || $monthly <= 0) {
+            $m[] = 'القسط الشهري المعتمد غير محدد بشكل صحيح.';
+        } else {
+            if ($r['maximum_monthly_deduction'] !== null && $monthly > (float)$r['maximum_monthly_deduction']) {
+                $m[] = 'القسط الشهري المعتمد يتجاوز الحد الأقصى للخصم الشهري.';
+            }
+            if ($r['maximum_repayment_months'] !== null) {
+                $months = (int)ceil($amount / $monthly);
+                if ($months > (int)$r['maximum_repayment_months']) {
+                    $m[] = 'مدة السداد المعتمدة تتجاوز الحد الأقصى لعدد الأشهر.';
+                }
+            }
+        }
+    }
+
+    if ($start !== null && $start !== '') {
+        $expected = date('Y-m-01', strtotime('+1 month'));
+        if ($r['repayment_start_rule'] === 'next_payroll' && $start !== $expected) {
+            $m[] = 'شهر بدء السداد المعتمد لا يطابق قاعدة بدء السداد في السياسة.';
+        }
+    }
+
+    return array_values(array_unique($m));
+}
+
 function hrSalaryAdvanceFmValidateDecision(PDO $pdo, array $r, array $input): array
 {
     $decision = (string)($input['decision'] ?? '');
@@ -337,6 +384,11 @@ function hrSalaryAdvanceFmValidateDecision(PDO $pdo, array $r, array $input): ar
         $mismatches = hrSalaryAdvanceFmPolicyMismatches($pdo, $r);
         if ($mismatches) {
             throw new InvalidArgumentException('لا يمكن اعتماد الطلب بصيغته الأصلية لوجود مخالفات للسياسة. فعّل التخصيص وعدّل الشروط، أو ارفض الطلب.');
+        }
+    } else {
+        $customMismatches = hrSalaryAdvanceValidateCustomizedRepaymentTerms($r, $amount, $method, $monthly, $start);
+        if ($customMismatches) {
+            throw new InvalidArgumentException('لا يمكن اعتماد شروط السداد المخصصة لوجود مخالفات للسياسة: ' . implode(' ', $customMismatches));
         }
     }
 
