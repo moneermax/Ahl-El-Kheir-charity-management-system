@@ -60,8 +60,9 @@ function hrSalaryAdvanceAccountingQueue(PDO $pdo): array
          JOIN employees e ON e.id = r.employee_id
          JOIN hr_salary_advance_policy_versions p ON p.id = r.policy_version_id
          WHERE r.status = 'approved'
-           AND COALESCE(r.accounting_status, 'pending') <> 'verified'
-         ORDER BY r.fm_reviewed_at ASC, r.id ASC"
+         ORDER BY
+             CASE WHEN COALESCE(r.accounting_status, 'pending') = 'verified' THEN 1 ELSE 0 END ASC,
+             r.fm_reviewed_at ASC, r.id ASC"
     );
 }
 
@@ -73,6 +74,13 @@ function hrSalaryAdvanceAccountingVerify(PDO $pdo, int $requestId, int $userId, 
 
     if (!in_array($decision, ['verify', 'reject'], true)) {
         throw new InvalidArgumentException('قرار التحقق المحاسبي غير صالح.');
+    }
+
+    // Accounting verification is intentionally atomic with disbursement.
+    // A standalone verification must never leave an approved request in a
+    // verified-but-not-disbursed state.
+    if ($decision === 'verify') {
+        throw new RuntimeException('لا يمكن اعتماد التحقق المحاسبي منفرداً. يتم اعتماد التحقق وترحيل الصرف في عملية واحدة.');
     }
 
     $request = hrSalaryAdvanceAccountingGetRequest($pdo, $requestId);
@@ -204,7 +212,45 @@ function hrSalaryAdvanceAccountingDisburse(PDO $pdo, int $requestId, int $userId
             throw new RuntimeException('تم رفض التحقق المحاسبي لهذه السلفة. يجب إعادة التحقق واعتمادها قبل الصرف.');
         }
         if ((int)$lockedRequest['require_accounting_verification'] === 1 && $lockedRequest['accounting_status'] !== 'verified') {
-            throw new RuntimeException('يجب إكمال التحقق المحاسبي قبل صرف السلفة.');
+            // Verification and disbursement are one atomic financial operation.
+            // The request cannot remain in a verified-but-not-disbursed state.
+            dbExecute(
+                "UPDATE hr_salary_advance_requests
+                 SET accounting_status = 'verified',
+                     accounting_verified_by = ?,
+                     accounting_verified_at = NOW(),
+                     accounting_rejection_reason = NULL,
+                     updated_at = NOW()
+                 WHERE id = ? AND status = 'approved' AND COALESCE(accounting_status, 'pending') <> 'verified'",
+                [$userId, $requestId]
+            );
+
+            try {
+                dbExecute(
+                    "INSERT INTO audit_log
+                     (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent)
+                     VALUES (?, 'HR_SALARY_ADVANCE_ACCOUNTING_VERIFY_AND_DISBURSE', 'hr_salary_advance_request', ?, ?, ?, ?, ?)",
+                    [
+                        $userId,
+                        $requestId,
+                        json_encode([
+                            'status' => 'approved',
+                            'accounting_status' => $lockedRequest['accounting_status'],
+                        ], JSON_UNESCAPED_UNICODE),
+                        json_encode([
+                            'accounting_status' => 'verified',
+                            'accounting_verified_by' => $userId,
+                            'verification_and_disbursement_atomic' => true,
+                        ], JSON_UNESCAPED_UNICODE),
+                        $_SERVER['REMOTE_ADDR'] ?? '',
+                        $_SERVER['HTTP_USER_AGENT'] ?? ''
+                    ]
+                );
+            } catch (Throwable $auditError) {
+                throw new RuntimeException('تعذر تسجيل تدقيق التحقق المحاسبي. لم يتم تنفيذ الصرف.');
+            }
+
+            $lockedRequest['accounting_status'] = 'verified';
         }
 
         $amount = round((float)$lockedRequest['approved_amount'], 2);
@@ -772,7 +818,6 @@ function hrSalaryAdvanceAccountingHistory(PDO $pdo): array
          LEFT JOIN accounts a ON a.id = r.disbursement_account_id
          LEFT JOIN journal_entries je ON je.id = r.disbursement_journal_entry_id
          WHERE r.status IN ('disbursed', 'settled', 'rejected', 'cancelled')
-            OR (r.status = 'approved' AND r.accounting_status = 'verified')
-         ORDER BY COALESCE(r.accounting_verified_at, r.disbursed_at, r.settled_at) DESC, r.id DESC"
+         ORDER BY COALESCE(r.disbursed_at, r.settled_at) DESC, r.id DESC"
     );
 }

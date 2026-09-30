@@ -1255,3 +1255,17 @@ Final repository state:
 
 Stage 6 must begin in a fresh session. First inspect the current `main` repository, the master documents, the salary-advance continuation document, and the actual schema/code relevant to repayment/settlement. Do not implement Stage 6 behavior before the design/schema audit checkpoint.
 
+
+
+## 2026-09-30 — Salary Advance Verification / Disbursement Lifecycle Hardening
+
+**IMPLEMENTED — RUNTIME VERIFICATION PENDING**
+
+Accounting verification can no longer be completed as a standalone state. For requests requiring accounting verification, verification is performed atomically with disbursement. A successful operation therefore reaches disbursed; failure rolls back the transaction.
+
+Legacy approved + verified + not disbursed requests are returned to the accounting action queue as جاهزة للصرف and are excluded from processed history.
+
+No schema change was required.
+
+Current branch: fix/salary-advance-verification-disbursement-atomic
+Next gate: runtime verification of SAR-2026-00009, then continue Stage 6 repayment tests.

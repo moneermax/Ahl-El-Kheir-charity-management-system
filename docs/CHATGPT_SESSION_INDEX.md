@@ -1141,3 +1141,16 @@ Final repository state:
 
 Stage 6 must begin in a fresh session. First inspect the current `main` repository, the master documents, the salary-advance continuation document, and the actual schema/code relevant to repayment/settlement. Do not implement Stage 6 behavior before the design/schema audit checkpoint.
 
+
+
+## 2026-09-30 — Latest Checkpoint — Salary Advance Verification/Disbursement Atomicity
+
+A workflow hardening fix is implemented on branch fix/salary-advance-verification-disbursement-atomic.
+
+Problem: standalone accounting verification could leave an approved request with accounting_status = verified while not disbursed.
+
+Fix: standalone verification is blocked; accounting rejection remains available before disbursement; for requests requiring verification, the disbursement transaction performs verification and financial posting atomically; legacy approved+verified requests are surfaced as جاهزة للصرف; processed history excludes approved+verified intermediate requests.
+
+Commits: ea15f86f88e4166ecf97cdaac1e851cfe2e395de, 2769cf2eb5b0062945510a53de9908954e8a5c1f, 7adcffc014f62d98601387f8194b25f87a89f1ec, f2cb76b9043743b3ee855837e8cea3563b96cc30
+
+**Next exact action:** first test only: confirm SAR-2026-00009 is in the accounting action queue as جاهزة للصرف and absent from processed history. Then disburse it and verify تم الصرف. Do not begin direct repayment until this gate passes.

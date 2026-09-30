@@ -139,22 +139,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                      $notificationType
                  );
              }
-        } elseif (isset($_POST['accounting_verify']) || isset($_POST['accounting_reject'])) {
+        } elseif (isset($_POST['accounting_reject'])) {
             if (!$canAccounting) {
                 throw new RuntimeException('لا يملك المستخدم الحالي صلاحية التحقق المحاسبي.');
             }
 
-            $decision = isset($_POST['accounting_verify']) ? 'verify' : 'reject';
             hrSalaryAdvanceAccountingVerify(
                 $pdo,
                 $requestId,
                 (int)Session::getUserID(),
-                $decision,
+                'reject',
                 trim((string)($_POST['accounting_rejection_reason'] ?? ''))
             );
-            $message = $decision === 'verify'
-                ? 'تم اعتماد التحقق المحاسبي بنجاح.'
-                : 'تم رفض التحقق المحاسبي.';
+            $message = 'تم رفض التحقق المحاسبي. يمكن إعادة التحقق فقط ضمن عملية الصرف.';
         } elseif (isset($_POST['disburse_salary_advance'])) {
             if (!$canAccounting) {
                 throw new RuntimeException('لا يملك المستخدم الحالي صلاحية صرف السلفة.');
@@ -245,7 +242,9 @@ foreach ($accountingQueue as $q) {
         'amount' => (float)$q['approved_amount'],
         'status' => $q['status'],
         'stage' => 'accounting',
-        'stage_label' => $q['accounting_status'] === 'rejected' ? 'إعادة تحقق محاسبي' : 'التحقق المحاسبي والصرف',
+        'stage_label' => $q['accounting_status'] === 'rejected'
+            ? 'إعادة تحقق محاسبي'
+            : ($q['accounting_status'] === 'verified' ? 'جاهزة للصرف' : 'التحقق المحاسبي والصرف'),
         'date' => $q['fm_reviewed_at'],
     ];
 }
@@ -464,27 +463,28 @@ if ($request && in_array((string)$request['status'], ['disbursed','settled'], tr
 <?php if(!empty($request['accounting_rejection_reason'])): ?><div class="col-md-8 text-danger"><strong>سبب الرفض المحاسبي:</strong><br><?=e($request['accounting_rejection_reason'])?></div><?php endif; ?>
 </div>
 
-<?php if($request['accounting_status']!=='verified'): ?>
 <hr>
+<?php if($request['accounting_status']!=='verified'): ?>
+<div class="alert alert-info">
+    لا يوجد اعتماد محاسبي منفصل. عند اختيار «صرف وترحيل» سيتم اعتماد التحقق المحاسبي وترحيل قيد الصرف داخل عملية محاسبية واحدة؛ لذلك لا يمكن ترك الطلب في حالة «تم التحقق» دون صرف.
+</div>
 <form method="post">
 <?=csrf_field()?>
 <input type="hidden" name="request_id" value="<?= (int)$request['id']?>">
 <div class="mb-3"><label class="form-label">سبب الرفض المحاسبي <span class="text-muted">(مطلوب عند الرفض)</span></label><textarea name="accounting_rejection_reason" class="form-control" rows="2" maxlength="2000"></textarea></div>
-<div class="d-flex gap-2">
-<button type="submit" name="accounting_verify" value="1" class="btn btn-success">اعتماد التحقق المحاسبي</button>
-<button type="submit" name="accounting_reject" value="1" class="btn btn-danger">رفض التحقق</button>
-</div>
+<button type="submit" name="accounting_reject" value="1" class="btn btn-danger">رفض التحقق المحاسبي</button>
 </form>
 <?php else: ?>
+<div class="alert alert-success mb-0">تم التحقق المحاسبي، والطلب جاهز للصرف.</div>
 <?php endif; ?>
 </div></div>
 </div>
 
 <div class="workflow-tab-panel <?= $workflowStep === 3 ? 'active' : '' ?>" data-workflow-panel="3">
 <div class="card"><div class="card-body">
-<?php if((int)$request['require_accounting_verification']===1 && $request['accounting_status']!=='verified'): ?>
-<div class="alert alert-warning mb-0">لا يمكن الصرف قبل اعتماد التحقق المحاسبي.</div>
-<?php else: ?>
+<div class="alert alert-info mb-3">
+    التحقق المحاسبي والصرف يتمان معاً داخل معاملة واحدة. عند نجاح هذه العملية لا يمكن أن يبقى الطلب في حالة «تم التحقق» دون أن يصبح «تم الصرف».
+</div>
 <form method="post">
 <?=csrf_field()?>
 <input type="hidden" name="request_id" value="<?= (int)$request['id']?>">

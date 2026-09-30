@@ -1645,3 +1645,24 @@ Final repository state:
 
 Stage 6 must begin in a fresh session. First inspect the current `main` repository, the master documents, the salary-advance continuation document, and the actual schema/code relevant to repayment/settlement. Do not implement Stage 6 behavior before the design/schema audit checkpoint.
 
+
+
+## 2026-09-30 — Salary Advance Accounting Verification / Disbursement Lifecycle Hardening
+
+**Status: IMPLEMENTED — RUNTIME VERIFICATION PENDING**
+
+A lifecycle defect was identified: accounting could set accounting_status = verified as a standalone action while the request remained status = approved and was not disbursed.
+
+The workflow is now hardened:
+- Standalone accounting verification is blocked.
+- Accounting rejection remains available before disbursement.
+- For requests requiring accounting verification, the Disburse & Post action performs verification and disbursement inside one database transaction.
+- If the transaction fails, both verification and disbursement roll back.
+- Legacy approved + verified requests are shown as جاهزة للصرف in the accounting action queue, not processed history.
+- Processed history contains only disbursed/settled/rejected/cancelled requests.
+- No schema change was required.
+
+Implementation branch: fix/salary-advance-verification-disbursement-atomic
+Implementation commits: ea15f86f88e4166ecf97cdaac1e851cfe2e395de, 2769cf2eb5b0062945510a53de9908954e8a5c1f, 7adcffc014f62d98601387f8194b25f87a89f1ec, f2cb76b9043743b3ee855837e8cea3563b96cc30
+
+**Runtime gate:** confirm SAR-2026-00009 appears as جاهزة للصرف, disburse it normally, and confirm it becomes تم الصرف and leaves the action queue. Then continue Stage 6 repayment testing.
