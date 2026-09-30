@@ -9,7 +9,7 @@ require_once dirname(__DIR__) . '/accounting/lib_transaction_review.php';
 
 function hrSalaryAdvanceAccountingCan(string $role): bool
 {
-    return in_array($role, ['financial_manager', 'accountant_staff', 'admin'], true);
+    return in_array($role, ['financial_manager', 'fm', 'admin'], true);
 }
 
 function hrSalaryAdvanceAccountingGetRequest(PDO $pdo, int $requestId): ?array

@@ -10,7 +10,7 @@ Session::start();
 if (!Session::isLoggedIn()) { header('Location: ' . APP_URL . 'index.php'); exit(); }
 $role = Session::getUserRole();
 $uid = (int) Session::getUserId();
-if (!in_array($role, ['admin','accountant','accountant_staff','financial_manager','supervisor','vice_general_manager'], true)) { header('Location: ' . APP_URL . 'index.php'); exit(); }
+if (!in_array($role, ['financial_manager', 'fm', 'admin'], true)) { header('Location: ' . APP_URL . 'index.php'); exit(); }
 
 fina_ensure_tables();
 $pageTitle = 'تسجيل تحصيل لصالح فينا الخير';
