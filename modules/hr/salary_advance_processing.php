@@ -383,7 +383,6 @@ if ($request && in_array((string)$request['status'], ['disbursed','settled'], tr
 <?php if($canFm && $fmRequest): ?>
 <div class="workflow-tab-panel <?= $workflowStep === 1 ? 'active' : '' ?>" data-workflow-panel="1">
 <div class="card"><div class="card-body">
-<h5>الخطوة 1 — مراجعة FM</h5>
 <h6>مقارنة الطلب بالسياسة المرجعية V<?= (int)$fmRequest['version_no'] ?></h6>
 <?php if($mismatches): foreach($mismatches as $m): ?><div class="mismatch"><i class="fas fa-triangle-exclamation me-1"></i><?=e($m)?></div><?php endforeach; else: ?><div class="match"><i class="fas fa-check me-1"></i>الطلب متوافق مع القواعد الظاهرة في السياسة المرجعية.</div><?php endif; ?>
 
@@ -427,7 +426,6 @@ if ($request && in_array((string)$request['status'], ['disbursed','settled'], tr
 <?php if($canAccounting && $request['status']==='approved'): ?>
 <div class="workflow-tab-panel <?= $workflowStep === 2 ? 'active' : '' ?>" data-workflow-panel="2">
 <div class="card"><div class="card-body">
-<h5>الخطوة 2 — التحقق المحاسبي</h5>
 <div class="alert alert-info">
 الحساب المستهدف للسلفة: <strong>1410 — ذمم سلف الموظفين</strong>.
 لا يتم استخدام حساب مصروف. الصرف ينشئ ذمة على الموظف مقابل خفض حساب الصندوق/البنك/المحفظة.
@@ -453,14 +451,12 @@ if ($request && in_array((string)$request['status'], ['disbursed','settled'], tr
 </div>
 </form>
 <?php else: ?>
-<div class="alert alert-success mt-3 mb-0">تم اعتماد التحقق المحاسبي. السلفة جاهزة للصرف.</div>
 <?php endif; ?>
 </div></div>
 </div>
 
 <div class="workflow-tab-panel <?= $workflowStep === 3 ? 'active' : '' ?>" data-workflow-panel="3">
 <div class="card"><div class="card-body">
-<h5>الخطوة 3 — الصرف والترحيل</h5>
 <?php if((int)$request['require_accounting_verification']===1 && $request['accounting_status']!=='verified'): ?>
 <div class="alert alert-warning mb-0">لا يمكن الصرف قبل اعتماد التحقق المحاسبي.</div>
 <?php else: ?>
