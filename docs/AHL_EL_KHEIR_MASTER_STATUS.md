@@ -1166,3 +1166,16 @@ Status remains **Stage 5 IN PROGRESS / RUNTIME VERIFICATION PENDING**. The code 
 PR #57 was merged to `main` with merge commit `0c01c3a378826b7b7cb260668f8f64b0e6648031`. Employee notifications are now emitted after a committed payroll repayment for applied, partial, skipped, and zero-balance completion outcomes. Notification delivery is informational and cannot roll back the financial transaction.
 
 Stage 5 remains IN PROGRESS pending controlled runtime verification. Stage 6 remains NOT STARTED.
+
+
+## 2026-09-30 — HR Salary Advance Stage 5 Edge-Case Checkpoint
+
+Stage 5 remains **IN PROGRESS**. Core payroll repayment integration is runtime verified. The rollback-only edge-case harness was merged in PR #67 (merge commit `49ae654a25a8ec2a80901c86fe9aa009da83b96c`).
+
+Runtime result:
+- PASS — `available_salary` + fixed monthly: `SAR-2026-00004`, scheduled remaining 5,000 SDG, eligible salary 1 SDG, deduction 1 SDG, outcome `partial`.
+- SKIP — `skip_month` + fixed monthly: no suitable existing disbursed fixture.
+- SKIP — low-salary `full_eligible_salary`: no suitable existing disbursed fixture.
+- PASS — rollback-only cleanup: no payroll/request/schedule/journal mutation committed.
+
+The two SKIPs are fixture-availability gaps, not failures. Do not create a new real employee/request solely to manufacture test data. Stage 6 remains NOT STARTED.
