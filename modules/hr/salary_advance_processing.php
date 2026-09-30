@@ -526,6 +526,32 @@ if ($request && in_array((string)$request['status'], ['disbursed','settled'], tr
 </div></div>
 
 <?php if($canAccounting): ?>
+<div class="card"><div class="card-body">
+<h5>إيصال الدفع</h5>
+<?php if(!empty($request['payment_receipt_id'])): ?>
+<div class="alert alert-success">تم رفع إيصال الدفع: <strong><?=e($request['payment_receipt_name'])?></strong><?php if(!empty($request['payment_receipt_uploaded_at'])): ?> — <?=e($request['payment_receipt_uploaded_at'])?><?php endif; ?></div>
+<div class="d-flex flex-wrap gap-2">
+<a class="btn btn-outline-primary" target="_blank" href="<?=e(APP_URL.'modules/hr/salary_advance_receipt.php?id='.(int)$request['payment_receipt_id'])?>"><i class="fas fa-file-arrow-up me-1"></i>عرض الإيصال</a>
+<form method="post" enctype="multipart/form-data" class="d-flex flex-wrap gap-2 align-items-center">
+<?=csrf_field()?><input type="hidden" name="request_id" value="<?= (int)$request['id']?>">
+<input type="file" name="payment_receipt" class="form-control" accept=".jpg,.jpeg,.png,.pdf" required>
+<button type="submit" name="upload_payment_receipt" value="1" class="btn btn-outline-secondary"><i class="fas fa-arrows-rotate me-1"></i>استبدال الإيصال</button>
+</form>
+</div>
+<?php else: ?>
+<div class="alert alert-warning">لم يتم رفع إيصال الدفع بعد.</div>
+<form method="post" enctype="multipart/form-data" class="row g-3 align-items-end">
+<?=csrf_field()?><input type="hidden" name="request_id" value="<?= (int)$request['id']?>">
+<div class="col-md-8"><label class="form-label">إيصال الدفع *</label><input type="file" name="payment_receipt" class="form-control" accept=".jpg,.jpeg,.png,.pdf" required><div class="form-text">JPG / PNG / PDF — بحد أقصى 5 ميجابايت.</div></div>
+<div class="col-md-4"><button type="submit" name="upload_payment_receipt" value="1" class="btn btn-success w-100"><i class="fas fa-upload me-1"></i>رفع الإيصال</button></div>
+</form>
+<?php endif; ?>
+</div></div>
+<?php endif; ?>
+</div>
+<?php endif; ?>
+
+<?php if($canAccounting): ?>
 <div class="workflow-tab-panel <?= $workflowStep === 5 ? 'active' : '' ?>" data-workflow-panel="5">
 <div class="card"><div class="card-body">
 <h5>السداد المباشر</h5>
@@ -594,31 +620,6 @@ if ($request && in_array((string)$request['status'], ['disbursed','settled'], tr
 </div>
 <?php endif; ?>
 
-<?php if($canAccounting): ?>
-<div class="card"><div class="card-body">
-<h5>إيصال الدفع</h5>
-<?php if(!empty($request['payment_receipt_id'])): ?>
-<div class="alert alert-success">تم رفع إيصال الدفع: <strong><?=e($request['payment_receipt_name'])?></strong><?php if(!empty($request['payment_receipt_uploaded_at'])): ?> — <?=e($request['payment_receipt_uploaded_at'])?><?php endif; ?></div>
-<div class="d-flex flex-wrap gap-2">
-<a class="btn btn-outline-primary" target="_blank" href="<?=e(APP_URL.'modules/hr/salary_advance_receipt.php?id='.(int)$request['payment_receipt_id'])?>"><i class="fas fa-file-arrow-up me-1"></i>عرض الإيصال</a>
-<form method="post" enctype="multipart/form-data" class="d-flex flex-wrap gap-2 align-items-center">
-<?=csrf_field()?><input type="hidden" name="request_id" value="<?= (int)$request['id']?>">
-<input type="file" name="payment_receipt" class="form-control" accept=".jpg,.jpeg,.png,.pdf" required>
-<button type="submit" name="upload_payment_receipt" value="1" class="btn btn-outline-secondary"><i class="fas fa-arrows-rotate me-1"></i>استبدال الإيصال</button>
-</form>
-</div>
-<?php else: ?>
-<div class="alert alert-warning">لم يتم رفع إيصال الدفع بعد.</div>
-<form method="post" enctype="multipart/form-data" class="row g-3 align-items-end">
-<?=csrf_field()?><input type="hidden" name="request_id" value="<?= (int)$request['id']?>">
-<div class="col-md-8"><label class="form-label">إيصال الدفع *</label><input type="file" name="payment_receipt" class="form-control" accept=".jpg,.jpeg,.png,.pdf" required><div class="form-text">JPG / PNG / PDF — بحد أقصى 5 ميجابايت.</div></div>
-<div class="col-md-4"><button type="submit" name="upload_payment_receipt" value="1" class="btn btn-success w-100"><i class="fas fa-upload me-1"></i>رفع الإيصال</button></div>
-</form>
-<?php endif; ?>
-</div></div>
-<?php endif; ?>
-</div>
-<?php endif; ?>
 <?php endif; ?>
 
 </div>
