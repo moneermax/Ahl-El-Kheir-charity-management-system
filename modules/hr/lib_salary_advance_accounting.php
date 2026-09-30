@@ -818,7 +818,6 @@ function hrSalaryAdvanceAccountingHistory(PDO $pdo): array
          LEFT JOIN accounts a ON a.id = r.disbursement_account_id
          LEFT JOIN journal_entries je ON je.id = r.disbursement_journal_entry_id
          WHERE r.status IN ('disbursed', 'settled', 'rejected', 'cancelled')
-            OR (r.status = 'approved' AND r.accounting_status = 'verified')
-         ORDER BY COALESCE(r.accounting_verified_at, r.disbursed_at, r.settled_at) DESC, r.id DESC"
+         ORDER BY COALESCE(r.disbursed_at, r.settled_at) DESC, r.id DESC"
     );
 }
