@@ -1095,3 +1095,14 @@ Post-merge main verification at `310f52a` passed all four edge-case gates:
 - rollback-only cleanup: PASS — no payroll/request/schedule/journal mutation committed.
 
 No permanent test data was created for the previously unavailable branches. Core Stage 5 payroll, accounting, balance/schedule, duplicate-protection, audit, and notification verification remains valid. Stage 6 Direct Repayment & Settlement remains **NOT STARTED**.
+
+
+## 2026-09-30 — HR Salary Advance Stage 5 CLOSED
+
+Stage 5 — Repayment Schedule + Payroll Integration is **DONE / RUNTIME VERIFIED / CLOSED**.
+
+Final runtime edge harness: `tools/run_salary_advance_stage5_payroll_edge_tests.php` — all four required cases PASS after the final UI cleanup. The processing-page UX now uses temporary toast feedback for workflow transitions and no longer contains the removed permanent process-instruction text. Repayment-schedule logic was not changed; disbursed records continue to use the existing generated schedule path.
+
+Final closure checkpoint remains merge commit `310f52aaae05cd9a86ce2b69c9ea278c3d1deb7d` for the Stage 5 implementation, with subsequent UI-only cleanup commits on `main`: `6bc8b94fdddff8593a8e9fe716865d302509a933`, `c04adaa1fe4ec27b187d7d080f85a8db0c593506`, and `f8ab8272b3eaf352cd02cd59ffafee3a0ee1cfb6`.
+
+Stage 6 — Direct Repayment & Settlement is **NOT STARTED** and is the next independent work unit.

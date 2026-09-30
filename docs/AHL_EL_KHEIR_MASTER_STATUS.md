@@ -1203,3 +1203,20 @@ The previously verified Stage 5 core payroll gates remain valid, including payro
 **Stage 5 is now formally closed.**
 
 Stage 6 — Direct Repayment & Settlement remains **NOT STARTED** and is the next planned work unit. Do not begin it in the same checkpoint unless explicitly proceeding with Stage 6.
+
+
+## 2026-09-30 — Stage 5 UI / Final Regression Closure
+
+The final Stage 5 processing-page UX cleanup is complete on `main`. Permanent process-guidance text was removed from the FM review, accounting verification, and disbursement panels; workflow progression is communicated through temporary toast feedback after successful actions. Existing business-state warnings and controls remain intact.
+
+Final payroll edge harness was rerun after the UI changes and returned all four required cases as **PASS**:
+- `available_salary` + fixed monthly — partial deduction.
+- `skip_month` + fixed monthly — skipped deduction.
+- `full_eligible_salary` with low eligible salary — partial deduction.
+- rollback-only cleanup — no committed payroll/request/schedule/journal mutation.
+
+Repayment-schedule behavior was not changed by the UI cleanup. Existing disbursed salary advances continue to display their generated schedules; schedules are generated atomically during disbursement.
+
+**Stage 5 remains DONE / RUNTIME VERIFIED / CLOSED.** Do not reopen Stage 5 for the removed instructional text or schedule display unless new regression evidence appears.
+
+**Next planned work: Stage 6 — Direct Repayment & Settlement. NOT STARTED.**
