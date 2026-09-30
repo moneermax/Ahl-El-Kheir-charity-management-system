@@ -169,7 +169,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $cashAccountId,
                 $reference
             );
-            $message = 'تم صرف السلفة وترحيل القيد المحاسبي رقم ' . $entryId . ' بنجاح. تم إنشاء جدول السداد.';
+            $message = 'تم صرف السلفة وترحيل القيد المحاسبي رقم ' . $entryId . ' بنجاح.' .
+                (in_array((string)$request['approved_repayment_method'], ['fixed_monthly', 'full_eligible_salary'], true)
+                    ? ' تم إنشاء جدول السداد.'
+                    : ' هذه السلفة لا تستخدم جدول سداد الرواتب.');
         } elseif (isset($_POST['direct_repayment_submit'])) {
             if (!$canAccounting) {
                 throw new RuntimeException('لا يملك المستخدم الحالي صلاحية تسجيل السداد المباشر.');
