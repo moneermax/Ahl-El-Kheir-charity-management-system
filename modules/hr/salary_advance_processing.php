@@ -389,7 +389,6 @@ if ($request && in_array((string)$request['status'], ['disbursed','settled'], tr
 </div>
 </form>
 <?php elseif($request['status']==='approved'): ?>
-<div class="alert alert-success mb-0 mt-3">تم اعتماد الطلب من FM. انتقل الإجراء الآن مباشرة إلى التحقق المحاسبي أدناه.</div>
 <?php elseif($request['status']==='disbursed'): ?>
 <div class="alert alert-success mb-0 mt-3">تم اعتماد الطلب وصرفه. بيانات الصرف وجدول السداد أدناه.</div>
 <?php endif; ?>
@@ -401,6 +400,7 @@ if ($request && in_array((string)$request['status'], ['disbursed','settled'], tr
 <div class="workflow-tab-panel <?= $workflowStep === 2 ? 'active' : '' ?>" data-workflow-panel="2">
 <div class="card"><div class="card-body">
 <h5>الخطوة 2 — التحقق المحاسبي</h5>
+<div class="alert alert-success mb-3">تم اعتماد الطلب من FM. انتقل الإجراء الآن إلى التحقق المحاسبي.</div>
 <div class="alert alert-info">
 الحساب المستهدف للسلفة: <strong>1410 — ذمم سلف الموظفين</strong>.
 لا يتم استخدام حساب مصروف. الصرف ينشئ ذمة على الموظف مقابل خفض حساب الصندوق/البنك/المحفظة.
