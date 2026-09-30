@@ -60,6 +60,7 @@ function hrSalaryAdvanceAccountingQueue(PDO $pdo): array
          JOIN employees e ON e.id = r.employee_id
          JOIN hr_salary_advance_policy_versions p ON p.id = r.policy_version_id
          WHERE r.status = 'approved'
+           AND COALESCE(r.accounting_status, 'pending') <> 'verified'
          ORDER BY r.fm_reviewed_at ASC, r.id ASC"
     );
 }
