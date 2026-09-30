@@ -269,10 +269,14 @@ require_once __DIR__ . '/../../includes/header.php';
 .salary-advance-process .hero{background:linear-gradient(135deg,#173f73,#2d67ad);color:#fff;border-radius:14px;padding:22px 25px;margin-bottom:16px}
 .salary-advance-process .hero h1{font-size:1.4rem;font-weight:800;margin:0}
 .salary-advance-process .hero p{font-size:.82rem;margin:6px 0 0;opacity:.92}
-.salary-advance-process .stepper{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
-.salary-advance-process .step{background:#f1f4f8;border:1px solid #dfe5ec;border-radius:10px;padding:9px 14px;font-weight:700;color:#667085}
-.salary-advance-process .step.active{background:#eaf2fb;color:#173f73;border-color:#b9d0ea}
-.salary-advance-process .step.done{background:#edf8f1;color:#176b3a;border-color:#b9e1c8}
+.salary-advance-tabs{border-bottom:1px solid #d9e1ea;gap:6px;flex-wrap:wrap}
+.salary-advance-tabs .nav-link{border:1px solid #dfe5ec;border-bottom:0;border-radius:10px 10px 0 0;background:#f5f7fa;color:#667085;font-weight:800;padding:11px 16px}
+.salary-advance-tabs .nav-link.active{background:#fff;color:#173f73;border-color:#b9d0ea}
+.salary-advance-tabs .nav-link.done{background:#edf8f1;color:#176b3a;border-color:#b9e1c8}
+.salary-advance-tabs .tab-number{display:inline-flex;align-items:center;justify-content:center;width:25px;height:25px;border-radius:50%;background:#e2e8f0;margin-left:5px;font-size:.78rem}
+.salary-advance-tabs .nav-link.active .tab-number{background:#dbeafe;color:#173f73}
+.salary-advance-tabs .nav-link.done .tab-number{background:#d1fae5;color:#176b3a}
+.salary-advance-tab-content{min-height:120px}
 .salary-advance-process .card{background:#fff;border:1px solid #e5eaf0;border-radius:12px;box-shadow:0 2px 12px rgba(16,24,40,.05);margin-bottom:15px;overflow:hidden}
 .salary-advance-process .card-body{padding:16px}
 .salary-advance-process .original{background:#f8f9fa;border-radius:10px;padding:14px}
@@ -292,12 +296,23 @@ require_once __DIR__ . '/../../includes/header.php';
 <?php if($message): ?><div class="alert alert-success"><?=e($message)?></div><?php endif; ?>
 <?php if($error): ?><div class="alert alert-danger"><?=e($error)?></div><?php endif; ?>
 
-<div class="stepper">
-    <div class="step <?=($request && in_array((string)$request['status'],['approved','disbursed','settled'],true))?'done':'active'?>"><i class="fas fa-user-check me-1"></i>1. مراجعة FM</div>
-    <div class="step <?=($request && ($request['accounting_status'] ?? '') === 'verified')?'done':(($request && $request['status']==='approved')?'active':'')?>"><i class="fas fa-calculator me-1"></i>2. التحقق المحاسبي</div>
-    <div class="step <?=($request && in_array((string)$request['status'],['disbursed','settled'],true))?'done':''?>"><i class="fas fa-money-bill-transfer me-1"></i>3. الصرف</div>
-    <div class="step <?=($request && $request['status']==='disbursed')?'done':''?>"><i class="fas fa-calendar-check me-1"></i>4. جدول السداد</div>
-</div>
+<?php
+$salaryAdvanceInitialTab = 1;
+if ($request) {
+    if (in_array((string)$request['status'], ['disbursed','settled'], true)) {
+        $salaryAdvanceInitialTab = 4;
+    } elseif ((string)$request['status'] === 'approved') {
+        $salaryAdvanceInitialTab = (($request['accounting_status'] ?? '') === 'verified') ? 3 : 2;
+    }
+}
+?>
+<ul class="nav nav-tabs salary-advance-tabs mb-3" id="salaryAdvanceTabs" role="tablist">
+    <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#salary-tab-fm" type="button" role="tab" data-tab="1"><span class="tab-number">1</span> مراجعة المدير المالي</button></li>
+    <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#salary-tab-accounting" type="button" role="tab" data-tab="2"><span class="tab-number">2</span> التحقق المحاسبي</button></li>
+    <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#salary-tab-disbursement" type="button" role="tab" data-tab="3"><span class="tab-number">3</span> الصرف</button></li>
+    <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#salary-tab-schedule" type="button" role="tab" data-tab="4"><span class="tab-number">4</span> جدول السداد</button></li>
+</ul>
+<div class="tab-content salary-advance-tab-content" id="salaryAdvanceTabContent" data-initial-tab="<?= (int)$salaryAdvanceInitialTab ?>">
 
 <div class="card"><div class="card-body">
 <h5 class="mb-3">طلبات السلف التي تتطلب إجراء</h5>
@@ -341,6 +356,7 @@ require_once __DIR__ . '/../../includes/header.php';
 </div>
 </div></div>
 
+<div class="tab-pane fade" id="salary-tab-fm" role="tabpanel">
 <?php if($canFm && $fmRequest): ?>
 <div class="card"><div class="card-body">
 <h5>الخطوة 1 — مراجعة FM</h5>
@@ -384,6 +400,10 @@ require_once __DIR__ . '/../../includes/header.php';
 </div></div>
 <?php endif; ?>
 
+<?php endif; ?>
+</div>
+
+<div class="tab-pane fade" id="salary-tab-accounting" role="tabpanel">
 <?php if($canAccounting && $request['status']==='approved'): ?>
 <div class="card"><div class="card-body">
 <h5>الخطوة 2 — التحقق المحاسبي</h5>
@@ -415,7 +435,11 @@ require_once __DIR__ . '/../../includes/header.php';
 <div class="alert alert-success mt-3 mb-0">تم اعتماد التحقق المحاسبي. السلفة جاهزة للصرف.</div>
 <?php endif; ?>
 </div></div>
+<?php endif; ?>
+</div>
 
+<div class="tab-pane fade" id="salary-tab-disbursement" role="tabpanel">
+<?php if($canAccounting && $request['status']==='approved'): ?>
 <div class="card"><div class="card-body">
 <h5>الخطوة 3 — الصرف والترحيل</h5>
 <?php if((int)$request['require_accounting_verification']===1 && $request['accounting_status']!=='verified'): ?>
@@ -434,7 +458,9 @@ require_once __DIR__ . '/../../includes/header.php';
 <?php endif; ?>
 </div></div>
 <?php endif; ?>
+</div>
 
+<div class="tab-pane fade" id="salary-tab-schedule" role="tabpanel">
 <?php if($request['status']==='disbursed'): ?>
 <div class="card"><div class="card-body">
 <h5>النتيجة — تم الصرف</h5>
@@ -492,6 +518,7 @@ require_once __DIR__ . '/../../includes/header.php';
 <?php endif; ?>
 
 </div>
+</div>
 <script>
 (function(){
  const c=document.getElementById('fm_customized');
@@ -500,6 +527,25 @@ require_once __DIR__ . '/../../includes/header.php';
    fields.forEach(function(n){const el=document.querySelector('[name="'+n+'"]'); if(el) el.disabled=!c.checked;});
  }
  c?.addEventListener('change',sync); sync();
+
+ const content=document.getElementById('salaryAdvanceTabContent');
+ const tabs=document.querySelectorAll('#salaryAdvanceTabs .nav-link');
+ const initial=parseInt(content?.dataset.initialTab || '1',10);
+ function activate(n){
+   const button=document.querySelector('#salaryAdvanceTabs .nav-link[data-tab="'+n+'"]');
+   if(button && window.bootstrap) bootstrap.Tab.getOrCreateInstance(button).show();
+ }
+ const status=<?php echo json_encode((string)($request['status'] ?? ''), JSON_UNESCAPED_UNICODE); ?>;
+ const accountingStatus=<?php echo json_encode((string)($request['accounting_status'] ?? ''), JSON_UNESCAPED_UNICODE); ?>;
+ tabs.forEach(function(button){
+   const n=parseInt(button.dataset.tab || '1',10);
+   if((n===1 && ['approved','disbursed','settled'].includes(status)) ||
+      (n===2 && accountingStatus==='verified') ||
+      (n===3 && ['disbursed','settled'].includes(status))){
+     button.classList.add('done');
+   }
+ });
+ activate(initial);
 })();
 </script>
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>
