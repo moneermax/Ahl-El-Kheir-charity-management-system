@@ -1381,3 +1381,29 @@ Maintain all project rules:
 - procedural PHP only;
 - preserve existing accounting/audit architecture;
 - do not disturb protected Stage 5 evidence.
+
+
+## LATEST CONTINUATION CHECKPOINT — 2026-09-30 — Verification/Disbursement Atomicity Fix
+
+The salary-advance accounting lifecycle has been hardened.
+
+Previously, accounting could mark an FM-approved request as accounting_status = verified without performing financial disbursement, creating an approved + verified + not disbursed state.
+
+Current rule for salary advances requiring accounting verification:
+
+FM approval -> accounting verification + disbursement atomically -> disbursed
+
+There is no standalone verification action. Accounting rejection remains available before disbursement. Legacy approved + verified + not disbursed records are treated as ready for disbursement, not processed history.
+
+Processed history contains only disbursed, settled, rejected, and cancelled requests.
+
+Branch: fix/salary-advance-verification-disbursement-atomic
+Commits: ea15f86f88e4166ecf97cdaac1e851cfe2e395de, 2769cf2eb5b0062945510a53de9908954e8a5c1f, 7adcffc014f62d98601387f8194b25f87a89f1ec, f2cb76b9043743b3ee855837e8cea3563b96cc30
+
+Immediate runtime gate:
+1. Confirm SAR-2026-00009 appears as جاهزة للصرف and not in processed history.
+2. Disburse SAR-2026-00009.
+3. Confirm it becomes disbursed / تم الصرف, leaves the action queue, and appears in processed history.
+4. Only then continue Stage 6 direct-repayment tests.
+
+Do not reopen Stages 1–5. Do not treat approved + verified as a completed business outcome.
