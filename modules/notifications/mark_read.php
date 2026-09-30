@@ -44,6 +44,29 @@ try {
 
 $redirect = (string)($_POST['redirect'] ?? '');
 
+// The salary-advance FM review page was consolidated into the unified
+// processing page. Normalize legacy notification redirects at click time as
+// well as through the cleanup migration, so old notifications remain usable
+// even if the migration has not yet been run on an existing database.
+$legacySalaryAdvancePath = 'modules/hr/salary_advance_fm_review.php';
+$newSalaryAdvancePath = 'modules/hr/salary_advance_processing.php';
+if ($redirect !== '' && strpos($redirect, $legacySalaryAdvancePath) !== false) {
+    $redirect = str_replace($legacySalaryAdvancePath, $newSalaryAdvancePath, $redirect);
+    if ($notificationId > 0) {
+        try {
+            dbExecute(
+                "UPDATE notifications
+                 SET link = REPLACE(link, ?, ?)
+                 WHERE id = ?
+                   AND recipient_user_id = ?",
+                [$legacySalaryAdvancePath, $newSalaryAdvancePath, $notificationId, current_user_id()]
+            );
+        } catch (Throwable $e) {
+            // Redirect normalization remains effective even if cleanup fails.
+        }
+    }
+}
+
 if ($redirect === '') {
     $redirect = $notificationPageUrl;
 } elseif (strpos($redirect, APP_URL) === 0) {
