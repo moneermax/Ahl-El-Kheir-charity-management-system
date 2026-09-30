@@ -1106,3 +1106,38 @@ Final runtime edge harness: `tools/run_salary_advance_stage5_payroll_edge_tests.
 Final closure checkpoint remains merge commit `310f52aaae05cd9a86ce2b69c9ea278c3d1deb7d` for the Stage 5 implementation, with subsequent UI-only cleanup commits on `main`: `6bc8b94fdddff8593a8e9fe716865d302509a933`, `c04adaa1fe4ec27b187d7d080f85a8db0c593506`, and `f8ab8272b3eaf352cd02cd59ffafee3a0ee1cfb6`.
 
 Stage 6 — Direct Repayment & Settlement is **NOT STARTED** and is the next independent work unit.
+
+## 2026-09-30 — HR Salary Advance Stage 5 Closure / Repository Cleanup
+
+**Stage 5 — Repayment Schedule + Payroll Integration: DONE / RUNTIME VERIFIED / CLOSED.**
+
+Final runtime verification on `main` passed all four Stage 5 payroll edge cases, including:
+- `available_salary` insufficient-salary partial repayment.
+- `skip_month` insufficient-salary skip behavior.
+- `full_eligible_salary` with low eligible salary.
+- rollback-only cleanup with no permanent payroll/request/schedule/journal mutation.
+
+The final Stage 5 UI cleanup also removed permanent workflow-instruction text from the unified salary-advance processing page and replaced successful workflow-state feedback with temporary toast notifications. Repayment schedule generation/display logic was not changed.
+
+Stage 5 closure checkpoints:
+- Final runtime merge checkpoint: `310f52aaae05cd9a86ce2b69c9ea278c3d1deb7d`.
+- Final UI cleanup commits: `6bc8b94fdddff8593a8e9fe716865d302509a933`, `c04adaa1fe4ec27b187d7d080f85a8db0c593506`, `f8ab8272b3eaf352cd02cd59ffafee3a0ee1cfb6`.
+- Documentation closure commits: `65cb44479c0218ae28b2c80e6c071eac0f1ddafa`, `0c8671ce8f4338fa90a290d3b9c8da6a7699ccf4`, `450581766bdf783c4cd32bc05dd33287de9fde32`.
+
+### Git repository cleanup
+
+The repository was audited for stale branches after Stage 5 closure. All obsolete remote branches were deleted and all obsolete local-only branches were deleted after reviewing their unique commits. No historical branch was merged back into `main`.
+
+Final repository state:
+- local branch: `main` only;
+- remote development branch: `origin/main` only;
+- `origin/HEAD -> origin/main`;
+- working tree clean;
+- local `main` synchronized with `origin/main`.
+
+### Next work unit
+
+**Stage 6 — Direct Repayment & Settlement: NOT STARTED.**
+
+Stage 6 must begin in a fresh session. First inspect the current `main` repository, the master documents, the salary-advance continuation document, and the actual schema/code relevant to repayment/settlement. Do not implement Stage 6 behavior before the design/schema audit checkpoint.
+
