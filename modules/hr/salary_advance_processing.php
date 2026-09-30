@@ -372,7 +372,8 @@ require_once __DIR__ . '/../../includes/header.php';
 <?php endif; ?>
 <div class="col-md-6 mt-3"><label class="form-label">سبب الرفض <span class="text-muted">(مطلوب عند الرفض)</span></label><textarea name="fm_rejection_reason" class="form-control" rows="2" maxlength="2000"></textarea></div>
 <div class="d-flex gap-2 mt-3">
-<button class="btn btn-success" name="decision" value="approve" type="submit">اعتماد الطلب والانتقال للتحقق المحاسبي</button>
+<?php $fmApproveDisabled = $mismatches && !(int)$fmRequest['allow_custom_repayment_terms']; ?>
+<button class="btn btn-success" name="decision" value="approve" type="submit"<?= $fmApproveDisabled ? ' disabled' : '' ?>>اعتماد الطلب والانتقال للتحقق المحاسبي</button>
 <button class="btn btn-danger" name="decision" value="reject" type="submit">رفض الطلب</button>
 </div>
 </form>
