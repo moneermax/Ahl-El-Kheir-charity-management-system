@@ -113,7 +113,16 @@ window.AK_VOUCHER_BACK_URL=<?php echo json_encode(
         : APP_URL . 'modules/hr/salary_advance_request.php',
     JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES
 ); ?>;
-function akVoucherBack(){window.location.href=window.AK_VOUCHER_BACK_URL;return false;}
+function akVoucherBack(){
+    try {
+        if (window.opener && !window.opener.closed) {
+            window.close();
+            return false;
+        }
+        window.close();
+    } catch (e) {}
+    return false;
+}
 </script>
 <div class="back-row"><a class="btn" href="<?php echo e($isPrivileged ? APP_URL . 'modules/hr/salary_advance_dashboard.php' : APP_URL . 'modules/hr/salary_advance_request.php'); ?>" onclick="return akVoucherBack();"><span>العودة</span><span aria-hidden="true">→</span></a></div>
 <div class="controls"><button class="btn primary" onclick="window.print()">طباعة السند / Print</button></div>
