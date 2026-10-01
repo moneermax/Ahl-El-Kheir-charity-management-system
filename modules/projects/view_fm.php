@@ -352,8 +352,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             dbExecute("UPDATE project_approval SET approval_status='rejected',fm_rejection_reason=?,fm_reviewed_by=?,fm_reviewed_at=NOW() WHERE project_id=?",[$reason,akp_user_id(),$id]);
             akp_audit('FM_REJECT_PROJECT','project_approval',$id,['approval_status'=>'submitted'],['approval_status'=>'rejected','reason'=>$reason]);
 
+            // FM rejection is the terminal rejection notification to the Projects Manager.
+            // GM/VGM rejection is handled separately and only notifies FM for re-review.
+            try {
+                $projectManagers = dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id=r.id WHERE r.code='projects_manager' AND u.is_active=1");
+                foreach ($projectManagers as $projectManager) {
+                    ak_transaction_review_notify_event(
+                        (int)$projectManager['id'],
+                        'تم رفض المشروع مالياً',
+                        'المشروع «'.(string)($project['name']??'').'» ('.(string)($project['project_code']??'').') تم رفضه من المدير المالي ويحتاج إلى التعديل وإعادة الإرسال أو إغلاق الطلب. السبب: '.$reason,
+                        APP_URL.'modules/projects/view.php?id='.$id,
+                        $id,
+                        'project_fm_rejection'
+                    );
+                }
+            } catch (Throwable $notificationError) {}
 
-            flash('success','تم رفض المشروع مالياً وإعادته لمدير المشاريع.');
+            flash('success','تم رفض المشروع مالياً وإبلاغ مدير المشاريع.');
         }
     } catch (Throwable $e) {
         if ($asyncPaymentAction || $asyncFundingAction) fm_json_response(false,$e->getMessage(),[],422);
