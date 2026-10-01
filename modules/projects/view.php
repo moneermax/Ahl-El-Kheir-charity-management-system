@@ -2304,7 +2304,20 @@ document.getElementById('edit-milestone-description').value = button.dataset.mil
 <div class="text-primary fs-4"><i class="fas fa-paper-plane"></i></div>
 <div class="flex-grow-1">
 <h6 class="fw-bold mb-1">طلب إغلاق المشروع</h6>
-<p class="small text-muted mb-3">مشرف المشروع لا ينفذ الإغلاق مباشرة. أرسل الطلب إلى مدير المشاريع مع الملاحظات ليقوم بالمراجعة والتنفيذ.</p>
+<p class="small text-muted mb-3">مشرف المشروع يطلب الإغلاق من مدير المشاريع. إذا كان هناك رصيد متبقٍ من التمويل، سيُدرج تلقائياً كاسترداد مطلوب ويُخطر المدير المالي لمعالجته قبل الإغلاق النهائي.</p>
+<?php if ($totals['controlled_balance'] > 0.01): ?>
+<div class="alert alert-warning d-flex align-items-start gap-2 small">
+<i class="fas fa-rotate-left mt-1"></i>
+<div><strong>يوجد رصيد متبقٍ تحت سيطرة المشروع:</strong>
+<?php echo number_format((float)$totals['controlled_balance'], 2); ?> <?php echo e($currency); ?>.
+عند إرسال طلب الإغلاق سيتم إشعار المدير المالي تلقائياً لمعالجة إرجاع هذا المبلغ إلى حساب المؤسسة.
+</div>
+</div>
+<?php else: ?>
+<div class="alert alert-success d-flex align-items-start gap-2 small">
+<i class="fas fa-check-circle mt-1"></i><div>لا يوجد رصيد متبقٍ يحتاج إلى إرجاع حالياً.</div>
+</div>
+<?php endif; ?>
 <?php if ($closureRequest && (string)$closureRequest['new_status'] === 'closure_requested'): ?>
 <div class="alert alert-info d-flex align-items-start gap-2 small mb-0">
 <i class="fas fa-clock mt-1"></i>
