@@ -314,6 +314,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             flash('success','تم اعتماد المشروع مالياً. المشروع الآن بانتظار اعتماد المدير العام.');
 
+        } elseif ($action === 'fm_return_to_review') {
+            if (akp_role() !== 'financial_manager') throw new RuntimeException('إعادة المشروع للمراجعة المالية متاحة للمدير المالي فقط.');
+            $reason = fm_post('return_reason');
+            if ($reason === '') throw new RuntimeException('سبب إعادة المشروع للمراجعة المالية مطلوب.');
+            if ((string)$approval['approval_status'] !== 'fm_approved') throw new RuntimeException('المشروع ليس في حالة اعتماد مالي تسمح بإعادته للمراجعة.');
+
+            dbExecute('START TRANSACTION');
+            try {
+                akp_reverse_project_funding_release($id, $reason);
+                dbExecute("UPDATE project_approval SET approval_status='submitted', rejection_reason=NULL WHERE project_id=?", [$id]);
+                dbExecute('COMMIT');
+            } catch (Throwable $e) {
+                dbExecute('ROLLBACK');
+                throw $e;
+            }
+
+            akp_audit('FM_RETURN_TO_REVIEW','project_approval',$id,['approval_status'=>'fm_approved'],['approval_status'=>'submitted','reason'=>$reason]);
+            flash('success','تمت إعادة المشروع إلى مرحلة المراجعة المالية.');
         } elseif ($action === 'fm_reject_project') {
             $reason=fm_post('rejection_reason');
             if ($reason==='') throw new RuntimeException('سبب الرفض مطلوب.');
@@ -444,7 +462,22 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         <div class="card-header bg-success text-white"><i class="fas fa-money-check-dollar me-2"></i>صرف وتمييز مستندات التمويل</div>
         <div class="card-body">
             <div class="alert alert-light border mb-3">تظهر هذه الخيارات فقط بعد الاعتماد النهائي من المدير العام. لا تنشئ هذه الإجراءات قيداً محاسبياً جديداً؛ القيد الذي أنشأه الاعتماد النهائي هو حدث خروج الأموال، وهذه الخطوة توثق سند الصرف أو إيصال التحويل.</div>
-            <?php if ($paymentEvidence): ?>
+            <?php if ($approval['approval_status'] === 'fm_approved' && !$closed): ?>
+        <div class="card mb-4 fade-in border-warning">
+            <div class="card-header bg-warning text-dark"><i class="fas fa-rotate-left me-2"></i>إعادة المشروع للمراجعة المالية</div>
+            <div class="card-body">
+                <p class="mb-3">يمكن للمدير المالي إعادة المشروع إلى مرحلة المراجعة عند الحاجة إلى استكمال أو تصحيح تخصيصات التمويل. إذا سبق إنشاء إفراج محاسبي، سيتم عكسه قبل إعادة الحالة إلى المراجعة.</p>
+                <form method="post">
+                    <?php echo csrf_field(); ?>
+                    <input type="hidden" name="action" value="fm_return_to_review">
+                    <input type="text" name="return_reason" class="form-control mb-2" placeholder="سبب إعادة المراجعة (مطلوب)" required>
+                    <button class="btn btn-warning" onclick="return confirm('هل تريد إعادة المشروع إلى المراجعة المالية؟')"><i class="fas fa-rotate-left me-1"></i>إعادة للمراجعة المالية</button>
+                </form>
+            </div>
+        </div>
+    <?php endif; ?>
+
+    <?php if ($paymentEvidence): ?>
                 <?php foreach ($paymentEvidence as $payment): ?>
                     <?php $paymentMethodLabels=['cash'=>'نقدي','bank_transfer'=>'تحويل بنكي','e_wallet'=>'محفظة إلكترونية']; ?>
                     <?php $finalEvidenceConfirmed = fm_payment_evidence_finalized($id); ?>
