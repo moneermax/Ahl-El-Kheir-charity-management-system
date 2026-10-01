@@ -1191,11 +1191,11 @@ width: 24%;
 <div class="card mb-4 fade-in border-success">
 <div class="card-header bg-success text-white"><i class="fas fa-user-tie me-2"></i>اعتماد المدير العام</div>
 <div class="card-body">
-<p class="mb-3">المشروع معتمد مالياً. راجع مصادر التمويل والمبالغ المسجلة أدناه، ثم اعتمد نهائياً. سيتم تخصيص التمويل وحجزه للمشروع فوراً، دون أي أثر على السيولة الفعلية أو القيود المحاسبية — لا يُخصم أي مبلغ من الصندوق أو البنك أو المحفظة الإلكترونية إلا عند توثيق كل دفعة فعلية على حدة لاحقاً.</p>
+<p class="mb-3">تم إكمال الاعتماد المحاسبي النهائي والإفراج المالي من المدير المالي قبل هذه الخطوة. راجع حالة المشروع ثم نفّذ الاعتماد النهائي. لا ينشئ اعتماد المدير العام قيداً محاسبياً أو إفراجاً مالياً جديداً.</p>
 <form method="post" class="project-action-form d-inline">
 <?php echo csrf_field(); ?>
 <input type="hidden" name="action" value="approve_project">
-<button class="btn btn-success" onclick="return confirm('هل أنت متأكد من الاعتماد النهائي لهذا المشروع؟ سيتم تخصيص التمويل وحجزه للمشروع.')"><i class="fas fa-check-double me-1"></i> اعتماد نهائي</button>
+<button class="btn btn-success" onclick="return confirm('هل أنت متأكد من الاعتماد النهائي لهذا المشروع؟ الإفراج المحاسبي تم بالفعل من المدير المالي ولا ينشئ هذا الاعتماد قيداً جديداً.')"><i class="fas fa-check-double me-1"></i> اعتماد نهائي</button>
 </form>
 <form method="post" class="project-action-form d-inline ms-2">
 <?php echo csrf_field(); ?>
