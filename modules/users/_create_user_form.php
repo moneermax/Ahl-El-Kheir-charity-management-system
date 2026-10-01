@@ -47,9 +47,13 @@
                 <input type="text" name="username" class="form-control form-control-lg" dir="ltr" required pattern="[A-Za-z0-9_.]{3,30}">
             </div>
             <div class="col-md-3">
-                <label class="form-label">كلمة المرور المؤقتة <span class="text-danger">*</span></label>
-                <input type="password" name="password" class="form-control form-control-lg" dir="ltr" minlength="6" required autocomplete="new-password">
-                <div class="form-text">هذه كلمة مرور مؤقتة. سيُطلب من المستخدم تغييرها عند أول تسجيل دخول.</div>
+                <div class="alert alert-info h-100 mb-0 d-flex align-items-center">
+                    <div>
+                        <i class="fas fa-key me-1"></i>
+                        <strong>كلمة المرور</strong>
+                        <div class="small mt-1">سيولد النظام كلمة مرور مؤقتة تلقائياً بعد إنشاء الحساب، وستظهر لك مرة واحدة لتسليمها للموظف.</div>
+                    </div>
+                </div>
             </div>
             <div class="col-md-4">
                 <label class="form-label">البريد الإلكتروني</label>
@@ -103,7 +107,7 @@
         <div class="account-create-result">
             <div><i class="fas fa-link me-2"></i><strong>ما الذي سيحدث تلقائياً؟</strong></div>
             <ul class="mb-0 mt-2">
-                <li>إنشاء حساب المستخدم بكلمة مرور مؤقتة.</li>
+                <li>إنشاء حساب المستخدم بكلمة مرور مؤقتة يولدها النظام تلقائياً.</li>
                 <li>إنشاء ملف موظف مرتبط بالحساب بواسطة <code>employees.user_id</code>.</li>
                 <li>توليد كود الموظف وحالة التوظيف الأولية تلقائياً.</li>
                 <li>يمكن استكمال البيانات الوظيفية والشخصية لاحقاً دون إنشاء حساب آخر.</li>
