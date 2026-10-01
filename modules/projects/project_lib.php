@@ -337,3 +337,4 @@ if (!function_exists('akp_history_status_label')) {
 if (!function_exists('akp_money')) {
     function akp_money($value): string { return number_format((float)$value, 2); }
 }
+// Phase 5 audit checkpoint: accounting release/return implementation follows documented FM-controlled funding model.
