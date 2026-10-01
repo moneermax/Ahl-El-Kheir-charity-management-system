@@ -327,7 +327,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     );
                 }
             } catch (Throwable $notificationError) {}
-            flash('success','تم الاعتماد المحاسبي النهائي وإبلاغ المدير العام.');
+
+            // The Projects Manager is notified only after FM final accounting confirmation.
+            // GM final approval must not generate a second PM notification.
+            try {
+                $projectManagers = dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id=r.id WHERE r.code='projects_manager' AND u.is_active=1");
+                foreach ($projectManagers as $projectManager) {
+                    ak_transaction_review_notify_event(
+                        (int)$projectManager['id'],
+                        'تم اعتماد المشروع مالياً وإكمال الإفراج المحاسبي',
+                        'المشروع «'.(string)($project['name']??'').'» ('.(string)($project['project_code']??'').') أكمل المدير المالي المراجعة المالية النهائية والإفراج المحاسبي، وأصبح بانتظار الاعتماد النهائي من المدير العام.',
+                        APP_URL.'modules/projects/view.php?id='.$id,
+                        $id,
+                        'project_fm_final_accounting_approval_pm'
+                    );
+                }
+            } catch (Throwable $notificationError) {}
+            flash('success','تم الاعتماد المحاسبي النهائي وإبلاغ المدير العام ومدير المشاريع.');
 
         } elseif ($action === 'fm_reject_project') {
             $reason=fm_post('rejection_reason');
