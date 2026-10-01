@@ -39,3 +39,8 @@ The closure workflow follows a strict role boundary:
 - FM processing creates the balanced return journal and `project_funding_returns` record, then notifies the Projects Manager that the financial reconciliation is complete.
 
 This preserves the existing PS → Projects Manager closure request while making any savings reconciliation an FM-only financial task.
+
+
+### Static audit correction — repeated/partial savings returns
+
+The FM return path was hardened before runtime verification: one funding allocation may require a partial return and a later additional return. The reconciliation table therefore indexes (rather than uniquely constrains) the allocation, the accounting helper validates cumulative returned amount against both the allocation amount and the project's current controlled balance, and the FM UI aggregates all returns per allocation. This prevents a partial first return from making the remaining savings permanently unrecoverable.
