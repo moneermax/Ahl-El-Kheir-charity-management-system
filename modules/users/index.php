@@ -4,6 +4,7 @@ require_once dirname(__DIR__, 2) . '/config/config.php';
 require_once dirname(__DIR__, 2) . '/config/database.php';
 require_once dirname(__DIR__, 2) . '/config/functions.php';
 require_once dirname(__DIR__, 2) . '/config/session.php';
+require_once dirname(__DIR__, 2) . '/modules/hr/lib_employee_provisioning.php';
 Session::start();
 if (!Session::isLoggedIn() || !in_array(Session::getUserRole(), ['admin', 'sudo', 'hr_manager'], true)) {
     header('Location: ' . APP_URL . 'index.php'); exit();
@@ -142,13 +143,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$manageAcct) {
 
             if (!$errors) {
                 $roleId = (int)array_column($roles, 'id', 'code')[$rc];
-                dbExecute("INSERT INTO users (role_id, username, password_hash, full_name, email, phone, is_active, created_by, department_id, manager_id, gender) VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?)",
-                    [$roleId, $un, password_hash($pw, PASSWORD_DEFAULT), $fn, $em !== '' ? $em : null, $ph !== '' ? $ph : null, Session::getUserId(), $dept, $mgr, $gn]);
-                $newUserId = (int)db()->lastInsertId();
-                if ($linkEmployeeId > 0) {
-                    dbExecute("UPDATE employees SET user_id = ? WHERE id = ? AND user_id IS NULL", [$newUserId, $linkEmployeeId]);
+                $pdo = db();
+                try {
+                    $pdo->beginTransaction();
+                    dbExecute("INSERT INTO users (role_id, username, password_hash, full_name, email, phone, is_active, created_by, department_id, manager_id, gender) VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?)",
+                        [$roleId, $un, password_hash($pw, PASSWORD_DEFAULT), $fn, $em !== '' ? $em : null, $ph !== '' ? $ph : null, Session::getUserId(), $dept, $mgr, $gn]);
+                    $newUserId = (int)$pdo->lastInsertId();
+
+                    // Every newly-created account represents an employee. The employee
+                    // profile is provisioned automatically; optional HR/personal fields
+                    // remain empty until the employee completes their profile.
+                    if ($linkEmployeeId > 0) {
+                        dbExecute("UPDATE employees SET user_id = ?, department_id = COALESCE(?, department_id) WHERE id = ? AND user_id IS NULL", [$newUserId, $dept, $linkEmployeeId]);
+                    } else {
+                        hrProvisionEmployeeForUser($pdo, $newUserId, [
+                            'full_name' => $fn,
+                            'email' => $em !== '' ? $em : null,
+                            'phone' => $ph !== '' ? $ph : null,
+                            'gender' => $gn,
+                            'department_id' => $dept,
+                        ], Session::getUserId());
+                    }
+
+                    $pdo->commit();
+                } catch (Throwable $e) {
+                    if ($pdo->inTransaction()) {
+                        $pdo->rollBack();
+                    }
+                    throw $e;
                 }
-                flash('success', 'تم إنشاء المستخدم: ' . $un);
+                flash('success', 'تم إنشاء المستخدم: ' . $un . ' وإنشاء ملف الموظف المرتبط به.');
                 header('Location: ' . APP_URL . 'modules/users/index.php'); exit();
             }
         }
