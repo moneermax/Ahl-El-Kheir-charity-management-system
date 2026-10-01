@@ -55,7 +55,7 @@ if (!in_array($mime, $allowedMimes, true)) {
 }
 
 header('Content-Type: ' . $mime);
-header('Content-Length: (string)filesize($real));
+header('Content-Length: ' . (string)filesize($real));
 header('Cache-Control: private, max-age=300');
 header('Content-Disposition: inline; filename="' . rawurlencode((string)$row['original_name']) . '"');
 readfile($real);
