@@ -35,7 +35,7 @@ function hrSalaryAdvanceDirectRepaymentEvidenceUpload(
 
     $repayment = dbFetchOne(
         "SELECT d.id, d.repayment_account_id, d.repayment_amount, d.repayment_reference,
-                d.repayment_date, r.salary_advance_request_id
+                d.repayment_date, d.salary_advance_request_id
          FROM hr_salary_advance_direct_repayments d
          JOIN hr_salary_advance_requests r ON r.id = d.salary_advance_request_id
          WHERE d.id = ? AND d.salary_advance_request_id = ?
