@@ -53,3 +53,19 @@ The FM unused-fund return helper was hardened before runtime certification. The 
 Code commit: `c631ffe571e339fd8a61196ad046f1d7344b964c`.
 
 Runtime verification remains required; no workflow is marked certified from static inspection alone.
+
+
+## 2026-10-01 — Approval notification boundary re-audited
+
+Static review confirmed and corrected the notification boundary independently of the accounting-release boundary:
+
+- PM submit/resubmit → FM notification.
+- FM preliminary approval → no PM/GM notification.
+- FM final accounting confirmation → GM/VGM notification + exactly one PM notification.
+- GM/VGM final approval → no PM notification and no second release.
+- GM/VGM rejection → FM-only re-review notification.
+- FM rejection → terminal PM rejection notification.
+
+A hidden shutdown notification path that previously sent project_gm_approval_pm was removed. Generic audit logging was also made notification-free so approval notifications cannot be emitted implicitly from akp_audit().
+
+Runtime verification of the complete notification chain remains required.
