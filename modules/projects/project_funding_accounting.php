@@ -202,8 +202,8 @@ if (!function_exists('akp_return_project_funding')) {
         if (!$approval || $approval['approval_status'] !== 'approved') throw new RuntimeException('لا يمكن إرجاع رصيد قبل الاعتماد النهائي للمشروع.');
 
         $lifecycle = dbFetchOne('SELECT lifecycle_status FROM project_lifecycle WHERE project_id=?', [$projectId]);
-        if (!$lifecycle || !in_array((string)$lifecycle['lifecycle_status'], ['completed','under_review'], true)) {
-            throw new RuntimeException('إرجاع الرصيد المتبقي متاح بعد انتهاء التنفيذ وطلب المراجعة المالية.');
+        if (!$lifecycle || !in_array((string)$lifecycle['lifecycle_status'], ['closure_requested','completed','under_review'], true)) {
+            throw new RuntimeException('إرجاع الرصيد المتبقي متاح عند طلب إغلاق المشروع أو أثناء المراجعة الختامية.');
         }
 
         $allocation = dbFetchOne(
@@ -265,6 +265,20 @@ if (!function_exists('akp_return_project_funding')) {
             dbExecute('ROLLBACK');
             throw $e;
         }
+        // Notify the Projects Manager that the requested refund has been processed.
+        try {
+            $projectManagers = dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id=r.id WHERE r.code='projects_manager' AND u.is_active=1");
+            foreach ($projectManagers as $projectManager) {
+                ak_transaction_review_notify_event(
+                    (int)$projectManager['id'],
+                    'تمت معالجة استرداد رصيد المشروع',
+                    'تمت معالجة إرجاع الرصيد المتبقي للمشروع «' . (string)($project['name'] ?? '') . '». يمكن متابعة إجراء الإغلاق بعد اكتمال المراجعة.',
+                    APP_URL . 'modules/projects/view.php?id=' . $projectId,
+                    $projectId,
+                    'project_funding_return_processed'
+                );
+            }
+        } catch (Throwable $notificationError) {}
         return $entryId;
     }
 }
