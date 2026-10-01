@@ -1211,3 +1211,10 @@ Continued the Projects Phase 5 audit from the existing `audit/projects-phase5-ac
 A deeper static audit then identified and corrected legacy FM approval/rejection handlers and duplicate FM UI in `modules/projects/view.php`. FM workflow is now canonical in `view_fm.php`; legacy FM actions in the general project view are blocked without side effects. Canonical FM rejection now sends the terminal PM notification. GM final approval remains notification-free toward PM and does not create a second accounting release.
 
 Runtime verification remains the next gate.
+
+
+### 2026-10-01 — Projects Phase 5 continued static hardening
+- Continued from the merged Phase 5 workflow reconciliation checkpoint on `main`.
+- Identified and corrected a concurrency window in FM controlled-fund returns; documented in the Phase 5 checkpoint and audit plan.
+- Code: `c631ffe571e339fd8a61196ad046f1d7344b964c`.
+- Runtime certification is still pending and must use the existing controlled project data rather than creating an unnecessary new fixture.
