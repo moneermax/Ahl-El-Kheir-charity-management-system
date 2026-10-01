@@ -42,19 +42,15 @@ if (!class_exists('Session', false)) {
                 $logoutPage = $script === 'logout.php';
 
                 if (!$passwordChangePage && !$logoutPage && function_exists('dbFetchOne')) {
-                    try {
-                        $passwordState = dbFetchOne(
-                            "SELECT password_change_required FROM users WHERE id = ? LIMIT 1",
-                            [(int)$_SESSION['user_id']]
-                        );
+                    $passwordState = dbFetchOne(
+                        "SELECT password_change_required FROM users WHERE id = ? LIMIT 1",
+                        [(int)$_SESSION['user_id']]
+                    );
 
-                        if ($passwordState && (int)$passwordState['password_change_required'] === 1) {
-                            $target = (defined('APP_URL') ? APP_URL : '/') . 'modules/users/change_password.php?forced=1';
-                            header('Location: ' . $target);
-                            exit();
-                        }
-                    } catch (Throwable $e) {
-                        // Do not break authentication if the optional flag cannot be read.
+                    if ($passwordState && (int)$passwordState['password_change_required'] === 1) {
+                        $target = (defined('APP_URL') ? APP_URL : '/') . 'modules/users/change_password.php?forced=1';
+                        header('Location: ' . $target);
+                        exit();
                     }
                 }
             }
