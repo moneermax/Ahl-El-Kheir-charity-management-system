@@ -1187,41 +1187,6 @@ width: 24%;
 <?php endif; ?>
 </div>
 <?php endif; ?>
-<?php if ($role === 'financial_manager' && $approval['approval_status'] === 'submitted'): ?>
-<div class="card mb-4 fade-in border-primary">
-<div class="card-header bg-primary text-white"><i class="fas fa-money-check-alt me-2"></i>مراجعة المدير المالي</div>
-<div class="card-body">
-<div class="project-module-note mb-3">راجع الميزانية المعتمدة والرسوم الحكومية وتخصيصات التمويل. يجب تحديد حسابات التمويل الفعلية (1100 النقدية، 1200 البنك، 1300 المحفظة الإلكترونية) وتخصيص كامل إجمالي المتطلبات المالية قبل الاعتماد.</div>
-<form method="post" class="project-action-form d-inline">
-<?php echo csrf_field(); ?>
-<input type="hidden" name="action" value="fm_approve_project">
-<button class="btn btn-success" onclick="return confirm('هل أنت متأكد من اعتماد هذا المشروع مالياً؟')"><i class="fas fa-check me-1"></i> اعتماد مالي</button>
-</form>
-<form method="post" class="project-action-form d-inline ms-2">
-<?php echo csrf_field(); ?>
-<input type="hidden" name="action" value="fm_reject_project">
-<input type="text" name="rejection_reason" class="form-control d-inline-block" style="width: 300px;" placeholder="سبب الرفض المالي (مطلوب)" required>
-<button class="btn btn-danger ms-2"><i class="fas fa-times me-1"></i> رفض</button>
-</form>
-</div>
-</div>
-<?php endif; ?>
-<?php if ($role === 'financial_manager' && $approval['approval_status'] === 'fm_approved'): ?>
-<div class="card mb-4 fade-in border-warning">
-<div class="card-header bg-warning text-dark"><i class="fas fa-rotate-left me-2"></i>استكمال تخصيص التمويل</div>
-<div class="card-body">
-<p class="mb-3">هذا المشروع تم اعتماده مالياً قبل تطبيق شرط تخصيص التمويل الصريح. أعده للمراجعة المالية، ثم سجّل حسابات التمويل الفعلية قبل إعادة الاعتماد.</p>
-<form method="post" class="project-action-form">
-<?php echo csrf_field(); ?>
-<input type="hidden" name="action" value="fm_return_to_review">
-<div class="input-group">
-<input type="text" name="return_reason" class="form-control" placeholder="سبب إعادة المراجعة (مطلوب)" required value="استكمال تخصيص حسابات تمويل المشروع">
-<button class="btn btn-warning" onclick="return confirm('سيُعاد المشروع إلى مرحلة المراجعة المالية. هل تريد المتابعة؟')"><i class="fas fa-rotate-left me-1"></i> إعادة للمراجعة المالية</button>
-</div>
-</form>
-</div>
-</div>
-<?php endif; ?>
 <?php if (in_array($role, ['admin', 'general_manager', 'vice_general_manager'], true) && $approval['approval_status'] === 'fm_approved'): ?>
 <div class="card mb-4 fade-in border-success">
 <div class="card-header bg-success text-white"><i class="fas fa-user-tie me-2"></i>اعتماد المدير العام</div>
@@ -1230,7 +1195,7 @@ width: 24%;
 <form method="post" class="project-action-form d-inline">
 <?php echo csrf_field(); ?>
 <input type="hidden" name="action" value="approve_project">
-<button class="btn btn-success" onclick="return confirm('هل أنت متأكد من الاعتماد النهائي لهذا المشروع؟ سيتم تخصيص التمويل وحجزه للمشروع.')"><i class="fas fa-check-double me-1"></i> اعتماد نهائي وإنشاء قيد</button>
+<button class="btn btn-success" onclick="return confirm('هل أنت متأكد من الاعتماد النهائي لهذا المشروع؟ سيتم تخصيص التمويل وحجزه للمشروع.')"><i class="fas fa-check-double me-1"></i> اعتماد نهائي</button>
 </form>
 <form method="post" class="project-action-form d-inline ms-2">
 <?php echo csrf_field(); ?>
