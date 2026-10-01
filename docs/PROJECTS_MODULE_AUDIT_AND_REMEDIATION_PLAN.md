@@ -850,3 +850,11 @@ The clarified business requirement is:
 
 **Current status: TO DO / NEXT. No Projects accounting implementation is authorized by this checkpoint.**
 
+
+
+## 2026-10-01 — Phase 5 closure ownership clarification
+
+- Primary Project Supervisor submits the project closure request; that submission ends the PS responsibility for closure and finance.
+- If the system detects unused controlled funds, only the Financial Manager is notified and handles the full savings/refund accounting reconciliation.
+- If unused controlled funds are zero, no FM notification is generated.
+- PS is never asked to perform or confirm the refund after submitting closure.
