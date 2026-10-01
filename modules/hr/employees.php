@@ -79,12 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($action, ['edit','suspend'
             $work_mode = $_POST['work_mode'] ?? 'onsite';
             $basic_salary = (float)($_POST['basic_salary'] ?? 0);
             $bank_account = trim($_POST['bank_account'] ?? '');
-            $existing_user_id = (int)($_POST['existing_user_id'] ?? 0);
-
-            if (false) {
-                // Account creation is handled exclusively by the shared user+employee flow above.
-            } else {
-                $newStateCode = $_POST['employment_state'] ?? '';
+            $newStateCode = $_POST['employment_state'] ?? '';
                 if (!isset($statesByCode[$newStateCode])) throw new RuntimeException('حالة التوظيف المختارة غير صالحة.');
                 $old = dbFetchOne('SELECT employment_state_id, basic_salary FROM employees WHERE id = ?', [$emp_id]);
                 // Employee code is immutable after creation; do not accept or update it from the edit form.
@@ -97,7 +92,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($action, ['edit','suspend'
                     hrSetEmploymentState($emp_id, (int)$statesByCode[$newStateCode]['id'], Session::getUserID(), 'Employment state changed from employee edit');
                 }
                 $message = 'تم تحديث بيانات الموظف وحالته الوظيفية بنجاح';
-            }
             if (isset($_FILES['contract_file']) && $_FILES['contract_file']['error'] === UPLOAD_ERR_OK) {
                 $upload_dir = __DIR__ . '/../../storage/hr_contracts/'; if (!is_dir($upload_dir)) mkdir($upload_dir,0755,true);
                 $file=$_FILES['contract_file']; $ext=strtolower(pathinfo($file['name'],PATHINFO_EXTENSION));
