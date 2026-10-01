@@ -157,9 +157,9 @@ function hrSalaryAdvanceAccountingDisburse(PDO $pdo, int $requestId, int $userId
         throw new RuntimeException('المبلغ المعتمد للسلفة غير صالح.');
     }
 
-    if ((int)$request['require_accounting_verification'] === 1 && $request['accounting_status'] !== 'verified') {
-        throw new RuntimeException('يجب إكمال التحقق المحاسبي قبل صرف السلفة.');
-    }
+    // Accounting verification is completed atomically inside the locked
+    // disbursement transaction below. Do not reject a pending request here,
+    // otherwise the atomic verification path can never be reached.
 
     $existing = dbFetchOne(
         "SELECT id, entry_code
