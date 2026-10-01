@@ -802,7 +802,17 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                         if (reference && result.reference !== undefined) reference.textContent = result.reference || '—';
                     }
                 } catch (error) {
-                    alert(error.message || 'تعذر تنفيذ العملية.');
+                    if (window.AKNotify && typeof window.AKNotify.notificationToast === 'function') {
+                        window.AKNotify.notificationToast('error', 'تعذر تنفيذ العملية', error.message || 'تعذر تنفيذ العملية.');
+                    } else {
+                        const fallback = document.createElement('div');
+                        fallback.className = 'alert alert-danger alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3 shadow';
+                        fallback.style.zIndex = '1080';
+                        fallback.innerHTML = '<strong>تعذر تنفيذ العملية</strong><div class="small mt-1"></div><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="إغلاق"></button>';
+                        fallback.querySelector('.small').textContent = error.message || 'تعذر تنفيذ العملية.';
+                        document.body.appendChild(fallback);
+                        window.setTimeout(function () { if (fallback.parentNode) fallback.remove(); }, 8000);
+                    }
                 } finally {
                     if (submit) submit.disabled = false;
                 }
