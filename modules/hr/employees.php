@@ -5,6 +5,7 @@ require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../config/functions.php';
 require_once __DIR__ . '/../../config/session.php';
 require_once __DIR__ . '/lib_employment.php';
+require_once __DIR__ . '/lib_employee_provisioning.php';
 
 Session::start();
 $pdo = db();
@@ -16,6 +17,40 @@ if (!Session::isLoggedIn() || !in_array($userRole, ['hr_manager', 'hr_staff', 'a
 $action = $_GET['action'] ?? $_POST['action'] ?? 'list';
 $emp_id = (int)($_GET['id'] ?? $_POST['employee_id'] ?? 0);
 $message = ''; $msg_type = 'success';
+
+$roles = dbFetchAll("SELECT id, code, name_ar, name_en FROM roles ORDER BY id");
+$departments = dbFetchAll("SELECT id, name_ar, name_en FROM departments ORDER BY id");
+$managers = dbFetchAll("SELECT u.id, u.full_name, u.username
+    FROM users u
+    JOIN roles r ON r.id = u.role_id
+    WHERE r.code IN ('admin','sudo','general_manager','vice_general_manager','financial_manager','accountant')
+      AND u.is_active = 1
+    ORDER BY u.full_name");
+$nameCol = (defined('AK_LANG') && AK_LANG === 'en') ? 'name_en' : 'name_ar';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_user'])) {
+    try {
+        if (!verify_csrf()) {
+            throw new RuntimeException('انتهت صلاحية الجلسة.');
+        }
+        hrCreateUserWithEmployee(db(), [
+            'full_name' => trim($_POST['full_name'] ?? ''),
+            'username' => trim($_POST['username'] ?? ''),
+            'password' => $_POST['password'] ?? '',
+            'role_code' => trim($_POST['role_code'] ?? ''),
+            'email' => trim($_POST['email'] ?? ''),
+            'phone' => trim($_POST['phone'] ?? ''),
+            'gender' => $_POST['gender'] ?? null,
+            'department_id' => !empty($_POST['department_id']) ? (int)$_POST['department_id'] : null,
+            'manager_id' => !empty($_POST['manager_id']) ? (int)$_POST['manager_id'] : null,
+        ], Session::getUserID());
+        $message = 'تم إنشاء حساب الموظف وملف الموظف المرتبط به تلقائياً.';
+        $action = 'list';
+    } catch (Throwable $e) {
+        $message = 'خطأ: ' . $e->getMessage();
+        $msg_type = 'error';
+    }
+}
 
 $states = hrGetEmploymentStates();
 $unlinkedUsers = dbFetchAll("SELECT u.id, u.username, u.full_name FROM users u LEFT JOIN employees e ON e.user_id = u.id WHERE e.id IS NULL AND u.is_active = 1 ORDER BY u.full_name");
@@ -157,6 +192,12 @@ $pageTitle='إدارة الموظفين'; require_once __DIR__.'/../../includes/
 <td><?php if(!empty($emp['state_name'])): $stateClass=$emp['state_code']==='suspended'?'suspended':(($emp['state_category']??'')==='separation'?'separation':($emp['state_code']==='probation'?'probation':'')); ?><span class="state-pill <?php echo $stateClass; ?>"><span class="state-dot"></span><?php echo htmlspecialchars($emp['state_name']); ?></span><span class="state-meta"><?php echo htmlspecialchars($emp['state_code']); ?></span><?php else: ?><span class="badge-fm badge-gray">غير محددة</span><?php endif; ?></td>
 <td class="text-end"><a href="?action=edit&id=<?php echo $emp['id']; ?>" class="btn-fm btn-ghost" style="font-size:.75rem;padding:4px 8px" title="تعديل"><i class="fas fa-edit"></i></a><?php $isAdmin=in_array(Session::getUserRole(),['admin','sudo'],true); if(($emp['state_code']??'')!=='terminated'): ?><?php if(($emp['state_code']??'')==='active'||($emp['state_code']??'')==='probation'): ?><form method="POST" style="display:inline"><input type="hidden" name="action" value="suspend"><input type="hidden" name="employee_id" value="<?php echo $emp['id']; ?>"><button class="btn-fm btn-warning" style="font-size:.75rem;padding:4px 8px" title="إيقاف مؤقت" onclick="return confirm('هل أنت متأكد من إيقاف هذا الموظف مؤقتاً؟')"><i class="fas fa-pause"></i></button></form><?php elseif(($emp['state_code']??'')==='suspended'): ?><form method="POST" style="display:inline"><input type="hidden" name="action" value="activate"><input type="hidden" name="employee_id" value="<?php echo $emp['id']; ?>"><button class="btn-fm btn-success" style="font-size:.75rem;padding:4px 8px" title="تفعيل"><i class="fas fa-play"></i></button></form><?php endif; ?><?php if($isAdmin): ?><a href="?action=delete&id=<?php echo $emp['id']; ?>" class="btn-fm btn-danger-ghost" style="font-size:.75rem;padding:4px 8px" title="إنهاء الخدمة" onclick="return confirm('سيتم تغيير حالة الموظف إلى منهي الخدمة. هل أنت متأكد؟')"><i class="fas fa-user-slash"></i></a><?php endif; ?><?php endif; ?></td>
 </tr><?php endforeach; endif; ?></tbody></table></div></div></div>
+<?php elseif($action==='add'): ?>
+<div class="fm-card">
+    <div class="fm-card-body p-0">
+        <?php include __DIR__ . '/_user_create_form.php'; ?>
+    </div>
+</div>
 <?php else: ?>
 <div class="fm-card"><div class="fm-card-head"><span>📝 بيانات الموظف</span><a href="employees.php" class="btn-fm btn-ghost" style="background:#fff;color:#1b4d8f;font-size:.8rem">العودة للقائمة</a></div><div class="fm-card-body"><form method="POST" enctype="multipart/form-data"><div class="row g-3">
 <div class="col-md-6"><label class="form-label">الاسم الكامل <span class="text-danger">*</span></label><input type="text" name="full_name" class="form-control" required value="<?php echo htmlspecialchars($employee['full_name']??''); ?>"></div><div class="col-md-3"><label class="form-label">كود الموظف</label><input type="text" class="form-control bg-light" readonly value="<?php echo htmlspecialchars($action==='add'?$nextEmployeeCode:($employee['employee_code']??'')); ?>"><small class="text-muted"><?php echo $action==='add'?'يتم إنشاء الكود تلقائياً بواسطة النظام ولا يمكن إدخاله يدوياً.':'كود الموظف ثابت ولا يمكن تغييره بعد الإنشاء.'; ?></small></div><div class="col-md-3"><label class="form-label">الرقم القومي</label><input type="text" name="national_id" class="form-control" value="<?php echo htmlspecialchars($employee['national_id']??''); ?>"></div>
