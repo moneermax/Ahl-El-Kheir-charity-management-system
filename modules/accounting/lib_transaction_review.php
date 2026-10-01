@@ -155,9 +155,10 @@ function ak_transaction_review_notify_fm_event(int $referenceId, string $referen
 }
 
 /**
- * GM/VGM approval notifications are registered at request shutdown so they
+ * Project approval notifications are registered at request shutdown so they
  * run only after the project action has completed (including its transaction).
- * FM approval/rejection notifications are handled by the canonical FM page.
+ * This keeps notification delivery separate from the accounting/business
+ * transition while covering all project approval return paths consistently.
  */
 if (!function_exists('ak_register_project_approval_notifications')) {
 function ak_register_project_approval_notifications(): void {
@@ -166,7 +167,7 @@ function ak_register_project_approval_notifications(): void {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
 
     $action = (string)($_POST['action'] ?? '');
-    if ($action !== 'approve_project') return;
+    if (!in_array($action, ['fm_reject_project', 'approve_project', 'reject_project'], true)) return;
 
     $projectId = (int)($_POST['project_id'] ?? $_GET['id'] ?? 0);
     if ($projectId <= 0) return;
@@ -188,6 +189,21 @@ function ak_register_project_approval_notifications(): void {
             $link = APP_URL . 'modules/projects/view.php?id=' . $projectId;
             $submittedBy = (int)($approval['submitted_by'] ?? 0);
 
+            if ($action === 'fm_reject_project' && $approval['approval_status'] === 'rejected') {
+                if ($submittedBy > 0) {
+                    $reason = (string)(dbFetchOne('SELECT fm_rejection_reason FROM project_approval WHERE project_id = ?', [$projectId])['fm_rejection_reason'] ?? '');
+                    ak_transaction_review_notify_event(
+                        $submittedBy,
+                        'إعادة المشروع للتعديل',
+                        $label . ' تم رفضه مالياً وإعادته إلى مدير المشاريع للتعديل.' . ($reason !== '' ? ' سبب الرفض: ' . $reason : ''),
+                        $link,
+                        $projectId,
+                        'project_fm_rejection'
+                    );
+                }
+                return;
+            }
+
             if ($action === 'approve_project' && $approval['approval_status'] === 'approved') {
                 // Final GM/VGM approval means the FM can now execute the actual
                 // payment evidence step. Notify every active FM.
@@ -199,11 +215,34 @@ function ak_register_project_approval_notifications(): void {
                     $link
                 );
 
-                // The Projects Manager is deliberately not notified here.
-                // PM notification belongs to the FM final-accounting boundary,
-                // not to the later GM/VGM approval.
+                // The PM also needs confirmation because the project may now
+                // proceed to actual execution after payment release.
+                if ($submittedBy > 0) {
+                    ak_transaction_review_notify_event(
+                        $submittedBy,
+                        'تم اعتماد المشروع نهائياً',
+                        $label . ' تم اعتماده نهائياً ويمكن الانتقال إلى إجراءات التنفيذ بعد استكمال الصرف.',
+                        $link,
+                        $projectId,
+                        'project_gm_approval_pm'
+                    );
+                }
+                return;
             }
 
+            if ($action === 'reject_project' && $approval['approval_status'] === 'rejected') {
+                if ($submittedBy > 0) {
+                    $reason = (string)(dbFetchOne('SELECT rejection_reason FROM project_approval WHERE project_id = ?', [$projectId])['rejection_reason'] ?? '');
+                    ak_transaction_review_notify_event(
+                        $submittedBy,
+                        'إعادة المشروع للتعديل',
+                        $label . ' تم رفضه نهائياً وإعادته إلى مدير المشاريع للتعديل.' . ($reason !== '' ? ' سبب الرفض: ' . $reason : ''),
+                        $link,
+                        $projectId,
+                        'project_gm_rejection'
+                    );
+                }
+            }
         } catch (Throwable $notificationError) {
             // Never change the completed project action because notification delivery failed.
         }
