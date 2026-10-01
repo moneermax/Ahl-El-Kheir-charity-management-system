@@ -191,9 +191,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$manageAcct) {
             if (!in_array($rc, $allowedRoles, true)) $errors[] = 'دور غير صالح.';
             if (!$errors) {
                 $roleId = (int)array_column($roles, 'id', 'code')[$rc];
-                dbExecute("UPDATE users SET full_name=?, email=?, phone=?, role_id=?, department_id=?, manager_id=?, gender=?, is_active=?, updated_at=NOW() WHERE id=?",
-                    [$fn, $em !== '' ? $em : null, $ph !== '' ? $ph : null, $roleId, $dept, $mgr, $gender, $isActive, $uid]);
-                flash('success', 'تم تحديث بيانات المستخدم.');
+                $pdo = db();
+                try {
+                    $pdo->beginTransaction();
+                    dbExecute("UPDATE users SET full_name=?, email=?, phone=?, role_id=?, department_id=?, manager_id=?, gender=?, is_active=?, updated_at=NOW() WHERE id=?",
+                        [$fn, $em !== '' ? $em : null, $ph !== '' ? $ph : null, $roleId, $dept, $mgr, $gender, $isActive, $uid]);
+                    hrSyncEmployeeIdentityFromUser($pdo, $uid, [
+                        'full_name' => $fn,
+                        'email' => $em !== '' ? $em : null,
+                        'phone' => $ph !== '' ? $ph : null,
+                        'gender' => $gender,
+                        'department_id' => $dept,
+                    ]);
+                    $pdo->commit();
+                } catch (Throwable $e) {
+                    if ($pdo->inTransaction()) {
+                        $pdo->rollBack();
+                    }
+                    throw $e;
+                }
+                flash('success', 'تم تحديث بيانات المستخدم وملف الموظف المرتبط.');
                 header('Location: ' . APP_URL . 'modules/users/index.php'); exit();
             }
         }
