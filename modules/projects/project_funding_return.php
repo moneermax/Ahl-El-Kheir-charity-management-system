@@ -38,10 +38,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $allocations = dbFetchAll(
     "SELECT f.id, f.amount, f.currency_code, a.code AS source_account_code, a.name_ar AS source_account_name,
-            r.id AS return_id, r.amount AS returned_amount, r.journal_entry_id
+            COALESCE(r.returned_amount,0) AS returned_amount
      FROM project_funding_allocations f
      JOIN accounts a ON a.id=f.source_account_id
-     LEFT JOIN project_funding_returns r ON r.funding_allocation_id=f.id
+     LEFT JOIN (
+         SELECT funding_allocation_id, SUM(amount) AS returned_amount
+         FROM project_funding_returns
+         GROUP BY funding_allocation_id
+     ) r ON r.funding_allocation_id=f.id
      WHERE f.project_id=? AND f.status='posted'
      ORDER BY f.id",
     [$id]
@@ -84,21 +88,22 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                             <td><?php echo number_format((float)$row['amount'], 2); ?> <?php echo e($row['currency_code'] ?: $currency); ?></td>
                             <td><?php echo number_format((float)($row['returned_amount'] ?? 0), 2); ?> <?php echo e($row['currency_code'] ?: $currency); ?></td>
                             <td>
-                                <?php if (!empty($row['return_id'])): ?>
-                                    <span class="badge bg-success">تم الإرجاع</span>
+                                <?php $allocationRemaining = round((float)$row['amount'] - (float)$row['returned_amount'], 2); ?>
+                                <?php if ($allocationRemaining <= 0.01): ?>
+                                    <span class="badge bg-success">تمت التسوية</span>
                                 <?php else: ?>
-                                    <span class="badge bg-warning text-dark">متاح للمراجعة</span>
+                                    <span class="badge bg-warning text-dark">متاح للإرجاع</span>
                                 <?php endif; ?>
                             </td>
                             <td>
-                            <?php if (empty($row['return_id']) && $controlledBalance > 0.01): ?>
+                            <?php if ($allocationRemaining > 0.01 && $controlledBalance > 0.01): ?>
                                 <form method="post" class="row g-2 align-items-end">
                                     <?php echo csrf_field(); ?>
                                     <input type="hidden" name="project_id" value="<?php echo $id; ?>">
                                     <input type="hidden" name="allocation_id" value="<?php echo (int)$row['id']; ?>">
                                     <div class="col-auto">
                                         <label class="form-label small">مبلغ الإرجاع</label>
-                                        <input type="number" step="0.01" min="0.01" max="<?php echo e((string)min((float)$row['amount'], $controlledBalance)); ?>" name="return_amount" class="form-control" required>
+                                        <input type="number" step="0.01" min="0.01" max="<?php echo e((string)min($allocationRemaining, $controlledBalance)); ?>" name="return_amount" class="form-control" required>
                                     </div>
                                     <div class="col-auto">
                                         <label class="form-label small">التاريخ</label>
