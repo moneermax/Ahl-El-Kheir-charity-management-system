@@ -35,32 +35,9 @@ $managers = dbFetchAll("SELECT u.id, u.full_name, u.username
     ORDER BY u.full_name");
 $nameCol = (defined('AK_LANG') && AK_LANG === 'en') ? 'name_en' : 'name_ar';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_user'])) {
+if ($action === 'add') {
     header('Location: ' . APP_URL . 'modules/users/index.php');
     exit();
-}
-if (false) {
-    try {
-        if (!verify_csrf()) {
-            throw new RuntimeException('انتهت صلاحية الجلسة.');
-        }
-        hrCreateUserWithEmployee(db(), [
-            'full_name' => trim($_POST['full_name'] ?? ''),
-            'username' => trim($_POST['username'] ?? ''),
-            'password' => $_POST['password'] ?? '',
-            'role_code' => trim($_POST['role_code'] ?? ''),
-            'email' => trim($_POST['email'] ?? ''),
-            'phone' => trim($_POST['phone'] ?? ''),
-            'gender' => $_POST['gender'] ?? null,
-            'department_id' => !empty($_POST['department_id']) ? (int)$_POST['department_id'] : null,
-            'manager_id' => !empty($_POST['manager_id']) ? (int)$_POST['manager_id'] : null,
-        ], Session::getUserID());
-        $message = 'تم إنشاء حساب الموظف وملف الموظف المرتبط به تلقائياً.';
-        $action = 'list';
-    } catch (Throwable $e) {
-        $message = 'خطأ: ' . $e->getMessage();
-        $msg_type = 'error';
-    }
 }
 
 $states = hrGetEmploymentStates();
