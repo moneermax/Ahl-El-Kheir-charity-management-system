@@ -1294,3 +1294,14 @@ Final Stage 6 hardening checkpoints:
 - PR #87 merge: `756debc716339470344428812f9684960a272588`.
 
 Do not reopen Stage 6 without genuine regression evidence. The next work unit must be taken from the staged project plan after inspecting the current master documentation; do not invent a new stage.
+
+## 2026-10-01 — Projects Phase 5 explicitly queued after Salary Advance closure
+
+Salary Advance Stage 6 is now closed; do not reopen completed Salary Advance work without genuine regression evidence.
+
+**Projects Module Phase 5 — Accounting Reconciliation / Post-Approval Financial Integrity Audit** is now explicitly **TO DO / NEXT**.
+
+Business intent clarified for the next Projects audit: after the required FM-controlled financial approval, the full approved project budget is intended to come under Project Supervisor control; the organization's treasury is intended to be reduced by that amount and the amount treated as project expense at that financial/disbursement point. If the Project Supervisor saves part of the approved budget, the saved balance must later be reconciled and returned to the organization's accounts through an explicit, auditable financial event.
+
+For now, do not change the Projects accounting implementation. Phase 5 must first reconcile this business intent against the existing chart of accounts, project funding/payment-evidence/expense workflow, and fresh database evidence. Do not invent an account, transfer model, journal type, or schema change. Historical phantom project-approval journals must be corrected only after the replacement accounting model is settled.
+
