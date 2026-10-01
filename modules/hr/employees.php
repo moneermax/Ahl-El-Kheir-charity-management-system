@@ -110,7 +110,7 @@ if ($action === 'delete' && $emp_id > 0) {
     $action='list';
 }
 
-$departments=dbFetchAll('SELECT id,name_ar FROM departments ORDER BY name_ar',[]);
+$departments=dbFetchAll('SELECT id,name_ar,name_en FROM departments ORDER BY name_ar',[]);
 $employee=null; $employees=[]; $nextEmployeeCode='';
 if ($action==='edit' && $emp_id>0) {
     $employee=dbFetchOne('SELECT e.*, s.code AS state_code, s.name_ar AS state_name FROM employees e LEFT JOIN hr_employment_states s ON s.id=e.employment_state_id WHERE e.id=?',[$emp_id]);
