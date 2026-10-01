@@ -195,8 +195,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$manageAcct) {
             $id = (int)$_POST['reset_user'];
             $pw = $_POST['new_password'] ?? '';
             if ($id !== Session::getUserId() && strlen($pw) >= 6) {
-                dbExecute("UPDATE users SET password_hash = ? WHERE id = ?", [password_hash($pw, PASSWORD_DEFAULT), $id]);
-                flash('success', 'تمت إعادة تعيين كلمة المرور.');
+                dbExecute("UPDATE users SET password_hash = ?, password_change_required = 1 WHERE id = ?", [password_hash($pw, PASSWORD_DEFAULT), $id]);
+                flash('success', 'تمت إعادة تعيين كلمة المرور. سيُطلب من المستخدم تغيير كلمة المرور عند تسجيل الدخول التالي.');
             }
             header('Location: ' . APP_URL . 'modules/users/index.php'); exit();
         }
