@@ -1165,3 +1165,10 @@ Final fixture SAR-2026-00019 (20,000 SDG, direct repayment) was successfully dis
 Hardening checkpoints merged to main: PR #86 `cebd8df397d76738d56a6287b6ba85afba77b6c3`; PR #87 `756debc716339470344428812f9684960a272588`.
 
 Stage 6 is closed. Next session must inspect the current staged plan/master documents and continue with the next explicitly defined work unit; do not reopen completed salary-advance stages without regression evidence.
+
+## 2026-10-01 — Next work unit: Projects Phase 5
+
+Salary Advance Stage 6 is closed. The next work unit is **Projects Module Phase 5 — Accounting Reconciliation / Post-Approval Financial Integrity Audit**, explicitly marked **TO DO / NEXT**.
+
+Current Projects business intent: after FM-controlled financial approval, the full approved budget comes under Project Supervisor control and is deducted from organizational treasury as project expense. Any amount genuinely saved must later be reconciled and returned to the organization's accounts through an auditable financial event. Do not implement this yet; first reconcile the intended event against the existing accounting model and schema.
+
