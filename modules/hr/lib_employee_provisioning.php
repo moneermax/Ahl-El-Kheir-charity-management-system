@@ -31,7 +31,7 @@ function hrProvisionEmployeeForUser(PDO $pdo, int $userId, array $data, int $cre
 
     $departmentId = array_key_exists('department_id', $data)
         ? (!empty($data['department_id']) ? (int)$data['department_id'] : null)
-        : (isset($employee['department_id']) ? (int)$employee['department_id'] : null);
+        : null;
     $email = !empty($data['email']) ? trim((string)$data['email']) : null;
     $phone = !empty($data['phone']) ? trim((string)$data['phone']) : null;
     $gender = in_array(($data['gender'] ?? null), ['male', 'female'], true)
@@ -48,7 +48,7 @@ function hrProvisionEmployeeForUser(PDO $pdo, int $userId, array $data, int $cre
     );
 
     $nextNumber = 1;
-    if ($lastCodeRow && preg_match('/^EMP-(d+)$/', (string)$lastCodeRow['employee_code'], $m)) {
+    if ($lastCodeRow && preg_match('/^EMP-(\d+)$/', (string)$lastCodeRow['employee_code'], $m)) {
         $nextNumber = (int)$m[1] + 1;
     }
 
@@ -169,4 +169,78 @@ function hrSyncEmployeeIdentityFromUser(PDO $pdo, int $userId, array $data): voi
             (int)$employee['id'],
         ]
     );
+}
+
+
+/**
+ * Create the canonical user + employee pair in one transaction.
+ *
+ * This is the single account-creation path used by both Admin and HR.
+ * Authorization is handled by the calling page; the data/provisioning
+ * behavior is intentionally identical.
+ */
+function hrCreateUserWithEmployee(PDO $pdo, array $data, int $createdBy): array
+{
+    $fullName = trim((string)($data['full_name'] ?? ''));
+    $username = trim((string)($data['username'] ?? ''));
+    $password = (string)($data['password'] ?? '');
+    $roleCode = trim((string)($data['role_code'] ?? ''));
+    $email = trim((string)($data['email'] ?? ''));
+    $phone = trim((string)($data['phone'] ?? ''));
+    $gender = in_array(($data['gender'] ?? null), ['male', 'female'], true) ? $data['gender'] : null;
+    $departmentId = !empty($data['department_id']) ? (int)$data['department_id'] : null;
+    $managerId = !empty($data['manager_id']) ? (int)$data['manager_id'] : null;
+
+    if ($fullName === '') throw new InvalidArgumentException('الاسم الكامل مطلوب.');
+    if (!preg_match('/^[A-Za-z0-9_.]{3,30}$/', $username)) {
+        throw new InvalidArgumentException('اسم المستخدم غير صالح.');
+    }
+    if (strlen($password) < 6) throw new InvalidArgumentException('كلمة المرور 6 أحرف على الأقل.');
+
+    $role = dbFetchOne("SELECT id FROM roles WHERE code = ? LIMIT 1", [$roleCode]);
+    if (!$role) throw new InvalidArgumentException('الدور المحدد غير صالح.');
+    if (dbFetchOne("SELECT id FROM users WHERE username = ? LIMIT 1", [$username])) {
+        throw new InvalidArgumentException('اسم المستخدم موجود.');
+    }
+
+    $pdo->beginTransaction();
+    try {
+        $stmt = $pdo->prepare(
+            "INSERT INTO users
+             (role_id, username, password_hash, full_name, email, phone,
+              is_active, created_by, department_id, manager_id, gender)
+             VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?)"
+        );
+        $stmt->execute([
+            (int)$role['id'],
+            $username,
+            password_hash($password, PASSWORD_DEFAULT),
+            $fullName,
+            $email !== '' ? $email : null,
+            $phone !== '' ? $phone : null,
+            $createdBy,
+            $departmentId,
+            $managerId,
+            $gender,
+        ]);
+
+        $userId = (int)$pdo->lastInsertId();
+        $employeeId = hrProvisionEmployeeForUser($pdo, $userId, [
+            'full_name' => $fullName,
+            'email' => $email !== '' ? $email : null,
+            'phone' => $phone !== '' ? $phone : null,
+            'gender' => $gender,
+            'department_id' => $departmentId,
+        ], $createdBy);
+
+        $pdo->commit();
+
+        return [
+            'user_id' => $userId,
+            'employee_id' => $employeeId,
+        ];
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        throw $e;
+    }
 }
