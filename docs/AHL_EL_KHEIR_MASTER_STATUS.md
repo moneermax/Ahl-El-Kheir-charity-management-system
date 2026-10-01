@@ -1353,3 +1353,12 @@ The authoritative notification timing remains: PM is notified after FM final acc
 - Main remains the working branch; Projects Phase 5 is implemented but **runtime verification remains required**.
 - Controlled-fund return concurrency was hardened in commit `c631ffe571e339fd8a61196ad046f1d7344b964c`: the return transaction now serializes on the project approval row and selected funding allocation before recalculating remaining balances, and validates the return date server-side.
 - Documentation commits immediately following the code fix: `21281ca91408c3a0296a4c62f2d80a10ad1a3ff9`, `1d7022d64e85264ec2bf6a380177d37e2b1c2b5c`.
+
+
+## 2026-10-01 — Projects approval notification gate — static re-audit correction
+
+A deeper static re-audit found one stale notification path that survived the earlier PM timing correction: the shared transaction-review helper still sent project_gm_approval_pm after GM/VGM approval. This conflicted with the authoritative rule that the PM approval-chain notification occurs at FM final accounting confirmation and is not repeated at GM approval.
+
+The stale GM → PM path was removed. Stale PM-notification branches for GM rejection and generic FM rejection were also removed from the shared helper; the canonical FM page now owns FM rejection notification, while GM rejection remains FM-only. akp_audit() is now side-effect free with respect to workflow notifications.
+
+Runtime verification remains the gate for closing this correction.
