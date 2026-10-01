@@ -82,7 +82,6 @@ try {
 
 $roles       = dbFetchAll("SELECT id, code, name_ar, name_en FROM roles ORDER BY id");
 $departments = dbFetchAll("SELECT id, name_ar, name_en FROM departments ORDER BY id");
-$unlinkedEmployees = dbFetchAll("SELECT id, employee_code, full_name, position FROM employees WHERE user_id IS NULL AND status NOT IN ('terminated', 'suspended') ORDER BY full_name");
 $managers    = dbFetchAll("SELECT u.id, u.full_name, u.username FROM users u JOIN roles r ON r.id = u.role_id WHERE r.code IN ('admin','sudo','general_manager','vice_general_manager','financial_manager','accountant') AND u.is_active = 1 ORDER BY u.full_name");
 $nannies     = dbFetchAll("SELECT u.id, u.full_name FROM users u JOIN roles r ON r.id = u.role_id WHERE r.code = 'nanny' AND u.is_active = 1 ORDER BY u.full_name");
 $allowedRoles = array_column($roles, 'code');
@@ -109,74 +108,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$manageAcct) {
         $errors[] = 'انتهت صلاحية الجلسة.';
     } else {
         if (isset($_POST['create_user'])) {
-            $fn = trim($_POST['full_name'] ?? '');
-            $un = trim($_POST['username'] ?? '');
-            $pw = $_POST['password'] ?? '';
-            $rc = $_POST['role_code'] ?? '';
-            $em = trim($_POST['email'] ?? '');
-            $ph = trim($_POST['phone'] ?? '');
-            $gn = in_array($_POST['gender'] ?? '', ['male','female'], true) ? $_POST['gender'] : null;
-            $dept = !empty($_POST['department_id']) ? (int)$_POST['department_id'] : null;
-            $mgr = !empty($_POST['manager_id']) ? (int)$_POST['manager_id'] : null;
+            $data = [
+                'full_name' => trim($_POST['full_name'] ?? ''),
+                'username' => trim($_POST['username'] ?? ''),
+                'password' => $_POST['password'] ?? '',
+                'role_code' => trim($_POST['role_code'] ?? ''),
+                'email' => trim($_POST['email'] ?? ''),
+                'phone' => trim($_POST['phone'] ?? ''),
+                'gender' => $_POST['gender'] ?? null,
+                'department_id' => !empty($_POST['department_id']) ? (int)$_POST['department_id'] : null,
+                'manager_id' => !empty($_POST['manager_id']) ? (int)$_POST['manager_id'] : null,
+            ];
 
-            if ($fn === '') $errors[] = 'الاسم الكامل مطلوب.';
-            if (!preg_match('/^[A-Za-z0-9_.]{3,30}$/', $un)) $errors[] = 'اسم المستخدم غير صالح.';
-            if (strlen($pw) < 6) $errors[] = 'كلمة المرور 6 أحرف على الأقل.';
-            if (!in_array($rc, $allowedRoles, true)) $errors[] = 'دور غير صالح.';
-            if (!$errors && dbFetchOne("SELECT id FROM users WHERE username = ?", [$un])) $errors[] = 'اسم المستخدم موجود.';
-
-            $linkEmployeeId = !empty($_POST['employee_id']) ? (int)$_POST['employee_id'] : 0;
-            if (!$errors && $linkEmployeeId > 0 && !dbFetchOne("SELECT id FROM employees WHERE id = ? AND user_id IS NULL AND status NOT IN ('terminated','suspended')", [$linkEmployeeId])) {
-                $errors[] = 'سجل الموظف المختار غير متاح للربط أو مرتبط بحساب آخر.';
-            }
-
-            // Employee accounts use the same generic relationship regardless of role.
-            // If the creator did not explicitly select an employee, safely auto-link only
-            // when there is exactly one active, unlinked employee with the same full name.
-            // Ambiguous matches are never guessed and must be selected explicitly.
-            if (!$errors && $linkEmployeeId === 0) {
-                $sameNameEmployees = dbFetchAll("SELECT id FROM employees WHERE full_name = ? AND user_id IS NULL AND status NOT IN ('terminated','suspended')", [$fn]);
-                if (count($sameNameEmployees) === 1) {
-                    $linkEmployeeId = (int)$sameNameEmployees[0]['id'];
-                }
-            }
-
-            if (!$errors) {
-                $roleId = (int)array_column($roles, 'id', 'code')[$rc];
-                $pdo = db();
-                try {
-                    $pdo->beginTransaction();
-                    dbExecute("INSERT INTO users (role_id, username, password_hash, full_name, email, phone, is_active, created_by, department_id, manager_id, gender) VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?)",
-                        [$roleId, $un, password_hash($pw, PASSWORD_DEFAULT), $fn, $em !== '' ? $em : null, $ph !== '' ? $ph : null, Session::getUserId(), $dept, $mgr, $gn]);
-                    $newUserId = (int)$pdo->lastInsertId();
-
-                    // Every newly-created account represents an employee. The employee
-                    // profile is provisioned automatically; optional HR/personal fields
-                    // remain empty until the employee completes their profile.
-                    if ($linkEmployeeId > 0) {
-                        dbExecute("UPDATE employees SET user_id = ?, department_id = COALESCE(?, department_id) WHERE id = ? AND user_id IS NULL", [$newUserId, $dept, $linkEmployeeId]);
-                    } else {
-                        hrProvisionEmployeeForUser($pdo, $newUserId, [
-                            'full_name' => $fn,
-                            'email' => $em !== '' ? $em : null,
-                            'phone' => $ph !== '' ? $ph : null,
-                            'gender' => $gn,
-                            'department_id' => $dept,
-                        ], Session::getUserId());
-                    }
-
-                    $pdo->commit();
-                } catch (Throwable $e) {
-                    if ($pdo->inTransaction()) {
-                        $pdo->rollBack();
-                    }
-                    throw $e;
-                }
-                flash('success', 'تم إنشاء المستخدم: ' . $un . ' وإنشاء ملف الموظف المرتبط به.');
-                header('Location: ' . APP_URL . 'modules/users/index.php'); exit();
+            try {
+                hrCreateUserWithEmployee(db(), $data, Session::getUserId());
+                flash('success', 'تم إنشاء حساب الموظف وملف الموظف المرتبط به تلقائياً.');
+                header('Location: ' . APP_URL . 'modules/users/index.php');
+                exit();
+            } catch (Throwable $e) {
+                $errors[] = $e->getMessage();
             }
         }
-
         if (isset($_POST['update_user'])) {
             $uid = (int)$_POST['user_id'];
             $fn = trim($_POST['full_name'] ?? '');
@@ -293,33 +245,10 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 <?php endif; ?>
 
 <div class="card mb-4 fade-in">
-    <div class="card-header"><i class="fas fa-user-plus me-2"></i><?php echo t('إضافة مستخدم'); ?></div>
-    <div class="card-body">
-        <form method="post">
-            <?php echo csrf_field(); ?>
-            <div class="row g-3">
-                <div class="col-md-6"><label class="form-label"><?php echo t('الاسم الكامل'); ?> *</label><input type="text" name="full_name" class="form-control form-control-lg" required></div>
-                <div class="col-md-3"><label class="form-label"><?php echo t('اسم المستخدم'); ?> *</label><input type="text" name="username" class="form-control form-control-lg" dir="ltr" required></div>
-                <div class="col-md-3"><label class="form-label"><?php echo t('كلمة المرور'); ?> *</label><input type="text" name="password" class="form-control form-control-lg" dir="ltr" required></div>
-                <div class="col-md-4"><label class="form-label"><?php echo t('الدور'); ?> *</label><select name="role_code" class="form-select form-select-lg" required><?php foreach ($roles as $r): ?><option value="<?php echo e($r['code']); ?>"><?php echo e($r[$nameCol]); ?></option><?php endforeach; ?></select></div>
-                <div class="col-md-4">
-                    <label class="form-label"><?php echo t('سجل الموظف'); ?></label>
-                    <select name="employee_id" class="form-select form-select-lg">
-                        <option value="">— ربط تلقائي بالاسم إن كان هناك سجل موظف وحيد —</option>
-                        <?php foreach ($unlinkedEmployees as $employee): ?><option value="<?php echo (int)$employee['id']; ?>"><?php echo e($employee['full_name']); ?> — <?php echo e($employee['employee_code']); ?><?php echo !empty($employee['position']) ? ' — ' . e($employee['position']) : ''; ?></option><?php endforeach; ?>
-                    </select>
-                    <div class="form-text">اختياري لجميع الموظفين. إذا لم تختَر سجلاً، يربط النظام تلقائياً عند وجود سجل موظف نشط واحد فقط بالاسم نفسه؛ عند وجود أكثر من تطابق يجب الاختيار يدوياً.</div>
-                </div>
-                <div class="col-md-4"><label class="form-label"><?php echo t('القسم'); ?></label><select name="department_id" class="form-select form-select-lg"><option value=""><?php echo t('— القسم —'); ?></option><?php foreach ($departments as $d): ?><option value="<?php echo (int)$d['id']; ?>"><?php echo e($d[$nameCol]); ?></option><?php endforeach; ?></select></div>
-                <div class="col-md-4"><label class="form-label"><?php echo t('المسؤول المباشر'); ?></label><select name="manager_id" class="form-select form-select-lg"><option value=""><?php echo t('— المسؤول المباشر —'); ?></option><?php foreach ($managers as $m): ?><option value="<?php echo (int)$m['id']; ?>"><?php echo e(t($m['full_name'])); ?> (<?php echo e($m['username']); ?>)</option><?php endforeach; ?></select></div>
-                <div class="col-md-4"><label class="form-label"><?php echo t('البريد الإلكتروني'); ?></label><input type="email" name="email" class="form-control form-control-lg" dir="ltr"></div>
-                <div class="col-md-4"><label class="form-label"><?php echo t('الهاتف'); ?></label><input type="text" name="phone" class="form-control form-control-lg" dir="ltr"></div>
-                <div class="col-md-4"><label class="form-label"><?php echo t('الجنس'); ?></label><select name="gender" class="form-select form-select-lg"><option value=""><?php echo t('— الجنس —'); ?></option><option value="male"><?php echo t('ذكر'); ?></option><option value="female"><?php echo t('أنثى'); ?></option></select></div>
-                <div class="col-12"><button name="create_user" value="1" class="btn btn-primary btn-lg px-5"><i class="fas fa-plus me-1"></i><?php echo t('إضافة مستخدم'); ?></button></div>
-            </div>
-        </form>
+    <div class="card-body p-0">
+        <?php include __DIR__ . '/_create_user_form.php'; ?>
     </div>
-</div>
+</div>>
 
 <div class="card fade-in">
     <div class="card-header"><i class="fas fa-users me-2"></i><?php echo t('حسابات المستخدمين'); ?> (<?php echo count($users); ?>)</div>
