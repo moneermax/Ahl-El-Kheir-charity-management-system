@@ -16,6 +16,7 @@ require_once dirname(__DIR__, 2) . '/config/config.php';
 require_once dirname(__DIR__, 2) . '/config/database.php';
 require_once dirname(__DIR__, 2) . '/config/functions.php';
 require_once dirname(__DIR__, 2) . '/config/session.php';
+require_once dirname(__DIR__, 2) . '/modules/hr/lib_employee_provisioning.php';
 
 Session::start();
 
@@ -509,34 +510,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
          */
         if (!$errors) {
 
-            dbExecute(
-                "UPDATE users
-                 SET
-                    full_name = ?,
-                    email = ?,
-                    phone = ?,
-                    address = ?,
-                    birth_date = ?,
-                    gender = ?
-                 WHERE id = ?",
-                [
-                    $fullName,
-                    $email !== ''
-                        ? $email
-                        : null,
-                    $phone !== ''
-                        ? $phone
-                        : null,
-                    $address !== ''
-                        ? $address
-                        : null,
-                    $birth !== ''
-                        ? $birth
-                        : null,
-                    $gender,
-                    $uid
-                ]
-            );
+            $pdo = db();
+            try {
+                $pdo->beginTransaction();
+                $emailValue = $email !== '' ? $email : null;
+                $phoneValue = $phone !== '' ? $phone : null;
+                $addressValue = $address !== '' ? $address : null;
+                $birthValue = $birth !== '' ? $birth : null;
+
+                dbExecute(
+                    "UPDATE users
+                     SET
+                        full_name = ?,
+                        email = ?,
+                        phone = ?,
+                        address = ?,
+                        birth_date = ?,
+                        gender = ?
+                     WHERE id = ?",
+                    [
+                        $fullName,
+                        $emailValue,
+                        $phoneValue,
+                        $addressValue,
+                        $birthValue,
+                        $gender,
+                        $uid
+                    ]
+                );
+
+                $employeeGender = $gender === 'ذكر'
+                    ? 'male'
+                    : ($gender === 'أنثى' ? 'female' : null);
+                hrSyncEmployeeIdentityFromUser($pdo, $uid, [
+                    'full_name' => $fullName,
+                    'email' => $emailValue,
+                    'phone' => $phoneValue,
+                    'address' => $addressValue,
+                    'birth_date' => $birthValue,
+                    'gender' => $employeeGender,
+                    'department_id' => null,
+                ]);
+                $pdo->commit();
+            } catch (Throwable $e) {
+                if ($pdo->inTransaction()) {
+                    $pdo->rollBack();
+                }
+                throw $e;
+            }
 
 
             /*
