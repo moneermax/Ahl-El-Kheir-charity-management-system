@@ -32,6 +32,32 @@ if (!class_exists('Session', false)) {
             if (function_exists('ak_enforce_family_request_scope')) {
                 ak_enforce_family_request_scope();
             }
+
+            // Newly-created/recovery-reset accounts must replace their temporary
+            // password before accessing any normal application page. This is
+            // enforced at the session boundary so direct URLs cannot bypass it.
+            if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
+                $script = basename((string)($_SERVER['SCRIPT_NAME'] ?? ''));
+                $passwordChangePage = $script === 'change_password.php';
+                $logoutPage = $script === 'logout.php';
+
+                if (!$passwordChangePage && !$logoutPage && function_exists('dbFetchOne')) {
+                    try {
+                        $passwordState = dbFetchOne(
+                            "SELECT password_change_required FROM users WHERE id = ? LIMIT 1",
+                            [(int)$_SESSION['user_id']]
+                        );
+
+                        if ($passwordState && (int)$passwordState['password_change_required'] === 1) {
+                            $target = (defined('APP_URL') ? APP_URL : '/') . 'modules/users/change_password.php?forced=1';
+                            header('Location: ' . $target);
+                            exit();
+                        }
+                    } catch (Throwable $e) {
+                        // Do not break authentication if the optional flag cannot be read.
+                    }
+                }
+            }
         }
 
         public static function isLoggedIn(): bool {
