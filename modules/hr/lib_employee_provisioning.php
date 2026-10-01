@@ -143,6 +143,8 @@ function hrSyncEmployeeIdentityFromUser(PDO $pdo, int $userId, array $data): voi
     $gender = in_array(($data['gender'] ?? null), ['male', 'female'], true)
         ? $data['gender']
         : null;
+    $birthDate = !empty($data['birth_date']) ? (string)$data['birth_date'] : null;
+    $address = !empty($data['address']) ? trim((string)$data['address']) : null;
 
     dbExecute(
         "UPDATE employees
@@ -150,6 +152,8 @@ function hrSyncEmployeeIdentityFromUser(PDO $pdo, int $userId, array $data): voi
              email = ?,
              phone = ?,
              gender = ?,
+             birth_date = ?,
+             address = ?,
              department_id = ?
          WHERE id = ?",
         [
@@ -157,6 +161,8 @@ function hrSyncEmployeeIdentityFromUser(PDO $pdo, int $userId, array $data): voi
             $email,
             $phone,
             $gender,
+            $birthDate,
+            $address,
             $departmentId,
             (int)$employee['id'],
         ]
