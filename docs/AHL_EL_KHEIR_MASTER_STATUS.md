@@ -1362,3 +1362,28 @@ A deeper static re-audit found one stale notification path that survived the ear
 The stale GM → PM path was removed. Stale PM-notification branches for GM rejection and generic FM rejection were also removed from the shared helper; the canonical FM page now owns FM rejection notification, while GM rejection remains FM-only. akp_audit() is now side-effect free with respect to workflow notifications.
 
 Runtime verification remains the gate for closing this correction.
+
+## 2026-10-01 — Unified User / Employee Provisioning Workflow
+
+**DONE / IMPLEMENTED / DOCUMENTED**
+
+The user-account and employee-profile creation flow has been consolidated into one canonical workflow.
+
+Authoritative design:
+- **User = employee account identity**; a newly created user receives an employee profile automatically.
+- Admin and HR Manager use the same canonical creation page: `modules/users/index.php`.
+- The same backend provisioning function, `hrCreateUserWithEmployee()`, creates the user and linked employee profile transactionally.
+- Optional personal fields may initially be empty and can be completed later through the employee/profile workflow.
+- The employee relationship is established through `employees.user_id`.
+- `modules/hr/employees.php` remains the employee-management/list/edit page, but no longer owns a second account-creation implementation.
+- HR's former `?action=add` creation path now routes to the canonical users page.
+- The shared creation form remains `modules/users/_create_user_form.php`; it is not a duplicate page and must not be removed.
+- The Admin/HR manager-selection dropdown is maintained only in the canonical users page and now includes the established manager/head role/name patterns instead of the previous narrow hard-coded list.
+
+This consolidation also addresses the earlier Projects employee-service inconsistency by ensuring new accounts cannot be created without their linked employee profile.
+
+Relevant implementation commits:
+- `b90791e2bfa49f0a6cab26e1844b951c52981d38` — canonical manager selection.
+- `ca42000f4552eeeb4fea6fb493bb8008c29a40b9`, `ffed7719f241f7bcee1732da88e743e838296f2c8`, `6b36187460bc27246d9a5e89615f4c8b85cdf2d8` — removal of the duplicate HR account-creation path and obsolete dependency.
+
+No Salary Advance or Leave business logic was changed as part of this consolidation.
