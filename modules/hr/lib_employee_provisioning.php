@@ -197,7 +197,7 @@ function hrCreateUserWithEmployee(PDO $pdo, array $data, int $createdBy): array
 {
     $fullName = trim((string)($data['full_name'] ?? ''));
     $username = trim((string)($data['username'] ?? ''));
-    $password = (string)($data['password'] ?? '');
+    $password = 'AK-' . bin2hex(random_bytes(10));
     $roleCode = trim((string)($data['role_code'] ?? ''));
     $email = trim((string)($data['email'] ?? ''));
     $phone = trim((string)($data['phone'] ?? ''));
@@ -209,7 +209,6 @@ function hrCreateUserWithEmployee(PDO $pdo, array $data, int $createdBy): array
     if (!preg_match('/^[A-Za-z0-9_.]{3,30}$/', $username)) {
         throw new InvalidArgumentException('اسم المستخدم غير صالح.');
     }
-    if (strlen($password) < 6) throw new InvalidArgumentException('كلمة المرور 6 أحرف على الأقل.');
 
     $role = dbFetchOne("SELECT id FROM roles WHERE code = ? LIMIT 1", [$roleCode]);
     if (!$role) throw new InvalidArgumentException('الدور المحدد غير صالح.');
@@ -252,6 +251,7 @@ function hrCreateUserWithEmployee(PDO $pdo, array $data, int $createdBy): array
         return [
             'user_id' => $userId,
             'employee_id' => $employeeId,
+            'temporary_password' => $password,
         ];
     } catch (Throwable $e) {
         if ($pdo->inTransaction()) $pdo->rollBack();
