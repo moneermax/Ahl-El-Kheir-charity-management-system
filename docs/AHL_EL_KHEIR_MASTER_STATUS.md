@@ -1305,3 +1305,12 @@ Business intent clarified for the next Projects audit: after the required FM-con
 
 For now, do not change the Projects accounting implementation. Phase 5 must first reconcile this business intent against the existing chart of accounts, project funding/payment-evidence/expense workflow, and fresh database evidence. Do not invent an account, transfer model, journal type, or schema change. Historical phantom project-approval journals must be corrected only after the replacement accounting model is settled.
 
+
+
+## 2026-10-01 — Projects Phase 5 implementation + closure/refund integration
+
+**IMPLEMENTED — RUNTIME VERIFICATION REQUIRED.**
+
+FM approval is the treasury-release event. Project Supervisor closure requests now automatically detect any controlled unused balance and notify FM with a direct refund-processing link. FM remains the accounting authority for the return; final project closure remains blocked until the controlled balance reaches zero. The Projects Manager is notified after the refund is processed so the existing closure workflow can continue.
+
+Runtime gate: apply the Phase 5 migration and test the complete FM release → GM approval → PS partial spending → PS closure request → automatic FM refund notification → FM refund → PM closure flow on a fresh controlled project. Historical phantom project-approval journal correction remains deferred until this flow passes.
