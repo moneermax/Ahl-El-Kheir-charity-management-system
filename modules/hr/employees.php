@@ -70,23 +70,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($action, ['add','edit','su
                 } while ($exists);
 
                 $user_id = null;
-                if ($existing_user_id > 0 && isset($_POST['create_account'])) {
-                    throw new RuntimeException('اختر إما ربط حساب مستخدم موجود أو إنشاء حساب جديد، وليس الاثنين معاً.');
-                }
                 if ($existing_user_id > 0) {
                     if (!dbFetchOne('SELECT u.id FROM users u LEFT JOIN employees e ON e.user_id = u.id WHERE u.id = ? AND u.is_active = 1 AND e.id IS NULL', [$existing_user_id])) {
                         throw new RuntimeException('حساب المستخدم المختار غير متاح للربط.');
                     }
                     $user_id = $existing_user_id;
-                } elseif (isset($_POST['create_account'])) {
-                    $username = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $full_name));
-                    $username = substr($username, 0, 20); if (strlen($username) < 3) $username .= '00';
-                    if (dbFetchOne('SELECT id FROM users WHERE username = ?', [$username])) {
-                        throw new RuntimeException('اسم المستخدم المقترح موجود بالفعل. اختر الحساب الموجود من قائمة ربط حساب مستخدم بدلاً من إنشاء حساب جديد.');
-                    }
-                    $pass_hash = password_hash('admin123', PASSWORD_DEFAULT);
-                    $stmt = $pdo->prepare('INSERT INTO users (role_id, username, password_hash, full_name, email, phone, department_id, is_active) VALUES (11, ?, ?, ?, ?, ?, ?, 1)');
-                    $stmt->execute([$username,$pass_hash,$full_name,$email,$phone,$department_id]); $user_id = (int)$pdo->lastInsertId();
                 }
                 $stmt = $pdo->prepare('INSERT INTO employees (user_id, full_name, employee_code, national_id, birth_date, gender, phone, email, address, hire_date, department_id, position, employment_type, work_mode, basic_salary, bank_account, status, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
                 $stmt->execute([$user_id,$full_name,$employee_code,$national_id,$birth_date,$gender,$phone,$email,$address,$hire_date,$department_id,$position,$employment_type,$work_mode,$basic_salary,$bank_account,'active',Session::getUserID()]);
@@ -178,6 +166,6 @@ $pageTitle='إدارة الموظفين'; require_once __DIR__.'/../../includes/
 <div class="col-md-6"><label class="form-label">الحالة الوظيفية <span class="text-danger">*</span></label><select name="employment_state" class="form-select" required><?php foreach($states as $state): ?><option value="<?php echo htmlspecialchars($state['code']); ?>" <?php echo ($employee['state_code']??'active')===$state['code']?'selected':''; ?>><?php echo htmlspecialchars($state['name_ar']); ?></option><?php endforeach; ?></select><small class="text-muted">الإجازات لا تُسجل هنا؛ سيتم التعامل معها من خلال وحدة الإجازات.</small></div>
 <div class="col-md-6"><label class="form-label">حساب مستخدم موجود (اختياري)</label><select name="existing_user_id" class="form-select"><option value="">— لا يوجد ربط —</option><?php foreach($unlinkedUsers as $u): ?><option value="<?php echo (int)$u['id']; ?>"><?php echo htmlspecialchars($u['full_name']); ?> (<?php echo htmlspecialchars($u['username']); ?>)</option><?php endforeach; ?></select><small class="text-muted">يمكن ربط أي موظف بحساب مستخدم موجود، بغض النظر عن الدور.</small></div>
 <div class="col-md-6"><label class="form-label">صورة العقد (PDF/صورة)</label><input type="file" name="contract_file" class="form-control" accept=".pdf,.jpg,.jpeg,.png"><small class="text-muted">ارفع نسخة من العقد الموقع</small><?php if($employee && !empty($employee['contract_file_path'])): ?><div class="mt-2"><a href="<?php echo APP_URL.$employee['contract_file_path']; ?>" target="_blank" class="btn-fm btn-ghost btn-sm"><i class="fas fa-file-alt me-1"></i> عرض العقد الحالي</a></div><?php endif; ?></div>
-<?php if($action==='add'): ?><div class="col-12"><div class="form-check"><input class="form-check-input" type="checkbox" name="create_account" id="create_account"><label class="form-check-label" for="create_account">إنشاء حساب نظامي للموظف</label></div></div><?php endif; ?></div><div class="mt-4 d-flex gap-2"><button type="submit" class="btn-fm btn-navy"><i class="fas fa-save me-1"></i><?php echo $action==='add'?'حفظ الموظف':'حفظ التعديلات'; ?></button><a href="employees.php" class="btn-fm btn-ghost">إلغاء</a></div><input type="hidden" name="action" value="<?php echo htmlspecialchars($action); ?>"><?php if($action==='edit'): ?><input type="hidden" name="employee_id" value="<?php echo $emp_id; ?>"><?php endif; ?></form></div></div>
+<?php if($action==='add'): ?><div class="col-12"><div class="alert alert-info mb-0"><i class="fas fa-circle-info me-1"></i>إنشاء حساب المستخدم يتم من صفحة <strong>إدارة المستخدمين</strong>، حيث يتم إنشاء الحساب وملف الموظف وربطهما تلقائياً في خطوة واحدة.</div></div><?php endif; ?></div><div class="mt-4 d-flex gap-2"><button type="submit" class="btn-fm btn-navy"><i class="fas fa-save me-1"></i><?php echo $action==='add'?'حفظ الموظف':'حفظ التعديلات'; ?></button><a href="employees.php" class="btn-fm btn-ghost">إلغاء</a></div><input type="hidden" name="action" value="<?php echo htmlspecialchars($action); ?>"><?php if($action==='edit'): ?><input type="hidden" name="employee_id" value="<?php echo $emp_id; ?>"><?php endif; ?></form></div></div>
 <?php endif; ?>
 <?php require_once __DIR__.'/../../includes/footer.php'; ?>
