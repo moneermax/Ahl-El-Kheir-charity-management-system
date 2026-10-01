@@ -1697,3 +1697,12 @@ Stage 6 hardening/fixes merged to `main`:
 No schema change was introduced by PR #86 or #87. The dedicated evidence table remains provided by the Stage 6 migration already merged earlier.
 
 **Stage 6 is formally closed. Do not reopen it unless genuine regression evidence appears.**
+
+## 2026-10-01 — Projects Phase 5 queued as next audit work
+
+Salary Advance Stage 6 Direct Repayment & Settlement is closed and runtime verified. The next substantive audit unit is **Projects Module Phase 5 — Accounting Reconciliation / Post-Approval Financial Integrity Audit**.
+
+The clarified Projects business requirement is that, after required FM-controlled financial approval, the full approved project budget comes under Project Supervisor control, the organization's treasury is reduced by that amount, and the amount is treated as project expense at that financial/disbursement point. Any genuine saving by the Project Supervisor must later be reconciled and returned to the organization's accounts as an explicit, auditable financial event.
+
+Phase 5 remains **TO DO / NEXT**. Before implementation, inspect and reconcile the existing chart of accounts, funding allocations, payment evidence, project expenses, journal conventions, and fresh database evidence. The saved-budget return path must be designed from existing accounting conventions; do not invent accounts or schema. Historical phantom project-approval journals are not to be corrected until the replacement accounting model is settled.
+
