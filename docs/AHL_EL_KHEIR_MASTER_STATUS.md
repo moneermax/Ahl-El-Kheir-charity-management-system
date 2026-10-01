@@ -1269,3 +1269,28 @@ No schema change was required.
 
 Current branch: fix/salary-advance-verification-disbursement-atomic
 Next gate: runtime verification of SAR-2026-00009, then continue Stage 6 repayment tests.
+
+
+## 2026-10-01 — Stage 6 Direct Repayment & Settlement CLOSED
+
+**Stage 6 — Direct Repayment & Settlement: DONE / RUNTIME VERIFIED / CLOSED.**
+
+Final clean runtime request: **SAR-2026-00019**, 20,000 SDG, direct repayment.
+
+Verified end-to-end:
+- FM approval.
+- Atomic accounting verification + disbursement.
+- No payroll repayment schedule for direct repayment.
+- Partial repayment of 10,000 SDG through 1200 — البنك, JE-000049.
+- Remaining 10,000 SDG through 1300 — المحافظ الإلكترونية, JE-000050.
+- Correct receiving-account updates and accounting calculations.
+- Outstanding balance reached 0.00 SDG.
+- Request reached settled.
+- Dedicated repayment evidence upload, viewing, and replacement passed for the repayment records.
+- Multiple direct repayments against one advance were verified successfully.
+
+Final Stage 6 hardening checkpoints:
+- PR #86 merge: `cebd8df397d76738d56a6287b6ba85afba77b6c3`.
+- PR #87 merge: `756debc716339470344428812f9684960a272588`.
+
+Do not reopen Stage 6 without genuine regression evidence. The next work unit must be taken from the staged project plan after inspecting the current master documentation; do not invent a new stage.
