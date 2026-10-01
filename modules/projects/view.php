@@ -254,7 +254,7 @@ $_SESSION['project_toast_success'] = 'تم رفض المشروع مالياً و
 } elseif ($action === 'approve_project') {
 if (!in_array($role, ['admin', 'general_manager', 'vice_general_manager'], true)) throw new RuntimeException('اعتماد المشروع نهائياً محصور بالمدير العام أو نائبه.');
 $approvalCheck = dbFetchOne('SELECT approval_status FROM project_approval WHERE project_id = ?', [$id]);
-if (!$approvalCheck || $approvalCheck['approval_status'] !== 'fm_approved') throw new RuntimeException('المشروع لم يتم اعتماده مالياً بعد.');
+if (!$approvalCheck || $approvalCheck['approval_status'] !== 'fm_approved' || empty($approvalCheck['fm_accounting_approved_at'])) throw new RuntimeException('المشروع لم يستكمل الاعتماد المحاسبي النهائي من المدير المالي بعد.');
 // Final approval must use the currently approved budget, never a draft
 // budget or a stale/proposed lifecycle amount.
 $approvedBudgetCheck = dbFetchOne(
@@ -287,87 +287,45 @@ throw new RuntimeException('لا يمكن اعتماد المشروع نهائي
 }
 try {
 dbExecute('START TRANSACTION');
+$lockedApproval=dbFetchOne("SELECT * FROM project_approval WHERE project_id=? FOR UPDATE",[$id]);
+if (!$lockedApproval || $lockedApproval['approval_status'] !== 'fm_approved' || empty($lockedApproval['fm_accounting_approved_at'])) {
+throw new RuntimeException('المشروع لم يستكمل الاعتماد المحاسبي النهائي من المدير المالي.');
+}
 dbExecute("UPDATE project_approval SET approval_status = 'approved', approved_by = ?, approved_at = NOW() WHERE project_id = ?", [akp_user_id(), $id]);
 /*
-* Final approval does not launch the project. It returns the
-* fully approved project to the Projects Manager for review.
-* The PM must explicitly launch it before operational access
-* is opened to the assigned Project Supervisor.
+* GM final approval is workflow authorization only. The treasury release
+* already happened atomically during FM final accounting approval.
 */
 dbExecute('UPDATE other_projects SET status = \'planned\' WHERE id = ?', [$id]);
 dbExecute('UPDATE project_lifecycle SET lifecycle_status = \'planned\' WHERE project_id = ?', [$id]);
 dbExecute('UPDATE project_lifecycle SET final_budget_amount = ? WHERE project_id = ?', [$financialRequirement, $id]);
-// Earmark the funding: no ledger entry, no cash movement. Real cash only moves
-// later, per actual expense or documented payment — see 'post_expense' below and
-// project_payment_receipt.php, which is where journal_entry_id below gets filled in.
-akp_commit_project_funding($id);
-$entryId = null;
-// Create one documentary payment-evidence row per approved funding source, with
-// no journal entry yet: nothing has actually been paid or documented at this point.
-$paymentRows = dbFetchAll(
-"SELECT f.id, f.source_account_id, f.amount, f.currency_code, f.allocation_date, a.code AS source_code
-FROM project_funding_allocations f
-INNER JOIN accounts a ON a.id = f.source_account_id
-WHERE f.project_id = ?",
-[$id]
-);
-foreach ($paymentRows as $paymentRow) {
-$method = akp_project_payment_method_from_account_code((string)$paymentRow['source_code']);
-if ($method === null) {
-throw new RuntimeException('مصدر تمويل المشروع لا يملك طريقة دفع معروفة.');
-}
-$existingEvidence = dbFetchOne(
-'SELECT id FROM project_payment_evidence WHERE funding_allocation_id = ? LIMIT 1',
-[(int)$paymentRow['id']]
-);
-if (!$existingEvidence) {
-dbExecute(
-"INSERT INTO project_payment_evidence
-(project_id, funding_allocation_id, source_account_id, journal_entry_id, payment_method, amount, currency_code, payment_date, status, created_at)
-VALUES (?,?,?,?,?,?,?,CURDATE(),'pending',NOW())",
-[$id, (int)$paymentRow['id'], (int)$paymentRow['source_account_id'], $entryId, $method, (float)$paymentRow['amount'], $paymentRow['currency_code'] ?: ($project['currency_code'] ?: 'SDG')]
-);
-}
-}
 dbExecute('COMMIT');
-akp_audit('GM_APPROVE_PROJECT', 'project_approval', $id, ['approval_status' => 'fm_approved'], ['approval_status' => 'approved']);
-$_SESSION['project_toast_success'] = 'تم اعتماد المشروع نهائياً. التمويل مخصص ومحجوز للمشروع، ولن يُخصم من السيولة الفعلية إلا عند توثيق كل دفعة فعلية على حدة.';
+akp_audit('GM_APPROVE_PROJECT', 'project_approval', $id, ['approval_status' => 'fm_approved', 'fm_accounting_approved' => true], ['approval_status' => 'approved']);
+$_SESSION['project_toast_success'] = 'تم اعتماد المشروع نهائياً. الإفراج المحاسبي سبق اعتماده من المدير المالي ولا ينشئ اعتماد المدير العام قيداً جديداً.';
 } catch (Throwable $e) {
 dbExecute('ROLLBACK');
 throw $e;
-}
-} elseif ($action === 'reject_project') {
+}} elseif ($action === 'reject_project') {
 if (!in_array($role, ['admin', 'general_manager', 'vice_general_manager'], true)) throw new RuntimeException('رفض المشروع نهائياً محصور بالمدير العام أو نائبه.');
 $reason = akp_post_value('rejection_reason');
 if ($reason === '') throw new RuntimeException('سبب الرفض مطلوب.');
 $approvalCheck = dbFetchOne('SELECT approval_status FROM project_approval WHERE project_id = ?', [$id]);
-if (!$approvalCheck || $approvalCheck['approval_status'] !== 'fm_approved') throw new RuntimeException('المشروع ليس في حالة انتظار الاعتماد النهائي.');
-// GM rejection returns the project to FM review first.
-// The FM then performs the financial rejection that returns the project to PM.
+if (!$approvalCheck || $approvalCheck['approval_status'] !== 'fm_approved' || empty($approvalCheck['fm_accounting_approved_at'])) throw new RuntimeException('المشروع ليس في مرحلة الاعتماد النهائي لدى المدير العام.');
+// GM rejection returns the project to FM review. The FM may then revise the
+// financial allocation and repeat the final accounting approval.
 dbExecute('START TRANSACTION');
 try {
+    $lockedApproval=dbFetchOne("SELECT * FROM project_approval WHERE project_id=? FOR UPDATE",[$id]);
+    if (!$lockedApproval || $lockedApproval['approval_status'] !== 'fm_approved' || empty($lockedApproval['fm_accounting_approved_at'])) {
+        throw new RuntimeException('تغيرت حالة المشروع قبل تنفيذ الرفض.');
+    }
     akp_reverse_project_funding_release($id, $reason);
-    dbExecute("UPDATE project_approval SET approval_status = 'submitted', rejection_reason = ?, approved_by = NULL, approved_at = NULL WHERE project_id = ?", [$reason, $id]);
+    dbExecute("UPDATE project_approval SET approval_status = 'submitted', rejection_reason = ?, approved_by = NULL, approved_at = NULL, fm_accounting_approved_by = NULL, fm_accounting_approved_at = NULL WHERE project_id = ?", [$reason, $id]);
     dbExecute('COMMIT');
 } catch (Throwable $e) {
     dbExecute('ROLLBACK');
     throw $e;
 }
-akp_audit('REJECT_PROJECT', 'project_approval', $id, ['approval_status' => 'fm_approved'], ['approval_status' => 'submitted', 'reason' => $reason]);
-try {
-$fmUsers = dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id = r.id WHERE r.code IN ('financial_manager', 'fm', 'finance') AND u.is_active = 1");
-foreach ($fmUsers as $fmUser) {
-ak_transaction_review_notify_event(
-(int)$fmUser['id'],
-'المشروع مرفوض من المدير العام ويحتاج مراجعة مالية',
-'المشروع «' . (string)($project['name'] ?? '') . '» (' . (string)($project['project_code'] ?? '') . ') رفضه المدير العام ويحتاج مراجعة المدير المالي قبل إعادته لمدير المشاريع. السبب: ' . $reason,
-APP_URL . 'modules/projects/view.php?id=' . $id,
-$id,
-'project_gm_rejection'
-);
-}
-} catch (Throwable $notificationError) {}
-$_SESSION['project_toast_success'] = 'تم رفض المشروع من المدير العام وإعادته إلى المدير المالي للمراجعة.';
 } elseif ($action === 'launch_project') {
 if ($role !== 'projects_manager') {
 throw new RuntimeException('إطلاق المشروع متاح لمدير المشاريع فقط.');
