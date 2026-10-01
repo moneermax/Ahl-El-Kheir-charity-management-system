@@ -230,8 +230,16 @@ $reason = akp_post_value('return_reason');
 if ($reason === '') throw new RuntimeException('سبب إعادة المشروع للمراجعة المالية مطلوب.');
 $approvalCheck = dbFetchOne('SELECT approval_status FROM project_approval WHERE project_id = ?', [$id]);
 if (!$approvalCheck || $approvalCheck['approval_status'] !== 'fm_approved') throw new RuntimeException('المشروع ليس في حالة اعتماد مالي تسمح بإعادته للمراجعة.');
-dbExecute("UPDATE project_approval SET approval_status = 'submitted' WHERE project_id = ?", [$id]);
-akp_audit('FM_RETURN_TO_REVIEW', 'project_approval', $id, ['approval_status' => 'fm_approved'], ['approval_status' => 'submitted', 'reason' => $reason]);
+dbExecute('START TRANSACTION');
+try {
+    akp_reverse_project_funding_release($id, $reason);
+    dbExecute("UPDATE project_approval SET approval_status = 'submitted' WHERE project_id = ?", [$id]);
+    dbExecute('COMMIT');
+} catch (Throwable $e) {
+    dbExecute('ROLLBACK');
+    throw $e;
+}
+akp_audit('FM_RETURN_TO_REVIEW', 'project_approval', $id, ['approval_status' => 'fm_approved'], ['approval_status' => 'submitted', 'reason' => $reason, 'funding_release_reversed' => true]);
 $_SESSION['project_toast_success'] = 'تمت إعادة المشروع إلى مرحلة المراجعة المالية لاستكمال تخصيص التمويل.';
 } elseif ($action === 'fm_reject_project') {
 if ($role !== 'financial_manager') throw new RuntimeException('رفض المشروع مالياً محصور بالمدير المالي.');
@@ -335,7 +343,15 @@ $approvalCheck = dbFetchOne('SELECT approval_status FROM project_approval WHERE 
 if (!$approvalCheck || $approvalCheck['approval_status'] !== 'fm_approved') throw new RuntimeException('المشروع ليس في حالة انتظار الاعتماد النهائي.');
 // GM rejection returns the project to FM review first.
 // The FM then performs the financial rejection that returns the project to PM.
-dbExecute("UPDATE project_approval SET approval_status = 'submitted', rejection_reason = ?, approved_by = NULL, approved_at = NULL WHERE project_id = ?", [$reason, $id]);
+dbExecute('START TRANSACTION');
+try {
+    akp_reverse_project_funding_release($id, $reason);
+    dbExecute("UPDATE project_approval SET approval_status = 'submitted', rejection_reason = ?, approved_by = NULL, approved_at = NULL WHERE project_id = ?", [$reason, $id]);
+    dbExecute('COMMIT');
+} catch (Throwable $e) {
+    dbExecute('ROLLBACK');
+    throw $e;
+}
 akp_audit('REJECT_PROJECT', 'project_approval', $id, ['approval_status' => 'fm_approved'], ['approval_status' => 'submitted', 'reason' => $reason]);
 try {
 $fmUsers = dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id = r.id WHERE r.code IN ('financial_manager', 'fm', 'finance') AND u.is_active = 1");
