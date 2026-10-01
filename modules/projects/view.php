@@ -193,8 +193,16 @@ if (abs($fundingTotal - $approvedBudgetTotal) > 0.01) {
 $remaining = max(0, $approvedBudgetTotal - $fundingTotal);
 throw new RuntimeException('لا يمكن اعتماد المشروع مالياً قبل اكتمال تخصيص التمويل من حسابات المؤسسة. الميزانية: ' . number_format($approvedBudgetTotal, 2) . '، المخصص: ' . number_format($fundingTotal, 2) . '، المتبقي: ' . number_format($remaining, 2) . '.');
 }
-dbExecute("UPDATE project_approval SET approval_status = 'fm_approved', fm_reviewed_by = ?, fm_reviewed_at = NOW() WHERE project_id = ?", [akp_user_id(), $id]);
-akp_audit('FM_APPROVE_PROJECT', 'project_approval', $id, ['approval_status' => 'submitted'], ['approval_status' => 'fm_approved']);
+dbExecute('START TRANSACTION');
+try {
+    akp_post_project_funding_release($id);
+    dbExecute("UPDATE project_approval SET approval_status = 'fm_approved', fm_reviewed_by = ?, fm_reviewed_at = NOW() WHERE project_id = ?", [akp_user_id(), $id]);
+    dbExecute('COMMIT');
+} catch (Throwable $e) {
+    dbExecute('ROLLBACK');
+    throw $e;
+}
+akp_audit('FM_APPROVE_PROJECT', 'project_approval', $id, ['approval_status' => 'submitted'], ['approval_status' => 'fm_approved', 'funding_released' => true]);
 // Notify active General Manager recipients through the existing notification infrastructure.
 // Notification delivery is isolated so it cannot roll back the completed FM approval.
 try {
