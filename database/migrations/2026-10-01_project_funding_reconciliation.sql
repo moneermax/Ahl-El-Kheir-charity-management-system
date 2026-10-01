@@ -1,0 +1,2 @@
+-- Projects Phase 5: controlled-fund reconciliation
+-- Migration placeholder; no runtime DDL.
