@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS project_funding_returns (
     returned_by INT UNSIGNED NOT NULL,
     returned_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
-    KEY idx_project_funding_return_allocation (funding_allocation_id),
+    UNIQUE KEY uq_project_funding_return_allocation (funding_allocation_id),
     KEY idx_project_funding_return_project (project_id),
     KEY idx_project_funding_return_source (source_account_id),
     KEY idx_project_funding_return_journal (journal_entry_id)
