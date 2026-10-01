@@ -1099,16 +1099,16 @@ try {
 $projectManagers = dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id = r.id WHERE r.code = 'projects_manager' AND u.is_active = 1");
 foreach ($projectManagers as $projectManager) {
     $message = 'المشروع «' . (string)($project['name'] ?? '') . '» (' . (string)($project['project_code'] ?? '') . ') لديه طلب إغلاق من مشرف المشروع.';
-    if ($refundRequired) $message .= ' يوجد رصيد متبقٍ قدره ' . number_format($controlledBalance, 2) . ' ' . ($project['currency_code'] ?: 'SDG') . ' ويجب إرجاعه قبل الإغلاق النهائي.';
-    ak_transaction_review_notify_event((int)$projectManager['id'], $refundRequired ? 'طلب إغلاق مشروع مع إرجاع رصيد' : 'طلب إغلاق مشروع', $message . ' يحتاج إجراء مدير المشاريع.', APP_URL . 'modules/projects/view.php?id=' . $id, $id, 'project_closure_request');
+    if ($refundRequired) $message .= ' يوجد رصيد متبقٍ يحتاج إلى تسوية مالية قبل الإغلاق النهائي.';
+    ak_transaction_review_notify_event((int)$projectManager['id'], $refundRequired ? 'طلب إغلاق مشروع مع تسوية مالية' : 'طلب إغلاق مشروع', $message . ' يحتاج إجراء مدير المشاريع.', APP_URL . 'modules/projects/view.php?id=' . $id, $id, 'project_closure_request');
 }
 if ($refundRequired) {
     $financialManagers = dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id = r.id WHERE r.code = 'financial_manager' AND u.is_active = 1");
     foreach ($financialManagers as $financialManager) {
         ak_transaction_review_notify_event(
             (int)$financialManager['id'],
-            'إرجاع رصيد مشروع قبل الإغلاق',
-            'تم طلب إغلاق المشروع «' . (string)($project['name'] ?? '') . '» (' . (string)($project['project_code'] ?? '') . '). يوجد رصيد متبقٍ قدره ' . number_format($controlledBalance, 2) . ' ' . ($project['currency_code'] ?: 'SDG') . ' تحت سيطرة المشروع. يرجى معالجة الإرجاع قبل تنفيذ الإغلاق.',
+            'تسوية الرصيد المتبقي لمشروع',
+            'تم طلب إغلاق المشروع «' . (string)($project['name'] ?? '') . '» (' . (string)($project['project_code'] ?? '') . '). يوجد رصيد متبقٍ يحتاج إلى الإرجاع إلى حسابات المؤسسة. هذه التسوية من اختصاص المدير المالي.',
             APP_URL . 'modules/projects/project_funding_return.php?id=' . $id,
             $id,
             'project_funding_return_request'
@@ -1116,9 +1116,8 @@ if ($refundRequired) {
     }
 }
 } catch (Throwable $notificationError) {}
-$_SESSION['project_toast_success'] = $refundRequired
-    ? 'تم إرسال طلب الإغلاق. تم تلقائياً إشعار المدير المالي بوجود رصيد متبقٍ لإرجاعه، وسيتم إتمام الإغلاق بعد تسوية الرصيد.'
-    : 'تم إرسال طلب إغلاق المشروع إلى مدير المشاريع.';
+$_SESSION['project_toast_success'] = 'تم إرسال طلب إغلاق المشروع إلى مدير المشاريع. انتهت مسؤولية مشرف المشروع عند إرسال الطلب.';
+
 } elseif ($action === 'request_project_reopen') {
 if ($role !== 'project_supervisor' || !akp_is_primary_supervisor($id)) throw new RuntimeException('طلب إعادة فتح المشروع متاح لمشرف المشروع الأساسي فقط.');
 if (!$closed) throw new RuntimeException('المشروع ليس مغلقاً.');
@@ -2304,20 +2303,7 @@ document.getElementById('edit-milestone-description').value = button.dataset.mil
 <div class="text-primary fs-4"><i class="fas fa-paper-plane"></i></div>
 <div class="flex-grow-1">
 <h6 class="fw-bold mb-1">طلب إغلاق المشروع</h6>
-<p class="small text-muted mb-3">مشرف المشروع يطلب الإغلاق من مدير المشاريع. إذا كان هناك رصيد متبقٍ من التمويل، سيُدرج تلقائياً كاسترداد مطلوب ويُخطر المدير المالي لمعالجته قبل الإغلاق النهائي.</p>
-<?php if ($totals['controlled_balance'] > 0.01): ?>
-<div class="alert alert-warning d-flex align-items-start gap-2 small">
-<i class="fas fa-rotate-left mt-1"></i>
-<div><strong>يوجد رصيد متبقٍ تحت سيطرة المشروع:</strong>
-<?php echo number_format((float)$totals['controlled_balance'], 2); ?> <?php echo e($currency); ?>.
-عند إرسال طلب الإغلاق سيتم إشعار المدير المالي تلقائياً لمعالجة إرجاع هذا المبلغ إلى حساب المؤسسة.
-</div>
-</div>
-<?php else: ?>
-<div class="alert alert-success d-flex align-items-start gap-2 small">
-<i class="fas fa-check-circle mt-1"></i><div>لا يوجد رصيد متبقٍ يحتاج إلى إرجاع حالياً.</div>
-</div>
-<?php endif; ?>
+<p class="small text-muted mb-3">مشرف المشروع يرسل طلب إغلاق المشروع إلى مدير المشاريع. عند إرسال الطلب تنتهي مسؤولية مشرف المشروع، وأي تسوية مالية لاحقة تتم حصراً من خلال المدير المالي عند وجود رصيد متبقٍ.</p>
 <?php if ($closureRequest && (string)$closureRequest['new_status'] === 'closure_requested'): ?>
 <div class="alert alert-info d-flex align-items-start gap-2 small mb-0">
 <i class="fas fa-clock mt-1"></i>
