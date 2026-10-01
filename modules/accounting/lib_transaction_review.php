@@ -155,10 +155,9 @@ function ak_transaction_review_notify_fm_event(int $referenceId, string $referen
 }
 
 /**
- * Project approval notifications are registered at request shutdown so they
+ * GM/VGM approval notifications are registered at request shutdown so they
  * run only after the project action has completed (including its transaction).
- * This keeps notification delivery separate from the accounting/business
- * transition while covering all project approval return paths consistently.
+ * FM approval/rejection notifications are handled by the canonical FM page.
  */
 if (!function_exists('ak_register_project_approval_notifications')) {
 function ak_register_project_approval_notifications(): void {
@@ -167,7 +166,7 @@ function ak_register_project_approval_notifications(): void {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
 
     $action = (string)($_POST['action'] ?? '');
-    if (!in_array($action, ['fm_reject_project', 'approve_project', 'reject_project'], true)) return;
+    if ($action !== 'approve_project') return;
 
     $projectId = (int)($_POST['project_id'] ?? $_GET['id'] ?? 0);
     if ($projectId <= 0) return;
