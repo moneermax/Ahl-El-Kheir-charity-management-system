@@ -139,7 +139,6 @@ function hrSyncEmployeeIdentityFromUser(PDO $pdo, int $userId, array $data): voi
         return;
     }
 
-    $departmentId = !empty($data['department_id']) ? (int)$data['department_id'] : null;
     $email = !empty($data['email']) ? trim((string)$data['email']) : null;
     $phone = !empty($data['phone']) ? trim((string)$data['phone']) : null;
     $gender = in_array(($data['gender'] ?? null), ['male', 'female'], true)
@@ -148,26 +147,41 @@ function hrSyncEmployeeIdentityFromUser(PDO $pdo, int $userId, array $data): voi
     $birthDate = !empty($data['birth_date']) ? (string)$data['birth_date'] : null;
     $address = !empty($data['address']) ? trim((string)$data['address']) : null;
 
+    /*
+     * Department is administrative assignment data. Preserve the existing
+     * employee department unless the caller explicitly supplies it.
+     * Self-service profile updates do not own this field and therefore omit it.
+     */
+    $fields = [
+        'full_name = ?',
+        'email = ?',
+        'phone = ?',
+        'gender = ?',
+        'birth_date = ?',
+        'address = ?',
+    ];
+    $params = [
+        $fullName,
+        $email,
+        $phone,
+        $gender,
+        $birthDate,
+        $address,
+    ];
+
+    if (array_key_exists('department_id', $data)) {
+        $departmentId = !empty($data['department_id']) ? (int)$data['department_id'] : null;
+        $fields[] = 'department_id = ?';
+        $params[] = $departmentId;
+    }
+
+    $params[] = (int)$employee['id'];
+
     dbExecute(
         "UPDATE employees
-         SET full_name = ?,
-             email = ?,
-             phone = ?,
-             gender = ?,
-             birth_date = ?,
-             address = ?,
-             department_id = ?
+         SET " . implode(', ', $fields) . "
          WHERE id = ?",
-        [
-            $fullName,
-            $email,
-            $phone,
-            $gender,
-            $birthDate,
-            $address,
-            $departmentId,
-            (int)$employee['id'],
-        ]
+        $params
     );
 }
 
