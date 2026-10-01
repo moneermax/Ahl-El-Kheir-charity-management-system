@@ -185,9 +185,10 @@ FROM project_funding_allocations
 WHERE project_id = ? AND status = 'draft'",
 [$id]
 )['n'] ?? 0);
-if (abs($fundingTotal - $approvedBudgetTotal) > 0.01) {
-$remaining = max(0, $approvedBudgetTotal - $fundingTotal);
-throw new RuntimeException('لا يمكن اعتماد المشروع مالياً قبل اكتمال تخصيص التمويل من حسابات المؤسسة. الميزانية: ' . number_format($approvedBudgetTotal, 2) . '، المخصص: ' . number_format($fundingTotal, 2) . '، المتبقي: ' . number_format($remaining, 2) . '.');
+$financialRequirement = akp_project_financial_requirement($id, $approvedBudgetTotal)['total_financial_requirement'];
+if (abs($fundingTotal - $financialRequirement) > 0.01) {
+$remaining = max(0, $financialRequirement - $fundingTotal);
+throw new RuntimeException('لا يمكن اعتماد المشروع مالياً قبل اكتمال تخصيص التمويل من حسابات المؤسسة. المتطلب المالي: ' . number_format($financialRequirement, 2) . '، المخصص: ' . number_format($fundingTotal, 2) . '، المتبقي: ' . number_format($remaining, 2) . '.');
 }
 dbExecute('START TRANSACTION');
 try {
