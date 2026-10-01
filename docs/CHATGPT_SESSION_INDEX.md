@@ -1172,3 +1172,8 @@ Salary Advance Stage 6 is closed. The next work unit is **Projects Module Phase 
 
 Current Projects business intent: after FM-controlled financial approval, the full approved budget comes under Project Supervisor control and is deducted from organizational treasury as project expense. Any amount genuinely saved must later be reconciled and returned to the organization's accounts through an auditable financial event. Do not implement this yet; first reconcile the intended event against the existing accounting model and schema.
 
+
+
+## 2026-10-01 — Projects Phase 5 implementation checkpoint
+
+Phase 5 accounting implementation is now **IMPLEMENTED — RUNTIME VERIFICATION REQUIRED** on `audit/projects-phase5-accounting-reconciliation`. The closure workflow has been integrated so a primary PS closure request automatically detects unused controlled funds and notifies FM to process the refund before final closure. Runtime verification is the next exact action; historical phantom project journals remain deferred.
