@@ -32,12 +32,17 @@ function hrSetEmploymentState(int $employeeId, int $stateId, ?int $changedBy = n
 
     $pdo = db();
     $effectiveAt = $effectiveAt ?: date('Y-m-d H:i:s');
-    $pdo->beginTransaction();
+    $ownsTransaction = !$pdo->inTransaction();
+    if ($ownsTransaction) {
+        $pdo->beginTransaction();
+    }
     try {
         $employee = dbFetchOne("SELECT id, employment_state_id FROM employees WHERE id = ? LIMIT 1 FOR UPDATE", [$employeeId]);
         if (!$employee) throw new RuntimeException('الموظف غير موجود.');
         if ((int)($employee['employment_state_id'] ?? 0) === (int)$state['id']) {
-            $pdo->commit();
+            if ($ownsTransaction) {
+                $pdo->commit();
+            }
             return;
         }
         $pdo->prepare("UPDATE hr_employee_state_history SET effective_to = ? WHERE employee_id = ? AND effective_to IS NULL")
@@ -46,9 +51,13 @@ function hrSetEmploymentState(int $employeeId, int $stateId, ?int $changedBy = n
             ->execute([$employeeId, (int)$state['id'], $effectiveAt, $reason, $changedBy]);
         $pdo->prepare("UPDATE employees SET employment_state_id = ?, employment_state_changed_at = ?, status = ? WHERE id = ?")
             ->execute([(int)$state['id'], $effectiveAt, hrLegacyStatusForState($state), $employeeId]);
-        $pdo->commit();
+        if ($ownsTransaction) {
+            $pdo->commit();
+        }
     } catch (Throwable $e) {
-        if ($pdo->inTransaction()) $pdo->rollBack();
+        if ($ownsTransaction && $pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
         throw $e;
     }
 }
