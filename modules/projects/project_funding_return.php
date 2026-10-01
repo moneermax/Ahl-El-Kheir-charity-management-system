@@ -133,5 +133,9 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             تم تسوية كامل الرصيد تحت سيطرة المشروع. يمكن متابعة إغلاق المشروع وفق مساره المعتاد.
         </div>
     <?php endif; ?>
+
+    <div class="d-flex justify-content-end mt-4 mb-2">
+        <a class="btn btn-outline-secondary" href="<?php echo e(APP_URL . 'modules/projects/view_fm.php?id=' . $id); ?>">العودة إلى المراجعة المالية</a>
+    </div>
 </div>
 <?php include dirname(__DIR__, 2) . '/includes/footer.php'; ?>
