@@ -1407,3 +1407,48 @@ Immediate runtime gate:
 4. Only then continue Stage 6 direct-repayment tests.
 
 Do not reopen Stages 1–5. Do not treat approved + verified as a completed business outcome.
+
+
+# LATEST CONTINUATION CHECKPOINT — 2026-10-01 — Stage 6 CLOSED
+
+Continue the existing Ahl El Kheir Charity Management System. Do not rebuild or start a new project.
+
+Environment: repository `moneermax/Ahl-El-Kheir-charity-management-system`; local path `D:\\xampp\\htdocs\\AhlElKheir`; local URL `http://localhost:8081/AhlElKheir/`; database `ahl_el_kheir`; Windows/XAMPP/Apache/PHP 8.2/MariaDB; Arabic RTL; Bootstrap 5.3 RTL; vanilla JS; procedural PHP only.
+
+## Current salary-advance status
+- Stages 1–5: **DONE / RUNTIME VERIFIED / CLOSED**. Do not reopen without genuine regression evidence.
+- Stage 6 — Direct Repayment & Settlement: **DONE / RUNTIME VERIFIED / CLOSED**.
+
+## Final Stage 6 runtime evidence
+Clean fixture: **SAR-2026-00019**.
+- Approved amount: 20,000 SDG.
+- Direct repayment method.
+- FM approval completed.
+- Atomic accounting verification + disbursement completed successfully.
+- No payroll repayment schedule was created.
+- 10,000 SDG repayment through 1200 — البنك → JE-000049 → reference `SAL-ADV-REP-SAR-2026-00019-93`.
+- 10,000 SDG repayment through 1300 — المحافظ الإلكترونية → JE-000050 → reference `SAL-ADV-REP-SAR-2026-00019-94`.
+- Both repayments were reflected in the organization receiving accounts.
+- Outstanding balance reached 0.00 SDG and request status became settled.
+- Repayment evidence upload, viewing, and replacement were successfully tested.
+- Multiple repayments against one advance and different receiving accounts were verified.
+
+## Final Stage 6 code checkpoints
+- PR #86 atomic disbursement precheck correction: `cebd8df397d76738d56a6287b6ba85afba77b6c3`.
+- PR #87 direct repayment evidence query correction: `756debc716339470344428812f9684960a272588`.
+
+## Next session
+First inspect the current master documents and staged working plan to identify the **next explicitly defined work unit**. Do not invent a new stage and do not begin implementation before the normal repository/schema/design audit checkpoint.
+
+Maintain all existing project rules:
+- inspect repo/docs/schema first;
+- no invented tables/columns/statuses;
+- schema changes only through migrations;
+- no runtime CREATE/ALTER;
+- no triggers, views, stored procedures, functions, or events;
+- procedural PHP only;
+- no destructive Git commands;
+- preserve completed salary-advance stages;
+- update documentation after each completed milestone;
+- record exact merge/checkpoint SHAs;
+- runtime-test before declaring a stage complete.
