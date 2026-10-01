@@ -1666,3 +1666,34 @@ Implementation branch: fix/salary-advance-verification-disbursement-atomic
 Implementation commits: ea15f86f88e4166ecf97cdaac1e851cfe2e395de, 2769cf2eb5b0062945510a53de9908954e8a5c1f, 7adcffc014f62d98601387f8194b25f87a89f1ec, f2cb76b9043743b3ee855837e8cea3563b96cc30
 
 **Runtime gate:** confirm SAR-2026-00009 appears as جاهزة للصرف, disburse it normally, and confirm it becomes تم الصرف and leaves the action queue. Then continue Stage 6 repayment testing.
+
+
+## 2026-10-01 — Stage 6 Direct Repayment & Settlement Final Runtime Closure
+
+**Status: DONE / RUNTIME VERIFIED / CLOSED**
+
+Stage 6 — Direct Repayment & Settlement is now fully runtime verified on the current `main` lifecycle.
+
+Final clean runtime fixture: **SAR-2026-00019**
+- Employee: EMP-0002 / المدير العام.
+- Approved amount: 20,000 SDG.
+- Approved repayment method: direct repayment.
+- FM approval completed successfully.
+- Atomic accounting verification + disbursement completed successfully after the Stage 6 precheck correction.
+- Outstanding balance after disbursement: 20,000 SDG.
+- No payroll repayment schedule was created, as required for direct repayment.
+- Direct repayment 1: 10,000 SDG received through **1200 — البنك**, accounting entry **JE-000049**, reference `SAL-ADV-REP-SAR-2026-00019-93`.
+- Direct repayment 2: 10,000 SDG received through **1300 — المحافظ الإلكترونية**, accounting entry **JE-000050**, reference `SAL-ADV-REP-SAR-2026-00019-94`.
+- Both repayments were reflected in the organization receiving accounts.
+- Outstanding balance correctly reduced to **0.00 SDG** and the request reached **settled**.
+- Both direct-repayment transactions accepted dedicated supporting evidence.
+- Evidence display and replacement were runtime verified.
+- The workflow therefore covers partial repayment, multiple repayments, different receiving accounts, accounting posting, balance reduction, evidence attachment/replacement, and final settlement.
+
+Stage 6 hardening/fixes merged to `main`:
+- PR #86 — atomic disbursement precheck correction: merge commit `cebd8df397d76738d56a6287b6ba85afba77b6c3`.
+- PR #87 — direct repayment evidence request-column correction: merge commit `756debc716339470344428812f9684960a272588`.
+
+No schema change was introduced by PR #86 or #87. The dedicated evidence table remains provided by the Stage 6 migration already merged earlier.
+
+**Stage 6 is formally closed. Do not reopen it unless genuine regression evidence appears.**
