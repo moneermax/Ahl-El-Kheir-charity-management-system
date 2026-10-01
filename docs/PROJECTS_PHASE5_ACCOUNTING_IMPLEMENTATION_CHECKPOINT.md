@@ -44,3 +44,12 @@ This preserves the existing PS → Projects Manager closure request while making
 ### Static audit correction — repeated/partial savings returns
 
 The FM return path was hardened before runtime verification: one funding allocation may require a partial return and a later additional return. The reconciliation table therefore indexes (rather than uniquely constrains) the allocation, the accounting helper validates cumulative returned amount against both the allocation amount and the project's current controlled balance, and the FM UI aggregates all returns per allocation. This prevents a partial first return from making the remaining savings permanently unrecoverable.
+
+
+## Static audit hardening — controlled-fund return concurrency — 2026-10-01
+
+The FM unused-fund return helper was hardened before runtime certification. The original balance check occurred before the transaction, so two concurrent return requests could theoretically observe the same controlled balance and both pass validation. The return workflow now locks the project's approval row and selected funding allocation inside the transaction before recalculating allocation and project controlled balances. It also validates the submitted return date server-side. This preserves the existing partial-return model while preventing concurrent over-return of the same controlled balance.
+
+Code commit: `c631ffe571e339fd8a61196ad046f1d7344b964c`.
+
+Runtime verification remains required; no workflow is marked certified from static inspection alone.
