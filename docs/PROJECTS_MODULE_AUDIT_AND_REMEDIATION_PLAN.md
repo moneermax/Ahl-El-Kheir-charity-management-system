@@ -827,3 +827,26 @@ Implementation: modules/projects/view.php.
 - The project view now preserves the user's scroll position across its normal POST → redirect → GET save cycle using tab-scoped `sessionStorage`, so saving an operational record keeps the user at the same area of the page.
 - The previous project-view JavaScript that searched for success alerts and called `scrollIntoView()` was removed; success feedback is no longer coupled to section scrolling.
 - No database/schema changes, migrations, triggers, views, stored procedures, accounting behavior, or workflow changes were introduced.
+
+## 2026-10-01 — Projects Phase 5 — TO DO / NEXT
+
+The Projects accounting reconciliation and post-approval financial-integrity work is explicitly parked as the **next Projects work unit** after Salary Advance completion.
+
+The clarified business requirement is:
+
+1. After the required FM-controlled financial approval, the full approved project budget comes under Project Supervisor control.
+2. The organization's treasury is reduced by the approved amount and that amount is treated as project expense at the financial/disbursement point.
+3. If the Project Supervisor completes the project below the approved amount, the saved balance must be reconciled and returned to the organization's accounts through an explicit, auditable financial event.
+
+### Phase 5 audit scope
+
+- Reconcile the intended financial/disbursement event against the existing project funding, payment-evidence, expense, journal, and treasury conventions.
+- Determine how Project Supervisor-controlled funds are represented after treasury reduction using existing accounting patterns; do not invent an account without inspection and approval.
+- Prevent double recognition of the same financial event as both project funding/disbursement and project expense.
+- Reconcile approved/funded/paid/expense/residual/variance figures across project detail, portfolio, closure, and accounting records.
+- Define the saved-budget return/reconciliation event and its audit trail.
+- Review and safely correct historical phantom project-approval journals only after the replacement accounting model is settled.
+- Runtime-verify the resulting workflow with controlled project data.
+
+**Current status: TO DO / NEXT. No Projects accounting implementation is authorized by this checkpoint.**
+
