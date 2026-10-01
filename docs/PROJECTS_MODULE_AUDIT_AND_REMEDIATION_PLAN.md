@@ -902,3 +902,30 @@ During the continued Phase 5 audit, the FM return path was rechecked for race co
 Commit: `c631ffe571e339fd8a61196ad046f1d7344b964c` — **Projects: serialize controlled-fund returns**.
 
 This is a static hardening fix. Runtime Phase 5 certification is still pending.
+
+
+## 2026-10-01 — Projects approval notification static audit — hidden GM/PM path removed
+
+A follow-up static audit of the authoritative approval path found one remaining notification path outside the dedicated FM workflow. modules/accounting/lib_transaction_review.php still registered a shutdown callback that sent the Projects Manager a project_gm_approval_pm notification after GM/VGM final approval. That conflicted with the confirmed timing rule: the PM approval-chain notification belongs to FM final accounting confirmation, and GM/VGM approval must not generate another PM notification.
+
+The same helper also contained stale FM-rejection/GM-rejection PM notification branches. Those were removed from the generic helper because FM approval/rejection is now canonical in modules/projects/view_fm.php, while GM rejection must notify FM only during the FM/GM back-and-forth.
+
+modules/projects/project_lib.php was also corrected so akp_audit() is audit-only and does not secretly emit an FM-rejection notification. The canonical FM page remains responsible for the terminal PM rejection notification.
+
+Current notification boundary is therefore:
+
+- PM submit/resubmit → FM receives submission notification.
+- FM preliminary approval → no PM notification and no GM notification.
+- FM final accounting confirmation → GM/VGM receive the approval notification and PM receives exactly one approval-chain notification.
+- GM/VGM final approval → no PM notification and no second accounting release.
+- GM/VGM rejection → FM receives re-review notification; PM receives no notification.
+- FM rejection → PM receives the terminal rejection notification.
+- Later post-GM operational notifications (for example completed payment evidence or controlled-fund return processing) remain separate from the FM/GM approval loop.
+
+Commits on main:
+- 83cf0d6f51779efa282cc932480f301589965a28 — remove GM → PM approval notification.
+- 02b31dd0edea82f4983d19ec39f92346ad0bc75f — keep GM rejection notifications FM-only.
+- db346734e1d31dacb5c7a74bd45ca0c64481dcd8 — narrow shutdown notification scope to GM approval only.
+- 25058e697176bd38623e6d6f97c60baeccb6d2d7 — keep approval notifications out of the generic audit helper.
+
+Runtime verification is still required before this notification gate is marked closed.
