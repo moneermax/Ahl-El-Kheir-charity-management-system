@@ -1122,6 +1122,10 @@ if (!$pendingRequest) throw new RuntimeException('لا يوجد طلب إغلا�
 // ... (Original close_project logic preserved exactly)
 $pending = dbFetchOne("SELECT COUNT(*) AS n FROM project_expenses WHERE project_id = ? AND status IN ('draft','submitted','approved')", [$id]);
 if ((int)($pending['n'] ?? 0) > 0) throw new RuntimeException('لا يمكن الإغلاق مع وجود مصروفات غير مرحلة.');
+$controlledBalance = akp_project_controlled_balance($id);
+if ($controlledBalance > 0.01) {
+    throw new RuntimeException('لا يمكن إغلاق المشروع قبل إعادة الرصيد المتبقي إلى حسابات المؤسسة. الرصيد تحت سيطرة المشروع: ' . number_format($controlledBalance, 2) . ' ' . ($project['currency_code'] ?: 'SDG') . '.');
+}
 $summary = akp_post_value('closure_summary');
 $varianceExplanation = akp_post_value('variance_explanation');
 if ($summary === '') throw new RuntimeException('ملخص الإغلاق مطلوب.');
