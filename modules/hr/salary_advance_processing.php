@@ -7,6 +7,7 @@ require_once __DIR__ . '/../../config/functions.php';
 require_once __DIR__ . '/../../config/session.php';
 require_once __DIR__ . '/lib_salary_advance_request.php';
 require_once __DIR__ . '/lib_salary_advance_accounting.php';
+require_once __DIR__ . '/lib_salary_advance_repayment_evidence.php';
 require_once __DIR__ . '/../accounting/lib_transaction_review.php';
 
 Session::start();
@@ -187,6 +188,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 trim((string)($_POST['repayment_notes'] ?? ''))
             );
             $message = 'تم تسجيل السداد المباشر وترحيل القيد المحاسبي رقم ' . $entryId . ' بنجاح.';
+        } elseif (isset($_POST['upload_direct_repayment_evidence'])) {
+            if (!$canAccounting) {
+                throw new RuntimeException('لا يملك المستخدم الحالي صلاحية رفع إثبات السداد المباشر.');
+            }
+
+            hrSalaryAdvanceDirectRepaymentEvidenceUpload(
+                $pdo,
+                $requestId,
+                (int)($_POST['direct_repayment_id'] ?? 0),
+                (int)Session::getUserID(),
+                $_FILES['direct_repayment_evidence'] ?? []
+            );
+            $message = 'تم رفع إثبات السداد المباشر بنجاح.';
         } elseif (isset($_POST['upload_payment_receipt'])) {
             if (!$canAccounting) {
                 throw new RuntimeException('لا يملك المستخدم الحالي صلاحية رفع إيصال الدفع.');
@@ -266,6 +280,10 @@ $repaymentSchedule = $request && in_array((string)$request['status'], ['disburse
 $directRepaymentHistory = $request && in_array((string)$request['status'], ['disbursed','settled'], true)
     ? hrSalaryAdvanceDirectRepaymentHistory($pdo, (int)$request['id'])
     : [];
+foreach ($directRepaymentHistory as &$repayment) {
+    $repayment['evidence'] = hrSalaryAdvanceDirectRepaymentEvidenceGet($pdo, (int)$repayment['id']);
+}
+unset($repayment);
 
 $cashAccounts = [];
 $balances = [];
@@ -611,7 +629,7 @@ if ($request && in_array((string)$request['status'], ['disbursed','settled'], tr
 <div class="alert alert-light border mb-0">لا توجد عمليات سداد مباشر مسجلة لهذه السلفة.</div>
 <?php else: ?>
 <div class="table-responsive"><table class="table table-hover align-middle mb-0">
-<thead><tr><th>التاريخ</th><th>المبلغ</th><th>حساب الاستلام</th><th>القيد</th><th>المرجع</th><th>بواسطة</th><th>السند</th></tr></thead>
+<thead><tr><th>التاريخ</th><th>المبلغ</th><th>حساب الاستلام</th><th>القيد</th><th>المرجع</th><th>بواسطة</th><th>السند</th><th>إثبات التحصيل</th></tr></thead>
 <tbody>
 <?php foreach($directRepaymentHistory as $rep): ?>
 <tr>
@@ -622,6 +640,30 @@ if ($request && in_array((string)$request['status'], ['disbursed','settled'], tr
 <td><?=e($rep['repayment_reference']??'—')?></td>
 <td><?=e($rep['received_by_name']??'—')?></td>
 <td><a class="btn btn-sm btn-outline-success" target="_blank" href="<?=e(APP_URL.'modules/hr/salary_advance_repayment_voucher_print.php?id='.(int)$rep['id'])?>"><i class="fas fa-print me-1"></i>طباعة سند القبض</a></td>
+<td>
+<?php if(!empty($rep['evidence']['id'])): ?>
+    <div class="d-flex flex-wrap gap-1 align-items-center">
+        <a class="btn btn-sm btn-outline-primary" target="_blank" href="<?=e(APP_URL.'modules/hr/salary_advance_repayment_evidence.php?id='.(int)$rep['evidence']['id'])?>"><i class="fas fa-file-lines me-1"></i>عرض</a>
+        <form method="post" enctype="multipart/form-data" class="d-flex flex-wrap gap-1 align-items-center">
+            <?=csrf_field()?>
+            <input type="hidden" name="request_id" value="<?= (int)$request['id']?>">
+            <input type="hidden" name="direct_repayment_id" value="<?= (int)$rep['id']?>">
+            <input type="file" name="direct_repayment_evidence" class="form-control form-control-sm" accept=".jpg,.jpeg,.png,.pdf" required style="max-width:220px">
+            <button type="submit" name="upload_direct_repayment_evidence" value="1" class="btn btn-sm btn-outline-secondary"><i class="fas fa-arrows-rotate me-1"></i>استبدال</button>
+        </form>
+    </div>
+    <div class="small text-muted mt-1"><?=e($rep['evidence']['original_name'])?></div>
+<?php else: ?>
+    <form method="post" enctype="multipart/form-data" class="d-flex flex-wrap gap-1 align-items-center">
+        <?=csrf_field()?>
+        <input type="hidden" name="request_id" value="<?= (int)$request['id']?>">
+        <input type="hidden" name="direct_repayment_id" value="<?= (int)$rep['id']?>">
+        <input type="file" name="direct_repayment_evidence" class="form-control form-control-sm" accept=".jpg,.jpeg,.png,.pdf" required style="max-width:220px">
+        <button type="submit" name="upload_direct_repayment_evidence" value="1" class="btn btn-sm btn-outline-primary"><i class="fas fa-upload me-1"></i>رفع</button>
+    </form>
+    <?php if((string)$rep['repayment_account_code'] === '1200'): ?><div class="small text-warning mt-1"><i class="fas fa-circle-exclamation me-1"></i>حساب بنك: يفضل إرفاق إثبات التحويل/الإيداع البنكي.</div><?php endif; ?>
+<?php endif; ?>
+</td>
 </tr>
 <?php endforeach; ?>
 </tbody></table></div>
