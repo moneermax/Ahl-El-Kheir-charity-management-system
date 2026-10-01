@@ -1314,3 +1314,23 @@ For now, do not change the Projects accounting implementation. Phase 5 must firs
 FM approval is the treasury-release event. When the primary Project Supervisor submits project closure, the PS responsibility ends. The system only notifies FM when a controlled unused balance exists; FM alone performs the savings/refund and accounting reconciliation. If the controlled balance is zero, no FM notification is generated. Final project closure remains blocked until any required financial reconciliation reaches zero, and FM notifies the Projects Manager after the refund is processed.
 
 Runtime gate: apply the Phase 5 migration and test the complete FM release → GM approval → PS partial spending → PS closure request → conditional FM refund notification → FM refund (only when savings exist) → PM closure flow on a fresh controlled project. Historical phantom project-approval journal correction remains deferred until this flow passes.
+
+
+## 2026-10-01 — Projects Approval Notification Timing Reconfirmed
+
+The Projects approval notification timing was explicitly corrected during the current Phase 5 audit.
+
+Authoritative behavior:
+- PM submit/resubmit → FM receives submission notification.
+- FM preliminary financial approval → no PM notification.
+- FM final accounting confirmation / treasury release → GM/VGM receive the final-approval review notification **and Projects Manager receives exactly one notification**.
+- GM/VGM final approval → **no additional Projects Manager notification**.
+- GM/VGM rejection → FM receives the review/rejection notification; PM is not notified as a terminal rejection.
+- FM rejection → PM receives the terminal rejection notification.
+
+Historical documentation had incorrectly recorded PM notification after GM final approval. That statement is superseded. The old GM → PM notification was removed in commit `8524cea415347b6219440455d66860fae142b543`.
+
+Current implementation correction is committed on the Projects Phase 5 audit branch:
+`3dcc2acd3bf53cf40e49f78d3b03b0bf3c925100`.
+
+Runtime verification of the corrected timing remains required before closure.
