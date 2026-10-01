@@ -28,16 +28,14 @@ Do not run historical project-approval journal correction until this flow passes
 
 ## Closure/refund integration — 2026-10-01
 
-The closure workflow now automatically detects unused controlled project funds when the **primary Project Supervisor requests closure**.
+The closure workflow follows a strict role boundary:
 
-- PS does not directly post a treasury return; FM remains the accounting authority.
-- If controlled balance > 0, the closure request is marked/audited as requiring a refund.
-- The Projects Manager continues to receive the closure request.
-- FM is automatically notified with a direct link to the project refund workflow.
-- FM can process the unused balance while the project is in `closure_requested`.
-- The refund creates the balanced return journal and `project_funding_returns` record.
-- FM processing also notifies the Projects Manager so the existing closure approval can continue.
-- The Projects Manager cannot execute final closure while controlled balance remains.
-- If controlled balance is already zero, no refund notification is generated.
+- The primary Project Supervisor submits the project closure request. **That is the end of the PS financial/closure responsibility.**
+- The system checks the controlled balance at the time of the closure request.
+- If controlled balance > 0, FM is automatically notified and receives the refund-processing link. **Only FM handles the savings/refund and accounting reconciliation.**
+- If controlled balance = 0, **no FM notification is generated** and no refund workflow is created.
+- PS is not asked to return, confirm, monitor, or complete the saved-funds process after submitting the closure request.
+- The Projects Manager continues the existing project-closure workflow; final closure remains blocked while controlled balance remains.
+- FM processing creates the balanced return journal and `project_funding_returns` record, then notifies the Projects Manager that the financial reconciliation is complete.
 
-This preserves the existing PS → Projects Manager closure workflow while integrating the financial reconciliation step rather than allowing PS to bypass FM accounting controls.
+This preserves the existing PS → Projects Manager closure request while making any savings reconciliation an FM-only financial task.
