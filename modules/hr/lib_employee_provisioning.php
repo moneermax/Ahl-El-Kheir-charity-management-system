@@ -29,7 +29,9 @@ function hrProvisionEmployeeForUser(PDO $pdo, int $userId, array $data, int $cre
         throw new InvalidArgumentException('اسم الموظف مطلوب لإنشاء ملف الموظف.');
     }
 
-    $departmentId = !empty($data['department_id']) ? (int)$data['department_id'] : null;
+    $departmentId = array_key_exists('department_id', $data)
+        ? (!empty($data['department_id']) ? (int)$data['department_id'] : null)
+        : (isset($employee['department_id']) ? (int)$employee['department_id'] : null);
     $email = !empty($data['email']) ? trim((string)$data['email']) : null;
     $phone = !empty($data['phone']) ? trim((string)$data['phone']) : null;
     $gender = in_array(($data['gender'] ?? null), ['male', 'female'], true)
