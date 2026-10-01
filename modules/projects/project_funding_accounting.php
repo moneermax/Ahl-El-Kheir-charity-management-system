@@ -214,18 +214,19 @@ if (!function_exists('akp_return_project_funding')) {
             [$allocationId, $projectId]
         );
         if (!$allocation) throw new RuntimeException('تخصيص التمويل المطلوب غير موجود أو غير مرحّل.');
-        if (dbFetchOne('SELECT id FROM project_funding_returns WHERE funding_allocation_id=? LIMIT 1', [$allocationId])) {
-            throw new RuntimeException('تم إرجاع هذا المصدر المالي مسبقاً.');
-        }
-
         $amount = round($amount, 2);
         if ($amount <= 0) throw new RuntimeException('مبلغ الإرجاع يجب أن يكون أكبر من صفر.');
+        $returnedForAllocation = dbFetchOne(
+            'SELECT COALESCE(SUM(amount),0) AS total FROM project_funding_returns WHERE funding_allocation_id=?',
+            [$allocationId]
+        );
+        $allocationRemaining = round((float)$allocation['amount'] - (float)($returnedForAllocation['total'] ?? 0), 2);
+        if ($amount > $allocationRemaining + 0.01) {
+            throw new RuntimeException('مبلغ الإرجاع يتجاوز الرصيد المتبقي لهذا المصدر المالي: ' . number_format($allocationRemaining, 2) . '.');
+        }
         $controlledBalance = akp_project_controlled_balance($projectId);
         if ($amount > $controlledBalance + 0.01) {
             throw new RuntimeException('مبلغ الإرجاع يتجاوز الرصيد المتبقي تحت سيطرة المشروع: ' . number_format($controlledBalance, 2) . '.');
-        }
-        if ($amount > (float)$allocation['amount'] + 0.01) {
-            throw new RuntimeException('مبلغ الإرجاع يتجاوز قيمة تخصيص مصدر التمويل.');
         }
 
         $project = dbFetchOne('SELECT name, currency_code FROM other_projects WHERE id=?', [$projectId]);
