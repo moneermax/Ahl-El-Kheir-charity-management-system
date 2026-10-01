@@ -1305,3 +1305,45 @@ Business intent clarified for the next Projects audit: after the required FM-con
 
 For now, do not change the Projects accounting implementation. Phase 5 must first reconcile this business intent against the existing chart of accounts, project funding/payment-evidence/expense workflow, and fresh database evidence. Do not invent an account, transfer model, journal type, or schema change. Historical phantom project-approval journals must be corrected only after the replacement accounting model is settled.
 
+
+
+## 2026-10-01 — Projects Phase 5 implementation + closure/refund integration
+
+**IMPLEMENTED — RUNTIME VERIFICATION REQUIRED.**
+
+FM approval is the treasury-release event. When the primary Project Supervisor submits project closure, the PS responsibility ends. The system only notifies FM when a controlled unused balance exists; FM alone performs the savings/refund and accounting reconciliation. If the controlled balance is zero, no FM notification is generated. Final project closure remains blocked until any required financial reconciliation reaches zero, and FM notifies the Projects Manager after the refund is processed.
+
+Runtime gate: apply the Phase 5 migration and test the complete FM release → GM approval → PS partial spending → PS closure request → conditional FM refund notification → FM refund (only when savings exist) → PM closure flow on a fresh controlled project. Historical phantom project-approval journal correction remains deferred until this flow passes.
+
+
+## 2026-10-01 — Projects Approval Notification Timing Reconfirmed
+
+The Projects approval notification timing was explicitly corrected during the current Phase 5 audit.
+
+Authoritative behavior:
+- PM submit/resubmit → FM receives submission notification.
+- FM preliminary financial approval → no PM notification.
+- FM final accounting confirmation / treasury release → GM/VGM receive the final-approval review notification **and Projects Manager receives exactly one notification**.
+- GM/VGM final approval → **no additional Projects Manager notification**.
+- GM/VGM rejection → FM receives the review/rejection notification; PM is not notified as a terminal rejection.
+- FM rejection → PM receives the terminal rejection notification.
+
+Historical documentation had incorrectly recorded PM notification after GM final approval. That statement is superseded. The old GM → PM notification was removed in commit `8524cea415347b6219440455d66860fae142b543`.
+
+Current implementation correction is committed on the Projects Phase 5 audit branch:
+`3dcc2acd3bf53cf40e49f78d3b03b0bf3c925100`.
+
+Runtime verification of the corrected timing remains required before closure.
+
+
+## 2026-10-01 — Projects approval-path audit correction
+
+A deeper Projects workflow audit found a second layer of inconsistency beyond the already-corrected PM notification timing. The dedicated `modules/projects/view_fm.php` is the canonical Financial Manager workflow, but legacy FM POST handlers and duplicate FM UI remained in `modules/projects/view.php`. Because the legacy page supports a `role_view` bypass, those handlers were still directly reachable.
+
+Correction on the Projects audit branch:
+- blocked legacy FM approval/review/rejection actions in `view.php` so they cannot mutate workflow state;
+- removed duplicate FM approval UI from `view.php`;
+- corrected GM final-approval wording so it no longer implies a second journal/release;
+- added the terminal Projects Manager notification on canonical FM rejection using `project_fm_rejection`.
+
+The authoritative notification timing remains: PM is notified after FM final accounting confirmation, not after GM final approval. Runtime verification of the complete path is still required before this Projects audit gate is closed.

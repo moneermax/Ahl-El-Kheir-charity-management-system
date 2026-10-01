@@ -1172,3 +1172,42 @@ Salary Advance Stage 6 is closed. The next work unit is **Projects Module Phase 
 
 Current Projects business intent: after FM-controlled financial approval, the full approved budget comes under Project Supervisor control and is deducted from organizational treasury as project expense. Any amount genuinely saved must later be reconciled and returned to the organization's accounts through an auditable financial event. Do not implement this yet; first reconcile the intended event against the existing accounting model and schema.
 
+
+
+## 2026-10-01 — Projects Phase 5 implementation checkpoint
+
+Phase 5 accounting implementation is now **IMPLEMENTED — RUNTIME VERIFICATION REQUIRED** on `audit/projects-phase5-accounting-reconciliation`. The closure workflow has been integrated so a primary PS closure request automatically detects unused controlled funds and notifies FM to process the refund before final closure. Runtime verification is the next exact action; historical phantom project journals remain deferred.
+
+
+## 2026-10-01 — Phase 5 closure ownership clarification
+
+Phase 5 closure ownership is now explicit: PS submits the closure request and then the PS responsibility ends. FM is notified only if unused controlled funds exist; FM alone handles the savings/refund and accounting reconciliation. No FM notification is generated when savings are zero. Runtime verification remains the next gate.
+
+
+## 2026-10-01 — Projects Approval Notification Timing Correction
+
+The Projects notification timing was reconfirmed during the Phase 5 audit because an older documentation section incorrectly described PM notification after GM final approval.
+
+Authoritative behavior:
+- PM submit/resubmit → FM notification.
+- FM preliminary approval → no PM notification.
+- FM final accounting confirmation → GM/VGM notification and one PM notification.
+- GM/VGM final approval → no additional PM notification.
+- GM/VGM rejection → FM review notification only at this stage.
+- FM rejection → PM terminal-rejection notification.
+
+The old GM → PM notification was removed in 8524cea415347b6219440455d66860fae142b543. The current PM notification was restored at the correct FM final-accounting checkpoint in view_fm.php.
+
+Correction commit: 3dcc2acd3bf53cf40e49f78d3b03b0bf3c925100.
+Documentation correction commits: 8e86c08cde582d74d93bb2eb5479a357b9117449, 64a7f26e1172ba798d76eb0fdbc5cef0c6552d0c.
+
+Runtime verification remains required.
+
+
+## 2026-10-01 — Projects approval-path reconciliation
+
+Continued the Projects Phase 5 audit from the existing `audit/projects-phase5-accounting-reconciliation` checkpoint. Confirmed that the earlier PM-notification decision was historically real but the current branch had only removed the obsolete GM→PM notification and had not yet restored the replacement PM notification; that replacement was added at FM final accounting confirmation.
+
+A deeper static audit then identified and corrected legacy FM approval/rejection handlers and duplicate FM UI in `modules/projects/view.php`. FM workflow is now canonical in `view_fm.php`; legacy FM actions in the general project view are blocked without side effects. Canonical FM rejection now sends the terminal PM notification. GM final approval remains notification-free toward PM and does not create a second accounting release.
+
+Runtime verification remains the next gate.
