@@ -549,7 +549,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'address' => $addressValue,
                     'birth_date' => $birthValue,
                     'gender' => $employeeGender,
-                    'department_id' => null,
                 ]);
                 $pdo->commit();
             } catch (Throwable $e) {
