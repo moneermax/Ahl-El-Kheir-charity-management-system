@@ -23,8 +23,15 @@ $departments = dbFetchAll("SELECT id, name_ar, name_en FROM departments ORDER BY
 $managers = dbFetchAll("SELECT u.id, u.full_name, u.username
     FROM users u
     JOIN roles r ON r.id = u.role_id
-    WHERE r.code IN ('admin','sudo','general_manager','vice_general_manager','financial_manager','accountant')
-      AND u.is_active = 1
+    WHERE u.is_active = 1
+      AND (
+          r.code IN ('admin','sudo','general_manager','vice_general_manager','financial_manager','accountant')
+          OR r.code LIKE '%_manager'
+          OR r.name_ar LIKE '%مدير%'
+          OR r.name_ar LIKE '%رئيس%'
+          OR r.name_en LIKE '%Manager%'
+          OR r.name_en LIKE '%Head%'
+      )
     ORDER BY u.full_name");
 $nameCol = (defined('AK_LANG') && AK_LANG === 'en') ? 'name_en' : 'name_ar';
 
@@ -155,7 +162,7 @@ $pageTitle='إدارة الموظفين'; require_once __DIR__.'/../../includes/
 <?php elseif($action==='add'): ?>
 <div class="fm-card">
     <div class="fm-card-body p-0">
-        <?php include __DIR__ . '/_user_create_form.php'; ?>
+        <?php include __DIR__ . '/../users/_create_user_form.php'; ?>
     </div>
 </div>
 <?php else: ?>
