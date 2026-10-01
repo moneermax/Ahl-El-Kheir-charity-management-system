@@ -196,6 +196,7 @@ throw new RuntimeException('لا يمكن اعتماد المشروع ماليا
 dbExecute('START TRANSACTION');
 try {
     akp_post_project_funding_release($id);
+    akp_sync_project_payment_evidence_after_release($id);
     dbExecute("UPDATE project_approval SET approval_status = 'fm_approved', fm_reviewed_by = ?, fm_reviewed_at = NOW() WHERE project_id = ?", [akp_user_id(), $id]);
     dbExecute('COMMIT');
 } catch (Throwable $e) {
