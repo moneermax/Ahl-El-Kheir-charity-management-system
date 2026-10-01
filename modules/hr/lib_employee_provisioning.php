@@ -222,8 +222,8 @@ function hrCreateUserWithEmployee(PDO $pdo, array $data, int $createdBy): array
         $stmt = $pdo->prepare(
             "INSERT INTO users
              (role_id, username, password_hash, full_name, email, phone,
-              is_active, created_by, department_id, manager_id, gender)
-             VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?)"
+              is_active, password_change_required, created_by, department_id, manager_id, gender)
+             VALUES (?, ?, ?, ?, ?, ?, 1, 1, ?, ?, ?, ?)"
         );
         $stmt->execute([
             (int)$role['id'],
