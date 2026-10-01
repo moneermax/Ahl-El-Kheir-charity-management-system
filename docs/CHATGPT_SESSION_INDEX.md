@@ -1227,3 +1227,20 @@ After the earlier notification-timing correction, the shared transaction-review 
 Corrections were committed directly to main: the GM → PM path and stale rejection branches were removed, and the generic akp_audit() helper was made notification-free. The canonical FM page remains responsible for FM final-accounting and FM-rejection notifications.
 
 Runtime verification of the complete approval notification sequence is still required.
+
+## 2026-10-01 — Unified User / Employee Creation Workflow
+
+Completed the account-creation consolidation prompted by the PM/PS employee-service investigation.
+
+Authoritative architecture:
+- `modules/users/index.php` is the single canonical Create User / Employee page for Admin and HR Manager.
+- `modules/users/_create_user_form.php` is the shared form used by that page and is intentionally retained.
+- `hrCreateUserWithEmployee()` creates the user and linked employee profile in one transaction.
+- `modules/hr/employees.php` no longer contains a duplicate account-creation implementation; its old add route redirects to the canonical page.
+- Manager selection is maintained in one place and now includes the existing manager/head patterns.
+- No PM/PS-specific code path was introduced.
+- Existing broken employee linkage/data is repaired through the existing schema rather than by role-specific exceptions.
+
+Implementation commits: `b90791e`, `ca42000e`, `ffed771`, `6b36187`.
+
+Next runtime check: verify the same creation UI for Admin and HR and verify automatic user→employee linkage on a controlled test account. Do not alter Leave or Salary Advance logic unless a concrete regression is found.
