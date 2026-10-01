@@ -1347,3 +1347,9 @@ Correction on the Projects audit branch:
 - added the terminal Projects Manager notification on canonical FM rejection using `project_fm_rejection`.
 
 The authoritative notification timing remains: PM is notified after FM final accounting confirmation, not after GM final approval. Runtime verification of the complete path is still required before this Projects audit gate is closed.
+
+
+### Projects Phase 5 — 2026-10-01 continued static hardening
+- Main remains the working branch; Projects Phase 5 is implemented but **runtime verification remains required**.
+- Controlled-fund return concurrency was hardened in commit `c631ffe571e339fd8a61196ad046f1d7344b964c`: the return transaction now serializes on the project approval row and selected funding allocation before recalculating remaining balances, and validates the return date server-side.
+- Documentation commits immediately following the code fix: `21281ca91408c3a0296a4c62f2d80a10ad1a3ff9`, `1d7022d64e85264ec2bf6a380177d37e2b1c2b5c`.
