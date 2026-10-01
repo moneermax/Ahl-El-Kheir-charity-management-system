@@ -326,6 +326,21 @@ try {
     dbExecute('ROLLBACK');
     throw $e;
 }
+akp_audit('REJECT_PROJECT', 'project_approval', $id, ['approval_status' => 'fm_approved', 'fm_accounting_approved' => true], ['approval_status' => 'submitted', 'reason' => $reason, 'funding_release_reversed' => true]);
+try {
+$fmUsers = dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id = r.id WHERE r.code IN ('financial_manager', 'fm', 'finance') AND u.is_active = 1");
+foreach ($fmUsers as $fmUser) {
+ak_transaction_review_notify_event(
+(int)$fmUser['id'],
+'المشروع مرفوض من المدير العام ويحتاج مراجعة مالية',
+'المشروع «' . (string)($project['name'] ?? '') . '» (' . (string)($project['project_code'] ?? '') . ') رفضه المدير العام ويحتاج مراجعة المدير المالي قبل إعادته لمدير المشاريع. السبب: ' . $reason,
+APP_URL . 'modules/projects/view.php?id=' . $id,
+$id,
+'project_gm_rejection'
+);
+}
+} catch (Throwable $notificationError) {}
+$_SESSION['project_toast_success'] = 'تم رفض المشروع من المدير العام وإعادته إلى المدير المالي للمراجعة.';
 } elseif ($action === 'launch_project') {
 if ($role !== 'projects_manager') {
 throw new RuntimeException('إطلاق المشروع متاح لمدير المشاريع فقط.');
