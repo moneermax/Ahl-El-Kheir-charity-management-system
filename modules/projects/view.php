@@ -127,12 +127,8 @@ return trim((string)($_POST[$name] ?? $default));
 * This mirrors how every other module in this system recognizes cash on a cash basis.
 */
 function akp_commit_project_funding(int $projectId): void {
-dbExecute(
-"UPDATE project_funding_allocations
-SET status = 'posted', approved_by = ?, posted_by = ?, posted_at = NOW()
-WHERE project_id = ? AND status = 'draft'",
-[akp_user_id(), akp_user_id(), $projectId]
-);
+    // Compatibility shim: FM approval now performs the accounting release.
+    // GM final approval must never create or repeat a funding release.
 }
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 if (!verify_csrf()) {
