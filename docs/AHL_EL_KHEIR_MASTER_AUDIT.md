@@ -1715,3 +1715,8 @@ Phase 5 remains **TO DO / NEXT**. Before implementation, inspect and reconcile t
 The Phase 5 accounting model is implemented on the isolated audit branch. FM financial approval releases each funding allocation once; GM final approval does not create a second release. PS closure requests automatically identify unused controlled funds and notify FM to process the audited return. Closure remains blocked until the controlled balance is zero.
 
 Do not run historical project journal correction until runtime verification of the replacement model passes.
+
+
+## 2026-10-01 — Phase 5 closure ownership clarification
+
+The Phase 5 closure rule was clarified after implementation review: the primary Project Supervisor submits the closure request and has no further responsibility for savings reconciliation. FM is notified **only when a controlled unused balance exists** and FM alone performs the return/accounting reconciliation. When the controlled balance is zero, no FM notification is sent. PS is not asked to return, confirm, monitor, or complete any financial reconciliation after closure submission.
