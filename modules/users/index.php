@@ -123,7 +123,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$manageAcct) {
             $data = [
                 'full_name' => trim($_POST['full_name'] ?? ''),
                 'username' => trim($_POST['username'] ?? ''),
-                'password' => $_POST['password'] ?? '',
                 'role_code' => trim($_POST['role_code'] ?? ''),
                 'email' => trim($_POST['email'] ?? ''),
                 'phone' => trim($_POST['phone'] ?? ''),
@@ -133,8 +132,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$manageAcct) {
             ];
 
             try {
-                hrCreateUserWithEmployee(db(), $data, Session::getUserId());
-                flash('success', 'تم إنشاء حساب الموظف وملف الموظف المرتبط به تلقائياً.');
+                $createdAccount = hrCreateUserWithEmployee(db(), $data, Session::getUserId());
+                $temporaryPassword = (string)($createdAccount['temporary_password'] ?? '');
+                flash(
+                    'success',
+                    'تم إنشاء حساب الموظف وملف الموظف المرتبط به تلقائياً. كلمة المرور المؤقتة: ' . $temporaryPassword . ' — احفظها الآن وسلمها للموظف؛ لن يتم عرضها مرة أخرى.'
+                );
                 header('Location: ' . APP_URL . 'modules/users/index.php');
                 exit();
             } catch (Throwable $e) {
