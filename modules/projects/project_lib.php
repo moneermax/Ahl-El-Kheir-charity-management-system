@@ -5,7 +5,6 @@ require_once dirname(__DIR__, 2) . '/config/database.php';
 require_once dirname(__DIR__, 2) . '/config/functions.php';
 require_once dirname(__DIR__, 2) . '/config/session.php';
 require_once dirname(__DIR__, 2) . '/modules/accounting/lib_transaction_review.php';
-require_once dirname(__DIR__) . '/projects/project_funding_accounting.php';
 
 if (!function_exists('akp_role')) {
     function akp_role(): string { return (string)Session::getUserRole(); }
@@ -157,7 +156,25 @@ if (!function_exists('akp_audit')) {
     {
         try {
             dbExecute("INSERT INTO audit_log (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", [akp_user_id(), $action, $entityType, $entityId, $oldValues === null ? null : json_encode($oldValues, JSON_UNESCAPED_UNICODE), $newValues === null ? null : json_encode($newValues, JSON_UNESCAPED_UNICODE), $_SERVER['REMOTE_ADDR'] ?? '', $_SERVER['HTTP_USER_AGENT'] ?? '']);
-            // Project approval notifications are emitted by the canonical workflow handlers, not from the generic audit helper. This keeps audit logging side-effect free and prevents hidden or duplicate approval notifications.
+            if ($action === 'FM_REJECT_PROJECT' && $entityType === 'project_approval') {
+                try {
+                    $project = dbFetchOne('SELECT project_code, name FROM other_projects WHERE id = ?', [$entityId]);
+                    if ($project) {
+                        $reason = trim((string)($newValues['reason'] ?? ''));
+                        $projectManagers = dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id = r.id WHERE r.code = 'projects_manager' AND u.is_active = 1");
+                        foreach ($projectManagers as $projectManager) {
+                            ak_transaction_review_notify_event(
+                                (int)$projectManager['id'],
+                                'تم رفض المشروع مالياً',
+                                'المشروع «' . (string)($project['name'] ?? '') . '» (' . (string)($project['project_code'] ?? '') . ') تم رفضه مالياً وإعادته للمراجعة. السبب: ' . $reason,
+                                APP_URL . 'modules/projects/view.php?id=' . $entityId,
+                                $entityId,
+                                'project_fm_rejection'
+                            );
+                        }
+                    }
+                } catch (Throwable $notificationError) {}
+            }
         } catch (Throwable $e) {}
     }
 }
@@ -233,14 +250,13 @@ if (!function_exists('akp_project_totals')) {
         $funded = dbFetchOne("SELECT COALESCE(SUM(f.amount),0) AS value FROM project_funding_allocations f WHERE f.project_id = ? AND f.status = 'posted' AND (f.transaction_id IS NULL OR NOT EXISTS (SELECT 1 FROM transactions t WHERE t.id = f.transaction_id AND t.status = 'posted'))", [$projectId]);
         $donations = dbFetchOne("SELECT COALESCE(SUM(amount),0) AS value FROM transactions WHERE project_id = ? AND status = 'posted'", [$projectId]);
         $expenses = dbFetchOne("SELECT COALESCE(SUM(amount),0) AS value FROM project_expenses WHERE project_id = ? AND status = 'posted'", [$projectId]);
-        $returned = dbFetchOne("SELECT COALESCE(SUM(amount),0) AS value FROM project_funding_returns WHERE project_id = ?", [$projectId]);
         $budget = dbFetchOne("SELECT COALESCE(SUM(COALESCE(bl.approved_amount, bl.estimated_amount)),0) AS value FROM project_budgets b JOIN project_budget_lines bl ON bl.budget_id = b.id WHERE b.project_id = ? AND b.status = 'approved'", [$projectId]);
-        $fundingAllocations = (float)($funded['value'] ?? 0); $donationAmount = (float)($donations['value'] ?? 0); $totalFunded = $fundingAllocations + $donationAmount; $totalExpensed = (float)($expenses['value'] ?? 0); $returnedAmount = (float)($returned['value'] ?? 0); $approvedBudget = (float)($budget['value'] ?? 0);
+        $fundingAllocations = (float)($funded['value'] ?? 0); $donationAmount = (float)($donations['value'] ?? 0); $totalFunded = $fundingAllocations + $donationAmount; $totalExpensed = (float)($expenses['value'] ?? 0); $approvedBudget = (float)($budget['value'] ?? 0);
         if ($approvedBudget <= 0) { $p = dbFetchOne("SELECT target_amount FROM other_projects WHERE id = ?", [$projectId]); $approvedBudget = (float)($p['target_amount'] ?? 0); }
         $financial = akp_project_financial_requirement($projectId, $approvedBudget);
         $financialRequirement = $financial['total_financial_requirement'];
         $variance = $financialRequirement - $totalExpensed; $percent = $financialRequirement > 0 ? ($variance / $financialRequirement) * 100 : null;
-        return ['approved_budget'=>$approvedBudget,'government_fees'=>$financial['government_fees'],'total_financial_requirement'=>$financialRequirement,'funding_allocations'=>$fundingAllocations,'donations'=>$donationAmount,'total_funded'=>$totalFunded,'total_expensed'=>$totalExpensed,'returned_amount'=>$returnedAmount,'variance'=>$variance,'variance_percent'=>$percent,'residual'=>max(0, $totalFunded-$totalExpensed-$returnedAmount),'controlled_balance'=>max(0, $totalFunded-$totalExpensed-$returnedAmount)];
+        return ['approved_budget'=>$approvedBudget,'government_fees'=>$financial['government_fees'],'total_financial_requirement'=>$financialRequirement,'funding_allocations'=>$fundingAllocations,'donations'=>$donationAmount,'total_funded'=>$totalFunded,'total_expensed'=>$totalExpensed,'variance'=>$variance,'variance_percent'=>$percent,'residual'=>$totalFunded-$totalExpensed];
     }
 }
 if (!function_exists('akp_sync_closure_totals')) {
@@ -321,4 +337,3 @@ if (!function_exists('akp_history_status_label')) {
 if (!function_exists('akp_money')) {
     function akp_money($value): string { return number_format((float)$value, 2); }
 }
-// Phase 5 audit checkpoint: accounting release/return implementation follows documented FM-controlled funding model.
