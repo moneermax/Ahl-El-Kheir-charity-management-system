@@ -1452,3 +1452,14 @@ Maintain all existing project rules:
 - update documentation after each completed milestone;
 - record exact merge/checkpoint SHAs;
 - runtime-test before declaring a stage complete.
+
+## 2026-10-01 — Projects Phase 5 queued next
+
+Salary Advance Stage 6 Direct Repayment & Settlement is closed and runtime verified. Do not reopen it without genuine regression evidence.
+
+Next: **Projects Module Phase 5 — Accounting Reconciliation / Post-Approval Financial Integrity Audit** — TO DO / NEXT.
+
+Projects business intent clarified: after required FM-controlled financial approval, the full approved project budget comes under Project Supervisor control, organizational treasury is reduced by that amount, and the amount is treated as project expense at that financial/disbursement point. If the Project Supervisor saves part of the approved budget, the saved balance must later be reconciled and returned to the organization's accounts through an explicit, auditable financial event.
+
+When continuing Projects, inspect the existing repository/schema/chart of accounts and fresh database evidence first. Do not invent an account, transfer mechanism, journal type, or schema change. Resolve the accounting event boundary before implementation so the same financial event cannot be recognized twice. Correct historical phantom project-approval journals only after the replacement accounting model is settled.
+
