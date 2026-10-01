@@ -457,26 +457,26 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 
     <?php if($approval['approval_status']==='submitted' && $approvedExists): ?><div class="card mb-4 border-primary"><div class="card-body"><h5>الاعتماد المالي للمشروع</h5><div class="alert alert-light border mb-3"><div class="d-flex justify-content-between"><span class="text-muted">الميزانية المعتمدة</span><strong><?php echo number_format((float)($activeBudget['line_total'] ?? 0),2); ?></strong></div><div class="d-flex justify-content-between mt-2"><span class="text-muted">الرسوم الحكومية</span><strong><?php echo number_format((float)$financialSummary['government_fees'],2); ?></strong></div><hr class="my-2"><div class="d-flex justify-content-between"><span class="fw-semibold">إجمالي المتطلبات المالية</span><strong class="fs-4"><?php echo number_format((float)$financialSummary['total_financial_requirement'],2); ?> <?php echo e($project['currency_code']?:'SDG'); ?></strong></div></div><p class="text-muted">يجب أن يساوي إجمالي تخصيص التمويل إجمالي المتطلبات المالية (الميزانية المعتمدة + الرسوم الحكومية).</p><div class="d-flex gap-2"><form method="post"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_approve_project"><button class="btn btn-success">اعتماد المشروع مالياً</button></form><button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#rejectProject">رفض المشروع مالياً</button></div></div></div><?php endif; ?>
 
+    <?php if ($approval['approval_status']==='fm_approved' && !$closed): ?>
+    <div class="card mb-4 fade-in border-warning">
+        <div class="card-header bg-warning text-dark"><i class="fas fa-rotate-left me-2"></i>إعادة المشروع للمراجعة المالية</div>
+        <div class="card-body">
+            <p class="mb-3">يمكن للمدير المالي إعادة المشروع إلى مرحلة المراجعة عند الحاجة إلى استكمال أو تصحيح تخصيصات التمويل. إذا سبق إنشاء إفراج محاسبي، سيتم عكسه قبل إعادة الحالة إلى المراجعة.</p>
+            <form method="post">
+                <?php echo csrf_field(); ?>
+                <input type="hidden" name="action" value="fm_return_to_review">
+                <input type="text" name="return_reason" class="form-control mb-2" placeholder="سبب إعادة المراجعة (مطلوب)" required>
+                <button class="btn btn-warning" onclick="return confirm('هل تريد إعادة المشروع إلى المراجعة المالية؟')"><i class="fas fa-rotate-left me-1"></i>إعادة للمراجعة المالية</button>
+            </form>
+        </div>
+    </div>
+    <?php endif; ?>
+
     <?php if ($approval['approval_status']==='approved'): ?>
     <div class="card mb-4 border-success">
         <div class="card-header bg-success text-white"><i class="fas fa-money-check-dollar me-2"></i>صرف وتمييز مستندات التمويل</div>
         <div class="card-body">
             <div class="alert alert-light border mb-3">تظهر هذه الخيارات فقط بعد الاعتماد النهائي من المدير العام. لا تنشئ هذه الإجراءات قيداً محاسبياً جديداً؛ القيد الذي أنشأه الاعتماد النهائي هو حدث خروج الأموال، وهذه الخطوة توثق سند الصرف أو إيصال التحويل.</div>
-            <?php if ($approval['approval_status'] === 'fm_approved' && !$closed): ?>
-        <div class="card mb-4 fade-in border-warning">
-            <div class="card-header bg-warning text-dark"><i class="fas fa-rotate-left me-2"></i>إعادة المشروع للمراجعة المالية</div>
-            <div class="card-body">
-                <p class="mb-3">يمكن للمدير المالي إعادة المشروع إلى مرحلة المراجعة عند الحاجة إلى استكمال أو تصحيح تخصيصات التمويل. إذا سبق إنشاء إفراج محاسبي، سيتم عكسه قبل إعادة الحالة إلى المراجعة.</p>
-                <form method="post">
-                    <?php echo csrf_field(); ?>
-                    <input type="hidden" name="action" value="fm_return_to_review">
-                    <input type="text" name="return_reason" class="form-control mb-2" placeholder="سبب إعادة المراجعة (مطلوب)" required>
-                    <button class="btn btn-warning" onclick="return confirm('هل تريد إعادة المشروع إلى المراجعة المالية؟')"><i class="fas fa-rotate-left me-1"></i>إعادة للمراجعة المالية</button>
-                </form>
-            </div>
-        </div>
-    <?php endif; ?>
-
     <?php if ($paymentEvidence): ?>
                 <?php foreach ($paymentEvidence as $payment): ?>
                     <?php $paymentMethodLabels=['cash'=>'نقدي','bank_transfer'=>'تحويل بنكي','e_wallet'=>'محفظة إلكترونية']; ?>
