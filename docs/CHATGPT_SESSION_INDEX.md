@@ -1154,3 +1154,14 @@ Fix: standalone verification is blocked; accounting rejection remains available 
 Commits: ea15f86f88e4166ecf97cdaac1e851cfe2e395de, 2769cf2eb5b0062945510a53de9908954e8a5c1f, 7adcffc014f62d98601387f8194b25f87a89f1ec, f2cb76b9043743b3ee855837e8cea3563b96cc30
 
 **Next exact action:** first test only: confirm SAR-2026-00009 is in the accounting action queue as جاهزة للصرف and absent from processed history. Then disburse it and verify تم الصرف. Do not begin direct repayment until this gate passes.
+
+
+## 2026-10-01 — Stage 6 Final Runtime Closure
+
+Stage 6 — Direct Repayment & Settlement is **DONE / RUNTIME VERIFIED / CLOSED**.
+
+Final fixture SAR-2026-00019 (20,000 SDG, direct repayment) was successfully disbursed and then repaid in two 10,000 SDG transactions: JE-000049 through 1200 — البنك and JE-000050 through 1300 — المحافظ الإلكترونية. The receiving-account balances and outstanding balance calculations were correct; outstanding reached 0.00 SDG and the request settled. No payroll schedule was created. Repayment evidence upload/view/replacement was also verified.
+
+Hardening checkpoints merged to main: PR #86 `cebd8df397d76738d56a6287b6ba85afba77b6c3`; PR #87 `756debc716339470344428812f9684960a272588`.
+
+Stage 6 is closed. Next session must inspect the current staged plan/master documents and continue with the next explicitly defined work unit; do not reopen completed salary-advance stages without regression evidence.
