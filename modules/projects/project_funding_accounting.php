@@ -268,3 +268,47 @@ if (!function_exists('akp_return_project_funding')) {
         return $entryId;
     }
 }
+
+
+if (!function_exists('akp_sync_project_payment_evidence_after_release')) {
+    function akp_sync_project_payment_evidence_after_release(int $projectId): void
+    {
+        $project = dbFetchOne('SELECT currency_code FROM other_projects WHERE id=?', [$projectId]);
+        $rows = dbFetchAll(
+            "SELECT f.id, f.source_account_id, f.amount, f.currency_code, a.code AS source_code,
+                    je.id AS journal_entry_id
+             FROM project_funding_allocations f
+             JOIN accounts a ON a.id=f.source_account_id
+             JOIN journal_entries je
+               ON je.reference_type='project_funding_release'
+              AND je.reference_id=f.id
+              AND je.status='posted'
+              AND je.voided_at IS NULL
+             WHERE f.project_id=? AND f.status='posted'
+             ORDER BY f.id",
+            [$projectId]
+        );
+        foreach ($rows as $row) {
+            $method = akp_project_payment_method_from_account_code((string)$row['source_code']);
+            if ($method === null) throw new RuntimeException('مصدر تمويل المشروع لا يملك طريقة دفع معروفة.');
+            $existing = dbFetchOne('SELECT id FROM project_payment_evidence WHERE funding_allocation_id=? LIMIT 1', [(int)$row['id']]);
+            if ($existing) {
+                dbExecute(
+                    "UPDATE project_payment_evidence
+                     SET source_account_id=?, journal_entry_id=?, payment_method=?, amount=?, currency_code=?, payment_date=CURDATE(), status='pending'
+                     WHERE funding_allocation_id=?",
+                    [(int)$row['source_account_id'], (int)$row['journal_entry_id'], $method,
+                     (float)$row['amount'], $row['currency_code'] ?: ($project['currency_code'] ?: 'SDG'), (int)$row['id']]
+                );
+            } else {
+                dbExecute(
+                    "INSERT INTO project_payment_evidence
+                     (project_id, funding_allocation_id, source_account_id, journal_entry_id, payment_method, amount, currency_code, payment_date, status, created_at)
+                     VALUES (?,?,?,?,?,?,?,CURDATE(),'pending',NOW())",
+                    [$projectId, (int)$row['id'], (int)$row['source_account_id'], (int)$row['journal_entry_id'],
+                     $method, (float)$row['amount'], $row['currency_code'] ?: ($project['currency_code'] ?: 'SDG')]
+                );
+            }
+        }
+    }
+}
