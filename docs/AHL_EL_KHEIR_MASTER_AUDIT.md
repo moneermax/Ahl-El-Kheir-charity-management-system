@@ -1706,3 +1706,12 @@ The clarified Projects business requirement is that, after required FM-controlle
 
 Phase 5 remains **TO DO / NEXT**. Before implementation, inspect and reconcile the existing chart of accounts, funding allocations, payment evidence, project expenses, journal conventions, and fresh database evidence. The saved-budget return path must be designed from existing accounting conventions; do not invent accounts or schema. Historical phantom project-approval journals are not to be corrected until the replacement accounting model is settled.
 
+
+
+## 2026-10-01 — Projects Phase 5 implementation checkpoint
+
+**IMPLEMENTED — RUNTIME VERIFICATION REQUIRED.**
+
+The Phase 5 accounting model is implemented on the isolated audit branch. FM financial approval releases each funding allocation once; GM final approval does not create a second release. PS closure requests automatically identify unused controlled funds and notify FM to process the audited return. Closure remains blocked until the controlled balance is zero.
+
+Do not run historical project journal correction until runtime verification of the replacement model passes.
