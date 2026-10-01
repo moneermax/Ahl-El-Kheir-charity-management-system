@@ -1182,3 +1182,23 @@ Phase 5 accounting implementation is now **IMPLEMENTED — RUNTIME VERIFICATION 
 ## 2026-10-01 — Phase 5 closure ownership clarification
 
 Phase 5 closure ownership is now explicit: PS submits the closure request and then the PS responsibility ends. FM is notified only if unused controlled funds exist; FM alone handles the savings/refund and accounting reconciliation. No FM notification is generated when savings are zero. Runtime verification remains the next gate.
+
+
+## 2026-10-01 — Projects Approval Notification Timing Correction
+
+The Projects notification timing was reconfirmed during the Phase 5 audit because an older documentation section incorrectly described PM notification after GM final approval.
+
+Authoritative behavior:
+- PM submit/resubmit → FM notification.
+- FM preliminary approval → no PM notification.
+- FM final accounting confirmation → GM/VGM notification and one PM notification.
+- GM/VGM final approval → no additional PM notification.
+- GM/VGM rejection → FM review notification only at this stage.
+- FM rejection → PM terminal-rejection notification.
+
+The old GM → PM notification was removed in 8524cea415347b6219440455d66860fae142b543. The current PM notification was restored at the correct FM final-accounting checkpoint in view_fm.php.
+
+Correction commit: 3dcc2acd3bf53cf40e49f78d3b03b0bf3c925100.
+Documentation correction commits: 8e86c08cde582d74d93bb2eb5479a357b9117449, 64a7f26e1172ba798d76eb0fdbc5cef0c6552d0c.
+
+Runtime verification remains required.
