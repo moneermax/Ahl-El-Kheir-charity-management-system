@@ -253,7 +253,7 @@ akp_audit('FM_REJECT_PROJECT', 'project_approval', $id, ['approval_status' => 's
 $_SESSION['project_toast_success'] = 'تم رفض المشروع مالياً وإعادته لمدير المشاريع.';
 } elseif ($action === 'approve_project') {
 if (!in_array($role, ['admin', 'general_manager', 'vice_general_manager'], true)) throw new RuntimeException('اعتماد المشروع نهائياً محصور بالمدير العام أو نائبه.');
-$approvalCheck = dbFetchOne('SELECT approval_status FROM project_approval WHERE project_id = ?', [$id]);
+$approvalCheck = dbFetchOne('SELECT approval_status, fm_accounting_approved_at FROM project_approval WHERE project_id = ?', [$id]);
 if (!$approvalCheck || $approvalCheck['approval_status'] !== 'fm_approved' || empty($approvalCheck['fm_accounting_approved_at'])) throw new RuntimeException('المشروع لم يستكمل الاعتماد المحاسبي النهائي من المدير المالي بعد.');
 // Final approval must use the currently approved budget, never a draft
 // budget or a stale/proposed lifecycle amount.
@@ -309,7 +309,7 @@ throw $e;
 if (!in_array($role, ['admin', 'general_manager', 'vice_general_manager'], true)) throw new RuntimeException('رفض المشروع نهائياً محصور بالمدير العام أو نائبه.');
 $reason = akp_post_value('rejection_reason');
 if ($reason === '') throw new RuntimeException('سبب الرفض مطلوب.');
-$approvalCheck = dbFetchOne('SELECT approval_status FROM project_approval WHERE project_id = ?', [$id]);
+$approvalCheck = dbFetchOne('SELECT approval_status, fm_accounting_approved_at FROM project_approval WHERE project_id = ?', [$id]);
 if (!$approvalCheck || $approvalCheck['approval_status'] !== 'fm_approved' || empty($approvalCheck['fm_accounting_approved_at'])) throw new RuntimeException('المشروع ليس في مرحلة الاعتماد النهائي لدى المدير العام.');
 // GM rejection returns the project to FM review. The FM may then revise the
 // financial allocation and repeat the final accounting approval.
