@@ -1,3 +1,15 @@
+<style>
+.account-create-shell{padding:26px}
+.account-create-intro{display:flex;align-items:center;gap:15px;padding:18px 20px;background:linear-gradient(135deg,#1b4d8f,#2c5aa0);color:#fff;border-radius:12px;margin-bottom:20px}
+.account-create-icon{width:48px;height:48px;border-radius:12px;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;font-size:1.35rem}
+.account-create-intro h3{font-weight:700}
+.account-create-intro p{opacity:.9}
+.account-create-shell .form-label{font-weight:600}
+.account-create-shell .form-control,.account-create-shell .form-select{border-radius:8px}
+.section-title{font-weight:700;color:#1b4d8f;border-bottom:1px solid #e8edf5;padding-bottom:9px;margin-bottom:16px}
+.account-create-result{background:#f5f8fc;border:1px solid #dce6f2;border-radius:10px;padding:15px 18px;color:#435064}
+.account-create-result ul{padding-right:20px}
+</style>
 <?php
 /*
  * Shared account creation form.
