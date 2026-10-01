@@ -1092,14 +1092,33 @@ if ($closureRequest && (string)$closureRequest['new_status'] === 'closure_reques
 $reason = akp_post_value('closure_request_reason');
 if ($reason === '') throw new RuntimeException('ملاحظة طلب الإغلاق مطلوبة.');
 dbExecute("INSERT INTO project_status_history (project_id, old_status, new_status, reason, changed_by) VALUES (?, ?, 'closure_requested', ?, ?)", [$id, $project['lifecycle_status'] ?: $project['status'], 'طلب إغلاق من مشرف المشروع: ' . $reason, akp_user_id()]);
-akp_audit('REQUEST_CLOSE', 'project_lifecycle', $id, ['status' => $project['lifecycle_status'] ?: $project['status']], ['status' => 'closure_requested', 'reason' => $reason]);
+$controlledBalance = akp_project_controlled_balance($id);
+$refundRequired = $controlledBalance > 0.01;
+akp_audit('REQUEST_CLOSE', 'project_lifecycle', $id, ['status' => $project['lifecycle_status'] ?: $project['status']], ['status' => 'closure_requested', 'reason' => $reason, 'refund_required' => $refundRequired, 'controlled_balance' => $controlledBalance]);
 try {
 $projectManagers = dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id = r.id WHERE r.code = 'projects_manager' AND u.is_active = 1");
 foreach ($projectManagers as $projectManager) {
-ak_transaction_review_notify_event((int)$projectManager['id'], 'طلب إغلاق مشروع', 'المشروع «' . (string)($project['name'] ?? '') . '» (' . (string)($project['project_code'] ?? '') . ') لديه طلب إغلاق من مشرف المشروع ويحتاج إجراء مدير المشاريع.', APP_URL . 'modules/projects/view.php?id=' . $id, $id, 'project_closure_request');
+    $message = 'المشروع «' . (string)($project['name'] ?? '') . '» (' . (string)($project['project_code'] ?? '') . ') لديه طلب إغلاق من مشرف المشروع.';
+    if ($refundRequired) $message .= ' يوجد رصيد متبقٍ قدره ' . number_format($controlledBalance, 2) . ' ' . ($project['currency_code'] ?: 'SDG') . ' ويجب إرجاعه قبل الإغلاق النهائي.';
+    ak_transaction_review_notify_event((int)$projectManager['id'], $refundRequired ? 'طلب إغلاق مشروع مع إرجاع رصيد' : 'طلب إغلاق مشروع', $message . ' يحتاج إجراء مدير المشاريع.', APP_URL . 'modules/projects/view.php?id=' . $id, $id, 'project_closure_request');
+}
+if ($refundRequired) {
+    $financialManagers = dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id = r.id WHERE r.code = 'financial_manager' AND u.is_active = 1");
+    foreach ($financialManagers as $financialManager) {
+        ak_transaction_review_notify_event(
+            (int)$financialManager['id'],
+            'إرجاع رصيد مشروع قبل الإغلاق',
+            'تم طلب إغلاق المشروع «' . (string)($project['name'] ?? '') . '» (' . (string)($project['project_code'] ?? '') . '). يوجد رصيد متبقٍ قدره ' . number_format($controlledBalance, 2) . ' ' . ($project['currency_code'] ?: 'SDG') . ' تحت سيطرة المشروع. يرجى معالجة الإرجاع قبل تنفيذ الإغلاق.',
+            APP_URL . 'modules/projects/project_funding_return.php?id=' . $id,
+            $id,
+            'project_funding_return_request'
+        );
+    }
 }
 } catch (Throwable $notificationError) {}
-$_SESSION['project_toast_success'] = 'تم إرسال طلب إغلاق المشروع إلى مدير المشاريع.';
+$_SESSION['project_toast_success'] = $refundRequired
+    ? 'تم إرسال طلب الإغلاق. تم تلقائياً إشعار المدير المالي بوجود رصيد متبقٍ لإرجاعه، وسيتم إتمام الإغلاق بعد تسوية الرصيد.'
+    : 'تم إرسال طلب إغلاق المشروع إلى مدير المشاريع.';
 } elseif ($action === 'request_project_reopen') {
 if ($role !== 'project_supervisor' || !akp_is_primary_supervisor($id)) throw new RuntimeException('طلب إعادة فتح المشروع متاح لمشرف المشروع الأساسي فقط.');
 if (!$closed) throw new RuntimeException('المشروع ليس مغلقاً.');
