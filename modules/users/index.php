@@ -82,7 +82,19 @@ try {
 
 $roles       = dbFetchAll("SELECT id, code, name_ar, name_en FROM roles ORDER BY id");
 $departments = dbFetchAll("SELECT id, name_ar, name_en FROM departments ORDER BY id");
-$managers    = dbFetchAll("SELECT u.id, u.full_name, u.username FROM users u JOIN roles r ON r.id = u.role_id WHERE r.code IN ('admin','sudo','general_manager','vice_general_manager','financial_manager','accountant') AND u.is_active = 1 ORDER BY u.full_name");
+$managers    = dbFetchAll("SELECT u.id, u.full_name, u.username
+    FROM users u
+    JOIN roles r ON r.id = u.role_id
+    WHERE u.is_active = 1
+      AND (
+          r.code IN ('admin','sudo','general_manager','vice_general_manager','financial_manager','accountant')
+          OR r.code LIKE '%_manager'
+          OR r.name_ar LIKE '%مدير%'
+          OR r.name_ar LIKE '%رئيس%'
+          OR r.name_en LIKE '%Manager%'
+          OR r.name_en LIKE '%Head%'
+      )
+    ORDER BY u.full_name");
 $nannies     = dbFetchAll("SELECT u.id, u.full_name FROM users u JOIN roles r ON r.id = u.role_id WHERE r.code = 'nanny' AND u.is_active = 1 ORDER BY u.full_name");
 $allowedRoles = array_column($roles, 'code');
 $errors = [];
@@ -248,7 +260,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     <div class="card-body p-0">
         <?php include __DIR__ . '/_create_user_form.php'; ?>
     </div>
-</div>>
+</div>
 
 <div class="card fade-in">
     <div class="card-header"><i class="fas fa-users me-2"></i><?php echo t('حسابات المستخدمين'); ?> (<?php echo count($users); ?>)</div>
