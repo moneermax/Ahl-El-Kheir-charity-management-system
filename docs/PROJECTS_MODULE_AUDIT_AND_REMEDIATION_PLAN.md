@@ -854,3 +854,42 @@ The clarified business requirement is:
 - If the system detects unused controlled funds, only the Financial Manager is notified and handles the full savings/refund accounting reconciliation.
 - If unused controlled funds are zero, no FM notification is generated.
 - PS is never asked to perform or confirm the refund after submitting closure.
+
+
+## 2026-10-01 — Projects approval-path reconciliation — legacy FM path removed
+
+A deeper static audit found that the earlier notification correction was not sufficient by itself. The legacy `modules/projects/view.php` still contained server-side FM approval/review handlers even though the dedicated `modules/projects/view_fm.php` had become the canonical FM workflow.
+
+### Finding
+
+- `view.php` redirected normal Financial Manager requests to `view_fm.php`, but the legacy `role_view` bypass meant the old FM POST actions could still be reached directly.
+- The old `fm_approve_project` path could perform the accounting release and set `approval_status = fm_approved` without setting `fm_accounting_approved_at`, producing a state inconsistent with the current two-step FM workflow.
+- The old FM rejection path also lacked the required terminal Projects Manager notification.
+- The general project view still rendered duplicate FM approval controls for the bypassed FM path.
+- The GM final-approval text incorrectly described that step as creating a journal, despite the current accounting release already occurring during FM final accounting confirmation.
+
+### Correction
+
+- Legacy FM actions `fm_approve_project`, `fm_return_to_review`, and `fm_reject_project` in `view.php` are now blocked with no state-changing side effect; FM approval/review/rejection is handled only by the dedicated FM page.
+- Duplicate FM approval UI was removed from `view.php`.
+- GM final-approval wording now explicitly states that FM final accounting release has already occurred and GM approval does not create a second accounting release.
+- Canonical FM rejection now notifies active `projects_manager` recipients exactly once using reference type `project_fm_rejection`.
+- GM rejection remains an FM-only re-review notification using `project_gm_rejection`; it does not terminally notify PM.
+
+### Current approval control boundary
+
+```
+PM submit/resubmit
+  → FM preliminary review
+  → FM final accounting confirmation / treasury release
+      ├─→ GM/VGM final approval notification
+      └─→ PM approval-chain notification
+  → GM/VGM final approval (workflow authorization only)
+
+GM/VGM rejection
+  → FM re-review notification
+  → FM rejection
+  → PM terminal rejection notification
+```
+
+Runtime verification remains required. The static audit gate is now: there must be no executable legacy FM approval/rejection transition in `view.php`, and the only FM approval/rejection transitions must be in `view_fm.php`.
