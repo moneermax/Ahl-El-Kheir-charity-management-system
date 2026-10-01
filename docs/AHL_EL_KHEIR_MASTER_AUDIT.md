@@ -1720,3 +1720,26 @@ Do not run historical project journal correction until runtime verification of t
 ## 2026-10-01 — Phase 5 closure ownership clarification
 
 The Phase 5 closure rule was clarified after implementation review: the primary Project Supervisor submits the closure request and has no further responsibility for savings reconciliation. FM is notified **only when a controlled unused balance exists** and FM alone performs the return/accounting reconciliation. When the controlled balance is zero, no FM notification is sent. PS is not asked to return, confirm, monitor, or complete any financial reconciliation after closure submission.
+
+
+## 2026-10-01 — User / Employee Creation Architecture Consolidation
+
+**STATUS: IMPLEMENTED / VERIFIED STATICALLY**
+
+The Admin and HR Manager account-creation paths have been consolidated.
+
+The canonical workflow is now `modules/users/index.php`, accessible to both Admin and HR Manager. It uses the shared `modules/users/_create_user_form.php` and the transactional `hrCreateUserWithEmployee()` provisioning function so every newly created account receives its linked employee profile automatically.
+
+The previous duplicate HR creation implementation was removed from `modules/hr/employees.php`. That page remains responsible for employee management and now redirects its former `action=add` route to the canonical user/employee creation page.
+
+The direct-manager dropdown is maintained only in the canonical page and was broadened to include the existing management/head patterns. No PM/PS-specific exception was introduced.
+
+The shared form file is intentionally retained because it is the single reusable creation UI; it is not an extra creation page.
+
+Relevant commits:
+- `b90791e2bfa49f0a6cab26e1844b951c52981d38`
+- `ca42000f4552eeeb4fea6fb493bb8008c29a40b9`
+- `ffed7719f241f7bcee1732da88e743e838296f2c8`
+- `6b36187460bc27246d9a5e89615f4c8b85cdf2d8`
+
+Follow-up runtime verification should confirm Admin and HR both open the same creation UI and that a newly created account produces exactly one linked employee profile.
