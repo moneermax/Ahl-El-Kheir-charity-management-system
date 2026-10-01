@@ -1334,3 +1334,16 @@ Current implementation correction is committed on the Projects Phase 5 audit bra
 `3dcc2acd3bf53cf40e49f78d3b03b0bf3c925100`.
 
 Runtime verification of the corrected timing remains required before closure.
+
+
+## 2026-10-01 — Projects approval-path audit correction
+
+A deeper Projects workflow audit found a second layer of inconsistency beyond the already-corrected PM notification timing. The dedicated `modules/projects/view_fm.php` is the canonical Financial Manager workflow, but legacy FM POST handlers and duplicate FM UI remained in `modules/projects/view.php`. Because the legacy page supports a `role_view` bypass, those handlers were still directly reachable.
+
+Correction on the Projects audit branch:
+- blocked legacy FM approval/review/rejection actions in `view.php` so they cannot mutate workflow state;
+- removed duplicate FM approval UI from `view.php`;
+- corrected GM final-approval wording so it no longer implies a second journal/release;
+- added the terminal Projects Manager notification on canonical FM rejection using `project_fm_rejection`.
+
+The authoritative notification timing remains: PM is notified after FM final accounting confirmation, not after GM final approval. Runtime verification of the complete path is still required before this Projects audit gate is closed.
