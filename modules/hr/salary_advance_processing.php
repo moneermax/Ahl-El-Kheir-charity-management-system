@@ -611,7 +611,7 @@ if ($request && in_array((string)$request['status'], ['disbursed','settled'], tr
 <div class="alert alert-light border mb-0">لا توجد عمليات سداد مباشر مسجلة لهذه السلفة.</div>
 <?php else: ?>
 <div class="table-responsive"><table class="table table-hover align-middle mb-0">
-<thead><tr><th>التاريخ</th><th>المبلغ</th><th>حساب الاستلام</th><th>القيد</th><th>المرجع</th><th>بواسطة</th></tr></thead>
+<thead><tr><th>التاريخ</th><th>المبلغ</th><th>حساب الاستلام</th><th>القيد</th><th>المرجع</th><th>بواسطة</th><th>السند</th></tr></thead>
 <tbody>
 <?php foreach($directRepaymentHistory as $rep): ?>
 <tr>
@@ -621,6 +621,7 @@ if ($request && in_array((string)$request['status'], ['disbursed','settled'], tr
 <td><?=e($rep['accounting_entry_code']??'—')?></td>
 <td><?=e($rep['repayment_reference']??'—')?></td>
 <td><?=e($rep['received_by_name']??'—')?></td>
+<td><a class="btn btn-sm btn-outline-success" target="_blank" href="<?=e(APP_URL.'modules/hr/salary_advance_repayment_voucher_print.php?id='.(int)$rep['id'])?>"><i class="fas fa-print me-1"></i>طباعة سند القبض</a></td>
 </tr>
 <?php endforeach; ?>
 </tbody></table></div>

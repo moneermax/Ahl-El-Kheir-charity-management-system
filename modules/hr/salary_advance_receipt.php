@@ -17,7 +17,7 @@ if (!Session::isLoggedIn()) {
 }
 
 $role = (string)Session::getUserRole();
-$allowed = ['admin', 'financial_manager', 'accountant_staff'];
+$allowed = ['admin', 'financial_manager', 'fm'];
 $isPrivileged = in_array($role, $allowed, true);
 
 $documentId = (int)($_GET['id'] ?? 0);
@@ -36,7 +36,7 @@ $row = dbFetchOne(
     [$documentId]
 );
 
-if (!$row || $row['status'] !== 'disbursed' || (int)$row['disbursement_journal_entry_id'] <= 0) {
+if (!$row || !in_array((string)$row['status'], ['disbursed', 'settled'], true) || (int)$row['disbursement_journal_entry_id'] <= 0) {
     http_response_code(404);
     exit('Receipt not found');
 }
