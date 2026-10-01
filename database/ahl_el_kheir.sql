@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 29, 2026 at 07:26 PM
+-- Generation Time: Oct 01, 2026 at 07:21 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -868,7 +868,32 @@ INSERT INTO `audit_log` (`id`, `user_id`, `action`, `entity_type`, `entity_id`, 
 (2066, 29, 'HR_SALARY_ADVANCE_FM_APPROVE', 'hr_salary_advance_request', 11, '{\"status\":\"submitted\",\"closed_at\":null,\"requested_amount\":\"30000.00\",\"requested_repayment_method\":\"fixed_monthly\",\"requested_monthly_amount\":\"10000.00\",\"requested_start_month\":\"2026-12-01\"}', '{\"decision\":\"approve\",\"approved_amount\":30000,\"approved_repayment_method\":\"fixed_monthly\",\"approved_monthly_amount\":10000,\"approved_start_month\":\"2026-12-01\",\"customized\":1,\"customization_reason\":\"next_payroll\",\"status\":\"approved\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-29 16:05:07'),
 (2067, 29, 'HR_SALARY_ADVANCE_ACCOUNTING_VERIFY', 'hr_salary_advance_request', 11, '{\"status\":\"approved\",\"accounting_status\":\"pending\"}', '{\"accounting_status\":\"verified\",\"accounting_rejection_reason\":null}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-29 16:05:52'),
 (2068, 29, 'HR_SALARY_ADVANCE_SCHEDULE_GENERATE', 'hr_salary_advance_request', 11, '{\"schedule_rows\":0}', '{\"schedule_rows\":3,\"start_month\":\"2026-10-01\",\"repayment_method\":\"fixed_monthly\",\"approved_amount\":30000,\"outstanding_balance\":30000}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-29 16:06:02'),
-(2069, 29, 'HR_SALARY_ADVANCE_DISBURSE', 'hr_salary_advance_request', 11, '{\"status\":\"approved\",\"accounting_status\":\"verified\",\"approved_amount\":30000}', '{\"status\":\"disbursed\",\"disbursed_amount\":30000,\"cash_account_id\":1,\"journal_entry_id\":76,\"reference\":\"SAL-ADV-SAR-2026-00011\",\"outstanding_balance\":30000}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-29 16:06:02');
+(2069, 29, 'HR_SALARY_ADVANCE_DISBURSE', 'hr_salary_advance_request', 11, '{\"status\":\"approved\",\"accounting_status\":\"verified\",\"approved_amount\":30000}', '{\"status\":\"disbursed\",\"disbursed_amount\":30000,\"cash_account_id\":1,\"journal_entry_id\":76,\"reference\":\"SAL-ADV-SAR-2026-00011\",\"outstanding_balance\":30000}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-29 16:06:02'),
+(2072, 29, 'LOGIN', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-30 07:46:28'),
+(2073, 1, 'LOGIN', 'users', 1, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-30 09:16:45'),
+(2074, 1, 'LOGOUT', 'users', 1, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-30 10:01:54'),
+(2075, 2, 'LOGIN', 'users', 2, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-30 10:02:09'),
+(2076, 29, 'HR_SALARY_ADVANCE_RECEIPT_UPLOAD', 'hr_salary_advance_request', 11, '{\"previous_receipt\":null}', '{\"receipt_path\":\"storage\\/receipts\\/salary-advances\\/SAL-ADV-SAR-2026-00011-8d26aad04623fe05.jpg\",\"original_name\":\"Feen_logo.jpeg\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-30 19:19:37'),
+(2077, 29, 'HR_SALARY_ADVANCE_FM_APPROVE', 'hr_salary_advance_request', 18, '{\"status\":\"submitted\",\"closed_at\":null,\"requested_amount\":\"10000.00\",\"requested_repayment_method\":\"direct_repayment\",\"requested_monthly_amount\":null,\"requested_start_month\":\"2026-10-01\"}', '{\"decision\":\"approve\",\"approved_amount\":10000,\"approved_repayment_method\":\"direct_repayment\",\"approved_monthly_amount\":null,\"approved_start_month\":\"2026-10-01\",\"customized\":0,\"customization_reason\":null,\"status\":\"approved\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-30 20:48:46'),
+(2078, 2, 'LOGOUT', 'users', 2, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-30 20:50:14'),
+(2079, 17, 'LOGIN', 'users', 17, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-30 20:50:39'),
+(2080, 29, 'HR_SALARY_ADVANCE_ACCOUNTING_VERIFY', 'hr_salary_advance_request', 18, '{\"status\":\"approved\",\"accounting_status\":\"pending\"}', '{\"accounting_status\":\"verified\",\"accounting_rejection_reason\":null}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-30 20:56:41'),
+(2081, 17, 'LOGOUT', 'users', 17, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-30 21:06:35'),
+(2082, 2, 'LOGIN', 'users', 2, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-30 21:06:44'),
+(2083, 29, 'HR_SALARY_ADVANCE_DISBURSE', 'hr_salary_advance_request', 18, '{\"status\":\"approved\",\"accounting_status\":\"verified\",\"approved_amount\":10000}', '{\"status\":\"disbursed\",\"disbursed_amount\":10000,\"cash_account_id\":1,\"journal_entry_id\":88,\"reference\":\"SAL-ADV-SAR-2026-00012\",\"outstanding_balance\":10000}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-09-30 21:10:00'),
+(2084, 29, 'LOGIN', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-01 07:10:52'),
+(2085, 29, 'HR_SALARY_ADVANCE_RECEIPT_UPLOAD', 'hr_salary_advance_request', 18, '{\"previous_receipt\":null}', '{\"receipt_path\":\"storage\\/receipts\\/salary-advances\\/SAL-ADV-SAR-2026-00012-e8f3faa1a0b51690.jpg\",\"original_name\":\"WhatsApp Image 2026-09-21 at 11.09.00 AM.jpeg\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-01 07:13:27'),
+(2086, 2, 'LOGIN', 'users', 2, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-01 07:13:47'),
+(2087, 29, 'HR_SALARY_ADVANCE_DIRECT_REPAYMENT', 'hr_salary_advance_request', 18, '{\"status\":\"disbursed\",\"outstanding_balance\":10000}', '{\"status\":\"disbursed\",\"repayment_amount\":4000,\"repayment_account_id\":1,\"accounting_entry_id\":90,\"reference\":\"SAL-ADV-REP-SAR-2026-00012-90\",\"outstanding_balance\":6000}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-01 07:14:27'),
+(2088, 29, 'HR_SALARY_ADVANCE_DIRECT_REPAYMENT', 'hr_salary_advance_request', 18, '{\"status\":\"disbursed\",\"outstanding_balance\":6000}', '{\"status\":\"settled\",\"repayment_amount\":6000,\"repayment_account_id\":1,\"accounting_entry_id\":91,\"reference\":\"SAL-ADV-REP-SAR-2026-00012-91\",\"outstanding_balance\":0}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-01 07:16:31'),
+(2089, 29, 'HR_SALARY_ADVANCE_FM_APPROVE', 'hr_salary_advance_request', 19, '{\"status\":\"submitted\",\"closed_at\":null,\"requested_amount\":\"20000.00\",\"requested_repayment_method\":\"direct_repayment\",\"requested_monthly_amount\":null,\"requested_start_month\":\"2026-11-01\"}', '{\"decision\":\"approve\",\"approved_amount\":20000,\"approved_repayment_method\":\"direct_repayment\",\"approved_monthly_amount\":null,\"approved_start_month\":\"2026-11-01\",\"customized\":0,\"customization_reason\":null,\"status\":\"approved\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-01 07:42:01'),
+(2090, 29, 'HR_SALARY_ADVANCE_ACCOUNTING_VERIFY_AND_DISBURSE', 'hr_salary_advance_request', 19, '{\"status\":\"approved\",\"accounting_status\":\"pending\"}', '{\"accounting_status\":\"verified\",\"accounting_verified_by\":29,\"verification_and_disbursement_atomic\":true}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-01 07:59:33'),
+(2091, 29, 'HR_SALARY_ADVANCE_DISBURSE', 'hr_salary_advance_request', 19, '{\"status\":\"approved\",\"accounting_status\":\"verified\",\"approved_amount\":20000}', '{\"status\":\"disbursed\",\"disbursed_amount\":20000,\"cash_account_id\":2,\"journal_entry_id\":92,\"reference\":\"SAL-ADV-SAR-2026-00019\",\"outstanding_balance\":20000}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-01 07:59:33'),
+(2092, 29, 'HR_SALARY_ADVANCE_RECEIPT_UPLOAD', 'hr_salary_advance_request', 19, '{\"previous_receipt\":null}', '{\"receipt_path\":\"storage\\/receipts\\/salary-advances\\/SAL-ADV-SAR-2026-00019-5ec2e74bc264c1d9.pdf\",\"original_name\":\"Fai Ali.pdf\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-01 08:00:23'),
+(2093, 29, 'HR_SALARY_ADVANCE_DIRECT_REPAYMENT', 'hr_salary_advance_request', 19, '{\"status\":\"disbursed\",\"outstanding_balance\":20000}', '{\"status\":\"disbursed\",\"repayment_amount\":10000,\"repayment_account_id\":2,\"accounting_entry_id\":93,\"reference\":\"SAL-ADV-REP-SAR-2026-00019-93\",\"outstanding_balance\":10000}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-01 08:01:16'),
+(2094, 29, 'HR_SALARY_ADVANCE_REPAYMENT_EVIDENCE_UPLOAD', 'hr_salary_advance_direct_repayment', 3, '{\"previous_evidence\":null}', '{\"evidence_path\":\"storage\\/receipts\\/salary-advance-repayments\\/SAL-ADV-REP-3-7f4b8aaa916991d1.jpg\",\"original_name\":\"Feen_logo.jpeg\",\"repayment_account_id\":2,\"repayment_amount\":10000}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-01 08:08:16'),
+(2095, 29, 'HR_SALARY_ADVANCE_DIRECT_REPAYMENT', 'hr_salary_advance_request', 19, '{\"status\":\"disbursed\",\"outstanding_balance\":10000}', '{\"status\":\"settled\",\"repayment_amount\":10000,\"repayment_account_id\":3,\"accounting_entry_id\":94,\"reference\":\"SAL-ADV-REP-SAR-2026-00019-94\",\"outstanding_balance\":0}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-01 08:09:26'),
+(2096, 29, 'HR_SALARY_ADVANCE_REPAYMENT_EVIDENCE_UPLOAD', 'hr_salary_advance_direct_repayment', 4, '{\"previous_evidence\":null}', '{\"evidence_path\":\"storage\\/receipts\\/salary-advance-repayments\\/SAL-ADV-REP-4-d6414274bf17bc80.jpg\",\"original_name\":\"WhatsApp Image 2026-09-18 at 1.57.43 PM.jpeg\",\"repayment_account_id\":3,\"repayment_amount\":10000}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-01 08:10:04');
 
 -- --------------------------------------------------------
 
@@ -8845,6 +8870,60 @@ INSERT INTO `hr_payroll_reversals` (`id`, `payroll_id`, `original_entry_id`, `re
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `hr_salary_advance_direct_repayments`
+--
+
+CREATE TABLE `hr_salary_advance_direct_repayments` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `salary_advance_request_id` int(10) UNSIGNED NOT NULL,
+  `repayment_amount` decimal(18,2) NOT NULL,
+  `repayment_account_id` int(10) UNSIGNED NOT NULL,
+  `accounting_entry_id` int(10) UNSIGNED NOT NULL,
+  `repayment_reference` varchar(100) DEFAULT NULL,
+  `repayment_date` date NOT NULL,
+  `received_by` int(10) UNSIGNED NOT NULL,
+  `notes` varchar(2000) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `hr_salary_advance_direct_repayments`
+--
+
+INSERT INTO `hr_salary_advance_direct_repayments` (`id`, `salary_advance_request_id`, `repayment_amount`, `repayment_account_id`, `accounting_entry_id`, `repayment_reference`, `repayment_date`, `received_by`, `notes`, `created_at`) VALUES
+(1, 18, 4000.00, 1, 90, 'SAL-ADV-REP-SAR-2026-00012-90', '2026-10-01', 29, NULL, '2026-10-01 07:14:27'),
+(2, 18, 6000.00, 1, 91, 'SAL-ADV-REP-SAR-2026-00012-91', '2026-10-01', 29, NULL, '2026-10-01 07:16:31'),
+(3, 19, 10000.00, 2, 93, 'SAL-ADV-REP-SAR-2026-00019-93', '2026-10-01', 29, NULL, '2026-10-01 08:01:16'),
+(4, 19, 10000.00, 3, 94, 'SAL-ADV-REP-SAR-2026-00019-94', '2026-10-01', 29, NULL, '2026-10-01 08:09:26');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `hr_salary_advance_direct_repayment_documents`
+--
+
+CREATE TABLE `hr_salary_advance_direct_repayment_documents` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `direct_repayment_id` int(10) UNSIGNED NOT NULL,
+  `file_path` varchar(500) NOT NULL,
+  `original_name` varchar(255) NOT NULL,
+  `mime_type` varchar(100) NOT NULL,
+  `file_size` int(10) UNSIGNED NOT NULL,
+  `uploaded_by` int(10) UNSIGNED NOT NULL,
+  `uploaded_at` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `hr_salary_advance_direct_repayment_documents`
+--
+
+INSERT INTO `hr_salary_advance_direct_repayment_documents` (`id`, `direct_repayment_id`, `file_path`, `original_name`, `mime_type`, `file_size`, `uploaded_by`, `uploaded_at`) VALUES
+(1, 3, 'storage/receipts/salary-advance-repayments/SAL-ADV-REP-3-7f4b8aaa916991d1.jpg', 'Feen_logo.jpeg', 'image/jpeg', 51326, 29, '2026-10-01 08:08:16'),
+(2, 4, 'storage/receipts/salary-advance-repayments/SAL-ADV-REP-4-d6414274bf17bc80.jpg', 'WhatsApp Image 2026-09-18 at 1.57.43 PM.jpeg', 'image/jpeg', 36502, 29, '2026-10-01 08:10:04');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `hr_salary_advance_documents`
 --
 
@@ -8865,7 +8944,10 @@ CREATE TABLE `hr_salary_advance_documents` (
 --
 
 INSERT INTO `hr_salary_advance_documents` (`id`, `salary_advance_request_id`, `document_type`, `file_path`, `original_name`, `mime_type`, `file_size`, `uploaded_by`, `uploaded_at`) VALUES
-(1, 1, 'payment_receipt', 'storage/receipts/salary-advances/SAL-ADV-SAR-2026-00001-02b403d9e309fe25.jpg', 'Fai Ali_page-0001.jpg', 'image/jpeg', 1465580, 29, '2026-09-29 07:41:54');
+(1, 1, 'payment_receipt', 'storage/receipts/salary-advances/SAL-ADV-SAR-2026-00001-02b403d9e309fe25.jpg', 'Fai Ali_page-0001.jpg', 'image/jpeg', 1465580, 29, '2026-09-29 07:41:54'),
+(2, 11, 'payment_receipt', 'storage/receipts/salary-advances/SAL-ADV-SAR-2026-00011-8d26aad04623fe05.jpg', 'Feen_logo.jpeg', 'image/jpeg', 51326, 29, '2026-09-30 19:19:37'),
+(3, 18, 'payment_receipt', 'storage/receipts/salary-advances/SAL-ADV-SAR-2026-00012-e8f3faa1a0b51690.jpg', 'WhatsApp Image 2026-09-21 at 11.09.00 AM.jpeg', 'image/jpeg', 135639, 29, '2026-10-01 07:13:27'),
+(4, 19, 'payment_receipt', 'storage/receipts/salary-advances/SAL-ADV-SAR-2026-00019-5ec2e74bc264c1d9.pdf', 'Fai Ali.pdf', 'application/pdf', 428106, 29, '2026-10-01 08:00:23');
 
 -- --------------------------------------------------------
 
@@ -9043,7 +9125,9 @@ INSERT INTO `hr_salary_advance_requests` (`id`, `request_no`, `employee_id`, `po
 (8, 'SAR-2026-00008', 3, 1, 50000.00, 'fixed_monthly', 15000.00, '2026-10-01', NULL, 'disbursed', 3, '2026-09-29 10:38:49', 29, '2026-09-29 10:41:26', NULL, 'approved', NULL, 50000.00, 'fixed_monthly', 15000.00, '2026-10-01', 1, 'repayment schedule generator enforces the policy maximum at disbursement time', 'verified', 29, '2026-09-29 11:29:30', NULL, 29, '2026-09-29 11:30:36', 1, 74, 'SAL-ADV-SAR-2026-00008', 50000.00, NULL, NULL, '2026-09-29 10:38:49', '2026-09-29 11:30:36'),
 (9, 'SAR-2026-00009', 1, 1, 70000.00, 'fixed_monthly', 10000.00, '2026-10-01', NULL, 'approved', 1, '2026-09-29 11:35:36', 29, '2026-09-29 11:36:18', NULL, 'approved', NULL, 70000.00, 'fixed_monthly', 10000.00, '2026-10-01', 1, 'test', 'verified', 29, '2026-09-29 11:54:19', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-29 11:35:36', '2026-09-29 11:54:19'),
 (10, 'SAR-2026-00010', 20, 1, 30000.00, 'fixed_monthly', 10000.00, '2026-11-01', 'test', 'rejected', 32, '2026-09-29 12:05:25', 29, '2026-09-29 12:06:06', '2026-09-29 12:06:06', 'rejected', 'test', NULL, NULL, NULL, NULL, 0, NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-29 12:05:25', '2026-09-29 12:06:06'),
-(11, 'SAR-2026-00011', 20, 1, 30000.00, 'fixed_monthly', 10000.00, '2026-12-01', 'next_payroll test', 'disbursed', 32, '2026-09-29 16:03:20', 29, '2026-09-29 16:05:07', NULL, 'approved', NULL, 30000.00, 'fixed_monthly', 10000.00, '2026-12-01', 1, 'next_payroll', 'verified', 29, '2026-09-29 16:05:52', NULL, 29, '2026-09-29 16:06:02', 1, 76, 'SAL-ADV-SAR-2026-00011', 30000.00, NULL, NULL, '2026-09-29 16:03:20', '2026-09-29 16:06:02');
+(11, 'SAR-2026-00011', 20, 1, 30000.00, 'fixed_monthly', 10000.00, '2026-12-01', 'next_payroll test', 'disbursed', 32, '2026-09-29 16:03:20', 29, '2026-09-29 16:05:07', NULL, 'approved', NULL, 30000.00, 'fixed_monthly', 10000.00, '2026-12-01', 1, 'next_payroll', 'verified', 29, '2026-09-29 16:05:52', NULL, 29, '2026-09-29 16:06:02', 1, 76, 'SAL-ADV-SAR-2026-00011', 30000.00, NULL, NULL, '2026-09-29 16:03:20', '2026-09-29 16:06:02'),
+(18, 'SAR-2026-00012', 2, 1, 10000.00, 'direct_repayment', NULL, '2026-10-01', 'Direct Repayment method test', 'settled', 2, '2026-09-30 20:46:14', 29, '2026-09-30 20:48:46', NULL, 'approved', NULL, 10000.00, 'direct_repayment', NULL, '2026-10-01', 0, NULL, 'verified', 29, '2026-09-30 20:56:41', NULL, 29, '2026-09-30 21:10:00', 1, 88, 'SAL-ADV-SAR-2026-00012', 0.00, 29, '2026-10-01 07:16:31', '2026-09-30 20:46:14', '2026-10-01 07:16:31'),
+(19, 'SAR-2026-00019', 2, 1, 20000.00, 'direct_repayment', NULL, '2026-11-01', 'salary_advance_direct_repayment_evidence test', 'settled', 2, '2026-10-01 07:41:01', 29, '2026-10-01 07:42:01', NULL, 'approved', NULL, 20000.00, 'direct_repayment', NULL, '2026-11-01', 0, NULL, 'verified', 29, '2026-10-01 07:59:33', NULL, 29, '2026-10-01 07:59:33', 2, 92, 'SAL-ADV-SAR-2026-00019', 0.00, 29, '2026-10-01 08:09:26', '2026-10-01 07:41:01', '2026-10-01 08:09:26');
 
 -- --------------------------------------------------------
 
@@ -9128,7 +9212,13 @@ INSERT INTO `journal_entries` (`id`, `entry_code`, `entry_date`, `description`, 
 (72, 'JE-000041', '2026-09-29', 'صرف سلفة راتب SAR-2026-00007 — هديل عثمان', 'salary_advance_disbursement', 7, 'posted', NULL, NULL, NULL, 29, '2026-09-29 08:19:55'),
 (73, 'JE-000042', '2026-09-29', 'صرف سلفة راتب SAR-2026-00004 — أحمد حسين', 'salary_advance_disbursement', 4, 'posted', NULL, NULL, NULL, 29, '2026-09-29 08:26:24'),
 (74, 'JE-000043', '2026-09-29', 'صرف سلفة راتب SAR-2026-00008 — لمياء علي طه صالح', 'salary_advance_disbursement', 8, 'posted', NULL, NULL, NULL, 29, '2026-09-29 11:30:36'),
-(76, 'JE-000044', '2026-09-29', 'صرف سلفة راتب SAR-2026-00011 — مدير الموارد البشرية', 'salary_advance_disbursement', 11, 'posted', NULL, NULL, NULL, 29, '2026-09-29 16:06:02');
+(76, 'JE-000044', '2026-09-29', 'صرف سلفة راتب SAR-2026-00011 — مدير الموارد البشرية', 'salary_advance_disbursement', 11, 'posted', NULL, NULL, NULL, 29, '2026-09-29 16:06:02'),
+(88, 'JE-000045', '2026-09-30', 'صرف سلفة راتب SAR-2026-00012 — المدير العام', 'salary_advance_disbursement', 18, 'posted', NULL, NULL, NULL, 29, '2026-09-30 21:10:00'),
+(90, 'JE-000046', '2026-10-01', 'سداد مباشر لسلفة راتب SAR-2026-00012 — المدير العام', 'salary_advance_direct_repayment', 18, 'posted', NULL, NULL, NULL, 29, '2026-10-01 07:14:27'),
+(91, 'JE-000047', '2026-10-01', 'سداد مباشر لسلفة راتب SAR-2026-00012 — المدير العام', 'salary_advance_direct_repayment', 18, 'posted', NULL, NULL, NULL, 29, '2026-10-01 07:16:31'),
+(92, 'JE-000048', '2026-10-01', 'صرف سلفة راتب SAR-2026-00019 — المدير العام', 'salary_advance_disbursement', 19, 'posted', NULL, NULL, NULL, 29, '2026-10-01 07:59:33'),
+(93, 'JE-000049', '2026-10-01', 'سداد مباشر لسلفة راتب SAR-2026-00019 — المدير العام', 'salary_advance_direct_repayment', 19, 'posted', NULL, NULL, NULL, 29, '2026-10-01 08:01:16'),
+(94, 'JE-000050', '2026-10-01', 'سداد مباشر لسلفة راتب SAR-2026-00019 — المدير العام', 'salary_advance_direct_repayment', 19, 'posted', NULL, NULL, NULL, 29, '2026-10-01 08:09:26');
 
 -- --------------------------------------------------------
 
@@ -9271,7 +9361,19 @@ INSERT INTO `journal_lines` (`id`, `entry_id`, `account_id`, `debit`, `credit`, 
 (149, 74, 37, 50000.00, 0.00, 'صرف سلفة راتب SAR-2026-00008 — لمياء علي طه صالح'),
 (150, 74, 1, 0.00, 50000.00, 'صرف سلفة راتب SAR-2026-00008 — لمياء علي طه صالح'),
 (153, 76, 37, 30000.00, 0.00, 'صرف سلفة راتب SAR-2026-00011 — مدير الموارد البشرية'),
-(154, 76, 1, 0.00, 30000.00, 'صرف سلفة راتب SAR-2026-00011 — مدير الموارد البشرية');
+(154, 76, 1, 0.00, 30000.00, 'صرف سلفة راتب SAR-2026-00011 — مدير الموارد البشرية'),
+(179, 88, 37, 10000.00, 0.00, 'صرف سلفة راتب SAR-2026-00012 — المدير العام'),
+(180, 88, 1, 0.00, 10000.00, 'صرف سلفة راتب SAR-2026-00012 — المدير العام'),
+(183, 90, 1, 4000.00, 0.00, 'سداد مباشر لسلفة راتب SAR-2026-00012 — المدير العام'),
+(184, 90, 37, 0.00, 4000.00, 'سداد مباشر لسلفة راتب SAR-2026-00012 — المدير العام'),
+(185, 91, 1, 6000.00, 0.00, 'سداد مباشر لسلفة راتب SAR-2026-00012 — المدير العام'),
+(186, 91, 37, 0.00, 6000.00, 'سداد مباشر لسلفة راتب SAR-2026-00012 — المدير العام'),
+(187, 92, 37, 20000.00, 0.00, 'صرف سلفة راتب SAR-2026-00019 — المدير العام'),
+(188, 92, 2, 0.00, 20000.00, 'صرف سلفة راتب SAR-2026-00019 — المدير العام'),
+(189, 93, 2, 10000.00, 0.00, 'سداد مباشر لسلفة راتب SAR-2026-00019 — المدير العام'),
+(190, 93, 37, 0.00, 10000.00, 'سداد مباشر لسلفة راتب SAR-2026-00019 — المدير العام'),
+(191, 94, 3, 10000.00, 0.00, 'سداد مباشر لسلفة راتب SAR-2026-00019 — المدير العام'),
+(192, 94, 37, 0.00, 10000.00, 'سداد مباشر لسلفة راتب SAR-2026-00019 — المدير العام');
 
 -- --------------------------------------------------------
 
@@ -9775,12 +9877,20 @@ INSERT INTO `notifications` (`id`, `recipient_user_id`, `type`, `title`, `body`,
 (104, 29, 'info', 'طلب سلفة على الراتب بانتظار المراجعة', 'طلب السلفة «SAR-2026-00008» للموظف «لمياء علي طه صالح» بانتظار مراجعة المدير المالي.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_fm_review.php?id=8', 1, '2026-09-29 10:38:49'),
 (105, 3, 'info', 'تم اعتماد طلب السلفة', 'تم اعتماد طلب السلفة «SAR-2026-00008». بعد تخصيص شروط الطلب من قبل المدير المالي.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_request.php', 1, '2026-09-29 10:41:26'),
 (106, 3, 'info', 'تم صرف السلفة', 'تم صرف السلفة «SAR-2026-00008» بمبلغ 50,000.00 ج.س. الرصيد القائم للسلفة: 50,000.00 ج.س.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_request.php', 1, '2026-09-29 11:30:36'),
-(107, 29, 'info', 'طلب سلفة على الراتب بانتظار المراجعة', 'طلب السلفة «SAR-2026-00009» للموظف «منير علي طه صالح» بانتظار مراجعة المدير المالي.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_fm_review.php?id=9', 1, '2026-09-29 11:35:36'),
+(107, 29, 'info', 'طلب سلفة على الراتب بانتظار المراجعة', 'طلب السلفة «SAR-2026-00009» للموظف «منير علي طه صالح» بانتظار مراجعة المدير المالي.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_processing.php?id=9', 1, '2026-09-29 11:35:36'),
 (108, 29, 'info', 'طلب سلفة على الراتب بانتظار المراجعة', 'طلب السلفة «SAR-2026-00010» للموظف «مدير الموارد البشرية» بانتظار مراجعة المدير المالي.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_fm_review.php?id=10', 1, '2026-09-29 12:05:25'),
 (109, 32, 'info', 'تم رفض وإغلاق طلب السلفة', 'تم رفض وإغلاق طلب السلفة «SAR-2026-00010». سبب الرفض: test', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_request.php', 1, '2026-09-29 12:06:06'),
-(110, 29, 'info', 'طلب سلفة على الراتب بانتظار المراجعة', 'طلب السلفة «SAR-2026-00011» للموظف «مدير الموارد البشرية» بانتظار مراجعة المدير المالي.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_fm_review.php?id=11', 1, '2026-09-29 16:03:20'),
+(110, 29, 'info', 'طلب سلفة على الراتب بانتظار المراجعة', 'طلب السلفة «SAR-2026-00011» للموظف «مدير الموارد البشرية» بانتظار مراجعة المدير المالي.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_processing.php?id=11', 1, '2026-09-29 16:03:20'),
 (111, 32, 'info', 'تم اعتماد طلب السلفة', 'تم اعتماد طلب السلفة «SAR-2026-00011». بعد تخصيص شروط الطلب من قبل المدير المالي.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_request.php', 1, '2026-09-29 16:05:07'),
-(112, 32, 'info', 'تم صرف السلفة', 'تم صرف السلفة «SAR-2026-00011» بمبلغ 30,000.00 ج.س. الرصيد القائم للسلفة: 30,000.00 ج.س.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_request.php', 0, '2026-09-29 16:06:02');
+(112, 32, 'info', 'تم صرف السلفة', 'تم صرف السلفة «SAR-2026-00011» بمبلغ 30,000.00 ج.س. الرصيد القائم للسلفة: 30,000.00 ج.س.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_request.php', 0, '2026-09-29 16:06:02'),
+(113, 29, 'info', 'طلب سلفة على الراتب بانتظار المراجعة', 'طلب السلفة «SAR-2026-00012» للموظف «المدير العام» بانتظار مراجعة المدير المالي.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_processing.php?id=18', 1, '2026-09-30 20:46:14'),
+(114, 2, 'info', 'تم صرف السلفة', 'تم صرف السلفة «SAR-2026-00012» بمبلغ 10,000.00 ج.س. الرصيد القائم للسلفة: 10,000.00 ج.س.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_request.php', 1, '2026-09-30 21:10:00'),
+(115, 2, 'info', 'تم تسجيل سداد للسلفة', 'تم تسجيل سداد مباشر بقيمة 4,000.00 ج.س للسلفة «SAR-2026-00012». الرصيد القائم: 6,000.00 ج.س.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_request.php', 1, '2026-10-01 07:14:27'),
+(116, 2, 'info', 'تمت تسوية السلفة', 'تم تسجيل سداد مباشر بقيمة 6,000.00 ج.س وإغلاق رصيد السلفة «SAR-2026-00012».', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_request.php', 1, '2026-10-01 07:16:31'),
+(117, 29, 'info', 'طلب سلفة على الراتب بانتظار المراجعة', 'طلب السلفة «SAR-2026-00019» للموظف «المدير العام» بانتظار مراجعة المدير المالي.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_processing.php?id=19', 1, '2026-10-01 07:41:01'),
+(118, 2, 'info', 'تم صرف السلفة', 'تم صرف السلفة «SAR-2026-00019» بمبلغ 20,000.00 ج.س. الرصيد القائم للسلفة: 20,000.00 ج.س.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_request.php', 1, '2026-10-01 07:59:33'),
+(119, 2, 'info', 'تم تسجيل سداد للسلفة', 'تم تسجيل سداد مباشر بقيمة 10,000.00 ج.س للسلفة «SAR-2026-00019». الرصيد القائم: 10,000.00 ج.س.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_request.php', 0, '2026-10-01 08:01:16'),
+(120, 2, 'info', 'تمت تسوية السلفة', 'تم تسجيل سداد مباشر بقيمة 10,000.00 ج.س وإغلاق رصيد السلفة «SAR-2026-00019».', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_request.php', 0, '2026-10-01 08:09:26');
 
 -- --------------------------------------------------------
 
@@ -28526,14 +28636,14 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `role_id`, `username`, `password_hash`, `full_name`, `email`, `phone`, `is_active`, `supervisor_status`, `password_change_required`, `last_login_at`, `created_by`, `created_at`, `updated_at`, `legacy_status`, `avatar_path`, `address`, `birth_date`, `gender`, `department_id`, `manager_id`, `theme_preference`, `language_preference`, `email_notifications`, `push_notifications`, `email_newsletter`) VALUES
-(1, 1, 'sudo', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'منير علي طه صالح', 'sudo@ahlelkheir.org', '0966616614', 1, '', 0, '2026-09-29 11:59:09', NULL, '2026-08-02 16:49:35', '2026-09-29 11:59:09', 'active', 'storage/avatars/user_1_1789753554.png', NULL, NULL, 'male', 1, 1, 'auto', 'ar', 1, 1, 1),
-(2, 2, 'gm', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'المدير العام', 'gm@ahlelkheir.org', NULL, 1, '', 0, '2026-09-27 08:41:07', NULL, '2026-08-02 16:49:35', '2026-09-27 08:41:07', 'active', 'storage/avatars/user_2_1787805764.png', NULL, NULL, NULL, 1, NULL, 'light', 'ar', 1, 1, 1),
+(1, 1, 'sudo', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'منير علي طه صالح', 'sudo@ahlelkheir.org', '0966616614', 1, '', 0, '2026-09-30 09:16:45', NULL, '2026-08-02 16:49:35', '2026-09-30 09:16:45', 'active', 'storage/avatars/user_1_1789753554.png', NULL, NULL, 'male', 1, 1, 'auto', 'ar', 1, 1, 1),
+(2, 2, 'gm', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'المدير العام', 'gm@ahlelkheir.org', NULL, 1, '', 0, '2026-10-01 07:13:47', NULL, '2026-08-02 16:49:35', '2026-10-01 07:13:47', 'active', 'storage/avatars/user_2_1787805764.png', NULL, NULL, NULL, 1, NULL, 'light', 'ar', 1, 1, 1),
 (3, 3, 'vgm', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'لمياء علي طه صالح', 'vgm@ahlelkheir.org', NULL, 1, '', 0, '2026-09-29 09:00:10', NULL, '2026-08-02 16:49:35', '2026-09-29 09:00:10', 'active', 'storage/avatars/user_3_1787556761.png', NULL, NULL, 'female', 1, 2, 'light', 'ar', 1, 1, 1),
 (4, 10, 'accountant', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'محاسب (موظف)', 'accountant@ahlelkheir.org', '0123456789', 1, '', 0, '2026-08-17 14:11:48', NULL, '2026-08-08 12:33:29', '2026-08-17 14:30:38', 'active', NULL, NULL, NULL, NULL, 6, 29, 'light', 'ar', 1, 1, 1),
 (14, 4, 'Mad_Max', '$2y$10$2Pps4jCppxKBhdFrBRi94.FmCAYDqhUWd.vOLH4CnCIZDWbWrLhTC', 'أحمد محمد', 'moneerali2000@gmail.com', '0912345100', 0, 'archived', 0, '2026-08-16 09:20:38', 3, '2026-08-09 10:41:43', '2026-09-04 08:02:07', 'active', NULL, NULL, NULL, NULL, NULL, NULL, 'light', 'ar', 1, 1, 1),
 (15, 4, 'medo', '$2y$10$8XL6WcxWHuHZ2MB0XKlWReI28/2VUY0P9TJNWIM1chyov7mi9vZGy', 'مديحه عبد الماجد', 'madiha@example.com', '096664568', 0, 'archived', 0, NULL, 3, '2026-08-10 10:31:56', '2026-09-04 08:01:57', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'light', 'ar', 1, 1, 1),
 (16, 7, 'nany1', '$2y$10$bOs5FR0MQDIWcay4vmcoc.wkTOTt7mU2umWJYHn1AFkAXclPGcZWO', 'nany1', 'nany1@gmail.com', '094449785', 1, '', 0, '2026-09-21 10:40:51', 1, '2026-08-13 18:03:28', '2026-09-21 10:40:51', NULL, 'storage/avatars/user_16_1787805870.png', NULL, NULL, 'female', 2, 3, 'light', 'ar', 1, 1, 1),
-(17, 10, 'acc1', '$2y$10$n6sTBlpffNdZOaN48KkAx.zqkDnrikirhM.HWVBH81qG255EuUqKS', 'acc1', 'acc1@gmail.com', '0945786321', 1, '', 0, '2026-09-20 08:44:20', 1, '2026-08-13 19:47:47', '2026-09-20 08:44:20', NULL, NULL, NULL, NULL, 'male', 6, 4, 'light', 'ar', 1, 1, 1),
+(17, 10, 'acc1', '$2y$10$n6sTBlpffNdZOaN48KkAx.zqkDnrikirhM.HWVBH81qG255EuUqKS', 'acc1', 'acc1@gmail.com', '0945786321', 1, '', 0, '2026-09-30 20:50:39', 1, '2026-08-13 19:47:47', '2026-09-30 20:50:39', NULL, NULL, NULL, NULL, 'male', 6, 4, 'light', 'ar', 1, 1, 1),
 (18, 8, 'ro1', '$2y$10$Rx63s7Lt4lh4IkJwbUKigOAmp0MzhzByWauPrF1HptcVmr4V/MpHq', 'أحمد حسين عبدالكريم', 'ro@gmail.com', '0123456789', 1, '', 0, '2026-09-20 08:43:19', 1, '2026-08-13 20:23:47', '2026-09-20 08:43:19', NULL, 'storage/avatars/user_18_1789729126.jpg', NULL, NULL, NULL, 3, 3, 'light', 'ar', 1, 1, 1),
 (19, 4, 'sv1', '$2y$10$1orOJuoh50H0m8Ow4eKIMOZC18pCFV6XILrjtEZvInwH/M/yGCDUS', 'فاطمه سليمان', 'fatima@gmail.com', '0999999999999', 1, 'active', 0, '2026-09-28 19:17:45', 3, '2026-08-14 08:10:49', '2026-09-28 19:17:45', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
 (20, 4, 'sv2', '$2y$10$GlgbXKPFv/Tqz/UYdBF2kOgV.Wwpe6yBpfmzcUSOKOocQuLulV2IW', 'ميادة الحبر', 'mayadah@gmail.com', NULL, 1, 'active', 0, '2026-09-28 17:25:15', 3, '2026-08-14 08:12:16', '2026-09-28 17:25:15', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
@@ -28544,7 +28654,7 @@ INSERT INTO `users` (`id`, `role_id`, `username`, `password_hash`, `full_name`, 
 (26, 4, 'sv8', '$2y$10$iRZLB9UdIggAJqKsR.eoPuwyMFfS4w3RgVjZ4XjvxxUynOuhMAc/i', 'ساره خلف الله', 'sarah@gmail.com', '015468972', 1, 'active', 0, NULL, 3, '2026-08-14 09:28:14', '2026-09-04 08:38:22', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
 (27, 4, 'sv9', '$2y$10$oBV.8O1UW/yiwOAcPMxbqeH8Xh/PJhNtq.tIkyOqh55v1v7GzjSJW', 'هناء خلف الله', 'hanah@gmail.com', '78999456789', 1, 'active', 0, NULL, 3, '2026-08-14 09:31:19', '2026-09-03 15:28:42', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
 (28, 9, 'sm1', '$2y$10$gtVZcFBfL2yMhNXOPpkr5e7up/SiAnE7KfjJ8tq4JFocePuGjcr0C', 'أحمد حسين', 'ahmed@gmail.com', '8545567865', 1, '', 0, '2026-09-28 16:38:49', 1, '2026-08-14 13:06:45', '2026-09-28 16:38:49', NULL, NULL, NULL, NULL, 'male', 4, 3, 'light', 'ar', 1, 1, 1),
-(29, 6, 'fm', '$2y$10$K2.yA1kpqLaGWrqH/QOQ2uXv0PJhvWTMC55tW5kSkU6u5iaz6JmVW', 'المدير المالي', 'fm@ahlelkheir.org', NULL, 1, '', 0, '2026-09-29 08:16:30', 1, '2026-08-17 14:26:40', '2026-09-29 08:16:30', NULL, 'storage/avatars/user_29_1787555658.jpg', NULL, NULL, 'أنثى', 1, 2, 'light', 'ar', 1, 1, 1),
+(29, 6, 'fm', '$2y$10$K2.yA1kpqLaGWrqH/QOQ2uXv0PJhvWTMC55tW5kSkU6u5iaz6JmVW', 'المدير المالي', 'fm@ahlelkheir.org', NULL, 1, '', 0, '2026-10-01 07:10:52', 1, '2026-08-17 14:26:40', '2026-10-01 07:10:52', NULL, 'storage/avatars/user_29_1787555658.jpg', NULL, NULL, 'أنثى', 1, 2, 'light', 'ar', 1, 1, 1),
 (32, 11, 'hrh', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'مدير الموارد البشرية', 'hr@ahlelkheir.org', '00112233445566', 1, '', 0, '2026-09-29 12:03:09', NULL, '2026-08-18 21:49:04', '2026-09-29 12:03:09', NULL, 'storage/avatars/user_32_1788630391.png', NULL, NULL, NULL, 1, NULL, 'light', 'ar', 1, 1, 1),
 (33, 13, 'gpm', '$2y$10$ftQaFFCk4DF1UrdPlpGtd.OVR.2pyxPxKlIcZ7KhRxa7VMP/FXC/G', 'projects manager', 'pm@gmail.com', '00012344456678', 1, '', 0, '2026-09-29 12:02:52', 1, '2026-08-28 18:33:31', '2026-09-29 12:02:52', NULL, 'storage/avatars/user_33_1787943667.jpg', NULL, NULL, 'male', 1, 2, 'light', 'ar', 1, 1, 1),
 (34, 14, 'ps1', '$2y$10$y6GVpoe/hF9GxE8zyezAPORKNgBn5n65Ct.tUHI0r6lnkyHEdkrZi', 'project supervisor', 'gps@gmail.com', '987654321', 1, '', 0, '2026-09-27 16:25:11', 1, '2026-08-28 18:35:16', '2026-09-29 12:02:14', NULL, NULL, NULL, NULL, 'male', 8, NULL, 'light', 'ar', 1, 1, 1),
@@ -28922,6 +29032,25 @@ ALTER TABLE `hr_payroll_reversals`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `uq_hr_payroll_reversal_payroll` (`payroll_id`),
   ADD KEY `idx_hr_payroll_reversal_entry` (`reversal_entry_id`);
+
+--
+-- Indexes for table `hr_salary_advance_direct_repayments`
+--
+ALTER TABLE `hr_salary_advance_direct_repayments`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_hr_salary_advance_direct_repayment_journal` (`accounting_entry_id`),
+  ADD KEY `idx_hr_salary_advance_direct_repayment_request` (`salary_advance_request_id`),
+  ADD KEY `idx_hr_salary_advance_direct_repayment_account` (`repayment_account_id`),
+  ADD KEY `idx_hr_salary_advance_direct_repayment_receiver` (`received_by`),
+  ADD KEY `idx_hr_salary_advance_direct_repayment_date` (`repayment_date`);
+
+--
+-- Indexes for table `hr_salary_advance_direct_repayment_documents`
+--
+ALTER TABLE `hr_salary_advance_direct_repayment_documents`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_hr_salary_advance_direct_repayment_document` (`direct_repayment_id`),
+  ADD KEY `idx_hr_salary_advance_direct_repayment_documents_uploader` (`uploaded_by`);
 
 --
 -- Indexes for table `hr_salary_advance_documents`
@@ -29590,7 +29719,7 @@ ALTER TABLE `attendance`
 -- AUTO_INCREMENT for table `audit_log`
 --
 ALTER TABLE `audit_log`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2071;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2097;
 
 --
 -- AUTO_INCREMENT for table `contracts`
@@ -29719,16 +29848,28 @@ ALTER TABLE `hr_payroll_reversals`
   MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
+-- AUTO_INCREMENT for table `hr_salary_advance_direct_repayments`
+--
+ALTER TABLE `hr_salary_advance_direct_repayments`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+
+--
+-- AUTO_INCREMENT for table `hr_salary_advance_direct_repayment_documents`
+--
+ALTER TABLE `hr_salary_advance_direct_repayment_documents`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
 -- AUTO_INCREMENT for table `hr_salary_advance_documents`
 --
 ALTER TABLE `hr_salary_advance_documents`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `hr_salary_advance_payroll_repayments`
 --
 ALTER TABLE `hr_salary_advance_payroll_repayments`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `hr_salary_advance_policy_versions`
@@ -29752,13 +29893,13 @@ ALTER TABLE `hr_salary_advance_requests`
 -- AUTO_INCREMENT for table `journal_entries`
 --
 ALTER TABLE `journal_entries`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=85;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=95;
 
 --
 -- AUTO_INCREMENT for table `journal_lines`
 --
 ALTER TABLE `journal_lines`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=172;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=193;
 
 --
 -- AUTO_INCREMENT for table `leaves`
@@ -29818,7 +29959,7 @@ ALTER TABLE `nanny_group_assignments`
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=113;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=121;
 
 --
 -- AUTO_INCREMENT for table `orphan_documents`
@@ -29848,7 +29989,7 @@ ALTER TABLE `password_recovery_requests`
 -- AUTO_INCREMENT for table `payroll`
 --
 ALTER TABLE `payroll`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
 
 --
 -- AUTO_INCREMENT for table `performance_reviews`
@@ -30180,6 +30321,12 @@ ALTER TABLE `group_children`
   ADD CONSTRAINT `fk_gc_added_by` FOREIGN KEY (`added_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `fk_gc_child` FOREIGN KEY (`child_id`) REFERENCES `family_children` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_gc_group` FOREIGN KEY (`group_id`) REFERENCES `orphan_groups` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `hr_salary_advance_direct_repayment_documents`
+--
+ALTER TABLE `hr_salary_advance_direct_repayment_documents`
+  ADD CONSTRAINT `fk_hr_salary_advance_direct_repayment_documents_repayment` FOREIGN KEY (`direct_repayment_id`) REFERENCES `hr_salary_advance_direct_repayments` (`id`) ON UPDATE CASCADE;
 
 --
 -- Constraints for table `hr_salary_advance_documents`
