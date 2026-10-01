@@ -1463,3 +1463,37 @@ Projects business intent clarified: after required FM-controlled financial appro
 
 When continuing Projects, inspect the existing repository/schema/chart of accounts and fresh database evidence first. Do not invent an account, transfer mechanism, journal type, or schema change. Resolve the accounting event boundary before implementation so the same financial event cannot be recognized twice. Correct historical phantom project-approval journals only after the replacement accounting model is settled.
 
+
+
+## 2026-10-01 — Latest Checkpoint: Unified User / Employee Creation
+
+The Admin/HR account-creation architecture is now consolidated.
+
+Canonical page:
+`modules/users/index.php`
+
+Canonical shared form:
+`modules/users/_create_user_form.php`
+
+Canonical provisioning:
+`modules/hr/lib_employee_provisioning.php` → `hrCreateUserWithEmployee()`
+
+Rules:
+- Admin and HR Manager use the same creation page, form, validation, and provisioning path.
+- Creating a user automatically creates and links one employee profile through `employees.user_id`.
+- Personal fields may be empty initially and may be completed later.
+- `modules/hr/employees.php` is employee management only; its former add/create path redirects to the canonical page.
+- Do not recreate a second HR-specific account creation page.
+- Do not remove `_create_user_form.php`; it is the shared canonical form.
+- Manager selection is maintained only in `modules/users/index.php`.
+- No PM/PS-specific exception is permitted.
+- Do not modify Leave or Salary Advance behavior unless a concrete regression is demonstrated.
+
+Implementation/documentation commits:
+- `b90791e2bfa49f0a6cab26e1844b951c52981d38`
+- `ca42000f4552eeeb4fea6fb493bb8008c29a40b9`
+- `ffed7719f241f7bcee1732da88e743e838296f2c8`
+- `6b36187460bc27246d9a5e89615f4c8b85cdf2d8`
+- documentation: `724e0d6e08451d828c6fa067627bfff6b9d7674d`, `5ebfdb10883b9eb03eec6d2389877c15ffa0a470`, `0cd4cc8ba058de752d4f9b61e9f48a276140dca5`
+
+Next verification gate: runtime-test the canonical creation page from both Admin and HR Manager and verify automatic one-to-one user→employee creation using controlled test data. Then continue from the explicitly documented next work unit; do not invent a new stage.
