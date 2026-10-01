@@ -198,42 +198,55 @@ if (!function_exists('akp_return_project_funding')) {
     {
         if (akp_role() !== 'financial_manager') throw new RuntimeException('إرجاع الرصيد المتبقي محصور بالمدير المالي.');
 
-        $approval = dbFetchOne('SELECT approval_status FROM project_approval WHERE project_id=?', [$projectId]);
-        if (!$approval || $approval['approval_status'] !== 'approved') throw new RuntimeException('لا يمكن إرجاع رصيد قبل الاعتماد النهائي للمشروع.');
-
-        $lifecycle = dbFetchOne('SELECT lifecycle_status FROM project_lifecycle WHERE project_id=?', [$projectId]);
-        if (!$lifecycle || !in_array((string)$lifecycle['lifecycle_status'], ['closure_requested','completed','under_review'], true)) {
-            throw new RuntimeException('إرجاع الرصيد المتبقي متاح عند طلب إغلاق المشروع أو أثناء المراجعة الختامية.');
-        }
-
-        $allocation = dbFetchOne(
-            "SELECT f.*, a.code AS source_account_code
-             FROM project_funding_allocations f
-             JOIN accounts a ON a.id=f.source_account_id
-             WHERE f.id=? AND f.project_id=? AND f.status='posted'",
-            [$allocationId, $projectId]
-        );
-        if (!$allocation) throw new RuntimeException('تخصيص التمويل المطلوب غير موجود أو غير مرحّل.');
-        $amount = round($amount, 2);
-        if ($amount <= 0) throw new RuntimeException('مبلغ الإرجاع يجب أن يكون أكبر من صفر.');
-        $returnedForAllocation = dbFetchOne(
-            'SELECT COALESCE(SUM(amount),0) AS total FROM project_funding_returns WHERE funding_allocation_id=?',
-            [$allocationId]
-        );
-        $allocationRemaining = round((float)$allocation['amount'] - (float)($returnedForAllocation['total'] ?? 0), 2);
-        if ($amount > $allocationRemaining + 0.01) {
-            throw new RuntimeException('مبلغ الإرجاع يتجاوز الرصيد المتبقي لهذا المصدر المالي: ' . number_format($allocationRemaining, 2) . '.');
-        }
-        $controlledBalance = akp_project_controlled_balance($projectId);
-        if ($amount > $controlledBalance + 0.01) {
-            throw new RuntimeException('مبلغ الإرجاع يتجاوز الرصيد المتبقي تحت سيطرة المشروع: ' . number_format($controlledBalance, 2) . '.');
-        }
-
-        $project = dbFetchOne('SELECT name, currency_code FROM other_projects WHERE id=?', [$projectId]);
-        $expenseAccountId = akp_project_expense_account_id($projectId);
-
+        /*
+         * Serialize all FM returns for this project before calculating the
+         * remaining controlled balance. Without the lock, two concurrent
+         * return requests could both observe the same balance and over-return.
+         * The approval row is already the workflow-level serialization point
+         * used by final approval/rejection, so reuse it here.
+         */
         dbExecute('START TRANSACTION');
         try {
+            $approval = dbFetchOne('SELECT approval_status FROM project_approval WHERE project_id=? FOR UPDATE', [$projectId]);
+            if (!$approval || $approval['approval_status'] !== 'approved') throw new RuntimeException('لا يمكن إرجاع رصيد قبل الاعتماد النهائي للمشروع.');
+
+            $lifecycle = dbFetchOne('SELECT lifecycle_status FROM project_lifecycle WHERE project_id=? FOR UPDATE', [$projectId]);
+            if (!$lifecycle || !in_array((string)$lifecycle['lifecycle_status'], ['closure_requested','completed','under_review'], true)) {
+                throw new RuntimeException('إرجاع الرصيد المتبقي متاح عند طلب إغلاق المشروع أو أثناء المراجعة الختامية.');
+            }
+
+            $dateObj = DateTime::createFromFormat('Y-m-d', $returnDate);
+            if (!$dateObj || $dateObj->format('Y-m-d') !== $returnDate) {
+                throw new RuntimeException('تاريخ الإرجاع غير صالح.');
+            }
+
+            $allocation = dbFetchOne(
+                "SELECT f.*, a.code AS source_account_code
+                 FROM project_funding_allocations f
+                 JOIN accounts a ON a.id=f.source_account_id
+                 WHERE f.id=? AND f.project_id=? AND f.status='posted'
+                 FOR UPDATE",
+                [$allocationId, $projectId]
+            );
+            if (!$allocation) throw new RuntimeException('تخصيص التمويل المطلوب غير موجود أو غير مرحّل.');
+            $amount = round($amount, 2);
+            if ($amount <= 0) throw new RuntimeException('مبلغ الإرجاع يجب أن يكون أكبر من صفر.');
+            $returnedForAllocation = dbFetchOne(
+                'SELECT COALESCE(SUM(amount),0) AS total FROM project_funding_returns WHERE funding_allocation_id=?',
+                [$allocationId]
+            );
+            $allocationRemaining = round((float)$allocation['amount'] - (float)($returnedForAllocation['total'] ?? 0), 2);
+            if ($amount > $allocationRemaining + 0.01) {
+                throw new RuntimeException('مبلغ الإرجاع يتجاوز الرصيد المتبقي لهذا المصدر المالي: ' . number_format($allocationRemaining, 2) . '.');
+            }
+            $controlledBalance = akp_project_controlled_balance($projectId);
+            if ($amount > $controlledBalance + 0.01) {
+                throw new RuntimeException('مبلغ الإرجاع يتجاوز الرصيد المتبقي تحت سيطرة المشروع: ' . number_format($controlledBalance, 2) . '.');
+            }
+
+            $project = dbFetchOne('SELECT name, currency_code FROM other_projects WHERE id=?', [$projectId]);
+            $expenseAccountId = akp_project_expense_account_id($projectId);
+
             $entryCode = akp_project_journal_code('JE-PRJ-RET', $projectId, $allocationId);
             dbExecute(
                 "INSERT INTO journal_entries
