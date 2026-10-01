@@ -189,21 +189,6 @@ function ak_register_project_approval_notifications(): void {
             $link = APP_URL . 'modules/projects/view.php?id=' . $projectId;
             $submittedBy = (int)($approval['submitted_by'] ?? 0);
 
-            if ($action === 'fm_reject_project' && $approval['approval_status'] === 'rejected') {
-                if ($submittedBy > 0) {
-                    $reason = (string)(dbFetchOne('SELECT fm_rejection_reason FROM project_approval WHERE project_id = ?', [$projectId])['fm_rejection_reason'] ?? '');
-                    ak_transaction_review_notify_event(
-                        $submittedBy,
-                        'إعادة المشروع للتعديل',
-                        $label . ' تم رفضه مالياً وإعادته إلى مدير المشاريع للتعديل.' . ($reason !== '' ? ' سبب الرفض: ' . $reason : ''),
-                        $link,
-                        $projectId,
-                        'project_fm_rejection'
-                    );
-                }
-                return;
-            }
-
             if ($action === 'approve_project' && $approval['approval_status'] === 'approved') {
                 // Final GM/VGM approval means the FM can now execute the actual
                 // payment evidence step. Notify every active FM.
@@ -220,19 +205,6 @@ function ak_register_project_approval_notifications(): void {
                 // not to the later GM/VGM approval.
             }
 
-            if ($action === 'reject_project' && $approval['approval_status'] === 'rejected') {
-                if ($submittedBy > 0) {
-                    $reason = (string)(dbFetchOne('SELECT rejection_reason FROM project_approval WHERE project_id = ?', [$projectId])['rejection_reason'] ?? '');
-                    ak_transaction_review_notify_event(
-                        $submittedBy,
-                        'إعادة المشروع للتعديل',
-                        $label . ' تم رفضه نهائياً وإعادته إلى مدير المشاريع للتعديل.' . ($reason !== '' ? ' سبب الرفض: ' . $reason : ''),
-                        $link,
-                        $projectId,
-                        'project_gm_rejection'
-                    );
-                }
-            }
         } catch (Throwable $notificationError) {
             // Never change the completed project action because notification delivery failed.
         }
