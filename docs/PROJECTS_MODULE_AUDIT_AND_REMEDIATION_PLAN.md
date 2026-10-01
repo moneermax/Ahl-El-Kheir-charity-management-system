@@ -893,3 +893,12 @@ GM/VGM rejection
 ```
 
 Runtime verification remains required. The static audit gate is now: there must be no executable legacy FM approval/rejection transition in `view.php`, and the only FM approval/rejection transitions must be in `view_fm.php`.
+
+
+## 2026-10-01 — Controlled-fund return concurrency hardening
+
+During the continued Phase 5 audit, the FM return path was rechecked for race conditions rather than only normal sequential behavior. The previous implementation calculated the allocation/project remaining balance before starting its transaction. That left a theoretical concurrent-request window in which two FM requests could both pass the same balance check. The helper was corrected to start the transaction first, lock the project approval row and selected posted allocation, then recalculate the remaining balances before creating the return journal and reconciliation row. Server-side return-date validation was also added.
+
+Commit: `c631ffe571e339fd8a61196ad046f1d7344b964c` — **Projects: serialize controlled-fund returns**.
+
+This is a static hardening fix. Runtime Phase 5 certification is still pending.
