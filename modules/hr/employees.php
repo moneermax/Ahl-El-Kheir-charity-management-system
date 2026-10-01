@@ -53,11 +53,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_user'])) {
 }
 
 $states = hrGetEmploymentStates();
-$unlinkedUsers = dbFetchAll("SELECT u.id, u.username, u.full_name FROM users u LEFT JOIN employees e ON e.user_id = u.id WHERE e.id IS NULL AND u.is_active = 1 ORDER BY u.full_name");
 $statesByCode = [];
 foreach ($states as $state) { $statesByCode[$state['code']] = $state; }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($action, ['add','edit','suspend','activate'], true)) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($action, ['edit','suspend','activate'], true)) {
     try {
         if ($action === 'suspend' || $action === 'activate') {
             $code = $action === 'suspend' ? 'suspended' : 'active';
@@ -82,41 +81,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($action, ['add','edit','su
             $bank_account = trim($_POST['bank_account'] ?? '');
             $existing_user_id = (int)($_POST['existing_user_id'] ?? 0);
 
-            if ($action === 'add') {
-                $initialStateCode = $_POST['employment_state'] ?? 'active';
-                if (!isset($statesByCode[$initialStateCode])) throw new RuntimeException('حالة التوظيف المختارة غير صالحة.');
-
-                // Employee codes are system-generated. Existing codes are never reused or changed.
-                $lastCodeRow = dbFetchOne(
-                    "SELECT employee_code
-                     FROM employees
-                     WHERE employee_code REGEXP '^EMP-[0-9]+$'
-                     ORDER BY CAST(SUBSTRING(employee_code, 5) AS UNSIGNED) DESC
-                     LIMIT 1"
-                );
-                $nextNumber = 1;
-                if ($lastCodeRow && preg_match('/^EMP-(\\d+)$/', (string)$lastCodeRow['employee_code'], $m)) {
-                    $nextNumber = (int)$m[1] + 1;
-                }
-                do {
-                    $employee_code = 'EMP-' . str_pad((string)$nextNumber, 4, '0', STR_PAD_LEFT);
-                    $exists = dbFetchOne('SELECT id FROM employees WHERE employee_code = ? LIMIT 1', [$employee_code]);
-                    $nextNumber++;
-                } while ($exists);
-
-                $user_id = null;
-                if ($existing_user_id > 0) {
-                    if (!dbFetchOne('SELECT u.id FROM users u LEFT JOIN employees e ON e.user_id = u.id WHERE u.id = ? AND u.is_active = 1 AND e.id IS NULL', [$existing_user_id])) {
-                        throw new RuntimeException('حساب المستخدم المختار غير متاح للربط.');
-                    }
-                    $user_id = $existing_user_id;
-                }
-                $stmt = $pdo->prepare('INSERT INTO employees (user_id, full_name, employee_code, national_id, birth_date, gender, phone, email, address, hire_date, department_id, position, employment_type, work_mode, basic_salary, bank_account, status, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
-                $stmt->execute([$user_id,$full_name,$employee_code,$national_id,$birth_date,$gender,$phone,$email,$address,$hire_date,$department_id,$position,$employment_type,$work_mode,$basic_salary,$bank_account,'active',Session::getUserID()]);
-                $emp_id = (int)$pdo->lastInsertId();
-                hrSyncEmployeeSalaryHistory($emp_id, $basic_salary, $hire_date ?: date('Y-m-d'), 'initial');
-                hrInitializeEmploymentState($emp_id, $initialStateCode, Session::getUserID(), null, 'Initial employee creation');
-                $message = 'تم إضافة الموظف بنجاح' . ($user_id ? ' (تم إنشاء حساب نظامي له)' : '');
+            if (false) {
+                // Account creation is handled exclusively by the shared user+employee flow above.
             } else {
                 $newStateCode = $_POST['employment_state'] ?? '';
                 if (!isset($statesByCode[$newStateCode])) throw new RuntimeException('حالة التوظيف المختارة غير صالحة.');
