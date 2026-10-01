@@ -1218,3 +1218,12 @@ Runtime verification remains the next gate.
 - Identified and corrected a concurrency window in FM controlled-fund returns; documented in the Phase 5 checkpoint and audit plan.
 - Code: `c631ffe571e339fd8a61196ad046f1d7344b964c`.
 - Runtime certification is still pending and must use the existing controlled project data rather than creating an unnecessary new fixture.
+
+
+## 2026-10-01 — Projects approval notification static re-audit
+
+After the earlier notification-timing correction, the shared transaction-review helper was rechecked for hidden paths. It still contained a GM/VGM → PM notification (project_gm_approval_pm) and stale PM-notification branches for rejection events. These conflicted with the confirmed boundary: PM receives the approval-chain notification after FM final accounting confirmation only; GM/VGM approval must not notify PM, and GM/VGM rejection must notify FM only.
+
+Corrections were committed directly to main: the GM → PM path and stale rejection branches were removed, and the generic akp_audit() helper was made notification-free. The canonical FM page remains responsible for FM final-accounting and FM-rejection notifications.
+
+Runtime verification of the complete approval notification sequence is still required.
