@@ -1177,3 +1177,8 @@ Current Projects business intent: after FM-controlled financial approval, the fu
 ## 2026-10-01 — Projects Phase 5 implementation checkpoint
 
 Phase 5 accounting implementation is now **IMPLEMENTED — RUNTIME VERIFICATION REQUIRED** on `audit/projects-phase5-accounting-reconciliation`. The closure workflow has been integrated so a primary PS closure request automatically detects unused controlled funds and notifies FM to process the refund before final closure. Runtime verification is the next exact action; historical phantom project journals remain deferred.
+
+
+## 2026-10-01 — Phase 5 closure ownership clarification
+
+Phase 5 closure ownership is now explicit: PS submits the closure request and then the PS responsibility ends. FM is notified only if unused controlled funds exist; FM alone handles the savings/refund and accounting reconciliation. No FM notification is generated when savings are zero. Runtime verification remains the next gate.
