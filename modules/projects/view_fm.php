@@ -272,78 +272,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $fundingTotal=(float)(dbFetchOne("SELECT COALESCE(SUM(amount),0) n FROM project_funding_allocations WHERE project_id=? AND status='draft'",[$id])['n']??0);
             if ($budgetTotal<=0) throw new RuntimeException('لا يمكن الاعتماد قبل اعتماد الميزانية.');
             if (abs($fundingTotal-$financialRequirement)>0.01) throw new RuntimeException('يجب أن يساوي إجمالي تخصيص التمويل إجمالي المتطلبات المالية للمشروع (الميزانية + الرسوم الحكومية).');
+            dbExecute("UPDATE project_approval SET approval_status='fm_approved',fm_reviewed_by=?,fm_reviewed_at=NOW() WHERE project_id=?", [akp_user_id(),$id]);
+            akp_audit('FM_APPROVE_PROJECT','project_approval',$id,['approval_status'=>'submitted'],['approval_status'=>'fm_approved']);
 
-            // Preliminary FM approval is a financial review checkpoint only.
-            // It does not release treasury funds, create journals, or notify GM.
-            dbExecute('START TRANSACTION');
+            // Notify active General Manager recipients that the project is now
+            // waiting for final approval. Delivery is isolated so it cannot
+            // roll back the completed FM approval.
             try {
-                $locked=dbFetchOne("SELECT approval_status FROM project_approval WHERE project_id=? FOR UPDATE",[$id]);
-                if (!$locked || $locked['approval_status']!=='submitted') throw new RuntimeException('تغيرت حالة المشروع قبل إتمام الاعتماد المالي.');
-                dbExecute("UPDATE project_approval SET approval_status='fm_approved',fm_reviewed_by=?,fm_reviewed_at=NOW(),fm_accounting_approved_by=NULL,fm_accounting_approved_at=NULL WHERE project_id=?", [akp_user_id(),$id]);
-                dbExecute('COMMIT');
-            } catch (Throwable $e) {
-                dbExecute('ROLLBACK');
-                throw $e;
-            }
-            akp_audit('FM_APPROVE_PROJECT','project_approval',$id,['approval_status'=>'submitted'],['approval_status'=>'fm_approved','accounting_release_pending'=>true]);
-            flash('success','تم الاعتماد المالي المبدئي. راجع الإفراج المحاسبي نهائياً قبل إرساله للمدير العام.');
-
-        } elseif ($action === 'fm_final_accounting_approve') {
-            if ((string)$approval['approval_status']!=='fm_approved') throw new RuntimeException('المشروع ليس في مرحلة المراجعة المالية النهائية.');
-            if ((string)($_POST['final_accounting_confirmation'] ?? '') !== '1') throw new RuntimeException('يجب تأكيد المراجعة النهائية للإفراج المحاسبي.');
-            dbExecute('START TRANSACTION');
-            try {
-                $locked=dbFetchOne("SELECT * FROM project_approval WHERE project_id=? FOR UPDATE",[$id]);
-                if (!$locked || $locked['approval_status']!=='fm_approved') throw new RuntimeException('تغيرت حالة المشروع قبل إتمام الاعتماد المحاسبي النهائي.');
-                if (!empty($locked['fm_accounting_approved_at'])) throw new RuntimeException('تم اعتماد الإفراج المحاسبي النهائي مسبقاً.');
-
-                $budget=dbFetchOne("SELECT b.id,COALESCE(SUM(bl.estimated_amount),0) total FROM project_budgets b LEFT JOIN project_budget_lines bl ON bl.budget_id=b.id WHERE b.project_id=? AND b.status='approved' GROUP BY b.id ORDER BY b.version_no DESC LIMIT 1",[$id]);
-                $budgetTotal=(float)($budget['total']??0);
-                $financialRequirement = akp_project_financial_requirement($id, $budgetTotal)['total_financial_requirement'];
-                $fundingTotal=(float)(dbFetchOne("SELECT COALESCE(SUM(amount),0) n FROM project_funding_allocations WHERE project_id=? AND status='draft'",[$id])['n']??0);
-                if ($budgetTotal<=0) throw new RuntimeException('لا يمكن اعتماد الإفراج قبل وجود ميزانية معتمدة.');
-                if (abs($fundingTotal-$financialRequirement)>0.01) throw new RuntimeException('يجب أن يساوي إجمالي تخصيص التمويل إجمالي المتطلبات المالية للمشروع قبل الإفراج المحاسبي النهائي.');
-
-                akp_post_project_funding_release($id);
-                akp_sync_project_payment_evidence_after_release($id);
-                dbExecute("UPDATE project_approval SET fm_accounting_approved_by=?,fm_accounting_approved_at=NOW() WHERE project_id=?", [akp_user_id(),$id]);
-                dbExecute('COMMIT');
-            } catch (Throwable $e) {
-                dbExecute('ROLLBACK');
-                throw $e;
-            }
-
-            akp_audit('FM_FINAL_ACCOUNTING_APPROVE','project_approval',$id,['approval_status'=>'fm_approved'],['approval_status'=>'fm_approved','accounting_release_completed'=>true]);
-            try {
-                $gmUsers = dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id=r.id WHERE r.code IN ('general_manager','vice_general_manager') AND u.is_active=1");
+                $gmUsers = dbFetchAll(
+                    "SELECT u.id
+                     FROM users u
+                     JOIN roles r ON u.role_id = r.id
+                     WHERE r.code IN ('general_manager', 'vice_general_manager')
+                       AND u.is_active = 1"
+                );
                 foreach ($gmUsers as $gmUser) {
                     ak_transaction_review_notify_event(
                         (int)$gmUser['id'],
                         'مشروع بانتظار الاعتماد النهائي',
-                        'المشروع «'.(string)($project['name']??'').'» ('.(string)($project['project_code']??'').') أكمل المدير المالي مراجعته واعتماده المحاسبي النهائي، والمشروع بانتظار اعتماد المدير العام.',
-                        APP_URL.'modules/projects/view.php?id='.$id,
+                        'المشروع «' . (string)($project['name'] ?? '') . '» (' . (string)($project['project_code'] ?? '') . ') تم اعتماده مالياً وبانتظار اعتماد المدير العام.',
+                        APP_URL . 'modules/projects/view.php?id=' . $id,
                         $id,
-                        'project_fm_final_accounting_approval'
+                        'project_fm_approval'
                     );
                 }
-            } catch (Throwable $notificationError) {}
-
-            // The Projects Manager is notified only after FM final accounting confirmation.
-            // GM final approval must not generate a second PM notification.
-            try {
-                $projectManagers = dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id=r.id WHERE r.code='projects_manager' AND u.is_active=1");
-                foreach ($projectManagers as $projectManager) {
-                    ak_transaction_review_notify_event(
-                        (int)$projectManager['id'],
-                        'تم اعتماد المشروع مالياً وإكمال الإفراج المحاسبي',
-                        'المشروع «'.(string)($project['name']??'').'» ('.(string)($project['project_code']??'').') أكمل المدير المالي المراجعة المالية النهائية والإفراج المحاسبي، وأصبح بانتظار الاعتماد النهائي من المدير العام.',
-                        APP_URL.'modules/projects/view.php?id='.$id,
-                        $id,
-                        'project_fm_final_accounting_approval_pm'
-                    );
-                }
-            } catch (Throwable $notificationError) {}
-            flash('success','تم الاعتماد المحاسبي النهائي وإبلاغ المدير العام ومدير المشاريع.');
+            } catch (Throwable $notificationError) {
+                // Notification delivery must never roll back the completed FM approval.
+            }
+            flash('success','تم اعتماد المشروع مالياً. المشروع الآن بانتظار اعتماد المدير العام.');
 
         } elseif ($action === 'fm_reject_project') {
             $reason=fm_post('rejection_reason');
@@ -352,23 +308,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             dbExecute("UPDATE project_approval SET approval_status='rejected',fm_rejection_reason=?,fm_reviewed_by=?,fm_reviewed_at=NOW() WHERE project_id=?",[$reason,akp_user_id(),$id]);
             akp_audit('FM_REJECT_PROJECT','project_approval',$id,['approval_status'=>'submitted'],['approval_status'=>'rejected','reason'=>$reason]);
 
-            // FM rejection is the terminal rejection notification to the Projects Manager.
-            // GM/VGM rejection is handled separately and only notifies FM for re-review.
-            try {
-                $projectManagers = dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id=r.id WHERE r.code='projects_manager' AND u.is_active=1");
-                foreach ($projectManagers as $projectManager) {
-                    ak_transaction_review_notify_event(
-                        (int)$projectManager['id'],
-                        'تم رفض المشروع مالياً',
-                        'المشروع «'.(string)($project['name']??'').'» ('.(string)($project['project_code']??'').') تم رفضه من المدير المالي ويحتاج إلى التعديل وإعادة الإرسال أو إغلاق الطلب. السبب: '.$reason,
-                        APP_URL.'modules/projects/view.php?id='.$id,
-                        $id,
-                        'project_fm_rejection'
-                    );
-                }
-            } catch (Throwable $notificationError) {}
 
-            flash('success','تم رفض المشروع مالياً وإبلاغ مدير المشاريع.');
+            flash('success','تم رفض المشروع مالياً وإعادته لمدير المشاريع.');
         }
     } catch (Throwable $e) {
         if ($asyncPaymentAction || $asyncFundingAction) fm_json_response(false,$e->getMessage(),[],422);
@@ -483,37 +424,14 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         <?php else: ?><div class="alert alert-warning">تظهر أدوات تخصيص التمويل بعد اعتماد الميزانية.</div><?php endif; ?>
     </div></div>
 
-    <?php if($approval['approval_status']==='submitted' && $approvedExists): ?><div class="card mb-4 border-primary"><div class="card-body"><h5>الاعتماد المالي المبدئي للمشروع</h5><div class="alert alert-light border mb-3"><div class="d-flex justify-content-between"><span class="text-muted">الميزانية المعتمدة</span><strong><?php echo number_format((float)($activeBudget['line_total'] ?? 0),2); ?></strong></div><div class="d-flex justify-content-between mt-2"><span class="text-muted">الرسوم الحكومية</span><strong><?php echo number_format((float)$financialSummary['government_fees'],2); ?></strong></div><hr class="my-2"><div class="d-flex justify-content-between"><span class="fw-semibold">إجمالي المتطلبات المالية</span><strong class="fs-4"><?php echo number_format((float)$financialSummary['total_financial_requirement'],2); ?> <?php echo e($project['currency_code']?:'SDG'); ?></strong></div></div><p class="text-muted">هذه الخطوة تعتمد المراجعة المالية المبدئية فقط. لا يتم إنشاء قيد أو خصم من حسابات المؤسسة ولا يتم إخطار المدير العام قبل الاعتماد المحاسبي النهائي.</p><div class="d-flex gap-2"><form method="post"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_approve_project"><button class="btn btn-success">اعتماد مالي مبدئي</button></form><button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#rejectProject">رفض المشروع مالياً</button></div></div></div><?php endif; ?>
-
-    <?php if($approval['approval_status']==='fm_approved' && !$closed): ?>
-    <div class="card mb-4 border-warning">
-        <div class="card-header bg-warning text-dark"><i class="fas fa-file-signature me-2"></i>المراجعة المالية النهائية والإفراج المحاسبي</div>
-        <div class="card-body">
-            <div class="alert alert-light border">
-                <div class="d-flex justify-content-between"><span class="text-muted">الميزانية المعتمدة</span><strong><?php echo number_format((float)($financialSummary['approved_budget'] ?? 0),2); ?> <?php echo e($project['currency_code']?:'SDG'); ?></strong></div>
-                <div class="d-flex justify-content-between mt-2"><span class="text-muted">الرسوم الحكومية</span><strong><?php echo number_format((float)$financialSummary['government_fees'],2); ?> <?php echo e($project['currency_code']?:'SDG'); ?></strong></div>
-                <div class="d-flex justify-content-between mt-2"><span class="fw-semibold">إجمالي الإفراج</span><strong><?php echo number_format((float)$financialSummary['total_financial_requirement'],2); ?> <?php echo e($project['currency_code']?:'SDG'); ?></strong></div>
-            </div>
-            <div class="table-responsive mb-3"><table class="table table-sm align-middle"><thead><tr><th>حساب المصدر</th><th>المبلغ</th><th>المعالجة المحاسبية</th></tr></thead><tbody>
-            <?php foreach($fundings as $f): ?><tr><td><?php echo e(($f['source_account_code']??$f['source_type']).' · '.($f['source_account_name']??'')); ?></td><td><?php echo number_format((float)$f['amount'],2); ?></td><td>مدين: حساب مصروف المشروع — دائن: حساب المصدر</td></tr><?php endforeach; ?>
-            </tbody></table></div>
-            <div class="alert alert-warning">بعد الضغط على الاعتماد المحاسبي النهائي سيتم إنشاء الإفراجات المحاسبية، تحويل التخصيصات إلى مرحلة الترحيل، إنشاء إثباتات الدفع، ثم إرسال المشروع للمدير العام. لا توجد خطوة مالية أخرى بين هذه العملية واعتماد المدير العام.</div>
-            <form method="post">
-                <?php echo csrf_field(); ?>
-                <input type="hidden" name="action" value="fm_final_accounting_approve">
-                <div class="form-check mb-3"><input class="form-check-input" type="checkbox" value="1" id="finalAccountingConfirmation" name="final_accounting_confirmation" required><label class="form-check-label" for="finalAccountingConfirmation">أؤكد أنني راجعت إجمالي التمويل وحسابات المصدر والقيد المحاسبي المقترح وأوافق على الإفراج المحاسبي النهائي.</label></div>
-                <button class="btn btn-success" onclick="return confirm('هل تريد تنفيذ الاعتماد المحاسبي النهائي وإرسال المشروع للمدير العام؟')"><i class="fas fa-file-signature me-1"></i>الاعتماد المحاسبي النهائي وإرسال المشروع للمدير العام</button>
-            </form>
-        </div>
-    </div>
-    <?php endif; ?>
+    <?php if($approval['approval_status']==='submitted' && $approvedExists): ?><div class="card mb-4 border-primary"><div class="card-body"><h5>الاعتماد المالي للمشروع</h5><div class="alert alert-light border mb-3"><div class="d-flex justify-content-between"><span class="text-muted">الميزانية المعتمدة</span><strong><?php echo number_format((float)($activeBudget['line_total'] ?? 0),2); ?></strong></div><div class="d-flex justify-content-between mt-2"><span class="text-muted">الرسوم الحكومية</span><strong><?php echo number_format((float)$financialSummary['government_fees'],2); ?></strong></div><hr class="my-2"><div class="d-flex justify-content-between"><span class="fw-semibold">إجمالي المتطلبات المالية</span><strong class="fs-4"><?php echo number_format((float)$financialSummary['total_financial_requirement'],2); ?> <?php echo e($project['currency_code']?:'SDG'); ?></strong></div></div><p class="text-muted">يجب أن يساوي إجمالي تخصيص التمويل إجمالي المتطلبات المالية (الميزانية المعتمدة + الرسوم الحكومية).</p><div class="d-flex gap-2"><form method="post"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_approve_project"><button class="btn btn-success">اعتماد المشروع مالياً</button></form><button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#rejectProject">رفض المشروع مالياً</button></div></div></div><?php endif; ?>
 
     <?php if ($approval['approval_status']==='approved'): ?>
     <div class="card mb-4 border-success">
         <div class="card-header bg-success text-white"><i class="fas fa-money-check-dollar me-2"></i>صرف وتمييز مستندات التمويل</div>
         <div class="card-body">
             <div class="alert alert-light border mb-3">تظهر هذه الخيارات فقط بعد الاعتماد النهائي من المدير العام. لا تنشئ هذه الإجراءات قيداً محاسبياً جديداً؛ القيد الذي أنشأه الاعتماد النهائي هو حدث خروج الأموال، وهذه الخطوة توثق سند الصرف أو إيصال التحويل.</div>
-    <?php if ($paymentEvidence): ?>
+            <?php if ($paymentEvidence): ?>
                 <?php foreach ($paymentEvidence as $payment): ?>
                     <?php $paymentMethodLabels=['cash'=>'نقدي','bank_transfer'=>'تحويل بنكي','e_wallet'=>'محفظة إلكترونية']; ?>
                     <?php $finalEvidenceConfirmed = fm_payment_evidence_finalized($id); ?>
@@ -833,17 +751,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                         if (reference && result.reference !== undefined) reference.textContent = result.reference || '—';
                     }
                 } catch (error) {
-                    if (window.AKNotify && typeof window.AKNotify.notificationToast === 'function') {
-                        window.AKNotify.notificationToast('error', 'تعذر تنفيذ العملية', error.message || 'تعذر تنفيذ العملية.');
-                    } else {
-                        const fallback = document.createElement('div');
-                        fallback.className = 'alert alert-danger alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3 shadow';
-                        fallback.style.zIndex = '1080';
-                        fallback.innerHTML = '<strong>تعذر تنفيذ العملية</strong><div class="small mt-1"></div><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="إغلاق"></button>';
-                        fallback.querySelector('.small').textContent = error.message || 'تعذر تنفيذ العملية.';
-                        document.body.appendChild(fallback);
-                        window.setTimeout(function () { if (fallback.parentNode) fallback.remove(); }, 8000);
-                    }
+                    alert(error.message || 'تعذر تنفيذ العملية.');
                 } finally {
                     if (submit) submit.disabled = false;
                 }
