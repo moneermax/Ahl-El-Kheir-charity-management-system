@@ -1381,10 +1381,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 db()->commit();
             }
 
+            $_SESSION['project_toast_success'] = $id
+                ? 'تم تحديث البيانات الأساسية للمشروع.'
+                : 'تم إنشاء المشروع مع ميزانيته الأولية المتطابقة مع الميزانية التقديرية. يمكنك الآن إرساله للاعتماد أو إضافة تفاصيل أخرى.';
+
             header(
                 'Location: ' .
                 APP_URL .
-                'modules/projects/view.php?id=' .
+                'modules/projects/form.php?id=' .
                 $projectId
             );
 
@@ -1410,11 +1414,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 |--------------------------------------------------------------------------
 */
 
+$projectToastSuccess = $_SESSION['project_toast_success'] ?? null;
+unset($_SESSION['project_toast_success']);
+
 include dirname(__DIR__, 2) . '/includes/header.php';
 ?>
 <link rel="stylesheet" href="<?php echo e(APP_URL . 'assets/css/projects-ui.css'); ?>">
 
 <?php include dirname(__DIR__, 2) . '/includes/alerts.php'; ?>
+
+<?php if ($projectToastSuccess): ?>
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index:1080; direction:rtl;" aria-live="polite" aria-atomic="true">
+    <div id="projectFormSuccessToast" class="toast text-bg-success border-0" role="status" data-bs-delay="4500" data-bs-autohide="true">
+        <div class="d-flex align-items-center">
+            <div class="toast-body fw-semibold">
+                <i class="fas fa-check-circle me-2" aria-hidden="true"></i><?php echo e($projectToastSuccess); ?>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2" data-bs-dismiss="toast" aria-label="إغلاق"></button>
+        </div>
+    </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var toastElement = document.getElementById('projectFormSuccessToast');
+    if (toastElement && window.bootstrap && bootstrap.Toast) {
+        bootstrap.Toast.getOrCreateInstance(toastElement).show();
+    }
+});
+</script>
+<?php endif; ?>
 
 
 <?php if ($errors): ?>
