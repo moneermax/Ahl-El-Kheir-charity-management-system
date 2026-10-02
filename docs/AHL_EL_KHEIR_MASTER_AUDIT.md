@@ -1990,3 +1990,15 @@ Before any new runtime fixture/test, the complete current Projects user-facing p
 This is a source/schema consistency gate, not a runtime certification. No new project fixture has been created and no XAMPP/MariaDB/browser test has been claimed. The existing controlled fixtures remain untouched.
 
 **Current Phase 5 status: IMPLEMENTED / DEEPLY SOURCE-AUDITED / PRE-RUNTIME WORKFLOW CONSISTENCY PASS / RUNTIME VERIFICATION STILL REQUIRED.**
+
+
+## 2026-10-02 — Phase 5 PRJ-0015 runtime fixture
+
+A fresh controlled project was created through the normal PM workflow: **PRJ-0015 — PH5 Full Accounting Reconciliation Test**. Approval is `draft`; lifecycle/display is `planned`; Project Supervisor is `project supervisor`; budget is `300,000.00 SDG` across 3 lines. Financial requirements, approved funding, and posted expenses were `0.00` at this point.
+
+### Open runtime findings
+
+1. **Numeric input mouse-wheel mutation:** scrolling over a numeric budget input changes its value; `299999.98` was observed. Treat this as a system-wide numeric-input defect and inspect shared/global handling before applying a project-only workaround.
+2. **Save-flow reliability:** the user had to refresh the page and click Save twice before the expected project result appeared. The project eventually saved, but this interaction is not considered cleanly verified and requires source inspection.
+
+The Phase 5 workflow remains runtime-verification-required. Do not delete/recreate PRJ-0015 merely to bypass these findings, and do not alter historical accounting journals. Resume at PM submission only after the input/save findings are addressed or explicitly verified as a separate boundary.
