@@ -1897,6 +1897,7 @@ foreach ($budgetDisplayLines as $index => $line):
             <div class="project-bottom-actions mt-4">
 
                 <button
+                    type="submit"
                     class="btn btn-primary"
                     id="save-project-button"
                 >
@@ -2706,6 +2707,18 @@ document
                 alert(
                     'لا يمكن حفظ المشروع. يجب أن يساوي إجمالي بنود الميزانية الإجمالي المطلوب (الميزانية التقديرية + الرسوم الحكومية) تماماً.'
                 );
+                return;
+            }
+
+            /*
+             * The server uses PRG after a successful save. Prevent repeated
+             * clicks while that request is being submitted, but only after
+             * the client-side validation above has passed.
+             */
+            const saveButton = document.getElementById('save-project-button');
+            if (saveButton) {
+                saveButton.disabled = true;
+                saveButton.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>جارٍ الحفظ...';
             }
         }
     );
