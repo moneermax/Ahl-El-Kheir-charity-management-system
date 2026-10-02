@@ -215,19 +215,9 @@ function ak_register_project_approval_notifications(): void {
                     $link
                 );
 
-                // The PM also needs confirmation because the project may now
-                // proceed to actual execution after payment release.
-                if ($submittedBy > 0) {
-                    ak_transaction_review_notify_event(
-                        $submittedBy,
-                        'تم اعتماد المشروع نهائياً',
-                        $label . ' تم اعتماده نهائياً ويمكن الانتقال إلى إجراءات التنفيذ بعد استكمال الصرف.',
-                        $link,
-                        $projectId,
-                        'project_gm_approval_pm'
-                    );
-                }
-                return;
+                // Do not notify the Projects Manager at GM approval.
+                // PM/PS notification is sent only after FM final confirmation
+                // of the funding/payment documentation.
             }
 
             if ($action === 'reject_project' && $approval['approval_status'] === 'rejected') {
