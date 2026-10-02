@@ -226,9 +226,17 @@ $reason = akp_post_value('return_reason');
 if ($reason === '') throw new RuntimeException('سبب إعادة المشروع للمراجعة المالية مطلوب.');
 $approvalCheck = dbFetchOne('SELECT approval_status FROM project_approval WHERE project_id = ?', [$id]);
 if (!$approvalCheck || $approvalCheck['approval_status'] !== 'fm_approved') throw new RuntimeException('المشروع ليس في حالة اعتماد مالي تسمح بإعادته للمراجعة.');
+dbExecute('START TRANSACTION');
+try {
+akp_reverse_project_funding_release($id, $reason);
 dbExecute("UPDATE project_approval SET approval_status = 'submitted' WHERE project_id = ?", [$id]);
-akp_audit('FM_RETURN_TO_REVIEW', 'project_approval', $id, ['approval_status' => 'fm_approved'], ['approval_status' => 'submitted', 'reason' => $reason]);
-$_SESSION['project_toast_success'] = 'تمت إعادة المشروع إلى مرحلة المراجعة المالية لاستكمال تخصيص التمويل.';
+dbExecute('COMMIT');
+} catch (Throwable $e) {
+dbExecute('ROLLBACK');
+throw $e;
+}
+akp_audit('FM_RETURN_TO_REVIEW', 'project_approval', $id, ['approval_status' => 'fm_approved'], ['approval_status' => 'submitted', 'reason' => $reason, 'funding_release_reversed' => true]);
+$_SESSION['project_toast_success'] = 'تمت إعادة المشروع إلى مرحلة المراجعة المالية وعكس الإفراج المالي غير المنفذ.';
 } elseif ($action === 'fm_reject_project') {
 if ($role !== 'financial_manager') throw new RuntimeException('رفض المشروع مالياً محصور بالمدير المالي.');
 $reason = akp_post_value('rejection_reason');
@@ -290,7 +298,7 @@ dbExecute('UPDATE project_lifecycle SET final_budget_amount = ? WHERE project_id
 // never create a second accounting release.
 dbExecute('COMMIT');
 akp_audit('GM_APPROVE_PROJECT', 'project_approval', $id, ['approval_status' => 'fm_approved'], ['approval_status' => 'approved']);
-$_SESSION['project_toast_success'] = 'تم اعتماد المشروع نهائياً. التمويل مخصص ومحجوز للمشروع، ولن يُخصم من السيولة الفعلية إلا عند توثيق كل دفعة فعلية على حدة.';
+$_SESSION['project_toast_success'] = 'تم اعتماد المشروع نهائياً. التمويل سبق الإفراج عنه محاسبياً عند الاعتماد المالي، ويمكن الآن الانتقال إلى التنفيذ تحت سيطرة مشرف المشروع.';
 } catch (Throwable $e) {
 dbExecute('ROLLBACK');
 throw $e;
