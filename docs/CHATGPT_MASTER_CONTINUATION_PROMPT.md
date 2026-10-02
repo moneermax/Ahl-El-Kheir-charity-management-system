@@ -1828,3 +1828,55 @@ Before any new runtime fixture/test, the complete current Projects user-facing p
 This is a source/schema consistency gate, not a runtime certification. No new project fixture has been created and no XAMPP/MariaDB/browser test has been claimed. The existing controlled fixtures remain untouched.
 
 **Current Phase 5 status: IMPLEMENTED / DEEPLY SOURCE-AUDITED / PRE-RUNTIME WORKFLOW CONSISTENCY PASS / RUNTIME VERIFICATION STILL REQUIRED.**
+
+
+# LATEST CONTINUATION PROMPT — 2026-10-02 — Projects Phase 5 PRJ-0015 runtime checkpoint
+
+Continue the existing Ahl El Kheir Charity Management System. Do not rebuild or start a new project. Work directly on `main`; do not create branches.
+
+## Current fixture
+**PRJ-0015 — PH5 Full Accounting Reconciliation Test**
+- approval: `draft`
+- lifecycle/display: `planned`
+- Project Supervisor: `project supervisor`
+- budget: `300,000.00 SDG` across 3 lines
+- financial requirements: `0.00`
+- approved funding: `0.00`
+- posted expenses: `0.00`
+
+Do not delete or recreate PRJ-0015 merely to bypass a finding.
+
+## Immediate findings to investigate
+
+### 1. Numeric-input mouse-wheel behavior
+When entering a budget amount, mouse-wheel scrolling over the numeric field changes the amount; `299999.98` was observed. Remove this behavior **system-wide wherever it exists**, preferably by correcting the shared/global numeric-input handling rather than adding a project-only workaround. Preserve normal typing, validation, decimal handling, keyboard behavior, and mobile behavior.
+
+### 2. Save-flow reliability
+The project creation issue was eventually resolved, but the user had to refresh the page and click Save twice before the expected result appeared. PRJ-0015 was eventually created, so do not describe this as a total creation failure. Inspect the actual form submission, redirect, flash-message, and duplicate-submit flow; fix only the verified cause.
+
+## Required next sequence
+1. Inspect current `main` and the four master docs.
+2. Inspect the actual source responsible for numeric-input wheel behavior and the PRJ-0015 save flow.
+3. Make the narrowest verified fixes.
+4. Runtime-test locally in XAMPP/MariaDB.
+5. Update all four master docs with the exact result and commit SHA.
+6. Resume at PM submission: `draft` → `submitted`.
+7. Verify PM submission works, FM sees the project, and **no accounting release** is created by submission.
+8. Continue the established Phase 5 sequence only after that gate passes.
+
+## Established accounting sequence
+FM approval → exactly one release per allocation → GM approval with no additional release → GM rejection reverses release and returns atomically to FM review → FM re-approval creates the next current release → GM approval again → FM correction before final confirmation reverses current release and invalidates GM approval → FM re-approval → GM approval → FM final confirmation with no new accounting and PM handoff only → PM launch `planned` → `active` and PS notification only after launch.
+
+Expected accounting history remains: `+300,000 → -300,000 → +300,000 → -300,000 → +300,000`; final net funding release `300,000`.
+
+## Working rules
+- Runtime behavior is the source of truth; do not claim verification without actually testing.
+- Do not use guarantees such as “100% fixed”.
+- Inspect source/schema/docs before changing anything.
+- No invented schema; migrations only for DB structure; never runtime CREATE/ALTER.
+- No triggers, views, stored procedures, functions, or events.
+- Procedural PHP only.
+- No destructive Git commands (`reset --hard`, `clean`, `restore`, force-push, etc.).
+- Do not disturb completed Salary Advance work or unrelated modules.
+- Update the four master docs after each meaningful milestone and record the exact commit SHA.
+- Do not mark Phase 5 closed until the complete local runtime sequence passes.
