@@ -268,7 +268,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } catch(Throwable $notificationError) {}
             $asyncSuccessMessage='تم تأكيد اكتمال مستندات التمويل وإبلاغ مدير المشاريع.';
         } elseif ($action === 'fm_return_to_review') {
-            if ($role !== 'financial_manager') throw new RuntimeException('إعادة المشروع للمراجعة المالية متاحة للمدير المالي فقط.');
+            if (akp_role() !== 'financial_manager') throw new RuntimeException('إعادة المشروع للمراجعة المالية متاحة للمدير المالي فقط.');
             $reason=fm_post('return_reason');
             if($reason==='') throw new RuntimeException('سبب إعادة المشروع للمراجعة المالية مطلوب.');
             if((string)$approval['approval_status']!=='fm_approved') throw new RuntimeException('المشروع ليس في حالة اعتماد مالي تسمح بإعادته للمراجعة.');
@@ -277,7 +277,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             akp_audit('FM_RETURN_TO_REVIEW','project_approval',$id,['approval_status'=>'fm_approved'],['approval_status'=>'submitted','reason'=>$reason,'funding_release_reversed'=>true]);
             flash('success','تمت إعادة المشروع للمراجعة المالية وعكس الإفراج المالي غير المنفذ.');
         } elseif ($action === 'fm_return_project_funding') {
-            if ($role !== 'financial_manager') throw new RuntimeException('تسوية الرصيد المتبقي محصورة بالمدير المالي.');
+            if (akp_role() !== 'financial_manager') throw new RuntimeException('تسوية الرصيد المتبقي محصورة بالمدير المالي.');
             $allocationId=(int)($_POST['allocation_id']??0);
             $amount=(float)($_POST['return_amount']??0);
             $returnDate=fm_post('return_date',date('Y-m-d'));
