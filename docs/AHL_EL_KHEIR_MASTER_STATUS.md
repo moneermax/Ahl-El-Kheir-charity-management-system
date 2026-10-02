@@ -1552,3 +1552,7 @@ Current status: IMPLEMENTED / STATICALLY RE-AUDITED / RUNTIME VERIFICATION REQUI
 No historical project journals have been modified. No historical Phase 5 fixture has been reused. Do not mark Phase 5 closed until the fresh controlled runtime sequence passes.
 
 Latest main commit: 52a930f697198dbe8f051bf3415e014a929e1f1b.
+
+
+### Final static consistency follow-up — 2026-10-02
+The shared project status mutation path was also aligned with the portfolio: the legacy other_projects status mirror now maps lifecycle-only under_review to planned rather than completed. This prevents a mixed legacy/lifecycle status representation. Final code commit: f3cf39c5aafcee876db5be4436a1703ad6040097.
