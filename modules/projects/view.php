@@ -184,7 +184,11 @@ throw new RuntimeException('لا يمكن اعتماد المشروع نهائي
 }
 try {
 dbExecute('START TRANSACTION');
-dbExecute("UPDATE project_approval SET approval_status = 'approved', approved_by = ?, approved_at = NOW() WHERE project_id = ?", [akp_user_id(), $id]);
+$lockedApproval = dbFetchOne('SELECT approval_status FROM project_approval WHERE project_id = ? FOR UPDATE', [$id]);
+if (!$lockedApproval || $lockedApproval['approval_status'] !== 'fm_approved') {
+    throw new RuntimeException('تغيرت حالة اعتماد المشروع قبل إتمام الاعتماد النهائي.');
+}
+dbExecute("UPDATE project_approval SET approval_status = 'approved', approved_by = ?, approved_at = NOW() WHERE project_id = ? AND approval_status = 'fm_approved'", [akp_user_id(), $id]);
 /*
 * Final approval does not launch the project. It returns the
 * fully approved project to the Projects Manager for review.
@@ -217,8 +221,12 @@ if (!$approvalCheck || $approvalCheck['approval_status'] !== 'fm_approved') thro
 // accounting history and re-opens the existing funding allocations as draft.
 dbExecute('START TRANSACTION');
 try {
+    $lockedApproval = dbFetchOne('SELECT approval_status FROM project_approval WHERE project_id = ? FOR UPDATE', [$id]);
+    if (!$lockedApproval || $lockedApproval['approval_status'] !== 'fm_approved') {
+        throw new RuntimeException('تغيرت حالة اعتماد المشروع قبل إتمام الرفض.');
+    }
     akp_reverse_project_funding_release($id, 'رفض المدير العام: ' . $reason, false);
-    dbExecute("UPDATE project_approval SET approval_status='submitted', rejection_reason=?, approved_by=NULL, approved_at=NULL WHERE project_id=?", [$reason, $id]);
+    dbExecute("UPDATE project_approval SET approval_status='submitted', rejection_reason=?, approved_by=NULL, approved_at=NULL WHERE project_id=? AND approval_status='fm_approved'", [$reason, $id]);
     dbExecute('COMMIT');
 } catch (Throwable $e) {
     dbExecute('ROLLBACK');
