@@ -102,6 +102,72 @@ if (!function_exists('akp_post_project_funding_release')) {
     }
 }
 
+if (!function_exists('akp_reverse_project_funding_release')) {
+    function akp_reverse_project_funding_release(int $projectId, string $reason): void
+    {
+        if (akp_role() !== 'financial_manager') throw new RuntimeException('عكس الإفراج المالي محصور بالمدير المالي.');
+        $postedExpenses = dbFetchOne("SELECT COALESCE(SUM(amount),0) AS total FROM project_expenses WHERE project_id=? AND status='posted'", [$projectId]);
+        if ((float)($postedExpenses['total'] ?? 0) > 0.009) throw new RuntimeException('لا يمكن عكس الإفراج المالي بعد تسجيل مصروفات تنفيذ فعلية للمشروع.');
+        $documented = dbFetchOne("SELECT COUNT(*) AS n FROM project_payment_evidence WHERE project_id=? AND status='documented'", [$projectId]);
+        if ((int)($documented['n'] ?? 0) > 0) throw new RuntimeException('لا يمكن عكس الإفراج المالي بعد توثيق دفعات فعلية للمشروع.');
+
+        dbExecute('START TRANSACTION');
+        try {
+            $rows = dbFetchAll(
+                "SELECT f.id AS allocation_id, je.id AS journal_id
+                 FROM project_funding_allocations f
+                 JOIN journal_entries je
+                   ON je.reference_type='project_funding_release'
+                  AND je.reference_id=f.id
+                  AND je.status='posted'
+                  AND je.voided_at IS NULL
+                 WHERE f.project_id=? AND f.status='posted'
+                 ORDER BY f.id
+                 FOR UPDATE",
+                [$projectId]
+            );
+            foreach ($rows as $row) {
+                $lines = dbFetchAll('SELECT account_id, debit, credit, description FROM journal_lines WHERE entry_id=? ORDER BY id', [(int)$row['journal_id']]);
+                if (count($lines) !== 2) throw new RuntimeException('قيد الإفراج المالي غير صالح للعكس.');
+                $totalDebit = 0.0; $totalCredit = 0.0;
+                foreach ($lines as $line) {
+                    $debit = round((float)$line['debit'], 2); $credit = round((float)$line['credit'], 2);
+                    if ($debit < 0 || $credit < 0 || ($debit > 0 && $credit > 0)) throw new RuntimeException('سطر قيد الإفراج المالي غير صالح.');
+                    $totalDebit += $debit; $totalCredit += $credit;
+                }
+                if (round($totalDebit,2) !== round($totalCredit,2) || $totalDebit <= 0) throw new RuntimeException('قيد الإفراج المالي غير متوازن.');
+
+                $changed = dbExecute(
+                    "UPDATE journal_entries SET status='voided', voided_at=NOW(), voided_by=?, void_reason=? WHERE id=? AND status='posted' AND voided_at IS NULL",
+                    [akp_user_id(), $reason, (int)$row['journal_id']]
+                );
+                if ($changed !== 1) throw new RuntimeException('تعذر إبطال قيد الإفراج المالي.');
+
+                $entryCode = akp_project_journal_code('JE-PRJ-REL-REV', $projectId, (int)$row['allocation_id']);
+                dbExecute(
+                    "INSERT INTO journal_entries (entry_code, entry_date, description, reference_type, reference_id, status, created_by)
+                     SELECT ?, entry_date, ?, 'project_funding_release_reversal', ?, 'posted', ?
+                     FROM journal_entries WHERE id=?",
+                    [$entryCode, 'عكس إفراج تمويل المشروع: '.$reason, (int)$row['allocation_id'], akp_user_id(), (int)$row['journal_id']]
+                );
+                $reversalId = (int)dbLastInsertId();
+                foreach ($lines as $line) {
+                    dbExecute(
+                        'INSERT INTO journal_lines (entry_id, account_id, debit, credit, description) VALUES (?,?,?,?,?)',
+                        [$reversalId, (int)$line['account_id'], round((float)$line['credit'],2), round((float)$line['debit'],2), 'عكس: '.(string)($line['description'] ?? '')]
+                    );
+                }
+                dbExecute("UPDATE project_funding_allocations SET status='draft', approved_by=NULL, posted_by=NULL, posted_at=NULL WHERE id=? AND project_id=? AND status='posted'", [(int)$row['allocation_id'], $projectId]);
+            }
+            dbExecute("DELETE FROM project_payment_evidence WHERE project_id=? AND status='pending'", [$projectId]);
+            dbExecute('COMMIT');
+        } catch (Throwable $e) {
+            dbExecute('ROLLBACK');
+            throw $e;
+        }
+    }
+}
+
 if (!function_exists('akp_sync_project_payment_evidence_after_release')) {
     function akp_sync_project_payment_evidence_after_release(int $projectId): void
     {
