@@ -1331,7 +1331,7 @@ $grandFinancialRequirement = (float)($financialSummary['total_financial_requirem
 <?php if ($role === 'financial_manager' && $approval['approval_status'] === 'submitted' && !$closed): ?>
 <div class="alert alert-info small mb-3">
 <i class="fas fa-eye me-1"></i>
-تم إعداد تخصيصات التمويل قبل الإرسال. دور المدير المالي هنا هو المراجعة المالية والاعتماد أو الرفض، دون تعديل بيانات التمويل.
+تخصيصات التمويل تُدار من الصفحة المالية المخصصة للمدير المالي أثناء المراجعة المالية. هذه الصفحة تعرضها للقراءة فقط ضمن ملخص المشروع.
 </div>
 <?php endif; ?>
 <div class="table-responsive">
