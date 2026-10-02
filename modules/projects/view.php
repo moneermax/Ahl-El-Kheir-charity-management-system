@@ -1320,62 +1320,6 @@ $grandFinancialRequirement = (float)($financialSummary['total_financial_requirem
 </table>
 </div>
 
-<div class="row g-2">
-<div class="col-md-6">
-<label class="form-label small">حساب المصدر</label>
-<select name="source_account_id" id="editFundingSourceAccount" class="form-select form-select-sm" required>
-<option value="">اختر حساب التمويل</option>
-<?php foreach (dbFetchAll("SELECT id, code, name_ar FROM accounts WHERE is_active = 1 AND code IN ('1100','1200','1300') ORDER BY code") as $account): ?>
-<option value="<?php echo (int)$account['id']; ?>"><?php echo e($account['code'] . ' · ' . $account['name_ar']); ?></option>
-<?php endforeach; ?>
-</select>
-</div>
-<div class="col-md-6">
-<label class="form-label small">المبلغ</label>
-<input type="number" step="0.01" min="0.01" name="funding_amount" id="editFundingAmount" class="form-control form-control-sm" required>
-</div>
-<div class="col-md-4">
-<label class="form-label small">تاريخ التخصيص</label>
-<input type="date" name="allocation_date" id="editFundingDate" class="form-control form-control-sm" required>
-</div>
-<div class="col-md-4">
-<label class="form-label small">المرجع</label>
-<input name="funding_reference" id="editFundingReference" class="form-control form-control-sm">
-</div>
-<div class="col-md-4">
-<label class="form-label small">الوصف</label>
-<input name="funding_description" id="editFundingDescription" class="form-control form-control-sm">
-</div>
-</div>
-</div>
-<div class="modal-footer">
-<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
-<button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i> حفظ التعديل</button>
-</div>
-</form>
-</div>
-</div>
-</div>
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-var modal = document.getElementById('editFundingModal');
-if (!modal) return;
-modal.addEventListener('show.bs.modal', function (event) {
-var button = event.relatedTarget;
-document.getElementById('editFundingId').value = button.getAttribute('data-id') || '';
-document.getElementById('editFundingSourceAccount').value = button.getAttribute('data-source-account') || '';
-document.getElementById('editFundingAmount').value = button.getAttribute('data-amount') || '';
-document.getElementById('editFundingDate').value = button.getAttribute('data-date') || '';
-document.getElementById('editFundingReference').value = button.getAttribute('data-reference') || '';
-document.getElementById('editFundingDescription').value = button.getAttribute('data-description') || '';
-});
-});
-</script>
-<?php endif; ?>
-</div>
-</div>
-</div>
-</div>
 <?php endif; ?>
 <?php if ($approval['approval_status'] === 'approved'): ?>
 <?php if ($role !== 'project_supervisor'): ?>
