@@ -1526,3 +1526,11 @@ During the final static pass, one authorization mismatch was found before runtim
 Correction commit: `4d672f3df3848421900b04a53706551dcd0ba4ac`.
 
 **Runtime verification has not started yet. Pull only after this checkpoint is complete.**
+
+
+## Phase 5 runtime-gate preflight repair — 2026-10-02
+- Corrected PM project visibility so the Projects Manager who created a project can still see that project during the pre-handoff approval workflow (draft, submitted, rejected, fm_approved). Final FM confirmation remains the normal PM handoff gate for general project visibility.
+- Corrected project creation PRG behavior: successful creation/update now returns to the same project form instead of redirecting through the project view, and displays the existing project-specific success toast.
+- Removed the project portfolio page's duplicate page-specific bottom back button; the shared global back-button installer now supplies the standard top and bottom pair.
+- Code commits: aa8b26532293c3a1933c0b64f6021205c0703c43, 4cfe3f9175da05cc57d91bde, 448a913dc254cdbc72e61f5bd4e767a32251cc20, dd49b8896109faaa1f1635405eff3911f065c7b6.
+- Runtime verification is still required after the user pulls these commits; the current newly created test project should be reused rather than recreated.
