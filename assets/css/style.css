@@ -76,42 +76,57 @@ a { text-decoration: none; }
 
 /* =========================================================
    Global form layout
-   - Normal labelled fields stay compact and aligned on desktop.
-   - Labels sit beside their controls instead of consuming a full line.
-   - Field width follows the expected data type rather than stretching
-     every control across the whole card.
-   - Mobile screens stack labels above controls for readability.
-   Only standard Bootstrap-style .mb-3/.mb-4 field groups with a
-   direct .form-label + control are affected; custom layouts remain intact.
+   Standardize labelled fields across both Bootstrap forms and custom forms.
+   The field wrapper itself becomes the layout boundary, so page-specific
+   label rules such as "display:block" cannot force labels above controls.
    ========================================================= */
 @media (min-width: 768px) {
   /*
-   * Bootstrap column forms are very common in this application, and a number
-   * of individual pages have their own "display:block" form rules.  Therefore
-   * the shared layout must win at the component boundary, not only rely on
-   * the page's default flex/block choice.
+   * Covers the two dominant patterns in the application:
+   *   <div class="col-*"><label>...</label><input ...></div>
+   *   <div><label class="label">...</label><input ...></div>
    *
-   * Grid is used here because some fields also have help/validation text after
-   * the control.  That text stays underneath the control instead of becoming
-   * a third item on the same line.
+   * Help/validation text remains below the control.
    */
-  .content form .row > [class*="col-"]:has(> .form-label + :is(.form-control, .form-select, textarea, input, select)) {
+  .content form :is(
+      [class*="col-"],
+      .grid > div,
+      .mb-3,
+      .mb-4
+  ):has(> label + :is(input, select, textarea, .form-control, .form-select)) {
     display: grid !important;
-    grid-template-columns: minmax(105px, 38%) minmax(0, 1fr);
+    grid-template-columns: minmax(115px, 36%) minmax(0, 1fr);
     column-gap: 12px;
     align-items: center;
   }
 
-  .content form .row > [class*="col-"]:has(> .form-label + :is(.form-control, .form-select, textarea, input, select)) > .form-label {
+  .content form :is(
+      [class*="col-"],
+      .grid > div,
+      .mb-3,
+      .mb-4
+  ):has(> label + :is(input, select, textarea, .form-control, .form-select)) > label {
     grid-column: 1;
-    margin: 0 !important;
+    display: block !important;
     width: auto !important;
-    max-width: none;
+    margin: 0 !important;
     line-height: 1.35;
     align-self: center;
+    white-space: normal;
   }
 
-  .content form .row > [class*="col-"]:has(> .form-label + :is(.form-control, .form-select, textarea, input, select)) > :is(.form-control, .form-select, textarea, input, select) {
+  .content form :is(
+      [class*="col-"],
+      .grid > div,
+      .mb-3,
+      .mb-4
+  ):has(> label + :is(input, select, textarea, .form-control, .form-select)) > :is(
+      input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+      select,
+      textarea,
+      .form-control,
+      .form-select
+  ) {
     grid-column: 2;
     min-width: 0;
     width: 100% !important;
@@ -119,114 +134,90 @@ a { text-decoration: none; }
     justify-self: stretch;
   }
 
-  /* Help, validation and explanatory text belongs under the control. */
-  .content form .row > [class*="col-"]:has(> .form-label + :is(.form-control, .form-select, textarea, input, select)) > :is(.project-help, .form-text, .invalid-feedback, .valid-feedback, .text-muted) {
+  /* Keep explanatory/help text beneath the actual field. */
+  .content form :is(
+      [class*="col-"],
+      .grid > div,
+      .mb-3,
+      .mb-4
+  ):has(> label + :is(input, select, textarea, .form-control, .form-select)) > :is(
+      small,
+      .note,
+      .form-text,
+      .project-help,
+      .invalid-feedback,
+      .valid-feedback,
+      .text-muted
+  ) {
     grid-column: 2;
     min-width: 0;
   }
 
-  /* Long text fields use the available width; compact data types do not. */
-  .content form .row > [class*="col-"] > input[type="date"] {
+  /* Width follows the data rather than the available card width. */
+  .content form :is([class*="col-"], .grid > div, .mb-3, .mb-4) > input[type="date"] {
     width: 13rem !important;
     max-width: 100%;
     justify-self: start;
   }
-  .content form .row > [class*="col-"] > input[type="time"] {
+  .content form :is([class*="col-"], .grid > div, .mb-3, .mb-4) > input[type="time"] {
     width: 11rem !important;
     max-width: 100%;
     justify-self: start;
   }
-  .content form .row > [class*="col-"] > input[type="number"] {
+  .content form :is([class*="col-"], .grid > div, .mb-3, .mb-4) > input[type="number"] {
     width: 17rem !important;
     max-width: 100%;
     justify-self: start;
   }
-  .content form .row > [class*="col-"] > input[type="tel"] {
+  .content form :is([class*="col-"], .grid > div, .mb-3, .mb-4) > input[type="tel"] {
     width: 19rem !important;
     max-width: 100%;
     justify-self: start;
   }
-  .content form .row > [class*="col-"] > input[type="email"] {
+  .content form :is([class*="col-"], .grid > div, .mb-3, .mb-4) > input[type="email"] {
     width: min(30rem, 100%) !important;
     max-width: 100%;
     justify-self: start;
   }
-  .content form .row > [class*="col-"] > input[type="text"] {
+  .content form :is([class*="col-"], .grid > div, .mb-3, .mb-4) > input[type="text"] {
     width: min(32rem, 100%) !important;
     max-width: 100%;
     justify-self: start;
   }
-  .content form .row > [class*="col-"] > .form-select {
+  .content form :is([class*="col-"], .grid > div, .mb-3, .mb-4) > select,
+  .content form :is([class*="col-"], .grid > div, .mb-3, .mb-4) > .form-select {
     width: min(30rem, 100%) !important;
     max-width: 100%;
     justify-self: start;
   }
-
-  /* A full-width field (for example a project description) needs both columns. */
-  .content form .row > [class*="col-"] > textarea.form-control {
-    grid-column: 2;
+  .content form :is([class*="col-"], .grid > div, .mb-3, .mb-4) > textarea {
     width: 100% !important;
-    max-width: 100%;
+    max-width: 42rem;
     min-height: 96px;
-  }
-}
-
-@media (min-width: 768px) {
-  .content form .mb-3:has(> .form-label + :is(.form-control, .form-select, textarea, input, select)),
-  .content form .mb-4:has(> .form-label + :is(.form-control, .form-select, textarea, input, select)) {
-    display: grid;
-    grid-template-columns: minmax(150px, 30%) minmax(0, 1fr);
-    column-gap: 14px;
-    align-items: center;
-  }
-
-  .content form .mb-3:has(> .form-label + :is(.form-control, .form-select, textarea, input, select)) > .form-label,
-  .content form .mb-4:has(> .form-label + :is(.form-control, .form-select, textarea, input, select)) > .form-label {
-    margin: 0;
-    align-self: center;
-    line-height: 1.35;
-  }
-
-  .content form .mb-3:has(> .form-label + :is(.form-control, .form-select, textarea, input, select)) > :is(.form-control, .form-select, textarea, input, select),
-  .content form .mb-4:has(> .form-label + :is(.form-control, .form-select, textarea, input, select)) > :is(.form-control, .form-select, textarea, input, select) {
     justify-self: start;
-    width: 100%;
   }
-
-  /* Compact controls for values with predictable short lengths. */
-  .content form .mb-3 > input[type="date"],
-  .content form .mb-4 > input[type="date"] { max-width: 13rem; }
-  .content form .mb-3 > input[type="time"],
-  .content form .mb-4 > input[type="time"] { max-width: 11rem; }
-  .content form .mb-3 > input[type="number"],
-  .content form .mb-4 > input[type="number"] { max-width: 17rem; }
-  .content form .mb-3 > input[type="tel"],
-  .content form .mb-4 > input[type="tel"] { max-width: 19rem; }
-  .content form .mb-3 > input[type="email"],
-  .content form .mb-4 > input[type="email"] { max-width: 30rem; }
-  .content form .mb-3 > input[type="text"],
-  .content form .mb-4 > input[type="text"] { max-width: 32rem; }
-  .content form .mb-3 > select.form-select,
-  .content form .mb-4 > select.form-select { max-width: 30rem; }
-  .content form .mb-3 > textarea.form-control,
-  .content form .mb-4 > textarea.form-control { max-width: 100%; min-height: 96px; }
 }
 
 @media (max-width: 767.98px) {
-  .content form .mb-3:has(> .form-label + :is(.form-control, .form-select, textarea, input, select)),
-  .content form .mb-4:has(> .form-label + :is(.form-control, .form-select, textarea, input, select)) {
-    display: block;
+  /* Mobile: labels above controls remain easier to use. */
+  .content form :is([class*="col-"], .grid > div, .mb-3, .mb-4):has(> label + :is(input, select, textarea, .form-control, .form-select)) {
+    display: block !important;
   }
 
-  .content form .mb-3:has(> .form-label + :is(.form-control, .form-select, textarea, input, select)) > .form-label,
-  .content form .mb-4:has(> .form-label + :is(.form-control, .form-select, textarea, input, select)) > .form-label {
-    display: block;
-    margin-bottom: 6px;
+  .content form :is([class*="col-"], .grid > div, .mb-3, .mb-4):has(> label + :is(input, select, textarea, .form-control, .form-select)) > label {
+    display: block !important;
+    width: auto !important;
+    margin-bottom: 6px !important;
   }
 
-  .content form .mb-3:has(> .form-label + :is(.form-control, .form-select, textarea, input, select)) > :is(.form-control, .form-select, textarea, input, select),
-  .content form .mb-4:has(> .form-label + :is(.form-control, .form-select, textarea, input, select)) > :is(.form-control, .form-select, textarea, input, select) {
-    width: 100%;
+  .content form :is([class*="col-"], .grid > div, .mb-3, .mb-4):has(> label + :is(input, select, textarea, .form-control, .form-select)) > :is(
+      input:not([type="hidden"]),
+      select,
+      textarea,
+      .form-control,
+      .form-select
+  ) {
+    width: 100% !important;
     max-width: none;
   }
 }
