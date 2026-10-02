@@ -289,7 +289,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 try{
                     $pmUsers=dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id=r.id WHERE r.code='projects_manager' AND u.is_active=1");
                     foreach($pmUsers as $pmUser){
-                        ak_transaction_review_notify_event((int)$pmUser['id'],'اكتملت تسوية تمويل المشروع','اكتملت تسوية الرصيد المالي المتبقي للمشروع «'.(string)($project['name']??'').'» ('.(string)($project['project_code']??').') ويمكن لمدير المشاريع استكمال إجراءات الإغلاق.',APP_URL.'modules/projects/view.php?id='.$id,$id,'project_funding_reconciliation_complete');
+                        ak_transaction_review_notify_event((int)$pmUser['id'],'اكتملت تسوية تمويل المشروع','اكتملت تسوية الرصيد المالي المتبقي للمشروع «'.(string)($project['name']??'').'» ('.(string)($project['project_code']??'').' ويمكن لمدير المشاريع استكمال إجراءات الإغلاق.',APP_URL.'modules/projects/view.php?id='.$id,$id,'project_funding_reconciliation_complete');
                     }
                 }catch(Throwable $notificationError){}
             }
@@ -515,7 +515,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     <div class="card mb-4 border-success">
         <div class="card-header bg-success text-white"><i class="fas fa-money-check-dollar me-2"></i>صرف وتمييز مستندات التمويل</div>
         <div class="card-body">
-            <div class="alert alert-light border mb-3">تظهر هذه الخيارات فقط بعد الاعتماد النهائي من المدير العام. لا تنشئ هذه الإجراءات قيداً محاسبياً جديداً؛ القيد الذي أنشأه الاعتماد النهائي هو حدث خروج الأموال، وهذه الخطوة توثق سند الصرف أو إيصال التحويل.</div>
+            <div class="alert alert-light border mb-3">تظهر هذه الخيارات بعد الاعتماد النهائي من المدير العام لتوثيق مستندات الدفع. الإفراج المحاسبي عن التمويل حدث بالفعل عند الاعتماد المالي من المدير المالي؛ هذه الخطوة توثق سند الصرف أو إيصال التحويل ولا تنشئ خروجاً مالياً ثانياً.</div>
             <?php if ($paymentEvidence): ?>
                 <?php foreach ($paymentEvidence as $payment): ?>
                     <?php $paymentMethodLabels=['cash'=>'نقدي','bank_transfer'=>'تحويل بنكي','e_wallet'=>'محفظة إلكترونية']; ?>
