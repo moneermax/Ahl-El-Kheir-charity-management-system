@@ -1644,3 +1644,35 @@ After the runtime gate, continue the remaining Projects Phase 5 reconciliation/c
 
 ## 2026-10-02 — Projects Phase 5 runtime gate: PS notification timing correction
 PRJ-0012 runtime evidence showed the assigned Project Supervisor was notified when FM performed final funding-document confirmation, while the project was still `planned` and before PM launch. This was corrected in `modules/projects/view_fm.php` by removing the PS notification from FM final confirmation. The existing `modules/projects/view.php` PM `launch_project` workflow already changes `planned → active` and then notifies the assigned PS. Code fix commit: `adecaf6c1e4b12017143d7a2f19bf8354ec1788d`. The corrected required sequence is: FM final confirmation → PM handoff/visibility → PM explicitly launches → PS execution notification. Runtime retest is required before Phase 5 closure.
+
+
+# LATEST CHECKPOINT — 2026-10-02 — Projects Phase 5 Workflow Repair
+
+Projects Phase 5 is currently IMPLEMENTED / STATICALLY AUDITED / RUNTIME VERIFICATION REQUIRED.
+
+The agreed workflow is fixed:
+PM prepares/submits -> FM financial review and approval -> ONE accounting release -> GM organizational approval only -> FM completes funding documentation -> FM final confirmation and PM handoff -> PM explicitly launches -> planned to active -> PS notified.
+
+GM rejection after FM approval must reverse the already-posted FM release, preserve accounting history, and return the project to FM financial review. Before FM final confirmation, FM correction may reverse the current release and invalidate GM approval. After FM final confirmation, correction/void is blocked both visually and server-side.
+
+Repair commits:
+- 9217b81fa71a5b3445ddef0ccbc829eb54fdd9d2
+- 331c3c9bdf144ebc7158538a99b1b67f75722c1d
+- c93824e07b43c49fb90dff31522ee618220e3ab5
+- 80c6012023e68d513952ca30f175ae6e3ecf25c8
+
+Runtime verification is now required. Do not correct historical project journals until the replacement accounting model passes the runtime gate.
+
+Runtime gate:
+1. FM approval creates exactly one release.
+2. GM approval creates no release.
+3. GM rejection reverses the release and returns to FM review atomically.
+4. FM correction before final confirmation does the same.
+5. FM final confirmation hands off to PM only and does not notify PS.
+6. After final confirmation, correction/void is unavailable.
+7. PM launch is the only initial planned-to-active transition.
+8. PS is notified only after PM launch.
+9. No duplicate treasury reduction is created.
+10. Controlled-balance reconciliation and closure remain correct.
+
+Start runtime testing only after pulling the latest main once.
