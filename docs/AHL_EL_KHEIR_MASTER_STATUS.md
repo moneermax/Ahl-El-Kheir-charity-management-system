@@ -1454,3 +1454,21 @@ Implementation commits:
 
 **Status: STATICALLY CORRECTED — RUNTIME VERIFICATION REQUIRED.**
 The PRJ-0012 runtime gate must verify: GM approval alone leaves the project absent from the PM dashboard/detail access; FM final funding-document confirmation then makes it visible and sends the PM handoff notification; no duplicate accounting release is created.
+
+
+## 2026-10-02 — Projects Phase 5 current documentation checkpoint
+
+The Projects Phase 5 accounting model and PM handoff visibility correction are now documented as the current working boundary.
+
+- Initial FM financial approval remains the accounting release point: Dr the project's existing expense account / Cr the selected treasury source account.
+- GM approval is organizational approval only; it does not create another funding/accounting release and does not hand the project to PM/PS for execution.
+- FM final funding-document confirmation is the execution handoff milestone and the single PM notification/visibility gate.
+- PM project visibility and PM launch now require the auditable FM_CONFIRM_PAYMENT_EVIDENCE event through the shared akp_project_final_fm_confirmed() helper.
+- No second accounting event is created by final FM confirmation.
+- Historical project journals remain untouched pending completion of the replacement-model runtime gate.
+
+Code checkpoints: 2ec62923ad554e5feb7c2bd261d3267cbdf9ca5e; ad097b53c15d0d2b3d2f8307164e1325b9f44d5f. Previous documentation checkpoint: 3ffbb4ad8598f37f5b1abf3a42d2983e4a20e7c9.
+
+Status: STATICALLY CORRECTED — RUNTIME VERIFICATION STILL REQUIRED.
+
+Required next runtime gate: on isolated project PRJ-0012, verify GM approval alone does not expose the project to PM; complete all funding evidence; perform FM final confirmation; verify the PM notification and dashboard/detail visibility appear only then; verify no duplicate accounting release was created; then continue the remaining Projects Phase 5 reconciliation/closure tests.
