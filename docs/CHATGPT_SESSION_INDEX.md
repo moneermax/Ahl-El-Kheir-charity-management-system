@@ -1319,3 +1319,7 @@ Latest code checkpoints: 2ec62923ad554e5feb7c2bd261d3267cbdf9ca5e and ad097b53c1
 Latest documentation checkpoint before this refresh: 3ffbb4ad8598f37f5b1abf3a42d2983e4a20e7c9.
 
 Next session must start with the isolated PRJ-0012 runtime gate: GM approval must not expose the project to PM; FM final funding-document confirmation must be the single PM notification/visibility handoff; no duplicate accounting release may appear.
+
+
+## 2026-10-02 — Projects Phase 5 runtime gate: PS notification timing correction
+During PRJ-0012 runtime verification, PM visibility and final FM confirmation worked, but the assigned PS received the execution notification before PM launch. Static source review confirmed `view.php` already requires PM `launch_project` and sends the PS notification only after lifecycle transition `planned → active`. The premature PS notification was removed from `view_fm.php`. Commit: `adecaf6c1e4b12017143d7a2f19bf8354ec1788d`. Continue by retesting the corrected FM-final-confirmation → PM-launch → PS-notification sequence.
