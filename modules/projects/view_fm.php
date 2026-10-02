@@ -282,14 +282,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } catch(Throwable $notificationError) {}
             $asyncSuccessMessage='تم تأكيد اكتمال مستندات التمويل وإبلاغ مدير المشاريع والمشرف المعيّن.';
         } elseif ($action === 'fm_return_to_review') {
-            if (akp_role() !== 'financial_manager') throw new RuntimeException('إعادة المشروع للمراجعة المالية متاحة للمدير المالي فقط.');
+            if (akp_role() !== 'financial_manager') throw new RuntimeException('إلغاء التأكيدات المالية السابقة متاح للمدير المالي فقط.');
             $reason=fm_post('return_reason');
-            if($reason==='') throw new RuntimeException('سبب إعادة المشروع للمراجعة المالية مطلوب.');
-            if((string)$approval['approval_status']!=='fm_approved') throw new RuntimeException('المشروع ليس في حالة اعتماد مالي تسمح بإعادته للمراجعة.');
+            if($reason==='') throw new RuntimeException('سبب إلغاء التأكيدات المالية السابقة مطلوب.');
+            if((string)$approval['approval_status']!=='approved') throw new RuntimeException('لا يمكن إلغاء التأكيدات المالية السابقة إلا بعد اعتماد المدير العام.');
+            if(fm_payment_evidence_finalized($id)) throw new RuntimeException('لا يمكن إلغاء التأكيدات المالية السابقة بعد التأكيد النهائي لمستندات التمويل.');
             akp_reverse_project_funding_release($id,$reason);
-            dbExecute("UPDATE project_approval SET approval_status='submitted' WHERE project_id=?",[$id]);
-            akp_audit('FM_RETURN_TO_REVIEW','project_approval',$id,['approval_status'=>'fm_approved'],['approval_status'=>'submitted','reason'=>$reason,'funding_release_reversed'=>true]);
-            flash('success','تمت إعادة المشروع للمراجعة المالية وعكس الإفراج المالي غير المنفذ.');
+            dbExecute("UPDATE project_approval SET approval_status='submitted', approved_by=NULL, approved_at=NULL WHERE project_id=?",[$id]);
+            akp_audit('FM_RETURN_TO_REVIEW','project_approval',$id,['approval_status'=>'approved'],['approval_status'=>'submitted','reason'=>$reason,'funding_release_reversed'=>true,'gm_approval_voided'=>true]);
+            flash('success','تم إلغاء التأكيدات المالية السابقة وإعادة المشروع للمراجعة المالية، مع عكس الإفراج المالي غير المنفذ.');
         } elseif ($action === 'fm_return_project_funding') {
             if (akp_role() !== 'financial_manager') throw new RuntimeException('تسوية الرصيد المتبقي محصورة بالمدير المالي.');
             $allocationId=(int)($_POST['allocation_id']??0);
@@ -479,17 +480,17 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 
     <?php if($approval['approval_status']==='submitted' && $approvedExists): ?><div class="card mb-4 border-primary"><div class="card-body"><h5>الاعتماد المالي للمشروع</h5><div class="alert alert-light border mb-3"><div class="d-flex justify-content-between"><span class="text-muted">الميزانية المعتمدة</span><strong><?php echo number_format((float)($activeBudget['line_total'] ?? 0),2); ?></strong></div><div class="d-flex justify-content-between mt-2"><span class="text-muted">الرسوم الحكومية</span><strong><?php echo number_format((float)$financialSummary['government_fees'],2); ?></strong></div><hr class="my-2"><div class="d-flex justify-content-between"><span class="fw-semibold">إجمالي المتطلبات المالية</span><strong class="fs-4"><?php echo number_format((float)$financialSummary['total_financial_requirement'],2); ?> <?php echo e($project['currency_code']?:'SDG'); ?></strong></div></div><p class="text-muted">يجب أن يساوي إجمالي تخصيص التمويل إجمالي المتطلبات المالية (الميزانية المعتمدة + الرسوم الحكومية).</p><div class="d-flex gap-2"><form method="post"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_approve_project"><button class="btn btn-success">اعتماد المشروع مالياً</button></form><button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#rejectProject">رفض المشروع مالياً</button></div></div></div><?php endif; ?>
 
-    <?php if ($approval['approval_status']==='fm_approved'): ?>
+    <?php if ($approval['approval_status']==='approved' && !$finalEvidenceConfirmed && !$closed): ?>
     <div class="card mb-4 border-warning">
-        <div class="card-header"><strong>الإفراج المالي والتسوية</strong></div>
+        <div class="card-header"><strong>إلغاء التأكيدات المالية السابقة</strong></div>
         <div class="card-body">
-            <div class="alert alert-light border">تم الإفراج عن التمويل محاسبياً عند الاعتماد المالي. الرصيد الحالي تحت سيطرة المشروع: <strong><?php echo number_format($controlledBalance,2); ?> <?php echo e($project['currency_code']?:'SDG'); ?></strong>.</div>
+            <div class="alert alert-light border">بعد اعتماد المدير العام، يمكن للمدير المالي إلغاء التأكيدات المالية السابقة إذا احتاج المشروع إلى تصحيح أو استكمال إجراءات التمويل. سيُعكس الإفراج المالي غير المنفذ ويعود المشروع للمراجعة المالية، ولا ينشئ هذا الإجراء إفراجاً محاسبياً جديداً.</div>
             <form method="post" class="border rounded p-3">
                 <?php echo csrf_field(); ?>
                 <input type="hidden" name="action" value="fm_return_to_review">
                 <div class="row g-2 align-items-end">
-                    <div class="col-md-9"><label class="form-label">سبب إعادة المراجعة المالية</label><input name="return_reason" class="form-control" required value="استكمال أو تصحيح إجراءات التمويل"></div>
-                    <div class="col-md-3"><button class="btn btn-warning w-100" onclick="return confirm('سيتم عكس الإفراج المالي غير المنفذ وإعادة المشروع للمراجعة. هل تريد المتابعة؟')">إعادة للمراجعة</button></div>
+                    <div class="col-md-9"><label class="form-label">سبب الإلغاء</label><input name="return_reason" class="form-control" required value="استكمال أو تصحيح إجراءات التمويل"></div>
+                    <div class="col-md-3"><button class="btn btn-warning w-100" onclick="return confirm('سيتم إلغاء التأكيدات المالية السابقة وعكس الإفراج المالي غير المنفذ وإعادة المشروع للمراجعة المالية. هل تريد المتابعة؟')">إلغاء التأكيدات المالية السابقة</button></div>
                 </div>
             </form>
         </div>
