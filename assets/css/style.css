@@ -12,6 +12,7 @@
   --navy-soft: rgba(31, 78, 140, 0.12);
   --bg: #f0f2f5;
   --border: #e3e8ef;
+  --form-border: #8aa6c8;
   --muted: #64748b;
   --white: #ffffff;
 }
@@ -28,7 +29,7 @@ a { text-decoration: none; }
 .auth-alert { background: #f8d7da; color: #842026; border: 1px solid #f5c2c7; border-radius: 10px; padding: 10px 14px; margin-bottom: 16px; font-size: 14px; }
 .auth-field { margin-bottom: 16px; }
 .auth-field label { display: block; font-weight: 700; color: var(--navy-900); font-size: 14px; margin-bottom: 6px; }
-.auth-field input { width: 100%; border: 2px solid var(--border); border-radius: 10px; padding: 11px 14px; font-size: 15px; outline: none; background: #fff; font-family: inherit; transition: border-color .2s, box-shadow .2s; }
+.auth-field input { width: 100%; border: 2px solid var(--form-border); border-radius: 10px; padding: 11px 14px; font-size: 15px; outline: none; background: #fff; font-family: inherit; transition: border-color .2s, box-shadow .2s; }
 .auth-field input:focus { border-color: var(--navy-600); box-shadow: 0 0 0 4px var(--navy-soft); }
 .btn-login { width: 100%; border: none; cursor: pointer; border-radius: 12px; padding: 12px; font-size: 16px; font-weight: 800; color: #fff; background: linear-gradient(135deg,var(--navy-900),var(--navy-600)); font-family: inherit; transition: transform .2s, box-shadow .2s; }
 .btn-login:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(31,78,140,.45); }
@@ -67,7 +68,9 @@ a { text-decoration: none; }
 .welcome-section .quick-actions .btn { padding: .25rem .55rem; font-size: .74rem; }
 .quick-actions { margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap; }
 .quick-actions .btn { border-radius: 10px; font-weight: 600; }
-.form-control,.form-select { border-radius: 10px; padding: 10px 14px; border: 2px solid var(--border); }
+/* Global form-field visibility: keep editable controls clearly separated from the page background. */
+.form-control,.form-select { border-radius: 10px; padding: 10px 14px; border: 2px solid var(--form-border); }
+.form-check-input { border: 2px solid var(--form-border); }
 .form-control:focus,.form-select:focus { border-color: var(--navy-600); box-shadow: 0 0 0 .2rem var(--navy-soft); }
 .form-label { font-weight: 600; color: var(--navy-900); }
 .btn { border-radius: 10px; font-weight: 600; }
