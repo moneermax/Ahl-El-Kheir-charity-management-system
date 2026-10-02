@@ -1743,3 +1743,27 @@ Relevant commits:
 - `6b36187460bc27246d9a5e89615f4c8b85cdf2d8`
 
 Follow-up runtime verification should confirm Admin and HR both open the same creation UI and that a newly created account produces exactly one linked employee profile.
+
+## 2026-10-02 — Unified Account Provisioning / Temporary Password Runtime Closure
+
+The canonical Admin/HR account-creation workflow and temporary-password first-login flow were runtime verified.
+
+Evidence:
+- A controlled disposable account was created successfully through the unified creation page.
+- The system generated a temporary password automatically and stored a 60-character password hash with password_change_required = 1.
+- Login with the generated temporary password was successfully completed after credential-entry direction was corrected.
+- The employee was forced into password change, changed the password successfully, and subsequently logged in using the new password.
+- The backend authentication implementation was retained; the observed first-attempt issue was isolated to credential text-direction behavior while the page was RTL.
+- Login and password-change credential fields were hardened with dir="ltr", while the surrounding application can remain RTL or LTR.
+
+Commits:
+- c3b139cae1d08c67f00313b2bca50c8d20987afe
+- 745fe81d5c3dcc7773b84377e4d2ff5facc9dd88
+
+**Status: CLOSED / RUNTIME VERIFIED.**
+
+Do not reopen the password/authentication workflow without a new reproducible defect.
+
+## 2026-10-02 — Projects Historical Checkpoint Clarification
+
+The earlier Projects Phase 5 accounting implementation/audit attempt is not the current working baseline. It was explicitly rolled back to checkpoint 594e6c216757851526e63e80a8b2e8585416d94a before subsequent work. Future Projects work must begin from that rollback baseline plus unrelated changes subsequently merged to main; do not reintroduce the rolled-back Phase 5 implementation or its migrations/files without an explicit fresh design audit.
