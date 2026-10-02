@@ -73,6 +73,77 @@ a { text-decoration: none; }
 .form-check-input { border: 2px solid var(--form-border); }
 .form-control:focus,.form-select:focus { border-color: var(--navy-600); box-shadow: 0 0 0 .2rem var(--navy-soft); }
 .form-label { font-weight: 600; color: var(--navy-900); }
+
+/* =========================================================
+   Global form layout
+   - Normal labelled fields stay compact and aligned on desktop.
+   - Labels sit beside their controls instead of consuming a full line.
+   - Field width follows the expected data type rather than stretching
+     every control across the whole card.
+   - Mobile screens stack labels above controls for readability.
+   Only standard Bootstrap-style .mb-3/.mb-4 field groups with a
+   direct .form-label + control are affected; custom layouts remain intact.
+   ========================================================= */
+@media (min-width: 768px) {
+  .content form .mb-3:has(> .form-label + :is(.form-control, .form-select, textarea, input, select)),
+  .content form .mb-4:has(> .form-label + :is(.form-control, .form-select, textarea, input, select)) {
+    display: grid;
+    grid-template-columns: minmax(150px, 30%) minmax(0, 1fr);
+    column-gap: 14px;
+    align-items: center;
+  }
+
+  .content form .mb-3:has(> .form-label + :is(.form-control, .form-select, textarea, input, select)) > .form-label,
+  .content form .mb-4:has(> .form-label + :is(.form-control, .form-select, textarea, input, select)) > .form-label {
+    margin: 0;
+    align-self: center;
+    line-height: 1.35;
+  }
+
+  .content form .mb-3:has(> .form-label + :is(.form-control, .form-select, textarea, input, select)) > :is(.form-control, .form-select, textarea, input, select),
+  .content form .mb-4:has(> .form-label + :is(.form-control, .form-select, textarea, input, select)) > :is(.form-control, .form-select, textarea, input, select) {
+    justify-self: start;
+    width: 100%;
+  }
+
+  /* Compact controls for values with predictable short lengths. */
+  .content form .mb-3 > input[type="date"],
+  .content form .mb-4 > input[type="date"] { max-width: 13rem; }
+  .content form .mb-3 > input[type="time"],
+  .content form .mb-4 > input[type="time"] { max-width: 11rem; }
+  .content form .mb-3 > input[type="number"],
+  .content form .mb-4 > input[type="number"] { max-width: 17rem; }
+  .content form .mb-3 > input[type="tel"],
+  .content form .mb-4 > input[type="tel"] { max-width: 19rem; }
+  .content form .mb-3 > input[type="email"],
+  .content form .mb-4 > input[type="email"] { max-width: 30rem; }
+  .content form .mb-3 > input[type="text"],
+  .content form .mb-4 > input[type="text"] { max-width: 32rem; }
+  .content form .mb-3 > select.form-select,
+  .content form .mb-4 > select.form-select { max-width: 30rem; }
+  .content form .mb-3 > textarea.form-control,
+  .content form .mb-4 > textarea.form-control { max-width: 100%; min-height: 96px; }
+}
+
+@media (max-width: 767.98px) {
+  .content form .mb-3:has(> .form-label + :is(.form-control, .form-select, textarea, input, select)),
+  .content form .mb-4:has(> .form-label + :is(.form-control, .form-select, textarea, input, select)) {
+    display: block;
+  }
+
+  .content form .mb-3:has(> .form-label + :is(.form-control, .form-select, textarea, input, select)) > .form-label,
+  .content form .mb-4:has(> .form-label + :is(.form-control, .form-select, textarea, input, select)) > .form-label {
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  .content form .mb-3:has(> .form-label + :is(.form-control, .form-select, textarea, input, select)) > :is(.form-control, .form-select, textarea, input, select),
+  .content form .mb-4:has(> .form-label + :is(.form-control, .form-select, textarea, input, select)) > :is(.form-control, .form-select, textarea, input, select) {
+    width: 100%;
+    max-width: none;
+  }
+}
+
 .btn { border-radius: 10px; font-weight: 600; }
 .btn-primary { background: linear-gradient(135deg,var(--navy-900),var(--navy-600)); border: none; color: #fff; }
 .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(31,78,140,.4); color: #fff; }
