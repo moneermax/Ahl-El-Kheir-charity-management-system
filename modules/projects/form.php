@@ -1368,13 +1368,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
              |--------------------------------------------------------------------------
              */
 
-            flash(
-                'success',
-
-                $id
-                    ? 'تم تحديث البيانات الأساسية للمشروع.'
-                    : 'تم إنشاء المشروع مع ميزانيته الأولية المتطابقة مع الميزانية التقديرية. يمكنك الآن إرساله للاعتماد أو إضافة تفاصيل أخرى.'
-            );
+            // Success is delivered as a project-specific toast after PRG redirect.
 
 
             if ($projectCreateTransaction && db()->inTransaction()) {
