@@ -92,9 +92,9 @@ if (!function_exists('akp_post_project_funding_release')) {
                 );
                 dbExecute(
                     "UPDATE project_funding_allocations
-                     SET status='posted', approved_by=?, posted_by=?, posted_at=NOW()
+                     SET status='posted', approved_by=?, posted_by=?, posted_at=NOW(), journal_entry_id=?
                      WHERE id=? AND project_id=? AND status='draft'",
-                    [akp_user_id(), akp_user_id(), $allocationId, $projectId]
+                    [akp_user_id(), akp_user_id(), $entryId, $allocationId, $projectId]
                 );
                 $journalIds[$allocationId] = $entryId;
             }
