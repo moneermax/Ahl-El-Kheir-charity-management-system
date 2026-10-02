@@ -1244,3 +1244,26 @@ Authoritative architecture:
 Implementation commits: `b90791e`, `ca42000e`, `ffed771`, `6b36187`.
 
 Next runtime check: verify the same creation UI for Admin and HR and verify automatic user→employee linkage on a controlled test account. Do not alter Leave or Salary Advance logic unless a concrete regression is found.
+
+## 2026-10-02 — Latest Checkpoint: Account Provisioning + Password Workflow CLOSED
+
+The unified Admin/HR account-creation workflow and temporary-password first-login flow are **DONE / RUNTIME VERIFIED / CLOSED**.
+
+Runtime verification confirmed:
+- automatic temporary password generation;
+- password hash persistence and password_change_required = 1;
+- successful first login using the generated temporary password;
+- forced password change;
+- successful normal login after the password was changed;
+- credential-entry stability when the application is viewed in either RTL or LTR writing direction.
+
+The observed first-login failure was not a backend password/hash defect. The same credentials worked after changing the writing direction to LTR, so the credential-input UI was hardened instead of changing authentication logic.
+
+Relevant commits:
+- c3b139cae1d08c67f00313b2bca50c8d20987afe
+- 745fe81d5c3dcc7773b84377e4d2ff5facc9dd88
+
+Do not reopen this workflow without genuine regression evidence.
+
+### Next session boundary
+Start from current main and inspect the master documents and explicitly documented project/module checkpoint before changing code. The historical Projects Phase 5 implementation was rolled back to checkpoint 594e6c216757851526e63e80a8b2e8585416d94a; do not assume the rolled-back Phase 5 implementation is active or reintroduce it without a fresh design/schema audit.
