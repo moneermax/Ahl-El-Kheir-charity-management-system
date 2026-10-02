@@ -1050,8 +1050,18 @@ $projectManagers = dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_i
 foreach ($projectManagers as $projectManager) {
 ak_transaction_review_notify_event((int)$projectManager['id'], 'طلب إغلاق مشروع', 'المشروع «' . (string)($project['name'] ?? '') . '» (' . (string)($project['project_code'] ?? '') . ') لديه طلب إغلاق من مشرف المشروع ويحتاج إجراء مدير المشاريع.', APP_URL . 'modules/projects/view.php?id=' . $id, $id, 'project_closure_request');
 }
+}
+catch (Throwable $notificationError) {}
+$controlledBalance = akp_project_controlled_balance($id);
+if ($controlledBalance > 0.009) {
+try {
+$fmUsers = dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id = r.id WHERE r.code IN ('financial_manager','fm','finance') AND u.is_active = 1");
+foreach ($fmUsers as $fmUser) {
+ak_transaction_review_notify_event((int)$fmUser['id'], 'مشروع بانتظار تسوية الرصيد المتبقي', 'المشروع «' . (string)($project['name'] ?? '') . '» (' . (string)($project['project_code'] ?? '') . ') لديه رصيد متبقٍ تحت سيطرة المشروع بقيمة ' . number_format($controlledBalance, 2) . ' ' . (string)($project['currency_code'] ?? 'SDG') . '. يرجى تنفيذ التسوية المالية قبل الإغلاق.', APP_URL . 'modules/projects/view_fm.php?id=' . $id, $id, 'project_funding_reconciliation');
+}
 } catch (Throwable $notificationError) {}
-$_SESSION['project_toast_success'] = 'تم إرسال طلب إغلاق المشروع إلى مدير المشاريع.';
+}
+$_SESSION['project_toast_success'] = 'تم إرسال طلب إغلاق المشروع إلى مدير المشاريع' . ($controlledBalance > 0.009 ? ' وإبلاغ المدير المالي بوجود رصيد متبقٍ للتسوية.' : '.');
 } elseif ($action === 'request_project_reopen') {
 if ($role !== 'project_supervisor' || !akp_is_primary_supervisor($id)) throw new RuntimeException('طلب إعادة فتح المشروع متاح لمشرف المشروع الأساسي فقط.');
 if (!$closed) throw new RuntimeException('المشروع ليس مغلقاً.');
@@ -1075,6 +1085,8 @@ if (!$pendingRequest) throw new RuntimeException('لا يوجد طلب إغلا�
 // ... (Original close_project logic preserved exactly)
 $pending = dbFetchOne("SELECT COUNT(*) AS n FROM project_expenses WHERE project_id = ? AND status IN ('draft','submitted','approved')", [$id]);
 if ((int)($pending['n'] ?? 0) > 0) throw new RuntimeException('لا يمكن الإغلاق مع وجود مصروفات غير مرحلة.');
+$controlledBalance = akp_project_controlled_balance($id);
+if ($controlledBalance > 0.009) throw new RuntimeException('لا يمكن إغلاق المشروع قبل تسوية الرصيد المتبقي تحت سيطرة المشروع: ' . number_format($controlledBalance, 2) . '.');
 $summary = akp_post_value('closure_summary');
 $varianceExplanation = akp_post_value('variance_explanation');
 if ($summary === '') throw new RuntimeException('ملخص الإغلاق مطلوب.');
