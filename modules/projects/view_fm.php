@@ -275,8 +275,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if($reason==='') throw new RuntimeException('سبب إلغاء التأكيدات المالية السابقة مطلوب.');
             if((string)$approval['approval_status']!=='approved') throw new RuntimeException('لا يمكن إلغاء التأكيدات المالية السابقة إلا بعد اعتماد المدير العام.');
             if(fm_payment_evidence_finalized($id)) throw new RuntimeException('لا يمكن إلغاء التأكيدات المالية السابقة بعد التأكيد النهائي لمستندات التمويل.');
-            akp_reverse_project_funding_release($id,$reason);
-            dbExecute("UPDATE project_approval SET approval_status='submitted', approved_by=NULL, approved_at=NULL WHERE project_id=?",[$id]);
+            dbExecute('START TRANSACTION');
+            try {
+                akp_reverse_project_funding_release($id,$reason,false);
+                dbExecute("UPDATE project_approval SET approval_status='submitted', approved_by=NULL, approved_at=NULL WHERE project_id=?",[$id]);
+                dbExecute('COMMIT');
+            } catch (Throwable $e) {
+                dbExecute('ROLLBACK');
+                throw $e;
+            }
             akp_audit('FM_RETURN_TO_REVIEW','project_approval',$id,['approval_status'=>'approved'],['approval_status'=>'submitted','reason'=>$reason,'funding_release_reversed'=>true,'gm_approval_voided'=>true]);
             flash('success','تم إلغاء التأكيدات المالية السابقة وإعادة المشروع للمراجعة المالية، مع عكس الإفراج المالي غير المنفذ.');
         } elseif ($action === 'fm_return_project_funding') {
