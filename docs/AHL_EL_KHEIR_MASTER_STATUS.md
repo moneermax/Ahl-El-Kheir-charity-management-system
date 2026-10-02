@@ -1387,3 +1387,28 @@ Relevant implementation commits:
 - `ca42000f4552eeeb4fea6fb493bb8008c29a40b9`, `ffed7719f241f7bcee1732da88e743e838296f2c8`, `6b36187460bc27246d9a5e89615f4c8b85cdf2d8` — removal of the duplicate HR account-creation path and obsolete dependency.
 
 No Salary Advance or Leave business logic was changed as part of this consolidation.
+
+## 2026-10-02 — Unified Account Provisioning + Temporary Password First-Login Flow CLOSED
+
+**DONE / IMPLEMENTED / RUNTIME VERIFIED / CLOSED**
+
+The unified Admin/HR user-creation workflow and its temporary-password first-login flow are now runtime verified.
+
+Verified behavior:
+- New accounts are created through the canonical user/employee provisioning path.
+- The system generates the temporary password server-side; the creator does not enter a password.
+- The password is stored only as a password_hash and password_change_required is set to 1.
+- The generated temporary password is shown once after successful account creation.
+- Login with the temporary password succeeds and forces the employee to the password-change page.
+- Successful password change clears password_change_required and normal login then works.
+- Credential-entry behavior was hardened so username/password fields remain stable when the surrounding page is displayed in either RTL or LTR direction.
+
+Relevant checkpoints:
+- 43f0a0ce846952e8dceaea72325807f7ac5b6c1f — password_change_required migration.
+- c3b139cae1d08c67f00313b2bca50c8d20987afe — login credential-direction hardening.
+- 745fe81d5c3dcc7773b84377e4d2ff5facc9dd88 — password-change credential-direction hardening.
+
+The password workflow is closed. Do not reopen it without genuine regression evidence.
+
+### Current continuation boundary
+The repository remains an existing-project workflow. Continue from current main and the documented project/module checkpoint. Do not resurrect the historical Projects Phase 5 implementation that was later rolled back; use the rollback baseline and current source as truth before future Projects work.
