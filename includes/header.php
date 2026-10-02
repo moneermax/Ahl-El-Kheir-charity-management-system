@@ -1434,56 +1434,6 @@ if (!empty($akPrintOwnLetterhead)) $akBodyClasses[] = 'ak-print-own';
             <?php endif; ?>
 
 
-            <?php if (!empty($_SESSION['flash'])): ?>
-
-
-                <?php
-                foreach (
-                    $_SESSION['flash']
-                    as $msg
-                ):
-                ?>
-
-
-                    <div
-                        class="alert alert-<?php
-                            echo e(
-                                $msg['type'] === 'error'
-                                    ? 'danger'
-                                    : $msg['type']
-                            );
-                        ?> alert-dismissible fade-show"
-                        role="alert"
-                    >
-
-                        <?php
-                        echo e(
-                            $msg['message']
-                        );
-                        ?>
-
-
-                        <button
-                            type="button"
-                            class="btn-close"
-                            data-bs-dismiss="alert"
-                            aria-label="Close"
-                        ></button>
-
-
-                    </div>
-
-
-                <?php endforeach; ?>
-
-
-                <?php
-                unset(
-                    $_SESSION['flash']
-                );
-                ?>
-
-
-            <?php endif; ?>
+            <?php include __DIR__ . '/alerts.php'; ?>
 
 
