@@ -102,12 +102,27 @@ if (!function_exists('akp_can_view_project')) {
         if (in_array($role, ['admin', 'general_manager', 'vice_general_manager', 'accountant', 'financial_manager'], true)) return true;
 
         /*
-         * The Projects Manager receives operational project visibility only
-         * after the FM completes the final funding-document confirmation.
-         * GM approval alone is not the PM handoff milestone.
+         * The final FM confirmation remains the handoff milestone for full
+         * project visibility. However, the PM who created a project must be
+         * able to see and continue working with that project while it is still
+         * in the pre-handoff approval workflow (draft/submitted/rejected or
+         * financially approved). This is not operational access for execution;
+         * launch and operational permissions remain separately gated.
          */
         if ($role === 'projects_manager') {
-            return akp_project_final_fm_confirmed($projectId);
+            if (akp_project_final_fm_confirmed($projectId)) return true;
+
+            $pmProject = dbFetchOne(
+                "SELECT op.created_by, COALESCE(pa.approval_status, 'draft') AS approval_status
+                 FROM other_projects op
+                 LEFT JOIN project_approval pa ON pa.project_id = op.id
+                 WHERE op.id = ?",
+                [$projectId]
+            );
+
+            return $pmProject
+                && (int)$pmProject['created_by'] === akp_user_id()
+                && in_array((string)$pmProject['approval_status'], ['draft', 'submitted', 'rejected', 'fm_approved'], true);
         }
 
         /*
