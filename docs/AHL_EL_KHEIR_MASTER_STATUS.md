@@ -1700,3 +1700,25 @@ Do not mark Phase 5 closed. Do not start the FM accounting gate until the immedi
 
 PRJ-0015 must be preserved in its current submitted/planned state unless the immediate fix itself requires a controlled change.
 
+
+
+## 2026-10-02 — Projects Phase 5 PM submission gate passed
+
+Controlled fixture **PRJ-0015 — PH5 Full Accounting Reconciliation Test** is preserved in submitted/planned state:
+- approval: **submitted / مرسل للمراجعة**
+- lifecycle/display: **planned / مخطط**
+- budget: **300,000.00 SDG** across 3 lines
+- approved funding: **0.00**
+- posted expenses: **0.00**
+
+Runtime verification confirmed PM submission hands the project to FM financial review, generates the FM review notification, and creates **no funding allocation or accounting release**. FM can open the review page; allocation tools correctly remain gated until budget approval.
+
+**Current Projects Phase 5 status:** IMPLEMENTED / DEEPLY SOURCE-AUDITED / PM SUBMISSION RUNTIME GATE PASSED / PAUSED BEFORE FM BUDGET APPROVAL.
+
+Do not recreate PRJ-0015. The next runtime gate is FM budget approval and the subsequent accounting reconciliation sequence.
+
+## 2026-10-02 — System-wide form layout refinement
+
+The immediate form field sizing/label alignment issue was addressed centrally after reviewing the actual form structures across the repository. The global rule in `includes/footer.php` now uses individual field-container width rather than a fixed percentage of the whole form, keeps narrow/dense columns stacked, and applies semantic sizing to common field types.
+
+Commit: **7856da749fc23e06fce9c7ecedfa5e92f061fd8f**. User runtime feedback: **much better for most pages**, with some remaining page-level imperfections.
