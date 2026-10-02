@@ -1476,3 +1476,44 @@ Required next runtime gate: on isolated project PRJ-0012, verify GM approval alo
 
 ## 2026-10-02 — Projects Phase 5 runtime gate: PS notification timing correction
 The controlled PRJ-0012 runtime gate exposed one remaining handoff-timing defect after the successful FM final-confirmation path: the assigned Project Supervisor was being notified at FM final funding-document confirmation even though the project remained `planned` and had not yet been launched by the Projects Manager. Repository review confirmed that `modules/projects/view.php` already contains the correct explicit PM `launch_project` gate and PS notification path. The fix removes the premature PS notification from `modules/projects/view_fm.php` and changes the FM success message to identify the PM-only handoff. Resulting code commit: `adecaf6c1e4b12017143d7a2f19bf8354ec1788d`. The intended sequence is now: FM final confirmation → PM notification/visibility → PM explicitly launches project → PS execution notification.
+
+
+
+## 2026-10-02 — Projects Phase 5 workflow alignment / accounting integrity repair
+
+A deep cross-page audit was completed against the agreed Projects workflow. The following real implementation gaps were corrected on `main`:
+
+- FM financial approval remains the single project funding/accounting release point.
+- GM approval is organizational only and no longer has any competing accounting-release semantics in the GM UI.
+- GM rejection now atomically reverses the already-posted FM funding release and returns the project to FM financial review. The original release remains preserved as voided accounting history and a posted reversal is created.
+- The funding-reversal helper now supports caller-owned transaction boundaries, preventing nested-transaction commits and making reversal + approval-state transition atomic.
+- FM's pre-final-confirmation correction action now reverses funding and resets GM approval atomically.
+- The legacy shared-view FM approval/rejection/reversal handlers were removed from `modules/projects/view.php`; FM actions are owned by the dedicated `view_fm.php` workflow.
+- Generic project status changes can no longer set `active`. Project activation is available only through the explicit PM `launch_project` action.
+- The Projects portfolio UI no longer offers `active` in the generic status selector.
+- GM approval wording was corrected so it no longer implies creation of a financial/accounting release.
+- Stale shared-view funding-posting wording was corrected to identify FM approval as the release point.
+
+This repair is intended to close the previously identified competing workflow and transaction-atomicity gaps without reopening completed Salary Advance or account/password work.
+
+Code repair commits:
+- `9217b81fa71a5b3445ddef0ccbc829eb54fdd9d2`
+- `331c3c9bdf144ebc7158538a99b1b67f75722c1d`
+- `c93824e07b43c49fb90dff31522ee618220e3ab5`
+- `80c6012023e68d513952ca30f175ae6e3ecf25c8`
+
+**Status: WORKFLOW REPAIRED / RUNTIME VERIFICATION REQUIRED.**
+
+Runtime verification must specifically cover:
+1. FM approval creates exactly one release.
+2. GM approval creates no release.
+3. GM rejection reverses the FM release and returns the project to FM review atomically.
+4. FM correction/void before final confirmation reverses the release and returns to FM review atomically.
+5. After FM final confirmation, the correction/void action is unavailable both visually and server-side.
+6. PM cannot see/launch before FM final confirmation.
+7. PM launch is the only initial transition to `active`.
+8. PS is notified only after PM launch.
+9. No duplicate treasury reduction is created by any later approval/handoff milestone.
+10. Existing controlled-balance/reconciliation and closure behavior remains intact.
+
+Do not correct historical/phantom project journals until these replacement-model runtime tests pass.
