@@ -1460,3 +1460,12 @@ Before any new runtime fixture/test, the complete current Projects user-facing p
 This is a source/schema consistency gate, not a runtime certification. No new project fixture has been created and no XAMPP/MariaDB/browser test has been claimed. The existing controlled fixtures remain untouched.
 
 **Current Phase 5 status: IMPLEMENTED / DEEPLY SOURCE-AUDITED / PRE-RUNTIME WORKFLOW CONSISTENCY PASS / RUNTIME VERIFICATION STILL REQUIRED.**
+
+
+## 2026-10-02 — Projects Phase 5 PRJ-0015 runtime checkpoint
+
+Fresh fixture: **PRJ-0015 — PH5 Full Accounting Reconciliation Test**; approval `draft`; lifecycle/display `planned`; budget `300,000.00 SDG`; 3 budget lines; Project Supervisor `project supervisor`.
+
+Open findings before the accounting sequence: numeric budget fields change on mouse-wheel scrolling (example `299999.98`), and the save flow required a refresh plus a second Save click before the expected result appeared. The project eventually saved successfully, but both findings require verification.
+
+Next checkpoint: resolve/verify these findings, then PM submission (`draft` → `submitted`) and confirm no accounting release is created by submission.
