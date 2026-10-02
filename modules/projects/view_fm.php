@@ -30,6 +30,7 @@ $accounts = dbFetchAll("SELECT id, code, name_ar FROM accounts WHERE is_active=1
 $financialSummary = akp_project_financial_requirement($id, $activeBudget && $activeBudget['status'] === 'approved' ? (float)$activeBudget['line_total'] : null);
 $controlledBalance = akp_project_controlled_balance($id);
 $closurePending = (bool)dbFetchOne("SELECT id FROM project_status_history WHERE project_id=? AND new_status='closure_requested' ORDER BY id DESC LIMIT 1", [$id]);
+$finalEvidenceConfirmed = fm_payment_evidence_finalized($id);
 
 function fm_redirect_project(int $id): void {
     header('Location: ' . APP_URL . 'modules/projects/view_fm.php?id=' . $id);
@@ -595,8 +596,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         <?php endif; ?>
     <?php endforeach; ?>
 
-    <?php if ($paymentEvidence): ?>
-        <?php $finalEvidenceConfirmed = fm_payment_evidence_finalized($id); ?>
+    <?php if ($paymentEvidence && $approval['approval_status']==='approved'): ?>
         <div class="card mb-4 border-success">
             <div class="card-body d-flex justify-content-between align-items-center gap-3 flex-wrap">
                 <div>
@@ -836,7 +836,12 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                         if (reference && result.reference !== undefined) reference.textContent = result.reference || '—';
                     }
                 } catch (error) {
-                    alert(error.message || 'تعذر تنفيذ العملية.');
+                    var message = error.message || 'تعذر تنفيذ العملية.';
+                    if (window.AKNotify && typeof window.AKNotify.toast === 'function') {
+                        window.AKNotify.toast('error', message);
+                    } else if (window.Swal) {
+                        window.Swal.fire({icon:'error', title:message, rtl:true, confirmButtonText:'حسناً'});
+                    }
                 } finally {
                     if (submit) submit.disabled = false;
                 }
