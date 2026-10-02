@@ -85,34 +85,90 @@ a { text-decoration: none; }
    direct .form-label + control are affected; custom layouts remain intact.
    ========================================================= */
 @media (min-width: 768px) {
-  /* Bootstrap column-based forms are the other common structure in the system.
-     Keep the label and its direct control on one line inside each field column. */
+  /*
+   * Bootstrap column forms are very common in this application, and a number
+   * of individual pages have their own "display:block" form rules.  Therefore
+   * the shared layout must win at the component boundary, not only rely on
+   * the page's default flex/block choice.
+   *
+   * Grid is used here because some fields also have help/validation text after
+   * the control.  That text stays underneath the control instead of becoming
+   * a third item on the same line.
+   */
   .content form .row > [class*="col-"]:has(> .form-label + :is(.form-control, .form-select, textarea, input, select)) {
-    display: flex;
+    display: grid !important;
+    grid-template-columns: minmax(105px, 38%) minmax(0, 1fr);
+    column-gap: 12px;
     align-items: center;
-    gap: 12px;
   }
 
   .content form .row > [class*="col-"]:has(> .form-label + :is(.form-control, .form-select, textarea, input, select)) > .form-label {
-    flex: 0 0 clamp(120px, 34%, 190px);
-    margin: 0;
+    grid-column: 1;
+    margin: 0 !important;
+    width: auto !important;
+    max-width: none;
     line-height: 1.35;
+    align-self: center;
   }
 
   .content form .row > [class*="col-"]:has(> .form-label + :is(.form-control, .form-select, textarea, input, select)) > :is(.form-control, .form-select, textarea, input, select) {
-    flex: 1 1 auto;
+    grid-column: 2;
     min-width: 0;
-    width: auto;
+    width: 100% !important;
+    max-width: none;
+    justify-self: stretch;
   }
 
-  /* Type-aware widths inside column-based forms. */
-  .content form .row > [class*="col-"] > input[type="date"] { flex: 0 1 13rem; }
-  .content form .row > [class*="col-"] > input[type="time"] { flex: 0 1 11rem; }
-  .content form .row > [class*="col-"] > input[type="number"] { flex: 0 1 17rem; }
-  .content form .row > [class*="col-"] > input[type="tel"] { flex: 0 1 19rem; }
-  .content form .row > [class*="col-"] > input[type="email"] { flex: 0 1 30rem; }
-  .content form .row > [class*="col-"] > input[type="text"] { flex: 0 1 32rem; }
-  .content form .row > [class*="col-"] > .form-select { flex: 0 1 30rem; }
+  /* Help, validation and explanatory text belongs under the control. */
+  .content form .row > [class*="col-"]:has(> .form-label + :is(.form-control, .form-select, textarea, input, select)) > :is(.project-help, .form-text, .invalid-feedback, .valid-feedback, .text-muted) {
+    grid-column: 2;
+    min-width: 0;
+  }
+
+  /* Long text fields use the available width; compact data types do not. */
+  .content form .row > [class*="col-"] > input[type="date"] {
+    width: 13rem !important;
+    max-width: 100%;
+    justify-self: start;
+  }
+  .content form .row > [class*="col-"] > input[type="time"] {
+    width: 11rem !important;
+    max-width: 100%;
+    justify-self: start;
+  }
+  .content form .row > [class*="col-"] > input[type="number"] {
+    width: 17rem !important;
+    max-width: 100%;
+    justify-self: start;
+  }
+  .content form .row > [class*="col-"] > input[type="tel"] {
+    width: 19rem !important;
+    max-width: 100%;
+    justify-self: start;
+  }
+  .content form .row > [class*="col-"] > input[type="email"] {
+    width: min(30rem, 100%) !important;
+    max-width: 100%;
+    justify-self: start;
+  }
+  .content form .row > [class*="col-"] > input[type="text"] {
+    width: min(32rem, 100%) !important;
+    max-width: 100%;
+    justify-self: start;
+  }
+  .content form .row > [class*="col-"] > .form-select {
+    width: min(30rem, 100%) !important;
+    max-width: 100%;
+    justify-self: start;
+  }
+
+  /* A full-width field (for example a project description) needs both columns. */
+  .content form .row > [class*="col-"] > textarea.form-control {
+    grid-column: 2;
+    width: 100% !important;
+    max-width: 100%;
+    min-height: 96px;
+  }
 }
 
 @media (min-width: 768px) {
