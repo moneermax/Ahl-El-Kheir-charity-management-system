@@ -1300,7 +1300,7 @@ $grandFinancialRequirement = (float)($financialSummary['total_financial_requirem
 <?php endif; ?>
 <div class="table-responsive">
 <table class="table table-sm">
-<thead><tr><th>التاريخ</th><th>حساب التمويل</th><th>المبلغ</th><th>المرجع/الوصف</th><th>الحالة</th><th></th></tr></thead>
+<thead><tr><th>التاريخ</th><th>حساب التمويل</th><th>المبلغ</th><th>المرجع/الوصف</th><th>الحالة</th></tr></thead>
 <tbody>
 <?php foreach ($fundings as $funding): ?>
 <tr>
@@ -1309,12 +1309,9 @@ $grandFinancialRequirement = (float)($financialSummary['total_financial_requirem
 <td><?php echo akp_money($funding['amount']); ?></td>
 <td><small><?php echo e((string)($funding['reference_number'] ?? '')); ?><?php if (!empty($funding['description'])): ?><br><?php echo e((string)$funding['description']); ?><?php endif; ?></small></td>
 <td><?php echo e(akp_funding_status_label((string)$funding['status'])); ?></td>
-<td>
-
-</td>
 </tr>
 <?php endforeach; if (!$fundings): ?>
-<tr><td colspan="6" class="text-center text-muted">لا توجد تخصيصات تمويل مسجلة بعد.</td></tr>
+<tr><td colspan="5" class="text-center text-muted">لا توجد تخصيصات تمويل مسجلة بعد.</td></tr>
 <?php endif; ?>
 </tbody>
 </table>
