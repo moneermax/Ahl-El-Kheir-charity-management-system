@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 01, 2026 at 03:57 PM
+-- Generation Time: Oct 02, 2026 at 07:51 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -907,7 +907,30 @@ INSERT INTO `audit_log` (`id`, `user_id`, `action`, `entity_type`, `entity_id`, 
 (2105, 29, 'CREATE', 'project_funding_allocation', 32, NULL, '{\"project_id\":11,\"amount\":50000,\"source_account\":\"1200\",\"fm_review\":true}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-01 10:51:01'),
 (2106, 29, 'CREATE', 'project_funding_allocation', 33, NULL, '{\"project_id\":11,\"amount\":60000,\"source_account\":\"1300\",\"fm_review\":true}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-01 10:51:01'),
 (2107, 29, 'FM_APPROVE_PROJECT', 'project_approval', 11, '{\"approval_status\":\"submitted\"}', '{\"approval_status\":\"fm_approved\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-01 10:52:31'),
-(2108, 29, 'FM_FINAL_ACCOUNTING_APPROVE', 'project_approval', 11, '{\"approval_status\":\"fm_approved\"}', '{\"approval_status\":\"fm_approved\",\"accounting_release_completed\":true}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-01 16:31:29');
+(2108, 29, 'FM_FINAL_ACCOUNTING_APPROVE', 'project_approval', 11, '{\"approval_status\":\"fm_approved\"}', '{\"approval_status\":\"fm_approved\",\"accounting_release_completed\":true}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-01 16:31:29'),
+(2109, 33, 'LOGOUT', 'users', 33, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-01 17:19:29'),
+(2110, 2, 'LOGIN', 'users', 2, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-01 17:19:40'),
+(2111, 2, 'GM_APPROVE_PROJECT', 'project_approval', 11, '{\"approval_status\":\"fm_approved\",\"fm_accounting_approved\":true}', '{\"approval_status\":\"approved\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-01 17:55:44'),
+(2112, 2, 'LOGOUT', 'users', 2, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-01 18:13:17'),
+(2113, 33, 'LOGIN', 'users', 33, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-01 18:13:25'),
+(2114, 33, 'LOGOUT', 'users', 33, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-01 19:30:03'),
+(2115, 1, 'LOGIN', 'users', 1, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-01 19:30:11'),
+(2116, 33, 'LOGIN', 'users', 33, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-01 22:30:09'),
+(2117, 34, 'LOGIN', 'users', 34, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-01 22:34:40'),
+(2118, 33, 'LOGOUT', 'users', 33, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-01 22:36:18'),
+(2119, 32, 'LOGIN', 'users', 32, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-01 22:36:34'),
+(2120, 34, 'LOGOUT', 'users', 34, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-01 22:41:27'),
+(2121, 1, 'LOGIN', 'users', 1, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-01 22:41:36'),
+(2122, 1, 'LOGOUT', 'users', 1, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-01 23:42:12'),
+(2123, 40, 'LOGIN', 'users', 40, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 00:36:34'),
+(2124, 40, 'CHANGE_PASSWORD', 'users', 40, NULL, '{\"password_changed\":true,\"forced\":true}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 00:37:08'),
+(2125, 40, 'LOGOUT', 'users', 40, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 00:37:36'),
+(2126, 40, 'LOGIN', 'users', 40, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 00:37:44'),
+(2127, 40, 'LOGOUT', 'users', 40, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 00:37:49'),
+(2128, 32, 'LOGOUT', 'users', 32, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 00:51:12'),
+(2129, 1, 'LOGIN', 'users', 1, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 00:51:19'),
+(2130, 1, 'LOGOUT', 'users', 1, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 00:51:25'),
+(2131, 19, 'LOGIN', 'users', 19, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 08:26:13');
 
 -- --------------------------------------------------------
 
@@ -1085,10 +1108,13 @@ INSERT INTO `employees` (`id`, `user_id`, `full_name`, `birth_date`, `gender`, `
 (16, 18, 'ro1', NULL, NULL, '0123456789', 'ro@gmail.com', '', 3, 'EMP-0018', '', '2026-08-13', 'مندوب استرجاع الكفلاء', 'full_time', 'remote', 5000.00, '', NULL, 'active', 1, '2026-09-06 21:28:24', 1, '2026-08-18 23:51:09', '2026-09-06 23:10:30'),
 (17, 28, 'أحمد حسين', NULL, NULL, '8545567865', 'ahmed@gmail.com', NULL, 4, 'EMP-0028', NULL, '2026-08-14', 'موظف العلاقات العامة والإعلام', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-09-06 21:31:44'),
 (18, 4, 'محاسب (موظف)', NULL, NULL, '0123456789', 'accountant@ahlelkheir.org', NULL, 6, 'EMP-0004', NULL, '2026-08-08', 'محاسب', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-09-06 21:31:44'),
-(19, 17, 'acc1', NULL, NULL, '0945786321', 'acc1@gmail.com', NULL, 6, 'EMP-0017', NULL, '2026-08-13', 'محاسب', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-09-06 21:31:44'),
-(20, 32, 'مدير الموارد البشرية', NULL, NULL, '00112233445566', 'hr@ahlelkheir.org', NULL, 1, 'EMP-0032', NULL, '2026-08-18', 'مدير الموارد البشرية', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-09-06 21:31:44'),
+(19, 17, 'acc1', NULL, 'male', '0945786321', 'acc1@gmail.com', NULL, 6, 'EMP-0017', NULL, '2026-08-13', 'محاسب', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-10-01 23:23:11'),
+(20, 32, 'مدير الموارد البشرية', NULL, 'male', '00112233445566', 'hr@ahlelkheir.org', NULL, 1, 'EMP-0032', NULL, '2026-08-18', 'مدير الموارد البشرية', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-10-01 23:20:43'),
 (21, NULL, 'HR Salary Test', '2000-01-01', 'male', '', '', '', 3, 'EMP-0033', '', '2026-09-07', 'HR Test', 'full_time', 'remote', 7000.00, '', NULL, 'active', 1, '2026-09-07 09:07:51', 32, '2026-09-07 09:07:51', '2026-09-07 16:15:18'),
-(22, 34, 'project supervisor', NULL, 'male', '987654321', 'gps@gmail.com', NULL, 8, 'EMP-0034', NULL, '2026-08-28', 'مشرف مشروع', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-09-27 17:37:12', 1, '2026-09-27 17:37:12', '2026-09-27 17:37:12');
+(22, 34, 'project supervisor', NULL, 'male', '987654321', 'gps@gmail.com', NULL, 8, 'EMP-0034', NULL, '2026-08-28', 'مشرف مشروع', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-09-27 17:37:12', 1, '2026-09-27 17:37:12', '2026-09-27 17:37:12'),
+(23, 33, 'projects manager', NULL, 'male', '00012344456678', 'pm@gmail.com', NULL, 1, 'EMP-0035', NULL, '2026-10-01', 'موظف', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-10-01 22:28:50', 1, '2026-10-01 22:28:50', '2026-10-01 22:28:50'),
+(26, 39, 'حمد محمد التجريبي', NULL, 'male', '0123456789', 'ah@test.com', NULL, 8, 'EMP-0036', NULL, '2026-10-01', 'موظف', 'full_time', 'onsite', 0.00, NULL, NULL, 'active', 1, '2026-10-01 22:46:02', 32, '2026-10-01 23:46:02', '2026-10-01 23:46:02'),
+(27, 40, 'حمد أحمد اختبار كلمة المرور', NULL, 'male', '01123456789', 'test.password01@example.com', NULL, 8, 'EMP-0037', NULL, '2026-10-01', 'موظف', 'full_time', 'onsite', 0.00, NULL, NULL, 'active', 1, '2026-10-01 23:30:29', 32, '2026-10-02 00:30:29', '2026-10-02 00:30:29');
 
 -- --------------------------------------------------------
 
@@ -8716,7 +8742,9 @@ INSERT INTO `hr_employee_salary_history` (`id`, `employee_id`, `contract_id`, `e
 (32, 16, 16, '2026-09-06', '2026-09-30', 5000.00, 'SDG', 'monthly', 'initial', NULL, 32, '2026-09-06 20:10:30'),
 (33, 16, 16, '2026-10-01', NULL, 6000.00, 'SDG', 'monthly', 'initial', NULL, 32, '2026-09-07 03:19:22'),
 (34, 21, 22, '2026-09-07', NULL, 7000.00, 'SDG', 'monthly', 'contract_change', 'تم إنشاء سجل الراتب من عقد جديد', 32, '2026-09-07 06:07:51'),
-(35, 22, NULL, '2026-08-28', NULL, 0.00, 'SDG', 'monthly', 'initial', 'Initial salary history created from employee record', NULL, '2026-09-27 14:37:12');
+(35, 22, NULL, '2026-08-28', NULL, 0.00, 'SDG', 'monthly', 'initial', 'Initial salary history created from employee record', NULL, '2026-09-27 14:37:12'),
+(38, 26, NULL, '2026-10-01', NULL, 0.00, 'SDG', 'monthly', 'initial', 'Synchronized from employee record', NULL, '2026-10-01 20:46:02'),
+(39, 27, NULL, '2026-10-01', NULL, 0.00, 'SDG', 'monthly', 'initial', 'Synchronized from employee record', NULL, '2026-10-01 21:30:29');
 
 -- --------------------------------------------------------
 
@@ -8770,7 +8798,9 @@ INSERT INTO `hr_employee_state_history` (`id`, `employee_id`, `employment_state_
 (39, 4, 3, '2026-09-07 07:43:36', '2026-09-07 07:43:57', 'Employee temporarily suspended', 32, '2026-09-07 05:43:36'),
 (40, 4, 5, '2026-09-07 07:43:57', NULL, 'Employment state changed from employee edit', 32, '2026-09-07 05:43:57'),
 (41, 21, 1, '2026-09-07 09:07:51', NULL, 'Initial employee creation', 32, '2026-09-07 06:07:51'),
-(42, 22, 1, '2026-09-27 17:37:12', NULL, 'Initial employee creation', 1, '2026-09-27 14:37:12');
+(42, 22, 1, '2026-09-27 17:37:12', NULL, 'Initial employee creation', 1, '2026-09-27 14:37:12'),
+(43, 26, 1, '2026-10-01 22:46:02', NULL, 'Initial employee profile provisioned with user account', 32, '2026-10-01 20:46:02'),
+(44, 27, 1, '2026-10-01 23:30:29', NULL, 'Initial employee profile provisioned with user account', 32, '2026-10-01 21:30:29');
 
 -- --------------------------------------------------------
 
@@ -9892,7 +9922,7 @@ INSERT INTO `notifications` (`id`, `recipient_user_id`, `type`, `title`, `body`,
 (96, 29, 'info', 'طلب سلفة على الراتب بانتظار المراجعة', 'طلب السلفة «SAR-2026-00006» للموظف «ميادة الحبر» بانتظار مراجعة المدير المالي.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_fm_review.php?id=6', 1, '2026-09-28 17:26:22'),
 (97, 20, 'info', 'تم رفض طلب السلفة', 'تم رفض طلب السلفة «SAR-2026-00006». سبب الرفض: اختبار رفض طلب غير متوافق مع قاعدة بدء السداد', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_request.php', 1, '2026-09-28 17:28:45'),
 (98, 19, 'info', 'تم صرف السلفة', 'تم صرف السلفة «SAR-2026-00001» بمبلغ 10,000.00 ج.س. الرصيد القائم للسلفة: 10,000.00 ج.س.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_request.php', 1, '2026-09-28 19:06:24'),
-(99, 19, 'info', 'تم رفض وإغلاق طلب السلفة', 'تم رفض وإغلاق طلب السلفة «SAR-2026-00005». سبب الرفض: تم رفض طلب السلفة وإغلاقه وإبلاغ الموظف.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_request.php', 0, '2026-09-29 07:36:57'),
+(99, 19, 'info', 'تم رفض وإغلاق طلب السلفة', 'تم رفض وإغلاق طلب السلفة «SAR-2026-00005». سبب الرفض: تم رفض طلب السلفة وإغلاقه وإبلاغ الموظف.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_request.php', 1, '2026-09-29 07:36:57'),
 (100, 29, 'info', 'طلب سلفة على الراتب بانتظار المراجعة', 'طلب السلفة «SAR-2026-00007» للموظف «هديل عثمان» بانتظار مراجعة المدير المالي.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_fm_review.php?id=7', 1, '2026-09-29 08:09:37'),
 (101, 21, 'info', 'تم اعتماد طلب السلفة', 'تم اعتماد طلب السلفة «SAR-2026-00007».', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_request.php', 1, '2026-09-29 08:14:56'),
 (102, 21, 'info', 'تم صرف السلفة', 'تم صرف السلفة «SAR-2026-00007» بمبلغ 50,000.00 ج.س. الرصيد القائم للسلفة: 50,000.00 ج.س.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_request.php', 1, '2026-09-29 08:19:55'),
@@ -9905,18 +9935,20 @@ INSERT INTO `notifications` (`id`, `recipient_user_id`, `type`, `title`, `body`,
 (109, 32, 'info', 'تم رفض وإغلاق طلب السلفة', 'تم رفض وإغلاق طلب السلفة «SAR-2026-00010». سبب الرفض: test', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_request.php', 1, '2026-09-29 12:06:06'),
 (110, 29, 'info', 'طلب سلفة على الراتب بانتظار المراجعة', 'طلب السلفة «SAR-2026-00011» للموظف «مدير الموارد البشرية» بانتظار مراجعة المدير المالي.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_processing.php?id=11', 1, '2026-09-29 16:03:20'),
 (111, 32, 'info', 'تم اعتماد طلب السلفة', 'تم اعتماد طلب السلفة «SAR-2026-00011». بعد تخصيص شروط الطلب من قبل المدير المالي.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_request.php', 1, '2026-09-29 16:05:07'),
-(112, 32, 'info', 'تم صرف السلفة', 'تم صرف السلفة «SAR-2026-00011» بمبلغ 30,000.00 ج.س. الرصيد القائم للسلفة: 30,000.00 ج.س.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_request.php', 0, '2026-09-29 16:06:02'),
+(112, 32, 'info', 'تم صرف السلفة', 'تم صرف السلفة «SAR-2026-00011» بمبلغ 30,000.00 ج.س. الرصيد القائم للسلفة: 30,000.00 ج.س.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_request.php', 1, '2026-09-29 16:06:02'),
 (113, 29, 'info', 'طلب سلفة على الراتب بانتظار المراجعة', 'طلب السلفة «SAR-2026-00012» للموظف «المدير العام» بانتظار مراجعة المدير المالي.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_processing.php?id=18', 1, '2026-09-30 20:46:14'),
 (114, 2, 'info', 'تم صرف السلفة', 'تم صرف السلفة «SAR-2026-00012» بمبلغ 10,000.00 ج.س. الرصيد القائم للسلفة: 10,000.00 ج.س.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_request.php', 1, '2026-09-30 21:10:00'),
 (115, 2, 'info', 'تم تسجيل سداد للسلفة', 'تم تسجيل سداد مباشر بقيمة 4,000.00 ج.س للسلفة «SAR-2026-00012». الرصيد القائم: 6,000.00 ج.س.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_request.php', 1, '2026-10-01 07:14:27'),
 (116, 2, 'info', 'تمت تسوية السلفة', 'تم تسجيل سداد مباشر بقيمة 6,000.00 ج.س وإغلاق رصيد السلفة «SAR-2026-00012».', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_request.php', 1, '2026-10-01 07:16:31'),
 (117, 29, 'info', 'طلب سلفة على الراتب بانتظار المراجعة', 'طلب السلفة «SAR-2026-00019» للموظف «المدير العام» بانتظار مراجعة المدير المالي.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_processing.php?id=19', 1, '2026-10-01 07:41:01'),
 (118, 2, 'info', 'تم صرف السلفة', 'تم صرف السلفة «SAR-2026-00019» بمبلغ 20,000.00 ج.س. الرصيد القائم للسلفة: 20,000.00 ج.س.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_request.php', 1, '2026-10-01 07:59:33'),
-(119, 2, 'info', 'تم تسجيل سداد للسلفة', 'تم تسجيل سداد مباشر بقيمة 10,000.00 ج.س للسلفة «SAR-2026-00019». الرصيد القائم: 10,000.00 ج.س.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_request.php', 0, '2026-10-01 08:01:16'),
-(120, 2, 'info', 'تمت تسوية السلفة', 'تم تسجيل سداد مباشر بقيمة 10,000.00 ج.س وإغلاق رصيد السلفة «SAR-2026-00019».', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_request.php', 0, '2026-10-01 08:09:26'),
+(119, 2, 'info', 'تم تسجيل سداد للسلفة', 'تم تسجيل سداد مباشر بقيمة 10,000.00 ج.س للسلفة «SAR-2026-00019». الرصيد القائم: 10,000.00 ج.س.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_request.php', 1, '2026-10-01 08:01:16'),
+(120, 2, 'info', 'تمت تسوية السلفة', 'تم تسجيل سداد مباشر بقيمة 10,000.00 ج.س وإغلاق رصيد السلفة «SAR-2026-00019».', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_request.php', 1, '2026-10-01 08:09:26'),
 (121, 29, 'info', 'مشروع بانتظار المراجعة المالية', 'المشروع «PH5 Accounting Reconciliation Test» (PRJ-0011) بانتظار مراجعة المدير المالي.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=11', 1, '2026-10-01 10:41:14'),
-(122, 2, 'info', 'مشروع بانتظار الاعتماد النهائي', 'المشروع «PH5 Accounting Reconciliation Test» (PRJ-0011) تم اعتماده مالياً وبانتظار اعتماد المدير العام.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=11', 0, '2026-10-01 10:52:31'),
-(123, 3, 'info', 'مشروع بانتظار الاعتماد النهائي', 'المشروع «PH5 Accounting Reconciliation Test» (PRJ-0011) تم اعتماده مالياً وبانتظار اعتماد المدير العام.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=11', 0, '2026-10-01 10:52:31');
+(122, 2, 'info', 'مشروع بانتظار الاعتماد النهائي', 'المشروع «PH5 Accounting Reconciliation Test» (PRJ-0011) تم اعتماده مالياً وبانتظار اعتماد المدير العام.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=11', 1, '2026-10-01 10:52:31'),
+(123, 3, 'info', 'مشروع بانتظار الاعتماد النهائي', 'المشروع «PH5 Accounting Reconciliation Test» (PRJ-0011) تم اعتماده مالياً وبانتظار اعتماد المدير العام.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=11', 0, '2026-10-01 10:52:31'),
+(124, 29, 'info', 'المشروع معتمد نهائياً — بانتظار تنفيذ الصرف', 'المشروع «PH5 Accounting Reconciliation Test» (PRJ-0011) تم اعتماده نهائياً من الإدارة التنفيذية. يمكن للمدير المالي الآن تنفيذ إجراءات الصرف وإثبات الدفع.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=11', 1, '2026-10-01 17:55:44'),
+(125, 33, 'info', 'تم اعتماد المشروع نهائياً', 'المشروع «PH5 Accounting Reconciliation Test» (PRJ-0011) تم اعتماده نهائياً ويمكن الانتقال إلى إجراءات التنفيذ بعد استكمال الصرف.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=11', 1, '2026-10-01 17:55:44');
 
 -- --------------------------------------------------------
 
@@ -10151,7 +10183,7 @@ INSERT INTO `project_approval` (`project_id`, `approval_status`, `submitted_by`,
 (8, 'approved', 33, '2026-09-24 09:39:04', 2, '2026-09-24 09:48:06', 29, '2026-09-24 09:43:51', NULL, NULL, NULL, NULL, '2026-09-24 09:48:06'),
 (9, 'rejected', 1, '2026-09-24 22:59:38', NULL, NULL, 29, '2026-09-25 09:20:50', NULL, NULL, 'test', NULL, '2026-09-25 09:20:50'),
 (10, 'approved', 33, '2026-09-25 12:21:07', 2, '2026-09-25 13:10:25', 29, '2026-09-25 13:07:30', NULL, NULL, NULL, NULL, '2026-09-25 13:10:25'),
-(11, 'fm_approved', 33, '2026-10-01 10:41:14', NULL, NULL, 29, '2026-10-01 10:52:31', 29, '2026-10-01 16:31:29', NULL, NULL, '2026-10-01 16:31:29');
+(11, 'approved', 33, '2026-10-01 10:41:14', 2, '2026-10-01 17:55:44', 29, '2026-10-01 10:52:31', 29, '2026-10-01 16:31:29', NULL, NULL, '2026-10-01 17:55:44');
 
 -- --------------------------------------------------------
 
@@ -28700,16 +28732,16 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `role_id`, `username`, `password_hash`, `full_name`, `email`, `phone`, `is_active`, `supervisor_status`, `password_change_required`, `last_login_at`, `created_by`, `created_at`, `updated_at`, `legacy_status`, `avatar_path`, `address`, `birth_date`, `gender`, `department_id`, `manager_id`, `theme_preference`, `language_preference`, `email_notifications`, `push_notifications`, `email_newsletter`) VALUES
-(1, 1, 'sudo', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'منير علي طه صالح', 'sudo@ahlelkheir.org', '0966616614', 1, '', 0, '2026-09-30 09:16:45', NULL, '2026-08-02 16:49:35', '2026-09-30 09:16:45', 'active', 'storage/avatars/user_1_1789753554.png', NULL, NULL, 'male', 1, 1, 'auto', 'ar', 1, 1, 1),
-(2, 2, 'gm', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'المدير العام', 'gm@ahlelkheir.org', NULL, 1, '', 0, '2026-10-01 07:13:47', NULL, '2026-08-02 16:49:35', '2026-10-01 07:13:47', 'active', 'storage/avatars/user_2_1787805764.png', NULL, NULL, NULL, 1, NULL, 'light', 'ar', 1, 1, 1),
+(1, 1, 'sudo', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'منير علي طه صالح', 'sudo@ahlelkheir.org', '0966616614', 1, '', 0, '2026-10-02 00:51:19', NULL, '2026-08-02 16:49:35', '2026-10-02 00:51:19', 'active', 'storage/avatars/user_1_1789753554.png', NULL, NULL, 'male', 1, 1, 'auto', 'ar', 1, 1, 1),
+(2, 2, 'gm', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'المدير العام', 'gm@ahlelkheir.org', NULL, 1, '', 0, '2026-10-01 17:19:40', NULL, '2026-08-02 16:49:35', '2026-10-01 17:19:40', 'active', 'storage/avatars/user_2_1787805764.png', NULL, NULL, NULL, 1, NULL, 'light', 'ar', 1, 1, 1),
 (3, 3, 'vgm', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'لمياء علي طه صالح', 'vgm@ahlelkheir.org', NULL, 1, '', 0, '2026-09-29 09:00:10', NULL, '2026-08-02 16:49:35', '2026-09-29 09:00:10', 'active', 'storage/avatars/user_3_1787556761.png', NULL, NULL, 'female', 1, 2, 'light', 'ar', 1, 1, 1),
 (4, 10, 'accountant', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'محاسب (موظف)', 'accountant@ahlelkheir.org', '0123456789', 1, '', 0, '2026-08-17 14:11:48', NULL, '2026-08-08 12:33:29', '2026-08-17 14:30:38', 'active', NULL, NULL, NULL, NULL, 6, 29, 'light', 'ar', 1, 1, 1),
 (14, 4, 'Mad_Max', '$2y$10$2Pps4jCppxKBhdFrBRi94.FmCAYDqhUWd.vOLH4CnCIZDWbWrLhTC', 'أحمد محمد', 'moneerali2000@gmail.com', '0912345100', 0, 'archived', 0, '2026-08-16 09:20:38', 3, '2026-08-09 10:41:43', '2026-09-04 08:02:07', 'active', NULL, NULL, NULL, NULL, NULL, NULL, 'light', 'ar', 1, 1, 1),
 (15, 4, 'medo', '$2y$10$8XL6WcxWHuHZ2MB0XKlWReI28/2VUY0P9TJNWIM1chyov7mi9vZGy', 'مديحه عبد الماجد', 'madiha@example.com', '096664568', 0, 'archived', 0, NULL, 3, '2026-08-10 10:31:56', '2026-09-04 08:01:57', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'light', 'ar', 1, 1, 1),
 (16, 7, 'nany1', '$2y$10$bOs5FR0MQDIWcay4vmcoc.wkTOTt7mU2umWJYHn1AFkAXclPGcZWO', 'nany1', 'nany1@gmail.com', '094449785', 1, '', 0, '2026-09-21 10:40:51', 1, '2026-08-13 18:03:28', '2026-09-21 10:40:51', NULL, 'storage/avatars/user_16_1787805870.png', NULL, NULL, 'female', 2, 3, 'light', 'ar', 1, 1, 1),
-(17, 10, 'acc1', '$2y$10$n6sTBlpffNdZOaN48KkAx.zqkDnrikirhM.HWVBH81qG255EuUqKS', 'acc1', 'acc1@gmail.com', '0945786321', 1, '', 0, '2026-09-30 20:50:39', 1, '2026-08-13 19:47:47', '2026-09-30 20:50:39', NULL, NULL, NULL, NULL, 'male', 6, 4, 'light', 'ar', 1, 1, 1),
+(17, 10, 'acc1', '$2y$10$n6sTBlpffNdZOaN48KkAx.zqkDnrikirhM.HWVBH81qG255EuUqKS', 'acc1', 'acc1@gmail.com', '0945786321', 1, '', 0, '2026-09-30 20:50:39', 1, '2026-08-13 19:47:47', '2026-10-01 23:23:11', NULL, NULL, NULL, NULL, 'male', 6, 29, 'light', 'ar', 1, 1, 1),
 (18, 8, 'ro1', '$2y$10$Rx63s7Lt4lh4IkJwbUKigOAmp0MzhzByWauPrF1HptcVmr4V/MpHq', 'أحمد حسين عبدالكريم', 'ro@gmail.com', '0123456789', 1, '', 0, '2026-09-20 08:43:19', 1, '2026-08-13 20:23:47', '2026-09-20 08:43:19', NULL, 'storage/avatars/user_18_1789729126.jpg', NULL, NULL, NULL, 3, 3, 'light', 'ar', 1, 1, 1),
-(19, 4, 'sv1', '$2y$10$1orOJuoh50H0m8Ow4eKIMOZC18pCFV6XILrjtEZvInwH/M/yGCDUS', 'فاطمه سليمان', 'fatima@gmail.com', '0999999999999', 1, 'active', 0, '2026-09-28 19:17:45', 3, '2026-08-14 08:10:49', '2026-09-28 19:17:45', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
+(19, 4, 'sv1', '$2y$10$1orOJuoh50H0m8Ow4eKIMOZC18pCFV6XILrjtEZvInwH/M/yGCDUS', 'فاطمه سليمان', 'fatima@gmail.com', '0999999999999', 1, 'active', 0, '2026-10-02 08:26:13', 3, '2026-08-14 08:10:49', '2026-10-02 08:26:13', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
 (20, 4, 'sv2', '$2y$10$GlgbXKPFv/Tqz/UYdBF2kOgV.Wwpe6yBpfmzcUSOKOocQuLulV2IW', 'ميادة الحبر', 'mayadah@gmail.com', NULL, 1, 'active', 0, '2026-09-28 17:25:15', 3, '2026-08-14 08:12:16', '2026-09-28 17:25:15', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
 (21, 4, 'sv3', '$2y$10$hi/o4qq4Byzdwq96wvXYPe3JW4lPlbIAwRH.JFjLtLXa7DEAj06ZG', 'هديل عثمان', 'hadeel@gmail.com', '03333333333333', 1, 'active', 0, '2026-09-29 08:07:42', 3, '2026-08-14 08:31:52', '2026-09-29 08:07:42', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
 (22, 4, 'sv4', '$2y$10$aw1SmFzeeI.xEnSbxWPwEOn/3UahrD72EBqhPuDMJ5bPcdtp40Ppy', 'ميساء سليمان', 'mysa@gmail.com', '26498879658', 1, 'active', 0, '2026-08-16 09:14:21', 3, '2026-08-14 09:13:31', '2026-09-03 15:28:42', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
@@ -28719,11 +28751,13 @@ INSERT INTO `users` (`id`, `role_id`, `username`, `password_hash`, `full_name`, 
 (27, 4, 'sv9', '$2y$10$oBV.8O1UW/yiwOAcPMxbqeH8Xh/PJhNtq.tIkyOqh55v1v7GzjSJW', 'هناء خلف الله', 'hanah@gmail.com', '78999456789', 1, 'active', 0, NULL, 3, '2026-08-14 09:31:19', '2026-09-03 15:28:42', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
 (28, 9, 'sm1', '$2y$10$gtVZcFBfL2yMhNXOPpkr5e7up/SiAnE7KfjJ8tq4JFocePuGjcr0C', 'أحمد حسين', 'ahmed@gmail.com', '8545567865', 1, '', 0, '2026-09-28 16:38:49', 1, '2026-08-14 13:06:45', '2026-09-28 16:38:49', NULL, NULL, NULL, NULL, 'male', 4, 3, 'light', 'ar', 1, 1, 1),
 (29, 6, 'fm', '$2y$10$K2.yA1kpqLaGWrqH/QOQ2uXv0PJhvWTMC55tW5kSkU6u5iaz6JmVW', 'المدير المالي', 'fm@ahlelkheir.org', NULL, 1, '', 0, '2026-10-01 08:28:01', 1, '2026-08-17 14:26:40', '2026-10-01 08:28:01', NULL, 'storage/avatars/user_29_1787555658.jpg', NULL, NULL, 'أنثى', 1, 2, 'light', 'ar', 1, 1, 1),
-(32, 11, 'hrh', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'مدير الموارد البشرية', 'hr@ahlelkheir.org', '00112233445566', 1, '', 0, '2026-09-29 12:03:09', NULL, '2026-08-18 21:49:04', '2026-09-29 12:03:09', NULL, 'storage/avatars/user_32_1788630391.png', NULL, NULL, NULL, 1, NULL, 'light', 'ar', 1, 1, 1),
-(33, 13, 'gpm', '$2y$10$ftQaFFCk4DF1UrdPlpGtd.OVR.2pyxPxKlIcZ7KhRxa7VMP/FXC/G', 'projects manager', 'pm@gmail.com', '00012344456678', 1, '', 0, '2026-10-01 10:36:57', 1, '2026-08-28 18:33:31', '2026-10-01 10:36:57', NULL, 'storage/avatars/user_33_1787943667.jpg', NULL, NULL, 'male', 1, 2, 'light', 'ar', 1, 1, 1),
-(34, 14, 'ps1', '$2y$10$y6GVpoe/hF9GxE8zyezAPORKNgBn5n65Ct.tUHI0r6lnkyHEdkrZi', 'project supervisor', 'gps@gmail.com', '987654321', 1, '', 0, '2026-09-27 16:25:11', 1, '2026-08-28 18:35:16', '2026-09-29 12:02:14', NULL, NULL, NULL, NULL, 'male', 8, NULL, 'light', 'ar', 1, 1, 1),
+(32, 11, 'hrh', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'مدير الموارد البشرية', 'hr@ahlelkheir.org', '00112233445566', 1, '', 0, '2026-10-01 22:36:34', NULL, '2026-08-18 21:49:04', '2026-10-01 23:20:43', NULL, 'storage/avatars/user_32_1788630391.png', NULL, NULL, 'male', 1, 2, 'light', 'ar', 1, 1, 1),
+(33, 13, 'gpm', '$2y$10$ftQaFFCk4DF1UrdPlpGtd.OVR.2pyxPxKlIcZ7KhRxa7VMP/FXC/G', 'projects manager', 'pm@gmail.com', '00012344456678', 1, '', 0, '2026-10-01 22:30:09', 1, '2026-08-28 18:33:31', '2026-10-01 22:30:09', NULL, 'storage/avatars/user_33_1787943667.jpg', NULL, NULL, 'male', 1, 2, 'light', 'ar', 1, 1, 1),
+(34, 14, 'ps1', '$2y$10$y6GVpoe/hF9GxE8zyezAPORKNgBn5n65Ct.tUHI0r6lnkyHEdkrZi', 'project supervisor', 'gps@gmail.com', '987654321', 1, '', 0, '2026-10-01 22:34:40', 1, '2026-08-28 18:35:16', '2026-10-01 23:21:11', NULL, NULL, NULL, NULL, 'male', 8, 33, 'light', 'ar', 1, 1, 1),
 (35, 10, 'audit_acc2_20260911', '$2y$12$kxUoLJ66pmSWJRDVnkmtUuN5XI6ZhMb41RpeV2cIfN8kUA7.2EWl.', 'ACCOUNTING AUDIT TEMP ACCOUNTANT', NULL, NULL, 1, 'active', 0, '2026-09-11 09:47:45', NULL, '2026-09-11 09:47:04', '2026-09-11 09:47:45', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'light', 'ar', 1, 1, 1),
-(36, 7, 'audit_nany2_20260911', '$2y$12$kxUoLJ66pmSWJRDVnkmtUuN5XI6ZhMb41RpeV2cIfN8kUA7.2EWl.', 'ACCOUNTING AUDIT TEMP NANNY', NULL, NULL, 1, 'active', 0, NULL, NULL, '2026-09-11 09:47:04', '2026-09-11 09:47:04', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'light', 'ar', 1, 1, 1);
+(36, 7, 'audit_nany2_20260911', '$2y$12$kxUoLJ66pmSWJRDVnkmtUuN5XI6ZhMb41RpeV2cIfN8kUA7.2EWl.', 'ACCOUNTING AUDIT TEMP NANNY', NULL, NULL, 1, 'active', 0, NULL, NULL, '2026-09-11 09:47:04', '2026-09-11 09:47:04', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'light', 'ar', 1, 1, 1),
+(39, 14, 'test.employee01', '$2y$10$nhtO7EaE.NqJ7WSJRo.0weOGfDqJgYOBjvMqiP8LUKdHz0e2n3JSW', 'حمد محمد التجريبي', 'ah@test.com', '0123456789', 1, 'active', 0, NULL, 32, '2026-10-01 23:46:02', '2026-10-01 23:46:02', NULL, NULL, NULL, NULL, 'male', 8, 33, 'light', 'ar', 1, 1, 1),
+(40, 14, 'test.password01', '$2y$10$q1lGJ5aA7sqciSOYIorniOSeoUYcBBzxdHLw/q0EzQx.CGWUrqW/e', 'حمد أحمد اختبار كلمة المرور', 'test.password01@example.com', '01123456789', 1, 'active', 0, '2026-10-02 00:37:44', 32, '2026-10-02 00:30:29', '2026-10-02 00:37:44', NULL, NULL, NULL, NULL, 'male', 8, 33, 'light', 'ar', 1, 1, 1);
 
 -- --------------------------------------------------------
 
@@ -29794,7 +29828,7 @@ ALTER TABLE `attendance`
 -- AUTO_INCREMENT for table `audit_log`
 --
 ALTER TABLE `audit_log`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2109;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2132;
 
 --
 -- AUTO_INCREMENT for table `contracts`
@@ -29818,7 +29852,7 @@ ALTER TABLE `disbursement_items`
 -- AUTO_INCREMENT for table `employees`
 --
 ALTER TABLE `employees`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
 -- AUTO_INCREMENT for table `families`
@@ -29890,13 +29924,13 @@ ALTER TABLE `hr_employee_contracts`
 -- AUTO_INCREMENT for table `hr_employee_salary_history`
 --
 ALTER TABLE `hr_employee_salary_history`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
 
 --
 -- AUTO_INCREMENT for table `hr_employee_state_history`
 --
 ALTER TABLE `hr_employee_state_history`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=43;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=45;
 
 --
 -- AUTO_INCREMENT for table `hr_employment_states`
@@ -30034,7 +30068,7 @@ ALTER TABLE `nanny_group_assignments`
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=124;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=126;
 
 --
 -- AUTO_INCREMENT for table `orphan_documents`
@@ -30280,7 +30314,7 @@ ALTER TABLE `transactions`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
 
 --
 -- AUTO_INCREMENT for table `user_sessions`
