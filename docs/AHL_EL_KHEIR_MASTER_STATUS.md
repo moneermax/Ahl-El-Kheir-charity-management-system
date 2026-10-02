@@ -1472,3 +1472,7 @@ Code checkpoints: 2ec62923ad554e5feb7c2bd261d3267cbdf9ca5e; ad097b53c15d0d2b3d2f
 Status: STATICALLY CORRECTED — RUNTIME VERIFICATION STILL REQUIRED.
 
 Required next runtime gate: on isolated project PRJ-0012, verify GM approval alone does not expose the project to PM; complete all funding evidence; perform FM final confirmation; verify the PM notification and dashboard/detail visibility appear only then; verify no duplicate accounting release was created; then continue the remaining Projects Phase 5 reconciliation/closure tests.
+
+
+## 2026-10-02 — Projects Phase 5 runtime gate: PS notification timing correction
+The controlled PRJ-0012 runtime gate exposed one remaining handoff-timing defect after the successful FM final-confirmation path: the assigned Project Supervisor was being notified at FM final funding-document confirmation even though the project remained `planned` and had not yet been launched by the Projects Manager. Repository review confirmed that `modules/projects/view.php` already contains the correct explicit PM `launch_project` gate and PS notification path. The fix removes the premature PS notification from `modules/projects/view_fm.php` and changes the FM success message to identify the PM-only handoff. Resulting code commit: `adecaf6c1e4b12017143d7a2f19bf8354ec1788d`. The intended sequence is now: FM final confirmation → PM notification/visibility → PM explicitly launches project → PS execution notification.
