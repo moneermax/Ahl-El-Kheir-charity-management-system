@@ -329,7 +329,7 @@ if (!akp_can_edit_section('operations', $id) || $closed) throw new RuntimeExcept
 if (!in_array($newStatus, ['planned','completed','under_review','cancelled'], true)) throw new RuntimeException('الحالة غير صالحة.');
 if ($newStatus === 'active') throw new RuntimeException('الحالة قيد التنفيذ لا تُغيّر من هذا المسار؛ إطلاق المشروع يتم حصراً من إجراء إطلاق المشروع لمدير المشاريع.');
 $oldStatus = (string)($project['lifecycle_status'] ?: $project['status']);
-$legacyStatus = in_array($newStatus, ['planned','active','completed','cancelled'], true) ? $newStatus : 'completed';
+$legacyStatus = $newStatus === 'under_review' ? 'planned' : $newStatus;
 dbExecute('UPDATE other_projects SET status = ?, updated_by = ? WHERE id = ?', [$legacyStatus, akp_user_id(), $id]);
 dbExecute('UPDATE project_lifecycle SET lifecycle_status = ? WHERE project_id = ?', [$newStatus, $id]);
 dbExecute('INSERT INTO project_status_history (project_id, old_status, new_status, reason, changed_by) VALUES (?,?,?,?,?)', [$id, $oldStatus, $newStatus, akp_post_value('reason') ?: null, akp_user_id()]);
