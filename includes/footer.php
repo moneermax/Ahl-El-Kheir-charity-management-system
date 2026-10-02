@@ -66,8 +66,8 @@
 @media (min-width: 768px) {
     .content form :is(.row > [class*="col-"], .grid > div, .mb-3, .mb-4):has(> label + :is(input, select, textarea, .form-control, .form-select)) {
         display: grid !important;
-        grid-template-columns: minmax(120px, 36%) minmax(0, 1fr) !important;
-        column-gap: 12px !important;
+        grid-template-columns: minmax(105px, max-content) minmax(0, 1fr) !important;
+        column-gap: 8px !important;
         align-items: center !important;
     }
 
