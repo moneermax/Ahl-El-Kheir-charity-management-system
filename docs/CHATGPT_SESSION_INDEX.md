@@ -1528,3 +1528,29 @@ PM submission runtime gate passed. Current verified state: approval `submitted`;
 **System-wide UI checkpoint:** global form label/field sizing was redesigned centrally in `includes/footer.php` after reviewing the actual Bootstrap/custom form structures. Commit **7856da749fc23e06fce9c7ecedfa5e92f061fd8f**. User runtime feedback: much better for most pages, with some remaining page-level imperfections.
 
 **Next Projects action:** resume Phase 5 at FM budget approval, then verify funding allocation and the single canonical accounting release before continuing to GM approval, rejection/correction, final confirmation, PM launch, and PS handoff gates.
+
+
+## 2026-10-02 — Projects Phase 5 / system-wide form-layout checkpoint
+
+### Projects Phase 5 current state
+- Controlled fixture **PRJ-0015 — PH5 Full Accounting Reconciliation Test** is preserved and currently remains at the PM-submission gate: **approval = submitted**, lifecycle/display = **planned**.
+- PM submission runtime gate **PASSED**.
+- FM receives the pending-financial-review notification and can open the FM review page.
+- PM submission created **no funding allocation and no accounting release**.
+- Budget remains **300,000.00 SDG** across 3 lines; approved funding and posted expenses remain **0.00**.
+- Phase 5 accounting runtime testing is intentionally paused here until the immediate project fix requested by the user is completed and runtime-verified.
+- Do **not** recreate or replace PRJ-0015 and do not proceed to FM budget approval/funding allocation until the pause is lifted.
+- Previously completed numeric-input wheel and project-save-flow gates remain closed; do not repeat those investigations unless a genuine regression appears.
+- The established Phase 5 accounting sequence remains unchanged: FM approval → one release per allocation → GM approval without a second release → GM rejection reversal/atomic return to FM → FM re-approval → GM approval → FM pre-final correction/reversal → FM re-approval → GM approval → FM final confirmation/PM handoff → PM launch → PS notification only after launch.
+- Phase 5 is **not closed** until the complete local XAMPP/MariaDB runtime sequence passes.
+
+### System-wide form UI checkpoint
+- The global form-layout issue was reviewed structurally across Bootstrap column forms, custom grids, and dense repeatable rows rather than continuing page-by-page sizing adjustments.
+- The centralized solution now uses the actual field-container width: wide containers use a content-sized label with a small gap and flexible field; narrow containers remain stacked so labels are not stuffed into cramped columns; dense repeatable rows are protected from the inline-label rule.
+- Field widths are now differentiated by input type instead of forcing every field to consume the same excessive width.
+- Implemented centrally in `includes/footer.php`.
+- User runtime feedback: **much better for most pages**; this UI milestone is accepted for continuation, with any remaining page-specific issues to be handled only when concrete evidence is provided.
+- Commit: `7856da749fc23e06fce9c7ecedfa5e92f061fd8f`.
+
+### Continuation rule
+Start the next session by reading the four master documents and the current Projects Phase 5 checkpoint. Do not restart earlier audits or recreate historical/controlled fixtures.
