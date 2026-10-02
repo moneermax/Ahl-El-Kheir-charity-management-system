@@ -827,3 +827,22 @@ Implementation: modules/projects/view.php.
 - The project view now preserves the user's scroll position across its normal POST → redirect → GET save cycle using tab-scoped `sessionStorage`, so saving an operational record keeps the user at the same area of the page.
 - The previous project-view JavaScript that searched for success alerts and called `scrollIntoView()` was removed; success feedback is no longer coupled to section scrolling.
 - No database/schema changes, migrations, triggers, views, stored procedures, accounting behavior, or workflow changes were introduced.
+
+
+## 2026-10-02 — Phase 5 PM submission gate and current pause
+
+Controlled fixture **PRJ-0015 — PH5 Full Accounting Reconciliation Test** passed the PM submission gate in local runtime.
+
+Verified: approval **submitted / مرسل للمراجعة**; lifecycle/display **planned / مخطط**; budget **300,000.00 SDG** across 3 lines; approved funding **0.00**; posted expenses **0.00**; FM received the project-review notification and can open the FM review page; FM funding-allocation tools remain gated until budget approval; PM submission created **no funding allocation and no accounting release**.
+
+The Phase 5 accounting sequence is paused immediately before FM budget approval. Preserve PRJ-0015 in its current submitted/planned state; do not recreate it merely to continue testing.
+
+### System-wide form-layout correction
+A repository-wide source review found that the earlier global form rule was forcing unrelated Bootstrap columns, custom grids, and dense rows into the same label geometry. The shared rule was redesigned centrally in `includes/footer.php` to size labels from the actual field-container width, keep narrow/dense columns stacked, use a small inline gap on sufficiently wide fields, and apply semantic sizing to common field types.
+
+Commit: **7856da749fc23e06fce9c7ecedfa5e92f061fd8f**.
+
+User runtime feedback: the result is **much better for most pages**. Some individual pages may still need refinement later; this is separate from the Phase 5 accounting gate.
+
+### Next Phase 5 gate
+Resume with **FM budget approval for PRJ-0015**, then verify the canonical funding allocation and single accounting-release behavior before continuing the established GM/confirmation/launch sequence.
