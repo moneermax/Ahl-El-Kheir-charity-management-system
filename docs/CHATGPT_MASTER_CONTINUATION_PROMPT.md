@@ -1746,3 +1746,34 @@ Do not mark Phase 5 closed until the full sequence passes in the local XAMPP/Mar
 
 
 Final static consistency correction: shared project status mutation now maps lifecycle-only under_review to planned in the legacy other_projects status mirror. Final code commit before runtime pull: f3cf39c5aafcee876db5be4436a1703ad6040097.
+
+
+## Phase 5 — Second Independent Deep Scan / Remediation — 2026-10-02
+
+A second independent source-level review was performed against the post-`e04b35c` Projects module revision before any new Phase 5 runtime fixture was created.
+
+### Confirmed defects found and remediated
+
+- Project creation is now restricted to the Projects Manager; new projects always begin in `draft` approval.
+- GM/VGM general-data editing is removed from existing-project authorization.
+- Generic Project Supervisor lifecycle changes can no longer set `planned`; PM launch remains the only `planned → active` path.
+- Generic lifecycle mutations are transactionally grouped with legacy-status mirroring and history.
+- Posted execution expenses cannot be edited or deleted by the Project Supervisor.
+- Posted labor-payment records cannot be edited/deleted through the labor helper path.
+- Existing-project form saves now use one transaction across the multi-table update sequence.
+- FM budget approval and funding-batch writes are transactionally protected and lock the approval row against concurrent workflow transitions.
+- GM approval/rejection re-check and lock the approval row inside their transaction.
+- PM launch re-checks approval/lifecycle under lock and verifies the lifecycle update affects exactly one row.
+- FM final funding confirmation records its workflow event transactionally and re-checks the locked approval state, preventing false success and duplicate concurrent confirmations.
+- Funding allocation `journal_entry_id` is synchronized on release and cleared when the release is reversed.
+- Project close/reopen state changes are transactionally grouped with lifecycle/legacy-state/history updates.
+
+### Static post-remediation review
+
+Targeted source checks for the above findings pass on the current `main` revision.
+
+### Runtime status
+
+No XAMPP/MariaDB/browser runtime verification has been claimed. The fresh controlled fixture `PH5 Full Accounting Reconciliation Test` must not be created until local runtime verification is available and the complete Phase 5 runtime sequence is executed.
+
+Historical fixtures PRJ-0011 and PRJ-0012 remain untouched.
