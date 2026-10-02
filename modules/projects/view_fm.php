@@ -185,83 +185,113 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         } elseif ($action === 'fm_confirm_cash_payment') {
             if (akp_role() !== 'financial_manager') throw new RuntimeException('إصدار سند صرف المشروع محصور بالمدير المالي.');
-            if (fm_payment_evidence_finalized($id)) throw new RuntimeException('تم إرسال تأكيد مستندات التمويل النهائي بالفعل.');
-            if ((string)$approval['approval_status'] !== 'approved') throw new RuntimeException('لا يمكن إصدار سند الصرف قبل الاعتماد النهائي من المدير العام.');
-            $paymentId=(int)($_POST['payment_id']??0);
-            $payment=dbFetchOne("SELECT * FROM project_payment_evidence WHERE id=? AND project_id=? AND payment_method='cash'",[$paymentId,$id]);
-            if(!$payment) throw new RuntimeException('سجل صرف النقد المطلوب غير موجود.');
-            if($payment['status']==='documented') throw new RuntimeException('تم إصدار سند الصرف لهذا المبلغ مسبقاً.');
-            dbExecute("UPDATE project_payment_evidence SET status='documented',voucher_confirmed_at=NOW(),documented_by=?,documented_at=NOW() WHERE id=? AND project_id=? AND status='pending'",[akp_user_id(),$paymentId,$id]);
-            akp_audit('DOCUMENT_PROJECT_CASH_PAYMENT','project_payment_evidence',$paymentId,['status'=>'pending'],['status'=>'documented','payment_method'=>'cash']);
+            dbExecute('START TRANSACTION');
+            try {
+                $lockedApproval = dbFetchOne('SELECT approval_status FROM project_approval WHERE project_id=? FOR UPDATE',[$id]);
+                if (!$lockedApproval || (string)$lockedApproval['approval_status'] !== 'approved') throw new RuntimeException('لا يمكن إصدار سند الصرف قبل الاعتماد النهائي من المدير العام.');
+                if (fm_payment_evidence_finalized($id)) throw new RuntimeException('تم إرسال تأكيد مستندات التمويل النهائي بالفعل.');
+                $paymentId=(int)($_POST['payment_id']??0);
+                $payment=dbFetchOne("SELECT * FROM project_payment_evidence WHERE id=? AND project_id=? AND payment_method='cash'",[$paymentId,$id]);
+                if(!$payment) throw new RuntimeException('سجل صرف النقد المطلوب غير موجود.');
+                if($payment['status']==='documented') throw new RuntimeException('تم إصدار سند الصرف لهذا المبلغ مسبقاً.');
+                dbExecute("UPDATE project_payment_evidence SET status='documented',voucher_confirmed_at=NOW(),documented_by=?,documented_at=NOW() WHERE id=? AND project_id=? AND status='pending'",[akp_user_id(),$paymentId,$id]);
+                akp_audit('DOCUMENT_PROJECT_CASH_PAYMENT','project_payment_evidence',$paymentId,['status'=>'pending'],['status'=>'documented','payment_method'=>'cash']);
+                dbExecute('COMMIT');
+            } catch (Throwable $e) {
+                dbExecute('ROLLBACK');
+                throw $e;
+            }
             $asyncSuccessMessage='تم توثيق سند الصرف النقدي.';
         } elseif ($action === 'fm_upload_payment_receipt') {
             if (akp_role() !== 'financial_manager') throw new RuntimeException('إرفاق إيصال التحويل محصور بالمدير المالي.');
-            if (fm_payment_evidence_finalized($id)) throw new RuntimeException('تم إرسال تأكيد مستندات التمويل النهائي بالفعل.');
-            if ((string)$approval['approval_status'] !== 'approved') throw new RuntimeException('لا يمكن إرفاق إيصال قبل الاعتماد النهائي من المدير العام.');
-            $paymentId=(int)($_POST['payment_id']??0);
-            $reference=trim((string)($_POST['payment_reference']??''));
-            $payment=dbFetchOne("SELECT * FROM project_payment_evidence WHERE id=? AND project_id=? AND payment_method IN ('bank_transfer','e_wallet')",[$paymentId,$id]);
-            if(!$payment) throw new RuntimeException('سجل التحويل المطلوب غير موجود.');
-            if(!isset($_FILES['payment_receipt']) || $_FILES['payment_receipt']['error']!==UPLOAD_ERR_OK) throw new RuntimeException('إيصال التحويل مطلوب.');
-            $file=$_FILES['payment_receipt'];
-            if((int)$file['size']>10*1024*1024) throw new RuntimeException('حجم الإيصال يجب ألا يتجاوز 10 ميجابايت.');
-            $mime=(new finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']);
-            $allowed=['application/pdf'=>'pdf','image/jpeg'=>'jpg','image/png'=>'png'];
-            if(!isset($allowed[$mime])) throw new RuntimeException('نوع الإيصال غير مسموح. استخدم PDF أو JPG أو PNG.');
-            $dir=dirname(__DIR__,2).'/storage/documents/projects/'.$id.'/payments';
-            if(!is_dir($dir) && !mkdir($dir,0777,true)) throw new RuntimeException('تعذر إنشاء مجلد إيصالات المشروع.');
-            $name='payment_'.$paymentId.'_'.date('YmdHis').'_'.bin2hex(random_bytes(4)).'.'.$allowed[$mime];
-            $dest=$dir.'/'.$name;
-            if(!move_uploaded_file($file['tmp_name'],$dest)) throw new RuntimeException('فشل حفظ إيصال التحويل.');
-            $relative='storage/documents/projects/'.$id.'/payments/'.$name;
-            dbExecute("UPDATE project_payment_evidence SET status='documented',reference_number=?,receipt_file_path=?,receipt_original_name=?,receipt_mime_type=?,documented_by=?,documented_at=NOW() WHERE id=? AND project_id=? AND status='pending'",[$reference!==''?$reference:null,$relative,$file['name'],$mime,akp_user_id(),$paymentId,$id]);
-            akp_audit('DOCUMENT_PROJECT_PAYMENT_RECEIPT','project_payment_evidence',$paymentId,['status'=>'pending'],['status'=>'documented','payment_method'=>$payment['payment_method'],'reference'=>$reference,'receipt'=>$relative]);
+            $storedPaymentReceiptPath = null;
+            dbExecute('START TRANSACTION');
+            try {
+                $lockedApproval = dbFetchOne('SELECT approval_status FROM project_approval WHERE project_id=? FOR UPDATE',[$id]);
+                if (!$lockedApproval || (string)$lockedApproval['approval_status'] !== 'approved') throw new RuntimeException('لا يمكن إرفاق إيصال قبل الاعتماد النهائي من المدير العام.');
+                if (fm_payment_evidence_finalized($id)) throw new RuntimeException('تم إرسال تأكيد مستندات التمويل النهائي بالفعل.');
+                $paymentId=(int)($_POST['payment_id']??0);
+                $reference=trim((string)($_POST['payment_reference']??''));
+                $payment=dbFetchOne("SELECT * FROM project_payment_evidence WHERE id=? AND project_id=? AND payment_method IN ('bank_transfer','e_wallet')",[$paymentId,$id]);
+                if(!$payment) throw new RuntimeException('سجل التحويل المطلوب غير موجود.');
+                if(!isset($_FILES['payment_receipt']) || $_FILES['payment_receipt']['error']!==UPLOAD_ERR_OK) throw new RuntimeException('إيصال التحويل مطلوب.');
+                $file=$_FILES['payment_receipt'];
+                if((int)$file['size']>10*1024*1024) throw new RuntimeException('حجم الإيصال يجب ألا يتجاوز 10 ميجابايت.');
+                $mime=(new finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']);
+                $allowed=['application/pdf'=>'pdf','image/jpeg'=>'jpg','image/png'=>'png'];
+                if(!isset($allowed[$mime])) throw new RuntimeException('نوع الإيصال غير مسموح. استخدم PDF أو JPG أو PNG.');
+                $dir=dirname(__DIR__,2).'/storage/documents/projects/'.$id.'/payments';
+                if(!is_dir($dir) && !mkdir($dir,0777,true)) throw new RuntimeException('تعذر إنشاء مجلد إيصالات المشروع.');
+                $name='payment_'.$paymentId.'_'.date('YmdHis').'_'.bin2hex(random_bytes(4)).'.'.$allowed[$mime];
+                $dest=$dir.'/'.$name;
+                if(!move_uploaded_file($file['tmp_name'],$dest)) throw new RuntimeException('فشل حفظ إيصال التحويل.');
+                $storedPaymentReceiptPath=$dest;
+                $relative='storage/documents/projects/'.$id.'/payments/'.$name;
+                $changed = dbExecute("UPDATE project_payment_evidence SET status='documented',reference_number=?,receipt_file_path=?,receipt_original_name=?,receipt_mime_type=?,documented_by=?,documented_at=NOW() WHERE id=? AND project_id=? AND status='pending'",[$reference!==''?$reference:null,$relative,$file['name'],$mime,akp_user_id(),$paymentId,$id]);
+                if ($changed !== 1) throw new RuntimeException('تعذر توثيق إيصال التحويل؛ ربما تم توثيقه في طلب متزامن.');
+                akp_audit('DOCUMENT_PROJECT_PAYMENT_RECEIPT','project_payment_evidence',$paymentId,['status'=>'pending'],['status'=>'documented','payment_method'=>$payment['payment_method'],'reference'=>$reference,'receipt'=>$relative]);
+                dbExecute('COMMIT');
+            } catch (Throwable $e) {
+                dbExecute('ROLLBACK');
+                if ($storedPaymentReceiptPath && is_file($storedPaymentReceiptPath)) @unlink($storedPaymentReceiptPath);
+                throw $e;
+            }
             $asyncSuccessMessage='تم إرفاق إيصال التحويل وتوثيق عملية الدفع.';
 
         } elseif ($action === 'fm_edit_payment_evidence') {
             if (akp_role() !== 'financial_manager') throw new RuntimeException('تعديل مستندات التمويل محصور بالمدير المالي.');
-            if ((string)$approval['approval_status'] !== 'approved') throw new RuntimeException('لا يمكن تعديل المستندات قبل الاعتماد النهائي من المدير العام.');
-            if (fm_payment_evidence_finalized($id)) throw new RuntimeException('تم إرسال تأكيد مستندات التمويل النهائي؛ لا يمكن تعديلها الآن.');
-            $paymentId=(int)($_POST['payment_id']??0);
-            $payment=dbFetchOne('SELECT * FROM project_payment_evidence WHERE id=? AND project_id=?',[$paymentId,$id]);
-            if(!$payment) throw new RuntimeException('سجل مستند التمويل المطلوب غير موجود.');
-            $paymentDate=fm_post('payment_date',date('Y-m-d'));
-            $dateObj=DateTime::createFromFormat('Y-m-d',$paymentDate);
-            if(!$dateObj || $dateObj->format('Y-m-d')!==$paymentDate) throw new RuntimeException('تاريخ الدفع غير صالح.');
-            if($payment['payment_method']==='cash'){
-                dbExecute("UPDATE project_payment_evidence SET payment_date=?, documented_by=? WHERE id=? AND project_id=?",[$paymentDate,akp_user_id(),$paymentId,$id]);
-                akp_audit('EDIT_PROJECT_PAYMENT_EVIDENCE','project_payment_evidence',$paymentId,['payment_date'=>$payment['payment_date']],['payment_date'=>$paymentDate,'payment_method'=>'cash']);
-                $asyncSuccessMessage='تم تعديل بيانات سند الصرف.';
-            }else{
-                $reference=trim((string)($_POST['payment_reference']??''));
-                $setParts=['payment_date=?','reference_number=?','documented_by=?'];
-                $params=[$paymentDate,$reference!==''?$reference:null,akp_user_id()];
-                $newFilePath=$payment['receipt_file_path']; $newOriginal=$payment['receipt_original_name']; $newMime=$payment['receipt_mime_type'];
-                if(isset($_FILES['payment_receipt']) && $_FILES['payment_receipt']['error']!==UPLOAD_ERR_NO_FILE){
-                    if($_FILES['payment_receipt']['error']!==UPLOAD_ERR_OK) throw new RuntimeException('تعذر قراءة ملف الإيصال الجديد.');
-                    $file=$_FILES['payment_receipt'];
-                    if((int)$file['size']>10*1024*1024) throw new RuntimeException('حجم الإيصال يجب ألا يتجاوز 10 ميجابايت.');
-                    $mime=(new finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']);
-                    $allowed=['application/pdf'=>'pdf','image/jpeg'=>'jpg','image/png'=>'png'];
-                    if(!isset($allowed[$mime])) throw new RuntimeException('نوع الإيصال غير مسموح. استخدم PDF أو JPG أو PNG.');
-                    $dir=dirname(__DIR__,2).'/storage/documents/projects/'.$id.'/payments';
-                    if(!is_dir($dir) && !mkdir($dir,0777,true)) throw new RuntimeException('تعذر إنشاء مجلد إيصالات المشروع.');
-                    $name='payment_'.$paymentId.'_'.date('YmdHis').'_'.bin2hex(random_bytes(4)).'.'.$allowed[$mime];
-                    $dest=$dir.'/'.$name;
-                    if(!move_uploaded_file($file['tmp_name'],$dest)) throw new RuntimeException('فشل حفظ الإيصال الجديد.');
-                    $newFilePath='storage/documents/projects/'.$id.'/payments/'.$name; $newOriginal=$file['name']; $newMime=$mime;
+            $storedPaymentReceiptPath = null;
+            $oldPaymentReceiptPath = null;
+            dbExecute('START TRANSACTION');
+            try {
+                $lockedApproval = dbFetchOne('SELECT approval_status FROM project_approval WHERE project_id=? FOR UPDATE',[$id]);
+                if (!$lockedApproval || (string)$lockedApproval['approval_status'] !== 'approved') throw new RuntimeException('لا يمكن تعديل المستندات قبل الاعتماد النهائي من المدير العام.');
+                if (fm_payment_evidence_finalized($id)) throw new RuntimeException('تم إرسال تأكيد مستندات التمويل النهائي؛ لا يمكن تعديلها الآن.');
+                $paymentId=(int)($_POST['payment_id']??0);
+                $payment=dbFetchOne('SELECT * FROM project_payment_evidence WHERE id=? AND project_id=?',[$paymentId,$id]);
+                if(!$payment) throw new RuntimeException('سجل مستند التمويل المطلوب غير موجود.');
+                $paymentDate=fm_post('payment_date',date('Y-m-d'));
+                $dateObj=DateTime::createFromFormat('Y-m-d',$paymentDate);
+                if(!$dateObj || $dateObj->format('Y-m-d')!==$paymentDate) throw new RuntimeException('تاريخ الدفع غير صالح.');
+                if($payment['payment_method']==='cash'){
+                    dbExecute("UPDATE project_payment_evidence SET payment_date=?, documented_by=? WHERE id=? AND project_id=?",[$paymentDate,akp_user_id(),$paymentId,$id]);
+                    akp_audit('EDIT_PROJECT_PAYMENT_EVIDENCE','project_payment_evidence',$paymentId,['payment_date'=>$payment['payment_date']],['payment_date'=>$paymentDate,'payment_method'=>'cash']);
+                }else{
+                    $reference=trim((string)($_POST['payment_reference']??''));
+                    $setParts=['payment_date=?','reference_number=?','documented_by=?'];
+                    $params=[$paymentDate,$reference!==''?$reference:null,akp_user_id()];
+                    $newFilePath=$payment['receipt_file_path']; $newOriginal=$payment['receipt_original_name']; $newMime=$payment['receipt_mime_type'];
+                    if(isset($_FILES['payment_receipt']) && $_FILES['payment_receipt']['error']!==UPLOAD_ERR_NO_FILE){
+                        if($_FILES['payment_receipt']['error']!==UPLOAD_ERR_OK) throw new RuntimeException('تعذر قراءة ملف الإيصال الجديد.');
+                        $file=$_FILES['payment_receipt'];
+                        if((int)$file['size']>10*1024*1024) throw new RuntimeException('حجم الإيصال يجب ألا يتجاوز 10 ميجابايت.');
+                        $mime=(new finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']);
+                        $allowed=['application/pdf'=>'pdf','image/jpeg'=>'jpg','image/png'=>'png'];
+                        if(!isset($allowed[$mime])) throw new RuntimeException('نوع الإيصال غير مسموح. استخدم PDF أو JPG أو PNG.');
+                        $dir=dirname(__DIR__,2).'/storage/documents/projects/'.$id.'/payments';
+                        if(!is_dir($dir) && !mkdir($dir,0777,true)) throw new RuntimeException('تعذر إنشاء مجلد إيصالات المشروع.');
+                        $name='payment_'.$paymentId.'_'.date('YmdHis').'_'.bin2hex(random_bytes(4)).'.'.$allowed[$mime];
+                        $dest=$dir.'/'.$name;
+                        if(!move_uploaded_file($file['tmp_name'],$dest)) throw new RuntimeException('فشل حفظ الإيصال الجديد.');
+                        $storedPaymentReceiptPath=$dest;
+                        $newFilePath='storage/documents/projects/'.$id.'/payments/'.$name; $newOriginal=$file['name']; $newMime=$mime;
+                        $oldPaymentReceiptPath=!empty($payment['receipt_file_path']) ? dirname(__DIR__,2).'/'.$payment['receipt_file_path'] : null;
+                    }
+                    $setParts[]='receipt_file_path=?'; $params[]=$newFilePath;
+                    $setParts[]='receipt_original_name=?'; $params[]=$newOriginal;
+                    $setParts[]='receipt_mime_type=?'; $params[]=$newMime;
+                    $params[]=$paymentId; $params[]=$id;
+                    dbExecute("UPDATE project_payment_evidence SET ".implode(',',$setParts)." WHERE id=? AND project_id=?",$params);
+                    akp_audit('EDIT_PROJECT_PAYMENT_EVIDENCE','project_payment_evidence',$paymentId,['payment_date'=>$payment['payment_date'],'reference'=>$payment['reference_number'],'receipt'=>$payment['receipt_file_path']],['payment_date'=>$paymentDate,'reference'=>$reference,'receipt'=>$newFilePath]);
                 }
-                $setParts[]='receipt_file_path=?'; $params[]=$newFilePath;
-                $setParts[]='receipt_original_name=?'; $params[]=$newOriginal;
-                $setParts[]='receipt_mime_type=?'; $params[]=$newMime;
-                $params[]=$paymentId; $params[]=$id;
-                dbExecute("UPDATE project_payment_evidence SET ".implode(',',$setParts)." WHERE id=? AND project_id=?",$params);
-                if($newFilePath!==$payment['receipt_file_path'] && !empty($payment['receipt_file_path'])){
-                    $oldPath=dirname(__DIR__,2).'/'.$payment['receipt_file_path']; if(is_file($oldPath)) @unlink($oldPath);
-                }
-                akp_audit('EDIT_PROJECT_PAYMENT_EVIDENCE','project_payment_evidence',$paymentId,['payment_date'=>$payment['payment_date'],'reference'=>$payment['reference_number'],'receipt'=>$payment['receipt_file_path']],['payment_date'=>$paymentDate,'reference'=>$reference,'receipt'=>$newFilePath]);
-                $asyncSuccessMessage='تم تعديل بيانات ومستند الدفع.';
+                dbExecute('COMMIT');
+            } catch (Throwable $e) {
+                dbExecute('ROLLBACK');
+                if ($storedPaymentReceiptPath && is_file($storedPaymentReceiptPath)) @unlink($storedPaymentReceiptPath);
+                throw $e;
             }
+            if ($oldPaymentReceiptPath && $storedPaymentReceiptPath && $oldPaymentReceiptPath !== $storedPaymentReceiptPath && is_file($oldPaymentReceiptPath)) @unlink($oldPaymentReceiptPath);
+            $asyncSuccessMessage='تم تعديل بيانات ومستند الدفع.';
         } elseif ($action === 'fm_confirm_payment_evidence') {
             if (akp_role() !== 'financial_manager') throw new RuntimeException('تأكيد مستندات التمويل النهائي محصور بالمدير المالي.');
             if ((string)$approval['approval_status'] !== 'approved') throw new RuntimeException('لا يمكن التأكيد قبل الاعتماد النهائي من المدير العام.');
