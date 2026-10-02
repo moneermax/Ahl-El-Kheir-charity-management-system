@@ -1,3 +1,11 @@
+/* Prevent accidental mouse-wheel changes on every numeric input in the system. */
+document.addEventListener('wheel', function (event) {
+    const target = event.target;
+    if (target && target.matches && target.matches('input[type="number"]')) {
+        event.preventDefault();
+    }
+}, { passive: false });
+
 document.addEventListener('DOMContentLoaded', function () {
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('sidebarOverlay');
