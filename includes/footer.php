@@ -47,7 +47,7 @@ window.AK_BACK_FALLBACK=<?php echo json_encode(APP_URL . dashboard_for_role(curr
 </script>
 <script src="<?php echo asset('js/language.js'); ?>"></script>
 <script src="<?php echo asset('js/app.js'); ?>"></script>
-<script src="<?php echo asset('js/notifications.js'); ?>"></script>
+<script src="<?php echo asset('js/notifications.js'); ?>?v=<?php echo (int)@filemtime(dirname(__DIR__) . '/assets/js/notifications.js'); ?>"></script>
 <script src="<?php echo asset('js/messaging_reply_tools.js'); ?>"></script>
 <script src="<?php echo asset('js/messaging_ui_fixes.js'); ?>"></script>
 <script src="<?php echo asset('js/messaging_ui_cleanup.js'); ?>"></script>
