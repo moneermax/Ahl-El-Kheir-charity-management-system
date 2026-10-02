@@ -1748,3 +1748,32 @@ Commit: **7856da749fc23e06fce9c7ecedfa5e92f061fd8f**. User runtime feedback: **m
 
 ### Continuation rule
 Start the next session by reading the four master documents and the current Projects Phase 5 checkpoint. Do not restart earlier audits or recreate historical/controlled fixtures.
+
+
+
+## 2026-10-02 — Projects Phase 5 continuation checkpoint — UI fix accepted / FM gate next
+
+The previously requested immediate project/UI fix is now completed and accepted for continuation.
+
+### System-wide form UI fix — completed
+- The form label/field sizing issue was addressed **centrally**, not page-by-page, in `includes/footer.php`.
+- The solution was based on the repository's actual Bootstrap column forms, custom grids, and dense repeatable rows.
+- Wide field containers use a content-sized label with a small gap and a flexible field; narrow/dense containers remain stacked; common field types use semantic sizing rather than forcing every field to the same width.
+- Commit: **7856da749fc23e06fce9c7ecedfa5e92f061fd8f**.
+- User runtime feedback: **"much better now for most pages"**.
+- This UI milestone is accepted. Any remaining page-specific issue should be handled only when concrete runtime evidence appears; do not reopen the completed global sizing investigation.
+
+### PRJ-0015 current state
+- Fixture: **PRJ-0015 — PH5 Full Accounting Reconciliation Test**
+- approval: **submitted / مرسل للمراجعة**
+- lifecycle/display: **planned / مخطط**
+- budget: **300,000.00 SDG** across 3 lines
+- approved funding: **0.00**
+- posted expenses: **0.00**
+- no funding allocation/accounting release created by PM submission
+- FM received the financial-review notification and can open the FM review page
+
+### Next gate
+The temporary pause after PM submission is now **lifted**. The next task is to resume Phase 5 at **FM financial review / budget approval**, then continue the established accounting reconciliation sequence.
+
+Do **not** recreate PRJ-0015. Do not repeat the already-passed numeric-wheel or save-flow investigation unless a genuine regression appears.
