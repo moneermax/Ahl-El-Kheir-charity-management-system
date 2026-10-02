@@ -1585,3 +1585,57 @@ Implementation commits:
 
 **Status: STATICALLY CORRECTED — RUNTIME VERIFICATION REQUIRED.**
 The PRJ-0012 runtime gate must verify: GM approval alone leaves the project absent from the PM dashboard/detail access; FM final funding-document confirmation then makes it visible and sends the PM handoff notification; no duplicate accounting release is created.
+
+
+# LATEST CONTINUATION PROMPT — 2026-10-02 — Projects Phase 5 Runtime Gate
+
+Continue the existing Ahl El Kheir Charity Management System. Do not rebuild or start a new project.
+
+Environment: repository moneermax/Ahl-El-Kheir-charity-management-system; local path D:\xampp\htdocs\AhlElKheir; local URL http://localhost:8081/AhlElKheir/; database ahl_el_kheir; Windows/XAMPP/Apache/PHP 8.2/MariaDB; Arabic RTL; Bootstrap 5.3 RTL; vanilla JS; procedural PHP only.
+
+## Current status
+- Salary Advance Stages 1–6: DONE / RUNTIME VERIFIED / CLOSED. Do not reopen without genuine regression evidence.
+- Unified User / Employee provisioning: DONE / IMPLEMENTED / DOCUMENTED.
+- Temporary-password first-login workflow and credential-direction hardening: DONE / RUNTIME VERIFIED / CLOSED.
+- Projects Phase 5 accounting model: IMPLEMENTED / STATICALLY CORRECTED / RUNTIME VERIFICATION REQUIRED.
+
+## Projects Phase 5 established workflow
+1. PM prepares/submits the project budget.
+2. FM performs financial approval. This is the accounting release point: the approved funding is posted once as Dr the project's existing expense account / Cr the selected treasury source account.
+3. GM approval is organizational approval only. It must not create a second funding/accounting release and must not notify or expose the project to PM/PS as execution-ready.
+4. FM completes and confirms all funding/payment documents after GM approval. This final FM confirmation is the single PM handoff milestone.
+5. Only after that FM final-confirmation event should PM receive the handoff notification and see the project in the PM project dashboard/detail flow.
+6. PM launch remains separately gated by the same FM final-confirmation evidence and the existing lifecycle rules.
+7. No second accounting event is created by FM final confirmation.
+
+## Current implementation checkpoints
+- 2ec62923ad554e5feb7c2bd261d3267cbdf9ca5e — PM visibility gate.
+- ad097b53c15d0d2b3d2f8307164e1325b9f44d5f — shared FM-final-confirmation gate for PM launch.
+- 3ffbb4ad8598f37f5b1abf3a42d2983e4a20e7c9 — previous documentation checkpoint.
+
+## Immediate next task — runtime gate
+Use the already-created isolated project PRJ-0012 (PH5 Runtime Gate Test 2026-10-02). Do not create another test project unless the existing fixture is unusable.
+
+Verify end-to-end:
+- GM approval alone leaves PRJ-0012 absent from the PM dashboard and direct PM project view.
+- PM/PS do not receive an execution-handoff notification at GM approval.
+- All funding evidence is documented.
+- FM performs the final funding-document confirmation.
+- PM receives exactly the intended final handoff notification and the project becomes visible to PM.
+- PM launch remains blocked until the FM final-confirmation event exists and then becomes available according to the existing lifecycle rules.
+- The accounting ledger contains only the single intended funding-release event; FM final confirmation does not create a duplicate treasury reduction.
+- Existing release → reversal → release-again behavior remains intact.
+
+After the runtime gate, continue the remaining Projects Phase 5 reconciliation/closure tests. Do not mark Phase 5 closed until all required runtime evidence passes. Do not correct historical project journals until the replacement model is fully verified.
+
+## Working rules
+- Inspect source/schema/docs before changing anything.
+- Do not invent tables, columns, statuses, accounts, or workflows.
+- Schema changes only through migrations; no runtime CREATE/ALTER.
+- No triggers, views, stored procedures, functions, or events.
+- Procedural PHP only.
+- No destructive Git commands and no branches; work directly on main.
+- Do not disturb completed Salary Advance or account/password work.
+- Keep accounting events single-purpose and auditable.
+- Runtime-test meaningful changes before declaring them complete.
+- Update all four master documentation files after each meaningful milestone and record the exact checkpoint SHA.
