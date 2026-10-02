@@ -43,9 +43,7 @@ if (!function_exists('akp_post_project_funding_release')) {
         $project = dbFetchOne('SELECT name, currency_code FROM other_projects WHERE id = ?', [$projectId]);
         if (!$project) throw new RuntimeException('المشروع غير موجود.');
 
-        dbExecute('START TRANSACTION');
-        try {
-            $journalIds = [];
+        $journalIds = [];
             foreach ($allocations as $allocation) {
                 $allocationId = (int)$allocation['id'];
                 $existing = dbFetchOne(
@@ -98,15 +96,9 @@ if (!function_exists('akp_post_project_funding_release')) {
                      WHERE id=? AND project_id=? AND status='draft'",
                     [akp_user_id(), akp_user_id(), $allocationId, $projectId]
                 );
-                if (dbExecute('SELECT 1') < 0) throw new RuntimeException('تعذر إكمال الإفراج المالي.');
                 $journalIds[$allocationId] = $entryId;
             }
-            dbExecute('COMMIT');
             return $journalIds;
-        } catch (Throwable $e) {
-            dbExecute('ROLLBACK');
-            throw $e;
-        }
     }
 }
 
