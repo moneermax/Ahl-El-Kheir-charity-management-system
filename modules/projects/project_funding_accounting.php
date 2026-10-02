@@ -59,9 +59,9 @@ if (!function_exists('akp_post_project_funding_release')) {
                 if ($existing) {
                     dbExecute(
                         "UPDATE project_funding_allocations
-                         SET status='posted', approved_by=?, posted_by=?, posted_at=NOW()
+                         SET status='posted', approved_by=?, posted_by=?, posted_at=NOW(), journal_entry_id=?
                          WHERE id=? AND project_id=? AND status='draft'",
-                        [akp_user_id(), akp_user_id(), $allocationId, $projectId]
+                        [akp_user_id(), akp_user_id(), (int)$existing['id'], $allocationId, $projectId]
                     );
                     $journalIds[$allocationId] = (int)$existing['id'];
                     continue;
@@ -159,7 +159,7 @@ if (!function_exists('akp_reverse_project_funding_release')) {
                         [$reversalId, (int)$line['account_id'], round((float)$line['credit'],2), round((float)$line['debit'],2), 'عكس: '.(string)($line['description'] ?? '')]
                     );
                 }
-                dbExecute("UPDATE project_funding_allocations SET status='draft', approved_by=NULL, posted_by=NULL, posted_at=NULL WHERE id=? AND project_id=? AND status='posted'", [(int)$row['allocation_id'], $projectId]);
+                dbExecute("UPDATE project_funding_allocations SET status='draft', approved_by=NULL, posted_by=NULL, posted_at=NULL, journal_entry_id=NULL WHERE id=? AND project_id=? AND status='posted'", [(int)$row['allocation_id'], $projectId]);
             }
             dbExecute("DELETE FROM project_payment_evidence WHERE project_id=? AND status='pending'", [$projectId]);
             if ($manageTransaction) dbExecute('COMMIT');
