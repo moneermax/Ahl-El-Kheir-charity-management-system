@@ -79,8 +79,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$budget || $budget['status']!=='draft') throw new RuntimeException('نسخة الميزانية ليست مسودة.');
             $total=(float)(dbFetchOne('SELECT COALESCE(SUM(estimated_amount),0) n FROM project_budget_lines WHERE budget_id=?',[$budgetId])['n']??0);
             if ($total<=0) throw new RuntimeException('لا يمكن اعتماد ميزانية بدون بنود ومبلغ أكبر من صفر.');
-            dbExecute("UPDATE project_budgets SET status='superseded' WHERE project_id=? AND status='approved'",[$id]);
-            dbExecute("UPDATE project_budgets SET status='approved' WHERE id=? AND project_id=?",[$budgetId,$id]);
+            dbExecute('START TRANSACTION');
+            try {
+                dbExecute("UPDATE project_budgets SET status='superseded' WHERE project_id=? AND status='approved'",[$id]);
+                dbExecute("UPDATE project_budgets SET status='approved' WHERE id=? AND project_id=? AND status='draft'",[$budgetId,$id]);
+                dbExecute('COMMIT');
+            } catch (Throwable $e) {
+                dbExecute('ROLLBACK');
+                throw $e;
+            }
             akp_audit('FM_APPROVE_BUDGET','project_budget',$budgetId,['status'=>'draft'],['status'=>'approved','total'=>$total]);
             flash('success','تم اعتماد الميزانية مالياً. يمكن الآن تخصيص التمويل.');
 
@@ -125,6 +132,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $existingTotal=(float)(dbFetchOne("SELECT COALESCE(SUM(amount),0) n FROM project_funding_allocations WHERE project_id=? AND status='draft'",[$id])['n']??0);
             if($existingTotal+$batchTotal>$financialRequirement+0.01) throw new RuntimeException('إجمالي التمويل لا يمكن أن يتجاوز إجمالي المتطلبات المالية للمشروع.');
 
+            dbExecute('START TRANSACTION');
+            try {
             foreach($batchByAccount as $item){
                 $accountId=(int)$item['account']['id'];
                 $existingRows=dbFetchAll("SELECT id,amount FROM project_funding_allocations WHERE project_id=? AND source_account_id=? AND status='draft' ORDER BY id",[$id,$accountId]);
@@ -138,6 +147,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     dbExecute('INSERT INTO project_funding_allocations (project_id,budget_id,source_type,source_account_id,destination_account_id,transaction_id,amount,currency_code,allocation_date,reference_number,description,status,created_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)',[$id,$budget['id'],$item['account']['code'],$accountId,null,null,$item['amount'],$project['currency_code']?:'SDG',$item['date'],null,$item['description']?:null,'draft',akp_user_id()]);
                     $allocationId=(int)(dbFetchOne('SELECT LAST_INSERT_ID() id')['id']??0); akp_audit('CREATE','project_funding_allocation',$allocationId,null,['project_id'=>$id,'amount'=>$item['amount'],'source_account'=>$item['account']['code'],'fm_review'=>true]);
                 }
+            }
+            dbExecute('COMMIT');
+            } catch (Throwable $e) {
+                dbExecute('ROLLBACK');
+                throw $e;
             }
             $asyncSuccessMessage='تم حفظ تخصيصات التمويل وتجميع كل مصدر تمويل في سجل واحد.';
 
@@ -262,7 +276,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $total=(int)($counts['total']??0); $documented=(int)($counts['documented']??0);
             if($total<=0) throw new RuntimeException('لا توجد مستندات تمويل مرتبطة بالمشروع.');
             if($documented!==$total) throw new RuntimeException('يجب استكمال توثيق جميع عمليات التمويل قبل التأكيد النهائي.');
-            akp_audit('FM_CONFIRM_PAYMENT_EVIDENCE','project_payment_evidence',$id,['documented'=>$documented,'total'=>$total],['final_confirmed'=>true]);
+            dbExecute('START TRANSACTION');
+            try {
+                dbExecute(
+                    "INSERT INTO audit_log (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent)
+                     VALUES (?, 'FM_CONFIRM_PAYMENT_EVIDENCE', 'project_payment_evidence', ?, ?, ?, ?, ?)",
+                    [
+                        akp_user_id(),
+                        $id,
+                        json_encode(['documented'=>$documented,'total'=>$total], JSON_UNESCAPED_UNICODE),
+                        json_encode(['final_confirmed'=>true], JSON_UNESCAPED_UNICODE),
+                        $_SERVER['REMOTE_ADDR'] ?? '',
+                        $_SERVER['HTTP_USER_AGENT'] ?? ''
+                    ]
+                );
+                dbExecute('COMMIT');
+            } catch (Throwable $e) {
+                dbExecute('ROLLBACK');
+                throw new RuntimeException('تعذر تسجيل التأكيد النهائي لمستندات التمويل؛ لم يتم اعتماد التأكيد.');
+            }
             try {
                 $pmUsers=dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id=r.id WHERE r.code='projects_manager' AND u.is_active=1");
                 foreach($pmUsers as $pmUser){
