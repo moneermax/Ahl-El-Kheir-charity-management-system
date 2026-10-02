@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['set_status'])) {
             flash('error', t('projects.invalid_status'));
         } else {
             $oldStatus = (string)($project['lifecycle_status'] ?: $project['status']);
-            $legacyStatus = in_array($newStatus, ['planned', 'active', 'completed', 'cancelled'], true) ? $newStatus : 'completed';
+$legacyStatus = $newStatus === 'under_review' ? 'planned' : $newStatus;
             dbExecute('UPDATE other_projects SET status = ?, updated_by = ? WHERE id = ?', [$legacyStatus, akp_user_id(), $projectId]);
             dbExecute('UPDATE project_lifecycle SET lifecycle_status = ? WHERE project_id = ?', [$newStatus, $projectId]);
             dbExecute('INSERT INTO project_status_history (project_id, old_status, new_status, reason, changed_by) VALUES (?,?,?,?,?)', [$projectId, $oldStatus, $newStatus, trim((string)($_POST['status_reason'] ?? '')) ?: null, akp_user_id()]);
@@ -118,7 +118,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 <a class="btn btn-sm btn-primary" title="<?php echo e(t('projects.view_file')); ?>" href="<?php echo APP_URL; ?>modules/projects/view.php?id=<?php echo (int)$project['id']; ?>&return=<?php echo rawurlencode($returnQuery); ?>"><i class="fas fa-eye"></i></a>
 <?php if (akp_can_edit_section('general', (int)$project['id']) && !in_array($role, ['general_manager','vice_general_manager'], true)): ?><a class="btn btn-sm btn-warning" title="<?php echo e(t('projects.edit_basic')); ?>" href="<?php echo APP_URL; ?>modules/projects/form.php?id=<?php echo (int)$project['id']; ?>&return=<?php echo rawurlencode($returnQuery); ?>"><i class="fas fa-pen"></i></a><?php endif; ?>
 <?php if (akp_can_edit_section('operations', (int)$project['id']) && $status !== 'closed'): ?><form method="post" class="project-inline-form d-inline"><?php echo csrf_field(); ?><input type="hidden" name="set_status" value="<?php echo (int)$project['id']; ?>"><select name="new_status" class="form-select form-select-sm d-inline-block w-auto" onchange="this.form.submit()" aria-label="<?php echo e(t('projects.change_status')); ?>">
-<?php foreach (['planned'=>'projects.planned','active'=>'projects.active','under_review'=>'projects.under_review','completed'=>'projects.completed','cancelled'=>'projects.cancelled'] as $key => $labelKey): ?><option value="<?php echo $key; ?>" <?php echo $status === $key ? 'selected' : ''; ?>><?php echo e(t($labelKey)); ?></option><?php endforeach; ?>
+<?php foreach (['planned'=>'projects.planned','under_review'=>'projects.under_review','completed'=>'projects.completed','cancelled'=>'projects.cancelled'] as $key => $labelKey): ?><option value="<?php echo $key; ?>" <?php echo $status === $key ? 'selected' : ''; ?>><?php echo e(t($labelKey)); ?></option><?php endforeach; ?>
 </select></form><?php endif; ?>
 </td></tr>
 <?php endforeach; endif; ?>
