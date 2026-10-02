@@ -85,6 +85,37 @@ a { text-decoration: none; }
    direct .form-label + control are affected; custom layouts remain intact.
    ========================================================= */
 @media (min-width: 768px) {
+  /* Bootstrap column-based forms are the other common structure in the system.
+     Keep the label and its direct control on one line inside each field column. */
+  .content form .row > [class*="col-"]:has(> .form-label + :is(.form-control, .form-select, textarea, input, select)) {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .content form .row > [class*="col-"]:has(> .form-label + :is(.form-control, .form-select, textarea, input, select)) > .form-label {
+    flex: 0 0 clamp(120px, 34%, 190px);
+    margin: 0;
+    line-height: 1.35;
+  }
+
+  .content form .row > [class*="col-"]:has(> .form-label + :is(.form-control, .form-select, textarea, input, select)) > :is(.form-control, .form-select, textarea, input, select) {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: auto;
+  }
+
+  /* Type-aware widths inside column-based forms. */
+  .content form .row > [class*="col-"] > input[type="date"] { flex: 0 1 13rem; }
+  .content form .row > [class*="col-"] > input[type="time"] { flex: 0 1 11rem; }
+  .content form .row > [class*="col-"] > input[type="number"] { flex: 0 1 17rem; }
+  .content form .row > [class*="col-"] > input[type="tel"] { flex: 0 1 19rem; }
+  .content form .row > [class*="col-"] > input[type="email"] { flex: 0 1 30rem; }
+  .content form .row > [class*="col-"] > input[type="text"] { flex: 0 1 32rem; }
+  .content form .row > [class*="col-"] > .form-select { flex: 0 1 30rem; }
+}
+
+@media (min-width: 768px) {
   .content form .mb-3:has(> .form-label + :is(.form-control, .form-select, textarea, input, select)),
   .content form .mb-4:has(> .form-label + :is(.form-control, .form-select, textarea, input, select)) {
     display: grid;
