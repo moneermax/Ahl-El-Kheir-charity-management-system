@@ -1927,3 +1927,49 @@ This confirms that PM submission itself did not create an accounting/funding rel
 
 Do not recreate or replace PRJ-0015 merely because the workflow is paused. Preserve the fixture in its current submitted/planned state for continuation unless the immediate fix genuinely requires a documented change to it.
 
+
+
+# LATEST CONTINUATION PROMPT — 2026-10-02 — Projects Phase 5 PM submission passed
+
+Continue the existing Ahl El Kheir Charity Management System. Do not rebuild or start a new project. Work directly on **main**; do not create branches.
+
+## Current controlled fixture
+**PRJ-0015 — PH5 Full Accounting Reconciliation Test**
+- approval: `submitted` / مرسل للمراجعة
+- lifecycle/display: `planned` / مخطط
+- budget: `300,000.00 SDG` across 3 budget lines
+- approved funding: `0.00`
+- posted expenses: `0.00`
+- Project Supervisor: `project supervisor`
+
+**Preserve PRJ-0015. Do not delete or recreate it merely to continue testing.**
+
+## Verified PM submission gate
+Runtime verification confirmed: PM changed `draft` → `submitted`; lifecycle remained `planned`; FM received the project-review notification and can open the FM review page; no funding allocation or accounting release was created by submission; FM allocation tools remain gated until budget approval.
+
+## Immediate next gate: FM budget approval
+Resume with **FM budget approval** for PRJ-0015. Verify locally in XAMPP/MariaDB/browser that FM can review the submitted project, approval is allowed only in the correct financial-review state, the approved budget remains 300,000.00 SDG, funding allocations are managed only through the canonical FM workflow, and the expected accounting release occurs exactly at the established FM accounting-release point. Do not assume success without runtime evidence.
+
+## Established Phase 5 accounting sequence
+FM budget approval → canonical funding allocation/release → GM approval with **no additional accounting release** → GM rejection reverses the current release and returns atomically to FM review → FM re-approval creates the next current release → GM approval again → FM correction before final confirmation reverses the current release and invalidates GM approval → FM re-approval → GM approval → FM final confirmation with no new accounting and PM handoff only → PM launch `planned` → `active` → PS notification/access only after launch.
+
+Expected reconciliation for the 300,000 SDG fixture remains: `+300,000 → -300,000 → +300,000 → -300,000 → +300,000`, with final net funding release of `300,000`.
+
+## Recent system-wide UI work
+The form-layout issue was addressed centrally in `includes/footer.php` after reviewing the repository's actual form structures. The new layout uses individual field-container width instead of a fixed whole-form percentage, keeps narrow/dense columns stacked, and applies semantic sizing to common field types.
+
+Commit: **7856da749fc23e06fce9c7ecedfa5e92f061fd8f**. User runtime feedback: **much better for most pages**; some individual pages may still require refinement later. Do not treat this as a Phase 5 accounting blocker unless a real regression appears.
+
+## Working rules
+- Runtime behavior is the source of truth; never claim verification without local evidence.
+- Inspect source/schema/docs before changing anything.
+- Do not guess tables, columns, statuses, accounts, or workflow rules.
+- No runtime CREATE/ALTER/DROP; migrations only for genuine schema changes.
+- No triggers, views, stored procedures, functions, or events.
+- Procedural PHP only.
+- No destructive Git commands (`reset --hard`, `clean`, `restore`, force-push, etc.).
+- Do not create branches.
+- Do not disturb completed Salary Advance work or unrelated closed modules.
+- Update the four master docs after each meaningful Projects milestone and record the exact commit SHA.
+- Do not mark Projects Phase 5 closed until the complete local runtime sequence passes.
+- Preserve PRJ-0015 throughout the remaining runtime sequence.
