@@ -1343,3 +1343,12 @@ Code checkpoint commits:
 `9217b81fa71a5b3445ddef0ccbc829eb54fdd9d2`, `331c3c9bdf144ebc7158538a99b1b67f75722c1d`, `c93824e07b43c49fb90dff31522ee618220e3ab5`, `80c6012023e68d513952ca30f175ae6e3ecf25c8`.
 
 **Current status: Projects Phase 5 workflow repaired; runtime verification required.**
+
+
+## 2026-10-02 — Final static authorization correction
+
+During the final static pass, one authorization mismatch was found before runtime testing: the shared funding-reversal helper itself still enforced the FM role, which would have blocked the newly added GM-rejection reversal path. The helper now leaves role authorization to its calling workflow; FM correction and GM rejection each enforce their own role before calling it.
+
+Correction commit: `4d672f3df3848421900b04a53706551dcd0ba4ac`.
+
+**Runtime verification has not started yet. Pull only after this checkpoint is complete.**
