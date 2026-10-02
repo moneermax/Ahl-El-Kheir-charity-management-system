@@ -1873,3 +1873,34 @@ Corrections on main:
 - index.php: duplicate page-specific back button removed; global standard pair remains.
 
 Commits: aa8b26532293c3a1933c0b64f6021205c0703c43, 4cfe3f9175da05cc57d91bde, 448a913dc254cdbc72e61f5bd4e767a32251cc20, dd49b8896109faaa1f1635405eff3911f065c7b6.
+
+
+## 2026-10-02 — Projects Phase 5 second deep pre-runtime audit
+
+The Phase 5 implementation was re-audited after the PRJ-0013 preflight fixture exposed the need for another review before runtime testing. The review covered the shared project view, dedicated FM workflow, PM visibility/launch gates, status mutation paths, funding/accounting helpers, project schema relationships, and duplicate/legacy FM funding paths.
+
+### Confirmed findings and fixes
+
+1. Legacy FM funding workflow remained in the shared project view — CONFIRMED DEFECT.
+   - modules/projects/view.php still contained legacy add_funding, edit_funding, and delete_funding handlers and their UI even though view_fm.php is the canonical FM workflow.
+   - These handlers did not create the Phase 5 release journal themselves, but they created a competing funding-maintenance path and stale accounting language.
+   - Removed the handlers and duplicate funding-entry/edit UI. Shared project view now displays funding allocations without mutation controls.
+
+2. Shared portfolio still exposed the generic active status selector — CONFIRMED UI/workflow inconsistency.
+   - Server-side project status handling already rejected active through the generic path, but the portfolio still rendered it as a selectable option.
+   - Removed the option so the UI and server-side workflow agree: PM launch is the initial activation path.
+
+3. FM budget decision actions were not explicitly tied to submitted/rejected financial review — CONFIRMED workflow gap.
+   - Added server-side gates to FM budget approval/rejection so these actions are only available during the intended financial-review states.
+
+4. Funding card markup was rechecked after removing the legacy UI — corrected before runtime testing.
+
+### Schema review note
+
+The repository schema contains the project-domain tables and project-linked accounting/evidence tables used by Phase 5. The current schema dump does not establish a direct foreign-key cascade from other_projects to all project-domain tables, so project test-fixture deletion must continue to be explicitly dependency-aware rather than relying on ON DELETE CASCADE assumptions.
+
+### Current Phase 5 gate
+
+The replacement accounting model remains STATICALLY IMPLEMENTED / STATICALLY RE-AUDITED / RUNTIME VERIFICATION REQUIRED. The controlled runtime sequence must be performed on a fresh project created after the latest corrections. Historical project journals remain protected until that sequence passes.
+
+Latest main commit: 52a930f697198dbe8f051bf3415e014a929e1f1b.
