@@ -226,15 +226,8 @@ $reason = akp_post_value('return_reason');
 if ($reason === '') throw new RuntimeException('سبب إعادة المشروع للمراجعة المالية مطلوب.');
 $approvalCheck = dbFetchOne('SELECT approval_status FROM project_approval WHERE project_id = ?', [$id]);
 if (!$approvalCheck || $approvalCheck['approval_status'] !== 'fm_approved') throw new RuntimeException('المشروع ليس في حالة اعتماد مالي تسمح بإعادته للمراجعة.');
-dbExecute('START TRANSACTION');
-try {
 akp_reverse_project_funding_release($id, $reason);
 dbExecute("UPDATE project_approval SET approval_status = 'submitted' WHERE project_id = ?", [$id]);
-dbExecute('COMMIT');
-} catch (Throwable $e) {
-dbExecute('ROLLBACK');
-throw $e;
-}
 akp_audit('FM_RETURN_TO_REVIEW', 'project_approval', $id, ['approval_status' => 'fm_approved'], ['approval_status' => 'submitted', 'reason' => $reason, 'funding_release_reversed' => true]);
 $_SESSION['project_toast_success'] = 'تمت إعادة المشروع إلى مرحلة المراجعة المالية وعكس الإفراج المالي غير المنفذ.';
 } elseif ($action === 'fm_reject_project') {
