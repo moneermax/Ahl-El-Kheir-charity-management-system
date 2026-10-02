@@ -113,6 +113,7 @@ $closureRequest = dbFetchOne("SELECT h.*, u.full_name AS requester_name FROM pro
 $closed = akp_project_is_closed($id);
 $role = akp_role();
 $approval = dbFetchOne('SELECT * FROM project_approval WHERE project_id = ?', [$id]) ?: ['approval_status' => 'approved'];
+$fmFinalConfirmed = (bool)dbFetchOne("SELECT id FROM audit_log WHERE action='FM_CONFIRM_PAYMENT_EVIDENCE' AND entity_type='project_payment_evidence' AND entity_id=? LIMIT 1", [$id]);
 $errors = [];
 function akp_redirect_project(int $id): void {
 header('Location: ' . APP_URL . 'modules/projects/view.php?id=' . $id);
@@ -332,6 +333,10 @@ WHERE project_id = ?',
 );
 if (!$approvalCheck || $approvalCheck['approval_status'] !== 'approved') {
 throw new RuntimeException('لا يمكن إطلاق المشروع قبل الاعتماد النهائي.');
+}
+$fmFinalConfirmed = (bool)dbFetchOne("SELECT id FROM audit_log WHERE action='FM_CONFIRM_PAYMENT_EVIDENCE' AND entity_type='project_payment_evidence' AND entity_id=? LIMIT 1", [$id]);
+if (!$fmFinalConfirmed) {
+throw new RuntimeException('لا يمكن إطلاق المشروع قبل استكمال المدير المالي للتأكيد النهائي لمستندات التمويل.');
 }
 $currentLifecycle = dbFetchOne(
 'SELECT lifecycle_status
@@ -1214,7 +1219,7 @@ width: 24%;
 <?php endif; ?>
 </div>
 <div class="d-flex gap-2">
-<?php if ($role === 'projects_manager' && $approval['approval_status'] === 'approved' && (string)($project['lifecycle_status'] ?? $project['status']) === 'planned'): ?>
+<?php if ($role === 'projects_manager' && $approval['approval_status'] === 'approved' && $fmFinalConfirmed && (string)($project['lifecycle_status'] ?? $project['status']) === 'planned'): ?>
 <form method="post" class="project-action-form d-inline">
 <?php echo csrf_field(); ?>
 <input type="hidden" name="action" value="launch_project">
