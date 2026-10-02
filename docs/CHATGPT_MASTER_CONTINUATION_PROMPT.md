@@ -1604,8 +1604,8 @@ Environment: repository moneermax/Ahl-El-Kheir-charity-management-system; local 
 2. FM performs financial approval. This is the accounting release point: the approved funding is posted once as Dr the project's existing expense account / Cr the selected treasury source account.
 3. GM approval is organizational approval only. It must not create a second funding/accounting release and must not notify or expose the project to PM/PS as execution-ready.
 4. FM completes and confirms all funding/payment documents after GM approval. This final FM confirmation is the single PM handoff milestone.
-5. Only after that FM final-confirmation event should PM receive the handoff notification and see the project in the PM project dashboard/detail flow.
-6. PM launch remains separately gated by the same FM final-confirmation evidence and the existing lifecycle rules.
+5. Only after that FM final-confirmation event should PM receive the handoff notification and see the project in the PM project dashboard/detail flow. The assigned Project Supervisor is NOT notified at this point.
+6. PM launch remains separately gated by the same FM final-confirmation evidence and the existing lifecycle rules; the assigned Project Supervisor is notified only when PM explicitly launches the project.
 7. No second accounting event is created by FM final confirmation.
 
 ## Current implementation checkpoints
@@ -1623,6 +1623,7 @@ Verify end-to-end:
 - FM performs the final funding-document confirmation.
 - PM receives exactly the intended final handoff notification and the project becomes visible to PM.
 - PM launch remains blocked until the FM final-confirmation event exists and then becomes available according to the existing lifecycle rules.
+- The assigned Project Supervisor must not receive an execution-handoff notification at FM final confirmation; PS notification occurs only from the explicit PM `launch_project` action.
 - The accounting ledger contains only the single intended funding-release event; FM final confirmation does not create a duplicate treasury reduction.
 - Existing release → reversal → release-again behavior remains intact.
 
@@ -1639,3 +1640,7 @@ After the runtime gate, continue the remaining Projects Phase 5 reconciliation/c
 - Keep accounting events single-purpose and auditable.
 - Runtime-test meaningful changes before declaring them complete.
 - Update all four master documentation files after each meaningful milestone and record the exact checkpoint SHA.
+
+
+## 2026-10-02 — Projects Phase 5 runtime gate: PS notification timing correction
+PRJ-0012 runtime evidence showed the assigned Project Supervisor was notified when FM performed final funding-document confirmation, while the project was still `planned` and before PM launch. This was corrected in `modules/projects/view_fm.php` by removing the PS notification from FM final confirmation. The existing `modules/projects/view.php` PM `launch_project` workflow already changes `planned → active` and then notifies the assigned PS. Code fix commit: `adecaf6c1e4b12017143d7a2f19bf8354ec1788d`. The corrected required sequence is: FM final confirmation → PM handoff/visibility → PM explicitly launches → PS execution notification. Runtime retest is required before Phase 5 closure.
