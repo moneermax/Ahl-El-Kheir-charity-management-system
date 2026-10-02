@@ -56,7 +56,7 @@ if ($id) {
 if ($id && !akp_can_edit_section('general', $id) && !$canEditRejectedBudget) {
     flash(
         'error',
-        'تعديل البيانات الأساسية متاح للمدير العام ونائبه فقط، وبعد إغلاق المشروع للمدير العام فقط.'
+        'تعديل البيانات الأساسية للمشروع متاح لمدير المشاريع أثناء التحضير أو بعد الرفض المالي فقط.'
     );
 
     redirect('modules/projects/view.php?id=' . $id);
@@ -652,7 +652,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (!$errors) {
 
-            $projectCreateTransaction = !$id;
+            $projectCreateTransaction = true;
             if ($projectCreateTransaction) {
                 db()->beginTransaction();
             }
@@ -1395,7 +1395,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $errors[] = APP_ENV === 'development'
                     ? 'تعذر حفظ المشروع: ' . $e->getMessage()
-                    : 'تعذر حفظ المشروع بسبب خطأ داخلي. لم يتم حفظ أي جزء من عملية الإنشاء.';
+                    : 'تعذر حفظ المشروع بسبب خطأ داخلي. لم يتم حفظ أي جزء من عملية التعديل أو الإنشاء.';
             }
         }
     }
