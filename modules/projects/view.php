@@ -246,7 +246,7 @@ $id,
 );
 }
 } catch (Throwable $notificationError) {}
-$_SESSION['project_toast_success'] = 'تم رفض المشروع من المدير العام وعكس الإفراج المالي وإعادته إلى المدير المالي للمراجعة.';
+flash('info', 'المشروع بانتظار المراجعة والاعتماد المالي من المدير المالي.');
 } elseif ($action === 'launch_project') {
 if ($role !== 'projects_manager') {
 throw new RuntimeException('إطلاق المشروع متاح لمدير المشاريع فقط.');
@@ -1023,20 +1023,7 @@ width: 24%;
 </div>
 </div>
 <?php include dirname(__DIR__, 2) . '/includes/alerts.php'; ?>
-<?php if ($approval['approval_status'] === 'submitted'): ?>
-<div class="alert alert-info fade-in"><i class="fas fa-info-circle me-2"></i>المشروع بانتظار المراجعة والاعتماد المالي من المدير المالي.</div>
-<?php elseif ($approval['approval_status'] === 'fm_approved'): ?>
-<div class="alert alert-warning fade-in"><i class="fas fa-clock me-2"></i>تم اعتماد المشروع مالياً. بانتظار الاعتماد النهائي من المدير العام.</div>
-<?php elseif ($approval['approval_status'] === 'rejected'): ?>
-<div class="alert alert-danger fade-in">
-<i class="fas fa-exclamation-triangle me-2"></i>تم رفض المشروع.
-<?php if (!empty($approval['fm_rejection_reason'])): ?>
-<br><strong>سبب الرفض المالي:</strong> <?php echo e($approval['fm_rejection_reason']); ?>
-<?php elseif (!empty($approval['rejection_reason'])): ?>
-<br><strong>سبب الرفض النهائي:</strong> <?php echo e($approval['rejection_reason']); ?>
-<?php endif; ?>
-</div>
-<?php endif; ?>
+
 <?php if ($role === 'financial_manager' && $approval['approval_status'] === 'submitted'): ?>
 <div class="card mb-4 fade-in border-primary">
 <div class="card-header bg-primary text-white"><i class="fas fa-money-check-alt me-2"></i>مراجعة المدير المالي</div>
