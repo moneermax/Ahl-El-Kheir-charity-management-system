@@ -22,18 +22,35 @@
 <?php include __DIR__ . '/age_alert.php'; ?>
 
 <style>
-.ak-top-back-wrap { display:flex; justify-content:flex-start; direction:ltr; width:100%; margin:0 0 1rem; }
-.ak-bottom-back-wrap { display:flex; justify-content:flex-end; direction:ltr; width:100%; margin:1.5rem 0; }
+.ak-top-back-wrap { display:flex; justify-content:flex-start; direction:ltr; width:100%; margin:0 0 .7rem; }
+.ak-bottom-back-wrap { display:flex; justify-content:flex-end; direction:ltr; width:100%; margin:1rem 0; }
 .ak-top-back-wrap .ak-top-back-btn,
-.ak-bottom-back-wrap .ak-bottom-back-btn { direction:rtl; display:inline-flex; align-items:center; gap:.35rem; white-space:nowrap; }
-@media (max-width:575.98px) { .ak-top-back-wrap { margin-bottom:.75rem; } .ak-bottom-back-wrap { margin-top:1.25rem; } }
+.ak-bottom-back-wrap .ak-bottom-back-btn {
+    direction:rtl;
+    display:inline-flex;
+    align-items:center;
+    gap:.3rem;
+    white-space:nowrap;
+    font-size:.8rem;
+    font-weight:500;
+    line-height:1.2;
+    padding:.3rem .6rem;
+    min-height:30px;
+    border-radius:.375rem;
+}
+.ak-top-back-wrap .ak-top-back-btn i,
+.ak-bottom-back-wrap .ak-bottom-back-btn i { font-size:.72rem; }
+@media (max-width:575.98px) {
+    .ak-top-back-wrap { margin-bottom:.6rem; }
+    .ak-bottom-back-wrap { margin-top:.8rem; }
+}
 </style>
 <style>
 .org-header-banner .org-flag,
 .app-footer .org-flag { display:inline-block !important;position:relative;width:34px !important;height:23px !important;min-width:34px !important;margin-inline:7px;vertical-align:middle;overflow:hidden;border-radius:2px;font-size:0 !important;line-height:0;background:linear-gradient(to bottom,#d71920 0 33.333%,#fff 33.333% 66.666%,#000 66.666% 100%) !important;box-shadow:0 1px 3px rgba(0,0,0,.28);transform-origin:left center;animation:ak-sudan-flag-wave 2.8s ease-in-out infinite }
 .org-header-banner .org-flag::before,.app-footer .org-flag::before {content:"";display:block !important;position:absolute;inset:0 auto 0 0;width:43%;height:100%;background:#087a3b !important;clip-path:polygon(0 0,100% 50%,0 100%);z-index:2}
 .org-header-banner .org-flag::after,.app-footer .org-flag::after {content:"";display:block !important;position:absolute;inset:0;background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.28) 18%,transparent 34%,rgba(0,0,0,.16) 48%,transparent 63%,rgba(255,255,255,.22) 78%,transparent 100%);z-index:3;pointer-events:none;animation:ak-sudan-flag-folds 2.8s ease-in-out infinite}
-@keyframes ak-sudan-flag-wave{0%,100%{transform:perspective(120px) rotateY(0deg) skewY(0deg) scaleX(1)}25%{transform:perspective(120px) rotateY(-12deg) skewY(1.5deg) scaleX(.96)}50%{transform:perspective(120px) rotateY(10deg) skewY(-1deg) scaleX(.98)}75%{transform:perspective(120px) rotateY(-7deg) skewY(.8deg) scaleX(.97)}}
+@keyframes ak-sudan-flag-wave{0%,100%{transform:perspective(120px) rotateY(0deg) skewY(0deg) scaleX(1)}25%{transform:perspective(120px) rotateY(-12deg) skewY(1.5deg) scaleX(.96)}50%{transform:perspective(120px) rotateY(10deg) skewY(-1deg) scaleX(.98)}75%{transform:perspective(120px) rotateY(-7deg) skewY(.8deg) scaleX(.97)}} 
 @keyframes ak-sudan-flag-folds{0%,100%{transform:translateX(-12%)}50%{transform:translateX(12%)}}
 @media (prefers-reduced-motion:reduce){.org-header-banner .org-flag,.org-header-banner .org-flag::after,.app-footer .org-flag,.app-footer .org-flag::after{animation:none}}
 .ak-leave-request-moving{visibility:hidden}
@@ -169,7 +186,8 @@ function akProjectPageEnhancements(){
                     var uploaderTd=document.createElement('td'); uploaderTd.textContent=uploader?uploader.textContent.replace('رفع بواسطة:','').trim():'—';
                     var actionsTd=document.createElement('td'); actionsTd.className='text-nowrap';
                     if(actions) actionsTd.appendChild(actions);
-                    tr.appendChild(titleTd);tr.appendChild(typeTd);tr.appendChild(statusTd);tr.appendChild(uploaderTd);tr.appendChild(actionsTd);tbody.appendChild(tr);
+                    tr.appendChild(titleTd);tr.appendChild(typeTd);tr.appendChild(statusTd);tr.appendChild(uploaderTd);tr.appendChild(actionsTd);
+                    tbody.appendChild(tr);
                 });
                 tableWrap.appendChild(table);
                 cardsRow.replaceWith(tableWrap);
