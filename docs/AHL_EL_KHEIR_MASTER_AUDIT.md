@@ -2002,3 +2002,13 @@ A fresh controlled project was created through the normal PM workflow: **PRJ-001
 2. **Save-flow reliability:** the user had to refresh the page and click Save twice before the expected project result appeared. The project eventually saved, but this interaction is not considered cleanly verified and requires source inspection.
 
 The Phase 5 workflow remains runtime-verification-required. Do not delete/recreate PRJ-0015 merely to bypass these findings, and do not alter historical accounting journals. Resume at PM submission only after the input/save findings are addressed or explicitly verified as a separate boundary.
+
+
+## 2026-10-02 — PRJ-0015 source verification checkpoint
+
+- Remote `main` HEAD at inspection: `138a7b7d2206b3bbe2664c919462c54bd7026169`.
+- Numeric-input finding: the repository already contains the intended system-wide fix in `assets/js/app.js`, commit `c80e1aa218aa5d8a6438d6e899482da3af5a7169`. The shared document-level `wheel` listener prevents default wheel changes only for `input[type="number"]`, with a non-passive listener, so no project-only workaround is required from this source review.
+- Project save-flow finding: `modules/projects/form.php` currently performs one DB transaction for the create/update sequence, commits before PRG redirect, stores a project-specific success message in session, redirects to the project form, and disables the Save button only after client-side validation passes. The form has no source-level duplicate-submit path beyond the intentional submit-button lock.
+- The prior PRG/toast repair commits `4cfe3f9175da05cc57e30d16f155851675d91bde` and `dd49b8896109faaa1f1635405eff3911f065c7b6` are present in the current history.
+- **Runtime status:** source review alone does not prove browser behavior. No local XAMPP/MariaDB runtime certification is recorded by this checkpoint.
+- **Next gate:** locally pull current `main`, verify the numeric wheel behavior and PRJ-0015 save flow in the browser, then continue with PM submission only after those runtime checks pass. Do not recreate PRJ-0015.
