@@ -1517,3 +1517,12 @@ Runtime verification must specifically cover:
 10. Existing controlled-balance/reconciliation and closure behavior remains intact.
 
 Do not correct historical/phantom project journals until these replacement-model runtime tests pass.
+
+
+## 2026-10-02 — Final static authorization correction
+
+During the final static pass, one authorization mismatch was found before runtime testing: the shared funding-reversal helper itself still enforced the FM role, which would have blocked the newly added GM-rejection reversal path. The helper now leaves role authorization to its calling workflow; FM correction and GM rejection each enforce their own role before calling it.
+
+Correction commit: `4d672f3df3848421900b04a53706551dcd0ba4ac`.
+
+**Runtime verification has not started yet. Pull only after this checkpoint is complete.**
