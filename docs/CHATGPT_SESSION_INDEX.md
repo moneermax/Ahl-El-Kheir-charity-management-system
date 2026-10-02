@@ -1359,3 +1359,18 @@ Correction commit: `4d672f3df3848421900b04a53706551dcd0ba4ac`.
 - A second UI defect was found on modules/projects/index.php: a local bottom back button duplicated the shared global bottom button.
 - Both were corrected on main. Successful project create/update now returns to the same form with the project-specific success toast. The current test project should be reused after pulling; do not create another duplicate fixture.
 - Commits: aa8b26532293c3a1933c0b64f6021205c0703c43, 4cfe3f9175da05cc57d91bde, 448a913dc254cdbc72e61f5bd4e767a32251cc20, dd49b8896109faaa1f1635405eff3911f065c7b6.
+
+
+## 2026-10-02 — Projects Phase 5 second deep review checkpoint
+
+The previous PRJ-0013 test fixture was deleted after the user requested a fresh start. Before asking for another fixture, a second deep static/schema review was performed.
+
+Corrections now on main:
+- Removed remaining legacy FM funding handlers and duplicate funding-maintenance UI from modules/projects/view.php.
+- Removed the generic active option from the Projects portfolio status selector.
+- Gated FM budget approval/rejection to submitted / rejected financial-review states.
+- Rechecked and corrected the shared funding-card markup after the legacy UI removal.
+
+Phase 5 remains RUNTIME VERIFICATION REQUIRED. No fresh controlled project currently exists. Do not ask the user to create the next fixture until the latest commit has been pulled.
+
+Latest main: 52a930f697198dbe8f051bf3415e014a929e1f1b.
