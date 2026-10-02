@@ -1659,3 +1659,18 @@ Do not mark Phase 5 closed. Next gate after resolving/verifying these findings: 
 - The prior PRG/toast repair commits `4cfe3f9175da05cc57e30d16f155851675d91bde` and `dd49b8896109faaa1f1635405eff3911f065c7b6` are present in the current history.
 - **Runtime status:** source review alone does not prove browser behavior. No local XAMPP/MariaDB runtime certification is recorded by this checkpoint.
 - **Next gate:** locally pull current `main`, verify the numeric wheel behavior and PRJ-0015 save flow in the browser, then continue with PM submission only after those runtime checks pass. Do not recreate PRJ-0015.
+
+
+## 2026-10-02 — PRJ-0015 runtime pre-submission gate PASSED
+
+The PRJ-0015 browser/runtime gate for the two previously open findings is now passed.
+
+- The system-wide numeric-input mouse-wheel issue is fixed and runtime-confirmed by the user. Scrolling the mouse wheel while focused/hovered over the budget numeric field no longer changes the value. The fix is implemented centrally in `assets/js/app.js` using a capturing, non-passive window-level wheel listener limited to `input[type="number"]`, with default prevention and propagation stopping.
+- The project save flow is now runtime-confirmed working: PRJ-0015 saved successfully and is ready for PM submission to FM approval. No project recreation was required.
+- Code fix commit: `788228916d8d79b94ff9b705c2b12613ee8cd631`.
+
+**Current runtime status:** PRJ-0015 is saved in `draft` and ready for the next workflow gate.
+
+**Immediate next gate:** PM submits PRJ-0015 for FM approval. Verify that submission changes the project from `draft` to `submitted`, that the FM can see/review it, and that submission itself creates **no accounting/funding release**. Do not begin the FM accounting sequence until this submission gate passes.
+
+Do not repeat the numeric-input or project-save investigation unless a genuine regression appears.
