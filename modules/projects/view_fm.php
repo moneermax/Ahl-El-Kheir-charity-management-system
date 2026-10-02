@@ -278,6 +278,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if($documented!==$total) throw new RuntimeException('يجب استكمال توثيق جميع عمليات التمويل قبل التأكيد النهائي.');
             dbExecute('START TRANSACTION');
             try {
+                $lockedApproval = dbFetchOne('SELECT approval_status FROM project_approval WHERE project_id=? FOR UPDATE',[$id]);
+                if (!$lockedApproval || (string)$lockedApproval['approval_status'] !== 'approved') throw new RuntimeException('تغيرت حالة الاعتماد قبل التأكيد النهائي.');
+                if (fm_payment_evidence_finalized($id)) throw new RuntimeException('تم تأكيد مستندات التمويل النهائي مسبقاً.');
                 dbExecute(
                     "INSERT INTO audit_log (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent)
                      VALUES (?, 'FM_CONFIRM_PAYMENT_EVIDENCE', 'project_payment_evidence', ?, ?, ?, ?, ?)",
@@ -311,6 +314,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if(fm_payment_evidence_finalized($id)) throw new RuntimeException('لا يمكن إلغاء التأكيدات المالية السابقة بعد التأكيد النهائي لمستندات التمويل.');
             dbExecute('START TRANSACTION');
             try {
+                $lockedApproval = dbFetchOne('SELECT approval_status FROM project_approval WHERE project_id=? FOR UPDATE',[$id]);
+                if (!$lockedApproval || (string)$lockedApproval['approval_status'] !== 'approved') throw new RuntimeException('تغيرت حالة الاعتماد قبل إلغاء التأكيدات المالية السابقة.');
+                if (fm_payment_evidence_finalized($id)) throw new RuntimeException('لا يمكن إلغاء التأكيدات المالية السابقة بعد التأكيد النهائي لمستندات التمويل.');
                 akp_reverse_project_funding_release($id,$reason,false);
                 dbExecute("UPDATE project_approval SET approval_status='submitted', approved_by=NULL, approved_at=NULL WHERE project_id=?",[$id]);
                 dbExecute('COMMIT');
@@ -348,7 +354,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (abs($fundingTotal-$financialRequirement)>0.01) throw new RuntimeException('يجب أن يساوي إجمالي تخصيص التمويل إجمالي المتطلبات المالية للمشروع (الميزانية + الرسوم الحكومية).');
             dbExecute('START TRANSACTION');
             try {
-                dbExecute("UPDATE project_approval SET approval_status='fm_approved',fm_reviewed_by=?,fm_reviewed_at=NOW() WHERE project_id=?", [akp_user_id(),$id]);
+                $lockedApproval = dbFetchOne('SELECT approval_status FROM project_approval WHERE project_id=? FOR UPDATE',[$id]);
+                if (!$lockedApproval || (string)$lockedApproval['approval_status'] !== 'submitted') throw new RuntimeException('تغيرت حالة المشروع قبل إتمام الاعتماد المالي.');
+                dbExecute("UPDATE project_approval SET approval_status='fm_approved',fm_reviewed_by=?,fm_reviewed_at=NOW() WHERE project_id=? AND approval_status='submitted'", [akp_user_id(),$id]);
                 akp_post_project_funding_release($id);
                 akp_sync_project_payment_evidence_after_release($id);
                 dbExecute('COMMIT');
@@ -388,7 +396,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $reason=fm_post('rejection_reason');
             if ($reason==='') throw new RuntimeException('سبب الرفض مطلوب.');
             if ((string)$approval['approval_status']!=='submitted') throw new RuntimeException('المشروع ليس في انتظار المراجعة المالية.');
-            dbExecute("UPDATE project_approval SET approval_status='rejected',fm_rejection_reason=?,fm_reviewed_by=?,fm_reviewed_at=NOW() WHERE project_id=?",[$reason,akp_user_id(),$id]);
+            dbExecute('START TRANSACTION');
+            try {
+                $lockedApproval = dbFetchOne('SELECT approval_status FROM project_approval WHERE project_id=? FOR UPDATE',[$id]);
+                if (!$lockedApproval || (string)$lockedApproval['approval_status'] !== 'submitted') throw new RuntimeException('تغيرت حالة المشروع قبل إتمام الرفض المالي.');
+                dbExecute("UPDATE project_approval SET approval_status='rejected',fm_rejection_reason=?,fm_reviewed_by=?,fm_reviewed_at=NOW() WHERE project_id=? AND approval_status='submitted'",[$reason,akp_user_id(),$id]);
+                dbExecute('COMMIT');
+            } catch (Throwable $e) {
+                dbExecute('ROLLBACK');
+                throw $e;
+            }
             akp_audit('FM_REJECT_PROJECT','project_approval',$id,['approval_status'=>'submitted'],['approval_status'=>'rejected','reason'=>$reason]);
 
 
