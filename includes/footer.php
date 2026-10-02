@@ -55,6 +55,132 @@
 @media (prefers-reduced-motion:reduce){.org-header-banner .org-flag,.org-header-banner .org-flag::after,.app-footer .org-flag,.app-footer .org-flag::after{animation:none}}
 .ak-leave-request-moving{visibility:hidden}
 </style>
+
+<style id="ak-global-form-final">
+/*
+ * Final global form-layout layer.
+ * footer.php is included after each page's own <style> block, so these rules
+ * are intentionally the last application-level CSS. This prevents page-local
+ * form CSS from undoing the shared field sizing/layout standard.
+ */
+@media (min-width: 768px) {
+    .content form :is(.row > [class*="col-"], .grid > div, .mb-3, .mb-4):has(> label + :is(input, select, textarea, .form-control, .form-select)) {
+        display: grid !important;
+        grid-template-columns: minmax(120px, 36%) minmax(0, 1fr) !important;
+        column-gap: 12px !important;
+        align-items: center !important;
+    }
+
+    .content form :is(.row > [class*="col-"], .grid > div, .mb-3, .mb-4):has(> label + :is(input, select, textarea, .form-control, .form-select)) > label {
+        grid-column: 1 !important;
+        display: block !important;
+        width: auto !important;
+        max-width: none !important;
+        margin: 0 !important;
+        align-self: center !important;
+        line-height: 1.35 !important;
+        white-space: normal !important;
+    }
+
+    .content form :is(.row > [class*="col-"], .grid > div, .mb-3, .mb-4):has(> label + :is(input, select, textarea, .form-control, .form-select)) > :is(
+        input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+        select,
+        textarea,
+        .form-control,
+        .form-select
+    ) {
+        grid-column: 2 !important;
+        min-width: 0 !important;
+        width: 100% !important;
+        max-width: none !important;
+        justify-self: stretch !important;
+    }
+
+    .content form :is(.row > [class*="col-"], .grid > div, .mb-3, .mb-4) > input[type="date"] {
+        width: 13rem !important;
+        max-width: 100% !important;
+        justify-self: start !important;
+    }
+    .content form :is(.row > [class*="col-"], .grid > div, .mb-3, .mb-4) > input[type="time"] {
+        width: 11rem !important;
+        max-width: 100% !important;
+        justify-self: start !important;
+    }
+    .content form :is(.row > [class*="col-"], .grid > div, .mb-3, .mb-4) > input[type="number"] {
+        width: 17rem !important;
+        max-width: 100% !important;
+        justify-self: start !important;
+    }
+    .content form :is(.row > [class*="col-"], .grid > div, .mb-3, .mb-4) > input[type="tel"] {
+        width: 19rem !important;
+        max-width: 100% !important;
+        justify-self: start !important;
+    }
+    .content form :is(.row > [class*="col-"], .grid > div, .mb-3, .mb-4) > input[type="email"] {
+        width: min(30rem, 100%) !important;
+        max-width: 100% !important;
+        justify-self: start !important;
+    }
+    .content form :is(.row > [class*="col-"], .grid > div, .mb-3, .mb-4) > input[type="text"] {
+        width: min(32rem, 100%) !important;
+        max-width: 100% !important;
+        justify-self: start !important;
+    }
+    .content form :is(.row > [class*="col-"], .grid > div, .mb-3, .mb-4) > select,
+    .content form :is(.row > [class*="col-"], .grid > div, .mb-3, .mb-4) > .form-select {
+        width: min(30rem, 100%) !important;
+        max-width: 100% !important;
+        justify-self: start !important;
+    }
+    .content form :is(.row > [class*="col-"], .grid > div, .mb-3, .mb-4) > textarea {
+        width: 100% !important;
+        max-width: 42rem !important;
+        min-height: 96px !important;
+        justify-self: start !important;
+    }
+
+    /* Keep Bootstrap column sizing from stretching a short field to the full column. */
+    .content form :is(.row > [class*="col-"], .grid > div, .mb-3, .mb-4) > :is(
+        input[type="date"], input[type="time"], input[type="number"],
+        input[type="tel"], input[type="email"], input[type="text"],
+        select, .form-select
+    ) {
+        flex: 0 1 auto !important;
+    }
+
+    /* Help/validation text belongs under the field, not beside the label. */
+    .content form :is(.row > [class*="col-"], .grid > div, .mb-3, .mb-4):has(> label + :is(input, select, textarea, .form-control, .form-select)) > :is(
+        small, .note, .form-text, .project-help, .invalid-feedback, .valid-feedback, .text-muted
+    ) {
+        grid-column: 2 !important;
+        min-width: 0 !important;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .content form :is(.row > [class*="col-"], .grid > div, .mb-3, .mb-4):has(> label + :is(input, select, textarea, .form-control, .form-select)) {
+        display: block !important;
+    }
+
+    .content form :is(.row > [class*="col-"], .grid > div, .mb-3, .mb-4):has(> label + :is(input, select, textarea, .form-control, .form-select)) > label {
+        display: block !important;
+        width: auto !important;
+        margin-bottom: 6px !important;
+    }
+
+    .content form :is(.row > [class*="col-"], .grid > div, .mb-3, .mb-4):has(> label + :is(input, select, textarea, .form-control, .form-select)) > :is(
+        input:not([type="hidden"]),
+        select,
+        textarea,
+        .form-control,
+        .form-select
+    ) {
+        width: 100% !important;
+        max-width: none !important;
+    }
+}
+</style>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
