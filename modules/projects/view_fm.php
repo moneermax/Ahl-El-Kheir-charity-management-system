@@ -81,6 +81,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($total<=0) throw new RuntimeException('لا يمكن اعتماد ميزانية بدون بنود ومبلغ أكبر من صفر.');
             dbExecute('START TRANSACTION');
             try {
+                $lockedApproval = dbFetchOne('SELECT approval_status FROM project_approval WHERE project_id=? FOR UPDATE',[$id]);
+                if (!$lockedApproval || !in_array((string)$lockedApproval['approval_status'], ['submitted','rejected'], true)) throw new RuntimeException('تغيرت حالة المشروع قبل اعتماد الميزانية.');
                 dbExecute("UPDATE project_budgets SET status='superseded' WHERE project_id=? AND status='approved'",[$id]);
                 dbExecute("UPDATE project_budgets SET status='approved' WHERE id=? AND project_id=? AND status='draft'",[$budgetId,$id]);
                 dbExecute('COMMIT');
