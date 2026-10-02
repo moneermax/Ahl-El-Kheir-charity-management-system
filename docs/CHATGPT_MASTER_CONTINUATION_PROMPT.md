@@ -1696,3 +1696,50 @@ Before starting the controlled accounting runtime sequence, two defects were fou
 Code commits: aa8b26532293c3a1933c0b64f6021205c0703c43, 4cfe3f9175da05cc57d91bde, 448a913dc254cdbc72e61f5bd4e767a32251cc20, dd49b8896109faaa1f1635405eff3911f065c7b6.
 
 Next action: pull main, verify the already-created controlled test project is visible to its PM and that saving remains on the same form with a toast, then resume the Phase 5 accounting runtime gate. Do not recreate PRJ-0011 or PRJ-0012.
+
+
+# LATEST CONTINUATION CHECKPOINT — 2026-10-02 — Projects Phase 5 Deep Pre-Runtime Review
+
+Continue the existing Ahl El Kheir Charity Management System. Do not rebuild or start a new project.
+
+## Current repository state
+- Branch: main
+- Latest commit: 52a930f697198dbe8f051bf3415e014a929e1f1b
+- Projects Phase 5: IMPLEMENTED / STATICALLY RE-AUDITED / RUNTIME VERIFICATION REQUIRED
+- The previous PRJ-0013 fixture was deleted. There is currently no fresh Phase 5 runtime fixture.
+
+## Latest deep-review corrections
+1. Removed the remaining legacy FM funding POST handlers (add_funding, edit_funding, delete_funding) from modules/projects/view.php.
+2. Removed the corresponding duplicate funding-entry/edit UI from the shared project view; funding is now maintained through canonical modules/projects/view_fm.php only.
+3. Removed the generic active option from the Projects portfolio status selector. Initial activation remains exclusively through PM launch_project.
+4. Gated FM budget approval/rejection to the intended submitted / rejected financial-review states.
+5. Rechecked the shared funding-card markup after the legacy workflow removal.
+
+## Established Phase 5 workflow — do not change unless explicitly agreed
+PM prepares/submits → FM financial review → FM approves and posts exactly one funding release per allocation → GM organizational approval only → FM documents funding → FM final confirmation → PM handoff/visibility → PM explicitly launches → PS notification/execution.
+
+- GM rejection reverses the already-posted FM release and returns the project atomically to FM review.
+- Before FM final confirmation, FM may use the controlled correction window to reverse the current release and invalidate GM approval.
+- After FM final confirmation, correction/void is blocked visually and server-side.
+- FM final confirmation creates no new accounting release and does not notify PS.
+- PM launch is the sole initial planned → active path and notifies the assigned active Project Supervisor.
+
+## Required next step
+First pull latest main. Then create a fresh controlled Phase 5 project fixture only after confirming the latest code is present. Do not reuse PRJ-0013 or historical PRJ-0011/PRJ-0012 fixtures unless explicitly required.
+
+Then run the complete controlled sequence:
+1. PM creation and immediate visibility.
+2. PM submission.
+3. FM budget approval/funding allocation.
+4. FM financial approval: verify one release per allocation and balanced journals.
+5. GM approval: verify no additional release.
+6. GM rejection: verify original releases voided, posted reversals created, allocations reopened, and approval returned to submitted atomically.
+7. FM re-approval: verify a new current release while preserving history.
+8. GM approval again: no additional accounting.
+9. FM correction before final confirmation: verify current release reversal and GM approval invalidation.
+10. FM re-approval again.
+11. GM approval again.
+12. FM completes all funding evidence and final confirmation: no new accounting; PM handoff only; PS not notified.
+13. PM launch: planned → active; PS notified; no accounting release.
+
+Do not mark Phase 5 closed until the full sequence passes in the local XAMPP/MariaDB runtime. Do not modify historical project journals before the replacement model is fully runtime-verified.
