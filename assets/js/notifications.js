@@ -110,6 +110,78 @@
         window.AKNotify.confirm(message, proceed);
     }
 
+    /*
+     * Preserve the user's position when a normal POST/PRG action returns to
+     * the same page with a server-side flash message. The flash is already
+     * rendered as a fixed toast; this prevents the browser reload itself from
+     * forcing the user back to the top of a long page.
+     *
+     * sessionStorage is deliberately used so the state is isolated to the
+     * current browser tab and survives the normal reload/redirect cycle.
+     */
+    var AK_FLASH_SCROLL_KEY = 'ak_flash_scroll_restore_v1';
+
+    function saveFlashScrollPosition(form) {
+        if (!form || (form.target && form.target !== '_self' && form.target !== '')) return;
+        if (!window.sessionStorage) return;
+
+        try {
+            window.sessionStorage.setItem(AK_FLASH_SCROLL_KEY, JSON.stringify({
+                href: window.location.href,
+                left: window.scrollX || 0,
+                top: window.scrollY || 0,
+                savedAt: Date.now()
+            }));
+        } catch (e) {
+            /* Storage can be unavailable; the action must continue normally. */
+        }
+    }
+
+    function restoreFlashScrollPosition(hasFlash) {
+        if (!hasFlash || !window.sessionStorage) return;
+
+        var raw = null;
+        try {
+            raw = window.sessionStorage.getItem(AK_FLASH_SCROLL_KEY);
+        } catch (e) {
+            return;
+        }
+
+        if (!raw) return;
+
+        var saved;
+        try {
+            saved = JSON.parse(raw);
+        } catch (e) {
+            try { window.sessionStorage.removeItem(AK_FLASH_SCROLL_KEY); } catch (ignore) {}
+            return;
+        }
+
+        var samePage = saved && saved.href === window.location.href;
+        var recentEnough = saved && Number.isFinite(Number(saved.savedAt)) && (Date.now() - Number(saved.savedAt)) <= 30000;
+        if (!samePage || !recentEnough) {
+            try { window.sessionStorage.removeItem(AK_FLASH_SCROLL_KEY); } catch (ignore) {}
+            return;
+        }
+
+        try { window.sessionStorage.removeItem(AK_FLASH_SCROLL_KEY); } catch (ignore) {}
+
+        /* Wait for the restored document to have its normal layout before scrolling. */
+        window.requestAnimationFrame(function () {
+            window.requestAnimationFrame(function () {
+                window.scrollTo(Number(saved.left) || 0, Number(saved.top) || 0);
+            });
+        });
+    }
+
+    /* Register before the confirmation interceptor below so the original
+     * scroll position is captured even when SweetAlert confirmation is used. */
+    document.addEventListener('submit', function (event) {
+        var form = event.target;
+        if (!form || form.tagName !== 'FORM') return;
+        saveFlashScrollPosition(form);
+    }, true);
+
     document.addEventListener('submit', function (event) {
         var form = event.target;
         if (!form || form.tagName !== 'FORM') return;
@@ -237,6 +309,9 @@
     }, true);
 
     document.addEventListener('DOMContentLoaded', function () {
+        var flashNodes = document.querySelectorAll('[data-ak-flash]');
+        restoreFlashScrollPosition(flashNodes.length > 0);
+
         document.querySelectorAll('form.js-supervisor-action').forEach(function (form) {
             var button = form.querySelector('button[name="supervisor_action"]');
             if (!button) return;
