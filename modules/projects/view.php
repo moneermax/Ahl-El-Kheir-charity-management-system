@@ -1,6 +1,7 @@
 <?php
 // modules/projects/view.php - Project profile, financial controls, documents, operations, closure
 require_once dirname(__DIR__, 2) . '/modules/projects/project_lib.php';
+require_once dirname(__DIR__, 2) . '/modules/projects/project_funding_accounting.php';
 require_once dirname(__DIR__, 2) . '/modules/accounting/lib.php';
 require_once dirname(__DIR__, 2) . '/modules/accounting/lib_transaction_review.php';
 Session::start();
@@ -283,38 +284,10 @@ dbExecute("UPDATE project_approval SET approval_status = 'approved', approved_by
 dbExecute('UPDATE other_projects SET status = \'planned\' WHERE id = ?', [$id]);
 dbExecute('UPDATE project_lifecycle SET lifecycle_status = \'planned\' WHERE project_id = ?', [$id]);
 dbExecute('UPDATE project_lifecycle SET final_budget_amount = ? WHERE project_id = ?', [$financialRequirement, $id]);
-// Earmark the funding: no ledger entry, no cash movement. Real cash only moves
-// later, per actual expense or documented payment — see 'post_expense' below and
-// project_payment_receipt.php, which is where journal_entry_id below gets filled in.
-akp_commit_project_funding($id);
-$entryId = null;
-// Create one documentary payment-evidence row per approved funding source, with
-// no journal entry yet: nothing has actually been paid or documented at this point.
-$paymentRows = dbFetchAll(
-"SELECT f.id, f.source_account_id, f.amount, f.currency_code, f.allocation_date, a.code AS source_code
-FROM project_funding_allocations f
-INNER JOIN accounts a ON a.id = f.source_account_id
-WHERE f.project_id = ?",
-[$id]
-);
-foreach ($paymentRows as $paymentRow) {
-$method = akp_project_payment_method_from_account_code((string)$paymentRow['source_code']);
-if ($method === null) {
-throw new RuntimeException('مصدر تمويل المشروع لا يملك طريقة دفع معروفة.');
-}
-$existingEvidence = dbFetchOne(
-'SELECT id FROM project_payment_evidence WHERE funding_allocation_id = ? LIMIT 1',
-[(int)$paymentRow['id']]
-);
-if (!$existingEvidence) {
-dbExecute(
-"INSERT INTO project_payment_evidence
-(project_id, funding_allocation_id, source_account_id, journal_entry_id, payment_method, amount, currency_code, payment_date, status, created_at)
-VALUES (?,?,?,?,?,?,?,CURDATE(),'pending',NOW())",
-[$id, (int)$paymentRow['id'], (int)$paymentRow['source_account_id'], $entryId, $method, (float)$paymentRow['amount'], $paymentRow['currency_code'] ?: ($project['currency_code'] ?: 'SDG')]
-);
-}
-}
+// FM financial approval is the treasury-release event. By the time GM reaches
+// final approval, the funding allocations are already posted and each allocation
+// has one auditable release journal/payment-evidence record. GM approval must
+// never create a second accounting release.
 dbExecute('COMMIT');
 akp_audit('GM_APPROVE_PROJECT', 'project_approval', $id, ['approval_status' => 'fm_approved'], ['approval_status' => 'approved']);
 $_SESSION['project_toast_success'] = 'تم اعتماد المشروع نهائياً. التمويل مخصص ومحجوز للمشروع، ولن يُخصم من السيولة الفعلية إلا عند توثيق كل دفعة فعلية على حدة.';
