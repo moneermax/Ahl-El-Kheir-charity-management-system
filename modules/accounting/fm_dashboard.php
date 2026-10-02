@@ -180,6 +180,13 @@ $projectApprovalQueue = dbFetchAll("SELECT
              b.version_no
     ORDER BY pa.submitted_at ASC, p.id ASC");
 $projectApprovalCount = count($projectApprovalQueue);
+
+// The project-review quick card must open the actual FM review workflow when
+// a project is waiting for financial review. With no pending project, keep the
+// card as a same-page anchor so the empty queue remains visible.
+if ($projectApprovalQueue) {
+    $headerQuickActions[2]['url'] = 'modules/projects/view_fm.php?id=' . (int)$projectApprovalQueue[0]['project_id'];
+}
 $fundingAccounts = dbFetchAll("SELECT a.id, a.code, a.name_ar, a.name_en,
         COALESCE(SUM(
             CASE
