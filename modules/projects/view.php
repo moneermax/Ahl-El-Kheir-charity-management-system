@@ -291,7 +291,7 @@ dbExecute('UPDATE project_lifecycle SET final_budget_amount = ? WHERE project_id
 // never create a second accounting release.
 dbExecute('COMMIT');
 akp_audit('GM_APPROVE_PROJECT', 'project_approval', $id, ['approval_status' => 'fm_approved'], ['approval_status' => 'approved']);
-$_SESSION['project_toast_success'] = 'تم اعتماد المشروع نهائياً. التمويل سبق الإفراج عنه محاسبياً عند الاعتماد المالي، ويمكن الآن الانتقال إلى التنفيذ تحت سيطرة مشرف المشروع.';
+$_SESSION['project_toast_success'] = 'تم اعتماد المشروع نهائياً. بانتظار استكمال توثيق مستندات التمويل من المدير المالي.';
 } catch (Throwable $e) {
 dbExecute('ROLLBACK');
 throw $e;
