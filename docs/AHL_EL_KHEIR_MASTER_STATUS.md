@@ -1434,3 +1434,23 @@ A fresh implementation was added on main without resurrecting the rolled-back Ph
 7. Normal accounting post_expense is blocked after project funding has been released, preventing a second treasury reduction for the same controlled project funds.
 
 The implementation is STATICALLY IMPLEMENTED — RUNTIME VERIFICATION REQUIRED. Do not mark Phase 5 closed and do not correct historical project journals until the fresh controlled-project runtime gate passes.
+
+
+## 2026-10-02 — Projects Phase 5 PM handoff visibility gate corrected
+
+A runtime-driven workflow audit found that the Projects Manager dashboard/list used the generic project-view authorization and therefore exposed a GM-approved project before the Financial Manager had completed the separate final funding-document confirmation. This contradicted the established handoff boundary.
+
+Correction:
+- Added the shared helper `akp_project_final_fm_confirmed()`, derived from the existing auditable `FM_CONFIRM_PAYMENT_EVIDENCE` event in `audit_log`.
+- Projects Manager project visibility is now denied until that FM final-confirmation event exists.
+- The existing FM final confirmation remains the single PM handoff/notification event; no new accounting event or schema state was introduced.
+- Project Supervisor access remains governed by the existing approval + explicit launch lifecycle gate.
+- PM project launch now uses the same shared FM-final-confirmation helper rather than duplicating the audit-log query.
+- GM approval remains organizational approval only and does not notify the PM or create a second accounting release.
+
+Implementation commits:
+- `2ec62923ad554e5feb7c2bd261d3267cbdf9ca5e` — PM visibility gate.
+- `ad097b53c15d0d2b3d2f8307164e1325b9f44d5f` — shared helper used by PM launch gate.
+
+**Status: STATICALLY CORRECTED — RUNTIME VERIFICATION REQUIRED.**
+The PRJ-0012 runtime gate must verify: GM approval alone leaves the project absent from the PM dashboard/detail access; FM final funding-document confirmation then makes it visible and sends the PM handoff notification; no duplicate accounting release is created.
