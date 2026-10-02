@@ -9,7 +9,7 @@ if (!function_exists('akp_project_expense_account_id')) {
         $project = dbFetchOne('SELECT expense_account_id FROM other_projects WHERE id = ?', [$projectId]);
         $accountId = (int)($project['expense_account_id'] ?? 0);
         if ($accountId > 0) {
-            $account = dbFetchOne('SELECT id FROM accounts WHERE id=? AND is_active=1 AND account_type='expense' LIMIT 1', [$accountId]);
+            $account = dbFetchOne("SELECT id FROM accounts WHERE id=? AND is_active=1 AND account_type='expense' LIMIT 1", [$accountId]);
             if ($account) return (int)$account['id'];
         }
         $account = dbFetchOne("SELECT id FROM accounts WHERE code = '5100' AND is_active = 1 AND account_type='expense' LIMIT 1");
