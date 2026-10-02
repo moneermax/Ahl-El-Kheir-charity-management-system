@@ -1777,3 +1777,54 @@ Targeted source checks for the above findings pass on the current `main` revisio
 No XAMPP/MariaDB/browser runtime verification has been claimed. The fresh controlled fixture `PH5 Full Accounting Reconciliation Test` must not be created until local runtime verification is available and the complete Phase 5 runtime sequence is executed.
 
 Historical fixtures PRJ-0011 and PRJ-0012 remain untouched.
+
+
+## 2026-10-02 — Phase 5 final pre-runtime workflow consistency repair
+
+Before any new runtime fixture/test, the complete current Projects user-facing page set and the Projects dashboard were re-read against the established Phase 5 workflow, and the repository database snapshot was inspected as schema/accounting evidence.
+
+### Additional inconsistencies found and corrected
+
+1. **Obsolete standalone FM budget-rejection action removed**
+   - modules/projects/view_fm.php still exposed fm_reject_budget.
+   - That action only stored a rejection reason while leaving project_approval.approval_status unchanged, creating a dead-end path that did not match the canonical FM financial rejection workflow.
+   - The standalone action, button, and modal were removed.
+   - FM rejection is now exclusively fm_reject_project, which transitions submitted -> rejected and notifies the Projects Manager.
+
+2. **Shared project-view funding ownership wording corrected**
+   - modules/projects/view.php contained stale wording saying funding allocations were prepared before submission and that FM only reviewed them.
+   - The current canonical workflow maintains funding allocations through modules/projects/view_fm.php during FM financial review.
+   - The shared project view now presents allocations read-only and directs the workflow boundary to the dedicated FM page.
+
+3. **Payment-evidence wording corrected**
+   - The shared project view previously described the accounting documentation boundary as though the GM approval itself made the funding payment/accounting event.
+   - It now explicitly states that the accounting funding release occurs at FM financial approval; GM approval is organizational approval only; FM later documents the actual payment evidence without creating another accounting release.
+
+4. **Final-confirmation concurrency hardening**
+   - FM cash confirmation, bank/e-wallet receipt upload, and payment-evidence editing now lock the project approval row and re-check the final-confirmation event inside a transaction.
+   - This prevents a payment-evidence mutation from racing with FM final confirmation and modifying a project after the final handoff lock.
+
+### Repository/schema verification
+
+- All current modules/projects PHP pages were included in the source review: form.php, index.php, project_funding_accounting.php, project_lib.php, project_payment_receipt.php, serve_project_document.php, view.php, view_fm.php, view_pm.php.
+- dashboard/projects_dashboard.php was also reviewed because it is part of the documented PM/PS workflow.
+- The repository database snapshot database/ahl_el_kheir.sql was inspected directly from its Git blob, including the project approval/funding/payment-evidence/accounting structures.
+- The snapshot contains no CREATE VIEW, CREATE TRIGGER, CREATE PROCEDURE, CREATE FUNCTION, or CREATE EVENT definitions.
+- The current project page set contains no request-time CREATE/ALTER/DROP TABLE/VIEW/TRIGGER/PROCEDURE/FUNCTION/EVENT operations.
+- Targeted post-remediation source invariants pass for:
+  - canonical FM rejection;
+  - GM rejection reversal/atomic approval reset;
+  - FM correction lock;
+  - final confirmation lock;
+  - payment-evidence mutation locking;
+  - PM-only planned -> active launch;
+  - PS notification only after launch;
+  - GM approval without a second accounting release;
+  - FM approval as the accounting release point;
+  - allocation-to-journal linkage.
+
+### Runtime boundary
+
+This is a source/schema consistency gate, not a runtime certification. No new project fixture has been created and no XAMPP/MariaDB/browser test has been claimed. The existing controlled fixtures remain untouched.
+
+**Current Phase 5 status: IMPLEMENTED / DEEPLY SOURCE-AUDITED / PRE-RUNTIME WORKFLOW CONSISTENCY PASS / RUNTIME VERIFICATION STILL REQUIRED.**
