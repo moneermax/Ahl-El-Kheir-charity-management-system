@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['set_status'])) {
     } else {
         $projectId = (int)$_POST['set_status'];
         $newStatus = (string)($_POST['new_status'] ?? '');
-        $allowed = ['planned', 'active', 'completed', 'cancelled', 'under_review'];
+        $allowed = ['planned', 'completed', 'cancelled', 'under_review'];
         $project = akp_get_project($projectId);
         if (!$project || !akp_can_edit_section('operations', $projectId) || akp_project_is_closed($projectId)) {
             flash('error', t('projects.no_permission_status'));
