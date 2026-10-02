@@ -161,7 +161,12 @@ if (!function_exists('akp_can_edit_section')) {
         if ($role === 'admin') return true;
         if ($projectId > 0 && akp_project_is_closed($projectId) && !akp_is_dg()) return false;
         if ($section === 'general') {
-            if (in_array($role, ['general_manager', 'vice_general_manager'], true)) return true;
+            /*
+             * General project data is owned by the Projects Manager during
+             * preparation/correction. GM/VGM are approval actors, not editors
+             * of the underlying project record after creation.
+             */
+            if (in_array($role, ['general_manager', 'vice_general_manager'], true)) return false;
 
             /*
              * The Projects Manager owns project creation and pre-approval
