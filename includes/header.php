@@ -373,6 +373,62 @@ $langSwitchUrl =
             margin: 0;
         }
 
+        /* Global form fields: make editable controls clearly visible against the page background.
+           This is intentionally centralized here so page-specific forms inherit one consistent border. */
+        .content :is(
+            input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+            select,
+            textarea,
+            .form-control,
+            .form-select
+        ) {
+            border: 2px solid #5f7fa8 !important;
+            border-color: #5f7fa8 !important;
+        }
+
+        .content :is(
+            input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+            select,
+            textarea,
+            .form-control,
+            .form-select
+        ):focus,
+        .content :is(
+            input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+            select,
+            textarea,
+            .form-control,
+            .form-select
+        ):focus-visible {
+            border-color: #1b4d8f !important;
+            box-shadow: 0 0 0 .2rem rgba(27, 77, 143, .14) !important;
+        }
+
+        /* Validation/autofill states must not turn the field border into a pale green. */
+        .content :is(
+            input,
+            select,
+            textarea,
+            .form-control,
+            .form-select
+        ).is-valid,
+        .content :is(
+            input,
+            select,
+            textarea,
+            .form-control,
+            .form-select
+        ).is-invalid,
+        .content :is(
+            input,
+            select,
+            textarea,
+            .form-control,
+            .form-select
+        ):valid {
+            border-color: #5f7fa8 !important;
+        }
+
         /* Hide native number-field spinner arrows throughout the application.
            Numeric fields remain fully editable by typing or using the keyboard. */
         input[type="number"]::-webkit-inner-spin-button,
