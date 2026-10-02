@@ -1676,3 +1676,11 @@ Runtime gate:
 10. Controlled-balance reconciliation and closure remain correct.
 
 Start runtime testing only after pulling the latest main once.
+
+## 2026-10-02 — Final static authorization correction
+
+During the final static pass, one authorization mismatch was found before runtime testing: the shared funding-reversal helper itself still enforced the FM role, which would have blocked the newly added GM-rejection reversal path. The helper now leaves role authorization to its calling workflow; FM correction and GM rejection each enforce their own role before calling it.
+
+Correction commit: `4d672f3df3848421900b04a53706551dcd0ba4ac`.
+
+**Runtime verification has not started yet. Pull only after this checkpoint is complete.**
