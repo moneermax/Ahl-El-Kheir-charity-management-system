@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['set_status'])) {
     } else {
         $projectId = (int)$_POST['set_status'];
         $newStatus = (string)($_POST['new_status'] ?? '');
-        $allowed = ['planned', 'completed', 'cancelled', 'under_review'];
+        $allowed = ['completed', 'cancelled', 'under_review'];
         $project = akp_get_project($projectId);
         if (!$project || !akp_can_edit_section('operations', $projectId) || akp_project_is_closed($projectId)) {
             flash('error', t('projects.no_permission_status'));
@@ -28,10 +28,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['set_status'])) {
             flash('error', t('projects.invalid_status'));
         } else {
             $oldStatus = (string)($project['lifecycle_status'] ?: $project['status']);
-$legacyStatus = $newStatus === 'under_review' ? 'planned' : $newStatus;
-            dbExecute('UPDATE other_projects SET status = ?, updated_by = ? WHERE id = ?', [$legacyStatus, akp_user_id(), $projectId]);
-            dbExecute('UPDATE project_lifecycle SET lifecycle_status = ? WHERE project_id = ?', [$newStatus, $projectId]);
-            dbExecute('INSERT INTO project_status_history (project_id, old_status, new_status, reason, changed_by) VALUES (?,?,?,?,?)', [$projectId, $oldStatus, $newStatus, trim((string)($_POST['status_reason'] ?? '')) ?: null, akp_user_id()]);
+            $legacyStatus = $newStatus === 'under_review' ? 'planned' : $newStatus;
+            dbExecute('START TRANSACTION');
+            try {
+                dbExecute('UPDATE other_projects SET status = ?, updated_by = ? WHERE id = ?', [$legacyStatus, akp_user_id(), $projectId]);
+                dbExecute('UPDATE project_lifecycle SET lifecycle_status = ? WHERE project_id = ?', [$newStatus, $projectId]);
+                dbExecute('INSERT INTO project_status_history (project_id, old_status, new_status, reason, changed_by) VALUES (?,?,?,?,?)', [$projectId, $oldStatus, $newStatus, trim((string)($_POST['status_reason'] ?? '')) ?: null, akp_user_id()]);
+                dbExecute('COMMIT');
+            } catch (Throwable $e) {
+                dbExecute('ROLLBACK');
+                throw $e;
+            }
             akp_audit('STATUS_CHANGE', 'project_lifecycle', $projectId, ['status' => $oldStatus], ['status' => $newStatus]);
             flash('success', t('projects.status_updated'));
         }
