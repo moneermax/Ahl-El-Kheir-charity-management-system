@@ -1497,3 +1497,49 @@ Implementation/documentation commits:
 - documentation: `724e0d6e08451d828c6fa067627bfff6b9d7674d`, `5ebfdb10883b9eb03eec6d2389877c15ffa0a470`, `0cd4cc8ba058de752d4f9b61e9f48a276140dca5`
 
 Next verification gate: runtime-test the canonical creation page from both Admin and HR Manager and verify automatic one-to-one user→employee creation using controlled test data. Then continue from the explicitly documented next work unit; do not invent a new stage.
+
+## LATEST CONTINUATION CHECKPOINT — 2026-10-02 — Account Provisioning + Password Workflow CLOSED
+
+Continue the existing Ahl El Kheir Charity Management System. Do not rebuild or start a new project.
+
+Environment: repository moneermax/Ahl-El-Kheir-charity-management-system; local path D:\xampp\htdocs\AhlElKheir; local URL http://localhost:8081/AhlElKheir/; database ahl_el_kheir; Windows/XAMPP/Apache/PHP 8.2/MariaDB; Arabic RTL; Bootstrap 5.3 RTL; vanilla JS; procedural PHP only.
+
+## Current status
+- Salary Advance Stages 1–6: **DONE / RUNTIME VERIFIED / CLOSED**.
+- Unified User / Employee provisioning: **DONE / IMPLEMENTED / DOCUMENTED**.
+- Temporary-password first-login workflow: **DONE / RUNTIME VERIFIED / CLOSED**.
+- Login/password credential-direction hardening: **DONE / RUNTIME VERIFIED / CLOSED**.
+
+## Password workflow evidence
+- Account creation generates a temporary password server-side; no password field is provided to Admin/HR.
+- The password is stored only as a hash and password_change_required = 1.
+- The generated temporary password is displayed once after successful account creation.
+- First login with that password reaches the forced password-change flow.
+- Successful password change clears the forced-change flag.
+- Subsequent normal login with the new password succeeds.
+- Credential fields use stable LTR character direction so login/password changes remain usable whether the surrounding page is RTL or LTR.
+
+Relevant commits:
+- Migration: 43f0a0ce846952e8dceaea72325807f7ac5b6c1f
+- Login direction hardening: c3b139cae1d08c67f00313b2bca50c8d20987afe
+- Password-change direction hardening: 745fe81d5c3dcc7773b84377e4d2ff5facc9dd88
+
+## Important Projects baseline
+The historical Projects Phase 5 accounting implementation/audit attempt was explicitly rolled back. The rollback baseline is commit 594e6c216757851526e63e80a8b2e8585416d94a. Do not treat the rolled-back Phase 5 implementation, migrations, or files as current. Any future Projects work must first inspect the rollback baseline plus current main and perform a fresh design/schema audit.
+
+## Next session instructions
+1. Start on main; do not create branches.
+2. Inspect the current master status/audit/session index and this continuation document before making changes.
+3. Identify the next explicitly agreed work item from the current project checkpoint; do not invent a new stage.
+4. Inspect the actual current source and schema relevant to that work before coding.
+5. Preserve all completed Salary Advance and account/password workflow behavior unless a concrete regression is demonstrated.
+6. For Projects, use the rollback baseline as the historical implementation boundary; do not resurrect the rejected Phase 5 implementation by assumption.
+7. Keep all existing project rules: no guessed schema, migrations only for schema changes, no runtime CREATE/ALTER, no triggers/views/stored procedures/functions/events, procedural PHP only, no destructive Git commands, and no branches.
+8. Update documentation and continuation checkpoint after the next milestone.
+
+## User's preferred working style
+- Inspect the repository directly rather than asking the user to run routine inspection commands when the connector can provide the evidence.
+- Make changes directly on main; do not create branches.
+- Do not rebuild existing modules.
+- Explain findings before changing established workflows.
+- Runtime-test changes before declaring them complete.
