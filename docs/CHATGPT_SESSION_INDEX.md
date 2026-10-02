@@ -1515,3 +1515,16 @@ The user is switching to an immediate project fix that should be addressed compr
 
 After the immediate fix is runtime-verified, resume from the FM budget approval gate and continue the established Phase 5 accounting reconciliation sequence.
 
+
+
+## 2026-10-02 — Projects Phase 5 current continuation checkpoint
+
+**Fixture:** PRJ-0015 — PH5 Full Accounting Reconciliation Test
+
+PM submission runtime gate passed. Current verified state: approval `submitted`; lifecycle/display `planned`; budget `300,000.00 SDG` across 3 lines; approved funding `0.00`; posted expenses `0.00`; FM project-review notification received; FM review page accessible; submission created no funding allocation and no accounting release.
+
+**Pause point:** immediately before FM budget approval. Preserve PRJ-0015; do not recreate it.
+
+**System-wide UI checkpoint:** global form label/field sizing was redesigned centrally in `includes/footer.php` after reviewing the actual Bootstrap/custom form structures. Commit **7856da749fc23e06fce9c7ecedfa5e92f061fd8f**. User runtime feedback: much better for most pages, with some remaining page-level imperfections.
+
+**Next Projects action:** resume Phase 5 at FM budget approval, then verify funding allocation and the single canonical accounting release before continuing to GM approval, rejection/correction, final confirmation, PM launch, and PS handoff gates.
