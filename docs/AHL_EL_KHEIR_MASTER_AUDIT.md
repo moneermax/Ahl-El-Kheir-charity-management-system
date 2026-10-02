@@ -1860,3 +1860,16 @@ During the final static pass, one authorization mismatch was found before runtim
 Correction commit: `4d672f3df3848421900b04a53706551dcd0ba4ac`.
 
 **Runtime verification has not started yet. Pull only after this checkpoint is complete.**
+
+
+## 2026-10-02 — Phase 5 runtime-gate preflight defect found and corrected
+Static review immediately before runtime testing found two genuine integration defects that the earlier Phase 5 deep repair had not covered:
+1. akp_can_view_project() blocked the PM who created a project from seeing it while it was still in the pre-handoff workflow, causing a successful create operation to appear to lose the project and redirect through the dashboard.
+2. modules/projects/index.php contained a page-specific bottom back button in addition to the shared global back-button installer, producing a duplicate bottom button.
+
+Corrections on main:
+- project_lib.php: creator-PM pre-handoff visibility added without granting operational execution rights.
+- form.php: successful create/update now uses PRG back to the same form and delivers the success message through the project-specific Bootstrap toast; duplicate success alert removed.
+- index.php: duplicate page-specific back button removed; global standard pair remains.
+
+Commits: aa8b26532293c3a1933c0b64f6021205c0703c43, 4cfe3f9175da05cc57d91bde, 448a913dc254cdbc72e61f5bd4e767a32251cc20, dd49b8896109faaa1f1635405eff3911f065c7b6.
