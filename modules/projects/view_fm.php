@@ -264,7 +264,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 $pmUsers=dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id=r.id WHERE r.code='projects_manager' AND u.is_active=1");
                 foreach($pmUsers as $pmUser){
-                    ak_transaction_review_notify_event((int)$pmUser['id'],'اكتملت مستندات صرف المشروع','اكتمل توثيق جميع مستندات صرف وتمويل المشروع «'.(string)($project['name']??'').'» ('.(string)($project['project_code']??'').'). يمكن لمدير المشاريع الآن مراجعة المشروع واستكمال إجراءات ما بعد الاعتماد.',APP_URL.'modules/projects/view_pm.php?id='.$id,$id,'project_payment_evidence_final');
+                    ak_transaction_review_notify_event((int)$pmUser['id'],'تم اعتماد المشروع نهائياً','اكتمل الاعتماد المالي النهائي للمشروع «'.(string)($project['name']??'').'» ('.(string)($project['project_code']??'').') بعد استكمال توثيق مستندات التمويل. يمكن لمدير المشاريع الآن مراجعة المشروع واستكمال إجراءات ما بعد الاعتماد.',APP_URL.'modules/projects/view_pm.php?id='.$id,$id,'project_final_approval');
                 }
 
                 $projectSupervisors=dbFetchAll(
