@@ -1684,3 +1684,15 @@ During the final static pass, one authorization mismatch was found before runtim
 Correction commit: `4d672f3df3848421900b04a53706551dcd0ba4ac`.
 
 **Runtime verification has not started yet. Pull only after this checkpoint is complete.**
+
+
+## Current continuation checkpoint — 2026-10-02
+### Phase 5 runtime-gate preflight correction
+Before starting the controlled accounting runtime sequence, two defects were found and repaired:
+- PM-created projects were incorrectly hidden until final FM confirmation. Creator PMs can now see their own pre-handoff projects in draft, submitted, rejected, and fm_approved; this does not grant PS/operational launch rights.
+- Project creation/update now returns to the same form and shows a project-specific success toast instead of redirecting through the project view.
+- The project portfolio page no longer renders an extra page-specific bottom back button; the shared global back-button pair remains.
+
+Code commits: aa8b26532293c3a1933c0b64f6021205c0703c43, 4cfe3f9175da05cc57d91bde, 448a913dc254cdbc72e61f5bd4e767a32251cc20, dd49b8896109faaa1f1635405eff3911f065c7b6.
+
+Next action: pull main, verify the already-created controlled test project is visible to its PM and that saving remains on the same form with a toast, then resume the Phase 5 accounting runtime gate. Do not recreate PRJ-0011 or PRJ-0012.
