@@ -1319,7 +1319,9 @@ $grandFinancialRequirement = (float)($financialSummary['total_financial_requirem
 </tbody>
 </table>
 </div>
-
+</div>
+</div>
+</div>
 <?php endif; ?>
 <?php if ($approval['approval_status'] === 'approved'): ?>
 <?php if ($role !== 'project_supervisor'): ?>
