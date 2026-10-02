@@ -2027,3 +2027,50 @@ The PRJ-0015 browser/runtime gate for the two previously open findings is now pa
 **Immediate next gate:** PM submits PRJ-0015 for FM approval. Verify that submission changes the project from `draft` to `submitted`, that the FM can see/review it, and that submission itself creates **no accounting/funding release**. Do not begin the FM accounting sequence until this submission gate passes.
 
 Do not repeat the numeric-input or project-save investigation unless a genuine regression appears.
+
+# 2026-10-02 — Projects Phase 5 PRJ-0015 PM submission runtime gate
+
+## Controlled fixture
+
+**PRJ-0015 — PH5 Full Accounting Reconciliation Test**
+
+- approval: submitted
+- lifecycle/display: planned
+- Project Supervisor: project supervisor
+- budget: 300,000.00 SDG across 3 lines
+- approved funding: 0.00
+- posted expenses: 0.00
+- funding allocations: none at submission stage
+
+## Runtime evidence
+
+The PM successfully submitted PRJ-0015 for FM review.
+
+The PM-facing result showed:
+- مرسل للمراجعة
+- the project remains مخطط
+- the project is waiting for FM financial review/approval
+- no funding allocation has been recorded
+
+The FM-facing result showed:
+- a new notification: **مشروع بانتظار المراجعة المالية**
+- PRJ-0015 is available on the FM financial-review page
+- the proposed budget is 300,000 SDG
+- allocation tools are correctly deferred until budget approval
+
+Therefore the PM submission gate passed. No accounting/funding release was created by submission.
+
+## Accounting boundary confirmed
+
+The next accounting event remains the established FM budget approval/funding-release step. GM approval is not an additional accounting release, and later correction/rejection/final-confirmation behavior remains governed by the previously documented Phase 5 workflow.
+
+## Current pause point
+
+At the user's request, Phase 5 accounting runtime testing is paused immediately after the successful PM submission gate so an **immediate project fix** can be handled first and addressed comprehensively.
+
+Do not proceed to FM budget approval, funding allocation, or the remaining accounting reconciliation sequence until that immediate fix is implemented and runtime-verified.
+
+Do not recreate PRJ-0015. Preserve the submitted/planned fixture for continuation unless the immediate fix explicitly requires a controlled modification.
+
+**Phase 5 status: RUNTIME PM SUBMISSION GATE PASSED / ACCOUNTING SEQUENCE PAUSED FOR IMMEDIATE FIX.**
+
