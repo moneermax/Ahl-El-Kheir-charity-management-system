@@ -1,6 +1,7 @@
 <?php
 // modules/projects/view_fm.php - Dedicated Financial Manager project review
 require_once dirname(__DIR__, 2) . '/modules/projects/project_lib.php';
+require_once dirname(__DIR__, 2) . '/modules/projects/project_funding_accounting.php';
 require_once dirname(__DIR__, 2) . '/modules/accounting/lib.php';
 require_once dirname(__DIR__, 2) . '/modules/accounting/lib_transaction_review.php';
 Session::start();
@@ -272,8 +273,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $fundingTotal=(float)(dbFetchOne("SELECT COALESCE(SUM(amount),0) n FROM project_funding_allocations WHERE project_id=? AND status='draft'",[$id])['n']??0);
             if ($budgetTotal<=0) throw new RuntimeException('لا يمكن الاعتماد قبل اعتماد الميزانية.');
             if (abs($fundingTotal-$financialRequirement)>0.01) throw new RuntimeException('يجب أن يساوي إجمالي تخصيص التمويل إجمالي المتطلبات المالية للمشروع (الميزانية + الرسوم الحكومية).');
-            dbExecute("UPDATE project_approval SET approval_status='fm_approved',fm_reviewed_by=?,fm_reviewed_at=NOW() WHERE project_id=?", [akp_user_id(),$id]);
-            akp_audit('FM_APPROVE_PROJECT','project_approval',$id,['approval_status'=>'submitted'],['approval_status'=>'fm_approved']);
+            dbExecute('START TRANSACTION');
+            try {
+                dbExecute("UPDATE project_approval SET approval_status='fm_approved',fm_reviewed_by=?,fm_reviewed_at=NOW() WHERE project_id=?", [akp_user_id(),$id]);
+                akp_post_project_funding_release($id);
+                akp_sync_project_payment_evidence_after_release($id);
+                dbExecute('COMMIT');
+            } catch (Throwable $e) {
+                dbExecute('ROLLBACK');
+                throw $e;
+            }
+            akp_audit('FM_APPROVE_PROJECT',$id,['approval_status'=>'submitted'],['approval_status'=>'fm_approved','funding_release'=>'posted']);
 
             // Notify active General Manager recipients that the project is now
             // waiting for final approval. Delivery is isolated so it cannot
