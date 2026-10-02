@@ -30,7 +30,7 @@ $pageTitle = t('fm.page_title');
 $headerQuickActions = [
     ['label'=>'التحويلات الشهرية','url'=>'modules/accounting/disbursements.php','icon'=>'fa-money-check-dollar','color'=>'#28a745'],
     ['label'=>' دليل الحسابات','url'=>'modules/accounting/accounts.php','icon'=>'fa-sitemap','color'=>'#2195c4'],
-    ['label'=>'مراجعة ميزانيات المشاريع','url'=>'modules/accounting/fm_dashboard.php#project-budget-review','icon'=>'fa-clipboard-check','color'=>'#ffc107'],
+    ['label'=>'إدارة المشاريع','url'=>'modules/projects/index.php','icon'=>'fa-diagram-project','color'=>'#ffc107'],
     ['label'=>'مراجعة المعاملات المالية','url'=>'modules/accounting/fm_transaction_review.php','icon'=>'fa-file-invoice-dollar','color'=>'#6c757d'],
     ['label'=>'التقارير المالية','url'=>'modules/reports/financial.php','icon'=>'fa-chart-pie','color'=>'#0d6efd'],
     ['label'=>'سجل المعاملات','url'=>'modules/transactions/index.php','icon'=>'fa-money-bill-transfer','color'=>'#2daf79'],
@@ -407,7 +407,7 @@ if (is_array($fl)) {
 $fmActionDescriptions = [
     'متابعة التحويلات والصرف الشهري',
     'عرض وإدارة دليل الحسابات',
-    'مراجعة واعتماد ميزانيات المشاريع',
+    'إدارة ومتابعة مشاريع المنظمة',
     'مراجعة واعتماد المعاملات المالية',
     'عرض التقارير والحركة المالية',
     'مراجعة سجل المعاملات المالية',
