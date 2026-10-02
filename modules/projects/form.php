@@ -910,9 +910,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     VALUES (?,?)",
                     [
                         $projectId,
-                        akp_role() === 'projects_manager'
-                            ? 'draft'
-                            : 'approved'
+                        'draft'
                     ]
                 );
 
