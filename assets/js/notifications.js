@@ -308,8 +308,40 @@
         });
     }, true);
 
+    /*
+     * Legacy Bootstrap alerts: transient action feedback must use the same
+     * centralized toast channel as server-side flash messages. Persistent
+     * informational panels can opt out explicitly with
+     * data-ak-persistent-alert="1".
+     */
+    function convertTransientAlertsToToasts() {
+        var selectors = [
+            '.alert[data-ak-transient-alert="1"]',
+            '.alert[role="alert"]',
+            '.alert.alert-dismissible'
+        ].join(',');
+
+        document.querySelectorAll(selectors).forEach(function (node) {
+            if (node.getAttribute('data-ak-persistent-alert') === '1') return;
+            if (node.getAttribute('data-ak-toast-processed') === '1') return;
+
+            var type = 'info';
+            if (node.classList.contains('alert-success')) type = 'success';
+            else if (node.classList.contains('alert-danger')) type = 'danger';
+            else if (node.classList.contains('alert-warning')) type = 'warning';
+            else if (node.classList.contains('alert-primary')) type = 'info';
+
+            var message = (node.textContent || '').replace(/\\s+/g, ' ').trim();
+            if (!message) return;
+
+            node.setAttribute('data-ak-toast-processed', '1');
+            window.AKNotify.toast(type, message);
+            node.remove();
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
-        var flashNodes = document.querySelectorAll('[data-ak-flash]');
+        convertTransientAlertsToToasts();\n\n        var flashNodes = document.querySelectorAll('[data-ak-flash]');
         restoreFlashScrollPosition(flashNodes.length > 0);
 
         document.querySelectorAll('form.js-supervisor-action').forEach(function (form) {
