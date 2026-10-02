@@ -1323,3 +1323,23 @@ Next session must start with the isolated PRJ-0012 runtime gate: GM approval mus
 
 ## 2026-10-02 — Projects Phase 5 runtime gate: PS notification timing correction
 During PRJ-0012 runtime verification, PM visibility and final FM confirmation worked, but the assigned PS received the execution notification before PM launch. Static source review confirmed `view.php` already requires PM `launch_project` and sends the PS notification only after lifecycle transition `planned → active`. The premature PS notification was removed from `view_fm.php`. Commit: `adecaf6c1e4b12017143d7a2f19bf8354ec1788d`. Continue by retesting the corrected FM-final-confirmation → PM-launch → PS-notification sequence.
+
+
+
+## 2026-10-02 — Projects Phase 5 coherent workflow repair
+
+The Projects Phase 5 implementation was repaired after a full cross-page audit against the agreed workflow.
+
+Key repair points:
+- GM rejection now reverses the prior FM financial release and returns the project to FM review atomically.
+- FM pre-final-confirmation correction now performs reversal + GM-approval invalidation atomically.
+- The reversal helper no longer forces an inner transaction when the caller owns the transaction.
+- Legacy FM action handlers were removed from the shared project view.
+- Generic `active` status changes were removed; PM `launch_project` is the sole initial activation path.
+- GM UI language now correctly describes organizational approval only.
+- FM approval remains the single accounting-release event; final FM confirmation and PM launch do not create additional releases.
+
+Code checkpoint commits:
+`9217b81fa71a5b3445ddef0ccbc829eb54fdd9d2`, `331c3c9bdf144ebc7158538a99b1b67f75722c1d`, `c93824e07b43c49fb90dff31522ee618220e3ab5`, `80c6012023e68d513952ca30f175ae6e3ecf25c8`.
+
+**Current status: Projects Phase 5 workflow repaired; runtime verification required.**
