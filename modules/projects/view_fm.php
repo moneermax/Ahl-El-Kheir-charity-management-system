@@ -73,6 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($closed) throw new RuntimeException('لا يمكن تعديل مشروع مغلق.');
 
         if ($action === 'fm_approve_budget') {
+            if (!in_array((string)$approval['approval_status'], ['submitted', 'rejected'], true)) throw new RuntimeException('لا يمكن اعتماد الميزانية قبل إرسال المشروع للمراجعة المالية أو بعد إعادته بالرفض.');
             $budgetId=(int)($_POST['budget_id']??0);
             $budget=dbFetchOne('SELECT * FROM project_budgets WHERE id=? AND project_id=?',[$budgetId,$id]);
             if (!$budget || $budget['status']!=='draft') throw new RuntimeException('نسخة الميزانية ليست مسودة.');
@@ -84,6 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('success','تم اعتماد الميزانية مالياً. يمكن الآن تخصيص التمويل.');
 
         } elseif ($action === 'fm_reject_budget') {
+            if (!in_array((string)$approval['approval_status'], ['submitted', 'rejected'], true)) throw new RuntimeException('لا يمكن رفض الميزانية قبل إرسال المشروع للمراجعة المالية أو بعد إعادته بالرفض.');
             $budgetId=(int)($_POST['budget_id']??0); $reason=fm_post('rejection_reason');
             $budget=dbFetchOne('SELECT * FROM project_budgets WHERE id=? AND project_id=?',[$budgetId,$id]);
             if (!$budget || $budget['status']!=='draft') throw new RuntimeException('نسخة الميزانية ليست مسودة.');
