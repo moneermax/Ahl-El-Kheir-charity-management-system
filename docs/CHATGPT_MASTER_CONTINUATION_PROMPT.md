@@ -1905,3 +1905,25 @@ The PRJ-0015 browser/runtime gate for the two previously open findings is now pa
 **Immediate next gate:** PM submits PRJ-0015 for FM approval. Verify that submission changes the project from `draft` to `submitted`, that the FM can see/review it, and that submission itself creates **no accounting/funding release**. Do not begin the FM accounting sequence until this submission gate passes.
 
 Do not repeat the numeric-input or project-save investigation unless a genuine regression appears.
+
+## 2026-10-02 — PRJ-0015 PM submission gate PASSED / pause for immediate fix
+
+The controlled Phase 5 fixture **PRJ-0015 — PH5 Full Accounting Reconciliation Test** has now passed the PM submission gate.
+
+Runtime evidence supplied by the user:
+- PM view shows approval state **submitted / مرسل للمراجعة**.
+- Lifecycle/display remains **planned / مخطط**.
+- Budget remains **300,000.00 SDG** across 3 lines.
+- Approved funding remains **0.00**.
+- Posted expenses remain **0.00**.
+- No funding allocation is present yet.
+- PM view states the project is waiting for FM financial review/approval.
+- FM receives a new **project pending financial review** notification and can open the FM review page.
+- FM review page correctly shows the proposed 300,000 SDG budget and states that funding-allocation tools appear only after budget approval.
+
+This confirms that PM submission itself did not create an accounting/funding release.
+
+**Important current decision:** pause the Phase 5 accounting sequence at this point. The user wants to switch to an immediate project fix and address it once and for all before continuing the FM accounting runtime gate. Do not begin FM budget approval, funding allocation, or subsequent accounting tests until the immediate fix is completed and runtime-verified.
+
+Do not recreate or replace PRJ-0015 merely because the workflow is paused. Preserve the fixture in its current submitted/planned state for continuation unless the immediate fix genuinely requires a documented change to it.
+
