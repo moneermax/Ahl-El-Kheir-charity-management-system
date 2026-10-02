@@ -58,117 +58,230 @@
 
 <style id="ak-global-form-final">
 /*
- * Final global form-layout layer.
- * footer.php is included after each page's own <style> block, so these rules
- * are intentionally the last application-level CSS. This prevents page-local
- * form CSS from undoing the shared field sizing/layout standard.
+ * Global form layout standard.
+ *
+ * The repository uses several legitimate form structures: Bootstrap columns,
+ * custom two-column grids, and dense repeatable rows. The shared layer must
+ * therefore size each field from the width of its own field container rather
+ * than reserving a fixed percentage of the whole form.
  */
 @media (min-width: 768px) {
-    .content form :is(.row > [class*="col-"], .grid > div, .mb-3, .mb-4):has(> label + :is(input, select, textarea, .form-control, .form-select)) {
-        display: grid !important;
-        grid-template-columns: minmax(105px, max-content) minmax(0, 1fr) !important;
-        column-gap: 8px !important;
-        align-items: center !important;
+    /*
+     * A field container becomes a size-query container. Inline labels are used
+     * only when that individual container is wide enough to hold both label
+     * and control comfortably. Narrow Bootstrap columns remain stacked so
+     * labels cannot be squeezed into the control area.
+     */
+    .content form :is(
+        .row > [class*="col-"]:not(.repeatable-row > [class*="col-"]),
+        .grid > div
+    ):has(> label + :is(input, select, textarea, .form-control, .form-select)) {
+        container-type: inline-size;
+        display: block !important;
     }
 
-    .content form :is(.row > [class*="col-"], .grid > div, .mb-3, .mb-4):has(> label + :is(input, select, textarea, .form-control, .form-select)) > label {
-        grid-column: 1 !important;
+    .content form :is(
+        .row > [class*="col-"],
+        .grid > div
+    ):has(> label + :is(input, select, textarea, .form-control, .form-select)) > label {
         display: block !important;
         width: auto !important;
-        max-width: none !important;
-        margin: 0 !important;
-        align-self: center !important;
+        max-width: 100% !important;
+        margin: 0 0 6px !important;
         line-height: 1.35 !important;
         white-space: normal !important;
     }
 
-    .content form :is(.row > [class*="col-"], .grid > div, .mb-3, .mb-4):has(> label + :is(input, select, textarea, .form-control, .form-select)) > :is(
+    .content form :is(
+        .row > [class*="col-"],
+        .grid > div
+    ):has(> label + :is(input, select, textarea, .form-control, .form-select)) > :is(
         input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
         select,
         textarea,
         .form-control,
         .form-select
     ) {
-        grid-column: 2 !important;
         min-width: 0 !important;
         width: 100% !important;
-        max-width: none !important;
-        justify-self: stretch !important;
+        max-width: 100% !important;
     }
 
-    .content form :is(.row > [class*="col-"], .grid > div, .mb-3, .mb-4) > input[type="date"] {
-        width: 13rem !important;
-        max-width: 100% !important;
-        justify-self: start !important;
-    }
-    .content form :is(.row > [class*="col-"], .grid > div, .mb-3, .mb-4) > input[type="time"] {
-        width: 11rem !important;
-        max-width: 100% !important;
-        justify-self: start !important;
-    }
-    .content form :is(.row > [class*="col-"], .grid > div, .mb-3, .mb-4) > input[type="number"] {
-        width: 17rem !important;
-        max-width: 100% !important;
-        justify-self: start !important;
-    }
-    .content form :is(.row > [class*="col-"], .grid > div, .mb-3, .mb-4) > input[type="tel"] {
-        width: 19rem !important;
-        max-width: 100% !important;
-        justify-self: start !important;
-    }
-    .content form :is(.row > [class*="col-"], .grid > div, .mb-3, .mb-4) > input[type="email"] {
-        width: min(30rem, 100%) !important;
-        max-width: 100% !important;
-        justify-self: start !important;
-    }
-    .content form :is(.row > [class*="col-"], .grid > div, .mb-3, .mb-4) > input[type="text"] {
-        width: min(32rem, 100%) !important;
-        max-width: 100% !important;
-        justify-self: start !important;
-    }
-    .content form :is(.row > [class*="col-"], .grid > div, .mb-3, .mb-4) > select,
-    .content form :is(.row > [class*="col-"], .grid > div, .mb-3, .mb-4) > .form-select {
-        width: min(30rem, 100%) !important;
-        max-width: 100% !important;
-        justify-self: start !important;
-    }
-    .content form :is(.row > [class*="col-"], .grid > div, .mb-3, .mb-4) > textarea {
-        width: 100% !important;
-        max-width: 42rem !important;
-        min-height: 96px !important;
-        justify-self: start !important;
+    /*
+     * Dense repeatable rows are intentionally kept stacked. Their columns are
+     * often only 8–20% of the row and forcing an inline label there is what
+     * causes the cramped / overlapping appearance.
+     */
+    .content form .repeatable-row > [class*="col-"] > label,
+    .content form .budget-line-item > [class*="col-"] > label,
+    .content form .bank-row > [class*="col-"] > label {
+        display: block !important;
+        width: auto !important;
+        margin-bottom: 5px !important;
     }
 
-    /* Keep Bootstrap column sizing from stretching a short field to the full column. */
-    .content form :is(.row > [class*="col-"], .grid > div, .mb-3, .mb-4) > :is(
-        input[type="date"], input[type="time"], input[type="number"],
-        input[type="tel"], input[type="email"], input[type="text"],
-        select, .form-select
-    ) {
-        flex: 0 1 auto !important;
-    }
+    /* Wide fields: content-sized label + flexible control, with a small gap. */
+    @container (min-width: 420px) {
+        :where(
+            .content form :is(
+                .row > [class*="col-"],
+                .grid > div
+            ):has(> label + :is(input, select, textarea, .form-control, .form-select))
+        ) {
+            display: grid !important;
+            grid-template-columns: fit-content(180px) minmax(0, 1fr) !important;
+            column-gap: 8px !important;
+            align-items: center !important;
+        }
 
-    /* Help/validation text belongs under the field, not beside the label. */
-    .content form :is(.row > [class*="col-"], .grid > div, .mb-3, .mb-4):has(> label + :is(input, select, textarea, .form-control, .form-select)) > :is(
-        small, .note, .form-text, .project-help, .invalid-feedback, .valid-feedback, .text-muted
-    ) {
-        grid-column: 2 !important;
-        min-width: 0 !important;
+        :where(
+            .content form :is(
+                .row > [class*="col-"],
+                .grid > div
+            ):has(> label + :is(input, select, textarea, .form-control, .form-select))
+        ) > label {
+            grid-column: 1 !important;
+            margin: 0 !important;
+            align-self: center !important;
+        }
+
+        :where(
+            .content form :is(
+                .row > [class*="col-"],
+                .grid > div
+            ):has(> label + :is(input, select, textarea, .form-control, .form-select))
+        ) > :is(
+            input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+            select,
+            textarea,
+            .form-control,
+            .form-select
+        ) {
+            grid-column: 2 !important;
+            justify-self: stretch !important;
+        }
+
+        /* Semantic field widths: do not make short-value fields unnecessarily wide. */
+        :where(
+            .content form :is(
+                .row > [class*="col-"],
+                .grid > div
+            )
+        ) > input[type="date"] {
+            width: min(12rem, 100%) !important;
+            justify-self: start !important;
+        }
+
+        :where(
+            .content form :is(
+                .row > [class*="col-"],
+                .grid > div
+            )
+        ) > input[type="time"] {
+            width: min(10rem, 100%) !important;
+            justify-self: start !important;
+        }
+
+        :where(
+            .content form :is(
+                .row > [class*="col-"],
+                .grid > div
+            )
+        ) > input[type="number"] {
+            width: min(14rem, 100%) !important;
+            justify-self: start !important;
+        }
+
+        :where(
+            .content form :is(
+                .row > [class*="col-"],
+                .grid > div
+            )
+        ) > input[type="tel"] {
+            width: min(16rem, 100%) !important;
+            justify-self: start !important;
+        }
+
+        :where(
+            .content form :is(
+                .row > [class*="col-"],
+                .grid > div
+            )
+        ) > input[type="email"] {
+            width: min(24rem, 100%) !important;
+            justify-self: start !important;
+        }
+
+        :where(
+            .content form :is(
+                .row > [class*="col-"],
+                .grid > div
+            )
+        ) > input[type="text"],
+        :where(
+            .content form :is(
+                .row > [class*="col-"],
+                .grid > div
+            )
+        ) > select,
+        :where(
+            .content form :is(
+                .row > [class*="col-"],
+                .grid > div
+            )
+        ) > .form-select {
+            width: min(28rem, 100%) !important;
+            justify-self: start !important;
+        }
+
+        :where(
+            .content form :is(
+                .row > [class*="col-"],
+                .grid > div
+            )
+        ) > textarea {
+            width: min(38rem, 100%) !important;
+            max-width: 100% !important;
+            min-height: 96px !important;
+            justify-self: start !important;
+        }
+
+        /* Help/validation text belongs below the control, not beside the label. */
+        :where(
+            .content form :is(
+                .row > [class*="col-"],
+                .grid > div
+            ):has(> label + :is(input, select, textarea, .form-control, .form-select))
+        ) > :is(
+            small, .note, .form-text, .project-help, .invalid-feedback, .valid-feedback, .text-muted
+        ) {
+            grid-column: 2 !important;
+            min-width: 0 !important;
+        }
     }
 }
 
 @media (max-width: 767.98px) {
-    .content form :is(.row > [class*="col-"], .grid > div, .mb-3, .mb-4):has(> label + :is(input, select, textarea, .form-control, .form-select)) {
+    .content form :is(
+        .row > [class*="col-"],
+        .grid > div
+    ):has(> label + :is(input, select, textarea, .form-control, .form-select)) {
         display: block !important;
     }
 
-    .content form :is(.row > [class*="col-"], .grid > div, .mb-3, .mb-4):has(> label + :is(input, select, textarea, .form-control, .form-select)) > label {
+    .content form :is(
+        .row > [class*="col-"],
+        .grid > div
+    ):has(> label + :is(input, select, textarea, .form-control, .form-select)) > label {
         display: block !important;
         width: auto !important;
         margin-bottom: 6px !important;
     }
 
-    .content form :is(.row > [class*="col-"], .grid > div, .mb-3, .mb-4):has(> label + :is(input, select, textarea, .form-control, .form-select)) > :is(
+    .content form :is(
+        .row > [class*="col-"],
+        .grid > div
+    ):has(> label + :is(input, select, textarea, .form-control, .form-select)) > :is(
         input:not([type="hidden"]),
         select,
         textarea,
