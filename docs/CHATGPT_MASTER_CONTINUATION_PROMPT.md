@@ -1743,3 +1743,6 @@ Then run the complete controlled sequence:
 13. PM launch: planned → active; PS notified; no accounting release.
 
 Do not mark Phase 5 closed until the full sequence passes in the local XAMPP/MariaDB runtime. Do not modify historical project journals before the replacement model is fully runtime-verified.
+
+
+Final static consistency correction: shared project status mutation now maps lifecycle-only under_review to planned in the legacy other_projects status mirror. Final code commit before runtime pull: f3cf39c5aafcee876db5be4436a1703ad6040097.
