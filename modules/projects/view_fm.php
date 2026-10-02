@@ -283,7 +283,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 dbExecute('ROLLBACK');
                 throw $e;
             }
-            akp_audit('FM_APPROVE_PROJECT',$id,['approval_status'=>'submitted'],['approval_status'=>'fm_approved','funding_release'=>'posted']);
+            akp_audit('FM_APPROVE_PROJECT','project_approval',$id,['approval_status'=>'submitted'],['approval_status'=>'fm_approved','funding_release'=>'posted']);
 
             // Notify active General Manager recipients that the project is now
             // waiting for final approval. Delivery is isolated so it cannot
