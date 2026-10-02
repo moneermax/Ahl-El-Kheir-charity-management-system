@@ -812,6 +812,8 @@ if (!in_array($role, ['admin', 'accountant', 'financial_manager'], true) || $clo
 $expenseId = (int)($_POST['expense_id'] ?? 0);
 $expense = dbFetchOne('SELECT * FROM project_expenses WHERE id = ? AND project_id = ?', [$expenseId, $id]);
 if (!$expense || $expense['status'] !== 'approved') throw new RuntimeException('المصروف يجب أن يكون معتمداً أولاً.');
+$releasedFunding = (float)(dbFetchOne("SELECT COALESCE(SUM(amount),0) total FROM project_funding_allocations WHERE project_id=? AND status='posted'",[$id])['total']??0);
+if ($releasedFunding > 0.009) throw new RuntimeException('تم الإفراج عن تمويل المشروع تحت سيطرة مشرف المشروع. لا يجوز ترحيل مصروف تنفيذي بقيد خزينة ثانٍ؛ سجّل الدفعة من خلال مصروفات التنفيذ الخاصة بالمشروع.');
 if (!$expense['payment_account_id'] || !$expense['expense_account_id']) throw new RuntimeException('حسابات المصروف والدفع مطلوبة.');
 dbExecute('START TRANSACTION');
 try {
