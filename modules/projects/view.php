@@ -283,18 +283,24 @@ throw new RuntimeException('لا يمكن إطلاق المشروع قبل وج�
 }
 dbExecute('START TRANSACTION');
 try {
-dbExecute(
+$lockedApproval = dbFetchOne('SELECT approval_status FROM project_approval WHERE project_id = ? FOR UPDATE', [$id]);
+$lockedLifecycle = dbFetchOne('SELECT lifecycle_status FROM project_lifecycle WHERE project_id = ? FOR UPDATE', [$id]);
+if (!$lockedApproval || $lockedApproval['approval_status'] !== 'approved') throw new RuntimeException('لا يمكن إطلاق المشروع بعد تغير حالة الاعتماد.');
+if (!$lockedLifecycle || $lockedLifecycle['lifecycle_status'] !== 'planned') throw new RuntimeException('المشروع لم يعد في حالة انتظار الإطلاق.');
+$changed = dbExecute(
 "UPDATE project_lifecycle
 SET lifecycle_status = 'active'
 WHERE project_id = ? AND lifecycle_status = 'planned'",
 [$id]
 );
-dbExecute(
+if ($changed !== 1) throw new RuntimeException('تعذر إتمام إطلاق المشروع؛ ربما تم إطلاقه في طلب متزامن.');
+$legacyChanged = dbExecute(
 "UPDATE other_projects
 SET status = 'active', updated_by = ?
-WHERE id = ?",
+WHERE id = ? AND status = 'planned'",
 [akp_user_id(), $id]
 );
+if ($legacyChanged !== 1) throw new RuntimeException('تعذر مزامنة الحالة القديمة للمشروع أثناء الإطلاق.');
 dbExecute(
 "INSERT INTO project_status_history
 (project_id, old_status, new_status, reason, changed_by)
