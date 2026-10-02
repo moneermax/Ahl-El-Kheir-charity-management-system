@@ -326,13 +326,20 @@ $_SESSION['project_toast_success'] = 'تم إطلاق المشروع وإبلا�
 // ... (Original change_status logic preserved exactly)
 $newStatus = akp_post_value('new_status');
 if (!akp_can_edit_section('operations', $id) || $closed) throw new RuntimeException('لا تملك صلاحية تغيير حالة هذا المشروع.');
-if (!in_array($newStatus, ['planned','completed','under_review','cancelled'], true)) throw new RuntimeException('الحالة غير صالحة.');
-if ($newStatus === 'active') throw new RuntimeException('الحالة قيد التنفيذ لا تُغيّر من هذا المسار؛ إطلاق المشروع يتم حصراً من إجراء إطلاق المشروع لمدير المشاريع.');
+if (!in_array($newStatus, ['completed','under_review','cancelled'], true)) throw new RuntimeException('الحالة غير صالحة.');
+if ($newStatus === 'active' || $newStatus === 'planned') throw new RuntimeException('الحالة المخططة وقيد التنفيذ لا تُغيّران من مسار مشرف المشروع؛ الإطلاق يتم حصراً من مدير المشاريع.');
 $oldStatus = (string)($project['lifecycle_status'] ?: $project['status']);
 $legacyStatus = $newStatus === 'under_review' ? 'planned' : $newStatus;
-dbExecute('UPDATE other_projects SET status = ?, updated_by = ? WHERE id = ?', [$legacyStatus, akp_user_id(), $id]);
-dbExecute('UPDATE project_lifecycle SET lifecycle_status = ? WHERE project_id = ?', [$newStatus, $id]);
-dbExecute('INSERT INTO project_status_history (project_id, old_status, new_status, reason, changed_by) VALUES (?,?,?,?,?)', [$id, $oldStatus, $newStatus, akp_post_value('reason') ?: null, akp_user_id()]);
+dbExecute('START TRANSACTION');
+try {
+    dbExecute('UPDATE other_projects SET status = ?, updated_by = ? WHERE id = ?', [$legacyStatus, akp_user_id(), $id]);
+    dbExecute('UPDATE project_lifecycle SET lifecycle_status = ? WHERE project_id = ?', [$newStatus, $id]);
+    dbExecute('INSERT INTO project_status_history (project_id, old_status, new_status, reason, changed_by) VALUES (?,?,?,?,?)', [$id, $oldStatus, $newStatus, akp_post_value('reason') ?: null, akp_user_id()]);
+    dbExecute('COMMIT');
+} catch (Throwable $e) {
+    dbExecute('ROLLBACK');
+    throw $e;
+}
 akp_audit('STATUS_CHANGE', 'project_lifecycle', $id, ['status' => $oldStatus], ['status' => $newStatus]);
 $_SESSION['project_toast_success'] = 'تم تحديث حالة المشروع.';
 } elseif ($action === 'add_budget') {
@@ -437,7 +444,7 @@ $_SESSION['project_expense_success'] = 'تم تسجيل الدفع وخصم ' . 
 if ($role !== 'project_supervisor' || !akp_is_primary_supervisor($id) || $closed) throw new RuntimeException('تعديل مصروفات التنفيذ متاح لمشرف المشروع المكلّف فقط.');
 $expenseId = (int)($_POST['expense_id'] ?? 0);
 $expense = dbFetchOne('SELECT * FROM project_expenses WHERE id = ? AND project_id = ?', [$expenseId, $id]);
-if (!$expense || !in_array($expense['status'], ['draft', 'posted'], true)) throw new RuntimeException('لا يمكن تعديل المصروف بعد إرساله أو اعتماده.');
+if (!$expense || $expense['status'] !== 'draft') throw new RuntimeException('لا يمكن تعديل المصروف بعد ترحيله أو إرساله.');
 $amount = (float)($_POST['expense_amount'] ?? 0);
 $description = akp_post_value('expense_description');
 $expenseDate = akp_post_value('expense_date', date('Y-m-d'));
@@ -498,7 +505,7 @@ $_SESSION['project_expense_success'] = 'تم تسجيل الدفع وخصم ' . 
 if ($role !== 'project_supervisor' || !akp_is_primary_supervisor($id) || $closed) throw new RuntimeException('حذف مصروفات التنفيذ متاح لمشرف المشروع المكلّف فقط.');
 $expenseId = (int)($_POST['expense_id'] ?? 0);
 $expense = dbFetchOne('SELECT * FROM project_expenses WHERE id = ? AND project_id = ?', [$expenseId, $id]);
-if (!$expense || !in_array($expense['status'], ['draft', 'posted'], true)) throw new RuntimeException('لا يمكن حذف المصروف بعد إرساله أو اعتماده.');
+if (!$expense || $expense['status'] !== 'draft') throw new RuntimeException('لا يمكن حذف المصروف بعد ترحيله أو إرساله.');
 $receiptPath = null;
 if (!empty($expense['primary_document_id'])) {
 $receipt = dbFetchOne('SELECT file_path FROM project_documents WHERE id = ? AND project_id = ? AND document_type = \'receipt\'', [(int)$expense['primary_document_id'], $id]);
