@@ -1824,3 +1824,30 @@ Runtime verification remains open. Do not mark Projects Phase 5 closed or alter 
 
 ## 2026-10-02 — Projects Phase 5 runtime gate: PS notification timing correction
 Runtime evidence from PRJ-0012 confirmed that FM final funding-document confirmation correctly exposed the project to PM, but also revealed an incorrect early PS execution notification while the project was still `planned`. Static inspection of `modules/projects/view.php` confirmed the canonical lifecycle: PM must explicitly execute `launch_project`, which changes the project from `planned` to `active` and then notifies the assigned Project Supervisor. The defect was isolated to the PS notification block inside `modules/projects/view_fm.php`; that notification has been removed from FM final confirmation. Commit: `adecaf6c1e4b12017143d7a2f19bf8354ec1788d`. Phase 5 remains runtime verification pending until the corrected sequence is retested.
+
+
+
+## 2026-10-02 — Projects Phase 5 deep audit repair checkpoint
+
+The Projects module was re-audited page-by-page against the agreed workflow. The audit identified and corrected the following implementation risks:
+
+### Corrected
+- **GM rejection accounting gap:** GM rejection previously returned `fm_approved` to `submitted` without reversing the FM-posted funding release. It now performs a controlled accounting reversal and approval-state reset in one transaction.
+- **Nested transaction risk:** `akp_reverse_project_funding_release()` previously owned its own transaction even when the caller needed to atomically update project approval. It now accepts a transaction-management flag so the caller can own the transaction when required.
+- **FM correction atomicity:** FM's pre-final-confirmation return-to-review now reverses funding and invalidates GM approval in the same transaction.
+- **Competing FM implementation:** obsolete FM handlers in the shared project view were removed. The dedicated FM page remains the sole FM action surface.
+- **Activation bypass:** generic project status changes previously allowed `active`, which could bypass PM's explicit launch action. Both server-side and portfolio UI paths now exclude `active`; only `launch_project` can perform the initial planned→active transition.
+- **GM accounting wording:** stale GM UI wording implying a financial/accounting action was corrected.
+
+### Verified as existing and preserved
+- PM handoff visibility is gated by the auditable FM final-confirmation event.
+- PM launch requires final FM confirmation, GM approval, planned lifecycle, and an active assigned PS.
+- PS access remains gated by approval + launched lifecycle.
+- FM final confirmation notifies PM, not PS.
+- PS execution notification is emitted only by PM `launch_project`.
+- FM approval is the accounting release point and includes duplicate-release protection.
+- FM final confirmation does not create another accounting release.
+- Controlled project balance and unused-fund return remain FM-owned.
+
+### Remaining runtime gate
+Static alignment is complete. Phase 5 is **not closed**. Runtime evidence is still required for the corrected GM-rejection reversal path, FM correction atomicity, final-confirmation boundary, and launch/PS timing. Historical project journals remain untouched pending that evidence.
