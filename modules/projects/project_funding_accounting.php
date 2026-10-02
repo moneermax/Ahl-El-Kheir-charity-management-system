@@ -103,7 +103,7 @@ if (!function_exists('akp_post_project_funding_release')) {
 }
 
 if (!function_exists('akp_reverse_project_funding_release')) {
-    function akp_reverse_project_funding_release(int $projectId, string $reason): void
+    function akp_reverse_project_funding_release(int $projectId, string $reason, bool $manageTransaction = true): void
     {
         if (akp_role() !== 'financial_manager') throw new RuntimeException('عكس الإفراج المالي محصور بالمدير المالي.');
         $postedExpenses = dbFetchOne("SELECT COALESCE(SUM(amount),0) AS total FROM project_expenses WHERE project_id=? AND status='posted'", [$projectId]);
@@ -111,7 +111,7 @@ if (!function_exists('akp_reverse_project_funding_release')) {
         $documented = dbFetchOne("SELECT COUNT(*) AS n FROM project_payment_evidence WHERE project_id=? AND status='documented'", [$projectId]);
         if ((int)($documented['n'] ?? 0) > 0) throw new RuntimeException('لا يمكن عكس الإفراج المالي بعد توثيق دفعات فعلية للمشروع.');
 
-        dbExecute('START TRANSACTION');
+        if ($manageTransaction) dbExecute('START TRANSACTION');
         try {
             $rows = dbFetchAll(
                 "SELECT f.id AS allocation_id, je.id AS journal_id
@@ -160,9 +160,9 @@ if (!function_exists('akp_reverse_project_funding_release')) {
                 dbExecute("UPDATE project_funding_allocations SET status='draft', approved_by=NULL, posted_by=NULL, posted_at=NULL WHERE id=? AND project_id=? AND status='posted'", [(int)$row['allocation_id'], $projectId]);
             }
             dbExecute("DELETE FROM project_payment_evidence WHERE project_id=? AND status='pending'", [$projectId]);
-            dbExecute('COMMIT');
+            if ($manageTransaction) dbExecute('COMMIT');
         } catch (Throwable $e) {
-            dbExecute('ROLLBACK');
+            if ($manageTransaction) dbExecute('ROLLBACK');
             throw $e;
         }
     }
