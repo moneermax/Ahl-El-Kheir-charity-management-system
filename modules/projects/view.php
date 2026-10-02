@@ -864,11 +864,18 @@ if ($controlledBalance > 0.009) throw new RuntimeException('لا يمكن إغل
 $summary = akp_post_value('closure_summary');
 $varianceExplanation = akp_post_value('variance_explanation');
 if ($summary === '') throw new RuntimeException('ملخص الإغلاق مطلوب.');
+dbExecute('START TRANSACTION');
+try {
 $totals = akp_sync_closure_totals($id);
 dbExecute("UPDATE project_lifecycle SET lifecycle_status = 'closed', closed_at = NOW(), closed_by = ?, close_reason = ?, closure_summary = ?, variance_explanation = ? WHERE project_id = ?", [akp_user_id(), akp_post_value('closure_reason', 'other'), $summary, $varianceExplanation, $id]);
-dbExecute("UPDATE other_projects SET status = 'completed', updated_by = ? WHERE id = ?", [akp_user_id(), $id]);
+if (dbExecute("UPDATE other_projects SET status = 'completed', updated_by = ? WHERE id = ?", [akp_user_id(), $id]) !== 1) throw new RuntimeException('تعذر مزامنة حالة المشروع عند الإغلاق.');
 dbExecute("INSERT INTO project_status_history (project_id, old_status, new_status, reason, changed_by) VALUES (?, ?, 'closed', ?, ?)", [$id, $project['lifecycle_status'] ?: $project['status'], $summary, akp_user_id()]);
 akp_audit('CLOSE', 'project_lifecycle', $id, ['status' => $project['lifecycle_status'] ?: $project['status']], ['status' => 'closed', 'reason' => $summary]);
+dbExecute('COMMIT');
+} catch (Throwable $e) {
+dbExecute('ROLLBACK');
+throw $e;
+}
 try {
 $executiveUsers = dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id = r.id WHERE r.code IN ('general_manager', 'vice_general_manager') AND u.is_active = 1");
 foreach ($executiveUsers as $executiveUser) {
@@ -884,10 +891,17 @@ $pendingRequest = dbFetchOne("SELECT h.* FROM project_status_history h WHERE h.p
 if (!$pendingRequest) throw new RuntimeException('لا يوجد طلب إعادة فتح معلق من مشرف المشروع.');
 $reason = akp_post_value('reopen_reason');
 if ($reason === '') throw new RuntimeException('سبب إعادة الفتح مطلوب.');
-dbExecute("UPDATE project_lifecycle SET lifecycle_status = 'reopened', reopened_at = NOW(), reopened_by = ?, reopen_reason = ? WHERE project_id = ?", [akp_user_id(), $reason, $id]);
-dbExecute("UPDATE other_projects SET status = 'active', updated_by = ? WHERE id = ?", [akp_user_id(), $id]);
+dbExecute('START TRANSACTION');
+try {
+dbExecute("UPDATE project_lifecycle SET lifecycle_status = 'reopened', reopened_at = NOW(), reopened_by = ?, reopen_reason = ? WHERE project_id = ? AND lifecycle_status = 'closed'", [akp_user_id(), $reason, $id]);
+if (dbExecute("UPDATE other_projects SET status = 'active', updated_by = ? WHERE id = ?", [akp_user_id(), $id]) !== 1) throw new RuntimeException('تعذر مزامنة حالة المشروع عند إعادة الفتح.');
 dbExecute("INSERT INTO project_status_history (project_id, old_status, new_status, reason, changed_by) VALUES (?, 'closed', 'reopened', ?, ?)", [$id, $reason, akp_user_id()]);
 akp_audit('REOPEN', 'project_lifecycle', $id, ['status' => 'closed'], ['status' => 'reopened', 'reason' => $reason]);
+dbExecute('COMMIT');
+} catch (Throwable $e) {
+dbExecute('ROLLBACK');
+throw $e;
+}
 try {
 $executiveUsers = dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id = r.id WHERE r.code IN ('general_manager', 'vice_general_manager') AND u.is_active = 1");
 foreach ($executiveUsers as $executiveUser) {
