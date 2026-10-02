@@ -1534,3 +1534,21 @@ Correction commit: `4d672f3df3848421900b04a53706551dcd0ba4ac`.
 - Removed the project portfolio page's duplicate page-specific bottom back button; the shared global back-button installer now supplies the standard top and bottom pair.
 - Code commits: aa8b26532293c3a1933c0b64f6021205c0703c43, 4cfe3f9175da05cc57d91bde, 448a913dc254cdbc72e61f5bd4e767a32251cc20, dd49b8896109faaa1f1635405eff3911f065c7b6.
 - Runtime verification is still required after the user pulls these commits; the current newly created test project should be reused rather than recreated.
+
+
+## 2026-10-02 — Projects Phase 5 deep pre-runtime review and workflow consolidation
+
+A second deep repository/schema review was completed before requesting another runtime fixture. The previous controlled fixture PRJ-0013 was deleted by the user because it had been created before the preflight visibility correction; there is currently no fresh Phase 5 runtime fixture.
+
+Confirmed and corrected on main:
+- Removed the remaining legacy funding POST handlers (add_funding, edit_funding, delete_funding) from modules/projects/view.php. The dedicated modules/projects/view_fm.php is now the canonical FM funding workflow.
+- Removed the corresponding duplicate funding-entry/edit UI from the shared project view. Shared project view now presents funding allocations read-only.
+- Removed the obsolete shared-project active status option. Initial planned → active remains exclusively through the PM launch_project action.
+- Gated FM budget approval/rejection to the actual financial-review states (submitted / rejected) instead of allowing an FM budget decision on an unsubmitted draft project.
+- Rechecked the shared funding card markup after consolidation and restored its correct closing structure.
+
+Current status: IMPLEMENTED / STATICALLY RE-AUDITED / RUNTIME VERIFICATION REQUIRED.
+
+No historical project journals have been modified. No historical Phase 5 fixture has been reused. Do not mark Phase 5 closed until the fresh controlled runtime sequence passes.
+
+Latest main commit: 52a930f697198dbe8f051bf3415e014a929e1f1b.
