@@ -1309,3 +1309,13 @@ Implementation commits:
 
 **Status: STATICALLY CORRECTED — RUNTIME VERIFICATION REQUIRED.**
 The PRJ-0012 runtime gate must verify: GM approval alone leaves the project absent from the PM dashboard/detail access; FM final funding-document confirmation then makes it visible and sends the PM handoff notification; no duplicate accounting release is created.
+
+
+## 2026-10-02 — Current Projects Phase 5 continuation point
+
+Projects Phase 5 is IMPLEMENTED / STATICALLY CORRECTED / RUNTIME GATE PENDING.
+
+Latest code checkpoints: 2ec62923ad554e5feb7c2bd261d3267cbdf9ca5e and ad097b53c15d0d2b3d2f8307164e1325b9f44d5f.
+Latest documentation checkpoint before this refresh: 3ffbb4ad8598f37f5b1abf3a42d2983e4a20e7c9.
+
+Next session must start with the isolated PRJ-0012 runtime gate: GM approval must not expose the project to PM; FM final funding-document confirmation must be the single PM notification/visibility handoff; no duplicate accounting release may appear.
