@@ -1380,7 +1380,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header(
                 'Location: ' .
                 APP_URL .
-                'modules/projects/form.php?id=' .
+                'modules/projects/view.php?id=' .
                 $projectId
             );
 
