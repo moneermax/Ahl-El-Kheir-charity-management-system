@@ -1820,3 +1820,7 @@ The authoritative handoff event is the existing auditable FM_CONFIRM_PAYMENT_EVI
 The accounting event boundary remains unchanged: the full approved project funding is released once at FM financial approval, using the project's existing expense-account mapping and selected treasury source account. GM approval and FM final document confirmation do not create another treasury/accounting event.
 
 Runtime verification remains open. Do not mark Projects Phase 5 closed or alter historical project journals until the controlled PRJ-0012 gate is completed.
+
+
+## 2026-10-02 — Projects Phase 5 runtime gate: PS notification timing correction
+Runtime evidence from PRJ-0012 confirmed that FM final funding-document confirmation correctly exposed the project to PM, but also revealed an incorrect early PS execution notification while the project was still `planned`. Static inspection of `modules/projects/view.php` confirmed the canonical lifecycle: PM must explicitly execute `launch_project`, which changes the project from `planned` to `active` and then notifies the assigned Project Supervisor. The defect was isolated to the PS notification block inside `modules/projects/view_fm.php`; that notification has been removed from FM final confirmation. Commit: `adecaf6c1e4b12017143d7a2f19bf8354ec1788d`. Phase 5 remains runtime verification pending until the corrected sequence is retested.
