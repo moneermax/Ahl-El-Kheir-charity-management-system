@@ -93,16 +93,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             akp_audit('FM_APPROVE_BUDGET','project_budget',$budgetId,['status'=>'draft'],['status'=>'approved','total'=>$total]);
             flash('success','تم اعتماد الميزانية مالياً. يمكن الآن تخصيص التمويل.');
 
-        } elseif ($action === 'fm_reject_budget') {
-            if (!in_array((string)$approval['approval_status'], ['submitted', 'rejected'], true)) throw new RuntimeException('لا يمكن رفض الميزانية قبل إرسال المشروع للمراجعة المالية أو بعد إعادته بالرفض.');
-            $budgetId=(int)($_POST['budget_id']??0); $reason=fm_post('rejection_reason');
-            $budget=dbFetchOne('SELECT * FROM project_budgets WHERE id=? AND project_id=?',[$budgetId,$id]);
-            if (!$budget || $budget['status']!=='draft') throw new RuntimeException('نسخة الميزانية ليست مسودة.');
-            if ($reason==='') throw new RuntimeException('سبب رفض الميزانية مطلوب.');
-            dbExecute("UPDATE project_approval SET fm_rejection_reason=? WHERE project_id=?",[$reason,$id]);
-            akp_audit('FM_REJECT_BUDGET','project_budget',$budgetId,['status'=>'draft'],['status'=>'draft','reason'=>$reason]);
-            flash('success','تم رفض الميزانية وإبلاغ مدير المشاريع بسبب الرفض.');
-
         } elseif ($action === 'fm_save_funding_batch') {
             if (!akp_can_manage_funding($id)) throw new RuntimeException('تخصيص التمويل محصور بالمدير المالي.');
             if ((string)$approval['approval_status']!=='submitted') throw new RuntimeException('تخصيص التمويل متاح أثناء المراجعة المالية.');
@@ -462,7 +452,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             <?php foreach($budgetLines as $line): ?><tr><td><?php echo e($line['category']); ?></td><td><?php echo e($line['description']); ?></td><td><?php echo number_format((float)$line['estimated_amount'],2).' '.e($project['currency_code']?:'SDG'); ?></td></tr>
             <?php endforeach; ?><?php if(!$budgetLines): ?><tr><td colspan="3" class="text-center text-muted">لا توجد بنود.</td></tr><?php endif; ?></tbody></table></div>
             <?php if($activeBudget['status']==='draft'): ?>
-                <div class="d-flex gap-2"><form method="post"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_approve_budget"><input type="hidden" name="budget_id" value="<?php echo (int)$activeBudget['id']; ?>"><button class="btn btn-success">اعتماد الميزانية</button></form><button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejectBudget">رفض الميزانية</button></div>
+                <div class="d-flex gap-2"><form method="post"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_approve_budget"><input type="hidden" name="budget_id" value="<?php echo (int)$activeBudget['id']; ?>"><button class="btn btn-success">اعتماد الميزانية</button></form></div>
             <?php endif; ?>
         <?php endif; ?>
     </div></div>
@@ -914,7 +904,6 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     });
     </script>
 
-    <div class="modal fade" id="rejectBudget"><div class="modal-dialog"><div class="modal-content"><form method="post"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_reject_budget"><input type="hidden" name="budget_id" value="<?php echo (int)($activeBudget['id']??0); ?>"><div class="modal-header"><h5>رفض الميزانية</h5></div><div class="modal-body"><textarea name="rejection_reason" class="form-control" required placeholder="سبب الرفض"></textarea></div><div class="modal-footer"><button class="btn btn-danger">تأكيد الرفض</button></div></form></div></div></div>
     <div class="modal fade" id="rejectProject"><div class="modal-dialog"><div class="modal-content"><form method="post"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_reject_project"><div class="modal-header"><h5>رفض المشروع مالياً</h5></div><div class="modal-body"><textarea name="rejection_reason" class="form-control" required placeholder="سبب الرفض"></textarea></div><div class="modal-footer"><button class="btn btn-danger">تأكيد الرفض</button></div></form></div></div></div>
 </div>
 <?php include dirname(__DIR__, 2) . '/includes/footer.php'; ?>
