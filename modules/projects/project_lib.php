@@ -25,7 +25,7 @@ if (!function_exists('akp_is_dg')) {
     function akp_is_dg(): bool { return in_array(akp_role(), ['admin', 'general_manager'], true); }
 }
 if (!function_exists('akp_can_create_project')) {
-    function akp_can_create_project(): bool { return in_array(akp_role(), ['admin', 'general_manager', 'vice_general_manager', 'projects_manager'], true); }
+    function akp_can_create_project(): bool { return akp_role() === 'projects_manager'; }
 }
 
 if (!function_exists('akp_can_prepare_finance')) {
