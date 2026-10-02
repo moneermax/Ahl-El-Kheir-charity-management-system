@@ -1267,3 +1267,25 @@ Do not reopen this workflow without genuine regression evidence.
 
 ### Next session boundary
 Start from current main and inspect the master documents and explicitly documented project/module checkpoint before changing code. The historical Projects Phase 5 implementation was rolled back to checkpoint 594e6c216757851526e63e80a8b2e8585416d94a; do not assume the rolled-back Phase 5 implementation is active or reintroduce it without a fresh design/schema audit.
+
+
+## 2026-10-02 — Projects Phase 5 fresh accounting model implemented / runtime gate pending
+
+The fresh database snapshot commit 3219852ad239b9ee4fc1d8e685b9462ff9ef7a47 confirmed the intended Phase 5 accounting event directly in the live-derived dump:
+
+- other_projects.expense_account_id is the existing project expense-account mapping.
+- PRJ-0011 uses 5100-11 — مصروفات مشروع: PH5 Accounting Reconciliation Test.
+- Existing test journals JE-PRJ-REL-11-31..., ...32..., ...33... use the model: debit the project's existing expense account and credit the actual treasury source account.
+- project_funding_returns already exists in the fresh database snapshot and records the auditable return event.
+
+A fresh implementation was added on main without resurrecting the rolled-back Phase 5 files:
+
+1. Added modules/projects/project_funding_accounting.php with procedural helpers for one-time FM-controlled funding release, payment-evidence synchronization, controlled-balance calculation, FM-only unused-fund return, and safe reversal of an unreconciled FM release before execution.
+2. Added database/migrations/2026-10-02_project_funding_reconciliation.sql for project_funding_returns.
+3. FM financial approval now performs the accounting release atomically with the approval transition.
+4. GM final approval no longer creates a second funding/accounting event.
+5. Project closure is blocked while a controlled unused balance remains.
+6. A closure request with a non-zero controlled balance notifies FM for reconciliation; when reconciliation reaches zero, PM is notified.
+7. Normal accounting post_expense is blocked after project funding has been released, preventing a second treasury reduction for the same controlled project funds.
+
+The implementation is STATICALLY IMPLEMENTED — RUNTIME VERIFICATION REQUIRED. Do not mark Phase 5 closed and do not correct historical project journals until the fresh controlled-project runtime gate passes.
