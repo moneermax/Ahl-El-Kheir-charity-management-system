@@ -1361,7 +1361,7 @@ $grandFinancialRequirement = (float)($financialSummary['total_financial_requirem
 <div class="card mb-4 fade-in border-success">
 <div class="card-header bg-success text-white"><i class="fas fa-money-check-dollar me-2"></i>إثبات صرف تمويل المشروع</div>
 <div class="card-body">
-<div class="alert alert-light border">بعد اعتماد المدير العام أصبح صرف التمويل موثقاً محاسبياً. المدير المالي يستكمل مستند الصرف: سند صرف مطبوع للنقد، أو إيصال التحويل/المحفظة الإلكترونية. مدير المشاريع يستطيع الاطلاع على المستندات قبل بدء التنفيذ الفعلي.</div>
+<div class="alert alert-light border">تم الإفراج عن تمويل المشروع محاسبياً عند اعتماد المدير المالي. بعد الاعتماد التنظيمي النهائي من المدير العام، يستكمل المدير المالي توثيق مستندات الدفع: سند صرف للنقد، أو إيصال التحويل/المحفظة الإلكترونية. لا ينشئ توثيق المستندات قيداً محاسبياً جديداً.</div>
 <div class="table-responsive">
 <table class="table table-sm align-middle">
 <thead><tr><th>حساب التمويل</th><th>طريقة الدفع</th><th>المبلغ</th><th>المرجع</th><th>المستند</th></tr></thead>
@@ -1413,7 +1413,7 @@ $grandFinancialRequirement = (float)($financialSummary['total_financial_requirem
 <div class="col-md-4"><label class="form-label small">إيصال المصروف</label><input type="file" name="expense_receipt" class="form-control form-control-sm" accept=".pdf,.jpg,.jpeg,.png"></div>
 <div class="col-12 d-flex align-items-center justify-content-between gap-2 flex-wrap">
 <button class="btn btn-primary"><i class="fas fa-money-bill-transfer me-1"></i>تسجيل الدفع وترحيل المصروف</button>
-<span class="small text-muted">عند حفظ الدفع مع الإيصال يُعتبر المصروف مدفوعاً ومرحّلاً مباشرة من ميزانية المشروع، دون أي قيد على حسابات المنظمة.</span>
+<span class="small text-muted">يُسجَّل المصروف مباشرة على الرصيد المالي الذي أُفرج عنه للمشروع؛ لا يُنشأ قيد خزينة ثانٍ لهذا المصروف.</span>
 </div>
 </div>
 </form>
