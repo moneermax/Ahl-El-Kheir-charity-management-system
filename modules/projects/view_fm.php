@@ -264,10 +264,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 $pmUsers=dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id=r.id WHERE r.code='projects_manager' AND u.is_active=1");
                 foreach($pmUsers as $pmUser){
-                    ak_transaction_review_notify_event((int)$pmUser['id'],'اكتملت مستندات صرف المشروع','اكتمل توثيق جميع مستندات صرف وتمويل المشروع «'.(string)($project['name']??'').'» ('.(string)($project['project_code']??'').'). يمكنكم الاطلاع على النتيجة من صفحة المشروع.',APP_URL.'modules/projects/view_pm.php?id='.$id,$id,'project_payment_evidence_final');
+                    ak_transaction_review_notify_event((int)$pmUser['id'],'اكتملت مستندات صرف المشروع','اكتمل توثيق جميع مستندات صرف وتمويل المشروع «'.(string)($project['name']??'').'» ('.(string)($project['project_code']??'').'). يمكن لمدير المشاريع الآن مراجعة المشروع واستكمال إجراءات ما بعد الاعتماد.',APP_URL.'modules/projects/view_pm.php?id='.$id,$id,'project_payment_evidence_final');
+                }
+
+                $projectSupervisors=dbFetchAll(
+                    "SELECT DISTINCT u.id
+                     FROM project_supervisor_assignments psa
+                     JOIN users u ON u.id=psa.supervisor_user_id
+                     JOIN roles r ON r.id=u.role_id
+                     WHERE psa.project_id=? AND psa.ended_at IS NULL
+                       AND u.is_active=1 AND r.code='project_supervisor'",
+                    [$id]
+                );
+                foreach($projectSupervisors as $projectSupervisor){
+                    ak_transaction_review_notify_event((int)$projectSupervisor['id'],'تمت إحالة المشروع للتنفيذ','اكتملت الموافقات وتوثيق مستندات التمويل للمشروع «'.(string)($project['name']??'').'» ('.(string)($project['project_code']??'').'). أصبح المشروع متاحاً وفق صلاحيات ومسار الإطلاق المعتمد.',APP_URL.'modules/projects/view.php?id='.$id,$id,'project_payment_evidence_final_ps');
                 }
             } catch(Throwable $notificationError) {}
-            $asyncSuccessMessage='تم تأكيد اكتمال مستندات التمويل وإبلاغ مدير المشاريع.';
+            $asyncSuccessMessage='تم تأكيد اكتمال مستندات التمويل وإبلاغ مدير المشاريع والمشرف المعيّن.';
         } elseif ($action === 'fm_return_to_review') {
             if (akp_role() !== 'financial_manager') throw new RuntimeException('إعادة المشروع للمراجعة المالية متاحة للمدير المالي فقط.');
             $reason=fm_post('return_reason');
