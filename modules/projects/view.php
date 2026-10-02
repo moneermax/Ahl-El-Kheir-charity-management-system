@@ -334,8 +334,7 @@ WHERE project_id = ?',
 if (!$approvalCheck || $approvalCheck['approval_status'] !== 'approved') {
 throw new RuntimeException('لا يمكن إطلاق المشروع قبل الاعتماد النهائي.');
 }
-$fmFinalConfirmed = (bool)dbFetchOne("SELECT id FROM audit_log WHERE action='FM_CONFIRM_PAYMENT_EVIDENCE' AND entity_type='project_payment_evidence' AND entity_id=? LIMIT 1", [$id]);
-if (!$fmFinalConfirmed) {
+if (!akp_project_final_fm_confirmed($id)) {
 throw new RuntimeException('لا يمكن إطلاق المشروع قبل استكمال المدير المالي للتأكيد النهائي لمستندات التمويل.');
 }
 $currentLifecycle = dbFetchOne(
