@@ -105,7 +105,9 @@ if (!function_exists('akp_post_project_funding_release')) {
 if (!function_exists('akp_reverse_project_funding_release')) {
     function akp_reverse_project_funding_release(int $projectId, string $reason, bool $manageTransaction = true): void
     {
-        if (akp_role() !== 'financial_manager') throw new RuntimeException('عكس الإفراج المالي محصور بالمدير المالي.');
+        // Authorization is enforced by each workflow action that calls this helper:
+        // FM correction and GM rejection have different business roles but the same
+        // controlled accounting reversal operation.
         $postedExpenses = dbFetchOne("SELECT COALESCE(SUM(amount),0) AS total FROM project_expenses WHERE project_id=? AND status='posted'", [$projectId]);
         if ((float)($postedExpenses['total'] ?? 0) > 0.009) throw new RuntimeException('لا يمكن عكس الإفراج المالي بعد تسجيل مصروفات تنفيذ فعلية للمشروع.');
         $documented = dbFetchOne("SELECT COUNT(*) AS n FROM project_payment_evidence WHERE project_id=? AND status='documented'", [$projectId]);
