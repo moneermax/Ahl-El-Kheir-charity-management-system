@@ -75,10 +75,40 @@ if (!function_exists('akp_can_review_budget')) {
     }
 }
 
+if (!function_exists('akp_project_final_fm_confirmed')) {
+    /**
+     * The FM final confirmation is the handoff gate to the Projects Manager.
+     * It is intentionally derived from the existing auditable confirmation
+     * event; it does not create a second workflow/accounting state.
+     */
+    function akp_project_final_fm_confirmed(int $projectId): bool
+    {
+        if ($projectId < 1) return false;
+        return (bool)dbFetchOne(
+            "SELECT id FROM audit_log
+             WHERE action='FM_CONFIRM_PAYMENT_EVIDENCE'
+               AND entity_type='project_payment_evidence'
+               AND entity_id=?
+             LIMIT 1",
+            [$projectId]
+        );
+    }
+}
+
 if (!function_exists('akp_can_view_project')) {
     function akp_can_view_project(int $projectId): bool
     {
-        if (in_array(akp_role(), ['admin', 'general_manager', 'vice_general_manager', 'projects_manager', 'accountant', 'financial_manager'], true)) return true;
+        $role = akp_role();
+        if (in_array($role, ['admin', 'general_manager', 'vice_general_manager', 'accountant', 'financial_manager'], true)) return true;
+
+        /*
+         * The Projects Manager receives operational project visibility only
+         * after the FM completes the final funding-document confirmation.
+         * GM approval alone is not the PM handoff milestone.
+         */
+        if ($role === 'projects_manager') {
+            return akp_project_final_fm_confirmed($projectId);
+        }
 
         /*
          * A Project Supervisor must not gain operational access merely because
