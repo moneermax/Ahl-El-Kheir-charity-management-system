@@ -1,10 +1,19 @@
-/* Prevent accidental mouse-wheel changes on every numeric input in the system. */
-document.addEventListener('wheel', function (event) {
+/* Prevent accidental mouse-wheel changes on every numeric input in the system.
+ * Capture at window level so the browser's native number-input stepper cannot
+ * receive the wheel action even if another page-level listener is present.
+ */
+window.addEventListener('wheel', function (event) {
     const target = event.target;
-    if (target && target.matches && target.matches('input[type="number"]')) {
+    if (
+        event.cancelable &&
+        target &&
+        target.matches &&
+        target.matches('input[type="number"]')
+    ) {
         event.preventDefault();
+        event.stopPropagation();
     }
-}, { passive: false });
+}, { capture: true, passive: false });
 
 document.addEventListener('DOMContentLoaded', function () {
     const sidebar = document.getElementById('sidebar');
