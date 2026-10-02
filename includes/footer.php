@@ -83,13 +83,25 @@ window.AK_BACK_FALLBACK=<?php echo json_encode(APP_URL . dashboard_for_role(curr
 (function(){var deferred=null;var btn=document.getElementById('akInstallBtn');window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferred=e;if(btn)btn.classList.remove('d-none')});if(btn)btn.addEventListener('click',function(){if(!deferred)return;deferred.prompt();deferred.userChoice.then(function(){deferred=null;btn.classList.add('d-none')})});window.addEventListener('appinstalled',function(){if(btn)btn.classList.add('d-none')})})();
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('<?php echo APP_URL; ?>sw.js').catch(function(){})});}
 function akCreateBackButton(fallback,extraClass,label){var button=document.createElement('a');button.href=fallback||'#';button.className=extraClass;button.setAttribute('onclick','return akGoBack(this.href);');button.setAttribute('aria-label',label);button.innerHTML='<i class="fa-solid fa-arrow-right" aria-hidden="true"></i><span>'+label+'</span>';return button;}
+function akRemoveCompetingBackButtons(){
+    document.querySelectorAll('.ak-top-back-wrap,.ak-bottom-back-wrap').forEach(function(node){
+        if(!node.hasAttribute('data-ak-shared-back')) node.remove();
+    });
+    document.querySelectorAll('a[onclick*="akGoBack"],button[onclick*="akGoBack"]').forEach(function(node){
+        if(node.closest('[data-ak-shared-back]')) return;
+        node.remove();
+    });
+}
 function akInstallBackButtons(){
     var content=document.querySelector('.content');
     if(!content)return;
     var path=window.location.pathname.replace(/\\/g,'/');
     var isDashboard=/(^|\/)dashboard\//i.test(path)||/(^|\/)modules\/accounting\/fm_dashboard\.php$/i.test(path);
     if(isDashboard)return;
-    content.querySelectorAll('.ak-top-back-wrap,.ak-bottom-back-wrap').forEach(function(node){node.remove();});
+
+    akRemoveCompetingBackButtons();
+    document.querySelectorAll('.ak-top-back-wrap,.ak-bottom-back-wrap').forEach(function(node){node.remove();});
+
     var fallback=window.AK_PAGE_BACK_URL||window.AK_BACK_FALLBACK||window.location.origin+'/';
     var label=window.AK_LANG==='ar'?'العودة':'Back';
     var topWrap=document.createElement('div');
@@ -97,12 +109,18 @@ function akInstallBackButtons(){
     topWrap.setAttribute('data-ak-shared-back','top');
     topWrap.appendChild(akCreateBackButton(fallback,'btn btn-outline-secondary ak-top-back-btn',label));
     content.insertBefore(topWrap,content.firstChild);
+
     var bottomWrap=document.createElement('div');
     bottomWrap.className='ak-bottom-back-wrap';
     bottomWrap.setAttribute('data-ak-shared-back','bottom');
     bottomWrap.appendChild(akCreateBackButton(fallback,'btn btn-outline-secondary ak-bottom-back-btn',label));
     var footer=document.querySelector('.app-footer');
     if(footer&&footer.parentNode) footer.parentNode.insertBefore(bottomWrap,footer); else content.appendChild(bottomWrap);
+
+    if(!window.__akBackObserver){
+        window.__akBackObserver=new MutationObserver(function(){ akRemoveCompetingBackButtons(); });
+        window.__akBackObserver.observe(document.body,{childList:true,subtree:true});
+    }
 }
 function akGoBack(fallback){try{if(window.AK_PAGE_BACK_URL){window.location.href=fallback||window.AK_PAGE_BACK_URL;return false;}var ref=document.referrer;if(ref&&ref.indexOf(window.location.origin)===0&&window.history.length>1){window.history.back();return false;}}catch(e){}if(fallback){window.location.href=fallback;}return false;}
 
