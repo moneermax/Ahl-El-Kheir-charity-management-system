@@ -11,7 +11,20 @@ $pageTitle=t('projects.dashboard_title');$active='projects_dashboard';
 if($role==='projects_manager'){
 $stats=dbFetchOne("SELECT COUNT(*) total_projects,SUM(CASE WHEN BINARY current_status IN (BINARY 'active', BINARY 'reopened') THEN 1 ELSE 0 END) active_projects,SUM(CASE WHEN BINARY approval_status = BINARY 'submitted' THEN 1 ELSE 0 END) pending_approval,COALESCE(SUM(CASE WHEN BINARY current_status IN (BINARY 'active', BINARY 'reopened') THEN COALESCE((SELECT SUM(COALESCE(bl.approved_amount, bl.estimated_amount)) FROM project_budgets b JOIN project_budget_lines bl ON bl.budget_id=b.id WHERE b.project_id=x.id AND BINARY b.status = BINARY 'approved'), target_amount) ELSE 0 END),0) active_budget FROM (SELECT p.id,p.target_amount,COALESCE(l.lifecycle_status,p.status) current_status,COALESCE((SELECT pa.approval_status FROM project_approval pa WHERE pa.project_id=p.id),'approved') approval_status FROM other_projects p LEFT JOIN project_lifecycle l ON l.project_id=p.id) x");
 $pendingApprovals=dbFetchAll("SELECT p.id,p.name,p.project_code,pa.submitted_at,u.full_name submitted_by_name FROM project_approval pa JOIN other_projects p ON p.id=pa.project_id LEFT JOIN users u ON u.id=pa.submitted_by WHERE BINARY pa.approval_status = BINARY 'submitted' ORDER BY pa.submitted_at DESC LIMIT 5");
-$readyToLaunchProjects=dbFetchAll("SELECT p.id,p.name,p.project_code,COALESCE(l.lifecycle_status,p.status) status,p.target_amount FROM other_projects p JOIN project_approval pa ON pa.project_id=p.id LEFT JOIN project_lifecycle l ON l.project_id=p.id WHERE BINARY pa.approval_status = BINARY 'approved' AND BINARY COALESCE(l.lifecycle_status,p.status) = BINARY 'planned' ORDER BY pa.approved_at DESC, p.id DESC LIMIT 10");
+$readyToLaunchProjects=dbFetchAll("SELECT p.id,p.name,p.project_code,COALESCE(l.lifecycle_status,p.status) status,p.target_amount
+    FROM other_projects p
+    JOIN project_approval pa ON pa.project_id=p.id
+    LEFT JOIN project_lifecycle l ON l.project_id=p.id
+    WHERE BINARY pa.approval_status = BINARY 'approved'
+      AND BINARY COALESCE(l.lifecycle_status,p.status) = BINARY 'planned'
+      AND EXISTS (
+          SELECT 1
+          FROM audit_log al
+          WHERE al.action='FM_CONFIRM_PAYMENT_EVIDENCE'
+            AND al.entity_type='project_payment_evidence'
+            AND al.entity_id=p.id
+      )
+    ORDER BY pa.approved_at DESC, p.id DESC LIMIT 10");
 $recentProjects=dbFetchAll("SELECT p.id,p.name,p.project_code,COALESCE(l.lifecycle_status,p.status) status,p.target_amount FROM other_projects p LEFT JOIN project_lifecycle l ON l.project_id=p.id ORDER BY p.id DESC LIMIT 5");
 }else{
 $stats=dbFetchOne("SELECT COUNT(DISTINCT p.id) assigned_projects,SUM(CASE WHEN BINARY COALESCE(l.lifecycle_status,p.status) IN (BINARY 'active', BINARY 'reopened') THEN 1 ELSE 0 END) active_assigned,COUNT(DISTINCT lh.id) pending_labor,COUNT(DISTINCT pm.id) upcoming_milestones FROM other_projects p JOIN project_approval pa ON pa.project_id=p.id LEFT JOIN project_lifecycle l ON l.project_id=p.id LEFT JOIN project_supervisor_assignments psa ON psa.project_id=p.id AND psa.ended_at IS NULL AND psa.supervisor_user_id=? LEFT JOIN project_labor_helpers lh ON lh.project_id=p.id AND lh.supervisor_user_id=? AND BINARY lh.status IN (BINARY 'planned', BINARY 'in_progress') LEFT JOIN project_milestones pm ON pm.project_id=p.id AND BINARY pm.status = BINARY 'pending' WHERE psa.supervisor_user_id=? AND BINARY pa.approval_status = BINARY 'approved' AND BINARY COALESCE(l.lifecycle_status,p.status) IN (BINARY 'active',BINARY 'reopened',BINARY 'completed',BINARY 'under_review',BINARY 'closed',BINARY 'cancelled')",[$uid,$uid,$uid]);
