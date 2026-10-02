@@ -28,6 +28,8 @@ $paymentEvidence = dbFetchAll("SELECT pe.*, a.code AS source_account_code, a.nam
     WHERE pe.project_id=? ORDER BY pe.id DESC", [$id]);
 $accounts = dbFetchAll("SELECT id, code, name_ar FROM accounts WHERE is_active=1 AND code IN ('1100','1200','1300') ORDER BY code");
 $financialSummary = akp_project_financial_requirement($id, $activeBudget && $activeBudget['status'] === 'approved' ? (float)$activeBudget['line_total'] : null);
+$controlledBalance = akp_project_controlled_balance($id);
+$closurePending = (bool)dbFetchOne("SELECT id FROM project_status_history WHERE project_id=? AND new_status='closure_requested' ORDER BY id DESC LIMIT 1", [$id]);
 
 function fm_redirect_project(int $id): void {
     header('Location: ' . APP_URL . 'modules/projects/view_fm.php?id=' . $id);
@@ -265,6 +267,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             } catch(Throwable $notificationError) {}
             $asyncSuccessMessage='تم تأكيد اكتمال مستندات التمويل وإبلاغ مدير المشاريع.';
+        } elseif ($action === 'fm_return_to_review') {
+            if ($role !== 'financial_manager') throw new RuntimeException('إعادة المشروع للمراجعة المالية متاحة للمدير المالي فقط.');
+            $reason=fm_post('return_reason');
+            if($reason==='') throw new RuntimeException('سبب إعادة المشروع للمراجعة المالية مطلوب.');
+            if((string)$approval['approval_status']!=='fm_approved') throw new RuntimeException('المشروع ليس في حالة اعتماد مالي تسمح بإعادته للمراجعة.');
+            akp_reverse_project_funding_release($id,$reason);
+            dbExecute("UPDATE project_approval SET approval_status='submitted' WHERE project_id=?",[$id]);
+            akp_audit('FM_RETURN_TO_REVIEW','project_approval',$id,['approval_status'=>'fm_approved'],['approval_status'=>'submitted','reason'=>$reason,'funding_release_reversed'=>true]);
+            flash('success','تمت إعادة المشروع للمراجعة المالية وعكس الإفراج المالي غير المنفذ.');
+        } elseif ($action === 'fm_return_project_funding') {
+            if ($role !== 'financial_manager') throw new RuntimeException('تسوية الرصيد المتبقي محصورة بالمدير المالي.');
+            $allocationId=(int)($_POST['allocation_id']??0);
+            $amount=(float)($_POST['return_amount']??0);
+            $returnDate=fm_post('return_date',date('Y-m-d'));
+            $reference=trim((string)($_POST['return_reference']??''))?:null;
+            $description=trim((string)($_POST['return_description']??''))?:null;
+            $entryId=akp_return_project_funding($id,$allocationId,$amount,$returnDate,$reference,$description);
+            $remaining=akp_project_controlled_balance($id);
+            if($remaining<=0.009){
+                try{
+                    $pmUsers=dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id=r.id WHERE r.code='projects_manager' AND u.is_active=1");
+                    foreach($pmUsers as $pmUser){
+                        ak_transaction_review_notify_event((int)$pmUser['id'],'اكتملت تسوية تمويل المشروع','اكتملت تسوية الرصيد المالي المتبقي للمشروع «'.(string)($project['name']??'').'» ('.(string)($project['project_code']??').') ويمكن لمدير المشاريع استكمال إجراءات الإغلاق.',APP_URL.'modules/projects/view.php?id='.$id,$id,'project_funding_reconciliation_complete');
+                    }
+                }catch(Throwable $notificationError){}
+            }
+            flash('success','تم تسجيل إرجاع الرصيد المتبقي إلى حساب المؤسسة. الرصيد المتبقي تحت سيطرة المشروع: '.number_format($remaining,2).' '.($project['currency_code']?:'SDG').'.');
         } elseif ($action === 'fm_approve_project') {
             if ((string)$approval['approval_status']!=='submitted') throw new RuntimeException('المشروع ليس في حالة انتظار الاعتماد المالي.');
             $budget=dbFetchOne("SELECT b.id,COALESCE(SUM(bl.estimated_amount),0) total FROM project_budgets b LEFT JOIN project_budget_lines bl ON bl.budget_id=b.id WHERE b.project_id=? AND b.status='approved' GROUP BY b.id ORDER BY b.version_no DESC LIMIT 1",[$id]);
@@ -435,6 +464,52 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     </div></div>
 
     <?php if($approval['approval_status']==='submitted' && $approvedExists): ?><div class="card mb-4 border-primary"><div class="card-body"><h5>الاعتماد المالي للمشروع</h5><div class="alert alert-light border mb-3"><div class="d-flex justify-content-between"><span class="text-muted">الميزانية المعتمدة</span><strong><?php echo number_format((float)($activeBudget['line_total'] ?? 0),2); ?></strong></div><div class="d-flex justify-content-between mt-2"><span class="text-muted">الرسوم الحكومية</span><strong><?php echo number_format((float)$financialSummary['government_fees'],2); ?></strong></div><hr class="my-2"><div class="d-flex justify-content-between"><span class="fw-semibold">إجمالي المتطلبات المالية</span><strong class="fs-4"><?php echo number_format((float)$financialSummary['total_financial_requirement'],2); ?> <?php echo e($project['currency_code']?:'SDG'); ?></strong></div></div><p class="text-muted">يجب أن يساوي إجمالي تخصيص التمويل إجمالي المتطلبات المالية (الميزانية المعتمدة + الرسوم الحكومية).</p><div class="d-flex gap-2"><form method="post"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_approve_project"><button class="btn btn-success">اعتماد المشروع مالياً</button></form><button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#rejectProject">رفض المشروع مالياً</button></div></div></div><?php endif; ?>
+
+    <?php if ($approval['approval_status']==='fm_approved'): ?>
+    <div class="card mb-4 border-warning">
+        <div class="card-header"><strong>الإفراج المالي والتسوية</strong></div>
+        <div class="card-body">
+            <div class="alert alert-light border">تم الإفراج عن التمويل محاسبياً عند الاعتماد المالي. الرصيد الحالي تحت سيطرة المشروع: <strong><?php echo number_format($controlledBalance,2); ?> <?php echo e($project['currency_code']?:'SDG'); ?></strong>.</div>
+            <form method="post" class="border rounded p-3">
+                <?php echo csrf_field(); ?>
+                <input type="hidden" name="action" value="fm_return_to_review">
+                <div class="row g-2 align-items-end">
+                    <div class="col-md-9"><label class="form-label">سبب إعادة المراجعة المالية</label><input name="return_reason" class="form-control" required value="استكمال أو تصحيح إجراءات التمويل"></div>
+                    <div class="col-md-3"><button class="btn btn-warning w-100" onclick="return confirm('سيتم عكس الإفراج المالي غير المنفذ وإعادة المشروع للمراجعة. هل تريد المتابعة؟')">إعادة للمراجعة</button></div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <?php endif; ?>
+
+    <?php if ($approval['approval_status']==='approved' && $closurePending && $controlledBalance > 0.009): ?>
+    <div class="card mb-4 border-warning">
+        <div class="card-header"><strong>تسوية الرصيد المتبقي تحت سيطرة المشروع</strong></div>
+        <div class="card-body">
+            <div class="alert alert-warning">طلب مشرف المشروع الإغلاق قائم. الرصيد المتبقي الذي يجب إرجاعه إلى حسابات المؤسسة: <strong><?php echo number_format($controlledBalance,2); ?> <?php echo e($project['currency_code']?:'SDG'); ?></strong>.</div>
+            <div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>حساب المصدر</th><th>المبلغ المفرج</th><th>الإرجاع</th></tr></thead><tbody>
+            <?php foreach($fundings as $f): ?>
+                <?php if(($f['status']??'')==='posted' && !dbFetchOne('SELECT id FROM project_funding_returns WHERE funding_allocation_id=? LIMIT 1',[(int)$f['id']])): ?>
+                <tr>
+                    <td><?php echo e(($f['source_account_code']??$f['source_type']).' · '.($f['source_account_name']??'')); ?></td>
+                    <td><?php echo number_format((float)$f['amount'],2).' '.e($f['currency_code']?:($project['currency_code']?:'SDG')); ?></td>
+                    <td>
+                        <form method="post" class="row g-2 align-items-end">
+                            <?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_return_project_funding"><input type="hidden" name="allocation_id" value="<?php echo (int)$f['id']; ?>">
+                            <div class="col-md-3"><input type="number" name="return_amount" class="form-control form-control-sm" min="0.01" step="0.01" max="<?php echo e((string)$f['amount']); ?>" required></div>
+                            <div class="col-md-3"><input type="date" name="return_date" class="form-control form-control-sm" value="<?php echo date('Y-m-d'); ?>" required></div>
+                            <div class="col-md-2"><input name="return_reference" class="form-control form-control-sm" maxlength="100" placeholder="المرجع"></div>
+                            <div class="col-md-2"><input name="return_description" class="form-control form-control-sm" maxlength="500" placeholder="الوصف"></div>
+                            <div class="col-md-2"><button class="btn btn-sm btn-success w-100" onclick="return confirm('هل تم إرجاع المبلغ فعلياً إلى حساب المؤسسة؟')">تسجيل الإرجاع</button></div>
+                        </form>
+                    </td>
+                </tr>
+                <?php endif; ?>
+            <?php endforeach; ?>
+            </tbody></table></div>
+        </div>
+    </div>
+    <?php endif; ?>
 
     <?php if ($approval['approval_status']==='approved'): ?>
     <div class="card mb-4 border-success">
