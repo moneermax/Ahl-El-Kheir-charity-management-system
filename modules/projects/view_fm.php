@@ -134,6 +134,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             dbExecute('START TRANSACTION');
             try {
+                $lockedApproval = dbFetchOne('SELECT approval_status FROM project_approval WHERE project_id=? FOR UPDATE',[$id]);
+                if (!$lockedApproval || (string)$lockedApproval['approval_status'] !== 'submitted') throw new RuntimeException('تغيرت حالة المشروع قبل حفظ تخصيصات التمويل.');
             foreach($batchByAccount as $item){
                 $accountId=(int)$item['account']['id'];
                 $existingRows=dbFetchAll("SELECT id,amount FROM project_funding_allocations WHERE project_id=? AND source_account_id=? AND status='draft' ORDER BY id",[$id,$accountId]);
