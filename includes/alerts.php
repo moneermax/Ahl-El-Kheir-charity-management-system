@@ -1,5 +1,5 @@
 <?php
-$flashes = get_flashes();
+$flashes = flash_all();
 
 foreach ($flashes as $flash) {
     $type = $flash['type'] ?? 'info';
