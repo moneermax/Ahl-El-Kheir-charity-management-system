@@ -340,8 +340,22 @@
         });
     }
 
+    /* Catch transient alerts inserted later by AJAX or page-specific scripts. */
+    var akAlertObserver = new MutationObserver(function (mutations) {
+        var hasAddedNodes = mutations.some(function (mutation) {
+            return mutation.addedNodes && mutation.addedNodes.length > 0;
+        });
+        if (hasAddedNodes) convertTransientAlertsToToasts();
+    });
+
+    function startTransientAlertObserver() {
+        if (!document.body || !window.MutationObserver) return;
+        akAlertObserver.observe(document.body, { childList: true, subtree: true });
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
-        convertTransientAlertsToToasts();\n\n        var flashNodes = document.querySelectorAll('[data-ak-flash]');
+        convertTransientAlertsToToasts();
+        startTransientAlertObserver();\n\n        var flashNodes = document.querySelectorAll('[data-ak-flash]');
         restoreFlashScrollPosition(flashNodes.length > 0);
 
         document.querySelectorAll('form.js-supervisor-action').forEach(function (form) {
