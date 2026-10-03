@@ -1349,3 +1349,34 @@ Projects continuation checkpoint — 2026-10-03
 When continuing Projects work, do not repeat completed Phase 5 gates. The fresh database backup in `database/ahl_el_kheir.sql` is now authoritative for the current test-data snapshot. PRJ-0015 has active primary supervisor assignment id 14 to user 34 (`ps1`), and user 34 is a `project_supervisor`. The missing PS status option was a detail-page UI exposure issue, not a missing authorization grant: `modules/projects/view.php` already had the protected `change_status` action, while its UI form was absent. The narrow fix is commit `0de84d5bd0b3c42e5b113499f551a96347b3f179`.
 
 Runtime verification is still pending for that exact UI fix. After verification, the next Projects task is the financial reconciliation case where the PS does not consume the entire approved/released budget: return the remaining controlled amount through the existing FM/accounting funding-return workflow, ensure the controlled balance reaches zero, and verify the resulting journal, return record, audit trail, and closure-readiness behavior. Do not invent a new accounting mechanism if the existing funding-return path can be extended correctly.
+
+## 2026-10-03 — Projects closure proof UX and final-close guard
+
+A source-driven review of the closure flow addressed two concrete UX defects without weakening the accounting controls.
+
+### Closure proof field
+The Project Supervisor closure form now uses one unified return_proof field:
+- an existing funding-return proof is displayed with its current filename and authenticated view link;
+- the same file chooser can optionally replace that proof when the next closure request is submitted;
+- leaving the chooser empty preserves the existing proof;
+- replacement updates the existing project_documents row instead of creating a duplicate;
+- the original physical file is removed only after the database update succeeds;
+- replacement remains restricted to an unverified proof before a pending closure request exists;
+- audit action is UPLOAD for the first proof and UPDATE for a replacement.
+
+The separate replace_funding_return_proof action/form was removed. Browser security is respected: the existing local file path is not inserted into the file input; the current file is shown beside the same chooser instead.
+
+Implementation commits:
+- be3ee1768f4834db48b5d0d4e299da776637c94d
+- b86ff01bd045607c889d031190f97af13efa280d (latest main)
+
+### Final-close guard
+The PM final-close UI now calculates the same authoritative controlled balance and pending-expense conditions used by the server-side close_project action.
+
+When closure is not currently permissible, the final-close button is visibly disabled and the reason is displayed. For PRJ-0015 at the current documented checkpoint, the controlled balance is 250,000.00 SDG, so final closure must remain blocked until the Financial Manager records the funding reconciliation/return.
+
+The server-side balance check remains authoritative; this is a visibility/UX correction, not a relaxation of the closure rule.
+
+Runtime status: code/source change completed; local XAMPP/browser verification of unified proof replacement/preservation and the visible final-close blocking state is still required. Do not mark this UI/runtime gate closed until the user supplies that evidence.
+
+Next runtime action: on PRJ-0015, verify the PS closure form preserves the current proof when no new file is selected, replaces it through the same field when a new file is selected, and does not create a duplicate document. Then verify the PM closure card clearly shows the 250,000.00 SDG blocking balance and a disabled final-close button. After FM settlement, verify the guard clears and final closure can proceed subject to the remaining closure checks.
