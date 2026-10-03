@@ -2456,11 +2456,6 @@ document.getElementById('edit-milestone-description').value = button.dataset.mil
 </div>
 </div>
 <?php endif; ?>
-<?php elseif ($status === 'closed'): ?>
-<div class="alert alert-light border mb-0 small"><i class="fas fa-lock me-1 text-success"></i>تم إغلاق المشروع إدارياً من مدير المشاريع. إذا كان هناك رصيد متبقٍ، يتولى المدير المالي الآن إرجاعه إلى حساب المؤسسة وإتمام الإغلاق المالي.</div>
-<?php else: ?>
-<div class="alert alert-light border mb-0 small"><i class="fas fa-info-circle me-1"></i>إجراءات الإغلاق وإعادة الفتح محصورة بمدير المشاريع، وتبدأ بطلب من مشرف المشروع.</div>
-<?php endif; ?>
 </div>
 </div>
 </div>
