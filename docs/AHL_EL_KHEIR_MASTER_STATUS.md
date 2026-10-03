@@ -2004,3 +2004,14 @@ Notification sequence:
 Implementation commit: **e66d0452885a0f3c0270913cda698b0f522723f9**.
 
 **Runtime status: pending.** Do not mark this workflow closed until PRJ-0015 is exercised locally through the complete PS → PM → FM → PM sequence.
+
+
+---
+
+## 2026-10-03 — Projects Phase 5 closure gate CLOSED
+
+PRJ-0015 — PH5 Full Accounting Reconciliation Test has passed the administrative-to-financial closure runtime gate. PM completed administrative closure with 250,000.00 SDG remaining under project control; FM returned the remaining balance through the existing funding-return workflow to **1200 — البنك**; FM financial closure completed; and PM received the final **اكتمل الإغلاق المالي للمشروع** notification confirming that the remaining balance was returned to the organization's account.
+
+The FM closed-state UI was also corrected to present the project as administratively and financially closed with controlled balance 0.00 SDG and no pending FM financial action. No second return or accounting release was created.
+
+**Projects status:** this Phase 5 closure gate is **RUNTIME VERIFIED / CLOSED**. Do not repeat the return or recreate PRJ-0015 for this gate.
