@@ -1936,3 +1936,48 @@ Next runtime action: on PRJ-0015, verify the PS closure form preserves the curre
 - The PM closure-review message now explicitly states that the settlement request has been sent to FM and that final closure becomes eligible only after the controlled balance reaches zero.
 - This does not bypass the accounting guard or create a second accounting release. FM remains the only role allowed to record the project funding return; PM performs final closure only after reconciliation is complete.
 - Runtime verification is required: confirm FM receives the settlement notification, can see the return control for PRJ-0015, record the 250,000.00 SDG return, and that PM then sees zero controlled balance and an enabled final-close action.
+
+## 2026-10-03 — Projects closure workflow correction: PM administrative close → FM financial close
+
+A source-driven review superseded the earlier closure design that treated the FM return as a prerequisite to PM closure. The authoritative workflow is now:
+
+1. **PS** submits the closure request and provides the return information/proof when unused project-controlled funds remain.
+2. **PM** reviews the request and performs the **administrative/project closure with return**. The Projects Department ends its role here. PM does **not** post the accounting return and is not blocked by a non-zero controlled balance.
+3. After PM closure, the project is administratively **closed** while financial closure may remain pending. The system notifies **FM only at this handoff point**.
+4. **FM** opens the financial-closure task, reviews the PS return proof, records the actual return of the remaining controlled balance to the organization source account, and posts the accounting journal through the existing funding-return engine.
+5. When the controlled balance reaches zero, FM records the explicit 'FM_FINANCIAL_CLOSURE' audit event and the system notifies **PM that financial closure is complete**. PS is not notified again because the Projects Department role ended at PM closure.
+
+### Notification sequence — authoritative
+
+PS closure request → PM notification → PM administrative close → FM financial-closure notification → FM return/accounting → FM financial-closure completion → PM completion notification
+
+There is **no FM notification at the PS request stage**, and no second accounting release is created by either PM closure or FM financial closure. Notification event references remain event-specific and use the closure/financial-closure event keys rather than reusing an unrelated project ID event.
+
+### Accounting/state boundary
+
+- `project_lifecycle.lifecycle_status = 'closed'` represents the administrative/project closure performed by PM.
+- A non-zero `akp_project_controlled_balance()` after that point represents **financial closure pending**, not an invalid project state.
+- 'FM_FINANCIAL_CLOSURE' in `audit_log` represents completion of the financial-close stage without requiring a new schema column.
+- `akp_return_project_funding()` is now restricted to an administratively closed project and requires the recorded PM `CLOSE` audit event. It remains FM-only and uses the existing balanced return journal.
+- If the controlled balance is already zero, FM can explicitly confirm financial closure without creating a fictitious return transaction.
+
+### Implementation commits
+
+- `52622eebfd613fe242ff47a6c2bdfeee4e58f84c` — funding-return helper now requires administrative closure and prevents duplicate financial closure.
+- `2a91f507200d1d41490fa946646517ccb5d26be7` — FM financial-closure action, post-close authorization, completion notification, and post-close UI routing.
+- `5f1282424d14308f260ae13739b746d256e2f377` — removed duplicate FM closure panel after source review.
+- `86c669f607482e08cf30705980955c6a567e25aa` — PM closure UI now explicitly explains the administrative-close → FM-financial-close handoff.
+
+### Runtime status
+
+**STATICALLY IMPLEMENTED — RUNTIME VERIFICATION PENDING.** The controlled PRJ-0015 scenario remains the next runtime gate. Do not claim financial closure or notification sequencing as runtime-passed until the user verifies it locally.
+
+### Required runtime sequence for PRJ-0015
+
+1. Pull the latest `main`.
+2. As PS, submit/confirm the closure request with the existing return proof and verify the notification goes to **PM only** at this stage.
+3. As PM, review the request and close the project even though the controlled balance is 250,000.00 SDG. Verify the project becomes administratively closed and PM receives no requirement to wait for FM.
+4. Verify **FM** receives the financial-closure notification only after PM close and can open the FM financial-closure section.
+5. As FM, verify the 250,000.00 SDG balance and PS proof, then record the return to the organization account. Verify the balanced return journal and controlled balance becomes zero.
+6. Verify 'FM_FINANCIAL_CLOSURE' is recorded exactly once and **PM** receives the completion notification.
+7. Verify PS is not re-notified and no second funding-release journal is created.
