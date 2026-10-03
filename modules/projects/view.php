@@ -2214,6 +2214,8 @@ document.getElementById('edit-milestone-description').value = button.dataset.mil
 </div>
 </div>
 <?php endif; ?>
+
+<?php endif; ?>
 <?php if ($role === 'projects_manager'): ?>
 <?php if ($status === 'closed'): ?>
 <div class="card border-warning mb-4">
@@ -2614,6 +2616,5 @@ bootstrap.Toast.getOrCreateInstance(projectToast, {delay: 4500, autohide: true})
 }
 });
 </script>
-<?php endif; ?>
 <?php endif; ?>
 <?php include dirname(__DIR__, 2) . '/includes/footer.php'; ?>
