@@ -2076,9 +2076,27 @@ document.getElementById('edit-milestone-description').value = button.dataset.mil
 <?php endif; ?>
 </div>
 </div>
-<label class="form-label small fw-semibold mt-3">ملف إثبات التسوية <span class="text-muted">(اختياري — استبدال الملف الحالي)</span></label>
-<input type="file" name="return_proof" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
-<div class="form-text">اترك الحقل فارغاً للاحتفاظ بالملف الحالي. عند اختيار ملف جديد سيتم استبدال الملف الحالي، مع الاحتفاظ بسجل الوثيقة نفسه. PDF أو JPG أو PNG — بحد أقصى 10 ميجابايت.</div>
+<label class="form-label small fw-semibold mt-3">ملف إثبات التسوية <span class="text-muted">(يمكن استبدال الملف الحالي)</span></label>
+<div class="input-group">
+<span id="fundingReturnProofName" class="form-control bg-white text-muted text-truncate" title="<?php echo e($existingFundingReturnProof['original_name'] ?? ''); ?>"><?php echo e($existingFundingReturnProof['original_name'] ?? ''); ?></span>
+<label class="btn btn-outline-secondary mb-0" for="fundingReturnProofInput"><i class="fas fa-upload me-1"></i>اختيار ملف</label>
+<input type="file" id="fundingReturnProofInput" name="return_proof" class="d-none" accept=".pdf,.jpg,.jpeg,.png">
+</div>
+<div class="form-text">الملف الحالي ظاهر في نفس الحقل. عند اختيار ملف جديد سيحل محل الملف الحالي في التخزين، ويُحذف الملف القديم. اتركه دون اختيار للاحتفاظ بالملف الحالي. PDF أو JPG أو PNG — بحد أقصى 10 ميجابايت.</div>
+<script>
+(function () {
+  const input = document.getElementById('fundingReturnProofInput');
+  const name = document.getElementById('fundingReturnProofName');
+  if (!input || !name) return;
+  input.addEventListener('change', function () {
+    if (this.files && this.files.length) {
+      name.textContent = this.files[0].name;
+      name.title = this.files[0].name;
+      name.classList.remove('text-muted');
+    }
+  });
+})();
+</script>
 <?php else: ?>
 <label class="form-label small fw-semibold">إثبات تسوية الرصيد المتبقي <span class="text-muted">(اختياري)</span></label>
 <input type="file" name="return_proof" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
