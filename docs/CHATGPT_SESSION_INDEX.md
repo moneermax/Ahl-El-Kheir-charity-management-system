@@ -1761,3 +1761,12 @@ The closure workflow is now explicitly:
 Implementation commit: **e66d0452885a0f3c0270913cda698b0f522723f9**.
 
 **Runtime status: pending.** Next gate: exercise PRJ-0015 through PS closure request → PM close with 250,000.00 SDG still controlled → FM notification → FM return/financial closure → PM completion notification.
+
+
+---
+
+## 2026-10-03 — Projects closure gate handoff
+
+The PRJ-0015 Phase 5 administrative-to-financial closure gate is now **RUNTIME VERIFIED / CLOSED**. PM received the final financial-closure-complete notification after FM returned the remaining 250,000.00 SDG to **1200 — البنك** and completed financial closure. The FM page now presents the final closed state with 0.00 SDG controlled balance.
+
+Do not repeat the return or recreate PRJ-0015 for this gate. Continue Projects work from the next distinct Phase 5 reconciliation/audit item.
