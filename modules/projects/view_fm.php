@@ -32,6 +32,7 @@ $controlledBalance = akp_project_controlled_balance($id);
 $closurePending = (bool)dbFetchOne("SELECT id FROM project_status_history WHERE project_id=? AND new_status='closure_requested' ORDER BY id DESC LIMIT 1", [$id]);
 $closureRequest = dbFetchOne("SELECT reason FROM project_status_history WHERE project_id=? AND new_status='closure_requested' ORDER BY id DESC LIMIT 1", [$id]);
 $closureReason = trim((string)($closureRequest['reason'] ?? ''));
+$closureReturnProof = dbFetchOne("SELECT d.*, u.full_name AS uploader_name FROM project_documents d LEFT JOIN users u ON u.id=d.uploaded_by WHERE d.project_id=? AND d.document_type='funding_return_proof' ORDER BY d.id DESC LIMIT 1", [$id]);
 $finalEvidenceConfirmed = fm_payment_evidence_finalized($id);
 
 function fm_redirect_project(int $id): void {
@@ -602,11 +603,19 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     <button type="button" class="btn-close ms-0 me-auto" data-bs-dismiss="modal" aria-label="إغلاق"></button>
                 </div>
                 <div class="modal-body">
-                    هل تم إرجاع المبلغ فعلياً إلى حساب المؤسسة؟
+                    <div class="mb-2">سيتم تسجيل تسوية مبلغ <strong><?php echo number_format($controlledBalance,2); ?> <?php echo e($project['currency_code']?:'SDG'); ?></strong> من الرصيد المتبقي تحت سيطرة المشروع إلى حساب المؤسسة <strong>1200 · البنك</strong>.</div>
+                    <div class="small text-muted">هذا المبلغ لم يخرج من المؤسسة؛ التسوية تعيد الرصيد غير المستخدم من عهدة المشروع إلى حساب المؤسسة وتخفض الرصيد تحت سيطرة المشروع إلى <strong><?php echo number_format(max(0,$controlledBalance-$controlledBalance),2); ?> <?php echo e($project['currency_code']?:'SDG'); ?></strong>.</div>
+                    <?php if ($closureReturnProof): ?>
+                    <div class="alert alert-light border small mt-3 mb-0">
+                        <div class="fw-semibold mb-1"><i class="fas fa-paperclip me-1"></i>إثبات التسوية المرفق من مشرف المشروع</div>
+                        <a target="_blank" href="<?php echo APP_URL; ?>modules/projects/serve_project_document.php?id=<?php echo (int)$closureReturnProof['id']; ?>"><?php echo e($closureReturnProof['original_name'] ?: 'عرض الإثبات'); ?></a>
+                    </div>
+                    <?php endif; ?>
+                    <div class="mt-3 fw-semibold">هل تريد تسجيل هذه التسوية؟</div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
-                    <button type="button" class="btn btn-success" id="confirmFundingReturnButton">نعم، تم الإرجاع فعلياً</button>
+                    <button type="button" class="btn btn-success" id="confirmFundingReturnButton">نعم، تسجيل التسوية</button>
                 </div>
             </div>
         </div>
