@@ -509,11 +509,13 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 <div class="container-fluid py-4 project-fm-review-page" dir="rtl">
     <div class="card mb-4 shadow-sm">
         <div class="card-header py-3">
-            <h3 class="mb-1"><i class="fas fa-coins me-2"></i>المراجعة المالية للمشروع</h3>
+            <h3 class="mb-1"><i class="fas fa-coins me-2"></i><?php echo $financialClosureCompleted ? 'إغلاق المشروع المالي' : 'المراجعة المالية للمشروع'; ?></h3>
             <div class="text-muted"><?php echo e($project['project_code'] ?? ''); ?> · <?php echo e($project['name'] ?? ''); ?></div>
         </div>
     </div>
+    <?php if (!$financialClosureCompleted): ?>
     <div class="alert alert-primary"><strong>دور المدير المالي:</strong> مراجعة الميزانية، اعتمادها عند قبولها، ثم تحديد حسابات التمويل وتخصيص المبلغ قبل الاعتماد المالي. إذا احتاج المشروع إلى تعديل، يتم رفضه وإعادته لمدير المشاريع مع توضيح السبب.</div>
+    <?php endif; ?>
     <?php if ($financialClosureCompleted): ?>
     <div class="card mb-4 border-success shadow-sm">
         <div class="card-header bg-success-subtle">
@@ -538,10 +540,8 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 </div>
                 <div class="col-md-4">
                     <div class="border rounded p-3 h-100">
-                        <div class="border rounded p-3 h-100">
-                            <div class="text-muted small">الرصيد تحت سيطرة المشروع</div>
-                            <div class="fw-semibold mt-1"><?php echo number_format((float)$controlledBalance,2); ?> <?php echo e($project['currency_code']?:'SDG'); ?></div>
-                        </div>
+                        <div class="text-muted small">الرصيد تحت سيطرة المشروع</div>
+                        <div class="fw-semibold mt-1"><?php echo number_format((float)$controlledBalance,2); ?> <?php echo e($project['currency_code']?:'SDG'); ?></div>
                     </div>
                 </div>
             </div>
