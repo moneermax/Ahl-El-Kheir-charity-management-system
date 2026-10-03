@@ -875,11 +875,18 @@ throw $e;
 if ($returnProofRelativePath) {
 akp_audit('UPLOAD', 'project_document', (int)dbFetchOne("SELECT id FROM project_documents WHERE project_id=? AND document_type='funding_return_proof' ORDER BY id DESC LIMIT 1")['id'], null, ['project_id'=>$id,'document_type'=>'funding_return_proof','amount'=>$closureControlledBalance,'uploaded_by_role'=>'project_supervisor']);
 }
+$closureRequestHistoryId = (int)(dbFetchOne(
+"SELECT id FROM project_status_history
+ WHERE project_id = ? AND new_status = 'closure_requested'
+ ORDER BY id DESC
+ LIMIT 1",
+[$id]
+)['id'] ?? 0);
 akp_audit('REQUEST_CLOSE', 'project_lifecycle', $id, ['status' => $project['lifecycle_status'] ?: $project['status']], ['status' => 'closure_requested', 'reason' => $reason]);
 try {
 $projectManagers = dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id = r.id WHERE r.code = 'projects_manager' AND u.is_active = 1");
 foreach ($projectManagers as $projectManager) {
-ak_transaction_review_notify_event((int)$projectManager['id'], 'طلب إغلاق مشروع', 'المشروع «' . (string)($project['name'] ?? '') . '» (' . (string)($project['project_code'] ?? '') . ') لديه طلب إغلاق من مشرف المشروع ويحتاج إجراء مدير المشاريع.', APP_URL . 'modules/projects/view.php?id=' . $id, $id, 'project_closure_request');
+ak_transaction_review_notify_event((int)$projectManager['id'], 'طلب إغلاق مشروع', 'المشروع «' . (string)($project['name'] ?? '') . '» (' . (string)($project['project_code'] ?? '') . ') لديه طلب إغلاق من مشرف المشروع ويحتاج إجراء مدير المشاريع.', APP_URL . 'modules/projects/view.php?id=' . $id, $closureRequestHistoryId ?: $id, 'project_closure_request');
 }
 }
 catch (Throwable $notificationError) {}
