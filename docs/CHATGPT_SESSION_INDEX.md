@@ -1661,3 +1661,9 @@ Next runtime action: on PRJ-0015, verify the PS closure form preserves the curre
 - FM notification now occurs **only after the PM successfully performs final project closure**.
 - The FM notification is informational and points to the FM project view for any subsequent financial follow-up; it does not alter the closure accounting guard.
 - Runtime status: source fix completed; local XAMPP/browser verification of both notification boundaries is required.
+
+
+### Closure notification syntax correction — commit cc1e2c9708f23305a8bb56897b0da952160f4db2
+- Corrected the malformed try/catch structure introduced in the project-closure notification sequence change.
+- The Projects Manager closure path now has one valid notification try/catch covering GM/VGM and post-closure FM notifications.
+- Runtime verification is still required after pulling `main`.
