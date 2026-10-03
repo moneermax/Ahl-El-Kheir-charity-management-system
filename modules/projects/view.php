@@ -905,6 +905,67 @@ ak_transaction_review_notify_event((int)$projectManager['id'], 'طلب إعاد�
 }
 } catch (Throwable $notificationError) {}
 $_SESSION['project_toast_success'] = 'تم إرسال طلب إعادة فتح المشروع إلى مدير المشاريع.';
+} elseif ($action === 'return_project_to_ps') {
+if ($role !== 'projects_manager') throw new RuntimeException('إعادة المشروع إلى مشرف المشروع متاحة لمدير المشاريع فقط.');
+if ($closed) throw new RuntimeException('لا يمكن إعادة مشروع مغلق إلى مشرف المشروع.');
+$pendingRequest = dbFetchOne("SELECT h.* FROM project_status_history h WHERE h.project_id = ? AND h.new_status = 'closure_requested' ORDER BY h.id DESC LIMIT 1", [$id]);
+if (!$pendingRequest) throw new RuntimeException('لا يوجد طلب إغلاق معلق يمكن إعادته إلى مشرف المشروع.');
+$reason = akp_post_value('return_to_ps_reason');
+if ($reason === '') throw new RuntimeException('سبب إعادة المشروع إلى مشرف المشروع مطلوب.');
+dbExecute('START TRANSACTION');
+try {
+    $lockedLifecycle = dbFetchOne('SELECT lifecycle_status FROM project_lifecycle WHERE project_id = ? FOR UPDATE', [$id]);
+    $lockedStatus = (string)($lockedLifecycle['lifecycle_status'] ?? '');
+    if ($lockedStatus !== 'under_review') {
+        throw new RuntimeException('المشروع لم يعد في مرحلة مراجعة الإغلاق.');
+    }
+    $changed = dbExecute(
+        "UPDATE project_lifecycle SET lifecycle_status = 'active' WHERE project_id = ? AND lifecycle_status = 'under_review'",
+        [$id]
+    );
+    if ($changed !== 1) throw new RuntimeException('تعذر إعادة المشروع إلى حالة التنفيذ.');
+    dbExecute(
+        "INSERT INTO project_status_history (project_id, old_status, new_status, reason, changed_by) VALUES (?, 'under_review', 'active', ?, ?)",
+        [$id, 'إعادة المشروع إلى مشرف المشروع لاستكمال/توضيح المطلوب: ' . $reason, akp_user_id()]
+    );
+    dbExecute('COMMIT');
+} catch (Throwable $e) {
+    dbExecute('ROLLBACK');
+    throw $e;
+}
+akp_audit(
+    'RETURN_TO_PS',
+    'project_lifecycle',
+    $id,
+    ['status' => 'under_review'],
+    ['status' => 'active', 'reason' => $reason, 'returned_by_role' => 'projects_manager']
+);
+try {
+    $supervisor = dbFetchOne(
+        "SELECT u.id, u.full_name
+         FROM project_supervisor_assignments psa
+         JOIN users u ON u.id = psa.supervisor_user_id
+         JOIN roles r ON r.id = u.role_id
+         WHERE psa.project_id = ?
+           AND psa.ended_at IS NULL
+           AND u.is_active = 1
+           AND r.code = 'project_supervisor'
+         ORDER BY psa.id DESC
+         LIMIT 1",
+        [$id]
+    );
+    if ($supervisor) {
+        ak_transaction_review_notify_event(
+            (int)$supervisor['id'],
+            'إعادة المشروع لاستكمال المطلوب',
+            'أعاد مدير المشاريع المشروع «' . (string)($project['name'] ?? '') . '» (' . (string)($project['project_code'] ?? '') . ') إلى مشرف المشروع لاستكمال أو توضيح المطلوب قبل طلب الإغلاق مرة أخرى. السبب: ' . $reason,
+            APP_URL . 'modules/projects/view.php?id=' . $id,
+            $id,
+            'project_returned_to_ps'
+        );
+    }
+} catch (Throwable $notificationError) {}
+$_SESSION['project_toast_success'] = 'تم إعادة المشروع إلى مشرف المشروع لاستكمال المطلوب، وتم إبلاغه بسبب الإعادة.';
 } elseif ($action === 'close_project') {
 if ($role !== 'projects_manager') throw new RuntimeException('إغلاق المشروع محصور بمدير المشاريع بعد طلب مشرف المشروع.');
 if (!akp_can_edit_section('closure', $id) || $closed) throw new RuntimeException('لا تملك صلاحية إغلاق المشروع أو أنه مغلق مسبقاً.');
@@ -1981,7 +2042,23 @@ document.getElementById('edit-milestone-description').value = button.dataset.mil
 </div>
 </div>
 </div>
-<form method="post" class="border-top pt-3">
+<div class="border-top pt-3">
+<div class="alert alert-info border small mb-3">
+    <i class="fas fa-rotate-left me-1"></i>
+    إذا كانت هناك نقاط تحتاج إلى استكمال أو توضيح، يمكنك إعادة المشروع إلى مشرف المشروع بدلاً من إغلاقه نهائياً. سيعود المشروع إلى حالة <strong>قيد التنفيذ</strong> ويمكن للمشرف استكمال المطلوب ثم إرسال طلب إغلاق جديد.
+</div>
+<form method="post" class="mb-3">
+<input type="hidden" name="action" value="return_project_to_ps">
+<?php echo csrf_field(); ?>
+<div class="mb-3">
+<label class="form-label small fw-semibold">سبب إعادة المشروع إلى مشرف المشروع <span class="text-danger">*</span></label>
+<textarea name="return_to_ps_reason" class="form-control" rows="3" placeholder="حدد ما يحتاج إلى استكمال أو توضيح قبل إعادة طلب الإغلاق..." required></textarea>
+</div>
+<div class="d-flex justify-content-start">
+<button type="submit" class="btn btn-warning px-4"><i class="fas fa-rotate-left me-1"></i>إعادة المشروع إلى مشرف المشروع</button>
+</div>
+</form>
+<form method="post">
 <input type="hidden" name="action" value="close_project">
 <?php echo csrf_field(); ?>
 <div class="mb-3">
