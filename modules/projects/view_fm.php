@@ -581,7 +581,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     <td>
                         <form method="post" class="row g-2 align-items-end">
                             <?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_return_project_funding"><input type="hidden" name="allocation_id" value="<?php echo (int)$f['id']; ?>">
-                            <div class="col-md-3"><input type="number" name="return_amount" class="form-control form-control-sm" min="0.01" step="0.01" max="<?php echo e((string)$f['amount']); ?>" required></div>
+                            <div class="col-md-3"><input type="number" name="return_amount" class="form-control form-control-sm bg-light" min="0.01" step="0.01" max="<?php echo e((string)$f['amount']); ?>" value="<?php echo e((string)min($controlledBalance,(float)$f['amount'])); ?>" readonly aria-readonly="true" title="يُحدد تلقائياً حسب الرصيد المتبقي تحت سيطرة المشروع"></div>
                             <div class="col-md-3"><input type="date" name="return_date" class="form-control form-control-sm" value="<?php echo date('Y-m-d'); ?>" required></div>
                             <div class="col-md-2"><input name="return_reference" class="form-control form-control-sm" maxlength="100" placeholder="المرجع"></div>
                             <div class="col-md-2"><input name="return_description" class="form-control form-control-sm" maxlength="500" placeholder="الوصف"></div>
