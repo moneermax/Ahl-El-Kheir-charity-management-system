@@ -1,3 +1,17 @@
+# Documentation Authority Notice — 2026-10-03
+
+The canonical system description is now maintained in:
+- docs/AHL_EL_KHEIR_SYSTEM_ANALYSIS.md
+- docs/AHL_EL_KHEIR_ARCHITECTURE_AND_DATA_MODEL.md
+- docs/AHL_EL_KHEIR_ROLES_AND_WORKFLOWS.md
+- docs/AHL_EL_KHEIR_EMPLOYEE_TASKS_AND_USER_GUIDE.md
+- docs/AHL_EL_KHEIR_OPERATIONS_SECURITY.md
+- docs/AHL_EL_KHEIR_DOCUMENTATION_INDEX.md
+
+This file remains the master status/audit history. Its dated evidence is retained; it must not be interpreted as a substitute for the canonical architecture/workflow documents. Later verified evidence supersedes older checkpoint statements.
+
+---
+
 # Ahl El Kheir Charity Management System — Master Status
 
 **Repository:** `moneermax/Ahl-El-Kheir-charity-management-system`  
