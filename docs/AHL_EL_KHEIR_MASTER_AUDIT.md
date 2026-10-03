@@ -2203,3 +2203,20 @@ This runtime result confirms the intended post-release spending boundary already
 **Gate: PASS / RUNTIME VERIFIED.**
 
 No source change was required for this gate. Do not repeat the test or reopen the gate without concrete regression evidence.
+
+
+---
+
+Projects Phase 5 — PS status-control authorization/UI gate (2026-10-03)
+
+Fresh repository database backup generated 2026-10-03 was inspected. PRJ-0015 has an active `project_supervisor_assignments` row assigning supervisor user 34 (`ps1`) with `ended_at = NULL`. The `users` dump identifies user 34 as role `project_supervisor`. Therefore the authoritative `akp_is_primary_supervisor(15)` path is satisfied for PS1; no `project_team` operations row is required for the primary-supervisor path.
+
+Source audit found the server-side `change_status` action already permits `under_review`, `completed`, and `cancelled`, but `modules/projects/view.php` exposed no corresponding status-control form. The portfolio page had a selector, but the project-detail page used by the PS did not expose the existing capability. This explains the reported missing option without weakening authorization.
+
+Narrow fix: `modules/projects/view.php` now exposes a PS-only status selector when `akp_can_edit_section('operations', $id)` is true and the project is not closed. `planned`/`active` are displayed as the current state but disabled because initial launch remains PM-only; selectable transitions remain `under_review`, `completed`, and `cancelled`. The server-side authorization and existing transaction/audit path are unchanged.
+
+Implementation commits: `bd31a974193a12b19324216f6e647b70789d06c8`, refined by `0de84d5bd0b3c42e5b113499f551a96347b3f179`.
+
+Runtime verification remains pending: pull the final commit and confirm PS1 can see the status selector on PRJ-0015 detail page and select `under_review` without changing the project yet unless intentionally testing that transition.
+
+Next financial task explicitly parked as the next Projects reconciliation item: return the remaining controlled amount of an approved/released project budget when the PS does not fully consume it. The return must use the existing FM/accounting funding-return path, reconcile the controlled balance to zero, preserve journal/audit evidence, and must not create a second funding release.
