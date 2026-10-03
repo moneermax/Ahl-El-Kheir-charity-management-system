@@ -2015,3 +2015,13 @@ PRJ-0015 — PH5 Full Accounting Reconciliation Test has passed the administrati
 The FM closed-state UI was also corrected to present the project as administratively and financially closed with controlled balance 0.00 SDG and no pending FM financial action. No second return or accounting release was created.
 
 **Projects status:** this Phase 5 closure gate is **RUNTIME VERIFIED / CLOSED**. Do not repeat the return or recreate PRJ-0015 for this gate.
+
+---
+
+## 2026-10-03 — Projects Phase 5 final certification
+
+The Projects Phase 5 controlled runtime sequence is now **RUNTIME VERIFIED / CLOSED** on PRJ-0015. The sequence reached the intended end state: 300,000.00 SDG released, 50,000.00 SDG consumed through the PS execution-expense path, 250,000.00 SDG returned by FM to **1200 — البنك**, controlled balance reduced to 0.00 SDG, FM financial closure completed, and PM received the final **اكتمل الإغلاق المالي للمشروع** notification.
+
+This supersedes earlier checkpoints that described the Phase 5 accounting sequence as pending. Those entries remain historical audit records and must not be interpreted as the current status.
+
+**Current Projects checkpoint: Phase 5 closed.** No further work is required on this controlled reconciliation path unless a concrete regression is found.
