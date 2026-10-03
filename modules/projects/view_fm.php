@@ -514,6 +514,43 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         </div>
     </div>
     <div class="alert alert-primary"><strong>دور المدير المالي:</strong> مراجعة الميزانية، اعتمادها عند قبولها، ثم تحديد حسابات التمويل وتخصيص المبلغ قبل الاعتماد المالي. إذا احتاج المشروع إلى تعديل، يتم رفضه وإعادته لمدير المشاريع مع توضيح السبب.</div>
+    <?php if ($financialClosureCompleted): ?>
+    <div class="card mb-4 border-success shadow-sm">
+        <div class="card-header bg-success-subtle">
+            <strong><i class="fas fa-lock me-2"></i>المشروع مغلق ومغلق مالياً</strong>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-success mb-3">
+                تم إتمام الإغلاق المالي للمشروع بنجاح. لا توجد إجراءات مالية معلقة على المدير المالي.
+            </div>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="border rounded p-3 h-100">
+                        <div class="text-muted small">الحالة الإدارية</div>
+                        <div class="fw-semibold mt-1">مغلق</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="border rounded p-3 h-100">
+                        <div class="text-muted small">الحالة المالية</div>
+                        <div class="fw-semibold mt-1">مغلق مالياً</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="border rounded p-3 h-100">
+                        <div class="border rounded p-3 h-100">
+                            <div class="text-muted small">الرصيد تحت سيطرة المشروع</div>
+                            <div class="fw-semibold mt-1"><?php echo number_format((float)$controlledBalance,2); ?> <?php echo e($project['currency_code']?:'SDG'); ?></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="alert alert-light border mt-3 mb-0">
+                تم تسجيل اكتمال الإغلاق المالي بعد تسوية الرصيد المتبقي. أصبحت إجراءات المراجعة والتمويل والإغلاق المالي للمدير المالي للقراءة فقط.
+            </div>
+        </div>
+    </div>
+    <?php else: ?>
 
     <div class="card mb-4"><div class="card-header"><strong>الميزانية المقترحة</strong></div><div class="card-body">
         <?php if (!$activeBudget): ?><div class="alert alert-warning">لا توجد ميزانية مقترحة للمراجعة.</div>
@@ -687,6 +724,8 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             </div>
         </div>
     </div>
+    <?php endif; ?>
+
     <?php endif; ?>
 
     <script>
