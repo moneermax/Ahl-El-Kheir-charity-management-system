@@ -820,6 +820,63 @@ if ($summary === '') throw new RuntimeException('ملخص التقدم مطلو�
 dbExecute('INSERT INTO project_progress_updates (project_id, update_date, completion_percent, summary, achievements, issues, next_steps, submitted_by) VALUES (?,?,?,?,?,?,?,?)', [$id, akp_post_value('update_date') ?: date('Y-m-d'), $progressPercent, $summary, akp_post_value('achievements') ?: null, akp_post_value('issues') ?: null, akp_post_value('next_steps') ?: null, akp_user_id()]);
 akp_audit('CREATE', 'project_progress_update', (int)dbFetchOne('SELECT LAST_INSERT_ID() AS id')['id'], null, ['project_id' => $id]);
 $_SESSION['project_toast_success'] = 'تم حفظ تحديث التقدم.';
+} elseif ($action === 'replace_funding_return_proof') {
+if ($role !== 'project_supervisor' || !akp_is_primary_supervisor($id) || $closed) {
+throw new RuntimeException('تعديل إثبات تسوية الرصيد متاح لمشرف المشروع الأساسي فقط قبل إغلاق المشروع.');
+}
+if ($closureRequest && (string)$closureRequest['new_status'] === 'closure_requested') {
+throw new RuntimeException('لا يمكن تعديل إثبات التسوية أثناء وجود طلب إغلاق قيد المراجعة.');
+}
+$documentId = (int)($_POST['document_id'] ?? 0);
+$doc = dbFetchOne(
+"SELECT * FROM project_documents
+ WHERE id = ? AND project_id = ? AND document_type = 'funding_return_proof'",
+[$documentId, $id]
+);
+if (!$doc) throw new RuntimeException('إثبات تسوية الرصيد غير موجود.');
+if ((string)($doc['verification_status'] ?? '') !== 'unverified') {
+throw new RuntimeException('لا يمكن تعديل إثبات التسوية بعد التحقق منه.');
+}
+if (empty($_FILES['return_proof_edit']['name'])) {
+throw new RuntimeException('اختر ملف إثبات التسوية الجديد.');
+}
+$file = $_FILES['return_proof_edit'];
+if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) throw new RuntimeException('فشل في رفع إثبات التسوية الجديد.');
+if ((int)($file['size'] ?? 0) > 10 * 1024 * 1024) throw new RuntimeException('حجم إثبات تسوية الرصيد المتبقي يجب ألا يتجاوز 10 ميجابايت.');
+$mime = mime_content_type($file['tmp_name']);
+$allowedProofTypes = ['application/pdf'=>'pdf','image/jpeg'=>'jpg','image/png'=>'png'];
+if (!isset($allowedProofTypes[$mime])) throw new RuntimeException('نوع إثبات التسوية غير مسموح. استخدم PDF أو JPG أو PNG.');
+$relativeDir = 'storage/documents/projects/' . $id;
+$absoluteDir = dirname(__DIR__, 2) . '/' . $relativeDir;
+if (!is_dir($absoluteDir) && !mkdir($absoluteDir, 0750, true)) throw new RuntimeException('تعذر إنشاء مجلد إثبات التسوية.');
+$stored = bin2hex(random_bytes(16)) . '.' . $allowedProofTypes[$mime];
+$newStoredAbsolutePath = $absoluteDir . '/' . $stored;
+if (!move_uploaded_file($file['tmp_name'], $newStoredAbsolutePath)) throw new RuntimeException('تعذر حفظ إثبات التسوية الجديد.');
+$newRelativePath = $relativeDir . '/' . $stored;
+$oldStoredPath = (string)($doc['file_path'] ?? '');
+try {
+dbExecute(
+'UPDATE project_documents
+ SET file_path = ?, original_name = ?, mime_type = ?, file_size = ?, document_date = ?, issuer = ?, notes = ?
+ WHERE id = ? AND project_id = ? AND document_type = \'funding_return_proof\'',
+[$newRelativePath, $file['name'], $mime, $file['size'], date('Y-m-d'), 'مشرف المشروع', 'تم استبدال إثبات تسوية الرصيد المتبقي قبل إعادة إرسال طلب الإغلاق.', $documentId, $id]
+);
+} catch (Throwable $e) {
+if (is_file($newStoredAbsolutePath)) @unlink($newStoredAbsolutePath);
+throw $e;
+}
+if ($oldStoredPath) {
+$oldAbsolutePath = dirname(__DIR__, 2) . '/' . $oldStoredPath;
+if ($oldAbsolutePath !== $newStoredAbsolutePath && is_file($oldAbsolutePath)) @unlink($oldAbsolutePath);
+}
+akp_audit(
+'UPDATE',
+'project_document',
+$documentId,
+['project_id'=>$id,'document_type'=>'funding_return_proof','file_path'=>$oldStoredPath,'original_name'=>$doc['original_name'] ?? null],
+['project_id'=>$id,'document_type'=>'funding_return_proof','file_path'=>$newRelativePath,'original_name'=>$file['name']]
+);
+$_SESSION['project_document_success'] = 'تم استبدال إثبات تسوية الرصيد المتبقي بنجاح.';
 } elseif ($action === 'request_project_closure') {
 if ($role !== 'project_supervisor' || !akp_is_primary_supervisor($id)) throw new RuntimeException('طلب إغلاق المشروع متاح لمشرف المشروع الأساسي فقط.');
 if ($closed) throw new RuntimeException('المشروع مغلق بالفعل.');
@@ -2011,7 +2068,7 @@ document.getElementById('edit-milestone-description').value = button.dataset.mil
 <?php if ($existingFundingReturnProof): ?>
 <div class="alert alert-success border small mb-0">
 <div class="fw-semibold mb-1"><i class="fas fa-file-circle-check me-1"></i>إثبات تسوية الرصيد المتبقي مرفق مسبقاً</div>
-<div>تم إرفاق الإثبات من قبل مشرف المشروع، ولن تحتاج إلى رفعه مرة أخرى عند إعادة إرسال طلب الإغلاق.</div>
+<div>يمكنك عرض الإثبات الحالي أو استبداله قبل إعادة إرسال طلب الإغلاق.</div>
 <div class="mt-2 d-flex flex-wrap align-items-center gap-2">
 <a href="<?php echo APP_URL; ?>modules/projects/serve_project_document.php?id=<?php echo (int)$existingFundingReturnProof['id']; ?>" class="btn btn-sm btn-outline-primary" target="_blank">
 <i class="fas fa-eye me-1"></i>عرض الإثبات
@@ -2020,6 +2077,17 @@ document.getElementById('edit-milestone-description').value = button.dataset.mil
 <span class="text-muted">رفع بواسطة: <?php echo e($existingFundingReturnProof['uploader_name']); ?></span>
 <?php endif; ?>
 </div>
+<form method="post" enctype="multipart/form-data" class="mt-3">
+<?php echo csrf_field(); ?>
+<input type="hidden" name="action" value="replace_funding_return_proof">
+<input type="hidden" name="document_id" value="<?php echo (int)$existingFundingReturnProof['id']; ?>">
+<label class="form-label small fw-semibold mb-1">استبدال إثبات التسوية</label>
+<div class="input-group">
+<input type="file" name="return_proof_edit" class="form-control" accept=".pdf,.jpg,.jpeg,.png" required>
+<button type="submit" class="btn btn-outline-secondary"><i class="fas fa-pen me-1"></i>حفظ الاستبدال</button>
+</div>
+<div class="form-text">PDF أو JPG أو PNG — بحد أقصى 10 ميجابايت.</div>
+</form>
 </div>
 <?php else: ?>
 <label class="form-label small fw-semibold">إثبات تسوية الرصيد المتبقي <span class="text-muted">(اختياري)</span></label>
