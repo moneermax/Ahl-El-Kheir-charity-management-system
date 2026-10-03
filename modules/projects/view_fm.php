@@ -584,7 +584,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                             <?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_return_project_funding"><input type="hidden" name="allocation_id" value="<?php echo (int)$f['id']; ?>">
                             <div class="col-md-3"><input type="number" name="return_amount" class="form-control form-control-sm bg-body-secondary text-muted border-secondary-subtle" min="0.01" step="0.01" max="<?php echo e((string)$f['amount']); ?>" value="<?php echo e((string)min($controlledBalance,(float)$f['amount'])); ?>" readonly aria-readonly="true" tabindex="-1" title="يُحدد تلقائياً حسب الرصيد المتبقي تحت سيطرة المشروع"></div>
                             <div class="col-md-3"><input type="date" name="return_date" class="form-control form-control-sm" value="<?php echo date('Y-m-d'); ?>" required></div>
-                            <div class="col-md-4"><button class="btn btn-sm btn-success w-100" onclick="return confirm('هل تم إرجاع المبلغ فعلياً إلى حساب المؤسسة؟')">تسجيل الإرجاع</button></div>
+                            <div class="col-md-4"><button type="button" class="btn btn-sm btn-success w-100 js-confirm-funding-return" data-bs-toggle="modal" data-bs-target="#confirmFundingReturnModal">تسجيل الإرجاع</button></div>
                         </form>
                     </td>
                 </tr>
@@ -593,7 +593,49 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             </tbody></table></div>
         </div>
     </div>
+
+    <div class="modal fade" id="confirmFundingReturnModal" tabindex="-1" aria-labelledby="confirmFundingReturnModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmFundingReturnModalLabel">تأكيد إرجاع الرصيد</h5>
+                    <button type="button" class="btn-close ms-0 me-auto" data-bs-dismiss="modal" aria-label="إغلاق"></button>
+                </div>
+                <div class="modal-body">
+                    هل تم إرجاع المبلغ فعلياً إلى حساب المؤسسة؟
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="button" class="btn btn-success" id="confirmFundingReturnButton">نعم، تم الإرجاع فعلياً</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <?php endif; ?>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var pendingReturnForm = null;
+        document.querySelectorAll('.js-confirm-funding-return').forEach(function (button) {
+            button.addEventListener('click', function () {
+                pendingReturnForm = button.closest('form');
+            });
+        });
+        var confirmButton = document.getElementById('confirmFundingReturnButton');
+        var modalElement = document.getElementById('confirmFundingReturnModal');
+        if (confirmButton && modalElement) {
+            confirmButton.addEventListener('click', function () {
+                if (!pendingReturnForm) return;
+                confirmButton.disabled = true;
+                pendingReturnForm.submit();
+            });
+            modalElement.addEventListener('hidden.bs.modal', function () {
+                confirmButton.disabled = false;
+                pendingReturnForm = null;
+            });
+        }
+    });
+    </script>
 
     <?php if ($approval['approval_status']==='approved'): ?>
     <div class="card mb-4 border-success">
