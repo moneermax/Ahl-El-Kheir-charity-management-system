@@ -1121,6 +1121,21 @@ $existingFundingReturnProof = dbFetchOne(
      LIMIT 1",
     [$id]
 );
+$closureFundingReturns = dbFetchAll(
+    "SELECT r.*, a.code AS source_account_code, a.name_ar AS source_account_name,
+            je.entry_code, u.full_name AS returned_by_name
+     FROM project_funding_returns r
+     LEFT JOIN accounts a ON a.id = r.source_account_id
+     LEFT JOIN journal_entries je ON je.id = r.journal_entry_id
+     LEFT JOIN users u ON u.id = r.returned_by
+     WHERE r.project_id = ?
+     ORDER BY r.return_date DESC, r.id DESC",
+    [$id]
+);
+$closureFundingReturnTotal = 0.0;
+foreach ($closureFundingReturns as $closureFundingReturn) {
+    $closureFundingReturnTotal += (float)($closureFundingReturn['amount'] ?? 0);
+}
 include dirname(__DIR__, 2) . '/includes/header.php';
 ?>
 <link rel="stylesheet" href="<?php echo e(APP_URL . 'assets/css/projects-ui.css'); ?>">
@@ -2045,6 +2060,60 @@ document.getElementById('edit-milestone-description').value = button.dataset.mil
 <div class="flex-grow-1">
 <h6 class="fw-bold mb-1">طلب إغلاق المشروع</h6>
 <p class="small text-muted mb-3">مشرف المشروع لا ينفذ الإغلاق مباشرة. أرسل الطلب إلى مدير المشاريع مع الملاحظات ليقوم بالمراجعة والتنفيذ.</p>
+<?php if (($closureRequest && (string)$closureRequest['new_status'] === 'closure_requested') || $closureFundingReturns): ?>
+<div class="card border-info mb-4 fade-in">
+<div class="card-header bg-info-subtle"><i class="fas fa-hand-holding-dollar me-2"></i>تسوية الرصيد المتبقي وإثباتها</div>
+<div class="card-body">
+<div class="row g-3 mb-3">
+<div class="col-md-4"><div class="small text-muted">الرصيد الحالي تحت سيطرة المشروع</div><div class="fw-bold"><?php echo number_format($closureControlledBalanceView, 2); ?> <?php echo e($project['currency_code'] ?: 'SDG'); ?></div></div>
+<div class="col-md-4"><div class="small text-muted">إجمالي التسويات المسجلة</div><div class="fw-bold"><?php echo number_format($closureFundingReturnTotal, 2); ?> <?php echo e($project['currency_code'] ?: 'SDG'); ?></div></div>
+<div class="col-md-4"><div class="small text-muted">حالة التسوية</div>
+<?php if ($closureControlledBalanceView <= 0.009 && $closureFundingReturns): ?>
+<span class="badge bg-success">تمت تسوية الرصيد بالكامل</span>
+<?php elseif ($closureFundingReturns): ?>
+<span class="badge bg-warning text-dark">تم تسجيل تسوية جزئية</span>
+<?php else: ?>
+<span class="badge bg-secondary">بانتظار تسجيل المدير المالي</span>
+<?php endif; ?>
+</div>
+</div>
+<?php if ($closureFundingReturns): ?>
+<div class="table-responsive mb-3">
+<table class="table table-sm align-middle mb-0">
+<thead><tr><th>التاريخ</th><th>حساب الإرجاع</th><th>المبلغ</th><th>القيد</th><th>بواسطة</th></tr></thead>
+<tbody>
+<?php foreach ($closureFundingReturns as $returnRow): ?>
+<tr>
+<td><?php echo e($returnRow['return_date'] ?? '—'); ?></td>
+<td><?php echo e(($returnRow['source_account_code'] ?? '—') . ' · ' . ($returnRow['source_account_name'] ?? '')); ?></td>
+<td><?php echo number_format((float)$returnRow['amount'], 2); ?> <?php echo e($returnRow['currency_code'] ?: ($project['currency_code'] ?: 'SDG')); ?></td>
+<td><?php echo e($returnRow['entry_code'] ?? '—'); ?></td>
+<td><?php echo e($returnRow['returned_by_name'] ?? '—'); ?></td>
+</tr>
+<?php endforeach; ?>
+</tbody>
+</table>
+</div>
+<?php else: ?>
+<div class="alert alert-warning border small mb-3"><i class="fas fa-clock me-1"></i>لم يسجل المدير المالي تسوية الرصيد المتبقي بعد. سيظل الإغلاق النهائي محجوباً حتى تصبح قيمة الرصيد تحت سيطرة المشروع صفراً.</div>
+<?php endif; ?>
+<?php if ($existingFundingReturnProof): ?>
+<div class="alert alert-light border small mb-0">
+<div class="fw-semibold mb-1"><i class="fas fa-paperclip me-1"></i>إثبات تسوية الرصيد المرفق من مشرف المشروع</div>
+<div class="d-flex flex-wrap align-items-center gap-2">
+<a href="<?php echo APP_URL; ?>modules/projects/serve_project_document.php?id=<?php echo (int)$existingFundingReturnProof['id']; ?>" class="btn btn-sm btn-outline-primary" target="_blank"><i class="fas fa-eye me-1"></i>عرض إثبات التسوية</a>
+<span><?php echo e($existingFundingReturnProof['original_name'] ?: 'ملف الإثبات'); ?></span>
+<?php if (!empty($existingFundingReturnProof['uploader_name'])): ?><span class="text-muted">رفع بواسطة: <?php echo e($existingFundingReturnProof['uploader_name']); ?></span><?php endif; ?>
+</div>
+<?php if ($closureFundingReturns && $closureControlledBalanceView <= 0.009): ?><div class="text-success mt-2">تم تسجيل التسوية محاسبياً وأصبح الرصيد تحت سيطرة المشروع صفراً.</div>
+<?php else: ?><div class="text-muted mt-2">هذا الإثبات يوضح مستند التسوية المرفق مع طلب الإغلاق؛ تسجيل التسوية المحاسبية يتم من المدير المالي.</div><?php endif; ?>
+</div>
+<?php elseif ($closureFundingReturns): ?>
+<div class="alert alert-warning border small mb-0"><i class="fas fa-file-circle-xmark me-1"></i>تم تسجيل التسوية المحاسبية، لكن لا يوجد ملف إثبات تسوية مرفق بطلب الإغلاق.</div>
+<?php endif; ?>
+</div>
+</div>
+<?php endif; ?>
 <?php if ($closureRequest && (string)$closureRequest['new_status'] === 'closure_requested'): ?>
 <div class="alert alert-info d-flex align-items-start gap-2 small mb-0">
 <i class="fas fa-clock mt-1"></i>
