@@ -1908,3 +1908,13 @@ Next runtime action: on PRJ-0015, verify the PS closure form preserves the curre
 - Corrected the malformed try/catch structure introduced in the project-closure notification sequence change.
 - The Projects Manager closure path now has one valid notification try/catch covering GM/VGM and post-closure FM notifications.
 - Runtime verification is still required after pulling `main`.
+
+
+## 2026-10-03 — Projects PM Settlement Visibility Checkpoint
+
+- Commit: `c8863f953fa3ef82310a8d1ef3e764fbeacfad08`.
+- Root cause of the reported PM UX gap: the project PM page already blocked final closure when the controlled balance was non-zero, but it did not render the financial-manager settlement ledger or the closure-request funding-return proof in the PM closure-review area.
+- Fix: `modules/projects/view.php` now loads all `project_funding_returns` for the project and renders a dedicated PM section showing current controlled balance, recorded settlement total/status, settlement date/source account/amount/journal/actor, and the PS-provided settlement-proof document when present.
+- The section explicitly distinguishes: no FM settlement yet, partial settlement, and full settlement. It does not create or modify accounting data.
+- Server-side final-close guard remains authoritative: PRJ-0015 must remain blocked while the controlled balance is 250,000.00 SDG; after FM records the settlement and the balance reaches zero, the PM page should show the recorded settlement/proof and the final-close control should become eligible subject to all other closure guards.
+- Runtime status: source fix committed; browser/runtime verification is still required. Do not claim the PM display as runtime-passed until verified locally.
