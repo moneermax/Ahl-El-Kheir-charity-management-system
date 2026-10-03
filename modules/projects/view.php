@@ -1132,6 +1132,15 @@ $closureFundingReturnTotal = 0.0;
 foreach ($closureFundingReturns as $closureFundingReturn) {
     $closureFundingReturnTotal += (float)($closureFundingReturn['amount'] ?? 0);
 }
+$financialClosureCompletedView = (bool)dbFetchOne(
+    "SELECT id FROM audit_log
+     WHERE action='FM_FINANCIAL_CLOSURE'
+       AND entity_type='project_lifecycle'
+       AND entity_id=?
+     LIMIT 1",
+    [$id]
+);
+
 include dirname(__DIR__, 2) . '/includes/header.php';
 ?>
 <link rel="stylesheet" href="<?php echo e(APP_URL . 'assets/css/projects-ui.css'); ?>">
@@ -2041,7 +2050,9 @@ document.getElementById('edit-milestone-description').value = button.dataset.mil
 </div>
 </div>
 <?php if ($status === 'closed'): ?>
-<span class="badge bg-success-subtle text-success-emphasis px-3 py-2"><i class="fas fa-lock me-1"></i>مغلق</span>
+<span class="badge <?php echo $financialClosureCompletedView ? 'bg-success-subtle text-success-emphasis' : 'bg-warning-subtle text-warning-emphasis'; ?> px-3 py-2">
+<i class="fas fa-lock me-1"></i><?php echo $financialClosureCompletedView ? 'مغلق ومغلق مالياً' : 'مغلق إدارياً · بانتظار الإغلاق المالي'; ?>
+</span>
 <?php else: ?>
 <span class="badge bg-warning-subtle text-warning-emphasis px-3 py-2"><i class="fas fa-unlock me-1"></i>مفتوح</span>
 <?php endif; ?>
@@ -2204,6 +2215,59 @@ document.getElementById('edit-milestone-description').value = button.dataset.mil
 </div>
 <?php endif; ?>
 <?php elseif ($role === 'projects_manager'): ?>
+<?php if ($status === 'closed'): ?>
+<div class="card border-warning mb-4">
+<div class="card-header bg-warning-subtle">
+<strong><i class="fas fa-coins me-2"></i>الإغلاق المالي للمشروع</strong>
+</div>
+<div class="card-body">
+<?php if ($financialClosureCompletedView): ?>
+<div class="alert alert-success border mb-3">
+<i class="fas fa-circle-check me-1"></i>
+<strong>تم إتمام الإغلاق المالي.</strong>
+عاد الرصيد المتبقي إلى حساب المؤسسة وأكمل المدير المالي الإغلاق المالي للمشروع.
+</div>
+<?php else: ?>
+<div class="alert alert-warning border mb-3">
+<i class="fas fa-clock me-1"></i>
+<strong>الإغلاق الإداري مكتمل، والإغلاق المالي قيد انتظار المدير المالي.</strong>
+<?php if ($closureControlledBalanceView > 0.009): ?>
+الرصيد المتبقي تحت سيطرة المشروع هو <strong><?php echo number_format($closureControlledBalanceView, 2); ?> <?php echo e($project['currency_code'] ?: 'SDG'); ?></strong>، وسيقوم المدير المالي بإرجاعه إلى حساب المؤسسة وإتمام الإغلاق المالي.
+<?php else: ?>
+لا يوجد رصيد متبقٍ؛ سيؤكد المدير المالي الإغلاق المالي.
+<?php endif; ?>
+</div>
+<?php endif; ?>
+<?php if ($closureFundingReturns): ?>
+<div class="table-responsive mb-3">
+<table class="table table-sm align-middle mb-0">
+<thead><tr><th>التاريخ</th><th>حساب الإرجاع</th><th>المبلغ</th><th>القيد</th><th>بواسطة</th></tr></thead>
+<tbody>
+<?php foreach ($closureFundingReturns as $returnRow): ?>
+<tr>
+<td><?php echo e($returnRow['return_date'] ?? '—'); ?></td>
+<td><?php echo e(($returnRow['source_account_code'] ?? '—') . ' · ' . ($returnRow['source_account_name'] ?? '')); ?></td>
+<td><?php echo number_format((float)$returnRow['amount'], 2); ?> <?php echo e($returnRow['currency_code'] ?: ($project['currency_code'] ?: 'SDG')); ?></td>
+<td><?php echo e($returnRow['entry_code'] ?? '—'); ?></td>
+<td><?php echo e($returnRow['returned_by_name'] ?? '—'); ?></td>
+</tr>
+<?php endforeach; ?>
+</tbody>
+</table>
+</div>
+<?php endif; ?>
+<?php if ($existingFundingReturnProof): ?>
+<div class="alert alert-light border small mb-0">
+<div class="fw-semibold mb-1"><i class="fas fa-paperclip me-1"></i>إثبات الإرجاع المرفق مع طلب الإغلاق</div>
+<a href="<?php echo APP_URL; ?>modules/projects/serve_project_document.php?id=<?php echo (int)$existingFundingReturnProof['id']; ?>" target="_blank"><?php echo e($existingFundingReturnProof['original_name'] ?: 'عرض الإثبات'); ?></a>
+<?php if (!empty($existingFundingReturnProof['uploader_name'])): ?><span class="text-muted"> · رفع بواسطة <?php echo e($existingFundingReturnProof['uploader_name']); ?></span><?php endif; ?>
+</div>
+<?php endif; ?>
+<div class="small text-muted mt-3">
+دور مدير المشاريع انتهى عند الإغلاق الإداري. أي إرجاع للرصيد أو قيد محاسبي أو إغلاق مالي يتم حصراً بواسطة المدير المالي.
+</div>
+</div>
+</div>
 <?php if ($status !== 'closed'): ?>
 <div class="border rounded-3 p-3 bg-warning-subtle">
 <div class="d-flex align-items-start gap-3">
@@ -2336,7 +2400,7 @@ document.getElementById('edit-milestone-description').value = button.dataset.mil
 </div>
 <?php endif; ?>
 <div class="d-flex justify-content-end mt-3">
-<button type="submit" class="btn btn-dark px-4" <?php echo $closureCanBeFinalizedView ? '' : 'disabled aria-disabled="true"'; ?>><i class="fas fa-lock me-1"></i>تنفيذ إغلاق المشروع</button>
+<button type="submit" class="btn btn-dark px-4" <?php echo $closureCanBeFinalizedView ? '' : 'disabled aria-disabled="true"'; ?>><i class="fas fa-lock me-1"></i>إغلاق المشروع إدارياً وتحويله للإغلاق المالي</button>
 </div>
 </div>
 </form>
