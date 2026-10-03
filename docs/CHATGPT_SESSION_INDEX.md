@@ -1583,3 +1583,18 @@ The previously requested immediate project/UI fix is now completed and accepted 
 The temporary pause after PM submission is now **lifted**. The next task is to resume Phase 5 at **FM financial review / budget approval**, then continue the established accounting reconciliation sequence.
 
 Do **not** recreate PRJ-0015. Do not repeat the already-passed numeric-wheel or save-flow investigation unless a genuine regression appears.
+
+
+## 2026-10-03 — Projects Phase 5 documentation reconciliation
+
+The Projects continuation state was corrected after a source-driven page scan showed that the previous index/checkpoint was stale. PRJ-0015 has already progressed beyond FM review: FM approval/release, GM approval, FM final funding-document confirmation, PM launch, and PS notification/access are runtime-completed evidence.
+
+**Current controlled fixture:** PRJ-0015 — PH5 Full Accounting Reconciliation Test; final approval approved; lifecycle active; Project Supervisor project supervisor; approved budget/funding 300,000.00 SDG; expenses 0.00 SDG at the PS checkpoint.
+
+**Closed gates:** PM submission; FM financial release; GM approval/no duplicate release; reversal/re-approval workflow; FM pre-final correction/reversal; FM final confirmation/PM handoff; PM launch; PS notification timing; PS post-launch access/role boundary.
+
+**Do not restart:** FM approval, GM approval, FM final confirmation, PM launch, PS notification/access, numeric mouse-wheel fix, project save-flow fix, or global field-sizing work without concrete regression evidence.
+
+**Current next action:** inspect the master audit for the first genuinely undocumented Projects Phase 5 runtime gate and continue from there. Do not create a new project or infer a gate from the old submitted/planned checkpoint.
+
+Current main documentation/code checkpoint used for this correction: 798a5d54248d9270065757d34171bb8661089ba6.
