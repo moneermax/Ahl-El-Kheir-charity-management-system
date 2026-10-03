@@ -817,7 +817,27 @@ if ($closed) throw new RuntimeException('المشروع مغلق بالفعل.')
 if ($closureRequest && (string)$closureRequest['new_status'] === 'closure_requested') throw new RuntimeException('يوجد بالفعل طلب إغلاق بانتظار مدير المشاريع.');
 $reason = akp_post_value('closure_request_reason');
 if ($reason === '') throw new RuntimeException('ملاحظة طلب الإغلاق مطلوبة.');
-dbExecute("INSERT INTO project_status_history (project_id, old_status, new_status, reason, changed_by) VALUES (?, ?, 'closure_requested', ?, ?)", [$id, $project['lifecycle_status'] ?: $project['status'], 'طلب إغلاق من مشرف المشروع: ' . $reason, akp_user_id()]);
+$currentLifecycleStatus = (string)($project['lifecycle_status'] ?: $project['status']);
+if (!in_array($currentLifecycleStatus, ['active', 'reopened', 'under_review'], true)) {
+throw new RuntimeException('لا يمكن طلب إغلاق المشروع من حالته الحالية.');
+}
+dbExecute('START TRANSACTION');
+try {
+$lockedLifecycle = dbFetchOne('SELECT lifecycle_status FROM project_lifecycle WHERE project_id = ? FOR UPDATE', [$id]);
+$lockedStatus = (string)($lockedLifecycle['lifecycle_status'] ?? '');
+if (!in_array($lockedStatus, ['active', 'reopened', 'under_review'], true)) {
+throw new RuntimeException('تغيرت حالة المشروع قبل تسجيل طلب الإغلاق.');
+}
+if ($lockedStatus !== 'under_review') {
+dbExecute("UPDATE project_lifecycle SET lifecycle_status = 'under_review' WHERE project_id = ?", [$id]);
+}
+dbExecute("INSERT INTO project_status_history (project_id, old_status, new_status, reason, changed_by) VALUES (?, ?, 'under_review', ?, ?)", [$id, $lockedStatus, 'طلب إغلاق من مشرف المشروع: ' . $reason, akp_user_id()]);
+dbExecute("INSERT INTO project_status_history (project_id, old_status, new_status, reason, changed_by) VALUES (?, 'under_review', 'closure_requested', ?, ?)", [$id, 'طلب إغلاق من مشرف المشروع: ' . $reason, akp_user_id()]);
+dbExecute('COMMIT');
+} catch (Throwable $e) {
+dbExecute('ROLLBACK');
+throw $e;
+}
 akp_audit('REQUEST_CLOSE', 'project_lifecycle', $id, ['status' => $project['lifecycle_status'] ?: $project['status']], ['status' => 'closure_requested', 'reason' => $reason]);
 try {
 $projectManagers = dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id = r.id WHERE r.code = 'projects_manager' AND u.is_active = 1");
@@ -1000,18 +1020,7 @@ width: 24%;
 <?php endif; ?>
 </div>
 <div class="d-flex gap-2 align-items-center flex-wrap">
-<?php if ($role === 'project_supervisor' && akp_can_edit_section('operations', $id) && !$closed): ?>
-<form method="post" class="project-action-form d-flex align-items-center gap-2">
-<?php echo csrf_field(); ?>
-<input type="hidden" name="action" value="change_status">
-<label for="projectStatusControl" class="small fw-semibold mb-0">حالة المشروع</label>
-<select id="projectStatusControl" name="new_status" class="form-select form-select-sm" style="min-width:180px" onchange="this.form.submit()" aria-label="تغيير حالة المشروع">
-<?php foreach (['planned','active','under_review','completed','cancelled'] as $key): ?>
-<option value="<?php echo $key; ?>" <?php echo $status === $key ? 'selected' : ''; ?> <?php echo in_array($key, ['planned','active'], true) ? 'disabled' : ''; ?>><?php echo e(akp_status_label($key)); ?></option>
-<?php endforeach; ?>
-</select>
-</form>
-<?php endif; ?>
+
 <?php if ($role === 'projects_manager' && $approval['approval_status'] === 'approved' && $fmFinalConfirmed && (string)($project['lifecycle_status'] ?? $project['status']) === 'planned'): ?>
 <form method="post" class="project-action-form d-inline">
 <?php echo csrf_field(); ?>
