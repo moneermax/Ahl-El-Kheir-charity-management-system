@@ -230,7 +230,11 @@ if (!function_exists('akp_return_project_funding')) {
         $approval = dbFetchOne('SELECT approval_status FROM project_approval WHERE project_id=?', [$projectId]);
         if (!$approval || $approval['approval_status'] !== 'approved') throw new RuntimeException('لا يمكن إرجاع رصيد قبل الاعتماد النهائي للمشروع.');
         $lifecycle = dbFetchOne('SELECT lifecycle_status FROM project_lifecycle WHERE project_id=?', [$projectId]);
-        if (!$lifecycle || !in_array((string)$lifecycle['lifecycle_status'], ['completed','under_review'], true)) throw new RuntimeException('إرجاع الرصيد المتبقي متاح بعد انتهاء التنفيذ وطلب المراجعة المالية.');
+        if (!$lifecycle || (string)$lifecycle['lifecycle_status'] !== 'closed') throw new RuntimeException('إرجاع الرصيد المتبقي متاح بعد إغلاق المشروع إدارياً من مدير المشاريع.');
+        $financialClose = dbFetchOne("SELECT id FROM audit_log WHERE action='CLOSE' AND entity_type='project_lifecycle' AND entity_id=? ORDER BY id DESC LIMIT 1", [$projectId]);
+        if (!$financialClose) throw new RuntimeException('لا يوجد إغلاق إداري مسجل للمشروع يسمح ببدء الإغلاق المالي.');
+        $alreadyClosedFinancially = dbFetchOne("SELECT id FROM audit_log WHERE action='FM_FINANCIAL_CLOSURE' AND entity_type='project_lifecycle' AND entity_id=? LIMIT 1", [$projectId]);
+        if ($alreadyClosedFinancially) throw new RuntimeException('تم إتمام الإغلاق المالي للمشروع مسبقاً.');
 
         $allocation = dbFetchOne(
             "SELECT f.*, a.code AS source_account_code
