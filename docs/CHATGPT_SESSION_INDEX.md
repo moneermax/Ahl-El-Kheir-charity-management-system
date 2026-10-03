@@ -1740,3 +1740,24 @@ There is **no FM notification at the PS request stage**, and no second accountin
 5. As FM, verify the 250,000.00 SDG balance and PS proof, then record the return to the organization account. Verify the balanced return journal and controlled balance becomes zero.
 6. Verify 'FM_FINANCIAL_CLOSURE' is recorded exactly once and **PM** receives the completion notification.
 7. Verify PS is not re-notified and no second funding-release journal is created.
+
+
+---
+
+
+## 2026-10-03 — Projects closure workflow correction and notification handoff
+
+The closure workflow is now explicitly:
+
+**PS → PM administrative closure → FM financial closure**
+
+- PS submits the closure request and, when a controlled balance remains, attaches the return proof. The PS request notification goes **only to the Projects Manager**.
+- PM reviews the request and may return it to PS. If PM closes the project, that action is **administrative closure only**. PM does not record the accounting return and is not blocked by a non-zero controlled balance.
+- A successful PM close changes the project to `closed`, records the administrative `CLOSE` audit event, and sends the **financial-closure-required** notification to the active Financial Manager.
+- FM reviews the remaining controlled balance/proof, records the unused-fund return through the existing accounting return path, and completes financial closure when the controlled balance reaches zero.
+- FM financial closure sends the completion notification **back to PM**. PS does not receive a post-close accounting task.
+- No second project funding release is created by closure.
+
+Implementation commit: **e66d0452885a0f3c0270913cda698b0f522723f9**.
+
+**Runtime status: pending.** Next gate: exercise PRJ-0015 through PS closure request → PM close with 250,000.00 SDG still controlled → FM notification → FM return/financial closure → PM completion notification.
