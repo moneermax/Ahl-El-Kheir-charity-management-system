@@ -74,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $asyncFundingAction = $action === 'fm_save_funding_batch' && (stripos((string)($_SERVER['HTTP_ACCEPT'] ?? ''), 'application/json') !== false || (string)($_POST['async_funding'] ?? '') === '1');
 
     try {
-        if ($closed && $action !== 'fm_return_project_funding') throw new RuntimeException('المشروع مغلق إدارياً؛ المتاح الآن للمدير المالي هو إتمام الإغلاق المالي فقط.');
+        if ($closed && !in_array($action, ['fm_return_project_funding','fm_complete_financial_closure'], true)) throw new RuntimeException('المشروع مغلق إدارياً؛ المتاح الآن للمدير المالي هو إتمام الإغلاق المالي فقط.');
 
         if ($action === 'fm_approve_budget') {
             if (!in_array((string)$approval['approval_status'], ['submitted', 'rejected'], true)) throw new RuntimeException('لا يمكن اعتماد الميزانية قبل إرسال المشروع للمراجعة المالية أو بعد إعادته بالرفض.');
@@ -354,6 +354,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             akp_audit('FM_RETURN_TO_REVIEW','project_approval',$id,['approval_status'=>'approved'],['approval_status'=>'submitted','reason'=>$reason,'funding_release_reversed'=>true,'gm_approval_voided'=>true]);
             flash('success','تم إلغاء التأكيدات المالية السابقة وإعادة المشروع للمراجعة المالية، مع عكس الإفراج المالي غير المنفذ.');
+        } elseif ($action === 'fm_complete_financial_closure') {
+            if (akp_role() !== 'financial_manager') throw new RuntimeException('الإغلاق المالي محصور بالمدير المالي.');
+            if (!$closed) throw new RuntimeException('لا يمكن إتمام الإغلاق المالي قبل إغلاق المشروع إدارياً من مدير المشاريع.');
+            if ($financialClosureCompleted) throw new RuntimeException('تم إتمام الإغلاق المالي للمشروع مسبقاً.');
+            $remaining=akp_project_controlled_balance($id);
+            if($remaining>0.009) throw new RuntimeException('لا يمكن إتمام الإغلاق المالي قبل إرجاع كامل الرصيد المتبقي إلى حساب المؤسسة.');
+            akp_audit(
+                'FM_FINANCIAL_CLOSURE',
+                'project_lifecycle',
+                $id,
+                ['status'=>'closed','controlled_balance'=>0.0],
+                ['status'=>'financially_closed','controlled_balance'=>0.0,'return_required'=>false]
+            );
+            try{
+                $pmUsers=dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id=r.id WHERE r.code='projects_manager' AND u.is_active=1");
+                foreach($pmUsers as $pmUser){
+                    ak_transaction_review_notify_event(
+                        (int)$pmUser['id'],
+                        'اكتمل الإغلاق المالي للمشروع',
+                        'أتم المدير المالي الإغلاق المالي للمشروع «'.(string)($project['name']??'').'» ('.(string)($project['project_code']??'').'). لا يوجد رصيد متبقٍ يحتاج إلى إرجاع.',
+                        APP_URL.'modules/projects/view_pm.php?id='.$id,
+                        $id,
+                        'project_financial_closure_completed'
+                    );
+                }
+            }catch(Throwable $notificationError){}
+            flash('success','تم تأكيد الإغلاق المالي للمشروع بعد التحقق من عدم وجود رصيد متبقٍ.');
         } elseif ($action === 'fm_return_project_funding') {
             if (akp_role() !== 'financial_manager') throw new RuntimeException('الإغلاق المالي محصور بالمدير المالي.');
             if (!$closed) throw new RuntimeException('لا يمكن بدء الإغلاق المالي قبل إغلاق المشروع إدارياً من مدير المشاريع.');
@@ -587,7 +614,55 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     </div>
     <?php endif; ?>
 
-    <?php if ($approval['approval_status']==='approved' && $closed && !$financialClosureCompleted && $controlledBalance > 0.009): ?>
+    <?php if ($approval['approval_status']==='approved' && $closed && !$financialClosureCompleted): ?>
+    <div class="card mb-4 border-warning">
+        <div class="card-header"><strong>الإغلاق المالي للمشروع</strong></div>
+        <div class="card-body">
+            <div class="alert alert-warning mb-3">
+                <strong>أغلق مدير المشاريع المشروع إدارياً.</strong>
+                <?php if ($controlledBalance > 0.009): ?>
+                    الرصيد المتبقي تحت سيطرة المشروع هو <strong><?php echo number_format($controlledBalance,2); ?> <?php echo e($project['currency_code']?:'SDG'); ?></strong> ويجب إرجاعه إلى حساب المؤسسة قبل إتمام الإغلاق المالي.
+                <?php else: ?>
+                    لا يوجد رصيد متبقٍ تحت سيطرة المشروع. يلزم فقط تأكيد الإغلاق المالي.
+                <?php endif; ?>
+            </div>
+            <?php if ($closureReason !== ''): ?><div class="alert alert-light border mb-3"><strong>ملاحظات طلب الإغلاق:</strong> <?php echo e($closureReason); ?></div><?php endif; ?>
+            <?php if ($closureReturnProof): ?>
+                <div class="alert alert-light border mb-3 small">
+                    <div class="fw-semibold mb-1"><i class="fas fa-paperclip me-1"></i>إثبات الإرجاع المرفق من مشرف المشروع</div>
+                    <a target="_blank" href="<?php echo APP_URL; ?>modules/projects/serve_project_document.php?id=<?php echo (int)$closureReturnProof['id']; ?>"><?php echo e($closureReturnProof['original_name'] ?: 'عرض الإثبات'); ?></a>
+                    <?php if (!empty($closureReturnProof['uploader_name'])): ?><span class="text-muted"> · رفع بواسطة <?php echo e($closureReturnProof['uploader_name']); ?></span><?php endif; ?>
+                </div>
+            <?php endif; ?>
+            <?php if ($controlledBalance > 0.009): ?>
+                <div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>حساب المصدر</th><th>المبلغ المفرج</th><th>الإجراء المالي</th></tr></thead><tbody>
+                <?php foreach($fundings as $f): ?>
+                    <?php if(($f['status']??'')==='posted' && !dbFetchOne('SELECT id FROM project_funding_returns WHERE funding_allocation_id=? LIMIT 1',[(int)$f['id']])): ?>
+                    <tr>
+                        <td><?php echo e(($f['source_account_code']??$f['source_type']).' · '.($f['source_account_name']??'')); ?></td>
+                        <td><?php echo number_format((float)$f['amount'],2).' '.e($f['currency_code']?:($project['currency_code']?:'SDG')); ?></td>
+                        <td>
+                            <form method="post" class="row g-2 align-items-end">
+                                <?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_return_project_funding"><input type="hidden" name="allocation_id" value="<?php echo (int)$f['id']; ?>">
+                                <div class="col-md-3"><input type="number" name="return_amount" class="form-control form-control-sm bg-body-secondary text-muted border-secondary-subtle" min="0.01" step="0.01" max="<?php echo e((string)$f['amount']); ?>" value="<?php echo e((string)min($controlledBalance,(float)$f['amount'])); ?>" readonly aria-readonly="true" tabindex="-1" title="يُحدد تلقائياً حسب الرصيد المتبقي تحت سيطرة المشروع"></div>
+                                <div class="col-md-3"><input type="date" name="return_date" class="form-control form-control-sm" value="<?php echo date('Y-m-d'); ?>" required></div>
+                                <div class="col-md-4"><button type="button" class="btn btn-sm btn-success w-100 js-confirm-funding-return" data-return-amount="<?php echo e((string)min($controlledBalance,(float)$f['amount'])); ?>" data-source-account="<?php echo e(($f['source_account_code']??$f['source_type']).' · '.($f['source_account_name']??'')); ?>" data-bs-toggle="modal" data-bs-target="#confirmFundingReturnModal">إرجاع الرصيد وإتمام الإغلاق المالي</button></div>
+                            </form>
+                        </td>
+                    </tr>
+                    <?php endif; ?>
+                <?php endforeach; ?>
+                </tbody></table></div>
+            <?php else: ?>
+                <form method="post" class="d-flex justify-content-end">
+                    <?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_complete_financial_closure">
+                    <button class="btn btn-success"><i class="fas fa-lock me-1"></i>تأكيد الإغلاق المالي</button>
+                </form>
+            <?php endif; ?>
+        </div>
+    </div>
+
+    <?php if ($controlledBalance > 0.009): ?>
     <div class="card mb-4 border-warning">
         <div class="card-header"><strong>الإغلاق المالي للمشروع وإرجاع الرصيد</strong></div>
         <div class="card-body">
