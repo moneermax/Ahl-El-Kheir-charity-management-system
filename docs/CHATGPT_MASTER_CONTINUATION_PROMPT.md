@@ -1450,3 +1450,80 @@ Next runtime action: on PRJ-0015, verify the PS closure form preserves the curre
 - The PM closure-review message now explicitly states that the settlement request has been sent to FM and that final closure becomes eligible only after the controlled balance reaches zero.
 - This does not bypass the accounting guard or create a second accounting release. FM remains the only role allowed to record the project funding return; PM performs final closure only after reconciliation is complete.
 - Runtime verification is required: confirm FM receives the settlement notification, can see the return control for PRJ-0015, record the 250,000.00 SDG return, and that PM then sees zero controlled balance and an enabled final-close action.
+
+
+---
+
+
+# LATEST CONTINUATION PROMPT — 2026-10-03 — Projects administrative/financial closure handoff
+
+Continue the existing Ahl El Kheir Charity Management System directly on **main**. Do not rebuild, create a branch, or repeat completed gates.
+
+Read first:
+1. docs/CHATGPT_SESSION_INDEX.md
+2. docs/AHL_EL_KHEIR_MASTER_STATUS.md
+3. docs/AHL_EL_KHEIR_MASTER_AUDIT.md
+4. docs/CHATGPT_MASTER_CONTINUATION_PROMPT.md
+5. docs/PROJECTS_MODULE_AUDIT_AND_REMEDIATION_PLAN.md
+
+### Controlled fixture
+
+**PRJ-0015 — PH5 Full Accounting Reconciliation Test**
+- final approval: approved / معتمد نهائياً
+- lifecycle before closure gate: active / قيد التنفيذ
+- approved budget: 300,000.00 SDG
+- released funding: 300,000.00 SDG
+- verified execution expense: 50,000.00 SDG
+- controlled balance: 250,000.00 SDG
+- PS primary supervisor: user 34 / ps1
+
+Preserve PRJ-0015. Do not delete or recreate it merely to test closure.
+
+### Current authoritative closure workflow
+
+1. **PS:** submits closure request and return proof when a balance remains. Notification goes only to PM.
+2. **PM:** reviews the request and may return it to PS, then performs **administrative project closure**. PM must not record accounting return and must not be blocked by the 250,000.00 SDG controlled balance.
+3. **After PM close:** lifecycle becomes `closed`; Projects Department work is finished. FM receives `project_financial_closure_required`.
+4. **FM:** verifies the remaining controlled balance/proof, records the unused-fund return through the existing FM-only funding-return action, and completes financial closure when the balance reaches zero.
+5. **After FM completion:** `FM_FINANCIAL_CLOSURE` is recorded and PM receives `project_financial_closure_completed`.
+6. **PS is not part of the post-close accounting notification flow.**
+
+### Required runtime gate — OPEN
+
+Use PRJ-0015 without recreating it:
+
+A. As PS:
+- submit the closure request with the existing return proof;
+- verify notification goes to PM only.
+
+B. As PM:
+- verify the request and proof;
+- close the project administratively while 250,000.00 SDG remains controlled;
+- verify the success message says the project was administratively closed and transferred to FM;
+- verify FM receives the financial-closure-required notification.
+
+C. As FM:
+- open PRJ-0015 from the notification;
+- verify 250,000.00 SDG remains and the PS proof is visible;
+- return 250,000.00 SDG through the existing FM control;
+- verify the balanced return journal uses source account 1200 · البنك;
+- verify controlled balance becomes zero;
+- verify `FM_FINANCIAL_CLOSURE` and the PM completion notification.
+
+D. As PM:
+- verify financial closure is shown as complete;
+- verify the recorded return/journal/proof are visible;
+- verify no second funding release or duplicate return exists.
+
+Do not claim this gate passed until local XAMPP/browser evidence is supplied.
+
+### Engineering rules
+
+- Source/schema/docs are authoritative; do not guess tables, columns, statuses, accounts, or workflow.
+- No runtime CREATE/ALTER/DROP; migrations only for genuine DB structure changes.
+- No triggers, views, stored procedures, functions, or events.
+- Procedural PHP only.
+- No destructive Git commands: reset --hard, clean, restore, force-push, etc.
+- Do not create branches.
+- Preserve PRJ-0015 and unrelated completed modules.
+- Update all four master docs after the runtime milestone and record the exact commit SHA.
