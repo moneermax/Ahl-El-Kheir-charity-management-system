@@ -1527,3 +1527,24 @@ Do not claim this gate passed until local XAMPP/browser evidence is supplied.
 - Do not create branches.
 - Preserve PRJ-0015 and unrelated completed modules.
 - Update all four master docs after the runtime milestone and record the exact commit SHA.
+
+
+---
+
+## LATEST PROJECTS CHECKPOINT — 2026-10-03 — PRJ-0015 financial closure PASSED
+
+The previously open PRJ-0015 administrative/financial closure runtime gate is now **PASSED / CLOSED**.
+
+Verified locally by user evidence:
+1. PM completed administrative closure with 250,000.00 SDG still controlled.
+2. FM returned the full remaining 250,000.00 SDG through the existing funding-return workflow to **1200 — البنك**; the user confirmed the return succeeded without issue.
+3. FM completed financial closure.
+4. PM received **اكتمل الإغلاق المالي للمشروع**, confirming the remaining balance was returned to the organization's account and the financial-closure cycle ended.
+5. The FM post-close UI presents administrative status **مغلق**, financial status **مغلق مالياً**, and controlled balance **0.00 SDG**, with no pending FM financial action.
+
+The existing `FM_FINANCIAL_CLOSURE` audit event remains the authoritative financial-close completion marker. No new lifecycle state or accounting mechanism was introduced.
+
+### Continuation rule
+Do not repeat the completed return, create another return/journal, or recreate PRJ-0015 merely to rerun this gate. The next Projects task must be a distinct Phase 5 reconciliation/audit item identified from the current source and documentation.
+
+Engineering constraints remain unchanged: work directly on `main`, no branches, no destructive Git commands, no runtime DDL, no triggers/views/stored procedures/functions/events, procedural PHP only, and inspect source/schema before any change.
