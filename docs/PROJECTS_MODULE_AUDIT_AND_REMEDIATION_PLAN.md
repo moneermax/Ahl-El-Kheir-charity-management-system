@@ -913,3 +913,25 @@ The PM notification is the runtime evidence that the final notification boundary
 **Status: PASS / CLOSED for this Phase 5 closure gate.** Do not repeat the return or recreate PRJ-0015 merely to re-test the same acceptance path.
 
 **Next Projects work:** proceed to the next distinct Phase 5 reconciliation/audit item only after reviewing the current repository/docs; do not reopen the completed closure gate without genuine regression evidence.
+
+
+---
+
+## 2026-10-03 — Projects Phase 5 final certification / module checkpoint
+
+The controlled Phase 5 runtime sequence has reached its intended financial end state on PRJ-0015 — PH5 Full Accounting Reconciliation Test.
+
+- PM submission and FM review handoff completed.
+- FM funding release and the established approval/reversal/final-confirmation controls were exercised in the controlled Phase 5 sequence.
+- PM launch and PS execution access were exercised.
+- PS recorded the controlled 50,000.00 SDG execution expense; funded amount remained 300,000.00 SDG and residual became 250,000.00 SDG.
+- PM administrative closure was completed with the remaining controlled balance preserved for FM reconciliation.
+- FM returned the remaining 250,000.00 SDG to 1200 — البنك through the existing funding-return/accounting path.
+- FM completed financial closure and PM received the final أكتمل الإغلاق المالي للمشروع notification.
+- The FM final-state page shows administrative status مغلق, financial status مغلق مالياً, and controlled balance 0.00 SDG.
+
+The released project funding is the treasury-release event. Post-release PS execution expenses consume the released project-controlled balance and do not create a second treasury release. The final unused balance is returned once through the existing FM funding-return mechanism; financial closure is then recorded by the existing FM_FINANCIAL_CLOSURE audit event.
+
+**Projects Phase 5: RUNTIME VERIFIED / CLOSED.**
+
+Do not reopen or repeat completed PRJ-0015 gates, create another return, or alter historical project journals.
