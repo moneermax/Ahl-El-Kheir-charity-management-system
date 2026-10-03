@@ -119,7 +119,7 @@ $approval = dbFetchOne('SELECT * FROM project_approval WHERE project_id = ?', [$
 $fmFinalConfirmed = (bool)dbFetchOne("SELECT id FROM audit_log WHERE action='FM_CONFIRM_PAYMENT_EVIDENCE' AND entity_type='project_payment_evidence' AND entity_id=? LIMIT 1", [$id]);
 $closureControlledBalanceView = akp_project_controlled_balance($id);
 $pendingClosureExpensesView = (int)(dbFetchOne("SELECT COUNT(*) AS n FROM project_expenses WHERE project_id = ? AND status IN ('draft','submitted','approved')", [$id])['n'] ?? 0);
-$closureCanBeFinalizedView = ($closureControlledBalanceView <= 0.009 && $pendingClosureExpensesView === 0 && akp_can_edit_section('closure', $id) && !$closed);
+$closureCanBeFinalizedView = ($pendingClosureExpensesView === 0 && akp_can_edit_section('closure', $id) && !$closed);
 $errors = [];
 function akp_redirect_project(int $id): void {
 header('Location: ' . APP_URL . 'modules/projects/view.php?id=' . $id);
@@ -941,19 +941,6 @@ $projectManagers = dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_i
 foreach ($projectManagers as $projectManager) {
 ak_transaction_review_notify_event((int)$projectManager['id'], 'طلب إغلاق مشروع', 'المشروع «' . (string)($project['name'] ?? '') . '» (' . (string)($project['project_code'] ?? '') . ') لديه طلب إغلاق من مشرف المشروع ويحتاج إجراء مدير المشاريع.', APP_URL . 'modules/projects/view.php?id=' . $id, $closureRequestHistoryId ?: $id, 'project_closure_request');
 }
-if ($closureControlledBalance > 0.009) {
-    $financialManagers = dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id = r.id WHERE r.code IN ('financial_manager','fm','finance') AND u.is_active = 1");
-    foreach ($financialManagers as $financialManager) {
-        ak_transaction_review_notify_event(
-            (int)$financialManager['id'],
-            'طلب تسوية رصيد مشروع',
-            'المشروع «' . (string)($project['name'] ?? '') . '» (' . (string)($project['project_code'] ?? '') . ') لديه رصيد متبقٍ تحت سيطرة المشروع قدره ' . number_format($closureControlledBalance, 2) . ' ' . (string)($project['currency_code'] ?: 'SDG') . '. يرجى تسجيل إرجاع الرصيد إلى حساب المؤسسة قبل الإغلاق النهائي.',
-            APP_URL . 'modules/projects/view_fm.php?id=' . $id,
-            $closureRequestHistoryId ?: $id,
-            'project_funding_return_request'
-        );
-    }
-}
 }
 catch (Throwable $notificationError) {}
 $controlledBalance = akp_project_controlled_balance($id);
@@ -1037,46 +1024,42 @@ $_SESSION['project_toast_success'] = 'تم إعادة المشروع إلى مش
 } elseif ($action === 'close_project') {
 if ($role !== 'projects_manager') throw new RuntimeException('إغلاق المشروع محصور بمدير المشاريع بعد طلب مشرف المشروع.');
 if (!akp_can_edit_section('closure', $id) || $closed) throw new RuntimeException('لا تملك صلاحية إغلاق المشروع أو أنه مغلق مسبقاً.');
-$pendingRequest = dbFetchOne("SELECT h.* FROM project_status_history h WHERE h.project_id = ? AND h.new_status = 'closure_requested' ORDER BY h.id DESC LIMIT 1", [$id]);
+$pendingRequest = dbFetchOne("SELECT h.* FROM project_status_history h WHERE project_id = ? AND new_status = 'closure_requested' ORDER BY id DESC LIMIT 1", [$id]);
 if (!$pendingRequest) throw new RuntimeException('لا يوجد طلب إغلاق معلق من مشرف المشروع.');
-// ... (Original close_project logic preserved exactly)
 $pending = dbFetchOne("SELECT COUNT(*) AS n FROM project_expenses WHERE project_id = ? AND status IN ('draft','submitted','approved')", [$id]);
 if ((int)($pending['n'] ?? 0) > 0) throw new RuntimeException('لا يمكن الإغلاق مع وجود مصروفات غير مرحلة.');
 $controlledBalance = akp_project_controlled_balance($id);
-if ($controlledBalance > 0.009) throw new RuntimeException('لا يمكن إغلاق المشروع قبل تسوية الرصيد المتبقي تحت سيطرة المشروع: ' . number_format($controlledBalance, 2) . '.');
 $summary = akp_post_value('closure_summary');
 $varianceExplanation = akp_post_value('variance_explanation');
 if ($summary === '') throw new RuntimeException('ملخص الإغلاق مطلوب.');
 dbExecute('START TRANSACTION');
 try {
 $totals = akp_sync_closure_totals($id);
-dbExecute("UPDATE project_lifecycle SET lifecycle_status = 'closed', closed_at = NOW(), closed_by = ?, close_reason = ?, closure_summary = ?, variance_explanation = ? WHERE project_id = ?", [akp_user_id(), akp_post_value('closure_reason', 'other'), $summary, $varianceExplanation, $id]);
+dbExecute("UPDATE project_lifecycle SET lifecycle_status = 'closed', closed_at = NOW(), closed_by = ?, close_reason = ?, closure_summary = ?, variance_explanation = ? WHERE project_id = ? AND lifecycle_status = 'under_review'", [akp_user_id(), akp_post_value('closure_reason', 'other'), $summary, $varianceExplanation, $id]);
 if (dbExecute("UPDATE other_projects SET status = 'completed', updated_by = ? WHERE id = ?", [akp_user_id(), $id]) !== 1) throw new RuntimeException('تعذر مزامنة حالة المشروع عند الإغلاق.');
 dbExecute("INSERT INTO project_status_history (project_id, old_status, new_status, reason, changed_by) VALUES (?, ?, 'closed', ?, ?)", [$id, $project['lifecycle_status'] ?: $project['status'], $summary, akp_user_id()]);
-akp_audit('CLOSE', 'project_lifecycle', $id, ['status' => $project['lifecycle_status'] ?: $project['status']], ['status' => 'closed', 'reason' => $summary]);
+akp_audit('CLOSE', 'project_lifecycle', $id, ['status' => $project['lifecycle_status'] ?: $project['status'], 'controlled_balance' => $controlledBalance], ['status' => 'closed', 'reason' => $summary, 'financial_closure_pending' => $controlledBalance > 0.009]);
 dbExecute('COMMIT');
 } catch (Throwable $e) {
 dbExecute('ROLLBACK');
 throw $e;
 }
 try {
-$executiveUsers = dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id = r.id WHERE r.code IN ('general_manager', 'vice_general_manager') AND u.is_active = 1");
-foreach ($executiveUsers as $executiveUser) {
-ak_transaction_review_notify_event((int)$executiveUser['id'], 'تم إغلاق مشروع', 'تم إغلاق المشروع «' . (string)($project['name'] ?? '') . '» (' . (string)($project['project_code'] ?? '') . ') بواسطة مدير المشاريع بعد طلب الإغلاق من مشرف المشروع.', APP_URL . 'modules/projects/view.php?id=' . $id, $id, 'project_closed');
-}
 $fmUsers = dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id = r.id WHERE r.code IN ('financial_manager','fm','finance') AND u.is_active = 1");
 foreach ($fmUsers as $fmUser) {
 ak_transaction_review_notify_event(
     (int)$fmUser['id'],
-    'تم إغلاق المشروع',
-    'تم إغلاق المشروع «' . (string)($project['name'] ?? '') . '» (' . (string)($project['project_code'] ?? '') . ') نهائياً بواسطة مدير المشاريع. تم اكتمال الإغلاق ويمكن للمدير المالي متابعة ما يلزم من إجراءات مالية لاحقة.',
+    'المشروع مغلق إدارياً ويحتاج إغلاقاً مالياً',
+    'أغلق مدير المشاريع المشروع «' . (string)($project['name'] ?? '') . '» (' . (string)($project['project_code'] ?? '') . '). الرصيد المتبقي تحت سيطرة المشروع: ' . number_format($controlledBalance, 2) . ' ' . (string)($project['currency_code'] ?: 'SDG') . '. يرجى مراجعة إثبات الإرجاع وتسجيل إرجاع الرصيد وإتمام الإغلاق المالي.',
     APP_URL . 'modules/projects/view_fm.php?id=' . $id,
     $id,
-    'project_closed'
+    'project_financial_closure_required'
 );
 }
 } catch (Throwable $notificationError) {}
-$_SESSION['project_toast_success'] = 'تم إغلاق المشروع وإبلاغ الجهات المعنية.';
+$_SESSION['project_toast_success'] = $controlledBalance > 0.009
+    ? 'تم إغلاق المشروع إدارياً وتحويله إلى المدير المالي لإتمام الإغلاق المالي وإرجاع الرصيد المتبقي.'
+    : 'تم إغلاق المشروع إدارياً وتحويله إلى المدير المالي لإتمام الإغلاق المالي.';
 } elseif ($action === 'reopen_project') {
 // ... (Original reopen_project logic preserved exactly)
 if ($role !== 'projects_manager') throw new RuntimeException('إعادة فتح المشروع محصورة بمدير المشاريع بعد طلب مشرف المشروع.');
@@ -2054,7 +2037,7 @@ document.getElementById('edit-milestone-description').value = button.dataset.mil
 <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-white bg-opacity-10 me-2" style="width:36px;height:36px;"><i class="fas fa-lock"></i></span>
 <div>
 <div class="fw-bold">الإغلاق وإعادة الفتح</div>
-<div class="small text-white-50">إجراء إداري نهائي يمر عبر مدير المشاريع</div>
+<div class="small text-white-50">إجراء إغلاق إداري يمر عبر مدير المشاريع، ثم يُستكمل الإغلاق المالي بواسطة المدير المالي</div>
 </div>
 </div>
 <?php if ($status === 'closed'): ?>
@@ -2108,7 +2091,7 @@ document.getElementById('edit-milestone-description').value = button.dataset.mil
 </table>
 </div>
 <?php else: ?>
-<div class="alert alert-warning border small mb-3"><i class="fas fa-clock me-1"></i>لم يسجل المدير المالي تسوية الرصيد المتبقي بعد. سيظل الإغلاق النهائي محجوباً حتى تصبح قيمة الرصيد تحت سيطرة المشروع صفراً.</div>
+<div class="alert alert-warning border small mb-3"><i class="fas fa-clock me-1"></i>لم يسجل المدير المالي تسوية الرصيد المتبقي بعد. سيتم تحويل المشروع بعد إغلاقه إدارياً إلى المدير المالي لإتمام الإغلاق المالي وإرجاع الرصيد المتبقي.</div>
 <?php endif; ?>
 <?php if ($existingFundingReturnProof): ?>
 <div class="alert alert-light border small mb-0">
@@ -2339,11 +2322,7 @@ document.getElementById('edit-milestone-description').value = button.dataset.mil
 <?php if (!$closureCanBeFinalizedView): ?>
 <div class="alert alert-warning border small mb-0">
 <i class="fas fa-triangle-exclamation me-1"></i>
-<strong>لا يمكن تنفيذ الإغلاق النهائي حالياً.</strong>
-<?php if ($closureControlledBalanceView > 0.009): ?>
-<div class="mt-1">الرصيد المتبقي تحت سيطرة المشروع: <strong><?php echo number_format($closureControlledBalanceView, 2); ?> <?php echo e($project['currency_code'] ?: 'SDG'); ?></strong>.</div>
-<div>تم إرسال طلب تسوية هذا الرصيد إلى المدير المالي. يجب على المدير المالي تسجيل إرجاع الرصيد إلى حساب المؤسسة أولاً، وبعد وصول الرصيد تحت سيطرة المشروع إلى صفر يمكن لمدير المشاريع تنفيذ الإغلاق النهائي.</div>
-<?php endif; ?>
+<strong>لا يمكن تنفيذ إغلاق المشروع حالياً.</strong>
 <?php if ($pendingClosureExpensesView > 0): ?>
 <div class="mt-1">توجد <strong><?php echo $pendingClosureExpensesView; ?></strong> مصروفات غير مرحلة يجب استكمالها أولاً.</div>
 <?php endif; ?>
