@@ -1,3 +1,31 @@
+# LATEST PROJECTS CLOSURE CHECKPOINT — 2026-10-03
+
+**Current authoritative Projects closure workflow:**
+
+PS submits closure request + return information/proof → PM reviews and closes the project administratively (Projects Department role ends) → FM receives the financial-closure task → FM returns the remaining controlled balance to the organization account and completes financial closure → PM receives completion notification.
+
+Important corrections:
+- PM closure is **not blocked by a non-zero controlled balance**.
+- PM does not perform the accounting return.
+- FM is **not notified when PS merely submits the closure request**.
+- FM is notified only after PM successfully closes the project administratively.
+- FM return is permitted only after the project is administratively closed and a PM CLOSE audit event exists.
+- Financial closure completion is recorded by the audit action **FM_FINANCIAL_CLOSURE**; no new schema column is required.
+- When the balance reaches zero, FM completion notifies PM. PS is not re-notified because the Projects Department role ended at PM closure.
+- No second project funding release is created by closure or financial closure.
+
+Implementation commits:
+- 52622eebfd613fe242ff47a6c2bdfeee4e58f84c
+- 2a91f507200d1d41490fa946646517ccb5d26be7
+- 5f1282424d14308f260ae13739b746d256e2f377
+- 86c669f607482e08cf30705980955c6a567e25aa
+
+**Runtime status:** STATICALLY IMPLEMENTED — RUNTIME VERIFICATION PENDING on controlled fixture PRJ-0015. The next runtime gate must verify the notification sequence, PM administrative close with 250,000 SDG still controlled, FM return journal, zero controlled balance, single FM_FINANCIAL_CLOSURE audit event, and PM completion notification.
+
+Do not revert to the earlier workflow that required FM settlement before PM closure; the above sequence supersedes the older closure notes in this document.
+
+---
+
 # LATEST WORKFLOW CHECKPOINT — 2026-09-29 — Salary Advance Processing Consolidation
 
 The salary-advance FM review and accounting/disbursement workflows have been consolidated into one user-facing processing page.
