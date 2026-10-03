@@ -1653,7 +1653,7 @@ if (documentSection) documentSection.scrollIntoView({ behavior: 'smooth', block:
 <tbody>
 <?php foreach ($documents as $doc): ?>
 <tr>
-<td><span class="badge bg-secondary"><?php echo e($doc['document_type']); ?></span></td>
+<td><span class="badge bg-secondary"><?php echo e((string)$doc['document_type'] === 'funding_return_proof' ? 'إثبات تسوية الرصيد المتبقي' : $doc['document_type']); ?></span></td>
 <td>
 <div class="fw-semibold"><?php echo e($doc['title']); ?></div>
 <?php if (!empty($doc['uploader_name'])): ?><small class="text-muted">رفع بواسطة: <?php echo e($doc['uploader_name']); ?></small><?php endif; ?>
@@ -1668,7 +1668,7 @@ if (documentSection) documentSection.scrollIntoView({ behavior: 'smooth', block:
 <td>
 <div class="d-flex flex-wrap gap-1">
 <a href="<?php echo APP_URL; ?>modules/projects/serve_project_document.php?id=<?php echo (int)$doc['id']; ?>" class="btn btn-sm btn-outline-primary" target="_blank"><i class="fas fa-eye me-1"></i>عرض</a>
-<?php if ($doc['verification_status'] === 'unverified' && akp_can_edit_section('documents', $id) && !$closed): ?>
+<?php if ($doc['verification_status'] === 'unverified' && $doc['document_type'] !== 'funding_return_proof' && akp_can_edit_section('documents', $id) && !$closed): ?>
 <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editProjectDocumentModal"
 data-document-id="<?php echo (int)$doc['id']; ?>"
 data-document-type="<?php echo e($doc['document_type']); ?>"
