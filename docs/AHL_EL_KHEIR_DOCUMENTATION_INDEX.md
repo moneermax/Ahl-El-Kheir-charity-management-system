@@ -1,0 +1,82 @@
+# Ahl El Kheir — Documentation Index and Governance
+
+Baseline: 2026-10-03
+
+## 1. Canonical documents
+
+1. AHL_EL_KHEIR_SYSTEM_ANALYSIS.md — complete system explanation.
+2. AHL_EL_KHEIR_ARCHITECTURE_AND_DATA_MODEL.md — technical architecture and relationships.
+3. AHL_EL_KHEIR_ROLES_AND_WORKFLOWS.md — role authority and workflows.
+4. AHL_EL_KHEIR_EMPLOYEE_TASKS_AND_USER_GUIDE.md — employee tasks and step-by-step procedures.
+5. AHL_EL_KHEIR_OPERATIONS_SECURITY.md — security, operations and maintenance.
+6. AHL_EL_KHEIR_DOCUMENTATION_INDEX.md — this governance/index document.
+
+## 2. Status/evidence documents
+
+AHL_EL_KHEIR_MASTER_STATUS.md and AHL_EL_KHEIR_MASTER_AUDIT.md remain historical/current-status evidence. They must not contradict the canonical documents.
+
+## 3. Domain references
+
+Projects:
+- PROJECTS_MODULE_AUDIT_AND_REMEDIATION_PLAN.md
+- PROJECTS_RUNTIME_CHECKPOINT_2026-09-26.md
+- PROJECTS_VIEW_RUNTIME_FIXES_2026-09-25.md
+- PROJECT_APPROVAL_NOTIFICATION_WORKFLOW_2026-09-23.md
+- PROJECT_HISTORY_TABLE_FIX_2026-09-25.md
+
+HR/Salary Advance:
+- HR_SALARY_ADVANCE_CONTINUATION.md
+- HR_SALARY_ADVANCE_STAGE5_AUDIT.md
+
+Fina:
+- FINA_SETTLEMENT_PROCESS.md
+- FINA_STANDALONE_PAYMENT_MODEL.md
+
+Accounting:
+- ACCOUNTING_JOURNAL_INTEGRITY_CHECKPOINT_2026-09-15.md
+- AUDIT_SUPERVISOR_ACCOUNTING_INTEGRATION_20260914.md
+
+Cross-cutting:
+- I18N.md
+- PRODUCTION_PREPARATION.md
+- CHATGPT_MASTER_CONTINUATION_PROMPT.md
+- CHATGPT_SESSION_INDEX.md
+
+## 4. Historical support
+
+docs/checkpoints/ contains dated checkpoint material.
+code_artifact.* and images are supporting artifacts.
+
+Historical evidence is retained; later verified state supersedes earlier checkpoint claims.
+
+## 5. Documentation standard
+
+Every durable document should identify:
+- status;
+- baseline/date;
+- scope;
+- authoritative facts;
+- implementation location where useful;
+- verification boundary;
+- known limitations/open work.
+
+Avoid chat narration, duplicated architecture, guessed schema and unverified runtime claims.
+
+## 6. New-developer reading order
+
+README.md
+-> AHL_EL_KHEIR_SYSTEM_ANALYSIS.md
+-> AHL_EL_KHEIR_ARCHITECTURE_AND_DATA_MODEL.md
+-> AHL_EL_KHEIR_ROLES_AND_WORKFLOWS.md
+-> AHL_EL_KHEIR_EMPLOYEE_TASKS_AND_USER_GUIDE.md
+-> relevant domain reference
+-> source/schema/migration
+-> AHL_EL_KHEIR_OPERATIONS_SECURITY.md
+
+## 7. Conflict rule
+
+If documents disagree:
+1. current source/schema wins for implementation facts;
+2. later verified evidence wins over older checkpoint claims;
+3. current business rules win over obsolete proposals;
+4. unresolved contradictions are documented rather than guessed.
