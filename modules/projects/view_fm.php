@@ -662,39 +662,6 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         </div>
     </div>
 
-    <?php if ($controlledBalance > 0.009): ?>
-    <div class="card mb-4 border-warning">
-        <div class="card-header"><strong>الإغلاق المالي للمشروع وإرجاع الرصيد</strong></div>
-        <div class="card-body">
-            <div class="alert alert-warning mb-2">أغلق مدير المشاريع المشروع إدارياً. أصبح هذا المشروع الآن لدى المدير المالي لإتمام الإغلاق المالي. الرصيد المتبقي الذي يجب إرجاعه إلى حسابات المؤسسة: <strong><?php echo number_format($controlledBalance,2); ?> <?php echo e($project['currency_code']?:'SDG'); ?></strong>.</div>
-            <?php if ($closureReason !== ''): ?><div class="alert alert-light border mb-3"><strong>سبب الإرجاع:</strong> <?php echo e($closureReason); ?></div><?php endif; ?><?php if ($closureReturnProof): ?>
-<div class="alert alert-light border mb-3 small">
-    <div class="fw-semibold mb-1"><i class="fas fa-paperclip me-1"></i>إثبات تسوية الرصيد من مشرف المشروع</div>
-    <a target="_blank" href="<?php echo APP_URL; ?>modules/projects/serve_project_document.php?id=<?php echo (int)$closureReturnProof['id']; ?>"><?php echo e($closureReturnProof['original_name'] ?: 'عرض الإثبات'); ?></a>
-    <?php if (!empty($closureReturnProof['uploader_name'])): ?><span class="text-muted"> · رفع بواسطة <?php echo e($closureReturnProof['uploader_name']); ?></span><?php endif; ?>
-</div>
-<?php endif; ?>
-            <div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>حساب المصدر</th><th>المبلغ المفرج</th><th>الإرجاع</th></tr></thead><tbody>
-            <?php foreach($fundings as $f): ?>
-                <?php if(($f['status']??'')==='posted' && !dbFetchOne('SELECT id FROM project_funding_returns WHERE funding_allocation_id=? LIMIT 1',[(int)$f['id']])): ?>
-                <tr>
-                    <td><?php echo e(($f['source_account_code']??$f['source_type']).' · '.($f['source_account_name']??'')); ?></td>
-                    <td><?php echo number_format((float)$f['amount'],2).' '.e($f['currency_code']?:($project['currency_code']?:'SDG')); ?></td>
-                    <td>
-                        <form method="post" class="row g-2 align-items-end">
-                            <?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_return_project_funding"><input type="hidden" name="allocation_id" value="<?php echo (int)$f['id']; ?>">
-                            <div class="col-md-3"><input type="number" name="return_amount" class="form-control form-control-sm bg-body-secondary text-muted border-secondary-subtle" min="0.01" step="0.01" max="<?php echo e((string)$f['amount']); ?>" value="<?php echo e((string)min($controlledBalance,(float)$f['amount'])); ?>" readonly aria-readonly="true" tabindex="-1" title="يُحدد تلقائياً حسب الرصيد المتبقي تحت سيطرة المشروع"></div>
-                            <div class="col-md-3"><input type="date" name="return_date" class="form-control form-control-sm" value="<?php echo date('Y-m-d'); ?>" required></div>
-                            <div class="col-md-4"><button type="button" class="btn btn-sm btn-success w-100 js-confirm-funding-return" data-return-amount="<?php echo e((string)min($controlledBalance,(float)$f['amount'])); ?>" data-source-account="<?php echo e(($f['source_account_code']??$f['source_type']).' · '.($f['source_account_name']??'')); ?>" data-bs-toggle="modal" data-bs-target="#confirmFundingReturnModal">إرجاع الرصيد وإتمام الإغلاق المالي</button></div>
-                        </form>
-                    </td>
-                </tr>
-                <?php endif; ?>
-            <?php endforeach; ?>
-            </tbody></table></div>
-        </div>
-    </div>
-
     <div class="modal fade" id="confirmFundingReturnModal" tabindex="-1" aria-labelledby="confirmFundingReturnModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
