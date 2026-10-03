@@ -944,15 +944,7 @@ ak_transaction_review_notify_event((int)$projectManager['id'], 'طلب إغلا�
 }
 catch (Throwable $notificationError) {}
 $controlledBalance = akp_project_controlled_balance($id);
-if ($controlledBalance > 0.009) {
-try {
-$fmUsers = dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id = r.id WHERE r.code IN ('financial_manager','fm','finance') AND u.is_active = 1");
-foreach ($fmUsers as $fmUser) {
-ak_transaction_review_notify_event((int)$fmUser['id'], 'مشروع بانتظار تسوية الرصيد المتبقي', 'المشروع «' . (string)($project['name'] ?? '') . '» (' . (string)($project['project_code'] ?? '') . ') لديه رصيد متبقٍ تحت سيطرة المشروع بقيمة ' . number_format($controlledBalance, 2) . ' ' . (string)($project['currency_code'] ?? 'SDG') . '. يرجى تنفيذ التسوية المالية قبل الإغلاق.', APP_URL . 'modules/projects/view_fm.php?id=' . $id, $id, 'project_funding_reconciliation');
-}
-} catch (Throwable $notificationError) {}
-}
-$_SESSION['project_toast_success'] = 'تم إرسال طلب إغلاق المشروع إلى مدير المشاريع' . ($controlledBalance > 0.009 ? ' وإبلاغ المدير المالي بوجود رصيد متبقٍ للتسوية.' : '.');
+$_SESSION['project_toast_success'] = 'تم إرسال طلب إغلاق المشروع إلى مدير المشاريع.';
 } elseif ($action === 'request_project_reopen') {
 if ($role !== 'project_supervisor' || !akp_is_primary_supervisor($id)) throw new RuntimeException('طلب إعادة فتح المشروع متاح لمشرف المشروع الأساسي فقط.');
 if (!$closed) throw new RuntimeException('المشروع ليس مغلقاً.');
@@ -1059,8 +1051,20 @@ $executiveUsers = dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id
 foreach ($executiveUsers as $executiveUser) {
 ak_transaction_review_notify_event((int)$executiveUser['id'], 'تم إغلاق مشروع', 'تم إغلاق المشروع «' . (string)($project['name'] ?? '') . '» (' . (string)($project['project_code'] ?? '') . ') بواسطة مدير المشاريع بعد طلب الإغلاق من مشرف المشروع.', APP_URL . 'modules/projects/view.php?id=' . $id, $id, 'project_closed');
 }
-} catch (Throwable $notificationError) {}
-$_SESSION['project_toast_success'] = 'تم إغلاق المشروع وإبلاغ المدير العام ونائبه.';
+}
+$fmUsers = dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id = r.id WHERE r.code IN ('financial_manager','fm','finance') AND u.is_active = 1");
+foreach ($fmUsers as $fmUser) {
+ak_transaction_review_notify_event(
+    (int)$fmUser['id'],
+    'تم إغلاق المشروع',
+    'تم إغلاق المشروع «' . (string)($project['name'] ?? '') . '» (' . (string)($project['project_code'] ?? '') . ') نهائياً بواسطة مدير المشاريع. تم اكتمال الإغلاق ويمكن للمدير المالي متابعة ما يلزم من إجراءات مالية لاحقة.',
+    APP_URL . 'modules/projects/view_fm.php?id=' . $id,
+    $id,
+    'project_closed'
+);
+}
+catch (Throwable $notificationError) {}
+$_SESSION['project_toast_success'] = 'تم إغلاق المشروع وإبلاغ الجهات المعنية.';
 } elseif ($action === 'reopen_project') {
 // ... (Original reopen_project logic preserved exactly)
 if ($role !== 'projects_manager') throw new RuntimeException('إعادة فتح المشروع محصورة بمدير المشاريع بعد طلب مشرف المشروع.');
