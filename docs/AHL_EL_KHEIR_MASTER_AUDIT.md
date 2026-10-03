@@ -2387,3 +2387,13 @@ Evidence recorded:
 The authoritative financial-close completion marker remains the existing `FM_FINANCIAL_CLOSURE` audit event. The UI correction did not introduce a new lifecycle state or accounting mechanism.
 
 **Result: PASS / CLOSED for this Phase 5 closure gate.** Any further Projects work must target a distinct reconciliation, security, workflow, or UX issue rather than reopening this completed gate.
+
+---
+
+## 2026-10-03 — Projects Phase 5 final certification / stale-checkpoint supersession
+
+The remaining PRJ-0015 runtime gates identified earlier in the audit have now been exercised through the final financial-closure boundary. The controlled project reached a zero controlled balance after the single FM funding return, and PM received the final financial-closure-complete notification.
+
+Earlier audit entries that say runtime verification is pending for the PRJ-0015 closure sequence are historical checkpoints and are superseded by the subsequent runtime evidence. They are intentionally retained for audit chronology.
+
+**Final Phase 5 result: PASS / RUNTIME VERIFIED / CLOSED.** Historical project journals remain untouched.
