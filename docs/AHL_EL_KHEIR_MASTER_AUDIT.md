@@ -2369,3 +2369,21 @@ Implementation commit: **e66d0452885a0f3c0270913cda698b0f522723f9**.
 PM closure does not create a journal. FM return continues through `akp_return_project_funding()`. The controlled balance is reduced by the recorded return, and `FM_FINANCIAL_CLOSURE` is the auditable completion event.
 
 **Runtime gate: OPEN / NOT YET VERIFIED.**
+
+
+---
+
+## 2026-10-03 — Projects Phase 5 financial closure acceptance
+
+The controlled PRJ-0015 closure sequence is now runtime-verified through the final PM notification boundary.
+
+Evidence recorded:
+- PM administrative closure completed while 250,000.00 SDG remained controlled.
+- FM returned 250,000.00 SDG through the existing funding-return engine to **1200 — البنك**; the user confirmed the return completed without issue.
+- FM financial closure completed and the PM received **اكتمل الإغلاق المالي للمشروع**, stating that the remaining balance had been returned to the organization's account and the financial-closure cycle had ended.
+- The FM post-close page now presents **إغلاق المشروع المالي**, administrative status **مغلق**, financial status **مغلق مالياً**, and controlled balance **0.00 SDG**, with pending FM review controls hidden.
+- No duplicate return, funding release, or second accounting transaction was created for this gate.
+
+The authoritative financial-close completion marker remains the existing `FM_FINANCIAL_CLOSURE` audit event. The UI correction did not introduce a new lifecycle state or accounting mechanism.
+
+**Result: PASS / CLOSED for this Phase 5 closure gate.** Any further Projects work must target a distinct reconciliation, security, workflow, or UX issue rather than reopening this completed gate.
