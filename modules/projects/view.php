@@ -941,6 +941,19 @@ $projectManagers = dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_i
 foreach ($projectManagers as $projectManager) {
 ak_transaction_review_notify_event((int)$projectManager['id'], 'طلب إغلاق مشروع', 'المشروع «' . (string)($project['name'] ?? '') . '» (' . (string)($project['project_code'] ?? '') . ') لديه طلب إغلاق من مشرف المشروع ويحتاج إجراء مدير المشاريع.', APP_URL . 'modules/projects/view.php?id=' . $id, $closureRequestHistoryId ?: $id, 'project_closure_request');
 }
+if ($closureControlledBalance > 0.009) {
+    $financialManagers = dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id = r.id WHERE r.code IN ('financial_manager','fm','finance') AND u.is_active = 1");
+    foreach ($financialManagers as $financialManager) {
+        ak_transaction_review_notify_event(
+            (int)$financialManager['id'],
+            'طلب تسوية رصيد مشروع',
+            'المشروع «' . (string)($project['name'] ?? '') . '» (' . (string)($project['project_code'] ?? '') . ') لديه رصيد متبقٍ تحت سيطرة المشروع قدره ' . number_format($closureControlledBalance, 2) . ' ' . (string)($project['currency_code'] ?: 'SDG') . '. يرجى تسجيل إرجاع الرصيد إلى حساب المؤسسة قبل الإغلاق النهائي.',
+            APP_URL . 'modules/projects/view_fm.php?id=' . $id,
+            $closureRequestHistoryId ?: $id,
+            'project_funding_return_request'
+        );
+    }
+}
 }
 catch (Throwable $notificationError) {}
 $controlledBalance = akp_project_controlled_balance($id);
@@ -2329,7 +2342,7 @@ document.getElementById('edit-milestone-description').value = button.dataset.mil
 <strong>لا يمكن تنفيذ الإغلاق النهائي حالياً.</strong>
 <?php if ($closureControlledBalanceView > 0.009): ?>
 <div class="mt-1">الرصيد المتبقي تحت سيطرة المشروع: <strong><?php echo number_format($closureControlledBalanceView, 2); ?> <?php echo e($project['currency_code'] ?: 'SDG'); ?></strong>.</div>
-<div>يجب على المدير المالي تسجيل تسوية هذا الرصيد أولاً.</div>
+<div>تم إرسال طلب تسوية هذا الرصيد إلى المدير المالي. يجب على المدير المالي تسجيل إرجاع الرصيد إلى حساب المؤسسة أولاً، وبعد وصول الرصيد تحت سيطرة المشروع إلى صفر يمكن لمدير المشاريع تنفيذ الإغلاق النهائي.</div>
 <?php endif; ?>
 <?php if ($pendingClosureExpensesView > 0): ?>
 <div class="mt-1">توجد <strong><?php echo $pendingClosureExpensesView; ?></strong> مصروفات غير مرحلة يجب استكمالها أولاً.</div>
