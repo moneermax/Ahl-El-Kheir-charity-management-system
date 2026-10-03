@@ -2037,6 +2037,7 @@ document.getElementById('edit-milestone-description').value = button.dataset.mil
 </div>
 </div>
 </div>
+<?php endif; ?>
 <div class="row g-4 project-closure-section">
 <div class="col-12">
 <div class="card mb-4 fade-in border-0 shadow-sm overflow-hidden project-closure-card">
