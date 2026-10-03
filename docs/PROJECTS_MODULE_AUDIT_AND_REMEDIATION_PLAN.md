@@ -891,3 +891,25 @@ There is **no FM notification at the PS request stage**, and no second accountin
 5. As FM, verify the 250,000.00 SDG balance and PS proof, then record the return to the organization account. Verify the balanced return journal and controlled balance becomes zero.
 6. Verify 'FM_FINANCIAL_CLOSURE' is recorded exactly once and **PM** receives the completion notification.
 7. Verify PS is not re-notified and no second funding-release journal is created.
+
+
+---
+
+## 2026-10-03 — Phase 5 financial closure runtime gate PASSED
+
+Controlled fixture **PRJ-0015 — PH5 Full Accounting Reconciliation Test** has now passed the Phase 5 administrative-to-financial closure acceptance gate in local runtime.
+
+Verified from the user's local XAMPP/browser evidence:
+- PM completed administrative closure while **250,000.00 SDG** remained under project control.
+- The project was handed to FM for financial closure; the PM received the final **financial-closure-complete** notification after FM completion.
+- FM returned the remaining **250,000.00 SDG** through the existing funding-return workflow to **1200 — البنك**.
+- The user confirmed the return posted correctly with no issues.
+- PM notification displayed **اكتمل الإغلاق المالي للمشروع** and stated that the remaining balance had been returned to the organization's account and the financial closure cycle had ended.
+- The FM post-close presentation was corrected so a financially closed project is shown as **إغلاق المشروع المالي**, with administrative status **مغلق**, financial status **مغلق مالياً**, and controlled balance **0.00 SDG**; normal pending FM review controls are hidden after completion.
+- No second return, funding release, or accounting transaction was created for this acceptance gate.
+
+The PM notification is the runtime evidence that the final notification boundary was reached. The existing `FM_FINANCIAL_CLOSURE` audit event remains the authoritative completion marker; the UI change does not introduce a new lifecycle state or accounting mechanism.
+
+**Status: PASS / CLOSED for this Phase 5 closure gate.** Do not repeat the return or recreate PRJ-0015 merely to re-test the same acceptance path.
+
+**Next Projects work:** proceed to the next distinct Phase 5 reconciliation/audit item only after reviewing the current repository/docs; do not reopen the completed closure gate without genuine regression evidence.
