@@ -573,7 +573,13 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         <div class="card-header"><strong>تسوية الرصيد المتبقي تحت سيطرة المشروع</strong></div>
         <div class="card-body">
             <div class="alert alert-warning mb-2">طلب مشرف المشروع الإغلاق قائم. الرصيد المتبقي الذي يجب إرجاعه إلى حسابات المؤسسة: <strong><?php echo number_format($controlledBalance,2); ?> <?php echo e($project['currency_code']?:'SDG'); ?></strong>.</div>
-            <?php if ($closureReason !== ''): ?><div class="alert alert-light border mb-3"><strong>سبب الإرجاع:</strong> <?php echo e($closureReason); ?></div><?php endif; ?>
+            <?php if ($closureReason !== ''): ?><div class="alert alert-light border mb-3"><strong>سبب الإرجاع:</strong> <?php echo e($closureReason); ?></div><?php endif; ?><?php if ($closureReturnProof): ?>
+<div class="alert alert-light border mb-3 small">
+    <div class="fw-semibold mb-1"><i class="fas fa-paperclip me-1"></i>إثبات تسوية الرصيد من مشرف المشروع</div>
+    <a target="_blank" href="<?php echo APP_URL; ?>modules/projects/serve_project_document.php?id=<?php echo (int)$closureReturnProof['id']; ?>"><?php echo e($closureReturnProof['original_name'] ?: 'عرض الإثبات'); ?></a>
+    <?php if (!empty($closureReturnProof['uploader_name'])): ?><span class="text-muted"> · رفع بواسطة <?php echo e($closureReturnProof['uploader_name']); ?></span><?php endif; ?>
+</div>
+<?php endif; ?>
             <div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>حساب المصدر</th><th>المبلغ المفرج</th><th>الإرجاع</th></tr></thead><tbody>
             <?php foreach($fundings as $f): ?>
                 <?php if(($f['status']??'')==='posted' && !dbFetchOne('SELECT id FROM project_funding_returns WHERE funding_allocation_id=? LIMIT 1',[(int)$f['id']])): ?>
