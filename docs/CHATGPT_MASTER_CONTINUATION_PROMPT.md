@@ -1279,3 +1279,64 @@ Select only the first gate that the documentation proves is still open. Do not c
 - Update all four master docs after every meaningful Projects milestone and record the exact resulting commit SHA.
 - Do not mark Projects Phase 5 closed until all required runtime gates are actually evidenced.
 \n## Current 2026-10-03 Projects Phase 5 continuation checkpoint — execution-expense boundary\n\nThe current `main` repository has now been source-scanned for the next post-PS runtime gate. The correct expense model is:\n\n1. FM financial approval releases project funding once.\n2. After PM launch, the assigned PS uses `add_ps_expense` for actual execution spending from that already-released controlled balance.\n3. That PS path records a posted `project_expenses` row and audit event but intentionally creates no second treasury journal.\n4. The older `draft → submitted → approved → post_expense` accounting workflow remains available only for projects without released funding; the server rejects `post_expense` once posted project funding exists.\n5. `akp_project_totals()` calculates posted expenses from `project_expenses.status='posted'` and residual as total funded minus total expensed.\n\n### Runtime gate now open\nUse PRJ-0015 without recreating it. Record one controlled PS execution expense and verify exactly one expense effect: funding stays 300,000.00 SDG, posted expense increases by the test amount, residual decreases by the same amount, and no second funding-release/treasury journal appears. This is **runtime pending** until local XAMPP/browser evidence is supplied.\n\nDo not repeat PM submission, FM release, GM approval/reversal, FM final confirmation, PM launch, PS notification/access, or post-final-confirmation mutation-lock tests unless concrete regression evidence appears.\n
+
+# LATEST CONTINUATION PROMPT — 2026-10-03 — Projects Phase 5 after execution-expense runtime PASS
+
+Continue the existing Ahl El Kheir Charity Management System directly on **main**. Do not rebuild, create a branch, or repeat closed gates.
+
+Read first:
+1. docs/CHATGPT_SESSION_INDEX.md
+2. docs/AHL_EL_KHEIR_MASTER_STATUS.md
+3. docs/AHL_EL_KHEIR_MASTER_AUDIT.md
+4. docs/CHATGPT_MASTER_CONTINUATION_PROMPT.md
+5. docs/PROJECTS_MODULE_AUDIT_AND_REMEDIATION_PLAN.md
+
+Controlled fixture: **PRJ-0015 — PH5 Full Accounting Reconciliation Test**. Preserve it.
+
+## Closed Projects Phase 5 runtime gates
+
+The following are already runtime verified and must not be repeated without concrete regression evidence:
+- PM submission;
+- FM financial approval/funding release;
+- GM approval with no second release;
+- GM rejection/reversal and FM re-approval;
+- FM correction/void before final confirmation;
+- FM final payment-document confirmation;
+- PM launch;
+- PS notification timing;
+- PS role/access boundary;
+- post-final-confirmation mutation lock;
+- PS execution-expense reconciliation.
+
+## Latest runtime evidence — PS execution expense
+
+The assigned Project Supervisor recorded a 50,000.00 SDG execution payment on PRJ-0015.
+
+Observed application result:
+- approved budget: 300,000.00 SDG;
+- total recorded expenses: 50,000.00 SDG;
+- remaining budget: 250,000.00 SDG.
+
+This exactly reconciles as 300,000.00 - 50,000.00 = 250,000.00 SDG.
+
+The source-defined model remains authoritative: the PS execution expense consumes the already-released project-controlled balance and is not a second organizational treasury-release journal.
+
+**Gate status: PASS / CLOSED.**
+
+## Next action
+
+Do a source-driven scan of the current Projects master audit and repository to identify the **first genuinely open runtime gate after execution expense**. Do not guess and do not repeat completed gates.
+
+Candidate areas include controlled funding reconciliation/return and closure/reopen certification, but select only the first gate that the current documentation and source prove is still open.
+
+Before changing code:
+- inspect current source/schema/docs;
+- make the smallest root-cause change only if a concrete defect exists;
+- preserve PRJ-0015;
+- no runtime DDL;
+- no triggers/views/stored procedures/functions/events;
+- procedural PHP only;
+- no destructive Git commands;
+- do not create branches.
+
+After a meaningful verified milestone, update all four master documents and record the exact resulting commit SHA.
