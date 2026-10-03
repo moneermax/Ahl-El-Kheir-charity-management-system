@@ -1848,3 +1848,18 @@ This matches the source-defined PS execution-expense model: spending is recorded
 **Result: PASS / RUNTIME VERIFIED.**
 
 The next genuinely open Projects runtime gate must now be identified from the current master audit; do not repeat completed workflow gates.
+
+
+---
+
+Projects checkpoint — 2026-10-03
+
+PS status-control root cause was identified from the fresh database backup. PRJ-0015 is project id 15 and has active primary supervisor assignment id 14 to user 34 (`ps1`), who is a `project_supervisor`. The primary-supervisor authorization path therefore grants operations access without requiring a `project_team` operations row.
+
+The missing PS status option was a UI exposure defect on `modules/projects/view.php`: the existing `change_status` server-side action supported `under_review`, `completed`, and `cancelled`, but the project-detail page had no form exposing it. A narrow PS-only selector was added; server-side authorization was not weakened.
+
+Latest implementation commit: `0de84d5bd0b3c42e5b113499f551a96347b3f179`.
+
+Runtime gate: PENDING until user pulls and verifies the PRJ-0015 detail-page selector. Do not repeat completed Projects Phase 5 gates.
+
+Next open financial task: implement/verify return of the remaining controlled funding amount when PS execution does not fully consume the approved/released project budget, using the existing FM/accounting return mechanism and full reconciliation/audit evidence.
