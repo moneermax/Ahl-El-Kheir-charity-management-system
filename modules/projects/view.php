@@ -109,7 +109,10 @@ $history[] = [
 }
 usort($history, static function ($a, $b) { return strcmp((string)($b['created_at'] ?? ''), (string)($a['created_at'] ?? '')); });
 $history = array_slice($history, 0, 20);
-$closureRequest = dbFetchOne("SELECT h.*, u.full_name AS requester_name FROM project_status_history h LEFT JOIN users u ON u.id = h.changed_by WHERE h.project_id = ? AND h.new_status IN ('closure_requested', 'reopen_requested') ORDER BY h.id DESC LIMIT 1", [$id]);
+$latestProjectStatusEvent = dbFetchOne("SELECT h.*, u.full_name AS requester_name FROM project_status_history h LEFT JOIN users u ON u.id = h.changed_by WHERE h.project_id = ? ORDER BY h.id DESC LIMIT 1", [$id]);
+$closureRequest = ($latestProjectStatusEvent && in_array((string)$latestProjectStatusEvent['new_status'], ['closure_requested', 'reopen_requested'], true))
+    ? $latestProjectStatusEvent
+    : null;
 $closed = akp_project_is_closed($id);
 $role = akp_role();
 $approval = dbFetchOne('SELECT * FROM project_approval WHERE project_id = ?', [$id]) ?: ['approval_status' => 'approved'];
