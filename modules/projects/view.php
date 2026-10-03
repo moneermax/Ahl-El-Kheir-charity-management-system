@@ -2053,7 +2053,6 @@ document.getElementById('edit-milestone-description').value = button.dataset.mil
 </div>
 <?php else: ?>
 <form method="post" enctype="multipart/form-data">
-<input type="hidden" name="action" value="request_project_closure">
 <?php echo csrf_field(); ?>
 <label class="form-label small fw-semibold">ملاحظات ومبررات الطلب <span class="text-danger">*</span></label>
 <textarea name="closure_request_reason" class="form-control mb-3" rows="3" placeholder="اكتب ملاحظات إتمام المشروع أو أسباب طلب الإغلاق..." required></textarea>
@@ -2096,7 +2095,7 @@ document.getElementById('edit-milestone-description').value = button.dataset.mil
 <?php endif; ?>
 </div>
 <?php endif; ?>
-<button class="btn btn-dark px-4"><i class="fas fa-paper-plane me-1"></i>إرسال طلب الإغلاق</button>
+<button type="submit" name="action" value="request_project_closure" class="btn btn-dark px-4"><i class="fas fa-paper-plane me-1"></i>إرسال طلب الإغلاق</button>
 </form>
 <?php endif; ?>
 </div>
