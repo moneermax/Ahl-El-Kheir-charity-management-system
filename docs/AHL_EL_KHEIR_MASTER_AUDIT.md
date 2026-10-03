@@ -2220,3 +2220,34 @@ Implementation commits: `bd31a974193a12b19324216f6e647b70789d06c8`, refined by `
 Runtime verification remains pending: pull the final commit and confirm PS1 can see the status selector on PRJ-0015 detail page and select `under_review` without changing the project yet unless intentionally testing that transition.
 
 Next financial task explicitly parked as the next Projects reconciliation item: return the remaining controlled amount of an approved/released project budget when the PS does not fully consume it. The return must use the existing FM/accounting funding-return path, reconcile the controlled balance to zero, preserve journal/audit evidence, and must not create a second funding release.
+
+## 2026-10-03 — Projects closure proof UX and final-close guard
+
+A source-driven review of the closure flow addressed two concrete UX defects without weakening the accounting controls.
+
+### Closure proof field
+The Project Supervisor closure form now uses one unified return_proof field:
+- an existing funding-return proof is displayed with its current filename and authenticated view link;
+- the same file chooser can optionally replace that proof when the next closure request is submitted;
+- leaving the chooser empty preserves the existing proof;
+- replacement updates the existing project_documents row instead of creating a duplicate;
+- the original physical file is removed only after the database update succeeds;
+- replacement remains restricted to an unverified proof before a pending closure request exists;
+- audit action is UPLOAD for the first proof and UPDATE for a replacement.
+
+The separate replace_funding_return_proof action/form was removed. Browser security is respected: the existing local file path is not inserted into the file input; the current file is shown beside the same chooser instead.
+
+Implementation commits:
+- be3ee1768f4834db48b5d0d4e299da776637c94d
+- b86ff01bd045607c889d031190f97af13efa280d (latest main)
+
+### Final-close guard
+The PM final-close UI now calculates the same authoritative controlled balance and pending-expense conditions used by the server-side close_project action.
+
+When closure is not currently permissible, the final-close button is visibly disabled and the reason is displayed. For PRJ-0015 at the current documented checkpoint, the controlled balance is 250,000.00 SDG, so final closure must remain blocked until the Financial Manager records the funding reconciliation/return.
+
+The server-side balance check remains authoritative; this is a visibility/UX correction, not a relaxation of the closure rule.
+
+Runtime status: code/source change completed; local XAMPP/browser verification of unified proof replacement/preservation and the visible final-close blocking state is still required. Do not mark this UI/runtime gate closed until the user supplies that evidence.
+
+Next runtime action: on PRJ-0015, verify the PS closure form preserves the current proof when no new file is selected, replaces it through the same field when a new file is selected, and does not create a duplicate document. Then verify the PM closure card clearly shows the 250,000.00 SDG blocking balance and a disabled final-close button. After FM settlement, verify the guard clears and final closure can proceed subject to the remaining closure checks.
