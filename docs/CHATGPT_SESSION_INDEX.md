@@ -1607,3 +1607,18 @@ PRJ-0015 execution-expense reconciliation is now runtime verified. The assigned 
 Status: **PASS / CLOSED**.
 
 Continue with the first genuinely open Projects runtime gate identified by the master audit. Do not repeat the already-closed PM/FM/GM/final-confirmation/launch/PS-access or execution-expense gates without regression evidence.
+
+
+---
+
+2026-10-03 Projects checkpoint — PS status control
+
+Investigated the reported missing `under_review` option scientifically using the fresh `database/ahl_el_kheir.sql` backup committed to `main`. PRJ-0015 (id 15) has active primary supervisor assignment id 14 to user 34 (`ps1`); the users dump confirms user 34 has role `project_supervisor`. `project_team` has no operations row for this user, but that is not required because `akp_is_primary_supervisor()` is an OR path in `akp_can_edit_section('operations', ...)`.
+
+Root cause: `modules/projects/view.php` contained the server-side `change_status` handler but did not expose a status form on the project-detail page. The portfolio page had one, causing the earlier source/UI mismatch.
+
+Fix committed on `main`: `0de84d5bd0b3c42e5b113499f551a96347b3f179`.
+
+Immediate runtime gate: pull and verify the PS detail page for PRJ-0015 shows the status selector. Do not alter PRJ-0015 status unless intentionally running the targeted transition test.
+
+Next task after this gate: remaining-budget/funding return when PS consumes less than the approved/released budget; inspect and implement the existing FM/accounting return path, then runtime-reconcile controlled balance and journal/audit evidence.
