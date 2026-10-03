@@ -1050,6 +1050,7 @@ if ($projectDocumentSuccess && !$projectToastSuccess) $projectToastSuccess = $pr
 unset($_SESSION['project_toast_success'], $_SESSION['project_expense_success'], $_SESSION['project_document_success']);
 $badge = ['planned'=>'bg-secondary','active'=>'bg-success','completed'=>'bg-info','under_review'=>'bg-warning text-dark','closed'=>'bg-dark','reopened'=>'bg-primary','cancelled'=>'bg-danger'][$status] ?? 'bg-secondary';
 $varianceClass = $totals['variance'] > 0 ? 'text-danger' : 'text-success';
+$existingFundingReturnProof = dbFetchOne("SELECT d.*, u.full_name AS uploader_name FROM project_documents d LEFT JOIN users u ON u.id = d.uploaded_by WHERE d.project_id = ? AND d.document_type = 'funding_return_proof' ORDER BY d.id DESC LIMIT 1", [$id]);
 include dirname(__DIR__, 2) . '/includes/header.php';
 ?>
 <link rel="stylesheet" href="<?php echo e(APP_URL . 'assets/css/projects-ui.css'); ?>">
@@ -1993,9 +1994,24 @@ document.getElementById('edit-milestone-description').value = button.dataset.mil
 <div class="mt-1">يمكنك إرفاق إثبات تسوية هذا الرصيد إلى حساب المؤسسة مع طلب الإغلاق. سيقوم المدير المالي بمراجعة التسوية وتسجيلها محاسبياً.</div>
 </div>
 <div class="mb-3">
+<?php if ($existingFundingReturnProof): ?>
+<div class="alert alert-success border small mb-0">
+<div class="fw-semibold mb-1"><i class="fas fa-file-circle-check me-1"></i>إثبات تسوية الرصيد المتبقي مرفق مسبقاً</div>
+<div>تم إرفاق الإثبات من قبل مشرف المشروع، ولن تحتاج إلى رفعه مرة أخرى عند إعادة إرسال طلب الإغلاق.</div>
+<div class="mt-2 d-flex flex-wrap align-items-center gap-2">
+<a href="<?php echo APP_URL; ?>modules/projects/serve_project_document.php?id=<?php echo (int)$existingFundingReturnProof['id']; ?>" class="btn btn-sm btn-outline-primary" target="_blank">
+<i class="fas fa-eye me-1"></i>عرض الإثبات
+</a>
+<?php if (!empty($existingFundingReturnProof['uploader_name'])): ?>
+<span class="text-muted">رفع بواسطة: <?php echo e($existingFundingReturnProof['uploader_name']); ?></span>
+<?php endif; ?>
+</div>
+</div>
+<?php else: ?>
 <label class="form-label small fw-semibold">إثبات تسوية الرصيد المتبقي <span class="text-muted">(اختياري)</span></label>
 <input type="file" name="return_proof" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
 <div class="form-text">PDF أو JPG أو PNG — بحد أقصى 10 ميجابايت.</div>
+<?php endif; ?>
 </div>
 <?php endif; ?>
 <button class="btn btn-dark px-4"><i class="fas fa-paper-plane me-1"></i>إرسال طلب الإغلاق</button>
