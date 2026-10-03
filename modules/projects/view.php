@@ -1050,7 +1050,21 @@ if ($projectDocumentSuccess && !$projectToastSuccess) $projectToastSuccess = $pr
 unset($_SESSION['project_toast_success'], $_SESSION['project_expense_success'], $_SESSION['project_document_success']);
 $badge = ['planned'=>'bg-secondary','active'=>'bg-success','completed'=>'bg-info','under_review'=>'bg-warning text-dark','closed'=>'bg-dark','reopened'=>'bg-primary','cancelled'=>'bg-danger'][$status] ?? 'bg-secondary';
 $varianceClass = $totals['variance'] > 0 ? 'text-danger' : 'text-success';
-$existingFundingReturnProof = dbFetchOne("SELECT d.*, u.full_name AS uploader_name FROM project_documents d LEFT JOIN users u ON u.id = d.uploaded_by WHERE d.project_id = ? AND d.document_type = 'funding_return_proof' ORDER BY d.id DESC LIMIT 1", [$id]);
+$existingFundingReturnProof = dbFetchOne(
+    "SELECT d.*, u.full_name AS uploader_name
+     FROM project_documents d
+     LEFT JOIN users u ON u.id = d.uploaded_by
+     WHERE d.project_id = ?
+       AND (
+           d.document_type = 'funding_return_proof'
+           OR d.title = 'إثبات تسوية الرصيد المتبقي'
+       )
+     ORDER BY
+       CASE WHEN d.document_type = 'funding_return_proof' THEN 0 ELSE 1 END,
+       d.id DESC
+     LIMIT 1",
+    [$id]
+);
 include dirname(__DIR__, 2) . '/includes/header.php';
 ?>
 <link rel="stylesheet" href="<?php echo e(APP_URL . 'assets/css/projects-ui.css'); ?>">
