@@ -1051,7 +1051,6 @@ $executiveUsers = dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id
 foreach ($executiveUsers as $executiveUser) {
 ak_transaction_review_notify_event((int)$executiveUser['id'], 'تم إغلاق مشروع', 'تم إغلاق المشروع «' . (string)($project['name'] ?? '') . '» (' . (string)($project['project_code'] ?? '') . ') بواسطة مدير المشاريع بعد طلب الإغلاق من مشرف المشروع.', APP_URL . 'modules/projects/view.php?id=' . $id, $id, 'project_closed');
 }
-}
 $fmUsers = dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id = r.id WHERE r.code IN ('financial_manager','fm','finance') AND u.is_active = 1");
 foreach ($fmUsers as $fmUser) {
 ak_transaction_review_notify_event(
@@ -1063,7 +1062,7 @@ ak_transaction_review_notify_event(
     'project_closed'
 );
 }
-catch (Throwable $notificationError) {}
+} catch (Throwable $notificationError) {}
 $_SESSION['project_toast_success'] = 'تم إغلاق المشروع وإبلاغ الجهات المعنية.';
 } elseif ($action === 'reopen_project') {
 // ... (Original reopen_project logic preserved exactly)
