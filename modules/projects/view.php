@@ -1006,8 +1006,8 @@ width: 24%;
 <input type="hidden" name="action" value="change_status">
 <label for="projectStatusControl" class="small fw-semibold mb-0">حالة المشروع</label>
 <select id="projectStatusControl" name="new_status" class="form-select form-select-sm" style="min-width:180px" onchange="this.form.submit()" aria-label="تغيير حالة المشروع">
-<?php foreach (['planned'=>'projects.planned','active'=>'projects.active','under_review'=>'projects.under_review','completed'=>'projects.completed','cancelled'=>'projects.cancelled'] as $key => $labelKey): ?>
-<option value="<?php echo $key; ?>" <?php echo $status === $key ? 'selected' : ''; ?> <?php echo in_array($key, ['planned','active'], true) ? 'disabled' : ''; ?>><?php echo e(t($labelKey)); ?></option>
+<?php foreach (['planned','active','under_review','completed','cancelled'] as $key): ?>
+<option value="<?php echo $key; ?>" <?php echo $status === $key ? 'selected' : ''; ?> <?php echo in_array($key, ['planned','active'], true) ? 'disabled' : ''; ?>><?php echo e(akp_status_label($key)); ?></option>
 <?php endforeach; ?>
 </select>
 </form>
