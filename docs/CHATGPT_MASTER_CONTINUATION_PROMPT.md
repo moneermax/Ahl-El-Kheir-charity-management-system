@@ -1340,3 +1340,12 @@ Before changing code:
 - do not create branches.
 
 After a meaningful verified milestone, update all four master documents and record the exact resulting commit SHA.
+
+
+---
+
+Projects continuation checkpoint — 2026-10-03
+
+When continuing Projects work, do not repeat completed Phase 5 gates. The fresh database backup in `database/ahl_el_kheir.sql` is now authoritative for the current test-data snapshot. PRJ-0015 has active primary supervisor assignment id 14 to user 34 (`ps1`), and user 34 is a `project_supervisor`. The missing PS status option was a detail-page UI exposure issue, not a missing authorization grant: `modules/projects/view.php` already had the protected `change_status` action, while its UI form was absent. The narrow fix is commit `0de84d5bd0b3c42e5b113499f551a96347b3f179`.
+
+Runtime verification is still pending for that exact UI fix. After verification, the next Projects task is the financial reconciliation case where the PS does not consume the entire approved/released budget: return the remaining controlled amount through the existing FM/accounting funding-return workflow, ensure the controlled balance reaches zero, and verify the resulting journal, return record, audit trail, and closure-readiness behavior. Do not invent a new accounting mechanism if the existing funding-return path can be extended correctly.
