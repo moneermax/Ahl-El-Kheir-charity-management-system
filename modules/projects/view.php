@@ -626,6 +626,9 @@ if ($role !== 'project_supervisor' || !akp_can_edit_section('documents', $id) ||
 $documentId = (int)($_POST['document_id'] ?? 0);
 $doc = dbFetchOne('SELECT * FROM project_documents WHERE id = ? AND project_id = ? AND document_type <> \'receipt\'', [$documentId, $id]);
 if (!$doc || $doc['verification_status'] !== 'unverified') throw new RuntimeException('لا يمكن تعديل الوثيقة بعد التحقق منها.');
+if ((string)($doc['document_type'] ?? '') === 'funding_return_proof' && dbFetchOne("SELECT id FROM project_status_history WHERE project_id=? AND new_status='closure_requested' ORDER BY id DESC LIMIT 1", [$id])) {
+throw new RuntimeException('لا يمكن تعديل إثبات تسوية الرصيد بعد إرسال طلب الإغلاق.');
+}
 $documentType = akp_post_value('document_type', 'other');
 $allowedTypes = ['invoice','certificate','government_fee','permit','contract','quotation','progress_report','closure_report','other'];
 if (!in_array($documentType, $allowedTypes, true)) throw new RuntimeException('نوع الوثيقة غير صالح.');
@@ -662,6 +665,9 @@ if ($role !== 'project_supervisor' || !akp_can_edit_section('documents', $id) ||
 $documentId = (int)($_POST['document_id'] ?? 0);
 $doc = dbFetchOne('SELECT * FROM project_documents WHERE id = ? AND project_id = ? AND document_type <> \'receipt\'', [$documentId, $id]);
 if (!$doc || $doc['verification_status'] !== 'unverified') throw new RuntimeException('لا يمكن حذف الوثيقة بعد التحقق منها.');
+if ((string)($doc['document_type'] ?? '') === 'funding_return_proof' && dbFetchOne("SELECT id FROM project_status_history WHERE project_id=? AND new_status='closure_requested' ORDER BY id DESC LIMIT 1", [$id])) {
+throw new RuntimeException('لا يمكن حذف إثبات تسوية الرصيد بعد إرسال طلب الإغلاق.');
+}
 $linked = dbFetchOne('SELECT id FROM project_expenses WHERE project_id = ? AND primary_document_id = ? LIMIT 1', [$id, $documentId]);
 if ($linked) throw new RuntimeException('لا يمكن حذف وثيقة مرتبطة بمصروف.');
 dbExecute('DELETE FROM project_documents WHERE id = ? AND project_id = ? AND document_type <> \'receipt\' AND verification_status = \'unverified\'', [$documentId, $id]);
@@ -821,6 +827,24 @@ $currentLifecycleStatus = (string)($project['lifecycle_status'] ?: $project['sta
 if (!in_array($currentLifecycleStatus, ['active', 'reopened', 'under_review'], true)) {
 throw new RuntimeException('لا يمكن طلب إغلاق المشروع من حالته الحالية.');
 }
+$closureControlledBalance = akp_project_controlled_balance($id);
+$returnProofStoredAbsolutePath = null;
+$returnProofRelativePath = null;
+if ($closureControlledBalance > 0.009 && !empty($_FILES['return_proof']['name'])) {
+$file = $_FILES['return_proof'];
+if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) throw new RuntimeException('فشل في رفع إثبات تسوية الرصيد المتبقي.');
+if ((int)($file['size'] ?? 0) > 10 * 1024 * 1024) throw new RuntimeException('حجم إثبات تسوية الرصيد المتبقي يجب ألا يتجاوز 10 ميجابايت.');
+$mime = mime_content_type($file['tmp_name']);
+$allowedProofTypes = ['application/pdf'=>'pdf','image/jpeg'=>'jpg','image/png'=>'png'];
+if (!isset($allowedProofTypes[$mime])) throw new RuntimeException('نوع إثبات التسوية غير مسموح. استخدم PDF أو JPG أو PNG.');
+$relativeDir = 'storage/documents/projects/' . $id;
+$absoluteDir = dirname(__DIR__, 2) . '/' . $relativeDir;
+if (!is_dir($absoluteDir) && !mkdir($absoluteDir, 0750, true)) throw new RuntimeException('تعذر إنشاء مجلد إثبات التسوية.');
+$stored = bin2hex(random_bytes(16)) . '.' . $allowedProofTypes[$mime];
+$returnProofStoredAbsolutePath = $absoluteDir . '/' . $stored;
+if (!move_uploaded_file($file['tmp_name'], $returnProofStoredAbsolutePath)) throw new RuntimeException('تعذر حفظ إثبات تسوية الرصيد المتبقي.');
+$returnProofRelativePath = $relativeDir . '/' . $stored;
+}
 dbExecute('START TRANSACTION');
 try {
 $lockedLifecycle = dbFetchOne('SELECT lifecycle_status FROM project_lifecycle WHERE project_id = ? FOR UPDATE', [$id]);
@@ -833,10 +857,20 @@ dbExecute("UPDATE project_lifecycle SET lifecycle_status = 'under_review' WHERE 
 }
 dbExecute("INSERT INTO project_status_history (project_id, old_status, new_status, reason, changed_by) VALUES (?, ?, 'under_review', ?, ?)", [$id, $lockedStatus, 'طلب إغلاق من مشرف المشروع: ' . $reason, akp_user_id()]);
 dbExecute("INSERT INTO project_status_history (project_id, old_status, new_status, reason, changed_by) VALUES (?, 'under_review', 'closure_requested', ?, ?)", [$id, 'طلب إغلاق من مشرف المشروع: ' . $reason, akp_user_id()]);
+if ($returnProofRelativePath) {
+dbExecute(
+'INSERT INTO project_documents (project_id, document_type, title, file_path, original_name, mime_type, file_size, document_date, issuer, reference_number, amount, currency_code, notes, uploaded_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+[$id, 'funding_return_proof', 'إثبات تسوية الرصيد المتبقي', $returnProofRelativePath, $file['name'], $mime, $file['size'], date('Y-m-d'), 'مشرف المشروع', null, $closureControlledBalance, $project['currency_code'] ?: 'SDG', 'مرفق مع طلب إغلاق المشروع لإثبات تسوية الرصيد المتبقي تحت سيطرة المشروع.', akp_user_id()]
+);
+}
 dbExecute('COMMIT');
 } catch (Throwable $e) {
 dbExecute('ROLLBACK');
+if ($returnProofStoredAbsolutePath && is_file($returnProofStoredAbsolutePath)) @unlink($returnProofStoredAbsolutePath);
 throw $e;
+}
+if ($returnProofRelativePath) {
+akp_audit('UPLOAD', 'project_document', (int)dbFetchOne("SELECT id FROM project_documents WHERE project_id=? AND document_type='funding_return_proof' ORDER BY id DESC LIMIT 1")['id'], null, ['project_id'=>$id,'document_type'=>'funding_return_proof','amount'=>$closureControlledBalance,'uploaded_by_role'=>'project_supervisor']);
 }
 akp_audit('REQUEST_CLOSE', 'project_lifecycle', $id, ['status' => $project['lifecycle_status'] ?: $project['status']], ['status' => 'closure_requested', 'reason' => $reason]);
 try {
@@ -1875,11 +1909,24 @@ document.getElementById('edit-milestone-description').value = button.dataset.mil
 <div><strong>الطلب قيد المراجعة.</strong><br>تم إرسال طلب الإغلاق إلى مدير المشاريع.</div>
 </div>
 <?php else: ?>
-<form method="post">
+<form method="post" enctype="multipart/form-data">
 <input type="hidden" name="action" value="request_project_closure">
 <?php echo csrf_field(); ?>
 <label class="form-label small fw-semibold">ملاحظات ومبررات الطلب <span class="text-danger">*</span></label>
 <textarea name="closure_request_reason" class="form-control mb-3" rows="3" placeholder="اكتب ملاحظات إتمام المشروع أو أسباب طلب الإغلاق..." required></textarea>
+<?php $closureRequestBalance = akp_project_controlled_balance($id); ?>
+<?php if ($closureRequestBalance > 0.009): ?>
+<div class="alert alert-warning border small mb-3">
+<div class="fw-semibold mb-1"><i class="fas fa-coins me-1"></i>يوجد رصيد متبقٍ تحت سيطرة المشروع</div>
+<div>الرصيد المتبقي: <strong><?php echo number_format($closureRequestBalance, 2); ?> <?php echo e($project['currency_code'] ?: 'SDG'); ?></strong>.</div>
+<div class="mt-1">يمكنك إرفاق إثبات تسوية هذا الرصيد إلى حساب المؤسسة مع طلب الإغلاق. سيقوم المدير المالي بمراجعة التسوية وتسجيلها محاسبياً.</div>
+</div>
+<div class="mb-3">
+<label class="form-label small fw-semibold">إثبات تسوية الرصيد المتبقي <span class="text-muted">(اختياري)</span></label>
+<input type="file" name="return_proof" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
+<div class="form-text">PDF أو JPG أو PNG — بحد أقصى 10 ميجابايت.</div>
+</div>
+<?php endif; ?>
 <button class="btn btn-dark px-4"><i class="fas fa-paper-plane me-1"></i>إرسال طلب الإغلاق</button>
 </form>
 <?php endif; ?>
