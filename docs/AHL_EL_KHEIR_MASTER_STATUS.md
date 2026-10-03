@@ -1894,3 +1894,11 @@ The server-side balance check remains authoritative; this is a visibility/UX cor
 Runtime status: code/source change completed; local XAMPP/browser verification of unified proof replacement/preservation and the visible final-close blocking state is still required. Do not mark this UI/runtime gate closed until the user supplies that evidence.
 
 Next runtime action: on PRJ-0015, verify the PS closure form preserves the current proof when no new file is selected, replaces it through the same field when a new file is selected, and does not create a duplicate document. Then verify the PM closure card clearly shows the 250,000.00 SDG blocking balance and a disabled final-close button. After FM settlement, verify the guard clears and final closure can proceed subject to the remaining closure checks.
+
+
+### Projects closure notification-sequence correction — commit 2aa16aca0e0ba326000fb65ec2132314777d9145
+- Corrected the closure notification sequence in `modules/projects/view.php`.
+- A PS closure request now notifies **only the Projects Manager (PM)**; the Financial Manager (FM) is no longer notified at the request stage.
+- FM notification now occurs **only after the PM successfully performs final project closure**.
+- The FM notification is informational and points to the FM project view for any subsequent financial follow-up; it does not alter the closure accounting guard.
+- Runtime status: source fix completed; local XAMPP/browser verification of both notification boundaries is required.
