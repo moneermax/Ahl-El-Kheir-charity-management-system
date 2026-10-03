@@ -389,3 +389,21 @@ Runtime status:
 - Code correction is committed to `main`.
 - Runtime verification is pending.
 - Next controlled test: pull the latest `main`, sign in as `ps1`, open the header user dropdown, and verify that **طلب إجازة** and **طلب سلفة على الراتب** are both present. Stop there and report the result before proceeding to either request page.
+
+
+---
+
+## 2026-10-03 — PRJ-0015 financial closure runtime acceptance PASSED
+
+The controlled **PRJ-0015 — PH5 Full Accounting Reconciliation Test** closure gate is now **RUNTIME VERIFIED / CLOSED**.
+
+The user supplied the final PM-side notification after FM completion: **اكتمل الإغلاق المالي للمشروع**. It states that the FM completed financial closure for PRJ-0015 after returning the remaining balance to the organization's account and that the financial-closure cycle ended.
+
+Verified runtime sequence now documented:
+1. PM administrative closure completed with 250,000.00 SDG still controlled by the project.
+2. FM performed the existing funding-return operation.
+3. The 250,000.00 SDG return was posted to **1200 — البنك** and the user confirmed it completed without issue.
+4. FM financial closure completed and the PM received the final completion notification.
+5. The FM closed-state UI now presents the project as administratively and financially closed with a controlled balance of 0.00 SDG and no pending FM action.
+
+Do not repeat the return, create another journal, or recreate PRJ-0015 for this gate. Any future verification must be targeted to a genuinely new regression or reconciliation question.
