@@ -1192,3 +1192,89 @@ Final net funding release: **300,000 SDG**.
 
 ## First action in the new session
 Pull the latest `main`, read the four master documents, confirm PRJ-0015 is still `submitted/planned`, then inspect the FM financial-review/budget-approval workflow and proceed with the next runtime gate.
+
+# LATEST CONTINUATION PROMPT — 2026-10-03 — Projects Phase 5 runtime reconciliation after PS gate
+
+Continue the existing Ahl El Kheir Charity Management System. Do not rebuild or start a new project. Work directly on main; do not create branches.
+
+## Read first
+1. docs/CHATGPT_SESSION_INDEX.md
+2. docs/AHL_EL_KHEIR_MASTER_STATUS.md
+3. docs/AHL_EL_KHEIR_MASTER_AUDIT.md
+4. docs/CHATGPT_MASTER_CONTINUATION_PROMPT.md
+5. docs/PROJECTS_MODULE_AUDIT_AND_REMEDIATION_PLAN.md
+
+## Controlled fixture
+**PRJ-0015 — PH5 Full Accounting Reconciliation Test**
+- approval: approved / معتمد نهائياً
+- lifecycle: active / قيد التنفيذ
+- Project Supervisor: project supervisor
+- approved budget: 300,000.00 SDG
+- approved funding: 300,000.00 SDG
+- posted expenses at the PS checkpoint: 0.00 SDG
+- remaining budget: 300,000.00 SDG
+
+Preserve PRJ-0015. Do not delete or recreate it merely to continue testing.
+
+## Runtime gates already CLOSED
+- PM submission: draft → submitted; no release; FM notified.
+- FM financial approval/funding release: runtime verified.
+- GM approval: runtime verified; no second release.
+- GM rejection/reversal and FM re-approval: runtime verified.
+- FM correction/void before final confirmation: runtime verified.
+- FM final payment-document confirmation: runtime verified; no new accounting; PM handoff enabled.
+- PM launch: runtime verified; planned → active at 2026-10-02 19:48:43.
+- PS notification: runtime verified at the same timestamp with **تم إطلاق مشروع جديد للتنفيذ**.
+- PS access/role boundary: runtime verified; operational access is available after launch and accounting-release controls are not exposed.
+
+Do not reopen any of these gates without concrete regression evidence.
+
+## Source scan completed
+Current Projects surfaces scanned:
+- dashboard/projects_dashboard.php
+- modules/projects/index.php
+- modules/projects/form.php
+- modules/projects/view.php
+- modules/projects/view_fm.php
+- modules/projects/project_lib.php
+- modules/projects/project_funding_accounting.php
+- modules/projects/project_payment_receipt.php
+- modules/projects/serve_project_document.php
+
+Important current source boundaries:
+- PM launch is a dedicated launch_project action and requires final approval plus akp_project_final_fm_confirmed().
+- PS visibility requires final approval and a launched lifecycle state.
+- project_funding_accounting.php is the canonical funding-release/reversal/return accounting helper.
+- Funding-release journals use project_funding_release; an existing posted journal for an allocation is reused rather than duplicated.
+- Final payment-document confirmation is an auditable handoff event, not a second accounting release.
+- FM correction/return-to-review is blocked after final payment-evidence finalization.
+- PS operational expense creation is separate from accounting posting; actual expense posting remains restricted to FM/accountant/admin.
+- Closure/reopen requests are separated from Projects Manager execution.
+
+## Critical documentation correction
+The previous prompt incorrectly left the workflow at FM financial review / budget approval. That is stale. The current runtime checkpoint is after PM launch and PS notification/access.
+
+Do not ask the user to repeat FM approval, GM approval, final confirmation, PM launch, or PS notification tests.
+
+## Next task
+Read the current master audit and identify the **first genuinely undocumented runtime gate after the PS checkpoint**. Candidate areas include:
+1. post-final-confirmation mutation lock verification;
+2. controlled project funding return/reconciliation;
+3. project expense/accounting reconciliation after actual execution;
+4. closure/reopen runtime certification.
+
+Select only the first gate that the documentation proves is still open. Do not create a new fixture if PRJ-0015 can exercise the gate safely. Do not declare a gate passed without user-supplied local XAMPP/browser evidence.
+
+## Working rules
+- Runtime behavior is the source of truth.
+- Inspect current source/schema/docs before changing anything.
+- Do not guess tables, columns, statuses, accounts, or workflow rules.
+- No runtime CREATE/ALTER/DROP; migrations only for genuine schema changes.
+- No triggers, views, stored procedures, functions, or events.
+- Procedural PHP only.
+- No destructive Git commands: reset --hard, clean, restore, force-push, etc.
+- Do not create branches.
+- Do not disturb completed Salary Advance work or unrelated closed modules.
+- Preserve PRJ-0015.
+- Update all four master docs after every meaningful Projects milestone and record the exact resulting commit SHA.
+- Do not mark Projects Phase 5 closed until all required runtime gates are actually evidenced.
