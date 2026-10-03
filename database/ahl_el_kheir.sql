@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 02, 2026 at 07:51 AM
+-- Generation Time: Oct 03, 2026 at 08:26 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -126,7 +126,15 @@ INSERT INTO `accounts` (`id`, `code`, `name_ar`, `name_en`, `account_type`, `par
 (36, '5100-10', 'مصروفات مشروع: اختبار  المشاريع 2026', NULL, 'expense', NULL, 1, NULL, '2026-09-25 11:02:12', '2026-09-25 11:02:12'),
 (37, '1410', 'ذمم سلف الموظفين', 'Employee Salary Advances Receivable', 'asset', NULL, 1, 'Control account for employee salary advances; disbursement is not an expense.', '2026-09-28 18:00:20', '2026-09-28 18:00:20'),
 (38, '4400-11', 'إيرادات مشروع: PH5 Accounting Reconciliation Test', NULL, 'revenue', NULL, 1, NULL, '2026-10-01 10:40:18', '2026-10-01 10:40:18'),
-(39, '5100-11', 'مصروفات مشروع: PH5 Accounting Reconciliation Test', NULL, 'expense', NULL, 1, NULL, '2026-10-01 10:40:18', '2026-10-01 10:40:18');
+(39, '5100-11', 'مصروفات مشروع: PH5 Accounting Reconciliation Test', NULL, 'expense', NULL, 1, NULL, '2026-10-01 10:40:18', '2026-10-01 10:40:18'),
+(40, '4400-12', 'إيرادات مشروع: PH5 Runtime Gate Test 2026-10-02', NULL, 'revenue', NULL, 1, NULL, '2026-10-02 09:32:08', '2026-10-02 09:32:08'),
+(41, '5100-12', 'مصروفات مشروع: PH5 Runtime Gate Test 2026-10-02', NULL, 'expense', NULL, 1, NULL, '2026-10-02 09:32:08', '2026-10-02 09:32:08'),
+(42, '4400-13', 'إيرادات مشروع: PH5 Full Accounting Reconciliation Test', NULL, 'revenue', NULL, 1, NULL, '2026-10-02 16:44:31', '2026-10-02 16:44:31'),
+(43, '5100-13', 'مصروفات مشروع: PH5 Full Accounting Reconciliation Test', NULL, 'expense', NULL, 1, NULL, '2026-10-02 16:44:31', '2026-10-02 16:44:31'),
+(44, '4400-14', 'إيرادات مشروع: PH5 Full Accounting Reconciliation Test', NULL, 'revenue', NULL, 1, NULL, '2026-10-02 18:10:58', '2026-10-02 18:10:58'),
+(45, '5100-14', 'مصروفات مشروع: PH5 Full Accounting Reconciliation Test', NULL, 'expense', NULL, 1, NULL, '2026-10-02 18:10:58', '2026-10-02 18:10:58'),
+(46, '4400-15', 'إيرادات مشروع: PH5 Full Accounting Reconciliation Test', NULL, 'revenue', NULL, 1, NULL, '2026-10-02 18:28:04', '2026-10-02 18:28:04'),
+(47, '5100-15', 'مصروفات مشروع: PH5 Full Accounting Reconciliation Test', NULL, 'expense', NULL, 1, NULL, '2026-10-02 18:28:04', '2026-10-02 18:28:04');
 
 -- --------------------------------------------------------
 
@@ -930,7 +938,105 @@ INSERT INTO `audit_log` (`id`, `user_id`, `action`, `entity_type`, `entity_id`, 
 (2128, 32, 'LOGOUT', 'users', 32, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 00:51:12'),
 (2129, 1, 'LOGIN', 'users', 1, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 00:51:19'),
 (2130, 1, 'LOGOUT', 'users', 1, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 00:51:25'),
-(2131, 19, 'LOGIN', 'users', 19, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 08:26:13');
+(2131, 19, 'LOGIN', 'users', 19, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 08:26:13'),
+(2132, 19, 'LOGOUT', 'users', 19, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 09:10:31'),
+(2133, 29, 'LOGIN', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 09:10:38'),
+(2134, 33, 'LOGIN', 'users', 33, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 09:18:24'),
+(2135, 33, 'CREATE', 'other_projects', 12, NULL, '{\"name\":\"PH5 Runtime Gate Test 2026-10-02\",\"status\":\"planned\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 09:32:08'),
+(2136, 33, 'ASSIGN_PRIMARY_SUPERVISOR', 'project_supervisor_assignment', 12, NULL, '{\"supervisor_user_id\":39}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 09:32:08'),
+(2137, 33, 'CREATE_BUDGET', 'project_budget', 9, NULL, '{\"project_id\":12,\"total\":100000,\"target_amount\":100000}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 09:32:08'),
+(2138, 33, 'SUBMIT_APPROVAL', 'project_approval', 12, '{\"approval_status\":\"draft\"}', '{\"approval_status\":\"submitted\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 09:53:48'),
+(2139, 29, 'FM_APPROVE_BUDGET', 'project_budget', 9, '{\"status\":\"draft\"}', '{\"status\":\"approved\",\"total\":100000}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 09:54:22'),
+(2140, 29, 'CREATE', 'project_funding_allocation', 34, NULL, '{\"project_id\":12,\"amount\":60000,\"source_account\":\"1200\",\"fm_review\":true}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 09:55:40'),
+(2141, 29, 'CREATE', 'project_funding_allocation', 35, NULL, '{\"project_id\":12,\"amount\":20000,\"source_account\":\"1100\",\"fm_review\":true}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 09:55:40'),
+(2142, 29, 'CREATE', 'project_funding_allocation', 36, NULL, '{\"project_id\":12,\"amount\":20000,\"source_account\":\"1300\",\"fm_review\":true}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 09:55:40'),
+(2143, 29, 'FM_APPROVE_PROJECT', 'project_approval', 12, '{\"approval_status\":\"submitted\"}', '{\"approval_status\":\"fm_approved\",\"funding_release\":\"posted\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 10:09:09'),
+(2144, 29, 'FM_RETURN_TO_REVIEW', 'project_approval', 12, '{\"approval_status\":\"fm_approved\"}', '{\"approval_status\":\"submitted\",\"reason\":\"استكمال أو تصحيح إجراءات التمويل\",\"funding_release_reversed\":true}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 10:21:45'),
+(2145, 29, 'FM_APPROVE_PROJECT', 'project_approval', 12, '{\"approval_status\":\"submitted\"}', '{\"approval_status\":\"fm_approved\",\"funding_release\":\"posted\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 10:27:03'),
+(2146, 33, 'LOGOUT', 'users', 33, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 10:43:51'),
+(2147, 2, 'LOGIN', 'users', 2, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 10:44:04'),
+(2148, 2, 'GM_APPROVE_PROJECT', 'project_approval', 12, '{\"approval_status\":\"fm_approved\"}', '{\"approval_status\":\"approved\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 10:44:35'),
+(2149, 2, 'LOGOUT', 'users', 2, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 10:46:57'),
+(2150, 33, 'LOGIN', 'users', 33, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 10:47:09'),
+(2151, 33, 'LOGOUT', 'users', 33, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 10:49:07'),
+(2152, 34, 'LOGIN', 'users', 34, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 10:49:17'),
+(2153, 34, 'LOGOUT', 'users', 34, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 10:49:23'),
+(2154, 1, 'LOGIN', 'users', 1, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 10:51:24'),
+(2155, 1, 'LOGOUT', 'users', 1, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 10:51:45'),
+(2156, 1, 'LOGIN', 'users', 1, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 10:52:20'),
+(2157, 1, 'LOGOUT', 'users', 1, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 10:52:54'),
+(2158, 40, 'LOGIN', 'users', 40, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 10:53:08'),
+(2159, 40, 'LOGOUT', 'users', 40, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 10:53:11'),
+(2160, 1, 'LOGIN', 'users', 1, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 10:53:18'),
+(2161, 1, 'LOGOUT', 'users', 1, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 10:55:04'),
+(2162, 39, 'LOGIN', 'users', 39, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 10:55:12'),
+(2163, 39, 'CHANGE_PASSWORD', 'users', 39, NULL, '{\"password_changed\":true,\"forced\":true}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 10:55:40'),
+(2164, 39, 'LOGOUT', 'users', 39, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 10:55:44'),
+(2165, 39, 'LOGIN', 'users', 39, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 10:55:52'),
+(2166, 39, 'LOGOUT', 'users', 39, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 11:10:28'),
+(2167, 33, 'LOGIN', 'users', 33, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 11:10:36'),
+(2168, 29, 'DOCUMENT_PROJECT_PAYMENT_RECEIPT', 'project_payment_evidence', 16, '{\"status\":\"pending\"}', '{\"status\":\"documented\",\"payment_method\":\"e_wallet\",\"reference\":\"9999\",\"receipt\":\"storage\\/documents\\/projects\\/12\\/payments\\/payment_16_20261002131408_14956d79.jpg\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 14:14:08'),
+(2169, 29, 'DOCUMENT_PROJECT_PAYMENT_RECEIPT', 'project_payment_evidence', 14, '{\"status\":\"pending\"}', '{\"status\":\"documented\",\"payment_method\":\"bank_transfer\",\"reference\":\"101010\",\"receipt\":\"storage\\/documents\\/projects\\/12\\/payments\\/payment_14_20261002131431_69cfda03.jpg\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 14:14:31'),
+(2170, 29, 'DOCUMENT_PROJECT_CASH_PAYMENT', 'project_payment_evidence', 15, '{\"status\":\"pending\"}', '{\"status\":\"documented\",\"payment_method\":\"cash\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 14:27:12'),
+(2171, 29, 'FM_CONFIRM_PAYMENT_EVIDENCE', 'project_payment_evidence', 12, '{\"documented\":3,\"total\":3}', '{\"final_confirmed\":true}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 14:28:03'),
+(2172, 29, 'LOGOUT', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 14:30:12'),
+(2173, 1, 'LOGIN', 'users', 1, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 14:30:19'),
+(2174, 1, 'LOGOUT', 'users', 1, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 14:30:40'),
+(2175, 39, 'LOGIN', 'users', 39, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 14:30:49'),
+(2176, 33, 'LAUNCH_PROJECT', 'project_lifecycle', 12, '{\"status\":\"planned\"}', '{\"status\":\"active\",\"supervisor_user_id\":39}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 14:42:24'),
+(2177, 33, 'LOGOUT', 'users', 33, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 15:12:40'),
+(2178, 29, 'LOGIN', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 15:13:00'),
+(2179, 29, 'FM_RETURN_TO_REVIEW', 'project_approval', 11, '{\"approval_status\":\"approved\"}', '{\"approval_status\":\"submitted\",\"reason\":\"voiding test\",\"funding_release_reversed\":true,\"gm_approval_voided\":true}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 15:14:19'),
+(2180, 39, 'LOGOUT', 'users', 39, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 16:36:51'),
+(2181, 33, 'LOGIN', 'users', 33, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 16:37:24'),
+(2183, 33, 'ASSIGN_PRIMARY_SUPERVISOR', 'project_supervisor_assignment', 13, NULL, '{\"supervisor_user_id\":34}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 16:44:31'),
+(2184, 33, 'CREATE_BUDGET', 'project_budget', 10, NULL, '{\"project_id\":13,\"total\":300000,\"target_amount\":300000}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 16:44:31'),
+(2185, 33, 'CREATE', 'other_projects', 14, NULL, '{\"name\":\"PH5 Full Accounting Reconciliation Test\",\"status\":\"planned\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 18:10:58'),
+(2186, 33, 'ASSIGN_PRIMARY_SUPERVISOR', 'project_supervisor_assignment', 14, NULL, '{\"supervisor_user_id\":34}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 18:10:58'),
+(2187, 33, 'CREATE_BUDGET', 'project_budget', 11, NULL, '{\"project_id\":14,\"total\":300000,\"target_amount\":300000}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 18:10:58'),
+(2188, 33, 'CREATE', 'other_projects', 15, NULL, '{\"name\":\"PH5 Full Accounting Reconciliation Test\",\"status\":\"planned\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 18:28:04'),
+(2189, 33, 'ASSIGN_PRIMARY_SUPERVISOR', 'project_supervisor_assignment', 15, NULL, '{\"supervisor_user_id\":34}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 18:28:04'),
+(2190, 33, 'CREATE_BUDGET', 'project_budget', 12, NULL, '{\"project_id\":15,\"total\":300000,\"target_amount\":300000}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 18:28:04'),
+(2191, 33, 'UPDATE_GENERAL', 'other_projects', 15, '{\"name\":\"PH5 Full Accounting Reconciliation Test\",\"status\":\"planned\"}', '{\"name\":\"PH5 Full Accounting Reconciliation Test\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 18:28:47'),
+(2192, 33, 'UPDATE_INITIAL_BUDGET', 'project_budget', 12, NULL, '{\"project_id\":15,\"total\":300000,\"target_amount\":300000}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 18:28:47'),
+(2193, 33, 'UPDATE_GENERAL', 'other_projects', 15, '{\"name\":\"PH5 Full Accounting Reconciliation Test\",\"status\":\"planned\"}', '{\"name\":\"PH5 Full Accounting Reconciliation Test\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 18:57:52'),
+(2194, 33, 'UPDATE_INITIAL_BUDGET', 'project_budget', 12, NULL, '{\"project_id\":15,\"total\":300000,\"target_amount\":300000}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 18:57:52'),
+(2195, 33, 'SUBMIT_APPROVAL', 'project_approval', 15, '{\"approval_status\":\"draft\"}', '{\"approval_status\":\"submitted\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 18:59:30'),
+(2196, 29, 'FM_APPROVE_BUDGET', 'project_budget', 12, '{\"status\":\"draft\"}', '{\"status\":\"approved\",\"total\":300000}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 19:08:42');
+INSERT INTO `audit_log` (`id`, `user_id`, `action`, `entity_type`, `entity_id`, `old_values`, `new_values`, `ip_address`, `user_agent`, `created_at`) VALUES
+(2197, 29, 'CREATE', 'project_funding_allocation', 37, NULL, '{\"project_id\":15,\"amount\":300000,\"source_account\":\"1200\",\"fm_review\":true}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 19:23:06'),
+(2198, 29, 'FM_APPROVE_PROJECT', 'project_approval', 15, '{\"approval_status\":\"submitted\"}', '{\"approval_status\":\"fm_approved\",\"funding_release\":\"posted\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 19:23:17'),
+(2199, 33, 'LOGOUT', 'users', 33, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 19:25:28'),
+(2200, 2, 'LOGIN', 'users', 2, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 19:25:37'),
+(2201, 2, 'REJECT_PROJECT', 'project_approval', 15, '{\"approval_status\":\"fm_approved\"}', '{\"approval_status\":\"submitted\",\"reason\":\"Reconciliation Test\",\"funding_release_reversed\":true}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 19:26:07'),
+(2202, 29, 'FM_APPROVE_PROJECT', 'project_approval', 15, '{\"approval_status\":\"submitted\"}', '{\"approval_status\":\"fm_approved\",\"funding_release\":\"posted\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 19:33:53'),
+(2203, 2, 'REJECT_PROJECT', 'project_approval', 15, '{\"approval_status\":\"fm_approved\"}', '{\"approval_status\":\"submitted\",\"reason\":\"info messages test\",\"funding_release_reversed\":true}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 19:34:30'),
+(2204, 29, 'FM_APPROVE_PROJECT', 'project_approval', 15, '{\"approval_status\":\"submitted\"}', '{\"approval_status\":\"fm_approved\",\"funding_release\":\"posted\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 19:34:47'),
+(2205, 2, 'GM_APPROVE_PROJECT', 'project_approval', 15, '{\"approval_status\":\"fm_approved\"}', '{\"approval_status\":\"approved\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 19:35:01'),
+(2206, 29, 'DOCUMENT_PROJECT_PAYMENT_RECEIPT', 'project_payment_evidence', 19, '{\"status\":\"pending\"}', '{\"status\":\"documented\",\"payment_method\":\"bank_transfer\",\"reference\":\"1000100\",\"receipt\":\"storage\\/documents\\/projects\\/15\\/payments\\/payment_19_20261002184024_0112d782.jpg\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 19:40:24'),
+(2207, 29, 'FM_CONFIRM_PAYMENT_EVIDENCE', 'project_payment_evidence', 15, '{\"documented\":1,\"total\":1}', '{\"final_confirmed\":true}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 19:40:45'),
+(2208, 2, 'LOGOUT', 'users', 2, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 19:44:31'),
+(2209, 33, 'LOGIN', 'users', 33, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 19:44:43'),
+(2210, 33, 'LOGOUT', 'users', 33, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 19:44:49'),
+(2211, 34, 'LOGIN', 'users', 34, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 19:44:59'),
+(2212, 34, 'LOGOUT', 'users', 34, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 19:45:07'),
+(2213, 33, 'LOGIN', 'users', 33, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 19:45:17'),
+(2214, 33, 'LAUNCH_PROJECT', 'project_lifecycle', 15, '{\"status\":\"planned\"}', '{\"status\":\"active\",\"supervisor_user_id\":34}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 19:48:43'),
+(2215, 29, 'LOGOUT', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 19:48:59'),
+(2216, 34, 'LOGIN', 'users', 34, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 19:49:09'),
+(2217, 34, 'LOGOUT', 'users', 34, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 19:52:41'),
+(2218, 29, 'LOGIN', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 19:52:50'),
+(2219, 33, 'LOGOUT', 'users', 33, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 21:29:44'),
+(2220, 19, 'LOGIN', 'users', 19, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 21:29:53'),
+(2221, 19, 'LOGOUT', 'users', 19, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 21:31:19'),
+(2222, 1, 'LOGIN', 'users', 1, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-02 21:31:27'),
+(2223, 32, 'LOGIN', 'users', 32, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-03 08:16:22'),
+(2224, 32, 'LOGOUT', 'users', 32, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-03 08:27:18'),
+(2225, 29, 'LOGIN', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-03 08:27:28'),
+(2226, 33, 'LOGIN', 'users', 33, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-03 08:53:14'),
+(2227, 33, 'LOGOUT', 'users', 33, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-03 08:55:34'),
+(2228, 34, 'LOGIN', 'users', 34, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-03 08:55:44'),
+(2229, 34, 'CREATE', 'project_expense', 6, NULL, '{\"project_id\":15,\"amount\":50000,\"recorded_by_role\":\"project_supervisor\",\"primary_document_id\":7}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-03 09:08:51');
 
 -- --------------------------------------------------------
 
@@ -9263,9 +9369,26 @@ INSERT INTO `journal_entries` (`id`, `entry_code`, `entry_date`, `description`, 
 (92, 'JE-000048', '2026-10-01', 'صرف سلفة راتب SAR-2026-00019 — المدير العام', 'salary_advance_disbursement', 19, 'posted', NULL, NULL, NULL, 29, '2026-10-01 07:59:33'),
 (93, 'JE-000049', '2026-10-01', 'سداد مباشر لسلفة راتب SAR-2026-00019 — المدير العام', 'salary_advance_direct_repayment', 19, 'posted', NULL, NULL, NULL, 29, '2026-10-01 08:01:16'),
 (94, 'JE-000050', '2026-10-01', 'سداد مباشر لسلفة راتب SAR-2026-00019 — المدير العام', 'salary_advance_direct_repayment', 19, 'posted', NULL, NULL, NULL, 29, '2026-10-01 08:09:26'),
-(95, 'JE-PRJ-REL-11-31-20261001153129-4a5818', '2026-10-01', 'إفراج مالي لتمويل المشروع: PH5 Accounting Reconciliation Test', 'project_funding_release', 31, 'posted', NULL, NULL, NULL, 29, '2026-10-01 16:31:29'),
-(96, 'JE-PRJ-REL-11-32-20261001153129-c2e05c', '2026-10-01', 'إفراج مالي لتمويل المشروع: PH5 Accounting Reconciliation Test', 'project_funding_release', 32, 'posted', NULL, NULL, NULL, 29, '2026-10-01 16:31:29'),
-(97, 'JE-PRJ-REL-11-33-20261001153129-07fe75', '2026-10-01', 'إفراج مالي لتمويل المشروع: PH5 Accounting Reconciliation Test', 'project_funding_release', 33, 'posted', NULL, NULL, NULL, 29, '2026-10-01 16:31:29');
+(95, 'JE-PRJ-REL-11-31-20261001153129-4a5818', '2026-10-01', 'إفراج مالي لتمويل المشروع: PH5 Accounting Reconciliation Test', 'project_funding_release', 31, 'voided', '2026-10-02 15:14:19', 29, 'voiding test', 29, '2026-10-01 16:31:29'),
+(96, 'JE-PRJ-REL-11-32-20261001153129-c2e05c', '2026-10-01', 'إفراج مالي لتمويل المشروع: PH5 Accounting Reconciliation Test', 'project_funding_release', 32, 'voided', '2026-10-02 15:14:19', 29, 'voiding test', 29, '2026-10-01 16:31:29'),
+(97, 'JE-PRJ-REL-11-33-20261001153129-07fe75', '2026-10-01', 'إفراج مالي لتمويل المشروع: PH5 Accounting Reconciliation Test', 'project_funding_release', 33, 'voided', '2026-10-02 15:14:19', 29, 'voiding test', 29, '2026-10-01 16:31:29'),
+(98, 'JE-PRJ-REL-12-34-20261002090909-e0e667', '2026-10-02', 'إفراج مالي لتمويل المشروع: PH5 Runtime Gate Test 2026-10-02', 'project_funding_release', 34, 'voided', '2026-10-02 10:21:45', 29, 'استكمال أو تصحيح إجراءات التمويل', 29, '2026-10-02 10:09:09'),
+(99, 'JE-PRJ-REL-12-35-20261002090909-335d95', '2026-10-02', 'إفراج مالي لتمويل المشروع: PH5 Runtime Gate Test 2026-10-02', 'project_funding_release', 35, 'voided', '2026-10-02 10:21:45', 29, 'استكمال أو تصحيح إجراءات التمويل', 29, '2026-10-02 10:09:09'),
+(100, 'JE-PRJ-REL-12-36-20261002090909-48e648', '2026-10-02', 'إفراج مالي لتمويل المشروع: PH5 Runtime Gate Test 2026-10-02', 'project_funding_release', 36, 'voided', '2026-10-02 10:21:45', 29, 'استكمال أو تصحيح إجراءات التمويل', 29, '2026-10-02 10:09:09'),
+(101, 'JE-PRJ-REL-REV-12-34-20261002092145-cf99e7', '2026-10-02', 'عكس إفراج تمويل المشروع: استكمال أو تصحيح إجراءات التمويل', 'project_funding_release_reversal', 34, 'posted', NULL, NULL, NULL, 29, '2026-10-02 10:21:45'),
+(102, 'JE-PRJ-REL-REV-12-35-20261002092145-dff8f4', '2026-10-02', 'عكس إفراج تمويل المشروع: استكمال أو تصحيح إجراءات التمويل', 'project_funding_release_reversal', 35, 'posted', NULL, NULL, NULL, 29, '2026-10-02 10:21:45'),
+(103, 'JE-PRJ-REL-REV-12-36-20261002092145-afc449', '2026-10-02', 'عكس إفراج تمويل المشروع: استكمال أو تصحيح إجراءات التمويل', 'project_funding_release_reversal', 36, 'posted', NULL, NULL, NULL, 29, '2026-10-02 10:21:45'),
+(104, 'JE-PRJ-REL-12-34-20261002092703-121ffc', '2026-10-02', 'إفراج مالي لتمويل المشروع: PH5 Runtime Gate Test 2026-10-02', 'project_funding_release', 34, 'posted', NULL, NULL, NULL, 29, '2026-10-02 10:27:03'),
+(105, 'JE-PRJ-REL-12-35-20261002092703-6478db', '2026-10-02', 'إفراج مالي لتمويل المشروع: PH5 Runtime Gate Test 2026-10-02', 'project_funding_release', 35, 'posted', NULL, NULL, NULL, 29, '2026-10-02 10:27:03'),
+(106, 'JE-PRJ-REL-12-36-20261002092703-f17f08', '2026-10-02', 'إفراج مالي لتمويل المشروع: PH5 Runtime Gate Test 2026-10-02', 'project_funding_release', 36, 'posted', NULL, NULL, NULL, 29, '2026-10-02 10:27:03'),
+(107, 'JE-PRJ-REL-REV-11-31-20261002141419-524739', '2026-10-01', 'عكس إفراج تمويل المشروع: voiding test', 'project_funding_release_reversal', 31, 'posted', NULL, NULL, NULL, 29, '2026-10-02 15:14:19'),
+(108, 'JE-PRJ-REL-REV-11-32-20261002141419-f1adcc', '2026-10-01', 'عكس إفراج تمويل المشروع: voiding test', 'project_funding_release_reversal', 32, 'posted', NULL, NULL, NULL, 29, '2026-10-02 15:14:19'),
+(109, 'JE-PRJ-REL-REV-11-33-20261002141419-609c5f', '2026-10-01', 'عكس إفراج تمويل المشروع: voiding test', 'project_funding_release_reversal', 33, 'posted', NULL, NULL, NULL, 29, '2026-10-02 15:14:19'),
+(110, 'JE-PRJ-REL-15-37-20261002182317-ea46c8', '2026-10-02', 'إفراج مالي لتمويل المشروع: PH5 Full Accounting Reconciliation Test', 'project_funding_release', 37, 'voided', '2026-10-02 19:26:07', 2, 'رفض المدير العام: Reconciliation Test', 29, '2026-10-02 19:23:17'),
+(111, 'JE-PRJ-REL-REV-15-37-20261002182607-275142', '2026-10-02', 'عكس إفراج تمويل المشروع: رفض المدير العام: Reconciliation Test', 'project_funding_release_reversal', 37, 'posted', NULL, NULL, NULL, 2, '2026-10-02 19:26:07'),
+(112, 'JE-PRJ-REL-15-37-20261002183353-11ca0a', '2026-10-02', 'إفراج مالي لتمويل المشروع: PH5 Full Accounting Reconciliation Test', 'project_funding_release', 37, 'voided', '2026-10-02 19:34:30', 2, 'رفض المدير العام: info messages test', 29, '2026-10-02 19:33:53'),
+(113, 'JE-PRJ-REL-REV-15-37-20261002183430-d60fa0', '2026-10-02', 'عكس إفراج تمويل المشروع: رفض المدير العام: info messages test', 'project_funding_release_reversal', 37, 'posted', NULL, NULL, NULL, 2, '2026-10-02 19:34:30'),
+(114, 'JE-PRJ-REL-15-37-20261002183447-0b3263', '2026-10-02', 'إفراج مالي لتمويل المشروع: PH5 Full Accounting Reconciliation Test', 'project_funding_release', 37, 'posted', NULL, NULL, NULL, 29, '2026-10-02 19:34:47');
 
 -- --------------------------------------------------------
 
@@ -9426,7 +9549,41 @@ INSERT INTO `journal_lines` (`id`, `entry_id`, `account_id`, `debit`, `credit`, 
 (195, 96, 39, 50000.00, 0.00, 'إفراج تمويل المشروع إلى عهدة التنفيذ'),
 (196, 96, 2, 0.00, 50000.00, 'خصم من حساب تمويل المشروع'),
 (197, 97, 39, 60000.00, 0.00, 'إفراج تمويل المشروع إلى عهدة التنفيذ'),
-(198, 97, 3, 0.00, 60000.00, 'خصم من حساب تمويل المشروع');
+(198, 97, 3, 0.00, 60000.00, 'خصم من حساب تمويل المشروع'),
+(199, 98, 41, 60000.00, 0.00, 'إفراج تمويل المشروع إلى عهدة التنفيذ'),
+(200, 98, 2, 0.00, 60000.00, 'خصم من حساب تمويل المشروع'),
+(201, 99, 41, 20000.00, 0.00, 'إفراج تمويل المشروع إلى عهدة التنفيذ'),
+(202, 99, 1, 0.00, 20000.00, 'خصم من حساب تمويل المشروع'),
+(203, 100, 41, 20000.00, 0.00, 'إفراج تمويل المشروع إلى عهدة التنفيذ'),
+(204, 100, 3, 0.00, 20000.00, 'خصم من حساب تمويل المشروع'),
+(205, 101, 41, 0.00, 60000.00, 'عكس: إفراج تمويل المشروع إلى عهدة التنفيذ'),
+(206, 101, 2, 60000.00, 0.00, 'عكس: خصم من حساب تمويل المشروع'),
+(207, 102, 41, 0.00, 20000.00, 'عكس: إفراج تمويل المشروع إلى عهدة التنفيذ'),
+(208, 102, 1, 20000.00, 0.00, 'عكس: خصم من حساب تمويل المشروع'),
+(209, 103, 41, 0.00, 20000.00, 'عكس: إفراج تمويل المشروع إلى عهدة التنفيذ'),
+(210, 103, 3, 20000.00, 0.00, 'عكس: خصم من حساب تمويل المشروع'),
+(211, 104, 41, 60000.00, 0.00, 'إفراج تمويل المشروع إلى عهدة التنفيذ'),
+(212, 104, 2, 0.00, 60000.00, 'خصم من حساب تمويل المشروع'),
+(213, 105, 41, 20000.00, 0.00, 'إفراج تمويل المشروع إلى عهدة التنفيذ'),
+(214, 105, 1, 0.00, 20000.00, 'خصم من حساب تمويل المشروع'),
+(215, 106, 41, 20000.00, 0.00, 'إفراج تمويل المشروع إلى عهدة التنفيذ'),
+(216, 106, 3, 0.00, 20000.00, 'خصم من حساب تمويل المشروع'),
+(217, 107, 39, 0.00, 150000.00, 'عكس: إفراج تمويل المشروع إلى عهدة التنفيذ'),
+(218, 107, 1, 150000.00, 0.00, 'عكس: خصم من حساب تمويل المشروع'),
+(219, 108, 39, 0.00, 50000.00, 'عكس: إفراج تمويل المشروع إلى عهدة التنفيذ'),
+(220, 108, 2, 50000.00, 0.00, 'عكس: خصم من حساب تمويل المشروع'),
+(221, 109, 39, 0.00, 60000.00, 'عكس: إفراج تمويل المشروع إلى عهدة التنفيذ'),
+(222, 109, 3, 60000.00, 0.00, 'عكس: خصم من حساب تمويل المشروع'),
+(223, 110, 47, 300000.00, 0.00, 'إفراج تمويل المشروع إلى عهدة التنفيذ'),
+(224, 110, 2, 0.00, 300000.00, 'خصم من حساب تمويل المشروع'),
+(225, 111, 47, 0.00, 300000.00, 'عكس: إفراج تمويل المشروع إلى عهدة التنفيذ'),
+(226, 111, 2, 300000.00, 0.00, 'عكس: خصم من حساب تمويل المشروع'),
+(227, 112, 47, 300000.00, 0.00, 'إفراج تمويل المشروع إلى عهدة التنفيذ'),
+(228, 112, 2, 0.00, 300000.00, 'خصم من حساب تمويل المشروع'),
+(229, 113, 47, 0.00, 300000.00, 'عكس: إفراج تمويل المشروع إلى عهدة التنفيذ'),
+(230, 113, 2, 300000.00, 0.00, 'عكس: خصم من حساب تمويل المشروع'),
+(231, 114, 47, 300000.00, 0.00, 'إفراج تمويل المشروع إلى عهدة التنفيذ'),
+(232, 114, 2, 0.00, 300000.00, 'خصم من حساب تمويل المشروع');
 
 -- --------------------------------------------------------
 
@@ -9948,7 +10105,25 @@ INSERT INTO `notifications` (`id`, `recipient_user_id`, `type`, `title`, `body`,
 (122, 2, 'info', 'مشروع بانتظار الاعتماد النهائي', 'المشروع «PH5 Accounting Reconciliation Test» (PRJ-0011) تم اعتماده مالياً وبانتظار اعتماد المدير العام.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=11', 1, '2026-10-01 10:52:31'),
 (123, 3, 'info', 'مشروع بانتظار الاعتماد النهائي', 'المشروع «PH5 Accounting Reconciliation Test» (PRJ-0011) تم اعتماده مالياً وبانتظار اعتماد المدير العام.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=11', 0, '2026-10-01 10:52:31'),
 (124, 29, 'info', 'المشروع معتمد نهائياً — بانتظار تنفيذ الصرف', 'المشروع «PH5 Accounting Reconciliation Test» (PRJ-0011) تم اعتماده نهائياً من الإدارة التنفيذية. يمكن للمدير المالي الآن تنفيذ إجراءات الصرف وإثبات الدفع.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=11', 1, '2026-10-01 17:55:44'),
-(125, 33, 'info', 'تم اعتماد المشروع نهائياً', 'المشروع «PH5 Accounting Reconciliation Test» (PRJ-0011) تم اعتماده نهائياً ويمكن الانتقال إلى إجراءات التنفيذ بعد استكمال الصرف.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=11', 1, '2026-10-01 17:55:44');
+(125, 33, 'info', 'تم اعتماد المشروع نهائياً', 'المشروع «PH5 Accounting Reconciliation Test» (PRJ-0011) تم اعتماده نهائياً ويمكن الانتقال إلى إجراءات التنفيذ بعد استكمال الصرف.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=11', 1, '2026-10-01 17:55:44'),
+(126, 29, 'info', 'مشروع بانتظار المراجعة المالية', 'المشروع «PH5 Runtime Gate Test 2026-10-02» (PRJ-0012) بانتظار مراجعة المدير المالي.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=12', 1, '2026-10-02 09:53:48'),
+(127, 2, 'info', 'مشروع بانتظار الاعتماد النهائي', 'المشروع «PH5 Runtime Gate Test 2026-10-02» (PRJ-0012) تم اعتماده مالياً وبانتظار اعتماد المدير العام.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=12', 1, '2026-10-02 10:09:09'),
+(128, 3, 'info', 'مشروع بانتظار الاعتماد النهائي', 'المشروع «PH5 Runtime Gate Test 2026-10-02» (PRJ-0012) تم اعتماده مالياً وبانتظار اعتماد المدير العام.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=12', 0, '2026-10-02 10:09:09'),
+(129, 29, 'info', 'المشروع معتمد نهائياً — بانتظار تنفيذ الصرف', 'المشروع «PH5 Runtime Gate Test 2026-10-02» (PRJ-0012) تم اعتماده نهائياً من الإدارة التنفيذية. يمكن للمدير المالي الآن تنفيذ إجراءات الصرف وإثبات الدفع.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=12', 1, '2026-10-02 10:44:35'),
+(130, 33, 'info', 'تم اعتماد المشروع نهائياً', 'المشروع «PH5 Runtime Gate Test 2026-10-02» (PRJ-0012) تم اعتماده نهائياً ويمكن الانتقال إلى إجراءات التنفيذ بعد استكمال الصرف.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=12', 1, '2026-10-02 10:44:35'),
+(131, 33, 'info', 'تم اعتماد المشروع نهائياً', 'اكتمل الاعتماد المالي النهائي للمشروع «PH5 Runtime Gate Test 2026-10-02» (PRJ-0012) بعد استكمال توثيق مستندات التمويل. يمكن لمدير المشاريع الآن مراجعة المشروع واستكمال إجراءات ما بعد الاعتماد.', 'http://localhost:8081/AhlElKheir/modules/projects/view_pm.php?id=12', 1, '2026-10-02 14:28:03'),
+(132, 39, 'info', 'تمت إحالة المشروع للتنفيذ', 'اكتملت الموافقات وتوثيق مستندات التمويل للمشروع «PH5 Runtime Gate Test 2026-10-02» (PRJ-0012). أصبح المشروع متاحاً وفق صلاحيات ومسار الإطلاق المعتمد.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=12', 1, '2026-10-02 14:28:03'),
+(133, 39, 'info', 'تم إطلاق مشروع جديد للتنفيذ', 'المشروع «PH5 Runtime Gate Test 2026-10-02» (PRJ-0012) تم إطلاقه وأصبح متاحاً لكم للتنفيذ والمتابعة.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=12', 1, '2026-10-02 14:42:24'),
+(134, 29, 'info', 'مشروع بانتظار المراجعة المالية', 'المشروع «PH5 Full Accounting Reconciliation Test» (PRJ-0015) بانتظار مراجعة المدير المالي.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=15', 1, '2026-10-02 18:59:30'),
+(135, 2, 'info', 'مشروع بانتظار الاعتماد النهائي', 'المشروع «PH5 Full Accounting Reconciliation Test» (PRJ-0015) تم اعتماده مالياً وبانتظار اعتماد المدير العام.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=15', 1, '2026-10-02 19:23:17'),
+(136, 3, 'info', 'مشروع بانتظار الاعتماد النهائي', 'المشروع «PH5 Full Accounting Reconciliation Test» (PRJ-0015) تم اعتماده مالياً وبانتظار اعتماد المدير العام.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=15', 0, '2026-10-02 19:23:17'),
+(137, 29, 'info', 'المشروع مرفوض من المدير العام ويحتاج مراجعة مالية', 'المشروع «PH5 Full Accounting Reconciliation Test» (PRJ-0015) رفضه المدير العام، وتم عكس الإفراج المالي وإعادته للمراجعة المالية. السبب: Reconciliation Test', 'http://localhost:8081/AhlElKheir/modules/projects/view_fm.php?id=15', 1, '2026-10-02 19:26:07'),
+(138, 2, 'info', 'مشروع بانتظار الاعتماد النهائي', 'المشروع «PH5 Full Accounting Reconciliation Test» (PRJ-0015) تم اعتماده مالياً وبانتظار اعتماد المدير العام.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=15', 1, '2026-10-02 19:33:53'),
+(139, 29, 'info', 'المشروع مرفوض من المدير العام ويحتاج مراجعة مالية', 'المشروع «PH5 Full Accounting Reconciliation Test» (PRJ-0015) رفضه المدير العام، وتم عكس الإفراج المالي وإعادته للمراجعة المالية. السبب: info messages test', 'http://localhost:8081/AhlElKheir/modules/projects/view_fm.php?id=15', 1, '2026-10-02 19:34:30'),
+(140, 2, 'info', 'مشروع بانتظار الاعتماد النهائي', 'المشروع «PH5 Full Accounting Reconciliation Test» (PRJ-0015) تم اعتماده مالياً وبانتظار اعتماد المدير العام.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=15', 1, '2026-10-02 19:34:47'),
+(141, 29, 'info', 'المشروع معتمد نهائياً — بانتظار تنفيذ الصرف', 'المشروع «PH5 Full Accounting Reconciliation Test» (PRJ-0015) تم اعتماده نهائياً من الإدارة التنفيذية. يمكن للمدير المالي الآن تنفيذ إجراءات الصرف وإثبات الدفع.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=15', 1, '2026-10-02 19:35:01'),
+(142, 33, 'info', 'تم اعتماد المشروع نهائياً', 'اكتمل الاعتماد المالي النهائي للمشروع «PH5 Full Accounting Reconciliation Test» (PRJ-0015) بعد استكمال توثيق مستندات التمويل. يمكن لمدير المشاريع الآن مراجعة المشروع واستكمال إجراءات ما بعد الاعتماد.', 'http://localhost:8081/AhlElKheir/modules/projects/view_pm.php?id=15', 1, '2026-10-02 19:40:45'),
+(143, 34, 'info', 'تم إطلاق مشروع جديد للتنفيذ', 'المشروع «PH5 Full Accounting Reconciliation Test» (PRJ-0015) تم إطلاقه وأصبح متاحاً لكم للتنفيذ والمتابعة.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=15', 1, '2026-10-02 19:48:43');
 
 -- --------------------------------------------------------
 
@@ -10043,7 +10218,9 @@ INSERT INTO `other_projects` (`id`, `name`, `description`, `target_amount`, `cur
 (8, 'اختبار المشاريع 2026', 'توزيع وجبة مركز غسيل الكلي', NULL, 'SDG', '2026-09-22', '2026-09-30', 'active', 33, '2026-09-22 17:38:43', '2026-09-24 09:48:06', 'PRJ-0008', 'الإغاثة والسلال الغذائية', 'الخرطوم', 'الخرطوم', 'الخرطوم', NULL, 250, 33, 33, 34),
 (9, 'اختبار إشعار اعتماد المشروع للمشرف 2026-09-24', 'مشروع اختبار مخصص للتحقق من إشعار المشرف بعد الاعتماد المالي.', 10000.00, 'SDG', '2026-09-24', '2026-12-31', 'planned', 1, '2026-09-24 22:59:38', '2026-09-24 22:59:38', 'PRJ-TEST-0924-PS', 'other', 'اختبار', 'الخرطوم', 'اختبار', 0.00, 0, NULL, NULL, NULL),
 (10, 'اختبار  المشاريع 2026', NULL, 200000.00, 'SDG', '2026-09-25', '2026-09-30', 'completed', 33, '2026-09-25 11:02:12', '2026-09-27 08:02:12', 'PRJ-0010', 'مشاريع المياه', 'الخرطوم', 'الخرطوم', 'الخرطوم', NULL, 1500, 33, 35, 36),
-(11, 'PH5 Accounting Reconciliation Test', NULL, 260000.00, 'SDG', '2026-10-01', '2026-10-03', 'planned', 33, '2026-10-01 10:40:18', '2026-10-01 10:40:18', 'PRJ-0011', 'الإغاثة والسلال الغذائية', 'الخرطوم', 'الخرطوم', NULL, NULL, 260, NULL, 38, 39);
+(11, 'PH5 Accounting Reconciliation Test', NULL, 260000.00, 'SDG', '2026-10-01', '2026-10-03', 'planned', 33, '2026-10-01 10:40:18', '2026-10-01 10:40:18', 'PRJ-0011', 'الإغاثة والسلال الغذائية', 'الخرطوم', 'الخرطوم', NULL, NULL, 260, NULL, 38, 39),
+(12, 'PH5 Runtime Gate Test 2026-10-02', 'Controlled runtime verification for Projects Phase 5', 100000.00, 'SDG', '2026-10-02', '2026-10-31', 'active', 33, '2026-10-02 09:32:08', '2026-10-02 14:42:24', 'PRJ-0012', 'الإيواء والتأهيل السكني', 'الخرطوم', 'الخرطوم', 'السليم', NULL, 200, 33, 40, 41),
+(15, 'PH5 Full Accounting Reconciliation Test', 'Phase 5 controlled runtime test — accounting release, reversal, re-approval, correction, final confirmation and launch', 300000.00, 'SDG', '2026-10-02', '2026-11-30', 'active', 33, '2026-10-02 18:28:04', '2026-10-02 19:48:43', 'PRJ-0015', 'التمكين الاقتصادي', 'الخرطوم', 'الخرطوم', NULL, NULL, 150, 33, 46, 47);
 
 -- --------------------------------------------------------
 
@@ -10183,7 +10360,9 @@ INSERT INTO `project_approval` (`project_id`, `approval_status`, `submitted_by`,
 (8, 'approved', 33, '2026-09-24 09:39:04', 2, '2026-09-24 09:48:06', 29, '2026-09-24 09:43:51', NULL, NULL, NULL, NULL, '2026-09-24 09:48:06'),
 (9, 'rejected', 1, '2026-09-24 22:59:38', NULL, NULL, 29, '2026-09-25 09:20:50', NULL, NULL, 'test', NULL, '2026-09-25 09:20:50'),
 (10, 'approved', 33, '2026-09-25 12:21:07', 2, '2026-09-25 13:10:25', 29, '2026-09-25 13:07:30', NULL, NULL, NULL, NULL, '2026-09-25 13:10:25'),
-(11, 'approved', 33, '2026-10-01 10:41:14', 2, '2026-10-01 17:55:44', 29, '2026-10-01 10:52:31', 29, '2026-10-01 16:31:29', NULL, NULL, '2026-10-01 17:55:44');
+(11, 'submitted', 33, '2026-10-01 10:41:14', NULL, NULL, 29, '2026-10-01 10:52:31', 29, '2026-10-01 16:31:29', NULL, NULL, '2026-10-02 15:14:19'),
+(12, 'approved', 33, '2026-10-02 09:53:48', 2, '2026-10-02 10:44:35', 29, '2026-10-02 10:27:03', NULL, NULL, NULL, NULL, '2026-10-02 10:44:35'),
+(15, 'approved', 33, '2026-10-02 18:59:30', 2, '2026-10-02 19:35:01', 29, '2026-10-02 19:34:47', NULL, NULL, NULL, 'info messages test', '2026-10-02 19:35:01');
 
 -- --------------------------------------------------------
 
@@ -10262,7 +10441,9 @@ INSERT INTO `project_budgets` (`id`, `project_id`, `version_no`, `budget_name`, 
 (5, 7, 1, 'تأهيل مدرسة السليم - الميزانية الأولية', 'SDG', 'approved', NULL, '2026-09-22 08:25:49', 29, NULL, 33, '2026-09-22 08:18:04', '2026-09-22 08:25:49'),
 (6, 8, 1, 'اختبار المشاريع 2026 - الميزانية الأولية', 'SDG', 'approved', NULL, NULL, NULL, NULL, 33, '2026-09-22 17:38:43', '2026-09-23 15:54:27'),
 (7, 10, 1, 'اختبار  المشاريع 2026 - الميزانية الأولية', 'SDG', 'approved', NULL, NULL, NULL, NULL, 33, '2026-09-25 11:02:12', '2026-09-25 11:56:17'),
-(8, 11, 1, 'PH5 Accounting Reconciliation Test - الميزانية الأولية', 'SDG', 'approved', NULL, NULL, NULL, NULL, 33, '2026-10-01 10:40:18', '2026-10-01 10:49:31');
+(8, 11, 1, 'PH5 Accounting Reconciliation Test - الميزانية الأولية', 'SDG', 'approved', NULL, NULL, NULL, NULL, 33, '2026-10-01 10:40:18', '2026-10-01 10:49:31'),
+(9, 12, 1, 'PH5 Runtime Gate Test 2026-10-02 - الميزانية الأولية', 'SDG', 'approved', NULL, NULL, NULL, NULL, 33, '2026-10-02 09:32:08', '2026-10-02 09:54:22'),
+(12, 15, 1, 'PH5 Full Accounting Reconciliation Test - الميزانية الأولية', 'SDG', 'approved', NULL, NULL, NULL, NULL, 33, '2026-10-02 18:28:04', '2026-10-02 19:08:42');
 
 -- --------------------------------------------------------
 
@@ -10307,7 +10488,13 @@ INSERT INTO `project_budget_lines` (`id`, `budget_id`, `category`, `description`
 (32, 7, 'تمديدات', 'شبكة الأنابيب والتمديدات', NULL, 70000.00, NULL, NULL, 33, NULL, '2026-09-25 11:56:17', '2026-09-25 11:56:17'),
 (33, 8, 'مواد غذائية', 'السلال أو المواد الغذائية الأساسية', NULL, 150000.00, NULL, NULL, 33, NULL, '2026-10-01 10:40:18', '2026-10-01 10:40:18'),
 (34, 8, 'تعبئة', 'التعبئة والتغليف', NULL, 50000.00, NULL, NULL, 33, NULL, '2026-10-01 10:40:18', '2026-10-01 10:40:18'),
-(35, 8, 'نقل وتوزيع', 'النقل والتوزيع للمستفيدين', NULL, 60000.00, NULL, NULL, 33, NULL, '2026-10-01 10:40:18', '2026-10-01 10:40:18');
+(35, 8, 'نقل وتوزيع', 'النقل والتوزيع للمستفيدين', NULL, 60000.00, NULL, NULL, 33, NULL, '2026-10-01 10:40:18', '2026-10-01 10:40:18'),
+(36, 9, 'أعمال إنشائية', 'أعمال البناء أو التأهيل الأساسية', NULL, 60000.00, NULL, NULL, 33, NULL, '2026-10-02 09:32:08', '2026-10-02 09:32:08'),
+(37, 9, 'مواد بناء', 'مواد ومستلزمات البناء والتأهيل', NULL, 20000.00, NULL, NULL, 33, NULL, '2026-10-02 09:32:08', '2026-10-02 09:32:08'),
+(38, 9, 'أعمال كهرباء/سباكة', 'أعمال وخدمات البنية الأساسية', NULL, 20000.00, NULL, NULL, 33, NULL, '2026-10-02 09:32:08', '2026-10-02 09:32:08'),
+(51, 12, 'معدات', 'معدات وأدوات النشاط الاقتصادي', NULL, 150000.00, NULL, NULL, 33, NULL, '2026-10-02 18:57:52', '2026-10-02 18:57:52'),
+(52, 12, 'مواد تشغيل', 'المواد الأولية ومستلزمات البدء', NULL, 100000.00, NULL, NULL, 33, NULL, '2026-10-02 18:57:52', '2026-10-02 18:57:52'),
+(53, 12, 'تدريب', 'التدريب والمتابعة الفنية', NULL, 50000.00, NULL, NULL, 33, NULL, '2026-10-02 18:57:52', '2026-10-02 18:57:52');
 
 -- --------------------------------------------------------
 
@@ -10374,7 +10561,9 @@ INSERT INTO `project_details` (`project_id`, `objectives`, `justification`, `exp
 (7, 'تأهيل وصيانة المدرسة\r\nتوفير معينات العمل\r\nتأهيل الكوادر العامله', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'تصريح العمل الطوعي — 1500.00 SDG\nرشوة لإستخراج الوراق المطلوبه — 3500.00 SDG', NULL, NULL, NULL, NULL, NULL, 33, '2026-09-22 08:18:04', '2026-09-24 15:40:34'),
 (8, 'توزيع وجبة مركز غسيل الكلي للمرافقين\r\nتوزيع وجبة مركز غسيل الكلي للعاملين', 'إختبار 1\r\nإختبار 2', 'علي مدي ثلاثة أيام توزيع وجبة مركز غسيل الكلي للمرافقين والعاملين', 'المراجعين والعاملين بالمركز', 'شركة طعام\nشركة توصيل', 'تصوير مراحل المشروع مع الفواتير ورفعها علي الموقع الإلكتروني', 'كاش\nعبر التحويل البنكي', 'جعل الموضوع شهري', 'التلوث الطبي وعليه يجب إرتداء الماسكات الطبيه', 'تصريح العمل الطوعي — 1000.00 SDG\nرشوة لإستخراج الوراق المطلوبه — 5000.00 SDG', 25000.00, 'مدير شركة تحضير الطعام', '3698754236', 'food@food.com', 'الفترة الزمنيه ضيقه جدا عليه يجي الإسراع في التصديق والموافقه', 33, '2026-09-22 17:38:43', '2026-09-23 20:45:26'),
 (10, NULL, NULL, NULL, NULL, 'شركة حفر أبار', NULL, 'كاش', NULL, NULL, 'تصريح العمل الطوعي — 10000.00 SDG\nرشوة لإستخراج الوراق المطلوبه — 20000.00 SDG', NULL, 'حسن محمد', '3698754236', 'foo@food.com', NULL, 33, '2026-09-25 11:02:12', '2026-09-25 11:02:12'),
-(11, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 33, '2026-10-01 10:40:18', '2026-10-01 10:40:18');
+(11, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 33, '2026-10-01 10:40:18', '2026-10-01 10:40:18'),
+(12, NULL, NULL, NULL, NULL, 'شركة مبانيومقاولات', NULL, 'مناقصه', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 33, '2026-10-02 09:32:08', '2026-10-02 09:32:08'),
+(15, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 33, '2026-10-02 18:28:04', '2026-10-02 18:28:04');
 
 -- --------------------------------------------------------
 
@@ -10416,7 +10605,8 @@ INSERT INTO `project_documents` (`id`, `project_id`, `document_type`, `title`, `
 (3, 10, 'receipt', 'إيصال مصروف: مضخة ومعدات التشغيل', 'storage/documents/projects/10/a83afe0d8ca5d0001068dde76941b5ef.jpg', 'جواز أمين فيصل 2035_page-0001.jpg', 'image/jpeg', 1431269, '2026-09-25', 'شركة الخندقاوي', '97856438', 80000.00, 'SDG', 'unverified', NULL, NULL, NULL, 'مرفق مباشرة بالمصروف المسجل بواسطة مشرف المشروع.', 34, '2026-09-25 21:58:28', '2026-09-25 21:58:28'),
 (4, 10, 'receipt', 'إيصال دفعة عمالة: test1', 'storage/documents/projects/10/d2b12a28cccd4d9dfbddee8baded27a2.jpg', 'Feen_logo.jpeg', 'image/jpeg', 51326, '2026-09-26', 'test1', 'PRJ-LPV-PRJ-0010-1', 5000.00, 'SDG', 'unverified', NULL, NULL, NULL, 'مرفق مباشرة بدفعة من ميزانية المشروع.', 34, '2026-09-26 09:27:38', '2026-09-26 09:27:38'),
 (5, 10, 'receipt', 'إيصال دفعة عمالة: test2', 'storage/documents/projects/10/03f520ff1ebf3bce0b6c6ba364e286a8.jpg', 'WhatsApp Image 2026-09-18 at 1.57.43 PM.jpeg', 'image/jpeg', 36502, '2026-09-26', 'test2', 'PRJ-LPV-PRJ-0010-2', 5000.00, 'SDG', 'unverified', NULL, NULL, NULL, 'مرفق مباشرة بدفعة من ميزانية المشروع.', 34, '2026-09-26 09:37:27', '2026-09-26 12:46:11'),
-(6, 10, 'receipt', 'إيصال مصروف: شبكة الأنابيب والتمديدات', 'storage/documents/projects/10/bd61dc57fb6029558dbe78e431b22a5b.pdf', 'Fai Ali.pdf', 'application/pdf', 428106, '2026-09-26', 'plumber', '8796578', 60000.00, 'SDG', 'unverified', NULL, NULL, NULL, 'مرفق مباشرة بالمصروف المسجل بواسطة مشرف المشروع.', 34, '2026-09-26 12:48:57', '2026-09-26 12:48:57');
+(6, 10, 'receipt', 'إيصال مصروف: شبكة الأنابيب والتمديدات', 'storage/documents/projects/10/bd61dc57fb6029558dbe78e431b22a5b.pdf', 'Fai Ali.pdf', 'application/pdf', 428106, '2026-09-26', 'plumber', '8796578', 60000.00, 'SDG', 'unverified', NULL, NULL, NULL, 'مرفق مباشرة بالمصروف المسجل بواسطة مشرف المشروع.', 34, '2026-09-26 12:48:57', '2026-09-26 12:48:57'),
+(7, 15, 'receipt', 'إيصال مصروف: شبكة الأنابيب والتمديدات', 'storage/documents/projects/15/afa8908ffc2595138d4551ef7dbaef5d.jpg', 'Passport.jpeg', 'image/jpeg', 193842, '2026-10-03', 'شركة الخندقاوي', '8796578', 50000.00, 'SDG', 'unverified', NULL, NULL, NULL, 'مرفق مباشرة بالمصروف المسجل بواسطة مشرف المشروع.', 34, '2026-10-03 09:08:51', '2026-10-03 09:08:51');
 
 -- --------------------------------------------------------
 
@@ -10466,7 +10656,8 @@ INSERT INTO `project_expenses` (`id`, `project_id`, `budget_id`, `budget_line_id
 (2, 10, 7, NULL, '2026-09-25', 'مواد', 'مضخة ومعدات التشغيل', 'شركة الخندقاوي', NULL, '97856438', NULL, 80000.00, 'SDG', 'treasury', NULL, NULL, NULL, NULL, 3, 'posted', 34, NULL, 34, NULL, NULL, NULL, NULL, NULL, '2026-09-25 21:58:28', '2026-09-26 21:57:26'),
 (3, 10, 7, NULL, '2026-09-26', 'عمالة خارجية', 'دفعة عمالة من ميزانية المشروع: test1 — plumber', 'test1', '6546879', 'PRJ-LPV-PRJ-0010-1', NULL, 5000.00, 'SDG', 'treasury', NULL, NULL, 'LABOR:1', NULL, 4, 'posted', 34, NULL, 34, NULL, NULL, NULL, NULL, NULL, '2026-09-26 09:27:38', '2026-09-26 09:27:38'),
 (4, 10, 7, NULL, '2026-09-26', 'عمالة خارجية', 'دفعة عمالة من ميزانية المشروع: test2 — electrician', 'test2', '8746879', 'PRJ-LPV-PRJ-0010-2', NULL, 5000.00, 'SDG', 'treasury', NULL, NULL, 'LABOR:2', NULL, 5, 'posted', 34, NULL, 34, NULL, NULL, NULL, NULL, NULL, '2026-09-26 09:37:27', '2026-09-26 12:46:11'),
-(5, 10, 7, NULL, '2026-09-26', 'connecting', 'شبكة الأنابيب والتمديدات', 'plumber', NULL, '8796578', NULL, 60000.00, 'SDG', 'treasury', NULL, NULL, NULL, NULL, 6, 'posted', 34, NULL, 34, NULL, NULL, NULL, NULL, NULL, '2026-09-26 12:48:57', '2026-09-26 21:41:22');
+(5, 10, 7, NULL, '2026-09-26', 'connecting', 'شبكة الأنابيب والتمديدات', 'plumber', NULL, '8796578', NULL, 60000.00, 'SDG', 'treasury', NULL, NULL, NULL, NULL, 6, 'posted', 34, NULL, 34, NULL, NULL, NULL, NULL, NULL, '2026-09-26 12:48:57', '2026-09-26 21:41:22'),
+(6, 15, 12, NULL, '2026-10-03', 'مواد', 'شبكة الأنابيب والتمديدات', 'شركة الخندقاوي', NULL, '8796578', NULL, 50000.00, 'SDG', 'treasury', NULL, NULL, NULL, NULL, 7, 'posted', 34, NULL, 34, NULL, NULL, NULL, NULL, NULL, '2026-10-03 09:08:51', '2026-10-03 09:08:51');
 
 -- --------------------------------------------------------
 
@@ -10530,9 +10721,13 @@ INSERT INTO `project_funding_allocations` (`id`, `project_id`, `budget_id`, `sou
 (28, 10, 7, '', 2, NULL, NULL, NULL, 150000.00, 'SDG', '2026-09-25', NULL, NULL, 'posted', 2, 2, '2026-09-25 13:10:25', NULL, NULL, NULL, 29, '2026-09-25 13:06:18', '2026-09-25 13:10:25'),
 (29, 10, 7, '', 1, NULL, NULL, NULL, 50000.00, 'SDG', '2026-09-25', NULL, NULL, 'posted', 2, 2, '2026-09-25 13:10:25', NULL, NULL, NULL, 29, '2026-09-25 13:06:34', '2026-09-25 13:10:25'),
 (30, 10, 7, '', 3, NULL, NULL, NULL, 60000.00, 'SDG', '2026-09-25', NULL, NULL, 'posted', 2, 2, '2026-09-25 13:10:25', NULL, NULL, NULL, 29, '2026-09-25 13:06:52', '2026-09-25 13:10:25'),
-(31, 11, 8, '', 1, NULL, NULL, NULL, 150000.00, 'SDG', '2026-10-01', NULL, NULL, 'posted', 29, 29, '2026-10-01 16:31:29', NULL, NULL, NULL, 29, '2026-10-01 10:51:01', '2026-10-01 16:31:29'),
-(32, 11, 8, '', 2, NULL, NULL, NULL, 50000.00, 'SDG', '2026-10-01', NULL, NULL, 'posted', 29, 29, '2026-10-01 16:31:29', NULL, NULL, NULL, 29, '2026-10-01 10:51:01', '2026-10-01 16:31:29'),
-(33, 11, 8, '', 3, NULL, NULL, NULL, 60000.00, 'SDG', '2026-10-01', NULL, NULL, 'posted', 29, 29, '2026-10-01 16:31:29', NULL, NULL, NULL, 29, '2026-10-01 10:51:01', '2026-10-01 16:31:29');
+(31, 11, 8, '', 1, NULL, NULL, NULL, 150000.00, 'SDG', '2026-10-01', NULL, NULL, 'draft', NULL, NULL, NULL, NULL, NULL, NULL, 29, '2026-10-01 10:51:01', '2026-10-02 15:14:19'),
+(32, 11, 8, '', 2, NULL, NULL, NULL, 50000.00, 'SDG', '2026-10-01', NULL, NULL, 'draft', NULL, NULL, NULL, NULL, NULL, NULL, 29, '2026-10-01 10:51:01', '2026-10-02 15:14:19'),
+(33, 11, 8, '', 3, NULL, NULL, NULL, 60000.00, 'SDG', '2026-10-01', NULL, NULL, 'draft', NULL, NULL, NULL, NULL, NULL, NULL, 29, '2026-10-01 10:51:01', '2026-10-02 15:14:19'),
+(34, 12, 9, '', 2, NULL, NULL, NULL, 60000.00, 'SDG', '2026-10-02', NULL, NULL, 'posted', 29, 29, '2026-10-02 10:27:03', NULL, NULL, NULL, 29, '2026-10-02 09:55:40', '2026-10-02 10:27:03'),
+(35, 12, 9, '', 1, NULL, NULL, NULL, 20000.00, 'SDG', '2026-10-02', NULL, NULL, 'posted', 29, 29, '2026-10-02 10:27:03', NULL, NULL, NULL, 29, '2026-10-02 09:55:40', '2026-10-02 10:27:03'),
+(36, 12, 9, '', 3, NULL, NULL, NULL, 20000.00, 'SDG', '2026-10-02', NULL, NULL, 'posted', 29, 29, '2026-10-02 10:27:03', NULL, NULL, NULL, 29, '2026-10-02 09:55:40', '2026-10-02 10:27:03'),
+(37, 15, 12, '', 2, NULL, NULL, 114, 300000.00, 'SDG', '2026-10-02', NULL, NULL, 'posted', 29, 29, '2026-10-02 19:34:47', NULL, NULL, NULL, 29, '2026-10-02 19:23:06', '2026-10-02 19:34:47');
 
 -- --------------------------------------------------------
 
@@ -10677,7 +10872,9 @@ INSERT INTO `project_lifecycle` (`project_id`, `lifecycle_status`, `closed_at`, 
 (7, 'active', NULL, NULL, NULL, NULL, NULL, NULL, 260000.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-22 08:18:04', '2026-09-24 19:53:54', NULL),
 (8, 'active', NULL, NULL, NULL, NULL, NULL, NULL, 400000.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-22 17:38:43', '2026-09-24 09:48:06', NULL),
 (10, 'closed', '2026-09-27 08:02:12', 33, NULL, NULL, NULL, 'تم الانتهاء من تنفيذ المشروع وإتمام الأعمال المطلوبة', 260000.00, 260000.00, 230000.00, 30000.00, 11.54, '', 30000.00, NULL, NULL, '2026-09-25 11:02:12', '2026-09-27 08:02:12', 'completed_successfully'),
-(11, 'planned', NULL, NULL, NULL, NULL, NULL, NULL, 260000.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-10-01 10:40:18', '2026-10-01 10:40:18', NULL);
+(11, 'planned', NULL, NULL, NULL, NULL, NULL, NULL, 260000.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-10-01 10:40:18', '2026-10-01 10:40:18', NULL),
+(12, 'active', NULL, NULL, NULL, NULL, NULL, NULL, 100000.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-10-02 09:32:08', '2026-10-02 14:42:24', NULL),
+(15, 'active', NULL, NULL, NULL, NULL, NULL, NULL, 300000.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-10-02 18:28:04', '2026-10-02 19:48:43', NULL);
 
 -- --------------------------------------------------------
 
@@ -10732,7 +10929,8 @@ CREATE TABLE `project_partners` (
 INSERT INTO `project_partners` (`id`, `project_id`, `partner_name`, `role_description`, `created_by`, `created_at`, `updated_at`) VALUES
 (5, 8, 'شركة طعام', NULL, 33, '2026-09-24 09:38:58', '2026-09-24 09:38:58'),
 (6, 8, 'شركة توصيل', NULL, 33, '2026-09-24 09:38:58', '2026-09-24 09:38:58'),
-(8, 10, 'شركة حفر أبار', 'تنفيذ', 33, '2026-09-25 11:56:17', '2026-09-25 11:56:17');
+(8, 10, 'شركة حفر أبار', 'تنفيذ', 33, '2026-09-25 11:56:17', '2026-09-25 11:56:17'),
+(9, 12, 'شركة مبانيومقاولات', 'تنفيذ', 33, '2026-10-02 09:32:08', '2026-10-02 09:32:08');
 
 -- --------------------------------------------------------
 
@@ -10773,9 +10971,10 @@ INSERT INTO `project_payment_evidence` (`id`, `project_id`, `funding_allocation_
 (5, 10, 28, 2, NULL, 'bank_transfer', 150000.00, 'SDG', '2026-09-25', 'documented', '987654321', 'storage/documents/projects/10/payments/payment_5_20260925121214_b3b77a33.jpg', 'photo.jpeg', 'image/jpeg', NULL, 29, '2026-09-25 13:12:14', '2026-09-25 13:10:25'),
 (6, 10, 29, 1, NULL, 'cash', 50000.00, 'SDG', '2026-09-25', 'documented', NULL, NULL, NULL, NULL, '2026-09-25 13:11:54', 29, '2026-09-25 13:11:54', '2026-09-25 13:10:25'),
 (7, 10, 30, 3, NULL, 'e_wallet', 60000.00, 'SDG', '2026-09-25', 'documented', '123456789', 'storage/documents/projects/10/payments/payment_7_20260925121147_aeec1ab6.jpg', 'Passport.jpeg', 'image/jpeg', NULL, 29, '2026-09-25 13:11:47', '2026-09-25 13:10:25'),
-(8, 11, 31, 1, 95, 'cash', 150000.00, 'SDG', '2026-10-01', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-10-01 16:31:29'),
-(9, 11, 32, 2, 96, 'bank_transfer', 50000.00, 'SDG', '2026-10-01', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-10-01 16:31:29'),
-(10, 11, 33, 3, 97, 'e_wallet', 60000.00, 'SDG', '2026-10-01', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-10-01 16:31:29');
+(14, 12, 34, 2, 104, 'bank_transfer', 60000.00, 'SDG', '2026-10-02', 'documented', '101010', 'storage/documents/projects/12/payments/payment_14_20261002131431_69cfda03.jpg', 'Passport.jpeg', 'image/jpeg', NULL, 29, '2026-10-02 14:14:31', '2026-10-02 10:27:03'),
+(15, 12, 35, 1, 105, 'cash', 20000.00, 'SDG', '2026-10-02', 'documented', NULL, NULL, NULL, NULL, '2026-10-02 14:27:12', 29, '2026-10-02 14:27:12', '2026-10-02 10:27:03'),
+(16, 12, 36, 3, 106, 'e_wallet', 20000.00, 'SDG', '2026-10-02', 'documented', '9999', 'storage/documents/projects/12/payments/payment_16_20261002131408_14956d79.jpg', 'Photo.jpeg', 'image/jpeg', NULL, 29, '2026-10-02 14:14:08', '2026-10-02 10:27:03'),
+(19, 15, 37, 2, 114, 'bank_transfer', 300000.00, 'SDG', '2026-10-02', 'documented', '1000100', 'storage/documents/projects/15/payments/payment_19_20261002184024_0112d782.jpg', 'Photo.jpeg', 'image/jpeg', NULL, 29, '2026-10-02 19:40:24', '2026-10-02 19:34:47');
 
 -- --------------------------------------------------------
 
@@ -10800,7 +10999,8 @@ CREATE TABLE `project_procurement_methods` (
 INSERT INTO `project_procurement_methods` (`id`, `project_id`, `method_name`, `notes`, `created_by`, `created_at`, `updated_at`) VALUES
 (5, 8, 'كاش', NULL, 33, '2026-09-24 09:38:58', '2026-09-24 09:38:58'),
 (6, 8, 'عبر التحويل البنكي', NULL, 33, '2026-09-24 09:38:58', '2026-09-24 09:38:58'),
-(8, 10, 'كاش', 'إرسال الإيصال', 33, '2026-09-25 11:56:17', '2026-09-25 11:56:17');
+(8, 10, 'كاش', 'إرسال الإيصال', 33, '2026-09-25 11:56:17', '2026-09-25 11:56:17'),
+(9, 12, 'مناقصه', 'أقل سعر', 33, '2026-10-02 09:32:08', '2026-10-02 09:32:08');
 
 -- --------------------------------------------------------
 
@@ -10845,7 +11045,9 @@ INSERT INTO `project_status_history` (`id`, `project_id`, `old_status`, `new_sta
 (2, 10, 'planned', 'active', 'تم إطلاق المشروع من مدير المشاريع بعد الاعتماد النهائي.', 33, '2026-09-25 20:26:35'),
 (3, 10, 'إضافة مرحلة', 'شبكة الأنابيب والتمديدات', 'التاريخ المخطط: 2026-09-26 | نسبة الإنجاز: 100.00% | وصف المرحلة: شبكة الأنابيب والتمديدات', 34, '2026-09-26 12:49:52'),
 (4, 10, 'active', 'closure_requested', 'طلب إغلاق من مشرف المشروع: Project is Done', 34, '2026-09-26 14:12:06'),
-(5, 10, 'active', 'closed', 'تم الانتهاء من تنفيذ المشروع وإتمام الأعمال المطلوبة', 33, '2026-09-27 08:02:12');
+(5, 10, 'active', 'closed', 'تم الانتهاء من تنفيذ المشروع وإتمام الأعمال المطلوبة', 33, '2026-09-27 08:02:12'),
+(6, 12, 'planned', 'active', 'تم إطلاق المشروع من مدير المشاريع بعد الاعتماد النهائي.', 33, '2026-10-02 14:42:24'),
+(7, 15, 'planned', 'active', 'تم إطلاق المشروع من مدير المشاريع بعد الاعتماد النهائي.', 33, '2026-10-02 19:48:43');
 
 -- --------------------------------------------------------
 
@@ -10875,7 +11077,9 @@ INSERT INTO `project_supervisor_assignments` (`id`, `project_id`, `supervisor_us
 (7, 8, 34, 33, '2026-09-22 17:38:43', NULL, NULL, 'التكليف الأساسي للمشروع'),
 (8, 9, 34, NULL, '2026-09-24 22:59:38', NULL, NULL, NULL),
 (9, 10, 34, 33, '2026-09-25 11:02:12', NULL, NULL, 'التكليف الأساسي للمشروع'),
-(10, 11, 34, 33, '2026-10-01 10:40:18', NULL, NULL, 'التكليف الأساسي للمشروع');
+(10, 11, 34, 33, '2026-10-01 10:40:18', NULL, NULL, 'التكليف الأساسي للمشروع'),
+(11, 12, 39, 33, '2026-10-02 09:32:08', NULL, NULL, 'التكليف الأساسي للمشروع'),
+(14, 15, 34, 33, '2026-10-02 18:28:04', NULL, NULL, 'التكليف الأساسي للمشروع');
 
 -- --------------------------------------------------------
 
@@ -28732,8 +28936,8 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `role_id`, `username`, `password_hash`, `full_name`, `email`, `phone`, `is_active`, `supervisor_status`, `password_change_required`, `last_login_at`, `created_by`, `created_at`, `updated_at`, `legacy_status`, `avatar_path`, `address`, `birth_date`, `gender`, `department_id`, `manager_id`, `theme_preference`, `language_preference`, `email_notifications`, `push_notifications`, `email_newsletter`) VALUES
-(1, 1, 'sudo', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'منير علي طه صالح', 'sudo@ahlelkheir.org', '0966616614', 1, '', 0, '2026-10-02 00:51:19', NULL, '2026-08-02 16:49:35', '2026-10-02 00:51:19', 'active', 'storage/avatars/user_1_1789753554.png', NULL, NULL, 'male', 1, 1, 'auto', 'ar', 1, 1, 1),
-(2, 2, 'gm', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'المدير العام', 'gm@ahlelkheir.org', NULL, 1, '', 0, '2026-10-01 17:19:40', NULL, '2026-08-02 16:49:35', '2026-10-01 17:19:40', 'active', 'storage/avatars/user_2_1787805764.png', NULL, NULL, NULL, 1, NULL, 'light', 'ar', 1, 1, 1),
+(1, 1, 'sudo', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'منير علي طه صالح', 'sudo@ahlelkheir.org', '0966616614', 1, '', 0, '2026-10-02 21:31:27', NULL, '2026-08-02 16:49:35', '2026-10-02 21:31:27', 'active', 'storage/avatars/user_1_1789753554.png', NULL, NULL, 'male', 1, 1, 'auto', 'ar', 1, 1, 1),
+(2, 2, 'gm', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'المدير العام', 'gm@ahlelkheir.org', NULL, 1, '', 0, '2026-10-02 19:25:37', NULL, '2026-08-02 16:49:35', '2026-10-02 19:25:37', 'active', 'storage/avatars/user_2_1787805764.png', NULL, NULL, NULL, 1, NULL, 'light', 'ar', 1, 1, 1),
 (3, 3, 'vgm', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'لمياء علي طه صالح', 'vgm@ahlelkheir.org', NULL, 1, '', 0, '2026-09-29 09:00:10', NULL, '2026-08-02 16:49:35', '2026-09-29 09:00:10', 'active', 'storage/avatars/user_3_1787556761.png', NULL, NULL, 'female', 1, 2, 'light', 'ar', 1, 1, 1),
 (4, 10, 'accountant', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'محاسب (موظف)', 'accountant@ahlelkheir.org', '0123456789', 1, '', 0, '2026-08-17 14:11:48', NULL, '2026-08-08 12:33:29', '2026-08-17 14:30:38', 'active', NULL, NULL, NULL, NULL, 6, 29, 'light', 'ar', 1, 1, 1),
 (14, 4, 'Mad_Max', '$2y$10$2Pps4jCppxKBhdFrBRi94.FmCAYDqhUWd.vOLH4CnCIZDWbWrLhTC', 'أحمد محمد', 'moneerali2000@gmail.com', '0912345100', 0, 'archived', 0, '2026-08-16 09:20:38', 3, '2026-08-09 10:41:43', '2026-09-04 08:02:07', 'active', NULL, NULL, NULL, NULL, NULL, NULL, 'light', 'ar', 1, 1, 1),
@@ -28741,7 +28945,7 @@ INSERT INTO `users` (`id`, `role_id`, `username`, `password_hash`, `full_name`, 
 (16, 7, 'nany1', '$2y$10$bOs5FR0MQDIWcay4vmcoc.wkTOTt7mU2umWJYHn1AFkAXclPGcZWO', 'nany1', 'nany1@gmail.com', '094449785', 1, '', 0, '2026-09-21 10:40:51', 1, '2026-08-13 18:03:28', '2026-09-21 10:40:51', NULL, 'storage/avatars/user_16_1787805870.png', NULL, NULL, 'female', 2, 3, 'light', 'ar', 1, 1, 1),
 (17, 10, 'acc1', '$2y$10$n6sTBlpffNdZOaN48KkAx.zqkDnrikirhM.HWVBH81qG255EuUqKS', 'acc1', 'acc1@gmail.com', '0945786321', 1, '', 0, '2026-09-30 20:50:39', 1, '2026-08-13 19:47:47', '2026-10-01 23:23:11', NULL, NULL, NULL, NULL, 'male', 6, 29, 'light', 'ar', 1, 1, 1),
 (18, 8, 'ro1', '$2y$10$Rx63s7Lt4lh4IkJwbUKigOAmp0MzhzByWauPrF1HptcVmr4V/MpHq', 'أحمد حسين عبدالكريم', 'ro@gmail.com', '0123456789', 1, '', 0, '2026-09-20 08:43:19', 1, '2026-08-13 20:23:47', '2026-09-20 08:43:19', NULL, 'storage/avatars/user_18_1789729126.jpg', NULL, NULL, NULL, 3, 3, 'light', 'ar', 1, 1, 1),
-(19, 4, 'sv1', '$2y$10$1orOJuoh50H0m8Ow4eKIMOZC18pCFV6XILrjtEZvInwH/M/yGCDUS', 'فاطمه سليمان', 'fatima@gmail.com', '0999999999999', 1, 'active', 0, '2026-10-02 08:26:13', 3, '2026-08-14 08:10:49', '2026-10-02 08:26:13', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
+(19, 4, 'sv1', '$2y$10$1orOJuoh50H0m8Ow4eKIMOZC18pCFV6XILrjtEZvInwH/M/yGCDUS', 'فاطمه سليمان', 'fatima@gmail.com', '0999999999999', 1, 'active', 0, '2026-10-02 21:29:53', 3, '2026-08-14 08:10:49', '2026-10-02 21:29:53', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
 (20, 4, 'sv2', '$2y$10$GlgbXKPFv/Tqz/UYdBF2kOgV.Wwpe6yBpfmzcUSOKOocQuLulV2IW', 'ميادة الحبر', 'mayadah@gmail.com', NULL, 1, 'active', 0, '2026-09-28 17:25:15', 3, '2026-08-14 08:12:16', '2026-09-28 17:25:15', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
 (21, 4, 'sv3', '$2y$10$hi/o4qq4Byzdwq96wvXYPe3JW4lPlbIAwRH.JFjLtLXa7DEAj06ZG', 'هديل عثمان', 'hadeel@gmail.com', '03333333333333', 1, 'active', 0, '2026-09-29 08:07:42', 3, '2026-08-14 08:31:52', '2026-09-29 08:07:42', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
 (22, 4, 'sv4', '$2y$10$aw1SmFzeeI.xEnSbxWPwEOn/3UahrD72EBqhPuDMJ5bPcdtp40Ppy', 'ميساء سليمان', 'mysa@gmail.com', '26498879658', 1, 'active', 0, '2026-08-16 09:14:21', 3, '2026-08-14 09:13:31', '2026-09-03 15:28:42', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
@@ -28750,14 +28954,14 @@ INSERT INTO `users` (`id`, `role_id`, `username`, `password_hash`, `full_name`, 
 (26, 4, 'sv8', '$2y$10$iRZLB9UdIggAJqKsR.eoPuwyMFfS4w3RgVjZ4XjvxxUynOuhMAc/i', 'ساره خلف الله', 'sarah@gmail.com', '015468972', 1, 'active', 0, NULL, 3, '2026-08-14 09:28:14', '2026-09-04 08:38:22', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
 (27, 4, 'sv9', '$2y$10$oBV.8O1UW/yiwOAcPMxbqeH8Xh/PJhNtq.tIkyOqh55v1v7GzjSJW', 'هناء خلف الله', 'hanah@gmail.com', '78999456789', 1, 'active', 0, NULL, 3, '2026-08-14 09:31:19', '2026-09-03 15:28:42', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
 (28, 9, 'sm1', '$2y$10$gtVZcFBfL2yMhNXOPpkr5e7up/SiAnE7KfjJ8tq4JFocePuGjcr0C', 'أحمد حسين', 'ahmed@gmail.com', '8545567865', 1, '', 0, '2026-09-28 16:38:49', 1, '2026-08-14 13:06:45', '2026-09-28 16:38:49', NULL, NULL, NULL, NULL, 'male', 4, 3, 'light', 'ar', 1, 1, 1),
-(29, 6, 'fm', '$2y$10$K2.yA1kpqLaGWrqH/QOQ2uXv0PJhvWTMC55tW5kSkU6u5iaz6JmVW', 'المدير المالي', 'fm@ahlelkheir.org', NULL, 1, '', 0, '2026-10-01 08:28:01', 1, '2026-08-17 14:26:40', '2026-10-01 08:28:01', NULL, 'storage/avatars/user_29_1787555658.jpg', NULL, NULL, 'أنثى', 1, 2, 'light', 'ar', 1, 1, 1),
-(32, 11, 'hrh', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'مدير الموارد البشرية', 'hr@ahlelkheir.org', '00112233445566', 1, '', 0, '2026-10-01 22:36:34', NULL, '2026-08-18 21:49:04', '2026-10-01 23:20:43', NULL, 'storage/avatars/user_32_1788630391.png', NULL, NULL, 'male', 1, 2, 'light', 'ar', 1, 1, 1),
-(33, 13, 'gpm', '$2y$10$ftQaFFCk4DF1UrdPlpGtd.OVR.2pyxPxKlIcZ7KhRxa7VMP/FXC/G', 'projects manager', 'pm@gmail.com', '00012344456678', 1, '', 0, '2026-10-01 22:30:09', 1, '2026-08-28 18:33:31', '2026-10-01 22:30:09', NULL, 'storage/avatars/user_33_1787943667.jpg', NULL, NULL, 'male', 1, 2, 'light', 'ar', 1, 1, 1),
-(34, 14, 'ps1', '$2y$10$y6GVpoe/hF9GxE8zyezAPORKNgBn5n65Ct.tUHI0r6lnkyHEdkrZi', 'project supervisor', 'gps@gmail.com', '987654321', 1, '', 0, '2026-10-01 22:34:40', 1, '2026-08-28 18:35:16', '2026-10-01 23:21:11', NULL, NULL, NULL, NULL, 'male', 8, 33, 'light', 'ar', 1, 1, 1),
+(29, 6, 'fm', '$2y$10$K2.yA1kpqLaGWrqH/QOQ2uXv0PJhvWTMC55tW5kSkU6u5iaz6JmVW', 'المدير المالي', 'fm@ahlelkheir.org', NULL, 1, '', 0, '2026-10-03 08:27:27', 1, '2026-08-17 14:26:40', '2026-10-03 08:27:27', NULL, 'storage/avatars/user_29_1787555658.jpg', NULL, NULL, 'أنثى', 1, 2, 'light', 'ar', 1, 1, 1),
+(32, 11, 'hrh', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'مدير الموارد البشرية', 'hr@ahlelkheir.org', '00112233445566', 1, '', 0, '2026-10-03 08:16:22', NULL, '2026-08-18 21:49:04', '2026-10-03 08:16:22', NULL, 'storage/avatars/user_32_1788630391.png', NULL, NULL, 'male', 1, 2, 'light', 'ar', 1, 1, 1),
+(33, 13, 'gpm', '$2y$10$ftQaFFCk4DF1UrdPlpGtd.OVR.2pyxPxKlIcZ7KhRxa7VMP/FXC/G', 'projects manager', 'pm@gmail.com', '00012344456678', 1, '', 0, '2026-10-03 08:53:14', 1, '2026-08-28 18:33:31', '2026-10-03 08:53:14', NULL, 'storage/avatars/user_33_1787943667.jpg', NULL, NULL, 'male', 1, 2, 'light', 'ar', 1, 1, 1),
+(34, 14, 'ps1', '$2y$10$y6GVpoe/hF9GxE8zyezAPORKNgBn5n65Ct.tUHI0r6lnkyHEdkrZi', 'project supervisor', 'gps@gmail.com', '987654321', 1, '', 0, '2026-10-03 08:55:44', 1, '2026-08-28 18:35:16', '2026-10-03 08:55:44', NULL, NULL, NULL, NULL, 'male', 8, 33, 'light', 'ar', 1, 1, 1),
 (35, 10, 'audit_acc2_20260911', '$2y$12$kxUoLJ66pmSWJRDVnkmtUuN5XI6ZhMb41RpeV2cIfN8kUA7.2EWl.', 'ACCOUNTING AUDIT TEMP ACCOUNTANT', NULL, NULL, 1, 'active', 0, '2026-09-11 09:47:45', NULL, '2026-09-11 09:47:04', '2026-09-11 09:47:45', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'light', 'ar', 1, 1, 1),
 (36, 7, 'audit_nany2_20260911', '$2y$12$kxUoLJ66pmSWJRDVnkmtUuN5XI6ZhMb41RpeV2cIfN8kUA7.2EWl.', 'ACCOUNTING AUDIT TEMP NANNY', NULL, NULL, 1, 'active', 0, NULL, NULL, '2026-09-11 09:47:04', '2026-09-11 09:47:04', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'light', 'ar', 1, 1, 1),
-(39, 14, 'test.employee01', '$2y$10$nhtO7EaE.NqJ7WSJRo.0weOGfDqJgYOBjvMqiP8LUKdHz0e2n3JSW', 'حمد محمد التجريبي', 'ah@test.com', '0123456789', 1, 'active', 0, NULL, 32, '2026-10-01 23:46:02', '2026-10-01 23:46:02', NULL, NULL, NULL, NULL, 'male', 8, 33, 'light', 'ar', 1, 1, 1),
-(40, 14, 'test.password01', '$2y$10$q1lGJ5aA7sqciSOYIorniOSeoUYcBBzxdHLw/q0EzQx.CGWUrqW/e', 'حمد أحمد اختبار كلمة المرور', 'test.password01@example.com', '01123456789', 1, 'active', 0, '2026-10-02 00:37:44', 32, '2026-10-02 00:30:29', '2026-10-02 00:37:44', NULL, NULL, NULL, NULL, 'male', 8, 33, 'light', 'ar', 1, 1, 1);
+(39, 14, 'test.employee01', '$2y$10$fH73kKYe6Pt5yJyEaWsIFOnQkL5mNyQhYnyWLMmCwruBgEere/A7K', 'حمد محمد التجريبي', 'ah@test.com', '0123456789', 1, 'active', 0, '2026-10-02 14:30:49', 32, '2026-10-01 23:46:02', '2026-10-02 14:30:49', NULL, NULL, NULL, NULL, 'male', 8, 33, 'light', 'ar', 1, 1, 1),
+(40, 14, 'test.password01', '$2y$10$q1lGJ5aA7sqciSOYIorniOSeoUYcBBzxdHLw/q0EzQx.CGWUrqW/e', 'حمد أحمد اختبار كلمة المرور', 'test.password01@example.com', '01123456789', 1, 'active', 0, '2026-10-02 10:53:08', 32, '2026-10-02 00:30:29', '2026-10-02 10:53:08', NULL, NULL, NULL, NULL, 'male', 8, 33, 'light', 'ar', 1, 1, 1);
 
 -- --------------------------------------------------------
 
@@ -29816,7 +30020,7 @@ ALTER TABLE `accounting_admin_fee_policies`
 -- AUTO_INCREMENT for table `accounts`
 --
 ALTER TABLE `accounts`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=48;
 
 --
 -- AUTO_INCREMENT for table `attendance`
@@ -29828,7 +30032,7 @@ ALTER TABLE `attendance`
 -- AUTO_INCREMENT for table `audit_log`
 --
 ALTER TABLE `audit_log`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2132;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2230;
 
 --
 -- AUTO_INCREMENT for table `contracts`
@@ -30002,13 +30206,13 @@ ALTER TABLE `hr_salary_advance_requests`
 -- AUTO_INCREMENT for table `journal_entries`
 --
 ALTER TABLE `journal_entries`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=98;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=115;
 
 --
 -- AUTO_INCREMENT for table `journal_lines`
 --
 ALTER TABLE `journal_lines`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=199;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=233;
 
 --
 -- AUTO_INCREMENT for table `leaves`
@@ -30068,7 +30272,7 @@ ALTER TABLE `nanny_group_assignments`
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=126;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=144;
 
 --
 -- AUTO_INCREMENT for table `orphan_documents`
@@ -30086,7 +30290,7 @@ ALTER TABLE `orphan_groups`
 -- AUTO_INCREMENT for table `other_projects`
 --
 ALTER TABLE `other_projects`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT for table `password_recovery_requests`
@@ -30122,13 +30326,13 @@ ALTER TABLE `project_beneficiary_records`
 -- AUTO_INCREMENT for table `project_budgets`
 --
 ALTER TABLE `project_budgets`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `project_budget_lines`
 --
 ALTER TABLE `project_budget_lines`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=54;
 
 --
 -- AUTO_INCREMENT for table `project_contacts`
@@ -30140,13 +30344,13 @@ ALTER TABLE `project_contacts`
 -- AUTO_INCREMENT for table `project_documents`
 --
 ALTER TABLE `project_documents`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `project_expenses`
 --
 ALTER TABLE `project_expenses`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `project_expense_approvals`
@@ -30158,7 +30362,7 @@ ALTER TABLE `project_expense_approvals`
 -- AUTO_INCREMENT for table `project_funding_allocations`
 --
 ALTER TABLE `project_funding_allocations`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
 
 --
 -- AUTO_INCREMENT for table `project_funding_returns`
@@ -30194,19 +30398,19 @@ ALTER TABLE `project_milestones`
 -- AUTO_INCREMENT for table `project_partners`
 --
 ALTER TABLE `project_partners`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `project_payment_evidence`
 --
 ALTER TABLE `project_payment_evidence`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 
 --
 -- AUTO_INCREMENT for table `project_procurement_methods`
 --
 ALTER TABLE `project_procurement_methods`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `project_progress_updates`
@@ -30218,13 +30422,13 @@ ALTER TABLE `project_progress_updates`
 -- AUTO_INCREMENT for table `project_status_history`
 --
 ALTER TABLE `project_status_history`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `project_supervisor_assignments`
 --
 ALTER TABLE `project_supervisor_assignments`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT for table `project_team`
