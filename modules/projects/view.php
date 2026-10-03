@@ -2318,6 +2318,10 @@ document.getElementById('edit-milestone-description').value = button.dataset.mil
 <input name="variance_explanation" class="form-control" placeholder="مثلاً: وفر في التنفيذ أو مصروف إضافي...">
 </div>
 </div>
+<div class="alert alert-info border small mt-3 mb-3">
+<i class="fas fa-coins me-1"></i>
+<strong>مهم:</strong> إغلاق مدير المشاريع هنا هو إغلاق المشروع من ناحية المشاريع فقط. إذا كان هناك رصيد متبقٍ، لا تنتظر تسويته قبل الإغلاق؛ بعد تنفيذ الإغلاق سيتم تحويل المهمة إلى المدير المالي لإرجاع الرصيد إلى حساب المؤسسة وإتمام الإغلاق المالي.
+</div>
 <div class="mt-3">
 <?php if (!$closureCanBeFinalizedView): ?>
 <div class="alert alert-warning border small mb-0">
@@ -2389,7 +2393,7 @@ document.getElementById('edit-milestone-description').value = button.dataset.mil
 </div>
 <?php endif; ?>
 <?php elseif ($status === 'closed'): ?>
-<div class="alert alert-light border mb-0 small"><i class="fas fa-lock me-1 text-success"></i>المشروع مغلق. الإغلاق وإعادة الفتح يتمان عبر مدير المشاريع بناءً على طلب مشرف المشروع.</div>
+<div class="alert alert-light border mb-0 small"><i class="fas fa-lock me-1 text-success"></i>تم إغلاق المشروع إدارياً من مدير المشاريع. إذا كان هناك رصيد متبقٍ، يتولى المدير المالي الآن إرجاعه إلى حساب المؤسسة وإتمام الإغلاق المالي.</div>
 <?php else: ?>
 <div class="alert alert-light border mb-0 small"><i class="fas fa-info-circle me-1"></i>إجراءات الإغلاق وإعادة الفتح محصورة بمدير المشاريع، وتبدأ بطلب من مشرف المشروع.</div>
 <?php endif; ?>
