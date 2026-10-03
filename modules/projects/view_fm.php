@@ -585,7 +585,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                             <?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_return_project_funding"><input type="hidden" name="allocation_id" value="<?php echo (int)$f['id']; ?>">
                             <div class="col-md-3"><input type="number" name="return_amount" class="form-control form-control-sm bg-body-secondary text-muted border-secondary-subtle" min="0.01" step="0.01" max="<?php echo e((string)$f['amount']); ?>" value="<?php echo e((string)min($controlledBalance,(float)$f['amount'])); ?>" readonly aria-readonly="true" tabindex="-1" title="يُحدد تلقائياً حسب الرصيد المتبقي تحت سيطرة المشروع"></div>
                             <div class="col-md-3"><input type="date" name="return_date" class="form-control form-control-sm" value="<?php echo date('Y-m-d'); ?>" required></div>
-                            <div class="col-md-4"><button type="button" class="btn btn-sm btn-success w-100 js-confirm-funding-return" data-bs-toggle="modal" data-bs-target="#confirmFundingReturnModal">تسجيل الإرجاع</button></div>
+                            <div class="col-md-4"><button type="button" class="btn btn-sm btn-success w-100 js-confirm-funding-return" data-return-amount="<?php echo e((string)min($controlledBalance,(float)$f['amount'])); ?>" data-source-account="<?php echo e(($f['source_account_code']??$f['source_type']).' · '.($f['source_account_name']??'')); ?>" data-bs-toggle="modal" data-bs-target="#confirmFundingReturnModal">تسجيل التسوية</button></div>
                         </form>
                     </td>
                 </tr>
@@ -603,8 +603,8 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     <button type="button" class="btn-close ms-0 me-auto" data-bs-dismiss="modal" aria-label="إغلاق"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="mb-2">سيتم تسجيل تسوية مبلغ <strong><?php echo number_format($controlledBalance,2); ?> <?php echo e($project['currency_code']?:'SDG'); ?></strong> من الرصيد المتبقي تحت سيطرة المشروع إلى حساب المؤسسة <strong>1200 · البنك</strong>.</div>
-                    <div class="small text-muted">هذا المبلغ لم يخرج من المؤسسة؛ التسوية تعيد الرصيد غير المستخدم من عهدة المشروع إلى حساب المؤسسة وتخفض الرصيد تحت سيطرة المشروع إلى <strong><?php echo number_format(max(0,$controlledBalance-$controlledBalance),2); ?> <?php echo e($project['currency_code']?:'SDG'); ?></strong>.</div>
+                    <div class="mb-2">سيتم تسجيل تسوية مبلغ <strong id="confirmFundingReturnAmount">—</strong> من الرصيد المتبقي تحت سيطرة المشروع إلى حساب المؤسسة <strong id="confirmFundingReturnAccount">—</strong>.</div>
+                    <div class="small text-muted">هذا المبلغ لم يخرج من المؤسسة؛ التسوية تعيد الرصيد غير المستخدم من عهدة المشروع إلى حساب المؤسسة وتخفض الرصيد تحت سيطرة المشروع.</div>
                     <?php if ($closureReturnProof): ?>
                     <div class="alert alert-light border small mt-3 mb-0">
                         <div class="fw-semibold mb-1"><i class="fas fa-paperclip me-1"></i>إثبات التسوية المرفق من مشرف المشروع</div>
@@ -628,6 +628,14 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         document.querySelectorAll('.js-confirm-funding-return').forEach(function (button) {
             button.addEventListener('click', function () {
                 pendingReturnForm = button.closest('form');
+                var amountNode = document.getElementById('confirmFundingReturnAmount');
+                var accountNode = document.getElementById('confirmFundingReturnAccount');
+                if (amountNode) {
+                    amountNode.textContent = (button.dataset.returnAmount || '0.00') + ' <?php echo e($project['currency_code']?:'SDG'); ?>';
+                }
+                if (accountNode) {
+                    accountNode.textContent = button.dataset.sourceAccount || '—';
+                }
             });
         });
         var confirmButton = document.getElementById('confirmFundingReturnButton');
