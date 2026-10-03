@@ -1599,3 +1599,11 @@ The Projects continuation state was corrected after a source-driven page scan sh
 
 Current main documentation/code checkpoint used for this correction: 798a5d54248d9270065757d34171bb8661089ba6.
 \n## 2026-10-03 — Projects Phase 5 current continuation: execution-expense boundary\n\nThe current `main` source was re-scanned before the next runtime action. The Projects expense implementation has two distinct paths:\n\n- post-release PS execution expense: direct `posted` project expense against already-released project funds, with audit logging and no second treasury journal;\n- unreleased/legacy accounting expense: draft → submitted → approved → `post_expense`, with a balanced journal, but explicitly blocked once project funding has already been released.\n\nFor PRJ-0015, the first path is the authoritative path because funding has already been released and the project has been launched.\n\n**Current gate:** STATICALLY VERIFIED — runtime pending.\n\n**Next action:** runtime-test one controlled PS execution expense on PRJ-0015 and reconcile funding, posted expenses, residual, and absence of duplicate treasury/accounting release. Do not repeat closed approval/launch gates and do not use the blocked legacy `post_expense` path.\n
+
+## 2026-10-03 — Projects Phase 5 execution-expense runtime gate — CLOSED
+
+PRJ-0015 execution-expense reconciliation is now runtime verified. The assigned PS recorded 50,000.00 SDG; approved budget remained 300,000.00 SDG; recorded expenses became 50,000.00 SDG; remaining budget became 250,000.00 SDG. The result exactly matches the documented controlled-balance model.
+
+Status: **PASS / CLOSED**.
+
+Continue with the first genuinely open Projects runtime gate identified by the master audit. Do not repeat the already-closed PM/FM/GM/final-confirmation/launch/PS-access or execution-expense gates without regression evidence.
