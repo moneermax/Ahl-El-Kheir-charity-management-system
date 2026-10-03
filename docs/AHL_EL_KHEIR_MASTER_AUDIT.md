@@ -2129,3 +2129,59 @@ The previously requested immediate project/UI fix is now completed and accepted 
 The temporary pause after PM submission is now **lifted**. The next task is to resume Phase 5 at **FM financial review / budget approval**, then continue the established accounting reconciliation sequence.
 
 Do **not** recreate PRJ-0015. Do not repeat the already-passed numeric-wheel or save-flow investigation unless a genuine regression appears.
+
+
+## 2026-10-03 — Projects Phase 5 runtime reconciliation correction — PRJ-0015
+
+### Audit correction
+A review of the current Projects source and the supplied browser/runtime evidence identified a documentation synchronization error: the previous master checkpoint continued to describe PRJ-0015 as submitted/planned with FM budget approval still pending, even though the runtime sequence had already advanced through FM approval, GM approval, FM final confirmation, PM launch, and PS notification/access.
+
+This section is authoritative for the current Projects Phase 5 position and supersedes the stale checkpoint text without deleting historical audit records.
+
+### Current runtime evidence
+**PRJ-0015 — PH5 Full Accounting Reconciliation Test**
+- Approval: **معتمد نهائياً** (approved)
+- Lifecycle: **قيد التنفيذ** (active)
+- Project Supervisor: **project supervisor**
+- Approved budget: **300,000.00 SDG**
+- Approved funding: **300,000.00 SDG**
+- Posted expenses at PS checkpoint: **0.00 SDG**
+- Remaining budget: **300,000.00 SDG**
+- PM launch history: مخطط → قيد التنفيذ, actor projects manager, timestamp 2026-10-02 19:48:43
+- PS launch notification: **تم إطلاق مشروع جديد للتنفيذ**, PRJ-0015, timestamp 2026-10-02 19:48:43
+
+### Closed runtime workflow gates
+The following are now treated as completed for PRJ-0015 or already-established controlled Phase 5 evidence and must not be reopened without regression evidence:
+
+- PM submission and FM notification.
+- FM financial approval as the sole initial accounting-release point.
+- Canonical funding allocation/release and journal linkage.
+- GM approval without a second accounting release.
+- GM rejection reversal / atomic return to FM review.
+- FM re-approval after reversal.
+- FM correction/void before final confirmation with GM approval invalidation.
+- FM final payment-document confirmation without a new accounting event.
+- PM visibility after final FM confirmation.
+- PM-only planned → active launch.
+- PS notification only after PM launch.
+- PS post-launch access and operational-role boundary.
+
+### Current source invariants confirmed during page scan
+- akp_project_final_fm_confirmed() derives the PM handoff gate from the auditable FM_CONFIRM_PAYMENT_EVIDENCE event.
+- Project Supervisor access requires final approval plus a launched lifecycle state; assignment alone does not expose an unlaunched project.
+- launch_project is a dedicated Projects Manager action and requires final approval plus final FM confirmation.
+- Generic status handling does not provide the normal active transition; launch remains the controlled transition.
+- FM funding release uses project_funding_release journal references and checks for an existing posted journal for the allocation before creating another release.
+- Funding reversal voids the current release, posts a balanced reversal journal, and returns the allocation to draft for controlled re-approval.
+- After final payment-evidence confirmation, FM return-to-review is blocked by fm_payment_evidence_finalized().
+- Project receipt access is restricted to authorized project viewers and documented payment evidence, with filesystem path confinement.
+- Project Supervisor operational expense entry is distinct from accounting posting; project expense posting is restricted to FM/accountant/admin.
+- Closure/reopen request and execution are separated: PS requests, Projects Manager performs the administrative close/reopen action.
+
+### Page/action inventory scanned
+ dashboard/projects_dashboard.php, modules/projects/index.php, modules/projects/form.php, modules/projects/view.php, modules/projects/view_fm.php, modules/projects/project_lib.php, modules/projects/project_funding_accounting.php, modules/projects/project_payment_receipt.php, and modules/projects/serve_project_document.php.
+
+Current POST/action families include project submission, GM approval/rejection, dedicated PM launch, PS operational expense/document/labor/milestone/progress actions, closure/reopen requests and execution, FM budget approval, funding batch/edit/delete, funding reversal/return, FM approval/rejection/correction, payment-evidence upload/edit/confirmation, and final payment-document confirmation.
+
+### Remaining certification work
+The page scan does not justify declaring the whole Projects Phase 5 closed. The remaining work must be selected from genuinely undocumented runtime gates, especially any still-open post-final-confirmation mutation lock, controlled-balance/funding-return reconciliation, final expense/accounting reconciliation, and closure/reopen runtime certification. Historical completed tests must be used rather than repeated.
