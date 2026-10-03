@@ -834,14 +834,6 @@ if (!in_array($currentLifecycleStatus, ['active', 'reopened', 'under_review'], t
 throw new RuntimeException('لا يمكن طلب إغلاق المشروع من حالته الحالية.');
 }
 $closureControlledBalance = akp_project_controlled_balance($id);
-$existingFundingReturnProofForClosure = dbFetchOne(
-"SELECT * FROM project_documents
- WHERE project_id = ?
- AND (document_type = 'funding_return_proof' OR title = 'إثبات تسوية الرصيد المتبقي')
- ORDER BY CASE WHEN document_type = 'funding_return_proof' THEN 0 ELSE 1 END, id DESC
- LIMIT 1",
-[$id]
-);
 $returnProofStoredAbsolutePath = null;
 $returnProofRelativePath = null;
 $returnProofDocumentId = 0;
