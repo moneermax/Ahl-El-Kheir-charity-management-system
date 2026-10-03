@@ -2214,7 +2214,7 @@ document.getElementById('edit-milestone-description').value = button.dataset.mil
 </div>
 </div>
 <?php endif; ?>
-<?php elseif ($role === 'projects_manager'): ?>
+<?php if ($role === 'projects_manager'): ?>
 <?php if ($status === 'closed'): ?>
 <div class="card border-warning mb-4">
 <div class="card-header bg-warning-subtle">
@@ -2268,13 +2268,7 @@ document.getElementById('edit-milestone-description').value = button.dataset.mil
 </div>
 </div>
 </div>
-
-<?php else: ?>
-
-<span class="badge bg-secondary">بانتظار تسجيل المدير المالي</span>
-
-<?php endif; ?>
-
+<?php if ($status !== 'closed'): ?>
 <div class="border rounded-3 p-3 bg-warning-subtle">
 <div class="d-flex align-items-start gap-3">
 <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-warning bg-opacity-25 text-warning-emphasis" style="width:40px;height:40px;"><i class="fas fa-clipboard-check"></i></div>
@@ -2293,7 +2287,178 @@ document.getElementById('edit-milestone-description').value = button.dataset.mil
 <span class="badge bg-success">تمت تسوية الرصيد بالكامل</span>
 <?php elseif ($closureFundingReturns): ?>
 <span class="badge bg-warning text-dark">تم تسجيل تسوية جزئية</span>
-
+<?php else: ?>
+<span class="badge bg-secondary">بانتظار تسجيل المدير المالي</span>
+<?php endif; ?>
+</div>
+</div>
+<?php if ($closureFundingReturns): ?>
+<div class="table-responsive mb-3">
+<table class="table table-sm align-middle mb-0">
+<thead><tr><th>التاريخ</th><th>حساب الإرجاع</th><th>المبلغ</th><th>القيد</th><th>بواسطة</th></tr></thead>
+<tbody>
+<?php foreach ($closureFundingReturns as $returnRow): ?>
+<tr>
+<td><?php echo e($returnRow['return_date'] ?? '—'); ?></td>
+<td><?php echo e(($returnRow['source_account_code'] ?? '—') . ' · ' . ($returnRow['source_account_name'] ?? '')); ?></td>
+<td><?php echo number_format((float)$returnRow['amount'], 2); ?> <?php echo e($returnRow['currency_code'] ?: ($project['currency_code'] ?: 'SDG')); ?></td>
+<td><?php echo e($returnRow['entry_code'] ?? '—'); ?></td>
+<td><?php echo e($returnRow['returned_by_name'] ?? '—'); ?></td>
+</tr>
+<?php endforeach; ?>
+</tbody>
+</table>
+</div>
+<?php else: ?>
+<div class="alert alert-warning border small mb-3"><i class="fas fa-clock me-1"></i>لم يسجل المدير المالي تسوية الرصيد المتبقي بعد. لذلك يبقى الإغلاق النهائي محجوباً.</div>
+<?php endif; ?>
+<?php if ($existingFundingReturnProof): ?>
+<div class="alert alert-light border small mb-0">
+<div class="fw-semibold mb-1"><i class="fas fa-paperclip me-1"></i>إثبات تسوية الرصيد المرفق من مشرف المشروع</div>
+<div class="d-flex flex-wrap align-items-center gap-2">
+<a href="<?php echo APP_URL; ?>modules/projects/serve_project_document.php?id=<?php echo (int)$existingFundingReturnProof['id']; ?>" class="btn btn-sm btn-outline-primary" target="_blank"><i class="fas fa-eye me-1"></i>عرض إثبات التسوية</a>
+<span><?php echo e($existingFundingReturnProof['original_name'] ?: 'ملف الإثبات'); ?></span>
+<?php if (!empty($existingFundingReturnProof['uploader_name'])): ?><span class="text-muted">رفع بواسطة: <?php echo e($existingFundingReturnProof['uploader_name']); ?></span><?php endif; ?>
+</div>
+<div class="text-muted mt-2">المستند المرفق من مشرف المشروع هو إثبات مستندي؛ أما التسوية المحاسبية نفسها فتظهر أعلاه بعد تسجيلها من المدير المالي.</div>
+</div>
+<?php elseif ($closureFundingReturns): ?>
+<div class="alert alert-warning border small mb-0"><i class="fas fa-file-circle-xmark me-1"></i>تم تسجيل التسوية المحاسبية، لكن لا يوجد ملف إثبات تسوية مرفق بطلب الإغلاق.</div>
+<?php endif; ?>
+</div>
+</div>
+<?php endif; ?>
+<?php if ($closureRequest && (string)$closureRequest['new_status'] === 'closure_requested'): ?>
+<div class="card border-0 shadow-sm mb-3">
+<div class="card-body p-3">
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+<span class="badge bg-warning-subtle text-warning-emphasis"><i class="fas fa-clock me-1"></i>طلب إغلاق بانتظار الإجراء</span>
+<span class="small text-muted">من مشرف المشروع</span>
+</div>
+<div class="small">
+<div class="mb-1"><strong>مقدم الطلب:</strong> <?php echo e($closureRequest['requester_name'] ?? 'مشرف المشروع'); ?></div>
+<?php if (!empty($closureRequest['reason'])): ?>
+<div><strong>ملاحظات المشرف:</strong><div class="mt-1 p-2 bg-light rounded"><?php echo nl2br(e($closureRequest['reason'])); ?></div></div>
+<?php endif; ?>
+</div>
+</div>
+</div>
+<div class="border-top pt-3">
+<div class="alert alert-info border small mb-3">
+    <i class="fas fa-rotate-left me-1"></i>
+    إذا كانت هناك نقاط تحتاج إلى استكمال أو توضيح، يمكنك إعادة المشروع إلى مشرف المشروع بدلاً من إغلاقه نهائياً. سيعود المشروع إلى حالة <strong>قيد التنفيذ</strong> ويمكن للمشرف استكمال المطلوب ثم إرسال طلب إغلاق جديد.
+</div>
+<form method="post" class="mb-3">
+<input type="hidden" name="action" value="return_project_to_ps">
+<?php echo csrf_field(); ?>
+<div class="mb-3">
+<label class="form-label small fw-semibold">سبب إعادة المشروع إلى مشرف المشروع <span class="text-danger">*</span></label>
+<textarea name="return_to_ps_reason" class="form-control" rows="3" placeholder="حدد ما يحتاج إلى استكمال أو توضيح قبل إعادة طلب الإغلاق..." required></textarea>
+</div>
+<div class="d-flex justify-content-start">
+<button type="submit" class="btn btn-warning px-4"><i class="fas fa-rotate-left me-1"></i>إعادة المشروع إلى مشرف المشروع</button>
+</div>
+</form>
+<form method="post">
+<input type="hidden" name="action" value="close_project">
+<?php echo csrf_field(); ?>
+<div class="mb-3">
+<label class="form-label small fw-semibold">ملخص الإغلاق <span class="text-danger">*</span></label>
+<textarea name="closure_summary" class="form-control" rows="3" placeholder="اكتب ملخص الإغلاق والأسباب..." required></textarea>
+</div>
+<div class="row g-3">
+<div class="col-md-6">
+<label class="form-label small fw-semibold">تصنيف الإغلاق</label>
+<select name="closure_reason" class="form-select">
+<option value="completed_successfully">إنجاز كامل</option>
+<option value="cancelled">إلغاء</option>
+<option value="transferred_to_another_project">نقل لمشروع آخر</option>
+<option value="retained_for_followup">احتفاظ للمتابعة</option>
+<option value="other">أخرى</option>
+</select>
+</div>
+<div class="col-md-6">
+<label class="form-label small fw-semibold">تفسير فرق الميزانية <span class="text-muted">(اختياري)</span></label>
+<input name="variance_explanation" class="form-control" placeholder="مثلاً: وفر في التنفيذ أو مصروف إضافي...">
+</div>
+</div>
+<div class="alert alert-info border small mt-3 mb-3">
+<i class="fas fa-coins me-1"></i>
+<strong>مهم:</strong> إغلاق مدير المشاريع هنا هو إغلاق المشروع من ناحية المشاريع فقط. إذا كان هناك رصيد متبقٍ، لا تنتظر تسويته قبل الإغلاق؛ بعد تنفيذ الإغلاق سيتم تحويل المهمة إلى المدير المالي لإرجاع الرصيد إلى حساب المؤسسة وإتمام الإغلاق المالي.
+</div>
+<div class="mt-3">
+<?php if (!$closureCanBeFinalizedView): ?>
+<div class="alert alert-warning border small mb-0">
+<i class="fas fa-triangle-exclamation me-1"></i>
+<strong>لا يمكن تنفيذ إغلاق المشروع حالياً.</strong>
+<?php if ($pendingClosureExpensesView > 0): ?>
+<div class="mt-1">توجد <strong><?php echo $pendingClosureExpensesView; ?></strong> مصروفات غير مرحلة يجب استكمالها أولاً.</div>
+<?php endif; ?>
+<?php if (!akp_can_edit_section('closure', $id)): ?>
+<div class="mt-1">لا تملك صلاحية تنفيذ الإغلاق النهائي لهذا المشروع.</div>
+<?php endif; ?>
+</div>
+<?php endif; ?>
+<div class="d-flex justify-content-end mt-3">
+<button type="submit" class="btn btn-dark px-4" <?php echo $closureCanBeFinalizedView ? '' : 'disabled aria-disabled="true"'; ?>><i class="fas fa-lock me-1"></i>إغلاق المشروع إدارياً وتحويله للإغلاق المالي</button>
+</div>
+</div>
+</form>
+<?php else: ?>
+<div class="alert alert-light border d-flex align-items-center gap-2 small mb-0">
+<i class="fas fa-info-circle text-muted"></i>
+<span>لا يوجد طلب إغلاق معلق من مشرف المشروع.</span>
+</div>
+<?php endif; ?>
+</div>
+</div>
+</div>
+<?php else: ?>
+<div class="border rounded-3 p-3 bg-warning-subtle">
+<div class="d-flex align-items-start gap-3">
+<div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-warning bg-opacity-25 text-warning-emphasis" style="width:40px;height:40px;"><i class="fas fa-lock-open"></i></div>
+<div class="flex-grow-1">
+<h6 class="fw-bold mb-1">مراجعة طلب إعادة الفتح</h6>
+<p class="small text-muted mb-3">مراجعة مدير المشاريع لطلب إعادة الفتح المرسل من مشرف المشروع قبل تنفيذ إعادة الفتح.</p>
+<?php if ($closureRequest && (string)$closureRequest['new_status'] === 'reopen_requested'): ?>
+<div class="card border-0 shadow-sm mb-3">
+<div class="card-body p-3">
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+<span class="badge bg-warning-subtle text-warning-emphasis"><i class="fas fa-clock me-1"></i>طلب إعادة فتح بانتظار الإجراء</span>
+<span class="small text-muted">من مشرف المشروع</span>
+</div>
+<div class="small">
+<div class="mb-1"><strong>مقدم الطلب:</strong> <?php echo e($closureRequest['requester_name'] ?? 'مشرف المشروع'); ?></div>
+<?php if (!empty($closureRequest['reason'])): ?>
+<div><strong>سبب إعادة الفتح:</strong><div class="mt-1 p-2 bg-light rounded"><?php echo nl2br(e($closureRequest['reason'])); ?></div></div>
+<?php endif; ?>
+</div>
+</div>
+</div>
+<form method="post" class="border-top pt-3">
+<input type="hidden" name="action" value="reopen_project">
+<?php echo csrf_field(); ?>
+<div class="mb-3">
+<label class="form-label small fw-semibold">سبب اعتماد إعادة الفتح <span class="text-danger">*</span></label>
+<textarea name="reopen_reason" class="form-control" rows="3" placeholder="سجل سبب اعتماد إعادة فتح المشروع..." required></textarea>
+</div>
+<div class="d-flex justify-content-end">
+<button class="btn btn-warning px-4"><i class="fas fa-lock-open me-1"></i>تنفيذ إعادة فتح المشروع</button>
+</div>
+</form>
+<?php else: ?>
+<div class="alert alert-light border d-flex align-items-center gap-2 small mb-0">
+<i class="fas fa-info-circle text-muted"></i>
+<span>لا يوجد طلب إعادة فتح معلق من مشرف المشروع.</span>
+</div>
+<?php endif; ?>
+</div>
+</div>
+</div>
+<?php endif; ?>
+</div>
+</div>
+</div>
 <div class="modal fade" id="editProjectExpenseModal" tabindex="-1" aria-hidden="true">
 <div class="modal-dialog modal-lg modal-dialog-centered">
 <div class="modal-content">
