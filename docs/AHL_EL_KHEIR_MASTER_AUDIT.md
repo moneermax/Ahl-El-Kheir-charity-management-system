@@ -2338,3 +2338,34 @@ There is **no FM notification at the PS request stage**, and no second accountin
 5. As FM, verify the 250,000.00 SDG balance and PS proof, then record the return to the organization account. Verify the balanced return journal and controlled balance becomes zero.
 6. Verify 'FM_FINANCIAL_CLOSURE' is recorded exactly once and **PM** receives the completion notification.
 7. Verify PS is not re-notified and no second funding-release journal is created.
+
+
+---
+
+
+## 2026-10-03 — Closure workflow/root-cause correction
+
+The previous closure guard conflated administrative project closure with financial closure. The required workflow is:
+
+`PS closure request + return proof → PM administrative close → FM return + financial close`
+
+### Authoritative boundaries
+
+- **PS:** submits the closure request and return proof; no accounting return authority.
+- **PM:** reviews/returns the request or closes the project administratively; no accounting return authority and no requirement to reduce the controlled balance to zero before administrative closure.
+- **FM:** after PM closure, records the unused-fund return and completes financial closure.
+- **PS is not notified of or responsible for the post-close accounting task.**
+
+### Notification sequence
+
+1. `project_closure_request` → active Projects Manager only.
+2. `project_financial_closure_required` → active Financial Manager after successful PM `CLOSE`.
+3. `project_financial_closure_completed` → active Projects Manager after FM completes the return/financial close.
+
+Implementation commit: **e66d0452885a0f3c0270913cda698b0f522723f9**.
+
+### Accounting invariant
+
+PM closure does not create a journal. FM return continues through `akp_return_project_funding()`. The controlled balance is reduced by the recorded return, and `FM_FINANCIAL_CLOSURE` is the auditable completion event.
+
+**Runtime gate: OPEN / NOT YET VERIFIED.**
