@@ -999,7 +999,19 @@ width: 24%;
 <p class="small mb-0"><i class="fas fa-user-tie me-1"></i>مشرف المشروع: <strong><?php echo e($primarySupervisor['full_name']); ?></strong></p>
 <?php endif; ?>
 </div>
-<div class="d-flex gap-2">
+<div class="d-flex gap-2 align-items-center flex-wrap">
+<?php if ($role === 'project_supervisor' && akp_can_edit_section('operations', $id) && !$closed): ?>
+<form method="post" class="project-action-form d-flex align-items-center gap-2">
+<?php echo csrf_field(); ?>
+<input type="hidden" name="action" value="change_status">
+<label for="projectStatusControl" class="small fw-semibold mb-0">حالة المشروع</label>
+<select id="projectStatusControl" name="new_status" class="form-select form-select-sm" style="min-width:180px" onchange="this.form.submit()" aria-label="تغيير حالة المشروع">
+<?php foreach (['planned'=>'projects.planned','active'=>'projects.active','under_review'=>'projects.under_review','completed'=>'projects.completed','cancelled'=>'projects.cancelled'] as $key => $labelKey): ?>
+<option value="<?php echo $key; ?>" <?php echo $status === $key ? 'selected' : ''; ?> <?php echo in_array($key, ['planned','active'], true) ? 'disabled' : ''; ?>><?php echo e(t($labelKey)); ?></option>
+<?php endforeach; ?>
+</select>
+</form>
+<?php endif; ?>
 <?php if ($role === 'projects_manager' && $approval['approval_status'] === 'approved' && $fmFinalConfirmed && (string)($project['lifecycle_status'] ?? $project['status']) === 'planned'): ?>
 <form method="post" class="project-action-form d-inline">
 <?php echo csrf_field(); ?>
