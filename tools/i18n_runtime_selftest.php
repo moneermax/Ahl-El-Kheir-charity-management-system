@@ -71,12 +71,9 @@ $results['sample_en'] = (function () {
     $_GET['lang'] = 'en';
     return ak_catalog('en')['common.organization_name'] ?? '';
 })();
-$results['reverse_home'] = ak_translate_text(
+$results['english_home'] = ak_legacy_lookup(
     'الرئيسية',
-    ak_reverse_dict(),
-    [],
-    [],
-    true
+    ak_server_dict()
 );
 echo json_encode($results, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
 PHP;
@@ -135,8 +132,8 @@ PHP;
     if ($testLanguage === 'en') {
         check_test(
             'Arabic compatibility phrase translates to English',
-            (string)($data['reverse_home'] ?? '') === 'Home',
-            'expected Home, got ' . (string)($data['reverse_home'] ?? '')
+            (string)($data['english_home'] ?? '') === 'Home',
+            'expected Home, got ' . (string)($data['english_home'] ?? '')
         );
     }
 }
