@@ -4422,4 +4422,10 @@ return [
 'حدد توضيح الغرض للشهر:' => 'Specify the purpose details for the month:',
 'سطر مكرر (نفس الشهر والغرض):' => 'Duplicate line (same month and purpose):',
 'المبلغ يجب أن يكون أكبر من صفر للشهر:' => 'The amount must be greater than zero for month:',
+'الاعتماد النهائي' => 'Final approval',
+'مراجعة وإطلاق' => 'Review and launch',
+'استلم بواسطة' => 'Received by',
+'المُعد' => 'Prepared by',
+'المدير المالي' => 'Financial Manager',
+'الموظف' => 'Employee',
 ];
