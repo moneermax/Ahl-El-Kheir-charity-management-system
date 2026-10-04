@@ -4505,4 +4505,10 @@ return [
 'الحساب موقوف' => 'Account is suspended',
 'تحميل' => 'Download',
 'الرموز التعبيرية' => 'Emoji',
+'ج.س) أقل من مبلغ السند.' => 'SDG) is less than the voucher amount.',
+' SDG. يجب أن يساوي الإجمالي المطلوب تماماً.' => ' SDG. The required total must match exactly.',
+'المشروع معتمد مالياً. راجع الاعتماد المالي ومصادر التمويل والمبالغ المسجلة أدناه، ثم اتخذ قرار الاعتماد التنظيمي النهائي. لا ينشئ هذا الاعتماد أي إفراج مالي أو قيد محاسبي جديد؛ فقد تم تنفيذ الإفراج المالي عند اعتماد المدير المالي.' => 'The project is financially approved. Review the financial approval, funding sources, and amounts recorded below, then make the final organizational approval decision. This approval does not create any new financial release or accounting entry; the financial release was already executed when the Financial Manager approved it.',
+'، وسيقوم المدير المالي بإرجاعه إلى حساب المؤسسة وإتمام الإغلاق المالي.' => ', and the Financial Manager will return it to the organization account and complete financial closure.',
+'تقسيم التعيين القديم للحرف «» إلى ذكور + إناث لنفس المشرف؟' => 'Split the old letter assignment «» into males + females for the same supervisor?',
+'لا تحتاج إلى اختيار سجل موظف موجود. بعد إنشاء الحساب ينشئ النظام ملف الموظف ويربطه بالحساب تلقائياً. يمكن للموظف استكمال البيانات الوظيفية والشخصية لاحقاً دون إنشاء حساب آخر.' => 'You do not need to select an existing employee record. After creating the account, the system automatically creates and links the employee profile. The employee can complete employment and personal details later without creating another account.',
 ];
