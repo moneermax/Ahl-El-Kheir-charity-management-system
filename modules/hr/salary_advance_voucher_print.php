@@ -134,7 +134,7 @@ function akVoucherBack(){
 <div class="no"><span>رقم الطلب / Request</span><b><?php echo e($r['request_no']); ?></b><span>التاريخ / Date</span><b><?php echo e($r['entry_date'] ?? $r['disbursed_at']); ?></b></div>
 </header>
 <div class="title"><div class="title-ar">سند صرف سلفة راتب</div><div class="title-en" dir="ltr">SALARY ADVANCE PAYMENT VOUCHER</div></div>
-<div class="amount"><span>المبلغ / Amount</span><b><?php echo number_format($amount,2); ?></b><span>ج.س / SDG</span></div>
+<div class="amount"><span>المبلغ</span><b><?php echo number_format($amount,2); ?></b><span>ج.س</span></div>
 <table class="table">
 <?php
 echo row('الموظف', 'Employee', (string)$r['employee_name'], true);
@@ -147,7 +147,7 @@ echo row('مرجع الصرف', 'Disbursement Reference', (string)($r['disbursem
 echo row('القيد المحاسبي', 'Journal Entry', (string)$r['entry_code'], true);
 ?>
 </table>
-<div class="sign"><div>المستفيد / Employee<br><br>التوقيع: __________________</div><div>المُعد / Prepared by<br><br><?php echo e($r['disburser_name'] ?? ''); ?></div><div>المدير المالي / Financial Manager<br><br>التوقيع: __________________</div></div>
+<div class="sign"><div>المستفيد<br><br>التوقيع: __________________</div><div>المُعد<br><br><?php echo e($r['disburser_name'] ?? ''); ?></div><div>المدير المالي<br><br>التوقيع: __________________</div></div>
 <footer class="foot"><span>تمت الطباعة بواسطة: <?php echo e($printedBy); ?></span><span>حالة السند: مرحّل / Posted</span><span>القيد: <?php echo e($r['entry_code']); ?></span></footer>
 </section>
 </main>
