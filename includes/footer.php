@@ -331,35 +331,29 @@ window.AK_BACK_FALLBACK=<?php echo json_encode(APP_URL . dashboard_for_role(curr
     }
     setSidebar(false);
     if(btn) btn.addEventListener('click',function(){setSidebar(!document.body.classList.contains('sidebar-open'));});
-    if(overlay) overlay.addEventListener('click',function(){setSidebar(false);});
-    document.addEventListener('click',function(event){
+    /*
+     * Closing is handled before normal page click handlers run.
+     *
+     * The overlay is visual only; it must never become a click-capture layer,
+     * otherwise it can swallow the navigation click that should take the user
+     * away from the current page.
+     */
+    document.addEventListener('pointerdown',function(event){
         if(!document.body.classList.contains('sidebar-open')) return;
         if(event.target.closest('#sidebar') || event.target.closest('#akSidebarToggle')) return;
         setSidebar(false);
-    });
-    document.addEventListener('keydown',function(event){if(event.key==='Escape'&&document.body.classList.contains('sidebar-open')){setSidebar(false);if(btn)btn.focus();}});
-    document.querySelectorAll('#sidebar a').forEach(function(link){
-        link.addEventListener('click',function(event){
-            var href=link.getAttribute('href')||'';
-            var isPlainNavigation=
-                href &&
-                href!=='#' &&
-                !link.hasAttribute('download') &&
-                link.target!=='_blank' &&
-                !event.defaultPrevented &&
-                !event.metaKey &&
-                !event.ctrlKey &&
-                !event.shiftKey &&
-                !event.altKey;
+    },true);
 
-            if(!isPlainNavigation || !document.body.classList.contains('sidebar-open')) return;
-
-            event.preventDefault();
+    document.addEventListener('keydown',function(event){
+        if(event.key==='Escape'&&document.body.classList.contains('sidebar-open')){
             setSidebar(false);
+            if(btn)btn.focus();
+        }
+    });
 
-            window.setTimeout(function(){
-                window.location.href=link.href;
-            },320);
+    document.querySelectorAll('#sidebar a').forEach(function(link){
+        link.addEventListener('click',function(){
+            if(document.body.classList.contains('sidebar-open')) setSidebar(false);
         });
     });
     window.addEventListener('resize',function(){if(mobileQuery.matches&&document.body.classList.contains('sidebar-open'))setSidebar(false);});
