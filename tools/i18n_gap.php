@@ -36,7 +36,13 @@ foreach ($iterator as $file) {
         // onclick="return confirm('message')" -> check the message itself (native dialogs are translated at runtime).
         if (preg_match('/\b(?:confirm|alert|prompt)\(\s*([\'"])(.*?)\1/us', $text, $dialog)) $text = ak_legacy_normalize($dialog[2]);
         if ($text === '' || !preg_match('/[\x{0600}-\x{06FF}]/u', $text)) continue;
-        if (preg_match('/[\$\{\};]|->|::|\bSELECT\b|\bINSERT\b|\bUPDATE\b/', $text)) continue; // code, not UI text
+        // Ignore source-code / schema literals that contain Arabic but are not UI text.
+        if (preg_match('/[\$\{\};]|->|::|\b(?:SELECT|INSERT|UPDATE|DELETE|ALTER|CREATE|DROP|TRUNCATE)\b|\b(?:FROM|JOIN|WHERE|VALUES|SET|ADD|COLUMN|TABLE)\b/i', $text)) continue;
+        if (preg_match('/\b(?:document|getElementById|querySelector|classList|style|innerHTML|textContent)\b|===|!==|=>|\b(?:CASE|WHEN|THEN|ELSE|END)\b/i', $text)) continue;
+        // Single Arabic letters are data/filter values, not translatable UI words.
+        if (mb_strlen(preg_replace('/\s+/u', '', $text) ?? $text) <= 2) continue;
+        // SQL LIKE wildcards and enum/value lists are source/data fragments, not UI text.
+        if (strpos($text, '%') !== false || preg_match('/\b(?:male|female|ذكر|أنثى|انثى)\b.*\b(?:male|female|ذكر|أنثى|انثى)\b/iu', $text)) continue;
         if (ak_legacy_lookup($text, $dict) !== null || ak_core_lookup($text, $coreIndex) !== null) continue;
         $missing[substr($path, strlen($root) + 1)][$text] = true;
     }
