@@ -80,9 +80,9 @@ Partial settlement is not production behavior.
 2. FM reviews against active policy/customization.
 3. Approved request is disbursed.
 4. Receivable/control is recorded.
-5. Payroll schedule and/or approved direct repayment reduces the balance.
+5. Payroll schedule and payroll repayment reduce the balance.
 6. Evidence is recorded.
-7. Final balance reaches zero.
+7. Direct employee repayment and final settlement are reserved for Stage 6 and are not yet implemented at this baseline.
 
 The detailed salary-advance policy is maintained in the dedicated domain documentation.
 
