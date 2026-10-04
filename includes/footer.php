@@ -331,7 +331,12 @@ window.AK_BACK_FALLBACK=<?php echo json_encode(APP_URL . dashboard_for_role(curr
     }
     setSidebar(false);
     if(btn) btn.addEventListener('click',function(){setSidebar(!document.body.classList.contains('sidebar-open'));});
-    if(overlay) overlay.addEventListener('click',function(){if(mobileQuery.matches)setSidebar(false);});
+    if(overlay) overlay.addEventListener('click',function(){setSidebar(false);});
+    document.addEventListener('click',function(event){
+        if(!document.body.classList.contains('sidebar-open')) return;
+        if(event.target.closest('#sidebar') || event.target.closest('#akSidebarToggle')) return;
+        setSidebar(false);
+    });
     document.addEventListener('keydown',function(event){if(event.key==='Escape'&&document.body.classList.contains('sidebar-open')){setSidebar(false);if(btn)btn.focus();}});
     document.querySelectorAll('#sidebar a').forEach(function(link){
         link.addEventListener('click',function(event){
