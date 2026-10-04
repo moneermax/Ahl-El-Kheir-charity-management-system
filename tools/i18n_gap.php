@@ -28,9 +28,15 @@ foreach ($iterator as $file) {
     if (preg_match_all("/'((?:[^'\\\\\\n]|\\\\.)*)'|\"((?:[^\"\\\\\\n]|\\\\.)*)\"/u", $code, $m, PREG_SET_ORDER)) {
         foreach ($m as $hit) $found[] = $hit[1] !== '' ? $hit[1] : ($hit[2] ?? '');
     }
-    $html = preg_replace('~<(script|style)\b.*?</\1>~is', "\0", $code) ?? $code;
-    $html = preg_replace('~<\?(?:php|=).*?\?>~s', "\0", $html) ?? $html;
-    if (preg_match_all('~>([^<>]+)<~u', $html, $m)) foreach ($m[1] as $text) foreach (explode("\0", $text) as $piece) $found[] = $piece;
+    // HTML text-node scanning is useful for PHP templates, but running it over JavaScript
+    // source treats ">" and "<" inside JS/HTML string literals as if they were real tags.
+    // That creates false fragments such as `href="...">Label`. JS literals are already
+    // collected by the quoted-string scanner above, so only PHP templates need this pass.
+    if (strtolower($file->getExtension()) === 'php') {
+        $html = preg_replace('~<(script|style)\\b.*?</\\1>~is', "\0", $code) ?? $code;
+        $html = preg_replace('~<\\?(?:php|=).*?\\?>~s', "\0", $html) ?? $html;
+        if (preg_match_all('~>([^<>]+)<~u', $html, $m)) foreach ($m[1] as $text) foreach (explode("\0", $text) as $piece) $found[] = $piece;
+    }
     foreach ($found as $text) {
         $text = ak_legacy_normalize(strip_tags(stripslashes($text)));
         // onclick="return confirm('message')" -> check the message itself (native dialogs are translated at runtime).
