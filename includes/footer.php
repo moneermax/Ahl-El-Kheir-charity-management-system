@@ -333,7 +333,30 @@ window.AK_BACK_FALLBACK=<?php echo json_encode(APP_URL . dashboard_for_role(curr
     if(btn) btn.addEventListener('click',function(){setSidebar(!document.body.classList.contains('sidebar-open'));});
     if(overlay) overlay.addEventListener('click',function(){if(mobileQuery.matches)setSidebar(false);});
     document.addEventListener('keydown',function(event){if(event.key==='Escape'&&document.body.classList.contains('sidebar-open')){setSidebar(false);if(btn)btn.focus();}});
-    document.querySelectorAll('#sidebar a').forEach(function(link){link.addEventListener('click',function(){if(mobileQuery.matches)setSidebar(false);});});
+    document.querySelectorAll('#sidebar a').forEach(function(link){
+        link.addEventListener('click',function(event){
+            var href=link.getAttribute('href')||'';
+            var isPlainNavigation=
+                href &&
+                href!=='#' &&
+                !link.hasAttribute('download') &&
+                link.target!=='_blank' &&
+                !event.defaultPrevented &&
+                !event.metaKey &&
+                !event.ctrlKey &&
+                !event.shiftKey &&
+                !event.altKey;
+
+            if(!isPlainNavigation || !document.body.classList.contains('sidebar-open')) return;
+
+            event.preventDefault();
+            setSidebar(false);
+
+            window.setTimeout(function(){
+                window.location.href=link.href;
+            },320);
+        });
+    });
     window.addEventListener('resize',function(){if(mobileQuery.matches&&document.body.classList.contains('sidebar-open'))setSidebar(false);});
 })();
 (function(){var deferred=null;var btn=document.getElementById('akInstallBtn');window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferred=e;if(btn)btn.classList.remove('d-none')});if(btn)btn.addEventListener('click',function(){if(!deferred)return;deferred.prompt();deferred.userChoice.then(function(){deferred=null;btn.classList.add('d-none')})});window.addEventListener('appinstalled',function(){if(btn)btn.classList.add('d-none')})})();
