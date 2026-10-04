@@ -52,7 +52,7 @@ function addCandidate(string $path, string $raw, array $dict, array &$missing): 
     // Source-code fragments and translation-key calls are not visible English UI.
     if (preg_match('/(?:<\\/?[A-Za-z][^>]*>|<\\?php|\\?>|\\b(?:echo|print|t|ak_t)\\s*\\(|AK_LANG|csrf_token\\s*\\()/i', $text)) return;
     if (preg_match('/\$[A-Za-z_]|\{\{|\b(?:const|let|var|function)\b/i', $text)) return;
-    if (preg_match('/^(?:https?:\/\/|mailto:|javascript:)/i', $text)) return;
+    if (preg_match('/^(?:https?:\/\/|mailto:|javascript:|[A-Za-z]:\\\\)/i', $text)) return;
     if (preg_match('/^[A-Za-z0-9._:#\/\\-]+$/', $text) && !preg_match('/\s/', $text)) return;
 
     $words = preg_split('/[^A-Za-z]+/', strtolower($text), -1, PREG_SPLIT_NO_EMPTY) ?: [];
