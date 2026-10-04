@@ -102,7 +102,7 @@ user/role, URL/action, record ID, workflow state, audit event, journal/reference
 ## 11. Current verified boundaries
 
 - Projects Phase 5 controlled reconciliation/closure: runtime verified and closed.
-- HR Salary Advance Stages 1–6: completed at their documented acceptance boundary.
+- HR Salary Advance Stages 1–5: runtime verified and closed at their documented acceptance boundary; Stage 6 direct repayment/settlement is not started.
 - Fina core settlement model: accepted.
 - Accounting/notification audits: completed at documented evidence boundaries.
 - Development/test data remains non-production data unless explicitly designated.
