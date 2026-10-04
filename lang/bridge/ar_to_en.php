@@ -2711,4 +2711,7 @@ return [
 'الفرع' => 'Branch',
 'رقم الحساب' => 'Account Number',
 'اسم صاحب الحساب' => 'Account Holder Name',
+'return confirm(\'إعادة فتح متابعة هذا الكفيل؟\')' => 'Reopen this sponsor follow-up?',
+'return confirm(\'إعادة تفعيل الكفيل؟\')' => 'Reactivate this sponsor?',
+'return confirm(\'إغلاق المتابعة؟\')' => 'Close this follow-up?',
 ];
