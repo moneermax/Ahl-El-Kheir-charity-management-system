@@ -14,6 +14,7 @@ while (ob_get_level() > 0) ob_end_clean();
 $showAll = in_array('--all', $argv ?? [], true);
 $dict = ak_server_dict();
 $coreIndex = ak_core_index($dict);
+$runtimePatterns = ak_compile_patterns(ak_bridge('ar_to_en_patterns'));
 $skip = ['/TCPDF/', '/.git/', '/storage/', '/database/', '/lang/', '/tools/', '/docs/', '/modules/system/'];
 $missing = [];
 $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS));
