@@ -164,4 +164,11 @@ return [
 'سيتم إلغاء التأكيدات المالية السابقة وعكس الإفراج المالي غير المنفذ وإعادة المشروع للمراجعة المالية. هل تريد المتابعة؟' => 'Previous financial confirmations will be cancelled, the unexecuted financial release reversed, and the project returned to financial review. Do you want to continue?',
 'سبب الرفض' => 'Rejection reason',
 'سيتم ترحيل' => 'The following will be posted',
+'تحميل' => 'Download',
+'إغلاق' => 'Close',
+'مراجعة منظمة فينا الخير' => 'Fina Al-Khair review',
+'تسويات منظمة فينا الخير' => 'Fina Al-Khair settlements',
+'سجل منظمة فينا الخير' => 'Fina Al-Khair log',
+'تقرير منظمة فينا الخير' => 'Fina Al-Khair report',
+'إجمالي المعتمد هنا هو مجموع التحصيلات ذات الحالة «معتمد» فقط؛ وهو يختلف عن الرصيد غير المسدد في شاشة التسويات. أموال منظمة فينا الخير مستقلة عن إيرادات الكفالات والرسوم الإدارية.' => 'The approved total here is the sum of collections with “Approved” status only; it differs from the unsettled balance on the settlements screen. Fina Al-Khair funds are independent of sponsorship revenue and administrative fees.',
 ];
