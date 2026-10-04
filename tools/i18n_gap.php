@@ -59,6 +59,10 @@ foreach ($iterator as $file) {
         // Ignore source-code / schema literals that contain Arabic but are not UI text.
         if (preg_match('/[\$\{\};]|->|::|\b(?:SELECT|INSERT|UPDATE|DELETE|ALTER|CREATE|DROP|TRUNCATE)\b|\b(?:FROM|JOIN|WHERE|VALUES|SET|ADD|COLUMN|TABLE)\b/i', $text)) continue;
         if (preg_match('/\b(?:document|getElementById|querySelector|classList|style|innerHTML|textContent)\b|===|!==|=>|\b(?:CASE|WHEN|THEN|ELSE|END)\b/i', $text)) continue;
+        // CSS/DOM selector literals containing Arabic attribute values are code, not visible UI text.
+        if (preg_match('/(?:^|[\\s,{])(?:[.#][A-Za-z_-][\\w-]*|[A-Za-z][\\w-]*)\\[[^\\]]*[\\x{0600}-\\x{06FF}][^\\]]*\\]/u', $text)) continue;
+        // Regex literals containing Arabic are executable patterns, not translatable UI text.
+        if (preg_match('~^/(?:[^/\\\\]|\\\\.)*[\\x{0600}-\\x{06FF}](?:[^/\\\\]|\\\\.)*/[a-z]*$~iu', $text)) continue;
         // Single Arabic letters are data/filter values, not translatable UI words.
         if (mb_strlen(preg_replace('/\s+/u', '', $text) ?? $text) <= 2) continue;
         // SQL LIKE wildcards and enum/value lists are source/data fragments, not UI text.
