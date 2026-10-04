@@ -57,4 +57,10 @@ return [
 'سند قبض {n} — {n}' => 'Receipt voucher {1} — {2}',
 'الطفل «{n}» مكفول بالفعل.' => 'Child “{1}” is already sponsored.',
 'أدخل المبلغ الشهري للطفل «{n}»' => 'Enter the monthly amount for child “{1}”',
+'تم رفض وإغلاق طلب السلفة «{n}». سبب الرفض: {n}' => 'Salary advance request “{1}” was rejected and closed. Rejection reason: {2}',
+'تم صرف السلفة وترحيل القيد المحاسبي رقم {n} بنجاح.' => 'Salary advance was disbursed and accounting entry number {1} was posted successfully.',
+'تم تسجيل السداد المباشر وترحيل القيد المحاسبي رقم {n}' => 'Direct repayment was recorded and accounting entry number {1} was posted.',
+'. يجب تسوية السلفة السابقة أولاً.' => '. The previous advance must be settled first.',
+'طلب السلفة «{n}» للموظف «{n}» بانتظار مراجعة المدير المالي.' => 'Salary advance request “{1}” for employee “{2}” is awaiting Financial Manager review.',
+'تم إرسال طلب السلفة رقم {n}' => 'Salary advance request number {1} was sent',
 ];
