@@ -90,9 +90,9 @@ This guide describes implemented business tasks. It does not grant permissions.
 2. Review policy/customization.
 3. Approve/reject.
 4. Complete approved disbursement.
-5. Review repayment schedule/payroll deduction.
-6. For direct repayment, verify receipt/evidence and journal.
-7. Confirm final outstanding balance is zero.
+5. Review the repayment schedule and payroll deduction results.
+6. Verify the payroll repayment evidence/journal when applicable.
+7. Direct repayment/settlement is not yet an available employee task; it is reserved for Stage 6.
 
 ## 5. Accountant / Accountant Staff
 
