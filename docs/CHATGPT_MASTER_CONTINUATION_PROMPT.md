@@ -16,7 +16,7 @@ Then inspect the relevant source, schema and domain evidence.
 
 Projects Phase 5 controlled PRJ-0015 reconciliation and financial closure is runtime verified and closed. Do not recreate the fixture or repeat the return.
 
-HR Salary Advance Stages 1–5 are complete at their documented acceptance boundary. Stage 6 — Direct Repayment & Settlement — is NOT STARTED and is the next planned work unit.
+HR Salary Advance Stages 1–6 are complete at their documented acceptance boundary.
 
 Fina core settlement acceptance is complete at its documented boundary.
 
