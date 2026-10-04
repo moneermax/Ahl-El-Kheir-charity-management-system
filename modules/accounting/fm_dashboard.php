@@ -459,7 +459,7 @@ $fmActionDescriptions = [
                         <section class="project-review-item">
                             <div class="project-review-main">
                                 <div class="project-review-title"><?php echo e($projectRequest['project_name']); ?></div>
-                                <div class="project-review-code">Project ID: <?php echo (int)$projectRequest['project_id']; ?> · <code><?php echo e($projectRequest['project_code'] ?? ''); ?></code></div>
+                                <div class="project-review-code"><?php echo e(t('projects.project_id')); ?>: <?php echo (int)$projectRequest['project_id']; ?> · <code><?php echo e($projectRequest['project_code'] ?? ''); ?></code></div>
                                 <div class="project-review-budget"><?php echo number_format((float)$projectRequest['budget_amount'], 2); ?> <?php echo e($projectRequest['currency_code'] ?: t('fm.currency_sdg')); ?></div>
                             </div>
                             <div class="project-review-actions">
