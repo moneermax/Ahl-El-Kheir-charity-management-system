@@ -171,4 +171,9 @@ return [
 'سجل منظمة فينا الخير' => 'Fina Al-Khair log',
 'تقرير منظمة فينا الخير' => 'Fina Al-Khair report',
 'إجمالي المعتمد هنا هو مجموع التحصيلات ذات الحالة «معتمد» فقط؛ وهو يختلف عن الرصيد غير المسدد في شاشة التسويات. أموال منظمة فينا الخير مستقلة عن إيرادات الكفالات والرسوم الإدارية.' => 'The approved total here is the sum of collections with “Approved” status only; it differs from the unsettled balance on the settlements screen. Fina Al-Khair funds are independent of sponsorship revenue and administrative fees.',
+'منظمة فينا الخير' => 'Fina Al-Khair Organization',
+'الحساب نشط' => 'Account is active',
+'حساب 2300' => 'Account 2300',
+'إجمالي المعتمد هنا هو مجموع التحصيلات ذات الحالة «معتمد» فقط؛ وهو يختلف عن الرصيد غير المسدد في شاشة التسويات.' => 'The approved total here is the sum of collections with “Approved” status only; it differs from the unsettled balance on the settlements screen.',
+'أموال منظمة فينا الخير مستقلة عن إيرادات الكفالات والرسوم الإدارية.' => 'Fina Al-Khair funds are independent of sponsorship revenue and administrative fees.',
 ];
