@@ -112,7 +112,7 @@ Other controlled accounts include:
 Fina is a protected third-party fund, not Ahl revenue. The current model uses permanent 2300 liability/control and 1401 Fina-held-funds control. Settlement is full-balance and FM-only.
 
 ### HR/payroll
-Employees, employment states, contracts, attendance, leave, payroll, payroll accounting, salary-advance policy, requests, disbursement and repayment.
+Employees, employment states, contracts, attendance, leave, payroll, payroll accounting, salary-advance policy, requests, disbursement and payroll repayment. Direct employee repayment/settlement is reserved for the next salary-advance stage and is not yet implemented at this baseline.
 
 ### Projects
 Projects use other_projects and related approval/lifecycle/assignment/funding structures. They do not use a generic projects table.
