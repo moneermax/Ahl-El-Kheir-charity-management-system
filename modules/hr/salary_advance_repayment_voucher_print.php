@@ -109,7 +109,7 @@ function akRepaymentVoucherBack(){try{if(window.opener&&!window.opener.closed){w
 <div class="no"><span>رقم الطلب / Request</span><b><?php echo e($r['request_no']); ?></b><span>تاريخ السداد / Date</span><b><?php echo e((string)$r['repayment_date']); ?></b></div>
 </header>
 <div class="title"><div class="title-ar">سند قبض سداد سلفة راتب</div><div class="title-en" dir="ltr">SALARY ADVANCE REPAYMENT RECEIPT</div></div>
-<div class="amount"><span>المبلغ / Amount</span><b><?php echo number_format($amount,2); ?></b><span>ج.س / SDG</span></div>
+<div class="amount"><span>المبلغ</span><b><?php echo number_format($amount,2); ?></b><span>ج.س</span></div>
 <table class="table">
 <?php
 echo repaymentRow('الموظف', 'Employee', (string)$r['employee_name'], true);
@@ -119,12 +119,12 @@ echo repaymentRow('الغرض', 'Purpose', 'سداد سلفة راتب للمو�
 echo repaymentRow('حساب الاستلام', 'Receiving Account', (string)$r['repayment_account_code'] . ' — ' . (string)$r['repayment_account_name']);
 echo repaymentRow('مرجع السداد', 'Repayment Reference', (string)($r['repayment_reference'] ?? ''), true);
 echo repaymentRow('القيد المحاسبي', 'Journal Entry', (string)$r['entry_code'], true);
-echo repaymentRow('استلم بواسطة', 'Received By', (string)($r['received_by_name'] ?? ''));
+echo repaymentRow('استلم بواسطة', 'استلم بواسطة', (string)($r['received_by_name'] ?? ''));
 if (trim((string)($r['notes'] ?? '')) !== '') echo repaymentRow('ملاحظات', 'Notes', (string)$r['notes']);
 ?>
 </table>
 <div class="journal">تم تسجيل السداد وترحيل القيد المحاسبي: <strong><?php echo e($r['entry_code']); ?></strong>. القيد يعالج سداد الذمة على حساب 1410 — ذمم سلف الموظفين مقابل حساب الاستلام المحدد.</div>
-<div class="sign"><div>الموظف / Employee<br><br>التوقيع: __________________</div><div>المُعد / Prepared by<br><br><?php echo e($r['received_by_name'] ?? ''); ?></div><div>المدير المالي / Financial Manager<br><br>التوقيع: __________________</div></div>
+<div class="sign"><div>الموظف<br><br>التوقيع: __________________</div><div>المُعد<br><br><?php echo e($r['received_by_name'] ?? ''); ?></div><div>المدير المالي<br><br>التوقيع: __________________</div></div>
 <footer class="foot"><span>تمت الطباعة بواسطة: <?php echo e($printedBy); ?></span><span>حالة السداد: مرحّل / Posted</span><span>القيد: <?php echo e($r['entry_code']); ?></span></footer>
 </section>
 </main>
