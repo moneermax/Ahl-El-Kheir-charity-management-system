@@ -26,7 +26,18 @@ foreach ($iterator as $file) {
     $code = preg_replace('~^\s*(//|#).*$~m', '', $code) ?? $code;   // whole-line comments
     $found = [];
     if (preg_match_all("/'((?:[^'\\\\\\n]|\\\\.)*)'|\"((?:[^\"\\\\\\n]|\\\\.)*)\"/u", $code, $m, PREG_SET_ORDER)) {
-        foreach ($m as $hit) $found[] = $hit[1] !== '' ? $hit[1] : ($hit[2] ?? '');
+        foreach ($m as $hit) {
+            $literal = $hit[1] !== '' ? $hit[1] : ($hit[2] ?? '');
+            // A JavaScript literal may contain generated HTML. The whole literal is not
+            // one translatable phrase; inspect its visible text nodes instead.
+            if (preg_match('/<\\/?[a-z][^>]*>/iu', $literal)) {
+                if (preg_match_all('~>([^<>]+)<~u', $literal, $htmlText)) {
+                    foreach ($htmlText[1] as $piece) $found[] = $piece;
+                }
+            } else {
+                $found[] = $literal;
+            }
+        }
     }
     // HTML text-node scanning is useful for PHP templates, but running it over JavaScript
     // source treats ">" and "<" inside JS/HTML string literals as if they were real tags.
@@ -41,6 +52,9 @@ foreach ($iterator as $file) {
         $text = ak_legacy_normalize(strip_tags(stripslashes($text)));
         // onclick="return confirm('message')" -> check the message itself (native dialogs are translated at runtime).
         if (preg_match('/\b(?:confirm|alert|prompt)\(\s*([\'"])(.*?)\1/us', $text, $dialog)) $text = ak_legacy_normalize($dialog[2]);
+        // PHP HTML extraction can occasionally retain a structural quote prefix
+        // such as `">طباعة سند الصرف`. Remove only that prefix, not meaningful text.
+        $text = preg_replace('/^[\\s"\\'>]+(?=[\\x{0600}-\\x{06FF}])/u', '', $text) ?? $text;
         if ($text === '' || !preg_match('/[\x{0600}-\x{06FF}]/u', $text)) continue;
         // Ignore source-code / schema literals that contain Arabic but are not UI text.
         if (preg_match('/[\$\{\};]|->|::|\b(?:SELECT|INSERT|UPDATE|DELETE|ALTER|CREATE|DROP|TRUNCATE)\b|\b(?:FROM|JOIN|WHERE|VALUES|SET|ADD|COLUMN|TABLE)\b/i', $text)) continue;
