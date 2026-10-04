@@ -46,6 +46,11 @@ function addCandidate(string $path, string $raw, array $dict, array &$missing): 
     $text = trim($text, " \t\r\n\"'");
     if ($text === '' || mb_strlen($text) > 220 || !preg_match('/[A-Za-z]/', $text)) return;
     if (isIntentionalEnglish($path, $text)) return;
+    // Mixed Arabic/English strings are already Arabic-mode UI or bilingual/technical
+    // content; this audit targets English-only UI text needing Arabic.
+    if (preg_match('/[\\x{0600}-\\x{06FF}]/u', $text)) return;
+    // Source-code fragments and translation-key calls are not visible English UI.
+    if (preg_match('/(?:<\\/?[A-Za-z][^>]*>|<\\?php|\\?>|\\b(?:echo|print|t|ak_t)\\s*\\(|AK_LANG|csrf_token\\s*\\()/i', $text)) return;
     if (preg_match('/\$[A-Za-z_]|\{\{|\b(?:const|let|var|function)\b/i', $text)) return;
     if (preg_match('/^(?:https?:\/\/|mailto:|javascript:)/i', $text)) return;
     if (preg_match('/^[A-Za-z0-9._:#\/\\-]+$/', $text) && !preg_match('/\s/', $text)) return;
@@ -78,9 +83,10 @@ function scanMarkup(string $path, string $code, array $dict, array &$missing): v
 }
 
 function scanJs(string $path, string $code, array $dict, array &$missing): void {
-    // Ignore JS dictionary declarations whose values are intentionally selected
-    // according to the active language (e.g. lang === 'en' ? {...} : {...}).
-    $code = preg_replace('~\b(?:const|let|var)\s+(?:text|labels|statusMap)\s*=\s*(?:\{.*?\}|.*?\?.*?:\s*\{.*?\})\s*;~is', '', $code) ?? $code;
+    // Ignore JS dictionaries whose values are intentionally selected according
+    // to the active language (for example lang === 'en' ? {...} : {...}).
+    $code = preg_replace('~\b(?:const|let|var)\s+text\s*=\s*lang\s*===\s*["\\']en["\\']\s*\?\s*\{.*?\}\s*:\s*\{.*?\}\s*;~is', '', $code) ?? $code;
+    $code = preg_replace('~\b(?:const|let|var)\s+(?:labels|statusMap)\s*=\s*\{.*?\}\s*;~is', '', $code) ?? $code;
 
     $patterns = [
         '~\b(?:alert|confirm|prompt)\s*\(\s*(["\'])(.*?)\1~isu',
