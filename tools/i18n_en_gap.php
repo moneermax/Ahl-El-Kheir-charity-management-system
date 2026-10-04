@@ -52,6 +52,12 @@ function addCandidate(string $path, string $raw, array $dict, array &$missing): 
     // Source-code fragments and translation-key calls are not visible English UI.
     if (preg_match('/(?:<\\/?[A-Za-z][^>]*>|<\\?php|\\?>|\\b(?:echo|print|t|ak_t)\\s*\\(|AK_LANG|csrf_token\\s*\\()/i', $text)) return;
     if (preg_match('/\$[A-Za-z_]|\{\{|\b(?:const|let|var|function)\b/i', $text)) return;
+    // Dynamic JS fragments are implementation details, not standalone UI labels.
+    if (preg_match('/\$\{|(?:escapeHtml|formatAmount|formatBytes|bytesLabel|bytes|esc)\s*\(|(?:toLocaleString|attachments\.length|window\.|innerHeight|actualHeight)\b/i', $text)) return;
+    if (preg_match('/^[+\s]*(?:[A-Za-z_$][A-Za-z0-9_$]*\.)?[A-Za-z_$][A-Za-z0-9_$]*[+\s]*$/', $text)) return;
+    // SQL fragments found by markup-like scanning are implementation details.
+    if (preg_match('/\b(?:SELECT|UPDATE|INSERT|DELETE|FROM|WHERE|JOIN|LIMIT|SET)\b/i', $text)
+        && preg_match('/[?=(),]/', $text)) return;
     if (preg_match('/^(?:https?:\/\/|mailto:|javascript:|[A-Za-z]:\\\\)/i', $text)) return;
     if (preg_match('/^[A-Za-z0-9._:#\/\\-]+$/', $text) && !preg_match('/\s/', $text)) return;
 
