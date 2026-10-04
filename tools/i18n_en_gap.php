@@ -20,10 +20,32 @@ $flatten($bridge);
 $skip = ['/\.git/', '/storage/', '/database/', '/lang/', '/tools/', '/docs/', '/vendor/', '/TCPDF/', '/node_modules/'];
 $missing = [];
 
+function isIntentionalEnglish(string $path, string $text): bool {
+    $t = strtolower(trim($text));
+    // Known organization/brand names and technical display notation.
+    $known = [
+        'feena al-khair',
+        'sudan flag',
+        'pdf, jpg, png',
+        'pdf, jpg, png, gif',
+        'csv utf-8',
+    ];
+    if (in_array($t, $known, true)) return true;
+
+    // English labels intentionally printed alongside Arabic in bilingual documents.
+    if (preg_match('/(?:voucher|receipt|print|payment|repayment|fina)/i', $path)
+        && preg_match('/^(?:prepared by|financial manager|printed by|posted|print|salary advance (?:payment voucher|repayment receipt)|voucher issued and posted|new voucher)$/i', trim($text))) {
+        return true;
+    }
+
+    return false;
+}
+
 function addCandidate(string $path, string $raw, array $dict, array &$missing): void {
     $text = html_entity_decode(trim(preg_replace('/\s+/u', ' ', $raw) ?? $raw), ENT_QUOTES | ENT_HTML5, 'UTF-8');
     $text = trim($text, " \t\r\n\"'");
     if ($text === '' || mb_strlen($text) > 220 || !preg_match('/[A-Za-z]/', $text)) return;
+    if (isIntentionalEnglish($path, $text)) return;
     if (preg_match('/\$[A-Za-z_]|\{\{|\b(?:const|let|var|function)\b/i', $text)) return;
     if (preg_match('/^(?:https?:\/\/|mailto:|javascript:)/i', $text)) return;
     if (preg_match('/^[A-Za-z0-9._:#\/\\-]+$/', $text) && !preg_match('/\s/', $text)) return;
@@ -37,7 +59,10 @@ function addCandidate(string $path, string $raw, array $dict, array &$missing): 
 }
 
 function scanMarkup(string $path, string $code, array $dict, array &$missing): void {
+    // Remove PHP blocks and intentionally bilingual English-only presentation elements
+    // before scanning visible markup. These are not Arabic-mode translation defects.
     $html = preg_replace('~<\?(?:php|=).*?\?>~s', '', $code) ?? $code;
+    $html = preg_replace('~<(?:span|div|small|button|td|th|p|label)[^>]*class=["\'][^"\']*\\b(?:en|title-en|org-en|name-en|english)[^"\']*["\'][^>]*>.*?</(?:span|div|small|button|td|th|p|label)>~is', '', $html) ?? $html;
     $html = preg_replace('~<script\b.*?</script>~is', '', $html) ?? $html;
     $html = preg_replace('~<style\b.*?</style>~is', '', $html) ?? $html;
 
@@ -53,6 +78,10 @@ function scanMarkup(string $path, string $code, array $dict, array &$missing): v
 }
 
 function scanJs(string $path, string $code, array $dict, array &$missing): void {
+    // Ignore JS dictionary declarations whose values are intentionally selected
+    // according to the active language (e.g. lang === 'en' ? {...} : {...}).
+    $code = preg_replace('~\b(?:const|let|var)\s+(?:text|labels|statusMap)\s*=\s*(?:\{.*?\}|.*?\?.*?:\s*\{.*?\})\s*;~is', '', $code) ?? $code;
+
     $patterns = [
         '~\b(?:alert|confirm|prompt)\s*\(\s*(["\'])(.*?)\1~isu',
         '~\.(?:textContent|innerHTML)\s*=\s*(["\'])(.*?)\1~isu',
