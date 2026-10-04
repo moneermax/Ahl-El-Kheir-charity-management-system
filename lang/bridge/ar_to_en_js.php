@@ -176,4 +176,9 @@ return [
 'حساب 2300' => 'Account 2300',
 'إجمالي المعتمد هنا هو مجموع التحصيلات ذات الحالة «معتمد» فقط؛ وهو يختلف عن الرصيد غير المسدد في شاشة التسويات.' => 'The approved total here is the sum of collections with “Approved” status only; it differs from the unsettled balance on the settlements screen.',
 'أموال منظمة فينا الخير مستقلة عن إيرادات الكفالات والرسوم الإدارية.' => 'Fina Al-Khair funds are independent of sponsorship revenue and administrative fees.',
+'منظمة فينا الخيرFeena Al-Khair' => 'Fina Al-Khair Organization',
+'طلبات بانتظار المراجعةيجب مراجعتها من المدير المالي' => 'Requests pending review — Must be reviewed by the Financial Manager',
+'تحصيلات معتمدةلا تشمل إيرادات أهل الخير' => 'Approved collections — Does not include Ahl Al-Khair revenue',
+'تحصيلات مرتجعةمستبعدة من إجمالي المعتمد' => 'Returned collections — Excluded from the approved total',
+'SDGإجمالي التحصيلات المعتمدة للتسويةالتحصيلات المعتمدة فقط — المرتجعات مستبعدة' => 'SDG Total approved collections for settlement — Approved collections only — returns excluded',
 ];
