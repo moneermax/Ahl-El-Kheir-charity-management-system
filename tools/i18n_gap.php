@@ -14,7 +14,6 @@ while (ob_get_level() > 0) ob_end_clean();
 $showAll = in_array('--all', $argv ?? [], true);
 $dict = ak_server_dict();
 $coreIndex = ak_core_index($dict);
-$runtimePatterns = ak_compile_patterns(ak_bridge('ar_to_en_patterns'));
 $skip = ['/TCPDF/', '/.git/', '/storage/', '/database/', '/lang/', '/tools/', '/docs/', '/modules/system/'];
 $missing = [];
 $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS));
@@ -68,7 +67,7 @@ foreach ($iterator as $file) {
         if (mb_strlen(preg_replace('/\s+/u', '', $text) ?? $text) <= 2) continue;
         // SQL LIKE wildcards and enum/value lists are source/data fragments, not UI text.
         if (strpos($text, '%') !== false || preg_match('/\b(?:male|female|ذكر|أنثى|انثى)\b.*\b(?:male|female|ذكر|أنثى|انثى)\b/iu', $text)) continue;
-        // Use the same server-side translation pipeline as runtime (exact, punctuation-tolerant,\n        // segmented, label/value, and dynamic-pattern lookups). A static gap is real only\n        // when the runtime translator also cannot resolve the complete UI text.\n        $runtimePatterns = ak_compile_patterns(ak_bridge('ar_to_en_patterns'));\n        if (ak_translate_text($text, $dict, $coreIndex, $runtimePatterns, true) !== null) continue;
+        if (ak_legacy_lookup($text, $dict) !== null || ak_core_lookup($text, $coreIndex) !== null) continue;
         $missing[substr($path, strlen($root) + 1)][$text] = true;
     }
 }
