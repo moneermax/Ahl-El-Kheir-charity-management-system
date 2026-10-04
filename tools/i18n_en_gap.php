@@ -34,7 +34,7 @@ function isIntentionalEnglish(string $path, string $text): bool {
 
     // English labels intentionally printed alongside Arabic in bilingual documents.
     if (preg_match('/(?:voucher|receipt|print|payment|repayment|fina)/i', $path)
-        && preg_match('/^(?:prepared by|financial manager|printed by|posted|print|salary advance (?:payment voucher|repayment receipt)|voucher issued and posted|new voucher)$/i', trim($text))) {
+        && preg_match('/^(?:prepared by|financial manager|printed by|posted|print|salary advance (?:payment voucher|repayment receipt)|voucher issued and posted(?:\s*[—-].*)?|new voucher)$/i', trim($text))) {
         return true;
     }
 
