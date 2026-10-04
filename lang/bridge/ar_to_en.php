@@ -4501,4 +4501,8 @@ return [
 'بعد اعتماد المدير العام، يمكن للمدير المالي إلغاء التأكيدات المالية السابقة إذا احتاج المشروع إلى تصحيح أو استكمال إجراءات التمويل. سيُعكس الإفراج المالي غير المنفذ ويعود المشروع للمراجعة المالية، ولا ينشئ هذا الإجراء إفراجاً محاسبياً جديداً.' => 'After General Manager approval, the Financial Manager can cancel previous financial confirmations if the project needs correction or completion of funding procedures. The unexecuted financial release will be reversed and the project returned to financial review; this action does not create a new accounting release.',
 'تظهر هذه الخيارات بعد الاعتماد النهائي من المدير العام لتوثيق مستندات الدفع. الإفراج المحاسبي عن التمويل حدث بالفعل عند الاعتماد المالي من المدير المالي؛ هذه الخطوة توثق سند الصرف أو إيصال التحويل ولا تنشئ خروجاً مالياً ثانياً.' => 'These options appear after final General Manager approval to document payment evidence. The accounting release of funding already occurred at Financial Manager approval; this step documents the payment voucher or transfer receipt and does not create a second financial outflow.',
 'المبلغإيصال هذا السطرتوضيح الغرض' => 'Amount Line receipt Purpose details',
+'الحساب نشط' => 'Account is active',
+'الحساب موقوف' => 'Account is suspended',
+'تحميل' => 'Download',
+'الرموز التعبيرية' => 'Emoji',
 ];
