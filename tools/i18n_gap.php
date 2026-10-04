@@ -54,7 +54,7 @@ foreach ($iterator as $file) {
         if (preg_match('/\b(?:confirm|alert|prompt)\(\s*([\'"])(.*?)\1/us', $text, $dialog)) $text = ak_legacy_normalize($dialog[2]);
         // PHP HTML extraction can occasionally retain a structural quote prefix
         // such as `">طباعة سند الصرف`. Remove only that prefix, not meaningful text.
-        $text = preg_replace('/^[\\s"\\'>]+(?=[\\x{0600}-\\x{06FF}])/u', '', $text) ?? $text;
+        $text = preg_replace("/^[\\s\"'>]+(?=[\\x{0600}-\\x{06FF}])/u", '', $text) ?? $text;
         if ($text === '' || !preg_match('/[\x{0600}-\x{06FF}]/u', $text)) continue;
         // Ignore source-code / schema literals that contain Arabic but are not UI text.
         if (preg_match('/[\$\{\};]|->|::|\b(?:SELECT|INSERT|UPDATE|DELETE|ALTER|CREATE|DROP|TRUNCATE)\b|\b(?:FROM|JOIN|WHERE|VALUES|SET|ADD|COLUMN|TABLE)\b/i', $text)) continue;
