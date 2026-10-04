@@ -29,24 +29,24 @@ if (!Session::isLoggedIn() || !in_array(Session::getUserRole(), $allowed_roles, 
 $family_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 $family = dbFetchOne("SELECT * FROM families WHERE id = ?", [$family_id]);
 if (!$family) {
-    flash('error', t('الأسرة غير موجودة / Family not found'));
+    flash('error', t('الأسرة غير موجودة.'));
     redirect(url('modules/families/index.php'));
 }
 
 // Nanny scope check
 if (Session::getUserRole() === 'nanny' && (int)($family['nanny_id'] ?? 0) !== Session::getUserId()) {
-    flash('error', t('غير مصرح بالوصول لهذه الأسرة / Unauthorized access to this family'));
+    flash('error', t('غير مصرح بالوصول لهذه الأسرة.'));
     redirect(url('dashboard/nanny_dashboard.php'));
 }
 
 $doc_types = [
-    'eligibility' => t('شهادة استحقاق / Eligibility'),
-    'id-card' => t('بطاقة هوية / ID Card'),
-    'national-id' => t('رقم وطني / National ID'),
-    'bank' => t('بيانات بنكية / Bank Info'),
-    'birth-cert' => t('شهادة ميلاد / Birth Certificate'),
-    'death-cert' => t('شهادة وفاة / Death Certificate'),
-    'other' => t('أخرى / Other')
+    'eligibility' => t('شهادة استحقاق'),
+    'id-card' => t('بطاقة هوية'),
+    'national-id' => t('رقم وطني'),
+    'bank' => t('بيانات بنكية'),
+    'birth-cert' => t('شهادة ميلاد'),
+    'death-cert' => t('شهادة وفاة'),
+    'other' => t('أخرى')
 ];
 
 $fam_code = $family['family_code'] ?? ($family['code'] ?? 'FAM' . $family['id']);
@@ -103,11 +103,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload_documents'])) 
                 $ext = strtolower(pathinfo($orig_name, PATHINFO_EXTENSION));
 
                 if (!in_array($ext, $allowed_exts)) {
-                    flash('error', t('نوع ملف غير صالح / Invalid file type') . ': ' . e($orig_name));
+                    flash('error', t('نوع ملف غير صالح') . ': ' . e($orig_name));
                     continue;
                 }
                 if ($size > $max_size) {
-                    flash('error', t('الملف يتجاوز حد 10MB / File exceeds 10MB limit') . ': ' . e($orig_name));
+                    flash('error', t('الملف يتجاوز حد 10MB') . ': ' . e($orig_name));
                     continue;
                 }
 
@@ -131,17 +131,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload_documents'])) 
                     $current_seq++;
                     $success_count++;
                 } else {
-                    flash('error', t('فشل رفع الملف / Failed to upload') . ': ' . e($orig_name));
+                    flash('error', t('فشل رفع الملف') . ': ' . e($orig_name));
                 }
             }
         }
 
         if ($success_count > 0) {
-            flash('success', t('تم رفع الملفات بنجاح / Files uploaded successfully') . " ($success_count)");
+            flash('success', t('تم رفع الملفات بنجاح') . " ($success_count)");
         }
         redirect(url('modules/families/documents.php?id=' . $family['id']));
     } else {
-        flash('error', t('لم يتم اختيار أي ملف / No files selected'));
+        flash('error', t('لم يتم اختيار أي ملف'));
         redirect(url('modules/families/documents.php?id=' . $family['id']));
     }
 }
@@ -150,7 +150,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload_documents'])) 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reorganize_archive'])) {
     ak_document_require_csrf(url('modules/families/documents.php?id=' . $family['id']));
     if (Session::getUserRole() !== 'admin') {
-        flash('error', t('غير مصرح / Unauthorized'));
+        flash('error', t('غير مصرح'));
         redirect(url('modules/families/documents.php?id=' . $family['id']));
     }
 
@@ -201,7 +201,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reorganize_archive'])
             }
         }
     }
-    flash('success', t('تم إعادة تنظيم الأرشيف بنجاح / Archive reorganized') . " ($moved_count)");
+    flash('success', t('تم إعادة تنظيم الأرشيف بنجاح') . " ($moved_count)");
     redirect(url('modules/families/documents.php?id=' . $family['id']));
 }
 
@@ -227,9 +227,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_document'])) {
                 [Session::getUserId(), $doc_id, json_encode(['file_name' => $doc['file_name'], 'doc_type' => $doc['doc_type']]), json_encode(['file_name' => $new_name, 'doc_type' => $new_type]), $_SERVER['REMOTE_ADDR'] ?? '', $_SERVER['HTTP_USER_AGENT'] ?? '']);
             } catch (Throwable $e) {}
 
-            flash('success', t('تم تحديث بيانات الملف / Document details updated'));
+            flash('success', t('تم تحديث بيانات الملف'));
         } else {
-            flash('error', t('غير مصرح بالتعديل / Unauthorized to update'));
+            flash('error', t('غير مصرح بالتعديل'));
         }
     }
     redirect(url('modules/families/documents.php?id=' . $family['id']));
@@ -254,9 +254,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_document'])) {
                  VALUES (?, 'delete_document', 'family_document', ?, ?, ?, ?)",
                 [Session::getUserId(), $doc_id, json_encode(['file_name' => $doc['file_name']]), $_SERVER['REMOTE_ADDR'] ?? '', $_SERVER['HTTP_USER_AGENT'] ?? '']
             );
-            flash('success', t('تم حذف الملف / Document deleted'));
+            flash('success', t('تم حذف الملف'));
         } else {
-            flash('error', t('غير مصرح بالحذف / Unauthorized to delete'));
+            flash('error', t('غير مصرح بالحذف'));
         }
     }
     redirect(url('modules/families/documents.php?id=' . $family['id']));
@@ -281,10 +281,10 @@ include __DIR__ . '/../../includes/header.php';
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h3 class="mb-0">
             <i class="fas fa-folder-open me-2 text-primary"></i>
-            <?php echo t('أرشيف مستندات الأسرة / Family Document Archive'); ?>
+            <?php echo t('أرشيف مستندات الأسرة'); ?>
         </h3>
         <a href="<?php echo url('modules/families/view.php?id=' . $family['id']); ?>" class="btn btn-outline-secondary" onclick="return akGoBack(this.href);">
-            <i class="fas fa-arrow-<?php echo (defined('AK_DIR') && AK_DIR === 'rtl') ? 'right' : 'left'; ?> me-1"></i> <?php echo t('العودة للأسرة / Back to Family'); ?>
+            <i class="fas fa-arrow-<?php echo (defined('AK_DIR') && AK_DIR === 'rtl') ? 'right' : 'left'; ?> me-1"></i> <?php echo t('العودة للأسرة'); ?>
         </a>
     </div>
 
@@ -297,7 +297,7 @@ include __DIR__ . '/../../includes/header.php';
                 </div>
             </div>
             <div>
-                <h5 class="mb-0"><?php echo e($family['mother_name'] ?? ($family['father_name'] ?? t('غير معروف / Unknown'))); ?></h5>
+                <h5 class="mb-0"><?php echo e($family['mother_name'] ?? ($family['father_name'] ?? t('غير معروف'))); ?></h5>
                 <small class="text-muted"><?php echo e($family['family_code'] ?? ($family['code'] ?? 'FAM-' . $family['id'])); ?></small>
             </div>
         </div>
@@ -307,13 +307,13 @@ include __DIR__ . '/../../includes/header.php';
     <div class="card mb-4 border-warning">
         <div class="card-body d-flex justify-content-between align-items-center">
             <div>
-                <h5 class="mb-0 text-warning"><i class="fas fa-tools me-2"></i><?php echo t('إعادة تنظيم الأرشيف / Reorganize Archive'); ?></h5>
-                <small class="text-muted"><?php echo t('نقل وإعادة تسمية جميع الملفات لتطابق الاتفاقية الجديدة / Move and rename all files to match the new convention.'); ?></small>
+                <h5 class="mb-0 text-warning"><i class="fas fa-tools me-2"></i><?php echo t('إعادة تنظيم الأرشيف'); ?></h5>
+                <small class="text-muted"><?php echo t('نقل وإعادة تسمية جميع الملفات لتطابق الاتفاقية الجديدة.'); ?></small>
             </div>
             <form method="POST" action="" class="mb-0">
                 <?php echo csrf_field(); ?>
                 <button type="submit" name="reorganize_archive" class="btn btn-warning" onclick="return confirm('<?php echo t('هل أنت متأكد؟ قد تستغرق العملية بعض الوقت. / Are you sure? This may take some time.'); ?>');">
-                    <i class="fas fa-sync-alt me-1"></i> <?php echo t('إعادة تنظيم / Reorganize'); ?>
+                    <i class="fas fa-sync-alt me-1"></i> <?php echo t('إعادة تنظيم'); ?>
                 </button>
             </form>
         </div>
@@ -322,14 +322,14 @@ include __DIR__ . '/../../includes/header.php';
 
     <div class="card mb-4">
         <div class="card-header bg-primary text-white">
-            <h5 class="mb-0"><i class="fas fa-upload me-2"></i><?php echo t('رفع ملفات جديدة / Upload New Documents'); ?></h5>
+            <h5 class="mb-0"><i class="fas fa-upload me-2"></i><?php echo t('رفع ملفات جديدة'); ?></h5>
         </div>
         <div class="card-body">
             <form method="POST" action="" enctype="multipart/form-data">
                 <?php echo csrf_field(); ?>
                 <div class="row g-3">
                     <div class="col-md-4">
-                        <label class="form-label"><?php echo t('نوع الملف / Document Type'); ?></label>
+                        <label class="form-label"><?php echo t('نوع الملف'); ?></label>
                         <select name="doc_type" class="form-select" required>
                             <?php foreach ($doc_types as $slug => $label): ?>
                                 <option value="<?php echo $slug; ?>"><?php echo $label; ?></option>
@@ -337,12 +337,12 @@ include __DIR__ . '/../../includes/header.php';
                         </select>
                     </div>
                     <div class="col-md-8">
-                        <label class="form-label"><?php echo t('اختر الملفات (PDF, JPG, PNG - حد أقصى 10MB) / Select Files (PDF, JPG, PNG - Max 10MB)'); ?></label>
+                        <label class="form-label"><?php echo t('اختر الملفات (PDF, JPG, PNG - حد أقصى 10MB)'); ?></label>
                         <input type="file" name="documents[]" class="form-control" multiple required accept=".pdf,.jpg,.jpeg,.png">
                     </div>
                     <div class="col-12">
                         <button type="submit" name="upload_documents" class="btn btn-primary">
-                            <i class="fas fa-cloud-upload-alt me-1"></i> <?php echo t('رفع / Upload'); ?>
+                            <i class="fas fa-cloud-upload-alt me-1"></i> <?php echo t('رفع'); ?>
                         </button>
                     </div>
                 </div>
@@ -352,13 +352,13 @@ include __DIR__ . '/../../includes/header.php';
 
     <div class="card">
         <div class="card-header bg-light">
-            <h5 class="mb-0"><i class="fas fa-folder-open me-2"></i><?php echo t('أرشيف المستندات / Document Archive'); ?></h5>
+            <h5 class="mb-0"><i class="fas fa-folder-open me-2"></i><?php echo t('أرشيف المستندات'); ?></h5>
         </div>
         <div class="card-body p-0">
             <?php if (empty($grouped_docs)): ?>
                 <div class="p-5 text-center text-muted">
                     <i class="fas fa-folder-open fa-3x mb-3"></i>
-                    <p><?php echo t('لا توجد مستندات حتى الآن / No documents yet.'); ?></p>
+                    <p><?php echo t('لا توجد مستندات حتى الآن.'); ?></p>
                 </div>
             <?php else: ?>
                 <div class="accordion" id="docsAccordion">
@@ -375,10 +375,10 @@ include __DIR__ . '/../../includes/header.php';
                                     <table class="table table-hover mb-0">
                                         <thead class="table-light">
                                             <tr>
-                                                <th><?php echo t('اسم الملف / File Name'); ?></th>
-                                                <th><?php echo t('الحجم / Size'); ?></th>
-                                                <th><?php echo t('تاريخ الرفع / Upload Date'); ?></th>
-                                                <th class="text-end"><?php echo t('إجراءات / Actions'); ?></th>
+                                                <th><?php echo t('اسم الملف'); ?></th>
+                                                <th><?php echo t('الحجم'); ?></th>
+                                                <th><?php echo t('تاريخ الرفع Date'); ?></th>
+                                                <th class="text-end"><?php echo t('إجراءات'); ?></th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -420,7 +420,7 @@ include __DIR__ . '/../../includes/header.php';
                                                                 <?php echo csrf_field(); ?>
                                                                 <input type="hidden" name="doc_id" value="<?php echo $doc['id']; ?>">
                                                                 <div class="col-md-5">
-                                                                    <label class="form-label small mb-1"><?php echo t('نوع الملف / Type'); ?></label>
+                                                                    <label class="form-label small mb-1"><?php echo t('نوع الملف'); ?></label>
                                                                     <select name="new_doc_type" class="form-select form-select-sm">
                                                                         <?php foreach ($doc_types as $slug => $label): ?>
                                                                             <option value="<?php echo $slug; ?>" <?php echo ($doc['doc_type'] ?? 'other') === $slug ? 'selected' : ''; ?>><?php echo $label; ?></option>
@@ -428,11 +428,11 @@ include __DIR__ . '/../../includes/header.php';
                                                                     </select>
                                                                 </div>
                                                                 <div class="col-md-5">
-                                                                    <label class="form-label small mb-1"><?php echo t('اسم الملف / Name'); ?></label>
+                                                                    <label class="form-label small mb-1"><?php echo t('اسم الملف'); ?></label>
                                                                     <input type="text" name="new_file_name" class="form-control form-control-sm" value="<?php echo e($doc['file_name']); ?>">
                                                                 </div>
                                                                 <div class="col-md-2">
-                                                                    <button type="submit" name="update_document" class="btn btn-sm btn-success w-100"><?php echo t('حفظ / Save'); ?></button>
+                                                                    <button type="submit" name="update_document" class="btn btn-sm btn-success w-100"><?php echo t('حفظ'); ?></button>
                                                                 </div>
                                                             </form>
                                                         </div>
