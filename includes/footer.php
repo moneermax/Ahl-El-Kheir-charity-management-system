@@ -338,8 +338,27 @@ window.AK_BACK_FALLBACK=<?php echo json_encode(APP_URL . dashboard_for_role(curr
      * otherwise it can swallow the navigation click that should take the user
      * away from the current page.
      */
+    /*
+     * The sidebar is opened deliberately with the handler, but once open it
+     * behaves as a slide-out navigation panel: leaving the panel with the
+     * mouse closes it automatically. This is intentionally based on
+     * mouseleave, not click, so the user never has to click somewhere merely
+     * to dismiss the open panel.
+     */
+    var sidebar=document.getElementById('sidebar');
+    if(sidebar){
+        sidebar.addEventListener('mouseleave',function(){
+            if(document.body.classList.contains('sidebar-open')) setSidebar(false);
+        });
+    }
+
+    /*
+     * Keep outside pointerdown as a fallback for keyboard/touch/navigation
+     * interactions that do not produce a mouseleave event.
+     */
     document.addEventListener('pointerdown',function(event){
         if(!document.body.classList.contains('sidebar-open')) return;
+        if(event.pointerType==='mouse') return;
         if(event.target.closest('#sidebar') || event.target.closest('#akSidebarToggle')) return;
         setSidebar(false);
     },true);
