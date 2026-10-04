@@ -55,7 +55,7 @@ foreach ($tests as $testLanguage) {
     $bootstrap = <<<'PHP'
 <?php
 declare(strict_types=1);
-$root = dirname(__DIR__);
+$root = 'D:\\\\xampp\\\\htdocs\\\\AhlElKheir';
 $_COOKIE = [];
 $_GET = ['lang' => getenv('AK_TEST_LANG') ?: 'ar'];
 $_SERVER['SCRIPT_NAME'] = '/AhlElKheir/tools/i18n_runtime_selftest.php';
