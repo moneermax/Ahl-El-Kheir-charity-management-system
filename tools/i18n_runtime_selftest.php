@@ -66,7 +66,7 @@ $results['lang'] = AK_LANG;
 $results['dir'] = AK_DIR;
 $results['catalog_keys_ar'] = count(ak_catalog('ar'));
 $results['catalog_keys_en'] = count(ak_catalog('en'));
-$results['sample_ar'] = ak_t('common.organization_name', []);
+$results['sample_ar'] = ak_catalog('ar')['common.organization_name'] ?? '';
 $results['sample_en'] = (function () {
     $_GET['lang'] = 'en';
     return ak_catalog('en')['common.organization_name'] ?? '';
