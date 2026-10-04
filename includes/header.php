@@ -902,10 +902,15 @@ $langSwitchUrl =
                 transition: opacity 0.25s ease, visibility 0.25s ease;
             }
 
+            /*
+             * The overlay is visual only. Pointer events stay disabled so an
+             * outside navigation click reaches the page normally. The shared
+             * footer closes the sidebar during pointerdown capture.
+             */
             body.sidebar-open .sidebar-overlay {
                 opacity: 1;
                 visibility: visible;
-                pointer-events: auto;
+                pointer-events: none;
             }
 
             .ak-sidebar-toggle {
