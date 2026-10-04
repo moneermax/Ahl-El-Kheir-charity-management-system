@@ -17,7 +17,7 @@ $flatten = static function ($value) use (&$flatten, &$dict): void {
 };
 $flatten($bridge);
 
-$skip = ['/\.git/', '/storage/', '/database/', '/lang/', '/tools/', '/docs/', '/vendor/', '/TCPDF/', '/node_modules/'];
+$skip = ['/\.git/', '/storage/', '/database/', '/lang/', '/tools/', '/docs/', '/config/', '/vendor/', '/TCPDF/', '/node_modules/'];
 $missing = [];
 
 function isIntentionalEnglish(string $path, string $text): bool {
