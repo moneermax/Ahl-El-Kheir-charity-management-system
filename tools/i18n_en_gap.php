@@ -85,7 +85,7 @@ function scanMarkup(string $path, string $code, array $dict, array &$missing): v
 function scanJs(string $path, string $code, array $dict, array &$missing): void {
     // Ignore JS dictionaries whose values are intentionally selected according
     // to the active language (for example lang === 'en' ? {...} : {...}).
-    $code = preg_replace('~\b(?:const|let|var)\s+text\s*=\s*lang\s*===\s*["\\']en["\\']\s*\?\s*\{.*?\}\s*:\s*\{.*?\}\s*;~is', '', $code) ?? $code;
+    $code = preg_replace("~\\b(?:const|let|var)\\s+text\\s*=\\s*lang\\s*===\\s*[\\\"']en[\\\"']\\s*\\?\\s*\\{.*?\\}\\s*:\\s*\\{.*?\\}\\s*;~is", '', $code) ?? $code;
     $code = preg_replace('~\b(?:const|let|var)\s+(?:labels|statusMap)\s*=\s*\{.*?\}\s*;~is', '', $code) ?? $code;
 
     $patterns = [
