@@ -4521,5 +4521,6 @@ return [
 '✓ تغيير الحالة إلى "محوّل"' => '✓ Change the status to "Transferred"',
 'إذا كانت هناك نقاط تحتاج إلى استكمال أو توضيح، يمكنك إعادة المشروع إلى مشرف المشروع بدلاً من إغلاقه نهائياً. سيعود المشروع إلى حالة' => 'If anything needs completion or clarification, you can return the project to the Project Supervisor instead of closing it permanently. The project will return to',
 'لا تحتاج إلى اختيار سجل موظف موجود. بعد إنشاء الحساب ينشئ النظام ملف الموظف ويربطه بالحساب تلقائياً.' => 'You do not need to select an existing employee record. After creating the account, the system automatically creates and links the employee profile.',
+'لا تحتاج إلى اختيار سجل موظف موجود. بعد إنشاء الحساب ينشئ النظام ملف الموظف ويربطه بالحساب تلقائياً. يمكن للموظف استكمال بياناته الشخصية لاحقاً من ملفه الشخصي.' => 'You do not need to select an existing employee record. After creating the account, the system automatically creates and links the employee profile. The employee can complete their personal information later from their profile.',
 'لا تحتاج إلى اختيار سجل موظف موجود. بعد إنشاء الحساب ينشئ النظام ملف الموظف ويربطه بالحساب تلقائياً.' => 'You do not need to select an existing employee record. After creating the account, the system automatically creates and links the employee profile.',
 ];
