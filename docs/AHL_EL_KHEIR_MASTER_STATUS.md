@@ -22,8 +22,7 @@ This is the single high-level **START HERE** status and continuation summary for
 
 **Current continuation boundary — 2026-10-04:**
 - Projects Phase 5 controlled PRJ-0015 reconciliation and financial closure: **RUNTIME VERIFIED / CLOSED**.
-- HR Salary Advance Stages 1–5: **DONE / RUNTIME VERIFIED / CLOSED**.
-- HR Salary Advance Stage 6 — Direct Repayment & Settlement: **NOT STARTED**.
+- HR Salary Advance Stages 1–6: **DONE / RUNTIME VERIFIED / CLOSED at their documented acceptance boundary**.
 - Fina core settlement acceptance: **COMPLETE at its documented boundary**.
 - Current repository branch boundary: **main only**.
 
