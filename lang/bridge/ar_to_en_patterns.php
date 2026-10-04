@@ -55,4 +55,6 @@ return [
 'لا يمكن إبطال سند القبض: رصيد الحساب الحالي ({n} ج.س) أقل من مبلغ السند' => 'Cannot void the receipt voucher: the current account balance ({1} SDG) is less than the voucher amount',
 'تم إبطال السند {n} وإنشاء القيد العكسي {n}' => 'Voucher {1} was voided and the reversal entry {2} was created',
 'سند قبض {n} — {n}' => 'Receipt voucher {1} — {2}',
+'الطفل «{n}» مكفول بالفعل.' => 'Child “{1}” is already sponsored.',
+'أدخل المبلغ الشهري للطفل «{n}»' => 'Enter the monthly amount for child “{1}”',
 ];
