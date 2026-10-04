@@ -59,6 +59,10 @@ function addCandidate(string $path, string $raw, array $dict, array &$missing): 
     if (preg_match('/\b(?:SELECT|UPDATE|INSERT|DELETE|FROM|WHERE|JOIN|LIMIT|SET)\b/i', $text)
         && preg_match('/[?=(),]/', $text)) return;
     if (preg_match('/^(?:https?:\/\/|mailto:|javascript:|[A-Za-z]:\\\\)/i', $text)) return;
+    // HTML/DOM construction fragments captured from JavaScript assignments are not UI labels.
+    if (preg_match('/^(?:<|;|\\s*<)|<i\\s+class\\s*=|(?:input|preview|row)\\.innerHTML/i', $text)) return;
+    // Backend/configuration source is not user-facing UI.
+    if (preg_match('/(?:^|\\/)config\\//i', $path) && preg_match('/\\b(?:SELECT|UPDATE|INSERT|DELETE|FROM|WHERE|JOIN|LIMIT|SET)\\b/i', $text)) return;
     if (preg_match('/^[A-Za-z0-9._:#\/\\-]+$/', $text) && !preg_match('/\s/', $text)) return;
 
     $words = preg_split('/[^A-Za-z]+/', strtolower($text), -1, PREG_SPLIT_NO_EMPTY) ?: [];
