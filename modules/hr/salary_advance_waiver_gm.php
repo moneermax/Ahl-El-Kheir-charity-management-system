@@ -14,7 +14,7 @@ if (!hrSalaryAdvanceWaiverCanGM($role)) { header('Location: '.APP_URL.'index.php
 
 $pdo=db();
 $message=''; $error='';
-$tablesReady = (bool)dbFetchOne("SELECT COUNT(*) c FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name IN ('hr_salary_advance_waiver_decisions','hr_salary_advance_waiver_items','hr_salary_advance_waiver_schedule_items')")['c'] === 2;
+$tablesReady = (bool)dbFetchOne("SELECT COUNT(*) c FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name IN ('hr_salary_advance_waiver_decisions','hr_salary_advance_waiver_items','hr_salary_advance_waiver_schedule_items')")['c'] === 3;
 
 if ($_SERVER['REQUEST_METHOD']==='POST' && $tablesReady) {
     try {
@@ -71,12 +71,11 @@ $preview=dbFetchOne("SELECT COUNT(*) item_count, COALESCE(SUM(balance_before),0)
 </form>
 </div>
 <?php endforeach; if(!$pending): ?><div class="text-center text-muted py-3">لا توجد قرارات بانتظار اعتماد المدير العام.</div><?php endif; ?>
-</div></div><div class="card"><div class="card-body"><h5>قرارات بانتظار FM</h5><div class="table-responsive"><table class="table table-sm"><thead><tr><th>القرار</th><th>النوع</th><th>الشهر</th><th>أنشأه</th><th>الحالة</th></tr></thead><tbody>
-<?php foreach($pending as $d): ?><tr><td><?=e($d['decision_no'])?></td><td><?=e($d['decision_type']==='blanket'?'جماعي':'فردي')?></td><td><?=e($d['effective_month'])?></td><td><?=e($d['creator_name']??'—')?></td><td>بانتظار التنفيذ المالي</td></tr><?php endforeach; if(!$pending): ?><tr><td colspan="5" class="text-center text-muted">لا توجد قرارات معلقة.</td></tr><?php endif; ?>
+</div></div><?php endif; ?>
 </tbody></table></div></div></div>
 <?php endif; ?>
 </div>
 <script>
-(function(){const t=document.getElementById('waiver_type'),w=document.getElementById('employee_wrap');function s(){w.style.display=t.value==='individual'?'block':'none';}t?.addEventListener('change',s);s();})();
+(function(){void 0;})();
 </script>
 <?php require_once __DIR__.'/../../includes/footer.php'; ?>
