@@ -10,6 +10,39 @@
  * current viewport. Cross-page redirects remain normal navigations.
  */
 (function(){
+    const AK_SCROLL_TRACE = window.location.hash.includes('ak-scroll-trace');
+    const akTrace = (label, extra) => {
+        if (!AK_SCROLL_TRACE) return;
+        const vv = window.visualViewport;
+        const state = {
+            label,
+            t: Math.round(performance.now()*100)/100,
+            scrollX: window.scrollX || 0,
+            scrollY: window.scrollY || window.pageYOffset || 0,
+            innerHeight: window.innerHeight,
+            docHeight: document.documentElement ? document.documentElement.scrollHeight : null,
+            bodyHeight: document.body ? document.body.scrollHeight : null,
+            active: document.activeElement ? {
+                tag: document.activeElement.tagName,
+                id: document.activeElement.id || '',
+                name: document.activeElement.getAttribute('name') || '',
+                cls: document.activeElement.className || ''
+            } : null,
+            visualViewport: vv ? {offsetTop: vv.offsetTop, pageTop: vv.pageTop, height: vv.height} : null,
+            ...extra
+        };
+        console.log('[AK-SCROLL]', state);
+    };
+    if (AK_SCROLL_TRACE) {
+        console.warn('[AK-SCROLL] TRACE ENABLED — diagnostic only');
+        window.addEventListener('scroll', () => akTrace('window scroll'), {capture:true, passive:true});
+        window.addEventListener('pageshow', e => akTrace('pageshow', {persisted:e.persisted}));
+        window.addEventListener('pagehide', e => akTrace('pagehide', {persisted:e.persisted}));
+        window.addEventListener('beforeunload', () => akTrace('beforeunload'));
+        window.addEventListener('popstate', () => akTrace('popstate'));
+        if ('onscrollend' in window) window.addEventListener('scrollend', () => akTrace('scrollend'), {passive:true});
+    }
+
     function samePagePost(form) {
         if (!form || form.tagName !== 'FORM') return false;
         if (String(form.method || 'get').toLowerCase() !== 'post') return false;
@@ -84,6 +117,7 @@
     }
 
     async function renderResponse(response, fallbackUrl) {
+        akTrace('renderResponse:start', {responseUrl:response.url || fallbackUrl, status:response.status});
         const finalUrl = new URL(response.url || fallbackUrl, window.location.href);
 
         if (!response.ok) {
@@ -106,6 +140,7 @@
 
         const scrollX = window.scrollX || 0;
         const scrollY = window.scrollY || window.pageYOffset || 0;
+        akTrace('renderResponse:captured-scroll', {scrollX, scrollY});
 
         /*
          * Preserve the current document's scrollable height during the root
@@ -151,6 +186,7 @@
          * DOM swap so the browser has no disappearing focused control to
          * reconcile during replacement.
          */
+        akTrace('renderResponse:before-blur');
         if (active && typeof active.blur === 'function') {
             try { active.blur(); } catch (e) {}
         }
@@ -160,15 +196,20 @@
          * subtree is never emptied, and the new subtree is already complete
          * before it enters the document.
          */
+        akTrace('renderResponse:before-replace');
         current.replaceWith(replacement);
+        akTrace('renderResponse:after-replace');
 
         if (parsed.title) document.title = parsed.title;
         if (finalUrl.href !== window.location.href) {
             history.replaceState(history.state, '', finalUrl.href);
         }
 
+        akTrace('renderResponse:before-fragment-scripts');
         runFragmentScripts(replacement);
+        akTrace('renderResponse:after-fragment-scripts');
 
+        akTrace('renderResponse:before-focus-restore');
         if (activeDescriptor) {
             let nextActive = null;
             if (activeDescriptor.type === 'id') {
@@ -200,12 +241,17 @@
          * keep enough height for the requested scroll position rather than
          * allowing the browser to jump to the top.
          */
+        akTrace('renderResponse:before-scrollTo');
         const requiredHeight = Math.ceil(scrollY + window.innerHeight);
         if (replacement.scrollHeight < requiredHeight) {
             replacement.style.minHeight = requiredHeight + 'px';
         }
 
         window.scrollTo({left: scrollX, top: scrollY, behavior: 'auto'});
+        akTrace('renderResponse:after-scrollTo');
+        if (AK_SCROLL_TRACE) {
+            [0, 1, 16, 50, 150, 500].forEach(ms => setTimeout(() => akTrace('renderResponse:timer+'+ms), ms));
+        }
     }
 
     async function refreshSamePage() {
@@ -236,7 +282,9 @@
         if (event.defaultPrevented) return;
         if (form.dataset.akSubmitting === '1') return;
 
+        akTrace('submit:before-preventDefault', {action:form.action || window.location.href});
         event.preventDefault();
+        akTrace('submit:after-preventDefault');
         form.dataset.akSubmitting = '1';
 
         const submitter = event.submitter;
@@ -248,6 +296,7 @@
             formData.append(submitter.name, submitter.value || '');
         }
 
+        akTrace('submit:before-fetch');
         fetch(target.href, {
             method: 'POST',
             body: formData,
@@ -258,6 +307,7 @@
                 'X-AK-Same-Page': '1'
             }
         }).then(function(response){
+            akTrace('submit:fetch-response', {status:response.status, url:response.url});
             const finalUrl = new URL(response.url || target.href, window.location.href);
 
             /*
