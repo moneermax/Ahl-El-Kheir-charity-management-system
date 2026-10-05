@@ -44,13 +44,12 @@ function hrSalaryAdvanceWaiverEligibleRows(PDO $pdo, string $effectiveMonth, ?in
                    COALESCE((
                        SELECT SUM(pr.actual_amount)
                        FROM hr_salary_advance_payroll_repayments pr
+                       JOIN payroll pp ON pp.id = pr.payroll_id
                        WHERE pr.salary_advance_request_id = r.id
-                         AND pr.payroll_id IN (
-                             SELECT p.id FROM payroll p
-                             WHERE p.employee_id = r.employee_id
-                               AND p.year = YEAR(?)
-                               AND p.month = MONTH(?)
-                         )
+                         AND pp.employee_id = r.employee_id
+                         AND pp.year = YEAR(?)
+                         AND pp.month = MONTH(?)
+                         AND pp.status = 'paid'
                    ), 0) AS current_period_repayment
             FROM hr_salary_advance_requests r
             JOIN employees e ON e.id = r.employee_id
@@ -169,15 +168,6 @@ function hrSalaryAdvanceWaiverCreateDecision(
         );
 
         $pdo->commit();
-
-        // Notify FM only after the GM decision transaction has committed.
-        ak_transaction_review_notify_fm_event(
-            $decisionId,
-            'salary_advance_waiver_decision',
-            'قرار إعفاء سلف راتب بانتظار التنفيذ المالي',
-            'يوجد قرار إعفاء سلف راتب «' . $decisionNo . '» صادر من المدير العام وبانتظار مراجعة وتنفيذ المدير المالي.',
-            APP_URL . 'modules/hr/salary_advance_waiver_fm.php'
-        );
 
         return $decisionId;
     } catch (Throwable $e) {
@@ -325,15 +315,6 @@ function hrSalaryAdvanceWaiverExecute(
             $waiverTotal = round($waiverTotal + $balanceBeforeWaiver, 2);
         }
 
-        // A salary refund is a real cash/bank/wallet outflow. Refuse the entire
-        // execution atomically if the selected source cannot fund it.
-        if ($refundTotal > 0.00) {
-            $availableRefund = ak_voucher_cash_balance($refundAccountId);
-            if ($refundTotal > $availableRefund + 0.000001) {
-                throw new RuntimeException('الرصيد غير كافٍ في حساب رد الخصم المحدد لتنفيذ الإعفاء بالكامل.');
-            }
-        }
-
         foreach ($items as $item) {
             $requestId = (int)$item['salary_advance_request_id'];
             $balance = round(max(0.00, (float)$item['outstanding_balance']), 2);
@@ -451,28 +432,6 @@ function hrSalaryAdvanceWaiverExecute(
         if ($pdo->rowCount() !== 1) throw new RuntimeException('تعذر إكمال قرار الإعفاء.');
 
         $pdo->commit();
-
-        // Notifications are informational and are emitted only after the
-        // financial transaction has committed successfully.
-        try {
-            $creator = dbFetchOne(
-                "SELECT created_by FROM hr_salary_advance_waiver_decisions WHERE id = ?",
-                [$decisionId]
-            );
-            $creatorId = (int)($creator['created_by'] ?? 0);
-            if ($creatorId > 0) {
-                ak_transaction_review_notify_event(
-                    $creatorId,
-                    'تم تنفيذ إعفاء سلف الراتب',
-                    'تم تنفيذ قرار الإعفاء المالي بنجاح، وتمت معالجة الخصومات المشمولة وتصفير الأرصدة القائمة.',
-                    APP_URL . 'modules/hr/salary_advance_waiver_gm.php',
-                    $decisionId,
-                    'salary_advance_waiver_decision'
-                );
-            }
-        } catch (Throwable $notificationError) {
-            // Notification failure must never undo a committed financial action.
-        }
 
         return [
             'decision_id' => $decisionId,
