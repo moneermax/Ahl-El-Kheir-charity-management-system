@@ -34,6 +34,8 @@ $sponsorReportItem = ['active' => 'sponsor_reports', 'label_key' => 'navigation.
 $lostContactReportItem = ['active' => 'lost_contact_report', 'label_key' => 'navigation.lost_contact_report', 'icon' => 'fa-exclamation-triangle', 'url' => 'modules/reports/lost_contact_report.php'];
 $confirmedDisbReportItem = ['active' => 'confirmed_disbursements_report', 'label_key' => 'navigation.confirmed_transfers_report', 'icon' => 'fa-check-circle', 'url' => 'modules/reports/confirmed_disbursements_report.php'];
 $reportsItem = ['active' => 'reports', 'label_key' => 'navigation.reports', 'icon' => 'fa-chart-line', 'url' => 'modules/reports/index.php'];
+$salaryAdvanceWaiverGMItem = ['active' => 'salary_advance_waiver_gm', 'label_key' => 'navigation.salary_advance_waiver_gm', 'icon' => 'fa-hand-sparkles', 'url' => 'modules/hr/salary_advance_waiver_gm.php'];
+$salaryAdvanceWaiverFMItem = ['active' => 'salary_advance_waiver_fm', 'label_key' => 'navigation.salary_advance_waiver_fm', 'icon' => 'fa-scale-balanced', 'url' => 'modules/hr/salary_advance_waiver_fm.php'];
 
 /* Menus per role */
 $menus = [
@@ -44,6 +46,7 @@ $menus = [
     // GM keeps the primary navigation intentionally executive-level.
     // Operational/accounting drill-downs are reached from the GM dashboard and Reports Center.
     'general_manager' => [
+        $salaryAdvanceWaiverGMItem,
         ['active' => 'dashboard', 'label_key' => 'navigation.dashboard', 'icon' => 'fa-gauge-high', 'url' => 'dashboard/gm_dashboard.php'],
         $projectsItem,
         $reportsItem,
@@ -59,6 +62,7 @@ $menus = [
     ],
 
     'financial_manager' => [
+        $salaryAdvanceWaiverFMItem,
         ['active' => 'dashboard', 'label_key' => 'navigation.dashboard', 'icon' => 'fa-gauge-high', 'url' => 'modules/accounting/fm_dashboard.php'],
         ['active' => 'journal', 'label_key' => 'navigation.journal', 'icon' => 'fa-book', 'url' => 'modules/accounting/journal.php'],
         $vouchersItem,
