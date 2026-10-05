@@ -284,6 +284,18 @@
         runFragmentScripts(replacement);
         akTrace('renderResponse:after-fragment-scripts');
 
+        /*
+         * Fragment initialization that was registered as DOMContentLoaded/load
+         * is deliberately queued as a microtask by runFragmentScripts().
+         * Restore scroll only after those queued initializers have completed.
+         * Otherwise a fragment can mutate its rows/layout after scrollTo(),
+         * letting scroll anchoring or scroll-range clamping move the viewport
+         * again. This yields to the pending microtask queue without allowing
+         * a rendering opportunity in between.
+         */
+        await Promise.resolve();
+        akTrace('renderResponse:after-fragment-microtasks');
+
         akTrace('renderResponse:before-focus-restore');
         if (activeDescriptor) {
             let nextActive = null;
