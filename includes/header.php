@@ -488,84 +488,132 @@ $langSwitchUrl =
         }
 
 
+        /*
+         * Shared sidebar handler — Design 5
+         *
+         * This is deliberately a tab/rail rather than the old rounded button:
+         * the handle is a narrow vertical control that is visually anchored to
+         * the sidebar edge, with a gold inner rail and a compact chevron well.
+         */
         .ak-sidebar-toggle {
             position: fixed;
             top: 50%;
             right: 0;
             transform: translateY(-50%);
             z-index: 1202;
-            width: 38px;
-            height: 118px;
-            border: 1px solid rgba(212,175,55,.9);
-            border-right: 0;
-            border-radius: 16px 0 0 16px;
-            background: linear-gradient(180deg, var(--navy), var(--navy-dark));
+            width: 46px;
+            height: 104px;
+            padding: 0;
+            border: 0;
+            border-inline-start: 1px solid rgba(212,175,55,.9);
+            border-radius: 14px 0 0 14px;
+            background: linear-gradient(180deg, #1b4d8f 0%, #143a6b 100%);
             color: #fff;
-            box-shadow: -4px 0 16px rgba(0,0,0,.20);
+            box-shadow: -6px 0 20px rgba(0,0,0,.20);
             display: inline-flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
+            overflow: hidden;
             transition: right .28s cubic-bezier(.22,.61,.36,1),
                         left .28s cubic-bezier(.22,.61,.36,1),
                         transform .18s ease,
-                        background .18s ease,
                         box-shadow .18s ease,
-                        border-color .18s ease,
-                        border-radius .18s ease;
+                        background .18s ease;
         }
 
+        .ak-sidebar-toggle::before {
+            content: '';
+            position: absolute;
+            top: 12px;
+            bottom: 12px;
+            inset-inline-start: 7px;
+            width: 2px;
+            border-radius: 999px;
+            background: linear-gradient(180deg, transparent, #d4af37 18%, #f0d47a 50%, #d4af37 82%, transparent);
+            opacity: .95;
+        }
+
+        .ak-sidebar-toggle::after {
+            content: '';
+            position: absolute;
+            inset: 50% auto auto 50%;
+            width: 30px;
+            height: 30px;
+            transform: translate(-50%, -50%);
+            border: 1px solid rgba(212,175,55,.78);
+            border-radius: 50%;
+            background: rgba(20,58,107,.92);
+            box-shadow: 0 3px 10px rgba(0,0,0,.22), inset 0 0 0 3px rgba(255,255,255,.035);
+        }
 
         .ak-sidebar-toggle:hover {
-            background: linear-gradient(180deg, var(--navy-dark), var(--navy));
-            border-color: #e2bd4f;
-            box-shadow: -5px 0 18px rgba(0,0,0,.24), 0 0 0 1px rgba(212,175,55,.18);
+            background: linear-gradient(180deg, #214f91 0%, #173f72 100%);
+            box-shadow: -8px 0 24px rgba(0,0,0,.25), 0 0 0 1px rgba(212,175,55,.18);
         }
-
 
         .ak-sidebar-toggle:active {
-            transform: translateY(-50%) scale(.96);
+            transform: translateY(-50%) scale(.97);
         }
-
 
         .ak-sidebar-toggle:focus-visible {
             outline: 3px solid rgba(13,110,253,.45);
             outline-offset: 3px;
         }
 
-
         body.sidebar-open .ak-sidebar-toggle {
             right: var(--ak-sidebar-width);
-            border-radius: 0 16px 16px 0;
+            border-radius: 0 14px 14px 0;
         }
-
 
         [dir="ltr"] .ak-sidebar-toggle {
             right: auto;
             left: 0;
-            border-radius: 0 16px 16px 0;
-            border-left: 0;
-            border-right: 1px solid rgba(212,175,55,.9);
+            border-radius: 0 14px 14px 0;
+            border-inline-start: 0;
+            border-inline-end: 1px solid rgba(212,175,55,.9);
         }
 
+        [dir="ltr"] .ak-sidebar-toggle::before {
+            inset-inline-start: auto;
+            inset-inline-end: 7px;
+        }
 
         [dir="ltr"] body.sidebar-open .ak-sidebar-toggle {
             left: var(--ak-sidebar-width);
-            border-radius: 16px 0 0 16px;
+            border-radius: 14px 0 0 14px;
         }
 
-
         .ak-sidebar-toggle i {
-            font-size: 1rem;
+            position: relative;
+            z-index: 1;
+            font-size: .88rem;
+            line-height: 1;
             text-shadow: 0 1px 2px rgba(0,0,0,.35);
             transition: transform .18s ease, color .18s ease;
         }
 
         .ak-sidebar-toggle:hover i {
             color: #f4d477;
-            transform: scale(1.08);
+            transform: scale(1.12);
         }
 
+        @media (max-width: 991.98px) {
+            .ak-sidebar-toggle {
+                width: 42px;
+                height: 92px;
+                border-radius: 12px 0 0 12px;
+            }
+            body.sidebar-open .ak-sidebar-toggle {
+                border-radius: 0 12px 12px 0;
+            }
+            [dir="ltr"] .ak-sidebar-toggle {
+                border-radius: 0 12px 12px 0;
+            }
+            [dir="ltr"] body.sidebar-open .ak-sidebar-toggle {
+                border-radius: 12px 0 0 12px;
+            }
+        }
 
         .sidebar-brand {
             display: flex;
