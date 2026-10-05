@@ -80,3 +80,8 @@ If documents disagree:
 2. later verified evidence wins over older checkpoint claims;
 3. current business rules win over obsolete proposals;
 4. unresolved contradictions are documented rather than guessed.
+
+
+## 2026-10-05 — HR attendance policy reference
+
+Attendance policy implementation references: database/migrations/2026-10-05_hr_attendance_policy.sql, modules/hr/lib_attendance_policy.php, modules/hr/attendance_policy.php and tools/finalize_daily_attendance.php. The policy follows the versioned/effective-date model used by salary advance policy. Runtime verification is an explicit open gate.
