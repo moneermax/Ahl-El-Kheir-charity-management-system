@@ -98,7 +98,22 @@ if ($action === 'delete' && $emp_id > 0) {
 }
 
 $departments=dbFetchAll('SELECT id,name_ar,name_en FROM departments ORDER BY name_ar',[]);
-$employee=null; $employees=[]; $nextEmployeeCode='';
+$employee=null; $employees=[]; $salaryRegister=[]; $salaryRegisterTotal=0.0; $nextEmployeeCode='';
+if ($action === 'salary_register') {
+    $salaryRegister = dbFetchAll("SELECT e.id, e.employee_code, e.full_name, e.hire_date, d.name_ar AS dept_name,
+        h.effective_from AS salary_effective_from, h.basic_salary, h.salary_currency
+        FROM employees e
+        LEFT JOIN departments d ON d.id = e.department_id
+        LEFT JOIN hr_employee_salary_history h ON h.employee_id = e.id
+            AND NOT EXISTS (
+                SELECT 1 FROM hr_employee_salary_history h2
+                WHERE h2.employee_id = h.employee_id
+                  AND (h2.effective_from < h.effective_from
+                       OR (h2.effective_from = h.effective_from AND h2.id < h.id))
+            )
+        ORDER BY e.id ASC");
+    foreach ($salaryRegister as $row) { $salaryRegisterTotal += (float)($row['basic_salary'] ?? 0); }
+}
 if ($action==='edit' && $emp_id>0) {
     $employee=dbFetchOne('SELECT e.*, s.code AS state_code, s.name_ar AS state_name FROM employees e LEFT JOIN hr_employment_states s ON s.id=e.employment_state_id WHERE e.id=?',[$emp_id]);
 } else {
@@ -132,13 +147,27 @@ $pageTitle='إدارة الموظفين'; require_once __DIR__.'/../../includes/
 <div class="fm-header"><h1><i class="fas fa-users me-2"></i><?php echo $action==='list'?'قائمة الموظفين':($action==='add'?'إضافة موظف جديد':'تعديل بيانات موظف'); ?></h1><p>إدارة بيانات الموظفين ودورة حياتهم الوظيفية</p></div>
 <?php if($message): ?><div class="alert alert-<?php echo $msg_type==='error'?'danger':'success'; ?> alert-dismissible fade show" style="border-radius:8px"><?php echo htmlspecialchars($message); ?><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div><?php endif; ?>
 <?php if($action==='list'): ?>
-<div class="fm-card"><div class="fm-card-body" style="display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between;align-items:center"><form method="GET" class="d-flex gap-2" style="flex-grow:1;max-width:500px"><input type="text" name="search" class="form-control" placeholder="بحث بالاسم، الكود، أو المسمى الوظيفي..." value="<?php echo htmlspecialchars($_GET['search']??''); ?>"><button class="btn-fm btn-navy" type="submit"><i class="fas fa-search"></i></button></form><a href="<?php echo APP_URL; ?>modules/users/index.php" class="btn-fm btn-navy"><i class="fas fa-user-plus me-1"></i> إنشاء حساب موظف</a></div></div>
+<div class="fm-card"><div class="fm-card-body" style="display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between;align-items:center"><form method="GET" class="d-flex gap-2" style="flex-grow:1;max-width:500px"><input type="text" name="search" class="form-control" placeholder="بحث بالاسم، الكود، أو المسمى الوظيفي..." value="<?php echo htmlspecialchars($_GET['search']??''); ?>"><button class="btn-fm btn-navy" type="submit"><i class="fas fa-search"></i></button></form><div class="d-flex gap-2 flex-wrap"><a href="?action=salary_register" class="btn-fm btn-navy"><i class="fas fa-money-check-dollar me-1"></i> سجل الرواتب عند التعيين</a><a href="<?php echo APP_URL; ?>modules/users/index.php" class="btn-fm btn-navy"><i class="fas fa-user-plus me-1"></i> إنشاء حساب موظف</a></div></div></div>
 <div class="fm-card"><div class="fm-card-head"><span>📋 سجل الموظفين</span><span class="badge-fm badge-green"><?php echo count($employees); ?> موظف</span></div><div class="fm-card-body"><div class="table-responsive"><table class="fm-table"><thead><tr><th>الكود</th><th>الاسم الكامل</th><th>القسم</th><th>المسمى الوظيفي</th><th>نمط العمل</th><th>الراتب</th><th>الحالة الوظيفية</th><th class="text-end">إجراءات</th></tr></thead><tbody>
 <?php if(empty($employees)): ?><tr><td colspan="8" class="text-center py-4 text-muted">لا يوجد موظفين حالياً.</td></tr><?php else: foreach($employees as $emp): ?><tr>
 <td><code><?php echo htmlspecialchars($emp['employee_code']); ?></code></td><td><strong><?php echo htmlspecialchars($emp['full_name']); ?></strong></td><td><?php echo htmlspecialchars($emp['dept_name']??'-'); ?></td><td><?php echo htmlspecialchars($emp['position']); ?></td><td><?php echo htmlspecialchars(['remote'=>'عن بُعد','onsite'=>'في المقر','hybrid'=>'مختلط'][$emp['work_mode']]??$emp['work_mode']); ?></td><td><?php echo number_format((float)($emp['basic_salary']??0),2); ?></td>
 <td><?php if(!empty($emp['state_name'])): $stateClass=$emp['state_code']==='suspended'?'suspended':(($emp['state_category']??'')==='separation'?'separation':($emp['state_code']==='probation'?'probation':'')); ?><span class="state-pill <?php echo $stateClass; ?>"><span class="state-dot"></span><?php echo htmlspecialchars($emp['state_name']); ?></span><span class="state-meta"><?php echo htmlspecialchars($emp['state_code']); ?></span><?php else: ?><span class="badge-fm badge-gray">غير محددة</span><?php endif; ?></td>
 <td class="text-end"><a href="?action=edit&id=<?php echo $emp['id']; ?>" class="btn-fm btn-ghost" style="font-size:.75rem;padding:4px 8px" title="تعديل"><i class="fas fa-edit"></i></a><?php $isAdmin=in_array(Session::getUserRole(),['admin','sudo'],true); if(($emp['state_code']??'')!=='terminated'): ?><?php if(($emp['state_code']??'')==='active'||($emp['state_code']??'')==='probation'): ?><form method="POST" style="display:inline"><input type="hidden" name="action" value="suspend"><input type="hidden" name="employee_id" value="<?php echo $emp['id']; ?>"><button class="btn-fm btn-warning" style="font-size:.75rem;padding:4px 8px" title="إيقاف مؤقت" onclick="return confirm('هل أنت متأكد من إيقاف هذا الموظف مؤقتاً؟')"><i class="fas fa-pause"></i></button></form><?php elseif(($emp['state_code']??'')==='suspended'): ?><form method="POST" style="display:inline"><input type="hidden" name="action" value="activate"><input type="hidden" name="employee_id" value="<?php echo $emp['id']; ?>"><button class="btn-fm btn-success" style="font-size:.75rem;padding:4px 8px" title="تفعيل"><i class="fas fa-play"></i></button></form><?php endif; ?><?php if($isAdmin): ?><a href="?action=delete&id=<?php echo $emp['id']; ?>" class="btn-fm btn-danger-ghost" style="font-size:.75rem;padding:4px 8px" title="إنهاء الخدمة" onclick="return confirm('سيتم تغيير حالة الموظف إلى منهي الخدمة. هل أنت متأكد؟')"><i class="fas fa-user-slash"></i></a><?php endif; ?><?php endif; ?></td>
 </tr><?php endforeach; endif; ?></tbody></table></div></div></div>
+<?php elseif($action==='salary_register'): ?>
+<div class="fm-card">
+<div class="fm-card-head"><span><i class="fas fa-money-check-dollar me-1"></i> سجل الرواتب عند التعيين</span><span class="badge-fm badge-blue"><?php echo count($salaryRegister); ?> موظف</span></div>
+<div class="fm-card-body">
+<div class="row g-3 mb-4">
+<div class="col-md-4"><div class="p-3 rounded-3 border bg-light"><div class="text-muted small fw-bold mb-1">إجمالي الرواتب عند التعيين</div><div class="fs-4 fw-bold text-primary"><?php echo number_format($salaryRegisterTotal,2); ?> ج.س</div></div></div>
+<div class="col-md-4"><div class="p-3 rounded-3 border bg-light"><div class="text-muted small fw-bold mb-1">عدد الموظفين</div><div class="fs-4 fw-bold"><?php echo count($salaryRegister); ?></div></div></div>
+<div class="col-md-4"><div class="p-3 rounded-3 border bg-light"><div class="text-muted small fw-bold mb-1">متوسط الراتب عند التعيين</div><div class="fs-4 fw-bold"><?php echo count($salaryRegister) ? number_format($salaryRegisterTotal / count($salaryRegister),2) : '0.00'; ?> ج.س</div></div></div>
+</div>
+<div class="table-responsive"><table class="fm-table"><thead><tr><th>#</th><th>كود الموظف</th><th>اسم الموظف</th><th>القسم</th><th>تاريخ التعيين</th><th>تاريخ سريان أول راتب</th><th>الراتب عند التعيين</th><th>العملة</th></tr></thead><tbody>
+<?php if(empty($salaryRegister)): ?><tr><td colspan="8" class="text-center py-4 text-muted">لا توجد بيانات رواتب.</td></tr>
+<?php else: foreach($salaryRegister as $i=>$row): ?><tr><td><?php echo $i+1; ?></td><td><code><?php echo htmlspecialchars($row['employee_code']); ?></code></td><td><strong><?php echo htmlspecialchars($row['full_name']); ?></strong></td><td><?php echo htmlspecialchars($row['dept_name']??'-'); ?></td><td><?php echo htmlspecialchars($row['hire_date']??'-'); ?></td><td><?php echo htmlspecialchars($row['salary_effective_from']??'-'); ?></td><td class="fw-bold"><?php echo $row['basic_salary'] !== null ? number_format((float)$row['basic_salary'],2) : 'غير مسجل'; ?></td><td><?php echo htmlspecialchars($row['salary_currency']??APP_CURRENCY_CODE); ?></td></tr><?php endforeach; endif; ?></tbody>
+<?php if(!empty($salaryRegister)): ?><tfoot><tr><th colspan="6" class="text-end">الإجمالي</th><th class="fw-bold"><?php echo number_format($salaryRegisterTotal,2); ?></th><th>ج.س</th></tr></tfoot><?php endif; ?></table></div>
+</div></div>
 <?php else: ?>
 <div class="fm-card"><div class="fm-card-head"><span>📝 بيانات الموظف</span><a href="employees.php" class="btn-fm btn-ghost" style="background:#fff;color:#1b4d8f;font-size:.8rem">العودة للقائمة</a></div><div class="fm-card-body"><form method="POST" enctype="multipart/form-data"><div class="row g-3">
 <div class="col-md-6"><label class="form-label">الاسم الكامل <span class="text-danger">*</span></label><input type="text" name="full_name" class="form-control" required value="<?php echo htmlspecialchars($employee['full_name']??''); ?>"></div><div class="col-md-3"><label class="form-label">كود الموظف</label><input type="text" class="form-control bg-light" readonly value="<?php echo htmlspecialchars($action==='add'?$nextEmployeeCode:($employee['employee_code']??'')); ?>"><small class="text-muted"><?php echo $action==='add'?'يتم إنشاء الكود تلقائياً بواسطة النظام ولا يمكن إدخاله يدوياً.':'كود الموظف ثابت ولا يمكن تغييره بعد الإنشاء.'; ?></small></div><div class="col-md-3"><label class="form-label">الرقم القومي</label><input type="text" name="national_id" class="form-control" value="<?php echo htmlspecialchars($employee['national_id']??''); ?>"></div>
