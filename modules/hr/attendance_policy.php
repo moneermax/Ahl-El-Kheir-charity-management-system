@@ -257,7 +257,7 @@ $canManage = $future || $todayUnused;
 <td><?=e(substr((string)$p['absence_finalization_time'],0,5))?></td>
 <td><?=e((string)$p['default_work_mode'])?></td>
 <td class="text-nowrap">
-<a class="btn btn-sm btn-outline-primary <?= $future ? '' : 'disabled' ?>" href="<?= $canManage ? e(APP_URL.'modules/hr/attendance_policy.php?edit='.(int)$p['id']) : '#' ?>"><i class="fas fa-pen"></i></a>
+<a class="btn btn-sm btn-outline-primary <?= $canManage ? '' : 'disabled' ?>" href="<?= $canManage ? e(APP_URL.'modules/hr/attendance_policy.php?edit='.(int)$p['id']) : '#' ?>"><i class="fas fa-pen"></i></a>
 <form method="post" class="d-inline" onsubmit="return confirm('هل تريد حذف إصدار السياسة هذا؟ لا يمكن التراجع عن الحذف بعد التنفيذ.');">
 <?=csrf_field()?>
 <input type="hidden" name="action" value="delete_policy">
