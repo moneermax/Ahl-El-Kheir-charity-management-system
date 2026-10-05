@@ -191,7 +191,7 @@
         });
     }
 
-    async function renderResponse(response, fallbackUrl) {
+    async function renderResponse(response, fallbackUrl, preservedScroll) {
         akTrace('renderResponse:start', {responseUrl:response.url || fallbackUrl, status:response.status});
         const finalUrl = new URL(response.url || fallbackUrl, window.location.href);
 
@@ -213,9 +213,20 @@
             throw new Error('CONTENT_REGION_NOT_FOUND');
         }
 
-        const scrollX = window.scrollX || 0;
-        const scrollY = window.scrollY || window.pageYOffset || 0;
-        akTrace('renderResponse:captured-scroll', {scrollX, scrollY});
+        /*
+         * Capture the viewport at submit time, not after the network round
+         * trip. The submit handler may change focus/control state before the
+         * response arrives, and the browser is then free to adjust scrollY.
+         * For a same-page POST the submit-time viewport is the authoritative
+         * position the user asked us to preserve.
+         */
+        const scrollX = preservedScroll && Number.isFinite(preservedScroll.x)
+            ? preservedScroll.x
+            : (window.scrollX || 0);
+        const scrollY = preservedScroll && Number.isFinite(preservedScroll.y)
+            ? preservedScroll.y
+            : (window.scrollY || window.pageYOffset || 0);
+        akTrace('renderResponse:captured-scroll', {scrollX, scrollY, source: preservedScroll ? 'submit' : 'render'});
         /*
          * Server-side flash messages are feedback, not page content.
          * Extract them before the live fragment swap. This prevents the
@@ -423,8 +434,23 @@
         akTrace('submit:after-preventDefault');
         form.dataset.akSubmitting = '1';
 
+        /*
+         * Freeze the user's viewport before doing anything else. Do this in
+         * the submit event itself so later control/focus changes cannot
+         * redefine the position we are trying to preserve.
+         */
+        const preservedScroll = {
+            x: window.scrollX || 0,
+            y: window.scrollY || window.pageYOffset || 0
+        };
+        akTrace('submit:captured-scroll', preservedScroll);
+
         const submitter = event.submitter;
-        if (submitter) submitter.disabled = true;
+        /*
+         * Do not disable the focused submitter here. A native disabled state
+         * removes focusability and can trigger browser focus/scroll cleanup.
+         * data-akSubmitting already blocks duplicate same-page submissions.
+         */
 
         const target = new URL(form.action || window.location.href, window.location.href);
         const formData = new FormData(form);
@@ -456,7 +482,7 @@
                 return null;
             }
 
-            return renderResponse(response, target.href);
+            return renderResponse(response, target.href, preservedScroll);
         }).catch(function(error){
             /*
              * The POST may already have reached the server. Never blindly
@@ -474,7 +500,6 @@
             }
         }).finally(function(){
             delete form.dataset.akSubmitting;
-            if (submitter) submitter.disabled = false;
         });
     });
 
