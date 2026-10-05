@@ -54,8 +54,10 @@ function hrSalaryAdvanceWaiverEligibleRows(PDO $pdo, string $effectiveMonth, ?in
                    ), 0) AS current_period_repayment
             FROM hr_salary_advance_requests r
             JOIN employees e ON e.id = r.employee_id
-            WHERE r.status = 'disbursed'
-              AND COALESCE(r.outstanding_balance, 0) > 0";
+            WHERE (
+                (r.status = 'disbursed' AND COALESCE(r.outstanding_balance, 0) > 0)
+                OR (r.status IN ('submitted','fm_review','approved') AND r.closed_at IS NULL)
+            )";
     $params = [$effectiveMonth, $effectiveMonth];
 
     if ($employeeId !== null) {
@@ -136,7 +138,7 @@ function hrSalaryAdvanceWaiverCreateDecision(
                   balance_before, current_period_repayment, refund_amount,
                   balance_before_waiver, waived_amount, balance_after,
                   previous_request_status, resulting_request_status)
-                 VALUES (?, ?, ?, ?, ?, 0, ?, 0, 0, ?, 'disbursed')"
+                 VALUES (?, ?, ?, ?, ?, 0, ?, 0, 0, ?, ?)"
             )->execute([
                 $decisionId,
                 (int)$row['request_id'],
@@ -145,6 +147,7 @@ function hrSalaryAdvanceWaiverCreateDecision(
                 round((float)$row['current_period_repayment'], 2),
                 round((float)$row['outstanding_balance'], 2),
                 (string)$row['status'],
+                (string)$row['status'] === 'disbursed' ? 'disbursed' : 'cancelled',
             ]);
         }
 
@@ -291,11 +294,23 @@ function hrSalaryAdvanceWaiverExecute(
         if (!$items) throw new RuntimeException('قرار الإعفاء لا يحتوي على بنود تنفيذ.');
 
         foreach ($items as $item) {
-            if ((string)$item['live_request_status'] !== 'disbursed') {
-                throw new RuntimeException('تغيرت حالة إحدى السلف منذ إنشاء القرار؛ التنفيذ متوقف للمراجعة.');
-            }
-            if (round((float)$item['outstanding_balance'], 2) !== round((float)$item['balance_before'], 2)) {
-                throw new RuntimeException('تغير رصيد إحدى السلف منذ إنشاء القرار؛ التنفيذ متوقف للمراجعة.');
+            $liveStatus = (string)$item['live_request_status'];
+            $snapshotStatus = (string)$item['previous_request_status'];
+
+            if ($snapshotStatus === 'disbursed') {
+                if ($liveStatus !== 'disbursed') {
+                    throw new RuntimeException('تغيرت حالة إحدى السلف منذ إنشاء القرار؛ التنفيذ متوقف للمراجعة.');
+                }
+                if (round((float)$item['outstanding_balance'], 2) !== round((float)$item['balance_before'], 2)) {
+                    throw new RuntimeException('تغير رصيد إحدى السلف منذ إنشاء القرار؛ التنفيذ متوقف للمراجعة.');
+                }
+            } else {
+                if (!in_array($liveStatus, ['submitted','fm_review','approved'], true)) {
+                    throw new RuntimeException('تغيرت حالة أحد طلبات السلف غير المصروفة منذ إنشاء القرار؛ التنفيذ متوقف للمراجعة.');
+                }
+                if (round((float)$item['balance_before'], 2) !== 0.00) {
+                    throw new RuntimeException('بيانات طلب السلفة غير المصروف غير متسقة؛ التنفيذ متوقف للمراجعة.');
+                }
             }
         }
 
@@ -323,6 +338,10 @@ function hrSalaryAdvanceWaiverExecute(
 
         foreach ($items as $item) {
             $requestId = (int)$item['salary_advance_request_id'];
+            if ((string)$item['previous_request_status'] !== 'disbursed') {
+                continue;
+            }
+
             $balance = round(max(0.00, (float)$item['outstanding_balance']), 2);
             $refund = round(max(0.00, (float)$item['current_period_repayment']), 2);
             $balanceBeforeWaiver = round(max(0.00, $balance + $refund), 2);
@@ -337,6 +356,49 @@ function hrSalaryAdvanceWaiverExecute(
 
         foreach ($items as $item) {
             $requestId = (int)$item['salary_advance_request_id'];
+
+            if ((string)$item['previous_request_status'] !== 'disbursed') {
+                $pdo->prepare(
+                    "UPDATE hr_salary_advance_requests
+                     SET status = 'cancelled', closed_at = NOW(), updated_at = NOW()
+                     WHERE id = ?
+                       AND status IN ('submitted','fm_review','approved')
+                       AND closed_at IS NULL"
+                )->execute([$requestId]);
+
+                if ($pdo->rowCount() !== 1) {
+                    throw new RuntimeException('تعذر إغلاق طلب السلفة غير المصروف ضمن قرار الإعفاء.');
+                }
+
+                $pdo->prepare(
+                    "UPDATE hr_salary_advance_waiver_items
+                     SET executed_at = NOW(), resulting_request_status = 'cancelled'
+                     WHERE id = ?"
+                )->execute([(int)$item['id']);
+
+                dbExecute(
+                    "INSERT INTO audit_log
+                     (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent)
+                     VALUES (?, 'HR_SALARY_ADVANCE_WAIVER_EXECUTED', 'hr_salary_advance_request', ?, ?, ?, ?, ?)",
+                    [
+                        $fmUserId,
+                        $requestId,
+                        json_encode([
+                            'status' => $item['previous_request_status'],
+                            'financial_effect' => 0.00,
+                        ], JSON_UNESCAPED_UNICODE),
+                        json_encode([
+                            'decision_id' => $decisionId,
+                            'status' => 'cancelled',
+                            'waiver_type' => 'unissued_request',
+                        ], JSON_UNESCAPED_UNICODE),
+                        $_SERVER['REMOTE_ADDR'] ?? '',
+                        $_SERVER['HTTP_USER_AGENT'] ?? ''
+                    ]
+                );
+                continue;
+            }
+
             $balance = round(max(0.00, (float)$item['outstanding_balance']), 2);
             $refund = round(max(0.00, (float)$item['current_period_repayment']), 2);
             $balanceBeforeWaiver = round(max(0.00, $balance + $refund), 2);
