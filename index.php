@@ -21,6 +21,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             else {
                 $_SESSION['user_id']=(int)$user['id']; $_SESSION['user_name']=$user['full_name']; $_SESSION['user_username']=$user['username']; $_SESSION['user_role']=$user['role_code'];
                 dbExecute("UPDATE users SET last_login_at = NOW() WHERE id = ?", [$user['id']]);
+                try {
+                    require_once __DIR__ . '/modules/hr/lib_attendance_policy.php';
+                    require_once __DIR__ . '/modules/hr/lib_attendance_integrity.php';
+                    hrAttendanceAutoCheckInForUser((int)$user['id']);
+                } catch (Throwable $attendanceError) {
+                    // Authentication must never fail because an optional attendance
+                    // side-effect cannot be recorded. The attendance helper is
+                    // independently guarded by the effective policy and HR eligibility rules.
+                }
                 try { dbExecute("INSERT INTO audit_log (user_id, action, entity_type, entity_id, ip_address, user_agent, created_at) VALUES (?, 'LOGIN', 'users', ?, ?, ?, NOW())", [$user['id'],$user['id'],$_SERVER['REMOTE_ADDR']??'',$_SERVER['HTTP_USER_AGENT']??'']); } catch (Throwable $e) {}
                 header('Location: ' . APP_URL . dashboard_for_role($user['role_code'])); exit();
             }
