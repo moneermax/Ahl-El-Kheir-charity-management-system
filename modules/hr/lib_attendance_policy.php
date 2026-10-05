@@ -21,7 +21,7 @@ function hrAttendancePolicyValidate(array $input): array
     }
 
     $date = DateTime::createFromFormat('!Y-m-d', $p['effective_from']);
-    if (!$date || $date->format('Y-m-d') !== $p['effective_from'] || $p['effective_from'] <= date('Y-m-d')) {
+    if (!$date || $date->format('Y-m-d') !== $p['effective_from'] || $p['effective_from'] < date('Y-m-d')) {
         throw new InvalidArgumentException('تاريخ السريان يجب أن يكون تاريخاً مستقبلياً صالحاً.');
     }
 
@@ -35,6 +35,9 @@ function hrAttendancePolicyValidate(array $input): array
 
     if ($p['working_start_time'] >= $p['working_end_time']) {
         throw new InvalidArgumentException('وقت بداية العمل يجب أن يسبق وقت نهاية العمل.');
+    }
+    if ($p['attendance_cutoff_time'] > $p['working_end_time']) {
+        throw new InvalidArgumentException('حد تسجيل الحضور لا يمكن أن يتجاوز نهاية ساعات العمل.');
     }
     if ($p['absence_finalization_time'] > $p['attendance_cutoff_time']) {
         throw new InvalidArgumentException('وقت إنهاء الغياب لا يمكن أن يتجاوز حد تسجيل الحضور.');
@@ -71,6 +74,7 @@ function hrAttendancePolicyGetAll(PDO $pdo): array
 function hrAttendancePolicyLoginEligible(array $policy, string $time): bool
 {
     return (int)$policy['auto_login_attendance'] === 1
+        && $time >= (string)$policy['working_start_time']
         && $time <= (string)$policy['attendance_cutoff_time'];
 }
 
