@@ -321,6 +321,27 @@ $langSwitchUrl =
     try {
         if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 
+        /*
+         * Save the viewport for forms that explicitly use native POST.
+         * SPA-intercepted forms have their own restoration path in app.js.
+         */
+        document.addEventListener('submit', function (event) {
+            var form = event.target;
+            if (!form || form.tagName !== 'FORM') return;
+            if (String(form.method || 'get').toLowerCase() !== 'post') return;
+            if (form.dataset.akNativePost !== '1') return;
+            if (form.target && !['_self', ''].includes(String(form.target).toLowerCase())) return;
+
+            try {
+                sessionStorage.setItem('akGlobalScrollRestore', JSON.stringify({
+                    path: window.location.pathname,
+                    x: window.scrollX || 0,
+                    y: window.scrollY || 0,
+                    at: Date.now()
+                }));
+            } catch (ignore) {}
+        }, true);
+
         var raw = sessionStorage.getItem('akGlobalScrollRestore');
         if (!raw) return;
 
