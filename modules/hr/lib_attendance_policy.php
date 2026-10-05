@@ -95,6 +95,40 @@ function hrAttendancePolicyAbsenceFinalizationReached(array $policy, string $tim
 }
 
 
+function hrAttendancePolicyHasOperationalAttendance(PDO $pdo, array $policy): bool
+{
+    $policyId = (int)($policy['id'] ?? 0);
+    $effectiveFrom = (string)($policy['effective_from'] ?? '');
+    if ($policyId <= 0 || $effectiveFrom === '') return false;
+
+    $nextPolicy = dbFetchOne(
+        "SELECT effective_from
+         FROM hr_attendance_policy_versions
+         WHERE effective_from > ?
+           AND id <> ?
+         ORDER BY effective_from ASC, version_no ASC
+         LIMIT 1",
+        [$effectiveFrom, $policyId]
+    );
+
+    $params = [$effectiveFrom];
+    $dateCondition = "a.date >= ?";
+    if ($nextPolicy && !empty($nextPolicy['effective_from'])) {
+        $dateCondition .= " AND a.date < ?";
+        $params[] = (string)$nextPolicy['effective_from'];
+    }
+
+    $row = dbFetchOne(
+        "SELECT a.id
+         FROM attendance a
+         WHERE {$dateCondition}
+         LIMIT 1",
+        $params
+    );
+
+    return $row !== null;
+}
+
 function hrAttendanceEmployeeForUser(int $userId): ?array
 {
     if ($userId <= 0) return null;
