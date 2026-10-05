@@ -432,6 +432,28 @@ function hrSalaryAdvanceWaiverExecute(
 
         $pdo->commit();
 
+        // Notifications are informational and are emitted only after the
+        // financial transaction has committed successfully.
+        try {
+            $creator = dbFetchOne(
+                "SELECT created_by FROM hr_salary_advance_waiver_decisions WHERE id = ?",
+                [$decisionId]
+            );
+            $creatorId = (int)($creator['created_by'] ?? 0);
+            if ($creatorId > 0) {
+                ak_transaction_review_notify_event(
+                    $creatorId,
+                    'تم تنفيذ إعفاء سلف الراتب',
+                    'تم تنفيذ قرار الإعفاء المالي بنجاح، وتمت معالجة الخصومات المشمولة وتصفير الأرصدة القائمة.',
+                    APP_URL . 'modules/hr/salary_advance_waiver_gm.php',
+                    $decisionId,
+                    'salary_advance_waiver_decision'
+                );
+            }
+        } catch (Throwable $notificationError) {
+            // Notification failure must never undo a committed financial action.
+        }
+
         return [
             'decision_id' => $decisionId,
             'refund_total' => $refundTotal,
