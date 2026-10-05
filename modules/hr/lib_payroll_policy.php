@@ -118,14 +118,12 @@ function hrPayrollAttendanceDeductionCalculate(PDO $pdo, array $payroll, string 
             continue;
         }
 
-        $eligibility = hrAttendanceEligibility($employeeId, $day);
-        if (!$eligibility['eligible']) {
-            // Approved leave and non-working employment states are not absence.
-            // Unpaid approved leave is handled explicitly below.
-            if (($eligibility['reason'] ?? '') !== 'approved_leave') {
-                $date = $date->modify('+1 day');
-                continue;
-            }
+        // Payroll is historical: resolve the employee's employment state
+        // for the actual attendance date instead of today's employee status.
+        $employmentState = hrAttendanceEmploymentState($employeeId, $day);
+        if (!$employmentState || ($employmentState['category'] ?? '') !== 'working') {
+            $date = $date->modify('+1 day');
+            continue;
         }
 
         $leave = hrAttendanceApprovedLeave($employeeId, $day);
