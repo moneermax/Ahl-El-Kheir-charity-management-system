@@ -79,3 +79,78 @@ function hrAttendancePolicyAbsenceFinalizationReached(array $policy, string $tim
     return (int)$policy['auto_absence_enabled'] === 1
         && $time >= (string)$policy['absence_finalization_time'];
 }
+
+
+function hrAttendanceEmployeeForUser(int $userId): ?array
+{
+    if ($userId <= 0) return null;
+
+    return dbFetchOne(
+        "SELECT e.id, e.user_id, e.full_name
+         FROM employees e
+         WHERE e.user_id = ? AND e.status = 'active'
+         LIMIT 1",
+        [$userId]
+    );
+}
+
+function hrAttendanceAutoCheckInForUser(int $userId, ?DateTimeImmutable $now = null): bool
+{
+    $now = $now ?: new DateTimeImmutable('now');
+    $policy = hrAttendancePolicyGetActive(db());
+    if (!$policy) return false;
+
+    $time = $now->format('H:i:s');
+    if (!hrAttendancePolicyLoginEligible($policy, $time)) return false;
+
+    $employee = hrAttendanceEmployeeForUser($userId);
+    if (!$employee) return false;
+
+    $date = $now->format('Y-m-d');
+    $eligibility = hrAttendanceEligibility((int)$employee['id'], $date);
+    if (!$eligibility['eligible']) return false;
+
+    $mode = (string)$policy['default_work_mode'];
+    dbExecute(
+        "INSERT INTO attendance
+            (employee_id, date, check_in, work_mode, status, notes)
+         VALUES (?, ?, ?, ?, 'present', NULL)
+         ON DUPLICATE KEY UPDATE
+            check_in = COALESCE(check_in, VALUES(check_in)),
+            work_mode = COALESCE(work_mode, VALUES(work_mode)),
+            status = CASE
+                WHEN status = 'on_leave' THEN status
+                ELSE 'present'
+            END,
+            notes = CASE
+                WHEN status = 'on_leave' THEN notes
+                ELSE NULL
+            END",
+        [(int)$employee['id'], $date, $time, $mode]
+    );
+
+    try {
+        dbExecute(
+            "INSERT INTO audit_log
+             (user_id, action, entity_type, entity_id, new_values, ip_address, user_agent)
+             VALUES (?, 'HR_ATTENDANCE_AUTO_CHECK_IN', 'attendance', ?, ?, ?, ?)",
+            [
+                $userId,
+                (int)$employee['id'],
+                json_encode([
+                    'date' => $date,
+                    'check_in' => $time,
+                    'work_mode' => $mode,
+                    'policy_version' => (int)$policy['version_no'],
+                    'source' => 'successful_login'
+                ], JSON_UNESCAPED_UNICODE),
+                $_SERVER['REMOTE_ADDR'] ?? '',
+                $_SERVER['HTTP_USER_AGENT'] ?? ''
+            ]
+        );
+    } catch (Throwable $e) {
+        // Attendance remains authoritative; audit logging must not break login.
+    }
+
+    return true;
+}
