@@ -250,3 +250,21 @@ If an action is unavailable:
 5. route the work to the responsible role.
 
 Never bypass the application with a direct URL or manual database edit.
+
+
+## 2026-10-05 — HR salary register
+
+### Salary register
+
+HR Manager/HR Staff can use **سجل الرواتب عند التعيين** from Employee Management to review the salary register for currently working employees.
+
+The register:
+1. shows the employee's first positive salary-history entry;
+2. ignores the automatic 0.00 provisioning placeholder;
+3. shows hire date, salary effective date, salary, currency and department;
+4. calculates the employee count, total and average salary;
+5. excludes suspended, terminated/separated and other non-working employment states.
+
+The current varied salary amounts are development/test data. They are stored in the database and are not hard-coded application values.
+
+Non-working employees are not deleted from HR history or accounting history. They simply fall outside the current working/payroll scope.
