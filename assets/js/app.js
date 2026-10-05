@@ -154,12 +154,28 @@
          */
         const currentHeight = Math.ceil(current.getBoundingClientRect().height);
         const replacement = document.importNode(incoming, true);
-        replacement.style.minHeight = currentHeight + 'px';
+
+        /*
+         * The .content element is not the document's scroll container, but it
+         * is the large flex item that contains the entire changing viewport
+         * content. Replacing that element itself invalidates the browser's
+         * layout/scroll-anchor context. Keep the live .content node in place
+         * and replace only its children instead.
+         *
+         * Also temporarily exclude this changing subtree from CSS scroll
+         * anchoring. Otherwise the browser is allowed to compensate for the
+         * large DOM/layout mutation while we are deliberately preserving the
+         * user's viewport.
+         */
+        const originalMinHeight = current.style.minHeight;
+        const originalOverflowAnchor = current.style.overflowAnchor;
+        current.style.minHeight = currentHeight + 'px';
+        current.style.overflowAnchor = 'none';
 
         /*
          * Preserve focus where possible. The submitted control normally
          * disappears with the old fragment, so remember a stable identity
-         * before replacing the root.
+         * before replacing the children.
          */
         const active = document.activeElement;
         let activeDescriptor = null;
@@ -192,13 +208,13 @@
         }
 
         /*
-         * Replace the .content root itself in one DOM operation. The old
-         * subtree is never emptied, and the new subtree is already complete
-         * before it enters the document.
+         * Keep the existing .content root and replace its children in one DOM
+         * operation. This preserves the root's place in the document/flex
+         * layout and avoids invalidating the browser's scroll context.
          */
-        akTrace('renderResponse:before-replace');
-        current.replaceWith(replacement);
-        akTrace('renderResponse:after-replace');
+        akTrace('renderResponse:before-replace-children');
+        current.replaceChildren(...Array.from(replacement.childNodes));
+        akTrace('renderResponse:after-replace-children');
 
         if (parsed.title) document.title = parsed.title;
         if (finalUrl.href !== window.location.href) {
@@ -249,6 +265,21 @@
 
         window.scrollTo({left: scrollX, top: scrollY, behavior: 'auto'});
         akTrace('renderResponse:after-scrollTo');
+
+        /*
+         * Remove the temporary layout guards when the incoming content is
+         * tall enough to support the preserved viewport. If it is genuinely
+         * shorter, retain only the minimum height required to keep the
+         * requested position valid rather than allowing the browser to clamp
+         * the viewport.
+         */
+        if (replacement.scrollHeight >= requiredHeight) {
+            current.style.minHeight = originalMinHeight;
+        } else {
+            current.style.minHeight = Math.max(requiredHeight, currentHeight) + 'px';
+        }
+        current.style.overflowAnchor = originalOverflowAnchor;
+
         if (AK_SCROLL_TRACE) {
             [0, 1, 16, 50, 150, 500].forEach(ms => setTimeout(() => akTrace('renderResponse:timer+'+ms), ms));
         }
