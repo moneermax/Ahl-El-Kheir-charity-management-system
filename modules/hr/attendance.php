@@ -205,11 +205,6 @@ require_once __DIR__ . '/../../includes/header.php';
 <?php endforeach; ?></tbody></table></div></div>
 <script>
 document.addEventListener('DOMContentLoaded', function(){
-    const savedScrollY=sessionStorage.getItem('akAttendanceScrollY');
-    if(savedScrollY!==null){
-        sessionStorage.removeItem('akAttendanceScrollY');
-        window.requestAnimationFrame(function(){ window.scrollTo(0,Number(savedScrollY)||0); });
-    }
     const feedback=document.querySelector('.att5-feedback');
     if(feedback){
         const close=feedback.querySelector('.btn-close');
@@ -226,10 +221,6 @@ document.addEventListener('DOMContentLoaded', function(){
     const status=document.getElementById('att5Status');
     const applyFilter=document.getElementById('att5ApplyFilter');
     const resetFilter=document.getElementById('att5ResetFilter');
-
-    document.querySelectorAll('form[method="POST"]').forEach(form=>form.addEventListener('submit',()=>{
-        sessionStorage.setItem('akAttendanceScrollY',String(window.scrollY));
-    }));
 
     // Approved-leave employees are kept out of the attendance roster entirely.
     // Their existing return-from-leave form is moved into a dedicated panel.
