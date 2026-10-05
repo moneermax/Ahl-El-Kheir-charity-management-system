@@ -222,7 +222,7 @@
         }
 
         akTrace('renderResponse:before-fragment-scripts');
-        runFragmentScripts(replacement);
+        runFragmentScripts(current);
         akTrace('renderResponse:after-fragment-scripts');
 
         akTrace('renderResponse:before-focus-restore');
