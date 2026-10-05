@@ -59,18 +59,26 @@ $employees = dbFetchAll(
     "SELECT e.id, e.full_name
      FROM employees e
      WHERE e.status = 'active'
-       AND EXISTS (
-           SELECT 1
+       AND (
+           SELECT s.category
            FROM hr_employee_state_history h
            INNER JOIN hr_employment_states s ON s.id = h.employment_state_id
            WHERE h.employee_id = e.id
              AND h.effective_from <= ?
              AND (h.effective_to IS NULL OR h.effective_to >= ?)
-             AND s.category = 'working'
-             AND s.is_active = 1
            ORDER BY h.effective_from DESC, h.id DESC
            LIMIT 1
-       )
+       ) = 'working'
+       AND (
+           SELECT s.is_active
+           FROM hr_employee_state_history h
+           INNER JOIN hr_employment_states s ON s.id = h.employment_state_id
+           WHERE h.employee_id = e.id
+             AND h.effective_from <= ?
+             AND (h.effective_to IS NULL OR h.effective_to >= ?)
+           ORDER BY h.effective_from DESC, h.id DESC
+           LIMIT 1
+       ) = 1
      ORDER BY e.id",
     [$selectedDate . ' 23:59:59', $selectedDate . ' 00:00:00']
 );
