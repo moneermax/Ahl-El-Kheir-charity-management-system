@@ -37,10 +37,14 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && $tablesReady) {
 $month=date('Y-m-01');
 $employees=[];
 $rows=$tablesReady ? hrSalaryAdvanceWaiverEligibleRows($pdo,$month) : [];
-$pending=$tablesReady ? dbFetchAll("SELECT d.*,u.full_name AS creator_name,p.full_name AS preparer_name
+$pending=$tablesReady ? dbFetchAll("SELECT d.*,u.full_name AS creator_name,p.full_name AS preparer_name,
+ ra.code AS refund_code,ra.name_ar AS refund_name,
+ ea.code AS expense_code,ea.name_ar AS expense_name
  FROM hr_salary_advance_waiver_decisions d
  LEFT JOIN users u ON u.id=d.created_by
  LEFT JOIN users p ON p.id=d.prepared_by
+ LEFT JOIN accounts ra ON ra.id=d.refund_account_id
+ LEFT JOIN accounts ea ON ea.id=d.waiver_expense_account_id
  WHERE d.status='pending_gm' ORDER BY d.id DESC") : [];
 $pageTitle='إعفاء سلف الرواتب — قرار المدير العام'; $active='salary_advance_waiver_gm';
 require_once __DIR__.'/../../includes/header.php';
@@ -61,10 +65,11 @@ require_once __DIR__.'/../../includes/header.php';
 <div class="d-flex justify-content-between"><strong><?=e($d['decision_no'])?></strong><span class="badge text-bg-warning">بانتظار اعتماد GM</span></div>
 <div class="small mt-2"><strong>النوع:</strong> <?=e($d['decision_type']==='blanket'?'إعفاء جماعي':'إعفاء فردي')?> · <strong>الشهر:</strong> <?=e($d['effective_month'])?></div>
 <p class="mt-2 mb-2"><?=e($d['reason'])?></p>
+<div class="small mb-2"><strong>جهزه:</strong> <?=e($d['preparer_name']??'—')?> · <strong>حساب رد الخصم:</strong> <?=e(($d['refund_code']??'—').' — '.($d['refund_name']??''))?> · <strong>مصروف الإعفاء:</strong> <?=e(($d['expense_code']??'—').' — '.($d['expense_name']??''))?></div>
 <?php
-$preview=dbFetchOne("SELECT COUNT(*) item_count, COALESCE(SUM(balance_before),0) balance_total, COALESCE(SUM(current_period_repayment),0) refund_total FROM hr_salary_advance_waiver_items WHERE decision_id=?",[(int)$d['id']]);
+$preview=dbFetchOne("SELECT COUNT(*) item_count, COALESCE(SUM(balance_before),0) balance_total, COALESCE(SUM(balance_before + current_period_repayment),0) waiver_total, COALESCE(SUM(current_period_repayment),0) refund_total FROM hr_salary_advance_waiver_items WHERE decision_id=?",[(int)$d['id']]);
 ?>
-<div class="alert alert-info small mb-3">السلف المشمولة: <strong><?=number_format((int)$preview['item_count'])?></strong> · الرصيد المراد إعفاؤه بعد رد خصم الشهر: <strong><?=number_format((float)$preview['balance_total'],2)?></strong> ج.س. · رد الخصم: <strong><?=number_format((float)$preview['refund_total'],2)?></strong> ج.س.</div>
+<div class="alert alert-info small mb-3">السلف المشمولة: <strong><?=number_format((int)$preview['item_count'])?></strong> · الرصيد الذي سيُعفى بعد رد خصم الشهر: <strong><?=number_format((float)$preview['waiver_total'],2)?></strong> ج.س. · رد الخصم: <strong><?=number_format((float)$preview['refund_total'],2)?></strong> ج.س.</div>
 <form method="post" class="row g-2"><?=csrf_field()?><input type="hidden" name="decision_id" value="<?=$d['id']?>">
 <div class="col-md-9"><input name="reason" class="form-control" maxlength="2000" placeholder="سبب الرفض (مطلوب عند الرفض)"></div>
 <div class="col-md-3 d-flex gap-2"><button name="action" value="approve" class="btn btn-success flex-fill" onclick="return confirm('اعتماد قرار الإعفاء وإعادته إلى FM للتنفيذ؟')">اعتماد</button><button name="action" value="reject" class="btn btn-outline-danger flex-fill" onclick="return confirm('رفض قرار الإعفاء دون أثر مالي؟')">رفض</button></div>
