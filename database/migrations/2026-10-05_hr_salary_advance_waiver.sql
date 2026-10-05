@@ -45,3 +45,17 @@ CREATE TABLE IF NOT EXISTS hr_salary_advance_waiver_items (
     KEY idx_hr_salary_advance_waiver_item_refund_journal (refund_journal_entry_id),
     KEY idx_hr_salary_advance_waiver_item_waiver_journal (waiver_journal_entry_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- Explicit overlay for future repayment schedules.
+-- The original schedule rows are preserved; this table records that a specific
+-- installment was waived by a specific GM/FM decision.
+CREATE TABLE IF NOT EXISTS hr_salary_advance_waiver_schedule_items (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    waiver_item_id INT UNSIGNED NOT NULL,
+    repayment_schedule_id INT UNSIGNED NOT NULL,
+    previous_schedule_status VARCHAR(50) NOT NULL,
+    waived_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_hr_salary_advance_waiver_schedule (repayment_schedule_id),
+    KEY idx_hr_salary_advance_waiver_schedule_item (waiver_item_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
