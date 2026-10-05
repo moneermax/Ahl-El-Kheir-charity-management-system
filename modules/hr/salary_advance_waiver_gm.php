@@ -19,24 +19,29 @@ $tablesReady = (bool)dbFetchOne("SELECT COUNT(*) c FROM information_schema.table
 if ($_SERVER['REQUEST_METHOD']==='POST' && $tablesReady) {
     try {
         if (!verify_csrf()) throw new RuntimeException('انتهت صلاحية نموذج الحماية. أعد تحميل الصفحة.');
-        $type=(string)($_POST['decision_type']??'');
-        $month=(string)($_POST['effective_month']??'');
-        $reason=trim((string)($_POST['reason']??''));
-        $employeeId=$type==='individual' ? (int)($_POST['employee_id']??0) : null;
-        $id=hrSalaryAdvanceWaiverCreateDecision($pdo,$type,$month,$reason,(int)Session::getUserID(),$employeeId);
-        $message='تم إنشاء قرار الإعفاء وإحالته إلى المدير المالي للتنفيذ المالي.';
+        $action=(string)($_POST['action']??'');
+        if (!in_array($action,['approve','reject'],true)) throw new RuntimeException('إجراء غير صالح.');
+        hrSalaryAdvanceWaiverGMReview(
+            $pdo,
+            (int)($_POST['decision_id']??0),
+            (int)Session::getUserID(),
+            $action==='approve',
+            trim((string)($_POST['reason']??''))
+        );
+        $message=$action==='approve'
+            ? 'تم اعتماد قرار الإعفاء وإعادته إلى المدير المالي لإتمام التنفيذ.'
+            : 'تم رفض قرار الإعفاء دون أي أثر مالي.';
     } catch(Throwable $e){ $error=$e->getMessage(); }
 }
 
 $month=date('Y-m-01');
-$employees=dbFetchAll("SELECT DISTINCT e.id,e.employee_code,e.full_name
- FROM employees e JOIN hr_salary_advance_requests r ON r.employee_id=e.id
- WHERE r.status='disbursed' AND COALESCE(r.outstanding_balance,0)>0
- ORDER BY e.full_name");
+$employees=[];
 $rows=$tablesReady ? hrSalaryAdvanceWaiverEligibleRows($pdo,$month) : [];
-$pending=$tablesReady ? dbFetchAll("SELECT d.*,u.full_name AS creator_name
- FROM hr_salary_advance_waiver_decisions d LEFT JOIN users u ON u.id=d.created_by
- WHERE d.status='pending_fm' ORDER BY d.id DESC") : [];
+$pending=$tablesReady ? dbFetchAll("SELECT d.*,u.full_name AS creator_name,p.full_name AS preparer_name
+ FROM hr_salary_advance_waiver_decisions d
+ LEFT JOIN users u ON u.id=d.created_by
+ LEFT JOIN users p ON p.id=d.prepared_by
+ WHERE d.status='pending_gm' ORDER BY d.id DESC") : [];
 $pageTitle='إعفاء سلف الرواتب — قرار المدير العام'; $active='salary_advance_waiver_gm';
 require_once __DIR__.'/../../includes/header.php';
 ?>
@@ -47,21 +52,26 @@ require_once __DIR__.'/../../includes/header.php';
 <?php if($error): ?><div class="alert alert-danger"><?=e($error)?></div><?php endif; ?>
 <?php if($tablesReady): ?>
 <div class="card mb-3"><div class="card-body">
-<h5 class="mb-3">إنشاء قرار جديد</h5>
-<form method="post" class="row g-3">
-<?=csrf_field()?>
-<div class="col-md-3"><label class="form-label">نوع القرار</label><select name="decision_type" id="waiver_type" class="form-select" required><option value="blanket">إعفاء جماعي — جميع السلف القائمة</option><option value="individual">إعفاء فردي</option></select></div>
-<div class="col-md-3"><label class="form-label">شهر السريان</label><input type="date" name="effective_month" class="form-control" value="<?=e($month)?>" required></div>
-<div class="col-md-3" id="employee_wrap"><label class="form-label">الموظف</label><select name="employee_id" class="form-select"><option value="">اختر الموظف</option><?php foreach($employees as $e): ?><option value="<?=$e['id']?>"><?=e($e['employee_code'].' — '.$e['full_name'])?></option><?php endforeach; ?></select></div>
-<div class="col-12"><label class="form-label">سبب/نص قرار المدير العام *</label><textarea name="reason" class="form-control" rows="3" maxlength="2000" required></textarea></div>
-<div class="col-12"><button class="btn btn-primary"><i class="fas fa-paper-plane me-1"></i>إحالة القرار إلى FM</button></div>
+<h5 class="mb-3">قرارات معدّة بانتظار اعتماد المدير العام</h5>
+<div class="text-muted small">المدير المالي يجهز القرار والحسابات أولاً. دور المدير العام هنا هو الاعتماد أو الرفض فقط.</div>
+</div></div><div class="card mb-3"><div class="card-body">
+<h5>المراجعة والاعتماد</h5>
+<?php foreach($pending as $d): ?>
+<div class="border rounded p-3 mb-3">
+<div class="d-flex justify-content-between"><strong><?=e($d['decision_no'])?></strong><span class="badge text-bg-warning">بانتظار اعتماد GM</span></div>
+<div class="small mt-2"><strong>النوع:</strong> <?=e($d['decision_type']==='blanket'?'إعفاء جماعي':'إعفاء فردي')?> · <strong>الشهر:</strong> <?=e($d['effective_month'])?></div>
+<p class="mt-2 mb-2"><?=e($d['reason'])?></p>
+<?php
+$preview=dbFetchOne("SELECT COUNT(*) item_count, COALESCE(SUM(balance_before),0) balance_total, COALESCE(SUM(current_period_repayment),0) refund_total FROM hr_salary_advance_waiver_items WHERE decision_id=?",[(int)$d['id']]);
+?>
+<div class="alert alert-info small mb-3">السلف المشمولة: <strong><?=number_format((int)$preview['item_count'])?></strong> · الرصيد المراد إعفاؤه بعد رد خصم الشهر: <strong><?=number_format((float)$preview['balance_total'],2)?></strong> ج.س. · رد الخصم: <strong><?=number_format((float)$preview['refund_total'],2)?></strong> ج.س.</div>
+<form method="post" class="row g-2"><?=csrf_field()?><input type="hidden" name="decision_id" value="<?=$d['id']?>">
+<div class="col-md-9"><input name="reason" class="form-control" maxlength="2000" placeholder="سبب الرفض (مطلوب عند الرفض)"></div>
+<div class="col-md-3 d-flex gap-2"><button name="action" value="approve" class="btn btn-success flex-fill" onclick="return confirm('اعتماد قرار الإعفاء وإعادته إلى FM للتنفيذ؟')">اعتماد</button><button name="action" value="reject" class="btn btn-outline-danger flex-fill" onclick="return confirm('رفض قرار الإعفاء دون أثر مالي؟')">رفض</button></div>
 </form>
-</div></div>
-<div class="card mb-3"><div class="card-body"><h5>السلف القائمة التي سيشملها القرار</h5>
-<div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>الموظف</th><th>السلفة</th><th>الرصيد القائم</th><th>خصم الشهر المرحّل</th></tr></thead><tbody>
-<?php foreach($rows as $r): ?><tr><td><?=e($r['employee_code'].' — '.$r['employee_name'])?></td><td><?=e($r['request_no'])?></td><td><?=number_format((float)$r['outstanding_balance'],2)?></td><td><?=number_format((float)$r['current_period_repayment'],2)?></td></tr><?php endforeach; if(!$rows): ?><tr><td colspan="4" class="text-center text-muted">لا توجد سلف قائمة لهذا الشهر.</td></tr><?php endif; ?>
-</tbody></table></div></div></div>
-<div class="card"><div class="card-body"><h5>قرارات بانتظار FM</h5><div class="table-responsive"><table class="table table-sm"><thead><tr><th>القرار</th><th>النوع</th><th>الشهر</th><th>أنشأه</th><th>الحالة</th></tr></thead><tbody>
+</div>
+<?php endforeach; if(!$pending): ?><div class="text-center text-muted py-3">لا توجد قرارات بانتظار اعتماد المدير العام.</div><?php endif; ?>
+</div></div><div class="card"><div class="card-body"><h5>قرارات بانتظار FM</h5><div class="table-responsive"><table class="table table-sm"><thead><tr><th>القرار</th><th>النوع</th><th>الشهر</th><th>أنشأه</th><th>الحالة</th></tr></thead><tbody>
 <?php foreach($pending as $d): ?><tr><td><?=e($d['decision_no'])?></td><td><?=e($d['decision_type']==='blanket'?'جماعي':'فردي')?></td><td><?=e($d['effective_month'])?></td><td><?=e($d['creator_name']??'—')?></td><td>بانتظار التنفيذ المالي</td></tr><?php endforeach; if(!$pending): ?><tr><td colspan="5" class="text-center text-muted">لا توجد قرارات معلقة.</td></tr><?php endif; ?>
 </tbody></table></div></div></div>
 <?php endif; ?>
