@@ -41,8 +41,17 @@ function hrSalaryAdvancePayrollPendingRows(PDO $pdo, int $employeeId, string $pe
            AND COALESCE(r.outstanding_balance, 0) > 0
            AND s.scheduled_month = ?
            AND s.status IN ('pending', 'partial')
+           AND NOT EXISTS (
+               SELECT 1
+               FROM hr_salary_advance_waiver_items wi
+               JOIN hr_salary_advance_waiver_decisions wd
+                 ON wd.id = wi.decision_id
+               WHERE wi.salary_advance_request_id = r.id
+                 AND wd.status = 'executed'
+                 AND wd.effective_month <= ?
+           )
          ORDER BY s.installment_no ASC, s.id ASC",
-        [$employeeId, $periodStart]
+        [$employeeId, $periodStart, $periodStart]
     );
 }
 
@@ -197,9 +206,18 @@ function hrSalaryAdvancePayrollApply(PDO $pdo, array $payroll, int $accountingEn
            AND COALESCE(r.outstanding_balance, 0) > 0
            AND s.scheduled_month = ?
            AND s.status IN ('pending', 'partial')
+           AND NOT EXISTS (
+               SELECT 1
+               FROM hr_salary_advance_waiver_items wi
+               JOIN hr_salary_advance_waiver_decisions wd
+                 ON wd.id = wi.decision_id
+               WHERE wi.salary_advance_request_id = r.id
+                 AND wd.status = 'executed'
+                 AND wd.effective_month <= ?
+           )
          ORDER BY s.installment_no ASC, s.id ASC
          FOR UPDATE",
-        [$employeeId, $periodStart]
+        [$employeeId, $periodStart, $periodStart]
     );
 
     if (!$locked) {
