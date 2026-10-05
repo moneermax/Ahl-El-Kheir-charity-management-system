@@ -58,7 +58,7 @@ try {
                  (version_no, policy_name, effective_from, working_start_time, working_end_time, working_days,
                   attendance_cutoff_time, absence_finalization_time, auto_login_attendance,
                   auto_absence_enabled, default_work_mode, notes, created_by)
-                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?)"
+                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)"
             )->execute([
                 $version, $p['policy_name'], $p['effective_from'],
                 $p['working_start_time'], $p['working_end_time'], $p['working_days'],
@@ -132,6 +132,17 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     form.addEventListener('submit', syncWorkingDays);
+
+    document.querySelectorAll('.attendance-policy-feedback .alert').forEach(function (alert) {
+        window.setTimeout(function () {
+            alert.style.transition = 'opacity .25s ease, transform .25s ease';
+            alert.style.opacity = '0';
+            alert.style.transform = 'translateY(-6px)';
+            window.setTimeout(function () {
+                if (alert.parentNode) alert.parentNode.removeChild(alert);
+            }, 280);
+        }, 6000);
+    });
 });
 </script>
 <div class="attendance-policy">
@@ -142,8 +153,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
 <div class="card">
 <div class="card-body">
-<?php if ($message): ?><div class="alert alert-success py-2"><?=e($message)?></div><?php endif; ?>
-<?php if ($error): ?><div class="alert alert-danger py-2"><?=e($error)?></div><?php endif; ?>
+<?php if ($message || $error): ?>
+<div class="attendance-policy-feedback" aria-live="polite">
+    <?php if ($message): ?><div class="alert alert-success py-2" role="alert"><i class="fas fa-circle-check me-1"></i><?=e($message)?></div><?php endif; ?>
+    <?php if ($error): ?><div class="alert alert-danger py-2" role="alert"><i class="fas fa-triangle-exclamation me-1"></i><?=e($error)?></div><?php endif; ?>
+</div>
+<?php endif; ?>
 <?php if ($activePolicy): ?>
 <div class="alert alert-info py-2 small">السياسة السارية حالياً: <strong>V<?= (int)$activePolicy['version_no'] ?></strong> — <?=e($activePolicy['policy_name'])?> — <?=e($activePolicy['effective_from'])?></div>
 <?php else: ?>
