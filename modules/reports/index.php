@@ -18,8 +18,6 @@ ak_report_require_access('overview');
 
 $allowed_reports = ak_report_allowed_catalog($role);
 
-$from = trim($_GET['from'] ?? date('Y-m-01'));
-$to = trim($_GET['to'] ?? date('Y-m-d'));
 
 $pageTitle = t('navigation.reports');
 $active = 'reports';
@@ -44,28 +42,9 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <div class="welcome-section fade-in">
+    <style>.welcome-section h2,.welcome-section p{color:#fff !important;}</style>
     <h2><i class="fas fa-chart-pie me-2"></i><?php echo e($pageTitle); ?></h2>
-    <p class="text-muted"><?php echo e(t('navigation.general_reports')); ?> — <?php echo e($from); ?> → <?php echo e($to); ?></p>
-</div>
-
-<div class="card mb-4 fade-in shadow-sm">
-    <div class="card-body">
-        <form method="GET" action="" class="row g-3 align-items-end">
-            <div class="col-md-3">
-                <label class="form-label fw-bold"><?php echo e(t('accounting.from')); ?></label>
-                <input type="date" name="from" class="form-control" value="<?php echo e($from); ?>" required>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label fw-bold"><?php echo e(t('accounting.to')); ?></label>
-                <input type="date" name="to" class="form-control" value="<?php echo e($to); ?>" required>
-            </div>
-            <div class="col-md-3">
-                <button type="submit" class="btn btn-primary w-100" style="background-color: #1b4d8f; border-color: #1b4d8f;">
-                    <i class="fas fa-filter me-1"></i><?php echo e(t('common.search')); ?>
-                </button>
-            </div>
-        </form>
-    </div>
+    <p class="text-muted">التقارير العامة والمؤشرات الحالية للنظام.</p>
 </div>
 
 <div class="alert alert-light border mb-4 fade-in">
@@ -83,7 +62,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             <?php foreach ($allowed_reports as $key => $report): ?>
                 <?php if ($key === 'overview') continue; ?>
                 <div class="col-xl-4 col-md-6">
-                    <a href="<?php echo APP_URL . $report['url']; ?>?from=<?php echo e($from); ?>&to=<?php echo e($to); ?>" class="text-decoration-none">
+                    <a href="<?php echo APP_URL . $report['url']; ?>" class="text-decoration-none">
                         <div class="report-card h-100 p-4 border rounded-3">
                             <div class="d-flex align-items-start gap-3">
                                 <div class="report-icon"><i class="fas <?php echo e($report['icon']); ?>"></i></div>
