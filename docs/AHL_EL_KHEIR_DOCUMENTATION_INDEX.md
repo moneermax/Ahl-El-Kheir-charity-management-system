@@ -85,3 +85,7 @@ If documents disagree:
 ## 2026-10-05 — HR attendance policy reference
 
 Attendance policy implementation references: database/migrations/2026-10-05_hr_attendance_policy.sql, modules/hr/lib_attendance_policy.php, modules/hr/attendance_policy.php and tools/finalize_daily_attendance.php. The policy follows the versioned/effective-date model used by salary advance policy. Runtime verification is an explicit open gate.
+
+
+### Attendance ↔ Payroll policy integration checkpoint — 2026-10-05
+The attendance policy remains the authoritative source for attendance facts, while the payroll/salary-deduction policy remains authoritative for monetary treatment. Cross-policy behavior is documented in the system analysis, architecture/data model, roles/workflows, operations/security, master status/audit, and continuation documents. Runtime verification of the new payroll attendance-deduction migration and end-to-end calculation remains pending locally.
