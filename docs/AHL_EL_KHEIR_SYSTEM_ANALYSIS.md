@@ -196,3 +196,9 @@ The distinction is:
 - **Historical record:** employee, salary history, payroll and accounting evidence remain available for audit.
 - **Current working scope:** only working employment states participate in current salary/payroll processing.
 - **Accounting history:** prior posted accounting evidence is never removed because an employee becomes non-working.
+
+## 2026-10-05 — Attendance policy-driven automation foundation
+
+HR attendance now has a dedicated versioned policy foundation rather than hard-coded working-hour rules. The policy controls working start/end, attendance cutoff, absence-finalization time, automatic login attendance, automatic absence finalization and default work mode. The effective policy is selected by date. Successful qualifying login can create the day's present record while preserving the first check-in. Automatic absence is handled separately by tools/finalize_daily_attendance.php and remains subject to the canonical employment-state/approved-leave eligibility rules. Default/example values are remote work, 07:00–16:00, but these are policy data rather than PHP constants.
+
+Runtime status: source implementation complete; local migration/application and end-to-end browser/scheduler verification remain pending.
