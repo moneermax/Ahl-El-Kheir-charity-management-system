@@ -322,6 +322,7 @@ function hrSalaryAdvanceWaiverExecute(
              JOIN hr_salary_advance_waiver_items wi ON wi.employee_id = p.employee_id
              JOIN hr_salary_advance_waiver_decisions wd ON wd.id = wi.decision_id
              WHERE wi.decision_id = ?
+               AND wi.previous_request_status = 'disbursed'
                AND p.year = YEAR(wd.effective_month)
                AND p.month = MONTH(wd.effective_month)
                AND p.status = 'approved'
@@ -451,26 +452,32 @@ function hrSalaryAdvanceWaiverExecute(
             $refundEntryId = null;
         }
 
-        if ($waiverTotal <= 0.00) throw new RuntimeException('لا يوجد رصيد يمكن إعفاؤه.');
+        $waiverEntryId = null;
 
-        $jeCode = ak_voucher_next_journal_code();
-        $desc = 'إعفاء سلف رواتب بقرار المدير العام';
-        $pdo->prepare(
-            "INSERT INTO journal_entries
-             (entry_code, entry_date, description, reference_type, reference_id, status, created_by)
-             VALUES (?, ?, ?, 'salary_advance_waiver', ?, 'posted', ?)"
-        )->execute([$jeCode, date('Y-m-d'), $desc, $decisionId, $fmUserId]);
-        $waiverEntryId = (int)$pdo->lastInsertId();
+        if ($waiverTotal > 0.00) {
+            $jeCode = ak_voucher_next_journal_code();
+            $desc = 'إعفاء سلف رواتب بقرار المدير العام';
+            $pdo->prepare(
+                "INSERT INTO journal_entries
+                 (entry_code, entry_date, description, reference_type, reference_id, status, created_by)
+                 VALUES (?, ?, ?, 'salary_advance_waiver', ?, 'posted', ?)"
+            )->execute([$jeCode, date('Y-m-d'), $desc, $decisionId, $fmUserId]);
+            $waiverEntryId = (int)$pdo->lastInsertId();
 
-        $advanceId = ak_account_id('1410');
-        if ($advanceId <= 0) throw new RuntimeException('حساب 1410 غير موجود.');
+            $advanceId = ak_account_id('1410');
+            if ($advanceId <= 0) throw new RuntimeException('حساب 1410 غير موجود.');
 
-        $pdo->prepare("INSERT INTO journal_lines (entry_id, account_id, debit, credit, description) VALUES (?, ?, ?, 0, ?)")
-            ->execute([$waiverEntryId, $waiverExpenseAccountId, $waiverTotal, $desc]);
-        $pdo->prepare("INSERT INTO journal_lines (entry_id, account_id, debit, credit, description) VALUES (?, ?, 0, ?, ?)")
-            ->execute([$waiverEntryId, $advanceId, $waiverTotal, $desc]);
+            $pdo->prepare("INSERT INTO journal_lines (entry_id, account_id, debit, credit, description) VALUES (?, ?, ?, 0, ?)")
+                ->execute([$waiverEntryId, $waiverExpenseAccountId, $waiverTotal, $desc]);
+            $pdo->prepare("INSERT INTO journal_lines (entry_id, account_id, debit, credit, description) VALUES (?, ?, 0, ?, ?)")
+                ->execute([$waiverEntryId, $advanceId, $waiverTotal, $desc]);
+        }
 
         foreach ($items as $item) {
+            if ((string)$item['previous_request_status'] !== 'disbursed') {
+                continue;
+            }
+
             $pdo->prepare(
                 "UPDATE hr_salary_advance_waiver_items
                  SET waiver_journal_entry_id = ?, executed_at = NOW(),
@@ -514,25 +521,26 @@ function hrSalaryAdvanceWaiverExecute(
                 ]);
             }
 
-            $pdo->prepare(
+            dbExecute(
                 "INSERT INTO audit_log
                  (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent)
-                 VALUES (?, 'HR_SALARY_ADVANCE_WAIVER_EXECUTED', 'hr_salary_advance_request', ?, ?, ?, ?, ?)"
-            )->execute([
-                $fmUserId,
-                (int)$item['salary_advance_request_id'],
-                json_encode([
-                    'outstanding_balance' => round((float)$item['outstanding_balance'], 2)
-                ], JSON_UNESCAPED_UNICODE),
-                json_encode([
-                    'decision_id' => $decisionId,
-                    'refund_amount' => round((float)$item['refund_amount'], 2),
-                    'waived_amount' => round((float)$item['waived_amount'], 2),
-                    'outstanding_balance' => 0.00
-                ], JSON_UNESCAPED_UNICODE),
-                $_SERVER['REMOTE_ADDR'] ?? '',
-                $_SERVER['HTTP_USER_AGENT'] ?? ''
-            ]);
+                 VALUES (?, 'HR_SALARY_ADVANCE_WAIVER_EXECUTED', 'hr_salary_advance_request', ?, ?, ?, ?, ?)",
+                [
+                    $fmUserId,
+                    (int)$item['salary_advance_request_id'],
+                    json_encode([
+                        'outstanding_balance' => round((float)$item['outstanding_balance'], 2)
+                    ], JSON_UNESCAPED_UNICODE),
+                    json_encode([
+                        'decision_id' => $decisionId,
+                        'refund_amount' => round((float)$item['refund_amount'], 2),
+                        'waived_amount' => round((float)$item['waived_amount'], 2),
+                        'outstanding_balance' => 0.00
+                    ], JSON_UNESCAPED_UNICODE),
+                    $_SERVER['REMOTE_ADDR'] ?? '',
+                    $_SERVER['HTTP_USER_AGENT'] ?? ''
+                ]
+            );
         }
 
         $pdo->prepare(
