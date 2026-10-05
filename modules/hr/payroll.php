@@ -87,6 +87,7 @@ function payrollRefreshDraftBaseSalary(PDO $pdo, int $month, int $year): int
 
     foreach ($drafts as $row) {
         $salaryStmt->execute([(float)$row['basic_salary'], (int)$row['id']]);
+        hrPayrollRefreshAttendanceDeductionDraft($pdo, (int)$row['id']);
         hrSalaryAdvancePayrollRefreshDraft($pdo, (int)$row['id']);
         $updated++;
     }
@@ -157,6 +158,7 @@ try {
                  WHERE id=? AND status='draft'"
             )->execute([$allowances,$overtime,$deductions,max(0.00,$netBeforeAdvance),$id]);
 
+            hrPayrollRefreshAttendanceDeductionDraft($pdo, $id);
             hrSalaryAdvancePayrollRefreshDraft($pdo, $id);
             $message = 'تم تحديث مكونات مسير الراتب؛ واحتُسب خصم السلفة آلياً وفق جدول السداد والسياسة المعتمدة.';
         } elseif ($action === 'update_status') {
