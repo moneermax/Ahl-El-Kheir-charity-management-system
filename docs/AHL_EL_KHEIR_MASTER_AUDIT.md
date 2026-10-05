@@ -2417,3 +2417,24 @@ Earlier audit entries that say runtime verification is pending for the PRJ-0015 
 ### Data principle
 
 Employment lifecycle is the authoritative boundary for current payroll/accounting eligibility. Historical financial evidence remains immutable and auditable after an employee becomes non-working.
+
+## 2026-10-05 — HR Attendance Policy Foundation
+
+A policy-driven attendance foundation was implemented on main.
+
+Implementation:
+- database/migrations/2026-10-05_hr_attendance_policy.sql adds the versioned policy table.
+- modules/hr/lib_attendance_policy.php provides validation, effective-policy lookup and login-attendance helpers.
+- modules/hr/attendance_policy.php provides HR Manager/Admin policy administration with future-version edit/delete protection.
+- index.php invokes the attendance helper after successful authentication.
+- tools/finalize_daily_attendance.php provides the separate CLI absence finalizer intended for Windows Task Scheduler.
+- dashboard/hr_dashboard.php exposes the attendance-policy administration page to HR Manager/Admin.
+
+Design boundary:
+- 07:00–16:00 and remote work are initial policy values, not hard-coded attendance rules.
+- First qualifying login creates/preserves the day's first check-in; repeated login does not overwrite it.
+- Canonical attendance eligibility remains based on employment state and approved leave.
+- Automatic absence is separate from authentication and is idempotent.
+- No runtime DDL, triggers, views, stored procedures, functions or events were introduced.
+
+Runtime status: STATICALLY IMPLEMENTED — RUNTIME VERIFICATION PENDING. The migration must be applied and the first policy/login/finalizer cycle verified locally before this gate is marked closed.
