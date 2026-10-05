@@ -267,13 +267,18 @@
         }
 
         /*
-         * Replace the .content root itself in one DOM operation. The old
-         * subtree is never emptied, and the new subtree is already complete
-         * before it enters the document.
+         * Keep the live .content element itself alive. Replacing that root
+         * removes the DOM element that owns the entire visible page region;
+         * browsers are then free to reconcile scroll/focus state against a
+         * different scroll tree. The stable-root approach changes only the
+         * fragment children, so the page's scroll container and its identity
+         * never disappear.
          */
-        akTrace('renderResponse:before-replace');
-        current.replaceWith(replacement);
-        akTrace('renderResponse:after-replace');
+        akTrace('renderResponse:before-content-children-replace');
+        while (current.firstChild) current.removeChild(current.firstChild);
+        while (replacement.firstChild) current.appendChild(replacement.firstChild);
+        current.removeAttribute('style');
+        akTrace('renderResponse:after-content-children-replace');
 
         if (parsed.title) document.title = parsed.title;
         if (finalUrl.href !== window.location.href) {
