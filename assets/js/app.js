@@ -108,12 +108,18 @@
         const scrollY = window.scrollY || window.pageYOffset || 0;
 
         /*
-         * Build the complete replacement content off-document first.
-         * Never empty the live .content element: doing so can collapse the
-         * document's scrollable height while the user is positioned deep in
-         * the page and lets the browser clamp the viewport.
+         * Preserve the current document's scrollable height during the root
+         * swap. Replacing the live .content root is a single DOM operation,
+         * but if the response is shorter than the current content the browser
+         * can still observe a sudden reduction in document height and clamp
+         * scrollY before our explicit restore runs. Give the off-document
+         * replacement a temporary minimum height equal to the live region's
+         * rendered height, so the scroll range cannot collapse during the
+         * swap.
          */
+        const currentHeight = Math.ceil(current.getBoundingClientRect().height);
         const replacement = document.importNode(incoming, true);
+        replacement.style.minHeight = currentHeight + 'px';
 
         /*
          * Preserve focus where possible. The submitted control normally
@@ -175,8 +181,18 @@
         /*
          * The document never intentionally navigated, but fragment scripts
          * may alter layout. Restore the exact pre-submit viewport after the
-         * complete fragment lifecycle.
+         * complete fragment lifecycle. Remove the temporary height only after
+         * the restore so it cannot participate in the swap-time clamp.
+         *
+         * If the new page is genuinely shorter than the previous viewport,
+         * keep enough height for the requested scroll position rather than
+         * allowing the browser to jump to the top.
          */
+        const requiredHeight = Math.ceil(scrollY + window.innerHeight);
+        if (replacement.scrollHeight < requiredHeight) {
+            replacement.style.minHeight = requiredHeight + 'px';
+        }
+
         window.scrollTo({left: scrollX, top: scrollY, behavior: 'auto'});
     }
 
