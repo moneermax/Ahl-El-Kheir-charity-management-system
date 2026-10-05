@@ -340,6 +340,14 @@ function hrSalaryAdvanceWaiverCreateDecision(
 
         $pdo->commit();
 
+        hrSalaryAdvanceWaiverNotifyPreparedForGM(
+            $decisionId,
+            $decisionNo,
+            $decisionType,
+            $effectiveMonth,
+            $preparedBy
+        );
+
         return $decisionId;
     } catch (Throwable $e) {
         if ($pdo->inTransaction()) $pdo->rollBack();
@@ -395,6 +403,14 @@ function hrSalaryAdvanceWaiverGMReview(PDO $pdo, int $decisionId, int $gmUserId,
             ]
         );
         $pdo->commit();
+
+        hrSalaryAdvanceWaiverNotifyFMReview(
+            $decisionId,
+            (string)$decision['decision_no'],
+            $approve,
+            $approve ? '' : trim($reason),
+            (int)$decision['prepared_by']
+        );
     } catch (Throwable $e) {
         if ($pdo->inTransaction()) $pdo->rollBack();
         throw $e;
@@ -763,6 +779,15 @@ function hrSalaryAdvanceWaiverExecute(
         }
 
         $pdo->commit();
+
+        hrSalaryAdvanceWaiverNotifyExecution(
+            $decisionId,
+            (string)$decision['decision_no'],
+            (int)$decision['gm_approved_by'],
+            (string)$decision['effective_month'],
+            $refundTotal,
+            $waiverTotal
+        );
 
         return [
             'decision_id' => $decisionId,
