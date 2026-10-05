@@ -1,6 +1,10 @@
 <?php
 declare(strict_types=1);
 
+require_once dirname(__DIR__) . '/accounting/lib.php';
+require_once dirname(__DIR__) . '/accounting/lib_vouchers.php';
+require_once dirname(__DIR__) . '/accounting/lib_transaction_review.php';
+
 /**
  * GM salary-advance waiver/exemption feature.
  *
@@ -145,12 +149,69 @@ function hrSalaryAdvanceWaiverCreateDecision(
         }
 
         $pdo->commit();
+
+        // Notify FM only after the GM decision transaction has committed.
+        ak_transaction_review_notify_fm_event(
+            $decisionId,
+            'salary_advance_waiver_decision',
+            'قرار إعفاء سلف راتب بانتظار التنفيذ المالي',
+            'يوجد قرار إعفاء سلف راتب «' . $decisionNo . '» صادر من المدير العام وبانتظار مراجعة وتنفيذ المدير المالي.',
+            APP_URL . 'modules/hr/salary_advance_waiver_fm.php'
+        );
+
         return $decisionId;
     } catch (Throwable $e) {
         if ($pdo->inTransaction()) $pdo->rollBack();
         throw $e;
     } finally {
         ak_voucher_unlock();
+    }
+}
+
+function hrSalaryAdvanceWaiverReject(PDO $pdo, int $decisionId, int $fmUserId, string $reason): void
+{
+    if ($decisionId <= 0 || $fmUserId <= 0 || trim($reason) === '') {
+        throw new InvalidArgumentException('قرار الرفض وسببه غير صالحين.');
+    }
+
+    $pdo->beginTransaction();
+    try {
+        $decision = dbFetchOne(
+            "SELECT * FROM hr_salary_advance_waiver_decisions WHERE id = ? FOR UPDATE",
+            [$decisionId]
+        );
+        if (!$decision || $decision['status'] !== 'pending_fm') {
+            throw new RuntimeException('قرار الإعفاء غير متاح للرفض.');
+        }
+
+        $pdo->prepare(
+            "UPDATE hr_salary_advance_waiver_decisions
+             SET status='rejected', fm_reviewed_by=?, fm_reviewed_at=NOW(), fm_rejection_reason=?
+             WHERE id=? AND status='pending_fm'"
+        )->execute([$fmUserId, trim($reason), $decisionId]);
+
+        if ($pdo->rowCount() !== 1) {
+            throw new RuntimeException('تعذر تسجيل رفض قرار الإعفاء.');
+        }
+
+        dbExecute(
+            "INSERT INTO audit_log
+             (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent)
+             VALUES (?, 'HR_SALARY_ADVANCE_WAIVER_REJECTED', 'hr_salary_advance_waiver_decision', ?, ?, ?, ?, ?)",
+            [
+                $fmUserId,
+                $decisionId,
+                json_encode(['status'=>'pending_fm'], JSON_UNESCAPED_UNICODE),
+                json_encode(['status'=>'rejected','reason'=>trim($reason)], JSON_UNESCAPED_UNICODE),
+                $_SERVER['REMOTE_ADDR'] ?? '',
+                $_SERVER['HTTP_USER_AGENT'] ?? ''
+            ]
+        );
+
+        $pdo->commit();
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        throw $e;
     }
 }
 
