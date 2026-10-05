@@ -302,7 +302,7 @@ window.AK_TRANSLATIONS=<?php echo json_encode(ak_dict(),JSON_UNESCAPED_UNICODE|J
 window.AK_BACK_FALLBACK=<?php echo json_encode(APP_URL . dashboard_for_role(current_user_role()), JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES); ?>;
 </script>
 <script src="<?php echo asset('js/language.js'); ?>"></script>
-<script src="<?php echo asset('js/app.js'); ?>"></script>
+<script src="<?php echo asset('js/app.js'); ?>?v=<?php echo (int)@filemtime(dirname(__DIR__) . '/assets/js/app.js'); ?>"></script>
 <script src="<?php echo asset('js/notifications.js'); ?>?v=<?php echo (int)@filemtime(dirname(__DIR__) . '/assets/js/notifications.js'); ?>"></script>
 <script src="<?php echo asset('js/messaging_reply_tools.js'); ?>"></script>
 <script src="<?php echo asset('js/messaging_ui_fixes.js'); ?>"></script>
