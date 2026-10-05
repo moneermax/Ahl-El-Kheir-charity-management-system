@@ -312,10 +312,10 @@
         if (activeDescriptor) {
             let nextActive = null;
             if (activeDescriptor.type === 'id') {
-                nextActive = replacement.querySelector('#' + CSS.escape(activeDescriptor.value));
+                nextActive = current.querySelector('#' + CSS.escape(activeDescriptor.value));
             } else {
                 nextActive = Array.from(
-                    replacement.querySelectorAll(
+                    current.querySelectorAll(
                         activeDescriptor.tag + '[name="' +
                         CSS.escape(activeDescriptor.value) + '"]'
                     )
@@ -342,12 +342,19 @@
          */
         akTrace('renderResponse:before-scrollTo');
         const requiredHeight = Math.ceil(scrollY + window.innerHeight);
-        if (replacement.scrollHeight < requiredHeight) {
-            replacement.style.minHeight = requiredHeight + 'px';
+        if (current.scrollHeight < requiredHeight) {
+            current.style.minHeight = requiredHeight + 'px';
         }
 
         window.scrollTo({left: scrollX, top: scrollY, behavior: 'auto'});
         akTrace('renderResponse:after-scrollTo');
+
+        /* Restore the root's original inline min-height after the final
+         * viewport restoration. If the new content genuinely needs more
+         * height, keep the calculated minimum required for the old viewport. */
+        if (current.scrollHeight >= requiredHeight) {
+            current.style.minHeight = originalMinHeight;
+        }
         if (AK_SCROLL_TRACE) {
             [0, 1, 16, 50, 150, 500].forEach(ms => setTimeout(() => akTrace('renderResponse:timer+'+ms), ms));
         }
