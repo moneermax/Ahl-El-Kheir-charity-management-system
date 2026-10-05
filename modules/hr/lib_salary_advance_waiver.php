@@ -451,6 +451,25 @@ function hrSalaryAdvanceWaiverExecute(
 
         if ($pdo->rowCount() !== 1) throw new RuntimeException('تعذر إكمال قرار الإعفاء.');
 
+        // Recalculate existing draft payrolls in the effective month while the
+        // same transaction is still open. The normal payroll calculator now
+        // sees the executed waiver and therefore removes the deduction.
+        $draftRows = dbFetchAll(
+            "SELECT DISTINCT p.id
+             FROM payroll p
+             JOIN hr_salary_advance_waiver_items wi ON wi.employee_id = p.employee_id
+             JOIN hr_salary_advance_waiver_decisions wd ON wd.id = wi.decision_id
+             WHERE wi.decision_id = ?
+               AND p.year = YEAR(wd.effective_month)
+               AND p.month = MONTH(wd.effective_month)
+               AND p.status = 'draft'
+             FOR UPDATE",
+            [$decisionId]
+        );
+        foreach ($draftRows as $draftRow) {
+            hrSalaryAdvancePayrollRefreshDraft($pdo, (int)$draftRow['id']);
+        }
+
         $pdo->commit();
 
         return [
