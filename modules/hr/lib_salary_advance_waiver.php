@@ -291,6 +291,20 @@ function hrSalaryAdvanceWaiverExecute(
         $refundTotal = 0.00;
         $waiverTotal = 0.00;
 
+        foreach ($items as $item) {
+            $requestId = (int)$item['salary_advance_request_id'];
+            $balance = round(max(0.00, (float)$item['outstanding_balance']), 2);
+            $refund = round(max(0.00, (float)$item['current_period_repayment']), 2);
+            $balanceBeforeWaiver = round(max(0.00, $balance + $refund), 2);
+
+            // The current payroll deduction has already reduced the live 1410
+            // balance. Refund it first, then waive the restored outstanding debt.
+            if ($refund > 0.00) {
+                $refundTotal = round($refundTotal + $refund, 2);
+            }
+            $waiverTotal = round($waiverTotal + $balanceBeforeWaiver, 2);
+        }
+
         // A salary refund is a real cash/bank/wallet outflow. Refuse the entire
         // execution atomically if the selected source cannot fund it.
         if ($refundTotal > 0.00) {
@@ -305,13 +319,6 @@ function hrSalaryAdvanceWaiverExecute(
             $balance = round(max(0.00, (float)$item['outstanding_balance']), 2);
             $refund = round(max(0.00, (float)$item['current_period_repayment']), 2);
             $balanceBeforeWaiver = round(max(0.00, $balance + $refund), 2);
-
-            // The current payroll deduction has already reduced the live 1410
-            // balance. Refund it first, then waive the restored outstanding debt.
-            if ($refund > 0.00) {
-                $refundTotal = round($refundTotal + $refund, 2);
-            }
-            $waiverTotal = round($waiverTotal + $balanceBeforeWaiver, 2);
 
             $pdo->prepare(
                 "UPDATE hr_salary_advance_waiver_items
