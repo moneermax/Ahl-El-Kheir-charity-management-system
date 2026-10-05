@@ -270,14 +270,21 @@
          * Keep the live .content element itself alive. Replacing that root
          * removes the DOM element that owns the entire visible page region;
          * browsers are then free to reconcile scroll/focus state against a
-         * different scroll tree. The stable-root approach changes only the
-         * fragment children, so the page's scroll container and its identity
-         * never disappear.
+         * different scroll tree. The stable-root approach changes only its
+         * children, so the page's scroll container and its identity never
+         * disappear.
+         *
+         * Use replaceChildren() rather than remove/append loops so the live
+         * root does not spend an observable layout interval with zero content.
+         * Preserve any pre-existing inline min-height while the new fragment
+         * is installed so the scroll range cannot collapse during the swap.
          */
+        const originalMinHeight = current.style.minHeight;
+        current.style.minHeight = currentHeight + 'px';
+        const fragment = document.createDocumentFragment();
+        while (replacement.firstChild) fragment.appendChild(replacement.firstChild);
         akTrace('renderResponse:before-content-children-replace');
-        while (current.firstChild) current.removeChild(current.firstChild);
-        while (replacement.firstChild) current.appendChild(replacement.firstChild);
-        current.removeAttribute('style');
+        current.replaceChildren(fragment);
         akTrace('renderResponse:after-content-children-replace');
 
         if (parsed.title) document.title = parsed.title;
