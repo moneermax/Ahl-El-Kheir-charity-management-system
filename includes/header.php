@@ -362,28 +362,38 @@ $langSwitchUrl =
             document.documentElement.style.visibility = 'hidden';
             document.documentElement.setAttribute('data-ak-scroll-restoring', '1');
     
+            var restored = false;
             var restore = function () {
+                if (restored) return;
+                restored = true;
+
+                /*
+                 * pagereveal is the earliest cross-document lifecycle point at
+                 * which the browser is about to render the new document. In
+                 * Chromium it lets us restore the scroll while the document is
+                 * still covered by the synchronous visibility guard, avoiding
+                 * the visible 0 -> saved-position jump.
+                 */
                 window.scrollTo(x, y);
-                window.requestAnimationFrame(function () {
-                    window.scrollTo(x, y);
-                    window.requestAnimationFrame(function () {
-                        window.scrollTo(x, y);
-                        sessionStorage.removeItem('akGlobalScrollRestore');
-                        document.documentElement.style.visibility = '';
-                        document.documentElement.removeAttribute('data-ak-scroll-restoring');
-                    });
-                });
+                sessionStorage.removeItem('akGlobalScrollRestore');
+                document.documentElement.style.visibility = '';
+                document.documentElement.removeAttribute('data-ak-scroll-restoring');
             };
-    
-            window.addEventListener('load', restore, { once: true });
-    
+
+            /*
+             * Chrome/Edge currently support pagereveal. Keep load as the
+             * compatibility fallback for browsers that do not expose it.
+             */
+            if ('onpagereveal' in window) {
+                window.addEventListener('pagereveal', restore, { once: true });
+            } else {
+                window.addEventListener('load', restore, { once: true });
+            }
+
             /* Safety release: never leave a page permanently hidden. */
             window.setTimeout(function () {
                 if (document.documentElement.getAttribute('data-ak-scroll-restoring') === '1') {
-                    window.scrollTo(x, y);
-                    sessionStorage.removeItem('akGlobalScrollRestore');
-                    document.documentElement.style.visibility = '';
-                    document.documentElement.removeAttribute('data-ak-scroll-restoring');
+                    restore();
                 }
             }, 10000);
         } catch (e) {
