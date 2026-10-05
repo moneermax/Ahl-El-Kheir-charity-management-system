@@ -2046,3 +2046,19 @@ The Projects Phase 5 controlled runtime sequence is now **RUNTIME VERIFIED / CLO
 This supersedes earlier checkpoints that described the Phase 5 accounting sequence as pending. Those entries remain historical audit records and must not be interpreted as the current status.
 
 **Current Projects checkpoint: Phase 5 closed.** No further work is required on this controlled reconciliation path unless a concrete regression is found.
+
+## 2026-10-05 — HR Salary Register and Employment-Scope Checkpoint
+
+- Salary-register implementation commit: `7ef751180de91dc9aacdeb0efe8086cc791dc728`.
+- Zero-placeholder correction commit: `7d0f5a43d6e3a18f7cc65ef123bb5314207b2c05`.
+- The HR employee page now provides a dedicated **سجل الرواتب عند التعيين** view based on the earliest positive salary-history record for each employee, with employee count, total and average salary.
+- The salary values used during the current payroll/salary-advance testing are intentionally test data. They were varied directly in the database rather than hard-coded into PHP.
+- Non-working employees are now excluded from the salary register using the existing employment-state model: only states with `category = 'working'` and `is_active = 1` are included.
+- This exclusion is a scope rule, not deletion. Historical employee, salary-history, payroll and accounting evidence remains preserved.
+- Employment-state scope is aligned with the existing payroll rule that prevents non-working employees from entering a new payroll run.
+- Latest source commit: `b8adb067c3de34441192e63fff56c6b707b3aa22`, **Exclude non-working employees from salary register**.
+- Runtime status: user confirmed the salary distribution is now acceptable. The non-working employee exclusion is source-implemented; local browser verification of the filtered register should be performed when next convenient.
+
+### HR salary-register test-data boundary
+
+The current varied salaries are development/test values only. They must not be interpreted as historical payroll truth. The register is intended to demonstrate the first positive salary-history value for currently working employees while preserving employment lifecycle scope.
