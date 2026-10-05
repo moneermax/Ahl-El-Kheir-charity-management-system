@@ -325,7 +325,7 @@ window.AK_BACK_FALLBACK=<?php echo json_encode(APP_URL . dashboard_for_role(curr
             btn.setAttribute('aria-expanded',open?'true':'false');
             btn.setAttribute('title',open?(window.AK_LANG==='ar'?'إخفاء القائمة':'Hide menu'):(window.AK_LANG==='ar'?'إظهار القائمة':'Show menu'));
             var icon=btn.querySelector('i');
-            if(icon) icon.className='fas '+(open?(document.documentElement.dir==='rtl'?'fa-chevron-right':'fa-chevron-left'):'fa-bars');
+            if(icon) icon.className='fas '+(open?(document.documentElement.dir==='rtl'?'fa-chevron-right':'fa-chevron-left'):(document.documentElement.dir==='rtl'?'fa-chevron-left':'fa-chevron-right'));
         }
         document.body.style.overflow=mobileQuery.matches&&open?'hidden':'';
     }
