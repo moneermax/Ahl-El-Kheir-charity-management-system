@@ -1,42 +1,202 @@
-/* Global same-page POST viewport preservation.
- * The request remains a normal browser POST; this layer only records the
- * current viewport so the shared header can restore it before the destination
- * document is revealed.
+/*
+ * Global same-page POST navigation.
+ *
+ * A normal same-page POST creates a new document. That is the actual source
+ * of the visible scroll-to-top/scroll-back effect: scroll restoration can
+ * only repair a navigation that has already happened.
+ *
+ * For safe same-document POSTs, submit through fetch(), keep the existing
+ * document alive, replace only the shared .content region, and keep the
+ * current viewport. Cross-page redirects remain normal navigations.
  */
 (function(){
-    function saveScrollPosition() {
-        try {
-            sessionStorage.setItem('akGlobalScrollRestore', JSON.stringify({
-                path: window.location.pathname,
-                x: window.scrollX || 0,
-                y: window.scrollY || window.pageYOffset || 0,
-                at: Date.now()
-            }));
-        } catch (e) {}
-    }
+    function samePagePost(form) {
+        if (!form || form.tagName !== 'FORM') return false;
+        if (String(form.method || 'get').toLowerCase() !== 'post') return false;
+        if (form.dataset.akNativePost === '1' || form.dataset.akAjaxPost === '0') return false;
+        if (form.target && !['_self'].includes(String(form.target).toLowerCase())) return false;
 
-    document.addEventListener('submit', function(event) {
-        const form = event.target;
-        if (!form || form.tagName !== 'FORM') return;
-        if (String(form.method || 'get').toLowerCase() !== 'post') return;
+        const currentContent = form.closest('.content');
+        if (!currentContent) return false;
 
         try {
             const target = new URL(form.action || window.location.href, window.location.href);
-            if (
-                target.origin !== window.location.origin ||
-                target.pathname !== window.location.pathname
-            ) return;
+            return target.origin === window.location.origin &&
+                   target.pathname === window.location.pathname;
+        } catch (e) {
+            return false;
+        }
+    }
 
-            saveScrollPosition();
-        } catch (e) {}
-    }, true);
+    function runFragmentScripts(container) {
+        const scripts = Array.from(container.querySelectorAll('script'));
+        scripts.forEach(function(oldScript){
+            const src = oldScript.getAttribute('src');
+            if (src) {
+                const absolute = new URL(src, document.baseURI).href;
+                if (Array.from(document.scripts).some(function(s){ return s.src === absolute; })) return;
+                const script = document.createElement('script');
+                Array.from(oldScript.attributes).forEach(function(attr){
+                    script.setAttribute(attr.name, attr.value);
+                });
+                document.body.appendChild(script);
+                return;
+            }
 
-    /*
-     * Fallback for any same-page navigation mechanism that does not expose
-     * a normal form submit event.
-     */
-    window.addEventListener('pagehide', function() {
-        saveScrollPosition();
+            if (!oldScript.textContent.trim()) return;
+
+            /*
+             * Page modules commonly register initialization on DOMContentLoaded.
+             * The new fragment is inserted after that event has already fired,
+             * so execute those registrations immediately during fragment boot.
+             */
+            const originalDocumentAdd = document.addEventListener;
+            const originalWindowAdd = window.addEventListener;
+            const immediateAdd = function(original, target, type, listener, options){
+                if ((target === document && type === 'DOMContentLoaded') ||
+                    (target === window && type === 'load')) {
+                    if (typeof listener === 'function') {
+                        queueMicrotask(function(){
+                            try { listener.call(target, new Event(type)); } catch (e) {}
+                        });
+                    }
+                    return;
+                }
+                return original.call(target, type, listener, options);
+            };
+
+            document.addEventListener = function(type, listener, options){
+                return immediateAdd(originalDocumentAdd, document, type, listener, options);
+            };
+            window.addEventListener = function(type, listener, options){
+                return immediateAdd(originalWindowAdd, window, type, listener, options);
+            };
+
+            try {
+                (new Function(oldScript.textContent)).call(window);
+            } catch (e) {
+                console.error('Ahl El Kheir fragment script failed:', e);
+            } finally {
+                document.addEventListener = originalDocumentAdd;
+                window.addEventListener = originalWindowAdd;
+            }
+        });
+    }
+
+    async function renderResponse(response, fallbackUrl) {
+        const finalUrl = new URL(response.url || fallbackUrl, window.location.href);
+
+        if (!response.ok) {
+            throw new Error('HTTP ' + response.status);
+        }
+
+        const contentType = String(response.headers.get('content-type') || '').toLowerCase();
+        if (!contentType.includes('text/html')) {
+            throw new Error('NON_HTML_RESPONSE');
+        }
+
+        const html = await response.text();
+        const parsed = new DOMParser().parseFromString(html, 'text/html');
+        const incoming = parsed.querySelector('.content');
+        const current = document.querySelector('.content');
+
+        if (!incoming || !current) {
+            throw new Error('CONTENT_REGION_NOT_FOUND');
+        }
+
+        const scrollX = window.scrollX || 0;
+        const scrollY = window.scrollY || window.pageYOffset || 0;
+
+        current.replaceChildren(...Array.from(incoming.childNodes).map(function(node){
+            return document.importNode(node, true);
+        }));
+
+        if (parsed.title) document.title = parsed.title;
+        if (finalUrl.href !== window.location.href) {
+            history.replaceState(history.state, '', finalUrl.href);
+        }
+
+        runFragmentScripts(current);
+        window.scrollTo(scrollX, scrollY);
+    }
+
+    async function refreshSamePage() {
+        const url = window.location.href;
+        const response = await fetch(url, {
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: { 'X-AK-Same-Page': '1' },
+            cache: 'no-store'
+        });
+        await renderResponse(response, url);
+    }
+
+    window.AKSamePage = {
+        refresh: refreshSamePage,
+        renderResponse: renderResponse
+    };
+
+    document.addEventListener('submit', function(event){
+        if (event.defaultPrevented) return;
+
+        const form = event.target;
+        if (!samePagePost(form)) return;
+        if (form.dataset.akSubmitting === '1') return;
+
+        event.preventDefault();
+        form.dataset.akSubmitting = '1';
+
+        const submitter = event.submitter;
+        if (submitter) submitter.disabled = true;
+
+        const target = new URL(form.action || window.location.href, window.location.href);
+        const formData = new FormData(form);
+        if (submitter && submitter.name && !formData.has(submitter.name)) {
+            formData.append(submitter.name, submitter.value || '');
+        }
+
+        fetch(target.href, {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin',
+            redirect: 'follow',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-AK-Same-Page': '1'
+            }
+        }).then(function(response){
+            const finalUrl = new URL(response.url || target.href, window.location.href);
+
+            /*
+             * A redirect to another application page is a real navigation.
+             * Only same-path responses are kept in-place.
+             */
+            if (finalUrl.origin !== window.location.origin ||
+                finalUrl.pathname !== window.location.pathname) {
+                window.location.assign(finalUrl.href);
+                return null;
+            }
+
+            return renderResponse(response, target.href);
+        }).catch(function(error){
+            /*
+             * The POST may already have reached the server. Never blindly
+             * resubmit it on an error, because that could duplicate a
+             * financial/HR operation. Restore the form and let the user retry.
+             */
+            console.error('Same-page POST failed:', error);
+            if (window.Swal) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'تعذر تنفيذ الإجراء',
+                    text: 'تعذر تحديث الصفحة دون إعادة تحميلها. يمكنك المحاولة مرة أخرى.',
+                    confirmButtonText: 'حسناً'
+                });
+            }
+        }).finally(function(){
+            delete form.dataset.akSubmitting;
+            if (submitter) submitter.disabled = false;
+        });
     });
 })();
 
