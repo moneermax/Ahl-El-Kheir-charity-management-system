@@ -107,17 +107,47 @@
         const scrollX = window.scrollX || 0;
         const scrollY = window.scrollY || window.pageYOffset || 0;
 
-        current.replaceChildren(...Array.from(incoming.childNodes).map(function(node){
-            return document.importNode(node, true);
-        }));
+        /*
+         * Replacing the content subtree can temporarily change document
+         * geometry. If the browser paints during that mutation it may clamp
+         * the viewport to the top before the replacement is complete.
+         *
+         * Freeze the current viewport for the duration of the mutation and
+         * restore it synchronously before the browser gets a chance to paint.
+         * This is intentionally local to the content swap; there is no
+         * global scroll restoration after navigation.
+         */
+        const root = document.documentElement;
+        const body = document.body;
+        const previousScrollBehavior = root.style.scrollBehavior;
+        const previousBodyOverflowAnchor = body.style.overflowAnchor;
+        root.style.scrollBehavior = 'auto';
+        body.style.overflowAnchor = 'none';
 
-        if (parsed.title) document.title = parsed.title;
-        if (finalUrl.href !== window.location.href) {
-            history.replaceState(history.state, '', finalUrl.href);
+        try {
+            current.replaceChildren(...Array.from(incoming.childNodes).map(function(node){
+                return document.importNode(node, true);
+            }));
+
+            if (parsed.title) document.title = parsed.title;
+            if (finalUrl.href !== window.location.href) {
+                history.replaceState(history.state, '', finalUrl.href);
+            }
+
+            runFragmentScripts(current);
+
+            /*
+             * Restore immediately after the complete fragment lifecycle.
+             * The double synchronous call covers browsers that recalculate
+             * layout once more while fragment scripts initialize.
+             */
+            window.scrollTo(scrollX, scrollY);
+            document.documentElement.scrollTop = scrollY;
+            document.body.scrollTop = scrollY;
+        } finally {
+            root.style.scrollBehavior = previousScrollBehavior;
+            body.style.overflowAnchor = previousBodyOverflowAnchor;
         }
-
-        runFragmentScripts(current);
-        window.scrollTo(scrollX, scrollY);
     }
 
     async function refreshSamePage() {
