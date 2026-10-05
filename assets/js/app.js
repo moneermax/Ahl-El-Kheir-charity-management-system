@@ -1,22 +1,42 @@
-/* Preserve viewport position for same-page POST actions.
- * The shared header consumes this state before rendering the next document.
+/* Global scroll preservation.
+ * Capture the viewport both when a same-page POST starts and as a pagehide
+ * fallback. The shared header restores it before the new page is visible.
  */
 (function(){
-    document.addEventListener('submit',function(event){
-        const form=event.target;
-        if(!form || form.tagName!=='FORM') return;
-        if(String(form.method||'get').toLowerCase()!=='post') return;
-        try{
-            const target=new URL(form.action||window.location.href,window.location.href);
-            if(target.origin!==window.location.origin || target.pathname!==window.location.pathname) return;
-            sessionStorage.setItem('akGlobalScrollRestore',JSON.stringify({
-                path:window.location.pathname,
-                x:window.scrollX||0,
-                y:window.scrollY||0,
-                at:Date.now()
+    function saveScrollPosition() {
+        try {
+            sessionStorage.setItem('akGlobalScrollRestore', JSON.stringify({
+                path: window.location.pathname,
+                x: window.scrollX || 0,
+                y: window.scrollY || window.pageYOffset || 0,
+                at: Date.now()
             }));
-        }catch(e){}
-    },true);
+        } catch (e) {}
+    }
+
+    document.addEventListener('submit', function(event) {
+        const form = event.target;
+        if (!form || form.tagName !== 'FORM') return;
+        if (String(form.method || 'get').toLowerCase() !== 'post') return;
+
+        try {
+            const target = new URL(form.action || window.location.href, window.location.href);
+            if (
+                target.origin !== window.location.origin ||
+                target.pathname !== window.location.pathname
+            ) return;
+
+            saveScrollPosition();
+        } catch (e) {}
+    }, true);
+
+    /*
+     * Fallback for any same-page navigation mechanism that does not expose
+     * a normal form submit event.
+     */
+    window.addEventListener('pagehide', function() {
+        saveScrollPosition();
+    });
 })();
 
 /* Prevent accidental mouse-wheel changes on every numeric input in the system.
