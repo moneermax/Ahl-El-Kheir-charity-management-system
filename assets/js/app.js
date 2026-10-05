@@ -1,6 +1,7 @@
-/* Global scroll preservation.
- * Capture the viewport both when a same-page POST starts and as a pagehide
- * fallback. The shared header restores it before the new page is visible.
+/* Global same-page POST viewport preservation.
+ * The request remains a normal browser POST; this layer only records the
+ * current viewport so the shared header can restore it before the destination
+ * document is revealed.
  */
 (function(){
     function saveScrollPosition() {
