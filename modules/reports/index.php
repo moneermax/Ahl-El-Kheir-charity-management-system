@@ -48,8 +48,16 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 </div>
 
 <div class="alert alert-light border mb-4 fade-in">
-    <i class="fas fa-shield-halved me-1 text-primary"></i>
-    <strong>لوحة التقارير الموحدة:</strong> تظهر هنا التقارير المتاحة لك وفق دور المستخدم وصلاحيات الوصول.
+    <i class="fas fa-chart-pie me-1 text-primary"></i>
+    <strong>المؤشرات العامة</strong>
+    <span class="ms-2">أنت الآن في لوحة التقارير الموحدة والمؤشرات العامة.</span>
+</div>
+
+<div class="row g-4 mb-4 fade-in">
+    <div class="col-md-3"><div class="card border-0 shadow-sm h-100" style="border-right:4px solid #1b4d8f !important;"><div class="card-body text-center"><div class="display-6 fw-bold text-primary mb-2"><?php echo number_format($stats['sponsors']); ?></div><div class="text-muted small fw-bold"><?php echo e(t('common.active')); ?> <?php echo e(t('common.sponsors')); ?></div></div></div></div>
+    <div class="col-md-3"><div class="card border-0 shadow-sm h-100" style="border-right:4px solid #198754 !important;"><div class="card-body text-center"><div class="display-6 fw-bold text-success mb-2"><?php echo number_format($stats['active_sponsorships']); ?></div><div class="text-muted small fw-bold"><?php echo e(t('common.active')); ?> <?php echo e(t('common.sponsorships')); ?></div></div></div></div>
+    <div class="col-md-3"><div class="card border-0 shadow-sm h-100" style="border-right:4px solid #fd7e14 !important;"><div class="card-body text-center"><div class="display-6 fw-bold text-warning mb-2"><?php echo number_format($stats['families']); ?></div><div class="text-muted small fw-bold"><?php echo e(t('common.families')); ?></div></div></div></div>
+    <div class="col-md-3"><div class="card border-0 shadow-sm h-100" style="border-right:4px solid #6f42c1 !important;"><div class="card-body text-center"><div class="display-6 fw-bold" style="color:#6f42c1;font-size:1.8rem;"><?php echo number_format($stats['monthly_commitment'],0); ?> <span class="fs-6"><?php echo e(t('accounting.currency_sdg')); ?></span></div><div class="text-muted small fw-bold"><?php echo e(t('families.monthly_commitment')); ?></div></div></div></div>
 </div>
 
 <div class="card shadow-sm fade-in mb-4">
@@ -76,19 +84,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     </a>
                 </div>
             <?php endforeach; ?>
-            <?php if (isset($allowed_reports['overview'])): ?>
-                <div class="col-xl-4 col-md-6">
-                    <div class="report-card report-current h-100 p-4 border rounded-3">
-                        <div class="d-flex align-items-start gap-3">
-                            <div class="report-icon"><i class="fas fa-chart-pie"></i></div>
-                            <div class="flex-grow-1">
-                                <h5 class="mb-2 fw-bold">المؤشرات العامة</h5>
-                                <p class="text-muted small mb-0">أنت الآن في لوحة التقارير الموحدة والمؤشرات العامة.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            <?php endif; ?>
+            
         </div>
     </div>
 </div>
@@ -99,14 +95,6 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 .report-current{background:#f8fbff;border-color:#1b4d8f!important}
 .report-icon{width:48px;height:48px;min-width:48px;border-radius:12px;background:#eef4ff;color:#1b4d8f;display:flex;align-items:center;justify-content:center;font-size:1.25rem}
 </style>
-
-<div class="row g-4 mb-4 fade-in">
-    <div class="col-md-3"><div class="card border-0 shadow-sm h-100" style="border-right:4px solid #1b4d8f !important;"><div class="card-body text-center"><div class="display-6 fw-bold text-primary mb-2"><?php echo number_format($stats['sponsors']); ?></div><div class="text-muted small fw-bold"><?php echo e(t('common.active')); ?> <?php echo e(t('common.sponsors')); ?></div></div></div></div>
-    <div class="col-md-3"><div class="card border-0 shadow-sm h-100" style="border-right:4px solid #198754 !important;"><div class="card-body text-center"><div class="display-6 fw-bold text-success mb-2"><?php echo number_format($stats['active_sponsorships']); ?></div><div class="text-muted small fw-bold"><?php echo e(t('common.active')); ?> <?php echo e(t('common.sponsorships')); ?></div></div></div></div>
-    <div class="col-md-3"><div class="card border-0 shadow-sm h-100" style="border-right:4px solid #fd7e14 !important;"><div class="card-body text-center"><div class="display-6 fw-bold text-warning mb-2"><?php echo number_format($stats['families']); ?></div><div class="text-muted small fw-bold"><?php echo e(t('common.families')); ?></div></div></div></div>
-    <div class="col-md-3"><div class="card border-0 shadow-sm h-100" style="border-right:4px solid #6f42c1 !important;"><div class="card-body text-center"><div class="display-6 fw-bold" style="color:#6f42c1;font-size:1.8rem;"><?php echo number_format($stats['monthly_commitment'],0); ?> <span class="fs-6"><?php echo e(t('accounting.currency_sdg')); ?></span></div><div class="text-muted small fw-bold"><?php echo e(t('families.monthly_commitment')); ?></div></div></div></div>
-</div>
-
 
 <div class="container-fluid px-3 pb-4"><div class="d-flex justify-content-start"><a href="<?php echo APP_URL; ?>modules/reports/index.php" class="btn btn-outline-secondary" onclick="return akGoBack(this.href);"><i class="fa-solid fa-arrow-right me-1"></i> العودة</a></div></div>
 <?php include dirname(__DIR__, 2) . '/includes/footer.php'; ?>
