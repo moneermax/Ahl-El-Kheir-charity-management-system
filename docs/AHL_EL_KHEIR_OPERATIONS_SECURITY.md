@@ -106,3 +106,8 @@ user/role, URL/action, record ID, workflow state, audit event, journal/reference
 - Fina core settlement model: accepted.
 - Accounting/notification audits: completed at documented evidence boundaries.
 - Development/test data remains non-production data unless explicitly designated.
+
+
+## 2026-10-05 — Attendance automation operations
+
+Attendance automation has two controlled execution points: successful web login may create the day's attendance through the attendance policy helper; tools/finalize_daily_attendance.php creates missing absence records after the effective policy finalization time. Automatic absence cannot depend only on login, so Windows Task Scheduler or an equivalent scheduler is required for the finalizer. The finalizer is idempotent and performs no runtime DDL. Policy administration is restricted to HR Manager/Admin. Runtime verification remains pending until the migration and complete login/finalizer flow are exercised locally.
