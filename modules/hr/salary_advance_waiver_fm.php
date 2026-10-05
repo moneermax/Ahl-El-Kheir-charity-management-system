@@ -17,8 +17,8 @@ $tablesReady=(bool)dbFetchOne("SELECT COUNT(*) c FROM information_schema.tables 
 if($_SERVER['REQUEST_METHOD']==='POST' && $tablesReady){
  try{
   if(!verify_csrf()) throw new RuntimeException('انتهت صلاحية نموذج الحماية. أعد تحميل الصفحة.');
-  $result=hrSalaryAdvanceWaiverExecute($pdo,(int)$_POST['decision_id'],(int)Session::getUserID(),(int)$_POST['refund_account_id'],(int)$_POST['waiver_expense_account_id']);
-  $message='تم تنفيذ قرار الإعفاء. إجمالي الرد: '.number_format($result['refund_total'],2).' ج.س. وإجمالي الإعفاء: '.number_format($result['waiver_total'],2).' ج.س.';
+  if((string)($_POST['action']??'execute')==='reject'){ hrSalaryAdvanceWaiverReject($pdo,(int)$_POST['decision_id'],(int)Session::getUserID(),trim((string)$_POST['rejection_reason'])); $message='تم رفض قرار الإعفاء دون أي أثر مالي.'; }
+  else { $result=hrSalaryAdvanceWaiverExecute($pdo,(int)$_POST['decision_id'],(int)Session::getUserID(),(int)$_POST['refund_account_id'],(int)$_POST['waiver_expense_account_id']); $message='تم تنفيذ قرار الإعفاء. إجمالي الرد: '.number_format($result['refund_total'],2).' ج.س. وإجمالي الإعفاء: '.number_format($result['waiver_total'],2).' ج.س.'; }
  }catch(Throwable $e){$error=$e->getMessage();}
 }
 $decisions=$tablesReady?dbFetchAll("SELECT d.*,u.full_name AS creator_name,
@@ -42,7 +42,7 @@ require_once __DIR__.'/../../includes/header.php';
 <form method="post" class="row g-3"><?=csrf_field()?><input type="hidden" name="decision_id" value="<?=$d['id']?>">
 <div class="col-md-4"><label class="form-label">حساب رد الخصم</label><select name="refund_account_id" class="form-select" required><?php foreach($cash as $a): ?><option value="<?=$a['id']?>"><?=e($a['code'].' — '.$a['name_ar'])?></option><?php endforeach; ?></select></div>
 <div class="col-md-5"><label class="form-label">حساب مصروف الإعفاء</label><select name="waiver_expense_account_id" class="form-select" required><option value="">اختر الحساب</option><?php foreach($expenses as $a): ?><option value="<?=$a['id']?>"><?=e($a['code'].' — '.$a['name_ar'])?></option><?php endforeach; ?></select></div>
-<div class="col-md-3 d-flex align-items-end"><button class="btn btn-success w-100" onclick="return confirm('سيتم ترحيل القيود وتصفير الأرصدة المشمولة. هل تريد المتابعة؟')"><i class="fas fa-check me-1"></i>تأكيد التنفيذ المالي</button></div>
+<div class="col-md-3 d-flex align-items-end"><button name="action" value="execute" class="btn btn-success w-100" onclick="return confirm('سيتم ترحيل القيود وتصفير الأرصدة المشمولة. هل تريد المتابعة؟')"><i class="fas fa-check me-1"></i>تأكيد التنفيذ المالي</button></div><div class="col-md-12"><label class="form-label">سبب الرفض عند الحاجة</label><input name="rejection_reason" class="form-control" maxlength="2000"><button name="action" value="reject" class="btn btn-outline-danger mt-2" onclick="return confirm('سيتم رفض القرار دون أي أثر مالي. هل تريد المتابعة؟')"><i class="fas fa-xmark me-1"></i>رفض القرار</button></div>
 </form></div></div>
 <?php endforeach; if(!$decisions): ?><div class="alert alert-light border">لا توجد قرارات بانتظار التنفيذ المالي.</div><?php endif; ?>
 </div>
