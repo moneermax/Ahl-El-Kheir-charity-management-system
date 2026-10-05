@@ -229,10 +229,10 @@
         if (activeDescriptor) {
             let nextActive = null;
             if (activeDescriptor.type === 'id') {
-                nextActive = replacement.querySelector('#' + CSS.escape(activeDescriptor.value));
+                nextActive = current.querySelector('#' + CSS.escape(activeDescriptor.value));
             } else {
                 nextActive = Array.from(
-                    replacement.querySelectorAll(
+                    current.querySelectorAll(
                         activeDescriptor.tag + '[name="' +
                         CSS.escape(activeDescriptor.value) + '"]'
                     )
@@ -259,7 +259,7 @@
          */
         akTrace('renderResponse:before-scrollTo');
         const requiredHeight = Math.ceil(scrollY + window.innerHeight);
-        if (replacement.scrollHeight < requiredHeight) {
+        if (current.scrollHeight < requiredHeight) {
             replacement.style.minHeight = requiredHeight + 'px';
         }
 
@@ -273,7 +273,7 @@
          * requested position valid rather than allowing the browser to clamp
          * the viewport.
          */
-        if (replacement.scrollHeight >= requiredHeight) {
+        if (current.scrollHeight >= requiredHeight) {
             current.style.minHeight = originalMinHeight;
         } else {
             current.style.minHeight = Math.max(requiredHeight, currentHeight) + 'px';
