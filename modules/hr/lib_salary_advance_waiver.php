@@ -291,6 +291,15 @@ function hrSalaryAdvanceWaiverExecute(
         $refundTotal = 0.00;
         $waiverTotal = 0.00;
 
+        // A salary refund is a real cash/bank/wallet outflow. Refuse the entire
+        // execution atomically if the selected source cannot fund it.
+        if ($refundTotal > 0.00) {
+            $availableRefund = ak_voucher_cash_balance($refundAccountId);
+            if ($refundTotal > $availableRefund + 0.000001) {
+                throw new RuntimeException('الرصيد غير كافٍ في حساب رد الخصم المحدد لتنفيذ الإعفاء بالكامل.');
+            }
+        }
+
         foreach ($items as $item) {
             $requestId = (int)$item['salary_advance_request_id'];
             $balance = round(max(0.00, (float)$item['outstanding_balance']), 2);
