@@ -111,6 +111,22 @@ function hrAttendanceAutoCheckInForUser(int $userId, ?DateTimeImmutable $now = n
     if (!$eligibility['eligible']) return false;
 
     $mode = (string)$policy['default_work_mode'];
+    $existing = dbFetchOne(
+        "SELECT id, status, check_in
+         FROM attendance
+         WHERE employee_id = ? AND date = ?
+         LIMIT 1",
+        [(int)$employee['id'], $date]
+    );
+
+    if ($existing && (string)$existing['status'] === 'on_leave') {
+        return false;
+    }
+
+    if ($existing && !empty($existing['check_in'])) {
+        return false;
+    }
+
     dbExecute(
         "INSERT INTO attendance
             (employee_id, date, check_in, work_mode, status, notes)
@@ -118,14 +134,8 @@ function hrAttendanceAutoCheckInForUser(int $userId, ?DateTimeImmutable $now = n
          ON DUPLICATE KEY UPDATE
             check_in = COALESCE(check_in, VALUES(check_in)),
             work_mode = COALESCE(work_mode, VALUES(work_mode)),
-            status = CASE
-                WHEN status = 'on_leave' THEN status
-                ELSE 'present'
-            END,
-            notes = CASE
-                WHEN status = 'on_leave' THEN notes
-                ELSE NULL
-            END",
+            status = 'present',
+            notes = NULL",
         [(int)$employee['id'], $date, $time, $mode]
     );
 
