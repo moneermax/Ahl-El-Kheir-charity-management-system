@@ -118,6 +118,9 @@ require_once __DIR__ . '/../../includes/header.php';
 .attendance-policy .card{background:#fff;border:1px solid #e5eaf0;border-radius:12px;box-shadow:0 2px 12px rgba(16,24,40,.05);margin-bottom:15px;overflow:hidden}
 .attendance-policy .card-body{padding:16px}
 .attendance-policy .section-title{font-weight:800;color:#173f73;border-bottom:1px solid #edf0f4;padding-bottom:7px;margin-bottom:12px}
+.attendance-policy-feedback{position:fixed;top:76px;right:20px;z-index:1080;width:min(420px,calc(100vw - 40px));pointer-events:none}
+.attendance-policy-feedback .alert{box-shadow:0 10px 28px rgba(16,24,40,.16);border-radius:10px;margin-bottom:8px;pointer-events:auto}
+@media (max-width:576px){.attendance-policy-feedback{top:66px;right:12px;width:calc(100vw - 24px)}}
 </style>
 <script>
 window.AK_PAGE_BACK_URL=<?php echo json_encode($attendanceBackUrl, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES); ?>;
