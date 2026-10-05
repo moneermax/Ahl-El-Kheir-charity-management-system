@@ -22,7 +22,7 @@ function hrAttendancePolicyValidate(array $input): array
 
     $date = DateTime::createFromFormat('!Y-m-d', $p['effective_from']);
     if (!$date || $date->format('Y-m-d') !== $p['effective_from'] || $p['effective_from'] < date('Y-m-d')) {
-        throw new InvalidArgumentException('تاريخ السريان يجب أن يكون تاريخاً مستقبلياً صالحاً.');
+        throw new InvalidArgumentException('تاريخ السريان يجب أن يكون اليوم أو تاريخاً مستقبلياً صالحاً.');
     }
 
     foreach (['working_start_time', 'working_end_time', 'attendance_cutoff_time', 'absence_finalization_time'] as $key) {
