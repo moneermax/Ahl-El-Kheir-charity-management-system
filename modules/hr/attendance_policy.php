@@ -141,14 +141,6 @@ require_once __DIR__ . '/../../includes/header.php';
 <script>
 window.AK_PAGE_BACK_URL=<?php echo json_encode($attendanceBackUrl, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES); ?>;
 document.addEventListener('DOMContentLoaded', function () {
-    const savedScrollY = sessionStorage.getItem('akAttendancePolicyScrollY');
-    if (savedScrollY !== null) {
-        sessionStorage.removeItem('akAttendancePolicyScrollY');
-        window.requestAnimationFrame(function () {
-            window.scrollTo(0, Number(savedScrollY) || 0);
-        });
-    }
-
     const form = document.querySelector('.attendance-policy form');
     const hidden = document.getElementById('workingDaysValue');
     if (!form || !hidden) return;
@@ -167,7 +159,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     form.addEventListener('submit', function () {
         syncWorkingDays();
-        sessionStorage.setItem('akAttendancePolicyScrollY', String(window.scrollY || window.pageYOffset || 0));
     });
 
     document.querySelectorAll('.attendance-policy-feedback .alert').forEach(function (alert) {
