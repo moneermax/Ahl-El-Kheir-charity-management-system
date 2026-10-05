@@ -171,3 +171,28 @@ Do not rebuild the project, invent tables/columns/statuses/accounts, repeat clos
 - AHL_EL_KHEIR_DOCUMENTATION_INDEX.md
 
 Domain evidence remains in the existing Fina, HR Salary Advance, Projects and accounting audit documents.
+
+
+## 2026-10-05 — HR employment scope and salary register refinement
+
+The HR domain now has an explicit distinction between **historical employee data** and **current working financial scope**.
+
+### Salary-at-hire register
+
+The employee module exposes `?action=salary_register` as a reporting view. It reads the earliest positive salary-history record per employee rather than the mutable `employees.basic_salary` field. This preserves the meaning of a historical salary-at-hire register when current salary changes later.
+
+Automatic employee provisioning can create a 0.00 initial salary-history placeholder. That placeholder is not treated as the employee's actual salary-at-hire value; the register selects the earliest positive salary-history entry.
+
+Current payroll/salary-advance test salaries are development data populated in the database. Salary values are not embedded in application code.
+
+### Current employment/accounting scope
+
+Current salary-register scope is restricted to employment states whose existing canonical state record has `category = 'working'` and `is_active = 1`. Suspended or separated/terminated employees remain part of historical HR records but are not current working payroll scope.
+
+This follows the existing payroll eligibility principle: a non-working employee must not enter a new payroll period merely because an employee record or historical salary exists.
+
+The distinction is:
+
+- **Historical record:** employee, salary history, payroll and accounting evidence remain available for audit.
+- **Current working scope:** only working employment states participate in current salary/payroll processing.
+- **Accounting history:** prior posted accounting evidence is never removed because an employee becomes non-working.
