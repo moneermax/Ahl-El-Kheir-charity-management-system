@@ -27,6 +27,161 @@ function hrSalaryAdvanceWaiverCanFM(string $role): bool
     return in_array($role, ['financial_manager', 'fm', 'finance', 'admin'], true);
 }
 
+/**
+ * Notification helpers for the GM -> FM -> employee waiver workflow.
+ *
+ * Notifications are deliberately emitted only after the related database
+ * transaction has committed. A notification failure must never undo a
+ * completed financial/business action.
+ */
+function hrSalaryAdvanceWaiverNotifyPreparedForGM(
+    int $decisionId,
+    string $decisionNo,
+    string $decisionType,
+    string $effectiveMonth,
+    int $preparedBy
+): void {
+    if ($decisionId <= 0) return;
+
+    try {
+        $users = dbFetchAll(
+            "SELECT u.id
+             FROM users u
+             JOIN roles r ON r.id = u.role_id
+             WHERE r.code IN ('general_manager','gm')
+               AND u.is_active = 1"
+        );
+
+        $typeLabel = $decisionType === 'blanket' ? 'جماعي' : 'فردي';
+        $body = 'تم تجهيز قرار إعفاء سلف راتب رقم «' . $decisionNo . '» (' . $typeLabel .
+            ') لشهر ' . $effectiveMonth . ' بواسطة المدير المالي. القرار بانتظار مراجعتك واعتمادك أو رفضه.';
+        $link = APP_URL . 'modules/hr/salary_advance_waiver_gm.php';
+
+        foreach ($users as $user) {
+            $userId = (int)$user['id'];
+            if ($userId <= 0 || $userId === $preparedBy) continue;
+            ak_transaction_review_notify_event(
+                $userId,
+                'قرار إعفاء سلف الرواتب بانتظار اعتمادك',
+                $body,
+                $link,
+                $decisionId,
+                'salary_advance_waiver_gm_review'
+            );
+        }
+    } catch (Throwable $e) {
+        // Notification delivery must never roll back the prepared decision.
+    }
+}
+
+function hrSalaryAdvanceWaiverNotifyFMReview(
+    int $decisionId,
+    string $decisionNo,
+    bool $approved,
+    string $reason,
+    int $fmUserId
+): void {
+    if ($decisionId <= 0 || $fmUserId <= 0) return;
+
+    $title = $approved
+        ? 'اعتماد GM لقرار إعفاء سلف الرواتب'
+        : 'رفض GM لقرار إعفاء سلف الرواتب';
+
+    $body = $approved
+        ? 'تم اعتماد قرار إعفاء سلف الراتب «' . $decisionNo . '» من المدير العام. يمكنك الآن العودة إلى القرار وإتمام التنفيذ المالي.'
+        : 'تم رفض قرار إعفاء سلف الراتب «' . $decisionNo . '» من المدير العام. سبب الرفض: ' . trim($reason);
+
+    ak_transaction_review_notify_event(
+        $fmUserId,
+        $title,
+        $body,
+        APP_URL . 'modules/hr/salary_advance_waiver_fm.php',
+        $decisionId,
+        'salary_advance_waiver_fm_execution'
+    );
+}
+
+function hrSalaryAdvanceWaiverNotifyExecution(
+    int $decisionId,
+    string $decisionNo,
+    int $gmUserId,
+    string $effectiveMonth,
+    float $refundTotal,
+    float $waiverTotal
+): void {
+    if ($decisionId <= 0) return;
+
+    try {
+        if ($gmUserId > 0) {
+            ak_transaction_review_notify_event(
+                $gmUserId,
+                'تم تنفيذ قرار إعفاء سلف الرواتب',
+                'تم تنفيذ قرار الإعفاء «' . $decisionNo . '» الذي اعتمدته. رد الخصومات: ' .
+                    number_format($refundTotal, 2) . ' ج.س.، وإجمالي الإعفاء: ' .
+                    number_format($waiverTotal, 2) . ' ج.س.، لشهر السريان ' . $effectiveMonth . '.',
+                APP_URL . 'modules/hr/salary_advance_waiver_gm.php',
+                $decisionId,
+                'salary_advance_waiver_execution'
+            );
+        }
+
+        $rows = dbFetchAll(
+            "SELECT wi.employee_id,
+                    e.user_id AS employee_user_id,
+                    e.full_name AS employee_name,
+                    COALESCE(SUM(wi.refund_amount),0) AS refund_total,
+                    COALESCE(SUM(wi.waived_amount),0) AS waived_total,
+                    COUNT(*) AS request_count,
+                    SUM(CASE WHEN wi.previous_request_status = 'disbursed' THEN 1 ELSE 0 END) AS disbursed_count,
+                    SUM(CASE WHEN wi.resulting_request_status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled_count
+             FROM hr_salary_advance_waiver_items wi
+             JOIN employees e ON e.id = wi.employee_id
+             WHERE wi.decision_id = ?
+             GROUP BY wi.employee_id, e.user_id, e.full_name
+             ORDER BY e.full_name ASC",
+            [$decisionId]
+        );
+
+        foreach ($rows as $row) {
+            $employeeUserId = (int)($row['employee_user_id'] ?? 0);
+            if ($employeeUserId <= 0) continue;
+
+            $refund = round((float)$row['refund_total'], 2);
+            $waived = round((float)$row['waived_total'], 2);
+            $disbursedCount = (int)$row['disbursed_count'];
+            $cancelledCount = (int)$row['cancelled_count'];
+
+            $body = 'تم تنفيذ قرار المدير العام بشأن سلف الراتب رقم «' . $decisionNo .
+                '» بواسطة المدير المالي لشهر السريان ' . $effectiveMonth . '.';
+
+            if ($disbursedCount > 0) {
+                $body .= ' تم رد خصومات راتب مستحقة بقيمة ' . number_format($refund, 2) .
+                    ' ج.س. وإعفاء رصيد سلف بقيمة ' . number_format($waived, 2) .
+                    ' ج.س.، وتم إيقاف الخصومات المستقبلية للسلف المشمولة.';
+            }
+
+            if ($cancelledCount > 0) {
+                $body .= ' كما تم إلغاء ' . number_format($cancelledCount) .
+                    ' طلب/طلبات سلفة غير مصروفة ضمن القرار.';
+            }
+
+            $body .= ' السلف المشمولة في القرار: ' . number_format((int)$row['request_count']) . '.';
+
+            ak_transaction_review_notify_event(
+                $employeeUserId,
+                'تم تنفيذ قرار إعفاء سلف الراتب',
+                $body,
+                APP_URL . 'modules/hr/salary_advance_request.php',
+                $decisionId,
+                'salary_advance_waiver_employee'
+            );
+        }
+    } catch (Throwable $e) {
+        // Notification delivery must never roll back the completed execution.
+    }
+}
+
+
 function hrSalaryAdvanceWaiverNextDecisionNo(PDO $pdo): string
 {
     $row = dbFetchOne(
