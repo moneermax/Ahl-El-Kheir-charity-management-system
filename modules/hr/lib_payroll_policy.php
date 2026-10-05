@@ -129,6 +129,10 @@ function hrPayrollAttendanceDeductionCalculate(PDO $pdo, array $payroll, string 
         }
 
         $leave = hrAttendanceApprovedLeave($employeeId, $day);
+        if ($leave && hrAttendanceHasReturnOverride($employeeId, $day)) {
+            $leave = null;
+        }
+
         if ($leave) {
             $leaveType = (string)$leave['leave_type'];
             if ($leaveType === 'unpaid' && (int)$payrollPolicy['unpaid_leave_enabled'] === 1) {
