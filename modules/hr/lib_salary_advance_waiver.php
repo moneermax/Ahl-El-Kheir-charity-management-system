@@ -422,6 +422,36 @@ function hrSalaryAdvanceWaiverExecute(
                  WHERE id = ? AND status = 'disbursed'"
             )->execute([(int)$item['salary_advance_request_id']]);
 
+            // Preserve the original schedule row/status and record an explicit
+            // waiver overlay for every unpaid installment from the effective
+            // month onward. Payroll eligibility also consults the executed
+            // decision, so these rows can never be collected accidentally.
+            $scheduleRows = dbFetchAll(
+                "SELECT id, status
+                 FROM hr_salary_advance_repayment_schedule
+                 WHERE salary_advance_request_id = ?
+                   AND scheduled_month >= (
+                       SELECT effective_month
+                       FROM hr_salary_advance_waiver_decisions
+                       WHERE id = ?
+                   )
+                   AND status IN ('pending', 'partial')
+                 FOR UPDATE",
+                [(int)$item['salary_advance_request_id'], $decisionId]
+            );
+            foreach ($scheduleRows as $scheduleRow) {
+                $pdo->prepare(
+                    "INSERT INTO hr_salary_advance_waiver_schedule_items
+                     (waiver_item_id, repayment_schedule_id, previous_schedule_status)
+                     VALUES (?, ?, ?)
+                     ON DUPLICATE KEY UPDATE waiver_item_id = VALUES(waiver_item_id)"
+                )->execute([
+                    (int)$item['id'],
+                    (int)$scheduleRow['id'],
+                    (string)$scheduleRow['status']
+                ]);
+            }
+
             $pdo->prepare(
                 "INSERT INTO audit_log
                  (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent)
