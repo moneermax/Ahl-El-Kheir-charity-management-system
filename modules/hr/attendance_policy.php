@@ -112,7 +112,28 @@ require_once __DIR__ . '/../../includes/header.php';
 .attendance-policy .card-body{padding:16px}
 .attendance-policy .section-title{font-weight:800;color:#173f73;border-bottom:1px solid #edf0f4;padding-bottom:7px;margin-bottom:12px}
 </style>
-<script>window.AK_PAGE_BACK_URL=<?php echo json_encode($attendanceBackUrl, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES); ?>;</script>
+<script>
+window.AK_PAGE_BACK_URL=<?php echo json_encode($attendanceBackUrl, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES); ?>;
+document.addEventListener('DOMContentLoaded', function () {
+    const form = document.querySelector('.attendance-policy form');
+    const hidden = document.getElementById('workingDaysValue');
+    if (!form || !hidden) return;
+
+    function syncWorkingDays() {
+        const selected = Array.from(document.querySelectorAll('.attendance-day-status'))
+            .filter(function (select) { return select.value === 'work'; })
+            .map(function (select) { return Number(select.dataset.day); })
+            .sort(function (a, b) { return a - b; });
+        hidden.value = selected.join(',');
+    }
+
+    document.querySelectorAll('.attendance-day-status').forEach(function (select) {
+        select.addEventListener('change', syncWorkingDays);
+    });
+
+    form.addEventListener('submit', syncWorkingDays);
+});
+</script>
 <div class="attendance-policy">
 <section class="hero">
     <h1><i class="fas fa-calendar-check me-2"></i>سياسة الحضور والانصراف</h1>
@@ -139,7 +160,41 @@ require_once __DIR__ . '/../../includes/header.php';
 <div class="col-md-4"><label class="form-label">تاريخ السريان *</label><input type="date" name="effective_from" class="form-control" min="<?=e(date('Y-m-d'))?>" value="<?=e($editPolicy['effective_from'] ?? '')?>" required></div>
 <div class="col-md-4"><label class="form-label">نمط العمل الافتراضي</label><select name="default_work_mode" class="form-select"><option value="remote" <?= (($editPolicy['default_work_mode'] ?? 'remote') === 'remote') ? 'selected' : '' ?>>عن بُعد</option><option value="onsite" <?= (($editPolicy['default_work_mode'] ?? '') === 'onsite') ? 'selected' : '' ?>>من المكتب</option><option value="hybrid" <?= (($editPolicy['default_work_mode'] ?? '') === 'hybrid') ? 'selected' : '' ?>>هجين</option></select></div>
 <div class="col-md-3"><label class="form-label">بداية العمل<input type="time" name="working_start_time" class="form-control" value="<?=e(substr((string)($editPolicy['working_start_time'] ?? '07:00:00'),0,5))?>" required></label></div>
-<div class="col-md-3"><label class="form-label">أيام العمل</label><input type="text" name="working_days" class="form-control" value="<?=e($editPolicy['working_days'] ?? '1,2,3,4,5')?>" placeholder="1,2,3,4,5" required><div class="form-text" style="font-size:.65rem">1=الإثنين ... 7=الأحد</div></div>
+<div class="col-12">
+<label class="form-label fw-bold">جدول أيام العمل الأسبوعي</label>
+<div class="table-responsive border rounded-3">
+<table class="table table-sm align-middle mb-0 attendance-weekly-schedule">
+<thead><tr><th>اليوم</th><th style="width:190px">الحالة</th></tr></thead>
+<tbody>
+<?php
+$selectedWorkingDays = array_map('intval', explode(',', (string)($editPolicy['working_days'] ?? '1,2,3,4,5')));
+$weeklyDays = [
+    6 => 'السبت',
+    7 => 'الأحد',
+    1 => 'الاثنين',
+    2 => 'الثلاثاء',
+    3 => 'الأربعاء',
+    4 => 'الخميس',
+    5 => 'الجمعة',
+];
+foreach ($weeklyDays as $dayNo => $dayName):
+?>
+<tr>
+<td class="fw-semibold"><?=e($dayName)?></td>
+<td>
+<select class="form-select form-select-sm attendance-day-status" data-day="<?= $dayNo ?>">
+<option value="work" <?=in_array($dayNo, $selectedWorkingDays, true) ? 'selected' : ''?>>يوم عمل</option>
+<option value="off" <?=in_array($dayNo, $selectedWorkingDays, true) ? '' : 'selected'?>>عطلة</option>
+</select>
+</td>
+</tr>
+<?php endforeach; ?>
+</tbody>
+</table>
+</div>
+<div class="form-text">يمكن تحديد أي عدد من أيام العطلة الأسبوعية. هذا الجدول يحدد النمط الأسبوعي المعتاد فقط، ولا يمثل الإجازات أو العطلات الاستثنائية في تواريخ محددة.</div>
+<input type="hidden" name="working_days" id="workingDaysValue" value="<?=e(implode(',', $selectedWorkingDays))?>" required>
+</div>
 <div class="col-md-3"><label class="form-label">نهاية العمل<input type="time" name="working_end_time" class="form-control" value="<?=e(substr((string)($editPolicy['working_end_time'] ?? '16:00:00'),0,5))?>" required></label></div>
 <div class="col-md-3"><label class="form-label">آخر وقت لاحتساب الحضور<input type="time" name="attendance_cutoff_time" class="form-control" value="<?=e(substr((string)($editPolicy['attendance_cutoff_time'] ?? '16:00:00'),0,5))?>" required></label></div>
 <div class="col-md-3"><label class="form-label">وقت تثبيت الغياب<input type="time" name="absence_finalization_time" class="form-control" value="<?=e(substr((string)($editPolicy['absence_finalization_time'] ?? '16:00:00'),0,5))?>" required></label></div>
