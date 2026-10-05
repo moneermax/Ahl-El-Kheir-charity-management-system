@@ -2397,3 +2397,23 @@ The remaining PRJ-0015 runtime gates identified earlier in the audit have now be
 Earlier audit entries that say runtime verification is pending for the PRJ-0015 closure sequence are historical checkpoints and are superseded by the subsequent runtime evidence. They are intentionally retained for audit chronology.
 
 **Final Phase 5 result: PASS / RUNTIME VERIFIED / CLOSED.** Historical project journals remain untouched.
+
+## 2026-10-05 — HR Salary Register / Employment Scope
+
+### Salary register
+
+- `modules/hr/employees.php?action=salary_register` now provides a dedicated register of the first positive salary-history record for each employee.
+- The register displays employee code, name, department, hire date, first salary effective date, salary and currency, plus total employee count and salary total/average.
+- The initial salary-history placeholder of 0.00 created during automatic employee provisioning is intentionally ignored. The register therefore selects the earliest salary-history row with `basic_salary > 0`.
+- Current salary values are test data used for payroll/salary-advance testing and were populated directly in the database. No salary amounts are hard-coded into the application.
+
+### Employment scope correction
+
+- Commit `b8adb067c3de34441192e63fff56c6b707b3aa22` changed the salary register to join the canonical `hr_employment_states` table and include only states where `category = 'working'` and `is_active = 1`.
+- Suspended, terminated/separated and other non-working employees are therefore outside the current salary-register scope.
+- This does not delete, hide from historical audit, or alter their existing salary/payroll/accounting records. It only prevents non-working employees from being treated as currently eligible salary-register/payroll scope.
+- Payroll already applies the same working-state principle when generating a new payroll period.
+
+### Data principle
+
+Employment lifecycle is the authoritative boundary for current payroll/accounting eligibility. Historical financial evidence remains immutable and auditable after an employee becomes non-working.
