@@ -494,13 +494,14 @@ $langSwitchUrl =
             right: 0;
             transform: translateY(-50%);
             z-index: 1202;
-            width: 28px;
-            height: 118px;
-            border: 0;
+            width: 34px;
+            height: 112px;
+            border: 1px solid rgba(212,175,55,.9);
+            border-right: 0;
             border-radius: 18px 0 0 18px;
-            background: var(--navy);
+            background: linear-gradient(180deg, var(--navy), var(--navy-dark));
             color: #fff;
-            box-shadow: none;
+            box-shadow: -3px 0 14px rgba(0,0,0,.18);
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -510,18 +511,20 @@ $langSwitchUrl =
                         transform .18s ease,
                         background .18s ease,
                         box-shadow .18s ease,
+                        border-color .18s ease,
                         border-radius .18s ease;
         }
 
 
         .ak-sidebar-toggle:hover {
-            background: var(--navy-dark);
-            box-shadow: none;
+            background: linear-gradient(180deg, var(--navy-dark), var(--navy));
+            border-color: #e2bd4f;
+            box-shadow: -5px 0 18px rgba(0,0,0,.24), 0 0 0 1px rgba(212,175,55,.18);
         }
 
 
         .ak-sidebar-toggle:active {
-            transform: translateY(-50%) scale(.94);
+            transform: translateY(-50%) scale(.96);
         }
 
 
@@ -533,7 +536,7 @@ $langSwitchUrl =
 
         body.sidebar-open .ak-sidebar-toggle {
             right: var(--ak-sidebar-width);
-            border-radius: 0;
+            border-radius: 18px 0 0 18px;
         }
 
 
@@ -541,17 +544,26 @@ $langSwitchUrl =
             right: auto;
             left: 0;
             border-radius: 0 18px 18px 0;
+            border-left: 0;
+            border-right: 1px solid rgba(212,175,55,.9);
         }
 
 
         [dir="ltr"] body.sidebar-open .ak-sidebar-toggle {
             left: var(--ak-sidebar-width);
-            border-radius: 0;
+            border-radius: 0 18px 18px 0;
         }
 
 
         .ak-sidebar-toggle i {
             font-size: 1rem;
+            text-shadow: 0 1px 2px rgba(0,0,0,.35);
+            transition: transform .18s ease, color .18s ease;
+        }
+
+        .ak-sidebar-toggle:hover i {
+            color: #f4d477;
+            transform: scale(1.08);
         }
 
 
