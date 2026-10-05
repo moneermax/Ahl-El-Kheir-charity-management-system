@@ -124,3 +124,10 @@ Do not mutate schema during ordinary page requests. No triggers, views, stored p
 - 8 shared include paths
 
 These are baseline inventory figures, not design limits.
+
+
+## 2026-10-05 — HR attendance policy architecture
+
+New attendance policy structures: hr_attendance_policy_versions, modules/hr/lib_attendance_policy.php, modules/hr/attendance_policy.php and tools/finalize_daily_attendance.php. The policy contains name/effective date, working start/end, attendance cutoff, absence-finalization time, automatic login attendance, automatic absence, default work mode, notes and creator metadata. The application timezone remains the authoritative time basis. The event flow is successful login -> linked active employee -> effective policy -> canonical attendance eligibility -> daily attendance record. Absence is separate: scheduled finalizer -> effective policy -> canonical eligibility -> existing-record check -> absent record. The finalizer does not overwrite an existing daily row and is idempotent.
+
+Runtime boundary: source implementation complete; migration application, login test and scheduled finalizer test remain pending locally.
