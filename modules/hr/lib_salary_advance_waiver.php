@@ -375,7 +375,7 @@ function hrSalaryAdvanceWaiverExecute(
                     "UPDATE hr_salary_advance_waiver_items
                      SET executed_at = NOW(), resulting_request_status = 'cancelled'
                      WHERE id = ?"
-                )->execute([(int)$item['id']);
+                 )->execute([(int)$item['id']]);
 
                 dbExecute(
                     "INSERT INTO audit_log
