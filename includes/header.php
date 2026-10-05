@@ -501,7 +501,7 @@ $langSwitchUrl =
             right: 0;
             transform: translateY(-50%);
             z-index: 1202;
-            width: 46px;
+            width: 38px;
             height: 104px;
             padding: 0;
             border: 0;
@@ -600,7 +600,7 @@ $langSwitchUrl =
 
         @media (max-width: 991.98px) {
             .ak-sidebar-toggle {
-                width: 42px;
+                width: 36px;
                 height: 92px;
                 border-radius: 12px 0 0 12px;
             }
