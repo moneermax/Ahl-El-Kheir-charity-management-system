@@ -1,6 +1,6 @@
 -- Salary Advance GM Waiver / Exemption
 -- Additive, isolated schema only. No existing salary-advance columns/statuses are modified.
--- Rollback: remove this feature by dropping only the two tables created here.
+-- Rollback: remove this feature by dropping only the three tables created here.
 -- IMPORTANT: posted accounting history must never be deleted as part of rollback.
 CREATE TABLE IF NOT EXISTS hr_salary_advance_waiver_decisions (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
