@@ -148,6 +148,26 @@ function hrSalaryAdvanceWaiverCreateDecision(
             ]);
         }
 
+        dbExecute(
+            "INSERT INTO audit_log
+             (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent)
+             VALUES (?, 'HR_SALARY_ADVANCE_WAIVER_DECISION_CREATED', 'hr_salary_advance_waiver_decision', ?, ?, ?, ?, ?)",
+            [
+                $createdBy,
+                $decisionId,
+                json_encode(['status' => 'new'], JSON_UNESCAPED_UNICODE),
+                json_encode([
+                    'decision_no' => $decisionNo,
+                    'decision_type' => $decisionType,
+                    'effective_month' => $effectiveMonth,
+                    'item_count' => count($rows),
+                    'reason' => trim($reason)
+                ], JSON_UNESCAPED_UNICODE),
+                $_SERVER['REMOTE_ADDR'] ?? '',
+                $_SERVER['HTTP_USER_AGENT'] ?? ''
+            ]
+        );
+
         $pdo->commit();
 
         // Notify FM only after the GM decision transaction has committed.
