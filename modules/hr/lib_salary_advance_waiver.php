@@ -4,6 +4,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__) . '/accounting/lib.php';
 require_once dirname(__DIR__) . '/accounting/lib_vouchers.php';
 require_once dirname(__DIR__) . '/accounting/lib_transaction_review.php';
+require_once __DIR__ . '/lib_salary_advance_payroll.php';
 
 /**
  * GM salary-advance waiver/exemption feature.
