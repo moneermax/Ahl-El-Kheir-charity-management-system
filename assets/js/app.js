@@ -199,17 +199,6 @@
     document.addEventListener('submit', function(event){
         if (event.defaultPrevented) return;
 
-        if (window.__AKScrollDebug === true && samePagePost(event.target)) {
-            console.log('[AK scroll diagnosis] submit intercepted', {
-                scrollY: window.scrollY,
-                activeElement: document.activeElement ? {
-                    tag: document.activeElement.tagName,
-                    id: document.activeElement.id || '',
-                    name: document.activeElement.getAttribute('name') || ''
-                } : null
-            });
-        }
-
         const form = event.target;
         if (!samePagePost(form)) return;
         if (form.dataset.akSubmitting === '1') return;
