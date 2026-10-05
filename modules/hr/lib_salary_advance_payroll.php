@@ -67,9 +67,10 @@ function hrSalaryAdvancePayrollCalculateDraft(PDO $pdo, array $payroll, string $
     $allowances = round((float)($payroll['allowances'] ?? 0), 2);
     $overtime = round((float)($payroll['overtime'] ?? 0), 2);
     $ordinaryDeductions = round((float)($payroll['deductions'] ?? 0), 2);
+    $attendanceDeduction = round((float)($payroll['attendance_deduction'] ?? 0), 2);
 
     $gross = round(max(0.00, $basic + $allowances + $overtime), 2);
-    $netBeforeAdvance = round(max(0.00, $gross - $ordinaryDeductions), 2);
+    $netBeforeAdvance = round(max(0.00, $gross - $ordinaryDeductions - $attendanceDeduction), 2);
 
     $remainingEligibleSalary = null;
     $total = 0.00;
@@ -482,7 +483,7 @@ function hrSalaryAdvancePayrollRefreshDraft(PDO $pdo, int $payrollId): void
 
     $payroll = dbFetchOne(
         "SELECT id, employee_id, month, year, basic_salary, allowances, overtime,
-                deductions, status, salary_advance_deduction
+                deductions, attendance_deduction, status, salary_advance_deduction
          FROM payroll
          WHERE id = ?
          LIMIT 1",
