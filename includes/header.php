@@ -494,14 +494,14 @@ $langSwitchUrl =
             right: 0;
             transform: translateY(-50%);
             z-index: 1202;
-            width: 34px;
-            height: 112px;
+            width: 38px;
+            height: 118px;
             border: 1px solid rgba(212,175,55,.9);
             border-right: 0;
-            border-radius: 18px 0 0 18px;
+            border-radius: 16px 0 0 16px;
             background: linear-gradient(180deg, var(--navy), var(--navy-dark));
             color: #fff;
-            box-shadow: -3px 0 14px rgba(0,0,0,.18);
+            box-shadow: -4px 0 16px rgba(0,0,0,.20);
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -536,14 +536,14 @@ $langSwitchUrl =
 
         body.sidebar-open .ak-sidebar-toggle {
             right: var(--ak-sidebar-width);
-            border-radius: 18px 0 0 18px;
+            border-radius: 0 16px 16px 0;
         }
 
 
         [dir="ltr"] .ak-sidebar-toggle {
             right: auto;
             left: 0;
-            border-radius: 0 18px 18px 0;
+            border-radius: 0 16px 16px 0;
             border-left: 0;
             border-right: 1px solid rgba(212,175,55,.9);
         }
@@ -551,7 +551,7 @@ $langSwitchUrl =
 
         [dir="ltr"] body.sidebar-open .ak-sidebar-toggle {
             left: var(--ak-sidebar-width);
-            border-radius: 0 18px 18px 0;
+            border-radius: 16px 0 0 16px;
         }
 
 
@@ -1253,8 +1253,9 @@ if (!empty($akPrintOwnLetterhead)) $akBodyClasses[] = 'ak-print-own';
         aria-controls="sidebar"
         aria-expanded="false"
         title="<?php echo e(AK_LANG === 'ar' ? 'إظهار القائمة' : 'Show menu'); ?>"
+        aria-label="<?php echo e(AK_LANG === 'ar' ? 'إظهار القائمة' : 'Show menu'); ?>"
     >
-        <i class="fas fa-bars" aria-hidden="true"></i>
+        <i class="fas fa-chevron-left" aria-hidden="true"></i>
         <span class="visually-hidden"><?php echo e(AK_LANG === 'ar' ? 'إظهار القائمة' : 'Show menu'); ?></span>
     </button>
 
