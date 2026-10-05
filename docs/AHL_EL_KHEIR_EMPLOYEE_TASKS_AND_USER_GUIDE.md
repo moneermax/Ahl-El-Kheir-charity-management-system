@@ -268,3 +268,11 @@ The register:
 The current varied salary amounts are development/test data. They are stored in the database and are not hard-coded application values.
 
 Non-working employees are not deleted from HR history or accounting history. They simply fall outside the current working/payroll scope.
+
+## 2026-10-05 — Attendance policy and automatic attendance
+
+HR Manager/Admin: open سياسة الحضور والانصراف from the HR Dashboard, create a future-effective policy, configure working start/end, attendance cutoff and absence-finalization time, configure the automation switches, save and verify the version.
+
+Employee: no separate attendance action is required for the normal remote-work V1 flow. A successful qualifying system login can establish the day's attendance. The first check-in is preserved across later logins.
+
+Automatic absence: the server-side scheduled finalizer creates an absence only when an eligible working employee has no attendance record for that date. Approved leave and non-working employment states are excluded. Runtime verification remains pending.
