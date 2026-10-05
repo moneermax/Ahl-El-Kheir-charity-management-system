@@ -35,6 +35,81 @@
     };
     if (AK_SCROLL_TRACE) {
         console.warn('[AK-SCROLL] TRACE ENABLED — diagnostic only');
+
+        /* Causal instrumentation: record JavaScript APIs that can directly
+         * move the viewport/focus/history, plus DOM/layout lifecycle events.
+         * This is diagnostic only; it does not alter their behavior. */
+        (function installScrollCauseTracing(){
+            function stack(){
+                try { return (new Error()).stack || ''; } catch (e) { return ''; }
+            }
+            function patch(obj, name, label){
+                if (!obj || typeof obj[name] !== 'function') return;
+                const original = obj[name];
+                const key = '__akTraceOriginal_' + name;
+                if (obj[key]) return;
+                obj[key] = original;
+                obj[name] = function(){
+                    akTrace('API:' + label, {
+                        args: Array.prototype.slice.call(arguments, 0, 3).map(function(v){
+                            try { return typeof v === 'object' ? JSON.stringify(v) : v; } catch (e) { return String(v); }
+                        }),
+                        stack: stack()
+                    });
+                    return original.apply(this, arguments);
+                };
+            }
+
+            patch(window, 'scrollTo', 'window.scrollTo');
+            patch(window, 'scrollBy', 'window.scrollBy');
+            patch(Element.prototype, 'scrollIntoView', 'Element.scrollIntoView');
+            patch(HTMLElement.prototype, 'focus', 'HTMLElement.focus');
+            patch(history, 'pushState', 'history.pushState');
+            patch(history, 'replaceState', 'history.replaceState');
+
+            document.addEventListener('focusin', function(e){
+                akTrace('event:focusin', {
+                    target: e.target && e.target.tagName,
+                    id: e.target && e.target.id || '',
+                    name: e.target && e.target.getAttribute && e.target.getAttribute('name') || ''
+                });
+            }, true);
+            document.addEventListener('focusout', function(e){
+                akTrace('event:focusout', {
+                    target: e.target && e.target.tagName,
+                    id: e.target && e.target.id || ''
+                });
+            }, true);
+
+            if (window.MutationObserver) {
+                var content = document.querySelector('.content');
+                if (content) {
+                    new MutationObserver(function(mutations){
+                        var added=0, removed=0, text=0;
+                        mutations.forEach(function(m){
+                            added += m.addedNodes ? m.addedNodes.length : 0;
+                            removed += m.removedNodes ? m.removedNodes.length : 0;
+                            if (m.type === 'characterData') text++;
+                        });
+                        akTrace('mutation:.content', {records:mutations.length, added:added, removed:removed, text:text});
+                    }).observe(content, {childList:true,subtree:true,characterData:true});
+                }
+            }
+
+            if (window.ResizeObserver) {
+                var root = document.documentElement;
+                var body = document.body;
+                var ro = new ResizeObserver(function(entries){
+                    entries.forEach(function(entry){
+                        akTrace('resize:' + (entry.target === root ? 'documentElement' : 'body'), {
+                            height: Math.round(entry.contentRect.height * 100) / 100
+                        });
+                    });
+                });
+                if (root) ro.observe(root);
+                if (body) ro.observe(body);
+            }
+        })();
         window.addEventListener('scroll', () => akTrace('window scroll'), {capture:true, passive:true});
         window.addEventListener('pageshow', e => akTrace('pageshow', {persisted:e.persisted}));
         window.addEventListener('pagehide', e => akTrace('pagehide', {persisted:e.persisted}));
