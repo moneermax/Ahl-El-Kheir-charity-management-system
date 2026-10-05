@@ -19,6 +19,15 @@ $pdo = db();
 $message = '';
 $error = '';
 
+$flashes = get_flashes();
+foreach ($flashes as $flash) {
+    if (($flash['type'] ?? '') === 'success') {
+        $message = (string)($flash['message'] ?? '');
+    } elseif (($flash['type'] ?? '') === 'error') {
+        $error = (string)($flash['message'] ?? '');
+    }
+}
+
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!verify_csrf()) {
@@ -40,7 +49,9 @@ try {
             if ($collision) throw new InvalidArgumentException('يوجد إصدار سياسة آخر بنفس تاريخ السريان بالفعل.');
             $pdo->prepare("UPDATE hr_attendance_policy_versions SET policy_name=?, effective_from=?, working_start_time=?, working_end_time=?, working_days=?, attendance_cutoff_time=?, absence_finalization_time=?, auto_login_attendance=?, auto_absence_enabled=?, default_work_mode=?, notes=? WHERE id=?")
                 ->execute([$p['policy_name'],$p['effective_from'],$p['working_start_time'],$p['working_end_time'],$p['working_days'],$p['attendance_cutoff_time'],$p['absence_finalization_time'],$p['auto_login_attendance'],$p['auto_absence_enabled'],$p['default_work_mode'],$p['notes'],$policyId]);
-            $message = 'تم تحديث إصدار سياسة الحضور V' . (int)$existingPolicy['version_no'] . ' بأمان.';
+            flash('success', 'تم تحديث إصدار سياسة الحضور V' . (int)$existingPolicy['version_no'] . ' بأمان.');
+            header('Location: ' . APP_URL . 'modules/hr/attendance_policy.php');
+            exit;
         } elseif ($action === 'create_policy') {
             $p = hrAttendancePolicyValidate($_POST);
             $existing = dbFetchOne(
@@ -70,7 +81,9 @@ try {
                 $p['default_work_mode'], $p['notes'], Session::getUserID()
             ]);
 
-            $message = 'تم إنشاء إصدار سياسة الحضور V' . $version . ' بتاريخ سريان ' . $p['effective_from'] . '.';
+            flash('success', 'تم إنشاء إصدار سياسة الحضور V' . $version . ' بتاريخ سريان ' . $p['effective_from'] . '.');
+            header('Location: ' . APP_URL . 'modules/hr/attendance_policy.php');
+            exit;
         } elseif ($action === 'delete_policy') {
             $policyId = (int)($_POST['policy_id'] ?? 0);
             $policy = dbFetchOne(
@@ -86,13 +99,16 @@ try {
                 throw new InvalidArgumentException('لا يمكن حذف سياسة اليوم بعد تسجيل أي حركة حضور فعلية تحت نطاق سريانها.');
             }
 
-            $message = 'سيتم حذف السياسة بعد التحقق من عدم استخدامها تشغيلياً.';
             $pdo->prepare('DELETE FROM hr_attendance_policy_versions WHERE id = ?')->execute([$policyId]);
-            $message = 'تم حذف إصدار السياسة المستقبلية بأمان.';
+            flash('success', 'تم حذف إصدار السياسة المستقبلية بأمان.');
+            header('Location: ' . APP_URL . 'modules/hr/attendance_policy.php');
+            exit;
         }
     }
 } catch (Throwable $e) {
-    $error = $e->getMessage();
+    flash('error', $e->getMessage());
+    header('Location: ' . APP_URL . 'modules/hr/attendance_policy.php');
+    exit;
 }
 
 $activePolicy = hrAttendancePolicyGetActive($pdo);
