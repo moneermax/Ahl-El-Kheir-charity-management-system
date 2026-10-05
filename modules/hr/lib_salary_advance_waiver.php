@@ -82,13 +82,15 @@ function hrSalaryAdvanceWaiverCreateDecision(
     string $decisionType,
     string $effectiveMonth,
     string $reason,
-    int $createdBy,
-    ?int $employeeId = null
+    int $preparedBy,
+    ?int $employeeId,
+    int $refundAccountId,
+    int $waiverExpenseAccountId
 ): int {
     if (!in_array($decisionType, ['individual', 'blanket'], true)) {
         throw new InvalidArgumentException('نوع قرار الإعفاء غير صالح.');
     }
-    if ($createdBy <= 0 || trim($reason) === '') {
+    if ($preparedBy <= 0 || $refundAccountId <= 0 || $waiverExpenseAccountId <= 0 || trim($reason) === '') {
         throw new InvalidArgumentException('بيانات قرار الإعفاء غير مكتملة.');
     }
 
@@ -110,11 +112,21 @@ function hrSalaryAdvanceWaiverCreateDecision(
         $pdo->beginTransaction();
 
         $decisionNo = hrSalaryAdvanceWaiverNextDecisionNo($pdo);
+        $refundAccount = dbFetchOne("SELECT id, code, account_type, is_active FROM accounts WHERE id = ? FOR UPDATE", [$refundAccountId]);
+        if (!$refundAccount || (int)$refundAccount['is_active'] !== 1 || !in_array((string)$refundAccount['code'], ['1100','1200','1300'], true)) {
+            throw new RuntimeException('حساب رد الخصم غير صالح.');
+        }
+        $expenseAccount = dbFetchOne("SELECT id, code, account_type, is_active FROM accounts WHERE id = ? FOR UPDATE", [$waiverExpenseAccountId]);
+        if (!$expenseAccount || (int)$expenseAccount['is_active'] !== 1 || $expenseAccount['account_type'] !== 'expense') {
+            throw new RuntimeException('حساب مصروف الإعفاء غير صالح.');
+        }
+
         $pdo->prepare(
             "INSERT INTO hr_salary_advance_waiver_decisions
-             (decision_no, decision_type, effective_month, reason, status, created_by)
-             VALUES (?, ?, ?, ?, 'pending_fm', ?)"
-        )->execute([$decisionNo, $decisionType, $effectiveMonth, trim($reason), $createdBy]);
+             (decision_no, decision_type, effective_month, reason, status, created_by,
+              prepared_by, prepared_at, refund_account_id, waiver_expense_account_id)
+             VALUES (?, ?, ?, ?, 'pending_gm', ?, ?, NOW(), ?, ?)"
+        )->execute([$decisionNo, $decisionType, $effectiveMonth, trim($reason), $preparedBy, $preparedBy, $refundAccountId, $waiverExpenseAccountId]);
 
         $decisionId = (int)$pdo->lastInsertId();
         if ($decisionId <= 0) {
@@ -156,7 +168,7 @@ function hrSalaryAdvanceWaiverCreateDecision(
              (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent)
              VALUES (?, 'HR_SALARY_ADVANCE_WAIVER_DECISION_CREATED', 'hr_salary_advance_waiver_decision', ?, ?, ?, ?, ?)",
             [
-                $createdBy,
+                $preparedBy,
                 $decisionId,
                 json_encode(['status' => 'new'], JSON_UNESCAPED_UNICODE),
                 json_encode([
@@ -182,10 +194,13 @@ function hrSalaryAdvanceWaiverCreateDecision(
     }
 }
 
-function hrSalaryAdvanceWaiverReject(PDO $pdo, int $decisionId, int $fmUserId, string $reason): void
+function hrSalaryAdvanceWaiverGMReview(PDO $pdo, int $decisionId, int $gmUserId, bool $approve, string $reason = ''): void
 {
-    if ($decisionId <= 0 || $fmUserId <= 0 || trim($reason) === '') {
-        throw new InvalidArgumentException('قرار الرفض وسببه غير صالحين.');
+    if ($decisionId <= 0 || $gmUserId <= 0) {
+        throw new InvalidArgumentException('بيانات مراجعة قرار الإعفاء غير صالحة.');
+    }
+    if (!$approve && trim($reason) === '') {
+        throw new InvalidArgumentException('سبب الرفض مطلوب.');
     }
 
     $pdo->beginTransaction();
@@ -194,34 +209,36 @@ function hrSalaryAdvanceWaiverReject(PDO $pdo, int $decisionId, int $fmUserId, s
             "SELECT * FROM hr_salary_advance_waiver_decisions WHERE id = ? FOR UPDATE",
             [$decisionId]
         );
-        if (!$decision || $decision['status'] !== 'pending_fm') {
-            throw new RuntimeException('قرار الإعفاء غير متاح للرفض.');
+        if (!$decision || $decision['status'] !== 'pending_gm') {
+            throw new RuntimeException('قرار الإعفاء غير متاح لمراجعة المدير العام.');
         }
 
+        $newStatus = $approve ? 'approved_by_gm' : 'rejected_by_gm';
         $pdo->prepare(
             "UPDATE hr_salary_advance_waiver_decisions
-             SET status='rejected', fm_reviewed_by=?, fm_reviewed_at=NOW(), fm_rejection_reason=?
-             WHERE id=? AND status='pending_fm'"
-        )->execute([$fmUserId, trim($reason), $decisionId]);
+             SET status = ?, gm_approved_by = ?, gm_approved_at = NOW(), gm_rejection_reason = ?
+             WHERE id = ? AND status = 'pending_gm'"
+        )->execute([$newStatus, $gmUserId, $approve ? null : trim($reason), $decisionId]);
 
-        if ($pdo->rowCount() !== 1) {
-            throw new RuntimeException('تعذر تسجيل رفض قرار الإعفاء.');
-        }
+        if ($pdo->rowCount() !== 1) throw new RuntimeException('تعذر تسجيل مراجعة قرار الإعفاء.');
 
         dbExecute(
             "INSERT INTO audit_log
              (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent)
-             VALUES (?, 'HR_SALARY_ADVANCE_WAIVER_REJECTED', 'hr_salary_advance_waiver_decision', ?, ?, ?, ?, ?)",
+             VALUES (?, ?, 'hr_salary_advance_waiver_decision', ?, ?, ?, ?, ?)",
             [
-                $fmUserId,
+                $gmUserId,
+                $approve ? 'HR_SALARY_ADVANCE_WAIVER_GM_APPROVED' : 'HR_SALARY_ADVANCE_WAIVER_GM_REJECTED',
                 $decisionId,
-                json_encode(['status'=>'pending_fm'], JSON_UNESCAPED_UNICODE),
-                json_encode(['status'=>'rejected','reason'=>trim($reason)], JSON_UNESCAPED_UNICODE),
+                json_encode(['status'=>'pending_gm'], JSON_UNESCAPED_UNICODE),
+                json_encode([
+                    'status'=>$newStatus,
+                    'reason'=>$approve ? null : trim($reason)
+                ], JSON_UNESCAPED_UNICODE),
                 $_SERVER['REMOTE_ADDR'] ?? '',
                 $_SERVER['HTTP_USER_AGENT'] ?? ''
             ]
         );
-
         $pdo->commit();
     } catch (Throwable $e) {
         if ($pdo->inTransaction()) $pdo->rollBack();
@@ -231,19 +248,14 @@ function hrSalaryAdvanceWaiverReject(PDO $pdo, int $decisionId, int $fmUserId, s
 
 /**
  * FM executes an already-approved GM decision.
- *
- * Accounting account selection is deliberately supplied by FM; this feature
- * never invents an expense account. The refund account must be one of the
- * existing payment accounts (1100/1200/1300).
  */
+/**
 function hrSalaryAdvanceWaiverExecute(
     PDO $pdo,
     int $decisionId,
-    int $fmUserId,
-    int $refundAccountId,
-    int $waiverExpenseAccountId
+    int $fmUserId
 ): array {
-    if ($decisionId <= 0 || $fmUserId <= 0 || $refundAccountId <= 0 || $waiverExpenseAccountId <= 0) {
+    if ($decisionId <= 0 || $fmUserId <= 0) {
         throw new InvalidArgumentException('بيانات تنفيذ الإعفاء غير صالحة.');
     }
 
@@ -258,8 +270,14 @@ function hrSalaryAdvanceWaiverExecute(
             [$decisionId]
         );
         if (!$decision) throw new RuntimeException('قرار الإعفاء غير موجود.');
-        if ($decision['status'] !== 'pending_fm') {
+        if ($decision['status'] !== 'approved_by_gm') {
             throw new RuntimeException('قرار الإعفاء ليس بانتظار التنفيذ المالي.');
+        }
+
+        $refundAccountId = (int)$decision['refund_account_id'];
+        $waiverExpenseAccountId = (int)$decision['waiver_expense_account_id'];
+        if ($refundAccountId <= 0 || $waiverExpenseAccountId <= 0) {
+            throw new RuntimeException('قرار الإعفاء غير مكتمل الحسابات المالية.');
         }
 
         $refundAccount = dbFetchOne(
@@ -269,7 +287,7 @@ function hrSalaryAdvanceWaiverExecute(
         );
         if (!$refundAccount || (int)$refundAccount['is_active'] !== 1 ||
             !in_array((string)$refundAccount['code'], ['1100','1200','1300'], true)) {
-            throw new RuntimeException('حساب رد الخصم غير صالح.');
+            throw new RuntimeException('حساب رد الخصم في القرار غير صالح.');
         }
 
         $expenseAccount = dbFetchOne(
@@ -279,7 +297,7 @@ function hrSalaryAdvanceWaiverExecute(
         );
         if (!$expenseAccount || (int)$expenseAccount['is_active'] !== 1 ||
             $expenseAccount['account_type'] !== 'expense') {
-            throw new RuntimeException('حساب مصروف الإعفاء غير صالح.');
+            throw new RuntimeException('حساب مصروف الإعفاء في القرار غير صالح.');
         }
 
         $items = dbFetchAll(
@@ -545,9 +563,9 @@ function hrSalaryAdvanceWaiverExecute(
 
         $pdo->prepare(
             "UPDATE hr_salary_advance_waiver_decisions
-             SET status = 'executed', fm_reviewed_by = ?, fm_reviewed_at = NOW(), executed_at = NOW()
-             WHERE id = ? AND status = 'pending_fm'"
-        )->execute([$fmUserId, $decisionId]);
+             SET status = 'executed', prepared_by = COALESCE(prepared_by, ?), executed_at = NOW()
+             WHERE id = ? AND status = 'approved_by_gm'"
+         )->execute([$fmUserId, $decisionId]);
 
         if ($pdo->rowCount() !== 1) throw new RuntimeException('تعذر إكمال قرار الإعفاء.');
 
@@ -558,7 +576,7 @@ function hrSalaryAdvanceWaiverExecute(
             [
                 $fmUserId,
                 $decisionId,
-                json_encode(['status'=>'pending_fm'], JSON_UNESCAPED_UNICODE),
+                json_encode(['status'=>'approved_by_gm'], JSON_UNESCAPED_UNICODE),
                 json_encode([
                     'status'=>'executed',
                     'refund_total'=>$refundTotal,
