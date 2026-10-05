@@ -103,6 +103,9 @@ if ($action === 'salary_register') {
     $salaryRegister = dbFetchAll("SELECT e.id, e.employee_code, e.full_name, e.hire_date, d.name_ar AS dept_name,
         h.effective_from AS salary_effective_from, h.basic_salary, h.salary_currency
         FROM employees e
+        JOIN hr_employment_states es ON es.id = e.employment_state_id
+            AND es.category = 'working'
+            AND es.is_active = 1
         LEFT JOIN departments d ON d.id = e.department_id
         LEFT JOIN hr_employee_salary_history h ON h.id = (
             SELECT h1.id
