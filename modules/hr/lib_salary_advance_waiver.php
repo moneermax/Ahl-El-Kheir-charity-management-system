@@ -299,6 +299,25 @@ function hrSalaryAdvanceWaiverExecute(
             }
         }
 
+        // Do not silently mutate an approved, unpaid payroll. Such a payroll
+        // must be corrected through the controlled payroll workflow first.
+        $approvedRows = dbFetchAll(
+            "SELECT p.id
+             FROM payroll p
+             JOIN hr_salary_advance_waiver_items wi ON wi.employee_id = p.employee_id
+             JOIN hr_salary_advance_waiver_decisions wd ON wd.id = wi.decision_id
+             WHERE wi.decision_id = ?
+               AND p.year = YEAR(wd.effective_month)
+               AND p.month = MONTH(wd.effective_month)
+               AND p.status = 'approved'
+               AND COALESCE(p.salary_advance_deduction, 0) > 0
+             FOR UPDATE",
+            [$decisionId]
+        );
+        if ($approvedRows) {
+            throw new RuntimeException('يوجد مسير راتب معتمد وغير مصروف ما زال يحتوي على خصم سلفة ضمن القرار. يجب تصحيح المسير قبل تنفيذ الإعفاء؛ لم يتم إجراء أي أثر مالي.');
+        }
+
         $refundTotal = 0.00;
         $waiverTotal = 0.00;
 
