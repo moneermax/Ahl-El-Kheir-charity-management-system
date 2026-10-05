@@ -316,6 +316,53 @@ $langSwitchUrl =
 
 ?>
 
+<script>
+(function () {
+    try {
+        if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+
+        var raw = sessionStorage.getItem('akGlobalScrollRestore');
+        if (!raw) return;
+
+        var state = JSON.parse(raw);
+        var x = Number(state && state.x);
+        var y = Number(state && state.y);
+        var path = String(state && state.path || '');
+        var age = Date.now() - Number(state && state.at || 0);
+
+        if (path !== window.location.pathname ||
+            !Number.isFinite(x) || !Number.isFinite(y) ||
+            x < 0 || y < 0 || age < 0 || age > 15000) {
+            sessionStorage.removeItem('akGlobalScrollRestore');
+            return;
+        }
+
+        document.documentElement.style.visibility = 'hidden';
+        document.documentElement.setAttribute('data-ak-scroll-restoring', '1');
+
+        var restore = function () {
+            window.scrollTo(x, y);
+            window.requestAnimationFrame(function () {
+                window.scrollTo(x, y);
+                sessionStorage.removeItem('akGlobalScrollRestore');
+                document.documentElement.style.visibility = '';
+                document.documentElement.removeAttribute('data-ak-scroll-restoring');
+            });
+        };
+
+        if (document.readyState === 'loading') {
+            window.addEventListener('load', restore, { once: true });
+        } else {
+            restore();
+        }
+    } catch (e) {
+        try { sessionStorage.removeItem('akGlobalScrollRestore'); } catch (ignore) {}
+        document.documentElement.style.visibility = '';
+        document.documentElement.removeAttribute('data-ak-scroll-restoring');
+    }
+})();
+</script>
+
 <!DOCTYPE html>
 
 <html
