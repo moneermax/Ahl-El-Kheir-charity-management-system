@@ -2062,3 +2062,11 @@ This supersedes earlier checkpoints that described the Phase 5 accounting sequen
 ### HR salary-register test-data boundary
 
 The current varied salaries are development/test values only. They must not be interpreted as historical payroll truth. The register is intended to demonstrate the first positive salary-history value for currently working employees while preserving employment lifecycle scope.
+
+## 2026-10-05 — HR Attendance Policy Foundation
+
+A new attendance-policy foundation is implemented on main. The versioned policy table is added by dated migration; HR Manager/Admin can manage future-effective policy versions; successful qualifying employee login can create the day's attendance while preserving the first check-in; and tools/finalize_daily_attendance.php provides the separate scheduled absence-finalization path. Initial policy examples are remote work and 07:00–16:00, stored as policy data rather than hard-coded rules.
+
+Canonical attendance eligibility remains unchanged: active employee + effective working employment state + no blocking approved leave/return condition. Non-working employees and approved-leave employees are not auto-marked present or absent.
+
+**Status: STATICALLY IMPLEMENTED / RUNTIME VERIFICATION PENDING.** Migration application, first policy creation, qualifying/repeated-login tests, exclusion tests and finalizer idempotency remain the next runtime gate.
