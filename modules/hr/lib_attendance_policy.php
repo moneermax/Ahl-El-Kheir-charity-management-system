@@ -8,6 +8,7 @@ function hrAttendancePolicyValidate(array $input): array
         'effective_from' => trim((string)($input['effective_from'] ?? '')),
         'working_start_time' => trim((string)($input['working_start_time'] ?? '07:00')),
         'working_end_time' => trim((string)($input['working_end_time'] ?? '16:00')),
+        'working_days' => trim((string)($input['working_days'] ?? '1,2,3,4,5')),
         'attendance_cutoff_time' => trim((string)($input['attendance_cutoff_time'] ?? '16:00')),
         'absence_finalization_time' => trim((string)($input['absence_finalization_time'] ?? '16:00')),
         'auto_login_attendance' => isset($input['auto_login_attendance']) ? 1 : 0,
@@ -35,6 +36,9 @@ function hrAttendancePolicyValidate(array $input): array
 
     if ($p['working_start_time'] >= $p['working_end_time']) {
         throw new InvalidArgumentException('وقت بداية العمل يجب أن يسبق وقت نهاية العمل.');
+    }
+    if (!preg_match('/^[1-7](?:,[1-7])*$/', $p['working_days']) || count(array_unique(explode(',', $p['working_days']))) !== count(explode(',', $p['working_days']))) {
+        throw new InvalidArgumentException('أيام العمل يجب أن تكون أرقاماً فريدة من 1 إلى 7 مفصولة بفواصل.');
     }
     if ($p['attendance_cutoff_time'] > $p['working_end_time']) {
         throw new InvalidArgumentException('حد تسجيل الحضور لا يمكن أن يتجاوز نهاية ساعات العمل.');
@@ -69,6 +73,12 @@ function hrAttendancePolicyGetAll(PDO $pdo): array
          LEFT JOIN users u ON u.id = p.created_by
          ORDER BY p.effective_from ASC, p.version_no ASC"
     );
+}
+
+function hrAttendancePolicyIsWorkingDay(array $policy, string $date): bool
+{
+    $day = (int)(new DateTimeImmutable($date))->format('N');
+    return in_array($day, array_map('intval', explode(',', (string)$policy['working_days'])), true);
 }
 
 function hrAttendancePolicyLoginEligible(array $policy, string $time): bool
@@ -106,6 +116,7 @@ function hrAttendanceAutoCheckInForUser(int $userId, ?DateTimeImmutable $now = n
 
     $time = $now->format('H:i:s');
     if (!hrAttendancePolicyLoginEligible($policy, $time)) return false;
+    if (!hrAttendancePolicyIsWorkingDay($policy, $now->format('Y-m-d'))) return false;
 
     $employee = hrAttendanceEmployeeForUser($userId);
     if (!$employee) return false;
