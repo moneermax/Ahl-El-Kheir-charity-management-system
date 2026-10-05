@@ -31,7 +31,10 @@ try {
             $policyId = (int)($_POST['policy_id'] ?? 0);
             $existingPolicy = dbFetchOne('SELECT * FROM hr_attendance_policy_versions WHERE id = ? LIMIT 1', [$policyId]);
             if (!$existingPolicy) throw new InvalidArgumentException('إصدار السياسة المطلوب غير موجود.');
-            if ((string)$existingPolicy['effective_from'] <= date('Y-m-d')) throw new InvalidArgumentException('لا يمكن تعديل سياسة سارية أو منتهية. أنشئ إصداراً جديداً للحفاظ على السجل التاريخي.');
+            if ((string)$existingPolicy['effective_from'] < date('Y-m-d')) throw new InvalidArgumentException('لا يمكن تعديل سياسة منتهية.');
+            if ((string)$existingPolicy['effective_from'] === date('Y-m-d') && hrAttendancePolicyHasOperationalAttendance($pdo, $existingPolicy)) {
+                throw new InvalidArgumentException('لا يمكن تعديل سياسة اليوم بعد تسجيل أي حركة حضور فعلية تحت نطاق سريانها.');
+            }
             $p = hrAttendancePolicyValidate($_POST);
             $collision = dbFetchOne('SELECT id FROM hr_attendance_policy_versions WHERE effective_from = ? AND id <> ? LIMIT 1', [$p['effective_from'], $policyId]);
             if ($collision) throw new InvalidArgumentException('يوجد إصدار سياسة آخر بنفس تاريخ السريان بالفعل.');
@@ -76,11 +79,14 @@ try {
             );
             if (!$policy) throw new InvalidArgumentException('إصدار السياسة المطلوب غير موجود.');
 
-            if ((string)$policy['effective_from'] <= date('Y-m-d')) {
-                throw new InvalidArgumentException('لا يمكن حذف سياسة سارية أو منتهية.');
+            if ((string)$policy['effective_from'] < date('Y-m-d')) {
+                throw new InvalidArgumentException('لا يمكن حذف سياسة منتهية.');
+            }
+            if ((string)$policy['effective_from'] === date('Y-m-d') && hrAttendancePolicyHasOperationalAttendance($pdo, $policy)) {
+                throw new InvalidArgumentException('لا يمكن حذف سياسة اليوم بعد تسجيل أي حركة حضور فعلية تحت نطاق سريانها.');
             }
 
-            $message = 'سيتم حذف السياسة المستقبلية فقط.';
+            $message = 'سيتم حذف السياسة بعد التحقق من عدم استخدامها تشغيلياً.';
             $pdo->prepare('DELETE FROM hr_attendance_policy_versions WHERE id = ?')->execute([$policyId]);
             $message = 'تم حذف إصدار السياسة المستقبلية بأمان.';
         }
@@ -95,7 +101,8 @@ $editPolicyId = (int)($_GET['edit'] ?? 0);
 $editPolicy = null;
 if ($editPolicyId > 0) {
     $editPolicy = dbFetchOne('SELECT * FROM hr_attendance_policy_versions WHERE id = ? LIMIT 1', [$editPolicyId]);
-    if ($editPolicy && (string)$editPolicy['effective_from'] <= date('Y-m-d')) $editPolicy = null;
+    if ($editPolicy && (string)$editPolicy['effective_from'] < date('Y-m-d')) $editPolicy = null;
+if ($editPolicy && (string)$editPolicy['effective_from'] === date('Y-m-d') && hrAttendancePolicyHasOperationalAttendance($pdo, $editPolicy)) $editPolicy = null;
 }
 
 $pageTitle = 'سياسة الحضور والانصراف';
@@ -148,7 +155,7 @@ document.addEventListener('DOMContentLoaded', function () {
 <div class="attendance-policy">
 <section class="hero">
     <h1><i class="fas fa-calendar-check me-2"></i>سياسة الحضور والانصراف</h1>
-    <p>إعدادات مؤسسية مُصدرة بإصدارات زمنية. السجلات التاريخية لا تتغير عند إصدار سياسة جديدة.</p>
+    <p>إعدادات مؤسسية مُصدرة بإصدارات زمنية. يمكن تصحيح سياسة اليوم قبل أول حركة حضور فعلية، ثم تُقفل تلقائياً لحماية السجل التاريخي.</p>
 </section>
 
 <div class="card">
@@ -235,7 +242,12 @@ foreach ($weeklyDays as $dayNo => $dayName):
 <thead><tr><th>الإصدار</th><th>السياسة</th><th>السريان</th><th>العمل</th><th>الحضور</th><th>الغياب</th><th>النمط</th><th>الإجراءات</th></tr></thead>
 <tbody>
 <?php foreach ($policies as $p): ?>
-<?php $future = (string)$p['effective_from'] > date('Y-m-d'); ?>
+<?php
+$policyDate = (string)$p['effective_from'];
+$future = $policyDate > date('Y-m-d');
+$todayUnused = $policyDate === date('Y-m-d') && !hrAttendancePolicyHasOperationalAttendance($pdo, $p);
+$canManage = $future || $todayUnused;
+?>
 <tr>
 <td><strong>V<?= (int)$p['version_no'] ?></strong></td>
 <td><?=e($p['policy_name'])?></td>
@@ -245,12 +257,12 @@ foreach ($weeklyDays as $dayNo => $dayName):
 <td><?=e(substr((string)$p['absence_finalization_time'],0,5))?></td>
 <td><?=e((string)$p['default_work_mode'])?></td>
 <td class="text-nowrap">
-<a class="btn btn-sm btn-outline-primary <?= $future ? '' : 'disabled' ?>" href="<?= $future ? e(APP_URL.'modules/hr/attendance_policy.php?edit='.(int)$p['id']) : '#' ?>"><i class="fas fa-pen"></i></a>
-<form method="post" class="d-inline" onsubmit="return confirm('هل تريد حذف إصدار السياسة المستقبلي هذا؟');">
+<a class="btn btn-sm btn-outline-primary <?= $future ? '' : 'disabled' ?>" href="<?= $canManage ? e(APP_URL.'modules/hr/attendance_policy.php?edit='.(int)$p['id']) : '#' ?>"><i class="fas fa-pen"></i></a>
+<form method="post" class="d-inline" onsubmit="return confirm('هل تريد حذف إصدار السياسة هذا؟ لا يمكن التراجع عن الحذف بعد التنفيذ.');">
 <?=csrf_field()?>
 <input type="hidden" name="action" value="delete_policy">
 <input type="hidden" name="policy_id" value="<?= (int)$p['id'] ?>">
-<button class="btn btn-sm btn-outline-danger" type="submit" <?=$future?'':'disabled'?>><i class="fas fa-trash"></i></button>
+<button class="btn btn-sm btn-outline-danger" type="submit" <?=$canManage?'':'disabled'?>><i class="fas fa-trash"></i></button>
 </form>
 </td>
 </tr>
