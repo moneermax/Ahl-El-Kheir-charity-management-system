@@ -104,13 +104,14 @@ if ($action === 'salary_register') {
         h.effective_from AS salary_effective_from, h.basic_salary, h.salary_currency
         FROM employees e
         LEFT JOIN departments d ON d.id = e.department_id
-        LEFT JOIN hr_employee_salary_history h ON h.employee_id = e.id
-            AND NOT EXISTS (
-                SELECT 1 FROM hr_employee_salary_history h2
-                WHERE h2.employee_id = h.employee_id
-                  AND (h2.effective_from < h.effective_from
-                       OR (h2.effective_from = h.effective_from AND h2.id < h.id))
-            )
+        LEFT JOIN hr_employee_salary_history h ON h.id = (
+            SELECT h1.id
+            FROM hr_employee_salary_history h1
+            WHERE h1.employee_id = e.id
+              AND h1.basic_salary > 0
+            ORDER BY h1.effective_from ASC, h1.id ASC
+            LIMIT 1
+        )
         ORDER BY e.id ASC");
     foreach ($salaryRegister as $row) { $salaryRegisterTotal += (float)($row['basic_salary'] ?? 0); }
 }
