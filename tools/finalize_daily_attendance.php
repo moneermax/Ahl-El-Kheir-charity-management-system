@@ -48,6 +48,11 @@ if (!$policy) {
     exit(0);
 }
 
+if (!hrAttendancePolicyIsWorkingDay($policy, $selectedDate)) {
+    echo "Attendance policy V" . (int)$policy['version_no'] . " does not define {$selectedDate} as a working day. Nothing finalized.\n";
+    exit(0);
+}
+
 if (!$force && !hrAttendancePolicyAbsenceFinalizationReached($policy, $selectedTime)) {
     echo "Policy V" . (int)$policy['version_no'] .
         " finalization time is " . $policy['absence_finalization_time'] .
