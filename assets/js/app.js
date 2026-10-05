@@ -196,11 +196,16 @@
         renderResponse: renderResponse
     };
 
-    document.addEventListener('submit', function(event){
-        if (event.defaultPrevented) return;
-
+    /*
+     * Capture submit before any page-level listener can invoke native
+     * navigation. This is intentionally registered on window in capture
+     * phase: the browser must never get a chance to start a document
+     * navigation for a same-page POST.
+     */
+    window.addEventListener('submit', function(event){
         const form = event.target;
         if (!samePagePost(form)) return;
+        if (event.defaultPrevented) return;
         if (form.dataset.akSubmitting === '1') return;
 
         event.preventDefault();
