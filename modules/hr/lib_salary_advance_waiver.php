@@ -249,7 +249,6 @@ function hrSalaryAdvanceWaiverGMReview(PDO $pdo, int $decisionId, int $gmUserId,
 /**
  * FM executes an already-approved GM decision.
  */
-/**
 function hrSalaryAdvanceWaiverExecute(
     PDO $pdo,
     int $decisionId,
