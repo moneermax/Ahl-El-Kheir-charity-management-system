@@ -106,3 +106,12 @@ Notifications communicate workflow results; they do not confer authority. Employ
 
 Every new workflow must define:
 actors, scope, states, transitions, rejection path, financial effect, accounting reference, evidence, notifications, final state and duplicate-action protection.
+
+
+## 2026-10-05 — Attendance policy workflow
+
+HR Manager/Admin can configure future attendance-policy versions through modules/hr/attendance_policy.php. The policy controls working hours, attendance cutoff, absence-finalization time, automatic login attendance, automatic absence and default work mode. Current/historical versions are protected; future versions may be edited or deleted.
+
+Employee attendance lifecycle: successful authentication resolves the linked active employee, loads the effective policy, applies canonical attendance eligibility, and creates today's present record when policy permits. The first check-in is preserved. At the policy finalization time, the scheduled finalizer marks eligible working employees with no attendance row as absent. Approved leave and non-working employment states remain excluded.
+
+Runtime status: source implementation complete; local migration and end-to-end verification pending.
