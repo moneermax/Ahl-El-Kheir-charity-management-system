@@ -35,8 +35,8 @@ try {
             $p = hrAttendancePolicyValidate($_POST);
             $collision = dbFetchOne('SELECT id FROM hr_attendance_policy_versions WHERE effective_from = ? AND id <> ? LIMIT 1', [$p['effective_from'], $policyId]);
             if ($collision) throw new InvalidArgumentException('يوجد إصدار سياسة آخر بنفس تاريخ السريان بالفعل.');
-            $pdo->prepare("UPDATE hr_attendance_policy_versions SET policy_name=?, effective_from=?, working_start_time=?, working_end_time=?, attendance_cutoff_time=?, absence_finalization_time=?, auto_login_attendance=?, auto_absence_enabled=?, default_work_mode=?, notes=? WHERE id=?")
-                ->execute([$p['policy_name'],$p['effective_from'],$p['working_start_time'],$p['working_end_time'],$p['attendance_cutoff_time'],$p['absence_finalization_time'],$p['auto_login_attendance'],$p['auto_absence_enabled'],$p['default_work_mode'],$p['notes'],$policyId]);
+            $pdo->prepare("UPDATE hr_attendance_policy_versions SET policy_name=?, effective_from=?, working_start_time=?, working_end_time=?, working_days=?, attendance_cutoff_time=?, absence_finalization_time=?, auto_login_attendance=?, auto_absence_enabled=?, default_work_mode=?, notes=? WHERE id=?")
+                ->execute([$p['policy_name'],$p['effective_from'],$p['working_start_time'],$p['working_end_time'],$p['working_days'],$p['attendance_cutoff_time'],$p['absence_finalization_time'],$p['auto_login_attendance'],$p['auto_absence_enabled'],$p['default_work_mode'],$p['notes'],$policyId]);
             $message = 'تم تحديث إصدار سياسة الحضور V' . (int)$existingPolicy['version_no'] . ' بأمان.';
         } elseif ($action === 'create_policy') {
             $p = hrAttendancePolicyValidate($_POST);
@@ -55,13 +55,13 @@ try {
 
             $pdo->prepare(
                 "INSERT INTO hr_attendance_policy_versions
-                 (version_no, policy_name, effective_from, working_start_time, working_end_time,
+                 (version_no, policy_name, effective_from, working_start_time, working_end_time, working_days,
                   attendance_cutoff_time, absence_finalization_time, auto_login_attendance,
                   auto_absence_enabled, default_work_mode, notes, created_by)
                  VALUES (?,?,?,?,?,?,?,?,?,?,?,?)"
             )->execute([
                 $version, $p['policy_name'], $p['effective_from'],
-                $p['working_start_time'], $p['working_end_time'],
+                $p['working_start_time'], $p['working_end_time'], $p['working_days'],
                 $p['attendance_cutoff_time'], $p['absence_finalization_time'],
                 $p['auto_login_attendance'], $p['auto_absence_enabled'],
                 $p['default_work_mode'], $p['notes'], Session::getUserID()
@@ -139,6 +139,7 @@ require_once __DIR__ . '/../../includes/header.php';
 <div class="col-md-4"><label class="form-label">تاريخ السريان *</label><input type="date" name="effective_from" class="form-control" min="<?=e(date('Y-m-d'))?>" value="<?=e($editPolicy['effective_from'] ?? '')?>" required></div>
 <div class="col-md-4"><label class="form-label">نمط العمل الافتراضي</label><select name="default_work_mode" class="form-select"><option value="remote" <?= (($editPolicy['default_work_mode'] ?? 'remote') === 'remote') ? 'selected' : '' ?>>عن بُعد</option><option value="onsite" <?= (($editPolicy['default_work_mode'] ?? '') === 'onsite') ? 'selected' : '' ?>>من المكتب</option><option value="hybrid" <?= (($editPolicy['default_work_mode'] ?? '') === 'hybrid') ? 'selected' : '' ?>>هجين</option></select></div>
 <div class="col-md-3"><label class="form-label">بداية العمل<input type="time" name="working_start_time" class="form-control" value="<?=e(substr((string)($editPolicy['working_start_time'] ?? '07:00:00'),0,5))?>" required></label></div>
+<div class="col-md-3"><label class="form-label">أيام العمل</label><input type="text" name="working_days" class="form-control" value="<?=e($editPolicy['working_days'] ?? '1,2,3,4,5')?>" placeholder="1,2,3,4,5" required><div class="form-text" style="font-size:.65rem">1=الإثنين ... 7=الأحد</div></div>
 <div class="col-md-3"><label class="form-label">نهاية العمل<input type="time" name="working_end_time" class="form-control" value="<?=e(substr((string)($editPolicy['working_end_time'] ?? '16:00:00'),0,5))?>" required></label></div>
 <div class="col-md-3"><label class="form-label">آخر وقت لاحتساب الحضور<input type="time" name="attendance_cutoff_time" class="form-control" value="<?=e(substr((string)($editPolicy['attendance_cutoff_time'] ?? '16:00:00'),0,5))?>" required></label></div>
 <div class="col-md-3"><label class="form-label">وقت تثبيت الغياب<input type="time" name="absence_finalization_time" class="form-control" value="<?=e(substr((string)($editPolicy['absence_finalization_time'] ?? '16:00:00'),0,5))?>" required></label></div>
