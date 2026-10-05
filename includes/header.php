@@ -1275,6 +1275,39 @@ $langSwitchUrl =
 
     <link rel="stylesheet" href="<?php echo APP_URL; ?>assets/css/print.css?v=<?php echo (int)@filemtime(__DIR__ . '/../assets/css/print.css'); ?>">
 
+<script>
+(function(){
+    try{
+        var raw=sessionStorage.getItem('akGlobalScrollRestore');
+        if(!raw)return;
+        var state=JSON.parse(raw);
+        var y=Number(state&&state.y), x=Number(state&&state.x)||0;
+        var path=String(state&&state.path||'');
+        var age=Date.now()-Number(state&&state.at||0);
+        if(path!==window.location.pathname || !Number.isFinite(y) || y<0 || age>15000){
+            sessionStorage.removeItem('akGlobalScrollRestore');
+            return;
+        }
+        document.documentElement.setAttribute('data-ak-scroll-restoring','1');
+        document.documentElement.style.visibility='hidden';
+        var restore=function(){
+            window.scrollTo(x,y);
+            try{sessionStorage.removeItem('akGlobalScrollRestore');}catch(e){}
+            document.documentElement.style.visibility='';
+            document.documentElement.removeAttribute('data-ak-scroll-restoring');
+        };
+        if(document.readyState==='loading'){
+            document.addEventListener('DOMContentLoaded',function(){window.requestAnimationFrame(restore);},{once:true});
+        }else{
+            window.requestAnimationFrame(restore);
+        }
+    }catch(e){
+        try{sessionStorage.removeItem('akGlobalScrollRestore');}catch(ignore){}
+        document.documentElement.style.visibility='';
+        document.documentElement.removeAttribute('data-ak-scroll-restoring');
+    }
+})();
+</script>
 </head>
 
 
