@@ -12,11 +12,11 @@ Read the canonical documentation first:
 
 Then inspect the relevant source, schema and domain evidence.
 
-## Current boundary — 2026-10-03
+## Current boundary — 2026-10-05
 
 Projects Phase 5 controlled PRJ-0015 reconciliation and financial closure is runtime verified and closed. Do not recreate the fixture or repeat the return.
 
-HR Salary Advance Stages 1–6 are complete at their documented acceptance boundary.
+HR Salary Advance Stages 1–5 are complete at their documented acceptance boundary. Stage 6 — Direct Repayment & Settlement — remains NOT STARTED and must not be implemented unless explicitly opened as the next agreed work unit.
 
 Fina core settlement acceptance is complete at its documented boundary.
 
@@ -37,3 +37,19 @@ Fina core settlement acceptance is complete at its documented boundary.
 ## Engineering method
 
 Inspect -> Understand -> Verify -> Identify risk -> Fix narrowly -> Test -> Document.
+
+
+## Latest HR checkpoint — 2026-10-05
+
+The employee salary register is implemented at `modules/hr/employees.php?action=salary_register`.
+
+Rules:
+- use the earliest positive salary-history row per employee;
+- ignore the automatic 0.00 provisioning placeholder;
+- current salary values are database-only development/test data;
+- include only employment states with `category = 'working'` and `is_active = 1`;
+- do not delete or alter historical HR/payroll/accounting evidence for employees who become non-working.
+
+Latest source commit: `b8adb067c3de34441192e63fff56c6b707b3aa22`.
+
+When continuing, pull/inspect the current `main` state first. Do not assume the next task from chat history; identify it from the current canonical documents and the user's new requirement.
