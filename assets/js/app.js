@@ -216,6 +216,24 @@
         const scrollX = window.scrollX || 0;
         const scrollY = window.scrollY || window.pageYOffset || 0;
         akTrace('renderResponse:captured-scroll', {scrollX, scrollY});
+        /*
+         * Server-side flash messages are feedback, not page content.
+         * Extract them before the live fragment swap. This prevents the
+         * notification observer/toast lifecycle from running while the
+         * viewport is being reconciled.
+         */
+        const responseFlashes = Array.from(
+            incoming.querySelectorAll('[data-ak-flash]')
+        ).map(function(node){
+            return {
+                type: node.getAttribute('data-ak-flash') || 'info',
+                message: String(node.getAttribute('data-ak-message') || node.textContent || '').trim()
+            };
+        });
+        incoming.querySelectorAll('[data-ak-flash]').forEach(function(node){
+            node.remove();
+        });
+
 
         /*
          * Preserve the current document's scrollable height during the root
@@ -280,30 +298,6 @@
          * is installed so the scroll range cannot collapse during the swap.
          */
         const originalMinHeight = current.style.minHeight;
-        const originalRootVisibility = document.documentElement.style.visibility;
-        const originalRootOverflowAnchor = document.documentElement.style.overflowAnchor;
-        const originalBodyOverflowAnchor = document.body ? document.body.style.overflowAnchor : '';
-        const originalContentOverflowAnchor = current.style.overflowAnchor;
-
-        /*
-         * The browser can repaint between DOM replacement and our final
-         * scroll restoration. That repaint is the visible "jump to top"
-         * reported on attendance: the viewport is temporarily allowed to
-         * reconcile against the changing DOM, then scrollTo() moves it back.
-         *
-         * Lock the affected paint interval instead of trying another timing
-         * guess. The page remains visible while the network request is in
-         * flight; visibility is suppressed only for the synchronous fragment
-         * swap/initialisation and final viewport restoration.
-         *
-         * Also disable scroll anchoring for this interval. This prevents the
-         * browser from applying an independent anchor correction while the
-         * .content subtree is replaced.
-         */
-        document.documentElement.style.visibility = 'hidden';
-        document.documentElement.style.overflowAnchor = 'none';
-        if (document.body) document.body.style.overflowAnchor = 'none';
-        current.style.overflowAnchor = 'none';
         current.style.minHeight = currentHeight + 'px';
         const fragment = document.createDocumentFragment();
         while (replacement.firstChild) fragment.appendChild(replacement.firstChild);
@@ -380,10 +374,16 @@
             current.style.minHeight = originalMinHeight;
         }
 
-        current.style.overflowAnchor = originalContentOverflowAnchor;
-        if (document.body) document.body.style.overflowAnchor = originalBodyOverflowAnchor;
-        document.documentElement.style.overflowAnchor = originalRootOverflowAnchor;
-        document.documentElement.style.visibility = originalRootVisibility;
+        /*
+         * The viewport has now been explicitly restored. Only now create the
+         * feedback toast; the flash nodes were never inserted into .content.
+         */
+        responseFlashes.forEach(function(flash){
+            if (!flash.message) return;
+            if (window.AKNotify && typeof window.AKNotify.toast === 'function') {
+                window.AKNotify.toast(flash.type, flash.message);
+            }
+        });
 
         if (AK_SCROLL_TRACE) {
             [0, 1, 16, 50, 150, 500].forEach(ms => setTimeout(() => akTrace('renderResponse:timer+'+ms), ms));
