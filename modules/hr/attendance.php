@@ -189,13 +189,13 @@ require_once __DIR__ . '/../../includes/header.php';
 <div class="att5-panel">
 <div class="att5-tools"><div class="att5-search"><i class="fas fa-search"></i><input id="att5Search" type="search" placeholder="البحث باسم الموظف..." autocomplete="off"></div><select id="att5Dept"><option value="">كل الأقسام</option><?php foreach($departments as $department): ?><option value="<?php echo htmlspecialchars((string)$department); ?>"><?php echo htmlspecialchars((string)$department); ?></option><?php endforeach; ?></select><select id="att5Status"><option value="">كل الحالات</option><option value="present"><?php echo e(t('hr.present')); ?></option><option value="late"><?php echo e(t('hr.late')); ?></option><option value="absent"><?php echo e(t('hr.absent')); ?></option><option value="on_leave"><?php echo e(t('hr.on_leave')); ?></option></select><button type="button" id="att5ApplyFilter" class="att5-filter-btn"><i class="fas fa-filter"></i> تطبيق</button><button type="button" id="att5ResetFilter" class="att5-filter-reset"><i class="fas fa-rotate-left"></i> إعادة ضبط</button></div>
 <div class="att5-selection" id="att5Selection"><select id="att5BulkMode" class="att5-mode"><option value="remote">عن بُعد</option><option value="onsite">من المكتب</option><option value="hybrid">هجين</option></select><span class="att5-count" id="att5Count">0 موظف محدد</span><button type="button" class="att5-btn att5-in" data-bulk-action="bulk_check_in"><i class="fas fa-right-to-bracket"></i> حضور</button><button type="button" class="att5-btn att5-out" data-bulk-action="bulk_check_out"><i class="fas fa-right-from-bracket"></i> انصراف</button><button type="button" class="att5-btn att5-absent" data-bulk-action="bulk_absent"><i class="fas fa-user-xmark"></i> غياب</button><button type="button" class="att5-btn att5-leave" data-bulk-action="bulk_leave"><i class="fas fa-calendar-day"></i> إجازة يدوية</button></div>
-<table class="att5-table"><thead><tr><th class="att5-check"><input type="checkbox" id="att5SelectAll" title="تحديد الموظفين المؤهلين"></th><th>الموظف</th><th>القسم</th><th>الحالة</th><th>الحضور</th><th>الانصراف</th><th>النمط</th><th>الإجراء</th></tr></thead><tbody id="att5Body">
-<?php if(!$rows): ?><tr><td colspan="8" class="att5-empty">لا يوجد موظفون نشطون.</td></tr><?php endif; ?>
+<table class="att5-table"><thead><tr><th class="att5-check"><input type="checkbox" id="att5SelectAll" title="تحديد الموظفين المؤهلين"></th><th>الموظف</th><th>الحالة</th><th>الحضور</th><th>الانصراف</th><th>النمط</th><th>الإجراء</th></tr></thead><tbody id="att5Body">
+<?php if(!$rows): ?><tr><td colspan="7" class="att5-empty">لا يوجد موظفون نشطون.</td></tr><?php endif; ?>
 <?php foreach($rows as $row): $employee=$row['employee']; $att=$row['attendance']; $status=$row['status']; $onLeave=($status==='on_leave'); $returned=$row['returned']; $initials=mb_substr((string)$employee['full_name'],0,1,'UTF-8'); $searchText=mb_strtolower((string)$employee['full_name'].' '.(string)($employee['dept_name']??''),'UTF-8'); ?>
 <tr class="<?php echo $onLeave?'att5-on-leave':''; ?>" data-name="<?php echo htmlspecialchars($searchText); ?>" data-dept="<?php echo htmlspecialchars((string)($employee['dept_name']??'')); ?>" data-status="<?php echo htmlspecialchars($status); ?>" data-eligible="<?php echo $onLeave?'0':'1'; ?>">
 <td class="att5-check"><input type="checkbox" class="att5-employee" value="<?php echo (int)$employee['id']; ?>" <?php echo $onLeave?'disabled aria-disabled="true" title="الموظف في إجازة معتمدة"':''; ?>></td>
 <td><div class="att5-person"><div class="att5-avatar"><?php echo e($initials); ?></div><div><div class="att5-name"><?php echo e($employee['full_name']); ?></div><?php if($onLeave && $row['leave']): ?><div class="att5-leave-note">إجازة معتمدة: <?php echo e($row['leave']['start_date']); ?> → <?php echo e($row['leave']['end_date']); ?></div><?php elseif($returned): ?><div class="att5-meta">تمت العودة من الإجازة لهذا اليوم</div><?php endif; ?></div></div></td>
-<td class="att5-dept"><?php echo e($employee['dept_name'] ?? '—'); ?></td>
+
 <td><?php if($status==='present'): ?><span class="att5-status p"><i class="fas fa-check"></i><?php echo e(t('hr.present')); ?></span><?php elseif($status==='late'): ?><span class="att5-status l"><i class="fas fa-clock"></i><?php echo e(t('hr.late')); ?></span><?php elseif($status==='on_leave'): ?><span class="att5-status lv"><i class="fas fa-calendar-day"></i><?php echo e(t('hr.on_leave')); ?></span><?php else: ?><span class="att5-status a"><i class="fas fa-user-xmark"></i><?php echo e(t('hr.absent')); ?></span><?php endif; ?></td>
 <td class="att5-time <?php echo empty($att['check_in'])?'empty':''; ?>"><?php echo e($att['check_in'] ?? '—'); ?></td><td class="att5-time <?php echo empty($att['check_out'])?'empty':''; ?>"><?php echo e($att['check_out'] ?? '—'); ?></td><td><?php echo !empty($att['work_mode']) ? '<span class="att5-mode-label">'.e($att['work_mode']).'</span>' : '<span class="att5-time empty">—</span>'; ?></td>
 <td><div class="att5-row-actions">
@@ -217,6 +217,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
     // Approved-leave employees are kept out of the attendance roster entirely.
     // Their existing return-from-leave form is moved into a dedicated panel.
+    const escapeHtml=(value)=>String(value).replace(/[&<>'"]/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','\"':'&quot;'}[ch]));
     const leaveRows=Array.from(body.querySelectorAll('tr[data-status="on_leave"]'));
     if(leaveRows.length){
         const panel=document.createElement('div');
@@ -231,7 +232,8 @@ document.addEventListener('DOMContentLoaded', function(){
         leaveRows.forEach(row=>{
             const cells=row.children;
             const tr=document.createElement('tr');
-            tr.innerHTML='<td>'+cells[1].innerHTML+'</td><td>'+cells[2].innerHTML+'</td><td>'+cells[3].innerHTML+'</td><td>'+cells[7].innerHTML+'</td>';
+            const department=row.dataset.dept || '—';
+            tr.innerHTML='<td>'+cells[1].innerHTML+'</td><td>'+escapeHtml(department)+'</td><td>'+cells[2].innerHTML+'</td><td>'+cells[6].innerHTML+'</td>';
             leaveBody.appendChild(tr);
             row.remove();
         });
