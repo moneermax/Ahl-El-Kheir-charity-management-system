@@ -106,135 +106,78 @@
 
         const scrollX = window.scrollX || 0;
         const scrollY = window.scrollY || window.pageYOffset || 0;
-        const debugScroll = window.__AKScrollDebug === true;
-        const debugStartedAt = performance.now();
-        const debugActive = document.activeElement;
-        const debugActiveInfo = debugActive ? {
-            tag: debugActive.tagName,
-            id: debugActive.id || '',
-            name: debugActive.getAttribute('name') || '',
-            cls: typeof debugActive.className === 'string' ? debugActive.className : ''
-        } : null;
 
-        if (debugScroll) {
-            console.groupCollapsed('[AK scroll diagnosis] renderResponse');
-            console.log('before mutation', {
-                scrollX, scrollY,
-                activeElement: debugActiveInfo,
-                documentHeight: document.documentElement.scrollHeight,
-                viewportHeight: window.innerHeight
-            });
-            console.groupEnd();
+        /*
+         * Build the complete replacement content off-document first.
+         * Never empty the live .content element: doing so can collapse the
+         * document's scrollable height while the user is positioned deep in
+         * the page and lets the browser clamp the viewport.
+         */
+        const replacement = document.importNode(incoming, true);
+
+        /*
+         * Preserve focus where possible. The submitted control normally
+         * disappears with the old fragment, so remember a stable identity
+         * before replacing the root.
+         */
+        const active = document.activeElement;
+        let activeDescriptor = null;
+        if (active && current.contains(active)) {
+            if (active.id) {
+                activeDescriptor = {type: 'id', value: active.id};
+            } else {
+                const name = active.getAttribute('name');
+                if (name) {
+                    activeDescriptor = {
+                        type: 'name',
+                        value: name,
+                        tag: active.tagName
+                    };
+                }
+            }
         }
 
         /*
-         * Replacing the content subtree can temporarily change document
-         * geometry. If the browser paints during that mutation it may clamp
-         * the viewport to the top before the replacement is complete.
-         *
-         * Freeze the current viewport for the duration of the mutation and
-         * restore it synchronously before the browser gets a chance to paint.
-         * This is intentionally local to the content swap; there is no
-         * global scroll restoration after navigation.
+         * Replace the .content root itself in one DOM operation. The old
+         * subtree is never emptied, and the new subtree is already complete
+         * before it enters the document.
          */
-        const root = document.documentElement;
-        const body = document.body;
-        const previousScrollBehavior = root.style.scrollBehavior;
-        const previousBodyOverflowAnchor = body.style.overflowAnchor;
-        root.style.scrollBehavior = 'auto';
-        body.style.overflowAnchor = 'none';
+        current.replaceWith(replacement);
 
-        try {
-            if (debugScroll) console.log('[AK scroll diagnosis] before replaceChildren', {
-                scrollY: window.scrollY,
-                activeElement: document.activeElement ? {
-                    tag: document.activeElement.tagName,
-                    id: document.activeElement.id || '',
-                    name: document.activeElement.getAttribute('name') || ''
-                } : null
-            });
-
-            current.replaceChildren(...Array.from(incoming.childNodes).map(function(node){
-                return document.importNode(node, true);
-            }));
-
-            if (debugScroll) console.log('[AK scroll diagnosis] after replaceChildren', {
-                elapsed: performance.now() - debugStartedAt,
-                scrollY: window.scrollY,
-                activeElement: document.activeElement ? {
-                    tag: document.activeElement.tagName,
-                    id: document.activeElement.id || '',
-                    name: document.activeElement.getAttribute('name') || ''
-                } : null,
-                documentHeight: document.documentElement.scrollHeight
-            });
-
-            if (parsed.title) document.title = parsed.title;
-            if (finalUrl.href !== window.location.href) {
-                history.replaceState(history.state, '', finalUrl.href);
-            }
-
-            runFragmentScripts(current);
-
-            if (debugScroll) console.log('[AK scroll diagnosis] after fragment scripts', {
-                elapsed: performance.now() - debugStartedAt,
-                scrollY: window.scrollY,
-                activeElement: document.activeElement ? {
-                    tag: document.activeElement.tagName,
-                    id: document.activeElement.id || '',
-                    name: document.activeElement.getAttribute('name') || ''
-                } : null,
-                documentHeight: document.documentElement.scrollHeight
-            });
-
-            /*
-             * Restore immediately after the complete fragment lifecycle.
-             * The double synchronous call covers browsers that recalculate
-             * layout once more while fragment scripts initialize.
-             */
-            window.scrollTo(scrollX, scrollY);
-            document.documentElement.scrollTop = scrollY;
-            document.body.scrollTop = scrollY;
-
-            if (debugScroll) {
-                console.log('[AK scroll diagnosis] after synchronous restore', {
-                    elapsed: performance.now() - debugStartedAt,
-                    scrollY: window.scrollY,
-                    activeElement: document.activeElement ? {
-                        tag: document.activeElement.tagName,
-                        id: document.activeElement.id || '',
-                        name: document.activeElement.getAttribute('name') || ''
-                    } : null
-                });
-                requestAnimationFrame(function(){
-                    console.log('[AK scroll diagnosis] next animation frame', {
-                        elapsed: performance.now() - debugStartedAt,
-                        scrollY: window.scrollY,
-                        documentHeight: document.documentElement.scrollHeight,
-                        activeElement: document.activeElement ? {
-                            tag: document.activeElement.tagName,
-                            id: document.activeElement.id || '',
-                            name: document.activeElement.getAttribute('name') || ''
-                        } : null
-                    });
-                });
-                setTimeout(function(){
-                    console.log('[AK scroll diagnosis] timeout 0', {
-                        elapsed: performance.now() - debugStartedAt,
-                        scrollY: window.scrollY,
-                        documentHeight: document.documentElement.scrollHeight,
-                        activeElement: document.activeElement ? {
-                            tag: document.activeElement.tagName,
-                            id: document.activeElement.id || '',
-                            name: document.activeElement.getAttribute('name') || ''
-                        } : null
-                    });
-                }, 0);
-            }
-        } finally {
-            root.style.scrollBehavior = previousScrollBehavior;
-            body.style.overflowAnchor = previousBodyOverflowAnchor;
+        if (parsed.title) document.title = parsed.title;
+        if (finalUrl.href !== window.location.href) {
+            history.replaceState(history.state, '', finalUrl.href);
         }
+
+        runFragmentScripts(replacement);
+
+        if (activeDescriptor) {
+            let nextActive = null;
+            if (activeDescriptor.type === 'id') {
+                nextActive = replacement.querySelector('#' + CSS.escape(activeDescriptor.value));
+            } else {
+                nextActive = Array.from(
+                    replacement.querySelectorAll(
+                        activeDescriptor.tag + '[name="' +
+                        CSS.escape(activeDescriptor.value) + '"]'
+                    )
+                )[0] || null;
+            }
+            if (nextActive && typeof nextActive.focus === 'function') {
+                try {
+                    nextActive.focus({preventScroll: true});
+                } catch (e) {
+                    try { nextActive.focus(); } catch (e2) {}
+                }
+            }
+        }
+
+        /*
+         * The document never intentionally navigated, but fragment scripts
+         * may alter layout. Restore the exact pre-submit viewport after the
+         * complete fragment lifecycle.
+         */
+        window.scrollTo({left: scrollX, top: scrollY, behavior: 'auto'});
     }
 
     async function refreshSamePage() {
@@ -327,24 +270,7 @@
         });
     });
 
-    /*
-     * Temporary diagnostic hook for the current same-page POST jump.
-     * It is opt-in and inert unless __AKScrollDebug is explicitly enabled
-     * from DevTools, so it has no production behavior by default.
-     */
-    window.__AKEnableScrollDiagnosis = function(){
-        window.__AKScrollDebug = true;
-        console.log('[AK scroll diagnosis] enabled. Reproduce the action now.');
-        console.log('[AK scroll diagnosis] initial state', {
-            scrollY: window.scrollY,
-            documentHeight: document.documentElement.scrollHeight,
-            activeElement: document.activeElement ? {
-                tag: document.activeElement.tagName,
-                id: document.activeElement.id || '',
-                name: document.activeElement.getAttribute('name') || ''
-            } : null
-        });
-    };
+
 })();
 
 /* Prevent accidental mouse-wheel changes on every numeric input in the system.
