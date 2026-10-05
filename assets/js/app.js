@@ -106,6 +106,26 @@
 
         const scrollX = window.scrollX || 0;
         const scrollY = window.scrollY || window.pageYOffset || 0;
+        const debugScroll = window.__AKScrollDebug === true;
+        const debugStartedAt = performance.now();
+        const debugActive = document.activeElement;
+        const debugActiveInfo = debugActive ? {
+            tag: debugActive.tagName,
+            id: debugActive.id || '',
+            name: debugActive.getAttribute('name') || '',
+            cls: typeof debugActive.className === 'string' ? debugActive.className : ''
+        } : null;
+
+        if (debugScroll) {
+            console.groupCollapsed('[AK scroll diagnosis] renderResponse');
+            console.log('before mutation', {
+                scrollX, scrollY,
+                activeElement: debugActiveInfo,
+                documentHeight: document.documentElement.scrollHeight,
+                viewportHeight: window.innerHeight
+            });
+            console.groupEnd();
+        }
 
         /*
          * Replacing the content subtree can temporarily change document
@@ -125,9 +145,29 @@
         body.style.overflowAnchor = 'none';
 
         try {
+            if (debugScroll) console.log('[AK scroll diagnosis] before replaceChildren', {
+                scrollY: window.scrollY,
+                activeElement: document.activeElement ? {
+                    tag: document.activeElement.tagName,
+                    id: document.activeElement.id || '',
+                    name: document.activeElement.getAttribute('name') || ''
+                } : null
+            });
+
             current.replaceChildren(...Array.from(incoming.childNodes).map(function(node){
                 return document.importNode(node, true);
             }));
+
+            if (debugScroll) console.log('[AK scroll diagnosis] after replaceChildren', {
+                elapsed: performance.now() - debugStartedAt,
+                scrollY: window.scrollY,
+                activeElement: document.activeElement ? {
+                    tag: document.activeElement.tagName,
+                    id: document.activeElement.id || '',
+                    name: document.activeElement.getAttribute('name') || ''
+                } : null,
+                documentHeight: document.documentElement.scrollHeight
+            });
 
             if (parsed.title) document.title = parsed.title;
             if (finalUrl.href !== window.location.href) {
@@ -135,6 +175,17 @@
             }
 
             runFragmentScripts(current);
+
+            if (debugScroll) console.log('[AK scroll diagnosis] after fragment scripts', {
+                elapsed: performance.now() - debugStartedAt,
+                scrollY: window.scrollY,
+                activeElement: document.activeElement ? {
+                    tag: document.activeElement.tagName,
+                    id: document.activeElement.id || '',
+                    name: document.activeElement.getAttribute('name') || ''
+                } : null,
+                documentHeight: document.documentElement.scrollHeight
+            });
 
             /*
              * Restore immediately after the complete fragment lifecycle.
@@ -144,6 +195,42 @@
             window.scrollTo(scrollX, scrollY);
             document.documentElement.scrollTop = scrollY;
             document.body.scrollTop = scrollY;
+
+            if (debugScroll) {
+                console.log('[AK scroll diagnosis] after synchronous restore', {
+                    elapsed: performance.now() - debugStartedAt,
+                    scrollY: window.scrollY,
+                    activeElement: document.activeElement ? {
+                        tag: document.activeElement.tagName,
+                        id: document.activeElement.id || '',
+                        name: document.activeElement.getAttribute('name') || ''
+                    } : null
+                });
+                requestAnimationFrame(function(){
+                    console.log('[AK scroll diagnosis] next animation frame', {
+                        elapsed: performance.now() - debugStartedAt,
+                        scrollY: window.scrollY,
+                        documentHeight: document.documentElement.scrollHeight,
+                        activeElement: document.activeElement ? {
+                            tag: document.activeElement.tagName,
+                            id: document.activeElement.id || '',
+                            name: document.activeElement.getAttribute('name') || ''
+                        } : null
+                    });
+                });
+                setTimeout(function(){
+                    console.log('[AK scroll diagnosis] timeout 0', {
+                        elapsed: performance.now() - debugStartedAt,
+                        scrollY: window.scrollY,
+                        documentHeight: document.documentElement.scrollHeight,
+                        activeElement: document.activeElement ? {
+                            tag: document.activeElement.tagName,
+                            id: document.activeElement.id || '',
+                            name: document.activeElement.getAttribute('name') || ''
+                        } : null
+                    });
+                }, 0);
+            }
         } finally {
             root.style.scrollBehavior = previousScrollBehavior;
             body.style.overflowAnchor = previousBodyOverflowAnchor;
@@ -168,6 +255,17 @@
 
     document.addEventListener('submit', function(event){
         if (event.defaultPrevented) return;
+
+        if (window.__AKScrollDebug === true && samePagePost(event.target)) {
+            console.log('[AK scroll diagnosis] submit intercepted', {
+                scrollY: window.scrollY,
+                activeElement: document.activeElement ? {
+                    tag: document.activeElement.tagName,
+                    id: document.activeElement.id || '',
+                    name: document.activeElement.getAttribute('name') || ''
+                } : null
+            });
+        }
 
         const form = event.target;
         if (!samePagePost(form)) return;
@@ -228,6 +326,25 @@
             if (submitter) submitter.disabled = false;
         });
     });
+
+    /*
+     * Temporary diagnostic hook for the current same-page POST jump.
+     * It is opt-in and inert unless __AKScrollDebug is explicitly enabled
+     * from DevTools, so it has no production behavior by default.
+     */
+    window.__AKEnableScrollDiagnosis = function(){
+        window.__AKScrollDebug = true;
+        console.log('[AK scroll diagnosis] enabled. Reproduce the action now.');
+        console.log('[AK scroll diagnosis] initial state', {
+            scrollY: window.scrollY,
+            documentHeight: document.documentElement.scrollHeight,
+            activeElement: document.activeElement ? {
+                tag: document.activeElement.tagName,
+                id: document.activeElement.id || '',
+                name: document.activeElement.getAttribute('name') || ''
+            } : null
+        });
+    };
 })();
 
 /* Prevent accidental mouse-wheel changes on every numeric input in the system.
