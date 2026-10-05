@@ -1277,33 +1277,61 @@ $langSwitchUrl =
 
 <script>
 (function(){
-    try{
-        var raw=sessionStorage.getItem('akGlobalScrollRestore');
-        if(!raw)return;
-        var state=JSON.parse(raw);
-        var y=Number(state&&state.y), x=Number(state&&state.x)||0;
-        var path=String(state&&state.path||'');
-        var age=Date.now()-Number(state&&state.at||0);
-        if(path!==window.location.pathname || !Number.isFinite(y) || y<0 || age>15000){
+    /*
+     * Scroll restoration must happen before the first visible paint.
+     * Native browser restoration is disabled so it cannot overwrite our
+     * position after the document has been rendered.
+     */
+    try {
+        if ('scrollRestoration' in history) {
+            history.scrollRestoration = 'manual';
+        }
+
+        var raw = sessionStorage.getItem('akGlobalScrollRestore');
+        if (!raw) return;
+
+        var state = JSON.parse(raw);
+        var y = Number(state && state.y);
+        var x = Number(state && state.x) || 0;
+        var path = String(state && state.path || '');
+        var age = Date.now() - Number(state && state.at || 0);
+
+        if (
+            path !== window.location.pathname ||
+            !Number.isFinite(y) ||
+            y < 0 ||
+            age > 15000
+        ) {
             sessionStorage.removeItem('akGlobalScrollRestore');
             return;
         }
-        document.documentElement.setAttribute('data-ak-scroll-restoring','1');
-        document.documentElement.style.visibility='hidden';
-        var restore=function(){
-            window.scrollTo(x,y);
-            try{sessionStorage.removeItem('akGlobalScrollRestore');}catch(e){}
-            document.documentElement.style.visibility='';
-            document.documentElement.removeAttribute('data-ak-scroll-restoring');
+
+        /*
+         * The html element is hidden immediately, before <body> is parsed.
+         * Therefore the user cannot see the browser's initial position.
+         */
+        document.documentElement.style.visibility = 'hidden';
+        document.documentElement.setAttribute('data-ak-scroll-restoring', '1');
+
+        var restore = function () {
+            window.scrollTo(x, y);
+
+            /*
+             * One extra frame handles pages whose final layout height changes
+             * after images/widgets/scripts finish loading.
+             */
+            window.requestAnimationFrame(function () {
+                window.scrollTo(x, y);
+                sessionStorage.removeItem('akGlobalScrollRestore');
+                document.documentElement.style.visibility = '';
+                document.documentElement.removeAttribute('data-ak-scroll-restoring');
+            });
         };
-        if(document.readyState==='loading'){
-            document.addEventListener('DOMContentLoaded',function(){window.requestAnimationFrame(restore);},{once:true});
-        }else{
-            window.requestAnimationFrame(restore);
-        }
-    }catch(e){
-        try{sessionStorage.removeItem('akGlobalScrollRestore');}catch(ignore){}
-        document.documentElement.style.visibility='';
+
+        window.addEventListener('load', restore, { once: true });
+    } catch (e) {
+        try { sessionStorage.removeItem('akGlobalScrollRestore'); } catch (ignore) {}
+        document.documentElement.style.visibility = '';
         document.documentElement.removeAttribute('data-ak-scroll-restoring');
     }
 })();
