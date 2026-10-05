@@ -154,28 +154,12 @@
          */
         const currentHeight = Math.ceil(current.getBoundingClientRect().height);
         const replacement = document.importNode(incoming, true);
-
-        /*
-         * The .content element is not the document's scroll container, but it
-         * is the large flex item that contains the entire changing viewport
-         * content. Replacing that element itself invalidates the browser's
-         * layout/scroll-anchor context. Keep the live .content node in place
-         * and replace only its children instead.
-         *
-         * Also temporarily exclude this changing subtree from CSS scroll
-         * anchoring. Otherwise the browser is allowed to compensate for the
-         * large DOM/layout mutation while we are deliberately preserving the
-         * user's viewport.
-         */
-        const originalMinHeight = current.style.minHeight;
-        const originalOverflowAnchor = current.style.overflowAnchor;
-        current.style.minHeight = currentHeight + 'px';
-        current.style.overflowAnchor = 'none';
+        replacement.style.minHeight = currentHeight + 'px';
 
         /*
          * Preserve focus where possible. The submitted control normally
          * disappears with the old fragment, so remember a stable identity
-         * before replacing the children.
+         * before replacing the root.
          */
         const active = document.activeElement;
         let activeDescriptor = null;
@@ -208,13 +192,13 @@
         }
 
         /*
-         * Keep the existing .content root and replace its children in one DOM
-         * operation. This preserves the root's place in the document/flex
-         * layout and avoids invalidating the browser's scroll context.
+         * Replace the .content root itself in one DOM operation. The old
+         * subtree is never emptied, and the new subtree is already complete
+         * before it enters the document.
          */
-        akTrace('renderResponse:before-replace-children');
-        current.replaceChildren(...Array.from(replacement.childNodes));
-        akTrace('renderResponse:after-replace-children');
+        akTrace('renderResponse:before-replace');
+        current.replaceWith(replacement);
+        akTrace('renderResponse:after-replace');
 
         if (parsed.title) document.title = parsed.title;
         if (finalUrl.href !== window.location.href) {
@@ -222,17 +206,17 @@
         }
 
         akTrace('renderResponse:before-fragment-scripts');
-        runFragmentScripts(current);
+        runFragmentScripts(replacement);
         akTrace('renderResponse:after-fragment-scripts');
 
         akTrace('renderResponse:before-focus-restore');
         if (activeDescriptor) {
             let nextActive = null;
             if (activeDescriptor.type === 'id') {
-                nextActive = current.querySelector('#' + CSS.escape(activeDescriptor.value));
+                nextActive = replacement.querySelector('#' + CSS.escape(activeDescriptor.value));
             } else {
                 nextActive = Array.from(
-                    current.querySelectorAll(
+                    replacement.querySelectorAll(
                         activeDescriptor.tag + '[name="' +
                         CSS.escape(activeDescriptor.value) + '"]'
                     )
@@ -259,27 +243,12 @@
          */
         akTrace('renderResponse:before-scrollTo');
         const requiredHeight = Math.ceil(scrollY + window.innerHeight);
-        if (current.scrollHeight < requiredHeight) {
+        if (replacement.scrollHeight < requiredHeight) {
             replacement.style.minHeight = requiredHeight + 'px';
         }
 
         window.scrollTo({left: scrollX, top: scrollY, behavior: 'auto'});
         akTrace('renderResponse:after-scrollTo');
-
-        /*
-         * Remove the temporary layout guards when the incoming content is
-         * tall enough to support the preserved viewport. If it is genuinely
-         * shorter, retain only the minimum height required to keep the
-         * requested position valid rather than allowing the browser to clamp
-         * the viewport.
-         */
-        if (current.scrollHeight >= requiredHeight) {
-            current.style.minHeight = originalMinHeight;
-        } else {
-            current.style.minHeight = Math.max(requiredHeight, currentHeight) + 'px';
-        }
-        current.style.overflowAnchor = originalOverflowAnchor;
-
         if (AK_SCROLL_TRACE) {
             [0, 1, 16, 50, 150, 500].forEach(ms => setTimeout(() => akTrace('renderResponse:timer+'+ms), ms));
         }
