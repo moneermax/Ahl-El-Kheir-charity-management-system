@@ -144,6 +144,18 @@
         }
 
         /*
+         * The submit button is normally the focused element when this code
+         * runs. Removing a focused element from a deeply scrolled document
+         * can make the browser move the viewport as part of focus cleanup,
+         * independently of scroll restoration. Explicitly blur it BEFORE the
+         * DOM swap so the browser has no disappearing focused control to
+         * reconcile during replacement.
+         */
+        if (active && typeof active.blur === 'function') {
+            try { active.blur(); } catch (e) {}
+        }
+
+        /*
          * Replace the .content root itself in one DOM operation. The old
          * subtree is never emptied, and the new subtree is already complete
          * before it enters the document.
