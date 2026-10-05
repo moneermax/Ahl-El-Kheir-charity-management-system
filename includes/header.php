@@ -880,15 +880,15 @@ $langSwitchUrl =
 
         @media (max-width: 991.98px) {
             .ak-sidebar-toggle {
-                width: 28px;
+                width: 32px;
                 height: 104px;
                 right: 0;
-                border-radius: 14px 0 0 14px;
+                border-radius: 16px 0 0 16px;
             }
 
             body.sidebar-open .ak-sidebar-toggle {
                 right: var(--ak-sidebar-width);
-                border-radius: 0;
+                border-radius: 16px 0 0 16px;
             }
 
             [dir="ltr"] .ak-sidebar-toggle {
@@ -899,7 +899,7 @@ $langSwitchUrl =
 
             [dir="ltr"] body.sidebar-open .ak-sidebar-toggle {
                 left: var(--ak-sidebar-width);
-                border-radius: 0;
+                border-radius: 0 16px 16px 0;
             }
 
             .sidebar-overlay {
@@ -926,24 +926,26 @@ $langSwitchUrl =
             }
 
             .ak-sidebar-toggle {
-                width: 28px;
+                width: 32px;
                 height: 104px;
                 right: 0;
-                border-radius: 14px 0 0 14px;
+                border-radius: 16px 0 0 16px;
             }
 
             body.sidebar-open .ak-sidebar-toggle {
                 right: var(--ak-sidebar-width);
+                border-radius: 16px 0 0 16px;
             }
 
             [dir="ltr"] .ak-sidebar-toggle {
                 right: auto;
                 left: 0;
-                border-radius: 0 14px 14px 0;
+                border-radius: 0 16px 16px 0;
             }
 
             [dir="ltr"] body.sidebar-open .ak-sidebar-toggle {
                 left: var(--ak-sidebar-width);
+                border-radius: 0 16px 16px 0;
             }
 
             .main-area {
