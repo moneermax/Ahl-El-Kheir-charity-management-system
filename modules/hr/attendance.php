@@ -344,19 +344,26 @@ document.addEventListener('DOMContentLoaded', function(){
             const data=await res.json();
             if(!res.ok||!data.ok)throw new Error(data.message||'تعذر تنفيذ الإجراء.');
             if(window.Swal)await Swal.fire({icon:data.skipped>0?'warning':'success',title:'تم التنفيذ',text:data.message,confirmButtonText:'حسناً'});
-            location.reload();
+            if (window.AKSamePage && typeof window.AKSamePage.refresh === 'function') await window.AKSamePage.refresh();
+            else location.reload();
         }catch(err){
             if(window.Swal)Swal.fire({icon:'error',title:'تعذر التنفيذ',text:err.message,confirmButtonText:'حسناً'});else alert(err.message);
         }
     }));
 
     document.querySelectorAll('.att5-return-form').forEach(form=>form.addEventListener('submit',async e=>{
+        if(form.dataset.akSkipConfirmation==='1'){
+            delete form.dataset.akSkipConfirmation;
+            return;
+        }
         e.preventDefault();
         if(window.Swal){
             const r=await Swal.fire({icon:'question',title:'عودة من الإجازة',text:'هل تؤكد عودة الموظف من الإجازة لهذا التاريخ؟ بعد التأكيد سيصبح مؤهلاً لتسجيل الحضور.',showCancelButton:true,confirmButtonText:'تأكيد العودة',cancelButtonText:'إلغاء'});
             if(!r.isConfirmed)return;
         }
-        form.submit();
+        form.dataset.akSkipConfirmation='1';
+        if (typeof form.requestSubmit === 'function') form.requestSubmit();
+        else form.submit();
     }));
 
     // Initial cleanup also protects against browser-restored checkbox state.
