@@ -314,3 +314,27 @@ Next gate: **audit preservation runtime verification**. The audit test must prov
 Open evidence gaps remain:
 - same employee with multiple eligible advances;
 - true two-process concurrent execution.
+
+## 2026-10-06 — Audit-preservation runtime gate prepared
+
+The notification failure-isolation gate passed and was closed. The next gate is audit preservation.
+
+Direct inspection of the waiver execution source and additive waiver migration confirmed:
+- original disbursement journal is never updated/deleted;
+- historical payroll repayment rows are re-read/locked for validation and are not rewritten;
+- original payroll accounting journal is not rewritten;
+- refund accounting and waiver accounting use separate journal entries;
+- original repayment schedule rows are preserved and waiver overlays are additive;
+- waiver decision/item/audit evidence is additive.
+
+New rollback-only harness:
+`tools\\run_salary_advance_gm_waiver_audit_preservation_tests.php`
+
+It requires an existing disbursed request with a paid historical payroll repayment, snapshots the actual historical journals, repayment row, schedules and request audit rows, executes the real FM preparation -> GM approval -> FM execution path inside one caller-owned transaction, verifies historical evidence remains unchanged while separate waiver evidence is created, then rolls the fixture back and verifies the complete pre-test evidence set is restored.
+
+**Runtime status: PENDING USER EXECUTION.**
+
+Exact next command:
+`php tools\\run_salary_advance_gm_waiver_audit_preservation_tests.php`
+
+If the harness fails, stop and inspect the exact failure. Do not speculate and do not rerun closed gates.
