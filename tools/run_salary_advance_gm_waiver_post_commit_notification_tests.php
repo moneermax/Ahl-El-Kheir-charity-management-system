@@ -43,6 +43,46 @@ function findNotificationUserByRole(PDO $pdo, array $roleCodes, int $excludeUser
     return $row ? (int)$row['id'] : null;
 }
 
+function notificationReferenceColumnsAvailable(PDO $pdo): bool
+{
+    $row = dbFetchOne(
+        "SELECT COUNT(*) AS c
+         FROM information_schema.columns
+         WHERE table_schema = DATABASE()
+           AND table_name = 'notifications'
+           AND column_name IN ('reference_id', 'reference_type')"
+    );
+    return (int)($row['c'] ?? 0) === 2;
+}
+
+function findNotificationByEvent(PDO $pdo, int $userId, int $decisionId, string $referenceType, string $title, string $link, bool $hasReferenceColumns): ?int
+{
+    if ($hasReferenceColumns) {
+        $row = dbFetchOne(
+            "SELECT id FROM notifications
+             WHERE recipient_user_id = ?
+               AND reference_id = ?
+               AND reference_type = ?
+               AND is_read = 0
+             ORDER BY id DESC
+             LIMIT 1",
+            [$userId, $decisionId, $referenceType]
+        );
+    } else {
+        $row = dbFetchOne(
+            "SELECT id FROM notifications
+             WHERE recipient_user_id = ?
+               AND title = ?
+               AND link = ?
+               AND is_read = 0
+             ORDER BY id DESC
+             LIMIT 1",
+            [$userId, $title, $link]
+        );
+    }
+    return $row ? (int)$row['id'] : null;
+}
+
 function findFixture(PDO $pdo): ?array
 {
     return dbFetchOne(
@@ -84,6 +124,9 @@ if (!$fixture || !$fmUserId || !$gmUserId || !$refundAccountId || !$expenseAccou
 }
 
 $decisionId = 0;
+$gmNotificationId = 0;
+$fmNotificationId = 0;
+$hasReferenceColumns = notificationReferenceColumnsAvailable($pdo);
 
 try {
     $effectiveMonth = date('Y-m-01', strtotime((string)$fixture['scheduled_month']));
@@ -111,19 +154,17 @@ try {
         throw new RuntimeException('Committed preparation decision was not found in pending_gm state.');
     }
 
-    $gmNotification = dbFetchOne(
-        "SELECT id
-         FROM notifications
-         WHERE recipient_user_id = ?
-           AND reference_id = ?
-           AND reference_type = 'salary_advance_waiver_gm_review'
-           AND is_read = 0
-         ORDER BY id DESC
-         LIMIT 1",
-        [$gmUserId, $decisionId]
+    $gmNotificationId = findNotificationByEvent(
+        $pdo,
+        $gmUserId,
+        $decisionId,
+        'salary_advance_waiver_gm_review',
+        'قرار إعفاء سلف الرواتب بانتظار اعتمادك',
+        APP_URL . 'modules/hr/salary_advance_waiver_gm.php',
+        $hasReferenceColumns
     );
 
-    if (!$gmNotification) {
+    if ($gmNotificationId <= 0) {
         throw new RuntimeException('GM preparation notification was not visible after the preparation commit.');
     }
 
@@ -148,19 +189,17 @@ try {
         throw new RuntimeException('Committed GM approval was not found in approved_by_gm state.');
     }
 
-    $fmNotification = dbFetchOne(
-        "SELECT id
-         FROM notifications
-         WHERE recipient_user_id = ?
-           AND reference_id = ?
-           AND reference_type = 'salary_advance_waiver_fm_execution'
-           AND is_read = 0
-         ORDER BY id DESC
-         LIMIT 1",
-        [$fmUserId, $decisionId]
+    $fmNotificationId = findNotificationByEvent(
+        $pdo,
+        $fmUserId,
+        $decisionId,
+        'salary_advance_waiver_fm_execution',
+        'اعتماد GM لقرار إعفاء سلف الرواتب',
+        APP_URL . 'modules/hr/salary_advance_waiver_fm.php',
+        $hasReferenceColumns
     );
 
-    if (!$fmNotification) {
+    if ($fmNotificationId <= 0) {
         throw new RuntimeException('FM approval notification was not visible after the GM approval commit.');
     }
 
@@ -169,11 +208,12 @@ try {
     // No financial execution occurred. Remove only this harness's committed rows.
     $pdo->beginTransaction();
 
-    $pdo->prepare(
-        "DELETE FROM notifications
-         WHERE reference_id = ?
-           AND reference_type IN ('salary_advance_waiver_gm_review','salary_advance_waiver_fm_execution')"
-    )->execute([$decisionId]);
+    if ($gmNotificationId > 0) {
+        $pdo->prepare("DELETE FROM notifications WHERE id = ?")->execute([$gmNotificationId]);
+    }
+    if ($fmNotificationId > 0) {
+        $pdo->prepare("DELETE FROM notifications WHERE id = ?")->execute([$fmNotificationId]);
+    }
 
     $pdo->prepare(
         "DELETE FROM audit_log
@@ -205,15 +245,15 @@ try {
         [$decisionId]
     )['c'] ?? 0);
 
-    $remainingNotifications = (int)(dbFetchOne(
-        "SELECT COUNT(*) AS c
-         FROM notifications
-         WHERE reference_id = ?
-           AND reference_type IN ('salary_advance_waiver_gm_review','salary_advance_waiver_fm_execution')",
-        [$decisionId]
-    )['c'] ?? 0);
+    $remainingNotificationIds = 0;
+    if ($gmNotificationId > 0) {
+        $remainingNotificationIds += (int)(dbFetchOne("SELECT COUNT(*) AS c FROM notifications WHERE id = ?", [$gmNotificationId])['c'] ?? 0);
+    }
+    if ($fmNotificationId > 0) {
+        $remainingNotificationIds += (int)(dbFetchOne("SELECT COUNT(*) AS c FROM notifications WHERE id = ?", [$fmNotificationId])['c'] ?? 0);
+    }
 
-    if ($remaining !== 0 || $remainingNotifications !== 0) {
+    if ($remaining !== 0 || $remainingNotificationIds !== 0) {
         throw new RuntimeException('Committed notification-test cleanup left residual rows.');
     }
 
