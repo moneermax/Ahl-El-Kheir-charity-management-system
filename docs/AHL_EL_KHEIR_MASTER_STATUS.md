@@ -2133,3 +2133,11 @@ The dedicated rollback-only refund harness passed locally on `main` using the re
 
 **Verification status:** the paid-deduction refund gate is runtime verified. GM Salary Advance Waiver remains open pending the remaining verification matrix; this does not reopen Salary Advance Stages 1–6.
 
+
+
+## 2026-10-06 — GM Salary Advance Waiver: Undistributed Cancellation Gate Passed
+
+The dedicated rollback-only cancellation harness passed locally on `main` for `SAR-2026-00009` (previous status `approved`). FM preparation, GM approval, and FM execution resulted in `cancelled` with **zero accounting journals** and **zero waiver schedule overlays**. Rollback cleanup restored waiver decision/item/overlay/journal counts to zero and restored the request's original state.
+
+**Verification status:** the undistributed-request cancellation gate is runtime verified. GM Salary Advance Waiver remains open pending the remaining verification matrix; this does not reopen Salary Advance Stages 1–6.
+
