@@ -504,7 +504,7 @@
         }).finally(function(){
             delete form.dataset.akSubmitting;
         });
-    });
+    }, true);
 
 
 })();
