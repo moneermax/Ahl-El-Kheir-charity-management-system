@@ -2185,3 +2185,17 @@ Rollback-only runtime verification passed for the blanket decision workflow:
 The live fixture had no employee with multiple eligible advances, so the system's blanket-all-eligible behavior is proven across multiple requests/employees, but the specific same-employee multiple-advance scenario is not yet runtime-proven.
 
 **Verification status:** blanket scope/execution is closed. Multiple-advance-for-one-employee remains an explicit open test condition. Salary Advance Stages 1–6 remain closed.
+
+## 2026-10-06 — GM Salary Advance Waiver: Duplicate Execution Gate Passed
+
+The dedicated rollback-only duplicate-execution harness passed locally on `main`:
+
+- `SAR-2026-00004`, decision ID `9`.
+- First waiver execution succeeded.
+- A second execution attempt against the same decision was rejected.
+- No additional waiver/refund journal was created by the rejected duplicate attempt.
+- Rollback cleanup returned waiver decision/item/schedule-overlay counts to zero.
+
+This closes the sequential duplicate-execution runtime gate. The source inspection also confirms the decision row is locked with `SELECT ... FOR UPDATE` before the `approved_by_gm` status check, providing the transaction-level serialization point for concurrent attempts. A separate two-process concurrent-commit runtime test has not been claimed.
+
+**Current GM Salary Advance Waiver status:** still open for post-commit notification behavior/failure isolation, audit preservation, final 1410 reconciliation, and the specific same-employee multiple-advance runtime fixture.
