@@ -184,23 +184,15 @@ if (!$gmUserId || !$fmUserId || !$refundAccountId || !$expenseAccount) {
 }
 
 $requestId = (int)$fixture['request_id'];
-$repaymentId = (int)$fixture['repayment_id'];
-$payrollId = (int)$fixture['payroll_id'];
 $disbursementJournalId = (int)(dbFetchOne(
     "SELECT disbursement_journal_entry_id
      FROM hr_salary_advance_requests
      WHERE id = ?",
     [$requestId]
 )['disbursement_journal_entry_id'] ?? 0);
-$payrollJournalId = (int)$fixture['accounting_entry_id'];
-$effectiveMonth = sprintf(
-    '%04d-%02d-01',
-    (int)$fixture['repayment_year'],
-    (int)$fixture['repayment_month']
-);
 
-if ($disbursementJournalId <= 0 || $payrollJournalId <= 0) {
-    echo "SKIP | Fixture does not have both original disbursement and payroll accounting journal references.\n";
+if ($disbursementJournalId <= 0) {
+    echo "SKIP | Fixture does not have an original disbursement accounting journal reference.\n";
     exit(0);
 }
 
@@ -212,14 +204,11 @@ $beforeRequest = dbFetchOne(
     [$requestId]
 );
 $beforeDisbursementJournal = fetchJournalEvidence($pdo, $disbursementJournalId);
-$beforePayrollJournal = fetchJournalEvidence($pdo, $payrollJournalId);
-$beforeRepayment = fetchRepaymentEvidence($pdo, $repaymentId);
 $beforeSchedule = fetchScheduleEvidence($pdo, $requestId);
-$beforeAudit = fetchRequestAuditEvidence($pdo, $requestId);
+$originalAudit = fetchRequestAuditEvidence($pdo, $requestId);
 
-if (!$beforeRequest || !$beforeDisbursementJournal || !$beforePayrollJournal ||
-    !$beforeRepayment || !$beforeSchedule) {
-    echo "SKIP | Required historical evidence could not be snapshotted completely.\n";
+if (!$beforeRequest || !$beforeDisbursementJournal || !$beforeSchedule) {
+    echo "SKIP | Required original request/disbursement/schedule evidence could not be snapshotted completely.\n";
     exit(0);
 }
 
