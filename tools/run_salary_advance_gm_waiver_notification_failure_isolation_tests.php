@@ -506,6 +506,21 @@ try {
         )->execute([(int)$id]);
     }
 
+    $postEmployeeExecutionNotifications = notificationIdsForFailureIsolation(
+        $pdo,
+        (int)$fixture['employee_user_id'],
+        $employeeExecutionTitle,
+        $employeeExecutionLink
+    );
+    foreach (array_diff(
+        $postEmployeeExecutionNotifications,
+        $employeeExecutionNotificationsBefore
+    ) as $id) {
+        $pdo->prepare(
+            "DELETE FROM notifications WHERE id = ?"
+        )->execute([(int)$id]);
+    }
+
     $pdo->prepare(
         "DELETE FROM audit_log
          WHERE entity_type = 'hr_salary_advance_request'
@@ -653,6 +668,21 @@ try {
             foreach (array_diff(
                 $postApprovalNotifications,
                 $fmApprovalNotificationsBefore
+            ) as $id) {
+                $pdo->prepare(
+                    "DELETE FROM notifications WHERE id = ?"
+                )->execute([(int)$id]);
+            }
+
+            $postEmployeeExecutionNotifications = notificationIdsForFailureIsolation(
+                $pdo,
+                (int)$fixture['employee_user_id'],
+                $employeeExecutionTitle,
+                $employeeExecutionLink
+            );
+            foreach (array_diff(
+                $postEmployeeExecutionNotifications,
+                $employeeExecutionNotificationsBefore
             ) as $id) {
                 $pdo->prepare(
                     "DELETE FROM notifications WHERE id = ?"
