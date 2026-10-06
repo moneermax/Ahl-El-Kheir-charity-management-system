@@ -2395,3 +2395,28 @@ Runtime result: **PASS**. The user confirmed that everything displayed in Englis
 This closes the current i18n cleanup item. Do not repeat the scan/runtime pass unless a concrete regression or newly introduced untranslated string is identified.
 
 The GM Salary Advance Waiver remains closed separately; its explicit evidence gaps are unchanged and are not reopened by this i18n checkpoint.
+
+## 2026-10-06 — Attendance Policy ↔ Payroll integration: source-audit defect found and targeted fix applied
+
+The attendance/payroll integration remains **OPEN / PENDING RUNTIME VERIFICATION**.
+
+Before runtime testing, the actual payroll calculation path was inspected. A concrete defect was found in `modules/hr/lib_salary_advance_payroll.php`: `hrSalaryAdvancePayrollRefreshDraft()` calculated `net_salary` as gross minus ordinary deductions and salary-advance deduction, but omitted `attendance_deduction`.
+
+This was inconsistent with the already-implemented attendance-aware salary-advance eligibility calculation, which correctly subtracts attendance deduction when the policy basis is `net_before_advance`.
+
+Targeted fix:
+- `modules/hr/lib_salary_advance_payroll.php`
+- commit `60adf7f4f428b1754f45b010c552ad93a2155323`
+
+A rollback-only runtime harness was added:
+- `tools\\run_hr_attendance_payroll_integration_tests.php`
+- commit `20c8f23e5fc239fd3b19f26ec4cd424c08dc9d34`
+
+The harness uses the real attendance-policy and payroll-policy calculation functions, creates only temporary payroll/attendance rows inside one transaction, verifies an explicit working-day absence produces the policy-calculated deduction and corresponding net-salary reduction, verifies a missing attendance row produces zero attendance deduction, then rolls everything back.
+
+**Runtime status: PENDING USER EXECUTION.**
+
+Exact next command:
+`php tools\\run_hr_attendance_payroll_integration_tests.php`
+
+If it fails, stop at the exact failure and inspect the root cause before changing anything else.
