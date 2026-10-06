@@ -18,7 +18,8 @@ declare(strict_types=1);
  * unchanged.
  */
 
-$akNotificationFailureAttempts = 0;
+$akNotificationDeliveryAttempts = 0;
+$akNotificationDeliveryFailures = 0;
 
 function ak_notification_test_delivery_hook(
     int $userId,
@@ -28,17 +29,24 @@ function ak_notification_test_delivery_hook(
     ?int $referenceId = null,
     ?string $referenceType = null
 ): void {
-    global $akNotificationFailureAttempts;
+    global $akNotificationDeliveryAttempts, $akNotificationDeliveryFailures;
 
     if (in_array(
         (string)$referenceType,
         ['salary_advance_waiver_execution', 'salary_advance_waiver_employee'],
         true
     )) {
-        $akNotificationFailureAttempts++;
-        throw new RuntimeException(
-            'TEST_INJECTED_NOTIFICATION_DELIVERY_FAILURE'
-        );
+        $akNotificationDeliveryAttempts++;
+
+        // Fail exactly the first execution notification attempt, then allow
+        // the next notification to prove that one delivery failure does not
+        // abort the rest of the post-commit notification sequence.
+        if ($akNotificationDeliveryFailures === 0) {
+            $akNotificationDeliveryFailures++;
+            throw new RuntimeException(
+                'TEST_INJECTED_NOTIFICATION_DELIVERY_FAILURE'
+            );
+        }
     }
 }
 
@@ -419,10 +427,13 @@ try {
         );
     }
 
-    global $akNotificationFailureAttempts;
-    if ($akNotificationFailureAttempts < 2) {
+    global $akNotificationDeliveryAttempts, $akNotificationDeliveryFailures;
+    if (
+        $akNotificationDeliveryAttempts < 2 ||
+        $akNotificationDeliveryFailures !== 1
+    ) {
         throw new RuntimeException(
-            'The controlled notification failure hook did not record both execution delivery attempts.'
+            'The controlled notification failure hook did not record one failure followed by another execution delivery attempt.'
         );
     }
 
@@ -443,21 +454,24 @@ try {
         $gmExecutionNotificationsAfter,
         $gmExecutionNotificationsBefore
     );
-    $unexpectedEmployeeNotifications = array_diff(
+    $newEmployeeNotifications = array_diff(
         $employeeExecutionNotificationsAfter,
         $employeeExecutionNotificationsBefore
     );
 
-    if (
-        $unexpectedGmNotifications ||
-        $unexpectedEmployeeNotifications
-    ) {
+    if ($unexpectedGmNotifications) {
         throw new RuntimeException(
-            'Execution notification rows were created despite the injected delivery failure.'
+            'The intentionally failed first execution notification unexpectedly created a GM notification row.'
         );
     }
 
-    echo "PASS | Notification failure isolation | request={$fixture['request_no']} | decision_id={$decisionId} | failure_attempts={$akNotificationFailureAttempts} | status=executed | outstanding=0 | waiver_journal={$waiverJournalId} | schedule_overlays={$overlayCount}\n";
+    if (!$newEmployeeNotifications) {
+        throw new RuntimeException(
+            'The later execution notification was not delivered after the first notification failure.'
+        );
+    }
+
+    echo "PASS | Notification failure isolation | request={$fixture['request_no']} | decision_id={$decisionId} | delivery_attempts={$akNotificationDeliveryAttempts} | injected_failures={$akNotificationDeliveryFailures} | status=executed | outstanding=0 | waiver_journal={$waiverJournalId} | schedule_overlays={$overlayCount}\n";
 
     // Remove only rows created by this committed test fixture.
     $pdo->beginTransaction();
