@@ -146,3 +146,22 @@ Result:
 This closes the approved-unpaid payroll protection gate. The protection is now runtime verified as an explicit pre-financial-mutation block.
 
 Remaining gates: blanket/multiple-advance scope, concurrency/duplicate protection, post-commit notification behavior and failure isolation, audit preservation, and final 1410 reconciliation.
+
+
+## 2026-10-06 — Blanket waiver scope and execution runtime verified
+
+The dedicated rollback-only blanket-scope harness was executed locally on `main`:
+
+`php tools\\run_salary_advance_gm_waiver_blanket_scope_rollback_tests.php`
+
+Result:
+- **PASS — Blanket waiver scope + execution:** effective month `2026-10-01`; 6 eligible requests were snapshotted and all 6 executed.
+- The 6-item blanket contained 5 disbursed requests and 1 undistributed request.
+- The 5 disbursed requests were financially waived; the 1 undistributed request was cancelled without accounting.
+- Combined waiver amount was 190,000.00 SDG and the resulting waiver journal was balanced.
+- The live fixture contained no employee with multiple eligible advances at the same time (`multiple_employee_advances=not_present`), so the blanket-all-eligible scope was runtime verified, but the specific multiple-advances-for-one-employee scenario remains untested with a live fixture.
+- **PASS — Rollback-only cleanup:** decision, item, and schedule-overlay rows returned to zero.
+
+This closes the blanket-scope gate. The separate multiple-advances-for-one-employee runtime scenario remains open until a genuine live fixture exists or is created through an explicitly controlled test fixture without committing production data.
+
+Remaining gates: concurrency/duplicate protection, post-commit notification behavior and failure isolation, audit preservation, final 1410 reconciliation, and the specific multiple-advances-for-one-employee runtime fixture.
