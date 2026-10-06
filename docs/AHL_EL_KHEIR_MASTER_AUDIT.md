@@ -2485,3 +2485,65 @@ The test exercised the actual salary-advance payroll repayment/accounting path a
 The GM waiver feature remains **open for waiver-specific runtime verification**. Required remaining evidence includes FM preparation, GM approval/rejection, current-period paid-deduction refund, remaining-balance waiver, future deduction blocking, undistributed request cancellation, concurrency/duplicate execution safety, draft refresh, post-commit notifications, audit preservation and final 1410 reconciliation.
 
 No production payroll-generation change was made as a result of the earlier read-only October simulation or this rollback-only test.
+
+## 2026-10-06 — GM Salary Advance Waiver: Notification Failure-Isolation Gate Prepared
+
+The next waiver verification gate is notification failure isolation. No previously closed waiver runtime gate was repeated.
+
+### Direct source inspection
+
+The production notification path was inspected in:
+- `modules/accounting/lib_transaction_review.php`
+- `ak_transaction_review_notify_event()`
+- `modules/hr/lib_salary_advance_waiver.php`
+- `hrSalaryAdvanceWaiverNotifyExecution()`
+
+Confirmed implementation boundary:
+1. FM preparation commits before its GM notification helper is called.
+2. GM approval commits before its FM notification helper is called.
+3. FM execution commits before its execution notification helper is called.
+4. `ak_transaction_review_notify_event()` catches `Throwable` from notification delivery.
+5. Workflow-reference notification attempts are already guarded by a nested fallback to the legacy notification schema when `reference_id` / `reference_type` are unavailable.
+6. The employee execution query requires an active linked user account.
+
+The installed legacy notification schema was not assumed to contain workflow-reference columns. Existing runtime harnesses already verified the actual installation behavior.
+
+### Test-seam decision
+
+Repository inspection found no existing deterministic notification-failure seam. Manufacturing a SQL failure by guessing column lengths, constraints, foreign keys or schema mutations would violate the project rules.
+
+A narrow inert test-only seam was therefore added at the actual notification-delivery boundary:
+`ak_notification_test_delivery_hook()`
+
+It is invoked only when a test defines that function before the notification helper is loaded. Normal production execution has no such function and therefore follows the existing code path unchanged.
+
+### New runtime harness
+
+`tools\\run_salary_advance_gm_waiver_notification_failure_isolation_tests.php`
+
+The harness:
+- uses the real production FM-preparation, GM-approval and FM-execution functions;
+- forces exactly one controlled notification-delivery Throwable on the first execution notification attempt;
+- allows the subsequent execution notification attempt to continue;
+- verifies the decision remains `executed`;
+- verifies the disbursed request remains disbursed with outstanding balance zero;
+- verifies the waiver journal exists and is balanced;
+- verifies future schedule overlays remain committed;
+- verifies waiver audit evidence remains committed;
+- verifies the failed notification does not create a notification row;
+- verifies the subsequent employee notification is still delivered;
+- restores the request and removes only the test decision, journals, audit rows, schedule overlays and newly-created notifications.
+
+Implementation commits:
+- `2319ccc421fb8944dc3b59a874410868d658d333`
+- `bcce74ec825e3e45193f3e44f58e67bcbe2aa43c`
+- `0e072f9f05d2cbf5067126f1147eaa6dfb2e59c7`
+- `5abfe6e36b7681cff9ff639e4e80e3d4680cd924`
+- `446451977a23fb78c71406446ce7003705cebf14`
+- `46aec64c840bd64007ccff242a2a1a9403f4c8e8`
+
+**Runtime status: PENDING USER EXECUTION.**
+
+The exact next gate is runtime execution of the new harness. If it passes, record the evidence and move to audit-preservation runtime verification. If it fails, stop and inspect the exact failure before any further change.
+
+Salary Advance Stages 1–6 remain closed. The same-employee multiple-advance and true two-process concurrency evidence gaps remain open.
