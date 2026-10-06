@@ -255,12 +255,12 @@ try {
         }
     }
 
-    if (isset($rowByType['absence:' . $candidate['paid_leave_date'])
-        || isset($rowByType['unpaid_leave:' . $candidate['paid_leave_date'])) {
+    if (isset($rowByType['absence:' . $candidate['paid_leave_date']])
+        || isset($rowByType['unpaid_leave:' . $candidate['paid_leave_date']])) {
         fail_test('Approved paid leave incorrectly produced an attendance deduction.');
     }
 
-    if (isset($rowByType['absence:' . $candidate['non_working_absent_date'])) {
+    if (isset($rowByType['absence:' . $candidate['non_working_absent_date']])) {
         fail_test('Explicit absence on a non-working day incorrectly produced a deduction.');
     }
 
