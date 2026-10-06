@@ -2652,3 +2652,28 @@ Observed result:
 - no untranslated Arabic runtime defect was reported.
 
 Interpretation: the scanner establishes static translation coverage, and the user runtime test establishes the corresponding browser rendering/behavior for the affected pages. This item is closed unless a later source change introduces a regression.
+
+## 2026-10-06 — Attendance ↔ Payroll integration: pre-runtime source audit
+
+The 2026-10-05 attendance/payroll integration was audited before runtime verification.
+
+The authoritative implementation already had the intended separation:
+- attendance policy determines working days and attendance facts;
+- payroll policy determines absence/unpaid-leave monetary treatment;
+- missing attendance rows are not inferred as absences;
+- attendance deduction is used by the salary-advance eligibility calculator when the basis is `net_before_advance`.
+
+A concrete downstream calculation defect was found: `hrSalaryAdvancePayrollRefreshDraft()` omitted `attendance_deduction` when recomputing `payroll.net_salary`. This could leave the displayed/payable draft net salary higher than the attendance-adjusted salary.
+
+The production fix was narrowly applied in:
+`modules/hr/lib_salary_advance_payroll.php`
+
+The corrected formula is:
+`gross - ordinary deductions - attendance deduction - salary-advance deduction`
+
+A rollback-only harness was added at:
+`tools\\run_hr_attendance_payroll_integration_tests.php`
+
+It deliberately performs no DDL and does not commit its temporary fixture.
+
+**Runtime verification remains PENDING USER EXECUTION.**
