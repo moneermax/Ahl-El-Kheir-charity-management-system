@@ -182,3 +182,22 @@ The unfinished attendance same-page POST scroll-jump issue remains out of scope.
 
 **Next continuation rule:** select the next task from the current canonical documentation and the user's new requirement. Do not automatically reopen the waiver unit.
 
+## 2026-10-06 — English i18n cleanup CLOSED
+
+The system English i18n cleanup is now STATIC + RUNTIME VERIFIED / CLOSED.
+
+Static command:
+php tools\i18n_gap.php
+
+Result:
+Files with gaps: 0 | Untranslated Arabic strings: 0
+
+Runtime verification:
+The affected pages were tested locally in English mode with the language switch, including attendance policy, payroll, payroll policy, salary-advance waiver FM/GM, accounting FM dashboard, HR dashboard and reports. User result: everything is English and pages behave normally.
+
+Continuation rule:
+- Do not rerun the i18n scan or runtime verification unless a concrete regression or new untranslated source string is introduced.
+- Do not reopen the completed GM Salary Advance Waiver verification matrix.
+- Do not reopen Salary Advance Stages 1–6.
+- Do not reopen the unfinished attendance same-page POST scroll-jump issue unless explicitly requested.
+- Select the next task from the current canonical documentation and the user's next requirement.
