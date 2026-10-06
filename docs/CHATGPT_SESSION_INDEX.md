@@ -348,3 +348,47 @@ Implementation commits:
 - `40d4b3ad552ac0f9a77720cbd112f41bee015aa6`
 
 User runtime result: the FM UI is visually accepted. Do not reopen these UI issues absent a concrete regression.
+
+## 2026-10-06 — Production-preparation database cleanup: disposable database runtime verification CLOSED
+
+The current production-preparation script was corrected to match the original production-preparation contract while covering the current 101-table schema.
+
+Authoritative behavior:
+- Preserve the original explicitly protected production data: users, employees, families, family children, sponsors, sponsorships, sponsorship children, sponsor-supervisor assignment history, supervisor letters, supervisor-letter assignment history, roles, departments, currencies, letters, medical needs, settings, and accounts.
+- Preserve accounts except for the original exact eight development/test account codes: `4400-1`, `5100-1`, `4400-2`, `5100-2`, `4400-3`, `5100-3`, `4400-4`, `5100-4`.
+- Treat all other current base tables as development/test operational data and clear them with `TRUNCATE TABLE`.
+- Do not drop tables, alter the schema, or delete physical files from `storage/`.
+
+Implementation commit:
+`5f92a919ec64127428fda5e0adf8b5243ad8554f`
+
+Disposable-database runtime verification:
+1. A fresh dump of the live `ahl_el_kheir` database was imported into disposable `ahl_el_kheir_production_test`.
+2. The production-preparation script was executed against that disposable database.
+3. Core production data remained present:
+   - users 26
+   - employees 25
+   - families 2208
+   - family children 4910
+   - sponsors 2858
+   - sponsorships 3560
+   - sponsorship children 2965
+   - sponsor-supervisor history 270
+   - current supervisor letters 56
+   - supervisor-letter history 6
+4. Reference/configuration data remained present:
+   - roles 14
+   - departments 8
+   - currencies 4
+   - letters 29
+   - medical needs 14
+   - settings 18
+   - accounts 38
+5. Every one of the 83 non-preserved current tables returned zero rows.
+6. The original test-account verification returned zero remaining rows.
+7. No SQL execution error or warning was reported.
+
+**Disposition: Production-preparation database cleanup is RUNTIME VERIFIED / CLOSED at the disposable-database acceptance boundary.**
+
+The temporary disposable-database dump and test-copy SQL file are test artifacts only and must not be committed to the repository.
+
