@@ -306,3 +306,29 @@ Implementation commits:
 - `41d448abb9daa7d917ecedd324b81be7bf9077c0`
 
 Runtime browser verification is still required on the local XAMPP application. Do not mark the UI fixes runtime-verified until the user confirms the affected FM pages visually.
+
+## 2026-10-06 — System-wide same-page POST scroll-jump fix: RUNTIME VERIFIED / CLOSED
+
+The previously reported same-page POST viewport jump is now **RUNTIME VERIFIED / CLOSED as a system-wide behavior**, not an attendance-specific workaround.
+
+The final implementation is centralized in `assets/js/app.js` and uses a **global default / opt-out policy**:
+- qualifying same-path POST forms are intercepted before native document navigation;
+- the existing document/content region is updated in place;
+- the user's viewport position is preserved by the centralized response renderer;
+- interception is registered in the capture phase so the browser's native submit navigation does not win the race;
+- form actions are resolved with `getAttribute('action')`, avoiding shadowing by hidden inputs named `action`;
+- submitter overrides (`formaction`, `formmethod`, `formenctype`, `formtarget`) are respected;
+- multipart uploads, non-self targets, cross-path/cross-origin submissions, and explicit native-post opt-outs remain native by design.
+
+The attendance page was deliberately tested **after its `data-ak-same-page="1"` opt-in was removed**. The user confirmed the POST action now remains in place. This is the critical runtime evidence that the global policy itself works rather than an attendance-specific attribute.
+
+Key implementation commits:
+- `af5fe03e3592972c61ec2821fa7ad0a7f4b7abfd` — capture-phase interception;
+- `0a06fb57f687f4ac56c623251a7fa38d6dba083d` — system-wide default/opt-out policy;
+- `4496a8f6fb4d38a856483b25d856c640a81732ec` — submitter override hardening;
+- `396576c6bc8d1f26af37a09e80c15909aac06e60` — effective submitter passed into policy;
+- `8389708b84a9853f164d3b73d6f810dbe4967ef5` — attendance returned to the global policy with no page-specific opt-in.
+
+Earlier attendance-specific and diagnostic attempts are historical investigation only and must not be treated as the current mechanism.
+
+**Disposition:** CLOSED. Do not reopen or redesign this behavior absent a concrete regression. Do not add page-specific same-page POST attributes merely to reproduce the old fix; the system-wide policy is the authoritative mechanism.
