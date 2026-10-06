@@ -2098,6 +2098,12 @@ Commits: `412301e82718dba9a96146b4b9b42c4298469619`, `c7ade0903bf3aefbeed2d0e272
 **Verification status:** code/repository review completed; local browser runtime verification is still required before marking the issue closed. Do not treat the change as runtime-verified until the attendance and representative same-page POST workflows are tested locally.
 
 
+## 2026-10-06 — GM Salary Advance Waiver: First waiver-specific runtime gate passed
+
+The local rollback-only waiver harness passed the transaction-composable remaining-balance/no-refund execution path for `SAR-2026-00004`. Temporary waiver decision, waiver journal, and future schedule-overlay rows were all rolled back; post-rollback counts returned to zero.
+
+This is a verified waiver-specific milestone, not feature closure. The remaining waiver verification matrix is still open.
+
 ## 2026-10-06 — GM Salary Advance Waiver Verification
 
 **Status: IMPLEMENTATION HARDENED / DEPENDENCY RUNTIME VERIFIED / WAIVER RUNTIME VERIFICATION OPEN.**
