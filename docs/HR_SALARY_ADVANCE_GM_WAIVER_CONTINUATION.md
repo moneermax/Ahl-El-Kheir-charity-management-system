@@ -247,3 +247,44 @@ Still open — do not claim closure:
 5. True two-process concurrent execution: source row-locking and sequential duplicate protection are proven, but a dedicated two-process concurrent-commit runtime test has not been executed.
 
 Mandatory continuation rule: the next session must start at item 1 (notification failure isolation). Do not rerun any of the closed gates above unless a later change creates concrete regression evidence.
+
+## 2026-10-06 — Notification failure-isolation harness prepared
+
+Before creating the failure test, the current production notification implementation was inspected directly.
+
+Authoritative notification helper:
+- `modules/accounting/lib_transaction_review.php`
+- `ak_transaction_review_notify_event()`
+
+Source findings:
+- The helper catches `Throwable` around notification delivery.
+- When workflow reference columns are unavailable, the helper's reference-aware attempt fails inside its nested try and falls back to the legacy notification shape using only `recipient_user_id`, `title`, `body`, `link`, `is_read`, and `created_at`.
+- The live installation has already been runtime-proven to use the legacy notification schema; the previously rejected `2026-09-28_notifications_workflow_references.sql` migration was not used.
+- Repository inspection found no existing controlled notification-failure test seam suitable for this gate.
+
+A narrow test-only seam was therefore added to `ak_transaction_review_notify_event()`:
+- production behavior is unchanged unless a test defines `ak_notification_test_delivery_hook()` before loading the helper;
+- the hook is called at the actual notification-delivery boundary;
+- the production helper still catches the injected `Throwable`;
+- no schema mutation or permanent failure mode was introduced.
+
+A dedicated harness was added:
+`tools\\run_salary_advance_gm_waiver_notification_failure_isolation_tests.php`
+
+The harness uses the real committed FM-preparation -> GM-approval -> FM-execution path, injects exactly one controlled execution-notification failure, then verifies that a later execution notification can still be delivered and that the already-committed financial/business state remains intact. It also verifies waiver journal balance, request balance, schedule overlays, audit evidence, and exact notification/test-state cleanup.
+
+Implementation commits:
+- `2319ccc421fb8944dc3b59a874410868d658d333` — narrow test-only delivery seam.
+- `bcce74ec825e3e45193f3e44f58e67bcbe2aa43c` through `46aec64c840bd64007ccff242a2a1a9403f4c8e8` — failure-isolation harness and cleanup hardening.
+
+**Runtime status: PENDING USER EXECUTION.**
+
+Exact next command:
+`php tools\\run_salary_advance_gm_waiver_notification_failure_isolation_tests.php`
+
+Do not rerun any previously closed waiver harness. If this test fails, stop at the exact failure, inspect the root cause, and do not speculate. If it passes, document the runtime evidence and continue to audit-preservation verification.
+
+Open evidence gaps remain unchanged:
+- same employee with multiple eligible advances;
+- true two-process concurrent execution.
+Do not claim either as runtime-proven.
