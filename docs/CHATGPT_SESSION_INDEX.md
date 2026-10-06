@@ -218,3 +218,20 @@ Neither is to be described as runtime-proven.
 
 The unfinished attendance same-page POST scroll-jump issue remains out of scope.
 
+## 2026-10-06 — i18n cleanup: static scan + runtime verification CLOSED
+
+The English-language cleanup is now **RUNTIME VERIFIED / CLOSED** at the current acceptance boundary.
+
+Static verification:
+- `php tools\\i18n_gap.php`
+- Result: `Files with gaps: 0 | Untranslated Arabic strings: 0`
+- Result confirms every scanned Arabic UI string has an English compatibility translation.
+
+Runtime verification was then performed locally by the user in English mode on the affected HR, salary-advance waiver, accounting FM, HR dashboard and reports pages. The user confirmed:
+- all tested UI is English;
+- pages behave normally;
+- no runtime English-language rendering defect was observed.
+
+Do not reopen or repeat the i18n cleanup without a concrete regression or a newly introduced untranslated UI string.
+
+The previously unfinished attendance same-page POST scroll-jump issue remains out of scope and is not changed by this checkpoint.
