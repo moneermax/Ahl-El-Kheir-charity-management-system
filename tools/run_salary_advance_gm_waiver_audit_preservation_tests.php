@@ -238,6 +238,7 @@ try {
         [$requestId]
     );
     $originalSchedule = fetchScheduleEvidence($pdo, $requestId);
+    $originalAudit = fetchRequestAuditEvidence($pdo, $requestId);
 
     if (!$originalRequest || !$originalSchedule) {
         throw new RuntimeException('Required pre-test request/schedule evidence is missing.');
@@ -593,7 +594,7 @@ try {
         $finalPayrollJournal !== $beforePayrollJournal ||
         $finalRepayment !== null ||
         $finalSchedule !== $originalSchedule ||
-        $finalAudit !== $beforeAudit
+        $finalAudit !== $originalAudit
     ) {
         throw new RuntimeException('Audit-preservation rollback did not restore the complete pre-test evidence set.');
     }
