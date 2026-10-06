@@ -27,6 +27,7 @@ Projects:
 HR/Salary Advance:
 - HR_SALARY_ADVANCE_CONTINUATION.md
 - HR_SALARY_ADVANCE_STAGE5_AUDIT.md
+- HR_SALARY_ADVANCE_GM_WAIVER_CONTINUATION.md
 
 Fina:
 - FINA_SETTLEMENT_PROCESS.md
@@ -89,3 +90,12 @@ Attendance policy implementation references: database/migrations/2026-10-05_hr_a
 
 ### Attendance ↔ Payroll policy integration checkpoint — 2026-10-05
 The attendance policy remains the authoritative source for attendance facts, while the payroll/salary-deduction policy remains authoritative for monetary treatment. Cross-policy behavior is documented in the system analysis, architecture/data model, roles/workflows, operations/security, master status/audit, and continuation documents. Runtime verification of the new payroll attendance-deduction migration and end-to-end calculation remains pending locally.
+
+
+## 2026-10-06 — GM Salary Advance Waiver verification checkpoint
+
+The GM salary-advance waiver is an exceptional lifecycle extension, separate from completed Salary Advance Stages 1–6. Its design and implementation remain under controlled runtime verification.
+
+The real Stage 5 payroll repayment dependency has now passed the existing rollback-only local harness: payroll repayment application, schedule/outstanding update, balanced Cr 1410 accounting, duplicate protection, and rollback-only cleanup all passed for `SAR-2026-00004`. This is dependency verification only; the GM waiver itself remains open until its documented verification matrix passes.
+
+Canonical waiver reference: `HR_SALARY_ADVANCE_GM_WAIVER_CONTINUATION.md`.
