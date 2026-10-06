@@ -2119,3 +2119,17 @@ Results:
 This establishes the real payroll repayment dependency required by the waiver. It does not establish that the GM waiver workflow itself is complete. The waiver-specific verification matrix remains open.
 
 Do not reopen completed Salary Advance Stages 1–6 and do not mix this work with the unfinished attendance scroll-jump issue.
+
+## 2026-10-06 — GM Salary Advance Waiver: Paid-Deduction Refund Gate Passed
+
+The dedicated rollback-only refund harness passed locally on `main` using the real payroll/accounting/repayment and waiver functions.
+
+- `SAR-2026-00004`: temporary payroll ID 24 produced a 5,000.00 SDG salary-advance repayment.
+- GM waiver execution refunded the already-paid 5,000.00 SDG and waived the restored 50,000.00 SDG balance.
+- Refund journal 119 matched Dr 1410 / Cr 1100 for 5,000.00 SDG.
+- Waiver journal 120 matched Dr selected expense / Cr 1410 for 50,000.00 SDG.
+- Historical repayment evidence remained applied and linked to its original payroll accounting entry; the request remained `disbursed` and final outstanding balance became zero inside the test transaction.
+- Rollback cleanup passed: payroll rows 22, repayment rows 0, waiver decision rows 0, and waiver journal rows 0 after rollback.
+
+**Verification status:** the paid-deduction refund gate is runtime verified. GM Salary Advance Waiver remains open pending the remaining verification matrix; this does not reopen Salary Advance Stages 1–6.
+
