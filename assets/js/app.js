@@ -130,22 +130,39 @@
      * downloads, multipart uploads, cross-document targets, or workflows
      * that intentionally require a real navigation.
      */
-    function samePagePost(form) {
+    function samePagePost(form, submitter) {
         if (!form || form.tagName !== 'FORM') return false;
-        if (String(form.getAttribute('method') || 'get').toLowerCase() !== 'post') return false;
         if (form.dataset.akNativePost === '1' || form.dataset.akSamePage === '0' || form.dataset.akAjaxPost === '0') return false;
 
-        const enctype = String(form.getAttribute('enctype') || '').toLowerCase();
+        const method = String(
+            (submitter && submitter.getAttribute('formmethod')) ||
+            form.getAttribute('method') ||
+            'get'
+        ).toLowerCase();
+        if (method !== 'post') return false;
+
+        const enctype = String(
+            (submitter && submitter.getAttribute('formenctype')) ||
+            form.getAttribute('enctype') ||
+            ''
+        ).toLowerCase();
         if (enctype === 'multipart/form-data') return false;
 
-        const targetAttribute = String(form.getAttribute('target') || '').toLowerCase();
+        const targetAttribute = String(
+            (submitter && submitter.getAttribute('formtarget')) ||
+            form.getAttribute('target') ||
+            ''
+        ).toLowerCase();
         if (targetAttribute && targetAttribute !== '_self') return false;
 
         const currentContent = form.closest('.content');
         if (!currentContent) return false;
 
         try {
-            const formAction = form.getAttribute('action') || window.location.href;
+            const formAction =
+                (submitter && submitter.getAttribute('formaction')) ||
+                form.getAttribute('action') ||
+                window.location.href;
             const target = new URL(formAction, window.location.href);
             return target.origin === window.location.origin &&
                    target.pathname === window.location.pathname;
@@ -470,7 +487,10 @@
          * data-akSubmitting already blocks duplicate same-page submissions.
          */
 
-        const formAction = form.getAttribute('action') || window.location.href;
+        const formAction =
+            (submitter && submitter.getAttribute('formaction')) ||
+            form.getAttribute('action') ||
+            window.location.href;
         const target = new URL(formAction, window.location.href);
         const formData = new FormData(form);
         if (submitter && submitter.name && !formData.has(submitter.name)) {
