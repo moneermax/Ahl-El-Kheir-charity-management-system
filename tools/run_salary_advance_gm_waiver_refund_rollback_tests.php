@@ -103,7 +103,7 @@ function findAccountByCode(PDO $pdo, string $code): ?int
     return $row ? (int)$row['id'] : null;
 }
 
-function findActiveExpenseAccount(PDO $pdo): ?int
+function findActiveExpenseAccount(PDO $pdo): ?array
 {
     $row = dbFetchOne(
         "SELECT id, code
