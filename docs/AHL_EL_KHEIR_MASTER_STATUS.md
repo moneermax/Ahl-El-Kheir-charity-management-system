@@ -2225,3 +2225,37 @@ The dedicated committed-fixture notification harness passed locally on `main`:
 The harness intentionally stopped before FM financial execution, so no waiver/refund accounting mutation was introduced by this notification test. The live installation uses the legacy notification schema, and the harness verified the notifications against that actual schema.
 
 **Verification status:** the post-commit preparation and GM-approval notification gate is **RUNTIME VERIFIED / CLOSED**. GM Salary Advance Waiver as a whole remains open for execution-notification coverage/failure-isolation runtime evidence, audit preservation, final 1410 reconciliation, and the specific same-employee multiple-advance fixture.
+
+
+## 2026-10-06 — GM Salary Advance Waiver: Current Runtime Verification Checkpoint
+
+The GM Salary Advance Waiver has now passed the committed execution-notification runtime gate. This is an exceptional lifecycle extension and does not reopen Salary Advance Stages 1–6.
+
+Runtime-verified / closed:
+- Transaction-composable remaining-balance waiver execution.
+- Paid-current-period deduction refund.
+- Undistributed qualifying-request cancellation without accounting.
+- Future-deduction blocking and draft-payroll refresh.
+- Approved-but-unpaid payroll protection.
+- Blanket scope/execution across multiple requests and employees.
+- Sequential duplicate-execution protection.
+- Post-commit FM preparation → active GM notification.
+- Post-commit GM approval → preparing FM notification.
+- Post-commit FM execution → approving GM notification.
+- Post-commit FM execution → affected employee notification with an active linked account.
+
+Latest execution-notification runtime evidence:
+- Harness: tools\\run_salary_advance_gm_waiver_execution_notification_rollback_tests.php
+- PASS: request SAR-2026-00004, decision ID 12, GM notification = 1, employee notification = 1, waiver journal = 124.
+- PASS cleanup: decision rows = 0, test notifications = 0, test journals = 0.
+
+Explicitly open evidence gates:
+1. Notification failure isolation runtime: deliberately induce a controlled notification-delivery failure and prove the already-committed waiver execution is not rolled back.
+2. Audit preservation runtime: verify historical disbursement, payroll repayment and original accounting evidence remain intact and waiver audit evidence is complete.
+3. Final 1410 reconciliation: reconcile the salary-advance receivable/control account after waiver execution against the remaining live receivables.
+4. Same-employee multiple eligible advances: no live fixture currently proves the consolidated employee-notification behavior for one employee with multiple affected advances.
+5. True two-process concurrent commit: source-level row locking and sequential duplicate protection are proven; a dedicated concurrent-process runtime test has not been executed.
+
+Do not repeat any closed waiver harness solely because a new session starts. Only repeat a closed test if a concrete regression, source change, schema change, or failed dependency makes it relevant again.
+
+Exact next gate: notification failure isolation runtime. After that, proceed one gate at a time to audit preservation and final 1410 reconciliation, while retaining the two evidence gaps above.
