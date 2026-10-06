@@ -165,3 +165,19 @@ Result:
 This closes the blanket-scope gate. The separate multiple-advances-for-one-employee runtime scenario remains open until a genuine live fixture exists or is created through an explicitly controlled test fixture without committing production data.
 
 Remaining gates: concurrency/duplicate protection, post-commit notification behavior and failure isolation, audit preservation, final 1410 reconciliation, and the specific multiple-advances-for-one-employee runtime fixture.
+
+## 2026-10-06 — Concurrency / duplicate-execution runtime gate passed
+
+The dedicated rollback-only duplicate-execution harness was executed locally on `main`:
+
+`php tools\\run_salary_advance_gm_waiver_duplicate_execution_rollback_tests.php`
+
+Result:
+- **PASS — Duplicate waiver execution protection:** `SAR-2026-00004`; decision ID `9`; first execution succeeded; second execution was rejected; journal count remained unchanged.
+- **PASS — Rollback-only duplicate cleanup:** decision rows = 0; waiver item rows = 0; schedule-overlay rows = 0 after rollback.
+
+This runtime gate proves that an already executed waiver decision cannot be executed a second time through the production execution function and that the rejected duplicate attempt creates no additional waiver/refund accounting journal. It does not claim a separate two-process concurrent-commit runtime test.
+
+The source inspection already established the stronger concurrency mechanism: the waiver decision row is locked with `SELECT ... FOR UPDATE` before the `approved_by_gm` status check, so concurrent execution attempts on the same decision serialize at that row. The advisory accounting-number lock is not treated as the transaction duplicate guard.
+
+**Verification status:** sequential duplicate-execution protection is **RUNTIME VERIFIED / CLOSED**. True concurrent two-process execution remains a separate evidence item only if later required by the verification matrix.
