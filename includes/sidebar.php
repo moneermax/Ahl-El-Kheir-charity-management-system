@@ -62,7 +62,6 @@ $menus = [
     ],
 
     'financial_manager' => [
-        $salaryAdvanceWaiverFMItem,
         ['active' => 'dashboard', 'label_key' => 'navigation.dashboard', 'icon' => 'fa-gauge-high', 'url' => 'modules/accounting/fm_dashboard.php'],
         ['active' => 'journal', 'label_key' => 'navigation.journal', 'icon' => 'fa-book', 'url' => 'modules/accounting/journal.php'],
         $vouchersItem,
