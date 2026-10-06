@@ -12,7 +12,7 @@ Session::start();
 $role=(string)Session::getUserRole();
 if(!hrSalaryAdvanceWaiverCanFM($role)){header('Location: '.APP_URL.'index.php');exit;}
 $pdo=db(); $message=''; $error='';
-$tablesReady=(bool)dbFetchOne("SELECT COUNT(*) c FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name IN ('hr_salary_advance_waiver_decisions','hr_salary_advance_waiver_items','hr_salary_advance_waiver_schedule_items')")['c']===3;
+$tablesReady=(int)dbFetchOne("SELECT COUNT(*) c FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name IN ('hr_salary_advance_waiver_decisions','hr_salary_advance_waiver_items','hr_salary_advance_waiver_schedule_items')")['c']===3;
 
 if($_SERVER['REQUEST_METHOD']==='POST' && $tablesReady){
  try{
