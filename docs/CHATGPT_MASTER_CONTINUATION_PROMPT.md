@@ -229,3 +229,29 @@ Continuation rules:
 - Do not reopen the unfinished attendance same-page POST scroll-jump issue.
 - If the harness fails, inspect the exact failure/root cause before any further modification.
 - If it passes, document the evidence and then perform any remaining attendance/payroll runtime coverage required by the canonical acceptance boundary.
+
+## FINAL CHECKPOINT — 2026-10-06 — Attendance ↔ Payroll integration CLOSED
+
+The Attendance ↔ Payroll integration is **RUNTIME VERIFIED / CLOSED**.
+
+Do not restart or repeat the completed verification merely because a new chat session begins.
+
+Final runtime command:
+`php tools\\run_hr_attendance_payroll_extended_integration_tests.php`
+
+Final PASS:
+- policy effective-date selection: PASS
+- attendance policy effective-date selection: PASS
+- `net_before_advance`: PASS
+- employee 8 / request SAR-2026-00007 / period 2026-10
+- attendance deduction 333.33
+- salary-advance deduction 9666.67
+- net salary 0.00
+- paid payroll immutable: PASS
+- rollback: PASS
+
+The earlier core integration harness also passed all explicit absence/leave/non-working/missing-attendance branches.
+
+Known non-blocking observation: CLI execution emits the existing `REQUEST_METHOD` warning from `config/functions.php:52`. Do not alter production code solely to silence it without a separate root-cause task.
+
+**Next continuation rule:** select the next task from the canonical documentation and the user's new requirement. Do not reopen closed waiver, i18n, Salary Advance Stages 1–6, or attendance/payroll verification without concrete regression evidence. The attendance same-page POST scroll-jump issue remains explicitly unfinished/out of scope.
