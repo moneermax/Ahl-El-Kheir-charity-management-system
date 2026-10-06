@@ -403,3 +403,15 @@ Do not rerun closed gates without concrete regression evidence. Salary Advance S
 
 The GM Salary Advance Waiver verification unit is closed. The next task must be selected from the current canonical documentation and the user's new requirement; do not automatically reopen waiver testing.
 
+## 2026-10-06 — i18n cleanup completed after waiver closure
+
+A separate system-wide English i18n cleanup was completed after the GM Salary Advance Waiver verification unit had already been closed.
+
+Static gate:
+php tools\i18n_gap.php
+Result: Files with gaps: 0 | Untranslated Arabic strings: 0
+
+Runtime gate:
+The affected waiver FM/GM pages were opened in English mode using the language switch, and the user confirmed that everything is English and the pages behave normally.
+
+This is an adjacent documentation/UI verification checkpoint only. It does not reopen the closed waiver financial verification matrix and does not require any waiver harness to be rerun.
