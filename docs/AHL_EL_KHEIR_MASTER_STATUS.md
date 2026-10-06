@@ -2141,3 +2141,16 @@ The dedicated rollback-only cancellation harness passed locally on `main` for `S
 
 **Verification status:** the undistributed-request cancellation gate is runtime verified. GM Salary Advance Waiver remains open pending the remaining verification matrix; this does not reopen Salary Advance Stages 1–6.
 
+
+
+## 2026-10-06 — GM Salary Advance Waiver: Future-Deduction Blocking + Draft Refresh Gate Passed
+
+The dedicated rollback-only harness passed locally on `main` for `SAR-2026-00004`.
+
+- Temporary draft payroll ID 24 initially received a 5,000.00 SDG salary-advance deduction.
+- After FM preparation, GM approval, and FM execution, the draft payroll was refreshed to **0.00 SDG** salary-advance deduction.
+- The executed waiver created 10 future schedule-overlay rows, and the real payroll eligibility query returned no pending/partial repayment rows for the waived request/effective month.
+- The request remained `disbursed` and its outstanding balance became zero inside the transaction.
+- Rollback cleanup passed: the temporary payroll was removed and waiver decision/item/schedule-overlay counts returned to zero.
+
+**Verification status:** the future-deduction blocking + draft-refresh gate is runtime verified. GM Salary Advance Waiver remains open pending approved-unpaid payroll protection, blanket/multiple-advance scope, concurrency/duplicate protection, post-commit notifications and failure isolation, audit preservation, and final 1410 reconciliation. This does not reopen Salary Advance Stages 1–6.
