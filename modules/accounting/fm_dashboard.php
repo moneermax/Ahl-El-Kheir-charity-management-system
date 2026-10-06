@@ -348,6 +348,8 @@ $recentJournals = dbFetchAll("SELECT je.entry_code, je.entry_date, je.descriptio
 .ak-fm-action-card.ak-fm-action-8 { border-top:3px solid #198754; }
 .ak-fm-action-card.ak-fm-action-9 { border-top:3px solid #0d6efd; }
 .ak-fm-action-card.ak-fm-action-10 { border-top:3px solid #17a2b8; }
+.ak-fm-action-card.ak-fm-action-journal { border-top:3px solid #0d6efd; }
+.ak-fm-action-card.ak-fm-action-vouchers { border-top:3px solid #17a2b8; }
 @media(max-width:991.98px) { .ak-fm-action-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media(max-width:420px) { .ak-fm-action-grid { grid-template-columns:1fr; } .ak-fm-action-card { height:96px; min-height:96px; } }
 
@@ -428,7 +430,7 @@ $fmActionDescriptions = [
             </div>
         </a>
         <?php else: ?>
-        <a href="<?php echo APP_URL . e($qa['url']); ?>" class="ak-fm-action-card ak-fm-action-<?php echo (int)$index + 1; ?>">
+        <a href="<?php echo APP_URL . e($qa['url']); ?>" class="ak-fm-action-card ak-fm-action-<?php echo (int)$index + 1; ?><?php echo (($qa['url'] ?? '') === 'modules/accounting/journal.php') ? ' ak-fm-action-journal' : ((($qa['url'] ?? '') === 'modules/accounting/vouchers.php') ? ' ak-fm-action-vouchers' : ''); ?>">
             <div class="text-center px-2">
                 <div class="ak-fm-action-icon">
                     <?php if (($qa['icon'] ?? '') === 'fina-logo'): ?><img src="<?php echo APP_URL; ?>assets/img/Feen_logo.jpeg" alt="منظمة فينا الخير — Feena Al-Khair" class="ak-fm-action-fina-logo"><?php else: ?><i class="fas <?php echo e($qa['icon']); ?>" aria-hidden="true"></i><?php endif; ?>
