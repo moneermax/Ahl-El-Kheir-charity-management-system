@@ -2154,3 +2154,16 @@ The dedicated rollback-only harness passed locally on `main` for `SAR-2026-00004
 - Rollback cleanup passed: the temporary payroll was removed and waiver decision/item/schedule-overlay counts returned to zero.
 
 **Verification status:** the future-deduction blocking + draft-refresh gate is runtime verified. GM Salary Advance Waiver remains open pending approved-unpaid payroll protection, blanket/multiple-advance scope, concurrency/duplicate protection, post-commit notifications and failure isolation, audit preservation, and final 1410 reconciliation. This does not reopen Salary Advance Stages 1–6.
+
+
+## 2026-10-06 — GM Salary Advance Waiver: Approved-Unpaid Payroll Protection Gate Passed
+
+The rollback-only runtime harness passed for `SAR-2026-00004`.
+
+- Temporary approved payroll ID 24 carried a 5,000.00 SDG salary-advance deduction.
+- FM preparation and GM approval succeeded.
+- FM execution was **blocked before financial mutation** because the approved, unpaid payroll still contained the salary-advance deduction.
+- Decision remained `approved_by_gm`; request and payroll state remained unchanged; waiver/refund journal count was zero.
+- Rollback cleanup passed completely.
+
+**Verification status:** approved-unpaid payroll protection is runtime verified. GM Salary Advance Waiver remains open for blanket/multiple-advance scope, concurrency/duplicate protection, post-commit notifications and failure isolation, audit preservation, and final 1410 reconciliation. Salary Advance Stages 1–6 remain closed.
