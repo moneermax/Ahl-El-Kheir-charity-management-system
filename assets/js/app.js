@@ -118,12 +118,28 @@
         if ('onscrollend' in window) window.addEventListener('scrollend', () => akTrace('scrollend'), {passive:true});
     }
 
+    /*
+     * System-wide same-page POST policy.
+     *
+     * A POST whose action resolves to the current application path is kept
+     * inside the current document by default. This is deliberately opt-out,
+     * not opt-in: individual pages must not remember to add a special data
+     * attribute just to avoid the browser's native full-page navigation.
+     *
+     * Explicit native POST remains available for exceptional cases such as
+     * downloads, multipart uploads, cross-document targets, or workflows
+     * that intentionally require a real navigation.
+     */
     function samePagePost(form) {
         if (!form || form.tagName !== 'FORM') return false;
-        if (String(form.method || 'get').toLowerCase() !== 'post') return false;
-        if (form.dataset.akSamePage !== '1') return false;
-        if (form.dataset.akNativePost === '1' || form.dataset.akAjaxPost === '0') return false;
-        if (form.target && !['_self'].includes(String(form.target).toLowerCase())) return false;
+        if (String(form.getAttribute('method') || 'get').toLowerCase() !== 'post') return false;
+        if (form.dataset.akNativePost === '1' || form.dataset.akSamePage === '0' || form.dataset.akAjaxPost === '0') return false;
+
+        const enctype = String(form.getAttribute('enctype') || '').toLowerCase();
+        if (enctype === 'multipart/form-data') return false;
+
+        const targetAttribute = String(form.getAttribute('target') || '').toLowerCase();
+        if (targetAttribute && targetAttribute !== '_self') return false;
 
         const currentContent = form.closest('.content');
         if (!currentContent) return false;
@@ -431,7 +447,7 @@
         if (event.defaultPrevented) return;
         if (form.dataset.akSubmitting === '1') return;
 
-        akTrace('submit:before-preventDefault', {action:form.action || window.location.href});
+        akTrace('submit:before-preventDefault', {action:form.getAttribute('action') || window.location.href});
         event.preventDefault();
         akTrace('submit:after-preventDefault');
         form.dataset.akSubmitting = '1';
