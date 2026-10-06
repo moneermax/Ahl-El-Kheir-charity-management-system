@@ -288,3 +288,29 @@ Open evidence gaps remain unchanged:
 - same employee with multiple eligible advances;
 - true two-process concurrent execution.
 Do not claim either as runtime-proven.
+
+## 2026-10-06 — Notification failure-isolation gate PASSED
+
+Runtime command:
+`php tools\\run_salary_advance_gm_waiver_notification_failure_isolation_tests.php`
+
+Evidence:
+- request: `SAR-2026-00004`
+- decision: `13`
+- controlled notification delivery attempts: `2`
+- injected notification failures: `1`
+- final decision state: `executed`
+- outstanding balance: `0`
+- waiver journal: `125`
+- schedule overlays: `10`
+- cleanup: decision rows `0`, journals `0`, notifications restored `1`, request restored `1`
+
+This proves the notification-delivery failure was real and isolated from the already-committed financial/business execution. The first execution notification failed through the controlled delivery seam; the later notification attempt continued, while the waiver state, balance, journal, schedule overlays and audit state remained committed.
+
+**Gate CLOSED.**
+
+Next gate: **audit preservation runtime verification**. The audit test must prove historical disbursement, historical payroll repayment and original payroll accounting evidence remain intact while waiver accounting and waiver audit evidence are represented separately.
+
+Open evidence gaps remain:
+- same employee with multiple eligible advances;
+- true two-process concurrent execution.
