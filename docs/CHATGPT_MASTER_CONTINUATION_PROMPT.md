@@ -113,3 +113,21 @@ Hard continuation rules:
 - Do not reopen the unfinished attendance same-page POST scroll-jump issue.
 - Do not change the waiver production logic merely to make a failure-isolation test pass; first identify the real notification failure path and use the narrowest controlled test seam available.
 - After each newly closed gate, update the waiver continuation doc, master status, session index, and this continuation prompt before moving to the next gate.
+
+## LATEST WAIVER CHECKPOINT — 2026-10-06
+
+The GM Salary Advance Waiver verification matrix has passed through post-commit execution notification delivery.
+
+The immediate next gate is **notification failure-isolation runtime verification**.
+
+Source inspection has already confirmed:
+- `ak_transaction_review_notify_event()` catches `Throwable`;
+- the installed notification path must support the legacy schema fallback;
+- no existing deterministic failure seam was available.
+
+A narrow inert test-only delivery hook and dedicated harness are now on `main`:
+`tools\\run_salary_advance_gm_waiver_notification_failure_isolation_tests.php`
+
+Runtime status: **PENDING USER EXECUTION**.
+
+Do not repeat any closed waiver harness. If the failure-isolation harness passes, proceed to audit-preservation runtime verification, then final 1410 reconciliation. Keep same-employee multiple-advance and true two-process concurrent execution as explicit open evidence gaps unless separately proven.
