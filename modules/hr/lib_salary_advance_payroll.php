@@ -533,9 +533,14 @@ function hrSalaryAdvancePayrollRefreshDraft(PDO $pdo, int $payrollId): void
         ),
         2
     );
+    // Attendance deduction is a payroll deduction that must reduce the
+    // employee's cash salary before salary-advance recovery is applied.
+    // hrSalaryAdvancePayrollCalculateDraft() already uses the same basis
+    // when eligible_salary_basis = net_before_advance.
     $net = round(
         $gross
         - (float)$payroll['deductions']
+        - (float)$payroll['attendance_deduction']
         - $salaryAdvanceDeduction,
         2
     );
