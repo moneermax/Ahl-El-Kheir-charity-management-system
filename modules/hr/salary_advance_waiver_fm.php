@@ -50,9 +50,15 @@ $expenses=$tablesReady?dbFetchAll("SELECT id,code,name_ar FROM accounts WHERE ac
 $pageTitle='إعفاء سلف الرواتب — التنفيذ المالي';$active='salary_advance_waiver_fm';
 require_once __DIR__.'/../../includes/header.php';
 ?>
+<style>
+.salary-waiver-page-head { background:#fff; color:#1b4d8f; border:1px solid #e3e8ef; border-radius:12px; padding:14px 18px; margin-bottom:16px; box-shadow:0 2px 8px rgba(10,31,68,.05); }
+.salary-waiver-page-head h1 { color:#1b4d8f; }
+</style>
 <div class="container-fluid" style="max-width:1350px">
+<div class="salary-waiver-page-head">
 <h1 class="h4 mb-1">إعفاء سلف الرواتب — المدير المالي</h1>
-<div class="text-muted small mb-3">FM يجهز القرار والحسابات، ثم يعتمد GM القرار، ثم يعود التنفيذ النهائي إلى FM.</div>
+<div class="text-muted small">FM يجهز القرار والحسابات، ثم يعتمد GM القرار، ثم يعود التنفيذ النهائي إلى FM.</div>
+</div>
 <?php if(!$tablesReady): ?><div class="alert alert-warning">ميزة الإعفاء لم تُفعّل في قاعدة البيانات بعد.</div><?php endif; ?>
 <?php if($message): ?><div class="alert alert-success"><?=e($message)?></div><?php endif; ?>
 <?php if($error): ?><div class="alert alert-danger"><?=e($error)?></div><?php endif; ?>
