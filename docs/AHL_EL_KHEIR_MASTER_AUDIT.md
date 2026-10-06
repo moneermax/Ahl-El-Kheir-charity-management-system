@@ -2677,3 +2677,25 @@ A rollback-only harness was added at:
 It deliberately performs no DDL and does not commit its temporary fixture.
 
 **Runtime verification remains PENDING USER EXECUTION.**
+
+## 2026-10-06 — Attendance ↔ Payroll integration: final runtime verification
+
+Runtime verification of the Attendance Policy ↔ Payroll integration is complete.
+
+The first rollback-only harness passed the core attendance branches, including explicit absence, paid leave, unpaid leave, non-working-day absence, missing attendance, draft deduction refresh and rollback.
+
+The extended rollback-only harness then passed:
+- payroll-policy effective-date selection;
+- attendance-policy effective-date selection;
+- `net_before_advance` salary-advance interaction;
+- paid payroll immutability;
+- rollback cleanup.
+
+Exact final runtime evidence:
+`PASS | Attendance/payroll extended integration | policy_effective_dates=PASS | payroll_versions=3,4 | attendance_versions=2,3 | net_before_advance=PASS | employee=8 | request=SAR-2026-00007 | period=2026-10 | absence_date=2026-10-06 | attendance_deduction=333.33 | salary_advance_deduction=9666.67 | net_salary=0 | paid_payroll_immutable=PASS | rollback=PASS`
+
+The previously fixed production defect in `hrSalaryAdvancePayrollRefreshDraft()` is therefore runtime-covered: the refresh path now subtracts `attendance_deduction` before salary-advance recovery.
+
+The CLI warning at `config/functions.php:52` is an existing CLI-context warning and is not considered an integration failure.
+
+**Audit disposition: Attendance ↔ Payroll integration RUNTIME VERIFIED / CLOSED.**
