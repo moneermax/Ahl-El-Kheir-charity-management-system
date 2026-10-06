@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 03, 2026 at 08:26 AM
+-- Generation Time: Oct 06, 2026 at 08:36 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -180,7 +180,31 @@ INSERT INTO `attendance` (`id`, `employee_id`, `date`, `check_in`, `check_out`, 
 (178, 9, '2026-09-08', '10:03:15', NULL, 'remote', NULL, NULL, 'present', NULL, '2026-09-08 11:03:15'),
 (179, 10, '2026-09-08', '10:03:15', NULL, 'remote', NULL, NULL, 'present', NULL, '2026-09-08 11:03:15'),
 (180, 8, '2026-09-08', '10:03:15', NULL, 'remote', NULL, NULL, 'present', NULL, '2026-09-08 11:03:15'),
-(181, 13, '2026-09-08', '10:03:15', NULL, 'remote', NULL, NULL, 'present', NULL, '2026-09-08 11:03:15');
+(181, 13, '2026-09-08', '10:03:15', NULL, 'remote', NULL, NULL, 'present', NULL, '2026-09-08 11:03:15'),
+(190, 19, '2026-10-05', '15:30:52', NULL, 'remote', NULL, NULL, 'present', NULL, '2026-10-05 16:30:52'),
+(191, 21, '2026-10-05', '15:33:05', NULL, 'remote', NULL, NULL, 'present', NULL, '2026-10-05 16:30:59'),
+(193, 15, '2026-10-05', '15:33:10', NULL, 'remote', NULL, NULL, 'present', NULL, '2026-10-05 16:33:10'),
+(194, 2, '2026-10-05', '15:41:13', NULL, 'remote', NULL, NULL, 'present', NULL, '2026-10-05 16:33:18'),
+(196, 1, '2026-10-05', '15:41:22', NULL, 'remote', NULL, NULL, 'present', NULL, '2026-10-05 16:41:22'),
+(197, 7, '2026-10-05', '15:48:36', NULL, 'remote', NULL, NULL, 'present', NULL, '2026-10-05 16:48:36'),
+(198, 6, '2026-10-05', '16:15:43', NULL, 'remote', NULL, NULL, 'present', NULL, '2026-10-05 17:15:43'),
+(199, 9, '2026-10-05', '16:45:37', NULL, 'remote', NULL, NULL, 'present', NULL, '2026-10-05 17:45:37'),
+(200, 27, '2026-10-05', '17:24:08', NULL, 'remote', NULL, NULL, 'present', NULL, '2026-10-05 18:24:08'),
+(201, 8, '2026-10-05', '17:29:37', NULL, 'remote', NULL, NULL, 'present', NULL, '2026-10-05 18:29:37'),
+(202, 10, '2026-10-05', '17:37:29', NULL, 'remote', NULL, NULL, 'present', NULL, '2026-10-05 18:37:29'),
+(203, 13, '2026-10-05', '17:41:37', NULL, 'remote', NULL, NULL, 'present', NULL, '2026-10-05 18:41:37'),
+(204, 11, '2026-10-05', '17:51:02', NULL, 'remote', NULL, NULL, 'present', NULL, '2026-10-05 18:43:43'),
+(206, 20, '2026-10-05', '17:51:08', NULL, 'remote', NULL, NULL, 'present', NULL, '2026-10-05 18:51:08'),
+(207, 18, '2026-10-05', '18:19:03', NULL, 'remote', NULL, NULL, 'present', NULL, '2026-10-05 19:19:03'),
+(208, 3, '2026-10-05', '18:28:00', NULL, 'remote', NULL, NULL, 'present', NULL, '2026-10-05 19:28:00'),
+(209, 13, '2026-10-04', '18:34:25', NULL, 'remote', NULL, NULL, 'present', NULL, '2026-10-05 19:34:25'),
+(210, 12, '2026-10-05', '18:39:36', NULL, 'remote', NULL, NULL, 'present', NULL, '2026-10-05 19:39:36'),
+(211, 8, '2026-10-04', '18:49:31', NULL, 'remote', NULL, NULL, 'present', NULL, '2026-10-05 19:49:31'),
+(212, 10, '2026-10-04', '18:58:43', NULL, 'remote', NULL, NULL, 'present', NULL, '2026-10-05 19:58:43'),
+(213, 9, '2026-10-04', '19:00:39', NULL, 'remote', NULL, NULL, 'present', NULL, '2026-10-05 20:00:39'),
+(214, 7, '2026-10-04', '19:11:32', NULL, 'remote', NULL, NULL, 'present', NULL, '2026-10-05 20:11:32'),
+(215, 13, '2026-10-03', '19:19:08', NULL, 'remote', NULL, NULL, 'present', NULL, '2026-10-05 20:19:08'),
+(216, 8, '2026-10-03', '19:22:29', NULL, 'remote', NULL, NULL, 'present', NULL, '2026-10-05 20:22:29');
 
 -- --------------------------------------------------------
 
@@ -1036,7 +1060,40 @@ INSERT INTO `audit_log` (`id`, `user_id`, `action`, `entity_type`, `entity_id`, 
 (2226, 33, 'LOGIN', 'users', 33, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-03 08:53:14'),
 (2227, 33, 'LOGOUT', 'users', 33, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-03 08:55:34'),
 (2228, 34, 'LOGIN', 'users', 34, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-03 08:55:44'),
-(2229, 34, 'CREATE', 'project_expense', 6, NULL, '{\"project_id\":15,\"amount\":50000,\"recorded_by_role\":\"project_supervisor\",\"primary_document_id\":7}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-03 09:08:51');
+(2229, 34, 'CREATE', 'project_expense', 6, NULL, '{\"project_id\":15,\"amount\":50000,\"recorded_by_role\":\"project_supervisor\",\"primary_document_id\":7}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-03 09:08:51'),
+(2230, 34, 'REQUEST_CLOSE', 'project_lifecycle', 15, '{\"status\":\"active\"}', '{\"status\":\"closure_requested\",\"reason\":\"project is done with some refund as we manage to save money from the earlier suggested budget\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-03 10:22:07'),
+(2231, 34, 'LOGOUT', 'users', 34, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-03 10:24:06'),
+(2232, 33, 'LOGIN', 'users', 33, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-03 10:24:13'),
+(2233, 33, 'RETURN_TO_PS', 'project_lifecycle', 15, '{\"status\":\"under_review\"}', '{\"status\":\"active\",\"reason\":\"return prove must be added\",\"returned_by_role\":\"projects_manager\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-03 14:57:39'),
+(2234, 33, 'LOGOUT', 'users', 33, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-03 14:57:49'),
+(2235, 34, 'LOGIN', 'users', 34, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-03 14:57:59'),
+(2236, 34, 'LOGOUT', 'users', 34, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-03 15:00:29'),
+(2237, 33, 'LOGIN', 'users', 33, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-03 15:00:37'),
+(2238, 33, 'RETURN_TO_PS', 'project_lifecycle', 15, '{\"status\":\"under_review\"}', '{\"status\":\"active\",\"reason\":\"resubmit notification test\",\"returned_by_role\":\"projects_manager\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-03 15:05:37'),
+(2239, 33, 'LOGOUT', 'users', 33, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-03 15:05:47'),
+(2240, 34, 'LOGIN', 'users', 34, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-03 15:05:57'),
+(2241, 34, 'REQUEST_CLOSE', 'project_lifecycle', 15, '{\"status\":\"active\"}', '{\"status\":\"closure_requested\",\"reason\":\"notification test\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-03 16:29:08'),
+(2242, 34, 'LOGOUT', 'users', 34, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-03 16:42:29'),
+(2243, 33, 'LOGIN', 'users', 33, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-03 16:42:38'),
+(2244, 33, 'CLOSE', 'project_lifecycle', 15, '{\"status\":\"under_review\",\"controlled_balance\":250000}', '{\"status\":\"closed\",\"reason\":\"Project is done with return\",\"financial_closure_pending\":true}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-03 18:47:27'),
+(2245, 29, 'FM_FINANCIAL_CLOSURE', 'project_lifecycle', 15, '{\"status\":\"closed\",\"controlled_balance_before_return\":250000}', '{\"status\":\"financially_closed\",\"controlled_balance\":0,\"return_journal_entry_id\":115}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-03 19:06:46'),
+(2246, 1, 'LOGIN', 'users', 1, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-04 20:32:28'),
+(2247, 1, 'LOGOUT', 'users', 1, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-04 20:33:22'),
+(2248, 29, 'LOGIN', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-04 20:34:55'),
+(2249, 29, 'LOGIN', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-05 07:31:08'),
+(2250, 1, 'LOGIN', 'users', 1, NULL, NULL, '192.168.18.6', 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Mobile Safari/537.36', '2026-10-05 07:55:39'),
+(2251, 1, 'UPDATE', 'settings', NULL, '{\"org_name_ar\":\"أهل الخير\"}', '{\"org_name_ar\":\"منظمة أهل الخير النسويه\"}', '192.168.18.6', 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Mobile Safari/537.36', '2026-10-05 07:56:37'),
+(2252, 1, 'UPDATE', 'users', 1, '{\"full_name\":\"منير علي طه صالح\",\"email\":\"sudo@ahlelkheir.org\",\"phone\":\"0966616614\"}', '{\"full_name\":\"منير علي طه صالح\",\"email\":\"sudo@ahlelkheir.org\",\"phone\":\"0966616614\",\"address\":\"\"}', '192.168.18.6', 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Mobile Safari/537.36', '2026-10-05 07:57:32'),
+(2253, 1, 'EXPORT', 'database', NULL, NULL, '{\"file\":\"backup_20261005_065812.sql\",\"size\":5833115}', '192.168.18.6', 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Mobile Safari/537.36', '2026-10-05 07:58:14'),
+(2254, 1, 'LOGOUT', 'users', 1, NULL, NULL, '192.168.18.6', 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Mobile Safari/537.36', '2026-10-05 07:58:32'),
+(2255, 2, 'LOGIN', 'users', 2, NULL, NULL, '192.168.18.6', 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Mobile Safari/537.36', '2026-10-05 07:58:44'),
+(2256, 2, 'LOGOUT', 'users', 2, NULL, NULL, '192.168.18.6', 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Mobile Safari/537.36', '2026-10-05 08:02:26'),
+(2257, 29, 'LOGOUT', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-05 08:04:10'),
+(2258, 2, 'LOGIN', 'users', 2, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-05 08:04:19'),
+(2259, 2, 'LOGOUT', 'users', 2, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-05 09:09:07'),
+(2260, 32, 'LOGIN', 'users', 32, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-05 09:09:19'),
+(2261, 32, 'LOGIN', 'users', 32, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-06 07:39:15'),
+(2262, 29, 'LOGIN', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-06 07:53:51');
 
 -- --------------------------------------------------------
 
@@ -1196,31 +1253,31 @@ CREATE TABLE `employees` (
 --
 
 INSERT INTO `employees` (`id`, `user_id`, `full_name`, `birth_date`, `gender`, `phone`, `email`, `address`, `department_id`, `employee_code`, `national_id`, `hire_date`, `position`, `employment_type`, `work_mode`, `basic_salary`, `bank_account`, `contract_file_path`, `status`, `employment_state_id`, `employment_state_changed_at`, `created_by`, `created_at`, `updated_at`) VALUES
-(1, 1, 'منير علي طه صالح', NULL, NULL, '0966616614', 'sudo@ahlelkheir.org', NULL, NULL, 'EMP-0001', NULL, '2026-08-02', 'مدير النظام', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-09-06 21:31:44'),
-(2, 2, 'المدير العام', NULL, NULL, NULL, 'gm@ahlelkheir.org', NULL, 1, 'EMP-0002', NULL, '2026-08-02', 'المدير العام', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-09-06 21:31:44'),
-(3, 3, 'لمياء علي طه صالح', NULL, NULL, NULL, 'vgm@ahlelkheir.org', NULL, 1, 'EMP-0003', NULL, '2026-08-02', 'نائب المدير العام', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-09-06 21:31:44'),
-(4, 14, 'أحمد محمد', NULL, NULL, '0912345100', 'moneerali2000@gmail.com', '', NULL, 'EMP-0014', '', '2026-08-09', 'مشرف', 'full_time', 'remote', 0.00, '', NULL, 'terminated', 5, '2026-09-07 07:43:57', 1, '2026-08-18 23:51:09', '2026-09-07 08:43:57'),
-(5, 15, 'مديحه عبد الماجد', NULL, NULL, '096664568', 'madiha@example.com', NULL, NULL, 'EMP-0015', NULL, '2026-08-10', 'مشرف', 'full_time', 'remote', 0.00, NULL, NULL, 'terminated', 5, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-09-06 21:31:44'),
-(6, 19, 'فاطمه سليمان', NULL, NULL, '0999999999999', 'fatima@gmail.com', NULL, 5, 'EMP-0019', NULL, '2026-08-14', 'مشرف', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-09-06 21:31:44'),
-(7, 20, 'ميادة الحبر', NULL, NULL, NULL, 'mayadah@gmail.com', NULL, 5, 'EMP-0020', NULL, '2026-08-14', 'مشرف', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-09-06 21:31:44'),
-(8, 21, 'هديل عثمان', NULL, NULL, '03333333333333', 'hadeel@gmail.com', NULL, 5, 'EMP-0021', NULL, '2026-08-14', 'مشرف', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-09-06 21:31:44'),
-(9, 22, 'ميساء سليمان', NULL, NULL, '26498879658', 'mysa@gmail.com', NULL, 5, 'EMP-0022', NULL, '2026-08-14', 'مشرف', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-09-06 21:31:44'),
-(10, 23, 'هبه خلف الله', NULL, NULL, '0123467', 'hibah@gmail.com', NULL, 5, 'EMP-0023', NULL, '2026-08-14', 'مشرف', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-09-06 21:31:44'),
-(11, 25, 'مها محجوب', NULL, NULL, '023547891', 'maha@gmail.com', NULL, 5, 'EMP-0025', NULL, '2026-08-14', 'مشرف', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-09-06 21:31:44'),
-(12, 26, 'ساره خلف الله', NULL, NULL, '015468972', 'sarah@gmail.com', NULL, 5, 'EMP-0026', NULL, '2026-08-14', 'مشرف', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-09-06 21:31:44'),
-(13, 27, 'هناء خلف الله', NULL, NULL, '78999456789', 'hanah@gmail.com', NULL, 5, 'EMP-0027', NULL, '2026-08-14', 'مشرف', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-09-06 21:31:44'),
-(14, 29, 'المدير المالي', NULL, NULL, NULL, 'fm@ahlelkheir.org', NULL, 1, 'EMP-0029', NULL, '2026-08-17', 'المدير المالي', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-09-06 21:31:44'),
-(15, 16, 'nany1', NULL, NULL, '094449785', 'nany1@gmail.com', NULL, 2, 'EMP-0016', NULL, '2026-08-13', 'أخصائية شؤون الأمهات', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-09-06 21:31:44'),
-(16, 18, 'ro1', NULL, NULL, '0123456789', 'ro@gmail.com', '', 3, 'EMP-0018', '', '2026-08-13', 'مندوب استرجاع الكفلاء', 'full_time', 'remote', 5000.00, '', NULL, 'active', 1, '2026-09-06 21:28:24', 1, '2026-08-18 23:51:09', '2026-09-06 23:10:30'),
-(17, 28, 'أحمد حسين', NULL, NULL, '8545567865', 'ahmed@gmail.com', NULL, 4, 'EMP-0028', NULL, '2026-08-14', 'موظف العلاقات العامة والإعلام', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-09-06 21:31:44'),
-(18, 4, 'محاسب (موظف)', NULL, NULL, '0123456789', 'accountant@ahlelkheir.org', NULL, 6, 'EMP-0004', NULL, '2026-08-08', 'محاسب', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-09-06 21:31:44'),
-(19, 17, 'acc1', NULL, 'male', '0945786321', 'acc1@gmail.com', NULL, 6, 'EMP-0017', NULL, '2026-08-13', 'محاسب', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-10-01 23:23:11'),
-(20, 32, 'مدير الموارد البشرية', NULL, 'male', '00112233445566', 'hr@ahlelkheir.org', NULL, 1, 'EMP-0032', NULL, '2026-08-18', 'مدير الموارد البشرية', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-10-01 23:20:43'),
-(21, NULL, 'HR Salary Test', '2000-01-01', 'male', '', '', '', 3, 'EMP-0033', '', '2026-09-07', 'HR Test', 'full_time', 'remote', 7000.00, '', NULL, 'active', 1, '2026-09-07 09:07:51', 32, '2026-09-07 09:07:51', '2026-09-07 16:15:18'),
-(22, 34, 'project supervisor', NULL, 'male', '987654321', 'gps@gmail.com', NULL, 8, 'EMP-0034', NULL, '2026-08-28', 'مشرف مشروع', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-09-27 17:37:12', 1, '2026-09-27 17:37:12', '2026-09-27 17:37:12'),
-(23, 33, 'projects manager', NULL, 'male', '00012344456678', 'pm@gmail.com', NULL, 1, 'EMP-0035', NULL, '2026-10-01', 'موظف', 'full_time', 'remote', 0.00, NULL, NULL, 'active', 1, '2026-10-01 22:28:50', 1, '2026-10-01 22:28:50', '2026-10-01 22:28:50'),
-(26, 39, 'حمد محمد التجريبي', NULL, 'male', '0123456789', 'ah@test.com', NULL, 8, 'EMP-0036', NULL, '2026-10-01', 'موظف', 'full_time', 'onsite', 0.00, NULL, NULL, 'active', 1, '2026-10-01 22:46:02', 32, '2026-10-01 23:46:02', '2026-10-01 23:46:02'),
-(27, 40, 'حمد أحمد اختبار كلمة المرور', NULL, 'male', '01123456789', 'test.password01@example.com', NULL, 8, 'EMP-0037', NULL, '2026-10-01', 'موظف', 'full_time', 'onsite', 0.00, NULL, NULL, 'active', 1, '2026-10-01 23:30:29', 32, '2026-10-02 00:30:29', '2026-10-02 00:30:29');
+(1, 1, 'منير علي طه صالح', NULL, 'male', '0966616614', 'sudo@ahlelkheir.org', NULL, NULL, 'EMP-0001', NULL, '2026-08-02', 'مدير النظام', 'full_time', 'remote', 27500.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-10-05 10:03:19'),
+(2, 2, 'المدير العام', NULL, NULL, NULL, 'gm@ahlelkheir.org', NULL, 1, 'EMP-0002', NULL, '2026-08-02', 'المدير العام', 'full_time', 'remote', 30000.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-10-05 10:03:19'),
+(3, 3, 'لمياء علي طه صالح', NULL, NULL, NULL, 'vgm@ahlelkheir.org', NULL, 1, 'EMP-0003', NULL, '2026-08-02', 'نائب المدير العام', 'full_time', 'remote', 32500.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-10-05 10:03:19'),
+(4, 14, 'أحمد محمد', NULL, NULL, '0912345100', 'moneerali2000@gmail.com', '', NULL, 'EMP-0014', '', '2026-08-09', 'مشرف', 'full_time', 'remote', 18000.00, '', NULL, 'terminated', 5, '2026-09-07 07:43:57', 1, '2026-08-18 23:51:09', '2026-10-05 10:03:19'),
+(5, 15, 'مديحه عبد الماجد', NULL, NULL, '096664568', 'madiha@example.com', NULL, NULL, 'EMP-0015', NULL, '2026-08-10', 'مشرف', 'full_time', 'remote', 19500.00, NULL, NULL, 'terminated', 5, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-10-05 10:03:19'),
+(6, 19, 'فاطمه سليمان', NULL, NULL, '0999999999999', 'fatima@gmail.com', NULL, 5, 'EMP-0019', NULL, '2026-08-14', 'مشرف', 'full_time', 'remote', 21000.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-10-05 10:03:19'),
+(7, 20, 'ميادة الحبر', NULL, NULL, NULL, 'mayadah@gmail.com', NULL, 5, 'EMP-0020', NULL, '2026-08-14', 'مشرف', 'full_time', 'remote', 22500.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-10-05 10:03:19'),
+(8, 21, 'هديل عثمان', NULL, NULL, '03333333333333', 'hadeel@gmail.com', NULL, 5, 'EMP-0021', NULL, '2026-08-14', 'مشرف', 'full_time', 'remote', 18000.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-10-05 10:03:19'),
+(9, 22, 'ميساء سليمان', NULL, NULL, '26498879658', 'mysa@gmail.com', NULL, 5, 'EMP-0022', NULL, '2026-08-14', 'مشرف', 'full_time', 'remote', 19500.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-10-05 10:03:19'),
+(10, 23, 'هبه خلف الله', NULL, NULL, '0123467', 'hibah@gmail.com', NULL, 5, 'EMP-0023', NULL, '2026-08-14', 'مشرف', 'full_time', 'remote', 21000.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-10-05 10:03:19'),
+(11, 25, 'مها محجوب', NULL, NULL, '023547891', 'maha@gmail.com', NULL, 5, 'EMP-0025', NULL, '2026-08-14', 'مشرف', 'full_time', 'remote', 22500.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-10-05 10:03:19'),
+(12, 26, 'ساره خلف الله', NULL, NULL, '015468972', 'sarah@gmail.com', NULL, 5, 'EMP-0026', NULL, '2026-08-14', 'مشرف', 'full_time', 'remote', 18000.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-10-05 10:03:19'),
+(13, 27, 'هناء خلف الله', NULL, NULL, '78999456789', 'hanah@gmail.com', NULL, 5, 'EMP-0027', NULL, '2026-08-14', 'مشرف', 'full_time', 'remote', 19500.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-10-05 10:03:19'),
+(14, 29, 'المدير المالي', NULL, NULL, NULL, 'fm@ahlelkheir.org', NULL, 1, 'EMP-0029', NULL, '2026-08-17', 'المدير المالي', 'full_time', 'remote', 30000.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-10-05 10:03:19'),
+(15, 16, 'nany1', NULL, NULL, '094449785', 'nany1@gmail.com', NULL, 2, 'EMP-0016', NULL, '2026-08-13', 'أخصائية شؤون الأمهات', 'full_time', 'remote', 17000.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-10-05 10:03:19'),
+(16, 18, 'ro1', NULL, NULL, '0123456789', 'ro@gmail.com', '', 3, 'EMP-0018', '', '2026-08-13', 'مندوب استرجاع الكفلاء', 'full_time', 'remote', 11000.00, '', NULL, 'active', 1, '2026-09-06 21:28:24', 1, '2026-08-18 23:51:09', '2026-10-05 10:03:19'),
+(17, 28, 'أحمد حسين', NULL, NULL, '8545567865', 'ahmed@gmail.com', NULL, 4, 'EMP-0028', NULL, '2026-08-14', 'موظف العلاقات العامة والإعلام', 'full_time', 'remote', 11750.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-10-05 10:03:19'),
+(18, 4, 'محاسب (موظف)', NULL, NULL, '0123456789', 'accountant@ahlelkheir.org', NULL, 6, 'EMP-0004', NULL, '2026-08-08', 'محاسب', 'full_time', 'remote', 8000.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-10-05 10:03:19'),
+(19, 17, 'acc1', NULL, 'male', '0945786321', 'acc1@gmail.com', NULL, 6, 'EMP-0017', NULL, '2026-08-13', 'محاسب', 'full_time', 'remote', 8750.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-10-05 10:03:19'),
+(20, 32, 'مدير الموارد البشرية', NULL, 'male', '00112233445566', 'hr@ahlelkheir.org', NULL, 1, 'EMP-0032', NULL, '2026-08-18', 'مدير الموارد البشرية', 'full_time', 'remote', 25000.00, NULL, NULL, 'active', 1, '2026-09-06 21:31:44', 1, '2026-08-18 23:51:09', '2026-10-05 10:03:19'),
+(21, NULL, 'HR Salary Test', '2000-01-01', 'male', '', '', '', 3, 'EMP-0033', '', '2026-09-07', 'HR Test', 'full_time', 'remote', 10250.00, '', NULL, 'active', 1, '2026-09-07 09:07:51', 32, '2026-09-07 09:07:51', '2026-10-05 10:03:19'),
+(22, 34, 'project supervisor', NULL, 'male', '987654321', 'gps@gmail.com', NULL, 8, 'EMP-0034', NULL, '2026-08-28', 'مشرف مشروع', 'full_time', 'remote', 21000.00, NULL, NULL, 'active', 1, '2026-09-27 17:37:12', 1, '2026-09-27 17:37:12', '2026-10-05 10:03:19'),
+(23, 33, 'projects manager', NULL, 'male', '00012344456678', 'pm@gmail.com', NULL, 1, 'EMP-0035', NULL, '2026-10-01', 'موظف', 'full_time', 'remote', 11750.00, NULL, NULL, 'active', 1, '2026-10-01 22:28:50', 1, '2026-10-01 22:28:50', '2026-10-05 10:03:19'),
+(26, 39, 'حمد محمد التجريبي', NULL, 'male', '0123456789', 'ah@test.com', NULL, 8, 'EMP-0036', NULL, '2026-10-01', 'موظف', 'full_time', 'onsite', 9500.00, NULL, NULL, 'active', 1, '2026-10-01 22:46:02', 32, '2026-10-01 23:46:02', '2026-10-05 10:03:19'),
+(27, 40, 'حمد أحمد اختبار كلمة المرور', NULL, 'male', '01123456789', 'test.password01@example.com', NULL, 8, 'EMP-0037', NULL, '2026-10-01', 'موظف', 'full_time', 'onsite', 10250.00, NULL, NULL, 'active', 1, '2026-10-01 23:30:29', 32, '2026-10-02 00:30:29', '2026-10-05 10:03:19');
 
 -- --------------------------------------------------------
 
@@ -8749,6 +8806,37 @@ INSERT INTO `group_workflow_audit_log` (`id`, `group_id`, `family_id`, `month`, 
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `hr_attendance_policy_versions`
+--
+
+CREATE TABLE `hr_attendance_policy_versions` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `version_no` int(10) UNSIGNED NOT NULL,
+  `policy_name` varchar(150) NOT NULL,
+  `effective_from` date NOT NULL,
+  `working_start_time` time NOT NULL DEFAULT '07:00:00',
+  `working_end_time` time NOT NULL DEFAULT '16:00:00',
+  `working_days` varchar(20) NOT NULL DEFAULT '1,2,3,4,5',
+  `attendance_cutoff_time` time NOT NULL DEFAULT '16:00:00',
+  `absence_finalization_time` time NOT NULL DEFAULT '16:00:00',
+  `auto_login_attendance` tinyint(1) NOT NULL DEFAULT 1,
+  `auto_absence_enabled` tinyint(1) NOT NULL DEFAULT 1,
+  `default_work_mode` enum('remote','onsite','hybrid') NOT NULL DEFAULT 'remote',
+  `notes` varchar(2000) DEFAULT NULL,
+  `created_by` int(10) UNSIGNED DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `hr_attendance_policy_versions`
+--
+
+INSERT INTO `hr_attendance_policy_versions` (`id`, `version_no`, `policy_name`, `effective_from`, `working_start_time`, `working_end_time`, `working_days`, `attendance_cutoff_time`, `absence_finalization_time`, `auto_login_attendance`, `auto_absence_enabled`, `default_work_mode`, `notes`, `created_by`, `created_at`) VALUES
+(1, 1, 'سياسة الحضور والانصراف الأساسية', '2026-10-05', '07:00:00', '16:00:00', '1,2,3,4,6,7', '16:00:00', '16:00:00', 1, 1, 'hybrid', NULL, 32, '2026-10-05 15:23:27');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `hr_employee_contracts`
 --
 
@@ -8846,11 +8934,58 @@ INSERT INTO `hr_employee_salary_history` (`id`, `employee_id`, `contract_id`, `e
 (19, 19, 19, '2026-08-13', NULL, 0.00, 'SDG', 'monthly', 'initial', 'Initial HR contract/salary foundation migration', NULL, '2026-09-06 19:32:55'),
 (20, 20, 20, '2026-08-18', NULL, 0.00, 'SDG', 'monthly', 'initial', 'Initial HR contract/salary foundation migration', NULL, '2026-09-06 19:32:55'),
 (32, 16, 16, '2026-09-06', '2026-09-30', 5000.00, 'SDG', 'monthly', 'initial', NULL, 32, '2026-09-06 20:10:30'),
-(33, 16, 16, '2026-10-01', NULL, 6000.00, 'SDG', 'monthly', 'initial', NULL, 32, '2026-09-07 03:19:22'),
+(33, 16, 16, '2026-10-01', NULL, 11000.00, 'SDG', 'monthly', 'adjustment', 'Payroll test salary - varied test data - 2026-10-01', 32, '2026-09-07 03:19:22'),
 (34, 21, 22, '2026-09-07', NULL, 7000.00, 'SDG', 'monthly', 'contract_change', 'تم إنشاء سجل الراتب من عقد جديد', 32, '2026-09-07 06:07:51'),
 (35, 22, NULL, '2026-08-28', NULL, 0.00, 'SDG', 'monthly', 'initial', 'Initial salary history created from employee record', NULL, '2026-09-27 14:37:12'),
-(38, 26, NULL, '2026-10-01', NULL, 0.00, 'SDG', 'monthly', 'initial', 'Synchronized from employee record', NULL, '2026-10-01 20:46:02'),
-(39, 27, NULL, '2026-10-01', NULL, 0.00, 'SDG', 'monthly', 'initial', 'Synchronized from employee record', NULL, '2026-10-01 21:30:29');
+(38, 26, NULL, '2026-10-01', NULL, 9500.00, 'SDG', 'monthly', 'adjustment', 'Payroll test salary - varied test data - 2026-10-01', NULL, '2026-10-01 20:46:02'),
+(39, 27, NULL, '2026-10-01', NULL, 10250.00, 'SDG', 'monthly', 'adjustment', 'Payroll test salary - varied test data - 2026-10-01', NULL, '2026-10-01 21:30:29'),
+(40, 1, NULL, '2026-10-05', NULL, 10000.00, 'SDG', 'monthly', 'adjustment', 'Test salary data for payroll verification', NULL, '2026-10-05 06:08:58'),
+(41, 2, NULL, '2026-10-05', NULL, 10000.00, 'SDG', 'monthly', 'adjustment', 'Test salary data for payroll verification', NULL, '2026-10-05 06:08:58'),
+(42, 3, NULL, '2026-10-05', NULL, 10000.00, 'SDG', 'monthly', 'adjustment', 'Test salary data for payroll verification', NULL, '2026-10-05 06:08:58'),
+(43, 6, NULL, '2026-10-05', NULL, 10000.00, 'SDG', 'monthly', 'adjustment', 'Test salary data for payroll verification', NULL, '2026-10-05 06:08:58'),
+(44, 7, NULL, '2026-10-05', NULL, 10000.00, 'SDG', 'monthly', 'adjustment', 'Test salary data for payroll verification', NULL, '2026-10-05 06:08:58'),
+(45, 8, NULL, '2026-10-05', NULL, 10000.00, 'SDG', 'monthly', 'adjustment', 'Test salary data for payroll verification', NULL, '2026-10-05 06:08:58'),
+(46, 9, NULL, '2026-10-05', NULL, 10000.00, 'SDG', 'monthly', 'adjustment', 'Test salary data for payroll verification', NULL, '2026-10-05 06:08:58'),
+(47, 10, NULL, '2026-10-05', NULL, 10000.00, 'SDG', 'monthly', 'adjustment', 'Test salary data for payroll verification', NULL, '2026-10-05 06:08:58'),
+(48, 11, NULL, '2026-10-05', NULL, 10000.00, 'SDG', 'monthly', 'adjustment', 'Test salary data for payroll verification', NULL, '2026-10-05 06:08:58'),
+(49, 12, NULL, '2026-10-05', NULL, 10000.00, 'SDG', 'monthly', 'adjustment', 'Test salary data for payroll verification', NULL, '2026-10-05 06:08:58'),
+(50, 13, NULL, '2026-10-05', NULL, 10000.00, 'SDG', 'monthly', 'adjustment', 'Test salary data for payroll verification', NULL, '2026-10-05 06:08:58'),
+(51, 14, NULL, '2026-10-05', NULL, 10000.00, 'SDG', 'monthly', 'adjustment', 'Test salary data for payroll verification', NULL, '2026-10-05 06:08:58'),
+(52, 15, NULL, '2026-10-05', NULL, 10000.00, 'SDG', 'monthly', 'adjustment', 'Test salary data for payroll verification', NULL, '2026-10-05 06:08:58'),
+(53, 16, NULL, '2026-10-05', NULL, 10000.00, 'SDG', 'monthly', 'adjustment', 'Test salary data for payroll verification', NULL, '2026-10-05 06:08:58'),
+(54, 17, NULL, '2026-10-05', NULL, 10000.00, 'SDG', 'monthly', 'adjustment', 'Test salary data for payroll verification', NULL, '2026-10-05 06:08:58'),
+(55, 18, NULL, '2026-10-05', NULL, 10000.00, 'SDG', 'monthly', 'adjustment', 'Test salary data for payroll verification', NULL, '2026-10-05 06:08:58'),
+(56, 19, NULL, '2026-10-05', NULL, 10000.00, 'SDG', 'monthly', 'adjustment', 'Test salary data for payroll verification', NULL, '2026-10-05 06:08:58'),
+(57, 20, NULL, '2026-10-05', NULL, 10000.00, 'SDG', 'monthly', 'adjustment', 'Test salary data for payroll verification', NULL, '2026-10-05 06:08:58'),
+(58, 21, NULL, '2026-10-05', NULL, 10000.00, 'SDG', 'monthly', 'adjustment', 'Test salary data for payroll verification', NULL, '2026-10-05 06:08:58'),
+(59, 22, NULL, '2026-10-05', NULL, 10000.00, 'SDG', 'monthly', 'adjustment', 'Test salary data for payroll verification', NULL, '2026-10-05 06:08:58'),
+(60, 23, NULL, '2026-10-05', NULL, 10000.00, 'SDG', 'monthly', 'adjustment', 'Test salary data for payroll verification', NULL, '2026-10-05 06:08:58'),
+(61, 26, NULL, '2026-10-05', NULL, 10000.00, 'SDG', 'monthly', 'adjustment', 'Test salary data for payroll verification', NULL, '2026-10-05 06:08:58'),
+(62, 27, NULL, '2026-10-05', NULL, 10000.00, 'SDG', 'monthly', 'adjustment', 'Test salary data for payroll verification', NULL, '2026-10-05 06:08:58'),
+(63, 4, NULL, '2026-10-05', NULL, 10000.00, 'SDG', 'monthly', 'adjustment', 'Test salary data for payroll verification', NULL, '2026-10-05 06:08:58'),
+(64, 5, NULL, '2026-10-05', NULL, 10000.00, 'SDG', 'monthly', 'adjustment', 'Test salary data for payroll verification', NULL, '2026-10-05 06:08:58'),
+(102, 1, NULL, '2026-10-01', NULL, 27500.00, 'SDG', 'monthly', 'adjustment', 'Payroll test salary - varied test data - 2026-10-01', NULL, '2026-10-05 06:23:06'),
+(103, 2, NULL, '2026-10-01', NULL, 30000.00, 'SDG', 'monthly', 'adjustment', 'Payroll test salary - varied test data - 2026-10-01', NULL, '2026-10-05 06:23:06'),
+(104, 3, NULL, '2026-10-01', NULL, 32500.00, 'SDG', 'monthly', 'adjustment', 'Payroll test salary - varied test data - 2026-10-01', NULL, '2026-10-05 06:23:06'),
+(105, 6, NULL, '2026-10-01', NULL, 21000.00, 'SDG', 'monthly', 'adjustment', 'Payroll test salary - varied test data - 2026-10-01', NULL, '2026-10-05 06:23:06'),
+(106, 7, NULL, '2026-10-01', NULL, 22500.00, 'SDG', 'monthly', 'adjustment', 'Payroll test salary - varied test data - 2026-10-01', NULL, '2026-10-05 06:23:06'),
+(107, 8, NULL, '2026-10-01', NULL, 18000.00, 'SDG', 'monthly', 'adjustment', 'Payroll test salary - varied test data - 2026-10-01', NULL, '2026-10-05 06:23:06'),
+(108, 9, NULL, '2026-10-01', NULL, 19500.00, 'SDG', 'monthly', 'adjustment', 'Payroll test salary - varied test data - 2026-10-01', NULL, '2026-10-05 06:23:06'),
+(109, 10, NULL, '2026-10-01', NULL, 21000.00, 'SDG', 'monthly', 'adjustment', 'Payroll test salary - varied test data - 2026-10-01', NULL, '2026-10-05 06:23:06'),
+(110, 11, NULL, '2026-10-01', NULL, 22500.00, 'SDG', 'monthly', 'adjustment', 'Payroll test salary - varied test data - 2026-10-01', NULL, '2026-10-05 06:23:06'),
+(111, 12, NULL, '2026-10-01', NULL, 18000.00, 'SDG', 'monthly', 'adjustment', 'Payroll test salary - varied test data - 2026-10-01', NULL, '2026-10-05 06:23:06'),
+(112, 13, NULL, '2026-10-01', NULL, 19500.00, 'SDG', 'monthly', 'adjustment', 'Payroll test salary - varied test data - 2026-10-01', NULL, '2026-10-05 06:23:06'),
+(113, 14, NULL, '2026-10-01', NULL, 30000.00, 'SDG', 'monthly', 'adjustment', 'Payroll test salary - varied test data - 2026-10-01', NULL, '2026-10-05 06:23:06'),
+(114, 15, NULL, '2026-10-01', NULL, 17000.00, 'SDG', 'monthly', 'adjustment', 'Payroll test salary - varied test data - 2026-10-01', NULL, '2026-10-05 06:23:06'),
+(115, 17, NULL, '2026-10-01', NULL, 11750.00, 'SDG', 'monthly', 'adjustment', 'Payroll test salary - varied test data - 2026-10-01', NULL, '2026-10-05 06:23:06'),
+(116, 18, NULL, '2026-10-01', NULL, 8000.00, 'SDG', 'monthly', 'adjustment', 'Payroll test salary - varied test data - 2026-10-01', NULL, '2026-10-05 06:23:06'),
+(117, 19, NULL, '2026-10-01', NULL, 8750.00, 'SDG', 'monthly', 'adjustment', 'Payroll test salary - varied test data - 2026-10-01', NULL, '2026-10-05 06:23:06'),
+(118, 20, NULL, '2026-10-01', NULL, 25000.00, 'SDG', 'monthly', 'adjustment', 'Payroll test salary - varied test data - 2026-10-01', NULL, '2026-10-05 06:23:06'),
+(119, 21, NULL, '2026-10-01', NULL, 10250.00, 'SDG', 'monthly', 'adjustment', 'Payroll test salary - varied test data - 2026-10-01', NULL, '2026-10-05 06:23:06'),
+(120, 22, NULL, '2026-10-01', NULL, 21000.00, 'SDG', 'monthly', 'adjustment', 'Payroll test salary - varied test data - 2026-10-01', NULL, '2026-10-05 06:23:06'),
+(121, 23, NULL, '2026-10-01', NULL, 11750.00, 'SDG', 'monthly', 'adjustment', 'Payroll test salary - varied test data - 2026-10-01', NULL, '2026-10-05 06:23:06'),
+(122, 4, NULL, '2026-10-01', NULL, 18000.00, 'SDG', 'monthly', 'adjustment', 'Payroll test salary - varied test data - 2026-10-01', NULL, '2026-10-05 06:23:06'),
+(123, 5, NULL, '2026-10-01', NULL, 19500.00, 'SDG', 'monthly', 'adjustment', 'Payroll test salary - varied test data - 2026-10-01', NULL, '2026-10-05 06:23:06');
 
 -- --------------------------------------------------------
 
@@ -9282,6 +9417,71 @@ INSERT INTO `hr_salary_advance_requests` (`id`, `request_no`, `employee_id`, `po
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `hr_salary_advance_waiver_decisions`
+--
+
+CREATE TABLE `hr_salary_advance_waiver_decisions` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `decision_no` varchar(50) NOT NULL,
+  `decision_type` enum('individual','blanket') NOT NULL,
+  `effective_month` date NOT NULL,
+  `reason` varchar(2000) NOT NULL,
+  `status` enum('pending_gm','rejected_by_gm','approved_by_gm','executed') NOT NULL DEFAULT 'pending_gm',
+  `created_by` int(10) UNSIGNED NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `prepared_by` int(10) UNSIGNED DEFAULT NULL,
+  `prepared_at` datetime DEFAULT NULL,
+  `refund_account_id` int(10) UNSIGNED DEFAULT NULL,
+  `waiver_expense_account_id` int(10) UNSIGNED DEFAULT NULL,
+  `gm_approved_by` int(10) UNSIGNED DEFAULT NULL,
+  `gm_approved_at` datetime DEFAULT NULL,
+  `gm_rejection_reason` varchar(2000) DEFAULT NULL,
+  `executed_at` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `hr_salary_advance_waiver_items`
+--
+
+CREATE TABLE `hr_salary_advance_waiver_items` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `decision_id` int(10) UNSIGNED NOT NULL,
+  `salary_advance_request_id` int(10) UNSIGNED NOT NULL,
+  `employee_id` int(10) UNSIGNED NOT NULL,
+  `balance_before` decimal(18,2) NOT NULL DEFAULT 0.00,
+  `current_period_repayment` decimal(18,2) NOT NULL DEFAULT 0.00,
+  `refund_amount` decimal(18,2) NOT NULL DEFAULT 0.00,
+  `balance_before_waiver` decimal(18,2) NOT NULL DEFAULT 0.00,
+  `waived_amount` decimal(18,2) NOT NULL DEFAULT 0.00,
+  `balance_after` decimal(18,2) NOT NULL DEFAULT 0.00,
+  `previous_request_status` varchar(50) NOT NULL,
+  `resulting_request_status` varchar(50) NOT NULL,
+  `refund_account_id` int(10) UNSIGNED DEFAULT NULL,
+  `refund_journal_entry_id` int(10) UNSIGNED DEFAULT NULL,
+  `waiver_expense_account_id` int(10) UNSIGNED DEFAULT NULL,
+  `waiver_journal_entry_id` int(10) UNSIGNED DEFAULT NULL,
+  `executed_at` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `hr_salary_advance_waiver_schedule_items`
+--
+
+CREATE TABLE `hr_salary_advance_waiver_schedule_items` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `waiver_item_id` int(10) UNSIGNED NOT NULL,
+  `repayment_schedule_id` int(10) UNSIGNED NOT NULL,
+  `previous_schedule_status` varchar(50) NOT NULL,
+  `waived_at` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `journal_entries`
 --
 
@@ -9388,7 +9588,8 @@ INSERT INTO `journal_entries` (`id`, `entry_code`, `entry_date`, `description`, 
 (111, 'JE-PRJ-REL-REV-15-37-20261002182607-275142', '2026-10-02', 'عكس إفراج تمويل المشروع: رفض المدير العام: Reconciliation Test', 'project_funding_release_reversal', 37, 'posted', NULL, NULL, NULL, 2, '2026-10-02 19:26:07'),
 (112, 'JE-PRJ-REL-15-37-20261002183353-11ca0a', '2026-10-02', 'إفراج مالي لتمويل المشروع: PH5 Full Accounting Reconciliation Test', 'project_funding_release', 37, 'voided', '2026-10-02 19:34:30', 2, 'رفض المدير العام: info messages test', 29, '2026-10-02 19:33:53'),
 (113, 'JE-PRJ-REL-REV-15-37-20261002183430-d60fa0', '2026-10-02', 'عكس إفراج تمويل المشروع: رفض المدير العام: info messages test', 'project_funding_release_reversal', 37, 'posted', NULL, NULL, NULL, 2, '2026-10-02 19:34:30'),
-(114, 'JE-PRJ-REL-15-37-20261002183447-0b3263', '2026-10-02', 'إفراج مالي لتمويل المشروع: PH5 Full Accounting Reconciliation Test', 'project_funding_release', 37, 'posted', NULL, NULL, NULL, 29, '2026-10-02 19:34:47');
+(114, 'JE-PRJ-REL-15-37-20261002183447-0b3263', '2026-10-02', 'إفراج مالي لتمويل المشروع: PH5 Full Accounting Reconciliation Test', 'project_funding_release', 37, 'posted', NULL, NULL, NULL, 29, '2026-10-02 19:34:47'),
+(115, 'JE-PRJ-RET-15-37-20261003180646-6ee541', '2026-10-03', 'إرجاع رصيد مشروع غير مستخدم: PH5 Full Accounting Reconciliation Test', 'project_funding_return', 37, 'posted', NULL, NULL, NULL, 29, '2026-10-03 19:06:46');
 
 -- --------------------------------------------------------
 
@@ -9583,7 +9784,9 @@ INSERT INTO `journal_lines` (`id`, `entry_id`, `account_id`, `debit`, `credit`, 
 (229, 113, 47, 0.00, 300000.00, 'عكس: إفراج تمويل المشروع إلى عهدة التنفيذ'),
 (230, 113, 2, 300000.00, 0.00, 'عكس: خصم من حساب تمويل المشروع'),
 (231, 114, 47, 300000.00, 0.00, 'إفراج تمويل المشروع إلى عهدة التنفيذ'),
-(232, 114, 2, 0.00, 300000.00, 'خصم من حساب تمويل المشروع');
+(232, 114, 2, 0.00, 300000.00, 'خصم من حساب تمويل المشروع'),
+(233, 115, 2, 250000.00, 0.00, 'إعادة الرصيد إلى حساب المؤسسة'),
+(234, 115, 47, 0.00, 250000.00, 'عكس الجزء غير المستخدم من مصروف المشروع');
 
 -- --------------------------------------------------------
 
@@ -10123,7 +10326,15 @@ INSERT INTO `notifications` (`id`, `recipient_user_id`, `type`, `title`, `body`,
 (140, 2, 'info', 'مشروع بانتظار الاعتماد النهائي', 'المشروع «PH5 Full Accounting Reconciliation Test» (PRJ-0015) تم اعتماده مالياً وبانتظار اعتماد المدير العام.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=15', 1, '2026-10-02 19:34:47'),
 (141, 29, 'info', 'المشروع معتمد نهائياً — بانتظار تنفيذ الصرف', 'المشروع «PH5 Full Accounting Reconciliation Test» (PRJ-0015) تم اعتماده نهائياً من الإدارة التنفيذية. يمكن للمدير المالي الآن تنفيذ إجراءات الصرف وإثبات الدفع.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=15', 1, '2026-10-02 19:35:01'),
 (142, 33, 'info', 'تم اعتماد المشروع نهائياً', 'اكتمل الاعتماد المالي النهائي للمشروع «PH5 Full Accounting Reconciliation Test» (PRJ-0015) بعد استكمال توثيق مستندات التمويل. يمكن لمدير المشاريع الآن مراجعة المشروع واستكمال إجراءات ما بعد الاعتماد.', 'http://localhost:8081/AhlElKheir/modules/projects/view_pm.php?id=15', 1, '2026-10-02 19:40:45'),
-(143, 34, 'info', 'تم إطلاق مشروع جديد للتنفيذ', 'المشروع «PH5 Full Accounting Reconciliation Test» (PRJ-0015) تم إطلاقه وأصبح متاحاً لكم للتنفيذ والمتابعة.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=15', 1, '2026-10-02 19:48:43');
+(143, 34, 'info', 'تم إطلاق مشروع جديد للتنفيذ', 'المشروع «PH5 Full Accounting Reconciliation Test» (PRJ-0015) تم إطلاقه وأصبح متاحاً لكم للتنفيذ والمتابعة.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=15', 1, '2026-10-02 19:48:43'),
+(144, 33, 'info', 'طلب إغلاق مشروع', 'المشروع «PH5 Full Accounting Reconciliation Test» (PRJ-0015) لديه طلب إغلاق من مشرف المشروع ويحتاج إجراء مدير المشاريع.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=15', 1, '2026-10-03 10:22:07'),
+(145, 29, 'info', 'مشروع بانتظار تسوية الرصيد المتبقي', 'المشروع «PH5 Full Accounting Reconciliation Test» (PRJ-0015) لديه رصيد متبقٍ تحت سيطرة المشروع بقيمة 250,000.00 SDG. يرجى تنفيذ التسوية المالية قبل الإغلاق.', 'http://localhost:8081/AhlElKheir/modules/projects/view_fm.php?id=15', 1, '2026-10-03 10:22:07'),
+(146, 34, 'info', 'إعادة المشروع لاستكمال المطلوب', 'أعاد مدير المشاريع المشروع «PH5 Full Accounting Reconciliation Test» (PRJ-0015) إلى مشرف المشروع لاستكمال أو توضيح المطلوب قبل طلب الإغلاق مرة أخرى. السبب: return prove must be added', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=15', 1, '2026-10-03 14:57:39'),
+(147, 34, 'info', 'إعادة المشروع لاستكمال المطلوب', 'أعاد مدير المشاريع المشروع «PH5 Full Accounting Reconciliation Test» (PRJ-0015) إلى مشرف المشروع لاستكمال أو توضيح المطلوب قبل طلب الإغلاق مرة أخرى. السبب: resubmit notification test', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=15', 1, '2026-10-03 15:05:37'),
+(148, 33, 'info', 'طلب إغلاق مشروع', 'المشروع «PH5 Full Accounting Reconciliation Test» (PRJ-0015) لديه طلب إغلاق من مشرف المشروع ويحتاج إجراء مدير المشاريع.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=15', 1, '2026-10-03 16:29:08'),
+(149, 29, 'info', 'مشروع بانتظار تسوية الرصيد المتبقي', 'المشروع «PH5 Full Accounting Reconciliation Test» (PRJ-0015) لديه رصيد متبقٍ تحت سيطرة المشروع بقيمة 250,000.00 SDG. يرجى تنفيذ التسوية المالية قبل الإغلاق.', 'http://localhost:8081/AhlElKheir/modules/projects/view_fm.php?id=15', 1, '2026-10-03 16:29:08'),
+(150, 29, 'info', 'المشروع مغلق إدارياً ويحتاج إغلاقاً مالياً', 'أغلق مدير المشاريع المشروع «PH5 Full Accounting Reconciliation Test» (PRJ-0015). الرصيد المتبقي تحت سيطرة المشروع: 250,000.00 SDG. يرجى مراجعة إثبات الإرجاع وتسجيل إرجاع الرصيد وإتمام الإغلاق المالي.', 'http://localhost:8081/AhlElKheir/modules/projects/view_fm.php?id=15', 1, '2026-10-03 18:47:27'),
+(151, 33, 'info', 'اكتمل الإغلاق المالي للمشروع', 'أتم المدير المالي الإغلاق المالي للمشروع «PH5 Full Accounting Reconciliation Test» (PRJ-0015) بعد إرجاع الرصيد المتبقي إلى حساب المؤسسة. انتهت دورة الإغلاق المالي للمشروع.', 'http://localhost:8081/AhlElKheir/modules/projects/view_pm.php?id=15', 1, '2026-10-03 19:06:46');
 
 -- --------------------------------------------------------
 
@@ -10220,7 +10431,7 @@ INSERT INTO `other_projects` (`id`, `name`, `description`, `target_amount`, `cur
 (10, 'اختبار  المشاريع 2026', NULL, 200000.00, 'SDG', '2026-09-25', '2026-09-30', 'completed', 33, '2026-09-25 11:02:12', '2026-09-27 08:02:12', 'PRJ-0010', 'مشاريع المياه', 'الخرطوم', 'الخرطوم', 'الخرطوم', NULL, 1500, 33, 35, 36),
 (11, 'PH5 Accounting Reconciliation Test', NULL, 260000.00, 'SDG', '2026-10-01', '2026-10-03', 'planned', 33, '2026-10-01 10:40:18', '2026-10-01 10:40:18', 'PRJ-0011', 'الإغاثة والسلال الغذائية', 'الخرطوم', 'الخرطوم', NULL, NULL, 260, NULL, 38, 39),
 (12, 'PH5 Runtime Gate Test 2026-10-02', 'Controlled runtime verification for Projects Phase 5', 100000.00, 'SDG', '2026-10-02', '2026-10-31', 'active', 33, '2026-10-02 09:32:08', '2026-10-02 14:42:24', 'PRJ-0012', 'الإيواء والتأهيل السكني', 'الخرطوم', 'الخرطوم', 'السليم', NULL, 200, 33, 40, 41),
-(15, 'PH5 Full Accounting Reconciliation Test', 'Phase 5 controlled runtime test — accounting release, reversal, re-approval, correction, final confirmation and launch', 300000.00, 'SDG', '2026-10-02', '2026-11-30', 'active', 33, '2026-10-02 18:28:04', '2026-10-02 19:48:43', 'PRJ-0015', 'التمكين الاقتصادي', 'الخرطوم', 'الخرطوم', NULL, NULL, 150, 33, 46, 47);
+(15, 'PH5 Full Accounting Reconciliation Test', 'Phase 5 controlled runtime test — accounting release, reversal, re-approval, correction, final confirmation and launch', 300000.00, 'SDG', '2026-10-02', '2026-11-30', 'completed', 33, '2026-10-02 18:28:04', '2026-10-03 18:47:27', 'PRJ-0015', 'التمكين الاقتصادي', 'الخرطوم', 'الخرطوم', NULL, NULL, 150, 33, 46, 47);
 
 -- --------------------------------------------------------
 
@@ -10264,6 +10475,7 @@ CREATE TABLE `payroll` (
   `basic_salary` decimal(10,2) NOT NULL,
   `allowances` decimal(10,2) NOT NULL DEFAULT 0.00,
   `deductions` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `attendance_deduction` decimal(12,2) NOT NULL DEFAULT 0.00,
   `salary_advance_deduction` decimal(18,2) NOT NULL DEFAULT 0.00,
   `overtime` decimal(10,2) NOT NULL DEFAULT 0.00,
   `net_salary` decimal(10,2) NOT NULL,
@@ -10282,29 +10494,29 @@ CREATE TABLE `payroll` (
 -- Dumping data for table `payroll`
 --
 
-INSERT INTO `payroll` (`id`, `employee_id`, `month`, `year`, `basic_salary`, `allowances`, `deductions`, `salary_advance_deduction`, `overtime`, `net_salary`, `status`, `payroll_policy_version_id`, `payment_date`, `journal_entry_id`, `created_by`, `created_at`, `accounting_status`, `accounting_entry_id`, `payment_account_id`) VALUES
-(1, 19, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
-(2, 15, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
-(4, 17, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
-(5, 4, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
-(6, 2, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
-(7, 14, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
-(8, 12, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
-(9, 6, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
-(10, 3, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
-(11, 18, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
-(12, 20, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
-(13, 1, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
-(14, 11, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
-(15, 7, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
-(16, 9, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
-(17, 10, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
-(18, 8, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
-(19, 13, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
-(20, 16, 10, 2026, 6000.00, 0.00, 0.00, 0.00, 0.00, 6000.00, 'paid', NULL, '2026-09-07', NULL, NULL, '2026-09-07 06:17:11', 'posted', 31, NULL),
-(21, 16, 9, 2026, 5000.00, 0.00, 0.00, 0.00, 0.00, 5000.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-07 07:36:14', 'none', NULL, NULL),
-(22, 21, 9, 2026, 7000.00, 0.00, 0.00, 0.00, 0.00, 7000.00, 'paid', NULL, '2026-09-07', NULL, NULL, '2026-09-07 16:24:25', 'posted', 33, NULL),
-(23, 21, 10, 2026, 7000.00, 0.00, 0.00, 0.00, 0.00, 7000.00, 'paid', 1, '2026-09-08', NULL, NULL, '2026-09-08 07:17:26', 'posted', 34, NULL);
+INSERT INTO `payroll` (`id`, `employee_id`, `month`, `year`, `basic_salary`, `allowances`, `deductions`, `attendance_deduction`, `salary_advance_deduction`, `overtime`, `net_salary`, `status`, `payroll_policy_version_id`, `payment_date`, `journal_entry_id`, `created_by`, `created_at`, `accounting_status`, `accounting_entry_id`, `payment_account_id`) VALUES
+(1, 19, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(2, 15, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(4, 17, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(5, 4, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(6, 2, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(7, 14, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(8, 12, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(9, 6, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(10, 3, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(11, 18, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(12, 20, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(13, 1, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(14, 11, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(15, 7, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(16, 9, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(17, 10, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(18, 8, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(19, 13, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(20, 16, 10, 2026, 6000.00, 0.00, 0.00, 0.00, 0.00, 0.00, 6000.00, 'paid', NULL, '2026-09-07', NULL, NULL, '2026-09-07 06:17:11', 'posted', 31, NULL),
+(21, 16, 9, 2026, 5000.00, 0.00, 0.00, 0.00, 0.00, 0.00, 5000.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-07 07:36:14', 'none', NULL, NULL),
+(22, 21, 9, 2026, 7000.00, 0.00, 0.00, 0.00, 0.00, 0.00, 7000.00, 'paid', NULL, '2026-09-07', NULL, NULL, '2026-09-07 16:24:25', 'posted', 33, NULL),
+(23, 21, 10, 2026, 7000.00, 0.00, 0.00, 0.00, 0.00, 0.00, 7000.00, 'paid', 1, '2026-09-08', NULL, NULL, '2026-09-08 07:17:26', 'posted', 34, NULL);
 
 -- --------------------------------------------------------
 
@@ -10606,7 +10818,8 @@ INSERT INTO `project_documents` (`id`, `project_id`, `document_type`, `title`, `
 (4, 10, 'receipt', 'إيصال دفعة عمالة: test1', 'storage/documents/projects/10/d2b12a28cccd4d9dfbddee8baded27a2.jpg', 'Feen_logo.jpeg', 'image/jpeg', 51326, '2026-09-26', 'test1', 'PRJ-LPV-PRJ-0010-1', 5000.00, 'SDG', 'unverified', NULL, NULL, NULL, 'مرفق مباشرة بدفعة من ميزانية المشروع.', 34, '2026-09-26 09:27:38', '2026-09-26 09:27:38'),
 (5, 10, 'receipt', 'إيصال دفعة عمالة: test2', 'storage/documents/projects/10/03f520ff1ebf3bce0b6c6ba364e286a8.jpg', 'WhatsApp Image 2026-09-18 at 1.57.43 PM.jpeg', 'image/jpeg', 36502, '2026-09-26', 'test2', 'PRJ-LPV-PRJ-0010-2', 5000.00, 'SDG', 'unverified', NULL, NULL, NULL, 'مرفق مباشرة بدفعة من ميزانية المشروع.', 34, '2026-09-26 09:37:27', '2026-09-26 12:46:11'),
 (6, 10, 'receipt', 'إيصال مصروف: شبكة الأنابيب والتمديدات', 'storage/documents/projects/10/bd61dc57fb6029558dbe78e431b22a5b.pdf', 'Fai Ali.pdf', 'application/pdf', 428106, '2026-09-26', 'plumber', '8796578', 60000.00, 'SDG', 'unverified', NULL, NULL, NULL, 'مرفق مباشرة بالمصروف المسجل بواسطة مشرف المشروع.', 34, '2026-09-26 12:48:57', '2026-09-26 12:48:57'),
-(7, 15, 'receipt', 'إيصال مصروف: شبكة الأنابيب والتمديدات', 'storage/documents/projects/15/afa8908ffc2595138d4551ef7dbaef5d.jpg', 'Passport.jpeg', 'image/jpeg', 193842, '2026-10-03', 'شركة الخندقاوي', '8796578', 50000.00, 'SDG', 'unverified', NULL, NULL, NULL, 'مرفق مباشرة بالمصروف المسجل بواسطة مشرف المشروع.', 34, '2026-10-03 09:08:51', '2026-10-03 09:08:51');
+(7, 15, 'receipt', 'إيصال مصروف: شبكة الأنابيب والتمديدات', 'storage/documents/projects/15/afa8908ffc2595138d4551ef7dbaef5d.jpg', 'Passport.jpeg', 'image/jpeg', 193842, '2026-10-03', 'شركة الخندقاوي', '8796578', 50000.00, 'SDG', 'unverified', NULL, NULL, NULL, 'مرفق مباشرة بالمصروف المسجل بواسطة مشرف المشروع.', 34, '2026-10-03 09:08:51', '2026-10-03 09:08:51'),
+(8, 15, '', 'إثبات تسوية الرصيد المتبقي', 'storage/documents/projects/15/21eda946dba554f33afb5803dd6e2aeb.jpg', 'Passport.jpeg', 'image/jpeg', 193842, '2026-10-03', 'مشرف المشروع', NULL, 250000.00, 'SDG', 'unverified', NULL, NULL, NULL, 'مرفق مع طلب إغلاق المشروع لإثبات تسوية الرصيد المتبقي تحت سيطرة المشروع.', 34, '2026-10-03 14:59:03', '2026-10-03 14:59:03');
 
 -- --------------------------------------------------------
 
@@ -10750,6 +10963,13 @@ CREATE TABLE `project_funding_returns` (
   `returned_at` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `project_funding_returns`
+--
+
+INSERT INTO `project_funding_returns` (`id`, `project_id`, `funding_allocation_id`, `source_account_id`, `journal_entry_id`, `amount`, `currency_code`, `return_date`, `reference_number`, `description`, `returned_by`, `returned_at`) VALUES
+(1, 15, 37, 2, 115, 250000.00, 'SDG', '2026-10-03', NULL, NULL, 29, '2026-10-03 19:06:46');
+
 -- --------------------------------------------------------
 
 --
@@ -10874,7 +11094,7 @@ INSERT INTO `project_lifecycle` (`project_id`, `lifecycle_status`, `closed_at`, 
 (10, 'closed', '2026-09-27 08:02:12', 33, NULL, NULL, NULL, 'تم الانتهاء من تنفيذ المشروع وإتمام الأعمال المطلوبة', 260000.00, 260000.00, 230000.00, 30000.00, 11.54, '', 30000.00, NULL, NULL, '2026-09-25 11:02:12', '2026-09-27 08:02:12', 'completed_successfully'),
 (11, 'planned', NULL, NULL, NULL, NULL, NULL, NULL, 260000.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-10-01 10:40:18', '2026-10-01 10:40:18', NULL),
 (12, 'active', NULL, NULL, NULL, NULL, NULL, NULL, 100000.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-10-02 09:32:08', '2026-10-02 14:42:24', NULL),
-(15, 'active', NULL, NULL, NULL, NULL, NULL, NULL, 300000.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-10-02 18:28:04', '2026-10-02 19:48:43', NULL);
+(15, 'closed', '2026-10-03 18:47:27', 33, NULL, NULL, NULL, 'Project is done with return', 300000.00, 300000.00, 50000.00, 250000.00, 83.33, 'Project is done with return', 250000.00, NULL, NULL, '2026-10-02 18:28:04', '2026-10-03 18:47:27', 'completed_successfully');
 
 -- --------------------------------------------------------
 
@@ -11047,7 +11267,16 @@ INSERT INTO `project_status_history` (`id`, `project_id`, `old_status`, `new_sta
 (4, 10, 'active', 'closure_requested', 'طلب إغلاق من مشرف المشروع: Project is Done', 34, '2026-09-26 14:12:06'),
 (5, 10, 'active', 'closed', 'تم الانتهاء من تنفيذ المشروع وإتمام الأعمال المطلوبة', 33, '2026-09-27 08:02:12'),
 (6, 12, 'planned', 'active', 'تم إطلاق المشروع من مدير المشاريع بعد الاعتماد النهائي.', 33, '2026-10-02 14:42:24'),
-(7, 15, 'planned', 'active', 'تم إطلاق المشروع من مدير المشاريع بعد الاعتماد النهائي.', 33, '2026-10-02 19:48:43');
+(7, 15, 'planned', 'active', 'تم إطلاق المشروع من مدير المشاريع بعد الاعتماد النهائي.', 33, '2026-10-02 19:48:43'),
+(8, 15, 'active', 'under_review', 'طلب إغلاق من مشرف المشروع: project is done with some refund as we manage to save money from the earlier suggested budget', 34, '2026-10-03 10:22:07'),
+(9, 15, 'under_review', 'closure_requested', 'طلب إغلاق من مشرف المشروع: project is done with some refund as we manage to save money from the earlier suggested budget', 34, '2026-10-03 10:22:07'),
+(10, 15, 'under_review', 'active', 'إعادة المشروع إلى مشرف المشروع لاستكمال/توضيح المطلوب: return prove must be added', 33, '2026-10-03 14:57:39'),
+(11, 15, 'active', 'under_review', 'طلب إغلاق من مشرف المشروع: project is done with refund', 34, '2026-10-03 14:59:03'),
+(12, 15, 'under_review', 'closure_requested', 'طلب إغلاق من مشرف المشروع: project is done with refund', 34, '2026-10-03 14:59:03'),
+(13, 15, 'under_review', 'active', 'إعادة المشروع إلى مشرف المشروع لاستكمال/توضيح المطلوب: resubmit notification test', 33, '2026-10-03 15:05:37'),
+(14, 15, 'active', 'under_review', 'طلب إغلاق من مشرف المشروع: notification test', 34, '2026-10-03 16:29:08'),
+(15, 15, 'under_review', 'closure_requested', 'طلب إغلاق من مشرف المشروع: notification test', 34, '2026-10-03 16:29:08'),
+(16, 15, 'under_review', 'closed', 'Project is done with return', 33, '2026-10-03 18:47:27');
 
 -- --------------------------------------------------------
 
@@ -11200,7 +11429,7 @@ INSERT INTO `settings` (`setting_key`, `setting_value`, `updated_at`) VALUES
 ('default_sponsorship_amount', '9000', '2026-08-09 22:45:38'),
 ('financial_year_start', '2026-01-01', '2026-08-08 12:30:31'),
 ('org_address', '', '2026-08-08 12:30:31'),
-('org_name_ar', 'أهل الخير', '2026-08-02 16:49:35'),
+('org_name_ar', 'منظمة أهل الخير النسويه', '2026-10-05 07:56:37'),
 ('org_name_en', 'Ahl El Kheir', '2026-08-02 16:49:35'),
 ('organization_name_ar', 'أهل الخير', '2026-08-09 22:34:36'),
 ('organization_name_en', 'Ahl El Kheir', '2026-08-09 22:34:36'),
@@ -28936,8 +29165,8 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `role_id`, `username`, `password_hash`, `full_name`, `email`, `phone`, `is_active`, `supervisor_status`, `password_change_required`, `last_login_at`, `created_by`, `created_at`, `updated_at`, `legacy_status`, `avatar_path`, `address`, `birth_date`, `gender`, `department_id`, `manager_id`, `theme_preference`, `language_preference`, `email_notifications`, `push_notifications`, `email_newsletter`) VALUES
-(1, 1, 'sudo', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'منير علي طه صالح', 'sudo@ahlelkheir.org', '0966616614', 1, '', 0, '2026-10-02 21:31:27', NULL, '2026-08-02 16:49:35', '2026-10-02 21:31:27', 'active', 'storage/avatars/user_1_1789753554.png', NULL, NULL, 'male', 1, 1, 'auto', 'ar', 1, 1, 1),
-(2, 2, 'gm', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'المدير العام', 'gm@ahlelkheir.org', NULL, 1, '', 0, '2026-10-02 19:25:37', NULL, '2026-08-02 16:49:35', '2026-10-02 19:25:37', 'active', 'storage/avatars/user_2_1787805764.png', NULL, NULL, NULL, 1, NULL, 'light', 'ar', 1, 1, 1),
+(1, 1, 'sudo', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'منير علي طه صالح', 'sudo@ahlelkheir.org', '0966616614', 1, '', 0, '2026-10-05 07:55:39', NULL, '2026-08-02 16:49:35', '2026-10-05 07:57:32', 'active', 'storage/avatars/user_1_1789753554.png', NULL, NULL, 'ذكر', 1, 1, 'auto', 'ar', 1, 1, 1),
+(2, 2, 'gm', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'المدير العام', 'gm@ahlelkheir.org', NULL, 1, '', 0, '2026-10-05 08:04:19', NULL, '2026-08-02 16:49:35', '2026-10-05 08:04:19', 'active', 'storage/avatars/user_2_1787805764.png', NULL, NULL, NULL, 1, NULL, 'light', 'ar', 1, 1, 1),
 (3, 3, 'vgm', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'لمياء علي طه صالح', 'vgm@ahlelkheir.org', NULL, 1, '', 0, '2026-09-29 09:00:10', NULL, '2026-08-02 16:49:35', '2026-09-29 09:00:10', 'active', 'storage/avatars/user_3_1787556761.png', NULL, NULL, 'female', 1, 2, 'light', 'ar', 1, 1, 1),
 (4, 10, 'accountant', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'محاسب (موظف)', 'accountant@ahlelkheir.org', '0123456789', 1, '', 0, '2026-08-17 14:11:48', NULL, '2026-08-08 12:33:29', '2026-08-17 14:30:38', 'active', NULL, NULL, NULL, NULL, 6, 29, 'light', 'ar', 1, 1, 1),
 (14, 4, 'Mad_Max', '$2y$10$2Pps4jCppxKBhdFrBRi94.FmCAYDqhUWd.vOLH4CnCIZDWbWrLhTC', 'أحمد محمد', 'moneerali2000@gmail.com', '0912345100', 0, 'archived', 0, '2026-08-16 09:20:38', 3, '2026-08-09 10:41:43', '2026-09-04 08:02:07', 'active', NULL, NULL, NULL, NULL, NULL, NULL, 'light', 'ar', 1, 1, 1),
@@ -28954,10 +29183,10 @@ INSERT INTO `users` (`id`, `role_id`, `username`, `password_hash`, `full_name`, 
 (26, 4, 'sv8', '$2y$10$iRZLB9UdIggAJqKsR.eoPuwyMFfS4w3RgVjZ4XjvxxUynOuhMAc/i', 'ساره خلف الله', 'sarah@gmail.com', '015468972', 1, 'active', 0, NULL, 3, '2026-08-14 09:28:14', '2026-09-04 08:38:22', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
 (27, 4, 'sv9', '$2y$10$oBV.8O1UW/yiwOAcPMxbqeH8Xh/PJhNtq.tIkyOqh55v1v7GzjSJW', 'هناء خلف الله', 'hanah@gmail.com', '78999456789', 1, 'active', 0, NULL, 3, '2026-08-14 09:31:19', '2026-09-03 15:28:42', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
 (28, 9, 'sm1', '$2y$10$gtVZcFBfL2yMhNXOPpkr5e7up/SiAnE7KfjJ8tq4JFocePuGjcr0C', 'أحمد حسين', 'ahmed@gmail.com', '8545567865', 1, '', 0, '2026-09-28 16:38:49', 1, '2026-08-14 13:06:45', '2026-09-28 16:38:49', NULL, NULL, NULL, NULL, 'male', 4, 3, 'light', 'ar', 1, 1, 1),
-(29, 6, 'fm', '$2y$10$K2.yA1kpqLaGWrqH/QOQ2uXv0PJhvWTMC55tW5kSkU6u5iaz6JmVW', 'المدير المالي', 'fm@ahlelkheir.org', NULL, 1, '', 0, '2026-10-03 08:27:27', 1, '2026-08-17 14:26:40', '2026-10-03 08:27:27', NULL, 'storage/avatars/user_29_1787555658.jpg', NULL, NULL, 'أنثى', 1, 2, 'light', 'ar', 1, 1, 1),
-(32, 11, 'hrh', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'مدير الموارد البشرية', 'hr@ahlelkheir.org', '00112233445566', 1, '', 0, '2026-10-03 08:16:22', NULL, '2026-08-18 21:49:04', '2026-10-03 08:16:22', NULL, 'storage/avatars/user_32_1788630391.png', NULL, NULL, 'male', 1, 2, 'light', 'ar', 1, 1, 1),
-(33, 13, 'gpm', '$2y$10$ftQaFFCk4DF1UrdPlpGtd.OVR.2pyxPxKlIcZ7KhRxa7VMP/FXC/G', 'projects manager', 'pm@gmail.com', '00012344456678', 1, '', 0, '2026-10-03 08:53:14', 1, '2026-08-28 18:33:31', '2026-10-03 08:53:14', NULL, 'storage/avatars/user_33_1787943667.jpg', NULL, NULL, 'male', 1, 2, 'light', 'ar', 1, 1, 1),
-(34, 14, 'ps1', '$2y$10$y6GVpoe/hF9GxE8zyezAPORKNgBn5n65Ct.tUHI0r6lnkyHEdkrZi', 'project supervisor', 'gps@gmail.com', '987654321', 1, '', 0, '2026-10-03 08:55:44', 1, '2026-08-28 18:35:16', '2026-10-03 08:55:44', NULL, NULL, NULL, NULL, 'male', 8, 33, 'light', 'ar', 1, 1, 1),
+(29, 6, 'fm', '$2y$10$K2.yA1kpqLaGWrqH/QOQ2uXv0PJhvWTMC55tW5kSkU6u5iaz6JmVW', 'المدير المالي', 'fm@ahlelkheir.org', NULL, 1, '', 0, '2026-10-06 07:53:51', 1, '2026-08-17 14:26:40', '2026-10-06 07:53:51', NULL, 'storage/avatars/user_29_1787555658.jpg', NULL, NULL, 'أنثى', 1, 2, 'light', 'ar', 1, 1, 1),
+(32, 11, 'hrh', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'مدير الموارد البشرية', 'hr@ahlelkheir.org', '00112233445566', 1, '', 0, '2026-10-06 07:39:15', NULL, '2026-08-18 21:49:04', '2026-10-06 07:39:15', NULL, 'storage/avatars/user_32_1788630391.png', NULL, NULL, 'male', 1, 2, 'light', 'ar', 1, 1, 1),
+(33, 13, 'gpm', '$2y$10$ftQaFFCk4DF1UrdPlpGtd.OVR.2pyxPxKlIcZ7KhRxa7VMP/FXC/G', 'projects manager', 'pm@gmail.com', '00012344456678', 1, '', 0, '2026-10-03 16:42:38', 1, '2026-08-28 18:33:31', '2026-10-03 16:42:38', NULL, 'storage/avatars/user_33_1787943667.jpg', NULL, NULL, 'male', 1, 2, 'light', 'ar', 1, 1, 1),
+(34, 14, 'ps1', '$2y$10$y6GVpoe/hF9GxE8zyezAPORKNgBn5n65Ct.tUHI0r6lnkyHEdkrZi', 'project supervisor', 'gps@gmail.com', '987654321', 1, '', 0, '2026-10-03 15:05:57', 1, '2026-08-28 18:35:16', '2026-10-03 15:05:57', NULL, NULL, NULL, NULL, 'male', 8, 33, 'light', 'ar', 1, 1, 1),
 (35, 10, 'audit_acc2_20260911', '$2y$12$kxUoLJ66pmSWJRDVnkmtUuN5XI6ZhMb41RpeV2cIfN8kUA7.2EWl.', 'ACCOUNTING AUDIT TEMP ACCOUNTANT', NULL, NULL, 1, 'active', 0, '2026-09-11 09:47:45', NULL, '2026-09-11 09:47:04', '2026-09-11 09:47:45', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'light', 'ar', 1, 1, 1),
 (36, 7, 'audit_nany2_20260911', '$2y$12$kxUoLJ66pmSWJRDVnkmtUuN5XI6ZhMb41RpeV2cIfN8kUA7.2EWl.', 'ACCOUNTING AUDIT TEMP NANNY', NULL, NULL, 1, 'active', 0, NULL, NULL, '2026-09-11 09:47:04', '2026-09-11 09:47:04', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'light', 'ar', 1, 1, 1),
 (39, 14, 'test.employee01', '$2y$10$fH73kKYe6Pt5yJyEaWsIFOnQkL5mNyQhYnyWLMmCwruBgEere/A7K', 'حمد محمد التجريبي', 'ah@test.com', '0123456789', 1, 'active', 0, '2026-10-02 14:30:49', 32, '2026-10-01 23:46:02', '2026-10-02 14:30:49', NULL, NULL, NULL, NULL, 'male', 8, 33, 'light', 'ar', 1, 1, 1),
@@ -29275,6 +29504,16 @@ ALTER TABLE `group_workflow_audit_log`
   ADD KEY `idx_gwal_action` (`action_type`);
 
 --
+-- Indexes for table `hr_attendance_policy_versions`
+--
+ALTER TABLE `hr_attendance_policy_versions`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_hr_attendance_policy_version` (`version_no`),
+  ADD UNIQUE KEY `uq_hr_attendance_policy_effective` (`effective_from`),
+  ADD KEY `idx_hr_attendance_policy_effective` (`effective_from`),
+  ADD KEY `idx_hr_attendance_policy_created_by` (`created_by`);
+
+--
 -- Indexes for table `hr_employee_contracts`
 --
 ALTER TABLE `hr_employee_contracts`
@@ -29410,6 +29649,35 @@ ALTER TABLE `hr_salary_advance_requests`
   ADD KEY `idx_hr_salary_advance_disbursement_journal` (`disbursement_journal_entry_id`),
   ADD KEY `idx_hr_salary_advance_status_balance` (`status`,`outstanding_balance`),
   ADD KEY `idx_hr_salary_advance_closed_at` (`closed_at`);
+
+--
+-- Indexes for table `hr_salary_advance_waiver_decisions`
+--
+ALTER TABLE `hr_salary_advance_waiver_decisions`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_hr_salary_advance_waiver_decision_no` (`decision_no`),
+  ADD KEY `idx_hr_salary_advance_waiver_decision_status` (`status`),
+  ADD KEY `idx_hr_salary_advance_waiver_decision_effective_month` (`effective_month`),
+  ADD KEY `idx_hr_salary_advance_waiver_decision_type` (`decision_type`);
+
+--
+-- Indexes for table `hr_salary_advance_waiver_items`
+--
+ALTER TABLE `hr_salary_advance_waiver_items`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_hr_salary_advance_waiver_item_decision` (`decision_id`),
+  ADD KEY `idx_hr_salary_advance_waiver_item_request` (`salary_advance_request_id`),
+  ADD KEY `idx_hr_salary_advance_waiver_item_employee` (`employee_id`),
+  ADD KEY `idx_hr_salary_advance_waiver_item_refund_journal` (`refund_journal_entry_id`),
+  ADD KEY `idx_hr_salary_advance_waiver_item_waiver_journal` (`waiver_journal_entry_id`);
+
+--
+-- Indexes for table `hr_salary_advance_waiver_schedule_items`
+--
+ALTER TABLE `hr_salary_advance_waiver_schedule_items`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_hr_salary_advance_waiver_schedule` (`repayment_schedule_id`),
+  ADD KEY `idx_hr_salary_advance_waiver_schedule_item` (`waiver_item_id`);
 
 --
 -- Indexes for table `journal_entries`
@@ -30026,13 +30294,13 @@ ALTER TABLE `accounts`
 -- AUTO_INCREMENT for table `attendance`
 --
 ALTER TABLE `attendance`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=190;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=217;
 
 --
 -- AUTO_INCREMENT for table `audit_log`
 --
 ALTER TABLE `audit_log`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2230;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2263;
 
 --
 -- AUTO_INCREMENT for table `contracts`
@@ -30119,6 +30387,12 @@ ALTER TABLE `group_workflow_audit_log`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
+-- AUTO_INCREMENT for table `hr_attendance_policy_versions`
+--
+ALTER TABLE `hr_attendance_policy_versions`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
 -- AUTO_INCREMENT for table `hr_employee_contracts`
 --
 ALTER TABLE `hr_employee_contracts`
@@ -30128,7 +30402,7 @@ ALTER TABLE `hr_employee_contracts`
 -- AUTO_INCREMENT for table `hr_employee_salary_history`
 --
 ALTER TABLE `hr_employee_salary_history`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=124;
 
 --
 -- AUTO_INCREMENT for table `hr_employee_state_history`
@@ -30203,16 +30477,34 @@ ALTER TABLE `hr_salary_advance_requests`
   MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `hr_salary_advance_waiver_decisions`
+--
+ALTER TABLE `hr_salary_advance_waiver_decisions`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `hr_salary_advance_waiver_items`
+--
+ALTER TABLE `hr_salary_advance_waiver_items`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `hr_salary_advance_waiver_schedule_items`
+--
+ALTER TABLE `hr_salary_advance_waiver_schedule_items`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `journal_entries`
 --
 ALTER TABLE `journal_entries`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=115;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=116;
 
 --
 -- AUTO_INCREMENT for table `journal_lines`
 --
 ALTER TABLE `journal_lines`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=233;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=235;
 
 --
 -- AUTO_INCREMENT for table `leaves`
@@ -30272,7 +30564,7 @@ ALTER TABLE `nanny_group_assignments`
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=144;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=152;
 
 --
 -- AUTO_INCREMENT for table `orphan_documents`
@@ -30344,7 +30636,7 @@ ALTER TABLE `project_contacts`
 -- AUTO_INCREMENT for table `project_documents`
 --
 ALTER TABLE `project_documents`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `project_expenses`
@@ -30368,7 +30660,7 @@ ALTER TABLE `project_funding_allocations`
 -- AUTO_INCREMENT for table `project_funding_returns`
 --
 ALTER TABLE `project_funding_returns`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `project_government_requirements`
@@ -30422,7 +30714,7 @@ ALTER TABLE `project_progress_updates`
 -- AUTO_INCREMENT for table `project_status_history`
 --
 ALTER TABLE `project_status_history`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT for table `project_supervisor_assignments`
