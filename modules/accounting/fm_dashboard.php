@@ -348,6 +348,8 @@ $recentJournals = dbFetchAll("SELECT je.entry_code, je.entry_date, je.descriptio
 .ak-fm-action-card.ak-fm-action-8 { border-top:3px solid #198754; }
 .ak-fm-action-card.ak-fm-action-9 { border-top:3px solid #0d6efd; }
 .ak-fm-action-card.ak-fm-action-10 { border-top:3px solid #17a2b8; }
+.ak-fm-action-card.ak-fm-action-11 { border-top:3px solid #0d6efd; }
+.ak-fm-action-card.ak-fm-action-12 { border-top:3px solid #6f42c1; }
 @media(max-width:991.98px) { .ak-fm-action-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media(max-width:420px) { .ak-fm-action-grid { grid-template-columns:1fr; } .ak-fm-action-card { height:96px; min-height:96px; } }
 
@@ -413,6 +415,7 @@ $fmActionDescriptions = [
     'عرض التقارير والحركة المالية',
     'مراجعة سجل المعاملات المالية',
     'إدارة سياسة السلف على الراتب ومراجعة واعتماد طلبات الموظفين',
+    'إنشاء ومراجعة مسيرات الرواتب ومعالجة خصم السلف',
     'إنشاء ومراجعة مسيرات الرواتب ومعالجة خصم السلف',
     'لوحة مستقلة لتحصيلات وتسويات منظمة فينا الخير',
 ];
