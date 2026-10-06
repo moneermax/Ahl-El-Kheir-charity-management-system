@@ -2259,3 +2259,24 @@ Explicitly open evidence gates:
 Do not repeat any closed waiver harness solely because a new session starts. Only repeat a closed test if a concrete regression, source change, schema change, or failed dependency makes it relevant again.
 
 Exact next gate: notification failure isolation runtime. After that, proceed one gate at a time to audit preservation and final 1410 reconciliation, while retaining the two evidence gaps above.
+
+## 2026-10-06 — GM Salary Advance Waiver: Notification Failure-Isolation Gate Prepared
+
+The waiver runtime matrix remains active at the notification failure-isolation boundary. All earlier waiver gates remain closed and must not be repeated without regression evidence.
+
+Direct source inspection confirmed:
+- `ak_transaction_review_notify_event()` catches notification-delivery `Throwable`;
+- the installed notification path supports the legacy notification schema through its existing fallback;
+- no existing deterministic notification-failure test seam was available.
+
+A narrow inert test-only delivery hook was added, plus:
+`tools\\run_salary_advance_gm_waiver_notification_failure_isolation_tests.php`
+
+The harness will use the real committed waiver execution path, force exactly one notification-delivery failure, verify the execution remains committed and a later notification still proceeds, then restore all test state.
+
+**Runtime status: PENDING USER EXECUTION.**
+
+Exact next command:
+`php tools\\run_salary_advance_gm_waiver_notification_failure_isolation_tests.php`
+
+After a PASS, the next gate is audit preservation, followed by final 1410 reconciliation. The same-employee multiple-advance and true two-process concurrent execution evidence gaps remain explicitly open.
