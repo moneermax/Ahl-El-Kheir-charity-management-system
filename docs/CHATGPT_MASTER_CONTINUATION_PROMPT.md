@@ -269,3 +269,33 @@ Implementation commits:
 - `41d448abb9daa7d917ecedd324b81be7bf9077c0`
 
 Runtime browser verification is still required on the local XAMPP application. Do not mark the UI fixes runtime-verified until the user confirms the affected FM pages visually.
+
+## FINAL CHECKPOINT — 2026-10-06 — System-wide same-page POST scroll-jump fix CLOSED
+
+The previously unfinished same-page POST viewport-jump issue is now **RUNTIME VERIFIED / CLOSED system-wide**.
+
+### Authoritative rule
+The global handler in `assets/js/app.js` uses a **default-on / opt-out** policy. A qualifying POST to the current application path is intercepted in the capture phase and processed in place, preserving the user's viewport instead of causing native full-document navigation.
+
+Do not add per-page `data-ak-same-page="1"` attributes for ordinary same-page POSTs. The attendance page was tested after its opt-in attribute was removed, and the user confirmed that the page stayed in place. That test is the acceptance evidence for the global mechanism.
+
+### Explicit exceptions
+Native navigation remains intentional for:
+- `data-ak-native-post="1"`;
+- `data-ak-same-page="0"`;
+- `data-ak-ajax-post="0"`;
+- multipart/form-data submissions;
+- non-self targets;
+- cross-path or cross-origin submissions.
+
+Submitter overrides are honored, including `formaction`, `formmethod`, `formenctype` and `formtarget`.
+
+### Implementation commits
+- `af5fe03e3592972c61ec2821fa7ad0a7f4b7abfd`
+- `0a06fb57f687f4ac56c623251a7fa38d6dba083d`
+- `4496a8f6fb4d38a856483b25d856c640a81732ec`
+- `396576c6bc8d1f26af37a09e80c15909aac06e60`
+- `8389708b84a9853f164d3b73d6f810dbe4967ef5`
+
+### Continuation rule
+Treat the scroll-jump issue as closed. Do not reopen it, repeat its old diagnostic tests, or add page-specific workarounds unless a concrete regression is reported. Continue from the next genuinely open task in the canonical documentation and the user's new requirement.
