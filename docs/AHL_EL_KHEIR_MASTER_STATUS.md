@@ -2167,3 +2167,21 @@ The rollback-only runtime harness passed for `SAR-2026-00004`.
 - Rollback cleanup passed completely.
 
 **Verification status:** approved-unpaid payroll protection is runtime verified. GM Salary Advance Waiver remains open for blanket/multiple-advance scope, concurrency/duplicate protection, post-commit notifications and failure isolation, audit preservation, and final 1410 reconciliation. Salary Advance Stages 1–6 remain closed.
+
+
+## 2026-10-06 — GM Salary Advance Waiver: Blanket Scope Gate Passed
+
+Rollback-only runtime verification passed for the blanket decision workflow:
+
+- Effective month: `2026-10-01`
+- Eligible requests: **6**
+- Executed items: **6**
+- Disbursed items: **5**
+- Undistributed item cancelled: **1**
+- Combined waiver amount: **190,000.00 SDG**
+- Waiver journal: **122**
+- Rollback cleanup: **PASS**
+
+The live fixture had no employee with multiple eligible advances, so the system's blanket-all-eligible behavior is proven across multiple requests/employees, but the specific same-employee multiple-advance scenario is not yet runtime-proven.
+
+**Verification status:** blanket scope/execution is closed. Multiple-advance-for-one-employee remains an explicit open test condition. Salary Advance Stages 1–6 remain closed.
