@@ -280,8 +280,13 @@ function hrSalaryAdvanceWaiverCreateDecision(
         throw new RuntimeException('تعذر الحصول على قفل ترقيم قرار الإعفاء.');
     }
 
+    $startedHere = false;
+
     try {
-        $pdo->beginTransaction();
+        if (!$pdo->inTransaction()) {
+            $pdo->beginTransaction();
+            $startedHere = true;
+        }
 
         $decisionNo = hrSalaryAdvanceWaiverNextDecisionNo($pdo);
         $refundAccount = dbFetchOne("SELECT id, code, account_type, is_active FROM accounts WHERE id = ? FOR UPDATE", [$refundAccountId]);
@@ -355,19 +360,21 @@ function hrSalaryAdvanceWaiverCreateDecision(
             ]
         );
 
-        $pdo->commit();
+        if ($startedHere) {
+            $pdo->commit();
 
-        hrSalaryAdvanceWaiverNotifyPreparedForGM(
-            $decisionId,
-            $decisionNo,
-            $decisionType,
-            $effectiveMonth,
-            $preparedBy
-        );
+            hrSalaryAdvanceWaiverNotifyPreparedForGM(
+                $decisionId,
+                $decisionNo,
+                $decisionType,
+                $effectiveMonth,
+                $preparedBy
+            );
+        }
 
         return $decisionId;
     } catch (Throwable $e) {
-        if ($pdo->inTransaction()) $pdo->rollBack();
+        if ($startedHere && $pdo->inTransaction()) $pdo->rollBack();
         throw $e;
     } finally {
         ak_voucher_unlock();
@@ -383,8 +390,14 @@ function hrSalaryAdvanceWaiverGMReview(PDO $pdo, int $decisionId, int $gmUserId,
         throw new InvalidArgumentException('سبب الرفض مطلوب.');
     }
 
-    $pdo->beginTransaction();
+    $startedHere = false;
+
     try {
+        if (!$pdo->inTransaction()) {
+            $pdo->beginTransaction();
+            $startedHere = true;
+        }
+
         $decision = dbFetchOne(
             "SELECT * FROM hr_salary_advance_waiver_decisions WHERE id = ? FOR UPDATE",
             [$decisionId]
@@ -419,17 +432,19 @@ function hrSalaryAdvanceWaiverGMReview(PDO $pdo, int $decisionId, int $gmUserId,
                 $_SERVER['HTTP_USER_AGENT'] ?? ''
             ]
         );
-        $pdo->commit();
+        if ($startedHere) {
+            $pdo->commit();
 
-        hrSalaryAdvanceWaiverNotifyFMReview(
-            $decisionId,
-            (string)$decision['decision_no'],
-            $approve,
-            $approve ? '' : trim($reason),
-            (int)$decision['prepared_by']
-        );
+            hrSalaryAdvanceWaiverNotifyFMReview(
+                $decisionId,
+                (string)$decision['decision_no'],
+                $approve,
+                $approve ? '' : trim($reason),
+                (int)$decision['prepared_by']
+            );
+        }
     } catch (Throwable $e) {
-        if ($pdo->inTransaction()) $pdo->rollBack();
+        if ($startedHere && $pdo->inTransaction()) $pdo->rollBack();
         throw $e;
     }
 }
@@ -449,8 +464,13 @@ function hrSalaryAdvanceWaiverExecute(
     $lock = ak_voucher_lock();
     if (!$lock) throw new RuntimeException('تعذر الحصول على قفل الترقيم المحاسبي.');
 
+    $startedHere = false;
+
     try {
-        $pdo->beginTransaction();
+        if (!$pdo->inTransaction()) {
+            $pdo->beginTransaction();
+            $startedHere = true;
+        }
 
         $decision = dbFetchOne(
             "SELECT * FROM hr_salary_advance_waiver_decisions WHERE id = ? FOR UPDATE",
@@ -846,16 +866,18 @@ function hrSalaryAdvanceWaiverExecute(
             hrSalaryAdvancePayrollRefreshDraft($pdo, (int)$draftRow['id']);
         }
 
-        $pdo->commit();
+        if ($startedHere) {
+            $pdo->commit();
 
-        hrSalaryAdvanceWaiverNotifyExecution(
-            $decisionId,
-            (string)$decision['decision_no'],
-            (int)$decision['gm_approved_by'],
-            (string)$decision['effective_month'],
-            $refundTotal,
-            $waiverTotal
-        );
+            hrSalaryAdvanceWaiverNotifyExecution(
+                $decisionId,
+                (string)$decision['decision_no'],
+                (int)$decision['gm_approved_by'],
+                (string)$decision['effective_month'],
+                $refundTotal,
+                $waiverTotal
+            );
+        }
 
         return [
             'decision_id' => $decisionId,
@@ -866,7 +888,7 @@ function hrSalaryAdvanceWaiverExecute(
             'item_count' => count($items),
         ];
     } catch (Throwable $e) {
-        if ($pdo->inTransaction()) $pdo->rollBack();
+        if ($startedHere && $pdo->inTransaction()) $pdo->rollBack();
         throw $e;
     } finally {
         ak_voucher_unlock();
