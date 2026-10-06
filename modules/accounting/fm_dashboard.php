@@ -338,6 +338,16 @@ $recentJournals = dbFetchAll("SELECT je.entry_code, je.entry_date, je.descriptio
 .ak-fm-action-fina-logo { width:38px !important; height:38px !important; max-width:38px !important; max-height:38px !important; object-fit:contain; border-radius:7px; background:#fff; border:1px solid #e9ecef; padding:2px; display:block; margin:0 auto .35rem; box-sizing:border-box; }
 .ak-fm-action-title { font-size:.82rem; font-weight:700; line-height:1.35; }
 .ak-fm-action-desc { font-size:.66rem; line-height:1.3; color:#6c757d; margin-top:.18rem; }
+.ak-fm-action-card.ak-fm-action-1 { border-top:3px solid #d3701f; }
+.ak-fm-action-card.ak-fm-action-2 { border-top:3px solid #28a745; }
+.ak-fm-action-card.ak-fm-action-3 { border-top:3px solid #2195c4; }
+.ak-fm-action-card.ak-fm-action-4 { border-top:3px solid #ffc107; }
+.ak-fm-action-card.ak-fm-action-5 { border-top:3px solid #0d6efd; }
+.ak-fm-action-card.ak-fm-action-6 { border-top:3px solid #2daf79; }
+.ak-fm-action-card.ak-fm-action-7 { border-top:3px solid #6f42c1; }
+.ak-fm-action-card.ak-fm-action-8 { border-top:3px solid #198754; }
+.ak-fm-action-card.ak-fm-action-9 { border-top:3px solid #0d6efd; }
+.ak-fm-action-card.ak-fm-action-10 { border-top:3px solid #17a2b8; }
 @media(max-width:991.98px) { .ak-fm-action-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media(max-width:420px) { .ak-fm-action-grid { grid-template-columns:1fr; } .ak-fm-action-card { height:96px; min-height:96px; } }
 
@@ -410,7 +420,7 @@ $fmActionDescriptions = [
 <div class="ak-fm-action-grid fade-in" aria-label="إجراءات سريعة">
     <?php foreach ($headerQuickActions as $index => $qa): ?>
         <?php if (!empty($qa['salary_advance'])): ?>
-        <a href="<?php echo APP_URL; ?>modules/hr/salary_advance_dashboard.php" class="ak-fm-action-card" style="border-top:3px solid <?php echo e($qa['color'] ?? '#1b4d8f'); ?>;">
+        <a href="<?php echo APP_URL; ?>modules/hr/salary_advance_dashboard.php" class="ak-fm-action-card ak-fm-action-<?php echo (int)$index + 1; ?>">
             <div class="text-center px-2">
                 <div class="ak-fm-action-icon"><i class="fas <?php echo e($qa['icon']); ?>" aria-hidden="true"></i></div>
                 <div class="ak-fm-action-title"><?php echo e($qa['label']); ?></div>
