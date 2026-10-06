@@ -127,7 +127,7 @@ function hrSalaryAdvanceWaiverNotifyExecution(
 
         $rows = dbFetchAll(
             "SELECT wi.employee_id,
-                    e.user_id AS employee_user_id,
+                    u.id AS employee_user_id,
                     e.full_name AS employee_name,
                     COALESCE(SUM(wi.refund_amount),0) AS refund_total,
                     COALESCE(SUM(wi.waived_amount),0) AS waived_total,
@@ -136,7 +136,9 @@ function hrSalaryAdvanceWaiverNotifyExecution(
                     SUM(CASE WHEN wi.resulting_request_status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled_count
              FROM hr_salary_advance_waiver_items wi
              JOIN employees e ON e.id = wi.employee_id
+             JOIN users u ON u.id = e.user_id
              WHERE wi.decision_id = ?
+               AND u.is_active = 1
              GROUP BY wi.employee_id, e.user_id, e.full_name
              ORDER BY e.full_name ASC",
             [$decisionId]
