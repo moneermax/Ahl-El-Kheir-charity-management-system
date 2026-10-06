@@ -580,7 +580,7 @@ try {
     if (
         $finalRequest !== $originalRequest ||
         $finalDisbursementJournal !== $beforeDisbursementJournal ||
-        $finalPayrollJournal !== $beforePayrollJournal ||
+        $finalPayrollJournal !== null ||
         $finalRepayment !== null ||
         $finalSchedule !== $originalSchedule ||
         $finalAudit !== $originalAudit
