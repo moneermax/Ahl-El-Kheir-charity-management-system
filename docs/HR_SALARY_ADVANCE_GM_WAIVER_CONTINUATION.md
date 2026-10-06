@@ -94,3 +94,19 @@ This closes the controlled paid-deduction refund execution gate. It does not clo
 ## Next step
 Proceed to the waiver-specific controlled verification matrix. First inspect the current waiver source for an existing rollback-only/SAVEPOINT harness or other safe fixture mechanism. Then verify FM preparation, GM approval/rejection, current-period refund, remaining waiver, future-deduction blocking, undistributed-request cancellation, draft refresh, concurrency/duplicate protection, post-commit notifications, audit preservation and final 1410 reconciliation. Do not mark the waiver complete until these gates are evidenced locally.
 
+
+
+## 2026-10-06 — Undistributed-request cancellation runtime verified
+
+The dedicated rollback-only cancellation harness was executed locally on `main`:
+
+`php tools\\run_salary_advance_gm_waiver_cancellation_rollback_tests.php`
+
+Result:
+- **PASS — undistributed request cancellation:** `SAR-2026-00009`, previous status `approved`, resulting status `cancelled`, with zero accounting journals and zero waiver schedule overlays.
+- The test verified FM preparation, GM approval, and FM execution using the real waiver functions.
+- The request's outstanding balance was not treated as a financial waiver, and no refund or waiver journal was created.
+- **PASS — rollback-only cleanup:** waiver decision rows = 0; item rows = 0; schedule-overlay rows = 0; waiver journal rows = 0 after rollback; the original request status, balance, and `closed_at` were restored.
+
+This closes the controlled undistributed-request cancellation gate. It does not close the overall waiver feature. Remaining gates include future-deduction blocking and draft refresh, approved-unpaid payroll protection, blanket/multiple-advance scope, concurrency/duplicate protection, post-commit notifications and failure isolation, audit preservation, and final 1410 reconciliation.
+
