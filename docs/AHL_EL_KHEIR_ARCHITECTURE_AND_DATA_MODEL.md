@@ -143,3 +143,25 @@ Salary-advance payroll integration remains downstream: attendance deduction redu
 The payroll UI displays **general deductions**, **attendance deduction**, and **salary-advance deduction** separately. Posted payrolls are immutable; attendance changes after payroll approval do not retroactively rewrite the posted payroll. Draft payrolls can be refreshed before approval.
 
 Migration: `database/migrations/2026-10-05_hr_attendance_payroll_integration.sql` adds `attendance_deduction` to payroll and `working_days` to attendance-policy versions. Runtime verification of the new cross-policy path is pending on the local XAMPP/MariaDB environment.
+
+## 2026-10-06 — GM Salary Advance Waiver: Payroll Repayment Dependency Runtime Verified
+
+The controlled payroll-integration dependency required by the GM salary-advance waiver has now been runtime verified locally on `main` using the existing rollback-only Stage 5 harness:
+
+`php tools\\run_salary_advance_stage5_payroll_tests.php`
+
+Result:
+- PASS — payroll repayment application: `SAR-2026-00004`, temporary payroll ID 24, deduction 5,000 SDG, one repayment trace row, schedule status `paid`, outstanding balance 45,000 SDG, balanced journal 116.
+- PASS — duplicate repayment protection for the same request/payroll.
+- PASS — rollback-only cleanup; no payroll/request/schedule/journal mutation was committed.
+
+This verifies the real payroll repayment path used by salary advances: payroll deduction -> repayment allocation -> schedule update -> outstanding-balance reduction -> Cr 1410 accounting -> duplicate protection, without creating permanent test data.
+
+This does **not** close the GM waiver feature. The waiver-specific runtime matrix remains open, including FM preparation, GM approval/rejection, refund of already-paid current-period deductions, remaining-balance waiver, future-deduction blocking, undistributed-request cancellation, concurrency/duplicate execution protection, draft refresh, post-commit notifications, audit evidence and final 1410 reconciliation.
+
+Evidence boundary:
+- Current waiver implementation commits include `b5e0bbd`, `2d035ae`, `1a67312`, and `7e63fd0`.
+- The local database already contains the waiver migration; no new schema change was made for this verification.
+- No production payroll-generation code was changed as a result of the earlier read-only October simulation or this rollback-only test.
+
+The unfinished attendance same-page POST scroll-jump issue remains separate and must not be reopened during this work.
