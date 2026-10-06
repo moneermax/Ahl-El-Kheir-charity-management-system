@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+$_SERVER['REQUEST_METHOD'] = $_SERVER['REQUEST_METHOD'] ?? 'CLI';
+
 /**
  * GM salary-advance waiver post-commit notification verification.
  *
@@ -19,6 +21,8 @@ require_once __DIR__ . '/../config/functions.php';
 require_once __DIR__ . '/../config/session.php';
 require_once __DIR__ . '/../modules/accounting/lib.php';
 require_once __DIR__ . '/../modules/hr/lib_salary_advance_waiver.php';
+
+$pdo = db();
 
 function findNotificationUserByRole(PDO $pdo, array $roleCodes, int $excludeUserId = 0): ?int
 {
