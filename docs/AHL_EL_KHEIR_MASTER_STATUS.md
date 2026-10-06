@@ -2280,3 +2280,22 @@ Exact next command:
 `php tools\\run_salary_advance_gm_waiver_notification_failure_isolation_tests.php`
 
 After a PASS, the next gate is audit preservation, followed by final 1410 reconciliation. The same-employee multiple-advance and true two-process concurrent execution evidence gaps remain explicitly open.
+
+## 2026-10-06 — GM Salary Advance Waiver: Notification Failure-Isolation PASSED
+
+The notification failure-isolation runtime gate is **CLOSED/PASSED**.
+
+Exact runtime evidence:
+- request `SAR-2026-00004`
+- decision `13`
+- delivery attempts `2`
+- injected failures `1`
+- status `executed`
+- outstanding `0`
+- waiver journal `125`
+- schedule overlays `10`
+- cleanup restored notifications and request state with zero decision/journal residue.
+
+Next gate: **audit preservation runtime verification**.
+
+Do not repeat closed waiver tests. Open evidence gaps remain the multiple-eligible-advances-per-employee scenario and true two-process concurrent execution.
