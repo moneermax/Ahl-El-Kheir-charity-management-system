@@ -616,10 +616,45 @@ try {
         [(int)$fixture['request_id']]
     );
 
+    $finalPreparationNotifications = notificationIdsForFailureIsolation(
+        $pdo,
+        $gmUserId,
+        $gmPreparationTitle,
+        $gmPreparationLink
+    );
+    $finalApprovalNotifications = notificationIdsForFailureIsolation(
+        $pdo,
+        $fmUserId,
+        $fmApprovalTitle,
+        $fmApprovalLink
+    );
+    $finalEmployeeExecutionNotifications = notificationIdsForFailureIsolation(
+        $pdo,
+        (int)$fixture['employee_user_id'],
+        $employeeExecutionTitle,
+        $employeeExecutionLink
+    );
+
+    $unexpectedFinalPreparation = array_diff(
+        $finalPreparationNotifications,
+        $gmPreparationNotificationsBefore
+    );
+    $unexpectedFinalApproval = array_diff(
+        $finalApprovalNotifications,
+        $fmApprovalNotificationsBefore
+    );
+    $unexpectedFinalEmployeeExecution = array_diff(
+        $finalEmployeeExecutionNotifications,
+        $employeeExecutionNotificationsBefore
+    );
+
     if (
         $remainingDecision !== 0 ||
         $remainingWaiverJournal !== 0 ||
         $remainingRefundJournal !== 0 ||
+        $unexpectedFinalPreparation ||
+        $unexpectedFinalApproval ||
+        $unexpectedFinalEmployeeExecution ||
         !$finalRequest ||
         $finalRequest['status'] !== $beforeRequest['status'] ||
         round((float)$finalRequest['outstanding_balance'], 2) !==
@@ -628,11 +663,11 @@ try {
             (string)($beforeRequest['closed_at'] ?? '')
     ) {
         throw new RuntimeException(
-            'Failure-isolation test cleanup left residual test state or failed to restore the request.'
+            'Failure-isolation test cleanup left residual test state or failed to restore the request/notifications.'
         );
     }
 
-    echo "PASS | Notification failure-isolation cleanup | decision_rows=0 | journals=0 | request_restored=1\n";
+    echo "PASS | Notification failure-isolation cleanup | decision_rows=0 | journals=0 | notifications_restored=1 | request_restored=1\n";
 } catch (Throwable $e) {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();
