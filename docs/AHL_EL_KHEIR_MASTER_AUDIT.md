@@ -2566,3 +2566,70 @@ The next verification is audit preservation. No completed waiver gate is to be r
 Open evidence gaps remain:
 - same employee with multiple eligible advances;
 - true two-process concurrent execution.
+
+
+## 2026-10-06 — GM Salary Advance Waiver: final audit-preservation and 1410 gates CLOSED
+
+The final two runtime verification gates for the GM Salary Advance Waiver have passed.
+
+### Audit preservation runtime gate
+
+Command:
+`php tools\\run_salary_advance_gm_waiver_audit_preservation_tests.php`
+
+PASS evidence:
+- request `SAR-2026-00004`
+- decision `15`
+- original disbursement journal `73`
+- temporary payroll `24`
+- temporary payroll journal `129`
+- repayment `6`
+- historical audit rows preserved `6`
+- waiver audit rows `3`
+- schedule overlays `9`
+- cleanup restored the complete pre-test evidence set.
+
+The source and migration audit established that original disbursement/payroll/repayment/schedule evidence is preserved and waiver evidence is additive. The rollback-only runtime gate confirms that behavior on the real fixture without leaving temporary payroll/repayment residue.
+
+### Final 1410 reconciliation runtime gate
+
+Command:
+`php tools\\run_salary_advance_1410_reconciliation.php`
+
+PASS evidence:
+- ledger balance `190000`
+- live outstanding `190000`
+- debit `220000`
+- credit `30000`
+- disbursement debit `220000`
+- direct repayment credit `30000`
+- payroll credit `0`
+- waiver-refund debit `0`
+- waiver credit `0`
+- open requests `5`
+- journals/lines `11 / 11`.
+
+The reconciliation formula is based on the actual accounting implementation:
+
+`1410 = disbursement debits + waiver-refund debits - payroll repayment credits - direct-repayment credits - waiver credits`
+
+The live subledger agrees exactly:
+
+`220000 - 30000 = 190000`.
+
+The reconciliation correction added recognition of the existing `salary_advance_direct_repayment` 1410 credit reference type and initialized CLI request context to avoid an unrelated `REQUEST_METHOD` warning. This was a test-harness-only correction; production financial logic was not changed.
+
+### Final waiver audit disposition
+
+**GM Salary Advance Waiver — RUNTIME VERIFIED / CLOSED at the documented acceptance boundary.**
+
+Completed gates include transaction-composable waiver execution, paid-deduction refund, undistributed cancellation, future-deduction blocking/draft refresh, approved-unpaid payroll protection, blanket scope, sequential duplicate protection, post-commit notifications, notification failure isolation, audit preservation and final 1410 reconciliation.
+
+Explicit evidence gaps remain:
+- same employee with multiple eligible advances;
+- true two-process concurrent execution.
+
+Neither gap is a failure, but neither should be represented as runtime-proven.
+
+Do not rerun closed waiver tests absent concrete regression evidence. Do not reopen Salary Advance Stages 1–6. The unfinished attendance same-page POST scroll-jump issue remains out of scope.
+

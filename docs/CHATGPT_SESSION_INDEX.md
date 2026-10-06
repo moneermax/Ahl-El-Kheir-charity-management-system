@@ -166,3 +166,55 @@ Runtime PASS:
 Evidence: `SAR-2026-00004`, decision `13`, two execution-notification delivery attempts, one injected failure, final status `executed`, outstanding `0`, waiver journal `125`, 10 schedule overlays, and clean restoration of test state.
 
 **Next exact engineering gate: audit preservation runtime verification.**
+
+
+### 2026-10-06 — GM Salary Advance Waiver: audit preservation + 1410 reconciliation CLOSED
+
+The final two waiver verification gates have now passed locally on `main`.
+
+**Audit preservation runtime gate — PASS**
+Command:
+`php tools\\run_salary_advance_gm_waiver_audit_preservation_tests.php`
+
+Evidence:
+- request: `SAR-2026-00004`
+- decision: `15`
+- original disbursement journal: `73`
+- temporary paid payroll: `24`
+- temporary payroll journal: `129`
+- repayment: `6`
+- historical audit rows preserved: `6`
+- waiver audit rows: `3`
+- schedule overlays: `9`
+- cleanup restored the complete pre-test evidence set; temporary payroll/repayment data rolled back.
+
+This proves the waiver execution preserves historical disbursement, payroll repayment/accounting and schedule evidence while recording separate waiver evidence.
+
+**Final 1410 reconciliation — PASS**
+Command:
+`php tools\\run_salary_advance_1410_reconciliation.php`
+
+Result:
+- ledger balance: `190000`
+- live outstanding: `190000`
+- 1410 debits: `220000`
+- 1410 credits: `30000`
+- disbursement debit: `220000`
+- payroll credit: `0`
+- waiver-refund debit: `0`
+- waiver credit: `0`
+- direct-repayment credit: `30000`
+- open disbursed requests: `5`
+- posted journals/lines: `11 / 11`
+
+The reconciliation correctly includes direct salary-advance repayments as Cr 1410. Therefore the accounting control balance exactly equals the live HR outstanding receivable: `220000 - 30000 = 190000`.
+
+**Waiver verification status: CLOSED at the documented acceptance boundary.**
+
+Do not rerun the closed waiver gates without concrete regression evidence. The remaining evidence gaps are intentionally unchanged:
+- same employee with multiple eligible advances;
+- true two-process concurrent execution.
+Neither is to be described as runtime-proven.
+
+The unfinished attendance same-page POST scroll-jump issue remains out of scope.
+

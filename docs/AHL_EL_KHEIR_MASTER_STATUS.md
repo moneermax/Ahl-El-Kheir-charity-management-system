@@ -2299,3 +2299,70 @@ Exact runtime evidence:
 Next gate: **audit preservation runtime verification**.
 
 Do not repeat closed waiver tests. Open evidence gaps remain the multiple-eligible-advances-per-employee scenario and true two-process concurrent execution.
+
+
+## 2026-10-06 — GM Salary Advance Waiver: final verification gates PASSED
+
+The GM Salary Advance Waiver verification matrix has now passed its final two gates.
+
+### Audit preservation — RUNTIME VERIFIED / CLOSED
+
+Command:
+`php tools\\run_salary_advance_gm_waiver_audit_preservation_tests.php`
+
+Evidence:
+- `SAR-2026-00004`
+- decision `15`
+- original disbursement journal `73`
+- temporary payroll `24`
+- temporary payroll journal `129`
+- repayment `6`
+- historical audit rows preserved `6`
+- waiver audit rows `3`
+- schedule overlays `9`
+- cleanup: decision rows `0`, historical journals restored `1`, temporary payroll rolled back `1`, repayment rolled back `1`, schedules restored `1`, audit restored `1`.
+
+The gate proves that waiver execution does not rewrite/delete historical disbursement, payroll repayment, payroll accounting or original schedule evidence. Waiver accounting and waiver-specific audit/schedule evidence are additive.
+
+### Final 1410 reconciliation — RUNTIME VERIFIED / CLOSED
+
+Command:
+`php tools\\run_salary_advance_1410_reconciliation.php`
+
+Result:
+- ledger balance = `190000`
+- live outstanding = `190000`
+- total 1410 debit = `220000`
+- total 1410 credit = `30000`
+- disbursement debit = `220000`
+- direct repayment credit = `30000`
+- payroll credit = `0`
+- waiver-refund debit = `0`
+- waiver credit = `0`
+- open requests = `5`
+- journals/lines = `11 / 11`
+
+The verified reconciliation is:
+
+`1410 balance = disbursement debits + waiver-refund debits - payroll repayment credits - direct-repayment credits - waiver credits`
+
+For the current evidence set:
+
+`220000 - 30000 = 190000`
+
+which exactly matches the live outstanding salary-advance receivable.
+
+The reconciliation harness was narrowed to the actual accounting implementation after source inspection identified `salary_advance_direct_repayment` as an additional 1410 credit reference type. No production accounting logic was changed by the reconciliation fix.
+
+### Waiver feature status
+
+**GM Salary Advance Waiver: RUNTIME VERIFIED / CLOSED at the documented acceptance boundary.**
+
+Do not repeat the completed waiver matrix without concrete regression evidence. Do not reopen Salary Advance Stages 1–6. The two explicit evidence gaps remain:
+1. same employee with multiple eligible advances;
+2. true two-process concurrent execution.
+
+These are evidence gaps, not failures, and must not be silently relabeled as proven.
+
+The attendance same-page POST scroll-jump issue remains unfinished and out of scope.
+

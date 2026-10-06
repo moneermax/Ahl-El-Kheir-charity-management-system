@@ -153,3 +153,32 @@ PASS evidence:
 **NEXT:** audit preservation runtime verification.
 
 Do not repeat prior waiver tests. Before creating the audit-preservation harness, inspect the actual salary-advance request, repayment, payroll-accounting, journal and audit schemas and existing repository test patterns. Then build the narrowest real-fixture runtime verification and ask for the exact command. Keep multiple eligible advances for one employee and true two-process concurrency explicitly open unless separately proven.
+
+
+## FINAL CHECKPOINT — 2026-10-06 — GM Salary Advance Waiver CLOSED
+
+The GM Salary Advance Waiver verification unit is now **RUNTIME VERIFIED / CLOSED at the documented acceptance boundary**.
+
+Final audit-preservation gate:
+`php tools\\run_salary_advance_gm_waiver_audit_preservation_tests.php`
+PASS for `SAR-2026-00004`, decision `15`; original disbursement journal `73`, temporary payroll `24`, payroll journal `129`, repayment `6`; historical audit rows preserved `6`; waiver audit rows `3`; schedule overlays `9`; rollback cleanup fully restored the pre-test evidence set.
+
+Final 1410 reconciliation:
+`php tools\\run_salary_advance_1410_reconciliation.php`
+PASS with ledger balance `190000` = live outstanding `190000`; debits `220000`; credits `30000`; direct repayment credit `30000`; 5 open disbursed requests; 11 journals / 11 lines.
+
+The verified 1410 equation is:
+`disbursement debits + waiver-refund debits - payroll repayment credits - direct-repayment credits - waiver credits = live outstanding receivable`.
+
+Do not repeat the closed waiver verification matrix without concrete regression evidence. Do not reopen Salary Advance Stages 1–6.
+
+Explicit evidence gaps that remain intentionally open:
+- same employee with multiple eligible advances;
+- true two-process concurrent execution.
+
+These are not failures and are not runtime-proven.
+
+The unfinished attendance same-page POST scroll-jump issue remains out of scope.
+
+**Next continuation rule:** select the next task from the current canonical documentation and the user's new requirement. Do not automatically reopen the waiver unit.
+
