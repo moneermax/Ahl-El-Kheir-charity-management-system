@@ -16,7 +16,7 @@ This file remains the master status/audit history. Its dated evidence is retaine
 
 **Repository:** `moneermax/Ahl-El-Kheir-charity-management-system`  
 **Branch:** `main`  
-**Current checkpoint:** 2026-10-04
+**Current checkpoint:** 2026-10-06
 
 This is the single high-level **START HERE** status and continuation summary for the existing project. The detailed audit record is consolidated into `docs/AHL_EL_KHEIR_MASTER_AUDIT.md`.
 
@@ -2096,3 +2096,20 @@ Implemented on `main`:
 Commits: `412301e82718dba9a96146b4b9b42c4298469619`, `c7ade0903bf3aefbeed2d0e272c91a889d19038c`, `9e2e781ba465fd0c3ab4bdd41f0ac4e52f1b5b84`.
 
 **Verification status:** code/repository review completed; local browser runtime verification is still required before marking the issue closed. Do not treat the change as runtime-verified until the attendance and representative same-page POST workflows are tested locally.
+
+
+## 2026-10-06 — GM Salary Advance Waiver Verification
+
+**Status: IMPLEMENTATION HARDENED / DEPENDENCY RUNTIME VERIFIED / WAIVER RUNTIME VERIFICATION OPEN.**
+
+The existing rollback-only Stage 5 payroll harness was executed locally on `main`:
+`php tools\run_salary_advance_stage5_payroll_tests.php`
+
+Results:
+- PASS — payroll repayment application for `SAR-2026-00004`; deduction 5,000 SDG; one repayment trace row; schedule status `paid`; outstanding balance 45,000 SDG; journal 116 balanced.
+- PASS — duplicate repayment protection for the same request/payroll.
+- PASS — rollback-only cleanup; no payroll/request/schedule/journal mutation was committed.
+
+This establishes the real payroll repayment dependency required by the waiver. It does not establish that the GM waiver workflow itself is complete. The waiver-specific verification matrix remains open.
+
+Do not reopen completed Salary Advance Stages 1–6 and do not mix this work with the unfinished attendance scroll-jump issue.
