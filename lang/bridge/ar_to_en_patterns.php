@@ -63,4 +63,12 @@ return [
 '. يجب تسوية السلفة السابقة أولاً.' => '. The previous advance must be settled first.',
 'طلب السلفة «{n}» للموظف «{n}» بانتظار مراجعة المدير المالي.' => 'Salary advance request “{1}” for employee “{2}” is awaiting Financial Manager review.',
 'تم إرسال طلب السلفة رقم {n}' => 'Salary advance request number {1} was sent',
-];
+'تم تجهيز قرار إعفاء سلف راتب رقم «{n}» ({n}) لشهر {n} بواسطة المدير المالي. القرار بانتظار مراجعتك واعتمادك أو رفضه.' => 'Salary advance waiver decision number “{1}” ({2}) for month {3} was prepared by the Financial Manager. The decision is awaiting your review and approval or rejection.',
+'تم اعتماد قرار إعفاء سلف الراتب «{n}» من المدير العام. يمكنك الآن العودة إلى القرار وإتمام التنفيذ المالي.' => 'Salary advance waiver decision “{1}” was approved by the General Manager. You can now return to the decision and complete the financial execution.',
+'تم رفض قرار إعفاء سلف الراتب «{n}» من المدير العام. سبب الرفض: {n}' => 'Salary advance waiver decision “{1}” was rejected by the General Manager. Rejection reason: {2}',
+'تم تنفيذ قرار الإعفاء «{n}» الذي اعتمدته. رد الخصومات: {n} ج.س.، وإجمالي الإعفاء: {n} ج.س.، لشهر السريان {n}.' => 'Waiver decision “{1}” that you approved was executed. Deduction refund: {2} SDG, total waiver: {3} SDG, for effective month {4}.',
+'تم تنفيذ قرار المدير العام بشأن سلف الراتب رقم «{n}» بواسطة المدير المالي لشهر السريان {n}.' => 'The General Manager\'s decision regarding salary advance number “{1}” was executed by the Financial Manager for effective month {2}.',
+' تم رد خصومات راتب مستحقة بقيمة {n} ج.س. وإعفاء رصيد سلف بقيمة {n} ج.س.، وتم إيقاف الخصومات المستقبلية للسلف المشمولة.' => ' Eligible salary deductions of {1} SDG were refunded and a salary advance balance of {2} SDG was waived; future deductions for the included advances were stopped.',
+' كما تم إلغاء {n} طلب/طلبات سلفة غير مصروفة ضمن القرار.' => ' Also cancelled: {1} undisbursed salary advance request(s) included in the decision.',
+' السلف المشمولة في القرار: {n}.' => ' Advances included in the decision: {1}.',
+'تم تنفيذ قرار الإعفاء بعد اعتماد المدير العام. إجمالي الرد: {n} ج.س. وإجمالي الإعفاء: {n} ج.س.' => 'The waiver decision was executed after General Manager approval. Total refund: {1} SDG; total waiver: {2} SDG.',];
