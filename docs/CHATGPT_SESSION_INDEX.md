@@ -235,3 +235,24 @@ Runtime verification was then performed locally by the user in English mode on t
 Do not reopen or repeat the i18n cleanup without a concrete regression or a newly introduced untranslated UI string.
 
 The previously unfinished attendance same-page POST scroll-jump issue remains out of scope and is not changed by this checkpoint.
+
+## 2026-10-06 — Attendance ↔ Payroll integration: runtime verification resumed
+
+The next open engineering unit after the completed i18n cleanup is the 2026-10-05 Attendance Policy ↔ Payroll integration.
+
+Source audit found a concrete calculation defect before runtime verification: `hrSalaryAdvancePayrollRefreshDraft()` recomputed `payroll.net_salary` without subtracting `attendance_deduction`, even though the attendance deduction is explicitly part of the `net_before_advance` basis used by the salary-advance calculator.
+
+A targeted production fix was applied:
+- `modules/hr/lib_salary_advance_payroll.php`
+- commit `60adf7f4f428b1754f45b010c552ad93a2155323`
+
+A rollback-only integration harness was added:
+- `tools\\run_hr_attendance_payroll_integration_tests.php`
+- commit `20c8f23e5fc239fd3b19f26ec4cd424c08dc9d34`
+
+Runtime status: **PENDING USER EXECUTION**.
+
+Exact next command:
+`php tools\\run_hr_attendance_payroll_integration_tests.php`
+
+Do not mark the attendance/payroll integration closed until this harness passes locally. Do not reopen completed salary-advance waiver tests, i18n verification, Salary Advance Stages 1–6, or the unfinished attendance scroll-jump issue.
