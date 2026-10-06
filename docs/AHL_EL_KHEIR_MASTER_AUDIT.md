@@ -2713,3 +2713,31 @@ Implementation commits:
 - `41d448abb9daa7d917ecedd324b81be7bf9077c0`
 
 Runtime browser verification is still required on the local XAMPP application. Do not mark the UI fixes runtime-verified until the user confirms the affected FM pages visually.
+
+## 2026-10-06 — System-wide same-page POST scroll-jump remediation: FINAL AUDIT DISPOSITION
+
+The previously observed browser jump-to-top after same-page POST actions is now **RUNTIME VERIFIED / CLOSED at the system-wide acceptance boundary**.
+
+### Final architecture
+The fix is centralized in `assets/js/app.js` and is **default-on / opt-out**, rather than requiring individual pages to opt in.
+
+For a qualifying same-path POST, the global capture-phase submit handler prevents native full-document navigation and routes the request through the existing in-place response renderer. The renderer preserves the current viewport while replacing the shared `.content` region and restores focus/scroll state as appropriate.
+
+The implementation also hardens form resolution by using DOM attributes rather than the potentially shadowed `form.action` property, and it respects effective submitter overrides.
+
+### Intentional native-navigation boundaries
+Native behavior remains available for multipart uploads, non-self targets, cross-path/cross-origin submissions, and explicit native-post opt-outs. This prevents the global policy from interfering with workflows that genuinely require navigation or a browser-managed upload/download flow.
+
+### Runtime evidence
+The attendance workflow was tested after the page-specific `data-ak-same-page="1"` attribute was removed. The user confirmed the page remained in place after the POST action.
+
+This is the decisive evidence that the global mechanism is functioning system-wide rather than depending on an attendance-specific workaround.
+
+### Final implementation commits
+- `af5fe03e3592972c61ec2821fa7ad0a7f4b7abfd`
+- `0a06fb57f687f4ac56c623251a7fa38d6dba083d`
+- `4496a8f6fb4d38a856483b25d856c640a81732ec`
+- `396576c6bc8d1f26af37a09e80c15909aac06e60`
+- `8389708b84a9853f164d3b73d6f810dbe4967ef5`
+
+**Audit conclusion:** the old attendance-specific scroll-jump defect is closed. The system-wide same-page POST policy is now the authoritative behavior. Do not introduce page-specific scroll restoration or opt-in POST interception to solve this issue again unless a concrete regression demonstrates a gap in the global policy.
