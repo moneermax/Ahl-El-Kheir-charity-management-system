@@ -1,7 +1,7 @@
 # GM Salary Advance Waiver — Continuation Checkpoint
 
 Date: 2026-10-06
-Status: implementation hardened; payroll repayment dependency runtime verified; waiver-specific runtime verification pending.
+Status: implementation hardened; payroll repayment dependency runtime verified; post-commit notification gate runtime verified; remaining waiver verification gates still open.
 
 ## Requirement
 GM may decide, for any reason, to waive salary advances or submitted salary-withdrawal requests. A blanket decision includes previous loans. If a current payroll installment was already deducted and the remaining salary paid, that deducted amount must be refunded and the remaining covered advance balance must be waived. Example: 100,000 original, 60,000 previous repayments, 10,000 current deduction, 30,000 remaining => refund 10,000, waive 30,000, final 1410 balance zero. Historical disbursement and repayment records remain untouched.
@@ -192,3 +192,19 @@ A dedicated runtime harness was added:
 The harness will exercise the real committed FM-preparation and GM-approval paths, verify that the corresponding GM/FM workflow notifications exist after commit, and explicitly clean up the committed test decision, items, audit rows, and test notifications without executing any financial waiver.
 
 **Runtime status: PENDING USER EXECUTION.**
+
+
+## 2026-10-06 — Post-commit notification runtime gate passed
+
+The dedicated committed-fixture notification harness was executed locally on `main`:
+
+`php tools\\run_salary_advance_gm_waiver_post_commit_notification_tests.php`
+
+Result:
+- **PASS — Post-commit preparation notification:** decision ID `11`, committed status `pending_gm`, GM notification found.
+- **PASS — Post-commit GM approval notification:** the same committed decision reached `approved_by_gm`, and the preparing FM notification was found after the GM review commit.
+- **PASS — Post-commit notification cleanup:** decision rows = 0 and test notification rows = 0 after cleanup.
+
+The harness deliberately did not execute the financial waiver. It therefore verifies the real committed notification boundary for FM preparation and GM approval without creating accounting effects. The live installation uses the legacy notification schema; the harness verified the notification through that actual schema and removed only the exact test notification rows it created.
+
+**Verification status:** the FM-preparation → GM notification and GM-approval → FM notification post-commit gate is **RUNTIME VERIFIED / CLOSED**. The broader notification requirement remains open for execution notifications and forced notification-failure isolation runtime evidence.
