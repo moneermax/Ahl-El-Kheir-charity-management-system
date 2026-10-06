@@ -110,3 +110,20 @@ Result:
 
 This closes the controlled undistributed-request cancellation gate. It does not close the overall waiver feature. Remaining gates include future-deduction blocking and draft refresh, approved-unpaid payroll protection, blanket/multiple-advance scope, concurrency/duplicate protection, post-commit notifications and failure isolation, audit preservation, and final 1410 reconciliation.
 
+
+
+## 2026-10-06 — Future-deduction blocking and draft-refresh runtime verified
+
+The dedicated rollback-only harness was executed locally on `main`:
+
+`php tools\\run_salary_advance_gm_waiver_draft_refresh_rollback_tests.php`
+
+Result:
+- **PASS — future-deduction blocking + draft refresh:** `SAR-2026-00004`; temporary draft payroll ID 24 initially calculated a 5,000.00 SDG salary-advance deduction. After FM preparation, GM approval, and FM execution, the same draft payroll was refreshed to a 0.00 SDG salary-advance deduction; 10 future schedule-overlay rows existed inside the transaction.
+- The test also re-ran the real salary-advance payroll eligibility query after execution and confirmed that no pending/partial repayment rows remained eligible for the waived request/effective month.
+- The request remained `disbursed` and its outstanding balance became zero inside the test transaction.
+- **PASS — rollback-only cleanup:** temporary payroll ID 24 was removed and waiver decision/item/schedule-overlay counts returned to zero.
+
+This closes the controlled future-deduction blocking + draft-refresh gate. It proves the waiver overlay is honored by the existing payroll eligibility calculation and that an existing draft payroll is refreshed after execution.
+
+This does **not** close the overall waiver feature. Remaining gates include approved-unpaid payroll protection, blanket/multiple-advance scope, concurrency/duplicate protection, post-commit notification behavior and failure isolation, audit preservation, and final 1410 reconciliation.
