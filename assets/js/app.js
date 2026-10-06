@@ -121,6 +121,7 @@
     function samePagePost(form) {
         if (!form || form.tagName !== 'FORM') return false;
         if (String(form.method || 'get').toLowerCase() !== 'post') return false;
+        if (form.dataset.akSamePage !== '1') return false;
         if (form.dataset.akNativePost === '1' || form.dataset.akAjaxPost === '0') return false;
         if (form.target && !['_self'].includes(String(form.target).toLowerCase())) return false;
 
@@ -128,7 +129,8 @@
         if (!currentContent) return false;
 
         try {
-            const target = new URL(form.action || window.location.href, window.location.href);
+            const formAction = form.getAttribute('action') || window.location.href;
+            const target = new URL(formAction, window.location.href);
             return target.origin === window.location.origin &&
                    target.pathname === window.location.pathname;
         } catch (e) {
@@ -452,7 +454,8 @@
          * data-akSubmitting already blocks duplicate same-page submissions.
          */
 
-        const target = new URL(form.action || window.location.href, window.location.href);
+        const formAction = form.getAttribute('action') || window.location.href;
+        const target = new URL(formAction, window.location.href);
         const formData = new FormData(form);
         if (submitter && submitter.name && !formData.has(submitter.name)) {
             formData.append(submitter.name, submitter.value || '');
