@@ -30,8 +30,8 @@ $pageTitle = t('fm.page_title');
 $headerQuickActions = [
     ['label'=>'التحويلات الشهرية','url'=>'modules/accounting/disbursements.php','icon'=>'fa-money-check-dollar','color'=>'#28a745'],
     ['label'=>' دليل الحسابات','url'=>'modules/accounting/accounts.php','icon'=>'fa-sitemap','color'=>'#2195c4'],
-    ['label'=>'اليومية','url'=>'modules/accounting/journal.php','icon'=>'fa-book','color'=>'#0d6efd'],
-    ['label'=>'السندات','url'=>'modules/accounting/vouchers.php','icon'=>'fa-file-invoice-dollar','color'=>'#17a2b8'],
+    ['label'=>'اليومية','url'=>'modules/accounting/journal.php','icon'=>'fa-book','color'=>'#0d6efd','border_color'=>'#0d6efd'],
+    ['label'=>'السندات','url'=>'modules/accounting/vouchers.php','icon'=>'fa-file-invoice-dollar','color'=>'#17a2b8','border_color'=>'#17a2b8'],
     ['label'=>'إدارة المشاريع','url'=>'modules/projects/index.php','icon'=>'fa-diagram-project','color'=>'#ffc107'],
     ['label'=>'مراجعة المعاملات المالية','url'=>'modules/accounting/fm_transaction_review.php','icon'=>'fa-file-invoice-dollar','color'=>'#6c757d'],
     ['label'=>'التقارير المالية','url'=>'modules/reports/financial.php','icon'=>'fa-chart-pie','color'=>'#0d6efd'],
@@ -420,7 +420,7 @@ $fmActionDescriptions = [
 <div class="ak-fm-action-grid fade-in" aria-label="إجراءات سريعة">
     <?php foreach ($headerQuickActions as $index => $qa): ?>
         <?php if (!empty($qa['salary_advance'])): ?>
-        <a href="<?php echo APP_URL; ?>modules/hr/salary_advance_dashboard.php" class="ak-fm-action-card ak-fm-action-<?php echo (int)$index + 1; ?>">
+        <a href="<?php echo APP_URL; ?>modules/hr/salary_advance_dashboard.php" class="ak-fm-action-card ak-fm-action-<?php echo (int)$index + 1; ?>"<?php if (!empty($qa['border_color'])): ?> style="border-top-color:<?php echo e($qa['border_color']); ?>;"<?php endif; ?>>
             <div class="text-center px-2">
                 <div class="ak-fm-action-icon"><i class="fas <?php echo e($qa['icon']); ?>" aria-hidden="true"></i></div>
                 <div class="ak-fm-action-title"><?php echo e($qa['label']); ?></div>
@@ -428,7 +428,7 @@ $fmActionDescriptions = [
             </div>
         </a>
         <?php else: ?>
-        <a href="<?php echo APP_URL . e($qa['url']); ?>" class="ak-fm-action-card ak-fm-action-<?php echo (int)$index + 1; ?>">
+        <a href="<?php echo APP_URL . e($qa['url']); ?>" class="ak-fm-action-card ak-fm-action-<?php echo (int)$index + 1; ?>"<?php if (!empty($qa['border_color'])): ?> style="border-top-color:<?php echo e($qa['border_color']); ?>;"<?php endif; ?>>
             <div class="text-center px-2">
                 <div class="ak-fm-action-icon">
                     <?php if (($qa['icon'] ?? '') === 'fina-logo'): ?><img src="<?php echo APP_URL; ?>assets/img/Feen_logo.jpeg" alt="منظمة فينا الخير — Feena Al-Khair" class="ak-fm-action-fina-logo"><?php else: ?><i class="fas <?php echo e($qa['icon']); ?>" aria-hidden="true"></i><?php endif; ?>
