@@ -20,6 +20,8 @@ require_once __DIR__ . '/../config/functions.php';
 require_once __DIR__ . '/../config/session.php';
 require_once __DIR__ . '/../modules/accounting/lib.php';
 require_once __DIR__ . '/../modules/hr/lib_salary_advance_waiver.php';
+require_once __DIR__ . '/../modules/hr/lib_salary_advance_payroll.php';
+require_once __DIR__ . '/../modules/hr/lib_payroll_accounting.php';
 
 $pdo = db();
 ak_ensure_tables();
@@ -30,37 +32,33 @@ function findAuditPreservationFixture(PDO $pdo): ?array
     return dbFetchOne(
         "SELECT r.id AS request_id, r.request_no, r.employee_id,
                 r.status, r.outstanding_balance,
-                pr.id AS repayment_id, pr.payroll_id,
-                pr.actual_amount, pr.accounting_entry_id,
-                p.year AS repayment_year, p.month AS repayment_month,
-                p.status AS payroll_status
+                s.id AS schedule_id, s.scheduled_month,
+                s.scheduled_amount, s.applied_amount, s.status AS schedule_status,
+                p.insufficient_salary_rule, p.eligible_salary_basis,
+                r.approved_repayment_method
          FROM hr_salary_advance_requests r
-         JOIN hr_salary_advance_payroll_repayments pr
-           ON pr.salary_advance_request_id = r.id
-         JOIN payroll p ON p.id = pr.payroll_id
+         JOIN hr_salary_advance_repayment_schedule s
+           ON s.salary_advance_request_id = r.id
+         JOIN hr_salary_advance_policy_versions p
+           ON p.id = r.policy_version_id
          WHERE r.status = 'disbursed'
            AND COALESCE(r.outstanding_balance, 0) > 0
-           AND p.status = 'paid'
-           AND COALESCE(pr.actual_amount, 0) > 0
-           AND pr.accounting_entry_id IS NOT NULL
-           AND NOT EXISTS (
-               SELECT 1
-               FROM hr_salary_advance_waiver_items wi
-               JOIN hr_salary_advance_waiver_decisions wd
-                 ON wd.id = wi.decision_id
-               WHERE wi.salary_advance_request_id = r.id
-                 AND wd.status = 'executed'
-           )
+           AND s.status IN ('pending', 'partial')
            AND NOT EXISTS (
                SELECT 1
                FROM payroll px
                WHERE px.employee_id = r.employee_id
-                 AND px.year = p.year
-                 AND px.month = p.month
-                 AND px.status = 'approved'
-                 AND COALESCE(px.salary_advance_deduction, 0) > 0
+                 AND px.month = MONTH(s.scheduled_month)
+                 AND px.year = YEAR(s.scheduled_month)
            )
-         ORDER BY p.year ASC, p.month ASC, r.id ASC, pr.id ASC
+           AND NOT EXISTS (
+               SELECT 1
+               FROM hr_salary_advance_waiver_items wi
+               JOIN hr_salary_advance_waiver_decisions wd ON wd.id = wi.decision_id
+               WHERE wi.salary_advance_request_id = r.id
+                 AND wd.status = 'executed'
+           )
+         ORDER BY s.scheduled_month ASC, r.id ASC
          LIMIT 1"
     );
 }
@@ -226,9 +224,171 @@ if (!$beforeRequest || !$beforeDisbursementJournal || !$beforePayrollJournal ||
 }
 
 $decisionId = 0;
+$payrollId = 0;
+$payrollJournalId = 0;
 
 try {
     $pdo->beginTransaction();
+
+    $originalRequest = dbFetchOne(
+        "SELECT id, request_no, employee_id, status, outstanding_balance,
+                disbursement_journal_entry_id, closed_at
+         FROM hr_salary_advance_requests
+         WHERE id = ?",
+        [$requestId]
+    );
+    $originalSchedule = fetchScheduleEvidence($pdo, $requestId);
+
+    if (!$originalRequest || !$originalSchedule) {
+        throw new RuntimeException('Required pre-test request/schedule evidence is missing.');
+    }
+
+    $employeeId = (int)$fixture['employee_id'];
+    $month = (int)date('n', strtotime((string)$fixture['scheduled_month']));
+    $year = (int)date('Y', strtotime((string)$fixture['scheduled_month']));
+    $effectiveMonth = sprintf('%04d-%02d-01', $year, $month);
+
+    $salaryRow = dbFetchOne(
+        "SELECT basic_salary
+         FROM hr_employee_salary_history
+         WHERE employee_id = ?
+           AND effective_from <= ?
+           AND (effective_to IS NULL OR effective_to >= ?)
+         ORDER BY effective_from DESC, id DESC
+         LIMIT 1",
+        [
+            $employeeId,
+            date('Y-m-t', strtotime($effectiveMonth)),
+            $effectiveMonth
+        ]
+    );
+    $basicSalary = round((float)($salaryRow['basic_salary'] ?? 10000.00), 2);
+    if ($basicSalary <= 0.00) $basicSalary = 10000.00;
+
+    $maxPayrollId = (int)(dbFetchOne(
+        "SELECT COALESCE(MAX(id), 0) AS max_id FROM payroll"
+    )['max_id'] ?? 0);
+    $maxPayrollRef = (int)(dbFetchOne(
+        "SELECT COALESCE(MAX(reference_id), 0) AS max_id
+         FROM journal_entries
+         WHERE reference_type = 'payroll'"
+    )['max_id'] ?? 0);
+
+    $payrollId = max($maxPayrollId, $maxPayrollRef) + 1;
+    if ($payrollId <= 0 || $payrollId > 2147483647) {
+        throw new RuntimeException('Unable to allocate a safe temporary payroll id.');
+    }
+
+    while (dbFetchOne(
+        "SELECT id
+         FROM journal_entries
+         WHERE reference_type = 'payroll' AND reference_id = ?
+         LIMIT 1",
+        [$payrollId]
+    )) {
+        $payrollId++;
+        if ($payrollId >= 2147483647) {
+            throw new RuntimeException('Unable to find an unused temporary payroll reference.');
+        }
+    }
+
+    $pdo->prepare(
+        "INSERT INTO payroll
+         (id, employee_id, month, year, basic_salary, allowances, overtime,
+          deductions, salary_advance_deduction, net_salary, status)
+         VALUES (?, ?, ?, ?, ?, 0, 0, 0, 0, ?, 'approved')"
+    )->execute([
+        $payrollId,
+        $employeeId,
+        $month,
+        $year,
+        $basicSalary,
+        $basicSalary
+    ]);
+
+    $payroll = dbFetchOne(
+        "SELECT p.*, e.full_name AS employee_name, e.employee_code
+         FROM payroll p
+         JOIN employees e ON e.id = p.employee_id
+         WHERE p.id = ?",
+        [$payrollId]
+    );
+
+    $preview = hrSalaryAdvancePayrollCalculateDraft(
+        $pdo,
+        $payroll,
+        $effectiveMonth
+    );
+    $deduction = round((float)$preview['total'], 2);
+
+    if ($deduction <= 0.00) {
+        throw new RuntimeException('Temporary payroll did not produce a positive salary-advance deduction.');
+    }
+
+    $netSalary = round(max(0.00, $basicSalary - $deduction), 2);
+
+    $pdo->prepare(
+        "UPDATE payroll
+         SET salary_advance_deduction = ?, net_salary = ?, status = 'paid', payment_date = CURRENT_DATE
+         WHERE id = ?"
+    )->execute([$deduction, $netSalary, $payrollId]);
+
+    $payroll['status'] = 'paid';
+    $payroll['payment_date'] = date('Y-m-d');
+    $payroll['salary_advance_deduction'] = $deduction;
+    $payroll['net_salary'] = $netSalary;
+    $payroll['payment_account_id'] = null;
+
+    if (dbFetchOne(
+        "SELECT id
+         FROM journal_entries
+         WHERE reference_type = 'payroll' AND reference_id = ?
+         LIMIT 1",
+        [$payrollId]
+    )) {
+        throw new RuntimeException('Temporary payroll journal reference already exists before accounting.');
+    }
+
+    $payrollJournalId = hrPayrollPostAccounting($pdo, $payroll);
+    hrSalaryAdvancePayrollApply($pdo, $payroll, $payrollJournalId);
+
+    $repayment = dbFetchOne(
+        "SELECT id, salary_advance_request_id, repayment_schedule_id,
+                payroll_id, scheduled_amount, actual_amount, outcome,
+                outcome_reason, accounting_entry_id, created_at
+         FROM hr_salary_advance_payroll_repayments
+         WHERE payroll_id = ? AND salary_advance_request_id = ?
+         ORDER BY id DESC
+         LIMIT 1",
+        [$payrollId, $requestId]
+    );
+
+    if (!$repayment ||
+        (int)$repayment['payroll_id'] !== $payrollId ||
+        (int)$repayment['salary_advance_request_id'] !== $requestId ||
+        round((float)$repayment['actual_amount'], 2) !== $deduction ||
+        $repayment['outcome'] !== 'applied' ||
+        (int)$repayment['accounting_entry_id'] !== $payrollJournalId) {
+        throw new RuntimeException('Temporary paid payroll repayment evidence is inconsistent.');
+    }
+
+    $beforeRequest = dbFetchOne(
+        "SELECT id, request_no, employee_id, status, outstanding_balance,
+                disbursement_journal_entry_id, closed_at
+         FROM hr_salary_advance_requests
+         WHERE id = ?",
+        [$requestId]
+    );
+    $beforeDisbursementJournal = fetchJournalEvidence($pdo, $disbursementJournalId);
+    $beforePayrollJournal = fetchJournalEvidence($pdo, $payrollJournalId);
+    $beforeRepayment = fetchRepaymentEvidence($pdo, (int)$repayment['id']);
+    $beforeSchedule = fetchScheduleEvidence($pdo, $requestId);
+    $beforeAudit = fetchRequestAuditEvidence($pdo, $requestId);
+
+    if (!$beforeRequest || !$beforeDisbursementJournal || !$beforePayrollJournal ||
+        !$beforeRepayment || !$beforeSchedule) {
+        throw new RuntimeException('Required historical evidence could not be snapshotted completely.');
+    }
 
     $decisionId = hrSalaryAdvanceWaiverCreateDecision(
         $pdo,
@@ -236,7 +396,7 @@ try {
         $effectiveMonth,
         'Rollback-only audit preservation verification',
         $fmUserId,
-        (int)$fixture['employee_id'],
+        $employeeId,
         $refundAccountId,
         (int)$expenseAccount['id']
     );
@@ -248,7 +408,7 @@ try {
         true
     );
 
-    $execution = hrSalaryAdvanceWaiverExecute(
+    hrSalaryAdvanceWaiverExecute(
         $pdo,
         $decisionId,
         $fmUserId
@@ -267,7 +427,7 @@ try {
     );
     $afterDisbursementJournal = fetchJournalEvidence($pdo, $disbursementJournalId);
     $afterPayrollJournal = fetchJournalEvidence($pdo, $payrollJournalId);
-    $afterRepayment = fetchRepaymentEvidence($pdo, $repaymentId);
+    $afterRepayment = fetchRepaymentEvidence($pdo, (int)$repayment['id']);
     $afterSchedule = fetchScheduleEvidence($pdo, $requestId);
     $afterAudit = fetchRequestAuditEvidence($pdo, $requestId);
 
@@ -322,7 +482,7 @@ try {
         [$requestId, '%' . $decisionId . '%']
     );
 
-    if ($afterRequest['disbursement_journal_entry_id'] != $beforeRequest['disbursement_journal_entry_id']) {
+    if ($afterRequest['disbursement_journal_entry_id'] != $originalRequest['disbursement_journal_entry_id']) {
         throw new RuntimeException('Original disbursement journal reference on the request was rewritten.');
     }
 
@@ -410,7 +570,7 @@ try {
         }
     }
 
-    echo "PASS | Audit preservation | request={$fixture['request_no']} | decision_id={$decisionId} | disbursement_journal={$disbursementJournalId} | payroll_id={$payrollId} | payroll_journal={$payrollJournalId} | repayment_id={$repaymentId} | historical_audit_rows_preserved=" . count($beforeAudit) . " | waiver_audit_rows=" . count($waiverAudit) . " | schedule_overlays=" . count($overlays) . "\n";
+    echo "PASS | Audit preservation | request={$fixture['request_no']} | decision_id={$decisionId} | disbursement_journal={$disbursementJournalId} | payroll_id={$payrollId} | payroll_journal={$payrollJournalId} | repayment_id={$repayment['id']} | historical_audit_rows_preserved=" . count($beforeAudit) . " | waiver_audit_rows=" . count($waiverAudit) . " | schedule_overlays=" . count($overlays) . "\n";
 
     $pdo->rollBack();
 
@@ -423,16 +583,16 @@ try {
     );
     $finalDisbursementJournal = fetchJournalEvidence($pdo, $disbursementJournalId);
     $finalPayrollJournal = fetchJournalEvidence($pdo, $payrollJournalId);
-    $finalRepayment = fetchRepaymentEvidence($pdo, $repaymentId);
+    $finalRepayment = fetchRepaymentEvidence($pdo, (int)$repayment['id']);
     $finalSchedule = fetchScheduleEvidence($pdo, $requestId);
     $finalAudit = fetchRequestAuditEvidence($pdo, $requestId);
 
     if (
-        $finalRequest !== $beforeRequest ||
+        $finalRequest !== $originalRequest ||
         $finalDisbursementJournal !== $beforeDisbursementJournal ||
         $finalPayrollJournal !== $beforePayrollJournal ||
-        $finalRepayment !== $beforeRepayment ||
-        $finalSchedule !== $beforeSchedule ||
+        $finalRepayment !== null ||
+        $finalSchedule !== $originalSchedule ||
         $finalAudit !== $beforeAudit
     ) {
         throw new RuntimeException('Audit-preservation rollback did not restore the complete pre-test evidence set.');
@@ -447,7 +607,8 @@ try {
         throw new RuntimeException('Audit-preservation rollback left the test waiver decision behind.');
     }
 
-    echo "PASS | Audit preservation cleanup | request={$fixture['request_no']} | decision_rows=0 | historical_journals_restored=1 | repayment_restored=1 | schedules_restored=1 | audit_restored=1\n";
+    echo "PASS | Audit preservation cleanup | request={$fixture['request_no']} | decision_rows=0 | historical_journals_restored=1 | temporary_payroll_rolled_back=1 | repayment_rolled_back=1 | schedules_restored=1 | audit_restored=1\n";
+}
 } catch (Throwable $e) {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();
