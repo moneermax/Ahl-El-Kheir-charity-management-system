@@ -75,6 +75,22 @@ Results:
 
 This proves the actual payroll repayment/accounting dependency used by the waiver without committing test data. It does not prove the waiver execution itself.
 
+
+## 2026-10-06 — Paid-deduction refund branch runtime verified
+
+The dedicated rollback-only refund harness was executed locally on `main` after correcting only its expense-account helper return type.
+
+Command:
+`php tools\\run_salary_advance_gm_waiver_refund_rollback_tests.php`
+
+Result:
+- **PASS — paid-deduction refund branch:** `SAR-2026-00004`; temporary payroll ID 24; current salary-advance deduction = 5,000.00 SDG; refund = 5,000.00 SDG; total waived = 50,000.00 SDG; refund journal = 119; waiver journal = 120.
+- The test verified the full sequence using the real payroll/accounting/repayment functions: paid payroll repayment -> FM preparation -> GM approval -> FM execution.
+- The executed waiver preserved the request as `disbursed`, reduced final outstanding balance to zero, preserved the historical paid repayment row and its original payroll accounting entry, and produced the expected refund journal Dr 1410 / Cr 1100 plus waiver journal Dr selected expense / Cr 1410.
+- **PASS — rollback-only refund cleanup:** payroll rows = 22; repayment rows = 0; waiver decision rows = 0; waiver journal rows = 0 after rollback.
+
+This closes the controlled paid-deduction refund execution gate. It does not close the overall waiver feature. Remaining gates include undistributed-request cancellation, future-deduction blocking and draft refresh, approved-unpaid payroll protection, blanket/multiple-advance scope, concurrency/duplicate protection, post-commit notification behavior and failure isolation, audit preservation, and final 1410 reconciliation.
+
 ## Next step
 Proceed to the waiver-specific controlled verification matrix. First inspect the current waiver source for an existing rollback-only/SAVEPOINT harness or other safe fixture mechanism. Then verify FM preparation, GM approval/rejection, current-period refund, remaining waiver, future-deduction blocking, undistributed-request cancellation, draft refresh, concurrency/duplicate protection, post-commit notifications, audit preservation and final 1410 reconciliation. Do not mark the waiver complete until these gates are evidenced locally.
 
