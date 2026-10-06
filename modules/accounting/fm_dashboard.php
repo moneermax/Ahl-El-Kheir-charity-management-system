@@ -30,6 +30,8 @@ $pageTitle = t('fm.page_title');
 $headerQuickActions = [
     ['label'=>'التحويلات الشهرية','url'=>'modules/accounting/disbursements.php','icon'=>'fa-money-check-dollar','color'=>'#28a745'],
     ['label'=>' دليل الحسابات','url'=>'modules/accounting/accounts.php','icon'=>'fa-sitemap','color'=>'#2195c4'],
+    ['label'=>'اليومية','url'=>'modules/accounting/journal.php','icon'=>'fa-book','color'=>'#0d6efd'],
+    ['label'=>'السندات','url'=>'modules/accounting/vouchers.php','icon'=>'fa-file-invoice-dollar','color'=>'#17a2b8'],
     ['label'=>'إدارة المشاريع','url'=>'modules/projects/index.php','icon'=>'fa-diagram-project','color'=>'#ffc107'],
     ['label'=>'مراجعة المعاملات المالية','url'=>'modules/accounting/fm_transaction_review.php','icon'=>'fa-file-invoice-dollar','color'=>'#6c757d'],
     ['label'=>'التقارير المالية','url'=>'modules/reports/financial.php','icon'=>'fa-chart-pie','color'=>'#0d6efd'],
@@ -344,6 +346,8 @@ $recentJournals = dbFetchAll("SELECT je.entry_code, je.entry_date, je.descriptio
 .ak-fm-action-card.ak-fm-action-6 { border-top:3px solid #2daf79; }
 .ak-fm-action-card.ak-fm-action-7 { border-top:3px solid #6f42c1; }
 .ak-fm-action-card.ak-fm-action-8 { border-top:3px solid #198754; }
+.ak-fm-action-card.ak-fm-action-9 { border-top:3px solid #0d6efd; }
+.ak-fm-action-card.ak-fm-action-10 { border-top:3px solid #17a2b8; }
 @media(max-width:991.98px) { .ak-fm-action-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media(max-width:420px) { .ak-fm-action-grid { grid-template-columns:1fr; } .ak-fm-action-card { height:96px; min-height:96px; } }
 
@@ -402,6 +406,8 @@ if (is_array($fl)) {
 $fmActionDescriptions = [
     'متابعة التحويلات والصرف الشهري',
     'عرض وإدارة دليل الحسابات',
+    'عرض القيود اليومية والحركات المحاسبية',
+    'إدارة ومراجعة السندات المحاسبية',
     'إدارة ومتابعة مشاريع المنظمة',
     'مراجعة واعتماد المعاملات المالية',
     'عرض التقارير والحركة المالية',
