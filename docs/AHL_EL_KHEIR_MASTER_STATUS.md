@@ -2199,3 +2199,14 @@ The dedicated rollback-only duplicate-execution harness passed locally on `main`
 This closes the sequential duplicate-execution runtime gate. The source inspection also confirms the decision row is locked with `SELECT ... FOR UPDATE` before the `approved_by_gm` status check, providing the transaction-level serialization point for concurrent attempts. A separate two-process concurrent-commit runtime test has not been claimed.
 
 **Current GM Salary Advance Waiver status:** still open for post-commit notification behavior/failure isolation, audit preservation, final 1410 reconciliation, and the specific same-employee multiple-advance runtime fixture.
+
+## 2026-10-06 — GM Salary Advance Waiver: Post-Commit Notification Gate Prepared
+
+Source inspection confirms the required transaction boundary: waiver preparation, GM review, and FM execution invoke their notification helpers only after a function-owned commit. The shared notification helper catches delivery exceptions, so notification failure cannot roll back an already-completed business/financial action.
+
+A rollback-safe-in-scope committed-fixture harness was added:
+`tools\\run_salary_advance_gm_waiver_post_commit_notification_tests.php`
+
+It will runtime-test the real committed preparation and GM-approval notification paths and then remove only its own committed test rows. FM financial execution is deliberately not performed by this harness.
+
+**Runtime status: PENDING USER EXECUTION.**
