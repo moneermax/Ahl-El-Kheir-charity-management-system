@@ -299,3 +299,19 @@ Submitter overrides are honored, including `formaction`, `formmethod`, `formenct
 
 ### Continuation rule
 Treat the scroll-jump issue as closed. Do not reopen it, repeat its old diagnostic tests, or add page-specific workarounds unless a concrete regression is reported. Continue from the next genuinely open task in the canonical documentation and the user's new requirement.
+
+## 2026-10-06 — FM UI consistency cleanup: RUNTIME VERIFIED / CLOSED
+
+The focused FM UI consistency cleanup is now **runtime verified / accepted**.
+
+Verified/accepted changes:
+- `modules/accounting/fm_dashboard.php`: the final FM quick-action cards now use the same fixed-height/card treatment, including the previously missing top-border variants and complete descriptions.
+- `modules/hr/salary_advance_waiver_fm.php`: the FM salary-advance waiver page title/header now uses the FM blue-gradient header treatment consistently with the FM dashboard.
+
+Implementation commits:
+- `8d30f714e302c86c880e835bc5f3ce756189864d`
+- `894ec59a82ff11e78cc7788f282df32c630cb840`
+- `41d448abb9daa7d917ecedd324b81be7bf9077c0`
+- `40d4b3ad552ac0f9a77720cbd112f41bee015aa6`
+
+User runtime result: the FM UI is visually accepted. Do not reopen these UI issues absent a concrete regression.
