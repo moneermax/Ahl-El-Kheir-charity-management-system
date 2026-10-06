@@ -75,3 +75,41 @@ Salary-advance payroll integration remains downstream: attendance deduction redu
 The payroll UI displays **general deductions**, **attendance deduction**, and **salary-advance deduction** separately. Posted payrolls are immutable; attendance changes after payroll approval do not retroactively rewrite the posted payroll. Draft payrolls can be refreshed before approval.
 
 Migration: `database/migrations/2026-10-05_hr_attendance_payroll_integration.sql` adds `attendance_deduction` to payroll and `working_days` to attendance-policy versions. Runtime verification of the new cross-policy path is pending on the local XAMPP/MariaDB environment.
+
+
+## 2026-10-06 — Mandatory continuation checkpoint: GM Salary Advance Waiver
+
+Continue the existing GM Salary Advance Waiver work exactly from this checkpoint. Do not restart analysis or repeat already closed runtime gates.
+
+Closed gates — DO NOT RERUN WITHOUT REGRESSION EVIDENCE:
+- transaction-composable remaining-balance execution;
+- paid-deduction refund;
+- undistributed-request cancellation;
+- future-deduction blocking and draft refresh;
+- approved-unpaid payroll protection;
+- blanket scope/execution;
+- sequential duplicate execution protection;
+- post-commit FM preparation → GM notification;
+- post-commit GM approval → FM notification;
+- post-commit FM execution → approving GM notification;
+- post-commit FM execution → affected employee notification.
+
+Latest closed execution-notification evidence:
+php tools\\run_salary_advance_gm_waiver_execution_notification_rollback_tests.php
+PASS: decision 12, request SAR-2026-00004, GM notification 1, employee notification 1, waiver journal 124; cleanup PASS with zero test decisions/notifications/journals.
+
+OPEN — start here next:
+1. Notification failure isolation runtime. Inspect the actual ak_transaction_review_notify_event implementation and existing notification schema/test patterns first. Do not guess a failure mechanism. Create a controlled, rollback-safe test that causes notification delivery to fail and proves the waiver financial/business commit remains intact.
+2. Audit preservation runtime. Verify original disbursement, payroll repayment and accounting history are untouched, while waiver decision/item/schedule/audit records provide the required evidence.
+3. Final 1410 reconciliation. Reconcile the 1410 control balance after waiver execution against the remaining live salary-advance receivables.
+
+Evidence gaps to retain, not silently close:
+- Same-employee multiple eligible advances: current blanket fixture had none, so consolidated employee notification for that exact scenario is not runtime-proven.
+- True two-process concurrent commit: source row locking plus sequential duplicate protection are proven, but no dedicated two-process runtime test has been executed.
+
+Hard continuation rules:
+- Do not rerun any closed waiver harness just because the chat session changed.
+- Do not reopen Salary Advance Stages 1–6.
+- Do not reopen the unfinished attendance same-page POST scroll-jump issue.
+- Do not change the waiver production logic merely to make a failure-isolation test pass; first identify the real notification failure path and use the narrowest controlled test seam available.
+- After each newly closed gate, update the waiver continuation doc, master status, session index, and this continuation prompt before moving to the next gate.
