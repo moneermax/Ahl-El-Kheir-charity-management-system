@@ -75,7 +75,7 @@ require_once __DIR__.'/../../includes/header.php';
 <div class="container-fluid" style="max-width:1350px">
 <div class="salary-waiver-page-head">
 <h1>إعفاء سلف الرواتب — المدير المالي</h1>
-<p>FM يجهز القرار والحسابات، ثم يعتمد GM القرار، ثم يعود التنفيذ النهائي إلى FM.</p>
+<p>المدير المالي يجهز القرار والحسابات، ثم يعتمد المدير العام القرار، ثم يعود التنفيذ النهائي إلى المدير المالي.</p>
 </div>
 <?php if(!$tablesReady): ?><div class="alert alert-warning">ميزة الإعفاء لم تُفعّل في قاعدة البيانات بعد.</div><?php endif; ?>
 <?php if($message): ?><div class="alert alert-success"><?=e($message)?></div><?php endif; ?>
