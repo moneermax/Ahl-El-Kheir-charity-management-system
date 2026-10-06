@@ -2491,3 +2491,64 @@ Implementation commits:
 - `40d4b3ad552ac0f9a77720cbd112f41bee015aa6`
 
 User runtime result: the FM UI is visually accepted. Do not reopen these UI issues absent a concrete regression.
+
+## 2026-10-06 — Production-preparation database cleanup: RUNTIME VERIFIED / CLOSED
+
+The production-preparation script at `database/production/prepare_production_database.sql` has been corrected and runtime-verified against a disposable copy of the current live database.
+
+Implementation commit:
+`5f92a919ec64127428fda5e0adf8b5243ad8554f`
+
+The script preserves only the data explicitly protected by the original production-preparation contract:
+- users
+- employees
+- families
+- family children
+- sponsors
+- sponsorships
+- sponsorship children
+- sponsor-supervisor assignment history
+- supervisor letters
+- supervisor-letter assignment history
+- roles
+- departments
+- currencies
+- letters
+- medical needs
+- settings
+- accounts, except the original exact eight test account codes
+
+All other current base tables are treated as development/test data and are cleared. No tables are dropped and no physical storage files are deleted.
+
+### Disposable runtime verification
+
+A fresh dump of `ahl_el_kheir` was imported into disposable database `ahl_el_kheir_production_test`, then the corrected script was executed against that disposable database.
+
+Verified preserved counts:
+- users: 26
+- employees: 25
+- families: 2208
+- family_children: 4910
+- sponsors: 2858
+- sponsorships: 3560
+- sponsorship_children: 2965
+- sponsor_supervisor_assignments: 270
+- supervisor_letters: 56
+- supervisor_letter_assignment_history: 6
+- roles: 14
+- departments: 8
+- currencies: 4
+- letters: 29
+- medical_needs: 14
+- settings: 18
+- accounts: 38
+
+Verified cleanup:
+- all 83 non-preserved current tables returned zero rows;
+- original test accounts remaining: 0;
+- no SQL execution error or warning was reported.
+
+**Disposition: RUNTIME VERIFIED / CLOSED at the disposable-database acceptance boundary.**
+
+Do not rerun this destructive cleanup against the live production database as a verification step. The disposable database is the verified test target; live production execution is a separate deployment action.
+
