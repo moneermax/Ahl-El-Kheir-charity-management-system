@@ -2633,3 +2633,22 @@ Neither gap is a failure, but neither should be represented as runtime-proven.
 
 Do not rerun closed waiver tests absent concrete regression evidence. Do not reopen Salary Advance Stages 1–6. The unfinished attendance same-page POST scroll-jump issue remains out of scope.
 
+## 2026-10-06 — i18n cleanup: final runtime verification
+
+The English i18n cleanup is **RUNTIME VERIFIED / CLOSED** at the documented acceptance boundary.
+
+Static gate:
+`php tools\\i18n_gap.php`
+
+Result:
+`Files with gaps: 0 | Untranslated Arabic strings: 0`
+
+Runtime gate:
+The user tested the affected pages in English mode (`?lang=en`) covering attendance policy, payroll, payroll policy, salary-advance waiver FM/GM, accounting FM dashboard, HR dashboard and reports.
+
+Observed result:
+- all tested UI rendered in English;
+- page behavior remained normal;
+- no untranslated Arabic runtime defect was reported.
+
+Interpretation: the scanner establishes static translation coverage, and the user runtime test establishes the corresponding browser rendering/behavior for the affected pages. This item is closed unless a later source change introduces a regression.
