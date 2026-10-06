@@ -212,10 +212,25 @@ function hrSalaryAdvanceWaiverEligibleRows(PDO $pdo, string $effectiveMonth, ?in
             FROM hr_salary_advance_requests r
             JOIN employees e ON e.id = r.employee_id
             WHERE (
-                (r.status = 'disbursed' AND COALESCE(r.outstanding_balance, 0) > 0)
+                (
+                    r.status = 'disbursed'
+                    AND (
+                        COALESCE(r.outstanding_balance, 0) > 0
+                        OR COALESCE((
+                            SELECT SUM(pr.actual_amount)
+                            FROM hr_salary_advance_payroll_repayments pr
+                            JOIN payroll pp ON pp.id = pr.payroll_id
+                            WHERE pr.salary_advance_request_id = r.id
+                              AND pp.employee_id = r.employee_id
+                              AND pp.year = YEAR(?)
+                              AND pp.month = MONTH(?)
+                              AND pp.status = 'paid'
+                        ), 0) > 0
+                    )
+                )
                 OR (r.status IN ('submitted','fm_review','approved') AND r.closed_at IS NULL)
             )";
-    $params = [$effectiveMonth, $effectiveMonth];
+    $params = [$effectiveMonth, $effectiveMonth, $effectiveMonth, $effectiveMonth];
 
     if ($employeeId !== null) {
         $sql .= " AND r.employee_id = ?";
