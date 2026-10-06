@@ -492,6 +492,57 @@ function hrSalaryAdvanceWaiverExecute(
                 if (round((float)$item['outstanding_balance'], 2) !== round((float)$item['balance_before'], 2)) {
                     throw new RuntimeException('تغير رصيد إحدى السلف منذ إنشاء القرار؛ التنفيذ متوقف للمراجعة.');
                 }
+
+                // Lock and re-read the actual paid payroll repayment evidence
+                // captured when the decision was prepared. The request balance
+                // alone is not sufficient to prove that the approved refund
+                // amount is still valid.
+                $repaymentRows = dbFetchAll(
+                    "SELECT pr.id, pr.actual_amount, pr.payroll_id
+                     FROM hr_salary_advance_payroll_repayments pr
+                     JOIN payroll pp ON pp.id = pr.payroll_id
+                     WHERE pr.salary_advance_request_id = ?
+                       AND pp.employee_id = ?
+                       AND pp.year = YEAR(?)
+                       AND pp.month = MONTH(?)
+                       AND pp.status = 'paid'
+                     ORDER BY pr.id ASC
+                     FOR UPDATE",
+                    [
+                        (int)$item['salary_advance_request_id'],
+                        (int)$item['employee_id'],
+                        (string)$decision['effective_month'],
+                        (string)$decision['effective_month']
+                    ]
+                );
+
+                $liveRepaymentCount = count($repaymentRows);
+                $liveRepaymentTotal = 0.00;
+                foreach ($repaymentRows as $repaymentRow) {
+                    $liveRepaymentTotal = round(
+                        $liveRepaymentTotal + max(0.00, (float)$repaymentRow['actual_amount']),
+                        2
+                    );
+                }
+
+                $snapshotRepaymentTotal = round(
+                    max(0.00, (float)$item['current_period_repayment']),
+                    2
+                );
+
+                // A paid repayment exists when the approved snapshot is
+                // non-zero. A changed row count or total is a changed
+                // financial basis and must stop execution.
+                if (
+                    ($snapshotRepaymentTotal > 0.00 && $liveRepaymentCount === 0)
+                    || ($snapshotRepaymentTotal <= 0.00 && $liveRepaymentCount > 0)
+                ) {
+                    throw new RuntimeException('تغيرت سجلات سداد مسير الراتب منذ إعداد قرار الإعفاء؛ التنفيذ متوقف للمراجعة.');
+                }
+
+                if (abs($liveRepaymentTotal - $snapshotRepaymentTotal) > 0.009) {
+                    throw new RuntimeException('تغير مبلغ سداد مسير الراتب منذ إعداد قرار الإعفاء؛ التنفيذ متوقف للمراجعة.');
+                }
             } else {
                 if (!in_array($liveStatus, ['submitted','fm_review','approved'], true)) {
                     throw new RuntimeException('تغيرت حالة أحد طلبات السلف غير المصروفة منذ إنشاء القرار؛ التنفيذ متوقف للمراجعة.');
