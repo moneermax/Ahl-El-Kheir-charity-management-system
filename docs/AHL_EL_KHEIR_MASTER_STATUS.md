@@ -2420,3 +2420,32 @@ Exact next command:
 `php tools\\run_hr_attendance_payroll_integration_tests.php`
 
 If it fails, stop at the exact failure and inspect the root cause before changing anything else.
+
+## 2026-10-06 — Attendance ↔ Payroll integration: RUNTIME VERIFIED / CLOSED
+
+The Attendance Policy ↔ Payroll integration is now **RUNTIME VERIFIED / CLOSED** at the documented acceptance boundary.
+
+Runtime coverage includes:
+- working-day absence deduction;
+- approved paid leave with zero deduction;
+- approved unpaid leave using payroll policy treatment;
+- non-working-day absence with zero deduction;
+- missing attendance not inferred as absence;
+- draft attendance deduction and net-salary refresh;
+- payroll/attendance policy effective-date selection;
+- attendance deduction reducing the `net_before_advance` salary basis before salary-advance recovery;
+- final net salary subtracting attendance and salary-advance deductions;
+- paid payroll immutability;
+- rollback cleanup.
+
+Final extended gate:
+`php tools\\run_hr_attendance_payroll_extended_integration_tests.php`
+
+PASS:
+`policy_effective_dates=PASS | net_before_advance=PASS | employee=8 | request=SAR-2026-00007 | period=2026-10 | attendance_deduction=333.33 | salary_advance_deduction=9666.67 | net_salary=0 | paid_payroll_immutable=PASS | rollback=PASS`
+
+The existing CLI warning for `$_SERVER['REQUEST_METHOD']` in `config/functions.php:52` remains a non-blocking observation; no production change was made solely to suppress it.
+
+**Current status: CLOSED.**
+
+The same attendance scroll-jump issue remains unfinished/out of scope.
