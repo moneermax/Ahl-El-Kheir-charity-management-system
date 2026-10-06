@@ -124,3 +124,18 @@ The waiver implementation has been source-hardened and the local database migrat
 Known hardening commits include `b5e0bbd` (live paid-repayment revalidation), `2d035ae` (active linked employee notification targeting), `1a67312` (final paid deduction eligibility), and `7e63fd0` (GM page PHP syntax fix).
 
 The attendance same-page POST scroll-jump issue remains explicitly unfinished and out of scope.
+
+
+### 2026-10-06 — GM Salary Advance Waiver: latest continuation point
+
+The waiver-specific runtime matrix has progressed through committed execution notifications.
+
+Closed runtime gates: transaction-composable remaining-balance waiver; paid-deduction refund; undistributed cancellation; future-deduction blocking/draft refresh; approved-unpaid payroll protection; blanket scope/execution; sequential duplicate protection; post-commit preparation notification; post-commit GM approval notification; and post-commit full execution notifications to the approving GM and affected employee.
+
+Latest evidence:
+php tools\\run_salary_advance_gm_waiver_execution_notification_rollback_tests.php
+PASS — request SAR-2026-00004, decision 12, GM notification = 1, employee notification = 1, waiver journal = 124; cleanup PASS with zero test decisions/notifications/journals.
+
+Exact next task: notification failure-isolation runtime. Do not repeat any closed waiver test. After failure isolation, continue to audit preservation, then final 1410 reconciliation. Keep the same-employee multiple-advance scenario and true two-process concurrent execution as explicit evidence gaps unless separately proven.
+
+Salary Advance Stages 1–6 remain closed and must not be reopened without regression evidence. The attendance same-page POST scroll-jump issue remains unfinished and out of scope.
