@@ -37,6 +37,8 @@ Baseline: af111bdfbb3770ea5ac782bc2f54376cfb565709. Latest notification wiring: 
 ## 2026-10-06 Execution Hardening
 During the fresh source audit, execution was found to revalidate the live request balance but not explicitly re-read and lock the paid payroll repayment evidence used to calculate the approved refund. The execution path now locks the relevant paid repayment rows for each disbursed request, recalculates their actual paid amount for the effective month, and aborts atomically if the presence or total amount differs from the GM-approved snapshot. This does not modify historical payroll repayment rows.
 
+A notification-path audit also found that employee execution notifications were selected from the employee-linked user ID without requiring the linked user account to remain active. The execution notification query now joins `users` and requires `u.is_active = 1`; inactive/unlinked employee accounts remain financially/audit complete but do not receive an in-system notification, matching the documented requirement.
+
 ## Verification gate
 Before closure: syntax; migration; FM blanket/individual preparation; GM/FM notifications; approval/rejection; atomic execution; paid-deduction refund; remaining waiver; 1410 reconciliation; historical preservation; future-deduction blocking; draft refresh; approved-unpaid safety; undistributed cancellation; multiple advances; blanket/individual scope; duplicate/concurrency protection; rollback; final GM and employee notifications; consolidated employee notification; audit; notification failure isolation; final reconciliation. Prefer rollback-only/SAVEPOINT fixtures.
 
