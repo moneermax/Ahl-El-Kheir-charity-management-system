@@ -1,7 +1,7 @@
 # GM Salary Advance Waiver — Continuation Checkpoint
 
-Date: 2026-10-05
-Status: design agreed; implementation in progress; runtime verification pending.
+Date: 2026-10-06
+Status: implementation hardened; runtime verification pending.
 
 ## Requirement
 GM may decide, for any reason, to waive salary advances or submitted salary-withdrawal requests. A blanket decision includes previous loans. If a current payroll installment was already deducted and the remaining salary paid, that deducted amount must be refunded and the remaining covered advance balance must be waived. Example: 100,000 original, 60,000 previous repayments, 10,000 current deduction, 30,000 remaining => refund 10,000, waive 30,000, final 1410 balance zero. Historical disbursement and repayment records remain untouched.
@@ -34,6 +34,9 @@ Eight files only: database/migrations/2026-10-05_hr_salary_advance_waiver.sql; i
 Tables: hr_salary_advance_waiver_decisions, hr_salary_advance_waiver_items, hr_salary_advance_waiver_schedule_items.
 Baseline: af111bdfbb3770ea5ac782bc2f54376cfb565709. Latest notification wiring: 4415244444006e445912d231e8b59e80773b7857.
 
+## 2026-10-06 Execution Hardening
+During the fresh source audit, execution was found to revalidate the live request balance but not explicitly re-read and lock the paid payroll repayment evidence used to calculate the approved refund. The execution path now locks the relevant paid repayment rows for each disbursed request, recalculates their actual paid amount for the effective month, and aborts atomically if the presence or total amount differs from the GM-approved snapshot. This does not modify historical payroll repayment rows.
+
 ## Verification gate
 Before closure: syntax; migration; FM blanket/individual preparation; GM/FM notifications; approval/rejection; atomic execution; paid-deduction refund; remaining waiver; 1410 reconciliation; historical preservation; future-deduction blocking; draft refresh; approved-unpaid safety; undistributed cancellation; multiple advances; blanket/individual scope; duplicate/concurrency protection; rollback; final GM and employee notifications; consolidated employee notification; audit; notification failure isolation; final reconciliation. Prefer rollback-only/SAVEPOINT fixtures.
 
@@ -41,4 +44,4 @@ Before closure: syntax; migration; FM blanket/individual preparation; GM/FM noti
 The feature is file-isolated but has multiple commits. Do not claim one-commit rollback exists. Rollback must be non-destructive and must include database reversal planning if migration is applied.
 
 ## Next step
-Inspect current main and actual schema; apply the waiver migration locally; syntax-check; verify notification schema and employee-user linkage; then run the controlled verification matrix. Do not call complete merely because code exists.
+Pull the hardening commit to the local XAMPP checkout, verify the local migration/schema state, run PHP syntax checks, then execute the controlled verification matrix. Runtime completion remains unverified until the local tests pass.
