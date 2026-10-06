@@ -2366,3 +2366,32 @@ These are evidence gaps, not failures, and must not be silently relabeled as pro
 
 The attendance same-page POST scroll-jump issue remains unfinished and out of scope.
 
+## 2026-10-06 — English i18n cleanup: RUNTIME VERIFIED / CLOSED
+
+The i18n cleanup reached its acceptance boundary.
+
+### Static verification
+Command:
+`php tools\\i18n_gap.php`
+
+Result:
+`Files with gaps: 0 | Untranslated Arabic strings: 0`
+
+The scanner reports that every Arabic UI string in its scanned scope has an English compatibility translation.
+
+### Runtime verification
+The affected English-mode pages were opened and tested locally by the user using `?lang=en`, including:
+- HR Attendance Policy
+- HR Payroll
+- HR Payroll Policy
+- Salary Advance Waiver — FM
+- Salary Advance Waiver — GM
+- Accounting FM Dashboard
+- HR Dashboard
+- Reports Center
+
+Runtime result: **PASS**. The user confirmed that everything displayed in English and the pages behaved normally.
+
+This closes the current i18n cleanup item. Do not repeat the scan/runtime pass unless a concrete regression or newly introduced untranslated string is identified.
+
+The GM Salary Advance Waiver remains closed separately; its explicit evidence gaps are unchanged and are not reopened by this i18n checkpoint.
