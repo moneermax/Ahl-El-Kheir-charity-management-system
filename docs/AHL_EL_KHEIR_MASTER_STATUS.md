@@ -2210,3 +2210,18 @@ A rollback-safe-in-scope committed-fixture harness was added:
 It will runtime-test the real committed preparation and GM-approval notification paths and then remove only its own committed test rows. FM financial execution is deliberately not performed by this harness.
 
 **Runtime status: PENDING USER EXECUTION.**
+
+
+## 2026-10-06 — GM Salary Advance Waiver: Post-Commit Notification Gate Passed
+
+The dedicated committed-fixture notification harness passed locally on `main`:
+
+`php tools\\run_salary_advance_gm_waiver_post_commit_notification_tests.php`
+
+- PASS — FM preparation committed as `pending_gm` and produced the required active-GM notification.
+- PASS — GM approval committed as `approved_by_gm` and produced the required preparing-FM notification.
+- PASS — cleanup removed the test decision and test notifications.
+
+The harness intentionally stopped before FM financial execution, so no waiver/refund accounting mutation was introduced by this notification test. The live installation uses the legacy notification schema, and the harness verified the notifications against that actual schema.
+
+**Verification status:** the post-commit preparation and GM-approval notification gate is **RUNTIME VERIFIED / CLOSED**. GM Salary Advance Waiver as a whole remains open for execution-notification coverage/failure-isolation runtime evidence, audit preservation, final 1410 reconciliation, and the specific same-employee multiple-advance fixture.
