@@ -2464,3 +2464,24 @@ Implemented on `main`:
 Commits: `412301e82718dba9a96146b4b9b42c4298469619`, `c7ade0903bf3aefbeed2d0e272c91a889d19038c`, `9e2e781ba465fd0c3ab4bdd41f0ac4e52f1b5b84`.
 
 **Verification status:** code/repository review completed; local browser runtime verification is still required before marking the issue closed. Do not treat the change as runtime-verified until the attendance and representative same-page POST workflows are tested locally.
+
+
+## 2026-10-06 — GM Salary Advance Waiver Verification Evidence
+
+### Controlled payroll dependency test
+
+The existing Stage 5 rollback-only payroll integration harness was run locally on `main` with:
+`php tools\run_salary_advance_stage5_payroll_tests.php`
+
+Observed results:
+- **PASS — Payroll repayment application:** request `SAR-2026-00004`; temporary payroll ID 24; deduction 5,000 SDG; one repayment trace row; schedule status `paid`; outstanding balance 45,000 SDG; journal 116 balanced.
+- **PASS — Duplicate repayment protection:** the same request/payroll could not be applied twice.
+- **PASS — Rollback-only cleanup:** no payroll/request/schedule/journal mutation was committed.
+
+The test exercised the actual salary-advance payroll repayment/accounting path and therefore provides runtime evidence for the waiver's repayment dependency without consuming a real payroll period or changing permanent financial history.
+
+### Boundary
+
+The GM waiver feature remains **open for waiver-specific runtime verification**. Required remaining evidence includes FM preparation, GM approval/rejection, current-period paid-deduction refund, remaining-balance waiver, future deduction blocking, undistributed request cancellation, concurrency/duplicate execution safety, draft refresh, post-commit notifications, audit preservation and final 1410 reconciliation.
+
+No production payroll-generation change was made as a result of the earlier read-only October simulation or this rollback-only test.
