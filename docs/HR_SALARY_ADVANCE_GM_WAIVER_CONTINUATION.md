@@ -1,7 +1,7 @@
 # GM Salary Advance Waiver — Continuation Checkpoint
 
 Date: 2026-10-06
-Status: implementation hardened; runtime verification pending.
+Status: implementation hardened; payroll repayment dependency runtime verified; waiver-specific runtime verification pending.
 
 ## Requirement
 GM may decide, for any reason, to waive salary advances or submitted salary-withdrawal requests. A blanket decision includes previous loans. If a current payroll installment was already deducted and the remaining salary paid, that deducted amount must be refunded and the remaining covered advance balance must be waived. Example: 100,000 original, 60,000 previous repayments, 10,000 current deduction, 30,000 remaining => refund 10,000, waive 30,000, final 1410 balance zero. Historical disbursement and repayment records remain untouched.
@@ -45,5 +45,21 @@ Before closure: syntax; migration; FM blanket/individual preparation; GM/FM noti
 ## Rollback
 The feature is file-isolated but has multiple commits. Do not claim one-commit rollback exists. Rollback must be non-destructive and must include database reversal planning if migration is applied.
 
+
+
+## 2026-10-06 Payroll Repayment Dependency Runtime Verification
+
+The existing rollback-only Stage 5 payroll integration harness was executed locally on `main`:
+
+`php tools\run_salary_advance_stage5_payroll_tests.php`
+
+Results:
+- PASS — Payroll repayment application: `SAR-2026-00004`, temporary payroll ID 24, deduction 5,000 SDG, one repayment trace row, schedule status `paid`, outstanding balance 45,000 SDG, journal 116 balanced.
+- PASS — Duplicate repayment protection for the same request/payroll.
+- PASS — Rollback-only cleanup; no payroll/request/schedule/journal mutation was committed.
+
+This proves the actual payroll repayment/accounting dependency used by the waiver without committing test data. It does not prove the waiver execution itself.
+
 ## Next step
-Pull the hardening commit to the local XAMPP checkout, verify the local migration/schema state, run PHP syntax checks, then execute the controlled verification matrix. Runtime completion remains unverified until the local tests pass.
+Proceed to the waiver-specific controlled verification matrix. First inspect the current waiver source for an existing rollback-only/SAVEPOINT harness or other safe fixture mechanism. Then verify FM preparation, GM approval/rejection, current-period refund, remaining waiver, future-deduction blocking, undistributed-request cancellation, draft refresh, concurrency/duplicate protection, post-commit notifications, audit preservation and final 1410 reconciliation. Do not mark the waiver complete until these gates are evidenced locally.
+
