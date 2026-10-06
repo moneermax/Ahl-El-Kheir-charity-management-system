@@ -460,7 +460,7 @@
      */
     window.addEventListener('submit', function(event){
         const form = event.target;
-        if (!samePagePost(form)) return;
+        if (!samePagePost(form, event.submitter || null)) return;
         if (event.defaultPrevented) return;
         if (form.dataset.akSubmitting === '1') return;
 
