@@ -131,3 +131,25 @@ A narrow inert test-only delivery hook and dedicated harness are now on `main`:
 Runtime status: **PENDING USER EXECUTION**.
 
 Do not repeat any closed waiver harness. If the failure-isolation harness passes, proceed to audit-preservation runtime verification, then final 1410 reconciliation. Keep same-employee multiple-advance and true two-process concurrent execution as explicit open evidence gaps unless separately proven.
+
+## LATEST CHECKPOINT — 2026-10-06 — Notification Failure-Isolation PASSED
+
+The notification failure-isolation gate is closed.
+
+Runtime:
+`php tools\\run_salary_advance_gm_waiver_notification_failure_isolation_tests.php`
+
+PASS evidence:
+- `SAR-2026-00004`
+- decision `13`
+- delivery attempts `2`
+- injected failures `1`
+- status `executed`
+- outstanding `0`
+- waiver journal `125`
+- schedule overlays `10`
+- cleanup restored notifications/request and removed decision/journal residue.
+
+**NEXT:** audit preservation runtime verification.
+
+Do not repeat prior waiver tests. Before creating the audit-preservation harness, inspect the actual salary-advance request, repayment, payroll-accounting, journal and audit schemas and existing repository test patterns. Then build the narrowest real-fixture runtime verification and ask for the exact command. Keep multiple eligible advances for one employee and true two-process concurrency explicitly open unless separately proven.
