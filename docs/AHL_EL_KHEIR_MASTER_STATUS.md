@@ -2463,3 +2463,15 @@ Implementation commits:
 - `41d448abb9daa7d917ecedd324b81be7bf9077c0`
 
 Runtime browser verification is still required on the local XAMPP application. Do not mark the UI fixes runtime-verified until the user confirms the affected FM pages visually.
+
+## 2026-10-06 — System-wide same-page POST navigation policy: CLOSED
+
+The same-page POST viewport-jump defect has been **runtime verified and closed system-wide**.
+
+The authoritative mechanism is the global policy in `assets/js/app.js`: same-path POST forms are handled in place by default, with explicit opt-outs/exceptions for native navigation. The listener is registered in capture phase, and the response renderer preserves the current viewport while replacing the shared content region.
+
+Runtime evidence: the attendance POST workflow was tested after removing the attendance-specific `data-ak-same-page="1"` attribute, and the user confirmed that the page now remains in place. This proves the global policy rather than a page-specific workaround.
+
+Key commits: `af5fe03e3592972c61ec2821fa7ad0a7f4b7abfd`, `0a06fb57f687f4ac56c623251a7fa38d6dba083d`, `4496a8f6fb4d38a856483b25d856c640a81732ec`, `396576c6bc8d1f26af37a09e80c15909aac06e60`, `8389708b84a9853f164d3b73d6f810dbe4967ef5`.
+
+**Acceptance:** system-wide same-page POST behavior is CLOSED. Do not reopen without a concrete regression. The next task must come from the current canonical documentation and the user's new requirement.
