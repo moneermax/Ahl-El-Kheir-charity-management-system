@@ -201,3 +201,31 @@ Continuation rule:
 - Do not reopen Salary Advance Stages 1–6.
 - Do not reopen the unfinished attendance same-page POST scroll-jump issue unless explicitly requested.
 - Select the next task from the current canonical documentation and the user's next requirement.
+
+## 2026-10-06 — Attendance ↔ Payroll integration: current continuation point
+
+The next open task is the **Attendance Policy ↔ Payroll integration runtime verification**.
+
+A source-level audit found and corrected one concrete defect before runtime verification: `hrSalaryAdvancePayrollRefreshDraft()` did not subtract `attendance_deduction` when recomputing `net_salary`. The salary-advance eligibility calculator already treated attendance deduction correctly for `net_before_advance`, so the refresh path was inconsistent.
+
+Fix commit:
+`60adf7f4f428b1754f45b010c552ad93a2155323`
+
+Rollback-only runtime harness:
+`tools\\run_hr_attendance_payroll_integration_tests.php`
+
+Harness commit:
+`20c8f23e5fc239fd3b19f26ec4cd424c08dc9d34`
+
+**Runtime status: PENDING USER EXECUTION.**
+
+Exact next command:
+`php tools\\run_hr_attendance_payroll_integration_tests.php`
+
+Continuation rules:
+- Do not repeat closed GM Salary Advance Waiver tests.
+- Do not repeat closed i18n verification.
+- Do not reopen Salary Advance Stages 1–6.
+- Do not reopen the unfinished attendance same-page POST scroll-jump issue.
+- If the harness fails, inspect the exact failure/root cause before any further modification.
+- If it passes, document the evidence and then perform any remaining attendance/payroll runtime coverage required by the canonical acceptance boundary.
