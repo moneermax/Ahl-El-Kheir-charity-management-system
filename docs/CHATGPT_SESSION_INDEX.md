@@ -139,3 +139,21 @@ PASS — request SAR-2026-00004, decision 12, GM notification = 1, employee noti
 Exact next task: notification failure-isolation runtime. Do not repeat any closed waiver test. After failure isolation, continue to audit preservation, then final 1410 reconciliation. Keep the same-employee multiple-advance scenario and true two-process concurrent execution as explicit evidence gaps unless separately proven.
 
 Salary Advance Stages 1–6 remain closed and must not be reopened without regression evidence. The attendance same-page POST scroll-jump issue remains unfinished and out of scope.
+
+### 2026-10-06 — GM Salary Advance Waiver: notification failure-isolation gate prepared
+
+The current main branch now contains a narrow, inert test-only seam at `ak_transaction_review_notify_event()` and a dedicated runtime harness:
+`tools\\run_salary_advance_gm_waiver_notification_failure_isolation_tests.php`
+
+The seam was added only because source inspection found no existing deterministic notification-failure seam and the installed notification schema is legacy; no schema assumptions or runtime DDL were introduced.
+
+**Runtime status: PENDING USER EXECUTION.**
+
+Exact next command:
+`php tools\\run_salary_advance_gm_waiver_notification_failure_isolation_tests.php`
+
+Do not repeat any closed waiver tests. On PASS, continue to audit-preservation verification. On failure, stop at the exact failure and inspect the root cause.
+
+Open evidence gaps remain:
+- same employee with multiple eligible advances;
+- true two-process concurrent execution.
