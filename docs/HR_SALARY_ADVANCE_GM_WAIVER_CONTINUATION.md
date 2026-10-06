@@ -181,3 +181,14 @@ This runtime gate proves that an already executed waiver decision cannot be exec
 The source inspection already established the stronger concurrency mechanism: the waiver decision row is locked with `SELECT ... FOR UPDATE` before the `approved_by_gm` status check, so concurrent execution attempts on the same decision serialize at that row. The advisory accounting-number lock is not treated as the transaction duplicate guard.
 
 **Verification status:** sequential duplicate-execution protection is **RUNTIME VERIFIED / CLOSED**. True concurrent two-process execution remains a separate evidence item only if later required by the verification matrix.
+
+## 2026-10-06 — Post-commit notification verification prepared
+
+The next verification gate targets the required notification boundary. Source inspection confirms that preparation, GM review, and FM execution call their notification helpers only after the function-owned transaction commits; notification helpers also catch notification-delivery failures so they cannot roll back a completed business/financial action.
+
+A dedicated runtime harness was added:
+`tools\\run_salary_advance_gm_waiver_post_commit_notification_tests.php`
+
+The harness will exercise the real committed FM-preparation and GM-approval paths, verify that the corresponding GM/FM workflow notifications exist after commit, and explicitly clean up the committed test decision, items, audit rows, and test notifications without executing any financial waiver.
+
+**Runtime status: PENDING USER EXECUTION.**
