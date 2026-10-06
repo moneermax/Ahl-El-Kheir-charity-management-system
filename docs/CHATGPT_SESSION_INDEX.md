@@ -256,3 +256,39 @@ Exact next command:
 `php tools\\run_hr_attendance_payroll_integration_tests.php`
 
 Do not mark the attendance/payroll integration closed until this harness passes locally. Do not reopen completed salary-advance waiver tests, i18n verification, Salary Advance Stages 1–6, or the unfinished attendance scroll-jump issue.
+
+## 2026-10-06 — Attendance ↔ Payroll integration: RUNTIME VERIFIED / CLOSED
+
+The Attendance Policy ↔ Payroll integration has now completed its runtime acceptance gates on the user's local XAMPP/MariaDB environment.
+
+Previously verified core branches:
+- Working-day explicit absence deduction.
+- Approved paid leave = zero deduction.
+- Approved unpaid leave uses the payroll-policy percentage.
+- Non-working-day absence = zero deduction.
+- Missing attendance row = zero automatic deduction.
+- Draft payroll attendance deduction and net salary refresh.
+- Rollback-only cleanup.
+
+Final extended runtime gate:
+`php tools\\run_hr_attendance_payroll_extended_integration_tests.php`
+
+PASS evidence:
+- payroll policy effective-date selection: PASS
+- attendance policy effective-date selection: PASS
+- `net_before_advance` salary-advance interaction: PASS
+- employee: 8
+- salary-advance request: SAR-2026-00007
+- period: 2026-10
+- absence date: 2026-10-06
+- attendance deduction: 333.33
+- salary-advance deduction: 9666.67
+- final net salary: 0.00
+- paid payroll immutability: PASS
+- rollback: PASS
+
+Known observation: the CLI harness still emits the existing `$_SERVER['REQUEST_METHOD']` warning from `config/functions.php` line 52. This did not affect the test result and was not changed merely to suppress CLI output.
+
+**Disposition: Attendance ↔ Payroll integration is RUNTIME VERIFIED / CLOSED at the documented acceptance boundary.**
+
+Do not rerun these integration harnesses without concrete regression evidence. Do not reopen the GM Salary Advance Waiver, i18n cleanup, Salary Advance Stages 1–6, or the unfinished attendance same-page POST scroll-jump issue.
