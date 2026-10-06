@@ -157,3 +157,12 @@ Do not repeat any closed waiver tests. On PASS, continue to audit-preservation v
 Open evidence gaps remain:
 - same employee with multiple eligible advances;
 - true two-process concurrent execution.
+
+### 2026-10-06 — Notification failure-isolation gate CLOSED
+
+Runtime PASS:
+`php tools\\run_salary_advance_gm_waiver_notification_failure_isolation_tests.php`
+
+Evidence: `SAR-2026-00004`, decision `13`, two execution-notification delivery attempts, one injected failure, final status `executed`, outstanding `0`, waiver journal `125`, 10 schedule overlays, and clean restoration of test state.
+
+**Next exact engineering gate: audit preservation runtime verification.**
