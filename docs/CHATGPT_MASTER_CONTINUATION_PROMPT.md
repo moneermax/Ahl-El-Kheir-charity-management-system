@@ -255,3 +255,17 @@ The earlier core integration harness also passed all explicit absence/leave/non-
 Known non-blocking observation: CLI execution emits the existing `REQUEST_METHOD` warning from `config/functions.php:52`. Do not alter production code solely to silence it without a separate root-cause task.
 
 **Next continuation rule:** select the next task from the canonical documentation and the user's new requirement. Do not reopen closed waiver, i18n, Salary Advance Stages 1–6, or attendance/payroll verification without concrete regression evidence. The attendance same-page POST scroll-jump issue remains explicitly unfinished/out of scope.
+
+## 2026-10-06 — FM UI consistency cleanup
+
+A focused UI consistency pass corrected two visible inconsistencies in the FM dashboard quick-action section and the GM salary-advance waiver FM page.
+
+- `modules/accounting/fm_dashboard.php`: the final two quick-action cards — **إدارة الرواتب** and **منظمة فينا الخير** — now have the same fixed-height/card treatment as the other FM quick-action cards, including their missing top-border variants and complete descriptions.
+- `modules/hr/salary_advance_waiver_fm.php`: the top page title section now uses the same FM blue-gradient header treatment as the FM dashboard instead of the previous standalone white bordered card.
+
+Implementation commits:
+- `8d30f714e302c86c880e835bc5f3ce756189864d`
+- `894ec59a82ff11e78cc7788f282df32c630cb840`
+- `41d448abb9daa7d917ecedd324b81be7bf9077c0`
+
+Runtime browser verification is still required on the local XAMPP application. Do not mark the UI fixes runtime-verified until the user confirms the affected FM pages visually.
