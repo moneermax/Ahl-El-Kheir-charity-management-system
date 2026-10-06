@@ -63,8 +63,6 @@ $menus = [
 
     'financial_manager' => [
         ['active' => 'dashboard', 'label_key' => 'navigation.dashboard', 'icon' => 'fa-gauge-high', 'url' => 'modules/accounting/fm_dashboard.php'],
-        ['active' => 'journal', 'label_key' => 'navigation.journal', 'icon' => 'fa-book', 'url' => 'modules/accounting/journal.php'],
-        $vouchersItem,
         $openingBalanceItem,
         ['active' => 'disbursements', 'label_key' => 'navigation.monthly_transfers', 'icon' => 'fa-money-check-dollar', 'url' => 'modules/accounting/disbursements.php'],
         ['active' => 'my_nannies', 'label_key' => 'navigation.assigned_nannies', 'icon' => 'fa-user-nurse', 'url' => 'modules/accounting/my_nannies.php'],
