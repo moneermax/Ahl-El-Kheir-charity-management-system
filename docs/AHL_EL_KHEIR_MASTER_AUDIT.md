@@ -2547,3 +2547,22 @@ Implementation commits:
 The exact next gate is runtime execution of the new harness. If it passes, record the evidence and move to audit-preservation runtime verification. If it fails, stop and inspect the exact failure before any further change.
 
 Salary Advance Stages 1–6 remain closed. The same-employee multiple-advance and true two-process concurrency evidence gaps remain open.
+
+## 2026-10-06 — GM Salary Advance Waiver: Notification Failure-Isolation PASSED
+
+Runtime command:
+`php tools\\run_salary_advance_gm_waiver_notification_failure_isolation_tests.php`
+
+Result:
+- `PASS | Notification failure isolation | request=SAR-2026-00004 | decision_id=13 | delivery_attempts=2 | injected_failures=1 | status=executed | outstanding=0 | waiver_journal=125 | schedule_overlays=10`
+- `PASS | Notification failure-isolation cleanup | decision_rows=0 | journals=0 | notifications_restored=1 | request_restored=1`
+
+The test used the real FM-preparation -> GM-approval -> FM-execution path and injected one deterministic failure at the actual notification-delivery boundary. The financial/business execution remained committed, the subsequent notification attempt proceeded, and cleanup left no test residue.
+
+**Notification failure-isolation gate is CLOSED.**
+
+The next verification is audit preservation. No completed waiver gate is to be rerun without concrete regression evidence.
+
+Open evidence gaps remain:
+- same employee with multiple eligible advances;
+- true two-process concurrent execution.
