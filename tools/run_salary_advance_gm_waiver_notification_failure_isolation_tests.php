@@ -202,12 +202,29 @@ if (
 $decisionId = 0;
 $waiverJournalId = null;
 $refundJournalId = null;
-$createdNotificationIds = [];
 $beforeRequest = [
     'status' => $fixture['status'],
     'outstanding_balance' => $fixture['outstanding_balance'],
     'closed_at' => null,
 ];
+
+$gmPreparationTitle = 'قرار إعفاء سلف الرواتب بانتظار اعتمادك';
+$gmPreparationLink = APP_URL . 'modules/hr/salary_advance_waiver_gm.php';
+$fmApprovalTitle = 'اعتماد GM لقرار إعفاء سلف الرواتب';
+$fmApprovalLink = APP_URL . 'modules/hr/salary_advance_waiver_fm.php';
+
+$gmPreparationNotificationsBefore = notificationIdsForFailureIsolation(
+    $pdo,
+    $gmUserId,
+    $gmPreparationTitle,
+    $gmPreparationLink
+);
+$fmApprovalNotificationsBefore = notificationIdsForFailureIsolation(
+    $pdo,
+    $fmUserId,
+    $fmApprovalTitle,
+    $fmApprovalLink
+);
 
 $gmExecutionTitle = 'تم تنفيذ قرار إعفاء سلف الرواتب';
 $gmExecutionLink = APP_URL . 'modules/hr/salary_advance_waiver_gm.php';
@@ -445,64 +462,34 @@ try {
     // Remove only rows created by this committed test fixture.
     $pdo->beginTransaction();
 
-    $notificationTitleLinkPairs = [
-        [
-            'user_id' => $gmUserId,
-            'title' => 'قرار إعفاء سلف الرواتب بانتظار اعتمادك',
-            'link' => APP_URL . 'modules/hr/salary_advance_waiver_gm.php',
-        ],
-        [
-            'user_id' => $fmUserId,
-            'title' => 'اعتماد GM لقرار إعفاء سلف الرواتب',
-            'link' => APP_URL . 'modules/hr/salary_advance_waiver_fm.php',
-        ],
-    ];
-
-    foreach ($notificationTitleLinkPairs as $pair) {
-        $rows = dbFetchAll(
-            "SELECT id
-             FROM notifications
-             WHERE recipient_user_id = ?
-               AND title = ?
-               AND link = ?",
-            [
-                $pair['user_id'],
-                $pair['title'],
-                $pair['link']
-            ]
-        );
-
-        foreach ($rows as $row) {
-            $id = (int)$row['id'];
-            $createdNotificationIds[] = $id;
-        }
+    $postPreparationNotifications = notificationIdsForFailureIsolation(
+        $pdo,
+        $gmUserId,
+        $gmPreparationTitle,
+        $gmPreparationLink
+    );
+    foreach (array_diff(
+        $postPreparationNotifications,
+        $gmPreparationNotificationsBefore
+    ) as $id) {
+        $pdo->prepare(
+            "DELETE FROM notifications WHERE id = ?"
+        )->execute([(int)$id]);
     }
 
-    // Re-read the pre-test notification IDs from the current committed state
-    // is not sufficient for cleanup, so retain only IDs that were actually
-    // created after the first snapshot by comparing against the snapshots.
-    $protectedIds = array_merge(
-        notificationIdsForFailureIsolation(
-            $pdo,
-            $gmUserId,
-            'قرار إعفاء سلف الرواتب بانتظار اعتمادك',
-            APP_URL . 'modules/hr/salary_advance_waiver_gm.php'
-        ),
-        notificationIdsForFailureIsolation(
-            $pdo,
-            $fmUserId,
-            'اعتماد GM لقرار إعفاء سلف الرواتب',
-            APP_URL . 'modules/hr/salary_advance_waiver_fm.php'
-        )
+    $postApprovalNotifications = notificationIdsForFailureIsolation(
+        $pdo,
+        $fmUserId,
+        $fmApprovalTitle,
+        $fmApprovalLink
     );
-
-    // Determine the exact rows that were not present before this test.
-    foreach ($createdNotificationIds as $id) {
-        if (!in_array($id, $protectedIds, true)) {
-            $pdo->prepare(
-                "DELETE FROM notifications WHERE id = ?"
-            )->execute([$id]);
-        }
+    foreach (array_diff(
+        $postApprovalNotifications,
+        $fmApprovalNotificationsBefore
+    ) as $id) {
+        $pdo->prepare(
+            "DELETE FROM notifications WHERE id = ?"
+        )->execute([(int)$id]);
     }
 
     $pdo->prepare(
@@ -623,10 +610,40 @@ try {
     }
 
     // Best-effort cleanup for a failure before the normal cleanup block.
-    // Never delete anything unless this test created a concrete decision.
+    // Only remove notification rows that were absent from the pre-test snapshots.
     if ($decisionId > 0) {
         try {
             $pdo->beginTransaction();
+
+            $postPreparationNotifications = notificationIdsForFailureIsolation(
+                $pdo,
+                $gmUserId,
+                $gmPreparationTitle,
+                $gmPreparationLink
+            );
+            foreach (array_diff(
+                $postPreparationNotifications,
+                $gmPreparationNotificationsBefore
+            ) as $id) {
+                $pdo->prepare(
+                    "DELETE FROM notifications WHERE id = ?"
+                )->execute([(int)$id]);
+            }
+
+            $postApprovalNotifications = notificationIdsForFailureIsolation(
+                $pdo,
+                $fmUserId,
+                $fmApprovalTitle,
+                $fmApprovalLink
+            );
+            foreach (array_diff(
+                $postApprovalNotifications,
+                $fmApprovalNotificationsBefore
+            ) as $id) {
+                $pdo->prepare(
+                    "DELETE FROM notifications WHERE id = ?"
+                )->execute([(int)$id]);
+            }
 
             $pdo->prepare(
                 "DELETE FROM audit_log
