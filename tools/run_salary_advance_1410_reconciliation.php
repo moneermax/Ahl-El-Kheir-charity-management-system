@@ -13,6 +13,8 @@ declare(strict_types=1);
  * No schema/data mutation is performed.
  */
 
+$_SERVER['REQUEST_METHOD'] = $_SERVER['REQUEST_METHOD'] ?? 'CLI';
+
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/functions.php';
@@ -90,6 +92,7 @@ $expectedReferenceTypes = [
     'payroll',
     'salary_advance_waiver_refund',
     'salary_advance_waiver',
+    'salary_advance_direct_repayment',
 ];
 
 $unexpected = [];
@@ -110,6 +113,7 @@ $disbursementDebit = round((float)($components['salary_advance_disbursement']['d
 $payrollCredit = round((float)($components['payroll']['credit'] ?? 0), 2);
 $refundDebit = round((float)($components['salary_advance_waiver_refund']['debit'] ?? 0), 2);
 $waiverCredit = round((float)($components['salary_advance_waiver']['credit'] ?? 0), 2);
+$directRepaymentCredit = round((float)($components['salary_advance_direct_repayment']['credit'] ?? 0), 2);
 
 $disbursementOther = round(
     (float)($components['salary_advance_disbursement']['credit'] ?? 0),
@@ -127,9 +131,10 @@ $waiverOther = round(
     (float)($components['salary_advance_waiver']['debit'] ?? 0),
     2
 );
+$directRepaymentDebit = round((float)($components['salary_advance_direct_repayment']['debit'] ?? 0), 2);
 
 $expectedDebit = round($disbursementDebit + $refundDebit, 2);
-$expectedCredit = round($payrollCredit + $waiverCredit, 2);
+$expectedCredit = round($payrollCredit + $waiverCredit + $directRepaymentCredit, 2);
 $componentBalance = round($expectedDebit - $expectedCredit, 2);
 
 if ($unexpected) {
@@ -173,4 +178,4 @@ if (abs($componentBalance - $liveOutstanding) > 0.009) {
     exit(1);
 }
 
-echo "PASS | 1410 reconciliation | ledger_balance={$ledgerBalance} | live_outstanding={$liveOutstanding} | debit={$ledgerDebit} | credit={$ledgerCredit} | disbursement_debit={$disbursementDebit} | payroll_credit={$payrollCredit} | waiver_refund_debit={$refundDebit} | waiver_credit={$waiverCredit} | open_requests={$openRequestCount} | journals=" . (int)($ledger['journal_count'] ?? 0) . " | lines=" . (int)($ledger['line_count'] ?? 0) . "\n";
+echo "PASS | 1410 reconciliation | ledger_balance={$ledgerBalance} | live_outstanding={$liveOutstanding} | debit={$ledgerDebit} | credit={$ledgerCredit} | disbursement_debit={$disbursementDebit} | payroll_credit={$payrollCredit} | waiver_refund_debit={$refundDebit} | waiver_credit={$waiverCredit} | direct_repayment_credit={$directRepaymentCredit} | open_requests={$openRequestCount} | journals=" . (int)($ledger['journal_count'] ?? 0) . " | lines=" . (int)($ledger['line_count'] ?? 0) . "\n";
