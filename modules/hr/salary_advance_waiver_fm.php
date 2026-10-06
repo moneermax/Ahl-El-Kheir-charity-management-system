@@ -51,8 +51,18 @@ $pageTitle='إعفاء سلف الرواتب — التنفيذ المالي';$a
 require_once __DIR__.'/../../includes/header.php';
 ?>
 <style>
-.salary-waiver-page-head { background:#fff; color:#1b4d8f; border:1px solid #e3e8ef; border-radius:12px; padding:14px 18px; margin-bottom:16px; box-shadow:0 2px 8px rgba(10,31,68,.05); }
-.salary-waiver-page-head h1 { color:#1b4d8f; }
+.salary-waiver-page-head {
+    background: #fff;
+    color: #212529;
+    border: 1px solid #e3e8ef;
+    border-radius: 16px;
+    padding: 18px 22px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 15px rgba(0,0,0,.06);
+}
+.salary-waiver-page-head h1 {
+    color: #0a1f44;
+}
 </style>
 <div class="container-fluid" style="max-width:1350px">
 <div class="salary-waiver-page-head">
