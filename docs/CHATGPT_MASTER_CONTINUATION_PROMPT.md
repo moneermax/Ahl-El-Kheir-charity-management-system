@@ -315,3 +315,47 @@ Implementation commits:
 - `40d4b3ad552ac0f9a77720cbd112f41bee015aa6`
 
 User runtime result: the FM UI is visually accepted. Do not reopen these UI issues absent a concrete regression.
+
+## 2026-10-06 — Production-preparation database cleanup CLOSED
+
+The production-preparation database cleanup task is now **RUNTIME VERIFIED / CLOSED at the disposable-database acceptance boundary**.
+
+Corrected implementation commit:
+`5f92a919ec64127428fda5e0adf8b5243ad8554f`
+
+Final semantics:
+- preserve exactly the production data explicitly protected by the original script;
+- preserve accounts except the original eight exact test account codes;
+- clear every other current base table as development/test data;
+- do not drop tables;
+- do not delete physical storage files;
+- do not use runtime schema changes.
+
+Runtime evidence:
+- fresh live database dump imported into disposable `ahl_el_kheir_production_test`;
+- corrected script executed successfully;
+- users 26;
+- employees 25;
+- families 2208;
+- family_children 4910;
+- sponsors 2858;
+- sponsorships 3560;
+- sponsorship_children 2965;
+- sponsor-supervisor history 270;
+- supervisor letters 56;
+- supervisor-letter history 6;
+- roles 14;
+- departments 8;
+- currencies 4;
+- letters 29;
+- medical needs 14;
+- settings 18;
+- accounts 38;
+- all 83 cleanup tables = 0 rows;
+- original test accounts remaining = 0;
+- no SQL execution error or warning.
+
+**Continuation rule:** do not reopen or repeat this verification without a concrete regression or a change to the production-preparation contract. The next task should come from the current canonical documentation and the user's new requirement.
+
+The temporary test artifacts `database/production/current_test_database.sql` and `database/production/prepare_production_database_test.sql` must not be committed or uploaded to the repository. They are local disposable test artifacts and should be deleted after verification.
+
