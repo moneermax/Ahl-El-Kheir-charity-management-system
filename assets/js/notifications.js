@@ -355,7 +355,9 @@
 
     document.addEventListener('DOMContentLoaded', function () {
         convertTransientAlertsToToasts();
-        startTransientAlertObserver();\n\n        var flashNodes = document.querySelectorAll('[data-ak-flash]');
+        startTransientAlertObserver();
+
+        var flashNodes = document.querySelectorAll('[data-ak-flash]');
         restoreFlashScrollPosition(flashNodes.length > 0);
 
         document.querySelectorAll('form.js-supervisor-action').forEach(function (form) {
