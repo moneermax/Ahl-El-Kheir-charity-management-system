@@ -52,22 +52,30 @@ require_once __DIR__.'/../../includes/header.php';
 ?>
 <style>
 .salary-waiver-page-head {
-    background: #fff;
-    color: #212529;
-    border: 1px solid #e3e8ef;
-    border-radius: 16px;
-    padding: 18px 22px;
+    background: linear-gradient(135deg, #1b4d8f 0%, #2c5aa0 100%);
+    color: #fff;
+    padding: 16px 20px;
+    border-radius: 14px;
+    margin-top: -6px;
     margin-bottom: 16px;
-    box-shadow: 0 2px 15px rgba(0,0,0,.06);
 }
 .salary-waiver-page-head h1 {
-    color: #0a1f44;
+    color: #fff;
+    margin: 0;
+    font-size: 1.35rem;
+    line-height: 1.25;
+}
+.salary-waiver-page-head p {
+    margin: 4px 0 0;
+    opacity: .9;
+    font-size: .82rem;
+    line-height: 1.4;
 }
 </style>
 <div class="container-fluid" style="max-width:1350px">
 <div class="salary-waiver-page-head">
-<h1 class="h4 mb-1">إعفاء سلف الرواتب — المدير المالي</h1>
-<div class="text-muted small">FM يجهز القرار والحسابات، ثم يعتمد GM القرار، ثم يعود التنفيذ النهائي إلى FM.</div>
+<h1>إعفاء سلف الرواتب — المدير المالي</h1>
+<p>FM يجهز القرار والحسابات، ثم يعتمد GM القرار، ثم يعود التنفيذ النهائي إلى FM.</p>
 </div>
 <?php if(!$tablesReady): ?><div class="alert alert-warning">ميزة الإعفاء لم تُفعّل في قاعدة البيانات بعد.</div><?php endif; ?>
 <?php if($message): ?><div class="alert alert-success"><?=e($message)?></div><?php endif; ?>
