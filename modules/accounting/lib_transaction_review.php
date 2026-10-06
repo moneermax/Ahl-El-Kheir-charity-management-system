@@ -43,6 +43,14 @@ function ak_transaction_review_notify_event(int $userId, string $title, string $
     if ($userId <= 0 || trim($title) === '') return;
 
     try {
+        // Test-only seam: production has no hook unless a controlled test
+        // defines this function before loading the notification helper. A test
+        // can therefore force a delivery-layer Throwable without changing the
+        // real notification schema or manufacturing a schema failure.
+        if (function_exists('ak_notification_test_delivery_hook')) {
+            ak_notification_test_delivery_hook($userId, $title, $body, $link, $referenceId, $referenceType);
+        }
+
         // Newer notification schemas may have workflow reference columns.
         // If they are unavailable in an existing installation, fall back to
         // the long-standing notification columns so business notifications
