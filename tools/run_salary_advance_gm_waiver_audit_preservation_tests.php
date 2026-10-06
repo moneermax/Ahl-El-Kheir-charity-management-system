@@ -609,7 +609,6 @@ try {
     }
 
     echo "PASS | Audit preservation cleanup | request={$fixture['request_no']} | decision_rows=0 | historical_journals_restored=1 | temporary_payroll_rolled_back=1 | repayment_rolled_back=1 | schedules_restored=1 | audit_restored=1\n";
-}
 } catch (Throwable $e) {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();
