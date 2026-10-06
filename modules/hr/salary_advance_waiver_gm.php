@@ -78,7 +78,6 @@ $preview=dbFetchOne("SELECT COUNT(*) item_count, COALESCE(SUM(balance_before),0)
 <?php endforeach; if(!$pending): ?><div class="text-center text-muted py-3">لا توجد قرارات بانتظار اعتماد المدير العام.</div><?php endif; ?>
 </div></div><?php endif; ?>
 </tbody></table></div></div></div>
-<?php endif; ?>
 </div>
 <script>
 (function(){void 0;})();
