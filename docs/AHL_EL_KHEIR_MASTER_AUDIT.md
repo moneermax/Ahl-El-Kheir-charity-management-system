@@ -2757,3 +2757,47 @@ Implementation commits:
 - `40d4b3ad552ac0f9a77720cbd112f41bee015aa6`
 
 User runtime result: the FM UI is visually accepted. Do not reopen these UI issues absent a concrete regression.
+
+## 2026-10-06 — Production-preparation database cleanup: final audit disposition
+
+The production-preparation cleanup logic was audited against the current 101-table database and the original script's documented preservation contract.
+
+### Final semantics
+
+The script preserves:
+- users and employees;
+- families and family children;
+- sponsors, sponsorships and sponsorship children;
+- sponsor-supervisor assignment history;
+- supervisor letters and supervisor-letter assignment history;
+- roles, departments, currencies, letters, medical needs and settings;
+- accounts, except the original eight explicitly named development/test account codes.
+
+Every other current base table is treated as development/test data and cleared with `TRUNCATE TABLE`.
+
+The script does not drop tables, introduce runtime DDL, or delete physical files from `storage/`.
+
+### Runtime evidence
+
+Commit:
+`5f92a919ec64127428fda5e0adf8b5243ad8554f`
+
+Disposable database:
+`ahl_el_kheir_production_test`
+
+The test began from a fresh dump of the current live database and executed the corrected script against the disposable copy.
+
+Observed results:
+- preserved core and reference/configuration counts remained populated;
+- all 83 cleanup-table counts were zero;
+- original test-account remaining count was zero;
+- the SQL execution completed without an error or warning.
+
+The preserved-count evidence included users 26, employees 25, families 2208, family children 4910, sponsors 2858, sponsorships 3560, sponsorship children 2965, sponsor-supervisor history 270, supervisor letters 56, supervisor-letter history 6, roles 14, departments 8, currencies 4, letters 29, medical needs 14, settings 18, and accounts 38.
+
+### Audit conclusion
+
+**Production-preparation database cleanup is RUNTIME VERIFIED / CLOSED at the disposable-database acceptance boundary.**
+
+The test artifacts `database/production/current_test_database.sql` and `database/production/prepare_production_database_test.sql` are disposable verification artifacts and are not part of the repository deliverable. They must not be uploaded/committed.
+
