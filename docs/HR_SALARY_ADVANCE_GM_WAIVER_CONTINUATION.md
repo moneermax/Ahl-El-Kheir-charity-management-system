@@ -47,6 +47,21 @@ The feature is file-isolated but has multiple commits. Do not claim one-commit r
 
 
 
+## 2026-10-06 — Waiver-specific transaction-composable execution runtime verified
+
+The first waiver-specific rollback-only runtime gate was executed locally on `main` after the PDO statement-row-count correction.
+
+Command:
+`php tools\\run_salary_advance_gm_waiver_rollback_tests.php`
+
+Result:
+- **PASS — transaction-composable GM waiver execution:** `SAR-2026-00004`; rollback-only decision `2`; remaining balance waived = 50,000.00 SDG; current-period refund = 0.00; waiver journal = 117; 10 future schedule overlay rows created inside the test transaction.
+- **PASS — rollback-only cleanup:** decision rows = 0; waiver item rows = 0; schedule-overlay rows = 0 after rollback.
+
+This verifies the no-refund remaining-balance execution path, caller-owned transaction composability, waiver journal balancing, future schedule overlay creation, preservation of the disbursed request status, and complete rollback of the temporary decision/accounting/schedule mutations.
+
+This does **not** close the waiver feature. Refund, rejection, undistributed-request cancellation, draft refresh, approved-unpaid protection, blanket/multiple-advance scope, concurrency/duplicate protection, post-commit notifications, audit preservation and final reconciliation remain open.
+
 ## 2026-10-06 Payroll Repayment Dependency Runtime Verification
 
 The existing rollback-only Stage 5 payroll integration harness was executed locally on `main`:
