@@ -407,13 +407,14 @@ function hrSalaryAdvanceWaiverGMReview(PDO $pdo, int $decisionId, int $gmUserId,
         }
 
         $newStatus = $approve ? 'approved_by_gm' : 'rejected_by_gm';
-        $pdo->prepare(
+        $stmt = $pdo->prepare(
             "UPDATE hr_salary_advance_waiver_decisions
              SET status = ?, gm_approved_by = ?, gm_approved_at = NOW(), gm_rejection_reason = ?
              WHERE id = ? AND status = 'pending_gm'"
-        )->execute([$newStatus, $gmUserId, $approve ? null : trim($reason), $decisionId]);
+        );
+        $stmt->execute([$newStatus, $gmUserId, $approve ? null : trim($reason), $decisionId]);
 
-        if ($pdo->rowCount() !== 1) throw new RuntimeException('تعذر تسجيل مراجعة قرار الإعفاء.');
+        if ($stmt->rowCount() !== 1) throw new RuntimeException('تعذر تسجيل مراجعة قرار الإعفاء.');
 
         dbExecute(
             "INSERT INTO audit_log
@@ -635,15 +636,16 @@ function hrSalaryAdvanceWaiverExecute(
             $requestId = (int)$item['salary_advance_request_id'];
 
             if ((string)$item['previous_request_status'] !== 'disbursed') {
-                $pdo->prepare(
+                $stmt = $pdo->prepare(
                     "UPDATE hr_salary_advance_requests
                      SET status = 'cancelled', closed_at = NOW(), updated_at = NOW()
                      WHERE id = ?
                        AND status IN ('submitted','fm_review','approved')
                        AND closed_at IS NULL"
-                )->execute([$requestId]);
+                );
+                $stmt->execute([$requestId]);
 
-                if ($pdo->rowCount() !== 1) {
+                if ($stmt->rowCount() !== 1) {
                     throw new RuntimeException('تعذر إغلاق طلب السلفة غير المصروف ضمن قرار الإعفاء.');
                 }
 
@@ -819,13 +821,14 @@ function hrSalaryAdvanceWaiverExecute(
             );
         }
 
-        $pdo->prepare(
+        $stmt = $pdo->prepare(
             "UPDATE hr_salary_advance_waiver_decisions
              SET status = 'executed', prepared_by = COALESCE(prepared_by, ?), executed_at = NOW()
              WHERE id = ? AND status = 'approved_by_gm'"
-         )->execute([$fmUserId, $decisionId]);
+         );
+        $stmt->execute([$fmUserId, $decisionId]);
 
-        if ($pdo->rowCount() !== 1) throw new RuntimeException('تعذر إكمال قرار الإعفاء.');
+        if ($stmt->rowCount() !== 1) throw new RuntimeException('تعذر إكمال قرار الإعفاء.');
 
         dbExecute(
             "INSERT INTO audit_log
