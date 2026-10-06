@@ -127,3 +127,22 @@ Result:
 This closes the controlled future-deduction blocking + draft-refresh gate. It proves the waiver overlay is honored by the existing payroll eligibility calculation and that an existing draft payroll is refreshed after execution.
 
 This does **not** close the overall waiver feature. Remaining gates include approved-unpaid payroll protection, blanket/multiple-advance scope, concurrency/duplicate protection, post-commit notification behavior and failure isolation, audit preservation, and final 1410 reconciliation.
+
+
+## 2026-10-06 — Approved-unpaid payroll protection runtime verified
+
+The dedicated rollback-only harness was executed locally on `main`:
+
+`php tools\\run_salary_advance_gm_waiver_approved_unpaid_rollback_tests.php`
+
+Result:
+- **PASS — approved-unpaid payroll protection:** `SAR-2026-00004`; temporary payroll ID 24 was created as `approved` with a 5,000.00 SDG salary-advance deduction.
+- FM preparation and GM approval succeeded, leaving the waiver at `approved_by_gm`.
+- FM execution was correctly blocked because the approved, unpaid payroll still contained a positive salary-advance deduction.
+- The error explicitly required correction of the payroll before waiver execution and confirmed that no financial effect was made.
+- Request status/balance and payroll deduction/net salary remained unchanged; no waiver/refund journals were created.
+- **PASS — rollback-only cleanup:** temporary payroll ID 24 and all waiver decision/item/overlay/journal rows were removed.
+
+This closes the approved-unpaid payroll protection gate. The protection is now runtime verified as an explicit pre-financial-mutation block.
+
+Remaining gates: blanket/multiple-advance scope, concurrency/duplicate protection, post-commit notification behavior and failure isolation, audit preservation, and final 1410 reconciliation.
