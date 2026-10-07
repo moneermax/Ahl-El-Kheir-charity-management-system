@@ -99,3 +99,13 @@ The GM salary-advance waiver is an exceptional lifecycle extension, separate fro
 The real Stage 5 payroll repayment dependency has now passed the existing rollback-only local harness: payroll repayment application, schedule/outstanding update, balanced Cr 1410 accounting, duplicate protection, and rollback-only cleanup all passed for `SAR-2026-00004`. This is dependency verification only; the GM waiver itself remains open until its documented verification matrix passes.
 
 Canonical waiver reference: `HR_SALARY_ADVANCE_GM_WAIVER_CONTINUATION.md`.
+
+## 2026-10-06 — Production go-live onboarding guide
+
+Added the durable production onboarding reference:
+
+- `PRODUCTION_GO_LIVE_INITIAL_SETUP_AND_FIRST_LOGIN_GUIDE.md` — step-by-step production setup, role onboarding order, first-login checks, HR/attendance/payroll/accounting/Fina/salary-advance/project setup, pilot-user verification, and final go-live acceptance gate.
+
+The guide establishes the recommended first-user sequence: Developer/System Administrator for technical preparation, then **General Manager as the first normal organizational user**, followed by HR Manager and Financial Manager before wider operational onboarding.
+
+The guide is based on the current documented role/workflow model and the verified production-preparation database contract. It does not replace source/schema or module-specific workflow documentation.
