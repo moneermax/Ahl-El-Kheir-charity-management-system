@@ -318,6 +318,15 @@ function hrSalaryAdvanceFmValidateDecision(PDO $pdo, array $r, array $input): ar
     if (!in_array($method, ['fixed_monthly','full_eligible_salary','full_settlement','direct_repayment'], true)) {
         throw new InvalidArgumentException('طريقة السداد المعتمدة غير صالحة.');
     }
+    $approvedMethodAllowed = [
+        'fixed_monthly' => (int)($r['allow_fixed_monthly_repayment'] ?? 0),
+        'full_eligible_salary' => (int)($r['allow_full_eligible_salary_repayment'] ?? 0),
+        'full_settlement' => (int)($r['allow_full_settlement_from_salary'] ?? 0),
+        'direct_repayment' => (int)($r['allow_direct_repayment'] ?? 0),
+    ];
+    if (empty($approvedMethodAllowed[$method])) {
+        throw new InvalidArgumentException('طريقة السداد المعتمدة غير مسموحة في السياسة المرجعية لهذا الطلب.');
+    }
     if ($method === 'fixed_monthly') {
         if ($monthly === null || $monthly <= 0) throw new InvalidArgumentException('يجب تحديد القسط الشهري المعتمد.');
         if ($monthly > $amount) throw new InvalidArgumentException('القسط الشهري لا يمكن أن يتجاوز المبلغ المعتمد.');
