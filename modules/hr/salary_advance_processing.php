@@ -519,7 +519,7 @@ if ($request && str_starts_with($message, 'تم صرف السلفة وترحيل
 
 <div class="workflow-tab-panel <?= $workflowStep === 3 ? 'active' : '' ?>" data-workflow-panel="3">
 <div class="card"><div class="card-body">
-<form method="post">
+<form method="post" data-ak-native-post="1">
 <?=csrf_field()?>
 <input type="hidden" name="request_id" value="<?= (int)$request['id']?>">
 <div class="row g-3">
