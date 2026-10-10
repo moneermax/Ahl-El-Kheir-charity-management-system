@@ -257,6 +257,33 @@
             throw new Error('CONTENT_REGION_NOT_FOUND');
         }
 
+        /*
+         * A validation failure inside the salary-advance request modal does
+         * not change the request state. Update only that modal's body instead
+         * of replacing the entire .content fragment, which would destroy the
+         * open modal/backdrop and make it visibly close and reopen.
+         */
+        const incomingAdvanceModal = incoming.querySelector('#salaryAdvanceRequestModal');
+        const currentAdvanceModal = document.getElementById('salaryAdvanceRequestModal');
+        const incomingAdvanceError = incomingAdvanceModal &&
+            incomingAdvanceModal.querySelector('.modal-body .ak-workflow-toast.is-error');
+        const currentAdvanceBody = currentAdvanceModal &&
+            currentAdvanceModal.querySelector('.modal-body');
+        const incomingAdvanceBody = incomingAdvanceModal &&
+            incomingAdvanceModal.querySelector('.modal-body');
+
+        if (incomingAdvanceError && currentAdvanceBody && incomingAdvanceBody) {
+            const modalScrollTop = currentAdvanceBody.scrollTop;
+            currentAdvanceBody.replaceChildren(
+                ...Array.from(incomingAdvanceBody.childNodes).map(function(node){
+                    return document.importNode(node, true);
+                })
+            );
+            currentAdvanceBody.scrollTop = modalScrollTop;
+            runFragmentScripts(incoming);
+            return;
+        }
+
         /* Keep a response footer available if HTML parsing places it outside
          * the replaceable .content fragment. Some legacy shared layouts close
          * their wrappers in includes/footer.php, so the parsed DOM can differ
