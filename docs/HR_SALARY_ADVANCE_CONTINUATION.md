@@ -964,3 +964,17 @@ The modal is scrollable and uses the existing Bootstrap 5 bundle. Closing it ret
 
 **Verification boundary:** source change committed; PHP lint and local Apache/browser interaction still need to be checked in the user's environment. Verify opening a request, closing the modal, switching workflow tabs, and submitting an ordinary workflow action before treating the UI change as runtime-verified.
 
+
+
+## 2026-10-10 — Keep salary-advance validation feedback inside the modal
+
+The policy validation message was still rendered in the page-level feedback area, outside the selected request modal. This made a failed workflow submission display the old top-of-page alert even though the request itself was open in a modal.
+
+Committed on `main` as `d44dc7385901ee870d963662f2ab42e67ed8ceae`:
+- Request-scoped success and validation feedback now render at the top of the request modal body.
+- Both success and error feedback use the temporary toast treatment; validation errors use a red error style.
+- Toast positioning is scoped to the modal's scrollable body rather than fixed to the overall page viewport.
+- Page-level feedback remains only as a fallback when no request can be loaded.
+- No repayment policy, validation rule, accounting operation, or database behavior was changed.
+
+Source-level change reviewed. Local Apache/browser verification is still pending; the next check is to submit the existing invalid policy case and confirm the message appears temporarily inside the open modal, with the request queue remaining behind it.
