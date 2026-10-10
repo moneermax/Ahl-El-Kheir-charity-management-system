@@ -950,3 +950,17 @@ Changes committed on `main`:
 Static source checks confirmed the receipt tab/panel, schedule Stage 5, direct repayment Stage 6, approved-to-disbursement routing, missing-receipt routing, and initial active-panel scrolling. No request was disbursed or otherwise changed as part of these source edits.
 
 **Runtime gate remains open:** the local Apache application has not yet been exercised with these commits. Pull the latest `main`, then open request #20 without submitting any financial action: it should land on Stage 3 (disbursement). Do not disburse #20 merely to test this. The receipt stage should be verified after a real/test disbursement using a fresh request, followed by receipt upload and the automatic transition to the next stage.
+
+---
+
+# UI change — Salary advance processing modal
+
+**Date:** 2026-10-10  
+**Status:** Implemented on `main`; local browser verification pending.
+
+The request queue remains on `modules/hr/salary_advance_processing.php`. Selecting **فتح الطلب** loads that request and opens a Bootstrap modal containing the request details and all existing workflow sections (FM review, accounting verification, disbursement, payment receipt, repayment schedule, and direct repayment/history where applicable).
+
+The modal is scrollable and uses the existing Bootstrap 5 bundle. Closing it returns the user to the request queue. Existing form submissions, CSRF protection, permission checks, workflow calculations, and accounting/repayment operations are retained; the modal is presentation/navigation only. After a form submission, the page re-renders and reopens the selected request modal so the next action remains visible.
+
+**Verification boundary:** source change committed; PHP lint and local Apache/browser interaction still need to be checked in the user's environment. Verify opening a request, closing the modal, switching workflow tabs, and submitting an ordinary workflow action before treating the UI change as runtime-verified.
+
