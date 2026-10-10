@@ -578,7 +578,7 @@ if ($request && in_array((string)$request['status'], ['disbursed','settled'], tr
 </div>
 <?php endif; ?>
 
-<?php if($canAccounting): ?>
+<?php if($request && $canAccounting && in_array((string)$request['status'], ['disbursed','settled'], true)): ?>
 <div class="workflow-tab-panel <?= $workflowStep === 5 ? 'active' : '' ?>" data-workflow-panel="5">
 <div class="card"><div class="card-body">
 <h5>السداد المباشر</h5>
