@@ -347,7 +347,7 @@ function hrSalaryAdvanceAccountingDisburse(PDO $pdo, int $requestId, int $userId
         // Payroll-based methods receive a Stage 5 schedule at disbursement.
         // Direct repayment is settled outside payroll, so it intentionally has
         // no payroll schedule to generate.
-        if (in_array((string)$lockedRequest['approved_repayment_method'], ['fixed_monthly', 'full_eligible_salary', 'full_settlement'], true)) {
+        if (in_array((string)$lockedRequest['approved_repayment_method'], ['fixed_monthly', 'full_eligible_salary'], true)) {
             hrSalaryAdvanceScheduleGenerate($pdo, $requestId, $userId);
         }
 
