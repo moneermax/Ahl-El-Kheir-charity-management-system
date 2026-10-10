@@ -437,6 +437,25 @@
         }
 
         window.scrollTo({left: scrollX, top: scrollY, behavior: 'auto'});
+
+        /*
+         * Workflow approvals and disbursements change the active stage. Keeping
+         * the old viewport can leave the user looking at the previous form even
+         * though the request has advanced and its schedule has been generated.
+         * Move to the active panel only for explicit stage-advancing successes;
+         * ordinary edits continue to preserve their original scroll position.
+         */
+        const workflowAdvanced = current.querySelector('[data-ak-workflow-advance="1"]');
+        if (workflowAdvanced) {
+            const activeTab = current.querySelector('.workflow-tabs .nav-link.active');
+            const activeStep = activeTab && activeTab.getAttribute('data-workflow-tab');
+            const activePanel = activeStep
+                ? current.querySelector('[data-workflow-panel="' + CSS.escape(activeStep) + '"]')
+                : null;
+            if (activePanel) {
+                activePanel.scrollIntoView({left: 0, block: 'start', behavior: 'auto'});
+            }
+        }
         akTrace('renderResponse:after-scrollTo');
 
         /* Restore the root's original inline min-height after the final
