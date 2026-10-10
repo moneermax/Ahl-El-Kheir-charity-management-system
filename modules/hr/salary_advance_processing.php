@@ -370,7 +370,15 @@ if ($request && in_array((string)$request['status'], ['disbursed','settled'], tr
         ? 5
         : 4;
 } elseif ($request && (string)$request['status'] === 'approved') {
-    $workflowStep = (($request['accounting_status'] ?? '') === 'verified') ? 3 : 2;
+    /*
+     * Open the next actionable stage from the request's saved policy.
+     * When accounting verification is not required, the accounting
+     * information tab is informational only and the next action is disbursement.
+     * When it is required (or was rejected), keep the accounting checkpoint active.
+     */
+    $requiresAccountingVerification = (int)($request['require_accounting_verification'] ?? 0) === 1;
+    $accountingStatus = (string)($request['accounting_status'] ?? 'pending');
+    $workflowStep = $requiresAccountingVerification && $accountingStatus !== 'verified' ? 2 : 3;
 }
 ?>
 <ul class="nav nav-tabs workflow-tabs" role="tablist">
