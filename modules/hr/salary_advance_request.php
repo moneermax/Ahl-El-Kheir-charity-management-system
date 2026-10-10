@@ -95,12 +95,17 @@ require_once __DIR__ . '/../../includes/header.php';
 ?>
 <style>
 .salary-advance-request{max-width:1100px;margin:0 auto}.salary-advance-request .hero{background:linear-gradient(135deg,#173f73,#2d67ad);color:#fff;border-radius:14px;padding:22px 25px;margin-bottom:16px}.salary-advance-request .hero h1{font-size:1.35rem;font-weight:800;margin:0}.salary-advance-request .hero p{font-size:.74rem;margin:6px 0 0;opacity:.9}.salary-advance-request .card{background:#fff;border:1px solid #e5eaf0;border-radius:12px;box-shadow:0 2px 12px rgba(16,24,40,.05);margin-bottom:15px;overflow:hidden}.salary-advance-request .card-body{padding:16px}
+.salary-advance-request .ak-request-toast{position:fixed;top:90px;right:24px;z-index:1080;display:flex;align-items:center;gap:10px;min-width:320px;max-width:min(460px,calc(100vw - 32px));padding:13px 16px;border:1px solid #badbcc;border-radius:10px;background:#f0fff4;color:#146c43;box-shadow:0 8px 24px rgba(16,24,40,.14);font-weight:700;animation:akRequestToastIn .2s ease-out}
+.salary-advance-request .ak-request-toast.is-error{border-color:#f1aeb5;background:#fff5f5;color:#b02a37}
+.salary-advance-request .ak-request-toast .ak-request-toast-message{flex:1}
+@keyframes akRequestToastIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:576px){.salary-advance-request .ak-request-toast{left:16px;right:16px;top:76px;min-width:0;max-width:none}}
 </style>
 <div class="salary-advance-request">
 <section class="hero"><h1><i class="fas fa-hand-holding-dollar me-2"></i>طلب سلفة على الراتب</h1><p>تقديم طلب سلفة وفق السياسة العامة، مع الاحتفاظ بطلبك الأصلي كما قدمته.</p></section>
 
-<?php if($message): ?><div class="alert alert-success"><?=e($message)?></div><?php endif; ?>
-<?php if($error): ?><div class="alert alert-danger"><?=e($error)?></div><?php endif; ?>
+<?php if($message): ?><div class="ak-request-toast" role="status" aria-live="polite"><i class="fas fa-circle-check" aria-hidden="true"></i><span class="ak-request-toast-message"><?=e($message)?></span><button type="button" class="btn-close" data-dismiss-request-toast aria-label="إغلاق"></button></div><?php endif; ?>
+<?php if($error): ?><div class="ak-request-toast is-error" role="alert" aria-live="assertive"><i class="fas fa-circle-exclamation" aria-hidden="true"></i><span class="ak-request-toast-message"><?=e($error)?></span><button type="button" class="btn-close" data-dismiss-request-toast aria-label="إغلاق"></button></div><?php endif; ?>
 
 <?php if($employee): ?>
 <div class="card"><div class="card-body">
@@ -139,6 +144,11 @@ require_once __DIR__ . '/../../includes/header.php';
  const method=document.getElementById('repayment_method'), wrap=document.getElementById('monthly_amount_wrap');
  function sync(){ if(!method||!wrap)return; wrap.style.display=method.value==='fixed_monthly'?'block':'none'; }
  method?.addEventListener('change',sync); sync();
+ document.querySelectorAll('.ak-request-toast').forEach(function(toast){
+   const dismiss=function(){toast.style.transition='opacity .25s ease, transform .25s ease';toast.style.opacity='0';toast.style.transform='translateY(-8px)';window.setTimeout(function(){toast.remove();},260);};
+   toast.querySelector('[data-dismiss-request-toast]')?.addEventListener('click',dismiss);
+   window.setTimeout(dismiss,5000);
+ });
 })();
 </script>
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>
