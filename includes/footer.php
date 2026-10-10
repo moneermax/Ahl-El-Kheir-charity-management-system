@@ -547,5 +547,12 @@ document.addEventListener('DOMContentLoaded', function () {
     body.appendChild(wrapper);
 });
 </script>
+<script>
+/* Defensive guard: only one visible application footer should survive on a page. */
+(function(){
+    var footers=document.querySelectorAll('footer.app-footer');
+    footers.forEach(function(footer,index){if(index>0)footer.remove();});
+})();
+</script>
 </body>
 </html>
