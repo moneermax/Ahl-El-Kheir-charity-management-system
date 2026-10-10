@@ -322,13 +322,13 @@ require_once __DIR__ . '/../../includes/header.php';
 .salary-advance-process .match{border-right:4px solid #198754;background:#f3fbf6;padding:10px 12px;border-radius:8px}
 .salary-advance-process .stage-fm{color:#173f73;font-weight:700}
 .salary-advance-process .stage-accounting{color:#176b3a;font-weight:700}
-.salary-advance-process .ak-workflow-toast{
-    position:fixed;
-    top:90px;
-    right:24px;
-    z-index:1080;
-    min-width:320px;
-    max-width:460px;
+.salary-advance-process .modal-body .ak-workflow-toast{
+    position:sticky;
+    top:0;
+    z-index:2;
+    width:100%;
+    max-width:100%;
+    margin:0 0 16px;
     padding:13px 16px;
     border:1px solid #badbcc;
     border-radius:10px;
@@ -338,19 +338,16 @@ require_once __DIR__ . '/../../includes/header.php';
     font-weight:700;
     animation:akWorkflowToastIn .2s ease-out;
 }
+.salary-advance-process .modal-body .ak-workflow-toast.is-error{
+    border-color:#f1aeb5;
+    background:#fff1f2;
+    color:#b42318;
+}
 @keyframes akWorkflowToastIn{
     from{opacity:0;transform:translateY(-8px)}
     to{opacity:1;transform:translateY(0)}
 }
-@media (max-width:576px){
-    .salary-advance-process .ak-workflow-toast{
-        left:16px;
-        right:16px;
-        top:76px;
-        min-width:0;
-        max-width:none;
-    }
-}
+
 </style>
 
 <script>window.AK_PAGE_BACK_URL=<?php echo json_encode($salaryAdvanceBackUrl, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES); ?>;</script>
@@ -359,8 +356,8 @@ require_once __DIR__ . '/../../includes/header.php';
     <h1><i class="fas fa-hand-holding-dollar me-2"></i>معالجة سلف الرواتب</h1>
 </section>
 
-<?php if($message): ?><div class="ak-workflow-toast" data-ak-workflow-advance="<?= (str_starts_with($message, 'تم اعتماد طلب السلفة بنجاح.') || str_starts_with($message, 'تم صرف السلفة وترحيل القيد المحاسبي رقم') || str_starts_with($message, 'تم رفع إيصال الدفع بنجاح.')) ? '1' : '0' ?>" role="status" aria-live="polite"><i class="fas fa-circle-check me-2"></i><span><?=e($message)?></span></div><?php endif; ?>
-<?php if($error): ?><div class="alert alert-danger"><?=e($error)?></div><?php endif; ?>
+<?php if(!$request && $message): ?><div class="alert alert-success" role="status"><?=e($message)?></div><?php endif; ?>
+<?php if(!$request && $error): ?><div class="alert alert-danger" role="alert"><?=e($error)?></div><?php endif; ?>
 
 <?php
 $workflowStep = 1;
@@ -420,6 +417,9 @@ if ($request && str_starts_with($message, 'تم صرف السلفة وترحيل
 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
 </div>
 <div class="modal-body">
+
+<?php if($message): ?><div class="ak-workflow-toast" data-ak-workflow-advance="<?= (str_starts_with($message, 'تم اعتماد طلب السلفة بنجاح.') || str_starts_with($message, 'تم صرف السلفة وترحيل القيد المحاسبي رقم') || str_starts_with($message, 'تم رفع إيصال الدفع بنجاح.')) ? '1' : '0' ?>" role="status" aria-live="polite"><i class="fas fa-circle-check me-2"></i><span><?=e($message)?></span></div><?php endif; ?>
+<?php if($error): ?><div class="ak-workflow-toast is-error" role="alert" aria-live="assertive"><i class="fas fa-circle-exclamation me-2"></i><span><?=e($error)?></span></div><?php endif; ?>
 
 <?php if($request): ?>
 <div class="card"><div class="card-body">
