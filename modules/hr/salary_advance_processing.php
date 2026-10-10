@@ -714,10 +714,12 @@ if ($request && str_starts_with($message, 'تم صرف السلفة وترحيل
 </div>
 <script>
 (function(){
- const requestModal=document.getElementById("salaryAdvanceRequestModal");
- if(requestModal && window.bootstrap && window.bootstrap.Modal){
-   window.bootstrap.Modal.getOrCreateInstance(requestModal).show();
- }
+ document.addEventListener('DOMContentLoaded',function(){
+   const requestModal=document.getElementById("salaryAdvanceRequestModal");
+   if(requestModal && window.bootstrap && window.bootstrap.Modal){
+     window.bootstrap.Modal.getOrCreateInstance(requestModal).show();
+   }
+ });
  const toast=document.querySelector('.ak-workflow-toast');
  if(toast){
    window.setTimeout(function(){
