@@ -707,6 +707,9 @@ if ($request && str_starts_with($message, 'تم صرف السلفة وترحيل
 <?php endif; ?>
 
 </div>
+<?php endif; ?>
+</div>
+</div>
 </div>
 </div>
 <script>
