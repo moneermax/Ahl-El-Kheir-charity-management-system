@@ -114,8 +114,8 @@ function hrSalaryAdvanceScheduleGenerate(PDO $pdo, int $requestId, ?int $userId 
     }
 
     $method = (string)($request['approved_repayment_method'] ?? '');
-    if (!in_array($method, ['fixed_monthly', 'full_eligible_salary'], true)) {
-        throw new RuntimeException('طريقة السداد المعتمدة لا تدخل ضمن جدول سداد الرواتب في Stage 5.');
+    if (!in_array($method, ['fixed_monthly', 'full_eligible_salary', 'full_settlement'], true)) {
+        throw new RuntimeException('طريقة السداد المعتمدة لا تدخل ضمن جدول سداد الرواتب.');
     }
 
     $maximumDeduction = $request['maximum_monthly_deduction'] !== null
@@ -154,7 +154,7 @@ function hrSalaryAdvanceScheduleGenerate(PDO $pdo, int $requestId, ?int $userId 
             $installments[] = [$i, $month, $amount];
             $remaining = round($remaining - $amount, 2);
         }
-    } else {
+    } elseif ($method === 'full_eligible_salary') {
         // Full eligible salary is determined from the actual payroll period,
         // so the schedule stores the maximum permitted monthly amount rather
         // than guessing a salary value at disbursement time. A finite horizon
@@ -176,6 +176,15 @@ function hrSalaryAdvanceScheduleGenerate(PDO $pdo, int $requestId, ?int $userId 
         if ($remaining > 0.000001) {
             throw new RuntimeException('الحد الأقصى لأشهر السداد لا يغطي الرصيد وفق الحد الأقصى الشهري المسموح.');
         }
+    } else {
+        // "Full settlement from salary" is a single payroll installment.
+        // Respect the policy's monthly deduction ceiling; if the entire
+        // balance cannot be collected in one eligible payroll, fail before
+        // commit so the disbursement and journal are rolled back together.
+        if ($maximumDeduction !== null && $outstanding > $maximumDeduction + 0.000001) {
+            throw new RuntimeException('تسوية كامل الرصيد من الراتب تتجاوز الحد الأقصى للخصم الشهري في السياسة المرجعية.');
+        }
+        $installments[] = [1, $startMonth, $outstanding];
     }
 
     if (!$installments) {
