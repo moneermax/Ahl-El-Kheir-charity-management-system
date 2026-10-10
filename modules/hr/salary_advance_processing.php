@@ -360,7 +360,7 @@ require_once __DIR__ . '/../../includes/header.php';
     <p>مسار موحد لمعالجة الطلب من مراجعة FM، إلى التحقق المحاسبي، ثم الصرف وإنشاء جدول السداد — دون الانتقال بين صفحات معالجة مختلفة.</p>
 </section>
 
-<?php if($message): ?><div class="ak-workflow-toast" role="status" aria-live="polite"><i class="fas fa-circle-check me-2"></i><span><?=e($message)?></span></div><?php endif; ?>
+<?php if($message): ?><div class="ak-workflow-toast" data-ak-workflow-advance="<?= (str_starts_with($message, 'تم اعتماد طلب السلفة بنجاح.') || str_starts_with($message, 'تم صرف السلفة وترحيل القيد المحاسبي رقم')) ? '1' : '0' ?>" role="status" aria-live="polite"><i class="fas fa-circle-check me-2"></i><span><?=e($message)?></span></div><?php endif; ?>
 <?php if($error): ?><div class="alert alert-danger"><?=e($error)?></div><?php endif; ?>
 
 <?php
@@ -378,7 +378,7 @@ if ($request && in_array((string)$request['status'], ['disbursed','settled'], tr
      */
     $requiresAccountingVerification = (int)($request['require_accounting_verification'] ?? 0) === 1;
     $accountingStatus = (string)($request['accounting_status'] ?? 'pending');
-    $workflowStep = $requiresAccountingVerification && $accountingStatus !== 'verified' ? 2 : 3;
+    $workflowStep = ($accountingStatus === 'rejected' || ($requiresAccountingVerification && $accountingStatus !== 'verified')) ? 2 : 3;
 }
 ?>
 <ul class="nav nav-tabs workflow-tabs" role="tablist">
@@ -702,6 +702,8 @@ if ($request && in_array((string)$request['status'], ['disbursed','settled'], tr
      const target=this.getAttribute('data-workflow-tab');
      document.querySelectorAll('[data-workflow-tab]').forEach(function(t){t.classList.toggle('active',t===tab);});
      document.querySelectorAll('[data-workflow-panel]').forEach(function(panel){panel.classList.toggle('active',panel.getAttribute('data-workflow-panel')===target);});
+     const panel=document.querySelector('[data-workflow-panel="'+target+'"]');
+     if(panel) panel.scrollIntoView({behavior:'smooth',block:'start'});
    });
  });
  const c=document.getElementById('fm_customized');
