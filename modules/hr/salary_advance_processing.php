@@ -412,6 +412,16 @@ if ($request && str_starts_with($message, 'تم صرف السلفة وترحيل
 </div></div>
 
 <?php if($request): ?>
+<div class="modal fade" id="salaryAdvanceRequestModal" tabindex="-1" aria-labelledby="salaryAdvanceRequestModalLabel" aria-hidden="true">
+<div class="modal-dialog modal-xl modal-dialog-scrollable modal-fullscreen-lg-down">
+<div class="modal-content">
+<div class="modal-header">
+<h5 class="modal-title" id="salaryAdvanceRequestModalLabel">معالجة طلب السلفة <?=e($request['request_no'])?></h5>
+<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
+</div>
+<div class="modal-body">
+
+<?php if($request): ?>
 <div class="card"><div class="card-body">
 <h5>تفاصيل الطلب <?=e($request['request_no'])?></h5>
 <div class="row g-3 mt-1">
@@ -697,8 +707,14 @@ if ($request && str_starts_with($message, 'تم صرف السلفة وترحيل
 <?php endif; ?>
 
 </div>
+</div>
+</div>
 <script>
 (function(){
+ const requestModal=document.getElementById("salaryAdvanceRequestModal");
+ if(requestModal && window.bootstrap && window.bootstrap.Modal){
+   window.bootstrap.Modal.getOrCreateInstance(requestModal).show();
+ }
  const toast=document.querySelector('.ak-workflow-toast');
  if(toast){
    window.setTimeout(function(){
@@ -717,14 +733,6 @@ if ($request && str_starts_with($message, 'تم صرف السلفة وترحيل
      if(tabs) tabs.scrollIntoView({behavior:'smooth',block:'start'});
    });
  });
- if(<?= ($_SERVER['REQUEST_METHOD'] === 'GET' && $request) ? 'true' : 'false' ?>){
-   const workflowTabs=document.querySelector('.workflow-tabs');
-   if(workflowTabs){
-     window.requestAnimationFrame(function(){
-       workflowTabs.scrollIntoView({left:0,block:'start',behavior:'auto'});
-     });
-   }
- }
  const c=document.getElementById('fm_customized');
  const method=document.querySelector('[name="approved_repayment_method"]');
  const fields=['approved_amount','approved_repayment_method','approved_monthly_amount','approved_start_month','fm_customization_reason'];
