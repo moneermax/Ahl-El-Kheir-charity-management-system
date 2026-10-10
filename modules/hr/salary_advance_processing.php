@@ -721,11 +721,13 @@ if ($request && in_array((string)$request['status'], ['disbursed','settled'], tr
      if(panel) panel.scrollIntoView({behavior:'smooth',block:'start'});
    });
  });
- const initialActivePanel=document.querySelector('.workflow-tab-panel.active');
- if(initialActivePanel){
-   window.requestAnimationFrame(function(){
-     initialActivePanel.scrollIntoView({left:0,block:'start',behavior:'auto'});
-   });
+ if(<?= ($_SERVER['REQUEST_METHOD'] === 'GET' && $request) ? 'true' : 'false' ?>){
+   const initialActivePanel=document.querySelector('.workflow-tab-panel.active');
+   if(initialActivePanel){
+     window.requestAnimationFrame(function(){
+       initialActivePanel.scrollIntoView({left:0,block:'start',behavior:'auto'});
+     });
+   }
  }
  const c=document.getElementById('fm_customized');
  const method=document.querySelector('[name="approved_repayment_method"]');
