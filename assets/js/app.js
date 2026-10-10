@@ -10,6 +10,15 @@
  * current viewport. Cross-page redirects remain normal navigations.
  */
 (function(){
+    function akEnsureSingleAppFooter(){
+        const footers=document.querySelectorAll('footer.app-footer');
+        footers.forEach(function(footer,index){if(index>0) footer.remove();});
+    }
+    if(document.readyState==='loading'){
+        document.addEventListener('DOMContentLoaded',akEnsureSingleAppFooter,{once:true});
+    } else {
+        akEnsureSingleAppFooter();
+    }
     const AK_SCROLL_TRACE = window.location.hash.includes('ak-scroll-trace');
     const akTrace = (label, extra) => {
         if (!AK_SCROLL_TRACE) return;
@@ -370,6 +379,7 @@
          * a rendering opportunity in between.
          */
         await Promise.resolve();
+        akEnsureSingleAppFooter();
         akTrace('renderResponse:after-fragment-microtasks');
 
         akTrace('renderResponse:before-focus-restore');
