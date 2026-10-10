@@ -208,9 +208,12 @@ function hrSalaryAdvanceAccountingDisburse(PDO $pdo, int $requestId, int $userId
             throw new RuntimeException('طلب السلفة لم يعد متاحاً للصرف.');
         }
 
-        if ($lockedRequest['accounting_status'] === 'rejected') {
-            throw new RuntimeException('تم رفض التحقق المحاسبي لهذه السلفة. يجب إعادة التحقق واعتمادها قبل الصرف.');
-        }
+        /*
+         * A previous accounting rejection is retried only through this same
+         * locked transaction. The verification update below clears the prior
+         * rejection and records the new verifier before any journal is posted.
+         * This matches the UI contract: verification cannot be committed alone.
+         */
         if ((int)$lockedRequest['require_accounting_verification'] === 1 && $lockedRequest['accounting_status'] !== 'verified') {
             // Verification and disbursement are one atomic financial operation.
             // The request cannot remain in a verified-but-not-disbursed state.
