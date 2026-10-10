@@ -380,14 +380,11 @@ if ($request && in_array((string)$request['status'], ['disbursed','settled'], tr
     }
 } elseif ($request && (string)$request['status'] === 'approved') {
     /*
-     * Open the next actionable stage from the request's saved policy.
-     * When accounting verification is not required, the accounting
-     * information tab is informational only and the next action is disbursement.
-     * When it is required (or was rejected), keep the accounting checkpoint active.
+     * Accounting verification is committed atomically with disbursement.
+     * The accounting tab is informational; disbursement is the next action,
+     * including retry after an accounting rejection.
      */
-    $requiresAccountingVerification = (int)($request['require_accounting_verification'] ?? 0) === 1;
-    $accountingStatus = (string)($request['accounting_status'] ?? 'pending');
-    $workflowStep = ($accountingStatus === 'rejected' || ($requiresAccountingVerification && $accountingStatus !== 'verified')) ? 2 : 3;
+    $workflowStep = 3;
 }
 ?>
 <ul class="nav nav-tabs workflow-tabs" role="tablist">
@@ -586,7 +583,7 @@ if ($request && in_array((string)$request['status'], ['disbursed','settled'], tr
 
 </div>
 
-<div class="workflow-tab-panel <?= $workflowStep === 6 ? 'active' : '' ?>" data-workflow-panel="6">
+<div class="workflow-tab-panel <?= $workflowStep === 5 ? 'active' : '' ?>" data-workflow-panel="5">
 <div class="card"><div class="card-body">
 <h5>جدول السداد</h5>
 <?php if(($request['approved_repayment_method'] ?? '') === 'direct_repayment'): ?>
@@ -606,7 +603,7 @@ if ($request && in_array((string)$request['status'], ['disbursed','settled'], tr
 <?php endif; ?>
 
 <?php if($request && $canAccounting && in_array((string)$request['status'], ['disbursed','settled'], true)): ?>
-<div class="workflow-tab-panel <?= $workflowStep === 5 ? 'active' : '' ?>" data-workflow-panel="5">
+<div class="workflow-tab-panel <?= $workflowStep === 6 ? 'active' : '' ?>" data-workflow-panel="6">
 <div class="card"><div class="card-body">
 <h5>السداد المباشر</h5>
 <?php if((int)($request['allow_direct_repayment'] ?? 0) !== 1): ?>
