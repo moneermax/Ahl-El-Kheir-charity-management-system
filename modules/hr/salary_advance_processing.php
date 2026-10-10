@@ -357,7 +357,6 @@ require_once __DIR__ . '/../../includes/header.php';
 <div class="salary-advance-process">
 <section class="hero">
     <h1><i class="fas fa-hand-holding-dollar me-2"></i>معالجة سلف الرواتب</h1>
-    <p>مسار موحد لمعالجة الطلب من مراجعة FM، إلى التحقق المحاسبي، ثم الصرف وإنشاء جدول السداد — دون الانتقال بين صفحات معالجة مختلفة.</p>
 </section>
 
 <?php if($message): ?><div class="ak-workflow-toast" data-ak-workflow-advance="<?= (str_starts_with($message, 'تم اعتماد طلب السلفة بنجاح.') || str_starts_with($message, 'تم صرف السلفة وترحيل القيد المحاسبي رقم') || str_starts_with($message, 'تم رفع إيصال الدفع بنجاح.')) ? '1' : '0' ?>" role="status" aria-live="polite"><i class="fas fa-circle-check me-2"></i><span><?=e($message)?></span></div><?php endif; ?>
@@ -492,10 +491,6 @@ if ($request && in_array((string)$request['status'], ['disbursed','settled'], tr
 <?php if($canAccounting && $request['status']==='approved'): ?>
 <div class="workflow-tab-panel <?= $workflowStep === 2 ? 'active' : '' ?>" data-workflow-panel="2">
 <div class="card"><div class="card-body">
-<div class="alert alert-info">
-الحساب المستهدف للسلفة: <strong>1410 — ذمم سلف الموظفين</strong>.
-لا يتم استخدام حساب مصروف. الصرف ينشئ ذمة على الموظف مقابل خفض حساب الصندوق/البنك/المحفظة.
-</div>
 <div class="row g-3">
 <div class="col-md-4"><strong>المبلغ المعتمد:</strong><br><?=number_format((float)$request['approved_amount'],2)?> SDG</div>
 <div class="col-md-4"><strong>طريقة السداد:</strong><br><?=e(['fixed_monthly'=>'قسط شهري ثابت','full_eligible_salary'=>'كامل الراتب المؤهل','full_settlement'=>'تسوية كاملة','direct_repayment'=>'سداد مباشر'][$request['approved_repayment_method']]??$request['approved_repayment_method'])?></div>
@@ -507,9 +502,6 @@ if ($request && in_array((string)$request['status'], ['disbursed','settled'], tr
 
 <hr>
 <?php if($request['accounting_status']!=='verified'): ?>
-<div class="alert alert-info">
-    لا يوجد اعتماد محاسبي منفصل. عند اختيار «صرف وترحيل» سيتم اعتماد التحقق المحاسبي وترحيل قيد الصرف داخل عملية محاسبية واحدة؛ لذلك لا يمكن ترك الطلب في حالة «تم التحقق» دون صرف.
-</div>
 <form method="post">
 <?=csrf_field()?>
 <input type="hidden" name="request_id" value="<?= (int)$request['id']?>">
@@ -524,9 +516,6 @@ if ($request && in_array((string)$request['status'], ['disbursed','settled'], tr
 
 <div class="workflow-tab-panel <?= $workflowStep === 3 ? 'active' : '' ?>" data-workflow-panel="3">
 <div class="card"><div class="card-body">
-<div class="alert alert-info mb-3">
-    التحقق المحاسبي والصرف يتمان معاً داخل معاملة واحدة. عند نجاح هذه العملية لا يمكن أن يبقى الطلب في حالة «تم التحقق» دون أن يصبح «تم الصرف».
-</div>
 <form method="post">
 <?=csrf_field()?>
 <input type="hidden" name="request_id" value="<?= (int)$request['id']?>">
