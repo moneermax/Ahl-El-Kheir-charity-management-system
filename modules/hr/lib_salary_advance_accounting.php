@@ -214,7 +214,8 @@ function hrSalaryAdvanceAccountingDisburse(PDO $pdo, int $requestId, int $userId
          * rejection and records the new verifier before any journal is posted.
          * This matches the UI contract: verification cannot be committed alone.
          */
-        if ((int)$lockedRequest['require_accounting_verification'] === 1 && $lockedRequest['accounting_status'] !== 'verified') {
+        if ($lockedRequest['accounting_status'] !== 'verified' &&
+            ((int)$lockedRequest['require_accounting_verification'] === 1 || $lockedRequest['accounting_status'] === 'rejected')) {
             // Verification and disbursement are one atomic financial operation.
             // The request cannot remain in a verified-but-not-disbursed state.
             dbExecute(
