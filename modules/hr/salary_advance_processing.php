@@ -385,6 +385,9 @@ if ($request && in_array((string)$request['status'], ['disbursed','settled'], tr
      */
     $workflowStep = 3;
 }
+if ($request && str_starts_with($message, 'تم صرف السلفة وترحيل القيد المحاسبي رقم')) {
+    $workflowStep = 4;
+}
 ?>
 
 
@@ -549,6 +552,28 @@ if ($request && in_array((string)$request['status'], ['disbursed','settled'], tr
 
 </div>
 
+
+
+<div class="workflow-tab-panel <?= $workflowStep === 5 ? 'active' : '' ?>" data-workflow-panel="5">
+<div class="card"><div class="card-body">
+<h5>جدول السداد</h5>
+<?php if(($request['approved_repayment_method'] ?? '') === 'direct_repayment'): ?>
+<div class="alert alert-info mb-0">هذه السلفة معتمدة على السداد المباشر، لذلك لا يتم إنشاء جدول سداد للرواتب.</div>
+<?php elseif(!$repaymentSchedule): ?>
+<div class="alert alert-warning mb-0">لم يتم إنشاء جدول سداد لهذه السلفة.</div>
+<?php else: ?>
+<div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr><th>القسط</th><th>شهر السداد</th><th>المبلغ المجدول</th><th>المبلغ المطبق</th><th>الحالة</th></tr></thead><tbody>
+<?php foreach($repaymentSchedule as $installment): ?>
+<?php $scheduleBadge=['pending'=>['معلق','secondary'],'partial'=>['جزئي','warning'],'paid'=>['مسدد','success'],'skipped'=>['متجاوز','danger']][$installment['status']]??[$installment['status'],'secondary']; ?>
+<tr><td><?= (int)$installment['installment_no']?></td><td><?=e($installment['scheduled_month'])?></td><td><?=number_format((float)$installment['scheduled_amount'],2)?> SDG</td><td><?=number_format((float)($installment['applied_amount']??0),2)?> SDG</td><td><span class="badge bg-<?=e($scheduleBadge[1])?>"><?=e($scheduleBadge[0])?></span></td></tr>
+<?php endforeach; ?>
+</tbody></table></div>
+<?php endif; ?>
+</div></div>
+</div>
+<?php endif; ?>
+
+<?php if($request && $canAccounting && in_array((string)$request['status'], ['disbursed','settled'], true)): ?>
 <div class="workflow-tab-panel <?= $workflowStep === 4 ? 'active' : '' ?>" data-workflow-panel="4">
 <?php if($canAccounting): ?>
 <div class="card"><div class="card-body">
@@ -575,25 +600,6 @@ if ($request && in_array((string)$request['status'], ['disbursed','settled'], tr
 <?php endif; ?>
 
 </div>
-
-<div class="workflow-tab-panel <?= $workflowStep === 5 ? 'active' : '' ?>" data-workflow-panel="5">
-<div class="card"><div class="card-body">
-<h5>جدول السداد</h5>
-<?php if(($request['approved_repayment_method'] ?? '') === 'direct_repayment'): ?>
-<div class="alert alert-info mb-0">هذه السلفة معتمدة على السداد المباشر، لذلك لا يتم إنشاء جدول سداد للرواتب.</div>
-<?php elseif(!$repaymentSchedule): ?>
-<div class="alert alert-warning mb-0">لم يتم إنشاء جدول سداد لهذه السلفة.</div>
-<?php else: ?>
-<div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr><th>القسط</th><th>شهر السداد</th><th>المبلغ المجدول</th><th>المبلغ المطبق</th><th>الحالة</th></tr></thead><tbody>
-<?php foreach($repaymentSchedule as $installment): ?>
-<?php $scheduleBadge=['pending'=>['معلق','secondary'],'partial'=>['جزئي','warning'],'paid'=>['مسدد','success'],'skipped'=>['متجاوز','danger']][$installment['status']]??[$installment['status'],'secondary']; ?>
-<tr><td><?= (int)$installment['installment_no']?></td><td><?=e($installment['scheduled_month'])?></td><td><?=number_format((float)$installment['scheduled_amount'],2)?> SDG</td><td><?=number_format((float)($installment['applied_amount']??0),2)?> SDG</td><td><span class="badge bg-<?=e($scheduleBadge[1])?>"><?=e($scheduleBadge[0])?></span></td></tr>
-<?php endforeach; ?>
-</tbody></table></div>
-<?php endif; ?>
-</div></div>
-</div>
-<?php endif; ?>
 
 <?php if($request && $canAccounting && in_array((string)$request['status'], ['disbursed','settled'], true)): ?>
 <div class="workflow-tab-panel <?= $workflowStep === 6 ? 'active' : '' ?>" data-workflow-panel="6">
