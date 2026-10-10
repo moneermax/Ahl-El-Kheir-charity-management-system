@@ -418,7 +418,7 @@ function hrSalaryAdvanceAccountingUploadReceipt(PDO $pdo, int $requestId, int $u
     }
 
     $request = hrSalaryAdvanceAccountingGetRequest($pdo, $requestId);
-    if (!$request || $request['status'] !== 'disbursed' || (int)($request['disbursement_journal_entry_id'] ?? 0) <= 0) {
+    if (!$request || !in_array((string)$request['status'], ['disbursed', 'settled'], true) || (int)($request['disbursement_journal_entry_id'] ?? 0) <= 0) {
         throw new RuntimeException('لا يمكن رفع إيصال إلا لسلفة تم صرفها وترحيل قيدها.');
     }
 
