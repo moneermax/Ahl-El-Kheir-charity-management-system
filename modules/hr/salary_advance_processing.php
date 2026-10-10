@@ -717,15 +717,15 @@ if ($request && in_array((string)$request['status'], ['disbursed','settled'], tr
      const target=this.getAttribute('data-workflow-tab');
      document.querySelectorAll('[data-workflow-tab]').forEach(function(t){t.classList.toggle('active',t===tab);});
      document.querySelectorAll('[data-workflow-panel]').forEach(function(panel){panel.classList.toggle('active',panel.getAttribute('data-workflow-panel')===target);});
-     const panel=document.querySelector('[data-workflow-panel="'+target+'"]');
-     if(panel) panel.scrollIntoView({behavior:'smooth',block:'start'});
+     const tabs=document.querySelector('.workflow-tabs');
+     if(tabs) tabs.scrollIntoView({behavior:'smooth',block:'start'});
    });
  });
  if(<?= ($_SERVER['REQUEST_METHOD'] === 'GET' && $request) ? 'true' : 'false' ?>){
-   const initialActivePanel=document.querySelector('.workflow-tab-panel.active');
-   if(initialActivePanel){
+   const workflowTabs=document.querySelector('.workflow-tabs');
+   if(workflowTabs){
      window.requestAnimationFrame(function(){
-       initialActivePanel.scrollIntoView({left:0,block:'start',behavior:'auto'});
+       workflowTabs.scrollIntoView({left:0,block:'start',behavior:'auto'});
      });
    }
  }
