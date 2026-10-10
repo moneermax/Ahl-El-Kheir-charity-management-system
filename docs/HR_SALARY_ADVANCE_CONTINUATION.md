@@ -943,7 +943,7 @@ Changes committed on `main`:
 - Approved requests now open at Stage 3 (disbursement), because accounting verification is performed atomically as part of that operation. This also keeps accounting-rejection retry at the actionable disbursement step.
 - Added a dedicated Stage 4 — Payment Receipt tab. A disbursed/settled request with no receipt opens there for an accounting-authorized user.
 - Receipt evidence is separated from the disbursement-result panel. After successful upload, the saved receipt state advances the request to Stage 5 (repayment schedule) or Stage 6 (direct repayment/settlement), as appropriate.
-- Reordered the tab bar to sit immediately before the action panels and added initial-load scrolling to the active panel so opening a request presents the next action rather than leaving the user at the top of the page.
+- Reordered the tab bar to sit immediately before the action panels and added initial-load scrolling to the tab bar so the selected stage and its action panel remain together in view rather than leaving the user at the top of the page. Tab clicks and successful stage-advancing POSTs also keep the tab bar visible.
 - Receipt-upload success now participates in the existing same-page workflow auto-scroll behavior.
 - Receipt evidence can be attached to a settled request as well, provided its disbursement journal exists; the UI already exposes receipt upload for settled requests.
 
