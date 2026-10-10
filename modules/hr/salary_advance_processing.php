@@ -387,14 +387,7 @@ if ($request && in_array((string)$request['status'], ['disbursed','settled'], tr
     $workflowStep = 3;
 }
 ?>
-<ul class="nav nav-tabs workflow-tabs" role="tablist">
-    <li class="nav-item"><button type="button" class="nav-link <?= $workflowStep === 1 ? 'active' : '' ?> <?= $request && in_array((string)$request['status'], ['approved','disbursed','settled'], true) ? 'done' : '' ?>" data-workflow-tab="1"><i class="fas fa-user-check me-1"></i>1. مراجعة FM</button></li>
-    <li class="nav-item"><button type="button" class="nav-link <?= $workflowStep === 2 ? 'active' : '' ?> <?= $request && ($request['accounting_status'] ?? '') === 'verified' ? 'done' : '' ?>" data-workflow-tab="2"><i class="fas fa-calculator me-1"></i>2. التحقق المحاسبي</button></li>
-    <li class="nav-item"><button type="button" class="nav-link <?= $workflowStep === 3 ? 'active' : '' ?> <?= $request && in_array((string)$request['status'], ['disbursed','settled'], true) ? 'done' : '' ?>" data-workflow-tab="3"><i class="fas fa-money-bill-transfer me-1"></i>3. الصرف</button></li>
-    <?php if($canAccounting): ?><li class="nav-item"><button type="button" class="nav-link <?= $workflowStep === 4 ? 'active' : '' ?> <?= $request && in_array((string)$request['status'], ['disbursed','settled'], true) && !empty($request['payment_receipt_id']) ? 'done' : '' ?>" data-workflow-tab="4"><i class="fas fa-receipt me-1"></i>4. إيصال الدفع</button></li><?php endif; ?>
-    <li class="nav-item"><button type="button" class="nav-link <?= $workflowStep === 5 ? 'active' : '' ?>" data-workflow-tab="5"><i class="fas fa-calendar-check me-1"></i>5. جدول السداد</button></li>
-    <?php if($canAccounting): ?><li class="nav-item"><button type="button" class="nav-link <?= $workflowStep === 6 ? 'active' : '' ?> <?= $request && (string)$request['status'] === 'settled' ? 'done' : '' ?>" data-workflow-tab="6"><i class="fas fa-hand-holding-dollar me-1"></i>6. السداد المباشر</button></li><?php endif; ?>
-</ul>
+
 
 <div class="card"><div class="card-body">
 <h5 class="mb-3">طلبات السلف التي تتطلب إجراء</h5>
@@ -437,6 +430,17 @@ if ($request && in_array((string)$request['status'], ['disbursed','settled'], tr
 </div>
 </div>
 </div></div>
+
+<?php if($request): ?>
+<ul class="nav nav-tabs workflow-tabs" role="tablist">
+    <li class="nav-item"><button type="button" class="nav-link <?= $workflowStep === 1 ? 'active' : '' ?> <?= $request && in_array((string)$request['status'], ['approved','disbursed','settled'], true) ? 'done' : '' ?>" data-workflow-tab="1"><i class="fas fa-user-check me-1"></i>1. مراجعة FM</button></li>
+    <li class="nav-item"><button type="button" class="nav-link <?= $workflowStep === 2 ? 'active' : '' ?> <?= $request && ($request['accounting_status'] ?? '') === 'verified' ? 'done' : '' ?>" data-workflow-tab="2"><i class="fas fa-calculator me-1"></i>2. التحقق المحاسبي</button></li>
+    <li class="nav-item"><button type="button" class="nav-link <?= $workflowStep === 3 ? 'active' : '' ?> <?= $request && in_array((string)$request['status'], ['disbursed','settled'], true) ? 'done' : '' ?>" data-workflow-tab="3"><i class="fas fa-money-bill-transfer me-1"></i>3. الصرف</button></li>
+    <?php if($canAccounting): ?><li class="nav-item"><button type="button" class="nav-link <?= $workflowStep === 4 ? 'active' : '' ?> <?= $request && in_array((string)$request['status'], ['disbursed','settled'], true) && !empty($request['payment_receipt_id']) ? 'done' : '' ?>" data-workflow-tab="4"><i class="fas fa-receipt me-1"></i>4. إيصال الدفع</button></li><?php endif; ?>
+    <li class="nav-item"><button type="button" class="nav-link <?= $workflowStep === 5 ? 'active' : '' ?>" data-workflow-tab="5"><i class="fas fa-calendar-check me-1"></i>5. جدول السداد</button></li>
+    <?php if($canAccounting): ?><li class="nav-item"><button type="button" class="nav-link <?= $workflowStep === 6 ? 'active' : '' ?> <?= $request && (string)$request['status'] === 'settled' ? 'done' : '' ?>" data-workflow-tab="6"><i class="fas fa-hand-holding-dollar me-1"></i>6. السداد المباشر</button></li><?php endif; ?>
+</ul>
+<?php endif; ?>
 
 <?php if($canFm && $fmRequest): ?>
 <div class="workflow-tab-panel <?= $workflowStep === 1 ? 'active' : '' ?>" data-workflow-panel="1">
@@ -717,6 +721,12 @@ if ($request && in_array((string)$request['status'], ['disbursed','settled'], tr
      if(panel) panel.scrollIntoView({behavior:'smooth',block:'start'});
    });
  });
+ const initialActivePanel=document.querySelector('.workflow-tab-panel.active');
+ if(initialActivePanel){
+   window.requestAnimationFrame(function(){
+     initialActivePanel.scrollIntoView({left:0,block:'start',behavior:'auto'});
+   });
+ }
  const c=document.getElementById('fm_customized');
  const method=document.querySelector('[name="approved_repayment_method"]');
  const fields=['approved_amount','approved_repayment_method','approved_monthly_amount','approved_start_month','fm_customization_reason'];
