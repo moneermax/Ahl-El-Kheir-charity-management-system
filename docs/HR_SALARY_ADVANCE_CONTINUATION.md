@@ -978,3 +978,15 @@ Committed on `main` as `d44dc7385901ee870d963662f2ab42e67ed8ceae`:
 - No repayment policy, validation rule, accounting operation, or database behavior was changed.
 
 Source-level change reviewed. Local Apache/browser verification is still pending; the next check is to submit the existing invalid policy case and confirm the message appears temporarily inside the open modal, with the request queue remaining behind it.
+
+## 2026-10-10 — Keep validation errors in the already-open salary-advance modal
+
+**Status: source change committed; local browser verification pending.**
+
+The shared same-page POST handler already avoids a full document navigation, but its normal response renderer replaces the entire `.content` region. For a salary-advance validation failure, that replacement removed the open request modal and recreated it, causing the visible flicker.
+
+The renderer now detects a validation error inside `#salaryAdvanceRequestModal` and replaces only the modal body's contents. The existing modal and Bootstrap backdrop remain mounted, and the modal body's scroll position is preserved. The returned page script is reinitialized so the replacement form controls, workflow tabs, and temporary error toast continue to work. This narrow path applies only to a validation-error response for the salary-advance modal; other same-page POSTs retain the existing renderer, and the disbursement form's explicit native-POST opt-out is unchanged.
+
+Committed on `main`: `5d0a6ce353a4a0cdf15e7350b95d8226eaf24922`.
+
+Source-level verification: the error-specific path is placed after response-fragment validation and before the standard full-content replacement. Local Apache/browser verification remains pending. After pulling, submit the existing invalid repayment-policy case: the red validation toast should appear inside the still-open modal without the close/reopen flicker. Do not disburse the previously used request as part of this check.
