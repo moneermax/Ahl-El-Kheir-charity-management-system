@@ -257,6 +257,12 @@
             throw new Error('CONTENT_REGION_NOT_FOUND');
         }
 
+        /* Keep a response footer available if HTML parsing places it outside
+         * the replaceable .content fragment. Some legacy shared layouts close
+         * their wrappers in includes/footer.php, so the parsed DOM can differ
+         * from the source's apparent nesting. */
+        const responseFooter = parsed.querySelector('footer.app-footer');
+
         /*
          * Capture the viewport at submit time, not after the network round
          * trip. The submit handler may change focus/control state before the
@@ -358,6 +364,12 @@
         while (replacement.firstChild) fragment.appendChild(replacement.firstChild);
         akTrace('renderResponse:before-content-children-replace');
         current.replaceChildren(fragment);
+        /* A footer parsed outside .content is not part of the fragment swap.
+         * If the old footer was inside the replaced region, restore the footer
+         * from this response rather than leaving the page without one. */
+        if (!document.querySelector('footer.app-footer') && responseFooter) {
+            current.appendChild(document.importNode(responseFooter, true));
+        }
         akTrace('renderResponse:after-content-children-replace');
 
         if (parsed.title) document.title = parsed.title;
