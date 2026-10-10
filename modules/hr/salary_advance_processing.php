@@ -451,7 +451,12 @@ if ($request && in_array((string)$request['status'], ['disbursed','settled'], tr
 </div>
 <div class="row g-3">
 <div class="col-md-3"><label class="form-label">المبلغ المعتمد</label><input type="number" step="0.01" min="0.01" name="approved_amount" class="form-control" value="<?=e((string)$request['requested_amount'])?>"></div>
-<div class="col-md-3"><label class="form-label">طريقة السداد المعتمدة</label><select name="approved_repayment_method" class="form-select"><option value="fixed_monthly">قسط شهري ثابت</option><option value="full_eligible_salary">كامل الراتب المؤهل</option><option value="full_settlement">تسوية كاملة</option><option value="direct_repayment">سداد مباشر</option></select></div>
+<div class="col-md-3"><label class="form-label">طريقة السداد المعتمدة</label><select name="approved_repayment_method" class="form-select">
+<?php if((int)$fmRequest['allow_fixed_monthly_repayment'] === 1): ?><option value="fixed_monthly" <?= (string)$request['requested_repayment_method'] === 'fixed_monthly' ? 'selected' : '' ?>>قسط شهري ثابت</option><?php endif; ?>
+<?php if((int)$fmRequest['allow_full_eligible_salary_repayment'] === 1): ?><option value="full_eligible_salary" <?= (string)$request['requested_repayment_method'] === 'full_eligible_salary' ? 'selected' : '' ?>>كامل الراتب المؤهل</option><?php endif; ?>
+<?php if((int)$fmRequest['allow_full_settlement_from_salary'] === 1): ?><option value="full_settlement" <?= (string)$request['requested_repayment_method'] === 'full_settlement' ? 'selected' : '' ?>>تسوية كاملة</option><?php endif; ?>
+<?php if((int)$fmRequest['allow_direct_repayment'] === 1): ?><option value="direct_repayment" <?= (string)$request['requested_repayment_method'] === 'direct_repayment' ? 'selected' : '' ?>>سداد مباشر</option><?php endif; ?>
+</select></div>
 <div class="col-md-3"><label class="form-label">القسط الشهري المعتمد</label><input type="number" step="0.01" min="0.01" name="approved_monthly_amount" class="form-control" value="<?=e((string)($request['requested_monthly_amount']??''))?>"></div>
 <div class="col-md-3"><label class="form-label">شهر بدء السداد</label><input type="date" name="approved_start_month" class="form-control" value="<?=e((string)($request['requested_start_month']??''))?>"></div>
 <div class="col-12"><label class="form-label">سبب التخصيص</label><textarea name="fm_customization_reason" class="form-control" rows="2" maxlength="2000"></textarea></div>
@@ -700,11 +705,18 @@ if ($request && in_array((string)$request['status'], ['disbursed','settled'], tr
    });
  });
  const c=document.getElementById('fm_customized');
+ const method=document.querySelector('[name="approved_repayment_method"]');
  const fields=['approved_amount','approved_repayment_method','approved_monthly_amount','approved_start_month','fm_customization_reason'];
  function sync(){
-   fields.forEach(function(n){const el=document.querySelector('[name="'+n+'"]'); if(el) el.disabled=!c.checked;});
+   fields.forEach(function(n){
+     const el=document.querySelector('[name="'+n+'"]');
+     if(!el) return;
+     el.disabled=!c || !c.checked || (n==='approved_monthly_amount' && method && method.value!=='fixed_monthly');
+   });
  }
- c?.addEventListener('change',sync); sync();
+ c?.addEventListener('change',sync);
+ method?.addEventListener('change',sync);
+ sync();
 })();
 </script>
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>
