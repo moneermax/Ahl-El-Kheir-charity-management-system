@@ -438,6 +438,15 @@
 
         window.scrollTo({left: scrollX, top: scrollY, behavior: 'auto'});
 
+        akTrace('renderResponse:after-scrollTo');
+
+        /* Restore the root's original inline min-height after the viewport
+         * restoration. If the new content genuinely needs more height, keep
+         * the calculated minimum required for the previous viewport. */
+        if (current.scrollHeight >= requiredHeight) {
+            current.style.minHeight = originalMinHeight;
+        }
+
         /*
          * Workflow approvals and disbursements change the active stage. Keeping
          * the old viewport can leave the user looking at the previous form even
@@ -455,14 +464,6 @@
             if (activePanel) {
                 activePanel.scrollIntoView({left: 0, block: 'start', behavior: 'auto'});
             }
-        }
-        akTrace('renderResponse:after-scrollTo');
-
-        /* Restore the root's original inline min-height after the final
-         * viewport restoration. If the new content genuinely needs more
-         * height, keep the calculated minimum required for the old viewport. */
-        if (current.scrollHeight >= requiredHeight) {
-            current.style.minHeight = originalMinHeight;
         }
 
         /*
