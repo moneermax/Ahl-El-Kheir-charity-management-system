@@ -448,20 +448,22 @@
         }
 
         /*
-         * Workflow approvals and disbursements change the active stage. Keeping
-         * the old viewport can leave the user looking at the previous form even
-         * though the request has advanced and its schedule has been generated.
-         * Move to the active panel only for explicit stage-advancing successes;
-         * ordinary edits continue to preserve their original scroll position.
+         * Workflow approvals, disbursements, and receipt uploads change the
+         * next actionable stage. Keep the selected tab and its panel together
+         * in view after explicit stage-advancing successes. Ordinary edits keep
+         * their original viewport.
          */
         const workflowAdvanced = current.querySelector('[data-ak-workflow-advance="1"]');
         if (workflowAdvanced) {
+            const workflowTabs = current.querySelector('.workflow-tabs');
             const activeTab = current.querySelector('.workflow-tabs .nav-link.active');
             const activeStep = activeTab && activeTab.getAttribute('data-workflow-tab');
             const activePanel = activeStep
                 ? current.querySelector('[data-workflow-panel="' + CSS.escape(activeStep) + '"]')
                 : null;
-            if (activePanel) {
+            if (workflowTabs) {
+                workflowTabs.scrollIntoView({left: 0, block: 'start', behavior: 'auto'});
+            } else if (activePanel) {
                 activePanel.scrollIntoView({left: 0, block: 'start', behavior: 'auto'});
             }
         }
