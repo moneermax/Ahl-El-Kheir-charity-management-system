@@ -378,7 +378,11 @@
         }
 
         akTrace('renderResponse:before-fragment-scripts');
-        runFragmentScripts(replacement);
+        /* The replacement node has been emptied into the live .content root
+         * above. Run scripts from the inserted DOM, not from that now-empty
+         * staging node; otherwise page-specific tabs, toasts, and controls are
+         * never initialized after an in-place POST response. */
+        runFragmentScripts(current);
         akTrace('renderResponse:after-fragment-scripts');
 
         /*
