@@ -360,15 +360,24 @@ require_once __DIR__ . '/../../includes/header.php';
     <p>مسار موحد لمعالجة الطلب من مراجعة FM، إلى التحقق المحاسبي، ثم الصرف وإنشاء جدول السداد — دون الانتقال بين صفحات معالجة مختلفة.</p>
 </section>
 
-<?php if($message): ?><div class="ak-workflow-toast" data-ak-workflow-advance="<?= (str_starts_with($message, 'تم اعتماد طلب السلفة بنجاح.') || str_starts_with($message, 'تم صرف السلفة وترحيل القيد المحاسبي رقم')) ? '1' : '0' ?>" role="status" aria-live="polite"><i class="fas fa-circle-check me-2"></i><span><?=e($message)?></span></div><?php endif; ?>
+<?php if($message): ?><div class="ak-workflow-toast" data-ak-workflow-advance="<?= (str_starts_with($message, 'تم اعتماد طلب السلفة بنجاح.') || str_starts_with($message, 'تم صرف السلفة وترحيل القيد المحاسبي رقم') || str_starts_with($message, 'تم رفع إيصال الدفع بنجاح.')) ? '1' : '0' ?>" role="status" aria-live="polite"><i class="fas fa-circle-check me-2"></i><span><?=e($message)?></span></div><?php endif; ?>
 <?php if($error): ?><div class="alert alert-danger"><?=e($error)?></div><?php endif; ?>
 
 <?php
 $workflowStep = 1;
 if ($request && in_array((string)$request['status'], ['disbursed','settled'], true)) {
-    $workflowStep = ($request['approved_repayment_method'] ?? '') === 'direct_repayment' || (string)$request['status'] === 'settled'
-        ? 5
-        : 4;
+    /*
+     * Receipt evidence is the next required action after disbursement.
+     * Once evidence exists, continue to the repayment schedule or direct
+     * repayment stage appropriate to this request.
+     */
+    if ($canAccounting && empty($request['payment_receipt_id'])) {
+        $workflowStep = 4;
+    } else {
+        $workflowStep = ($request['approved_repayment_method'] ?? '') === 'direct_repayment' || (string)$request['status'] === 'settled'
+            ? 6
+            : 5;
+    }
 } elseif ($request && (string)$request['status'] === 'approved') {
     /*
      * Open the next actionable stage from the request's saved policy.
@@ -385,8 +394,9 @@ if ($request && in_array((string)$request['status'], ['disbursed','settled'], tr
     <li class="nav-item"><button type="button" class="nav-link <?= $workflowStep === 1 ? 'active' : '' ?> <?= $request && in_array((string)$request['status'], ['approved','disbursed','settled'], true) ? 'done' : '' ?>" data-workflow-tab="1"><i class="fas fa-user-check me-1"></i>1. مراجعة FM</button></li>
     <li class="nav-item"><button type="button" class="nav-link <?= $workflowStep === 2 ? 'active' : '' ?> <?= $request && ($request['accounting_status'] ?? '') === 'verified' ? 'done' : '' ?>" data-workflow-tab="2"><i class="fas fa-calculator me-1"></i>2. التحقق المحاسبي</button></li>
     <li class="nav-item"><button type="button" class="nav-link <?= $workflowStep === 3 ? 'active' : '' ?> <?= $request && in_array((string)$request['status'], ['disbursed','settled'], true) ? 'done' : '' ?>" data-workflow-tab="3"><i class="fas fa-money-bill-transfer me-1"></i>3. الصرف</button></li>
-    <li class="nav-item"><button type="button" class="nav-link <?= $workflowStep === 4 ? 'active' : '' ?>" data-workflow-tab="4"><i class="fas fa-calendar-check me-1"></i>4. جدول السداد</button></li>
-    <?php if($canAccounting): ?><li class="nav-item"><button type="button" class="nav-link <?= $workflowStep === 5 ? 'active' : '' ?> <?= $request && (string)$request['status'] === 'settled' ? 'done' : '' ?>" data-workflow-tab="5"><i class="fas fa-hand-holding-dollar me-1"></i>5. السداد المباشر</button></li><?php endif; ?>
+    <?php if($canAccounting): ?><li class="nav-item"><button type="button" class="nav-link <?= $workflowStep === 4 ? 'active' : '' ?> <?= $request && in_array((string)$request['status'], ['disbursed','settled'], true) && !empty($request['payment_receipt_id']) ? 'done' : '' ?>" data-workflow-tab="4"><i class="fas fa-receipt me-1"></i>4. إيصال الدفع</button></li><?php endif; ?>
+    <li class="nav-item"><button type="button" class="nav-link <?= $workflowStep === 5 ? 'active' : '' ?>" data-workflow-tab="5"><i class="fas fa-calendar-check me-1"></i>5. جدول السداد</button></li>
+    <?php if($canAccounting): ?><li class="nav-item"><button type="button" class="nav-link <?= $workflowStep === 6 ? 'active' : '' ?> <?= $request && (string)$request['status'] === 'settled' ? 'done' : '' ?>" data-workflow-tab="6"><i class="fas fa-hand-holding-dollar me-1"></i>6. السداد المباشر</button></li><?php endif; ?>
 </ul>
 
 <div class="card"><div class="card-body">
@@ -547,6 +557,9 @@ if ($request && in_array((string)$request['status'], ['disbursed','settled'], tr
 </div>
 </div></div>
 
+</div>
+
+<div class="workflow-tab-panel <?= $workflowStep === 4 ? 'active' : '' ?>" data-workflow-panel="4">
 <?php if($canAccounting): ?>
 <div class="card"><div class="card-body">
 <h5>إيصال الدفع</h5>
@@ -570,9 +583,10 @@ if ($request && in_array((string)$request['status'], ['disbursed','settled'], tr
 <?php endif; ?>
 </div></div>
 <?php endif; ?>
+
 </div>
 
-<div class="workflow-tab-panel <?= $workflowStep === 4 ? 'active' : '' ?>" data-workflow-panel="4">
+<div class="workflow-tab-panel <?= $workflowStep === 6 ? 'active' : '' ?>" data-workflow-panel="6">
 <div class="card"><div class="card-body">
 <h5>جدول السداد</h5>
 <?php if(($request['approved_repayment_method'] ?? '') === 'direct_repayment'): ?>
