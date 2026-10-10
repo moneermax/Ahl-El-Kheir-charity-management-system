@@ -600,6 +600,7 @@ if ($request && str_starts_with($message, 'تم صرف السلفة وترحيل
 <?php endif; ?>
 
 </div>
+<?php endif; ?>
 
 <?php if($request && $canAccounting && in_array((string)$request['status'], ['disbursed','settled'], true)): ?>
 <div class="workflow-tab-panel <?= $workflowStep === 6 ? 'active' : '' ?>" data-workflow-panel="6">
