@@ -931,3 +931,22 @@ Source-level verification performed on 2026-10-10:
 **Runtime gate remains open:** these changes have not been exercised in the user's local Apache/browser session, and PHP lint/full regression tests have not been run from this remote source review. After pulling, verify FM approval advances to the appropriate next panel, disbursement displays the newly generated schedule without refresh, the footer remains visible, and an accounting rejection can be retried safely.
 
 **Separate policy-method gap found during the review:** `full_settlement` (“تسوية كامل الرصيد من الراتب”) is accepted as a repayment method, but the current payroll schedule generator only creates plans for `fixed_monthly` and `full_eligible_salary`. Correctly implementing full settlement requires coordinated payroll handling for insufficient salary/partial collection; do not treat a one-row schedule as complete without that handling. This remains open and must be addressed before claiming all repayment-policy paths are complete.
+
+
+## 2026-10-10 — Next-Action Tab Routing and Receipt Stage
+
+**Status: SOURCE CHANGES COMMITTED; LOCAL APACHE/BROWSER VERIFICATION PENDING.**
+
+Follow-up review based on the FM's reported request #20 screen found that the active-stage logic did not match the actual action sequence. Accounting verification is intentionally atomic with disbursement, but an approved request could still open the informational accounting tab when the policy flag required verification. The receipt upload was also nested inside the disbursement-result panel while the workflow selected the repayment-schedule tab after disbursement, so the next required receipt action could be hidden.
+
+Changes committed on `main`:
+- Approved requests now open at Stage 3 (disbursement), because accounting verification is performed atomically as part of that operation. This also keeps accounting-rejection retry at the actionable disbursement step.
+- Added a dedicated Stage 4 — Payment Receipt tab. A disbursed/settled request with no receipt opens there for an accounting-authorized user.
+- Receipt evidence is separated from the disbursement-result panel. After successful upload, the saved receipt state advances the request to Stage 5 (repayment schedule) or Stage 6 (direct repayment/settlement), as appropriate.
+- Reordered the tab bar to sit immediately before the action panels and added initial-load scrolling to the active panel so opening a request presents the next action rather than leaving the user at the top of the page.
+- Receipt-upload success now participates in the existing same-page workflow auto-scroll behavior.
+- Receipt evidence can be attached to a settled request as well, provided its disbursement journal exists; the UI already exposes receipt upload for settled requests.
+
+Static source checks confirmed the receipt tab/panel, schedule Stage 5, direct repayment Stage 6, approved-to-disbursement routing, missing-receipt routing, and initial active-panel scrolling. No request was disbursed or otherwise changed as part of these source edits.
+
+**Runtime gate remains open:** the local Apache application has not yet been exercised with these commits. Pull the latest `main`, then open request #20 without submitting any financial action: it should land on Stage 3 (disbursement). Do not disburse #20 merely to test this. The receipt stage should be verified after a real/test disbursement using a fresh request, followed by receipt upload and the automatic transition to the next stage.
