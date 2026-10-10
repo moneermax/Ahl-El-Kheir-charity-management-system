@@ -909,3 +909,25 @@ Evidence boundary:
 - No production payroll-generation code was changed as a result of the earlier read-only October simulation or this rollback-only test.
 
 The unfinished attendance same-page POST scroll-jump issue remains separate and must not be reopened during this work.
+
+
+## 2026-10-10 — Salary Advance Processing UI/Workflow Review
+
+**Status: SOURCE CHANGES COMMITTED; LOCAL APACHE/BROWSER VERIFICATION PENDING.**
+
+The latest source review found that the same-page POST renderer moved the response fragment's children into the live `.content` node, then attempted to execute scripts from the emptied staging node. This prevented the processing page's newly inserted tab handlers and toast lifecycle from initializing after actions such as FM approval and disbursement. The renderer now initializes scripts from the inserted live content and, for explicit workflow-advancing success messages, scrolls to the server-selected active stage after layout restoration. Ordinary same-page edits still preserve their original viewport. Clicking a workflow tab also brings its panel into view.
+
+The processing page now chooses the next actionable stage using the request's saved `require_accounting_verification` policy and accounting status. A rejected accounting checkpoint remains visible. FM customization now lists only repayment methods enabled by the request's saved policy, defaults to the employee's original method when allowed, enables the monthly installment field only for fixed-monthly repayment, and validates the chosen method server-side against the saved policy.
+
+The disbursement path's prior explicit guard blocked every retry after accounting rejection, despite the UI stating that re-verification occurs atomically with disbursement. The guard was removed; a retry now clears the prior rejection and records verification inside the same locked transaction as journal posting. If any later step fails, the transaction rollback still protects the request and journal state.
+
+Source-level verification performed on 2026-10-10:
+- JavaScript syntax check passed for `assets/js/app.js`.
+- Confirmed the renderer executes scripts from the inserted content rather than the emptied staging node.
+- Confirmed workflow-success responses trigger active-panel scrolling.
+- Confirmed policy-driven step selection and policy-bound FM method validation are present.
+- Confirmed accounting rejection retry remains within the transactional disbursement path.
+
+**Runtime gate remains open:** these changes have not been exercised in the user's local Apache/browser session, and PHP lint/full regression tests have not been run from this remote source review. After pulling, verify FM approval advances to the appropriate next panel, disbursement displays the newly generated schedule without refresh, the footer remains visible, and an accounting rejection can be retried safely.
+
+**Separate policy-method gap found during the review:** `full_settlement` (“تسوية كامل الرصيد من الراتب”) is accepted as a repayment method, but the current payroll schedule generator only creates plans for `fixed_monthly` and `full_eligible_salary`. Correctly implementing full settlement requires coordinated payroll handling for insufficient salary/partial collection; do not treat a one-row schedule as complete without that handling. This remains open and must be addressed before claiming all repayment-policy paths are complete.
