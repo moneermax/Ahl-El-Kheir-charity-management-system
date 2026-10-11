@@ -61,10 +61,10 @@ WHERE s.repayment_plan_id IS NULL;
 -- Uniqueness now applies within a plan, allowing a new plan to retain its
 -- own installment numbering/months without deleting the old plan's history.
 ALTER TABLE hr_salary_advance_repayment_schedule
-    DROP INDEX uq_hr_salary_advance_schedule_installment,
-    DROP INDEX uq_hr_salary_advance_schedule_month,
-    ADD UNIQUE KEY uq_hr_salary_advance_schedule_plan_installment
+    DROP INDEX IF EXISTS uq_hr_salary_advance_schedule_installment,
+    DROP INDEX IF EXISTS uq_hr_salary_advance_schedule_month,
+    ADD UNIQUE KEY IF NOT EXISTS uq_hr_salary_advance_schedule_plan_installment
         (salary_advance_request_id, repayment_plan_id, installment_no),
-    ADD UNIQUE KEY uq_hr_salary_advance_schedule_plan_month
+    ADD UNIQUE KEY IF NOT EXISTS uq_hr_salary_advance_schedule_plan_month
         (salary_advance_request_id, repayment_plan_id, scheduled_month),
-    ADD KEY idx_hr_salary_advance_schedule_plan (repayment_plan_id);
+    ADD KEY IF NOT EXISTS idx_hr_salary_advance_schedule_plan (repayment_plan_id);
