@@ -247,3 +247,21 @@ A rollback-free pure calculation regression has been added to the disposable ful
 - refusing to recommend an installment when there is no finite policy horizon.
 
 GitHub Actions run 38151858277 passed all four jobs on commit 572dc85afdddb9dbe238457d73f4d1dfae73bdd9: PHP lint, MariaDB 10.4.32 migration, full-schema migration/backfill with payroll regressions and account 1410 reconciliation, and rescheduling service/concurrency tests. The new fixed-installment policy validation cases passed in the full-schema job. This is repository/CI work only; the local XAMPP browser workflow has not been exercised by this change.
+
+
+## 19. FM dashboard navigation and local Stage 7 preflight — 2026-10-11
+
+PR [#92](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/pull/92) was merged as commit [aa6e9e69039c54dc2b11d6852ac66cfe1317aac3](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/commit/aa6e9e69039c54dc2b11d6852ac66cfe1317aac3). The salary-advance dashboard now exposes a rescheduling card to users whose role is `financial_manager` or `fm`; the destination page's server-side policy, plan-expiry, repayment-method, and outstanding-balance checks remain authoritative. The dashboard was added to the PHP syntax CI list. The change does not enable policy authorization or modify the database.
+
+Verification: [GitHub Actions run 38165399320](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/38165399320) passed all four jobs: PHP lint, the guarded rescheduling-service tests, full checked-in-schema migration/backfill and rollback-only payroll/accounting regressions, and migration verification on MariaDB 10.4.32.
+
+The user's read-only local preflight against the canonical `ahl_el_kheir` database also passed. All three Stage 7 schema markers were present; there were 15 requests, 30 schedule rows, and one policy version; no requests lacked a policy, no schedules lacked a request or plan, and no requests had multiple active plans. This means the Stage 7 migration artifacts are already present locally. **Do not reapply the migration**; the preflight is not a reason to run it again.
+
+A separate read-only account 1410 reconciliation passed: ledger balance and live outstanding balance both equaled 250,000 (debits 280,000 less direct-repayment credits 30,000). The current local policy version is limited to six months, has a monthly deduction cap of 10,000, and has `allow_fm_repayment_rescheduling = 0`. There are six active repayment plans and no schedules missing a plan. The user opened the policy page and FM rescheduling page: the policy authorization checkbox is visible but unchecked, and the rescheduling page correctly reports no eligible advances under the current policy. No policy setting was changed.
+
+### Remaining Stage 7 gate
+
+- The dashboard navigation code is merged and all four CI jobs pass.
+- Local schema/integrity preflight and account 1410 balance reconciliation have passed without writes.
+- Policy authorization remains disabled because the current saved policy does not authorize the exception; do not enable it without the prior GM/FM agreement described above.
+- Still required: verify the FM dashboard card after pulling the merged commit, and complete a browser-driven end-to-end rescheduling and payroll/accounting journey using an isolated test fixture that is safe to mutate. Do not use the canonical `ahl_el_kheir` database for destructive service tests, and do not declare Stage 7 closed based only on CI or the read-only preflight.
