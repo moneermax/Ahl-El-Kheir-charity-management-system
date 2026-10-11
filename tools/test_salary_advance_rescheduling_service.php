@@ -220,6 +220,11 @@ expectRescheduleRejected(
     'يتجاوز الحد الأقصى للخصم الشهري'
 );
 expectRescheduleRejected(
+    fn() => hrSalaryAdvanceScheduleReschedule($pdo, 4, $startMonth, 3, 0.001, 'Rounded zero installment test', 77),
+    'installment rounds down to zero',
+    'ألا يقل عن 0.01'
+);
+expectRescheduleRejected(
     fn() => hrSalaryAdvanceScheduleReschedule($pdo, 5, $startMonth, 2, 200.00, 'Duration coverage test', 77),
     'proposed terms do not cover balance',
     'لا يغطي الرصيد القائم'
