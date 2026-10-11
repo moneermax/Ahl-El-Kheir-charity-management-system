@@ -2,7 +2,7 @@
 
 **Date:** 2026-10-11  
 **Branch:** `main`  
-**Status:** SOURCE, SYNTAX, MIGRATION, AND SERVICE-SAFEGUARD TESTS PASSED IN CI; PAYROLL/LOCAL-SCHEMA VERIFICATION PENDING
+**Status:** SYNTAX, MIGRATION, RESCHEDULING, AND FOCUSED PAYROLL APPLY TESTS PASSED IN CI; FULL ACCOUNTING/LOCAL-SCHEMA VERIFICATION PENDING
 
 ## 1. Why this workflow is needed
 
@@ -85,13 +85,13 @@ These are source-level observations. Dedicated CI checks also pass PHP syntax ch
 
 - PHP 8.2 syntax checks for the salary-advance PHP files and notification dependency passed: [workflow run 38119108564](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/38119108564).
 - The Stage 7 migration ran twice against an isolated MariaDB 10.4.32 database. The test verified the default-disabled policy flag, legacy schedule backfill, preservation of both finite and NULL/unbounded policy durations, preserved schedule row count, plan-scoped indexes replacing the old indexes, and no duplicate plan or schedule rows on rerun. This job passed in the same workflow run.
-- The rescheduling service and payroll eligibility query passed disposable-database tests for successful plan replacement, active-plan-only payroll selection, post-horizon suppression, specific rejection reasons for disabled policy authorization, unexpired horizon, monthly cap, insufficient duration, direct-repayment exclusion, and installments rounding down to zero. The tests also verified preservation of old plan/schedule rows, one audit event on success, refusal when multiple active plans exist, and rollback when the audit write fails. Payroll preview calculation is also tested against the active replacement plan and returns no deduction after the plan horizon. See [workflow run 38119819844](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/38119819844).
+- The rescheduling service and payroll eligibility query passed disposable-database tests for successful plan replacement, active-plan-only payroll selection, post-horizon suppression, specific rejection reasons for disabled policy authorization, unexpired horizon, monthly cap, insufficient duration, direct-repayment exclusion, and installments rounding down to zero. The tests also verified preservation of old plan/schedule rows, one audit event on success, refusal when multiple active plans exist, and rollback when the audit write fails. Payroll preview and posting tests now verify active-plan selection, no deduction after the plan horizon, exact balance reduction, schedule/trace/audit updates, rejection of repeated payroll application, and no duplicate repayment trace. See [workflow run 38119987073](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/38119987073).
 - The repository confirms `employees.user_id` is the canonical employee/user relationship, and existing code uses the same `audit_log` columns as the rescheduling service. This is source-pattern confirmation, not a full live-schema audit.
 
 **Still required before applying the migration to the working database or declaring the feature complete:**
 
 1. Confirm the exact `audit_log` schema and all required columns against the user's actual local database/schema source.
-2. Extend the service tests to cover stale balance/concurrent payroll interaction and notification failure isolation, and add full payroll posting/apply integration coverage beyond the focused active-plan eligibility and preview-calculation tests.
+2. Extend the focused tests to cover stale balance/concurrent payroll interaction and notification failure isolation. The payroll apply helper is tested in isolation; the complete application payroll/accounting posting path is still unverified.
 3. Run existing salary-advance payroll regression tests and account 1410 reconciliation against the disposable/local test database.
 4. Record those results here. Do not treat a fixture-based migration test as proof that the full feature works end to end.
 
@@ -120,5 +120,5 @@ The current service intentionally rejects rescheduling when the saved policy has
 
 The UI lists only requests with an active plan, a positive outstanding balance, an expired plan, a positive saved maximum duration, and explicit saved-policy FM authorization. It does not provide a way to reschedule an in-horizon plan.
 
-**Next required work:** confirm the audit-log schema from the actual local database/schema source; add tests for stale balance/concurrent payroll and notification failure isolation; integrate active-plan selection into payroll preview/posting tests; then run the existing payroll repayment regressions and account 1410 reconciliation. Do not claim the feature complete until the remaining evidence is recorded.
+**Next required work:** confirm the audit-log schema from the actual local database/schema source; add tests for stale balance/concurrent payroll and notification failure isolation; verify the full application's payroll-to-accounting posting path; then run the existing payroll repayment regressions and account 1410 reconciliation. Do not claim the feature complete until the remaining evidence is recorded.
 
