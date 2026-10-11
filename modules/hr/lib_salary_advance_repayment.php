@@ -123,6 +123,9 @@ function hrSalaryAdvanceScheduleReschedule(
         throw new InvalidArgumentException('مدة السداد والقسط الشهري يجب أن يكونا أكبر من صفر.');
     }
     $monthlyAmount = round($monthlyAmount, 2);
+    if ($monthlyAmount <= 0) {
+        throw new InvalidArgumentException('القسط الشهري يجب ألا يقل عن 0.01 بعد التقريب إلى منزلتين عشريتين.');
+    }
 
     $ownsTransaction = !$pdo->inTransaction();
     if ($ownsTransaction) {
