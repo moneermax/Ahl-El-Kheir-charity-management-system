@@ -4,7 +4,7 @@
 **Repository:** `moneermax/Ahl-El-Kheir-charity-management-system`  
 **Branch:** `main`  
 **Active area:** HR / Salary Advance  
-**Current stage:** Stage 5 — Repayment Schedule + Payroll Integration — **DONE / RUNTIME VERIFIED / CLOSED**
+**Current stage:** Stage 5 — Repayment Schedule + Payroll Integration — **targeted carry-forward follow-up in progress; local verification pending**
 
 ## Purpose
 
