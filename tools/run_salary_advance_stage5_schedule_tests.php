@@ -313,6 +313,45 @@ $results[] = runTest('Test 6 — full_eligible_salary planning', function (PDO $
     return 'Full-eligible-salary planning respects the monthly cap and covers the full outstanding balance within the saved horizon.';
 });
 
+$results[] = runTest('Test 7 — full_settlement planning', function (PDO $pdo): string {
+    $source = sourceRequest($pdo);
+    $amount = round((float)$source['approved_amount'], 2);
+    $maxDeduction = 10000.00;
+    $maxMonths = (int)ceil($amount / $maxDeduction);
+
+    $policyId = clonePolicy($pdo, $source, 'next_payroll', $maxDeduction, $maxMonths);
+    $requestId = cloneRequest(
+        $pdo,
+        $source,
+        $policyId,
+        'full_settlement',
+        null,
+        date('Y-m-01')
+    );
+
+    $count = hrSalaryAdvanceScheduleGenerate($pdo, $requestId);
+    $rows = scheduleRows($pdo, $requestId);
+
+    if ($count !== $maxMonths || count($rows) !== $maxMonths) {
+        testFail('Expected ' . $maxMonths . ' full-settlement schedule rows, got ' . $count . '.');
+    }
+
+    $total = 0.00;
+    foreach ($rows as $row) {
+        $scheduled = round((float)$row['scheduled_amount'], 2);
+        if ($scheduled > $maxDeduction + 0.000001) {
+            testFail('A full-settlement schedule row exceeds the maximum monthly deduction.');
+        }
+        $total = round($total + $scheduled, 2);
+    }
+
+    if ($total !== $amount) {
+        testFail('Full-settlement schedule does not cover the outstanding balance.');
+    }
+
+    return 'Full-settlement schedule covers the balance within the configured monthly deduction cap and maximum months.';
+});
+
 $failed = false;
 
 echo PHP_EOL . "Stage 5 schedule-rule verification (rollback-only)" . PHP_EOL;
@@ -326,6 +365,6 @@ foreach ($results as $result) {
 }
 
 echo str_repeat('=', 60) . PHP_EOL;
-echo $failed ? "RESULT: FAIL" . PHP_EOL : "RESULT: ALL THREE TESTS PASS" . PHP_EOL;
+echo $failed ? "RESULT: FAIL" . PHP_EOL : "RESULT: ALL FOUR TESTS PASS" . PHP_EOL;
 
 exit($failed ? 1 : 0);
