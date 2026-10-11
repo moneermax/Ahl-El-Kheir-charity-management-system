@@ -4,7 +4,7 @@
 **Repository:** `moneermax/Ahl-El-Kheir-charity-management-system`  
 **Branch:** `main`  
 **Active area:** HR / Salary Advance  
-**Current stage:** Stage 5 payroll repayment path **DONE / FOCUSED REGRESSION CHECKS PASSED / CLOSED**. Next: design an authorized rescheduling workflow for balances remaining after a configured maximum repayment horizon.
+**Current stage:** Stage 5 payroll repayment path **DONE / FOCUSED REGRESSION CHECKS PASSED / CLOSED**. Stage 7 rescheduling business authority is now decided: GM and FM agree the policy before FM creates it; FM may reschedule under explicit policy-level authority without a second GM approval. Next: implement a versioned rescheduling workflow and test it locally.
 
 This is the authoritative continuation checkpoint. Older dated sections are retained as historical evidence; where an older checkpoint says a completed stage is pending or not started, the latest status and verification addenda below supersede it.
 
@@ -22,6 +22,8 @@ Do not reopen completed Stages 1–5 unless a genuine regression is evidenced. S
 6. Stage 6 — Direct Repayment & Settlement: **PARTIAL / REQUIRES SEPARATE CLOSURE AUDIT**. A direct-repayment posting and evidence path exists in source; do not infer that the entire settlement lifecycle is verified or closed.
 7. Stage 7 — Exceptional Lifecycle Cases: **NOT STARTED**. The next design item is authorized rescheduling when a balance remains after a configured maximum repayment horizon.
 8. Stage 8 — Reporting / Audit / Hardening: NOT STARTED
+
+**Confirmed rescheduling authority (2026-10-11):** GM and FM agree the salary-advance policy before FM creates/applies it. FM may administer a qualifying reschedule without another GM approval only when the saved policy version explicitly authorizes the exception. The app currently has no confirmed persisted GM policy-approval record; do not imply otherwise. Keep the original policy version and financial history immutable.
 
 The project completion gate remains:
 
