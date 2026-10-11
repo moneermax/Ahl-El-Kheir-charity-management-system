@@ -2,7 +2,7 @@
 
 **Date:** 2026-10-11  
 **Branch:** `main`  
-**Status:** SYNTAX, FULL-DUMP MIGRATION, RESCHEDULING, AND FOCUSED PAYROLL APPLY TESTS PASSED IN CI; LOCAL INSTANCE/FULL ACCOUNTING VERIFICATION PENDING
+**Status:** SYNTAX, FULL-DUMP MIGRATION, RESCHEDULING, STAGE 5 PAYROLL REGRESSIONS, AND ACCOUNT 1410 RECONCILIATION PASSED IN CI; LOCAL INSTANCE AND CONCURRENCY VERIFICATION PENDING
 
 ## 1. Why this workflow is needed
 
@@ -138,3 +138,17 @@ The latest run, [38124958731](https://github.com/moneermax/Ahl-El-Kheir-charity-
 A source review confirms rescheduling locks the request before locking its active plan, while payroll applies a joined `FOR UPDATE` query over schedule, plan, and request records. InnoDB deadlock detection should abort one competing transaction rather than permit both to proceed, but the lock-order behavior has not yet been exercised by a two-connection concurrency test. Treat this as an explicit remaining verification item; no speculative lock-order rewrite has been made.
 
 No migration has been applied to the user's local database. Local schema confirmation, full application payroll/accounting-path verification, concurrency testing, existing payroll regressions, and account 1410 reconciliation remain open.
+
+
+## 10. Expanded regression workflow result — 2026-10-11
+
+The expanded workflow [run 38125299220](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/38125299220), on commit `6b4e7e659e5b8532695a4ae6b79c9a94bd0cf6b4`, passed all four jobs. In addition to PHP lint, the disposable MariaDB 10.4.32 migration test, full checked-in schema/backfill migration, and focused rescheduling service tests, the full-schema job ran these existing regression programs after migration:
+
+- `tools/run_salary_advance_stage5_schedule_tests.php`
+- `tools/run_salary_advance_stage5_payroll_tests.php`
+- `tools/run_salary_advance_stage5_payroll_edge_tests.php`
+- `tools/run_salary_advance_1410_reconciliation.php`
+
+All completed successfully against the disposable CI database. The workflow change also lints these scripts. This is CI evidence, not evidence that the migration has been applied to the user's local XAMPP database or that a browser-driven end-to-end payroll posting was exercised.
+
+The payroll and rescheduling services both use InnoDB transactions and row locks, but their SQL lock acquisition order differs: payroll starts from the joined eligible schedule query, while rescheduling locks the request first and then its active plan. No lock-order change is made based solely on inspection; a controlled two-connection concurrency regression remains a separate gate. Until that test and local schema/integrity confirmation are complete, do not apply the migration to the working database or mark Stage 7 closed.
