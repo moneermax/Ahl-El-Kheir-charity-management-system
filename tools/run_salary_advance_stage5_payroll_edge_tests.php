@@ -228,6 +228,69 @@ try {
         }
     }
 
+    $settlementBase = findRollbackBaseFixture($pdo);
+    if ($settlementBase) {
+        $pdo->exec('SAVEPOINT stage5_full_settlement_available_fixture');
+        $pdo->prepare(
+            "UPDATE hr_salary_advance_requests
+             SET approved_repayment_method = 'full_settlement'
+             WHERE id = ?"
+        )->execute([(int)$settlementBase['request_id']]);
+
+        $settlementFixture = findEdgeFixture($pdo, 'available_salary', 'full_settlement');
+        if (!$settlementFixture) {
+            $pdo->exec('ROLLBACK TO SAVEPOINT stage5_full_settlement_available_fixture');
+            $pdo->exec('RELEASE SAVEPOINT stage5_full_settlement_available_fixture');
+            throw new RuntimeException('Rollback-only full_settlement fixture could not be prepared.');
+        }
+
+        $payrollId = nextFixturePayrollId($pdo);
+        [$preview] = runPreview($pdo, $settlementFixture, $payrollId);
+        $allocation = $preview['allocations'][0] ?? null;
+        if (!$allocation || round((float)$preview['total'], 2) !== 1.00 || $allocation['outcome'] !== 'partial') {
+            throw new RuntimeException('full_settlement + available_salary should collect the available 1.00 and record a partial outcome.');
+        }
+        echo "PASS | Full settlement — available_salary | request={$settlementFixture['request_no']} | deduction=1.00 | outcome=partial | rollback_fixture=existing_request_method_override\n";
+        $pdo->exec('ROLLBACK TO SAVEPOINT stage5_full_settlement_available_fixture');
+        $pdo->exec('RELEASE SAVEPOINT stage5_full_settlement_available_fixture');
+
+        $pdo->exec('SAVEPOINT stage5_full_settlement_skip_fixture');
+        $pdo->prepare(
+            "UPDATE hr_salary_advance_requests
+             SET approved_repayment_method = 'full_settlement'
+             WHERE id = ?"
+        )->execute([(int)$settlementBase['request_id']]);
+        $pdo->prepare(
+            "UPDATE hr_salary_advance_policy_versions
+             SET insufficient_salary_rule = 'skip_month'
+             WHERE id = (
+                 SELECT policy_version_id
+                 FROM hr_salary_advance_requests
+                 WHERE id = ?
+                 LIMIT 1
+             )"
+        )->execute([(int)$settlementBase['request_id']]);
+
+        $skipSettlementFixture = findEdgeFixture($pdo, 'skip_month', 'full_settlement');
+        if (!$skipSettlementFixture) {
+            $pdo->exec('ROLLBACK TO SAVEPOINT stage5_full_settlement_skip_fixture');
+            $pdo->exec('RELEASE SAVEPOINT stage5_full_settlement_skip_fixture');
+            throw new RuntimeException('Rollback-only full_settlement skip_month fixture could not be prepared.');
+        }
+
+        $payrollId = nextFixturePayrollId($pdo);
+        [$preview] = runPreview($pdo, $skipSettlementFixture, $payrollId);
+        $allocation = $preview['allocations'][0] ?? null;
+        if (!$allocation || round((float)$preview['total'], 2) !== 0.00 || $allocation['outcome'] !== 'skipped') {
+            throw new RuntimeException('full_settlement + skip_month should produce zero deduction and a skipped outcome.');
+        }
+        echo "PASS | Full settlement — skip_month | request={$skipSettlementFixture['request_no']} | deduction=0.00 | outcome=skipped | rollback_fixture=existing_request_policy_override\n";
+        $pdo->exec('ROLLBACK TO SAVEPOINT stage5_full_settlement_skip_fixture');
+        $pdo->exec('RELEASE SAVEPOINT stage5_full_settlement_skip_fixture');
+    } else {
+        echo "SKIP | Full-settlement insufficient-salary cases | No unused existing rollback-only fixture was available.\n";
+    }
+
     $fullFixture = findEdgeFixture($pdo, 'available_salary', 'full_eligible_salary');
     $syntheticFullFixture = false;
 
