@@ -228,7 +228,7 @@ check((int)$pdo->query("SELECT COUNT(*) FROM audit_log WHERE action = 'HR_SALARY
 
 require_once dirname(__DIR__) . '/modules/hr/lib_salary_advance_payroll.php';
 $pendingAtStart = hrSalaryAdvancePayrollPendingRows($pdo, 1, $startMonth);
-check(count($pendingAtStart) === 1, 'payroll selection returns only the first eligible installment of the active plan');
+check(count($pendingAtStart) === 1, 'payroll selection should return one active-plan installment; got ' . count($pendingAtStart) . ': ' . json_encode($pendingAtStart, JSON_UNESCAPED_UNICODE));
 check((string)$pendingAtStart[0]['scheduled_month'] === $startMonth, 'payroll selection uses the replacement plan start month');
 check((int)$pendingAtStart[0]['schedule_id'] !== 1, 'payroll selection excludes the superseded plan schedule row');
 $afterPlanHorizon = date('Y-m-01', strtotime($startMonth . ' +3 months'));
