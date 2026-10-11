@@ -181,3 +181,16 @@ Commit [eab5e1a8ba4ff98e7df74ace9c75c06bae7cf0c7](https://github.com/moneermax/A
 The test is wired into the rescheduling-service CI job by [commit 3fe1e04d81f02ccc61893991757d938e723cb026](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/commit/3fe1e04d81f02ccc61893991757d938e723cb026). [Workflow run 38126660778](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/38126660778) completed successfully; all four jobs passed, including the MariaDB 10.4.32 migration, full-schema/backfill and regression job, PHP lint, and the rescheduling-service job containing the new two-connection test.
 
 **Scope limit:** this proves the expected InnoDB parent-request lock serialization primitive and that the test runs in CI. It does not execute a simultaneous production payroll-posting transaction against a real reschedule request, and it does not prove browser-driven payroll/accounting behavior. Those remain distinct verification gates. Local XAMPP schema/integrity confirmation is also still outstanding. The migration remains unapplied to the working database; Stage 7 remains open.
+
+## 14. Actual rescheduling service under a competing row lock — 2026-10-11
+
+Commit [55c2539585b0c175a68c495264837893c18357ce](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/commit/55c2539585b0c175a68c495264837893c18357ce) upgrades the lock-order regression from testing lock acquisition alone to calling the real `hrSalaryAdvanceScheduleReschedule()` service with two independent PDO connections against the disposable CI database.
+
+- Connection A holds the salary-advance request row lock while connection B calls the service with a short InnoDB lock wait timeout.
+- The test requires the competing service call to fail with lock timeout and checks that no partial replacement plan was left behind.
+- After connection A releases its lock, connection B retries the service. The test requires a replacement plan, preservation of the previous plan as history, exactly one active plan, and one corresponding audit row.
+- The script remains guarded by the dedicated disposable database/environment variables; it also restores the intentionally removed `audit_log.user_agent` column in that disposable test database so the actual service can run after the separate audit-failure rollback test.
+
+Verification: [GitHub Actions run 38126940406](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/38126940406) completed successfully with all four jobs passing: PHP lint, MariaDB 10.4.32 migration, rescheduling service/concurrency tests, and full-schema migration plus Stage 5 schedule/payroll/edge regressions and account 1410 reconciliation.
+
+**Scope limit:** this now exercises the actual rescheduling service against a competing request-row lock, but it still does not run a simultaneous production payroll-posting transaction against a reschedule. Browser-driven payroll/accounting verification and read-only local XAMPP schema/integrity confirmation remain open. The migration has not been applied to the working database; Stage 7 remains open.
