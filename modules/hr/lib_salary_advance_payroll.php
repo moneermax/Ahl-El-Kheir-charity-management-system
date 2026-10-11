@@ -46,13 +46,13 @@ function hrSalaryAdvancePayrollPendingRows(PDO $pdo, int $employeeId, string $pe
            AND s.scheduled_month <= ?
            AND (
                p.maximum_repayment_months IS NULL
-               OR ? <= DATE_ADD(
+               OR ? < DATE_ADD(
                    (
                        SELECT MIN(plan_start.scheduled_month)
                        FROM hr_salary_advance_repayment_schedule plan_start
                        WHERE plan_start.salary_advance_request_id = r.id
                    ),
-                   INTERVAL (p.maximum_repayment_months - 1) MONTH
+                   INTERVAL p.maximum_repayment_months MONTH
                )
            )
            AND (
@@ -244,13 +244,13 @@ function hrSalaryAdvancePayrollApply(PDO $pdo, array $payroll, int $accountingEn
            AND s.scheduled_month <= ?
            AND (
                p.maximum_repayment_months IS NULL
-               OR ? <= DATE_ADD(
+               OR ? < DATE_ADD(
                    (
                        SELECT MIN(plan_start.scheduled_month)
                        FROM hr_salary_advance_repayment_schedule plan_start
                        WHERE plan_start.salary_advance_request_id = r.id
                    ),
-                   INTERVAL (p.maximum_repayment_months - 1) MONTH
+                   INTERVAL p.maximum_repayment_months MONTH
                )
            )
            AND (
