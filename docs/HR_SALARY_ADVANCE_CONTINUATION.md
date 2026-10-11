@@ -1033,7 +1033,7 @@ The payroll edge-test harness now performs the posting lifecycle inside a rollba
 
 ## 2026-10-11 — Enforce the Approved Repayment Horizon
 
-**Status: source changes and rollback-only regression test committed; local runtime verification pending.**
+**Status: source changes committed and locally verified against MariaDB on 2026-10-11; all focused checks passed.**
 
 The focused audit found that carry-forward selection had no comparison against the saved policy's `maximum_repayment_months`. As a result, an unpaid installment could continue being deducted after the approved maximum calendar window had elapsed. That conflicts with the policy limit even though the code did not add schedule rows.
 
@@ -1044,4 +1044,4 @@ Changes committed on `main`:
 - `hrSalaryAdvancePayrollApply()` now treats no eligible rows plus a zero salary-advance deduction as a valid no-op, but only after confirming the preview has no allocations. This prevents an exhausted repayment window from blocking an otherwise ordinary payroll payment; a nonzero payroll deduction with no eligible row still fails safely.
 - `tools/run_salary_advance_stage5_payroll_edge_tests.php`: added a rollback-only regression case proving a partial deduction remains eligible inside a one-month window, is no longer selected in the following month, and the resulting zero-deduction payroll application completes without adding schedule rows.
 
-**Local verification required:** after pulling the commits, run PHP lint on the payroll library and edge-test harness, then run both Stage 5 schedule and payroll edge suites. The new horizon regression must pass against local MariaDB before this change is considered runtime-verified. The next business-design task, not implemented here, is an authorized rescheduling workflow for balances that remain after the approved horizon.
+**Local verification outcome (2026-10-11):** after pulling commit range `ecfcbd56..4b6e8494`, the user ran PHP lint on both changed PHP files with no syntax errors, all four Stage 5 schedule-rule tests passed, and all eight reported payroll edge checks passed. This includes the carry-forward lifecycle, maximum repayment horizon, and rollback-only cleanup assertions. The new horizon test verified that a 1.00 partial deduction remains eligible in the approved month, is not selected in the next month, and no extra schedule row is created. The post-horizon zero-deduction payroll application also completed as a no-op. The next business-design task, not implemented here, is an authorized rescheduling workflow for balances that remain after the approved horizon.
