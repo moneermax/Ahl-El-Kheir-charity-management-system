@@ -65,7 +65,21 @@ The current schedule's unique keys prevent inserting a second row for the same r
 
 The exact migration design should follow the repository's actual MariaDB schema and current query patterns during implementation; this audit does not create or assume new columns.
 
-## 6. Implementation plan
+## 6. Implementation progress — not yet complete or runtime-verified
+
+The following foundational code has now been committed to `main`:
+
+- `database/migrations/2026-10-11_hr_salary_advance_rescheduling.sql` adds a disabled-by-default policy authorization flag, versioned plan metadata, a plan reference on schedule rows, and a backfill for existing schedules.
+- `modules/hr/lib_salary_advance_policy.php` validates the new policy setting.
+- `modules/hr/salary_advance_policy.php` exposes the setting to FM when creating a future policy version.
+- `modules/hr/lib_salary_advance_repayment.php` creates a first plan for newly generated schedules.
+- `modules/hr/lib_salary_advance_payroll.php` limits both preview and posting to the active plan and evaluates the horizon from that plan's start month and duration.
+
+Relevant commits: `69ccd60`, `d3d62e1`, `a6252c4`, `b2cdd75`, `3afdbdd`, `8c53838`.
+
+**These are foundational changes, not a finished rescheduling feature.** The FM rescheduling form/service, authorization enforcement at execution, plan replacement workflow, rollback-only tests, MariaDB migration execution, PHP lint, payroll regression verification, and reconciliation have not yet been completed. Do not apply the migration to a live/important database until the migration has been reviewed and tested against the actual local schema. Existing policies default to no rescheduling authorization.
+
+## 7. Remaining implementation plan
 
 The approval-authority decision is closed; the remaining work is engineering, not another approval discussion.
 
