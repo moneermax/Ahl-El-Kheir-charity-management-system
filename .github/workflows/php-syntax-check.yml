@@ -1,4 +1,4 @@
-name: Salary advance PHP syntax check
+name: Salary advance verification
 
 on:
   push:
@@ -20,6 +20,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
+          extensions: pdo_mysql
           coverage: none
 
       - name: Lint salary-advance PHP files
@@ -35,7 +36,44 @@ jobs:
             modules/hr/salary_advance_processing.php
             modules/hr/salary_advance_request.php
             modules/accounting/lib_transaction_review.php
+            tools/test_salary_advance_rescheduling_migration.php
           )
           for file in "${files[@]}"; do
             php -l "$file"
           done
+
+  migration-mariadb-10-4:
+    runs-on: ubuntu-latest
+    services:
+      mariadb:
+        image: mariadb:10.4.32
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: salary_advance_migration_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up PHP 8.2 with PDO MySQL
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo_mysql
+          coverage: none
+
+      - name: Verify migration on disposable MariaDB 10.4.32
+        env:
+          SALARY_ADVANCE_MIGRATION_TEST: '1'
+          DB_HOST: 127.0.0.1
+          DB_PORT: '3306'
+          DB_DATABASE: salary_advance_migration_test
+          DB_USERNAME: root
+          DB_PASSWORD: root
+        run: php tools/test_salary_advance_rescheduling_migration.php
