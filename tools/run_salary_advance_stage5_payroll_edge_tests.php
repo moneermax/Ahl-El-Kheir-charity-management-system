@@ -49,8 +49,7 @@ function findEdgeFixture(PDO $pdo, string $rule, ?string $method = null): ?array
             WHERE r.status = 'disbursed'
               AND COALESCE(r.outstanding_balance, 0) > 0
               AND s.status IN ('pending', 'partial')
-              AND s.scheduled_month <= DATE_FORMAT(CURRENT_DATE, '%Y-%m-01')
-              AND (rp.maximum_repayment_months IS NULL OR
+                            AND (rp.maximum_repayment_months IS NULL OR
                    s.scheduled_month < DATE_ADD(rp.start_month, INTERVAL rp.maximum_repayment_months MONTH))
               AND p.insufficient_salary_rule = ?
               AND COALESCE(s.scheduled_amount - s.applied_amount, 0) > 1.00
@@ -119,8 +118,7 @@ function findHorizonFixture(PDO $pdo): ?array
            AND p.insufficient_salary_rule = 'available_salary'
            AND s.installment_no = 1
            AND s.status IN ('pending', 'partial')
-           AND s.scheduled_month <= DATE_FORMAT(CURRENT_DATE, '%Y-%m-01')
-           AND (rp.maximum_repayment_months IS NULL OR
+                      AND (rp.maximum_repayment_months IS NULL OR
                 s.scheduled_month < DATE_ADD(rp.start_month, INTERVAL rp.maximum_repayment_months MONTH))
            AND COALESCE(s.scheduled_amount - s.applied_amount, 0) > 2.00
            AND NOT EXISTS (
