@@ -232,3 +232,18 @@ Added `tools/inspect_salary_advance_rescheduling_prerequisites.php` to make the 
 The tool is included in the PHP syntax CI job. After the latest `main` commits are pulled locally, run it from the repository root with the XAMPP PHP CLI. Its output will determine whether the local database is in the expected pre-migration state or needs investigation before any schema change.
 
 **Scope limit:** CI passing does not replace this local read-only check or browser-driven verification. Stage 7 remains open and the local migration remains unapplied.
+
+
+## 18. Automatic repayment installment recommendation during first FM approval — 2026-10-11
+
+The first-approval workflow now calculates the minimum fixed monthly installment needed to finish within the saved policy's maximum repayment period, rounds the recommendation upward to two decimal places, and pre-fills the FM customization form when the requested installment would exceed that period. The FM can review or adjust the amount before approval. If the calculated amount exceeds the saved policy's maximum monthly deduction, the UI explains that the requested amount cannot fit the policy horizon under the current cap; the recommendation is not silently applied as an exception.
+
+The request validation helper now accepts the candidate approved terms when checking policy mismatches. This closes the prior gap where marking terms as customized skipped all policy mismatch checks: customized amount, repayment method, monthly installment, repayment duration, and start-month constraints are checked against the saved policy before the approval can be committed. The disbursement schedule generator's existing duration guard remains unchanged.
+
+A rollback-free pure calculation regression has been added to the disposable full-schema test for:
+- 70,000 over six months at a 15,000 monthly cap, recommending 11,666.67;
+- the same recommendation being blocked by a 10,000 monthly cap;
+- upward currency-precision rounding; and
+- refusing to recommend an installment when there is no finite policy horizon.
+
+GitHub Actions verification for these changes is pending at the time of this note. This is repository/CI work only; the local XAMPP browser workflow has not been exercised by this change.
