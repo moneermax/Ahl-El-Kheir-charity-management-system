@@ -214,16 +214,16 @@ function hrPayrollChangeStatus(PDO $pdo, int $payrollId, string $newStatus, ?int
         throw new RuntimeException('سجل الرواتب غير صالح.');
     }
 
-    // Accounting table initialization contains DDL. Do it before opening
-    // the transaction so it cannot implicitly commit the payroll transaction.
-    require_once dirname(__DIR__) . '/accounting/lib.php';
-    ak_ensure_tables();
-    ak_seed_accounts();
-
-    $startedHere = false;
-    if (!$pdo->inTransaction()) {
+    // Accounting initialization may execute DDL, which can implicitly
+    // commit in MySQL/MariaDB. Only initialize it when this function owns the
+    // transaction boundary; callers with an existing transaction must prepare
+    // the accounting schema before entering it.
+    $startedHere = !$pdo->inTransaction();
+    if ($startedHere) {
+        require_once dirname(__DIR__) . '/accounting/lib.php';
+        ak_ensure_tables();
+        ak_seed_accounts();
         $pdo->beginTransaction();
-        $startedHere = true;
     }
 
     try {
