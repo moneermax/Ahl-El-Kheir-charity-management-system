@@ -152,3 +152,12 @@ The expanded workflow [run 38125299220](https://github.com/moneermax/Ahl-El-Khei
 All completed successfully against the disposable CI database. The workflow change also lints these scripts. This is CI evidence, not evidence that the migration has been applied to the user's local XAMPP database or that a browser-driven end-to-end payroll posting was exercised.
 
 The payroll and rescheduling services both use InnoDB transactions and row locks, but their SQL lock acquisition order differs: payroll starts from the joined eligible schedule query, while rescheduling locks the request first and then its active plan. No lock-order change is made based solely on inspection; a controlled two-connection concurrency regression remains a separate gate. Until that test and local schema/integrity confirmation are complete, do not apply the migration to the working database or mark Stage 7 closed.
+
+
+## 11. Ordered payroll/rescheduling locks — 2026-10-11
+
+Commit [dfbc193354fda8f1a5295143026d8659e5a08fd6](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/commit/dfbc193354fda8f1a5295143026d8659e5a08fd6) now locks the employee's outstanding disbursed salary-advance request rows in ascending request ID order before payroll locks eligible schedule/plan rows. This aligns the parent-request lock order with rescheduling's request-then-plan order and reduces one avoidable source of lock inversion. The change does not alter repayment amounts, schedule selection, or accounting behavior.
+
+Verification: [GitHub Actions run 38126111808](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/38126111808) passed all four jobs: PHP lint, MariaDB 10.4.32 migration, full checked-in schema/backfill migration, and rescheduling-service tests (including the Stage 5 schedule/payroll/edge regressions and account 1410 reconciliation in the full-schema job). This establishes regression compatibility for the new lock acquisition step; it is **not** a substitute for a controlled two-connection concurrency test or a browser-driven end-to-end payroll/accounting posting test.
+
+The local XAMPP schema/integrity confirmation remains outstanding. The migration has not been applied to the working database. Do not mark Stage 7 complete until the local schema, concurrency behavior, and full application payroll/accounting path are verified.
