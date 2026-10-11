@@ -173,6 +173,7 @@ $policy = $pdo->prepare("INSERT INTO hr_salary_advance_policy_versions (id, allo
 $policy->execute([1, 1]);
 $policy->execute([2, 0]);
 $pdo->exec("INSERT INTO employees (id, user_id) VALUES (1, 9001)");
+$pdo->exec("INSERT INTO employees (id, user_id) VALUES (2, NULL), (3, NULL), (4, NULL), (5, NULL), (6, NULL), (7, NULL), (8, NULL)");
 
 $requests = [
     [1, 'ADV-RESCHED-1', 1, 'fixed_monthly', 500.00],
@@ -187,10 +188,10 @@ $requests = [
 $insertRequest = $pdo->prepare("
     INSERT INTO hr_salary_advance_requests
         (id, request_no, employee_id, policy_version_id, status, outstanding_balance, approved_repayment_method)
-    VALUES (?, ?, 1, ?, 'disbursed', ?, ?)
+    VALUES (?, ?, ?, ?, 'disbursed', ?, ?)
 ");
 foreach ($requests as [$id, $requestNo, $policyId, $method, $balance]) {
-    $insertRequest->execute([$id, $requestNo, $policyId, $balance, $method]);
+    $insertRequest->execute([$id, $requestNo, $id, $policyId, $balance, $method]);
 }
 
 $oldStart = '2020-01-01';
