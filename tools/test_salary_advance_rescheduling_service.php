@@ -276,6 +276,20 @@ check((float)$pdo->query("SELECT outstanding_balance_at_creation FROM hr_salary_
 check((int)$staleFormResult['schedule_rows'] === 2, 'replacement schedule duration is based on the live outstanding balance');
 check((float)$pdo->query("SELECT SUM(scheduled_amount) FROM hr_salary_advance_repayment_schedule WHERE repayment_plan_id = " . (int)$staleFormResult['plan_id'])->fetchColumn() === 350.00, 'replacement schedule covers exactly the current outstanding balance');
 
+// Stub the delivery layer so the caller's post-commit failure isolation is testable.
+$GLOBALS['salaryAdvanceNotificationFailureCalls'] = 0;
+function ak_transaction_review_notify_event(
+    int $userId,
+    string $title,
+    string $body,
+    string $link,
+    ?int $referenceId = null,
+    ?string $referenceType = null
+): void {
+    $GLOBALS['salaryAdvanceNotificationFailureCalls']++;
+    throw new RuntimeException('Forced notification delivery failure for test.');
+}
+
 require_once dirname(__DIR__) . '/modules/hr/lib_salary_advance_payroll.php';
 $pendingAtStart = hrSalaryAdvancePayrollPendingRows($pdo, 1, $startMonth);
 check(count($pendingAtStart) === 1, 'payroll selection should return one active-plan installment; got ' . count($pendingAtStart) . ': ' . json_encode($pendingAtStart, JSON_UNESCAPED_UNICODE));
@@ -411,6 +425,12 @@ check($duplicatePayrollRejected, 'a repeated payroll application is rejected aft
 check((float)$pdo->query("SELECT outstanding_balance FROM hr_salary_advance_requests WHERE id = 1")->fetchColumn() === 300.00, 'repeated payroll application cannot reduce the balance twice');
 check((int)$pdo->query("SELECT COUNT(*) FROM hr_salary_advance_payroll_repayments WHERE salary_advance_request_id = 1 AND payroll_id = 101")->fetchColumn() === 1, 'repeated payroll application cannot duplicate the repayment trace');
 
+// A delivery-layer failure after commit must not bubble up as a failed payroll action.
+hrSalaryAdvancePayrollNotifyApplied($pdo, 101);
+check((int)$GLOBALS['salaryAdvanceNotificationFailureCalls'] === 1, 'payroll notification was attempted exactly once in the failure fixture');
+check((float)$pdo->query("SELECT outstanding_balance FROM hr_salary_advance_requests WHERE id = 1")->fetchColumn() === 300.00, 'notification failure leaves the already-committed repayment balance unchanged');
+check((int)$pdo->query("SELECT COUNT(*) FROM hr_salary_advance_payroll_repayments WHERE salary_advance_request_id = 1 AND payroll_id = 101")->fetchColumn() === 1, 'notification failure leaves the committed repayment trace unchanged');
+
 // Force an audit-write failure and prove the plan/schedule changes roll back.
 $pdo->exec("ALTER TABLE audit_log DROP COLUMN user_agent");
 $beforeSchedules = (int)$pdo->query("SELECT COUNT(*) FROM hr_salary_advance_repayment_schedule WHERE salary_advance_request_id = 7")->fetchColumn();
@@ -424,4 +444,4 @@ check((int)$pdo->query("SELECT COUNT(*) FROM hr_salary_advance_repayment_plans W
 check((string)$pdo->query("SELECT status FROM hr_salary_advance_repayment_plans WHERE salary_advance_request_id = 7")->fetchColumn() === 'active', 'audit failure leaves the original plan active');
 check((int)$pdo->query("SELECT COUNT(*) FROM hr_salary_advance_repayment_schedule WHERE salary_advance_request_id = 7")->fetchColumn() === $beforeSchedules, 'audit failure rolls back inserted schedule rows');
 
-echo "PASS: reschedule safeguards, live-balance revalidation, active-plan payroll preview/posting/horizon, duplicate-posting rejection, multiple-active-plan guard, history preservation, audit events, and transaction rollback.\n";
+echo "PASS: reschedule safeguards, live-balance revalidation, notification-failure isolation, active-plan payroll preview/posting/horizon, duplicate-posting rejection, multiple-active-plan guard, history preservation, audit events, and transaction rollback.\n";
