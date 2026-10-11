@@ -239,6 +239,30 @@ $afterPlanHorizon = date('Y-m-01', strtotime($startMonth . ' +3 months'));
 $pendingAfterHorizon = hrSalaryAdvancePayrollPendingRows($pdo, 1, $afterPlanHorizon);
 check($pendingAfterHorizon === [], 'payroll selection excludes installments beyond the active plan horizon');
 
+$preview = hrSalaryAdvancePayrollCalculateDraft($pdo, [
+    'id' => 101,
+    'employee_id' => 1,
+    'basic_salary' => 1000.00,
+    'allowances' => 0.00,
+    'overtime' => 0.00,
+    'deductions' => 0.00,
+    'attendance_deduction' => 0.00,
+], $startMonth);
+check((float)$preview['total'] === 200.00, 'payroll preview calculates only the active replacement plan installment');
+check(count($preview['allocations']) === 1, 'payroll preview exposes one active-plan allocation');
+check((int)$preview['allocations'][0]['schedule_id'] === $firstReplacementScheduleId, 'payroll preview references the replacement-plan schedule row');
+
+$previewAfterHorizon = hrSalaryAdvancePayrollCalculateDraft($pdo, [
+    'id' => 102,
+    'employee_id' => 1,
+    'basic_salary' => 1000.00,
+    'allowances' => 0.00,
+    'overtime' => 0.00,
+    'deductions' => 0.00,
+    'attendance_deduction' => 0.00,
+], $afterPlanHorizon);
+check((float)$previewAfterHorizon['total'] === 0.00 && $previewAfterHorizon['allocations'] === [], 'payroll preview produces no deduction beyond the active plan horizon');
+
 expectRescheduleRejected(
     fn() => hrSalaryAdvanceScheduleReschedule($pdo, 2, $startMonth, 3, 200.00, 'Policy disabled test', 77),
     'saved policy authorization disabled',
@@ -304,4 +328,4 @@ check((int)$pdo->query("SELECT COUNT(*) FROM hr_salary_advance_repayment_plans W
 check((string)$pdo->query("SELECT status FROM hr_salary_advance_repayment_plans WHERE salary_advance_request_id = 7")->fetchColumn() === 'active', 'audit failure leaves the original plan active');
 check((int)$pdo->query("SELECT COUNT(*) FROM hr_salary_advance_repayment_schedule WHERE salary_advance_request_id = 7")->fetchColumn() === $beforeSchedules, 'audit failure rolls back inserted schedule rows');
 
-echo "PASS: successful reschedule, active-plan payroll selection/horizon, specific rejection reasons, multiple-active-plan guard, history preservation, audit event, and transaction rollback.\n";
+echo "PASS: reschedule safeguards, active-plan payroll selection and preview/horizon, multiple-active-plan guard, history preservation, audit event, and transaction rollback.\n";
