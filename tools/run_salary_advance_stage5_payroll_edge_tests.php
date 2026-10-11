@@ -291,6 +291,19 @@ try {
         echo "SKIP | Full-settlement insufficient-salary cases | No unused existing rollback-only fixture was available.\n";
     }
 
+    // Source-level regression guard: overdue skipped rows must be eligible,
+    // while only the oldest unpaid installment for each request is selected.
+    $payrollSource = file_get_contents(__DIR__ . '/../modules/hr/lib_salary_advance_payroll.php');
+    if (
+        !is_string($payrollSource) ||
+        strpos($payrollSource, "s.scheduled_month <= ?") === false ||
+        strpos($payrollSource, "s.status = 'skipped' AND s.scheduled_month < ?") === false ||
+        strpos($payrollSource, "earlier.status = 'skipped' AND earlier.scheduled_month < ?") === false
+    ) {
+        throw new RuntimeException('Carry-forward source guard failed: overdue skipped installments are not included in the payroll selection.');
+    }
+    echo "PASS | Carry-forward source guard | overdue skipped installments are eligible and oldest unpaid installment is selected.\n";
+
     $fullFixture = findEdgeFixture($pdo, 'available_salary', 'full_eligible_salary');
     $syntheticFullFixture = false;
 
