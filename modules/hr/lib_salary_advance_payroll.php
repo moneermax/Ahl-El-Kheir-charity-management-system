@@ -36,6 +36,9 @@ function hrSalaryAdvancePayrollPendingRows(PDO $pdo, int $employeeId, string $pe
             p.insufficient_salary_rule,
             p.eligible_salary_basis
          FROM hr_salary_advance_repayment_schedule s
+         JOIN hr_salary_advance_repayment_plans rp
+           ON rp.id = s.repayment_plan_id
+          AND rp.status = 'active'
          JOIN hr_salary_advance_requests r
            ON r.id = s.salary_advance_request_id
          JOIN hr_salary_advance_policy_versions p
@@ -234,6 +237,9 @@ function hrSalaryAdvancePayrollApply(PDO $pdo, array $payroll, int $accountingEn
                 s.scheduled_amount, s.applied_amount, s.status AS schedule_status,
                 r.status AS request_status, r.outstanding_balance
          FROM hr_salary_advance_repayment_schedule s
+         JOIN hr_salary_advance_repayment_plans rp
+           ON rp.id = s.repayment_plan_id
+          AND rp.status = 'active'
          JOIN hr_salary_advance_requests r
            ON r.id = s.salary_advance_request_id
          JOIN hr_salary_advance_policy_versions p
