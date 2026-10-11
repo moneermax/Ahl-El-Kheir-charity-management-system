@@ -175,6 +175,12 @@ try {
 
 require_once dirname(__DIR__) . '/modules/hr/lib_salary_advance_request.php';
 
+$approvedTermsValid = hrSalaryAdvanceFixedMonthlyTermMismatches(70000.00, 11666.67, 15000.00, 6);
+expectFullSchema($approvedTermsValid === [], 'A candidate installment within the monthly cap and six-month horizon must pass.');
+$requestedTermsInvalid = hrSalaryAdvanceFixedMonthlyTermMismatches(70000.00, 10000.00, 15000.00, 6);
+expectFullSchema(count($requestedTermsInvalid) === 1, 'The original installment must fail the six-month duration rule.');
+$customTermsOverCap = hrSalaryAdvanceFixedMonthlyTermMismatches(70000.00, 11666.67, 10000.00, 6);
+expectFullSchema(count($customTermsOverCap) >= 1, 'Customized terms must not bypass the saved monthly deduction cap.');
 $recommended = hrSalaryAdvanceRecommendMonthlyInstallment(70000.00, 6, 15000.00);
 expectFullSchema($recommended['monthly_amount'] === 11666.67, 'Automatic installment recommendation must round up to the cent needed to fit six months.');
 expectFullSchema($recommended['within_policy_cap'] === true, 'A recommendation below the policy monthly cap must be eligible.');
