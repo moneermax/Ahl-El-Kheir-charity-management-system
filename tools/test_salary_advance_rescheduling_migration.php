@@ -80,14 +80,15 @@ $pdo->exec("
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ");
 
-$pdo->exec("INSERT INTO hr_salary_advance_policy_versions (id, maximum_monthly_deduction, maximum_repayment_months) VALUES (1, 200.00, 12)");
-$pdo->exec("INSERT INTO hr_salary_advance_requests (id, policy_version_id, outstanding_balance) VALUES (1, 1, 500.00)");
+$pdo->exec("INSERT INTO hr_salary_advance_policy_versions (id, maximum_monthly_deduction, maximum_repayment_months) VALUES (1, 200.00, 12), (2, 100.00, NULL)");
+$pdo->exec("INSERT INTO hr_salary_advance_requests (id, policy_version_id, outstanding_balance) VALUES (1, 1, 500.00), (2, 2, 300.00)");
 $pdo->exec("
     INSERT INTO hr_salary_advance_repayment_schedule
         (salary_advance_request_id, installment_no, scheduled_month, scheduled_amount)
     VALUES
         (1, 1, '2026-01-01', 200.00),
-        (1, 2, '2026-02-01', 200.00)
+        (1, 2, '2026-02-01', 200.00),
+        (2, 1, '2026-03-01', 100.00)
 ");
 
 $migrationPath = dirname(__DIR__) . '/database/migrations/2026-10-11_hr_salary_advance_rescheduling.sql';
@@ -111,6 +112,10 @@ expect(is_array($plan), 'Legacy schedule must be backfilled into initial plan 1.
 expect((string)$plan['start_month'] === '2026-01-01', 'Backfilled plan must start at the earliest legacy scheduled month.');
 expect((int)$plan['maximum_repayment_months'] === 12, 'Backfilled plan must preserve policy duration.');
 expect((float)$plan['maximum_monthly_deduction'] === 200.0, 'Backfilled plan must preserve policy monthly cap.');
+
+$unboundedPlan = $pdo->query("SELECT maximum_repayment_months FROM hr_salary_advance_repayment_plans WHERE salary_advance_request_id = 2 AND plan_no = 1")->fetch();
+expect(is_array($unboundedPlan), 'Legacy schedule under a policy without a fixed horizon must receive an initial plan.');
+expect($unboundedPlan['maximum_repayment_months'] === null, 'Backfill must preserve a NULL policy duration as an unbounded plan.');
 
 $schedule = $pdo->query("SELECT COUNT(*) AS total, SUM(repayment_plan_id IS NOT NULL) AS linked FROM hr_salary_advance_repayment_schedule WHERE salary_advance_request_id = 1")->fetch();
 expect((int)$schedule['total'] === 2 && (int)$schedule['linked'] === 2, 'All legacy schedule rows must remain and link to the backfilled plan.');
@@ -138,4 +143,4 @@ expect($count === 1, 'Re-running the migration must not duplicate the initial re
 $scheduleCount = (int)$pdo->query("SELECT COUNT(*) FROM hr_salary_advance_repayment_schedule WHERE salary_advance_request_id = 1")->fetchColumn();
 expect($scheduleCount === 2, 'Re-running the migration must not duplicate or remove legacy schedule rows.');
 
-echo "PASS: Stage 7 migration, legacy backfill, policy default, plan-scoped indexes, and rerun safety.\n";
+echo "PASS: Stage 7 migration, finite/unbounded legacy backfill, policy default, plan-scoped indexes, and rerun safety.\n";
