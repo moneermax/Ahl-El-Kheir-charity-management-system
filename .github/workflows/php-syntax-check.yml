@@ -40,6 +40,7 @@ jobs:
             tools/test_salary_advance_rescheduling_service.php
             tools/test_salary_advance_rescheduling_lock_order.php
             tools/test_salary_advance_rescheduling_full_schema.php
+            tools/test_salary_advance_rescheduling_payroll_concurrency.php
             tools/run_salary_advance_stage5_schedule_tests.php
             tools/run_salary_advance_stage5_payroll_tests.php
             tools/run_salary_advance_stage5_payroll_edge_tests.php
@@ -185,3 +186,4 @@ jobs:
           php tools/run_salary_advance_stage5_payroll_tests.php
           php tools/run_salary_advance_stage5_payroll_edge_tests.php
           php tools/run_salary_advance_1410_reconciliation.php
+          php tools/test_salary_advance_rescheduling_payroll_concurrency.php
