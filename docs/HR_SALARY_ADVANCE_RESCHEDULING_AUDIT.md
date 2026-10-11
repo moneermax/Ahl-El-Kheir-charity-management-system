@@ -50,10 +50,10 @@ The `maximum_repayment_months` value remains the normal schedule duration bounda
 
 1. A reschedule must be an explicit, authorized decision. Payroll must never extend the expired horizon on its own.
 2. Preserve the original approved policy version, original schedule rows, payroll repayment allocations, posted journals, and audit trail.
-3. Record the reason, old and proposed terms, who prepared the request, who approved/rejected it, timestamps, effective month, and the identity of the new schedule version.
+3. Record the reason, old and proposed terms, executing FM user, timestamp, effective month, and new schedule identity. The saved policy flag represents prior GM/FM policy agreement; this workflow does not require a second GM decision for each reschedule.
 4. Enforce the new plan's monthly deduction and duration limits from the approved terms; do not mutate the original policy version.
 5. Revalidate the live outstanding balance and repayment history under transaction locks at approval/execution time; reject stale proposals if the balance or repayment basis changed.
-6. Activate a new schedule only after the required approval. Old unpaid rows must become ineligible without deleting or rewriting historical paid/partial/skipped rows.
+6. Activate a new schedule atomically with the audit event after all policy and balance checks pass. Old unpaid rows must become ineligible without deleting or rewriting historical paid/partial/skipped rows.
 7. Keep preview and posting eligibility identical; protect against duplicate approval/execution and concurrent payroll posting.
 8. Emit notifications only after the relevant transaction commits; notification failure must not roll back financial work.
 9. Use a migration for schema changes. No runtime DDL, triggers, or views.
@@ -83,13 +83,13 @@ Relevant commits: `69ccd60`, `d3d62e1`, `a6252c4`, `b2cdd75`, `3afdbdd`, `8c5383
 
 The approval-authority decision is closed; the remaining work is engineering, not another approval discussion.
 
-1. Add a policy-version flag that explicitly authorizes FM-managed rescheduling beyond the normal maximum horizon. Existing policies must default to **not authorized** so their existing behavior is unchanged.
-2. Introduce versioned repayment plans/reschedule records without deleting, renumbering, or rewriting the original schedule, applied payroll allocations, direct repayments, waiver decisions, or posted journals.
-3. Record reason, actor, timestamp, prior-plan reference, new-plan reference, outstanding balance at decision time, start month, duration, and monthly terms. Recheck balance/history under transaction locks before activation.
-4. Update both payroll preview and payroll-paid application to select only the active plan and enforce the same policy flag, monthly deduction cap, and duration rules. An expired plan must remain ineligible unless a qualifying FM reschedule is explicitly recorded.
-5. Add an FM-only authorized workflow with idempotency/concurrency protection, audit events, and post-commit notifications. Do not add a second GM approval step.
-6. Add rollback-only MariaDB tests for policy default/authorization, in-policy reschedule, exception beyond horizon, monthly-cap enforcement, stale balance, duplicate/concurrent attempts, original schedule/history preservation, active-plan selection, payroll preview/posting parity, and notification failure isolation.
-7. Run local PHP lint and the focused tests; inspect reconciliation; then update the master continuation docs and record the verified commit.
+1. **Implemented in source:** the policy-version flag defaults to not authorized, preserving existing policy behavior.
+2. **Implemented in source:** versioned repayment plans and plan-linked schedules preserve historical schedule rows and applied payroll references.
+3. **Implemented in source:** FM execution records reason, actor, timestamp, old/new plan details, and the locked outstanding balance; request and active-plan reads, schedule inserts, and audit writes use the supplied PDO transaction.
+4. **Implemented in source:** payroll preview/posting select active-plan rows and preserve no-horizon policies; the rescheduling service requires a finite expired active plan, valid policy duration/cap, and a repayment method handled through payroll.
+5. **Implemented in source:** an FM-only page exposes eligible expired plans; the employee notification is sent after commit and notification errors do not undo the financial transaction.
+6. **Still required:** rollback-only MariaDB tests for allowed/denied reschedule, current-horizon rejection, policy cap, duration coverage, rollback, history preservation, active-plan payroll selection, and notification isolation.
+7. **Still required:** local PHP lint, migration execution against a disposable database, focused payroll tests, and reconciliation review. Do not mark complete before these checks pass.
 
 Implementation must begin with the actual schema/query inventory, not assumed column names. Do not apply any migration automatically or use runtime DDL.
 
@@ -106,7 +106,7 @@ The following source work now exists on `main`:
 - Corrected the versioned-plan migration and initial-plan generator so a policy with `maximum_repayment_months IS NULL` retains an unbounded plan duration. Both payroll queries explicitly preserve the existing no-fixed-horizon behavior for those policies. This avoids accidentally stopping payroll after one month for a policy that deliberately has no duration boundary.
 - Tightened the migration's plan-duration column to nullable even if an earlier draft of the new table had already been created.
 
-Source commits for this continuation include `365c7ca`, `050a4c8`, `688b2ce`, `801411f`, `ca53bc5`, `1d2180e`, `3404e72`, `9ee080e`, `1f2872d`, `8523a92`, `69eebd9`, `94e255b`, `91cde79`, `635ccf4`, `f776dc7`, and `f4cec9f`.
+Source commits for this continuation include `365c7ca`, `050a4c8`, `688b2ce`, `801411f`, `ca53bc5`, `1d2180e`, `3404e72`, `9ee080e`, `1f2872d`, `8523a92`, `69eebd9`, `94e255b`, `91cde79`, `635ccf4`, `f776dc7`, `f4cec9f`, `47c6f30`, `def80c6`, `2e4c2e3`, `109318d`, and `f3f7ee3`.
 
 ### Verification gate and known limits
 
