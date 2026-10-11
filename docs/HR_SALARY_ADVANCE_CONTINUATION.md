@@ -1007,7 +1007,7 @@ Source changes committed directly to `main`:
 
 **Verification note at implementation time:** local PHP lint and rollback-only tests had not yet been run when this section was first written. The local verification outcome recorded below supersedes that interim status.
 
-**Known broader schedule behavior to watch during runtime verification:** the existing schedule design pre-generates a finite number of monthly rows from the maximum permitted deduction. A persistently low salary or repeated skipped months can leave an outstanding balance after the planned horizon. The request's outstanding balance is only reduced by the actual payroll deduction, so the accounting balance is not erased, but the remaining amount may need an explicit rescheduling workflow. This fix does not change the schema or silently extend the saved maximum-months policy.
+**Schedule-horizon boundary:** repeated low-salary partials or skipped months can leave an outstanding balance after the approved repayment window. The balance is not erased or settled automatically. The follow-up source fix documented below now stops automatic payroll selection after a configured `maximum_repayment_months` window; an authorized rescheduling workflow is still needed if the organization wishes to approve a new plan. A NULL maximum does not define a fixed calendar-duration boundary.
 
 
 **Local verification outcome (2026-10-11):** all six changed PHP files passed `php -l`; `tools/run_salary_advance_stage5_schedule_tests.php` reported all four tests passed; `tools/run_salary_advance_stage5_payroll_edge_tests.php` passed both full-settlement insufficient-salary policy branches and reported rollback-only cleanup with no payroll/request/schedule/journal mutation committed.
@@ -1022,10 +1022,25 @@ Source changes committed directly to `main`:
 The deeper payroll posting review confirmed that the `available_salary` / `skip_month` policy label promised carry-forward, but the payroll selection queried only installments whose scheduled month exactly matched the current payroll month. Skipped installments were marked `skipped`, so they could never be selected again. The same exact-month filter also stranded overdue pending or partial installments.
 
 Source fix in `modules/hr/lib_salary_advance_payroll.php`:
-- Payroll preview and payroll-paid application now consider installments scheduled on or before the current payroll month.
-- Pending and partial installments can be carried forward when overdue; a skipped installment becomes eligible again only in a later month, preserving its skipped outcome for the original month in the repayment trace.
+- Payroll preview and payroll-paid application consider installments scheduled on or before the current payroll month, but only while the current period remains within the request's saved policy `maximum_repayment_months` window.
+- Pending and partial installments can be carried forward when overdue within that approved window; a skipped installment becomes eligible again only in a later month, preserving its skipped outcome for the original month in the repayment trace.
+- If a configured maximum duration has elapsed with an unpaid balance, automatic payroll selection stops. It does not create new schedule rows or silently extend the approved duration; the balance remains outstanding pending an explicitly authorized rescheduling decision. When the saved policy has no maximum-month value, no fixed calendar-duration cutoff is inferred.
 - A correlated earlier-installment check selects only the oldest unpaid eligible installment for each salary advance in a payroll period. This prevents multiple accumulated installments for the same request from being deducted together and bypassing its monthly deduction cap.
 - The locked-row query and schedule update predicate use the same carry-forward eligibility rule. Existing waiver checks, request outstanding-balance checks, transaction boundaries, duplicate payroll trace protection, and audit writes remain in place.
 - A skipped payroll posting leaves the outstanding balance unchanged. Since MySQL can report zero changed rows for a valid no-op update, the posting code now confirms the locked request and unchanged balance instead of incorrectly failing the transaction.
 
 The payroll edge-test harness now performs the posting lifecycle inside a rollback-only database transaction: it posts a zero-value skipped repayment, verifies the persisted skipped trace and schedule status, then verifies that the same schedule row is eligible for a partial repayment in the following month. All fixture mutations, including the policy override, schedule statuses, payroll, repayment trace, and audit rows, are rolled back by the harness. **Local verification outcome (2026-10-11):** both changed PHP files passed `php -l`; all four schedule-rule tests passed; all payroll edge cases passed, including the database-backed carry-forward lifecycle (first-month skipped trace at `0.00`, same installment eligible the following month for a `1.00` partial repayment); rollback-only cleanup reported no committed payroll/request/schedule/journal mutation.
+
+## 2026-10-11 — Enforce the Approved Repayment Horizon
+
+**Status: source and rollback-only regression test committed; local runtime verification pending.**
+
+The focused audit found that carry-forward selection had no comparison against the saved policy's `maximum_repayment_months`. As a result, an unpaid installment could continue being deducted after the approved maximum calendar window had elapsed. That conflicts with the policy limit even though the code did not add schedule rows.
+
+Changes committed on `main`:
+- `modules/hr/lib_salary_advance_payroll.php`: both preview selection and the payroll-paid locking query now enforce the same maximum-duration boundary, calculated from the first scheduled month and the request's own saved policy version. This keeps preview and posting eligibility aligned.
+- Carry-forward still works inside the approved window. After the configured window, the unpaid balance and schedule history remain intact, but payroll does not automatically deduct the overdue installment. No new schedule rows are generated and no policy limit is silently extended.
+- A policy version with `maximum_repayment_months IS NULL` has no fixed calendar-duration boundary, so existing carry-forward behavior remains for that explicit configuration.
+- `tools/run_salary_advance_stage5_payroll_edge_tests.php`: added a rollback-only regression case proving a partial deduction remains eligible inside a one-month window and is no longer selected in the following month; it also asserts that the schedule row count is unchanged.
+
+**Local verification required:** after pulling the commits, run PHP lint on the payroll library and edge-test harness, then run both Stage 5 schedule and payroll edge suites. The new horizon regression must pass against local MariaDB before this change is considered runtime-verified. The next business-design task, not implemented here, is an authorized rescheduling workflow for balances that remain after the approved horizon.
