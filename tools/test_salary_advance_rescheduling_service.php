@@ -31,6 +31,21 @@ function dbFetchAll(string $sql, array $params = []): array
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
+function dbFetchOne(string $sql, array $params = []): ?array
+{
+    $stmt = $GLOBALS['salaryAdvanceRescheduleTestPdo']->prepare($sql);
+    $stmt->execute($params);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    return $row === false ? null : $row;
+}
+
+function dbExecute(string $sql, array $params = []): int
+{
+    $stmt = $GLOBALS['salaryAdvanceRescheduleTestPdo']->prepare($sql);
+    $stmt->execute($params);
+    return $stmt->rowCount();
+}
+
 function check(bool $condition, string $message): void
 {
     if (!$condition) {
@@ -56,6 +71,7 @@ function expectRescheduleRejected(callable $operation, string $case, string $exp
 }
 
 foreach ([
+    'hr_salary_advance_payroll_repayments',
     'hr_salary_advance_repayment_schedule',
     'hr_salary_advance_repayment_plans',
     'hr_salary_advance_requests',
@@ -134,6 +150,28 @@ $pdo->exec("
         PRIMARY KEY (id),
         UNIQUE KEY uq_hr_salary_advance_schedule_plan_installment (salary_advance_request_id, repayment_plan_id, installment_no),
         UNIQUE KEY uq_hr_salary_advance_schedule_plan_month (salary_advance_request_id, repayment_plan_id, scheduled_month)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+");
+$pdo->exec("
+    CREATE TABLE hr_salary_advance_payroll_repayments (
+        id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+        salary_advance_request_id INT UNSIGNED NOT NULL,
+        repayment_schedule_id INT UNSIGNED NULL,
+        payroll_id INT UNSIGNED NOT NULL,
+        employee_id INT UNSIGNED NOT NULL,
+        eligible_salary DECIMAL(18,2) NOT NULL DEFAULT 0.00,
+        maximum_allowed_deduction DECIMAL(18,2) NULL,
+        scheduled_amount DECIMAL(18,2) NOT NULL DEFAULT 0.00,
+        actual_amount DECIMAL(18,2) NOT NULL DEFAULT 0.00,
+        outcome ENUM('applied','partial','skipped') NOT NULL,
+        outcome_reason VARCHAR(1000) NULL,
+        accounting_entry_id INT UNSIGNED NULL,
+        applied_at DATETIME NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        UNIQUE KEY uq_hr_salary_advance_payroll_repayment (salary_advance_request_id, payroll_id),
+        KEY idx_test_repayment_schedule (repayment_schedule_id),
+        KEY idx_test_repayment_payroll (payroll_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ");
 $pdo->exec("
@@ -315,6 +353,35 @@ foreach ([2, 3, 4, 5, 6] as $id) {
 }
 check((int)$pdo->query("SELECT COUNT(*) FROM audit_log WHERE action = 'HR_SALARY_ADVANCE_REPAYMENT_RESCHEDULE'")->fetchColumn() === 1, 'rejected attempts do not add audit success events');
 
+$payroll = [
+    'id' => 101,
+    'employee_id' => 1,
+    'year' => (int)substr($startMonth, 0, 4),
+    'month' => (int)substr($startMonth, 5, 2),
+    'salary_advance_deduction' => 200.00,
+    'basic_salary' => 1000.00,
+    'allowances' => 0.00,
+    'overtime' => 0.00,
+    'deductions' => 0.00,
+    'attendance_deduction' => 0.00,
+];
+$pdo->beginTransaction();
+try {
+    $applied = hrSalaryAdvancePayrollApply($pdo, $payroll, 5001);
+    $pdo->commit();
+} catch (Throwable $e) {
+    if ($pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
+    throw $e;
+}
+check((float)$applied['total'] === 200.00 && (int)$applied['trace_rows'] === 1, 'payroll posting applies the previewed active-plan deduction exactly once');
+check((float)$pdo->query("SELECT outstanding_balance FROM hr_salary_advance_requests WHERE id = 1")->fetchColumn() === 300.00, 'payroll posting reduces the live outstanding balance by the actual deduction');
+check((float)$pdo->query("SELECT applied_amount FROM hr_salary_advance_repayment_schedule WHERE id = " . $firstReplacementScheduleId)->fetchColumn() === 200.00, 'payroll posting applies the replacement-plan schedule row');
+check((string)$pdo->query("SELECT status FROM hr_salary_advance_repayment_schedule WHERE id = " . $firstReplacementScheduleId)->fetchColumn() === 'paid', 'payroll posting marks the fully paid replacement installment as paid');
+check((int)$pdo->query("SELECT COUNT(*) FROM hr_salary_advance_payroll_repayments WHERE salary_advance_request_id = 1 AND payroll_id = 101")->fetchColumn() === 1, 'payroll posting writes one repayment trace');
+check((int)$pdo->query("SELECT COUNT(*) FROM audit_log WHERE action = 'HR_SALARY_ADVANCE_PAYROLL_REPAYMENT'")->fetchColumn() === 1, 'payroll posting writes the repayment audit event');
+
 // Force an audit-write failure and prove the plan/schedule changes roll back.
 $pdo->exec("ALTER TABLE audit_log DROP COLUMN user_agent");
 $beforeSchedules = (int)$pdo->query("SELECT COUNT(*) FROM hr_salary_advance_repayment_schedule WHERE salary_advance_request_id = 7")->fetchColumn();
@@ -328,4 +395,4 @@ check((int)$pdo->query("SELECT COUNT(*) FROM hr_salary_advance_repayment_plans W
 check((string)$pdo->query("SELECT status FROM hr_salary_advance_repayment_plans WHERE salary_advance_request_id = 7")->fetchColumn() === 'active', 'audit failure leaves the original plan active');
 check((int)$pdo->query("SELECT COUNT(*) FROM hr_salary_advance_repayment_schedule WHERE salary_advance_request_id = 7")->fetchColumn() === $beforeSchedules, 'audit failure rolls back inserted schedule rows');
 
-echo "PASS: reschedule safeguards, active-plan payroll selection and preview/horizon, multiple-active-plan guard, history preservation, audit event, and transaction rollback.\n";
+echo "PASS: reschedule safeguards, active-plan payroll preview/posting and horizon, multiple-active-plan guard, history preservation, audit events, and transaction rollback.\n";
