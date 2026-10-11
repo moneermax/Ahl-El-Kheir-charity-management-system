@@ -83,6 +83,9 @@ These are source-level observations. Dedicated CI checks also pass PHP syntax ch
 
 **Passed in GitHub Actions (2026-10-11):**
 
+- A fresh verification run on the current implementation commit completed successfully across all four jobs: PHP syntax checks, migration on disposable MariaDB 10.4.32, import of the checked-in full schema plus legacy data and migration/backfill/rerun verification, and rescheduling-service/payroll safeguards. [Workflow run 38121863772](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/38121863772). This is isolated CI evidence; it does not inspect the user's local XAMPP database or replace the remaining end-to-end accounting check.
+
+
 - PHP 8.2 syntax checks for the salary-advance PHP files and notification dependency passed: [workflow run 38119108564](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/38119108564).
 - The Stage 7 migration ran twice against an isolated MariaDB 10.4.32 database. The test verified the default-disabled policy flag, legacy schedule backfill, preservation of both finite and NULL/unbounded policy durations, preserved schedule row count, plan-scoped indexes replacing the old indexes, and no duplicate plan or schedule rows on rerun. This job passed in the same workflow run.
 - The same migration also passed against the **full checked-in `database/ahl_el_kheir.sql` dump and its legacy rows** on MariaDB 10.4.32. The full-schema test verified every legacy schedule row remained and received a plan link, one initial plan per scheduled request, policy durations/caps and start months preserved, existing policy authorization left disabled, old unique indexes replaced, and rerun safety. See [workflow run 38120228433](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/38120228433).
