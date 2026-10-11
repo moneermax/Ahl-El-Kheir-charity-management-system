@@ -97,6 +97,8 @@ $pdo->exec("
     CREATE TABLE employees (
         id INT UNSIGNED NOT NULL AUTO_INCREMENT,
         user_id INT UNSIGNED NULL,
+        full_name VARCHAR(150) NULL,
+        employee_code VARCHAR(50) NULL,
         PRIMARY KEY (id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ");
