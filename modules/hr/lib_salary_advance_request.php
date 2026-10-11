@@ -227,9 +227,9 @@ function hrSalaryAdvanceFmPolicyMismatches(PDO $pdo, array $r, ?array $terms = n
     $m = [];
     $amount = (float)($terms['amount'] ?? $r['requested_amount']);
     $method = (string)($terms['method'] ?? $r['requested_repayment_method']);
-    $monthlyValue = $terms['monthly_amount'] ?? $r['requested_monthly_amount'];
+    $monthlyValue = $terms !== null && array_key_exists('monthly_amount', $terms) ? $terms['monthly_amount'] : $r['requested_monthly_amount'];
     $monthly = $monthlyValue !== null && $monthlyValue !== '' ? (float)$monthlyValue : null;
-    $startMonth = $terms['start_month'] ?? $r['requested_start_month'];
+    $startMonth = $terms !== null && array_key_exists('start_month', $terms) ? $terms['start_month'] : $r['requested_start_month'];
     if (!(int)$r['allow_any_request_amount']) {
         $min = $r['minimum_request_amount'] !== null ? (float)$r['minimum_request_amount'] : null;
         $max = $r['maximum_request_amount'] !== null ? (float)$r['maximum_request_amount'] : null;
