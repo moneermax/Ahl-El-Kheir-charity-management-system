@@ -167,7 +167,10 @@ function hrSalaryAdvanceScheduleReschedule(
         $policyCap = $request['maximum_monthly_deduction'] !== null
             ? round((float)$request['maximum_monthly_deduction'], 2)
             : null;
-        if ($policyCap !== null && $policyCap > 0 && $monthlyAmount > $policyCap + 0.000001) {
+        if ($policyCap === null || $policyCap <= 0) {
+            throw new RuntimeException('لا يمكن إعادة الجدولة دون حد أقصى شهري صالح في إصدار السياسة المحفوظ.');
+        }
+        if ($monthlyAmount > $policyCap + 0.000001) {
             throw new RuntimeException('القسط الشهري المقترح يتجاوز الحد الأقصى للخصم الشهري في السياسة.');
         }
 
@@ -233,7 +236,7 @@ function hrSalaryAdvanceScheduleReschedule(
         );
         $insertPlan->execute([
             $requestId, $planNo, $reason, $outstanding, $startMonth,
-            $durationMonths, $monthlyAmount, $userId
+            $durationMonths, $policyCap, $userId
         ]);
         $planId = (int)$pdo->lastInsertId();
         if ($planId <= 0) {
