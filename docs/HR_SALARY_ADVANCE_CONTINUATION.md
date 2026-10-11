@@ -1,16 +1,14 @@
 # HR Salary Advance — Current Development Checkpoint
 
-**Date:** 2026-09-29  
+**Current authoritative status:** 2026-10-11  
 **Repository:** `moneermax/Ahl-El-Kheir-charity-management-system`  
 **Branch:** `main`  
 **Active area:** HR / Salary Advance  
-**Current stage:** Stage 5 — Repayment Schedule + Payroll Integration — **targeted carry-forward follow-up in progress; local verification pending**
+**Current stage:** Stage 5 payroll repayment path **DONE / FOCUSED REGRESSION CHECKS PASSED / CLOSED**. Next: design an authorized rescheduling workflow for balances remaining after a configured maximum repayment horizon.
 
-## Purpose
+This is the authoritative continuation checkpoint. Older dated sections are retained as historical evidence; where an older checkpoint says a completed stage is pending or not started, the latest status and verification addenda below supersede it.
 
-This document is the continuation checkpoint for the Salary Advance feature. It records the completed stages, verified runtime evidence, the Stage 4 accounting design decision, the implementation now prepared on the Stage 4 feature branch, and the exact next runtime gate.
-
-Do not reopen Stages 1–3 unless a genuine regression is found.
+Do not reopen completed Stages 1–5 unless a genuine regression is evidenced. Stage 6 direct repayment/final settlement still needs a separate closure audit; source implementation alone is not runtime closure.
 
 ---
 
