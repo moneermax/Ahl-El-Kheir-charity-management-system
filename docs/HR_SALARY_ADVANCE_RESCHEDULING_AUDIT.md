@@ -95,7 +95,7 @@ These are source-level observations. Dedicated CI checks also pass PHP syntax ch
 **Still required before applying the migration to the working database or declaring the feature complete:**
 
 1. Confirm the user's actual local database schema matches the checked-in base dump; the repository schema is now verified, but the local instance has not been inspected.
-2. Extend the focused tests to cover stale balance/concurrent payroll interaction and notification failure isolation. The payroll apply helper is tested in isolation; the complete application payroll/accounting posting path is still unverified.
+2. The focused service test now includes a rollback-isolated live-balance revalidation case (commit `032594e0c9161920d0bf37df0ece67f344e54193`): it changes the request balance after the hypothetical form display and checks that the replacement plan and schedule use the current database balance. This new test has not yet been run in CI. Separate concurrent payroll/reschedule and notification-failure isolation tests remain pending. The payroll apply helper is tested in isolation; the complete application payroll/accounting posting path is still unverified.
 3. Run existing salary-advance payroll regression tests and account 1410 reconciliation against the disposable/local test database.
 4. Record those results here. Do not treat a fixture-based migration test as proof that the full feature works end to end.
 
@@ -123,6 +123,7 @@ These edits have been made through remote repository access only. PHP syntax che
 The current service intentionally rejects rescheduling when the saved policy has no finite `maximum_repayment_months`, because there is no expired finite horizon to qualify for this exception. It uses the proposed monthly amount as the new scheduled installment for all payroll-based repayment methods; payroll still limits actual deduction by eligible salary and the policy's monthly cap. Confirm this matches the organization's intended rescheduling terms during local workflow testing.
 
 The UI lists only requests with an active plan, a positive outstanding balance, an expired plan, a positive saved maximum duration, and explicit saved-policy FM authorization. It does not provide a way to reschedule an in-horizon plan.
+- Follow-up UI correction `af91d773606a201deae51597f41ca2e5ee77a4bc` also filters the FM list to the three payroll-based repayment methods accepted by the service, so direct-repayment advances are not presented as eligible. The source change has been inspected, but no post-commit CI run is yet available.
 
 **Next required work:** confirm the local XAMPP database matches the checked-in dump; add tests for stale balance/concurrent payroll and notification failure isolation; verify the full application's payroll-to-accounting posting path; then run the existing payroll repayment regressions and account 1410 reconciliation. Do not claim the feature complete until the remaining evidence is recorded.
 
