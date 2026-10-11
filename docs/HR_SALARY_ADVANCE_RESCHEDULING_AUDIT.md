@@ -2,7 +2,7 @@
 
 **Date:** 2026-10-11  
 **Branch:** `main`  
-**Status:** SOURCE IMPLEMENTED — PHP SYNTAX AND DISPOSABLE MIGRATION TEST PASSED; WORKFLOW VERIFICATION PENDING
+**Status:** SOURCE, SYNTAX, MIGRATION, AND SERVICE-SAFEGUARD TESTS PASSED IN CI; PAYROLL/LOCAL-SCHEMA VERIFICATION PENDING
 
 ## 1. Why this workflow is needed
 
@@ -65,7 +65,7 @@ The current schedule's unique keys prevent inserting a second row for the same r
 
 The exact migration design should follow the repository's actual MariaDB schema and current query patterns during implementation; this audit does not create or assume new columns.
 
-## 6. Implementation progress — source committed, syntax and migration checks passed
+## 6. Implementation progress — source committed, syntax, migration, and service checks passed
 
 The following source changes are present on `main`:
 
@@ -77,7 +77,7 @@ The following source changes are present on `main`:
 - Employee notification is attempted after the service commits its own transaction; notification errors are caught so they do not misreport or undo committed financial work.
 - Direct-repayment advances are excluded from rescheduling so they cannot be silently converted to payroll deductions.
 
-These are source-level observations. Dedicated CI checks also pass PHP syntax checks for the changed salary-advance files and run the migration twice against an isolated MariaDB 10.4.32 fixture. This verifies migration syntax, legacy schedule backfill, policy-default behavior, plan-scoped indexes, and rerun safety; it does not verify the full local schema or complete rescheduling/payroll workflow.
+These are source-level observations. Dedicated CI checks also pass PHP syntax checks for the changed salary-advance files and run the migration twice against an isolated MariaDB 10.4.32 fixture. This verifies migration syntax, legacy schedule backfill, policy-default behavior, plan-scoped indexes, rerun safety, and core rescheduling-service safeguards against an isolated fixture schema. It does not verify the full local schema, payroll integration, or account reconciliation.
 
 ## 7. Verification status and remaining gate
 
@@ -85,12 +85,13 @@ These are source-level observations. Dedicated CI checks also pass PHP syntax ch
 
 - PHP 8.2 syntax checks for the salary-advance PHP files and notification dependency passed: [workflow run 38119108564](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/38119108564).
 - The Stage 7 migration ran twice against an isolated MariaDB 10.4.32 database. The test verified the default-disabled policy flag, legacy schedule backfill, preserved schedule row count, plan-scoped indexes replacing the old indexes, and no duplicate plan or schedule rows on rerun. This job passed in the same workflow run.
+- The rescheduling service passed disposable-database tests for successful plan replacement, specific rejection reasons for disabled policy authorization, unexpired horizon, monthly cap, insufficient duration, direct-repayment exclusion, and installments rounding down to zero; it also verified preservation of old plan/schedule rows, one audit event on success, refusal when multiple active plans exist, and rollback when the audit write fails.
 - The repository confirms `employees.user_id` is the canonical employee/user relationship, and existing code uses the same `audit_log` columns as the rescheduling service. This is source-pattern confirmation, not a full live-schema audit.
 
 **Still required before applying the migration to the working database or declaring the feature complete:**
 
 1. Confirm the exact `audit_log` schema and all required columns against the user's actual local database/schema source.
-2. Run rollback-only workflow tests for authorized/denied reschedule, in-horizon rejection, policy cap, duration coverage, transaction rollback, schedule-history preservation, active-plan payroll selection, stale balance/concurrent payroll interaction, and notification failure isolation.
+2. Extend the service tests to cover stale balance/concurrent payroll interaction and notification failure isolation, and add payroll preview/posting integration coverage for active-plan selection and suppression of superseded schedules.
 3. Run existing salary-advance payroll regression tests and account 1410 reconciliation against the disposable/local test database.
 4. Record those results here. Do not treat a fixture-based migration test as proof that the full feature works end to end.
 
@@ -98,7 +99,7 @@ The CI database is disposable and uses a deliberately minimal schema fixture to 
 
 ## 8. FM rescheduling source implementation — 2026-10-11
 
-**Status: PHP syntax and disposable MariaDB migration checks passed; end-to-end rescheduling/payroll verification remains required. Do not apply the migration to the working database yet.**
+**Status: PHP syntax, disposable MariaDB migration, and core service-safeguard tests passed; end-to-end payroll/local-schema verification remains required. Do not apply the migration to the working database yet.**
 
 The following source work now exists on `main`:
 
@@ -113,11 +114,11 @@ Source commits for this continuation include `365c7ca`, `050a4c8`, `688b2ce`, `8
 
 ### Verification gate and known limits
 
-These edits have been made through remote repository access only. PHP syntax checks and a disposable MariaDB 10.4.32 migration/backfill/rerun test have passed in GitHub Actions. Rollback-only tests of the rescheduling service and payroll/accounting regression tests have **not** been run in this continuation. The new FM page/service must not be considered production-ready until those remaining checks pass.
+These edits have been made through remote repository access only. PHP syntax checks, a disposable MariaDB 10.4.32 migration/backfill/rerun test, and core rescheduling-service safeguard/rollback tests have passed in GitHub Actions. Payroll integration and accounting regression tests have **not** been run in this continuation. The new FM page/service must not be considered production-ready until those remaining checks pass.
 
 The current service intentionally rejects rescheduling when the saved policy has no finite `maximum_repayment_months`, because there is no expired finite horizon to qualify for this exception. It uses the proposed monthly amount as the new scheduled installment for all payroll-based repayment methods; payroll still limits actual deduction by eligible salary and the policy's monthly cap. Confirm this matches the organization's intended rescheduling terms during local workflow testing.
 
 The UI lists only requests with an active plan, a positive outstanding balance, an expired plan, a positive saved maximum duration, and explicit saved-policy FM authorization. It does not provide a way to reschedule an in-horizon plan.
 
-**Next required work:** confirm the audit-log schema from the actual local database/schema source; add rollback-only tests for allowed/denied reschedule, current-horizon rejection, stale balance, policy cap, duration coverage, transaction rollback, plan history preservation, and active-plan payroll selection; then run payroll repayment and 1410 reconciliation regressions. Do not claim the feature complete until the remaining evidence is recorded.
+**Next required work:** confirm the audit-log schema from the actual local database/schema source; add tests for stale balance/concurrent payroll and notification failure isolation; integrate active-plan selection into payroll preview/posting tests; then run the existing payroll repayment regressions and account 1410 reconciliation. Do not claim the feature complete until the remaining evidence is recorded.
 
