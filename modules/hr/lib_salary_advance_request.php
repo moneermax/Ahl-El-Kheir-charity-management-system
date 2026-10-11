@@ -222,6 +222,27 @@ function hrSalaryAdvanceRecommendMonthlyInstallment(float $amount, ?int $maximum
     ];
 }
 
+function hrSalaryAdvanceFixedMonthlyTermMismatches(
+    float $amount,
+    ?float $monthlyAmount,
+    ?float $maximumMonthlyDeduction,
+    ?int $maximumRepaymentMonths
+): array {
+    $m = [];
+    $monthly = (float)($monthlyAmount ?? 0);
+    if ($monthly <= 0) $m[] = 'القسط الشهري المطلوب غير محدد بشكل صحيح.';
+    if ($maximumMonthlyDeduction !== null && $monthly > $maximumMonthlyDeduction) {
+        $m[] = 'القسط الشهري المطلوب يتجاوز الحد الأقصى للخصم الشهري.';
+    }
+    if ($maximumRepaymentMonths !== null && $monthly > 0) {
+        $months = (int)ceil($amount / $monthly);
+        if ($months > $maximumRepaymentMonths) {
+            $m[] = 'مدة السداد المطلوبة تتجاوز الحد الأقصى لعدد الأشهر.';
+        }
+    }
+    return $m;
+}
+
 function hrSalaryAdvanceFmPolicyMismatches(PDO $pdo, array $r, ?array $terms = null): array
 {
     $m = [];
@@ -248,17 +269,12 @@ function hrSalaryAdvanceFmPolicyMismatches(PDO $pdo, array $r, ?array $terms = n
     }
 
     if ($method === 'fixed_monthly') {
-        $monthly = (float)($monthly ?? 0);
-        if ($monthly <= 0) $m[] = 'القسط الشهري المطلوب غير محدد بشكل صحيح.';
-        if ($r['maximum_monthly_deduction'] !== null && $monthly > (float)$r['maximum_monthly_deduction']) {
-            $m[] = 'القسط الشهري المطلوب يتجاوز الحد الأقصى للخصم الشهري.';
-        }
-        if ($r['maximum_repayment_months'] !== null && $monthly > 0) {
-            $months = (int)ceil($amount / $monthly);
-            if ($months > (int)$r['maximum_repayment_months']) {
-                $m[] = 'مدة السداد المطلوبة تتجاوز الحد الأقصى لعدد الأشهر.';
-            }
-        }
+        $m = array_merge($m, hrSalaryAdvanceFixedMonthlyTermMismatches(
+            $amount,
+            $monthly,
+            $r['maximum_monthly_deduction'] !== null ? (float)$r['maximum_monthly_deduction'] : null,
+            $r['maximum_repayment_months'] !== null ? (int)$r['maximum_repayment_months'] : null
+        ));
     }
 
     if ($startMonth !== null) {
