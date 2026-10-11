@@ -30,11 +30,18 @@ function check(bool $condition, string $message): void
     }
 }
 
-function expectRescheduleRejected(callable $operation, string $case): void
+function expectRescheduleRejected(callable $operation, string $case, string $expectedMessage): void
 {
     try {
         $operation();
     } catch (Throwable $e) {
+        if (strpos($e->getMessage(), $expectedMessage) === false) {
+            throw new RuntimeException(
+                'Wrong rejection for ' . $case . ': ' . $e->getMessage(),
+                0,
+                $e
+            );
+        }
         return;
     }
     throw new RuntimeException('Expected rescheduling rejection: ' . $case);
@@ -148,6 +155,7 @@ $requests = [
     [5, 'ADV-RESCHED-5', 1, 'fixed_monthly', 500.00],
     [6, 'ADV-RESCHED-6', 1, 'direct_repayment', 500.00],
     [7, 'ADV-RESCHED-7', 1, 'fixed_monthly', 500.00],
+    [8, 'ADV-RESCHED-8', 1, 'fixed_monthly', 500.00],
 ];
 $insertRequest = $pdo->prepare("
     INSERT INTO hr_salary_advance_requests
@@ -166,7 +174,7 @@ $insertPlan = $pdo->prepare("
          outstanding_balance_at_creation, start_month, maximum_repayment_months, maximum_monthly_deduction)
     VALUES (?, ?, 1, 'active', 'Fixture original plan', 500.00, ?, ?, 200.00)
 ");
-for ($id = 1; $id <= 7; $id++) {
+for ($id = 1; $id <= 8; $id++) {
     $insertPlan->execute([$id, $id, $id === 3 ? $activeStart : $oldStart, 12]);
 }
 $insertSchedule = $pdo->prepare("
@@ -174,7 +182,7 @@ $insertSchedule = $pdo->prepare("
         (salary_advance_request_id, repayment_plan_id, installment_no, scheduled_month, scheduled_amount)
     VALUES (?, ?, 1, ?, 200.00)
 ");
-for ($id = 1; $id <= 7; $id++) {
+for ($id = 1; $id <= 8; $id++) {
     $insertSchedule->execute([$id, $id, $id === 3 ? $activeStart : $oldStart]);
 }
 
@@ -196,7 +204,48 @@ expectRescheduleRejected(fn() => hrSalaryAdvanceScheduleReschedule($pdo, 3, $sta
 expectRescheduleRejected(fn() => hrSalaryAdvanceScheduleReschedule($pdo, 4, $startMonth, 3, 201.00, 'Monthly cap test', 77), 'monthly cap exceeded');
 expectRescheduleRejected(fn() => hrSalaryAdvanceScheduleReschedule($pdo, 5, $startMonth, 2, 200.00, 'Duration coverage test', 77), 'proposed terms do not cover balance');
 expectRescheduleRejected(fn() => hrSalaryAdvanceScheduleReschedule($pdo, 6, $startMonth, 3, 200.00, 'Direct repayment test', 77), 'direct repayment cannot convert to payroll deductions');
-foreach ([2, 3, 4, 5, 6] as $id) {
+expectRescheduleRejected(
+    fn() => hrSalaryAdvanceScheduleReschedule($pdo, 2, $startMonth, 3, 200.00, 'Policy disabled test', 77),
+    'saved policy authorization disabled',
+    'غير مصرح بها'
+);
+expectRescheduleRejected(
+    fn() => hrSalaryAdvanceScheduleReschedule($pdo, 3, $startMonth, 3, 200.00, 'In-horizon test', 77),
+    'current plan has not expired',
+    'لم تنتهِ مدة خطة السداد الحالية'
+);
+expectRescheduleRejected(
+    fn() => hrSalaryAdvanceScheduleReschedule($pdo, 4, $startMonth, 3, 201.00, 'Monthly cap test', 77),
+    'monthly cap exceeded',
+    'يتجاوز الحد الأقصى للخصم الشهري'
+);
+expectRescheduleRejected(
+    fn() => hrSalaryAdvanceScheduleReschedule($pdo, 5, $startMonth, 2, 200.00, 'Duration coverage test', 77),
+    'proposed terms do not cover balance',
+    'لا يغطي الرصيد القائم'
+);
+expectRescheduleRejected(
+    fn() => hrSalaryAdvanceScheduleReschedule($pdo, 6, $startMonth, 3, 200.00, 'Direct repayment test', 77),
+    'direct repayment cannot convert to payroll deductions',
+    'لا يمكن تحويل السداد المباشر إلى خصومات رواتب'
+);
+
+// A corrupted request with two active plans must not silently supersede only one.
+$pdo->exec("
+    INSERT INTO hr_salary_advance_repayment_plans
+        (id, salary_advance_request_id, plan_no, status, reason,
+         outstanding_balance_at_creation, start_month, maximum_repayment_months, maximum_monthly_deduction)
+    VALUES (9, 8, 2, 'active', 'Fixture duplicate active plan', 500.00, '{$oldStart}', 12, 200.00)
+");
+expectRescheduleRejected(
+    fn() => hrSalaryAdvanceScheduleReschedule($pdo, 8, $startMonth, 3, 200.00, 'Duplicate active plan test', 77),
+    'multiple active plans are inconsistent',
+    'أكثر من خطة سداد نشطة'
+);
+check((int)$pdo->query("SELECT COUNT(*) FROM hr_salary_advance_repayment_plans WHERE salary_advance_request_id = 8")->fetchColumn() === 2, 'ambiguous active plans remain unchanged for manual review');
+check((int)$pdo->query("SELECT COUNT(*) FROM hr_salary_advance_repayment_plans WHERE salary_advance_request_id = 8 AND status = 'active'")->fetchColumn() === 2, 'service refuses to choose between multiple active plans');
+
+foreach ([2, 3, 4, 5, 6, 8] as $id) {
     check((int)$pdo->query("SELECT COUNT(*) FROM hr_salary_advance_repayment_plans WHERE salary_advance_request_id = {$id}")->fetchColumn() === 1, "rejected request {$id} retains only its original plan");
     check((string)$pdo->query("SELECT status FROM hr_salary_advance_repayment_plans WHERE salary_advance_request_id = {$id}")->fetchColumn() === 'active', "rejected request {$id} keeps its original plan active");
 }
@@ -215,4 +264,4 @@ check((int)$pdo->query("SELECT COUNT(*) FROM hr_salary_advance_repayment_plans W
 check((string)$pdo->query("SELECT status FROM hr_salary_advance_repayment_plans WHERE salary_advance_request_id = 7")->fetchColumn() === 'active', 'audit failure leaves the original plan active');
 check((int)$pdo->query("SELECT COUNT(*) FROM hr_salary_advance_repayment_schedule WHERE salary_advance_request_id = 7")->fetchColumn() === $beforeSchedules, 'audit failure rolls back inserted schedule rows');
 
-echo "PASS: reschedule success, saved-policy denial, horizon/cap/duration/direct-repayment guards, history preservation, audit event, and transaction rollback.\n";
+echo "PASS: successful reschedule, specific rejection reasons, multiple-active-plan guard, history preservation, audit event, and transaction rollback.\n";
