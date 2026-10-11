@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS hr_salary_advance_repayment_plans (
     reason VARCHAR(1000) NULL,
     outstanding_balance_at_creation DECIMAL(18,2) NOT NULL,
     start_month DATE NOT NULL,
-    maximum_repayment_months INT UNSIGNED NOT NULL,
+    maximum_repayment_months INT UNSIGNED NULL,
     maximum_monthly_deduction DECIMAL(18,2) NOT NULL,
     created_by INT UNSIGNED NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -37,7 +37,7 @@ SELECT s.salary_advance_request_id, 1, 'active',
        'Initial schedule migrated from the pre-versioned repayment plan.',
        COALESCE(r.outstanding_balance, 0),
        MIN(s.scheduled_month),
-       COALESCE(MAX(p.maximum_repayment_months), 1),
+       MAX(p.maximum_repayment_months),
        COALESCE(MAX(p.maximum_monthly_deduction), 0.01),
        CURRENT_TIMESTAMP
 FROM hr_salary_advance_repayment_schedule s
