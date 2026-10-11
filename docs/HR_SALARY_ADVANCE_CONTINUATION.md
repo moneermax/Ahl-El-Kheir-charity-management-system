@@ -1017,7 +1017,7 @@ Source changes committed directly to `main`:
 
 ## 2026-10-11 — Carry Forward Overdue Payroll Installments
 
-**Status: source fix and regression guard committed; local runtime verification pending.**
+**Status: source fix and database-backed rollback-only lifecycle test committed; local runtime verification pending.**
 
 The deeper payroll posting review confirmed that the `available_salary` / `skip_month` policy label promised carry-forward, but the payroll selection queried only installments whose scheduled month exactly matched the current payroll month. Skipped installments were marked `skipped`, so they could never be selected again. The same exact-month filter also stranded overdue pending or partial installments.
 
@@ -1026,5 +1026,6 @@ Source fix in `modules/hr/lib_salary_advance_payroll.php`:
 - Pending and partial installments can be carried forward when overdue; a skipped installment becomes eligible again only in a later month, preserving its skipped outcome for the original month in the repayment trace.
 - A correlated earlier-installment check selects only the oldest unpaid eligible installment for each salary advance in a payroll period. This prevents multiple accumulated installments for the same request from being deducted together and bypassing its monthly deduction cap.
 - The locked-row query and schedule update predicate use the same carry-forward eligibility rule. Existing waiver checks, request outstanding-balance checks, transaction boundaries, duplicate payroll trace protection, and audit writes remain in place.
+- A skipped payroll posting leaves the outstanding balance unchanged. Since MySQL can report zero changed rows for a valid no-op update, the posting code now confirms the locked request and unchanged balance instead of incorrectly failing the transaction.
 
-The payroll edge-test harness now includes a source regression guard for overdue skipped rows and oldest-installment selection. This guard is static; it does not replace a database-backed post-and-retry test. Local verification must run PHP lint plus the schedule and payroll edge suites. A focused end-to-end test that posts a skipped installment and confirms that the same unpaid installment is eligible in the following period remains desirable before closing this workflow.
+The payroll edge-test harness now performs the posting lifecycle inside a rollback-only database transaction: it posts a zero-value skipped repayment, verifies the persisted skipped trace and schedule status, then verifies that the same schedule row is eligible for a partial repayment in the following month. All fixture mutations, including the policy override, schedule statuses, payroll, repayment trace, and audit rows, are rolled back by the harness. Run PHP lint and both Stage 5 focused suites against these latest commits before closing this workflow.
