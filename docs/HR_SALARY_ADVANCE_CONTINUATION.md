@@ -1013,3 +1013,18 @@ Source changes committed directly to `main`:
 **Local verification outcome (2026-10-11):** all six changed PHP files passed `php -l`; `tools/run_salary_advance_stage5_schedule_tests.php` reported all four tests passed; `tools/run_salary_advance_stage5_payroll_edge_tests.php` passed both full-settlement insufficient-salary policy branches and reported rollback-only cleanup with no payroll/request/schedule/journal mutation committed.
 
 **Additional deep-scan finding — carry-forward behavior is not implemented for skipped installments:** the payroll query selects only schedule rows with status `pending` or `partial`, while posting changes a zero-deduction installment to `skipped`. The current preview tests verify the `skip_month` outcome but do not post a skipped installment and verify its next-period treatment. Consequently, the saved policy label “skip month and carry installment” is not proven to retry that same installment in a later payroll period. This needs a focused lifecycle fix/test before the salary-advance payroll workflow can be considered fully complete.
+
+
+## 2026-10-11 — Carry Forward Overdue Payroll Installments
+
+**Status: source fix and regression guard committed; local runtime verification pending.**
+
+The deeper payroll posting review confirmed that the `available_salary` / `skip_month` policy label promised carry-forward, but the payroll selection queried only installments whose scheduled month exactly matched the current payroll month. Skipped installments were marked `skipped`, so they could never be selected again. The same exact-month filter also stranded overdue pending or partial installments.
+
+Source fix in `modules/hr/lib_salary_advance_payroll.php`:
+- Payroll preview and payroll-paid application now consider installments scheduled on or before the current payroll month.
+- Pending and partial installments can be carried forward when overdue; a skipped installment becomes eligible again only in a later month, preserving its skipped outcome for the original month in the repayment trace.
+- A correlated earlier-installment check selects only the oldest unpaid eligible installment for each salary advance in a payroll period. This prevents multiple accumulated installments for the same request from being deducted together and bypassing its monthly deduction cap.
+- The locked-row query and schedule update predicate use the same carry-forward eligibility rule. Existing waiver checks, request outstanding-balance checks, transaction boundaries, duplicate payroll trace protection, and audit writes remain in place.
+
+The payroll edge-test harness now includes a source regression guard for overdue skipped rows and oldest-installment selection. This guard is static; it does not replace a database-backed post-and-retry test. Local verification must run PHP lint plus the schedule and payroll edge suites. A focused end-to-end test that posts a skipped installment and confirms that the same unpaid installment is eligible in the following period remains desirable before closing this workflow.
