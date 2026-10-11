@@ -8,9 +8,13 @@ declare(strict_types=1);
  * CI database. A child PHP process exercises the real payroll status transition
  * so its db() helper and passed PDO share the same independent connection.
  */
+$allowedDatabases = [
+    'salary_advance_migration_test',
+    'salary_advance_full_schema_test',
+];
 if (getenv('AHL_ENV') !== 'development'
-    || (string)getenv('AHL_DB_NAME') !== 'salary_advance_migration_test') {
-    fwrite(STDERR, "Refusing to run outside the dedicated disposable full-schema CI database.\n");
+    || !in_array((string)getenv('AHL_DB_NAME'), $allowedDatabases, true)) {
+    fwrite(STDERR, "Refusing to run outside a named disposable Stage 7 full-schema test database.\n");
     exit(2);
 }
 
@@ -25,6 +29,50 @@ require_once __DIR__ . '/../modules/hr/lib_payroll_accounting.php';
 require_once __DIR__ . '/../modules/hr/lib_salary_advance_repayment.php';
 
 $pdo = db();
+
+$connectedDatabase = (string)$pdo->query('SELECT DATABASE()')->fetchColumn();
+if (!in_array($connectedDatabase, $allowedDatabases, true)
+    || $connectedDatabase !== (string)getenv('AHL_DB_NAME')) {
+    fwrite(STDERR, "Refusing to continue: connected database does not match the named disposable test database.\n");
+    exit(2);
+}
+$requiredTables = [
+    'employees',
+    'payroll',
+    'users',
+    'journal_entries',
+    'hr_salary_advance_policy_versions',
+    'hr_salary_advance_requests',
+    'hr_salary_advance_repayment_plans',
+    'hr_salary_advance_repayment_schedule',
+    'hr_salary_advance_payroll_repayments',
+];
+$checkTable = $pdo->prepare(
+    'SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ?'
+);
+foreach ($requiredTables as $requiredTable) {
+    $checkTable->execute([$requiredTable]);
+    if ((int)$checkTable->fetchColumn() !== 1) {
+        fwrite(STDERR, "Refusing to continue: required full-schema table is missing: " . $requiredTable . "\n");
+        exit(2);
+    }
+}
+$policyFlag = $pdo->query(
+    "SELECT COUNT(*) FROM information_schema.columns
+     WHERE table_schema = DATABASE()
+       AND table_name = 'hr_salary_advance_policy_versions'
+       AND column_name = 'allow_fm_repayment_rescheduling'"
+)->fetchColumn();
+$planReference = $pdo->query(
+    "SELECT COUNT(*) FROM information_schema.columns
+     WHERE table_schema = DATABASE()
+       AND table_name = 'hr_salary_advance_repayment_schedule'
+       AND column_name = 'repayment_plan_id'"
+)->fetchColumn();
+if ((int)$policyFlag !== 1 || (int)$planReference !== 1) {
+    fwrite(STDERR, "Refusing to continue: Stage 7 migration markers are missing from this test database.\n");
+    exit(2);
+}
 
 function concurrencyCheck(bool $condition, string $message): void
 {
