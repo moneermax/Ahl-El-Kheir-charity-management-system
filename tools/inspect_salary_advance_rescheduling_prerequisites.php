@@ -112,9 +112,19 @@ if ($artifactsPresent === 0) {
     );
 }
 
-if (isset($columnsByTable['hr_salary_advance_requests'])
-    && isset($columnsByTable['hr_salary_advance_policy_versions'])
-    && isset($columnsByTable['hr_salary_advance_repayment_schedule'])) {
+$baseTablesUsable = true;
+foreach ([
+    'hr_salary_advance_requests',
+    'hr_salary_advance_policy_versions',
+    'hr_salary_advance_repayment_schedule',
+] as $table) {
+    if (!isset($columnsByTable[$table])
+        || array_diff($required[$table], $columnsByTable[$table])) {
+        $baseTablesUsable = false;
+    }
+}
+
+if ($baseTablesUsable) {
     $requestCount = (int)$pdo->query('SELECT COUNT(*) FROM hr_salary_advance_requests')->fetchColumn();
     $scheduleCount = (int)$pdo->query('SELECT COUNT(*) FROM hr_salary_advance_repayment_schedule')->fetchColumn();
     $policyCount = (int)$pdo->query('SELECT COUNT(*) FROM hr_salary_advance_policy_versions')->fetchColumn();
@@ -163,6 +173,8 @@ if (isset($columnsByTable['hr_salary_advance_requests'])
             inspectStage7Fail($problems, 'Some requests have more than one active repayment plan.');
         }
     }
+} else {
+    echo "Integrity count queries skipped because one or more required base tables/columns are missing.\\n";
 }
 
 if ($problems) {
