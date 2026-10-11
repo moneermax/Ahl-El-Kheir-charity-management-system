@@ -2,7 +2,7 @@
 
 **Date:** 2026-10-11  
 **Branch:** `main`  
-**Status:** BUSINESS AUTHORITY DECIDED — IMPLEMENTATION DESIGN AND BUILD NEXT
+**Status:** SOURCE IMPLEMENTED — RUNTIME VERIFICATION REQUIRED
 
 ## 1. Why this workflow is needed
 
@@ -65,33 +65,32 @@ The current schedule's unique keys prevent inserting a second row for the same r
 
 The exact migration design should follow the repository's actual MariaDB schema and current query patterns during implementation; this audit does not create or assume new columns.
 
-## 6. Implementation progress — not yet complete or runtime-verified
+## 6. Implementation progress — source committed, runtime verification pending
 
-The following foundational code has now been committed to `main`:
+The following source changes are present on `main`:
 
-- `database/migrations/2026-10-11_hr_salary_advance_rescheduling.sql` adds a disabled-by-default policy authorization flag, versioned plan metadata, a plan reference on schedule rows, and a backfill for existing schedules.
-- `modules/hr/lib_salary_advance_policy.php` validates the new policy setting.
-- `modules/hr/salary_advance_policy.php` exposes the setting to FM when creating a future policy version.
-- `modules/hr/lib_salary_advance_repayment.php` creates a first plan for newly generated schedules.
-- `modules/hr/lib_salary_advance_payroll.php` limits both preview and posting to the active plan and evaluates the horizon from that plan's start month and duration.
+- The migration adds a disabled-by-default policy authorization flag, versioned repayment-plan metadata, and a plan reference on schedule rows; it also backfills an initial plan for legacy requests with schedule rows.
+- The policy editor stores the FM rescheduling authorization in the policy version. Existing versions default to not authorized.
+- Schedule generation links newly generated installments to an initial plan, and schedule history exposes plan identity/status and plan terms.
+- Payroll preview and posting join only active plans and apply the active plan's start month and duration. A nullable plan duration preserves the no-fixed-horizon predicate where that model is supported.
+- The FM-only rescheduling page and service validate the saved policy authorization, outstanding balance, payroll-based repayment method, expired finite plan, policy duration/cap, future start month, and reason; the service creates a replacement plan and schedule while retaining old schedule rows and records an audit event.
+- Employee notification is attempted after the service commits its own transaction; notification errors are caught so they do not misreport or undo committed financial work.
+- Direct-repayment advances are excluded from rescheduling so they cannot be silently converted to payroll deductions.
 
-Relevant commits: `69ccd60`, `d3d62e1`, `a6252c4`, `b2cdd75`, `3afdbdd`, `8c53838`.
+These are source-level observations only. They are not proof that the migration or workflow runs successfully against the local database.
 
-**These are foundational changes, not a finished rescheduling feature.** The FM rescheduling form/service, authorization enforcement at execution, plan replacement workflow, rollback-only tests, MariaDB migration execution, PHP lint, payroll regression verification, and reconciliation have not yet been completed. Do not apply the migration to a live/important database until the migration has been reviewed and tested against the actual local schema. Existing policies default to no rescheduling authorization.
+## 7. Required verification gate
 
-## 7. Remaining implementation plan
+Do not apply the migration to the working database or mark this feature complete until the following are verified against the actual local environment:
 
-The approval-authority decision is closed; the remaining work is engineering, not another approval discussion.
+1. PHP syntax checks for the changed PHP files.
+2. Schema review confirms the employee notification recipient column and the exact `audit_log` columns used by the service.
+3. The migration runs successfully on a disposable database using the project's supported MariaDB version, including rerun/recovery behavior and legacy schedule backfill.
+4. Rollback-only database tests cover authorized/denied reschedule, in-horizon rejection, policy cap, duration coverage, transaction rollback, schedule-history preservation, active-plan payroll selection, stale balance/concurrent payroll interaction, and notification failure isolation.
+5. Existing salary-advance payroll regressions pass and account 1410 reconciliation remains balanced.
+6. The verified commands/results and any fixes are recorded here before the workflow is treated as closed.
 
-1. **Implemented in source:** the policy-version flag defaults to not authorized, preserving existing policy behavior.
-2. **Implemented in source:** versioned repayment plans and plan-linked schedules preserve historical schedule rows and applied payroll references.
-3. **Implemented in source:** FM execution records reason, actor, timestamp, old/new plan details, and the locked outstanding balance; request and active-plan reads, schedule inserts, and audit writes use the supplied PDO transaction.
-4. **Implemented in source:** payroll preview/posting select active-plan rows and preserve no-horizon policies; the rescheduling service requires a finite expired active plan, valid policy duration/cap, and a repayment method handled through payroll.
-5. **Implemented in source:** an FM-only page exposes eligible expired plans; the employee notification is sent after commit and notification errors do not undo the financial transaction.
-6. **Still required:** rollback-only MariaDB tests for allowed/denied reschedule, current-horizon rejection, policy cap, duration coverage, rollback, history preservation, active-plan payroll selection, and notification isolation.
-7. **Still required:** local PHP lint, migration execution against a disposable database, focused payroll tests, and reconciliation review. Do not mark complete before these checks pass.
-
-Implementation must begin with the actual schema/query inventory, not assumed column names. Do not apply any migration automatically or use runtime DDL.
+The repository review performed remotely cannot execute PHP against the user's local XAMPP/MariaDB database. Do not infer a successful runtime test from a committed change or from a successful GitHub API response.
 
 ## 8. FM rescheduling source implementation — 2026-10-11
 
