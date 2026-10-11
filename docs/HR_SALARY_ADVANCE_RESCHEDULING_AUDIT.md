@@ -2,7 +2,7 @@
 
 **Date:** 2026-10-11  
 **Branch:** `main`  
-**Status:** SYNTAX, FULL-DUMP MIGRATION, RESCHEDULING, STAGE 5 PAYROLL REGRESSIONS, AND ACCOUNT 1410 RECONCILIATION PASSED IN CI; LOCAL INSTANCE AND CONCURRENCY VERIFICATION PENDING
+**Status:** SYNTAX, FULL-DUMP MIGRATION, RESCHEDULING, STAGE 5 PAYROLL REGRESSIONS, ACCOUNT 1410 RECONCILIATION, AND PAYROLL/RESCHEDULING CONCURRENCY PASSED IN CI; LOCAL INSTANCE AND BROWSER WORKFLOW VERIFICATION PENDING
 
 ## 1. Why this workflow is needed
 
@@ -212,3 +212,14 @@ Verification: [GitHub Actions run 38128024549](https://github.com/moneermax/Ahl-
 
 **Scope limit:** this is strong CLI/database integration evidence for the production payroll transition interacting with rescheduling under contention. It is still not a browser-driven user journey and does not confirm that the user's local XAMPP database matches the checked-in schema. No migration has been applied to the local database. Local schema/integrity inspection and browser-driven payroll/accounting verification remain open; Stage 7 is not closed.
 
+
+
+## 16. Policy creation must persist rescheduling authorization — 2026-10-11
+
+A deeper review after the passing payroll-contention regression found a separate gap not covered by the existing rescheduling tests: the FM policy-creation INSERT listed `allow_fm_repayment_rescheduling` as a column but omitted its value from the parameter array. The resulting column/placeholder/parameter mismatch could prevent creating a policy version. Policy editing already included the field in its update statement.
+
+Commit [35934865d3b6729323b1de356fbbf75545cf47f5](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/commit/35934865d3b6729323b1de356fbbf75545cf47f5) extracts the exact INSERT into `hrSalaryAdvancePolicyInsertVersion()` in `modules/hr/lib_salary_advance_policy.php` and makes the policy editor call that shared helper. The full-schema CI regression now calls the same helper with a validated policy that explicitly enables rescheduling, reads the inserted row back, verifies the authorization and adjacent repayment-rule fields landed in the intended columns, and rolls the fixture back.
+
+Verification: [GitHub Actions run 38128854517](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/38128854517) passed all four jobs. The full-schema job explicitly reported the migration/backfill/rerun and rollback-only policy-creation regression as PASS. This is verified against the checked-in schema in disposable CI, not the local XAMPP database.
+
+**Scope limit:** Stage 7 remains open until read-only local schema/integrity confirmation and browser-driven policy/rescheduling/payroll/accounting checks are completed. The local migration remains unapplied.
