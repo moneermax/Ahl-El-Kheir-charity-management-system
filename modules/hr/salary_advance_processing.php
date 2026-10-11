@@ -353,7 +353,12 @@ require_once __DIR__ . '/../../includes/header.php';
 <script>window.AK_PAGE_BACK_URL=<?php echo json_encode($salaryAdvanceBackUrl, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES); ?>;</script>
 <div class="salary-advance-process">
 <section class="hero">
-    <h1><i class="fas fa-hand-holding-dollar me-2"></i>معالجة سلف الرواتب</h1>
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <h1><i class="fas fa-hand-holding-dollar me-2"></i>معالجة سلف الرواتب</h1>
+        <?php if ($canFm): ?>
+            <a class="btn btn-light btn-sm fw-bold" href="<?=e(APP_URL . 'modules/hr/salary_advance_reschedule.php')?>"><i class="fas fa-calendar-alt me-1"></i>إعادة جدولة السلف المنتهية</a>
+        <?php endif; ?>
+    </div>
 </section>
 
 <?php if(!$request && $message): ?><div class="alert alert-success" role="status"><?=e($message)?></div><?php endif; ?>
