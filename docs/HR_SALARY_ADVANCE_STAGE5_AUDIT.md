@@ -4,6 +4,13 @@
 **Branch:** `feature/hr-salary-advance-stage5-schedule`  
 **Status:** SCHEMA MIGRATION APPLIED — SCHEDULE GENERATION IMPLEMENTED / RUNTIME VERIFICATION PENDING
 
+
+> **Current status addendum — 2026-10-11:** This file began as a historical Stage 5 design checkpoint. Its original header (“runtime verification pending”) and early dated notes describe the state at those dates and are superseded by the current closure evidence below and in `docs/HR_SALARY_ADVANCE_CONTINUATION.md`.
+>
+> **Stage 5 — Repayment Schedule + Payroll Integration: DONE / FOCUSED REGRESSION CHECKS PASSED / CLOSED** for the implemented policy paths. The user locally verified PHP syntax for the changed payroll library and edge-test harness; all four schedule-rule tests passed; and the payroll edge suite passed, including full-settlement insufficient-salary behavior, skip/carry-forward lifecycle, maximum repayment horizon, safe zero-deduction no-op after the horizon, and rollback-only cleanup. No test fixture mutations were committed.
+>
+> **Known boundary, not a regression:** when a configured maximum repayment window expires with an unpaid balance, automatic payroll deductions stop and no new installments are generated. The balance remains outstanding. An authorized rescheduling workflow is not implemented; its approval authority must be grounded in a business rule before coding. Stage 6 direct repayment/final settlement must be audited separately and is not declared fully closed by this Stage 5 result.
+
 ## 1. Stage boundary
 
 Stages 1–4 are complete and closed.
