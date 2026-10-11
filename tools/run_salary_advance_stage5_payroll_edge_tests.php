@@ -291,18 +291,105 @@ try {
         echo "SKIP | Full-settlement insufficient-salary cases | No unused existing rollback-only fixture was available.\n";
     }
 
-    // Source-level regression guard: overdue skipped rows must be eligible,
-    // while only the oldest unpaid installment for each request is selected.
-    $payrollSource = file_get_contents(__DIR__ . '/../modules/hr/lib_salary_advance_payroll.php');
-    if (
-        !is_string($payrollSource) ||
-        strpos($payrollSource, "s.scheduled_month <= ?") === false ||
-        strpos($payrollSource, "s.status = 'skipped' AND s.scheduled_month < ?") === false ||
-        strpos($payrollSource, "earlier.status = 'skipped' AND earlier.scheduled_month < ?") === false
-    ) {
-        throw new RuntimeException('Carry-forward source guard failed: overdue skipped installments are not included in the payroll selection.');
+    // Exercise the actual posting lifecycle inside the outer rollback-only
+    // transaction: post a zero-value skip for one month, then verify that the
+    // same schedule row is selectable in the following month.
+    $carryFixture = findRollbackBaseFixture($pdo);
+    if (!$carryFixture) {
+        throw new RuntimeException('No safe existing fixture available for carry-forward lifecycle test.');
     }
-    echo "PASS | Carry-forward source guard | overdue skipped installments are eligible and oldest unpaid installment is selected.\n";
+
+    $pdo->exec('SAVEPOINT stage5_carry_forward_fixture');
+    $pdo->prepare(
+        "UPDATE hr_salary_advance_policy_versions
+         SET insufficient_salary_rule = 'skip_month'
+         WHERE id = (
+             SELECT policy_version_id
+             FROM hr_salary_advance_requests
+             WHERE id = ?
+             LIMIT 1
+         )"
+    )->execute([(int)$carryFixture['request_id']]);
+
+    $firstPayrollId = nextFixturePayrollId($pdo);
+    [$firstPreview] = runPreview($pdo, $carryFixture, $firstPayrollId);
+    if (round((float)$firstPreview['total'], 2) !== 0.00 ||
+        (($firstPreview['allocations'][0]['outcome'] ?? '') !== 'skipped')) {
+        throw new RuntimeException('Carry-forward lifecycle fixture did not produce the expected first-month skip.');
+    }
+
+    $firstPayroll = dbFetchOne("SELECT * FROM payroll WHERE id = ?", [$firstPayrollId]);
+    if (!$firstPayroll) {
+        throw new RuntimeException('Carry-forward lifecycle payroll fixture was not created.');
+    }
+    hrSalaryAdvancePayrollApply($pdo, $firstPayroll, 0);
+
+    $postedSchedule = dbFetchOne(
+        "SELECT status, scheduled_month
+         FROM hr_salary_advance_repayment_schedule
+         WHERE id = ?",
+        [(int)$carryFixture['schedule_id']]
+    );
+    $postedTrace = dbFetchOne(
+        "SELECT outcome, actual_amount
+         FROM hr_salary_advance_payroll_repayments
+         WHERE salary_advance_request_id = ? AND payroll_id = ?
+         LIMIT 1",
+        [(int)$carryFixture['request_id'], $firstPayrollId]
+    );
+    if (!$postedSchedule || $postedSchedule['status'] !== 'skipped' ||
+        !$postedTrace || $postedTrace['outcome'] !== 'skipped' ||
+        round((float)$postedTrace['actual_amount'], 2) !== 0.00) {
+        throw new RuntimeException('First-month skipped outcome was not persisted in the rollback-only posting lifecycle.');
+    }
+
+    $pdo->prepare(
+        "UPDATE hr_salary_advance_policy_versions
+         SET insufficient_salary_rule = 'available_salary'
+         WHERE id = (
+             SELECT policy_version_id
+             FROM hr_salary_advance_requests
+             WHERE id = ?
+             LIMIT 1
+         )"
+    )->execute([(int)$carryFixture['request_id']]);
+
+    $nextPeriod = date('Y-m-01', strtotime((string)$carryFixture['scheduled_month'] . ' +1 month'));
+    $nextYear = (int)date('Y', strtotime($nextPeriod));
+    $nextMonth = (int)date('n', strtotime($nextPeriod));
+    $nextPreview = hrSalaryAdvancePayrollCalculateDraft(
+        $pdo,
+        [
+            'id' => $firstPayrollId + 1,
+            'employee_id' => (int)$carryFixture['employee_id'],
+            'year' => $nextYear,
+            'month' => $nextMonth,
+            'basic_salary' => 1.00,
+            'allowances' => 0.00,
+            'overtime' => 0.00,
+            'deductions' => 0.00,
+            'attendance_deduction' => 0.00,
+            'salary_advance_deduction' => 1.00,
+        ],
+        $nextPeriod
+    );
+
+    $nextAllocation = null;
+    foreach (($nextPreview['allocations'] ?? []) as $candidate) {
+        if ((int)$candidate['schedule_id'] === (int)$carryFixture['schedule_id']) {
+            $nextAllocation = $candidate;
+            break;
+        }
+    }
+    if (!$nextAllocation ||
+        round((float)$nextPreview['total'], 2) !== 1.00 ||
+        $nextAllocation['outcome'] !== 'partial') {
+        throw new RuntimeException('Previously skipped installment was not eligible for partial repayment in the following month.');
+    }
+
+    echo "PASS | Carry-forward lifecycle | first month persisted skipped/0.00; next month reselected the same installment for 1.00 partial repayment.\n";
+    $pdo->exec('ROLLBACK TO SAVEPOINT stage5_carry_forward_fixture');
+    $pdo->exec('RELEASE SAVEPOINT stage5_carry_forward_fixture');
 
     $fullFixture = findEdgeFixture($pdo, 'available_salary', 'full_eligible_salary');
     $syntheticFullFixture = false;
