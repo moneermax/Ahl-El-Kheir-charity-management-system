@@ -226,28 +226,59 @@ $fixture = null;
 $nextMonth = '';
 $targetYear = 0;
 $targetMonth = 0;
+$periodsChecked = 0;
+$employeesChecked = [];
+$employeesWithAllPeriodsOccupied = 0;
 foreach ($candidates as $candidate) {
+    $employeeIdForSearch = (int)$candidate['employee_id'];
+    $employeesChecked[$employeeIdForSearch] = true;
+    $allPeriodsOccupied = true;
     for ($monthOffset = 1; $monthOffset <= 60; $monthOffset++) {
         $candidateMonth = date('Y-m-01', strtotime(date('Y-m-01') . ' +' . $monthOffset . ' months'));
         $candidateYear = (int)date('Y', strtotime($candidateMonth));
         $candidateMonthNumber = (int)date('n', strtotime($candidateMonth));
+        $periodsChecked++;
         $existingPayroll = dbFetchOne(
             'SELECT id FROM payroll WHERE employee_id = ? AND month = ? AND year = ? LIMIT 1',
-            [(int)$candidate['employee_id'], $candidateMonthNumber, $candidateYear]
+            [$employeeIdForSearch, $candidateMonthNumber, $candidateYear]
         );
         if (!$existingPayroll) {
             $fixture = $candidate;
             $nextMonth = $candidateMonth;
             $targetYear = $candidateYear;
             $targetMonth = $candidateMonthNumber;
+            $allPeriodsOccupied = false;
             break 2;
         }
     }
+    if ($allPeriodsOccupied) {
+        $employeesWithAllPeriodsOccupied++;
+    }
 }
-concurrencyCheck(
-    (bool)$fixture,
-    'full-schema fixture needs an employee request with a policy and an unused payroll period within the next 60 months'
-);
+if (!$fixture) {
+    $requestCount = (int)$pdo->query('SELECT COUNT(*) FROM hr_salary_advance_requests')->fetchColumn();
+    $employeeCount = (int)$pdo->query('SELECT COUNT(*) FROM employees')->fetchColumn();
+    $payrollCount = (int)$pdo->query('SELECT COUNT(*) FROM payroll')->fetchColumn();
+    $linkedRequestCount = (int)$pdo->query(
+        'SELECT COUNT(*) FROM hr_salary_advance_requests r JOIN employees e ON e.id = r.employee_id'
+    )->fetchColumn();
+    throw new RuntimeException(
+        'FAIL: no fixture candidate found; diagnostics=' . json_encode([
+            'requests_total' => $requestCount,
+            'employees_total' => $employeeCount,
+            'payroll_rows_total' => $payrollCount,
+            'requests_with_employee' => count($candidates),
+            'verified_request_employee_joins' => $linkedRequestCount,
+            'distinct_candidate_employees_checked' => count($employeesChecked),
+            'future_payroll_periods_checked' => $periodsChecked,
+            'employees_with_all_60_future_periods_occupied' => $employeesWithAllPeriodsOccupied,
+            'candidate_request_ids' => array_slice(array_map(
+                static fn(array $row): int => (int)$row['request_id'],
+                $candidates
+            ), 0, 10),
+        ], JSON_UNESCAPED_SLASHES)
+    );
+}
 
 $requestId = (int)$fixture['request_id'];
 $employeeId = (int)$fixture['employee_id'];
