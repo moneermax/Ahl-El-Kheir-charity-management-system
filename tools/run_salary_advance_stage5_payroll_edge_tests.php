@@ -487,19 +487,25 @@ try {
     }
 
     $nextHorizonPeriod = date('Y-m-01', strtotime((string)$horizonFixture['scheduled_month'] . ' +1 month'));
-    $afterHorizonFixture = $horizonFixture;
-    $afterHorizonFixture['scheduled_month'] = $nextHorizonPeriod;
     $afterHorizonPayrollId = nextFixturePayrollId($pdo);
-    [$nextHorizonPreview] = runPreview($pdo, $afterHorizonFixture, $afterHorizonPayrollId);
+    $afterHorizonPayroll = [
+        'id' => $afterHorizonPayrollId,
+        'employee_id' => (int)$horizonFixture['employee_id'],
+        'year' => (int)date('Y', strtotime($nextHorizonPeriod)),
+        'month' => (int)date('n', strtotime($nextHorizonPeriod)),
+        'basic_salary' => 1.00,
+        'allowances' => 0.00,
+        'overtime' => 0.00,
+        'deductions' => 0.00,
+        'attendance_deduction' => 0.00,
+        'salary_advance_deduction' => 0.00,
+    ];
+    $nextHorizonPreview = hrSalaryAdvancePayrollCalculateDraft($pdo, $afterHorizonPayroll, $nextHorizonPeriod);
     if (round((float)$nextHorizonPreview['total'], 2) !== 0.00 ||
         !empty($nextHorizonPreview['allocations'])) {
         throw new RuntimeException('An unpaid installment was still selected after the configured maximum repayment horizon.');
     }
 
-    $afterHorizonPayroll = dbFetchOne("SELECT * FROM payroll WHERE id = ?", [$afterHorizonPayrollId]);
-    if (!$afterHorizonPayroll) {
-        throw new RuntimeException('The zero-deduction payroll fixture after the approved horizon was not created.');
-    }
     $afterHorizonApply = hrSalaryAdvancePayrollApply($pdo, $afterHorizonPayroll, 0);
     if (round((float)($afterHorizonApply['total'] ?? -1), 2) !== 0.00 ||
         (int)($afterHorizonApply['trace_rows'] ?? -1) !== 0) {
