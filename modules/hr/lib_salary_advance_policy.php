@@ -58,3 +58,58 @@ function hrSalaryAdvancePolicyGetAll(PDO $pdo): array
 {
     return dbFetchAll("SELECT p.*, u.full_name AS created_by_name FROM hr_salary_advance_policy_versions p LEFT JOIN users u ON u.id=p.created_by ORDER BY p.effective_from ASC, p.version_no ASC");
 }
+
+
+/**
+ * Insert one immutable salary-advance policy version using the validated field map.
+ * Kept in the library so the production create path and its database regression
+ * test execute the same SQL and parameter ordering.
+ */
+function hrSalaryAdvancePolicyInsertVersion(PDO $pdo, int $versionNo, array $p, int $userId): void
+{
+    if ($versionNo <= 0 || $userId <= 0) {
+        throw new InvalidArgumentException('بيانات إصدار سياسة السلفة غير صالحة.');
+    }
+
+    $sql = "INSERT INTO hr_salary_advance_policy_versions
+        (version_no, policy_name, effective_from, notes,
+         allow_any_request_amount, minimum_request_amount, maximum_request_amount,
+         allow_multiple_active_advances, allow_fixed_monthly_repayment,
+         allow_full_eligible_salary_repayment, allow_full_settlement_from_salary,
+         allow_direct_repayment, allow_custom_repayment_terms,
+         maximum_monthly_deduction, maximum_repayment_months,
+         allow_fm_repayment_rescheduling, repayment_start_rule,
+         insufficient_salary_rule, eligible_salary_basis, minimum_service_days,
+         probation_allowed, terminated_employee_allowed,
+         require_accounting_verification, allow_early_settlement, created_by)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([
+        $versionNo,
+        $p['policy_name'],
+        $p['effective_from'],
+        $p['notes'],
+        $p['allow_any_request_amount'],
+        $p['minimum_request_amount'],
+        $p['maximum_request_amount'],
+        $p['allow_multiple_active_advances'],
+        $p['allow_fixed_monthly_repayment'],
+        $p['allow_full_eligible_salary_repayment'],
+        $p['allow_full_settlement_from_salary'],
+        $p['allow_direct_repayment'],
+        $p['allow_custom_repayment_terms'],
+        $p['maximum_monthly_deduction'],
+        $p['maximum_repayment_months'],
+        $p['allow_fm_repayment_rescheduling'],
+        $p['repayment_start_rule'],
+        $p['insufficient_salary_rule'],
+        $p['eligible_salary_basis'],
+        $p['minimum_service_days'],
+        $p['probation_allowed'],
+        $p['terminated_employee_allowed'],
+        $p['require_accounting_verification'],
+        $p['allow_early_settlement'],
+        $userId,
+    ]);
+}

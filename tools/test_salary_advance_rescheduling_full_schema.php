@@ -110,4 +110,67 @@ expectFullSchema($afterRerunRows === $beforeRows, 'Re-running the migration chan
 expectFullSchema($afterRerunPlans === $scheduledRequests, 'Re-running the migration duplicated or removed initial plans.');
 expectFullSchema($afterRerunLinked === $beforeRows, 'Re-running the migration lost repayment-plan links.');
 
-echo "PASS: full checked-in schema migration, legacy data backfill, disabled-by-default policy flag, index replacement, and rerun safety.\n";
+
+/*
+ * Exercise the exact policy-version INSERT used by the FM policy editor.
+ * This catches column/placeholder/parameter drift for the rescheduling flag.
+ * The fixture is always rolled back and never persists in the disposable DB.
+ */
+require_once dirname(__DIR__) . '/modules/hr/lib_salary_advance_policy.php';
+$actorId = (int)$pdo->query('SELECT id FROM users ORDER BY id LIMIT 1')->fetchColumn();
+expectFullSchema($actorId > 0, 'A valid actor is required to test policy creation.');
+
+$futureDate = new DateTimeImmutable('2099-01-01');
+$effectiveFrom = '';
+for ($i = 0; $i < 366; $i++) {
+    $candidate = $futureDate->modify('+' . $i . ' days')->format('Y-m-d');
+    $checkDate = $pdo->prepare('SELECT id FROM hr_salary_advance_policy_versions WHERE effective_from = ? LIMIT 1');
+    $checkDate->execute([$candidate]);
+    if (!$checkDate->fetchColumn()) {
+        $effectiveFrom = $candidate;
+        break;
+    }
+}
+expectFullSchema($effectiveFrom !== '', 'Could not find an unused future effective date for the rollback-only policy test.');
+
+$policyInput = hrSalaryAdvancePolicyValidate([
+    'policy_name' => 'CI rescheduling flag insert regression',
+    'effective_from' => $effectiveFrom,
+    'allow_any_request_amount' => '1',
+    'allow_multiple_active_advances' => '1',
+    'allow_fixed_monthly_repayment' => '1',
+    'allow_full_eligible_salary_repayment' => '1',
+    'allow_full_settlement_from_salary' => '1',
+    'allow_direct_repayment' => '1',
+    'allow_custom_repayment_terms' => '1',
+    'maximum_monthly_deduction' => '200.00',
+    'maximum_repayment_months' => '12',
+    'allow_fm_repayment_rescheduling' => '1',
+    'repayment_start_rule' => 'specified_month',
+    'insufficient_salary_rule' => 'skip_month',
+    'eligible_salary_basis' => 'gross',
+    'minimum_service_days' => '0',
+    'probation_allowed' => '1',
+    'terminated_employee_allowed' => '0',
+    'require_accounting_verification' => '1',
+    'allow_early_settlement' => '1',
+]);
+$nextVersion = (int)$pdo->query('SELECT COALESCE(MAX(version_no), 0) + 1 FROM hr_salary_advance_policy_versions')->fetchColumn();
+$pdo->beginTransaction();
+try {
+    hrSalaryAdvancePolicyInsertVersion($pdo, $nextVersion, $policyInput, $actorId);
+    $insertedPolicy = $pdo->prepare('SELECT allow_fm_repayment_rescheduling, repayment_start_rule, insufficient_salary_rule, eligible_salary_basis FROM hr_salary_advance_policy_versions WHERE version_no = ? LIMIT 1');
+    $insertedPolicy->execute([$nextVersion]);
+    $inserted = $insertedPolicy->fetch(PDO::FETCH_ASSOC);
+    expectFullSchema(is_array($inserted), 'Policy create helper did not insert the test policy version.');
+    expectFullSchema((int)$inserted['allow_fm_repayment_rescheduling'] === 1, 'Policy create helper did not persist the enabled rescheduling authorization.');
+    expectFullSchema((string)$inserted['repayment_start_rule'] === 'specified_month', 'Policy create helper shifted the repayment-start value into the wrong column.');
+    expectFullSchema((string)$inserted['insufficient_salary_rule'] === 'skip_month', 'Policy create helper shifted the insufficient-salary value into the wrong column.');
+    expectFullSchema((string)$inserted['eligible_salary_basis'] === 'gross', 'Policy create helper shifted the eligible-salary value into the wrong column.');
+} finally {
+    if ($pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
+}
+
+echo "PASS: full-schema migration/backfill/rerun and rollback-only policy creation with rescheduling authorization.\\n";
