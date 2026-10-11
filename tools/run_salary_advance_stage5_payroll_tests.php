@@ -41,8 +41,7 @@ function findFixture(PDO $pdo): ?array
          WHERE r.status = 'disbursed'
            AND COALESCE(r.outstanding_balance, 0) > 0
            AND s.status IN ('pending', 'partial')
-           AND s.scheduled_month <= DATE_FORMAT(CURRENT_DATE, '%Y-%m-01')
-           AND (rp.maximum_repayment_months IS NULL OR
+                      AND (rp.maximum_repayment_months IS NULL OR
                 s.scheduled_month < DATE_ADD(rp.start_month, INTERVAL rp.maximum_repayment_months MONTH))
            AND NOT EXISTS (
                SELECT 1
