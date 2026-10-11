@@ -256,7 +256,6 @@ function hrSalaryAdvancePayrollApply(PDO $pdo, array $payroll, int $accountingEn
                  AND wd.effective_month <= ?
            )
          ORDER BY r.id ASC, s.scheduled_month ASC, s.installment_no ASC, s.id ASC
-         FOR UPDATE
          FOR UPDATE",
         [$employeeId, $periodStart, $periodStart, $periodStart, $periodStart, $periodStart]
     );
