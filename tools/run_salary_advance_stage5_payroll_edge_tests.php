@@ -466,6 +466,17 @@ try {
          WHERE id = ?"
     )->execute([(int)$horizonFixture['policy_version_id']]);
 
+    $scheduleCountBefore = dbFetchOne(
+        "SELECT COUNT(*) AS row_count
+         FROM hr_salary_advance_repayment_schedule
+         WHERE salary_advance_request_id = ?",
+        [(int)$horizonFixture['request_id']]
+    );
+    $scheduleRowsBefore = (int)($scheduleCountBefore['row_count'] ?? 0);
+    if ($scheduleRowsBefore < 1) {
+        throw new RuntimeException('The horizon fixture has no approved schedule rows.');
+    }
+
     $horizonPayrollId = nextFixturePayrollId($pdo);
     [$withinHorizon] = runPreview($pdo, $horizonFixture, $horizonPayrollId);
     $withinAllocation = $withinHorizon['allocations'][0] ?? null;
@@ -503,8 +514,8 @@ try {
          WHERE salary_advance_request_id = ?",
         [(int)$horizonFixture['request_id']]
     );
-    if ((int)($horizonScheduleCount['row_count'] ?? 0) < 1) {
-        throw new RuntimeException('The approved schedule unexpectedly disappeared during horizon verification.');
+    if ((int)($horizonScheduleCount['row_count'] ?? 0) !== $scheduleRowsBefore) {
+        throw new RuntimeException('Payroll horizon handling unexpectedly changed the approved schedule row count.');
     }
 
     echo "PASS | Maximum repayment horizon | 1.00 partial repayment eligible in the approved month; no automatic deduction or new installment after the one-month policy limit.\n";
