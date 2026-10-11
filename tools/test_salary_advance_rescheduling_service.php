@@ -235,7 +235,7 @@ $pdo->exec("
     INSERT INTO hr_salary_advance_repayment_plans
         (id, salary_advance_request_id, plan_no, status, reason,
          outstanding_balance_at_creation, start_month, maximum_repayment_months, maximum_monthly_deduction)
-    VALUES (9, 8, 2, 'active', 'Fixture duplicate active plan', 500.00, '{$oldStart}', 12, 200.00)
+    VALUES (10, 8, 2, 'active', 'Fixture duplicate active plan', 500.00, '{$oldStart}', 12, 200.00)
 ");
 expectRescheduleRejected(
     fn() => hrSalaryAdvanceScheduleReschedule($pdo, 8, $startMonth, 3, 200.00, 'Duplicate active plan test', 77),
