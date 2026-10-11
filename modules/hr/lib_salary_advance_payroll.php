@@ -16,6 +16,10 @@ function hrSalaryAdvancePayrollPendingRows(PDO $pdo, int $employeeId, string $pe
         return [];
     }
 
+    // The request's saved policy controls the maximum calendar window.
+    // Unpaid rows may carry forward within that window, but deductions after
+    // it require an explicit authorized rescheduling decision. A NULL maximum
+    // means the policy does not define a fixed duration boundary.
     return dbFetchAll(
         "SELECT
             r.id AS request_id,
@@ -40,6 +44,17 @@ function hrSalaryAdvancePayrollPendingRows(PDO $pdo, int $employeeId, string $pe
            AND r.status = 'disbursed'
            AND COALESCE(r.outstanding_balance, 0) > 0
            AND s.scheduled_month <= ?
+           AND (
+               p.maximum_repayment_months IS NULL
+               OR ? <= DATE_ADD(
+                   (
+                       SELECT MIN(plan_start.scheduled_month)
+                       FROM hr_salary_advance_repayment_schedule plan_start
+                       WHERE plan_start.salary_advance_request_id = r.id
+                   ),
+                   INTERVAL (p.maximum_repayment_months - 1) MONTH
+               )
+           )
            AND (
                s.status IN ('pending', 'partial')
                OR (s.status = 'skipped' AND s.scheduled_month < ?)
@@ -71,7 +86,7 @@ function hrSalaryAdvancePayrollPendingRows(PDO $pdo, int $employeeId, string $pe
                  AND wd.effective_month <= ?
            )
          ORDER BY r.id ASC, s.scheduled_month ASC, s.installment_no ASC, s.id ASC",
-        [$employeeId, $periodStart, $periodStart, $periodStart, $periodStart, $periodStart]
+        [$employeeId, $periodStart, $periodStart, $periodStart, $periodStart, $periodStart, $periodStart]
     );
 }
 
@@ -221,6 +236,8 @@ function hrSalaryAdvancePayrollApply(PDO $pdo, array $payroll, int $accountingEn
          FROM hr_salary_advance_repayment_schedule s
          JOIN hr_salary_advance_requests r
            ON r.id = s.salary_advance_request_id
+         JOIN hr_salary_advance_policy_versions p
+           ON p.id = r.policy_version_id
          WHERE r.employee_id = ?
            AND r.status = 'disbursed'
            AND COALESCE(r.outstanding_balance, 0) > 0
