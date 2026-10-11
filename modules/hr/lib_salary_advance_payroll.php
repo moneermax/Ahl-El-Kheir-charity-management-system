@@ -411,7 +411,24 @@ function hrSalaryAdvancePayrollApply(PDO $pdo, array $payroll, int $accountingEn
 
         $updateRequest->execute([$outstandingAfter, $requestId]);
         if ($updateRequest->rowCount() !== 1) {
-            throw new RuntimeException('تعذر تحديث الرصيد القائم للسلفة.');
+            // A skipped installment legitimately leaves the balance unchanged.
+            // MySQL may report zero changed rows for that valid no-op update,
+            // so distinguish it from a missing or no-longer-disbursed request.
+            $confirmedRequest = dbFetchOne(
+                "SELECT outstanding_balance
+                 FROM hr_salary_advance_requests
+                 WHERE id = ?
+                   AND status = 'disbursed'
+                 LIMIT 1
+                 FOR UPDATE",
+                [$requestId]
+            );
+            if (
+                !$confirmedRequest ||
+                abs(round((float)$confirmedRequest['outstanding_balance'], 2) - $outstandingAfter) > 0.000001
+            ) {
+                throw new RuntimeException('تعذر تحديث الرصيد القائم للسلفة.');
+            }
         }
 
         $auditUserId = null;
