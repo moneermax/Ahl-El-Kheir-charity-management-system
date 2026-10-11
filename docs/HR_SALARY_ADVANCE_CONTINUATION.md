@@ -990,3 +990,21 @@ The renderer now detects a validation error inside `#salaryAdvanceRequestModal` 
 Committed on `main`: `5d0a6ce353a4a0cdf15e7350b95d8226eaf24922`.
 
 Source-level verification: the error-specific path is placed after response-fragment validation and before the standard full-content replacement. Local Apache/browser verification remains pending. After pulling, submit the existing invalid repayment-policy case: the red validation toast should appear inside the still-open modal without the close/reopen flicker. Do not disburse the previously used request as part of this check.
+
+
+## 2026-10-11 — Full Settlement from Salary: Payroll Integration Source Fix
+
+**Status: source changes committed; local PHP/runtime verification still required.**
+
+A focused scan of the live `main` source confirmed that `full_settlement` was accepted by request and FM approval validation, and was exposed by the saved policy, but was excluded from repayment schedule generation and the disbursement schedule-generation call. The payroll calculator also applied `insufficient_salary_rule` only to `fixed_monthly` repayments.
+
+Source changes committed directly to `main`:
+- `modules/hr/lib_salary_advance_repayment.php`: allow `full_settlement` to use the existing bounded payroll schedule planner. It reuses the policy's `maximum_monthly_deduction` and `maximum_repayment_months`; the finite schedule horizon remains mandatory.
+- `modules/hr/lib_salary_advance_accounting.php`: generate the schedule during the existing disbursement transaction for `full_settlement`, just as for the two existing payroll-based methods.
+- `modules/hr/lib_salary_advance_payroll.php`: apply the saved `available_salary` / `skip_month` insufficient-salary policy to `full_settlement` without changing actual deduction caps or balance/accounting protections.
+- `modules/hr/salary_advance_processing.php`: report that the payroll schedule was created after disbursement.
+- Added rollback-only schedule-planning and payroll edge-test cases for full settlement. The payroll cases adapt an existing disbursed fixture inside SAVEPOINTs and roll the changes back; no permanent financial fixture is intended.
+
+**Important verification boundary:** this remote source edit has not executed PHP lint or the rollback-only test scripts against the local XAMPP/MariaDB database. Do not consider runtime verification complete until those tests pass locally.
+
+**Known broader schedule behavior to watch during runtime verification:** the existing schedule design pre-generates a finite number of monthly rows from the maximum permitted deduction. A persistently low salary or repeated skipped months can leave an outstanding balance after the planned horizon. The request's outstanding balance is only reduced by the actual payroll deduction, so the accounting balance is not erased, but the remaining amount may need an explicit rescheduling workflow. This fix does not change the schema or silently extend the saved maximum-months policy.
