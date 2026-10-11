@@ -71,6 +71,9 @@ function expectRescheduleRejected(callable $operation, string $case, string $exp
 }
 
 foreach ([
+    // Drop fixture-created tables too, so repeated runs start from a clean schema.
+    'hr_salary_advance_waiver_items',
+    'hr_salary_advance_waiver_decisions',
     'hr_salary_advance_payroll_repayments',
     'hr_salary_advance_repayment_schedule',
     'hr_salary_advance_repayment_plans',
