@@ -39,6 +39,10 @@ jobs:
             tools/test_salary_advance_rescheduling_migration.php
             tools/test_salary_advance_rescheduling_service.php
             tools/test_salary_advance_rescheduling_full_schema.php
+            tools/run_salary_advance_stage5_schedule_tests.php
+            tools/run_salary_advance_stage5_payroll_tests.php
+            tools/run_salary_advance_stage5_payroll_edge_tests.php
+            tools/run_salary_advance_1410_reconciliation.php
           )
           for file in "${files[@]}"; do
             php -l "$file"
@@ -162,3 +166,18 @@ jobs:
           DB_USERNAME: root
           DB_PASSWORD: root
         run: php tools/test_salary_advance_rescheduling_full_schema.php
+
+      - name: Run rollback-only Stage 5 payroll regressions and account 1410 reconciliation
+        env:
+          AHL_ENV: development
+          AHL_DB_HOST: 127.0.0.1
+          AHL_DB_PORT: '3306'
+          AHL_DB_NAME: salary_advance_migration_test
+          AHL_DB_USER: root
+          AHL_DB_PASS: root
+        run: |
+          set -euo pipefail
+          php tools/run_salary_advance_stage5_schedule_tests.php
+          php tools/run_salary_advance_stage5_payroll_tests.php
+          php tools/run_salary_advance_stage5_payroll_edge_tests.php
+          php tools/run_salary_advance_1410_reconciliation.php
