@@ -211,7 +211,7 @@ $policy = $pdo->prepare("INSERT INTO hr_salary_advance_policy_versions (id, allo
 $policy->execute([1, 1]);
 $policy->execute([2, 0]);
 $pdo->exec("INSERT INTO employees (id, user_id) VALUES (1, 9001)");
-$pdo->exec("INSERT INTO employees (id, user_id) VALUES (2, NULL), (3, NULL), (4, NULL), (5, NULL), (6, NULL), (7, NULL), (8, NULL)");
+$pdo->exec("INSERT INTO employees (id, user_id) VALUES (2, NULL), (3, NULL), (4, NULL), (5, NULL), (6, NULL), (7, NULL), (8, NULL), (9, NULL)");
 
 $requests = [
     [1, 'ADV-RESCHED-1', 1, 'fixed_monthly', 500.00],
@@ -222,6 +222,7 @@ $requests = [
     [6, 'ADV-RESCHED-6', 1, 'direct_repayment', 500.00],
     [7, 'ADV-RESCHED-7', 1, 'fixed_monthly', 500.00],
     [8, 'ADV-RESCHED-8', 1, 'fixed_monthly', 500.00],
+    [9, 'ADV-RESCHED-9', 1, 'fixed_monthly', 500.00],
 ];
 $insertRequest = $pdo->prepare("
     INSERT INTO hr_salary_advance_requests
@@ -240,7 +241,7 @@ $insertPlan = $pdo->prepare("
          outstanding_balance_at_creation, start_month, maximum_repayment_months, maximum_monthly_deduction)
     VALUES (?, ?, 1, 'active', 'Fixture original plan', 500.00, ?, ?, 200.00)
 ");
-for ($id = 1; $id <= 8; $id++) {
+for ($id = 1; $id <= 9; $id++) {
     $insertPlan->execute([$id, $id, $id === 3 ? $activeStart : $oldStart, 12]);
 }
 $insertSchedule = $pdo->prepare("
@@ -248,7 +249,7 @@ $insertSchedule = $pdo->prepare("
         (salary_advance_request_id, repayment_plan_id, installment_no, scheduled_month, scheduled_amount)
     VALUES (?, ?, 1, ?, 200.00)
 ");
-for ($id = 1; $id <= 8; $id++) {
+for ($id = 1; $id <= 9; $id++) {
     $insertSchedule->execute([$id, $id, $id === 3 ? $activeStart : $oldStart]);
 }
 
@@ -264,6 +265,16 @@ check((string)$pdo->query("SELECT status FROM hr_salary_advance_repayment_plans 
 check((string)$pdo->query("SELECT status FROM hr_salary_advance_repayment_plans WHERE id = " . (int)$success['plan_id'])->fetchColumn() === 'active', 'new plan is active');
 check((int)$pdo->query("SELECT COUNT(*) FROM hr_salary_advance_repayment_schedule WHERE salary_advance_request_id = 1")->fetchColumn() === 4, 'old schedule row and three new rows are all preserved');
 check((int)$pdo->query("SELECT COUNT(*) FROM audit_log WHERE action = 'HR_SALARY_ADVANCE_REPAYMENT_RESCHEDULE'")->fetchColumn() === 1, 'successful reschedule writes one audit event');
+
+// The form's displayed balance can become stale before submission. The service
+// must lock/re-read the request and size the replacement from the live balance.
+$pdo->exec("UPDATE hr_salary_advance_requests SET outstanding_balance = 350.00 WHERE id = 9");
+$staleFormResult = hrSalaryAdvanceScheduleReschedule(
+    $pdo, 9, $startMonth, 2, 175.00, 'Live balance revalidation test', 77
+);
+check((float)$pdo->query("SELECT outstanding_balance_at_creation FROM hr_salary_advance_repayment_plans WHERE id = " . (int)$staleFormResult['plan_id'])->fetchColumn() === 350.00, 'replacement plan records the live balance rather than the stale form balance');
+check((int)$staleFormResult['schedule_rows'] === 2, 'replacement schedule duration is based on the live outstanding balance');
+check((float)$pdo->query("SELECT SUM(scheduled_amount) FROM hr_salary_advance_repayment_schedule WHERE repayment_plan_id = " . (int)$staleFormResult['plan_id'])->fetchColumn() === 350.00, 'replacement schedule covers exactly the current outstanding balance');
 
 require_once dirname(__DIR__) . '/modules/hr/lib_salary_advance_payroll.php';
 $pendingAtStart = hrSalaryAdvancePayrollPendingRows($pdo, 1, $startMonth);
@@ -351,7 +362,7 @@ foreach ([2, 3, 4, 5, 6] as $id) {
     check((int)$pdo->query("SELECT COUNT(*) FROM hr_salary_advance_repayment_plans WHERE salary_advance_request_id = {$id}")->fetchColumn() === 1, "rejected request {$id} retains only its original plan");
     check((string)$pdo->query("SELECT status FROM hr_salary_advance_repayment_plans WHERE salary_advance_request_id = {$id}")->fetchColumn() === 'active', "rejected request {$id} keeps its original plan active");
 }
-check((int)$pdo->query("SELECT COUNT(*) FROM audit_log WHERE action = 'HR_SALARY_ADVANCE_REPAYMENT_RESCHEDULE'")->fetchColumn() === 1, 'rejected attempts do not add audit success events');
+check((int)$pdo->query("SELECT COUNT(*) FROM audit_log WHERE action = 'HR_SALARY_ADVANCE_REPAYMENT_RESCHEDULE'")->fetchColumn() === 2, 'rejected attempts do not add audit success events');
 
 $payroll = [
     'id' => 101,
@@ -413,4 +424,4 @@ check((int)$pdo->query("SELECT COUNT(*) FROM hr_salary_advance_repayment_plans W
 check((string)$pdo->query("SELECT status FROM hr_salary_advance_repayment_plans WHERE salary_advance_request_id = 7")->fetchColumn() === 'active', 'audit failure leaves the original plan active');
 check((int)$pdo->query("SELECT COUNT(*) FROM hr_salary_advance_repayment_schedule WHERE salary_advance_request_id = 7")->fetchColumn() === $beforeSchedules, 'audit failure rolls back inserted schedule rows');
 
-echo "PASS: reschedule safeguards, active-plan payroll preview/posting/horizon, duplicate-posting rejection, multiple-active-plan guard, history preservation, audit events, and transaction rollback.\n";
+echo "PASS: reschedule safeguards, live-balance revalidation, active-plan payroll preview/posting/horizon, duplicate-posting rejection, multiple-active-plan guard, history preservation, audit events, and transaction rollback.\n";
