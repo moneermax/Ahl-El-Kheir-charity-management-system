@@ -13,7 +13,7 @@ if (!Session::isLoggedIn()) {
     exit;
 }
 $role = (string)Session::getUserRole();
-if (!in_array($role, ['financial_manager', 'fm', 'admin'], true)) {
+if (!in_array($role, ['financial_manager', 'fm'], true)) {
     flash('error', 'هذه الصفحة متاحة للمدير المالي المخول فقط.');
     header('Location: ' . APP_URL . 'index.php');
     exit;
