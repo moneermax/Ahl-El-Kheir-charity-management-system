@@ -382,6 +382,24 @@ check((string)$pdo->query("SELECT status FROM hr_salary_advance_repayment_schedu
 check((int)$pdo->query("SELECT COUNT(*) FROM hr_salary_advance_payroll_repayments WHERE salary_advance_request_id = 1 AND payroll_id = 101")->fetchColumn() === 1, 'payroll posting writes one repayment trace');
 check((int)$pdo->query("SELECT COUNT(*) FROM audit_log WHERE action = 'HR_SALARY_ADVANCE_PAYROLL_REPAYMENT'")->fetchColumn() === 1, 'payroll posting writes the repayment audit event');
 
+$duplicatePayrollRejected = false;
+$pdo->beginTransaction();
+try {
+    hrSalaryAdvancePayrollApply($pdo, $payroll, 5001);
+    $pdo->rollBack();
+} catch (Throwable $e) {
+    if ($pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
+    if (strpos($e->getMessage(), 'لا يوجد قسط سداد قائم يمكن تطبيقه') === false) {
+        throw $e;
+    }
+    $duplicatePayrollRejected = true;
+}
+check($duplicatePayrollRejected, 'a repeated payroll application is rejected after its installment has already been paid');
+check((float)$pdo->query("SELECT outstanding_balance FROM hr_salary_advance_requests WHERE id = 1")->fetchColumn() === 300.00, 'repeated payroll application cannot reduce the balance twice');
+check((int)$pdo->query("SELECT COUNT(*) FROM hr_salary_advance_payroll_repayments WHERE salary_advance_request_id = 1 AND payroll_id = 101")->fetchColumn() === 1, 'repeated payroll application cannot duplicate the repayment trace');
+
 // Force an audit-write failure and prove the plan/schedule changes roll back.
 $pdo->exec("ALTER TABLE audit_log DROP COLUMN user_agent");
 $beforeSchedules = (int)$pdo->query("SELECT COUNT(*) FROM hr_salary_advance_repayment_schedule WHERE salary_advance_request_id = 7")->fetchColumn();
@@ -395,4 +413,4 @@ check((int)$pdo->query("SELECT COUNT(*) FROM hr_salary_advance_repayment_plans W
 check((string)$pdo->query("SELECT status FROM hr_salary_advance_repayment_plans WHERE salary_advance_request_id = 7")->fetchColumn() === 'active', 'audit failure leaves the original plan active');
 check((int)$pdo->query("SELECT COUNT(*) FROM hr_salary_advance_repayment_schedule WHERE salary_advance_request_id = 7")->fetchColumn() === $beforeSchedules, 'audit failure rolls back inserted schedule rows');
 
-echo "PASS: reschedule safeguards, active-plan payroll preview/posting and horizon, multiple-active-plan guard, history preservation, audit events, and transaction rollback.\n";
+echo "PASS: reschedule safeguards, active-plan payroll preview/posting/horizon, duplicate-posting rejection, multiple-active-plan guard, history preservation, audit events, and transaction rollback.\n";
