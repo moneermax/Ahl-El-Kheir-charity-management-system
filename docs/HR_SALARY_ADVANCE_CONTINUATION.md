@@ -1033,7 +1033,7 @@ The payroll edge-test harness now performs the posting lifecycle inside a rollba
 
 ## 2026-10-11 — Enforce the Approved Repayment Horizon
 
-**Status: source and rollback-only regression test committed; local runtime verification pending.**
+**Status: source changes and rollback-only regression test committed; local runtime verification pending.**
 
 The focused audit found that carry-forward selection had no comparison against the saved policy's `maximum_repayment_months`. As a result, an unpaid installment could continue being deducted after the approved maximum calendar window had elapsed. That conflicts with the policy limit even though the code did not add schedule rows.
 
@@ -1041,6 +1041,7 @@ Changes committed on `main`:
 - `modules/hr/lib_salary_advance_payroll.php`: both preview selection and the payroll-paid locking query now enforce the same maximum-duration boundary, calculated from the first scheduled month and the request's own saved policy version. This keeps preview and posting eligibility aligned.
 - Carry-forward still works inside the approved window. After the configured window, the unpaid balance and schedule history remain intact, but payroll does not automatically deduct the overdue installment. No new schedule rows are generated and no policy limit is silently extended.
 - A policy version with `maximum_repayment_months IS NULL` has no fixed calendar-duration boundary, so existing carry-forward behavior remains for that explicit configuration.
-- `tools/run_salary_advance_stage5_payroll_edge_tests.php`: added a rollback-only regression case proving a partial deduction remains eligible inside a one-month window and is no longer selected in the following month; it also asserts that the schedule row count is unchanged.
+- `hrSalaryAdvancePayrollApply()` now treats no eligible rows plus a zero salary-advance deduction as a valid no-op, but only after confirming the preview has no allocations. This prevents an exhausted repayment window from blocking an otherwise ordinary payroll payment; a nonzero payroll deduction with no eligible row still fails safely.
+- `tools/run_salary_advance_stage5_payroll_edge_tests.php`: added a rollback-only regression case proving a partial deduction remains eligible inside a one-month window, is no longer selected in the following month, and the resulting zero-deduction payroll application completes without adding schedule rows.
 
 **Local verification required:** after pulling the commits, run PHP lint on the payroll library and edge-test harness, then run both Stage 5 schedule and payroll edge suites. The new horizon regression must pass against local MariaDB before this change is considered runtime-verified. The next business-design task, not implemented here, is an authorized rescheduling workflow for balances that remain after the approved horizon.
