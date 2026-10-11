@@ -426,7 +426,7 @@ function hrSalaryAdvanceScheduleGenerate(PDO $pdo, int $requestId, ?int $userId 
             $requestId,
             $outstanding,
             $startMonth,
-            max(1, $maximumMonths ?? count($installments)),
+            $maximumMonths,
             max(0.01, $maximumDeduction ?? (float)max(array_column($installments, 2))),
             $userId,
         ]);
