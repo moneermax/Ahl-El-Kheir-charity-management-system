@@ -198,10 +198,38 @@ function hrSalaryAdvanceGetRequestForFm(PDO $pdo, int $requestId): ?array
     );
 }
 
-function hrSalaryAdvanceFmPolicyMismatches(PDO $pdo, array $r): array
+/**
+ * Recommend the smallest cent-precise fixed installment that can repay an
+ * amount within the saved policy horizon. This is a recommendation only:
+ * the caller must still enforce the policy's monthly deduction ceiling.
+ */
+function hrSalaryAdvanceRecommendMonthlyInstallment(float $amount, ?int $maximumMonths, ?float $maximumMonthlyDeduction): array
+{
+    if (!is_finite($amount) || $amount <= 0 || $maximumMonths === null || $maximumMonths < 1) {
+        return ['monthly_amount' => null, 'within_policy_cap' => false, 'maximum_monthly_deduction' => $maximumMonthlyDeduction];
+    }
+
+    $requiredCents = (int)ceil(($amount * 100) / $maximumMonths - 1e-9);
+    $monthlyAmount = $requiredCents / 100;
+    $withinCap = $maximumMonthlyDeduction === null
+        || $maximumMonthlyDeduction <= 0
+        || $monthlyAmount <= $maximumMonthlyDeduction + 1e-9;
+
+    return [
+        'monthly_amount' => $monthlyAmount,
+        'within_policy_cap' => $withinCap,
+        'maximum_monthly_deduction' => $maximumMonthlyDeduction,
+    ];
+}
+
+function hrSalaryAdvanceFmPolicyMismatches(PDO $pdo, array $r, ?array $terms = null): array
 {
     $m = [];
-    $amount = (float)$r['requested_amount'];
+    $amount = (float)($terms['amount'] ?? $r['requested_amount']);
+    $method = (string)($terms['method'] ?? $r['requested_repayment_method']);
+    $monthlyValue = $terms['monthly_amount'] ?? $r['requested_monthly_amount'];
+    $monthly = $monthlyValue !== null && $monthlyValue !== '' ? (float)$monthlyValue : null;
+    $startMonth = $terms['start_month'] ?? $r['requested_start_month'];
     if (!(int)$r['allow_any_request_amount']) {
         $min = $r['minimum_request_amount'] !== null ? (float)$r['minimum_request_amount'] : null;
         $max = $r['maximum_request_amount'] !== null ? (float)$r['maximum_request_amount'] : null;
@@ -215,12 +243,12 @@ function hrSalaryAdvanceFmPolicyMismatches(PDO $pdo, array $r): array
         'full_settlement' => (int)$r['allow_full_settlement_from_salary'],
         'direct_repayment' => (int)$r['allow_direct_repayment'],
     ];
-    if (empty($methodAllowed[$r['requested_repayment_method']])) {
+    if (empty($methodAllowed[$method])) {
         $m[] = 'طريقة السداد المطلوبة غير مسموحة في السياسة المرجعية.';
     }
 
-    if ($r['requested_repayment_method'] === 'fixed_monthly') {
-        $monthly = (float)($r['requested_monthly_amount'] ?? 0);
+    if ($method === 'fixed_monthly') {
+        $monthly = (float)($monthly ?? 0);
         if ($monthly <= 0) $m[] = 'القسط الشهري المطلوب غير محدد بشكل صحيح.';
         if ($r['maximum_monthly_deduction'] !== null && $monthly > (float)$r['maximum_monthly_deduction']) {
             $m[] = 'القسط الشهري المطلوب يتجاوز الحد الأقصى للخصم الشهري.';
@@ -233,8 +261,8 @@ function hrSalaryAdvanceFmPolicyMismatches(PDO $pdo, array $r): array
         }
     }
 
-    if ($r['requested_start_month'] !== null) {
-        $start = (string)$r['requested_start_month'];
+    if ($startMonth !== null) {
+        $start = (string)$startMonth;
         $expected = date('Y-m-01', strtotime('+1 month'));
         if ($r['repayment_start_rule'] === 'next_payroll' && $start !== $expected) {
             $m[] = 'شهر بدء السداد لا يطابق قاعدة بدء السداد في السياسة.';
@@ -342,11 +370,17 @@ function hrSalaryAdvanceFmValidateDecision(PDO $pdo, array $r, array $input): ar
         $start = null;
     }
 
-    if (!$customized) {
-        $mismatches = hrSalaryAdvanceFmPolicyMismatches($pdo, $r);
-        if ($mismatches) {
-            throw new InvalidArgumentException('لا يمكن اعتماد الطلب بصيغته الأصلية لوجود مخالفات للسياسة. فعّل التخصيص وعدّل الشروط، أو ارفض الطلب.');
-        }
+    $mismatches = hrSalaryAdvanceFmPolicyMismatches($pdo, $r, [
+        'amount' => $amount,
+        'method' => $method,
+        'monthly_amount' => $monthly,
+        'start_month' => $start,
+    ]);
+    if ($mismatches) {
+        throw new InvalidArgumentException(
+            ($customized ? 'الشروط المعدلة ' : 'الشروط المعتمدة ')
+            . 'لا تطابق السياسة المرجعية: ' . implode(' ', $mismatches)
+        );
     }
 
     return [
