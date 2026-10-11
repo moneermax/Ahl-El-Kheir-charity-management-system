@@ -246,7 +246,7 @@ foreach ($candidates as $candidate) {
 }
 concurrencyCheck(
     (bool)$fixture,
-    'full-schema fixture needs an outstanding installment-based advance and at least one unused payroll period within the next 60 months'
+    'full-schema fixture needs an employee request with a policy and an unused payroll period within the next 60 months'
 );
 
 $requestId = (int)$fixture['request_id'];
