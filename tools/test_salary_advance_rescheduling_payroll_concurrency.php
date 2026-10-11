@@ -208,15 +208,17 @@ if (isset($argv[1]) && in_array($argv[1], ['blocked', 'retry'], true)) {
 ak_ensure_tables();
 ak_seed_accounts();
 
+// Select an existing request with an active migrated plan, then make its
+// eligibility deterministic inside this disposable test database. Checked-in
+// legacy data is not guaranteed to contain a currently outstanding payroll
+// advance; relying on such a row made this regression stop before testing locks.
 $candidates = dbFetchAll(
     "SELECT r.id AS request_id, r.employee_id, r.policy_version_id,
             r.outstanding_balance, r.request_no, rp.id AS active_plan_id
      FROM hr_salary_advance_requests r
+     JOIN employees e ON e.id = r.employee_id
      JOIN hr_salary_advance_repayment_plans rp
        ON rp.salary_advance_request_id = r.id AND rp.status = 'active'
-     WHERE r.status = 'disbursed'
-       AND COALESCE(r.outstanding_balance, 0) > 0
-       AND r.approved_repayment_method IN ('fixed_monthly', 'full_eligible_salary', 'full_settlement')
      ORDER BY r.id ASC"
 );
 
@@ -250,14 +252,22 @@ concurrencyCheck(
 $requestId = (int)$fixture['request_id'];
 $employeeId = (int)$fixture['employee_id'];
 $policyId = (int)$fixture['policy_version_id'];
-$balance = round((float)$fixture['outstanding_balance'], 2);
+// Use a deterministic balance independent of legacy sample data.
+$balance = 500.00;
 $planId = (int)$fixture['active_plan_id'];
-concurrencyCheck($balance > 0, 'fixture outstanding balance must be positive');
+concurrencyCheck($planId > 0, 'fixture active repayment plan must exist');
 
-// This test database is disposable. Prepare an expired plan and an explicitly
-// authorized test policy without changing any non-test/local database.
+// This test database is disposable. Prepare an eligible request, expired plan,
+// and explicitly authorized policy without changing any non-test/local database.
 $pdo->beginTransaction();
 try {
+    $pdo->prepare(
+        "UPDATE hr_salary_advance_requests
+         SET status = 'disbursed',
+             outstanding_balance = ?,
+             approved_repayment_method = 'fixed_monthly'
+         WHERE id = ?"
+    )->execute([$balance, $requestId]);
     $pdo->prepare(
         "UPDATE hr_salary_advance_policy_versions
          SET allow_fm_repayment_rescheduling = 1,
