@@ -217,7 +217,7 @@ $candidates = dbFetchAll(
             r.outstanding_balance, r.request_no, rp.id AS active_plan_id
      FROM hr_salary_advance_requests r
      JOIN employees e ON e.id = r.employee_id
-     JOIN hr_salary_advance_repayment_plans rp
+     LEFT JOIN hr_salary_advance_repayment_plans rp
        ON rp.salary_advance_request_id = r.id AND rp.status = 'active'
      ORDER BY r.id ASC"
 );
@@ -254,13 +254,37 @@ $employeeId = (int)$fixture['employee_id'];
 $policyId = (int)$fixture['policy_version_id'];
 // Use a deterministic balance independent of legacy sample data.
 $balance = 500.00;
-$planId = (int)$fixture['active_plan_id'];
-concurrencyCheck($planId > 0, 'fixture active repayment plan must exist');
+$planId = (int)($fixture['active_plan_id'] ?? 0);
 
-// This test database is disposable. Prepare an eligible request, expired plan,
-// and explicitly authorized policy without changing any non-test/local database.
+// This test database is disposable. Prepare an eligible request, an active
+// plan even when legacy data has no migrated active plan, and policy authorization.
 $pdo->beginTransaction();
 try {
+    if ($planId <= 0) {
+        $pdo->prepare(
+            "UPDATE hr_salary_advance_repayment_plans
+             SET status = 'superseded', superseded_at = CURRENT_TIMESTAMP
+             WHERE salary_advance_request_id = ? AND status = 'active'"
+        )->execute([$requestId]);
+        $nextPlanNo = (int)$pdo->query(
+            'SELECT COALESCE(MAX(plan_no), 0) + 1 FROM hr_salary_advance_repayment_plans WHERE salary_advance_request_id = ' . $requestId
+        )->fetchColumn();
+        $pdo->prepare(
+            "INSERT INTO hr_salary_advance_repayment_plans
+                (salary_advance_request_id, plan_no, status, reason,
+                 outstanding_balance_at_creation, start_month,
+                 maximum_repayment_months, maximum_monthly_deduction, activated_at)
+             VALUES (?, ?, 'active', ?, ?, ?, 1, ?, CURRENT_TIMESTAMP)"
+        )->execute([
+            $requestId,
+            $nextPlanNo,
+            'Disposable payroll/rescheduling concurrency fixture',
+            $balance,
+            date('Y-m-01', strtotime(date('Y-m-01') . ' -2 months')),
+            $balance,
+        ]);
+        $planId = (int)$pdo->lastInsertId();
+    }
     $pdo->prepare(
         "UPDATE hr_salary_advance_requests
          SET status = 'disbursed',
