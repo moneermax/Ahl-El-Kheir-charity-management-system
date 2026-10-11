@@ -115,6 +115,21 @@ require_once __DIR__ . '/../../includes/header.php';
                 </div>
             </a>
         </div>
+
+        <?php if (in_array($role, ['financial_manager', 'fm'], true)): ?>
+        <div class="col-md-6 col-xl-4">
+            <a href="<?php echo e(APP_URL . 'modules/hr/salary_advance_reschedule.php'); ?>" class="text-decoration-none text-reset">
+                <div class="option-card" style="border-top-color:#7c3aed">
+                    <div class="option-body">
+                        <div class="option-icon" style="background:#f3e8ff;color:#7c3aed"><i class="fas fa-calendar-check"></i></div>
+                        <div class="option-title">إعادة جدولة خطط السداد</div>
+                        <div class="option-desc">عرض السلف التي انتهت خططها ويسمح إصدار سياستها المحفوظ صراحةً بإعادة الجدولة. لا تظهر السلف غير المؤهلة.</div>
+                        <span class="btn btn-outline-primary btn-sm mt-2">فتح إعادة الجدولة <i class="fas fa-arrow-left ms-1"></i></span>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <?php endif; ?>
     </div>
 <div class="card fade-in mb-4">
         <div class="card-header fw-bold">سجل السلف المعالجة والطلبات السابقة</div>
