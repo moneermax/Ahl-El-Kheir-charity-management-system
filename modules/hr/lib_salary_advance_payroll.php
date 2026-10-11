@@ -47,17 +47,7 @@ function hrSalaryAdvancePayrollPendingRows(PDO $pdo, int $employeeId, string $pe
            AND r.status = 'disbursed'
            AND COALESCE(r.outstanding_balance, 0) > 0
            AND s.scheduled_month <= ?
-           AND (
-               p.maximum_repayment_months IS NULL
-               OR ? < DATE_ADD(
-                   (
-                       SELECT MIN(plan_start.scheduled_month)
-                       FROM hr_salary_advance_repayment_schedule plan_start
-                       WHERE plan_start.salary_advance_request_id = r.id
-                   ),
-                   INTERVAL p.maximum_repayment_months MONTH
-               )
-           )
+           AND ? < DATE_ADD(rp.start_month, INTERVAL rp.maximum_repayment_months MONTH)
            AND (
                s.status IN ('pending', 'partial')
                OR (s.status = 'skipped' AND s.scheduled_month < ?)
@@ -248,17 +238,7 @@ function hrSalaryAdvancePayrollApply(PDO $pdo, array $payroll, int $accountingEn
            AND r.status = 'disbursed'
            AND COALESCE(r.outstanding_balance, 0) > 0
            AND s.scheduled_month <= ?
-           AND (
-               p.maximum_repayment_months IS NULL
-               OR ? < DATE_ADD(
-                   (
-                       SELECT MIN(plan_start.scheduled_month)
-                       FROM hr_salary_advance_repayment_schedule plan_start
-                       WHERE plan_start.salary_advance_request_id = r.id
-                   ),
-                   INTERVAL p.maximum_repayment_months MONTH
-               )
-           )
+           AND ? < DATE_ADD(rp.start_month, INTERVAL rp.maximum_repayment_months MONTH)
            AND (
                s.status IN ('pending', 'partial')
                OR (s.status = 'skipped' AND s.scheduled_month < ?)
