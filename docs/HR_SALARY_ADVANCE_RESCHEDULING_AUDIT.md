@@ -85,13 +85,13 @@ These are source-level observations. Dedicated CI checks also pass PHP syntax ch
 
 - PHP 8.2 syntax checks for the salary-advance PHP files and notification dependency passed: [workflow run 38119108564](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/38119108564).
 - The Stage 7 migration ran twice against an isolated MariaDB 10.4.32 database. The test verified the default-disabled policy flag, legacy schedule backfill, preserved schedule row count, plan-scoped indexes replacing the old indexes, and no duplicate plan or schedule rows on rerun. This job passed in the same workflow run.
-- The rescheduling service passed disposable-database tests for successful plan replacement, specific rejection reasons for disabled policy authorization, unexpired horizon, monthly cap, insufficient duration, direct-repayment exclusion, and installments rounding down to zero; it also verified preservation of old plan/schedule rows, one audit event on success, refusal when multiple active plans exist, and rollback when the audit write fails.
+- The rescheduling service and payroll eligibility query passed disposable-database tests for successful plan replacement, active-plan-only payroll selection, post-horizon suppression, specific rejection reasons for disabled policy authorization, unexpired horizon, monthly cap, insufficient duration, direct-repayment exclusion, and installments rounding down to zero. The tests also verified preservation of old plan/schedule rows, one audit event on success, refusal when multiple active plans exist, and rollback when the audit write fails. See [workflow run 38119695931](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/38119695931).
 - The repository confirms `employees.user_id` is the canonical employee/user relationship, and existing code uses the same `audit_log` columns as the rescheduling service. This is source-pattern confirmation, not a full live-schema audit.
 
 **Still required before applying the migration to the working database or declaring the feature complete:**
 
 1. Confirm the exact `audit_log` schema and all required columns against the user's actual local database/schema source.
-2. Extend the service tests to cover stale balance/concurrent payroll interaction and notification failure isolation, and add payroll preview/posting integration coverage for active-plan selection and suppression of superseded schedules.
+2. Extend the service tests to cover stale balance/concurrent payroll interaction and notification failure isolation, and add full payroll preview/posting integration coverage beyond the focused active-plan eligibility query test.
 3. Run existing salary-advance payroll regression tests and account 1410 reconciliation against the disposable/local test database.
 4. Record those results here. Do not treat a fixture-based migration test as proof that the full feature works end to end.
 
