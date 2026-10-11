@@ -243,6 +243,17 @@ function hrSalaryAdvancePayrollApply(PDO $pdo, array $payroll, int $accountingEn
            AND COALESCE(r.outstanding_balance, 0) > 0
            AND s.scheduled_month <= ?
            AND (
+               p.maximum_repayment_months IS NULL
+               OR ? <= DATE_ADD(
+                   (
+                       SELECT MIN(plan_start.scheduled_month)
+                       FROM hr_salary_advance_repayment_schedule plan_start
+                       WHERE plan_start.salary_advance_request_id = r.id
+                   ),
+                   INTERVAL (p.maximum_repayment_months - 1) MONTH
+               )
+           )
+           AND (
                s.status IN ('pending', 'partial')
                OR (s.status = 'skipped' AND s.scheduled_month < ?)
            )
@@ -274,7 +285,7 @@ function hrSalaryAdvancePayrollApply(PDO $pdo, array $payroll, int $accountingEn
            )
          ORDER BY r.id ASC, s.scheduled_month ASC, s.installment_no ASC, s.id ASC
          FOR UPDATE",
-        [$employeeId, $periodStart, $periodStart, $periodStart, $periodStart, $periodStart]
+        [$employeeId, $periodStart, $periodStart, $periodStart, $periodStart, $periodStart, $periodStart]
     );
 
     if (!$locked) {
