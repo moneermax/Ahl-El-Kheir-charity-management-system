@@ -162,8 +162,8 @@ require_once __DIR__ . '/../../includes/header.php';
                 </div>
                 <div class="col-md-4">
                     <label class="form-label" for="duration_months">مدة السداد بالأشهر</label>
-                    <input class="form-control" type="number" id="duration_months" name="duration_months" min="1" max="<?=(int)$selected['policy_maximum_months']?>" value="<?=(int)$selected['policy_maximum_months']?>" required>
-                    <div class="form-text">الحد الأقصى وفق السياسة: <?=(int)$selected['policy_maximum_months']?> شهرًا.</div>
+                    <input class="form-control" type="number" id="duration_months" name="duration_months" min="1" value="<?=(int)$selected['policy_maximum_months']?>" required>
+                    <div class="form-text">المدة المعتادة وفق السياسة: <?=(int)$selected['policy_maximum_months']?> شهرًا. يسمح التفويض المحفوظ بإعادة الجدولة لمدة أطول عند الحاجة؛ يظل حد الخصم الشهري ملزمًا.</div>
                 </div>
                 <div class="col-md-4">
                     <label class="form-label" for="monthly_amount">القسط الشهري المقترح</label>
