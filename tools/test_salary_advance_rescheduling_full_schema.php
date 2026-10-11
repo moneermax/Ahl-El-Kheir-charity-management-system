@@ -5,9 +5,14 @@ declare(strict_types=1);
  * Runs the Stage 7 migration against the repository's full checked-in schema
  * and legacy data, using only a dedicated disposable MariaDB database.
  */
+$allowedTestDatabases = [
+    'salary_advance_migration_test',
+    'salary_advance_full_schema_test',
+];
+
 if (getenv('SALARY_ADVANCE_MIGRATION_TEST') !== '1'
-    || (string)getenv('DB_DATABASE') !== 'salary_advance_migration_test') {
-    fwrite(STDERR, "Refusing to run outside the dedicated disposable migration-test database.\n");
+    || !in_array((string)getenv('DB_DATABASE'), $allowedTestDatabases, true)) {
+    fwrite(STDERR, "Refusing to run outside an approved disposable migration-test database.\n");
     exit(2);
 }
 
@@ -31,7 +36,7 @@ function expectFullSchema(bool $condition, string $message): void
 }
 
 $schema = (string)$pdo->query('SELECT DATABASE()')->fetchColumn();
-expectFullSchema($schema === 'salary_advance_migration_test', 'Connected database is not the dedicated disposable test database.');
+expectFullSchema(in_array($schema, $allowedTestDatabases, true), 'Connected database is not an approved disposable test database.');
 
 $beforeRows = (int)$pdo->query('SELECT COUNT(*) FROM hr_salary_advance_repayment_schedule')->fetchColumn();
 $scheduledRequests = (int)$pdo->query('SELECT COUNT(DISTINCT salary_advance_request_id) FROM hr_salary_advance_repayment_schedule')->fetchColumn();

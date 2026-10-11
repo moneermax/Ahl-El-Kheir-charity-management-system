@@ -265,3 +265,20 @@ A separate read-only account 1410 reconciliation passed: ledger balance and live
 - Local schema/integrity preflight and account 1410 balance reconciliation have passed without writes.
 - Policy authorization remains disabled because the current saved policy does not authorize the exception; do not enable it without the prior GM/FM agreement described above.
 - Still required: verify the FM dashboard card after pulling the merged commit, and complete a browser-driven end-to-end rescheduling and payroll/accounting journey using an isolated test fixture that is safe to mutate. Do not use the canonical `ahl_el_kheir` database for destructive service tests, and do not declare Stage 7 closed based only on CI or the read-only preflight.
+
+### Current-status clarification
+
+The read-only local preflight recorded in this section supersedes earlier statements in sections 13–18 that the Stage 7 migration artifacts were absent or unapplied. The latest preflight found the Stage 7 schema markers already present in the canonical `ahl_el_kheir` database. Do not rerun the migration. This clarification does not authorize enabling rescheduling or changing the saved policy.
+## 20. Local isolated full-schema Stage 7 migration verification — 2026-10-11
+
+The full checked-in schema was imported without application data into the dedicated disposable MariaDB database `salary_advance_full_schema_test`. The Stage 7 full-schema regression script was guarded to permit only `salary_advance_migration_test` and `salary_advance_full_schema_test`, and still requires `SALARY_ADVANCE_MIGRATION_TEST=1`. The script verifies the connected database against that allowlist.
+
+Verification completed successfully against `salary_advance_full_schema_test`:
+
+- The Stage 7 migration and legacy repayment-schedule backfill passed.
+- Existing schedule-row counts and repayment-plan links were verified.
+- Plan-scoped indexes and migration rerun safety passed.
+- FM policy creation persisted the rescheduling authorization and adjacent repayment-rule values correctly; the policy fixture was rolled back.
+- The test process exited with code `0`.
+
+**Scope limit:** This verifies migration and policy behavior against the checked-in full schema in a disposable database. It does not complete browser-driven verification of FM policy creation, rescheduling, payroll, and accounting against the local application. Stage 7 remains open. The canonical `ahl_el_kheir` database was not used for this destructive test, and the untracked receipt image remains untouched.
