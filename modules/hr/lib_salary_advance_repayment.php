@@ -157,6 +157,9 @@ function hrSalaryAdvanceScheduleReschedule(
         if ((string)$request['status'] !== 'disbursed' || (float)$request['outstanding_balance'] <= 0) {
             throw new RuntimeException('إعادة الجدولة متاحة فقط لسلفة مصروفة لها رصيد قائم.');
         }
+        if (!in_array((string)($request['approved_repayment_method'] ?? ''), ['fixed_monthly', 'full_eligible_salary', 'full_settlement'], true)) {
+            throw new RuntimeException('إعادة الجدولة متاحة فقط لخطط السداد التي تتم عبر الرواتب؛ لا يمكن تحويل السداد المباشر إلى خصومات رواتب.');
+        }
         if ((int)($request['allow_fm_repayment_rescheduling'] ?? 0) !== 1) {
             throw new RuntimeException('إعادة الجدولة غير مصرح بها في إصدار السياسة المحفوظ لهذا الطلب.');
         }
