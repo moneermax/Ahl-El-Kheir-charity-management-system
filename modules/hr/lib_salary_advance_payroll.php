@@ -55,6 +55,9 @@ function hrSalaryAdvancePayrollPendingRows(PDO $pdo, int $employeeId, string $pe
            AND NOT EXISTS (
                SELECT 1
                FROM hr_salary_advance_repayment_schedule earlier
+               JOIN hr_salary_advance_repayment_plans earlier_plan
+                 ON earlier_plan.id = earlier.repayment_plan_id
+                AND earlier_plan.status = 'active'
                WHERE earlier.salary_advance_request_id = r.id
                  AND earlier.scheduled_month <= ?
                  AND (
@@ -246,6 +249,9 @@ function hrSalaryAdvancePayrollApply(PDO $pdo, array $payroll, int $accountingEn
            AND NOT EXISTS (
                SELECT 1
                FROM hr_salary_advance_repayment_schedule earlier
+               JOIN hr_salary_advance_repayment_plans earlier_plan
+                 ON earlier_plan.id = earlier.repayment_plan_id
+                AND earlier_plan.status = 'active'
                WHERE earlier.salary_advance_request_id = r.id
                  AND earlier.scheduled_month <= ?
                  AND (
