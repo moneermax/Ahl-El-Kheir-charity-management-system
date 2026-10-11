@@ -130,7 +130,14 @@ function hrSalaryAdvanceScheduleReschedule(
     }
 
     try {
-        $request = dbFetchOne(
+        $fetchOne = static function (string $sql, array $params = []) use ($pdo): ?array {
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $row ?: null;
+        };
+
+        $request = $fetchOne(
             "SELECT r.*,
                     p.allow_fm_repayment_rescheduling,
                     p.maximum_repayment_months,
@@ -174,7 +181,7 @@ function hrSalaryAdvanceScheduleReschedule(
             throw new RuntimeException('القسط الشهري المقترح يتجاوز الحد الأقصى للخصم الشهري في السياسة.');
         }
 
-        $activePlan = dbFetchOne(
+        $activePlan = $fetchOne(
             "SELECT *
              FROM hr_salary_advance_repayment_plans
              WHERE salary_advance_request_id = ? AND status = 'active'
@@ -208,7 +215,7 @@ function hrSalaryAdvanceScheduleReschedule(
             );
         }
 
-        $next = dbFetchOne(
+        $next = $fetchOne(
             "SELECT COALESCE(MAX(plan_no), 0) + 1 AS next_plan_no
              FROM hr_salary_advance_repayment_plans
              WHERE salary_advance_request_id = ?",
@@ -260,34 +267,34 @@ function hrSalaryAdvanceScheduleReschedule(
             throw new RuntimeException('تعذر تغطية كامل الرصيد ضمن خطة السداد الجديدة.');
         }
 
-        dbExecute(
+        $audit = $pdo->prepare(
             "INSERT INTO audit_log
              (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent)
-             VALUES (?, 'HR_SALARY_ADVANCE_REPAYMENT_RESCHEDULE', 'hr_salary_advance_request', ?, ?, ?, ?, ?)",
-            [
-                $userId,
-                $requestId,
-                json_encode([
-                    'active_plan_id' => (int)$activePlan['id'],
-                    'plan_no' => (int)$activePlan['plan_no'],
-                    'outstanding_balance' => $outstanding,
-                    'start_month' => $activePlan['start_month'],
-                    'maximum_repayment_months' => (int)$activePlan['maximum_repayment_months'],
-                ], JSON_UNESCAPED_UNICODE),
-                json_encode([
-                    'active_plan_id' => $planId,
-                    'plan_no' => $planNo,
-                    'reason' => $reason,
-                    'outstanding_balance' => $outstanding,
-                    'start_month' => $startMonth,
-                    'maximum_repayment_months' => $durationMonths,
-                    'monthly_amount' => $monthlyAmount,
-                    'schedule_rows' => $requiredMonths,
-                ], JSON_UNESCAPED_UNICODE),
-                $_SERVER['REMOTE_ADDR'] ?? '',
-                $_SERVER['HTTP_USER_AGENT'] ?? '',
-            ]
+             VALUES (?, 'HR_SALARY_ADVANCE_REPAYMENT_RESCHEDULE', 'hr_salary_advance_request', ?, ?, ?, ?, ?)"
         );
+        $audit->execute([
+            $userId,
+            $requestId,
+            json_encode([
+                'active_plan_id' => (int)$activePlan['id'],
+                'plan_no' => (int)$activePlan['plan_no'],
+                'outstanding_balance' => $outstanding,
+                'start_month' => $activePlan['start_month'],
+                'maximum_repayment_months' => (int)$activePlan['maximum_repayment_months'],
+            ], JSON_UNESCAPED_UNICODE),
+            json_encode([
+                'active_plan_id' => $planId,
+                'plan_no' => $planNo,
+                'reason' => $reason,
+                'outstanding_balance' => $outstanding,
+                'start_month' => $startMonth,
+                'maximum_repayment_months' => $durationMonths,
+                'monthly_amount' => $monthlyAmount,
+                'schedule_rows' => $requiredMonths,
+            ], JSON_UNESCAPED_UNICODE),
+            $_SERVER['REMOTE_ADDR'] ?? '',
+            $_SERVER['HTTP_USER_AGENT'] ?? '',
+        ]);
 
         if ($ownsTransaction) {
             $pdo->commit();
