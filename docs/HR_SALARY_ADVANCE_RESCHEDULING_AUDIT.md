@@ -92,3 +92,29 @@ The approval-authority decision is closed; the remaining work is engineering, no
 7. Run local PHP lint and the focused tests; inspect reconciliation; then update the master continuation docs and record the verified commit.
 
 Implementation must begin with the actual schema/query inventory, not assumed column names. Do not apply any migration automatically or use runtime DDL.
+
+## 8. FM rescheduling source implementation — 2026-10-11
+
+**Status: source changes committed; local syntax/database verification still required. Do not apply the migration yet.**
+
+The following source work now exists on `main`:
+
+- Added `hrSalaryAdvanceScheduleReschedule()` to `modules/hr/lib_salary_advance_repayment.php`. It validates the request and saved policy authorization, locks the request and current plan, requires the current plan horizon to have elapsed, validates a future month, limits duration and monthly amount to the saved policy, confirms the proposed installment can cover the outstanding balance, supersedes the old plan, inserts a replacement plan and schedule rows, and writes an audit event in the same transaction.
+- Added `modules/hr/salary_advance_reschedule.php`, an FM-only page listing eligible expired plans and collecting the proposed start month, duration, monthly installment, and reason.
+- Added a link to the new page from the salary-advance processing screen for FM users.
+- Schedule history now includes plan number/status and the plan's start/duration/reason so replacement schedules can be distinguished from the preserved historical plan.
+- Corrected the versioned-plan migration and initial-plan generator so a policy with `maximum_repayment_months IS NULL` retains an unbounded plan duration. Both payroll queries explicitly preserve the existing no-fixed-horizon behavior for those policies. This avoids accidentally stopping payroll after one month for a policy that deliberately has no duration boundary.
+- Tightened the migration's plan-duration column to nullable even if an earlier draft of the new table had already been created.
+
+Source commits for this continuation include `365c7ca`, `050a4c8`, `688b2ce`, `801411f`, `ca53bc5`, `1d2180e`, `3404e72`, `9ee080e`, `1f2872d`, and `8523a92`.
+
+### Verification gate and known limits
+
+These edits have been made through remote repository access only. PHP lint, actual MariaDB 10.4.32 migration execution, rollback-only tests, and payroll/accounting regression tests have **not** been run in this continuation. The new FM page/service must not be considered production-ready until those checks pass.
+
+The current service intentionally rejects rescheduling when the saved policy has no finite `maximum_repayment_months`, because there is no expired finite horizon to qualify for this exception. It uses the proposed monthly amount as the new scheduled installment for all payroll-based repayment methods; payroll still limits actual deduction by eligible salary and the policy's monthly cap. Confirm this matches the organization's intended rescheduling terms during local workflow testing.
+
+The UI lists only requests with an active plan, a positive outstanding balance, an expired plan, a positive saved maximum duration, and explicit saved-policy FM authorization. It does not provide a way to reschedule an in-horizon plan.
+
+**Next required work:** run PHP lint for the three changed PHP files; review and apply the migration only in a disposable/test copy of the local database; add rollback-only tests for allowed/denied reschedule, current-horizon rejection, stale balance, policy cap, duration coverage, transaction rollback, plan history preservation, and active-plan payroll selection; then run payroll repayment and 1410 reconciliation regressions. Do not claim the feature complete until the runtime evidence is recorded.
+
