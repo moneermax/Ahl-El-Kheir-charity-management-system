@@ -1005,14 +1005,14 @@ Source changes committed directly to `main`:
 - `modules/hr/salary_advance_processing.php`: report that the payroll schedule was created after disbursement.
 - Added rollback-only schedule-planning and payroll edge-test cases for full settlement. The payroll cases adapt an existing disbursed fixture inside SAVEPOINTs and roll the changes back; no permanent financial fixture is intended.
 
-**Important verification boundary:** this remote source edit has not executed PHP lint or the rollback-only test scripts against the local XAMPP/MariaDB database. Do not consider runtime verification complete until those tests pass locally.
+**Verification note at implementation time:** local PHP lint and rollback-only tests had not yet been run when this section was first written. The local verification outcome recorded below supersedes that interim status.
 
 **Known broader schedule behavior to watch during runtime verification:** the existing schedule design pre-generates a finite number of monthly rows from the maximum permitted deduction. A persistently low salary or repeated skipped months can leave an outstanding balance after the planned horizon. The request's outstanding balance is only reduced by the actual payroll deduction, so the accounting balance is not erased, but the remaining amount may need an explicit rescheduling workflow. This fix does not change the schema or silently extend the saved maximum-months policy.
 
 
 **Local verification outcome (2026-10-11):** all six changed PHP files passed `php -l`; `tools/run_salary_advance_stage5_schedule_tests.php` reported all four tests passed; `tools/run_salary_advance_stage5_payroll_edge_tests.php` passed both full-settlement insufficient-salary policy branches and reported rollback-only cleanup with no payroll/request/schedule/journal mutation committed.
 
-**Additional deep-scan finding — carry-forward behavior is not implemented for skipped installments:** the payroll query selects only schedule rows with status `pending` or `partial`, while posting changes a zero-deduction installment to `skipped`. The current preview tests verify the `skip_month` outcome but do not post a skipped installment and verify its next-period treatment. Consequently, the saved policy label “skip month and carry installment” is not proven to retry that same installment in a later payroll period. This needs a focused lifecycle fix/test before the salary-advance payroll workflow can be considered fully complete.
+**Historical finding (resolved in the next section):** skipped and overdue installments were not being carried into later payroll periods. The following section documents the source fix and the passing database-backed rollback-only lifecycle test that verifies this behavior.
 
 
 ## 2026-10-11 — Carry Forward Overdue Payroll Installments
