@@ -2,7 +2,7 @@
 
 **Date:** 2026-10-11  
 **Branch:** `main`  
-**Status:** SOURCE/DOCUMENTATION AUDIT COMPLETE — IMPLEMENTATION BLOCKED ONLY ON APPROVAL-AUTHORITY DECISION
+**Status:** BUSINESS AUTHORITY DECIDED — IMPLEMENTATION DESIGN AND BUILD NEXT
 
 ## 1. Why this workflow is needed
 
@@ -34,7 +34,19 @@ These completed checks are closed. Do not rerun them absent a regression.
 - The existing GM waiver workflow provides a separation-of-duties precedent: FM prepares a concrete decision, GM approves/rejects, and FM executes after approval.
 - Neither the canonical role document nor the current salary-advance policy explicitly assigns authority to change the repayment terms of an already-approved and disbursed advance. The waiver precedent is relevant but is not enough to silently invent a rescheduling policy.
 
-## 3. Required safety constraints for any future implementation
+## 3. Confirmed business rule
+
+The user confirmed this operating model on 2026-10-11:
+
+- GM and FM discuss and agree the salary-advance policy before it is created.
+- FM then creates, applies, and administers the agreed policy.
+- FM may prepare and execute a repayment reschedule without a second GM approval, provided the policy agreed by GM and FM explicitly authorizes FM to reschedule and, where needed, exceed the normal maximum repayment horizon.
+- This is policy-level prior authorization, not permission to silently edit the approved policy version. The system must store the authorization in the policy version used by the advance and preserve that version unchanged.
+- The app does not currently appear to persist a separate GM policy-approval record. Do not claim that it does; for this workflow the business agreement is prior organizational authorization, while the application enforces the recorded policy limits/authority.
+
+The `maximum_repayment_months` value remains the normal schedule duration boundary. Going beyond that boundary is permitted only when the saved policy version explicitly enables FM rescheduling exceptions. The exception does not waive debt, change the original disbursed amount, or remove the monthly deduction cap. Every reschedule must still document its reason and revised plan.
+
+## 4. Required safety constraints for implementation
 
 1. A reschedule must be an explicit, authorized decision. Payroll must never extend the expired horizon on its own.
 2. Preserve the original approved policy version, original schedule rows, payroll repayment allocations, posted journals, and audit trail.
@@ -47,29 +59,22 @@ These completed checks are closed. Do not rerun them absent a regression.
 9. Use a migration for schema changes. No runtime DDL, triggers, or views.
 10. Add rollback-only database tests for prepare, reject, approve, execute, stale-balance conflict, duplicate/concurrent execution, schedule-history preservation, old-plan suppression, monthly cap, duration boundary, payroll integration, audit, notification failure isolation, and reconciliation.
 
-## 4. Schema/design implication
+## 5. Schema/design implication
 
 The current schedule's unique keys prevent inserting a second row for the same request and installment number or scheduled month. Re-running the existing generator cannot safely represent a new plan while preserving the old plan's history. Implementation therefore needs a deliberate versioning strategy (for example, explicit plan/decision version identity plus an active-plan relationship) and corresponding payroll selection changes. Do not overwrite the old schedule or merely delete/recreate unpaid rows.
 
 The exact migration design should follow the repository's actual MariaDB schema and current query patterns during implementation; this audit does not create or assume new columns.
 
-## 5. Decision required before implementation
+## 6. Implementation plan
 
-**Who must approve a repayment reschedule?**
+The approval-authority decision is closed; the remaining work is engineering, not another approval discussion.
 
-The existing roles support two plausible policies, but the repository does not settle the choice:
+1. Add a policy-version flag that explicitly authorizes FM-managed rescheduling beyond the normal maximum horizon. Existing policies must default to **not authorized** so their existing behavior is unchanged.
+2. Introduce versioned repayment plans/reschedule records without deleting, renumbering, or rewriting the original schedule, applied payroll allocations, direct repayments, waiver decisions, or posted journals.
+3. Record reason, actor, timestamp, prior-plan reference, new-plan reference, outstanding balance at decision time, start month, duration, and monthly terms. Recheck balance/history under transaction locks before activation.
+4. Update both payroll preview and payroll-paid application to select only the active plan and enforce the same policy flag, monthly deduction cap, and duration rules. An expired plan must remain ineligible unless a qualifying FM reschedule is explicitly recorded.
+5. Add an FM-only authorized workflow with idempotency/concurrency protection, audit events, and post-commit notifications. Do not add a second GM approval step.
+6. Add rollback-only MariaDB tests for policy default/authorization, in-policy reschedule, exception beyond horizon, monthly-cap enforcement, stale balance, duplicate/concurrent attempts, original schedule/history preservation, active-plan selection, payroll preview/posting parity, and notification failure isolation.
+7. Run local PHP lint and the focused tests; inspect reconciliation; then update the master continuation docs and record the verified commit.
 
-- **Option A — dual control, recommended for financial-term changes:** FM prepares the proposed terms and supporting balance/reconciliation; GM approves or rejects; FM executes the approved plan.
-- **Option B — FM-only approval:** FM documents the reason, approves the revised terms, and executes them under the existing financial authorization.
-
-Do not implement either option until the business owner confirms the approval authority. The remainder of the workflow and schema can then be designed around that rule.
-
-## 6. Next checkpoint
-
-After approval authority is confirmed:
-1. inspect the current live schema and every payroll query that selects schedule rows;
-2. finalize the plan-version schema and state transitions;
-3. implement the smallest migration and workflow consistent with the approved authority;
-4. add rollback-only regression tests;
-5. run local lint and focused MariaDB tests;
-6. update the master continuation docs and commit the verified result.
+Implementation must begin with the actual schema/query inventory, not assumed column names. Do not apply any migration automatically or use runtime DDL.
