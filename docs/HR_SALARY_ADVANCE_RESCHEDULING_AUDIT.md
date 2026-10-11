@@ -161,3 +161,15 @@ Commit [dfbc193354fda8f1a5295143026d8659e5a08fd6](https://github.com/moneermax/A
 Verification: [GitHub Actions run 38126111808](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/38126111808) passed all four jobs: PHP lint, MariaDB 10.4.32 migration, full checked-in schema/backfill migration, and rescheduling-service tests (including the Stage 5 schedule/payroll/edge regressions and account 1410 reconciliation in the full-schema job). This establishes regression compatibility for the new lock acquisition step; it is **not** a substitute for a controlled two-connection concurrency test or a browser-driven end-to-end payroll/accounting posting test.
 
 The local XAMPP schema/integrity confirmation remains outstanding. The migration has not been applied to the working database. Do not mark Stage 7 complete until the local schema, concurrency behavior, and full application payroll/accounting path are verified.
+
+
+## 12. Production payroll transition and transaction-boundary regression — 2026-10-11
+
+Commits [027e70aeb173ba7be6ceec548bd99b5808d4645c](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/commit/027e70aeb173ba7be6ceec548bd99b5808d4645c) and [d2a89b275770ce8f2e76abc1a90bdaa2a872bb67](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/commit/d2a89b275770ce8f2e76abc1a90bdaa2a872bb67) address a transaction-boundary risk and strengthen integration coverage.
+
+- `hrPayrollChangeStatus()` now initializes accounting tables/accounts before opening a transaction only when it owns the transaction. When called inside an existing transaction, it does not run schema-initialization DDL that could implicitly commit the caller's work. The application payroll page calls this function directly; the rollback-only integration test now also exercises the caller-owned transaction case.
+- `tools/run_salary_advance_stage5_payroll_tests.php` now invokes the production `hrPayrollChangeStatus(..., 'paid', ...)` path instead of manually marking payroll paid and calling the journal/repayment helpers separately. The test checks the posted payroll journal, repayment trace totals, balanced journal, account 1410 credit, duplicate protection, and rollback-only cleanup.
+
+Both workflow runs [38126267396](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/38126267396) and [38126283077](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/38126283077) passed all four jobs: PHP lint, MariaDB 10.4.32 migration, full checked-in schema/backfill migration, and rescheduling-service tests. The latter full-schema job also ran the Stage 5 schedule/payroll/edge regression scripts and account 1410 reconciliation successfully. This materially improves integration evidence but remains a CLI rollback-only test, not a browser-driven user journey.
+
+Still open: a controlled two-connection concurrency test, local XAMPP schema/integrity confirmation, and browser-driven payroll/accounting verification. The migration remains unapplied to the working database; Stage 7 remains open.
