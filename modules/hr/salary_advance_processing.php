@@ -465,14 +465,36 @@ if ($request && str_starts_with($message, 'تم صرف السلفة وترحيل
 <h6>مقارنة الطلب بالسياسة المرجعية V<?= (int)$fmRequest['version_no'] ?></h6>
 <?php if($mismatches): foreach($mismatches as $m): ?><div class="mismatch"><i class="fas fa-triangle-exclamation me-1"></i><?=e($m)?></div><?php endforeach; else: ?><div class="match"><i class="fas fa-check me-1"></i>الطلب متوافق مع القواعد الظاهرة في السياسة المرجعية.</div><?php endif; ?>
 
+<?php
+$fmAutoInstallment = null;
+$fmAutoInstallmentBlocked = false;
+$fmAutoInstallmentNeeded = false;
+if ((string)$request['requested_repayment_method'] === 'fixed_monthly'
+    && (float)($request['requested_monthly_amount'] ?? 0) > 0
+    && (int)($fmRequest['maximum_repayment_months'] ?? 0) > 0) {
+    $requestedMonths = (int)ceil((float)$request['requested_amount'] / (float)$request['requested_monthly_amount']);
+    $fmAutoInstallmentNeeded = $requestedMonths > (int)$fmRequest['maximum_repayment_months'];
+    if ($fmAutoInstallmentNeeded) {
+        $fmRecommendation = hrSalaryAdvanceRecommendMonthlyInstallment(
+            (float)$request['requested_amount'],
+            (int)$fmRequest['maximum_repayment_months'],
+            $fmRequest['maximum_monthly_deduction'] !== null ? (float)$fmRequest['maximum_monthly_deduction'] : null
+        );
+        $fmAutoInstallment = $fmRecommendation['monthly_amount'];
+        $fmAutoInstallmentBlocked = !$fmRecommendation['within_policy_cap'];
+    }
+}
+?>
 <?php if(in_array((string)$request['status'],['submitted','fm_review'],true) && empty($request['closed_at'])): ?>
 <hr>
-<form method="post">
+<form method="post" id="salaryAdvanceFmDecisionForm">
 <?=csrf_field()?>
 <input type="hidden" name="request_id" value="<?= (int)$request['id']?>">
 <input type="hidden" name="fm_decision_submit" value="1">
 <?php if($mismatches && (int)$fmRequest['allow_custom_repayment_terms']): ?>
-<div class="alert alert-warning"><strong>الطلب غير متوافق مع السياسة المرجعية.</strong> يجب على FM إما تخصيص شروط هذا الطلب فقط أو رفض الطلب.</div>
+<div class="alert alert-warning"><strong>الطلب غير متوافق مع السياسة المرجعية.</strong> راجع الشروط المقترحة قبل الاعتماد؛ لا يمكن تجاوز أي حد في السياسة.</div>
+<?php if($fmAutoInstallmentNeeded && !$fmAutoInstallmentBlocked): ?><div class="alert alert-info" id="fm-installment-recommendation">اقترح النظام قسطاً شهرياً قدره <?=number_format((float)$fmAutoInstallment,2)?> SDG لإتمام السداد خلال <?= (int)$fmRequest['maximum_repayment_months'] ?> أشهر كحد أقصى. يمكنك تعديله ضمن حدود السياسة.</div>
+<?php elseif($fmAutoInstallmentNeeded && $fmAutoInstallmentBlocked): ?><div class="alert alert-danger" id="fm-installment-recommendation">لا يمكن إتمام السداد ضمن المدة المحددة دون تجاوز الحد الأقصى للخصم الشهري في السياسة. اختر طريقة/مبلغاً مسموحاً آخر أو ارفض الطلب.</div><?php endif; ?>
 <div class="form-check mb-3">
 <input class="form-check-input" type="checkbox" name="fm_customized" id="fm_customized" value="1" checked>
 <label class="form-check-label" for="fm_customized"><strong>تخصيص شروط هذا الطلب فقط</strong></label>
@@ -485,9 +507,9 @@ if ($request && str_starts_with($message, 'تم صرف السلفة وترحيل
 <?php if((int)$fmRequest['allow_full_settlement_from_salary'] === 1): ?><option value="full_settlement" <?= (string)$request['requested_repayment_method'] === 'full_settlement' ? 'selected' : '' ?>>تسوية كاملة</option><?php endif; ?>
 <?php if((int)$fmRequest['allow_direct_repayment'] === 1): ?><option value="direct_repayment" <?= (string)$request['requested_repayment_method'] === 'direct_repayment' ? 'selected' : '' ?>>سداد مباشر</option><?php endif; ?>
 </select></div>
-<div class="col-md-3"><label class="form-label">القسط الشهري المعتمد</label><input type="number" step="0.01" min="0.01" name="approved_monthly_amount" class="form-control" value="<?=e((string)($request['requested_monthly_amount']??''))?>"></div>
+<div class="col-md-3"><label class="form-label">القسط الشهري المعتمد</label><input type="number" step="0.01" min="0.01" name="approved_monthly_amount" class="form-control" data-maximum-months="<?= (int)($fmRequest['maximum_repayment_months'] ?? 0) ?>" data-maximum-monthly-deduction="<?=e((string)($fmRequest['maximum_monthly_deduction'] ?? ''))?>" value="<?=e((string)($fmAutoInstallment !== null && !$fmAutoInstallmentBlocked ? $fmAutoInstallment : ($request['requested_monthly_amount']??'')))?>"></div>
 <div class="col-md-3"><label class="form-label">شهر بدء السداد</label><input type="date" name="approved_start_month" class="form-control" value="<?=e((string)($request['requested_start_month']??''))?>"></div>
-<div class="col-12"><label class="form-label">سبب التخصيص</label><textarea name="fm_customization_reason" class="form-control" rows="2" maxlength="2000"></textarea></div>
+<div class="col-12"><label class="form-label">سبب التخصيص</label><textarea name="fm_customization_reason" class="form-control" rows="2" maxlength="2000"><?=e((string)($fmAutoInstallmentNeeded && !$fmAutoInstallmentBlocked ? 'تم اقتراح القسط آلياً لضمان إتمام السداد ضمن الحد الأقصى لمدة السداد؛ يرجى مراجعة الشروط واعتمادها.' : ''))?></textarea></div>
 </div>
 <?php elseif($mismatches): ?>
 <div class="alert alert-danger">الطلب غير متوافق مع السياسة المرجعية، والسياسة لا تسمح بتخصيص شروط السداد. يمكن رفض الطلب فقط.</div>
@@ -499,6 +521,41 @@ if ($request && str_starts_with($message, 'تم صرف السلفة وترحيل
 <button class="btn btn-danger" name="decision" value="reject" type="submit">رفض الطلب</button>
 </div>
 </form>
+<?php if($fmAutoInstallmentNeeded): ?>
+<script>
+(function () {
+    const form = document.getElementById('salaryAdvanceFmDecisionForm');
+    if (!form) return;
+    const amountInput = form.querySelector('[name="approved_amount"]');
+    const monthlyInput = form.querySelector('[name="approved_monthly_amount"]');
+    const recommendation = document.getElementById('fm-installment-recommendation');
+    if (!amountInput || !monthlyInput) return;
+    const months = Number(monthlyInput.dataset.maximumMonths || 0);
+    const cap = Number(monthlyInput.dataset.maximumMonthlyDeduction || 0);
+    const initialValue = Number(monthlyInput.value || 0);
+    const updateRecommendation = function () {
+        const amount = Number(amountInput.value || 0);
+        if (!(amount > 0) || !(months > 0)) return;
+        const cents = Math.ceil((amount * 100 / months) - 1e-9);
+        const required = cents / 100;
+        if (cap > 0 && required > cap + 1e-9) {
+            if (recommendation) {
+                recommendation.className = 'alert alert-danger';
+                recommendation.textContent = 'لا يمكن إتمام السداد ضمن المدة المحددة دون تجاوز الحد الأقصى للخصم الشهري في السياسة. اختر طريقة/مبلغاً مسموحاً آخر أو ارفض الطلب.';
+            }
+            return;
+        }
+        monthlyInput.value = required.toFixed(2);
+        if (recommendation) {
+            recommendation.className = 'alert alert-info';
+            recommendation.textContent = 'القسط المقترح حالياً ' + required.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' SDG لإتمام السداد خلال ' + months + ' أشهر كحد أقصى. يمكنك تعديله ضمن حدود السياسة.';
+        }
+    };
+    amountInput.addEventListener('input', updateRecommendation);
+    if (!(initialValue > 0)) updateRecommendation();
+})();
+</script>
+<?php endif; ?>
 <?php elseif($request['status']==='approved'): ?>
 <?php elseif($request['status']==='disbursed'): ?>
 <?php endif; ?>
