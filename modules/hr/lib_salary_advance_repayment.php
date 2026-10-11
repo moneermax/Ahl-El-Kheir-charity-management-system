@@ -182,14 +182,49 @@ function hrSalaryAdvanceScheduleGenerate(PDO $pdo, int $requestId, ?int $userId 
         throw new RuntimeException('تعذر إنشاء أي قسط سداد.');
     }
 
+    // Every schedule belongs to an immutable plan version. Legacy schedules
+    // are backfilled by the Stage 7 migration; this creates plan 1 for newly
+    // disbursed requests whose first schedule is generated after that migration.
+    $plan = dbFetchOne(
+        "SELECT id
+         FROM hr_salary_advance_repayment_plans
+         WHERE salary_advance_request_id = ? AND plan_no = 1
+         LIMIT 1
+         FOR UPDATE",
+        [$requestId]
+    );
+    if ($plan) {
+        $planId = (int)$plan['id'];
+    } else {
+        $planInsert = $pdo->prepare(
+            "INSERT INTO hr_salary_advance_repayment_plans
+                (salary_advance_request_id, plan_no, status, reason,
+                 outstanding_balance_at_creation, start_month,
+                 maximum_repayment_months, maximum_monthly_deduction,
+                 created_by, activated_at)
+             VALUES (?, 1, 'active', 'Initial approved repayment schedule.',
+                     ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)"
+        );
+        $planInsert->execute([
+            $requestId,
+            $outstanding,
+            $startMonth,
+            max(1, $maximumMonths ?? count($installments)),
+            max(0.01, $maximumDeduction ?? (float)max(array_column($installments, 2))),
+            $userId,
+        ]);
+        $planId = (int)$pdo->lastInsertId();
+    }
+
     $insert = $pdo->prepare(
         "INSERT INTO hr_salary_advance_repayment_schedule
-            (salary_advance_request_id, installment_no, scheduled_month, scheduled_amount, status)
-         VALUES (?, ?, ?, ?, 'pending')"
+            (salary_advance_request_id, repayment_plan_id, installment_no,
+             scheduled_month, scheduled_amount, status)
+         VALUES (?, ?, ?, ?, ?, 'pending')"
     );
 
     foreach ($installments as [$number, $month, $amount]) {
-        $insert->execute([$requestId, $number, $month, $amount]);
+        $insert->execute([$requestId, $planId, $number, $month, $amount]);
     }
 
     if ($userId !== null && $userId > 0) {
