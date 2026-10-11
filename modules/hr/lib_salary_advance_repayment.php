@@ -82,6 +82,219 @@ function hrSalaryAdvanceScheduleGet(PDO $pdo, int $requestId): array
     );
 }
 
+
+/**
+ * Explicit FM-managed replacement of an expired repayment plan.
+ *
+ * The caller must enforce the FM role and CSRF. This service independently
+ * enforces the saved policy authorization, locks the request and active plan,
+ * and preserves all old schedule rows and repayment allocations.
+ */
+function hrSalaryAdvanceScheduleReschedule(
+    PDO $pdo,
+    int $requestId,
+    string $startMonth,
+    int $durationMonths,
+    float $monthlyAmount,
+    string $reason,
+    int $userId
+): array {
+    if ($requestId <= 0 || $userId <= 0) {
+        throw new InvalidArgumentException('بيانات إعادة جدولة السلفة غير صالحة.');
+    }
+
+    $reason = trim($reason);
+    if ($reason === '' || mb_strlen($reason) > 1000) {
+        throw new InvalidArgumentException('سبب إعادة جدولة السلفة مطلوب وبحد أقصى 1000 حرف.');
+    }
+
+    $month = DateTime::createFromFormat('!Y-m-d', $startMonth);
+    if (!$month || $month->format('Y-m-d') !== $startMonth || $month->format('d') !== '01') {
+        throw new InvalidArgumentException('يجب أن يكون شهر بدء الخطة الجديدة هو اليوم الأول من شهر صحيح.');
+    }
+    if ($startMonth <= date('Y-m-01')) {
+        throw new InvalidArgumentException('يجب أن تبدأ الخطة الجديدة في شهر مستقبلي.');
+    }
+    if ($durationMonths <= 0 || $monthlyAmount <= 0 || !is_finite($monthlyAmount)) {
+        throw new InvalidArgumentException('مدة السداد والقسط الشهري يجب أن يكونا أكبر من صفر.');
+    }
+    $monthlyAmount = round($monthlyAmount, 2);
+
+    $ownsTransaction = !$pdo->inTransaction();
+    if ($ownsTransaction) {
+        $pdo->beginTransaction();
+    }
+
+    try {
+        $request = dbFetchOne(
+            "SELECT r.*,
+                    p.allow_fm_repayment_rescheduling,
+                    p.maximum_repayment_months,
+                    p.maximum_monthly_deduction
+             FROM hr_salary_advance_requests r
+             JOIN hr_salary_advance_policy_versions p ON p.id = r.policy_version_id
+             WHERE r.id = ?
+             LIMIT 1
+             FOR UPDATE",
+            [$requestId]
+        );
+        if (!$request) {
+            throw new RuntimeException('طلب السلفة غير موجود.');
+        }
+        if ((string)$request['status'] !== 'disbursed' || (float)$request['outstanding_balance'] <= 0) {
+            throw new RuntimeException('إعادة الجدولة متاحة فقط لسلفة مصروفة لها رصيد قائم.');
+        }
+        if ((int)($request['allow_fm_repayment_rescheduling'] ?? 0) !== 1) {
+            throw new RuntimeException('إعادة الجدولة غير مصرح بها في إصدار السياسة المحفوظ لهذا الطلب.');
+        }
+
+        $policyMonths = $request['maximum_repayment_months'] !== null
+            ? (int)$request['maximum_repayment_months']
+            : null;
+        if ($policyMonths === null || $policyMonths <= 0) {
+            throw new RuntimeException('لا يمكن التحقق من استثناء مدة السداد لأن السياسة المرجعية لا تحدد حداً أقصى صالحاً للأشهر.');
+        }
+        if ($durationMonths > $policyMonths) {
+            throw new RuntimeException('مدة الخطة الجديدة تتجاوز الحد الأقصى المحدد في السياسة المرجعية.');
+        }
+
+        $policyCap = $request['maximum_monthly_deduction'] !== null
+            ? round((float)$request['maximum_monthly_deduction'], 2)
+            : null;
+        if ($policyCap !== null && $policyCap > 0 && $monthlyAmount > $policyCap + 0.000001) {
+            throw new RuntimeException('القسط الشهري المقترح يتجاوز الحد الأقصى للخصم الشهري في السياسة.');
+        }
+
+        $activePlan = dbFetchOne(
+            "SELECT *
+             FROM hr_salary_advance_repayment_plans
+             WHERE salary_advance_request_id = ? AND status = 'active'
+             ORDER BY plan_no DESC
+             LIMIT 1
+             FOR UPDATE",
+            [$requestId]
+        );
+        if (!$activePlan) {
+            throw new RuntimeException('لا توجد خطة سداد نشطة يمكن استبدالها. يلزم فحص سجل الجدول قبل المتابعة.');
+        }
+
+        $horizon = DateTime::createFromFormat('!Y-m-d', (string)$activePlan['start_month']);
+        if (!$horizon) {
+            throw new RuntimeException('تاريخ بدء خطة السداد الحالية غير صالح.');
+        }
+        $horizon->modify('+' . (int)$activePlan['maximum_repayment_months'] . ' months');
+        if (date('Y-m-01') < $horizon->format('Y-m-d')) {
+            throw new RuntimeException('لم تنتهِ مدة خطة السداد الحالية بعد؛ لا يمكن استخدام استثناء إعادة الجدولة قبل انتهاء المدة المعتمدة.');
+        }
+
+        $outstanding = round((float)$request['outstanding_balance'], 2);
+        $requiredMonths = (int)ceil($outstanding / $monthlyAmount);
+        if ($requiredMonths > $durationMonths) {
+            throw new RuntimeException(
+                'القسط المقترح لا يغطي الرصيد القائم خلال مدة الخطة الجديدة. يلزم قسط لا يقل عن ' .
+                number_format(ceil(($outstanding / $durationMonths) * 100) / 100, 2) . '.'
+            );
+        }
+
+        $next = dbFetchOne(
+            "SELECT COALESCE(MAX(plan_no), 0) + 1 AS next_plan_no
+             FROM hr_salary_advance_repayment_plans
+             WHERE salary_advance_request_id = ?",
+            [$requestId]
+        );
+        $planNo = max(2, (int)($next['next_plan_no'] ?? 2));
+
+        $supersede = $pdo->prepare(
+            "UPDATE hr_salary_advance_repayment_plans
+             SET status = 'superseded', superseded_at = CURRENT_TIMESTAMP
+             WHERE id = ? AND status = 'active'"
+        );
+        $supersede->execute([(int)$activePlan['id']]);
+        if ($supersede->rowCount() !== 1) {
+            throw new RuntimeException('تغيرت الخطة النشطة أثناء إعادة الجدولة؛ أعد تحميل الطلب وحاول مرة أخرى.');
+        }
+
+        $insertPlan = $pdo->prepare(
+            "INSERT INTO hr_salary_advance_repayment_plans
+                (salary_advance_request_id, plan_no, status, reason,
+                 outstanding_balance_at_creation, start_month,
+                 maximum_repayment_months, maximum_monthly_deduction,
+                 created_by, activated_at)
+             VALUES (?, ?, 'active', ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)"
+        );
+        $insertPlan->execute([
+            $requestId, $planNo, $reason, $outstanding, $startMonth,
+            $durationMonths, $monthlyAmount, $userId
+        ]);
+        $planId = (int)$pdo->lastInsertId();
+        if ($planId <= 0) {
+            throw new RuntimeException('تعذر إنشاء إصدار خطة السداد الجديدة.');
+        }
+
+        $insertSchedule = $pdo->prepare(
+            "INSERT INTO hr_salary_advance_repayment_schedule
+                (salary_advance_request_id, repayment_plan_id, installment_no,
+                 scheduled_month, scheduled_amount, status)
+             VALUES (?, ?, ?, ?, ?, 'pending')"
+        );
+        $remaining = $outstanding;
+        for ($i = 1; $i <= $requiredMonths && $remaining > 0.000001; $i++) {
+            $amount = round(min($monthlyAmount, $remaining), 2);
+            $scheduledMonth = date('Y-m-01', strtotime($startMonth . ' +' . ($i - 1) . ' months'));
+            $insertSchedule->execute([$requestId, $planId, $i, $scheduledMonth, $amount]);
+            $remaining = round($remaining - $amount, 2);
+        }
+        if ($remaining > 0.000001) {
+            throw new RuntimeException('تعذر تغطية كامل الرصيد ضمن خطة السداد الجديدة.');
+        }
+
+        dbExecute(
+            "INSERT INTO audit_log
+             (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent)
+             VALUES (?, 'HR_SALARY_ADVANCE_REPAYMENT_RESCHEDULE', 'hr_salary_advance_request', ?, ?, ?, ?, ?)",
+            [
+                $userId,
+                $requestId,
+                json_encode([
+                    'active_plan_id' => (int)$activePlan['id'],
+                    'plan_no' => (int)$activePlan['plan_no'],
+                    'outstanding_balance' => $outstanding,
+                    'start_month' => $activePlan['start_month'],
+                    'maximum_repayment_months' => (int)$activePlan['maximum_repayment_months'],
+                ], JSON_UNESCAPED_UNICODE),
+                json_encode([
+                    'active_plan_id' => $planId,
+                    'plan_no' => $planNo,
+                    'reason' => $reason,
+                    'outstanding_balance' => $outstanding,
+                    'start_month' => $startMonth,
+                    'maximum_repayment_months' => $durationMonths,
+                    'monthly_amount' => $monthlyAmount,
+                    'schedule_rows' => $requiredMonths,
+                ], JSON_UNESCAPED_UNICODE),
+                $_SERVER['REMOTE_ADDR'] ?? '',
+                $_SERVER['HTTP_USER_AGENT'] ?? '',
+            ]
+        );
+
+        if ($ownsTransaction) {
+            $pdo->commit();
+        }
+
+        return [
+            'plan_id' => $planId,
+            'plan_no' => $planNo,
+            'schedule_rows' => $requiredMonths,
+            'outstanding_balance' => $outstanding,
+        ];
+    } catch (Throwable $e) {
+        if ($ownsTransaction && $pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        throw $e;
+    }
+}
+
 function hrSalaryAdvanceScheduleGenerate(PDO $pdo, int $requestId, ?int $userId = null): int
 {
     if ($requestId <= 0) {
