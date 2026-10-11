@@ -183,6 +183,9 @@ function hrSalaryAdvanceScheduleReschedule(
         if (!$activePlan) {
             throw new RuntimeException('لا توجد خطة سداد نشطة يمكن استبدالها. يلزم فحص سجل الجدول قبل المتابعة.');
         }
+        if ($activePlan['maximum_repayment_months'] === null || (int)$activePlan['maximum_repayment_months'] <= 0) {
+            throw new RuntimeException('مدة خطة السداد الحالية غير محددة؛ لا يمكن اعتبارها منتهية تلقائياً.');
+        }
 
         $horizon = DateTime::createFromFormat('!Y-m-d', (string)$activePlan['start_month']);
         if (!$horizon) {
