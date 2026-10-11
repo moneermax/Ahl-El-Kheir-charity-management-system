@@ -208,11 +208,7 @@ if (isset($argv[1]) && in_array($argv[1], ['blocked', 'retry'], true)) {
 ak_ensure_tables();
 ak_seed_accounts();
 
-$nextMonth = date('Y-m-01', strtotime(date('Y-m-01') . ' +1 month'));
-$targetYear = (int)date('Y', strtotime($nextMonth));
-$targetMonth = (int)date('n', strtotime($nextMonth));
-
-$fixture = dbFetchOne(
+$candidates = dbFetchAll(
     "SELECT r.id AS request_id, r.employee_id, r.policy_version_id,
             r.outstanding_balance, r.request_no, rp.id AS active_plan_id
      FROM hr_salary_advance_requests r
@@ -221,15 +217,35 @@ $fixture = dbFetchOne(
      WHERE r.status = 'disbursed'
        AND COALESCE(r.outstanding_balance, 0) > 0
        AND r.approved_repayment_method IN ('fixed_monthly', 'full_eligible_salary', 'full_settlement')
-       AND NOT EXISTS (
-           SELECT 1 FROM payroll p
-           WHERE p.employee_id = r.employee_id AND p.month = ? AND p.year = ?
-       )
-     ORDER BY r.id ASC
-     LIMIT 1",
-    [$targetMonth, $targetYear]
+     ORDER BY r.id ASC"
 );
-concurrencyCheck((bool)$fixture, 'full-schema fixture needs an outstanding payroll-repaid advance and an unused next-month payroll period');
+
+$fixture = null;
+$nextMonth = '';
+$targetYear = 0;
+$targetMonth = 0;
+foreach ($candidates as $candidate) {
+    for ($monthOffset = 1; $monthOffset <= 60; $monthOffset++) {
+        $candidateMonth = date('Y-m-01', strtotime(date('Y-m-01') . ' +' . $monthOffset . ' months'));
+        $candidateYear = (int)date('Y', strtotime($candidateMonth));
+        $candidateMonthNumber = (int)date('n', strtotime($candidateMonth));
+        $existingPayroll = dbFetchOne(
+            'SELECT id FROM payroll WHERE employee_id = ? AND month = ? AND year = ? LIMIT 1',
+            [(int)$candidate['employee_id'], $candidateMonthNumber, $candidateYear]
+        );
+        if (!$existingPayroll) {
+            $fixture = $candidate;
+            $nextMonth = $candidateMonth;
+            $targetYear = $candidateYear;
+            $targetMonth = $candidateMonthNumber;
+            break 2;
+        }
+    }
+}
+concurrencyCheck(
+    (bool)$fixture,
+    'full-schema fixture needs an outstanding installment-based advance and at least one unused payroll period within the next 60 months'
+);
 
 $requestId = (int)$fixture['request_id'];
 $employeeId = (int)$fixture['employee_id'];
