@@ -243,6 +243,9 @@ try {
     $blocked = runChild('blocked', $payrollId);
     concurrencyCheck($blocked['exit'] === 0, 'production payroll transition did not fail safely under the competing request lock: ' . $blocked['stdout'] . ' ' . $blocked['stderr']);
 
+    $actorId = (int)$pdo->query('SELECT id FROM users ORDER BY id ASC LIMIT 1')->fetchColumn();
+    concurrencyCheck($actorId > 0, 'full-schema fixture needs an existing audit-log user');
+
     $startMonth = $nextMonth;
     $result = hrSalaryAdvanceScheduleReschedule(
         $pdo,
@@ -251,7 +254,7 @@ try {
         36,
         $balance,
         'Disposable CI production payroll/rescheduling contention regression',
-        77
+        $actorId
     );
     concurrencyCheck((int)$result['plan_no'] >= 2, 'rescheduling must create a replacement plan version');
     $pdo->commit();
