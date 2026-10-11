@@ -289,6 +289,19 @@ function hrSalaryAdvancePayrollApply(PDO $pdo, array $payroll, int $accountingEn
     );
 
     if (!$locked) {
+        if ($salaryAdvanceDeduction === 0.00) {
+            $emptyPreview = hrSalaryAdvancePayrollCalculateDraft($pdo, $payroll, $periodStart);
+            if (
+                round((float)($emptyPreview['total'] ?? 0), 2) === 0.00
+                && empty($emptyPreview['allocations'])
+            ) {
+                // No eligible schedule rows is a valid no-op when this payroll
+                // has no salary-advance deduction (for example, after the
+                // approved repayment horizon). Ordinary payroll must still post.
+                return ['total' => 0.00, 'allocations' => [], 'trace_rows' => 0];
+            }
+        }
+
         throw new RuntimeException('مسير الراتب يحتوي على خصم سلفة، لكن لا يوجد قسط سداد قائم يمكن تطبيقه.');
     }
 
