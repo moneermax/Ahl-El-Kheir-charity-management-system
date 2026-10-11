@@ -137,6 +137,7 @@ function hrSalaryAdvanceScheduleReschedule(
                     p.maximum_monthly_deduction
              FROM hr_salary_advance_requests r
              JOIN hr_salary_advance_policy_versions p ON p.id = r.policy_version_id
+             LEFT JOIN employees e ON e.id = r.employee_id
              WHERE r.id = ?
              LIMIT 1
              FOR UPDATE",
@@ -290,6 +291,8 @@ function hrSalaryAdvanceScheduleReschedule(
             'plan_no' => $planNo,
             'schedule_rows' => $requiredMonths,
             'outstanding_balance' => $outstanding,
+            'request_no' => (string)$request['request_no'],
+            'employee_user_id' => (int)($request['user_id'] ?? 0),
         ];
     } catch (Throwable $e) {
         if ($ownsTransaction && $pdo->inTransaction()) {
