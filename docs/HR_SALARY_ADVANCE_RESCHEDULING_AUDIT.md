@@ -223,3 +223,12 @@ Commit [35934865d3b6729323b1de356fbbf75545cf47f5](https://github.com/moneermax/A
 Verification: [GitHub Actions run 38128854517](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/38128854517) passed all four jobs. The full-schema job explicitly reported the migration/backfill/rerun and rollback-only policy-creation regression as PASS. This is verified against the checked-in schema in disposable CI, not the local XAMPP database.
 
 **Scope limit:** Stage 7 remains open until read-only local schema/integrity confirmation and browser-driven policy/rescheduling/payroll/accounting checks are completed. The local migration remains unapplied.
+
+
+## 17. Read-only local preflight before the remaining runtime gate — 2026-10-11
+
+Added `tools/inspect_salary_advance_rescheduling_prerequisites.php` to make the local verification step small and safe. It uses the application's configured database connection but performs only metadata and `SELECT` queries. It checks the legacy tables/columns required by Stage 7, request/policy and schedule/request integrity, and whether the migration markers are all absent, all present, or partially applied. It never runs the migration and does not print employee or financial row details.
+
+The tool is included in the PHP syntax CI job. After the latest `main` commits are pulled locally, run it from the repository root with the XAMPP PHP CLI. Its output will determine whether the local database is in the expected pre-migration state or needs investigation before any schema change.
+
+**Scope limit:** CI passing does not replace this local read-only check or browser-driven verification. Stage 7 remains open and the local migration remains unapplied.
