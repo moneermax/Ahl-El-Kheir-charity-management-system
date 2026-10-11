@@ -223,8 +223,24 @@ function hrSalaryAdvancePayrollApply(PDO $pdo, array $payroll, int $accountingEn
         throw new RuntimeException('خصم سلفة الراتب في مسير الراتب غير صالح.');
     }
 
-    // Lock the schedule rows before recalculating so a concurrent payroll
-    // action cannot consume the same installment.
+    // Lock the employee's outstanding advance requests first, in stable ID order.
+    // Rescheduling also locks the request before its active plan. Acquiring the
+    // parent request locks first here avoids the reverse request/plan lock order
+    // that could otherwise deadlock when payroll and rescheduling overlap.
+    $requestLocks = $pdo->prepare(
+        "SELECT id
+         FROM hr_salary_advance_requests
+         WHERE employee_id = ?
+           AND status = 'disbursed'
+           AND COALESCE(outstanding_balance, 0) > 0
+         ORDER BY id ASC
+         FOR UPDATE"
+    );
+    $requestLocks->execute([$employeeId]);
+    $requestLocks->fetchAll(PDO::FETCH_COLUMN);
+
+    // Then lock eligible schedule rows and plans before recalculating so a
+    // concurrent payroll action cannot consume the same installment.
     $locked = dbFetchAll(
         "SELECT s.id AS schedule_id, s.salary_advance_request_id AS request_id,
                 s.scheduled_amount, s.applied_amount, s.status AS schedule_status,
