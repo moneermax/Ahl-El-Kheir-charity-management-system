@@ -21,8 +21,8 @@ Do not reopen Stages 1–3 unless a genuine regression is found.
 3. **Stage 3 — FM Review & Per-Request Customization: DONE / RUNTIME VERIFIED**
 4. **Stage 4 — Accounting Verification & Disbursement: DONE / RUNTIME VERIFIED / CLOSED**
 5. **Stage 5 — Repayment Schedule + Payroll Integration: DONE / RUNTIME VERIFIED / CLOSED**
-6. Stage 6 — Direct Repayment & Settlement: NOT STARTED
-7. Stage 7 — Exceptional Lifecycle Cases: NOT STARTED
+6. Stage 6 — Direct Repayment & Settlement: **PARTIAL / REQUIRES SEPARATE CLOSURE AUDIT**. A direct-repayment posting and evidence path exists in source; do not infer that the entire settlement lifecycle is verified or closed.
+7. Stage 7 — Exceptional Lifecycle Cases: **NOT STARTED**. The next design item is authorized rescheduling when a balance remains after a configured maximum repayment horizon.
 8. Stage 8 — Reporting / Audit / Hardening: NOT STARTED
 
 The project completion gate remains:
@@ -547,31 +547,38 @@ Reserved scope:
 - Do not repeat closed runtime tests unless a genuine regression appears.
 - Accounting test data is development/test data only.
 - Do not use the normal expense payment-voucher flow for salary advances.
-- Do not implement Stage 5/6 behavior early.
+- Do not reopen closed Stage 1–5 behavior unless a regression is evidenced; Stage 6 direct repayment/settlement still requires its own closure audit.
 - Update this document after every completed milestone.
 - Record exact commit/merge SHA for every completed milestone.
 
 ---
 
-# Current exact continuation point
+# Current exact continuation point — authoritative as of 2026-10-11
 
-**Stages 1–3 are complete and must not be reopened.**
+## Closed work — do not reopen without a regression
 
-**Stage 4 implementation is prepared on:**
+- Stages 1–4 remain closed based on their recorded verification evidence.
+- Stage 5 schedule planning and payroll repayment integration are closed for the implemented policy paths. The latest focused local verification reported by the user passed:
+  - PHP lint for `modules/hr/lib_salary_advance_payroll.php` and `tools/run_salary_advance_stage5_payroll_edge_tests.php`;
+  - all four cases in `tools/run_salary_advance_stage5_schedule_tests.php`;
+  - all reported cases in `tools/run_salary_advance_stage5_payroll_edge_tests.php`, including `full_settlement` insufficient-salary handling, carry-forward after a skipped month, maximum repayment horizon, and rollback-only cleanup.
+- The rollback-only harness confirmed that test mutations to payroll, requests, schedules, repayment traces, audit records, and journal data were not committed.
+- The approved-horizon behavior is intentional: no automatic payroll deduction or new schedule rows after a configured maximum repayment window; remaining debt stays outstanding.
+- The recent code change was locally pulled and verified at `4b6e849471eb36b6f4c76a5ae580453fdc7e7adf`. The later documentation-only update was committed as `ee7cd8a0ecbbd0e20851550e52e2af70934669b6`; do not assume that docs-only commit has been pulled locally unless the user confirms it.
 
-`feature/hr-salary-advance-stage4-accounting`
+## Next task — design only until authority is grounded
 
-Latest Stage 4 implementation commit:
+Inspect and design an authorized rescheduling workflow for an outstanding balance that remains after the approved repayment horizon. Current source scan did not find an existing rescheduling endpoint/helper/table or rescheduling-specific permission. Existing role guidance says GM handles final management approvals and FM handles financial review/posting/reconciliation, but it does not explicitly assign approval authority for changing an already-approved repayment plan.
 
-`5ef4c7d144c38fdcd701b269e6b6b540d9e94c53`
+Before implementing, establish the workflow’s authority and rules from an existing canonical business decision. Preserve the original approved policy version, schedule and repayment history; any new schedule must be explicitly approved and auditable. Do not silently extend the expired plan or invent an approver.
 
-Documentation checkpoint commit: `322557364fbd19cc26a879743d48eb15f5bc869c`
+## Stage boundaries
 
-**Immediate next task:** complete the remaining Stage 4 security/evidence gates: cross-employee voucher/receipt access denial, receipt replacement + audit verification, duplicate-disbursement protection, and final reconciliation/notification/audit confirmation.
+- Stage 6 direct repayment source exists, but the entire direct repayment/final settlement lifecycle is not yet established as runtime-verified and closed. Audit it separately before claiming closure.
+- Stage 7 exceptional lifecycle work is not started; rescheduling after the approved horizon is the next design item.
+- Stage 8 reporting/audit/hardening remains future work.
 
-The migration and core accounting/disbursement path are already runtime verified. Do not repeat those successful tests unless a regression appears.
-
-Do not start Stage 5 until Stage 4 is fully runtime-verified and documented.
+The detailed Stage 4 closure evidence below is historical and remains closed. Do not repeat its successful tests absent a regression.
 
 
 # Stage 4 — Final Closure Checkpoint (2026-09-29)
