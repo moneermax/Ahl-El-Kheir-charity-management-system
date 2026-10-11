@@ -355,7 +355,7 @@ require_once __DIR__ . '/../../includes/header.php';
 <section class="hero">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
         <h1><i class="fas fa-hand-holding-dollar me-2"></i>معالجة سلف الرواتب</h1>
-        <?php if ($canFm): ?>
+        <?php if (in_array($role, ['financial_manager', 'fm'], true)): ?>
             <a class="btn btn-light btn-sm fw-bold" href="<?=e(APP_URL . 'modules/hr/salary_advance_reschedule.php')?>"><i class="fas fa-calendar-alt me-1"></i>إعادة جدولة السلف المنتهية</a>
         <?php endif; ?>
     </div>
