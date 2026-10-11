@@ -114,7 +114,7 @@ function hrSalaryAdvanceScheduleGenerate(PDO $pdo, int $requestId, ?int $userId 
     }
 
     $method = (string)($request['approved_repayment_method'] ?? '');
-    if (!in_array($method, ['fixed_monthly', 'full_eligible_salary'], true)) {
+    if (!in_array($method, ['fixed_monthly', 'full_eligible_salary', 'full_settlement'], true)) {
         throw new RuntimeException('طريقة السداد المعتمدة لا تدخل ضمن جدول سداد الرواتب.');
     }
 
@@ -155,12 +155,12 @@ function hrSalaryAdvanceScheduleGenerate(PDO $pdo, int $requestId, ?int $userId 
             $remaining = round($remaining - $amount, 2);
         }
     } else {
-        // Full eligible salary is determined from the actual payroll period,
-        // so the schedule stores the maximum permitted monthly amount rather
-        // than guessing a salary value at disbursement time. A finite horizon
-        // is required so the generated plan remains deterministic.
+        // Full eligible salary and full settlement are determined from the actual
+        // payroll period, so the schedule stores the maximum permitted monthly
+        // amount rather than guessing a salary value at disbursement time. A
+        // finite horizon is required so the generated plan remains deterministic.
         if ($maximumMonths === null) {
-            throw new RuntimeException('طريقة خصم كامل الراتب المؤهل تتطلب تحديد أقصى عدد أشهر للسداد قبل إنشاء الجدول.');
+            throw new RuntimeException('طريقة السداد من الراتب تتطلب تحديد أقصى عدد أشهر للسداد قبل إنشاء الجدول.');
         }
 
         $scheduledMonthly = $maximumDeduction !== null ? $maximumDeduction : $outstanding;
