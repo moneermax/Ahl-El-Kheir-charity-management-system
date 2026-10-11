@@ -153,7 +153,7 @@ require_once __DIR__ . '/../../includes/header.php';
                     <textarea class="form-control" id="reason" name="reason" rows="3" maxlength="1000" required></textarea>
                 </div>
                 <div class="col-12 d-flex gap-2">
-                    <button class="btn btn-primary" type="submit" name="reschedule_submit" value="1" onclick="return confirm('سيتم تفعيل خطة جديدة مع الاحتفاظ بالخطة السابقة وسجل السداد. هل تريد المتابعة؟')">التحقق وحفظ الخطة الجديدة</button>
+                    <button class="btn btn-primary" type="submit" name="reschedule_submit" value="1">التحقق وحفظ الخطة الجديدة</button>
                     <a class="btn btn-outline-secondary" href="<?=e(APP_URL . 'modules/hr/salary_advance_reschedule.php')?>">إلغاء</a>
                 </div>
             </form>
