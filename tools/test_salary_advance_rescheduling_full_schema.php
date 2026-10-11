@@ -173,4 +173,17 @@ try {
     }
 }
 
+require_once dirname(__DIR__) . '/modules/hr/lib_salary_advance_request.php';
+
+$recommended = hrSalaryAdvanceRecommendMonthlyInstallment(70000.00, 6, 15000.00);
+expectFullSchema($recommended['monthly_amount'] === 11666.67, 'Automatic installment recommendation must round up to the cent needed to fit six months.');
+expectFullSchema($recommended['within_policy_cap'] === true, 'A recommendation below the policy monthly cap must be eligible.');
+$capBlocked = hrSalaryAdvanceRecommendMonthlyInstallment(70000.00, 6, 10000.00);
+expectFullSchema($capBlocked['monthly_amount'] === 11666.67, 'The system should still calculate the required installment when the cap makes it infeasible.');
+expectFullSchema($capBlocked['within_policy_cap'] === false, 'A recommendation above the saved monthly cap must be blocked, not silently approved.');
+$edgeRounded = hrSalaryAdvanceRecommendMonthlyInstallment(1000.00, 3, 400.00);
+expectFullSchema($edgeRounded['monthly_amount'] === 333.34 && $edgeRounded['within_policy_cap'] === true, 'Automatic installment calculation must round upward to currency precision.');
+$invalidRecommendation = hrSalaryAdvanceRecommendMonthlyInstallment(70000.00, null, 15000.00);
+expectFullSchema($invalidRecommendation['monthly_amount'] === null && $invalidRecommendation['within_policy_cap'] === false, 'No automatic installment should be proposed without a finite policy horizon.');
+
 echo "PASS: full-schema migration/backfill/rerun and rollback-only policy creation with rescheduling authorization.\\n";
