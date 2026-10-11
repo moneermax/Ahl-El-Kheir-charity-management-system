@@ -25,6 +25,10 @@ CREATE TABLE IF NOT EXISTS hr_salary_advance_repayment_plans (
     KEY idx_hr_salary_advance_plan_created_by (created_by)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Also repairs a partially applied earlier draft where this column was NOT NULL.
+ALTER TABLE hr_salary_advance_repayment_plans
+    MODIFY COLUMN maximum_repayment_months INT UNSIGNED NULL;
+
 ALTER TABLE hr_salary_advance_repayment_schedule
     ADD COLUMN IF NOT EXISTS repayment_plan_id INT UNSIGNED NULL AFTER salary_advance_request_id;
 
