@@ -199,11 +199,6 @@ check((string)$pdo->query("SELECT status FROM hr_salary_advance_repayment_plans 
 check((int)$pdo->query("SELECT COUNT(*) FROM hr_salary_advance_repayment_schedule WHERE salary_advance_request_id = 1")->fetchColumn() === 4, 'old schedule row and three new rows are all preserved');
 check((int)$pdo->query("SELECT COUNT(*) FROM audit_log WHERE action = 'HR_SALARY_ADVANCE_REPAYMENT_RESCHEDULE'")->fetchColumn() === 1, 'successful reschedule writes one audit event');
 
-expectRescheduleRejected(fn() => hrSalaryAdvanceScheduleReschedule($pdo, 2, $startMonth, 3, 200.00, 'Policy disabled test', 77), 'saved policy authorization disabled');
-expectRescheduleRejected(fn() => hrSalaryAdvanceScheduleReschedule($pdo, 3, $startMonth, 3, 200.00, 'In-horizon test', 77), 'current plan has not expired');
-expectRescheduleRejected(fn() => hrSalaryAdvanceScheduleReschedule($pdo, 4, $startMonth, 3, 201.00, 'Monthly cap test', 77), 'monthly cap exceeded');
-expectRescheduleRejected(fn() => hrSalaryAdvanceScheduleReschedule($pdo, 5, $startMonth, 2, 200.00, 'Duration coverage test', 77), 'proposed terms do not cover balance');
-expectRescheduleRejected(fn() => hrSalaryAdvanceScheduleReschedule($pdo, 6, $startMonth, 3, 200.00, 'Direct repayment test', 77), 'direct repayment cannot convert to payroll deductions');
 expectRescheduleRejected(
     fn() => hrSalaryAdvanceScheduleReschedule($pdo, 2, $startMonth, 3, 200.00, 'Policy disabled test', 77),
     'saved policy authorization disabled',
@@ -250,7 +245,7 @@ expectRescheduleRejected(
 check((int)$pdo->query("SELECT COUNT(*) FROM hr_salary_advance_repayment_plans WHERE salary_advance_request_id = 8")->fetchColumn() === 2, 'ambiguous active plans remain unchanged for manual review');
 check((int)$pdo->query("SELECT COUNT(*) FROM hr_salary_advance_repayment_plans WHERE salary_advance_request_id = 8 AND status = 'active'")->fetchColumn() === 2, 'service refuses to choose between multiple active plans');
 
-foreach ([2, 3, 4, 5, 6, 8] as $id) {
+foreach ([2, 3, 4, 5, 6] as $id) {
     check((int)$pdo->query("SELECT COUNT(*) FROM hr_salary_advance_repayment_plans WHERE salary_advance_request_id = {$id}")->fetchColumn() === 1, "rejected request {$id} retains only its original plan");
     check((string)$pdo->query("SELECT status FROM hr_salary_advance_repayment_plans WHERE salary_advance_request_id = {$id}")->fetchColumn() === 'active', "rejected request {$id} keeps its original plan active");
 }
