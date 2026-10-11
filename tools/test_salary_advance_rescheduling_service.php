@@ -195,13 +195,13 @@ $pdo->exec("
     CREATE TABLE audit_log (
         id INT UNSIGNED NOT NULL AUTO_INCREMENT,
         user_id INT UNSIGNED NULL,
-        action VARCHAR(150) NOT NULL,
-        entity_type VARCHAR(150) NOT NULL,
-        entity_id INT UNSIGNED NULL,
+        action VARCHAR(100) NOT NULL,
+        entity_type VARCHAR(50) NOT NULL,
+        entity_id BIGINT UNSIGNED NULL,
         old_values LONGTEXT NULL,
         new_values LONGTEXT NULL,
-        ip_address VARCHAR(100) NULL,
-        user_agent VARCHAR(1000) NULL,
+        ip_address VARCHAR(45) NULL,
+        user_agent VARCHAR(255) NULL,
         created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY (id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
