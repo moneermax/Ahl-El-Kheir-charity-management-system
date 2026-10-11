@@ -23,6 +23,14 @@ $pdo = new PDO(
     [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]
 );
 
+$GLOBALS['salaryAdvanceRescheduleTestPdo'] = $pdo;
+function dbFetchAll(string $sql, array $params = []): array
+{
+    $stmt = $GLOBALS['salaryAdvanceRescheduleTestPdo']->prepare($sql);
+    $stmt->execute($params);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
 function check(bool $condition, string $message): void
 {
     if (!$condition) {
@@ -64,6 +72,8 @@ $pdo->exec("
         allow_fm_repayment_rescheduling TINYINT(1) NOT NULL DEFAULT 0,
         maximum_repayment_months INT UNSIGNED NULL,
         maximum_monthly_deduction DECIMAL(18,2) NULL,
+        insufficient_salary_rule VARCHAR(30) NOT NULL DEFAULT 'available_salary',
+        eligible_salary_basis VARCHAR(30) NOT NULL DEFAULT 'net_before_advance',
         PRIMARY KEY (id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ");
@@ -124,6 +134,23 @@ $pdo->exec("
         PRIMARY KEY (id),
         UNIQUE KEY uq_hr_salary_advance_schedule_plan_installment (salary_advance_request_id, repayment_plan_id, installment_no),
         UNIQUE KEY uq_hr_salary_advance_schedule_plan_month (salary_advance_request_id, repayment_plan_id, scheduled_month)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+");
+$pdo->exec("
+    CREATE TABLE hr_salary_advance_waiver_items (
+        id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+        salary_advance_request_id INT UNSIGNED NOT NULL,
+        decision_id INT UNSIGNED NOT NULL,
+        PRIMARY KEY (id),
+        KEY idx_test_waiver_request (salary_advance_request_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+");
+$pdo->exec("
+    CREATE TABLE hr_salary_advance_waiver_decisions (
+        id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+        status VARCHAR(30) NOT NULL,
+        effective_month DATE NULL,
+        PRIMARY KEY (id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ");
 $pdo->exec("
@@ -199,6 +226,15 @@ check((string)$pdo->query("SELECT status FROM hr_salary_advance_repayment_plans 
 check((int)$pdo->query("SELECT COUNT(*) FROM hr_salary_advance_repayment_schedule WHERE salary_advance_request_id = 1")->fetchColumn() === 4, 'old schedule row and three new rows are all preserved');
 check((int)$pdo->query("SELECT COUNT(*) FROM audit_log WHERE action = 'HR_SALARY_ADVANCE_REPAYMENT_RESCHEDULE'")->fetchColumn() === 1, 'successful reschedule writes one audit event');
 
+require_once dirname(__DIR__) . '/modules/hr/lib_salary_advance_payroll.php';
+$pendingAtStart = hrSalaryAdvancePayrollPendingRows(1, $startMonth);
+check(count($pendingAtStart) === 1, 'payroll selection returns only the first eligible installment of the active plan');
+check((string)$pendingAtStart[0]['scheduled_month'] === $startMonth, 'payroll selection uses the replacement plan start month');
+check((int)$pendingAtStart[0]['schedule_id'] !== 1, 'payroll selection excludes the superseded plan schedule row');
+$afterPlanHorizon = date('Y-m-01', strtotime($startMonth . ' +3 months'));
+$pendingAfterHorizon = hrSalaryAdvancePayrollPendingRows(1, $afterPlanHorizon);
+check($pendingAfterHorizon === [], 'payroll selection excludes installments beyond the active plan horizon');
+
 expectRescheduleRejected(
     fn() => hrSalaryAdvanceScheduleReschedule($pdo, 2, $startMonth, 3, 200.00, 'Policy disabled test', 77),
     'saved policy authorization disabled',
@@ -264,4 +300,4 @@ check((int)$pdo->query("SELECT COUNT(*) FROM hr_salary_advance_repayment_plans W
 check((string)$pdo->query("SELECT status FROM hr_salary_advance_repayment_plans WHERE salary_advance_request_id = 7")->fetchColumn() === 'active', 'audit failure leaves the original plan active');
 check((int)$pdo->query("SELECT COUNT(*) FROM hr_salary_advance_repayment_schedule WHERE salary_advance_request_id = 7")->fetchColumn() === $beforeSchedules, 'audit failure rolls back inserted schedule rows');
 
-echo "PASS: successful reschedule, specific rejection reasons, multiple-active-plan guard, history preservation, audit event, and transaction rollback.\n";
+echo "PASS: successful reschedule, active-plan payroll selection/horizon, specific rejection reasons, multiple-active-plan guard, history preservation, audit event, and transaction rollback.\n";
