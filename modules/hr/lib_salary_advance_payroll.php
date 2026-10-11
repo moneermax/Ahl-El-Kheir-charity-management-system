@@ -122,7 +122,7 @@ function hrSalaryAdvancePayrollCalculateDraft(PDO $pdo, array $payroll, string $
         }
 
         $insufficientRule = (string)($row['insufficient_salary_rule'] ?? 'available_salary');
-        $isInsufficient = $method === 'fixed_monthly'
+        $isInsufficient = in_array($method, ['fixed_monthly', 'full_settlement'], true)
             && $availableSalary + 0.000001 < $cap;
 
         $actual = $planned;
