@@ -2,7 +2,7 @@
 
 **Date:** 2026-10-11  
 **Branch:** `main`  
-**Status:** SYNTAX, MIGRATION, RESCHEDULING, AND FOCUSED PAYROLL APPLY TESTS PASSED IN CI; FULL ACCOUNTING/LOCAL-SCHEMA VERIFICATION PENDING
+**Status:** SYNTAX, FULL-DUMP MIGRATION, RESCHEDULING, AND FOCUSED PAYROLL APPLY TESTS PASSED IN CI; LOCAL INSTANCE/FULL ACCOUNTING VERIFICATION PENDING
 
 ## 1. Why this workflow is needed
 
@@ -85,6 +85,7 @@ These are source-level observations. Dedicated CI checks also pass PHP syntax ch
 
 - PHP 8.2 syntax checks for the salary-advance PHP files and notification dependency passed: [workflow run 38119108564](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/38119108564).
 - The Stage 7 migration ran twice against an isolated MariaDB 10.4.32 database. The test verified the default-disabled policy flag, legacy schedule backfill, preservation of both finite and NULL/unbounded policy durations, preserved schedule row count, plan-scoped indexes replacing the old indexes, and no duplicate plan or schedule rows on rerun. This job passed in the same workflow run.
+- The same migration also passed against the **full checked-in `database/ahl_el_kheir.sql` dump and its legacy rows** on MariaDB 10.4.32. The full-schema test verified every legacy schedule row remained and received a plan link, one initial plan per scheduled request, policy durations/caps and start months preserved, existing policy authorization left disabled, old unique indexes replaced, and rerun safety. See [workflow run 38120228433](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/38120228433).
 - The rescheduling service and payroll eligibility query passed disposable-database tests for successful plan replacement, active-plan-only payroll selection, post-horizon suppression, specific rejection reasons for disabled policy authorization, unexpired horizon, monthly cap, insufficient duration, direct-repayment exclusion, and installments rounding down to zero. The tests also verified preservation of old plan/schedule rows, one audit event on success, refusal when multiple active plans exist, and rollback when the audit write fails. Payroll preview and apply tests verify active-plan selection, no deduction after the plan horizon, exact balance reduction, schedule/trace/audit updates, rejection of repeated payroll application, and no duplicate repayment trace. The fixture now matches the committed base schema's audit-log field sizes/types. See [workflow run 38120090114](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/38120090114).
 - The committed `database/ahl_el_kheir.sql` confirms `employees.user_id` is the canonical employee/user relationship. It defines `audit_log.action` as `VARCHAR(100)`, `entity_type` as `VARCHAR(50)`, `entity_id` as `BIGINT UNSIGNED`, `ip_address` as `VARCHAR(45)`, and `user_agent` as `VARCHAR(255)`. The service's action/entity values fit these fields, and the CI fixture now uses these exact types. The user's local database has not been inspected, so it still must be confirmed to match the checked-in dump.
 
@@ -120,5 +121,5 @@ The current service intentionally rejects rescheduling when the saved policy has
 
 The UI lists only requests with an active plan, a positive outstanding balance, an expired plan, a positive saved maximum duration, and explicit saved-policy FM authorization. It does not provide a way to reschedule an in-horizon plan.
 
-**Next required work:** confirm the audit-log schema from the actual local database/schema source; add tests for stale balance/concurrent payroll and notification failure isolation; verify the full application's payroll-to-accounting posting path; then run the existing payroll repayment regressions and account 1410 reconciliation. Do not claim the feature complete until the remaining evidence is recorded.
+**Next required work:** confirm the local XAMPP database matches the checked-in dump; add tests for stale balance/concurrent payroll and notification failure isolation; verify the full application's payroll-to-accounting posting path; then run the existing payroll repayment regressions and account 1410 reconciliation. Do not claim the feature complete until the remaining evidence is recorded.
 
