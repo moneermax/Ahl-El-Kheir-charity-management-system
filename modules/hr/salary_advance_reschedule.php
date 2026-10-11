@@ -6,6 +6,7 @@ require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../config/functions.php';
 require_once __DIR__ . '/../../config/session.php';
 require_once __DIR__ . '/lib_salary_advance_repayment.php';
+require_once __DIR__ . '/../accounting/lib_transaction_review.php';
 
 Session::start();
 if (!Session::isLoggedIn()) {
@@ -44,6 +45,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         );
         $message = 'تم إنشاء خطة السداد الجديدة رقم ' . (int)$result['plan_no'] .
             ' بعد التحقق من الرصيد وتسجيل التغيير في سجل التدقيق.';
+        $employeeUserId = (int)($result['employee_user_id'] ?? 0);
+        if ($employeeUserId > 0) {
+            try {
+                ak_transaction_review_notify_event(
+                    $employeeUserId,
+                    'تمت إعادة جدولة سلفة الراتب',
+                    'تم اعتماد خطة سداد جديدة للسلفة «' . (string)$result['request_no'] .
+                        '». الرصيد القائم عند إنشاء الخطة: ' .
+                        number_format((float)$result['outstanding_balance'], 2) . ' ج.س.',
+                    APP_URL . 'modules/hr/salary_advance_request.php',
+                    $requestId,
+                    'salary_advance_repayment_rescheduled'
+                );
+            } catch (Throwable $notificationError) {
+                // The financial transaction has already committed. Notification
+                // failure must not misreport or roll back the saved repayment plan.
+            }
+        }
     } catch (Throwable $e) {
         $error = $e->getMessage();
     }
