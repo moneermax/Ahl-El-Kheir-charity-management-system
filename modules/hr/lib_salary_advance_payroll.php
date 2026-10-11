@@ -39,8 +39,28 @@ function hrSalaryAdvancePayrollPendingRows(PDO $pdo, int $employeeId, string $pe
          WHERE r.employee_id = ?
            AND r.status = 'disbursed'
            AND COALESCE(r.outstanding_balance, 0) > 0
-           AND s.scheduled_month = ?
-           AND s.status IN ('pending', 'partial')
+           AND s.scheduled_month <= ?
+           AND (
+               s.status IN ('pending', 'partial')
+               OR (s.status = 'skipped' AND s.scheduled_month < ?)
+           )
+           AND NOT EXISTS (
+               SELECT 1
+               FROM hr_salary_advance_repayment_schedule earlier
+               WHERE earlier.salary_advance_request_id = r.id
+                 AND earlier.scheduled_month <= ?
+                 AND (
+                     earlier.status IN ('pending', 'partial')
+                     OR (earlier.status = 'skipped' AND earlier.scheduled_month < ?)
+                 )
+                 AND (
+                     earlier.scheduled_month < s.scheduled_month
+                     OR (
+                         earlier.scheduled_month = s.scheduled_month
+                         AND earlier.installment_no < s.installment_no
+                     )
+                 )
+           )
            AND NOT EXISTS (
                SELECT 1
                FROM hr_salary_advance_waiver_items wi
@@ -50,8 +70,8 @@ function hrSalaryAdvancePayrollPendingRows(PDO $pdo, int $employeeId, string $pe
                  AND wd.status = 'executed'
                  AND wd.effective_month <= ?
            )
-         ORDER BY s.installment_no ASC, s.id ASC",
-        [$employeeId, $periodStart, $periodStart]
+         ORDER BY r.id ASC, s.scheduled_month ASC, s.installment_no ASC, s.id ASC",
+        [$employeeId, $periodStart, $periodStart, $periodStart, $periodStart, $periodStart]
     );
 }
 
@@ -204,8 +224,28 @@ function hrSalaryAdvancePayrollApply(PDO $pdo, array $payroll, int $accountingEn
          WHERE r.employee_id = ?
            AND r.status = 'disbursed'
            AND COALESCE(r.outstanding_balance, 0) > 0
-           AND s.scheduled_month = ?
-           AND s.status IN ('pending', 'partial')
+           AND s.scheduled_month <= ?
+           AND (
+               s.status IN ('pending', 'partial')
+               OR (s.status = 'skipped' AND s.scheduled_month < ?)
+           )
+           AND NOT EXISTS (
+               SELECT 1
+               FROM hr_salary_advance_repayment_schedule earlier
+               WHERE earlier.salary_advance_request_id = r.id
+                 AND earlier.scheduled_month <= ?
+                 AND (
+                     earlier.status IN ('pending', 'partial')
+                     OR (earlier.status = 'skipped' AND earlier.scheduled_month < ?)
+                 )
+                 AND (
+                     earlier.scheduled_month < s.scheduled_month
+                     OR (
+                         earlier.scheduled_month = s.scheduled_month
+                         AND earlier.installment_no < s.installment_no
+                     )
+                 )
+           )
            AND NOT EXISTS (
                SELECT 1
                FROM hr_salary_advance_waiver_items wi
@@ -215,9 +255,10 @@ function hrSalaryAdvancePayrollApply(PDO $pdo, array $payroll, int $accountingEn
                  AND wd.status = 'executed'
                  AND wd.effective_month <= ?
            )
-         ORDER BY s.installment_no ASC, s.id ASC
+         ORDER BY r.id ASC, s.scheduled_month ASC, s.installment_no ASC, s.id ASC
+         FOR UPDATE
          FOR UPDATE",
-        [$employeeId, $periodStart, $periodStart]
+        [$employeeId, $periodStart, $periodStart, $periodStart, $periodStart, $periodStart]
     );
 
     if (!$locked) {
@@ -253,7 +294,10 @@ function hrSalaryAdvancePayrollApply(PDO $pdo, array $payroll, int $accountingEn
              applied_at = ?,
              skip_reason = ?
          WHERE id = ?
-           AND status IN ('pending', 'partial')"
+           AND (
+               status IN ('pending', 'partial')
+               OR (status = 'skipped' AND scheduled_month < ?)
+           )"
     );
 
     $updateRequest = $pdo->prepare(
@@ -360,6 +404,7 @@ function hrSalaryAdvancePayrollApply(PDO $pdo, array $payroll, int $accountingEn
             $appliedAt,
             $skipReason,
             $scheduleId,
+            $periodStart,
         ]);
         if ($updateSchedule->rowCount() !== 1) {
             throw new RuntimeException('تعذر تحديث حالة قسط سداد السلفة.');
