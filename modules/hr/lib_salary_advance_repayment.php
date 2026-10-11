@@ -173,10 +173,10 @@ function hrSalaryAdvanceScheduleReschedule(
         if ($policyMonths === null || $policyMonths <= 0) {
             throw new RuntimeException('لا يمكن التحقق من استثناء مدة السداد لأن السياسة المرجعية لا تحدد حداً أقصى صالحاً للأشهر.');
         }
-        if ($durationMonths > $policyMonths) {
-            throw new RuntimeException('مدة الخطة الجديدة تتجاوز الحد الأقصى المحدد في السياسة المرجعية.');
-        }
-
+        // The saved policy authorization above is the explicit exception to the
+        // normal repayment horizon. Keep the policy horizon valid, but do not
+        // cap a replacement plan to it; the monthly deduction cap and full-
+        // balance coverage checks below remain mandatory.
         $policyCap = $request['maximum_monthly_deduction'] !== null
             ? round((float)$request['maximum_monthly_deduction'], 2)
             : null;
