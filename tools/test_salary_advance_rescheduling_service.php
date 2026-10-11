@@ -213,7 +213,7 @@ $policy = $pdo->prepare("INSERT INTO hr_salary_advance_policy_versions (id, allo
 $policy->execute([1, 1]);
 $policy->execute([2, 0]);
 $pdo->exec("INSERT INTO employees (id, user_id) VALUES (1, 9001)");
-$pdo->exec("INSERT INTO employees (id, user_id) VALUES (2, NULL), (3, NULL), (4, NULL), (5, NULL), (6, NULL), (7, NULL), (8, NULL), (9, NULL)");
+$pdo->exec("INSERT INTO employees (id, user_id) VALUES (2, NULL), (3, NULL), (4, NULL), (5, NULL), (6, NULL), (7, NULL), (8, NULL), (9, NULL), (10, NULL)");
 
 $requests = [
     [1, 'ADV-RESCHED-1', 1, 'fixed_monthly', 500.00],
@@ -225,6 +225,7 @@ $requests = [
     [7, 'ADV-RESCHED-7', 1, 'fixed_monthly', 500.00],
     [8, 'ADV-RESCHED-8', 1, 'fixed_monthly', 500.00],
     [9, 'ADV-RESCHED-9', 1, 'fixed_monthly', 500.00],
+    [10, 'ADV-RESCHED-10', 1, 'fixed_monthly', 500.00],
 ];
 $insertRequest = $pdo->prepare("
     INSERT INTO hr_salary_advance_requests
@@ -243,7 +244,7 @@ $insertPlan = $pdo->prepare("
          outstanding_balance_at_creation, start_month, maximum_repayment_months, maximum_monthly_deduction)
     VALUES (?, ?, 1, 'active', 'Fixture original plan', 500.00, ?, ?, 200.00)
 ");
-for ($id = 1; $id <= 9; $id++) {
+for ($id = 1; $id <= 10; $id++) {
     $insertPlan->execute([$id, $id, $id === 3 ? $activeStart : $oldStart, 12]);
 }
 $insertSchedule = $pdo->prepare("
@@ -251,7 +252,7 @@ $insertSchedule = $pdo->prepare("
         (salary_advance_request_id, repayment_plan_id, installment_no, scheduled_month, scheduled_amount)
     VALUES (?, ?, 1, ?, 200.00)
 ");
-for ($id = 1; $id <= 9; $id++) {
+for ($id = 1; $id <= 10; $id++) {
     $insertSchedule->execute([$id, $id, $id === 3 ? $activeStart : $oldStart]);
 }
 
@@ -335,7 +336,7 @@ $previewAfterHorizon = hrSalaryAdvancePayrollCalculateDraft($pdo, [
 check((float)$previewAfterHorizon['total'] === 0.00 && $previewAfterHorizon['allocations'] === [], 'payroll preview produces no deduction beyond the active plan horizon');
 
 expectRescheduleRejected(
-    fn() => hrSalaryAdvanceScheduleReschedule($pdo, 2, $startMonth, 3, 200.00, 'Policy disabled test', 77),
+    fn() => hrSalaryAdvanceScheduleReschedule($pdo, 2, $startMonth, 13, 40.00, 'Policy disabled test', 77),
     'saved policy authorization disabled',
     'غير مصرح بها'
 );
@@ -385,6 +386,17 @@ foreach ([2, 3, 4, 5, 6] as $id) {
     check((string)$pdo->query("SELECT status FROM hr_salary_advance_repayment_plans WHERE salary_advance_request_id = {$id}")->fetchColumn() === 'active', "rejected request {$id} keeps its original plan active");
 }
 check((int)$pdo->query("SELECT COUNT(*) FROM audit_log WHERE action = 'HR_SALARY_ADVANCE_REPAYMENT_RESCHEDULE'")->fetchColumn() === 2, 'rejected attempts do not add audit success events');
+
+// Explicit policy authorization allows a replacement plan beyond the normal
+// policy horizon, while the monthly cap and full-balance coverage remain enforced.
+$extended = hrSalaryAdvanceScheduleReschedule(
+    $pdo, 10, $startMonth, 15, 40.00, 'Authorized extended horizon test', 77
+);
+check((int)$extended['schedule_rows'] === 13, 'extended replacement schedule covers the balance using the allowed monthly amount');
+check((int)$pdo->query("SELECT maximum_repayment_months FROM hr_salary_advance_repayment_plans WHERE id = " . (int)$extended['plan_id'])->fetchColumn() === 15, 'authorized replacement plan stores its extended duration');
+check((float)$pdo->query("SELECT SUM(scheduled_amount) FROM hr_salary_advance_repayment_schedule WHERE repayment_plan_id = " . (int)$extended['plan_id'])->fetchColumn() === 500.00, 'extended replacement schedule covers the full outstanding balance');
+check((float)$pdo->query("SELECT MAX(scheduled_amount) FROM hr_salary_advance_repayment_schedule WHERE repayment_plan_id = " . (int)$extended['plan_id'])->fetchColumn() <= 200.00, 'extended plan does not exceed the saved monthly deduction cap');
+check((int)$pdo->query("SELECT COUNT(*) FROM audit_log WHERE action = 'HR_SALARY_ADVANCE_REPAYMENT_RESCHEDULE'")->fetchColumn() === 3, 'authorized extended reschedule is audited exactly once');
 
 $payroll = [
     'id' => 101,
