@@ -278,6 +278,12 @@ check((float)$pdo->query("SELECT outstanding_balance_at_creation FROM hr_salary_
 check((int)$staleFormResult['schedule_rows'] === 2, 'replacement schedule duration is based on the live outstanding balance');
 check((float)$pdo->query("SELECT SUM(scheduled_amount) FROM hr_salary_advance_repayment_schedule WHERE repayment_plan_id = " . (int)$staleFormResult['plan_id'])->fetchColumn() === 350.00, 'replacement schedule covers exactly the current outstanding balance');
 
+// The notification URL constant is normally supplied by the web bootstrap.
+// This disposable CLI test has no web bootstrap, so provide a safe test value.
+if (!defined('APP_URL')) {
+    define('APP_URL', 'http://localhost/');
+}
+
 // Stub the delivery layer so the caller's post-commit failure isolation is testable.
 $GLOBALS['salaryAdvanceNotificationFailureCalls'] = 0;
 function ak_transaction_review_notify_event(
