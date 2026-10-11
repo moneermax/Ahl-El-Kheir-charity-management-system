@@ -196,3 +196,19 @@ Verification: [GitHub Actions run 38126940406](https://github.com/moneermax/Ahl-
 The follow-up documentation commit [e378d63d9c131e82086442c321c1855e03c3fe14](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/commit/e378d63d9c131e82086442c321c1855e03c3fe14) was also verified by [workflow run 38127386318](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/38127386318), with all four jobs passing.
 
 **Scope limit:** this now exercises the actual rescheduling service against a competing request-row lock, but it still does not run a simultaneous production payroll-posting transaction against a reschedule. Browser-driven payroll/accounting verification and read-only local XAMPP schema/integrity confirmation remain open. The migration has not been applied to the working database; Stage 7 remains open.
+
+## 15. Production payroll transition contending with actual rescheduling — 2026-10-11
+
+Commit [e65f29827251c8c9f256c5a7cb18e82bf9479c48](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/commit/e65f29827251c8c9f256c5a7cb18e82bf9479c48) fixes the disposable CI regression fixture to use an existing `users.id` as the audit actor, respecting the `audit_log.user_id` foreign key.
+
+The new `tools/test_salary_advance_rescheduling_payroll_concurrency.php` regression now executes the actual production payroll paid-transition and rescheduling service in separate PHP processes/connections against the disposable full-schema MariaDB 10.4.32 database:
+
+- While one connection holds the advance request row lock, the competing production `hrPayrollChangeStatus(..., 'paid', ...)` call reaches the configured InnoDB lock timeout and rolls back safely.
+- The owning connection performs a real reschedule, creating a replacement plan.
+- The payroll transition is retried after the replacement plan commits. The test verifies that payroll reaches paid status and that both a payroll repayment trace and posted payroll journal exist.
+- The payroll posting attempt runs inside a rollback-only transaction; the test rolls it back and removes its temporary payroll fixture. It does not commit a payroll posting into a non-test database.
+
+Verification: [GitHub Actions run 38128024549](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/38128024549), commit `e65f29827251c8c9f256c5a7cb18e82bf9479c48`, passed all four jobs: PHP lint, MariaDB 10.4.32 migration, full checked-in schema/backfill plus Stage 5 payroll regressions and account 1410 reconciliation, and rescheduling service/concurrency tests. The full-schema job output explicitly reported the competing payroll transition timeout, successful retry against the replacement plan with journal/repayment trace, and the overall concurrency regression as PASS.
+
+**Scope limit:** this is strong CLI/database integration evidence for the production payroll transition interacting with rescheduling under contention. It is still not a browser-driven user journey and does not confirm that the user's local XAMPP database matches the checked-in schema. No migration has been applied to the local database. Local schema/integrity inspection and browser-driven payroll/accounting verification remain open; Stage 7 is not closed.
+
