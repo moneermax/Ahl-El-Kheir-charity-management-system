@@ -1017,7 +1017,7 @@ Source changes committed directly to `main`:
 
 ## 2026-10-11 — Carry Forward Overdue Payroll Installments
 
-**Status: source fix and database-backed rollback-only lifecycle test committed; local runtime verification pending.**
+**Status: source fix committed; local PHP lint, schedule tests, and database-backed rollback-only lifecycle test passed on 2026-10-11.**
 
 The deeper payroll posting review confirmed that the `available_salary` / `skip_month` policy label promised carry-forward, but the payroll selection queried only installments whose scheduled month exactly matched the current payroll month. Skipped installments were marked `skipped`, so they could never be selected again. The same exact-month filter also stranded overdue pending or partial installments.
 
@@ -1028,4 +1028,4 @@ Source fix in `modules/hr/lib_salary_advance_payroll.php`:
 - The locked-row query and schedule update predicate use the same carry-forward eligibility rule. Existing waiver checks, request outstanding-balance checks, transaction boundaries, duplicate payroll trace protection, and audit writes remain in place.
 - A skipped payroll posting leaves the outstanding balance unchanged. Since MySQL can report zero changed rows for a valid no-op update, the posting code now confirms the locked request and unchanged balance instead of incorrectly failing the transaction.
 
-The payroll edge-test harness now performs the posting lifecycle inside a rollback-only database transaction: it posts a zero-value skipped repayment, verifies the persisted skipped trace and schedule status, then verifies that the same schedule row is eligible for a partial repayment in the following month. All fixture mutations, including the policy override, schedule statuses, payroll, repayment trace, and audit rows, are rolled back by the harness. Run PHP lint and both Stage 5 focused suites against these latest commits before closing this workflow.
+The payroll edge-test harness now performs the posting lifecycle inside a rollback-only database transaction: it posts a zero-value skipped repayment, verifies the persisted skipped trace and schedule status, then verifies that the same schedule row is eligible for a partial repayment in the following month. All fixture mutations, including the policy override, schedule statuses, payroll, repayment trace, and audit rows, are rolled back by the harness. **Local verification outcome (2026-10-11):** both changed PHP files passed `php -l`; all four schedule-rule tests passed; all payroll edge cases passed, including the database-backed carry-forward lifecycle (first-month skipped trace at `0.00`, same installment eligible the following month for a `1.00` partial repayment); rollback-only cleanup reported no committed payroll/request/schedule/journal mutation.
