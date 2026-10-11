@@ -568,9 +568,9 @@ Reserved scope:
 
 ## Next task — design only until authority is grounded
 
-Inspect and design an authorized rescheduling workflow for an outstanding balance that remains after the approved repayment horizon. Current source scan did not find an existing rescheduling endpoint/helper/table or rescheduling-specific permission. Existing role guidance says GM handles final management approvals and FM handles financial review/posting/reconciliation, but it does not explicitly assign approval authority for changing an already-approved repayment plan.
+The source/design audit is recorded in `docs/HR_SALARY_ADVANCE_RESCHEDULING_AUDIT.md`. It found no existing rescheduling-specific workflow, decision table, schedule version, or permission. The current schedule uniqueness constraints mean a new plan needs an explicit versioning strategy; the old schedule and repayment history must not be overwritten.
 
-Before implementing, establish the workflow’s authority and rules from an existing canonical business decision. Preserve the original approved policy version, schedule and repayment history; any new schedule must be explicitly approved and auditable. Do not silently extend the expired plan or invent an approver.
+**One business decision is required before implementation:** should rescheduling use dual control (FM prepares, GM approves/rejects, FM executes; recommended) or FM-only approval? The canonical role guide establishes general GM/FM responsibilities but does not assign authority for changing an already-approved repayment plan. Do not guess this approval rule.
 
 ## Stage boundaries
 
