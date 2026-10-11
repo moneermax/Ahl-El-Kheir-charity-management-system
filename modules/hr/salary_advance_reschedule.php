@@ -85,6 +85,8 @@ $eligible = dbFetchAll(
        AND COALESCE(r.outstanding_balance, 0) > 0
        AND p.allow_fm_repayment_rescheduling = 1
        AND p.maximum_repayment_months > 0
+       AND p.maximum_monthly_deduction > 0
+       AND rp.maximum_repayment_months > 0
        AND DATE_FORMAT(CURRENT_DATE, '%Y-%m-01') >=
            DATE_ADD(rp.start_month, INTERVAL rp.maximum_repayment_months MONTH)
      ORDER BY rp.start_month ASC, r.id ASC"
