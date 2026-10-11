@@ -300,6 +300,19 @@ try {
     }
 
     $pdo->exec('SAVEPOINT stage5_carry_forward_fixture');
+    // Isolate this existing request's chosen row as the sole unpaid installment
+    // inside the savepoint, so the lifecycle assertions cannot hit an earlier
+    // schedule row instead. The outer rollback restores every temporary change.
+    $pdo->prepare(
+        "UPDATE hr_salary_advance_repayment_schedule
+         SET status = 'paid'
+         WHERE salary_advance_request_id = ?
+           AND id <> ?
+           AND status IN ('pending', 'partial', 'skipped')"
+    )->execute([
+        (int)$carryFixture['request_id'],
+        (int)$carryFixture['schedule_id'],
+    ]);
     $pdo->prepare(
         "UPDATE hr_salary_advance_policy_versions
          SET insufficient_salary_rule = 'skip_month'
