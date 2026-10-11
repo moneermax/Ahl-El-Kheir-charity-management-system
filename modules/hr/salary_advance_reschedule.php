@@ -83,6 +83,7 @@ $eligible = dbFetchAll(
        ON rp.salary_advance_request_id = r.id AND rp.status = 'active'
      WHERE r.status = 'disbursed'
        AND COALESCE(r.outstanding_balance, 0) > 0
+       AND r.approved_repayment_method IN ('fixed_monthly', 'full_eligible_salary', 'full_settlement')
        AND p.allow_fm_repayment_rescheduling = 1
        AND p.maximum_repayment_months > 0
        AND p.maximum_monthly_deduction > 0
