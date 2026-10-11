@@ -246,4 +246,4 @@ A rollback-free pure calculation regression has been added to the disposable ful
 - upward currency-precision rounding; and
 - refusing to recommend an installment when there is no finite policy horizon.
 
-GitHub Actions verification for these changes is pending at the time of this note. This is repository/CI work only; the local XAMPP browser workflow has not been exercised by this change.
+GitHub Actions run 38151858277 passed all four jobs on commit 572dc85afdddb9dbe238457d73f4d1dfae73bdd9: PHP lint, MariaDB 10.4.32 migration, full-schema migration/backfill with payroll regressions and account 1410 reconciliation, and rescheduling service/concurrency tests. The new fixed-installment policy validation cases passed in the full-schema job. This is repository/CI work only; the local XAMPP browser workflow has not been exercised by this change.
