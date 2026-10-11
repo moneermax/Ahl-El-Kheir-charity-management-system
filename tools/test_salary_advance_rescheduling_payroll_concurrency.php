@@ -8,9 +8,11 @@ declare(strict_types=1);
  * CI database. A child PHP process exercises the real payroll status transition
  * so its db() helper and passed PDO share the same independent connection.
  */
+// Only the migration-test database is provisioned by the checked-in CI
+// workflow with the complete schema and legacy data dump. Do not accept an
+// ad-hoc full_schema_test database that may contain tables but no employees.
 $allowedDatabases = [
     'salary_advance_migration_test',
-    'salary_advance_full_schema_test',
 ];
 if (getenv('AHL_ENV') !== 'development'
     || !in_array((string)getenv('AHL_DB_NAME'), $allowedDatabases, true)) {
@@ -207,6 +209,20 @@ if (isset($argv[1]) && in_array($argv[1], ['blocked', 'retry'], true)) {
 
 ak_ensure_tables();
 ak_seed_accounts();
+
+$preflight = [
+    'employees' => (int)$pdo->query('SELECT COUNT(*) FROM employees')->fetchColumn(),
+    'users' => (int)$pdo->query('SELECT COUNT(*) FROM users')->fetchColumn(),
+    'requests' => (int)$pdo->query('SELECT COUNT(*) FROM hr_salary_advance_requests')->fetchColumn(),
+    'schedule_rows' => (int)$pdo->query('SELECT COUNT(*) FROM hr_salary_advance_repayment_schedule')->fetchColumn(),
+];
+if ($preflight['employees'] < 1 || $preflight['users'] < 1 || $preflight['requests'] < 1) {
+    throw new RuntimeException(
+        'FAIL: this database is not the imported full-schema fixture required by the concurrency regression; counts='
+        . json_encode($preflight, JSON_UNESCAPED_SLASHES)
+        . '. Import database/ahl_el_kheir.sql into the disposable salary_advance_migration_test database and run the full-schema migration verification before this test.'
+    );
+}
 
 // Select an existing request with an active migrated plan, then make its
 // eligibility deterministic inside this disposable test database. Checked-in
