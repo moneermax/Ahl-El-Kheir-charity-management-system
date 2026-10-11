@@ -576,14 +576,21 @@ function hrSalaryAdvancePayrollNotifyApplied(PDO $pdo, int $payrollId): void
             $body .= ' ' . trim((string)$row['outcome_reason']);
         }
 
-        ak_transaction_review_notify_event(
-            $employeeUserId,
-            $title,
-            $body,
-            APP_URL . 'modules/hr/salary_advance_request.php',
-            (int)$row['repayment_id'],
-            'salary_advance_payroll_repayment'
-        );
+        try {
+            ak_transaction_review_notify_event(
+                $employeeUserId,
+                $title,
+                $body,
+                APP_URL . 'modules/hr/salary_advance_request.php',
+                (int)$row['repayment_id'],
+                'salary_advance_payroll_repayment'
+            );
+        } catch (Throwable $notificationError) {
+            // Payroll, repayment allocations, and accounting have already committed.
+            // A notification outage must not make the completed financial action
+            // appear to have failed or prevent notices for later repayment rows.
+            continue;
+        }
     }
 }
 
