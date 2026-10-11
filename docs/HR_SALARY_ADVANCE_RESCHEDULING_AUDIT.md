@@ -193,4 +193,6 @@ Commit [55c2539585b0c175a68c495264837893c18357ce](https://github.com/moneermax/A
 
 Verification: [GitHub Actions run 38126940406](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/38126940406) completed successfully with all four jobs passing: PHP lint, MariaDB 10.4.32 migration, rescheduling service/concurrency tests, and full-schema migration plus Stage 5 schedule/payroll/edge regressions and account 1410 reconciliation.
 
+The follow-up documentation commit [e378d63d9c131e82086442c321c1855e03c3fe14](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/commit/e378d63d9c131e82086442c321c1855e03c3fe14) was also verified by [workflow run 38127386318](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/38127386318), with all four jobs passing.
+
 **Scope limit:** this now exercises the actual rescheduling service against a competing request-row lock, but it still does not run a simultaneous production payroll-posting transaction against a reschedule. Browser-driven payroll/accounting verification and read-only local XAMPP schema/integrity confirmation remain open. The migration has not been applied to the working database; Stage 7 remains open.
