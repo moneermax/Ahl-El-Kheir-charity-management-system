@@ -176,24 +176,17 @@ try {
     $deduction = round((float)$preview['total'], 2);
     $net = round(max(0.00, $basicSalary - $deduction), 2);
 
+    // Keep the payroll approved and let the production status transition
+    // perform the paid-state update, journal posting, and repayment allocation.
     $pdo->prepare(
         "UPDATE payroll
-         SET salary_advance_deduction = ?, net_salary = ?, status = 'paid', payment_date = CURRENT_DATE
-         WHERE id = ?"
+         SET salary_advance_deduction = ?, net_salary = ?
+         WHERE id = ? AND status = 'approved'"
     )->execute([$deduction, $net, $payrollId]);
 
-    $payroll['status'] = 'paid';
-    $payroll['payment_date'] = date('Y-m-d');
-    $payroll['salary_advance_deduction'] = $deduction;
-    $payroll['net_salary'] = $net;
-    $payroll['payment_account_id'] = null;
-
     /*
-     * Diagnostic guard: if the production accounting function reports a
-     * pre-existing posted payroll journal, expose the exact fixture ID and
-     * matching journal row. This distinguishes a true reference collision
-     * from an unexpected database-side mutation without changing production
-     * behavior.
+     * Diagnostic guard: expose any pre-existing payroll journal before the
+     * production status-transition function is invoked.
      */
     $prePostJournal = dbFetchOne(
         "SELECT id, entry_code, reference_type, reference_id, status
@@ -206,7 +199,7 @@ try {
     );
     if ($prePostJournal) {
         throw new RuntimeException(
-            'Stage 5 fixture collision before accounting: payroll_id=' . $payrollId .
+            'Stage 5 fixture collision before payroll transition: payroll_id=' . $payrollId .
             ', journal_entry_id=' . (int)$prePostJournal['id'] .
             ', entry_code=' . (string)$prePostJournal['entry_code'] .
             ', status=' . (string)$prePostJournal['status']
@@ -214,8 +207,8 @@ try {
     }
 
     try {
-        $entryId = hrPayrollPostAccounting($pdo, $payroll);
-    } catch (Throwable $accountingError) {
+        hrPayrollChangeStatus($pdo, $payrollId, 'paid', null);
+    } catch (Throwable $payrollError) {
         $postErrorJournal = dbFetchOne(
             "SELECT id, entry_code, reference_type, reference_id, status
              FROM journal_entries
@@ -227,15 +220,36 @@ try {
         );
         if ($postErrorJournal) {
             throw new RuntimeException(
-                $accountingError->getMessage() .
+                $payrollError->getMessage() .
                 ' [diagnostic payroll_id=' . $payrollId .
                 ', matching_journal_entry_id=' . (int)$postErrorJournal['id'] .
                 ', entry_code=' . (string)$postErrorJournal['entry_code'] . ']'
             );
         }
-        throw $accountingError;
+        throw $payrollError;
     }
-    $result = hrSalaryAdvancePayrollApply($pdo, $payroll, $entryId);
+
+    $payroll = dbFetchOne(
+        "SELECT p.*, e.full_name AS employee_name, e.employee_code
+         FROM payroll p
+         JOIN employees e ON e.id = p.employee_id
+         WHERE p.id = ?",
+        [$payrollId]
+    );
+    $postedJournal = dbFetchOne(
+        "SELECT id
+         FROM journal_entries
+         WHERE reference_type = 'payroll'
+           AND reference_id = ?
+           AND status = 'posted'
+         ORDER BY id ASC
+         LIMIT 1",
+        [$payrollId]
+    );
+    if (!$postedJournal) {
+        throw new RuntimeException('Production payroll transition did not create a posted journal.');
+    }
+    $entryId = (int)$postedJournal['id'];
 
     $trace = dbFetchAll(
         "SELECT salary_advance_request_id AS request_id, repayment_schedule_id, actual_amount, outcome, accounting_entry_id
@@ -271,7 +285,8 @@ try {
         [$entryId]
     );
 
-    if (round((float)$result['total'], 2) !== $deduction) {
+    $traceTotal = round(array_sum(array_map(static fn(array $row): float => (float)$row['actual_amount'], $trace)), 2);
+    if ($traceTotal !== $deduction) {
         throw new RuntimeException('Applied total does not match payroll salary_advance_deduction.');
     }
     if (count($trace) < 1) {
