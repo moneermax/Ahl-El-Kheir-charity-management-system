@@ -184,18 +184,22 @@ function hrSalaryAdvanceScheduleReschedule(
             throw new RuntimeException('القسط الشهري المقترح يتجاوز الحد الأقصى للخصم الشهري في السياسة.');
         }
 
-        $activePlan = $fetchOne(
+        $activePlansStmt = $pdo->prepare(
             "SELECT *
              FROM hr_salary_advance_repayment_plans
              WHERE salary_advance_request_id = ? AND status = 'active'
              ORDER BY plan_no DESC
-             LIMIT 1
-             FOR UPDATE",
-            [$requestId]
+             FOR UPDATE"
         );
-        if (!$activePlan) {
+        $activePlansStmt->execute([$requestId]);
+        $activePlans = $activePlansStmt->fetchAll(PDO::FETCH_ASSOC);
+        if (!$activePlans) {
             throw new RuntimeException('لا توجد خطة سداد نشطة يمكن استبدالها. يلزم فحص سجل الجدول قبل المتابعة.');
         }
+        if (count($activePlans) !== 1) {
+            throw new RuntimeException('يوجد أكثر من خطة سداد نشطة لهذه السلفة؛ أوقف إعادة الجدولة وراجع سجل الخطط قبل المتابعة.');
+        }
+        $activePlan = $activePlans[0];
         if ($activePlan['maximum_repayment_months'] === null || (int)$activePlan['maximum_repayment_months'] <= 0) {
             throw new RuntimeException('مدة خطة السداد الحالية غير محددة؛ لا يمكن اعتبارها منتهية تلقائياً.');
         }
