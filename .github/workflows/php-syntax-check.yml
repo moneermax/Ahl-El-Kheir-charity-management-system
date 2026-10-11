@@ -38,6 +38,7 @@ jobs:
             modules/accounting/lib_transaction_review.php
             tools/test_salary_advance_rescheduling_migration.php
             tools/test_salary_advance_rescheduling_service.php
+            tools/test_salary_advance_rescheduling_lock_order.php
             tools/test_salary_advance_rescheduling_full_schema.php
             tools/run_salary_advance_stage5_schedule_tests.php
             tools/run_salary_advance_stage5_payroll_tests.php
@@ -118,7 +119,10 @@ jobs:
           DB_DATABASE: salary_advance_reschedule_service_test
           DB_USERNAME: root
           DB_PASSWORD: root
-        run: php tools/test_salary_advance_rescheduling_service.php
+        run: |
+          set -euo pipefail
+          php tools/test_salary_advance_rescheduling_service.php
+          php tools/test_salary_advance_rescheduling_lock_order.php
 
   migration-full-schema:
     runs-on: ubuntu-latest
