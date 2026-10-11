@@ -73,11 +73,15 @@ function hrSalaryAdvanceScheduleGet(PDO $pdo, int $requestId): array
     }
 
     return dbFetchAll(
-        "SELECT installment_no, scheduled_month, scheduled_amount, applied_amount, status,
-                applied_payroll_id, applied_at, skip_reason
-         FROM hr_salary_advance_repayment_schedule
-         WHERE salary_advance_request_id = ?
-         ORDER BY installment_no",
+        "SELECT s.installment_no, s.scheduled_month, s.scheduled_amount, s.applied_amount, s.status,
+                s.applied_payroll_id, s.applied_at, s.skip_reason,
+                p.id AS repayment_plan_id, p.plan_no, p.status AS plan_status,
+                p.start_month AS plan_start_month, p.maximum_repayment_months AS plan_duration_months,
+                p.reason AS plan_reason
+         FROM hr_salary_advance_repayment_schedule s
+         JOIN hr_salary_advance_repayment_plans p ON p.id = s.repayment_plan_id
+         WHERE s.salary_advance_request_id = ?
+         ORDER BY p.plan_no ASC, s.installment_no ASC",
         [$requestId]
     );
 }
