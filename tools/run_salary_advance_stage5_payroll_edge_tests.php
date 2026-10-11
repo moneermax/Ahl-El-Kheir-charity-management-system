@@ -35,17 +35,23 @@ function findEdgeFixture(PDO $pdo, string $rule, ?string $method = null): ?array
     $sql = "SELECT r.id AS request_id, r.request_no, r.employee_id,
                    r.approved_repayment_method,
                    s.id AS schedule_id, s.scheduled_month, s.scheduled_amount,
-                   s.applied_amount,
+                   s.applied_amount, rp.id AS plan_id,
                    p.maximum_monthly_deduction,
                    p.insufficient_salary_rule, p.eligible_salary_basis
             FROM hr_salary_advance_requests r
             JOIN hr_salary_advance_repayment_schedule s
               ON s.salary_advance_request_id = r.id
+            JOIN hr_salary_advance_repayment_plans rp
+              ON rp.id = s.repayment_plan_id
+             AND rp.status = 'active'
             JOIN hr_salary_advance_policy_versions p
               ON p.id = r.policy_version_id
             WHERE r.status = 'disbursed'
               AND COALESCE(r.outstanding_balance, 0) > 0
               AND s.status IN ('pending', 'partial')
+              AND s.scheduled_month <= DATE_FORMAT(CURRENT_DATE, '%Y-%m-01')
+              AND (rp.maximum_repayment_months IS NULL OR
+                   s.scheduled_month < DATE_ADD(rp.start_month, INTERVAL rp.maximum_repayment_months MONTH))
               AND p.insufficient_salary_rule = ?
               AND COALESCE(s.scheduled_amount - s.applied_amount, 0) > 1.00
               AND NOT EXISTS (
@@ -96,12 +102,15 @@ function findHorizonFixture(PDO $pdo): ?array
 {
     return dbFetchOne(
         "SELECT r.id AS request_id, r.request_no, r.employee_id,
-                r.policy_version_id,
+                r.policy_version_id, rp.id AS plan_id,
                 s.id AS schedule_id, s.scheduled_month, s.scheduled_amount,
                 s.applied_amount
          FROM hr_salary_advance_requests r
          JOIN hr_salary_advance_repayment_schedule s
            ON s.salary_advance_request_id = r.id
+         JOIN hr_salary_advance_repayment_plans rp
+           ON rp.id = s.repayment_plan_id
+          AND rp.status = 'active'
          JOIN hr_salary_advance_policy_versions p
            ON p.id = r.policy_version_id
          WHERE r.status = 'disbursed'
@@ -110,6 +119,9 @@ function findHorizonFixture(PDO $pdo): ?array
            AND p.insufficient_salary_rule = 'available_salary'
            AND s.installment_no = 1
            AND s.status IN ('pending', 'partial')
+           AND s.scheduled_month <= DATE_FORMAT(CURRENT_DATE, '%Y-%m-01')
+           AND (rp.maximum_repayment_months IS NULL OR
+                s.scheduled_month < DATE_ADD(rp.start_month, INTERVAL rp.maximum_repayment_months MONTH))
            AND COALESCE(s.scheduled_amount - s.applied_amount, 0) > 2.00
            AND NOT EXISTS (
                SELECT 1
@@ -338,10 +350,12 @@ try {
         "UPDATE hr_salary_advance_repayment_schedule
          SET status = 'paid'
          WHERE salary_advance_request_id = ?
+           AND repayment_plan_id = ?
            AND id <> ?
            AND status IN ('pending', 'partial', 'skipped')"
     )->execute([
         (int)$carryFixture['request_id'],
+        (int)$carryFixture['plan_id'],
         (int)$carryFixture['schedule_id'],
     ]);
     $pdo->prepare(
@@ -447,10 +461,12 @@ try {
         "UPDATE hr_salary_advance_repayment_schedule
          SET status = 'paid'
          WHERE salary_advance_request_id = ?
+           AND repayment_plan_id = ?
            AND id <> ?
            AND status IN ('pending', 'partial', 'skipped')"
     )->execute([
         (int)$horizonFixture['request_id'],
+        (int)$horizonFixture['plan_id'],
         (int)$horizonFixture['schedule_id'],
     ]);
     $pdo->prepare(
@@ -465,12 +481,18 @@ try {
              insufficient_salary_rule = 'available_salary'
          WHERE id = ?"
     )->execute([(int)$horizonFixture['policy_version_id']]);
+    $pdo->prepare(
+        "UPDATE hr_salary_advance_repayment_plans
+         SET maximum_repayment_months = 1
+         WHERE id = ? AND status = 'active'"
+    )->execute([(int)$horizonFixture['plan_id']]);
 
     $scheduleCountBefore = dbFetchOne(
         "SELECT COUNT(*) AS row_count
          FROM hr_salary_advance_repayment_schedule
-         WHERE salary_advance_request_id = ?",
-        [(int)$horizonFixture['request_id']]
+         WHERE salary_advance_request_id = ?
+           AND repayment_plan_id = ?",
+        [(int)$horizonFixture['request_id'], (int)$horizonFixture['plan_id']]
     );
     $scheduleRowsBefore = (int)($scheduleCountBefore['row_count'] ?? 0);
     if ($scheduleRowsBefore < 1) {
@@ -515,8 +537,9 @@ try {
     $horizonScheduleCount = dbFetchOne(
         "SELECT COUNT(*) AS row_count
          FROM hr_salary_advance_repayment_schedule
-         WHERE salary_advance_request_id = ?",
-        [(int)$horizonFixture['request_id']]
+         WHERE salary_advance_request_id = ?
+           AND repayment_plan_id = ?",
+        [(int)$horizonFixture['request_id'], (int)$horizonFixture['plan_id']]
     );
     if ((int)($horizonScheduleCount['row_count'] ?? 0) !== $scheduleRowsBefore) {
         throw new RuntimeException('Payroll horizon handling unexpectedly changed the approved schedule row count.');
