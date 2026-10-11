@@ -99,14 +99,14 @@ Implementation must begin with the actual schema/query inventory, not assumed co
 
 The following source work now exists on `main`:
 
-- Added `hrSalaryAdvanceScheduleReschedule()` to `modules/hr/lib_salary_advance_repayment.php`. It validates the request and saved policy authorization, locks the request and current plan, requires the current plan horizon to have elapsed, validates a future month, limits duration and monthly amount to the saved policy, confirms the proposed installment can cover the outstanding balance, supersedes the old plan, inserts a replacement plan and schedule rows, and writes an audit event in the same transaction.
+- Added `hrSalaryAdvanceScheduleReschedule()` to `modules/hr/lib_salary_advance_repayment.php`. It validates the request and saved policy authorization, locks the request and current plan, requires the current plan horizon to have elapsed, validates a future month, limits duration and monthly amount to the saved policy, confirms the proposed installment can cover the outstanding balance, supersedes the old plan, inserts a replacement plan and schedule rows, and writes an audit event in the same transaction. The page sends an employee notification after the transaction commits; notification failure is isolated from the already-committed financial change.
 - Added `modules/hr/salary_advance_reschedule.php`, an FM-only page listing eligible expired plans and collecting the proposed start month, duration, monthly installment, and reason.
 - Added a link to the new page from the salary-advance processing screen for FM users.
 - Schedule history now includes plan number/status and the plan's start/duration/reason so replacement schedules can be distinguished from the preserved historical plan.
 - Corrected the versioned-plan migration and initial-plan generator so a policy with `maximum_repayment_months IS NULL` retains an unbounded plan duration. Both payroll queries explicitly preserve the existing no-fixed-horizon behavior for those policies. This avoids accidentally stopping payroll after one month for a policy that deliberately has no duration boundary.
 - Tightened the migration's plan-duration column to nullable even if an earlier draft of the new table had already been created.
 
-Source commits for this continuation include `365c7ca`, `050a4c8`, `688b2ce`, `801411f`, `ca53bc5`, `1d2180e`, `3404e72`, `9ee080e`, `1f2872d`, and `8523a92`.
+Source commits for this continuation include `365c7ca`, `050a4c8`, `688b2ce`, `801411f`, `ca53bc5`, `1d2180e`, `3404e72`, `9ee080e`, `1f2872d`, `8523a92`, `69eebd9`, `94e255b`, `91cde79`, `635ccf4`, `f776dc7`, and `f4cec9f`.
 
 ### Verification gate and known limits
 
