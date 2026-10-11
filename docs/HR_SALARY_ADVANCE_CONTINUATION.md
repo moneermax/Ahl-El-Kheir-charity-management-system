@@ -994,7 +994,7 @@ Source-level verification: the error-specific path is placed after response-frag
 
 ## 2026-10-11 — Full Settlement from Salary: Payroll Integration Source Fix
 
-**Status: source changes committed; local PHP/runtime verification still required.**
+**Status: source changes committed; local PHP syntax and focused runtime tests passed on 2026-10-11.**
 
 A focused scan of the live `main` source confirmed that `full_settlement` was accepted by request and FM approval validation, and was exposed by the saved policy, but was excluded from repayment schedule generation and the disbursement schedule-generation call. The payroll calculator also applied `insufficient_salary_rule` only to `fixed_monthly` repayments.
 
@@ -1008,3 +1008,8 @@ Source changes committed directly to `main`:
 **Important verification boundary:** this remote source edit has not executed PHP lint or the rollback-only test scripts against the local XAMPP/MariaDB database. Do not consider runtime verification complete until those tests pass locally.
 
 **Known broader schedule behavior to watch during runtime verification:** the existing schedule design pre-generates a finite number of monthly rows from the maximum permitted deduction. A persistently low salary or repeated skipped months can leave an outstanding balance after the planned horizon. The request's outstanding balance is only reduced by the actual payroll deduction, so the accounting balance is not erased, but the remaining amount may need an explicit rescheduling workflow. This fix does not change the schema or silently extend the saved maximum-months policy.
+
+
+**Local verification outcome (2026-10-11):** all six changed PHP files passed `php -l`; `tools/run_salary_advance_stage5_schedule_tests.php` reported all four tests passed; `tools/run_salary_advance_stage5_payroll_edge_tests.php` passed both full-settlement insufficient-salary policy branches and reported rollback-only cleanup with no payroll/request/schedule/journal mutation committed.
+
+**Additional deep-scan finding — carry-forward behavior is not implemented for skipped installments:** the payroll query selects only schedule rows with status `pending` or `partial`, while posting changes a zero-deduction installment to `skipped`. The current preview tests verify the `skip_month` outcome but do not post a skipped installment and verify its next-period treatment. Consequently, the saved policy label “skip month and carry installment” is not proven to retry that same installment in a later payroll period. This needs a focused lifecycle fix/test before the salary-advance payroll workflow can be considered fully complete.
