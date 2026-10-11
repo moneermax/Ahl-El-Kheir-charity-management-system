@@ -38,6 +38,7 @@ jobs:
             modules/accounting/lib_transaction_review.php
             tools/test_salary_advance_rescheduling_migration.php
             tools/test_salary_advance_rescheduling_service.php
+            tools/test_salary_advance_rescheduling_full_schema.php
           )
           for file in "${files[@]}"; do
             php -l "$file"
@@ -114,3 +115,50 @@ jobs:
           DB_USERNAME: root
           DB_PASSWORD: root
         run: php tools/test_salary_advance_rescheduling_service.php
+
+  migration-full-schema:
+    runs-on: ubuntu-latest
+    services:
+      mariadb:
+        image: mariadb:10.4.32
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: salary_advance_migration_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up PHP 8.2 with PDO MySQL
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo_mysql
+          coverage: none
+
+      - name: Install MariaDB client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mariadb-client
+
+      - name: Import checked-in database schema and legacy data
+        env:
+          MYSQL_PWD: root
+        run: |
+          mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test < database/ahl_el_kheir.sql
+
+      - name: Apply migration and verify full schema backfill
+        env:
+          SALARY_ADVANCE_MIGRATION_TEST: '1'
+          DB_HOST: 127.0.0.1
+          DB_PORT: '3306'
+          DB_DATABASE: salary_advance_migration_test
+          DB_USERNAME: root
+          DB_PASSWORD: root
+        run: php tools/test_salary_advance_rescheduling_full_schema.php
