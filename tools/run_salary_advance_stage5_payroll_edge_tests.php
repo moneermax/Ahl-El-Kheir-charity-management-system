@@ -92,6 +92,37 @@ function findRollbackBaseFixture(PDO $pdo): ?array
     return findEdgeFixture($pdo, 'available_salary', 'fixed_monthly');
 }
 
+function findHorizonFixture(PDO $pdo): ?array
+{
+    return dbFetchOne(
+        "SELECT r.id AS request_id, r.request_no, r.employee_id,
+                r.policy_version_id,
+                s.id AS schedule_id, s.scheduled_month, s.scheduled_amount,
+                s.applied_amount
+         FROM hr_salary_advance_requests r
+         JOIN hr_salary_advance_repayment_schedule s
+           ON s.salary_advance_request_id = r.id
+         JOIN hr_salary_advance_policy_versions p
+           ON p.id = r.policy_version_id
+         WHERE r.status = 'disbursed'
+           AND COALESCE(r.outstanding_balance, 0) > 0
+           AND r.approved_repayment_method = 'fixed_monthly'
+           AND p.insufficient_salary_rule = 'available_salary'
+           AND s.installment_no = 1
+           AND s.status IN ('pending', 'partial')
+           AND COALESCE(s.scheduled_amount - s.applied_amount, 0) > 2.00
+           AND NOT EXISTS (
+               SELECT 1
+               FROM payroll px
+               WHERE px.employee_id = r.employee_id
+                 AND px.month = MONTH(s.scheduled_month)
+                 AND px.year = YEAR(s.scheduled_month)
+           )
+         ORDER BY s.scheduled_month ASC, r.id ASC
+         LIMIT 1"
+    );
+}
+
 function runPreview(PDO $pdo, array $fixture, int $payrollId): array
 {
     $month = (int)date('n', strtotime($fixture['scheduled_month']));
@@ -403,6 +434,82 @@ try {
     echo "PASS | Carry-forward lifecycle | first month persisted skipped/0.00; next month reselected the same installment for 1.00 partial repayment.\n";
     $pdo->exec('ROLLBACK TO SAVEPOINT stage5_carry_forward_fixture');
     $pdo->exec('RELEASE SAVEPOINT stage5_carry_forward_fixture');
+
+    // A configured maximum repayment duration is a real boundary, not merely
+    // a schedule-row count. Partial/skip carry-forward must stop after it.
+    $horizonFixture = findHorizonFixture($pdo);
+    if (!$horizonFixture) {
+        throw new RuntimeException('No safe first-installment fixture is available for the maximum-horizon lifecycle test.');
+    }
+
+    $pdo->exec('SAVEPOINT stage5_horizon_fixture');
+    $pdo->prepare(
+        "UPDATE hr_salary_advance_repayment_schedule
+         SET status = 'paid'
+         WHERE salary_advance_request_id = ?
+           AND id <> ?
+           AND status IN ('pending', 'partial', 'skipped')"
+    )->execute([
+        (int)$horizonFixture['request_id'],
+        (int)$horizonFixture['schedule_id'],
+    ]);
+    $pdo->prepare(
+        "UPDATE hr_salary_advance_repayment_schedule
+         SET status = 'pending', applied_amount = 0.00,
+             applied_payroll_id = NULL, applied_at = NULL, skip_reason = NULL
+         WHERE id = ?"
+    )->execute([(int)$horizonFixture['schedule_id']]);
+    $pdo->prepare(
+        "UPDATE hr_salary_advance_policy_versions
+         SET maximum_repayment_months = 1,
+             insufficient_salary_rule = 'available_salary'
+         WHERE id = ?"
+    )->execute([(int)$horizonFixture['policy_version_id']]);
+
+    $horizonPayrollId = nextFixturePayrollId($pdo);
+    [$withinHorizon] = runPreview($pdo, $horizonFixture, $horizonPayrollId);
+    $withinAllocation = $withinHorizon['allocations'][0] ?? null;
+    if (!$withinAllocation ||
+        round((float)$withinHorizon['total'], 2) !== 1.00 ||
+        $withinAllocation['outcome'] !== 'partial') {
+        throw new RuntimeException('A partial repayment should remain eligible inside the one-month approved horizon.');
+    }
+
+    $nextHorizonPeriod = date('Y-m-01', strtotime((string)$horizonFixture['scheduled_month'] . ' +1 month'));
+    $nextHorizonPreview = hrSalaryAdvancePayrollCalculateDraft(
+        $pdo,
+        [
+            'id' => $horizonPayrollId + 1,
+            'employee_id' => (int)$horizonFixture['employee_id'],
+            'year' => (int)date('Y', strtotime($nextHorizonPeriod)),
+            'month' => (int)date('n', strtotime($nextHorizonPeriod)),
+            'basic_salary' => 1.00,
+            'allowances' => 0.00,
+            'overtime' => 0.00,
+            'deductions' => 0.00,
+            'attendance_deduction' => 0.00,
+            'salary_advance_deduction' => 0.00,
+        ],
+        $nextHorizonPeriod
+    );
+    if (round((float)$nextHorizonPreview['total'], 2) !== 0.00 ||
+        !empty($nextHorizonPreview['allocations'])) {
+        throw new RuntimeException('An unpaid installment was still selected after the configured maximum repayment horizon.');
+    }
+
+    $horizonScheduleCount = dbFetchOne(
+        "SELECT COUNT(*) AS row_count
+         FROM hr_salary_advance_repayment_schedule
+         WHERE salary_advance_request_id = ?",
+        [(int)$horizonFixture['request_id']]
+    );
+    if ((int)($horizonScheduleCount['row_count'] ?? 0) < 1) {
+        throw new RuntimeException('The approved schedule unexpectedly disappeared during horizon verification.');
+    }
+
+    echo "PASS | Maximum repayment horizon | 1.00 partial repayment eligible in the approved month; no automatic deduction or new installment after the one-month policy limit.\n";
+    $pdo->exec('ROLLBACK TO SAVEPOINT stage5_horizon_fixture');
+    $pdo->exec('RELEASE SAVEPOINT stage5_horizon_fixture');
 
     $fullFixture = findEdgeFixture($pdo, 'available_salary', 'full_eligible_salary');
     $syntheticFullFixture = false;
