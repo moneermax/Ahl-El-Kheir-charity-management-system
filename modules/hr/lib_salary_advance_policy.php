@@ -18,6 +18,7 @@ function hrSalaryAdvancePolicyValidate(array $input): array
         'allow_custom_repayment_terms' => isset($input['allow_custom_repayment_terms']) ? 1 : 0,
         'maximum_monthly_deduction' => ($input['maximum_monthly_deduction'] ?? '') !== '' ? (float)$input['maximum_monthly_deduction'] : null,
         'maximum_repayment_months' => ($input['maximum_repayment_months'] ?? '') !== '' ? (int)$input['maximum_repayment_months'] : null,
+        'allow_fm_repayment_rescheduling' => isset($input['allow_fm_repayment_rescheduling']) ? 1 : 0,
         'repayment_start_rule' => (string)($input['repayment_start_rule'] ?? 'next_payroll'),
         'insufficient_salary_rule' => (string)($input['insufficient_salary_rule'] ?? 'available_salary'),
         'eligible_salary_basis' => (string)($input['eligible_salary_basis'] ?? 'net_before_advance'),
