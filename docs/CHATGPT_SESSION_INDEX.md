@@ -392,3 +392,11 @@ Disposable-database runtime verification:
 
 The temporary disposable-database dump and test-copy SQL file are test artifacts only and must not be committed to the repository.
 
+
+
+
+## 2026-10-12 — Salary Advance Stage 7 browser rescheduling evidence and toast feedback correction
+
+Browser-driven rescheduling of isolated request 7 (SAR-2026-00007) reported success. Read-only SQL against salary_advance_browser_test confirmed old plan 1 is preserved as superseded with its five schedule rows; new plan 2 (row ID 8) is active, starts 2026-11-01, contains five installments totaling 50,000.00, and no installment exceeds 10,000.00. Audit row 2263 records HR_SALARY_ADVANCE_REPAYMENT_RESCHEDULE. The canonical ahl_el_kheir database was not modified by this operation.
+
+A concrete notification presentation regression was identified in modules/hr/salary_advance_reschedule.php: its transient success/error alerts lacked a selector marker recognized by assets/js/notifications.js. Commit b546005f7f7996d1c4f1946de82e9c72563733f7 adds alert-dismissible to only those success/error alerts so the existing shared toast handler can convert them; the persistent warning/instructions remain inline. Local pull, PHP syntax check, browser toast verification, and payroll/accounting acceptance are still pending. Stage 7 remains OPEN.
