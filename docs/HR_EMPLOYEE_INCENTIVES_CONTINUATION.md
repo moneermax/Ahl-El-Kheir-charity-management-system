@@ -170,3 +170,27 @@ Verification: source committed to GitHub; local pull, PHP lint, and browser veri
 ## Extensible incentive types — design decision still required
 
 The initial incentive schema/page hardcodes four types. Adding arbitrary policy types safely requires a type catalogue and changing the current ENUM-backed incentive_type columns; simply adding another row in the page would fail at the database boundary. Built-in types have known automatic source events, while examples such as “Employee of the Month” need a manual nomination/award workflow and verification semantics. Do not alter the schema or imply a custom type can generate/pay awards until that distinction is settled. Ask whether additional types should be created as manual award types, with an employee selected and the achievement manager-verified, while the four current source-driven types retain their existing automatic eligibility rules.
+
+## 2026-10-12 — System-wide currency field removal
+
+The incentive policy form now uses `APP_CURRENCY_CODE` / `APP_CURRENCY_NAME_AR` from `config/config.php` and no longer asks the FM to enter a three-letter currency for each reward. New policy rules store the system currency (currently SDG); the form labels the amount column with that currency. The ledger's currency snapshots remain in the schema for audit/accounting integrity, not as user-selectable policy currencies.
+
+Commit: `12af8e46b2a9e042322bddf939462b973dd612d0`.
+
+**Verification status:** committed on GitHub `main`; local pull, PHP lint, and browser verification are still required. This change does not alter existing database rows or apply currency conversion.
+
+## 2026-10-12 — Employee performance recognition design proposal (not yet implemented)
+
+The user proposed automatic monthly selection of the highest-performing employee(s), including equal-score co-winners, and an official certificate. Initial design research supports published job-relevant criteria, evidence-backed results, consistent evaluation, and transparent certificate identity/verification rather than popularity voting or one narrow metric.
+
+Recommended design direction:
+- Keep source-driven incentives (collection, new sponsor, reactivation, project completion) separate from a new performance-recognition evaluation workflow.
+- Use role/role-family-appropriate scorecards so unlike jobs are not compared using the same output measure.
+- Start with objectively verifiable system data where it is suitable; treat missing records as unknown rather than a zero or a penalty.
+- Attendance should measure reliability only under an approved rule: approved leave and non-working days must not be treated as poor performance.
+- Include a reviewable evidence breakdown, eligibility rules, frozen monthly score snapshot, policy version, calculation timestamp, reviewer/finalization audit, and a deterministic tie rule that awards all employees tied at the qualifying top score.
+- Keep the certificate as an official recognition record, distinct from any financial award. Include certificate number, employee name, award title/period, issue date, issuing authority, and a verification reference; provide a print-friendly Arabic RTL layout.
+- Financial rewards remain subject to the existing SDG policy and next-open-payroll/paid-payroll immutability controls.
+
+No scoring weights, minimum threshold, tie tolerance, eligibility window, reviewer workflow, or role-specific metrics have been approved. Do not implement scoring until the existing attendance, employee/work assignment, and performance evidence sources are audited and the business rules are agreed.
+
