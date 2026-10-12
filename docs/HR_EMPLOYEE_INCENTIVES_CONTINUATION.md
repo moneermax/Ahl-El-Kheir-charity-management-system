@@ -222,3 +222,12 @@ Custom fields support short text, long text, number, date, yes/no, and controlle
 
 
 Migration hardening follow-up: commit `eb92fa5a42d00c086da0fe6a439511178d8c149b` makes the ENUM-to-VARCHAR conversion conditional on the live column still being an ENUM, so a rerun after a completed or partially completed migration does not unnecessarily modify a column already referenced by a category foreign key. This source-level guard has not yet been exercised against the local MariaDB version.
+
+## 2026-10-12 — Category-code UX and agreement validation
+The category creation form now generates its code automatically from the required English name. The code is shown as a read-only preview rather than a user-editable/submitted field; PHP repeats the normalization server-side and appends a numeric suffix for existing codes. The database unique index remains the final duplicate barrier. This is intended to avoid manual code-entry mistakes while keeping stable English codes.
+
+The policy creation handler also validates the agreement timestamp by strict format round-trip, rejects impossible/future dates, and rejects empty or over-2,000-character notes. These checks were included alongside the code-generation update.
+
+Commits: `1a1ced379bf5f4942cd44d554bbfbbfc2c499bbe`, `23bdf2a84d81cd86f753c283e462f06f828aa510`.
+
+The user confirmed the existing category labels render correctly in Arabic and English. The new generated-code preview and server behavior have not yet been locally linted or browser-tested. Reward amounts are not yet agreed; any test amount must be used only in a rollback-only harness or otherwise clearly isolated from real policy activation. Do not mark policy administration verified until local lint and database-backed acceptance checks pass.
