@@ -1,7 +1,7 @@
 # Employee Incentives — Continuation and Source Audit
 
 **Checkpoint:** 2026-10-12  
-**Status:** Business rules captured; source audit in progress; no feature code or migration has been implemented or runtime-verified.
+**Status:** Incentive ledger and policy administration are committed on `main`; the category catalogue/custom policy-field extension is now committed on `main`. Local migration execution, PHP lint, and browser/runtime verification remain outstanding. Award issuance, source-event integration, payroll scheduling, and incentive accounting remain separate unfinished gates.
 
 ## Scope
 
@@ -167,9 +167,10 @@ Commits on main:
 
 Verification: source committed to GitHub; local pull, PHP lint, and browser verification of the portal/dashboard changes remain pending.
 
-## Extensible incentive types — design decision still required
+## Incentive category catalogue and manual-award boundary
 
-The initial incentive schema/page hardcodes four types. Adding arbitrary policy types safely requires a type catalogue and changing the current ENUM-backed incentive_type columns; simply adding another row in the page would fail at the database boundary. Built-in types have known automatic source events, while examples such as “Employee of the Month” need a manual nomination/award workflow and verification semantics. Do not alter the schema or imply a custom type can generate/pay awards until that distinction is settled. Ask whether additional types should be created as manual award types, with an employee selected and the achievement manager-verified, while the four current source-driven types retain their existing automatic eligibility rules.
+The user approved a database-driven category catalogue. Migration `database/migrations/2026-10-12_hr_employee_incentive_catalogue_and_policy_fields.sql` seeds the four existing category codes, converts the `incentive_type` ENUM columns to catalogue-backed `VARCHAR(80)` codes, adds foreign keys, and creates version-scoped custom policy fields. The policy page now loads categories from `hr_incentive_types` rather than a hard-coded PHP array. User-created categories are deliberately `manual_review`; they can be configured in a policy but cannot generate automatic awards. A separate nomination/verification/award workflow is still required before such categories can be used for financial payment. The four existing source-driven categories retain their established codes and qualification boundaries.
+
 
 ## 2026-10-12 — System-wide currency field removal
 
@@ -198,12 +199,23 @@ No scoring weights, minimum threshold, tie tolerance, eligibility window, review
 
 The user explicitly deferred the proposed monthly employee performance recognition/certificate feature to a separate future development task. Keep the discussion and proposal documented here, but do not implement its scoring engine, monthly ranking, co-winner handling, or certificate workflow as part of the current incentive task. Before that future task begins, audit the real attendance/work evidence sources and agree role-appropriate scorecards, eligibility, minimum threshold, tie handling, review/finalization, and certificate verification.
 
-The current task remains the employee incentive policy/award feature. The next requested improvement is to make policy records extensible so FM/HR can add additional policy fields when needed, while preserving required governance, policy versioning, audit history, and activation rules. Do not confuse arbitrary additional policy metadata with adding new incentive award types: those are separate extensibility concerns. The existing incentive type columns are ENUMs and still require a catalogue/schema design before custom award types can work.
+The current task remains the employee incentive policy/award feature. The user approved this authorization model: HR Manager/HR Staff and FM/Admin may create policy drafts and add custom fields; only FM/Admin may activate. GM/FM agreement timestamp and notes remain mandatory, and activation does not require a second GM approval. Custom policy fields are stored with their policy version and are only writable while the policy is a draft. Custom policy metadata is separate from incentive categories. The category catalogue has now been implemented in source/migration, but remains unverified locally.
 
 The user confirmed that the system-wide SDG currency change is visible on the local incentive policy page. Commit `12af8e46b2a9e042322bddf939462b973dd612d0` removed the currency input and uses `APP_CURRENCY_CODE` for new policy rule rows. Local PHP lint/runtime verification is still outstanding.
 
-Before implementation, confirm the authorization boundary for HR: existing policy governance says FM creates/activates policy versions and HR administers incentives, while the latest request asks FM or HR to add custom policy fields. Do not silently expand HR's ability to create or activate financial policies without confirming whether HR may create drafts/edit metadata while FM retains activation authority.
+Authorization boundary confirmed by the user: HR may create drafts and add custom policy fields; FM retains activation authority. The implementation permits `hr_manager`, `hr_staff`, `financial_manager`, and `admin` to create drafts/manage categories/fields, while activation remains restricted to `financial_manager` and `admin`.
 
 ## 2026-10-12 — Current scope
 
 Monthly performance recognition and certificate issuance are deferred to a separate future feature. Current focus: extensible policy fields for FM/HR, preserving FM policy activation authority. SDG currency input removal is visible locally; lint/runtime verification remains pending.
+
+
+## 2026-10-12 — Incentive catalogue and custom policy fields committed
+
+Commits:
+- `74a0140c32670bb74421f7366011420f0dd33c11` — adds `hr_incentive_types`, seeds the four existing category codes, converts the two ENUM-backed category columns to catalogue-backed strings, adds category foreign keys, and creates `hr_incentive_policy_custom_fields`.
+- `68758c17c6363083f798e019c6348bdb596acc8c` — makes the policy page category-driven, adds manual-only category creation, allows HR/FМ to create drafts and add version-scoped fields, and restricts activation to FM/Admin.
+
+Custom fields support short text, long text, number, date, yes/no, and controlled selection lists. Required fields must be populated before activation. Existing category codes remain unchanged. New categories are marked `manual_review` and the UI explicitly states that this does not implement award issuance or payment for them.
+
+**Verification boundary:** these commits are source changes only. The new migration has not been applied to the user's local MariaDB, and the updated PHP has not yet been locally linted or exercised in the browser. Do not claim runtime success. Next gate: pull `main`, apply the new migration after confirming the prior incentive ledger migration is present, run PHP lint, then verify category creation, policy draft creation, custom-field validation/version isolation, HR activation denial, and FM activation.
