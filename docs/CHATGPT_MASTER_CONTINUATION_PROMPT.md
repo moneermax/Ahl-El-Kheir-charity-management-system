@@ -408,14 +408,26 @@ Latest DB backup commit: `de397397432797c674a9bf06133e90d57bffb5b7`. It is a dat
 
 ## 2026-10-12 — Current task: Employee Incentives
 
-Continue the active Employee Incentives feature using `docs/HR_EMPLOYEE_INCENTIVES_CONTINUATION.md`. Current commits on `main` add account 5500, the incentive policy/event/award/allocation/adjustment schema, and `modules/hr/incentive_policy.php` for FM/admin policy administration. These are not locally applied or runtime-verified. The user has approved the 5500 account and the governance rule: GM/FM discuss and agree first; FM creates and activates the policy without a second GM approval. Do not invent reward amounts. Next: local migration application and verification, PHP lint, policy UI runtime checks, then implement event attribution/verification and payroll/accounting integration without altering paid payroll or salary-advance logic.
+Continue the active Employee Incentives feature using `docs/HR_EMPLOYEE_INCENTIVES_CONTINUATION.md`. Current commits on `main` include account 5500, the incentive ledger, category catalogue, custom policy fields, and `modules/hr/incentive_policy.php`. The user confirmed the prior ledger/account migrations are already applied locally, but the new category/custom-field migration has not yet been applied or runtime-verified. Governance: GM/FM discuss and agree first; HR Manager/HR Staff and FM/Admin may create drafts/add custom fields; only FM/Admin may activate without a second GM approval. Do not invent reward amounts. Next: sync latest `main`, apply the new migration, run PHP lint and local UI/role/validation tests, then continue source-event attribution/verification and payroll/accounting integration without altering paid payroll or salary-advance logic.
 
 ## 2026-10-12 — Salary portal and incentive extensibility
 
 modules/accounting/fm_dashboard.php now has one salary portal card instead of separate salary-advance, waiver, and payroll cards. modules/hr/salary_portal.php is committed on main and provides role-filtered links to the three existing workflows plus modules/hr/incentive_policy.php. Commits: 8bc2be917afaa09d50a3c46f4d13a3922c42648b and 94f5c9c5666a84cea8fc4a161277dba3b707e2a1. Local lint and browser verification remain pending.
 
-The user also requests adding more incentive types (example: Employee of the Month). Do not merely expand the PHP label array: hr_incentive_policy_rules.incentive_type and hr_incentive_events.incentive_type are ENUMs in the current migration. Inspect and design a type catalogue/migration. First confirm manual-award semantics: should new custom types be manually nominated for a selected employee and manager-verified, while the four existing types remain source-event-driven? Do not claim custom types can be earned or paid until the award/verification path exists. Current local database has the account/ledger migrations applied per user output; PHP syntax and runtime checks still require local evidence.
+The category catalogue and policy-field extension are now committed. Migration `database/migrations/2026-10-12_hr_employee_incentive_catalogue_and_policy_fields.sql` seeds the four existing category codes, converts the ENUM columns to catalogue-backed VARCHAR codes with foreign keys, and creates version-scoped custom policy fields. The policy UI loads categories from the database and allows new categories only in manual-review mode. Manual nomination/verification/award/payment workflow is not yet implemented; do not claim custom categories can be earned or paid. Local PHP syntax and runtime checks remain pending.
 
 ## 2026-10-12 — Current incentive task boundary
 
 Monthly employee performance recognition, scoring, ranking, co-winner handling, and certificates are explicitly deferred to a separate future feature. Current requirement: make incentive policy fields extensible for FM/HR while preserving FM activation authority and the agreed GM/FM governance. Keep custom policy fields separate from custom incentive award types (current type columns are ENUMs). The SDG currency field removal is visible locally (commit `12af8e46b2a9e042322bddf939462b973dd612d0`); local lint/runtime verification remains pending.
+
+
+## 2026-10-12 — Latest incentive extensibility checkpoint
+
+Latest commits:
+- `74a0140c32670bb74421f7366011420f0dd33c11`: category catalogue/custom-field migration.
+- `68758c17c6363083f798e019c6348bdb596acc8c`: category-driven policy page, HR/FM draft and custom-field access, FM/Admin-only activation.
+- `affd6538d4b3a140a2e3df725642254afdd1f71b`, `663efae40df2577dc517d8f02876c703eda1cfd1`, `40c47a468645de87f5f09eb1b9430c4733cf83e9`, `bdf7c41dff7dd4054096f9f941c3616fe00a1b47`: continuation/master docs updated.
+
+Important: these are GitHub source commits, not local runtime evidence. The new migration has not been applied locally, and `modules/hr/incentive_policy.php` has not yet been locally linted/browser-tested. The assistant cannot access the Windows/XAMPP runtime. The next action is to sync `main`, inspect the exact local diff and current migration state, run `php -l modules\\hr\\incentive_policy.php`, apply the new migration only if not already applied, then test database conversion/foreign keys, category creation, field validation and version isolation, HR denial of activation, and FM activation. If any check fails, inspect the exact failure before changing code.
+
+Custom category records are manual-review only. Do not issue awards or schedule payroll for these categories until a dedicated nomination/verification/award path exists. Monthly employee performance scoring/ranking/certificates remain deferred. Do not reopen closed salary-advance, attendance/payroll, i18n, or waiver work without regression evidence.
