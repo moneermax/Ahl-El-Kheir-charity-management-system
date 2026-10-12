@@ -204,3 +204,6 @@ The user confirmed that the system-wide SDG currency change is visible on the lo
 
 Before implementation, confirm the authorization boundary for HR: existing policy governance says FM creates/activates policy versions and HR administers incentives, while the latest request asks FM or HR to add custom policy fields. Do not silently expand HR's ability to create or activate financial policies without confirming whether HR may create drafts/edit metadata while FM retains activation authority.
 
+## 2026-10-12 — Current scope
+
+Monthly performance recognition and certificate issuance are deferred to a separate future feature. Current focus: extensible policy fields for FM/HR, preserving FM policy activation authority. SDG currency input removal is visible locally; lint/runtime verification remains pending.
