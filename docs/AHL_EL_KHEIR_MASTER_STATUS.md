@@ -2587,6 +2587,8 @@ The temporary routing override was removed safely. `.htaccess` now contains exac
 
 ## 2026-10-12 — Employee incentives: source/design checkpoint
 
+**User decision confirmed 2026-10-12:** direct sponsor creation must automatically set the sponsor's brought-by user to the logged-in employee; sponsor-request conversion must preserve the request's original `brought_by`; win-back rewards go to the employee who handled the successful win-back, only after first payment is confirmed. Existing conversion code already writes `sponsors.brought_by_user_id`, so verify the exact schema before adding any column; do not duplicate an existing field. Historical missing attribution must not be guessed or backfilled from `created_by`. See `docs/HR_EMPLOYEE_INCENTIVES_CONTINUATION.md`.
+
 **Open business rule discovered during source audit:** sponsor-request conversion preserves `sponsor_requests.brought_by` in `sponsors.brought_by_user_id`, but direct sponsor creation only saves `created_by` and free-text `brought_by_name`. Do not assume the creator is the person who acquired the sponsor. The direct-create award path requires explicit manager-verified employee attribution or must remain ineligible until attributed. See `docs/HR_EMPLOYEE_INCENTIVES_CONTINUATION.md`.
 
 
