@@ -194,3 +194,13 @@ Recommended design direction:
 
 No scoring weights, minimum threshold, tie tolerance, eligibility window, reviewer workflow, or role-specific metrics have been approved. Do not implement scoring until the existing attendance, employee/work assignment, and performance evidence sources are audited and the business rules are agreed.
 
+## 2026-10-12 — Performance recognition deferred; current policy extensibility is active
+
+The user explicitly deferred the proposed monthly employee performance recognition/certificate feature to a separate future development task. Keep the discussion and proposal documented here, but do not implement its scoring engine, monthly ranking, co-winner handling, or certificate workflow as part of the current incentive task. Before that future task begins, audit the real attendance/work evidence sources and agree role-appropriate scorecards, eligibility, minimum threshold, tie handling, review/finalization, and certificate verification.
+
+The current task remains the employee incentive policy/award feature. The next requested improvement is to make policy records extensible so FM/HR can add additional policy fields when needed, while preserving required governance, policy versioning, audit history, and activation rules. Do not confuse arbitrary additional policy metadata with adding new incentive award types: those are separate extensibility concerns. The existing incentive type columns are ENUMs and still require a catalogue/schema design before custom award types can work.
+
+The user confirmed that the system-wide SDG currency change is visible on the local incentive policy page. Commit `12af8e46b2a9e042322bddf939462b973dd612d0` removed the currency input and uses `APP_CURRENCY_CODE` for new policy rule rows. Local PHP lint/runtime verification is still outstanding.
+
+Before implementation, confirm the authorization boundary for HR: existing policy governance says FM creates/activates policy versions and HR administers incentives, while the latest request asks FM or HR to add custom policy fields. Do not silently expand HR's ability to create or activate financial policies without confirming whether HR may create drafts/edit metadata while FM retains activation authority.
+
