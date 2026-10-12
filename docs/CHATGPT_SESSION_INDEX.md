@@ -428,3 +428,7 @@ Active requirement: implement three policy-driven fixed-amount incentive categor
 ### 2026-10-12 — Employee Incentives (in progress)
 
 The Employee Incentives feature is the current active task. Dedicated expense account 5500 and the initial incentive ledger schema migrations are committed on `main`; the FM/admin policy administration page is also committed. These changes are not yet locally applied or runtime-verified. Follow `docs/HR_EMPLOYEE_INCENTIVES_CONTINUATION.md` for scope, business rules, and the next verification gate. Do not claim the feature is complete.
+
+### 2026-10-12 — Salary portal navigation
+
+FM dashboard salary links now route through modules/hr/salary_portal.php, which presents role-filtered links for salary advances, waivers, payroll, and incentive policy. Commits 8bc2be917afaa09d50a3c46f4d13a3922c42648b and 94f5c9c5666a84cea8fc4a161277dba3b707e2a1 are on main. Local PHP lint and browser verification are pending. Employee incentive policy extensibility is the next business-design question: custom/manual awards (e.g. Employee of the Month) versus the existing source-driven reward types.
