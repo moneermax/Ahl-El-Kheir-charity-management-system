@@ -2612,7 +2612,7 @@ The FM dashboard salary-related cards are consolidated into modules/hr/salary_po
 - The incentive policy currency input has been removed; the page now uses system-wide `APP_CURRENCY_CODE=SDG`. The user confirmed the change is visible locally. Commit: `12af8e46b2a9e042322bddf939462b973dd612d0`. PHP lint and runtime validation remain to be recorded.
 - Monthly employee performance recognition and certificate generation are explicitly deferred to a separate future feature. Do not implement this within the current incentive work.
 - The user approved a database-driven category catalogue plus version-scoped custom policy fields. HR Manager/HR Staff and FM/Admin can create drafts and add fields; activation remains FM/Admin only. The GM/FM agreement remains recorded before activation, with no second GM approval.
-- Source changes are committed in `74a0140` (catalogue/custom-field migration) and `68758c1` (policy page). Custom categories are manual-review only and do not yet have an award/payment workflow. Monthly performance recognition/certificates remain deferred.
+- Source changes are committed in `eb92fa5` (catalogue/custom-field migration) and `68758c1` (policy page). Custom categories are manual-review only and do not yet have an award/payment workflow. Monthly performance recognition/certificates remain deferred.
 
 ## 2026-10-12 — Employee incentive policy continuation
 
@@ -2622,7 +2622,10 @@ The user confirmed the SDG currency input removal is visible on the local incent
 ## 2026-10-12 — Incentive category catalogue and extensible policy fields
 
 Committed to `main`:
-- `74a0140c32670bb74421f7366011420f0dd33c11`: migration introduces `hr_incentive_types`, preserves the four built-in codes while converting ENUM-backed rule/event category columns to catalogue-backed strings with foreign keys, and adds `hr_incentive_policy_custom_fields`.
+- `eb92fa5a42d00c086da0fe6a439511178d8c149b`: migration introduces `hr_incentive_types`, preserves the four built-in codes while converting ENUM-backed rule/event category columns to catalogue-backed strings with foreign keys, and adds `hr_incentive_policy_custom_fields`.
 - `68758c17c6363083f798e019c6348bdb596acc8c`: policy page loads category records from the catalogue, supports manual-only category creation, lets HR/FM create policy drafts and add version-scoped custom fields, validates required field values before activation, and restricts activation to FM/Admin.
 
 Verification status: **NOT LOCALLY VERIFIED**. The new migration has not yet been applied to local MariaDB, and PHP lint/browser checks have not been run. New category award issuance/payment is not implemented. Next gate is local sync, migration execution, PHP lint, and role/workflow checks before proceeding to incentive event and payroll/accounting integration.
+
+
+Migration follow-up: `eb92fa5a42d00c086da0fe6a439511178d8c149b` adds a rerun guard around ENUM-to-VARCHAR conversion. Local MariaDB verification is still required.
