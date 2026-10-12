@@ -359,3 +359,11 @@ Runtime evidence:
 
 The temporary test artifacts `database/production/current_test_database.sql` and `database/production/prepare_production_database_test.sql` must not be committed or uploaded to the repository. They are local disposable test artifacts and should be deleted after verification.
 
+
+
+
+## Current continuation point — 2026-10-12: Stage 7 browser reschedule saved; toast verification pending
+
+User submitted a reschedule for request 7 in the isolated salary_advance_browser_test database. Read-only SQL confirmed plan 1 is preserved and superseded, new plan 2 (ID 8) is active, its five installments total 50,000.00 and each is at or below 10,000.00, and audit row 2263 records HR_SALARY_ADVANCE_REPAYMENT_RESCHEDULE. Do not repeat or undo this operation.
+
+The success message appeared as an inline alert. Source inspection found the success/error alerts in modules/hr/salary_advance_reschedule.php did not match the global transient-alert selectors in assets/js/notifications.js. Commit b546005f7f7996d1c4f1946de82e9c72563733f7 adds alert-dismissible to those two messages only. Next: on the user's local checkout, pull main, inspect status/diff without overwriting local changes, run PHP lint on the page, and browser-test that success/error feedback is now toast-based while the persistent repayment instructions remain inline. Then inspect the actual isolated payroll fixture and verify payroll/accounting integration without blindly posting payroll or mutating canonical ahl_el_kheir. Restore the original .htaccess from the recorded backup only after all local browser testing is finished, verify stage7_db_probe.php is absent, update evidence, and keep Stage 7 OPEN until the payroll/accounting path passes.
