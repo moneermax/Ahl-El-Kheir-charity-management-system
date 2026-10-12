@@ -282,3 +282,16 @@ Verification completed successfully against `salary_advance_full_schema_test`:
 - The test process exited with code `0`.
 
 **Scope limit:** This verifies migration and policy behavior against the checked-in full schema in a disposable database. It does not complete browser-driven verification of FM policy creation, rescheduling, payroll, and accounting against the local application. Stage 7 remains open. The canonical `ahl_el_kheir` database was not used for this destructive test, and the untracked receipt image remains untouched.
+
+
+
+## 2026-10-12 — Isolated browser rescheduling transaction verified; final acceptance still open
+
+After the user submitted the rescheduling form for request 7 in salary_advance_browser_test, read-only SQL returned:
+- actual database: salary_advance_browser_test;
+- plan 1 row ID 2 is superseded and its five historical schedule rows remain (total 50,000.00);
+- plan 2 row ID 8 is active, starts 2026-11-01, duration six months, monthly cap 10,000.00;
+- plan 2 has five installments totaling 50,000.00, maximum installment 10,000.00, first/last scheduled months 2026-11-01 / 2027-03-01;
+- audit row 2263 records HR_SALARY_ADVANCE_REPAYMENT_RESCHEDULE for request 7.
+
+The user also reported that the success confirmation appeared inline instead of as a toast. Inspection established that the page's success/error alerts were not matched by the existing global converter because they lacked alert-dismissible. Commit b546005f7f7996d1c4f1946de82e9c72563733f7 adds that marker only to transient success/error alerts, leaving the persistent policy/instruction warning unchanged. The local checkout still needs to pull the commit, run PHP syntax validation, and confirm in-browser that the success/error messages are converted to toasts. The payroll/accounting path remains unverified. Do not close Stage 7 until that path is verified; do not mutate canonical ahl_el_kheir or repeat the already-completed rescheduling transaction.
