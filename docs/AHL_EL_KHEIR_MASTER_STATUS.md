@@ -2602,3 +2602,7 @@ Current status: source/design audit in progress. No incentive production code or
 ## 2026-10-12 — Employee Incentives active work
 
 Employee Incentives is in progress. The account 5500 migration, incentive policy/event/award ledger migration, and FM/admin policy administration page have been committed to `main`. Local migration application, PHP syntax checks, runtime behavior, event attribution, project closure integration, payroll scheduling, and accounting posting remain unverified or unimplemented. The detailed continuation document is `docs/HR_EMPLOYEE_INCENTIVES_CONTINUATION.md`. This is not a completed milestone.
+
+## 2026-10-12 — Salary and incentives portal navigation
+
+The FM dashboard salary-related cards are consolidated into modules/hr/salary_portal.php. The portal presents role-filtered links to salary advances, salary-advance waivers, payroll, and incentive policy. Dashboard and portal changes are committed to main (8bc2be917afaa09d50a3c46f4d13a3922c42648b, 94f5c9c5666a84cea8fc4a161277dba3b707e2a1). Local lint/runtime verification is pending. Employee incentives remain in progress; custom incentive-type semantics need confirmation before schema changes because the current type columns are ENUMs and custom types such as Employee of the Month need a manual award/verification workflow.
