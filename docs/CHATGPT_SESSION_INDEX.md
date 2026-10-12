@@ -424,3 +424,7 @@ Cleanup and canonical-data safety are verified: `.htaccess` has been restored to
 ## 2026-10-12 — New employee incentives feature
 
 Active requirement: implement three policy-driven fixed-amount incentive categories (confirmed monthly sponsorship collections; new sponsor/reactivation after confirmed first payment; project completion after administrative and FM financial closure). The user synced `main`, passed PHP lint for direct sponsor attribution, and supplied local schema/index/FK metadata. Relevant tables are InnoDB; source tables lack a unique incentive idempotency key; payroll employee-period and journal/account identifiers have unique indexes. Detailed findings are in `docs/HR_EMPLOYEE_INCENTIVES_CONTINUATION.md`. No incentive policy/ledger/payroll migration has been implemented. Continue targeted full-DDL and payroll/source-flow audit; never restore the data-bearing SQL snapshot into the live database.
+
+### 2026-10-12 — Employee Incentives (in progress)
+
+The Employee Incentives feature is the current active task. Dedicated expense account 5500 and the initial incentive ledger schema migrations are committed on `main`; the FM/admin policy administration page is also committed. These changes are not yet locally applied or runtime-verified. Follow `docs/HR_EMPLOYEE_INCENTIVES_CONTINUATION.md` for scope, business rules, and the next verification gate. Do not claim the feature is complete.
