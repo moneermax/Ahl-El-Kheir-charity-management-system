@@ -75,17 +75,33 @@ try {
         $action = (string)($_POST['action'] ?? '');
         if ($action === 'create_category') {
             if (!$canManageTypes) throw new RuntimeException('ليس لديك صلاحية إدارة أنواع الحوافز.');
-            $code = strtolower(trim((string)($_POST['type_code'] ?? '')));
             $nameAr = trim((string)($_POST['name_ar'] ?? ''));
             $nameEn = trim((string)($_POST['name_en'] ?? ''));
-            if (!preg_match('/^[a-z][a-z0-9_]{1,79}$/', $code)) {
-                throw new InvalidArgumentException('رمز النوع يجب أن يبدأ بحرف إنجليزي ويحتوي على أحرف صغيرة أو أرقام أو شرطة سفلية فقط (2–80 حرفاً).');
-            }
             if ($nameAr === '' || mb_strlen($nameAr) > 190 || $nameEn === '' || mb_strlen($nameEn) > 190) {
                 throw new InvalidArgumentException('اسم نوع الحافز بالعربية والإنجليزية مطلوب وبحد أقصى 190 حرفاً لكل اسم.');
             }
-            $exists = dbFetchOne('SELECT id FROM hr_incentive_types WHERE type_code = ? LIMIT 1', [$code]);
-            if ($exists) throw new InvalidArgumentException('رمز نوع الحافز مستخدم بالفعل.');
+
+            // The code is generated server-side from the English name; posted client values are ignored.
+            $baseCode = strtolower($nameEn);
+            $baseCode = preg_replace('/[^a-z0-9]+/', '_', $baseCode) ?? '';
+            $baseCode = trim($baseCode, '_');
+            if ($baseCode === '') {
+                $baseCode = 'incentive_category';
+            } elseif (!preg_match('/^[a-z]/', $baseCode)) {
+                $baseCode = 'incentive_' . $baseCode;
+            }
+            $baseCode = trim(substr($baseCode, 0, 80), '_');
+            if ($baseCode === '') {
+                $baseCode = 'incentive_category';
+            }
+
+            $code = $baseCode;
+            $suffix = 2;
+            while (dbFetchOne('SELECT id FROM hr_incentive_types WHERE type_code = ? LIMIT 1', [$code])) {
+                $suffixText = '_' . $suffix;
+                $code = rtrim(substr($baseCode, 0, 80 - strlen($suffixText)), '_') . $suffixText;
+                $suffix++;
+            }
             $stmt = $pdo->prepare(
                 "INSERT INTO hr_incentive_types
                     (type_code, name_ar, name_en, qualification_mode, is_system, is_active, sort_order, created_by_user_id)
@@ -111,8 +127,17 @@ try {
                 throw new InvalidArgumentException('تاريخ السريان يجب أن يكون اليوم أو تاريخاً مستقبلياً؛ لا يمكن إنشاء سياسة بأثر رجعي.');
             }
             $agreementDate = DateTimeImmutable::createFromFormat('!Y-m-d\\TH:i', $agreementAt);
-            if (!$agreementDate || $agreementNotes === '') {
-                throw new InvalidArgumentException('سجّل تاريخ/وقت اتفاق GM وFM وملاحظات الاتفاق قبل إنشاء السياسة.');
+            $agreementDateErrors = DateTimeImmutable::getLastErrors();
+            if (
+                !$agreementDate
+                || $agreementDate->format('Y-m-d\\TH:i') !== $agreementAt
+                || ($agreementDateErrors !== false
+                    && ($agreementDateErrors['warning_count'] > 0 || $agreementDateErrors['error_count'] > 0))
+                || $agreementDate > new DateTimeImmutable()
+                || $agreementNotes === ''
+                || mb_strlen($agreementNotes) > 2000
+            ) {
+                throw new InvalidArgumentException('تحقق من صحة تاريخ ووقت اتفاق GM وFM، وأنه ليس في المستقبل، وأدخل ملاحظات لا تتجاوز 2000 حرف.');
             }
 
             $types = dbFetchAll('SELECT type_code, name_ar, qualification_mode FROM hr_incentive_types WHERE is_active = 1 ORDER BY sort_order, id');
@@ -354,17 +379,17 @@ require_once __DIR__ . '/../../includes/header.php';
                 <?=csrf_field()?>
                 <input type="hidden" name="action" value="create_category">
                 <div class="col-md-3">
-                    <label class="form-label">رمز الفئة *</label>
-                    <input class="form-control" name="type_code" pattern="[a-z][a-z0-9_]{1,79}" maxlength="80" placeholder="مثال: service_quality" required>
-                    <div class="form-text">رمز ثابت بالإنجليزية؛ لا تستخدم مسافات.</div>
-                </div>
-                <div class="col-md-3">
                     <label class="form-label">الاسم بالعربية *</label>
                     <input class="form-control" name="name_ar" maxlength="190" required>
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">الاسم بالإنجليزية *</label>
-                    <input class="form-control" name="name_en" maxlength="190" required>
+                    <input class="form-control" id="incentive-type-name-en" name="name_en" maxlength="190" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">رمز الفئة (تلقائي)</label>
+                    <input class="form-control font-monospace" id="incentive-type-code-preview" type="text" value="incentive_category" readonly aria-describedby="incentive-type-code-help">
+                    <div class="form-text" id="incentive-type-code-help">يُولّد الرمز من الاسم الإنجليزي تلقائياً. إذا كان مستخدماً، سيضيف النظام رقماً تلقائياً.</div>
                 </div>
                 <div class="col-md-3 d-flex align-items-end">
                     <button class="btn btn-outline-primary w-100" type="submit"><i class="fas fa-plus me-1"></i>إضافة فئة يدوية</button>
@@ -548,4 +573,22 @@ require_once __DIR__ . '/../../includes/header.php';
         </div>
     </div>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const englishName = document.getElementById('incentive-type-name-en');
+    const codePreview = document.getElementById('incentive-type-code-preview');
+    if (!englishName || !codePreview) return;
+
+    const updateCodePreview = function () {
+        let code = englishName.value.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+        if (!code) code = 'incentive_category';
+        else if (!/^[a-z]/.test(code)) code = 'incentive_' + code;
+        code = code.slice(0, 80).replace(/_+$/g, '');
+        codePreview.value = code || 'incentive_category';
+    };
+
+    englishName.addEventListener('input', updateCodePreview);
+    updateCodePreview();
+});
+</script>
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>
