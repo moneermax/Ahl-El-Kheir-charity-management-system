@@ -2869,9 +2869,12 @@ The SDG currency input removal is visible on the user's local policy page (commi
 ## 2026-10-12 — Incentive category catalogue/custom-field source audit checkpoint
 
 Source changes committed on `main`:
-- `74a0140c32670bb74421f7366011420f0dd33c11`: new catalogue and custom-field migration; existing four incentive codes are seeded and retained, rule/event type columns are converted from ENUM to VARCHAR and linked to the catalogue, and custom policy field definitions/values are stored by policy version.
+- `eb92fa5a42d00c086da0fe6a439511178d8c149b`: new catalogue and custom-field migration; existing four incentive codes are seeded and retained, rule/event type columns are converted from ENUM to VARCHAR and linked to the catalogue, and custom policy field definitions/values are stored by policy version.
 - `68758c17c6363083f798e019c6348bdb596acc8c`: policy UI uses database categories, permits HR/FM draft and custom-field actions, and keeps activation restricted to FM/Admin.
 
 Security/financial boundary: newly created categories are `manual_review` and cannot issue awards automatically. Their presence in a policy is configuration only; nomination, verification, award creation, payroll scheduling and accounting posting are not thereby implemented. Existing built-in categories retain their codes and source-event mode.
 
 Local migration, PHP lint, and browser/runtime checks are still pending. Do not claim the new source changes are runtime-verified or proceed to reward issuance until these gates pass.
+
+
+Migration follow-up: commit `eb92fa5a42d00c086da0fe6a439511178d8c149b` guards the ENUM-to-VARCHAR conversion using live column metadata, reducing rerun risk after partial application. This is not a substitute for testing the migration on the target MariaDB 10.4 environment.
