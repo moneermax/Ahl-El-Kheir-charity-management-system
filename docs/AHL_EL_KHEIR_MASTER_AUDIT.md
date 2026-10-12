@@ -2878,3 +2878,8 @@ Local migration, PHP lint, and browser/runtime checks are still pending. Do not 
 
 
 Migration follow-up: commit `eb92fa5a42d00c086da0fe6a439511178d8c149b` guards the ENUM-to-VARCHAR conversion using live column metadata, reducing rerun risk after partial application. This is not a substitute for testing the migration on the target MariaDB 10.4 environment.
+
+## 2026-10-12 — Incentive category code generation audit checkpoint
+Source change on `main`: `modules/hr/incentive_policy.php` generates `hr_incentive_types.type_code` server-side from the English category name. The code preview is read-only and has no submitted `type_code` field; the server ignores any client-supplied code. Normalization lowercases English text, replaces non-alphanumeric runs with underscores, ensures an alphabetic prefix and minimum length, limits to 80 characters, and adds `_2`, `_3`, etc. on collisions. The database unique key `uq_hr_incentive_type_code` remains the final integrity barrier for duplicate codes; concurrent collision behavior still needs local test evidence. The update also includes strict GM/FM agreement timestamp and notes validation.
+
+Commit `23bdf2a84d81cd86f753c283e462f06f828aa510`. Arabic/English rendering of existing categories was confirmed by the user. The new preview, server code generation, PHP lint, and collision behavior have not yet been runtime-verified locally. Reward amounts remain unapproved and no policy should be activated for testing.
