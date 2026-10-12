@@ -437,3 +437,6 @@ FM dashboard salary links now route through modules/hr/salary_portal.php, which 
 
 The policy page now uses the system-wide SDG currency; the user confirmed the change is visible locally (commit `12af8e46b2a9e042322bddf939462b973dd612d0`). Local lint/runtime verification remains pending. Monthly performance recognition/scoring/certificates are deferred to a separate future task. Current focus is extensible, versioned policy metadata that FM/HR can add as needed; confirm HR draft/metadata permissions while preserving FM activation authority. Custom incentive award types remain a distinct schema/workflow requirement because current type columns are ENUMs. See `docs/HR_EMPLOYEE_INCENTIVES_CONTINUATION.md`.
 
+### 2026-10-12 — Employee incentive continuation
+
+Monthly performance recognition/scoring/certificates are deferred to a separate future feature. Current focus: extensible incentive policy fields for FM/HR, with FM retaining activation authority. The SDG currency field removal is visible locally (commit `12af8e46b2a9e042322bddf939462b973dd612d0`); local lint/runtime verification remains pending. Custom incentive types are a separate schema/workflow issue. See `docs/HR_EMPLOYEE_INCENTIVES_CONTINUATION.md`.
