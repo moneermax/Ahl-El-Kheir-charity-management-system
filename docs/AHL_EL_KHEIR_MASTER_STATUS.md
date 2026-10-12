@@ -2606,3 +2606,11 @@ Employee Incentives is in progress. The account 5500 migration, incentive policy
 ## 2026-10-12 — Salary and incentives portal navigation
 
 The FM dashboard salary-related cards are consolidated into modules/hr/salary_portal.php. The portal presents role-filtered links to salary advances, salary-advance waivers, payroll, and incentive policy. Dashboard and portal changes are committed to main (8bc2be917afaa09d50a3c46f4d13a3922c42648b, 94f5c9c5666a84cea8fc4a161277dba3b707e2a1). Local lint/runtime verification is pending. Employee incentives remain in progress; custom incentive-type semantics need confirmation before schema changes because the current type columns are ENUMs and custom types such as Employee of the Month need a manual award/verification workflow.
+
+## 2026-10-12 — Employee incentive policy continuation
+
+- The incentive policy currency input has been removed; the page now uses system-wide `APP_CURRENCY_CODE=SDG`. The user confirmed the change is visible locally. Commit: `12af8e46b2a9e042322bddf939462b973dd612d0`. PHP lint and runtime validation remain to be recorded.
+- Monthly employee performance recognition and certificate generation are explicitly deferred to a separate future feature. Do not implement this within the current incentive work.
+- Current active requirement: make incentive policy records extensible with additional fields that FM/HR can add when needed. Keep custom policy metadata separate from custom incentive award types; the latter still require replacing the current ENUM-based type model with a proper catalogue and defined award workflow.
+- Authorization decision still needed before code: whether HR may create draft policy records/add fields while FM alone activates them, or whether HR's role is limited to proposing fields for FM-created drafts. Preserve the agreed no-second-GM-approval governance.
+
