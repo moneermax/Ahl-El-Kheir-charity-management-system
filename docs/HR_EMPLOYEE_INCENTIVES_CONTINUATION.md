@@ -148,3 +148,11 @@ Commits:
 **Status:** committed to GitHub `main`; not yet applied to the local database; no PHP workflow has yet been implemented or runtime-verified. The next gate is local migration application and verification, followed by policy administration and the transactional event/award integration. Do not mark the feature complete based on schema creation alone.
 
 The policy workflow follows the user-approved governance decision: GM/FM agree on the policy first; FM records/activates the agreed policy without a second GM approval. Individual incentive achievements still require manager verification, with financial confirmation where the source event is a collection or project closure.
+
+## 2026-10-12 — Policy administration page committed
+
+`modules/hr/incentive_policy.php` is now committed on `main` for `financial_manager` and `admin`. It supports creating draft policy versions with explicit GM/FM agreement date/time and notes, fixed amounts/currencies for all four reward categories, and activation by FM/admin without a second GM approval. It rejects retroactive effective dates, invalid currencies, enabled zero-value rewards, incomplete rule sets, and out-of-order activation that could overlap a later active policy. Amounts and currencies have no prefilled business defaults.
+
+Commit: `e30dd46c03ba064ff06c0dd957d006ef6b92b88a` (activation-order guard; initial page commit `9f16cefb2795752d08b6e1182d45ddc49c665668`).
+
+**Verification status:** source has not yet been PHP-linted or exercised against the local database. The next user-assisted gate is to pull `main` and apply the two incentive migrations. Then lint the new page and run controlled policy create/activation checks before building source-event integrations. Do not treat the current page as runtime-verified.
