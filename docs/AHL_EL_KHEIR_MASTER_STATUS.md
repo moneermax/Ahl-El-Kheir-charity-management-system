@@ -2629,3 +2629,10 @@ Verification status: **NOT LOCALLY VERIFIED**. The new migration has not yet bee
 
 
 Migration follow-up: `eb92fa5a42d00c086da0fe6a439511178d8c149b` adds a rerun guard around ENUM-to-VARCHAR conversion. Local MariaDB verification is still required.
+
+## 2026-10-12 — Employee incentive policy category-code hardening
+The policy category form no longer accepts a user-entered code. The UI displays a read-only preview derived from the English name, while PHP independently generates the authoritative code and appends a numeric suffix when a code already exists. This prevents manual code typos and ignores forged client-supplied code values. The same source update adds strict validation for the GM/FM agreement timestamp (round-trip date validation, reject future values) and a 2,000-character server-side notes limit.
+
+Commit: `23bdf2a84d81cd86f753c283e462f06f828aa510` (generated-code hardening); the underlying feature and agreement validation are in `1a1ced379bf5f4942cd44d554bbfbbfc2c499bbe`.
+
+User verified the existing category labels render correctly in Arabic and English. Local PHP lint and browser verification of the newly changed code-generation UI are still pending. No policy amounts have been approved; do not activate any test policy.
