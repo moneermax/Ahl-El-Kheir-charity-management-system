@@ -2594,7 +2594,7 @@ The temporary routing override was removed safely. `.htaccess` now contains exac
 
 A new requirement covers fixed-amount rewards for (1) financially confirmed monthly sponsorship collections, (2) new sponsor acquisition/reactivation only after the first payment is confirmed, and (3) successful project completion only after both administrative and FM financial closure. Governance and policy decisions are captured in `docs/HR_EMPLOYEE_INCENTIVES_CONTINUATION.md`.
 
-Current status: source/design audit in progress. No incentive production code or migration has been implemented or runtime-verified. Payroll accounting currently uses expense account 5200 and reconciles expense to `net_salary + salary_advance_deduction`; incentive accounting requires explicit allocation to a dedicated approved expense account and must preserve paid-payroll immutability. The latest database snapshot was committed as `de397397432797c674a9bf06133e90d57bffb5b7`; it is data-bearing and must not be restored into the live database for this work. Continue with exact schema and transaction-boundary inspection before coding.
+Current status at the original source/design checkpoint: implementation was not yet present. Subsequent commits added account 5500, the incentive ledger, policy administration, and the category/custom-field extension. These source changes still require local PHP lint and MariaDB/browser verification. Payroll accounting currently uses expense account 5200 and reconciles expense to `net_salary + salary_advance_deduction`; incentive accounting still requires explicit allocation to account 5500 and must preserve paid-payroll immutability. The data-bearing database snapshot must not be restored into the live database.
 
 
 **Implementation update (2026-10-12):** direct sponsor creation now includes `brought_by_user_id = Session::getUserId()` in `modules/sponsors/create.php` (commits `aaa7189`, `3bc49b3`). Static inspection confirms 22 SQL placeholders match 22 bound parameters. The user subsequently synced `main`, ran `php -l modules\sponsors\create.php` successfully, and confirmed the local `sponsors.brought_by_user_id` column exists as nullable indexed `int(10) unsigned` with an FK to `users.id`. Local metadata also confirms relevant tables use InnoDB and identifies the source indexes/FKs; see `docs/HR_EMPLOYEE_INCENTIVES_CONTINUATION.md`. Actual sponsor INSERT behavior remains runtime-unverified. Full incentive policy/ledger/payroll/accounting implementation remains pending.
@@ -2611,9 +2611,18 @@ The FM dashboard salary-related cards are consolidated into modules/hr/salary_po
 
 - The incentive policy currency input has been removed; the page now uses system-wide `APP_CURRENCY_CODE=SDG`. The user confirmed the change is visible locally. Commit: `12af8e46b2a9e042322bddf939462b973dd612d0`. PHP lint and runtime validation remain to be recorded.
 - Monthly employee performance recognition and certificate generation are explicitly deferred to a separate future feature. Do not implement this within the current incentive work.
-- Current active requirement: make incentive policy records extensible with additional fields that FM/HR can add when needed. Keep custom policy metadata separate from custom incentive award types; the latter still require replacing the current ENUM-based type model with a proper catalogue and defined award workflow.
-- Authorization decision still needed before code: whether HR may create draft policy records/add fields while FM alone activates them, or whether HR's role is limited to proposing fields for FM-created drafts. Preserve the agreed no-second-GM-approval governance.
+- The user approved a database-driven category catalogue plus version-scoped custom policy fields. HR Manager/HR Staff and FM/Admin can create drafts and add fields; activation remains FM/Admin only. The GM/FM agreement remains recorded before activation, with no second GM approval.
+- Source changes are committed in `74a0140` (catalogue/custom-field migration) and `68758c1` (policy page). Custom categories are manual-review only and do not yet have an award/payment workflow. Monthly performance recognition/certificates remain deferred.
 
 ## 2026-10-12 — Employee incentive policy continuation
 
 The user confirmed the SDG currency input removal is visible on the local incentive policy page. Commit `12af8e46b2a9e042322bddf939462b973dd612d0`; local lint/runtime verification remains pending. Monthly performance recognition/scoring/certificates are deferred to a separate future feature. Current active requirement: extensible policy fields FM/HR can add when needed. Confirm HR's permitted draft/metadata actions before changing authorization; FM retains policy activation authority. Custom incentive award types remain a separate schema/workflow requirement because the current type columns are ENUMs.
+
+
+## 2026-10-12 — Incentive category catalogue and extensible policy fields
+
+Committed to `main`:
+- `74a0140c32670bb74421f7366011420f0dd33c11`: migration introduces `hr_incentive_types`, preserves the four built-in codes while converting ENUM-backed rule/event category columns to catalogue-backed strings with foreign keys, and adds `hr_incentive_policy_custom_fields`.
+- `68758c17c6363083f798e019c6348bdb596acc8c`: policy page loads category records from the catalogue, supports manual-only category creation, lets HR/FM create policy drafts and add version-scoped custom fields, validates required field values before activation, and restricts activation to FM/Admin.
+
+Verification status: **NOT LOCALLY VERIFIED**. The new migration has not yet been applied to local MariaDB, and PHP lint/browser checks have not been run. New category award issuance/payment is not implemented. Next gate is local sync, migration execution, PHP lint, and role/workflow checks before proceeding to incentive event and payroll/accounting integration.
