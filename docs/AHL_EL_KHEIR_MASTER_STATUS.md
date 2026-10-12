@@ -2614,3 +2614,6 @@ The FM dashboard salary-related cards are consolidated into modules/hr/salary_po
 - Current active requirement: make incentive policy records extensible with additional fields that FM/HR can add when needed. Keep custom policy metadata separate from custom incentive award types; the latter still require replacing the current ENUM-based type model with a proper catalogue and defined award workflow.
 - Authorization decision still needed before code: whether HR may create draft policy records/add fields while FM alone activates them, or whether HR's role is limited to proposing fields for FM-created drafts. Preserve the agreed no-second-GM-approval governance.
 
+## 2026-10-12 — Employee incentive policy continuation
+
+The user confirmed the SDG currency input removal is visible on the local incentive policy page. Commit `12af8e46b2a9e042322bddf939462b973dd612d0`; local lint/runtime verification remains pending. Monthly performance recognition/scoring/certificates are deferred to a separate future feature. Current active requirement: extensible policy fields FM/HR can add when needed. Confirm HR's permitted draft/metadata actions before changing authorization; FM retains policy activation authority. Custom incentive award types remain a separate schema/workflow requirement because the current type columns are ENUMs.
