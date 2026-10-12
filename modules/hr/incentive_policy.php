@@ -128,9 +128,20 @@ try {
             }
 
             $effectiveFrom = (string)$policy['effective_from'];
+            $laterActive = dbFetchOne(
+                "SELECT id, effective_from FROM hr_incentive_policy_versions
+                 WHERE status = 'active' AND effective_from >= ?
+                 ORDER BY effective_from ASC LIMIT 1 FOR UPDATE",
+                [$effectiveFrom]
+            );
+            if ($laterActive) {
+                throw new InvalidArgumentException(
+                    'توجد سياسة مفعّلة بتاريخ سريان مساوٍ أو لاحق. فعّل الإصدارات بترتيب تاريخ السريان لتجنّب تداخل السياسات.'
+                );
+            }
             $prior = dbFetchAll(
                 "SELECT id, effective_from FROM hr_incentive_policy_versions
-                 WHERE status = 'active' AND effective_from < ? AND (effective_to IS NULL OR effective_to >= ?)
+                 WHERE status = 'active' AND effective_from <= ? AND (effective_to IS NULL OR effective_to >= ?)
                  FOR UPDATE",
                 [$effectiveFrom, $effectiveFrom]
             );
