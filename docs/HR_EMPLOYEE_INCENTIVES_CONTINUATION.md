@@ -156,3 +156,17 @@ The policy workflow follows the user-approved governance decision: GM/FM agree o
 Commit: `e30dd46c03ba064ff06c0dd957d006ef6b92b88a` (activation-order guard; initial page commit `9f16cefb2795752d08b6e1182d45ddc49c665668`).
 
 **Verification status:** source has not yet been PHP-linted or exercised against the local database. The next user-assisted gate is to pull `main` and apply the two incentive migrations. Then lint the new page and run controlled policy create/activation checks before building source-event integrations. Do not treat the current page as runtime-verified.
+
+## 2026-10-12 — Salary portal navigation milestone
+
+The FM dashboard salary actions are consolidated into modules/hr/salary_portal.php, which provides role-filtered links for salary-advance management, salary-advance waivers, payroll management, and employee incentive policy. The three separate salary/advance cards were removed from the FM dashboard and replaced by one portal card for roles that have at least one authorized destination. Each destination retains its own server-side authorization; the portal does not grant access by itself.
+
+Commits on main:
+- 8bc2be917afaa09d50a3c46f4d13a3922c42648b — consolidate FM dashboard salary actions.
+- 94f5c9c5666a84cea8fc4a161277dba3b707e2a1 — add salary portal.
+
+Verification: source committed to GitHub; local pull, PHP lint, and browser verification of the portal/dashboard changes remain pending.
+
+## Extensible incentive types — design decision still required
+
+The initial incentive schema/page hardcodes four types. Adding arbitrary policy types safely requires a type catalogue and changing the current ENUM-backed incentive_type columns; simply adding another row in the page would fail at the database boundary. Built-in types have known automatic source events, while examples such as “Employee of the Month” need a manual nomination/award workflow and verification semantics. Do not alter the schema or imply a custom type can generate/pay awards until that distinction is settled. Ask whether additional types should be created as manual award types, with an employee selected and the achievement manager-verified, while the four current source-driven types retain their existing automatic eligibility rules.
