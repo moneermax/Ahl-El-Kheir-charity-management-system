@@ -8,7 +8,10 @@ require_once __DIR__ . '/../../config/session.php';
 
 Session::start();
 $role = (string)Session::getUserRole();
-if (!Session::isLoggedIn() || !in_array($role, ['financial_manager', 'admin'], true)) {
+$canManagePolicies = in_array($role, ['financial_manager', 'admin', 'hr_manager', 'hr_staff'], true);
+$canActivatePolicies = in_array($role, ['financial_manager', 'admin'], true);
+$canManageTypes = in_array($role, ['financial_manager', 'admin', 'hr_manager', 'hr_staff'], true);
+if (!Session::isLoggedIn() || !$canManagePolicies) {
     header('Location: ' . APP_URL . 'index.php');
     exit;
 }
@@ -16,12 +19,52 @@ if (!Session::isLoggedIn() || !in_array($role, ['financial_manager', 'admin'], t
 $pdo = db();
 $message = '';
 $error = '';
-$types = [
-    'collection' => 'حوافز تحصيل الكفالات والتبرعات',
-    'new_sponsor' => 'حافز استقطاب كفيل جديد',
-    'reactivation' => 'حافز استعادة كفيل',
-    'project_completion' => 'حافز إتمام المشروع',
+$fieldTypes = [
+    'short_text' => 'نص قصير',
+    'long_text' => 'نص طويل',
+    'number' => 'رقم',
+    'date' => 'تاريخ',
+    'boolean' => 'نعم / لا',
+    'select' => 'قائمة اختيار',
 ];
+
+function hrIncentiveValidateCustomValue(string $type, string $value, array $options, bool $required): ?string
+{
+    $value = trim($value);
+    if ($value === '') {
+        if ($required) {
+            throw new InvalidArgumentException('قيمة الحقل مطلوبة.');
+        }
+        return null;
+    }
+
+    switch ($type) {
+        case 'short_text':
+            if (mb_strlen($value) > 500) throw new InvalidArgumentException('النص القصير يجب ألا يتجاوز 500 حرف.');
+            break;
+        case 'long_text':
+            if (mb_strlen($value) > 5000) throw new InvalidArgumentException('النص الطويل يجب ألا يتجاوز 5000 حرف.');
+            break;
+        case 'number':
+            $number = filter_var($value, FILTER_VALIDATE_FLOAT);
+            if ($number === false || !is_finite((float)$number)) throw new InvalidArgumentException('أدخل قيمة رقمية صحيحة للحقل.');
+            break;
+        case 'date':
+            $date = DateTimeImmutable::createFromFormat('!Y-m-d', $value);
+            if (!$date || $date->format('Y-m-d') !== $value) throw new InvalidArgumentException('أدخل تاريخاً صحيحاً للحقل.');
+            break;
+        case 'boolean':
+            if (!in_array($value, ['0', '1'], true)) throw new InvalidArgumentException('اختر نعم أو لا للحقل.');
+            break;
+        case 'select':
+            if (!in_array($value, $options, true)) throw new InvalidArgumentException('اختر قيمة موجودة في قائمة الحقل.');
+            break;
+        default:
+            throw new InvalidArgumentException('نوع الحقل غير مدعوم.');
+    }
+
+    return $value;
+}
 
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -30,7 +73,32 @@ try {
         }
 
         $action = (string)($_POST['action'] ?? '');
+        if ($action === 'create_category') {
+            if (!$canManageTypes) throw new RuntimeException('ليس لديك صلاحية إدارة أنواع الحوافز.');
+            $code = strtolower(trim((string)($_POST['type_code'] ?? '')));
+            $nameAr = trim((string)($_POST['name_ar'] ?? ''));
+            $nameEn = trim((string)($_POST['name_en'] ?? ''));
+            if (!preg_match('/^[a-z][a-z0-9_]{1,79}$/', $code)) {
+                throw new InvalidArgumentException('رمز النوع يجب أن يبدأ بحرف إنجليزي ويحتوي على أحرف صغيرة أو أرقام أو شرطة سفلية فقط (2–80 حرفاً).');
+            }
+            if ($nameAr === '' || mb_strlen($nameAr) > 190 || $nameEn === '' || mb_strlen($nameEn) > 190) {
+                throw new InvalidArgumentException('اسم نوع الحافز بالعربية والإنجليزية مطلوب وبحد أقصى 190 حرفاً لكل اسم.');
+            }
+            $exists = dbFetchOne('SELECT id FROM hr_incentive_types WHERE type_code = ? LIMIT 1', [$code]);
+            if ($exists) throw new InvalidArgumentException('رمز نوع الحافز مستخدم بالفعل.');
+            $stmt = $pdo->prepare(
+                "INSERT INTO hr_incentive_types
+                    (type_code, name_ar, name_en, qualification_mode, is_system, is_active, sort_order, created_by_user_id)
+                 VALUES (?, ?, ?, 'manual_review', 0, 1, 100, ?)"
+            );
+            $stmt->execute([$code, $nameAr, $nameEn, (int)Session::getUserID()]);
+            flash('success', 'تمت إضافة نوع الحافز. النوع الجديد مخصص للمراجعة اليدوية ولا ينشئ مكافآت تلقائياً.');
+            header('Location: ' . APP_URL . 'modules/hr/incentive_policy.php');
+            exit;
+        }
+
         if ($action === 'create_policy') {
+            if (!$canManagePolicies) throw new RuntimeException('ليس لديك صلاحية إنشاء مسودة سياسة.');
             $name = trim((string)($_POST['policy_name'] ?? ''));
             $effectiveFrom = trim((string)($_POST['effective_from'] ?? ''));
             $agreementAt = trim((string)($_POST['agreement_recorded_at'] ?? ''));
@@ -47,18 +115,21 @@ try {
                 throw new InvalidArgumentException('سجّل تاريخ/وقت اتفاق GM وFM وملاحظات الاتفاق قبل إنشاء السياسة.');
             }
 
+            $types = dbFetchAll('SELECT type_code, name_ar, qualification_mode FROM hr_incentive_types WHERE is_active = 1 ORDER BY sort_order, id');
+            if (!$types) throw new RuntimeException('لا توجد أنواع حوافز نشطة لإضافتها إلى السياسة.');
             $rules = [];
-            foreach ($types as $type => $label) {
-                $enabled = isset($_POST['enabled'][$type]) ? 1 : 0;
-                $amountRaw = trim((string)($_POST['amount'][$type] ?? ''));
+            foreach ($types as $typeRow) {
+                $typeCode = (string)$typeRow['type_code'];
+                $enabled = isset($_POST['enabled'][$typeCode]) ? 1 : 0;
+                $amountRaw = trim((string)($_POST['amount'][$typeCode] ?? ''));
                 $amount = filter_var($amountRaw, FILTER_VALIDATE_FLOAT);
                 if ($amount === false || !is_finite((float)$amount) || (float)$amount < 0 || (float)$amount > 9999999999.99) {
-                    throw new InvalidArgumentException('قيمة الحافز غير صالحة: ' . $label);
+                    throw new InvalidArgumentException('قيمة الحافز غير صالحة: ' . (string)$typeRow['name_ar']);
                 }
                 if ($enabled && (float)$amount <= 0) {
-                    throw new InvalidArgumentException('قيمة الحافز المفعّل يجب أن تكون أكبر من صفر: ' . $label);
+                    throw new InvalidArgumentException('قيمة الحافز المفعّل يجب أن تكون أكبر من صفر: ' . (string)$typeRow['name_ar']);
                 }
-                $rules[$type] = ['enabled' => $enabled, 'amount' => round((float)$amount, 2), 'currency' => APP_CURRENCY_CODE];
+                $rules[$typeCode] = ['enabled' => $enabled, 'amount' => round((float)$amount, 2), 'currency' => APP_CURRENCY_CODE];
             }
             if (!array_filter($rules, static fn(array $rule): bool => $rule['enabled'] === 1)) {
                 throw new InvalidArgumentException('فعّل نوع حافز واحداً على الأقل قبل حفظ السياسة.');
@@ -78,16 +149,68 @@ try {
                 'INSERT INTO hr_incentive_policy_rules (policy_version_id, incentive_type, reward_amount, currency_code, is_enabled)
                  VALUES (?, ?, ?, ?, ?)'
             );
-            foreach ($rules as $type => $rule) {
-                $ruleStmt->execute([$policyId, $type, $rule['amount'], $rule['currency'], $rule['enabled']]);
+            foreach ($rules as $typeCode => $rule) {
+                $ruleStmt->execute([$policyId, $typeCode, $rule['amount'], $rule['currency'], $rule['enabled']]);
             }
             $pdo->commit();
-            flash('success', 'تم حفظ مسودة سياسة الحوافز V' . $version . '. يجب مراجعة تفاصيلها ثم تفعيلها من خلال إجراء التفعيل.');
+            flash('success', 'تم حفظ مسودة سياسة الحوافز V' . $version . '. يمكن إضافة حقول مخصصة للمسودة، ويظل التفعيل من اختصاص FM.');
+            header('Location: ' . APP_URL . 'modules/hr/incentive_policy.php');
+            exit;
+        }
+
+        if ($action === 'add_custom_field') {
+            $policyId = (int)($_POST['policy_id'] ?? 0);
+            $policy = dbFetchOne('SELECT id, status FROM hr_incentive_policy_versions WHERE id = ? LIMIT 1', [$policyId]);
+            if (!$policy || $policy['status'] !== 'draft') {
+                throw new InvalidArgumentException('يمكن إضافة الحقول إلى مسودة سياسة فقط.');
+            }
+            $labelAr = trim((string)($_POST['label_ar'] ?? ''));
+            $labelEn = trim((string)($_POST['label_en'] ?? ''));
+            $type = (string)($_POST['field_type'] ?? '');
+            $required = isset($_POST['is_required']) ? 1 : 0;
+            $rawValue = (string)($_POST['field_value'] ?? '');
+            $optionsRaw = trim((string)($_POST['options'] ?? ''));
+            if ($labelAr === '' || mb_strlen($labelAr) > 190 || ($labelEn !== '' && mb_strlen($labelEn) > 190)) {
+                throw new InvalidArgumentException('اسم الحقل بالعربية مطلوب؛ والاسم الإنجليزي اختياري، وبحد أقصى 190 حرفاً.');
+            }
+            if (!isset($fieldTypes[$type])) throw new InvalidArgumentException('اختر نوعاً مدعوماً للحقل.');
+            $options = [];
+            if ($type === 'select') {
+                $options = array_values(array_unique(array_filter(array_map('trim', preg_split('/\\R/u', $optionsRaw) ?: []), static fn(string $v): bool => $v !== '')));
+                if (count($options) < 2 || count($options) > 50) {
+                    throw new InvalidArgumentException('قائمة الاختيار يجب أن تحتوي على 2 إلى 50 خياراً، خيار واحد في كل سطر.');
+                }
+                foreach ($options as $option) {
+                    if (mb_strlen($option) > 190) throw new InvalidArgumentException('كل خيار يجب ألا يتجاوز 190 حرفاً.');
+                }
+            }
+            $value = hrIncentiveValidateCustomValue($type, $rawValue, $options, $required === 1);
+            if ($type !== 'select' && $optionsRaw !== '') {
+                throw new InvalidArgumentException('قائمة الخيارات تستخدم مع نوع قائمة الاختيار فقط.');
+            }
+
+            $key = 'custom_' . bin2hex(random_bytes(8));
+            $sort = (int)(dbFetchOne(
+                'SELECT COALESCE(MAX(sort_order), 0) + 10 AS next_order FROM hr_incentive_policy_custom_fields WHERE policy_version_id = ?',
+                [$policyId]
+            )['next_order'] ?? 10);
+            $stmt = $pdo->prepare(
+                'INSERT INTO hr_incentive_policy_custom_fields
+                    (policy_version_id, field_key, label_ar, label_en, field_type, is_required, options_json, field_value, sort_order, created_by_user_id)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+            );
+            $stmt->execute([
+                $policyId, $key, $labelAr, ($labelEn !== '' ? $labelEn : null), $type, $required,
+                ($type === 'select' ? json_encode($options, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR) : null),
+                $value, $sort, (int)Session::getUserID()
+            ]);
+            flash('success', 'تمت إضافة الحقل إلى مسودة السياسة. سيبقى ضمن سجل إصدار السياسة ولن يغيّر الإصدارات السابقة.');
             header('Location: ' . APP_URL . 'modules/hr/incentive_policy.php');
             exit;
         }
 
         if ($action === 'activate_policy') {
+            if (!$canActivatePolicies) throw new RuntimeException('تفعيل سياسة الحوافز من اختصاص المدير المالي فقط.');
             $policyId = (int)($_POST['policy_id'] ?? 0);
             $pdo->beginTransaction();
             $policy = dbFetchOne('SELECT * FROM hr_incentive_policy_versions WHERE id = ? FOR UPDATE', [$policyId]);
@@ -100,15 +223,22 @@ try {
             if (trim((string)$policy['agreement_notes']) === '' || empty($policy['agreement_recorded_at'])) {
                 throw new InvalidArgumentException('لا توجد بيانات موثقة لاتفاق GM وFM.');
             }
-            $ruleRows = dbFetchAll('SELECT incentive_type, is_enabled, reward_amount FROM hr_incentive_policy_rules WHERE policy_version_id = ? FOR UPDATE', [$policyId]);
-            if (count($ruleRows) !== count($types)) {
-                throw new InvalidArgumentException('السياسة لا تحتوي على جميع أنواع الحوافز الأربعة.');
-            }
+            $ruleRows = dbFetchAll(
+                'SELECT r.incentive_type, r.is_enabled, r.reward_amount, t.is_active, t.qualification_mode
+                 FROM hr_incentive_policy_rules r
+                 JOIN hr_incentive_types t ON t.type_code = r.incentive_type
+                 WHERE r.policy_version_id = ? FOR UPDATE',
+                [$policyId]
+            );
+            if (!$ruleRows) throw new InvalidArgumentException('السياسة لا تحتوي على أي أنواع حوافز.');
             $enabledCount = 0;
             foreach ($ruleRows as $rule) {
                 if ((int)$rule['is_enabled'] === 1) {
                     if ((float)$rule['reward_amount'] <= 0) {
                         throw new InvalidArgumentException('لا يمكن تفعيل حافز مفعّل بقيمة صفر.');
+                    }
+                    if ((int)$rule['is_active'] !== 1) {
+                        throw new InvalidArgumentException('توجد فئة مفعّلة في السياسة لكنها غير نشطة في سجل الفئات.');
                     }
                     $enabledCount++;
                 }
@@ -116,6 +246,13 @@ try {
             if ($enabledCount === 0) {
                 throw new InvalidArgumentException('يجب تفعيل نوع حافز واحد على الأقل.');
             }
+
+            $requiredFields = dbFetchAll(
+                "SELECT label_ar FROM hr_incentive_policy_custom_fields
+                 WHERE policy_version_id = ? AND is_required = 1 AND (field_value IS NULL OR TRIM(field_value) = '')",
+                [$policyId]
+            );
+            if ($requiredFields) throw new InvalidArgumentException('أكمل الحقول الإضافية المطلوبة قبل تفعيل السياسة: ' . implode('، ', array_column($requiredFields, 'label_ar')));
 
             $effectiveFrom = (string)$policy['effective_from'];
             $laterActive = dbFetchOne(
@@ -172,6 +309,10 @@ $policies = dbFetchAll(
      LEFT JOIN users au ON au.id=p.activated_by_user_id
      ORDER BY p.version_no DESC"
 );
+$allTypes = dbFetchAll('SELECT * FROM hr_incentive_types ORDER BY sort_order, id');
+$activeTypes = array_values(array_filter($allTypes, static fn(array $t): bool => (int)$t['is_active'] === 1));
+$typeNames = [];
+foreach ($allTypes as $typeRow) $typeNames[(string)$typeRow['type_code']] = (string)$typeRow['name_ar'];
 $ruleRows = dbFetchAll(
     'SELECT r.*, p.version_no FROM hr_incentive_policy_rules r
      JOIN hr_incentive_policy_versions p ON p.id=r.policy_version_id
@@ -179,6 +320,13 @@ $ruleRows = dbFetchAll(
 );
 $rulesByPolicy = [];
 foreach ($ruleRows as $ruleRow) $rulesByPolicy[(int)$ruleRow['policy_version_id']][] = $ruleRow;
+$customFieldRows = dbFetchAll(
+    'SELECT f.*, p.version_no FROM hr_incentive_policy_custom_fields f
+     JOIN hr_incentive_policy_versions p ON p.id=f.policy_version_id
+     ORDER BY p.version_no DESC, f.sort_order, f.id'
+);
+$fieldsByPolicy = [];
+foreach ($customFieldRows as $fieldRow) $fieldsByPolicy[(int)$fieldRow['policy_version_id']][] = $fieldRow;
 
 $pageTitle = 'سياسة حوافز الموظفين';
 require_once __DIR__ . '/../../includes/header.php';
@@ -187,11 +335,60 @@ require_once __DIR__ . '/../../includes/header.php';
     <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
         <div>
             <h1 class="h4 fw-bold mb-1"><i class="fas fa-award text-primary me-2"></i>سياسة حوافز الموظفين</h1>
-            <p class="text-muted mb-0 small">يُسجّل FM اتفاق GM وFM ثم ينشئ السياسة ويفعّلها؛ لا توجد موافقة GM ثانية على السياسة.</p>
+            <p class="text-muted mb-0 small">يسجّل HR أو FM مسودة السياسة بعد اتفاق GM وFM؛ التفعيل من اختصاص FM ولا يتطلب اعتماد GM ثانياً.</p>
         </div>
     </div>
     <?php if ($message !== ''): ?><div class="alert alert-success"><?=e($message)?></div><?php endif; ?>
     <?php if ($error !== ''): ?><div class="alert alert-danger"><?=e($error)?></div><?php endif; ?>
+
+    <div class="alert alert-info small">
+        العملة المعتمدة على مستوى النظام هي <?=e(APP_CURRENCY_CODE)?> (<?=e(APP_CURRENCY_NAME_AR)?>).
+        الفئات الأربع الأساسية مرتبطة بأحداث النظام الحالية. أي فئة جديدة تُضاف هنا بوضع «مراجعة يدوية» ولا تصدر مكافآت تلقائياً؛ مسار الترشيح والصرف للفئات اليدوية يحتاج تنفيذاً مستقلاً قبل استخدامها مالياً.
+    </div>
+
+    <?php if ($canManageTypes): ?>
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white fw-bold">إدارة فئات الحوافز</div>
+        <div class="card-body">
+            <form method="post" class="row g-3">
+                <?=csrf_field()?>
+                <input type="hidden" name="action" value="create_category">
+                <div class="col-md-3">
+                    <label class="form-label">رمز الفئة *</label>
+                    <input class="form-control" name="type_code" pattern="[a-z][a-z0-9_]{1,79}" maxlength="80" placeholder="مثال: service_quality" required>
+                    <div class="form-text">رمز ثابت بالإنجليزية؛ لا تستخدم مسافات.</div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">الاسم بالعربية *</label>
+                    <input class="form-control" name="name_ar" maxlength="190" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">الاسم بالإنجليزية *</label>
+                    <input class="form-control" name="name_en" maxlength="190" required>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button class="btn btn-outline-primary w-100" type="submit"><i class="fas fa-plus me-1"></i>إضافة فئة يدوية</button>
+                </div>
+            </form>
+            <hr>
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered align-middle mb-0">
+                    <thead class="table-light"><tr><th>الرمز</th><th>الفئة</th><th>آلية الاستحقاق</th><th>الحالة</th></tr></thead>
+                    <tbody>
+                    <?php foreach ($allTypes as $typeRow): ?>
+                        <tr>
+                            <td><code><?=e($typeRow['type_code'])?></code></td>
+                            <td><?=e($typeRow['name_ar'])?> <span class="text-muted small">/ <?=e($typeRow['name_en'])?></span></td>
+                            <td><?= $typeRow['qualification_mode'] === 'source_event' ? 'حدث موثّق بالنظام' : 'مراجعة يدوية — لا إصدار تلقائي' ?></td>
+                            <td><?= (int)$typeRow['is_active'] === 1 ? 'نشطة' : 'غير نشطة' ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
 
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-header bg-white fw-bold">إنشاء إصدار سياسة جديد</div>
@@ -218,16 +415,17 @@ require_once __DIR__ . '/../../includes/header.php';
                     </div>
                 </div>
                 <hr>
-                <p class="small text-muted">العملة المعتمدة على مستوى النظام هي <?=e(APP_CURRENCY_CODE)?> (<?=e(APP_CURRENCY_NAME_AR)?>). أدخل قيمة الحافز وحدد الأنواع التي يشملها الإصدار؛ المبلغ ثابت وليس نسبة من التحصيل.</p>
+                <p class="small text-muted">حدّد الفئات المشمولة في هذا الإصدار وأدخل المبالغ الثابتة. الفئات التي ستُضاف لاحقاً لا تُدرج تلقائياً في الإصدارات السابقة.</p>
                 <div class="table-responsive">
                     <table class="table table-bordered align-middle">
-                        <thead class="table-light"><tr><th>نوع الحافز</th><th>مفعّل؟</th><th>المبلغ (<?=e(APP_CURRENCY_CODE)?>)</th></tr></thead>
+                        <thead class="table-light"><tr><th>فئة الحافز</th><th>آلية الاستحقاق</th><th>مفعّل؟</th><th>المبلغ (<?=e(APP_CURRENCY_CODE)?>)</th></tr></thead>
                         <tbody>
-                        <?php foreach ($types as $type => $label): ?>
+                        <?php foreach ($activeTypes as $typeRow): $typeCode = (string)$typeRow['type_code']; ?>
                             <tr>
-                                <td><?=e($label)?></td>
-                                <td class="text-center"><input class="form-check-input" type="checkbox" name="enabled[<?=e($type)?>]" value="1"></td>
-                                <td><input class="form-control" type="number" name="amount[<?=e($type)?>]" min="0" max="9999999999.99" step="0.01" value="0" required></td>
+                                <td><?=e($typeRow['name_ar'])?><br><code class="small"><?=e($typeCode)?></code></td>
+                                <td><?= $typeRow['qualification_mode'] === 'source_event' ? 'حدث موثّق بالنظام' : '<span class="text-warning">مراجعة يدوية — لا إصدار تلقائي</span>' ?></td>
+                                <td class="text-center"><input class="form-check-input" type="checkbox" name="enabled[<?=e($typeCode)?>]" value="1"></td>
+                                <td><input class="form-control" type="number" name="amount[<?=e($typeCode)?>]" min="0" max="9999999999.99" step="0.01" value="0" required></td>
                             </tr>
                         <?php endforeach; ?>
                         </tbody>
@@ -246,35 +444,101 @@ require_once __DIR__ . '/../../includes/header.php';
             <?php else: ?>
                 <div class="table-responsive">
                     <table class="table table-hover align-middle">
-                        <thead class="table-light"><tr><th>الإصدار</th><th>الاسم</th><th>الحالة</th><th>السريان</th><th>أنواع مفعّلة</th><th>الاتفاق</th><th>الإجراء</th></tr></thead>
+                        <thead class="table-light"><tr><th>الإصدار</th><th>الاسم</th><th>الحالة</th><th>السريان</th><th>فئات مفعّلة</th><th>الاتفاق</th><th>الإجراء</th></tr></thead>
                         <tbody>
-                        <?php foreach ($policies as $policy): ?>
+                        <?php foreach ($policies as $policy): $policyId = (int)$policy['id']; ?>
                             <tr>
                                 <td>V<?= (int)$policy['version_no'] ?></td>
                                 <td><?=e($policy['policy_name'])?></td>
                                 <td><?=e(['draft'=>'مسودة','active'=>'سارية','retired'=>'منتهية/مستبدلة'][$policy['status']] ?? $policy['status'])?></td>
                                 <td><?=e($policy['effective_from'])?><?= $policy['effective_to'] ? ' — ' . e($policy['effective_to']) : '' ?></td>
-                                <td><?= (int)$policy['enabled_rules'] ?> / 4</td>
+                                <td><?= (int)$policy['enabled_rules'] ?></td>
                                 <td><small><?=e($policy['agreement_recorded_at'] ?? '—')?></small><br><small class="text-muted"><?=e($policy['created_by_name'] ?? '')?></small></td>
                                 <td>
-                                    <?php if ($policy['status'] === 'draft'): ?>
+                                    <?php if ($policy['status'] === 'draft' && $canActivatePolicies): ?>
                                         <form method="post" onsubmit="return confirm('تفعيل هذه السياسة وفق تاريخ السريان المسجل؟');">
                                             <?=csrf_field()?>
                                             <input type="hidden" name="action" value="activate_policy">
-                                            <input type="hidden" name="policy_id" value="<?= (int)$policy['id'] ?>">
+                                            <input type="hidden" name="policy_id" value="<?=$policyId?>">
                                             <button class="btn btn-sm btn-success" type="submit">تفعيل السياسة</button>
                                         </form>
+                                    <?php elseif ($policy['status'] === 'draft'): ?>
+                                        <span class="text-muted small">بانتظار تفعيل FM</span>
                                     <?php else: ?><span class="text-muted">—</span><?php endif; ?>
                                 </td>
                             </tr>
                             <tr class="table-light"><td colspan="7">
                                 <div class="d-flex flex-wrap gap-3 small">
-                                <?php foreach (($rulesByPolicy[(int)$policy['id']] ?? []) as $rule): ?>
-                                    <span><strong><?=e($types[$rule['incentive_type']] ?? $rule['incentive_type'])?>:</strong>
+                                <?php foreach (($rulesByPolicy[$policyId] ?? []) as $rule): ?>
+                                    <span><strong><?=e($typeNames[$rule['incentive_type']] ?? $rule['incentive_type'])?>:</strong>
                                     <?= (int)$rule['is_enabled'] === 1 ? number_format((float)$rule['reward_amount'],2) . ' ' . e($rule['currency_code']) : 'غير مفعّل' ?></span>
                                 <?php endforeach; ?>
                                 </div>
                                 <?php if (!empty($policy['agreement_notes'])): ?><div class="small text-muted mt-2"><?=nl2br(e($policy['agreement_notes']))?></div><?php endif; ?>
+
+                                <?php if (!empty($fieldsByPolicy[$policyId])): ?>
+                                    <div class="mt-3">
+                                        <strong class="small">الحقول الإضافية لهذا الإصدار</strong>
+                                        <div class="d-flex flex-column gap-1 mt-1">
+                                        <?php foreach ($fieldsByPolicy[$policyId] as $field): ?>
+                                            <div class="small">
+                                                <strong><?=e($field['label_ar'])?><?= (int)$field['is_required'] === 1 ? ' *' : '' ?>:</strong>
+                                                <?php
+                                                $displayValue = (string)($field['field_value'] ?? '');
+                                                if ($field['field_type'] === 'boolean' && $displayValue !== '') $displayValue = $displayValue === '1' ? 'نعم' : 'لا';
+                                                ?>
+                                                <?= $displayValue !== '' ? nl2br(e($displayValue)) : '<span class="text-muted">—</span>' ?>
+                                                <span class="text-muted">(<?=e($fieldTypes[$field['field_type']] ?? $field['field_type'])?>)</span>
+                                            </div>
+                                        <?php endforeach; ?>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
+
+                                <?php if ($policy['status'] === 'draft' && $canManagePolicies): ?>
+                                    <details class="mt-3">
+                                        <summary class="small fw-bold">إضافة حقل مخصص إلى هذه المسودة</summary>
+                                        <form method="post" class="row g-2 mt-2">
+                                            <?=csrf_field()?>
+                                            <input type="hidden" name="action" value="add_custom_field">
+                                            <input type="hidden" name="policy_id" value="<?=$policyId?>">
+                                            <div class="col-md-3">
+                                                <label class="form-label small">اسم الحقل بالعربية *</label>
+                                                <input class="form-control form-control-sm" name="label_ar" maxlength="190" required>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="form-label small">اسم الحقل بالإنجليزية</label>
+                                                <input class="form-control form-control-sm" name="label_en" maxlength="190">
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label class="form-label small">نوع الحقل *</label>
+                                                <select class="form-select form-select-sm" name="field_type" required>
+                                                    <?php foreach ($fieldTypes as $fieldType => $fieldLabel): ?>
+                                                        <option value="<?=e($fieldType)?>"><?=e($fieldLabel)?></option>
+                                                    <?php endforeach; ?>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label small">القيمة *</label>
+                                                <textarea class="form-control form-control-sm" name="field_value" rows="1" maxlength="5000"></textarea>
+                                            </div>
+                                            <div class="col-md-8">
+                                                <label class="form-label small">خيارات قائمة الاختيار (خيار في كل سطر)</label>
+                                                <textarea class="form-control form-control-sm" name="options" rows="2" placeholder="تستخدم فقط إذا كان النوع قائمة اختيار"></textarea>
+                                            </div>
+                                            <div class="col-md-2 d-flex align-items-end">
+                                                <div class="form-check mb-2">
+                                                    <input class="form-check-input" type="checkbox" name="is_required" value="1" id="field-required-<?=$policyId?>">
+                                                    <label class="form-check-label small" for="field-required-<?=$policyId?>">حقل مطلوب</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-2 d-flex align-items-end">
+                                                <button class="btn btn-sm btn-outline-primary w-100" type="submit">إضافة الحقل</button>
+                                            </div>
+                                            <div class="col-12 small text-muted">لحقول نعم/لا استخدم 1 أو 0. يجب إدخال القيمة وفق نوع الحقل؛ الحقول المطلوبة لا يمكن تركها فارغة عند التفعيل.</div>
+                                        </form>
+                                    </details>
+                                <?php endif; ?>
                             </td></tr>
                         <?php endforeach; ?>
                         </tbody>
