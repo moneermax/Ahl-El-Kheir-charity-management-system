@@ -424,10 +424,13 @@ Monthly employee performance recognition, scoring, ranking, co-winner handling, 
 ## 2026-10-12 — Latest incentive extensibility checkpoint
 
 Latest commits:
-- `74a0140c32670bb74421f7366011420f0dd33c11`: category catalogue/custom-field migration.
+- `eb92fa5a42d00c086da0fe6a439511178d8c149b`: category catalogue/custom-field migration.
 - `68758c17c6363083f798e019c6348bdb596acc8c`: category-driven policy page, HR/FM draft and custom-field access, FM/Admin-only activation.
 - `affd6538d4b3a140a2e3df725642254afdd1f71b`, `663efae40df2577dc517d8f02876c703eda1cfd1`, `40c47a468645de87f5f09eb1b9430c4733cf83e9`, `bdf7c41dff7dd4054096f9f941c3616fe00a1b47`: continuation/master docs updated.
 
 Important: these are GitHub source commits, not local runtime evidence. The new migration has not been applied locally, and `modules/hr/incentive_policy.php` has not yet been locally linted/browser-tested. The assistant cannot access the Windows/XAMPP runtime. The next action is to sync `main`, inspect the exact local diff and current migration state, run `php -l modules\\hr\\incentive_policy.php`, apply the new migration only if not already applied, then test database conversion/foreign keys, category creation, field validation and version isolation, HR denial of activation, and FM activation. If any check fails, inspect the exact failure before changing code.
 
 Custom category records are manual-review only. Do not issue awards or schedule payroll for these categories until a dedicated nomination/verification/award path exists. Monthly employee performance scoring/ranking/certificates remain deferred. Do not reopen closed salary-advance, attendance/payroll, i18n, or waiver work without regression evidence.
+
+
+Migration follow-up: `eb92fa5a42d00c086da0fe6a439511178d8c149b` adds a metadata guard so ENUM conversion is skipped after the column is already VARCHAR. Still apply/test against local MariaDB 10.4 and inspect the exact DDL result.
