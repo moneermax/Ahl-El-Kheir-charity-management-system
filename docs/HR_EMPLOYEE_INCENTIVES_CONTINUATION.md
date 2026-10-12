@@ -213,9 +213,12 @@ Monthly performance recognition and certificate issuance are deferred to a separ
 ## 2026-10-12 — Incentive catalogue and custom policy fields committed
 
 Commits:
-- `74a0140c32670bb74421f7366011420f0dd33c11` — adds `hr_incentive_types`, seeds the four existing category codes, converts the two ENUM-backed category columns to catalogue-backed strings, adds category foreign keys, and creates `hr_incentive_policy_custom_fields`.
+- `eb92fa5a42d00c086da0fe6a439511178d8c149b` — adds `hr_incentive_types`, seeds the four existing category codes, converts the two ENUM-backed category columns to catalogue-backed strings, adds category foreign keys, and creates `hr_incentive_policy_custom_fields`.
 - `68758c17c6363083f798e019c6348bdb596acc8c` — makes the policy page category-driven, adds manual-only category creation, allows HR/FМ to create drafts and add version-scoped fields, and restricts activation to FM/Admin.
 
 Custom fields support short text, long text, number, date, yes/no, and controlled selection lists. Required fields must be populated before activation. Existing category codes remain unchanged. New categories are marked `manual_review` and the UI explicitly states that this does not implement award issuance or payment for them.
 
 **Verification boundary:** these commits are source changes only. The new migration has not been applied to the user's local MariaDB, and the updated PHP has not yet been locally linted or exercised in the browser. Do not claim runtime success. Next gate: pull `main`, apply the new migration after confirming the prior incentive ledger migration is present, run PHP lint, then verify category creation, policy draft creation, custom-field validation/version isolation, HR activation denial, and FM activation.
+
+
+Migration hardening follow-up: commit `eb92fa5a42d00c086da0fe6a439511178d8c149b` makes the ENUM-to-VARCHAR conversion conditional on the live column still being an ENUM, so a rerun after a completed or partially completed migration does not unnecessarily modify a column already referenced by a category foreign key. This source-level guard has not yet been exercised against the local MariaDB version.
