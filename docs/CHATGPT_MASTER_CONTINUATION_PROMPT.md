@@ -388,7 +388,10 @@ Local cleanup is complete: `.htaccess` is exactly `Options -Indexes`, the tempor
 Evidence gaps remain: local runtime has not proven multiple simultaneously eligible advances for one employee or true concurrent production execution. Do not state these are proven. At the start of the next task, inspect current `main` and the canonical docs, then select the next genuinely open requirement; do not automatically reopen Stage 7, the closed waiver/i18n/attendance-payroll stages, or the unfinished attendance scroll-jump issue unless explicitly requested.
 
 
-## NEW ACTIVE FEATURE — Employee incentives (checkpoint 2026-10-12)
+## NEW ACTIVE FEATURE — Employee incentives
+
+**Source-audit blocker:** `modules/sponsors/requests.php` records `brought_by_user_id` from sponsor-request conversion, but `modules/sponsors/create.php` only writes `created_by` plus free-text `brought_by_name`. Never infer the award recipient from `created_by`. Before implementing new-sponsor awards, ask whether directly created sponsors without verified attribution should require manager-verified employee attribution or remain ineligible. Win-back records `handled_by` as a user ID; do not assume it is the reward recipient without confirming the intended business rule.
+ (checkpoint 2026-10-12)
 
 Continue from `docs/HR_EMPLOYEE_INCENTIVES_CONTINUATION.md`. The agreed feature has three fixed-amount, policy-versioned categories: financially confirmed monthly sponsorship collections (recipient = recorded collector); new sponsor/reactivation (recipient resolved from `sponsors.brought_by_user_id`, award only after sponsorship and first payment are confirmed; 90-day reactivation lookback); and successful project completion (award only after administrative closure plus FM financial closure, with explicitly approved split among named eligible team members). Amount/currency are configured in policy; 10,000 SDG was only an example. Monthly collection reward is not percentage-based.
 
