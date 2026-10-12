@@ -115,8 +115,8 @@ require_once __DIR__ . '/../../includes/header.php';
         <p class="mb-0">للمدير المالي فقط — تظهر هنا السلف المصروفة ذات الرصيد القائم التي انتهت خطتها وتسمح سياستها المحفوظة بإعادة الجدولة.</p>
     </div>
 
-    <?php if ($message !== ''): ?><div class="alert alert-success"><?=e($message)?></div><?php endif; ?>
-    <?php if ($error !== ''): ?><div class="alert alert-danger"><?=e($error)?></div><?php endif; ?>
+    <?php if ($message !== ''): ?><div class="alert alert-success alert-dismissible"><?=e($message)?></div><?php endif; ?>
+    <?php if ($error !== ''): ?><div class="alert alert-danger alert-dismissible"><?=e($error)?></div><?php endif; ?>
 
     <div class="card mb-4">
         <div class="card-header fw-bold">السلف المؤهلة لإعادة الجدولة</div>
