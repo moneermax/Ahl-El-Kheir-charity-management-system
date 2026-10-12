@@ -2824,3 +2824,16 @@ Read-only account lookup in the isolated database returned account ID 2 / code 1
 The user also requested a more compact payroll table. Commit `ae7d9fc6209a8ff1366afa96b9fb73720d614249` on `main` removes the Contract and Policy columns, removes redundant currency labels from amount cells, tightens input/typography spacing, adds distinct blue cell borders and a blue-tinted header, and removes now-unused joins from the month-list query. The shared policy summary above the table remains. This is source-committed but still requires local pull, PHP syntax check, and browser visual acceptance; do not claim the new layout is runtime-verified yet.
 
 The user confirmed the rescheduling success/error feedback now appears as a toast after commit `b546005f7f7996d1c4f1946de82e9c72563733f7`. Stage 7 remains OPEN until the isolated payroll repayment/accounting acceptance and temporary-environment cleanup are complete. Preserve the temporary isolated-database routing until the test is complete; then safely restore `.htaccess` from the recorded backup, verify the temporary probe file is absent, and confirm the untracked receipt remains untouched.
+
+## 2026-10-12 — Stage 7 acceptance evidence and closure boundary
+
+### Verified isolated browser journey
+- Browser rescheduling created active plan 8 for request 7 (`SAR-2026-00007`) in `salary_advance_browser_test`, effective 2026-11-01, with five installments of 10,000.00; previous plan 2 was superseded and audit row 2263 recorded the reschedule.
+- November payroll row 46 for employee 8 contained salary-advance deduction 10,000.00 and net salary 0.00. The user approved and paid only row 46; the other generated payroll rows remained drafts.
+- Payroll row 46 ended `paid` with `accounting_status=posted`, linked to posted journal entry 116 (`PAY-46`). Journal lines: account 5200 debit 10,000.00; account 1410 credit 10,000.00. The journal is balanced. No bank 1200 line is expected because net pay was zero.
+- Exactly one repayment trace exists for request 7 / schedule 42 / payroll 46, amount 10,000.00, outcome `applied`, accounting entry 116. Schedule 42 has 10,000.00 applied and status `paid`. Isolated request outstanding is 40,000.00, down from 50,000.00.
+
+### Canonical-data and cleanup checks
+Read-only queries against canonical `ahl_el_kheir` show policy version 1 still has `allow_fm_repayment_rescheduling=0`, maximum duration 6 months and monthly cap 10,000.00. Canonical request 7 remains `disbursed` with outstanding 50,000.00. The account 1410 posted-balance query returned 250,000.00; it is recorded as observed, not treated as a new reconciliation assertion. The temporary `.htaccess` override was restored from a validated backup; final contents are exactly `Options -Indexes`. The temporary probe file is absent. The protected receipt remains present and untouched; local `git status --short` showed only that receipt as untracked on `main`.
+
+**Conclusion:** Stage 7 acceptance is closed at this boundary; no canonical policy or financial data was changed. Do not repeat the completed browser/payroll acceptance absent regression evidence. The same-employee/multiple-eligible-advance case remains unproven in local runtime, as does true concurrent production execution in local runtime. CI contention results are not a substitute for claiming those local-runtime scenarios proven.
