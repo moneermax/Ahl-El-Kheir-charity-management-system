@@ -2852,3 +2852,12 @@ A new active feature workstream has begun. Committed on `main`: the idempotent a
 ## 2026-10-12 — Salary portal navigation change
 
 modules/hr/salary_portal.php is now committed as a role-filtered entry point for salary-advance management, salary-advance waivers, payroll, and employee incentive policy. modules/accounting/fm_dashboard.php replaces the three standalone salary-related cards with one portal card; the card is shown only for roles that have a salary-portal destination. Each target page retains its own authorization check. Commits: 8bc2be917afaa09d50a3c46f4d13a3922c42648b and 94f5c9c5666a84cea8fc4a161277dba3b707e2a1. Changes are not yet locally linted or browser-verified. The requested extensible incentive type design remains open: existing ENUM constraints and the difference between source-driven types and manual awards must be handled before migration/page changes.
+
+## 2026-10-12 — Incentive policy extensibility and deferred recognition feature
+
+The system-wide currency adjustment is visible on the user's local policy page. Commit `12af8e46b2a9e042322bddf939462b973dd612d0` removed the per-rule currency input and derives new rule currency from `APP_CURRENCY_CODE` (SDG). Local lint/runtime validation is not yet evidenced.
+
+The user deferred monthly employee performance recognition, automatic monthly scoring/ranking, co-winner selection, and certificate issuance to a separate future feature. The proposal is preserved in `docs/HR_EMPLOYEE_INCENTIVES_CONTINUATION.md`; it is not part of the current implementation scope.
+
+The current requirement is to allow FM/HR to add extra fields to incentive policy records. This must be designed as versioned policy metadata and must not be confused with arbitrary incentive award types. The existing `hr_incentive_policy_rules.incentive_type` and `hr_incentive_events.incentive_type` ENUMs remain a separate limitation for custom award types. Before implementing the field editor, confirm HR's permitted actions: the previously agreed governance keeps policy activation with FM and does not require a second GM approval.
+
