@@ -132,3 +132,19 @@ This metadata output still does not show full column definitions, defaults, chec
 
 Continue the exact schema and transaction-boundary audit for the incentive ledger and payroll integration. Before authoring a migration, verify existing table definitions and constraints from the canonical SQL dump and current local database. Do not restore the data-bearing dump into the live database. Do not add a duplicate attribution column. No incentive policy, reward ledger, or payroll/accounting feature code has been implemented yet.
 
+## 2026-10-12 — Incentive ledger schema committed
+
+Two additive migrations are now present on `main`:
+
+- `database/migrations/2026-10-12_hr_employee_incentives_expense_account.sql` establishes account 5500 (`مصروف حوافز الموظفين` / `Employee Incentives Expense`) if absent. It does not choose a parent account because no parent was approved.
+- `database/migrations/2026-10-12_hr_employee_incentives_ledger.sql` creates versioned policy/rule records, idempotent source-event records, snapshotted project allocations, employee awards, and controlled correction/reversal records.
+
+Schema protections include unique policy versions, one rule per incentive type per policy version, a unique event idempotency key, one award per event/employee, and foreign-key restrictions against deleting referenced policy/event/allocation/award history. Historical source events are not backfilled. The migrations do not create runtime DDL, triggers, views, procedures, functions, or events.
+
+Commits:
+- Expense account migration: `9f5914f3205988bf6c7078c823f432119bd69682`
+- Incentive ledger migration: `afd84b9040893477f6052db9a9bbb1a4f7b5dda0`
+
+**Status:** committed to GitHub `main`; not yet applied to the local database; no PHP workflow has yet been implemented or runtime-verified. The next gate is local migration application and verification, followed by policy administration and the transactional event/award integration. Do not mark the feature complete based on schema creation alone.
+
+The policy workflow follows the user-approved governance decision: GM/FM agree on the policy first; FM records/activates the agreed policy without a second GM approval. Individual incentive achievements still require manager verification, with financial confirmation where the source event is a collection or project closure.
