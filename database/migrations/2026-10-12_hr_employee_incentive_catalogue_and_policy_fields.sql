@@ -34,11 +34,39 @@ ON DUPLICATE KEY UPDATE
     is_system = 1;
 
 -- Convert the ENUM columns to catalog-backed codes without changing existing values.
-ALTER TABLE hr_incentive_policy_rules
-    MODIFY incentive_type VARCHAR(80) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL;
+-- Convert only while the column is still ENUM so a rerun after a partial/full
+-- application does not attempt to modify a column already referenced by an FK.
+SET @ak_rule_type_is_enum = (
+    SELECT COUNT(*) FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'hr_incentive_policy_rules'
+      AND COLUMN_NAME = 'incentive_type'
+      AND COLUMN_TYPE LIKE 'enum(%'
+);
+SET @ak_sql = IF(
+    @ak_rule_type_is_enum > 0,
+    'ALTER TABLE hr_incentive_policy_rules MODIFY incentive_type VARCHAR(80) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL',
+    'SELECT 1'
+);
+PREPARE ak_stmt FROM @ak_sql;
+EXECUTE ak_stmt;
+DEALLOCATE PREPARE ak_stmt;
 
-ALTER TABLE hr_incentive_events
-    MODIFY incentive_type VARCHAR(80) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL;
+SET @ak_event_type_is_enum = (
+    SELECT COUNT(*) FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'hr_incentive_events'
+      AND COLUMN_NAME = 'incentive_type'
+      AND COLUMN_TYPE LIKE 'enum(%'
+);
+SET @ak_sql = IF(
+    @ak_event_type_is_enum > 0,
+    'ALTER TABLE hr_incentive_events MODIFY incentive_type VARCHAR(80) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL',
+    'SELECT 1'
+);
+PREPARE ak_stmt FROM @ak_sql;
+EXECUTE ak_stmt;
+DEALLOCATE PREPARE ak_stmt;
 
 -- Ensure a leading index exists for the policy-rule category foreign key.
 SET @ak_idx_exists = (
