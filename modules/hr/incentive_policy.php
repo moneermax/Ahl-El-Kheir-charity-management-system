@@ -91,9 +91,10 @@ try {
                 $baseCode = 'incentive_' . $baseCode;
             }
             $baseCode = trim(substr($baseCode, 0, 80), '_');
-            if ($baseCode === '') {
-                $baseCode = 'incentive_category';
+            if (strlen($baseCode) < 2) {
+                $baseCode = 'incentive_' . ($baseCode !== '' ? $baseCode : 'category');
             }
+            $baseCode = substr($baseCode, 0, 80);
 
             $code = $baseCode;
             $suffix = 2;
@@ -583,6 +584,7 @@ document.addEventListener('DOMContentLoaded', function () {
         let code = englishName.value.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
         if (!code) code = 'incentive_category';
         else if (!/^[a-z]/.test(code)) code = 'incentive_' + code;
+        if (code.length < 2) code = 'incentive_' + code;
         code = code.slice(0, 80).replace(/_+$/g, '');
         codePreview.value = code || 'incentive_category';
     };
