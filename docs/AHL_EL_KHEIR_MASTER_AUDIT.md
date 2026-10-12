@@ -2837,3 +2837,10 @@ The user confirmed the rescheduling success/error feedback now appears as a toas
 Read-only queries against canonical `ahl_el_kheir` show policy version 1 still has `allow_fm_repayment_rescheduling=0`, maximum duration 6 months and monthly cap 10,000.00. Canonical request 7 remains `disbursed` with outstanding 50,000.00. The account 1410 posted-balance query returned 250,000.00; it is recorded as observed, not treated as a new reconciliation assertion. The temporary `.htaccess` override was restored from a validated backup; final contents are exactly `Options -Indexes`. The temporary probe file is absent. The protected receipt remains present and untouched; local `git status --short` showed only that receipt as untracked on `main`.
 
 **Conclusion:** Stage 7 acceptance is closed at this boundary; no canonical policy or financial data was changed. Do not repeat the completed browser/payroll acceptance absent regression evidence. The same-employee/multiple-eligible-advance case remains unproven in local runtime, as does true concurrent production execution in local runtime. CI contention results are not a substitute for claiming those local-runtime scenarios proven.
+
+
+## 2026-10-12 — Employee incentives source audit opened
+
+Source-level evidence and agreed business rules are documented in `docs/HR_EMPLOYEE_INCENTIVES_CONTINUATION.md`. Confirmed integration boundaries: FM approval of `sponsor_payments` creates/posts the linked transaction and journal before commit; win-back `mark_returned` only reactivates a sponsor and is not a reward-earning event; project administrative closure is separate from FM financial closure; payroll draft refresh and journal posting must preserve explicit incentive attribution and paid-payroll immutability. The latest backup commit is `de397397432797c674a9bf06133e90d57bffb5b7` and updates the data-bearing `database/ahl_el_kheir.sql` snapshot.
+
+No feature code, migration, or live DB changes have been made. Runtime tests are not yet run. The source audit remains open until schema and transaction boundaries are fully mapped and implementation can be verified in the local XAMPP/MariaDB environment.
