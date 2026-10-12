@@ -71,3 +71,13 @@ The backup contains real organizational/application data. Keep database dumps ou
 ## Verification boundary
 
 Repository source and the latest committed backup have been inspected through GitHub. The Windows checkout and local XAMPP database are not accessible from this execution environment. No production code, schema, or live database has been changed, and no local runtime verification is claimed. Do not mark this feature complete until local PHP syntax checks and database-backed acceptance tests actually pass.
+
+
+## Newly identified implementation blocker — direct sponsor attribution
+
+The two sponsor creation paths are not equivalent:
+
+- `modules/sponsors/requests.php` converts a sponsor request and writes `sponsor_requests.brought_by` into `sponsors.brought_by_user_id`. This gives a user-ID attribution that can be resolved to an employee.
+- `modules/sponsors/create.php` directly creates a sponsor with `created_by` and free-text `brought_by_name`; it does **not** populate `brought_by_user_id`. The edit page also edits the free-text name, not the user-ID attribution.
+
+Therefore, it would be incorrect to silently treat `created_by` as the person who brought the sponsor, or to reward an arbitrary free-text name. The feature needs an explicit rule for directly created sponsors: either require a manager-verified employee attribution through an explicit user/employee field before the first-payment award can be earned, or make direct-create records without verified attribution ineligible for that award. This decision must be settled before coding the acquisition path. The 90-day reactivation path is separately attributed to the employee who handled the win-back, if that is the intended recipient; the current `winback_campaigns.handled_by` is a user ID and must be resolved/verified rather than inferred from sponsor creation metadata.
