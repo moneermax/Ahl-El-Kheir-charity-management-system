@@ -306,3 +306,24 @@ Read-only account lookup in the isolated database returned account ID 2 / code 1
 The user also requested a more compact payroll table. Commit `ae7d9fc6209a8ff1366afa96b9fb73720d614249` on `main` removes the Contract and Policy columns, removes redundant currency labels from amount cells, tightens input/typography spacing, adds distinct blue cell borders and a blue-tinted header, and removes now-unused joins from the month-list query. The shared policy summary above the table remains. This is source-committed but still requires local pull, PHP syntax check, and browser visual acceptance; do not claim the new layout is runtime-verified yet.
 
 The user confirmed the rescheduling success/error feedback now appears as a toast after commit `b546005f7f7996d1c4f1946de82e9c72563733f7`. Stage 7 remains OPEN until the isolated payroll repayment/accounting acceptance and temporary-environment cleanup are complete. Preserve the temporary isolated-database routing until the test is complete; then safely restore `.htaccess` from the recorded backup, verify the temporary probe file is absent, and confirm the untracked receipt remains untouched.
+
+## 2026-10-12 — Final Stage 7 isolated browser/payroll/accounting acceptance: PASS
+
+### Rescheduling and draft payroll
+The browser rescheduling flow completed in `salary_advance_browser_test` for request 7 (`SAR-2026-00007`, employee 8). The active replacement plan is ID 8, starts 2026-11-01, has a six-month duration and 10,000.00 monthly installment cap, and contains five pending installments from November 2026 through March 2027. The former plan (ID 2) is superseded and retained as history. Audit row 2263 records `HR_SALARY_ADVANCE_REPAYMENT_RESCHEDULE` for request 7. The success feedback appeared as a toast after commit `b546005f7f7996d1c4f1946de82e9c72563733f7`.
+
+### Individual payroll posting
+The user generated November 2026 drafts, then individually approved and paid only payroll ID 46 for employee 8. The other 21 payroll rows remained drafts. Read-only SQL verified:
+- payroll 46: `status=paid`, `accounting_status=posted`, `accounting_entry_id=116`, salary-advance deduction 10,000.00, net salary 0.00;
+- journal 116 (`PAY-46`): posted, reference type `payroll`, reference ID 46;
+- journal lines: account 5200 debit 10,000.00 and account 1410 credit 10,000.00, balanced; no bank line is expected because net pay is zero;
+- repayment trace ID 3: request 7, schedule 42, payroll 46, actual amount 10,000.00, outcome `applied`, accounting entry 116; exactly one matching trace exists;
+- schedule 42: scheduled/applied amount 10,000.00, status `paid`, linked payroll 46;
+- isolated request 7 outstanding balance: 40,000.00, down from 50,000.00.
+
+### Cleanup and canonical database safety
+The temporary routing override was removed only after validating the backup. Final `.htaccess` contains exactly `Options -Indexes`; `stage7_db_probe.php` is absent. The protected receipt `storage/receipts/salary-advances/SAL-ADV-SAR-2026-00021-48bacf449bde7ad1.png` remains present and untouched. Local Git was on `main`, and `git status --short` showed only that receipt as untracked.
+
+Read-only checks against canonical `ahl_el_kheir` verified policy version 1 is still unchanged (`allow_fm_repayment_rescheduling=0`, maximum repayment duration 6 months, maximum monthly deduction 10,000.00) and request 7 remains `disbursed` with outstanding balance 50,000.00. The observed posted account 1410 balance was 250,000.00. No policy, request, payroll, journal, or other financial data in the canonical database was mutated by the isolated acceptance.
+
+**Final status: Stage 7 ACCEPTANCE CLOSED at this documented boundary.** Do not repeat the successful journey or rerun closed tests without concrete regression evidence. Remaining local-runtime evidence gaps: the same employee with multiple simultaneously eligible advances and true concurrent production execution were not proven. Existing CI tests for lock contention are useful separate evidence, but do not erase these explicit local-runtime gaps.
