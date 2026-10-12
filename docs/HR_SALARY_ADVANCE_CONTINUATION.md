@@ -1052,3 +1052,11 @@ Changes committed on `main`:
 - `tools/run_salary_advance_stage5_payroll_edge_tests.php`: added a rollback-only regression case proving a partial deduction remains eligible inside a one-month window, is no longer selected in the following month, and the resulting zero-deduction payroll application completes without adding schedule rows.
 
 **Local verification outcome (2026-10-11):** after pulling commit range `ecfcbd56..4b6e8494`, the user ran PHP lint on both changed PHP files with no syntax errors, all four Stage 5 schedule-rule tests passed, and all eight reported payroll edge checks passed. This includes the carry-forward lifecycle, maximum repayment horizon, and rollback-only cleanup assertions. The new horizon test verified that a 1.00 partial deduction remains eligible in the approved month, is not selected in the next month, and no extra schedule row is created. The post-horizon zero-deduction payroll application also completed as a no-op. The next business-design task, not implemented here, is an authorized rescheduling workflow for balances that remain after the approved horizon.
+
+
+
+## 2026-10-12 — Stage 7 isolated browser rescheduling evidence (partial acceptance)
+
+The user submitted the FM rescheduling form for request 7 in salary_advance_browser_test. Read-only SQL confirmed old plan 1 remains stored as superseded with five old schedule rows; new plan row ID 8 / plan 2 is active; it starts 2026-11-01, uses six months and a 10,000.00 monthly cap; five new schedule rows total 50,000.00 with no installment above the cap; audit row 2263 records HR_SALARY_ADVANCE_REPAYMENT_RESCHEDULE. The operation was tested only in the isolated database.
+
+The success confirmation displayed inline. Root cause was the page's success/error alert markup lacking the alert-dismissible marker recognized by the global assets/js/notifications.js converter. Commit b546005f7f7996d1c4f1946de82e9c72563733f7 adds the marker to transient success/error messages only. Local PHP lint and browser verification of toast presentation remain pending. Payroll/accounting acceptance remains pending; Stage 7 is not closed.
