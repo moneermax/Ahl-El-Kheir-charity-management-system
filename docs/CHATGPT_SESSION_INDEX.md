@@ -432,3 +432,8 @@ The Employee Incentives feature is the current active task. Dedicated expense ac
 ### 2026-10-12 — Salary portal navigation
 
 FM dashboard salary links now route through modules/hr/salary_portal.php, which presents role-filtered links for salary advances, waivers, payroll, and incentive policy. Commits 8bc2be917afaa09d50a3c46f4d13a3922c42648b and 94f5c9c5666a84cea8fc4a161277dba3b707e2a1 are on main. Local PHP lint and browser verification are pending. Employee incentive policy extensibility is the next business-design question: custom/manual awards (e.g. Employee of the Month) versus the existing source-driven reward types.
+
+### 2026-10-12 — Employee incentive continuation
+
+The policy page now uses the system-wide SDG currency; the user confirmed the change is visible locally (commit `12af8e46b2a9e042322bddf939462b973dd612d0`). Local lint/runtime verification remains pending. Monthly performance recognition/scoring/certificates are deferred to a separate future task. Current focus is extensible, versioned policy metadata that FM/HR can add as needed; confirm HR draft/metadata permissions while preserving FM activation authority. Custom incentive award types remain a distinct schema/workflow requirement because current type columns are ENUMs. See `docs/HR_EMPLOYEE_INCENTIVES_CONTINUATION.md`.
+
