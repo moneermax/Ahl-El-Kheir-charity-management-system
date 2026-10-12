@@ -2843,11 +2843,11 @@ Read-only queries against canonical `ahl_el_kheir` show policy version 1 still h
 
 Source-level evidence, local verification boundaries, and agreed business rules are documented in `docs/HR_EMPLOYEE_INCENTIVES_CONTINUATION.md`. The user verified sponsor attribution PHP syntax and local column existence on 2026-10-12. A live metadata audit confirmed relevant tables are InnoDB and exposed important constraints: sponsor attribution/payment/win-back indexes are non-unique, payroll has unique employee-period indexes, journal entry codes and account codes are unique, and the source tables do not provide a unique incentive idempotency key. Foreign keys include `sponsors.brought_by_user_id -> users.id`, `sponsor_payments.supervisor_id -> users.id`, `sponsor_payments.transaction_id -> transactions.id`, and `winback_campaigns.handled_by -> users.id`. FM payment posting, separate project closure gates, and payroll immutability remain the integration boundaries. Direct sponsor INSERT runtime behavior and the incentive feature remain unverified/incomplete. The latest backup commit `de397397432797c674a9bf06133e90d57bffb5b7` is a data-bearing snapshot and must not be restored into the live database.
 
-No feature code, migration, or live DB changes have been made. Runtime tests are not yet run. The source audit remains open until schema and transaction boundaries are fully mapped and implementation can be verified in the local XAMPP/MariaDB environment.
+At this historical checkpoint, no feature code/migration/live DB changes had been made. Later commits introduced the account, incentive ledger, category catalogue, and policy UI changes. They remain pending local XAMPP/MariaDB and browser verification.
 
 ## 2026-10-12 — Employee Incentives implementation checkpoint
 
-A new active feature workstream has begun. Committed on `main`: the idempotent account 5500 migration, incentive policy/event/award/project-allocation/adjustment schema migration, and the initial FM/admin policy administration page. The page records GM/FM agreement details, stores fixed amounts and currencies without defaults, creates draft versions, and allows FM/admin activation without a second GM approval. The page and migrations have not yet been syntax/runtime verified against the local XAMPP database. No historical incentive events are backfilled. See `docs/HR_EMPLOYEE_INCENTIVES_CONTINUATION.md` for the binding business rules and remaining work.
+A new active feature workstream has begun. Committed on `main`: account 5500, the incentive policy/event/award/project-allocation/adjustment schema, the policy administration page, and the category/custom-field extension. The page records GM/FM agreement details, creates draft versions, supports HR/FM draft/field administration, and keeps activation with FM/Admin without a second GM approval. The latest category migration and page changes have not yet been locally syntax/runtime verified. No historical incentive events are backfilled. See `docs/HR_EMPLOYEE_INCENTIVES_CONTINUATION.md` for business rules and verification gates.
 
 ## 2026-10-12 — Salary portal navigation change
 
@@ -2859,8 +2859,19 @@ The system-wide currency adjustment is visible on the user's local policy page. 
 
 The user deferred monthly employee performance recognition, automatic monthly scoring/ranking, co-winner selection, and certificate issuance to a separate future feature. The proposal is preserved in `docs/HR_EMPLOYEE_INCENTIVES_CONTINUATION.md`; it is not part of the current implementation scope.
 
-The current requirement is to allow FM/HR to add extra fields to incentive policy records. This must be designed as versioned policy metadata and must not be confused with arbitrary incentive award types. The existing `hr_incentive_policy_rules.incentive_type` and `hr_incentive_events.incentive_type` ENUMs remain a separate limitation for custom award types. Before implementing the field editor, confirm HR's permitted actions: the previously agreed governance keeps policy activation with FM and does not require a second GM approval.
+The current requirement is to allow FM/HR to add extra fields to incentive policy records and introduce categories without repeated schema ENUM edits. Source changes are now committed: a catalogue-backed category model replaces the two ENUM columns while preserving existing codes, and custom policy fields are stored per policy version. HR Manager/HR Staff and FM/Admin can create drafts/add fields; activation remains FM/Admin only. Custom categories are manual-review only and cannot generate awards/payments until a separate award workflow is implemented. Monthly performance recognition/certificates remain deferred.
 
 ## 2026-10-12 — Incentive policy extensibility and deferred recognition
 
 The SDG currency input removal is visible on the user's local policy page (commit `12af8e46b2a9e042322bddf939462b973dd612d0`); local lint/runtime validation is not yet evidenced. Monthly employee performance scoring, ranking, co-winner handling, and certificates are deferred to a separate future feature. The current requirement is versioned, extensible policy metadata. Do not confuse custom policy fields with custom incentive award types: the current award-type columns are ENUMs and need a separate catalogue/workflow design. Preserve FM activation authority and the agreed no-second-GM-approval rule.
+
+
+## 2026-10-12 — Incentive category catalogue/custom-field source audit checkpoint
+
+Source changes committed on `main`:
+- `74a0140c32670bb74421f7366011420f0dd33c11`: new catalogue and custom-field migration; existing four incentive codes are seeded and retained, rule/event type columns are converted from ENUM to VARCHAR and linked to the catalogue, and custom policy field definitions/values are stored by policy version.
+- `68758c17c6363083f798e019c6348bdb596acc8c`: policy UI uses database categories, permits HR/FM draft and custom-field actions, and keeps activation restricted to FM/Admin.
+
+Security/financial boundary: newly created categories are `manual_review` and cannot issue awards automatically. Their presence in a policy is configuration only; nomination, verification, award creation, payroll scheduling and accounting posting are not thereby implemented. Existing built-in categories retain their codes and source-event mode.
+
+Local migration, PHP lint, and browser/runtime checks are still pending. Do not claim the new source changes are runtime-verified or proceed to reward issuance until these gates pass.
