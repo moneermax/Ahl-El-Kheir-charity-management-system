@@ -2587,6 +2587,9 @@ The temporary routing override was removed safely. `.htaccess` now contains exac
 
 ## 2026-10-12 — Employee incentives: source/design checkpoint
 
+**Open business rule discovered during source audit:** sponsor-request conversion preserves `sponsor_requests.brought_by` in `sponsors.brought_by_user_id`, but direct sponsor creation only saves `created_by` and free-text `brought_by_name`. Do not assume the creator is the person who acquired the sponsor. The direct-create award path requires explicit manager-verified employee attribution or must remain ineligible until attributed. See `docs/HR_EMPLOYEE_INCENTIVES_CONTINUATION.md`.
+
+
 A new requirement covers fixed-amount rewards for (1) financially confirmed monthly sponsorship collections, (2) new sponsor acquisition/reactivation only after the first payment is confirmed, and (3) successful project completion only after both administrative and FM financial closure. Governance and policy decisions are captured in `docs/HR_EMPLOYEE_INCENTIVES_CONTINUATION.md`.
 
 Current status: source/design audit in progress. No incentive production code or migration has been implemented or runtime-verified. Payroll accounting currently uses expense account 5200 and reconciles expense to `net_salary + salary_advance_deduction`; incentive accounting requires explicit allocation to a dedicated approved expense account and must preserve paid-payroll immutability. The latest database snapshot was committed as `de397397432797c674a9bf06133e90d57bffb5b7`; it is data-bearing and must not be restored into the live database for this work. Continue with exact schema and transaction-boundary inspection before coding.
