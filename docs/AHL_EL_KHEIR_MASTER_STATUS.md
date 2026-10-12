@@ -2598,3 +2598,7 @@ Current status: source/design audit in progress. No incentive production code or
 
 
 **Implementation update (2026-10-12):** direct sponsor creation now includes `brought_by_user_id = Session::getUserId()` in `modules/sponsors/create.php` (commits `aaa7189`, `3bc49b3`). Static inspection confirms 22 SQL placeholders match 22 bound parameters. The user subsequently synced `main`, ran `php -l modules\sponsors\create.php` successfully, and confirmed the local `sponsors.brought_by_user_id` column exists as nullable indexed `int(10) unsigned` with an FK to `users.id`. Local metadata also confirms relevant tables use InnoDB and identifies the source indexes/FKs; see `docs/HR_EMPLOYEE_INCENTIVES_CONTINUATION.md`. Actual sponsor INSERT behavior remains runtime-unverified. Full incentive policy/ledger/payroll/accounting implementation remains pending.
+
+## 2026-10-12 — Employee Incentives active work
+
+Employee Incentives is in progress. The account 5500 migration, incentive policy/event/award ledger migration, and FM/admin policy administration page have been committed to `main`. Local migration application, PHP syntax checks, runtime behavior, event attribution, project closure integration, payroll scheduling, and accounting posting remain unverified or unimplemented. The detailed continuation document is `docs/HR_EMPLOYEE_INCENTIVES_CONTINUATION.md`. This is not a completed milestone.
