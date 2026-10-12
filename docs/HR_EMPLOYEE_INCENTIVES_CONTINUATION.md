@@ -73,30 +73,22 @@ The backup contains real organizational/application data. Keep database dumps ou
 Repository source and the latest committed backup have been inspected through GitHub. The Windows checkout and local XAMPP database are not accessible from this execution environment. No production code, schema, or live database has been changed, and no local runtime verification is claimed. Do not mark this feature complete until local PHP syntax checks and database-backed acceptance tests actually pass.
 
 
-## Newly identified implementation blocker — direct sponsor attribution
+## Direct sponsor attribution — implementation and local verification
 
-The two sponsor creation paths are not equivalent:
+The direct sponsor creation INSERT now sets `sponsors.brought_by_user_id` from `Session::getUserId()`. Sponsor-request conversion remains unchanged and continues preserving `sponsor_requests.brought_by`; historical missing attribution is not backfilled.
 
-- `modules/sponsors/requests.php` converts a sponsor request and writes `sponsor_requests.brought_by` into `sponsors.brought_by_user_id`. This gives a user-ID attribution that can be resolved to an employee.
-- `modules/sponsors/create.php` directly creates a sponsor with `created_by` and free-text `brought_by_name`; it does **not** populate `brought_by_user_id`. The edit page also edits the free-text name, not the user-ID attribution.
+Commits:
+- `aaa71897249ca4911ee2e0763b85737d21ebb698` — direct attribution field and parameter.
+- `3bc49b342bb0e7aa988690582be2ef091bf1fe3c` — SQL placeholder correction.
+- `4058cff5515fc021129a45bcc1bdec96c6ce94b3` — static evidence documentation.
 
-Therefore, it would be incorrect to silently treat `created_by` as the person who brought the sponsor, or to reward an arbitrary free-text name. The feature needs an explicit rule for directly created sponsors: either require a manager-verified employee attribution through an explicit user/employee field before the first-payment award can be earned, or make direct-create records without verified attribution ineligible for that award. This decision must be settled before coding the acquisition path. The 90-day reactivation path is separately attributed to the employee who handled the win-back, if that is the intended recipient; the current `winback_campaigns.handled_by` is a user ID and must be resolved/verified rather than inferred from sponsor creation metadata.
+Local verification completed by the user on 2026-10-12 after syncing `main` to `48ff9293`:
+- `php -l modules\\sponsors\\create.php` — `No syntax errors detected`.
+- `SHOW COLUMNS FROM sponsors LIKE 'brought_by_user_id'` — column exists as nullable `int(10) unsigned`, indexed, default NULL.
 
+This confirms syntax and local schema compatibility. It does **not** yet prove a real sponsor INSERT succeeds or that the stored value equals the logged-in user ID. Direct-create behavior still needs a controlled local runtime test before this slice is called fully verified.
 
-## Decision confirmed by user — sponsor attribution (2026-10-12)
+## Next engineering gate
 
-- For sponsors entered directly by an employee, the system should automatically record the logged-in employee's **user ID** as the person who brought the sponsor. The employee must not type their own attribution or choose an arbitrary recipient.
-- For sponsor requests converted into sponsors, preserve the request's recorded `brought_by` user ID; do not overwrite the original attribution with the employee who processes the conversion.
-- For win-back/reactivation, the reward recipient is the employee who handled the successful win-back. This rule is approved by the user; resolve `winback_campaigns.handled_by` through the employee/user relationship and award only after the first payment is financially confirmed.
-- Existing source code already writes `sponsors.brought_by_user_id` in `modules/sponsors/requests.php`. Therefore, the next step is to verify the exact column definition against the latest committed `database/ahl_el_kheir.sql` and local schema. If the column exists as the request-conversion code indicates, do **not** add a duplicate column; instead, update the direct sponsor-creation path to populate it automatically. If the backup proves otherwise, add it through a dated migration.
-- Historical sponsors with no recorded attribution must remain unattributed until an authorized, auditable correction supplies it. Do not backfill them from `created_by`, free-text `brought_by_name`, or another guessed field.
+Continue the exact schema and transaction-boundary audit for the incentive ledger and payroll integration. Before authoring a migration, verify existing table definitions and constraints from the canonical SQL dump and current local database. Do not restore the data-bearing dump into the live database. Do not add a duplicate attribution column. No incentive policy, reward ledger, or payroll/accounting feature code has been implemented yet.
 
-
-## First implementation slice — direct sponsor attribution
-
-Committed to `main`:
-
-- `aaa71897249ca4911ee2e0763b85737d21ebb698` — added `brought_by_user_id` to the direct sponsor creation INSERT and populated it from `Session::getUserId()`.
-- `3bc49b342bb0e7aa988690582be2ef091bf1fe3c` — corrected the INSERT placeholder count after static inspection.
-
-Post-change static check fetched the exact committed file and verified: 24 INSERT columns, 2 SQL literal values (`NOW()` and `0`), 22 placeholders, and 22 bound parameters. This confirms the INSERT's column/parameter arity only; it is **not** a PHP syntax check or database/runtime test. Local XAMPP/MariaDB verification remains required before this slice can be called complete.
