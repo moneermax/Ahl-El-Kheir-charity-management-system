@@ -440,3 +440,15 @@ The policy page now uses the system-wide SDG currency; the user confirmed the ch
 ### 2026-10-12 — Employee incentive continuation
 
 Monthly performance recognition/scoring/certificates are deferred to a separate future feature. Current focus: extensible incentive policy fields for FM/HR, with FM retaining activation authority. The SDG currency field removal is visible locally (commit `12af8e46b2a9e042322bddf939462b973dd612d0`); local lint/runtime verification remains pending. Custom incentive types are a separate schema/workflow issue. See `docs/HR_EMPLOYEE_INCENTIVES_CONTINUATION.md`.
+
+
+## 2026-10-12 — Incentive category catalogue and custom policy fields
+
+Latest source commits on `main`:
+- `74a0140c32670bb74421f7366011420f0dd33c11`: adds `hr_incentive_types`, preserves/seeds the four built-in category codes, converts ENUM-backed rule/event category columns to catalogue-backed strings with foreign keys, and adds version-scoped `hr_incentive_policy_custom_fields`.
+- `68758c17c6363083f798e019c6348bdb596acc8c`: policy page loads categories from the database, lets HR/FM create policy drafts and add typed custom fields, permits creation of custom categories as manual-review only, and restricts activation to FM/Admin.
+- Documentation updated in `affd6538d4b3a140a2e3df725642254afdd1f71b`, `663efae40df2577dc517d8f02876c703eda1cfd1`, and `40c47a468645de87f5f09eb1b9430c4733cf83e9`.
+
+User-approved governance: HR Manager/HR Staff and FM/Admin may create drafts/add fields; FM/Admin alone activate; GM/FM agreement remains recorded before activation, without a second GM approval. Monthly performance recognition/certificates remain a separate future feature. New categories are manual-review only and cannot issue/pay awards until a dedicated nomination/verification/award workflow exists.
+
+**Verification boundary:** new migration and updated PHP are committed but not locally verified. Next: sync `main`, apply the new migration against the existing incentive ledger, run PHP lint, and test category creation, custom field type/required/select validation, version scoping, HR activation denial, and FM activation. Do not claim runtime success until the local XAMPP/MariaDB/browser checks are reported.
