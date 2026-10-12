@@ -23,15 +23,6 @@ $types = [
     'project_completion' => 'حافز إتمام المشروع',
 ];
 
-function hrIncentiveCurrency(string $value): string
-{
-    $currency = strtoupper(trim($value));
-    if (!preg_match('/^[A-Z]{3}$/', $currency)) {
-        throw new InvalidArgumentException('يجب إدخال رمز عملة مكوّن من ثلاثة أحرف لاتينية.');
-    }
-    return $currency;
-}
-
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!verify_csrf()) {
@@ -61,14 +52,13 @@ try {
                 $enabled = isset($_POST['enabled'][$type]) ? 1 : 0;
                 $amountRaw = trim((string)($_POST['amount'][$type] ?? ''));
                 $amount = filter_var($amountRaw, FILTER_VALIDATE_FLOAT);
-                $currency = hrIncentiveCurrency((string)($_POST['currency'][$type] ?? ''));
                 if ($amount === false || !is_finite((float)$amount) || (float)$amount < 0 || (float)$amount > 9999999999.99) {
                     throw new InvalidArgumentException('قيمة الحافز غير صالحة: ' . $label);
                 }
                 if ($enabled && (float)$amount <= 0) {
                     throw new InvalidArgumentException('قيمة الحافز المفعّل يجب أن تكون أكبر من صفر: ' . $label);
                 }
-                $rules[$type] = ['enabled' => $enabled, 'amount' => round((float)$amount, 2), 'currency' => $currency];
+                $rules[$type] = ['enabled' => $enabled, 'amount' => round((float)$amount, 2), 'currency' => APP_CURRENCY_CODE];
             }
             if (!array_filter($rules, static fn(array $rule): bool => $rule['enabled'] === 1)) {
                 throw new InvalidArgumentException('فعّل نوع حافز واحداً على الأقل قبل حفظ السياسة.');
@@ -228,17 +218,16 @@ require_once __DIR__ . '/../../includes/header.php';
                     </div>
                 </div>
                 <hr>
-                <p class="small text-muted">لا توجد مبالغ افتراضية. أدخل المبلغ والعملة لكل نوع، وحدد الأنواع التي يشملها الإصدار. المبلغ ثابت وليس نسبة من التحصيل.</p>
+                <p class="small text-muted">العملة المعتمدة على مستوى النظام هي <?=e(APP_CURRENCY_CODE)?> (<?=e(APP_CURRENCY_NAME_AR)?>). أدخل قيمة الحافز وحدد الأنواع التي يشملها الإصدار؛ المبلغ ثابت وليس نسبة من التحصيل.</p>
                 <div class="table-responsive">
                     <table class="table table-bordered align-middle">
-                        <thead class="table-light"><tr><th>نوع الحافز</th><th>مفعّل؟</th><th>المبلغ</th><th>العملة (3 أحرف)</th></tr></thead>
+                        <thead class="table-light"><tr><th>نوع الحافز</th><th>مفعّل؟</th><th>المبلغ (<?=e(APP_CURRENCY_CODE)?>)</th></tr></thead>
                         <tbody>
                         <?php foreach ($types as $type => $label): ?>
                             <tr>
                                 <td><?=e($label)?></td>
                                 <td class="text-center"><input class="form-check-input" type="checkbox" name="enabled[<?=e($type)?>]" value="1"></td>
                                 <td><input class="form-control" type="number" name="amount[<?=e($type)?>]" min="0" max="9999999999.99" step="0.01" value="0" required></td>
-                                <td><input class="form-control text-uppercase" name="currency[<?=e($type)?>]" minlength="3" maxlength="3" pattern="[A-Za-z]{3}" required></td>
                             </tr>
                         <?php endforeach; ?>
                         </tbody>
