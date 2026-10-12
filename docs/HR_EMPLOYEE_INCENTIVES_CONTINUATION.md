@@ -90,3 +90,13 @@ Therefore, it would be incorrect to silently treat `created_by` as the person wh
 - For win-back/reactivation, the reward recipient is the employee who handled the successful win-back. This rule is approved by the user; resolve `winback_campaigns.handled_by` through the employee/user relationship and award only after the first payment is financially confirmed.
 - Existing source code already writes `sponsors.brought_by_user_id` in `modules/sponsors/requests.php`. Therefore, the next step is to verify the exact column definition against the latest committed `database/ahl_el_kheir.sql` and local schema. If the column exists as the request-conversion code indicates, do **not** add a duplicate column; instead, update the direct sponsor-creation path to populate it automatically. If the backup proves otherwise, add it through a dated migration.
 - Historical sponsors with no recorded attribution must remain unattributed until an authorized, auditable correction supplies it. Do not backfill them from `created_by`, free-text `brought_by_name`, or another guessed field.
+
+
+## First implementation slice — direct sponsor attribution
+
+Committed to `main`:
+
+- `aaa71897249ca4911ee2e0763b85737d21ebb698` — added `brought_by_user_id` to the direct sponsor creation INSERT and populated it from `Session::getUserId()`.
+- `3bc49b342bb0e7aa988690582be2ef091bf1fe3c` — corrected the INSERT placeholder count after static inspection.
+
+Post-change static check fetched the exact committed file and verified: 24 INSERT columns, 2 SQL literal values (`NOW()` and `0`), 22 placeholders, and 22 bound parameters. This confirms the INSERT's column/parameter arity only; it is **not** a PHP syntax check or database/runtime test. Local XAMPP/MariaDB verification remains required before this slice can be called complete.
