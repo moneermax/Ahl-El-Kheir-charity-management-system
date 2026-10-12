@@ -2861,3 +2861,6 @@ The user deferred monthly employee performance recognition, automatic monthly sc
 
 The current requirement is to allow FM/HR to add extra fields to incentive policy records. This must be designed as versioned policy metadata and must not be confused with arbitrary incentive award types. The existing `hr_incentive_policy_rules.incentive_type` and `hr_incentive_events.incentive_type` ENUMs remain a separate limitation for custom award types. Before implementing the field editor, confirm HR's permitted actions: the previously agreed governance keeps policy activation with FM and does not require a second GM approval.
 
+## 2026-10-12 — Incentive policy extensibility and deferred recognition
+
+The SDG currency input removal is visible on the user's local policy page (commit `12af8e46b2a9e042322bddf939462b973dd612d0`); local lint/runtime validation is not yet evidenced. Monthly employee performance scoring, ranking, co-winner handling, and certificates are deferred to a separate future feature. The current requirement is versioned, extensible policy metadata. Do not confuse custom policy fields with custom incentive award types: the current award-type columns are ENUMs and need a separate catalogue/workflow design. Preserve FM activation authority and the agreed no-second-GM-approval rule.
