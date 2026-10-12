@@ -2801,3 +2801,15 @@ The preserved-count evidence included users 26, employees 25, families 2208, fam
 
 The test artifacts `database/production/current_test_database.sql` and `database/production/prepare_production_database_test.sql` are disposable verification artifacts and are not part of the repository deliverable. They must not be uploaded/committed.
 
+
+
+
+## 2026-10-12 — Stage 7 isolated rescheduling transaction and feedback markup audit
+
+Read-only result verification against salary_advance_browser_test after the user's browser submission established the following for request 7:
+- the legacy/current plan row ID 2, plan 1, was marked superseded and its five schedule rows remain;
+- new plan row ID 8 (plan 2) is active with a 50,000.00 starting balance, start month 2026-11-01, six-month duration and 10,000.00 monthly cap;
+- five new installments total 50,000.00; maximum installment is 10,000.00; months span 2026-11 through 2027-03;
+- audit_log row 2263 records HR_SALARY_ADVANCE_REPAYMENT_RESCHEDULE.
+
+The success message being rendered inline was traced to this page's success/error alerts not matching assets/js/notifications.js transient alert selectors. Commit b546005f7f7996d1c4f1946de82e9c72563733f7 adds alert-dismissible only to the success/error alerts, relying on the existing global converter rather than adding page-specific toast code or changing persistent instructions. Local runtime confirmation is pending. This verifies the isolated rescheduling transaction only; payroll/accounting path remains unverified and Stage 7 remains OPEN.
