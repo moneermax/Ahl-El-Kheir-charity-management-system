@@ -2552,3 +2552,15 @@ Verified cleanup:
 
 Do not rerun this destructive cleanup against the live production database as a verification step. The disposable database is the verified test target; live production execution is a separate deployment action.
 
+
+
+
+## 2026-10-12 — Salary Advance Stage 7 isolated browser acceptance progress
+
+The user submitted the FM rescheduling form for request 7 in the isolated local browser fixture. Read-only SQL against salary_advance_browser_test confirmed:
+- plan 1 remains present with its five historical schedule rows and status superseded;
+- new plan row ID 8 / plan number 2 is active, starts 2026-11-01, duration six months, and saved monthly cap 10,000.00;
+- new plan has five installments totaling 50,000.00 (full recorded outstanding balance), maximum installment 10,000.00, scheduled November 2026–March 2027;
+- audit row 2263 records HR_SALARY_ADVANCE_REPAYMENT_RESCHEDULE for request 7.
+
+Notification regression root cause: success/error markup on modules/hr/salary_advance_reschedule.php was plain alert-success / alert-danger and did not match the transient-alert selectors in assets/js/notifications.js. Commit b546005f7f7996d1c4f1946de82e9c72563733f7 adds alert-dismissible to those two transient messages only. Local pull, PHP lint, and browser confirmation that the message appears as a toast are not yet evidenced. Payroll/accounting end-to-end acceptance remains outstanding; Stage 7 is OPEN. Canonical ahl_el_kheir was not modified by the test operation.
