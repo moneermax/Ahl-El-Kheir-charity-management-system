@@ -36,9 +36,7 @@ $headerQuickActions = [
     ['label'=>'مراجعة المعاملات المالية','url'=>'modules/accounting/fm_transaction_review.php','icon'=>'fa-file-invoice-dollar','color'=>'#6c757d'],
     ['label'=>'التقارير المالية','url'=>'modules/reports/financial.php','icon'=>'fa-chart-pie','color'=>'#0d6efd'],
     ['label'=>'سجل المعاملات','url'=>'modules/transactions/index.php','icon'=>'fa-money-bill-transfer','color'=>'#2daf79'],
-    ['label'=>'إدارة سلف الرواتب','url'=>'modules/hr/salary_advance_dashboard.php','icon'=>'fa-hand-holding-dollar','color'=>'#198754','salary_advance'=>true],
-    ['label'=>'إعفاء سلف الرواتب','url'=>'modules/hr/salary_advance_waiver_fm.php','icon'=>'fa-hand-sparkles','color'=>'#6f42c1','salary_advance_waiver'=>true],
-    ['label'=>'إدارة الرواتب','url'=>'modules/hr/payroll.php','icon'=>'fa-file-invoice-dollar','color'=>'#0d6efd'],
+    ['label'=>'بوابة الرواتب والحوافز','url'=>'modules/hr/salary_portal.php','icon'=>'fa-users-gear','color'=>'#0d6efd','salary_portal'=>true],
     ['label'=>'منظمة فينا الخير','url'=>'modules/accounting/fina_dashboard.php','icon'=>'fina-logo','color'=>'#6f42c1'],
 ];
 
@@ -414,23 +412,13 @@ $fmActionDescriptions = [
     'مراجعة واعتماد المعاملات المالية',
     'عرض التقارير والحركة المالية',
     'مراجعة سجل المعاملات المالية',
-    'إدارة سياسة السلف على الراتب ومراجعة واعتماد طلبات الموظفين',
-    'إعداد ومراجعة قرارات إعفاء سلف الرواتب',
-    'إنشاء ومراجعة مسيرات الرواتب ومعالجة خصم السلف',
+    'بوابة موحدة لإدارة الرواتب والسلف وسياسة حوافز الموظفين',
     'لوحة مستقلة لتحصيلات وتسويات منظمة فينا الخير',
 ];
 ?>
 <div class="ak-fm-action-grid fade-in" aria-label="إجراءات سريعة">
     <?php foreach ($headerQuickActions as $index => $qa): ?>
-        <?php if (!empty($qa['salary_advance'])): ?>
-        <a href="<?php echo APP_URL; ?>modules/hr/salary_advance_dashboard.php" class="ak-fm-action-card ak-fm-action-<?php echo (int)$index + 1; ?>"<?php if (!empty($qa['border_color'])): ?> style="border-top:3px solid <?php echo e($qa['border_color']); ?>;"<?php endif; ?>>
-            <div class="text-center px-2">
-                <div class="ak-fm-action-icon"><i class="fas <?php echo e($qa['icon']); ?>" aria-hidden="true"></i></div>
-                <div class="ak-fm-action-title"><?php echo e($qa['label']); ?></div>
-                <div class="ak-fm-action-desc"><?php echo e($fmActionDescriptions[$index] ?? ''); ?></div>
-            </div>
-        </a>
-        <?php else: ?>
+        <?php if (!empty($qa['salary_portal']) && !in_array($urole, ['financial_manager', 'admin', 'fm', 'hr_manager', 'hr_staff'], true)) continue; ?>
         <a href="<?php echo APP_URL . e($qa['url']); ?>" class="ak-fm-action-card ak-fm-action-<?php echo (int)$index + 1; ?>"<?php if (!empty($qa['border_color'])): ?> style="border-top:3px solid <?php echo e($qa['border_color']); ?>;"<?php endif; ?>>
             <div class="text-center px-2">
                 <div class="ak-fm-action-icon">
@@ -440,7 +428,6 @@ $fmActionDescriptions = [
                 <div class="ak-fm-action-desc"><?php echo e($fmActionDescriptions[$index] ?? ''); ?></div>
             </div>
         </a>
-        <?php endif; ?>
     <?php endforeach; ?>
 </div>
 
