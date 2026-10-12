@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 06, 2026 at 08:36 AM
+-- Generation Time: Oct 12, 2026 at 09:38 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -204,7 +204,23 @@ INSERT INTO `attendance` (`id`, `employee_id`, `date`, `check_in`, `check_out`, 
 (213, 9, '2026-10-04', '19:00:39', NULL, 'remote', NULL, NULL, 'present', NULL, '2026-10-05 20:00:39'),
 (214, 7, '2026-10-04', '19:11:32', NULL, 'remote', NULL, NULL, 'present', NULL, '2026-10-05 20:11:32'),
 (215, 13, '2026-10-03', '19:19:08', NULL, 'remote', NULL, NULL, 'present', NULL, '2026-10-05 20:19:08'),
-(216, 8, '2026-10-03', '19:22:29', NULL, 'remote', NULL, NULL, 'present', NULL, '2026-10-05 20:22:29');
+(216, 8, '2026-10-03', '19:22:29', NULL, 'remote', NULL, NULL, 'present', NULL, '2026-10-05 20:22:29'),
+(217, 14, '2026-10-06', '15:41:29', NULL, '', NULL, NULL, 'present', NULL, '2026-10-06 16:41:29'),
+(222, 10, '2026-10-03', '16:38:22', NULL, 'remote', NULL, NULL, 'present', NULL, '2026-10-06 17:38:22'),
+(223, 13, '2026-10-06', '16:41:33', NULL, 'remote', NULL, NULL, 'present', NULL, '2026-10-06 17:41:33'),
+(224, 8, '2026-10-06', '16:41:39', NULL, 'remote', NULL, NULL, 'present', NULL, '2026-10-06 17:41:39'),
+(225, 10, '2026-10-06', '16:41:43', NULL, 'remote', NULL, NULL, 'present', NULL, '2026-10-06 17:41:43'),
+(226, 9, '2026-10-06', '17:22:46', NULL, 'remote', NULL, NULL, 'present', NULL, '2026-10-06 18:22:46'),
+(227, 27, '2026-10-06', '17:23:40', NULL, 'remote', NULL, NULL, 'present', NULL, '2026-10-06 18:23:40'),
+(228, 1, '2026-10-10', '13:33:57', NULL, '', NULL, NULL, 'present', NULL, '2026-10-10 14:33:58'),
+(229, 22, '2026-10-10', '13:45:38', NULL, '', NULL, NULL, 'present', NULL, '2026-10-10 14:45:38'),
+(230, 20, '2026-10-10', '13:50:16', NULL, '', NULL, NULL, 'present', NULL, '2026-10-10 14:50:16'),
+(232, 22, '2026-10-11', NULL, NULL, 'remote', NULL, NULL, 'on_leave', 'إجازة معتمدة', '2026-10-10 14:50:28'),
+(233, 22, '2026-10-12', NULL, NULL, 'remote', NULL, NULL, 'on_leave', 'إجازة معتمدة', '2026-10-10 14:50:28'),
+(234, 23, '2026-10-10', NULL, NULL, 'remote', NULL, NULL, 'on_leave', 'إجازة معتمدة', '2026-10-10 14:52:02'),
+(235, 23, '2026-10-11', NULL, NULL, 'remote', NULL, NULL, 'on_leave', 'إجازة معتمدة', '2026-10-10 14:52:02'),
+(236, 14, '2026-10-10', '13:52:50', NULL, '', NULL, NULL, 'present', NULL, '2026-10-10 14:52:50'),
+(237, 14, '2026-10-11', '15:59:23', NULL, '', NULL, NULL, 'present', NULL, '2026-10-11 16:59:23');
 
 -- --------------------------------------------------------
 
@@ -1093,7 +1109,50 @@ INSERT INTO `audit_log` (`id`, `user_id`, `action`, `entity_type`, `entity_id`, 
 (2259, 2, 'LOGOUT', 'users', 2, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-05 09:09:07'),
 (2260, 32, 'LOGIN', 'users', 32, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-05 09:09:19'),
 (2261, 32, 'LOGIN', 'users', 32, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-06 07:39:15'),
-(2262, 29, 'LOGIN', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-06 07:53:51');
+(2262, 29, 'LOGIN', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-06 07:53:51'),
+(2299, 29, 'HR_SALARY_ADVANCE_WAIVER_DECISION_CREATED', 'hr_salary_advance_waiver_decision', 10, '{\"status\":\"new\"}', '{\"decision_no\":\"SAW-000001\",\"decision_type\":\"individual\",\"effective_month\":\"2026-10-01\",\"item_count\":1,\"reason\":\"Post-commit notification verification\"}', '', '', '2026-10-06 15:23:40'),
+(2320, 29, 'HR_ATTENDANCE_AUTO_CHECK_IN', 'attendance', 14, NULL, '{\"date\":\"2026-10-06\",\"check_in\":\"15:41:29\",\"work_mode\":\"hybrid\",\"policy_version\":1,\"source\":\"successful_login\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-06 16:41:29'),
+(2321, 29, 'LOGIN', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-06 16:41:29'),
+(2322, 29, 'LOGOUT', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-06 17:38:02'),
+(2323, 32, 'LOGIN', 'users', 32, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-06 17:38:09'),
+(2324, 29, 'LOGOUT', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-06 20:22:11'),
+(2325, 32, 'LOGOUT', 'users', 32, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-06 20:22:16'),
+(2326, 1, 'LOGIN', 'users', 1, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', '2026-10-07 07:30:26'),
+(2327, 1, 'HR_ATTENDANCE_AUTO_CHECK_IN', 'attendance', 1, NULL, '{\"date\":\"2026-10-10\",\"check_in\":\"13:33:57\",\"work_mode\":\"hybrid\",\"policy_version\":1,\"source\":\"successful_login\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-10 14:33:58'),
+(2328, 1, 'LOGIN', 'users', 1, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-10 14:33:58'),
+(2329, 1, 'LOGOUT', 'users', 1, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-10 14:44:48'),
+(2330, 33, 'LOGIN', 'users', 33, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-10 14:44:57'),
+(2331, 33, 'LOGOUT', 'users', 33, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-10 14:45:24'),
+(2332, 34, 'HR_ATTENDANCE_AUTO_CHECK_IN', 'attendance', 22, NULL, '{\"date\":\"2026-10-10\",\"check_in\":\"13:45:38\",\"work_mode\":\"hybrid\",\"policy_version\":1,\"source\":\"successful_login\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-10 14:45:38'),
+(2333, 34, 'LOGIN', 'users', 34, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-10 14:45:38'),
+(2334, 32, 'HR_ATTENDANCE_AUTO_CHECK_IN', 'attendance', 20, NULL, '{\"date\":\"2026-10-10\",\"check_in\":\"13:50:16\",\"work_mode\":\"hybrid\",\"policy_version\":1,\"source\":\"successful_login\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-10 14:50:16'),
+(2335, 32, 'LOGIN', 'users', 32, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-10 14:50:16'),
+(2336, 34, 'LOGOUT', 'users', 34, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-10 14:51:20'),
+(2337, 33, 'LOGIN', 'users', 33, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-10 14:51:28'),
+(2338, 32, 'LOGOUT', 'users', 32, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-10 14:52:44'),
+(2339, 29, 'HR_ATTENDANCE_AUTO_CHECK_IN', 'attendance', 14, NULL, '{\"date\":\"2026-10-10\",\"check_in\":\"13:52:50\",\"work_mode\":\"hybrid\",\"policy_version\":1,\"source\":\"successful_login\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-10 14:52:50'),
+(2340, 29, 'LOGIN', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-10 14:52:50'),
+(2341, 29, 'HR_SALARY_ADVANCE_FM_APPROVE', 'hr_salary_advance_request', 20, '{\"status\":\"submitted\",\"closed_at\":null,\"requested_amount\":\"10000.00\",\"requested_repayment_method\":\"fixed_monthly\",\"requested_monthly_amount\":\"5000.00\",\"requested_start_month\":\"2026-11-01\"}', '{\"decision\":\"approve\",\"approved_amount\":10000,\"approved_repayment_method\":\"fixed_monthly\",\"approved_monthly_amount\":5000,\"approved_start_month\":\"2026-11-01\",\"customized\":0,\"customization_reason\":null,\"status\":\"approved\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-10 14:53:16'),
+(2342, 29, 'HR_SALARY_ADVANCE_FM_APPROVE', 'hr_salary_advance_request', 21, '{\"status\":\"submitted\",\"closed_at\":null,\"requested_amount\":\"50000.00\",\"requested_repayment_method\":\"fixed_monthly\",\"requested_monthly_amount\":\"10000.00\",\"requested_start_month\":\"2026-11-01\"}', '{\"decision\":\"approve\",\"approved_amount\":50000,\"approved_repayment_method\":\"fixed_monthly\",\"approved_monthly_amount\":10000,\"approved_start_month\":\"2026-11-01\",\"customized\":0,\"customization_reason\":null,\"status\":\"approved\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-10 15:09:16'),
+(2343, 33, 'LOGOUT', 'users', 33, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-10 15:16:19'),
+(2344, 29, 'LOGOUT', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-10 15:16:24'),
+(2345, 29, 'LOGIN', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-10 15:18:59'),
+(2346, 29, 'HR_SALARY_ADVANCE_ACCOUNTING_VERIFY_AND_DISBURSE', 'hr_salary_advance_request', 21, '{\"status\":\"approved\",\"accounting_status\":\"pending\"}', '{\"accounting_status\":\"verified\",\"accounting_verified_by\":29,\"verification_and_disbursement_atomic\":true}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-10 15:20:20'),
+(2347, 29, 'HR_SALARY_ADVANCE_SCHEDULE_GENERATE', 'hr_salary_advance_request', 21, '{\"schedule_rows\":0}', '{\"schedule_rows\":5,\"start_month\":\"2026-11-01\",\"repayment_method\":\"fixed_monthly\",\"approved_amount\":50000,\"outstanding_balance\":50000}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-10 15:20:20'),
+(2348, 29, 'HR_SALARY_ADVANCE_DISBURSE', 'hr_salary_advance_request', 21, '{\"status\":\"approved\",\"accounting_status\":\"verified\",\"approved_amount\":50000}', '{\"status\":\"disbursed\",\"disbursed_amount\":50000,\"cash_account_id\":1,\"journal_entry_id\":133,\"reference\":\"SAL-ADV-SAR-2026-00021\",\"outstanding_balance\":50000}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-10 15:20:20'),
+(2349, 34, 'LOGIN', 'users', 34, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-10 15:45:01'),
+(2350, 29, 'HR_SALARY_ADVANCE_ACCOUNTING_VERIFY_AND_DISBURSE', 'hr_salary_advance_request', 20, '{\"status\":\"approved\",\"accounting_status\":\"pending\"}', '{\"accounting_status\":\"verified\",\"accounting_verified_by\":29,\"verification_and_disbursement_atomic\":true}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-10 17:10:51'),
+(2351, 29, 'HR_SALARY_ADVANCE_SCHEDULE_GENERATE', 'hr_salary_advance_request', 20, '{\"schedule_rows\":0}', '{\"schedule_rows\":2,\"start_month\":\"2026-11-01\",\"repayment_method\":\"fixed_monthly\",\"approved_amount\":10000,\"outstanding_balance\":10000}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-10 17:10:51'),
+(2352, 29, 'HR_SALARY_ADVANCE_DISBURSE', 'hr_salary_advance_request', 20, '{\"status\":\"approved\",\"accounting_status\":\"verified\",\"approved_amount\":10000}', '{\"status\":\"disbursed\",\"disbursed_amount\":10000,\"cash_account_id\":1,\"journal_entry_id\":134,\"reference\":\"SAL-ADV-SAR-2026-00020\",\"outstanding_balance\":10000}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-10 17:10:51'),
+(2353, 29, 'HR_SALARY_ADVANCE_RECEIPT_UPLOAD', 'hr_salary_advance_request', 21, '{\"previous_receipt\":null}', '{\"receipt_path\":\"storage\\/receipts\\/salary-advances\\/SAL-ADV-SAR-2026-00021-48bacf449bde7ad1.png\",\"original_name\":\"pharma.png\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-10 17:18:29'),
+(2354, 34, 'LOGOUT', 'users', 34, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-10 17:19:02'),
+(2355, 33, 'LOGIN', 'users', 33, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-10 17:19:11'),
+(2356, 33, 'LOGOUT', 'users', 33, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-10 17:52:28'),
+(2357, 29, 'LOGOUT', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-10 20:48:11'),
+(2360, 29, 'HR_ATTENDANCE_AUTO_CHECK_IN', 'attendance', 14, NULL, '{\"date\":\"2026-10-11\",\"check_in\":\"15:59:23\",\"work_mode\":\"hybrid\",\"policy_version\":1,\"source\":\"successful_login\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-11 16:59:23'),
+(2361, 29, 'LOGIN', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-11 16:59:23'),
+(2362, 29, 'LOGOUT', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-11 22:08:46'),
+(2363, 29, 'LOGIN', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-12 07:09:25');
 
 -- --------------------------------------------------------
 
@@ -9232,7 +9291,8 @@ INSERT INTO `hr_salary_advance_documents` (`id`, `salary_advance_request_id`, `d
 (1, 1, 'payment_receipt', 'storage/receipts/salary-advances/SAL-ADV-SAR-2026-00001-02b403d9e309fe25.jpg', 'Fai Ali_page-0001.jpg', 'image/jpeg', 1465580, 29, '2026-09-29 07:41:54'),
 (2, 11, 'payment_receipt', 'storage/receipts/salary-advances/SAL-ADV-SAR-2026-00011-8d26aad04623fe05.jpg', 'Feen_logo.jpeg', 'image/jpeg', 51326, 29, '2026-09-30 19:19:37'),
 (3, 18, 'payment_receipt', 'storage/receipts/salary-advances/SAL-ADV-SAR-2026-00012-e8f3faa1a0b51690.jpg', 'WhatsApp Image 2026-09-21 at 11.09.00 AM.jpeg', 'image/jpeg', 135639, 29, '2026-10-01 07:13:27'),
-(4, 19, 'payment_receipt', 'storage/receipts/salary-advances/SAL-ADV-SAR-2026-00019-5ec2e74bc264c1d9.pdf', 'Fai Ali.pdf', 'application/pdf', 428106, 29, '2026-10-01 08:00:23');
+(4, 19, 'payment_receipt', 'storage/receipts/salary-advances/SAL-ADV-SAR-2026-00019-5ec2e74bc264c1d9.pdf', 'Fai Ali.pdf', 'application/pdf', 428106, 29, '2026-10-01 08:00:23'),
+(5, 21, 'payment_receipt', 'storage/receipts/salary-advances/SAL-ADV-SAR-2026-00021-48bacf449bde7ad1.png', 'pharma.png', 'image/png', 146680, 29, '2026-10-10 17:18:29');
 
 -- --------------------------------------------------------
 
@@ -9280,6 +9340,7 @@ CREATE TABLE `hr_salary_advance_policy_versions` (
   `allow_custom_repayment_terms` tinyint(1) NOT NULL DEFAULT 1,
   `maximum_monthly_deduction` decimal(18,2) DEFAULT NULL,
   `maximum_repayment_months` int(10) UNSIGNED DEFAULT NULL,
+  `allow_fm_repayment_rescheduling` tinyint(1) NOT NULL DEFAULT 0,
   `repayment_start_rule` enum('next_payroll','specified_month') NOT NULL DEFAULT 'next_payroll',
   `insufficient_salary_rule` enum('available_salary','skip_month') NOT NULL DEFAULT 'available_salary',
   `eligible_salary_basis` enum('net_before_advance','gross') NOT NULL DEFAULT 'net_before_advance',
@@ -9296,8 +9357,42 @@ CREATE TABLE `hr_salary_advance_policy_versions` (
 -- Dumping data for table `hr_salary_advance_policy_versions`
 --
 
-INSERT INTO `hr_salary_advance_policy_versions` (`id`, `version_no`, `policy_name`, `effective_from`, `notes`, `allow_any_request_amount`, `minimum_request_amount`, `maximum_request_amount`, `allow_multiple_active_advances`, `allow_fixed_monthly_repayment`, `allow_full_eligible_salary_repayment`, `allow_full_settlement_from_salary`, `allow_direct_repayment`, `allow_custom_repayment_terms`, `maximum_monthly_deduction`, `maximum_repayment_months`, `repayment_start_rule`, `insufficient_salary_rule`, `eligible_salary_basis`, `minimum_service_days`, `probation_allowed`, `terminated_employee_allowed`, `require_accounting_verification`, `allow_early_settlement`, `created_by`, `created_at`) VALUES
-(1, 1, 'سياسة السلف على الراتب', '2026-09-29', NULL, 1, NULL, NULL, 0, 1, 1, 1, 1, 1, 10000.00, 6, 'next_payroll', 'available_salary', 'net_before_advance', 0, 1, 0, 1, 1, 29, '2026-09-27 10:05:48');
+INSERT INTO `hr_salary_advance_policy_versions` (`id`, `version_no`, `policy_name`, `effective_from`, `notes`, `allow_any_request_amount`, `minimum_request_amount`, `maximum_request_amount`, `allow_multiple_active_advances`, `allow_fixed_monthly_repayment`, `allow_full_eligible_salary_repayment`, `allow_full_settlement_from_salary`, `allow_direct_repayment`, `allow_custom_repayment_terms`, `maximum_monthly_deduction`, `maximum_repayment_months`, `allow_fm_repayment_rescheduling`, `repayment_start_rule`, `insufficient_salary_rule`, `eligible_salary_basis`, `minimum_service_days`, `probation_allowed`, `terminated_employee_allowed`, `require_accounting_verification`, `allow_early_settlement`, `created_by`, `created_at`) VALUES
+(1, 1, 'سياسة السلف على الراتب', '2026-09-29', NULL, 1, NULL, NULL, 0, 1, 1, 1, 1, 1, 10000.00, 6, 0, 'next_payroll', 'available_salary', 'net_before_advance', 0, 1, 0, 1, 1, 29, '2026-09-27 10:05:48');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `hr_salary_advance_repayment_plans`
+--
+
+CREATE TABLE `hr_salary_advance_repayment_plans` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `salary_advance_request_id` int(10) UNSIGNED NOT NULL,
+  `plan_no` int(10) UNSIGNED NOT NULL,
+  `status` enum('active','superseded') NOT NULL DEFAULT 'active',
+  `reason` varchar(1000) DEFAULT NULL,
+  `outstanding_balance_at_creation` decimal(18,2) NOT NULL,
+  `start_month` date NOT NULL,
+  `maximum_repayment_months` int(10) UNSIGNED DEFAULT NULL,
+  `maximum_monthly_deduction` decimal(18,2) NOT NULL,
+  `created_by` int(10) UNSIGNED DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `activated_at` datetime DEFAULT NULL,
+  `superseded_at` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `hr_salary_advance_repayment_plans`
+--
+
+INSERT INTO `hr_salary_advance_repayment_plans` (`id`, `salary_advance_request_id`, `plan_no`, `status`, `reason`, `outstanding_balance_at_creation`, `start_month`, `maximum_repayment_months`, `maximum_monthly_deduction`, `created_by`, `created_at`, `activated_at`, `superseded_at`) VALUES
+(1, 4, 1, 'active', 'Initial schedule migrated from the pre-versioned repayment plan.', 50000.00, '2026-10-01', 6, 10000.00, NULL, '2026-10-11 16:54:41', '2026-10-11 16:54:41', NULL),
+(2, 7, 1, 'active', 'Initial schedule migrated from the pre-versioned repayment plan.', 50000.00, '2026-10-01', 6, 10000.00, NULL, '2026-10-11 16:54:41', '2026-10-11 16:54:41', NULL),
+(3, 8, 1, 'active', 'Initial schedule migrated from the pre-versioned repayment plan.', 50000.00, '2026-10-01', 6, 10000.00, NULL, '2026-10-11 16:54:41', '2026-10-11 16:54:41', NULL),
+(4, 11, 1, 'active', 'Initial schedule migrated from the pre-versioned repayment plan.', 30000.00, '2026-10-01', 6, 10000.00, NULL, '2026-10-11 16:54:41', '2026-10-11 16:54:41', NULL),
+(5, 20, 1, 'active', 'Initial schedule migrated from the pre-versioned repayment plan.', 10000.00, '2026-11-01', 6, 10000.00, NULL, '2026-10-11 16:54:41', '2026-10-11 16:54:41', NULL),
+(6, 21, 1, 'active', 'Initial schedule migrated from the pre-versioned repayment plan.', 50000.00, '2026-11-01', 6, 10000.00, NULL, '2026-10-11 16:54:41', '2026-10-11 16:54:41', NULL);
 
 -- --------------------------------------------------------
 
@@ -9308,6 +9403,7 @@ INSERT INTO `hr_salary_advance_policy_versions` (`id`, `version_no`, `policy_nam
 CREATE TABLE `hr_salary_advance_repayment_schedule` (
   `id` int(10) UNSIGNED NOT NULL,
   `salary_advance_request_id` int(10) UNSIGNED NOT NULL,
+  `repayment_plan_id` int(10) UNSIGNED DEFAULT NULL,
   `installment_no` int(10) UNSIGNED NOT NULL,
   `scheduled_month` date NOT NULL,
   `scheduled_amount` decimal(18,2) NOT NULL,
@@ -9324,30 +9420,37 @@ CREATE TABLE `hr_salary_advance_repayment_schedule` (
 -- Dumping data for table `hr_salary_advance_repayment_schedule`
 --
 
-INSERT INTO `hr_salary_advance_repayment_schedule` (`id`, `salary_advance_request_id`, `installment_no`, `scheduled_month`, `scheduled_amount`, `applied_amount`, `status`, `applied_payroll_id`, `applied_at`, `skip_reason`, `created_at`, `updated_at`) VALUES
-(1, 7, 1, '2026-10-01', 10000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 08:19:55', '2026-09-29 08:19:55'),
-(2, 7, 2, '2026-11-01', 10000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 08:19:55', '2026-09-29 08:19:55'),
-(3, 7, 3, '2026-12-01', 10000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 08:19:55', '2026-09-29 08:19:55'),
-(4, 7, 4, '2027-01-01', 10000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 08:19:55', '2026-09-29 08:19:55'),
-(5, 7, 5, '2027-02-01', 10000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 08:19:55', '2026-09-29 08:19:55'),
-(6, 4, 1, '2026-10-01', 5000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 08:26:24', '2026-09-29 08:26:24'),
-(7, 4, 2, '2026-11-01', 5000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 08:26:24', '2026-09-29 08:26:24'),
-(8, 4, 3, '2026-12-01', 5000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 08:26:24', '2026-09-29 08:26:24'),
-(9, 4, 4, '2027-01-01', 5000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 08:26:24', '2026-09-29 08:26:24'),
-(10, 4, 5, '2027-02-01', 5000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 08:26:24', '2026-09-29 08:26:24'),
-(11, 4, 6, '2027-03-01', 5000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 08:26:24', '2026-09-29 08:26:24'),
-(12, 4, 7, '2027-04-01', 5000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 08:26:24', '2026-09-29 08:26:24'),
-(13, 4, 8, '2027-05-01', 5000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 08:26:24', '2026-09-29 08:26:24'),
-(14, 4, 9, '2027-06-01', 5000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 08:26:24', '2026-09-29 08:26:24'),
-(15, 4, 10, '2027-07-01', 5000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 08:26:24', '2026-09-29 08:26:24'),
-(16, 8, 1, '2026-10-01', 10000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 11:30:36', '2026-09-29 11:30:36'),
-(17, 8, 2, '2026-11-01', 10000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 11:30:36', '2026-09-29 11:30:36'),
-(18, 8, 3, '2026-12-01', 10000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 11:30:36', '2026-09-29 11:30:36'),
-(19, 8, 4, '2027-01-01', 10000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 11:30:36', '2026-09-29 11:30:36'),
-(20, 8, 5, '2027-02-01', 10000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 11:30:36', '2026-09-29 11:30:36'),
-(21, 11, 1, '2026-10-01', 10000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 16:06:02', '2026-09-29 16:06:02'),
-(22, 11, 2, '2026-11-01', 10000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 16:06:02', '2026-09-29 16:06:02'),
-(23, 11, 3, '2026-12-01', 10000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 16:06:02', '2026-09-29 16:06:02');
+INSERT INTO `hr_salary_advance_repayment_schedule` (`id`, `salary_advance_request_id`, `repayment_plan_id`, `installment_no`, `scheduled_month`, `scheduled_amount`, `applied_amount`, `status`, `applied_payroll_id`, `applied_at`, `skip_reason`, `created_at`, `updated_at`) VALUES
+(1, 7, 2, 1, '2026-10-01', 10000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 08:19:55', '2026-10-11 16:54:41'),
+(2, 7, 2, 2, '2026-11-01', 10000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 08:19:55', '2026-10-11 16:54:41'),
+(3, 7, 2, 3, '2026-12-01', 10000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 08:19:55', '2026-10-11 16:54:41'),
+(4, 7, 2, 4, '2027-01-01', 10000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 08:19:55', '2026-10-11 16:54:41'),
+(5, 7, 2, 5, '2027-02-01', 10000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 08:19:55', '2026-10-11 16:54:41'),
+(6, 4, 1, 1, '2026-10-01', 5000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 08:26:24', '2026-10-11 16:54:41'),
+(7, 4, 1, 2, '2026-11-01', 5000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 08:26:24', '2026-10-11 16:54:41'),
+(8, 4, 1, 3, '2026-12-01', 5000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 08:26:24', '2026-10-11 16:54:41'),
+(9, 4, 1, 4, '2027-01-01', 5000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 08:26:24', '2026-10-11 16:54:41'),
+(10, 4, 1, 5, '2027-02-01', 5000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 08:26:24', '2026-10-11 16:54:41'),
+(11, 4, 1, 6, '2027-03-01', 5000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 08:26:24', '2026-10-11 16:54:41'),
+(12, 4, 1, 7, '2027-04-01', 5000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 08:26:24', '2026-10-11 16:54:41'),
+(13, 4, 1, 8, '2027-05-01', 5000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 08:26:24', '2026-10-11 16:54:41'),
+(14, 4, 1, 9, '2027-06-01', 5000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 08:26:24', '2026-10-11 16:54:41'),
+(15, 4, 1, 10, '2027-07-01', 5000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 08:26:24', '2026-10-11 16:54:41'),
+(16, 8, 3, 1, '2026-10-01', 10000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 11:30:36', '2026-10-11 16:54:41'),
+(17, 8, 3, 2, '2026-11-01', 10000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 11:30:36', '2026-10-11 16:54:41'),
+(18, 8, 3, 3, '2026-12-01', 10000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 11:30:36', '2026-10-11 16:54:41'),
+(19, 8, 3, 4, '2027-01-01', 10000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 11:30:36', '2026-10-11 16:54:41'),
+(20, 8, 3, 5, '2027-02-01', 10000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 11:30:36', '2026-10-11 16:54:41'),
+(21, 11, 4, 1, '2026-10-01', 10000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 16:06:02', '2026-10-11 16:54:41'),
+(22, 11, 4, 2, '2026-11-01', 10000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 16:06:02', '2026-10-11 16:54:41'),
+(23, 11, 4, 3, '2026-12-01', 10000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-09-29 16:06:02', '2026-10-11 16:54:41'),
+(42, 21, 6, 1, '2026-11-01', 10000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-10-10 15:20:20', '2026-10-11 16:54:41'),
+(43, 21, 6, 2, '2026-12-01', 10000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-10-10 15:20:20', '2026-10-11 16:54:41'),
+(44, 21, 6, 3, '2027-01-01', 10000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-10-10 15:20:20', '2026-10-11 16:54:41'),
+(45, 21, 6, 4, '2027-02-01', 10000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-10-10 15:20:20', '2026-10-11 16:54:41'),
+(46, 21, 6, 5, '2027-03-01', 10000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-10-10 15:20:20', '2026-10-11 16:54:41'),
+(47, 20, 5, 1, '2026-11-01', 5000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-10-10 17:10:51', '2026-10-11 16:54:41'),
+(48, 20, 5, 2, '2026-12-01', 5000.00, 0.00, 'pending', NULL, NULL, NULL, '2026-10-10 17:10:51', '2026-10-11 16:54:41');
 
 -- --------------------------------------------------------
 
@@ -9403,7 +9506,7 @@ INSERT INTO `hr_salary_advance_requests` (`id`, `request_no`, `employee_id`, `po
 (1, 'SAR-2026-00001', 6, 1, 10000.00, 'full_settlement', NULL, '2026-10-01', 'test salary advance', 'disbursed', 19, '2026-09-28 08:36:42', 29, '2026-09-28 09:55:09', NULL, 'approved', NULL, 10000.00, 'full_settlement', NULL, '2026-10-01', 0, NULL, 'verified', 29, '2026-09-28 18:56:56', NULL, 29, '2026-09-28 19:06:24', 1, 71, 'SAL-ADV-SAR-2026-00001', 10000.00, NULL, NULL, '2026-09-28 08:36:42', '2026-09-28 19:06:24'),
 (2, 'SAR-2026-00002', 17, 1, 20000.00, 'fixed_monthly', 5000.00, '2026-10-01', 'new request test', 'rejected', 28, '2026-09-28 10:00:12', 29, '2026-09-28 16:01:53', '2026-09-28 16:01:53', 'rejected', 'rejection test', NULL, NULL, NULL, NULL, 0, NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-28 10:00:12', '2026-09-28 21:19:30'),
 (3, 'SAR-2026-00003', 17, 1, 50000.00, 'fixed_monthly', 5000.00, '2026-10-01', 'policy test', 'rejected', 28, '2026-09-28 16:02:46', 29, '2026-09-28 16:10:47', '2026-09-28 16:10:47', 'rejected', 'rejection test 2', NULL, NULL, NULL, NULL, 0, NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-28 16:02:46', '2026-09-28 21:19:30'),
-(4, 'SAR-2026-00004', 17, 1, 50000.00, 'fixed_monthly', 5000.00, '2026-11-01', 'policy test 2', 'disbursed', 28, '2026-09-28 16:11:35', 29, '2026-09-28 16:13:49', NULL, 'approved', NULL, 50000.00, 'fixed_monthly', 5000.00, '2026-11-01', 1, 'استثناء خاص بهذا الطلب لا يغيّر السياسة العامة', 'verified', 29, '2026-09-28 18:24:14', NULL, 29, '2026-09-29 08:26:24', 1, 73, 'SAL-ADV-SAR-2026-00004', 50000.00, NULL, NULL, '2026-09-28 16:11:35', '2026-09-29 08:26:24'),
+(4, 'SAR-2026-00004', 17, 1, 50000.00, 'fixed_monthly', 5000.00, '2026-11-01', 'policy test 2', 'disbursed', 28, '2026-09-28 16:11:35', 29, '2026-09-28 16:13:49', NULL, 'approved', NULL, 50000.00, 'fixed_monthly', 5000.00, '2026-11-01', 1, 'استثناء خاص بهذا الطلب لا يغيّر السياسة العامة', 'verified', 29, '2026-09-28 18:24:14', NULL, 29, '2026-09-29 08:26:24', 1, 73, 'SAL-ADV-SAR-2026-00004', 50000.00, NULL, NULL, '2026-09-28 16:11:35', '2026-10-06 15:41:01'),
 (5, 'SAR-2026-00005', 6, 1, 50000.00, 'fixed_monthly', 5000.00, '2026-11-01', 'policy test 3', 'rejected', 19, '2026-09-28 16:17:52', 29, '2026-09-29 07:36:57', '2026-09-29 07:36:57', 'rejected', 'تم رفض طلب السلفة وإغلاقه وإبلاغ الموظف.', NULL, NULL, NULL, NULL, 0, NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-28 16:17:52', '2026-09-29 07:36:57'),
 (6, 'SAR-2026-00006', 7, 1, 60000.00, 'fixed_monthly', 5000.00, '2026-11-01', 'policy rejection test', 'rejected', 20, '2026-09-28 17:26:22', 29, '2026-09-28 17:28:45', '2026-09-28 17:28:45', 'rejected', 'اختبار رفض طلب غير متوافق مع قاعدة بدء السداد', NULL, NULL, NULL, NULL, 0, NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-28 17:26:22', '2026-09-28 21:19:30'),
 (7, 'SAR-2026-00007', 8, 1, 50000.00, 'fixed_monthly', 10000.00, '2026-10-01', 'schedule generation during disbursement test', 'disbursed', 21, '2026-09-29 08:09:37', 29, '2026-09-29 08:14:56', NULL, 'approved', NULL, 50000.00, 'fixed_monthly', 10000.00, '2026-10-01', 0, NULL, 'verified', 29, '2026-09-29 08:17:58', NULL, 29, '2026-09-29 08:19:55', 1, 72, 'SAL-ADV-SAR-2026-00007', 50000.00, NULL, NULL, '2026-09-29 08:09:37', '2026-09-29 08:19:55'),
@@ -9412,7 +9515,9 @@ INSERT INTO `hr_salary_advance_requests` (`id`, `request_no`, `employee_id`, `po
 (10, 'SAR-2026-00010', 20, 1, 30000.00, 'fixed_monthly', 10000.00, '2026-11-01', 'test', 'rejected', 32, '2026-09-29 12:05:25', 29, '2026-09-29 12:06:06', '2026-09-29 12:06:06', 'rejected', 'test', NULL, NULL, NULL, NULL, 0, NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-29 12:05:25', '2026-09-29 12:06:06'),
 (11, 'SAR-2026-00011', 20, 1, 30000.00, 'fixed_monthly', 10000.00, '2026-12-01', 'next_payroll test', 'disbursed', 32, '2026-09-29 16:03:20', 29, '2026-09-29 16:05:07', NULL, 'approved', NULL, 30000.00, 'fixed_monthly', 10000.00, '2026-12-01', 1, 'next_payroll', 'verified', 29, '2026-09-29 16:05:52', NULL, 29, '2026-09-29 16:06:02', 1, 76, 'SAL-ADV-SAR-2026-00011', 30000.00, NULL, NULL, '2026-09-29 16:03:20', '2026-09-29 16:06:02'),
 (18, 'SAR-2026-00012', 2, 1, 10000.00, 'direct_repayment', NULL, '2026-10-01', 'Direct Repayment method test', 'settled', 2, '2026-09-30 20:46:14', 29, '2026-09-30 20:48:46', NULL, 'approved', NULL, 10000.00, 'direct_repayment', NULL, '2026-10-01', 0, NULL, 'verified', 29, '2026-09-30 20:56:41', NULL, 29, '2026-09-30 21:10:00', 1, 88, 'SAL-ADV-SAR-2026-00012', 0.00, 29, '2026-10-01 07:16:31', '2026-09-30 20:46:14', '2026-10-01 07:16:31'),
-(19, 'SAR-2026-00019', 2, 1, 20000.00, 'direct_repayment', NULL, '2026-11-01', 'salary_advance_direct_repayment_evidence test', 'settled', 2, '2026-10-01 07:41:01', 29, '2026-10-01 07:42:01', NULL, 'approved', NULL, 20000.00, 'direct_repayment', NULL, '2026-11-01', 0, NULL, 'verified', 29, '2026-10-01 07:59:33', NULL, 29, '2026-10-01 07:59:33', 2, 92, 'SAL-ADV-SAR-2026-00019', 0.00, 29, '2026-10-01 08:09:26', '2026-10-01 07:41:01', '2026-10-01 08:09:26');
+(19, 'SAR-2026-00019', 2, 1, 20000.00, 'direct_repayment', NULL, '2026-11-01', 'salary_advance_direct_repayment_evidence test', 'settled', 2, '2026-10-01 07:41:01', 29, '2026-10-01 07:42:01', NULL, 'approved', NULL, 20000.00, 'direct_repayment', NULL, '2026-11-01', 0, NULL, 'verified', 29, '2026-10-01 07:59:33', NULL, 29, '2026-10-01 07:59:33', 2, 92, 'SAL-ADV-SAR-2026-00019', 0.00, 29, '2026-10-01 08:09:26', '2026-10-01 07:41:01', '2026-10-01 08:09:26'),
+(20, 'SAR-2026-00020', 22, 1, 10000.00, 'fixed_monthly', 5000.00, '2026-11-01', 'medications', 'disbursed', 34, '2026-10-10 14:51:06', 29, '2026-10-10 14:53:16', NULL, 'approved', NULL, 10000.00, 'fixed_monthly', 5000.00, '2026-11-01', 0, NULL, 'verified', 29, '2026-10-10 17:10:51', NULL, 29, '2026-10-10 17:10:51', 1, 134, 'SAL-ADV-SAR-2026-00020', 10000.00, NULL, NULL, '2026-10-10 14:51:06', '2026-10-10 17:10:51'),
+(21, 'SAR-2026-00021', 23, 1, 50000.00, 'fixed_monthly', 10000.00, '2026-11-01', 'medicine', 'disbursed', 33, '2026-10-10 14:52:28', 29, '2026-10-10 15:09:16', NULL, 'approved', NULL, 50000.00, 'fixed_monthly', 10000.00, '2026-11-01', 0, NULL, 'verified', 29, '2026-10-10 15:20:20', NULL, 29, '2026-10-10 15:20:20', 1, 133, 'SAL-ADV-SAR-2026-00021', 50000.00, NULL, NULL, '2026-10-10 14:52:28', '2026-10-10 15:20:20');
 
 -- --------------------------------------------------------
 
@@ -9439,6 +9544,13 @@ CREATE TABLE `hr_salary_advance_waiver_decisions` (
   `executed_at` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `hr_salary_advance_waiver_decisions`
+--
+
+INSERT INTO `hr_salary_advance_waiver_decisions` (`id`, `decision_no`, `decision_type`, `effective_month`, `reason`, `status`, `created_by`, `created_at`, `prepared_by`, `prepared_at`, `refund_account_id`, `waiver_expense_account_id`, `gm_approved_by`, `gm_approved_at`, `gm_rejection_reason`, `executed_at`) VALUES
+(10, 'SAW-000001', 'individual', '2026-10-01', 'Post-commit notification verification', 'pending_gm', 29, '2026-10-06 15:23:40', 29, '2026-10-06 15:23:40', 1, 13, NULL, NULL, NULL, NULL);
+
 -- --------------------------------------------------------
 
 --
@@ -9464,6 +9576,13 @@ CREATE TABLE `hr_salary_advance_waiver_items` (
   `waiver_journal_entry_id` int(10) UNSIGNED DEFAULT NULL,
   `executed_at` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `hr_salary_advance_waiver_items`
+--
+
+INSERT INTO `hr_salary_advance_waiver_items` (`id`, `decision_id`, `salary_advance_request_id`, `employee_id`, `balance_before`, `current_period_repayment`, `refund_amount`, `balance_before_waiver`, `waived_amount`, `balance_after`, `previous_request_status`, `resulting_request_status`, `refund_account_id`, `refund_journal_entry_id`, `waiver_expense_account_id`, `waiver_journal_entry_id`, `executed_at`) VALUES
+(15, 10, 4, 17, 50000.00, 0.00, 0.00, 50000.00, 0.00, 0.00, 'disbursed', 'disbursed', NULL, NULL, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -9589,7 +9708,9 @@ INSERT INTO `journal_entries` (`id`, `entry_code`, `entry_date`, `description`, 
 (112, 'JE-PRJ-REL-15-37-20261002183353-11ca0a', '2026-10-02', 'إفراج مالي لتمويل المشروع: PH5 Full Accounting Reconciliation Test', 'project_funding_release', 37, 'voided', '2026-10-02 19:34:30', 2, 'رفض المدير العام: info messages test', 29, '2026-10-02 19:33:53'),
 (113, 'JE-PRJ-REL-REV-15-37-20261002183430-d60fa0', '2026-10-02', 'عكس إفراج تمويل المشروع: رفض المدير العام: info messages test', 'project_funding_release_reversal', 37, 'posted', NULL, NULL, NULL, 2, '2026-10-02 19:34:30'),
 (114, 'JE-PRJ-REL-15-37-20261002183447-0b3263', '2026-10-02', 'إفراج مالي لتمويل المشروع: PH5 Full Accounting Reconciliation Test', 'project_funding_release', 37, 'posted', NULL, NULL, NULL, 29, '2026-10-02 19:34:47'),
-(115, 'JE-PRJ-RET-15-37-20261003180646-6ee541', '2026-10-03', 'إرجاع رصيد مشروع غير مستخدم: PH5 Full Accounting Reconciliation Test', 'project_funding_return', 37, 'posted', NULL, NULL, NULL, 29, '2026-10-03 19:06:46');
+(115, 'JE-PRJ-RET-15-37-20261003180646-6ee541', '2026-10-03', 'إرجاع رصيد مشروع غير مستخدم: PH5 Full Accounting Reconciliation Test', 'project_funding_return', 37, 'posted', NULL, NULL, NULL, 29, '2026-10-03 19:06:46'),
+(133, 'JE-000051', '2026-10-10', 'صرف سلفة راتب SAR-2026-00021 — projects manager', 'salary_advance_disbursement', 21, 'posted', NULL, NULL, NULL, 29, '2026-10-10 15:20:20'),
+(134, 'JE-000052', '2026-10-10', 'صرف سلفة راتب SAR-2026-00020 — project supervisor', 'salary_advance_disbursement', 20, 'posted', NULL, NULL, NULL, 29, '2026-10-10 17:10:51');
 
 -- --------------------------------------------------------
 
@@ -9786,7 +9907,11 @@ INSERT INTO `journal_lines` (`id`, `entry_id`, `account_id`, `debit`, `credit`, 
 (231, 114, 47, 300000.00, 0.00, 'إفراج تمويل المشروع إلى عهدة التنفيذ'),
 (232, 114, 2, 0.00, 300000.00, 'خصم من حساب تمويل المشروع'),
 (233, 115, 2, 250000.00, 0.00, 'إعادة الرصيد إلى حساب المؤسسة'),
-(234, 115, 47, 0.00, 250000.00, 'عكس الجزء غير المستخدم من مصروف المشروع');
+(234, 115, 47, 0.00, 250000.00, 'عكس الجزء غير المستخدم من مصروف المشروع'),
+(273, 133, 37, 50000.00, 0.00, 'صرف سلفة راتب SAR-2026-00021 — projects manager'),
+(274, 133, 1, 0.00, 50000.00, 'صرف سلفة راتب SAR-2026-00021 — projects manager'),
+(275, 134, 37, 10000.00, 0.00, 'صرف سلفة راتب SAR-2026-00020 — project supervisor'),
+(276, 134, 1, 0.00, 10000.00, 'صرف سلفة راتب SAR-2026-00020 — project supervisor');
 
 -- --------------------------------------------------------
 
@@ -9816,7 +9941,9 @@ CREATE TABLE `leaves` (
 
 INSERT INTO `leaves` (`id`, `employee_id`, `leave_type`, `start_date`, `end_date`, `days_count`, `reason`, `status`, `manager_approved_by`, `manager_approved_at`, `hr_approved_by`, `hr_approved_at`, `created_at`) VALUES
 (5, 16, 'sick', '2026-09-08', '2026-09-30', 23, 'as per doctor orders', 'hr_approved', NULL, NULL, 32, '2026-09-07 18:07:54', '2026-09-07 18:05:51'),
-(6, 6, 'sick', '2026-09-19', '2026-09-22', 4, 'as doctor requested', 'rejected', NULL, NULL, NULL, NULL, '2026-09-15 09:05:53');
+(6, 6, 'sick', '2026-09-19', '2026-09-22', 4, 'as doctor requested', 'rejected', NULL, NULL, NULL, NULL, '2026-09-15 09:05:53'),
+(9, 22, 'sick', '2026-10-10', '2026-10-12', 3, 'as per doctor orders', 'hr_approved', NULL, NULL, 32, '2026-10-10 14:50:28', '2026-10-10 14:49:56'),
+(10, 23, 'emergency', '2026-10-10', '2026-10-11', 2, 'sick leave', 'hr_approved', NULL, NULL, 32, '2026-10-10 14:52:02', '2026-10-10 14:51:51');
 
 -- --------------------------------------------------------
 
@@ -10334,7 +10461,17 @@ INSERT INTO `notifications` (`id`, `recipient_user_id`, `type`, `title`, `body`,
 (148, 33, 'info', 'طلب إغلاق مشروع', 'المشروع «PH5 Full Accounting Reconciliation Test» (PRJ-0015) لديه طلب إغلاق من مشرف المشروع ويحتاج إجراء مدير المشاريع.', 'http://localhost:8081/AhlElKheir/modules/projects/view.php?id=15', 1, '2026-10-03 16:29:08'),
 (149, 29, 'info', 'مشروع بانتظار تسوية الرصيد المتبقي', 'المشروع «PH5 Full Accounting Reconciliation Test» (PRJ-0015) لديه رصيد متبقٍ تحت سيطرة المشروع بقيمة 250,000.00 SDG. يرجى تنفيذ التسوية المالية قبل الإغلاق.', 'http://localhost:8081/AhlElKheir/modules/projects/view_fm.php?id=15', 1, '2026-10-03 16:29:08'),
 (150, 29, 'info', 'المشروع مغلق إدارياً ويحتاج إغلاقاً مالياً', 'أغلق مدير المشاريع المشروع «PH5 Full Accounting Reconciliation Test» (PRJ-0015). الرصيد المتبقي تحت سيطرة المشروع: 250,000.00 SDG. يرجى مراجعة إثبات الإرجاع وتسجيل إرجاع الرصيد وإتمام الإغلاق المالي.', 'http://localhost:8081/AhlElKheir/modules/projects/view_fm.php?id=15', 1, '2026-10-03 18:47:27'),
-(151, 33, 'info', 'اكتمل الإغلاق المالي للمشروع', 'أتم المدير المالي الإغلاق المالي للمشروع «PH5 Full Accounting Reconciliation Test» (PRJ-0015) بعد إرجاع الرصيد المتبقي إلى حساب المؤسسة. انتهت دورة الإغلاق المالي للمشروع.', 'http://localhost:8081/AhlElKheir/modules/projects/view_pm.php?id=15', 1, '2026-10-03 19:06:46');
+(151, 33, 'info', 'اكتمل الإغلاق المالي للمشروع', 'أتم المدير المالي الإغلاق المالي للمشروع «PH5 Full Accounting Reconciliation Test» (PRJ-0015) بعد إرجاع الرصيد المتبقي إلى حساب المؤسسة. انتهت دورة الإغلاق المالي للمشروع.', 'http://localhost:8081/AhlElKheir/modules/projects/view_pm.php?id=15', 1, '2026-10-03 19:06:46'),
+(154, 2, 'info', 'قرار إعفاء سلف الرواتب بانتظار اعتمادك', 'تم تجهيز قرار إعفاء سلف راتب رقم «SAW-000002» (فردي) لشهر 2026-10-01 بواسطة المدير المالي. القرار بانتظار مراجعتك واعتمادك أو رفضه.', 'http://localhost/modules/hr/salary_advance_waiver_gm.php', 0, '2026-10-06 15:29:51'),
+(155, 29, 'info', 'اعتماد GM لقرار إعفاء سلف الرواتب', 'تم اعتماد قرار إعفاء سلف الراتب «SAW-000002» من المدير العام. يمكنك الآن العودة إلى القرار وإتمام التنفيذ المالي.', 'http://localhost/modules/hr/salary_advance_waiver_fm.php', 1, '2026-10-06 15:29:51'),
+(159, 32, 'info', 'طلب إجازة جديد', 'قام الموظف project supervisor بتقديم طلب إجازة للفترة 2026-10-10 إلى 2026-10-12 ويحتاج إلى مراجعة الموارد البشرية.', 'http://localhost:8081/AhlElKheir/modules/hr/leaves.php?status=pending&leave_id=9', 1, '2026-10-10 14:49:56'),
+(160, 34, 'info', 'تم اعتماد طلب الإجازة', 'تم اعتماد طلب إجازتك للفترة 2026-10-10 إلى 2026-10-12 من قبل الموارد البشرية.', 'http://localhost:8081/AhlElKheir/modules/hr/leaves.php?action=request&leave_id=9', 1, '2026-10-10 14:50:28'),
+(161, 29, 'info', 'طلب سلفة على الراتب بانتظار المراجعة', 'طلب السلفة «SAR-2026-00020» للموظف «project supervisor» بانتظار مراجعة المدير المالي.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_processing.php?id=20', 1, '2026-10-10 14:51:06'),
+(162, 32, 'info', 'طلب إجازة جديد', 'قام الموظف projects manager بتقديم طلب إجازة للفترة 2026-10-10 إلى 2026-10-11 ويحتاج إلى مراجعة الموارد البشرية.', 'http://localhost:8081/AhlElKheir/modules/hr/leaves.php?status=pending&leave_id=10', 1, '2026-10-10 14:51:51'),
+(163, 33, 'info', 'تم اعتماد طلب الإجازة', 'تم اعتماد طلب إجازتك للفترة 2026-10-10 إلى 2026-10-11 من قبل الموارد البشرية.', 'http://localhost:8081/AhlElKheir/modules/hr/leaves.php?action=request&leave_id=10', 1, '2026-10-10 14:52:02'),
+(164, 29, 'info', 'طلب سلفة على الراتب بانتظار المراجعة', 'طلب السلفة «SAR-2026-00021» للموظف «projects manager» بانتظار مراجعة المدير المالي.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_processing.php?id=21', 1, '2026-10-10 14:52:28'),
+(165, 33, 'info', 'تم صرف السلفة', 'تم صرف السلفة «SAR-2026-00021» بمبلغ 50,000.00 ج.س. الرصيد القائم للسلفة: 50,000.00 ج.س.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_request.php', 1, '2026-10-10 15:20:20'),
+(166, 34, 'info', 'تم صرف السلفة', 'تم صرف السلفة «SAR-2026-00020» بمبلغ 10,000.00 ج.س. الرصيد القائم للسلفة: 10,000.00 ج.س.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_request.php', 1, '2026-10-10 17:10:51');
 
 -- --------------------------------------------------------
 
@@ -29165,7 +29302,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `role_id`, `username`, `password_hash`, `full_name`, `email`, `phone`, `is_active`, `supervisor_status`, `password_change_required`, `last_login_at`, `created_by`, `created_at`, `updated_at`, `legacy_status`, `avatar_path`, `address`, `birth_date`, `gender`, `department_id`, `manager_id`, `theme_preference`, `language_preference`, `email_notifications`, `push_notifications`, `email_newsletter`) VALUES
-(1, 1, 'sudo', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'منير علي طه صالح', 'sudo@ahlelkheir.org', '0966616614', 1, '', 0, '2026-10-05 07:55:39', NULL, '2026-08-02 16:49:35', '2026-10-05 07:57:32', 'active', 'storage/avatars/user_1_1789753554.png', NULL, NULL, 'ذكر', 1, 1, 'auto', 'ar', 1, 1, 1),
+(1, 1, 'sudo', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'منير علي طه صالح', 'sudo@ahlelkheir.org', '0966616614', 1, '', 0, '2026-10-10 14:33:57', NULL, '2026-08-02 16:49:35', '2026-10-10 14:33:57', 'active', 'storage/avatars/user_1_1789753554.png', NULL, NULL, 'ذكر', 1, 1, 'auto', 'ar', 1, 1, 1),
 (2, 2, 'gm', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'المدير العام', 'gm@ahlelkheir.org', NULL, 1, '', 0, '2026-10-05 08:04:19', NULL, '2026-08-02 16:49:35', '2026-10-05 08:04:19', 'active', 'storage/avatars/user_2_1787805764.png', NULL, NULL, NULL, 1, NULL, 'light', 'ar', 1, 1, 1),
 (3, 3, 'vgm', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'لمياء علي طه صالح', 'vgm@ahlelkheir.org', NULL, 1, '', 0, '2026-09-29 09:00:10', NULL, '2026-08-02 16:49:35', '2026-09-29 09:00:10', 'active', 'storage/avatars/user_3_1787556761.png', NULL, NULL, 'female', 1, 2, 'light', 'ar', 1, 1, 1),
 (4, 10, 'accountant', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'محاسب (موظف)', 'accountant@ahlelkheir.org', '0123456789', 1, '', 0, '2026-08-17 14:11:48', NULL, '2026-08-08 12:33:29', '2026-08-17 14:30:38', 'active', NULL, NULL, NULL, NULL, 6, 29, 'light', 'ar', 1, 1, 1),
@@ -29183,10 +29320,10 @@ INSERT INTO `users` (`id`, `role_id`, `username`, `password_hash`, `full_name`, 
 (26, 4, 'sv8', '$2y$10$iRZLB9UdIggAJqKsR.eoPuwyMFfS4w3RgVjZ4XjvxxUynOuhMAc/i', 'ساره خلف الله', 'sarah@gmail.com', '015468972', 1, 'active', 0, NULL, 3, '2026-08-14 09:28:14', '2026-09-04 08:38:22', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
 (27, 4, 'sv9', '$2y$10$oBV.8O1UW/yiwOAcPMxbqeH8Xh/PJhNtq.tIkyOqh55v1v7GzjSJW', 'هناء خلف الله', 'hanah@gmail.com', '78999456789', 1, 'active', 0, NULL, 3, '2026-08-14 09:31:19', '2026-09-03 15:28:42', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
 (28, 9, 'sm1', '$2y$10$gtVZcFBfL2yMhNXOPpkr5e7up/SiAnE7KfjJ8tq4JFocePuGjcr0C', 'أحمد حسين', 'ahmed@gmail.com', '8545567865', 1, '', 0, '2026-09-28 16:38:49', 1, '2026-08-14 13:06:45', '2026-09-28 16:38:49', NULL, NULL, NULL, NULL, 'male', 4, 3, 'light', 'ar', 1, 1, 1),
-(29, 6, 'fm', '$2y$10$K2.yA1kpqLaGWrqH/QOQ2uXv0PJhvWTMC55tW5kSkU6u5iaz6JmVW', 'المدير المالي', 'fm@ahlelkheir.org', NULL, 1, '', 0, '2026-10-06 07:53:51', 1, '2026-08-17 14:26:40', '2026-10-06 07:53:51', NULL, 'storage/avatars/user_29_1787555658.jpg', NULL, NULL, 'أنثى', 1, 2, 'light', 'ar', 1, 1, 1),
-(32, 11, 'hrh', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'مدير الموارد البشرية', 'hr@ahlelkheir.org', '00112233445566', 1, '', 0, '2026-10-06 07:39:15', NULL, '2026-08-18 21:49:04', '2026-10-06 07:39:15', NULL, 'storage/avatars/user_32_1788630391.png', NULL, NULL, 'male', 1, 2, 'light', 'ar', 1, 1, 1),
-(33, 13, 'gpm', '$2y$10$ftQaFFCk4DF1UrdPlpGtd.OVR.2pyxPxKlIcZ7KhRxa7VMP/FXC/G', 'projects manager', 'pm@gmail.com', '00012344456678', 1, '', 0, '2026-10-03 16:42:38', 1, '2026-08-28 18:33:31', '2026-10-03 16:42:38', NULL, 'storage/avatars/user_33_1787943667.jpg', NULL, NULL, 'male', 1, 2, 'light', 'ar', 1, 1, 1),
-(34, 14, 'ps1', '$2y$10$y6GVpoe/hF9GxE8zyezAPORKNgBn5n65Ct.tUHI0r6lnkyHEdkrZi', 'project supervisor', 'gps@gmail.com', '987654321', 1, '', 0, '2026-10-03 15:05:57', 1, '2026-08-28 18:35:16', '2026-10-03 15:05:57', NULL, NULL, NULL, NULL, 'male', 8, 33, 'light', 'ar', 1, 1, 1),
+(29, 6, 'fm', '$2y$10$K2.yA1kpqLaGWrqH/QOQ2uXv0PJhvWTMC55tW5kSkU6u5iaz6JmVW', 'المدير المالي', 'fm@ahlelkheir.org', NULL, 1, '', 0, '2026-10-12 07:09:24', 1, '2026-08-17 14:26:40', '2026-10-12 07:09:24', NULL, 'storage/avatars/user_29_1787555658.jpg', NULL, NULL, 'أنثى', 1, 2, 'light', 'ar', 1, 1, 1),
+(32, 11, 'hrh', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'مدير الموارد البشرية', 'hr@ahlelkheir.org', '00112233445566', 1, '', 0, '2026-10-10 14:50:16', NULL, '2026-08-18 21:49:04', '2026-10-10 14:50:16', NULL, 'storage/avatars/user_32_1788630391.png', NULL, NULL, 'male', 1, 2, 'light', 'ar', 1, 1, 1),
+(33, 13, 'gpm', '$2y$10$ftQaFFCk4DF1UrdPlpGtd.OVR.2pyxPxKlIcZ7KhRxa7VMP/FXC/G', 'projects manager', 'pm@gmail.com', '00012344456678', 1, '', 0, '2026-10-10 17:19:11', 1, '2026-08-28 18:33:31', '2026-10-10 17:19:11', NULL, 'storage/avatars/user_33_1787943667.jpg', NULL, NULL, 'male', 1, 2, 'light', 'ar', 1, 1, 1),
+(34, 14, 'ps1', '$2y$10$y6GVpoe/hF9GxE8zyezAPORKNgBn5n65Ct.tUHI0r6lnkyHEdkrZi', 'project supervisor', 'gps@gmail.com', '987654321', 1, '', 0, '2026-10-10 15:45:01', 1, '2026-08-28 18:35:16', '2026-10-10 15:45:01', NULL, NULL, NULL, NULL, 'male', 8, 33, 'light', 'ar', 1, 1, 1),
 (35, 10, 'audit_acc2_20260911', '$2y$12$kxUoLJ66pmSWJRDVnkmtUuN5XI6ZhMb41RpeV2cIfN8kUA7.2EWl.', 'ACCOUNTING AUDIT TEMP ACCOUNTANT', NULL, NULL, 1, 'active', 0, '2026-09-11 09:47:45', NULL, '2026-09-11 09:47:04', '2026-09-11 09:47:45', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'light', 'ar', 1, 1, 1),
 (36, 7, 'audit_nany2_20260911', '$2y$12$kxUoLJ66pmSWJRDVnkmtUuN5XI6ZhMb41RpeV2cIfN8kUA7.2EWl.', 'ACCOUNTING AUDIT TEMP NANNY', NULL, NULL, 1, 'active', 0, NULL, NULL, '2026-09-11 09:47:04', '2026-09-11 09:47:04', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'light', 'ar', 1, 1, 1),
 (39, 14, 'test.employee01', '$2y$10$fH73kKYe6Pt5yJyEaWsIFOnQkL5mNyQhYnyWLMmCwruBgEere/A7K', 'حمد محمد التجريبي', 'ah@test.com', '0123456789', 1, 'active', 0, '2026-10-02 14:30:49', 32, '2026-10-01 23:46:02', '2026-10-02 14:30:49', NULL, NULL, NULL, NULL, 'male', 8, 33, 'light', 'ar', 1, 1, 1),
@@ -29623,14 +29760,24 @@ ALTER TABLE `hr_salary_advance_policy_versions`
   ADD KEY `idx_hr_salary_advance_policy_created_by` (`created_by`);
 
 --
+-- Indexes for table `hr_salary_advance_repayment_plans`
+--
+ALTER TABLE `hr_salary_advance_repayment_plans`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_hr_salary_advance_plan_no` (`salary_advance_request_id`,`plan_no`),
+  ADD KEY `idx_hr_salary_advance_plan_active` (`salary_advance_request_id`,`status`),
+  ADD KEY `idx_hr_salary_advance_plan_created_by` (`created_by`);
+
+--
 -- Indexes for table `hr_salary_advance_repayment_schedule`
 --
 ALTER TABLE `hr_salary_advance_repayment_schedule`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `uq_hr_salary_advance_schedule_installment` (`salary_advance_request_id`,`installment_no`),
-  ADD UNIQUE KEY `uq_hr_salary_advance_schedule_month` (`salary_advance_request_id`,`scheduled_month`),
+  ADD UNIQUE KEY `uq_hr_salary_advance_schedule_plan_installment` (`salary_advance_request_id`,`repayment_plan_id`,`installment_no`),
+  ADD UNIQUE KEY `uq_hr_salary_advance_schedule_plan_month` (`salary_advance_request_id`,`repayment_plan_id`,`scheduled_month`),
   ADD KEY `idx_hr_salary_advance_schedule_request_status` (`salary_advance_request_id`,`status`),
-  ADD KEY `idx_hr_salary_advance_schedule_payroll` (`applied_payroll_id`);
+  ADD KEY `idx_hr_salary_advance_schedule_payroll` (`applied_payroll_id`),
+  ADD KEY `idx_hr_salary_advance_schedule_plan` (`repayment_plan_id`);
 
 --
 -- Indexes for table `hr_salary_advance_requests`
@@ -30294,13 +30441,13 @@ ALTER TABLE `accounts`
 -- AUTO_INCREMENT for table `attendance`
 --
 ALTER TABLE `attendance`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=217;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=238;
 
 --
 -- AUTO_INCREMENT for table `audit_log`
 --
 ALTER TABLE `audit_log`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2263;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2364;
 
 --
 -- AUTO_INCREMENT for table `contracts`
@@ -30390,7 +30537,7 @@ ALTER TABLE `group_workflow_audit_log`
 -- AUTO_INCREMENT for table `hr_attendance_policy_versions`
 --
 ALTER TABLE `hr_attendance_policy_versions`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `hr_employee_contracts`
@@ -30426,7 +30573,7 @@ ALTER TABLE `hr_leave_returns`
 -- AUTO_INCREMENT for table `hr_payroll_policy_versions`
 --
 ALTER TABLE `hr_payroll_policy_versions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `hr_payroll_reversals`
@@ -30450,25 +30597,31 @@ ALTER TABLE `hr_salary_advance_direct_repayment_documents`
 -- AUTO_INCREMENT for table `hr_salary_advance_documents`
 --
 ALTER TABLE `hr_salary_advance_documents`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `hr_salary_advance_payroll_repayments`
 --
 ALTER TABLE `hr_salary_advance_payroll_repayments`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `hr_salary_advance_policy_versions`
 --
 ALTER TABLE `hr_salary_advance_policy_versions`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
+
+--
+-- AUTO_INCREMENT for table `hr_salary_advance_repayment_plans`
+--
+ALTER TABLE `hr_salary_advance_repayment_plans`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `hr_salary_advance_repayment_schedule`
 --
 ALTER TABLE `hr_salary_advance_repayment_schedule`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=129;
 
 --
 -- AUTO_INCREMENT for table `hr_salary_advance_requests`
@@ -30480,37 +30633,37 @@ ALTER TABLE `hr_salary_advance_requests`
 -- AUTO_INCREMENT for table `hr_salary_advance_waiver_decisions`
 --
 ALTER TABLE `hr_salary_advance_waiver_decisions`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT for table `hr_salary_advance_waiver_items`
 --
 ALTER TABLE `hr_salary_advance_waiver_items`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 
 --
 -- AUTO_INCREMENT for table `hr_salary_advance_waiver_schedule_items`
 --
 ALTER TABLE `hr_salary_advance_waiver_schedule_items`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=101;
 
 --
 -- AUTO_INCREMENT for table `journal_entries`
 --
 ALTER TABLE `journal_entries`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=116;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=140;
 
 --
 -- AUTO_INCREMENT for table `journal_lines`
 --
 ALTER TABLE `journal_lines`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=235;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=287;
 
 --
 -- AUTO_INCREMENT for table `leaves`
 --
 ALTER TABLE `leaves`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `letters`
@@ -30564,7 +30717,7 @@ ALTER TABLE `nanny_group_assignments`
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=152;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=167;
 
 --
 -- AUTO_INCREMENT for table `orphan_documents`
@@ -30594,7 +30747,7 @@ ALTER TABLE `password_recovery_requests`
 -- AUTO_INCREMENT for table `payroll`
 --
 ALTER TABLE `payroll`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
 
 --
 -- AUTO_INCREMENT for table `performance_reviews`
