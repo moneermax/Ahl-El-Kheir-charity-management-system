@@ -390,6 +390,8 @@ Evidence gaps remain: local runtime has not proven multiple simultaneously eligi
 
 ## NEW ACTIVE FEATURE — Employee incentives
 
+**User has now resolved the attribution rule:** directly created sponsors should automatically record the logged-in employee's user ID as brought-by; conversion from a sponsor request preserves the request's original brought-by user; reactivation rewards go to the employee who handled the win-back after the first payment is confirmed. The conversion code already writes `sponsors.brought_by_user_id`; inspect the exact schema before considering a migration, and never duplicate an existing column. Do not infer or backfill historical attribution.
+
 **Source-audit blocker:** `modules/sponsors/requests.php` records `brought_by_user_id` from sponsor-request conversion, but `modules/sponsors/create.php` only writes `created_by` plus free-text `brought_by_name`. Never infer the award recipient from `created_by`. Before implementing new-sponsor awards, ask whether directly created sponsors without verified attribution should require manager-verified employee attribution or remain ineligible. Win-back records `handled_by` as a user ID; do not assume it is the reward recipient without confirming the intended business rule.
  (checkpoint 2026-10-12)
 
