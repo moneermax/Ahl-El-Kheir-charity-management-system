@@ -434,3 +434,8 @@ Custom category records are manual-review only. Do not issue awards or schedule 
 
 
 Migration follow-up: `eb92fa5a42d00c086da0fe6a439511178d8c149b` adds a metadata guard so ENUM conversion is skipped after the column is already VARCHAR. Still apply/test against local MariaDB 10.4 and inspect the exact DDL result.
+
+## Current HR incentive policy checkpoint — 2026-10-12
+The user confirmed existing Arabic and English category labels display correctly in the browser. `modules/hr/incentive_policy.php` on GitHub `main` now has an automatic, read-only category-code preview derived from the English category name; PHP generates the authoritative code and appends a numeric suffix on collision. Client-posted codes are ignored. Strict agreement timestamp validation and the 2,000-character notes limit are also included.
+
+Latest commits: `23bdf2a84d81cd86f753c283e462f06f828aa510`, `1a1ced379bf5f4942cd44d554bbfbbfc2c499bbe`. User has not yet synced or runtime-tested these latest changes locally. First inspect local `git status` and current `main` before pulling; preserve all local edits. Then run PHP lint and verify preview behavior. No GM/FM reward amounts are agreed yet; test amounts may only be used in a clearly isolated rollback-only test, not in a live policy activation. Continue the incentive feature without reopening closed attendance/payroll, waiver, i18n, or salary-advance stages.
