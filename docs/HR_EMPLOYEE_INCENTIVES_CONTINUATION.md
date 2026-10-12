@@ -88,6 +88,29 @@ Local verification completed by the user on 2026-10-12 after syncing `main` to `
 
 This confirms syntax and local schema compatibility. It does **not** yet prove a real sponsor INSERT succeeds or that the stored value equals the logged-in user ID. Direct-create behavior still needs a controlled local runtime test before this slice is called fully verified.
 
+## 2026-10-12 — Local schema output and source transaction audit
+
+The user supplied a live `information_schema.COLUMNS` result for the existing database. Confirmed local structures include:
+
+- `sponsors.brought_by_user_id`: nullable indexed `int(10) unsigned`; no duplicate-column migration is justified.
+- `sponsor_payments`: `supervisor_id`, `payment_type`, `payment_period`, `amount`, `currency_code`, `status`, and `transaction_id` are present.
+- `transactions`: has sponsor/sponsorship/project linkage, amount/currency, status and transaction metadata.
+- `winback_campaigns`: has nullable `handled_by`, status and `closed_at`, but no payment confirmation field.
+- `project_lifecycle`: records administrative closure/reopening; `project_approval` has FM review fields; `project_team` stores team membership by user ID and active/unassigned timestamps.
+- `payroll`: stores base pay, allowances, deductions, attendance deduction, salary-advance deduction, net salary, status and accounting references; it has no incentive detail/currency fields.
+- `hr_employee_salary_history.salary_currency` is the applicable salary currency source identified by prior source audit.
+- `accounts`, `journal_entries`, `journal_lines`, `notifications`, `users`, and `employees` are present.
+
+Important type boundary: `sponsor_requests.brought_by` is `varchar(190)`, whereas `sponsors.brought_by_user_id` is an integer. The conversion code currently writes the request's `brought_by` value into the integer column. New requests write the session user ID into that varchar field, but legacy rows may contain names or other text. A reward resolver must validate that the value is a positive numeric user ID and that it maps to an eligible employee; never cast arbitrary historical text into an award recipient.
+
+Source transaction boundaries confirmed from current `main`:
+- FM sponsor-payment approval starts a transaction, locks a pending payment, creates a posted `transactions` row and its journal, updates the payment to approved with the transaction ID, then commits. This is the reliable collection-reward trigger boundary; create any award idempotently inside the same transaction or through a safely replayable post-commit process.
+- Win-back `mark_returned` reactivates the sponsor and closes the campaign, but it is not a payment event. It also overwrites `handled_by` with the operator who marks the return, so this value alone is not guaranteed to identify the employee who won the sponsor back. Preserve/confirm the intended handler attribution before using it for awards.
+- Project administrative closure in `modules/projects/view.php` is distinct from the FM financial closure audit event `FM_FINANCIAL_CLOSURE`. Project rewards must wait for both.
+- Payroll accounting explicitly uses account code `5200` for salaries and rejects mutation of paid payroll. Do not book incentives to that account. Incentive payroll integration must preserve the salary-advance/attendance calculations and paid-payroll immutability.
+
+The user's schema query reports columns and indexes, not table engines, foreign keys, unique indexes, or all migration constraints. Before a new migration is authored, obtain targeted `SHOW CREATE TABLE` output and index definitions for the relevant tables. The canonical data-bearing SQL backup is not to be restored into the live database.
+
 ## Next engineering gate
 
 Continue the exact schema and transaction-boundary audit for the incentive ledger and payroll integration. Before authoring a migration, verify existing table definitions and constraints from the canonical SQL dump and current local database. Do not restore the data-bearing dump into the live database. Do not add a duplicate attribution column. No incentive policy, reward ledger, or payroll/accounting feature code has been implemented yet.
