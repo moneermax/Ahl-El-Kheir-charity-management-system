@@ -2922,3 +2922,10 @@ The GM approval migration is applied locally and the schema was inspected. PHP s
 - [ ] Run focused tests and the appropriate broader regression suite only where relevant; lint changed PHP, inspect SQL/migration compatibility, and capture exact commands, results, and expected-versus-actual arithmetic. Do not rerun closed suites without regression evidence.
 - [ ] Produce a discrepancy register with severity, exact source/schema evidence, reproducible case, expected rule/source for the expected result, actual result, smallest justified fix, and regression test. Resolve accounting-policy questions before changing code.
 - [ ] Close the audit only after every in-scope implemented flow is evidenced and reconciled. List unsupported or not-yet-built paths (including incentive award issuance/source-event, payroll scheduling, or accounting integration where still absent) as explicit gaps; never describe them as verified.
+
+
+## 2026-10-13 — Incentive policy role boundary clarified
+
+The user confirmed this is a higher-management workflow involving only HR Manager, General Manager (GM), and Financial Manager (FM). `modules/hr/incentive_policy.php` now limits draft creation/editing, custom-field management, and category management to `hr_manager` and `financial_manager`; review/approval/rejection remains GM-only; activation is FM-only. `hr_staff` and `admin` are no longer authorized substitutes in this workflow. Source change committed as `63534c5fd3aa5b0b3fc8bf640d3ecfb2280f314a`.
+
+**Verification boundary:** this is a source-level authorization correction only. Local PHP lint and real XAMPP/MariaDB role-based acceptance are still required. The three accounts previously identified are HR Manager user 32, GM user 2, and FM user 29, but their current login usability has not been established. Do not claim the workflow accepted until runtime tests pass. Do not use HR staff or Admin as test actors.
