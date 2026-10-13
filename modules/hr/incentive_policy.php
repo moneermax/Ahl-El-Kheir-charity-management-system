@@ -9,9 +9,9 @@ require_once __DIR__ . '/../../config/session.php';
 Session::start();
 $role = (string)Session::getUserRole();
 $canReviewPolicies = in_array($role, ['general_manager', 'gm'], true);
-$canManagePolicies = in_array($role, ['financial_manager', 'admin', 'hr_manager', 'hr_staff'], true);
-$canActivatePolicies = in_array($role, ['financial_manager', 'admin'], true);
-$canManageTypes = in_array($role, ['financial_manager', 'admin', 'hr_manager', 'hr_staff'], true);
+$canManagePolicies = in_array($role, ['financial_manager', 'hr_manager'], true);
+$canActivatePolicies = $role === 'financial_manager';
+$canManageTypes = $canManagePolicies;
 if (!Session::isLoggedIn() || (!$canManagePolicies && !$canReviewPolicies)) {
     header('Location: ' . APP_URL . 'index.php');
     exit;
@@ -464,7 +464,7 @@ require_once __DIR__ . '/../../includes/header.php';
     <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
         <div>
             <h1 class="h4 fw-bold mb-1"><i class="fas fa-award text-primary me-2"></i>سياسة حوافز الموظفين</h1>
-            <p class="text-muted mb-0 small">ينشئ HR/FM المسودة ويرسلها للاعتماد؛ يراجع GM القرار إلكترونياً، ثم يفعّل FM/Admin السياسة المعتمدة.</p>
+            <p class="text-muted mb-0 small">ينشئ مدير الموارد البشرية أو المدير المالي المسودة ويرسلها للاعتماد؛ يراجع المدير العام القرار إلكترونياً، ثم يفعّل المدير المالي السياسة المعتمدة.</p>
         </div>
     </div>
     <?php if ($message !== ''): ?><div class="alert alert-success"><?=e($message)?></div><?php endif; ?>
