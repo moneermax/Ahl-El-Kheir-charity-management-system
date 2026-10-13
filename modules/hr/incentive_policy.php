@@ -314,7 +314,7 @@ try {
             $pdo->prepare("UPDATE hr_incentive_policy_versions SET status='approved' WHERE id=? AND status='pending_gm'")->execute([$policyId]);
             $pdo->prepare("INSERT INTO hr_incentive_policy_approval_history (policy_version_id, action, actor_user_id) VALUES (?, 'approved', ?)")->execute([$policyId, (int)Session::getUserID()]);
             $pdo->commit();
-            flash('success', 'تم اعتماد سياسة الحوافز. يتولى FM/Admin تفعيلها في خطوة منفصلة.');
+            flash('success', 'تم اعتماد سياسة الحوافز. يتولى المدير المالي تفعيلها في خطوة منفصلة.');
             header('Location: ' . APP_URL . 'modules/hr/incentive_policy.php');
             exit;
         }
