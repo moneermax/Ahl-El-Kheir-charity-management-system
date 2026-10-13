@@ -243,3 +243,5 @@ Commits on main:
 The create form keeps policy name/effective date and removes agreement date/notes. Workflow states are draft → pending_gm → approved → active; rejection records its reason and returns to draft. Approval history records actor and timestamp. Only general_manager/gm can approve/reject; only FM/Admin can activate. Rejected drafts are editable/resubmittable. Legacy agreement columns are preserved.
 
 Not yet verified locally: PHP lint, migration execution/idempotent rerun, FK compatibility with live users schema, and browser/runtime role/transition tests. Do not treat the feature as runtime-verified until these pass.
+
+The GM executive dashboard now includes a direct “مراجعة واعتماد سياسة الحوافز” shortcut to modules/hr/incentive_policy.php (commit fff2e518720094211ffa28010f09e4495342c4b7). Local browser verification of this shortcut remains pending.
