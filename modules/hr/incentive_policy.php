@@ -8,10 +8,11 @@ require_once __DIR__ . '/../../config/session.php';
 
 Session::start();
 $role = (string)Session::getUserRole();
+$canReviewPolicies = in_array($role, ['general_manager', 'gm'], true);
 $canManagePolicies = in_array($role, ['financial_manager', 'admin', 'hr_manager', 'hr_staff'], true);
 $canActivatePolicies = in_array($role, ['financial_manager', 'admin'], true);
 $canManageTypes = in_array($role, ['financial_manager', 'admin', 'hr_manager', 'hr_staff'], true);
-if (!Session::isLoggedIn() || !$canManagePolicies) {
+if (!Session::isLoggedIn() || (!$canManagePolicies && !$canReviewPolicies)) {
     header('Location: ' . APP_URL . 'index.php');
     exit;
 }
@@ -118,8 +119,6 @@ try {
             if (!$canManagePolicies) throw new RuntimeException('ليس لديك صلاحية إنشاء مسودة سياسة.');
             $name = trim((string)($_POST['policy_name'] ?? ''));
             $effectiveFrom = trim((string)($_POST['effective_from'] ?? ''));
-            $agreementAt = trim((string)($_POST['agreement_recorded_at'] ?? ''));
-            $agreementNotes = trim((string)($_POST['agreement_notes'] ?? ''));
             if ($name === '' || mb_strlen($name) > 150) {
                 throw new InvalidArgumentException('اسم السياسة مطلوب وبحد أقصى 150 حرفاً.');
             }
@@ -127,20 +126,6 @@ try {
             if (!$date || $date->format('Y-m-d') !== $effectiveFrom || $effectiveFrom < date('Y-m-d')) {
                 throw new InvalidArgumentException('تاريخ السريان يجب أن يكون اليوم أو تاريخاً مستقبلياً؛ لا يمكن إنشاء سياسة بأثر رجعي.');
             }
-            $agreementDate = DateTimeImmutable::createFromFormat('!Y-m-d\\TH:i', $agreementAt);
-            $agreementDateErrors = DateTimeImmutable::getLastErrors();
-            if (
-                !$agreementDate
-                || $agreementDate->format('Y-m-d\\TH:i') !== $agreementAt
-                || ($agreementDateErrors !== false
-                    && ($agreementDateErrors['warning_count'] > 0 || $agreementDateErrors['error_count'] > 0))
-                || $agreementDate > new DateTimeImmutable()
-                || $agreementNotes === ''
-                || mb_strlen($agreementNotes) > 2000
-            ) {
-                throw new InvalidArgumentException('تحقق من صحة تاريخ ووقت اتفاق GM وFM، وأنه ليس في المستقبل، وأدخل ملاحظات لا تتجاوز 2000 حرف.');
-            }
-
             $types = dbFetchAll('SELECT type_code, name_ar, qualification_mode FROM hr_incentive_types WHERE is_active = 1 ORDER BY sort_order, id');
             if (!$types) throw new RuntimeException('لا توجد أنواع حوافز نشطة لإضافتها إلى السياسة.');
             $rules = [];
@@ -166,10 +151,10 @@ try {
             $version = (int)($next['next_version'] ?? 1);
             $stmt = $pdo->prepare(
                 "INSERT INTO hr_incentive_policy_versions
-                 (version_no, policy_name, status, effective_from, agreement_recorded_at, agreement_notes, created_by_user_id)
-                 VALUES (?, ?, 'draft', ?, ?, ?, ?)"
+                 (version_no, policy_name, status, effective_from, created_by_user_id)
+                 VALUES (?, ?, 'draft', ?, ?)"
             );
-            $stmt->execute([$version, $name, $effectiveFrom, $agreementDate->format('Y-m-d H:i:s'), $agreementNotes, (int)Session::getUserID()]);
+            $stmt->execute([$version, $name, $effectiveFrom, (int)Session::getUserID()]);
             $policyId = (int)$pdo->lastInsertId();
             $ruleStmt = $pdo->prepare(
                 'INSERT INTO hr_incentive_policy_rules (policy_version_id, incentive_type, reward_amount, currency_code, is_enabled)
@@ -179,7 +164,7 @@ try {
                 $ruleStmt->execute([$policyId, $typeCode, $rule['amount'], $rule['currency'], $rule['enabled']]);
             }
             $pdo->commit();
-            flash('success', 'تم حفظ مسودة سياسة الحوافز V' . $version . '. يمكن إضافة حقول مخصصة للمسودة، ويظل التفعيل من اختصاص FM.');
+            flash('success', 'تم حفظ مسودة سياسة الحوافز V' . $version . '. أكمل بياناتها ثم أرسلها لاعتماد المدير العام.');
             header('Location: ' . APP_URL . 'modules/hr/incentive_policy.php');
             exit;
         }
@@ -187,8 +172,8 @@ try {
         if ($action === 'add_custom_field') {
             $policyId = (int)($_POST['policy_id'] ?? 0);
             $policy = dbFetchOne('SELECT id, status FROM hr_incentive_policy_versions WHERE id = ? LIMIT 1', [$policyId]);
-            if (!$policy || $policy['status'] !== 'draft') {
-                throw new InvalidArgumentException('يمكن إضافة الحقول إلى مسودة سياسة فقط.');
+            if (!$canManagePolicies || !$policy || $policy['status'] !== 'draft') {
+                throw new InvalidArgumentException('يمكن إضافة الحقول إلى مسودة سياسة قابلة للتحرير فقط.');
             }
             $labelAr = trim((string)($_POST['label_ar'] ?? ''));
             $labelEn = trim((string)($_POST['label_en'] ?? ''));
@@ -235,19 +220,122 @@ try {
             exit;
         }
 
+
+        if ($action === 'update_policy') {
+            if (!$canManagePolicies) throw new RuntimeException('ليس لديك صلاحية تعديل سياسات الحوافز.');
+            $policyId = (int)($_POST['policy_id'] ?? 0);
+            $name = trim((string)($_POST['policy_name'] ?? ''));
+            $effectiveFrom = trim((string)($_POST['effective_from'] ?? ''));
+            if ($name === '' || mb_strlen($name) > 150) throw new InvalidArgumentException('اسم السياسة مطلوب وبحد أقصى 150 حرفاً.');
+            $date = DateTimeImmutable::createFromFormat('!Y-m-d', $effectiveFrom);
+            if (!$date || $date->format('Y-m-d') !== $effectiveFrom || $effectiveFrom < date('Y-m-d')) {
+                throw new InvalidArgumentException('تاريخ السريان يجب أن يكون اليوم أو تاريخاً مستقبلياً؛ لا يمكن إنشاء سياسة بأثر رجعي.');
+            }
+            $pdo->beginTransaction();
+            $policy = dbFetchOne('SELECT id, status FROM hr_incentive_policy_versions WHERE id = ? FOR UPDATE', [$policyId]);
+            if (!$policy || $policy['status'] !== 'draft') throw new InvalidArgumentException('يمكن تعديل المسودات فقط.');
+            $storedRules = dbFetchAll('SELECT r.incentive_type, t.name_ar, t.is_active FROM hr_incentive_policy_rules r JOIN hr_incentive_types t ON t.type_code=r.incentive_type WHERE r.policy_version_id=? FOR UPDATE', [$policyId]);
+            if (!$storedRules) throw new InvalidArgumentException('السياسة لا تحتوي على فئات حوافز.');
+            $enabledCount = 0;
+            foreach ($storedRules as $storedRule) {
+                $code = (string)$storedRule['incentive_type'];
+                $enabled = isset($_POST['enabled'][$code]) ? 1 : 0;
+                $raw = trim((string)($_POST['amount'][$code] ?? ''));
+                $amount = filter_var($raw, FILTER_VALIDATE_FLOAT);
+                if ($amount === false || !is_finite((float)$amount) || (float)$amount < 0 || (float)$amount > 9999999999.99) {
+                    throw new InvalidArgumentException('قيمة الحافز غير صالحة: ' . (string)$storedRule['name_ar']);
+                }
+                if ($enabled && (float)$amount <= 0) throw new InvalidArgumentException('قيمة الحافز المفعّل يجب أن تكون أكبر من صفر: ' . (string)$storedRule['name_ar']);
+                if ($enabled && (int)$storedRule['is_active'] !== 1) throw new InvalidArgumentException('لا يمكن تفعيل فئة غير نشطة: ' . (string)$storedRule['name_ar']);
+                if ($enabled) $enabledCount++;
+                $pdo->prepare('UPDATE hr_incentive_policy_rules SET is_enabled=?, reward_amount=? WHERE policy_version_id=? AND incentive_type=?')
+                    ->execute([$enabled, round((float)$amount, 2), $policyId, $code]);
+            }
+            if ($enabledCount < 1) throw new InvalidArgumentException('فعّل نوع حافز واحداً على الأقل قبل حفظ السياسة.');
+            $pdo->prepare('UPDATE hr_incentive_policy_versions SET policy_name=?, effective_from=? WHERE id=? AND status=\'draft\'')
+                ->execute([$name, $effectiveFrom, $policyId]);
+            $storedFields = dbFetchAll('SELECT id, field_type, is_required, options_json FROM hr_incentive_policy_custom_fields WHERE policy_version_id=? FOR UPDATE', [$policyId]);
+            foreach ($storedFields as $field) {
+                $fieldId = (int)$field['id'];
+                $rawValue = (string)($_POST['custom_values'][$fieldId] ?? '');
+                $options = $field['options_json'] ? json_decode((string)$field['options_json'], true, 512, JSON_THROW_ON_ERROR) : [];
+                $value = hrIncentiveValidateCustomValue((string)$field['field_type'], $rawValue, is_array($options) ? $options : [], (int)$field['is_required'] === 1);
+                $pdo->prepare('UPDATE hr_incentive_policy_custom_fields SET field_value=? WHERE id=? AND policy_version_id=?')
+                    ->execute([$value, $fieldId, $policyId]);
+            }
+            $pdo->commit();
+            flash('success', 'تم تحديث مسودة السياسة وفئاتها وحقولها الإضافية.');
+            header('Location: ' . APP_URL . 'modules/hr/incentive_policy.php');
+            exit;
+        }
+
+        if ($action === 'submit_policy') {
+            if (!$canManagePolicies) throw new RuntimeException('ليس لديك صلاحية إرسال سياسة للاعتماد.');
+            $policyId = (int)($_POST['policy_id'] ?? 0);
+            $pdo->beginTransaction();
+            $policy = dbFetchOne('SELECT * FROM hr_incentive_policy_versions WHERE id=? FOR UPDATE', [$policyId]);
+            if (!$policy || $policy['status'] !== 'draft') throw new InvalidArgumentException('المسودة غير موجودة أو سبق إرسالها.');
+            if ((string)$policy['effective_from'] < date('Y-m-d')) throw new InvalidArgumentException('لا يمكن إرسال سياسة بتاريخ سريان سابق.');
+            $rules = dbFetchAll('SELECT r.incentive_type, r.is_enabled, r.reward_amount, t.name_ar, t.is_active FROM hr_incentive_policy_rules r JOIN hr_incentive_types t ON t.type_code=r.incentive_type WHERE r.policy_version_id=? FOR UPDATE', [$policyId]);
+            $enabledCount = 0;
+            foreach ($rules as $rule) {
+                if ((int)$rule['is_enabled'] === 1) {
+                    if ((float)$rule['reward_amount'] <= 0) throw new InvalidArgumentException('قيمة الحافز المفعّل يجب أن تكون أكبر من صفر: ' . (string)$rule['name_ar']);
+                    if ((int)$rule['is_active'] !== 1) throw new InvalidArgumentException('توجد فئة مفعّلة غير نشطة: ' . (string)$rule['name_ar']);
+                    $enabledCount++;
+                }
+            }
+            if ($enabledCount < 1) throw new InvalidArgumentException('فعّل نوع حافز واحداً على الأقل قبل الإرسال.');
+            $missing = dbFetchAll("SELECT label_ar FROM hr_incentive_policy_custom_fields WHERE policy_version_id=? AND is_required=1 AND (field_value IS NULL OR TRIM(field_value)='')", [$policyId]);
+            if ($missing) throw new InvalidArgumentException('أكمل الحقول الإضافية المطلوبة: ' . implode('، ', array_column($missing, 'label_ar')));
+            $pdo->prepare("UPDATE hr_incentive_policy_versions SET status='pending_gm' WHERE id=? AND status='draft'")->execute([$policyId]);
+            $pdo->prepare("INSERT INTO hr_incentive_policy_approval_history (policy_version_id, action, actor_user_id) VALUES (?, 'submitted', ?)")->execute([$policyId, (int)Session::getUserID()]);
+            $pdo->commit();
+            flash('success', 'تم إرسال السياسة إلى المدير العام للاعتماد.');
+            header('Location: ' . APP_URL . 'modules/hr/incentive_policy.php');
+            exit;
+        }
+
+        if ($action === 'approve_policy') {
+            if (!$canReviewPolicies) throw new RuntimeException('اعتماد سياسة الحوافز متاح للمدير العام فقط.');
+            $policyId = (int)($_POST['policy_id'] ?? 0);
+            $pdo->beginTransaction();
+            $policy = dbFetchOne('SELECT id, status FROM hr_incentive_policy_versions WHERE id=? FOR UPDATE', [$policyId]);
+            if (!$policy || $policy['status'] !== 'pending_gm') throw new InvalidArgumentException('السياسة غير موجودة في قائمة انتظار اعتماد المدير العام.');
+            $pdo->prepare("UPDATE hr_incentive_policy_versions SET status='approved' WHERE id=? AND status='pending_gm'")->execute([$policyId]);
+            $pdo->prepare("INSERT INTO hr_incentive_policy_approval_history (policy_version_id, action, actor_user_id) VALUES (?, 'approved', ?)")->execute([$policyId, (int)Session::getUserID()]);
+            $pdo->commit();
+            flash('success', 'تم اعتماد سياسة الحوافز. يتولى FM/Admin تفعيلها في خطوة منفصلة.');
+            header('Location: ' . APP_URL . 'modules/hr/incentive_policy.php');
+            exit;
+        }
+
+        if ($action === 'reject_policy') {
+            if (!$canReviewPolicies) throw new RuntimeException('رفض سياسة الحوافز متاح للمدير العام فقط.');
+            $policyId = (int)($_POST['policy_id'] ?? 0);
+            $reason = trim((string)($_POST['reason'] ?? ''));
+            if ($reason === '' || mb_strlen($reason) > 2000) throw new InvalidArgumentException('سبب الرفض مطلوب وبحد أقصى 2000 حرف.');
+            $pdo->beginTransaction();
+            $policy = dbFetchOne('SELECT id, status FROM hr_incentive_policy_versions WHERE id=? FOR UPDATE', [$policyId]);
+            if (!$policy || $policy['status'] !== 'pending_gm') throw new InvalidArgumentException('السياسة غير موجودة في قائمة انتظار الاعتماد.');
+            $pdo->prepare("INSERT INTO hr_incentive_policy_approval_history (policy_version_id, action, actor_user_id, reason) VALUES (?, 'rejected', ?, ?)")->execute([$policyId, (int)Session::getUserID(), $reason]);
+            $pdo->prepare("UPDATE hr_incentive_policy_versions SET status='draft' WHERE id=? AND status='pending_gm'")->execute([$policyId]);
+            $pdo->commit();
+            flash('success', 'أُعيدت السياسة إلى المسودة مع حفظ سبب الرفض في سجل الاعتماد.');
+            header('Location: ' . APP_URL . 'modules/hr/incentive_policy.php');
+            exit;
+        }
+
         if ($action === 'activate_policy') {
             if (!$canActivatePolicies) throw new RuntimeException('تفعيل سياسة الحوافز من اختصاص المدير المالي فقط.');
             $policyId = (int)($_POST['policy_id'] ?? 0);
             $pdo->beginTransaction();
             $policy = dbFetchOne('SELECT * FROM hr_incentive_policy_versions WHERE id = ? FOR UPDATE', [$policyId]);
-            if (!$policy || $policy['status'] !== 'draft') {
-                throw new InvalidArgumentException('المسودة غير موجودة أو لم تعد قابلة للتفعيل.');
+            if (!$policy || $policy['status'] !== 'approved') {
+                throw new InvalidArgumentException('السياسة غير موجودة أو لم يعتمدها المدير العام بعد.');
             }
             if ((string)$policy['effective_from'] < date('Y-m-d')) {
                 throw new InvalidArgumentException('لا يمكن تفعيل سياسة بأثر رجعي.');
-            }
-            if (trim((string)$policy['agreement_notes']) === '' || empty($policy['agreement_recorded_at'])) {
-                throw new InvalidArgumentException('لا توجد بيانات موثقة لاتفاق GM وFM.');
             }
             $ruleRows = dbFetchAll(
                 'SELECT r.incentive_type, r.is_enabled, r.reward_amount, t.is_active, t.qualification_mode
@@ -305,10 +393,10 @@ try {
             }
             $pdo->prepare(
                 "UPDATE hr_incentive_policy_versions SET status='active', activated_by_user_id=?, activated_at=NOW()
-                 WHERE id=? AND status='draft'"
+                 WHERE id=? AND status='approved'"
             )->execute([(int)Session::getUserID(), $policyId]);
             $pdo->commit();
-            flash('success', 'تم تفعيل سياسة الحوافز V' . (int)$policy['version_no'] . ' وفق تاريخ السريان المسجل، دون اعتماد GM ثانٍ.');
+            flash('success', 'تم تفعيل سياسة الحوافز V' . (int)$policy['version_no'] . ' بعد اعتماد المدير العام.');
             header('Location: ' . APP_URL . 'modules/hr/incentive_policy.php');
             exit;
         }
@@ -354,6 +442,12 @@ $customFieldRows = dbFetchAll(
 $fieldsByPolicy = [];
 foreach ($customFieldRows as $fieldRow) $fieldsByPolicy[(int)$fieldRow['policy_version_id']][] = $fieldRow;
 
+$approvalRows = dbFetchAll(
+    'SELECT h.*, u.full_name AS actor_name FROM hr_incentive_policy_approval_history h LEFT JOIN users u ON u.id=h.actor_user_id ORDER BY h.policy_version_id DESC, h.created_at, h.id'
+);
+$historyByPolicy = [];
+foreach ($approvalRows as $approvalRow) $historyByPolicy[(int)$approvalRow['policy_version_id']][] = $approvalRow;
+
 $pageTitle = 'سياسة حوافز الموظفين';
 require_once __DIR__ . '/../../includes/header.php';
 ?>
@@ -361,7 +455,7 @@ require_once __DIR__ . '/../../includes/header.php';
     <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
         <div>
             <h1 class="h4 fw-bold mb-1"><i class="fas fa-award text-primary me-2"></i>سياسة حوافز الموظفين</h1>
-            <p class="text-muted mb-0 small">يسجّل HR أو FM مسودة السياسة بعد اتفاق GM وFM؛ التفعيل من اختصاص FM ولا يتطلب اعتماد GM ثانياً.</p>
+            <p class="text-muted mb-0 small">ينشئ HR/FM المسودة ويرسلها للاعتماد؛ يراجع GM القرار إلكترونياً، ثم يفعّل FM/Admin السياسة المعتمدة.</p>
         </div>
     </div>
     <?php if ($message !== ''): ?><div class="alert alert-success"><?=e($message)?></div><?php endif; ?>
@@ -431,14 +525,6 @@ require_once __DIR__ . '/../../includes/header.php';
                         <label class="form-label">تاريخ السريان *</label>
                         <input class="form-control" type="date" name="effective_from" min="<?=e(date('Y-m-d'))?>" required>
                     </div>
-                    <div class="col-md-4">
-                        <label class="form-label">تاريخ ووقت اتفاق GM وFM *</label>
-                        <input class="form-control" type="datetime-local" name="agreement_recorded_at" max="<?=e(date('Y-m-d\\TH:i'))?>" required>
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label">ملخص الاتفاق / محضر النقاش *</label>
-                        <textarea class="form-control" name="agreement_notes" rows="2" maxlength="2000" required></textarea>
-                    </div>
                 </div>
                 <hr>
                 <p class="small text-muted">حدّد الفئات المشمولة في هذا الإصدار وأدخل المبالغ الثابتة. الفئات التي ستُضاف لاحقاً لا تُدرج تلقائياً في الإصدارات السابقة.</p>
@@ -470,18 +556,53 @@ require_once __DIR__ . '/../../includes/header.php';
             <?php else: ?>
                 <div class="table-responsive">
                     <table class="table table-hover align-middle">
-                        <thead class="table-light"><tr><th>الإصدار</th><th>الاسم</th><th>الحالة</th><th>السريان</th><th>فئات مفعّلة</th><th>الاتفاق</th><th>الإجراء</th></tr></thead>
+                        <thead class="table-light"><tr><th>الإصدار</th><th>الاسم</th><th>الحالة</th><th>السريان</th><th>فئات مفعّلة</th><th>أُنشئت بواسطة</th><th>الإجراء</th></tr></thead>
                         <tbody>
                         <?php foreach ($policies as $policy): $policyId = (int)$policy['id']; ?>
                             <tr>
                                 <td>V<?= (int)$policy['version_no'] ?></td>
                                 <td><?=e($policy['policy_name'])?></td>
-                                <td><?=e(['draft'=>'مسودة','active'=>'سارية','retired'=>'منتهية/مستبدلة'][$policy['status']] ?? $policy['status'])?></td>
+                                <td><?=e(['draft'=>'مسودة','pending_gm'=>'بانتظار اعتماد GM','approved'=>'معتمدة — بانتظار التفعيل','active'=>'سارية','retired'=>'منتهية/مستبدلة'][$policy['status']] ?? $policy['status'])?></td>
                                 <td><?=e($policy['effective_from'])?><?= $policy['effective_to'] ? ' — ' . e($policy['effective_to']) : '' ?></td>
                                 <td><?= (int)$policy['enabled_rules'] ?></td>
-                                <td><small><?=e($policy['agreement_recorded_at'] ?? '—')?></small><br><small class="text-muted"><?=e($policy['created_by_name'] ?? '')?></small></td>
+                                <td><small><?=e($policy['created_by_name'] ?? '')?></small></td>
                                 <td>
-                                    <?php if ($policy['status'] === 'draft' && $canActivatePolicies): ?>
+                                    <?php if ($policy['status'] === 'draft' && $canManagePolicies): ?>
+                                        <form method="post" class="mb-2">
+                                            <?=csrf_field()?>
+                                            <input type="hidden" name="action" value="submit_policy">
+                                            <input type="hidden" name="policy_id" value="<?=$policyId?>">
+                                            <button class="btn btn-sm btn-primary" type="submit">إرسال لاعتماد GM</button>
+                                        </form>
+                                    <?php elseif ($policy['status'] === 'pending_gm' && $canReviewPolicies): ?>
+                                        <form method="post" class="mb-2" onsubmit="return confirm('اعتماد هذه السياسة؟ لن يتم تفعيلها تلقائياً.');">
+                                            <?=csrf_field()?>
+                                            <input type="hidden" name="action" value="approve_policy">
+                                            <input type="hidden" name="policy_id" value="<?=$policyId?>">
+                                            <button class="btn btn-sm btn-success" type="submit">اعتماد السياسة</button>
+                                        </form>
+                                        <form method="post" class="mt-2">
+                                            <?=csrf_field()?>
+                                            <input type="hidden" name="action" value="reject_policy">
+                                            <input type="hidden" name="policy_id" value="<?=$policyId?>">
+                                            <label class="form-label small">سبب الرفض *</label>
+                                            <textarea class="form-control form-control-sm mb-2" name="reason" rows="2" maxlength="2000" required></textarea>
+                                            <button class="btn btn-sm btn-outline-danger" type="submit">رفض وإعادة للمسودة</button>
+                                        </form>
+                                    <?php elseif ($policy['status'] === 'approved' && $canActivatePolicies): ?>
+                                        <form method="post" onsubmit="return confirm('تفعيل السياسة المعتمدة وفق تاريخ السريان؟');">
+                                            <?=csrf_field()?>
+                                            <input type="hidden" name="action" value="activate_policy">
+                                            <input type="hidden" name="policy_id" value="<?=$policyId?>">
+                                            <button class="btn btn-sm btn-success" type="submit">تفعيل السياسة</button>
+                                        </form>
+                                    <?php elseif ($policy['status'] === 'draft' && !$canManagePolicies): ?>
+                                        <span class="text-muted small">مسودة قابلة للتعديل لدى HR/FM</span>
+                                    <?php elseif ($policy['status'] === 'pending_gm'): ?>
+                                        <span class="text-muted small">بانتظار قرار GM</span>
+                                    <?php elseif ($policy['status'] === 'approved'): ?>
+                                        <span class="text-muted small">بانتظار تفعيل FM/Admin</span>
+                                    <?php elseif ($policy['status'] === 'draft' && $canActivatePolicies): ?>
                                         <form method="post" onsubmit="return confirm('تفعيل هذه السياسة وفق تاريخ السريان المسجل؟');">
                                             <?=csrf_field()?>
                                             <input type="hidden" name="action" value="activate_policy">
@@ -500,7 +621,15 @@ require_once __DIR__ . '/../../includes/header.php';
                                     <?= (int)$rule['is_enabled'] === 1 ? number_format((float)$rule['reward_amount'],2) . ' ' . e($rule['currency_code']) : 'غير مفعّل' ?></span>
                                 <?php endforeach; ?>
                                 </div>
-                                <?php if (!empty($policy['agreement_notes'])): ?><div class="small text-muted mt-2"><?=nl2br(e($policy['agreement_notes']))?></div><?php endif; ?>
+
+
+                                <?php if (!empty($historyByPolicy[$policyId])): ?>
+                                    <div class="mt-3"><strong class="small">سجل الاعتماد</strong><ul class="small mb-0 mt-1">
+                                    <?php foreach ($historyByPolicy[$policyId] as $history): ?>
+                                        <li><?=e(['submitted'=>'أُرسلت للاعتماد','approved'=>'اعتماد GM','rejected'=>'رفض GM وإعادة للمسودة'][$history['action']] ?? $history['action'])?> — <?=e($history['actor_name'] ?? 'مستخدم')?> — <?=e($history['created_at'])?><?php if (!empty($history['reason'])): ?><div class="text-danger"><?=nl2br(e($history['reason']))?></div><?php endif; ?></li>
+                                    <?php endforeach; ?>
+                                    </ul></div>
+                                <?php endif; ?>
 
                                 <?php if (!empty($fieldsByPolicy[$policyId])): ?>
                                     <div class="mt-3">
@@ -519,6 +648,34 @@ require_once __DIR__ . '/../../includes/header.php';
                                         <?php endforeach; ?>
                                         </div>
                                     </div>
+                                <?php endif; ?>
+
+                                <?php if ($policy['status'] === 'draft' && $canManagePolicies): ?>
+                                    <details class="mt-3">
+                                        <summary class="small fw-bold">تعديل بيانات المسودة والفئات والحقول</summary>
+                                        <form method="post" class="mt-2">
+                                            <?=csrf_field()?>
+                                            <input type="hidden" name="action" value="update_policy">
+                                            <input type="hidden" name="policy_id" value="<?=$policyId?>">
+                                            <div class="row g-2 mb-3">
+                                                <div class="col-md-6"><label class="form-label small">اسم السياسة *</label><input class="form-control form-control-sm" name="policy_name" maxlength="150" value="<?=e($policy['policy_name'])?>" required></div>
+                                                <div class="col-md-6"><label class="form-label small">تاريخ السريان *</label><input class="form-control form-control-sm" type="date" name="effective_from" min="<?=e(date('Y-m-d'))?>" value="<?=e($policy['effective_from'])?>" required></div>
+                                            </div>
+                                            <div class="table-responsive"><table class="table table-sm table-bordered align-middle"><thead><tr><th>الفئة</th><th>مفعّل؟</th><th>المبلغ (<?=e(APP_CURRENCY_CODE)?>)</th></tr></thead><tbody>
+                                            <?php foreach (($rulesByPolicy[$policyId] ?? []) as $editRule): $editCode=(string)$editRule['incentive_type']; ?>
+                                                <tr><td><?=e($typeNames[$editCode] ?? $editCode)?></td><td class="text-center"><input class="form-check-input" type="checkbox" name="enabled[<?=e($editCode)?>]" value="1" <?= (int)$editRule['is_enabled']===1 ? 'checked' : '' ?>></td><td><input class="form-control form-control-sm" type="number" name="amount[<?=e($editCode)?>]" min="0" max="9999999999.99" step="0.01" value="<?=e($editRule['reward_amount'])?>" required></td></tr>
+                                            <?php endforeach; ?>
+                                            </tbody></table></div>
+                                            <?php foreach (($fieldsByPolicy[$policyId] ?? []) as $editField): $editValue=(string)($editField['field_value'] ?? ''); ?>
+                                                <div class="mb-2"><label class="form-label small"><?=e($editField['label_ar'])?><?= (int)$editField['is_required']===1 ? ' *' : '' ?></label>
+                                                <?php if ($editField['field_type']==='long_text'): ?><textarea class="form-control form-control-sm" name="custom_values[<?=(int)$editField['id']?>]" maxlength="5000" rows="2" <?= (int)$editField['is_required']===1 ? 'required' : '' ?>><?=e($editValue)?></textarea>
+                                                <?php elseif ($editField['field_type']==='select'): $editOptions=json_decode((string)($editField['options_json'] ?? '[]'),true) ?: []; ?><select class="form-select form-select-sm" name="custom_values[<?=(int)$editField['id']?>]" <?= (int)$editField['is_required']===1 ? 'required' : '' ?>><option value="">—</option><?php foreach ($editOptions as $editOption): ?><option value="<?=e($editOption)?>" <?= $editValue===(string)$editOption ? 'selected' : '' ?>><?=e($editOption)?></option><?php endforeach; ?></select>
+                                                <?php elseif ($editField['field_type']==='boolean'): ?><select class="form-select form-select-sm" name="custom_values[<?=(int)$editField['id']?>]" <?= (int)$editField['is_required']===1 ? 'required' : '' ?>><option value="">—</option><option value="1" <?=$editValue==='1'?'selected':''?>>نعم</option><option value="0" <?=$editValue==='0'?'selected':''?>>لا</option></select>
+                                                <?php else: ?><input class="form-control form-control-sm" type="<?= $editField['field_type']==='number' ? 'number' : ($editField['field_type']==='date' ? 'date' : 'text') ?>" name="custom_values[<?=(int)$editField['id']?>]" value="<?=e($editValue)?>" maxlength="<?= $editField['field_type']==='short_text' ? 500 : 5000 ?>" <?= (int)$editField['is_required']===1 ? 'required' : '' ?>><?php endif; ?></div>
+                                            <?php endforeach; ?>
+                                            <button class="btn btn-sm btn-outline-primary" type="submit">حفظ التعديلات</button>
+                                        </form>
+                                    </details>
                                 <?php endif; ?>
 
                                 <?php if ($policy['status'] === 'draft' && $canManagePolicies): ?>
