@@ -473,3 +473,10 @@ The GM approval migration is applied locally and the schema was inspected. PHP s
 ## Deferred required work — cross-module payroll/accounting reconciliation audit
 
 After the current employee-incentive GM approval workflow is fully acceptance-tested, perform the comprehensive evidence-based integration audit documented in `docs/AHL_EL_KHEIR_MASTER_AUDIT.md`. Scope: salary additions and deductions, attendance deductions, salary advances/repayment schedules/rescheduling, advance waivers/refunds/cancellations, implemented incentive award flows, accounting journals/transactions, reversals, and reconciliation reports. Trace source-to-calculation-to-persisted ledger-to-accounting posting, independently recompute expected arithmetic, verify debit/credit balance and source-to-journal reconciliation, and test idempotency, rollback, concurrency boundaries, period/effective-date behavior, and paid/posted immutability. Use real source/schema and isolated rollback-only test data; do not invent accounting rules or incentive amounts. This is future work and is not yet verified.
+
+
+## 2026-10-13 — Incentive policy role boundary clarified
+
+The user confirmed this is a higher-management workflow involving only HR Manager, General Manager (GM), and Financial Manager (FM). `modules/hr/incentive_policy.php` now limits draft creation/editing, custom-field management, and category management to `hr_manager` and `financial_manager`; review/approval/rejection remains GM-only; activation is FM-only. `hr_staff` and `admin` are no longer authorized substitutes in this workflow. Source change committed as `63534c5fd3aa5b0b3fc8bf640d3ecfb2280f314a`.
+
+**Verification boundary:** this is a source-level authorization correction only. Local PHP lint and real XAMPP/MariaDB role-based acceptance are still required. The three accounts previously identified are HR Manager user 32, GM user 2, and FM user 29, but their current login usability has not been established. Do not claim the workflow accepted until runtime tests pass. Do not use HR staff or Admin as test actors.
