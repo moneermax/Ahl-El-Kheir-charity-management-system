@@ -2636,3 +2636,10 @@ The policy category form no longer accepts a user-entered code. The UI displays 
 Commit: `23bdf2a84d81cd86f753c283e462f06f828aa510` (generated-code hardening); the underlying feature and agreement validation are in `1a1ced379bf5f4942cd44d554bbfbbfc2c499bbe`.
 
 User verified the existing category labels render correctly in Arabic and English. Local PHP lint and browser verification of the newly changed code-generation UI are still pending. No policy amounts have been approved; do not activate any test policy.
+
+
+## 2026-10-13 — Incentive policy GM approval workflow (local verification pending)
+
+GitHub main now contains the policy approval workflow and migration database/migrations/2026-10-13_hr_incentive_policy_gm_approval.sql. Agreement date/notes are no longer required by the new policy form or activation path; legacy columns/data remain untouched. Drafts are submitted by HR/FM, approved/rejected only by general_manager/gm, and activated separately by FM/Admin after approval. Rejection requires a reason, records durable history, and returns the version to editable draft. Full draft editing covers policy name, effective date, category enabled/amount values, and custom-field values.
+
+Boundary: source commits exist, but local pull, migration application, PHP syntax check, and real XAMPP/MariaDB runtime/role tests have not yet been reported. Do not mark this workflow runtime-verified. Continue from docs/HR_EMPLOYEE_INCENTIVES_CONTINUATION.md.
