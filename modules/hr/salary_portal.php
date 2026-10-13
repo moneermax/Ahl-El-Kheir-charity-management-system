@@ -52,7 +52,7 @@ if (in_array($role, ['hr_manager', 'hr_staff', 'financial_manager', 'admin'], tr
 if (in_array($role, ['financial_manager', 'admin'], true)) {
     $links[] = [
         'title' => 'سياسة حوافز الموظفين',
-        'description' => 'تسجيل اتفاق GM وFM وإدارة إصدارات سياسة الحوافز ومبالغها وعملاتها.',
+        'description' => 'إدارة إصدارات سياسة الحوافز وإرسالها لاعتماد المدير العام ومتابعة مبالغها.',
         'url' => 'modules/hr/incentive_policy.php',
         'icon' => 'fa-award',
         'theme' => 'warning',
