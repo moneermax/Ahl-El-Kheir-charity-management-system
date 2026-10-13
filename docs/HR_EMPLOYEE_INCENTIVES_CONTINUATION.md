@@ -1,7 +1,7 @@
 # Employee Incentives — Continuation and Source Audit
 
 **Checkpoint:** 2026-10-12  
-**Status:** Incentive ledger and policy administration are committed on `main`; the category catalogue/custom policy-field extension is now committed on `main`. Local migration execution, PHP lint, and browser/runtime verification remain outstanding. Award issuance, source-event integration, payroll scheduling, and incentive accounting remain separate unfinished gates.
+**Status:** Incentive ledger, category catalogue/custom policy fields, and the GM policy approval workflow are committed on `main`. The new GM approval migration and policy-page changes have not yet been applied/linted/runtime-tested in the local Windows/XAMPP environment. Award issuance, source-event integration, payroll scheduling, and incentive accounting remain separate unfinished gates.
 
 ## Scope
 
@@ -70,7 +70,7 @@ The backup contains real organizational/application data. Keep database dumps ou
 
 ## Verification boundary
 
-Repository source and the latest committed backup have been inspected through GitHub. The Windows checkout and local XAMPP database are not accessible from this execution environment. No production code, schema, or live database has been changed, and no local runtime verification is claimed. Do not mark this feature complete until local PHP syntax checks and database-backed acceptance tests actually pass.
+Repository source and the latest committed backup have been inspected through GitHub. The policy page and GM approval migration have now been committed to GitHub main; the local Windows checkout and XAMPP database have not yet been pulled/migrated or runtime-tested. No live database has been changed from this execution environment, and no local runtime verification is claimed. Do not mark this feature complete until local PHP syntax checks and database-backed acceptance tests actually pass.
 
 
 ## Direct sponsor attribution — implementation and local verification
@@ -147,15 +147,15 @@ Commits:
 
 **Status:** committed to GitHub `main`; not yet applied to the local database; no PHP workflow has yet been implemented or runtime-verified. The next gate is local migration application and verification, followed by policy administration and the transactional event/award integration. Do not mark the feature complete based on schema creation alone.
 
-The policy workflow follows the user-approved governance decision: GM/FM agree on the policy first; FM records/activates the agreed policy without a second GM approval. Individual incentive achievements still require manager verification, with financial confirmation where the source event is a collection or project closure.
+The policy governance decision is now an in-system workflow: HR/FM prepare and submit a draft; only normalized roles general_manager or gm can approve/reject; rejection requires a reason and returns the version to an editable draft while preserving history; FM/Admin activate only an approved version. Approval does not activate or retire any policy. Individual incentive achievements still require manager verification, with financial confirmation where the source event is a collection or project closure.
 
 ## 2026-10-12 — Policy administration page committed
 
-`modules/hr/incentive_policy.php` is now committed on `main` for `financial_manager` and `admin`. It supports creating draft policy versions with explicit GM/FM agreement date/time and notes, fixed amounts/currencies for all four reward categories, and activation by FM/admin without a second GM approval. It rejects retroactive effective dates, invalid currencies, enabled zero-value rewards, incomplete rule sets, and out-of-order activation that could overlap a later active policy. Amounts and currencies have no prefilled business defaults.
+`modules/hr/incentive_policy.php` is committed on `main` with draft creation using policy name/effective date and fixed reward amounts; the GM approval workflow adds submission, GM-only approval/rejection, durable history, full draft editing, and FM/Admin-only activation after approval. The agreement date/notes inputs, validation, display, and activation prerequisite have been removed from the new workflow; legacy DB columns remain untouched. Existing effective-date, reward-amount, enabled-category, and activation-overlap safeguards are retained. Amounts and currencies have no prefilled business defaults.
 
 Commit: `e30dd46c03ba064ff06c0dd957d006ef6b92b88a` (activation-order guard; initial page commit `9f16cefb2795752d08b6e1182d45ddc49c665668`).
 
-**Verification status:** source has not yet been PHP-linted or exercised against the local database. The next user-assisted gate is to pull `main` and apply the two incentive migrations. Then lint the new page and run controlled policy create/activation checks before building source-event integrations. Do not treat the current page as runtime-verified.
+**Verification status:** source has not yet been PHP-linted or exercised against the local database. The next user-assisted gate is to pull `main`, apply the pending incentive migrations in order (including 2026-10-13_hr_incentive_policy_gm_approval.sql), lint the policy page, and run controlled draft/edit/submit/GM approve/reject/resubmit/FM activation checks before building source-event integrations. Do not treat the current page as runtime-verified.
 
 ## 2026-10-12 — Salary portal navigation milestone
 
@@ -231,3 +231,15 @@ The policy creation handler also validates the agreement timestamp by strict for
 Commits: `1a1ced379bf5f4942cd44d554bbfbbfc2c499bbe`, `23bdf2a84d81cd86f753c283e462f06f828aa510`.
 
 The user confirmed the existing category labels render correctly in Arabic and English. The new generated-code preview and server behavior have not yet been locally linted or browser-tested. Reward amounts are not yet agreed; any test amount must be used only in a rollback-only harness or otherwise clearly isolated from real policy activation. Do not mark policy administration verified until local lint and database-backed acceptance checks pass.
+
+
+## 2026-10-13 — GM policy approval workflow committed; local verification pending
+
+Commits on main:
+- 44b6fdcb62e3eb54c86255fdea7b6f22709f22c8 — add idempotent status/history migration database/migrations/2026-10-13_hr_incentive_policy_gm_approval.sql.
+- 38e79e0851eed31640de00553c843c2d2920bdce — add draft editing and GM submit/approve/reject handlers, and require approved state for activation.
+- 6ad9a4308e19f36b0a53132ab39b2048b00f56a4 — remove obsolete draft-activation UI path.
+
+The create form keeps policy name/effective date and removes agreement date/notes. Workflow states are draft → pending_gm → approved → active; rejection records its reason and returns to draft. Approval history records actor and timestamp. Only general_manager/gm can approve/reject; only FM/Admin can activate. Rejected drafts are editable/resubmittable. Legacy agreement columns are preserved.
+
+Not yet verified locally: PHP lint, migration execution/idempotent rerun, FK compatibility with live users schema, and browser/runtime role/transition tests. Do not treat the feature as runtime-verified until these pass.
