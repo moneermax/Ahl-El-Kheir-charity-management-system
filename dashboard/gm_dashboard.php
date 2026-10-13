@@ -219,6 +219,12 @@ foreach($cards as $c):
                 </a>
             </div>
         <?php endforeach; ?>
+            <div class="col-md-6 col-xl-4">
+                <a class="gm-report" href="<?php echo APP_URL; ?>modules/hr/incentive_policy.php">
+                    <i class="fas fa-award me-2"></i><strong>مراجعة واعتماد سياسة الحوافز</strong>
+                    <div class="small text-muted mt-2">مراجعة المسودات المرسلة من FM/HR واعتمادها أو رفضها مع تسجيل السبب.</div>
+                </a>
+            </div>
         </div>
     </div>
 </div>
