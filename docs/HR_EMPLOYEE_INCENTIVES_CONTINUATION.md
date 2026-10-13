@@ -1,7 +1,7 @@
 # Employee Incentives — Continuation and Source Audit
 
-**Checkpoint:** 2026-10-12  
-**Status:** Incentive ledger, category catalogue/custom policy fields, and the GM policy approval workflow are committed on `main`. The new GM approval migration and policy-page changes have not yet been applied/linted/runtime-tested in the local Windows/XAMPP environment. Award issuance, source-event integration, payroll scheduling, and incentive accounting remain separate unfinished gates.
+**Checkpoint:** 2026-10-13  
+**Status:** Incentive ledger, category catalogue/custom policy fields, and the GM policy approval workflow are committed on `main`. The GM approval migration has been applied locally and the schema inspected; PHP syntax checks passed and the policy page loads. The complete approval/rejection/activation workflow remains unverified at runtime because the local database has no policy versions, rules, or custom fields. Award issuance, source-event integration, payroll scheduling, and incentive accounting remain separate unfinished gates.
 
 ## Scope
 
@@ -70,7 +70,7 @@ The backup contains real organizational/application data. Keep database dumps ou
 
 ## Verification boundary
 
-Repository source and the latest committed backup have been inspected through GitHub. The policy page and GM approval migration have now been committed to GitHub main; the local Windows checkout and XAMPP database have not yet been pulled/migrated or runtime-tested. No live database has been changed from this execution environment, and no local runtime verification is claimed. Do not mark this feature complete until local PHP syntax checks and database-backed acceptance tests actually pass.
+Repository source and the latest committed backup have been inspected through GitHub. The GM approval migration is applied locally; schema inspection confirmed the expected `pending_gm` and `approved` statuses and the durable approval-history table. PHP syntax checks for `modules/hr/incentive_policy.php` and `dashboard/gm_dashboard.php` passed, and the policy page loads. The local database has zero policy versions, rules, and custom fields, so the complete role/state workflow has not yet been runtime-tested. Do not claim end-to-end approval, rejection, or activation verification until actual policy data can be tested safely; do not invent reward amounts or create a live policy just for testing.
 
 
 ## Direct sponsor attribution — implementation and local verification
@@ -245,3 +245,9 @@ The create form keeps policy name/effective date and removes agreement date/note
 Not yet verified locally: PHP lint, migration execution/idempotent rerun, FK compatibility with live users schema, and browser/runtime role/transition tests. Do not treat the feature as runtime-verified until these pass.
 
 The GM executive dashboard now includes a direct “مراجعة واعتماد سياسة الحوافز” shortcut to modules/hr/incentive_policy.php (commit fff2e518720094211ffa28010f09e4495342c4b7). Local browser verification of this shortcut remains pending.
+
+## 2026-10-13 — Custom policy field concurrency guard
+
+`modules/hr/incentive_policy.php` now checks the policy-management permission before opening a transaction, locks the target policy-version row with `SELECT ... FOR UPDATE`, verifies that it remains a draft, inserts the custom field, and commits. This serializes custom-field creation against policy submission, which locks the same policy-version row while validating required fields. Exceptions remain handled by the page's existing transaction rollback path. Commit: `c53a5dd6b32f6a737f7d6264df7b033e3383cb45`.
+
+Verification boundary: the change is committed on `main`; PHP syntax/runtime verification of this exact commit is pending the user's local pull and test. No concurrent two-process test has been run, and none is claimed.
