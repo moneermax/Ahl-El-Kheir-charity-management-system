@@ -130,7 +130,7 @@ This metadata output still does not show full column definitions, defaults, chec
 
 ## Next engineering gate
 
-Continue the exact schema and transaction-boundary audit for the incentive ledger and payroll integration. Before authoring a migration, verify existing table definitions and constraints from the canonical SQL dump and current local database. Do not restore the data-bearing dump into the live database. Do not add a duplicate attribution column. No incentive policy, reward ledger, or payroll/accounting feature code has been implemented yet.
+The next gate is local verification of the committed GM policy approval workflow, followed by the separate source-event/award and payroll/accounting integrations. Before further schema work, verify actual local table definitions and constraints; do not restore the data-bearing dump or add duplicate attribution columns. The policy approval source/migration exists on main but is not locally runtime-verified.
 
 ## 2026-10-12 — Incentive ledger schema committed
 
@@ -145,7 +145,7 @@ Commits:
 - Expense account migration: `9f5914f3205988bf6c7078c823f432119bd69682`
 - Incentive ledger migration: `afd84b9040893477f6052db9a9bbb1a4f7b5dda0`
 
-**Status:** committed to GitHub `main`; not yet applied to the local database; no PHP workflow has yet been implemented or runtime-verified. The next gate is local migration application and verification, followed by policy administration and the transactional event/award integration. Do not mark the feature complete based on schema creation alone.
+**Status:** committed to GitHub main; local migrations and PHP workflow remain unverified. The policy approval administration code now exists on main. The next gate is local migration application, PHP lint, and policy workflow acceptance testing, followed later by transactional event/award integration. Do not mark the feature complete based on source/schema commits alone.
 
 The policy governance decision is now an in-system workflow: HR/FM prepare and submit a draft; only normalized roles general_manager or gm can approve/reject; rejection requires a reason and returns the version to an editable draft while preserving history; FM/Admin activate only an approved version. Approval does not activate or retire any policy. Individual incentive achievements still require manager verification, with financial confirmation where the source event is a collection or project closure.
 
@@ -199,7 +199,7 @@ No scoring weights, minimum threshold, tie tolerance, eligibility window, review
 
 The user explicitly deferred the proposed monthly employee performance recognition/certificate feature to a separate future development task. Keep the discussion and proposal documented here, but do not implement its scoring engine, monthly ranking, co-winner handling, or certificate workflow as part of the current incentive task. Before that future task begins, audit the real attendance/work evidence sources and agree role-appropriate scorecards, eligibility, minimum threshold, tie handling, review/finalization, and certificate verification.
 
-The current task remains the employee incentive policy/award feature. The user approved this authorization model: HR Manager/HR Staff and FM/Admin may create policy drafts and add custom fields; only FM/Admin may activate. GM/FM agreement timestamp and notes remain mandatory, and activation does not require a second GM approval. Custom policy fields are stored with their policy version and are only writable while the policy is a draft. Custom policy metadata is separate from incentive categories. The category catalogue has now been implemented in source/migration, but remains unverified locally.
+The current task is local verification of the employee incentive policy GM approval workflow. HR Manager/HR Staff and FM/Admin may create/edit drafts and add custom fields; only general_manager/gm may approve or reject; only FM/Admin may activate an approved policy. Agreement timestamp/notes are no longer part of the new workflow, and legacy columns remain preserved. Custom policy fields are version-scoped and writable only while draft. The category catalogue and approval workflow source/migrations remain unverified locally.
 
 The user confirmed that the system-wide SDG currency change is visible on the local incentive policy page. Commit `12af8e46b2a9e042322bddf939462b973dd612d0` removed the currency input and uses `APP_CURRENCY_CODE` for new policy rule rows. Local PHP lint/runtime verification is still outstanding.
 
