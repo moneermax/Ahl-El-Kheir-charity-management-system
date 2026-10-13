@@ -170,9 +170,17 @@ try {
         }
 
         if ($action === 'add_custom_field') {
+            if (!$canManagePolicies) {
+                throw new RuntimeException('ليس لديك صلاحية إدارة حقول سياسة الحوافز.');
+            }
+
             $policyId = (int)($_POST['policy_id'] ?? 0);
-            $policy = dbFetchOne('SELECT id, status FROM hr_incentive_policy_versions WHERE id = ? LIMIT 1', [$policyId]);
-            if (!$canManagePolicies || !$policy || $policy['status'] !== 'draft') {
+            $pdo->beginTransaction();
+            $policy = dbFetchOne(
+                'SELECT id, status FROM hr_incentive_policy_versions WHERE id = ? FOR UPDATE',
+                [$policyId]
+            );
+            if (!$policy || $policy['status'] !== 'draft') {
                 throw new InvalidArgumentException('يمكن إضافة الحقول إلى مسودة سياسة قابلة للتحرير فقط.');
             }
             $labelAr = trim((string)($_POST['label_ar'] ?? ''));
@@ -215,6 +223,7 @@ try {
                 ($type === 'select' ? json_encode($options, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR) : null),
                 $value, $sort, (int)Session::getUserID()
             ]);
+            $pdo->commit();
             flash('success', 'تمت إضافة الحقل إلى مسودة السياسة. سيبقى ضمن سجل إصدار السياسة ولن يغيّر الإصدارات السابقة.');
             header('Location: ' . APP_URL . 'modules/hr/incentive_policy.php');
             exit;
