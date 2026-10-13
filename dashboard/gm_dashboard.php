@@ -188,20 +188,6 @@ foreach($cards as $c):
 </div>
 
 <div class="card gm-section mb-4 fade-in">
-    <div class="card-header"><i class="fas fa-chart-line me-2"></i>التحصيل المرحّل — آخر 12 شهراً</div>
-    <div class="card-body"><div class="chart-box"><canvas id="chMonthly"></canvas></div></div>
-</div>
-
-<div class="row g-4 mb-4 fade-in">
-    <div class="col-lg-6">
-        <div class="card gm-section h-100"><div class="card-header"><i class="fas fa-chart-pie me-2"></i>حالة الأسر</div><div class="card-body"><div class="chart-box"><canvas id="chFam"></canvas></div></div></div>
-    </div>
-    <div class="col-lg-6">
-        <div class="card gm-section h-100"><div class="card-header"><i class="fas fa-chart-pie me-2"></i>حالة الكفالات</div><div class="card-body"><div class="chart-box"><canvas id="chShip"></canvas></div></div></div>
-    </div>
-</div>
-
-<div class="card gm-section mb-4 fade-in">
     <div class="card-header"><i class="fas fa-folder-open me-2"></i>الوصول التنفيذي السريع</div>
     <div class="card-body">
         <div class="row g-3">
@@ -226,6 +212,21 @@ foreach($cards as $c):
                 </a>
             </div>
         </div>
+    </div>
+</div>
+
+
+<div class="card gm-section mb-4 fade-in">
+    <div class="card-header"><i class="fas fa-chart-line me-2"></i>التحصيل المرحّل — آخر 12 شهراً</div>
+    <div class="card-body"><div class="chart-box"><canvas id="chMonthly"></canvas></div></div>
+</div>
+
+<div class="row g-4 mb-4 fade-in">
+    <div class="col-lg-6">
+        <div class="card gm-section h-100"><div class="card-header"><i class="fas fa-chart-pie me-2"></i>حالة الأسر</div><div class="card-body"><div class="chart-box"><canvas id="chFam"></canvas></div></div></div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card gm-section h-100"><div class="card-header"><i class="fas fa-chart-pie me-2"></i>حالة الكفالات</div><div class="card-body"><div class="chart-box"><canvas id="chShip"></canvas></div></div></div>
     </div>
 </div>
 
