@@ -380,17 +380,17 @@ require_once __DIR__ . '/../../includes/header.php';
                 <?=csrf_field()?>
                 <input type="hidden" name="action" value="create_category">
                 <div class="col-md-3">
+                    <label class="form-label">رمز الفئة (تلقائي)</label>
+                    <input class="form-control font-monospace bg-light text-muted" id="incentive-type-code-preview" type="text" value="incentive_category" readonly aria-describedby="incentive-type-code-help">
+                    <div class="form-text" id="incentive-type-code-help">يُولّد الرمز من الاسم الإنجليزي تلقائياً. إذا كان مستخدماً، سيضيف النظام رقماً تلقائياً.</div>
+                </div>
+                <div class="col-md-3">
                     <label class="form-label">الاسم بالعربية *</label>
                     <input class="form-control" name="name_ar" maxlength="190" required>
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">الاسم بالإنجليزية *</label>
                     <input class="form-control" id="incentive-type-name-en" name="name_en" maxlength="190" required>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">رمز الفئة (تلقائي)</label>
-                    <input class="form-control font-monospace" id="incentive-type-code-preview" type="text" value="incentive_category" readonly aria-describedby="incentive-type-code-help">
-                    <div class="form-text" id="incentive-type-code-help">يُولّد الرمز من الاسم الإنجليزي تلقائياً. إذا كان مستخدماً، سيضيف النظام رقماً تلقائياً.</div>
                 </div>
                 <div class="col-md-3 d-flex align-items-end">
                     <button class="btn btn-outline-primary w-100" type="submit"><i class="fas fa-plus me-1"></i>إضافة فئة يدوية</button>
