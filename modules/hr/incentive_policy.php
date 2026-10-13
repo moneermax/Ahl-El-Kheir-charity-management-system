@@ -602,15 +602,6 @@ require_once __DIR__ . '/../../includes/header.php';
                                         <span class="text-muted small">بانتظار قرار GM</span>
                                     <?php elseif ($policy['status'] === 'approved'): ?>
                                         <span class="text-muted small">بانتظار تفعيل FM/Admin</span>
-                                    <?php elseif ($policy['status'] === 'draft' && $canActivatePolicies): ?>
-                                        <form method="post" onsubmit="return confirm('تفعيل هذه السياسة وفق تاريخ السريان المسجل؟');">
-                                            <?=csrf_field()?>
-                                            <input type="hidden" name="action" value="activate_policy">
-                                            <input type="hidden" name="policy_id" value="<?=$policyId?>">
-                                            <button class="btn btn-sm btn-success" type="submit">تفعيل السياسة</button>
-                                        </form>
-                                    <?php elseif ($policy['status'] === 'draft'): ?>
-                                        <span class="text-muted small">بانتظار تفعيل FM</span>
                                     <?php else: ?><span class="text-muted">—</span><?php endif; ?>
                                 </td>
                             </tr>
