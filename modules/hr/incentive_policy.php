@@ -519,6 +519,7 @@ require_once __DIR__ . '/../../includes/header.php';
     </div>
     <?php endif; ?>
 
+    <?php if ($canManagePolicies): ?>
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-header bg-white fw-bold">إنشاء إصدار سياسة جديد</div>
         <div class="card-body">
@@ -556,6 +557,7 @@ require_once __DIR__ . '/../../includes/header.php';
             </form>
         </div>
     </div>
+    <?php endif; ?>
 
     <div class="card border-0 shadow-sm">
         <div class="card-header bg-white fw-bold">إصدارات السياسات</div>
@@ -606,11 +608,11 @@ require_once __DIR__ . '/../../includes/header.php';
                                             <button class="btn btn-sm btn-success" type="submit">تفعيل السياسة</button>
                                         </form>
                                     <?php elseif ($policy['status'] === 'draft' && !$canManagePolicies): ?>
-                                        <span class="text-muted small">مسودة قابلة للتعديل لدى HR/FM</span>
+                                        <span class="text-muted small">مسودة قابلة للتعديل لدى مدير الموارد البشرية/المدير المالي</span>
                                     <?php elseif ($policy['status'] === 'pending_gm'): ?>
                                         <span class="text-muted small">بانتظار قرار GM</span>
                                     <?php elseif ($policy['status'] === 'approved'): ?>
-                                        <span class="text-muted small">بانتظار تفعيل FM/Admin</span>
+                                        <span class="text-muted small">بانتظار تفعيل المدير المالي</span>
                                     <?php else: ?><span class="text-muted">—</span><?php endif; ?>
                                 </td>
                             </tr>
