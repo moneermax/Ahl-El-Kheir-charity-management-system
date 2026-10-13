@@ -2883,3 +2883,15 @@ Migration follow-up: commit `eb92fa5a42d00c086da0fe6a439511178d8c149b` guards th
 Source change on `main`: `modules/hr/incentive_policy.php` generates `hr_incentive_types.type_code` server-side from the English category name. The code preview is read-only and has no submitted `type_code` field; the server ignores any client-supplied code. Normalization lowercases English text, replaces non-alphanumeric runs with underscores, ensures an alphabetic prefix and minimum length, limits to 80 characters, and adds `_2`, `_3`, etc. on collisions. The database unique key `uq_hr_incentive_type_code` remains the final integrity barrier for duplicate codes; concurrent collision behavior still needs local test evidence. The update also includes strict GM/FM agreement timestamp and notes validation.
 
 Commit `23bdf2a84d81cd86f753c283e462f06f828aa510`. Arabic/English rendering of existing categories was confirmed by the user. The new preview, server code generation, PHP lint, and collision behavior have not yet been runtime-verified locally. Reward amounts remain unapproved and no policy should be activated for testing.
+
+
+## 2026-10-13 — Incentive policy GM approval workflow audit boundary
+
+The policy page and migration have been committed on main:
+- 44b6fdcb62e3eb54c86255fdea7b6f22709f22c8 — status enum and durable approval history migration.
+- 38e79e0851eed31640de00553c843c2d2920bdce — workflow handlers and full draft editor.
+- 6ad9a4308e19f36b0a53132ab39b2048b00f56a4 — removal of the old draft activation UI path.
+
+Approval state path: draft → pending_gm → approved → active; GM rejection stores a mandatory reason in history and returns the policy to editable draft. Server-side role checks allow only general_manager/gm to approve/reject and only FM/Admin to activate. Agreement date/notes were removed from the new form and no longer gate activation; legacy columns/data are preserved. The editor updates policy name, effective date, category enablement/reward amounts, and custom-field values while status is draft.
+
+No local runtime proof is available yet. Pending evidence: migration application and safe rerun, PHP lint, live-schema foreign-key compatibility, and controlled role/transition/browser tests. The old agreement workflow must not be treated as current policy.
