@@ -2696,3 +2696,10 @@ The user confirmed the Arabic/English language toggle works and supplied local P
 The user-defined workflow is authoritative: HR Manager owns policy draft creation/editing and submission; GM alone performs final approval/rejection; FM cannot create or submit drafts and can only activate a GM-approved policy. Source commits `21c94362c4f11f4000e050ba5e14160eedbac0fe` and `675bdc36b67ea1b7ede11abef37cdbf5c2340b84` separate these role capabilities and wire post-commit notifications for submission to GM, GM decision to HR, approved-policy handoff to FM, and activation closure to HR/the approving GM.
 
 Status: **SOURCE COMMITTED; LOCAL RUNTIME ACCEPTANCE PENDING.** Do not treat role restrictions or notifications as runtime-verified until tested on the user's XAMPP/MariaDB application. Keep the existing V1 test policy inactive; its reward amounts are not approved for production use.
+
+
+## 2026-10-14 — Incentive policy rejection recovery and fallback confirmation
+
+GM rejection returns the submitted policy version to an editable HR draft. The previous active policy remains in force unless FM successfully activates a GM-approved replacement; the existing activation transaction is the only path that retires the overlapping previous active version. Commit `9430f3418afe03ed7fce871a1b369514e4dbbca0` fixes the page-level gate so FM can reach the activation UI, consistent with the existing activation action guard.
+
+Status remains **source committed; local runtime acceptance pending**. Verify HR/GM/FM access, rejection reason and resubmission, notification handoffs, toast feedback, and fallback behavior. Do not activate the V1 test policy.
