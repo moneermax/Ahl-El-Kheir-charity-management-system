@@ -482,20 +482,15 @@ require_once __DIR__ . '/../../includes/header.php';
             <form method="post" class="row g-3">
                 <?=csrf_field()?>
                 <input type="hidden" name="action" value="create_category">
-                <div class="col-md-3">
-                    <label class="form-label">رمز الفئة (تلقائي)</label>
-                    <input class="form-control font-monospace bg-light text-muted" id="incentive-type-code-preview" type="text" value="incentive_category" readonly aria-describedby="incentive-type-code-help">
-                    <div class="form-text" id="incentive-type-code-help">يُولّد الرمز من الاسم الإنجليزي تلقائياً. إذا كان مستخدماً، سيضيف النظام رقماً تلقائياً.</div>
-                </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <label class="form-label">الاسم بالعربية *</label>
                     <input class="form-control" name="name_ar" maxlength="190" required>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <label class="form-label">الاسم بالإنجليزية *</label>
                     <input class="form-control" id="incentive-type-name-en" name="name_en" maxlength="190" required>
                 </div>
-                <div class="col-md-3 d-flex align-items-end">
+                <div class="col-md-4 d-flex align-items-end">
                     <button class="btn btn-outline-primary w-100" type="submit"><i class="fas fa-plus me-1"></i>إضافة فئة يدوية</button>
                 </div>
             </form>
@@ -733,23 +728,4 @@ require_once __DIR__ . '/../../includes/header.php';
         </div>
     </div>
 </div>
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const englishName = document.getElementById('incentive-type-name-en');
-    const codePreview = document.getElementById('incentive-type-code-preview');
-    if (!englishName || !codePreview) return;
-
-    const updateCodePreview = function () {
-        let code = englishName.value.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
-        if (!code) code = 'incentive_category';
-        else if (!/^[a-z]/.test(code)) code = 'incentive_' + code;
-        if (code.length < 2) code = 'incentive_' + code;
-        code = code.slice(0, 80).replace(/_+$/g, '');
-        codePreview.value = code || 'incentive_category';
-    };
-
-    englishName.addEventListener('input', updateCodePreview);
-    updateCodePreview();
-});
-</script>
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>
