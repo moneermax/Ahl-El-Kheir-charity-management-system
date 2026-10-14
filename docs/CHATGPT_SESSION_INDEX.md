@@ -640,3 +640,7 @@ The agreed recipient is the employee who actually reactivated the sponsor, not a
 ## 2026-10-14 — New-sponsor incentive source event
 
 The first financially confirmed monthly-sponsorship payment can now create an idempotent `new_sponsor` event when the sponsor has a valid `brought_by_user_id` → unique employee mapping, no earlier confirmed monthly payment, and no qualifying reactivation transition. The event remains pending HR Manager verification. See `docs/HR_EMPLOYEE_INCENTIVES_CONTINUATION.md` for the rollback-only harness and local acceptance commands; runtime acceptance is pending.
+
+### HR Employee Incentives — 2026-10-14 continuation
+
+Current open gate: local PHP lint and rollback-only acceptance for the new HR Manager verification page, followed by employee notifications when awards become scheduled for payroll. Project-completion verification remains blocked until approved recipient allocations are implemented. See `docs/HR_EMPLOYEE_INCENTIVES_CONTINUATION.md`. Do not repeat passed source-event/accounting harnesses without regression evidence; keep policy R3 inactive.
