@@ -582,3 +582,9 @@ Schema-only checkpoint: on 2026-10-14, dedicated incentive payable account migra
 ### 2026-10-14 — Incentive accounting integration slice (runtime pending)
 
 Local schema gate passed per user evidence: account 2400 active liability; 5500 active expense; payroll incentive_amount and award recognition/settlement journal references/indexes present. Initial source integration commits add award recognition/scheduling helpers, separate payroll settlement through 2400 while keeping salary expense on 5200, and separate payroll UI display. This is partial source work only; source event hooks, manager verification/award creation, notifications, PHP lint, and rollback-only runtime tests remain open. See `docs/HR_EMPLOYEE_INCENTIVES_CONTINUATION.md`. Do not activate R3 or touch `ahl_el_kheir_production_test`.
+
+
+
+### 2026-10-14 — Employee incentive accounting rollback harness prepared
+
+Added `tools/run_hr_employee_incentive_accounting_rollback_tests.php` on `main` (commits `68a005d9`, `5cb05574`). This is a prepared rollback-only runtime gate, not a PASS. It exercises award recognition/idempotency, caller-owned currency hold, draft scheduling/repeat refresh, settlement journal separation (5500/2400/5200/1410), paid-payroll refresh immutability, and transaction cleanup using existing policy/payroll fixtures only. Pull `main` and run `& "D:\\xampp\\php\\php.exe" "tools\\run_hr_employee_incentive_accounting_rollback_tests.php"` against local `ahl_el_kheir` only. If SKIP, report the exact prerequisite; if FAIL, stop and inspect that exact root cause. Do not touch `ahl_el_kheir_production_test`, activate R3, or add source-event hooks before this gate is understood. Journal-code MAX+1 concurrency remains a source-review risk before concurrency-sensitive hooks.
