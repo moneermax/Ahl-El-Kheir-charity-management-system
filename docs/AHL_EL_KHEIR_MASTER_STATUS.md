@@ -2845,3 +2845,7 @@ The agreed recipient is the employee who actually reactivated the sponsor, not a
 ## 2026-10-14 — New-sponsor incentive source event committed; local gate pending
 
 `hrIncentiveRecordNewSponsorPaymentEvent()` is wired into the existing FM confirmed-payment transaction. It checks the linked posted transaction/journal, first confirmed monthly payment, sponsor attribution, unique employee mapping, and exclusion of a qualifying reactivation campaign. It records only a `pending_verification` event with recipient snapshots; no award is issued. Rollback-only harness: `tools/run_hr_employee_incentive_new_sponsor_rollback_tests.php`. Local lint/runtime acceptance remains pending; see `docs/HR_EMPLOYEE_INCENTIVES_CONTINUATION.md`. Project source/allocation, HR Manager verification/award issuance, notifications, and end-to-end acceptance remain open.
+
+## 2026-10-14 — Employee incentives continuation boundary
+
+The HR Manager-only incentive verification and award-issuance page is committed on `main` at `f0cef4f4`, with follow-up commits `02bb9eef` and `4e410198`; the continuation record was updated at `a4805b45`. The page and dashboard link are **not yet locally linted or runtime-verified**. Next: pull `main`, lint the two PHP files, and perform a safe rollback-only verification/award acceptance check on `ahl_el_kheir`. Project-completion events remain blocked pending approved allocation workflow; employee scheduling notifications remain open. Do not rerun closed incentive source-event/accounting tests absent regression evidence, and keep R3 inactive.
