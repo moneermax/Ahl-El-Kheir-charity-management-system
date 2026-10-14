@@ -2734,3 +2734,10 @@ Commit `fa733524d67411e08d299c84e7568c79b601316a` removes the explanatory alert 
 ## 2026-10-14 — Employee incentive GM approval feedback correction
 
 Current open verification: GM approval feedback for test policy R3. The approval handler restores the translated success flash/toast and bilingual confirmation. Only the GM approval form opts out of the shared same-page POST interceptor so the central confirmation handler can run before any request is sent; shared JavaScript and other module workflows are unchanged. Guarded test-only reset utility: `tools/reset_incentive_policy_gm_approval_acceptance.sql`. R3 must remain inactive. Source change is committed; local PHP lint, reset execution, cancellation behavior, success toast, persisted history, and HR/FM notification checks remain pending.
+
+
+## 2026-10-14 — Incentive GM approval notification timestamp discrepancy
+
+The GM approval confirmation and success toast were browser-confirmed, and R3 was approved but not activated. HR/FM notification timestamps predated the approval-history timestamp because the test reset failed to remove stale handoff notifications. Source evidence shows valid UTF-8 title bytes; the fragile test SQL relied on Arabic title literals that were misrepresented along the local PowerShell/CLI execution path. The existing helper suppresses an equivalent unread notification without refreshing its timestamp. No production notification-writer defect is established, so production workflow code remains unchanged.
+
+Commit `75484be186fdf7b935e27151e07604456b2cfa76` changes the test-only reset to ASCII-only body/link matching, exact R3 policy guard, and HR/FM recipient IDs only; it preserves GM's original submission notification and never activates R3. Local execution of the corrected reset and one clean re-approval/timestamp comparison remain pending. Do not claim timestamp verification complete until the local results are supplied.
