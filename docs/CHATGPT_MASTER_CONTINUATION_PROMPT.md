@@ -488,3 +488,10 @@ Repository source checks confirmed both catalogs contain 135 unique keys with no
 ## 2026-10-14 — Incentive policy review-page presentation follow-up
 
 The user confirmed the Arabic/English language toggle works and supplied local PHP lint results: `modules/hr/incentive_policy.php`, `lang/incentive_policy_ar.php`, and `lang/incentive_policy_en.php` all pass syntax checks. The official `tools/i18n_gap.php` scan reports 85 untranslated strings across 12 other files; `modules/hr/incentive_policy.php` is not listed, so unrelated files remain out of scope. The existing GM view exposed two narrow presentation issues: the system-currency notice was hard-coded in Arabic, and policy category/amount summaries had no visual separation. Commit `e446adee1ea9ae4e76bc5b48ad227926fec442c2` routes the currency notice through `t('incentives.currency_notice')` and styles each category/amount summary as a separated bordered item. This source correction is committed to `main`; local PHP lint and browser confirmation of the updated presentation remain pending. The Arabic creator name is stored user data and was intentionally preserved. V1 remains a draft; do not submit, approve, or activate until the toast acceptance checks and updated presentation are confirmed.
+
+
+## 2026-10-14 — Incentive policy fallback/access checkpoint
+
+GM rejection returns the version to HR as an editable draft. If HR does not submit a replacement or FM does not activate an approved replacement, the prior active policy remains in force. Existing source retires the prior active version only during successful FM activation; payroll payday effective-policy selection still needs inspection/runtime proof.
+
+Commit `9430f3418afe03ed7fce871a1b369514e4dbbca0` fixes the page gate so FM can reach activation. Success/error feedback uses transient-alert markers for toast conversion. Next: pull main, PHP-lint the page, test HR/GM/FM permissions, verify notifications and toast behavior, and inspect/test payroll's effective-policy lookup. Keep V1 inactive.
