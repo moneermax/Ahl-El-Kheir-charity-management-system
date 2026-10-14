@@ -2783,3 +2783,11 @@ Migration `database/migrations/2026-10-14_hr_employee_incentives_payroll_account
 The user applied and verified both incentive schema migrations locally: account `2400` is active liability, `5500` is active expense, payroll has `incentive_amount`, and awards have separate recognition/settlement journal references and indexes.
 
 Initial procedural PHP integration is now committed on `main`: `modules/hr/lib_employee_incentives.php` implements award recognition and currency-checked draft scheduling; payroll accounting settles scheduled incentives against `2400` while retaining salary expense on `5200`; payroll UI displays incentive component and total expected payout separately. This is a partial source implementation only. Local PHP lint and runtime accounting tests have not been run, and source-event creation, manager verification/award creation, and employee notifications remain open. Do not describe incentive integration as complete; do not activate R3.
+
+
+
+## 2026-10-14 — Employee incentive accounting rollback gate prepared
+
+A focused rollback-only harness is committed at `tools/run_hr_employee_incentive_accounting_rollback_tests.php` (commits `68a005d9`, `5cb05574`). It is prepared but **not runtime-verified**. The test uses an existing policy version and a compatible draft payroll; it validates recognition Dr 5500 / Cr 2400, duplicate idempotency, currency hold, draft scheduling, settlement and award journal linkage, preservation of salary expense 5200 and salary-advance recovery 1410, paid-payroll refresh immutability, and rollback cleanup. It performs no DDL and must run only against local `ahl_el_kheir`.
+
+Exact command after pulling `main`: `& "D:\\xampp\\php\\php.exe" "tools\\run_hr_employee_incentive_accounting_rollback_tests.php"`. Report exact output; do not treat a SKIP as PASS. No source-event hooks, manager award issuance, or employee award notifications are runtime-proven. R3 must remain approved/inactive and `ahl_el_kheir_production_test` untouched. Before concurrency-sensitive event integration, resolve the source-level MAX(JE suffix)+1 journal-code allocation race if the existing allocation convention confirms a safer narrow pattern.
