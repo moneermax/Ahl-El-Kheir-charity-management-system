@@ -2729,3 +2729,8 @@ Per the user's explicit direction, commit `0df1890e12a006cb1cae57c1bf906047178a3
 ## 2026-10-14 — Incentive policy page: remove redundant currency/category notice
 
 Commit `fa733524d67411e08d299c84e7568c79b601316a` removes the explanatory alert above the category section in `modules/hr/incentive_policy.php`. The application currency remains system-configured and continues to be stored with each policy rule; only the page-level notice was removed. The category management heading, category catalogue, and policy rule amount labels remain unchanged. Source change is committed on `main`; local pull, PHP lint, and browser verification are pending. This UI cleanup does not establish that the entire incentive lifecycle or incentive-to-payroll/accounting implementation is complete.
+
+
+## 2026-10-14 — Employee incentive GM approval feedback correction
+
+Current open verification: GM approval feedback for test policy R3. The approval handler restores the translated success flash/toast and bilingual confirmation. Only the GM approval form opts out of the shared same-page POST interceptor so the central confirmation handler can run before any request is sent; shared JavaScript and other module workflows are unchanged. Guarded test-only reset utility: `tools/reset_incentive_policy_gm_approval_acceptance.sql`. R3 must remain inactive. Source change is committed; local PHP lint, reset execution, cancellation behavior, success toast, persisted history, and HR/FM notification checks remain pending.
