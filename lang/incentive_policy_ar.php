@@ -134,4 +134,6 @@ return [
     'incentives.draft_saved' => 'تم حفظ مسودة سياسة الحوافز. أكمل بياناتها ثم أرسلها لاعتماد المدير العام.',
     'incentives.category_added_short' => 'تمت إضافة فئة الحوافز.',
     'incentives.draft_only_submit' => 'المسودة غير موجودة أو سبق إرسالها.',
-];
+    'incentives.name' => 'الاسم',
+    'incentives.disabled' => 'غير مفعّل',
+]; 
