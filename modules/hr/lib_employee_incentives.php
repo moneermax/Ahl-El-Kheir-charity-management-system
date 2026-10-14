@@ -365,6 +365,137 @@ function hrIncentiveEmployeeIdForUser(PDO $pdo, int $userId): int
 }
 
 /**
+ * Record a new-sponsor event only for the sponsor's first financially confirmed
+ * monthly-sponsorship payment. Caller must own the payment-confirmation transaction.
+ */
+function hrIncentiveRecordNewSponsorPaymentEvent(PDO $pdo, int $paymentId, int $createdByUserId = 0): int
+{
+    if ($paymentId <= 0) {
+        throw new InvalidArgumentException('مرجع دفعة الكفيل الجديد غير صالح.');
+    }
+    if (!$pdo->inTransaction()) {
+        throw new RuntimeException('يجب تسجيل حافز استقطاب الكفيل ضمن معاملة اعتماد الدفعة.');
+    }
+
+    $paymentStmt = $pdo->prepare(
+        "SELECT sp.id, sp.payment_type, sp.sponsor_id, sp.sponsorship_id,
+                sp.amount, sp.currency_code, sp.status, sp.reviewed_at,
+                sp.created_at, sp.transaction_id,
+                COALESCE(sp.sponsor_id, s.sponsor_id) AS resolved_sponsor_id,
+                t.status AS transaction_status
+         FROM sponsor_payments sp
+         LEFT JOIN sponsorships s ON s.id = sp.sponsorship_id
+         LEFT JOIN transactions t ON t.id = sp.transaction_id
+         WHERE sp.id = ?
+         LIMIT 1 FOR UPDATE"
+    );
+    $paymentStmt->execute([$paymentId]);
+    $payment = $paymentStmt->fetch(PDO::FETCH_ASSOC);
+    if (!$payment
+        || $payment['payment_type'] !== 'monthly_sponsorship'
+        || $payment['status'] !== 'approved'
+        || (int)($payment['transaction_id'] ?? 0) <= 0
+        || $payment['transaction_status'] !== 'posted'
+        || empty($payment['reviewed_at'])
+        || (int)($payment['resolved_sponsor_id'] ?? 0) <= 0
+        || empty($payment['created_at'])) {
+        return 0;
+    }
+
+    $journalStmt = $pdo->prepare(
+        "SELECT id FROM journal_entries
+         WHERE reference_type = 'transaction'
+           AND reference_id = ?
+           AND status = 'posted'
+         LIMIT 1"
+    );
+    $journalStmt->execute([(int)$payment['transaction_id']]);
+    if (!(int)$journalStmt->fetchColumn()) {
+        return 0;
+    }
+
+    $sponsorStmt = $pdo->prepare(
+        "SELECT id, brought_by_user_id, created_at
+         FROM sponsors WHERE id = ? LIMIT 1 FOR UPDATE"
+    );
+    $sponsorStmt->execute([(int)$payment['resolved_sponsor_id']]);
+    $sponsor = $sponsorStmt->fetch(PDO::FETCH_ASSOC);
+    $recipientUserId = (int)($sponsor['brought_by_user_id'] ?? 0);
+    if (!$sponsor || $recipientUserId <= 0
+        || empty($sponsor['created_at'])
+        || (string)$payment['created_at'] < (string)$sponsor['created_at']) {
+        return 0;
+    }
+
+    // Do not classify a sponsor already explicitly reactivated through win-back
+    // as a new acquisition, even if legacy payment history is incomplete.
+    $reactivationStmt = $pdo->prepare(
+        "SELECT id FROM winback_campaigns
+         WHERE sponsor_id = ?
+           AND status = 'persuaded'
+           AND reactivated_by_user_id IS NOT NULL
+           AND reactivation_confirmed_by_user_id IS NOT NULL
+           AND reactivated_at IS NOT NULL
+           AND reactivated_at <= ?
+         LIMIT 1 FOR UPDATE"
+    );
+    $reactivationStmt->execute([(int)$sponsor['id'], (string)$payment['reviewed_at']]);
+    if ($reactivationStmt->fetchColumn()) {
+        return 0;
+    }
+
+    // The first financially confirmed payment wins. A tied confirmation time
+    // is treated as ambiguous and held rather than selecting an arbitrary row.
+    $earlierPaymentStmt = $pdo->prepare(
+        "SELECT other.id
+         FROM sponsor_payments other
+         LEFT JOIN sponsorships other_s ON other_s.id = other.sponsorship_id
+         JOIN transactions other_t
+           ON other_t.id = other.transaction_id AND other_t.status = 'posted'
+         WHERE other.id <> ?
+           AND other.payment_type = 'monthly_sponsorship'
+           AND other.status = 'approved'
+           AND other.reviewed_at IS NOT NULL
+           AND other.reviewed_at <= ?
+           AND COALESCE(other.sponsor_id, other_s.sponsor_id) = ?
+           AND EXISTS (
+               SELECT 1 FROM journal_entries other_j
+               WHERE other_j.reference_type = 'transaction'
+                 AND other_j.reference_id = other_t.id
+                 AND other_j.status = 'posted'
+           )
+         LIMIT 1 FOR UPDATE"
+    );
+    $earlierPaymentStmt->execute([
+        $paymentId,
+        (string)$payment['reviewed_at'],
+        (int)$sponsor['id'],
+    ]);
+    if ($earlierPaymentStmt->fetchColumn()) {
+        return 0;
+    }
+
+    $recipientEmployeeId = hrIncentiveEmployeeIdForUser($pdo, $recipientUserId);
+    if ($recipientEmployeeId <= 0) {
+        error_log('Incentive new-sponsor event skipped: brought_by_user_id has no unique employee mapping. Payment ID=' . $paymentId);
+        return 0;
+    }
+
+    return hrIncentiveRecordSourceEvent(
+        $pdo,
+        'sponsor_payments',
+        $paymentId,
+        'new_sponsor',
+        (string)$payment['reviewed_at'],
+        (float)$payment['amount'],
+        (string)($payment['currency_code'] ?: 'SDG'),
+        $createdByUserId,
+        $recipientUserId,
+        $recipientEmployeeId
+    );
+}
+
+/**
  * Record a reactivation event only for the first financially confirmed
  * monthly-sponsorship payment created after a durable win-back transition.
  * Caller must be inside the payment-confirmation transaction.
