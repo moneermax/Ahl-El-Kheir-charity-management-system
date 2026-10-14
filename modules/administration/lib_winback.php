@@ -43,8 +43,10 @@ function wb_mark_returned(PDO $pdo, int $campaignId, int $actorUserId): ?array
             "UPDATE sponsors SET status = 'active', updated_at = NOW() WHERE id = ?"
         );
         $sponsorUpdate->execute([$sponsorId]);
-        if ($sponsorUpdate->rowCount() !== 1) {
-            throw new RuntimeException('تعذر تحديث حالة الكفيل؛ لم تكتمل إعادة التفعيل.');
+        $sponsorCheck = $pdo->prepare("SELECT id FROM sponsors WHERE id = ? LIMIT 1");
+        $sponsorCheck->execute([$sponsorId]);
+        if (!$sponsorCheck->fetchColumn()) {
+            throw new RuntimeException('تعذر العثور على الكفيل؛ لم تكتمل إعادة التفعيل.');
         }
 
         $campaignUpdate = $pdo->prepare(
