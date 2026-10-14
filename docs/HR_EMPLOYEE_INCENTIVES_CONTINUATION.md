@@ -297,3 +297,17 @@ Repository source checks confirmed both catalogs contain 135 unique keys with no
 ## 2026-10-14 — Incentive policy review-page presentation follow-up
 
 The user confirmed the Arabic/English language toggle works and supplied local PHP lint results: `modules/hr/incentive_policy.php`, `lang/incentive_policy_ar.php`, and `lang/incentive_policy_en.php` all pass syntax checks. The official `tools/i18n_gap.php` scan reports 85 untranslated strings across 12 other files; `modules/hr/incentive_policy.php` is not listed, so unrelated files remain out of scope. The existing GM view exposed two narrow presentation issues: the system-currency notice was hard-coded in Arabic, and policy category/amount summaries had no visual separation. Commit `e446adee1ea9ae4e76bc5b48ad227926fec442c2` routes the currency notice through `t('incentives.currency_notice')` and styles each category/amount summary as a separated bordered item. This source correction is committed to `main`; local PHP lint and browser confirmation of the updated presentation remain pending. The Arabic creator name is stored user data and was intentionally preserved. V1 remains a draft; do not submit, approve, or activate until the toast acceptance checks and updated presentation are confirmed.
+
+
+## 2026-10-14 — Policy ownership and notification workflow correction
+
+The user clarified the final policy workflow:
+- **HR Manager:** creates and edits drafts, manages categories/custom policy fields, and submits the policy to GM.
+- **GM:** receives a notification on submission and is the only role allowed to approve/reject. Rejection requires a reason, returns the policy to editable draft, and notifies the HR policy creator with that reason.
+- **FM:** cannot create/edit/submit drafts or approve/reject. After GM approval, FM receives a notification that the policy is available to select/apply and can activate it. Activation notifies the HR creator and the approving GM.
+
+Implementation commits on `main`: `21c94362c4f11f4000e050ba5e14160eedbac0fe` and `675bdc36b67ea1b7ede11abef37cdbf5c2340b84`.
+
+Implementation reuses `ak_transaction_review_notify_event()`. Notifications run after each policy transaction commits; delivery errors are isolated from the business state transition. No schema changes were introduced.
+
+**Acceptance pending on local XAMPP/MariaDB.** Pull main and lint the policy page. Verify HR Manager can create/edit/submit but cannot approve/activate; GM can approve/reject but cannot create/submit/activate; FM can activate an approved policy but cannot create/edit/submit/approve/reject. Verify recipients and rejection reason. Keep V1 inactive because its reward values are test amounts; safely test submit -> reject -> resubmit -> approve, leaving it approved and awaiting FM activation.
