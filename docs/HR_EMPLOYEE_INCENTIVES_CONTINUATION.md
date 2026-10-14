@@ -447,3 +447,15 @@ Required design before integration:
 5. Audit every payroll draft-generation/refresh path and accounting status transition before implementation; add rollback-only tests for idempotency, currency hold, draft refresh, journal balance, paid immutability, and post-commit notification failure isolation.
 
 Do not activate policy R3 or change any acceptance-policy/test financial data. Do not touch `ahl_el_kheir_production_test`. Local migration application, PHP lint, runtime integration tests, and documentation verification remain pending.
+
+
+## 2026-10-14 — Payroll component and dual award-journal schema committed
+
+Added migration `database/migrations/2026-10-14_hr_employee_incentives_payroll_accounting.sql` (commit `211f1e033cf488f1a95e5d76956b4371183d6463`). It:
+- adds `payroll.incentive_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00` so the payout component is not merged into salary `net_salary`;
+- renames the award's ambiguous `journal_entry_id` to `recognition_journal_entry_id`;
+- adds `settlement_journal_entry_id` and distinct indexes, allowing the earned-award recognition journal and payroll-settlement journal to be traced separately.
+
+This migration depends on the existing incentive-ledger migration and salary-advance payroll migration; chronological filenames preserve that order. It contains only migration-time DDL, not runtime DDL.
+
+**Verification boundary:** source commit only; do not assume it has been applied to local `ahl_el_kheir`. Before application, inspect the migration and confirm the expected source schema exists. Then verify the two payroll/award columns and indexes in the local DB. PHP source integration is not yet implemented by this schema commit.
