@@ -44,13 +44,18 @@ $recipient = reactivationTestOne(
      WHERE e.user_id > 0 ORDER BY e.id LIMIT 1"
 );
 $sponsor = reactivationTestOne($pdo, 'SELECT id FROM sponsors WHERE id > 0 ORDER BY id LIMIT 1');
+$reviewer = $recipient ? reactivationTestOne(
+    $pdo,
+    'SELECT id FROM users WHERE id > 0 AND id <> ? ORDER BY id LIMIT 1',
+    [(int)$recipient['user_id']]
+) : null;
 $accounts = reactivationTestOne(
     $pdo,
     "SELECT
         (SELECT id FROM accounts WHERE code = '1100' AND is_active = 1 LIMIT 1) AS cash_id,
         (SELECT id FROM accounts WHERE code = '4100' AND is_active = 1 LIMIT 1) AS revenue_id"
 );
-if (!$recipient || !$sponsor || !$accounts || (int)$accounts['cash_id'] <= 0 ||
+if (!$recipient || !$reviewer || !$sponsor || !$accounts || (int)$accounts['cash_id'] <= 0 ||
     (int)$accounts['revenue_id'] <= 0 || !preg_match('/^[A-Z]{3}$/', $currency)) {
     echo "SKIP | Reactivation incentive rollback test | employee-linked user, sponsor, active cash/revenue accounts, or currency unavailable.\n";
     exit(0);
@@ -59,6 +64,7 @@ if (!$recipient || !$sponsor || !$accounts || (int)$accounts['cash_id'] <= 0 ||
 $versionNo = (int)$pdo->query('SELECT COALESCE(MAX(version_no),0) + 1 FROM hr_incentive_policy_versions')->fetchColumn();
 $token = strtoupper(bin2hex(random_bytes(6)));
 $actorUserId = (int)$recipient['user_id'];
+$reviewerUserId = (int)$reviewer['id'];
 $employeeId = (int)$recipient['employee_id'];
 $sponsorId = (int)$sponsor['id'];
 $now = new DateTimeImmutable();
@@ -132,7 +138,7 @@ try {
         DateTimeImmutable $reviewedAt,
         string $suffix
     ) use (
-        $pdo, $transactionInsert, $paymentInsert, $sponsorId, $actorUserId,
+        $pdo, $transactionInsert, $paymentInsert, $sponsorId, $actorUserId, $reviewerUserId,
         $currency, $token, &$journalIds
     ): array {
         $amount = 100.00;
@@ -143,7 +149,7 @@ try {
             $createdAt->format('Y-m-d'),
             $code,
             'Rollback-only reactivation test ' . $suffix,
-            $actorUserId,
+            $reviewerUserId,
             $code,
             $sponsorId,
             $createdAt->format('M/Y'),
@@ -184,7 +190,7 @@ try {
             $createdAt->format('M/Y'),
             $amount,
             $currency,
-            $actorUserId,
+            $reviewerUserId,
             $reviewedAt->format('Y-m-d H:i:s'),
             $transactionId,
             $createdAt->format('Y-m-d H:i:s'),
@@ -200,7 +206,7 @@ try {
     $newTransactionId = $new['transaction_id'];
     $newPaymentId = $new['payment_id'];
 
-    $eventId = hrIncentiveRecordReactivationPaymentEvent($pdo, $newPaymentId, $actorUserId);
+    $eventId = hrIncentiveRecordReactivationPaymentEvent($pdo, $newPaymentId, $reviewerUserId);
     reactivationTestAssert($eventId > 0, 'Qualifying first confirmed payment did not record a reactivation event.');
 
     $event = reactivationTestOne(
@@ -217,12 +223,12 @@ try {
         $event['status'] === 'pending_verification' &&
         (int)$event['recipient_user_id'] === $actorUserId &&
         (int)$event['recipient_employee_id'] === $employeeId &&
-        (int)$event['created_by_user_id'] === $actorUserId &&
+        (int)$event['created_by_user_id'] === $reviewerUserId &&
         $event['occurred_at'] === $now->format('Y-m-d H:i:s'),
         'Reactivation event did not preserve payment, recipient, creator, and confirmation-time evidence.'
     );
 
-    $repeatId = hrIncentiveRecordReactivationPaymentEvent($pdo, $newPaymentId, $actorUserId);
+    $repeatId = hrIncentiveRecordReactivationPaymentEvent($pdo, $newPaymentId, $reviewerUserId);
     reactivationTestAssert($repeatId === $eventId, 'Repeated processing did not return the existing event.');
     reactivationTestAssert(
         reactivationTestCount($pdo, 'SELECT COUNT(*) FROM hr_incentive_events WHERE id = ?', [$eventId]) === 1,
