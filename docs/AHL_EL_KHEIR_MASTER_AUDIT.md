@@ -2956,3 +2956,19 @@ Repository source checks confirmed both catalogs contain 135 unique keys with no
 ## 2026-10-14 — Incentive policy review-page presentation follow-up
 
 The user confirmed the Arabic/English language toggle works and supplied local PHP lint results: `modules/hr/incentive_policy.php`, `lang/incentive_policy_ar.php`, and `lang/incentive_policy_en.php` all pass syntax checks. The official `tools/i18n_gap.php` scan reports 85 untranslated strings across 12 other files; `modules/hr/incentive_policy.php` is not listed, so unrelated files remain out of scope. The existing GM view exposed two narrow presentation issues: the system-currency notice was hard-coded in Arabic, and policy category/amount summaries had no visual separation. Commit `e446adee1ea9ae4e76bc5b48ad227926fec442c2` routes the currency notice through `t('incentives.currency_notice')` and styles each category/amount summary as a separated bordered item. This source correction is committed to `main`; local PHP lint and browser confirmation of the updated presentation remain pending. The Arabic creator name is stored user data and was intentionally preserved. V1 remains a draft; do not submit, approve, or activate until the toast acceptance checks and updated presentation are confirmed.
+
+
+## 2026-10-14 — Incentive policy governance and notification handoffs
+
+Source audit identified that the incentive policy page previously allowed both HR Manager and FM to create/edit/submit drafts, contrary to the clarified responsibility split, and had no incentive-policy notification calls at submit/approve/reject/activate transitions.
+
+Implemented on `main`:
+- Draft creation/editing, category management, custom fields, and submission are restricted to `hr_manager`.
+- GM roles `general_manager`/`gm` remain the only approvers/rejectors.
+- `financial_manager` retains activation authority only; it cannot create, edit, or submit drafts.
+- After commit, submission notifies active GM-role users; approval notifies the HR policy creator and active FM-role users; rejection notifies the HR creator with the reason; activation notifies the HR creator and the GM who approved the policy.
+- Notifications reuse `ak_transaction_review_notify_event()` and its delivery failure isolation. Activation's post-commit approver lookup is separately failure-isolated.
+
+Commits: `21c94362c4f11f4000e050ba5e14160eedbac0fe`, `675bdc36b67ea1b7ede11abef37cdbf5c2340b84`.
+
+No schema change was needed. **Verification is source-only; local PHP lint, server-side role denial/allowance tests, and notification recipient/appearance checks remain pending.** Keep the existing V1 acceptance policy inactive because its reward values are test values. A notification failure must never undo or falsely report failure for a committed policy transition.
