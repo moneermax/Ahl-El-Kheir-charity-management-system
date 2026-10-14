@@ -576,3 +576,15 @@ Next: inspect both dated migrations against the local schema, apply them only to
 The user applied both schema migrations locally and verified account `2400`, `5500`, payroll `incentive_amount`, and the award recognition/settlement journal columns. Latest source slice on `main` adds `modules/hr/lib_employee_incentives.php`, integrates incentive settlement in `modules/hr/lib_payroll_accounting.php`, and refreshes/displays the component in `modules/hr/payroll.php`. It is a partial, unverified implementation: source-event hooks, manager verification/award creation, employee notifications, PHP lint, and rollback-only runtime tests are still open.
 
 Next exact step: pull `main`; run `php -l modules/hr/lib_employee_incentives.php`, `php -l modules/hr/lib_payroll_accounting.php`, and `php -l modules/hr/payroll.php`; report exact output. Fix lint/source issues first. Then continue with manager-verification/award creation and confirmed source-event hooks without activating R3 or touching `ahl_el_kheir_production_test`.
+
+
+## 2026-10-14 — Exact next step: incentive accounting rollback gate
+
+The rollback-only harness `tools/run_hr_employee_incentive_accounting_rollback_tests.php` is committed on `main` (commits `68a005d9`, `5cb05574`), but has **not** been linted/executed locally. First pull `main`, then run:
+
+```powershell
+& "D:\xampp\php\php.exe" -l "tools\run_hr_employee_incentive_accounting_rollback_tests.php"
+& "D:\xampp\php\php.exe" "tools\run_hr_employee_incentive_accounting_rollback_tests.php"
+```
+
+Run only against local `ahl_el_kheir`; never use `ahl_el_kheir_production_test`. Report exact output. SKIP is not PASS; diagnose its stated missing fixture without creating or activating a policy. On FAIL, stop and inspect the exact root cause before editing. The harness checks 5500/2400 recognition, idempotency, caller-owned currency hold, draft scheduling, settlement with 5200 salary and 1410 recovery preserved, paid-payroll refresh immutability, and cleanup. Do not add event-boundary hooks until this gate passes and the MAX(JE suffix)+1 journal-code collision risk has been assessed. Keep R3 approved/inactive.
