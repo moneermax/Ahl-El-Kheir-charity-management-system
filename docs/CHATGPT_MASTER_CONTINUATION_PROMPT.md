@@ -588,3 +588,8 @@ The rollback-only harness `tools/run_hr_employee_incentive_accounting_rollback_t
 ```
 
 Run only against local `ahl_el_kheir`; never use `ahl_el_kheir_production_test`. Report exact output. SKIP is not PASS; diagnose its stated missing fixture without creating or activating a policy. On FAIL, stop and inspect the exact root cause before editing. The harness checks 5500/2400 recognition, idempotency, caller-owned currency hold, draft scheduling, settlement with 5200 salary and 1410 recovery preserved, paid-payroll refresh immutability, and cleanup. Do not add event-boundary hooks until this gate passes and the MAX(JE suffix)+1 journal-code collision risk has been assessed. Keep R3 approved/inactive.
+
+
+## 2026-10-14 — Accounting rollback gate passed; next step
+
+The user-provided local result confirms `tools/run_hr_employee_incentive_accounting_rollback_tests.php` passed after PHP lint. Verified: recognition Dr 5500 / Cr 2400 for SDG 123.45; duplicate protection; caller-owned currency hold; draft scheduling/repeat refresh; balanced payroll settlement preserving 5200 salary expense and 1410 salary-advance recovery; award settlement linkage; rollback cleanup. This is not full lifecycle proof. Next inspect existing journal-code allocation and make incentive recognition collision-safe before implementing source-event hooks. Then continue manager verification/award creation, confirmed source-event boundaries, post-commit notifications, and rollback-only tests. Keep policy R3 approved/inactive and `ahl_el_kheir_production_test` untouched.
