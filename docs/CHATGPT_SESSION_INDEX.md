@@ -603,3 +603,8 @@ User-provided local evidence: harness lint passed and `tools/run_hr_employee_inc
 ### 2026-10-14 — Incentive journal-code collision retry requires local revalidation
 
 Commit `143aec00` adds a bounded five-attempt duplicate-entry-code retry to incentive award recognition, following source review of the existing MAX+1 `JE-######` convention and unique `uq_je_code` constraint. Local lint and the rollback-only accounting harness must be rerun after this source change. Event-source hooks remain blocked pending that evidence.
+
+
+## 2026-10-14 — Win-back reactivation attribution
+
+Implementation is committed on main; local verification is pending. See `docs/HR_EMPLOYEE_INCENTIVES_CONTINUATION.md` for the migration, atomic transition helper, rollback-only harness, exact local acceptance gate, and remaining reactivation-payment/HR-verification requirements.
