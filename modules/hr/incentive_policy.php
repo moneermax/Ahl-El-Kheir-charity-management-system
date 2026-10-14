@@ -527,11 +527,6 @@ require_once __DIR__ . '/../../includes/header.php';
     <?php if ($message !== ''): ?><div class="alert alert-success" data-ak-transient-alert="1"><?=e($message)?></div><?php endif; ?>
     <?php if ($error !== ''): ?><div class="alert alert-danger" data-ak-transient-alert="1"><?=e($error)?></div><?php endif; ?>
 
-    <div class="alert alert-info small">
-        <?=e(t('incentives.currency_notice'))?> <?=e(APP_CURRENCY_CODE)?> (<?=e(AK_LANG === 'en' ? APP_CURRENCY_NAME_EN : APP_CURRENCY_NAME_AR)?>).
-        الفئات الأربع الأساسية مرتبطة بأحداث النظام الحالية. أي فئة جديدة تُضاف هنا بوضع «مراجعة يدوية» ولا تصدر مكافآت تلقائياً؛ مسار الترشيح والصرف للفئات اليدوية يحتاج تنفيذاً مستقلاً قبل استخدامها مالياً.
-    </div>
-
     <?php if ($canManageTypes): ?>
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-header bg-white fw-bold">إدارة فئات الحوافز</div>
