@@ -565,3 +565,12 @@ New migration: `database/migrations/2026-10-14_hr_incentive_event_recipient_snap
 ## 2026-10-14 — Reactivation actor decision implemented; local acceptance pending
 
 The actual reactivating employee is explicitly selected and server-validated; the confirmer is stored separately. The confirmed-payment source hook is now wired to the existing FM approval transaction. The source event remains pending HR Manager verification and no award is issued by the payment hook. See the current engineering gate above for migrations, harnesses, and exact local acceptance steps.
+
+
+## 2026-10-14 — New-sponsor first-payment source hook committed; local acceptance pending
+
+Added `hrIncentiveRecordNewSponsorPaymentEvent()` in `modules/hr/lib_employee_incentives.php` and wired it into the existing FM payment-confirmation transaction in `modules/accounting/fm_review_queue.php`. It requires an approved monthly-sponsorship payment, linked posted transaction and posted journal, sponsor creation before the payment record, an attributed `sponsors.brought_by_user_id` with exactly one employee mapping, no earlier financially confirmed monthly-sponsorship payment, and no qualifying durable reactivation transition. The event snapshots recipient user/employee IDs and remains `pending_verification`; it does not issue an award. The existing collection reward remains independently evaluated for the collector.
+
+Rollback-only harness: `tools/run_hr_employee_incentive_new_sponsor_rollback_tests.php`. It uses an existing sponsor with a unique employee attribution and no prior approved monthly payment; if no safe fixture exists, it reports `SKIP` without mutating data. When run, it inserts only transactional test policy/payment/journal/event rows and rolls them all back.
+
+**Local acceptance pending:** pull `main`; lint `modules/hr/lib_employee_incentives.php`, `modules/accounting/fm_review_queue.php`, and `tools/run_hr_employee_incentive_new_sponsor_rollback_tests.php`; run the new harness plus the existing source-event and reactivation rollback harnesses. No local result is claimed yet. Project-completion source/allocation, HR Manager verification and award issuance, post-commit employee notifications, and full lifecycle acceptance remain open. Keep policy R3 inactive and do not use `ahl_el_kheir_production_test`.
