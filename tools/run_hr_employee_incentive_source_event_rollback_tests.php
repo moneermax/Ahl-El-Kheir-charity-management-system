@@ -37,13 +37,22 @@ function incentiveSourceCount(PDO $pdo, string $sql, array $params = []): int
 }
 
 $currency = strtoupper(trim((string)APP_CURRENCY_CODE));
+$recipient = incentiveSourceOne(
+    $pdo,
+    "SELECT e.id AS employee_id, e.user_id
+     FROM employees e
+     JOIN users u ON u.id = e.user_id
+     WHERE e.user_id > 0
+     ORDER BY e.id
+     LIMIT 1"
+);
 $actor = incentiveSourceOne($pdo, 'SELECT id FROM users WHERE id > 0 ORDER BY id LIMIT 1');
 $type = incentiveSourceOne(
     $pdo,
     "SELECT type_code FROM hr_incentive_types
      WHERE type_code = 'collection' AND is_active = 1 AND qualification_mode = 'source_event' LIMIT 1"
 );
-if (!$actor || !$type || !preg_match('/^[A-Z]{3}$/', $currency)) {
+if (!$actor || !$recipient || !$type || !preg_match('/^[A-Z]{3}$/', $currency)) {
     echo "SKIP | Incentive source-event rollback tests | required user, collection category, or currency is unavailable.\n";
     exit(0);
 }
@@ -87,7 +96,9 @@ try {
         $occurredAt,
         321.45,
         $currency,
-        (int)$actor['id']
+        (int)$actor['id'],
+        (int)$recipient['user_id'],
+        (int)$recipient['employee_id']
     );
     incentiveSourceAssert($eventId > 0, 'No event was created for an active policy and enabled source-event rule.');
 
@@ -95,6 +106,7 @@ try {
         $pdo,
         "SELECT idempotency_key, source_table, source_record_id, incentive_type,
                 policy_version_id, occurred_at, source_amount, source_currency_code,
+                recipient_user_id, recipient_employee_id,
                 status, created_by_user_id
          FROM hr_incentive_events WHERE id = ?",
         [$eventId]
@@ -109,7 +121,9 @@ try {
         $event['status'] === 'pending_verification' &&
         round((float)$event['source_amount'], 2) === 321.45 &&
         strtoupper((string)$event['source_currency_code']) === $currency &&
-        (int)$event['created_by_user_id'] === (int)$actor['id'],
+        (int)$event['created_by_user_id'] === (int)$actor['id'] &&
+        (int)$event['recipient_user_id'] === (int)$recipient['user_id'] &&
+        (int)$event['recipient_employee_id'] === (int)$recipient['employee_id'],
         'Recorded event fields or pending-verification state do not match the source evidence.'
     );
 
@@ -121,7 +135,9 @@ try {
         $occurredAt,
         321.45,
         $currency,
-        (int)$actor['id']
+        (int)$actor['id'],
+        (int)$recipient['user_id'],
+        (int)$recipient['employee_id']
     );
     incentiveSourceAssert($repeatId === $eventId, 'Repeated source recording did not return the same event.');
     incentiveSourceAssert(
