@@ -2708,3 +2708,9 @@ Status remains **source committed; local runtime acceptance pending**. Verify HR
 ## 2026-10-14 — Incentive policy fallback rule
 
 GM rejection returns the policy to HR as an editable draft. The previous active policy remains in force unless FM successfully activates a GM-approved replacement; the existing activation transaction retires the overlapping previous version. Commit `9430f3418afe03ed7fce871a1b369514e4dbbca0` fixes the page gate so FM can reach the activation UI. Status: source committed, local runtime acceptance pending. Verify roles, rejection/resubmission, notifications, toasts, and payroll effective-policy selection. Keep V1 inactive.
+
+## 2026-10-14 — Hide unapproved incentive policies from FM
+
+Commit `1ab2eac4173dc5f4f808865fc10c722058210bb3` changes `modules/hr/incentive_policy.php` so the FM policy list includes only `approved`, `active`, and `retired` versions. Drafts and `pending_gm` submissions are not disclosed to FM before GM approval; HR and GM retain the workflow views they need. This is a source-level correction only; local PHP lint and FM/HR/GM browser verification remain pending.
+
+The existing V1 acceptance policy is still a draft and must remain unactivated. Do not delete it directly with SQL: its approval history and child records are acceptance evidence and may have referential constraints. Reuse V1 for HR edit/submit → GM reject with reason → HR revise/resubmit → GM approve. FM notification is expected at the GM approval handoff, not while the policy remains a draft. Verify actual recipient-role lookup and the persisted notification after approval before declaring delivery fixed. Payroll effective-policy selection remains a separate unverified gate.
