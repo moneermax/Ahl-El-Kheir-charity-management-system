@@ -356,6 +356,170 @@ function hrIncentiveMarkPayrollAwardsPaid(PDO $pdo, int $payrollId, int $journal
  * event. A missing active/effective policy or disabled rule means no event is
  * created. Duplicate source notifications return the existing event ID.
  */
+/**
+ * Resolve a user to exactly one employee row. Ambiguous/missing mappings are
+ * deliberately not guessed because an incentive must have a real employee recipient.
+ */
+function hrIncentiveEmployeeIdForUser(PDO $pdo, int $userId): int
+{
+    if ($userId <= 0) {
+        return 0;
+    }
+    $stmt = $pdo->prepare('SELECT id FROM employees WHERE user_id = ? ORDER BY id LIMIT 2');
+    $stmt->execute([$userId]);
+    $ids = array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
+    return count($ids) === 1 && $ids[0] > 0 ? $ids[0] : 0;
+}
+
+/**
+ * Record a reactivation event only for the first financially confirmed
+ * monthly-sponsorship payment created after a durable win-back transition.
+ * Caller must be inside the payment-confirmation transaction.
+ */
+function hrIncentiveRecordReactivationPaymentEvent(PDO $pdo, int $paymentId, int $createdByUserId = 0): int
+{
+    if ($paymentId <= 0) {
+        throw new InvalidArgumentException('مرجع دفعة إعادة التفعيل غير صالح.');
+    }
+    if (!$pdo->inTransaction()) {
+        throw new RuntimeException('يجب تسجيل حافز الاستعادة ضمن معاملة اعتماد الدفعة.');
+    }
+
+    $paymentStmt = $pdo->prepare(
+        "SELECT sp.id, sp.payment_type, sp.sponsor_id, sp.sponsorship_id,
+                sp.amount, sp.currency_code, sp.status, sp.reviewed_at,
+                sp.created_at, sp.transaction_id,
+                COALESCE(sp.sponsor_id, s.sponsor_id) AS resolved_sponsor_id,
+                t.status AS transaction_status
+         FROM sponsor_payments sp
+         LEFT JOIN sponsorships s ON s.id = sp.sponsorship_id
+         LEFT JOIN transactions t ON t.id = sp.transaction_id
+         WHERE sp.id = ?
+         LIMIT 1 FOR UPDATE"
+    );
+    $paymentStmt->execute([$paymentId]);
+    $payment = $paymentStmt->fetch(PDO::FETCH_ASSOC);
+    if (!$payment
+        || $payment['payment_type'] !== 'monthly_sponsorship'
+        || $payment['status'] !== 'approved'
+        || (int)($payment['transaction_id'] ?? 0) <= 0
+        || $payment['transaction_status'] !== 'posted'
+        || empty($payment['reviewed_at'])
+        || (int)($payment['resolved_sponsor_id'] ?? 0) <= 0) {
+        return 0;
+    }
+
+    $journalStmt = $pdo->prepare(
+        "SELECT id FROM journal_entries
+         WHERE reference_type = 'transaction'
+           AND reference_id = ?
+           AND status = 'posted'
+         LIMIT 1"
+    );
+    $journalStmt->execute([(int)$payment['transaction_id']]);
+    if (!(int)$journalStmt->fetchColumn()) {
+        return 0;
+    }
+
+    $sponsorId = (int)$payment['resolved_sponsor_id'];
+    $campaignStmt = $pdo->prepare(
+        "SELECT id, reactivated_by_user_id, reactivated_at
+         FROM winback_campaigns
+         WHERE sponsor_id = ?
+           AND status = 'persuaded'
+           AND reactivated_by_user_id IS NOT NULL
+           AND reactivated_at IS NOT NULL
+           AND reactivated_at < ?
+           AND reactivated_at <= ?
+         ORDER BY reactivated_at DESC, id DESC
+         LIMIT 1 FOR UPDATE"
+    );
+    $campaignStmt->execute([$sponsorId, $payment['created_at'], $payment['reviewed_at']]);
+    $campaign = $campaignStmt->fetch(PDO::FETCH_ASSOC);
+    if (!$campaign) {
+        return 0;
+    }
+
+    $reactivatedAt = new DateTimeImmutable((string)$campaign['reactivated_at']);
+    $priorPaymentStmt = $pdo->prepare(
+        "SELECT MAX(old.reviewed_at)
+         FROM sponsor_payments old
+         LEFT JOIN sponsorships old_s ON old_s.id = old.sponsorship_id
+         JOIN transactions old_t ON old_t.id = old.transaction_id AND old_t.status = 'posted'
+         WHERE old.payment_type = 'monthly_sponsorship'
+           AND old.status = 'approved'
+           AND old.reviewed_at IS NOT NULL
+           AND old.reviewed_at < ?
+           AND COALESCE(old.sponsor_id, old_s.sponsor_id) = ?
+           AND EXISTS (
+               SELECT 1 FROM journal_entries old_j
+               WHERE old_j.reference_type = 'transaction'
+                 AND old_j.reference_id = old_t.id
+                 AND old_j.status = 'posted'
+           )"
+    );
+    $priorPaymentStmt->execute([(string)$campaign['reactivated_at'], $sponsorId]);
+    $lastPriorPaymentAt = $priorPaymentStmt->fetchColumn();
+    if (!$lastPriorPaymentAt) {
+        return 0;
+    }
+    $minimumLapseBoundary = $reactivatedAt->modify('-90 days');
+    if (new DateTimeImmutable((string)$lastPriorPaymentAt) > $minimumLapseBoundary) {
+        return 0;
+    }
+
+    // Serialize claims per campaign above, then allow only one confirmed payment
+    // after the reactivation transition. Same-second ties are conservatively held.
+    $earlierReturnPaymentStmt = $pdo->prepare(
+        "SELECT other.id
+         FROM sponsor_payments other
+         LEFT JOIN sponsorships other_s ON other_s.id = other.sponsorship_id
+         JOIN transactions other_t ON other_t.id = other.transaction_id AND other_t.status = 'posted'
+         WHERE other.id <> ?
+           AND other.payment_type = 'monthly_sponsorship'
+           AND other.status = 'approved'
+           AND other.reviewed_at IS NOT NULL
+           AND other.reviewed_at <= ?
+           AND other.created_at > ?
+           AND COALESCE(other.sponsor_id, other_s.sponsor_id) = ?
+           AND EXISTS (
+               SELECT 1 FROM journal_entries other_j
+               WHERE other_j.reference_type = 'transaction'
+                 AND other_j.reference_id = other_t.id
+                 AND other_j.status = 'posted'
+           )
+         LIMIT 1"
+    );
+    $earlierReturnPaymentStmt->execute([
+        $paymentId,
+        $payment['reviewed_at'],
+        (string)$campaign['reactivated_at'],
+        $sponsorId,
+    ]);
+    if ($earlierReturnPaymentStmt->fetchColumn()) {
+        return 0;
+    }
+
+    $recipientUserId = (int)$campaign['reactivated_by_user_id'];
+    $recipientEmployeeId = hrIncentiveEmployeeIdForUser($pdo, $recipientUserId);
+    if ($recipientEmployeeId <= 0) {
+        return 0;
+    }
+
+    return hrIncentiveRecordSourceEvent(
+        $pdo,
+        'sponsor_payments',
+        $paymentId,
+        'reactivation',
+        (string)$payment['reviewed_at'],
+        (float)$payment['amount'],
+        (string)($payment['currency_code'] ?: 'SDG'),
+        $createdByUserId,
+        $recipientUserId,
+        $recipientEmployeeId
+    );
+}
+
 function hrIncentiveRecordSourceEvent(
     PDO $pdo,
     string $sourceTable,
@@ -364,7 +528,9 @@ function hrIncentiveRecordSourceEvent(
     string $occurredAt,
     ?float $sourceAmount = null,
     ?string $sourceCurrencyCode = null,
-    int $createdByUserId = 0
+    int $createdByUserId = 0,
+    ?int $recipientUserId = null,
+    ?int $recipientEmployeeId = null
 ): int {
     $allowedSources = [
         'collection' => 'sponsor_payments',
@@ -425,8 +591,8 @@ function hrIncentiveRecordSourceEvent(
             "INSERT INTO hr_incentive_events
              (idempotency_key, source_table, source_record_id, incentive_type,
               policy_version_id, occurred_at, source_amount, source_currency_code,
-              status, created_by_user_id)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending_verification', ?)"
+              recipient_user_id, recipient_employee_id, status, created_by_user_id)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending_verification', ?)"
         );
         $insert->execute([
             $idempotencyKey,
@@ -437,6 +603,8 @@ function hrIncentiveRecordSourceEvent(
             $occurredAt,
             $sourceAmount,
             $currency,
+            ($recipientUserId !== null && $recipientUserId > 0) ? $recipientUserId : null,
+            ($recipientEmployeeId !== null && $recipientEmployeeId > 0) ? $recipientEmployeeId : null,
             $createdByUserId > 0 ? $createdByUserId : null,
         ]);
         return (int)$pdo->lastInsertId();
