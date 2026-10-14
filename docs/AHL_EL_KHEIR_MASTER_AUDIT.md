@@ -3066,3 +3066,10 @@ After the user applied both 2026-10-14 migrations and verified account 2400 plus
 - Draft refresh before individual/bulk approval, separate UI display of net salary/incentives/total payout, and distinct award recognition/settlement journal pointers.
 
 This is not yet runtime-verified. No source-event hooks or manager verification/award-creation workflow has been implemented in this slice, so ordinary application activity cannot yet produce a complete incentive award lifecycle. PHP lint, rollback-only integration harnesses, and local XAMPP runtime tests are pending. Do not treat this as accounting acceptance.
+
+
+## 2026-10-14 — Incentive accounting rollback gate prepared
+
+Harness: `tools/run_hr_employee_incentive_accounting_rollback_tests.php`, commits `68a005d9` and `5cb05574`. Status is **prepared; local runtime pending**, not PASS. The harness uses existing policy/payroll fixtures, runs recognition Dr 5500 / Cr 2400, duplicate protection, caller-owned currency hold, draft scheduling, payroll settlement preserving 5200 and 1410 accounting, paid-payroll refresh immutability, and rollback cleanup inside one outer transaction. It performs no DDL.
+
+After pulling `main`, run `& "D:\xampp\php\php.exe" -l "tools\run_hr_employee_incentive_accounting_rollback_tests.php"` then `& "D:\xampp\php\php.exe" "tools\run_hr_employee_incentive_accounting_rollback_tests.php"` only against local `ahl_el_kheir`. A SKIP is not a PASS. Keep R3 approved/inactive and leave `ahl_el_kheir_production_test` untouched. Source-event hooks, manager award creation, and employee notifications remain open. Assess MAX(JE suffix)+1 journal-code concurrency before concurrent award event integration.
