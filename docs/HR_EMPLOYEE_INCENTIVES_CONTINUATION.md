@@ -499,3 +499,14 @@ The harness covers Dr 5500 / Cr 2400 recognition, duplicate-recognition idempote
 **Runtime status: PENDING local execution.** After pulling `main`, run `& "D:\\xampp\\php\\php.exe" "tools\\run_hr_employee_incentive_accounting_rollback_tests.php"` against only local `ahl_el_kheir`. Report the exact output. Do not run against `ahl_el_kheir_production_test`. No event-boundary hooks or manager award-creation UI should be added until this gate is understood. PHP lint and runtime execution have not been claimed by the remote commit itself.
 
 Source-review risk still requiring resolution before concurrency-sensitive event hooks: `hrIncentiveNextJournalCode()` chooses MAX(JE suffix)+1; unique `journal_entries.entry_code` prevents duplicate stored codes, but concurrent recognitions can race for the same candidate. Inspect the repository's established journal-code allocation convention and add a narrow collision-safe approach if justified.
+
+
+## 2026-10-14 — Rollback-only accounting harness prepared (runtime pending)
+
+Added `tools/run_hr_employee_incentive_accounting_rollback_tests.php` on `main` (initial commit `68a005d98b976b41d9f8773018407a06c8286cf8`; assertion hardening `5cb055746f70ea9f807cb0308bbf4e620ac3868a`). It uses an existing approved/active/retired policy version and an existing draft payroll with matching salary currency and no existing payroll journal. All inserted events/awards, recognition and settlement journals, and payroll changes are wrapped in one outer transaction and rolled back; it performs no DDL and does not create a policy.
+
+The harness covers Dr 5500 / Cr 2400 recognition, duplicate-recognition idempotency, a persisted currency hold inside a caller-owned transaction, draft payroll scheduling and repeated refresh, balanced settlement while retaining 5200 salary expense and any 1410 recovery, award settlement linkage, paid-payroll refresh immutability, and rollback cleanup. It reports SKIP if safe existing fixtures/accounts are unavailable.
+
+**Runtime status: PENDING local execution.** After pulling `main`, run `& "D:\xampp\php\php.exe" "tools\run_hr_employee_incentive_accounting_rollback_tests.php"` against only local `ahl_el_kheir`. Report the exact output. Do not run against `ahl_el_kheir_production_test`. No event-boundary hooks or manager award-creation UI should be added until this gate is understood. PHP lint and runtime execution have not been claimed by the remote commit itself.
+
+Source-review risk still requiring resolution before concurrency-sensitive event hooks: `hrIncentiveNextJournalCode()` chooses MAX(JE suffix)+1; unique `journal_entries.entry_code` prevents duplicate stored codes, but concurrent recognitions can race for the same candidate. Inspect the repository's established journal-code allocation convention and add a narrow collision-safe approach if justified.
