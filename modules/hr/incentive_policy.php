@@ -353,6 +353,7 @@ try {
             $policyLabel = 'سياسة الحوافز V' . (int)$policy['version_no'] . ' «' . (string)$policy['policy_name'] . '»';
             hrIncentivePolicyNotifyUser((int)$policy['created_by_user_id'], $policyId, 'اعتمد المدير العام سياسة الحوافز', 'اعتمد المدير العام ' . $policyLabel . '. أصبحت السياسة متاحة للمدير المالي لاختيارها وتفعيلها وفق تاريخ السريان.', APP_URL . 'modules/hr/incentive_policy.php', 'hr_incentive_policy_approved');
             hrIncentivePolicyNotifyRoleUsers($policyId, ['financial_manager', 'fm', 'finance'], 'سياسة حوافز معتمدة بانتظار التفعيل', $policyLabel . ' اعتمدها المدير العام وأصبحت متاحة لك للاختيار والتفعيل وفق تاريخ السريان.', APP_URL . 'modules/hr/incentive_policy.php', 'hr_incentive_policy_approved_for_fm');
+            flash('success', t('incentives.approve_success'));
             header('Location: ' . APP_URL . 'modules/hr/incentive_policy.php');
             exit;
         }
@@ -633,7 +634,7 @@ require_once __DIR__ . '/../../includes/header.php';
                                             <button class="btn btn-sm btn-primary" type="submit">إرسال لاعتماد GM</button>
                                         </form>
                                     <?php elseif ($policy['status'] === 'pending_gm' && $canReviewPolicies): ?>
-                                        <form method="post" class="mb-2">
+                                        <form method="post" class="mb-2" data-ak-native-post="1" data-confirm="<?=e(t('incentives.confirm_approve'))?>">
                                             <?=csrf_field()?>
                                             <input type="hidden" name="action" value="approve_policy">
                                             <input type="hidden" name="policy_id" value="<?=$policyId?>">
