@@ -598,3 +598,15 @@ The user-provided local result confirms `tools/run_hr_employee_incentive_account
 ## 2026-10-14 — Next gate after journal-code retry hardening
 
 The accounting rollback harness passed locally before the latest source change. Commit `143aec005e916b9d9a5b1923b82b16b16ca9b447` adds bounded retry for duplicate JE entry-code collisions in incentive recognition. Pull `main`, run PHP lint on `modules/hr/lib_employee_incentives.php`, then rerun `tools/run_hr_employee_incentive_accounting_rollback_tests.php` against local `ahl_el_kheir`. This is required before proceeding to source-event hooks. Never run against `ahl_el_kheir_production_test`; keep R3 approved/inactive. After the gate passes, inspect actual source/schema at confirmed collection, sponsor acquisition/reactivation, and project financial-closure boundaries before implementing the smallest justified event hooks, manager verification/award issuance, and post-commit notifications.
+
+
+## 2026-10-14 — Active task: win-back reactivation attribution
+
+The latest incentive source/accounting slice is committed on main. The next local gate is the new win-back transition work:
+
+1. Pull main in the existing local checkout.
+2. Apply `database/migrations/2026-10-14_winback_reactivation_attribution.sql` once to local database `ahl_el_kheir` only.
+3. PHP-lint `modules/administration/lib_winback.php`, `modules/administration/winback.php`, and `tools/run_winback_reactivation_rollback_tests.php`.
+4. Run `php tools/run_winback_reactivation_rollback_tests.php` and report the exact output.
+
+The implementation preserves the first successful transition actor/time separately from mutable `handled_by`, and makes sponsor/campaign state changes atomic. It does not create an incentive event or award. Do not claim runtime verification before the local gate passes. Next, inspect confirmed-payment and historical sponsorship evidence before implementing reactivation source qualification; require a genuine 90-day lapse, financially confirmed new payment, durable actor attribution, idempotency, and pending HR Manager verification. Keep policy R3 inactive, do not use `ahl_el_kheir_production_test`, and do not reopen completed tests without regression evidence.
