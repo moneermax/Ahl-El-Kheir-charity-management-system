@@ -547,3 +547,8 @@ Commit `fa733524d67411e08d299c84e7568c79b601316a` removes the explanatory alert 
 ### 2026-10-14 — Incentive policy GM approval feedback retest
 
 Active checkpoint: source correction restores GM approval confirmation and success toast; only the GM approval form opts out of same-page POST interception to ensure confirmation runs before submission. Guarded reset utility: `tools/reset_incentive_policy_gm_approval_acceptance.sql`. R3 must remain inactive. Local lint and runtime acceptance (cancel, confirm, toast, history, HR/FM notifications) are pending. See `docs/HR_EMPLOYEE_INCENTIVES_CONTINUATION.md`.
+
+
+### 2026-10-14 — Incentive GM approval notification timestamp follow-up
+
+The GM approval confirmation and toast were browser-confirmed. A timestamp discrepancy was traced to stale HR/FM approval-handoff notifications that the test reset did not remove because it compared Arabic title literals through a problematic local PowerShell/CLI encoding path. Stored title bytes are valid UTF-8, and no production notification insertion defect has been established. Commit `75484be186fdf7b935e27151e07604456b2cfa76` makes the reset encoding-independent using the exact R3 body/link and recipients 29/32, preserving GM recipient 2's submission notification and requiring R3 to remain unactivated. Next: pull, inspect and execute the reset on `ahl_el_kheir`, confirm old HR/FM handoff rows are removed, approve once as GM, and compare fresh notification timestamps with approval history. R3 must remain approved but inactive; do not touch `ahl_el_kheir_production_test`.
