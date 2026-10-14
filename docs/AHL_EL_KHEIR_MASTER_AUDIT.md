@@ -3012,3 +3012,10 @@ Commit `fa733524d67411e08d299c84e7568c79b601316a` removes the explanatory alert 
 ## 2026-10-14 — Incentive policy GM approval feedback: source correction, runtime pending
 
 The user observed a successful GM approval with no confirmation prompt or success toast. The prior source intentionally removed both feedback elements, and the shared same-page POST interceptor runs at window capture before the confirmation listener in `assets/js/notifications.js`. The scoped correction restores the bilingual confirmation and translated success flash, and marks only the GM approval form as native POST to prevent a request from starting before confirmation. No global JavaScript behavior was changed. A narrowly guarded SQL reset utility targets only the named, unactivated R3 acceptance policy and preserves the original submitted history. Local lint and browser/database acceptance are still required; do not activate R3 or claim runtime success until verified.
+
+
+## 2026-10-14 — GM incentive approval handoff timestamp retest
+
+The corrected acceptance reset and fresh browser approval established that the earlier stale timestamp was test-data residue, not a demonstrated production notification-writer defect. The fragile reset had relied on Arabic title literals that did not compare reliably through the local PowerShell/CLI path; the encoding-independent reset targets only policy R3, the exact body/link, and HR/FM recipients 32/29, while preserving the GM submission notification. Following reset, approval history row 8 (GM user 2) and HR/FM notifications 175/176 all have `2026-10-14 13:54:58`. Policy 3 is `approved`; activation fields remain NULL. Production notification code was left unchanged.
+
+Verified scope: GM confirmation and success toast, persisted approved status/history, HR/FM handoff notification creation, matching timestamps, and no activation. Confirmation cancellation was not explicitly reported and is not marked verified. This result does not close broader incentive-policy rejection/resubmission, FM activation, or payroll effective-policy selection acceptance.
