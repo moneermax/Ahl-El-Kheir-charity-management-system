@@ -75,7 +75,9 @@ $now = new DateTimeImmutable();
 $reactivatedAt = $now->modify('-100 days');
 $priorConfirmedAt = $reactivatedAt->modify('-91 days');
 $newPaymentCreatedAt = $reactivatedAt->modify('+1 day');
-$policyId = $campaignId = $priorTransactionId = $newTransactionId = $priorPaymentId = $newPaymentId = $eventId = 0;
+$policyId = $campaignId = $shortCampaignId = 0;
+$priorTransactionId = $newTransactionId = $shortPriorTransactionId = $shortNewTransactionId = 0;
+$priorPaymentId = $newPaymentId = $shortPriorPaymentId = $shortNewPaymentId = $eventId = 0;
 $journalIds = [];
 
 try {
@@ -243,19 +245,54 @@ try {
         'Reactivation source event created an award before HR verification.'
     );
 
+    // A lapse of only 89 days must not qualify, even with a posted new payment.
+    $shortReactivatedAt = $now->modify('-20 days');
+    $shortPriorAt = $shortReactivatedAt->modify('-89 days');
+    $shortNewCreatedAt = $shortReactivatedAt->modify('+1 day');
+    $shortCampaign = $pdo->prepare(
+        "INSERT INTO winback_campaigns
+         (sponsor_id, handled_by, reactivated_by_user_id, reactivated_at, status, closed_at)
+         VALUES (?, ?, ?, ?, 'persuaded', ?)"
+    );
+    $shortCampaign->execute([
+        $sponsorId, $actorUserId, $actorUserId,
+        $shortReactivatedAt->format('Y-m-d H:i:s'),
+        $shortReactivatedAt->format('Y-m-d H:i:s'),
+    ]);
+    $shortCampaignId = (int)$pdo->lastInsertId();
+    $shortPrior = $makeConfirmedPayment($shortPriorAt, $shortPriorAt, 'SHORTOLD');
+    $shortPriorTransactionId = $shortPrior['transaction_id'];
+    $shortPriorPaymentId = $shortPrior['payment_id'];
+    $shortNew = $makeConfirmedPayment($shortNewCreatedAt, $now, 'SHORTNEW');
+    $shortNewTransactionId = $shortNew['transaction_id'];
+    $shortNewPaymentId = $shortNew['payment_id'];
+    $shortEventId = hrIncentiveRecordReactivationPaymentEvent($pdo, $shortNewPaymentId, $reviewerUserId);
+    reactivationTestAssert($shortEventId === 0, 'An 89-day prior-payment lapse incorrectly qualified for reactivation.');
+    reactivationTestAssert(
+        reactivationTestCount($pdo, 'SELECT COUNT(*) FROM hr_incentive_events WHERE source_record_id = ? AND incentive_type = \'reactivation\'', [$shortNewPaymentId]) === 0,
+        'An ineligible 89-day lapse created a reactivation event.'
+    );
+
     $pdo->rollBack();
 
-    foreach ([
+    $cleanup = [
         ['hr_incentive_events', $eventId],
         ['hr_incentive_policy_versions', $policyId],
         ['winback_campaigns', $campaignId],
+        ['winback_campaigns', $shortCampaignId],
         ['sponsor_payments', $priorPaymentId],
         ['sponsor_payments', $newPaymentId],
+        ['sponsor_payments', $shortPriorPaymentId],
+        ['sponsor_payments', $shortNewPaymentId],
         ['transactions', $priorTransactionId],
         ['transactions', $newTransactionId],
-        ['journal_entries', $journalIds[0] ?? 0],
-        ['journal_entries', $journalIds[1] ?? 0],
-    ] as [$table, $id]) {
+        ['transactions', $shortPriorTransactionId],
+        ['transactions', $shortNewTransactionId],
+    ];
+    foreach ($journalIds as $journalId) {
+        $cleanup[] = ['journal_entries', $journalId];
+    }
+    foreach ($cleanup as [$table, $id]) {
         if ($id > 0) {
             reactivationTestAssert(
                 reactivationTestCount($pdo, "SELECT COUNT(*) FROM {$table} WHERE id = ?", [(int)$id]) === 0,
@@ -265,7 +302,8 @@ try {
     }
 
     echo "PASS | reactivation=90_day_lapse_and_confirmed_payment | recipient_snapshot=PASS\n";
-    echo "PASS | first_payment_idempotency=PASS | no_award_before_HR_verification=PASS | rollback_cleanup=PASS\n";
+    echo "PASS | first_payment_idempotency=PASS | 89_day_lapse_rejected=PASS\n";
+    echo "PASS | no_award_before_HR_verification=PASS | rollback_cleanup=PASS\n";
 } catch (Throwable $e) {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();
