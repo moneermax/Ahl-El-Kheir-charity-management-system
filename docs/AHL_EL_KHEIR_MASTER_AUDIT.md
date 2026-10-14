@@ -3007,3 +3007,8 @@ Per the user's explicit direction, commit `0df1890e12a006cb1cae57c1bf906047178a3
 ## 2026-10-14 — Incentive policy page: remove redundant currency/category notice
 
 Commit `fa733524d67411e08d299c84e7568c79b601316a` removes the explanatory alert above the category section in `modules/hr/incentive_policy.php`. The application currency remains system-configured and continues to be stored with each policy rule; only the page-level notice was removed. The category management heading, category catalogue, and policy rule amount labels remain unchanged. Source change is committed on `main`; local pull, PHP lint, and browser verification are pending. This UI cleanup does not establish that the entire incentive lifecycle or incentive-to-payroll/accounting implementation is complete.
+
+
+## 2026-10-14 — Incentive policy GM approval feedback: source correction, runtime pending
+
+The user observed a successful GM approval with no confirmation prompt or success toast. The prior source intentionally removed both feedback elements, and the shared same-page POST interceptor runs at window capture before the confirmation listener in `assets/js/notifications.js`. The scoped correction restores the bilingual confirmation and translated success flash, and marks only the GM approval form as native POST to prevent a request from starting before confirmation. No global JavaScript behavior was changed. A narrowly guarded SQL reset utility targets only the named, unactivated R3 acceptance policy and preserves the original submitted history. Local lint and browser/database acceptance are still required; do not activate R3 or claim runtime success until verified.
