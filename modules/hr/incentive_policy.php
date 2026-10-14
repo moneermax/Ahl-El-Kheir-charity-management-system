@@ -477,7 +477,7 @@ require_once __DIR__ . '/../../includes/header.php';
     <?php if ($error !== ''): ?><div class="alert alert-danger" data-ak-transient-alert="1"><?=e($error)?></div><?php endif; ?>
 
     <div class="alert alert-info small">
-        العملة المعتمدة على مستوى النظام هي <?=e(APP_CURRENCY_CODE)?> (<?=e(APP_CURRENCY_NAME_AR)?>).
+        العملة المعتمدة على مستوى النظام هي <?=e(APP_CURRENCY_CODE)?> (<?=e(AK_LANG === 'en' ? APP_CURRENCY_NAME_EN : APP_CURRENCY_NAME_AR)?>).
         الفئات الأربع الأساسية مرتبطة بأحداث النظام الحالية. أي فئة جديدة تُضاف هنا بوضع «مراجعة يدوية» ولا تصدر مكافآت تلقائياً؛ مسار الترشيح والصرف للفئات اليدوية يحتاج تنفيذاً مستقلاً قبل استخدامها مالياً.
     </div>
 
@@ -545,7 +545,7 @@ require_once __DIR__ . '/../../includes/header.php';
                         <tbody>
                         <?php foreach ($activeTypes as $typeRow): $typeCode = (string)$typeRow['type_code']; ?>
                             <tr>
-                                <td><?=e($typeRow['name_ar'])?><br><code class="small"><?=e($typeCode)?></code></td>
+                                <td><?=e(AK_LANG === 'en' ? $typeRow['name_en'] : $typeRow['name_ar'])?><br><code class="small"><?=e($typeCode)?></code></td>
                                 <td><?= $typeRow['qualification_mode'] === 'source_event' ? 'حدث موثّق بالنظام' : '<span class="text-warning">مراجعة يدوية — لا إصدار تلقائي</span>' ?></td>
                                 <td class="text-center"><input class="form-check-input" type="checkbox" name="enabled[<?=e($typeCode)?>]" value="1"></td>
                                 <td><input class="form-control" type="number" name="amount[<?=e($typeCode)?>]" min="0" max="9999999999.99" step="0.01" value="0" required></td>
