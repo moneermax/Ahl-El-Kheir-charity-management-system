@@ -95,11 +95,11 @@ function hrPayrollPostAccounting(PDO $pdo, array $payroll): int
     }
     $paymentAccountId = hrPayrollResolvePaymentAccount($pdo, $requestedPaymentAccount);
 
+    require_once __DIR__ . '/lib_employee_incentives.php';
     $expenseAmount = round($netSalary + $salaryAdvanceDeduction, 2);
     $totalDebitExpected = round($expenseAmount + $incentiveAmount, 2);
     $totalBankPayment = round($netSalary + $incentiveAmount, 2);
     $incentivePayableAccountId = $incentiveAmount > 0 ? hrIncentiveAccountId($pdo, '2400') : null;
-    require_once __DIR__ . '/lib_employee_incentives.php';
 
     $existingStmt = $pdo->prepare(
         "SELECT id
