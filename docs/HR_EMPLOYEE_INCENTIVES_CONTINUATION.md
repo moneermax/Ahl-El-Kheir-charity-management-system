@@ -1,7 +1,7 @@
 # Employee Incentives — Continuation and Source Audit
 
 **Checkpoint:** 2026-10-14  
-**Status:** The incentive policy GM approval workflow and FM activation/cancellation acceptance gates are closed at their tested boundary. The ledger, award accounting helpers, draft payroll integration, and collection source-event hook are committed on `main`; local rollback-only accounting and source-event harnesses passed, including no award before verification and duplicate-event protection. Full lifecycle coverage remains incomplete: reactivation attribution/atomic transition is the active slice, while first confirmed reactivation payment qualification, new-sponsor/project source hooks, HR Manager verification/award issuance, employee notifications, and end-to-end lifecycle acceptance remain open.
+**Status:** The incentive policy GM approval workflow and FM activation/cancellation acceptance gates are closed at their tested boundary. The ledger, award accounting helpers, draft payroll integration, and collection source-event hook are committed on `main`; local rollback-only accounting and source-event harnesses passed, including no award before verification and duplicate-event protection. Full lifecycle coverage remains incomplete. Durable win-back reactivation attribution and its atomic transition passed local rollback-only acceptance on 2026-10-14. The next open slice is qualifying a reactivation event at the financially confirmed payment boundary; new-sponsor/project source hooks, HR Manager verification/award issuance, employee notifications, and end-to-end lifecycle acceptance remain open.
 
 ## Scope
 
@@ -130,7 +130,7 @@ This metadata output still does not show full column definitions, defaults, chec
 
 ## Current engineering gate — Win-back reactivation attribution
 
-The active slice is to preserve the actual user who completed a successful win-back transition and make the sponsor/campaign state change atomic. Migration `database/migrations/2026-10-14_winback_reactivation_attribution.sql`, helper `modules/administration/lib_winback.php`, the `mark_returned` integration, and rollback-only harness `tools/run_winback_reactivation_rollback_tests.php` are committed on `main`. Local migration execution, PHP lint, and the rollback-only harness are **pending user execution**. The helper does not issue an incentive or record a source event.
+The active slice is to preserve the actual user who completed a successful win-back transition and make the sponsor/campaign state change atomic. Migration `database/migrations/2026-10-14_winback_reactivation_attribution.sql`, helper `modules/administration/lib_winback.php`, the `mark_returned` integration, and rollback-only harness `tools/run_winback_reactivation_rollback_tests.php` are committed on `main`. Local migration execution, PHP lint, and the rollback-only harness passed on 2026-10-14. The helper does not issue an incentive or record a source event. The helper does not issue an incentive or record a source event.
 
 After that gate passes, integrate reactivation only at a financially confirmed payment boundary, prove the ≥90-day lapse from authoritative sponsorship/payment history, use the durable reactivation actor (never mutable `handled_by`), and keep the event pending until HR Manager verification. Do not treat campaign status or `sponsor_payments.status='approved'` alone as proof of a qualifying reactivation. Do not use `ahl_el_kheir_production_test` or activate policy R3.
 
