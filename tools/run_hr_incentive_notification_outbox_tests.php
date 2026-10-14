@@ -193,7 +193,6 @@ try {
     if (!$outbox || $outbox['status'] !== 'pending' || (int)($outbox['notification_id'] ?? 0) !== 0) {
         throw new RuntimeException('Failed notification was not retained as pending in the outbox.');
     }
-    $afterFailureCount = (int)$beforeNotificationStmt->fetchColumn();
     $beforeNotificationStmt->execute([
         (int)$fixture['recipient_user_id'], 'incentive', $testTitle, $testBody, $testLink
     ]);
