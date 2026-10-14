@@ -198,6 +198,130 @@ function hrIncentiveRecognizeAward(PDO $pdo, int $awardId, int $actorUserId = 0)
  * already-recognized awards that have no payroll assignment. Award rows are
  * locked before assignment, making repeated refreshes idempotent.
  */
+/**
+ * Deliver pending incentive-scheduling notices after the payroll transaction
+ * commits. The outbox row and notification insert are completed atomically;
+ * a delivery failure leaves the row pending for a later retry.
+ */
+function hrIncentiveDispatchPendingNotifications(PDO $pdo): void
+{
+    if ($pdo->inTransaction()) {
+        // Never emit a user-visible notification before the caller commits.
+        return;
+    }
+
+    try {
+        $pending = $pdo->query(
+            "SELECT id
+             FROM hr_incentive_notification_outbox
+             WHERE status = 'pending'
+             ORDER BY id ASC
+             LIMIT 100"
+        )->fetchAll(PDO::FETCH_COLUMN);
+    } catch (Throwable $e) {
+        error_log('HR incentive notification outbox could not be read: ' . $e->getMessage());
+        return;
+    }
+
+    foreach ($pending as $outboxIdValue) {
+        $outboxId = (int)$outboxIdValue;
+        if ($outboxId <= 0) {
+            continue;
+        }
+
+        try {
+            $pdo->beginTransaction();
+            $stmt = $pdo->prepare(
+                "SELECT o.id, o.award_id, o.recipient_user_id, o.status,
+                        a.reward_amount, a.reward_currency_code,
+                        p.month, p.year
+                 FROM hr_incentive_notification_outbox o
+                 JOIN hr_incentive_awards a ON a.id = o.award_id
+                 JOIN payroll p ON p.id = a.payroll_id
+                 WHERE o.id = ?
+                 LIMIT 1
+                 FOR UPDATE"
+            );
+            $stmt->execute([$outboxId]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$row || $row['status'] !== 'pending') {
+                $pdo->commit();
+                continue;
+            }
+
+            $recipientUserId = (int)$row['recipient_user_id'];
+            if ($recipientUserId <= 0) {
+                throw new RuntimeException('مستلم إشعار الحافز غير صالح.');
+            }
+
+            $amount = number_format((float)$row['reward_amount'], 2, '.', ',');
+            $currency = strtoupper(trim((string)$row['reward_currency_code']));
+            $period = sprintf('%04d-%02d', (int)$row['year'], (int)$row['month']);
+            $title = 'تمت جدولة حافزك في مسير الرواتب';
+            $body = 'تمت جدولة حافز بقيمة ' . $amount . ' ' . $currency
+                . ' ضمن مسير الرواتب لشهر ' . $period
+                . '. يخضع المسير لإجراءات الاعتماد والصرف المعتادة.';
+            $link = APP_URL . 'modules/notifications/index.php';
+
+            // Controlled test seam: production does not define this function.
+            if (function_exists('hr_incentive_notification_test_hook')) {
+                hr_incentive_notification_test_hook(
+                    $recipientUserId,
+                    $title,
+                    $body,
+                    $link,
+                    (int)$row['award_id']
+                );
+            }
+
+            $insert = $pdo->prepare(
+                "INSERT INTO notifications
+                    (recipient_user_id, type, title, body, link, is_read, created_at)
+                 VALUES (?, 'incentive', ?, ?, ?, 0, NOW())"
+            );
+            $insert->execute([$recipientUserId, $title, $body, $link]);
+            $notificationId = (int)$pdo->lastInsertId();
+            if ($notificationId <= 0) {
+                throw new RuntimeException('تعذر حفظ إشعار جدولة الحافز.');
+            }
+
+            $markSent = $pdo->prepare(
+                "UPDATE hr_incentive_notification_outbox
+                 SET status = 'sent', notification_id = ?, sent_at = NOW(),
+                     attempt_count = attempt_count + 1,
+                     last_attempt_at = NOW(), last_error = NULL
+                 WHERE id = ? AND status = 'pending'"
+            );
+            $markSent->execute([$notificationId, $outboxId]);
+            if ($markSent->rowCount() !== 1) {
+                throw new RuntimeException('تغيرت حالة إشعار الحافز أثناء الإرسال.');
+            }
+
+            $pdo->commit();
+        } catch (Throwable $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+
+            // Record the failed attempt separately; never undo the committed
+            // payroll/award scheduling transaction because delivery failed.
+            try {
+                $failed = $pdo->prepare(
+                    "UPDATE hr_incentive_notification_outbox
+                     SET attempt_count = attempt_count + 1,
+                         last_attempt_at = NOW(), last_error = ?
+                     WHERE id = ? AND status = 'pending'"
+                );
+                $failed->execute([mb_substr($e->getMessage(), 0, 1000), $outboxId]);
+            } catch (Throwable $recordError) {
+                error_log('HR incentive notification failure could not be recorded: ' . $recordError->getMessage());
+            }
+            error_log('HR incentive scheduling notification failed for outbox ' . $outboxId . ': ' . $e->getMessage());
+        }
+    }
+}
+
 function hrIncentiveRefreshPayrollDraft(PDO $pdo, int $payrollId): void
 {
     if ($payrollId <= 0) {
@@ -231,6 +355,7 @@ function hrIncentiveRefreshPayrollDraft(PDO $pdo, int $payrollId): void
         if ($payroll['status'] !== 'draft') {
             if ($startedHere) {
                 $pdo->commit();
+                hrIncentiveDispatchPendingNotifications($pdo);
             }
             return;
         }
@@ -238,7 +363,7 @@ function hrIncentiveRefreshPayrollDraft(PDO $pdo, int $payrollId): void
         $salaryCurrency = strtoupper(trim((string)($payroll['salary_currency'] ?? '')));
         $systemCurrency = strtoupper((string)APP_CURRENCY_CODE);
         $pendingStmt = $pdo->prepare(
-            "SELECT a.id, a.reward_currency_code, a.recognition_journal_entry_id
+            "SELECT a.id, a.recipient_user_id, a.reward_currency_code, a.recognition_journal_entry_id
              FROM hr_incentive_awards a
              JOIN hr_incentive_events e ON e.id = a.event_id
              WHERE a.employee_id = ?
@@ -273,6 +398,19 @@ function hrIncentiveRefreshPayrollDraft(PDO $pdo, int $payrollId): void
                 continue;
             }
             $assign->execute([$payrollId, (int)$award['id']]);
+            if ($assign->rowCount() === 1) {
+                $recipientUserId = (int)$award['recipient_user_id'];
+                if ($recipientUserId <= 0) {
+                    throw new RuntimeException('لا يوجد مستخدم مستلم صالح لإشعار جدولة الحافز.');
+                }
+                $outbox = $pdo->prepare(
+                    "INSERT INTO hr_incentive_notification_outbox
+                        (award_id, recipient_user_id, status)
+                     VALUES (?, ?, 'pending')
+                     ON DUPLICATE KEY UPDATE award_id = VALUES(award_id)"
+                );
+                $outbox->execute([(int)$award['id'], $recipientUserId]);
+            }
         }
 
         $sumStmt = $pdo->prepare(
@@ -293,6 +431,7 @@ function hrIncentiveRefreshPayrollDraft(PDO $pdo, int $payrollId): void
 
         if ($startedHere) {
             $pdo->commit();
+            hrIncentiveDispatchPendingNotifications($pdo);
         }
     } catch (Throwable $e) {
         if ($startedHere && $pdo->inTransaction()) {
