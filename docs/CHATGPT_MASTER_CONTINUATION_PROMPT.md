@@ -646,3 +646,10 @@ Continue from current `main`; do not repeat completed source-event/accounting ac
 - run a targeted rollback-only verification/award test against local `ahl_el_kheir`;
 - then implement/verify employee notifications when an award is scheduled for an eligible payroll.
 Project-completion awards remain blocked until approved recipient allocation is implemented. Keep policy R3 inactive; never use `ahl_el_kheir_production_test`. Follow `docs/HR_EMPLOYEE_INCENTIVES_CONTINUATION.md`.
+
+
+## 2026-10-14 — HR incentive verification rollback harness prepared (runtime pending)
+
+Added `tools/run_hr_incentive_verification_rollback_tests.php` on `main` (commit `9d7ab5e2c442b7df8e72bb9b36b60afcdb7c2040`). The harness creates a synthetic collection event using an existing eligible positive collection rule, verifies the snapshotted active working employee relationship, performs the same pending-to-verified and award-insert sequence used by `modules/hr/incentive_verification.php`, invokes the production recognition helper, checks the balanced Dr 5500 / Cr 2400 journal and duplicate-recognition idempotency, and rolls back all synthetic rows/journals. It performs no DDL, policy mutation, payroll mutation, or commit. This is a rollback-only database integration harness, not an HTTP/session/CSRF browser test.
+
+The user's local read-only inspection found policy version 3 is approved (not active), with an enabled collection rule of 1,000.00 SDG; accounts 5500 and 2400 are active with the expected expense/liability types; one active `hr_manager` user exists; and no pending events currently exist. These observations do not prove verification runtime behavior. PHP lint and execution of the new harness against local `ahl_el_kheir` remain pending. Run only `tools/run_hr_incentive_verification_rollback_tests.php`; do not rerun previously passed source-event/accounting harnesses without regression evidence. Keep policy R3 inactive and do not use `ahl_el_kheir_production_test`. Employee notification after award scheduling remains open, and project-completion verification remains blocked pending approved allocation workflow.
