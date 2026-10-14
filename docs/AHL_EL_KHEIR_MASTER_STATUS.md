@@ -2750,10 +2750,10 @@ The local confirmed-approval path is runtime-verified for test policy R3. GM con
 Verification boundary: this confirms the approve/confirm/toast/history/notification/timestamp path only. Confirmation cancellation was not explicitly reported; rejection/resubmission, FM activation, and payroll effective-policy selection remain separate verification gates. Keep R3 inactive and do not touch `ahl_el_kheir_production_test`.
 
 
-## 2026-10-14 — Incentive FM activation confirmation defect
+## 2026-10-14 — Incentive FM activation confirmation acceptance
 
-FM activation acceptance exposed a confirmation/submit race. The user reported the confirmation prompt appeared briefly then disappeared and a toast followed; database evidence confirms R3 actually became active at 2026-10-14 14:12:23 under FM user 29. Source inspection traced the race to the window-capture same-page POST handler running before the document-level confirmation handler.
+The initial FM activation ran at 14:12:23 despite the prompt disappearing. Source inspection traced the race to the window-capture same-page POST handler preceding document-level confirmation handling. Fix committed on main: `06b08d44afc48887b74a4588f1604e11f5d5e809`; the FM form now uses translated `data-confirm` and opts out of same-page AJAX POST with `data-ak-native-post="1"`.
 
-Source fix committed on main: 06b08d44afc48887b74a4588f1604e11f5d5e809. FM activation now uses the existing translated data-confirm pattern and opts out of same-page AJAX POST with data-ak-native-post="1".
+Local PHP lint passed. After a guarded reset, the user confirmed the FM confirmation dialog and saw the success toast. Database evidence: R3 status `active`, actor FM user 29, timestamp `2026-10-14 14:18:10`. The reset utility's exact timestamp guard was updated in commit `a94080af39f82bcdaa56190c6c8eca264934d9f3`; the incentive continuation record was updated in `c0ed9d4d1c6bf680930dc40d3fc2ed58909b5bf0`.
 
-Guarded reset utility committed: 0f987a2dc367b4776525469ffefca05bb1c87bd6, tools/reset_incentive_policy_fm_activation_acceptance.sql. It resets only the exact observed R3 activation result to approved, preserving approval history and notifications. Local lint, reset execution, cancel-path verification, and successful reactivation verification remain pending. Do not touch ahl_el_kheir_production_test. Payroll effective-policy selection and incentive payroll integration remain unverified.
+Remaining gate: update/pull main, execute the guarded reset only against local `ahl_el_kheir`, verify R3 is `approved` with NULL activation fields, then test FM cancellation and verify no activation occurs. Approval history and notifications must remain preserved. Do not touch `ahl_el_kheir_production_test`. Payroll effective-policy selection and incentive payroll integration remain unverified.
