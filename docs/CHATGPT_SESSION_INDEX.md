@@ -598,3 +598,8 @@ Added `tools/run_hr_employee_incentive_accounting_rollback_tests.php` on `main` 
 ### 2026-10-14 — Incentive accounting rollback test passed locally
 
 User-provided local evidence: harness lint passed and `tools/run_hr_employee_incentive_accounting_rollback_tests.php` reported recognition Dr 5500 / Cr 2400 for SDG 123.45, duplicate recognition protection, caller-owned currency hold, draft refresh/repeat refresh, balanced settlement preserving salary account 5200 and salary-advance account 1410, paid award linkage, and rollback cleanup. Fixture IDs: payroll 21, employee 16, policy 3. This is runtime evidence for the tested accounting slice only, not full lifecycle proof. Next inspect journal-code allocation and address MAX+1 collision risk before event hooks. Keep R3 inactive and do not use `ahl_el_kheir_production_test`.
+
+
+### 2026-10-14 — Incentive journal-code collision retry requires local revalidation
+
+Commit `143aec00` adds a bounded five-attempt duplicate-entry-code retry to incentive award recognition, following source review of the existing MAX+1 `JE-######` convention and unique `uq_je_code` constraint. Local lint and the rollback-only accounting harness must be rerun after this source change. Event-source hooks remain blocked pending that evidence.
