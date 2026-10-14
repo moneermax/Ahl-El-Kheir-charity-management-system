@@ -13,7 +13,7 @@ $canReviewPolicies = in_array($role, ['general_manager', 'gm'], true);
 $canManagePolicies = $role === 'hr_manager';
 $canActivatePolicies = $role === 'financial_manager';
 $canManageTypes = $canManagePolicies;
-if (!Session::isLoggedIn() || (!$canManagePolicies && !$canReviewPolicies)) {
+if (!Session::isLoggedIn() || (!$canManagePolicies && !$canReviewPolicies && !$canActivatePolicies)) {
     header('Location: ' . APP_URL . 'index.php');
     exit;
 }
