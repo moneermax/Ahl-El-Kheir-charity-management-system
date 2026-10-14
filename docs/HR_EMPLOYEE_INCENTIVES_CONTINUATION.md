@@ -311,3 +311,12 @@ Implementation commits on `main`: `21c94362c4f11f4000e050ba5e14160eedbac0fe` and
 Implementation reuses `ak_transaction_review_notify_event()`. Notifications run after each policy transaction commits; delivery errors are isolated from the business state transition. No schema changes were introduced.
 
 **Acceptance pending on local XAMPP/MariaDB.** Pull main and lint the policy page. Verify HR Manager can create/edit/submit but cannot approve/activate; GM can approve/reject but cannot create/submit/activate; FM can activate an approved policy but cannot create/edit/submit/approve/reject. Verify recipients and rejection reason. Keep V1 inactive because its reward values are test amounts; safely test submit -> reject -> resubmit -> approve, leaving it approved and awaiting FM activation.
+
+
+## 2026-10-14 — Fallback policy requirement confirmed
+
+The user confirmed that GM rejection returns the policy to HR as an editable draft for review/edit/resubmission; it is not final closure. If HR does not submit a replacement, the last applicable policy must remain in force. If FM does not activate a newer GM-approved policy by payday, the previous applicable policy must continue to be used automatically.
+
+Source inspection of `modules/hr/incentive_policy.php` confirms the policy-administration behavior already preserves the currently active policy while a candidate is draft, pending GM, rejected back to draft, or approved but not activated: the prior active policy is retired only inside the FM activation transaction for the replacement. Therefore no extra status transition is required to preserve the old policy in those workflow states.
+
+Important gap: `modules/hr/payroll.php` and `modules/hr/lib_payroll_policy.php` currently contain no incentive-award integration; the payroll page has no `hr_incentive_awards` reference. Automatic application of the previous policy's eligible awards at payroll time is **not implemented or verified**. Treat the next engineering unit as a source/schema audit and design for incentive-award scheduling and payroll inclusion, including currency, net-pay calculation, paid-payroll immutability, and accounting treatment. Do not assume incentives can be added to `allowances` without explicit accounting/source justification. No production payroll values or V1 policy amounts may be changed for testing.
