@@ -3055,3 +3055,14 @@ Payroll accounting currently debits `5200` by `net_salary + salary_advance_deduc
 Migration `2026-10-14_hr_employee_incentives_payroll_accounting.sql` (commit `211f1e033cf488f1a95e5d76956b4371183d6463`) adds `payroll.incentive_amount` independently from salary `net_salary`, and distinguishes the award's recognition journal from its payroll-settlement journal. This avoids using one ambiguous award journal reference for two different entries and prepares accounting to recognize Dr `5500` / Cr `2400`, then settle Dr `2400` / Cr payout account.
 
 This is a schema-only source milestone. It has not been applied or runtime-verified locally; award functions, payroll scheduling/refresh, payroll UI, journal posting, and rollback-only tests remain pending. Before application, inspect the migration against the current local schema, then verify the resulting columns/indexes. Never merge incentive amounts into salary `net_salary` without retaining the separate accounting component.
+
+
+## 2026-10-14 — Initial incentive award accounting integration slice (unverified)
+
+After the user applied both 2026-10-14 migrations and verified account 2400 plus the new payroll/award columns/indexes, source changes introduced:
+- Award recognition journal: debit dedicated expense 5500 / credit dedicated payable 2400.
+- Draft payroll scheduling: only verified events and recognized awards are considered; reward currency must match the applicable salary currency and system ledger currency; mismatches remain held without FX.
+- Payroll settlement: salary expense stays on 5200; scheduled incentive settlement debits 2400; bank credit includes net salary plus incentive payout; salary-advance recovery continues through 1410.
+- Draft refresh before individual/bulk approval, separate UI display of net salary/incentives/total payout, and distinct award recognition/settlement journal pointers.
+
+This is not yet runtime-verified. No source-event hooks or manager verification/award-creation workflow has been implemented in this slice, so ordinary application activity cannot yet produce a complete incentive award lifecycle. PHP lint, rollback-only integration harnesses, and local XAMPP runtime tests are pending. Do not treat this as accounting acceptance.
