@@ -523,3 +523,8 @@ The user pulled `main` through `3341df38`, linted `tools/run_hr_employee_incenti
 `PASS | rollback_cleanup=PASS | payroll=21 | employee=16 | policy=3 | test_rows=2 awards=2 journals=2`
 
 This proves the harnessed recognition, duplicate protection, caller-owned currency hold, draft scheduling/repeat refresh, payroll settlement accounting, award linkage, and rollback cleanup on this local database. It does not prove business source-event hooks, manager verification/award creation, notifications, concurrency, or the complete incentive lifecycle. R3 remains approved/inactive; `ahl_el_kheir_production_test` was not used. Next, inspect the existing journal-code allocation convention and make the incentive recognizer resilient to the observed MAX+1 collision race before implementing concurrent event hooks.
+
+
+## 2026-10-14 — Incentive journal-code collision retry added (local verification pending)
+
+Source review of `modules/accounting/lib.php` confirmed the repository's existing `ak_post_transaction_journal()` also allocates `JE-######` using MAX+1 and inserts into `journal_entries`, whose unique code key is `uq_je_code`. That convention is not serialized, so concurrent recognitions of different awards can calculate the same next code. Commit `143aec005e916b9d9a5b1923b82b16b16ca9b447` changes only the incentive recognition helper: it retries up to five times when the insert fails specifically with a duplicate-key error naming `uq_je_code`/`entry_code`; unrelated SQL errors are rethrown. It does not change the established convention used by other accounting workflows. This change has not yet passed local PHP lint or the rollback harness; both must be rerun before proceeding to source-event hooks.
