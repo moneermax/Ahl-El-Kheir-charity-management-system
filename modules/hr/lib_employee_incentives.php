@@ -496,6 +496,7 @@ function hrIncentiveRecordReactivationPaymentEvent(PDO $pdo, int $paymentId, int
     $recipientUserId = (int)$campaign['reactivated_by_user_id'];
     $recipientEmployeeId = hrIncentiveEmployeeIdForUser($pdo, $recipientUserId);
     if ($recipientEmployeeId <= 0) {
+        error_log('Incentive reactivation event skipped: actor has no unique employee mapping. Payment ID=' . $paymentId);
         return 0;
     }
 
