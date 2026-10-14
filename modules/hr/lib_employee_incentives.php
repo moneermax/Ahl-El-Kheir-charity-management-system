@@ -482,7 +482,7 @@ function hrIncentiveRecordReactivationPaymentEvent(PDO $pdo, int $paymentId, int
                  AND other_j.reference_id = other_t.id
                  AND other_j.status = 'posted'
            )
-         LIMIT 1"
+         LIMIT 1 FOR UPDATE"
     );
     $earlierReturnPaymentStmt->execute([
         $paymentId,
