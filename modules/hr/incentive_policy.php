@@ -473,12 +473,17 @@ foreach (get_flashes() as $flashMessage) {
     if (($flashMessage['type'] ?? '') === 'error') $error = (string)($flashMessage['message'] ?? '');
 }
 
+// FM may only see policies that have passed the GM approval gate.
+$policyVisibilityFilter = $canActivatePolicies
+    ? "WHERE p.status IN ('approved', 'active', 'retired')"
+    : '';
 $policies = dbFetchAll(
     "SELECT p.*, u.full_name AS created_by_name, au.full_name AS activated_by_name,
             (SELECT COUNT(*) FROM hr_incentive_policy_rules r WHERE r.policy_version_id=p.id AND r.is_enabled=1) AS enabled_rules
      FROM hr_incentive_policy_versions p
      LEFT JOIN users u ON u.id=p.created_by_user_id
      LEFT JOIN users au ON au.id=p.activated_by_user_id
+     $policyVisibilityFilter
      ORDER BY p.version_no DESC"
 );
 $allTypes = dbFetchAll('SELECT * FROM hr_incentive_types ORDER BY sort_order, id');
