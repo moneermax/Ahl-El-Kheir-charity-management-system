@@ -507,3 +507,12 @@ Repository source checks confirmed both catalogs contain 135 unique keys with no
 ## 2026-10-14 — Incentive policy review-page presentation follow-up
 
 The user confirmed the Arabic/English language toggle works and supplied local PHP lint results: `modules/hr/incentive_policy.php`, `lang/incentive_policy_ar.php`, and `lang/incentive_policy_en.php` all pass syntax checks. The official `tools/i18n_gap.php` scan reports 85 untranslated strings across 12 other files; `modules/hr/incentive_policy.php` is not listed, so unrelated files remain out of scope. The existing GM view exposed two narrow presentation issues: the system-currency notice was hard-coded in Arabic, and policy category/amount summaries had no visual separation. Commit `e446adee1ea9ae4e76bc5b48ad227926fec442c2` routes the currency notice through `t('incentives.currency_notice')` and styles each category/amount summary as a separated bordered item. This source correction is committed to `main`; local PHP lint and browser confirmation of the updated presentation remain pending. The Arabic creator name is stored user data and was intentionally preserved. V1 remains a draft; do not submit, approve, or activate until the toast acceptance checks and updated presentation are confirmed.
+
+
+## 2026-10-14 — Incentive policy fallback semantics and FM page access
+
+The user confirmed that GM rejection returns the policy to HR for editing/resubmission; it does not close the workflow. If no replacement is submitted, the previous active policy remains in force. If FM does not activate an approved replacement, the previous active policy remains in force. Source inspection shows prior active policy retirement happens only during successful FM activation, not during draft creation/submission/GM approval/rejection.
+
+Review uncovered a page-level access gate that redirected FM users despite the activation action permission. Commit `9430f3418afe03ed7fce871a1b369514e4dbbca0` includes the FM activation role in the page gate. Existing incentive-policy success/error feedback uses `data-ak-transient-alert="1"` for centralized toast conversion.
+
+Local PHP lint/browser/notification/fallback verification is still pending. Keep V1 inactive.
