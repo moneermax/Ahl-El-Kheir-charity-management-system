@@ -358,3 +358,14 @@ At the user's direction, commit `0df1890e12a006cb1cae57c1bf906047178a39fd` remov
 ## 2026-10-14 — Incentive policy page: remove redundant currency/category notice
 
 Commit `fa733524d67411e08d299c84e7568c79b601316a` removes the explanatory alert above the category section in `modules/hr/incentive_policy.php`. The application currency remains system-configured and continues to be stored with each policy rule; only the page-level notice was removed. The category management heading, category catalogue, and policy rule amount labels remain unchanged. Source change is committed on `main`; local pull, PHP lint, and browser verification are pending. This UI cleanup does not establish that the entire incentive lifecycle or incentive-to-payroll/accounting implementation is complete.
+
+
+## 2026-10-14 — GM approval confirmation and success toast restored
+
+The user confirmed that test policy R3 was approved by GM user 2 at 10:52:48, but the page showed neither a confirmation prompt nor a success toast. The earlier commit `0df1890e12a006cb1cae57c1bf906047178a39fd` had deliberately removed both; the current requirement now explicitly restores them.
+
+The source fix adds a bilingual `data-confirm` message and restores the existing translated `flash('success', t('incentives.approve_success'))` after the durable approval and post-commit handoff calls. The GM approval form is marked `data-ak-native-post="1"` so `assets/js/app.js` does not start a same-page fetch during the window-capture submit event before `assets/js/notifications.js` can show its confirmation. After confirmation, the established native POST/redirect path renders the transient alert, which the central notification code converts to a toast. No shared JavaScript was changed; rejection and FM activation behavior are untouched.
+
+A guarded, test-specific SQL reset utility is added at `tools/reset_incentive_policy_gm_approval_acceptance.sql`. It only resets policy ID 3 when its exact R3 name, creator, version, `approved` status, and not-activated state match. It removes the test approval history row and matching approval handoff notifications only when that guarded update affects exactly one row; the original submission history remains. A zero-row guard means no reset was performed. Do not activate R3.
+
+**Verification boundary:** source review and repository commits are not local runtime proof. After syncing `main`, run PHP lint for the policy page and both translation files, execute the guarded reset utility against the local `ahl_el_kheir` database, then retest as GM: cancel confirmation (must not approve), confirm approval (must persist status/history and show a success toast), and verify the HR/FM handoff notifications. Leave the policy approved but inactive. Report actual results before updating this checkpoint to runtime-verified.
