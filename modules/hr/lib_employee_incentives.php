@@ -350,13 +350,6 @@ function hrIncentiveMarkPayrollAwardsPaid(PDO $pdo, int $payrollId, int $journal
 }
 
 /**
- * Record one qualifying source event for later manager verification.
- *
- * Call only from the transaction that durably confirms the source business
- * event. A missing active/effective policy or disabled rule means no event is
- * created. Duplicate source notifications return the existing event ID.
- */
-/**
  * Resolve a user to exactly one employee row. Ambiguous/missing mappings are
  * deliberately not guessed because an incentive must have a real employee recipient.
  */
@@ -442,20 +435,20 @@ function hrIncentiveRecordReactivationPaymentEvent(PDO $pdo, int $paymentId, int
 
     $reactivatedAt = new DateTimeImmutable((string)$campaign['reactivated_at']);
     $priorPaymentStmt = $pdo->prepare(
-        "SELECT MAX(old.reviewed_at)
-         FROM sponsor_payments old
-         LEFT JOIN sponsorships old_s ON old_s.id = old.sponsorship_id
-         JOIN transactions old_t ON old_t.id = old.transaction_id AND old_t.status = 'posted'
-         WHERE old.payment_type = 'monthly_sponsorship'
-           AND old.status = 'approved'
-           AND old.reviewed_at IS NOT NULL
-           AND old.reviewed_at < ?
-           AND COALESCE(old.sponsor_id, old_s.sponsor_id) = ?
+        "SELECT MAX(prior_sp.reviewed_at)
+         FROM sponsor_payments prior_sp
+         LEFT JOIN sponsorships prior_s ON prior_s.id = prior_sp.sponsorship_id
+         JOIN transactions prior_t ON prior_t.id = prior_sp.transaction_id AND prior_t.status = 'posted'
+         WHERE prior_sp.payment_type = 'monthly_sponsorship'
+           AND prior_sp.status = 'approved'
+           AND prior_sp.reviewed_at IS NOT NULL
+           AND prior_sp.reviewed_at < ?
+           AND COALESCE(prior_sp.sponsor_id, prior_s.sponsor_id) = ?
            AND EXISTS (
-               SELECT 1 FROM journal_entries old_j
-               WHERE old_j.reference_type = 'transaction'
-                 AND old_j.reference_id = old_t.id
-                 AND old_j.status = 'posted'
+               SELECT 1 FROM journal_entries prior_j
+               WHERE prior_j.reference_type = 'transaction'
+                 AND prior_j.reference_id = prior_t.id
+                 AND prior_j.status = 'posted'
            )"
     );
     $priorPaymentStmt->execute([(string)$campaign['reactivated_at'], $sponsorId]);
@@ -520,6 +513,13 @@ function hrIncentiveRecordReactivationPaymentEvent(PDO $pdo, int $paymentId, int
     );
 }
 
+/**
+ * Record one qualifying source event for later manager verification.
+ *
+ * Call only from the transaction that durably confirms the source business
+ * event. A missing active/effective policy or disabled rule means no event is
+ * created. Duplicate source notifications return the existing event ID.
+ */
 function hrIncentiveRecordSourceEvent(
     PDO $pdo,
     string $sourceTable,
