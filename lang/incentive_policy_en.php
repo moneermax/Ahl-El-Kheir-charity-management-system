@@ -134,4 +134,6 @@ return [
     'incentives.draft_saved' => 'The incentive policy draft was saved. Complete its details, then submit it for General Manager approval.',
     'incentives.category_added_short' => 'The incentive category was added.',
     'incentives.draft_only_submit' => 'The draft does not exist or has already been submitted.',
-];
+    'incentives.name' => 'Name',
+    'incentives.disabled' => 'Disabled',
+]; 
