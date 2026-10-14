@@ -348,3 +348,111 @@ function hrIncentiveMarkPayrollAwardsPaid(PDO $pdo, int $payrollId, int $journal
         }
     }
 }
+
+/**
+ * Record one qualifying source event for later manager verification.
+ *
+ * Call only from the transaction that durably confirms the source business
+ * event. A missing active/effective policy or disabled rule means no event is
+ * created. Duplicate source notifications return the existing event ID.
+ */
+function hrIncentiveRecordSourceEvent(
+    PDO $pdo,
+    string $sourceTable,
+    int $sourceRecordId,
+    string $incentiveType,
+    string $occurredAt,
+    ?float $sourceAmount = null,
+    ?string $sourceCurrencyCode = null,
+    int $createdByUserId = 0
+): int {
+    $allowedSources = [
+        'collection' => 'sponsor_payments',
+        'new_sponsor' => 'sponsor_payments',
+        'reactivation' => 'sponsor_payments',
+        'project_completion' => 'project_lifecycle',
+    ];
+    if ($sourceRecordId <= 0 || !isset($allowedSources[$incentiveType])
+        || $allowedSources[$incentiveType] !== $sourceTable) {
+        throw new InvalidArgumentException('مصدر حدث الحافز أو فئته غير صالح.');
+    }
+
+    $occurred = DateTimeImmutable::createFromFormat('!Y-m-d H:i:s', $occurredAt);
+    if (!$occurred || $occurred->format('Y-m-d H:i:s') !== $occurredAt) {
+        throw new InvalidArgumentException('تاريخ حدث الحافز غير صالح.');
+    }
+    if ($sourceAmount !== null && (!is_finite($sourceAmount) || $sourceAmount < 0)) {
+        throw new InvalidArgumentException('مبلغ مصدر الحافز غير صالح.');
+    }
+
+    $currency = $sourceCurrencyCode !== null ? strtoupper(trim($sourceCurrencyCode)) : null;
+    if ($currency !== null && !preg_match('/^[A-Z]{3}$/', $currency)) {
+        throw new InvalidArgumentException('عملة مصدر الحافز غير صالحة.');
+    }
+
+    $idempotencyKey = 'hr-incentive:' . $sourceTable . ':' . $sourceRecordId . ':' . $incentiveType;
+    $existingStmt = $pdo->prepare('SELECT id FROM hr_incentive_events WHERE idempotency_key = ? LIMIT 1');
+    $existingStmt->execute([$idempotencyKey]);
+    $existingId = (int)($existingStmt->fetchColumn() ?: 0);
+    if ($existingId > 0) {
+        return $existingId;
+    }
+
+    $policyStmt = $pdo->prepare(
+        "SELECT p.id
+         FROM hr_incentive_policy_versions p
+         JOIN hr_incentive_policy_rules r ON r.policy_version_id = p.id
+         JOIN hr_incentive_types t ON t.type_code = r.incentive_type
+         WHERE p.status = 'active'
+           AND p.effective_from <= DATE(?)
+           AND (p.effective_to IS NULL OR p.effective_to >= DATE(?))
+           AND r.incentive_type = ?
+           AND r.is_enabled = 1
+           AND t.is_active = 1
+           AND t.qualification_mode = 'source_event'
+         ORDER BY p.effective_from DESC, p.version_no DESC
+         LIMIT 1
+         FOR UPDATE"
+    );
+    $policyStmt->execute([$occurredAt, $occurredAt, $incentiveType]);
+    $policyVersionId = (int)($policyStmt->fetchColumn() ?: 0);
+    if ($policyVersionId <= 0) {
+        return 0;
+    }
+
+    try {
+        $insert = $pdo->prepare(
+            "INSERT INTO hr_incentive_events
+             (idempotency_key, source_table, source_record_id, incentive_type,
+              policy_version_id, occurred_at, source_amount, source_currency_code,
+              status, created_by_user_id)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending_verification', ?)"
+        );
+        $insert->execute([
+            $idempotencyKey,
+            $sourceTable,
+            $sourceRecordId,
+            $incentiveType,
+            $policyVersionId,
+            $occurredAt,
+            $sourceAmount,
+            $currency,
+            $createdByUserId > 0 ? $createdByUserId : null,
+        ]);
+        return (int)$pdo->lastInsertId();
+    } catch (PDOException $e) {
+        $duplicate = (string)$e->getCode() === '23000'
+            && (stripos($e->getMessage(), 'uq_hr_incentive_event_idempotency') !== false
+                || stripos($e->getMessage(), 'idempotency_key') !== false);
+        if (!$duplicate) {
+            throw $e;
+        }
+        $existingStmt->execute([$idempotencyKey]);
+        $existingId = (int)($existingStmt->fetchColumn() ?: 0);
+        if ($existingId <= 0) {
+            throw $e;
+        }
+        return $existingId;
+    }
+}
+
