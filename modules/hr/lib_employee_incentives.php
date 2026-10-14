@@ -421,6 +421,7 @@ function hrIncentiveRecordReactivationPaymentEvent(PDO $pdo, int $paymentId, int
          WHERE sponsor_id = ?
            AND status = 'persuaded'
            AND reactivated_by_user_id IS NOT NULL
+           AND reactivation_confirmed_by_user_id IS NOT NULL
            AND reactivated_at IS NOT NULL
            AND reactivated_at < ?
            AND reactivated_at <= ?
