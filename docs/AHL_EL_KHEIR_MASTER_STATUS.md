@@ -2666,3 +2666,10 @@ The user confirmed this is a higher-management workflow involving only HR Manage
 ## 2026-10-14 — Incentive category form cleanup
 
 Commit `e4b0675dbed130a1a5235851df6dbdb4f342b524` removes the visible automatic category-code field and its preview JavaScript from `modules/hr/incentive_policy.php`. Category codes remain server-generated from the English category name. Local PHP lint and browser verification are pending; incentive policy lifecycle acceptance remains in progress.
+
+
+## 2026-10-14 — Required UI feedback rule: toast, not top-of-page banners
+
+This is a project-wide implementation rule, not an optional page-specific preference. Success, error, warning, and action-result informational feedback must be shown as temporary toast notifications through the centralized `AKNotify.toast` path, near the active workflow/modal when applicable. Do not leave action feedback as persistent banners at the top of a page. For legacy Bootstrap feedback nodes that need centralized conversion on a full-page load, add `data-ak-transient-alert="1"`; server flash nodes may use the established `data-ak-flash` convention. Keep field validation beside the relevant field, and keep genuinely persistent instructional/context panels separate from action feedback (mark them explicitly persistent if their markup matches transient-alert selectors).
+
+**Required page-completion check:** inspect every success/error/warning/info message introduced or modified; verify both full-document POST/redirect loads and same-page/AJAX responses use toast behavior; confirm no action-result banner remains at the page top. Do not assume a page follows this rule merely because another module does. This rule applies to new pages and existing-page changes across the repository.
