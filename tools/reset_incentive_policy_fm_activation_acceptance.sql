@@ -16,7 +16,7 @@ SET @ak_r3_activation_guard = (
       AND effective_from = '2026-10-14'
       AND effective_to IS NULL
       AND activated_by_user_id = 29
-      AND activated_at = '2026-10-14 14:12:23'
+      AND activated_at = '2026-10-14 14:18:10'
 );
 
 UPDATE hr_incentive_policy_versions
@@ -32,7 +32,7 @@ WHERE @ak_r3_activation_guard = 1
   AND effective_from = '2026-10-14'
   AND effective_to IS NULL
   AND activated_by_user_id = 29
-  AND activated_at = '2026-10-14 14:12:23';
+  AND activated_at = '2026-10-14 14:18:10';
 
 SET @ak_r3_activation_reset_rows = ROW_COUNT();
 
