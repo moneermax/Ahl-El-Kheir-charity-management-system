@@ -2748,3 +2748,12 @@ Commit `75484be186fdf7b935e27151e07604456b2cfa76` changes the test-only reset to
 The local confirmed-approval path is runtime-verified for test policy R3. GM confirmation and success toast appeared; database approval history records GM user 2 at `2026-10-14 13:54:58`; HR notification 175 and FM notification 176 were both created at that exact timestamp. Policy 3 is `approved` and remains inactive (`activated_by_user_id=NULL`, `activated_at=NULL`). The earlier timestamp discrepancy was caused by stale HR/FM test notifications surviving an encoding-fragile reset; the corrected test-only reset uses exact R3 body/link matching and recipient IDs, and the fresh retest aligned timestamps. No production notification-writer defect was established, so production notification code was not changed.
 
 Verification boundary: this confirms the approve/confirm/toast/history/notification/timestamp path only. Confirmation cancellation was not explicitly reported; rejection/resubmission, FM activation, and payroll effective-policy selection remain separate verification gates. Keep R3 inactive and do not touch `ahl_el_kheir_production_test`.
+
+
+## 2026-10-14 — Incentive FM activation confirmation defect
+
+FM activation acceptance exposed a confirmation/submit race. The user reported the confirmation prompt appeared briefly then disappeared and a toast followed; database evidence confirms R3 actually became active at 2026-10-14 14:12:23 under FM user 29. Source inspection traced the race to the window-capture same-page POST handler running before the document-level confirmation handler.
+
+Source fix committed on main: 06b08d44afc48887b74a4588f1604e11f5d5e809. FM activation now uses the existing translated data-confirm pattern and opts out of same-page AJAX POST with data-ak-native-post="1".
+
+Guarded reset utility committed: 0f987a2dc367b4776525469ffefca05bb1c87bd6, tools/reset_incentive_policy_fm_activation_acceptance.sql. It resets only the exact observed R3 activation result to approved, preserving approval history and notifications. Local lint, reset execution, cancel-path verification, and successful reactivation verification remain pending. Do not touch ahl_el_kheir_production_test. Payroll effective-policy selection and incentive payroll integration remain unverified.
