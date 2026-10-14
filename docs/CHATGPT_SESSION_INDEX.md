@@ -516,3 +516,8 @@ The user confirmed that GM rejection returns the policy to HR for editing/resubm
 Review uncovered a page-level access gate that redirected FM users despite the activation action permission. Commit `9430f3418afe03ed7fce871a1b369514e4dbbca0` includes the FM activation role in the page gate. Existing incentive-policy success/error feedback uses `data-ak-transient-alert="1"` for centralized toast conversion.
 
 Local PHP lint/browser/notification/fallback verification is still pending. Keep V1 inactive.
+
+
+## 2026-10-14 — Incentive policy fallback and FM page access
+
+GM rejection returns the policy to HR as an editable draft. If HR does not submit a replacement, or FM does not activate a newly approved replacement by payday, the previous active policy remains in force. Source inspection shows prior active versions are retired only during successful FM activation. Commit `9430f3418afe03ed7fce871a1b369514e4dbbca0` fixes the page-level gate so FM can reach the activation UI. Action success/error messages already use transient-alert markers for toast conversion. Local lint, browser role checks, notifications, toast behavior, and payroll effective-policy selection remain unverified; keep V1 inactive.
