@@ -209,8 +209,8 @@ require_once __DIR__ . '/../../includes/header.php';
                                 && !$isProject && $recipientEligible
                                 && (int)$event['is_enabled'] === 1
                                 && (float)$event['reward_amount'] > 0;
-                            $typeName = AK_LANG === 'en' && !empty($event['name_en'])
-                                ? $event['name_en'] : ($event['incentive_name_ar'] ?? $event['incentive_type']);
+                            $typeName = AK_LANG === 'en' && !empty($event['incentive_name_en'])
+                                ? $event['incentive_name_en'] : ($event['incentive_name_ar'] ?? $event['incentive_type']);
                             ?>
                             <tr>
                                 <td>
