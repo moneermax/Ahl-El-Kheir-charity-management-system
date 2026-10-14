@@ -57,7 +57,7 @@ $accounts = reactivationTestOne(
 );
 if (!$recipient || !$reviewer || !$sponsor || !$accounts || (int)$accounts['cash_id'] <= 0 ||
     (int)$accounts['revenue_id'] <= 0 || !preg_match('/^[A-Z]{3}$/', $currency)) {
-    echo "SKIP | Reactivation incentive rollback test | employee-linked user, sponsor, active cash/revenue accounts, or currency unavailable.\n";
+    echo "SKIP | Reactivation incentive rollback test | employee-linked user, distinct reviewer, sponsor, active cash/revenue accounts, or currency unavailable.\n";
     exit(0);
 }
 
@@ -249,6 +249,8 @@ try {
         ['sponsor_payments', $newPaymentId],
         ['transactions', $priorTransactionId],
         ['transactions', $newTransactionId],
+        ['journal_entries', $journalIds[0] ?? 0],
+        ['journal_entries', $journalIds[1] ?? 0],
     ] as [$table, $id]) {
         if ($id > 0) {
             reactivationTestAssert(
