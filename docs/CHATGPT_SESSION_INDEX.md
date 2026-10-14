@@ -607,4 +607,14 @@ Commit `143aec00` adds a bounded five-attempt duplicate-entry-code retry to ince
 
 ## 2026-10-14 — Win-back reactivation attribution
 
-Implementation is committed on main; local verification is pending. See `docs/HR_EMPLOYEE_INCENTIVES_CONTINUATION.md` for the migration, atomic transition helper, rollback-only harness, exact local acceptance gate, and remaining reactivation-payment/HR-verification requirements.
+Implementation and local rollback-only acceptance are complete for the transition slice. The migration was applied to `ahl_el_kheir`; all three PHP lint checks passed; the harness passed atomic state, durable attribution, duplicate-transition blocking, and rollback cleanup. See `docs/HR_EMPLOYEE_INCENTIVES_CONTINUATION.md` for evidence and the next reactivation-payment/HR-verification requirements.
+
+
+## 2026-10-14 — Win-back reactivation attribution passed local rollback-only acceptance
+
+The user pulled commit `958a4644160071ea573db15f35e92f0f2d738c9c`, applied `database/migrations/2026-10-14_winback_reactivation_attribution.sql` to local `ahl_el_kheir`, and ran PHP 8.2 lint on `modules/administration/lib_winback.php`, `modules/administration/winback.php`, and `tools/run_winback_reactivation_rollback_tests.php`; all three reported no syntax errors. The rollback-only harness reported:
+
+- `PASS | sponsor_reactivation=atomic | durable_actor_timestamp=PASS | repeat_transition=blocked`
+- `PASS | rollback_cleanup=PASS | campaign=3 | sponsor=1`
+
+This proves the harnessed atomic sponsor/campaign transition, durable actor/timestamp, blocked repeated transition, and rollback cleanup on the local database. It does not prove concurrent two-process execution or the full incentive lifecycle. Next work remains the reactivation source-event qualification at the financially confirmed payment boundary, using confirmed payment history to prove the 90-day lapse and durable reactivation actor, with idempotency and HR Manager verification. Keep policy R3 inactive and do not use `ahl_el_kheir_production_test`.

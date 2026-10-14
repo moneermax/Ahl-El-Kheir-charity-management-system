@@ -609,4 +609,14 @@ The latest incentive source/accounting slice is committed on main. The next loca
 3. PHP-lint `modules/administration/lib_winback.php`, `modules/administration/winback.php`, and `tools/run_winback_reactivation_rollback_tests.php`.
 4. Run `php tools/run_winback_reactivation_rollback_tests.php` and report the exact output.
 
-The implementation preserves the first successful transition actor/time separately from mutable `handled_by`, and makes sponsor/campaign state changes atomic. It does not create an incentive event or award. Do not claim runtime verification before the local gate passes. Next, inspect confirmed-payment and historical sponsorship evidence before implementing reactivation source qualification; require a genuine 90-day lapse, financially confirmed new payment, durable actor attribution, idempotency, and pending HR Manager verification. Keep policy R3 inactive, do not use `ahl_el_kheir_production_test`, and do not reopen completed tests without regression evidence.
+The implementation preserves the first successful transition actor/time separately from mutable `handled_by`, and makes sponsor/campaign state changes atomic. It does not create an incentive event or award. The local transition gate passed on 2026-10-14: migration applied, all three PHP lint checks passed, and rollback-only test passed atomic state, durable attribution, repeat blocking, and cleanup. Full source qualification remains unverified. Next, inspect confirmed-payment and historical sponsorship evidence before implementing reactivation source qualification; require a genuine 90-day lapse, financially confirmed new payment, durable actor attribution, idempotency, and pending HR Manager verification. Keep policy R3 inactive, do not use `ahl_el_kheir_production_test`, and do not reopen completed tests without regression evidence.
+
+
+## 2026-10-14 — Win-back reactivation attribution passed local rollback-only acceptance
+
+The user pulled commit `958a4644160071ea573db15f35e92f0f2d738c9c`, applied `database/migrations/2026-10-14_winback_reactivation_attribution.sql` to local `ahl_el_kheir`, and ran PHP 8.2 lint on `modules/administration/lib_winback.php`, `modules/administration/winback.php`, and `tools/run_winback_reactivation_rollback_tests.php`; all three reported no syntax errors. The rollback-only harness reported:
+
+- `PASS | sponsor_reactivation=atomic | durable_actor_timestamp=PASS | repeat_transition=blocked`
+- `PASS | rollback_cleanup=PASS | campaign=3 | sponsor=1`
+
+This proves the harnessed atomic sponsor/campaign transition, durable actor/timestamp, blocked repeated transition, and rollback cleanup on the local database. It does not prove concurrent two-process execution or the full incentive lifecycle. Next work remains the reactivation source-event qualification at the financially confirmed payment boundary, using confirmed payment history to prove the 90-day lapse and durable reactivation actor, with idempotency and HR Manager verification. Keep policy R3 inactive and do not use `ahl_el_kheir_production_test`.
