@@ -467,8 +467,8 @@ require_once __DIR__ . '/../../includes/header.php';
             <p class="text-muted mb-0 small">ينشئ مدير الموارد البشرية أو المدير المالي المسودة ويرسلها للاعتماد؛ يراجع المدير العام القرار إلكترونياً، ثم يفعّل المدير المالي السياسة المعتمدة.</p>
         </div>
     </div>
-    <?php if ($message !== ''): ?><div class="alert alert-success"><?=e($message)?></div><?php endif; ?>
-    <?php if ($error !== ''): ?><div class="alert alert-danger"><?=e($error)?></div><?php endif; ?>
+    <?php if ($message !== ''): ?><div class="alert alert-success" data-ak-transient-alert="1"><?=e($message)?></div><?php endif; ?>
+    <?php if ($error !== ''): ?><div class="alert alert-danger" data-ak-transient-alert="1"><?=e($error)?></div><?php endif; ?>
 
     <div class="alert alert-info small">
         العملة المعتمدة على مستوى النظام هي <?=e(APP_CURRENCY_CODE)?> (<?=e(APP_CURRENCY_NAME_AR)?>).
