@@ -402,3 +402,21 @@ Commit 06b08d44afc48887b74a4588f1604e11f5d5e809 changes only the FM activation f
 The guarded test-only reset utility, tools/reset_incentive_policy_fm_activation_acceptance.sql, was committed as 0f987a2dc367b4776525469ffefca05bb1c87bd6. Its exact timestamp guard has now been updated in commit a94080af39f82bcdaa56190c6c8eca264934d9f3 to match the latest observed activation, 2026-10-14 14:18:10. It resets R3 from active to approved and clears activation fields only if the exact observed R3 name/id/version/creator/status/effective date/FM actor/timestamp all match. It preserves approval history and notifications. It does not touch other policies or ahl_el_kheir_production_test.
 
 Next local gate: pull main so the updated reset utility is present; inspect it and execute it only against local ahl_el_kheir; verify R3 is approved and inactive; then as FM click Activate and choose Cancel. Confirm no activation-success toast and verify status remains approved with both activation fields NULL. Do not repeat the already-passed confirm/activation path unless a regression appears. Payroll effective-policy selection is still unimplemented/unverified; activating this acceptance rule does not prove incentive payroll integration.
+
+
+## 2026-10-14 — Incentive policy rejection, HR recovery, GM reapproval, and handoff notifications verified
+
+Local browser and database acceptance completed the R3 rejection/recovery path for policy 3, `ACCEPTANCE TEST - INCENTIVE POLICY - 2026-10-14-R3`.
+
+- GM user 2 rejected the submitted policy with the required reason: `ACCEPTANCE TEST: clarify the evidence required to confirm a qualifying collection before approval.`
+- HR creator user 32 received the rejection notification at `2026-10-14 14:36:36`.
+- HR edited/resubmitted the same policy. Approval history row 10 records `submitted`, actor 32, at `2026-10-14 14:38:35`; GM received the resubmission notification at that timestamp.
+- GM reapproved through the actual UI. Approval history row 11 records `approved`, actor 2, at `2026-10-14 14:40:49`.
+- The final read-only notification query confirmed HR notification 181 (recipient 32) and FM notification 182 (recipient 29), both created at `2026-10-14 14:40:49`. Their bodies identify the exact R3 policy; both link to `modules/hr/incentive_policy.php` and remain unread (`is_read=0`).
+- Final policy state is `approved`; `activated_by_user_id` and `activated_at` are NULL. R3 is deliberately left approved but inactive.
+
+Acceptance boundary: rejection with reason, HR recovery/resubmission, GM reapproval, persisted history, rejection/resubmission notifications, and final HR/FM approval handoff notifications are verified. Earlier FM activation confirmation/acceptance and Cancel-branch tests are already closed; do not repeat them without regression evidence.
+
+Test-reset caveat: the guarded reset used to prepare this retest removed the prior approval-history row and prior HR/FM handoff notifications while preserving submission history and the GM submission notification. It is not a full rollback-only reset and must not be described as preserving all original test evidence. No production notification-writer defect was demonstrated; do not change production notification code based on this test.
+
+Next engineering unit remains a separate source/schema audit and design for incentive-award qualification, scheduling, payroll inclusion, currency/net-pay handling, paid-payroll immutability, and accounting treatment. Award issuance/payroll integration and payroll effective-policy selection are not implemented or runtime-verified. Do not activate R3, alter test financial values, or touch `ahl_el_kheir_production_test`.
