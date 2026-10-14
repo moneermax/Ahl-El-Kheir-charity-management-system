@@ -389,3 +389,16 @@ Local browser and database acceptance now confirms the GM approval path for test
 The earlier timestamp mismatch was caused by stale HR/FM test notifications surviving an encoding-fragile reset that matched Arabic titles. The corrected guarded reset matches the exact R3 body/link and recipients without Arabic literals; after reset and a fresh approval, the notification timestamps aligned. No production notification-writer defect was demonstrated, so production notification code remains unchanged.
 
 Acceptance boundary: the confirmed-approval path, toast, persisted history, HR/FM notifications, matching timestamps, and inactive policy state are verified. The user's message did not explicitly report the result of cancelling the confirmation, so do not mark the cancel path verified unless separately confirmed. Keep R3 approved but inactive; do not activate it or touch `ahl_el_kheir_production_test`. Broader rejection/resubmission, FM activation, and payroll effective-policy selection remain separate gates.
+
+
+## 2026-10-14 — FM activation confirmation race identified; guarded reset and source fix committed
+
+The user tested FM activation of the existing R3 acceptance policy and reported that the confirmation prompt appeared briefly and disappeared, followed by a toast. The database then showed policy 3 (ACCEPTANCE TEST - INCENTIVE POLICY - 2026-10-14-R3) as active, with FM user 29 and activation timestamp 2026-10-14 14:12:23. This proves the action executed despite the broken confirmation experience; do not treat it as a canceled activation.
+
+Source audit identified the race: the system-wide same-page POST interceptor runs on window in capture phase, before the shared confirmation handler on document. The FM activation form used inline onsubmit="return confirm(...)" without opting out of same-page AJAX interception, so the AJAX POST could start before the confirmation handler completed.
+
+Commit 06b08d44afc48887b74a4588f1604e11f5d5e809 changes only the FM activation form to use the existing translated incentives.confirm_activate message through data-confirm and sets data-ak-native-post="1". This aligns it with the established GM approval pattern and ensures the confirmation interceptor can stop the submit before the native POST is allowed. Local PHP lint and browser verification remain pending.
+
+A guarded test-only reset utility, tools/reset_incentive_policy_fm_activation_acceptance.sql, was committed as 0f987a2dc367b4776525469ffefca05bb1c87bd6. It resets R3 from active to approved and clears activation fields only if the exact observed R3 name/id/version/creator/status/effective date/FM actor/timestamp all match. It preserves approval history and notifications. It does not touch other policies or ahl_el_kheir_production_test.
+
+Next local steps: pull main; lint modules/hr/incentive_policy.php; inspect and execute the guarded reset SQL only against local ahl_el_kheir; verify R3 is approved and inactive; then as FM test cancellation first (status must remain approved), and confirm activation (the dialog must remain until a choice, then activation toast should appear and R3 should become active with FM actor/timestamp). Report each result. Payroll effective-policy selection is still unimplemented/unverified; activating this acceptance rule does not prove incentive payroll integration.
