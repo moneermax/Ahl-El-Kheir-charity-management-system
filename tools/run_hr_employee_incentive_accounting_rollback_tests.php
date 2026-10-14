@@ -105,7 +105,7 @@ if (!$fixture) {
 }
 
 $accountRows = $pdo->query(
-    "SELECT code, id, account_type, is_active FROM accounts WHERE code IN ('5200','1200','2400','5500')"
+    "SELECT code, id, account_type, is_active FROM accounts WHERE code IN ('5200','1200','1410','2400','5500')"
 )->fetchAll(PDO::FETCH_ASSOC);
 $accounts = [];
 foreach ($accountRows as $account) {
@@ -115,6 +115,9 @@ foreach (['5200', '1200', '2400', '5500'] as $code) {
     if (!isset($accounts[$code]) || (int)$accounts[$code]['is_active'] !== 1) {
         incentiveTestSkip("Required account {$code} is missing or inactive.");
     }
+}
+if ((float)$fixture['salary_advance_deduction'] > 0 && (!isset($accounts['1410']) || (int)$accounts['1410']['is_active'] !== 1)) {
+    incentiveTestSkip('Payroll fixture has a salary-advance deduction but active account 1410 is missing.');
 }
 if ($accounts['2400']['account_type'] !== 'liability' || $accounts['5500']['account_type'] !== 'expense') {
     incentiveTestSkip('Incentive accounts 2400/5500 do not have the expected liability/expense types.');
@@ -308,12 +311,12 @@ try {
                 ROUND(COALESCE(SUM(CASE WHEN jl.account_id = ? THEN jl.debit ELSE 0 END),0),2) AS payable_debit,
                 ROUND(COALESCE(SUM(CASE WHEN jl.account_id = ? THEN jl.debit ELSE 0 END),0),2) AS salary_expense_debit,
                 ROUND(COALESCE(SUM(CASE WHEN jl.account_id = ? THEN jl.credit ELSE 0 END),0),2) AS bank_credit,
-                ROUND(COALESCE(SUM(CASE WHEN jl.account_id = 1410 THEN jl.credit ELSE 0 END),0),2) AS advance_credit
+                ROUND(COALESCE(SUM(CASE WHEN jl.account_id = ? THEN jl.credit ELSE 0 END),0),2) AS advance_credit
          FROM journal_entries je
          JOIN journal_lines jl ON jl.entry_id = je.id
          WHERE je.id = ?
          GROUP BY je.id",
-        [(int)$accounts['2400']['id'], (int)$accounts['5200']['id'], (int)$accounts['1200']['id'], $settlementId]
+        [(int)$accounts['2400']['id'], (int)$accounts['5200']['id'], (int)$accounts['1200']['id'], (int)($accounts['1410']['id'] ?? 0), $settlementId]
     );
     $netSalary = round((float)$fixture['net_salary'], 2);
     $advanceDeduction = round((float)$fixture['salary_advance_deduction'], 2);
@@ -358,6 +361,19 @@ try {
         (int)$paidIncentiveAmount['accounting_entry_id'] === $settlementId &&
         $paidIncentiveAmount['accounting_status'] === 'posted',
         'Payroll settlement did not retain the incentive component and accounting reference.'
+    );
+
+    hrIncentiveRefreshPayrollDraft($pdo, $payrollId);
+    $afterPaidRefresh = incentiveTestOne(
+        $pdo,
+        "SELECT status, incentive_amount FROM payroll WHERE id = ?",
+        [$payrollId]
+    );
+    incentiveTestAssert(
+        $afterPaidRefresh !== null &&
+        $afterPaidRefresh['status'] === 'paid' &&
+        (float)$afterPaidRefresh['incentive_amount'] === $awardAmount,
+        'Draft refresh changed a paid payroll or its incentive component.'
     );
 
     incentiveTestAssert($pdo->inTransaction(), 'Harness transaction ended before final rollback.');
