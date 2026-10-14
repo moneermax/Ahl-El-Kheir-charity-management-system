@@ -107,13 +107,14 @@ try {
 
     $campaign = $pdo->prepare(
         "INSERT INTO winback_campaigns
-         (sponsor_id, handled_by, reactivated_by_user_id, reactivated_at, status, closed_at)
-         VALUES (?, ?, ?, ?, 'persuaded', ?)"
+         (sponsor_id, handled_by, reactivated_by_user_id, reactivation_confirmed_by_user_id, reactivated_at, status, closed_at)
+         VALUES (?, ?, ?, ?, ?, 'persuaded', ?)"
     );
     $campaign->execute([
         $sponsorId,
+        $reviewerUserId,
         $actorUserId,
-        $actorUserId,
+        $reviewerUserId,
         $reactivatedAt->format('Y-m-d H:i:s'),
         $reactivatedAt->format('Y-m-d H:i:s'),
     ]);

@@ -29,9 +29,20 @@ function winbackTestOne(PDO $pdo, string $sql, array $params = []): ?array
     return $row ?: null;
 }
 
-$actor = winbackTestOne($pdo, 'SELECT id FROM users WHERE id > 0 ORDER BY id LIMIT 1');
+$actor = winbackTestOne(
+    $pdo,
+    "SELECT e.user_id AS id
+     FROM employees e
+     JOIN users u ON u.id = e.user_id AND u.is_active = 1
+     JOIN hr_employment_states es ON es.id = e.employment_state_id
+        AND es.category = 'working' AND es.is_active = 1
+     WHERE e.user_id > 0
+       AND NOT EXISTS (SELECT 1 FROM employees e2 WHERE e2.user_id = e.user_id AND e2.id <> e.id)
+     ORDER BY e.id LIMIT 1"
+);
+$confirmer = $actor ? winbackTestOne($pdo, 'SELECT id FROM users WHERE id > 0 AND id <> ? ORDER BY id LIMIT 1', [(int)$actor['id']]) : null;
 $sponsor = winbackTestOne($pdo, 'SELECT id, status FROM sponsors WHERE id > 0 ORDER BY id LIMIT 1');
-if (!$actor || !$sponsor) {
+if (!$actor || !$confirmer || !$sponsor) {
     echo "SKIP | Winback reactivation rollback test | existing user or sponsor is unavailable.\n";
     exit(0);
 }
@@ -46,21 +57,22 @@ try {
         "INSERT INTO winback_campaigns (sponsor_id, handled_by, status)
          VALUES (?, ?, 'contacted')"
     );
-    $insert->execute([(int)$sponsor['id'], (int)$actor['id']]);
+    $insert->execute([(int)$sponsor['id'], (int)$confirmer['id']]);
     $campaignId = (int)$pdo->lastInsertId();
 
-    $result = wb_mark_returned($pdo, $campaignId, (int)$actor['id']);
+    $result = wb_mark_returned($pdo, $campaignId, (int)$actor['id'], (int)$confirmer['id']);
     winbackTestAssert($result !== null, 'A contacted campaign did not transition to returned.');
     winbackTestAssert(
         (int)$result['sponsor_id'] === (int)$sponsor['id'] &&
         (int)$result['reactivated_by_user_id'] === (int)$actor['id'] &&
+        (int)$result['reactivation_confirmed_by_user_id'] === (int)$confirmer['id'] &&
         trim((string)$result['reactivated_at']) !== '',
         'The transition did not return durable sponsor/actor/time attribution.'
     );
 
     $campaign = winbackTestOne(
         $pdo,
-        "SELECT status, handled_by, reactivated_by_user_id, reactivated_at
+        "SELECT status, handled_by, reactivated_by_user_id, reactivation_confirmed_by_user_id, reactivated_at
          FROM winback_campaigns WHERE id = ?",
         [$campaignId]
     );
@@ -72,15 +84,16 @@ try {
     winbackTestAssert(
         $campaign !== null &&
         $campaign['status'] === 'persuaded' &&
-        (int)$campaign['handled_by'] === (int)$actor['id'] &&
+        (int)$campaign['handled_by'] === (int)$confirmer['id'] &&
         (int)$campaign['reactivated_by_user_id'] === (int)$actor['id'] &&
+        (int)$campaign['reactivation_confirmed_by_user_id'] === (int)$confirmer['id'] &&
         !empty($campaign['reactivated_at']) &&
         $currentSponsor !== null &&
         $currentSponsor['status'] === 'active',
         'Sponsor and campaign state/attribution were not committed together inside the test transaction.'
     );
 
-    $repeat = wb_mark_returned($pdo, $campaignId, (int)$actor['id']);
+    $repeat = wb_mark_returned($pdo, $campaignId, (int)$actor['id'], (int)$confirmer['id']);
     winbackTestAssert($repeat === null, 'A second transition was not blocked after the campaign closed.');
 
     $pdo->rollBack();

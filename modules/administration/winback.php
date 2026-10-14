@@ -13,7 +13,23 @@ if (!in_array($role, ['admin', 'general_manager', 'vice_general_manager', 'admin
 }
 $pageTitle = t('متابعات الاسترجاع');
 $active    = 'winback';
-$uid = Session::getUserId();
+$uid = (int)Session::getUserId();
+$reactivators = dbFetchAll(
+    "SELECT e.user_id, e.employee_code, e.full_name
+     FROM employees e
+     JOIN users u ON u.id = e.user_id AND u.is_active = 1
+     JOIN hr_employment_states es
+       ON es.id = e.employment_state_id
+      AND es.category = 'working'
+      AND es.is_active = 1
+     WHERE e.user_id IS NOT NULL
+       AND e.user_id > 0
+       AND NOT EXISTS (
+           SELECT 1 FROM employees e2
+           WHERE e2.user_id = e.user_id AND e2.id <> e.id
+       )
+     ORDER BY e.full_name, e.id"
+);
 
 /* Winback schema is managed by an explicit migration, never during a web request. */
 
@@ -84,13 +100,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
     if (isset($_POST['mark_returned'])) {
         $cid = (int)$_POST['mark_returned'];
         try {
-            $result = wb_mark_returned(db(), $cid, (int)$uid);
+            $reactivatedByUserId = (int)($_POST['reactivated_by_user_id'] ?? 0);
+            $result = wb_mark_returned(db(), $cid, $reactivatedByUserId, (int)$uid);
             if ($result !== null) {
-                // Audit and future incentive qualification use the durable transition
-                // actor, not the mutable operational handled_by field.
+                // Audit the actual reactivator and the confirmer separately.
                 wb_audit($uid, 'RETURNED', $cid, [
                     'sponsor_id' => $result['sponsor_id'],
                     'reactivated_by_user_id' => $result['reactivated_by_user_id'],
+                    'reactivation_confirmed_by_user_id' => $result['reactivation_confirmed_by_user_id'],
                     'reactivated_at' => $result['reactivated_at'],
                 ]);
                 flash('success', t('تمت إعادة تفعيل الكفيل. أسرته السابقة ستظهر مميزة عند التكليف الجديد.'));
@@ -280,11 +297,18 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     <div class="col-md-2"><button name="add_contact" value="<?php echo (int)$view['id']; ?>" class="btn btn-primary w-100"><i class="fas fa-plus me-1"></i><?php echo t('تسجيل'); ?></button></div>
                 </form>
             </div>
-            <div class="col-md-4 d-flex gap-2 align-items-end">
-                <form method="post" class="flex-fill"><?php echo csrf_field(); ?>
-                    <button name="mark_returned" value="<?php echo (int)$view['id']; ?>" class="btn btn-success w-100" onclick="return confirm('إعادة تفعيل الكفيل؟')"><i class="fas fa-user-check me-1"></i><?php echo t('تأكيد العودة وتفعيل الكفيل'); ?></button>
+            <div class="col-md-4 d-grid gap-2">
+                <form method="post" class="border rounded p-2"><?php echo csrf_field(); ?>
+                    <label class="form-label"><?php echo t('الموظف الذي أعاد الكفيل فعلياً'); ?></label>
+                    <select name="reactivated_by_user_id" class="form-select mb-2" required>
+                        <option value=""><?php echo t('اختر الموظف'); ?></option>
+                        <?php foreach ($reactivators as $reactivator): ?>
+                        <option value="<?php echo (int)$reactivator['user_id']; ?>"><?php echo e($reactivator['full_name'] . ' (' . $reactivator['employee_code'] . ')'); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <button name="mark_returned" value="<?php echo (int)$view['id']; ?>" class="btn btn-success w-100" onclick="return confirm('تأكيد العودة للموظف المحدد وتفعيل الكفيل؟')"><i class="fas fa-user-check me-1"></i><?php echo t('تأكيد العودة وتفعيل الكفيل'); ?></button>
                 </form>
-                <form method="post" class="flex-fill"><?php echo csrf_field(); ?>
+                <form method="post"><?php echo csrf_field(); ?>
                     <button name="mark_declined" value="<?php echo (int)$view['id']; ?>" class="btn btn-danger w-100" onclick="return confirm('إغلاق المتابعة؟')"><i class="fas fa-user-xmark me-1"></i><?php echo t('اعتذر عن العودة'); ?></button>
                 </form>
             </div>

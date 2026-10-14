@@ -71,9 +71,9 @@ if($_SERVER['REQUEST_METHOD']==='POST'&&verify_csrf()){
                     error_log('Incentive collection event skipped: supervisor has no unique employee mapping. Payment ID=' . $sp_id);
                 }
 
-                // Reactivation source-event wiring is intentionally withheld until
-                // the win-back workflow distinguishes the employee who actually
-                // reactivated the sponsor from the user who confirms the return.
+                // The source event uses the selected actual reactivator, not this FM reviewer
+                // or mutable win-back case handler. It remains pending HR verification.
+                hrIncentiveRecordReactivationPaymentEvent($pdo, $sp_id, $uid);
             }
             $pdo->commit();
             try{$gmUsers=dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id=r.id WHERE r.code = 'general_manager' AND u.is_active=1");foreach($gmUsers as $u)ak_transaction_review_notify_event((int)$u['id'],'اعتماد تحصيل مشرف #'.$sp_id,'تم اعتماد تحصيل ('.$purLabel.') بمبلغ '.number_format($amount,2).' ج.س بواسطة المدير المالي.',APP_URL.'modules/accounting/fm_review_queue.php?payment_id='.$sp_id,$sp_id,'sponsor_payment_approved');}catch(Throwable $e){}
