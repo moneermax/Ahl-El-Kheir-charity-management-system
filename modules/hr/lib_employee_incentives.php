@@ -551,6 +551,12 @@ function hrIncentiveRecordSourceEvent(
         throw new InvalidArgumentException('مبلغ مصدر الحافز غير صالح.');
     }
 
+    $hasRecipientUser = $recipientUserId !== null && $recipientUserId > 0;
+    $hasRecipientEmployee = $recipientEmployeeId !== null && $recipientEmployeeId > 0;
+    if ($hasRecipientUser !== $hasRecipientEmployee) {
+        throw new InvalidArgumentException('يجب حفظ المستخدم والموظف المستفيدين معاً.');
+    }
+
     $currency = $sourceCurrencyCode !== null ? strtoupper(trim($sourceCurrencyCode)) : null;
     if ($currency !== null && !preg_match('/^[A-Z]{3}$/', $currency)) {
         throw new InvalidArgumentException('عملة مصدر الحافز غير صالحة.');
