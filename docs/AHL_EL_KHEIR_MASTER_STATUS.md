@@ -2776,3 +2776,10 @@ The chart-of-accounts/source audit confirmed the existing `5500` Employee Incent
 Migration `database/migrations/2026-10-14_hr_employee_incentives_payroll_accounting.sql` is committed as `211f1e033cf488f1a95e5d76956b4371183d6463`. It introduces a separate `payroll.incentive_amount` component and splits the award journal reference into `recognition_journal_entry_id` and `settlement_journal_entry_id`. This supports separate incentive expense/payable recognition and payable settlement without folding incentive expense into salary account `5200`.
 
 **Status: source committed; local migration/runtime verification pending.** No PHP payroll or award lifecycle integration is claimed complete by this migration. Next gate is source integration with idempotent award recognition, currency and next-open-payroll scheduling, draft refresh, separate `5500`/`2400` accounting, and paid-payroll immutability. Apply migrations only to the intended local `ahl_el_kheir` database after inspecting the SQL; do not touch `ahl_el_kheir_production_test`.
+
+
+## 2026-10-14 — Employee incentive accounting integration slice committed; runtime pending
+
+The user applied and verified both incentive schema migrations locally: account `2400` is active liability, `5500` is active expense, payroll has `incentive_amount`, and awards have separate recognition/settlement journal references and indexes.
+
+Initial procedural PHP integration is now committed on `main`: `modules/hr/lib_employee_incentives.php` implements award recognition and currency-checked draft scheduling; payroll accounting settles scheduled incentives against `2400` while retaining salary expense on `5200`; payroll UI displays incentive component and total expected payout separately. This is a partial source implementation only. Local PHP lint and runtime accounting tests have not been run, and source-event creation, manager verification/award creation, and employee notifications remain open. Do not describe incentive integration as complete; do not activate R3.
