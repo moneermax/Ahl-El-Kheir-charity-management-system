@@ -117,22 +117,50 @@ function hrIncentiveRecognizeAward(PDO $pdo, int $awardId, int $actorUserId = 0)
 
         $expenseId = hrIncentiveAccountId($pdo, '5500');
         $payableId = hrIncentiveAccountId($pdo, '2400');
-        $entryCode = hrIncentiveNextJournalCode($pdo);
         $createdBy = $actorUserId > 0 ? $actorUserId : null;
         $entry = $pdo->prepare(
             "INSERT INTO journal_entries
              (entry_code, entry_date, description, reference_type, reference_id, status, created_by)
              VALUES (?, DATE(?), ?, 'hr_incentive_award_recognition', ?, 'posted', ?)"
         );
-        $entry->execute([
-            $entryCode,
-            (string)$award['occurred_at'],
-            'إثبات استحقاق حافز موظف #' . $awardId . ' - ' . $currency,
-            $awardId,
-            $createdBy
-        ]);
-        $entryId = (int)$pdo->lastInsertId();
+        $entryId = 0;
+        $lastCodeCollision = null;
+        // JE codes follow the existing MAX+1 convention, which can race when
+        // different awards are recognized concurrently. Retry only a duplicate
+        // entry-code collision; never mask unrelated SQL errors.
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            $entryCode = hrIncentiveNextJournalCode($pdo);
+            try {
+                $entry->execute([
+                    $entryCode,
+                    (string)$award['occurred_at'],
+                    'إثبات استحقاق حافز موظف #' . $awardId . ' - ' . $currency,
+                    $awardId,
+                    $createdBy
+                ]);
+                $entryId = (int)$pdo->lastInsertId();
+                break;
+            } catch (PDOException $e) {
+                $errorInfo = $e->errorInfo ?? [];
+                $isDuplicateKey = (int)($errorInfo[1] ?? 0) === 1062;
+                $errorText = strtolower($e->getMessage());
+                $isEntryCodeCollision = $isDuplicateKey &&
+                    (str_contains($errorText, 'uq_je_code') ||
+                     str_contains($errorText, 'entry_code'));
+                if (!$isEntryCodeCollision) {
+                    throw $e;
+                }
+                $lastCodeCollision = $e;
+            }
+        }
         if ($entryId <= 0) {
+            if ($lastCodeCollision instanceof PDOException) {
+                throw new RuntimeException(
+                    'تعذر تخصيص رمز قيد فريد للحافز بعد خمس محاولات بسبب تصادم رموز القيود.',
+                    0,
+                    $lastCodeCollision
+                );
+            }
             throw new RuntimeException('تعذر إنشاء قيد إثبات الحافز.');
         }
 
