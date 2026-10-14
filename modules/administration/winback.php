@@ -5,6 +5,7 @@ require_once dirname(__DIR__, 2) . '/config/database.php';
 require_once dirname(__DIR__, 2) . '/config/functions.php';
 require_once dirname(__DIR__, 2) . '/config/session.php';
 Session::start();
+require_once __DIR__ . '/lib_winback.php';
 if (!Session::isLoggedIn()) { header('Location: ' . APP_URL . 'index.php'); exit(); }
 $role = Session::getUserRole();
 if (!in_array($role, ['admin', 'general_manager', 'vice_general_manager', 'administration'], true)) {
@@ -82,12 +83,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
 
     if (isset($_POST['mark_returned'])) {
         $cid = (int)$_POST['mark_returned'];
-        $c = dbFetchOne("SELECT * FROM winback_campaigns WHERE id = ?", [$cid]);
-        if ($c && in_array($c['status'], ['open','contacted'], true)) {
-            dbExecute("UPDATE sponsors SET status = 'active', updated_at = NOW() WHERE id = ?", [$c['sponsor_id']]);
-            dbExecute("UPDATE winback_campaigns SET status='persuaded', closed_at=NOW(), handled_by=? WHERE id = ?", [$uid, $cid]);
-            wb_audit($uid, 'RETURNED', $cid, ['sponsor_id' => $c['sponsor_id']]);
-            flash('success', t('تمت إعادة تفعيل الكفيل. أسرته السابقة ستظهر مميزة عند التكليف الجديد.'));
+        try {
+            $result = wb_mark_returned(db(), $cid, (int)$uid);
+            if ($result !== null) {
+                // Audit and future incentive qualification use the durable transition
+                // actor, not the mutable operational handled_by field.
+                wb_audit($uid, 'RETURNED', $cid, [
+                    'sponsor_id' => $result['sponsor_id'],
+                    'reactivated_by_user_id' => $result['reactivated_by_user_id'],
+                    'reactivated_at' => $result['reactivated_at'],
+                ]);
+                flash('success', t('تمت إعادة تفعيل الكفيل. أسرته السابقة ستظهر مميزة عند التكليف الجديد.'));
+            } else {
+                flash('error', t('لا يمكن إعادة تفعيل هذه المتابعة في حالتها الحالية.'));
+            }
+        } catch (Throwable $e) {
+            error_log('Winback reactivation failed: ' . $e->getMessage());
+            flash('error', t('تعذر إعادة تفعيل الكفيل. لم يتم حفظ التغييرات.'));
         }
         header('Location: ' . APP_URL . 'modules/administration/winback.php'); exit();
     }
