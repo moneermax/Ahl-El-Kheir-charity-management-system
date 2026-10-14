@@ -2803,3 +2803,8 @@ Exact command after pulling `main`: `& "D:\xampp\php\php.exe" "tools\run_hr_empl
 ## 2026-10-14 — Incentive accounting rollback test passed
 
 The user ran PHP lint and `tools/run_hr_employee_incentive_accounting_rollback_tests.php` on local `ahl_el_kheir`. Both passed. Runtime assertions passed for Dr 5500 / Cr 2400 recognition (SDG 123.45), duplicate-recognition protection, caller-owned currency hold, draft scheduling and repeated refresh, balanced settlement, preservation of salary expense 5200 and salary-advance recovery 1410, award settlement linkage, and rollback cleanup. Harness fixture IDs were payroll 21, employee 16, policy 3; two events, two awards, and two journals were rolled back. This verifies only the tested accounting slice. Business source-event creation, manager verification/award issuance, notifications, and concurrency are still open. R3 remains approved/inactive; `ahl_el_kheir_production_test` remains untouched.
+
+
+## 2026-10-14 — Incentive journal-code collision retry committed; verification pending
+
+Source inspection found that both incentive recognition and existing `ak_post_transaction_journal()` use the established MAX+1 `JE-######` convention, while `journal_entries` has a unique entry-code constraint. This leaves a concurrent candidate collision possibility. Commit `143aec005e916b9d9a5b1923b82b16b16ca9b447` adds a bounded five-attempt retry only for duplicate entry-code errors in incentive recognition; unrelated PDO errors still propagate. This is source-level hardening only. Rerun PHP lint on `modules/hr/lib_employee_incentives.php` and the rollback-only accounting harness before any event-source integration. Do not change policy R3 or use `ahl_el_kheir_production_test`.
