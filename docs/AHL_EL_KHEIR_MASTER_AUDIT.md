@@ -3021,12 +3021,14 @@ The corrected acceptance reset and fresh browser approval established that the e
 Verified scope: GM confirmation and success toast, persisted approved status/history, HR/FM handoff notification creation, matching timestamps, and no activation. Confirmation cancellation was not explicitly reported and is not marked verified. This result does not close broader incentive-policy rejection/resubmission, FM activation, or payroll effective-policy selection acceptance.
 
 
-## 2026-10-14 — FM incentive activation confirmation race and test reset
+## 2026-10-14 — FM incentive activation confirmation race and acceptance
 
-Runtime evidence supplied by the user: policy 3, exact R3 acceptance policy, changed to active; activated_by_user_id=29; activated_at=2026-10-14 14:12:23. The reported confirmation prompt disappeared after seconds and a toast followed. The action did execute, so the observed run is not a valid confirmation-cancel test.
+Initial runtime evidence: policy 3 (R3) became `active` under FM user 29 at `2026-10-14 14:12:23` even though the confirmation prompt disappeared. This was an executed activation, not a cancellation test.
 
-Root cause from current main source: assets/js/app.js intercepts same-page POST on window capture; the shared confirmation handler in assets/js/notifications.js listens on document. The FM activation form used inline onsubmit=confirm(...) but lacked data-ak-native-post="1", allowing the earlier AJAX handler to start the action before confirmation handling.
+Root cause from source: `assets/js/app.js` intercepts same-page POST on window capture; the shared confirmation handler in `assets/js/notifications.js` listens on document. The FM form's inline `onsubmit=confirm(...)` did not opt out of same-page AJAX interception.
 
-Fix commit: 06b08d44afc48887b74a4588f1604e11f5d5e809. The FM activation form now uses the translated incentives.confirm_activate message through data-confirm and opts out of same-page AJAX POST. Test-only guarded reset commit: 0f987a2dc367b4776525469ffefca05bb1c87bd6; reset script matches the exact observed R3 activation identity and timestamp before changing status back to approved and clearing activation fields. Approval history and notifications are preserved.
+Fix commit: `06b08d44afc48887b74a4588f1604e11f5d5e809`. The form now uses the translated `incentives.confirm_activate` message through `data-confirm` and opts out of same-page AJAX POST with `data-ak-native-post="1"`. Local PHP lint passed. After the guarded reset, the user confirmed the prompt and observed the success toast; database evidence shows R3 active under FM user 29 at `2026-10-14 14:18:10`. Thus the confirmation/acceptance path is browser- and database-verified.
 
-Verification pending: local pull, PHP lint, guarded reset result, confirmation cancellation preserving approved, and confirmation acceptance producing active plus the activation toast. No payroll-policy-selection or award-to-payroll integration is implied by this acceptance test.
+Test-only reset utility commit: `0f987a2dc367b4776525469ffefca05bb1c87bd6`. Its timestamp guard was updated in `a94080af39f82bcdaa56190c6c8eca264934d9f3` to match the latest exact activation timestamp. The reset preserves approval history and notifications and only targets the guarded R3 record.
+
+Remaining verification: pull main, execute the updated reset only against local `ahl_el_kheir`, confirm R3 is approved with NULL activation fields, then test Cancel and verify it remains approved with no success toast. Do not touch `ahl_el_kheir_production_test`. No payroll-policy-selection or award-to-payroll integration is implied.
