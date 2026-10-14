@@ -118,6 +118,19 @@ $notificationId = 0;
 $payrollId = (int)$fixture['payroll_id'];
 $originalIncentiveAmount = round((float)$fixture['original_incentive_amount'], 2);
 $testAmount = 12.34;
+$testTitle = 'تمت جدولة حافزك في مسير الرواتب';
+$testPeriod = sprintf('%04d-%02d', (int)$fixture['year'], (int)$fixture['month']);
+$testBody = 'تمت جدولة حافز بقيمة 12.34 ' . strtoupper((string)APP_CURRENCY_CODE)
+    . ' ضمن مسير الرواتب لشهر ' . $testPeriod
+    . '. يخضع المسير لإجراءات الاعتماد والصرف المعتادة.';
+$testLink = APP_URL . 'modules/notifications/index.php';
+$beforeNotificationStmt = $pdo->prepare(
+    'SELECT COUNT(*) FROM notifications WHERE recipient_user_id = ? AND type = ? AND title = ? AND body = ? AND link = ?'
+);
+$beforeNotificationStmt->execute([
+    (int)$fixture['recipient_user_id'], 'incentive', $testTitle, $testBody, $testLink
+]);
+$matchingNotificationsBefore = (int)$beforeNotificationStmt->fetchColumn();
 $cleanupError = null;
 
 try {
@@ -180,6 +193,14 @@ try {
     if (!$outbox || $outbox['status'] !== 'pending' || (int)($outbox['notification_id'] ?? 0) !== 0) {
         throw new RuntimeException('Failed notification was not retained as pending in the outbox.');
     }
+    $afterFailureCount = (int)$beforeNotificationStmt->fetchColumn();
+    $beforeNotificationStmt->execute([
+        (int)$fixture['recipient_user_id'], 'incentive', $testTitle, $testBody, $testLink
+    ]);
+    $afterFailureCount = (int)$beforeNotificationStmt->fetchColumn();
+    if ($afterFailureCount !== $matchingNotificationsBefore) {
+        throw new RuntimeException('A notification row persisted despite the injected delivery failure.');
+    }
     if (round((float)$payroll['incentive_amount'], 2) !== round($originalIncentiveAmount + $testAmount, 2)) {
         throw new RuntimeException('Committed payroll incentive total did not include the scheduled award.');
     }
@@ -206,19 +227,20 @@ try {
     }
     if ((int)$notification['recipient_user_id'] !== (int)$fixture['recipient_user_id']
         || $notification['type'] !== 'incentive'
-        || strpos((string)$notification['body'], sprintf('%04d-%02d', (int)$fixture['year'], (int)$fixture['month']) ) === false
-        || strpos((string)$notification['body'], '12.34') === false) {
-        throw new RuntimeException('Notification recipient, type, amount, or payroll period was incorrect.');
+        || (string)$notification['title'] !== $testTitle
+        || (string)$notification['body'] !== $testBody
+        || (string)$notification['link'] !== $testLink) {
+        throw new RuntimeException('Notification recipient, type, title, body, or link was incorrect.');
     }
 
     hrIncentiveDispatchPendingNotifications($pdo);
-    $sameNotificationCount = (int)dbFetchOne(
-        'SELECT COUNT(*) AS c FROM notifications WHERE id = ?',
-        [$notificationId]
+    $matchingNotificationsAfter = (int)dbFetchOne(
+        'SELECT COUNT(*) AS c FROM notifications WHERE recipient_user_id = ? AND type = ? AND title = ? AND body = ? AND link = ?',
+        [(int)$fixture['recipient_user_id'], 'incentive', $testTitle, $testBody, $testLink]
     )['c'];
 
-    if ($sameNotificationCount !== 1) {
-        throw new RuntimeException('Repeated dispatch created or lost the sent notification.');
+    if ($matchingNotificationsAfter !== $matchingNotificationsBefore + 1) {
+        throw new RuntimeException('Repeated dispatch created a duplicate notification.');
     }
 
     echo "PASS | retry_delivery=PASS | correct_recipient_amount_period=PASS | repeated_dispatch_no_duplicate=PASS\n";
