@@ -71,6 +71,10 @@ if($_SERVER['REQUEST_METHOD']==='POST'&&verify_csrf()){
                     error_log('Incentive collection event skipped: supervisor has no unique employee mapping. Payment ID=' . $sp_id);
                 }
 
+                // Sponsor acquisition and reactivation are distinct achievements;
+                // each helper independently validates first-payment/history evidence.
+                hrIncentiveRecordNewSponsorPaymentEvent($pdo, $sp_id, $uid);
+
                 // The source event uses the selected actual reactivator, not this FM reviewer
                 // or mutable win-back case handler. It remains pending HR verification.
                 hrIncentiveRecordReactivationPaymentEvent($pdo, $sp_id, $uid);
