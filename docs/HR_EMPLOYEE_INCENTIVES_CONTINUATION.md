@@ -574,3 +574,17 @@ Added `hrIncentiveRecordNewSponsorPaymentEvent()` in `modules/hr/lib_employee_in
 Rollback-only harness: `tools/run_hr_employee_incentive_new_sponsor_rollback_tests.php`. It uses an existing sponsor with a unique employee attribution and no prior approved monthly payment; if no safe fixture exists, it reports `SKIP` without mutating data. When run, it inserts only transactional test policy/payment/journal/event rows and rolls them all back.
 
 **Local acceptance pending:** pull `main`; lint `modules/hr/lib_employee_incentives.php`, `modules/accounting/fm_review_queue.php`, and `tools/run_hr_employee_incentive_new_sponsor_rollback_tests.php`; run the new harness plus the existing source-event and reactivation rollback harnesses. No local result is claimed yet. Project-completion source/allocation, HR Manager verification and award issuance, post-commit employee notifications, and full lifecycle acceptance remain open. Keep policy R3 inactive and do not use `ahl_el_kheir_production_test`.
+
+
+## 2026-10-14 — HR Manager verification and award issuance page added (runtime pending)
+
+Commits on `main`:
+- `f0cef4f45e6564b76f097572732430c1659070f3` — add `modules/hr/incentive_verification.php`.
+- `02bb9eef524025ce858f146baab8b6414f518408` — correct the localized category-label field.
+- `4e4101988c41f2028f9aef384172ecd6b9e0c7cc` — add the HR Manager-only dashboard link.
+
+The new page is restricted server-side to `hr_manager`. It lists recorded events and only allows verification for non-project events that are still `pending_verification`, have a snapshotted recipient, resolve to the same employee/user relationship, and currently map to an active working employment state and active user account. The policy rule must remain enabled with a positive fixed reward amount. The event transition, award insert, and recognition journal are performed in the same transaction; currency/amount holds are preserved by the existing recognition helper. Duplicate awards are checked and are additionally constrained by the ledger's unique event/employee key.
+
+Project-completion verification is deliberately blocked because the approved-allocation workflow is not yet implemented. This page does not send the employee's next-payroll notification; scheduling and notification timing remain a separate open acceptance gate.
+
+**Verification status: source committed, local syntax/runtime acceptance pending.** Do not describe the page as verified until the user pulls `main`, runs PHP lint on the new page and updated dashboard, then tests the HR Manager authorization and one safe rollback-only verification/award case against local `ahl_el_kheir`. Keep policy R3 inactive and do not touch `ahl_el_kheir_production_test`. Do not rerun previously passed source-event or accounting harnesses absent regression evidence.
