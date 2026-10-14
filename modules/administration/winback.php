@@ -299,14 +299,14 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             </div>
             <div class="col-md-4 d-grid gap-2">
                 <form method="post" class="border rounded p-2"><?php echo csrf_field(); ?>
-                    <label class="form-label"><?php echo t('الموظف الذي أعاد الكفيل فعلياً'); ?></label>
+                    <label class="form-label"><?php echo t('winback.actual_reactivator'); ?></label>
                     <select name="reactivated_by_user_id" class="form-select mb-2" required>
-                        <option value=""><?php echo t('اختر الموظف'); ?></option>
+                        <option value=""><?php echo t('winback.choose_employee'); ?></option>
                         <?php foreach ($reactivators as $reactivator): ?>
                         <option value="<?php echo (int)$reactivator['user_id']; ?>"><?php echo e($reactivator['full_name'] . ' (' . $reactivator['employee_code'] . ')'); ?></option>
                         <?php endforeach; ?>
                     </select>
-                    <button name="mark_returned" value="<?php echo (int)$view['id']; ?>" class="btn btn-success w-100" onclick="return confirm('تأكيد العودة للموظف المحدد وتفعيل الكفيل؟')"><i class="fas fa-user-check me-1"></i><?php echo t('تأكيد العودة وتفعيل الكفيل'); ?></button>
+                    <button name="mark_returned" value="<?php echo (int)$view['id']; ?>" class="btn btn-success w-100" onclick="return confirm(<?php echo json_encode(t('winback.confirm_return_employee_prompt'), JSON_UNESCAPED_UNICODE); ?>)"><i class="fas fa-user-check me-1"></i><?php echo t('winback.confirm_return_activate'); ?></button>
                 </form>
                 <form method="post"><?php echo csrf_field(); ?>
                     <button name="mark_declined" value="<?php echo (int)$view['id']; ?>" class="btn btn-danger w-100" onclick="return confirm('إغلاق المتابعة؟')"><i class="fas fa-user-xmark me-1"></i><?php echo t('اعتذر عن العودة'); ?></button>

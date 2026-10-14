@@ -33,7 +33,7 @@ function wb_mark_returned(PDO $pdo, int $campaignId, int $reactivatedByUserId, i
     $employeeStmt->execute([$reactivatedByUserId]);
     $employeeIds = array_map('intval', $employeeStmt->fetchAll(PDO::FETCH_COLUMN));
     if (count($employeeIds) !== 1 || $employeeIds[0] <= 0) {
-        throw new InvalidArgumentException('يجب اختيار موظف نشط مرتبط بحساب مستخدم واحد فقط.');
+        throw new InvalidArgumentException('The selected reactivator must map to exactly one active employee.');
     }
 
     $startedHere = !$pdo->inTransaction();
