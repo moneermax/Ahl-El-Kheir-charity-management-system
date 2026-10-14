@@ -3019,3 +3019,14 @@ The user observed a successful GM approval with no confirmation prompt or succes
 The corrected acceptance reset and fresh browser approval established that the earlier stale timestamp was test-data residue, not a demonstrated production notification-writer defect. The fragile reset had relied on Arabic title literals that did not compare reliably through the local PowerShell/CLI path; the encoding-independent reset targets only policy R3, the exact body/link, and HR/FM recipients 32/29, while preserving the GM submission notification. Following reset, approval history row 8 (GM user 2) and HR/FM notifications 175/176 all have `2026-10-14 13:54:58`. Policy 3 is `approved`; activation fields remain NULL. Production notification code was left unchanged.
 
 Verified scope: GM confirmation and success toast, persisted approved status/history, HR/FM handoff notification creation, matching timestamps, and no activation. Confirmation cancellation was not explicitly reported and is not marked verified. This result does not close broader incentive-policy rejection/resubmission, FM activation, or payroll effective-policy selection acceptance.
+
+
+## 2026-10-14 — FM incentive activation confirmation race and test reset
+
+Runtime evidence supplied by the user: policy 3, exact R3 acceptance policy, changed to active; activated_by_user_id=29; activated_at=2026-10-14 14:12:23. The reported confirmation prompt disappeared after seconds and a toast followed. The action did execute, so the observed run is not a valid confirmation-cancel test.
+
+Root cause from current main source: assets/js/app.js intercepts same-page POST on window capture; the shared confirmation handler in assets/js/notifications.js listens on document. The FM activation form used inline onsubmit=confirm(...) but lacked data-ak-native-post="1", allowing the earlier AJAX handler to start the action before confirmation handling.
+
+Fix commit: 06b08d44afc48887b74a4588f1604e11f5d5e809. The FM activation form now uses the translated incentives.confirm_activate message through data-confirm and opts out of same-page AJAX POST. Test-only guarded reset commit: 0f987a2dc367b4776525469ffefca05bb1c87bd6; reset script matches the exact observed R3 activation identity and timestamp before changing status back to approved and clearing activation fields. Approval history and notifications are preserved.
+
+Verification pending: local pull, PHP lint, guarded reset result, confirmation cancellation preserving approved, and confirmation acceptance producing active plus the activation toast. No payroll-policy-selection or award-to-payroll integration is implied by this acceptance test.
