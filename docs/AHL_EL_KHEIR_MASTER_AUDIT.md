@@ -3032,3 +3032,10 @@ Fix commit: `06b08d44afc48887b74a4588f1604e11f5d5e809`. The form now uses the tr
 Test-only reset utility commit: `0f987a2dc367b4776525469ffefca05bb1c87bd6`. Its timestamp guard was updated in `a94080af39f82bcdaa56190c6c8eca264934d9f3` to match the latest exact activation timestamp. The reset preserves approval history and notifications and only targets the guarded R3 record.
 
 Remaining verification: pull main, execute the updated reset only against local `ahl_el_kheir`, confirm R3 is approved with NULL activation fields, then test Cancel and verify it remains approved with no success toast. Do not touch `ahl_el_kheir_production_test`. No payroll-policy-selection or award-to-payroll integration is implied.
+
+
+## 2026-10-14 — Incentive policy rejection/resubmission audit evidence
+
+R3 policy 3 was rejected by GM user 2 with reason `ACCEPTANCE TEST: clarify the evidence required to confirm a qualifying collection before approval.`; HR user 32 received a rejection notification at 14:36:36. HR resubmitted the same policy; history row 10 records actor 32 at 14:38:35 and GM was notified. GM reapproved; history row 11 records actor 2 at 14:40:49. The final database query returned HR notification 181 and FM notification 182, both at 14:40:49, with the R3 policy in the body and the policy page as link. Policy status is `approved`; activation fields remain NULL.
+
+Evidence caveat: the guarded test reset removed the previous approval-history row and previous HR/FM approval-handoff notifications, while preserving submission history and the GM submission notification. It was not a rollback-only reset and did not preserve the full pre-test history. The observed new notifications match the latest approval event. No production notification-writer defect is evidenced; no production notification code change is justified by these results. Award-to-payroll/accounting integration and effective-policy selection remain outside this acceptance and unverified.
