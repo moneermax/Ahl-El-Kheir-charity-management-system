@@ -114,6 +114,7 @@ return [
     'incentives.gm_only_approve' => 'Only the General Manager can approve incentive policies.',
     'incentives.pending_gm_only' => 'The policy is not in the General Manager\'s approval queue.',
     'incentives.approve_success' => 'The incentive policy was approved. The Financial Manager activates it in a separate step.',
+    'incentives.confirm_approve' => 'Approve this incentive policy? The Financial Manager will be able to activate it after approval.',
     'incentives.gm_only_reject' => 'Only the General Manager can reject incentive policies.',
     'incentives.reason_required' => 'A rejection reason is required and must not exceed 2,000 characters.',
     'incentives.pending_approval_missing' => 'The policy is not in the approval queue.',
