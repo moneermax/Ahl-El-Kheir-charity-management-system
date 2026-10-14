@@ -420,3 +420,30 @@ Acceptance boundary: rejection with reason, HR recovery/resubmission, GM reappro
 Test-reset caveat: the guarded reset used to prepare this retest removed the prior approval-history row and prior HR/FM handoff notifications while preserving submission history and the GM submission notification. It is not a full rollback-only reset and must not be described as preserving all original test evidence. No production notification-writer defect was demonstrated; do not change production notification code based on this test.
 
 Next engineering unit remains a separate source/schema audit and design for incentive-award qualification, scheduling, payroll inclusion, currency/net-pay handling, paid-payroll immutability, and accounting treatment. Award issuance/payroll integration and payroll effective-policy selection are not implemented or runtime-verified. Do not activate R3, alter test financial values, or touch `ahl_el_kheir_production_test`.
+
+
+## 2026-10-14 — Dedicated incentive payable account established in source
+
+Source audit confirmed the existing chart-of-accounts model and current account-code series:
+- `2100` is general Payables.
+- `2200` is Deferred Revenue.
+- `2300` is reserved by `modules/accounting/fina_lib.php` for Fina Al-Khair Payable and is validated as a liability.
+- `5500` is the dedicated Employee Incentives Expense account created by its own migration.
+- The local chart-of-accounts inspection previously supplied for this task showed no `2400` account. The existing liability series and unique account-code constraint support reserving `2400` for Employee Incentives Payable rather than mixing incentives into `2100` or `2300`.
+
+Added migration `database/migrations/2026-10-14_hr_employee_incentives_payable_account.sql` (commit `a281b8cd695e1555dcec86b7c900b1bf691f1562`). It idempotently inserts account `2400` as a liability and does not create/alter tables or run DDL at application runtime.
+
+**Verification boundary:** this is a source commit only; the migration has not yet been applied or verified against local `ahl_el_kheir`. Do not claim the account exists in the live local database until the user applies it and confirms the account row/type/active state.
+
+### Next engineering step — implement award recognition and payroll settlement without mixing expense
+
+The existing payroll accounting function posts salary expense to `5200`, pays `payroll.net_salary` from the payment account, and credits `1410` for salary-advance recovery. Incentives must not be merged into `net_salary` in a way that increases the `5200` expense.
+
+Required design before integration:
+1. Keep the award ledger as the authoritative per-award record and preserve event/employee idempotency.
+2. Recognize an earned, verified incentive against `5500` and `2400`; record recognition and settlement journal references separately rather than overloading the existing single `journal_entry_id`.
+3. Add an explicit payroll incentive component/linkage so draft refresh, approval, and paid payroll can distinguish salary expense from incentive settlement. Payroll settlement should clear `2400`, pay the award amount, and leave `5200`/salary-advance accounting semantics unchanged.
+4. Preserve the existing currency hold, next-open-payroll cutoff, employee eligibility, project allocation, immutable paid payroll, and controlled adjustment rules already documented above.
+5. Audit every payroll draft-generation/refresh path and accounting status transition before implementation; add rollback-only tests for idempotency, currency hold, draft refresh, journal balance, paid immutability, and post-commit notification failure isolation.
+
+Do not activate policy R3 or change any acceptance-policy/test financial data. Do not touch `ahl_el_kheir_production_test`. Local migration application, PHP lint, runtime integration tests, and documentation verification remain pending.
