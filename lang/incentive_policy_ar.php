@@ -114,6 +114,7 @@ return [
     'incentives.gm_only_approve' => 'اعتماد سياسة الحوافز متاح للمدير العام فقط.',
     'incentives.pending_gm_only' => 'السياسة غير موجودة في قائمة انتظار اعتماد المدير العام.',
     'incentives.approve_success' => 'تم اعتماد سياسة الحوافز. يتولى المدير المالي تفعيلها في خطوة منفصلة.',
+    'incentives.confirm_approve' => 'هل تريد اعتماد سياسة الحوافز؟ سيُتاح للمدير المالي تفعيلها بعد الاعتماد.',
     'incentives.gm_only_reject' => 'رفض سياسة الحوافز متاح للمدير العام فقط.',
     'incentives.reason_required' => 'سبب الرفض مطلوب وبحد أقصى 2000 حرف.',
     'incentives.pending_approval_missing' => 'السياسة غير موجودة في قائمة انتظار الاعتماد.',
