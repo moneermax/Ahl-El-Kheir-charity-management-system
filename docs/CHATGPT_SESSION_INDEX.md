@@ -600,9 +600,9 @@ Added `tools/run_hr_employee_incentive_accounting_rollback_tests.php` on `main` 
 User-provided local evidence: harness lint passed and `tools/run_hr_employee_incentive_accounting_rollback_tests.php` reported recognition Dr 5500 / Cr 2400 for SDG 123.45, duplicate recognition protection, caller-owned currency hold, draft refresh/repeat refresh, balanced settlement preserving salary account 5200 and salary-advance account 1410, paid award linkage, and rollback cleanup. Fixture IDs: payroll 21, employee 16, policy 3. This is runtime evidence for the tested accounting slice only, not full lifecycle proof. Next inspect journal-code allocation and address MAX+1 collision risk before event hooks. Keep R3 inactive and do not use `ahl_el_kheir_production_test`.
 
 
-### 2026-10-14 — Incentive journal-code collision retry requires local revalidation
+### 2026-10-14 — Incentive journal-code collision retry locally verified
 
-Commit `143aec00` adds a bounded five-attempt duplicate-entry-code retry to incentive award recognition, following source review of the existing MAX+1 `JE-######` convention and unique `uq_je_code` constraint. Local lint and the rollback-only accounting harness must be rerun after this source change. Event-source hooks remain blocked pending that evidence.
+The user reported PHP lint and the rollback-only accounting harness passing after the bounded five-attempt duplicate-entry-code retry. This verifies the tested incentive accounting path only; it does not prove concurrent two-process execution or full lifecycle completion.
 
 
 ## 2026-10-14 — Win-back reactivation attribution
@@ -618,3 +618,10 @@ The user pulled commit `958a4644160071ea573db15f35e92f0f2d738c9c`, applied `data
 - `PASS | rollback_cleanup=PASS | campaign=3 | sponsor=1`
 
 This proves the harnessed atomic sponsor/campaign transition, durable actor/timestamp, blocked repeated transition, and rollback cleanup on the local database. It does not prove concurrent two-process execution or the full incentive lifecycle. Next work remains the reactivation source-event qualification at the financially confirmed payment boundary, using confirmed payment history to prove the 90-day lapse and durable reactivation actor, with idempotency and HR Manager verification. Keep policy R3 inactive and do not use `ahl_el_kheir_production_test`.
+
+
+## 2026-10-14 — Reactivation payment qualification committed; local acceptance pending
+
+The confirmed-payment hook now checks a posted linked transaction and posted journal, a durable successful win-back transition, a previous confirmed monthly-sponsorship payment at least 90 days before the transition, and the first confirmed monthly-sponsorship payment created after the transition. The event remains `pending_verification`; it does not issue an award. Recipient user and employee IDs are snapshotted on source events so the win-back actor is distinct from the payment reviewer. The collection hook also snapshots the collector's user/employee relationship. Missing or ambiguous employee mappings produce no event. Same-second competing payment confirmations are conservatively held rather than risking duplicate awards.
+
+New migration: `database/migrations/2026-10-14_hr_incentive_event_recipient_snapshot.sql`. New rollback-only harness: `tools/run_hr_employee_incentive_reactivation_rollback_tests.php`. The existing collection source-event harness now checks recipient snapshots. **Local acceptance is pending**: apply the recipient-snapshot migration once to `ahl_el_kheir`, lint `modules/hr/lib_employee_incentives.php`, `modules/accounting/fm_review_queue.php`, and both incentive source-event harnesses, then run both harnesses. No local runtime result is claimed for this new slice. HR Manager verification/award issuance, employee notifications, new-sponsor/project hooks, and end-to-end lifecycle testing remain open. Keep policy R3 inactive and do not use `ahl_el_kheir_production_test`.

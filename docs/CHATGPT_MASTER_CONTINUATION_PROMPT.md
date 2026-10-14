@@ -600,16 +600,16 @@ The user-provided local result confirms `tools/run_hr_employee_incentive_account
 The accounting rollback harness passed locally before the latest source change. Commit `143aec005e916b9d9a5b1923b82b16b16ca9b447` adds bounded retry for duplicate JE entry-code collisions in incentive recognition. Pull `main`, run PHP lint on `modules/hr/lib_employee_incentives.php`, then rerun `tools/run_hr_employee_incentive_accounting_rollback_tests.php` against local `ahl_el_kheir`. This is required before proceeding to source-event hooks. Never run against `ahl_el_kheir_production_test`; keep R3 approved/inactive. After the gate passes, inspect actual source/schema at confirmed collection, sponsor acquisition/reactivation, and project financial-closure boundaries before implementing the smallest justified event hooks, manager verification/award issuance, and post-commit notifications.
 
 
-## 2026-10-14 — Active task: win-back reactivation attribution
+## 2026-10-14 — Active task: reactivation payment qualification local acceptance
 
-The latest incentive source/accounting slice is committed on main. The next local gate is the new win-back transition work:
+The win-back transition itself passed local rollback-only acceptance. The latest reactivation-payment qualification and recipient-snapshot implementation is committed to `main`, but local acceptance is pending.
 
-1. Pull main in the existing local checkout.
-2. Apply `database/migrations/2026-10-14_winback_reactivation_attribution.sql` once to local database `ahl_el_kheir` only.
-3. PHP-lint `modules/administration/lib_winback.php`, `modules/administration/winback.php`, and `tools/run_winback_reactivation_rollback_tests.php`.
-4. Run `php tools/run_winback_reactivation_rollback_tests.php` and report the exact output.
+1. Pull `main` in the existing checkout.
+2. Apply `database/migrations/2026-10-14_hr_incentive_event_recipient_snapshot.sql` once to `ahl_el_kheir` only. Check whether both recipient columns exist before applying; do not rerun an applied ALTER migration.
+3. PHP-lint `modules/hr/lib_employee_incentives.php`, `modules/accounting/fm_review_queue.php`, `tools/run_hr_employee_incentive_source_event_rollback_tests.php`, and `tools/run_hr_employee_incentive_reactivation_rollback_tests.php`.
+4. Run both source-event rollback-only harnesses and report exact output.
 
-The implementation preserves the first successful transition actor/time separately from mutable `handled_by`, and makes sponsor/campaign state changes atomic. It does not create an incentive event or award. The local transition gate passed on 2026-10-14: migration applied, all three PHP lint checks passed, and rollback-only test passed atomic state, durable attribution, repeat blocking, and cleanup. Full source qualification remains unverified. Next, implement reactivation source qualification after clarifying the qualifying payment boundary. Require a genuine 90-day lapse from confirmed payment history, a linked posted transaction, durable actor attribution, idempotency, and pending HR Manager verification. Keep policy R3 inactive, do not use `ahl_el_kheir_production_test`, and do not reopen completed tests without regression evidence.
+The hook should record a reactivation event only for the first financially confirmed monthly-sponsorship payment after a durable win-back transition, with a prior confirmed monthly-sponsorship payment at least 90 days before that transition. It requires a posted linked transaction and journal, snapshots the reactivation actor separately from the payment reviewer, and leaves the event pending HR Manager verification. No award is issued here. Keep policy R3 inactive, do not use `ahl_el_kheir_production_test`, and do not reopen closed work without regression evidence.
 
 
 ## 2026-10-14 — Win-back reactivation attribution passed local rollback-only acceptance
@@ -620,3 +620,10 @@ The user pulled commit `958a4644160071ea573db15f35e92f0f2d738c9c`, applied `data
 - `PASS | rollback_cleanup=PASS | campaign=3 | sponsor=1`
 
 This proves the harnessed atomic sponsor/campaign transition, durable actor/timestamp, blocked repeated transition, and rollback cleanup on the local database. It does not prove concurrent two-process execution or the full incentive lifecycle. Next work remains the reactivation source-event qualification at the financially confirmed payment boundary, using confirmed payment history to prove the 90-day lapse and durable reactivation actor, with idempotency and HR Manager verification. Keep policy R3 inactive and do not use `ahl_el_kheir_production_test`.
+
+
+## 2026-10-14 — Reactivation payment qualification committed; local acceptance pending
+
+The confirmed-payment hook now checks a posted linked transaction and posted journal, a durable successful win-back transition, a previous confirmed monthly-sponsorship payment at least 90 days before the transition, and the first confirmed monthly-sponsorship payment created after the transition. The event remains `pending_verification`; it does not issue an award. Recipient user and employee IDs are snapshotted on source events so the win-back actor is distinct from the payment reviewer. The collection hook also snapshots the collector's user/employee relationship. Missing or ambiguous employee mappings produce no event. Same-second competing payment confirmations are conservatively held rather than risking duplicate awards.
+
+New migration: `database/migrations/2026-10-14_hr_incentive_event_recipient_snapshot.sql`. New rollback-only harness: `tools/run_hr_employee_incentive_reactivation_rollback_tests.php`. The existing collection source-event harness now checks recipient snapshots. **Local acceptance is pending**: apply the recipient-snapshot migration once to `ahl_el_kheir`, lint `modules/hr/lib_employee_incentives.php`, `modules/accounting/fm_review_queue.php`, and both incentive source-event harnesses, then run both harnesses. No local runtime result is claimed for this new slice. HR Manager verification/award issuance, employee notifications, new-sponsor/project hooks, and end-to-end lifecycle testing remain open. Keep policy R3 inactive and do not use `ahl_el_kheir_production_test`.
