@@ -306,7 +306,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                         <option value="<?php echo (int)$reactivator['user_id']; ?>"><?php echo e($reactivator['full_name'] . ' (' . $reactivator['employee_code'] . ')'); ?></option>
                         <?php endforeach; ?>
                     </select>
-                    <button name="mark_returned" value="<?php echo (int)$view['id']; ?>" class="btn btn-success w-100" onclick="return confirm(<?php echo json_encode(t('winback.confirm_return_employee_prompt'), JSON_UNESCAPED_UNICODE); ?>)"><i class="fas fa-user-check me-1"></i><?php echo t('winback.confirm_return_activate'); ?></button>
+                    <button name="mark_returned" value="<?php echo (int)$view['id']; ?>" class="btn btn-success w-100" onclick='return confirm(<?php echo json_encode(t("winback.confirm_return_employee_prompt"), JSON_UNESCAPED_UNICODE); ?>)'><i class="fas fa-user-check me-1"></i><?php echo t('winback.confirm_return_activate'); ?></button>
                 </form>
                 <form method="post"><?php echo csrf_field(); ?>
                     <button name="mark_declined" value="<?php echo (int)$view['id']; ?>" class="btn btn-danger w-100" onclick="return confirm('إغلاق المتابعة؟')"><i class="fas fa-user-xmark me-1"></i><?php echo t('اعتذر عن العودة'); ?></button>

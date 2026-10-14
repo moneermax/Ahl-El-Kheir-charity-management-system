@@ -3,7 +3,8 @@ declare(strict_types=1);
 
 /**
  * Win-back reactivation transition — rollback-only integration test.
- * Requires migration 2026-10-14_winback_reactivation_attribution.sql.
+ * Requires migrations 2026-10-14_winback_reactivation_attribution.sql and
+ * 2026-10-14_winback_reactivation_confirmer.sql.
  * Creates one temporary campaign and rolls back every business-data change.
  */
 $_SERVER['REQUEST_METHOD'] = $_SERVER['REQUEST_METHOD'] ?? 'CLI';
@@ -43,7 +44,7 @@ $actor = winbackTestOne(
 $confirmer = $actor ? winbackTestOne($pdo, 'SELECT id FROM users WHERE id > 0 AND id <> ? ORDER BY id LIMIT 1', [(int)$actor['id']]) : null;
 $sponsor = winbackTestOne($pdo, 'SELECT id, status FROM sponsors WHERE id > 0 ORDER BY id LIMIT 1');
 if (!$actor || !$confirmer || !$sponsor) {
-    echo "SKIP | Winback reactivation rollback test | existing user or sponsor is unavailable.\n";
+    echo "SKIP | Winback reactivation rollback test | eligible employee, distinct confirmer, or sponsor is unavailable.\n";
     exit(0);
 }
 
