@@ -577,3 +577,8 @@ The migration has not been applied/verified in the user's local database. Incent
 
 
 Schema-only checkpoint: on 2026-10-14, dedicated incentive payable account migration `a281b8cd695e1555dcec86b7c900b1bf691f1562` and payroll/award journal lifecycle migration `211f1e033cf488f1a95e5d76956b4371183d6463` were added to `main`. Local migration application remains pending. Do not treat this as runtime-complete; award qualification, payroll scheduling/refresh, journal posting, and rollback-only tests remain open.
+
+
+### 2026-10-14 — Incentive accounting integration slice (runtime pending)
+
+Local schema gate passed per user evidence: account 2400 active liability; 5500 active expense; payroll incentive_amount and award recognition/settlement journal references/indexes present. Initial source integration commits add award recognition/scheduling helpers, separate payroll settlement through 2400 while keeping salary expense on 5200, and separate payroll UI display. This is partial source work only; source event hooks, manager verification/award creation, notifications, PHP lint, and rollback-only runtime tests remain open. See `docs/HR_EMPLOYEE_INCENTIVES_CONTINUATION.md`. Do not activate R3 or touch `ahl_el_kheir_production_test`.
