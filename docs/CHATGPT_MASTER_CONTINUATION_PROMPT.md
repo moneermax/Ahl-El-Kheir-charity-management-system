@@ -638,3 +638,11 @@ Next local gate after pulling main: inspect whether the columns already exist; a
 ## 2026-10-14 — Active local gate: new-sponsor source-event hook
 
 Pull `main`, then PHP-lint `modules/hr/lib_employee_incentives.php`, `modules/accounting/fm_review_queue.php`, and `tools/run_hr_employee_incentive_new_sponsor_rollback_tests.php`. Run `php tools/run_hr_employee_incentive_new_sponsor_rollback_tests.php`, then rerun the existing source-event and reactivation rollback harnesses. Apply no migrations for this slice; the recipient-snapshot and win-back confirmer migrations were already applied per user-provided local schema output. Report exact results. Do not use `ahl_el_kheir_production_test` or activate policy R3. If the new harness SKIPs, report the exact prerequisite and inspect it before changing the harness. After this gate, proceed to the project-completion source/allocation and HR Manager verification/award-issuance design; notifications must remain post-commit and failure-isolated.
+
+## 2026-10-14 — Current HR incentive gate
+
+Continue from current `main`; do not repeat completed source-event/accounting acceptance. HR Manager verification/award page is committed but local PHP lint and rollback-only runtime acceptance are pending. Next check only:
+- lint `modules/hr/incentive_verification.php` and `dashboard/hr_dashboard.php`;
+- run a targeted rollback-only verification/award test against local `ahl_el_kheir`;
+- then implement/verify employee notifications when an award is scheduled for an eligible payroll.
+Project-completion awards remain blocked until approved recipient allocation is implemented. Keep policy R3 inactive; never use `ahl_el_kheir_production_test`. Follow `docs/HR_EMPLOYEE_INCENTIVES_CONTINUATION.md`.
