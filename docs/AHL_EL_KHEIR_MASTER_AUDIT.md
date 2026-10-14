@@ -3122,3 +3122,9 @@ The agreed recipient is the employee who actually reactivated the sponsor, not a
 ## 2026-10-14 — New-sponsor first-payment qualification added; local verification pending
 
 Source implementation adds a new-sponsor source-event helper and calls it inside the FM payment approval transaction after the linked transaction/journal and approved payment state are established. The helper locks the payment and sponsor, requires an approved monthly-sponsorship payment with posted transaction/journal evidence, requires the sponsor's `brought_by_user_id` to resolve to exactly one employee, rejects any earlier financially confirmed monthly payment, excludes a durable qualifying reactivation transition, and snapshots the recipient on a pending-verification event. No award or employee notification is created by this hook. Local lint and rollback-only test results have not yet been supplied; use `tools/run_hr_employee_incentive_new_sponsor_rollback_tests.php` and see the module continuation document for the exact acceptance gate.
+
+## 2026-10-14 — HR Manager incentive verification source implementation
+
+The HR Manager-only review page `modules/hr/incentive_verification.php` and dashboard entry point are committed on `main`. Source guards require a pending event, an enabled positive fixed-amount policy rule, a snapshotted recipient whose user/employee mapping still matches, and an active working employment state. Verification, award insertion, and recognition posting share one transaction. Project-completion events are explicitly blocked until approved allocation detail is implemented. The page does not yet send next-payroll notifications.
+
+This is **source implementation only**. Local PHP lint and rollback-only runtime acceptance remain pending. Keep policy R3 inactive and do not use `ahl_el_kheir_production_test`. See `docs/HR_EMPLOYEE_INCENTIVES_CONTINUATION.md` for exact commits and next checks.
