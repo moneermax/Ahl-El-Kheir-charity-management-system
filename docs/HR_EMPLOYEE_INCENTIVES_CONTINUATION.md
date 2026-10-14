@@ -510,3 +510,16 @@ The harness covers Dr 5500 / Cr 2400 recognition, duplicate-recognition idempote
 **Runtime status: PENDING local execution.** After pulling `main`, run `& "D:\xampp\php\php.exe" "tools\run_hr_employee_incentive_accounting_rollback_tests.php"` against only local `ahl_el_kheir`. Report the exact output. Do not run against `ahl_el_kheir_production_test`. No event-boundary hooks or manager award-creation UI should be added until this gate is understood. PHP lint and runtime execution have not been claimed by the remote commit itself.
 
 Source-review risk still requiring resolution before concurrency-sensitive event hooks: `hrIncentiveNextJournalCode()` chooses MAX(JE suffix)+1; unique `journal_entries.entry_code` prevents duplicate stored codes, but concurrent recognitions can race for the same candidate. Inspect the repository's established journal-code allocation convention and add a narrow collision-safe approach if justified.
+
+
+## 2026-10-14 — Rollback-only accounting integration passed locally
+
+The user pulled `main` through `3341df38`, linted `tools/run_hr_employee_incentive_accounting_rollback_tests.php`, and executed it against local `ahl_el_kheir`. PHP lint passed. Runtime output:
+
+`PASS | recognition=Dr5500/Cr2400 123.45 SDG | duplicate_recognition=PASS | caller_transaction_currency_hold=PASS`
+
+`PASS | draft_refresh=PASS | repeated_refresh=PASS | settlement=balanced | salary_5200=preserved | advance_1410=preserved | award_paid_link=PASS`
+
+`PASS | rollback_cleanup=PASS | payroll=21 | employee=16 | policy=3 | test_rows=2 awards=2 journals=2`
+
+This proves the harnessed recognition, duplicate protection, caller-owned currency hold, draft scheduling/repeat refresh, payroll settlement accounting, award linkage, and rollback cleanup on this local database. It does not prove business source-event hooks, manager verification/award creation, notifications, concurrency, or the complete incentive lifecycle. R3 remains approved/inactive; `ahl_el_kheir_production_test` was not used. Next, inspect the existing journal-code allocation convention and make the incentive recognizer resilient to the observed MAX+1 collision race before implementing concurrent event hooks.
