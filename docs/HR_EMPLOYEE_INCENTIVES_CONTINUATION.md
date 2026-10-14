@@ -459,3 +459,17 @@ Added migration `database/migrations/2026-10-14_hr_employee_incentives_payroll_a
 This migration depends on the existing incentive-ledger migration and salary-advance payroll migration; chronological filenames preserve that order. It contains only migration-time DDL, not runtime DDL.
 
 **Verification boundary:** source commit only; do not assume it has been applied to local `ahl_el_kheir`. Before application, inspect the migration and confirm the expected source schema exists. Then verify the two payroll/award columns and indexes in the local DB. PHP source integration is not yet implemented by this schema commit.
+
+
+## 2026-10-14 — First award accounting/payroll integration slice committed (runtime verification pending)
+
+The user applied both 2026-10-14 migrations to local `ahl_el_kheir`; the supplied read-only output confirms account `2400` is active/liability, `5500` is active/expense, `payroll.incentive_amount` exists, and the two award journal references and indexes exist.
+
+Source commits now add the first accounting slice:
+- `9e18faa55e38adad122ad2d86a22484ef23ae826` — `modules/hr/lib_employee_incentives.php`: idempotent award recognition helper (Dr 5500 / Cr 2400), draft-only currency-checked award scheduling, and award settlement state helper.
+- `6b24c7719f9913085a2a6a47b6b553399b474ba5`, `dab53825082c47c9948d8a143de1e85bbd636b87`, `67a76a3f5bdfb5f7cb20324a9002729c286a89d3` — payroll accounting settlement now keeps salary expense on 5200, debits 2400 for scheduled incentive settlement, pays net salary plus incentives from the payment account, and records settlement journal references on awards.
+- `2d8b1c2ce123e2bca69133a8f9a083e6a3b7daf7`, `14a10d6f2cd6bf235d3873ca2b0b76cf1479ac0a`, `7128c32216747a15f7437a95a4e77ae14f8e5c4c` — draft refresh/approval paths refresh incentive scheduling before approval, and the payroll UI shows salary net, scheduled incentives, and total expected payout separately.
+
+**Not yet complete or runtime-proven:** source-event creation at collection/sponsor/project confirmation boundaries; manager-verification UI and award creation; employee notifications when an award is scheduled/paid; full PHP lint; accounting and rollback-only integration tests. No local runtime test has yet been performed against this code. Do not call the feature complete and do not activate policy R3.
+
+Next gate: user pulls latest `main`, runs PHP syntax checks on the three changed PHP files, and reports exact output. Fix any syntax/source issue before adding event-boundary integration. Then implement the manager verification/award-creation flow and source-event boundaries from inspected source, with post-commit notifications and rollback-only tests.
