@@ -328,3 +328,12 @@ The user confirmed rejection returns the submitted version to HR as an editable 
 A page-level access-gate defect was found during this review: the FM role had activation permission in the action guard but was redirected before reaching the page because the page gate did not include `$canActivatePolicies`. Commit `9430f3418afe03ed7fce871a1b369514e4dbbca0` fixes that gate. Existing success/error action feedback is marked `data-ak-transient-alert="1"` for centralized toast conversion. The currency notice is contextual information, not an action-result message.
 
 **Local verification remains pending:** PHP lint and browser checks for HR, GM, and FM access, rejection/resubmission, actual notification delivery, toast feedback, and fallback policy status. Do not activate the V1 test policy.
+
+
+## 2026-10-14 — Rejection recovery and fallback rule
+
+GM rejection returns the version to HR as an editable draft; it does not terminate the process. If HR does not submit a replacement, the prior active policy remains in force. If FM does not activate a newly approved version by payday, the prior active policy remains in force. Source inspection confirms an overlapping prior active version is retired only inside the successful FM activation transaction.
+
+Commit `9430f3418afe03ed7fce871a1b369514e4dbbca0` fixes a page-level access gate that previously redirected FM even though FM had activation permission. Existing action success/error messages use `data-ak-transient-alert="1"` for centralized toast conversion.
+
+Local PHP lint, browser permissions, actual notification delivery, toast feedback, and payday policy selection still require runtime verification. Do not activate V1 test values.
