@@ -265,3 +265,7 @@ The user confirmed this is a higher-management workflow involving only HR Manage
 
 
 Role-boundary follow-up: commit `477b2151b63c0aeaa4bee98c006d3685283b6e5d` also updates the approval success message so it identifies FM alone as the activation actor. Runtime role checks remain pending locally.
+
+2026-10-14 — Category-code input removed
+
+The user reported that the “رمز الفئة (تلقائي)” control remained visible in the category form and requested its removal. Commit `e4b0675dbed130a1a5235851df6dbdb4f342b524` removes the code-preview input, label, help text, and preview JavaScript; the category form now presents only Arabic name, English name, and the submit action. The server continues generating and de-duplicating `type_code` from the English name; no client-supplied code is accepted. This is a source change committed to `main`; local pull, PHP lint, and browser verification remain pending. Resume the policy acceptance test only after syncing and confirming the field is absent.
