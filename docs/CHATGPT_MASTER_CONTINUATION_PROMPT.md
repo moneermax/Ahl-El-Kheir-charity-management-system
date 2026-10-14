@@ -569,3 +569,10 @@ Next: user applies migration to local `ahl_el_kheir` and verifies `2400` exists,
 In addition to the dedicated liability account migration (`a281b8cd695e1555dcec86b7c900b1bf691f1562`), schema migration `database/migrations/2026-10-14_hr_employee_incentives_payroll_accounting.sql` is committed as `211f1e033cf488f1a95e5d76956b4371183d6463`. It adds `payroll.incentive_amount` and splits the award journal pointer into recognition and settlement journal references. These are schema-only commits and are not evidence of local migration application or completed PHP integration.
 
 Next: inspect both dated migrations against the local schema, apply them only to `ahl_el_kheir`, verify account `2400` and the new columns/indexes, then continue implementing the award lifecycle and payroll integration in procedural PHP. Preserve salary expense `5200`, incentive expense `5500`, incentive payable `2400`, and salary-advance receivable `1410`; keep incentive payout separate from `net_salary`. Do not activate R3 or touch `ahl_el_kheir_production_test`.
+
+
+## 2026-10-14 — Incentive accounting integration in progress
+
+The user applied both schema migrations locally and verified account `2400`, `5500`, payroll `incentive_amount`, and the award recognition/settlement journal columns. Latest source slice on `main` adds `modules/hr/lib_employee_incentives.php`, integrates incentive settlement in `modules/hr/lib_payroll_accounting.php`, and refreshes/displays the component in `modules/hr/payroll.php`. It is a partial, unverified implementation: source-event hooks, manager verification/award creation, employee notifications, PHP lint, and rollback-only runtime tests are still open.
+
+Next exact step: pull `main`; run `php -l modules/hr/lib_employee_incentives.php`, `php -l modules/hr/lib_payroll_accounting.php`, and `php -l modules/hr/payroll.php`; report exact output. Fix lint/source issues first. Then continue with manager-verification/award creation and confirmed source-event hooks without activating R3 or touching `ahl_el_kheir_production_test`.
