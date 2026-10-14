@@ -3083,3 +3083,10 @@ User-provided evidence confirms PHP lint and runtime harness passed against loca
 ## 2026-10-14 — Incentive recognition journal-code collision retry (verification pending)
 
 The existing accounting convention in `modules/accounting/lib.php` uses MAX+1 for `JE-######` codes; the `journal_entries` schema enforces uniqueness. Concurrent award recognitions can race for a candidate. Commit `143aec005e916b9d9a5b1923b82b16b16ca9b447` adds a five-attempt retry scoped to duplicate entry-code errors inside `hrIncentiveRecognizeAward()`. It does not alter other accounting paths and does not suppress unrelated database errors. Local lint and rollback-only runtime revalidation are pending; source-event hooks remain blocked until those pass.
+
+
+## 2026-10-14 — Win-back reactivation attribution implementation committed; runtime gate pending
+
+Root cause: `winback_campaigns.handled_by` changes as operational ownership changes, so it cannot safely identify the employee who reactivated a sponsor. The new migration adds `reactivated_by_user_id` and `reactivated_at` as durable first-transition attribution. The new helper locks the campaign and updates sponsor/campaign state within one transaction; audit logging runs after success. The campaign transition is not itself an incentive qualification event and creates no award.
+
+Acceptance evidence is still pending local execution: apply `database/migrations/2026-10-14_winback_reactivation_attribution.sql` once on `ahl_el_kheir`; lint `modules/administration/lib_winback.php`, `modules/administration/winback.php`, and `tools/run_winback_reactivation_rollback_tests.php`; run the rollback-only harness. No runtime or two-process concurrency result is claimed. After this gate, source-event logic must separately establish a genuine ≥90-day lapse and a new financially confirmed payment, attribute the achievement to the durable actor, and remain pending HR Manager verification. Do not activate R3 or touch `ahl_el_kheir_production_test`.
