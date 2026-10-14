@@ -6,6 +6,7 @@ require_once dirname(__DIR__, 2) . '/config/functions.php';
 require_once dirname(__DIR__, 2) . '/config/session.php';
 require_once __DIR__ . '/lib.php';
 require_once __DIR__ . '/lib_transaction_review.php';
+require_once dirname(__DIR__, 2) . '/modules/hr/lib_employee_incentives.php';
 Session::start();
 
 $role=Session::getUserRole();
@@ -43,6 +44,9 @@ if($_SERVER['REQUEST_METHOD']==='POST'&&verify_csrf()){
             $affected=dbExecute("UPDATE sponsor_payments SET status='approved',reviewed_by_user_id=?,reviewed_at=NOW(),transaction_id=? WHERE id=? AND status='pending'",[$uid,$txnId,$sp_id]);
             if($affected!==1)throw new RuntimeException('تعذر اعتماد الدفعة.');
             try{dbExecute("INSERT INTO audit_log (user_id,action,entity_type,entity_id,old_values,new_values,ip_address,user_agent) VALUES (?, 'APPROVE','sponsor_payments',?,?,?,?,?)",[$uid,$sp_id,json_encode(['status'=>'pending'],JSON_UNESCAPED_UNICODE),json_encode(['status'=>'approved','txn_id'=>$txnId,'journal_id'=>$journalId,'admin_fee_amount'=>$calc['amount'],'admin_fee_method'=>$calc['method'],'payment_method'=>$sp['payment_method']],JSON_UNESCAPED_UNICODE),$_SERVER['REMOTE_ADDR']??'',$_SERVER['HTTP_USER_AGENT']??'']);}catch(Throwable $auditError){}
+            if ((string)$sp['payment_type'] === 'monthly_sponsorship') {
+                hrIncentiveRecordSourceEvent($pdo, 'sponsor_payments', $sp_id, 'collection', date('Y-m-d H:i:s'), $amount, (string)($sp['currency_code'] ?: 'SDG'), $uid);
+            }
             $pdo->commit();
             try{$gmUsers=dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id=r.id WHERE r.code = 'general_manager' AND u.is_active=1");foreach($gmUsers as $u)ak_transaction_review_notify_event((int)$u['id'],'اعتماد تحصيل مشرف #'.$sp_id,'تم اعتماد تحصيل ('.$purLabel.') بمبلغ '.number_format($amount,2).' ج.س بواسطة المدير المالي.',APP_URL.'modules/accounting/fm_review_queue.php?payment_id='.$sp_id,$sp_id,'sponsor_payment_approved');}catch(Throwable $e){}
             flash('success','تم اعتماد الدفعة وترحيلها للخزينة والقيد المحاسبي بنجاح.');
