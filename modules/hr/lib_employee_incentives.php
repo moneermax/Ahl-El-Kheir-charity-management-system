@@ -10,11 +10,20 @@ declare(strict_types=1);
 
 function hrIncentiveAccountId(PDO $pdo, string $code): int
 {
-    $stmt = $pdo->prepare("SELECT id FROM accounts WHERE code = ? AND is_active = 1 LIMIT 1");
-    $stmt->execute([$code]);
+    $expectedType = ['5500' => 'expense', '2400' => 'liability'][$code] ?? null;
+    if ($expectedType === null) {
+        throw new InvalidArgumentException('رمز حساب الحوافز غير مدعوم: ' . $code);
+    }
+
+    $stmt = $pdo->prepare(
+        "SELECT id FROM accounts
+         WHERE code = ? AND is_active = 1 AND account_type = ?
+         LIMIT 1"
+    );
+    $stmt->execute([$code, $expectedType]);
     $id = (int)($stmt->fetchColumn() ?: 0);
     if ($id <= 0) {
-        throw new RuntimeException('حساب الحوافز المطلوب غير موجود أو غير نشط: ' . $code);
+        throw new RuntimeException('حساب الحوافز المطلوب غير موجود أو غير نشط أو نوعه غير صحيح: ' . $code);
     }
     return $id;
 }
@@ -92,13 +101,18 @@ function hrIncentiveRecognizeAward(PDO $pdo, int $awardId, int $actorUserId = 0)
                      hold_reason = ?
                  WHERE id = ? AND recognition_journal_entry_id IS NULL"
             )->execute([
-                'عملة الحافز لا تطابق عملة الدفاتر؛ يلزم حل معتمد للعملة دون تحويل تلقائي.',
+                $amount <= 0
+                    ? 'مبلغ الحافز غير صالح؛ يلزم تصحيح معتمد قبل الإثبات.'
+                    : 'عملة الحافز لا تطابق عملة الدفاتر؛ يلزم حل معتمد للعملة دون تحويل تلقائي.',
                 $awardId
             ]);
             if ($startedHere) {
                 $pdo->commit();
             }
-            throw new RuntimeException('تم تعليق الحافز لأن عملته لا تطابق عملة الدفاتر.');
+            // Return 0 so an outer transaction can commit the hold instead of
+            // rolling it back in response to an exception. Callers must treat
+            // zero as "held; no recognition journal was posted".
+            return 0;
         }
 
         $expenseId = hrIncentiveAccountId($pdo, '5500');
