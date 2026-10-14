@@ -84,6 +84,20 @@ $fixture = incentiveTestOne(
      )
      WHERE p.status = 'draft'
        AND p.basic_salary > 0
+       AND COALESCE(p.incentive_amount, 0) = 0
+       AND NOT EXISTS (
+           SELECT 1 FROM hr_incentive_awards existing_payroll_award
+           WHERE existing_payroll_award.payroll_id = p.id
+       )
+       AND NOT EXISTS (
+           SELECT 1
+           FROM hr_incentive_awards existing_eligible_award
+           JOIN hr_incentive_events existing_event ON existing_event.id = existing_eligible_award.event_id
+           WHERE existing_eligible_award.employee_id = p.employee_id
+             AND existing_eligible_award.payroll_id IS NULL
+             AND existing_eligible_award.status IN ('earned','held_currency')
+             AND existing_event.status = 'verified'
+       )
        AND e.user_id IS NOT NULL AND e.user_id > 0
        AND UPPER(TRIM(s.salary_currency)) = ?
        AND NOT EXISTS (
