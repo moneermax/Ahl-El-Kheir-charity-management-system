@@ -270,9 +270,9 @@ function hrIncentiveMarkPayrollAwardsPaid(PDO $pdo, int $payrollId, int $journal
         throw new InvalidArgumentException('مراجع تسوية الحوافز غير صالحة.');
     }
     $stmt = $pdo->prepare(
-        "SELECT id, reward_amount
+        "SELECT id, reward_amount, status, settlement_journal_entry_id
          FROM hr_incentive_awards
-         WHERE payroll_id = ? AND status = 'scheduled'
+         WHERE payroll_id = ? AND status IN ('scheduled','paid')
          ORDER BY id ASC FOR UPDATE"
     );
     $stmt->execute([$payrollId]);
@@ -280,6 +280,9 @@ function hrIncentiveMarkPayrollAwardsPaid(PDO $pdo, int $payrollId, int $journal
     $sum = 0.0;
     foreach ($awards as $award) {
         $sum += round((float)$award['reward_amount'], 2);
+        if ($award['status'] === 'paid' && (int)($award['settlement_journal_entry_id'] ?? 0) !== $journalEntryId) {
+            throw new RuntimeException('الحافز مسجل كمدفوع بقيد تسوية مختلف عن قيد مسير الرواتب.');
+        }
     }
 
     $payrollStmt = $pdo->prepare("SELECT incentive_amount FROM payroll WHERE id = ? FOR UPDATE");
@@ -294,6 +297,9 @@ function hrIncentiveMarkPayrollAwardsPaid(PDO $pdo, int $payrollId, int $journal
          WHERE id = ? AND payroll_id = ? AND status = 'scheduled'"
     );
     foreach ($awards as $award) {
+        if ($award['status'] === 'paid') {
+            continue;
+        }
         $update->execute([$journalEntryId, (int)$award['id'], $payrollId]);
         if ($update->rowCount() !== 1) {
             throw new RuntimeException('تغيرت حالة أحد الحوافز أثناء التسوية.');
