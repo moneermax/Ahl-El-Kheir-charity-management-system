@@ -231,14 +231,20 @@ try {
         }
 
         $pdo->beginTransaction();
-        if ($notificationId > 0) {
-            $pdo->prepare('DELETE FROM notifications WHERE id = ?')->execute([$notificationId]);
-        }
         if ($awardId > 0) {
+            $storedNotificationId = (int)($pdo->query(
+                'SELECT notification_id FROM hr_incentive_notification_outbox WHERE award_id = ' . $awardId . ' LIMIT 1'
+            )->fetchColumn() ?: 0);
+            $notificationIds = array_values(array_unique(array_filter([$notificationId, $storedNotificationId])));
+            foreach ($notificationIds as $cleanupNotificationId) {
+                $pdo->prepare('DELETE FROM notifications WHERE id = ?')->execute([(int)$cleanupNotificationId]);
+            }
             $pdo->prepare('DELETE FROM hr_incentive_notification_outbox WHERE award_id = ?')->execute([$awardId]);
             $pdo->prepare('UPDATE payroll SET incentive_amount = ? WHERE id = ? AND status = \'draft\'')
                 ->execute([$originalIncentiveAmount, $payrollId]);
             $pdo->prepare('DELETE FROM hr_incentive_awards WHERE id = ?')->execute([$awardId]);
+        } elseif ($notificationId > 0) {
+            $pdo->prepare('DELETE FROM notifications WHERE id = ?')->execute([$notificationId]);
         }
         if ($eventId > 0) {
             $pdo->prepare('DELETE FROM hr_incentive_events WHERE id = ?')->execute([$eventId]);
