@@ -45,6 +45,13 @@ if($_SERVER['REQUEST_METHOD']==='POST'&&verify_csrf()){
             if($affected!==1)throw new RuntimeException('تعذر اعتماد الدفعة.');
             try{dbExecute("INSERT INTO audit_log (user_id,action,entity_type,entity_id,old_values,new_values,ip_address,user_agent) VALUES (?, 'APPROVE','sponsor_payments',?,?,?,?,?)",[$uid,$sp_id,json_encode(['status'=>'pending'],JSON_UNESCAPED_UNICODE),json_encode(['status'=>'approved','txn_id'=>$txnId,'journal_id'=>$journalId,'admin_fee_amount'=>$calc['amount'],'admin_fee_method'=>$calc['method'],'payment_method'=>$sp['payment_method']],JSON_UNESCAPED_UNICODE),$_SERVER['REMOTE_ADDR']??'',$_SERVER['HTTP_USER_AGENT']??'']);}catch(Throwable $auditError){}
             if ((string)$sp['payment_type'] === 'monthly_sponsorship') {
+                $confirmedAtStmt = $pdo->prepare('SELECT reviewed_at FROM sponsor_payments WHERE id = ?');
+                $confirmedAtStmt->execute([$sp_id]);
+                $confirmedAt = (string)$confirmedAtStmt->fetchColumn();
+                if ($confirmedAt === '') {
+                    throw new RuntimeException('تعذر التحقق من وقت اعتماد الدفعة.');
+                }
+
                 $collectorUserId = (int)$sp['supervisor_id'];
                 $collectorEmployeeId = hrIncentiveEmployeeIdForUser($pdo, $collectorUserId);
                 if ($collectorEmployeeId > 0) {
@@ -53,7 +60,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'&&verify_csrf()){
                         'sponsor_payments',
                         $sp_id,
                         'collection',
-                        date('Y-m-d H:i:s'),
+                        $confirmedAt,
                         $amount,
                         (string)($sp['currency_code'] ?: 'SDG'),
                         $uid,
