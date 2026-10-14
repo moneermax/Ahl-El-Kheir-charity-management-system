@@ -337,3 +337,9 @@ GM rejection returns the version to HR as an editable draft; it does not termina
 Commit `9430f3418afe03ed7fce871a1b369514e4dbbca0` fixes a page-level access gate that previously redirected FM even though FM had activation permission. Existing action success/error messages use `data-ak-transient-alert="1"` for centralized toast conversion.
 
 Local PHP lint, browser permissions, actual notification delivery, toast feedback, and payday policy selection still require runtime verification. Do not activate V1 test values.
+
+## 2026-10-14 — Hide unapproved incentive policies from FM
+
+Commit `1ab2eac4173dc5f4f808865fc10c722058210bb3` changes `modules/hr/incentive_policy.php` so the FM policy list includes only `approved`, `active`, and `retired` versions. Drafts and `pending_gm` submissions are not disclosed to FM before GM approval; HR and GM retain the workflow views they need. This is a source-level correction only; local PHP lint and FM/HR/GM browser verification remain pending.
+
+The existing V1 acceptance policy is still a draft and must remain unactivated. Do not delete it directly with SQL: its approval history and child records are acceptance evidence and may have referential constraints. Reuse V1 for HR edit/submit → GM reject with reason → HR revise/resubmit → GM approve. FM notification is expected at the GM approval handoff, not while the policy remains a draft. Verify actual recipient-role lookup and the persisted notification after approval before declaring delivery fixed. Payroll effective-policy selection remains a separate unverified gate.
