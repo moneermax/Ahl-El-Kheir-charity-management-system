@@ -135,10 +135,10 @@ try {
                 $amountRaw = trim((string)($_POST['amount'][$typeCode] ?? ''));
                 $amount = filter_var($amountRaw, FILTER_VALIDATE_FLOAT);
                 if ($amount === false || !is_finite((float)$amount) || (float)$amount < 0 || (float)$amount > 9999999999.99) {
-                    throw new InvalidArgumentException('قيمة الحافز غير صالحة: ' . (string)$typeRow['name_ar']);
+                    throw new InvalidArgumentException(t('incentives.invalid_amount') . ': ' . (string)(AK_LANG === 'en' ? $typeRow['name_en'] : $typeRow['name_ar']));
                 }
                 if ($enabled && (float)$amount <= 0) {
-                    throw new InvalidArgumentException('قيمة الحافز المفعّل يجب أن تكون أكبر من صفر: ' . (string)$typeRow['name_ar']);
+                    throw new InvalidArgumentException(t('incentives.enabled_amount_positive') . ': ' . (string)(AK_LANG === 'en' ? $typeRow['name_en'] : $typeRow['name_ar']));
                 }
                 $rules[$typeCode] = ['enabled' => $enabled, 'amount' => round((float)$amount, 2), 'currency' => APP_CURRENCY_CODE];
             }
@@ -252,10 +252,10 @@ try {
                 $raw = trim((string)($_POST['amount'][$code] ?? ''));
                 $amount = filter_var($raw, FILTER_VALIDATE_FLOAT);
                 if ($amount === false || !is_finite((float)$amount) || (float)$amount < 0 || (float)$amount > 9999999999.99) {
-                    throw new InvalidArgumentException('قيمة الحافز غير صالحة: ' . (string)$storedRule['name_ar']);
+                    throw new InvalidArgumentException(t('incentives.invalid_amount') . ': ' . (string)(AK_LANG === 'en' ? $storedRule['name_en'] : $storedRule['name_ar']));
                 }
-                if ($enabled && (float)$amount <= 0) throw new InvalidArgumentException('قيمة الحافز المفعّل يجب أن تكون أكبر من صفر: ' . (string)$storedRule['name_ar']);
-                if ($enabled && (int)$storedRule['is_active'] !== 1) throw new InvalidArgumentException('لا يمكن تفعيل فئة غير نشطة: ' . (string)$storedRule['name_ar']);
+                if ($enabled && (float)$amount <= 0) throw new InvalidArgumentException(t('incentives.enabled_amount_positive') . ': ' . (string)(AK_LANG === 'en' ? $storedRule['name_en'] : $storedRule['name_ar']));
+                if ($enabled && (int)$storedRule['is_active'] !== 1) throw new InvalidArgumentException(t('incentives.inactive_category_enable') . ': ' . (string)(AK_LANG === 'en' ? $storedRule['name_en'] : $storedRule['name_ar']));
                 if ($enabled) $enabledCount++;
                 $pdo->prepare('UPDATE hr_incentive_policy_rules SET is_enabled=?, reward_amount=? WHERE policy_version_id=? AND incentive_type=?')
                     ->execute([$enabled, round((float)$amount, 2), $policyId, $code]);
@@ -289,14 +289,14 @@ try {
             $enabledCount = 0;
             foreach ($rules as $rule) {
                 if ((int)$rule['is_enabled'] === 1) {
-                    if ((float)$rule['reward_amount'] <= 0) throw new InvalidArgumentException('قيمة الحافز المفعّل يجب أن تكون أكبر من صفر: ' . (string)$rule['name_ar']);
-                    if ((int)$rule['is_active'] !== 1) throw new InvalidArgumentException('توجد فئة مفعّلة غير نشطة: ' . (string)$rule['name_ar']);
+                    if ((float)$rule['reward_amount'] <= 0) throw new InvalidArgumentException(t('incentives.enabled_amount_positive') . ': ' . (string)(AK_LANG === 'en' ? $rule['name_en'] : $rule['name_ar']));
+                    if ((int)$rule['is_active'] !== 1) throw new InvalidArgumentException(t('incentives.inactive_enabled_category') . ': ' . (string)(AK_LANG === 'en' ? $rule['name_en'] : $rule['name_ar']));
                     $enabledCount++;
                 }
             }
             if ($enabledCount < 1) throw new InvalidArgumentException('فعّل نوع حافز واحداً على الأقل قبل الإرسال.');
-            $missing = dbFetchAll("SELECT label_ar FROM hr_incentive_policy_custom_fields WHERE policy_version_id=? AND is_required=1 AND (field_value IS NULL OR TRIM(field_value)='')", [$policyId]);
-            if ($missing) throw new InvalidArgumentException('أكمل الحقول الإضافية المطلوبة: ' . implode('، ', array_column($missing, 'label_ar')));
+            $missing = dbFetchAll("SELECT label_ar, label_en FROM hr_incentive_policy_custom_fields WHERE policy_version_id=? AND is_required=1 AND (field_value IS NULL OR TRIM(field_value)='')", [$policyId]);
+            if ($missing) throw new InvalidArgumentException(t('incentives.required_fields_submit') . ': ' . implode(', ', array_map(static fn(array $field): string => (string)(AK_LANG === 'en' && !empty($field['label_en']) ? $field['label_en'] : $field['label_ar']), $missing)));
             $pdo->prepare("UPDATE hr_incentive_policy_versions SET status='pending_gm' WHERE id=? AND status='draft'")->execute([$policyId]);
             $pdo->prepare("INSERT INTO hr_incentive_policy_approval_history (policy_version_id, action, actor_user_id) VALUES (?, 'submitted', ?)")->execute([$policyId, (int)Session::getUserID()]);
             $pdo->commit();
@@ -371,11 +371,11 @@ try {
             }
 
             $requiredFields = dbFetchAll(
-                "SELECT label_ar FROM hr_incentive_policy_custom_fields
+                "SELECT label_ar, label_en FROM hr_incentive_policy_custom_fields
                  WHERE policy_version_id = ? AND is_required = 1 AND (field_value IS NULL OR TRIM(field_value) = '')",
                 [$policyId]
             );
-            if ($requiredFields) throw new InvalidArgumentException('أكمل الحقول الإضافية المطلوبة قبل تفعيل السياسة: ' . implode('، ', array_column($requiredFields, 'label_ar')));
+            if ($requiredFields) throw new InvalidArgumentException(t('incentives.required_fields_activate') . ': ' . implode(', ', array_map(static fn(array $field): string => (string)(AK_LANG === 'en' && !empty($field['label_en']) ? $field['label_en'] : $field['label_ar']), $requiredFields)));
 
             $effectiveFrom = (string)$policy['effective_from'];
             $laterActive = dbFetchOne(
