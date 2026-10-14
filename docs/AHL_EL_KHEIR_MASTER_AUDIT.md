@@ -2979,3 +2979,10 @@ No schema change was needed. **Verification is source-only; local PHP lint, serv
 Verified in `modules/hr/incentive_policy.php`: GM rejection writes a rejection-history row and returns the version to `draft`, allowing HR to edit and resubmit. Existing active policy versions are retired only inside the successful FM activation transaction. Therefore, if HR does not submit a replacement or FM does not activate an approved replacement, the prior active policy is not retired by these workflow steps. This source review does not yet prove payroll's runtime effective-policy selection; that must be verified against the actual payroll incentive integration before claiming payday fallback acceptance.
 
 Found and fixed a role gate inconsistency: FM had permission for `activate_policy` but was excluded by the page-level access gate. Commit `9430f3418afe03ed7fce871a1b369514e4dbbca0` adds `$canActivatePolicies` to the gate. Success/error messages use transient-alert markers for toast conversion. Local syntax/runtime checks remain pending.
+
+
+## 2026-10-14 — Incentive policy fallback audit
+
+Source review confirms GM rejection records the reason and returns the version to `draft`, so HR can edit and resubmit. An overlapping prior active version is retired only in the successful FM activation transaction. If there is no replacement submission or FM does not activate an approved replacement, the previous active policy remains active. This does not yet prove payday selection in payroll; inspect and runtime-test the payroll incentive effective-policy lookup before closing fallback acceptance.
+
+Commit `9430f3418afe03ed7fce871a1b369514e4dbbca0` fixes the page-level access gate so FM can reach the existing activation action. Success/error action feedback nodes use `data-ak-transient-alert="1"` for centralized toast conversion. Local lint/runtime checks remain pending.
