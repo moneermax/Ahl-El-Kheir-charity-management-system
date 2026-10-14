@@ -364,7 +364,7 @@ try {
             $reason = trim((string)($_POST['reason'] ?? ''));
             if ($reason === '' || mb_strlen($reason) > 2000) throw new InvalidArgumentException('سبب الرفض مطلوب وبحد أقصى 2000 حرف.');
             $pdo->beginTransaction();
-            $policy = dbFetchOne('SELECT id, status FROM hr_incentive_policy_versions WHERE id=? FOR UPDATE', [$policyId]);
+            $policy = dbFetchOne('SELECT id, status, policy_name, version_no, created_by_user_id FROM hr_incentive_policy_versions WHERE id=? FOR UPDATE', [$policyId]);
             if (!$policy || $policy['status'] !== 'pending_gm') throw new InvalidArgumentException('السياسة غير موجودة في قائمة انتظار الاعتماد.');
             $pdo->prepare("INSERT INTO hr_incentive_policy_approval_history (policy_version_id, action, actor_user_id, reason) VALUES (?, 'rejected', ?, ?)")->execute([$policyId, (int)Session::getUserID(), $reason]);
             $pdo->prepare("UPDATE hr_incentive_policy_versions SET status='draft' WHERE id=? AND status='pending_gm'")->execute([$policyId]);
