@@ -3048,3 +3048,10 @@ Source inspection of `modules/accounting/accounts.php`, `modules/accounting/lib.
 Migration `database/migrations/2026-10-14_hr_employee_incentives_payable_account.sql` is committed as `a281b8cd695e1555dcec86b7c900b1bf691f1562`. It only inserts the account if code `2400` is absent; it does not execute DDL. Local application and account-row/type verification are pending.
 
 Payroll accounting currently debits `5200` by `net_salary + salary_advance_deduction`, credits the payout account by `net_salary`, and credits `1410` for salary-advance recovery. Adding an incentive to `net_salary` without an explicit component would incorrectly mix incentive expense into salary expense. The award schema's single `journal_entry_id` is insufficient to safely represent both accrual recognition and payroll settlement; distinct journal references and explicit payroll incentive linkage must be designed before posting any award journals. No incentive award/event lifecycle has been runtime-proven. Keep this as a source-level design checkpoint, not a completed integration.
+
+
+## 2026-10-14 — Separate incentive payout component and journal lifecycle schema
+
+Migration `2026-10-14_hr_employee_incentives_payroll_accounting.sql` (commit `211f1e033cf488f1a95e5d76956b4371183d6463`) adds `payroll.incentive_amount` independently from salary `net_salary`, and distinguishes the award's recognition journal from its payroll-settlement journal. This avoids using one ambiguous award journal reference for two different entries and prepares accounting to recognize Dr `5500` / Cr `2400`, then settle Dr `2400` / Cr payout account.
+
+This is a schema-only source milestone. It has not been applied or runtime-verified locally; award functions, payroll scheduling/refresh, payroll UI, journal posting, and rollback-only tests remain pending. Before application, inspect the migration against the current local schema, then verify the resulting columns/indexes. Never merge incentive amounts into salary `net_salary` without retaining the separate accounting component.
