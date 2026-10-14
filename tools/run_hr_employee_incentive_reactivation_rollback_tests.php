@@ -39,9 +39,13 @@ function reactivationTestCount(PDO $pdo, string $sql, array $params = []): int
 $currency = strtoupper(trim((string)APP_CURRENCY_CODE));
 $recipient = reactivationTestOne(
     $pdo,
-    "SELECT e.id AS employee_id, e.user_id
+    "SELECT MIN(e.id) AS employee_id, e.user_id
      FROM employees e JOIN users u ON u.id = e.user_id
-     WHERE e.user_id > 0 ORDER BY e.id LIMIT 1"
+     WHERE e.user_id > 0
+     GROUP BY e.user_id
+     HAVING COUNT(*) = 1
+     ORDER BY MIN(e.id)
+     LIMIT 1"
 );
 $sponsor = reactivationTestOne($pdo, 'SELECT id FROM sponsors WHERE id > 0 ORDER BY id LIMIT 1');
 $reviewer = $recipient ? reactivationTestOne(
