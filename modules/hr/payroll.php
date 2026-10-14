@@ -9,6 +9,7 @@ require_once __DIR__ . '/lib_contract_salary.php';
 require_once __DIR__ . '/lib_payroll_policy.php';
 require_once __DIR__ . '/lib_payroll_accounting.php';
 require_once __DIR__ . '/lib_salary_advance_payroll.php';
+require_once __DIR__ . '/lib_employee_incentives.php';
 
 Session::start();
 $userRole = Session::getUserRole();
@@ -89,6 +90,7 @@ function payrollRefreshDraftBaseSalary(PDO $pdo, int $month, int $year): int
         $salaryStmt->execute([(float)$row['basic_salary'], (int)$row['id']]);
         hrPayrollRefreshAttendanceDeductionDraft($pdo, (int)$row['id']);
         hrSalaryAdvancePayrollRefreshDraft($pdo, (int)$row['id']);
+        hrIncentiveRefreshPayrollDraft($pdo, (int)$row['id']);
         $updated++;
     }
 
@@ -160,14 +162,19 @@ try {
 
             hrPayrollRefreshAttendanceDeductionDraft($pdo, $id);
             hrSalaryAdvancePayrollRefreshDraft($pdo, $id);
-            $message = 'تم تحديث مكونات مسير الراتب؛ واحتُسب خصم السلفة آلياً وفق جدول السداد والسياسة المعتمدة.';
+            hrIncentiveRefreshPayrollDraft($pdo, $id);
+            $message = 'تم تحديث مكونات مسير الراتب؛ واحتُسب خصم السلفة والحوافز المجدولة آلياً وفق السجلات والسياسات المعتمدة.';
         } elseif ($action === 'update_status') {
             $id = (int)($_POST['payroll_id'] ?? 0);
             $newStatus = (string)($_POST['status'] ?? '');
             $paymentAccountId = isset($_POST['payment_account_id']) && $_POST['payment_account_id'] !== '' ? (int)$_POST['payment_account_id'] : null;
+            if ($newStatus === 'approved') {
+                payrollRefreshDraftBaseSalary($pdo, $month, $year);
+            }
             hrPayrollChangeStatus($pdo, $id, $newStatus, $paymentAccountId);
             $message = $newStatus === 'approved' ? 'تم اعتماد مسير الراتب وتجهيزه للمحاسبة.' : 'تم تسجيل صرف مسير الراتب وترحيله إلى المحاسبة.';
         } elseif ($action === 'approve_all') {
+            payrollRefreshDraftBaseSalary($pdo, $month, $year);
             hrPayrollApproveAll($pdo, $month, $year);
             $message = 'تم اعتماد مسودات الرواتب للفترة المحددة وتجهيزها للمحاسبة.';
         }
