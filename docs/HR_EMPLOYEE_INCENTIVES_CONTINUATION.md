@@ -473,3 +473,10 @@ Source commits now add the first accounting slice:
 **Not yet complete or runtime-proven:** source-event creation at collection/sponsor/project confirmation boundaries; manager-verification UI and award creation; employee notifications when an award is scheduled/paid; full PHP lint; accounting and rollback-only integration tests. No local runtime test has yet been performed against this code. Do not call the feature complete and do not activate policy R3.
 
 Next gate: user pulls latest `main`, runs PHP syntax checks on the three changed PHP files, and reports exact output. Fix any syntax/source issue before adding event-boundary integration. Then implement the manager verification/award-creation flow and source-event boundaries from inspected source, with post-commit notifications and rollback-only tests.
+
+
+## 2026-10-14 — Incentive recognition source review: currency-hold transaction fix
+
+The first syntax gate passed for the incentive helper, payroll accounting, and payroll page. Follow-up source review found that the recognition helper updated an award to `held_currency` and then threw. When invoked inside a caller-owned transaction, that exception could cause the caller to roll back the hold itself. The helper now returns `0` for a held/invalid-amount award instead of throwing after the update; when the caller owns the transaction it commits the hold, and when the caller owns the outer transaction the caller can commit it. Any caller must interpret return value `0` as “held; no recognition journal posted.” The helper also validates that account `5500` is an active expense account and `2400` is an active liability account, not merely active accounts by code.
+
+This is a source-level correction only. PHP lint and rollback-only runtime verification of the updated helper remain pending. Do not treat the award lifecycle as runtime-proven; event creation, manager verification/award creation, and post-commit employee notifications remain unimplemented.
