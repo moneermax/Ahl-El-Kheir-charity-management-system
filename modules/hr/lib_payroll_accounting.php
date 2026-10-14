@@ -63,7 +63,8 @@ function hrPayrollPostAccounting(PDO $pdo, array $payroll): int
     // payroll transaction is active.
     $netSalary = round((float)($payroll['net_salary'] ?? 0), 2);
     $salaryAdvanceDeduction = round((float)($payroll['salary_advance_deduction'] ?? 0), 2);
-    if ($netSalary < 0 || $salaryAdvanceDeduction < 0) {
+    $incentiveAmount = round((float)($payroll['incentive_amount'] ?? 0), 2);
+    if ($netSalary < 0 || $salaryAdvanceDeduction < 0 || $incentiveAmount < 0) {
         throw new RuntimeException('مبالغ مسير الراتب غير صالحة للمحاسبة.');
     }
 
@@ -95,6 +96,10 @@ function hrPayrollPostAccounting(PDO $pdo, array $payroll): int
     $paymentAccountId = hrPayrollResolvePaymentAccount($pdo, $requestedPaymentAccount);
 
     $expenseAmount = round($netSalary + $salaryAdvanceDeduction, 2);
+    $totalDebitExpected = round($expenseAmount + $incentiveAmount, 2);
+    $totalBankPayment = round($netSalary + $incentiveAmount, 2);
+    $incentivePayableAccountId = $incentiveAmount > 0 ? hrIncentiveAccountId($pdo, '2400') : null;
+    require_once __DIR__ . '/lib_employee_incentives.php';
 
     $existingStmt = $pdo->prepare(
         "SELECT id
@@ -127,8 +132,18 @@ function hrPayrollPostAccounting(PDO $pdo, array $payroll): int
         if ($lineCount < 2 ||
             $debitTotal <= 0 ||
             $debitTotal !== $creditTotal ||
-            $debitTotal !== $expenseAmount) {
+            $debitTotal !== $totalDebitExpected) {
             throw new RuntimeException('يوجد قيد رواتب مرحّل سابق لكنه غير متوازن أو لا يطابق إجمالي تكلفة الراتب؛ تم إيقاف إعادة استخدامه لحماية سلامة المحاسبة.');
+        }
+
+        if ($incentiveAmount > 0) {
+            $incentiveCheckStmt = $pdo->prepare(
+                "SELECT ROUND(COALESCE(SUM(debit), 0), 2) AS payable_debit\n                 FROM journal_lines WHERE entry_id = ? AND account_id = ?"
+            );
+            $incentiveCheckStmt->execute([$entryId, $incentivePayableAccountId]);
+            if (round((float)$incentiveCheckStmt->fetchColumn(), 2) !== $incentiveAmount) {
+                throw new RuntimeException('القيد المرحّل السابق لا يحتوي على تسوية الحوافز الصحيحة على حساب 2400.');
+            }
         }
 
         if ($salaryAdvanceDeduction > 0) {
@@ -186,8 +201,11 @@ function hrPayrollPostAccounting(PDO $pdo, array $payroll): int
         // paid to the employee; the repayment portion credits receivable 1410.
         $lineStmt->execute([$entryId, $expenseAccountId, $expenseAmount, 0, 'رواتب وأجور - ' . $period]);
 
-        if ($netSalary > 0) {
-            $lineStmt->execute([$entryId, $paymentAccountId, 0, $netSalary, 'صرف صافي الرواتب - ' . $period]);
+        if ($totalBankPayment > 0) {
+            $lineStmt->execute([$entryId, $paymentAccountId, 0, $totalBankPayment, 'صرف صافي الرواتب والحوافز المجدولة - ' . $period]);
+        }
+        if ($incentiveAmount > 0) {
+            $lineStmt->execute([$entryId, $incentivePayableAccountId, $incentiveAmount, 0, 'تسوية مستحقات الحوافز من مسير الرواتب - ' . $period]);
         }
         if ($salaryAdvanceDeduction > 0) {
             $lineStmt->execute([$entryId, $receivableAccountId, 0, $salaryAdvanceDeduction, 'سداد سلفة راتب من مسير - ' . $period]);
@@ -201,6 +219,9 @@ function hrPayrollPostAccounting(PDO $pdo, array $payroll): int
          WHERE id = ?"
     );
     $update->execute([$entryId, (int)$payroll['id']]);
+    if ($incentiveAmount > 0) {
+        hrIncentiveMarkPayrollAwardsPaid($pdo, (int)$payroll['id'], $entryId);
+    }
 
     return $entryId;
 }
