@@ -2703,3 +2703,8 @@ Status: **SOURCE COMMITTED; LOCAL RUNTIME ACCEPTANCE PENDING.** Do not treat rol
 GM rejection returns the submitted policy version to an editable HR draft. The previous active policy remains in force unless FM successfully activates a GM-approved replacement; the existing activation transaction is the only path that retires the overlapping previous active version. Commit `9430f3418afe03ed7fce871a1b369514e4dbbca0` fixes the page-level gate so FM can reach the activation UI, consistent with the existing activation action guard.
 
 Status remains **source committed; local runtime acceptance pending**. Verify HR/GM/FM access, rejection reason and resubmission, notification handoffs, toast feedback, and fallback behavior. Do not activate the V1 test policy.
+
+
+## 2026-10-14 — Incentive policy fallback rule
+
+GM rejection returns the policy to HR as an editable draft. The previous active policy remains in force unless FM successfully activates a GM-approved replacement; the existing activation transaction retires the overlapping previous version. Commit `9430f3418afe03ed7fce871a1b369514e4dbbca0` fixes the page gate so FM can reach the activation UI. Status: source committed, local runtime acceptance pending. Verify roles, rejection/resubmission, notifications, toasts, and payroll effective-policy selection. Keep V1 inactive.
