@@ -480,3 +480,10 @@ Next gate: user pulls latest `main`, runs PHP syntax checks on the three changed
 The first syntax gate passed for the incentive helper, payroll accounting, and payroll page. Follow-up source review found that the recognition helper updated an award to `held_currency` and then threw. When invoked inside a caller-owned transaction, that exception could cause the caller to roll back the hold itself. The helper now returns `0` for a held/invalid-amount award instead of throwing after the update; when the caller owns the transaction it commits the hold, and when the caller owns the outer transaction the caller can commit it. Any caller must interpret return value `0` as “held; no recognition journal posted.” The helper also validates that account `5500` is an active expense account and `2400` is an active liability account, not merely active accounts by code.
 
 This is a source-level correction only. PHP lint and rollback-only runtime verification of the updated helper remain pending. Do not treat the award lifecycle as runtime-proven; event creation, manager verification/award creation, and post-commit employee notifications remain unimplemented.
+
+
+## 2026-10-14 — Updated recognition helper PHP syntax gate passed
+
+After commit `8fff901700bb13a301338100948d02259dc4ff2e) was pulled to local `main`, the user ran PHP 8.2 lint against `modules/hr/lib_employee_incentives.php`. Result: `No syntax errors detected`. The earlier lint results for `modules/hr/lib_payroll_accounting.php` and `modules/hr/payroll.php` also passed before the recognition-helper hardening; those files were unchanged by the hardening commit.
+
+This is syntax-only evidence. Recognition journal posting, currency holds inside caller-owned transactions, draft scheduling, payroll accounting, paid-award settlement, and concurrency remain unverified at runtime. Next gate is a rollback-only harness against local `ahl_el_kheir`, using the existing schema and source accounting conventions. Keep policy R3 approved but inactive; do not touch `ahl_el_kheir_production_test`.
