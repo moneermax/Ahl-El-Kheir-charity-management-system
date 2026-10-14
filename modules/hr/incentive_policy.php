@@ -649,7 +649,7 @@ require_once __DIR__ . '/../../includes/header.php';
                                             <button class="btn btn-sm btn-outline-danger" type="submit">رفض وإعادة للمسودة</button>
                                         </form>
                                     <?php elseif ($policy['status'] === 'approved' && $canActivatePolicies): ?>
-                                        <form method="post" onsubmit="return confirm('تفعيل السياسة المعتمدة وفق تاريخ السريان؟');">
+                                        <form method="post" data-ak-native-post="1" data-confirm="<?=e(t('incentives.confirm_activate'))?>">
                                             <?=csrf_field()?>
                                             <input type="hidden" name="action" value="activate_policy">
                                             <input type="hidden" name="policy_id" value="<?=$policyId?>">
