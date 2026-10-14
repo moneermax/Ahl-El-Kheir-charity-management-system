@@ -1,7 +1,7 @@
 # Employee Incentives — Continuation and Source Audit
 
-**Checkpoint:** 2026-10-13  
-**Status:** Incentive ledger, category catalogue/custom policy fields, and the GM policy approval workflow are committed on `main`. The GM approval migration has been applied locally and the schema inspected; PHP syntax checks passed and the policy page loads. The complete approval/rejection/activation workflow remains unverified at runtime because the local database has no policy versions, rules, or custom fields. Award issuance, source-event integration, payroll scheduling, and incentive accounting remain separate unfinished gates.
+**Checkpoint:** 2026-10-14  
+**Status:** The incentive policy GM approval workflow and FM activation/cancellation acceptance gates are closed at their tested boundary. The ledger, award accounting helpers, draft payroll integration, and collection source-event hook are committed on `main`; local rollback-only accounting and source-event harnesses passed, including no award before verification and duplicate-event protection. Full lifecycle coverage remains incomplete: reactivation attribution/atomic transition is the active slice, while first confirmed reactivation payment qualification, new-sponsor/project source hooks, HR Manager verification/award issuance, employee notifications, and end-to-end lifecycle acceptance remain open.
 
 ## Scope
 
@@ -128,9 +128,11 @@ The user's live metadata query confirms all 18 relevant tables are InnoDB. Relev
 
 This metadata output still does not show full column definitions, defaults, check constraints, table collations, or complete DDL. The next gate is targeted `SHOW CREATE TABLE` for the payment, payroll, journal, project, and salary-history tables, plus inspection of the current transaction and payroll refresh functions. Do not author the incentive migration until those details and the approved reward-state model are reconciled.
 
-## Next engineering gate
+## Current engineering gate — Win-back reactivation attribution
 
-The next gate is local verification of the committed GM policy approval workflow, followed by the separate source-event/award and payroll/accounting integrations. Before further schema work, verify actual local table definitions and constraints; do not restore the data-bearing dump or add duplicate attribution columns. The policy approval source/migration exists on main but is not locally runtime-verified.
+The active slice is to preserve the actual user who completed a successful win-back transition and make the sponsor/campaign state change atomic. Migration `database/migrations/2026-10-14_winback_reactivation_attribution.sql`, helper `modules/administration/lib_winback.php`, the `mark_returned` integration, and rollback-only harness `tools/run_winback_reactivation_rollback_tests.php` are committed on `main`. Local migration execution, PHP lint, and the rollback-only harness are **pending user execution**. The helper does not issue an incentive or record a source event.
+
+After that gate passes, integrate reactivation only at a financially confirmed payment boundary, prove the ≥90-day lapse from authoritative sponsorship/payment history, use the durable reactivation actor (never mutable `handled_by`), and keep the event pending until HR Manager verification. Do not treat campaign status or `sponsor_payments.status='approved'` alone as proof of a qualifying reactivation. Do not use `ahl_el_kheir_production_test` or activate policy R3.
 
 ## 2026-10-12 — Incentive ledger schema committed
 
@@ -525,6 +527,13 @@ The user pulled `main` through `3341df38`, linted `tools/run_hr_employee_incenti
 This proves the harnessed recognition, duplicate protection, caller-owned currency hold, draft scheduling/repeat refresh, payroll settlement accounting, award linkage, and rollback cleanup on this local database. It does not prove business source-event hooks, manager verification/award creation, notifications, concurrency, or the complete incentive lifecycle. R3 remains approved/inactive; `ahl_el_kheir_production_test` was not used. Next, inspect the existing journal-code allocation convention and make the incentive recognizer resilient to the observed MAX+1 collision race before implementing concurrent event hooks.
 
 
-## 2026-10-14 — Incentive journal-code collision retry added (local verification pending)
+## 2026-10-14 — Incentive accounting and collection source-event rollback checks passed
 
-Source review of `modules/accounting/lib.php` confirmed the repository's existing `ak_post_transaction_journal()` also allocates `JE-######` using MAX+1 and inserts into `journal_entries`, whose unique code key is `uq_je_code`. That convention is not serialized, so concurrent recognitions of different awards can calculate the same next code. Commit `143aec005e916b9d9a5b1923b82b16b16ca9b447` changes only the incentive recognition helper: it retries up to five times when the insert fails specifically with a duplicate-key error naming `uq_je_code`/`entry_code`; unrelated SQL errors are rethrown. It does not change the established convention used by other accounting workflows. This change has not yet passed local PHP lint or the rollback harness; both must be rerun before proceeding to source-event hooks.
+The user reported PHP lint and both rollback-only harnesses passing after the bounded incentive journal-code collision retry and collection source-event hook. Evidence includes: collection event is `pending_verification`; duplicate event is blocked; no award exists before verification; rollback cleanup passes; recognition posts Dr 5500 / Cr 2400 for the test amount; currency mismatch is held; draft refresh is idempotent; payroll settlement is balanced and preserves salary expense 5200 and salary-advance account 1410; paid-award linkage and rollback cleanup pass. These results validate only the tested helper/accounting/collection slice, not the complete lifecycle or concurrency.
+
+
+## 2026-10-14 — Durable win-back reactivation attribution committed; local gate pending
+
+The existing `winback_campaigns.handled_by` is mutable case ownership and is not a reliable incentive recipient. Migration `database/migrations/2026-10-14_winback_reactivation_attribution.sql` adds `reactivated_by_user_id` and `reactivated_at` to preserve the first successful reactivation transition. `modules/administration/lib_winback.php` locks the campaign row and updates the sponsor and campaign in one transaction; it writes the actor/time only if not already set. `modules/administration/winback.php` uses this helper and writes the audit entry after the business transaction succeeds. No incentive event or award is created by the campaign transition.
+
+Rollback-only harness: `tools/run_winback_reactivation_rollback_tests.php`. **Required local gate:** apply the migration once to `ahl_el_kheir`, lint both PHP files and the harness, then run the harness. The harness inserts a temporary campaign against an existing sponsor, verifies atomic state/actor/timestamp and duplicate-transition blocking, and rolls back the sponsor/campaign mutations. No concurrent two-process test is claimed.
