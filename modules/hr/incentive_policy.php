@@ -5,11 +5,12 @@ require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../config/functions.php';
 require_once __DIR__ . '/../../config/session.php';
+require_once __DIR__ . '/../accounting/lib_transaction_review.php';
 
 Session::start();
 $role = (string)Session::getUserRole();
 $canReviewPolicies = in_array($role, ['general_manager', 'gm'], true);
-$canManagePolicies = in_array($role, ['financial_manager', 'hr_manager'], true);
+$canManagePolicies = $role === 'hr_manager';
 $canActivatePolicies = $role === 'financial_manager';
 $canManageTypes = $canManagePolicies;
 if (!Session::isLoggedIn() || (!$canManagePolicies && !$canReviewPolicies)) {
@@ -71,6 +72,33 @@ function hrIncentiveFieldLabel(array $field): string
 {
     $english = trim((string)($field['label_en'] ?? ''));
     return AK_LANG === 'en' && $english !== '' ? $english : (string)($field['label_ar'] ?? '');
+}
+
+function hrIncentivePolicyNotifyRoleUsers(int $policyId, array $roleCodes, string $title, string $body, string $link, string $referenceType, ?int $excludeUserId = null): void
+{
+    if ($policyId <= 0 || !$roleCodes || trim($title) === '') return;
+    try {
+        $roleCodes = array_values(array_unique(array_filter($roleCodes, static fn($code): bool => is_string($code) && $code !== '')));
+        if (!$roleCodes) return;
+        $placeholders = implode(',', array_fill(0, count($roleCodes), '?'));
+        $users = dbFetchAll(
+            "SELECT u.id FROM users u JOIN roles r ON r.id = u.role_id WHERE r.code IN ($placeholders) AND u.is_active = 1",
+            $roleCodes
+        );
+        foreach ($users as $user) {
+            $userId = (int)($user['id'] ?? 0);
+            if ($userId <= 0 || ($excludeUserId !== null && $userId === $excludeUserId)) continue;
+            ak_transaction_review_notify_event($userId, $title, $body, $link, $policyId, $referenceType);
+        }
+    } catch (Throwable $notificationError) {
+        // Notifications are post-commit handoffs; delivery failure never undoes the policy transition.
+    }
+}
+
+function hrIncentivePolicyNotifyUser(int $userId, int $policyId, string $title, string $body, string $link, string $referenceType): void
+{
+    if ($userId <= 0 || $policyId <= 0) return;
+    ak_transaction_review_notify_event($userId, $title, $body, $link, $policyId, $referenceType);
 }
 
 try {
@@ -306,6 +334,8 @@ try {
             $pdo->prepare("UPDATE hr_incentive_policy_versions SET status='pending_gm' WHERE id=? AND status='draft'")->execute([$policyId]);
             $pdo->prepare("INSERT INTO hr_incentive_policy_approval_history (policy_version_id, action, actor_user_id) VALUES (?, 'submitted', ?)")->execute([$policyId, (int)Session::getUserID()]);
             $pdo->commit();
+            $policyLabel = 'سياسة الحوافز V' . (int)$policy['version_no'] . ' «' . (string)$policy['policy_name'] . '»';
+            hrIncentivePolicyNotifyRoleUsers($policyId, ['general_manager', 'gm'], 'سياسة حوافز بانتظار اعتمادك', 'أرسل مدير الموارد البشرية ' . $policyLabel . ' للاعتماد. يرجى مراجعة تفاصيل السياسة واتخاذ قرار الاعتماد أو الرفض.', APP_URL . 'modules/hr/incentive_policy.php', 'hr_incentive_policy_submitted');
             flash('success', t('incentives.submit_success'));
             header('Location: ' . APP_URL . 'modules/hr/incentive_policy.php');
             exit;
@@ -315,11 +345,14 @@ try {
             if (!$canReviewPolicies) throw new RuntimeException('اعتماد سياسة الحوافز متاح للمدير العام فقط.');
             $policyId = (int)($_POST['policy_id'] ?? 0);
             $pdo->beginTransaction();
-            $policy = dbFetchOne('SELECT id, status FROM hr_incentive_policy_versions WHERE id=? FOR UPDATE', [$policyId]);
+            $policy = dbFetchOne('SELECT id, status, policy_name, version_no, created_by_user_id FROM hr_incentive_policy_versions WHERE id=? FOR UPDATE', [$policyId]);
             if (!$policy || $policy['status'] !== 'pending_gm') throw new InvalidArgumentException('السياسة غير موجودة في قائمة انتظار اعتماد المدير العام.');
             $pdo->prepare("UPDATE hr_incentive_policy_versions SET status='approved' WHERE id=? AND status='pending_gm'")->execute([$policyId]);
             $pdo->prepare("INSERT INTO hr_incentive_policy_approval_history (policy_version_id, action, actor_user_id) VALUES (?, 'approved', ?)")->execute([$policyId, (int)Session::getUserID()]);
             $pdo->commit();
+            $policyLabel = 'سياسة الحوافز V' . (int)$policy['version_no'] . ' «' . (string)$policy['policy_name'] . '»';
+            hrIncentivePolicyNotifyUser((int)$policy['created_by_user_id'], $policyId, 'اعتمد المدير العام سياسة الحوافز', 'اعتمد المدير العام ' . $policyLabel . '. أصبحت السياسة متاحة للمدير المالي لاختيارها وتفعيلها وفق تاريخ السريان.', APP_URL . 'modules/hr/incentive_policy.php', 'hr_incentive_policy_approved');
+            hrIncentivePolicyNotifyRoleUsers($policyId, ['financial_manager', 'fm', 'finance'], 'سياسة حوافز معتمدة بانتظار التفعيل', $policyLabel . ' اعتمدها المدير العام وأصبحت متاحة لك للاختيار والتفعيل وفق تاريخ السريان.', APP_URL . 'modules/hr/incentive_policy.php', 'hr_incentive_policy_approved_for_fm');
             flash('success', t('incentives.approve_success'));
             header('Location: ' . APP_URL . 'modules/hr/incentive_policy.php');
             exit;
@@ -336,6 +369,8 @@ try {
             $pdo->prepare("INSERT INTO hr_incentive_policy_approval_history (policy_version_id, action, actor_user_id, reason) VALUES (?, 'rejected', ?, ?)")->execute([$policyId, (int)Session::getUserID(), $reason]);
             $pdo->prepare("UPDATE hr_incentive_policy_versions SET status='draft' WHERE id=? AND status='pending_gm'")->execute([$policyId]);
             $pdo->commit();
+            $policyLabel = 'سياسة الحوافز V' . (int)$policy['version_no'] . ' «' . (string)$policy['policy_name'] . '»';
+            hrIncentivePolicyNotifyUser((int)$policy['created_by_user_id'], $policyId, 'رفض المدير العام سياسة الحوافز', 'رفض المدير العام ' . $policyLabel . '. سبب الرفض: ' . $reason . ' يمكنك مراجعة السبب وتعديل المسودة ثم إعادة إرسالها.', APP_URL . 'modules/hr/incentive_policy.php', 'hr_incentive_policy_rejected');
             flash('success', t('incentives.reject_success'));
             header('Location: ' . APP_URL . 'modules/hr/incentive_policy.php');
             exit;
@@ -411,6 +446,14 @@ try {
                  WHERE id=? AND status='approved'"
             )->execute([(int)Session::getUserID(), $policyId]);
             $pdo->commit();
+            $policyLabel = 'سياسة الحوافز V' . (int)$policy['version_no'] . ' «' . (string)$policy['policy_name'] . '»';
+            hrIncentivePolicyNotifyUser((int)$policy['created_by_user_id'], $policyId, 'فعّل المدير المالي سياسة الحوافز', 'فعّل المدير المالي ' . $policyLabel . ' وفق تاريخ السريان المعتمد.', APP_URL . 'modules/hr/incentive_policy.php', 'hr_incentive_policy_activated_for_hr');
+            try {
+                $approver = dbFetchOne("SELECT actor_user_id FROM hr_incentive_policy_approval_history WHERE policy_version_id = ? AND action = 'approved' ORDER BY id DESC LIMIT 1", [$policyId]);
+                hrIncentivePolicyNotifyUser((int)($approver['actor_user_id'] ?? 0), $policyId, 'تم تفعيل سياسة الحوافز التي اعتمدتها', 'فعّل المدير المالي ' . $policyLabel . ' وفق تاريخ السريان المعتمد.', APP_URL . 'modules/hr/incentive_policy.php', 'hr_incentive_policy_activated_for_gm');
+            } catch (Throwable $notificationError) {
+                // A post-commit notification lookup must not misreport activation as failed.
+            }
             flash('success', t('incentives.activation_success'));
             header('Location: ' . APP_URL . 'modules/hr/incentive_policy.php');
             exit;
@@ -470,7 +513,7 @@ require_once __DIR__ . '/../../includes/header.php';
     <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
         <div>
             <h1 class="h4 fw-bold mb-1"><i class="fas fa-award text-primary me-2"></i>سياسة حوافز الموظفين</h1>
-            <p class="text-muted mb-0 small">ينشئ مدير الموارد البشرية أو المدير المالي المسودة ويرسلها للاعتماد؛ يراجع المدير العام القرار إلكترونياً، ثم يفعّل المدير المالي السياسة المعتمدة.</p>
+            <p class="text-muted mb-0 small">ينشئ مدير الموارد البشرية المسودة ويرسلها للاعتماد؛ يعتمد المدير العام السياسة أو يرفضها، ثم يختار المدير المالي السياسة المعتمدة ويفعّلها.</p>
         </div>
     </div>
     <?php if ($message !== ''): ?><div class="alert alert-success" data-ak-transient-alert="1"><?=e($message)?></div><?php endif; ?>
@@ -609,7 +652,7 @@ require_once __DIR__ . '/../../includes/header.php';
                                             <button class="btn btn-sm btn-success" type="submit">تفعيل السياسة</button>
                                         </form>
                                     <?php elseif ($policy['status'] === 'draft' && !$canManagePolicies): ?>
-                                        <span class="text-muted small">مسودة قابلة للتعديل لدى مدير الموارد البشرية/المدير المالي</span>
+                                        <span class="text-muted small">مسودة قابلة للتعديل لدى مدير الموارد البشرية</span>
                                     <?php elseif ($policy['status'] === 'pending_gm'): ?>
                                         <span class="text-muted small">بانتظار قرار GM</span>
                                     <?php elseif ($policy['status'] === 'approved'): ?>
