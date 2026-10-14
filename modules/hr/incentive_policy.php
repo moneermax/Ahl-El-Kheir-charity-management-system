@@ -67,6 +67,12 @@ function hrIncentiveValidateCustomValue(string $type, string $value, array $opti
     return $value;
 }
 
+function hrIncentiveFieldLabel(array $field): string
+{
+    $english = trim((string)($field['label_en'] ?? ''));
+    return AK_LANG === 'en' && $english !== '' ? $english : (string)($field['label_ar'] ?? '');
+}
+
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!verify_csrf()) {
@@ -502,7 +508,7 @@ require_once __DIR__ . '/../../includes/header.php';
                     <?php foreach ($allTypes as $typeRow): ?>
                         <tr>
                             <td><code><?=e($typeRow['type_code'])?></code></td>
-                            <td><?=e($typeRow['name_ar'])?> <span class="text-muted small">/ <?=e($typeRow['name_en'])?></span></td>
+                            <td><?=e(AK_LANG === 'en' ? $typeRow['name_en'] : $typeRow['name_ar'])?></td>
                             <td><?= $typeRow['qualification_mode'] === 'source_event' ? 'حدث موثّق بالنظام' : 'مراجعة يدوية — لا إصدار تلقائي' ?></td>
                             <td><?= (int)$typeRow['is_active'] === 1 ? 'نشطة' : 'غير نشطة' ?></td>
                         </tr>
@@ -562,7 +568,7 @@ require_once __DIR__ . '/../../includes/header.php';
             <?php else: ?>
                 <div class="table-responsive">
                     <table class="table table-hover align-middle">
-                        <thead class="table-light"><tr><th>الإصدار</th><th>الاسم</th><th>الحالة</th><th>السريان</th><th>فئات مفعّلة</th><th>أُنشئت بواسطة</th><th>الإجراء</th></tr></thead>
+                        <thead class="table-light"><tr><th>الإصدار</th><th><?=e(t('incentives.name'))?></th><th>الحالة</th><th>السريان</th><th>فئات مفعّلة</th><th>أُنشئت بواسطة</th><th>الإجراء</th></tr></thead>
                         <tbody>
                         <?php foreach ($policies as $policy): $policyId = (int)$policy['id']; ?>
                             <tr>
@@ -615,7 +621,7 @@ require_once __DIR__ . '/../../includes/header.php';
                                 <div class="d-flex flex-wrap gap-3 small">
                                 <?php foreach (($rulesByPolicy[$policyId] ?? []) as $rule): ?>
                                     <span><strong><?=e($typeNames[$rule['incentive_type']] ?? $rule['incentive_type'])?>:</strong>
-                                    <?= (int)$rule['is_enabled'] === 1 ? number_format((float)$rule['reward_amount'],2) . ' ' . e($rule['currency_code']) : 'غير مفعّل' ?></span>
+                                    <?= (int)$rule['is_enabled'] === 1 ? number_format((float)$rule['reward_amount'],2) . ' ' . e($rule['currency_code']) : t('incentives.disabled') ?></span>
                                 <?php endforeach; ?>
                                 </div>
 
@@ -634,7 +640,7 @@ require_once __DIR__ . '/../../includes/header.php';
                                         <div class="d-flex flex-column gap-1 mt-1">
                                         <?php foreach ($fieldsByPolicy[$policyId] as $field): ?>
                                             <div class="small">
-                                                <strong><?=e($field['label_ar'])?><?= (int)$field['is_required'] === 1 ? ' *' : '' ?>:</strong>
+                                                <strong><?=e(hrIncentiveFieldLabel($field))?><?= (int)$field['is_required'] === 1 ? ' *' : '' ?>:</strong>
                                                 <?php
                                                 $displayValue = (string)($field['field_value'] ?? '');
                                                 if ($field['field_type'] === 'boolean' && $displayValue !== '') $displayValue = $displayValue === '1' ? t('incentives.yes') : t('incentives.no');
@@ -664,7 +670,7 @@ require_once __DIR__ . '/../../includes/header.php';
                                             <?php endforeach; ?>
                                             </tbody></table></div>
                                             <?php foreach (($fieldsByPolicy[$policyId] ?? []) as $editField): $editValue=(string)($editField['field_value'] ?? ''); ?>
-                                                <div class="mb-2"><label class="form-label small"><?=e($editField['label_ar'])?><?= (int)$editField['is_required']===1 ? ' *' : '' ?></label>
+                                                <div class="mb-2"><label class="form-label small"><?=e(hrIncentiveFieldLabel($editField))?><?= (int)$editField['is_required']===1 ? ' *' : '' ?></label>
                                                 <?php if ($editField['field_type']==='long_text'): ?><textarea class="form-control form-control-sm" name="custom_values[<?=(int)$editField['id']?>]" maxlength="5000" rows="2" <?= (int)$editField['is_required']===1 ? 'required' : '' ?>><?=e($editValue)?></textarea>
                                                 <?php elseif ($editField['field_type']==='select'): $editOptions=json_decode((string)($editField['options_json'] ?? '[]'),true) ?: []; ?><select class="form-select form-select-sm" name="custom_values[<?=(int)$editField['id']?>]" <?= (int)$editField['is_required']===1 ? 'required' : '' ?>><option value="">—</option><?php foreach ($editOptions as $editOption): ?><option value="<?=e($editOption)?>" <?= $editValue===(string)$editOption ? 'selected' : '' ?>><?=e($editOption)?></option><?php endforeach; ?></select>
                                                 <?php elseif ($editField['field_type']==='boolean'): ?><select class="form-select form-select-sm" name="custom_values[<?=(int)$editField['id']?>]" <?= (int)$editField['is_required']===1 ? 'required' : '' ?>><option value="">—</option><option value="1" <?=$editValue==='1'?'selected':''?>><?=e(t('incentives.yes'))?></option><option value="0" <?=$editValue==='0'?'selected':''?>><?=e(t('incentives.no'))?></option></select>
