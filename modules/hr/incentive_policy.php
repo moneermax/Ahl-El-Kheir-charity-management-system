@@ -477,7 +477,7 @@ require_once __DIR__ . '/../../includes/header.php';
     <?php if ($error !== ''): ?><div class="alert alert-danger" data-ak-transient-alert="1"><?=e($error)?></div><?php endif; ?>
 
     <div class="alert alert-info small">
-        العملة المعتمدة على مستوى النظام هي <?=e(APP_CURRENCY_CODE)?> (<?=e(AK_LANG === 'en' ? APP_CURRENCY_NAME_EN : APP_CURRENCY_NAME_AR)?>).
+        <?=e(t('incentives.currency_notice'))?> <?=e(APP_CURRENCY_CODE)?> (<?=e(AK_LANG === 'en' ? APP_CURRENCY_NAME_EN : APP_CURRENCY_NAME_AR)?>).
         الفئات الأربع الأساسية مرتبطة بأحداث النظام الحالية. أي فئة جديدة تُضاف هنا بوضع «مراجعة يدوية» ولا تصدر مكافآت تلقائياً؛ مسار الترشيح والصرف للفئات اليدوية يحتاج تنفيذاً مستقلاً قبل استخدامها مالياً.
     </div>
 
@@ -618,9 +618,9 @@ require_once __DIR__ . '/../../includes/header.php';
                                 </td>
                             </tr>
                             <tr class="table-light"><td colspan="7">
-                                <div class="d-flex flex-wrap gap-3 small">
+                                <div class="d-flex flex-wrap gap-2 small">
                                 <?php foreach (($rulesByPolicy[$policyId] ?? []) as $rule): ?>
-                                    <span><strong><?=e($typeNames[$rule['incentive_type']] ?? $rule['incentive_type'])?>:</strong>
+                                    <span class="border rounded px-2 py-1 bg-white"><strong><?=e($typeNames[$rule['incentive_type']] ?? $rule['incentive_type'])?>:</strong>
                                     <?= (int)$rule['is_enabled'] === 1 ? number_format((float)$rule['reward_amount'],2) . ' ' . e($rule['currency_code']) : t('incentives.disabled') ?></span>
                                 <?php endforeach; ?>
                                 </div>
