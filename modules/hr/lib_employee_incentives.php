@@ -462,7 +462,8 @@ function hrIncentiveRecordReactivationPaymentEvent(PDO $pdo, int $paymentId, int
     }
 
     // Serialize claims per campaign above, then allow only one confirmed payment
-    // after the reactivation transition. Same-second ties are conservatively held.
+    // after reactivation. Equal-second confirmations are treated as already claimed
+    // once one transaction has recorded the event.
     $earlierReturnPaymentStmt = $pdo->prepare(
         "SELECT other.id
          FROM sponsor_payments other
