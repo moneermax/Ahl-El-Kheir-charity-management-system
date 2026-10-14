@@ -2972,3 +2972,10 @@ Implemented on `main`:
 Commits: `21c94362c4f11f4000e050ba5e14160eedbac0fe`, `675bdc36b67ea1b7ede11abef37cdbf5c2340b84`.
 
 No schema change was needed. **Verification is source-only; local PHP lint, server-side role denial/allowance tests, and notification recipient/appearance checks remain pending.** Keep the existing V1 acceptance policy inactive because its reward values are test values. A notification failure must never undo or falsely report failure for a committed policy transition.
+
+
+## 2026-10-14 — Incentive policy rejection and active-policy fallback audit
+
+Verified in `modules/hr/incentive_policy.php`: GM rejection writes a rejection-history row and returns the version to `draft`, allowing HR to edit and resubmit. Existing active policy versions are retired only inside the successful FM activation transaction. Therefore, if HR does not submit a replacement or FM does not activate an approved replacement, the prior active policy is not retired by these workflow steps. This source review does not yet prove payroll's runtime effective-policy selection; that must be verified against the actual payroll incentive integration before claiming payday fallback acceptance.
+
+Found and fixed a role gate inconsistency: FM had permission for `activate_policy` but was excluded by the page-level access gate. Commit `9430f3418afe03ed7fce871a1b369514e4dbbca0` adds `$canActivatePolicies` to the gate. Success/error messages use transient-alert markers for toast conversion. Local syntax/runtime checks remain pending.
