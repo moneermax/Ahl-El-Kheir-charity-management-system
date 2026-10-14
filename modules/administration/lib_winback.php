@@ -61,10 +61,20 @@ function wb_mark_returned(PDO $pdo, int $campaignId, int $actorUserId): ?array
             throw new RuntimeException('تغيرت حالة متابعة الاسترجاع أثناء العملية؛ تم إيقاف إعادة التفعيل.');
         }
 
+        $attributionStmt = $pdo->prepare(
+            "SELECT reactivated_by_user_id, reactivated_at
+             FROM winback_campaigns WHERE id = ?"
+        );
+        $attributionStmt->execute([$campaignId]);
+        $attribution = $attributionStmt->fetch(PDO::FETCH_ASSOC);
+        if (!$attribution || empty($attribution['reactivated_by_user_id']) || empty($attribution['reactivated_at'])) {
+            throw new RuntimeException('تعذر التحقق من حفظ بيانات إسناد إعادة التفعيل.');
+        }
+
         $result = [
             'sponsor_id' => $sponsorId,
-            'reactivated_by_user_id' => (int)($campaign['reactivated_by_user_id'] ?: $actorUserId),
-            'reactivated_at' => (string)($campaign['reactivated_at'] ?: date('Y-m-d H:i:s')),
+            'reactivated_by_user_id' => (int)$attribution['reactivated_by_user_id'],
+            'reactivated_at' => (string)$attribution['reactivated_at'],
         ];
 
         if ($startedHere) {
