@@ -21,12 +21,12 @@ $pdo = db();
 $message = '';
 $error = '';
 $fieldTypes = [
-    'short_text' => 'نص قصير',
-    'long_text' => 'نص طويل',
-    'number' => 'رقم',
-    'date' => 'تاريخ',
-    'boolean' => 'نعم / لا',
-    'select' => 'قائمة اختيار',
+    'short_text' => t('incentives.short_text'),
+    'long_text' => t('incentives.long_text'),
+    'number' => t('incentives.number'),
+    'date' => t('incentives.date'),
+    'boolean' => t('incentives.yes_no'),
+    'select' => t('incentives.select'),
 ];
 
 function hrIncentiveValidateCustomValue(string $type, string $value, array $options, bool $required): ?string
@@ -110,7 +110,7 @@ try {
                  VALUES (?, ?, ?, 'manual_review', 0, 1, 100, ?)"
             );
             $stmt->execute([$code, $nameAr, $nameEn, (int)Session::getUserID()]);
-            flash('success', 'تمت إضافة نوع الحافز. النوع الجديد مخصص للمراجعة اليدوية ولا ينشئ مكافآت تلقائياً.');
+            flash('success', t('incentives.category_added'));
             header('Location: ' . APP_URL . 'modules/hr/incentive_policy.php');
             exit;
         }
@@ -126,7 +126,7 @@ try {
             if (!$date || $date->format('Y-m-d') !== $effectiveFrom || $effectiveFrom < date('Y-m-d')) {
                 throw new InvalidArgumentException('تاريخ السريان يجب أن يكون اليوم أو تاريخاً مستقبلياً؛ لا يمكن إنشاء سياسة بأثر رجعي.');
             }
-            $types = dbFetchAll('SELECT type_code, name_ar, qualification_mode FROM hr_incentive_types WHERE is_active = 1 ORDER BY sort_order, id');
+            $types = dbFetchAll('SELECT type_code, name_ar, name_en, qualification_mode FROM hr_incentive_types WHERE is_active = 1 ORDER BY sort_order, id');
             if (!$types) throw new RuntimeException('لا توجد أنواع حوافز نشطة لإضافتها إلى السياسة.');
             $rules = [];
             foreach ($types as $typeRow) {
@@ -164,7 +164,7 @@ try {
                 $ruleStmt->execute([$policyId, $typeCode, $rule['amount'], $rule['currency'], $rule['enabled']]);
             }
             $pdo->commit();
-            flash('success', 'تم حفظ مسودة سياسة الحوافز V' . $version . '. أكمل بياناتها ثم أرسلها لاعتماد المدير العام.');
+            flash('success', t('incentives.draft_saved'));
             header('Location: ' . APP_URL . 'modules/hr/incentive_policy.php');
             exit;
         }
@@ -224,7 +224,7 @@ try {
                 $value, $sort, (int)Session::getUserID()
             ]);
             $pdo->commit();
-            flash('success', 'تمت إضافة الحقل إلى مسودة السياسة. سيبقى ضمن سجل إصدار السياسة ولن يغيّر الإصدارات السابقة.');
+            flash('success', t('incentives.field_added'));
             header('Location: ' . APP_URL . 'modules/hr/incentive_policy.php');
             exit;
         }
@@ -243,7 +243,7 @@ try {
             $pdo->beginTransaction();
             $policy = dbFetchOne('SELECT id, status FROM hr_incentive_policy_versions WHERE id = ? FOR UPDATE', [$policyId]);
             if (!$policy || $policy['status'] !== 'draft') throw new InvalidArgumentException('يمكن تعديل المسودات فقط.');
-            $storedRules = dbFetchAll('SELECT r.incentive_type, t.name_ar, t.is_active FROM hr_incentive_policy_rules r JOIN hr_incentive_types t ON t.type_code=r.incentive_type WHERE r.policy_version_id=? FOR UPDATE', [$policyId]);
+            $storedRules = dbFetchAll('SELECT r.incentive_type, t.name_ar, t.name_en, t.is_active FROM hr_incentive_policy_rules r JOIN hr_incentive_types t ON t.type_code=r.incentive_type WHERE r.policy_version_id=? FOR UPDATE', [$policyId]);
             if (!$storedRules) throw new InvalidArgumentException('السياسة لا تحتوي على فئات حوافز.');
             $enabledCount = 0;
             foreach ($storedRules as $storedRule) {
@@ -273,7 +273,7 @@ try {
                     ->execute([$value, $fieldId, $policyId]);
             }
             $pdo->commit();
-            flash('success', 'تم تحديث مسودة السياسة وفئاتها وحقولها الإضافية.');
+            flash('success', t('incentives.draft_updated'));
             header('Location: ' . APP_URL . 'modules/hr/incentive_policy.php');
             exit;
         }
@@ -285,7 +285,7 @@ try {
             $policy = dbFetchOne('SELECT * FROM hr_incentive_policy_versions WHERE id=? FOR UPDATE', [$policyId]);
             if (!$policy || $policy['status'] !== 'draft') throw new InvalidArgumentException('المسودة غير موجودة أو سبق إرسالها.');
             if ((string)$policy['effective_from'] < date('Y-m-d')) throw new InvalidArgumentException('لا يمكن إرسال سياسة بتاريخ سريان سابق.');
-            $rules = dbFetchAll('SELECT r.incentive_type, r.is_enabled, r.reward_amount, t.name_ar, t.is_active FROM hr_incentive_policy_rules r JOIN hr_incentive_types t ON t.type_code=r.incentive_type WHERE r.policy_version_id=? FOR UPDATE', [$policyId]);
+            $rules = dbFetchAll('SELECT r.incentive_type, r.is_enabled, r.reward_amount, t.name_ar, t.name_en, t.is_active FROM hr_incentive_policy_rules r JOIN hr_incentive_types t ON t.type_code=r.incentive_type WHERE r.policy_version_id=? FOR UPDATE', [$policyId]);
             $enabledCount = 0;
             foreach ($rules as $rule) {
                 if ((int)$rule['is_enabled'] === 1) {
@@ -300,7 +300,7 @@ try {
             $pdo->prepare("UPDATE hr_incentive_policy_versions SET status='pending_gm' WHERE id=? AND status='draft'")->execute([$policyId]);
             $pdo->prepare("INSERT INTO hr_incentive_policy_approval_history (policy_version_id, action, actor_user_id) VALUES (?, 'submitted', ?)")->execute([$policyId, (int)Session::getUserID()]);
             $pdo->commit();
-            flash('success', 'تم إرسال السياسة إلى المدير العام للاعتماد.');
+            flash('success', t('incentives.submit_success'));
             header('Location: ' . APP_URL . 'modules/hr/incentive_policy.php');
             exit;
         }
@@ -314,7 +314,7 @@ try {
             $pdo->prepare("UPDATE hr_incentive_policy_versions SET status='approved' WHERE id=? AND status='pending_gm'")->execute([$policyId]);
             $pdo->prepare("INSERT INTO hr_incentive_policy_approval_history (policy_version_id, action, actor_user_id) VALUES (?, 'approved', ?)")->execute([$policyId, (int)Session::getUserID()]);
             $pdo->commit();
-            flash('success', 'تم اعتماد سياسة الحوافز. يتولى المدير المالي تفعيلها في خطوة منفصلة.');
+            flash('success', t('incentives.approve_success'));
             header('Location: ' . APP_URL . 'modules/hr/incentive_policy.php');
             exit;
         }
@@ -330,7 +330,7 @@ try {
             $pdo->prepare("INSERT INTO hr_incentive_policy_approval_history (policy_version_id, action, actor_user_id, reason) VALUES (?, 'rejected', ?, ?)")->execute([$policyId, (int)Session::getUserID(), $reason]);
             $pdo->prepare("UPDATE hr_incentive_policy_versions SET status='draft' WHERE id=? AND status='pending_gm'")->execute([$policyId]);
             $pdo->commit();
-            flash('success', 'أُعيدت السياسة إلى المسودة مع حفظ سبب الرفض في سجل الاعتماد.');
+            flash('success', t('incentives.reject_success'));
             header('Location: ' . APP_URL . 'modules/hr/incentive_policy.php');
             exit;
         }
@@ -405,7 +405,7 @@ try {
                  WHERE id=? AND status='approved'"
             )->execute([(int)Session::getUserID(), $policyId]);
             $pdo->commit();
-            flash('success', 'تم تفعيل سياسة الحوافز V' . (int)$policy['version_no'] . ' بعد اعتماد المدير العام.');
+            flash('success', t('incentives.activation_success'));
             header('Location: ' . APP_URL . 'modules/hr/incentive_policy.php');
             exit;
         }
@@ -435,7 +435,7 @@ $policies = dbFetchAll(
 $allTypes = dbFetchAll('SELECT * FROM hr_incentive_types ORDER BY sort_order, id');
 $activeTypes = array_values(array_filter($allTypes, static fn(array $t): bool => (int)$t['is_active'] === 1));
 $typeNames = [];
-foreach ($allTypes as $typeRow) $typeNames[(string)$typeRow['type_code']] = (string)$typeRow['name_ar'];
+foreach ($allTypes as $typeRow) $typeNames[(string)$typeRow['type_code']] = (string)(AK_LANG === 'en' ? ($typeRow['name_en'] ?? $typeRow['name_ar']) : $typeRow['name_ar']);
 $ruleRows = dbFetchAll(
     'SELECT r.*, p.version_no FROM hr_incentive_policy_rules r
      JOIN hr_incentive_policy_versions p ON p.id=r.policy_version_id
@@ -457,7 +457,7 @@ $approvalRows = dbFetchAll(
 $historyByPolicy = [];
 foreach ($approvalRows as $approvalRow) $historyByPolicy[(int)$approvalRow['policy_version_id']][] = $approvalRow;
 
-$pageTitle = 'سياسة حوافز الموظفين';
+$pageTitle = t('incentives.title');
 require_once __DIR__ . '/../../includes/header.php';
 ?>
 <div class="container-fluid py-3" style="max-width:1320px">
@@ -637,7 +637,7 @@ require_once __DIR__ . '/../../includes/header.php';
                                                 <strong><?=e($field['label_ar'])?><?= (int)$field['is_required'] === 1 ? ' *' : '' ?>:</strong>
                                                 <?php
                                                 $displayValue = (string)($field['field_value'] ?? '');
-                                                if ($field['field_type'] === 'boolean' && $displayValue !== '') $displayValue = $displayValue === '1' ? 'نعم' : 'لا';
+                                                if ($field['field_type'] === 'boolean' && $displayValue !== '') $displayValue = $displayValue === '1' ? t('incentives.yes') : t('incentives.no');
                                                 ?>
                                                 <?= $displayValue !== '' ? nl2br(e($displayValue)) : '<span class="text-muted">—</span>' ?>
                                                 <span class="text-muted">(<?=e($fieldTypes[$field['field_type']] ?? $field['field_type'])?>)</span>
@@ -667,7 +667,7 @@ require_once __DIR__ . '/../../includes/header.php';
                                                 <div class="mb-2"><label class="form-label small"><?=e($editField['label_ar'])?><?= (int)$editField['is_required']===1 ? ' *' : '' ?></label>
                                                 <?php if ($editField['field_type']==='long_text'): ?><textarea class="form-control form-control-sm" name="custom_values[<?=(int)$editField['id']?>]" maxlength="5000" rows="2" <?= (int)$editField['is_required']===1 ? 'required' : '' ?>><?=e($editValue)?></textarea>
                                                 <?php elseif ($editField['field_type']==='select'): $editOptions=json_decode((string)($editField['options_json'] ?? '[]'),true) ?: []; ?><select class="form-select form-select-sm" name="custom_values[<?=(int)$editField['id']?>]" <?= (int)$editField['is_required']===1 ? 'required' : '' ?>><option value="">—</option><?php foreach ($editOptions as $editOption): ?><option value="<?=e($editOption)?>" <?= $editValue===(string)$editOption ? 'selected' : '' ?>><?=e($editOption)?></option><?php endforeach; ?></select>
-                                                <?php elseif ($editField['field_type']==='boolean'): ?><select class="form-select form-select-sm" name="custom_values[<?=(int)$editField['id']?>]" <?= (int)$editField['is_required']===1 ? 'required' : '' ?>><option value="">—</option><option value="1" <?=$editValue==='1'?'selected':''?>>نعم</option><option value="0" <?=$editValue==='0'?'selected':''?>>لا</option></select>
+                                                <?php elseif ($editField['field_type']==='boolean'): ?><select class="form-select form-select-sm" name="custom_values[<?=(int)$editField['id']?>]" <?= (int)$editField['is_required']===1 ? 'required' : '' ?>><option value="">—</option><option value="1" <?=$editValue==='1'?'selected':''?>><?=e(t('incentives.yes'))?></option><option value="0" <?=$editValue==='0'?'selected':''?>><?=e(t('incentives.no'))?></option></select>
                                                 <?php else: ?><input class="form-control form-control-sm" type="<?= $editField['field_type']==='number' ? 'number' : ($editField['field_type']==='date' ? 'date' : 'text') ?>" name="custom_values[<?=(int)$editField['id']?>]" value="<?=e($editValue)?>" maxlength="<?= $editField['field_type']==='short_text' ? 500 : 5000 ?>" <?= (int)$editField['is_required']===1 ? 'required' : '' ?>><?php endif; ?></div>
                                             <?php endforeach; ?>
                                             <button class="btn btn-sm btn-outline-primary" type="submit">حفظ التعديلات</button>
