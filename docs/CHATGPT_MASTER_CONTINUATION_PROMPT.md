@@ -797,3 +797,14 @@ This verifies the positive-controlled-balance block and transactional cleanup in
 ## 2026-10-15 — Employee incentive project-success test continuation
 
 New main commit: `5b6fb97d975bdc3e591fa811ca55b2a214092bfc`, adding `tools/run_hr_project_incentive_success_rollback_tests.php`. This replaces the unsafe need to find or alter a real closed project's financial balance with a synthetic no-financial-activity project fixture, created and rolled back within one transaction on only `ahl_el_kheir_incentive_test_20261015_r1`. It refuses to run on any other database and asserts the active policy is the protected R5 acceptance policy. The eligible Project Supervisor is added to the team before simulated closure. It verifies the missing-FM-audit block, the successful full-policy award and Dr 5500 / Cr 2400 recognition journal, and rollback cleanup. **Next exact gate:** pull `main`, run PHP lint on the new harness, then execute it against the disposable test DB only. Do not rerun the already-passed negative harness without regression evidence, do not change R5, and do not touch the live database.
+
+## 2026-10-15 — Project incentive award recognition gate CLOSED
+
+User pulled main and locally verified `tools/run_hr_project_incentive_success_rollback_tests.php`. PHP lint and runtime PASS. Result:
+`PASS | synthetic_project=no_financial_activity | PS_snapshot=PASS | full_policy_amount_per_employee=PASS`
+`PASS | missing_FM_gate_blocks_award=PASS | FM_gate=PASS | recognition_journal_5500_2400=PASS`
+`PASS | rollback_cleanup=PASS | policy=R5 | reward=1500.00 SDG`
+
+The harness was restricted to `ahl_el_kheir_incentive_test_20261015_r1`, checked the protected R5 policy without changing it, snapshotted an eligible Project Supervisor before simulated closure, verified the FM financial-closure gate, checked the full Dr 5500 / Cr 2400 recognition journal, and rolled back all test data. Do not rerun absent regression evidence.
+
+**Next:** inspect current incentive source and existing test harnesses to select the next genuinely open acceptance gate, likely payroll inclusion/refresh and employee notification delivery. Do not assume these are already covered by the recognition harness. Real browser PM/FM closure workflow remains unverified and must be considered separately. Never test against the live DB or modify posted financial records.
