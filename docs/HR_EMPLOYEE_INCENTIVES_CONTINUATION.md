@@ -9,7 +9,7 @@ Three policy-driven, fixed-amount incentive categories:
 
 1. Monthly sponsorship collection: reward the employee/collector after the linked collection is financially confirmed.
 2. New sponsor or sponsor reactivation: reward only after sponsorship is established and its first payment is financially confirmed. Reactivation uses the agreed 90-day lapse lookback.
-3. Successful project completion: reward after both administrative project closure and FM financial closure, with an explicitly approved allocation among named eligible team members.
+3. Successful project completion: reward after both administrative project closure and FM financial closure. Under the approved R5 acceptance policy, every eligible employee assigned to the project team at PM administrative closure receives the full configured project-completion amount; it is not a shared pool and does not require a separate per-project incentive approval.
 
 The reward amount and currency are policy data configured when a policy version is created. **10,000 SDG was only an example, not an approved amount.** The monthly collection reward is not percentage-based.
 
@@ -19,7 +19,7 @@ The reward amount and currency are policy data configured when a policy version 
 - Collection recipient: the recorded collector.
 - Sponsor acquisition/reactivation recipient: the employee who brought the sponsor, resolved through the actual user-to-employee relationship.
 - Project acceptance: administrative closure plus FM financial closure.
-- Project rewards: fixed amount split according to an explicitly approved allocation for named eligible team members; do not auto-reward the project closer.
+- Project rewards (R5 accepted rule): full configured amount per eligible active employee snapshotted from the project team at PM administrative closure, including an eligible Project Supervisor if assigned before closure. This is not a shared pool; no separate human approval metadata is fabricated. The award remains blocked until durable FM financial closure and zero controlled balance are verified.
 - Employment eligibility: preserve rewards already earned and route them through the approved process; block new awards when an employee is ineligible.
 - Currency: only schedule payment when reward currency matches the employee's applicable salary currency. Otherwise hold it; do not invent FX.
 - Reversal/reopening: retain the original reward and use controlled review/adjustment. Never silently delete or automatically cancel the historical reward.
