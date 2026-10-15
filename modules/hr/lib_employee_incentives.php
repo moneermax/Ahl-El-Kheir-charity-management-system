@@ -923,7 +923,7 @@ function hrIncentivePrepareProjectCompletion(PDO $pdo, int $projectId, int $acto
 
     try {
         $projectStmt = $pdo->prepare(
-            "SELECT project_id, lifecycle_status, closed_at, currency_code
+            "SELECT project_id, lifecycle_status, closed_at
              FROM project_lifecycle
              WHERE project_id = ? LIMIT 1 FOR UPDATE"
         );
@@ -943,7 +943,7 @@ function hrIncentivePrepareProjectCompletion(PDO $pdo, int $projectId, int $acto
             'project_completion',
             (string)$project['closed_at'],
             null,
-            (string)($project['currency_code'] ?: 'SDG'),
+            null,
             $actorUserId
         );
         if ($eventId <= 0) {
