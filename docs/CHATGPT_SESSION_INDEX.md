@@ -820,3 +820,12 @@ This verifies the positive-controlled-balance block and transactional cleanup in
 ### 2026-10-15 — Project incentive success-path harness added (runtime pending)
 
 The existing project-completion rollback harness passed its negative gate but skipped award recognition because its existing project had a positive controlled balance. A separate success-path harness is now on `main`: `tools/run_hr_project_incentive_success_rollback_tests.php` (commit `5b6fb97d975bdc3e591fa811ca55b2a214092bfc`). It refuses any database except `ahl_el_kheir_incentive_test_20261015_r1`, requires the active R5 acceptance policy without modifying it, and uses a synthetic no-financial-activity project in one rollback-only transaction. It explicitly assigns an eligible Project Supervisor before closure, checks the no-FM-audit gate, then verifies the full policy amount and recognition journal. Local PHP lint and runtime execution are pending; no successful-path result is claimed yet.
+
+### 2026-10-15 — Project completion incentive recognition: RUNTIME PASS
+
+User executed `tools/run_hr_project_incentive_success_rollback_tests.php` locally after pulling `main`. PHP lint passed. Runtime output:
+`PASS | synthetic_project=no_financial_activity | PS_snapshot=PASS | full_policy_amount_per_employee=PASS`
+`PASS | missing_FM_gate_blocks_award=PASS | FM_gate=PASS | recognition_journal_5500_2400=PASS`
+`PASS | rollback_cleanup=PASS | policy=R5 | reward=1500.00 SDG`
+
+This closes the isolated successful project-award recognition gate at the harness boundary: eligible Project Supervisor snapshot before closure, full policy reward, durable FM gate, balanced recognition journal, and rollback cleanup. It does not prove payroll inclusion, employee notification delivery, or browser closure workflow. Next, inspect current source and existing harnesses to identify the smallest remaining acceptance gate; do not rerun the passed harness absent regression evidence.
