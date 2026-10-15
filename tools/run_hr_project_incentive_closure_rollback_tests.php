@@ -232,10 +232,60 @@ try {
         ]);
     }
 
+    $currentControlledBalance = akp_project_controlled_balance($projectId);
+    if ($currentControlledBalance > 0.009) {
+        // Positive balance is not mutated merely to manufacture a success fixture.
+        // Prove the processor rejects the award path and that the test transaction
+        // leaves no event/allocation/audit artifacts behind.
+        $blocked = hrIncentiveProcessProjectCompletion(
+            $pdo,
+            $projectId,
+            $currentControlledBalance,
+            0
+        );
+        hrProjectIncentiveTestAssert($blocked === 0, 'The processor issued awards while the project still had a controlled balance.');
+        hrProjectIncentiveTestAssert(
+            hrProjectIncentiveTestCount(
+                $pdo,
+                'SELECT COUNT(*) FROM hr_incentive_awards WHERE event_id = ?',
+                [$eventId]
+            ) === 0,
+            'Awards exist despite a positive controlled balance.'
+        );
+        $pdo->rollBack();
+
+        hrProjectIncentiveTestAssert(
+            hrProjectIncentiveTestCount(
+                $pdo,
+                "SELECT COUNT(*) FROM hr_incentive_events
+                 WHERE source_table = 'project_lifecycle' AND source_record_id = ?
+                   AND incentive_type = 'project_completion'",
+                [$projectId]
+            ) === $baselineEventCount,
+            'Rollback left a project incentive event behind.'
+        );
+        hrProjectIncentiveTestAssert(
+            hrProjectIncentiveTestCount(
+                $pdo,
+                "SELECT COUNT(*) FROM hr_incentive_awards a
+                 JOIN hr_incentive_events ev ON ev.id = a.event_id
+                 WHERE ev.source_table = 'project_lifecycle' AND ev.source_record_id = ?
+                   AND ev.incentive_type = 'project_completion'",
+                [$projectId]
+            ) === $baselineAwardCount,
+            'Rollback left project incentive awards behind.'
+        );
+
+        echo "PASS | project_team_snapshot={$allocationCount} | no_approval_metadata=PASS | positive_balance_award_block=PASS\n";
+        echo "PASS | rollback_cleanup=PASS | project={$projectId} | controlled_balance=" . number_format($currentControlledBalance, 2, '.', '') . "\n";
+        echo "SKIP | award-recognition success branch | No existing eligible closed project has a zero controlled balance; no accounting records were fabricated or altered.\n";
+        exit(0);
+    }
+
     $processed = hrIncentiveProcessProjectCompletion(
         $pdo,
         $projectId,
-        akp_project_controlled_balance($projectId),
+        $currentControlledBalance,
         0
     );
     hrProjectIncentiveTestAssert($processed === $allocationCount, 'The processor did not handle every snapshotted eligible employee.');
