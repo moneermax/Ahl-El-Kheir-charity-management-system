@@ -3280,3 +3280,9 @@ User ran the harness on local PHP 8.2 against disposable database `ahl_el_kheir_
 - `SKIP | award-recognition success branch | No existing eligible closed project has a zero controlled balance; no accounting records were fabricated or altered.`
 
 This verifies the positive-controlled-balance block and transactional cleanup in the disposable DB only. It does **not** verify successful award creation or recognition journals, nor browser/runtime behavior on a real project. The success branch remains open pending a legitimate eligible closed project with controlled balance <= 0.009. Do not fabricate funding returns or edit posted accounting records to create one. Active policy R5 and live accounting were not used or changed by this test.
+
+## 2026-10-15 — Project incentive successful-path test method
+
+The previous rollback-only project incentive harness proved the positive-controlled-balance block and rollback cleanup, but skipped award recognition because no existing eligible closed project had a zero controlled balance. No posted financial records were to be changed to manufacture a zero balance.
+
+A separate harness was added to `main`: `tools/run_hr_project_incentive_success_rollback_tests.php` (commit `5b6fb97d975bdc3e591fa811ca55b2a214092bfc`). It is hard-blocked unless the selected database is exactly `ahl_el_kheir_incentive_test_20261015_r1`. It reads, but does not alter, the protected active R5 policy; creates a synthetic project without funding/expense/return activity; assigns an eligible Project Supervisor before closure; proves the FM audit gate; verifies the full policy amount and balanced recognition journal on accounts 5500/2400; and rolls back all fixture, award, audit and journal rows. PHP lint and local runtime execution remain pending. This is a test-method improvement, not evidence that the successful award path has passed.
