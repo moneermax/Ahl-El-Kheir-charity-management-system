@@ -788,3 +788,10 @@ Inspect the migration and apply it once only if those columns are still `NO`. Th
 ```
 
 A `SKIP` from the harness means it could not find a safe eligible closed-project fixture; it is not a PASS. The harness is a database integration check, not browser proof or true concurrent-process proof. Source changes and migration remain **unverified locally** until exact lint and harness output is reviewed. Keep active R5 unchanged and do not touch `ahl_el_kheir_production_test`.
+
+
+### Follow-up — project closure rollback harness added; local acceptance pending
+
+Added `tools/run_hr_project_incentive_closure_rollback_tests.php` (commit `df40dc1c`). It exercises the automatic project allocation/award path inside an outer transaction and rolls back its fixture, journals, and payroll changes. The processor supports caller-owned transactions (commit `2bff519b`). A missing migration or safe project fixture results in `SKIP`, not PASS.
+
+Next: pull `main`, inspect/apply `2026-10-15_hr_incentive_project_auto_allocation.sql` only if needed, lint the four changed PHP source files plus the harness with local PHP 8.2, and run only the new harness. Local lint/runtime acceptance remains pending. Keep active R5 unchanged; never use `ahl_el_kheir_production_test`.
