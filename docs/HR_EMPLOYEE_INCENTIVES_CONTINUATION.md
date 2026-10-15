@@ -756,3 +756,16 @@ The existing `tools/run_hr_project_incentive_closure_rollback_tests.php` already
 Added `tools/run_hr_project_incentive_success_rollback_tests.php` on `main` in commit `5b6fb97d975bdc3e591fa811ca55b2a214092bfc`. The new harness is restricted to `ahl_el_kheir_incentive_test_20261015_r1`, verifies the active policy is the protected R5 acceptance policy, and uses a synthetic project with no funding, posted expenses, or returns. An eligible Project Supervisor is snapshotted before simulated administrative closure. The test checks that zero balance without durable `FM_FINANCIAL_CLOSURE` evidence cannot issue an award, then verifies the full configured reward and recognition journal (Dr 5500 employee incentive expense / Cr 2400 incentive payable), followed by rollback cleanup.
 
 **Status: RUNTIME PENDING.** The new harness has not yet been locally PHP-linted or executed against MariaDB. Do not describe the success path as verified until its output passes. This harness does not test payroll inclusion, notification delivery, or the slow browser project-creation workflow; those remain separate open acceptance gates. The active R5 policy is read-only throughout.
+
+## 2026-10-15 — Project completion award recognition: RUNTIME VERIFIED
+
+User locally ran `tools/run_hr_project_incentive_success_rollback_tests.php` against `ahl_el_kheir_incentive_test_20261015_r1`; PHP lint passed and runtime result:
+```
+PASS | synthetic_project=no_financial_activity | PS_snapshot=PASS | full_policy_amount_per_employee=PASS
+PASS | missing_FM_gate_blocks_award=PASS | FM_gate=PASS | recognition_journal_5500_2400=PASS
+PASS | rollback_cleanup=PASS | policy=R5 | reward=1500.00 SDG
+```
+
+This proves, at the rollback-harness boundary, that an eligible Project Supervisor assigned before simulated closure receives the full R5 reward of 1500.00 SDG after durable FM financial closure and zero controlled balance; no award is issued before the FM gate; the recognition journal debits 5500 and credits 2400; and all test changes roll back. No posted accounting records or active policy values were changed.
+
+**Still open:** payroll inclusion/refresh, employee notification delivery, and real PM-to-FM browser closure workflow. These were not exercised by this harness. Next step is to inspect the current implementation and existing harnesses before choosing a narrow test; do not rerun the passed recognition harness without regression evidence.
