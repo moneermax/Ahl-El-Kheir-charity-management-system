@@ -101,6 +101,12 @@ $projects = $pdo->query(
              AND ev.source_record_id = pl.project_id
              AND ev.incentive_type = 'project_completion'
        )
+       AND NOT EXISTS (
+           SELECT 1 FROM audit_log al
+           WHERE al.action = 'FM_FINANCIAL_CLOSURE'
+             AND al.entity_type = 'project_lifecycle'
+             AND al.entity_id = pl.project_id
+       )
        AND EXISTS (
            SELECT 1
            FROM project_team pt
@@ -174,6 +180,19 @@ try {
             [$eventId]
         ) === 0,
         'System allocations incorrectly contain human approval metadata.'
+    );
+
+    // A zero balance alone must not issue awards without the durable FM audit gate.
+    $beforeFmGate = hrIncentiveProcessProjectCompletion(
+        $pdo,
+        $projectId,
+        akp_project_controlled_balance($projectId),
+        0
+    );
+    hrProjectIncentiveTestAssert($beforeFmGate === 0, 'Awards were issued without durable FM financial-closure evidence.');
+    hrProjectIncentiveTestAssert(
+        hrProjectIncentiveTestCount($pdo, 'SELECT COUNT(*) FROM hr_incentive_awards WHERE event_id = ?', [$eventId]) === 0,
+        'Award rows exist before the FM financial-closure gate.'
     );
 
     $financialClosureExists = hrProjectIncentiveTestCount(
