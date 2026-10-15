@@ -4,6 +4,7 @@ require_once dirname(__DIR__, 2) . '/modules/projects/project_lib.php';
 require_once dirname(__DIR__, 2) . '/modules/projects/project_funding_accounting.php';
 require_once dirname(__DIR__, 2) . '/modules/accounting/lib.php';
 require_once dirname(__DIR__, 2) . '/modules/accounting/lib_transaction_review.php';
+require_once dirname(__DIR__, 2) . '/modules/hr/lib_employee_incentives.php';
 Session::start();
 $requestedProjectId = (int)($_GET['id'] ?? $_POST['project_id'] ?? 0);
 if (!isset($_GET['role_view'])) {
@@ -1043,6 +1044,11 @@ dbExecute('COMMIT');
 } catch (Throwable $e) {
 dbExecute('ROLLBACK');
 throw $e;
+}
+try {
+    hrIncentivePrepareProjectCompletion(db(), $id, akp_user_id());
+} catch (Throwable $incentiveError) {
+    error_log('Project completion incentive snapshot deferred for project ' . $id . ': ' . $incentiveError->getMessage());
 }
 try {
 $fmUsers = dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id = r.id WHERE r.code IN ('financial_manager','fm','finance') AND u.is_active = 1");
