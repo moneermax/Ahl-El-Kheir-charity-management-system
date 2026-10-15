@@ -3231,3 +3231,8 @@ Findings:
 - The project's current active team can be read from `project_team` (`unassigned_at IS NULL`), but team membership by itself does not establish eligibility for a completion reward.
 
 **Implementation remains blocked on business-rule decisions, not on removing the guard:** define the authoritative formal-acceptance evidence/transition; who may propose recipients; whether recipients are manually selected or derived from some approved evidence; who approves the allocation and under which existing role; whether allocation percentages must total exactly 100%; and how currency rounding/remainder is assigned. Preserve existing audit/accounting boundaries. No project source code, schema, policy, or incentive data was changed in this source-audit step. Active R5 remains untouched; do not create another policy unless the user explicitly agrees. Do not use `ahl_el_kheir_production_test`.
+
+
+### Additional existing project-completion acceptance constraint — preserve
+
+Prior incentive-design discussion established that a project-completion award must remain blocked until **administrative project closure and FM financial closure are both evidenced**, eligible team recipients have explicit approved allocations, and those allocations are approved before award issuance. A project lifecycle status such as `completed` (or a project-screen stage/status alone) is not sufficient proof. This constraint is binding alongside the unresolved decisions above; do not implement event qualification from `lifecycle_status='completed'` alone.
