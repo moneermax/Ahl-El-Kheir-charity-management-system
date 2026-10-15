@@ -1068,7 +1068,17 @@ function hrIncentiveProcessProjectCompletion(PDO $pdo, int $projectId, float $co
         return 0;
     }
 
-    $eventId = hrIncentivePrepareProjectCompletion($pdo, $projectId, $actorUserId);
+    // Do not create a late recipient snapshot here: team eligibility must be
+    // frozen atomically with PM closure. If that source event/snapshot is absent,
+    // stop safely instead of guessing from the later team membership.
+    $eventLookup = $pdo->prepare(
+        "SELECT id FROM hr_incentive_events
+         WHERE source_table = 'project_lifecycle' AND source_record_id = ?
+           AND incentive_type = 'project_completion'
+         LIMIT 1"
+    );
+    $eventLookup->execute([$projectId]);
+    $eventId = (int)($eventLookup->fetchColumn() ?: 0);
     if ($eventId <= 0) {
         return 0;
     }
