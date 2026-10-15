@@ -717,3 +717,19 @@ A narrow GM-only action was added to return an **approved but not activated** in
 
 ### 2026-10-15 — Employee incentive notification browser UX verified
 The live in-app notification UX was browser-verified for the employee account used in the controlled test: automatic delivery was observed, and the notification-history page rendered the Arabic body correctly when the test notification was inserted using UTF-8 bytes. Test notification ID 195 was deleted afterward; the exact cleanup query reported `rows_deleted=1`, `remaining_test_rows=0`, and `remaining_notifications=0 / remaining_unread=0` for recipient user 16. This closes the employee-facing notification UX gate only. It does not close HR Manager browser/session authorization or the full incentive lifecycle. Next documented local gate: verify the GM-only audited return-to-draft action for the approved, unactivated incentive policy, then confirm HR can edit the four category rules using the normal UI. Do not rerun passed incentive rollback harnesses or touch `ahl_el_kheir_production_test`.
+
+
+## 2026-10-15 — HR incentive verification authorization PASSED; active policy checkpoint corrected
+
+The user reports the local browser/session authorization acceptance passed:
+- Existing HR Manager account: the dashboard link was visible and the incentive verification page opened normally.
+- Existing HR Staff account: the verification link was absent and direct access to `modules/hr/incentive_verification.php` was denied/redirected as expected.
+- No additional details or failure symptoms were reported.
+
+This closes only the HR Manager browser/session authorization gate. Do not rerun the already-passed source-event, accounting, verification rollback, or notification-outbox harnesses without concrete regression evidence.
+
+**Policy-state correction from the user's actual local browser screen (2026-10-15):** the page shows one policy, `ACCEPTANCE TEST - INCENTIVE POLICY - 2026-10-15-R5`, Version V1, status active (`سارية`), effective date `2026-10-15`; its four enabled rule amounts are collection 1,000 SDG, new sponsor 2,000 SDG, reactivation 1,000 SDG, and project completion 1,500 SDG. The displayed approval history shows HR submission at `2026-10-15 09:19:58` and GM approval at `2026-10-15 09:20:10`. This is user-reported local UI evidence, not an independent database query.
+
+This current R5 observation supersedes older continuation instructions that describe R3 as the active testing target or direct the next session to return R3 to draft. **Do not reset, edit, deactivate, or otherwise modify active R5; do not create another policy unless the user explicitly agrees.** Do not change policy status/effective dates directly in SQL. Preserve the prior historical R3/R4 notes as chronology only, not as current instructions.
+
+**Next open engineering unit:** inspect the actual project-completion lifecycle/source integration and existing `hr_incentive_project_allocations` schema before proposing implementation. Project-completion incentive verification remains intentionally blocked until the approved recipient-allocation workflow is defined and implemented. Do not infer who qualifies, how percentages are assigned, who approves the allocation, or rounding/residual treatment from the schema alone. Preserve project lifecycle/approval evidence and existing accounting boundaries. No project-completion source changes or tests are claimed in this checkpoint. Keep `ahl_el_kheir_production_test` untouched.
