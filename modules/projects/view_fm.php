@@ -4,6 +4,7 @@ require_once dirname(__DIR__, 2) . '/modules/projects/project_lib.php';
 require_once dirname(__DIR__, 2) . '/modules/projects/project_funding_accounting.php';
 require_once dirname(__DIR__, 2) . '/modules/accounting/lib.php';
 require_once dirname(__DIR__, 2) . '/modules/accounting/lib_transaction_review.php';
+require_once dirname(__DIR__, 2) . '/modules/hr/lib_employee_incentives.php';
 Session::start();
 
 $id = (int)($_GET['id'] ?? $_POST['project_id'] ?? 0);
@@ -367,6 +368,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ['status'=>'closed','controlled_balance'=>0.0],
                 ['status'=>'financially_closed','controlled_balance'=>0.0,'return_required'=>false]
             );
+            try {
+                hrIncentiveProcessProjectCompletion(db(), $id, akp_project_controlled_balance($id), akp_user_id());
+            } catch (Throwable $incentiveError) {
+                error_log('Project completion incentive processing deferred for project ' . $id . ': ' . $incentiveError->getMessage());
+            }
             try{
                 $pmUsers=dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id=r.id WHERE r.code='projects_manager' AND u.is_active=1");
                 foreach($pmUsers as $pmUser){
@@ -398,6 +404,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ['status'=>'closed','controlled_balance_before_return'=>$amount],
                     ['status'=>'financially_closed','controlled_balance'=>0.0,'return_journal_entry_id'=>$entryId]
                 );
+                try {
+                    hrIncentiveProcessProjectCompletion(db(), $id, $remaining, akp_user_id());
+                } catch (Throwable $incentiveError) {
+                    error_log('Project completion incentive processing deferred for project ' . $id . ': ' . $incentiveError->getMessage());
+                }
                 try{
                     $pmUsers=dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id=r.id WHERE r.code='projects_manager' AND u.is_active=1");
                     foreach($pmUsers as $pmUser){
