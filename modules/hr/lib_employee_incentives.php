@@ -1083,7 +1083,10 @@ function hrIncentiveProcessProjectCompletion(PDO $pdo, int $projectId, float $co
         return 0;
     }
 
-    $pdo->beginTransaction();
+    $startedHere = !$pdo->inTransaction();
+    if ($startedHere) {
+        $pdo->beginTransaction();
+    }
     try {
         // Re-read the project balance inside the processing transaction when
         // the project domain helper is available; the caller's value is only
@@ -1092,7 +1095,7 @@ function hrIncentiveProcessProjectCompletion(PDO $pdo, int $projectId, float $co
             ? (float)akp_project_controlled_balance($projectId)
             : $controlledBalance;
         if (!is_finite($currentControlledBalance) || $currentControlledBalance > 0.009) {
-            $pdo->rollBack();
+            if ($startedHere) { $pdo->rollBack(); }
             return 0;
         }
 
@@ -1109,7 +1112,7 @@ function hrIncentiveProcessProjectCompletion(PDO $pdo, int $projectId, float $co
         $closure = $gate->fetch(PDO::FETCH_ASSOC);
         if (!$closure || $closure['lifecycle_status'] !== 'closed'
             || empty($closure['closed_at']) || (int)$closure['financial_closure_count'] < 1) {
-            $pdo->rollBack();
+            if ($startedHere) { $pdo->rollBack(); }
             return 0;
         }
 
@@ -1145,7 +1148,7 @@ function hrIncentiveProcessProjectCompletion(PDO $pdo, int $projectId, float $co
         $allocStmt->execute([$eventId]);
         $allocations = $allocStmt->fetchAll(PDO::FETCH_ASSOC);
         if (!$allocations) {
-            $pdo->rollBack();
+            if ($startedHere) { $pdo->rollBack(); }
             return 0;
         }
 
@@ -1205,7 +1208,7 @@ function hrIncentiveProcessProjectCompletion(PDO $pdo, int $projectId, float $co
             $processedAwardIds[] = $awardId;
         }
 
-        $pdo->commit();
+        if ($startedHere) { $pdo->commit(); }
 
         // Refresh only the earliest current/future draft payroll per employee.
         // If none exists, normal payroll generation/refresh will schedule the award.
@@ -1230,7 +1233,7 @@ function hrIncentiveProcessProjectCompletion(PDO $pdo, int $projectId, float $co
         return count($processedAwardIds);
     } catch (Throwable $e) {
         if ($pdo->inTransaction()) {
-            $pdo->rollBack();
+            if ($startedHere) { $pdo->rollBack(); }
         }
         throw $e;
     }
