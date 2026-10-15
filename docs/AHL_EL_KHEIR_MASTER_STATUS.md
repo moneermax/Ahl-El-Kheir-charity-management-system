@@ -2913,3 +2913,8 @@ The source change removing the HR notification on GM approval is commit `2c47e5a
 
 **Scope boundary:** this acceptance closes only the HR incentive policy governance/notification flow. It does not close the full employee-incentives lifecycle. Remaining open work includes the employee-facing notification UX and HR Manager authorization in browser/session context, plus project-completion verification/approved recipient allocations. Do not rerun already-passed rollback-only incentive harnesses or use `ahl_el_kheir_production_test` absent concrete regression evidence.
 
+
+
+## 2026-10-15 — Incentive policy approval withdrawal to HR draft (verification pending)
+
+Added a GM-only audited path to withdraw approval from an unactivated policy and return it to HR draft mode. A reason is mandatory; approval history records `returned_to_draft`; HR creator and FM notifications are sent after commit. Already-activated policies are explicitly excluded. Migration: `database/migrations/2026-10-15_hr_incentive_policy_approval_withdrawal.sql`. Source commit: `a9501f5f41e4f959a734d175cf14523c49c1e6d2`; migration commit: `cb522dcee4b2e78e03f8d4c97402a61ca7e23d6c`. **Not locally verified yet**: pull `main`, apply the migration to `ahl_el_kheir`, PHP-lint `modules/hr/incentive_policy.php`, then test GM withdrawal and HR editing in the browser. R3's effective date must be corrected through HR edit to a valid date and must not bypass the later R4 policy's activation chronology. Do not directly alter policy status or use `ahl_el_kheir_production_test`.
