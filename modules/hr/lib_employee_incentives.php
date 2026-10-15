@@ -1075,6 +1075,17 @@ function hrIncentiveProcessProjectCompletion(PDO $pdo, int $projectId, float $co
 
     $pdo->beginTransaction();
     try {
+        // Re-read the project balance inside the processing transaction when
+        // the project domain helper is available; the caller's value is only
+        // an initial guard, not the final financial-closure evidence.
+        $currentControlledBalance = function_exists('akp_project_controlled_balance')
+            ? (float)akp_project_controlled_balance($projectId)
+            : $controlledBalance;
+        if (!is_finite($currentControlledBalance) || $currentControlledBalance > 0.009) {
+            $pdo->rollBack();
+            return 0;
+        }
+
         $gate = $pdo->prepare(
             "SELECT pl.lifecycle_status, pl.closed_at,
                     (SELECT COUNT(*) FROM audit_log al
