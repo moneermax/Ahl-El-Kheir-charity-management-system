@@ -59,6 +59,16 @@ function fm_json_response(bool $ok, string $message, array $data = [], int $stat
     exit();
 }
 
+// Retry-safe recovery: a prior financial-closure transaction may have committed
+// while incentive processing failed. The processor rechecks durable closure evidence.
+if ($financialClosureCompleted && $closed && $controlledBalance <= 0.009) {
+    try {
+        hrIncentiveProcessProjectCompletion(db(), $id, $controlledBalance, akp_user_id());
+    } catch (Throwable $incentiveError) {
+        error_log('Project completion incentive retry deferred for project ' . $id . ': ' . $incentiveError->getMessage());
+    }
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = (string)($_POST['action'] ?? '');
     $asyncPaymentAction = in_array($action, ['fm_confirm_cash_payment','fm_upload_payment_receipt','fm_edit_payment_evidence','fm_confirm_payment_evidence'], true)
