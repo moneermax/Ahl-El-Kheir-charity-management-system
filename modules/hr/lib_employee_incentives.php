@@ -903,3 +903,314 @@ function hrIncentiveRecordSourceEvent(
     }
 }
 
+
+
+/**
+ * Snapshot eligible active project-team employees when PM administrative closure
+ * is durable. Each eligible employee receives the full policy amount; allocations
+ * are not a shared pool and carry no fabricated human-approval metadata.
+ */
+function hrIncentivePrepareProjectCompletion(PDO $pdo, int $projectId, int $actorUserId = 0): int
+{
+    if ($projectId <= 0) {
+        throw new InvalidArgumentException('معرّف المشروع غير صالح.');
+    }
+
+    $startedHere = !$pdo->inTransaction();
+    if ($startedHere) {
+        $pdo->beginTransaction();
+    }
+
+    try {
+        $projectStmt = $pdo->prepare(
+            "SELECT project_id, lifecycle_status, closed_at, currency_code
+             FROM project_lifecycle
+             WHERE project_id = ? LIMIT 1 FOR UPDATE"
+        );
+        $projectStmt->execute([$projectId]);
+        $project = $projectStmt->fetch(PDO::FETCH_ASSOC);
+        if (!$project || $project['lifecycle_status'] !== 'closed' || empty($project['closed_at'])) {
+            if ($startedHere) {
+                $pdo->commit();
+            }
+            return 0;
+        }
+
+        $eventId = hrIncentiveRecordSourceEvent(
+            $pdo,
+            'project_lifecycle',
+            $projectId,
+            'project_completion',
+            (string)$project['closed_at'],
+            null,
+            (string)($project['currency_code'] ?: 'SDG'),
+            $actorUserId
+        );
+        if ($eventId <= 0) {
+            if ($startedHere) {
+                $pdo->commit();
+            }
+            return 0;
+        }
+
+        $eventStmt = $pdo->prepare(
+            "SELECT id, policy_version_id, status, verification_note
+             FROM hr_incentive_events WHERE id = ? LIMIT 1 FOR UPDATE"
+        );
+        $eventStmt->execute([$eventId]);
+        $event = $eventStmt->fetch(PDO::FETCH_ASSOC);
+        if (!$event) {
+            throw new RuntimeException('تعذر تحميل حدث حافز إكمال المشروع.');
+        }
+
+        // This marker means the closure-time recipient snapshot finished, even
+        // when no eligible team member existed. It is not an approval marker.
+        $snapshotMarker = 'system:project-recipient-snapshot-v1';
+        if (strpos((string)($event['verification_note'] ?? ''), $snapshotMarker) === false) {
+            if ($event['status'] !== 'pending_verification') {
+                throw new RuntimeException('تعذر استكمال لقطة مستفيدي المشروع بعد انتقال حالة الحدث.');
+            }
+
+            $ruleStmt = $pdo->prepare(
+                "SELECT reward_amount, currency_code, is_enabled
+                 FROM hr_incentive_policy_rules
+                 WHERE policy_version_id = ? AND incentive_type = 'project_completion'
+                 LIMIT 1 FOR UPDATE"
+            );
+            $ruleStmt->execute([(int)$event['policy_version_id']]);
+            $rule = $ruleStmt->fetch(PDO::FETCH_ASSOC);
+            if (!$rule || (int)$rule['is_enabled'] !== 1 || (float)$rule['reward_amount'] <= 0) {
+                throw new RuntimeException('قاعدة حافز إكمال المشروع غير مفعلة أو مبلغها غير صالح.');
+            }
+
+            $teamStmt = $pdo->prepare(
+                "SELECT DISTINCT pt.user_id
+                 FROM project_team pt
+                 WHERE pt.project_id = ? AND pt.unassigned_at IS NULL
+                 ORDER BY pt.user_id"
+            );
+            $teamStmt->execute([$projectId]);
+            $insertAllocation = $pdo->prepare(
+                "INSERT INTO hr_incentive_project_allocations
+                    (event_id, employee_id, recipient_user_id, allocation_percent,
+                     reward_amount, currency_code, approved_by_user_id, approved_at, allocation_note)
+                 VALUES (?, ?, ?, 100.00, ?, ?, NULL, NULL, ?)
+                 ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)"
+            );
+            $eligibilityStmt = $pdo->prepare(
+                "SELECT e.id
+                 FROM employees e
+                 JOIN hr_employment_states es ON es.id = e.employment_state_id
+                 JOIN users u ON u.id = e.user_id
+                 WHERE e.id = ? AND e.user_id = ?
+                   AND es.category = 'working' AND es.is_active = 1 AND u.is_active = 1
+                 LIMIT 1"
+            );
+
+            foreach ($teamStmt->fetchAll(PDO::FETCH_COLUMN) as $userIdValue) {
+                $userId = (int)$userIdValue;
+                if ($userId <= 0) {
+                    continue;
+                }
+                $employeeId = hrIncentiveEmployeeIdForUser($pdo, $userId);
+                if ($employeeId <= 0) {
+                    continue;
+                }
+                $eligibilityStmt->execute([$employeeId, $userId]);
+                if (!$eligibilityStmt->fetchColumn()) {
+                    continue;
+                }
+                $insertAllocation->execute([
+                    $eventId,
+                    $employeeId,
+                    $userId,
+                    round((float)$rule['reward_amount'], 2),
+                    strtoupper(trim((string)$rule['currency_code'])),
+                    'System snapshot at PM administrative closure; full policy amount per eligible employee.'
+                ]);
+            }
+
+            $markSnapshot = $pdo->prepare(
+                "UPDATE hr_incentive_events
+                 SET verification_note = ?
+                 WHERE id = ? AND status = 'pending_verification'"
+            );
+            $markSnapshot->execute([$snapshotMarker, $eventId]);
+            if ($markSnapshot->rowCount() !== 1) {
+                throw new RuntimeException('تعذر تثبيت لقطة مستفيدي المشروع.');
+            }
+        }
+
+        if ($startedHere) {
+            $pdo->commit();
+        }
+        return $eventId;
+    } catch (Throwable $e) {
+        if ($startedHere && $pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        throw $e;
+    }
+}
+
+/**
+ * Issue project-completion awards only after both durable closure gates pass:
+ * lifecycle is administratively closed, FM_FINANCIAL_CLOSURE exists, and the
+ * caller-provided controlled balance is within the existing 0.009 tolerance.
+ * All awards and recognition journals commit together and are retry-safe.
+ */
+function hrIncentiveProcessProjectCompletion(PDO $pdo, int $projectId, float $controlledBalance, int $actorUserId = 0): int
+{
+    if ($projectId <= 0 || !is_finite($controlledBalance)) {
+        throw new InvalidArgumentException('بيانات الإغلاق المالي للمشروع غير صالحة.');
+    }
+    if ($controlledBalance > 0.009) {
+        return 0;
+    }
+
+    $eventId = hrIncentivePrepareProjectCompletion($pdo, $projectId, $actorUserId);
+    if ($eventId <= 0) {
+        return 0;
+    }
+
+    $pdo->beginTransaction();
+    try {
+        $gate = $pdo->prepare(
+            "SELECT pl.lifecycle_status, pl.closed_at,
+                    (SELECT COUNT(*) FROM audit_log al
+                     WHERE al.action = 'FM_FINANCIAL_CLOSURE'
+                       AND al.entity_type = 'project_lifecycle'
+                       AND al.entity_id = pl.project_id) AS financial_closure_count
+             FROM project_lifecycle pl
+             WHERE pl.project_id = ? LIMIT 1 FOR UPDATE"
+        );
+        $gate->execute([$projectId]);
+        $closure = $gate->fetch(PDO::FETCH_ASSOC);
+        if (!$closure || $closure['lifecycle_status'] !== 'closed'
+            || empty($closure['closed_at']) || (int)$closure['financial_closure_count'] < 1) {
+            $pdo->rollBack();
+            return 0;
+        }
+
+        $eventStmt = $pdo->prepare(
+            "SELECT id, status, verification_note
+             FROM hr_incentive_events
+             WHERE id = ? AND source_table = 'project_lifecycle'
+               AND source_record_id = ? AND incentive_type = 'project_completion'
+             LIMIT 1 FOR UPDATE"
+        );
+        $eventStmt->execute([$eventId, $projectId]);
+        $event = $eventStmt->fetch(PDO::FETCH_ASSOC);
+        if (!$event || strpos((string)($event['verification_note'] ?? ''), 'system:project-recipient-snapshot-v1') === false) {
+            throw new RuntimeException('لقطة مستفيدي حافز المشروع غير مكتملة؛ لم تصدر أي حوافز.');
+        }
+        if (!in_array($event['status'], ['pending_verification', 'verified'], true)) {
+            throw new RuntimeException('حالة حدث حافز المشروع لا تسمح بالمعالجة الآلية.');
+        }
+
+        $allocStmt = $pdo->prepare(
+            "SELECT pa.id AS allocation_id, pa.employee_id, pa.recipient_user_id,
+                    pa.reward_amount, pa.currency_code,
+                    es.category, es.is_active AS employment_state_active,
+                    u.is_active AS user_active, e.user_id AS employee_user_id
+             FROM hr_incentive_project_allocations pa
+             JOIN employees e ON e.id = pa.employee_id
+             JOIN hr_employment_states es ON es.id = e.employment_state_id
+             JOIN users u ON u.id = pa.recipient_user_id
+             WHERE pa.event_id = ?
+             ORDER BY pa.employee_id
+             FOR UPDATE"
+        );
+        $allocStmt->execute([$eventId]);
+        $allocations = $allocStmt->fetchAll(PDO::FETCH_ASSOC);
+        if (!$allocations) {
+            $pdo->rollBack();
+            return 0;
+        }
+
+        foreach ($allocations as $allocation) {
+            if ((int)$allocation['employee_user_id'] !== (int)$allocation['recipient_user_id']
+                || $allocation['category'] !== 'working'
+                || (int)$allocation['employment_state_active'] !== 1
+                || (int)$allocation['user_active'] !== 1
+                || (float)$allocation['reward_amount'] <= 0
+                || !preg_match('/^[A-Z]{3}$/', strtoupper(trim((string)$allocation['currency_code'])))) {
+                throw new RuntimeException('تغيرت أهلية أحد مستفيدي المشروع أو بيانات الحافز؛ أوقفت المعالجة دون حفظ أي حافز.');
+            }
+        }
+
+        if ($event['status'] === 'pending_verification') {
+            $verify = $pdo->prepare(
+                "UPDATE hr_incentive_events
+                 SET status = 'verified', verified_by_user_id = NULL, verified_at = NOW(),
+                     verification_note = CONCAT(COALESCE(verification_note, ''), '\nSystem verified after PM closure and durable FM financial closure.')
+                 WHERE id = ? AND status = 'pending_verification'"
+            );
+            $verify->execute([$eventId]);
+            if ($verify->rowCount() !== 1) {
+                throw new RuntimeException('تغيرت حالة حدث حافز المشروع أثناء المعالجة.');
+            }
+        }
+
+        $existingAward = $pdo->prepare(
+            "SELECT id FROM hr_incentive_awards WHERE event_id = ? AND employee_id = ? LIMIT 1 FOR UPDATE"
+        );
+        $insertAward = $pdo->prepare(
+            "INSERT INTO hr_incentive_awards
+                (event_id, employee_id, recipient_user_id, project_allocation_id,
+                 reward_amount, reward_currency_code, status, earned_at)
+             VALUES (?, ?, ?, ?, ?, ?, 'earned', ?)"
+        );
+        $processedAwardIds = [];
+        foreach ($allocations as $allocation) {
+            $existingAward->execute([$eventId, (int)$allocation['employee_id']]);
+            $awardId = (int)($existingAward->fetchColumn() ?: 0);
+            if ($awardId <= 0) {
+                $insertAward->execute([
+                    $eventId,
+                    (int)$allocation['employee_id'],
+                    (int)$allocation['recipient_user_id'],
+                    (int)$allocation['allocation_id'],
+                    round((float)$allocation['reward_amount'], 2),
+                    strtoupper(trim((string)$allocation['currency_code'])),
+                    (string)$closure['closed_at']
+                ]);
+                $awardId = (int)$pdo->lastInsertId();
+            }
+            if ($awardId <= 0) {
+                throw new RuntimeException('تعذر إنشاء استحقاق حافز المشروع.');
+            }
+            hrIncentiveRecognizeAward($pdo, $awardId, $actorUserId);
+            $processedAwardIds[] = $awardId;
+        }
+
+        $pdo->commit();
+
+        // Refresh only the earliest current/future draft payroll per employee.
+        // If none exists, normal payroll generation/refresh will schedule the award.
+        $draftPayroll = $pdo->prepare(
+            "SELECT id FROM payroll
+             WHERE employee_id = ? AND status = 'draft'
+               AND (year > YEAR(CURDATE()) OR (year = YEAR(CURDATE()) AND month >= MONTH(CURDATE())))
+             ORDER BY year, month, id LIMIT 1"
+        );
+        foreach ($allocations as $allocation) {
+            $draftPayroll->execute([(int)$allocation['employee_id']]);
+            $payrollId = (int)($draftPayroll->fetchColumn() ?: 0);
+            if ($payrollId > 0) {
+                try {
+                    hrIncentiveRefreshPayrollDraft($pdo, $payrollId);
+                } catch (Throwable $refreshError) {
+                    error_log('Project incentive payroll refresh deferred for award event ' . $eventId . ': ' . $refreshError->getMessage());
+                }
+            }
+        }
+
+        return count($processedAwardIds);
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        throw $e;
+    }
+}
