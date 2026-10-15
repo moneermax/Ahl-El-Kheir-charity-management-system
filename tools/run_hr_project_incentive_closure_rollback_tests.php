@@ -226,7 +226,7 @@ try {
             $actorId,
             $projectId,
             json_encode(['test_fixture' => true], JSON_UNESCAPED_UNICODE),
-            json_encode(['test_fixture' => true, 'controlled_balance' => 0], JSON_UNESCAPED_UNICODE),
+            json_encode(['test_fixture' => true, 'controlled_balance' => akp_project_controlled_balance($projectId)], JSON_UNESCAPED_UNICODE),
             '127.0.0.1',
             'rollback-only incentive test'
         ]);
