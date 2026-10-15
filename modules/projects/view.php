@@ -1040,15 +1040,13 @@ dbExecute("UPDATE project_lifecycle SET lifecycle_status = 'closed', closed_at =
 if (dbExecute("UPDATE other_projects SET status = 'completed', updated_by = ? WHERE id = ?", [akp_user_id(), $id]) !== 1) throw new RuntimeException('تعذر مزامنة حالة المشروع عند الإغلاق.');
 dbExecute("INSERT INTO project_status_history (project_id, old_status, new_status, reason, changed_by) VALUES (?, ?, 'closed', ?, ?)", [$id, $project['lifecycle_status'] ?: $project['status'], $summary, akp_user_id()]);
 akp_audit('CLOSE', 'project_lifecycle', $id, ['status' => $project['lifecycle_status'] ?: $project['status'], 'controlled_balance' => $controlledBalance], ['status' => 'closed', 'reason' => $summary, 'financial_closure_pending' => $controlledBalance > 0.009]);
+// Snapshot the eligible team in the same transaction as administrative closure.
+// If this fails, the closure transaction rolls back rather than losing the recipient snapshot.
+hrIncentivePrepareProjectCompletion(db(), $id, akp_user_id());
 dbExecute('COMMIT');
 } catch (Throwable $e) {
 dbExecute('ROLLBACK');
 throw $e;
-}
-try {
-    hrIncentivePrepareProjectCompletion(db(), $id, akp_user_id());
-} catch (Throwable $incentiveError) {
-    error_log('Project completion incentive snapshot deferred for project ' . $id . ': ' . $incentiveError->getMessage());
 }
 try {
 $fmUsers = dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id = r.id WHERE r.code IN ('financial_manager','fm','finance') AND u.is_active = 1");
