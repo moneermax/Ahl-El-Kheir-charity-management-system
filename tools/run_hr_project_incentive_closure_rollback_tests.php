@@ -159,6 +159,14 @@ $baselineAwardCount = hrProjectIncentiveTestCount(
     [$projectId]
 );
 
+$baselineFinancialClosureAuditCount = hrProjectIncentiveTestCount(
+    $pdo,
+    "SELECT COUNT(*) FROM audit_log
+     WHERE action = 'FM_FINANCIAL_CLOSURE'
+       AND entity_type = 'project_lifecycle' AND entity_id = ?",
+    [$projectId]
+);
+
 $pdo->beginTransaction();
 try {
     $updateClosure = $pdo->prepare(
@@ -274,6 +282,24 @@ try {
                 [$projectId]
             ) === $baselineAwardCount,
             'Rollback left project incentive awards behind.'
+        );
+        hrProjectIncentiveTestAssert(
+            hrProjectIncentiveTestCount(
+                $pdo,
+                'SELECT COUNT(*) FROM hr_incentive_project_allocations WHERE event_id = ?',
+                [$eventId]
+            ) === 0,
+            'Rollback left project incentive recipient allocations behind.'
+        );
+        hrProjectIncentiveTestAssert(
+            hrProjectIncentiveTestCount(
+                $pdo,
+                "SELECT COUNT(*) FROM audit_log
+                 WHERE action = 'FM_FINANCIAL_CLOSURE'
+                   AND entity_type = 'project_lifecycle' AND entity_id = ?",
+                [$projectId]
+            ) === $baselineFinancialClosureAuditCount,
+            'Rollback left temporary FM financial-closure audit evidence behind.'
         );
 
         echo "PASS | project_team_snapshot={$allocationCount} | no_approval_metadata=PASS | positive_balance_award_block=PASS\n";
