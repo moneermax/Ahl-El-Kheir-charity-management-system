@@ -3286,3 +3286,15 @@ This verifies the positive-controlled-balance block and transactional cleanup in
 The previous rollback-only project incentive harness proved the positive-controlled-balance block and rollback cleanup, but skipped award recognition because no existing eligible closed project had a zero controlled balance. No posted financial records were to be changed to manufacture a zero balance.
 
 A separate harness was added to `main`: `tools/run_hr_project_incentive_success_rollback_tests.php` (commit `5b6fb97d975bdc3e591fa811ca55b2a214092bfc`). It is hard-blocked unless the selected database is exactly `ahl_el_kheir_incentive_test_20261015_r1`. It reads, but does not alter, the protected active R5 policy; creates a synthetic project without funding/expense/return activity; assigns an eligible Project Supervisor before closure; proves the FM audit gate; verifies the full policy amount and balanced recognition journal on accounts 5500/2400; and rolls back all fixture, award, audit and journal rows. PHP lint and local runtime execution remain pending. This is a test-method improvement, not evidence that the successful award path has passed.
+
+## 2026-10-15 — Project incentive success-path harness: PASS
+
+Local user evidence for `tools/run_hr_project_incentive_success_rollback_tests.php`:
+```
+PASS | synthetic_project=no_financial_activity | PS_snapshot=PASS | full_policy_amount_per_employee=PASS
+PASS | missing_FM_gate_blocks_award=PASS | FM_gate=PASS | recognition_journal_5500_2400=PASS
+PASS | rollback_cleanup=PASS | policy=R5 | reward=1500.00 SDG
+```
+PHP lint also passed. The test used only `ahl_el_kheir_incentive_test_20261015_r1`, a synthetic no-financial-activity project and an eligible Project Supervisor snapshotted before closure. The FM closure gate was tested both absent and present. The award recognition journal debited incentive expense account 5500 and credited incentive payable account 2400 for 1500.00 SDG. Rollback cleanup was confirmed. No production policy, posted financial records, or live project were modified.
+
+**Acceptance boundary:** project award eligibility, snapshot, configured amount, FM gate, recognition journal and rollback are runtime verified. Payroll assignment/refresh, notification delivery, and real PM-to-FM browser workflow are not proven by this harness and must not be described as passed.
