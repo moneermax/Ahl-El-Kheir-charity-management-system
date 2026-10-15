@@ -3007,3 +3007,18 @@ This verifies the positive-controlled-balance block and transactional cleanup in
 The existing negative project-incentive harness remains passed: positive controlled balance blocks awards and all temporary changes roll back; its success branch was skipped because no existing eligible closed project had zero controlled balance. To avoid changing posted financial evidence, a separate harness was added on `main`: `tools/run_hr_project_incentive_success_rollback_tests.php`, commit `5b6fb97d975bdc3e591fa811ca55b2a214092bfc`.
 
 The new harness is restricted to `ahl_el_kheir_incentive_test_20261015_r1`, checks that the active policy is the protected R5 acceptance policy, and creates a synthetic project with no funding, posted expenses, or returns. It snapshots an eligible Project Supervisor before simulated administrative closure, verifies that a zero balance alone cannot issue an award, then tests the durable FM closure gate and the full configured reward's Dr 5500 / Cr 2400 recognition journal. Everything is inside a transaction that is rolled back. **Runtime status: PENDING local PHP lint and execution.** Do not claim award-recognition success until user-run output passes.
+
+## 2026-10-15 — Project completion incentive recognition: RUNTIME VERIFIED
+
+User locally ran `tools/run_hr_project_incentive_success_rollback_tests.php` on disposable database `ahl_el_kheir_incentive_test_20261015_r1`; PHP syntax and runtime both passed.
+
+Evidence:
+- Synthetic project had no funding, posted expenses, or returns.
+- Eligible Project Supervisor was assigned before the closure-time recipient snapshot.
+- Full R5 project-completion reward: `1500.00 SDG`.
+- Without durable FM financial-closure evidence, award processing was blocked.
+- With the FM gate satisfied and zero controlled balance, award recognition succeeded.
+- Recognition journal passed the Dr 5500 / Cr 2400 full-amount check.
+- Transaction rollback cleanup passed; no test project, award, journal, or temporary FM audit was left behind.
+
+This closes only the project award/recognition successful-path test gate. Payroll inclusion, post-commit employee notification delivery, and the real browser PM/FM closure workflow remain separate unverified gates. Do not rerun this passed harness absent regression evidence.
