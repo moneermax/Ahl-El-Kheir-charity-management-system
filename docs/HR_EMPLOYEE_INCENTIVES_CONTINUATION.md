@@ -748,3 +748,11 @@ User ran the harness on local PHP 8.2 against disposable database `ahl_el_kheir_
 - `SKIP | award-recognition success branch | No existing eligible closed project has a zero controlled balance; no accounting records were fabricated or altered.`
 
 This verifies the positive-controlled-balance block and transactional cleanup in the disposable DB only. It does **not** verify successful award creation or recognition journals, nor browser/runtime behavior on a real project. The success branch remains open pending a legitimate eligible closed project with controlled balance <= 0.009. Do not fabricate funding returns or edit posted accounting records to create one. Active policy R5 and live accounting were not used or changed by this test.
+
+## 2026-10-15 — Project completion incentive success-path harness added
+
+The existing `tools/run_hr_project_incentive_closure_rollback_tests.php` already passed the negative gate (positive controlled balance blocks award issuance and rollback cleanup passes); its successful award-recognition branch was skipped because no existing eligible closed project had a zero controlled balance. No accounting records were fabricated or altered.
+
+Added `tools/run_hr_project_incentive_success_rollback_tests.php` on `main` in commit `5b6fb97d975bdc3e591fa811ca55b2a214092bfc`. The new harness is restricted to `ahl_el_kheir_incentive_test_20261015_r1`, verifies the active policy is the protected R5 acceptance policy, and uses a synthetic project with no funding, posted expenses, or returns. An eligible Project Supervisor is snapshotted before simulated administrative closure. The test checks that zero balance without durable `FM_FINANCIAL_CLOSURE` evidence cannot issue an award, then verifies the full configured reward and recognition journal (Dr 5500 employee incentive expense / Cr 2400 incentive payable), followed by rollback cleanup.
+
+**Status: RUNTIME PENDING.** The new harness has not yet been locally PHP-linted or executed against MariaDB. Do not describe the success path as verified until its output passes. This harness does not test payroll inclusion, notification delivery, or the slow browser project-creation workflow; those remain separate open acceptance gates. The active R5 policy is read-only throughout.
