@@ -5,10 +5,11 @@ declare(strict_types=1);
  * Project-completion incentive closure integration — rollback-only test.
  *
  * Selects an existing administratively closed project with eligible active
- * team members and zero controlled balance, temporarily sets its closure time
- * to the current date inside a transaction, snapshots recipients, adds temporary
- * FM closure evidence if needed, issues awards, checks recognition, then rolls
- * everything back. It performs no DDL and never commits test fixtures.
+ * team members and a readable controlled balance. Inside a transaction it
+ * snapshots recipients and adds temporary FM closure evidence if needed.
+ * Positive-balance projects exercise award blocking and rollback; the award/
+ * recognition success branch requires a real zero-balance project. The harness
+ * performs no DDL and never commits test fixtures or alters accounting records.
  */
 $_SERVER['REQUEST_METHOD'] = $_SERVER['REQUEST_METHOD'] ?? 'CLI';
 
@@ -123,19 +124,23 @@ $projects = $pdo->query(
 )->fetchAll(PDO::FETCH_COLUMN);
 
 $projectId = 0;
+$initialControlledBalance = null;
 foreach ($projects as $projectIdValue) {
     $candidateId = (int)$projectIdValue;
     try {
-        if (akp_project_controlled_balance($candidateId) <= 0.009) {
-            $projectId = $candidateId;
-            break;
-        }
+        // A positive-balance project is still a safe fixture for proving that
+        // the FM closure gate cannot issue awards while funds remain controlled.
+        // The successful award/recognition branch still requires a real zero-balance
+        // candidate; the harness never edits posted funding, expenses, or returns.
+        $initialControlledBalance = akp_project_controlled_balance($candidateId);
+        $projectId = $candidateId;
+        break;
     } catch (Throwable $e) {
         // A candidate with incomplete financial source data is not a safe fixture.
     }
 }
-if ($projectId <= 0) {
-    hrProjectIncentiveTestSkip('No closed project with an eligible active team and controlled balance <= 0.009 is available.');
+if ($projectId <= 0 || $initialControlledBalance === null) {
+    hrProjectIncentiveTestSkip('No closed project with an eligible active team and readable controlled balance is available.');
 }
 
 $baselineEventCount = hrProjectIncentiveTestCount(

@@ -795,3 +795,8 @@ A `SKIP` from the harness means it could not find a safe eligible closed-project
 Added `tools/run_hr_project_incentive_closure_rollback_tests.php` (commit `df40dc1c`). It exercises the automatic project allocation/award path inside an outer transaction and rolls back its fixture, journals, and payroll changes. The processor supports caller-owned transactions (commit `2bff519b`). A missing migration or safe project fixture results in `SKIP`, not PASS.
 
 Next: pull `main`, inspect/apply `2026-10-15_hr_incentive_project_auto_allocation.sql` only if needed, lint the four changed PHP source files plus the harness with local PHP 8.2, and run only the new harness. Local lint/runtime acceptance remains pending. Keep active R5 unchanged; never use `ahl_el_kheir_production_test`.
+
+
+### 2026-10-15 — Project incentive rollback harness: safe positive-balance coverage
+
+The rollback harness was narrowed to avoid manufacturing a zero-balance accounting fixture. It now selects a closed project with an eligible active team and readable controlled balance. When the balance is positive, it verifies recipient snapshotting, absence of human approval metadata, award blocking, and rollback cleanup; the award/recognition success branch remains conditional on an existing genuine zero-balance project. This does not alter funding allocations, posted expenses, returns, or active R5. Pull main, lint the harness, and run it only against disposable database ahl_el_kheir_incentive_test_20261015_r1. A positive-balance branch PASS does not prove award recognition; its explicit SKIP remains an acceptance gap.

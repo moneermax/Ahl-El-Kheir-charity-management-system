@@ -3259,3 +3259,8 @@ The prior requirement for human-approved project allocations is superseded by th
 Added `tools/run_hr_project_incentive_closure_rollback_tests.php` (commit `df40dc1c`). It exercises the automatic project allocation/award path inside an outer transaction and rolls back its fixture, journals, and payroll changes. The processor supports caller-owned transactions (commit `2bff519b`). A missing migration or safe project fixture results in `SKIP`, not PASS.
 
 Next: pull `main`, inspect/apply `2026-10-15_hr_incentive_project_auto_allocation.sql` only if needed, lint the four changed PHP source files plus the harness with local PHP 8.2, and run only the new harness. Local lint/runtime acceptance remains pending. Keep active R5 unchanged; never use `ahl_el_kheir_production_test`.
+
+
+## 2026-10-15 — Project incentive rollback harness safety refinement
+
+Inspection of the disposable database found project 10 has posted allocations totaling 260,000 SDG and a controlled balance of 30,000 SDG, with no recorded funding returns. The harness will not fabricate a return or alter posted accounting records merely to create a passing fixture. It now tests the positive-balance rejection path and rollback cleanup using a genuine eligible closed project where possible. The award/recognition success path remains gated on a genuine zero controlled balance; if no such fixture exists, that branch is explicitly SKIP, not PASS. This source/doc change does not touch the live database, project 7, or active policy R5. Local lint and disposable-DB execution remain required.
