@@ -375,6 +375,63 @@ try {
             exit;
         }
 
+        if ($action === 'withdraw_approval_to_draft') {
+            if (!$canReviewPolicies) throw new RuntimeException('سحب اعتماد سياسة الحوافز متاح للمدير العام فقط.');
+            $policyId = (int)($_POST['policy_id'] ?? 0);
+            $reason = trim((string)($_POST['reason'] ?? ''));
+            if ($reason === '' || mb_strlen($reason) > 2000) {
+                throw new InvalidArgumentException('سبب سحب الاعتماد مطلوب وبحد أقصى 2000 حرف.');
+            }
+
+            $pdo->beginTransaction();
+            $policy = dbFetchOne('SELECT * FROM hr_incentive_policy_versions WHERE id = ? FOR UPDATE', [$policyId]);
+            if (!$policy || $policy['status'] !== 'approved') {
+                throw new InvalidArgumentException('يمكن سحب اعتماد سياسة معتمدة وغير مفعّلة فقط.');
+            }
+            if (!empty($policy['activated_at']) || !empty($policy['activated_by_user_id'])) {
+                throw new InvalidArgumentException('لا يمكن إرجاع سياسة سبق تفعيلها إلى المسودة؛ استخدم مسار إصدار سياسة جديد.');
+            }
+
+            $pdo->prepare(
+                "INSERT INTO hr_incentive_policy_approval_history
+                    (policy_version_id, action, actor_user_id, reason)
+                 VALUES (?, 'returned_to_draft', ?, ?)"
+            )->execute([$policyId, (int)Session::getUserID(), $reason]);
+
+            $update = $pdo->prepare(
+                "UPDATE hr_incentive_policy_versions
+                 SET status = 'draft'
+                 WHERE id = ? AND status = 'approved'
+                   AND activated_at IS NULL AND activated_by_user_id IS NULL"
+            );
+            $update->execute([$policyId]);
+            if ($update->rowCount() !== 1) {
+                throw new RuntimeException('تغيّرت حالة السياسة أثناء سحب الاعتماد؛ لم يتم إكمال العملية.');
+            }
+            $pdo->commit();
+
+            $policyLabel = 'سياسة الحوافز V' . (int)$policy['version_no'] . ' «' . (string)$policy['policy_name'] . '»';
+            hrIncentivePolicyNotifyUser(
+                (int)$policy['created_by_user_id'],
+                $policyId,
+                'سحب المدير العام اعتماد سياسة الحوافز',
+                'سحب المدير العام اعتماد ' . $policyLabel . '. السبب: ' . $reason . ' أعيدت السياسة إلى المسودة ويمكن لمدير الموارد البشرية تعديلها ثم إعادة إرسالها للاعتماد.',
+                APP_URL . 'modules/hr/incentive_policy.php',
+                'hr_incentive_policy_approval_withdrawn'
+            );
+            hrIncentivePolicyNotifyRoleUsers(
+                $policyId,
+                ['financial_manager', 'fm', 'finance'],
+                'سحب اعتماد سياسة حوافز',
+                'سحب المدير العام اعتماد ' . $policyLabel . ' وأعيدت إلى المسودة؛ لم تعد متاحة للتفعيل.',
+                APP_URL . 'modules/hr/incentive_policy.php',
+                'hr_incentive_policy_approval_withdrawn_for_fm'
+            );
+            flash('success', 'سُحب اعتماد السياسة وأُعيدت إلى المسودة لدى مدير الموارد البشرية.');
+            header('Location: ' . APP_URL . 'modules/hr/incentive_policy.php');
+            exit;
+        }
+
         if ($action === 'activate_policy') {
             if (!$canActivatePolicies) throw new RuntimeException('تفعيل سياسة الحوافز من اختصاص المدير المالي فقط.');
             $policyId = (int)($_POST['policy_id'] ?? 0);
@@ -647,6 +704,15 @@ require_once __DIR__ . '/../../includes/header.php';
                                             <textarea class="form-control form-control-sm mb-2" name="reason" rows="2" maxlength="2000" required></textarea>
                                             <button class="btn btn-sm btn-outline-danger" type="submit">رفض وإعادة للمسودة</button>
                                         </form>
+                                    <?php elseif ($policy['status'] === 'approved' && $canReviewPolicies): ?>
+                                        <form method="post" class="mb-2">
+                                            <?=csrf_field()?>
+                                            <input type="hidden" name="action" value="withdraw_approval_to_draft">
+                                            <input type="hidden" name="policy_id" value="<?=$policyId?>">
+                                            <label class="form-label small">سبب سحب الاعتماد وإعادة السياسة للمسودة *</label>
+                                            <textarea class="form-control form-control-sm mb-2" name="reason" rows="2" maxlength="2000" required></textarea>
+                                            <button class="btn btn-sm btn-outline-warning" type="submit">سحب الاعتماد وإعادة إلى HR</button>
+                                        </form>
                                     <?php elseif ($policy['status'] === 'approved' && $canActivatePolicies): ?>
                                         <form method="post" data-ak-native-post="1" data-confirm="<?=e(t('incentives.confirm_activate'))?>">
                                             <?=csrf_field()?>
@@ -675,7 +741,7 @@ require_once __DIR__ . '/../../includes/header.php';
                                 <?php if (!empty($historyByPolicy[$policyId])): ?>
                                     <div class="mt-3"><strong class="small">سجل الاعتماد</strong><ul class="small mb-0 mt-1">
                                     <?php foreach ($historyByPolicy[$policyId] as $history): ?>
-                                        <li><?=e(['submitted'=>'أُرسلت للاعتماد','approved'=>'اعتماد GM','rejected'=>'رفض GM وإعادة للمسودة'][$history['action']] ?? $history['action'])?> — <?=e($history['actor_name'] ?? 'مستخدم')?> — <?=e($history['created_at'])?><?php if (!empty($history['reason'])): ?><div class="text-danger"><?=nl2br(e($history['reason']))?></div><?php endif; ?></li>
+                                        <li><?=e(['submitted'=>'أُرسلت للاعتماد','approved'=>'اعتماد GM','rejected'=>'رفض GM وإعادة للمسودة','returned_to_draft'=>'سحب GM الاعتماد وإعادة للمسودة'][$history['action']] ?? $history['action'])?> — <?=e($history['actor_name'] ?? 'مستخدم')?> — <?=e($history['created_at'])?><?php if (!empty($history['reason'])): ?><div class="text-danger"><?=nl2br(e($history['reason']))?></div><?php endif; ?></li>
                                     <?php endforeach; ?>
                                     </ul></div>
                                 <?php endif; ?>
