@@ -149,7 +149,9 @@ $events = dbFetchAll(
             r.reward_amount, r.currency_code AS reward_currency_code, r.is_enabled,
             e.full_name AS recipient_name, es.category AS employment_category,
             es.is_active AS employment_state_active, u.is_active AS user_active,
-            a.id AS award_id, a.status AS award_status, a.hold_reason
+            a.id AS award_id, a.status AS award_status, a.hold_reason,
+            (SELECT COUNT(*) FROM hr_incentive_awards pa WHERE pa.event_id = ev.id) AS project_award_count,
+            (SELECT ROUND(COALESCE(SUM(pa.reward_amount),0),2) FROM hr_incentive_awards pa WHERE pa.event_id = ev.id) AS project_award_total
      FROM hr_incentive_events ev
      JOIN hr_incentive_types t ON t.type_code = ev.incentive_type
      JOIN hr_incentive_policy_rules r
@@ -173,7 +175,7 @@ require_once __DIR__ . '/../../includes/header.php';
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
         <div>
             <h1 class="h4 mb-1">التحقق من حوافز الموظفين</h1>
-            <p class="text-muted mb-0">تحقق من الإنجاز وهوية المستفيد قبل إصدار الحافز. لا تُعالج حوافز المشاريع قبل اعتماد حصص المستفيدين.</p>
+            <p class="text-muted mb-0">تُصدر حوافز الإنجازات بعد التحقق من المستفيد؛ وتُعالج حوافز إكمال المشاريع آلياً بعد الإغلاق المالي الموثق.</p>
         </div>
         <a class="btn btn-outline-secondary btn-sm" href="<?php echo e(APP_URL); ?>modules/hr/incentive_policy.php">سياسة الحوافز</a>
     </div>
@@ -236,7 +238,7 @@ require_once __DIR__ . '/../../includes/header.php';
                                 </td>
                                 <td style="min-width:220px">
                                     <?php if ($isProject && $event['status'] === 'pending_verification'): ?>
-                                        <span class="small text-warning">موقوف حتى اعتماد توزيع الحصص.</span>
+                                        <span class="small text-warning">بانتظار توثيق الإغلاق المالي للمشروع؛ سيصدر النظام الحوافز تلقائياً بعد اجتياز فحوص الإغلاق والأهلية.</span>
                                     <?php elseif ($event['status'] === 'pending_verification' && !$recipientEligible): ?>
                                         <span class="small text-danger">هوية المستفيد أو حالة التوظيف تحتاج مراجعة.</span>
                                     <?php elseif ($canVerify): ?>
@@ -249,6 +251,8 @@ require_once __DIR__ . '/../../includes/header.php';
                                         </form>
                                     <?php elseif ($event['status'] === 'pending_verification'): ?>
                                         <span class="small text-muted">قاعدة السياسة غير مفعلة أو المبلغ غير صالح.</span>
+                                    <?php elseif ($isProject && $event['status'] === 'verified'): ?>
+                                        <span class="small text-muted">تمت المعالجة الآلية: <?php echo (int)$event['project_award_count']; ?> موظف · <?php echo number_format((float)$event['project_award_total'], 2); ?> <?php echo e($event['reward_currency_code']); ?></span>
                                     <?php elseif (!empty($event['award_id'])): ?>
                                         <span class="small text-muted">الحافز #<?php echo (int)$event['award_id']; ?> · <?php echo e($event['award_status'] ?? ''); ?></span>
                                     <?php else: ?>
