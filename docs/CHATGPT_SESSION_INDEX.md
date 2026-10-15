@@ -763,3 +763,28 @@ Source commits on `main`:
 The prior requirement for human-approved project allocations is superseded by the user's explicit newer instruction. The old approval columns remain for historical/manual rows but are NULL for automated rows. Project-completion awards are not processed by the HR Manager's manual verification form.
 
 **Verification boundary:** these are source commits only. No PHP lint, migration application, local MariaDB runtime test, or browser acceptance has been run for this new slice. Do not describe the automation as verified. Next local gate: pull `main`; inspect and apply the new migration once to local `ahl_el_kheir`; PHP 8.2 lint the changed PHP files; then run a purpose-built rollback-only project closure/award test before exercising a real project. Never use `ahl_el_kheir_production_test`; never modify active policy R5; do not rerun already-passed incentive/accounting/notification harnesses absent regression evidence.
+
+
+### Follow-up — rollback-only closure harness added (runtime pending)
+
+Added `tools/run_hr_project_incentive_closure_rollback_tests.php` (commit `df40dc1c`). It uses an existing closed project fixture, changes its closure timestamp only inside an uncommitted transaction, snapshots the currently eligible team against the active effective project rule, supplies temporary FM-closure audit evidence only if none exists, checks one full-policy award per eligible employee and recognition journals, and rolls the transaction back. It skips safely if the allocation migration or a suitable fixture is absent. The processor now respects a caller-owned outer transaction (commit `2bff519b`) so the harness can prove rollback without leaving awards, journals, notifications, audit rows, or payroll changes behind.
+
+**Next local verification (only against `ahl_el_kheir`):**
+```powershell
+cd D:\xampp\htdocs\AhlElKheir
+git checkout main
+git pull origin main
+& "D:\xampp\mysql\bin\mysql.exe" --default-character-set=utf8mb4 --host=127.0.0.1 --user=root --database=ahl_el_kheir --table --execute="SELECT COLUMN_NAME, IS_NULLABLE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='hr_incentive_project_allocations' AND COLUMN_NAME IN ('approved_by_user_id','approved_at');"
+```
+
+Inspect the migration and apply it once only if those columns are still `NO`. Then run:
+```powershell
+& "D:\xampp\php\php.exe" -l "modules/hr/lib_employee_incentives.php"
+& "D:\xampp\php\php.exe" -l "modules/hr/incentive_verification.php"
+& "D:\xampp\php\php.exe" -l "modules/projects/view.php"
+& "D:\xampp\php\php.exe" -l "modules/projects/view_fm.php"
+& "D:\xampp\php\php.exe" -l "tools/run_hr_project_incentive_closure_rollback_tests.php"
+& "D:\xampp\php\php.exe" "tools/run_hr_project_incentive_closure_rollback_tests.php"
+```
+
+A `SKIP` from the harness means it could not find a safe eligible closed-project fixture; it is not a PASS. The harness is a database integration check, not browser proof or true concurrent-process proof. Source changes and migration remain **unverified locally** until exact lint and harness output is reviewed. Keep active R5 unchanged and do not touch `ahl_el_kheir_production_test`.
