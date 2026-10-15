@@ -652,3 +652,12 @@ The source change removing the HR notification on GM approval is commit `2c47e5a
 
 **Scope boundary:** this acceptance closes only the HR incentive policy governance/notification flow. It does not close the full employee-incentives lifecycle. Remaining open work includes the employee-facing notification UX and HR Manager authorization in browser/session context, plus project-completion verification/approved recipient allocations. Do not rerun already-passed rollback-only incentive harnesses or use `ahl_el_kheir_production_test` absent concrete regression evidence.
 
+
+
+## 2026-10-15 — Audited GM withdrawal of unactivated policy approval (local verification pending)
+
+**User request:** return policy V1/R3 (`ACCEPTANCE TEST - INCENTIVE POLICY - 2026-10-14-R3`, status approved/awaiting FM activation) to HR edit mode so all four existing incentive categories can be configured for lifecycle/accounting testing.
+
+**Source change on main:** `modules/hr/incentive_policy.php` now exposes a GM-only action for an approved policy that has never been activated. The GM must supply a reason. The transaction locks the policy row, checks status and NULL activation evidence, inserts approval-history action `returned_to_draft`, changes status to `draft`, and commits before notifying the HR creator and FM. Activated policies cannot use this path. The history UI labels the action explicitly. Migration `database/migrations/2026-10-15_hr_incentive_policy_approval_withdrawal.sql` adds the action to the existing approval-history ENUM. Commits: migration `cb522dcee4b2e78e03f8d4c97402a61ca7e23d6c`; source `a9501f5f41e4f959a734d175cf14523c49c1e6d2`.
+
+**Local verification is pending; no claim that R3 has already been reset.** Next: pull `main`; inspect whether the migration's ENUM value already exists and apply the migration to `ahl_el_kheir` only if needed; lint `modules/hr/incentive_policy.php`; sign in as GM and use the new return-to-draft action with a meaningful reason; verify status, history, and notifications; sign in as HR and edit all four category rules. Then use the ordinary HR → GM → FM workflow. R3's existing effective date (2026-10-14) is in the past and must be changed through the HR form. Respect R4's later effective date and existing chronological activation guard; do not edit statuses/dates directly in SQL. Keep `ahl_el_kheir_production_test` untouched.
