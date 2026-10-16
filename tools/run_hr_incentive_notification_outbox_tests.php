@@ -41,6 +41,12 @@ require_once __DIR__ . '/../modules/hr/lib_employee_incentives.php';
 
 $pdo = db();
 
+$databaseName = (string)$pdo->query('SELECT DATABASE()')->fetchColumn();
+if ($databaseName !== 'ahl_el_kheir_incentive_test_20261015_r1') {
+    fwrite(STDERR, "BLOCKED | expected disposable DB ahl_el_kheir_incentive_test_20261015_r1; connected DB={$databaseName}\n");
+    exit(2);
+}
+
 function incentiveNotificationFixture(PDO $pdo): ?array
 {
     return dbFetchOne(
@@ -243,6 +249,18 @@ try {
     }
 
     echo "PASS | retry_delivery=PASS | correct_recipient_amount_period=PASS | repeated_dispatch_no_duplicate=PASS\n";
+
+    // Optional real-browser acceptance pause. Normal test behavior is unchanged
+    // unless explicitly enabled; the notification remains available until Enter.
+    if (getenv('AHL_INCENTIVE_NOTIFICATION_PAUSE_BEFORE_CLEANUP') === '1') {
+        if (!defined('STDIN')) {
+            throw new RuntimeException('Browser acceptance pause requires a CLI run.');
+        }
+        echo "BROWSER_CHECK | notification_id={$notificationId}"
+            . " | recipient_user_id=" . (int)$fixture['recipient_user_id']
+            . " | Open the employee notification inbox now; press Enter here to resume cleanup.\n";
+        fgets(STDIN);
+    }
 } catch (Throwable $e) {
     echo "FAIL | " . $e->getMessage() . "\n";
 } finally {
