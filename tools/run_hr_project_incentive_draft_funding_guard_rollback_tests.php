@@ -155,6 +155,14 @@ try {
     $lockedDraft->execute([$projectId]);
     hrProjectDraftGuardAssert($lockedDraft->fetchColumn() !== false, 'The selected fixture no longer has a draft funding allocation.');
 
+    $closureGuardBlocked = false;
+    try {
+        akp_assert_no_draft_funding_allocations_for_financial_closure($projectId);
+    } catch (RuntimeException $guardError) {
+        $closureGuardBlocked = strpos($guardError->getMessage(), 'تخصيصات تمويل مسودة') !== false;
+    }
+    hrProjectDraftGuardAssert($closureGuardBlocked, 'Explicit FM financial-closure guard did not reject a draft allocation.');
+
     $pdo->prepare(
         "INSERT INTO audit_log
             (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent)
@@ -206,7 +214,7 @@ try {
         'Rollback left an incentive award behind.'
     );
 
-    echo "PASS | draft_funding_allocation_blocks_processor=PASS | awards_unchanged=PASS | recognition_journals_unchanged=PASS\n";
+    echo "PASS | fm_explicit_closure_guard=PASS | draft_funding_allocation_blocks_processor=PASS | awards_unchanged=PASS | recognition_journals_unchanged=PASS\n";
     echo "PASS | funding_evidence_unchanged=PASS | rollback_cleanup=PASS | project={$projectId} | policy=R5\n";
 } catch (Throwable $e) {
     if ($pdo->inTransaction()) {
