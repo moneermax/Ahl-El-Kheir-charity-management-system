@@ -2275,6 +2275,7 @@ document.getElementById('edit-milestone-description').value = button.dataset.mil
 </div>
 </div>
 </div>
+<?php endif; ?>
 <?php if ($status !== 'closed'): ?>
 <div class="border rounded-3 p-3 bg-warning-subtle">
 <div class="d-flex align-items-start gap-3">
