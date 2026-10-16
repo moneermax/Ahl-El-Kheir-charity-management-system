@@ -369,7 +369,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (akp_role() !== 'financial_manager') throw new RuntimeException('الإغلاق المالي محصور بالمدير المالي.');
             if (!$closed) throw new RuntimeException('لا يمكن إتمام الإغلاق المالي قبل إغلاق المشروع إدارياً من مدير المشاريع.');
             if ($financialClosureCompleted) throw new RuntimeException('تم إتمام الإغلاق المالي للمشروع مسبقاً.');
-            if (akp_project_has_draft_funding_allocations($id)) throw new RuntimeException('لا يمكن إتمام الإغلاق المالي مع وجود تخصيصات تمويل مسودة؛ أكمل الإفراج المالي أو ألغِ التخصيصات غير المنفذة أولاً.');
+            akp_assert_no_draft_funding_allocations_for_financial_closure($id);
             $remaining=akp_project_controlled_balance($id);
             if($remaining>0.009) throw new RuntimeException('لا يمكن إتمام الإغلاق المالي قبل إرجاع كامل الرصيد المتبقي إلى حساب المؤسسة.');
             akp_audit(
