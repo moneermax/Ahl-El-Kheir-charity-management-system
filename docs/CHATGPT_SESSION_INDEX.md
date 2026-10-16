@@ -841,3 +841,10 @@ The FM sponsor-payment approval operation is shared between the production POST 
 The user reported runtime PASS for `tools/run_hr_fm_sponsor_payment_approval_integration_tests.php` against `ahl_el_kheir_incentive_test_20261015_r1`: shared FM approval, posted transaction/journal, pending new-sponsor verification without premature award, successful rollback, injected incentive failure, and rollback of payment/transaction/journal. PHP 8.2 lint passed for all five relevant files. This gate is closed at the rollback-harness boundary.
 
 Added `tools/run_hr_project_incentive_payroll_rollback_tests.php` and added it to the PHP syntax workflow. It targets the remaining project-specific payroll linkage gap, checking scheduled award/payroll association, incentive total, unchanged net salary, outbox creation, and rollback restoration. Local lint/runtime remain pending. Next run only this new harness against `ahl_el_kheir_incentive_test_20261015_r1`; preserve R5 and do not repeat closed tests.
+
+
+### 2026-10-16 — FM sponsor-payment integration verified; next project payroll test
+
+The user reported runtime PASS for `tools/run_hr_fm_sponsor_payment_approval_integration_tests.php` against `ahl_el_kheir_incentive_test_20261015_r1`: shared FM approval, posted transaction/journal, pending new-sponsor verification without premature award, successful rollback, injected incentive failure, and rollback of payment/transaction/journal. PHP 8.2 lint passed for all five relevant files. This gate is closed at the rollback-harness boundary.
+
+Added `tools/run_hr_project_incentive_payroll_rollback_tests.php` and added it to the PHP syntax workflow. It targets the remaining project-specific payroll linkage gap, checking scheduled award/payroll association, incentive total, unchanged net salary, outbox creation, and rollback restoration. Local lint/runtime remain pending. Next run only this new harness against `ahl_el_kheir_incentive_test_20261015_r1`; preserve R5 and do not repeat closed tests.
