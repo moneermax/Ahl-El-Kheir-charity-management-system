@@ -408,7 +408,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $entryId=akp_return_project_funding($id,$allocationId,$amount,$returnDate,null,null);
             $remaining=akp_project_controlled_balance($id);
             $hasDraftFunding = akp_project_has_draft_funding_allocations($id);
-            if($remaining<=0.009 && !$hasDraftFunding){
+            $closureOutcome = akp_project_financial_closure_outcome($remaining, $hasDraftFunding);
+            if ($closureOutcome === 'complete') {
                 akp_audit(
                     'FM_FINANCIAL_CLOSURE',
                     'project_lifecycle',
@@ -435,7 +436,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }catch(Throwable $notificationError){}
                 flash('success','تم إرجاع كامل الرصيد المتبقي إلى حساب المؤسسة وإتمام الإغلاق المالي للمشروع.');
-            } elseif ($remaining <= 0.009 && $hasDraftFunding) {
+            } elseif ($closureOutcome === 'draft_allocations_pending') {
                 flash('success','تم تسجيل إرجاع كامل الرصيد المتبقي، لكن أُجّل الإغلاق المالي لوجود تخصيصات تمويل مسودة. أكمل الإفراج المالي أو ألغِ التخصيصات غير المنفذة ثم أعد الإغلاق المالي.');
             } else {
                 flash('success','تم تسجيل إرجاع جزء من الرصيد المتبقي إلى حساب المؤسسة. المتبقي للإغلاق المالي: '.number_format($remaining,2).' '.($project['currency_code']?:'SDG').'.');
