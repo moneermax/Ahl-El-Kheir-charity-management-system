@@ -3040,3 +3040,16 @@ PASS | injected_incentive_failure=PASS | payment_transaction_journal_rollback=PA
 Do not rerun absent concrete regression evidence. Active R5 and live `ahl_el_kheir` remain unchanged.
 
 New focused test added: `tools/run_hr_project_incentive_payroll_rollback_tests.php`, with its PHP syntax check added to CI. It targets project-specific draft payroll inclusion; local lint/runtime are pending. Next: run only that test against `ahl_el_kheir_incentive_test_20261015_r1`. The real PM-to-FM browser workflow remains open.
+
+
+## 2026-10-16 — FM sponsor-payment approval/incentive integration CLOSED at harness boundary
+
+User-reported local PHP 8.2 lint passed for the five relevant accounting files and harness. Against `ahl_el_kheir_incentive_test_20261015_r1`, output was:
+```
+PASS | shared_FM_approval=PASS | posted_transaction_journal=PASS
+PASS | new_sponsor_pending_verification=PASS | no_premature_award=PASS | success_rollback=PASS
+PASS | injected_incentive_failure=PASS | payment_transaction_journal_rollback=PASS
+```
+Do not rerun absent concrete regression evidence. Active R5 and live `ahl_el_kheir` remain unchanged.
+
+New focused test added: `tools/run_hr_project_incentive_payroll_rollback_tests.php`, with its PHP syntax check added to CI. It targets project-specific draft payroll inclusion; local lint/runtime are pending. Next: run only that test against `ahl_el_kheir_incentive_test_20261015_r1`. The real PM-to-FM browser workflow remains open.
