@@ -3064,3 +3064,12 @@ The user pulled `main`, confirmed PHP 8.2 syntax validation passed for `tools/ru
 
 **Status:** CLOSED at the rollback-harness boundary. Active policy R5 and live database were not changed by this test. The pending outbox row proves enqueue state only; actual employee notification delivery/experience and real PM-to-FM browser workflow remain separate, unverified acceptance gates. Do not rerun this test without regression evidence.
 
+## 2026-10-16 — Project incentive financial-closure draft-allocation safety guard (source committed; local acceptance pending)
+
+A source audit found that the controlled balance intentionally counts posted funding allocations only, but FM financial closure could still be recorded while a draft allocation remained. The same gap could allow the project-completion incentive processor to proceed if a caller supplied a zero balance and durable closure audit evidence existed.
+
+The targeted correction adds a reusable draft-allocation predicate, blocks explicit FM financial closure while any draft allocation remains, and lets a valid funding return complete while deferring automatic financial closure/PM completion notification when a draft allocation remains. The incentive processor independently locks/checks for a draft allocation before award or recognition-journal processing and preserves caller-owned transaction semantics.
+
+Added rollback-only regression harness: `tools/run_hr_project_incentive_draft_funding_guard_rollback_tests.php`. It is restricted to `ahl_el_kheir_incentive_test_20261015_r1`, requires the protected active R5 project-completion policy, reuses only an existing closed zero-posted-balance fixture with a draft allocation and pre-existing recipient snapshot, inserts temporary FM closure audit evidence inside a transaction, and rolls back. It does not change funding allocations, payment evidence, posted accounting, payroll, or R5.
+
+**Local PHP 8.2 lint and runtime execution are pending.** Do not click FM financial closure on project 7 or run the harness against live `ahl_el_kheir`. Keep the already-passed incentive, payroll, notification, salary-advance, and Projects Phase 5 gates closed unless regression evidence appears.
