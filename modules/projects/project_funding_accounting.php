@@ -223,6 +223,19 @@ if (!function_exists('akp_project_controlled_balance')) {
     }
 }
 
+if (!function_exists('akp_project_has_draft_funding_allocations')) {
+    function akp_project_has_draft_funding_allocations(int $projectId): bool
+    {
+        if ($projectId <= 0) return false;
+        return (bool)dbFetchOne(
+            "SELECT id FROM project_funding_allocations
+             WHERE project_id = ? AND status = 'draft'
+             LIMIT 1",
+            [$projectId]
+        );
+    }
+}
+
 if (!function_exists('akp_return_project_funding')) {
     function akp_return_project_funding(int $projectId, int $allocationId, float $amount, string $returnDate, ?string $reference, ?string $description): int
     {
