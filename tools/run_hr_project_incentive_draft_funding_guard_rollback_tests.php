@@ -162,6 +162,9 @@ try {
         $closureGuardBlocked = strpos($guardError->getMessage(), 'تخصيصات تمويل مسودة') !== false;
     }
     hrProjectDraftGuardAssert($closureGuardBlocked, 'Explicit FM financial-closure guard did not reject a draft allocation.');
+    hrProjectDraftGuardAssert(akp_project_financial_closure_outcome(0.00, true) === 'draft_allocations_pending', 'Zero balance with a draft allocation must defer closure.');
+    hrProjectDraftGuardAssert(akp_project_financial_closure_outcome(0.00, false) === 'complete', 'Zero balance without draft allocations should allow closure.');
+    hrProjectDraftGuardAssert(akp_project_financial_closure_outcome(10.00, false) === 'balance_remaining', 'Positive balance must block closure.');
 
     $pdo->prepare(
         "INSERT INTO audit_log
