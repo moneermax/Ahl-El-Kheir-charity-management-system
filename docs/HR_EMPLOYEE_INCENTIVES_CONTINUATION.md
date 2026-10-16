@@ -3,6 +3,10 @@
 **Checkpoint:** 2026-10-15  
 **Status:** GM approval and activation governance for the protected active R5 policy are complete at the documented acceptance boundary. Collection source-event, reactivation, incentive accounting, HR Manager authorization, scheduling notification outbox retry/failure isolation, and employee-facing in-app notification UX have previously passed their documented local/browser acceptance gates. Project-completion automation is implemented on `main`; the dedicated rollback-only success harness has now passed locally, proving closure-time Project Supervisor snapshot, full 1,500.00 SDG reward, missing-FM-gate blocking, recognition journal Dr 5500 / Cr 2400, and rollback cleanup. Do not repeat those closed gates without regression evidence. Full lifecycle acceptance remains incomplete: the new-sponsor first-payment hook's documented local acceptance is still pending, and the real browser PM-to-FM project-closure workflow has not been verified. Active R5 must remain unchanged; never use `ahl_el_kheir_production_test`.
 
+## 2026-10-16 — Project Manager closure-review panel investigation
+
+The real-browser PM-to-FM project-closure acceptance test remains open. Source inspection found that the `$status === 'closed'` conditional around the Project Manager's financial-closure card also enclosed the separate closure-request review/reopen section, so the review panel was skipped for a project in `under_review`. Commit `133d0978ac350018fe5425bc32a438dd4d0697e7` on `main` closes the financial-card conditional immediately after that card, before the independent `$status !== 'closed'` review/reopen condition. This is a source-level correction only; local PHP lint and real-browser verification are still pending. Do not submit administrative closure until the panel renders and the applicable financial gate is inspected. Continue using disposable test DB `ahl_el_kheir_incentive_test_20261015_r1`; preserve active R5 policy and do not touch live DB.
+
 ## Scope
 
 Three policy-driven, fixed-amount incentive categories:
