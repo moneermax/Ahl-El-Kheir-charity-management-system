@@ -3053,3 +3053,8 @@ PASS | injected_incentive_failure=PASS | payment_transaction_journal_rollback=PA
 Do not rerun absent concrete regression evidence. Active R5 and live `ahl_el_kheir` remain unchanged.
 
 New focused test added: `tools/run_hr_project_incentive_payroll_rollback_tests.php`, with its PHP syntax check added to CI. It targets project-specific draft payroll inclusion; local lint/runtime are pending. Next: run only that test against `ahl_el_kheir_incentive_test_20261015_r1`. The real PM-to-FM browser workflow remains open.
+
+
+## 2026-10-16 — Project incentive payroll rollback harness updated; verification pending
+
+The project payroll harness initially skipped because no eligible current/future draft payroll existed. Read-only diagnostics confirmed October 2026 salary history and working employment-state evidence for active Project Supervisors, plus payroll policy version 1 effective 2026-10-01. Commit `797f89afe848df39fee26a6f16bae6f2854c3c03` updates the harness to create a temporary draft payroll inside its existing rollback transaction when needed, using the production payroll INSERT shape and active effective policy. It guards against existing current-period payroll rows and other verified unscheduled awards and checks that the temporary payroll disappears after rollback. **Not yet locally linted or runtime-verified.** Next: pull `main`, lint the harness, and execute only `tools/run_hr_project_incentive_payroll_rollback_tests.php` against `ahl_el_kheir_incentive_test_20261015_r1`. Active R5 and live accounting remain untouched.
