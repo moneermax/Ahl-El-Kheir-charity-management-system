@@ -245,6 +245,20 @@ if (!function_exists('akp_assert_no_draft_funding_allocations_for_financial_clos
     }
 }
 
+if (!function_exists('akp_project_financial_closure_outcome')) {
+    /**
+     * Decide whether the return handler may finalize closure after recording a
+     * funding return. Draft allocations prevent closure even when posted
+     * controlled balance is zero.
+     */
+    function akp_project_financial_closure_outcome(float $remainingBalance, bool $hasDraftAllocations): string
+    {
+        if ($remainingBalance > 0.009) return 'balance_remaining';
+        if ($hasDraftAllocations) return 'draft_allocations_pending';
+        return 'complete';
+    }
+}
+
 if (!function_exists('akp_return_project_funding')) {
     function akp_return_project_funding(int $projectId, int $allocationId, float $amount, string $returnDate, ?string $reference, ?string $description): int
     {
