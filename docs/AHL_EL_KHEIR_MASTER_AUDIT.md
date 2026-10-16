@@ -3303,3 +3303,10 @@ PHP lint also passed. The test used only `ahl_el_kheir_incentive_test_20261015_r
 ## 2026-10-16 — FM sponsor-payment approval integration source checkpoint
 
 The shared approval operation preserves the transactional sequence (posted transaction and journal, guarded sponsor-payment approval, collection event, new-sponsor event, reactivation event) and leaves GM notifications after commit. Explicit prepared accounting helpers avoid DDL inside the operation; the FM approval POST no longer invokes the page's schema setup calls. A rollback-only harness checks the production operation's success path and injects a failure at new-sponsor event recording to assert financial and incentive writes roll back. This remains source-only evidence until local PHP lint and the harness pass against the disposable incentive test database.
+
+
+## 2026-10-16 — FM sponsor-payment integration runtime evidence
+
+User-supplied disposable-DB output verifies the shared FM approval path, posted transaction/journal, new-sponsor event left pending verification with no premature award, success rollback, and rollback after injected incentive-recording failure. PHP 8.2 lint passed for the five relevant files. Evidence is limited to `ahl_el_kheir_incentive_test_20261015_r1`; no live DB or active R5 changes are reported.
+
+A separate `tools/run_hr_project_incentive_payroll_rollback_tests.php` now covers project-award assignment to a current/future draft payroll, increase of the incentive component, unchanged salary net, pending notification outbox creation, and rollback restoration. It is included in the PHP syntax workflow. This test is not yet locally linted/runtime-verified. Do not report it as passed until output is reviewed.
