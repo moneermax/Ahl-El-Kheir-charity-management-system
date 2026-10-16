@@ -3352,3 +3352,18 @@ This closes the **processor rollback-harness gate**. A follow-up now extracts th
 ## 2026-10-16 — Automatic financial-closure branch testability refinement (verification pending)
 
 The return-handler closure decision was extracted into `akp_project_financial_closure_outcome()` and the production FM handler now uses that shared decision. The existing rollback-only harness asserts: zero balance plus draft allocation defers closure; zero balance without drafts permits closure; positive balance keeps closure pending. Its result line includes `automatic_closure_outcomes=PASS`. This does not invoke the browser POST handler or deliver a notification. Pull latest `main`, lint the affected PHP files, and run only the draft-funding rollback harness on `ahl_el_kheir_incentive_test_20261015_r1`. Do not alter project 7 funding/payment evidence or R5.
+
+
+## 2026-10-16 — New-sponsor first-confirmed-payment incentive acceptance passed
+
+The user ran the rollback-only harness `tools/run_hr_employee_incentive_new_sponsor_rollback_tests.php` locally. The temporary runner confirmed the configured and connected database were both `ahl_el_kheir_incentive_test_20261015_r1` before requiring the harness. Exact output:
+
+```text
+SAFE_TARGET | ahl_el_kheir_incentive_test_20261015_r1
+PASS | new_sponsor=first_confirmed_payment | recipient_snapshot=PASS
+PASS | later_payment_rejected=PASS | no_award_before_HR_verification=PASS
+PASS | rollback_cleanup=PASS | sponsor=2858 | employee=16
+TEST_EXIT_CODE=0
+```
+
+The new-sponsor first-confirmed-payment rollback-harness gate is runtime verified at this local disposable-database boundary. It proves the first confirmed payment event and recipient snapshot, rejection of a later payment as another qualifying first-payment event, no award before HR verification, and rollback cleanup. It does not prove the real-browser PM-to-FM project-closure workflow or end-to-end employee notification delivery/visibility. Do not repeat this closed harness without regression evidence. Active R5 was not modified and the live `ahl_el_kheir` database was not the test target. Preserve project 7 and its protected financial evidence.
