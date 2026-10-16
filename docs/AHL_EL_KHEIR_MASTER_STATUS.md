@@ -3084,3 +3084,20 @@ This closes the **processor rollback-harness gate**. A follow-up now extracts th
 ## 2026-10-16 — Automatic FM closure decision: source/harness update, local verification pending
 
 The FM return handler now calls `akp_project_financial_closure_outcome()` for its completion/defer/remaining-balance decision. The draft-funding rollback harness asserts all three outcomes and reports `automatic_closure_outcomes=PASS` only after those assertions run. Local PHP 8.2 lint and harness execution are still required after pulling `main`. Real browser POST acceptance and end-to-end employee notification delivery remain open; a pending outbox row alone is not delivery evidence. Preserve project 7, active policy R5, and closed tests.
+
+
+## 2026-10-16 — Employee incentives new-sponsor acceptance checkpoint
+
+**New-sponsor first-confirmed-payment rollback harness: RUNTIME VERIFIED / CLOSED at tested boundary.**
+
+User-reported local output from `tools/run_hr_employee_incentive_new_sponsor_rollback_tests.php`, with both configured and connected database guards passing for the isolated database:
+
+```text
+SAFE_TARGET | ahl_el_kheir_incentive_test_20261015_r1
+PASS | new_sponsor=first_confirmed_payment | recipient_snapshot=PASS
+PASS | later_payment_rejected=PASS | no_award_before_HR_verification=PASS
+PASS | rollback_cleanup=PASS | sponsor=2858 | employee=16
+TEST_EXIT_CODE=0
+```
+
+Do not repeat this gate without regression evidence. Active policy R5 was not modified; live database `ahl_el_kheir` was not the test target. Remaining distinct employee-incentive gates include the real-browser PM-to-FM project-closure workflow and end-to-end employee notification delivery/visibility. See `docs/HR_EMPLOYEE_INCENTIVES_CONTINUATION.md` for detailed evidence and constraints.
