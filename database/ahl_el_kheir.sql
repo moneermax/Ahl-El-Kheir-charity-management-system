@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 12, 2026 at 09:38 AM
+-- Generation Time: Oct 16, 2026 at 04:39 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -134,7 +134,9 @@ INSERT INTO `accounts` (`id`, `code`, `name_ar`, `name_en`, `account_type`, `par
 (44, '4400-14', 'إيرادات مشروع: PH5 Full Accounting Reconciliation Test', NULL, 'revenue', NULL, 1, NULL, '2026-10-02 18:10:58', '2026-10-02 18:10:58'),
 (45, '5100-14', 'مصروفات مشروع: PH5 Full Accounting Reconciliation Test', NULL, 'expense', NULL, 1, NULL, '2026-10-02 18:10:58', '2026-10-02 18:10:58'),
 (46, '4400-15', 'إيرادات مشروع: PH5 Full Accounting Reconciliation Test', NULL, 'revenue', NULL, 1, NULL, '2026-10-02 18:28:04', '2026-10-02 18:28:04'),
-(47, '5100-15', 'مصروفات مشروع: PH5 Full Accounting Reconciliation Test', NULL, 'expense', NULL, 1, NULL, '2026-10-02 18:28:04', '2026-10-02 18:28:04');
+(47, '5100-15', 'مصروفات مشروع: PH5 Full Accounting Reconciliation Test', NULL, 'expense', NULL, 1, NULL, '2026-10-02 18:28:04', '2026-10-02 18:28:04'),
+(48, '5500', '┘àÏÁÏ▒┘ê┘ü Ï¡┘êÏº┘üÏ▓ Ïº┘ä┘à┘êÏ©┘ü┘è┘å', 'Employee Incentives Expense', 'expense', NULL, 1, NULL, '2026-10-12 16:43:30', '2026-10-12 16:43:30'),
+(49, '2400', 'مستحقات حوافز الموظفين', 'Employee Incentives Payable', 'liability', NULL, 1, 'Dedicated liability for earned employee incentives awaiting payroll settlement', '2026-10-14 15:14:44', '2026-10-14 15:14:44');
 
 -- --------------------------------------------------------
 
@@ -220,7 +222,19 @@ INSERT INTO `attendance` (`id`, `employee_id`, `date`, `check_in`, `check_out`, 
 (234, 23, '2026-10-10', NULL, NULL, 'remote', NULL, NULL, 'on_leave', 'إجازة معتمدة', '2026-10-10 14:52:02'),
 (235, 23, '2026-10-11', NULL, NULL, 'remote', NULL, NULL, 'on_leave', 'إجازة معتمدة', '2026-10-10 14:52:02'),
 (236, 14, '2026-10-10', '13:52:50', NULL, '', NULL, NULL, 'present', NULL, '2026-10-10 14:52:50'),
-(237, 14, '2026-10-11', '15:59:23', NULL, '', NULL, NULL, 'present', NULL, '2026-10-11 16:59:23');
+(237, 14, '2026-10-11', '15:59:23', NULL, '', NULL, NULL, 'present', NULL, '2026-10-11 16:59:23'),
+(238, 14, '2026-10-13', '07:35:54', NULL, '', NULL, NULL, 'present', NULL, '2026-10-13 08:35:54'),
+(239, 20, '2026-10-13', '15:38:54', NULL, '', NULL, NULL, 'present', NULL, '2026-10-13 16:38:54'),
+(240, 2, '2026-10-13', '15:45:32', NULL, '', NULL, NULL, 'present', NULL, '2026-10-13 16:45:32'),
+(241, 14, '2026-10-14', '07:56:14', NULL, '', NULL, NULL, 'present', NULL, '2026-10-14 08:56:14'),
+(242, 20, '2026-10-14', '08:03:25', NULL, '', NULL, NULL, 'present', NULL, '2026-10-14 09:03:25'),
+(243, 2, '2026-10-14', '08:15:32', NULL, '', NULL, NULL, 'present', NULL, '2026-10-14 09:15:32'),
+(244, 2, '2026-10-15', '07:04:08', NULL, '', NULL, NULL, 'present', NULL, '2026-10-15 08:04:08'),
+(245, 14, '2026-10-15', '07:08:02', NULL, '', NULL, NULL, 'present', NULL, '2026-10-15 08:08:02'),
+(246, 20, '2026-10-15', '07:08:16', NULL, '', NULL, NULL, 'present', NULL, '2026-10-15 08:08:16'),
+(247, 6, '2026-10-15', '07:15:25', NULL, '', NULL, NULL, 'present', NULL, '2026-10-15 08:15:25'),
+(248, 22, '2026-10-15', '07:16:27', NULL, '', NULL, NULL, 'present', NULL, '2026-10-15 08:16:27'),
+(249, 15, '2026-10-15', '08:38:32', NULL, '', NULL, NULL, 'present', NULL, '2026-10-15 09:38:32');
 
 -- --------------------------------------------------------
 
@@ -1152,7 +1166,97 @@ INSERT INTO `audit_log` (`id`, `user_id`, `action`, `entity_type`, `entity_id`, 
 (2360, 29, 'HR_ATTENDANCE_AUTO_CHECK_IN', 'attendance', 14, NULL, '{\"date\":\"2026-10-11\",\"check_in\":\"15:59:23\",\"work_mode\":\"hybrid\",\"policy_version\":1,\"source\":\"successful_login\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-11 16:59:23'),
 (2361, 29, 'LOGIN', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-11 16:59:23'),
 (2362, 29, 'LOGOUT', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-11 22:08:46'),
-(2363, 29, 'LOGIN', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-12 07:09:25');
+(2363, 29, 'LOGIN', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-12 07:09:25'),
+(2364, 32, 'LOGIN', 'users', 32, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-13 07:21:33'),
+(2365, 32, 'LOGOUT', 'users', 32, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-13 08:32:24'),
+(2366, 29, 'HR_ATTENDANCE_AUTO_CHECK_IN', 'attendance', 14, NULL, '{\"date\":\"2026-10-13\",\"check_in\":\"07:35:54\",\"work_mode\":\"hybrid\",\"policy_version\":1,\"source\":\"successful_login\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-13 08:35:54'),
+(2367, 29, 'LOGIN', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-13 08:35:54'),
+(2368, 29, 'LOGOUT', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-13 16:38:46'),
+(2369, 32, 'HR_ATTENDANCE_AUTO_CHECK_IN', 'attendance', 20, NULL, '{\"date\":\"2026-10-13\",\"check_in\":\"15:38:54\",\"work_mode\":\"hybrid\",\"policy_version\":1,\"source\":\"successful_login\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-13 16:38:54'),
+(2370, 32, 'LOGIN', 'users', 32, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-13 16:38:54'),
+(2371, 2, 'HR_ATTENDANCE_AUTO_CHECK_IN', 'attendance', 2, NULL, '{\"date\":\"2026-10-13\",\"check_in\":\"15:45:32\",\"work_mode\":\"hybrid\",\"policy_version\":1,\"source\":\"successful_login\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-13 16:45:32'),
+(2372, 2, 'LOGIN', 'users', 2, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-13 16:45:32'),
+(2373, 32, 'LOGIN', 'users', 32, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-14 06:56:15'),
+(2374, 2, 'LOGIN', 'users', 2, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-14 07:05:17'),
+(2375, 32, 'LOGOUT', 'users', 32, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-14 07:06:48'),
+(2376, 29, 'LOGIN', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-14 07:06:58'),
+(2377, 29, 'LOGOUT', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-14 07:08:19'),
+(2378, 32, 'LOGIN', 'users', 32, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-14 07:08:37'),
+(2379, 29, 'HR_ATTENDANCE_AUTO_CHECK_IN', 'attendance', 14, NULL, '{\"date\":\"2026-10-14\",\"check_in\":\"07:56:14\",\"work_mode\":\"hybrid\",\"policy_version\":1,\"source\":\"successful_login\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-14 08:56:14'),
+(2380, 29, 'LOGIN', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-14 08:56:14'),
+(2381, 29, 'LOGOUT', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-14 09:03:15'),
+(2382, 32, 'HR_ATTENDANCE_AUTO_CHECK_IN', 'attendance', 20, NULL, '{\"date\":\"2026-10-14\",\"check_in\":\"08:03:25\",\"work_mode\":\"hybrid\",\"policy_version\":1,\"source\":\"successful_login\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-14 09:03:25'),
+(2383, 32, 'LOGIN', 'users', 32, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-14 09:03:25'),
+(2384, 2, 'HR_ATTENDANCE_AUTO_CHECK_IN', 'attendance', 2, NULL, '{\"date\":\"2026-10-14\",\"check_in\":\"08:15:32\",\"work_mode\":\"hybrid\",\"policy_version\":1,\"source\":\"successful_login\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-14 09:15:32'),
+(2385, 2, 'LOGIN', 'users', 2, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-14 09:15:32'),
+(2386, 32, 'LOGOUT', 'users', 32, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-14 09:28:57'),
+(2387, 29, 'LOGIN', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-14 09:29:04'),
+(2388, 29, 'LOGOUT', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-14 09:32:41'),
+(2389, 32, 'LOGIN', 'users', 32, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-14 09:32:50'),
+(2390, 32, 'LOGOUT', 'users', 32, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-14 09:34:32'),
+(2391, 29, 'LOGIN', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-14 09:34:42'),
+(2392, 29, 'LOGOUT', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-14 09:38:13'),
+(2393, 32, 'LOGIN', 'users', 32, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-14 09:38:21'),
+(2394, 32, 'LOGOUT', 'users', 32, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-14 09:43:42'),
+(2395, 29, 'LOGIN', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-14 09:43:49'),
+(2396, 29, 'LOGOUT', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-14 10:23:02'),
+(2397, 32, 'LOGIN', 'users', 32, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-14 10:23:11'),
+(2398, 32, 'LOGOUT', 'users', 32, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-14 10:30:42'),
+(2399, 29, 'LOGIN', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-14 10:30:49'),
+(2400, 29, 'LOGOUT', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-14 10:31:19'),
+(2401, 32, 'LOGIN', 'users', 32, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-14 10:31:34'),
+(2402, 32, 'LOGOUT', 'users', 32, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-14 11:05:11'),
+(2403, 29, 'LOGIN', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-14 11:05:18'),
+(2404, 29, 'LOGOUT', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-14 13:56:07'),
+(2405, 32, 'LOGIN', 'users', 32, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-14 13:56:35'),
+(2406, 32, 'LOGOUT', 'users', 32, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-14 14:12:05'),
+(2407, 29, 'LOGIN', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-14 14:12:12'),
+(2408, 29, 'LOGOUT', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-14 14:35:26'),
+(2409, 32, 'LOGIN', 'users', 32, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-14 14:35:33'),
+(2410, 29, 'LOGIN', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-15 07:25:26'),
+(2411, 29, 'LOGOUT', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-15 07:26:50'),
+(2412, 32, 'LOGIN', 'users', 32, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-15 07:27:02'),
+(2413, 29, 'LOGIN', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-15 07:27:34'),
+(2414, 29, 'LOGOUT', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-15 08:04:00'),
+(2415, 2, 'HR_ATTENDANCE_AUTO_CHECK_IN', 'attendance', 2, NULL, '{\"date\":\"2026-10-15\",\"check_in\":\"07:04:08\",\"work_mode\":\"hybrid\",\"policy_version\":1,\"source\":\"successful_login\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-15 08:04:08'),
+(2416, 2, 'LOGIN', 'users', 2, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-15 08:04:08'),
+(2417, 32, 'LOGOUT', 'users', 32, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-15 08:07:55'),
+(2418, 29, 'HR_ATTENDANCE_AUTO_CHECK_IN', 'attendance', 14, NULL, '{\"date\":\"2026-10-15\",\"check_in\":\"07:08:02\",\"work_mode\":\"hybrid\",\"policy_version\":1,\"source\":\"successful_login\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-15 08:08:02'),
+(2419, 29, 'LOGIN', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-15 08:08:02'),
+(2420, 2, 'LOGOUT', 'users', 2, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-15 08:08:09'),
+(2421, 32, 'HR_ATTENDANCE_AUTO_CHECK_IN', 'attendance', 20, NULL, '{\"date\":\"2026-10-15\",\"check_in\":\"07:08:16\",\"work_mode\":\"hybrid\",\"policy_version\":1,\"source\":\"successful_login\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-15 08:08:16'),
+(2422, 32, 'LOGIN', 'users', 32, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-15 08:08:16'),
+(2423, 29, 'LOGOUT', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-15 08:15:15'),
+(2424, 19, 'HR_ATTENDANCE_AUTO_CHECK_IN', 'attendance', 6, NULL, '{\"date\":\"2026-10-15\",\"check_in\":\"07:15:25\",\"work_mode\":\"hybrid\",\"policy_version\":1,\"source\":\"successful_login\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-15 08:15:25'),
+(2425, 19, 'LOGIN', 'users', 19, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-15 08:15:25'),
+(2426, 19, 'LOGOUT', 'users', 19, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-15 08:16:06'),
+(2427, 34, 'HR_ATTENDANCE_AUTO_CHECK_IN', 'attendance', 22, NULL, '{\"date\":\"2026-10-15\",\"check_in\":\"07:16:27\",\"work_mode\":\"hybrid\",\"policy_version\":1,\"source\":\"successful_login\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-15 08:16:27'),
+(2428, 34, 'LOGIN', 'users', 34, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-15 08:16:27'),
+(2429, 34, 'LOGOUT', 'users', 34, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-15 09:14:31'),
+(2430, 2, 'LOGIN', 'users', 2, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-15 09:14:43'),
+(2431, 2, 'LOGOUT', 'users', 2, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-15 09:20:17'),
+(2432, 29, 'LOGIN', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-15 09:20:24'),
+(2433, 32, 'LOGOUT', 'users', 32, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-15 09:38:21'),
+(2434, 16, 'HR_ATTENDANCE_AUTO_CHECK_IN', 'attendance', 15, NULL, '{\"date\":\"2026-10-15\",\"check_in\":\"08:38:32\",\"work_mode\":\"hybrid\",\"policy_version\":1,\"source\":\"successful_login\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-15 09:38:32'),
+(2435, 16, 'LOGIN', 'users', 16, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-15 09:38:32'),
+(2436, 29, 'LOGOUT', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-15 15:44:17'),
+(2437, 2, 'LOGIN', 'users', 2, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-15 15:44:28'),
+(2438, 2, 'LOGOUT', 'users', 2, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-15 15:49:31'),
+(2439, 32, 'LOGIN', 'users', 32, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-15 15:49:40'),
+(2440, 16, 'LOGOUT', 'users', 16, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-15 17:59:11'),
+(2441, 34, 'LOGIN', 'users', 34, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-15 17:59:19'),
+(2442, 32, 'LOGOUT', 'users', 32, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-15 18:03:28'),
+(2443, 29, 'LOGIN', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-15 18:03:36'),
+(2444, 34, 'STATUS_CHANGE', 'project_lifecycle', 8, '{\"status\":\"active\"}', '{\"status\":\"completed\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-15 18:04:38'),
+(2445, 34, 'STATUS_CHANGE', 'project_lifecycle', 7, '{\"status\":\"active\"}', '{\"status\":\"completed\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-15 18:04:46'),
+(2446, 34, 'STATUS_CHANGE', 'project_lifecycle', 6, '{\"status\":\"active\"}', '{\"status\":\"completed\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-15 18:04:51'),
+(2447, 34, 'STATUS_CHANGE', 'project_lifecycle', 4, '{\"status\":\"active\"}', '{\"status\":\"completed\"}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-15 18:04:55'),
+(2448, 34, 'LOGOUT', 'users', 34, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-15 18:05:00'),
+(2449, 33, 'LOGIN', 'users', 33, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-15 18:05:14'),
+(2450, 33, 'LOGOUT', 'users', 33, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-15 18:05:50'),
+(2451, 34, 'LOGIN', 'users', 34, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-15 18:05:58'),
+(2452, 34, 'LOGOUT', 'users', 34, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-15 18:07:00'),
+(2453, 29, 'LOGOUT', 'users', 29, NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', '2026-10-15 18:20:07');
 
 -- --------------------------------------------------------
 
@@ -9135,6 +9239,250 @@ INSERT INTO `hr_employment_states` (`id`, `code`, `name_ar`, `name_en`, `categor
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `hr_incentive_adjustments`
+--
+
+CREATE TABLE `hr_incentive_adjustments` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `award_id` int(10) UNSIGNED NOT NULL,
+  `adjustment_type` enum('correction','reversal') NOT NULL,
+  `amount_delta` decimal(12,2) NOT NULL,
+  `currency_code` char(3) NOT NULL,
+  `reason` varchar(2000) NOT NULL,
+  `requested_by_user_id` int(10) UNSIGNED NOT NULL,
+  `reviewed_by_user_id` int(10) UNSIGNED DEFAULT NULL,
+  `reviewed_at` datetime DEFAULT NULL,
+  `journal_entry_id` int(10) UNSIGNED DEFAULT NULL,
+  `status` enum('pending_review','approved','rejected','posted') NOT NULL DEFAULT 'pending_review',
+  `created_at` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `hr_incentive_awards`
+--
+
+CREATE TABLE `hr_incentive_awards` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `event_id` int(10) UNSIGNED NOT NULL,
+  `employee_id` int(10) UNSIGNED NOT NULL,
+  `recipient_user_id` int(10) UNSIGNED NOT NULL,
+  `project_allocation_id` int(10) UNSIGNED DEFAULT NULL,
+  `reward_amount` decimal(12,2) NOT NULL,
+  `reward_currency_code` char(3) NOT NULL,
+  `salary_currency_code` char(3) DEFAULT NULL,
+  `status` enum('earned','held_currency','scheduled','paid','rejected','adjustment_pending','adjusted') NOT NULL DEFAULT 'earned',
+  `hold_reason` varchar(1000) DEFAULT NULL,
+  `payroll_id` int(10) UNSIGNED DEFAULT NULL,
+  `recognition_journal_entry_id` int(10) UNSIGNED DEFAULT NULL,
+  `settlement_journal_entry_id` int(10) UNSIGNED DEFAULT NULL,
+  `earned_at` datetime NOT NULL,
+  `scheduled_at` datetime DEFAULT NULL,
+  `paid_at` datetime DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime DEFAULT NULL ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `hr_incentive_events`
+--
+
+CREATE TABLE `hr_incentive_events` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `idempotency_key` varchar(190) NOT NULL,
+  `source_table` varchar(80) NOT NULL,
+  `source_record_id` bigint(20) UNSIGNED NOT NULL,
+  `incentive_type` varchar(80) NOT NULL,
+  `policy_version_id` int(10) UNSIGNED NOT NULL,
+  `occurred_at` datetime NOT NULL,
+  `source_amount` decimal(12,2) DEFAULT NULL,
+  `source_currency_code` char(3) DEFAULT NULL,
+  `recipient_user_id` int(10) UNSIGNED DEFAULT NULL,
+  `recipient_employee_id` int(10) UNSIGNED DEFAULT NULL,
+  `status` enum('pending_verification','verified','rejected','held') NOT NULL DEFAULT 'pending_verification',
+  `verification_note` varchar(2000) DEFAULT NULL,
+  `verified_by_user_id` int(10) UNSIGNED DEFAULT NULL,
+  `verified_at` datetime DEFAULT NULL,
+  `created_by_user_id` int(10) UNSIGNED DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `hr_incentive_notification_outbox`
+--
+
+CREATE TABLE `hr_incentive_notification_outbox` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `award_id` int(10) UNSIGNED NOT NULL,
+  `recipient_user_id` int(10) UNSIGNED NOT NULL,
+  `status` enum('pending','sent') NOT NULL DEFAULT 'pending',
+  `notification_id` int(10) UNSIGNED DEFAULT NULL,
+  `attempt_count` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `last_attempt_at` datetime DEFAULT NULL,
+  `sent_at` datetime DEFAULT NULL,
+  `last_error` varchar(1000) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `hr_incentive_policy_approval_history`
+--
+
+CREATE TABLE `hr_incentive_policy_approval_history` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `policy_version_id` int(10) UNSIGNED NOT NULL,
+  `action` enum('submitted','approved','rejected','returned_to_draft') NOT NULL,
+  `actor_user_id` int(10) UNSIGNED NOT NULL,
+  `reason` varchar(2000) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `hr_incentive_policy_approval_history`
+--
+
+INSERT INTO `hr_incentive_policy_approval_history` (`id`, `policy_version_id`, `action`, `actor_user_id`, `reason`, `created_at`) VALUES
+(16, 11, 'submitted', 32, NULL, '2026-10-15 09:19:58'),
+(17, 11, 'approved', 2, NULL, '2026-10-15 09:20:10');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `hr_incentive_policy_custom_fields`
+--
+
+CREATE TABLE `hr_incentive_policy_custom_fields` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `policy_version_id` int(10) UNSIGNED NOT NULL,
+  `field_key` varchar(80) NOT NULL,
+  `label_ar` varchar(190) NOT NULL,
+  `label_en` varchar(190) DEFAULT NULL,
+  `field_type` enum('short_text','long_text','number','date','boolean','select') NOT NULL,
+  `is_required` tinyint(1) NOT NULL DEFAULT 0,
+  `options_json` text DEFAULT NULL,
+  `field_value` text DEFAULT NULL,
+  `sort_order` int(11) NOT NULL DEFAULT 100,
+  `created_by_user_id` int(10) UNSIGNED NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime DEFAULT NULL ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `hr_incentive_policy_rules`
+--
+
+CREATE TABLE `hr_incentive_policy_rules` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `policy_version_id` int(10) UNSIGNED NOT NULL,
+  `incentive_type` varchar(80) NOT NULL,
+  `reward_amount` decimal(12,2) NOT NULL,
+  `currency_code` char(3) NOT NULL,
+  `is_enabled` tinyint(1) NOT NULL DEFAULT 1,
+  `rule_notes` varchar(1000) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `hr_incentive_policy_rules`
+--
+
+INSERT INTO `hr_incentive_policy_rules` (`id`, `policy_version_id`, `incentive_type`, `reward_amount`, `currency_code`, `is_enabled`, `rule_notes`, `created_at`) VALUES
+(23, 11, 'collection', 1000.00, 'SDG', 1, NULL, '2026-10-15 09:18:49'),
+(24, 11, 'new_sponsor', 2000.00, 'SDG', 1, NULL, '2026-10-15 09:18:49'),
+(25, 11, 'reactivation', 1000.00, 'SDG', 1, NULL, '2026-10-15 09:18:49'),
+(26, 11, 'project_completion', 1500.00, 'SDG', 1, NULL, '2026-10-15 09:18:49');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `hr_incentive_policy_versions`
+--
+
+CREATE TABLE `hr_incentive_policy_versions` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `version_no` int(10) UNSIGNED NOT NULL,
+  `policy_name` varchar(150) NOT NULL,
+  `status` enum('draft','pending_gm','approved','active','retired') NOT NULL DEFAULT 'draft',
+  `effective_from` date NOT NULL,
+  `effective_to` date DEFAULT NULL,
+  `agreement_recorded_at` datetime DEFAULT NULL,
+  `agreement_notes` text DEFAULT NULL,
+  `created_by_user_id` int(10) UNSIGNED NOT NULL,
+  `activated_by_user_id` int(10) UNSIGNED DEFAULT NULL,
+  `activated_at` datetime DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime DEFAULT NULL ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `hr_incentive_policy_versions`
+--
+
+INSERT INTO `hr_incentive_policy_versions` (`id`, `version_no`, `policy_name`, `status`, `effective_from`, `effective_to`, `agreement_recorded_at`, `agreement_notes`, `created_by_user_id`, `activated_by_user_id`, `activated_at`, `created_at`, `updated_at`) VALUES
+(11, 1, 'ACCEPTANCE TEST - INCENTIVE POLICY - 2026-10-15-R5', 'active', '2026-10-15', NULL, NULL, NULL, 32, 29, '2026-10-15 09:21:09', '2026-10-15 09:18:49', '2026-10-15 09:21:09');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `hr_incentive_project_allocations`
+--
+
+CREATE TABLE `hr_incentive_project_allocations` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `event_id` int(10) UNSIGNED NOT NULL,
+  `employee_id` int(10) UNSIGNED NOT NULL,
+  `recipient_user_id` int(10) UNSIGNED NOT NULL,
+  `allocation_percent` decimal(5,2) NOT NULL,
+  `reward_amount` decimal(12,2) NOT NULL,
+  `currency_code` char(3) NOT NULL,
+  `approved_by_user_id` int(10) UNSIGNED DEFAULT NULL,
+  `approved_at` datetime DEFAULT NULL,
+  `allocation_note` varchar(1000) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `hr_incentive_types`
+--
+
+CREATE TABLE `hr_incentive_types` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `type_code` varchar(80) NOT NULL,
+  `name_ar` varchar(190) NOT NULL,
+  `name_en` varchar(190) NOT NULL,
+  `qualification_mode` enum('source_event','manual_review') NOT NULL DEFAULT 'manual_review',
+  `is_system` tinyint(1) NOT NULL DEFAULT 0,
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `sort_order` int(11) NOT NULL DEFAULT 100,
+  `created_by_user_id` int(10) UNSIGNED DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime DEFAULT NULL ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `hr_incentive_types`
+--
+
+INSERT INTO `hr_incentive_types` (`id`, `type_code`, `name_ar`, `name_en`, `qualification_mode`, `is_system`, `is_active`, `sort_order`, `created_by_user_id`, `created_at`, `updated_at`) VALUES
+(1, 'collection', 'حوافز تحصيل الكفالات والتبرعات', 'Sponsorship and Donation Collection', 'source_event', 1, 1, 10, NULL, '2026-10-12 20:42:57', '2026-10-12 21:10:05'),
+(2, 'new_sponsor', 'حافز استقطاب كفيل جديد', 'New Sponsor Acquisition', 'source_event', 1, 1, 20, NULL, '2026-10-12 20:42:57', '2026-10-12 21:10:05'),
+(3, 'reactivation', 'حافز استعادة كفيل', 'Sponsor Reactivation', 'source_event', 1, 1, 30, NULL, '2026-10-12 20:42:57', '2026-10-12 21:10:05'),
+(4, 'project_completion', 'حافز إتمام المشروع', 'Project Completion', 'source_event', 1, 1, 40, NULL, '2026-10-12 20:42:57', '2026-10-12 21:10:05');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `hr_leave_returns`
 --
 
@@ -10462,7 +10810,7 @@ INSERT INTO `notifications` (`id`, `recipient_user_id`, `type`, `title`, `body`,
 (149, 29, 'info', 'مشروع بانتظار تسوية الرصيد المتبقي', 'المشروع «PH5 Full Accounting Reconciliation Test» (PRJ-0015) لديه رصيد متبقٍ تحت سيطرة المشروع بقيمة 250,000.00 SDG. يرجى تنفيذ التسوية المالية قبل الإغلاق.', 'http://localhost:8081/AhlElKheir/modules/projects/view_fm.php?id=15', 1, '2026-10-03 16:29:08'),
 (150, 29, 'info', 'المشروع مغلق إدارياً ويحتاج إغلاقاً مالياً', 'أغلق مدير المشاريع المشروع «PH5 Full Accounting Reconciliation Test» (PRJ-0015). الرصيد المتبقي تحت سيطرة المشروع: 250,000.00 SDG. يرجى مراجعة إثبات الإرجاع وتسجيل إرجاع الرصيد وإتمام الإغلاق المالي.', 'http://localhost:8081/AhlElKheir/modules/projects/view_fm.php?id=15', 1, '2026-10-03 18:47:27'),
 (151, 33, 'info', 'اكتمل الإغلاق المالي للمشروع', 'أتم المدير المالي الإغلاق المالي للمشروع «PH5 Full Accounting Reconciliation Test» (PRJ-0015) بعد إرجاع الرصيد المتبقي إلى حساب المؤسسة. انتهت دورة الإغلاق المالي للمشروع.', 'http://localhost:8081/AhlElKheir/modules/projects/view_pm.php?id=15', 1, '2026-10-03 19:06:46'),
-(154, 2, 'info', 'قرار إعفاء سلف الرواتب بانتظار اعتمادك', 'تم تجهيز قرار إعفاء سلف راتب رقم «SAW-000002» (فردي) لشهر 2026-10-01 بواسطة المدير المالي. القرار بانتظار مراجعتك واعتمادك أو رفضه.', 'http://localhost/modules/hr/salary_advance_waiver_gm.php', 0, '2026-10-06 15:29:51'),
+(154, 2, 'info', 'قرار إعفاء سلف الرواتب بانتظار اعتمادك', 'تم تجهيز قرار إعفاء سلف راتب رقم «SAW-000002» (فردي) لشهر 2026-10-01 بواسطة المدير المالي. القرار بانتظار مراجعتك واعتمادك أو رفضه.', 'http://localhost/modules/hr/salary_advance_waiver_gm.php', 1, '2026-10-06 15:29:51'),
 (155, 29, 'info', 'اعتماد GM لقرار إعفاء سلف الرواتب', 'تم اعتماد قرار إعفاء سلف الراتب «SAW-000002» من المدير العام. يمكنك الآن العودة إلى القرار وإتمام التنفيذ المالي.', 'http://localhost/modules/hr/salary_advance_waiver_fm.php', 1, '2026-10-06 15:29:51'),
 (159, 32, 'info', 'طلب إجازة جديد', 'قام الموظف project supervisor بتقديم طلب إجازة للفترة 2026-10-10 إلى 2026-10-12 ويحتاج إلى مراجعة الموارد البشرية.', 'http://localhost:8081/AhlElKheir/modules/hr/leaves.php?status=pending&leave_id=9', 1, '2026-10-10 14:49:56'),
 (160, 34, 'info', 'تم اعتماد طلب الإجازة', 'تم اعتماد طلب إجازتك للفترة 2026-10-10 إلى 2026-10-12 من قبل الموارد البشرية.', 'http://localhost:8081/AhlElKheir/modules/hr/leaves.php?action=request&leave_id=9', 1, '2026-10-10 14:50:28'),
@@ -10471,7 +10819,11 @@ INSERT INTO `notifications` (`id`, `recipient_user_id`, `type`, `title`, `body`,
 (163, 33, 'info', 'تم اعتماد طلب الإجازة', 'تم اعتماد طلب إجازتك للفترة 2026-10-10 إلى 2026-10-11 من قبل الموارد البشرية.', 'http://localhost:8081/AhlElKheir/modules/hr/leaves.php?action=request&leave_id=10', 1, '2026-10-10 14:52:02'),
 (164, 29, 'info', 'طلب سلفة على الراتب بانتظار المراجعة', 'طلب السلفة «SAR-2026-00021» للموظف «projects manager» بانتظار مراجعة المدير المالي.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_processing.php?id=21', 1, '2026-10-10 14:52:28'),
 (165, 33, 'info', 'تم صرف السلفة', 'تم صرف السلفة «SAR-2026-00021» بمبلغ 50,000.00 ج.س. الرصيد القائم للسلفة: 50,000.00 ج.س.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_request.php', 1, '2026-10-10 15:20:20'),
-(166, 34, 'info', 'تم صرف السلفة', 'تم صرف السلفة «SAR-2026-00020» بمبلغ 10,000.00 ج.س. الرصيد القائم للسلفة: 10,000.00 ج.س.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_request.php', 1, '2026-10-10 17:10:51');
+(166, 34, 'info', 'تم صرف السلفة', 'تم صرف السلفة «SAR-2026-00020» بمبلغ 10,000.00 ج.س. الرصيد القائم للسلفة: 10,000.00 ج.س.', 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_request.php', 1, '2026-10-10 17:10:51'),
+(190, 2, 'info', 'سياسة حوافز بانتظار اعتمادك', 'أرسل مدير الموارد البشرية سياسة الحوافز V1 «ACCEPTANCE TEST - INCENTIVE POLICY - 2026-10-15-R5» للاعتماد. يرجى مراجعة تفاصيل السياسة واتخاذ قرار الاعتماد أو الرفض.', 'http://localhost:8081/AhlElKheir/modules/hr/incentive_policy.php', 1, '2026-10-15 09:19:58'),
+(191, 29, 'info', 'سياسة حوافز معتمدة بانتظار التفعيل', 'سياسة الحوافز V1 «ACCEPTANCE TEST - INCENTIVE POLICY - 2026-10-15-R5» اعتمدها المدير العام وأصبحت متاحة لك للاختيار والتفعيل وفق تاريخ السريان.', 'http://localhost:8081/AhlElKheir/modules/hr/incentive_policy.php', 1, '2026-10-15 09:20:10'),
+(192, 32, 'info', 'فعّل المدير المالي سياسة الحوافز', 'فعّل المدير المالي سياسة الحوافز V1 «ACCEPTANCE TEST - INCENTIVE POLICY - 2026-10-15-R5» وفق تاريخ السريان المعتمد.', 'http://localhost:8081/AhlElKheir/modules/hr/incentive_policy.php', 1, '2026-10-15 09:21:09'),
+(193, 2, 'info', 'تم تفعيل سياسة الحوافز التي اعتمدتها', 'فعّل المدير المالي سياسة الحوافز V1 «ACCEPTANCE TEST - INCENTIVE POLICY - 2026-10-15-R5» وفق تاريخ السريان المعتمد.', 'http://localhost:8081/AhlElKheir/modules/hr/incentive_policy.php', 1, '2026-10-15 09:21:09');
 
 -- --------------------------------------------------------
 
@@ -10560,10 +10912,10 @@ CREATE TABLE `other_projects` (
 --
 
 INSERT INTO `other_projects` (`id`, `name`, `description`, `target_amount`, `currency_code`, `start_date`, `end_date`, `status`, `created_by`, `created_at`, `updated_at`, `project_code`, `project_type`, `location`, `city`, `district`, `actual_cost`, `total_beneficiaries`, `updated_by`, `revenue_account_id`, `expense_account_id`) VALUES
-(4, 'تجديد ملجأ أيتام الخرطوم', 'تجديد ملجأ أيتام الخرطوم', 450000.00, 'SDG', '2026-09-01', '2026-10-01', 'active', 33, '2026-08-29 18:32:14', '2026-08-29 19:49:54', 'PRJ-0002', 'تجديد ملجأ أيتام الخرطوم', 'Main Street, Khartoum', 'الخرطوم', 'الخرطوم- بحري', NULL, 50, 2, 25, 26),
-(6, 'اختبار تدقيق المشاريع 2026-09-21', 'مشروع اختباري شامل لتدقيق دورة إنشاء وإدارة المشاريع داخل نظام أهل الخير.', NULL, 'SDG', '2026-09-21', '2026-12-31', 'active', 33, '2026-09-21 18:49:42', '2026-09-21 20:50:29', 'PRJ-0006', 'تأهيل مركز مجتمعي', 'مركز مجتمعي تجريبي', 'الخرطوم', 'الخرطوم', NULL, 10, 33, 29, 30),
-(7, 'تأهيل مدرسة السليم', NULL, 255000.00, 'SDG', '2026-09-22', '2026-12-31', 'active', 33, '2026-09-22 08:18:04', '2026-09-24 19:53:54', 'PRJ-0007', 'تأهيل مدرسة', 'الشماليه', 'دنقلا', 'السليم', NULL, 250, 33, 31, 32),
-(8, 'اختبار المشاريع 2026', 'توزيع وجبة مركز غسيل الكلي', NULL, 'SDG', '2026-09-22', '2026-09-30', 'active', 33, '2026-09-22 17:38:43', '2026-09-24 09:48:06', 'PRJ-0008', 'الإغاثة والسلال الغذائية', 'الخرطوم', 'الخرطوم', 'الخرطوم', NULL, 250, 33, 33, 34),
+(4, 'تجديد ملجأ أيتام الخرطوم', 'تجديد ملجأ أيتام الخرطوم', 450000.00, 'SDG', '2026-09-01', '2026-10-01', 'completed', 33, '2026-08-29 18:32:14', '2026-10-15 18:04:55', 'PRJ-0002', 'تجديد ملجأ أيتام الخرطوم', 'Main Street, Khartoum', 'الخرطوم', 'الخرطوم- بحري', NULL, 50, 34, 25, 26),
+(6, 'اختبار تدقيق المشاريع 2026-09-21', 'مشروع اختباري شامل لتدقيق دورة إنشاء وإدارة المشاريع داخل نظام أهل الخير.', NULL, 'SDG', '2026-09-21', '2026-12-31', 'completed', 33, '2026-09-21 18:49:42', '2026-10-15 18:04:51', 'PRJ-0006', 'تأهيل مركز مجتمعي', 'مركز مجتمعي تجريبي', 'الخرطوم', 'الخرطوم', NULL, 10, 34, 29, 30),
+(7, 'تأهيل مدرسة السليم', NULL, 255000.00, 'SDG', '2026-09-22', '2026-12-31', 'completed', 33, '2026-09-22 08:18:04', '2026-10-15 18:04:46', 'PRJ-0007', 'تأهيل مدرسة', 'الشماليه', 'دنقلا', 'السليم', NULL, 250, 34, 31, 32),
+(8, 'اختبار المشاريع 2026', 'توزيع وجبة مركز غسيل الكلي', NULL, 'SDG', '2026-09-22', '2026-09-30', 'completed', 33, '2026-09-22 17:38:43', '2026-10-15 18:04:38', 'PRJ-0008', 'الإغاثة والسلال الغذائية', 'الخرطوم', 'الخرطوم', 'الخرطوم', NULL, 250, 34, 33, 34),
 (9, 'اختبار إشعار اعتماد المشروع للمشرف 2026-09-24', 'مشروع اختبار مخصص للتحقق من إشعار المشرف بعد الاعتماد المالي.', 10000.00, 'SDG', '2026-09-24', '2026-12-31', 'planned', 1, '2026-09-24 22:59:38', '2026-09-24 22:59:38', 'PRJ-TEST-0924-PS', 'other', 'اختبار', 'الخرطوم', 'اختبار', 0.00, 0, NULL, NULL, NULL),
 (10, 'اختبار  المشاريع 2026', NULL, 200000.00, 'SDG', '2026-09-25', '2026-09-30', 'completed', 33, '2026-09-25 11:02:12', '2026-09-27 08:02:12', 'PRJ-0010', 'مشاريع المياه', 'الخرطوم', 'الخرطوم', 'الخرطوم', NULL, 1500, 33, 35, 36),
 (11, 'PH5 Accounting Reconciliation Test', NULL, 260000.00, 'SDG', '2026-10-01', '2026-10-03', 'planned', 33, '2026-10-01 10:40:18', '2026-10-01 10:40:18', 'PRJ-0011', 'الإغاثة والسلال الغذائية', 'الخرطوم', 'الخرطوم', NULL, NULL, 260, NULL, 38, 39),
@@ -10614,6 +10966,7 @@ CREATE TABLE `payroll` (
   `deductions` decimal(10,2) NOT NULL DEFAULT 0.00,
   `attendance_deduction` decimal(12,2) NOT NULL DEFAULT 0.00,
   `salary_advance_deduction` decimal(18,2) NOT NULL DEFAULT 0.00,
+  `incentive_amount` decimal(12,2) NOT NULL DEFAULT 0.00,
   `overtime` decimal(10,2) NOT NULL DEFAULT 0.00,
   `net_salary` decimal(10,2) NOT NULL,
   `status` enum('draft','approved','paid') NOT NULL DEFAULT 'draft',
@@ -10631,29 +10984,29 @@ CREATE TABLE `payroll` (
 -- Dumping data for table `payroll`
 --
 
-INSERT INTO `payroll` (`id`, `employee_id`, `month`, `year`, `basic_salary`, `allowances`, `deductions`, `attendance_deduction`, `salary_advance_deduction`, `overtime`, `net_salary`, `status`, `payroll_policy_version_id`, `payment_date`, `journal_entry_id`, `created_by`, `created_at`, `accounting_status`, `accounting_entry_id`, `payment_account_id`) VALUES
-(1, 19, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
-(2, 15, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
-(4, 17, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
-(5, 4, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
-(6, 2, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
-(7, 14, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
-(8, 12, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
-(9, 6, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
-(10, 3, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
-(11, 18, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
-(12, 20, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
-(13, 1, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
-(14, 11, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
-(15, 7, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
-(16, 9, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
-(17, 10, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
-(18, 8, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
-(19, 13, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
-(20, 16, 10, 2026, 6000.00, 0.00, 0.00, 0.00, 0.00, 0.00, 6000.00, 'paid', NULL, '2026-09-07', NULL, NULL, '2026-09-07 06:17:11', 'posted', 31, NULL),
-(21, 16, 9, 2026, 5000.00, 0.00, 0.00, 0.00, 0.00, 0.00, 5000.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-07 07:36:14', 'none', NULL, NULL),
-(22, 21, 9, 2026, 7000.00, 0.00, 0.00, 0.00, 0.00, 0.00, 7000.00, 'paid', NULL, '2026-09-07', NULL, NULL, '2026-09-07 16:24:25', 'posted', 33, NULL),
-(23, 21, 10, 2026, 7000.00, 0.00, 0.00, 0.00, 0.00, 0.00, 7000.00, 'paid', 1, '2026-09-08', NULL, NULL, '2026-09-08 07:17:26', 'posted', 34, NULL);
+INSERT INTO `payroll` (`id`, `employee_id`, `month`, `year`, `basic_salary`, `allowances`, `deductions`, `attendance_deduction`, `salary_advance_deduction`, `incentive_amount`, `overtime`, `net_salary`, `status`, `payroll_policy_version_id`, `payment_date`, `journal_entry_id`, `created_by`, `created_at`, `accounting_status`, `accounting_entry_id`, `payment_account_id`) VALUES
+(1, 19, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(2, 15, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(4, 17, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(5, 4, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(6, 2, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(7, 14, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(8, 12, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(9, 6, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(10, 3, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(11, 18, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(12, 20, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(13, 1, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(14, 11, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(15, 7, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(16, 9, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(17, 10, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(18, 8, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(19, 13, 9, 2026, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-06 23:02:40', 'none', NULL, NULL),
+(20, 16, 10, 2026, 6000.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 6000.00, 'paid', NULL, '2026-09-07', NULL, NULL, '2026-09-07 06:17:11', 'posted', 31, NULL),
+(21, 16, 9, 2026, 5000.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 5000.00, 'draft', NULL, NULL, NULL, NULL, '2026-09-07 07:36:14', 'none', NULL, NULL),
+(22, 21, 9, 2026, 7000.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 7000.00, 'paid', NULL, '2026-09-07', NULL, NULL, '2026-09-07 16:24:25', 'posted', 33, NULL),
+(23, 21, 10, 2026, 7000.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 7000.00, 'paid', 1, '2026-09-08', NULL, NULL, '2026-09-08 07:17:26', 'posted', 34, NULL);
 
 -- --------------------------------------------------------
 
@@ -11224,10 +11577,10 @@ CREATE TABLE `project_lifecycle` (
 --
 
 INSERT INTO `project_lifecycle` (`project_id`, `lifecycle_status`, `closed_at`, `closed_by`, `reopened_at`, `reopened_by`, `reopen_reason`, `closure_summary`, `final_budget_amount`, `total_funded_amount`, `total_expensed_amount`, `variance_amount`, `variance_percent`, `variance_explanation`, `residual_amount`, `residual_action`, `closing_document_id`, `created_at`, `updated_at`, `close_reason`) VALUES
-(4, 'active', NULL, NULL, NULL, NULL, NULL, NULL, 500000.00, 0.00, 0.00, -500000.00, -100.00, NULL, 0.00, NULL, NULL, '2026-08-29 18:32:14', '2026-08-29 19:49:54', NULL),
-(6, 'active', NULL, NULL, NULL, NULL, NULL, NULL, 10000.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-21 18:49:42', '2026-09-21 20:50:29', NULL),
-(7, 'active', NULL, NULL, NULL, NULL, NULL, NULL, 260000.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-22 08:18:04', '2026-09-24 19:53:54', NULL),
-(8, 'active', NULL, NULL, NULL, NULL, NULL, NULL, 400000.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-22 17:38:43', '2026-09-24 09:48:06', NULL),
+(4, 'completed', NULL, NULL, NULL, NULL, NULL, NULL, 500000.00, 0.00, 0.00, -500000.00, -100.00, NULL, 0.00, NULL, NULL, '2026-08-29 18:32:14', '2026-10-15 18:04:55', NULL),
+(6, 'completed', NULL, NULL, NULL, NULL, NULL, NULL, 10000.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-21 18:49:42', '2026-10-15 18:04:51', NULL),
+(7, 'completed', NULL, NULL, NULL, NULL, NULL, NULL, 260000.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-22 08:18:04', '2026-10-15 18:04:46', NULL),
+(8, 'completed', NULL, NULL, NULL, NULL, NULL, NULL, 400000.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-22 17:38:43', '2026-10-15 18:04:38', NULL),
 (10, 'closed', '2026-09-27 08:02:12', 33, NULL, NULL, NULL, 'تم الانتهاء من تنفيذ المشروع وإتمام الأعمال المطلوبة', 260000.00, 260000.00, 230000.00, 30000.00, 11.54, '', 30000.00, NULL, NULL, '2026-09-25 11:02:12', '2026-09-27 08:02:12', 'completed_successfully'),
 (11, 'planned', NULL, NULL, NULL, NULL, NULL, NULL, 260000.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-10-01 10:40:18', '2026-10-01 10:40:18', NULL),
 (12, 'active', NULL, NULL, NULL, NULL, NULL, NULL, 100000.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-10-02 09:32:08', '2026-10-02 14:42:24', NULL),
@@ -11413,7 +11766,11 @@ INSERT INTO `project_status_history` (`id`, `project_id`, `old_status`, `new_sta
 (13, 15, 'under_review', 'active', 'إعادة المشروع إلى مشرف المشروع لاستكمال/توضيح المطلوب: resubmit notification test', 33, '2026-10-03 15:05:37'),
 (14, 15, 'active', 'under_review', 'طلب إغلاق من مشرف المشروع: notification test', 34, '2026-10-03 16:29:08'),
 (15, 15, 'under_review', 'closure_requested', 'طلب إغلاق من مشرف المشروع: notification test', 34, '2026-10-03 16:29:08'),
-(16, 15, 'under_review', 'closed', 'Project is done with return', 33, '2026-10-03 18:47:27');
+(16, 15, 'under_review', 'closed', 'Project is done with return', 33, '2026-10-03 18:47:27'),
+(17, 8, 'active', 'completed', NULL, 34, '2026-10-15 18:04:38'),
+(18, 7, 'active', 'completed', NULL, 34, '2026-10-15 18:04:46'),
+(19, 6, 'active', 'completed', NULL, 34, '2026-10-15 18:04:51'),
+(20, 4, 'active', 'completed', NULL, 34, '2026-10-15 18:04:55');
 
 -- --------------------------------------------------------
 
@@ -29303,15 +29660,15 @@ CREATE TABLE `users` (
 
 INSERT INTO `users` (`id`, `role_id`, `username`, `password_hash`, `full_name`, `email`, `phone`, `is_active`, `supervisor_status`, `password_change_required`, `last_login_at`, `created_by`, `created_at`, `updated_at`, `legacy_status`, `avatar_path`, `address`, `birth_date`, `gender`, `department_id`, `manager_id`, `theme_preference`, `language_preference`, `email_notifications`, `push_notifications`, `email_newsletter`) VALUES
 (1, 1, 'sudo', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'منير علي طه صالح', 'sudo@ahlelkheir.org', '0966616614', 1, '', 0, '2026-10-10 14:33:57', NULL, '2026-08-02 16:49:35', '2026-10-10 14:33:57', 'active', 'storage/avatars/user_1_1789753554.png', NULL, NULL, 'ذكر', 1, 1, 'auto', 'ar', 1, 1, 1),
-(2, 2, 'gm', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'المدير العام', 'gm@ahlelkheir.org', NULL, 1, '', 0, '2026-10-05 08:04:19', NULL, '2026-08-02 16:49:35', '2026-10-05 08:04:19', 'active', 'storage/avatars/user_2_1787805764.png', NULL, NULL, NULL, 1, NULL, 'light', 'ar', 1, 1, 1),
+(2, 2, 'gm', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'المدير العام', 'gm@ahlelkheir.org', NULL, 1, '', 0, '2026-10-15 15:44:28', NULL, '2026-08-02 16:49:35', '2026-10-15 15:44:28', 'active', 'storage/avatars/user_2_1787805764.png', NULL, NULL, NULL, 1, NULL, 'light', 'ar', 1, 1, 1),
 (3, 3, 'vgm', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'لمياء علي طه صالح', 'vgm@ahlelkheir.org', NULL, 1, '', 0, '2026-09-29 09:00:10', NULL, '2026-08-02 16:49:35', '2026-09-29 09:00:10', 'active', 'storage/avatars/user_3_1787556761.png', NULL, NULL, 'female', 1, 2, 'light', 'ar', 1, 1, 1),
 (4, 10, 'accountant', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'محاسب (موظف)', 'accountant@ahlelkheir.org', '0123456789', 1, '', 0, '2026-08-17 14:11:48', NULL, '2026-08-08 12:33:29', '2026-08-17 14:30:38', 'active', NULL, NULL, NULL, NULL, 6, 29, 'light', 'ar', 1, 1, 1),
 (14, 4, 'Mad_Max', '$2y$10$2Pps4jCppxKBhdFrBRi94.FmCAYDqhUWd.vOLH4CnCIZDWbWrLhTC', 'أحمد محمد', 'moneerali2000@gmail.com', '0912345100', 0, 'archived', 0, '2026-08-16 09:20:38', 3, '2026-08-09 10:41:43', '2026-09-04 08:02:07', 'active', NULL, NULL, NULL, NULL, NULL, NULL, 'light', 'ar', 1, 1, 1),
 (15, 4, 'medo', '$2y$10$8XL6WcxWHuHZ2MB0XKlWReI28/2VUY0P9TJNWIM1chyov7mi9vZGy', 'مديحه عبد الماجد', 'madiha@example.com', '096664568', 0, 'archived', 0, NULL, 3, '2026-08-10 10:31:56', '2026-09-04 08:01:57', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'light', 'ar', 1, 1, 1),
-(16, 7, 'nany1', '$2y$10$bOs5FR0MQDIWcay4vmcoc.wkTOTt7mU2umWJYHn1AFkAXclPGcZWO', 'nany1', 'nany1@gmail.com', '094449785', 1, '', 0, '2026-09-21 10:40:51', 1, '2026-08-13 18:03:28', '2026-09-21 10:40:51', NULL, 'storage/avatars/user_16_1787805870.png', NULL, NULL, 'female', 2, 3, 'light', 'ar', 1, 1, 1),
+(16, 7, 'nany1', '$2y$10$bOs5FR0MQDIWcay4vmcoc.wkTOTt7mU2umWJYHn1AFkAXclPGcZWO', 'nany1', 'nany1@gmail.com', '094449785', 1, '', 0, '2026-10-15 09:38:32', 1, '2026-08-13 18:03:28', '2026-10-15 09:38:32', NULL, 'storage/avatars/user_16_1787805870.png', NULL, NULL, 'female', 2, 3, 'light', 'ar', 1, 1, 1),
 (17, 10, 'acc1', '$2y$10$n6sTBlpffNdZOaN48KkAx.zqkDnrikirhM.HWVBH81qG255EuUqKS', 'acc1', 'acc1@gmail.com', '0945786321', 1, '', 0, '2026-09-30 20:50:39', 1, '2026-08-13 19:47:47', '2026-10-01 23:23:11', NULL, NULL, NULL, NULL, 'male', 6, 29, 'light', 'ar', 1, 1, 1),
 (18, 8, 'ro1', '$2y$10$Rx63s7Lt4lh4IkJwbUKigOAmp0MzhzByWauPrF1HptcVmr4V/MpHq', 'أحمد حسين عبدالكريم', 'ro@gmail.com', '0123456789', 1, '', 0, '2026-09-20 08:43:19', 1, '2026-08-13 20:23:47', '2026-09-20 08:43:19', NULL, 'storage/avatars/user_18_1789729126.jpg', NULL, NULL, NULL, 3, 3, 'light', 'ar', 1, 1, 1),
-(19, 4, 'sv1', '$2y$10$1orOJuoh50H0m8Ow4eKIMOZC18pCFV6XILrjtEZvInwH/M/yGCDUS', 'فاطمه سليمان', 'fatima@gmail.com', '0999999999999', 1, 'active', 0, '2026-10-02 21:29:53', 3, '2026-08-14 08:10:49', '2026-10-02 21:29:53', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
+(19, 4, 'sv1', '$2y$10$1orOJuoh50H0m8Ow4eKIMOZC18pCFV6XILrjtEZvInwH/M/yGCDUS', 'فاطمه سليمان', 'fatima@gmail.com', '0999999999999', 1, 'active', 0, '2026-10-15 08:15:25', 3, '2026-08-14 08:10:49', '2026-10-15 08:15:25', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
 (20, 4, 'sv2', '$2y$10$GlgbXKPFv/Tqz/UYdBF2kOgV.Wwpe6yBpfmzcUSOKOocQuLulV2IW', 'ميادة الحبر', 'mayadah@gmail.com', NULL, 1, 'active', 0, '2026-09-28 17:25:15', 3, '2026-08-14 08:12:16', '2026-09-28 17:25:15', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
 (21, 4, 'sv3', '$2y$10$hi/o4qq4Byzdwq96wvXYPe3JW4lPlbIAwRH.JFjLtLXa7DEAj06ZG', 'هديل عثمان', 'hadeel@gmail.com', '03333333333333', 1, 'active', 0, '2026-09-29 08:07:42', 3, '2026-08-14 08:31:52', '2026-09-29 08:07:42', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
 (22, 4, 'sv4', '$2y$10$aw1SmFzeeI.xEnSbxWPwEOn/3UahrD72EBqhPuDMJ5bPcdtp40Ppy', 'ميساء سليمان', 'mysa@gmail.com', '26498879658', 1, 'active', 0, '2026-08-16 09:14:21', 3, '2026-08-14 09:13:31', '2026-09-03 15:28:42', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
@@ -29320,10 +29677,10 @@ INSERT INTO `users` (`id`, `role_id`, `username`, `password_hash`, `full_name`, 
 (26, 4, 'sv8', '$2y$10$iRZLB9UdIggAJqKsR.eoPuwyMFfS4w3RgVjZ4XjvxxUynOuhMAc/i', 'ساره خلف الله', 'sarah@gmail.com', '015468972', 1, 'active', 0, NULL, 3, '2026-08-14 09:28:14', '2026-09-04 08:38:22', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
 (27, 4, 'sv9', '$2y$10$oBV.8O1UW/yiwOAcPMxbqeH8Xh/PJhNtq.tIkyOqh55v1v7GzjSJW', 'هناء خلف الله', 'hanah@gmail.com', '78999456789', 1, 'active', 0, NULL, 3, '2026-08-14 09:31:19', '2026-09-03 15:28:42', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
 (28, 9, 'sm1', '$2y$10$gtVZcFBfL2yMhNXOPpkr5e7up/SiAnE7KfjJ8tq4JFocePuGjcr0C', 'أحمد حسين', 'ahmed@gmail.com', '8545567865', 1, '', 0, '2026-09-28 16:38:49', 1, '2026-08-14 13:06:45', '2026-09-28 16:38:49', NULL, NULL, NULL, NULL, 'male', 4, 3, 'light', 'ar', 1, 1, 1),
-(29, 6, 'fm', '$2y$10$K2.yA1kpqLaGWrqH/QOQ2uXv0PJhvWTMC55tW5kSkU6u5iaz6JmVW', 'المدير المالي', 'fm@ahlelkheir.org', NULL, 1, '', 0, '2026-10-12 07:09:24', 1, '2026-08-17 14:26:40', '2026-10-12 07:09:24', NULL, 'storage/avatars/user_29_1787555658.jpg', NULL, NULL, 'أنثى', 1, 2, 'light', 'ar', 1, 1, 1),
-(32, 11, 'hrh', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'مدير الموارد البشرية', 'hr@ahlelkheir.org', '00112233445566', 1, '', 0, '2026-10-10 14:50:16', NULL, '2026-08-18 21:49:04', '2026-10-10 14:50:16', NULL, 'storage/avatars/user_32_1788630391.png', NULL, NULL, 'male', 1, 2, 'light', 'ar', 1, 1, 1),
-(33, 13, 'gpm', '$2y$10$ftQaFFCk4DF1UrdPlpGtd.OVR.2pyxPxKlIcZ7KhRxa7VMP/FXC/G', 'projects manager', 'pm@gmail.com', '00012344456678', 1, '', 0, '2026-10-10 17:19:11', 1, '2026-08-28 18:33:31', '2026-10-10 17:19:11', NULL, 'storage/avatars/user_33_1787943667.jpg', NULL, NULL, 'male', 1, 2, 'light', 'ar', 1, 1, 1),
-(34, 14, 'ps1', '$2y$10$y6GVpoe/hF9GxE8zyezAPORKNgBn5n65Ct.tUHI0r6lnkyHEdkrZi', 'project supervisor', 'gps@gmail.com', '987654321', 1, '', 0, '2026-10-10 15:45:01', 1, '2026-08-28 18:35:16', '2026-10-10 15:45:01', NULL, NULL, NULL, NULL, 'male', 8, 33, 'light', 'ar', 1, 1, 1),
+(29, 6, 'fm', '$2y$10$K2.yA1kpqLaGWrqH/QOQ2uXv0PJhvWTMC55tW5kSkU6u5iaz6JmVW', 'المدير المالي', 'fm@ahlelkheir.org', NULL, 1, '', 0, '2026-10-15 18:03:36', 1, '2026-08-17 14:26:40', '2026-10-15 18:03:36', NULL, 'storage/avatars/user_29_1787555658.jpg', NULL, NULL, 'أنثى', 1, 2, 'light', 'ar', 1, 1, 1),
+(32, 11, 'hrh', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'مدير الموارد البشرية', 'hr@ahlelkheir.org', '00112233445566', 1, '', 0, '2026-10-15 15:49:40', NULL, '2026-08-18 21:49:04', '2026-10-15 15:49:40', NULL, 'storage/avatars/user_32_1788630391.png', NULL, NULL, 'male', 1, 2, 'light', 'ar', 1, 1, 1),
+(33, 13, 'gpm', '$2y$10$ftQaFFCk4DF1UrdPlpGtd.OVR.2pyxPxKlIcZ7KhRxa7VMP/FXC/G', 'projects manager', 'pm@gmail.com', '00012344456678', 1, '', 0, '2026-10-15 18:05:14', 1, '2026-08-28 18:33:31', '2026-10-15 18:05:14', NULL, 'storage/avatars/user_33_1787943667.jpg', NULL, NULL, 'male', 1, 2, 'light', 'ar', 1, 1, 1),
+(34, 14, 'ps1', '$2y$10$y6GVpoe/hF9GxE8zyezAPORKNgBn5n65Ct.tUHI0r6lnkyHEdkrZi', 'project supervisor', 'gps@gmail.com', '987654321', 1, '', 0, '2026-10-15 18:05:58', 1, '2026-08-28 18:35:16', '2026-10-15 18:05:58', NULL, NULL, NULL, NULL, 'male', 8, 33, 'light', 'ar', 1, 1, 1),
 (35, 10, 'audit_acc2_20260911', '$2y$12$kxUoLJ66pmSWJRDVnkmtUuN5XI6ZhMb41RpeV2cIfN8kUA7.2EWl.', 'ACCOUNTING AUDIT TEMP ACCOUNTANT', NULL, NULL, 1, 'active', 0, '2026-09-11 09:47:45', NULL, '2026-09-11 09:47:04', '2026-09-11 09:47:45', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'light', 'ar', 1, 1, 1),
 (36, 7, 'audit_nany2_20260911', '$2y$12$kxUoLJ66pmSWJRDVnkmtUuN5XI6ZhMb41RpeV2cIfN8kUA7.2EWl.', 'ACCOUNTING AUDIT TEMP NANNY', NULL, NULL, 1, 'active', 0, NULL, NULL, '2026-09-11 09:47:04', '2026-09-11 09:47:04', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'light', 'ar', 1, 1, 1),
 (39, 14, 'test.employee01', '$2y$10$fH73kKYe6Pt5yJyEaWsIFOnQkL5mNyQhYnyWLMmCwruBgEere/A7K', 'حمد محمد التجريبي', 'ah@test.com', '0123456789', 1, 'active', 0, '2026-10-02 14:30:49', 32, '2026-10-01 23:46:02', '2026-10-02 14:30:49', NULL, NULL, NULL, NULL, 'male', 8, 33, 'light', 'ar', 1, 1, 1),
@@ -29417,6 +29774,9 @@ CREATE TABLE `winback_campaigns` (
   `id` int(10) UNSIGNED NOT NULL,
   `sponsor_id` int(10) UNSIGNED NOT NULL,
   `handled_by` int(10) UNSIGNED DEFAULT NULL,
+  `reactivated_by_user_id` int(10) UNSIGNED DEFAULT NULL,
+  `reactivation_confirmed_by_user_id` int(10) UNSIGNED DEFAULT NULL,
+  `reactivated_at` datetime DEFAULT NULL,
   `status` enum('open','contacted','persuaded','declined') NOT NULL DEFAULT 'open',
   `opened_at` datetime NOT NULL DEFAULT current_timestamp(),
   `last_contact_at` datetime DEFAULT NULL,
@@ -29428,9 +29788,9 @@ CREATE TABLE `winback_campaigns` (
 -- Dumping data for table `winback_campaigns`
 --
 
-INSERT INTO `winback_campaigns` (`id`, `sponsor_id`, `handled_by`, `status`, `opened_at`, `last_contact_at`, `closed_at`, `notes`) VALUES
-(1, 1, 18, 'open', '2026-08-13 20:38:30', NULL, NULL, NULL),
-(2, 1, 18, 'contacted', '2026-08-13 21:02:05', '2026-09-19 14:13:29', NULL, NULL);
+INSERT INTO `winback_campaigns` (`id`, `sponsor_id`, `handled_by`, `reactivated_by_user_id`, `reactivation_confirmed_by_user_id`, `reactivated_at`, `status`, `opened_at`, `last_contact_at`, `closed_at`, `notes`) VALUES
+(1, 1, 18, NULL, NULL, NULL, 'open', '2026-08-13 20:38:30', NULL, NULL, NULL),
+(2, 1, 18, NULL, NULL, NULL, 'contacted', '2026-08-13 21:02:05', '2026-09-19 14:13:29', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -29685,6 +30045,100 @@ ALTER TABLE `hr_employment_states`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `uq_hr_employment_states_code` (`code`),
   ADD KEY `idx_hr_employment_states_active_sort` (`is_active`,`sort_order`);
+
+--
+-- Indexes for table `hr_incentive_adjustments`
+--
+ALTER TABLE `hr_incentive_adjustments`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_hr_incentive_adjustment_award` (`award_id`,`status`),
+  ADD KEY `idx_hr_incentive_adjustment_reviewer` (`reviewed_by_user_id`),
+  ADD KEY `idx_hr_incentive_adjustment_journal` (`journal_entry_id`);
+
+--
+-- Indexes for table `hr_incentive_awards`
+--
+ALTER TABLE `hr_incentive_awards`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_hr_incentive_award_event_employee` (`event_id`,`employee_id`),
+  ADD UNIQUE KEY `uq_hr_incentive_award_project_allocation` (`project_allocation_id`),
+  ADD KEY `idx_hr_incentive_award_employee_status` (`employee_id`,`status`,`earned_at`),
+  ADD KEY `idx_hr_incentive_award_user_status` (`recipient_user_id`,`status`,`earned_at`),
+  ADD KEY `idx_hr_incentive_award_payroll` (`payroll_id`),
+  ADD KEY `idx_hr_incentive_award_recognition_journal` (`recognition_journal_entry_id`),
+  ADD KEY `idx_hr_incentive_award_settlement_journal` (`settlement_journal_entry_id`);
+
+--
+-- Indexes for table `hr_incentive_events`
+--
+ALTER TABLE `hr_incentive_events`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_hr_incentive_event_idempotency` (`idempotency_key`),
+  ADD KEY `idx_hr_incentive_event_source` (`source_table`,`source_record_id`),
+  ADD KEY `idx_hr_incentive_event_type_status` (`incentive_type`,`status`,`occurred_at`),
+  ADD KEY `idx_hr_incentive_event_policy` (`policy_version_id`),
+  ADD KEY `idx_hr_incentive_event_recipient` (`recipient_user_id`,`recipient_employee_id`,`status`);
+
+--
+-- Indexes for table `hr_incentive_notification_outbox`
+--
+ALTER TABLE `hr_incentive_notification_outbox`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_hr_incentive_notification_award` (`award_id`),
+  ADD KEY `idx_hr_incentive_notification_pending` (`status`,`id`),
+  ADD KEY `idx_hr_incentive_notification_recipient` (`recipient_user_id`);
+
+--
+-- Indexes for table `hr_incentive_policy_approval_history`
+--
+ALTER TABLE `hr_incentive_policy_approval_history`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_hr_incentive_approval_policy_time` (`policy_version_id`,`created_at`,`id`),
+  ADD KEY `idx_hr_incentive_approval_actor` (`actor_user_id`);
+
+--
+-- Indexes for table `hr_incentive_policy_custom_fields`
+--
+ALTER TABLE `hr_incentive_policy_custom_fields`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_hr_incentive_policy_custom_field_key` (`policy_version_id`,`field_key`),
+  ADD KEY `idx_hr_incentive_policy_custom_field_order` (`policy_version_id`,`sort_order`,`id`);
+
+--
+-- Indexes for table `hr_incentive_policy_rules`
+--
+ALTER TABLE `hr_incentive_policy_rules`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_hr_incentive_rule_type` (`policy_version_id`,`incentive_type`),
+  ADD KEY `idx_hr_incentive_rule_currency` (`currency_code`),
+  ADD KEY `idx_hr_incentive_rule_type_catalog` (`incentive_type`);
+
+--
+-- Indexes for table `hr_incentive_policy_versions`
+--
+ALTER TABLE `hr_incentive_policy_versions`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_hr_incentive_policy_version` (`version_no`),
+  ADD KEY `idx_hr_incentive_policy_effective` (`status`,`effective_from`,`effective_to`),
+  ADD KEY `idx_hr_incentive_policy_created_by` (`created_by_user_id`),
+  ADD KEY `idx_hr_incentive_policy_activated_by` (`activated_by_user_id`);
+
+--
+-- Indexes for table `hr_incentive_project_allocations`
+--
+ALTER TABLE `hr_incentive_project_allocations`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_hr_incentive_project_recipient` (`event_id`,`employee_id`),
+  ADD KEY `idx_hr_incentive_project_user` (`recipient_user_id`),
+  ADD KEY `idx_hr_incentive_project_approver` (`approved_by_user_id`);
+
+--
+-- Indexes for table `hr_incentive_types`
+--
+ALTER TABLE `hr_incentive_types`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_hr_incentive_type_code` (`type_code`),
+  ADD KEY `idx_hr_incentive_type_active_sort` (`is_active`,`sort_order`,`id`);
 
 --
 -- Indexes for table `hr_leave_returns`
@@ -30405,7 +30859,9 @@ ALTER TABLE `vouchers`
 ALTER TABLE `winback_campaigns`
   ADD PRIMARY KEY (`id`),
   ADD KEY `sponsor_id` (`sponsor_id`),
-  ADD KEY `handled_by` (`handled_by`);
+  ADD KEY `handled_by` (`handled_by`),
+  ADD KEY `idx_winback_reactivated_by` (`reactivated_by_user_id`),
+  ADD KEY `idx_winback_reactivation_confirmer` (`reactivation_confirmed_by_user_id`);
 
 --
 -- Indexes for table `winback_contacts`
@@ -30435,19 +30891,19 @@ ALTER TABLE `accounting_admin_fee_policies`
 -- AUTO_INCREMENT for table `accounts`
 --
 ALTER TABLE `accounts`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=48;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=50;
 
 --
 -- AUTO_INCREMENT for table `attendance`
 --
 ALTER TABLE `attendance`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=238;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=250;
 
 --
 -- AUTO_INCREMENT for table `audit_log`
 --
 ALTER TABLE `audit_log`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2364;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2454;
 
 --
 -- AUTO_INCREMENT for table `contracts`
@@ -30564,6 +31020,66 @@ ALTER TABLE `hr_employment_states`
   MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
+-- AUTO_INCREMENT for table `hr_incentive_adjustments`
+--
+ALTER TABLE `hr_incentive_adjustments`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `hr_incentive_awards`
+--
+ALTER TABLE `hr_incentive_awards`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+
+--
+-- AUTO_INCREMENT for table `hr_incentive_events`
+--
+ALTER TABLE `hr_incentive_events`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+
+--
+-- AUTO_INCREMENT for table `hr_incentive_notification_outbox`
+--
+ALTER TABLE `hr_incentive_notification_outbox`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `hr_incentive_policy_approval_history`
+--
+ALTER TABLE `hr_incentive_policy_approval_history`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+
+--
+-- AUTO_INCREMENT for table `hr_incentive_policy_custom_fields`
+--
+ALTER TABLE `hr_incentive_policy_custom_fields`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `hr_incentive_policy_rules`
+--
+ALTER TABLE `hr_incentive_policy_rules`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
+
+--
+-- AUTO_INCREMENT for table `hr_incentive_policy_versions`
+--
+ALTER TABLE `hr_incentive_policy_versions`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+
+--
+-- AUTO_INCREMENT for table `hr_incentive_project_allocations`
+--
+ALTER TABLE `hr_incentive_project_allocations`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `hr_incentive_types`
+--
+ALTER TABLE `hr_incentive_types`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+
+--
 -- AUTO_INCREMENT for table `hr_leave_returns`
 --
 ALTER TABLE `hr_leave_returns`
@@ -30651,13 +31167,13 @@ ALTER TABLE `hr_salary_advance_waiver_schedule_items`
 -- AUTO_INCREMENT for table `journal_entries`
 --
 ALTER TABLE `journal_entries`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=140;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=157;
 
 --
 -- AUTO_INCREMENT for table `journal_lines`
 --
 ALTER TABLE `journal_lines`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=287;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=324;
 
 --
 -- AUTO_INCREMENT for table `leaves`
@@ -30717,7 +31233,7 @@ ALTER TABLE `nanny_group_assignments`
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=167;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=196;
 
 --
 -- AUTO_INCREMENT for table `orphan_documents`
@@ -30867,7 +31383,7 @@ ALTER TABLE `project_progress_updates`
 -- AUTO_INCREMENT for table `project_status_history`
 --
 ALTER TABLE `project_status_history`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 
 --
 -- AUTO_INCREMENT for table `project_supervisor_assignments`
@@ -30915,7 +31431,7 @@ ALTER TABLE `sponsor_import_exceptions`
 -- AUTO_INCREMENT for table `sponsor_payments`
 --
 ALTER TABLE `sponsor_payments`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- AUTO_INCREMENT for table `sponsor_requests`
@@ -30957,7 +31473,7 @@ ALTER TABLE `suspension_cases`
 -- AUTO_INCREMENT for table `transactions`
 --
 ALTER TABLE `transactions`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
 
 --
 -- AUTO_INCREMENT for table `users`
@@ -30987,7 +31503,7 @@ ALTER TABLE `vouchers`
 -- AUTO_INCREMENT for table `winback_campaigns`
 --
 ALTER TABLE `winback_campaigns`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `winback_contacts`
@@ -31085,6 +31601,59 @@ ALTER TABLE `group_children`
   ADD CONSTRAINT `fk_gc_added_by` FOREIGN KEY (`added_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `fk_gc_child` FOREIGN KEY (`child_id`) REFERENCES `family_children` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_gc_group` FOREIGN KEY (`group_id`) REFERENCES `orphan_groups` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `hr_incentive_adjustments`
+--
+ALTER TABLE `hr_incentive_adjustments`
+  ADD CONSTRAINT `fk_hr_incentive_adjustment_award` FOREIGN KEY (`award_id`) REFERENCES `hr_incentive_awards` (`id`);
+
+--
+-- Constraints for table `hr_incentive_awards`
+--
+ALTER TABLE `hr_incentive_awards`
+  ADD CONSTRAINT `fk_hr_incentive_award_event` FOREIGN KEY (`event_id`) REFERENCES `hr_incentive_events` (`id`),
+  ADD CONSTRAINT `fk_hr_incentive_award_project_allocation` FOREIGN KEY (`project_allocation_id`) REFERENCES `hr_incentive_project_allocations` (`id`);
+
+--
+-- Constraints for table `hr_incentive_events`
+--
+ALTER TABLE `hr_incentive_events`
+  ADD CONSTRAINT `fk_hr_incentive_event_policy` FOREIGN KEY (`policy_version_id`) REFERENCES `hr_incentive_policy_versions` (`id`),
+  ADD CONSTRAINT `fk_hr_incentive_event_type` FOREIGN KEY (`incentive_type`) REFERENCES `hr_incentive_types` (`type_code`);
+
+--
+-- Constraints for table `hr_incentive_notification_outbox`
+--
+ALTER TABLE `hr_incentive_notification_outbox`
+  ADD CONSTRAINT `fk_hr_incentive_notification_award` FOREIGN KEY (`award_id`) REFERENCES `hr_incentive_awards` (`id`),
+  ADD CONSTRAINT `fk_hr_incentive_notification_user` FOREIGN KEY (`recipient_user_id`) REFERENCES `users` (`id`);
+
+--
+-- Constraints for table `hr_incentive_policy_approval_history`
+--
+ALTER TABLE `hr_incentive_policy_approval_history`
+  ADD CONSTRAINT `fk_hr_incentive_approval_actor` FOREIGN KEY (`actor_user_id`) REFERENCES `users` (`id`),
+  ADD CONSTRAINT `fk_hr_incentive_approval_policy` FOREIGN KEY (`policy_version_id`) REFERENCES `hr_incentive_policy_versions` (`id`);
+
+--
+-- Constraints for table `hr_incentive_policy_custom_fields`
+--
+ALTER TABLE `hr_incentive_policy_custom_fields`
+  ADD CONSTRAINT `fk_hr_incentive_custom_field_policy` FOREIGN KEY (`policy_version_id`) REFERENCES `hr_incentive_policy_versions` (`id`);
+
+--
+-- Constraints for table `hr_incentive_policy_rules`
+--
+ALTER TABLE `hr_incentive_policy_rules`
+  ADD CONSTRAINT `fk_hr_incentive_rule_policy` FOREIGN KEY (`policy_version_id`) REFERENCES `hr_incentive_policy_versions` (`id`),
+  ADD CONSTRAINT `fk_hr_incentive_rule_type` FOREIGN KEY (`incentive_type`) REFERENCES `hr_incentive_types` (`type_code`);
+
+--
+-- Constraints for table `hr_incentive_project_allocations`
+--
+ALTER TABLE `hr_incentive_project_allocations`
+  ADD CONSTRAINT `fk_hr_incentive_project_event` FOREIGN KEY (`event_id`) REFERENCES `hr_incentive_events` (`id`);
 
 --
 -- Constraints for table `hr_salary_advance_direct_repayment_documents`
