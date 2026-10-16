@@ -781,3 +781,18 @@ Added `tools/run_hr_fm_sponsor_payment_approval_integration_tests.php`. It refus
 ### 2026-10-16 — Integration harness failure diagnosis and correction
 
 First local run of `tools/run_hr_fm_sponsor_payment_approval_integration_tests.php` failed at new-sponsor event recording with `يجب تسجيل حافز استقطاب الكفيل ضمن معاملة اعتماد الدفعة.`. Source tracing identified the root cause in `ak_apply_admin_fee_snapshot_prepared()`: it called the legacy `ak_calculate_admin_fee()` wrapper. When the prepared policy lookup returned `null`, that wrapper interpreted null as “policy not supplied” and called `ak_get_admin_fee_policy()`, which performs schema setup DDL; MariaDB implicitly ended the active transaction. Corrected the prepared snapshot function to call `ak_calculate_admin_fee_prepared()` directly. Fix commit: `d2e8ae01deade8ea88c4d7f68722b1d4e78a4aef`. Runtime verification is still pending; rerun only the new integration harness on the exact disposable DB after pulling this commit. Do not weaken the transaction guard or modify R5.
+
+
+## 2026-10-16 — FM sponsor-payment integration RUNTIME VERIFIED; project payroll gate added
+
+The user ran the rollback-only `tools/run_hr_fm_sponsor_payment_approval_integration_tests.php` against `ahl_el_kheir_incentive_test_20261015_r1`; all three reported checks passed:
+```
+PASS | shared_FM_approval=PASS | posted_transaction_journal=PASS
+PASS | new_sponsor_pending_verification=PASS | no_premature_award=PASS | success_rollback=PASS
+PASS | injected_incentive_failure=PASS | payment_transaction_journal_rollback=PASS
+```
+The user also PHP 8.2-linted all five relevant accounting PHP files and the harness successfully. This closes this FM integration gate at the harness boundary. The live database and active R5 were not used or changed. The known CLI-only `REQUEST_METHOD` warning is not a production fix target.
+
+Source inspection confirmed the existing generic payroll/accounting and outbox harnesses already cover general draft scheduling, settlement, and notification retry. They do not prove that the project-completion processor assigns its own generated award to the correct current/future draft payroll. Added `tools/run_hr_project_incentive_payroll_rollback_tests.php` and included it in the PHP 8.2 syntax workflow. The new test is restricted to `ahl_el_kheir_incentive_test_20261015_r1`, preserves R5, uses a synthetic no-financial-activity project, and checks the project award's payroll linkage, incentive component increase, unchanged salary net, pending outbox row, and rollback restoration. **Local PHP lint and runtime acceptance of this new harness are pending; do not claim PASS until its exact output is reviewed.**
+
+Next: pull `main`; lint the new harness; run only this new harness against the named disposable database. Do not rerun the closed project-recognition, generic payroll/accounting, outbox, or FM integration harnesses without regression evidence. Real PM-to-FM browser closure workflow remains a separate open gate.
