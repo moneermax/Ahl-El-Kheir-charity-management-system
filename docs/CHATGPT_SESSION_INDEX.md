@@ -879,3 +879,18 @@ This closes the **processor rollback-harness gate**. A follow-up now extracts th
 ### 2026-10-16 — Automatic financial-closure decision made directly testable (local verification pending)
 
 The FM funding-return handler now uses `akp_project_financial_closure_outcome()` from `modules/projects/project_funding_accounting.php` to select one of three outcomes: `complete` only when controlled balance is at most 0.009 and no draft funding allocation exists; `draft_allocations_pending` when balance is zero but a draft allocation remains; or `balance_remaining` when controlled balance remains positive. The existing rollback-only draft-funding harness asserts all three outcomes, the explicit FM closure guard, processor blocking, and unchanged award/journal/funding evidence. Local PHP lint and harness runtime must be repeated against `ahl_el_kheir_incentive_test_20261015_r1` after pulling the latest `main`. This is helper/rollback-harness coverage, not proof of the real browser POST route or delivered employee notification. Do not post a funding return or change project 7, its draft allocation/payment evidence, or policy R5.
+
+
+## 2026-10-16 — Employee incentives: new-sponsor first-payment gate passed
+
+The local rollback-only harness `tools/run_hr_employee_incentive_new_sponsor_rollback_tests.php` passed against the isolated database `ahl_el_kheir_incentive_test_20261015_r1`. The runner verified both configured and connected database names before invoking the harness. User-reported output:
+
+```text
+SAFE_TARGET | ahl_el_kheir_incentive_test_20261015_r1
+PASS | new_sponsor=first_confirmed_payment | recipient_snapshot=PASS
+PASS | later_payment_rejected=PASS | no_award_before_HR_verification=PASS
+PASS | rollback_cleanup=PASS | sponsor=2858 | employee=16
+TEST_EXIT_CODE=0
+```
+
+The new-sponsor first-confirmed-payment rollback-harness gate is closed at this acceptance boundary. Do not repeat it without regression evidence. Active R5 was not modified; the live database was not the test target. Remaining separate gates include the real-browser PM-to-FM project-closure workflow and end-to-end employee notification delivery/visibility. Details are recorded in `docs/HR_EMPLOYEE_INCENTIVES_CONTINUATION.md`.
