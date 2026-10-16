@@ -3317,3 +3317,18 @@ A separate `tools/run_hr_project_incentive_payroll_rollback_tests.php` now cover
 The initial project incentive payroll harness returned `SKIP` because its selected Project Supervisor had no current/future draft payroll. User-provided read-only query evidence showed employee 22/user 34, employee 26/user 39, and employee 27/user 40 each have a salary-history row effective from 2026-10-05 at 10,000 SDG and a working employment category, with no October 2026 payroll row. The actual payroll-policy helper source (`modules/hr/lib_payroll_policy.php`) selects the latest version effective by the period end; the disposable database returned policy version 1 effective 2026-10-01. The earlier diagnostic query's `effective_to`/status assumptions were not used as production rules.
 
 Commit `797f89afe848df39fee26a6f16bae6f2854c3c03` updates the rollback harness to seed a temporary current-period payroll inside the test transaction only when no eligible draft exists. The insert follows the production generation INSERT shape; salary history, historical employment state, currency, duplicate-period row, unscheduled award, and effective policy are guarded. Rollback must remove the temporary payroll; when an existing draft is used, the original payroll amounts must be restored. Local lint/runtime acceptance remains pending; no PASS is claimed.
+## 2026-10-16 — Project incentive → draft payroll rollback evidence
+
+User-reported local result for `tools/run_hr_project_incentive_payroll_rollback_tests.php` after successful PHP 8.2 lint:
+
+```
+PASS | synthetic_project=no_financial_activity | PS_snapshot=PASS | full_policy_amount_per_employee=PASS
+PASS | missing_FM_gate_blocks_award=PASS | FM_gate=PASS | recognition_journal_5500_2400=PASS
+PASS | project_award_draft_payroll_link=PASS | incentive_total=PASS | net_salary_unchanged=PASS | outbox_pending=PASS
+PASS | rollback_cleanup=PASS | temporary_payroll_rolled_back=PASS | policy=R5 | reward=1500.00 SDG
+```
+
+The evidence supports award linkage to the proper draft payroll, incentive component increase without changing net salary, outbox enqueue, recognition journal checks, and full transactional cleanup including a temporary payroll fixture. The run was intended for the disposable incentive test database; no production payroll run is evidenced. R5 remains unchanged.
+
+Residual boundary: no proof here of real browser PM-to-FM closure behavior or actual notification delivery to an employee. Keep those explicitly open until separately tested.
+
