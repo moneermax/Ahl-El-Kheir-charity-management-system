@@ -18,6 +18,7 @@ require_once __DIR__ . '/../config/functions.php';
 require_once __DIR__ . '/../modules/accounting/lib.php';
 require_once __DIR__ . '/../modules/projects/project_lib.php';
 require_once __DIR__ . '/../modules/projects/project_funding_accounting.php';
+require_once __DIR__ . '/../modules/hr/lib_payroll_policy.php';
 require_once __DIR__ . '/../modules/hr/lib_employee_incentives.php';
 
 $pdo = db();
@@ -155,12 +156,91 @@ $payrollFixture = hrProjectIncentiveSuccessOne(
      LIMIT 1",
     [$projectSupervisor['employee_id'], $currency]
 );
-if (!$payrollFixture) {
-    hrProjectIncentiveSuccessSkip('The selected Project Supervisor has no current/future draft payroll with matching currency and no other verified unscheduled awards.');
+
+$payrollSeed = null;
+if ($payrollFixture) {
+    $payrollId = (int)$payrollFixture['payroll_id'];
+    $originalPayrollIncentive = round((float)$payrollFixture['incentive_amount'], 2);
+    $originalPayrollNet = round((float)$payrollFixture['net_salary'], 2);
+} else {
+    // If no current/future draft exists, prepare to create one inside the same
+    // rollback transaction, matching the production payroll-generation INSERT.
+    $periodStart = date('Y-m-01');
+    $periodEnd = date('Y-m-t');
+    $payrollMonth = (int)date('n');
+    $payrollYear = (int)date('Y');
+    $payrollPolicy = hrPayrollPolicyGetActive($pdo, $periodEnd);
+    if (!$payrollPolicy) {
+        hrProjectIncentiveSuccessSkip('No effective payroll policy exists for the current payroll period.');
+    }
+
+    $salaryFixture = hrProjectIncentiveSuccessOne(
+        $pdo,
+        "SELECT e.hire_date, s.basic_salary, s.salary_currency
+         FROM employees e
+         JOIN hr_employee_salary_history s ON s.id = (
+             SELECT s2.id FROM hr_employee_salary_history s2
+             WHERE s2.employee_id = e.id
+               AND s2.effective_from <= ?
+               AND (s2.effective_to IS NULL OR s2.effective_to >= ?)
+             ORDER BY s2.effective_from DESC, s2.id DESC
+             LIMIT 1
+         )
+         WHERE e.id = ?
+           AND (e.hire_date IS NULL OR e.hire_date <= ?)
+         LIMIT 1",
+        [$periodEnd, $periodEnd, $projectSupervisor['employee_id'], $periodEnd]
+    );
+    $employmentState = hrProjectIncentiveSuccessOne(
+        $pdo,
+        "SELECT s.category
+         FROM hr_employee_state_history h
+         JOIN hr_employment_states s ON s.id = h.employment_state_id
+         WHERE h.employee_id = ?
+           AND h.effective_from <= ?
+           AND (h.effective_to IS NULL OR h.effective_to >= ?)
+         ORDER BY h.effective_from DESC, h.id DESC
+         LIMIT 1",
+        [$projectSupervisor['employee_id'], $periodEnd . ' 23:59:59', $periodEnd . ' 00:00:00']
+    );
+    if (!$salaryFixture
+        || (float)$salaryFixture['basic_salary'] <= 0
+        || strtoupper(trim((string)$salaryFixture['salary_currency'])) !== $currency
+        || !$employmentState
+        || (string)$employmentState['category'] !== 'working') {
+        hrProjectIncentiveSuccessSkip('Selected Project Supervisor is not eligible for a current-period payroll draft under the production salary/state/currency rules.');
+    }
+    if (hrProjectIncentiveSuccessCount(
+        $pdo,
+        'SELECT COUNT(*) FROM payroll WHERE employee_id = ? AND month = ? AND year = ?',
+        [$projectSupervisor['employee_id'], $payrollMonth, $payrollYear]
+    ) !== 0) {
+        hrProjectIncentiveSuccessSkip('A payroll row already exists for the selected employee and current period, but it is not an eligible draft fixture.');
+    }
+    if (hrProjectIncentiveSuccessCount(
+        $pdo,
+        "SELECT COUNT(*) FROM hr_incentive_awards a
+         JOIN hr_incentive_events e ON e.id = a.event_id
+         WHERE a.employee_id = ?
+           AND a.payroll_id IS NULL
+           AND a.status IN ('earned','held_currency')
+           AND e.status = 'verified'",
+        [$projectSupervisor['employee_id']]
+    ) !== 0) {
+        hrProjectIncentiveSuccessSkip('Selected Project Supervisor has another verified unscheduled award; refusing to mix it into this focused fixture.');
+    }
+
+    $payrollSeed = [
+        'employee_id' => (int)$projectSupervisor['employee_id'],
+        'month' => $payrollMonth,
+        'year' => $payrollYear,
+        'basic_salary' => round((float)$salaryFixture['basic_salary'], 2),
+        'policy_id' => (int)$payrollPolicy['id'],
+    ];
+    $payrollId = 0;
+    $originalPayrollIncentive = 0.00;
+    $originalPayrollNet = $payrollSeed['basic_salary'];
 }
-$payrollId = (int)$payrollFixture['payroll_id'];
-$originalPayrollIncentive = round((float)$payrollFixture['incentive_amount'], 2);
-$originalPayrollNet = round((float)$payrollFixture['net_salary'], 2);
 
 $projectManager = hrProjectIncentiveSuccessOne(
     $pdo,
@@ -187,6 +267,25 @@ $rewardAmount = round((float)$policy['reward_amount'], 2);
 
 try {
     $pdo->beginTransaction();
+
+    if ($payrollSeed !== null) {
+        $insertPayroll = $pdo->prepare(
+            "INSERT INTO payroll
+                (employee_id, month, year, basic_salary, allowances, overtime,
+                 deductions, net_salary, status, payroll_policy_version_id)
+             VALUES (?, ?, ?, ?, 0, 0, 0, ?, 'draft', ?)"
+        );
+        $insertPayroll->execute([
+            $payrollSeed['employee_id'],
+            $payrollSeed['month'],
+            $payrollSeed['year'],
+            $payrollSeed['basic_salary'],
+            $payrollSeed['basic_salary'],
+            $payrollSeed['policy_id'],
+        ]);
+        $payrollId = (int)$pdo->lastInsertId();
+        hrProjectIncentiveSuccessAssert($payrollId > 0, 'Could not create the temporary current-period payroll draft.');
+    }
 
     // Match the existing project creation INSERT; every fixture row is rolled back.
     $insertProject = $pdo->prepare(
@@ -414,18 +513,25 @@ try {
 
     $pdo->rollBack();
 
-    $payrollAfterRollback = hrProjectIncentiveSuccessOne(
-        $pdo,
-        'SELECT incentive_amount, net_salary, status FROM payroll WHERE id = ?',
-        [$payrollId]
-    );
-    hrProjectIncentiveSuccessAssert(
-        $payrollAfterRollback !== null
-        && $payrollAfterRollback['status'] === 'draft'
-        && round((float)$payrollAfterRollback['incentive_amount'], 2) === $originalPayrollIncentive
-        && round((float)$payrollAfterRollback['net_salary'], 2) === $originalPayrollNet,
-        'Rollback did not restore the selected draft payroll amounts.'
-    );
+    if ($payrollSeed !== null) {
+        hrProjectIncentiveSuccessAssert(
+            hrProjectIncentiveSuccessCount($pdo, 'SELECT COUNT(*) FROM payroll WHERE id = ?', [$payrollId]) === 0,
+            'Rollback left the temporary payroll draft behind.'
+        );
+    } else {
+        $payrollAfterRollback = hrProjectIncentiveSuccessOne(
+            $pdo,
+            'SELECT incentive_amount, net_salary, status FROM payroll WHERE id = ?',
+            [$payrollId]
+        );
+        hrProjectIncentiveSuccessAssert(
+            $payrollAfterRollback !== null
+            && $payrollAfterRollback['status'] === 'draft'
+            && round((float)$payrollAfterRollback['incentive_amount'], 2) === $originalPayrollIncentive
+            && round((float)$payrollAfterRollback['net_salary'], 2) === $originalPayrollNet,
+            'Rollback did not restore the selected draft payroll amounts.'
+        );
+    }
     hrProjectIncentiveSuccessAssert(
         hrProjectIncentiveSuccessCount($pdo, 'SELECT COUNT(*) FROM other_projects WHERE id = ?', [$projectId]) === 0,
         'Rollback left the synthetic project behind.'
@@ -458,7 +564,7 @@ try {
     echo "PASS | synthetic_project=no_financial_activity | PS_snapshot=PASS | full_policy_amount_per_employee=PASS\n";
     echo "PASS | missing_FM_gate_blocks_award=PASS | FM_gate=PASS | recognition_journal_5500_2400=PASS\n";
     echo "PASS | project_award_draft_payroll_link=PASS | incentive_total=PASS | net_salary_unchanged=PASS | outbox_pending=PASS\n";
-    echo "PASS | rollback_cleanup=PASS | policy=R5 | reward=" . number_format($rewardAmount, 2, '.', '') . " " . strtoupper((string)$policy['currency_code']) . "\n";
+    echo "PASS | rollback_cleanup=PASS | temporary_payroll_rolled_back=" . ($payrollSeed !== null ? 'PASS' : 'NOT_NEEDED') . " | policy=R5 | reward=" . number_format($rewardAmount, 2, '.', '') . " " . strtoupper((string)$policy['currency_code']) . "\n";
 } catch (Throwable $e) {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();
