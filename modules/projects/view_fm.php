@@ -369,6 +369,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (akp_role() !== 'financial_manager') throw new RuntimeException('الإغلاق المالي محصور بالمدير المالي.');
             if (!$closed) throw new RuntimeException('لا يمكن إتمام الإغلاق المالي قبل إغلاق المشروع إدارياً من مدير المشاريع.');
             if ($financialClosureCompleted) throw new RuntimeException('تم إتمام الإغلاق المالي للمشروع مسبقاً.');
+            if (akp_project_has_draft_funding_allocations($id)) throw new RuntimeException('لا يمكن إتمام الإغلاق المالي مع وجود تخصيصات تمويل مسودة؛ أكمل الإفراج المالي أو ألغِ التخصيصات غير المنفذة أولاً.');
             $remaining=akp_project_controlled_balance($id);
             if($remaining>0.009) throw new RuntimeException('لا يمكن إتمام الإغلاق المالي قبل إرجاع كامل الرصيد المتبقي إلى حساب المؤسسة.');
             akp_audit(
@@ -406,7 +407,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $returnDate=fm_post('return_date',date('Y-m-d'));
             $entryId=akp_return_project_funding($id,$allocationId,$amount,$returnDate,null,null);
             $remaining=akp_project_controlled_balance($id);
-            if($remaining<=0.009){
+            $hasDraftFunding = akp_project_has_draft_funding_allocations($id);
+            if($remaining<=0.009 && !$hasDraftFunding){
                 akp_audit(
                     'FM_FINANCIAL_CLOSURE',
                     'project_lifecycle',
@@ -433,6 +435,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }catch(Throwable $notificationError){}
                 flash('success','تم إرجاع كامل الرصيد المتبقي إلى حساب المؤسسة وإتمام الإغلاق المالي للمشروع.');
+            } elseif ($remaining <= 0.009 && $hasDraftFunding) {
+                flash('success','تم تسجيل إرجاع كامل الرصيد المتبقي، لكن أُجّل الإغلاق المالي لوجود تخصيصات تمويل مسودة. أكمل الإفراج المالي أو ألغِ التخصيصات غير المنفذة ثم أعد الإغلاق المالي.');
             } else {
                 flash('success','تم تسجيل إرجاع جزء من الرصيد المتبقي إلى حساب المؤسسة. المتبقي للإغلاق المالي: '.number_format($remaining,2).' '.($project['currency_code']?:'SDG').'.');
             }
