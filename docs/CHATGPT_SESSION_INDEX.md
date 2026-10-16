@@ -853,3 +853,9 @@ Added `tools/run_hr_project_incentive_payroll_rollback_tests.php` and added it t
 ### 2026-10-16 — Project incentive payroll harness: fixture setup corrected; local verification pending
 
 Read-only diagnostics showed the current payroll policy resolves to version 1 effective 2026-10-01 and eligible Project Supervisors have effective October salary history/working state but no October payroll row. Commit `797f89afe848df39fee26a6f16bae6f2854c3c03` makes `tools/run_hr_project_incentive_payroll_rollback_tests.php` self-contained: it can create a temporary current-period draft payroll inside the test transaction using the production payroll INSERT shape and effective policy, then asserts rollback removes that temporary row. Existing draft fixtures remain supported and must be restored exactly. Local PHP lint/runtime are still pending; run only this harness on `ahl_el_kheir_incentive_test_20261015_r1`. Do not modify R5 or repeat closed tests.
+### 2026-10-16 — Project incentive payroll integration CLOSED at rollback-harness boundary
+
+User locally PHP 8.2-linted and ran `tools/run_hr_project_incentive_payroll_rollback_tests.php` after pulling `main`. Reported PASS checks cover synthetic no-financial-activity project setup, Project Supervisor snapshot, full R5 amount, missing-FM-gate blocking, FM gate, recognition journal 5500/2400, correct draft-payroll link, incentive total increase, unchanged net salary, pending outbox, cleanup, and temporary payroll rollback. Reward was 1,500.00 SDG; active R5 was not changed.
+
+This closes only the disposable-database rollback-harness gate. It does not prove a real PM-to-FM browser closure workflow or notification delivery to an employee. Do not rerun the passed harness absent regression evidence.
+
