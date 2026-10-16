@@ -825,3 +825,16 @@ New test `tools/run_hr_project_incentive_payroll_rollback_tests.php` has been ad
 ## 2026-10-16 continuation — Project incentive payroll harness now creates a rollback-only payroll fixture
 
 The new project payroll test skipped because no current/future draft payroll existed for the selected Project Supervisor. User read-only diagnostics confirmed eligible salary history (10,000 SDG effective 2026-10-05), working employment category, no October payroll rows, and payroll policy version 1 effective 2026-10-01. Source commit `797f89afe848df39fee26a6f16bae6f2854c3c03` updates `tools/run_hr_project_incentive_payroll_rollback_tests.php` to create a temporary current-period draft inside its existing transaction when needed, using the production payroll INSERT shape and actual payroll-policy helper. It blocks existing payroll rows and verified unscheduled awards, and checks the temporary payroll is removed by rollback. **Next exact gate:** pull `main`, run `php -l tools\run_hr_project_incentive_payroll_rollback_tests.php`, then run only `php tools\run_hr_project_incentive_payroll_rollback_tests.php` while the configured database is exactly `ahl_el_kheir_incentive_test_20261015_r1`. Runtime output is pending. Do not modify active R5, use live `ahl_el_kheir`, or rerun closed tests.
+## Latest verified checkpoint — 2026-10-16 project incentive payroll gate
+
+The user pulled `main`, PHP 8.2-linted `tools/run_hr_project_incentive_payroll_rollback_tests.php`, and ran it against the disposable incentive test database. Reported results all PASS:
+
+```
+PASS | synthetic_project=no_financial_activity | PS_snapshot=PASS | full_policy_amount_per_employee=PASS
+PASS | missing_FM_gate_blocks_award=PASS | FM_gate=PASS | recognition_journal_5500_2400=PASS
+PASS | project_award_draft_payroll_link=PASS | incentive_total=PASS | net_salary_unchanged=PASS | outbox_pending=PASS
+PASS | rollback_cleanup=PASS | temporary_payroll_rolled_back=PASS | policy=R5 | reward=1500.00 SDG
+```
+
+The project-completion incentive-to-draft-payroll rollback-harness gate is CLOSED. Do not rerun it absent regression evidence. R5 remains unchanged. This does not prove employee notification delivery or the real PM-to-FM browser closure workflow; those remain separate open acceptance gates. Continue by inspecting current source/docs and target only the next genuinely open gate.
+
