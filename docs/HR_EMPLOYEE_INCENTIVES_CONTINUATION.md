@@ -859,3 +859,20 @@ This closes the **processor rollback-harness gate**. A follow-up now extracts th
 ### 2026-10-16 — FM automatic closure branch testability refinement (local verification pending)
 
 `akp_project_financial_closure_outcome()` is now the shared decision used by the FM funding-return handler. The draft-funding rollback harness checks zero-balance-with-draft defer, zero-balance-without-draft completion eligibility, and positive-balance defer. After pulling latest `main`, lint `modules/projects/project_funding_accounting.php`, `modules/projects/view_fm.php`, and `tools/run_hr_project_incentive_draft_funding_guard_rollback_tests.php`, then run only that harness against the named disposable DB using a process-only `AHL_DB_NAME` override. This remains rollback-harness evidence, not browser-route evidence. Employee notification delivery/visibility also remains unverified; pending outbox creation is not sufficient. Protect active R5 and project 7's financial evidence.
+
+
+## 2026-10-16 — New-sponsor first-confirmed-payment incentive acceptance RUNTIME VERIFIED
+
+The user executed the existing rollback-only harness from the local project against the isolated database. The temporary PHP runner set `AHL_DB_NAME` for this process only and checked both configured and connected database names before requiring the harness. The exact database guard output and harness result were:
+
+```text
+SAFE_TARGET | ahl_el_kheir_incentive_test_20261015_r1
+PASS | new_sponsor=first_confirmed_payment | recipient_snapshot=PASS
+PASS | later_payment_rejected=PASS | no_award_before_HR_verification=PASS
+PASS | rollback_cleanup=PASS | sponsor=2858 | employee=16
+TEST_EXIT_CODE=0
+```
+
+This closes the **new-sponsor first-confirmed-payment rollback-harness acceptance gate** at the tested local boundary: the first confirmed payment creates the expected event and recipient snapshot, a later payment is rejected as a second qualifying event, no award is issued before HR verification, and rollback cleanup passes. The configured and connected database were both confirmed as `ahl_el_kheir_incentive_test_20261015_r1`; the live `ahl_el_kheir` database was not the test target. Sponsor 2858 and employee 16 are fixture identifiers from this run, not permanent business rules.
+
+Do not rerun this passed harness without concrete regression evidence. This result does not prove the separate real-browser PM-to-FM project-closure workflow or end-to-end employee notification delivery/visibility. Preserve active policy R5 and project 7's protected financial evidence. Continue from the remaining open gates only.
