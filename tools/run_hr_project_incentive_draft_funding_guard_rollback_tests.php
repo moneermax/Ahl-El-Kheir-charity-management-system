@@ -217,7 +217,7 @@ try {
         'Rollback left an incentive award behind.'
     );
 
-    echo "PASS | fm_explicit_closure_guard=PASS | draft_funding_allocation_blocks_processor=PASS | awards_unchanged=PASS | recognition_journals_unchanged=PASS\n";
+    echo "PASS | fm_explicit_closure_guard=PASS | automatic_closure_outcomes=PASS | draft_funding_allocation_blocks_processor=PASS | awards_unchanged=PASS | recognition_journals_unchanged=PASS\n";
     echo "PASS | funding_evidence_unchanged=PASS | rollback_cleanup=PASS | project={$projectId} | policy=R5\n";
 } catch (Throwable $e) {
     if ($pdo->inTransaction()) {
