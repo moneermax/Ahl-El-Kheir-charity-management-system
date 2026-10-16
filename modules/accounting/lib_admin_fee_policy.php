@@ -164,7 +164,7 @@ if (!function_exists('ak_apply_admin_fee_snapshot_prepared')) {
                 'policy_id'=>(int)$t['admin_fee_policy_id'],
             ];
         }
-        $calc = ak_calculate_admin_fee((float)$t['amount'], ak_get_admin_fee_policy_prepared((string)$t['transaction_date']));
+        $calc = ak_calculate_admin_fee_prepared((float)$t['amount'], ak_get_admin_fee_policy_prepared((string)$t['transaction_date']));
         dbExecute("UPDATE transactions SET admin_fee_method=?, admin_fee_value=?, admin_fee_amount=?, net_amount=?, admin_fee_policy_id=? WHERE id=?",
             [$calc['method'], $calc['value'], $calc['amount'], $calc['net_amount'], $calc['policy_id'], $txnId]);
         return $calc;
