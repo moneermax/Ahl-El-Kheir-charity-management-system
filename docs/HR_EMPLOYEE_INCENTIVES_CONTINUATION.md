@@ -820,3 +820,18 @@ The project payroll rollback harness previously skipped because no current/futur
 Commit `797f89afe848df39fee26a6f16bae6f2854c3c03` updates `tools/run_hr_project_incentive_payroll_rollback_tests.php`: when no suitable draft exists, the harness now prepares a current-period draft payroll fixture inside its existing rollback transaction, using the same INSERT columns/initial net-salary behavior as `modules/hr/payroll.php`, the actual effective salary-history row, the historical employment-state rule, matching currency, and the production payroll-policy helper. It refuses to mix in a pre-existing payroll row or verified unscheduled award, and verifies the temporary payroll row is absent after rollback. If a valid current/future draft already exists, it continues checking restoration of that existing row.
 
 **Status: source change only; local PHP lint and runtime are pending.** Pull `main`, lint the harness, then run only this harness against `ahl_el_kheir_incentive_test_20261015_r1`. Preserve active R5 and do not run rollback tests against live `ahl_el_kheir`. Existing closed project recognition, FM approval, generic payroll, and outbox tests remain closed.
+## 2026-10-16 — Project-completion incentive → draft payroll integration RUNTIME VERIFIED
+
+User pulled `main` at `472fdd0f46705379a18518554f3b5d976f9d35de7e`, PHP 8.2 linted `tools/run_hr_project_incentive_payroll_rollback_tests.php` successfully, and executed the harness against the configured disposable test database. Exact user-reported output:
+
+```
+PASS | synthetic_project=no_financial_activity | PS_snapshot=PASS | full_policy_amount_per_employee=PASS
+PASS | missing_FM_gate_blocks_award=PASS | FM_gate=PASS | recognition_journal_5500_2400=PASS
+PASS | project_award_draft_payroll_link=PASS | incentive_total=PASS | net_salary_unchanged=PASS | outbox_pending=PASS
+PASS | rollback_cleanup=PASS | temporary_payroll_rolled_back=PASS | policy=R5 | reward=1500.00 SDG
+```
+
+This closes the project-completion award-to-draft-payroll rollback-harness gate: award/payroll linkage, incentive component increase, unchanged net salary, pending outbox row, rollback cleanup, and rollback of the temporary draft payroll all passed. The earlier project recognition/FM gate checks also passed in the same run. Active policy R5 remains protected and was not changed. This is disposable-database rollback-harness evidence, not a real payroll run.
+
+Do not rerun this closed harness without regression evidence. Remaining distinct acceptance work: real PM-to-FM browser closure workflow and end-to-end employee notification delivery/experience. Do not infer those from the pending-outbox assertion.
+
