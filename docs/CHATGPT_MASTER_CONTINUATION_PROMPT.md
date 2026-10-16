@@ -858,3 +858,20 @@ This closes the **processor rollback-harness gate**. A follow-up now extracts th
 ## Latest checkpoint — 2026-10-16: FM automatic closure decision harness refinement
 
 Latest source now extracts `akp_project_financial_closure_outcome()` in `modules/projects/project_funding_accounting.php`; `modules/projects/view_fm.php` uses it after a funding return. The existing `tools/run_hr_project_incentive_draft_funding_guard_rollback_tests.php` asserts all three outcomes and prints `automatic_closure_outcomes=PASS`. Local lint/runtime for this newest commit sequence is pending. Next, pull `main`, lint `modules/projects/project_funding_accounting.php`, `modules/projects/view_fm.php`, and the draft-funding harness, then run only that harness with process-scoped `AHL_DB_NAME=ahl_el_kheir_incentive_test_20261015_r1`. Still-open acceptance: real FM browser POST path and end-to-end employee notification delivery/experience. Never post a funding return or alter project 7's draft allocation/payment evidence. Keep R5 and previously closed tests untouched.
+
+
+## 2026-10-16 — Latest employee incentives continuation checkpoint
+
+The new-sponsor first-confirmed-payment rollback-only acceptance harness has now passed locally against `ahl_el_kheir_incentive_test_20261015_r1`. The user-reported exact result:
+
+```text
+SAFE_TARGET | ahl_el_kheir_incentive_test_20261015_r1
+PASS | new_sponsor=first_confirmed_payment | recipient_snapshot=PASS
+PASS | later_payment_rejected=PASS | no_award_before_HR_verification=PASS
+PASS | rollback_cleanup=PASS | sponsor=2858 | employee=16
+TEST_EXIT_CODE=0
+```
+
+Both configured and connected database guards matched the isolated database before the harness ran. Do not rerun this passed gate without regression evidence. Active R5 was not modified and live `ahl_el_kheir` was not the test target.
+
+Current remaining distinct incentive acceptance gates: real-browser PM-to-FM project-closure workflow and end-to-end employee notification delivery/visibility. Do not infer either from the rollback harness or pending outbox evidence. Protect project 7's existing financial evidence and allocation; do not modify R5. Read `docs/HR_EMPLOYEE_INCENTIVES_CONTINUATION.md` for the detailed checkpoint and resume only from the actual remaining gate.
