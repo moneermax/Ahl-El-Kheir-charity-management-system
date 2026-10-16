@@ -1099,6 +1099,22 @@ function hrIncentiveProcessProjectCompletion(PDO $pdo, int $projectId, float $co
             return 0;
         }
 
+        // A zero posted controlled balance is not sufficient while any draft
+        // funding allocation remains. Recheck inside this processing transaction
+        // so callers cannot bypass the FM-page closure guard.
+        $draftFundingStmt = $pdo->prepare(
+            "SELECT id FROM project_funding_allocations
+             WHERE project_id = ? AND status = 'draft'
+             LIMIT 1 FOR UPDATE"
+        );
+        $draftFundingStmt->execute([$projectId]);
+        if ($draftFundingStmt->fetchColumn() !== false) {
+            if ($startedHere && $pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            return 0;
+        }
+
         $gate = $pdo->prepare(
             "SELECT pl.lifecycle_status, pl.closed_at,
                     (SELECT COUNT(*) FROM audit_log al
