@@ -936,7 +936,7 @@ The released project funding is the treasury-release event. Post-release PS exec
 
 Do not reopen or repeat completed PRJ-0015 gates, create another return, or alter historical project journals.
 
-## 2026-10-16 — Project incentive financial-closure draft-allocation safety guard (source committed; local acceptance pending)
+## 2026-10-16 — Project incentive financial-closure draft-allocation safety guard (processor rollback gate passed; FM closure-path verification pending)
 
 A source audit found that the controlled balance intentionally counts posted funding allocations only, but FM financial closure could still be recorded while a draft allocation remained. The same gap could allow the project-completion incentive processor to proceed if a caller supplied a zero balance and durable closure audit evidence existed.
 
@@ -944,4 +944,10 @@ The targeted correction adds a reusable draft-allocation predicate, blocks expli
 
 Added rollback-only regression harness: `tools/run_hr_project_incentive_draft_funding_guard_rollback_tests.php`. It is restricted to `ahl_el_kheir_incentive_test_20261015_r1`, requires the protected active R5 project-completion policy, reuses only an existing closed zero-posted-balance fixture with a draft allocation and pre-existing recipient snapshot, inserts temporary FM closure audit evidence inside a transaction, and rolls back. It does not change funding allocations, payment evidence, posted accounting, payroll, or R5.
 
-**Local PHP 8.2 lint and runtime execution are pending.** Do not click FM financial closure on project 7 or run the harness against live `ahl_el_kheir`. Keep the already-passed incentive, payroll, notification, salary-advance, and Projects Phase 5 gates closed unless regression evidence appears.
+**Verification evidence:** the user ran PHP 8.2 lint successfully for `modules/projects/project_funding_accounting.php`, `modules/projects/view_fm.php`, `modules/hr/lib_employee_incentives.php`, and `tools/run_hr_project_incentive_draft_funding_guard_rollback_tests.php`. The rollback-only harness first refused the live `ahl_el_kheir` database, then passed against `ahl_el_kheir_incentive_test_20261015_r1`:
+
+`PASS | draft_funding_allocation_blocks_processor=PASS | awards_unchanged=PASS | recognition_journals_unchanged=PASS`
+
+`PASS | funding_evidence_unchanged=PASS | rollback_cleanup=PASS | project=7 | policy=R5`
+
+This closes the **processor rollback-harness gate only**. It confirms that the draft allocation blocks incentive processing and the test preserves awards, recognition journals, funding evidence, and rollback cleanup. It does **not** yet prove the FM browser closure handler or the automatic closure deferral after a funding return at runtime. Do not post a funding return or change project 7's draft allocation/payment evidence to test this. The next step is to inspect the exact FM closure/return handler paths and add safe rollback-only coverage where feasible, then verify the remaining runtime boundary without touching the protected fixture. Keep the already-passed incentive, payroll, notification, salary-advance, and Projects Phase 5 gates closed unless regression evidence appears.
