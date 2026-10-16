@@ -236,6 +236,15 @@ if (!function_exists('akp_project_has_draft_funding_allocations')) {
     }
 }
 
+if (!function_exists('akp_assert_no_draft_funding_allocations_for_financial_closure')) {
+    function akp_assert_no_draft_funding_allocations_for_financial_closure(int $projectId): void
+    {
+        if (akp_project_has_draft_funding_allocations($projectId)) {
+            throw new RuntimeException('لا يمكن إتمام الإغلاق المالي مع وجود تخصيصات تمويل مسودة؛ أكمل الإفراج المالي أو ألغِ التخصيصات غير المنفذة أولاً.');
+        }
+    }
+}
+
 if (!function_exists('akp_return_project_funding')) {
     function akp_return_project_funding(int $projectId, int $allocationId, float $amount, string $returnDate, ?string $reference, ?string $description): int
     {
