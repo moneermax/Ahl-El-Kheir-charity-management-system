@@ -813,3 +813,10 @@ The harness was restricted to `ahl_el_kheir_incentive_test_20261015_r1`, checked
 ## 2026-10-16 active task — FM sponsor-payment approval integration
 
 The approval operation is extracted into `modules/accounting/lib_sponsor_payment_approval.php`; its prepared accounting helpers must remain DDL-free, and production approval and harness call the same operation. Local verification is pending. Pull `main`, lint `modules/accounting/lib_admin_fee_policy.php`, `modules/accounting/lib.php`, `modules/accounting/fm_review_queue.php`, `modules/accounting/lib_sponsor_payment_approval.php`, and `tools/run_hr_fm_sponsor_payment_approval_integration_tests.php`. Run only the new harness against `ahl_el_kheir_incentive_test_20261015_r1`; it must refuse the live database. Do not alter R5 or rerun closed tests.
+
+
+## 2026-10-16 continuation update — FM integration passed; project payroll test pending
+
+FM sponsorship approval integration is runtime-verified by user output from `tools/run_hr_fm_sponsor_payment_approval_integration_tests.php` on `ahl_el_kheir_incentive_test_20261015_r1`. PHP 8.2 lint passed for all five relevant files. Output proves the shared FM path, posted transaction/journal, pending new-sponsor event without premature award, successful rollback, and rollback after injected event failure. Do not repeat this closed test absent regression evidence.
+
+New test `tools/run_hr_project_incentive_payroll_rollback_tests.php` has been added to test project-completion award linkage to the current/future draft payroll, incentive component total, unchanged salary net, outbox row, and rollback restoration. The workflow lints this test. Local lint/runtime are pending. Pull `main` and run only this new harness against `ahl_el_kheir_incentive_test_20261015_r1`. Keep R5 unchanged; never use live `ahl_el_kheir` for rollback tests. The actual PM-to-FM browser workflow remains a separate open gate.
