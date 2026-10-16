@@ -829,3 +829,8 @@ User executed `tools/run_hr_project_incentive_success_rollback_tests.php` locall
 `PASS | rollback_cleanup=PASS | policy=R5 | reward=1500.00 SDG`
 
 This closes the isolated successful project-award recognition gate at the harness boundary: eligible Project Supervisor snapshot before closure, full policy reward, durable FM gate, balanced recognition journal, and rollback cleanup. It does not prove payroll inclusion, employee notification delivery, or browser closure workflow. Next, inspect current source and existing harnesses to identify the smallest remaining acceptance gate; do not rerun the passed harness absent regression evidence.
+
+
+### 2026-10-16 — Active FM sponsor-payment integration gate
+
+The FM sponsor-payment approval operation is shared between the production POST route and a DDL-free rollback-only integration harness. Local PHP syntax/runtime acceptance is pending against `ahl_el_kheir_incentive_test_20261015_r1`. Active R5 is read-only; do not repeat closed incentive tests or use the live database for this gate.

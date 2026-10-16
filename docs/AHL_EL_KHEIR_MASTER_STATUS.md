@@ -3022,3 +3022,8 @@ Evidence:
 - Transaction rollback cleanup passed; no test project, award, journal, or temporary FM audit was left behind.
 
 This closes only the project award/recognition successful-path test gate. Payroll inclusion, post-commit employee notification delivery, and the real browser PM/FM closure workflow remain separate unverified gates. Do not rerun this passed harness absent regression evidence.
+
+
+## 2026-10-16 — FM sponsor-payment approval/incentive integration
+
+Source checkpoint only: the approval operation is extracted into a shared no-DDL business function and a rollback-only integration harness covers success plus injected incentive-event failure. Local PHP syntax/runtime acceptance remains pending; do not report this gate as closed until the user runs the harness against `ahl_el_kheir_incentive_test_20261015_r1`. Active R5 and the live database must remain unchanged.

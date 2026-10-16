@@ -6,6 +6,7 @@ require_once dirname(__DIR__, 2) . '/config/functions.php';
 require_once dirname(__DIR__, 2) . '/config/session.php';
 require_once __DIR__ . '/lib.php';
 require_once __DIR__ . '/lib_transaction_review.php';
+require_once __DIR__ . '/lib_sponsor_payment_approval.php';
 require_once dirname(__DIR__, 2) . '/modules/hr/lib_employee_incentives.php';
 Session::start();
 
@@ -13,7 +14,7 @@ $role=Session::getUserRole();
 $allowed_fm=['financial_manager','fm','finance','admin','sudo','general_manager'];
 if(!in_array($role,$allowed_fm,true)){header('Location: '.APP_URL.'index.php');exit();}
 $pageTitle='طابور المراجعة المالية';$active='fm_review';
-ak_ensure_tables();ak_seed_accounts();ak_ensure_admin_fee_policy_table();
+if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') { ak_ensure_tables(); ak_seed_accounts(); ak_ensure_admin_fee_policy_table(); }
 
 $purposeLabels=['monthly_sponsorship'=>'كفالة شهرية','school_fees'=>'رسوم دراسية','medicine'=>'علاج وأدوية','gift'=>'هدية/عيدية','other'=>'أخرى','admin_fee'=>'رسوم إدارية','general_donation'=>'تبرع عام','project_donation'=>'تبرع مشروع'];
 $methodLabels=['cash'=>'نقدي','bank_transfer'=>'تحويل بنكي','credit_card'=>'بطاقة','mobile'=>'محفظة إلكترونية','other'=>'أخرى'];
@@ -22,67 +23,15 @@ $uid=(int)Session::getUserId();
 
 if($_SERVER['REQUEST_METHOD']==='POST'&&verify_csrf()){
     if(isset($_POST['approve_payment'])){
-        $sp_id=(int)$_POST['approve_payment'];
-        $pdo=db();
+        $sp_id=(int)$_POST['approve_payment']; $pdo=db();
         try{
             $pdo->beginTransaction();
-            $sp=dbFetchOne("SELECT * FROM sponsor_payments WHERE id=? AND status='pending' FOR UPDATE",[$sp_id]);
-            if(!$sp)throw new RuntimeException('الدفعة غير موجودة أو لم تعد معلقة.');
-            $purLabel=$purposeLabels[$sp['payment_type']]??$sp['payment_type'];
-            $txnType=$typeMap[$sp['payment_type']]??'other';
-            $desc='تحصيل مشرف ('.$purLabel.')'.(!empty($sp['payment_period'])?' للفترة: '.$sp['payment_period']:'').(!empty($sp['purpose_note'])?' — '.$sp['purpose_note']:'');
-            $txnCode='SP-'.str_pad((string)$sp['id'],6,'0',STR_PAD_LEFT);
-            $amount=round((float)$sp['amount'],2);
-            if($amount<=0)throw new RuntimeException('مبلغ التحصيل غير صالح.');
-            $policy=ak_get_admin_fee_policy((string)date('Y-m-d',strtotime($sp['created_at'])));
-            $calc=ak_calculate_admin_fee($amount,$policy);
-            if($txnType!=='sponsorship_payment'&&$txnType!=='admin_fee'){$calc=['method'=>'none','value'=>0.00,'amount'=>0.00,'net_amount'=>$amount,'policy_id'=>null];}
-            $sql="INSERT INTO transactions (sponsorship_id,amount,currency_code,payment_method,transaction_date,receipt_number,description,months_covered,transaction_type,receipt_path,unified_receipt_path,status,created_by,transaction_code,sponsor_id,project_id,payment_period,purpose_note,purpose,admin_fee_percent,admin_fee_amount,net_amount,admin_fee_method,admin_fee_value,admin_fee_policy_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
-            dbExecute($sql,[$sp['sponsorship_id'],$amount,$sp['currency_code']?:'SDG',$sp['payment_method']?:'cash',date('Y-m-d',strtotime($sp['created_at'])),$txnCode,$desc,1.00,$txnType,$sp['receipt_file_path'],$sp['unified_receipt_path'],'posted',$uid,$txnCode,$sp['sponsor_id'],$sp['project_id'],$sp['payment_period'],$sp['purpose_note'],$sp['payment_type'],0.00,$calc['amount'],$calc['net_amount'],$calc['method'],$calc['value'],$calc['policy_id']]);
-            $txnId=(int)dbLastInsertId();if($txnId<=0)throw new RuntimeException('تعذر إنشاء المعاملة المحاسبية.');
-            $journalId=ak_post_transaction_journal($txnId);if($journalId<=0)throw new RuntimeException('فشل إنشاء القيد المحاسبي.');
-            $affected=dbExecute("UPDATE sponsor_payments SET status='approved',reviewed_by_user_id=?,reviewed_at=NOW(),transaction_id=? WHERE id=? AND status='pending'",[$uid,$txnId,$sp_id]);
-            if($affected!==1)throw new RuntimeException('تعذر اعتماد الدفعة.');
-            try{dbExecute("INSERT INTO audit_log (user_id,action,entity_type,entity_id,old_values,new_values,ip_address,user_agent) VALUES (?, 'APPROVE','sponsor_payments',?,?,?,?,?)",[$uid,$sp_id,json_encode(['status'=>'pending'],JSON_UNESCAPED_UNICODE),json_encode(['status'=>'approved','txn_id'=>$txnId,'journal_id'=>$journalId,'admin_fee_amount'=>$calc['amount'],'admin_fee_method'=>$calc['method'],'payment_method'=>$sp['payment_method']],JSON_UNESCAPED_UNICODE),$_SERVER['REMOTE_ADDR']??'',$_SERVER['HTTP_USER_AGENT']??'']);}catch(Throwable $auditError){}
-            if ((string)$sp['payment_type'] === 'monthly_sponsorship') {
-                $confirmedAtStmt = $pdo->prepare('SELECT reviewed_at FROM sponsor_payments WHERE id = ?');
-                $confirmedAtStmt->execute([$sp_id]);
-                $confirmedAt = (string)$confirmedAtStmt->fetchColumn();
-                if ($confirmedAt === '') {
-                    throw new RuntimeException('تعذر التحقق من وقت اعتماد الدفعة.');
-                }
-
-                $collectorUserId = (int)$sp['supervisor_id'];
-                $collectorEmployeeId = hrIncentiveEmployeeIdForUser($pdo, $collectorUserId);
-                if ($collectorEmployeeId > 0) {
-                    hrIncentiveRecordSourceEvent(
-                        $pdo,
-                        'sponsor_payments',
-                        $sp_id,
-                        'collection',
-                        $confirmedAt,
-                        $amount,
-                        (string)($sp['currency_code'] ?: 'SDG'),
-                        $uid,
-                        $collectorUserId,
-                        $collectorEmployeeId
-                    );
-                } else {
-                    error_log('Incentive collection event skipped: supervisor has no unique employee mapping. Payment ID=' . $sp_id);
-                }
-
-                // Sponsor acquisition and reactivation are distinct achievements;
-                // each helper independently validates first-payment/history evidence.
-                hrIncentiveRecordNewSponsorPaymentEvent($pdo, $sp_id, $uid);
-
-                // The source event uses the selected actual reactivator, not this FM reviewer
-                // or mutable win-back case handler. It remains pending HR verification.
-                hrIncentiveRecordReactivationPaymentEvent($pdo, $sp_id, $uid);
-            }
+            $approval=ak_approve_sponsor_payment($pdo,$sp_id,$uid);
             $pdo->commit();
+            $purLabel=$approval['purpose_label']; $amount=(float)$approval['amount'];
             try{$gmUsers=dbFetchAll("SELECT u.id FROM users u JOIN roles r ON u.role_id=r.id WHERE r.code = 'general_manager' AND u.is_active=1");foreach($gmUsers as $u)ak_transaction_review_notify_event((int)$u['id'],'اعتماد تحصيل مشرف #'.$sp_id,'تم اعتماد تحصيل ('.$purLabel.') بمبلغ '.number_format($amount,2).' ج.س بواسطة المدير المالي.',APP_URL.'modules/accounting/fm_review_queue.php?payment_id='.$sp_id,$sp_id,'sponsor_payment_approved');}catch(Throwable $e){}
             flash('success','تم اعتماد الدفعة وترحيلها للخزينة والقيد المحاسبي بنجاح.');
-        }catch(Throwable $e){if($pdo->inTransaction())$pdo->rollBack();flash('error','تعذر اعتماد الدفعة والقيد المحاسبي بشكل ذري. لم يتم اعتماد أي جزء.');}
+        }catch(Throwable $e){if($pdo->inTransaction())$pdo->rollBack();error_log('FM sponsor payment approval failed: '.$e->getMessage());flash('error','تعذر اعتماد الدفعة والقيد المحاسبي بشكل ذري. لم يتم اعتماد أي جزء.');}
         header('Location: '.APP_URL.'modules/accounting/fm_review_queue.php');exit();
     }
     if(isset($_POST['return_payment'])){

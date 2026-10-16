@@ -808,3 +808,8 @@ User pulled main and locally verified `tools/run_hr_project_incentive_success_ro
 The harness was restricted to `ahl_el_kheir_incentive_test_20261015_r1`, checked the protected R5 policy without changing it, snapshotted an eligible Project Supervisor before simulated closure, verified the FM financial-closure gate, checked the full Dr 5500 / Cr 2400 recognition journal, and rolled back all test data. Do not rerun absent regression evidence.
 
 **Next:** inspect current incentive source and existing test harnesses to select the next genuinely open acceptance gate, likely payroll inclusion/refresh and employee notification delivery. Do not assume these are already covered by the recognition harness. Real browser PM/FM closure workflow remains unverified and must be considered separately. Never test against the live DB or modify posted financial records.
+
+
+## 2026-10-16 active task — FM sponsor-payment approval integration
+
+The approval operation is extracted into `modules/accounting/lib_sponsor_payment_approval.php`; its prepared accounting helpers must remain DDL-free, and production approval and harness call the same operation. Local verification is pending. Pull `main`, lint `modules/accounting/lib_admin_fee_policy.php`, `modules/accounting/lib.php`, `modules/accounting/fm_review_queue.php`, `modules/accounting/lib_sponsor_payment_approval.php`, and `tools/run_hr_fm_sponsor_payment_approval_integration_tests.php`. Run only the new harness against `ahl_el_kheir_incentive_test_20261015_r1`; it must refuse the live database. Do not alter R5 or rerun closed tests.

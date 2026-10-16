@@ -3298,3 +3298,8 @@ PASS | rollback_cleanup=PASS | policy=R5 | reward=1500.00 SDG
 PHP lint also passed. The test used only `ahl_el_kheir_incentive_test_20261015_r1`, a synthetic no-financial-activity project and an eligible Project Supervisor snapshotted before closure. The FM closure gate was tested both absent and present. The award recognition journal debited incentive expense account 5500 and credited incentive payable account 2400 for 1500.00 SDG. Rollback cleanup was confirmed. No production policy, posted financial records, or live project were modified.
 
 **Acceptance boundary:** project award eligibility, snapshot, configured amount, FM gate, recognition journal and rollback are runtime verified. Payroll assignment/refresh, notification delivery, and real PM-to-FM browser workflow are not proven by this harness and must not be described as passed.
+
+
+## 2026-10-16 — FM sponsor-payment approval integration source checkpoint
+
+The shared approval operation preserves the transactional sequence (posted transaction and journal, guarded sponsor-payment approval, collection event, new-sponsor event, reactivation event) and leaves GM notifications after commit. Explicit prepared accounting helpers avoid DDL inside the operation; the FM approval POST no longer invokes the page's schema setup calls. A rollback-only harness checks the production operation's success path and injects a failure at new-sponsor event recording to assert financial and incentive writes roll back. This remains source-only evidence until local PHP lint and the harness pass against the disposable incentive test database.

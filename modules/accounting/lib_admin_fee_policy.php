@@ -48,14 +48,21 @@ if (!function_exists('ak_admin_fee_method_label')) {
     }
 }
 
-if (!function_exists('ak_get_admin_fee_policy')) {
-    function ak_get_admin_fee_policy(?string $onDate = null): ?array
+if (!function_exists('ak_get_admin_fee_policy_prepared')) {
+    /** Read an effective policy without performing schema setup. */
+    function ak_get_admin_fee_policy_prepared(?string $onDate = null): ?array
     {
-        ak_ensure_admin_fee_policy_table();
         $onDate = $onDate ?: date('Y-m-d');
         return dbFetchOne("SELECT * FROM accounting_admin_fee_policies
                            WHERE status = 'active' AND effective_from <= ?
                            ORDER BY effective_from DESC, id DESC LIMIT 1", [$onDate]);
+    }
+}
+if (!function_exists('ak_get_admin_fee_policy')) {
+    function ak_get_admin_fee_policy(?string $onDate = null): ?array
+    {
+        ak_ensure_admin_fee_policy_table();
+        return ak_get_admin_fee_policy_prepared($onDate);
     }
 }
 
@@ -111,11 +118,11 @@ if (!function_exists('ak_activate_admin_fee_policy')) {
     }
 }
 
-if (!function_exists('ak_calculate_admin_fee')) {
-    function ak_calculate_admin_fee(float $grossAmount, ?array $policy = null): array
+if (!function_exists('ak_calculate_admin_fee_prepared')) {
+    /** Calculate from a supplied policy value without loading policy or performing DDL. */
+    function ak_calculate_admin_fee_prepared(float $grossAmount, ?array $policy): array
     {
         $grossAmount = round(max(0, $grossAmount), 2);
-        $policy = $policy ?: ak_get_admin_fee_policy();
         if (!$policy) {
             return ['method'=>'none','value'=>0.00,'amount'=>0.00,'net_amount'=>$grossAmount,'policy_id'=>null];
         }
@@ -129,10 +136,18 @@ if (!function_exists('ak_calculate_admin_fee')) {
     }
 }
 
-if (!function_exists('ak_apply_admin_fee_snapshot')) {
-    function ak_apply_admin_fee_snapshot(int $txnId): array
+if (!function_exists('ak_calculate_admin_fee')) {
+    function ak_calculate_admin_fee(float $grossAmount, ?array $policy = null): array
     {
-        ak_ensure_admin_fee_policy_table();
+        if ($policy === null) $policy = ak_get_admin_fee_policy();
+        return ak_calculate_admin_fee_prepared($grossAmount, $policy);
+    }
+}
+
+if (!function_exists('ak_apply_admin_fee_snapshot_prepared')) {
+    /** Apply fee snapshots using the installed schema; caller owns the transaction. */
+    function ak_apply_admin_fee_snapshot_prepared(int $txnId): array
+    {
         $t = dbFetchOne("SELECT * FROM transactions WHERE id=? FOR UPDATE", [$txnId]);
         if (!$t) throw new RuntimeException('المعاملة غير موجودة.');
         $type = (string)($t['transaction_type'] ?? 'sponsorship_payment');
@@ -149,9 +164,16 @@ if (!function_exists('ak_apply_admin_fee_snapshot')) {
                 'policy_id'=>(int)$t['admin_fee_policy_id'],
             ];
         }
-        $calc = ak_calculate_admin_fee((float)$t['amount'], ak_get_admin_fee_policy((string)$t['transaction_date']));
+        $calc = ak_calculate_admin_fee((float)$t['amount'], ak_get_admin_fee_policy_prepared((string)$t['transaction_date']));
         dbExecute("UPDATE transactions SET admin_fee_method=?, admin_fee_value=?, admin_fee_amount=?, net_amount=?, admin_fee_policy_id=? WHERE id=?",
             [$calc['method'], $calc['value'], $calc['amount'], $calc['net_amount'], $calc['policy_id'], $txnId]);
         return $calc;
+    }
+}
+if (!function_exists('ak_apply_admin_fee_snapshot')) {
+    function ak_apply_admin_fee_snapshot(int $txnId): array
+    {
+        ak_ensure_admin_fee_policy_table();
+        return ak_apply_admin_fee_snapshot_prepared($txnId);
     }
 }

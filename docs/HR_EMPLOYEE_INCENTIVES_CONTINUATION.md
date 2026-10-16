@@ -769,3 +769,10 @@ PASS | rollback_cleanup=PASS | policy=R5 | reward=1500.00 SDG
 This proves, at the rollback-harness boundary, that an eligible Project Supervisor assigned before simulated closure receives the full R5 reward of 1500.00 SDG after durable FM financial closure and zero controlled balance; no award is issued before the FM gate; the recognition journal debits 5500 and credits 2400; and all test changes roll back. No posted accounting records or active policy values were changed.
 
 **Still open:** payroll inclusion/refresh, employee notification delivery, and real PM-to-FM browser closure workflow. These were not exercised by this harness. Next step is to inspect the current implementation and existing harnesses before choosing a narrow test; do not rerun the passed recognition harness without regression evidence.
+
+
+## 2026-10-16 — FM sponsor-payment approval integration source checkpoint
+
+The FM approval business operation is extracted to `modules/accounting/lib_sponsor_payment_approval.php`. The page delegates its approval POST to the shared operation and preserves its role/CSRF boundary and post-commit GM notification. The shared operation does not perform DDL or own the transaction. Prepared accounting helpers cover fee-policy reads, fee snapshots, and transaction journal posting; existing wrappers preserve their prior setup behavior for other callers. The FM approval POST skips the page's schema setup calls, which remain on non-POST page loads.
+
+Added `tools/run_hr_fm_sponsor_payment_approval_integration_tests.php`. It refuses any database other than `ahl_el_kheir_incentive_test_20261015_r1`, reads but does not change active R5, exercises success and an injected new-sponsor-event failure after financial writes, and rolls both scenarios back. Local PHP lint/runtime acceptance is pending. Pull `main`, lint the three changed accounting PHP files and the harness, then run only the new harness against the disposable DB. Never run it against `ahl_el_kheir`; do not alter R5 or repeat closed tests.

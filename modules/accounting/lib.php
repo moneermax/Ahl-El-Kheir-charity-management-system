@@ -57,14 +57,13 @@ if (!function_exists('ak_cash_code')) {
 function ak_cash_code(string $method): string { return ['cash'=>'1100','bank_transfer'=>'1200','credit_card'=>'1200','mobile'=>'1300','other'=>'1100'][$method] ?? '1100'; }
 }
 
-if (!function_exists('ak_post_transaction_journal')) {
-function ak_post_transaction_journal(int $txnId): int {
-    ak_ensure_tables(); ak_seed_accounts();
+if (!function_exists('ak_post_transaction_journal_prepared')) {
+function ak_post_transaction_journal_prepared(int $txnId, ?int $createdByUserId = null): int {
     $t = dbFetchOne("SELECT * FROM transactions WHERE id = ?", [$txnId]);
     if (!$t || $t['status'] !== 'posted') return 0;
     $ex = dbFetchOne("SELECT id FROM journal_entries WHERE reference_type='transaction' AND reference_id=? AND status='posted'", [$txnId]);
     if ($ex) return (int)$ex['id'];
-    $snapshot = ak_apply_admin_fee_snapshot($txnId);
+    $snapshot = ak_apply_admin_fee_snapshot_prepared($txnId);
     $t = dbFetchOne("SELECT * FROM transactions WHERE id = ?", [$txnId]);
     $amount = round((float)$t['amount'], 2); $fee = round((float)$snapshot['amount'], 2); $net = round((float)$snapshot['net_amount'], 2); $type = (string)($t['transaction_type'] ?? 'sponsorship_payment');
     if ($amount <= 0 || $fee < 0 || $net < 0 || round($fee + $net,2) !== $amount) throw new RuntimeException('تفاصيل الرسوم الإدارية للمعاملة غير متوافقة مع إجمالي التحصيل.');
@@ -78,13 +77,19 @@ function ak_post_transaction_journal(int $txnId): int {
     if (round($totalDebit,2) !== round($totalCredit,2)) throw new RuntimeException('القيد المحاسبي غير متوازن للمعاملة ' . $txnId);
     $n = (int)(dbFetchOne("SELECT COALESCE(MAX(CASE WHEN entry_code REGEXP '^JE-[0-9]+$' THEN CAST(SUBSTRING(entry_code,4) AS UNSIGNED) ELSE 0 END),0) n FROM journal_entries")['n'] ?? 0) + 1;
     $code = 'JE-' . str_pad((string)$n, 6, '0', STR_PAD_LEFT);
-    dbExecute("INSERT INTO journal_entries (entry_code, entry_date, description, reference_type, reference_id, status, created_by) VALUES (?,?,?,'transaction',?,'posted',?)", [$code,$t['transaction_date'],'قيد آلي من ' . $t['transaction_code'],$txnId,Session::getUserId()]);
+    dbExecute("INSERT INTO journal_entries (entry_code, entry_date, description, reference_type, reference_id, status, created_by) VALUES (?,?,?,'transaction',?,'posted',?)", [$code,$t['transaction_date'],'قيد آلي من ' . $t['transaction_code'],$txnId,$createdByUserId ?? (int)Session::getUserId()]);
     $eid = (int)dbLastInsertId(); if ($eid <= 0) throw new RuntimeException('تعذر إنشاء رأس القيد المحاسبي.');
     foreach ($resolvedLines as $l) dbExecute("INSERT INTO journal_lines (entry_id, account_id, debit, credit, description) VALUES (?,?,?,?,?)", [$eid,$l[0],$l[1],$l[2],$l[3]]);
     return $eid;
 }
 }
 
+if (!function_exists('ak_post_transaction_journal')) {
+function ak_post_transaction_journal(int $txnId): int {
+    ak_ensure_tables(); ak_seed_accounts();
+    return ak_post_transaction_journal_prepared($txnId);
+}
+}
 if (!function_exists('ak_void_journal_for_transaction')) {
 function ak_void_journal_for_transaction(int $txnId, string $reason): void {
     ak_ensure_tables();
