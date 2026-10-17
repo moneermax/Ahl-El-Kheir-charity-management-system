@@ -124,15 +124,6 @@ $teamSectionLabels = [
     'closure' => 'إغلاق',
 ];
 $teamCanManage = akp_can_edit_section('team', $id) && !$closed;
-$teamAssignableUsers = $teamCanManage
-    ? dbFetchAll(
-        "SELECT u.id, u.full_name, u.username, r.name_ar AS role_name
-         FROM users u
-         JOIN roles r ON r.id = u.role_id
-         WHERE u.is_active = 1
-         ORDER BY u.full_name, u.username"
-    )
-    : [];
 $approval = dbFetchOne('SELECT * FROM project_approval WHERE project_id = ?', [$id]) ?: ['approval_status' => 'approved'];
 $fmFinalConfirmed = (bool)dbFetchOne("SELECT id FROM audit_log WHERE action='FM_CONFIRM_PAYMENT_EVIDENCE' AND entity_type='project_payment_evidence' AND entity_id=? LIMIT 1", [$id]);
 $closureControlledBalanceView = akp_project_controlled_balance($id);
@@ -1359,7 +1350,7 @@ width: 24%;
     <?php if ($team): ?>
     <div class="table-responsive">
         <table class="table table-sm table-hover align-middle">
-            <thead><tr><th>المستخدم</th><th>القسم</th><th>تاريخ التعيين</th><th>ملاحظات</th><?php if ($teamCanManage): ?><th>الإجراء</th><?php endif; ?></tr></thead>
+            <thead><tr><th>المستخدم</th><th>القسم</th><th>تاريخ التعيين</th><th>ملاحظات</th></tr></thead>
             <tbody>
             <?php foreach ($team as $teamMember): ?>
                 <tr>
@@ -1367,16 +1358,7 @@ width: 24%;
                     <td><?php echo e($teamSectionLabels[(string)$teamMember['section_code']] ?? (string)$teamMember['section_code']); ?><?php if ((int)$teamMember['is_lead'] === 1): ?> <span class="badge bg-info text-dark">قائد</span><?php endif; ?></td>
                     <td><?php echo e((string)$teamMember['assigned_at']); ?></td>
                     <td><?php echo e((string)($teamMember['notes'] ?? '—') ?: '—'); ?></td>
-                    <?php if ($teamCanManage): ?>
-                    <td>
-                        <form method="post" class="d-inline" data-ak-native-post="1" onsubmit="return confirm('هل تريد إنهاء تعيين هذا المستخدم في هذا القسم؟ سيبقى سجل التعيين محفوظاً.');">
-                            <?php echo csrf_field(); ?>
-                            <input type="hidden" name="action" value="unassign_team_member">
-                            <input type="hidden" name="team_assignment_id" value="<?php echo (int)$teamMember['id']; ?>">
-                            <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-user-minus me-1"></i>إنهاء التعيين</button>
-                        </form>
-                    </td>
-                    <?php endif; ?>
+
                 </tr>
             <?php endforeach; ?>
             </tbody>
@@ -1385,36 +1367,8 @@ width: 24%;
     <?php else: ?>
         <p class="text-muted mb-3">لا توجد تعيينات نشطة لأعضاء الفريق حتى الآن.</p>
     <?php endif; ?>
-    <?php if ($teamCanManage): ?>
-        <hr>
-        <h6 class="mb-3">إضافة عضو إلى الفريق</h6>
-        <form method="post" class="row g-3">
-            <?php echo csrf_field(); ?>
-            <input type="hidden" name="action" value="assign_team_member">
-            <div class="col-md-5">
-                <label class="form-label" for="team-user-id">المستخدم النشط</label>
-                <select id="team-user-id" name="team_user_id" class="form-select" required>
-                    <option value="">اختر المستخدم</option>
-                    <?php foreach ($teamAssignableUsers as $assignableUser): ?>
-                    <option value="<?php echo (int)$assignableUser['id']; ?>"><?php echo e($assignableUser['full_name'] . ' · ' . $assignableUser['username'] . ' · ' . $assignableUser['role_name']); ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label" for="team-section">قسم الفريق</label>
-                <select id="team-section" name="team_section" class="form-select" required>
-                    <?php foreach ($teamSectionLabels as $sectionCode => $sectionLabel): ?>
-                    <option value="<?php echo e($sectionCode); ?>"><?php echo e($sectionLabel); ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <div class="col-md-4">
-                <label class="form-label" for="team-notes">ملاحظات (اختياري)</label>
-                <input id="team-notes" name="team_notes" class="form-control" maxlength="500">
-            </div>
-            <div class="col-12"><button type="submit" class="btn btn-primary"><i class="fas fa-user-plus me-1"></i>إضافة عضو</button></div>
-        </form>
-        <div class="form-text mt-2">تمنح العضوية صلاحيات القسم وفق قواعد الوصول الحالية. راجع القسم المختار قبل الحفظ.</div>
+    <?php if ($teamCanManage && $role === 'projects_manager' && in_array($approval['approval_status'], ['draft', 'rejected'], true)): ?>
+        <div class="mt-3"><a class="btn btn-sm btn-outline-primary" href="<?php echo e(APP_URL . 'modules/projects/form.php?id=' . $id); ?>"><i class="fas fa-edit me-1"></i>إدارة الفريق من صفحة تعديل المشروع</a></div>
     <?php endif; ?>
 </div>
 </div>
