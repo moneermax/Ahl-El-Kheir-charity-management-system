@@ -176,10 +176,10 @@ try {
         throw new RuntimeException('لا يمكن تعديل فريق مشروع مغلق.');
     }
     $existingAssignment = dbFetchOne(
-        'SELECT id FROM project_team WHERE project_id = ? AND user_id = ? AND section_code = ? AND unassigned_at IS NULL LIMIT 1 FOR UPDATE',
-        [$id, (int)$userId, $section]
+        'SELECT id FROM project_team WHERE project_id = ? AND user_id = ? AND unassigned_at IS NULL LIMIT 1 FOR UPDATE',
+        [$id, (int)$userId]
     );
-    if ($existingAssignment) throw new RuntimeException('هذا المستخدم مضاف بالفعل إلى القسم المحدد.');
+    if ($existingAssignment) throw new RuntimeException('هذا المستخدم مضاف بالفعل إلى فريق المشروع.');
     dbExecute(
         'INSERT INTO project_team (project_id, user_id, section_code, is_lead, assigned_by, notes) VALUES (?, ?, ?, 0, ?, ?)',
         [$id, (int)$userId, $section, akp_user_id(), $notes !== '' ? $notes : null]
