@@ -3399,3 +3399,12 @@ The source patch restricts the additional PM visibility path to the conjunction 
 Commits: `4258ebb656a3229b84d5d7729868ce92a683f921`, `f7f8bae9753694fd32b7f916443a1f2a8493a3c6`.
 
 No local lint or browser verification has been observed yet. Treat both changes as unverified until user executes the real local checks.
+
+
+## 2026-10-17 — Project 6 PM closure feedback defect and correction (runtime pending)
+
+Database evidence from `ahl_el_kheir_incentive_test_20261015_r1`: project 6 / `PRJ-0006` was successfully administratively closed by PM user 33 (`other_projects.status=completed`, lifecycle `closed`, status-history row 22, `CLOSE` audit row 2479). Project-completion event 28 is `pending_verification` with the expected `system:project-recipient-snapshot-v1` marker. No FM financial-closure audit row or award was returned. Active policy R5/version 1 remains enabled at 1,500.00 SDG.
+
+Source root cause: the `close_project` form in `modules/projects/view.php` had no confirmation prompt. The success handler stored `project_toast_success` but redirected to the closed project; PM access checks could redirect away before the view consumed the toast. Commits `986cef5d21d0ae972a1ec6dd9f624a619a851b40` and `b5879cb2cc69be7f3a30301eb72b4570efb12497` add the confirmation and move the success feedback to a one-time toast on `dashboard/projects_dashboard.php` after successful closure.
+
+These are source-level changes only until the user pulls `main`, PHP-lints both files, and verifies the prompt/toast in the real browser. Do not repeat project 6 closure or infer that FM closure/incentive awarding has occurred.
