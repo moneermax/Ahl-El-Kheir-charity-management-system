@@ -1970,7 +1970,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         <div class="row g-3">
                             <div class="col-md-5">
                                 <label class="form-label" for="edit-team-user-id">المستخدم النشط</label>
-                                <select id="edit-team-user-id" name="team_user_id" class="form-select" required>
+                                <select id="edit-team-user-id" name="team_user_id" class="form-select">
                                     <option value="">اختر المستخدم</option>
                                     <?php foreach ($editTeamUsers as $assignableUser): ?>
                                     <option value="<?php echo (int)$assignableUser['id']; ?>"><?php echo e($assignableUser['full_name'] . ' · ' . $assignableUser['username'] . ' · ' . $assignableUser['role_name']); ?></option>
@@ -1979,7 +1979,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label" for="edit-team-section">قسم الفريق</label>
-                                <select id="edit-team-section" name="team_section" class="form-select" required>
+                                <select id="edit-team-section" name="team_section" class="form-select">
                                     <?php foreach ($initialTeamSectionLabels as $sectionCode => $sectionLabel): ?>
                                     <option value="<?php echo e($sectionCode); ?>"><?php echo e($sectionLabel); ?></option>
                                     <?php endforeach; ?>
@@ -3090,7 +3090,16 @@ document
             const submittedAction = event.submitter && event.submitter.name === 'action'
                 ? event.submitter.value
                 : '';
-            if (submittedAction === 'edit_assign_team_member' || submittedAction === 'edit_unassign_team_member') {
+            if (submittedAction === 'edit_assign_team_member') {
+                const teamUser = document.getElementById('edit-team-user-id');
+                if (!teamUser || !teamUser.value) {
+                    event.preventDefault();
+                    alert('يرجى اختيار عضو الفريق قبل الإضافة.');
+                    if (teamUser) teamUser.focus();
+                }
+                return;
+            }
+            if (submittedAction === 'edit_unassign_team_member') {
                 return;
             }
 
