@@ -883,3 +883,10 @@ The user verified the incentive scheduling notification in the real local employ
 The test row's link was `http://localhost/modules/notifications/index.php`. This was generated in CLI context: dispatcher uses `APP_URL`, while `config/config.php` derives APP_URL from web server request variables and document-root/script-name path detection; the CLI harness only sets REQUEST_METHOD. Treat the observed root URL as a test-context artifact unless a browser-originated action reproduces it. Do not change production URL configuration without reproduction. If refining the harness, explicitly seed representative `HTTP_HOST=localhost:8081`, `DOCUMENT_ROOT=D:/xampp/htdocs`, and a script name under `/AhlElKheir/` before config load, then assert the full app base path.
 
 **Closed gate:** employee incentive notification delivery and visibility in the actual inbox. **Still open separately:** real-browser PM-to-FM project-closure workflow. Preserve R5 and all closed tests; continue from the real current open gate only.
+
+
+### Latest verified milestone — 2026-10-17
+
+The user PHP 8.2-linted `modules/projects/project_funding_accounting.php`, `modules/projects/view_fm.php`, and `tools/run_hr_project_incentive_draft_funding_guard_rollback_tests.php` with no syntax errors. Against `ahl_el_kheir_incentive_test_20261015_r1`, the rollback-only harness passed: explicit FM closure guard, automatic closure outcomes, draft-allocation processor block, unchanged awards and recognition journals, unchanged funding evidence, and rollback cleanup. Fixture project 7 and active policy R5 remain protected; no funding return was posted.
+
+Next distinct open gate is the real-browser PM → FM project-closure workflow using the correct local app URL `http://localhost:8081/AhlElKheir/`. Inspect current docs, source, and actual safe fixture state before acting. Do not infer browser-route success from helper/harness tests. Never fabricate funding activity or alter project 7's financial evidence; if no safe test fixture is available, stop and report the blocker.
