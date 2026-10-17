@@ -900,3 +900,22 @@ After browser inspection, the release file was created for harness PID 4528 and 
 The test notification stored `http://localhost/modules/notifications/index.php`, missing the local app's `/AhlElKheir/` prefix and port. Source inspection shows the dispatcher uses `APP_URL . 'modules/notifications/index.php'`; `APP_URL` is composed in `config/config.php` from request server variables and derives the base path from `DOCUMENT_ROOT` or a recognized `SCRIPT_NAME`. The test harness runs under CLI and only seeds `REQUEST_METHOD`, so web request host/document-root/script-name context is absent; the observed `http://localhost/` base is consistent with the CLI-derived `APP_URL`. This is a test-context issue based on the current evidence, not proof of a production-browser URL defect. Do not change production URL configuration without a browser-originated reproduction. If this harness assertion is strengthened later, explicitly seed a representative local web context before loading config and assert the generated link includes the application base path.
 
 The employee-facing notification delivery/visibility gate is now CLOSED at this tested boundary. The separate real-browser PM-to-FM project-closure workflow remains an independent acceptance gate. Preserve active incentive policy R5 and all previously closed gates; do not rerun passed harnesses without regression evidence.
+
+
+## 2026-10-17 — Project financial-closure draft-funding guard: latest rollback verification PASS
+
+After syncing local `main`, the user PHP 8.2-linted:
+- `modules/projects/project_funding_accounting.php`
+- `modules/projects/view_fm.php`
+- `tools/run_hr_project_incentive_draft_funding_guard_rollback_tests.php`
+
+All three reported `No syntax errors detected`. The latest rollback-only run against `ahl_el_kheir_incentive_test_20261015_r1` returned:
+
+```
+PASS | fm_explicit_closure_guard=PASS | automatic_closure_outcomes=PASS | draft_funding_allocation_blocks_processor=PASS | awards_unchanged=PASS | recognition_journals_unchanged=PASS
+PASS | funding_evidence_unchanged=PASS | rollback_cleanup=PASS | project=7 | policy=R5
+```
+
+This closes the latest **source/helper and rollback-harness verification** for explicit FM closure blocking, automatic-closure outcome decisions, processor blocking while a draft allocation exists, unchanged awards/journals/funding evidence, and rollback cleanup. Project 7's financial evidence and active incentive policy R5 remain protected. This is not a real-browser PM-to-FM workflow result, and it does not prove the actual FM POST route or a live funding-return action. Do not post a funding return or modify project 7 to extend testing.
+
+Next open gate: perform the separate real-browser PM → FM project-closure acceptance through the local application at `http://localhost:8081/AhlElKheir/`. Inspect the actual eligible test fixture and current workflow state before taking any action. Never point the browser at live data for disposable acceptance, never change project 7's financial evidence, and do not force the flow through by fabricating funding activity. Record actual UI outcomes and cleanup evidence; stop if a safe eligible test project is not available.
