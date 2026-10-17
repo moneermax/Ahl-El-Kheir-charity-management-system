@@ -1702,8 +1702,22 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     var toastElement = document.getElementById('projectFormSuccessToast');
-    if (toastElement && window.bootstrap && bootstrap.Toast) {
+    if (toastElement && window.Swal) {
+        var toastMessage = toastElement.querySelector('.toast-body');
+        Swal.fire({
+            toast: true,
+            position: 'bottom-end',
+            icon: 'success',
+            title: toastMessage ? toastMessage.textContent.trim() : 'تم حفظ التغييرات بنجاح.',
+            showConfirmButton: false,
+            timer: 4500,
+            timerProgressBar: true
+        });
+    } else if (toastElement && window.bootstrap && bootstrap.Toast) {
         bootstrap.Toast.getOrCreateInstance(toastElement).show();
+    } else if (toastElement) {
+        toastElement.classList.add('show');
+        toastElement.style.display = 'block';
     }
 });
 </script>
