@@ -1369,7 +1369,7 @@ width: 24%;
                     <td><?php echo e((string)($teamMember['notes'] ?? '—') ?: '—'); ?></td>
                     <?php if ($teamCanManage): ?>
                     <td>
-                        <form method="post" class="d-inline" onsubmit="return confirm('هل تريد إنهاء تعيين هذا المستخدم في هذا القسم؟ سيبقى سجل التعيين محفوظاً.');">
+                        <form method="post" class="d-inline" data-ak-native-post="1" onsubmit="return confirm('هل تريد إنهاء تعيين هذا المستخدم في هذا القسم؟ سيبقى سجل التعيين محفوظاً.');">
                             <?php echo csrf_field(); ?>
                             <input type="hidden" name="action" value="unassign_team_member">
                             <input type="hidden" name="team_assignment_id" value="<?php echo (int)$teamMember['id']; ?>">
