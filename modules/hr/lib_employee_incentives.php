@@ -210,11 +210,6 @@ function hrIncentiveRecognizeAward(PDO $pdo, int $awardId, int $actorUserId = 0)
 }
 
 /**
- * Refresh the incentive component of a draft payroll and attach verified,
- * already-recognized awards that have no payroll assignment. Award rows are
- * locked before assignment, making repeated refreshes idempotent.
- */
-/**
  * Deliver pending earned-incentive notices after the award-recognition
  * transaction commits. The outbox row and notification insert are completed
  * atomically; a delivery failure leaves the row pending for a later retry.
@@ -295,7 +290,7 @@ function hrIncentiveDispatchPendingNotifications(PDO $pdo): void
             $insert->execute([$recipientUserId, $title, $body, $link]);
             $notificationId = (int)$pdo->lastInsertId();
             if ($notificationId <= 0) {
-                throw new RuntimeException('تعذر حفظ إشعار جدولة الحافز.');
+                throw new RuntimeException('تعذر حفظ إشعار استحقاق الحافز.');
             }
 
             $markSent = $pdo->prepare(
@@ -317,7 +312,7 @@ function hrIncentiveDispatchPendingNotifications(PDO $pdo): void
             }
 
             // Record the failed attempt separately; never undo the committed
-            // payroll/award scheduling transaction because delivery failed.
+            // award-recognition transaction because delivery failed.
             try {
                 $failed = $pdo->prepare(
                     "UPDATE hr_incentive_notification_outbox
