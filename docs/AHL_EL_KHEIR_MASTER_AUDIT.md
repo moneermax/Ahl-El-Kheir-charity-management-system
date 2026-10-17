@@ -3367,3 +3367,13 @@ TEST_EXIT_CODE=0
 ```
 
 The new-sponsor first-confirmed-payment rollback-harness gate is runtime verified at this local disposable-database boundary. It proves the first confirmed payment event and recipient snapshot, rejection of a later payment as another qualifying first-payment event, no award before HR verification, and rollback cleanup. It does not prove the real-browser PM-to-FM project-closure workflow or end-to-end employee notification delivery/visibility. Do not repeat this closed harness without regression evidence. Active R5 was not modified and the live `ahl_el_kheir` database was not the test target. Preserve project 7 and its protected financial evidence.
+
+## 2026-10-17 — Incentive notification browser acceptance evidence
+
+**Result: employee inbox delivery/visibility verified; test cleanup independently verified.** Against the disposable database `ahl_el_kheir_incentive_test_20261015_r1`, the user opened the real local employee notification inbox while the outbox harness was paused. The expected Arabic notification for 12.34 SDG in payroll period 2026-09 appeared (test notification ID 200; timestamp 2026-10-17 06:54:52). The inbox showed 3 total notifications and 1 unread.
+
+After the release file was created, process 4528 exited. Independent checks showed notification ID 200 absent, payroll fixture 21 restored to incentive_amount 0.00/status draft, original test-user password hash exactly restored, original `.htaccess` restored and hash-matched, no Git working-tree changes, and test-only environment variables cleared. The final harness console transcript was not captured; therefore the report relies on direct browser evidence and independent cleanup verification rather than claiming a captured final harness PASS line.
+
+**URL observation:** The test-generated notification row contained `http://localhost/modules/notifications/index.php`. The production dispatcher concatenates `APP_URL` with the inbox path; `config/config.php` computes APP_URL from request variables and the base path from DOCUMENT_ROOT or SCRIPT_NAME. The CLI harness does not seed these web-context variables (other than REQUEST_METHOD), so this row is consistent with CLI APP_URL defaulting to the root localhost URL. This is not evidence by itself of a production browser URL defect. Keep production config unchanged unless a browser-originated workflow demonstrates the wrong link. A future harness refinement can seed representative local web server variables and assert the full app prefix.
+
+The employee-facing notification acceptance gate is CLOSED at the verified boundary. Real-browser PM-to-FM project-closure acceptance remains separate and open; do not infer it from this test.
