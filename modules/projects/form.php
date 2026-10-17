@@ -76,6 +76,24 @@ $supervisors = dbFetchAll(
      ORDER BY u.full_name"
 );
 
+$initialTeamUsers = !$id ? dbFetchAll(
+    "SELECT u.id, u.full_name, u.username, r.name_ar AS role_name
+     FROM users u
+     JOIN roles r ON r.id = u.role_id
+     WHERE u.is_active = 1
+     ORDER BY u.full_name, u.username"
+) : [];
+$initialTeamSectionLabels = [
+    'general' => 'عام',
+    'finance' => 'مالي',
+    'operations' => 'تشغيلي',
+    'documents' => 'وثائق',
+    'closure' => 'إغلاق',
+];
+$initialTeamRows = !$id
+    ? [['user_id' => '', 'section_code' => 'general', 'notes' => '']]
+    : [];
+
 $errors = [];
 
 /*
@@ -263,6 +281,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
+        $initialTeamRows = [];
+        if (!$id) {
+            $submittedInitialTeam = $_POST['initial_team'] ?? [];
+            if (!is_array($submittedInitialTeam)) {
+                $errors[] = 'بيانات فريق المشروع الأولي غير صالحة.';
+                $submittedInitialTeam = [];
+            }
+            foreach ($submittedInitialTeam as $row) {
+                if (!is_array($row)) {
+                    $errors[] = 'أحد تعيينات فريق المشروع يحتوي على بيانات غير صالحة.';
+                    continue;
+                }
+                $userRaw = trim((string)($row['user_id'] ?? ''));
+                $sectionCode = trim((string)($row['section_code'] ?? ''));
+                $notes = trim((string)($row['notes'] ?? ''));
+                if ($userRaw === '' && $notes === '') {
+                    continue;
+                }
+                $initialTeamRows[] = [
+                    'user_id' => $userRaw,
+                    'section_code' => $sectionCode,
+                    'notes' => $notes,
+                ];
+            }
+            if (!$initialTeamRows) {
+                $initialTeamRows = [['user_id' => '', 'section_code' => 'general', 'notes' => '']];
+            }
+        }
 
         /*
          * Basic validation.
@@ -387,6 +433,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
+
+        /*
+         * Optional initial team assignments. The primary supervisor is a
+         * separate assignment and is never added to project_team implicitly.
+         */
+        if (!$id) {
+            $seenInitialTeamUsers = [];
+            foreach ($initialTeamRows as $index => $teamRow) {
+                $userRaw = trim((string)($teamRow['user_id'] ?? ''));
+                $sectionCode = (string)($teamRow['section_code'] ?? '');
+                $notes = (string)($teamRow['notes'] ?? '');
+                if ($userRaw === '' && $notes === '') {
+                    continue;
+                }
+                $userId = filter_var($userRaw, FILTER_VALIDATE_INT);
+                if (!$userId || $userId < 1) {
+                    $errors[] = 'عضو الفريق الأولي رقم ' . ((int)$index + 1) . ': اختر مستخدماً نشطاً.';
+                    continue;
+                }
+                if (!array_key_exists($sectionCode, $initialTeamSectionLabels)) {
+                    $errors[] = 'عضو الفريق الأولي رقم ' . ((int)$index + 1) . ': اختر قسماً صالحاً.';
+                }
+                if ((function_exists('mb_strlen') ? mb_strlen($notes, 'UTF-8') : strlen($notes)) > 500) {
+                    $errors[] = 'ملاحظات عضو الفريق الأولي رقم ' . ((int)$index + 1) . ' يجب ألا تتجاوز 500 حرف.';
+                }
+                if (isset($seenInitialTeamUsers[$userId])) {
+                    $errors[] = 'لا يمكن إضافة المستخدم نفسه أكثر من مرة إلى فريق المشروع الأولي.';
+                } else {
+                    $seenInitialTeamUsers[$userId] = true;
+                }
+                $activeTeamUser = dbFetchOne(
+                    'SELECT id FROM users WHERE id = ? AND is_active = 1 LIMIT 1',
+                    [(int)$userId]
+                );
+                if (!$activeTeamUser) {
+                    $errors[] = 'عضو الفريق الأولي رقم ' . ((int)$index + 1) . ': المستخدم غير موجود أو غير نشط.';
+                }
+            }
+        }
 
         /*
         |--------------------------------------------------------------------------
@@ -1140,6 +1225,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 
             /*
+             * Save explicitly selected initial team members in the same
+             * project-creation transaction. Do not infer membership from the
+             * primary-supervisor assignment.
+             */
+            if (!$id && !empty($initialTeamRows)) {
+                foreach ($initialTeamRows as $teamRow) {
+                    $teamUserId = (int)($teamRow['user_id'] ?? 0);
+                    $teamSection = (string)($teamRow['section_code'] ?? '');
+                    $teamNotes = trim((string)($teamRow['notes'] ?? ''));
+                    if ($teamUserId < 1 || !array_key_exists($teamSection, $initialTeamSectionLabels)) {
+                        continue;
+                    }
+                    $activeTeamUser = dbFetchOne(
+                        'SELECT id, full_name FROM users WHERE id = ? AND is_active = 1 LIMIT 1',
+                        [$teamUserId]
+                    );
+                    if (!$activeTeamUser) {
+                        throw new RuntimeException('أحد أعضاء الفريق المحددين لم يعد نشطاً؛ لم يتم حفظ المشروع.');
+                    }
+                    dbExecute(
+                        'INSERT INTO project_team (project_id, user_id, section_code, is_lead, assigned_by, notes) VALUES (?, ?, ?, 0, ?, ?)',
+                        [$projectId, $teamUserId, $teamSection, akp_user_id(), $teamNotes !== '' ? $teamNotes : null]
+                    );
+                    $assignmentId = (int)db()->lastInsertId();
+                    $auditValues = json_encode([
+                        'project_id' => $projectId,
+                        'user_id' => $teamUserId,
+                        'section_code' => $teamSection,
+                        'assigned_by' => akp_user_id(),
+                        'notes' => $teamNotes !== '' ? $teamNotes : null,
+                    ], JSON_UNESCAPED_UNICODE);
+                    dbExecute(
+                        'INSERT INTO audit_log (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                        [akp_user_id(), 'ASSIGN_TEAM_MEMBER', 'project_team', $assignmentId, null, $auditValues, $_SERVER['REMOTE_ADDR'] ?? '', $_SERVER['HTTP_USER_AGENT'] ?? '']
+                    );
+                }
+            }
+
+            /*
              |--------------------------------------------------------------------------
              | CREATE INITIAL BUDGET
              |--------------------------------------------------------------------------
@@ -1641,6 +1765,45 @@ document.addEventListener('DOMContentLoaded', function () {
                     </div>
                 </section>
 
+                <?php if (!$id): ?>
+                <section class="project-form-section">
+                    <h5 class="project-form-section-title">
+                        <i class="fas fa-people-group text-primary"></i>
+                        فريق المشروع الأولي
+                    </h5>
+                    <p class="project-help mb-3">اختياري: يمكنك تحديد أعضاء الفريق وأقسامهم عند إنشاء المشروع. مشرف المشروع الأساسي تكليف مستقل ولن يُضاف إلى الفريق إلا إذا اخترته صراحةً أدناه.</p>
+                    <div id="initial-project-team-container">
+                        <?php foreach ($initialTeamRows as $index => $teamRow): ?>
+                        <div class="repeatable-row row g-2 align-items-end mb-2">
+                            <div class="col-md-5">
+                                <label class="form-label small">عضو الفريق</label>
+                                <select name="initial_team[<?php echo (int)$index; ?>][user_id]" class="form-select">
+                                    <option value="">اختر المستخدم</option>
+                                    <?php foreach ($initialTeamUsers as $teamUser): ?>
+                                    <option value="<?php echo (int)$teamUser['id']; ?>" <?php echo (string)($teamRow['user_id'] ?? '') === (string)$teamUser['id'] ? 'selected' : ''; ?>><?php echo e($teamUser['full_name'] . ' · ' . $teamUser['username'] . ' · ' . $teamUser['role_name']); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small">قسم الفريق</label>
+                                <select name="initial_team[<?php echo (int)$index; ?>][section_code]" class="form-select">
+                                    <?php foreach ($initialTeamSectionLabels as $sectionCode => $sectionLabel): ?>
+                                    <option value="<?php echo e($sectionCode); ?>" <?php echo (string)($teamRow['section_code'] ?? 'general') === $sectionCode ? 'selected' : ''; ?>><?php echo e($sectionLabel); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small">ملاحظات (اختياري)</label>
+                                <input type="text" name="initial_team[<?php echo (int)$index; ?>][notes]" class="form-control" maxlength="500" value="<?php echo e($teamRow['notes'] ?? ''); ?>">
+                            </div>
+                            <div class="col-md-1"><button type="button" class="btn btn-outline-danger w-100" onclick="removeInitialTeamRow(this)" aria-label="حذف عضو الفريق"><i class="fas fa-trash"></i></button></div>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="addInitialTeamRow()"><i class="fas fa-user-plus me-1"></i>إضافة عضو للفريق</button>
+                    <div class="form-text mt-2">تُحفظ التعيينات مع المشروع في معاملة واحدة، وتبقى قابلة للمراجعة والتعديل من صفحة المشروع وفق الصلاحيات الحالية.</div>
+                </section>
+                <?php endif; ?>
 
 
                 <section class="project-form-section">
@@ -1953,6 +2116,42 @@ function addGovernmentRequirementRow() {
 }
 function addContactRow() {
     addRepeatableRow('project-contacts-container', '<div class="repeatable-row row g-2 align-items-end mb-2"><div class="col-md-3"><input type="text" name="contacts[__INDEX__][name]" class="form-control" placeholder="الاسم"></div><div class="col-md-2"><input type="text" name="contacts[__INDEX__][role]" class="form-control" placeholder="الصفة / الدور"></div><div class="col-md-2"><input type="text" name="contacts[__INDEX__][phone]" class="form-control" placeholder="الهاتف"></div><div class="col-md-2"><input type="email" name="contacts[__INDEX__][email]" class="form-control" placeholder="البريد الإلكتروني"></div><div class="col-md-2"><input type="text" name="contacts[__INDEX__][notes]" class="form-control" placeholder="ملاحظات"></div><div class="col-md-1"><button type="button" class="btn btn-outline-danger w-100" onclick="removeRepeatableRow(this,\'project-contacts-container\')"><i class="fas fa-trash"></i></button></div></div>');
+}
+
+let initialTeamRowIndex = <?php echo count($initialTeamRows); ?>;
+function addInitialTeamRow() {
+    const container = document.getElementById('initial-project-team-container');
+    if (!container) return;
+    const index = initialTeamRowIndex++;
+    const users = <?php echo json_encode(array_map(static function ($teamUser) {
+        return [
+            'id' => (int)$teamUser['id'],
+            'label' => (string)$teamUser['full_name'] . ' · ' . (string)$teamUser['username'] . ' · ' . (string)$teamUser['role_name'],
+        ];
+    }, $initialTeamUsers), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT); ?>;
+    const sections = <?php echo json_encode($initialTeamSectionLabels, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT); ?>;
+    let userOptions = '<option value="">اختر المستخدم</option>';
+    users.forEach(user => { userOptions += '<option value="' + user.id + '">' + String(user.label).replace(/[&<>"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[char])) + '</option>'; });
+    let sectionOptions = '';
+    Object.keys(sections).forEach(code => { sectionOptions += '<option value="' + code + '">' + sections[code] + '</option>'; });
+    const row = document.createElement('div');
+    row.className = 'repeatable-row row g-2 align-items-end mb-2';
+    row.innerHTML = '<div class="col-md-5"><label class="form-label small">عضو الفريق</label><select name="initial_team[' + index + '][user_id]" class="form-select">' + userOptions + '</select></div>' +
+        '<div class="col-md-3"><label class="form-label small">قسم الفريق</label><select name="initial_team[' + index + '][section_code]" class="form-select">' + sectionOptions + '</select></div>' +
+        '<div class="col-md-3"><label class="form-label small">ملاحظات (اختياري)</label><input type="text" name="initial_team[' + index + '][notes]" class="form-control" maxlength="500"></div>' +
+        '<div class="col-md-1"><button type="button" class="btn btn-outline-danger w-100" onclick="removeInitialTeamRow(this)" aria-label="حذف عضو الفريق"><i class="fas fa-trash"></i></button></div>';
+    container.appendChild(row);
+}
+function removeInitialTeamRow(button) {
+    const container = document.getElementById('initial-project-team-container');
+    const row = button ? button.closest('.repeatable-row') : null;
+    if (!container || !row) return;
+    if (container.querySelectorAll('.repeatable-row').length > 1) {
+        row.remove();
+        return;
+    }
+    row.querySelectorAll('select').forEach(select => { select.selectedIndex = 0; });
+    row.querySelectorAll('input').forEach(input => { input.value = ''; });
 }
 
 const projectBudgetTemplates = {
