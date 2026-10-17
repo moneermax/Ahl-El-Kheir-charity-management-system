@@ -1751,6 +1751,7 @@ document.addEventListener('DOMContentLoaded', function () {
     </div>
 </div>
 
+<?php if ($id): ?>
 <div class="card mb-4 fade-in" id="project-team-editor">
     <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
         <strong><i class="fas fa-people-group me-2"></i>فريق المشروع</strong>
@@ -1821,6 +1822,7 @@ document.addEventListener('DOMContentLoaded', function () {
         <?php endif; ?>
     </div>
 </div>
+<?php endif; ?>
 
 <div class="card fade-in project-card">
 
