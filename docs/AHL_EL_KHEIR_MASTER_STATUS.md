@@ -3127,3 +3127,12 @@ The disposable-database browser acceptance flow recorded a Supervisor closure re
 - `ba5ed5cec327e45d396ecbfb333a6c6d27ea5637`: remove duplicate toast/scroll initialization after source inspection found an existing shared implementation.
 
 The missing-toast/scroll symptom remains unverified; if it persists in the updated browser, inspect the session toast value, rendered toast element, Bootstrap availability, and scroll restoration timing before changing code. Status remains **local verification pending**. Resume at the existing project 6 request; do not submit it again or use the live database.
+
+
+## 2026-10-17 — Project-completion browser acceptance: PM closure feedback fix
+
+Read-only evidence from disposable DB `ahl_el_kheir_incentive_test_20261015_r1` confirms project 6 (`PRJ-0006`) has been administratively closed by PM user 33: `other_projects.status=completed`, `project_lifecycle.lifecycle_status=closed`, `closed_at=2026-10-17 08:27:50`, status-history row 22, and audit row 2479 (`CLOSE`). Project-completion event 28 exists under policy version 11 with status `pending_verification`. The read-only acceptance query returned no `FM_FINANCIAL_CLOSURE` audit row and no project-completion award. Active policy version 1/R5 remains enabled at 1,500.00 SDG.
+
+The missing PM confirmation prompt and lost success toast were traced to the PM closure form lacking a confirmation handler and the success redirect returning to a closed project that the PM can no longer view. Fix committed on main in `986cef5d21d0ae972a1ec6dd9f624a619a851b40` and `b5879cb2cc69be7f3a30301eb72b4570efb12497`: confirmation added; successful PM closure redirects to the Projects dashboard and renders the one-time success toast there.
+
+**Status: source changed, local PHP lint and real-browser regression verification pending.** Do not repeat PM closure for project 6. The FM financial-closure and resulting award path remains unverified; continue only through the normal FM UI on the disposable database. Preserve R5 and protected project 7 evidence.
