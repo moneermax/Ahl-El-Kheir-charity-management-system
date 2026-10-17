@@ -890,3 +890,13 @@ The test row's link was `http://localhost/modules/notifications/index.php`. This
 The user PHP 8.2-linted `modules/projects/project_funding_accounting.php`, `modules/projects/view_fm.php`, and `tools/run_hr_project_incentive_draft_funding_guard_rollback_tests.php` with no syntax errors. Against `ahl_el_kheir_incentive_test_20261015_r1`, the rollback-only harness passed: explicit FM closure guard, automatic closure outcomes, draft-allocation processor block, unchanged awards and recognition journals, unchanged funding evidence, and rollback cleanup. Fixture project 7 and active policy R5 remain protected; no funding return was posted.
 
 Next distinct open gate is the real-browser PM → FM project-closure workflow using the correct local app URL `http://localhost:8081/AhlElKheir/`. Inspect current docs, source, and actual safe fixture state before acting. Do not infer browser-route success from helper/harness tests. Never fabricate funding activity or alter project 7's financial evidence; if no safe test fixture is available, stop and report the blocker.
+
+## Current exact continuation point — 2026-10-17 project-completion incentive browser test
+
+The Supervisor already submitted the closure request for disposable test project `PRJ-0006` in `ahl_el_kheir_incentive_test_20261015_r1`. Read-only evidence: `created_by=33`, `approval_status=approved`, `fm_final_confirmation_count=0`, latest status `closure_requested`. The PM portfolio hid it because `akp_can_view_project()` did not admit the approved/under_review/latest-closure-request state.
+
+Fixes committed on `main`:
+- `4258ebb656a3229b84d5d7729868ce92a683f921` — narrow PM visibility for pending closure review.
+- `f7f8bae9753694fd32b7f916443a1f2a8493a3c6` — Supervisor confirmation prompt, toast initialization, and scroll preservation.
+
+**Next:** pull main locally, lint `modules/projects/project_lib.php` and `modules/projects/view.php`, then browser-test as Supervisor that the confirmation can cancel without submitting and a confirmed request shows a toast without a viewport jump. Log in as PM and verify PRJ-0006 appears and opens with the pending closure-review panel. Do not resubmit the existing request. Continue normal PM administrative closure only if UI guards permit, then FM financial closure through the normal UI, and finally verify the project-completion incentive event/award/payroll/notification on the disposable DB. Do not use `ahl_el_kheir`, invent financial evidence, or bypass closure safeguards. Source fixes are not runtime-verified until those checks pass.
