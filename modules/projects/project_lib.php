@@ -113,12 +113,31 @@ if (!function_exists('akp_can_view_project')) {
             if (akp_project_final_fm_confirmed($projectId)) return true;
 
             $pmProject = dbFetchOne(
-                "SELECT op.created_by, COALESCE(pa.approval_status, 'draft') AS approval_status
+                "SELECT op.created_by,
+                        COALESCE(pa.approval_status, 'draft') AS approval_status,
+                        COALESCE(pl.lifecycle_status, op.status) AS lifecycle_status,
+                        (SELECT h.new_status
+                         FROM project_status_history h
+                         WHERE h.project_id = op.id
+                         ORDER BY h.id DESC
+                         LIMIT 1) AS latest_status
                  FROM other_projects op
                  LEFT JOIN project_approval pa ON pa.project_id = op.id
+                 LEFT JOIN project_lifecycle pl ON pl.project_id = op.id
                  WHERE op.id = ?",
                 [$projectId]
             );
+
+            // A pending Supervisor closure request must be visible to the PM
+            // responsible for reviewing it, even after project approval.
+            if (
+                $pmProject
+                && (string)$pmProject['approval_status'] === 'approved'
+                && (string)$pmProject['lifecycle_status'] === 'under_review'
+                && (string)($pmProject['latest_status'] ?? '') === 'closure_requested'
+            ) {
+                return true;
+            }
 
             return $pmProject
                 && (int)$pmProject['created_by'] === akp_user_id()
