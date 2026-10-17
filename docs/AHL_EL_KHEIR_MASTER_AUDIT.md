@@ -3394,7 +3394,7 @@ This confirms the latest shared explicit FM guard and automatic closure decision
 
 Audit evidence from disposable database `ahl_el_kheir_incentive_test_20261015_r1` for project 6 (`PRJ-0006`): `created_by=33`, `approval_status=approved`, `fm_final_confirmation_count=0`, latest history status `closure_requested`. The PM portfolio filters each project through `akp_can_view_project()`; the PM branch did not include this closure-review state, so the submitted request was hidden.
 
-The source patch restricts the additional PM visibility path to the conjunction `approved + under_review + latest status closure_requested`; it does not change the close action's PM-only authorization or its pending-expense/closed-state checks. A second patch adds a confirmation prompt and enables success-toast/scroll restoration for Supervisor requests.
+The source patch restricts the additional PM visibility path to the conjunction `approved + under_review + latest status closure_requested`; it does not change the close action's PM-only authorization or its pending-expense/closed-state checks. A confirmation prompt was added. Inspection found toast markup and a shared toast/scroll script already existed, so the newly added duplicate script was removed in `ba5ed5cec327e45d396ecbfb333a6c6d27ea5637`. The missing-toast/scroll symptom remains unverified and must be diagnosed from the browser if it persists.
 
 Commits: `4258ebb656a3229b84d5d7729868ce92a683f921`, `f7f8bae9753694fd32b7f916443a1f2a8493a3c6`.
 
