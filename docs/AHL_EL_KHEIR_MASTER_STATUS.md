@@ -3101,3 +3101,13 @@ TEST_EXIT_CODE=0
 ```
 
 Do not repeat this gate without regression evidence. Active policy R5 was not modified; live database `ahl_el_kheir` was not the test target. Remaining distinct employee-incentive gates include the real-browser PM-to-FM project-closure workflow and end-to-end employee notification delivery/visibility. See `docs/HR_EMPLOYEE_INCENTIVES_CONTINUATION.md` for detailed evidence and constraints.
+
+## 2026-10-17 — Employee incentive notification browser acceptance CLOSED
+
+The employee-facing notification inbox was opened in the real local application while the outbox harness was paused against disposable database `ahl_el_kheir_incentive_test_20261015_r1`. The browser displayed the expected scheduled-incentive notice for 12.34 SDG, payroll period 2026-09, with the expected Arabic title/body. The test notification was ID 200.
+
+Cleanup was independently verified after releasing the harness: notification 200 no longer exists; payroll fixture 21 is restored to 0.00 incentive amount and draft status; the disposable test user's original password hash matches exactly; `.htaccess` matches its original backup and contains only `Options -Indexes`; `git status --short` is empty; test-only environment variables were cleared. The harness's final console PASS transcript was not captured, so the result is based on the observed browser state plus independent database/filesystem cleanup checks.
+
+The notification link observed in this CLI-generated test row used `http://localhost/modules/notifications/index.php`. Source inspection indicates this is consistent with `APP_URL` being derived in CLI without the web request's host, document root, or script name. Treat this as a test-context artifact unless a browser-originated workflow reproduces it; do not alter production URL construction based solely on the CLI-created row.
+
+Employee notification delivery/visibility is CLOSED at this tested acceptance boundary. The real-browser PM-to-FM project-closure workflow remains a separate open gate. Do not reopen closed incentive, payroll, notification, salary-advance, or accounting tests without concrete regression evidence.
