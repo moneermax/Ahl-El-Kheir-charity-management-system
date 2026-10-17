@@ -3118,3 +3118,11 @@ Employee notification delivery/visibility is CLOSED at this tested acceptance bo
 Latest local PHP 8.2 lint passed for `modules/projects/project_funding_accounting.php`, `modules/projects/view_fm.php`, and `tools/run_hr_project_incentive_draft_funding_guard_rollback_tests.php`. The rollback-only harness passed explicit FM closure guard, automatic closure outcomes, processor block with draft funding allocation, unchanged awards/journals/funding evidence, and rollback cleanup on disposable DB project 7 under active policy R5. No funding return or durable financial change was made.
 
 The helper/rollback verification is closed at this boundary. The real-browser PM → FM project-closure workflow remains open and must be tested separately at `http://localhost:8081/AhlElKheir/` using a safe eligible test fixture. Preserve project 7 and R5.
+
+## 2026-10-17 — Project-completion incentive browser acceptance blocker
+
+The disposable-database browser acceptance flow recorded a Supervisor closure request for `PRJ-0006`, but the PM portfolio omitted the project. Source fixes were committed on `main`:
+- `4258ebb656a3229b84d5d7729868ce92a683f921`: allow PM visibility for an approved, `under_review` project whose latest status is `closure_requested`.
+- `f7f8bae9753694fd32b7f916443a1f2a8493a3c6`: add Supervisor closure-request confirmation and role-appropriate toast/scroll initialization.
+
+Status remains **local verification pending**. Do not claim the browser blocker or UX fixes are runtime-verified until pulled, linted, and tested in the disposable database. Resume at the existing project 6 request; do not submit it again or use the live database.
