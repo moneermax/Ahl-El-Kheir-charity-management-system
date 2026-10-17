@@ -934,3 +934,16 @@ Commits:
 - `f7f8bae9753694fd32b7f916443a1f2a8493a3c6` — Supervisor confirmation, toast, and viewport handling.
 
 **Verification boundary:** these are source-level fixes only. Local PHP lint and real-browser verification have not yet been performed. Pull `main`, lint the two changed PHP files, then resume the existing disposable DB test at project 6 without resubmitting the already-recorded request. Verify PM can see/open the request, the confirmation prompt can cancel safely, a confirmed request displays a toast without jumping to the top, and the PM closure controls still enforce pending-expense/authorization guards. Do not perform administrative or FM financial closure until the normal browser workflow and existing safeguards allow it. Never use live DB `ahl_el_kheir` for this test.
+
+
+## 2026-10-17 — PM administrative closure confirmation and feedback fix (runtime verification pending)
+
+The disposable-database browser acceptance for `PRJ-0006` established that PM administrative closure succeeded: project status `completed`, lifecycle `closed`, `CLOSE` audit row `2479`, and project-completion event `28` was created under policy version 11 with status `pending_verification` and the recipient-snapshot marker. No `FM_FINANCIAL_CLOSURE` audit or incentive award was present in the read-only query. Active policy version 1 / R5 remains enabled at 1,500.00 SDG; do not change it.
+
+The user reported that PM closure redirected to the dashboard without a confirmation prompt or visible success toast. Source review found the PM `close_project` form had no confirmation handler; after success the handler redirected back to the now-closed project, where PM access checks could redirect away before the toast was rendered.
+
+Source changes committed on `main`:
+- `986cef5d21d0ae972a1ec6dd9f624a619a851b40` — add confirmation to the PM administrative-closure form and redirect successful closure to the PM dashboard while preserving the session toast.
+- `b5879cb2cc69be7f3a30301eb72b4570efb12497` — render and auto-show the one-time closure success toast on the Projects dashboard.
+
+**Verification status: PENDING local PHP lint and real-browser verification.** After pulling `main`, lint `modules/projects/view.php` and `dashboard/projects_dashboard.php`. Do not repeat closure on project 6; it is already administratively closed. Continue the existing acceptance at FM financial closure through the normal UI only after inspecting the current state and ensuring no draft funding allocation or other guard blocks it. Keep all actions on `ahl_el_kheir_incentive_test_20261015_r1`; never use live `ahl_el_kheir`.
