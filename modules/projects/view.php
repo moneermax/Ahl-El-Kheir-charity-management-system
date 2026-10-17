@@ -169,9 +169,9 @@ $teamUser = dbFetchOne('SELECT id, full_name FROM users WHERE id = ? AND is_acti
 if (!$teamUser) throw new RuntimeException('المستخدم المحدد غير موجود أو غير نشط.');
 dbExecute('START TRANSACTION');
 try {
+    $lifecycleLock = dbFetchOne('SELECT lifecycle_status FROM project_lifecycle WHERE project_id = ? FOR UPDATE', [$id]);
     $projectLock = dbFetchOne('SELECT id FROM other_projects WHERE id = ? FOR UPDATE', [$id]);
     if (!$projectLock) throw new RuntimeException('المشروع المحدد غير موجود.');
-    $lifecycleLock = dbFetchOne('SELECT lifecycle_status FROM project_lifecycle WHERE project_id = ? FOR UPDATE', [$id]);
     if (($lifecycleLock['lifecycle_status'] ?? '') === 'closed' || akp_project_is_closed($id)) {
         throw new RuntimeException('لا يمكن تعديل فريق مشروع مغلق.');
     }
@@ -208,9 +208,9 @@ $assignmentId = filter_var($_POST['team_assignment_id'] ?? null, FILTER_VALIDATE
 if (!$assignmentId || $assignmentId < 1) throw new RuntimeException('تعيين عضو الفريق المحدد غير صالح.');
 dbExecute('START TRANSACTION');
 try {
+    $lifecycleLock = dbFetchOne('SELECT lifecycle_status FROM project_lifecycle WHERE project_id = ? FOR UPDATE', [$id]);
     $projectLock = dbFetchOne('SELECT id FROM other_projects WHERE id = ? FOR UPDATE', [$id]);
     if (!$projectLock) throw new RuntimeException('المشروع المحدد غير موجود.');
-    $lifecycleLock = dbFetchOne('SELECT lifecycle_status FROM project_lifecycle WHERE project_id = ? FOR UPDATE', [$id]);
     if (($lifecycleLock['lifecycle_status'] ?? '') === 'closed' || akp_project_is_closed($id)) {
         throw new RuntimeException('لا يمكن تعديل فريق مشروع مغلق.');
     }
