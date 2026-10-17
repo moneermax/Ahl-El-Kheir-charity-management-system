@@ -250,16 +250,26 @@ try {
 
     echo "PASS | retry_delivery=PASS | correct_recipient_amount_period=PASS | repeated_dispatch_no_duplicate=PASS\n";
 
-    // Optional real-browser acceptance pause. Normal test behavior is unchanged
-    // unless explicitly enabled; the notification remains available until Enter.
+    // Optional real-browser acceptance pause. Use an explicit release file rather
+    // than STDIN because some PowerShell/PHP launches provide EOF immediately.
+    // Normal test behavior is unchanged unless the opt-in environment flag is set.
     if (getenv('AHL_INCENTIVE_NOTIFICATION_PAUSE_BEFORE_CLEANUP') === '1') {
-        if (!defined('STDIN')) {
+        if (PHP_SAPI !== 'cli') {
             throw new RuntimeException('Browser acceptance pause requires a CLI run.');
+        }
+        $releasePath = sys_get_temp_dir() . DIRECTORY_SEPARATOR
+            . 'ahl_incentive_notification_browser_check_' . getmypid() . '.release';
+        if (is_file($releasePath)) {
+            unlink($releasePath);
         }
         echo "BROWSER_CHECK | notification_id={$notificationId}"
             . " | recipient_user_id=" . (int)$fixture['recipient_user_id']
-            . " | Open the employee notification inbox now; press Enter here to resume cleanup.\n";
-        fgets(STDIN);
+            . " | release_file={$releasePath}"
+            . " | Open the employee notification inbox, then create the release file in another PowerShell window to resume cleanup.\n";
+        while (!is_file($releasePath)) {
+            usleep(250000);
+        }
+        unlink($releasePath);
     }
 } catch (Throwable $e) {
     echo "FAIL | " . $e->getMessage() . "\n";
