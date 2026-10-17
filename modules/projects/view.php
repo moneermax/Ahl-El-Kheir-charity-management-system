@@ -1160,35 +1160,6 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 </div>
 </div>
 <?php endif; ?>
-<?php if ($role === 'project_supervisor'): ?>
-<script>
-/* Supervisor project POSTs must preserve the current viewport and display PRG toast feedback. */
-document.addEventListener('DOMContentLoaded', function () {
-    var projectScrollKey = 'ak_project_view_scroll_' + window.location.pathname + window.location.search;
-    try {
-        history.scrollRestoration = 'manual';
-        var savedScroll = sessionStorage.getItem(projectScrollKey);
-        if (savedScroll !== null) {
-            var scrollY = parseInt(savedScroll, 10);
-            if (!isNaN(scrollY)) {
-                window.scrollTo(0, scrollY);
-                requestAnimationFrame(function () { window.scrollTo(0, scrollY); });
-            }
-            sessionStorage.removeItem(projectScrollKey);
-        }
-        document.querySelectorAll('form[method="post"], form[method="POST"]').forEach(function (form) {
-            form.addEventListener('submit', function () {
-                sessionStorage.setItem(projectScrollKey, String(window.scrollY || window.pageYOffset || 0));
-            });
-        });
-    } catch (e) {}
-    var projectToast = document.getElementById('projectSuccessToast');
-    if (projectToast && window.bootstrap && bootstrap.Toast) {
-        bootstrap.Toast.getOrCreateInstance(projectToast, {delay: 4500, autohide: true}).show();
-    }
-});
-</script>
-<?php endif; ?>
 <style>
 .project-module-page {
 max-width: 1500px;
