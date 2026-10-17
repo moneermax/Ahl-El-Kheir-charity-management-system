@@ -3111,3 +3111,10 @@ Cleanup was independently verified after releasing the harness: notification 200
 The notification link observed in this CLI-generated test row used `http://localhost/modules/notifications/index.php`. Source inspection indicates this is consistent with `APP_URL` being derived in CLI without the web request's host, document root, or script name. Treat this as a test-context artifact unless a browser-originated workflow reproduces it; do not alter production URL construction based solely on the CLI-created row.
 
 Employee notification delivery/visibility is CLOSED at this tested acceptance boundary. The real-browser PM-to-FM project-closure workflow remains a separate open gate. Do not reopen closed incentive, payroll, notification, salary-advance, or accounting tests without concrete regression evidence.
+
+
+### 2026-10-17 — Project financial-closure draft-funding guard verification
+
+Latest local PHP 8.2 lint passed for `modules/projects/project_funding_accounting.php`, `modules/projects/view_fm.php`, and `tools/run_hr_project_incentive_draft_funding_guard_rollback_tests.php`. The rollback-only harness passed explicit FM closure guard, automatic closure outcomes, processor block with draft funding allocation, unchanged awards/journals/funding evidence, and rollback cleanup on disposable DB project 7 under active policy R5. No funding return or durable financial change was made.
+
+The helper/rollback verification is closed at this boundary. The real-browser PM → FM project-closure workflow remains open and must be tested separately at `http://localhost:8081/AhlElKheir/` using a safe eligible test fixture. Preserve project 7 and R5.
