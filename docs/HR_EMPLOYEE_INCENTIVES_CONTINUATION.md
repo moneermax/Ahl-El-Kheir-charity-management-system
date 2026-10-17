@@ -927,7 +927,7 @@ The disposable-database browser acceptance flow reached project `PRJ-0006` (ID 6
 
 Source fix on `main`: pending closure requests are visible to the PM only when approval is `approved`, lifecycle is `under_review`, and the latest project status event is `closure_requested`. Existing closure authorization and financial guards remain in place.
 
-The two deferred Supervisor UX defects were also addressed on `main`: a browser confirmation prompt now guards closure-request submission, and the Supervisor page now initializes its success toast and POST scroll restoration. The existing POST/redirect/GET flow and session toast message are retained.
+The missing confirmation prompt is addressed on `main`. Source inspection then showed that `view.php` already contained toast markup and a shared toast/scroll-restoration script before the attempted toast change; the newly introduced duplicate script was removed in commit `ba5ed5cec327e45d396ecbfb333a6c6d27ea5637`. Therefore, the reported missing toast/scroll jump is **not yet considered fixed**: test it after pulling and establish the exact runtime cause if it persists. The existing POST/redirect/GET flow and session toast message remain unchanged.
 
 Commits:
 - `4258ebb656a3229b84d5d7729868ce92a683f921` — PM pending-closure visibility.
