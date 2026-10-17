@@ -1765,78 +1765,7 @@ document.addEventListener('DOMContentLoaded', function () {
     </div>
 </div>
 
-<?php if ($id): ?>
-<div class="card mb-4 fade-in" id="project-team-editor">
-    <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
-        <strong><i class="fas fa-people-group me-2"></i>فريق المشروع</strong>
-        <span class="badge bg-secondary"><?php echo count($editTeamMembers); ?> تعيين نشط</span>
-    </div>
-    <div class="card-body">
-        <p class="small text-muted">إدارة أعضاء الفريق منفصلة عن تعيين مشرف المشروع الأساسي. تُقرأ العضويات النشطة عند الإغلاق الإداري لتحديد مستحقي حافز إكمال المشروع.</p>
-        <?php if ($editTeamMembers): ?>
-        <div class="table-responsive mb-3">
-            <table class="table table-sm table-hover align-middle">
-                <thead><tr><th>المستخدم</th><th>القسم</th><th>تاريخ التعيين</th><th>ملاحظات</th><?php if ($canManageEditTeam): ?><th>الإجراء</th><?php endif; ?></tr></thead>
-                <tbody>
-                <?php foreach ($editTeamMembers as $teamMember): ?>
-                    <tr>
-                        <td><strong><?php echo e($teamMember['full_name']); ?></strong><div class="small text-muted"><?php echo e($teamMember['username']); ?></div></td>
-                        <td><?php echo e($initialTeamSectionLabels[(string)$teamMember['section_code']] ?? (string)$teamMember['section_code']); ?><?php if ((int)$teamMember['is_lead'] === 1): ?> <span class="badge bg-info text-dark">قائد</span><?php endif; ?></td>
-                        <td><?php echo e((string)$teamMember['assigned_at']); ?></td>
-                        <td><?php echo e((string)($teamMember['notes'] ?? '—') ?: '—'); ?></td>
-                        <?php if ($canManageEditTeam): ?>
-                        <td>
-                            <form method="post" class="d-inline" onsubmit="return confirm('هل تريد إنهاء تعيين هذا المستخدم في هذا القسم؟ سيبقى سجل التعيين محفوظاً.');">
-                                <?php echo csrf_field(); ?>
-                                <input type="hidden" name="action" value="edit_unassign_team_member">
-                                <input type="hidden" name="team_assignment_id" value="<?php echo (int)$teamMember['id']; ?>">
-                                <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-user-minus me-1"></i>إنهاء التعيين</button>
-                            </form>
-                        </td>
-                        <?php endif; ?>
-                    </tr>
-                <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
-        <?php else: ?>
-            <p class="text-muted mb-3">لا توجد تعيينات نشطة لأعضاء الفريق حتى الآن.</p>
-        <?php endif; ?>
 
-        <?php if ($canManageEditTeam): ?>
-        <hr>
-        <h6 class="mb-3">إضافة عضو إلى الفريق</h6>
-        <form method="post" class="row g-3">
-            <?php echo csrf_field(); ?>
-            <input type="hidden" name="action" value="edit_assign_team_member">
-            <div class="col-md-5">
-                <label class="form-label" for="edit-team-user-id">المستخدم النشط</label>
-                <select id="edit-team-user-id" name="team_user_id" class="form-select" required>
-                    <option value="">اختر المستخدم</option>
-                    <?php foreach ($editTeamUsers as $assignableUser): ?>
-                    <option value="<?php echo (int)$assignableUser['id']; ?>"><?php echo e($assignableUser['full_name'] . ' · ' . $assignableUser['username'] . ' · ' . $assignableUser['role_name']); ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label" for="edit-team-section">قسم الفريق</label>
-                <select id="edit-team-section" name="team_section" class="form-select" required>
-                    <?php foreach ($initialTeamSectionLabels as $sectionCode => $sectionLabel): ?>
-                    <option value="<?php echo e($sectionCode); ?>"><?php echo e($sectionLabel); ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <div class="col-md-4">
-                <label class="form-label" for="edit-team-notes">ملاحظات (اختياري)</label>
-                <input id="edit-team-notes" name="team_notes" class="form-control" maxlength="500">
-            </div>
-            <div class="col-12"><button type="submit" class="btn btn-primary"><i class="fas fa-user-plus me-1"></i>إضافة عضو</button></div>
-        </form>
-        <div class="form-text mt-2">تُحفظ تغييرات الفريق مع سجل تدقيق، وتبقى العضويات السابقة محفوظة عند إنهاء التعيين.</div>
-        <?php endif; ?>
-    </div>
-</div>
-<?php endif; ?>
 
 <div class="card fade-in project-card">
 
@@ -2000,6 +1929,72 @@ document.addEventListener('DOMContentLoaded', function () {
                         </div>
                     </div>
                 </section>
+
+                <?php if ($id): ?>
+                <div class="card mb-4 fade-in" id="project-team-editor">
+                    <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+                        <strong><i class="fas fa-people-group me-2"></i>فريق المشروع</strong>
+                        <span class="badge bg-secondary"><?php echo count($editTeamMembers); ?> تعيين نشط</span>
+                    </div>
+                    <div class="card-body">
+                        <p class="small text-muted">إدارة أعضاء الفريق منفصلة عن تعيين مشرف المشروع الأساسي. تُقرأ العضويات النشطة عند الإغلاق الإداري لتحديد مستحقي حافز إكمال المشروع.</p>
+                        <?php if ($editTeamMembers): ?>
+                        <div class="table-responsive mb-3">
+                            <table class="table table-sm table-hover align-middle">
+                                <thead><tr><th>المستخدم</th><th>القسم</th><th>تاريخ التعيين</th><th>ملاحظات</th><?php if ($canManageEditTeam): ?><th>الإجراء</th><?php endif; ?></tr></thead>
+                                <tbody>
+                                <?php foreach ($editTeamMembers as $teamMember): ?>
+                                    <tr>
+                                        <td><strong><?php echo e($teamMember['full_name']); ?></strong><div class="small text-muted"><?php echo e($teamMember['username']); ?></div></td>
+                                        <td><?php echo e($initialTeamSectionLabels[(string)$teamMember['section_code']] ?? (string)$teamMember['section_code']); ?><?php if ((int)$teamMember['is_lead'] === 1): ?> <span class="badge bg-info text-dark">قائد</span><?php endif; ?></td>
+                                        <td><?php echo e((string)$teamMember['assigned_at']); ?></td>
+                                        <td><?php echo e((string)($teamMember['notes'] ?? '—') ?: '—'); ?></td>
+                                        <?php if ($canManageEditTeam): ?>
+                                        <td>
+                                            <button type="submit" name="action" value="edit_unassign_team_member" formnovalidate class="btn btn-sm btn-outline-danger" name="team_assignment_id" data-team-assignment-id="<?php echo (int)$teamMember['id']; ?>" onclick="if (!confirm('هل تريد إنهاء تعيين هذا المستخدم في هذا القسم؟ سيبقى سجل التعيين محفوظاً.')) return false; this.form.querySelector('[name=team_assignment_id]')?.remove(); const field = document.createElement('input'); field.type='hidden'; field.name='team_assignment_id'; field.value=this.dataset.teamAssignmentId; this.form.appendChild(field);"><i class="fas fa-user-minus me-1"></i>إنهاء التعيين</button>
+                                        </td>
+                                        <?php endif; ?>
+                                    </tr>
+                                <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                        <?php else: ?>
+                            <p class="text-muted mb-3">لا توجد تعيينات نشطة لأعضاء الفريق حتى الآن.</p>
+                        <?php endif; ?>
+                
+                        <?php if ($canManageEditTeam): ?>
+                        <hr>
+                        <h6 class="mb-3">إضافة عضو إلى الفريق</h6>
+                        <div class="row g-3">
+                            <div class="col-md-5">
+                                <label class="form-label" for="edit-team-user-id">المستخدم النشط</label>
+                                <select id="edit-team-user-id" name="team_user_id" class="form-select" required>
+                                    <option value="">اختر المستخدم</option>
+                                    <?php foreach ($editTeamUsers as $assignableUser): ?>
+                                    <option value="<?php echo (int)$assignableUser['id']; ?>"><?php echo e($assignableUser['full_name'] . ' · ' . $assignableUser['username'] . ' · ' . $assignableUser['role_name']); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label" for="edit-team-section">قسم الفريق</label>
+                                <select id="edit-team-section" name="team_section" class="form-select" required>
+                                    <?php foreach ($initialTeamSectionLabels as $sectionCode => $sectionLabel): ?>
+                                    <option value="<?php echo e($sectionCode); ?>"><?php echo e($sectionLabel); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label" for="edit-team-notes">ملاحظات (اختياري)</label>
+                                <input id="edit-team-notes" name="team_notes" class="form-control" maxlength="500">
+                            </div>
+                            <div class="col-12"><button type="submit" name="action" value="edit_assign_team_member" class="btn btn-primary"><i class="fas fa-user-plus me-1"></i>إضافة عضو</button></div>
+                        </div>
+                        <div class="form-text mt-2">تُحفظ تغييرات الفريق مع سجل تدقيق، وتبقى العضويات السابقة محفوظة عند إنهاء التعيين.</div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <?php endif; ?>
 
                 <?php if (!$id): ?>
                 <section class="project-form-section">
@@ -3090,6 +3085,13 @@ document
     .addEventListener(
         'submit',
         function (event) {
+
+            const submittedAction = event.submitter && event.submitter.name === 'action'
+                ? event.submitter.value
+                : '';
+            if (submittedAction === 'edit_assign_team_member' || submittedAction === 'edit_unassign_team_member') {
+                return;
+            }
 
             const targetInput =
                 document.getElementById(
