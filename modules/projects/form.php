@@ -94,6 +94,28 @@ $initialTeamRows = !$id
     ? [['user_id' => '', 'section_code' => 'general', 'notes' => '']]
     : [];
 
+$editTeamMembers = $id
+    ? dbFetchAll(
+        'SELECT pt.id, pt.user_id, pt.section_code, pt.is_lead, pt.assigned_at, pt.notes,
+                u.full_name, u.username
+         FROM project_team pt
+         JOIN users u ON u.id = pt.user_id
+         WHERE pt.project_id = ? AND pt.unassigned_at IS NULL
+         ORDER BY pt.section_code, pt.is_lead DESC, u.full_name',
+        [$id]
+    )
+    : [];
+$canManageEditTeam = $id > 0 && akp_can_edit_section('team', $id) && !akp_project_is_closed($id);
+$editTeamUsers = $canManageEditTeam
+    ? dbFetchAll(
+        "SELECT u.id, u.full_name, u.username, r.name_ar AS role_name
+         FROM users u
+         JOIN roles r ON r.id = u.role_id
+         WHERE u.is_active = 1
+         ORDER BY u.full_name, u.username"
+    )
+    : [];
+
 $errors = [];
 
 /*
@@ -255,6 +277,133 @@ if ($id) {
     $contactRows = dbFetchAll('SELECT contact_name, role_description, phone, email, notes FROM project_contacts WHERE project_id = ? ORDER BY id ASC', [$id]);
 }
 
+
+
+/*
+|--------------------------------------------------------------------------
+| Existing-project team management (separate POST actions)
+|--------------------------------------------------------------------------
+| Team membership is managed from the project edit page, not the read-only
+| project profile. Keep these changes separate from general project saves.
+*/
+if (
+    $_SERVER['REQUEST_METHOD'] === 'POST'
+    && $id > 0
+    && in_array((string)($_POST['action'] ?? ''), ['edit_assign_team_member', 'edit_unassign_team_member'], true)
+) {
+    try {
+        if (!verify_csrf()) {
+            throw new RuntimeException('انتهت صلاحية الجلسة. يرجى إعادة تحميل الصفحة.');
+        }
+        if (!akp_can_edit_section('team', $id) || akp_project_is_closed($id)) {
+            throw new RuntimeException('إدارة فريق المشروع غير متاحة لك أو أن المشروع مغلق.');
+        }
+
+        $teamAction = (string)$_POST['action'];
+        dbExecute('START TRANSACTION');
+        try {
+            $lifecycleLock = dbFetchOne(
+                'SELECT lifecycle_status FROM project_lifecycle WHERE project_id = ? FOR UPDATE',
+                [$id]
+            );
+            $projectLock = dbFetchOne(
+                'SELECT id FROM other_projects WHERE id = ? FOR UPDATE',
+                [$id]
+            );
+            if (!$projectLock) {
+                throw new RuntimeException('المشروع المحدد غير موجود.');
+            }
+            if (($lifecycleLock['lifecycle_status'] ?? '') === 'closed' || akp_project_is_closed($id)) {
+                throw new RuntimeException('لا يمكن تعديل فريق مشروع مغلق.');
+            }
+
+            if ($teamAction === 'edit_assign_team_member') {
+                $userId = filter_var($_POST['team_user_id'] ?? null, FILTER_VALIDATE_INT);
+                $section = trim((string)($_POST['team_section'] ?? ''));
+                $notes = trim((string)($_POST['team_notes'] ?? ''));
+                if (!$userId || $userId < 1) {
+                    throw new RuntimeException('اختر مستخدماً صالحاً لإضافته إلى الفريق.');
+                }
+                if (!array_key_exists($section, $initialTeamSectionLabels)) {
+                    throw new RuntimeException('قسم الفريق المحدد غير صالح.');
+                }
+                if ((function_exists('mb_strlen') ? mb_strlen($notes, 'UTF-8') : strlen($notes)) > 500) {
+                    throw new RuntimeException('ملاحظات تعيين الفريق يجب ألا تتجاوز 500 حرف.');
+                }
+                $teamUser = dbFetchOne(
+                    'SELECT id, full_name FROM users WHERE id = ? AND is_active = 1 LIMIT 1',
+                    [(int)$userId]
+                );
+                if (!$teamUser) {
+                    throw new RuntimeException('المستخدم المحدد غير موجود أو غير نشط.');
+                }
+                $existingAssignment = dbFetchOne(
+                    'SELECT id FROM project_team WHERE project_id = ? AND user_id = ? AND unassigned_at IS NULL LIMIT 1 FOR UPDATE',
+                    [$id, (int)$userId]
+                );
+                if ($existingAssignment) {
+                    throw new RuntimeException('هذا المستخدم مضاف بالفعل إلى فريق المشروع.');
+                }
+                dbExecute(
+                    'INSERT INTO project_team (project_id, user_id, section_code, is_lead, assigned_by, notes) VALUES (?, ?, ?, 0, ?, ?)',
+                    [$id, (int)$userId, $section, akp_user_id(), $notes !== '' ? $notes : null]
+                );
+                $assignmentId = (int)db()->lastInsertId();
+                $auditValues = json_encode([
+                    'project_id' => $id,
+                    'user_id' => (int)$userId,
+                    'section_code' => $section,
+                    'assigned_by' => akp_user_id(),
+                    'notes' => $notes !== '' ? $notes : null,
+                ], JSON_UNESCAPED_UNICODE);
+                dbExecute(
+                    'INSERT INTO audit_log (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                    [akp_user_id(), 'ASSIGN_TEAM_MEMBER', 'project_team', $assignmentId, null, $auditValues, $_SERVER['REMOTE_ADDR'] ?? '', $_SERVER['HTTP_USER_AGENT'] ?? '']
+                );
+                $_SESSION['project_toast_success'] = 'تمت إضافة ' . (string)$teamUser['full_name'] . ' إلى فريق المشروع.';
+            } else {
+                $assignmentId = filter_var($_POST['team_assignment_id'] ?? null, FILTER_VALIDATE_INT);
+                if (!$assignmentId || $assignmentId < 1) {
+                    throw new RuntimeException('تعيين عضو الفريق المحدد غير صالح.');
+                }
+                $assignment = dbFetchOne(
+                    'SELECT id, user_id, section_code, notes FROM project_team WHERE id = ? AND project_id = ? AND unassigned_at IS NULL LIMIT 1 FOR UPDATE',
+                    [(int)$assignmentId, $id]
+                );
+                if (!$assignment) {
+                    throw new RuntimeException('تعيين الفريق غير موجود أو سبق إنهاؤه.');
+                }
+                if (dbExecute(
+                    'UPDATE project_team SET unassigned_at = NOW() WHERE id = ? AND project_id = ? AND unassigned_at IS NULL',
+                    [(int)$assignmentId, $id]
+                ) !== 1) {
+                    throw new RuntimeException('تعذر إنهاء تعيين عضو الفريق.');
+                }
+                $oldValues = json_encode([
+                    'project_id' => $id,
+                    'user_id' => (int)$assignment['user_id'],
+                    'section_code' => (string)$assignment['section_code'],
+                    'notes' => $assignment['notes'],
+                ], JSON_UNESCAPED_UNICODE);
+                $newValues = json_encode(['unassigned' => true], JSON_UNESCAPED_UNICODE);
+                dbExecute(
+                    'INSERT INTO audit_log (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                    [akp_user_id(), 'UNASSIGN_TEAM_MEMBER', 'project_team', (int)$assignmentId, $oldValues, $newValues, $_SERVER['REMOTE_ADDR'] ?? '', $_SERVER['HTTP_USER_AGENT'] ?? '']
+                );
+                $_SESSION['project_toast_success'] = 'تم إنهاء تعيين عضو الفريق مع الاحتفاظ بسجل التعيين.';
+            }
+            dbExecute('COMMIT');
+        } catch (Throwable $e) {
+            dbExecute('ROLLBACK');
+            throw $e;
+        }
+    } catch (Throwable $e) {
+        flash('error', $e->getMessage());
+    }
+
+    header('Location: ' . APP_URL . 'modules/projects/form.php?id=' . $id);
+    exit();
+}
 
 /*
 |--------------------------------------------------------------------------
@@ -1599,6 +1748,77 @@ document.addEventListener('DOMContentLoaded', function () {
             <div><i class="fas fa-coins me-1"></i>العملة: SDG</div>
             <div><i class="fas fa-shield-halved me-1"></i>التحقق المالي يتم من الخادم</div>
         </div>
+    </div>
+</div>
+
+<div class="card mb-4 fade-in" id="project-team-editor">
+    <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <strong><i class="fas fa-people-group me-2"></i>فريق المشروع</strong>
+        <span class="badge bg-secondary"><?php echo count($editTeamMembers); ?> تعيين نشط</span>
+    </div>
+    <div class="card-body">
+        <p class="small text-muted">إدارة أعضاء الفريق منفصلة عن تعيين مشرف المشروع الأساسي. تُقرأ العضويات النشطة عند الإغلاق الإداري لتحديد مستحقي حافز إكمال المشروع.</p>
+        <?php if ($editTeamMembers): ?>
+        <div class="table-responsive mb-3">
+            <table class="table table-sm table-hover align-middle">
+                <thead><tr><th>المستخدم</th><th>القسم</th><th>تاريخ التعيين</th><th>ملاحظات</th><?php if ($canManageEditTeam): ?><th>الإجراء</th><?php endif; ?></tr></thead>
+                <tbody>
+                <?php foreach ($editTeamMembers as $teamMember): ?>
+                    <tr>
+                        <td><strong><?php echo e($teamMember['full_name']); ?></strong><div class="small text-muted"><?php echo e($teamMember['username']); ?></div></td>
+                        <td><?php echo e($initialTeamSectionLabels[(string)$teamMember['section_code']] ?? (string)$teamMember['section_code']); ?><?php if ((int)$teamMember['is_lead'] === 1): ?> <span class="badge bg-info text-dark">قائد</span><?php endif; ?></td>
+                        <td><?php echo e((string)$teamMember['assigned_at']); ?></td>
+                        <td><?php echo e((string)($teamMember['notes'] ?? '—') ?: '—'); ?></td>
+                        <?php if ($canManageEditTeam): ?>
+                        <td>
+                            <form method="post" class="d-inline" onsubmit="return confirm('هل تريد إنهاء تعيين هذا المستخدم في هذا القسم؟ سيبقى سجل التعيين محفوظاً.');">
+                                <?php echo csrf_field(); ?>
+                                <input type="hidden" name="action" value="edit_unassign_team_member">
+                                <input type="hidden" name="team_assignment_id" value="<?php echo (int)$teamMember['id']; ?>">
+                                <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-user-minus me-1"></i>إنهاء التعيين</button>
+                            </form>
+                        </td>
+                        <?php endif; ?>
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+        <?php else: ?>
+            <p class="text-muted mb-3">لا توجد تعيينات نشطة لأعضاء الفريق حتى الآن.</p>
+        <?php endif; ?>
+
+        <?php if ($canManageEditTeam): ?>
+        <hr>
+        <h6 class="mb-3">إضافة عضو إلى الفريق</h6>
+        <form method="post" class="row g-3">
+            <?php echo csrf_field(); ?>
+            <input type="hidden" name="action" value="edit_assign_team_member">
+            <div class="col-md-5">
+                <label class="form-label" for="edit-team-user-id">المستخدم النشط</label>
+                <select id="edit-team-user-id" name="team_user_id" class="form-select" required>
+                    <option value="">اختر المستخدم</option>
+                    <?php foreach ($editTeamUsers as $assignableUser): ?>
+                    <option value="<?php echo (int)$assignableUser['id']; ?>"><?php echo e($assignableUser['full_name'] . ' · ' . $assignableUser['username'] . ' · ' . $assignableUser['role_name']); ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" for="edit-team-section">قسم الفريق</label>
+                <select id="edit-team-section" name="team_section" class="form-select" required>
+                    <?php foreach ($initialTeamSectionLabels as $sectionCode => $sectionLabel): ?>
+                    <option value="<?php echo e($sectionCode); ?>"><?php echo e($sectionLabel); ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" for="edit-team-notes">ملاحظات (اختياري)</label>
+                <input id="edit-team-notes" name="team_notes" class="form-control" maxlength="500">
+            </div>
+            <div class="col-12"><button type="submit" class="btn btn-primary"><i class="fas fa-user-plus me-1"></i>إضافة عضو</button></div>
+        </form>
+        <div class="form-text mt-2">تُحفظ تغييرات الفريق مع سجل تدقيق، وتبقى العضويات السابقة محفوظة عند إنهاء التعيين.</div>
+        <?php endif; ?>
     </div>
 </div>
 
