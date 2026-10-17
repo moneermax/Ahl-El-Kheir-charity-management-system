@@ -2747,7 +2747,21 @@ sessionStorage.setItem(projectScrollKey, String(window.scrollY || window.pageYOf
 } catch (e) {}
 var projectToast = document.getElementById('projectSuccessToast');
 if (projectToast && window.bootstrap && bootstrap.Toast) {
-bootstrap.Toast.getOrCreateInstance(projectToast, {delay: 4500, autohide: true}).show();
+    bootstrap.Toast.getOrCreateInstance(projectToast, {delay: 4500, autohide: true}).show();
+} else if (projectToast && window.Swal) {
+    var toastMessage = projectToast.querySelector('.toast-body');
+    Swal.fire({
+        toast: true,
+        position: 'bottom-end',
+        icon: 'success',
+        title: toastMessage ? toastMessage.textContent.trim() : 'تم حفظ التغييرات بنجاح.',
+        showConfirmButton: false,
+        timer: 4500,
+        timerProgressBar: true
+    });
+} else if (projectToast) {
+    projectToast.classList.add('show');
+    projectToast.style.display = 'block';
 }
 });
 </script>
