@@ -3123,6 +3123,7 @@ The helper/rollback verification is closed at this boundary. The real-browser PM
 
 The disposable-database browser acceptance flow recorded a Supervisor closure request for `PRJ-0006`, but the PM portfolio omitted the project. Source fixes were committed on `main`:
 - `4258ebb656a3229b84d5d7729868ce92a683f921`: allow PM visibility for an approved, `under_review` project whose latest status is `closure_requested`.
-- `f7f8bae9753694fd32b7f916443a1f2a8493a3c6`: add Supervisor closure-request confirmation and role-appropriate toast/scroll initialization.
+- `f7f8bae9753694fd32b7f916443a1f2a8493a3c6`: add Supervisor closure-request confirmation.
+- `ba5ed5cec327e45d396ecbfb333a6c6d27ea5637`: remove duplicate toast/scroll initialization after source inspection found an existing shared implementation.
 
-Status remains **local verification pending**. Do not claim the browser blocker or UX fixes are runtime-verified until pulled, linted, and tested in the disposable database. Resume at the existing project 6 request; do not submit it again or use the live database.
+The missing-toast/scroll symptom remains unverified; if it persists in the updated browser, inspect the session toast value, rendered toast element, Bootstrap availability, and scroll restoration timing before changing code. Status remains **local verification pending**. Resume at the existing project 6 request; do not submit it again or use the live database.
