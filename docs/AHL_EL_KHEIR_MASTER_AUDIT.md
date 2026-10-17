@@ -3389,3 +3389,13 @@ PASS | funding_evidence_unchanged=PASS | rollback_cleanup=PASS | project=7 | pol
 ```
 
 This confirms the latest shared explicit FM guard and automatic closure decision assertions, alongside processor rejection and preservation/rollback checks, on the disposable incentive test database. It does not exercise the actual browser POST route, and no funding return was posted. Project 7 financial evidence and active policy R5 remain unchanged. The distinct real-browser PM-to-FM project-closure workflow remains open.
+
+## 2026-10-17 — Pending project closure visibility / Supervisor feedback
+
+Audit evidence from disposable database `ahl_el_kheir_incentive_test_20261015_r1` for project 6 (`PRJ-0006`): `created_by=33`, `approval_status=approved`, `fm_final_confirmation_count=0`, latest history status `closure_requested`. The PM portfolio filters each project through `akp_can_view_project()`; the PM branch did not include this closure-review state, so the submitted request was hidden.
+
+The source patch restricts the additional PM visibility path to the conjunction `approved + under_review + latest status closure_requested`; it does not change the close action's PM-only authorization or its pending-expense/closed-state checks. A second patch adds a confirmation prompt and enables success-toast/scroll restoration for Supervisor requests.
+
+Commits: `4258ebb656a3229b84d5d7729868ce92a683f921`, `f7f8bae9753694fd32b7f916443a1f2a8493a3c6`.
+
+No local lint or browser verification has been observed yet. Treat both changes as unverified until user executes the real local checks.
