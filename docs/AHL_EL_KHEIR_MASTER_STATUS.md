@@ -3136,3 +3136,19 @@ Read-only evidence from disposable DB `ahl_el_kheir_incentive_test_20261015_r1` 
 The missing PM confirmation prompt and lost success toast were traced to the PM closure form lacking a confirmation handler and the success redirect returning to a closed project that the PM can no longer view. Fix committed on main in `986cef5d21d0ae972a1ec6dd9f624a619a851b40` and `b5879cb2cc69be7f3a30301eb72b4570efb12497`: confirmation added; successful PM closure redirects to the Projects dashboard and renders the one-time success toast there.
 
 **Status: source changed, local PHP lint and real-browser regression verification pending.** Do not repeat PM closure for project 6. The FM financial-closure and resulting award path remains unverified; continue only through the normal FM UI on the disposable database. Preserve R5 and protected project 7 evidence.
+
+## 2026-10-17 — Project-team assignment workflow added; local acceptance pending
+
+A repository-wide local `git grep -n -i "project_team" -- "*.php"` showed that production PHP only read active team membership for authorization, display, and the project-completion incentive snapshot; the only explicit INSERTs were in rollback test harnesses. The current schema in `database/ahl_el_kheir.sql` already defines `project_team` with section codes `general`, `finance`, `operations`, `documents`, and `closure`, so no migration or runtime DDL is needed.
+
+On `main`, `modules/projects/view.php` now exposes team membership using the existing `akp_can_edit_section('team', $id)` authorization boundary:
+- active users can be assigned to a schema-valid section;
+- duplicate active user/section assignments are rejected;
+- unassignment sets `unassigned_at` instead of deleting history;
+- assignment/unassignment audit rows are written in the same transaction;
+- both operations reject closed projects and lock the lifecycle before the project row to align with the closure path;
+- the page explains that primary-supervisor assignment is separate from `project_team`.
+
+Source commits: `907d8be0c6f945bd030db45c8902d19427320c2b`, `5f0519f1e4418a367003849c76e1dcafa256fc64`.
+
+**Verification status: SOURCE COMMITTED; LOCAL PHP LINT AND BROWSER ACCEPTANCE PENDING.** Do not claim the workflow is verified. Next: pull `main`, run `php -l modules\projects\view.php`, then test add/duplicate-rejection/unassign/history through the normal browser UI on a newly created test project in `ahl_el_kheir_incentive_test_20261015_r1`. Do not modify PRJ-0007, PRJ-0018, active policy R5, or any funding/expense/payment/journal evidence. Keep the real PM-to-FM financial-closure incentive acceptance open until the browser path is genuinely verified.
