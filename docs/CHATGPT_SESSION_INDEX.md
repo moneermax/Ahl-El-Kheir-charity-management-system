@@ -903,3 +903,7 @@ The test-generated link `http://localhost/modules/notifications/index.php` came 
 
 
 - **2026-10-17 — Project financial-closure guard verification:** Latest PHP 8.2 lint and `tools/run_hr_project_incentive_draft_funding_guard_rollback_tests.php` passed against `ahl_el_kheir_incentive_test_20261015_r1`. Checks include explicit FM closure guard, automatic closure outcomes, processor block with draft allocation, unchanged awards/journals/funding evidence, and rollback cleanup (project 7, policy R5). No funding return or durable financial change was made. Real-browser PM → FM closure workflow remains open; use `http://localhost:8081/AhlElKheir/` and a safe eligible test fixture only.
+
+### 2026-10-17 — Employee incentive project-completion browser acceptance
+
+Current open gate: resume the disposable-database real-browser workflow at existing project `PRJ-0006` after a Supervisor closure request was already recorded. Source commits `4258ebb656a3229b84d5d7729868ce92a683f921` and `f7f8bae9753694fd32b7f916443a1f2a8493a3c6` address PM visibility for pending closure review and Supervisor confirmation/toast/scroll behavior. Local PHP lint and browser verification are pending. Read `docs/HR_EMPLOYEE_INCENTIVES_CONTINUATION.md` for the exact acceptance boundary. Do not resubmit the request or touch the live database.
