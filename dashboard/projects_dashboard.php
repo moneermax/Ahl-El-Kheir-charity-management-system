@@ -32,7 +32,27 @@ $assignedProjects=dbFetchAll("SELECT p.id,p.name,p.project_code,COALESCE(l.lifec
 $pendingLabor=dbFetchAll("SELECT lh.id,lh.provider_name,lh.work_description,p.name project_name,lh.status FROM project_labor_helpers lh JOIN other_projects p ON p.id=lh.project_id WHERE lh.supervisor_user_id=? AND BINARY lh.status IN (BINARY 'planned', BINARY 'in_progress') ORDER BY lh.id DESC LIMIT 5",[$uid]);
 }
 include dirname(__DIR__).'/includes/header.php';
+$projectClosureToast = (string)($_SESSION['project_toast_success'] ?? '');
+unset($_SESSION['project_toast_success']);
 ?>
+<?php if ($projectClosureToast !== ''): ?>
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index:1080; direction:rtl;" aria-live="polite" aria-atomic="true">
+    <div id="projectClosureSuccessToast" class="toast text-bg-success border-0" role="status" data-bs-delay="4500" data-bs-autohide="true">
+        <div class="d-flex align-items-center">
+            <div class="toast-body fw-semibold"><i class="fas fa-check-circle me-2" aria-hidden="true"></i><?php echo e($projectClosureToast); ?></div>
+            <button type="button" class="btn-close btn-close-white me-2" data-bs-dismiss="toast" aria-label="إغلاق"></button>
+        </div>
+    </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var toastElement = document.getElementById('projectClosureSuccessToast');
+    if (toastElement && window.bootstrap && bootstrap.Toast) {
+        bootstrap.Toast.getOrCreateInstance(toastElement).show();
+    }
+});
+</script>
+<?php endif; ?>
 <div class="welcome-section fade-in"><h2><?php echo e(t('dashboard.welcome_user',['name'=>$role==='projects_manager'?t('projects.manager'):t('projects.supervisor')])); ?></h2><p><?php echo e(t($role==='projects_manager'?'projects.manager_intro':'projects.supervisor_intro')); ?></p><div class="quick-actions mt-3"><?php if($role==='projects_manager'): ?><a href="<?php echo APP_URL; ?>modules/projects/form.php" class="btn btn-primary btn-sm me-2"><i class="fas fa-plus me-1"></i><?php echo e(t('projects.new')); ?></a><a href="<?php echo APP_URL; ?>modules/projects/index.php" class="btn btn-outline-secondary btn-sm"><i class="fas fa-list me-1"></i><?php echo e(t('projects.portfolio')); ?></a><?php else: ?><a href="<?php echo APP_URL; ?>modules/projects/index.php" class="btn btn-primary btn-sm me-2"><i class="fas fa-folder-open me-1"></i><?php echo e(t('navigation.my_projects')); ?></a><?php endif; ?></div></div>
 <?php include dirname(__DIR__).'/includes/alerts.php'; ?>
 <div class="row g-3 mb-4"><?php if($role==='projects_manager'): ?><?php $cards=[[(int)($stats['total_projects']??0),'projects.total','fa-diagram-project','primary'],[(int)($stats['active_projects']??0),'projects.active','fa-spinner','success'],[(int)($stats['pending_approval']??0),'projects.pending_approval','fa-clock','warning'],[(float)($stats['active_budget']??0),'projects.active_budget','fa-coins','info']]; ?><?php else: ?><?php $cards=[[(int)($stats['assigned_projects']??0),'projects.assigned','fa-folder-open','primary'],[(int)($stats['active_assigned']??0),'projects.active_assigned','fa-play-circle','success'],[(int)($stats['pending_labor']??0),'projects.pending_labor','fa-hard-hat','warning'],[(int)($stats['upcoming_milestones']??0),'projects.upcoming_milestones','fa-flag-checkered','info']]; ?><?php endif; ?><?php foreach($cards as $c): ?><div class="col-md-3"><div class="card fade-in border-<?php echo $c[3]; ?> h-100"><div class="card-body text-center"><i class="fas <?php echo $c[2]; ?> fa-2x text-<?php echo $c[3]; ?> mb-2"></i><h3><?php echo is_float($c[0])?number_format($c[0],0):$c[0]; ?></h3><p class="text-muted mb-0"><?php echo e(t($c[1])); ?></p></div></div></div><?php endforeach; ?></div>
