@@ -1340,38 +1340,6 @@ width: 24%;
 </div>
 </div>
 </div>
-<div class="card mb-4 fade-in">
-<div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
-    <strong><i class="fas fa-users me-2"></i>فريق المشروع</strong>
-    <span class="badge bg-secondary"><?php echo count($team); ?> تعيين نشط</span>
-</div>
-<div class="card-body">
-    <p class="small text-muted">عضوية الفريق منفصلة عن تعيين مشرف المشروع الأساسي. تتم قراءة أعضاء الفريق عند الإغلاق الإداري لتحديد مستحقي حافز إكمال المشروع وفق أهلية الموظف والسياسة الفعالة.</p>
-    <?php if ($team): ?>
-    <div class="table-responsive">
-        <table class="table table-sm table-hover align-middle">
-            <thead><tr><th>المستخدم</th><th>القسم</th><th>تاريخ التعيين</th><th>ملاحظات</th></tr></thead>
-            <tbody>
-            <?php foreach ($team as $teamMember): ?>
-                <tr>
-                    <td><strong><?php echo e($teamMember['full_name']); ?></strong><div class="small text-muted"><?php echo e($teamMember['username']); ?></div></td>
-                    <td><?php echo e($teamSectionLabels[(string)$teamMember['section_code']] ?? (string)$teamMember['section_code']); ?><?php if ((int)$teamMember['is_lead'] === 1): ?> <span class="badge bg-info text-dark">قائد</span><?php endif; ?></td>
-                    <td><?php echo e((string)$teamMember['assigned_at']); ?></td>
-                    <td><?php echo e((string)($teamMember['notes'] ?? '—') ?: '—'); ?></td>
-
-                </tr>
-            <?php endforeach; ?>
-            </tbody>
-        </table>
-    </div>
-    <?php else: ?>
-        <p class="text-muted mb-3">لا توجد تعيينات نشطة لأعضاء الفريق حتى الآن.</p>
-    <?php endif; ?>
-    <?php if ($teamCanManage && $role === 'projects_manager' && in_array($approval['approval_status'], ['draft', 'rejected'], true)): ?>
-        <div class="mt-3"><a class="btn btn-sm btn-outline-primary" href="<?php echo e(APP_URL . 'modules/projects/form.php?id=' . $id); ?>"><i class="fas fa-edit me-1"></i>إدارة الفريق من صفحة تعديل المشروع</a></div>
-    <?php endif; ?>
-</div>
-</div>
 <?php include dirname(__DIR__, 2) . '/includes/alerts.php'; ?>
 
 <?php if ($role === 'financial_manager' && $approval['approval_status'] === 'submitted'): ?>
@@ -1483,6 +1451,36 @@ width: 24%;
 </div>
 </div>
 </div>
+<div class="card mb-4 fade-in">
+<div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <strong><i class="fas fa-users me-2"></i>فريق المشروع</strong>
+    <span class="badge bg-secondary"><?php echo count($team); ?> تعيين نشط</span>
+</div>
+<div class="card-body">
+    <p class="small text-muted">عضوية الفريق منفصلة عن تعيين مشرف المشروع الأساسي. تتم قراءة أعضاء الفريق عند الإغلاق الإداري لتحديد مستحقي حافز إكمال المشروع وفق أهلية الموظف والسياسة الفعالة.</p>
+    <?php if ($team): ?>
+    <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle">
+            <thead><tr><th>المستخدم</th><th>القسم</th><th>تاريخ التعيين</th><th>ملاحظات</th></tr></thead>
+            <tbody>
+            <?php foreach ($team as $teamMember): ?>
+                <tr>
+                    <td><strong><?php echo e($teamMember['full_name']); ?></strong><div class="small text-muted"><?php echo e($teamMember['username']); ?></div></td>
+                    <td><?php echo e($teamSectionLabels[(string)$teamMember['section_code']] ?? (string)$teamMember['section_code']); ?><?php if ((int)$teamMember['is_lead'] === 1): ?> <span class="badge bg-info text-dark">قائد</span><?php endif; ?></td>
+                    <td><?php echo e((string)$teamMember['assigned_at']); ?></td>
+                    <td><?php echo e((string)($teamMember['notes'] ?? '—') ?: '—'); ?></td>
+
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+    <?php else: ?>
+        <p class="text-muted mb-3">لا توجد تعيينات نشطة لأعضاء الفريق حتى الآن.</p>
+    <?php endif; ?>
+</div>
+</div>
+
 <div class="card mb-4 fade-in">
 <div class="card-header"><i class="fas fa-people-group me-2"></i>التنفيذ والشركاء والتوريد</div>
 <div class="card-body">
