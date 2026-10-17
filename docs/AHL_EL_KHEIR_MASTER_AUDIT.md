@@ -3377,3 +3377,15 @@ After the release file was created, process 4528 exited. Independent checks show
 **URL observation:** The test-generated notification row contained `http://localhost/modules/notifications/index.php`. The production dispatcher concatenates `APP_URL` with the inbox path; `config/config.php` computes APP_URL from request variables and the base path from DOCUMENT_ROOT or SCRIPT_NAME. The CLI harness does not seed these web-context variables (other than REQUEST_METHOD), so this row is consistent with CLI APP_URL defaulting to the root localhost URL. This is not evidence by itself of a production browser URL defect. Keep production config unchanged unless a browser-originated workflow demonstrates the wrong link. A future harness refinement can seed representative local web server variables and assert the full app prefix.
 
 The employee-facing notification acceptance gate is CLOSED at the verified boundary. Real-browser PM-to-FM project-closure acceptance remains separate and open; do not infer it from this test.
+
+
+## 2026-10-17 — Latest project financial-closure draft-funding guard verification
+
+User-provided local PHP 8.2 lint output confirms no syntax errors in `modules/projects/project_funding_accounting.php`, `modules/projects/view_fm.php`, and `tools/run_hr_project_incentive_draft_funding_guard_rollback_tests.php`. Latest rollback-only harness output:
+
+```
+PASS | fm_explicit_closure_guard=PASS | automatic_closure_outcomes=PASS | draft_funding_allocation_blocks_processor=PASS | awards_unchanged=PASS | recognition_journals_unchanged=PASS
+PASS | funding_evidence_unchanged=PASS | rollback_cleanup=PASS | project=7 | policy=R5
+```
+
+This confirms the latest shared explicit FM guard and automatic closure decision assertions, alongside processor rejection and preservation/rollback checks, on the disposable incentive test database. It does not exercise the actual browser POST route, and no funding return was posted. Project 7 financial evidence and active policy R5 remain unchanged. The distinct real-browser PM-to-FM project-closure workflow remains open.
