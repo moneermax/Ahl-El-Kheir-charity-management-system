@@ -129,6 +129,7 @@ exit();
 function akp_post_value(string $name, string $default = ''): string {
 return trim((string)($_POST[$name] ?? $default));
 }
+$redirectToProjectsDashboard = false;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 if (!verify_csrf()) {
 flash('error', 'انتهت صلاحية الجلسة.');
@@ -1064,6 +1065,7 @@ ak_transaction_review_notify_event(
 $_SESSION['project_toast_success'] = $controlledBalance > 0.009
     ? 'تم إغلاق المشروع إدارياً وتحويله إلى المدير المالي لإتمام الإغلاق المالي وإرجاع الرصيد المتبقي.'
     : 'تم إغلاق المشروع إدارياً وتحويله إلى المدير المالي لإتمام الإغلاق المالي.';
+$redirectToProjectsDashboard = true;
 } elseif ($action === 'reopen_project') {
 // ... (Original reopen_project logic preserved exactly)
 if ($role !== 'projects_manager') throw new RuntimeException('إعادة فتح المشروع محصورة بمدير المشاريع بعد طلب مشرف المشروع.');
@@ -1093,6 +1095,10 @@ $_SESSION['project_toast_success'] = 'تمت إعادة فتح المشروع و
 }
 } catch (Throwable $e) {
 flash('error', $e->getMessage());
+}
+if (!empty($redirectToProjectsDashboard)) {
+header('Location: ' . APP_URL . 'dashboard/projects_dashboard.php');
+exit();
 }
 akp_redirect_project($id);
 }
@@ -2367,7 +2373,7 @@ document.getElementById('edit-milestone-description').value = button.dataset.mil
 <button type="submit" class="btn btn-warning px-4"><i class="fas fa-rotate-left me-1"></i>إعادة المشروع إلى مشرف المشروع</button>
 </div>
 </form>
-<form method="post">
+<form method="post" onsubmit="return confirm(&quot;هل تؤكد إغلاق المشروع إدارياً؟ سيتم تحويله إلى المدير المالي لاستكمال الإغلاق المالي.&quot;);">
 <input type="hidden" name="action" value="close_project">
 <?php echo csrf_field(); ?>
 <div class="mb-3">
