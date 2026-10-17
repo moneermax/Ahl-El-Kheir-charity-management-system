@@ -2746,9 +2746,7 @@ sessionStorage.setItem(projectScrollKey, String(window.scrollY || window.pageYOf
 });
 } catch (e) {}
 var projectToast = document.getElementById('projectSuccessToast');
-if (projectToast && window.bootstrap && bootstrap.Toast) {
-    bootstrap.Toast.getOrCreateInstance(projectToast, {delay: 4500, autohide: true}).show();
-} else if (projectToast && window.Swal) {
+if (projectToast && window.Swal) {
     var toastMessage = projectToast.querySelector('.toast-body');
     Swal.fire({
         toast: true,
@@ -2759,6 +2757,8 @@ if (projectToast && window.bootstrap && bootstrap.Toast) {
         timer: 4500,
         timerProgressBar: true
     });
+} else if (projectToast && window.bootstrap && bootstrap.Toast) {
+    bootstrap.Toast.getOrCreateInstance(projectToast, {delay: 4500, autohide: true}).show();
 } else if (projectToast) {
     projectToast.classList.add('show');
     projectToast.style.display = 'block';
