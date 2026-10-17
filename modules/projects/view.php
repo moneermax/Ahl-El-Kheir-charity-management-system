@@ -1160,6 +1160,35 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 </div>
 </div>
 <?php endif; ?>
+<?php if ($role === 'project_supervisor'): ?>
+<script>
+/* Supervisor project POSTs must preserve the current viewport and display PRG toast feedback. */
+document.addEventListener('DOMContentLoaded', function () {
+    var projectScrollKey = 'ak_project_view_scroll_' + window.location.pathname + window.location.search;
+    try {
+        history.scrollRestoration = 'manual';
+        var savedScroll = sessionStorage.getItem(projectScrollKey);
+        if (savedScroll !== null) {
+            var scrollY = parseInt(savedScroll, 10);
+            if (!isNaN(scrollY)) {
+                window.scrollTo(0, scrollY);
+                requestAnimationFrame(function () { window.scrollTo(0, scrollY); });
+            }
+            sessionStorage.removeItem(projectScrollKey);
+        }
+        document.querySelectorAll('form[method="post"], form[method="POST"]').forEach(function (form) {
+            form.addEventListener('submit', function () {
+                sessionStorage.setItem(projectScrollKey, String(window.scrollY || window.pageYOffset || 0));
+            });
+        });
+    } catch (e) {}
+    var projectToast = document.getElementById('projectSuccessToast');
+    if (projectToast && window.bootstrap && bootstrap.Toast) {
+        bootstrap.Toast.getOrCreateInstance(projectToast, {delay: 4500, autohide: true}).show();
+    }
+});
+</script>
+<?php endif; ?>
 <style>
 .project-module-page {
 max-width: 1500px;
@@ -2188,7 +2217,7 @@ document.getElementById('edit-milestone-description').value = button.dataset.mil
 <?php endif; ?>
 </div>
 <?php endif; ?>
-<button type="submit" name="action" value="request_project_closure" class="btn btn-dark px-4"><i class="fas fa-paper-plane me-1"></i>إرسال طلب الإغلاق</button>
+<button type="submit" name="action" value="request_project_closure" class="btn btn-dark px-4" onclick="return confirm('هل تؤكد إرسال طلب إغلاق المشروع إلى مدير المشاريع؟');"><i class="fas fa-paper-plane me-1"></i>إرسال طلب الإغلاق</button>
 </form>
 <?php endif; ?>
 </div>
