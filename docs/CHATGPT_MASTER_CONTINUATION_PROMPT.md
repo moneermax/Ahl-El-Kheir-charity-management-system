@@ -897,6 +897,7 @@ The Supervisor already submitted the closure request for disposable test project
 
 Fixes committed on `main`:
 - `4258ebb656a3229b84d5d7729868ce92a683f921` — narrow PM visibility for pending closure review.
-- `f7f8bae9753694fd32b7f916443a1f2a8493a3c6` — Supervisor confirmation prompt, toast initialization, and scroll preservation.
+- `f7f8bae9753694fd32b7f916443a1f2a8493a3c6` — Supervisor confirmation prompt.
+- `ba5ed5cec327e45d396ecbfb333a6c6d27ea5637` — remove duplicate toast/scroll initialization after inspection found the existing shared implementation. The missing-toast/scroll symptom is not yet runtime-verified and must be diagnosed if it persists.
 
 **Next:** pull main locally, lint `modules/projects/project_lib.php` and `modules/projects/view.php`, then browser-test as Supervisor that the confirmation can cancel without submitting and a confirmed request shows a toast without a viewport jump. Log in as PM and verify PRJ-0006 appears and opens with the pending closure-review panel. Do not resubmit the existing request. Continue normal PM administrative closure only if UI guards permit, then FM financial closure through the normal UI, and finally verify the project-completion incentive event/award/payroll/notification on the disposable DB. Do not use `ahl_el_kheir`, invent financial evidence, or bypass closure safeguards. Source fixes are not runtime-verified until those checks pass.
