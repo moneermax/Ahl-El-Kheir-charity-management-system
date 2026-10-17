@@ -1,6 +1,6 @@
--- Durable, idempotent delivery of employee incentive payroll-scheduling notices.
--- The pending outbox row is created in the same transaction as award scheduling.
--- Notification delivery happens after commit and is retried without undoing payroll.
+-- Durable, idempotent delivery of employee incentive earned notices.
+-- The pending outbox row is created in the same transaction as award recognition.
+-- Delivery happens after commit and can be retried without undoing the earned award.
 
 CREATE TABLE IF NOT EXISTS hr_incentive_notification_outbox (
     id INT UNSIGNED NOT NULL AUTO_INCREMENT,
