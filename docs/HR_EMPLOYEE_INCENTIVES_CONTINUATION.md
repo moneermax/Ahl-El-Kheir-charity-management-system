@@ -919,3 +919,18 @@ PASS | funding_evidence_unchanged=PASS | rollback_cleanup=PASS | project=7 | pol
 This closes the latest **source/helper and rollback-harness verification** for explicit FM closure blocking, automatic-closure outcome decisions, processor blocking while a draft allocation exists, unchanged awards/journals/funding evidence, and rollback cleanup. Project 7's financial evidence and active incentive policy R5 remain protected. This is not a real-browser PM-to-FM workflow result, and it does not prove the actual FM POST route or a live funding-return action. Do not post a funding return or modify project 7 to extend testing.
 
 Next open gate: perform the separate real-browser PM → FM project-closure acceptance through the local application at `http://localhost:8081/AhlElKheir/`. Inspect the actual eligible test fixture and current workflow state before taking any action. Never point the browser at live data for disposable acceptance, never change project 7's financial evidence, and do not force the flow through by fabricating funding activity. Record actual UI outcomes and cleanup evidence; stop if a safe eligible test project is not available.
+
+
+## 2026-10-17 — Project closure browser blocker and Supervisor feedback fixes (source committed; local verification pending)
+
+The disposable-database browser acceptance flow reached project `PRJ-0006` (ID 6). The Supervisor's closure request is already recorded; the latest history status is `closure_requested`, approval is `approved`, the project was created by PM user 33, and the audit query found no `FM_CONFIRM_PAYMENT_EVIDENCE` row for project 6. The missing PM portfolio row was caused by `akp_can_view_project()`: PM visibility covered the final FM handoff or the PM's own pre-approval states, but not an approved project awaiting closure review.
+
+Source fix on `main`: pending closure requests are visible to the PM only when approval is `approved`, lifecycle is `under_review`, and the latest project status event is `closure_requested`. Existing closure authorization and financial guards remain in place.
+
+The two deferred Supervisor UX defects were also addressed on `main`: a browser confirmation prompt now guards closure-request submission, and the Supervisor page now initializes its success toast and POST scroll restoration. The existing POST/redirect/GET flow and session toast message are retained.
+
+Commits:
+- `4258ebb656a3229b84d5d7729868ce92a683f921` — PM pending-closure visibility.
+- `f7f8bae9753694fd32b7f916443a1f2a8493a3c6` — Supervisor confirmation, toast, and viewport handling.
+
+**Verification boundary:** these are source-level fixes only. Local PHP lint and real-browser verification have not yet been performed. Pull `main`, lint the two changed PHP files, then resume the existing disposable DB test at project 6 without resubmitting the already-recorded request. Verify PM can see/open the request, the confirmation prompt can cancel safely, a confirmed request displays a toast without jumping to the top, and the PM closure controls still enforce pending-expense/authorization guards. Do not perform administrative or FM financial closure until the normal browser workflow and existing safeguards allow it. Never use live DB `ahl_el_kheir` for this test.
