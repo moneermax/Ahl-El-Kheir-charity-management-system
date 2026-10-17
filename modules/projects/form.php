@@ -1937,6 +1937,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         <span class="badge bg-secondary"><?php echo count($editTeamMembers); ?> تعيين نشط</span>
                     </div>
                     <div class="card-body">
+                        <input type="hidden" name="team_assignment_id" value="">
                         <p class="small text-muted">إدارة أعضاء الفريق منفصلة عن تعيين مشرف المشروع الأساسي. تُقرأ العضويات النشطة عند الإغلاق الإداري لتحديد مستحقي حافز إكمال المشروع.</p>
                         <?php if ($editTeamMembers): ?>
                         <div class="table-responsive mb-3">
@@ -1951,7 +1952,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                         <td><?php echo e((string)($teamMember['notes'] ?? '—') ?: '—'); ?></td>
                                         <?php if ($canManageEditTeam): ?>
                                         <td>
-                                            <button type="submit" name="action" value="edit_unassign_team_member" formnovalidate class="btn btn-sm btn-outline-danger" name="team_assignment_id" data-team-assignment-id="<?php echo (int)$teamMember['id']; ?>" onclick="if (!confirm('هل تريد إنهاء تعيين هذا المستخدم في هذا القسم؟ سيبقى سجل التعيين محفوظاً.')) return false; this.form.querySelector('[name=team_assignment_id]')?.remove(); const field = document.createElement('input'); field.type='hidden'; field.name='team_assignment_id'; field.value=this.dataset.teamAssignmentId; this.form.appendChild(field);"><i class="fas fa-user-minus me-1"></i>إنهاء التعيين</button>
+                                            <button type="submit" name="action" value="edit_unassign_team_member" formnovalidate class="btn btn-sm btn-outline-danger" data-team-assignment-id="<?php echo (int)$teamMember['id']; ?>" onclick="if (!confirm('هل تريد إنهاء تعيين هذا المستخدم في هذا القسم؟ سيبقى سجل التعيين محفوظاً.')) return false; const field = this.form.querySelector('[name=team_assignment_id]'); if (field) field.value = this.dataset.teamAssignmentId;"><i class="fas fa-user-minus me-1"></i>إنهاء التعيين</button>
                                         </td>
                                         <?php endif; ?>
                                     </tr>
