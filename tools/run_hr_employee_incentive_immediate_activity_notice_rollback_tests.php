@@ -99,6 +99,7 @@ try {
     }
 
     foreach ($noticeTypes as $type => [$label, $amountText]) {
+        $previousNoticeId = (int)($pdo->query('SELECT COALESCE(MAX(id), 0) FROM notifications')->fetchColumn() ?: 0);
         hrIncentiveNotifyPendingActivity($pdo, $actorUserId, $type, date('Y-m-d H:i:s'));
         $notice = immediateNoticeOne(
             $pdo,
@@ -110,6 +111,7 @@ try {
         );
         immediateNoticeAssert($notice !== null, "No immediate notification was inserted for {$type}.");
         immediateNoticeAssert(
+            (int)$notice['id'] > $previousNoticeId &&
             (int)$notice['recipient_user_id'] === $actorUserId &&
             $notice['type'] === 'incentive' &&
             str_contains((string)$notice['title'], 'تم تسجيل نشاط مرتبط بحافز') &&
