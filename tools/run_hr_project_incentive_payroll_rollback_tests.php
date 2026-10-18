@@ -608,7 +608,7 @@ try {
 
     echo "PASS | synthetic_project=no_financial_activity | PS_snapshot=PASS | full_policy_amount_per_employee=PASS\n";
     echo "PASS | missing_FM_gate_blocks_award=PASS | FM_gate=PASS | recognition_journal_5500_2400=PASS\n";
-    echo "PASS | project_award_draft_payroll_link=PASS | incentive_total=PASS | net_salary_unchanged=PASS | outbox_pending=PASS\n";
+    echo "PASS | project_award_draft_payroll_link=PASS | incentive_total=PASS | net_salary_unchanged=PASS | outbox_pending=PASS | project_notice_waits_for_FM=PASS\n";
     echo "PASS | rollback_cleanup=PASS | temporary_payroll_rolled_back=" . ($payrollSeed !== null ? 'PASS' : 'NOT_NEEDED') . " | policy=R5 | reward=" . number_format($rewardAmount, 2, '.', '') . " " . strtoupper((string)$policy['currency_code']) . "\n";
 } catch (Throwable $e) {
     if ($pdo->inTransaction()) {
