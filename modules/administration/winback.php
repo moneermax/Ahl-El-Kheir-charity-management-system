@@ -6,6 +6,7 @@ require_once dirname(__DIR__, 2) . '/config/functions.php';
 require_once dirname(__DIR__, 2) . '/config/session.php';
 Session::start();
 require_once __DIR__ . '/lib_winback.php';
+require_once dirname(__DIR__, 2) . '/modules/hr/lib_employee_incentives.php';
 if (!Session::isLoggedIn()) { header('Location: ' . APP_URL . 'index.php'); exit(); }
 $role = Session::getUserRole();
 if (!in_array($role, ['admin', 'general_manager', 'vice_general_manager', 'administration'], true)) {
@@ -110,6 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
                     'reactivation_confirmed_by_user_id' => $result['reactivation_confirmed_by_user_id'],
                     'reactivated_at' => $result['reactivated_at'],
                 ]);
+                try { hrIncentiveNotifyPendingActivity(db(), (int)$result['reactivated_by_user_id'], 'reactivation', (string)$result['reactivated_at']); } catch (Throwable $incentiveNoticeError) { error_log('Immediate reactivation incentive activity notice failed for campaign '.$cid.': '.$incentiveNoticeError->getMessage()); }
                 flash('success', t('تمت إعادة تفعيل الكفيل. أسرته السابقة ستظهر مميزة عند التكليف الجديد.'));
             } else {
                 flash('error', t('لا يمكن إعادة تفعيل هذه المتابعة في حالتها الحالية.'));
