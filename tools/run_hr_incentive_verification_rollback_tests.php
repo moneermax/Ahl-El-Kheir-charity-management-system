@@ -88,7 +88,7 @@ $policy = hrVerificationTestOne(
      FROM hr_incentive_policy_versions pv
      JOIN hr_incentive_policy_rules r ON r.policy_version_id = pv.id
      WHERE pv.status IN ('approved','active','retired')
-       AND r.incentive_type = 'collection'
+       AND r.incentive_type = 'new_sponsor'
        AND r.is_enabled = 1 AND r.reward_amount > 0
        AND UPPER(TRIM(r.currency_code)) = ?
      ORDER BY CASE pv.status WHEN 'active' THEN 0 WHEN 'approved' THEN 1 ELSE 2 END,
@@ -97,7 +97,7 @@ $policy = hrVerificationTestOne(
     [$currency]
 );
 if (!$policy) {
-    hrVerificationTestSkip('No existing eligible collection policy rule matches the system currency; no policy was created or changed.');
+    hrVerificationTestSkip('No existing eligible new-sponsor policy rule matches the system currency; no policy was created or changed.');
 }
 
 $accounts = $pdo->query(
@@ -130,7 +130,7 @@ try {
             (idempotency_key, source_table, source_record_id, incentive_type,
              policy_version_id, occurred_at, source_amount, source_currency_code,
              recipient_user_id, recipient_employee_id, status, created_by_user_id)
-         VALUES (?, 'rollback_test', ?, 'collection', ?, NOW(), 1.00, ?,
+         VALUES (?, 'rollback_test', ?, 'new_sponsor', ?, NOW(), 1.00, ?,
                  ?, ?, 'pending_verification', ?)"
     );
     $insertEvent->execute([
@@ -159,7 +159,7 @@ try {
     hrVerificationTestAssert($event !== null, 'Inserted event could not be reloaded.');
     hrVerificationTestAssert($event['status'] === 'pending_verification', 'Synthetic event did not start pending.');
     hrVerificationTestAssert((int)$event['is_enabled'] === 1 && (float)$event['reward_amount'] > 0, 'Selected policy rule is not eligible.');
-    hrVerificationTestAssert($event['incentive_type'] !== 'project_completion', 'Project completion must remain blocked.');
+    hrVerificationTestAssert($event['incentive_type'] === 'new_sponsor', 'Retained new-sponsor verification fixture was not selected.');
 
     $employee = hrVerificationTestOne(
         $pdo,
