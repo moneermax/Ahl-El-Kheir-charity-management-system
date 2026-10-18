@@ -3510,3 +3510,14 @@ Commits `dd5c072c34dcd40dd8232e8f5df3aeac9b748e30` (include latest active primar
 ### 2026-10-18 — Immediate activity-notice acceptance coverage added; not runtime verified
 
 The helper call sites were source-reviewed in `modules/transactions/create.php` (monthly sponsorship collection), `modules/sponsors/create.php` (active new sponsor), and `modules/administration/winback.php` (recorded reactivation). Commits `69ac7eb1b7da82f7495ea12db71c59b2725c4540` and `bb292f02acfcce504b84e69c1f8179b13332fc63` add a rollback-only helper acceptance harness for those three categories. Assertions cover a newly inserted row, recipient, incentive type, expected reward context, provisional wording, unread state, and rollback cleanup. Local PHP lint and execution against `ahl_el_kheir_incentive_test_20261015_r1` have not yet been performed. This harness tests the shared helper, not the real browser routes; no runtime pass or module closure is claimed.
+
+## 2026-10-18 — Immediate activity-notice helper acceptance passed
+
+Evidence supplied by the user: PHP lint passed for `modules/hr/lib_employee_incentives.php` and `tools/run_hr_employee_incentive_immediate_activity_notice_rollback_tests.php`. Running that harness with process-scoped `AHL_DB_NAME=ahl_el_kheir_incentive_test_20261015_r1` returned:
+
+```text
+PASS | immediate_notice=collection,new_sponsor,reactivation | correct_recipient=PASS
+PASS | provisional_wording=PASS | reward_context=PASS | unread=PASS | rollback_cleanup=PASS
+```
+
+Acceptance conclusion: shared helper runtime behavior and rollback cleanup are verified for collection, new sponsor, and reactivation. The harness calls the helper directly, so real POST-route invocation and browser inbox delivery remain separate acceptance boundaries. No live database, policy R5, payroll, or accounting state was changed by this test.
