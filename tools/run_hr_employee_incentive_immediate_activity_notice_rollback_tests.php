@@ -99,6 +99,7 @@ try {
 
     $previousCollectionNoticeId = (int)($pdo->query('SELECT COALESCE(MAX(id), 0) FROM notifications')->fetchColumn() ?: 0);
     hrIncentiveNotifyPendingActivity($pdo, $actorUserId, 'collection', date('Y-m-d H:i:s'));
+    hrIncentiveNotifyActivityRecorded($pdo, $actorUserId, 'collection', 25.00, $currency);
     $afterCollectionNoticeId = (int)($pdo->query('SELECT COALESCE(MAX(id), 0) FROM notifications')->fetchColumn() ?: 0);
     immediateNoticeAssert($afterCollectionNoticeId === $previousCollectionNoticeId, 'Routine collection still generated a provisional incentive notice.');
 
