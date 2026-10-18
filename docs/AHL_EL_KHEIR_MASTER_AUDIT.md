@@ -3521,3 +3521,10 @@ PASS | provisional_wording=PASS | reward_context=PASS | unread=PASS | rollback_c
 ```
 
 Acceptance conclusion: shared helper runtime behavior and rollback cleanup are verified for collection, new sponsor, and reactivation. The harness calls the helper directly, so real POST-route invocation and browser inbox delivery remain separate acceptance boundaries. No live database, policy R5, payroll, or accounting state was changed by this test.
+
+
+## Deferred development point — collection incentive eligibility (recorded 2026-10-18)
+
+The user raised a business-design concern after the real browser collection submission displayed a provisional “activity linked to an incentive” notice: routine monthly sponsorship collection is ordinary job responsibility and may not merit an additional incentive, especially where the same employee may also qualify for the separate new-sponsor acquisition incentive. Revisit this with the user's forthcoming idea before changing behavior. Candidate recommendation to evaluate later: disable or redesign the collection incentive category and its provisional activity notice, while retaining new-sponsor, reactivation, and project-completion incentives unless the user decides otherwise.
+
+**Deferred, not approved for implementation.** Do not disable the category, change active policy R5, modify existing events/awards, delete notifications, reverse accounting, or change payroll now. Preserve historical evidence. The observed collection notice is provisional and does not prove an award was issued; before describing an employee as having received a new-sponsor incentive, inspect the actual event and award records. Continue the already-open acceptance work without repeating the completed collection/new-sponsor browser submissions or closed helper harness.
