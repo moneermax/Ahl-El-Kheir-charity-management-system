@@ -363,21 +363,8 @@ try {
         [$supervisorUserId]
     );
     hrProjectIncentiveSuccessAssert(
-        $incentiveNotificationCountAfterSnapshot === $incentiveNotificationCountBefore + 1,
-        'Employee did not receive an immediate in-transaction qualifying-activity notice at PM closure.'
-    );
-    $activityNotice = hrProjectIncentiveSuccessOne(
-        $pdo,
-        "SELECT title, body FROM notifications
-         WHERE recipient_user_id = ? AND type = 'incentive'
-         ORDER BY id DESC LIMIT 1",
-        [$supervisorUserId]
-    );
-    hrProjectIncentiveSuccessAssert(
-        $activityNotice
-        && strpos((string)$activityNotice['body'], 'ينتظر الاستحقاق الإغلاق المالي النهائي') !== false
-        && strpos((string)$activityNotice['body'], 'ولا يعني أن الحافز اعتُمد نهائياً أو صُرف') !== false,
-        'Immediate project activity notice does not clearly explain the pending FM gate and unpaid state.'
+        $incentiveNotificationCountAfterSnapshot === $incentiveNotificationCountBefore,
+        'Project-completion notification was sent at PM administrative closure before FM final financial closure.'
     );
 
     $allocationRows = hrProjectIncentiveSuccessCount(
@@ -431,6 +418,27 @@ try {
 
     $processed = hrIncentiveProcessProjectCompletion($pdo, $projectId, 0.00, $actorId);
     hrProjectIncentiveSuccessAssert($processed === $allocationRows, 'Processor did not award every closure-time allocation.');
+
+    $pendingProjectNotices = hrProjectIncentiveSuccessCount(
+        $pdo,
+        "SELECT COUNT(*)
+         FROM hr_incentive_notification_outbox o
+         JOIN hr_incentive_awards a ON a.id = o.award_id
+         WHERE a.event_id = ? AND o.recipient_user_id = ? AND o.status = 'pending'",
+        [$eventId, $supervisorUserId]
+    );
+    hrProjectIncentiveSuccessAssert(
+        $pendingProjectNotices === $allocationRows,
+        'FM-gated award recognition did not queue one pending earned notice per eligible project recipient.'
+    );
+    hrProjectIncentiveSuccessAssert(
+        hrProjectIncentiveSuccessCount(
+            $pdo,
+            "SELECT COUNT(*) FROM notifications WHERE recipient_user_id = ? AND type = 'incentive'",
+            [$supervisorUserId]
+        ) === $incentiveNotificationCountBefore,
+        'Project earned notice was delivered before the surrounding FM closure transaction committed.'
+    );
 
     $event = hrProjectIncentiveSuccessOne(
         $pdo,
@@ -600,7 +608,7 @@ try {
 
     echo "PASS | synthetic_project=no_financial_activity | PS_snapshot=PASS | full_policy_amount_per_employee=PASS\n";
     echo "PASS | missing_FM_gate_blocks_award=PASS | FM_gate=PASS | recognition_journal_5500_2400=PASS\n";
-    echo "PASS | project_award_draft_payroll_link=PASS | incentive_total=PASS | net_salary_unchanged=PASS | outbox_pending=PASS\n";
+    echo "PASS | project_award_draft_payroll_link=PASS | incentive_total=PASS | net_salary_unchanged=PASS | outbox_pending=PASS | project_notice_waits_for_FM=PASS\n";
     echo "PASS | rollback_cleanup=PASS | temporary_payroll_rolled_back=" . ($payrollSeed !== null ? 'PASS' : 'NOT_NEEDED') . " | policy=R5 | reward=" . number_format($rewardAmount, 2, '.', '') . " " . strtoupper((string)$policy['currency_code']) . "\n";
 } catch (Throwable $e) {
     if ($pdo->inTransaction()) {

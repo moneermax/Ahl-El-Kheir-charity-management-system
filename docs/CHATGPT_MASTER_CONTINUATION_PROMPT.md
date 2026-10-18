@@ -985,3 +985,8 @@ Latest implementation commits: `77da80e0`, `895b4ba2`, `6ccd172a`, `a3b6130b`, `
 
 
 Latest immediate-notice wording clarification commit: `c0316a4d47b708dedd37e74da8ac2d884b840dff`. The early message describes a recorded activity and expected incentive, not final earned/paid status.
+
+
+## 2026-10-18 — Project incentive notice continuation
+
+Current open work: verify the correction that employee project-completion notices wait for FM final financial closure. On `main`, commit `28578e3c9088fe8efdfccc671e1e2e7e7b99721f` removed the provisional notification from the PM closure snapshot; commit `2a1d7b05e899582e40a6a0e864159914cc09b8e7` updates the rollback-only harness. These are not yet locally linted/runtime-verified. Pull `main` without overwriting local changes, lint `modules/hr/lib_employee_incentives.php` and `tools/run_hr_project_incentive_payroll_rollback_tests.php`, then run the harness with `AHL_DB_NAME=ahl_el_kheir_incentive_test_20261015_r1`. Do not run FM final closure on PRJ-0024 until the harness passes; it is already administratively closed, so do not close/reopen it again. Keep R5 unchanged and do not use `ahl_el_kheir_production_test`.
