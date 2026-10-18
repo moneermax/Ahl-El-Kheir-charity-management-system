@@ -982,3 +982,6 @@ Awards 14 and 15 already have sent outbox rows and existing notifications 212/21
 ### 2026-10-18 — Employee incentive immediate-notification requirement
 
 Active work: notify employees immediately when a qualifying activity is recorded, before later FM/higher-management approval gates. Notices must say the activity is recorded and the incentive remains pending the existing verification/financial conditions; final earned and paid notices remain separate. Implementation commits: `77da80e0`, `895b4ba2`, `6ccd172a`, `a3b6130b`, `04418b2f`, `50c43398`. Runtime acceptance is pending: lint, the modified rollback-only project harness, and browser inbox verification on existing disposable DB `ahl_el_kheir_incentive_test_20261015_r1`. Do not create a database or touch live payroll/financial data.
+
+
+Latest immediate-notice wording clarification commit: `c0316a4d47b708dedd37e74da8ac2d884b840dff`. The early message describes a recorded activity and expected incentive, not final earned/paid status.
