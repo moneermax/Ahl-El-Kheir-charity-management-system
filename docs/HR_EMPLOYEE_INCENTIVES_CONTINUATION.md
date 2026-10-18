@@ -1115,3 +1115,10 @@ PASS | provisional_wording=PASS | reward_context=PASS | unread=PASS | rollback_c
 ```
 
 The test created and checked new unread provisional notices for collection, new sponsor, and reactivation, confirmed reward context and explicit not-finally-approved/not-paid wording, then verified rollback cleanup. **Closed:** helper-level acceptance for these three notice categories. **Still open:** proof of the real business POST call sites and browser inbox rendering; the helper test is not route/browser simulation. Preserve R5 and use only `ahl_el_kheir_incentive_test_20261015_r1` for synthetic tests. Do not repeat already-closed new-sponsor first-payment or other suites without regression evidence.
+
+
+## Deferred development point — collection incentive eligibility (recorded 2026-10-18)
+
+The user raised a business-design concern after the real browser collection submission displayed a provisional “activity linked to an incentive” notice: routine monthly sponsorship collection is ordinary job responsibility and may not merit an additional incentive, especially where the same employee may also qualify for the separate new-sponsor acquisition incentive. Revisit this with the user's forthcoming idea before changing behavior. Candidate recommendation to evaluate later: disable or redesign the collection incentive category and its provisional activity notice, while retaining new-sponsor, reactivation, and project-completion incentives unless the user decides otherwise.
+
+**Deferred, not approved for implementation.** Do not disable the category, change active policy R5, modify existing events/awards, delete notifications, reverse accounting, or change payroll now. Preserve historical evidence. The observed collection notice is provisional and does not prove an award was issued; before describing an employee as having received a new-sponsor incentive, inspect the actual event and award records. Continue the already-open acceptance work without repeating the completed collection/new-sponsor browser submissions or closed helper harness.
