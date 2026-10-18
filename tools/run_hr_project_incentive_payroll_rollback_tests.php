@@ -263,6 +263,7 @@ $eventId = 0;
 $awardIds = [];
 $journalIds = [];
 $allocationCount = 0;
+$incentiveNotificationCountBefore = 0;
 $rewardAmount = round((float)$policy['reward_amount'], 2);
 
 try {
@@ -348,8 +349,36 @@ try {
         "UPDATE other_projects SET status = 'completed', updated_by = ? WHERE id = ?"
     )->execute([$actorId, $projectId]);
 
+    $incentiveNotificationCountBefore = hrProjectIncentiveSuccessCount(
+        $pdo,
+        "SELECT COUNT(*) FROM notifications WHERE recipient_user_id = ? AND type = 'incentive'",
+        [$supervisorUserId]
+    );
     $eventId = hrIncentivePrepareProjectCompletion($pdo, $projectId, $actorId);
     hrProjectIncentiveSuccessAssert($eventId > 0, 'Project completion event was not created.');
+
+    $incentiveNotificationCountAfterSnapshot = hrProjectIncentiveSuccessCount(
+        $pdo,
+        "SELECT COUNT(*) FROM notifications WHERE recipient_user_id = ? AND type = 'incentive'",
+        [$supervisorUserId]
+    );
+    hrProjectIncentiveSuccessAssert(
+        $incentiveNotificationCountAfterSnapshot === $incentiveNotificationCountBefore + 1,
+        'Employee did not receive an immediate in-transaction qualifying-activity notice at PM closure.'
+    );
+    $activityNotice = hrProjectIncentiveSuccessOne(
+        $pdo,
+        "SELECT title, body FROM notifications
+         WHERE recipient_user_id = ? AND type = 'incentive'
+         ORDER BY id DESC LIMIT 1",
+        [$supervisorUserId]
+    );
+    hrProjectIncentiveSuccessAssert(
+        $activityNotice
+        && strpos((string)$activityNotice['body'], 'ينتظر الاستحقاق الإغلاق المالي النهائي') !== false
+        && strpos((string)$activityNotice['body'], 'ولا يعني أن الحافز اعتُمد نهائياً أو صُرف') !== false,
+        'Immediate project activity notice does not clearly explain the pending FM gate and unpaid state.'
+    );
 
     $allocationRows = hrProjectIncentiveSuccessCount(
         $pdo,
@@ -539,6 +568,14 @@ try {
     hrProjectIncentiveSuccessAssert(
         hrProjectIncentiveSuccessCount($pdo, "SELECT COUNT(*) FROM hr_incentive_events WHERE id = ?", [$eventId]) === 0,
         'Rollback left the incentive event behind.'
+    );
+    hrProjectIncentiveSuccessAssert(
+        hrProjectIncentiveSuccessCount(
+            $pdo,
+            "SELECT COUNT(*) FROM notifications WHERE recipient_user_id = ? AND type = 'incentive'",
+            [$supervisorUserId]
+        ) === $incentiveNotificationCountBefore,
+        'Rollback left the immediate incentive activity notice behind.'
     );
     foreach ($awardIds as $awardId) {
         hrProjectIncentiveSuccessAssert(
