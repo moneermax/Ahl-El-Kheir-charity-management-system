@@ -810,14 +810,14 @@ function hrIncentiveNotifyActivityRecorded(
     ];
     $title = 'تم تسجيل إنجاز مؤهل لحافز';
     $amountText = number_format($amount, 2, '.', ',') . ' ' . strtoupper(trim($currency));
-    if ($awaitingFinancialClosure) {
+    if ($incentiveType === 'project_completion') {
         $body = 'تم تسجيل مشاركتك المؤهلة في ' . $labels[$incentiveType]
             . ' بقيمة حافز متوقعة ' . $amountText
             . '. ينتظر الاستحقاق الإغلاق المالي النهائي والتحقق المطلوب. أرسلنا لك هذا الإشعار فور تسجيل الإنجاز؛ ولا يعني أن الحافز اعتُمد نهائياً أو صُرف.';
     } else {
         $body = 'تم تسجيل ' . $labels[$incentiveType]
             . ' مرتبط بإنجازك وقيمته وفق السياسة ' . $amountText
-            . '. ينتظر الاستحقاق التحقق المطلوب قبل تأكيده. أرسلنا لك هذا الإشعار فور تسجيل الإنجاز؛ ولا يعني أن الحافز اعتُمد نهائياً أو صُرف.';
+            . '. ينتظر الاستحقاق التحقق المالي من العملية والتحقق المطلوب قبل تأكيده. أرسلنا لك هذا الإشعار فور تسجيل الإنجاز؛ ولا يعني أن الحافز اعتُمد نهائياً أو صُرف.';
     }
 
     $stmt = $pdo->prepare(
@@ -826,6 +826,54 @@ function hrIncentiveNotifyActivityRecorded(
          VALUES (?, 'incentive', ?, ?, ?, 0, NOW())"
     );
     $stmt->execute([$recipientUserId, $title, $body, APP_URL . 'modules/notifications/index.php']);
+}
+
+/**
+ * Notify the employee as soon as the qualifying activity is recorded, without
+ * waiting for the later financial/management gate. This notice is provisional;
+ * the existing qualification and award-recognition controls remain authoritative.
+ */
+function hrIncentiveNotifyPendingActivity(
+    PDO $pdo,
+    int $recipientUserId,
+    string $incentiveType,
+    string $occurredAt
+): void {
+    if ($recipientUserId <= 0
+        || !in_array($incentiveType, ['collection', 'new_sponsor', 'reactivation'], true)
+        || hrIncentiveEmployeeIdForUser($pdo, $recipientUserId) <= 0) {
+        return;
+    }
+
+    $policyStmt = $pdo->prepare(
+        "SELECT r.reward_amount, r.currency_code
+         FROM hr_incentive_policy_versions p
+         JOIN hr_incentive_policy_rules r ON r.policy_version_id = p.id
+         JOIN hr_incentive_types t ON t.type_code = r.incentive_type
+         WHERE p.status = 'active'
+           AND p.effective_from <= DATE(?)
+           AND (p.effective_to IS NULL OR p.effective_to >= DATE(?))
+           AND r.incentive_type = ?
+           AND r.is_enabled = 1
+           AND t.is_active = 1
+           AND t.qualification_mode = 'source_event'
+         ORDER BY p.effective_from DESC, p.version_no DESC
+         LIMIT 1"
+    );
+    $policyStmt->execute([$occurredAt, $occurredAt, $incentiveType]);
+    $rule = $policyStmt->fetch(PDO::FETCH_ASSOC);
+    if (!$rule || (float)$rule['reward_amount'] <= 0) {
+        return;
+    }
+
+    hrIncentiveNotifyActivityRecorded(
+        $pdo,
+        $recipientUserId,
+        $incentiveType,
+        (float)$rule['reward_amount'],
+        strtoupper(trim((string)$rule['currency_code'])),
+        false
+    );
 }
 
 /**
@@ -928,27 +976,7 @@ function hrIncentiveRecordSourceEvent(
             ($recipientEmployeeId !== null && $recipientEmployeeId > 0) ? $recipientEmployeeId : null,
             $createdByUserId > 0 ? $createdByUserId : null,
         ]);
-        $eventId = (int)$pdo->lastInsertId();
-        if ($hasRecipientUser && $sourceAmount !== null && $currency !== null) {
-            $ruleAmountStmt = $pdo->prepare(
-                "SELECT reward_amount, currency_code
-                 FROM hr_incentive_policy_rules
-                 WHERE policy_version_id = ? AND incentive_type = ?
-                 LIMIT 1"
-            );
-            $ruleAmountStmt->execute([$policyVersionId, $incentiveType]);
-            $ruleAmount = $ruleAmountStmt->fetch(PDO::FETCH_ASSOC);
-            if ($ruleAmount) {
-                hrIncentiveNotifyActivityRecorded(
-                    $pdo,
-                    (int)$recipientUserId,
-                    $incentiveType,
-                    (float)$ruleAmount['reward_amount'],
-                    strtoupper(trim((string)$ruleAmount['currency_code']))
-                );
-            }
-        }
-        return $eventId;
+        return (int)$pdo->lastInsertId();
     } catch (PDOException $e) {
         $duplicate = (string)$e->getCode() === '23000'
             && (stripos($e->getMessage(), 'uq_hr_incentive_event_idempotency') !== false
