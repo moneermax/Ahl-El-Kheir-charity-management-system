@@ -3228,3 +3228,14 @@ A disposable-DB acceptance case found that PRJ-0024 had an active eligible Proje
 ### 2026-10-18 — Immediate incentive activity-notice acceptance harness (runtime pending)
 
 Commits `69ac7eb1b7da82f7495ea12db71c59b2725c4540` and `bb292f02acfcce504b84e69c1f8179b13332fc63` add/tighten `tools/run_hr_employee_incentive_immediate_activity_notice_rollback_tests.php`. It exercises the shared provisional-notice helper for collection, new-sponsor, and reactivation categories and checks new row creation, intended recipient, expected reward context, provisional/no-final-approval-or-payment wording, unread state, and rollback cleanup. Source inspection confirms the corresponding call sites in collection submission, active sponsor creation, and win-back reactivation. PHP lint and runtime execution on disposable DB `ahl_el_kheir_incentive_test_20261015_r1` remain pending. This is not yet runtime acceptance and does not simulate the actual business POST routes. Preserve active R5 and avoid live financial data.
+
+## 2026-10-18 — Immediate activity-notice helper acceptance passed
+
+The user ran PHP lint for `modules/hr/lib_employee_incentives.php` and `tools/run_hr_employee_incentive_immediate_activity_notice_rollback_tests.php`; both reported no syntax errors. On the existing disposable database `ahl_el_kheir_incentive_test_20261015_r1`, the rollback-only harness passed:
+
+```text
+PASS | immediate_notice=collection,new_sponsor,reactivation | correct_recipient=PASS
+PASS | provisional_wording=PASS | reward_context=PASS | unread=PASS | rollback_cleanup=PASS
+```
+
+The shared helper creates a new unread provisional notice for each tested activity type, includes expected reward context, and rollback removes the temporary policy/notifications. This is helper-level runtime evidence, not proof that each real business POST route calls it correctly or that the browser inbox renders the notice. Keep employee notification browser acceptance and other documented incentive UI acceptance gates open. Active R5 and live payroll/accounting were not changed.
