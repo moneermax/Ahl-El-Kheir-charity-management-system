@@ -793,7 +793,8 @@ function hrIncentiveNotifyActivityRecorded(
     string $incentiveType,
     float $amount,
     string $currency,
-    bool $awaitingFinancialClosure = false
+    bool $awaitingFinancialClosure = false,
+    bool $throwOnFailure = false
 ): void {
     if ($recipientUserId <= 0 || !in_array($incentiveType, ['collection', 'new_sponsor', 'reactivation', 'project_completion'], true)) {
         return;
@@ -829,6 +830,9 @@ function hrIncentiveNotifyActivityRecorded(
         $stmt->execute([$recipientUserId, $title, $body, APP_URL . 'modules/notifications/index.php']);
     } catch (Throwable $notificationError) {
         error_log('Immediate incentive activity notification insert failed for user ' . $recipientUserId . ': ' . $notificationError->getMessage());
+        if ($throwOnFailure) {
+            throw $notificationError;
+        }
     }
 }
 
@@ -1041,10 +1045,9 @@ function hrIncentivePrepareProjectCompletion(PDO $pdo, int $projectId, int $acto
             $actorUserId
         );
         if ($eventId <= 0) {
-            if ($startedHere) {
-                $pdo->commit();
-            }
-            return 0;
+            throw new RuntimeException(
+                'لا يمكن إغلاق المشروع قبل تسجيل حدث الحافز؛ لا توجد سياسة فعالة ومفعلة لحافز إكمال المشروع في تاريخ الإغلاق.'
+            );
         }
 
         $eventStmt = $pdo->prepare(
@@ -1128,6 +1131,7 @@ function hrIncentivePrepareProjectCompletion(PDO $pdo, int $projectId, int $acto
                     'project_completion',
                     (float)$rule['reward_amount'],
                     strtoupper(trim((string)$rule['currency_code'])),
+                    true,
                     true
                 );
             }
