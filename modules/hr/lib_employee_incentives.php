@@ -848,7 +848,7 @@ function hrIncentiveNotifyPendingActivity(
     string $occurredAt
 ): void {
     if ($recipientUserId <= 0
-        || !in_array($incentiveType, ['collection', 'new_sponsor', 'reactivation'], true)
+        || !in_array($incentiveType, ['new_sponsor', 'reactivation'], true)
         || hrIncentiveEmployeeIdForUser($pdo, $recipientUserId) <= 0) {
         return;
     }
@@ -904,7 +904,6 @@ function hrIncentiveRecordSourceEvent(
     ?int $recipientEmployeeId = null
 ): int {
     $allowedSources = [
-        'collection' => 'sponsor_payments',
         'new_sponsor' => 'sponsor_payments',
         'reactivation' => 'sponsor_payments',
         'project_completion' => 'project_lifecycle',
