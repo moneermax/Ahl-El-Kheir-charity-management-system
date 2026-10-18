@@ -1004,3 +1004,14 @@ Active task: verify the project-completion incentive recipient snapshot correcti
 ## Active acceptance gate — immediate incentive activity notifications (2026-10-18)
 
 Source review confirms helper call sites for monthly collection submission (`modules/transactions/create.php`), active new sponsor creation (`modules/sponsors/create.php`), and recorded reactivation (`modules/administration/winback.php`). New rollback-only harness `tools/run_hr_employee_incentive_immediate_activity_notice_rollback_tests.php` was added in commits `69ac7eb1b7da82f7495ea12db71c59b2725c4540` and `bb292f02acfcce504b84e69c1f8179b13332fc63`. It asserts new notification row, intended employee recipient, expected reward context, provisional wording that does not claim final approval/payment, unread state, and rollback cleanup for all three types. **Next step: sync `main`, lint the harness and incentive helper, then execute the harness only against `ahl_el_kheir_incentive_test_20261015_r1`.** Runtime results are pending. The helper harness does not execute the actual collection/sponsor/reactivation POST routes, so report that limitation. Do not modify active R5, live payroll/accounting, or projects 6/7; do not reopen completed project investigations.
+
+## 2026-10-18 — Immediate activity-notice helper acceptance passed
+
+The user synced `main`; the working tree was clean before pull. Both PHP lint checks passed for `modules/hr/lib_employee_incentives.php` and `tools/run_hr_employee_incentive_immediate_activity_notice_rollback_tests.php`. The rollback-only harness against `ahl_el_kheir_incentive_test_20261015_r1` passed with exact results:
+
+```text
+PASS | immediate_notice=collection,new_sponsor,reactivation | correct_recipient=PASS
+PASS | provisional_wording=PASS | reward_context=PASS | unread=PASS | rollback_cleanup=PASS
+```
+
+The immediate activity-notice shared-helper gate is closed. Do not claim the real collection/sponsor/reactivation POST routes or browser inbox are verified by this harness. Continue only with the remaining documented incentive notification/UI acceptance gates; preserve active R5 and do not test against live financial data or repeat already-closed suites.
