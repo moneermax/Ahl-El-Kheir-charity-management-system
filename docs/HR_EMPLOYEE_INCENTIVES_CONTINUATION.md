@@ -1024,7 +1024,7 @@ Implementation committed on `main`:
 - `6ccd172a70251deca4c55ee55b743035d56ca637`: notify the collector immediately when a monthly sponsorship collection is submitted, before FM approval.
 - `a3b6130b5808b49775e266d52ed2826b1215cd2c`: notify an eligible recorded sponsor bringer immediately when an active new sponsor is created, before first-payment confirmation.
 - `04418b2f5da481993d0c1768b6981645ff24a2ac`: notify the recorded reactivator immediately when reactivation is durably recorded, before first-payment confirmation.
-- `50c433984b97bedee37c3bf22fa3b47fca5c58c5`: isolate notice-insert failure from the underlying business workflow and log the error.
+- `50c433984b97bedee37c3bf22fa3b47fca5c58c5; `c0316a4d47b708dedd37e74da8ac2d884b840dff` (clarify notices are provisional activity updates)`: isolate notice-insert failure from the underlying business workflow and log the error.
 
 Project-completion activity notice is created transactionally with the PM closure-time eligible-team snapshot; its wording explicitly says final FM financial closure and verification remain outstanding. The later earned notice remains a separate message emitted when the award is recognized. No policy, R5, payroll, award status, or accounting gate was weakened.
 
