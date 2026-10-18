@@ -1104,3 +1104,14 @@ The separate-supervisor regression is now covered by the updated project-complet
 ## 2026-10-18 — Immediate activity-notice helper acceptance harness added (runtime pending)
 
 Source inspection confirms the immediate provisional-notice helper is called from monthly sponsorship collection submission (`modules/transactions/create.php`), active sponsor creation (`modules/sponsors/create.php`), and win-back reactivation (`modules/administration/winback.php`). Commits `69ac7eb1b7da82f7495ea12db71c59b2725c4540` and `bb292f02acfcce504b84e69c1f8179b13332fc63` add `tools/run_hr_employee_incentive_immediate_activity_notice_rollback_tests.php`. In one outer transaction, it creates a temporary active policy with the three source-event rules, calls the shared notification helper for each category, verifies that each call inserts a new unread notification for the intended employee with the expected activity/reward and explicit provisional wording, then rolls back and checks cleanup. **This is source/test-harness work only so far: local PHP lint and disposable-DB execution are pending.** It does not simulate the real business POST routes or browser inbox. Next: sync `main`, lint the helper and new harness, then run the harness only with process-scoped `AHL_DB_NAME=ahl_el_kheir_incentive_test_20261015_r1`. Keep R5 unchanged. Do not repeat the already verified new-sponsor first-payment test without regression evidence.
+
+## 2026-10-18 — Immediate activity-notice helper acceptance passed
+
+**Runtime evidence:** the user synced `main`; PHP lint passed for `modules/hr/lib_employee_incentives.php` and `tools/run_hr_employee_incentive_immediate_activity_notice_rollback_tests.php`. With process-scoped `AHL_DB_NAME=ahl_el_kheir_incentive_test_20261015_r1`, the rollback-only test returned:
+
+```text
+PASS | immediate_notice=collection,new_sponsor,reactivation | correct_recipient=PASS
+PASS | provisional_wording=PASS | reward_context=PASS | unread=PASS | rollback_cleanup=PASS
+```
+
+The test created and checked new unread provisional notices for collection, new sponsor, and reactivation, confirmed reward context and explicit not-finally-approved/not-paid wording, then verified rollback cleanup. **Closed:** helper-level acceptance for these three notice categories. **Still open:** proof of the real business POST call sites and browser inbox rendering; the helper test is not route/browser simulation. Preserve R5 and use only `ahl_el_kheir_incentive_test_20261015_r1` for synthetic tests. Do not repeat already-closed new-sponsor first-payment or other suites without regression evidence.
