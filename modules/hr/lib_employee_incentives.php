@@ -1004,8 +1004,9 @@ function hrIncentiveRecordSourceEvent(
 
 
 /**
- * Snapshot eligible active project-team employees when PM administrative closure
- * is durable. Each eligible employee receives the full policy amount; allocations
+ * Snapshot eligible active project-team members plus the separately assigned
+ * primary Project Supervisor when PM administrative closure is durable. Each eligible
+ * employee receives the full policy amount; allocations
  * are not a shared pool and carry no fabricated human-approval metadata.
  */
 function hrIncentivePrepareProjectCompletion(PDO $pdo, int $projectId, int $actorUserId = 0): int
@@ -1080,13 +1081,28 @@ function hrIncentivePrepareProjectCompletion(PDO $pdo, int $projectId, int $acto
                 throw new RuntimeException('قاعدة حافز إكمال المشروع غير مفعلة أو مبلغها غير صالح.');
             }
 
+            // The primary Project Supervisor is stored separately from project_team.
+            // Use the latest active supervisor assignment, matching the Projects UI,
+            // and UNION it with active team members so a person assigned through both
+            // paths receives one allocation only.
             $teamStmt = $pdo->prepare(
-                "SELECT DISTINCT pt.user_id
-                 FROM project_team pt
-                 WHERE pt.project_id = ? AND pt.unassigned_at IS NULL
-                 ORDER BY pt.user_id"
+                "SELECT recipients.user_id
+                 FROM (
+                     SELECT pt.user_id
+                     FROM project_team pt
+                     WHERE pt.project_id = ? AND pt.unassigned_at IS NULL
+                     UNION
+                     SELECT psa.supervisor_user_id AS user_id
+                     FROM project_supervisor_assignments psa
+                     WHERE psa.id = (
+                         SELECT MAX(psa2.id)
+                         FROM project_supervisor_assignments psa2
+                         WHERE psa2.project_id = ? AND psa2.ended_at IS NULL
+                     )
+                 ) recipients
+                 ORDER BY recipients.user_id"
             );
-            $teamStmt->execute([$projectId]);
+            $teamStmt->execute([$projectId, $projectId]);
             $insertAllocation = $pdo->prepare(
                 "INSERT INTO hr_incentive_project_allocations
                     (event_id, employee_id, recipient_user_id, allocation_percent,
