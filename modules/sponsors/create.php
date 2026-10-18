@@ -3,6 +3,7 @@ require_once dirname(__DIR__, 2) . '/config/config.php';
 require_once dirname(__DIR__, 2) . '/config/database.php';
 require_once dirname(__DIR__, 2) . '/config/functions.php';
 require_once dirname(__DIR__, 2) . '/config/session.php';
+require_once dirname(__DIR__, 2) . '/modules/hr/lib_employee_incentives.php';
 require_once dirname(__DIR__, 2) . '/config/sponsor_assignments.php';
 Session::start();
 if (!Session::isLoggedIn()) { header('Location: ' . APP_URL . 'index.php'); exit(); }
@@ -19,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $letterId=$letterMap[$norm]??null;
         $n=(int)(dbFetchOne("SELECT COUNT(*) c FROM sponsors")['c']??0)+1; $code='SP-'.str_pad((string)$n,6,'0',STR_PAD_LEFT);
         dbExecute("INSERT INTO sponsors (full_name, first_letter_raw, first_letter_id, phone, phone_purpose, alt_phone, alt_phone_purpose, email, address, sponsor_type, gender, preferred_payment_method, status, notes, created_by, brought_by_user_id, sponsor_code, supervisor_id, assigned_by, assigned_at, desired_orphans, is_manual_override, acquisition_source, brought_by_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, 0, ?, ?)",[$input['full_name'],$raw,$letterId,$input['phone']!==''?$input['phone']:null,$input['phone_purpose'],$input['alt_phone']!==''?$input['alt_phone']:null,$input['alt_phone_purpose'],$input['email']!==''?$input['email']:null,$input['address']!==''?$input['address']:null,$input['sponsor_type'],$input['gender'],$input['payment'],$input['status'],$input['notes']!==''?$input['notes']:null,Session::getUserId(),Session::getUserId(),$code,$supId,Session::getUserId(),$input['desired_orphans']!==''?(int)$input['desired_orphans']:null,$input['acquisition_source']!==''?$input['acquisition_source']:null,$input['brought_by_name']!==''?$input['brought_by_name']:null]);
-        $newId=(int)dbLastInsertId(); if ($supId) ensureActiveSponsorAssignmentHistory($newId, $supId, Session::getUserId()); flash('success',t('sponsors.create_success',['name'=>$input['full_name'],'code'=>$code])); header('Location: '.APP_URL.'modules/sponsors/view.php?id='.$newId); exit();
+        $newId=(int)dbLastInsertId(); if ($supId) ensureActiveSponsorAssignmentHistory($newId, $supId, Session::getUserId()); if ($input['status']==='active') { try { hrIncentiveNotifyPendingActivity(db(), (int)Session::getUserId(), 'new_sponsor', date('Y-m-d H:i:s')); } catch (Throwable $incentiveNoticeError) { error_log('Immediate new-sponsor incentive activity notice failed for sponsor '.$newId.': '.$incentiveNoticeError->getMessage()); } } flash('success',t('sponsors.create_success',['name'=>$input['full_name'],'code'=>$code])); header('Location: '.APP_URL.'modules/sponsors/view.php?id='.$newId); exit();
     }
 }
 include dirname(__DIR__,2).'/includes/header.php'; ?>
