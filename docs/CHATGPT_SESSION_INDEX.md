@@ -985,3 +985,8 @@ Active work: notify employees immediately when a qualifying activity is recorded
 
 
 Latest immediate-notice wording clarification commit: `c0316a4d47b708dedd37e74da8ac2d884b840dff`. The early message describes a recorded activity and expected incentive, not final earned/paid status.
+
+
+## 2026-10-18 — Incentive project-notification timing
+
+The current incentive task is to ensure project-completion employee notices are sent only after FM final financial closure. Commits `28578e3c9088fe8efdfccc671e1e2e7e7b99721f` and `2a1d7b05e899582e40a6a0e864159914cc09b8e7` remove the early PM-closure notice and add rollback-harness assertions for the PM/FM boundary. Source-level only; local PHP lint and the targeted rollback-only harness have not yet been rerun. Use only `ahl_el_kheir_incentive_test_20261015_r1`; PRJ-0024 is already administratively closed and must not be closed/reopened again for testing.
