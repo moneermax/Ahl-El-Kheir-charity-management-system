@@ -1012,3 +1012,20 @@ The notice now says the employee has earned the reward, that it will be included
 Awards 14 and 15 already have sent outbox rows and existing notifications 212/213. They were not rewritten, resent, or backfilled; the October 2026 payroll drafts remain untouched and unpaid. Active policy R5 remains unchanged. Arabic appearing as `???` in prior SQL-console output is not proof of stored-text corruption and remains a separate encoding check.
 
 **Verification status: source committed; local PHP lint and fresh-award runtime/browser acceptance are pending.** After pulling `main`, lint `modules\\hr\\lib_employee_incentives.php`. Verify the next safe, new project-completion award through the normal workflow on `ahl_el_kheir_incentive_test_20261015_r1`: the outbox/employee notice must be created after recognition commits even before payroll linkage, retries must not duplicate it, and the employee inbox must show the earned-not-paid wording. Do not repeat closure for `PRJ-0020`, rewrite existing notifications, change R5, or approve/pay October payrolls. Preserve the local `.htaccess` disposable-database override.
+
+
+## 2026-10-18 — Immediate qualifying-activity notifications (implementation committed; runtime acceptance pending)
+
+The requirement is that an employee receives an in-app notice as soon as the qualifying activity is recorded, rather than waiting for a later FM/higher-management workflow or a background payroll process. The notice is explicitly provisional and must not falsely say the reward is finally earned or paid before the existing verification/financial gates pass.
+
+Implementation committed on `main`:
+- `77da80e00daaf096c516198ab0935a8bc0515dfd`: initial immediate activity-notice helper and rollback-test extension.
+- `895b4ba2af347b25f1b289772b3e4d534a122140`: make pre-approval activity notice separate from post-verification award recognition.
+- `6ccd172a70251deca4c55ee55b743035d56ca637`: notify the collector immediately when a monthly sponsorship collection is submitted, before FM approval.
+- `a3b6130b5808b49775e266d52ed2826b1215cd2c`: notify an eligible recorded sponsor bringer immediately when an active new sponsor is created, before first-payment confirmation.
+- `04418b2f5da481993d0c1768b6981645ff24a2ac`: notify the recorded reactivator immediately when reactivation is durably recorded, before first-payment confirmation.
+- `50c433984b97bedee37c3bf22fa3b47fca5c58c5`: isolate notice-insert failure from the underlying business workflow and log the error.
+
+Project-completion activity notice is created transactionally with the PM closure-time eligible-team snapshot; its wording explicitly says final FM financial closure and verification remain outstanding. The later earned notice remains a separate message emitted when the award is recognized. No policy, R5, payroll, award status, or accounting gate was weakened.
+
+The rollback-only project harness now asserts that the PM snapshot creates exactly one immediate activity notice, that its wording does not claim final approval/payment, and that rollback removes the temporary notification. This modified harness has **not yet been run locally**. PHP lint, disposable-DB harness execution, and browser inbox verification are pending. Do not mark this milestone runtime-verified until those checks pass. Use only existing disposable DB `ahl_el_kheir_incentive_test_20261015_r1`; never test on live financial data or create another DB.
