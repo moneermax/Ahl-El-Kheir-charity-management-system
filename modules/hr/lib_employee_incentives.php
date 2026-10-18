@@ -796,7 +796,7 @@ function hrIncentiveNotifyActivityRecorded(
     bool $awaitingFinancialClosure = false,
     bool $throwOnFailure = false
 ): void {
-    if ($recipientUserId <= 0 || !in_array($incentiveType, ['collection', 'new_sponsor', 'reactivation', 'project_completion'], true)) {
+    if ($recipientUserId <= 0 || !in_array($incentiveType, ['new_sponsor', 'reactivation', 'project_completion'], true)) {
         return;
     }
     if (!is_finite($amount) || $amount <= 0 || !preg_match('/^[A-Z]{3}$/', strtoupper(trim($currency)))) {
@@ -804,7 +804,6 @@ function hrIncentiveNotifyActivityRecorded(
     }
 
     $labels = [
-        'collection' => 'تسجيل تحصيل كفالة',
         'new_sponsor' => 'تسجيل كفيل جديد',
         'reactivation' => 'إعادة تفعيل كفيل',
         'project_completion' => 'إكمال مشروع',
