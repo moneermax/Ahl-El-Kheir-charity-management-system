@@ -1091,10 +1091,7 @@ PASS | historical_allocation=15 | award=24 | reward=1500.00 SDG | status=schedul
 RECOVERY_EXIT_CODE=0
 ```
 
-Run PHP lint first:
-`& 'D:\\xampp\\php\\php.exe' -l tools\\recover_hr_project_incentive_prj0024_supervisor.php`
-
-Expected success output includes the new allocation ID, award ID, recognition journal ID, sent outbox/notification ID, and audit confirmation. If the tool reports BLOCKED, it rolls back and makes no changes; provide the exact output without trying manual SQL. If it reports PARTIAL, the award/accounting transaction has committed but notification delivery needs targeted investigation. Do not rerun the project closure, modify R5, alter the two existing awards/notices, or use any database other than the named disposable database. Do not mark historical recovery complete until the tool's local lint and runtime output are reviewed.
+The one-time lint and recovery run are complete, with the exact successful result recorded above. This is a verified historical repair in the named disposable database only; production was not targeted. Do not rerun the recovery tool without concrete regression evidence. Preserve the separate remaining acceptance gates below; this recovery does not complete the real-browser PM-to-FM closure or project-team assignment UI testing.
 
 
 ## 2026-10-18 — PRJ-0024 supervisor recovery: runtime verified
