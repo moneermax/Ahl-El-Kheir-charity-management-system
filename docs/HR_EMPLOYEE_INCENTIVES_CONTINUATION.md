@@ -1,7 +1,7 @@
 # Employee Incentives — Continuation and Source Audit
 
 **Checkpoint:** 2026-10-15  
-**Status:** GM approval and activation governance for the protected active R5 policy are complete at the documented acceptance boundary. Collection source-event, reactivation, incentive accounting, HR Manager authorization, scheduling notification outbox retry/failure isolation, and employee-facing in-app notification UX have previously passed their documented local/browser acceptance gates. Project-completion automation is implemented on `main`, but a real FM-closure acceptance case exposed that the prior rollback-only harness did not cover a supervisor assigned only through `project_supervisor_assignments`. The earlier statement that the harness proved the separate-supervisor case was incorrect and is superseded by the 2026-10-18 regression note below. Local runtime verification of the correction is pending. Full lifecycle acceptance remains incomplete: the new-sponsor first-payment hook's documented local acceptance is still pending, and the real browser PM-to-FM project-closure workflow has not been fully verified. Active R5 must remain unchanged; never use `ahl_el_kheir_production_test`.
+**Status:** GM approval and activation governance for the protected active R5 policy are complete at the documented acceptance boundary. Collection source-event, reactivation, incentive accounting, HR Manager authorization, scheduling notification outbox retry/failure isolation, and employee-facing in-app notification UX have previously passed their documented local/browser acceptance gates. Project-completion automation is implemented on `main`, but a real FM-closure acceptance case exposed that the prior rollback-only harness did not cover a supervisor assigned only through `project_supervisor_assignments`. The earlier statement that the harness proved the separate-supervisor case was incorrect and is superseded by the 2026-10-18 regression note below. The correction and the PRJ-0024 historical supervisor recovery are runtime-verified on the disposable test database, as recorded in the 2026-10-18 evidence below. Full lifecycle acceptance remains incomplete: the new-sponsor first-payment hook's documented local acceptance is still pending, and the real browser PM-to-FM project-closure workflow has not been fully verified. Active R5 must remain unchanged; never use `ahl_el_kheir_production_test`.
 
 ## 2026-10-16 — Project Manager closure-review panel investigation
 
@@ -1083,26 +1083,19 @@ A one-purpose recovery tool was committed directly to `main`:
 
 The tool is strictly gated to disposable database `ahl_el_kheir_incentive_test_20261015_r1`, project 24, event 34, assignment 18, user 34 / employee 22, active R5 policy and the exact 1,500.00 SDG reward. It checks the durable FM financial-closure audit, zero controlled balance, no draft funding allocations, recipient eligibility, original two-recipient state, existing award/journal/notice state, and an empty pending incentive-notification outbox before changing anything. It refuses duplicates or any unexpected state. Within one transaction it adds only PS1's missing allocation with explicit historical-recovery notes and a system audit row that does not fabricate a human approver, then invokes the existing gated project-completion processor for recognition/accounting/payroll/outbox behavior. It commits only after validating the PS1 award, balanced 5500/2400 journal, and pending outbox row; it then uses the existing post-commit dispatcher. No DDL or policy changes are performed.
 
-**Runtime status: VERIFIED locally on 2026-10-18.** After syncing `main`, run:
+**Runtime status: VERIFIED locally on 2026-10-18.** The one-time lint and recovery execution completed successfully against only `ahl_el_kheir_incentive_test_20261015_r1`; do not rerun absent concrete regression evidence.
 
-```powershell
-$env:AHL_DB_NAME = 'ahl_el_kheir_incentive_test_20261015_r1'
-& 'D:\\xampp\\php\\php.exe' tools\\recover_hr_project_incentive_prj0024_supervisor.php --apply
-Remove-Item Env:AHL_DB_NAME
+```text
+PREFLIGHT PASS | DB=ahl_el_kheir_incentive_test_20261015_r1 | project=24 | event=34 | PS1=user34/employee22 | reward=1500.00 SDG | balance=0.000
+PASS | historical_allocation=15 | award=24 | reward=1500.00 SDG | status=scheduled | recognition_journal=178 | outbox=sent | notification=232 | audit=recorded
+RECOVERY_EXIT_CODE=0
 ```
 
-Run PHP lint first:
-`& 'D:\\xampp\\php\\php.exe' -l tools\\recover_hr_project_incentive_prj0024_supervisor.php`
-
-Expected success output includes the new allocation ID, award ID, recognition journal ID, sent outbox/notification ID, and audit confirmation. If the tool reports BLOCKED, it rolls back and makes no changes; provide the exact output without trying manual SQL. If it reports PARTIAL, the award/accounting transaction has committed but notification delivery needs targeted investigation. Do not rerun the project closure, modify R5, alter the two existing awards/notices, or use any database other than the named disposable database. Do not mark historical recovery complete until the tool's local lint and runtime output are reviewed.
+The one-time lint and recovery run are complete, with the exact successful result recorded above. This is a verified historical repair in the named disposable database only; production was not targeted. Do not rerun the recovery tool without concrete regression evidence. Preserve the separate remaining acceptance gates below; this recovery does not complete the real-browser PM-to-FM closure or project-team assignment UI testing.
 
 
-## 2026-10-18 - PRJ-0024 historical recovery runtime result
+## 2026-10-18 — PRJ-0024 supervisor recovery: runtime verified
 
-The guarded recovery tool passed PHP lint and executed once against the disposable database `ahl_el_kheir_incentive_test_20261015_r1`. Exact runtime result:
+Local PHP lint passed for `tools/recover_hr_project_incentive_prj0024_supervisor.php`. The tool was then executed exactly once with `--apply` against the disposable database `ahl_el_kheir_incentive_test_20261015_r1`. The preflight confirmed project 24, closure event 34, PS1 user 34 / employee 22, reward 1,500.00 SDG, and zero controlled balance. The committed result created historical allocation 15 and award 24, recognized the reward through journal 178, linked it to draft payroll processing (`status=scheduled`), delivered notification 232, and recorded the audit row. Exit code was 0. The production database was not targeted. Do not rerun this recovery tool without concrete evidence of regression; it is intentionally a one-time, tightly gated historical repair.
 
-`PREFLIGHT PASS | DB=ahl_el_kheir_incentive_test_20261015_r1 | project=24 | event=34 | PS1=user34/employee22 | reward=1500.00 SDG | balance=0.000`
-
-`PASS | historical_allocation=15 | award=24 | reward=1500.00 SDG | status=scheduled | recognition_journal=178 | outbox=sent | notification=232 | audit=recorded`
-
-Exit code: 0. This verifies the historical recovery in the disposable test database only; production was not modified. No recovery rerun is needed.
+The separate-supervisor regression is now covered by the updated project-completion recipient snapshot and rollback-only harness fixture. The earlier harness result remains synthetic rollback-only evidence; it is not evidence of true two-process concurrency or a same-employee/multiple-advance scenario. Other remaining acceptance gaps are the full real-browser PM-to-FM project-closure workflow and the project-team assignment UI workflow (initial selection, add/duplicate rejection, unassign/history retention, and edit-page behavior). New-sponsor first-confirmed-payment acceptance was already runtime-verified on 2026-10-16 and must not be repeated without regression evidence.
