@@ -3487,3 +3487,10 @@ Before the requested one-time administrative closure of PRJ-0024, source review 
 Commit `66aa8a820c67d632f53cfa48319157ef21ae7a48` adds strict notification failure propagation for project-completion notices and makes the project snapshot helper fail closed when no effective enabled project-completion policy exists. In the PM transaction, any such failure now rolls back administrative closure and any notices already inserted in that same transaction. Non-project activity notice paths retain their existing isolated-failure behavior.
 
 Status: **source committed; local verification and PRJ-0024 read-only eligibility/policy preflight pending. Do not click Close yet.** Required before the one-shot browser action: local PHP lint, the existing rollback-only harness on `ahl_el_kheir_incentive_test_20261015_r1`, and a read-only check of both active team members' unique employee mapping/working-state eligibility plus the effective active project-completion policy. No new project or repeated closure is authorized.
+
+
+## 2026-10-18 — Project incentive notification boundary
+
+**Finding and correction:** `hrIncentivePrepareProjectCompletion()` previously inserted a provisional employee-facing project-completion notification while PM administrative closure was being committed. That contradicted the clarified business boundary that employees are notified only after FM final financial closure. Commit `28578e3c9088fe8efdfccc671e1e2e7e7b99721f` removes that notification call while preserving the idempotent project source event and frozen recipient/reward snapshot. Commit `2a1d7b05e899582e40a6a0e864159914cc09b8e7` revises the rollback-only harness to assert no notice at PM closure and pending earned-notice outbox rows only after the FM-gated award path.
+
+**Evidence status:** source-level change only; local syntax and runtime acceptance are pending. Targeted verification must use `ahl_el_kheir_incentive_test_20261015_r1`. The current project PRJ-0024 is already administratively closed; no repeated closure/reopen is authorized. Preserve the active R5 policy and do not touch production data.
