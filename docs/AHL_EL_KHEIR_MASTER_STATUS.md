@@ -3257,3 +3257,11 @@ The user has now completed real-browser checks of two immediate activity-notice 
 These browser results prove the activity notices rendered; they do **not** prove an award was issued. The user's concern that the same employee may already have received a new-sponsor incentive must be resolved from durable records, not notification wording. Next step: run a read-only query against the same disposable database for incentive events and joined awards for recipient user 19, especially `new_sponsor` and `collection`; report event status and award status/payroll/journal links before deciding whether any earned incentive exists. Do not mutate, reverse, delete, or rerun the already completed browser submissions. New-sponsor first-confirmed-payment acceptance from 2026-10-16 remains closed and must not be repeated.
 
 The separate development point about whether routine collection should qualify for an incentive is deferred and recorded above; no category, active R5 policy, event, award, notification, payroll, or accounting behavior has been changed for that recommendation.
+
+
+
+## 2026-10-18 — Routine collection incentive behavior removed from PHP (verification pending)
+
+The user requested removal of the extra incentive attached to routine monthly sponsorship collection. On `main`, the collection submission no longer emits a provisional incentive notice, FM payment approval no longer records a collection incentive event, and the shared source-event / pending-notice helpers reject new collection incentive activity. New-sponsor, reactivation, and project-completion incentive behavior is preserved. The immediate-notice and source-event rollback-only harnesses were updated to test the new boundary.
+
+Status: source changes committed; local PHP lint and updated harness execution remain pending on disposable DB `ahl_el_kheir_incentive_test_20261015_r1`. Active policy R5 and all existing events, awards, notifications, payroll and accounting records were left unchanged. The browser-created collection event remains historical test evidence; it was not deleted or converted into an award.
