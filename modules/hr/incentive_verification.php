@@ -53,6 +53,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($event['status'] !== 'pending_verification') {
             throw new RuntimeException('تمت معالجة هذا الحدث مسبقاً؛ حدّث الصفحة لمراجعة حالته الحالية.');
         }
+        if ($event['incentive_type'] === 'collection') {
+            throw new RuntimeException('تم إيقاف حوافز التحصيل الروتيني؛ لن يصدر حافز لهذا الحدث.');
+        }
         if ($event['incentive_type'] === 'project_completion') {
             throw new RuntimeException('حوافز إكمال المشاريع موقوفة حتى اعتماد مسار توزيع الحصص على الموظفين.');
         }
@@ -207,8 +210,9 @@ require_once __DIR__ . '/../../includes/header.php';
                                 && $event['employment_category'] === 'working'
                                 && (int)$event['employment_state_active'] === 1
                                 && (int)$event['user_active'] === 1;
+                            $isRoutineCollection = $event['incentive_type'] === 'collection';
                             $canVerify = $event['status'] === 'pending_verification'
-                                && !$isProject && $recipientEligible
+                                && !$isRoutineCollection && !$isProject && $recipientEligible
                                 && (int)$event['is_enabled'] === 1
                                 && (float)$event['reward_amount'] > 0;
                             $typeName = AK_LANG === 'en' && !empty($event['incentive_name_en'])
@@ -227,7 +231,9 @@ require_once __DIR__ . '/../../includes/header.php';
                                 <td><?php echo e($event['occurred_at']); ?></td>
                                 <td><?php echo number_format((float)$event['reward_amount'], 2); ?> <?php echo e($event['reward_currency_code']); ?></td>
                                 <td>
-                                    <?php if ($event['status'] === 'pending_verification'): ?>
+                                    <?php if ($isRoutineCollection && $event['status'] === 'pending_verification'): ?>
+                                        <span class="badge bg-secondary">تم إيقاف حوافز التحصيل الروتيني</span>
+                                    <?php elseif ($event['status'] === 'pending_verification'): ?>
                                         <span class="badge bg-warning text-dark">بانتظار التحقق</span>
                                     <?php elseif ($event['status'] === 'held' || $event['award_status'] === 'held_currency'): ?>
                                         <span class="badge bg-danger">موقوف</span>
@@ -239,6 +245,8 @@ require_once __DIR__ . '/../../includes/header.php';
                                 <td style="min-width:220px">
                                     <?php if ($isProject && $event['status'] === 'pending_verification'): ?>
                                         <span class="small text-warning">بانتظار توثيق الإغلاق المالي للمشروع؛ سيصدر النظام الحوافز تلقائياً بعد اجتياز فحوص الإغلاق والأهلية.</span>
+                                    <?php elseif ($isRoutineCollection && $event['status'] === 'pending_verification'): ?>
+                                        <span class="small text-muted">التحصيل الشهري المعتاد لا يستحق حافزاً إضافياً؛ سيبقى السجل محفوظاً دون إصدار حافز.</span>
                                     <?php elseif ($event['status'] === 'pending_verification' && !$recipientEligible): ?>
                                         <span class="small text-danger">هوية المستفيد أو حالة التوظيف تحتاج مراجعة.</span>
                                     <?php elseif ($canVerify): ?>
