@@ -1083,7 +1083,7 @@ A one-purpose recovery tool was committed directly to `main`:
 
 The tool is strictly gated to disposable database `ahl_el_kheir_incentive_test_20261015_r1`, project 24, event 34, assignment 18, user 34 / employee 22, active R5 policy and the exact 1,500.00 SDG reward. It checks the durable FM financial-closure audit, zero controlled balance, no draft funding allocations, recipient eligibility, original two-recipient state, existing award/journal/notice state, and an empty pending incentive-notification outbox before changing anything. It refuses duplicates or any unexpected state. Within one transaction it adds only PS1's missing allocation with explicit historical-recovery notes and a system audit row that does not fabricate a human approver, then invokes the existing gated project-completion processor for recognition/accounting/payroll/outbox behavior. It commits only after validating the PS1 award, balanced 5500/2400 journal, and pending outbox row; it then uses the existing post-commit dispatcher. No DDL or policy changes are performed.
 
-**Runtime status: PENDING local PHP lint and one-time execution.** After syncing `main`, run:
+**Runtime status: VERIFIED locally on 2026-10-18.** After syncing `main`, run:
 
 ```powershell
 $env:AHL_DB_NAME = 'ahl_el_kheir_incentive_test_20261015_r1'
@@ -1095,3 +1095,14 @@ Run PHP lint first:
 `& 'D:\\xampp\\php\\php.exe' -l tools\\recover_hr_project_incentive_prj0024_supervisor.php`
 
 Expected success output includes the new allocation ID, award ID, recognition journal ID, sent outbox/notification ID, and audit confirmation. If the tool reports BLOCKED, it rolls back and makes no changes; provide the exact output without trying manual SQL. If it reports PARTIAL, the award/accounting transaction has committed but notification delivery needs targeted investigation. Do not rerun the project closure, modify R5, alter the two existing awards/notices, or use any database other than the named disposable database. Do not mark historical recovery complete until the tool's local lint and runtime output are reviewed.
+
+
+## 2026-10-18 - PRJ-0024 historical recovery runtime result
+
+The guarded recovery tool passed PHP lint and executed once against the disposable database `ahl_el_kheir_incentive_test_20261015_r1`. Exact runtime result:
+
+`PREFLIGHT PASS | DB=ahl_el_kheir_incentive_test_20261015_r1 | project=24 | event=34 | PS1=user34/employee22 | reward=1500.00 SDG | balance=0.000`
+
+`PASS | historical_allocation=15 | award=24 | reward=1500.00 SDG | status=scheduled | recognition_journal=178 | outbox=sent | notification=232 | audit=recorded`
+
+Exit code: 0. This verifies the historical recovery in the disposable test database only; production was not modified. No recovery rerun is needed.
