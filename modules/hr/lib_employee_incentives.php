@@ -810,7 +810,7 @@ function hrIncentiveNotifyActivityRecorded(
     ];
     $title = 'تم تسجيل إنجاز مؤهل لحافز';
     $amountText = number_format($amount, 2, '.', ',') . ' ' . strtoupper(trim($currency));
-    if ($incentiveType === 'project_completion') {
+    if ($awaitingFinancialClosure || $incentiveType === 'project_completion') {
         $body = 'تم تسجيل مشاركتك المؤهلة في ' . $labels[$incentiveType]
             . ' بقيمة حافز متوقعة ' . $amountText
             . '. ينتظر الاستحقاق الإغلاق المالي النهائي والتحقق المطلوب. أرسلنا لك هذا الإشعار فور تسجيل الإنجاز؛ ولا يعني أن الحافز اعتُمد نهائياً أو صُرف.';
@@ -820,12 +820,16 @@ function hrIncentiveNotifyActivityRecorded(
             . '. ينتظر الاستحقاق التحقق المالي من العملية والتحقق المطلوب قبل تأكيده. أرسلنا لك هذا الإشعار فور تسجيل الإنجاز؛ ولا يعني أن الحافز اعتُمد نهائياً أو صُرف.';
     }
 
-    $stmt = $pdo->prepare(
-        "INSERT INTO notifications
-            (recipient_user_id, type, title, body, link, is_read, created_at)
-         VALUES (?, 'incentive', ?, ?, ?, 0, NOW())"
-    );
-    $stmt->execute([$recipientUserId, $title, $body, APP_URL . 'modules/notifications/index.php']);
+    try {
+        $stmt = $pdo->prepare(
+            "INSERT INTO notifications
+                (recipient_user_id, type, title, body, link, is_read, created_at)
+             VALUES (?, 'incentive', ?, ?, ?, 0, NOW())"
+        );
+        $stmt->execute([$recipientUserId, $title, $body, APP_URL . 'modules/notifications/index.php']);
+    } catch (Throwable $notificationError) {
+        error_log('Immediate incentive activity notification insert failed for user ' . $recipientUserId . ': ' . $notificationError->getMessage());
+    }
 }
 
 /**
