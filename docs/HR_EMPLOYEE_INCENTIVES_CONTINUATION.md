@@ -1072,3 +1072,26 @@ Correction committed to `main`:
 - `f2ff7bb7bd4b56011a45c03fc591a8aefbd43c82` — change the rollback-only fixture to assign its eligible supervisor through `project_supervisor_assignments` only and assert the fixture has no active `project_team` row for that supervisor.
 
 Verification: the integrated local `main` code passed PHP lint for both `modules/hr/lib_employee_incentives.php` and `tools/run_hr_project_incentive_payroll_rollback_tests.php`. The user ran the guarded rollback-only harness with process-scoped `AHL_DB_NAME=ahl_el_kheir_incentive_test_20261015_r1`; exit code `0`. Exact output: `PS_snapshot=PASS`, `full_policy_amount_per_employee=PASS`, `missing_FM_gate_blocks_award=PASS`, `FM_gate=PASS`, `recognition_journal_5500_2400=PASS`, `project_award_draft_payroll_link=PASS`, `incentive_total=PASS`, `net_salary_unchanged=PASS`, `outbox_pending=PASS`, `project_notice_waits_for_FM=PASS`, `rollback_cleanup=PASS`; policy R5, reward `1500.00 SDG`. The fixture assigns the supervisor only through `project_supervisor_assignments`, not `project_team`. This proves the synthetic rollback scenario on the disposable database; it does not prove historical repair or actual notification delivery for PRJ-0024. Do not rerun closure on PRJ-0024, mutate its records, or manually insert allocations/awards/notifications. Review historical recovery separately through an auditable application path.
+
+## 2026-10-18 — Guarded historical PRJ-0024 supervisor incentive recovery tool
+
+The event/policy diagnostic confirmed event 34 is verified, tied to active policy R5 (policy version ID 11), and its enabled project-completion reward is 1,500.00 SDG. Previously reviewed local evidence establishes that PS1 (user 34 / employee 22) had active primary-supervisor assignment 18 at project closure but was omitted from the original recipient snapshot; the two existing recipients already have scheduled/accounted awards and sent notices.
+
+A one-purpose recovery tool was committed directly to `main`:
+- `tools/recover_hr_project_incentive_prj0024_supervisor.php`
+- Source commit: `e5202629840daca5ed441d8dc3b899e86ecb63b2`
+
+The tool is strictly gated to disposable database `ahl_el_kheir_incentive_test_20261015_r1`, project 24, event 34, assignment 18, user 34 / employee 22, active R5 policy and the exact 1,500.00 SDG reward. It checks the durable FM financial-closure audit, zero controlled balance, no draft funding allocations, recipient eligibility, original two-recipient state, existing award/journal/notice state, and an empty pending incentive-notification outbox before changing anything. It refuses duplicates or any unexpected state. Within one transaction it adds only PS1's missing allocation with explicit historical-recovery notes and a system audit row that does not fabricate a human approver, then invokes the existing gated project-completion processor for recognition/accounting/payroll/outbox behavior. It commits only after validating the PS1 award, balanced 5500/2400 journal, and pending outbox row; it then uses the existing post-commit dispatcher. No DDL or policy changes are performed.
+
+**Runtime status: PENDING local PHP lint and one-time execution.** After syncing `main`, run:
+
+```powershell
+$env:AHL_DB_NAME = 'ahl_el_kheir_incentive_test_20261015_r1'
+& 'D:\\xampp\\php\\php.exe' tools\\recover_hr_project_incentive_prj0024_supervisor.php --apply
+Remove-Item Env:AHL_DB_NAME
+```
+
+Run PHP lint first:
+`& 'D:\\xampp\\php\\php.exe' -l tools\\recover_hr_project_incentive_prj0024_supervisor.php`
+
+Expected success output includes the new allocation ID, award ID, recognition journal ID, sent outbox/notification ID, and audit confirmation. If the tool reports BLOCKED, it rolls back and makes no changes; provide the exact output without trying manual SQL. If it reports PARTIAL, the award/accounting transaction has committed but notification delivery needs targeted investigation. Do not rerun the project closure, modify R5, alter the two existing awards/notices, or use any database other than the named disposable database. Do not mark historical recovery complete until the tool's local lint and runtime output are reviewed.
