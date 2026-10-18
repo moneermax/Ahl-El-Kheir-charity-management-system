@@ -1005,3 +1005,14 @@ The real disposable-database acceptance case `PRJ-0024` exposed that the prior p
 ## 2026-10-18 — Immediate incentive activity-notice acceptance harness added
 
 Commit `69ac7eb1b7da82f7495ea12db71c59b2725c4540` adds `tools/run_hr_employee_incentive_immediate_activity_notice_rollback_tests.php`; commit `bb292f02acfcce504b84e69c1f8179b13332fc63` tightens it to require a newly inserted notification row for each tested type. The rollback-only harness covers collection, new sponsor, and reactivation recipient, category, expected reward context, provisional wording, unread state, and cleanup. Source review confirms call sites in `modules/transactions/create.php`, `modules/sponsors/create.php`, and `modules/administration/winback.php`. **Local PHP lint and execution against `ahl_el_kheir_incentive_test_20261015_r1` are still pending; do not claim runtime acceptance or close the incentive module until the user supplies those results.** The test calls the shared helper directly and does not simulate the three real browser POST workflows. Preserve R5 and the local `.htaccess` disposable-database override.
+
+## 2026-10-18 — Immediate activity-notice helper acceptance passed
+
+The user synced `main` and locally linted `modules/hr/lib_employee_incentives.php` and `tools/run_hr_employee_incentive_immediate_activity_notice_rollback_tests.php`; both passed. The rollback-only harness ran against the existing disposable database `ahl_el_kheir_incentive_test_20261015_r1` and returned:
+
+```text
+PASS | immediate_notice=collection,new_sponsor,reactivation | correct_recipient=PASS
+PASS | provisional_wording=PASS | reward_context=PASS | unread=PASS | rollback_cleanup=PASS
+```
+
+This closes the shared-helper acceptance gate only. It does not simulate the collection, sponsor-creation, or reactivation POST routes, nor prove browser inbox rendering. Next focus on the remaining employee notification delivery/UI acceptance and the already-documented incentive browser gates. Preserve active policy R5, do not use the live financial database, and do not repeat closed tests without regression evidence.
