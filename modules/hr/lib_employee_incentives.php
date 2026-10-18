@@ -783,6 +783,52 @@ function hrIncentiveRecordReactivationPaymentEvent(PDO $pdo, int $paymentId, int
 }
 
 /**
+ * Persist an immediate employee-facing notice in the same transaction as the
+ * qualifying activity. This is an activity notice, not a claim that the award
+ * is already earned or paid; later verification/financial gates remain intact.
+ */
+function hrIncentiveNotifyActivityRecorded(
+    PDO $pdo,
+    int $recipientUserId,
+    string $incentiveType,
+    float $amount,
+    string $currency,
+    bool $awaitingFinancialClosure = false
+): void {
+    if ($recipientUserId <= 0 || !in_array($incentiveType, ['collection', 'new_sponsor', 'reactivation', 'project_completion'], true)) {
+        return;
+    }
+    if (!is_finite($amount) || $amount <= 0 || !preg_match('/^[A-Z]{3}$/', strtoupper(trim($currency)))) {
+        throw new RuntimeException('بيانات إشعار الإنجاز المؤهل للحافز غير صالحة.');
+    }
+
+    $labels = [
+        'collection' => 'تحصيل كفالة مؤهل',
+        'new_sponsor' => 'استقطاب كفيل مؤهل',
+        'reactivation' => 'إعادة تفعيل كفيل مؤهلة',
+        'project_completion' => 'إكمال مشروع مؤهل',
+    ];
+    $title = 'تم تسجيل إنجاز مؤهل لحافز';
+    $amountText = number_format($amount, 2, '.', ',') . ' ' . strtoupper(trim($currency));
+    if ($awaitingFinancialClosure) {
+        $body = 'تم تسجيل مشاركتك المؤهلة في ' . $labels[$incentiveType]
+            . ' بقيمة حافز متوقعة ' . $amountText
+            . '. ينتظر الاستحقاق الإغلاق المالي النهائي والتحقق المطلوب. أرسلنا لك هذا الإشعار فور تسجيل الإنجاز؛ ولا يعني أن الحافز اعتُمد نهائياً أو صُرف.';
+    } else {
+        $body = 'تم تسجيل ' . $labels[$incentiveType]
+            . ' مرتبط بإنجازك وقيمته وفق السياسة ' . $amountText
+            . '. ينتظر الاستحقاق التحقق المطلوب قبل تأكيده. أرسلنا لك هذا الإشعار فور تسجيل الإنجاز؛ ولا يعني أن الحافز اعتُمد نهائياً أو صُرف.';
+    }
+
+    $stmt = $pdo->prepare(
+        "INSERT INTO notifications
+            (recipient_user_id, type, title, body, link, is_read, created_at)
+         VALUES (?, 'incentive', ?, ?, ?, 0, NOW())"
+    );
+    $stmt->execute([$recipientUserId, $title, $body, APP_URL . 'modules/notifications/index.php']);
+}
+
+/**
  * Record one qualifying source event for later manager verification.
  *
  * Call only from the transaction that durably confirms the source business
@@ -882,7 +928,27 @@ function hrIncentiveRecordSourceEvent(
             ($recipientEmployeeId !== null && $recipientEmployeeId > 0) ? $recipientEmployeeId : null,
             $createdByUserId > 0 ? $createdByUserId : null,
         ]);
-        return (int)$pdo->lastInsertId();
+        $eventId = (int)$pdo->lastInsertId();
+        if ($hasRecipientUser && $sourceAmount !== null && $currency !== null) {
+            $ruleAmountStmt = $pdo->prepare(
+                "SELECT reward_amount, currency_code
+                 FROM hr_incentive_policy_rules
+                 WHERE policy_version_id = ? AND incentive_type = ?
+                 LIMIT 1"
+            );
+            $ruleAmountStmt->execute([$policyVersionId, $incentiveType]);
+            $ruleAmount = $ruleAmountStmt->fetch(PDO::FETCH_ASSOC);
+            if ($ruleAmount) {
+                hrIncentiveNotifyActivityRecorded(
+                    $pdo,
+                    (int)$recipientUserId,
+                    $incentiveType,
+                    (float)$ruleAmount['reward_amount'],
+                    strtoupper(trim((string)$ruleAmount['currency_code']))
+                );
+            }
+        }
+        return $eventId;
     } catch (PDOException $e) {
         $duplicate = (string)$e->getCode() === '23000'
             && (stripos($e->getMessage(), 'uq_hr_incentive_event_idempotency') !== false
@@ -1024,6 +1090,14 @@ function hrIncentivePrepareProjectCompletion(PDO $pdo, int $projectId, int $acto
                     strtoupper(trim((string)$rule['currency_code'])),
                     'System snapshot at PM administrative closure; full policy amount per eligible employee.'
                 ]);
+                hrIncentiveNotifyActivityRecorded(
+                    $pdo,
+                    $userId,
+                    'project_completion',
+                    (float)$rule['reward_amount'],
+                    strtoupper(trim((string)$rule['currency_code'])),
+                    true
+                );
             }
 
             $markSnapshot = $pdo->prepare(
