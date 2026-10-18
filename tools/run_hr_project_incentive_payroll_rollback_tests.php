@@ -318,12 +318,21 @@ try {
         "INSERT INTO project_approval (project_id, approval_status) VALUES (?, 'draft')"
     )->execute([$projectId]);
 
-    // Snapshot must include the eligible PS before administrative closure.
+    // The eligible PS is assigned through the dedicated supervisor table only.
+    // Deliberately do not add this user to project_team: this is the regression case.
     $pdo->prepare(
-        "INSERT INTO project_team
-            (project_id, user_id, section_code, is_lead, assigned_by, notes)
-         VALUES (?, ?, 'operations', 1, ?, 'Rollback-only incentive fixture; PS assigned before closure')"
+        "INSERT INTO project_supervisor_assignments
+            (project_id, supervisor_user_id, assigned_by, notes)
+         VALUES (?, ?, ?, 'Rollback-only incentive fixture; supervisor-only assignment before closure')"
     )->execute([$projectId, $supervisorUserId, $actorId]);
+    hrProjectIncentiveSuccessAssert(
+        hrProjectIncentiveSuccessCount(
+            $pdo,
+            'SELECT COUNT(*) FROM project_team WHERE project_id = ? AND user_id = ? AND unassigned_at IS NULL',
+            [$projectId, $supervisorUserId]
+        ) === 0,
+        'Regression fixture accidentally placed the Project Supervisor in project_team.'
+    );
 
     // Confirm the test project has no financial activity; no accounting rows are fabricated.
     $financialRows = [
