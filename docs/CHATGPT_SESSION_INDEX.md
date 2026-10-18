@@ -995,3 +995,8 @@ The current incentive task is to ensure project-completion employee notices are 
 ## 2026-10-18 — Rollback verification passed
 
 Local PHP lint passed for `modules/hr/lib_employee_incentives.php` and `tools/run_hr_project_incentive_payroll_rollback_tests.php`. The targeted rollback-only harness passed on `ahl_el_kheir_incentive_test_20261015_r1`, including `project_notice_waits_for_FM=PASS` and `rollback_cleanup=PASS` (policy R5, 1,500 SDG). Real FM closure/earned-notice delivery for PRJ-0024 remains pending; do not repeat PM closure or alter R5.
+
+
+## Latest continuation — 2026-10-18 — project-completion incentive regression
+
+The real disposable-database acceptance case `PRJ-0024` exposed that the prior project incentive rollback harness did not cover a supervisor assigned only through `project_supervisor_assignments`. The closure-time recipient snapshot queried `project_team` alone. Correction commits on `main`: `dd5c072c34dcd40dd8232e8f5df3aeac9b748e30` (source) and `f2ff7bb7bd4b56011a45c03fc591a8aefbd43c82` (supervisor-only regression fixture). Local PHP lint and rollback-only runtime verification are pending; do not repeat project closure or modify PRJ-0024 while verifying. The project creation form already requires a primary supervisor server-side, so no creation validation change is indicated by this incident.
