@@ -3494,3 +3494,15 @@ Status: **source committed; local verification and PRJ-0024 read-only eligibilit
 **Finding and correction:** `hrIncentivePrepareProjectCompletion()` previously inserted a provisional employee-facing project-completion notification while PM administrative closure was being committed. That contradicted the clarified business boundary that employees are notified only after FM final financial closure. Commit `28578e3c9088fe8efdfccc671e1e2e7e7b99721f` removes that notification call while preserving the idempotent project source event and frozen recipient/reward snapshot. Commit `2a1d7b05e899582e40a6a0e864159914cc09b8e7` revises the rollback-only harness to assert no notice at PM closure and pending earned-notice outbox rows only after the FM-gated award path.
 
 **Evidence status:** source-level change only; local syntax and runtime acceptance are pending. Targeted verification must use `ahl_el_kheir_incentive_test_20261015_r1`. The current project PRJ-0024 is already administratively closed; no repeated closure/reopen is authorized. Preserve the active R5 policy and do not touch production data.
+
+
+## 2026-10-18 — Rollback evidence
+
+The user ran local PHP syntax checks for `modules/hr/lib_employee_incentives.php` and `tools/run_hr_project_incentive_payroll_rollback_tests.php`; both passed. The rollback-only project incentive/payroll harness passed on `ahl_el_kheir_incentive_test_20261015_r1`, with `project_notice_waits_for_FM=PASS`, `missing_FM_gate_blocks_award=PASS`, and `rollback_cleanup=PASS`. The run retained policy R5 and reward 1,500 SDG. Evidence is limited to the harness's synthetic rollback scenario. The real FM final-closure action and post-closure earned-notice delivery for PRJ-0024 are not yet verified.
+
+
+## 2026-10-18 — Project-completion incentive recipient omission (open)
+
+Disposable DB evidence: project `PRJ-0024` (ID 24) closed at `2026-10-18 09:47:23`. Active supervisor assignment 18 assigned PS1 (user 34) at `09:31:01`; user 34 was active and linked to working employee 22, but had no active `project_team` assignment. Verified event 34 carried `system:project-recipient-snapshot-v1`; allocations/awards/outbox existed only for users 16 and 28, whose notices were sent. The root cause is that `hrIncentivePrepareProjectCompletion()` queried only `project_team`, while the primary supervisor is stored separately in `project_supervisor_assignments`.
+
+Commits `dd5c072c34dcd40dd8232e8f5df3aeac9b748e30` (include latest active primary supervisor in the recipient union) and `f2ff7bb7bd4b56011a45c03fc591a8aefbd43c82` (supervisor-only rollback fixture) are on `main`. The creation form already requires a primary supervisor server-side; this incident does not show that the project was created without one. Local PHP lint and rollback-only harness verification remain pending. Do not rerun closure or modify PRJ-0024 while verifying; assess historical recovery separately.
