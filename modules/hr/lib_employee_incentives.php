@@ -1125,15 +1125,9 @@ function hrIncentivePrepareProjectCompletion(PDO $pdo, int $projectId, int $acto
                     strtoupper(trim((string)$rule['currency_code'])),
                     'System snapshot at PM administrative closure; full policy amount per eligible employee.'
                 ]);
-                hrIncentiveNotifyActivityRecorded(
-                    $pdo,
-                    $userId,
-                    'project_completion',
-                    (float)$rule['reward_amount'],
-                    strtoupper(trim((string)$rule['currency_code'])),
-                    true,
-                    true
-                );
+                // Employee notification is deliberately deferred until FM final
+                // financial closure has passed and award recognition commits.
+                // PM closure only freezes the recipient and reward snapshot.
             }
 
             $markSnapshot = $pdo->prepare(
