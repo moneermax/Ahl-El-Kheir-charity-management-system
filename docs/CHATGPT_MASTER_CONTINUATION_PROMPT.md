@@ -1015,3 +1015,10 @@ PASS | provisional_wording=PASS | reward_context=PASS | unread=PASS | rollback_c
 ```
 
 The immediate activity-notice shared-helper gate is closed. Do not claim the real collection/sponsor/reactivation POST routes or browser inbox are verified by this harness. Continue only with the remaining documented incentive notification/UI acceptance gates; preserve active R5 and do not test against live financial data or repeat already-closed suites.
+
+
+## Deferred development point — collection incentive eligibility (recorded 2026-10-18)
+
+The user raised a business-design concern after the real browser collection submission displayed a provisional “activity linked to an incentive” notice: routine monthly sponsorship collection is ordinary job responsibility and may not merit an additional incentive, especially where the same employee may also qualify for the separate new-sponsor acquisition incentive. Revisit this with the user's forthcoming idea before changing behavior. Candidate recommendation to evaluate later: disable or redesign the collection incentive category and its provisional activity notice, while retaining new-sponsor, reactivation, and project-completion incentives unless the user decides otherwise.
+
+**Deferred, not approved for implementation.** Do not disable the category, change active policy R5, modify existing events/awards, delete notifications, reverse accounting, or change payroll now. Preserve historical evidence. The observed collection notice is provisional and does not prove an award was issued; before describing an employee as having received a new-sponsor incentive, inspect the actual event and award records. Continue the already-open acceptance work without repeating the completed collection/new-sponsor browser submissions or closed helper harness.
