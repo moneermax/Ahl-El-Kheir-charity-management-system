@@ -3206,3 +3206,6 @@ Awards 14 and 15 already have sent outbox rows and existing notifications 212/21
 ## 2026-10-18 — Employee incentive immediate activity notices
 
 Implementation committed on `main`: qualifying monthly collection submission, active new-sponsor creation, reactivation, and project-team snapshot at PM administrative closure now create immediate in-app activity notices. The wording is provisional and preserves all existing verification, FM financial-closure, award-recognition, and payroll-payment gates. The earned-stage notification remains distinct from this early activity notice. Source change and rollback-test assertion are committed, but local PHP lint, disposable-DB test execution, and browser inbox verification are still pending; this is **not yet runtime-verified**. Use only the existing `ahl_el_kheir_incentive_test_20261015_r1` database.
+
+
+Latest immediate-notice wording clarification commit: `c0316a4d47b708dedd37e74da8ac2d884b840dff`. The early message describes a recorded activity and expected incentive, not final earned/paid status.
