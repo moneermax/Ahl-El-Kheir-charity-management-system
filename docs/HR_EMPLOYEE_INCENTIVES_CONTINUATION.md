@@ -1045,3 +1045,17 @@ Commit `66aa8a820c67d632f53cfa48319157ef21ae7a48` narrows the behavior for proje
 The user clarified that employee project-completion notifications must be sent **after FM final financial closure**, not at PM administrative closure. Source inspection found `hrIncentivePrepareProjectCompletion()` both snapshotted eligible employees and inserted a provisional `notifications` row for each one. Commit `28578e3c9088fe8efdfccc671e1e2e7e7b99721f` removes only that early notification call; the PM transaction still records the idempotent source event and closure-time allocation snapshot. The existing `hrIncentiveProcessProjectCompletion()` path remains gated by the durable `FM_FINANCIAL_CLOSURE` audit record and zero controlled balance, recognizes each eligible award, queues the earned notice in `hr_incentive_notification_outbox`, and dispatches after commit.
 
 Commit `2a1d7b05e899582e40a6a0e864159914cc09b8e7` updates `tools/run_hr_project_incentive_payroll_rollback_tests.php` to assert (1) no employee incentive notification is inserted at PM closure, (2) no award is issued without the FM gate, and (3) after the gate permits award recognition, one earned-notice outbox row is pending per eligible recipient while the outer rollback-only test transaction is still open. These are source-level changes only; local PHP lint and execution against `ahl_el_kheir_incentive_test_20261015_r1` remain required. Do not run the FM closure on PRJ-0024 until the updated harness passes and source is synced locally. PRJ-0024 is already administratively closed; do not re-close or reopen it for this test. Keep active policy R5 unchanged and never use `ahl_el_kheir_production_test`.
+
+
+## 2026-10-18 — Rollback verification passed
+
+The user synced `main` locally and ran PHP lint on `modules/hr/lib_employee_incentives.php` and `tools/run_hr_project_incentive_payroll_rollback_tests.php`; both reported no syntax errors. The updated rollback-only harness passed on `ahl_el_kheir_incentive_test_20261015_r1`:
+
+```
+PASS | synthetic_project=no_financial_activity | PS_snapshot=PASS | full_policy_amount_per_employee=PASS
+PASS | missing_FM_gate_blocks_award=PASS | FM_gate=PASS | recognition_journal_5500_2400=PASS
+PASS | project_award_draft_payroll_link=PASS | incentive_total=PASS | net_salary_unchanged=PASS | outbox_pending=PASS | project_notice_waits_for_FM=PASS
+PASS | rollback_cleanup=PASS | temporary_payroll_rolled_back=NOT_NEEDED | policy=R5 | reward=1500.00 SDG
+```
+
+This proves the rollback-only scenario's PM/FM notification boundary and cleanup, not the real browser-triggered FM closure or successful delivery to PRJ-0024 recipients. PRJ-0024 remains administratively closed and FM final closure is still pending. Before the FM action, verify the displayed project and financial summary are still PRJ-0024, remaining controlled balance is zero, and no draft funding allocations remain. Do not re-close/reopen PM state or alter policy R5. After the FM action, inspect the project-completion awards/outbox and employee notifications for exactly one earned notice per eligible snapshotted recipient; verify retry/reload does not duplicate notifications. If any discrepancy appears, stop and report the evidence without manually inserting notices or altering accounting data.
