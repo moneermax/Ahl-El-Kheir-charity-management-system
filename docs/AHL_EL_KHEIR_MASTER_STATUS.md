@@ -3214,3 +3214,8 @@ Latest immediate-notice wording clarification commit: `c0316a4d47b708dedd37e74da
 ## 2026-10-18 — Project incentive notification timing
 
 Employee project-completion notifications are now source-configured to wait for FM final financial closure: the PM closure path retains the event/recipient snapshot but no longer inserts an early employee notice. The existing award recognition/outbox flow remains downstream of the durable FM closure gate. Commits: `28578e3c9088fe8efdfccc671e1e2e7e7b99721f` and `2a1d7b05e899582e40a6a0e864159914cc09b8e7`. Verification is not complete until local PHP lint and `tools/run_hr_project_incentive_payroll_rollback_tests.php` pass on disposable DB `ahl_el_kheir_incentive_test_20261015_r1`. Do not rerun closed unrelated suites, mutate live DB, or re-close/reopen PRJ-0024.
+
+
+## 2026-10-18 — Rollback verification passed
+
+Local PHP lint passed for both changed PHP files, and `tools/run_hr_project_incentive_payroll_rollback_tests.php` passed on disposable DB `ahl_el_kheir_incentive_test_20261015_r1`. Key result: `project_notice_waits_for_FM=PASS`; rollback cleanup passed; policy R5 and 1,500 SDG reward remained unchanged. This does not yet prove the actual FM UI action or employee notification delivery. PRJ-0024 remains administratively closed; FM final closure is pending acceptance. Do not repeat PM closure/reopen or alter policy R5.
