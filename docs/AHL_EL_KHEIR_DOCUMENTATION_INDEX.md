@@ -112,4 +112,11 @@ The guide is based on the current documented role/workflow model and the verifie
 
 ## Employee salary statement — 2026-10-19
 
-Implementation reference: `modules/hr/payroll_statement.php` and the post-commit hook in `modules/hr/lib_payroll_accounting.php`. The statement is employee-scoped, available only for paid/accounting-posted payrolls, uses saved payroll components and period-effective salary currency, and supports A4 print / Save as PDF. Current status is source committed; local PHP lint and browser acceptance remain pending.
+Implementation reference: `modules/hr/payroll_statement.php` and the post-commit hook in `modules/hr/lib_payroll_accounting.php`. The statement is employee-scoped, available only for paid/accounting-posted payrolls, uses saved payroll components and period-effective salary currency, and supports A4 print / Save as PDF. **Implementation and requested heading layout are CLOSED at the agreed scope.** The user approved the final stacked header. Existing notification delivery/opening was confirmed for EMP-0017's paid October 2026 payroll (accounting entry 157). The final local A4 print preview after the last heading correction was not independently observed; reopen only for a concrete user-reported defect.
+
+
+## 2026-10-19 — Employee salary statement implementation CLOSED
+
+The user approved the final heading arrangement: the logo and “جمعية أهل الخير” remain together on the first row, with “بيان تفاصيل الراتب” and “كشف راتب رسمي” centered on a separate row below. The source changes are committed on `main`; the existing paid October 2026 payroll acceptance confirmed statement-notification delivery and initial statement opening for EMP-0017 (10,000.00 SDG; accounting entry 157). The implementation preserves employee-only access, the paid + accounting-posted guard, saved payroll values, incentive separation, and the existing `net_salary + incentive_amount` total-paid formula.
+
+**Disposition:** implementation and the requested presentation correction are closed at the agreed scope. Do not run another payroll payment, mutate financial data, or repeat closed acceptance suites for this task. The assistant has not independently observed the user's final local A4 print preview after the last heading correction; this is not represented as runtime verification. Reopen only if the user reports a concrete defect.
