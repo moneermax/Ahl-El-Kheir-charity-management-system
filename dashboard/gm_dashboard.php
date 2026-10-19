@@ -211,12 +211,14 @@ foreach($cards as $c):
                     <div class="small text-muted mt-2">مراجعة المسودات المرسلة من FM/HR واعتمادها أو رفضها مع تسجيل السبب.</div>
                 </a>
             </div>
+            <?php if (in_array(Session::getUserRole(), ['general_manager', 'gm'], true)): ?>
             <div class="col-md-6 col-xl-4">
                 <a class="gm-report" href="<?php echo APP_URL; ?>modules/hr/gm_payroll_period_history.php">
                     <i class="fas fa-clock-rotate-left me-2"></i><strong><?php echo e(t('navigation.gm_payroll_period_history')); ?></strong>
                     <div class="small text-muted mt-2">عرض فترات صرف الرواتب السابقة وفتح الكشف الموحد لكل فترة.</div>
                 </a>
             </div>
+            <?php endif; ?>
         </div>
     </div>
 </div>
