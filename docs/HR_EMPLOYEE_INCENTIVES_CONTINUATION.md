@@ -1210,3 +1210,12 @@ The rollback-only harness `tools/run_hr_employee_incentive_immediate_activity_no
 ## 2026-10-19 — Immediate activity-notice rollback harness executed
 
 The user ran `tools/run_hr_employee_incentive_immediate_activity_notice_rollback_tests.php` after fast-forwarding local `main` to `a7f1be28`. Reported output confirmed all six preflight tables were InnoDB and `all_six_tables_transactional=PASS`. Runtime assertions passed: new-sponsor/reactivation provisional notices, collection notice blocked, correct recipient, provisional wording, reward context, unread status, and rollback cleanup. This closes the shared-helper rollback acceptance check with the new engine-safety preflight. It does not prove real POST-to-inbox behavior or project PM-to-FM earned-notice delivery. Do not rerun this harness without concrete regression evidence. Remaining end-to-end gates are unchanged.
+
+## 2026-10-19 — Project-team source syntax verification
+
+The user ran PHP 8.2 syntax checks locally after syncing `main`; both commands passed:
+
+- `php -l modules\\projects\\form.php` — `No syntax errors detected in modules\\projects\\form.php`.
+- `php -l modules\\projects\\view.php` — `No syntax errors detected in modules\\projects\\view.php`.
+
+This closes only the local PHP syntax-check item. Browser acceptance for initial team selection, edit-page display and authorization, add/duplicate rejection, unassignment/history retention, and success feedback remains pending. The user confirmed the two disposable incentive databases are deleted; do not recreate them and do not perform mutating acceptance tests against live `ahl_el_kheir`. No database rows or project assignments were changed as part of this syntax check.
