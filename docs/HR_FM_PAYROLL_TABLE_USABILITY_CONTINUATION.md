@@ -49,3 +49,9 @@ Source is committed on `main`; local syntax and browser verification remain pend
 - Kept Save because edited allowances, overtime, and general deductions require explicit persistence and trigger existing recalculation of attendance deduction, salary-advance deduction, and scheduled incentives. The compact Save action now sits beside Approve instead of below Net salary.
 
 No schema or migration changes were made. Static source audit confirms all literal `hr.payroll...` keys used by the page exist in both catalogs, the sticky dark header and checkbox/form wiring exist, fixed percentage widths are removed, and selected approval has no payment/posting path. Local PHP lint and focused browser verification remain pending. Do not submit real approvals/payments just to test the UI.
+
+
+### Source checkpoint details
+- Payroll page: `49ab655e6202368139f957eb4faf2a42fce12e75`, with follow-up refinements through `262f7de3b1f7b3528e5fbb396449fcffd5961b9b` and `88376c343a499eddd487125029c715b1564361ac`.
+- Selected approval helper: `01f4ea32e3c7f693a7f4c4469d4df5dd9105dc70`, with strict input validation `739f5b4a90e9d84484d42fdde99b2062177cc09b` and the follow-up removing request-time accounting initialization `236f843801632e8db510c4e88930f1f60a48c475`.
+- Arabic/English catalogs and page messages were updated in the same follow-up series. The selected-approval helper deliberately does not call runtime schema initializers or seed accounts; it changes only the selected payroll status fields.
