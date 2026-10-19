@@ -78,7 +78,7 @@ $netSalary = round((float)$statement['net_salary'], 2);
 $incentiveAmount = round((float)($statement['incentive_amount'] ?? 0), 2);
 $totalPaid = round($netSalary + $incentiveAmount, 2);
 $paymentDate = trim((string)($statement['payment_date'] ?? ''));
-$pageTitle = $label('كشف تفاصيل الراتب', 'Salary Statement');
+$pageTitle = $label('بيان تفاصيل الراتب', 'Salary Statement');
 $logoUrl = APP_URL . 'assets/img/logo.png';
 ?>
 <!doctype html>
@@ -101,7 +101,7 @@ $logoUrl = APP_URL . 'assets/img/logo.png';
         .brand{grid-column:2;display:flex;align-items:center;justify-content:center;gap:10px;text-align:center;font-weight:800;font-size:16px;line-height:1.25}
         .brand img{width:54px;height:54px;object-fit:contain;background:#fff;border-radius:50%;padding:3px;border:1px solid rgba(255,255,255,.65);flex-shrink:0}
         .brand-name{display:block}
-        .doc-kind{position:absolute;inset-inline-end:18px;top:50%;transform:translateY(-50%);max-width:24%;text-align:start}
+        .doc-kind{position:static;transform:none;max-width:none;text-align:start;border-inline-start:1px solid rgba(255,255,255,.35);padding-inline-start:12px;margin-inline-start:2px;flex-shrink:0}
         .doc-kind strong{display:block;font-size:12px;letter-spacing:.35px}
         .doc-kind span{display:block;font-size:11px;opacity:.9}
         .period-ribbon{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.2)}
@@ -135,7 +135,7 @@ $logoUrl = APP_URL . 'assets/img/logo.png';
         .actions{display:flex;justify-content:center;gap:8px;margin:10px auto}
         .actions button{border:0;border-radius:5px;padding:7px 14px;font:700 11px 'Cairo',sans-serif;cursor:pointer}
         .print-btn{background:var(--navy);color:#fff}.back-btn{background:#fff;color:var(--navy);border:1px solid var(--navy)!important}
-        @media(max-width:620px){.statement-shell{width:calc(100% - 12px);margin:6px auto}.statement-top{padding:10px}.brandline{grid-template-columns:1fr;min-height:0}.brand{grid-column:1;flex-direction:column;font-size:14px}.brand img{width:44px;height:44px}.doc-kind{position:static;transform:none;max-width:none;text-align:center;margin-top:5px}.period-ribbon{margin-top:8px}.statement-body{padding:10px}.employee-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.detail-grid{grid-template-columns:1fr}.totals{grid-template-columns:repeat(2,minmax(0,1fr))}.statement-foot{padding:7px 10px}}
+        @media(max-width:620px){.statement-shell{width:calc(100% - 12px);margin:6px auto}.statement-top{padding:10px}.brandline{grid-template-columns:1fr;min-height:0}.brand{grid-column:1;flex-direction:column;font-size:14px}.brand img{width:44px;height:44px}.doc-kind{max-width:none;text-align:center;margin-top:5px;border:0;padding:0;margin-inline-start:0}.period-ribbon{margin-top:8px}.statement-body{padding:10px}.employee-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.detail-grid{grid-template-columns:1fr}.totals{grid-template-columns:repeat(2,minmax(0,1fr))}.statement-foot{padding:7px 10px}}
         @page{size:A4 portrait;margin:6mm}
         @media print{
             html,body{width:100%;height:auto;background:#fff;font-size:9px;line-height:1.25}
@@ -145,7 +145,7 @@ $logoUrl = APP_URL . 'assets/img/logo.png';
             .brandline{min-height:42px}
             .brand{font-size:12px;gap:6px}
             .brand img{width:38px;height:38px}
-            .doc-kind{inset-inline-end:12px}
+            .doc-kind{padding-inline-start:8px;margin-inline-start:0}
             .doc-kind strong{font-size:9px}.doc-kind span{font-size:8px}
             .period-ribbon{margin-top:4px;padding-top:4px}
             .period-label{font-size:8px}.period{font-size:12px}.status{font-size:8px;padding:2px 6px}
@@ -180,12 +180,12 @@ $logoUrl = APP_URL . 'assets/img/logo.png';
                 <div class="brand">
                     <img src="<?php echo e($logoUrl); ?>" alt="<?php echo e($label('شعار جمعية أهل الخير', 'Ahl El Kheir logo')); ?>">
                     <span class="brand-name"><?php echo e($label('جمعية أهل الخير', 'Ahl El Kheir Charity')); ?></span>
-                </div>
-                <div></div>
-                <div class="doc-kind">
+                    <div class="doc-kind">
                     <strong><?php echo e($label('بيان تفاصيل الراتب', 'SALARY STATEMENT')); ?></strong>
                     <span><?php echo e($label('كشف راتب رسمي', 'Official payroll statement')); ?></span>
+                    </div>
                 </div>
+                <div></div>
             </div>
             <div class="period-ribbon">
                 <div><div class="period-label"><?php echo e($label('فترة الراتب', 'PAY PERIOD')); ?></div><div class="period"><?php echo e($period); ?></div></div>
