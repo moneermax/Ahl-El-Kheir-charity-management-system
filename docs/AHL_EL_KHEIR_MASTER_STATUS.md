@@ -3290,3 +3290,12 @@ Do not describe the entire incentive module as fully done until those gates are 
 ## 2026-10-19 — Immediate activity-notice helper check
 
 The updated immediate activity-notice rollback harness was run by the user after syncing `main`. All six participating tables reported InnoDB; helper assertions for new-sponsor/reactivation notices, blocked collection notices, correct recipient and provisional content, unread state, and rollback cleanup passed. This does not close the full employee-incentives module: real POST-to-browser-inbox acceptance and the PM-to-FM project-completion earned-notice workflow remain open. No further mutating acceptance tests should target live `ahl_el_kheir`; preserve active R5 and historical financial records.
+
+## 2026-10-19 — Project-team source syntax verification
+
+The user ran PHP 8.2 syntax checks locally after syncing `main`; both commands passed:
+
+- `php -l modules\\projects\\form.php` — `No syntax errors detected in modules\\projects\\form.php`.
+- `php -l modules\\projects\\view.php` — `No syntax errors detected in modules\\projects\\view.php`.
+
+This closes only the local PHP syntax-check item. Browser acceptance for initial team selection, edit-page display and authorization, add/duplicate rejection, unassignment/history retention, and success feedback remains pending. The user confirmed the two disposable incentive databases are deleted; do not recreate them and do not perform mutating acceptance tests against live `ahl_el_kheir`. No database rows or project assignments were changed as part of this syntax check.
