@@ -120,3 +120,7 @@ Implementation reference: `modules/hr/payroll_statement.php` and the post-commit
 The user approved the final heading arrangement: the logo and “جمعية أهل الخير” remain together on the first row, with “بيان تفاصيل الراتب” and “كشف راتب رسمي” centered on a separate row below. The source changes are committed on `main`; the existing paid October 2026 payroll acceptance confirmed statement-notification delivery and initial statement opening for EMP-0017 (10,000.00 SDG; accounting entry 157). The implementation preserves employee-only access, the paid + accounting-posted guard, saved payroll values, incentive separation, and the existing `net_salary + incentive_amount` total-paid formula.
 
 **Disposition:** implementation and the requested presentation correction are closed at the agreed scope. Do not run another payroll payment, mutate financial data, or repeat closed acceptance suites for this task. The assistant has not independently observed the user's final local A4 print preview after the last heading correction; this is not represented as runtime verification. Reopen only if the user reports a concrete defect.
+
+
+## 2026-10-19 — GM payroll period report
+The GM-only period completion report and verification boundary are documented in `HR_GM_PAYROLL_PERIOD_REPORT_CONTINUATION.md`. Local runtime verification is still pending.
