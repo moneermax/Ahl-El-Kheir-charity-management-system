@@ -10,6 +10,7 @@ require_once __DIR__ . '/lib_payroll_policy.php';
 require_once __DIR__ . '/lib_payroll_accounting.php';
 require_once __DIR__ . '/lib_salary_advance_payroll.php';
 require_once __DIR__ . '/lib_employee_incentives.php';
+require_once __DIR__ . '/lib_gm_payroll_period.php';
 
 Session::start();
 $userRole = Session::getUserRole();
@@ -200,6 +201,9 @@ $payrolls = dbFetchAll(
      WHERE p.month=? AND p.year=? ORDER BY e.full_name ASC,p.id ASC",
     [$selectedMonth,$selectedYear]
 );
+
+// Idempotently catch a period that was fully paid before this completion notice existed.
+hrGmPayrollNotifyPeriodComplete($pdo, $selectedMonth, $selectedYear);
 
 $activePolicy = hrPayrollPolicyGetActive($pdo, $periodEnd);
 $summary = ['count'=>count($payrolls),'draft'=>0,'approved'=>0,'paid'=>0,'net'=>0.0,'incentives'=>0.0];
