@@ -18,7 +18,7 @@
 - Draft component editing used a form spanning multiple table cells, which is invalid table/form markup.
 
 Committed source changes:
-- `modules/hr/payroll.php` (commit `85269f123d042a08735680d487c78b0c7715783b`):
+- `modules/hr/payroll.php` (commits `85269f123d042a08735680d487c78b0c7715783b` and form-markup follow-up `fecd42a9edbae3ff91b1092f81bcb4dc8c06eeb8`):
   - compact fixed-layout table with explicit column proportions and smaller cell spacing;
   - bounded vertical/horizontal table scroller with sticky headings;
   - merged the payroll-status and accounting-status cells while retaining both badges and the journal-entry ID;
