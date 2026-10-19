@@ -137,7 +137,6 @@ exit();
 function akp_post_value(string $name, string $default = ''): string {
 return trim((string)($_POST[$name] ?? $default));
 }
-$redirectToProjectsDashboard = false;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 if (!verify_csrf()) {
 flash('error', 'انتهت صلاحية الجلسة.');
@@ -1186,10 +1185,6 @@ $_SESSION['project_toast_success'] = 'تمت إعادة فتح المشروع و
 }
 } catch (Throwable $e) {
 flash('error', $e->getMessage());
-}
-if (!empty($redirectToProjectsDashboard)) {
-header('Location: ' . APP_URL . 'dashboard/projects_dashboard.php');
-exit();
 }
 akp_redirect_project($id);
 }
