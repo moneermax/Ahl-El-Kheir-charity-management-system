@@ -1771,7 +1771,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     <div class="card-body">
 
-        <form method="post" id="project-form">
+        <form method="post" id="project-form" data-ak-native-post="1">
 
             <?php echo csrf_field(); ?>
 
