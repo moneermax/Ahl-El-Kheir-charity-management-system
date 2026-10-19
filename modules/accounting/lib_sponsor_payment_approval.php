@@ -33,11 +33,6 @@ function ak_approve_sponsor_payment(PDO $pdo,int $paymentId,int $reviewerUserId,
         dbExecute("INSERT INTO audit_log (user_id,action,entity_type,entity_id,old_values,new_values,ip_address,user_agent) VALUES (?, 'APPROVE','sponsor_payments',?,?,?,?,?)",[$reviewerUserId,$paymentId,json_encode(['status'=>'pending'],JSON_UNESCAPED_UNICODE),json_encode(['status'=>'approved','txn_id'=>$transactionId,'journal_id'=>$journalId,'admin_fee_amount'=>$calc['amount'],'admin_fee_method'=>$calc['method'],'payment_method'=>$sp['payment_method']],JSON_UNESCAPED_UNICODE),$_SERVER['REMOTE_ADDR']??'',$_SERVER['HTTP_USER_AGENT']??'']);
     } catch(Throwable $auditError) {}
     if((string)$sp['payment_type']==='monthly_sponsorship'){
-        $confirmedAtStmt=$pdo->prepare('SELECT reviewed_at FROM sponsor_payments WHERE id=?');$confirmedAtStmt->execute([$paymentId]);$confirmedAt=(string)$confirmedAtStmt->fetchColumn();
-        if($confirmedAt==='') throw new RuntimeException('تعذر التحقق من وقت اعتماد الدفعة.');
-        $collectorUserId=(int)$sp['supervisor_id'];$collectorEmployeeId=hrIncentiveEmployeeIdForUser($pdo,$collectorUserId);
-        if($collectorEmployeeId>0) hrIncentiveRecordSourceEvent($pdo,'sponsor_payments',$paymentId,'collection',$confirmedAt,$amount,(string)($sp['currency_code']?:'SDG'),$reviewerUserId,$collectorUserId,$collectorEmployeeId);
-        else error_log('Incentive collection event skipped: supervisor has no unique employee mapping. Payment ID='.$paymentId);
         if($newSponsorRecorder!==null) $newSponsorRecorder($pdo,$paymentId,$reviewerUserId);
         else hrIncentiveRecordNewSponsorPaymentEvent($pdo,$paymentId,$reviewerUserId);
         hrIncentiveRecordReactivationPaymentEvent($pdo,$paymentId,$reviewerUserId);

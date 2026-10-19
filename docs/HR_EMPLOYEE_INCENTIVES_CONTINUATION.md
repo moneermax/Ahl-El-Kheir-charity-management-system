@@ -1115,3 +1115,38 @@ PASS | provisional_wording=PASS | reward_context=PASS | unread=PASS | rollback_c
 ```
 
 The test created and checked new unread provisional notices for collection, new sponsor, and reactivation, confirmed reward context and explicit not-finally-approved/not-paid wording, then verified rollback cleanup. **Closed:** helper-level acceptance for these three notice categories. **Still open:** proof of the real business POST call sites and browser inbox rendering; the helper test is not route/browser simulation. Preserve R5 and use only `ahl_el_kheir_incentive_test_20261015_r1` for synthetic tests. Do not repeat already-closed new-sponsor first-payment or other suites without regression evidence.
+
+
+## Deferred development point — collection incentive eligibility (recorded 2026-10-18)
+
+The user raised a business-design concern after the real browser collection submission displayed a provisional “activity linked to an incentive” notice: routine monthly sponsorship collection is ordinary job responsibility and may not merit an additional incentive, especially where the same employee may also qualify for the separate new-sponsor acquisition incentive. Revisit this with the user's forthcoming idea before changing behavior. Candidate recommendation to evaluate later: disable or redesign the collection incentive category and its provisional activity notice, while retaining new-sponsor, reactivation, and project-completion incentives unless the user decides otherwise.
+
+This recommendation was deferred at the time and is superseded by the explicit implementation request recorded in the 2026-10-18 section below. Historical evidence and active policy R5 remain protected.
+
+
+## 2026-10-18 — Browser evidence and next read-only incentive-state check
+
+The user has now completed real-browser checks of two immediate activity-notice routes on disposable DB `ahl_el_kheir_incentive_test_20261015_r1`:
+- Active new-sponsor creation for user 19 created sponsor `SP-002859` (“اختبار الحوفز”); the inbox showed the provisional activity notice with expected reward 2,000 SDG and explicit pending-verification/not-paid wording (observed 19:16:45).
+- Monthly sponsorship collection submission reported two payments submitted to FM for approval/posting; the inbox showed the provisional collection activity notice for expected reward 1,000 SDG (observed 19:29:40). Do not assume this submission inserted only one payment.
+
+These browser results prove the activity notices rendered; they do **not** prove an award was issued. The user's concern that the same employee may already have received a new-sponsor incentive must be resolved from durable records, not notification wording. Next step: run a read-only query against the same disposable database for incentive events and joined awards for recipient user 19, especially `new_sponsor` and `collection`; report event status and award status/payroll/journal links before deciding whether any earned incentive exists. Do not mutate, reverse, delete, or rerun the already completed browser submissions. New-sponsor first-confirmed-payment acceptance from 2026-10-16 remains closed and must not be repeated.
+
+The separate development point about whether routine collection should qualify for an incentive is deferred and recorded above; no category, active R5 policy, event, award, notification, payroll, or accounting behavior has been changed for that recommendation.
+
+
+
+## 2026-10-18 — Routine collection incentive removed from the automatic PHP flow (source committed; runtime pending)
+
+This section supersedes the earlier deferred recommendation about collection incentive eligibility. The user explicitly requested removal of the extra incentive for routine monthly collection.
+
+Root cause was confirmed in source, not inferred from database status: `modules/transactions/create.php` sent a provisional collection-incentive notice at submission, while `modules/accounting/lib_sponsor_payment_approval.php` separately created a `collection` source event during FM approval. Removing only the notice would not have stopped award eligibility. The committed changes now:
+- remove the provisional collection notice call from collection submission;
+- remove automatic collection-event creation from FM approval, while preserving the new-sponsor and reactivation event hooks in the same approval transaction;
+- remove `collection` from the shared immediate-notice allow-lists and from the source-event helper's allowed source map, blocking new collection events/notices;
+- block verification/award issuance for any already-pending routine collection event and label it as discontinued in the HR verification UI;
+- update the immediate-notice and source-event rollback-only harnesses to assert collection notices/events are blocked, and shift the verification rollback harness to the retained new-sponsor category.
+
+New-sponsor, reactivation, and project-completion incentives remain intact. The catalogue entry and active policy R5 were not modified. No existing events/awards/notifications, payroll, or accounting records were deleted, rejected, reversed, or changed. The browser-created event for payment 29 remains `pending_verification` with no linked award; it is historical test evidence, not proof of an earned or paid incentive.
+
+**Runtime status: PENDING local verification.** After pulling `main`, lint the four changed PHP source files and three updated harnesses, then run only `tools/run_hr_employee_incentive_immediate_activity_notice_rollback_tests.php`, `tools/run_hr_employee_incentive_source_event_rollback_tests.php`, and `tools/run_hr_incentive_verification_rollback_tests.php` with process-scoped `AHL_DB_NAME=ahl_el_kheir_incentive_test_20261015_r1`. Do not rerun the already-completed browser submissions or modify active R5.

@@ -88,80 +88,46 @@ try {
     );
     $ruleInsert->execute([$policyId, $currency]);
 
-    $eventId = hrIncentiveRecordSourceEvent(
-        $pdo,
-        'sponsor_payments',
-        $sourceRecordId,
-        'collection',
-        $occurredAt,
-        321.45,
-        $currency,
-        (int)$actor['id'],
-        (int)$recipient['user_id'],
-        (int)$recipient['employee_id']
-    );
-    incentiveSourceAssert($eventId > 0, 'No event was created for an active policy and enabled source-event rule.');
-
-    $event = incentiveSourceOne(
-        $pdo,
-        "SELECT idempotency_key, source_table, source_record_id, incentive_type,
-                policy_version_id, occurred_at, source_amount, source_currency_code,
-                recipient_user_id, recipient_employee_id,
-                status, created_by_user_id
-         FROM hr_incentive_events WHERE id = ?",
-        [$eventId]
-    );
+    $collectionBlocked = false;
+    try {
+        hrIncentiveRecordSourceEvent(
+            $pdo,
+            'sponsor_payments',
+            $sourceRecordId,
+            'collection',
+            $occurredAt,
+            321.45,
+            $currency,
+            (int)$actor['id'],
+            (int)$recipient['user_id'],
+            (int)$recipient['employee_id']
+        );
+    } catch (InvalidArgumentException $expected) {
+        $collectionBlocked = true;
+    }
+    incentiveSourceAssert($collectionBlocked, 'Routine collection source event was not blocked.');
     incentiveSourceAssert(
-        $event !== null &&
-        $event['idempotency_key'] === 'hr-incentive:sponsor_payments:' . $sourceRecordId . ':collection' &&
-        $event['source_table'] === 'sponsor_payments' &&
-        (int)$event['source_record_id'] === $sourceRecordId &&
-        $event['incentive_type'] === 'collection' &&
-        (int)$event['policy_version_id'] === $policyId &&
-        $event['status'] === 'pending_verification' &&
-        round((float)$event['source_amount'], 2) === 321.45 &&
-        strtoupper((string)$event['source_currency_code']) === $currency &&
-        (int)$event['created_by_user_id'] === (int)$actor['id'] &&
-        (int)$event['recipient_user_id'] === (int)$recipient['user_id'] &&
-        (int)$event['recipient_employee_id'] === (int)$recipient['employee_id'],
-        'Recorded event fields or pending-verification state do not match the source evidence.'
-    );
-
-    $repeatId = hrIncentiveRecordSourceEvent(
-        $pdo,
-        'sponsor_payments',
-        $sourceRecordId,
-        'collection',
-        $occurredAt,
-        321.45,
-        $currency,
-        (int)$actor['id'],
-        (int)$recipient['user_id'],
-        (int)$recipient['employee_id']
-    );
-    incentiveSourceAssert($repeatId === $eventId, 'Repeated source recording did not return the same event.');
-    incentiveSourceAssert(
-        incentiveSourceCount($pdo, 'SELECT COUNT(*) FROM hr_incentive_events WHERE idempotency_key = ?', [$event['idempotency_key']]) === 1,
-        'Repeated source recording created a duplicate event.'
-    );
-    incentiveSourceAssert(
-        incentiveSourceCount($pdo, 'SELECT COUNT(*) FROM hr_incentive_awards WHERE event_id = ?', [$eventId]) === 0,
-        'Source recording issued an award before manager verification.'
+        incentiveSourceCount(
+            $pdo,
+            'SELECT COUNT(*) FROM hr_incentive_events WHERE idempotency_key = ?',
+            ['hr-incentive:sponsor_payments:' . $sourceRecordId . ':collection']
+        ) === 0,
+        'Blocked collection attempt created an event.'
     );
 
     $pdo->rollBack();
 
     incentiveSourceAssert(
-        incentiveSourceCount($pdo, 'SELECT COUNT(*) FROM hr_incentive_events WHERE id = ?', [$eventId]) === 0,
-        'Rollback left the source event behind.'
+        incentiveSourceCount($pdo, 'SELECT COUNT(*) FROM hr_incentive_events WHERE idempotency_key = ?', ['hr-incentive:sponsor_payments:' . $sourceRecordId . ':collection']) === 0,
+        'Blocked collection event appeared after rollback.'
     );
     incentiveSourceAssert(
         incentiveSourceCount($pdo, 'SELECT COUNT(*) FROM hr_incentive_policy_versions WHERE id = ?', [$policyId]) === 0,
         'Rollback left the temporary policy behind.'
     );
 
-    echo "PASS | source_event=recorded | state=pending_verification | policy_rule=effective | duplicate_event=blocked\n";
-    echo "PASS | no_award_before_verification=PASS | rollback_cleanup=PASS | policy={$policyId} | event={$eventId}\n";
+    echo "PASS | collection_source_event=blocked | no_new_collection_award_path=PASS\n";
+    echo "PASS | rollback_cleanup=PASS | policy={$policyId}\n";
 } catch (Throwable $e) {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();

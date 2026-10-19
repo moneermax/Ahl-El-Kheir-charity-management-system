@@ -50,10 +50,10 @@ $types = immediateNoticeOne(
     $pdo,
     "SELECT COUNT(DISTINCT type_code)
      FROM hr_incentive_types
-     WHERE type_code IN ('collection', 'new_sponsor', 'reactivation')
+     WHERE type_code IN ('new_sponsor', 'reactivation')
        AND is_active = 1 AND qualification_mode = 'source_event'"
 );
-if (!$recipient || !$types || (int)$types['COUNT(DISTINCT type_code)'] !== 3 ||
+if (!$recipient || !$types || (int)$types['COUNT(DISTINCT type_code)'] !== 2 ||
     !preg_match('/^[A-Z]{3}$/', $currency)) {
     echo "SKIP | Immediate activity-notice rollback test | eligible employee, source-event catalogue types, or currency unavailable.\n";
     exit(0);
@@ -66,7 +66,6 @@ $token = strtoupper(bin2hex(random_bytes(6)));
 $policyId = 0;
 $noticeIds = [];
 $noticeTypes = [
-    'collection' => ['تسجيل تحصيل كفالة', '25.00 ' . $currency],
     'new_sponsor' => ['تسجيل كفيل جديد', '35.00 ' . $currency],
     'reactivation' => ['إعادة تفعيل كفيل', '45.00 ' . $currency],
 ];
@@ -94,9 +93,15 @@ try {
          (policy_version_id, incentive_type, reward_amount, currency_code, is_enabled, rule_notes)
          VALUES (?, ?, ?, ?, 1, 'Rollback-only immediate activity notice test')"
     );
-    foreach (['collection' => 25.00, 'new_sponsor' => 35.00, 'reactivation' => 45.00] as $type => $amount) {
+    foreach (['new_sponsor' => 35.00, 'reactivation' => 45.00] as $type => $amount) {
         $rule->execute([$policyId, $type, $amount, $currency]);
     }
+
+    $previousCollectionNoticeId = (int)($pdo->query('SELECT COALESCE(MAX(id), 0) FROM notifications')->fetchColumn() ?: 0);
+    hrIncentiveNotifyPendingActivity($pdo, $actorUserId, 'collection', date('Y-m-d H:i:s'));
+    hrIncentiveNotifyActivityRecorded($pdo, $actorUserId, 'collection', 25.00, $currency);
+    $afterCollectionNoticeId = (int)($pdo->query('SELECT COALESCE(MAX(id), 0) FROM notifications')->fetchColumn() ?: 0);
+    immediateNoticeAssert($afterCollectionNoticeId === $previousCollectionNoticeId, 'Routine collection still generated a provisional incentive notice.');
 
     foreach ($noticeTypes as $type => [$label, $amountText]) {
         $previousNoticeId = (int)($pdo->query('SELECT COALESCE(MAX(id), 0) FROM notifications')->fetchColumn() ?: 0);
@@ -138,7 +143,7 @@ try {
         'Rollback left the temporary policy behind.'
     );
 
-    echo "PASS | immediate_notice=collection,new_sponsor,reactivation | correct_recipient=PASS\n";
+    echo "PASS | immediate_notice=new_sponsor,reactivation | collection_notice=blocked | correct_recipient=PASS\n";
     echo "PASS | provisional_wording=PASS | reward_context=PASS | unread=PASS | rollback_cleanup=PASS\n";
 } catch (Throwable $e) {
     if ($pdo->inTransaction()) {
