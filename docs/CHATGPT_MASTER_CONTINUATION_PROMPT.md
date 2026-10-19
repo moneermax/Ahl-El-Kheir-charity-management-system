@@ -1064,3 +1064,7 @@ Do not call the whole employee incentive module fully complete yet. Several core
 3. Verify project-team assignment UI: initial selection, adding a member, duplicate rejection, unassign with history retention, and edit-page behavior.
 
 Existing evidence is from disposable test state and rollback-only harnesses; it does not prove live/production database acceptance or the complete end-to-end gates above. The two disposable incentive databases were deleted after schema comparison; do not recreate them. Preserve active policy R5 and existing historical payroll/accounting records. Follow inspect → smallest justified change → lint/runtime evidence → documentation; do not rerun closed suites.
+
+## 2026-10-19 — Immediate activity-notice harness passed
+
+The user ran the updated immediate-notice rollback harness after syncing `main`. Six-table InnoDB preflight and all helper assertions passed for new-sponsor/reactivation provisional notices, blocked collection notice, correct recipient/content/unread state, and rollback cleanup. This does not close the real POST-to-inbox or PM-to-FM earned-notification browser gates. Do not rerun closed harnesses without regression evidence, recreate deleted disposable databases, or run further mutating acceptance tests against live `ahl_el_kheir`.
