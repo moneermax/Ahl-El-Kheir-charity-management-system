@@ -368,10 +368,15 @@ function hrPayrollApproveSelected(PDO $pdo, array $payrollIds, int $month, int $
         throw new RuntimeException(t('hr.payroll_error_invalid_period'));
     }
 
-    $ids = array_values(array_unique(array_filter(
-        array_map('intval', $payrollIds),
-        static function (int $id): bool { return $id > 0; }
-    )));
+    $uniqueIds = [];
+    foreach ($payrollIds as $rawId) {
+        if (!is_scalar($rawId) || !preg_match('/^\\d+$/', (string)$rawId)) {
+            throw new RuntimeException(t('hr.payroll_error_invalid_selection'));
+        }
+        $id = (int)$rawId;
+        if ($id > 0) $uniqueIds[$id] = $id;
+    }
+    $ids = array_values($uniqueIds);
     if (!$ids) {
         throw new RuntimeException(t('hr.payroll_error_no_selection'));
     }
