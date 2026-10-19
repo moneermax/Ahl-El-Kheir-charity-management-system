@@ -135,3 +135,7 @@ The user confirmed the GM payroll payment history navigation works as intended. 
 
 ## 2026-10-19 — FM payroll table usability (active)
 Target: `modules/hr/payroll.php?lang=en`. The active UI request is to reduce table width, keep the header visible during vertical scrolling, preserve row/action context after actions, and remove only redundant display information. Payroll calculations, payment states, and accounting behavior must remain unchanged. See the current continuation note in the master status and master continuation prompt.
+
+
+## 2026-10-19 — FM payroll table usability
+See `HR_FM_PAYROLL_TABLE_USABILITY_CONTINUATION.md` for source findings, committed UI/scroll changes, preserved financial behavior, and the focused local verification boundary. The source is committed to `main`; local syntax/browser verification remains pending.
