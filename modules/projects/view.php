@@ -1156,7 +1156,7 @@ ak_transaction_review_notify_event(
 $_SESSION['project_toast_success'] = $controlledBalance > 0.009
     ? 'تم إغلاق المشروع إدارياً وتحويله إلى المدير المالي لإتمام الإغلاق المالي وإرجاع الرصيد المتبقي.'
     : 'تم إغلاق المشروع إدارياً وتحويله إلى المدير المالي لإتمام الإغلاق المالي.';
-$redirectToProjectsDashboard = true;
+$redirectToProjectsDashboard = false;
 } elseif ($action === 'reopen_project') {
 // ... (Original reopen_project logic preserved exactly)
 if ($role !== 'projects_manager') throw new RuntimeException('إعادة فتح المشروع محصورة بمدير المشاريع بعد طلب مشرف المشروع.');
@@ -1322,7 +1322,7 @@ width: 24%;
 <form method="post" class="project-action-form d-inline">
 <?php echo csrf_field(); ?>
 <input type="hidden" name="action" value="launch_project">
-<button class="btn btn-success" onclick="return confirm('هل أنت متأكد من إطلاق المشروع للمشرف المعيّن؟')">
+<button class="btn btn-success" data-ak-project-confirm="هل أنت متأكد من إطلاق المشروع للمشرف المعيّن؟">
 <i class="fas fa-play me-1"></i> إطلاق المشروع
 </button>
 </form>
@@ -1350,7 +1350,7 @@ width: 24%;
 <form method="post" class="project-action-form d-inline">
 <?php echo csrf_field(); ?>
 <input type="hidden" name="action" value="fm_approve_project">
-<button class="btn btn-success" onclick="return confirm('هل أنت متأكد من اعتماد هذا المشروع مالياً؟')"><i class="fas fa-check me-1"></i> اعتماد مالي</button>
+<button class="btn btn-success" data-ak-project-confirm="هل أنت متأكد من اعتماد هذا المشروع مالياً؟"><i class="fas fa-check me-1"></i> اعتماد مالي</button>
 </form>
 <form method="post" class="project-action-form d-inline ms-2">
 <?php echo csrf_field(); ?>
@@ -1371,7 +1371,7 @@ width: 24%;
 <input type="hidden" name="action" value="fm_return_to_review">
 <div class="input-group">
 <input type="text" name="return_reason" class="form-control" placeholder="سبب إعادة المراجعة (مطلوب)" required value="استكمال تخصيص حسابات تمويل المشروع">
-<button class="btn btn-warning" onclick="return confirm('سيُعاد المشروع إلى مرحلة المراجعة المالية. هل تريد المتابعة؟')"><i class="fas fa-rotate-left me-1"></i> إعادة للمراجعة المالية</button>
+<button class="btn btn-warning" data-ak-project-confirm="سيُعاد المشروع إلى مرحلة المراجعة المالية. هل تريد المتابعة؟"><i class="fas fa-rotate-left me-1"></i> إعادة للمراجعة المالية</button>
 </div>
 </form>
 </div>
@@ -1385,7 +1385,7 @@ width: 24%;
 <form method="post" class="project-action-form d-inline">
 <?php echo csrf_field(); ?>
 <input type="hidden" name="action" value="approve_project">
-<button class="btn btn-success" onclick="return confirm('هل أنت متأكد من الاعتماد التنظيمي النهائي لهذا المشروع؟ لن يتم إنشاء قيد مالي جديد في هذه الخطوة.')"><i class="fas fa-check-double me-1"></i> اعتماد نهائي</button>
+<button class="btn btn-success" data-ak-project-confirm="هل أنت متأكد من الاعتماد التنظيمي النهائي لهذا المشروع؟ لن يتم إنشاء قيد مالي جديد في هذه الخطوة."><i class="fas fa-check-double me-1"></i> اعتماد نهائي</button>
 </form>
 <form method="post" class="project-action-form d-inline ms-2">
 <?php echo csrf_field(); ?>
@@ -2104,7 +2104,7 @@ document.addEventListener('DOMContentLoaded',function(){var edit=document.getEle
 <?php echo csrf_field(); ?>
 <input type="hidden" name="action" value="delete_milestone">
 <input type="hidden" name="milestone_id" value="<?php echo (int)$milestone['id']; ?>">
-<button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('هل تريد حذف هذه المرحلة؟');"><i class="fas fa-trash"></i> حذف</button>
+<button type="submit" class="btn btn-sm btn-outline-danger" data-ak-project-confirm="هل تريد حذف هذه المرحلة؟"><i class="fas fa-trash"></i> حذف</button>
 </form>
 </td>
 <?php endif; ?>
@@ -2315,7 +2315,7 @@ document.getElementById('edit-milestone-description').value = button.dataset.mil
 <?php endif; ?>
 </div>
 <?php endif; ?>
-<button type="submit" name="action" value="request_project_closure" class="btn btn-dark px-4" onclick="return confirm('هل تؤكد إرسال طلب إغلاق المشروع إلى مدير المشاريع؟');"><i class="fas fa-paper-plane me-1"></i>إرسال طلب الإغلاق</button>
+<button type="submit" name="action" value="request_project_closure" class="btn btn-dark px-4" data-ak-project-confirm="هل تؤكد إرسال طلب إغلاق المشروع إلى مدير المشاريع؟"><i class="fas fa-paper-plane me-1"></i>إرسال طلب الإغلاق</button>
 </form>
 <?php endif; ?>
 </div>
@@ -2494,7 +2494,7 @@ document.getElementById('edit-milestone-description').value = button.dataset.mil
 <button type="submit" class="btn btn-warning px-4"><i class="fas fa-rotate-left me-1"></i>إعادة المشروع إلى مشرف المشروع</button>
 </div>
 </form>
-<form method="post" onsubmit="return confirm(&quot;هل تؤكد إغلاق المشروع إدارياً؟ سيتم تحويله إلى المدير المالي لاستكمال الإغلاق المالي.&quot;);">
+<form method="post" data-ak-project-confirm="هل تؤكد إغلاق المشروع إدارياً؟ سيتم تحويله إلى المدير المالي لاستكمال الإغلاق المالي.">
 <input type="hidden" name="action" value="close_project">
 <?php echo csrf_field(); ?>
 <div class="mb-3">
@@ -2713,10 +2713,10 @@ confirmButtonText: 'حذف',
 cancelButtonText: 'إلغاء',
 reverseButtons: true
 }).then(function (result) {
-if (result.isConfirmed) form.submit();
+if (result.isConfirmed) form.requestSubmit(button);
 });
-} else if (window.confirm(text)) {
-form.submit();
+} else if (window.AKNotify && typeof window.AKNotify.toast === 'function') {
+window.AKNotify.toast('error', 'تعذر فتح نافذة التأكيد. أعد تحميل الصفحة ثم حاول مرة أخرى.');
 }
 });
 });
