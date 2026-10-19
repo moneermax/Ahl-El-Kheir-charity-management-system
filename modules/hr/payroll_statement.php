@@ -94,7 +94,7 @@ $logoUrl = APP_URL . 'assets/img/logo.png';
         :root{--ink:#172b4d;--navy:#17365d;--gold:#b38a3e;--muted:#66758a;--line:#c6d0de;--pale:#f4f7fb}
         *{box-sizing:border-box}
         body{margin:0;background:#edf1f6;color:var(--ink);font-family:'Cairo',Tahoma,Arial,sans-serif;font-size:12px;line-height:1.45}
-        .statement-shell{width:min(900px,calc(100% - 24px));margin:14px auto}
+        .statement-shell{width:min(748px,calc(100% - 24px));margin:14px auto}
         .statement{background:#fff;border:2px solid var(--navy);border-radius:10px;overflow:hidden;box-shadow:0 8px 22px rgba(23,54,93,.08)}
         .statement-top{position:relative;padding:12px 20px 10px;background:linear-gradient(120deg,#142b4b,#234a75);color:#fff;border-bottom:3px solid var(--gold)}
         .brandline{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;min-height:62px;gap:10px}
