@@ -3642,3 +3642,10 @@ Source now contains a GM-only read/print payroll period report and an idempotent
 Added a dedicated GM payroll payment history page and a quick-access card on the GM dashboard. The history lists payroll periods with at least one payroll record in `paid` status, shows each period's eligible/paid-and-posted counts and posted payment totals, and links to the existing read-only period report. The GM sidebar entry now opens the history page; notification links still open their specific period report directly. The page is GM-only and read-only; it does not change payroll or accounting data.
 
 **Verification boundary:** source committed to `main`; local PHP syntax and browser verification are pending. Do not pay, approve, regenerate, or otherwise mutate payroll records for this UI change.
+
+
+## 2026-10-19 — GM payroll payment history navigation disposition
+User confirmed the GM payroll history navigation is satisfactory. The GM-only read-only history route and dashboard/sidebar access are accepted. No payroll/accounting data was mutated for this change. No additional testing is warranted absent a concrete regression.
+
+## 2026-10-19 — FM payroll table usability request
+A new UI request targets `modules/hr/payroll.php?lang=en` for FM. Investigate the wide 13-column payroll table, sticky header behavior, and loss of row position after action POSTs. Source inspection must determine whether existing centralized same-path POST interception is engaged and whether the form/table markup interferes with it. Only remove or combine fields where their information is genuinely redundant; do not remove accounting journal identifiers or payroll components needed for financial review. No root cause or fix is claimed yet.
