@@ -1168,3 +1168,22 @@ The collection-incentive removal rollback verification is **CLOSED**. Routine co
 
 Important preservation boundary: this change blocks new routine collection incentive activity; it does not delete, reject, reverse, or rewrite historical collection events, awards, notifications, payroll, accounting records, the catalogue entry, or active policy R5. No production database or policy change was made. No additional application tests or browser submissions are warranted without concrete regression evidence.
 
+
+
+## 2026-10-19 — Incentive module status: core paths verified, full acceptance still open
+
+The current evidence supports **partial runtime verification, not a claim that the entire module is finished end-to-end**.
+
+### Closed gates
+- **Routine collection incentive removal — CLOSED.** Seven PHP lint checks and three rollback-only harnesses passed on disposable test state. New routine collection submissions no longer create provisional incentive notices or new collection source events; pending legacy collection events cannot be verified into new awards. Historical records, awards, notices, payroll/accounting evidence, catalogue entry and active R5 were not deleted or rewritten.
+- **New-sponsor first-confirmed-payment — CLOSED** at the browser acceptance boundary recorded for 2026-10-16. Do not repeat without regression evidence.
+- **Immediate provisional-notice helper — CLOSED** for new-sponsor and reactivation; rollback-only evidence confirms correct recipient, provisional wording, reward context, unread status and cleanup. Collection is intentionally blocked and is not part of the retained incentive paths.
+- **Project-completion award mechanics — CLOSED at rollback-only boundary.** Evidence covers FM financial-closure gating, full per-eligible-employee policy amount, Dr 5500 / Cr 2400 recognition, draft-payroll linkage, earned-notice outbox and rollback. The fixture includes a primary supervisor assigned through project_supervisor_assignments without a project_team row.
+- **PRJ-0024 supervisor omission recovery — DONE ONCE.** On the disposable database only, preflight and recovery passed: project 24/event 34, PS1 user 34/employee 22, reward 1,500 SDG; allocation 15, award 24, journal 178, scheduled award, outbox sent, notification 232, audit recorded. Production was not targeted. Do not rerun recovery or repeat closure.
+
+### Remaining end-to-end acceptance gates
+1. Real-browser PM-to-FM financial closure path: verify earned notices reach all snapshotted recipients after FM closure, including separately assigned supervisor PS1, and reload/retry does not duplicate delivery. Synthetic rollback evidence and the one-time recovery are not substitutes.
+2. Real POST-to-browser-inbox acceptance for the retained new-sponsor and reactivation provisional notices. The earlier helper-level harness does not simulate these POST routes; routine collection must remain blocked.
+3. Project-team assignment UI: initial selection, adding members, duplicate rejection, unassign/history retention, and edit-page behavior.
+
+Until those gates have concrete evidence, describe the module as implemented with several verified paths but **not fully acceptance-closed**. Current evidence comes from disposable test state, not production/live database acceptance. The two disposable incentive databases were deleted after schema metadata comparison; do not recreate them. Do not alter active policy R5, historical events/awards, payroll/accounting records, or repeat closed tests without an explicit new requirement or concrete regression evidence.
