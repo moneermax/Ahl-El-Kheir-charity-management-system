@@ -67,4 +67,5 @@ return [
     "hr.payroll_error_approved_edit" => "An approved payroll record cannot be edited.",
     "hr.payroll_error_negative_net" => "Net salary before salary-advance deduction cannot be negative.",
     "hr.payroll_error_invalid_salary" => "A valid basic salary is required before approval.",
+    'hr.payroll_msg_approve_selected' => 'Approved :count selected draft payroll record(s).',
 ];
