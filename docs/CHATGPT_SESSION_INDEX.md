@@ -1147,3 +1147,21 @@ The user confirmed the GM payroll history navigation works as intended. The impl
 
 ## 2026-10-19 — FM payroll table usability source update
 The FM payroll table usability changes are committed to `main` in `modules/hr/payroll.php` (`85269f123d042a08735680d487c78b0c7715783b`) and `assets/js/app.js` (`f9cf0c0a2e079ae297c1674a8d18b7b150d738f0`). The table is compact/fixed-layout, has a bounded scroll area with sticky headers, combines status/accounting into one column while retaining journal IDs, removes the repeated salary effective-date display, fixes draft amount form markup (final valid-cell placement commit `fecd42a9edbae3ff91b1092f81bcb4dc8c06eeb8`), and preserves the marked table scroll position across same-page POST fragment replacement. No payroll/accounting data or business logic was changed. Local PHP syntax and browser verification are pending; see `docs/HR_FM_PAYROLL_TABLE_USABILITY_CONTINUATION.md`.
+
+
+## 2026-10-19 — FM payroll table refinements and selected approval
+
+The follow-up request is implemented in source on `main`; local syntax/browser verification remains pending.
+
+### Changes
+- Replaced fixed percentage column widths with auto sizing and compact, translated header labels. Full labels remain available as header tooltips; cell contents wrap as needed.
+- Darkened the sticky table header to a navy background with white text.
+- Migrated the visible payroll page headings, period controls, summary labels, table headings, status/accounting badges, row actions, policy/note text, empty state, period month names, journal-entry label, and page-specific success/error messages to stable Arabic/English translation keys.
+- Added draft-row checkboxes and a select-all-drafts checkbox in the Employee heading. The “Approve selected” action shows the current selection count and is disabled until at least one draft is selected. Existing “Approve all drafts” remains available.
+- Added `hrPayrollApproveSelected()` in `modules/hr/lib_payroll_accounting.php`. It rejects malformed/empty/oversized selections, locks and validates every selected row against the chosen month/year and `draft` status, rejects non-positive basic salaries, and approves all selected rows in one transaction or none. It only changes status to `approved` and accounting status to `ready`; it does not pay payroll or post accounting.
+- Kept the Save action because editable allowances, overtime and general deductions need an explicit save to persist them and trigger the existing automatic recalculation of attendance deductions, salary-advance deductions and scheduled incentives. It is now a compact, clearly labelled action beside Approve, rather than under Net salary.
+
+### Scope and verification
+- No schema changes or migration; no payment/accounting journal creation was added to the selected-approval operation.
+- Static source audit confirms all literal `hr.payroll...` keys referenced by the page exist in both language catalogs, fixed percentage width rules are removed, the dark sticky header is present, the selected-checkbox form association exists, and selected approval has no paid/posting path.
+- Local PHP lint and focused browser verification are still required. Do not approve, pay, or otherwise mutate real payroll records just to test the new UI; verify syntax first, then inspect selection controls and header layout without submitting an approval unless the user explicitly chooses safe draft rows.
