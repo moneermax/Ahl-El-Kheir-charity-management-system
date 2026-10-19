@@ -1145,3 +1145,7 @@ Added a dedicated GM payroll payment history page and a quick-access card on the
 The user confirmed the GM payroll payment history navigation works. Treat it as CLOSED; do not repeat checks without regression evidence.
 
 Next active task: improve FM usability of `modules/hr/payroll.php?lang=en`. Read the canonical docs and inspect the live `main` source, especially the table structure/styles and `assets/js/app.js` same-path POST handler. Desired: reduce width, sticky headers during vertical scrolling, keep action controls usable after a row action without forcing the user to scroll back, and remove only demonstrably unnecessary display fields. Preserve all payroll/accounting business behavior. Use the smallest source-justified change, lint changed PHP, document the exact verification boundary, and do not mutate financial data for a UI-only task.
+
+
+## 2026-10-19 — FM payroll table usability continuation
+The requested source changes are committed on `main`. See `docs/HR_FM_PAYROLL_TABLE_USABILITY_CONTINUATION.md` for findings and exact scope. Next gate is focused local verification only: pull `main`, run PHP lint on `modules/hr/payroll.php`, and visually verify the existing payroll table's compact layout and sticky header in the real Apache app. If a safe existing draft/approved row is available, check that its normal action retains the table scroll position; do not create/pay test payrolls or mutate paid accounting data. Do not repeat unrelated payroll suites.
