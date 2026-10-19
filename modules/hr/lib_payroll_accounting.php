@@ -305,6 +305,8 @@ function hrPayrollChangeStatus(PDO $pdo, int $payrollId, string $newStatus, ?int
             }
             if ($newStatus === 'paid') {
                 hrPayrollNotifyStatementAvailable($pdo, $payrollId);
+                require_once __DIR__ . '/lib_gm_payroll_period.php';
+                hrGmPayrollNotifyPeriodComplete($pdo, (int)$row['month'], (int)$row['year']);
             }
         }
     } catch (Throwable $e) {
