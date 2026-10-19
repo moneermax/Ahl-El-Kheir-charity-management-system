@@ -3319,3 +3319,9 @@ Next: pull `main), run PHP syntax checks for the three changed project PHP pages
 ### 2026-10-19 — Project form validation ordering follow-up
 
 Follow-up source commit: `97ca44232ecec3bdb306992e46f5aec4ff6d770c`. The project create/edit form now opts out of the shared same-page POST interceptor so its existing client-side budget/team validation can run before submission. Server-side validation remains authoritative. This is still source-only verification; local PHP lint and browser verification are pending.
+
+## 2026-10-19 — Employee salary statement (source committed; local verification pending)
+
+A new employee-only salary statement route is implemented at `modules/hr/payroll_statement.php`. The paid-payroll transition calls a best-effort statement notification only after the existing payroll/accounting transaction commits. The statement is accessible only when the signed-in account resolves to the payroll's employee profile and the payroll is both paid and accounting-posted. It renders saved payroll fields (basic salary, allowances, overtime, general deductions, attendance deduction, salary-advance deduction, net salary, and incentives when positive), and separately shows total paid as `net_salary + incentive_amount`, matching existing payroll posting behavior. Salary currency is taken from the effective salary-history row for that payroll period. The print stylesheet is designed for A4 and browser Save as PDF; no database schema change was introduced.
+
+**Verification boundary:** source inspection only. Local PHP 8.2 syntax checks and non-mutating browser access/print checks remain pending. Do not trigger a real payroll payment solely for testing. The existing attendance, salary-advance, incentive, and payroll-accounting acceptance suites are not being reopened.

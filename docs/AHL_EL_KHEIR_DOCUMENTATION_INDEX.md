@@ -109,3 +109,7 @@ Added the durable production onboarding reference:
 The guide establishes the recommended first-user sequence: Developer/System Administrator for technical preparation, then **General Manager as the first normal organizational user**, followed by HR Manager and Financial Manager before wider operational onboarding.
 
 The guide is based on the current documented role/workflow model and the verified production-preparation database contract. It does not replace source/schema or module-specific workflow documentation.
+
+## Employee salary statement — 2026-10-19
+
+Implementation reference: `modules/hr/payroll_statement.php` and the post-commit hook in `modules/hr/lib_payroll_accounting.php`. The statement is employee-scoped, available only for paid/accounting-posted payrolls, uses saved payroll components and period-effective salary currency, and supports A4 print / Save as PDF. Current status is source committed; local PHP lint and browser acceptance remain pending.

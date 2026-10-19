@@ -303,6 +303,9 @@ function hrPayrollChangeStatus(PDO $pdo, int $payrollId, string $newStatus, ?int
                 require_once __DIR__ . '/lib_salary_advance_payroll.php';
                 hrSalaryAdvancePayrollNotifyApplied($pdo, $payrollId);
             }
+            if ($newStatus === 'paid') {
+                hrPayrollNotifyStatementAvailable($pdo, $payrollId);
+            }
         }
     } catch (Throwable $e) {
         if ($startedHere && $pdo->inTransaction()) {
@@ -349,5 +352,70 @@ function hrPayrollApproveAll(PDO $pdo, int $month, int $year): int
             $pdo->rollBack();
         }
         throw $e;
+    }
+}
+
+
+/**
+ * Notify the linked employee after payroll payment and accounting have committed.
+ *
+ * The notification is informational; the paid payroll and posted journal remain
+ * authoritative. Failures must not make a completed financial action look failed.
+ */
+function hrPayrollNotifyStatementAvailable(PDO $pdo, int $payrollId): void
+{
+    if ($payrollId <= 0) {
+        return;
+    }
+
+    try {
+        $row = dbFetchOne(
+            "SELECT p.id, p.month, p.year, p.net_salary, p.incentive_amount,
+                    e.user_id AS employee_user_id
+             FROM payroll p
+             JOIN employees e ON e.id = p.employee_id
+             JOIN users u ON u.id = e.user_id AND u.is_active = 1
+             WHERE p.id = ?
+               AND p.status = 'paid'
+               AND p.accounting_status = 'posted'
+             LIMIT 1",
+            [$payrollId]
+        );
+        if (!$row) {
+            return;
+        }
+
+        $recipientId = (int)($row['employee_user_id'] ?? 0);
+        if ($recipientId <= 0) {
+            return;
+        }
+
+        $link = APP_URL . 'modules/hr/payroll_statement.php?id=' . $payrollId;
+        $title = 'كشف تفاصيل الراتب جاهز';
+        $period = sprintf('%04d-%02d', (int)$row['year'], (int)$row['month']);
+        $totalPaid = round((float)$row['net_salary'] + (float)($row['incentive_amount'] ?? 0), 2);
+        $body = 'أصبح كشف تفاصيل راتبك للفترة ' . $period . ' متاحاً للعرض والطباعة. إجمالي المبلغ المصروف: '
+            . number_format($totalPaid, 2) . ' ' . (defined('APP_CURRENCY_NAME_AR') ? APP_CURRENCY_NAME_AR : 'ج.س.') . '.';
+
+        $existing = dbFetchOne(
+            "SELECT id FROM notifications
+             WHERE recipient_user_id = ? AND link = ? AND title = ?
+             LIMIT 1",
+            [$recipientId, $link, $title]
+        );
+        if ($existing) {
+            return;
+        }
+
+        $stmt = $pdo->prepare(
+            "INSERT INTO notifications
+                (recipient_user_id, type, title, body, link, is_read, created_at)
+             VALUES (?, 'info', ?, ?, ?, 0, NOW())"
+        );
+        $stmt->execute([$recipientId, $title, $body, $link]);
+    } catch (Throwable $notificationError) {
+        // Payroll and accounting have already committed. Never report them as failed
+        // because an informational notification could not be delivered.
+        return;
     }
 }

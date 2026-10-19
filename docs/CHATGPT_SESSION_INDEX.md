@@ -1097,3 +1097,9 @@ Next: pull `main), run PHP syntax checks for the three changed project PHP pages
 ### 2026-10-19 — Project form validation ordering follow-up
 
 Follow-up source commit: `97ca44232ecec3bdb306992e46f5aec4ff6d770c`. The project create/edit form now opts out of the shared same-page POST interceptor so its existing client-side budget/team validation can run before submission. Server-side validation remains authoritative. This is still source-only verification; local PHP lint and browser verification are pending.
+
+## 2026-10-19 — Employee salary statement (source committed; local verification pending)
+
+Added a secure employee-facing payroll statement at `modules/hr/payroll_statement.php`, linked by an in-system notification after `hrPayrollChangeStatus()` commits a successful paid transition. The route resolves the authenticated employee and requires the requested payroll to belong to that employee, with `status='paid'` and `accounting_status='posted'`. It uses saved payroll components and the effective salary-history currency; total paid follows the existing posting formula `net_salary + incentive_amount`, with incentives shown separately to avoid double-counting. The A4 Arabic-first bilingual layout supports browser print / Save as PDF. Notification insertion is best-effort after commit and deduplicated by recipient + statement link + title.
+
+Source-only work. PHP lint and browser acceptance against the user's local XAMPP/MariaDB are pending; no payroll was paid and no database rows were mutated for this change. Local verification must be limited to lint, route access control, visual print preview using an already-paid/posted payroll, and checking that notification creation occurs only after a genuine successful paid transition when such a workflow can be safely observed. Do not create or pay a test payroll against live financial data just to test this feature.

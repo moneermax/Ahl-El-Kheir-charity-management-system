@@ -3598,3 +3598,11 @@ Next: pull `main), run PHP syntax checks for the three changed project PHP pages
 ### 2026-10-19 — Project form validation ordering follow-up
 
 Follow-up source commit: `97ca44232ecec3bdb306992e46f5aec4ff6d770c`. The project create/edit form now opts out of the shared same-page POST interceptor so its existing client-side budget/team validation can run before submission. Server-side validation remains authoritative. This is still source-only verification; local PHP lint and browser verification are pending.
+
+## 2026-10-19 — Employee salary statement source audit
+
+Source change: `modules/hr/payroll_statement.php` provides an authenticated, employee-scoped, read-only statement for payrolls in `paid` state with `accounting_status='posted'`. It does not expose another employee's payroll by changing the query-string ID. It reads the saved payroll component fields and the salary currency effective for the payroll period. Incentives are itemized separately from net salary; total paid is displayed as `net_salary + incentive_amount`, matching the existing payroll journal's cash/payment amount and avoiding incentive double-counting. The print layout is Arabic-first bilingual, A4-oriented, and supports browser printing / Save as PDF.
+
+`hrPayrollNotifyStatementAvailable()` is invoked only in the existing post-commit paid-transition hook. It checks the payroll remains paid/accounting-posted, targets an active linked user, deduplicates by recipient + link + title, and catches notification errors so an already-committed financial action is not reported as failed. No schema/migration was needed based on the inspected repository schema and existing `notifications` table.
+
+Evidence status: source inspection only; local PHP lint and real-browser authorization/print verification are pending. No live payroll transition or database mutation was performed. Do not claim runtime acceptance until the user reports local results.
