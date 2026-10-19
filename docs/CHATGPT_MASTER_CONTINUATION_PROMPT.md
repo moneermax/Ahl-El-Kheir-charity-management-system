@@ -1139,3 +1139,9 @@ Current active work: complete the local verification boundary for the GM-only pa
 Added a dedicated GM payroll payment history page and a quick-access card on the GM dashboard. The history lists payroll periods with at least one payroll record in `paid` status, shows each period's eligible/paid-and-posted counts and posted payment totals, and links to the existing read-only period report. The GM sidebar entry now opens the history page; notification links still open their specific period report directly. The page is GM-only and read-only; it does not change payroll or accounting data.
 
 **Verification boundary:** source committed to `main`; local PHP syntax and browser verification are pending. Do not pay, approve, regenerate, or otherwise mutate payroll records for this UI change.
+
+
+## 2026-10-19 — GM payroll history closed; next task
+The user confirmed the GM payroll payment history navigation works. Treat it as CLOSED; do not repeat checks without regression evidence.
+
+Next active task: improve FM usability of `modules/hr/payroll.php?lang=en`. Read the canonical docs and inspect the live `main` source, especially the table structure/styles and `assets/js/app.js` same-path POST handler. Desired: reduce width, sticky headers during vertical scrolling, keep action controls usable after a row action without forcing the user to scroll back, and remove only demonstrably unnecessary display fields. Preserve all payroll/accounting business behavior. Use the smallest source-justified change, lint changed PHP, document the exact verification boundary, and do not mutate financial data for a UI-only task.
