@@ -14,6 +14,43 @@ require_once __DIR__ . '/../modules/hr/lib_employee_incentives.php';
 
 $pdo = db();
 
+// Fail closed before any fixture writes unless every table touched by this
+// rollback-only test is transactional. This avoids leaving live rows behind
+// if any participating table uses a non-transactional engine.
+$requiredTables = [
+    'notifications',
+    'hr_incentive_policy_versions',
+    'hr_incentive_policy_rules',
+    'hr_incentive_types',
+    'employees',
+    'users',
+];
+$engineStmt = $pdo->prepare(
+    "SELECT TABLE_NAME, ENGINE
+     FROM information_schema.TABLES
+     WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME IN (?, ?, ?, ?, ?, ?)"
+);
+$engineStmt->execute($requiredTables);
+$engines = [];
+foreach ($engineStmt->fetchAll(PDO::FETCH_ASSOC) as $table) {
+    $engines[(string)$table['TABLE_NAME']] = strtoupper((string)($table['ENGINE'] ?? ''));
+}
+$unsafeTables = [];
+foreach ($requiredTables as $tableName) {
+    if (!isset($engines[$tableName]) || $engines[$tableName] !== 'INNODB') {
+        $unsafeTables[] = $tableName . '=' . ($engines[$tableName] ?? 'MISSING');
+    }
+}
+foreach ($requiredTables as $tableName) {
+    echo 'PREFLIGHT | ' . $tableName . '_ENGINE=' . ($engines[$tableName] ?? 'MISSING') . "\n";
+}
+if ($unsafeTables) {
+    fwrite(STDERR, "BLOCKED | rollback test requires InnoDB for all six tables; no fixture writes attempted. Unsafe: " . implode(', ', $unsafeTables) . "\n");
+    exit(2);
+}
+echo "PREFLIGHT | all_six_tables_transactional=PASS\n";
+
 function immediateNoticeAssert(bool $condition, string $message): void
 {
     if (!$condition) {
