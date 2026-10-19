@@ -303,7 +303,13 @@
         const scrollY = preservedScroll && Number.isFinite(preservedScroll.y)
             ? preservedScroll.y
             : (window.scrollY || window.pageYOffset || 0);
-        akTrace('renderResponse:captured-scroll', {scrollX, scrollY, source: preservedScroll ? 'submit' : 'render'});
+        const nestedScrollPositions = Array.from(current.querySelectorAll('[data-ak-preserve-scroll]'))
+            .map(function(element){
+                const key = element.getAttribute('data-ak-preserve-scroll');
+                return key ? {key: key, top: element.scrollTop, left: element.scrollLeft} : null;
+            })
+            .filter(Boolean);
+        akTrace('renderResponse:captured-scroll', {scrollX, scrollY, nestedScrollContainers: nestedScrollPositions.length, source: preservedScroll ? 'submit' : 'render'});
         /*
          * Server-side flash messages are feedback, not page content.
          * Extract them before the live fragment swap. This prevents the
@@ -457,6 +463,16 @@
          * keep enough height for the requested scroll position rather than
          * allowing the browser to jump to the top.
          */
+        nestedScrollPositions.forEach(function(position){
+            const next = Array.from(current.querySelectorAll('[data-ak-preserve-scroll]')).find(function(element){
+                return element.getAttribute('data-ak-preserve-scroll') === position.key;
+            });
+            if (next) {
+                next.scrollTop = position.top;
+                next.scrollLeft = position.left;
+            }
+        });
+
         akTrace('renderResponse:before-scrollTo');
         const requiredHeight = Math.ceil(scrollY + window.innerHeight);
         if (current.scrollHeight < requiredHeight) {
