@@ -1068,3 +1068,12 @@ Other verified incentive evidence remains bounded: new-sponsor first-confirmed-p
 ## 2026-10-19 — Incentive immediate-notice harness result
 
 The user ran the updated immediate activity-notice rollback harness after syncing `main`. All six required tables reported InnoDB; the engine preflight, new-sponsor/reactivation provisional notices, blocked collection notice, recipient/content/unread assertions, and rollback cleanup passed. This is helper-level rollback evidence only; the real POST-to-inbox and PM-to-FM earned-notice/browser gates remain open. Do not rerun the harness without regression evidence or use the live database for further mutating acceptance tests.
+
+## 2026-10-19 — Project-team source syntax verification
+
+The user ran PHP 8.2 syntax checks locally after syncing `main`; both commands passed:
+
+- `php -l modules\\projects\\form.php` — `No syntax errors detected in modules\\projects\\form.php`.
+- `php -l modules\\projects\\view.php` — `No syntax errors detected in modules\\projects\\view.php`.
+
+This closes only the local PHP syntax-check item. Browser acceptance for initial team selection, edit-page display and authorization, add/duplicate rejection, unassignment/history retention, and success feedback remains pending. The user confirmed the two disposable incentive databases are deleted; do not recreate them and do not perform mutating acceptance tests against live `ahl_el_kheir`. No database rows or project assignments were changed as part of this syntax check.
