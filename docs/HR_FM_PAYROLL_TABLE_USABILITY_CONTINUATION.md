@@ -35,3 +35,17 @@ No payroll calculations, status transitions, authorization rules, payment action
 ## Verification boundary
 
 The source changes are committed on `main`. Local PHP syntax checks and real-browser visual/interaction verification remain pending. Verify the table layout and sticky header by scrolling the existing payroll period; if an already-existing draft/approved row is available and safe to act on, confirm the scroller retains its position after its normal action. Do not create/pay test payrolls or mutate paid payroll/accounting data solely for this UI task. Reopen on an exact visual/behavioral defect rather than repeating unrelated payroll suites.
+
+
+## 2026-10-19 — FM payroll refinement follow-up
+
+Source is committed on `main`; local syntax and browser verification remain pending.
+
+- Replaced fixed percentage widths with automatic table sizing and short translated column headings. Full labels remain in header tooltips, and table values can wrap.
+- Changed the sticky table header to dark navy with white text.
+- Added stable Arabic/English translation keys for the payroll page, including English month names, period controls, summary cards, headings, actions, statuses, policy text, and page-specific messages.
+- Added checkboxes for draft rows and a select-all-drafts control. The **Approve selected** button displays the selection count and remains disabled until a draft is selected. The existing **Approve all drafts** action remains available.
+- Added `hrPayrollApproveSelected()` to validate all selected IDs belong to the chosen period and are still drafts with a positive basic salary. It locks and approves the selected rows atomically, setting only `status='approved'` and `accounting_status='ready'`. It does not pay rows or post accounting.
+- Kept Save because edited allowances, overtime, and general deductions require explicit persistence and trigger existing recalculation of attendance deduction, salary-advance deduction, and scheduled incentives. The compact Save action now sits beside Approve instead of below Net salary.
+
+No schema or migration changes were made. Static source audit confirms all literal `hr.payroll...` keys used by the page exist in both catalogs, the sticky dark header and checkbox/form wiring exist, fixed percentage widths are removed, and selected approval has no payment/posting path. Local PHP lint and focused browser verification remain pending. Do not submit real approvals/payments just to test the UI.
