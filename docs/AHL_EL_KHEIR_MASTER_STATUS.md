@@ -3270,3 +3270,19 @@ The local runtime gate is closed. Seven PHP lint checks passed for the four chan
 
 The collection-incentive removal's rollback verification is **CLOSED**. Routine monthly collection no longer emits a provisional incentive notice or creates a new collection source event, and already-pending collection events cannot be verified into new awards. This is a forward-looking eligibility/issuance boundary, not historical data deletion: existing events, awards, notifications, payroll, accounting entries, and active policy R5 were not changed. New-sponsor, reactivation, and project-completion incentives remain intact. No further application tests or browser submissions are warranted without concrete regression evidence.
 
+
+
+## 2026-10-19 — Employee incentives status and remaining acceptance gates
+
+**Status: core paths implemented; selected runtime checks PASS; full module acceptance remains OPEN.**
+
+Closed and evidence-backed:
+- Routine collection incentive removal: seven PHP syntax checks and three rollback-only harnesses passed on the disposable DB. New routine collection incentive notices/source events are blocked, and pending legacy collection events cannot be verified into new awards. Existing history, active R5 and catalogue were preserved.
+- New-sponsor first-confirmed-payment: browser-verified 2026-10-16; do not repeat without regression evidence.
+- Shared immediate-notice helper: rollback-only test passed for new-sponsor and reactivation, with correct recipient, provisional wording, reward context, unread state and cleanup. The collection case is now intentionally blocked.
+- Project completion: rollback-only harness verified the FM gate, recognition journal Dr 5500 / Cr 2400, draft-payroll linkage, outbox and rollback cleanup; supervisor-only recipient fixture passed.
+- PRJ-0024 supervisor omission: one-time recovery passed on the disposable database only: allocation 15, award 24, journal 178, scheduled, outbox sent, notification 232 and audit recorded. Do not rerun the recovery.
+
+**Remaining acceptance gates:** (1) real-browser earned-notification delivery after FM financial closure, specifically confirm the project supervisor and other snapshotted recipients receive exactly one earned notice and reload/retry does not duplicate it; (2) real POST/browser inbox acceptance for the retained new-sponsor/reactivation provisional notices; and (3) project-team assignment UI acceptance covering initial selection, add and duplicate rejection, unassign/history retention, and edit-page behavior. The synthetic rollback harness and one-time historical recovery do not prove these complete workflows. Existing runtime evidence is from disposable test state, not production/live financial data.
+
+Do not describe the entire incentive module as fully done until those gates are evidenced. Do not repeat closed tests, re-close or recover PRJ-0024, recreate deleted disposable databases, modify active policy R5, or change historical payroll/accounting evidence without an explicit new requirement or concrete regression.
