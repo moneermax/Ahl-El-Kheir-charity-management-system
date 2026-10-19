@@ -89,4 +89,5 @@ return [
     "hr.payroll_error_transaction" => "Not all selected records could be approved; the operation was rolled back.",
     "hr.payroll_error_prefix" => "Error:",
     "hr.payroll_entry" => "Entry",
+    "hr.payroll_save_short" => "Save",
 ];
