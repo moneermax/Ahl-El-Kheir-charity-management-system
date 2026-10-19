@@ -1187,3 +1187,18 @@ The current evidence supports **partial runtime verification, not a claim that t
 3. Project-team assignment UI: initial selection, adding members, duplicate rejection, unassign/history retention, and edit-page behavior.
 
 Until those gates have concrete evidence, describe the module as implemented with several verified paths but **not fully acceptance-closed**. Current evidence comes from disposable test state, not production/live database acceptance. The two disposable incentive databases were deleted after schema metadata comparison; do not recreate them. Do not alter active policy R5, historical events/awards, payroll/accounting records, or repeat closed tests without an explicit new requirement or concrete regression evidence.
+
+
+## 2026-10-19 — Remaining incentive gates: source call-site audit
+
+A read-only review of the current `main` source confirmed the relevant integration call sites exist:
+
+- `modules/sponsors/create.php`: after a successful active-sponsor insert, calls `hrIncentiveNotifyPendingActivity(..., 'new_sponsor', ...)`.
+- `modules/administration/winback.php`: after `wb_mark_returned()` returns a successful reactivation transition, calls `hrIncentiveNotifyPendingActivity(..., 'reactivation', ...)` for the selected reactivator.
+- `modules/accounting/lib_sponsor_payment_approval.php`: within the caller-owned financial transaction, records the new-sponsor and reactivation first-confirmed-payment events for monthly sponsorship payments.
+- `modules/projects/form.php` and `modules/projects/view.php`: contain initial-team validation/persistence and authorized add/unassign handlers; duplicate active assignments are rejected and unassignment retains the assignment row with `unassigned_at`.
+- `modules/projects/view_fm.php`: invokes project-completion processing after durable FM financial-closure evidence and has a retry-safe processing path for an already-closed project.
+
+This is **source inspection only**. It does not establish successful browser POSTs, visible inbox rendering, actual project-team UI behavior, or duplicate-free delivery after reload/retry. No code change is justified by this read-only audit alone.
+
+The two previously used disposable incentive databases have been deleted and must not be recreated. The live `ahl_el_kheir` database must not be used for mutating acceptance tests. Therefore, the remaining end-to-end gates cannot be honestly closed from source review; they require a separately authorized safe local test environment and real-browser evidence. Preserve R5, historical incentive/accounting/payroll data, and the already-closed tests.
