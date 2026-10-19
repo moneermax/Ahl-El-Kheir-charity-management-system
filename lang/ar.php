@@ -88,4 +88,5 @@ return [
     "hr.payroll_error_invalid_period" => "فترة الرواتب غير صالحة.",
     "hr.payroll_error_transaction" => "لم يتسن اعتماد كل السجلات المحددة؛ تم التراجع عن العملية.",
     "hr.payroll_error_prefix" => "خطأ:",
+    "hr.payroll_entry" => "قيد",
 ];
