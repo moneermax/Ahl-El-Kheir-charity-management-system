@@ -87,4 +87,5 @@ return [
     "hr.payroll_error_selection_limit" => "The selected payroll count exceeds the allowed limit.",
     "hr.payroll_error_invalid_period" => "The payroll period is invalid.",
     "hr.payroll_error_transaction" => "Not all selected records could be approved; the operation was rolled back.",
+    "hr.payroll_error_prefix" => "Error:",
 ];
