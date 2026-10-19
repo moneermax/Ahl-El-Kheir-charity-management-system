@@ -528,6 +528,53 @@
     };
 
     /*
+     * Project pages opt into this confirmation helper with
+     * data-ak-project-confirm. It runs on the click before submission,
+     * and submits only after the user confirms.
+     */
+    document.addEventListener('click', function(event){
+        const trigger = event.target.closest('[data-ak-project-confirm]');
+        if (!trigger || trigger.tagName === 'FORM') return;
+
+        const form = trigger.form;
+        if (!form) return;
+        event.preventDefault();
+        if (trigger.dataset.akProjectConfirmPending === '1') return;
+        if (!window.Swal) {
+            if (window.AKNotify && typeof window.AKNotify.toast === 'function') {
+                window.AKNotify.toast('error', 'تعذر فتح نافذة التأكيد. أعد تحميل الصفحة ثم حاول مرة أخرى.');
+            }
+            return;
+        }
+
+        trigger.dataset.akProjectConfirmPending = '1';
+        window.Swal.fire({
+            title: 'تأكيد الإجراء',
+            text: trigger.dataset.akProjectConfirm || 'هل تريد المتابعة؟',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'متابعة',
+            cancelButtonText: 'إلغاء',
+            reverseButtons: true,
+            focusCancel: true,
+            rtl: true
+        }).then(function(result){
+            delete trigger.dataset.akProjectConfirmPending;
+            if (!result.isConfirmed) return;
+            if (trigger.dataset.teamAssignmentId) {
+                const field = form.querySelector('[name="team_assignment_id"]');
+                if (field) field.value = trigger.dataset.teamAssignmentId;
+            }
+            form.requestSubmit(trigger);
+        }).catch(function(){
+            delete trigger.dataset.akProjectConfirmPending;
+            if (window.AKNotify && typeof window.AKNotify.toast === 'function') {
+                window.AKNotify.toast('error', 'تعذر إكمال نافذة التأكيد. لم يتم تنفيذ الإجراء.');
+            }
+        });
+    }, true);
+
+    /*
      * Capture submit before any page-level listener can invoke native
      * navigation. This is intentionally registered on window in capture
      * phase: the browser must never get a chance to start a document
