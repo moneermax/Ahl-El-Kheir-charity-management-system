@@ -124,3 +124,7 @@ The user approved the final heading arrangement: the logo and “جمعية أه
 
 ## 2026-10-19 — GM payroll period report
 The GM-only period completion report and verification boundary are documented in `HR_GM_PAYROLL_PERIOD_REPORT_CONTINUATION.md`. Local runtime verification is still pending.
+
+
+## 2026-10-19 — GM payroll payment history
+The GM dashboard and sidebar now link to `modules/hr/gm_payroll_period_history.php`, a GM-only, read-only index of periods with paid payroll records. Each period links to the existing detailed employee payment report. Local syntax and browser verification remain pending; payroll/accounting records must not be mutated for this navigation change.

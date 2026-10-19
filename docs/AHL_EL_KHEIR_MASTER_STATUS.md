@@ -3355,3 +3355,9 @@ The user approved the final heading arrangement: the logo and “جمعية أه
 
 ## 2026-10-19 — GM payroll period completion report (verification pending)
 A new GM-only read/print report and idempotent completion notification have been committed to `main`. Completion requires all employees eligible under the payroll-generation period-end rules to have paid payroll rows, posted accounting status, and a journal entry ID. Checks run after committed payments and when the payroll management page loads a selected period, so October 2026 can be recognized without reissuing payment. Existing employee statement notifications and saved payroll/accounting rows are preserved. Local PHP syntax, live access, notification, totals, and print verification are still pending; see `docs/HR_GM_PAYROLL_PERIOD_REPORT_CONTINUATION.md`.
+
+
+## 2026-10-19 — GM payroll payment history navigation
+Added a dedicated GM payroll payment history page and a quick-access card on the GM dashboard. The history lists payroll periods with at least one payroll record in `paid` status, shows each period's eligible/paid-and-posted counts and posted payment totals, and links to the existing read-only period report. The GM sidebar entry now opens the history page; notification links still open their specific period report directly. The page is GM-only and read-only; it does not change payroll or accounting data.
+
+**Verification boundary:** source committed to `main`; local PHP syntax and browser verification are pending. Do not pay, approve, regenerate, or otherwise mutate payroll records for this UI change.

@@ -48,7 +48,7 @@ $menus = [
     'general_manager' => [
         $salaryAdvanceWaiverGMItem,
         ['active' => 'dashboard', 'label_key' => 'navigation.dashboard', 'icon' => 'fa-gauge-high', 'url' => 'dashboard/gm_dashboard.php'],
-        ['active' => 'gm_payroll_period_report', 'label_key' => 'navigation.gm_payroll_period_report', 'icon' => 'fa-file-invoice-dollar', 'url' => 'modules/hr/gm_payroll_period_report.php'],
+        ['active' => 'gm_payroll_period_history', 'label_key' => 'navigation.gm_payroll_period_history', 'icon' => 'fa-clock-rotate-left', 'url' => 'modules/hr/gm_payroll_period_history.php'],
         $projectsItem,
         $reportsItem,
     ],

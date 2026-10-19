@@ -31,3 +31,9 @@ Repository edits are committed to `main`. No payroll was paid again, and no Octo
 5. Confirm a non-GM direct request to the report is redirected.
 
 Do not repeat any payment, change paid payroll, or create test payroll data to perform these checks. Report any specific discrepancy before modifying business logic.
+
+
+## 2026-10-19 — GM payroll payment history navigation
+Added a dedicated GM payroll payment history page and a quick-access card on the GM dashboard. The history lists payroll periods with at least one payroll record in `paid` status, shows each period's eligible/paid-and-posted counts and posted payment totals, and links to the existing read-only period report. The GM sidebar entry now opens the history page; notification links still open their specific period report directly. The page is GM-only and read-only; it does not change payroll or accounting data.
+
+**Verification boundary:** source committed to `main`; local PHP syntax and browser verification are pending. Do not pay, approve, regenerate, or otherwise mutate payroll records for this UI change.
