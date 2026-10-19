@@ -602,7 +602,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         <?php if($approvedExists): ?>
             <div class="alert alert-info">يحدد المدير المالي حسابات المؤسسة التي سيمول منها المشروع: الصندوق النقدي أو البنك أو المحفظة الإلكترونية.</div>
             <?php if($approval['approval_status']==='submitted' && !$closed): ?>
-                <form method="post" class="border rounded p-3 mb-3" id="fundingForm">
+                <form method="post" data-ak-native-post="1" class="border rounded p-3 mb-3" id="fundingForm">
                     <?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_save_funding_batch">
                     <div id="fundingRows">
                         <div class="funding-row border rounded p-3 mb-2"><div class="row g-2 align-items-end">
@@ -670,7 +670,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 <input type="hidden" name="action" value="fm_return_to_review">
                 <div class="row g-2 align-items-end">
                     <div class="col-md-9"><label class="form-label">سبب الإلغاء</label><input name="return_reason" class="form-control" required value="استكمال أو تصحيح إجراءات التمويل"></div>
-                    <div class="col-md-3"><button class="btn btn-warning w-100" onclick="return confirm('سيتم إلغاء التأكيدات المالية السابقة وعكس الإفراج المالي غير المنفذ وإعادة المشروع للمراجعة المالية. هل تريد المتابعة؟')">إلغاء التأكيدات المالية السابقة</button></div>
+                    <div class="col-md-3"><button class="btn btn-warning w-100" data-ak-project-confirm="سيتم إلغاء التأكيدات المالية السابقة وعكس الإفراج المالي غير المنفذ وإعادة المشروع للمراجعة المالية. هل تريد المتابعة؟">إلغاء التأكيدات المالية السابقة</button></div>
                 </div>
             </form>
         </div>
@@ -813,7 +813,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                                         <button type="button" class="btn btn-sm btn-outline-secondary ms-2" data-bs-toggle="modal" data-bs-target="#editPaymentEvidence<?php echo (int)$payment['id']; ?>"><i class="fas fa-pen me-1"></i>تعديل</button>
                                     <?php endif; ?>
                                 <?php elseif ($payment['payment_method']==='cash'): ?>
-                                    <form method="post" action="<?php echo e(APP_URL . 'modules/projects/view_fm.php?id=' . (int)$id); ?>" class="d-inline js-payment-action" onsubmit="return confirm('هل تم صرف النقد فعلياً وتريد توثيق سند الصرف؟');"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_confirm_cash_payment"><input type="hidden" name="payment_id" value="<?php echo (int)$payment['id']; ?>"><button class="btn btn-sm btn-success"><i class="fas fa-file-invoice-dollar me-1"></i>تأكيد سند الصرف</button></form>
+                                    <form method="post" action="<?php echo e(APP_URL . 'modules/projects/view_fm.php?id=' . (int)$id); ?>" data-ak-native-post="1" class="d-inline js-payment-action" data-ak-project-confirm="هل تم صرف النقد فعلياً وتريد توثيق سند الصرف؟"><?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_confirm_cash_payment"><input type="hidden" name="payment_id" value="<?php echo (int)$payment['id']; ?>"><button class="btn btn-sm btn-success"><i class="fas fa-file-invoice-dollar me-1"></i>تأكيد سند الصرف</button></form>
                                 <?php else: ?>
                                     <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#paymentReceipt<?php echo (int)$payment['id']; ?>"><i class="fas fa-paperclip me-1"></i>إرفاق الإيصال</button>
                                 <?php endif; ?>
@@ -830,7 +830,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         <?php if ($payment['status']==='pending' && $payment['payment_method']!=='cash'): ?>
         <div class="modal fade" id="paymentReceipt<?php echo (int)$payment['id']; ?>" tabindex="-1">
             <div class="modal-dialog"><div class="modal-content">
-                <form method="post" action="<?php echo e(APP_URL . 'modules/projects/view_fm.php?id=' . (int)$id); ?>" enctype="multipart/form-data" class="js-payment-action">
+                <form method="post" action="<?php echo e(APP_URL . 'modules/projects/view_fm.php?id=' . (int)$id); ?>" enctype="multipart/form-data" data-ak-native-post="1" class="js-payment-action">
                     <?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_upload_payment_receipt"><input type="hidden" name="payment_id" value="<?php echo (int)$payment['id']; ?>">
                     <div class="modal-header"><h5 class="modal-title">إرفاق إيصال <?php echo e($payment['payment_method']==='bank_transfer'?'التحويل البنكي':'المحفظة الإلكترونية'); ?></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
                     <div class="modal-body">
@@ -850,7 +850,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         <?php if ($payment['status']==='documented' && !$finalEvidenceConfirmed && !$closed): ?>
         <div class="modal fade" id="editPaymentEvidence<?php echo (int)$payment['id']; ?>" tabindex="-1">
             <div class="modal-dialog"><div class="modal-content">
-                <form method="post" action="<?php echo e(APP_URL . 'modules/projects/view_fm.php?id=' . (int)$id); ?>" enctype="multipart/form-data" class="js-payment-action">
+                <form method="post" action="<?php echo e(APP_URL . 'modules/projects/view_fm.php?id=' . (int)$id); ?>" enctype="multipart/form-data" data-ak-native-post="1" class="js-payment-action">
                     <?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_edit_payment_evidence"><input type="hidden" name="payment_id" value="<?php echo (int)$payment['id']; ?>">
                     <div class="modal-header"><h5 class="modal-title">تعديل مستند التمويل</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
                     <div class="modal-body">
@@ -883,7 +883,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     <?php endif; ?>
                 </div>
                 <?php if (!$finalEvidenceConfirmed && !$closed): ?>
-                    <form method="post" action="<?php echo e(APP_URL . 'modules/projects/view_fm.php?id=' . (int)$id); ?>" class="js-payment-action">
+                    <form method="post" action="<?php echo e(APP_URL . 'modules/projects/view_fm.php?id=' . (int)$id); ?>" data-ak-native-post="1" class="js-payment-action">
                         <?php echo csrf_field(); ?><input type="hidden" name="action" value="fm_confirm_payment_evidence">
                         <button class="btn btn-success"><i class="fas fa-check-double me-1"></i>تأكيد اكتمال مستندات التمويل</button>
                     </form>
@@ -952,6 +952,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                             deleteForm.action = <?php echo json_encode(APP_URL . 'modules/projects/view_fm.php?id=' . (int)$id); ?>;
                             deleteForm.className = 'd-inline';
                             deleteForm.className = 'd-inline js-delete-funding';
+                            deleteForm.dataset.akNativePost = '1';
 
                             const csrf = document.createElement('input');
                             csrf.type = 'hidden';
@@ -991,7 +992,11 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                         window.AKNotify.notificationToast('success', 'تم الحفظ', result.message || 'تم حفظ تخصيص التمويل.');
                     }
                 } catch (error) {
-                    alert(error.message || 'تعذر حفظ تخصيص التمويل.');
+                    if (window.AKNotify && typeof window.AKNotify.toast === 'function') {
+                        window.AKNotify.toast('error', error.message || 'تعذر حفظ تخصيص التمويل.');
+                    } else if (window.Swal) {
+                        window.Swal.fire({icon:'error', title:'تعذر حفظ تخصيص التمويل', text:error.message || 'حدث خطأ غير متوقع.', rtl:true, confirmButtonText:'حسناً'});
+                    }
                 } finally {
                     if (submit) submit.disabled = false;
                 }
@@ -1030,8 +1035,8 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             event.preventDefault();
 
             if (typeof Swal === 'undefined') {
-                if (window.confirm('هل تريد حذف تخصيص هذا المصدر بالكامل؟')) {
-                    form.submit();
+                if (window.AKNotify && typeof window.AKNotify.toast === 'function') {
+                    window.AKNotify.toast('error', 'تعذر فتح نافذة التأكيد. أعد تحميل الصفحة ثم حاول مرة أخرى.');
                 }
                 return;
             }
