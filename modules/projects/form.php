@@ -1952,7 +1952,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                         <td><?php echo e((string)($teamMember['notes'] ?? '—') ?: '—'); ?></td>
                                         <?php if ($canManageEditTeam): ?>
                                         <td>
-                                            <button type="submit" name="action" value="edit_unassign_team_member" formnovalidate class="btn btn-sm btn-outline-danger" data-team-assignment-id="<?php echo (int)$teamMember['id']; ?>" onclick="if (!confirm('هل تريد إنهاء تعيين هذا المستخدم في هذا القسم؟ سيبقى سجل التعيين محفوظاً.')) return false; const field = this.form.querySelector('[name=team_assignment_id]'); if (field) field.value = this.dataset.teamAssignmentId;"><i class="fas fa-user-minus me-1"></i>إنهاء التعيين</button>
+                                            <button type="submit" name="action" value="edit_unassign_team_member" formnovalidate class="btn btn-sm btn-outline-danger" data-team-assignment-id="<?php echo (int)$teamMember['id']; ?>" data-ak-project-confirm="هل تريد إنهاء تعيين هذا المستخدم في هذا القسم؟ سيبقى سجل التعيين محفوظاً."><i class="fas fa-user-minus me-1"></i>إنهاء التعيين</button>
                                         </td>
                                         <?php endif; ?>
                                     </tr>
@@ -3094,7 +3094,7 @@ document
                 const teamUser = document.getElementById('edit-team-user-id');
                 if (!teamUser || !teamUser.value) {
                     event.preventDefault();
-                    alert('يرجى اختيار عضو الفريق قبل الإضافة.');
+                    if (window.Swal) { window.Swal.fire({icon:'warning', title:'بيانات مطلوبة', text:'يرجى اختيار عضو الفريق قبل الإضافة.', rtl:true, confirmButtonText:'حسناً'}); } else if (window.AKNotify && typeof window.AKNotify.toast === 'function') { window.AKNotify.toast('error', 'يرجى اختيار عضو الفريق قبل الإضافة.'); }
                     if (teamUser) teamUser.focus();
                 }
                 return;
@@ -3151,9 +3151,17 @@ document
 
                 calculateTotalBudget();
 
-                alert(
-                    'لا يمكن حفظ المشروع. يجب أن يساوي إجمالي بنود الميزانية الإجمالي المطلوب (الميزانية التقديرية + الرسوم الحكومية) تماماً.'
-                );
+                if (window.Swal) {
+                    window.Swal.fire({
+                        icon: 'warning',
+                        title: 'تعذر حفظ المشروع',
+                        text: 'يجب أن يساوي إجمالي بنود الميزانية الإجمالي المطلوب (الميزانية التقديرية + الرسوم الحكومية) تماماً.',
+                        rtl: true,
+                        confirmButtonText: 'حسناً'
+                    });
+                } else if (window.AKNotify && typeof window.AKNotify.toast === 'function') {
+                    window.AKNotify.toast('error', 'يجب أن يساوي إجمالي بنود الميزانية الإجمالي المطلوب (الميزانية التقديرية + الرسوم الحكومية) تماماً.');
+                }
                 return;
             }
 
