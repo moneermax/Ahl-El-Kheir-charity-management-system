@@ -3569,3 +3569,12 @@ Preserve the evidence boundary: do not rerun completed harnesses or the PRJ-0024
 ## 2026-10-19 — Immediate activity-notice helper runtime evidence
 
 User-supplied CLI output for `tools/run_hr_employee_incentive_immediate_activity_notice_rollback_tests.php` shows all six preflight tables as InnoDB and all assertions passing: retained new-sponsor/reactivation provisional notices, routine collection notice blocked, correct recipient/reward context/provisional wording/unread state, and rollback cleanup. This is limited to the shared helper and its rollback fixture. It does not prove business-route POST-to-inbox delivery or end-to-end PM-to-FM earned-notice delivery. Keep the module partially acceptance-verified; do not repeat this harness absent regression evidence or perform further mutating acceptance tests against live data.
+
+## 2026-10-19 — Project-team source syntax verification
+
+The user ran PHP 8.2 syntax checks locally after syncing `main`; both commands passed:
+
+- `php -l modules\\projects\\form.php` — `No syntax errors detected in modules\\projects\\form.php`.
+- `php -l modules\\projects\\view.php` — `No syntax errors detected in modules\\projects\\view.php`.
+
+This closes only the local PHP syntax-check item. Browser acceptance for initial team selection, edit-page display and authorization, add/duplicate rejection, unassignment/history retention, and success feedback remains pending. The user confirmed the two disposable incentive databases are deleted; do not recreate them and do not perform mutating acceptance tests against live `ahl_el_kheir`. No database rows or project assignments were changed as part of this syntax check.
