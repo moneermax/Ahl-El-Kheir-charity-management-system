@@ -3368,3 +3368,7 @@ The user confirmed the GM payroll history navigation works as intended. The GM d
 
 ## 2026-10-19 — Active request: FM payroll table usability
 Target: `modules/hr/payroll.php?lang=en`, viewed as FM. Requested outcomes: reduce the table's excessive width and horizontal scrolling; keep table headers visible during vertical scrolling; make row action buttons easier to use without losing the current row after POST; remove only display fields proven redundant by source review. Treat this as a UI/usability task; preserve payroll calculations, statuses, authorization, payment workflows, and accounting behavior. Root-cause inspection and local PHP/browser verification are pending.
+
+
+## 2026-10-19 — FM payroll table usability (source committed; local verification pending)
+Source changes are committed on `main`: `modules/hr/payroll.php` (`85269f123d042a08735680d487c78b0c7715783b`) and `assets/js/app.js` (`f9cf0c0a2e079ae297c1674a8d18b7b150d738f0`). The table now uses compact fixed column widths, sticky headers in a bounded scroller, a combined status/accounting cell retaining journal-entry IDs, and no repeated salary effective-date subline. Draft amount form markup is valid, and same-page POST rendering preserves the marked table scroller's offsets. No business logic or financial data changed. Local PHP lint and focused browser verification remain pending. See `docs/HR_FM_PAYROLL_TABLE_USABILITY_CONTINUATION.md`.
