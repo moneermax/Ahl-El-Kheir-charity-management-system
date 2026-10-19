@@ -3542,8 +3542,15 @@ The separate development point about whether routine collection should qualify f
 
 
 
-## 2026-10-18 — Audit note: routine collection incentive path removed (runtime pending)
+## 2026-10-19 — Audit closeout: routine collection incentive removal VERIFIED
 
-Source audit found two independent collection paths: an immediate provisional notice in `modules/transactions/create.php` and event creation during FM approval in `modules/accounting/lib_sponsor_payment_approval.php`. Removing only the notice would have left automatic award eligibility intact. The committed change removes both call sites and adds a defensive allow-list boundary in `modules/hr/lib_employee_incentives.php` so new collection source events and provisional notices are rejected. New-sponsor, reactivation, and project-completion incentive flows remain enabled.
+Seven PHP syntax checks passed for:
+`modules/transactions/create.php`, `modules/accounting/lib_sponsor_payment_approval.php`, `modules/hr/lib_employee_incentives.php`, `modules/hr/incentive_verification.php`, `tools/run_hr_employee_incentive_immediate_activity_notice_rollback_tests.php`, `tools/run_hr_employee_incentive_source_event_rollback_tests.php`, and `tools/run_hr_incentive_verification_rollback_tests.php`.
 
-The immediate-notice and source-event rollback-only harnesses were updated to assert blocked collection behavior. The HR verification endpoint and UI now refuse to issue awards for pending collection events, and its rollback harness was shifted to the retained new-sponsor category to preserve verification/accounting coverage. Runtime verification is pending: lint the four changed PHP source files and three changed harnesses, then run only the updated immediate-notice, source-event, and verification rollback harnesses against `ahl_el_kheir_incentive_test_20261015_r1`. No active policy, existing event/award, notification, payroll, or accounting record was mutated. The prior browser event for payment 29 remains pending verification and has no linked award; do not treat it as a paid incentive or manually delete it.
+All three rollback-only harnesses passed on disposable DB `ahl_el_kheir_incentive_test_20261015_r1`:
+- Immediate activity notice: retained new-sponsor/reactivation notices verified; collection notice blocked; recipient, wording, reward context, unread state, and rollback cleanup PASS.
+- Source event: collection source event blocked, no new collection award path, rollback cleanup PASS (policy 18).
+- Verification: recipient eligibility, pending-to-verified transition, award creation, Dr 5500 / Cr 2400 recognition for 2,000 SDG, duplicate-recognition protection, and rollback cleanup PASS (policy 11, employee 1).
+
+Audit conclusion: the collection-incentive removal rollback verification is CLOSED. New routine collection notices/events/awards are blocked, including verification of pending legacy collection events. Existing historical records are preserved, not deleted or rewritten; active policy R5 and the catalogue entry remain unchanged. New-sponsor, reactivation, and project-completion flows remain enabled. No further runtime tests or browser submissions are required absent concrete regression evidence.
+

@@ -3260,8 +3260,13 @@ The separate development point about whether routine collection should qualify f
 
 
 
-## 2026-10-18 — Routine collection incentive behavior removed from PHP (verification pending)
+## 2026-10-19 — Routine collection incentive removal: VERIFIED / CLOSED
 
-The user requested removal of the extra incentive attached to routine monthly sponsorship collection. On `main`, the collection submission no longer emits a provisional incentive notice, FM payment approval no longer records a collection incentive event, and the shared source-event / pending-notice helpers reject new collection incentive activity. New-sponsor, reactivation, and project-completion incentive behavior is preserved. The immediate-notice and source-event rollback-only harnesses were updated to test the new boundary. The HR verification endpoint/UI also block awards for already-pending routine collection events; its rollback harness now uses the retained new-sponsor category.
+The local runtime gate is closed. Seven PHP lint checks passed for the four changed PHP source files and three updated rollback harnesses. All three rollback-only harnesses passed against disposable DB `ahl_el_kheir_incentive_test_20261015_r1`:
 
-Status: source changes committed; local PHP lint and updated harness execution remain pending on disposable DB `ahl_el_kheir_incentive_test_20261015_r1`. Active policy R5 and all existing events, awards, notifications, payroll and accounting records were left unchanged. The browser-created collection event remains historical test evidence; it was not deleted or converted into an award.
+- Immediate activity notice: `immediate_notice=new_sponsor,reactivation`; `collection_notice=blocked`; correct recipient, provisional wording, reward context, unread state, and rollback cleanup all PASS.
+- Source event: `collection_source_event=blocked`; `no_new_collection_award_path=PASS`; rollback cleanup PASS; policy 18.
+- Verification: HR manager fixture, recipient eligibility, pending-to-verified transition, award creation, duplicate recognition, and rollback cleanup PASS; recognition journal Dr 5500 / Cr 2400 for 2,000 SDG; policy 11, employee 1.
+
+The collection-incentive removal's rollback verification is **CLOSED**. Routine monthly collection no longer emits a provisional incentive notice or creates a new collection source event, and already-pending collection events cannot be verified into new awards. This is a forward-looking eligibility/issuance boundary, not historical data deletion: existing events, awards, notifications, payroll, accounting entries, and active policy R5 were not changed. New-sponsor, reactivation, and project-completion incentives remain intact. No further application tests or browser submissions are warranted without concrete regression evidence.
+
