@@ -139,3 +139,7 @@ Target: `modules/hr/payroll.php?lang=en`. The active UI request is to reduce tab
 
 ## 2026-10-19 — FM payroll table usability
 See `HR_FM_PAYROLL_TABLE_USABILITY_CONTINUATION.md` for source findings, committed UI/scroll changes, preserved financial behavior, and the focused local verification boundary. The source is committed to `main`, including the valid draft-form markup follow-up; local syntax/browser verification remains pending.
+
+
+## 2026-10-19 — FM payroll table refinement and selected approval
+See `HR_FM_PAYROLL_TABLE_USABILITY_CONTINUATION.md` for the current checkpoint: compact translated headings, dark sticky header, Save action placement, selected draft approval validation, and the remaining local verification boundary.
