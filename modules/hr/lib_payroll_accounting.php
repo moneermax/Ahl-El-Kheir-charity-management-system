@@ -365,7 +365,7 @@ function hrPayrollApproveAll(PDO $pdo, int $month, int $year): int
 function hrPayrollApproveSelected(PDO $pdo, array $payrollIds, int $month, int $year): int
 {
     if ($month < 1 || $month > 12 || $year < 2020 || $year > 2100) {
-        throw new RuntimeException('فترة الرواتب غير صالحة.');
+        throw new RuntimeException(t('hr.payroll_error_invalid_period'));
     }
 
     $ids = array_values(array_unique(array_filter(
@@ -373,10 +373,10 @@ function hrPayrollApproveSelected(PDO $pdo, array $payrollIds, int $month, int $
         static function (int $id): bool { return $id > 0; }
     )));
     if (!$ids) {
-        throw new RuntimeException('اختر مسودة راتب واحدة على الأقل لاعتمادها.');
+        throw new RuntimeException(t('hr.payroll_error_no_selection'));
     }
     if (count($ids) > 500) {
-        throw new RuntimeException('عدد سجلات الرواتب المحددة يتجاوز الحد المسموح.');
+        throw new RuntimeException(t('hr.payroll_error_selection_limit'));
     }
 
     // Prepare accounting infrastructure before the transaction because the
@@ -399,11 +399,11 @@ function hrPayrollApproveSelected(PDO $pdo, array $payrollIds, int $month, int $
         $rows = $select->fetchAll(PDO::FETCH_ASSOC);
 
         if (count($rows) !== count($ids)) {
-            throw new RuntimeException('بعض السجلات المحددة ليست مسودات ضمن فترة الرواتب المختارة؛ لم يتم اعتماد أي سجل.');
+            throw new RuntimeException(t('hr.payroll_error_invalid_selection'));
         }
         foreach ($rows as $row) {
             if ((float)$row['basic_salary'] <= 0) {
-                throw new RuntimeException('توجد مسودة محددة بدون راتب أساسي صالح؛ لم يتم اعتماد أي سجل.');
+                throw new RuntimeException(t('hr.payroll_error_selected_salary'));
             }
         }
 
@@ -415,7 +415,7 @@ function hrPayrollApproveSelected(PDO $pdo, array $payrollIds, int $month, int $
         );
         $update->execute(array_merge($ids, [$month, $year]));
         if ($update->rowCount() !== count($ids)) {
-            throw new RuntimeException('لم يتسن اعتماد كل السجلات المحددة؛ تم التراجع عن العملية.');
+            throw new RuntimeException(t('hr.payroll_error_transaction'));
         }
 
         $pdo->commit();
