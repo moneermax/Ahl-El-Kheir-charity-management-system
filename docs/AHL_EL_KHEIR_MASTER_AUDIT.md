@@ -3554,3 +3554,14 @@ All three rollback-only harnesses passed on disposable DB `ahl_el_kheir_incentiv
 
 Audit conclusion: the collection-incentive removal rollback verification is CLOSED. New routine collection notices/events/awards are blocked, including verification of pending legacy collection events. Existing historical records are preserved, not deleted or rewritten; active policy R5 and the catalogue entry remain unchanged. New-sponsor, reactivation, and project-completion flows remain enabled. No further runtime tests or browser submissions are required absent concrete regression evidence.
 
+
+
+## 2026-10-19 — Employee incentives audit conclusion
+
+The audit conclusion is **PARTIALLY ACCEPTANCE-VERIFIED; full module closure is still pending**. The routine collection incentive removal is closed at its rollback-only boundary: seven PHP syntax checks passed and the immediate-notice, source-event, and HR-verification harnesses passed on the disposable database. New routine collection notices/events are blocked, and pending legacy collection events cannot create new awards. Historical events, awards, notifications, payroll, accounting entries, catalogue data and active R5 remain unchanged.
+
+Other evidence: new-sponsor first-confirmed-payment was browser-verified on 2026-10-16; the shared provisional-notice helper passed for new-sponsor/reactivation; project-completion rollback tests verified the FM gate, Dr 5500 / Cr 2400 recognition, draft-payroll linkage and outbox; and the one-time PRJ-0024 supervisor recovery recorded allocation 15, award 24, journal 178, sent outbox, notification 232 and an audit row on the disposable database. The supervisor recovery is complete and must not be rerun absent concrete regression evidence.
+
+The following are **not yet proven end-to-end**: real-browser earned-notice delivery after FM financial closure to every snapshotted recipient (including PS1), duplicate-free reload/retry behavior, retained new-sponsor/reactivation POST-to-inbox acceptance, and project-team assignment UI behavior (initial selection, adding members, duplicate rejection, unassign/history retention, and edit page). Rollback-only harnesses and a historical recovery cannot substitute for these workflow tests. No claim of live/production database acceptance is justified by the evidence recorded here.
+
+Preserve the evidence boundary: do not rerun completed harnesses or the PRJ-0024 recovery, do not recreate the removed disposable databases, and do not modify active R5 or historical accounting/payroll records merely to close documentation gaps. Close the module only after the remaining user-visible gates have concrete results.
