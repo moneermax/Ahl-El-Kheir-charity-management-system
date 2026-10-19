@@ -990,3 +990,12 @@ The existing-project team editor was moved from above the project form into the 
 ### 2026-10-17 — Project detail team card placement
 
 The read-only **فريق المشروع** card on `modules/projects/view.php` was moved to immediately after **ملخص المشروع** and before **التنفيذ والشركاء والتوريد**. Removed the duplicate team-specific edit link from that card; the existing primary **تعديل المشروع** action in the page banner remains the single edit entry point. No team assignments or lifecycle behavior were changed. Source committed on `main` as `2780a8dd14a54d91c1606b0d63d91d917a412f65`. Local PHP lint and browser verification are pending; do not describe this UI adjustment as runtime-verified until tested locally.
+
+## 2026-10-19 — Project-team source syntax verification
+
+The user ran PHP 8.2 syntax checks locally after syncing `main`; both commands passed:
+
+- `php -l modules\\projects\\form.php` — `No syntax errors detected in modules\\projects\\form.php`.
+- `php -l modules\\projects\\view.php` — `No syntax errors detected in modules\\projects\\view.php`.
+
+This closes only the local PHP syntax-check item. Browser acceptance for initial team selection, edit-page display and authorization, add/duplicate rejection, unassignment/history retention, and success feedback remains pending. The user confirmed the two disposable incentive databases are deleted; do not recreate them and do not perform mutating acceptance tests against live `ahl_el_kheir`. No database rows or project assignments were changed as part of this syntax check.
