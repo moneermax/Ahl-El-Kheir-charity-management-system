@@ -1068,3 +1068,12 @@ Existing evidence is from disposable test state and rollback-only harnesses; it 
 ## 2026-10-19 — Immediate activity-notice harness passed
 
 The user ran the updated immediate-notice rollback harness after syncing `main`. Six-table InnoDB preflight and all helper assertions passed for new-sponsor/reactivation provisional notices, blocked collection notice, correct recipient/content/unread state, and rollback cleanup. This does not close the real POST-to-inbox or PM-to-FM earned-notification browser gates. Do not rerun closed harnesses without regression evidence, recreate deleted disposable databases, or run further mutating acceptance tests against live `ahl_el_kheir`.
+
+## 2026-10-19 — Project-team source syntax verification
+
+The user ran PHP 8.2 syntax checks locally after syncing `main`; both commands passed:
+
+- `php -l modules\\projects\\form.php` — `No syntax errors detected in modules\\projects\\form.php`.
+- `php -l modules\\projects\\view.php` — `No syntax errors detected in modules\\projects\\view.php`.
+
+This closes only the local PHP syntax-check item. Browser acceptance for initial team selection, edit-page display and authorization, add/duplicate rejection, unassignment/history retention, and success feedback remains pending. The user confirmed the two disposable incentive databases are deleted; do not recreate them and do not perform mutating acceptance tests against live `ahl_el_kheir`. No database rows or project assignments were changed as part of this syntax check.
