@@ -1136,17 +1136,35 @@ The separate development point about whether routine collection should qualify f
 
 
 
-## 2026-10-18 — Routine collection incentive removed from the automatic PHP flow (source committed; runtime pending)
+## 2026-10-19 — Routine collection incentive removal: RUNTIME VERIFIED / CLOSED
 
-This section supersedes the earlier deferred recommendation about collection incentive eligibility. The user explicitly requested removal of the extra incentive for routine monthly collection.
+The user completed seven PHP syntax checks successfully for the four changed PHP source files and three updated rollback harnesses:
+- `modules/transactions/create.php`
+- `modules/accounting/lib_sponsor_payment_approval.php`
+- `modules/hr/lib_employee_incentives.php`
+- `modules/hr/incentive_verification.php`
+- `tools/run_hr_employee_incentive_immediate_activity_notice_rollback_tests.php`
+- `tools/run_hr_employee_incentive_source_event_rollback_tests.php`
+- `tools/run_hr_incentive_verification_rollback_tests.php`
 
-Root cause was confirmed in source, not inferred from database status: `modules/transactions/create.php` sent a provisional collection-incentive notice at submission, while `modules/accounting/lib_sponsor_payment_approval.php` separately created a `collection` source event during FM approval. Removing only the notice would not have stopped award eligibility. The committed changes now:
-- remove the provisional collection notice call from collection submission;
-- remove automatic collection-event creation from FM approval, while preserving the new-sponsor and reactivation event hooks in the same approval transaction;
-- remove `collection` from the shared immediate-notice allow-lists and from the source-event helper's allowed source map, blocking new collection events/notices;
-- block verification/award issuance for any already-pending routine collection event and label it as discontinued in the HR verification UI;
-- update the immediate-notice and source-event rollback-only harnesses to assert collection notices/events are blocked, and shift the verification rollback harness to the retained new-sponsor category.
+All three harnesses passed against disposable database `ahl_el_kheir_incentive_test_20261015_r1`:
 
-New-sponsor, reactivation, and project-completion incentives remain intact. The catalogue entry and active policy R5 were not modified. No existing events/awards/notifications, payroll, or accounting records were deleted, rejected, reversed, or changed. The browser-created event for payment 29 remains `pending_verification` with no linked award; it is historical test evidence, not proof of an earned or paid incentive.
+```text
+===== tools/run_hr_employee_incentive_immediate_activity_notice_rollback_tests.php =====
+PASS | immediate_notice=new_sponsor,reactivation | collection_notice=blocked | correct_recipient=PASS
+PASS | provisional_wording=PASS | reward_context=PASS | unread=PASS | rollback_cleanup=PASS
 
-**Runtime status: PENDING local verification.** After pulling `main`, lint the four changed PHP source files and three updated harnesses, then run only `tools/run_hr_employee_incentive_immediate_activity_notice_rollback_tests.php`, `tools/run_hr_employee_incentive_source_event_rollback_tests.php`, and `tools/run_hr_incentive_verification_rollback_tests.php` with process-scoped `AHL_DB_NAME=ahl_el_kheir_incentive_test_20261015_r1`. Do not rerun the already-completed browser submissions or modify active R5.
+===== tools/run_hr_employee_incentive_source_event_rollback_tests.php =====
+PASS | collection_source_event=blocked | no_new_collection_award_path=PASS
+PASS | rollback_cleanup=PASS | policy=18
+
+===== tools/run_hr_incentive_verification_rollback_tests.php =====
+PASS | hr_manager_fixture=available | recipient_eligibility=PASS | pending_to_verified=PASS
+PASS | award_creation=PASS | recognition=Dr5500/Cr2400 2000 SDG | duplicate_recognition=PASS
+PASS | rollback_cleanup=PASS | policy=11 | employee=1
+```
+
+The collection-incentive removal rollback verification is **CLOSED**. Routine collection no longer creates provisional incentive notices or new collection source events. The HR verification endpoint also blocks issuance of new awards from pending legacy collection events. New-sponsor, reactivation, and project-completion incentives remain enabled.
+
+Important preservation boundary: this change blocks new routine collection incentive activity; it does not delete, reject, reverse, or rewrite historical collection events, awards, notifications, payroll, accounting records, the catalogue entry, or active policy R5. No production database or policy change was made. No additional application tests or browser submissions are warranted without concrete regression evidence.
+

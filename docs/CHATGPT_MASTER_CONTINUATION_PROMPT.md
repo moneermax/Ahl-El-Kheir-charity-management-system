@@ -1036,8 +1036,12 @@ The separate development point about whether routine collection should qualify f
 
 
 
-## Current continuation — routine collection incentive removal (2026-10-18)
+## Current continuation — collection incentive removal CLOSED (2026-10-19)
 
-The user explicitly requested removal of the extra incentive for routine monthly sponsorship collection, superseding the earlier deferred design point. On `main`, the immediate collection activity notice and FM-approval collection-event hook have been removed; shared helper allow-lists reject new collection events/notices. The HR verification endpoint/UI also refuse to issue awards for already-pending routine collection events. New-sponsor, reactivation, and project-completion incentives are retained. The immediate-notice and source-event harnesses assert the new boundary; the verification rollback harness now exercises new-sponsor verification/accounting.
+The collection-incentive removal is fully verified at the defined rollback-only acceptance boundary. Seven PHP lint checks passed for the four changed PHP files and three updated harnesses. All three rollback harnesses passed on disposable DB `ahl_el_kheir_incentive_test_20261015_r1`:
+1. Immediate activity notices: new-sponsor/reactivation pass; collection notice blocked; recipient, provisional wording, reward context, unread state, and cleanup pass.
+2. Source events: collection event blocked; no new collection award path; cleanup passes (policy 18).
+3. HR verification: recipient eligibility, pending-to-verified transition, award creation, duplicate protection, and cleanup pass; recognition Dr 5500 / Cr 2400 for 2,000 SDG (policy 11, employee 1).
 
-Next exact gate: pull `main`; lint `modules/transactions/create.php`, `modules/accounting/lib_sponsor_payment_approval.php`, `modules/hr/lib_employee_incentives.php`, `modules/hr/incentive_verification.php`, `tools/run_hr_employee_incentive_immediate_activity_notice_rollback_tests.php`, `tools/run_hr_employee_incentive_source_event_rollback_tests.php`, and `tools/run_hr_incentive_verification_rollback_tests.php`; run only those three harnesses with process-scoped `AHL_DB_NAME=ahl_el_kheir_incentive_test_20261015_r1`. Do not change active R5 or historical events/awards/accounting/payroll. Do not repeat the already completed browser submissions. Runtime status is pending until the user provides exact local output.
+Do not rerun these harnesses or perform browser submissions without concrete regression evidence. Routine collection no longer creates new incentive notices/events and pending legacy collection events cannot be verified into new awards. Historical events, awards, notifications, payroll, accounting entries, the catalogue entry, and active policy R5 are preserved and unchanged. New-sponsor, reactivation, and project-completion incentives remain enabled.
+
