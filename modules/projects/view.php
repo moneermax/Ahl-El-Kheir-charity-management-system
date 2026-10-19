@@ -2494,7 +2494,7 @@ document.getElementById('edit-milestone-description').value = button.dataset.mil
 <button type="submit" class="btn btn-warning px-4"><i class="fas fa-rotate-left me-1"></i>إعادة المشروع إلى مشرف المشروع</button>
 </div>
 </form>
-<form method="post" data-ak-project-confirm="هل تؤكد إغلاق المشروع إدارياً؟ سيتم تحويله إلى المدير المالي لاستكمال الإغلاق المالي.">
+<form method="post">
 <input type="hidden" name="action" value="close_project">
 <?php echo csrf_field(); ?>
 <div class="mb-3">
@@ -2535,7 +2535,7 @@ document.getElementById('edit-milestone-description').value = button.dataset.mil
 </div>
 <?php endif; ?>
 <div class="d-flex justify-content-end mt-3">
-<button type="submit" class="btn btn-dark px-4" <?php echo $closureCanBeFinalizedView ? '' : 'disabled aria-disabled="true"'; ?>><i class="fas fa-lock me-1"></i>إغلاق المشروع إدارياً وتحويله للإغلاق المالي</button>
+<button type="submit" class="btn btn-dark px-4" data-ak-project-confirm="هل تؤكد إغلاق المشروع إدارياً؟ سيتم تحويله إلى المدير المالي لاستكمال الإغلاق المالي." <?php echo $closureCanBeFinalizedView ? '' : 'disabled aria-disabled="true"'; ?>><i class="fas fa-lock me-1"></i>إغلاق المشروع إدارياً وتحويله للإغلاق المالي</button>
 </div>
 </div>
 </form>
