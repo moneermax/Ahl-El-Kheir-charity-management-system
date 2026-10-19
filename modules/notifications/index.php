@@ -69,7 +69,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     }
                     $redirect = $link !== '' ? $link : APP_URL . 'modules/notifications/index.php';
                 ?>
-                    <form method="post" action="<?php echo e(APP_URL); ?>modules/notifications/mark_read.php" class="m-0">
+                    <form method="post" action="<?php echo e(APP_URL); ?>modules/notifications/mark_read.php" class="m-0" target="<?php echo strpos($link, 'modules/hr/payroll_statement.php') !== false ? '_blank' : '_self'; ?>">
                         <?php echo csrf_field(); ?>
                         <input type="hidden" name="notification_id" value="<?php echo $id; ?>">
                         <input type="hidden" name="redirect" value="<?php echo e($redirect); ?>">

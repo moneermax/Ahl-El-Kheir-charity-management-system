@@ -3606,3 +3606,10 @@ Source change: `modules/hr/payroll_statement.php` provides an authenticated, emp
 `hrPayrollNotifyStatementAvailable()` is invoked only in the existing post-commit paid-transition hook. It checks the payroll remains paid/accounting-posted, targets an active linked user, deduplicates by recipient + link + title, and catches notification errors so an already-committed financial action is not reported as failed. No schema/migration was needed based on the inspected repository schema and existing `notifications` table.
 
 Evidence status: source inspection only; local PHP lint and real-browser authorization/print verification are pending. No live payroll transition or database mutation was performed. Do not claim runtime acceptance until the user reports local results.
+
+
+## 2026-10-19 — Salary statement presentation follow-up
+
+The employee confirmed that the post-commit salary-statement notification was delivered and opened successfully for the paid October 2026 payroll (EMP-0017, 10,000.00 SDG; accounting entry 157). The statement was then refined on `main` to open payroll-statement notifications in a new tab (notification dropdown, live toast, and full notification history), center the organization logo in the header, use the navy header color for the outer statement border, compact earnings and deductions into side-by-side panels with a compact payment summary for A4 printing, and render only the currently selected `AK_LANG` language. Employee-only authorization, the paid + accounting-posted guard, saved payroll figures, separate incentive line, and `net_salary + incentive_amount` total-paid formula are preserved.
+
+**Verification boundary:** the user confirmed notification delivery and initial statement opening before these presentation changes. The revised new-tab behavior, Arabic/English layouts, and A4 print fit remain pending local browser/print-preview confirmation; no additional payroll disbursement or database mutation is required to verify these UI changes.

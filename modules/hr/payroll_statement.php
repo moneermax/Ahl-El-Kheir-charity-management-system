@@ -52,18 +52,21 @@ if ($employee && $payrollId > 0) {
 
 if (!$statement) {
     http_response_code(404);
-    $pageTitle = 'كشف الراتب غير متاح';
+    $pageTitle = AK_LANG === 'en' ? 'Salary statement unavailable' : 'كشف الراتب غير متاح';
     include __DIR__ . '/../../includes/header.php';
-    echo '<main class="container py-5"><div class="alert alert-warning text-center" role="alert">كشف الراتب غير متاح لهذا الحساب أو لم يكتمل ترحيله المحاسبي.</div></main>';
+    $message = AK_LANG === 'en'
+        ? 'This statement is unavailable for this account or its accounting entry has not been posted.'
+        : 'كشف الراتب غير متاح لهذا الحساب أو لم يكتمل ترحيله المحاسبي.';
+    echo '<main class="container py-5"><div class="alert alert-warning text-center" role="alert">' . e($message) . '</div></main>';
     include __DIR__ . '/../../includes/footer.php';
     exit;
 }
 
-$monthNames = [
-    1 => 'يناير', 2 => 'فبراير', 3 => 'مارس', 4 => 'أبريل',
-    5 => 'مايو', 6 => 'يونيو', 7 => 'يوليو', 8 => 'أغسطس',
-    9 => 'سبتمبر', 10 => 'أكتوبر', 11 => 'نوفمبر', 12 => 'ديسمبر',
-];
+$isEnglish = AK_LANG === 'en';
+$label = static fn(string $ar, string $en): string => $isEnglish ? $en : $ar;
+$monthNames = $isEnglish
+    ? [1 => 'January', 2 => 'February', 3 => 'March', 4 => 'April', 5 => 'May', 6 => 'June', 7 => 'July', 8 => 'August', 9 => 'September', 10 => 'October', 11 => 'November', 12 => 'December']
+    : [1 => 'يناير', 2 => 'فبراير', 3 => 'مارس', 4 => 'أبريل', 5 => 'مايو', 6 => 'يونيو', 7 => 'يوليو', 8 => 'أغسطس', 9 => 'سبتمبر', 10 => 'أكتوبر', 11 => 'نوفمبر', 12 => 'ديسمبر'];
 $month = (int)$statement['month'];
 $period = ($monthNames[$month] ?? (string)$month) . ' ' . (int)$statement['year'];
 $currency = trim((string)($statement['salary_currency'] ?? ''));
@@ -75,10 +78,11 @@ $netSalary = round((float)$statement['net_salary'], 2);
 $incentiveAmount = round((float)($statement['incentive_amount'] ?? 0), 2);
 $totalPaid = round($netSalary + $incentiveAmount, 2);
 $paymentDate = trim((string)($statement['payment_date'] ?? ''));
-$pageTitle = 'كشف تفاصيل الراتب';
+$pageTitle = $label('كشف تفاصيل الراتب', 'Salary Statement');
+$logoUrl = APP_URL . 'assets/img/logo.png';
 ?>
 <!doctype html>
-<html lang="ar" dir="rtl">
+<html lang="<?php echo e(AK_LANG); ?>" dir="<?php echo e(AK_DIR); ?>">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -87,51 +91,84 @@ $pageTitle = 'كشف تفاصيل الراتب';
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        :root{--ink:#172b4d;--navy:#17365d;--gold:#b38a3e;--muted:#66758a;--line:#dce3eb;--pale:#f4f7fb}
+        :root{--ink:#172b4d;--navy:#17365d;--gold:#b38a3e;--muted:#66758a;--line:#c6d0de;--pale:#f4f7fb}
         *{box-sizing:border-box}
-        body{margin:0;background:#edf1f6;color:var(--ink);font-family:'Cairo',Tahoma,Arial,sans-serif;font-size:14px}
-        .statement-shell{max-width:900px;margin:28px auto;padding:0 16px}
-        .statement{background:#fff;border:1px solid #e2e7ee;border-radius:16px;overflow:hidden;box-shadow:0 12px 35px rgba(23,54,93,.09)}
-        .statement-top{padding:28px 34px;background:linear-gradient(120deg,#142b4b,#234a75);color:#fff;border-bottom:4px solid var(--gold)}
-        .brandline{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap}
-        .brand{font-weight:800;font-size:21px;letter-spacing:.1px}
-        .brand small{display:block;font-size:11px;font-weight:500;opacity:.78;direction:ltr;text-align:right}
-        .doc-kind{text-align:left;direction:ltr}
-        .doc-kind strong{display:block;font-size:18px;letter-spacing:1.3px}
-        .doc-kind span{font-size:13px;opacity:.9}
-        .period-ribbon{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:24px;padding-top:18px;border-top:1px solid rgba(255,255,255,.2)}
-        .period-ribbon .period{font-size:19px;font-weight:800}
-        .period-ribbon .status{align-self:center;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.28);padding:6px 13px;border-radius:999px;font-size:12px}
-        .statement-body{padding:28px 34px 32px}
-        .section-title{display:flex;align-items:center;gap:10px;font-weight:800;font-size:14px;margin:0 0 14px;color:var(--navy)}
-        .section-title:before{content:"";width:4px;height:19px;background:var(--gold);border-radius:4px}
-        .employee-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:28px}
-        .info-cell{background:var(--pale);border:1px solid #e5ebf2;border-radius:9px;padding:12px 14px;min-width:0}
-        .info-label{font-size:11px;color:var(--muted);margin-bottom:4px}
-        .info-value{font-weight:700;overflow-wrap:anywhere}
-        .info-value small{display:block;font-size:10px;color:var(--muted);font-weight:500;direction:ltr;text-align:right}
-        .pay-table{width:100%;border-collapse:separate;border-spacing:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:22px}
-        .pay-table th{background:#eef3f9;color:var(--navy);font-size:12px;font-weight:800;padding:12px 15px}
-        .pay-table td{padding:12px 15px;border-top:1px solid var(--line);vertical-align:middle}
-        .pay-table .amount{font-weight:700;white-space:nowrap;text-align:left;direction:ltr}
-        .pay-table .subhead td{background:#fafbfd;color:#64748b;font-size:11px;font-weight:800;padding:8px 15px}
-        .pay-table .muted-row td{color:#64748b}
-        .totals{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:8px}
-        .total-card{border:1px solid var(--line);border-radius:11px;padding:15px 18px}
-        .total-label{font-size:12px;color:var(--muted)}
-        .total-value{font-size:19px;font-weight:800;margin-top:5px;direction:ltr;text-align:right}
-        .total-card.net{background:#f7f9fc}
-        .total-card.paid{background:#f8f5ed;border-color:#e6d8b8}
-        .total-card.paid .total-value{font-size:24px;color:#17365d}
-        .payment-meta{display:flex;gap:18px;flex-wrap:wrap;padding:15px 0 0;margin-top:20px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+        body{margin:0;background:#edf1f6;color:var(--ink);font-family:'Cairo',Tahoma,Arial,sans-serif;font-size:12px;line-height:1.45}
+        .statement-shell{width:min(900px,calc(100% - 24px));margin:14px auto}
+        .statement{background:#fff;border:2px solid var(--navy);border-radius:10px;overflow:hidden;box-shadow:0 8px 22px rgba(23,54,93,.08)}
+        .statement-top{position:relative;padding:12px 20px 10px;background:linear-gradient(120deg,#142b4b,#234a75);color:#fff;border-bottom:3px solid var(--gold)}
+        .brandline{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;min-height:62px;gap:10px}
+        .brand{grid-column:2;display:flex;align-items:center;justify-content:center;gap:10px;text-align:center;font-weight:800;font-size:16px;line-height:1.25}
+        .brand img{width:54px;height:54px;object-fit:contain;background:#fff;border-radius:50%;padding:3px;border:1px solid rgba(255,255,255,.65);flex-shrink:0}
+        .brand-name{display:block}
+        .doc-kind{position:absolute;inset-inline-end:18px;top:50%;transform:translateY(-50%);max-width:24%;text-align:start}
+        .doc-kind strong{display:block;font-size:12px;letter-spacing:.35px}
+        .doc-kind span{display:block;font-size:11px;opacity:.9}
+        .period-ribbon{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.2)}
+        .period-label{font-size:10px;opacity:.86}
+        .period{font-size:16px;font-weight:800}
+        .status{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);padding:4px 9px;border-radius:5px;font-size:10px;font-weight:700}
+        .statement-body{padding:12px 16px 10px}
+        .section-title{display:flex;align-items:center;gap:7px;font-weight:800;font-size:12px;margin:0 0 7px;color:var(--navy)}
+        .section-title:before{content:"";width:3px;height:14px;background:var(--gold);border-radius:3px;flex-shrink:0}
+        .employee-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-bottom:12px}
+        .info-cell{background:var(--pale);border:1px solid #c6d0de;border-radius:5px;padding:6px 9px;min-width:0}
+        .info-label{font-size:10px;color:var(--muted);margin-bottom:1px}
+        .info-value{font-weight:700;font-size:12px;overflow-wrap:anywhere}
+        .detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:start}
+        .detail-panel{min-width:0}
+        .pay-table{width:100%;border-collapse:collapse;border:1px solid var(--line);margin:0 0 9px}
+        .pay-table th{background:#eef3f9;color:var(--navy);font-size:10px;font-weight:800;padding:5px 8px;text-align:start;border-bottom:1px solid var(--line)}
+        .pay-table td{padding:5px 8px;border-top:1px solid #dbe2eb;vertical-align:middle}
+        .pay-table .amount{font-weight:700;white-space:nowrap;text-align:end;direction:ltr}
+        .pay-table .subhead td{background:#e9eef5;color:var(--navy);font-size:10px;font-weight:800;padding:5px 8px}
+        .totals{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:3px}
+        .total-card{border:1px solid var(--line);border-radius:6px;padding:7px 11px}
+        .total-label{font-size:10px;color:var(--muted)}
+        .total-value{font-size:16px;font-weight:800;margin-top:2px;direction:ltr;text-align:start;white-space:nowrap}
+        .total-card.net{background:#f4f7fb}
+        .total-card.paid{background:#f8f5ed;border-color:#b9a16c}
+        .total-card.paid .total-value{font-size:18px;color:var(--navy)}
+        .payment-meta{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:8px 0 0;margin-top:9px;border-top:1px solid var(--line);font-size:10px;color:var(--muted)}
         .payment-meta strong{color:var(--ink)}
-        .statement-foot{padding:16px 34px;background:#fafbfd;border-top:1px solid var(--line);color:#68778b;font-size:11px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
-        .actions{display:flex;justify-content:center;gap:10px;margin:18px auto 28px}
-        .actions button{border:0;border-radius:8px;padding:10px 20px;font:700 13px 'Cairo',sans-serif;cursor:pointer}
-        .print-btn{background:var(--navy);color:#fff}.back-btn{background:#fff;color:var(--navy);border:1px solid var(--line)!important}
-        @media(max-width:620px){.statement-shell{margin:10px auto;padding:0 8px}.statement-top,.statement-body{padding:20px 16px}.statement-foot{padding:14px 16px}.employee-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.totals{grid-template-columns:1fr}.doc-kind{text-align:right}.brandline{align-items:flex-start}}
-        @page{size:A4;margin:12mm}
-        @media print{body{background:#fff;font-size:12px}.statement-shell{max-width:none;margin:0;padding:0}.statement{border:0;border-radius:0;box-shadow:none}.statement-top{-webkit-print-color-adjust:exact;print-color-adjust:exact;border-radius:0}.statement-body{padding:20px 24px}.statement-foot{padding:12px 24px}.actions{display:none!important}.employee-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.total-card.paid{-webkit-print-color-adjust:exact;print-color-adjust:exact}.pay-table th,.pay-table .subhead td{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+        .statement-foot{padding:7px 16px;background:#f3f6fa;border-top:1px solid var(--navy);color:#52627a;font-size:9px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+        .actions{display:flex;justify-content:center;gap:8px;margin:10px auto}
+        .actions button{border:0;border-radius:5px;padding:7px 14px;font:700 11px 'Cairo',sans-serif;cursor:pointer}
+        .print-btn{background:var(--navy);color:#fff}.back-btn{background:#fff;color:var(--navy);border:1px solid var(--navy)!important}
+        @media(max-width:620px){.statement-shell{width:calc(100% - 12px);margin:6px auto}.statement-top{padding:10px}.brandline{grid-template-columns:1fr;min-height:0}.brand{grid-column:1;flex-direction:column;font-size:14px}.brand img{width:44px;height:44px}.doc-kind{position:static;transform:none;max-width:none;text-align:center;margin-top:5px}.period-ribbon{margin-top:8px}.statement-body{padding:10px}.employee-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.detail-grid{grid-template-columns:1fr}.totals{grid-template-columns:repeat(2,minmax(0,1fr))}.statement-foot{padding:7px 10px}}
+        @page{size:A4 portrait;margin:6mm}
+        @media print{
+            html,body{width:100%;height:auto;background:#fff;font-size:9px;line-height:1.25}
+            .statement-shell{width:100%;max-width:none;margin:0;padding:0}
+            .statement{border:2px solid var(--navy);border-radius:0;box-shadow:none;break-inside:avoid}
+            .statement-top{padding:7px 12px 6px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+            .brandline{min-height:42px}
+            .brand{font-size:12px;gap:6px}
+            .brand img{width:38px;height:38px}
+            .doc-kind{inset-inline-end:12px}
+            .doc-kind strong{font-size:9px}.doc-kind span{font-size:8px}
+            .period-ribbon{margin-top:4px;padding-top:4px}
+            .period-label{font-size:8px}.period{font-size:12px}.status{font-size:8px;padding:2px 6px}
+            .statement-body{padding:7px 10px 6px}
+            .section-title{font-size:9px;margin-bottom:4px}
+            .section-title:before{height:11px;width:2px}
+            .employee-grid{gap:4px;margin-bottom:7px}
+            .info-cell{padding:4px 6px}
+            .info-label{font-size:8px}.info-value{font-size:9px}
+            .detail-grid{gap:7px}
+            .pay-table{margin-bottom:5px}
+            .pay-table th{font-size:8px;padding:3px 5px}
+            .pay-table td{padding:3px 5px}
+            .pay-table .subhead td{font-size:8px;padding:3px 5px}
+            .totals{gap:5px}
+            .total-card{padding:4px 7px}
+            .total-label{font-size:8px}.total-value{font-size:12px}
+            .total-card.paid .total-value{font-size:14px}
+            .payment-meta{font-size:8px;padding-top:5px;margin-top:5px}
+            .statement-foot{padding:5px 10px;font-size:7px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+            .actions{display:none!important}
+            .pay-table th,.pay-table .subhead td,.total-card.paid{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+        }
     </style>
 </head>
 <body>
@@ -139,58 +176,76 @@ $pageTitle = 'كشف تفاصيل الراتب';
     <article class="statement">
         <header class="statement-top">
             <div class="brandline">
-                <div class="brand">جمعية أهل الخير<small>AHL EL KHEIR CHARITY</small></div>
-                <div class="doc-kind"><strong>SALARY STATEMENT</strong><span>بيان تفاصيل الراتب</span></div>
+                <div></div>
+                <div class="brand">
+                    <img src="<?php echo e($logoUrl); ?>" alt="<?php echo e($label('شعار جمعية أهل الخير', 'Ahl El Kheir logo')); ?>">
+                    <span class="brand-name"><?php echo e($label('جمعية أهل الخير', 'Ahl El Kheir Charity')); ?></span>
+                </div>
+                <div></div>
+                <div class="doc-kind">
+                    <strong><?php echo e($label('بيان تفاصيل الراتب', 'SALARY STATEMENT')); ?></strong>
+                    <span><?php echo e($label('كشف راتب رسمي', 'Official payroll statement')); ?></span>
+                </div>
             </div>
             <div class="period-ribbon">
-                <div><div style="font-size:11px;opacity:.78">فترة الراتب · PAY PERIOD</div><div class="period"><?php echo e($period); ?></div></div>
-                <div class="status">تم الصرف والترحيل المحاسبي · PAID</div>
+                <div><div class="period-label"><?php echo e($label('فترة الراتب', 'PAY PERIOD')); ?></div><div class="period"><?php echo e($period); ?></div></div>
+                <div class="status"><?php echo e($label('تم الصرف والترحيل المحاسبي', 'PAID & ACCOUNTING-POSTED')); ?></div>
             </div>
         </header>
         <div class="statement-body">
-            <h2 class="section-title">بيانات الموظف <span style="font-size:11px;color:var(--muted);font-weight:500">EMPLOYEE DETAILS</span></h2>
+            <h2 class="section-title"><?php echo e($label('بيانات الموظف', 'EMPLOYEE DETAILS')); ?></h2>
             <div class="employee-grid">
-                <div class="info-cell"><div class="info-label">اسم الموظف · Employee</div><div class="info-value"><?php echo e((string)$statement['employee_name']); ?></div></div>
-                <div class="info-cell"><div class="info-label">الرقم الوظيفي · Employee ID</div><div class="info-value"><?php echo e((string)$statement['employee_code']); ?></div></div>
-                <div class="info-cell"><div class="info-label">العملة · Currency</div><div class="info-value"><?php echo e($currency); ?></div></div>
+                <div class="info-cell"><div class="info-label"><?php echo e($label('اسم الموظف', 'Employee name')); ?></div><div class="info-value"><?php echo e((string)$statement['employee_name']); ?></div></div>
+                <div class="info-cell"><div class="info-label"><?php echo e($label('الرقم الوظيفي', 'Employee ID')); ?></div><div class="info-value"><?php echo e((string)$statement['employee_code']); ?></div></div>
+                <div class="info-cell"><div class="info-label"><?php echo e($label('العملة', 'Currency')); ?></div><div class="info-value"><?php echo e($currency); ?></div></div>
             </div>
 
-            <h2 class="section-title">تفاصيل الاستحقاقات والاستقطاعات <span style="font-size:11px;color:var(--muted);font-weight:500">EARNINGS &amp; DEDUCTIONS</span></h2>
-            <table class="pay-table">
-                <thead><tr><th>البيان · Description</th><th class="amount">المبلغ · Amount</th></tr></thead>
-                <tbody>
-                    <tr><td>الراتب الأساسي <div class="info-label">Basic salary</div></td><td class="amount"><?php echo e($money($statement['basic_salary'])); ?></td></tr>
-                    <tr><td>البدلات <div class="info-label">Allowances</div></td><td class="amount"><?php echo e($money($statement['allowances'])); ?></td></tr>
-                    <tr><td>العمل الإضافي <div class="info-label">Overtime</div></td><td class="amount"><?php echo e($money($statement['overtime'])); ?></td></tr>
-                    <tr class="subhead"><td colspan="2">الاستقطاعات · DEDUCTIONS</td></tr>
-                    <tr><td>الاستقطاعات العامة <div class="info-label">General deductions</div></td><td class="amount">− <?php echo e($money($statement['deductions'])); ?></td></tr>
-                    <tr><td>استقطاع الحضور والإجازات <div class="info-label">Attendance / leave deduction</div></td><td class="amount">− <?php echo e($money($statement['attendance_deduction'])); ?></td></tr>
-                    <tr><td>استقطاع سلفة الراتب <div class="info-label">Salary advance repayment</div></td><td class="amount">− <?php echo e($money($statement['salary_advance_deduction'])); ?></td></tr>
-                    <tr class="subhead"><td colspan="2">ملخص الصرف · PAYMENT SUMMARY</td></tr>
-                    <tr><td><strong>صافي الراتب المصروف</strong><div class="info-label">Net salary paid, after recorded deductions</div></td><td class="amount"><strong><?php echo e($money($netSalary)); ?></strong></td></tr>
-                    <?php if ($incentiveAmount > 0): ?>
-                    <tr><td>الحوافز المصروفة <div class="info-label">Incentives paid with this payroll</div></td><td class="amount"><?php echo e($money($incentiveAmount)); ?></td></tr>
-                    <?php endif; ?>
-                </tbody>
-            </table>
+            <div class="detail-grid">
+                <section class="detail-panel">
+                    <h2 class="section-title"><?php echo e($label('الاستحقاقات', 'EARNINGS')); ?></h2>
+                    <table class="pay-table">
+                        <thead><tr><th><?php echo e($label('البيان', 'Description')); ?></th><th class="amount"><?php echo e($label('المبلغ', 'Amount')); ?></th></tr></thead>
+                        <tbody>
+                            <tr><td><?php echo e($label('الراتب الأساسي', 'Basic salary')); ?></td><td class="amount"><?php echo e($money($statement['basic_salary'])); ?></td></tr>
+                            <tr><td><?php echo e($label('البدلات', 'Allowances')); ?></td><td class="amount"><?php echo e($money($statement['allowances'])); ?></td></tr>
+                            <tr><td><?php echo e($label('العمل الإضافي', 'Overtime')); ?></td><td class="amount"><?php echo e($money($statement['overtime'])); ?></td></tr>
+                            <?php if ($incentiveAmount > 0): ?>
+                            <tr><td><?php echo e($label('الحوافز المصروفة', 'Incentives paid')); ?></td><td class="amount"><?php echo e($money($incentiveAmount)); ?></td></tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </section>
+                <section class="detail-panel">
+                    <h2 class="section-title"><?php echo e($label('الاستقطاعات', 'DEDUCTIONS')); ?></h2>
+                    <table class="pay-table">
+                        <thead><tr><th><?php echo e($label('البيان', 'Description')); ?></th><th class="amount"><?php echo e($label('المبلغ', 'Amount')); ?></th></tr></thead>
+                        <tbody>
+                            <tr><td><?php echo e($label('الاستقطاعات العامة', 'General deductions')); ?></td><td class="amount">− <?php echo e($money($statement['deductions'])); ?></td></tr>
+                            <tr><td><?php echo e($label('استقطاع الحضور والإجازات', 'Attendance / leave deduction')); ?></td><td class="amount">− <?php echo e($money($statement['attendance_deduction'])); ?></td></tr>
+                            <tr><td><?php echo e($label('استقطاع سلفة الراتب', 'Salary advance repayment')); ?></td><td class="amount">− <?php echo e($money($statement['salary_advance_deduction'])); ?></td></tr>
+                        </tbody>
+                    </table>
+                </section>
+            </div>
 
+            <h2 class="section-title"><?php echo e($label('ملخص الصرف', 'PAYMENT SUMMARY')); ?></h2>
             <div class="totals">
-                <div class="total-card net"><div class="total-label">صافي الراتب · NET SALARY</div><div class="total-value"><?php echo e($money($netSalary)); ?></div></div>
-                <div class="total-card paid"><div class="total-label">إجمالي المبلغ المصروف · TOTAL PAID</div><div class="total-value"><?php echo e($money($totalPaid)); ?></div></div>
+                <div class="total-card net"><div class="total-label"><?php echo e($label('صافي الراتب المصروف', 'NET SALARY PAID')); ?></div><div class="total-value"><?php echo e($money($netSalary)); ?></div></div>
+                <div class="total-card paid"><div class="total-label"><?php echo e($label('إجمالي المبلغ المصروف', 'TOTAL PAID')); ?></div><div class="total-value"><?php echo e($money($totalPaid)); ?></div></div>
             </div>
             <div class="payment-meta">
-                <span>تاريخ الصرف · Payment date: <strong><?php echo e($paymentDate !== '' ? $paymentDate : '—'); ?></strong></span>
-                <span>مرجع القيد المحاسبي · Journal reference: <strong><?php echo e((string)($statement['accounting_entry_id'] ?? '—')); ?></strong></span>
+                <span><?php echo e($label('تاريخ الصرف', 'Payment date')); ?>: <strong><?php echo e($paymentDate !== '' ? $paymentDate : '—'); ?></strong></span>
+                <span><?php echo e($label('مرجع القيد المحاسبي', 'Journal reference')); ?>: <strong><?php echo e((string)($statement['accounting_entry_id'] ?? '—')); ?></strong></span>
             </div>
         </div>
         <footer class="statement-foot">
-            <span>كشف إلكتروني صادر من نظام أهل الخير بعد اكتمال تسجيل الصرف والترحيل المحاسبي.</span>
-            <span>Electronic statement · <?php echo e((string)$statement['employee_code']); ?> · <?php echo e(sprintf('%04d-%02d', (int)$statement['year'], $month)); ?></span>
+            <span><?php echo e($label('كشف إلكتروني صادر بعد اكتمال تسجيل الصرف والترحيل المحاسبي.', 'Electronic statement issued after disbursement and accounting posting.')); ?></span>
+            <span><?php echo e((string)$statement['employee_code']); ?> · <?php echo e(sprintf('%04d-%02d', (int)$statement['year'], $month)); ?></span>
         </footer>
     </article>
     <div class="actions">
-        <button type="button" class="print-btn" onclick="window.print()">طباعة / حفظ PDF · Print / Save PDF</button>
-        <button type="button" class="back-btn" onclick="history.back()">رجوع · Back</button>
+        <button type="button" class="print-btn" onclick="window.print()"><?php echo e($label('طباعة / حفظ PDF', 'Print / Save PDF')); ?></button>
+        <button type="button" class="back-btn" onclick="window.close()"><?php echo e($label('إغلاق الكشف', 'Close statement')); ?></button>
     </div>
 </main>
 </body>

@@ -100,7 +100,7 @@ if (Session::isLoggedIn()) {
     $notifUnread = (int)($ni['is_read'] ?? 0) === 0;
     ?>
     <?php if ($notifId > 0): ?>
-    <form method="post" action="<?php echo e($akNotifIndividualReadUrl); ?>" class="ak-notif-read-form">
+    <form method="post" action="<?php echo e($akNotifIndividualReadUrl); ?>" class="ak-notif-read-form" target="<?php echo strpos($notifLink, 'modules/hr/payroll_statement.php') !== false ? '_blank' : '_self'; ?>">
      <?php echo csrf_field(); ?>
      <input type="hidden" name="notification_id" value="<?php echo $notifId; ?>">
      <input type="hidden" name="redirect" value="<?php echo e($notifRedirect); ?>">
@@ -139,14 +139,17 @@ if (Session::isLoggedIn()) {
      toast.querySelector('.ak-notif-toast-close').addEventListener('click',function(e){e.stopPropagation();close()});
      if(link){
          toast.addEventListener('click',function(){
+             const statementLink=String(link).indexOf('modules/hr/payroll_statement.php')!==-1;
+             const statementTab=statementLink?window.open('about:blank','_blank'):null;
+             const navigate=function(){if(statementTab){statementTab.location.href=link;}else{window.location.href=link;}};
              if(notificationId && markReadUrl){
                  const formData=new FormData();
                  formData.append('csrf_token',csrfToken);
                  formData.append('notification_id',String(notificationId));
                  formData.append('redirect',String(link));
-                 fetch(markReadUrl,{method:'POST',credentials:'same-origin',body:formData,headers:{'Accept':'text/html'}}).then(function(){window.location.href=link}).catch(function(){window.location.href=link});
+                 fetch(markReadUrl,{method:'POST',credentials:'same-origin',body:formData,headers:{'Accept':'text/html'}}).then(navigate).catch(navigate);
              } else {
-                 window.location.href=link;
+                 navigate();
              }
          });
      }
@@ -188,7 +191,7 @@ if (Session::isLoggedIn()) {
      panelBody.innerHTML=items.map(function(item){
          const id=Number(item.id||0); let link=String(item.link||'').trim() || notificationPageUrl || currentUrl; const unread=Number(item.is_read||0)===0; const unreadClass=unread?' ak-notif-unread':''; const newBadge=unread?'<span class="ak-notif-new">جديد</span>':'';
          if(!id) return '<div class="ak-notif-item'+unreadClass+'"><strong>'+esc(item.title)+newBadge+'</strong><div class="ak-notif-body">'+esc(item.body)+'</div><small>'+esc(item.created_at)+'</small></div>';
-         return '<form method="post" action="'+esc(markReadUrl)+'" class="ak-notif-read-form"><input type="hidden" name="csrf_token" value="'+esc(csrfToken)+'"><input type="hidden" name="notification_id" value="'+id+'"><input type="hidden" name="redirect" value="'+esc(link)+'"><button type="submit" class="ak-notif-item'+unreadClass+'"><strong>'+esc(item.title)+newBadge+'</strong><div class="ak-notif-body">'+esc(item.body)+'</div><small>'+esc(item.created_at)+'</small></button></form>';
+         const targetAttr=link.indexOf('modules/hr/payroll_statement.php')!==-1?' target="_blank"':' target="_self"'; return '<form method="post" action="'+esc(markReadUrl)+'" class="ak-notif-read-form"'+targetAttr+'><input type="hidden" name="csrf_token" value="'+esc(csrfToken)+'"><input type="hidden" name="notification_id" value="'+id+'"><input type="hidden" name="redirect" value="'+esc(link)+'"><button type="submit" class="ak-notif-item'+unreadClass+'"><strong>'+esc(item.title)+newBadge+'</strong><div class="ak-notif-body">'+esc(item.body)+'</div><small>'+esc(item.created_at)+'</small></button></form>';
      }).join('');
  }
  function updateBadge(unread){const count=Number(unread||0);let badge=toggle ? toggle.querySelector('.ak-notif-badge') : null;if(count<=0){if(badge) badge.remove();return;}if(!badge){badge=document.createElement('span');badge.className='ak-notif-badge';toggle.appendChild(badge);}badge.textContent=count>99?'99+':String(count);}
