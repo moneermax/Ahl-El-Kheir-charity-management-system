@@ -359,6 +359,77 @@ function hrPayrollApproveAll(PDO $pdo, int $month, int $year): int
 
 
 /**
+ * Approve only the explicitly selected draft payroll rows for one period.
+ * This is approval only; payment and accounting posting remain separate actions.
+ */
+function hrPayrollApproveSelected(PDO $pdo, array $payrollIds, int $month, int $year): int
+{
+    if ($month < 1 || $month > 12 || $year < 2020 || $year > 2100) {
+        throw new RuntimeException('فترة الرواتب غير صالحة.');
+    }
+
+    $ids = array_values(array_unique(array_filter(
+        array_map('intval', $payrollIds),
+        static function (int $id): bool { return $id > 0; }
+    )));
+    if (!$ids) {
+        throw new RuntimeException('اختر مسودة راتب واحدة على الأقل لاعتمادها.');
+    }
+    if (count($ids) > 500) {
+        throw new RuntimeException('عدد سجلات الرواتب المحددة يتجاوز الحد المسموح.');
+    }
+
+    // Prepare accounting infrastructure before the transaction because the
+    // existing initializer can execute DDL in MySQL/MariaDB.
+    require_once dirname(__DIR__) . '/accounting/lib.php';
+    ak_ensure_tables();
+    ak_seed_accounts();
+
+    $pdo->beginTransaction();
+    try {
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $select = $pdo->prepare(
+            "SELECT id, basic_salary
+             FROM payroll
+             WHERE id IN ($placeholders)
+               AND month = ? AND year = ? AND status = 'draft'
+             FOR UPDATE"
+        );
+        $select->execute(array_merge($ids, [$month, $year]));
+        $rows = $select->fetchAll(PDO::FETCH_ASSOC);
+
+        if (count($rows) !== count($ids)) {
+            throw new RuntimeException('بعض السجلات المحددة ليست مسودات ضمن فترة الرواتب المختارة؛ لم يتم اعتماد أي سجل.');
+        }
+        foreach ($rows as $row) {
+            if ((float)$row['basic_salary'] <= 0) {
+                throw new RuntimeException('توجد مسودة محددة بدون راتب أساسي صالح؛ لم يتم اعتماد أي سجل.');
+            }
+        }
+
+        $update = $pdo->prepare(
+            "UPDATE payroll
+             SET status = 'approved', accounting_status = 'ready'
+             WHERE id IN ($placeholders)
+               AND month = ? AND year = ? AND status = 'draft'"
+        );
+        $update->execute(array_merge($ids, [$month, $year]));
+        if ($update->rowCount() !== count($ids)) {
+            throw new RuntimeException('لم يتسن اعتماد كل السجلات المحددة؛ تم التراجع عن العملية.');
+        }
+
+        $pdo->commit();
+        return count($ids);
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        throw $e;
+    }
+}
+
+
+/**
  * Notify the linked employee after payroll payment and accounting have committed.
  *
  * The notification is informational; the paid payroll and posted journal remain
