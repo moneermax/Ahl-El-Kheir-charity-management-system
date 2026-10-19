@@ -1045,3 +1045,22 @@ The collection-incentive removal is fully verified at the defined rollback-only 
 
 Do not rerun these harnesses or perform browser submissions without concrete regression evidence. Routine collection no longer creates new incentive notices/events and pending legacy collection events cannot be verified into new awards. Historical events, awards, notifications, payroll, accounting entries, the catalogue entry, and active policy R5 are preserved and unchanged. New-sponsor, reactivation, and project-completion incentives remain enabled.
 
+
+
+## Current continuation — employee incentives acceptance boundary (2026-10-19)
+
+Do not call the whole employee incentive module fully complete yet. Several core paths have passed their defined checks, but the end-to-end acceptance gates below remain open.
+
+**Closed; do not repeat without concrete regression evidence:**
+- Routine collection incentive removal: seven PHP syntax checks and three rollback-only harnesses passed on the disposable DB. New routine collection notices/events are blocked and pending legacy collection events cannot be verified into new awards; historical records, catalogue and active R5 remain unchanged.
+- New-sponsor first-confirmed-payment browser acceptance (2026-10-16).
+- Shared provisional-notice helper rollback test for new-sponsor/reactivation; collection intentionally blocked.
+- Project-completion rollback harness including FM gate, Dr 5500 / Cr 2400 recognition, payroll linkage/outbox and separate-supervisor fixture.
+- One-time PRJ-0024 supervisor historical recovery on the disposable database: allocation 15, award 24, journal 178, scheduled, outbox sent, notification 232, audit recorded. Never rerun this recovery or re-close/reopen PRJ-0024 for testing.
+
+**Remaining work only:**
+1. Complete real-browser PM-to-FM financial closure acceptance and verify exactly one earned notice for every eligible snapshotted recipient, especially the separately assigned project supervisor PS1; verify reload/retry does not duplicate notices. Do not mutate PRJ-0024 or use historical recovery as a substitute.
+2. Verify real POST-to-browser-inbox provisional notices for the retained new-sponsor and reactivation categories. Routine collection is no longer an incentive path and must not be retested as one.
+3. Verify project-team assignment UI: initial selection, adding a member, duplicate rejection, unassign with history retention, and edit-page behavior.
+
+Existing evidence is from disposable test state and rollback-only harnesses; it does not prove live/production database acceptance or the complete end-to-end gates above. The two disposable incentive databases were deleted after schema comparison; do not recreate them. Preserve active policy R5 and existing historical payroll/accounting records. Follow inspect → smallest justified change → lint/runtime evidence → documentation; do not rerun closed suites.
