@@ -384,12 +384,8 @@ function hrPayrollApproveSelected(PDO $pdo, array $payrollIds, int $month, int $
         throw new RuntimeException(t('hr.payroll_error_selection_limit'));
     }
 
-    // Prepare accounting infrastructure before the transaction because the
-    // existing initializer can execute DDL in MySQL/MariaDB.
-    require_once dirname(__DIR__) . '/accounting/lib.php';
-    ak_ensure_tables();
-    ak_seed_accounts();
-
+    // This is an approval-only status transition. It does not need to
+    // initialize accounting tables or seed accounts at request time.
     $pdo->beginTransaction();
     try {
         $placeholders = implode(',', array_fill(0, count($ids), '?'));
