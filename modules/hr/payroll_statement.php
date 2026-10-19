@@ -97,11 +97,11 @@ $logoUrl = APP_URL . 'assets/img/logo.png';
         .statement-shell{width:min(748px,calc(100% - 24px));margin:14px auto}
         .statement{background:#fff;border:2px solid var(--navy);border-radius:10px;overflow:hidden;box-shadow:0 8px 22px rgba(23,54,93,.08)}
         .statement-top{position:relative;padding:12px 20px 10px;background:linear-gradient(120deg,#142b4b,#234a75);color:#fff;border-bottom:3px solid var(--gold)}
-        .brandline{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;min-height:62px;gap:10px}
-        .brand{grid-column:2;display:flex;align-items:center;justify-content:center;gap:10px;text-align:center;font-weight:800;font-size:16px;line-height:1.25}
+        .brandline{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:62px;gap:5px}
+        .brand{display:flex;align-items:center;justify-content:center;gap:10px;text-align:center;font-weight:800;font-size:16px;line-height:1.25}
         .brand img{width:54px;height:54px;object-fit:contain;background:#fff;border-radius:50%;padding:3px;border:1px solid rgba(255,255,255,.65);flex-shrink:0}
         .brand-name{display:block}
-        .doc-kind{position:static;transform:none;max-width:none;text-align:start;border-inline-start:1px solid rgba(255,255,255,.35);padding-inline-start:12px;margin-inline-start:2px;flex-shrink:0}
+        .doc-kind{position:static;transform:none;max-width:none;text-align:center;border:0;padding:0;margin:0;flex-shrink:0}
         .doc-kind strong{display:block;font-size:12px;letter-spacing:.35px}
         .doc-kind span{display:block;font-size:11px;opacity:.9}
         .period-ribbon{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.2)}
@@ -176,16 +176,14 @@ $logoUrl = APP_URL . 'assets/img/logo.png';
     <article class="statement">
         <header class="statement-top">
             <div class="brandline">
-                <div></div>
                 <div class="brand">
                     <img src="<?php echo e($logoUrl); ?>" alt="<?php echo e($label('شعار جمعية أهل الخير', 'Ahl El Kheir logo')); ?>">
                     <span class="brand-name"><?php echo e($label('جمعية أهل الخير', 'Ahl El Kheir Charity')); ?></span>
-                    <div class="doc-kind">
+                </div>
+                <div class="doc-kind">
                     <strong><?php echo e($label('بيان تفاصيل الراتب', 'SALARY STATEMENT')); ?></strong>
                     <span><?php echo e($label('كشف راتب رسمي', 'Official payroll statement')); ?></span>
-                    </div>
                 </div>
-                <div></div>
             </div>
             <div class="period-ribbon">
                 <div><div class="period-label"><?php echo e($label('فترة الراتب', 'PAY PERIOD')); ?></div><div class="period"><?php echo e($period); ?></div></div>
