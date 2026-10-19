@@ -67,4 +67,5 @@ return [
     "hr.payroll_error_approved_edit" => "لا يمكن تعديل سجل بعد اعتماده.",
     "hr.payroll_error_negative_net" => "صافي الراتب قبل خصم السلفة لا يمكن أن يكون سالباً.",
     "hr.payroll_error_invalid_salary" => "يلزم وجود راتب أساسي صالح قبل الاعتماد.",
+    'hr.payroll_msg_approve_selected' => 'تم اعتماد :count من مسودات الرواتب المحددة.',
 ];
