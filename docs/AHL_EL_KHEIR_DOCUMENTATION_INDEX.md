@@ -128,3 +128,10 @@ The GM-only period completion report and verification boundary are documented in
 
 ## 2026-10-19 — GM payroll payment history
 The GM dashboard and sidebar now link to `modules/hr/gm_payroll_period_history.php`, a GM-only, read-only index of periods with paid payroll records. Each period links to the existing detailed employee payment report. Local syntax and browser verification remain pending; payroll/accounting records must not be mutated for this navigation change.
+
+
+## 2026-10-19 — GM payroll payment history CLOSED
+The user confirmed the GM payroll payment history navigation works as intended. `modules/hr/gm_payroll_period_history.php` is the GM-only, read-only history index linked from the GM dashboard and sidebar, with links to each detailed period report. No payroll/accounting data was changed. Do not reopen without a concrete regression.
+
+## 2026-10-19 — FM payroll table usability (active)
+Target: `modules/hr/payroll.php?lang=en`. The active UI request is to reduce table width, keep the header visible during vertical scrolling, preserve row/action context after actions, and remove only redundant display information. Payroll calculations, payment states, and accounting behavior must remain unchanged. See the current continuation note in the master status and master continuation prompt.
