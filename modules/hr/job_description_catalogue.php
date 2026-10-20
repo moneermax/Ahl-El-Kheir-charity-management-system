@@ -37,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'المسؤوليات' => [$responsibilities, 12000],
                 'المؤهلات' => [$qualifications, 5000],
                 'جهة الإشراف' => [$reportingTo, 180],
-                'بنود العقد الخاصة بالوظيفة' => [$roleTerms, 8000],
+                'بنود العقد الخاصة بالوظيفة' => [$roleTerms, 5000],
             ] as $label => [$value, $limit]) {
                 if (mb_strlen($value, 'UTF-8') > $limit) {
                     throw new InvalidArgumentException('تجاوز أحد الحقول الحد المسموح به: ' . $label . '.');
@@ -150,7 +150,7 @@ require_once __DIR__ . '/../../includes/header.php';
     <div class="jd-field jd-full"><label for="role_purpose">الغرض من الوظيفة</label><textarea id="role_purpose" name="role_purpose" maxlength="5000"><?= e($editing['role_purpose'] ?? '') ?></textarea></div>
     <div class="jd-field jd-full"><label for="responsibilities">المهام والمسؤوليات الأساسية</label><textarea id="responsibilities" name="responsibilities" maxlength="12000"><?= e($editing['responsibilities'] ?? '') ?></textarea></div>
     <div class="jd-field jd-full"><label for="qualifications">المؤهلات والخبرات المطلوبة (بعد اعتمادها داخلياً)</label><textarea id="qualifications" name="qualifications" maxlength="5000"><?= e($editing['qualifications'] ?? '') ?></textarea></div>
-    <div class="jd-field jd-full"><label for="role_specific_terms">بنود إضافية خاصة بهذا المسمى في العقد (اختيارية)</label><textarea id="role_specific_terms" name="role_specific_terms" maxlength="8000" placeholder="تُترك فارغة ما لم توجد شروط مهنية خاصة موثقة ومعتمدة لهذا المسمى."><?= e($editing['role_specific_terms'] ?? '') ?></textarea><small>هذه البنود تُضاف إلى الشروط الخاصة للعقد عند اختيار الموظف؛ لا تضع هنا استحقاقات قانونية غير متحقق منها.</small></div>
+    <div class="jd-field jd-full"><label for="role_specific_terms">بنود إضافية خاصة بهذا المسمى في العقد (اختيارية)</label><textarea id="role_specific_terms" name="role_specific_terms" maxlength="5000" placeholder="تُترك فارغة ما لم توجد شروط مهنية خاصة موثقة ومعتمدة لهذا المسمى."><?= e($editing['role_specific_terms'] ?? '') ?></textarea><small>هذه البنود تُضاف إلى الشروط الخاصة للعقد عند اختيار الموظف؛ لا تضع هنا استحقاقات قانونية غير متحقق منها.</small></div>
     <div class="jd-field"><label for="description_status">حالة الوصف</label><select id="description_status" name="description_status" <?= $canApprove ? '' : 'disabled' ?>><option value="needs_review" <?= ($editing['description_status'] ?? 'needs_review') === 'needs_review' ? 'selected' : '' ?>>يحتاج مراجعة HR</option><?php if ($canApprove): ?><option value="approved" <?= ($editing['description_status'] ?? '') === 'approved' ? 'selected' : '' ?>>معتمد داخلياً</option><?php endif; ?></select><?php if (!$canApprove): ?><small>اعتماد الوصف متاح لمدير الموارد البشرية أو مدير النظام.</small><input type="hidden" name="description_status" value="needs_review"><?php endif; ?></div>
     <div class="jd-field d-flex align-items-center gap-2 pt-4"><input class="form-check-input mt-0" type="checkbox" id="is_active" name="is_active" value="1" <?= !isset($editing['is_active']) || (int)$editing['is_active'] === 1 ? 'checked' : '' ?>><label for="is_active" class="mb-0">متاح للاستخدام في العقود</label></div>
    </div>
