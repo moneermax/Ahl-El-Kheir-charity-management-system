@@ -16,12 +16,48 @@ if (!Session::isLoggedIn() || !in_array(Session::getUserRole(), $allowedRoles, t
 $pdo = db();
 $employees = dbFetchAll(
     "SELECT e.id, e.employee_code, e.full_name, e.national_id, e.phone, e.email,
-            e.address, e.position, d.name_ar AS department_name
+            e.address, e.position, e.basic_salary, d.name_ar AS department_name
      FROM employees e
      LEFT JOIN departments d ON d.id = e.department_id
      ORDER BY e.full_name",
     []
 );
+$jobDescriptions = dbFetchAll(
+    "SELECT id, position_title, role_purpose, responsibilities, qualifications, reporting_to, description_status
+     FROM hr_job_description_templates
+     WHERE is_active = 1
+     ORDER BY position_title",
+    []
+);
+$jobDescriptionByPosition = [];
+foreach ($jobDescriptions as $description) {
+    $jobDescriptionByPosition[trim((string)$description['position_title'])] = $description;
+}
+$organizationSettings = [];
+foreach (dbFetchAll(
+    "SELECT setting_key, setting_value FROM settings
+     WHERE setting_key IN ('org_name_ar','org_name_en','org_address','support_phone','support_email','site_logo')",
+    []
+) as $setting) {
+    $organizationSettings[(string)$setting['setting_key']] = (string)$setting['setting_value'];
+}
+$selectedEmployeeId = (int)($_GET['employee_id'] ?? $_POST['employee_id'] ?? 0);
+
+function akContractTemplateText(?array $template): string
+{
+    if (!$template) return '';
+    $parts = [];
+    foreach ([
+        'الغرض الوظيفي' => $template['role_purpose'] ?? '',
+        'المهام والمسؤوليات' => $template['responsibilities'] ?? '',
+        'المؤهلات والخبرات' => $template['qualifications'] ?? '',
+        'جهة الإشراف' => $template['reporting_to'] ?? '',
+    ] as $label => $value) {
+        $value = trim((string)$value);
+        if ($value !== '') $parts[] = $label . ': ' . $value;
+    }
+    return implode("\n\n", $parts);
+}
 
 function akContractValue(array $data, string $key, string $default = ''): string
 {
@@ -59,10 +95,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
         if (!$employeeId || $employeeId < 1) {
             throw new InvalidArgumentException('اختر الموظف المرتبط بالعقد.');
         }
-        $employeeExists = dbFetchOne('SELECT id FROM employees WHERE id = ? LIMIT 1', [(int)$employeeId]);
+        $employeeExists = dbFetchOne('SELECT id, position FROM employees WHERE id = ? LIMIT 1', [(int)$employeeId]);
         if (!$employeeExists) {
             throw new InvalidArgumentException('الموظف المحدد غير موجود.');
         }
+        $employeePosition = trim((string)($employeeExists['position'] ?? ''));
+        $jobTemplate = $employeePosition !== ''
+            ? ($jobDescriptionByPosition[$employeePosition] ?? null)
+            : null;
+        $jobDescriptionStatus = (string)($jobTemplate['description_status'] ?? 'needs_review');
 
         $data = [
             'contract_number' => akContractValue($_POST, 'contract_number'),
@@ -73,7 +114,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
             'address' => akContractValue($_POST, 'address'),
             'phone' => akContractValue($_POST, 'phone'),
             'email' => akContractValue($_POST, 'email'),
-            'position' => akContractValue($_POST, 'position'),
+            'position' => $employeePosition,
             'department' => akContractValue($_POST, 'department'),
             'supervisor' => akContractValue($_POST, 'supervisor'),
             'work_location' => akContractValue($_POST, 'work_location'),
@@ -91,6 +132,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
             'sick_leave' => akContractValue($_POST, 'sick_leave', 'وفق قانون العمل السوداني والسياسات المعتمدة'),
             'notice_period' => akContractValue($_POST, 'notice_period', 'وفق القانون واجب التطبيق وشروط العقد'),
             'duties' => akContractValue($_POST, 'duties'),
+            'job_description_status' => $jobDescriptionStatus,
             'special_terms' => akContractValue($_POST, 'special_terms'),
         ];
 
@@ -151,9 +193,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
         $v = static fn(string $key): string => akContractEscape((string)($data[$key] ?? '—'));
         $endDateText = $data['end_date'] ?: 'لا يوجد تاريخ نهاية محدد';
         $probationText = $data['probation'] !== '' ? $data['probation'] : 'وفق ما يجيزه القانون واجب التطبيق وما يتفق عليه كتابةً';
+        if ($data['duties'] === '') {
+            $data['duties'] = akContractTemplateText($jobTemplate);
+        }
         $dutiesText = $data['duties'] !== '' ? nl2br($v('duties')) : 'تنفيذ المهام المرتبطة بالوظيفة والوصف الوظيفي والتعليمات المشروعة ذات الصلة.';
+        $jobDescriptionNotice = $jobDescriptionStatus === 'approved'
+            ? ''
+            : '<p style="color:#8a4b08;background-color:#fff7e6;border:1px solid #e5c07b;padding:5px;"><b>تنبيه داخلي:</b> الوصف الوظيفي لهذا المسمى يحتاج مراجعة واعتماد الموارد البشرية، ولا يُعد وصفاً معتمداً.</p>';
         $specialTermsText = $data['special_terms'] !== '' ? nl2br($v('special_terms')) : 'لا توجد شروط خاصة إضافية.';
-        $logoPath = APP_DIR . '/assets/img/logo.png';
+        $configuredLogo = (string)($organizationSettings['site_logo'] ?? 'assets/img/logo.png');
+        if ($configuredLogo === '' || strpos($configuredLogo, '..') !== false || str_starts_with($configuredLogo, '/')) {
+            $configuredLogo = 'assets/img/logo.png';
+        }
+        $logoPath = APP_DIR . '/' . $configuredLogo;
+        $organizationName = trim((string)($organizationSettings['org_name_ar'] ?? '')) ?: 'جمعية أهل الخير الخيرية';
+        $contactParts = [];
+        foreach (['org_address' => 'العنوان', 'support_phone' => 'الهاتف', 'support_email' => 'البريد الإلكتروني'] as $key => $label) {
+            $value = trim((string)($organizationSettings[$key] ?? ''));
+            if ($value !== '') $contactParts[] = $label . ': ' . $value;
+        }
+        $organizationContactHtml = $contactParts
+            ? '<p class="meta" style="text-align:center;">' . akContractEscape(implode(' | ', $contactParts)) . '</p>'
+            : '';
 
         require_once APP_DIR . '/TCPDF/tcpdf.php';
         $pdf = new TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
@@ -176,7 +237,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
         $pdf->SetY(15);
         $pdf->SetFont('aealarabiya', 'B', 17);
         $pdf->SetTextColor(23, 63, 115);
-        $pdf->Cell(0, 9, 'جمعية أهل الخير الخيرية', 0, 1, 'C');
+        $pdf->Cell(0, 9, $organizationName, 0, 1, 'C');
         $pdf->SetFont('aealarabiya', 'B', 14);
         $pdf->SetTextColor(35, 45, 60);
         $pdf->Cell(0, 8, 'عقد عمل', 0, 1, 'C');
@@ -193,6 +254,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
             .rule { border: 1px solid #d6dde7; padding: 6px; }
             .clause { margin-bottom: 5px; }
         </style>
+        ' . $organizationContactHtml . '
         <p class="meta">رقم العقد: <b>' . ($data['contract_number'] !== '' ? $v('contract_number') : 'يُستكمل عند التسجيل') . '</b> &nbsp;&nbsp; تاريخ التحرير: <b>' . $v('issue_date') . '</b></p>
         <p>تم إبرام هذا العقد بين جمعية أهل الخير الخيرية، ويشار إليها في هذا العقد بـ«الجمعية» أو «صاحب العمل»، وبين الموظف المبينة بياناته أدناه، ويشار إليه بـ«الموظف»، وفق أحكام هذا العقد وقوانين العمل السودانية السارية والسياسات المعتمدة المتوافقة معها.</p>
         <h2>أولاً: بيانات الطرفين والوظيفة</h2>
@@ -206,6 +268,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
         <h2>ثانياً: نوع العقد ومدته وفترة التجربة</h2>
         <p>نوع العقد: <b>' . akContractEscape($typeLabels[$data['contract_type']]) . '</b>. يبدأ في <b>' . $v('start_date') . '</b> وينتهي في <b>' . akContractEscape($endDateText) . '</b>. فترة التجربة: <b>' . akContractEscape($probationText) . '</b>. لا يغيّر هذا النص أي حماية أو شرط إلزامي مقرر بموجب القانون واجب التطبيق.</p>
         <h2>ثالثاً: المهام والمسؤوليات</h2>
+        ' . $jobDescriptionNotice . '
         <p>' . $dutiesText . '</p>
         <h2>رابعاً: ساعات العمل والإجازات</h2>
         <p>ساعات العمل الأسبوعية: <b>' . ($data['weekly_hours'] !== '' ? $v('weekly_hours') . ' ساعة' : 'وفق الجدول المعتمد والقانون واجب التطبيق') . '</b>. أيام العمل: <b>' . ($data['working_days'] !== '' ? $v('working_days') : 'وفق الجدول المعتمد') . '</b>. الإجازة السنوية: <b>' . $v('annual_leave') . '</b>. الإجازة المرضية: <b>' . $v('sick_leave') . '</b>. وتراعى فترات الراحة والعطلات والإجازات النظامية وأي شروط أفضل مقررة بصورة صحيحة.</p>
@@ -243,7 +306,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
     }
 }
 
-$selectedEmployeeId = (int)($_GET['employee_id'] ?? $_POST['employee_id'] ?? 0);
 $selectedEmployee = null;
 foreach ($employees as $employee) {
     if ((int)$employee['id'] === $selectedEmployeeId) {
@@ -251,7 +313,11 @@ foreach ($employees as $employee) {
         break;
     }
 }
-$pageTitle = 'إعداد عقد عمل للطباعة';
+$selectedPosition = trim((string)($selectedEmployee['position'] ?? ''));
+$selectedJobDescription = $jobDescriptionByPosition[$selectedPosition] ?? null;
+$selectedJobDuties = akContractTemplateText($selectedJobDescription);
+$selectedJobStatus = (string)($selectedJobDescription['description_status'] ?? 'needs_review');
+$pageTitle = 'بوابة عقود العمل';
 $active = 'hr';
 require_once __DIR__ . '/../../includes/header.php';
 ?>
@@ -259,14 +325,14 @@ require_once __DIR__ . '/../../includes/header.php';
 .contract-builder{max-width:1200px;margin:auto}.cb-hero{background:linear-gradient(120deg,#173f73,#2d67ad);color:#fff;padding:22px 26px;border-radius:14px;margin-bottom:18px}.cb-hero h1{font-size:1.4rem;font-weight:800;margin:0}.cb-hero p{margin:7px 0 0;font-size:.82rem;opacity:.92}.cb-card{background:#fff;border:1px solid #e4e9f0;border-radius:13px;box-shadow:0 3px 12px rgba(16,24,40,.05);margin-bottom:16px;overflow:hidden}.cb-head{padding:13px 17px;border-bottom:1px solid #e7ecf2;font-weight:800;color:#173f73}.cb-body{padding:17px}.cb-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.cb-field label{display:block;font-size:.76rem;font-weight:800;color:#344054;margin-bottom:5px}.cb-field input,.cb-field select,.cb-field textarea{width:100%;border:1px solid #b9c7d8;border-radius:8px;padding:9px 10px;font:inherit;font-size:.8rem;background:#fff}.cb-field textarea{min-height:78px}.cb-full{grid-column:1/-1}.cb-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:17px}.cb-actions .btn{font-size:.82rem;font-weight:700}.cb-note{font-size:.78rem;color:#475467;background:#f8fafc;border:1px solid #e4e9f0;padding:12px;border-radius:9px;margin-bottom:15px}.cb-error{font-size:.82rem}.cb-required{color:#b42318}@media(max-width:700px){.cb-grid{grid-template-columns:1fr}.cb-full{grid-column:auto}}
 </style>
 <div class="contract-builder">
-  <div class="cb-hero"><h1><i class="fa-solid fa-file-signature me-2"></i>إعداد عقد عمل</h1><p>املأ الحقول القابلة للتحرير، ثم اعرض العقد بصيغة PDF واطبعه للمراجعة والتوقيع.</p></div>
+  <div class="cb-hero d-flex align-items-center justify-content-between gap-3 flex-wrap"><div class="d-flex align-items-center gap-3"><img src="<?= e(APP_URL . ((isset($organizationSettings['site_logo']) && $organizationSettings['site_logo'] !== '' && strpos($organizationSettings['site_logo'], '..') === false) ? $organizationSettings['site_logo'] : 'assets/img/logo.png')) ?>" alt="شعار جمعية أهل الخير" style="width:68px;height:68px;object-fit:contain;background:#fff;border-radius:10px;padding:5px"><div><h1><i class="fa-solid fa-file-signature me-2"></i>بوابة عقود العمل</h1><p><?= e(trim((string)($organizationSettings['org_name_ar'] ?? '')) ?: 'جمعية أهل الخير الخيرية') ?> — إعداد عقد مناسب للمسمى الوظيفي ثم معاينته وطباعته للتوقيع.</p><?php $portalContact = array_filter([trim((string)($organizationSettings['org_address'] ?? '')), trim((string)($organizationSettings['support_phone'] ?? '')), trim((string)($organizationSettings['support_email'] ?? ''))]); if ($portalContact): ?><small><?= e(implode(' | ', $portalContact)) ?></small><?php endif; ?></div></div><a class="btn btn-light btn-sm fw-bold" href="<?= e(APP_URL) ?>modules/hr/job_description_catalogue.php"><i class="fa-solid fa-list-check me-1"></i> إدارة الأوصاف الوظيفية</a></div>
   <?php if (!empty($errorMessage)): ?><div class="alert alert-danger cb-error"><?= e($errorMessage) ?></div><?php endif; ?>
   <div class="cb-note"><strong>ملاحظة قانونية:</strong> هذا نموذج تشغيلي أولي وليس اعتماداً قانونياً. يجب مراجعته بواسطة محامٍ مؤهل في السودان قبل استخدامه رسمياً، والتحقق من توافق الشروط والسياسات مع أحكام قانون العمل السوداني السارية. لا تُدخل أي استحقاق أو مدة قانونية غير متحقق منها.</div>
   <form method="post" action="<?= e(APP_URL) ?>modules/hr/contract_builder.php" target="_blank">
     <?= csrf_field() ?>
     <input type="hidden" name="action" value="generate_pdf">
     <div class="cb-card"><div class="cb-head">بيانات العقد والموظف</div><div class="cb-body"><div class="cb-grid">
-      <div class="cb-field cb-full"><label for="employee_id">اختيار ملف الموظف <span class="cb-required">*</span></label><select id="employee_id" name="employee_id" required><option value="">— اختر الموظف —</option><?php foreach ($employees as $employee): ?><option value="<?= (int)$employee['id'] ?>" data-name="<?= e($employee['full_name']) ?>" data-national-id="<?= e($employee['national_id'] ?? '') ?>" data-phone="<?= e($employee['phone'] ?? '') ?>" data-email="<?= e($employee['email'] ?? '') ?>" data-address="<?= e($employee['address'] ?? '') ?>" data-position="<?= e($employee['position'] ?? '') ?>" data-department="<?= e($employee['department_name'] ?? '') ?>" <?= $selectedEmployeeId === (int)$employee['id'] ? 'selected' : '' ?>><?= e($employee['full_name']) ?> — <?= e($employee['employee_code']) ?></option><?php endforeach; ?></select><small>اختيار الموظف يملأ البيانات المتاحة تلقائياً؛ ويمكنك تعديل الحقول قبل إنشاء PDF.</small></div>
+      <div class="cb-field cb-full"><label for="employee_id">اختيار ملف الموظف <span class="cb-required">*</span></label><select id="employee_id" name="employee_id" required><option value="">— اختر الموظف —</option><?php foreach ($employees as $employee): ?><option value="<?= (int)$employee['id'] ?>" data-name="<?= e($employee['full_name']) ?>" data-national-id="<?= e($employee['national_id'] ?? '') ?>" data-phone="<?= e($employee['phone'] ?? '') ?>" data-email="<?= e($employee['email'] ?? '') ?>" data-address="<?= e($employee['address'] ?? '') ?>" data-position="<?= e($employee['position'] ?? '') ?>" data-department="<?= e($employee['department_name'] ?? '') ?>" data-duties="<?= e(akContractTemplateText($jobDescriptionByPosition[trim((string)($employee['position'] ?? ''))] ?? null)) ?>" data-description-status="<?= e((string)(($jobDescriptionByPosition[trim((string)($employee['position'] ?? ''))]['description_status'] ?? 'needs_review'))) ?>" <?= $selectedEmployeeId === (int)$employee['id'] ? 'selected' : '' ?>><?= e($employee['full_name']) ?> — <?= e($employee['employee_code']) ?></option><?php endforeach; ?></select><small>اختيار الموظف يملأ البيانات المتاحة تلقائياً؛ ويمكنك تعديل الحقول قبل إنشاء PDF.</small></div>
       <div class="cb-field"><label>رقم العقد (اختياري)</label><input name="contract_number" maxlength="80" placeholder="يُستكمل عند التسجيل"></div>
       <div class="cb-field"><label>تاريخ تحرير العقد <span class="cb-required">*</span></label><input type="date" name="issue_date" value="<?= e(date('Y-m-d')) ?>" required></div>
       <div class="cb-field"><label>اسم الموظف <span class="cb-required">*</span></label><input id="employee_name" name="employee_name" maxlength="180" required value="<?= e($selectedEmployee['full_name'] ?? '') ?>"></div>
@@ -275,7 +341,7 @@ require_once __DIR__ . '/../../includes/header.php';
       <div class="cb-field"><label>رقم الهاتف</label><input id="phone" name="phone" maxlength="80" value="<?= e($selectedEmployee['phone'] ?? '') ?>"></div>
       <div class="cb-field"><label>البريد الإلكتروني</label><input id="email" name="email" type="email" maxlength="180" value="<?= e($selectedEmployee['email'] ?? '') ?>"></div>
       <div class="cb-field cb-full"><label>العنوان</label><input id="address" name="address" maxlength="500" value="<?= e($selectedEmployee['address'] ?? '') ?>"></div>
-      <div class="cb-field"><label>المسمى الوظيفي <span class="cb-required">*</span></label><input id="position" name="position" maxlength="180" required value="<?= e($selectedEmployee['position'] ?? '') ?>"></div>
+      <div class="cb-field"><label>المسمى الوظيفي (من ملف الموظف) <span class="cb-required">*</span></label><input id="position" name="position" maxlength="180" required readonly value="<?= e($selectedEmployee['position'] ?? '') ?>"></div>
       <div class="cb-field"><label>القسم</label><input id="department" name="department" maxlength="180" value="<?= e($selectedEmployee['department_name'] ?? '') ?>"></div>
       <div class="cb-field"><label>المشرف المباشر</label><input name="supervisor" maxlength="180"></div>
       <div class="cb-field"><label>مكان العمل</label><input name="work_location" maxlength="250" value="حسب تكليف الجمعية المكتوب"></div>
@@ -296,7 +362,7 @@ require_once __DIR__ . '/../../includes/header.php';
       <div class="cb-field cb-full"><label>مدة الإخطار</label><input name="notice_period" maxlength="250" value="وفق القانون واجب التطبيق وشروط العقد"></div>
     </div></div></div>
     <div class="cb-card"><div class="cb-head">تفاصيل إضافية</div><div class="cb-body"><div class="cb-grid">
-      <div class="cb-field cb-full"><label>المهام والمسؤوليات</label><textarea name="duties" maxlength="5000" placeholder="اكتب المهام الأساسية والمسؤوليات المرتبطة بالوظيفة."></textarea></div>
+      <div class="cb-field cb-full"><label>المهام والمسؤوليات والوصف الوظيفي</label><textarea id="duties" name="duties" maxlength="5000" placeholder="يُحمّل الوصف من فهرس المسمى الوظيفي، ويمكن مراجعته وتعديله للعقد الحالي."><?= e($selectedJobDuties) ?></textarea><small id="jobDescriptionStatus" class="<?= $selectedJobStatus === 'approved' ? 'text-success' : 'text-warning-emphasis' ?>"><?= $selectedJobStatus === 'approved' ? 'الوصف الوظيفي معتمد داخلياً.' : 'تنبيه: لا يوجد وصف معتمد لهذا المسمى؛ راجع فهرس الأوصاف الوظيفية قبل اعتماد العقد.' ?></small></div>
       <div class="cb-field cb-full"><label>الشروط الخاصة المتفق عليها</label><textarea name="special_terms" maxlength="5000" placeholder="أي شروط إضافية متفق عليها كتابةً، دون مخالفة القانون."></textarea></div>
     </div><div class="cb-actions"><button type="submit" class="btn btn-primary"><i class="fa-solid fa-file-pdf me-1"></i> عرض العقد بصيغة PDF</button><a class="btn btn-outline-secondary" href="<?= e(APP_URL) ?>modules/hr/contracts.php<?= $selectedEmployeeId ? '?employee_id=' . $selectedEmployeeId . '&view=add' : '' ?>">العودة إلى العقود والرواتب</a></div></div></div>
   </form>
@@ -314,6 +380,14 @@ require_once __DIR__ . '/../../includes/header.php';
       const value=option.dataset[key];
       if(input&&value!==undefined)input.value=value;
     });
+    const duties=document.getElementById('duties');
+    if(duties)duties.value=option.dataset.duties||'';
+    const status=document.getElementById('jobDescriptionStatus');
+    if(status){
+      const approved=option.dataset.descriptionStatus==='approved';
+      status.textContent=approved?'الوصف الوظيفي معتمد داخلياً.':'تنبيه: لا يوجد وصف معتمد لهذا المسمى؛ راجع فهرس الأوصاف الوظيفية قبل اعتماد العقد.';
+      status.className=approved?'text-success':'text-warning-emphasis';
+    }
   });
 })();
 </script>
