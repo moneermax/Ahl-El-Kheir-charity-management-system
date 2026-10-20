@@ -2,6 +2,8 @@
 -- Remove only the known system-role seed prefix and exact generic placeholders.
 -- Preserve non-empty HR-authored qualifications and keep all descriptions pending review.
 -- This is a data-only migration; no runtime DDL and no approval-status changes.
+SET NAMES utf8mb4;
+
 
 UPDATE hr_job_description_templates
 SET role_purpose = TRIM(SUBSTRING(
