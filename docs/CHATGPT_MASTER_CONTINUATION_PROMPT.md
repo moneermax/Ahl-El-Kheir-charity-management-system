@@ -1158,3 +1158,8 @@ Read `docs/HR_FM_PAYROLL_TABLE_USABILITY_CONTINUATION.md`. Source is committed t
 ### Current continuation — 2026-10-20, Step 2
 
 Continue from the Step 2 audit in `docs/HR_FM_PAYROLL_TABLE_USABILITY_CONTINUATION.md`. Do not implement the proposed schema until actual local `SHOW CREATE TABLE` output for payroll/accounts/users/notifications and relevant employee keys has been inspected, and a real local migration/storage example has been checked. The connector returned an empty body for `database/ahl_el_kheir.sql`; this is not evidence about schema content. Keep paid/accounting, proof upload, transfer confirmation, notification and GM completion as separate explicit gates. No source/schema/data changed in Step 2.
+
+
+### FM payroll workflow redesign — current state 2026-10-20
+
+Step 2 is closed at the design boundary after reviewing actual local schema output. See `docs/HR_FM_PAYROLL_TABLE_USABILITY_CONTINUATION.md` for the model and required gates. Next: draft the migration and private proof storage contract; document and commit that stage before implementing runtime behavior. Do not change existing account resolution semantics without an explicit business decision. No source/schema/data has been changed by Step 2.
