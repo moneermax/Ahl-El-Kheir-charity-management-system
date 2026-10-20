@@ -1180,3 +1180,12 @@ Step 5 source is committed on `main`. Explicit CSRF-protected transfer confirmat
 New source change on `main`: account creation requires the initial monthly basic salary and hire date; employee provisioning records the salary-history entry effective on the hire date. Payroll continues to resolve the effective-dated history for each month. Local PHP lint and XAMPP/browser verification remain pending.
 
 Separate unresolved data issue: 18 September 2026 draft payrolls have zero salary and matching zero salary-history records. Most positive history rows supplied by the user start on 2026-10-01. Never copy October salaries backward or invent values. Next step is to pull current `main`, lint the three changed PHP files, and verify account creation creates the expected history row; do not approve September drafts until the actual September salary values are confirmed.
+
+
+### HR employment contract builder — current continuation (2026-10-20)
+
+The user requires an in-system contract page, not a separate Word template. Source on `main` now includes `modules/hr/contract_builder.php` and a link from `modules/hr/contracts.php`. HR can choose an existing employee, edit fields, and POST to a TCPDF-backed A4 Arabic RTL PDF for viewing/printing. The builder does not save drafts or mutate employee/contract/salary/payroll/accounting records. The contract is a legal draft; Sudanese legal counsel must review it before official use.
+
+Commits: `f0e5fdba4b32e179091478b092eccd5dd10f033f` and `ca14abbd85b490c5025f8367c1fe2d2caa43f88d`. Details are in `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`.
+
+**Next action:** sync local `main`, run `php -l modules/hr/contract_builder.php` and `php -l modules/hr/contracts.php`, then test at `http://localhost:8081/AhlElKheir/modules/hr/contract_builder.php` as an authorized HR user. Verify employee prefill/editing, PDF opening, Arabic RTL/logo, multi-page layout, print quality, role denial, CSRF rejection, and no DB/storage mutation. Do not begin the second task (onboarding + signed-copy upload integration) until this gate is accepted. Review the contract with a qualified Sudanese lawyer before operational use.
