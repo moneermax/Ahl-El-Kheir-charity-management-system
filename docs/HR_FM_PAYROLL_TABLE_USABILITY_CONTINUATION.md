@@ -155,3 +155,16 @@ The draft uses InnoDB, utf8mb4 Unicode collation, unsigned integer IDs consisten
 ### Step 3 boundary
 
 The migration has been authored and committed to `main`, but it has **not** been executed against any database. No PHP workflow or file endpoint was changed. Before application, review the exact migration SQL and verify local migration execution convention and private storage directory configuration. Next step: implement the period/account preparation and proof upload/download layer, with its own documentation checkpoint before moving to payment confirmation/accounting changes.
+
+
+## 2026-10-20 — Step 4 source checkpoint: account/proof preparation layer
+
+Added procedural helpers in `modules/hr/lib_payroll_transfer.php` and the authorized download endpoint `modules/hr/payroll_proof_download.php`; wired preparation actions and UI into `modules/hr/payroll.php`.
+
+- Period default account settings are stored per month/year and applied only to payroll rows without an existing account choice. Individual/group overrides validate that the account is active using the existing `hrPayrollResolvePaymentAccount()` policy and restrict updates to approved rows in the selected period. Saving the default does not overwrite explicit row choices.
+- Proof uploads accept PDF/JPG/JPEG/PNG only, enforce a 10 MiB application limit (local PHP limits reported 40M for upload and POST), inspect detected MIME type, generate a random 256-bit storage key, reject a second proof for the same payroll, and compensate by deleting the file if metadata insertion fails. Upload state is `prepared`; legacy attachment is allowed only for already-paid, accounting-posted rows with a journal ID and uses `legacy_evidence`.
+- Files are written under `storage/private/payroll-proofs`, below the existing deny-all `storage/.htaccess`. Download requests resolve the storage key from the database, enforce staff roles or employee ownership plus release state, stream as attachment with nosniff/private no-store headers, and never accept a caller-provided filesystem path.
+- New POST actions use the existing CSRF token verifier. Preparing proof does not itself change payroll status or accounting fields. The existing paid-status/accounting path has not yet been redesigned in this checkpoint; the explicit confirmation gate and completion-notification requirements remain the next stage, so this intermediate source checkpoint is not the final workflow release.
+- Migration `2026-10-20_hr_fm_payroll_transfer_workflow.sql` remains unapplied. The page checks whether both new tables exist before showing the new controls, so pulling source alone does not make the page depend on a missing table for its normal payroll listing.
+
+**Verification boundary:** source changes are committed to `main`; the available GitHub source editor does not provide local PHP lint/runtime evidence. Local syntax checks and the migration/runtime checks remain pending. No database migration was run and no payroll/accounting rows were changed by these source edits.
