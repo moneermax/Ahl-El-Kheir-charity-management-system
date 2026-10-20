@@ -3515,3 +3515,8 @@ Commit `6264c897b2bbadb460e0ba0d3e0c029b1443312d` improves `modules/hr/job_descr
 ## Follow-up — null-safe HR fallback counts
 
 Commit `4435226e37405e9a2963dd07af0d1c14f71e7f92` makes the catalogue employee count treat SQL NULL and empty `system_role_code` values consistently as general fallbacks, matching the contract builder's PHP normalization. Local PHP lint and browser verification remain pending.
+## 2026-10-20 — HR job-description fallback draft content (SOURCE COMMITTED; LOCAL VERIFICATION PENDING)
+
+The user identified that general title-only catalogue entries still opened with empty **الغرض من الوظيفة** and **المهام والمسؤوليات الأساسية** fields. Root cause: the earlier `2026-10-20_hr_job_description_z_clear_unreviewed_generic_drafts.sql` intentionally cleared exact generic proposals from these fallback records. Commit `5b6a553b22ff5a0be3d0a2b6430556ccf5138be9` adds `database/migrations/2026-10-20_hr_job_description_zzz_general_fallback_drafts.sql`, a data-only migration that restores distinct, broad drafts to active, unapproved, title-only records only when either field is blank. It preserves non-empty/HR-edited content, role-specific records, approval states, qualifications, reporting lines, employee data and schema; `HR Test` remains excluded. All drafts remain `needs_review`.
+
+**Next gate:** user pulls `main`, applies only the new migration with UTF-8 enabled, runs read-only verification of the active general fallback rows and review statuses, PHP-lints `modules/hr/job_description_catalogue.php`, and checks catalogue display plus role-specific employee selection in the local contract builder. No completion claim until those local checks are returned.
