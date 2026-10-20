@@ -1290,3 +1290,8 @@ Local diagnostic confirmed 26 catalogue rows, 25 qualifications beginning with q
 ### 2026-10-20 — Contract-builder purpose draft field correction
 
 Continue from `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`. The contract builder previously combined purpose and responsibilities in one `duties` field, so `الغرض من الوظيفة` had no dedicated control. Source commits `73b91d1a40024564d7399a80ae91b011167dbf9c`, `8fc40930c4224f04dab7e1f8c9c96c4fdfafd4b7`, `ec565758660214ac371ef14b692b4265249fc2b7`, `4d3d030bc4b96537141eec16fc6e3e0e86bce05d`, `59332e20a7d186eae3f969a9a94c24b1e2225d44`, `59ecd7b5057d9fe2910ccc3314b073d305cc19d6` add separate purpose, responsibility, qualification and reporting-line controls, each populated from the selected employee's role-aware catalogue match. Source-only; local PHP lint and browser/PDF verification remain required. Do not rerun data migrations.
+
+
+### 2026-10-20 — HR job-description fallback catalogue clarity
+
+Continue from `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`. The employee-wide audit found that current linked employees have role-specific draft matches except HR Salary Test (employee 21), while some title-only rows are intentionally empty fallbacks. Commit `6264c897b2bbadb460e0ba0d3e0c029b1443312d` labels general fallback entries, shows active role-specific template counts, and warns when editing an empty fallback that has role-specific descriptions. Documentation update commit `ff90fae0ab121b85267490fe10679120af7cffab`. Source-only; local PHP lint and browser verification remain pending. Do not reactivate the HR Test template or change employee data without further evidence.
