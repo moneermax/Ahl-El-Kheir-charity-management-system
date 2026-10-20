@@ -23,7 +23,7 @@ $employees = dbFetchAll(
     []
 );
 $jobDescriptions = dbFetchAll(
-    "SELECT id, position_title, role_purpose, responsibilities, qualifications, reporting_to, description_status
+    "SELECT id, position_title, role_purpose, responsibilities, qualifications, reporting_to, role_specific_terms, description_status
      FROM hr_job_description_templates
      WHERE is_active = 1
      ORDER BY position_title",
@@ -339,7 +339,7 @@ require_once __DIR__ . '/../../includes/header.php';
     <?= csrf_field() ?>
     <input type="hidden" name="action" value="generate_pdf">
     <div class="cb-card"><div class="cb-head">بيانات العقد والموظف</div><div class="cb-body"><div class="cb-grid">
-      <div class="cb-field cb-full"><label for="employee_id">اختيار ملف الموظف <span class="cb-required">*</span></label><select id="employee_id" name="employee_id" required><option value="">— اختر الموظف —</option><?php foreach ($employees as $employee): ?><option value="<?= (int)$employee['id'] ?>" data-name="<?= e($employee['full_name']) ?>" data-national-id="<?= e($employee['national_id'] ?? '') ?>" data-phone="<?= e($employee['phone'] ?? '') ?>" data-email="<?= e($employee['email'] ?? '') ?>" data-address="<?= e($employee['address'] ?? '') ?>" data-position="<?= e($employee['position'] ?? '') ?>" data-department="<?= e($employee['department_name'] ?? '') ?>" data-duties="<?= e(akContractTemplateText($jobDescriptionByPosition[trim((string)($employee['position'] ?? ''))] ?? null)) ?>" data-description-status="<?= e((string)(($jobDescriptionByPosition[trim((string)($employee['position'] ?? ''))]['description_status'] ?? 'needs_review'))) ?>" <?= $selectedEmployeeId === (int)$employee['id'] ? 'selected' : '' ?>><?= e($employee['full_name']) ?> — <?= e($employee['employee_code']) ?></option><?php endforeach; ?></select><small>اختيار الموظف يملأ البيانات المتاحة تلقائياً؛ ويمكنك تعديل الحقول قبل إنشاء PDF.</small></div>
+      <div class="cb-field cb-full"><label for="employee_id">اختيار ملف الموظف <span class="cb-required">*</span></label><select id="employee_id" name="employee_id" required><option value="">— اختر الموظف —</option><?php foreach ($employees as $employee): ?><option value="<?= (int)$employee['id'] ?>" data-name="<?= e($employee['full_name']) ?>" data-national-id="<?= e($employee['national_id'] ?? '') ?>" data-phone="<?= e($employee['phone'] ?? '') ?>" data-email="<?= e($employee['email'] ?? '') ?>" data-address="<?= e($employee['address'] ?? '') ?>" data-position="<?= e($employee['position'] ?? '') ?>" data-department="<?= e($employee['department_name'] ?? '') ?>" data-duties="<?= e(akContractTemplateText($jobDescriptionByPosition[trim((string)($employee['position'] ?? ''))] ?? null)) ?>" data-description-status="<?= e((string)(($jobDescriptionByPosition[trim((string)($employee['position'] ?? ''))]['description_status'] ?? 'needs_review'))) ?>" data-role-terms="<?= e((string)(($jobDescriptionByPosition[trim((string)($employee['position'] ?? ''))]['role_specific_terms'] ?? ''))) ?>" <?= $selectedEmployeeId === (int)$employee['id'] ? 'selected' : '' ?>><?= e($employee['full_name']) ?> — <?= e($employee['employee_code']) ?></option><?php endforeach; ?></select><small>اختيار الموظف يملأ البيانات المتاحة تلقائياً؛ ويمكنك تعديل الحقول قبل إنشاء PDF.</small></div>
       <div class="cb-field"><label>رقم العقد (اختياري)</label><input name="contract_number" maxlength="80" placeholder="يُستكمل عند التسجيل"></div>
       <div class="cb-field"><label>تاريخ تحرير العقد <span class="cb-required">*</span></label><input type="date" name="issue_date" value="<?= e(date('Y-m-d')) ?>" required></div>
       <div class="cb-field"><label>اسم الموظف <span class="cb-required">*</span></label><input id="employee_name" name="employee_name" maxlength="180" required value="<?= e($selectedEmployee['full_name'] ?? '') ?>"></div>
@@ -370,7 +370,7 @@ require_once __DIR__ . '/../../includes/header.php';
     </div></div></div>
     <div class="cb-card"><div class="cb-head">تفاصيل إضافية</div><div class="cb-body"><div class="cb-grid">
       <div class="cb-field cb-full"><label>المهام والمسؤوليات والوصف الوظيفي</label><textarea id="duties" name="duties" maxlength="5000" placeholder="يُحمّل الوصف من فهرس المسمى الوظيفي، ويمكن مراجعته وتعديله للعقد الحالي."><?= e($selectedJobDuties) ?></textarea><small id="jobDescriptionStatus" class="<?= $selectedJobStatus === 'approved' ? 'text-success' : 'text-warning-emphasis' ?>"><?= $selectedJobStatus === 'approved' ? 'الوصف الوظيفي معتمد داخلياً.' : 'تنبيه: لا يوجد وصف معتمد لهذا المسمى؛ راجع فهرس الأوصاف الوظيفية قبل اعتماد العقد.' ?></small></div>
-      <div class="cb-field cb-full"><label>الشروط الخاصة المتفق عليها</label><textarea name="special_terms" maxlength="5000" placeholder="أي شروط إضافية متفق عليها كتابةً، دون مخالفة القانون."></textarea></div>
+      <div class="cb-field cb-full"><label>الشروط الخاصة المتفق عليها / البنود المرتبطة بالمسمى</label><textarea id="special_terms" name="special_terms" maxlength="5000" placeholder="أي شروط إضافية متفق عليها كتابةً، دون مخالفة القانون."><?= e($selectedJobDescription['role_specific_terms'] ?? '') ?></textarea><small>يُحمّل النص من فهرس المسمى الوظيفي عند توفره، ويمكن تعديله لهذا العقد فقط.</small></div>
     </div><div class="cb-actions"><button type="submit" class="btn btn-primary"><i class="fa-solid fa-file-pdf me-1"></i> عرض العقد بصيغة PDF</button><a class="btn btn-outline-secondary" href="<?= e(APP_URL) ?>modules/hr/contracts.php<?= $selectedEmployeeId ? '?employee_id=' . $selectedEmployeeId . '&view=add' : '' ?>">العودة إلى العقود والرواتب</a></div></div></div>
   </form>
 </div>
@@ -389,6 +389,8 @@ require_once __DIR__ . '/../../includes/header.php';
     });
     const duties=document.getElementById('duties');
     if(duties)duties.value=option.dataset.duties||'';
+    const specialTerms=document.getElementById('special_terms');
+    if(specialTerms)specialTerms.value=option.dataset.roleTerms||'';
     const status=document.getElementById('jobDescriptionStatus');
     if(status){
       const approved=option.dataset.descriptionStatus==='approved';
