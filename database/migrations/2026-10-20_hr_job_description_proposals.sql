@@ -36,7 +36,8 @@ responsibilities = CASE
 END,
 qualifications = CASE
     WHEN NULLIF(TRIM(qualifications), '') IS NOT NULL THEN qualifications
-    ELSE 'مسودة مقترحة غير معتمدة: تُحدد المؤهلات العلمية والخبرة والمهارات المطلوبة بالتناسب مع المهام الفعلية وبمراجعة الموارد البشرية والمشرف المختص. لا تُعد هذه العبارة شرط توظيف رسمياً ولا تستبدل متطلبات قانونية أو مهنية واجبة.'
+    WHEN position_title IN ('المدير العام','نائب المدير العام','المدير المالي','مدير الموارد البشرية','مدير النظام','مشرف','مشرف مشروع','مندوب استرجاع الكفلاء','محاسب','موظف العلاقات العامة والإعلام','أخصائية شؤون الأمهات','موظف') THEN 'مسودة مقترحة غير معتمدة: تُحدد المؤهلات العلمية والخبرة والمهارات المطلوبة بالتناسب مع المهام الفعلية وبمراجعة الموارد البشرية والمشرف المختص. لا تُعد هذه العبارة شرط توظيف رسمياً ولا تستبدل متطلبات قانونية أو مهنية واجبة.'
+    ELSE qualifications
 END,
 reporting_to = CASE
     WHEN NULLIF(TRIM(reporting_to), '') IS NOT NULL THEN reporting_to
@@ -54,7 +55,6 @@ reporting_to = CASE
     WHEN position_title = 'موظف' THEN 'يحدد حسب القسم والتكليف الفعلي؛ يحتاج تأكيداً من HR.'
     ELSE reporting_to
 END,
-description_status = 'needs_review',
 updated_at = CURRENT_TIMESTAMP
 WHERE position_title <> 'HR Test';
 
