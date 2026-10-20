@@ -3424,3 +3424,8 @@ The new separate HR dashboard shortcut `بوابة عقود العمل` opens th
 Role matching uses the employee's actual `employees.position`, not application permission roles. Existing positions are seeded with empty descriptions and `needs_review` status; no job duties are represented as approved without HR review. Role-specific clauses are maintained independently of shared PDF layout. Organization logo and contact details are read from existing settings when configured.
 
 **Boundary:** source commits are present on `main`; local migration application, PHP/runtime/PDF/browser verification remain pending. Do not claim runtime success. Contract language requires review by a qualified Sudanese lawyer before official use. See `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`.
+
+
+## 2026-10-20 — HR job-description proposal drafts and contract prefill follow-up
+
+Source follow-up adds `database/migrations/2026-10-20_hr_job_description_proposals.sql`: empty job-description fields receive proposed Arabic draft content, existing filled fields and approval statuses are preserved, and all seeded proposals remain subject to HR review. The `HR Test` catalogue entry is inactive but its employee record is preserved. The contract builder fills the supervisor field from the catalogue reporting line where available and explicitly labels it as proposed. Local migration/runtime verification is pending. See `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`.
