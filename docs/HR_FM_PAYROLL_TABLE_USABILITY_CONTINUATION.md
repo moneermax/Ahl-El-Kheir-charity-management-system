@@ -104,3 +104,31 @@ This checkpoint records source inspection only. No payroll source, schema, migra
 ### Step 2 boundary / dependency
 
 The source-level workflow and proposed model are documented, but Step 2 is not marked fully closed because the schema source could not be retrieved through the repository connector and no upload-serving convention was found. Before creating the migration, obtain the relevant local `SHOW CREATE TABLE` output for `payroll`, `accounts`, `users`, and `notifications`, plus the relevant employee/user key definitions, and inspect local migration/storage examples. No application source, migration, live schema, payroll row or accounting record was changed in this step.
+
+
+## 2026-10-20 — Step 2 closed: schema verified and data model finalized
+
+The user supplied actual local `SHOW CREATE TABLE` output from `ahl_el_kheir`. The relevant schema facts are now verified:
+
+- `payroll.id`, `employee_id`, `journal_entry_id`, `created_by`, and `payment_account_id` are `INT UNSIGNED`; `month` and `year` are `INT`; payroll amount fields use existing `DECIMAL` definitions. The table is InnoDB and has unique employee/month/year keys (two equivalent unique keys already exist; do not modify them in this task).
+- `accounts.id` is `INT UNSIGNED`; `account_type` is enum asset/liability/equity/revenue/expense; `is_active` is a boolean-like tinyint. The existing resolver accepts any active account and falls back to active code `1200`. This redesign should preserve that resolver policy unless a separately approved business rule changes it.
+- `employees.user_id` is nullable, unique, and references `users.id`; notification recipient IDs are nullable unsigned ints without an FK in this schema. Missing employee user links must be handled explicitly rather than treated as notification success.
+- The real migration convention uses explicit InnoDB table definitions, utf8mb4 collation, named unique/index/foreign-key constraints, and RESTRICT semantics where records are audit evidence. No runtime DDL is allowed.
+
+### Finalized proposed data model (not yet applied)
+
+1. Add a period settings table, one row per `(month, year)`, with a required default account ID, creator/updater user IDs and timestamps. The default account is resolved into each payroll row's existing `payment_account_id` when preparing transfers; individual row choices remain overrides. Group override is a UI operation that explicitly sets the selected rows and never silently overwrites an individual choice.
+2. Add a proof/evidence table with one row per payroll ID and a unique key on that ID. Store a server-generated opaque storage key (never an absolute/public path), original display filename, validated MIME type, byte size, uploader and upload timestamp, proof state, and confirmation actor/time. Use separate states for a prepared new-transfer proof, confirmed new transfer, and legacy paid evidence. Legacy evidence is never interpreted as a new transfer confirmation.
+3. For new transfers, only the explicit confirmation action may mark proof confirmed, mark payroll paid and post accounting. It must lock the payroll/proof rows, verify approved status and a valid proof, then commit confirmation + paid status + accounting in one transaction; employee notification attempts happen after commit. Uploading a file does not confirm payment.
+4. Employee statement notification success means either an existing matching notification is found or a new notification insert succeeds. Any lookup/insert exception or missing linked active user is failure for completion tracking, without rolling back committed accounting.
+5. GM period completion must use the existing eligible-employee policy and require for every eligible row: paid + posted + journal ID, an individual proof (confirmed new-transfer proof or explicitly attached legacy evidence), and employee statement notification recorded. GM notifications remain idempotent by recipient/link/title and only occur after all requirements pass.
+6. Legacy paid/posted rows get an evidence-only attachment path. It must not update payroll status/date/account IDs/journal IDs, modify journal entries, rerun deductions, or create a new transfer confirmation. Such evidence can satisfy the evidence-presence gate only after successful attachment/validation; the existing notification requirement remains independently evaluated.
+7. Private file delivery must authorize the request against the payroll record on every download. Employee self-service may only access their own proof; authorized payroll/finance roles may access the proofs needed for their duties. Store files under a server-controlled private directory covered by deny-all web-server configuration; generate random storage names, validate upload error/size and MIME/content, disallow executable content, and stream with safe content-disposition and no-cache headers. Do not expose the storage key as a URL.
+
+### Account-policy boundary
+
+The schema supports account type but the existing resolver only enforces `is_active = 1` and fallback code `1200`. To avoid silently changing current accounting rules, this task preserves that server-side account policy for now. The account selector must be populated from actual active accounts and display code/name; a stricter asset-only rule requires an explicit business decision, not an inferred change.
+
+### Step 2 result and next gate
+
+Step 2 is closed at the design boundary: schema evidence was supplied, the relevant types and key relationships were reviewed, a real migration example was inspected, and the data model/state transitions are documented. No migration, application source, live schema or payroll/accounting data has been changed. Before any DDL is applied, the exact migration SQL must be reviewed as a standalone artifact and then applied only through the project's migration process. Proceed next to Step 3: author the migration and private-proof storage contract, document and commit that step, then move to implementation.
