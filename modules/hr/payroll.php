@@ -140,6 +140,20 @@ try {
                     $insertStmt->execute([(int)$candidate['id'],$month,$year,$salary,$salary,(int)$policy['id']]);
                     $inserted++;
                 }
+                if (hrPayrollTransferSchemaAvailable($pdo)) {
+                    $periodAccountSetting = hrPayrollGetPeriodSetting($pdo, $month, $year);
+                    if ($periodAccountSetting) {
+                        $applyPeriodAccount = $pdo->prepare(
+                            "UPDATE payroll SET payment_account_id = ?
+                             WHERE month = ? AND year = ? AND status = 'draft' AND payment_account_id IS NULL"
+                        );
+                        $applyPeriodAccount->execute([
+                            (int)$periodAccountSetting['default_payment_account_id'],
+                            $month,
+                            $year,
+                        ]);
+                    }
+                }
                 $pdo->commit();
                 $message = t('hr.payroll_msg_generate', [
                     'created' => $inserted,
