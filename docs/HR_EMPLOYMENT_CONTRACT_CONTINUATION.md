@@ -165,3 +165,8 @@ Source commit `6264c897b2bbadb460e0ba0d3e0c029b1443312d` updates `modules/hr/job
 - show a contextual warning while editing that fallback record.
 
 This is a catalogue clarity change, not a data repair. It preserves role-specific-first contract selection, existing draft content, activation flags and approval states. **Local PHP lint and browser verification remain pending; do not mark runtime verified until checked through the configured XAMPP application.**
+
+
+### Follow-up: fallback employee-count consistency
+
+Commit `4435226e37405e9a2963dd07af0d1c14f71e7f92` makes the catalogue's general-template employee-count condition treat both SQL NULL and empty `system_role_code` as a general fallback. This aligns the count with the contract builder's existing PHP behavior, which casts NULL to an empty string. The source was re-fetched from `main` and the change is present. The commit has no reported status checks in the GitHub status response; local PHP lint and browser verification are still required.
