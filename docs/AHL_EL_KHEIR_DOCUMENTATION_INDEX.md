@@ -143,3 +143,7 @@ See `HR_FM_PAYROLL_TABLE_USABILITY_CONTINUATION.md` for source findings, committ
 
 ## 2026-10-19 — FM payroll table refinement and selected approval
 See `HR_FM_PAYROLL_TABLE_USABILITY_CONTINUATION.md` for the current checkpoint: compact translated headings, dark sticky header, Save action placement, selected draft approval validation, and the remaining local verification boundary.
+
+
+## HR Employment Contracts
+- `HR_EMPLOYMENT_CONTRACT_CONTINUATION.md` — current scope, source checkpoint, legal-review boundary, and local verification steps for the in-system editable contract PDF builder.
