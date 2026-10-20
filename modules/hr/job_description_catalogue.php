@@ -27,7 +27,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($action === 'save') {
             $title = trim((string)($_POST['position_title'] ?? ''));
             $purpose = trim((string)($_POST['role_purpose'] ?? ''));
-            $responsibilities = trim((string)($_POST['responsibilities'] ?? ''));
+            $responsibilityInput = $_POST['responsibilities'] ?? [];
+            if (!is_array($responsibilityInput)) {
+                throw new InvalidArgumentException('قائمة المهام والمسؤوليات غير صالحة.');
+            }
+            $responsibilityItems = [];
+            foreach ($responsibilityInput as $item) {
+                $item = trim((string)$item);
+                if ($item === '') continue;
+                if (mb_strlen($item, 'UTF-8') > 1000) {
+                    throw new InvalidArgumentException('يجب ألا يتجاوز كل بند من المسؤوليات 1000 حرف.');
+                }
+                $responsibilityItems[] = $item;
+            }
+            if (count($responsibilityItems) > 30) {
+                throw new InvalidArgumentException('يمكن إدخال 30 مسؤولية كحد أقصى.');
+            }
+            $responsibilities = implode("\n", $responsibilityItems);
             $qualifications = trim((string)($_POST['qualifications'] ?? ''));
             $reportingTo = trim((string)($_POST['reporting_to'] ?? ''));
             $roleTerms = trim((string)($_POST['role_specific_terms'] ?? ''));
@@ -137,7 +153,7 @@ $active = 'hr';
 require_once __DIR__ . '/../../includes/header.php';
 ?>
 <style>
-.jd-wrap{max-width:1400px;margin:auto}.jd-hero{background:linear-gradient(120deg,#173f73,#2d67ad);color:#fff;padding:20px 24px;border-radius:14px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;gap:14px}.jd-hero h1{font-size:1.35rem;font-weight:800;margin:0}.jd-hero p{margin:5px 0 0;font-size:.82rem;opacity:.9}.jd-card{background:#fff;border:1px solid #e4e9f0;border-radius:12px;overflow:hidden;margin-bottom:16px;box-shadow:0 3px 12px rgba(16,24,40,.04)}.jd-card-head{padding:13px 17px;border-bottom:1px solid #e7ecf2;font-weight:800;color:#173f73}.jd-card-body{padding:17px}.jd-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.jd-field label{display:block;font-size:.78rem;font-weight:800;margin-bottom:5px}.jd-field input,.jd-field select,.jd-field textarea{width:100%;border:1px solid #b9c7d8;border-radius:8px;padding:9px 10px;font:inherit;font-size:.82rem;background:#fff}.jd-field textarea{min-height:110px}.jd-full{grid-column:1/-1}.jd-table{font-size:.8rem}.jd-table td,.jd-table th{vertical-align:middle}.jd-status{white-space:nowrap}@media(max-width:720px){.jd-grid{grid-template-columns:1fr}.jd-full{grid-column:auto}.jd-hero{align-items:flex-start;flex-direction:column}}
+.jd-wrap{max-width:1400px;margin:auto}.jd-hero{background:linear-gradient(120deg,#173f73,#2d67ad);color:#fff;padding:20px 24px;border-radius:14px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;gap:14px}.jd-hero h1{font-size:1.35rem;font-weight:800;margin:0}.jd-hero p{margin:5px 0 0;font-size:.82rem;opacity:.9}.jd-card{background:#fff;border:1px solid #e4e9f0;border-radius:12px;overflow:hidden;margin-bottom:16px;box-shadow:0 3px 12px rgba(16,24,40,.04)}.jd-card-head{padding:13px 17px;border-bottom:1px solid #e7ecf2;font-weight:800;color:#173f73}.jd-card-body{padding:17px}.jd-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.jd-field label{display:block;font-size:.78rem;font-weight:800;margin-bottom:5px}.jd-field input,.jd-field select,.jd-field textarea{width:100%;border:1px solid #b9c7d8;border-radius:8px;padding:9px 10px;font:inherit;font-size:.82rem;background:#fff}.jd-field textarea{min-height:110px}.jd-responsibility-row input{min-width:0}.jd-responsibility-row>span{min-width:24px;text-align:center}.jd-full{grid-column:1/-1}.jd-table{font-size:.8rem}.jd-table td,.jd-table th{vertical-align:middle}.jd-status{white-space:nowrap}@media(max-width:720px){.jd-grid{grid-template-columns:1fr}.jd-full{grid-column:auto}.jd-hero{align-items:flex-start;flex-direction:column}}
 </style>
 <div class="jd-wrap">
  <div class="jd-hero"><div><h1><i class="fa-solid fa-list-check me-2"></i>فهرس الأوصاف الوظيفية</h1><p>إدارة أوصاف الوظائف بصورة مستقلة عن تصميم عقد العمل؛ لا تُعامل الأوصاف غير المعتمدة على أنها أوصاف رسمية.</p></div><a class="btn btn-light btn-sm fw-bold" href="<?= e(APP_URL) ?>modules/hr/contract_builder.php"><i class="fa-solid fa-file-signature me-1"></i> بوابة عقود العمل</a></div>
@@ -151,7 +167,14 @@ require_once __DIR__ . '/../../includes/header.php';
     <div class="jd-field"><label for="position_title">المسمى الوظيفي *</label><input id="position_title" name="position_title" maxlength="180" required value="<?= e($editing['position_title'] ?? '') ?>"></div>
     <div class="jd-field"><label for="reporting_to">جهة الإشراف المباشر (إن كانت محددة)</label><input id="reporting_to" name="reporting_to" maxlength="180" value="<?= e($editing['reporting_to'] ?? '') ?>"></div>
     <div class="jd-field jd-full"><label for="role_purpose">الغرض من الوظيفة</label><textarea id="role_purpose" name="role_purpose" maxlength="5000"><?= e($editing['role_purpose'] ?? '') ?></textarea></div>
-    <div class="jd-field jd-full"><label for="responsibilities">المهام والمسؤوليات الأساسية</label><textarea id="responsibilities" name="responsibilities" maxlength="12000"><?= e($editing['responsibilities'] ?? '') ?></textarea></div>
+    <?php
+    $editingResponsibilities = preg_split('/\R/u', trim((string)($editing['responsibilities'] ?? ''))) ?: [];
+    $editingResponsibilities = array_values(array_filter(array_map(static function ($item) {
+        return trim((string)preg_replace('/^\s*(?:[•*\-–—]|\d+[.)])\s*/u', '', (string)$item));
+    }, $editingResponsibilities), static fn($item) => $item !== ''));
+    if (!$editingResponsibilities) $editingResponsibilities = [''];
+   ?>
+   <div class="jd-field jd-full"><label>المهام والمسؤوليات الأساسية</label><small class="d-block mb-2">أدخل كل مهمة في حقل مستقل. ستظهر في النسخة النهائية كقائمة عربية مرتبة ومسافة بادئة لكل بند.</small><div id="responsibilityFields" class="d-flex flex-column gap-2"><?php foreach ($editingResponsibilities as $index => $responsibility): ?><div class="jd-responsibility-row d-flex gap-2 align-items-start"><span class="pt-2 text-muted"><?= (int)($index + 1) ?>.</span><input type="text" name="responsibilities[]" maxlength="1000" class="form-control" value="<?= e($responsibility) ?>" placeholder="اكتب مهمة أو مسؤولية واحدة"><button type="button" class="btn btn-outline-danger jd-remove-responsibility" aria-label="حذف المسؤولية"><i class="fa-solid fa-trash"></i></button></div><?php endforeach; ?></div><button type="button" id="addResponsibility" class="btn btn-sm btn-outline-primary mt-2"><i class="fa-solid fa-plus me-1"></i> إضافة مسؤولية</button></div>
     <div class="jd-field jd-full"><label for="qualifications">المؤهلات والخبرات المطلوبة (بعد اعتمادها داخلياً)</label><textarea id="qualifications" name="qualifications" maxlength="5000"><?= e($editing['qualifications'] ?? '') ?></textarea></div>
     <div class="jd-field jd-full"><label for="role_specific_terms">بنود إضافية خاصة بهذا المسمى في العقد (اختيارية)</label><textarea id="role_specific_terms" name="role_specific_terms" maxlength="5000" placeholder="تُترك فارغة ما لم توجد شروط مهنية خاصة موثقة ومعتمدة لهذا المسمى."><?= e($editing['role_specific_terms'] ?? '') ?></textarea><small>هذه البنود تُضاف إلى الشروط الخاصة للعقد عند اختيار الموظف؛ لا تضع هنا استحقاقات قانونية غير متحقق منها.</small></div>
     <div class="jd-field"><label for="description_status">حالة الوصف</label><select id="description_status" name="description_status" <?= $canApprove ? '' : 'disabled' ?>><option value="needs_review" <?= ($editing['description_status'] ?? 'needs_review') === 'needs_review' ? 'selected' : '' ?>>يحتاج مراجعة HR</option><?php if ($canApprove): ?><option value="approved" <?= ($editing['description_status'] ?? '') === 'approved' ? 'selected' : '' ?>>معتمد داخلياً</option><?php endif; ?></select><?php if (!$canApprove): ?><small>اعتماد الوصف متاح لمدير الموارد البشرية أو مدير النظام.</small><input type="hidden" name="description_status" value="needs_review"><?php endif; ?></div>
@@ -166,4 +189,31 @@ require_once __DIR__ . '/../../includes/header.php';
  </tbody></table></div></div>
  <div class="text-muted small mb-4">هذه حالة اعتماد داخلية للوصف الوظيفي وليست اعتماداً قانونياً لعقد العمل. تظل مراجعة محامٍ سوداني مؤهل مطلوبة قبل الاستخدام الرسمي للعقود.</div>
 </div>
+<script>
+(function(){
+ const container=document.getElementById('responsibilityFields');
+ const addButton=document.getElementById('addResponsibility');
+ if(!container||!addButton)return;
+ function renumber(){
+  Array.from(container.querySelectorAll('.jd-responsibility-row')).forEach((row,index)=>{
+   const number=row.querySelector('span'); if(number)number.textContent=(index+1)+'.';
+  });
+ }
+ function addField(value=''){
+  if(container.querySelectorAll('.jd-responsibility-row').length>=30){alert('يمكن إضافة 30 مسؤولية كحد أقصى.');return;}
+  const row=document.createElement('div');row.className='jd-responsibility-row d-flex gap-2 align-items-start';
+  const number=document.createElement('span');number.className='pt-2 text-muted';
+  const input=document.createElement('input');input.type='text';input.name='responsibilities[]';input.maxLength=1000;input.className='form-control';input.placeholder='اكتب مهمة أو مسؤولية واحدة';input.value=value;
+  const remove=document.createElement('button');remove.type='button';remove.className='btn btn-outline-danger jd-remove-responsibility';remove.setAttribute('aria-label','حذف المسؤولية');remove.innerHTML='<i class="fa-solid fa-trash"></i>';
+  row.append(number,input,remove);container.appendChild(row);renumber();input.focus();
+ }
+ addButton.addEventListener('click',()=>addField());
+ container.addEventListener('click',event=>{
+  const button=event.target.closest('.jd-remove-responsibility');if(!button)return;
+  button.closest('.jd-responsibility-row').remove();
+  if(!container.querySelector('.jd-responsibility-row'))addField();
+  renumber();
+ });
+})();
+</script>
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>
