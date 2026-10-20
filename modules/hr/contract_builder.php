@@ -229,6 +229,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
             'start_date' => akContractValue($_POST, 'start_date'),
             'end_date' => akContractValue($_POST, 'end_date'),
             'probation' => akContractValue($_POST, 'probation'),
+            'probation_end_date' => akContractValue($_POST, 'probation_end_date'),
             'weekly_hours' => akContractValue($_POST, 'weekly_hours'),
             'working_days' => akContractValue($_POST, 'working_days'),
             'basic_salary' => akContractValue($_POST, 'basic_salary'),
@@ -296,8 +297,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
         $data['issue_date'] = akContractDate($data['issue_date'], 'تاريخ تحرير العقد', true) ?? date('Y-m-d');
         $data['start_date'] = akContractDate($data['start_date'], 'تاريخ بداية العقد', true) ?? '';
         $data['end_date'] = akContractDate($data['end_date'], 'تاريخ نهاية العقد');
+        $data['probation_end_date'] = akContractDate($data['probation_end_date'], 'تاريخ نهاية فترة التجربة');
         if ($data['end_date'] !== null && $data['end_date'] < $data['start_date']) {
             throw new InvalidArgumentException('تاريخ نهاية العقد لا يمكن أن يسبق تاريخ بدايته.');
+        }
+        if ($data['probation_end_date'] !== null && $data['probation_end_date'] < $data['start_date']) {
+            throw new InvalidArgumentException('تاريخ نهاية فترة التجربة لا يمكن أن يسبق تاريخ بداية العقد.');
         }
         $typeLabels = [
             'permanent' => 'غير محدد المدة',
@@ -311,6 +316,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
         $v = static fn(string $key): string => akContractEscape((string)($data[$key] ?? '—'));
         $endDateText = $data['end_date'] ?: 'لا يوجد تاريخ نهاية محدد';
         $probationText = $data['probation'] !== '' ? $data['probation'] : 'وفق ما يجيزه القانون واجب التطبيق وما يتفق عليه كتابةً';
+        if ($data['probation_end_date'] !== null) $probationText .= ' (تنتهي بتاريخ ' . $data['probation_end_date'] . ')';
         if ($data['duties'] === '' && !isset($_POST['role_purpose']) && !isset($_POST['responsibilities']) && !isset($_POST['qualifications'])) {
             $data['duties'] = akContractTemplateText($jobTemplate);
         }
@@ -360,7 +366,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
                 (employee_id, contract_number, contract_type, start_date, end_date, status,
                  basic_salary, salary_currency, pay_frequency, probation_end_date,
                  contract_file_path, notes, created_by)
-             VALUES (?, NULL, ?, ?, ?, 'draft', ?, ?, ?, NULL, NULL, ?, ?)"
+             VALUES (?, NULL, ?, ?, ?, 'draft', ?, ?, ?, ?, NULL, ?, ?)"
         );
         $insert->execute([
             (int)$employeeId,
@@ -370,6 +376,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
             (float)$data['basic_salary'],
             APP_CURRENCY_CODE,
             $data['pay_frequency'],
+            $data['probation_end_date'],
             'مسودة منشأة من بوابة عقود العمل؛ لم تُفعّل ولم يُحدّث سجل الرواتب.',
             Session::getUserID(),
         ]);
@@ -532,6 +539,7 @@ require_once __DIR__ . '/../../includes/header.php';
       <div class="cb-field"><label>تاريخ بداية العقد <span class="cb-required">*</span></label><input type="date" name="start_date" value="<?= e(date('Y-m-d')) ?>" required></div>
       <div class="cb-field"><label>تاريخ نهاية العقد</label><input type="date" name="end_date"></div>
       <div class="cb-field"><label>فترة التجربة (المدة/النص المتفق عليه)</label><input name="probation" maxlength="250" placeholder="وفق القانون والاتفاق المكتوب"></div>
+       <div class="cb-field"><label>تاريخ نهاية فترة التجربة (لإدارة حالة التوظيف)</label><input type="date" name="probation_end_date"><small>اختياري؛ عند إدخاله يُحفظ مع المسودة ويُستخدم عند تفعيل العقد.</small></div>
       <div class="cb-field"><label>ساعات العمل أسبوعياً</label><input type="number" name="weekly_hours" min="0" max="168" step="0.25"></div>
       <div class="cb-field"><label>أيام العمل</label><input name="working_days" maxlength="180" placeholder="تُحدد وفق الجدول المعتمد"></div>
       <div class="cb-field"><label>الراتب الأساسي (ج.س) <span class="cb-required">*</span></label><input id="basic_salary" type="number" name="basic_salary" min="0" step="0.01" required value="<?= e((string)($selectedEmployee['basic_salary'] ?? '')) ?>"></div>
