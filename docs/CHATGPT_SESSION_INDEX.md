@@ -1285,3 +1285,8 @@ Local diagnostic confirmed 26 catalogue rows, 25 qualifications beginning with q
 
 
 **2026-10-20 — Job-description qualification UTF-8 repair: local database verification passed.** User applied `2026-10-20_hr_job_description_zz_role_qualifications_utf8_repair.sql` with `--default-character-set=utf8mb4`. Verification returned `remaining_corrupted_qualifications = 0`; qualification hex values contain valid UTF-8 Arabic bytes rather than `3F` question-mark bytes. The `HR Test` row remained excluded and its qualifications remained NULL. PowerShell renders Arabic position titles as mojibake, but this output alone does not establish stored title corruption; do not rewrite titles without a byte-level diagnostic. Next scope is the user's original HR job-description/contract builder task, after reviewing the relevant continuation document and source. Local runtime UI/PDF acceptance remains pending.
+
+
+### 2026-10-20 — Contract-builder purpose draft field correction
+
+Continue from `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`. The contract builder previously combined purpose and responsibilities in one `duties` field, so `الغرض من الوظيفة` had no dedicated control. Source commits `73b91d1a40024564d7399a80ae91b011167dbf9c`, `8fc40930c4224f04dab7e1f8c9c96c4fdfafd4b7`, `ec565758660214ac371ef14b692b4265249fc2b7`, `4d3d030bc4b96537141eec16fc6e3e0e86bce05d` add separate purpose, responsibility, qualification and reporting-line controls, each populated from the selected employee's role-aware catalogue match. Source-only; local PHP lint and browser/PDF verification remain required. Do not rerun data migrations.
