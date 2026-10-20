@@ -3716,3 +3716,8 @@ Implemented a new catalogue table via `database/migrations/2026-10-20_hr_job_des
 The contract builder now matches against the selected employee's actual position, loads the corresponding description/terms, flags descriptions requiring review in the page/PDF, and reads organization logo/name/address/support phone/email from existing settings where populated. The HR dashboard exposes a separate `بوابة عقود العمل` shortcut and preserves `العقود والرواتب`.
 
 Do not confuse employee positions with application roles. The role/workflow matrix is only broad role context and is not an approved detailed job-description source. No legal entitlement has been invented. Sudanese lawyer review remains mandatory before official use. Local migration and runtime/PDF checks are not yet verified.
+
+
+## 2026-10-20 — HR catalogue proposal draft follow-up
+
+A data-only migration `database/migrations/2026-10-20_hr_job_description_proposals.sql` provides proposed Arabic purpose/responsibility drafts for the known position inventory. It fills only empty content, preserves HR-authored text and existing approval status, leaves role-specific contract terms empty, and does not represent proposals as approved. `HR Test` is deactivated in the catalogue without deleting its employee record. Contract builder reporting-line prefill is sourced from `reporting_to` and labeled as needing HR confirmation. Source status only; local migration and browser/PHP verification remain pending. Legal wording requires qualified Sudanese counsel review before official use.
