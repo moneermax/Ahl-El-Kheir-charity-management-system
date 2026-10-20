@@ -340,7 +340,7 @@ require_once __DIR__ . '/../../includes/header.php';
       <div class="cb-field cb-full"><label>العنوان</label><input id="address" name="address" maxlength="500" value="<?= e($selectedEmployee['address'] ?? '') ?>"></div>
       <div class="cb-field"><label>المسمى الوظيفي (من ملف الموظف) <span class="cb-required">*</span></label><input id="position" name="position" maxlength="180" required readonly value="<?= e($selectedEmployee['position'] ?? '') ?>"></div>
       <div class="cb-field"><label>القسم</label><input id="department" name="department" maxlength="180" value="<?= e($selectedEmployee['department_name'] ?? '') ?>"></div>
-      <div class="cb-field"><label>المشرف المباشر</label><input name="supervisor" maxlength="180"></div>
+      <div class="cb-field"><label>المشرف المباشر (مقترح من فهرس الوظيفة)</label><input id="supervisor" name="supervisor" maxlength="180" value="<?= e((string)($selectedJobDescription['reporting_to'] ?? '')) ?>"><small>خط الإشراف الوارد في الفهرس مقترح حتى يؤكده HR؛ راجعه قبل إصدار العقد.</small></div>
       <div class="cb-field"><label>مكان العمل</label><input name="work_location" maxlength="250" value="حسب تكليف الجمعية المكتوب"></div>
     </div></div></div>
     <div class="cb-card"><div class="cb-head">المدة والدوام والأجر</div><div class="cb-body"><div class="cb-grid">
