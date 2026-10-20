@@ -237,7 +237,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
             'work_location' => 250, 'probation' => 250, 'working_days' => 180,
             'allowances' => 500, 'benefits' => 500, 'annual_leave' => 250,
             'sick_leave' => 250, 'notice_period' => 250, 'duties' => 5000,
-            'special_terms' => 5000, 'weekly_hours' => 12,
+            'special_terms' => 5000, 'weekly_hours' => 12, 'reporting_to' => 180,
         ];
         foreach ($fieldLimits as $field => $maxLength) {
             if (strlen((string)$data[$field]) > $maxLength) {
@@ -287,7 +287,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
         $v = static fn(string $key): string => akContractEscape((string)($data[$key] ?? '—'));
         $endDateText = $data['end_date'] ?: 'لا يوجد تاريخ نهاية محدد';
         $probationText = $data['probation'] !== '' ? $data['probation'] : 'وفق ما يجيزه القانون واجب التطبيق وما يتفق عليه كتابةً';
-        if ($data['duties'] === '') {
+        if ($data['duties'] === '' && !isset($_POST['role_purpose']) && !isset($_POST['responsibilities']) && !isset($_POST['qualifications'])) {
             $data['duties'] = akContractTemplateText($jobTemplate);
         }
         if (strlen($data['duties']) > 5000) {
@@ -401,7 +401,6 @@ foreach ($employees as $employee) {
 }
 $selectedPosition = trim((string)($selectedEmployee['position'] ?? ''));
 $selectedJobDescription = $jobDescriptionForEmployee($selectedEmployee ?? []);
-$selectedJobDuties = akContractTemplateText($selectedJobDescription);
 $selectedJobStatus = (string)($selectedJobDescription['description_status'] ?? 'needs_review');
 $portalLogoPath = (string)($organizationSettings['site_logo'] ?? 'assets/img/logo.png');
 if ($portalLogoPath === '' || strpos($portalLogoPath, '..') !== false || str_starts_with($portalLogoPath, '/')
