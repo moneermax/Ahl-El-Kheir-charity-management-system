@@ -3806,3 +3806,16 @@ Commit `4435226e37405e9a2963dd07af0d1c14f71e7f92` normalizes NULL and empty `sys
 Audit root cause: the general title-only fallback rows were empty by design after `2026-10-20_hr_job_description_z_clear_unreviewed_generic_drafts.sql` removed exact generic proposal text. This was distinct from the populated role-specific draft for `أخصائية شؤون الأمهات`; the previous warning correctly described fallback selection but did not meet the user's request for editable starting content in every applicable form.
 
 Source commit `5b6a553b22ff5a0be3d0a2b6430556ccf5138be9` adds the data-only migration `2026-10-20_hr_job_description_zzz_general_fallback_drafts.sql`. It restores separate broad position-level purpose/responsibility drafts only to active title-only rows awaiting review where either field is blank. It neither copies role-specific text nor overwrites non-empty content; approved/inactive rows, `HR Test`, qualifications, reporting lines, employee records and schema are preserved. This is source-committed only; local migration and UI verification remain pending.
+
+
+## 2026-10-20 — Employment contract qualification baseline and reorderable rows
+
+Change boundary: the job-description catalogue and employment contract builder now include drag handles for repeatable purpose, responsibility, qualification and optional-term rows. Reordering is supported through pointer interactions, and displayed numbering is recalculated after add/remove/reorder. Contract form arrays are submitted in DOM order so the generated PDF follows the current list order.
+
+Data change: `database/migrations/2026-10-20_hr_job_description_zzzz_qualification_baseline.sql` prepends these proposed baseline qualification items to active templates:
+- `الحد الأدنى للمؤهل الأكاديمي: شهادة الثانوية العامة أو ما يعادلها.`
+- `معرفة أساسية باستخدام الحاسوب وبرامج المكتب.`
+
+Any modified description is marked `needs_review`; existing qualification text is preserved after the baseline items. This is not internal HR approval or legal approval. The migration must be applied after the existing job-description role-qualification and general-fallback migrations.
+
+Verification: source committed on `main`; local migration application, PHP syntax checks, browser interaction and generated-PDF ordering are pending. No runtime success is claimed.
