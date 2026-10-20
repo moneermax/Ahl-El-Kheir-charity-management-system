@@ -1153,3 +1153,8 @@ The requested source changes are committed on `main`, including the valid table-
 
 ## 2026-10-19 — FM payroll table refinement checkpoint
 Read `docs/HR_FM_PAYROLL_TABLE_USABILITY_CONTINUATION.md`. Source is committed to `main`: compact auto-sized translated column headers, dark sticky header, English month names, explicit save action in the row Actions column, and checkbox-based selected draft approval. The selected-approval helper validates the chosen period and all selected draft rows, then updates only approved/ready state in one transaction; it does not pay or post accounting. Static translation/source checks passed, but local PHP lint and browser verification remain pending. Next: pull `main`, lint `modules/hr/payroll.php` and `modules/hr/lib_payroll_accounting.php`, lint `lang/en.php` and `lang/ar.php`, then visually check both `?lang=en` and Arabic mode and select-all/count/button behavior without submitting an approval or payment. Do not rerun payroll suites or mutate payroll data for this UI check.
+
+
+### Current continuation — 2026-10-20, Step 2
+
+Continue from the Step 2 audit in `docs/HR_FM_PAYROLL_TABLE_USABILITY_CONTINUATION.md`. Do not implement the proposed schema until actual local `SHOW CREATE TABLE` output for payroll/accounts/users/notifications and relevant employee keys has been inspected, and a real local migration/storage example has been checked. The connector returned an empty body for `database/ahl_el_kheir.sql`; this is not evidence about schema content. Keep paid/accounting, proof upload, transfer confirmation, notification and GM completion as separate explicit gates. No source/schema/data changed in Step 2.
