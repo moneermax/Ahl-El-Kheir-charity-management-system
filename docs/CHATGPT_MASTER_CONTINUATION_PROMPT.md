@@ -1313,3 +1313,17 @@ User approved integrating modules/hr/contract_builder.php with the existing cont
 Implementation details: read-only number field; number generated from saved hr_employee_contracts.id using existing CTR-YYYY-000001 format (year from start date); draft inserted in a transaction and committed only after TCPDF renders to memory; overlapping draft/active periods rejected using the existing helper's rule; one-use session token blocks resubmitting the same form. The builder avoids hrCreateEmployeeContract() because it writes salary history and can update current salary/employment state for current/past start dates. The new path does not alter salary history, employees.basic_salary, or employment state. No migration added.
 
 Not runtime verified yet. On the user's machine, pull main, run D:\xampp\php\php.exe -l modules\hr\contract_builder.php, then use http://localhost:8081/AhlElKheir/modules/hr/contract_builder.php to generate a PDF and verify its number exactly matches the draft row in العقود والرواتب. Verify the draft status, no salary-history/current-salary/employment-state change, overlap rejection, and that resubmitting the same form does not create a second row. Do not mark this complete until evidence is supplied. Continue from docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md.
+
+
+## 2026-10-20 — Unify contract creation and register workflow
+
+Source changes committed directly to `main`:
+- `315f221c9f43d4bbbe55b0f2acdce88e3b403296` — removed the duplicate `add_contract` creation path from `modules/hr/contracts.php`. New-contract links now open `modules/hr/contract_builder.php` with the selected employee. The old `?view=add` URL now explains the canonical workflow instead of presenting a second creation form.
+- `b312f117f077f14e8c5f4f91bd80a4aeaf0c2ebf` — the builder's return link now returns to the employee's contract-register view, not the retired add form.
+- `dd2b1dcc99762226e1ddf8a28000e6fc4a7d5190` — added an explicit optional probation-end date to the builder, validates it against the contract start date, includes it in the PDF text, and persists it to the draft's existing `probation_end_date` column so the register's existing activation/employment-state behavior remains available.
+
+The register continues to manage contract status and salary history. It now uploads or replaces a signed copy against an existing contract record, rather than creating a new contract as a side effect of uploading a file. The upload validates that the contract belongs to the selected employee and retains the existing 10 MB / PDF-JPG-JPEG-PNG limits. Replacing a file updates the register path but deliberately does not delete older files.
+
+No schema change or migration was introduced. The builder continues to reserve the official number and create a draft when PDF generation succeeds; this does not activate the contract or update salary history/employment state. The full editable clause text remains in the generated PDF, while the register stores its existing core fields.
+
+**Verification status: SOURCE COMMITTED; PHP lint, browser interaction, signed-copy upload, draft activation, salary-history/employment-state behavior, and generated PDF are NOT runtime verified.** Pull `main`, lint both changed PHP files, then test one non-production/appropriate employee record through the configured XAMPP URL. Do not create a second draft for an employee/date period already covered by an active or draft contract. Sudanese legal review remains required before official use.
