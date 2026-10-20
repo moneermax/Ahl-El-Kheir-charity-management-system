@@ -3498,3 +3498,8 @@ The repair is data-only; no DDL or runtime schema changes. **Source committed; l
 The user applied the corrective migration with the MySQL client explicitly configured for utf8mb4. The verification query returned **0 remaining corrupted qualifications** for unapproved, non-`HR Test` rows. The qualifications hex previews show UTF-8 Arabic bytes, confirming the imported content is no longer replaced with ASCII question marks. The `HR Test` row remains excluded; its qualifications remain NULL. The PowerShell display of Arabic position titles is garbled, but display encoding is not proof of stored-byte corruption; no title repair is authorized without a separate byte-level check.
 
 **Closed:** qualifications encoding repair at the database-data boundary. **Still pending:** catalogue/browser and contract-builder/PDF acceptance for the broader job-description draft task. Do not repeat the repair migration or rewrite other fields without evidence.
+
+
+## 2026-10-20 — Employment contract purpose field correction
+
+The latest contract-builder source change separates job purpose from responsibilities and exposes the catalogue's qualifications and reporting line as their own controls. The root cause was UI consolidation: `role_purpose` was folded into the combined duties textarea, leaving no `الغرض من الوظيفة` field. The employee selector now reloads these fields from the matching position + system-role template, with the generic position template as fallback. Commits: `73b91d1a40024564d7399a80ae91b011167dbf9c`, `8fc40930c4224f04dab7e1f8c9c96c4fdfafd4b7`, `ec565758660214ac371ef14b692b4265249fc2b7`, `4d3d030bc4b96537141eec16fc6e3e0e86bce05d`. Source committed; local lint/browser/PDF verification is pending. No schema or migration changes.
