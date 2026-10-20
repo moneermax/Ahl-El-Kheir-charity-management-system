@@ -50,3 +50,8 @@ No local XAMPP/browser execution or PHP syntax check has been performed for the 
 ## Next stage — signed contract and employee onboarding integration
 
 Only after PDF rendering is locally verified, inspect the live local schema and existing account creation transaction. Integrate the contract preparation and signed-copy upload into the appropriate HR onboarding flow with minimal changes. Keep signed files private, use a permission-checked download endpoint rather than a public storage URL, validate detected MIME/size, generate opaque server-side filenames, prevent path traversal/overwrites, and preserve employee/contract association. Do not add columns or migrations until the actual schema and required persistence behavior are established.
+
+
+### 2026-10-20 — Input-validation refinement
+
+Follow-up commit `eef4d17e02543e1327ed8cc3db9fee3b916aa11f` adds server-side maximum lengths for contract fields, email validation, weekly-hours range validation, and a required end date for fixed-term contracts. Nationality is no longer prefilled with an assumed value. This remains source-only; local lint and browser/PDF verification are still pending.
