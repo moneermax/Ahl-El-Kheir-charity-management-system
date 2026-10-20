@@ -1219,3 +1219,8 @@ Commit `eef4d17e02543e1327ed8cc3db9fee3b916aa11f` adds server-side length/email/
 ### 2026-10-20 — HR employment contract portal and role catalogue
 
 Source implementation is committed on `main`: separate HR dashboard shortcut `بوابة عقود العمل`, editable `hr_job_description_templates` catalogue/migration, role-matched job descriptions and role-specific contract terms, organization branding from existing settings, and review warnings for incomplete/unapproved descriptions. The migration has not yet been applied to the local database, and local PDF/browser behavior is not yet verified. Continue from `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`; do not invent job duties or mark catalogue placeholders approved. Sudanese lawyer review is required before official contract use.
+
+
+## 2026-10-20 — HR job-description proposal drafts and contract auto-prefill
+
+Added `database/migrations/2026-10-20_hr_job_description_proposals.sql` to populate empty job-description fields with proposed Arabic drafts while preserving existing content and approval status. The `HR Test` catalogue row is deactivated without deleting its employee. The contract builder pre-fills the proposed reporting line from the selected position's catalogue entry and labels it for HR confirmation. Runtime application/checks remain pending; see `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`.
