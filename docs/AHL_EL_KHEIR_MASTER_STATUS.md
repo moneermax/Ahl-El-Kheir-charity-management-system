@@ -3520,3 +3520,10 @@ Commit `4435226e37405e9a2963dd07af0d1c14f71e7f92` makes the catalogue employee c
 The user identified that general title-only catalogue entries still opened with empty **الغرض من الوظيفة** and **المهام والمسؤوليات الأساسية** fields. Root cause: the earlier `2026-10-20_hr_job_description_z_clear_unreviewed_generic_drafts.sql` intentionally cleared exact generic proposals from these fallback records. Commit `5b6a553b22ff5a0be3d0a2b6430556ccf5138be9` adds `database/migrations/2026-10-20_hr_job_description_zzz_general_fallback_drafts.sql`, a data-only migration that restores distinct, broad drafts to active, unapproved, title-only records only when either field is blank. It preserves non-empty/HR-edited content, role-specific records, approval states, qualifications, reporting lines, employee data and schema; `HR Test` remains excluded. All drafts remain `needs_review`.
 
 **Next gate:** user pulls `main`, applies only the new migration with UTF-8 enabled, runs read-only verification of the active general fallback rows and review statuses, PHP-lints `modules/hr/job_description_catalogue.php`, and checks catalogue display plus role-specific employee selection in the local contract builder. No completion claim until those local checks are returned.
+
+
+## 2026-10-20 — Employment contract qualification baseline and item reordering
+
+The HR job-description catalogue and contract builder now support drag-to-reorder for repeatable purpose, responsibility, qualification and optional-term rows, with automatic numbering. The data-only migration `database/migrations/2026-10-20_hr_job_description_zzzz_qualification_baseline.sql` prepends a minimum high-school qualification and basic computer/office-program knowledge to active templates and returns changed descriptions to `needs_review`.
+
+Source is committed to `main`. Local migration application, PHP lint, browser drag/reorder behavior, and PDF order remain pending user verification. Do not mark runtime verified until confirmed.
