@@ -149,3 +149,8 @@ Evidence boundary:
 - No production payroll-generation code was changed as a result of the earlier read-only October simulation or this rollback-only test.
 
 The unfinished attendance same-page POST scroll-jump issue remains separate and must not be reopened during this work.
+
+
+## 2026-10-20 — Job-description source mapping
+
+The HR job-description catalogue may now hold separate drafts for the same employee position when the linked user accounts have different `roles.code` values. This is contextual evidence of which system workflows are available, not a grant of authority and not proof that the employee performs every accessible action. The documented workflow boundaries above remain authoritative: FM owns financial review and financial closure; VGM owns sponsor assignment/reassignment; PS performs assigned project execution and non-financial updates; HR roles process employee/attendance/leave/payroll workflows; Administration handles sponsor requests/Winback within its documented scope. HR and the direct supervisor must confirm actual day-to-day responsibilities before approving any description.
