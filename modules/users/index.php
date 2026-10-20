@@ -129,6 +129,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$manageAcct) {
                 'gender' => $_POST['gender'] ?? null,
                 'department_id' => !empty($_POST['department_id']) ? (int)$_POST['department_id'] : null,
                 'manager_id' => !empty($_POST['manager_id']) ? (int)$_POST['manager_id'] : null,
+                'hire_date' => trim((string)($_POST['hire_date'] ?? '')),
+                'basic_salary' => $_POST['basic_salary'] ?? null,
             ];
 
             try {
