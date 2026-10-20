@@ -34,6 +34,8 @@
   - Loads the selected role description and role-specific terms.
   - Marks descriptions requiring review in the page and generated PDF.
   - Uses configured organization logo/name/address/support phone/email when those settings are populated; falls back to the repository logo and organization name.
+  - Repeats organization branding/contact details in the TCPDF header on multi-page contracts and retains the PDF footer.
+  - Refreshes employee identity, position and current basic-salary prefill when HR changes the employee selection.
   - Keeps contract PDF generation separate from saving employment contracts or changing salary history.
 - `dashboard/hr_dashboard.php`
   - Adds separate `بوابة عقود العمل` shortcut; existing `العقود والرواتب` remains intact.
