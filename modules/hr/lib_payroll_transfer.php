@@ -126,7 +126,9 @@ function hrPayrollSetPaymentAccountForRows(PDO $pdo, array $payrollIds, int $mon
     try {
         $placeholders = implode(',', array_fill(0, count($ids), '?'));
         $lock = $pdo->prepare(
-            "SELECT id, status FROM payroll WHERE id IN ($placeholders) AND month = ? AND year = ? FOR UPDATE"
+            "SELECT p.id, p.status,
+                    EXISTS(SELECT 1 FROM hr_payroll_payment_proofs pp WHERE pp.payroll_id = p.id) AS has_proof
+             FROM payroll p WHERE p.id IN ($placeholders) AND p.month = ? AND p.year = ? FOR UPDATE"
         );
         $lock->execute([...$ids, $month, $year]);
         $rows = $lock->fetchAll(PDO::FETCH_ASSOC);
@@ -136,6 +138,9 @@ function hrPayrollSetPaymentAccountForRows(PDO $pdo, array $payrollIds, int $mon
         foreach ($rows as $row) {
             if ($row['status'] !== 'approved') {
                 throw new RuntimeException('يمكن تعيين حساب التحويل لسجلات الرواتب المعتمدة فقط.');
+            }
+            if ((int)$row['has_proof'] === 1) {
+                throw new RuntimeException('لا يمكن تغيير حساب التحويل بعد إرفاق إثبات؛ حافظ على تطابق الإثبات مع التحويل.');
             }
         }
         $update = $pdo->prepare(
@@ -204,6 +209,17 @@ function hrPayrollUploadProof(PDO $pdo, int $payrollId, array $upload, int $user
         }
     } elseif ($payroll['status'] !== 'approved') {
         throw new RuntimeException('يمكن تجهيز إثبات التحويل لسجل راتب معتمد وغير مصروف فقط.');
+    }
+
+    if (!$legacyEvidence) {
+        $accountStmt = $pdo->prepare('SELECT payment_account_id FROM payroll WHERE id = ? LIMIT 1');
+        $accountStmt->execute([$payrollId]);
+        $accountId = (int)($accountStmt->fetchColumn() ?: 0);
+        $activeAccountStmt = $pdo->prepare('SELECT id FROM accounts WHERE id = ? AND is_active = 1 LIMIT 1');
+        $activeAccountStmt->execute([$accountId]);
+        if (!$activeAccountStmt->fetchColumn()) {
+            throw new RuntimeException('عيّن حساب التحويل الافتراضي أو الفردي قبل رفع إثبات التحويل.');
+        }
     }
 
     $existingStmt = $pdo->prepare('SELECT id FROM hr_payroll_payment_proofs WHERE payroll_id = ? LIMIT 1');
