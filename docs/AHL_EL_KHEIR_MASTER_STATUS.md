@@ -3429,3 +3429,7 @@ Role matching uses the employee's actual `employees.position`, not application p
 ## 2026-10-20 — HR job-description proposal drafts and contract prefill follow-up
 
 Source follow-up adds `database/migrations/2026-10-20_hr_job_description_proposals.sql`: empty job-description fields receive proposed Arabic draft content, existing filled fields and approval statuses are preserved, and all seeded proposals remain subject to HR review. The `HR Test` catalogue entry is inactive but its employee record is preserved. The contract builder fills the supervisor field from the catalogue reporting line where available and explicitly labels it as proposed. Local migration/runtime verification is pending. See `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`.
+
+## 2026-10-20 — HR role-aware job-description follow-up
+
+The employment-contract continuation now uses the linked employee's application role as contextual evidence alongside `employees.position`, rather than assuming a title alone identifies the employee's system work. New migrations: `2026-10-20_hr_job_description_system_roles.sql` and `2026-10-20_hr_job_description_z_clear_unreviewed_generic_drafts.sql`. HR can manage each responsibility as an individual add/remove field; the existing TEXT column stores newline-separated items and the contract PDF renders them as an indented list. Proposed role-specific content remains pending HR/supervisor confirmation. Local migration application, PHP syntax checks, and browser/PDF verification are still pending. See `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`.
