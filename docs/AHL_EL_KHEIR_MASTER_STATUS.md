@@ -3480,3 +3480,14 @@ Research references used to shape common qualification profiles:
 These sources are benchmarks, not a claim that Ahl El Kheir must adopt another organization's minimum criteria. HR and the direct supervisor must confirm actual day-to-day duties, required education and experience, reporting line and role-specific conditions before approval. A system role documents workflow access; it does not prove which tasks an employee has personally performed.
 
 **Verification status: SOURCE COMMITTED; local migration application, PHP lint, catalogue browser check and contract PDF check remain pending.**
+
+
+## 2026-10-20 — HR job-description qualifications UTF-8 repair (OPEN: LOCAL VERIFICATION)
+
+The local diagnostic found 25 of 26 `hr_job_description_templates.qualifications` values beginning with literal question marks. There were zero approved rows and one `HR Test` row. `position_title`, `role_purpose`, `responsibilities`, and `qualifications` use `utf8mb4_unicode_ci`; only qualifications were confirmed to begin with question marks. The other three fields are to remain untouched.
+
+Source changes on `main`:
+- `database/migrations/2026-10-20_hr_job_description_zz_role_qualifications.sql` now starts with `SET NAMES utf8mb4;` for future correct imports.
+- `database/migrations/2026-10-20_hr_job_description_zz_role_qualifications_utf8_repair.sql` restores role-specific Arabic qualification drafts only where qualifications begin with literal question marks, while excluding approved rows and `HR Test`.
+
+The repair is data-only; no DDL or runtime schema changes. **Source committed; local repair application and verification are pending.** Do not rerun the original seed migration to repair non-empty question-mark values.
