@@ -13,7 +13,7 @@
 - HR selects an employee; the system uses that employee's actual `employees.position` to load the matching role description and role-specific contract clauses.
 - Shared PDF layout and standard clauses are maintained separately from role-specific content. The job-description catalogue can be edited without changing the PDF layout.
 - Catalogue rows seeded from existing employee positions start as `needs_review`; no duties or qualifications are invented or marked approved.
-- Existing `modules/hr/contracts.php` remains the contracts/salary-history page and signed-file upload workflow. The new portal is a separate dashboard shortcut.
+- `modules/hr/contract_builder.php` is the single entry point for creating a new contract PDF and reserving its draft number. `modules/hr/contracts.php` is the contract register and salary-history management page; it does not create new contracts. Signed copies are uploaded to an existing contract record from the register.
 - Do not map application permission roles to employee positions.
 
 ## Implemented on main
@@ -207,3 +207,17 @@ Source commit on main: 8ed43dc8c7e0f2e2c5693e1777bfb8324bdc3115.
 - No schema change or migration was required. The draft record stores the register's existing core fields and weekly hours when supplied; the full editable contract clauses remain in the generated PDF response and are not persisted as database columns by this change.
 
 Verification status: SOURCE COMMITTED, NOT RUNTIME VERIFIED. On the configured Windows/XAMPP environment, pull main; lint modules/hr/contract_builder.php; generate a PDF from http://localhost:8081/AhlElKheir/modules/hr/contract_builder.php; compare the displayed number with the draft in modules/hr/contracts.php; verify the record remains draft; compare salary history, employees.basic_salary, and employment state before/after; verify overlapping draft/active contract periods are rejected; and verify resubmitting the same form does not create another record. Do not rerun unrelated completed module tests. Sudanese legal review remains required before official use.
+
+
+## 2026-10-20 — Unify contract creation and register workflow
+
+Source changes committed directly to `main`:
+- `315f221c9f43d4bbbe55b0f2acdce88e3b403296` — removed the duplicate `add_contract` creation path from `modules/hr/contracts.php`. New-contract links now open `modules/hr/contract_builder.php` with the selected employee. The old `?view=add` URL now explains the canonical workflow instead of presenting a second creation form.
+- `b312f117f077f14e8c5f4f91bd80a4aeaf0c2ebf` — the builder's return link now returns to the employee's contract-register view, not the retired add form.
+- `dd2b1dcc99762226e1ddf8a28000e6fc4a7d5190` — added an explicit optional probation-end date to the builder, validates it against the contract start date, includes it in the PDF text, and persists it to the draft's existing `probation_end_date` column so the register's existing activation/employment-state behavior remains available.
+
+The register continues to manage contract status and salary history. It now uploads or replaces a signed copy against an existing contract record, rather than creating a new contract as a side effect of uploading a file. The upload validates that the contract belongs to the selected employee and retains the existing 10 MB / PDF-JPG-JPEG-PNG limits. Replacing a file updates the register path but deliberately does not delete older files.
+
+No schema change or migration was introduced. The builder continues to reserve the official number and create a draft when PDF generation succeeds; this does not activate the contract or update salary history/employment state. The full editable clause text remains in the generated PDF, while the register stores its existing core fields.
+
+**Verification status: SOURCE COMMITTED; PHP lint, browser interaction, signed-copy upload, draft activation, salary-history/employment-state behavior, and generated PDF are NOT runtime verified.** Pull `main`, lint both changed PHP files, then test one non-production/appropriate employee record through the configured XAMPP URL. Do not create a second draft for an employee/date period already covered by an active or draft contract. Sudanese legal review remains required before official use.
