@@ -69,7 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
             'issue_date' => akContractValue($_POST, 'issue_date', date('Y-m-d')),
             'employee_name' => akContractValue($_POST, 'employee_name'),
             'national_id' => akContractValue($_POST, 'national_id'),
-            'nationality' => akContractValue($_POST, 'nationality', 'سوداني/ة'),
+            'nationality' => akContractValue($_POST, 'nationality'),
             'address' => akContractValue($_POST, 'address'),
             'phone' => akContractValue($_POST, 'phone'),
             'email' => akContractValue($_POST, 'email'),
@@ -93,6 +93,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
             'duties' => akContractValue($_POST, 'duties'),
             'special_terms' => akContractValue($_POST, 'special_terms'),
         ];
+
+        $fieldLimits = [
+            'contract_number' => 80, 'employee_name' => 180, 'national_id' => 100,
+            'nationality' => 100, 'address' => 500, 'phone' => 80, 'email' => 180,
+            'position' => 180, 'department' => 180, 'supervisor' => 180,
+            'work_location' => 250, 'probation' => 250, 'working_days' => 180,
+            'allowances' => 500, 'benefits' => 500, 'annual_leave' => 250,
+            'sick_leave' => 250, 'notice_period' => 250, 'duties' => 5000,
+            'special_terms' => 5000, 'weekly_hours' => 12,
+        ];
+        foreach ($fieldLimits as $field => $maxLength) {
+            if (strlen((string)$data[$field]) > $maxLength) {
+                throw new InvalidArgumentException('أحد الحقول أطول من الحد المسموح به.');
+            }
+        }
+        if ($data['email'] !== '' && !filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+            throw new InvalidArgumentException('البريد الإلكتروني غير صالح.');
+        }
+        if ($data['weekly_hours'] !== '' &&
+            (!is_numeric($data['weekly_hours']) || (float)$data['weekly_hours'] < 0 || (float)$data['weekly_hours'] > 168)) {
+            throw new InvalidArgumentException('ساعات العمل الأسبوعية يجب أن تكون بين صفر و168 ساعة.');
+        }
+        if ($data['contract_type'] === 'fixed_term' && $data['end_date'] === '') {
+            throw new InvalidArgumentException('تاريخ نهاية العقد مطلوب للعقد محدد المدة.');
+        }
 
         foreach (['employee_name' => 'اسم الموظف', 'position' => 'المسمى الوظيفي', 'start_date' => 'تاريخ بداية العقد', 'basic_salary' => 'الراتب الأساسي'] as $key => $label) {
             if ($data[$key] === '') {
@@ -243,7 +268,7 @@ require_once __DIR__ . '/../../includes/header.php';
       <div class="cb-field"><label>تاريخ تحرير العقد <span class="cb-required">*</span></label><input type="date" name="issue_date" value="<?= e(date('Y-m-d')) ?>" required></div>
       <div class="cb-field"><label>اسم الموظف <span class="cb-required">*</span></label><input id="employee_name" name="employee_name" maxlength="180" required value="<?= e($selectedEmployee['full_name'] ?? '') ?>"></div>
       <div class="cb-field"><label>الرقم الوطني / الهوية</label><input id="national_id" name="national_id" maxlength="100" value="<?= e($selectedEmployee['national_id'] ?? '') ?>"></div>
-      <div class="cb-field"><label>الجنسية</label><input name="nationality" maxlength="100" value="سوداني/ة"></div>
+      <div class="cb-field"><label>الجنسية</label><input name="nationality" maxlength="100" value=""></div>
       <div class="cb-field"><label>رقم الهاتف</label><input id="phone" name="phone" maxlength="80" value="<?= e($selectedEmployee['phone'] ?? '') ?>"></div>
       <div class="cb-field"><label>البريد الإلكتروني</label><input id="email" name="email" type="email" maxlength="180" value="<?= e($selectedEmployee['email'] ?? '') ?>"></div>
       <div class="cb-field cb-full"><label>العنوان</label><input id="address" name="address" maxlength="500" value="<?= e($selectedEmployee['address'] ?? '') ?>"></div>
