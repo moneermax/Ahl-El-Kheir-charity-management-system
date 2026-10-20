@@ -177,3 +177,16 @@ The catalogue screenshot exposed a usability gap: the earlier `2026-10-20_hr_job
 Added data-only migration `database/migrations/2026-10-20_hr_job_description_zzz_general_fallback_drafts.sql` (commit `5b6a553b22ff5a0be3d0a2b6430556ccf5138be9`). It restores distinct, broad position-level draft purpose and responsibilities only for active, title-only records that remain `needs_review` and have blank fields. It does not copy role-specific text into fallback rows, overwrite non-empty content, alter approved/inactive records, change qualifications/reporting lines, reactivate `HR Test`, or modify employees/schema. All text remains an unapproved proposal for HR and direct-supervisor confirmation.
 
 **Next:** pull `main`; apply this new migration once to the configured `ahl_el_kheir` database using an explicit UTF-8 client; run a read-only check that active title-only records now have non-empty purpose/responsibilities while all statuses remain `needs_review`; lint the catalogue PHP file and verify the page and contract-builder employee switching locally. Do not rerun earlier migrations. Runtime verification is pending.
+
+
+## 2026-10-20 — Baseline qualifications and reorderable item lists
+
+The requested baseline qualification items are added by the data-only migration `database/migrations/2026-10-20_hr_job_description_zzzz_qualification_baseline.sql`, after the existing job-description proposal/qualification migrations:
+1. `الحد الأدنى للمؤهل الأكاديمي: شهادة الثانوية العامة أو ما يعادلها.`
+2. `معرفة أساسية باستخدام الحاسوب وبرامج المكتب.`
+
+The migration prepends these two items to active job-description templates while preserving existing qualification text. Changed descriptions are returned to `needs_review`; the new baseline is not silently approved. Apply it once after the earlier 2026-10-20 job-description migrations, including `2026-10-20_hr_job_description_zz_role_qualifications.sql` and `2026-10-20_hr_job_description_zzz_general_fallback_drafts.sql`.
+
+The job-description catalogue and contract builder now expose a drag handle on repeatable purpose, responsibility, qualification and optional-term rows. Rows can be rearranged with pointer-based dragging (mouse or touch), and visible numbering updates automatically. The submitted list order is the displayed/PDF order. Existing add/delete behavior remains.
+
+**Verification status: SOURCE COMMITTED; local migration application, PHP lint, catalogue/contract browser interaction, employee switching and PDF output remain to be verified on the user's XAMPP application.** Do not claim runtime verification until the user confirms these checks. HR and the direct supervisor must review the qualification baseline internally; Sudanese legal review remains required before official contract use.
