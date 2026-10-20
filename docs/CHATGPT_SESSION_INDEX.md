@@ -1224,3 +1224,7 @@ Source implementation is committed on `main`: separate HR dashboard shortcut `ب
 ## 2026-10-20 — HR job-description proposal drafts and contract auto-prefill
 
 Added `database/migrations/2026-10-20_hr_job_description_proposals.sql` to populate empty job-description fields with proposed Arabic drafts while preserving existing content and approval status. The `HR Test` catalogue row is deactivated without deleting its employee. The contract builder pre-fills the proposed reporting line from the selected position's catalogue entry and labels it for HR confirmation. Runtime application/checks remain pending; see `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`.
+
+## 2026-10-20 — Role-aware job descriptions and responsibility list editor
+
+Follow-up source now distinguishes `employees.position` from the linked account role (`employees.user_id` → `users.role_id` → `roles.code`). Added migration `database/migrations/2026-10-20_hr_job_description_system_roles.sql` to create position+system-role description variants from documented workflows, and `database/migrations/2026-10-20_hr_job_description_z_clear_unreviewed_generic_drafts.sql` to clear only exact unchanged generic placeholders from the earlier proposal migration. Catalogue responsibilities are now individually editable with add/remove controls and stored as newline-separated items; the contract builder matches position+role first and prints responsibilities as an indented list. Local migration/runtime verification remains pending; see `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`.
