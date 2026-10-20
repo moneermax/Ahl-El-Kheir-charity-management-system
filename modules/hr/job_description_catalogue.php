@@ -49,6 +49,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $status = ($canApprove && ($_POST['description_status'] ?? '') === 'approved')
                 ? 'approved'
                 : 'needs_review';
+            if ($status === 'approved' && $responsibilities === '') {
+                throw new InvalidArgumentException('لا يمكن اعتماد وصف وظيفي قبل إدخال المهام والمسؤوليات الأساسية.');
+            }
             $active = isset($_POST['is_active']) ? 1 : 0;
 
             if ($editingId > 0) {
