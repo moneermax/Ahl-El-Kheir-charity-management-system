@@ -132,3 +132,26 @@ The schema supports account type but the existing resolver only enforces `is_act
 ### Step 2 result and next gate
 
 Step 2 is closed at the design boundary: schema evidence was supplied, the relevant types and key relationships were reviewed, a real migration example was inspected, and the data model/state transitions are documented. No migration, application source, live schema or payroll/accounting data has been changed. Before any DDL is applied, the exact migration SQL must be reviewed as a standalone artifact and then applied only through the project's migration process. Proceed next to Step 3: author the migration and private-proof storage contract, document and commit that step, then move to implementation.
+
+
+## 2026-10-20 — Step 3 migration draft and private-proof contract
+
+Created `database/migrations/2026-10-20_hr_fm_payroll_transfer_workflow.sql` in commit `f1225411c429f0b0eb9486ccec03f6be02e1ed8a`. The migration draft adds:
+
+- `hr_payroll_period_settings`: one row per month/year with a required default account, optional creator/updater references and timestamps.
+- `hr_payroll_payment_proofs`: one evidence record per payroll, unique opaque storage key, original filename, detected MIME type, byte size, uploader/time, and state `prepared`, `confirmed`, or `legacy_evidence` with confirmation actor/time.
+
+The draft uses InnoDB, utf8mb4 Unicode collation, unsigned integer IDs consistent with the inspected schema, named keys/constraints, and RESTRICT semantics for payroll/account parents. The payroll foreign key uses RESTRICT intentionally so a payroll row cannot be deleted after proof evidence has been attached. No columns were added to `payroll`, and no historical rows are backfilled.
+
+### Private-proof storage contract for implementation
+
+- Store proof bytes under a server-controlled directory outside public serving, retaining the existing deny-all protection. The database `storage_key` is a random opaque identifier, not an absolute path or user-selected filename. Resolve it only beneath the fixed private directory and reject path separators/traversal.
+- Accept only a documented allowlist of evidence formats; check PHP upload error, actual byte size, detected MIME/content, and extension consistency. Do not trust the browser-supplied MIME type. Reject executable/active content. Exact size limits and allowed formats must be set in the implementation after checking current PHP configuration and confirming the required formats; they are not inferred from the schema.
+- Do not overwrite existing evidence silently. The unique payroll key means the first implementation must reject a second upload and surface a controlled error; a replacement/audit workflow is a separate design decision.
+- Downloads go through a PHP endpoint. It must verify login, resolve the payroll/evidence record by ID, enforce employee ownership for employee self-service and the existing role/permission boundary for staff access, then stream only the server-resolved file with safe content headers and private/no-store cache headers. Never return the physical path or expose a direct public URL.
+- Uploading sets state to `prepared`; only the explicit post-transfer confirmation transaction may set `confirmed`. A legacy evidence action sets `legacy_evidence` and must not alter any payroll/payment/accounting columns.
+- Because a proof is unique per payroll, duplicate upload/confirmation requests must be rejected or treated idempotently based on persisted state; no duplicate accounting posting is permitted. File persistence and DB changes require compensation/cleanup if one side fails.
+
+### Step 3 boundary
+
+The migration has been authored and committed to `main`, but it has **not** been executed against any database. No PHP workflow or file endpoint was changed. Before application, review the exact migration SQL and verify local migration execution convention and private storage directory configuration. Next step: implement the period/account preparation and proof upload/download layer, with its own documentation checkpoint before moving to payment confirmation/accounting changes.
