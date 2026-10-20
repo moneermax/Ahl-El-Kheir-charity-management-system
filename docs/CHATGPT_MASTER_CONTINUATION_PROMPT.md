@@ -1255,3 +1255,14 @@ Research references used to shape common qualification profiles:
 These sources are benchmarks, not a claim that Ahl El Kheir must adopt another organization's minimum criteria. HR and the direct supervisor must confirm actual day-to-day duties, required education and experience, reporting line and role-specific conditions before approval. A system role documents workflow access; it does not prove which tasks an employee has personally performed.
 
 **Verification status: SOURCE COMMITTED; local migration application, PHP lint, catalogue browser check and contract PDF check remain pending.**
+
+
+## LATEST CHECKPOINT — 2026-10-20 — Job-description qualification UTF-8 repair
+
+The user diagnosed a local encoding failure after importing `database/migrations/2026-10-20_hr_job_description_zz_role_qualifications.sql` into `ahl_el_kheir`. Diagnostic evidence: 26 rows total, 25 qualifications values start with literal question marks, zero approved rows, one `HR Test` row; all relevant columns use `utf8mb4_unicode_ci`. A second check found no question-mark prefixes in role_purpose, responsibilities, or position_title.
+
+Committed to `main`:
+- Original seed migration now explicitly starts with `SET NAMES utf8mb4;`.
+- New data-only correction: `database/migrations/2026-10-20_hr_job_description_zz_role_qualifications_utf8_repair.sql`. It sets UTF-8 explicitly and reapplies the original role-specific Arabic qualification CASE only to rows whose qualifications begin with literal question marks, excluding approved rows and `HR Test`. It leaves the other description fields and all schema untouched.
+
+**Next:** user pulls `main`, applies only the new repair migration with the mysql client explicitly set to utf8mb4, then runs read-only verification confirming the 25 corrupted values are restored, Arabic text survives HEX/terminal checks, and the `HR Test` row remains unchanged. Do not rerun the original seed migration as a repair. Do not claim runtime success before results are returned.
