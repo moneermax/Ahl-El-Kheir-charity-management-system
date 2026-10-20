@@ -1189,3 +1189,7 @@ The user requires an in-system contract page, not a separate Word template. Sour
 Commits: `f0e5fdba4b32e179091478b092eccd5dd10f033f` and `ca14abbd85b490c5025f8367c1fe2d2caa43f88d`. Details are in `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`.
 
 **Next action:** sync local `main`, run `php -l modules/hr/contract_builder.php` and `php -l modules/hr/contracts.php`, then test at `http://localhost:8081/AhlElKheir/modules/hr/contract_builder.php` as an authorized HR user. Verify employee prefill/editing, PDF opening, Arabic RTL/logo, multi-page layout, print quality, role denial, CSRF rejection, and no DB/storage mutation. Do not begin the second task (onboarding + signed-copy upload integration) until this gate is accepted. Review the contract with a qualified Sudanese lawyer before operational use.
+
+### Contract builder validation refinement
+
+Commit `eef4d17e02543e1327ed8cc3db9fee3b916aa11f` adds server-side field-length/email/weekly-hours validation, requires an end date for fixed-term contracts, and removes the assumed nationality default. Continue with local PHP lint and browser/PDF acceptance only; do not begin onboarding integration before acceptance.
