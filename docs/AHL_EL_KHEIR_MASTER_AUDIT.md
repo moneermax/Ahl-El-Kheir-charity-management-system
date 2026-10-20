@@ -3702,3 +3702,7 @@ Source added:
 Commits: builder `f0e5fdba4b32e179091478b092eccd5dd10f033f`; contracts-page link `ca14abbd85b490c5025f8367c1fe2d2caa43f88d`.
 
 **Evidence boundary:** source inspection only. PHP lint and real local Apache/browser verification have not been performed. No schema migration or database mutation was made. The schema dump could not be retrieved through the repository connector due to its size, so local schema must be inspected before any subsequent persistence/onboarding integration. Legal text is a draft and must be reviewed by a qualified Sudanese lawyer before use.
+
+### Follow-up — contract builder validation
+
+A narrow source refinement in commit `eef4d17e02543e1327ed8cc3db9fee3b916aa11f` adds server-side field-length, email and weekly-hours checks, requires an end date for fixed-term contracts, and leaves nationality blank rather than assuming it. This does not change database or employment records. Local PHP lint and browser/PDF verification remain pending.
