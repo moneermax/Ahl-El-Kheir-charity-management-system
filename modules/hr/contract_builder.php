@@ -225,9 +225,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
             'annual_leave' => akContractValue($_POST, 'annual_leave', 'وفق قانون العمل السوداني والسياسات المعتمدة'),
             'sick_leave' => akContractValue($_POST, 'sick_leave', 'وفق قانون العمل السوداني والسياسات المعتمدة'),
             'notice_period' => akContractValue($_POST, 'notice_period', 'وفق القانون واجب التطبيق وشروط العقد'),
-            'duties' => akContractValue($_POST, 'duties'),
+            'duties' => implode("\n", array_values(array_filter(array_map(static fn($item) => trim((string)$item), is_array($_POST['duties'] ?? null) ? $_POST['duties'] : [$_POST['duties'] ?? '']), static fn($item) => $item !== ''))),
             'job_description_status' => $jobDescriptionStatus,
-            'special_terms' => akContractValue($_POST, 'special_terms'),
+            'special_terms' => implode("\n", array_values(array_filter(array_map(static fn($item) => trim((string)$item), is_array($_POST['special_terms'] ?? null) ? $_POST['special_terms'] : [$_POST['special_terms'] ?? '']), static fn($item) => $item !== ''))),
         ];
 
         $fieldLimits = [
@@ -413,7 +413,7 @@ $active = 'hr';
 require_once __DIR__ . '/../../includes/header.php';
 ?>
 <style>
-.contract-builder{max-width:1200px;margin:auto}.cb-hero{background:linear-gradient(120deg,#173f73,#2d67ad);color:#fff;padding:22px 26px;border-radius:14px;margin-bottom:18px}.cb-hero h1{font-size:1.4rem;font-weight:800;margin:0}.cb-hero p{margin:7px 0 0;font-size:.82rem;opacity:.92}.cb-card{background:#fff;border:1px solid #e4e9f0;border-radius:13px;box-shadow:0 3px 12px rgba(16,24,40,.05);margin-bottom:16px;overflow:hidden}.cb-head{padding:13px 17px;border-bottom:1px solid #e7ecf2;font-weight:800;color:#173f73}.cb-body{padding:17px}.cb-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.cb-field label{display:block;font-size:.76rem;font-weight:800;color:#344054;margin-bottom:5px}.cb-field input,.cb-field select,.cb-field textarea{width:100%;border:1px solid #b9c7d8;border-radius:8px;padding:9px 10px;font:inherit;font-size:.8rem;background:#fff}.cb-field textarea{min-height:78px}.cb-full{grid-column:1/-1}.cb-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:17px}.cb-actions .btn{font-size:.82rem;font-weight:700}.cb-note{font-size:.78rem;color:#475467;background:#f8fafc;border:1px solid #e4e9f0;padding:12px;border-radius:9px;margin-bottom:15px}.cb-error{font-size:.82rem}.cb-required{color:#b42318}@media(max-width:700px){.cb-grid{grid-template-columns:1fr}.cb-full{grid-column:auto}}
+.contract-builder{max-width:1200px;margin:auto}.cb-hero{background:linear-gradient(120deg,#173f73,#2d67ad);color:#fff;padding:22px 26px;border-radius:14px;margin-bottom:18px}.cb-hero h1{font-size:1.4rem;font-weight:800;margin:0}.cb-hero p{margin:7px 0 0;font-size:.82rem;opacity:.92}.cb-card{background:#fff;border:1px solid #e4e9f0;border-radius:13px;box-shadow:0 3px 12px rgba(16,24,40,.05);margin-bottom:16px;overflow:hidden}.cb-head{padding:13px 17px;border-bottom:1px solid #e7ecf2;font-weight:800;color:#173f73}.cb-body{padding:17px}.cb-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.cb-field label{display:block;font-size:.76rem;font-weight:800;color:#344054;margin-bottom:5px}.cb-field input,.cb-field select,.cb-field textarea{width:100%;border:1px solid #b9c7d8;border-radius:8px;padding:9px 10px;font:inherit;font-size:.8rem;background:#fff}.cb-field textarea{min-height:78px}.cb-full{grid-column:1/-1}.cb-repeat-list{display:grid;gap:9px;margin-bottom:9px}.cb-repeat-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:start}.cb-repeat-row textarea{min-height:64px}.cb-repeat-row .cb-remove-item{white-space:nowrap;margin-top:4px}.cb-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:17px}.cb-actions .btn{font-size:.82rem;font-weight:700}.cb-note{font-size:.78rem;color:#475467;background:#f8fafc;border:1px solid #e4e9f0;padding:12px;border-radius:9px;margin-bottom:15px}.cb-error{font-size:.82rem}.cb-required{color:#b42318}@media(max-width:700px){.cb-grid{grid-template-columns:1fr}.cb-full{grid-column:auto}}
 </style>
 <div class="contract-builder">
   <div class="cb-hero d-flex align-items-center justify-content-between gap-3 flex-wrap"><div class="d-flex align-items-center gap-3"><img src="<?= e(APP_URL . $portalLogoPath) ?>" alt="شعار جمعية أهل الخير" style="width:68px;height:68px;object-fit:contain;background:#fff;border-radius:10px;padding:5px"><div><h1><i class="fa-solid fa-file-signature me-2"></i>بوابة عقود العمل</h1><p><?= e(trim((string)($organizationSettings['org_name_ar'] ?? '')) ?: 'جمعية أهل الخير الخيرية') ?> — إعداد عقد مناسب للمسمى الوظيفي ثم معاينته وطباعته للتوقيع.</p><?php $portalContact = array_filter([trim((string)($organizationSettings['org_address'] ?? '')), trim((string)($organizationSettings['support_phone'] ?? '')), trim((string)($organizationSettings['support_email'] ?? ''))]); if ($portalContact): ?><small><?= e(implode(' | ', $portalContact)) ?></small><?php endif; ?></div></div><a class="btn btn-light btn-sm fw-bold" href="<?= e(APP_URL) ?>modules/hr/job_description_catalogue.php"><i class="fa-solid fa-list-check me-1"></i> إدارة الأوصاف الوظيفية</a></div>
@@ -453,8 +453,8 @@ require_once __DIR__ . '/../../includes/header.php';
       <div class="cb-field cb-full"><label>مدة الإخطار</label><input name="notice_period" maxlength="250" value="وفق القانون واجب التطبيق وشروط العقد"></div>
     </div></div></div>
     <div class="cb-card"><div class="cb-head">تفاصيل إضافية</div><div class="cb-body"><div class="cb-grid">
-      <div class="cb-field cb-full"><label>المهام والمسؤوليات والوصف الوظيفي</label><textarea id="duties" name="duties" maxlength="5000" placeholder="يُحمّل الوصف من فهرس المسمى الوظيفي، ويمكن مراجعته وتعديله للعقد الحالي."><?= e($selectedJobDuties) ?></textarea><small id="jobDescriptionStatus" class="<?= $selectedJobStatus === 'approved' ? 'text-success' : 'text-warning-emphasis' ?>"><?= $selectedJobStatus === 'approved' ? 'الوصف الوظيفي معتمد داخلياً.' : 'تنبيه: لا يوجد وصف معتمد لهذا المسمى؛ راجع فهرس الأوصاف الوظيفية قبل اعتماد العقد.' ?></small></div>
-      <div class="cb-field cb-full"><label>الشروط الخاصة المتفق عليها / البنود المرتبطة بالمسمى</label><textarea id="special_terms" name="special_terms" maxlength="5000" placeholder="أي شروط إضافية متفق عليها كتابةً، دون مخالفة القانون."><?= e($selectedJobDescription['role_specific_terms'] ?? '') ?></textarea><small>يُحمّل النص من فهرس المسمى الوظيفي عند توفره، ويمكن تعديله لهذا العقد فقط.</small></div>
+      <div class="cb-field cb-full"><label>المهام والمسؤوليات والوصف الوظيفي</label><div id="dutiesFields" class="cb-repeat-list" data-name="duties[]"><?php foreach (preg_split('/\\R/u', trim($selectedJobDuties)) ?: [] as $dutyItem): ?><?php if (trim($dutyItem) !== ''): ?><div class="cb-repeat-row"><textarea name="duties[]" maxlength="5000" aria-label="بند من المهام والمسؤوليات والوصف الوظيفي"><?= e(trim($dutyItem)) ?></textarea><button type="button" class="btn btn-outline-danger btn-sm cb-remove-item" aria-label="حذف البند"><i class="fa-solid fa-trash"></i> حذف</button></div><?php endif; ?><?php endforeach; ?><?php if (trim($selectedJobDuties) === ''): ?><div class="cb-repeat-row"><textarea name="duties[]" maxlength="5000" aria-label="بند من المهام والمسؤوليات والوصف الوظيفي" placeholder="أدخل مهمة أو مسؤولية أو وصفاً وظيفياً"></textarea><button type="button" class="btn btn-outline-danger btn-sm cb-remove-item" aria-label="حذف البند"><i class="fa-solid fa-trash"></i> حذف</button></div><?php endif; ?></div><button type="button" class="btn btn-outline-primary btn-sm cb-add-item" data-target="dutiesFields"><i class="fa-solid fa-plus me-1"></i> إضافة بند</button><small id="jobDescriptionStatus" class="d-block mt-2 <?= $selectedJobStatus === 'approved' ? 'text-success' : 'text-warning-emphasis' ?>"><?= $selectedJobStatus === 'approved' ? 'الوصف الوظيفي معتمد داخلياً.' : 'تنبيه: لا يوجد وصف معتمد لهذا المسمى؛ راجع فهرس الأوصاف الوظيفية قبل اعتماد العقد.' ?></small></div>
+      <div class="cb-field cb-full"><label>الشروط الخاصة المتفق عليها / البنود المرتبطة بالمسمى</label><div id="specialTermsFields" class="cb-repeat-list" data-name="special_terms[]"><?php foreach (preg_split('/\\R/u', trim((string)($selectedJobDescription['role_specific_terms'] ?? ''))) ?: [] as $termItem): ?><?php if (trim($termItem) !== ''): ?><div class="cb-repeat-row"><textarea name="special_terms[]" maxlength="5000" aria-label="شرط خاص أو بند مرتبط بالمسمى"><?= e(trim($termItem)) ?></textarea><button type="button" class="btn btn-outline-danger btn-sm cb-remove-item" aria-label="حذف البند"><i class="fa-solid fa-trash"></i> حذف</button></div><?php endif; ?><?php endforeach; ?><?php if (trim((string)($selectedJobDescription['role_specific_terms'] ?? '')) === ''): ?><div class="cb-repeat-row"><textarea name="special_terms[]" maxlength="5000" aria-label="شرط خاص أو بند مرتبط بالمسمى" placeholder="أدخل شرطاً خاصاً متفقاً عليه كتابةً (اختياري)"></textarea><button type="button" class="btn btn-outline-danger btn-sm cb-remove-item" aria-label="حذف البند"><i class="fa-solid fa-trash"></i> حذف</button></div><?php endif; ?></div><button type="button" class="btn btn-outline-primary btn-sm cb-add-item" data-target="specialTermsFields"><i class="fa-solid fa-plus me-1"></i> إضافة شرط أو بند</button><small class="d-block mt-2">يُحمّل النص من فهرس المسمى الوظيفي عند توفره، ويمكن تعديله لهذا العقد فقط.</small></div>
     </div><div class="cb-actions"><button type="submit" class="btn btn-primary"><i class="fa-solid fa-file-pdf me-1"></i> عرض العقد بصيغة PDF</button><a class="btn btn-outline-secondary" href="<?= e(APP_URL) ?>modules/hr/contracts.php<?= $selectedEmployeeId ? '?employee_id=' . $selectedEmployeeId . '&view=add' : '' ?>">العودة إلى العقود والرواتب</a></div></div></div>
   </form>
 </div>
@@ -462,6 +462,27 @@ require_once __DIR__ . '/../../includes/header.php';
 (function(){
   const select=document.getElementById('employee_id');
   if(!select)return;
+  function setRepeatableItems(containerId,name,text){
+    const container=document.getElementById(containerId);
+    if(!container)return;
+    const items=(text||'').split(/\\r?\\n/).map(item=>item.trim()).filter(Boolean);
+    container.innerHTML='';
+    (items.length?items:['']).forEach(item=>addRepeatableItem(container,name,item));
+  }
+  function addRepeatableItem(container,name,value=''){
+    const row=document.createElement('div');row.className='cb-repeat-row';
+    const textarea=document.createElement('textarea');textarea.name=name;textarea.maxLength=5000;textarea.value=value;textarea.setAttribute('aria-label',name==='duties[]'?'بند من المهام والمسؤوليات والوصف الوظيفي':'شرط خاص أو بند مرتبط بالمسمى');
+    const remove=document.createElement('button');remove.type='button';remove.className='btn btn-outline-danger btn-sm cb-remove-item';remove.innerHTML='<i class="fa-solid fa-trash"></i> حذف';
+    row.append(textarea,remove);container.appendChild(row);
+  }
+  document.querySelectorAll('.cb-add-item').forEach(button=>button.addEventListener('click',()=>{
+    const container=document.getElementById(button.dataset.target);if(container)addRepeatableItem(container,container.dataset.name);
+  }));
+  document.addEventListener('click',event=>{
+    const button=event.target.closest('.cb-remove-item');if(!button)return;
+    const container=button.closest('.cb-repeat-list');const row=button.closest('.cb-repeat-row');if(!container||!row)return;
+    if(container.querySelectorAll('.cb-repeat-row').length>1)row.remove();else{const textarea=row.querySelector('textarea');if(textarea)textarea.value='';}
+  });
   const mapping={employee_name:'name',national_id:'nationalId',phone:'phone',email:'email',address:'address',position:'position',department:'department',basic_salary:'basicSalary'};
   const supervisorSelect=document.getElementById('supervisor');
   function refreshSupervisorOptions(){
@@ -481,10 +502,8 @@ require_once __DIR__ . '/../../includes/header.php';
       const value=option.dataset[key];
       if(input&&value!==undefined)input.value=value;
     });
-    const duties=document.getElementById('duties');
-    if(duties)duties.value=option.dataset.duties||'';
-    const specialTerms=document.getElementById('special_terms');
-    if(specialTerms)specialTerms.value=option.dataset.roleTerms||'';
+    setRepeatableItems('dutiesFields','duties[]',option.dataset.duties||'');
+    setRepeatableItems('specialTermsFields','special_terms[]',option.dataset.roleTerms||'');
     const status=document.getElementById('jobDescriptionStatus');
     if(status){
       const approved=option.dataset.descriptionStatus==='approved';
