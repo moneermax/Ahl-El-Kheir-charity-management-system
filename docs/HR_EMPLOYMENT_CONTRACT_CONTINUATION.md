@@ -152,3 +152,16 @@ The builder now renders separate repeatable controls for:
 The employee selector supplies each field from the best matching position + system-role template, falling back to the generic position template. Switching employees refreshes all four fields; selecting the blank option clears them. Existing role-specific special terms remain separate. PDF generation rebuilds the job-description sections from the edited values and keeps the current pending-review warning. Existing database schema and catalogue content are unchanged; no migration/runtime DDL was added.
 
 **Verification status: SOURCE COMMITTED; local PHP lint, employee-switch browser check, and PDF inspection remain pending.** The repository connection cannot verify the user's XAMPP runtime. Next: pull `main`, lint `modules/hr/contract_builder.php`, then test two employees with distinct templates and verify purpose/responsibility/qualification sections in the PDF. Do not rerun migrations for this UI-only change.
+
+
+## 2026-10-20 — Distinguish empty general fallback descriptions
+
+The employee-wide catalogue audit showed that current linked employees generally match active role-specific templates, while the title-only record for **أخصائية شؤون الأمهات** (id 6) is an empty general fallback and the nanny-specific draft is a separate active record (id 20). Employee 21 (**HR Salary Test**) has no matching active template; the existing HR Test catalogue entry was intentionally deactivated, so this must not be fixed by blindly reactivating it or deleting employee data.
+
+Source commit `6264c897b2bbadb460e0ba0d3e0c029b1443312d` updates `modules/hr/job_description_catalogue.php` to:
+- label title-only entries as general fallback descriptions;
+- show how many active role-specific descriptions exist for the same position;
+- flag an empty general fallback when role-specific records exist; and
+- show a contextual warning while editing that fallback record.
+
+This is a catalogue clarity change, not a data repair. It preserves role-specific-first contract selection, existing draft content, activation flags and approval states. **Local PHP lint and browser verification remain pending; do not mark runtime verified until checked through the configured XAMPP application.**
