@@ -278,6 +278,34 @@ function hrPayrollChangeStatus(PDO $pdo, int $payrollId, string $newStatus, ?int
                 throw new RuntimeException('يجب اعتماد مسير الراتب أولاً.');
             }
 
+            require_once __DIR__ . '/lib_payroll_transfer.php';
+            if (!hrPayrollTransferSchemaAvailable($pdo)) {
+                throw new RuntimeException('يجب تطبيق ترحيل تجهيز تحويلات الرواتب قبل تأكيد الدفع.');
+            }
+            $proofStmt = $pdo->prepare(
+                "SELECT id, proof_state, storage_key FROM hr_payroll_payment_proofs
+                 WHERE payroll_id = ? LIMIT 1 FOR UPDATE"
+            );
+            $proofStmt->execute([$payrollId]);
+            $proof = $proofStmt->fetch(PDO::FETCH_ASSOC);
+            if (!$proof || $proof['proof_state'] !== 'prepared') {
+                throw new RuntimeException('يجب رفع إثبات تحويل صالح قبل تأكيد الدفع. الدليل التاريخي لا يؤكد تحويلاً جديداً.');
+            }
+            $proofPath = hrPayrollProofPath((string)$proof['storage_key']);
+            if (!is_file($proofPath) || !is_readable($proofPath)) {
+                throw new RuntimeException('ملف إثبات التحويل غير موجود في التخزين الخاص؛ لم يتم تأكيد الدفع.');
+            }
+
+            $storedPaymentAccountId = (int)($row['payment_account_id'] ?? 0);
+            if ($storedPaymentAccountId <= 0) {
+                throw new RuntimeException('عيّن حساب التحويل للفترة أو لهذا الموظف قبل تأكيد الدفع.');
+            }
+            $validatedPaymentAccountId = hrPayrollResolvePaymentAccount($pdo, $storedPaymentAccountId);
+            if ($paymentAccountId !== null && $paymentAccountId !== $validatedPaymentAccountId) {
+                throw new RuntimeException('حساب التحويل المرسل لا يطابق الحساب المحفوظ لسجل الراتب.');
+            }
+            $paymentAccountId = $validatedPaymentAccountId;
+
             $paymentDate = date('Y-m-d');
             $stmt = $pdo->prepare(
                 "UPDATE payroll
@@ -295,6 +323,16 @@ function hrPayrollChangeStatus(PDO $pdo, int $payrollId, string $newStatus, ?int
             $entryId = hrPayrollPostAccounting($pdo, $row);
             require_once __DIR__ . '/lib_salary_advance_payroll.php';
             hrSalaryAdvancePayrollApply($pdo, $row, $entryId);
+
+            $confirmProof = $pdo->prepare(
+                "UPDATE hr_payroll_payment_proofs
+                 SET proof_state = 'confirmed', confirmed_by_user_id = ?, confirmed_at = NOW()
+                 WHERE id = ? AND proof_state = 'prepared'"
+            );
+            $confirmProof->execute([class_exists('Session') ? Session::getUserId() : null, (int)$proof['id']]);
+            if ($confirmProof->rowCount() !== 1) {
+                throw new RuntimeException('تعذر تأكيد إثبات التحويل؛ تم إلغاء عملية الدفع والمحاسبة.');
+            }
         }
 
         if ($startedHere) {
@@ -436,10 +474,10 @@ function hrPayrollApproveSelected(PDO $pdo, array $payrollIds, int $month, int $
  * The notification is informational; the paid payroll and posted journal remain
  * authoritative. Failures must not make a completed financial action look failed.
  */
-function hrPayrollNotifyStatementAvailable(PDO $pdo, int $payrollId): void
+function hrPayrollNotifyStatementAvailable(PDO $pdo, int $payrollId): bool
 {
     if ($payrollId <= 0) {
-        return;
+        return false;
     }
 
     try {
@@ -456,12 +494,12 @@ function hrPayrollNotifyStatementAvailable(PDO $pdo, int $payrollId): void
             [$payrollId]
         );
         if (!$row) {
-            return;
+            return false;
         }
 
         $recipientId = (int)($row['employee_user_id'] ?? 0);
         if ($recipientId <= 0) {
-            return;
+            return false;
         }
 
         $link = APP_URL . 'modules/hr/payroll_statement.php?id=' . $payrollId;
@@ -478,7 +516,7 @@ function hrPayrollNotifyStatementAvailable(PDO $pdo, int $payrollId): void
             [$recipientId, $link, $title]
         );
         if ($existing) {
-            return;
+            return true;
         }
 
         $stmt = $pdo->prepare(
@@ -487,9 +525,10 @@ function hrPayrollNotifyStatementAvailable(PDO $pdo, int $payrollId): void
              VALUES (?, 'info', ?, ?, ?, 0, NOW())"
         );
         $stmt->execute([$recipientId, $title, $body, $link]);
+        return $stmt->rowCount() === 1;
     } catch (Throwable $notificationError) {
         // Payroll and accounting have already committed. Never report them as failed
         // because an informational notification could not be delivered.
-        return;
+        return false;
     }
 }
