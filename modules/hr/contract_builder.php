@@ -76,14 +76,14 @@ function akContractTemplateText(?array $template): string
     if (!$template) return '';
     $parts = [];
     foreach ([
-        'الغرض الوظيفي' => $template['role_purpose'] ?? '',
+        'الغرض من الوظيفة' => $template['role_purpose'] ?? '',
         'المهام والمسؤوليات' => $template['responsibilities'] ?? '',
         'المؤهلات والخبرات' => $template['qualifications'] ?? '',
         'جهة الإشراف' => $template['reporting_to'] ?? '',
     ] as $label => $value) {
         $value = trim((string)$value);
         if ($value === '') continue;
-        if (in_array($label, ['الغرض الوظيفي', 'المهام والمسؤوليات', 'المؤهلات والخبرات'], true)) {
+        if (in_array($label, ['الغرض من الوظيفة', 'الغرض الوظيفي', 'المهام والمسؤوليات', 'المؤهلات والخبرات'], true)) {
             $items = preg_split('/\\R/u', $value) ?: [];
             $items = array_values(array_filter(array_map(static function ($item) {
                 return trim((string)preg_replace('/^\\s*(?:[•*\\-–—]|\\d+[.)])\\s*/u', '', (string)$item));
@@ -127,13 +127,13 @@ function akContractDutiesHtml(string $text): string
             $closeList();
             continue;
         }
-        if (preg_match('/^(الغرض الوظيفي|المهام والمسؤوليات|المؤهلات والخبرات|جهة الإشراف)\s*:\s*(.*)$/u', $line, $matches)) {
+        if (preg_match('/^(الغرض من الوظيفة|الغرض الوظيفي|المهام والمسؤوليات|المؤهلات والخبرات|جهة الإشراف)\s*:\s*(.*)$/u', $line, $matches)) {
             $closeList();
             $section = (string)$matches[1];
             $tail = trim((string)$matches[2]);
             $html .= '<p><strong>' . akContractEscape($section) . ':</strong></p>';
             if ($tail !== '') {
-                if (in_array($section, ['الغرض الوظيفي', 'المهام والمسؤوليات', 'المؤهلات والخبرات'], true)) {
+                if (in_array($section, ['الغرض من الوظيفة', 'الغرض الوظيفي', 'المهام والمسؤوليات', 'المؤهلات والخبرات'], true)) {
                     $item = trim((string)preg_replace('/^\s*(?:[•*\-–—]|\d+[.)])\s*/u', '', $tail));
                     if ($item !== '') {
                         $html .= '<ul style="margin-right:18px;padding-right:10px;">';
@@ -147,7 +147,7 @@ function akContractDutiesHtml(string $text): string
             continue;
         }
         $item = trim((string)preg_replace('/^\s*(?:[•*\-–—]|\d+[.)])\s*/u', '', $line));
-        if (in_array($section, ['الغرض الوظيفي', 'المهام والمسؤوليات', 'المؤهلات والخبرات'], true)) {
+        if (in_array($section, ['الغرض من الوظيفة', 'الغرض الوظيفي', 'المهام والمسؤوليات', 'المؤهلات والخبرات'], true)) {
             if (!$inList) {
                 $html .= '<ul style="margin-right:18px;padding-right:10px;">';
                 $inList = true;
@@ -239,7 +239,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
                 $responsibilities = array_values(array_filter(array_map(static fn($item) => trim((string)$item), is_array($_POST['responsibilities'] ?? null) ? $_POST['responsibilities'] : [$_POST['responsibilities'] ?? '']), static fn($item) => $item !== ''));
                 $qualifications = array_values(array_filter(array_map(static fn($item) => trim((string)$item), is_array($_POST['qualifications'] ?? null) ? $_POST['qualifications'] : [$_POST['qualifications'] ?? '']), static fn($item) => $item !== ''));
                 $reportingTo = trim((string)($_POST['reporting_to'] ?? ''));
-                if ($purpose) $sections[] = "الغرض الوظيفي:\n" . implode("\n", array_map(static fn($item) => '• ' . $item, $purpose));
+                if ($purpose) $sections[] = "الغرض من الوظيفة:\n" . implode("\n", array_map(static fn($item) => '• ' . $item, $purpose));
                 if ($responsibilities) $sections[] = "المهام والمسؤوليات:\n" . implode("\n", array_map(static fn($item) => '• ' . $item, $responsibilities));
                 if ($qualifications) $sections[] = "المؤهلات والخبرات:\n" . implode("\n", array_map(static fn($item) => '• ' . $item, $qualifications));
                 if ($reportingTo !== '') $sections[] = "جهة الإشراف: " . $reportingTo;
@@ -372,7 +372,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
         </table>
         <h2>ثانياً: نوع العقد ومدته وفترة التجربة</h2>
         <p>نوع العقد: <b>' . akContractEscape($typeLabels[$data['contract_type']]) . '</b>. يبدأ في <b>' . $v('start_date') . '</b> وينتهي في <b>' . akContractEscape($endDateText) . '</b>. فترة التجربة: <b>' . akContractEscape($probationText) . '</b>. لا يغيّر هذا النص أي حماية أو شرط إلزامي مقرر بموجب القانون واجب التطبيق.</p>
-        <h2>ثالثاً: المهام والمسؤوليات</h2>
+        <h2>ثالثاً: الغرض من الوظيفة والمهام والمسؤوليات والمؤهلات</h2>
         ' . $jobDescriptionNotice . '
         <p>' . $dutiesText . '</p>
         <h2>رابعاً: ساعات العمل والإجازات</h2>
