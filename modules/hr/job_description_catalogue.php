@@ -30,12 +30,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $responsibilities = trim((string)($_POST['responsibilities'] ?? ''));
             $qualifications = trim((string)($_POST['qualifications'] ?? ''));
             $reportingTo = trim((string)($_POST['reporting_to'] ?? ''));
+            $roleTerms = trim((string)($_POST['role_specific_terms'] ?? ''));
             foreach ([
                 'المسمى الوظيفي' => [$title, 180],
                 'الغرض الوظيفي' => [$purpose, 5000],
                 'المسؤوليات' => [$responsibilities, 12000],
                 'المؤهلات' => [$qualifications, 5000],
                 'جهة الإشراف' => [$reportingTo, 180],
+                'بنود العقد الخاصة بالوظيفة' => [$roleTerms, 8000],
             ] as $label => [$value, $limit]) {
                 if (mb_strlen($value, 'UTF-8') > $limit) {
                     throw new InvalidArgumentException('تجاوز أحد الحقول الحد المسموح به: ' . $label . '.');
@@ -54,24 +56,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (!$before) {
                     throw new RuntimeException('الوصف الوظيفي المطلوب غير موجود.');
                 }
+                if ($title !== (string)$before['position_title']) {
+                    $linkedEmployees = (int)(dbFetchOne(
+                        'SELECT COUNT(*) AS total FROM employees WHERE TRIM(position) = ?',
+                        [(string)$before['position_title']]
+                    )['total'] ?? 0);
+                    if ($linkedEmployees > 0) {
+                        throw new InvalidArgumentException('لا يمكن تغيير المسمى هنا لأنه مرتبط بموظفين. حدّث المسمى في سجلات الموظفين أولاً ثم أنشئ/حدّث وصف المسمى الجديد.');
+                    }
+                }
                 $stmt = $pdo->prepare(
                     'UPDATE hr_job_description_templates
                      SET position_title = ?, role_purpose = ?, responsibilities = ?, qualifications = ?,
-                         reporting_to = ?, description_status = ?, is_active = ?, updated_by = ?
+                         reporting_to = ?, role_specific_terms = ?, description_status = ?, is_active = ?, updated_by = ?
                      WHERE id = ?'
                 );
                 $stmt->execute([$title, $purpose ?: null, $responsibilities ?: null, $qualifications ?: null,
-                    $reportingTo ?: null, $status, $active, Session::getUserID(), $editingId]);
+                    $reportingTo ?: null, $roleTerms ?: null, $status, $active, Session::getUserID(), $editingId]);
                 $actionLabel = 'UPDATE';
             } else {
                 $stmt = $pdo->prepare(
                     'INSERT INTO hr_job_description_templates
-                     (position_title, role_purpose, responsibilities, qualifications, reporting_to,
+                     (position_title, role_purpose, responsibilities, qualifications, reporting_to, role_specific_terms,
                       description_status, is_active, created_by, updated_by)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
                 );
                 $stmt->execute([$title, $purpose ?: null, $responsibilities ?: null, $qualifications ?: null,
-                    $reportingTo ?: null, $status, $active, Session::getUserID(), Session::getUserID()]);
+                    $reportingTo ?: null, $roleTerms ?: null, $status, $active, Session::getUserID(), Session::getUserID()]);
                 $editingId = (int)$pdo->lastInsertId();
                 $actionLabel = 'CREATE';
                 $before = null;
@@ -86,7 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         json_encode([
                             'position_title' => $title, 'role_purpose' => $purpose,
                             'responsibilities' => $responsibilities, 'qualifications' => $qualifications,
-                            'reporting_to' => $reportingTo, 'description_status' => $status, 'is_active' => $active
+                            'reporting_to' => $reportingTo, 'role_specific_terms' => $roleTerms, 'description_status' => $status, 'is_active' => $active
                         ], JSON_UNESCAPED_UNICODE),
                         $_SERVER['REMOTE_ADDR'] ?? '', $_SERVER['HTTP_USER_AGENT'] ?? ''
                     ]
@@ -139,6 +150,7 @@ require_once __DIR__ . '/../../includes/header.php';
     <div class="jd-field jd-full"><label for="role_purpose">الغرض من الوظيفة</label><textarea id="role_purpose" name="role_purpose" maxlength="5000"><?= e($editing['role_purpose'] ?? '') ?></textarea></div>
     <div class="jd-field jd-full"><label for="responsibilities">المهام والمسؤوليات الأساسية</label><textarea id="responsibilities" name="responsibilities" maxlength="12000"><?= e($editing['responsibilities'] ?? '') ?></textarea></div>
     <div class="jd-field jd-full"><label for="qualifications">المؤهلات والخبرات المطلوبة (بعد اعتمادها داخلياً)</label><textarea id="qualifications" name="qualifications" maxlength="5000"><?= e($editing['qualifications'] ?? '') ?></textarea></div>
+    <div class="jd-field jd-full"><label for="role_specific_terms">بنود إضافية خاصة بهذا المسمى في العقد (اختيارية)</label><textarea id="role_specific_terms" name="role_specific_terms" maxlength="8000" placeholder="تُترك فارغة ما لم توجد شروط مهنية خاصة موثقة ومعتمدة لهذا المسمى."><?= e($editing['role_specific_terms'] ?? '') ?></textarea><small>هذه البنود تُضاف إلى الشروط الخاصة للعقد عند اختيار الموظف؛ لا تضع هنا استحقاقات قانونية غير متحقق منها.</small></div>
     <div class="jd-field"><label for="description_status">حالة الوصف</label><select id="description_status" name="description_status" <?= $canApprove ? '' : 'disabled' ?>><option value="needs_review" <?= ($editing['description_status'] ?? 'needs_review') === 'needs_review' ? 'selected' : '' ?>>يحتاج مراجعة HR</option><?php if ($canApprove): ?><option value="approved" <?= ($editing['description_status'] ?? '') === 'approved' ? 'selected' : '' ?>>معتمد داخلياً</option><?php endif; ?></select><?php if (!$canApprove): ?><small>اعتماد الوصف متاح لمدير الموارد البشرية أو مدير النظام.</small><input type="hidden" name="description_status" value="needs_review"><?php endif; ?></div>
     <div class="jd-field d-flex align-items-center gap-2 pt-4"><input class="form-check-input mt-0" type="checkbox" id="is_active" name="is_active" value="1" <?= !isset($editing['is_active']) || (int)$editing['is_active'] === 1 ? 'checked' : '' ?>><label for="is_active" class="mb-0">متاح للاستخدام في العقود</label></div>
    </div>
