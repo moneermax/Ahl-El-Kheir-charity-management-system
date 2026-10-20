@@ -168,3 +168,19 @@ Added procedural helpers in `modules/hr/lib_payroll_transfer.php` and the author
 - Migration `2026-10-20_hr_fm_payroll_transfer_workflow.sql` remains unapplied. The page checks whether both new tables exist before showing the new controls, so pulling source alone does not make the page depend on a missing table for its normal payroll listing.
 
 **Verification boundary:** source changes are committed to `main`; the available GitHub source editor does not provide local PHP lint/runtime evidence. Local syntax checks and the migration/runtime checks remain pending. No database migration was run and no payroll/accounting rows were changed by these source edits.
+
+
+## 2026-10-20 — Step 5 source checkpoint: explicit transfer confirmation and completion gates
+
+The next source checkpoint is committed on `main`:
+
+- The FM page now uses a CSRF-protected `confirm_transfer` action. The legacy generic `update_status=paid` path is explicitly rejected, so payment cannot bypass the dedicated confirmation action.
+- Confirmation locks the payroll row and its proof row, requires an approved payroll, a readable stored file in `prepared` state, and an active saved payment account. Historical evidence cannot confirm a new transfer. The transaction updates payroll to paid, posts the existing accounting journal, applies the existing salary-advance accounting behavior, and changes proof state to `confirmed`; any failure rolls the transaction back.
+- Account overrides are rejected once a proof is attached, preventing the saved payment account from drifting after evidence preparation. Upload now locks the payroll row during proof insertion to serialize it against confirmation; file bytes are removed if DB persistence/commit fails.
+- `hrPayrollNotifyStatementAvailable()` now returns a boolean: an existing matching recipient/link/title notification counts as success, a successful insert counts as success, and missing/inactive employee links or lookup/insert exceptions count as failure. Notifications remain after financial commit and cannot roll back the committed accounting.
+- GM period completion retains the existing eligible employee policy and now requires paid + accounting posted + journal ID, proof state `confirmed` or `legacy_evidence`, and a successfully recorded employee statement notification for every eligible employee. A completion evaluation retries missing employee notifications; GM notice remains idempotent by recipient/link/title and is withheld while any employee gate is incomplete.
+- The payroll generation action applies a saved period default to unassigned draft rows. Saving a period default preserves all already assigned row-level choices. Group/individual account changes remain limited to approved rows and reject rows that already have proof.
+
+### Verification boundary and deployment gate
+
+The PHP source is committed, but PHP lint/runtime verification could not be run against the user's Windows/XAMPP checkout from the remote source editor. A network attempt to create a disposable syntax-check checkout failed because this execution environment cannot resolve GitHub; no alternate or obsolete database was used. The migration `2026-10-20_hr_fm_payroll_transfer_workflow.sql` is still **not applied**. Before operational use, pull `main`, run `php -l` on all changed PHP files, apply the reviewed migration through the project's migration process, and perform a focused local test on a safe approved payroll/proof path without touching unrelated closed modules. No real payroll/accounting records were changed by this source work.
