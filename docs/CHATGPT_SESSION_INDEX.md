@@ -1174,3 +1174,8 @@ Committed the follow-up to `modules/hr/payroll.php` and `modules/hr/lib_payroll_
 ### FM payroll workflow redesign — 2026-10-20
 
 Step 2 source audit is documented in `docs/HR_FM_PAYROLL_TABLE_USABILITY_CONTINUATION.md`. Current account resolution, paid/accounting coupling, notification completion gap, statement authorization boundary, private storage requirement, proposed proof/default model and schema-retrieval blocker are recorded there. No application or database changes were made. Migration work is gated on verified local schema and storage conventions.
+
+
+### FM payroll workflow redesign — 2026-10-20 Step 2 closed
+
+Local schema output has been reviewed and the proposed data model finalized at design level. The continuation document records exact schema facts, account-policy boundary, period default, individual proof/evidence states, private authorized streaming, legacy paid evidence, employee notification success and GM completion requirements. No application/database changes yet. Proceed to authoring the migration and storage contract as the next separately documented step.
