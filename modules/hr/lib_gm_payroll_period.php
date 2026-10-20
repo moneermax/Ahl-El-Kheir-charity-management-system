@@ -5,7 +5,7 @@ declare(strict_types=1);
  * Returns the employees eligible for the selected payroll period using the
  * same period-end salary-history, hire-date and working-state rules as payroll
  * generation. Completion requires every eligible employee to have a paid,
- * accounting-posted payroll with a journal entry.
+ * accounting-posted payroll with a journal entry, accepted proof, and a recorded employee statement notification.
  */
 function hrGmPayrollPeriodState(PDO $pdo, int $month, int $year): array
 {
@@ -13,7 +13,11 @@ function hrGmPayrollPeriodState(PDO $pdo, int $month, int $year): array
         throw new InvalidArgumentException('فترة الرواتب غير صالحة.');
     }
 
+    require_once __DIR__ . '/lib_payroll_transfer.php';
+    $transferSchemaAvailable = hrPayrollTransferSchemaAvailable($pdo);
     $periodEnd = date('Y-m-t', strtotime(sprintf('%04d-%02d-01', $year, $month)));
+    $proofSelect = $transferSchemaAvailable ? 'pp.proof_state AS proof_state' : 'NULL AS proof_state';
+    $proofJoin = $transferSchemaAvailable ? 'LEFT JOIN hr_payroll_payment_proofs pp ON pp.payroll_id = p.id' : '';
     $candidates = dbFetchAll(
         "SELECT e.id AS employee_id, e.employee_code, e.full_name,
                 s.basic_salary AS effective_basic_salary,
@@ -22,7 +26,8 @@ function hrGmPayrollPeriodState(PDO $pdo, int $month, int $year): array
                 p.allowances, p.overtime, p.deductions,
                 p.attendance_deduction, p.salary_advance_deduction,
                 p.incentive_amount, p.net_salary, p.payment_date,
-                p.accounting_entry_id, p.accounting_status, p.status
+                p.accounting_entry_id, p.accounting_status, p.status,
+                $proofSelect
          FROM employees e
          JOIN hr_employee_salary_history s ON s.id = (
              SELECT s2.id
@@ -35,6 +40,7 @@ function hrGmPayrollPeriodState(PDO $pdo, int $month, int $year): array
          )
          LEFT JOIN payroll p
            ON p.employee_id = e.id AND p.month = ? AND p.year = ?
+         $proofJoin
          WHERE (e.hire_date IS NULL OR e.hire_date <= ?)
          ORDER BY e.full_name ASC, e.id ASC",
         [$periodEnd, $periodEnd, $month, $year, $periodEnd]
@@ -63,8 +69,16 @@ function hrGmPayrollPeriodState(PDO $pdo, int $month, int $year): array
         $isPaidAndPosted = ($candidate['status'] ?? '') === 'paid'
             && ($candidate['accounting_status'] ?? '') === 'posted'
             && (int)($candidate['accounting_entry_id'] ?? 0) > 0;
-        $candidate['completion_paid'] = $isPaidAndPosted;
-        if ($isPaidAndPosted) {
+        $hasAcceptedProof = in_array((string)($candidate['proof_state'] ?? ''), ['confirmed', 'legacy_evidence'], true);
+        $employeeNotificationRecorded = false;
+        if ($transferSchemaAvailable && $isPaidAndPosted && $hasAcceptedProof && (int)($candidate['payroll_id'] ?? 0) > 0) {
+            $employeeNotificationRecorded = hrPayrollNotifyStatementAvailable($pdo, (int)$candidate['payroll_id']);
+        }
+        $rowComplete = $isPaidAndPosted && $hasAcceptedProof && $employeeNotificationRecorded;
+        $candidate['completion_paid'] = $rowComplete;
+        $candidate['completion_has_proof'] = $hasAcceptedProof;
+        $candidate['completion_employee_notification'] = $employeeNotificationRecorded;
+        if ($rowComplete) {
             $paidCount++;
         }
         $eligible[] = $candidate;
