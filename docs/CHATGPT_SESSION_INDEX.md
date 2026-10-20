@@ -1190,3 +1190,15 @@ Committed period-level payment account settings, approved-row individual/group a
 
 ### FM payroll workflow redesign — 2026-10-20 Step 5 source checkpoint
 Added a CSRF-protected explicit transfer-confirmation action, proof/account gates, transactional proof confirmation + paid status + existing accounting posting, notification success reporting, and GM completion checks for proof plus employee statement notification. Generic paid-status POST is blocked. Source is committed on `main`; migration not applied and local PHP lint/runtime checks pending. See `docs/HR_FM_PAYROLL_TABLE_USABILITY_CONTINUATION.md` before proceeding.
+
+## 2026-10-20 — Initial Salary Capture at Employee Account Creation
+
+Active issue: September 2026 draft payrolls contain zero basic salary for 18 employees because their matching salary-history rows are zero and the positive rows shown in the user-provided query begin on 2026-10-01. Do not copy October salaries backward or approve these drafts without verified September salary facts.
+
+Source changes now on main:
+- Shared account-creation form captures a required hire date and positive initial monthly basic salary.
+- The canonical user/employee provisioning flow passes those values into employee creation.
+- Initial salary history is created with the hire date as its effective start; payroll continues to select salary history effective at each period end.
+- No schema migration was needed for these source changes.
+
+Status: SOURCE CHANGES COMMITTED; local PHP lint and real XAMPP/browser verification are still pending. The pre-existing September salary data is not repaired by this onboarding change and requires authoritative historical amounts before any correction.
