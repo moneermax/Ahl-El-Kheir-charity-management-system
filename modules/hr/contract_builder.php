@@ -233,6 +233,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
 
         $pdf->SetFont('aealarabiya', '', 10.5);
         $pdf->writeHTML($html, true, false, true, false, '');
+        header('Cache-Control: private, no-store, max-age=0');
+        header('Pragma: no-cache');
+        header('X-Content-Type-Options: nosniff');
         $pdf->Output('Ahl-El-Kheir-Employment-Contract.pdf', 'I');
         exit;
     } catch (Throwable $e) {
