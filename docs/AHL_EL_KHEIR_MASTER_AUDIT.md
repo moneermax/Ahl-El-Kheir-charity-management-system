@@ -3667,3 +3667,7 @@ Source evidence and constraints are documented in `docs/HR_FM_PAYROLL_TABLE_USAB
 ### 2026-10-20 — FM payroll workflow redesign Step 2
 
 Schema evidence confirms payroll uses unsigned integer keys, InnoDB, existing per-row `payment_account_id`, and no proof or period-default table. `employees.user_id` is nullable; notification completion must account for missing linked users. The existing resolver accepts any active account and defaults to code 1200, so the redesign preserves that behavior absent a separate policy decision. Design and state-transition requirements are in `docs/HR_FM_PAYROLL_TABLE_USABILITY_CONTINUATION.md`. No schema/source/data changed. Next: author migration and private proof storage contract; do not apply DDL before reviewing the exact migration.
+
+### 2026-10-20 — FM payroll workflow redesign Step 3
+
+A migration draft was committed as `f1225411c429f0b0eb9486ccec03f6be02e1ed8a`: `database/migrations/2026-10-20_hr_fm_payroll_transfer_workflow.sql`. It adds period default-account settings and private proof metadata without modifying payroll rows. The continuation document records the storage security contract and state semantics. The migration has not been executed and no PHP/data changes were made. Review the draft and verify the local migration process before applying.
