@@ -496,7 +496,7 @@ require_once __DIR__ . '/../../includes/header.php';
   }
   function addRepeatableItem(container,name,value=''){
     const row=document.createElement('div');row.className='cb-repeat-row';
-    const textarea=document.createElement('textarea');textarea.name=name;textarea.maxLength=5000;textarea.value=value;textarea.setAttribute('aria-label',name==='role_purpose[]'?'بند من الغرض من الوظيفة':name==='responsibilities[]'?'مهمة أو مسؤولية أساسية':name==='qualifications[]'?'مؤهل أو خبرة مطلوبة':'شرط خاص أو بند مرتبط بالمسمى');
+    const textarea=document.createElement('textarea');textarea.name=name;textarea.maxLength=name==='special_terms[]'?5000:1000;textarea.value=value;textarea.setAttribute('aria-label',name==='role_purpose[]'?'بند من الغرض من الوظيفة':name==='responsibilities[]'?'مهمة أو مسؤولية أساسية':name==='qualifications[]'?'مؤهل أو خبرة مطلوبة':'شرط خاص أو بند مرتبط بالمسمى');
     const remove=document.createElement('button');remove.type='button';remove.className='btn btn-outline-danger btn-sm cb-remove-item';remove.innerHTML='<i class="fa-solid fa-trash"></i> حذف';
     row.append(textarea,remove);container.appendChild(row);
   }
