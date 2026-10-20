@@ -15,24 +15,41 @@ if (!Session::isLoggedIn() || !in_array(Session::getUserRole(), $allowedRoles, t
 
 $pdo = db();
 $employees = dbFetchAll(
-    "SELECT e.id, e.employee_code, e.full_name, e.national_id, e.phone, e.email,
-            e.address, e.position, e.basic_salary, d.name_ar AS department_name
+    "SELECT e.id, e.user_id, e.employee_code, e.full_name, e.national_id, e.phone, e.email,
+            e.address, e.position, e.basic_salary, d.name_ar AS department_name,
+            r.code AS system_role_code, r.name_ar AS system_role_name
      FROM employees e
      LEFT JOIN departments d ON d.id = e.department_id
+     LEFT JOIN users u ON u.id = e.user_id
+     LEFT JOIN roles r ON r.id = u.role_id
      ORDER BY e.full_name",
     []
 );
 $jobDescriptions = dbFetchAll(
-    "SELECT id, position_title, role_purpose, responsibilities, qualifications, reporting_to, role_specific_terms, description_status
+    "SELECT id, position_title, system_role_code, role_purpose, responsibilities, qualifications, reporting_to, role_specific_terms, description_status
      FROM hr_job_description_templates
      WHERE is_active = 1
-     ORDER BY position_title",
+     ORDER BY position_title, system_role_code",
     []
 );
 $jobDescriptionByPosition = [];
+$jobDescriptionByPositionRole = [];
 foreach ($jobDescriptions as $description) {
-    $jobDescriptionByPosition[trim((string)$description['position_title'])] = $description;
+    $positionKey = trim((string)$description['position_title']);
+    $systemRoleCode = trim((string)($description['system_role_code'] ?? ''));
+    if ($systemRoleCode === '') {
+        $jobDescriptionByPosition[$positionKey] = $description;
+    } else {
+        $jobDescriptionByPositionRole[$positionKey . '|' . $systemRoleCode] = $description;
+    }
 }
+$jobDescriptionForEmployee = static function (array $employee) use ($jobDescriptionByPosition, $jobDescriptionByPositionRole): ?array {
+    $position = trim((string)($employee['position'] ?? ''));
+    $roleCode = trim((string)($employee['system_role_code'] ?? ''));
+    if ($position === '') return null;
+    return ($roleCode !== '' ? ($jobDescriptionByPositionRole[$position . '|' . $roleCode] ?? null) : null)
+        ?? ($jobDescriptionByPosition[$position] ?? null);
+};
 $organizationSettings = [];
 foreach (dbFetchAll(
     "SELECT setting_key, setting_value FROM settings
@@ -54,9 +71,21 @@ function akContractTemplateText(?array $template): string
         'جهة الإشراف' => $template['reporting_to'] ?? '',
     ] as $label => $value) {
         $value = trim((string)$value);
-        if ($value !== '') $parts[] = $label . ': ' . $value;
+        if ($value === '') continue;
+        if ($label === 'المهام والمسؤوليات') {
+            $items = preg_split('/\R/u', $value) ?: [];
+            $items = array_values(array_filter(array_map(static function ($item) {
+                return trim((string)preg_replace('/^\s*(?:[•*\-–—]|\d+[.)])\s*/u', '', (string)$item));
+            }, $items), static fn($item) => $item !== ''));
+            if ($items) {
+                $parts[] = $label . ':';
+                foreach ($items as $item) $parts[] = '• ' . $item;
+            }
+        } else {
+            $parts[] = $label . ': ' . $value;
+        }
     }
-    return implode("\n\n", $parts);
+    return implode("\n", $parts);
 }
 
 function akContractValue(array $data, string $key, string $default = ''): string
@@ -67,6 +96,59 @@ function akContractValue(array $data, string $key, string $default = ''): string
 function akContractEscape(string $value): string
 {
     return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+}
+
+function akContractDutiesHtml(string $text): string
+{
+    $lines = preg_split('/\R/u', trim($text)) ?: [];
+    $html = '';
+    $inList = false;
+    $section = '';
+    $closeList = static function () use (&$html, &$inList): void {
+        if ($inList) {
+            $html .= '</ul>';
+            $inList = false;
+        }
+    };
+    foreach ($lines as $line) {
+        $line = trim((string)$line);
+        if ($line === '') {
+            $closeList();
+            continue;
+        }
+        if (preg_match('/^(الغرض الوظيفي|المهام والمسؤوليات|المؤهلات والخبرات|جهة الإشراف)\s*:\s*(.*)$/u', $line, $matches)) {
+            $closeList();
+            $section = (string)$matches[1];
+            $tail = trim((string)$matches[2]);
+            $html .= '<p><strong>' . akContractEscape($section) . ':</strong></p>';
+            if ($tail !== '') {
+                if ($section === 'المهام والمسؤوليات') {
+                    $item = trim((string)preg_replace('/^\s*(?:[•*\-–—]|\d+[.)])\s*/u', '', $tail));
+                    if ($item !== '') {
+                        $html .= '<ul style="margin-right:18px;padding-right:10px;">';
+                        $inList = true;
+                        $html .= '<li>' . akContractEscape($item) . '</li>';
+                    }
+                } else {
+                    $html .= '<p>' . akContractEscape($tail) . '</p>';
+                }
+            }
+            continue;
+        }
+        $item = trim((string)preg_replace('/^\s*(?:[•*\-–—]|\d+[.)])\s*/u', '', $line));
+        if ($section === 'المهام والمسؤوليات') {
+            if (!$inList) {
+                $html .= '<ul style="margin-right:18px;padding-right:10px;">';
+                $inList = true;
+            }
+            $html .= '<li>' . akContractEscape($item) . '</li>';
+        } else {
+            $closeList();
+            $html .= '<p>' . akContractEscape($line) . '</p>';
+        }
+    }
+    $closeList();
+    return $html !== '' ? $html : 'تنفيذ المهام المرتبطة بالوظيفة والوصف الوظيفي والتعليمات المشروعة ذات الصلة.';
 }
 
 function akContractDate(string $value, string $label, bool $required = false): ?string
@@ -95,13 +177,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
         if (!$employeeId || $employeeId < 1) {
             throw new InvalidArgumentException('اختر الموظف المرتبط بالعقد.');
         }
-        $employeeExists = dbFetchOne('SELECT id, position FROM employees WHERE id = ? LIMIT 1', [(int)$employeeId]);
+        $employeeExists = dbFetchOne(
+            'SELECT e.id, e.position, r.code AS system_role_code
+             FROM employees e
+             LEFT JOIN users u ON u.id = e.user_id
+             LEFT JOIN roles r ON r.id = u.role_id
+             WHERE e.id = ? LIMIT 1',
+            [(int)$employeeId]
+        );
         if (!$employeeExists) {
             throw new InvalidArgumentException('الموظف المحدد غير موجود.');
         }
         $employeePosition = trim((string)($employeeExists['position'] ?? ''));
+        $employeeSystemRoleCode = trim((string)($employeeExists['system_role_code'] ?? ''));
         $jobTemplate = $employeePosition !== ''
-            ? ($jobDescriptionByPosition[$employeePosition] ?? null)
+            ? (($employeeSystemRoleCode !== '' ? ($jobDescriptionByPositionRole[$employeePosition . '|' . $employeeSystemRoleCode] ?? null) : null)
+                ?? ($jobDescriptionByPosition[$employeePosition] ?? null))
             : null;
         $jobDescriptionStatus = (string)($jobTemplate['description_status'] ?? 'needs_review');
 
@@ -199,7 +290,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
         if (strlen($data['duties']) > 5000) {
             throw new InvalidArgumentException('الوصف الوظيفي أطول من الحد المسموح به للعقد؛ اختصره من فهرس الأوصاف أو عدّله قبل التوليد.');
         }
-        $dutiesText = $data['duties'] !== '' ? nl2br($v('duties')) : 'تنفيذ المهام المرتبطة بالوظيفة والوصف الوظيفي والتعليمات المشروعة ذات الصلة.';
+        $dutiesText = $data['duties'] !== '' ? akContractDutiesHtml($data['duties']) : 'تنفيذ المهام المرتبطة بالوظيفة والوصف الوظيفي والتعليمات المشروعة ذات الصلة.';
         $jobDescriptionNotice = $jobDescriptionStatus === 'approved'
             ? ''
             : '<p style="color:#8a4b08;background-color:#fff7e6;border:1px solid #e5c07b;padding:5px;"><b>تنبيه داخلي:</b> الوصف الوظيفي لهذا المسمى يحتاج مراجعة واعتماد الموارد البشرية، ولا يُعد وصفاً معتمداً.</p>';
@@ -306,7 +397,7 @@ foreach ($employees as $employee) {
     }
 }
 $selectedPosition = trim((string)($selectedEmployee['position'] ?? ''));
-$selectedJobDescription = $jobDescriptionByPosition[$selectedPosition] ?? null;
+$selectedJobDescription = $jobDescriptionForEmployee($selectedEmployee ?? []);
 $selectedJobDuties = akContractTemplateText($selectedJobDescription);
 $selectedJobStatus = (string)($selectedJobDescription['description_status'] ?? 'needs_review');
 $portalLogoPath = (string)($organizationSettings['site_logo'] ?? 'assets/img/logo.png');
@@ -329,7 +420,7 @@ require_once __DIR__ . '/../../includes/header.php';
     <?= csrf_field() ?>
     <input type="hidden" name="action" value="generate_pdf">
     <div class="cb-card"><div class="cb-head">بيانات العقد والموظف</div><div class="cb-body"><div class="cb-grid">
-      <div class="cb-field cb-full"><label for="employee_id">اختيار ملف الموظف <span class="cb-required">*</span></label><select id="employee_id" name="employee_id" required><option value="">— اختر الموظف —</option><?php foreach ($employees as $employee): ?><option value="<?= (int)$employee['id'] ?>" data-name="<?= e($employee['full_name']) ?>" data-basic-salary="<?= e((string)($employee['basic_salary'] ?? '')) ?>" data-national-id="<?= e($employee['national_id'] ?? '') ?>" data-phone="<?= e($employee['phone'] ?? '') ?>" data-email="<?= e($employee['email'] ?? '') ?>" data-address="<?= e($employee['address'] ?? '') ?>" data-position="<?= e($employee['position'] ?? '') ?>" data-department="<?= e($employee['department_name'] ?? '') ?>" data-supervisor="<?= e((string)(($jobDescriptionByPosition[trim((string)($employee['position'] ?? ''))]['reporting_to'] ?? ''))) ?>" data-duties="<?= e(akContractTemplateText($jobDescriptionByPosition[trim((string)($employee['position'] ?? ''))] ?? null)) ?>" data-description-status="<?= e((string)(($jobDescriptionByPosition[trim((string)($employee['position'] ?? ''))]['description_status'] ?? 'needs_review'))) ?>" data-role-terms="<?= e((string)(($jobDescriptionByPosition[trim((string)($employee['position'] ?? ''))]['role_specific_terms'] ?? ''))) ?>" <?= $selectedEmployeeId === (int)$employee['id'] ? 'selected' : '' ?>><?= e($employee['full_name']) ?> — <?= e($employee['employee_code']) ?></option><?php endforeach; ?></select><small>اختيار الموظف يملأ البيانات المتاحة تلقائياً؛ ويمكنك تعديل الحقول قبل إنشاء PDF.</small></div>
+      <div class="cb-field cb-full"><label for="employee_id">اختيار ملف الموظف <span class="cb-required">*</span></label><select id="employee_id" name="employee_id" required><option value="">— اختر الموظف —</option><?php foreach ($employees as $employee): ?><?php $employeeTemplate = $jobDescriptionForEmployee($employee); ?><option value="<?= (int)$employee['id'] ?>" data-name="<?= e($employee['full_name']) ?>" data-basic-salary="<?= e((string)($employee['basic_salary'] ?? '')) ?>" data-national-id="<?= e($employee['national_id'] ?? '') ?>" data-phone="<?= e($employee['phone'] ?? '') ?>" data-email="<?= e($employee['email'] ?? '') ?>" data-address="<?= e($employee['address'] ?? '') ?>" data-position="<?= e($employee['position'] ?? '') ?>" data-department="<?= e($employee['department_name'] ?? '') ?>" data-supervisor="<?= e((string)($employeeTemplate['reporting_to'] ?? '')) ?>" data-duties="<?= e(akContractTemplateText($employeeTemplate)) ?>" data-description-status="<?= e((string)($employeeTemplate['description_status'] ?? 'needs_review')) ?>" data-role-terms="<?= e((string)($employeeTemplate['role_specific_terms'] ?? '')) ?>" data-system-role="<?= e((string)($employee['system_role_name'] ?? $employee['system_role_code'] ?? '')) ?>" <?= $selectedEmployeeId === (int)$employee['id'] ? 'selected' : '' ?>><?= e($employee['full_name']) ?> — <?= e($employee['employee_code']) ?></option><?php endforeach; ?></select><small>يُحمّل الوصف المطابق للمسمى ودور حساب النظام عند توفره، ثم يستخدم الوصف العام للمسمى كخيار احتياطي. دور النظام دليل على مسارات العمل المتاحة وليس بديلاً عن تأكيد HR للمهام الفعلية.</small></div>
       <div class="cb-field"><label>رقم العقد (اختياري)</label><input name="contract_number" maxlength="80" placeholder="يُستكمل عند التسجيل"></div>
       <div class="cb-field"><label>تاريخ تحرير العقد <span class="cb-required">*</span></label><input type="date" name="issue_date" value="<?= e(date('Y-m-d')) ?>" required></div>
       <div class="cb-field"><label>اسم الموظف <span class="cb-required">*</span></label><input id="employee_name" name="employee_name" maxlength="180" required value="<?= e($selectedEmployee['full_name'] ?? '') ?>"></div>
