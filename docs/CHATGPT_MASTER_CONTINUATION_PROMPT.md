@@ -1163,3 +1163,7 @@ Continue from the Step 2 audit in `docs/HR_FM_PAYROLL_TABLE_USABILITY_CONTINUATI
 ### FM payroll workflow redesign — current state 2026-10-20
 
 Step 2 is closed at the design boundary after reviewing actual local schema output. See `docs/HR_FM_PAYROLL_TABLE_USABILITY_CONTINUATION.md` for the model and required gates. Next: draft the migration and private proof storage contract; document and commit that stage before implementing runtime behavior. Do not change existing account resolution semantics without an explicit business decision. No source/schema/data has been changed by Step 2.
+
+### FM payroll workflow redesign — current continuation 2026-10-20
+
+Step 3 authored a migration draft at `database/migrations/2026-10-20_hr_fm_payroll_transfer_workflow.sql`, commit `f1225411c429f0b0eb9486ccec03f6be02e1ed8a`. Do not claim it is applied. Before application, review the exact SQL and verify the local migration runner and private storage path. Next implementation stage is period account preparation plus proof upload/download; document and commit that stage before implementing the payment confirmation/accounting gate. Full requirements and storage contract are in `docs/HR_FM_PAYROLL_TABLE_USABILITY_CONTINUATION.md`.
