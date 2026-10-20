@@ -63,6 +63,14 @@ $supervisorCandidates = array_values(array_filter($employees, static function ($
     return (int)$employee['id'] !== $selectedEmployeeId;
 }));
 
+function akContractTemplateItems(string $value): array
+{
+    $items = preg_split('/\\R/u', trim($value)) ?: [];
+    return array_values(array_filter(array_map(static function ($item) {
+        return trim((string)preg_replace('/^\\s*(?:[•*\\-–—]|\\d+[.)])\\s*/u', '', (string)$item));
+    }, $items), static fn($item) => $item !== ''));
+}
+
 function akContractTemplateText(?array $template): string
 {
     if (!$template) return '';
@@ -225,7 +233,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
             'annual_leave' => akContractValue($_POST, 'annual_leave', 'وفق قانون العمل السوداني والسياسات المعتمدة'),
             'sick_leave' => akContractValue($_POST, 'sick_leave', 'وفق قانون العمل السوداني والسياسات المعتمدة'),
             'notice_period' => akContractValue($_POST, 'notice_period', 'وفق القانون واجب التطبيق وشروط العقد'),
-            'duties' => implode("\n", array_values(array_filter(array_map(static fn($item) => trim((string)$item), is_array($_POST['duties'] ?? null) ? $_POST['duties'] : [$_POST['duties'] ?? '']), static fn($item) => $item !== ''))),
+            'duties' => (static function (): string {
+                $sections = [];
+                $purpose = array_values(array_filter(array_map(static fn($item) => trim((string)$item), is_array($_POST['role_purpose'] ?? null) ? $_POST['role_purpose'] : [$_POST['role_purpose'] ?? '']), static fn($item) => $item !== ''));
+                $responsibilities = array_values(array_filter(array_map(static fn($item) => trim((string)$item), is_array($_POST['responsibilities'] ?? null) ? $_POST['responsibilities'] : [$_POST['responsibilities'] ?? '']), static fn($item) => $item !== ''));
+                $qualifications = array_values(array_filter(array_map(static fn($item) => trim((string)$item), is_array($_POST['qualifications'] ?? null) ? $_POST['qualifications'] : [$_POST['qualifications'] ?? '']), static fn($item) => $item !== ''));
+                $reportingTo = trim((string)($_POST['reporting_to'] ?? ''));
+                if ($purpose) $sections[] = "الغرض الوظيفي:\n" . implode("\n", array_map(static fn($item) => '• ' . $item, $purpose));
+                if ($responsibilities) $sections[] = "المهام والمسؤوليات:\n" . implode("\n", array_map(static fn($item) => '• ' . $item, $responsibilities));
+                if ($qualifications) $sections[] = "المؤهلات والخبرات:\n" . implode("\n", array_map(static fn($item) => '• ' . $item, $qualifications));
+                if ($reportingTo !== '') $sections[] = "جهة الإشراف: " . $reportingTo;
+                return implode("\n", $sections);
+            })(),
             'job_description_status' => $jobDescriptionStatus,
             'special_terms' => implode("\n", array_values(array_filter(array_map(static fn($item) => trim((string)$item), is_array($_POST['special_terms'] ?? null) ? $_POST['special_terms'] : [$_POST['special_terms'] ?? '']), static fn($item) => $item !== ''))),
         ];
@@ -401,6 +420,10 @@ foreach ($employees as $employee) {
 }
 $selectedPosition = trim((string)($selectedEmployee['position'] ?? ''));
 $selectedJobDescription = $jobDescriptionForEmployee($selectedEmployee ?? []);
+$selectedJobPurposeItems = akContractTemplateItems((string)($selectedJobDescription['role_purpose'] ?? ''));
+$selectedJobResponsibilityItems = akContractTemplateItems((string)($selectedJobDescription['responsibilities'] ?? ''));
+$selectedJobQualificationItems = akContractTemplateItems((string)($selectedJobDescription['qualifications'] ?? ''));
+$selectedJobReportingTo = trim((string)($selectedJobDescription['reporting_to'] ?? ''));
 $selectedJobStatus = (string)($selectedJobDescription['description_status'] ?? 'needs_review');
 $portalLogoPath = (string)($organizationSettings['site_logo'] ?? 'assets/img/logo.png');
 if ($portalLogoPath === '' || strpos($portalLogoPath, '..') !== false || str_starts_with($portalLogoPath, '/')
@@ -422,7 +445,7 @@ require_once __DIR__ . '/../../includes/header.php';
     <?= csrf_field() ?>
     <input type="hidden" name="action" value="generate_pdf">
     <div class="cb-card"><div class="cb-head">بيانات العقد والموظف</div><div class="cb-body"><div class="cb-grid">
-      <div class="cb-field cb-full"><label for="employee_id">اختيار ملف الموظف <span class="cb-required">*</span></label><select id="employee_id" name="employee_id" required><option value="">— اختر الموظف —</option><?php foreach ($employees as $employee): ?><?php $employeeTemplate = $jobDescriptionForEmployee($employee); ?><option value="<?= (int)$employee['id'] ?>" data-name="<?= e($employee['full_name']) ?>" data-basic-salary="<?= e((string)($employee['basic_salary'] ?? '')) ?>" data-national-id="<?= e($employee['national_id'] ?? '') ?>" data-phone="<?= e($employee['phone'] ?? '') ?>" data-email="<?= e($employee['email'] ?? '') ?>" data-address="<?= e($employee['address'] ?? '') ?>" data-position="<?= e($employee['position'] ?? '') ?>" data-department="<?= e($employee['department_name'] ?? '') ?>" data-duties="<?= e(akContractTemplateText($employeeTemplate)) ?>" data-description-status="<?= e((string)($employeeTemplate['description_status'] ?? 'needs_review')) ?>" data-role-terms="<?= e((string)($employeeTemplate['role_specific_terms'] ?? '')) ?>" data-system-role="<?= e((string)($employee['system_role_name'] ?? $employee['system_role_code'] ?? '')) ?>" <?= $selectedEmployeeId === (int)$employee['id'] ? 'selected' : '' ?>><?= e($employee['full_name']) ?> — <?= e($employee['employee_code']) ?><?php if (!empty($employee['system_role_name'])): ?> — <?= e($employee['system_role_name']) ?><?php endif; ?></option><?php endforeach; ?></select><small>يُحمّل الوصف المطابق للمسمى ودور حساب النظام عند توفره، ثم يستخدم الوصف العام للمسمى كخيار احتياطي. دور النظام دليل على مسارات العمل المتاحة وليس بديلاً عن تأكيد HR للمهام الفعلية.</small></div>
+      <div class="cb-field cb-full"><label for="employee_id">اختيار ملف الموظف <span class="cb-required">*</span></label><select id="employee_id" name="employee_id" required><option value="">— اختر الموظف —</option><?php foreach ($employees as $employee): ?><?php $employeeTemplate = $jobDescriptionForEmployee($employee); ?><option value="<?= (int)$employee['id'] ?>" data-name="<?= e($employee['full_name']) ?>" data-basic-salary="<?= e((string)($employee['basic_salary'] ?? '')) ?>" data-national-id="<?= e($employee['national_id'] ?? '') ?>" data-phone="<?= e($employee['phone'] ?? '') ?>" data-email="<?= e($employee['email'] ?? '') ?>" data-address="<?= e($employee['address'] ?? '') ?>" data-position="<?= e($employee['position'] ?? '') ?>" data-department="<?= e($employee['department_name'] ?? '') ?>" data-purpose="<?= e((string)($employeeTemplate['role_purpose'] ?? '')) ?>" data-responsibilities="<?= e((string)($employeeTemplate['responsibilities'] ?? '')) ?>" data-qualifications="<?= e((string)($employeeTemplate['qualifications'] ?? '')) ?>" data-reporting-to="<?= e((string)($employeeTemplate['reporting_to'] ?? '')) ?>" data-description-status="<?= e((string)($employeeTemplate['description_status'] ?? 'needs_review')) ?>" data-role-terms="<?= e((string)($employeeTemplate['role_specific_terms'] ?? '')) ?>" data-system-role="<?= e((string)($employee['system_role_name'] ?? $employee['system_role_code'] ?? '')) ?>" <?= $selectedEmployeeId === (int)$employee['id'] ? 'selected' : '' ?>><?= e($employee['full_name']) ?> — <?= e($employee['employee_code']) ?><?php if (!empty($employee['system_role_name'])): ?> — <?= e($employee['system_role_name']) ?><?php endif; ?></option><?php endforeach; ?></select><small>يُحمّل الوصف المطابق للمسمى ودور حساب النظام عند توفره، ثم يستخدم الوصف العام للمسمى كخيار احتياطي. دور النظام دليل على مسارات العمل المتاحة وليس بديلاً عن تأكيد HR للمهام الفعلية.</small></div>
       <div class="cb-field"><label>رقم العقد (اختياري)</label><input name="contract_number" maxlength="80" placeholder="يُستكمل عند التسجيل"></div>
       <div class="cb-field"><label>تاريخ تحرير العقد <span class="cb-required">*</span></label><input type="date" name="issue_date" value="<?= e(date('Y-m-d')) ?>" required></div>
       <div class="cb-field"><label>اسم الموظف <span class="cb-required">*</span></label><input id="employee_name" name="employee_name" maxlength="180" required value="<?= e($selectedEmployee['full_name'] ?? '') ?>"></div>
@@ -452,7 +475,10 @@ require_once __DIR__ . '/../../includes/header.php';
       <div class="cb-field cb-full"><label>مدة الإخطار</label><input name="notice_period" maxlength="250" value="وفق القانون واجب التطبيق وشروط العقد"></div>
     </div></div></div>
     <div class="cb-card"><div class="cb-head">تفاصيل إضافية</div><div class="cb-body"><div class="cb-grid">
-      <div class="cb-field cb-full"><label>المهام والمسؤوليات والوصف الوظيفي</label><div id="dutiesFields" class="cb-repeat-list" data-name="duties[]"><?php foreach (preg_split('/\\R/u', trim($selectedJobDuties)) ?: [] as $dutyItem): ?><?php if (trim($dutyItem) !== ''): ?><div class="cb-repeat-row"><textarea name="duties[]" maxlength="5000" aria-label="بند من المهام والمسؤوليات والوصف الوظيفي"><?= e(trim($dutyItem)) ?></textarea><button type="button" class="btn btn-outline-danger btn-sm cb-remove-item" aria-label="حذف البند"><i class="fa-solid fa-trash"></i> حذف</button></div><?php endif; ?><?php endforeach; ?><?php if (trim($selectedJobDuties) === ''): ?><div class="cb-repeat-row"><textarea name="duties[]" maxlength="5000" aria-label="بند من المهام والمسؤوليات والوصف الوظيفي" placeholder="أدخل مهمة أو مسؤولية أو وصفاً وظيفياً"></textarea><button type="button" class="btn btn-outline-danger btn-sm cb-remove-item" aria-label="حذف البند"><i class="fa-solid fa-trash"></i> حذف</button></div><?php endif; ?></div><button type="button" class="btn btn-outline-primary btn-sm cb-add-item" data-target="dutiesFields"><i class="fa-solid fa-plus me-1"></i> إضافة بند</button><small id="jobDescriptionStatus" class="d-block mt-2 <?= $selectedJobStatus === 'approved' ? 'text-success' : 'text-warning-emphasis' ?>"><?= $selectedJobStatus === 'approved' ? 'الوصف الوظيفي معتمد داخلياً.' : 'تنبيه: لا يوجد وصف معتمد لهذا المسمى؛ راجع فهرس الأوصاف الوظيفية قبل اعتماد العقد.' ?></small></div>
+      <div class="cb-field cb-full"><label>الغرض من الوظيفة</label><div id="purposeFields" class="cb-repeat-list" data-name="role_purpose[]"><?php foreach ($selectedJobPurposeItems as $purposeItem): ?><div class="cb-repeat-row"><textarea name="role_purpose[]" maxlength="1000" aria-label="بند من الغرض من الوظيفة"><?= e($purposeItem) ?></textarea><button type="button" class="btn btn-outline-danger btn-sm cb-remove-item" aria-label="حذف البند"><i class="fa-solid fa-trash"></i> حذف</button></div><?php endforeach; ?><?php if (!$selectedJobPurposeItems): ?><div class="cb-repeat-row"><textarea name="role_purpose[]" maxlength="1000" aria-label="بند من الغرض من الوظيفة" placeholder="الغرض أو النتيجة الأساسية التي وُجدت الوظيفة لتحقيقها"></textarea><button type="button" class="btn btn-outline-danger btn-sm cb-remove-item" aria-label="حذف البند"><i class="fa-solid fa-trash"></i> حذف</button></div><?php endif; ?></div><button type="button" class="btn btn-outline-primary btn-sm cb-add-item" data-target="purposeFields"><i class="fa-solid fa-plus me-1"></i> إضافة بند للغرض</button></div>
+      <div class="cb-field cb-full"><label>المهام والمسؤوليات الأساسية</label><div id="responsibilitiesFields" class="cb-repeat-list" data-name="responsibilities[]"><?php foreach ($selectedJobResponsibilityItems as $responsibilityItem): ?><div class="cb-repeat-row"><textarea name="responsibilities[]" maxlength="1000" aria-label="مهمة أو مسؤولية أساسية"><?= e($responsibilityItem) ?></textarea><button type="button" class="btn btn-outline-danger btn-sm cb-remove-item" aria-label="حذف البند"><i class="fa-solid fa-trash"></i> حذف</button></div><?php endforeach; ?><?php if (!$selectedJobResponsibilityItems): ?><div class="cb-repeat-row"><textarea name="responsibilities[]" maxlength="1000" aria-label="مهمة أو مسؤولية أساسية" placeholder="مهمة أو مسؤولية واحدة مستمدة من العمل الفعلي"></textarea><button type="button" class="btn btn-outline-danger btn-sm cb-remove-item" aria-label="حذف البند"><i class="fa-solid fa-trash"></i> حذف</button></div><?php endif; ?></div><button type="button" class="btn btn-outline-primary btn-sm cb-add-item" data-target="responsibilitiesFields"><i class="fa-solid fa-plus me-1"></i> إضافة مسؤولية</button><small id="jobDescriptionStatus" class="d-block mt-2 <?= $selectedJobStatus === 'approved' ? 'text-success' : 'text-warning-emphasis' ?>"><?= $selectedJobStatus === 'approved' ? 'الوصف الوظيفي معتمد داخلياً.' : 'المسودة تحتاج مراجعة واعتماد الموارد البشرية، ويجب مطابقة البنود مع العمل الفعلي قبل اعتماد العقد.' ?></small></div>
+      <div class="cb-field cb-full"><label>المؤهلات والخبرات المطلوبة (مسودة للمراجعة)</label><div id="qualificationsFields" class="cb-repeat-list" data-name="qualifications[]"><?php foreach ($selectedJobQualificationItems as $qualificationItem): ?><div class="cb-repeat-row"><textarea name="qualifications[]" maxlength="1000" aria-label="مؤهل أو خبرة مطلوبة"><?= e($qualificationItem) ?></textarea><button type="button" class="btn btn-outline-danger btn-sm cb-remove-item" aria-label="حذف البند"><i class="fa-solid fa-trash"></i> حذف</button></div><?php endforeach; ?><?php if (!$selectedJobQualificationItems): ?><div class="cb-repeat-row"><textarea name="qualifications[]" maxlength="1000" aria-label="مؤهل أو خبرة مطلوبة" placeholder="تُحدد المؤهلات بعد مراجعة HR والمشرف المختص"></textarea><button type="button" class="btn btn-outline-danger btn-sm cb-remove-item" aria-label="حذف البند"><i class="fa-solid fa-trash"></i> حذف</button></div><?php endif; ?></div><button type="button" class="btn btn-outline-primary btn-sm cb-add-item" data-target="qualificationsFields"><i class="fa-solid fa-plus me-1"></i> إضافة مؤهل أو خبرة</button></div>
+      <div class="cb-field cb-full"><label for="reporting_to">جهة الإشراف الوظيفي (وفق فهرس الوصف)</label><input id="reporting_to" name="reporting_to" maxlength="180" value="<?= e($selectedJobReportingTo) ?>" placeholder="تُراجع وتؤكد من الموارد البشرية"></div>
       <div class="cb-field cb-full"><label>الشروط الخاصة المتفق عليها / البنود المرتبطة بالمسمى</label><div id="specialTermsFields" class="cb-repeat-list" data-name="special_terms[]"><?php foreach (preg_split('/\\R/u', trim((string)($selectedJobDescription['role_specific_terms'] ?? ''))) ?: [] as $termItem): ?><?php if (trim($termItem) !== ''): ?><div class="cb-repeat-row"><textarea name="special_terms[]" maxlength="5000" aria-label="شرط خاص أو بند مرتبط بالمسمى"><?= e(trim($termItem)) ?></textarea><button type="button" class="btn btn-outline-danger btn-sm cb-remove-item" aria-label="حذف البند"><i class="fa-solid fa-trash"></i> حذف</button></div><?php endif; ?><?php endforeach; ?><?php if (trim((string)($selectedJobDescription['role_specific_terms'] ?? '')) === ''): ?><div class="cb-repeat-row"><textarea name="special_terms[]" maxlength="5000" aria-label="شرط خاص أو بند مرتبط بالمسمى" placeholder="أدخل شرطاً خاصاً متفقاً عليه كتابةً (اختياري)"></textarea><button type="button" class="btn btn-outline-danger btn-sm cb-remove-item" aria-label="حذف البند"><i class="fa-solid fa-trash"></i> حذف</button></div><?php endif; ?></div><button type="button" class="btn btn-outline-primary btn-sm cb-add-item" data-target="specialTermsFields"><i class="fa-solid fa-plus me-1"></i> إضافة شرط أو بند</button><small class="d-block mt-2">يُحمّل النص من فهرس المسمى الوظيفي عند توفره، ويمكن تعديله لهذا العقد فقط.</small></div>
     </div><div class="cb-actions"><button type="submit" class="btn btn-primary"><i class="fa-solid fa-file-pdf me-1"></i> عرض العقد بصيغة PDF</button><a class="btn btn-outline-secondary" href="<?= e(APP_URL) ?>modules/hr/contracts.php<?= $selectedEmployeeId ? '?employee_id=' . $selectedEmployeeId . '&view=add' : '' ?>">العودة إلى العقود والرواتب</a></div></div></div>
   </form>
@@ -470,7 +496,7 @@ require_once __DIR__ . '/../../includes/header.php';
   }
   function addRepeatableItem(container,name,value=''){
     const row=document.createElement('div');row.className='cb-repeat-row';
-    const textarea=document.createElement('textarea');textarea.name=name;textarea.maxLength=5000;textarea.value=value;textarea.setAttribute('aria-label',name==='duties[]'?'بند من المهام والمسؤوليات والوصف الوظيفي':'شرط خاص أو بند مرتبط بالمسمى');
+    const textarea=document.createElement('textarea');textarea.name=name;textarea.maxLength=5000;textarea.value=value;textarea.setAttribute('aria-label',name==='role_purpose[]'?'بند من الغرض من الوظيفة':name==='responsibilities[]'?'مهمة أو مسؤولية أساسية':name==='qualifications[]'?'مؤهل أو خبرة مطلوبة':'شرط خاص أو بند مرتبط بالمسمى');
     const remove=document.createElement('button');remove.type='button';remove.className='btn btn-outline-danger btn-sm cb-remove-item';remove.innerHTML='<i class="fa-solid fa-trash"></i> حذف';
     row.append(textarea,remove);container.appendChild(row);
   }
@@ -496,7 +522,10 @@ require_once __DIR__ . '/../../includes/header.php';
   select.addEventListener('change',function(){refreshSupervisorOptions();
     const option=this.options[this.selectedIndex];
     if(!option||!option.value){
-      setRepeatableItems('dutiesFields','duties[]','');
+      setRepeatableItems('purposeFields','role_purpose[]','');
+      setRepeatableItems('responsibilitiesFields','responsibilities[]','');
+      setRepeatableItems('qualificationsFields','qualifications[]','');
+      const reportingTo=document.getElementById('reporting_to');if(reportingTo)reportingTo.value='';
       setRepeatableItems('specialTermsFields','special_terms[]','');
       const status=document.getElementById('jobDescriptionStatus');
       if(status){status.textContent='اختر موظفاً لتحميل بيانات الوصف الوظيفي.';status.className='text-warning-emphasis';}
@@ -507,7 +536,10 @@ require_once __DIR__ . '/../../includes/header.php';
       const value=option.dataset[key];
       if(input&&value!==undefined)input.value=value;
     });
-    setRepeatableItems('dutiesFields','duties[]',option.dataset.duties||'');
+    setRepeatableItems('purposeFields','role_purpose[]',option.dataset.purpose||'');
+    setRepeatableItems('responsibilitiesFields','responsibilities[]',option.dataset.responsibilities||'');
+    setRepeatableItems('qualificationsFields','qualifications[]',option.dataset.qualifications||'');
+    const reportingTo=document.getElementById('reporting_to');if(reportingTo)reportingTo.value=option.dataset.reportingTo||'';
     setRepeatableItems('specialTermsFields','special_terms[]',option.dataset.roleTerms||'');
     const status=document.getElementById('jobDescriptionStatus');
     if(status){
