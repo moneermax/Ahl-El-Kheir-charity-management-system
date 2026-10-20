@@ -73,6 +73,20 @@
             </div>
         </div>
 
+        <div class="section-title"><i class="fas fa-money-check-dollar me-2"></i>بيانات التوظيف والراتب الأساسي</div>
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <label class="form-label">تاريخ التعيين <span class="text-danger">*</span></label>
+                <input type="date" name="hire_date" class="form-control form-control-lg" value="<?php echo e(date('Y-m-d')); ?>" required>
+                <div class="form-text">يُستخدم كتاريخ بداية سجل الراتب الأولي.</div>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">الراتب الأساسي الشهري (SDG) <span class="text-danger">*</span></label>
+                <input type="number" name="basic_salary" class="form-control form-control-lg" min="0.01" step="0.01" required>
+                <div class="form-text">يُحفظ مرة واحدة ويُستخدم تلقائياً في فترات الرواتب حسب تاريخ سريانه.</div>
+            </div>
+        </div>
+
         <div class="section-title"><i class="fas fa-sitemap me-2"></i>التعيين الإداري</div>
         <div class="row g-3 mb-4">
             <div class="col-md-4">
