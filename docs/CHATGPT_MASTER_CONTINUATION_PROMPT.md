@@ -1283,3 +1283,8 @@ The latest source correction is committed on `main`: `modules/hr/contract_builde
 ## 2026-10-20 — HR job-description fallback catalogue clarity
 
 Current continuation is `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`. Commit `6264c897b2bbadb460e0ba0d3e0c029b1443312d` clarifies title-only general fallback rows in the HR catalogue, shows active role-specific template counts, and warns when an empty fallback has role-specific records. Employee-wide SQL evidence showed employee 21 (HR Salary Test) has no active matching template; do not reactivate the intentionally deactivated HR Test row or change employee data without investigation. For **أخصائية شؤون الأمهات**, populated role-specific draft id 20 and empty fallback id 6 are distinct records. Source and docs are committed on main; local PHP lint and browser verification remain pending. Do not rerun migrations for this UI-only change.
+
+
+## Follow-up — null-safe HR fallback counts
+
+Commit `4435226e37405e9a2963dd07af0d1c14f71e7f92` makes catalogue employee counts handle NULL and empty `system_role_code` as general fallback values, matching contract-builder selection. Local PHP lint and browser verification remain pending; no migration is required.
