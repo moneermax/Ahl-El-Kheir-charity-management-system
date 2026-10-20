@@ -1304,3 +1304,12 @@ Apply `database/migrations/2026-10-20_hr_job_description_zzzz_qualification_base
 2. `معرفة أساسية باستخدام الحاسوب وبرامج المكتب.`
 
 Changed descriptions are marked `needs_review`, not approved. Local migration, PHP lint, browser interaction and PDF checks remain pending; continue from `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`.
+
+
+## Latest task — automatic employment contract numbering (2026-10-20)
+
+User approved integrating modules/hr/contract_builder.php with the existing contract register: PDF generation must reserve a unique official number by creating a draft record. Source commit on main: 8ed43dc8c7e0f2e2c5693e1777bfb8324bdc3115.
+
+Implementation details: read-only number field; number generated from saved hr_employee_contracts.id using existing CTR-YYYY-000001 format (year from start date); draft inserted in a transaction and committed only after TCPDF renders to memory; overlapping draft/active periods rejected using the existing helper's rule; one-use session token blocks resubmitting the same form. The builder avoids hrCreateEmployeeContract() because it writes salary history and can update current salary/employment state for current/past start dates. The new path does not alter salary history, employees.basic_salary, or employment state. No migration added.
+
+Not runtime verified yet. On the user's machine, pull main, run D:\xampp\php\php.exe -l modules\hr\contract_builder.php, then use http://localhost:8081/AhlElKheir/modules/hr/contract_builder.php to generate a PDF and verify its number exactly matches the draft row in العقود والرواتب. Verify the draft status, no salary-history/current-salary/employment-state change, overlap rejection, and that resubmitting the same form does not create a second row. Do not mark this complete until evidence is supplied. Continue from docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md.
