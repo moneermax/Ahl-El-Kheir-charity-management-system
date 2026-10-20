@@ -1193,3 +1193,9 @@ Commits: `f0e5fdba4b32e179091478b092eccd5dd10f033f` and `ca14abbd85b490c5025f836
 ### Contract builder validation refinement
 
 Commit `eef4d17e02543e1327ed8cc3db9fee3b916aa11f` adds server-side field-length/email/weekly-hours validation, requires an end date for fixed-term contracts, and removes the assumed nationality default. Continue with local PHP lint and browser/PDF acceptance only; do not begin onboarding integration before acceptance.
+
+## Latest active task — HR role-specific employment contract portal (2026-10-20)
+
+Continue from `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`. Source code and migration are committed on `main`, but the local migration and browser/PDF verification are pending. New migration: `database/migrations/2026-10-20_hr_job_description_catalogue.sql`. New catalogue UI: `modules/hr/job_description_catalogue.php`. Updated portal/PDF builder: `modules/hr/contract_builder.php`. Dashboard shortcut: `dashboard/hr_dashboard.php`.
+
+Next: check the current PHP syntax workflow result, have the user pull `main`, apply the migration to `ahl_el_kheir`, run syntax checks, and verify the role-to-description loading and PDF rendering in the real XAMPP application. Preserve existing `modules/hr/contracts.php` and salary-history behavior. Never invent job descriptions; seeded catalogue entries require HR review. Employee `position` is authoritative, not application permission role. Contract wording requires qualified Sudanese lawyer review before official use. Do not reopen closed modules or repeat unrelated tests.
