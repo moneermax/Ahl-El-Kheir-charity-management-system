@@ -3403,3 +3403,12 @@ The source now has a dedicated CSRF-protected transfer-confirmation action; the 
 The shared user-creation workflow now requires a hire date and a positive initial monthly basic salary, and employee provisioning uses those values to create the initial salary-history record effective on the hire date. Payroll's existing effective-dated salary selection remains the monthly source of truth; salary does not need to be re-entered each month.
 
 Source changes are committed on `main`. Local PHP syntax checks and runtime/browser verification remain pending. This does not repair historical September 2026 drafts: 18 employees were identified with zero payroll salary and zero matching salary-history salary, while positive records shown for most employees start on 2026-10-01. Do not backfill historical salaries without authoritative amounts.
+
+
+## 2026-10-20 — HR employment contract builder: source implementation checkpoint
+
+Added `modules/hr/contract_builder.php` and linked it from `modules/hr/contracts.php`. HR can select an existing employee, edit contract fields, and submit a CSRF-protected form to generate an A4 Arabic RTL PDF using the repository's bundled TCPDF library. The document contains core employment terms and signature blocks and avoids hard-coded statutory leave/probation/notice numbers. This stage makes no database schema changes and does not save draft text or alter employment, salary, payroll or accounting data.
+
+Commits: `f0e5fdba4b32e179091478b092eccd5dd10f033f`, `ca14abbd85b490c5025f8367c1fe2d2caa43f88d`; continuation document: `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`.
+
+**Status: SOURCE ADDED — LOCAL VERIFICATION PENDING.** Do not call the PDF workflow complete until local PHP lint and browser checks confirm role access, CSRF rejection, PDF generation, Arabic RTL rendering, pagination and print quality. Qualified Sudanese legal review is required before official use. The second task—integrating contract preparation and signed-copy upload into employee onboarding—must wait until this PDF workflow is accepted and the actual local schema/storage behavior is inspected.
