@@ -66,11 +66,23 @@ function hrProvisionEmployeeForUser(PDO $pdo, int $userId, array $data, int $cre
      * schema. HR can complete/correct them later. Personal contact fields
      * intentionally remain nullable.
      */
-    $hireDate = date('Y-m-d');
+    $hireDate = trim((string)($data['hire_date'] ?? date('Y-m-d')));
+    $hireDateObject = DateTime::createFromFormat('!Y-m-d', $hireDate);
+    if (!$hireDateObject || $hireDateObject->format('Y-m-d') !== $hireDate) {
+        throw new InvalidArgumentException('تاريخ التعيين غير صالح.');
+    }
+
+    if (!isset($data['basic_salary']) || !is_numeric($data['basic_salary'])) {
+        throw new InvalidArgumentException('الراتب الأساسي مطلوب عند إنشاء حساب الموظف.');
+    }
+    $basicSalary = (float)$data['basic_salary'];
+    if (!is_finite($basicSalary) || $basicSalary <= 0) {
+        throw new InvalidArgumentException('يجب إدخال راتب أساسي أكبر من صفر عند إنشاء حساب الموظف.');
+    }
+
     $position = 'موظف';
     $employmentType = 'full_time';
     $workMode = 'onsite';
-    $basicSalary = 0.00;
 
     $pdo->prepare(
         "INSERT INTO employees
@@ -244,6 +256,8 @@ function hrCreateUserWithEmployee(PDO $pdo, array $data, int $createdBy): array
             'phone' => $phone !== '' ? $phone : null,
             'gender' => $gender,
             'department_id' => $departmentId,
+            'hire_date' => $data['hire_date'] ?? date('Y-m-d'),
+            'basic_salary' => $data['basic_salary'] ?? null,
         ], $createdBy);
 
         $pdo->commit();
