@@ -364,7 +364,7 @@ require_once __DIR__ . '/../../includes/header.php';
       <div class="cb-field"><label>فترة التجربة (المدة/النص المتفق عليه)</label><input name="probation" maxlength="250" placeholder="وفق القانون والاتفاق المكتوب"></div>
       <div class="cb-field"><label>ساعات العمل أسبوعياً</label><input type="number" name="weekly_hours" min="0" max="168" step="0.25"></div>
       <div class="cb-field"><label>أيام العمل</label><input name="working_days" maxlength="180" placeholder="تُحدد وفق الجدول المعتمد"></div>
-      <div class="cb-field"><label>الراتب الأساسي (ج.س) <span class="cb-required">*</span></label><input type="number" name="basic_salary" min="0" step="0.01" required value="<?= e((string)($selectedEmployee['basic_salary'] ?? '')) ?>"></div>
+      <div class="cb-field"><label>الراتب الأساسي (ج.س) <span class="cb-required">*</span></label><input id="basic_salary" type="number" name="basic_salary" min="0" step="0.01" required value="<?= e((string)($selectedEmployee['basic_salary'] ?? '')) ?>"></div>
       <div class="cb-field"><label>دورية الدفع</label><select name="pay_frequency"><option value="monthly">شهرياً</option><option value="weekly">أسبوعياً</option><option value="daily">يومياً</option><option value="hourly">بالساعة</option></select></div>
       <div class="cb-field cb-full"><label>البدلات</label><input name="allowances" maxlength="500" value="لا توجد إلا ما يرد صراحةً في ملحق مكتوب"></div>
       <div class="cb-field cb-full"><label>المزايا الأخرى</label><input name="benefits" maxlength="500" value="وفق السياسات المعتمدة وأحكام القانون واجب التطبيق"></div>
