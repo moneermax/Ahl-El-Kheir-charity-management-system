@@ -3796,3 +3796,8 @@ Audit finding: `modules/hr/contract_builder.php` used a single combined `duties`
 Audit evidence from the employee-wide query: linked employees with known system roles resolve to active role-specific draft records; employee 21 (**HR Salary Test**) has no active matching template. For **أخصائية شؤون الأمهات**, the populated nanny-specific draft (id 20) coexists with an empty title-only fallback (id 6). The contract builder's role-specific-first selection remains the intended behavior; the empty fallback should not be manually populated by copying role-specific content without an HR decision.
 
 Source commit `6264c897b2bbadb460e0ba0d3e0c029b1443312d` clarifies the catalogue by identifying general fallback rows, showing active role-specific counts, and warning on empty general rows where role-specific descriptions exist. Related continuation/status/session documents were updated. Verification boundary remains source-only until local PHP lint and configured XAMPP browser checks pass. No database changes.
+
+
+## Follow-up — null-safe HR fallback counts
+
+Commit `4435226e37405e9a2963dd07af0d1c14f71e7f92` normalizes NULL and empty `system_role_code` values for the catalogue's general-fallback employee-count condition. This is a read/query behavior correction only; no database data or schema was changed. Local PHP lint and browser verification remain pending.
