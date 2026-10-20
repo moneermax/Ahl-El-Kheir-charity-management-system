@@ -3386,3 +3386,7 @@ The account/proof workflow source audit and proposed data model are recorded in 
 ### FM payroll workflow redesign — 2026-10-20 Step 2 closed
 
 The user supplied local `SHOW CREATE TABLE` output for payroll, accounts, employees, users and notifications. Schema and migration conventions were reviewed; the finalized proposed period-default/proof model, explicit transfer-confirmation gate, legacy evidence path, private stream requirements and notification/GM completion gates are recorded in `docs/HR_FM_PAYROLL_TABLE_USABILITY_CONTINUATION.md`. Step 2 is design-only: no migration, source, schema or data was changed. Next step is authoring the migration and private-proof storage contract for review before application.
+
+### FM payroll workflow redesign — 2026-10-20 Step 3 draft
+
+Migration draft `database/migrations/2026-10-20_hr_fm_payroll_transfer_workflow.sql` was added in commit `f1225411c429f0b0eb9486ccec03f6be02e1ed8a`. It creates a period default-account table and one-per-payroll proof metadata table; it does not alter payroll or backfill historical rows. Private storage/download, upload validation, legacy evidence and duplicate-handling requirements are in `docs/HR_FM_PAYROLL_TABLE_USABILITY_CONTINUATION.md`. The migration is not applied; no application source or database was changed. Review SQL and local migration/storage conventions before application.
