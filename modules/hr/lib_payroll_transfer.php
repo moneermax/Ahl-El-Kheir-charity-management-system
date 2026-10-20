@@ -194,51 +194,54 @@ function hrPayrollUploadProof(PDO $pdo, int $payrollId, array $upload, int $user
     }
     $safeExtension = $mimeToExtension[$mime];
 
-    $payrollStmt = $pdo->prepare(
-        'SELECT id, status, accounting_status, accounting_entry_id
-         FROM payroll WHERE id = ? LIMIT 1'
-    );
-    $payrollStmt->execute([$payrollId]);
-    $payroll = $payrollStmt->fetch(PDO::FETCH_ASSOC);
-    if (!$payroll) {
-        throw new RuntimeException('سجل الرواتب غير موجود.');
+    $startedHere = !$pdo->inTransaction();
+    if ($startedHere) {
+        $pdo->beginTransaction();
     }
-    if ($legacyEvidence) {
-        if ($payroll['status'] !== 'paid' || $payroll['accounting_status'] !== 'posted' || empty($payroll['accounting_entry_id'])) {
-            throw new RuntimeException('يمكن إرفاق الدليل التاريخي لسجل مصروف ومرحل محاسبياً فقط.');
-        }
-    } elseif ($payroll['status'] !== 'approved') {
-        throw new RuntimeException('يمكن تجهيز إثبات التحويل لسجل راتب معتمد وغير مصروف فقط.');
-    }
-
-    if (!$legacyEvidence) {
-        $accountStmt = $pdo->prepare('SELECT payment_account_id FROM payroll WHERE id = ? LIMIT 1');
-        $accountStmt->execute([$payrollId]);
-        $accountId = (int)($accountStmt->fetchColumn() ?: 0);
-        $activeAccountStmt = $pdo->prepare('SELECT id FROM accounts WHERE id = ? AND is_active = 1 LIMIT 1');
-        $activeAccountStmt->execute([$accountId]);
-        if (!$activeAccountStmt->fetchColumn()) {
-            throw new RuntimeException('عيّن حساب التحويل الافتراضي أو الفردي قبل رفع إثبات التحويل.');
-        }
-    }
-
-    $existingStmt = $pdo->prepare('SELECT id FROM hr_payroll_payment_proofs WHERE payroll_id = ? LIMIT 1');
-    $existingStmt->execute([$payrollId]);
-    if ($existingStmt->fetchColumn()) {
-        throw new RuntimeException('يوجد إثبات محفوظ لهذا السجل بالفعل؛ لا يمكن استبداله تلقائياً.');
-    }
-
-    $storageKey = bin2hex(random_bytes(32)) . '.' . $safeExtension;
-    $destination = hrPayrollProofPath($storageKey);
-    if (file_exists($destination)) {
-        throw new RuntimeException('تعذر إنشاء مرجع فريد لإثبات الدفع؛ أعد المحاولة.');
-    }
-    if (!move_uploaded_file((string)$upload['tmp_name'], $destination)) {
-        throw new RuntimeException('تعذر حفظ إثبات الدفع في التخزين الخاص.');
-    }
-    @chmod($destination, 0600);
-
+    $destination = null;
     try {
+        $payrollStmt = $pdo->prepare(
+            'SELECT id, status, accounting_status, accounting_entry_id, payment_account_id
+             FROM payroll WHERE id = ? LIMIT 1 FOR UPDATE'
+        );
+        $payrollStmt->execute([$payrollId]);
+        $payroll = $payrollStmt->fetch(PDO::FETCH_ASSOC);
+        if (!$payroll) {
+            throw new RuntimeException('سجل الرواتب غير موجود.');
+        }
+        if ($legacyEvidence) {
+            if ($payroll['status'] !== 'paid' || $payroll['accounting_status'] !== 'posted' || empty($payroll['accounting_entry_id'])) {
+                throw new RuntimeException('يمكن إرفاق الدليل التاريخي لسجل مصروف ومرحل محاسبياً فقط.');
+            }
+        } elseif ($payroll['status'] !== 'approved') {
+            throw new RuntimeException('يمكن تجهيز إثبات التحويل لسجل راتب معتمد وغير مصروف فقط.');
+        }
+
+        if (!$legacyEvidence) {
+            $accountId = (int)($payroll['payment_account_id'] ?? 0);
+            $activeAccountStmt = $pdo->prepare('SELECT id FROM accounts WHERE id = ? AND is_active = 1 LIMIT 1');
+            $activeAccountStmt->execute([$accountId]);
+            if (!$activeAccountStmt->fetchColumn()) {
+                throw new RuntimeException('عيّن حساب التحويل الافتراضي أو الفردي قبل رفع إثبات التحويل.');
+            }
+        }
+
+        $existingStmt = $pdo->prepare('SELECT id FROM hr_payroll_payment_proofs WHERE payroll_id = ? LIMIT 1');
+        $existingStmt->execute([$payrollId]);
+        if ($existingStmt->fetchColumn()) {
+            throw new RuntimeException('يوجد إثبات محفوظ لهذا السجل بالفعل؛ لا يمكن استبداله تلقائياً.');
+        }
+
+        $storageKey = bin2hex(random_bytes(32)) . '.' . $safeExtension;
+        $destination = hrPayrollProofPath($storageKey);
+        if (file_exists($destination)) {
+            throw new RuntimeException('تعذر إنشاء مرجع فريد لإثبات الدفع؛ أعد المحاولة.');
+        }
+        if (!move_uploaded_file((string)$upload['tmp_name'], $destination)) {
+            throw new RuntimeException('تعذر حفظ إثبات الدفع في التخزين الخاص.');
+        }
+        @chmod($destination, 0600);
+
         $insert = $pdo->prepare(
             "INSERT INTO hr_payroll_payment_proofs
                 (payroll_id, proof_state, storage_key, original_filename, detected_mime_type,
@@ -254,8 +257,14 @@ function hrPayrollUploadProof(PDO $pdo, int $payrollId, array $upload, int $user
             $size,
             $userId,
         ]);
+        if ($startedHere) {
+            $pdo->commit();
+        }
     } catch (Throwable $e) {
-        if (is_file($destination)) {
+        if ($startedHere && $pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        if (is_string($destination) && is_file($destination)) {
             @unlink($destination);
         }
         throw $e;
