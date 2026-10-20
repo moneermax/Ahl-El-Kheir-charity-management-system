@@ -3662,3 +3662,8 @@ The follow-up to `modules/hr/payroll.php` adds compact auto-sized column headers
 ### 2026-10-20 — FM payroll workflow redesign Step 2
 
 Source evidence and constraints are documented in `docs/HR_FM_PAYROLL_TABLE_USABILITY_CONTINUATION.md`. Current paid transition posts accounting without a transfer-proof gate; account resolution accepts any active account and defaults to `1200`; employee notification helper cannot distinguish existing notification from failure; GM completion checks paid+posted+journal only. A private per-payroll proof record and period default are proposed but not migrated because the SQL schema body and upload-serving conventions could not be verified through the connector. No code or data changed.
+
+
+### 2026-10-20 — FM payroll workflow redesign Step 2
+
+Schema evidence confirms payroll uses unsigned integer keys, InnoDB, existing per-row `payment_account_id`, and no proof or period-default table. `employees.user_id` is nullable; notification completion must account for missing linked users. The existing resolver accepts any active account and defaults to code 1200, so the redesign preserves that behavior absent a separate policy decision. Design and state-transition requirements are in `docs/HR_FM_PAYROLL_TABLE_USABILITY_CONTINUATION.md`. No schema/source/data changed. Next: author migration and private proof storage contract; do not apply DDL before reviewing the exact migration.
