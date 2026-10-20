@@ -55,3 +55,7 @@ Only after PDF rendering is locally verified, inspect the live local schema and 
 ### 2026-10-20 — Input-validation refinement
 
 Follow-up commit `eef4d17e02543e1327ed8cc3db9fee3b916aa11f` adds server-side maximum lengths for contract fields, email validation, weekly-hours range validation, and a required end date for fixed-term contracts. Nationality is no longer prefilled with an assumed value. This remains source-only; local lint and browser/PDF verification are still pending.
+
+### 2026-10-20 — Generated PDF privacy headers
+
+Commit `1578984554da21e3ad8c6b69695fe4d44913a473` adds private/no-store cache headers and `X-Content-Type-Options: nosniff` before inline PDF output. This is a source hardening change only; it is not runtime verification.
