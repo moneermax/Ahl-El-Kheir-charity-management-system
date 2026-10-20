@@ -1266,3 +1266,10 @@ Committed to `main`:
 - New data-only correction: `database/migrations/2026-10-20_hr_job_description_zz_role_qualifications_utf8_repair.sql`. It sets UTF-8 explicitly and reapplies the original role-specific Arabic qualification CASE only to rows whose qualifications begin with literal question marks, excluding approved rows and `HR Test`. It leaves the other description fields and all schema untouched.
 
 **Next:** user pulls `main`, applies only the new repair migration with the mysql client explicitly set to utf8mb4, then runs read-only verification confirming the 25 corrupted values are restored, Arabic text survives HEX/terminal checks, and the `HR Test` row remains unchanged. Do not rerun the original seed migration as a repair. Do not claim runtime success before results are returned.
+
+
+## LATEST CHECKPOINT — 2026-10-20 — Qualifications UTF-8 repair verified
+
+The user pulled `main`, applied `database/migrations/2026-10-20_hr_job_description_zz_role_qualifications_utf8_repair.sql` with `--default-character-set=utf8mb4`, and ran verification. Result: `remaining_corrupted_qualifications = 0`; qualification hex previews contain real UTF-8 Arabic bytes. `HR Test` remains excluded and its qualifications are NULL. PowerShell displays Arabic position titles as mojibake, but this does not by itself prove stored title corruption; do not modify them without byte-level evidence.
+
+The data-repair milestone is verified and closed. Continue the broader job-description draft task from the relevant continuation doc/source; catalogue/browser display and contract-builder/PDF acceptance have not yet been reported verified. Do not rerun either migration or reopen the encoding repair absent regression evidence.
