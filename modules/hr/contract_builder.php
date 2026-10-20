@@ -218,9 +218,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
             $value = trim((string)($organizationSettings[$key] ?? ''));
             if ($value !== '') $contactParts[] = $label . ': ' . $value;
         }
-        $organizationContactHtml = $contactParts
-            ? '<p class="meta" style="text-align:center;">' . akContractEscape(implode(' | ', $contactParts)) . '</p>'
-            : '';
+        $headerContact = $contactParts ? 'عقد عمل | ' . implode(' | ', $contactParts) : 'عقد عمل';
 
         require_once APP_DIR . '/TCPDF/tcpdf.php';
         $pdf = new TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
@@ -228,29 +226,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
         $pdf->SetAuthor(APP_NAME_AR);
         $pdf->SetTitle('عقد عمل - ' . $data['employee_name']);
         $pdf->SetSubject('عقد عمل');
-        $pdf->setPrintHeader(false);
+        $pdf->setPrintHeader(true);
         $pdf->setPrintFooter(true);
+        $pdf->setHeaderData(is_file($logoPath) ? $logoPath : '', 20, $organizationName, $headerContact);
+        $pdf->setHeaderFont(['aealarabiya', '', 8]);
+        $pdf->setFooterFont(['aealarabiya', '', 8]);
+        $pdf->setHeaderMargin(5);
         $pdf->setFooterMargin(10);
-        $pdf->SetMargins(16, 15, 16);
+        $pdf->SetMargins(16, 30, 16);
         $pdf->SetAutoPageBreak(true, 17);
         $pdf->setRTL(true);
         $pdf->SetFont('aealarabiya', '', 11);
         $pdf->AddPage();
-
-        if (is_file($logoPath)) {
-            $pdf->Image($logoPath, 168, 12, 25, 25);
-        }
-        $pdf->SetY(15);
-        $pdf->SetFont('aealarabiya', 'B', 17);
-        $pdf->SetTextColor(23, 63, 115);
-        $pdf->Cell(0, 9, $organizationName, 0, 1, 'C');
-        $pdf->SetFont('aealarabiya', 'B', 14);
-        $pdf->SetTextColor(35, 45, 60);
-        $pdf->Cell(0, 8, 'عقد عمل', 0, 1, 'C');
-        $pdf->SetDrawColor(190, 151, 66);
-        $pdf->SetLineWidth(0.8);
-        $pdf->Line(16, 43, 194, 43);
-        $pdf->Ln(7);
 
         $html = '
         <style>
@@ -260,7 +247,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
             .rule { border: 1px solid #d6dde7; padding: 6px; }
             .clause { margin-bottom: 5px; }
         </style>
-        ' . $organizationContactHtml . '
         <p class="meta">رقم العقد: <b>' . ($data['contract_number'] !== '' ? $v('contract_number') : 'يُستكمل عند التسجيل') . '</b> &nbsp;&nbsp; تاريخ التحرير: <b>' . $v('issue_date') . '</b></p>
         <p>تم إبرام هذا العقد بين ' . akContractEscape($organizationName) . '، ويشار إليها في هذا العقد بـ«الجمعية» أو «صاحب العمل»، وبين الموظف المبينة بياناته أدناه، ويشار إليه بـ«الموظف»، وفق أحكام هذا العقد وقوانين العمل السودانية السارية والسياسات المعتمدة المتوافقة معها.</p>
         <h2>أولاً: بيانات الطرفين والوظيفة</h2>
