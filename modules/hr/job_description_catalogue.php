@@ -26,6 +26,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $action = (string)($_POST['action'] ?? '');
         if ($action === 'save') {
             $title = trim((string)($_POST['position_title'] ?? ''));
+            $systemRoleCode = trim((string)($_POST['system_role_code'] ?? ''));
+            if ($systemRoleCode !== '' && !dbFetchOne('SELECT code FROM roles WHERE code = ? LIMIT 1', [$systemRoleCode])) {
+                throw new InvalidArgumentException('دور النظام المحدد غير موجود.');
+            }
             $purpose = trim((string)($_POST['role_purpose'] ?? ''));
             $responsibilityInput = $_POST['responsibilities'] ?? [];
             if (!is_array($responsibilityInput)) {
@@ -86,21 +90,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 $stmt = $pdo->prepare(
                     'UPDATE hr_job_description_templates
-                     SET position_title = ?, role_purpose = ?, responsibilities = ?, qualifications = ?,
+                     SET position_title = ?, system_role_code = ?, role_purpose = ?, responsibilities = ?, qualifications = ?,
                          reporting_to = ?, role_specific_terms = ?, description_status = ?, is_active = ?, updated_by = ?
                      WHERE id = ?'
                 );
-                $stmt->execute([$title, $purpose ?: null, $responsibilities ?: null, $qualifications ?: null,
+                $stmt->execute([$title, $systemRoleCode, $purpose ?: null, $responsibilities ?: null, $qualifications ?: null,
                     $reportingTo ?: null, $roleTerms ?: null, $status, $active, Session::getUserID(), $editingId]);
                 $actionLabel = 'UPDATE';
             } else {
                 $stmt = $pdo->prepare(
                     'INSERT INTO hr_job_description_templates
-                     (position_title, role_purpose, responsibilities, qualifications, reporting_to, role_specific_terms,
+                     (position_title, system_role_code, role_purpose, responsibilities, qualifications, reporting_to, role_specific_terms,
                       description_status, is_active, created_by, updated_by)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
                 );
-                $stmt->execute([$title, $purpose ?: null, $responsibilities ?: null, $qualifications ?: null,
+                $stmt->execute([$title, $systemRoleCode, $purpose ?: null, $responsibilities ?: null, $qualifications ?: null,
                     $reportingTo ?: null, $roleTerms ?: null, $status, $active, Session::getUserID(), Session::getUserID()]);
                 $editingId = (int)$pdo->lastInsertId();
                 $actionLabel = 'CREATE';
@@ -114,7 +118,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         Session::getUserID(), $actionLabel, $editingId,
                         $before ? json_encode($before, JSON_UNESCAPED_UNICODE) : null,
                         json_encode([
-                            'position_title' => $title, 'role_purpose' => $purpose,
+                            'position_title' => $title, 'system_role_code' => $systemRoleCode, 'role_purpose' => $purpose,
                             'responsibilities' => $responsibilities, 'qualifications' => $qualifications,
                             'reporting_to' => $reportingTo, 'role_specific_terms' => $roleTerms, 'description_status' => $status, 'is_active' => $active
                         ], JSON_UNESCAPED_UNICODE),
@@ -143,11 +147,18 @@ $editing = $editingId > 0
     ? dbFetchOne('SELECT * FROM hr_job_description_templates WHERE id = ? LIMIT 1', [$editingId])
     : null;
 $templates = dbFetchAll(
-    'SELECT j.*, (SELECT COUNT(*) FROM employees e WHERE TRIM(e.position) = j.position_title) AS employee_count
+    "SELECT j.*, r.name_ar AS system_role_name,
+        (SELECT COUNT(*) FROM employees e
+         LEFT JOIN users u ON u.id = e.user_id
+         LEFT JOIN roles er ON er.id = u.role_id
+         WHERE TRIM(e.position) = j.position_title
+           AND (j.system_role_code = '' OR er.code = j.system_role_code)) AS employee_count
      FROM hr_job_description_templates j
-     ORDER BY j.is_active DESC, j.position_title',
+     LEFT JOIN roles r ON r.code = j.system_role_code
+     ORDER BY j.is_active DESC, j.position_title, j.system_role_code",
     []
 );
+$systemRoles = dbFetchAll("SELECT code, name_ar, name_en FROM roles ORDER BY name_ar", []);
 $pageTitle = 'فهرس الأوصاف الوظيفية';
 $active = 'hr';
 require_once __DIR__ . '/../../includes/header.php';
@@ -165,6 +176,7 @@ require_once __DIR__ . '/../../includes/header.php';
    <?= csrf_field() ?><input type="hidden" name="action" value="save"><input type="hidden" name="id" value="<?= (int)($editing['id'] ?? 0) ?>">
    <div class="jd-grid">
     <div class="jd-field"><label for="position_title">المسمى الوظيفي *</label><input id="position_title" name="position_title" maxlength="180" required value="<?= e($editing['position_title'] ?? '') ?>"></div>
+    <div class="jd-field"><label for="system_role_code">دور الحساب داخل النظام (اختياري)</label><select id="system_role_code" name="system_role_code"><option value="">وصف عام للمسمى (لا يحدد دور نظام بعينه)</option><?php foreach ($systemRoles as $systemRole): ?><option value="<?= e($systemRole['code']) ?>" <?= ($editing['system_role_code'] ?? '') === $systemRole['code'] ? 'selected' : '' ?>><?= e($systemRole['name_ar'] ?: $systemRole['name_en'] ?: $systemRole['code']) ?> (<?= e($systemRole['code']) ?>)</option><?php endforeach; ?></select><small>استخدم هذا الخيار عندما تختلف مهام الموظفين الذين يحملون المسمى نفسه بحسب دور حساباتهم. هذا الدليل لا يغيّر صلاحيات الحساب.</small></div>
     <div class="jd-field"><label for="reporting_to">جهة الإشراف المباشر (إن كانت محددة)</label><input id="reporting_to" name="reporting_to" maxlength="180" value="<?= e($editing['reporting_to'] ?? '') ?>"></div>
     <div class="jd-field jd-full"><label for="role_purpose">الغرض من الوظيفة</label><textarea id="role_purpose" name="role_purpose" maxlength="5000"><?= e($editing['role_purpose'] ?? '') ?></textarea></div>
     <?php
@@ -183,9 +195,9 @@ require_once __DIR__ . '/../../includes/header.php';
    <div class="d-flex gap-2 flex-wrap mt-3"><button class="btn btn-primary" type="submit"><i class="fa-solid fa-floppy-disk me-1"></i> حفظ الوصف</button><a class="btn btn-outline-secondary" href="<?= e(APP_URL) ?>modules/hr/job_description_catalogue.php">وصف جديد / إلغاء</a></div>
   </form>
  </div></div>
- <div class="jd-card"><div class="jd-card-head">الأوصاف حسب المسمى الوظيفي</div><div class="table-responsive"><table class="table table-hover jd-table mb-0"><thead class="table-light"><tr><th>المسمى الوظيفي</th><th>الموظفون</th><th>حالة الوصف</th><th>الاستخدام</th><th>آخر تحديث</th><th>الإجراء</th></tr></thead><tbody>
- <?php foreach ($templates as $item): ?><tr><td class="fw-bold"><?= e($item['position_title']) ?></td><td><?= (int)$item['employee_count'] ?></td><td class="jd-status"><?php if ($item['description_status'] === 'approved'): ?><span class="badge bg-success">معتمد داخلياً</span><?php else: ?><span class="badge bg-warning text-dark">يحتاج مراجعة HR</span><?php endif; ?></td><td><?= (int)$item['is_active'] === 1 ? '<span class="text-success">مفعل</span>' : '<span class="text-muted">غير مفعل</span>' ?></td><td><?= e($item['updated_at'] ?? '') ?></td><td><a class="btn btn-sm btn-outline-primary" href="<?= e(APP_URL) ?>modules/hr/job_description_catalogue.php?id=<?= (int)$item['id'] ?>">تعديل</a></td></tr><?php endforeach; ?>
- <?php if (!$templates): ?><tr><td colspan="6" class="text-center text-muted p-4">لا توجد أوصاف بعد. تأكد من تطبيق ترحيل فهرس الأوصاف الوظيفية.</td></tr><?php endif; ?>
+ <div class="jd-card"><div class="jd-card-head">الأوصاف حسب المسمى الوظيفي ودور الحساب</div><div class="table-responsive"><table class="table table-hover jd-table mb-0"><thead class="table-light"><tr><th>المسمى الوظيفي</th><th>دور النظام</th><th>الموظفون</th><th>حالة الوصف</th><th>الاستخدام</th><th>آخر تحديث</th><th>الإجراء</th></tr></thead><tbody>
+ <?php foreach ($templates as $item): ?><tr><td class="fw-bold"><?= e($item['position_title']) ?></td><td><?= e($item['system_role_name'] ?: ($item['system_role_code'] !== '' ? $item['system_role_code'] : 'عام / غير مرتبط بدور محدد')) ?></td><td><?= (int)$item['employee_count'] ?></td><td class="jd-status"><?php if ($item['description_status'] === 'approved'): ?><span class="badge bg-success">معتمد داخلياً</span><?php else: ?><span class="badge bg-warning text-dark">يحتاج مراجعة HR</span><?php endif; ?></td><td><?= (int)$item['is_active'] === 1 ? '<span class="text-success">مفعل</span>' : '<span class="text-muted">غير مفعل</span>' ?></td><td><?= e($item['updated_at'] ?? '') ?></td><td><a class="btn btn-sm btn-outline-primary" href="<?= e(APP_URL) ?>modules/hr/job_description_catalogue.php?id=<?= (int)$item['id'] ?>">تعديل</a></td></tr><?php endforeach; ?>
+ <?php if (!$templates): ?><tr><td colspan="7" class="text-center text-muted p-4">لا توجد أوصاف بعد. تأكد من تطبيق ترحيل فهرس الأوصاف الوظيفية.</td></tr><?php endif; ?>
  </tbody></table></div></div>
  <div class="text-muted small mb-4">هذه حالة اعتماد داخلية للوصف الوظيفي وليست اعتماداً قانونياً لعقد العمل. تظل مراجعة محامٍ سوداني مؤهل مطلوبة قبل الاستخدام الرسمي للعقود.</div>
 </div>
