@@ -1202,3 +1202,12 @@ Source changes now on main:
 - No schema migration was needed for these source changes.
 
 Status: SOURCE CHANGES COMMITTED; local PHP lint and real XAMPP/browser verification are still pending. The pre-existing September salary data is not repaired by this onboarding change and requires authoritative historical amounts before any correction.
+
+
+## 2026-10-20 — HR employment contract builder (source only; local verification pending)
+
+The existing HR contract/salary page is `modules/hr/contracts.php`; contract metadata and effective-dated salary behavior remain in `modules/hr/lib_contract_salary.php`. A new authorized in-system editable Arabic contract form was added at `modules/hr/contract_builder.php`, using bundled TCPDF to generate an A4 RTL PDF for viewing/printing. A link was added from the existing contracts page. The PDF form includes employee/job details, editable dates and remuneration, work arrangements, leave fields, safeguarding/PSEA, conduct, confidentiality/data, anti-fraud/conflicts, health/safety, termination, disputes, governing law and signature areas. It does not persist draft content or mutate employee, contract, salary, payroll or accounting records.
+
+Source commits: `f0e5fdba4b32e179091478b092eccd5dd10f033f` (builder), `ca14abbd85b490c5025f8367c1fe2d2caa43f88d` (contracts-page link). Continuation: `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`.
+
+**Not yet verified locally:** PHP lint, authorized/unauthorized browser access, CSRF rejection, PDF Arabic rendering/pagination/print, and absence of database/storage writes. The contract wording is not legally approved; qualified Sudanese legal review is required before official use. Do not start the signed-contract/onboarding integration until this PDF acceptance boundary passes.
