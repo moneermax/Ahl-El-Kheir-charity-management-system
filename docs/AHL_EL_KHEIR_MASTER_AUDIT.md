@@ -3706,3 +3706,13 @@ Commits: builder `f0e5fdba4b32e179091478b092eccd5dd10f033f`; contracts-page link
 ### Follow-up — contract builder validation
 
 A narrow source refinement in commit `eef4d17e02543e1327ed8cc3db9fee3b916aa11f` adds server-side field-length, email and weekly-hours checks, requires an end date for fixed-term contracts, and leaves nationality blank rather than assuming it. This does not change database or employment records. Local PHP lint and browser/PDF verification remain pending.
+
+## 2026-10-20 — HR role-specific employment contracts and job-description catalogue
+
+**Source status:** committed on `main`. **Local runtime status:** pending migration application and browser/PDF verification.
+
+Implemented a new catalogue table via `database/migrations/2026-10-20_hr_job_description_catalogue.sql` and an authorized maintenance page `modules/hr/job_description_catalogue.php`. The catalogue stores position title, role purpose, responsibilities, qualifications, reporting line, optional role-specific contract terms, review status and activation state. It seeds distinct non-empty `employees.position` values without inventing content; new rows require HR review. HR Manager/Admin may mark descriptions internally approved. Renaming a catalogue title while employees still use it is blocked to preserve exact position matching.
+
+The contract builder now matches against the selected employee's actual position, loads the corresponding description/terms, flags descriptions requiring review in the page/PDF, and reads organization logo/name/address/support phone/email from existing settings where populated. The HR dashboard exposes a separate `بوابة عقود العمل` shortcut and preserves `العقود والرواتب`.
+
+Do not confuse employee positions with application roles. The role/workflow matrix is only broad role context and is not an approved detailed job-description source. No legal entitlement has been invented. Sudanese lawyer review remains mandatory before official use. Local migration and runtime/PDF checks are not yet verified.
