@@ -3376,3 +3376,8 @@ Source changes are committed on `main`: `modules/hr/payroll.php` (`85269f123d042
 
 ## 2026-10-19 — FM payroll refinement follow-up
 The FM payroll page has compact auto-sized translated headings, full-label tooltips, a dark sticky header, English month names, and stable Arabic/English labels for visible controls, summaries, statuses, and actions. Draft rows can be selected individually or with select-all; the new selected-approval helper validates the selected period and draft status before changing selected drafts to approved/ready in one transaction. It does not record payment. Save remains an explicit action for edited salary components and is now beside the row actions. No schema change. Static source audit passed; local PHP lint and browser verification remain pending. See `docs/HR_FM_PAYROLL_TABLE_USABILITY_CONTINUATION.md`.
+
+
+### FM payroll workflow redesign — 2026-10-20 Step 2 audit
+
+The account/proof workflow source audit and proposed data model are recorded in `docs/HR_FM_PAYROLL_TABLE_USABILITY_CONTINUATION.md`. The existing account resolver validates active status only and defaults to active account `1200`; the current paid transition couples status change and accounting posting, and notification completion helpers do not expose reliable success. A period default and per-payroll proof record are design candidates only. The schema file could not be retrieved through the repository connector, so exact DDL and foreign-key details remain unverified. No application/schema/data changes were made; do not create a migration until the user provides targeted local schema output.
