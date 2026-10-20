@@ -190,3 +190,20 @@ The migration prepends these two items to active job-description templates while
 The job-description catalogue and contract builder now expose a drag handle on repeatable purpose, responsibility, qualification and optional-term rows. Rows can be rearranged with pointer-based dragging (mouse or touch), and visible numbering updates automatically. The submitted list order is the displayed/PDF order. Existing add/delete behavior remains.
 
 **Verification status: SOURCE COMMITTED; local migration application, PHP lint, catalogue/contract browser interaction, employee switching and PDF output remain to be verified on the user's XAMPP application.** Do not claim runtime verification until the user confirms these checks. HR and the direct supervisor must review the qualification baseline internally; Sudanese legal review remains required before official contract use.
+
+
+## 2026-10-20 — Automatic contract number reservation during PDF generation
+
+User-approved behavior: generating the employment contract PDF also creates a draft in the existing contract register, reserving the official number and avoiding manual entry.
+
+Source commit on main: 8ed43dc8c7e0f2e2c5693e1777bfb8324bdc3115.
+
+- The contract-number field is read-only; the client cannot submit the official number.
+- The builder inserts a draft row into hr_employee_contracts, then derives CTR-YYYY-000001 from the saved row ID and the contract start year.
+- The employee row is locked while the existing overlapping draft/active contract rule is checked and the draft is inserted.
+- The PDF is rendered to memory before the transaction commits. If PDF rendering or the transaction fails, the draft insert is rolled back.
+- A one-use session token prevents duplicate draft creation when the same form is resubmitted.
+- The builder deliberately does not call hrCreateEmployeeContract(): that helper writes salary-history segments and can update employees.basic_salary and employment state for a current/past start date. The new builder path leaves those fields unchanged; the existing explicit contract activation workflow remains responsible for activating the draft and applying salary/employment changes.
+- No schema change or migration was required. The draft record stores the register's existing core fields and weekly hours when supplied; the full editable contract clauses remain in the generated PDF response and are not persisted as database columns by this change.
+
+Verification status: SOURCE COMMITTED, NOT RUNTIME VERIFIED. On the configured Windows/XAMPP environment, pull main; lint modules/hr/contract_builder.php; generate a PDF from http://localhost:8081/AhlElKheir/modules/hr/contract_builder.php; compare the displayed number with the draft in modules/hr/contracts.php; verify the record remains draft; compare salary history, employees.basic_salary, and employment state before/after; verify overlapping draft/active contract periods are rejected; and verify resubmitting the same form does not create another record. Do not rerun unrelated completed module tests. Sudanese legal review remains required before official use.
