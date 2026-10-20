@@ -17,6 +17,14 @@ $message = '';
 $error = '';
 $editingId = (int)($_GET['id'] ?? $_POST['id'] ?? 0);
 
+function akJobDescriptionItems(string $value): array
+{
+    $items = preg_split('/\\R/u', trim($value)) ?: [];
+    return array_values(array_filter(array_map(static function ($item) {
+        return trim((string)preg_replace('/^\\s*(?:[•*\\-–—]|\\d+[.)])\\s*/u', '', (string)$item));
+    }, $items), static fn($item) => $item !== ''));
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         if (!verify_csrf()) {
@@ -30,27 +38,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($systemRoleCode !== '' && !dbFetchOne('SELECT code FROM roles WHERE code = ? LIMIT 1', [$systemRoleCode])) {
                 throw new InvalidArgumentException('دور النظام المحدد غير موجود.');
             }
-            $purpose = trim((string)($_POST['role_purpose'] ?? ''));
-            $responsibilityInput = $_POST['responsibilities'] ?? [];
-            if (!is_array($responsibilityInput)) {
-                throw new InvalidArgumentException('قائمة المهام والمسؤوليات غير صالحة.');
-            }
-            $responsibilityItems = [];
-            foreach ($responsibilityInput as $item) {
-                $item = trim((string)$item);
-                if ($item === '') continue;
-                if (mb_strlen($item, 'UTF-8') > 1000) {
-                    throw new InvalidArgumentException('يجب ألا يتجاوز كل بند من المسؤوليات 1000 حرف.');
+            $readItems = static function (string $field, int $maximum, string $label): string {
+                $input = $_POST[$field] ?? [];
+                if (!is_array($input)) throw new InvalidArgumentException('قائمة ' . $label . ' غير صالحة.');
+                $items = [];
+                foreach ($input as $item) {
+                    $item = trim((string)$item);
+                    if ($item === '') continue;
+                    if (mb_strlen($item, 'UTF-8') > 1000) throw new InvalidArgumentException('يجب ألا يتجاوز كل بند من ' . $label . ' 1000 حرف.');
+                    $items[] = $item;
                 }
-                $responsibilityItems[] = $item;
-            }
-            if (count($responsibilityItems) > 30) {
-                throw new InvalidArgumentException('يمكن إدخال 30 مسؤولية كحد أقصى.');
-            }
-            $responsibilities = implode("\n", $responsibilityItems);
-            $qualifications = trim((string)($_POST['qualifications'] ?? ''));
+                if (count($items) > $maximum) throw new InvalidArgumentException('يمكن إدخال ' . $maximum . ' بنداً كحد أقصى في ' . $label . '.');
+                return implode("\\n", $items);
+            };
+            $purpose = $readItems('role_purpose', 10, 'الغرض من الوظيفة');
+            $responsibilities = $readItems('responsibilities', 30, 'المهام والمسؤوليات');
+            $qualifications = $readItems('qualifications', 30, 'المؤهلات والخبرات');
             $reportingTo = trim((string)($_POST['reporting_to'] ?? ''));
-            $roleTerms = trim((string)($_POST['role_specific_terms'] ?? ''));
+            $roleTerms = $readItems('role_specific_terms', 20, 'البنود الإضافية');
+            if ($reportingTo !== '' && !dbFetchOne("SELECT position FROM employees WHERE TRIM(position) = ? LIMIT 1", [$reportingTo])) {
+                throw new InvalidArgumentException('جهة الإشراف المحددة غير موجودة ضمن المسميات الحالية.');
+            }
             foreach ([
                 'المسمى الوظيفي' => [$title, 180],
                 'الغرض الوظيفي' => [$purpose, 5000],
@@ -168,6 +176,11 @@ $templates = dbFetchAll(
     []
 );
 $systemRoles = dbFetchAll("SELECT code, name_ar, name_en FROM roles ORDER BY name_ar", []);
+$reportingPositions = dbFetchAll(
+    "SELECT DISTINCT TRIM(position) AS position_title FROM employees
+     WHERE position IS NOT NULL AND TRIM(position) <> '' ORDER BY position_title",
+    []
+);
 $pageTitle = 'فهرس الأوصاف الوظيفية';
 $active = 'hr';
 require_once __DIR__ . '/../../includes/header.php';
@@ -186,18 +199,17 @@ require_once __DIR__ . '/../../includes/header.php';
    <div class="jd-grid">
     <div class="jd-field"><label for="position_title">المسمى الوظيفي *</label><input id="position_title" name="position_title" maxlength="180" required value="<?= e($editing['position_title'] ?? '') ?>"></div>
     <div class="jd-field"><label for="system_role_code">دور الحساب داخل النظام (اختياري)</label><select id="system_role_code" name="system_role_code"><option value="">وصف عام للمسمى (لا يحدد دور نظام بعينه)</option><?php foreach ($systemRoles as $systemRole): ?><option value="<?= e($systemRole['code']) ?>" <?= ($editing['system_role_code'] ?? '') === $systemRole['code'] ? 'selected' : '' ?>><?= e($systemRole['name_ar'] ?: $systemRole['name_en'] ?: $systemRole['code']) ?> (<?= e($systemRole['code']) ?>)</option><?php endforeach; ?></select><small>استخدم هذا الخيار عندما تختلف مهام الموظفين الذين يحملون المسمى نفسه بحسب دور حساباتهم. هذا الدليل لا يغيّر صلاحيات الحساب.</small></div>
-    <div class="jd-field"><label for="reporting_to">جهة الإشراف المباشر (إن كانت محددة)</label><input id="reporting_to" name="reporting_to" maxlength="180" value="<?= e($editing['reporting_to'] ?? '') ?>"></div>
-    <div class="jd-field jd-full"><label for="role_purpose">الغرض من الوظيفة</label><textarea id="role_purpose" name="role_purpose" maxlength="5000"><?= e($editing['role_purpose'] ?? '') ?></textarea></div>
+    <div class="jd-field"><label for="reporting_to">جهة الإشراف المباشر (إن كانت محددة)</label><select id="reporting_to" name="reporting_to"><option value="">— غير محددة —</option><?php foreach ($reportingPositions as $reportingPosition): ?><option value="<?= e($reportingPosition['position_title']) ?>" <?= (string)($editing['reporting_to'] ?? '') === (string)$reportingPosition['position_title'] ? 'selected' : '' ?>><?= e($reportingPosition['position_title']) ?></option><?php endforeach; ?></select></div>
     <?php
-    $editingResponsibilities = preg_split('/\R/u', trim((string)($editing['responsibilities'] ?? ''))) ?: [];
-    $editingResponsibilities = array_values(array_filter(array_map(static function ($item) {
-        return trim((string)preg_replace('/^\s*(?:[•*\-–—]|\d+[.)])\s*/u', '', (string)$item));
-    }, $editingResponsibilities), static fn($item) => $item !== ''));
-    if (!$editingResponsibilities) $editingResponsibilities = [''];
-   ?>
-   <div class="jd-field jd-full"><label>المهام والمسؤوليات الأساسية</label><small class="d-block mb-2">أدخل كل مهمة في حقل مستقل. ستظهر في النسخة النهائية كقائمة عربية مرتبة ومسافة بادئة لكل بند.</small><div id="responsibilityFields" class="d-flex flex-column gap-2"><?php foreach ($editingResponsibilities as $index => $responsibility): ?><div class="jd-responsibility-row d-flex gap-2 align-items-start"><span class="pt-2 text-muted"><?= (int)($index + 1) ?>.</span><input type="text" name="responsibilities[]" maxlength="1000" class="form-control" value="<?= e($responsibility) ?>" placeholder="اكتب مهمة أو مسؤولية واحدة"><button type="button" class="btn btn-outline-danger jd-remove-responsibility" aria-label="حذف المسؤولية"><i class="fa-solid fa-trash"></i></button></div><?php endforeach; ?></div><button type="button" id="addResponsibility" class="btn btn-sm btn-outline-primary mt-2"><i class="fa-solid fa-plus me-1"></i> إضافة مسؤولية</button></div>
-    <div class="jd-field jd-full"><label for="qualifications">المؤهلات والخبرات المطلوبة (بعد اعتمادها داخلياً)</label><textarea id="qualifications" name="qualifications" maxlength="5000"><?= e($editing['qualifications'] ?? '') ?></textarea></div>
-    <div class="jd-field jd-full"><label for="role_specific_terms">بنود إضافية خاصة بهذا المسمى في العقد (اختيارية)</label><textarea id="role_specific_terms" name="role_specific_terms" maxlength="5000" placeholder="تُترك فارغة ما لم توجد شروط مهنية خاصة موثقة ومعتمدة لهذا المسمى."><?= e($editing['role_specific_terms'] ?? '') ?></textarea><small>هذه البنود تُضاف إلى الشروط الخاصة للعقد عند اختيار الموظف؛ لا تضع هنا استحقاقات قانونية غير متحقق منها.</small></div>
+    $editingPurpose = akJobDescriptionItems((string)($editing['role_purpose'] ?? '')) ?: [''];
+    $editingResponsibilities = akJobDescriptionItems((string)($editing['responsibilities'] ?? '')) ?: [''];
+    $editingQualifications = akJobDescriptionItems((string)($editing['qualifications'] ?? '')) ?: [''];
+    $editingTerms = akJobDescriptionItems((string)($editing['role_specific_terms'] ?? '')) ?: [''];
+    ?>
+    <div class="jd-field jd-full"><label>الغرض من الوظيفة</label><small class="d-block mb-2">اكتب هدفاً أو نتيجة أساسية واحدة في كل حقل؛ هذا يوضح لماذا توجد الوظيفة، وليس قائمة مهامها.</small><div id="purposeFields" class="jd-item-fields d-flex flex-column gap-2"><?php foreach ($editingPurpose as $index => $item): ?><div class="jd-item-row d-flex gap-2 align-items-start"><span class="pt-2 text-muted"><?= (int)($index + 1) ?>.</span><input type="text" name="role_purpose[]" maxlength="1000" class="form-control" value="<?= e($item) ?>" placeholder="الغرض أو الهدف من الوظيفة"><button type="button" class="btn btn-outline-danger jd-remove-item" aria-label="حذف البند"><i class="fa-solid fa-trash"></i></button></div><?php endforeach; ?></div><button type="button" class="btn btn-sm btn-outline-primary mt-2 jd-add-item" data-target="purposeFields" data-name="role_purpose[]" data-limit="10" data-placeholder="الغرض أو الهدف من الوظيفة"><i class="fa-solid fa-plus me-1"></i> إضافة بند للغرض</button></div>
+    <div class="jd-field jd-full"><label>المهام والمسؤوليات الأساسية</label><small class="d-block mb-2">أدخل كل مهمة في حقل مستقل. ستظهر في النسخة النهائية كقائمة عربية مرتبة ومسافة بادئة لكل بند.</small><div id="responsibilityFields" class="jd-item-fields d-flex flex-column gap-2"><?php foreach ($editingResponsibilities as $index => $item): ?><div class="jd-item-row d-flex gap-2 align-items-start"><span class="pt-2 text-muted"><?= (int)($index + 1) ?>.</span><input type="text" name="responsibilities[]" maxlength="1000" class="form-control" value="<?= e($item) ?>" placeholder="مهمة أو مسؤولية واحدة"><button type="button" class="btn btn-outline-danger jd-remove-item" aria-label="حذف البند"><i class="fa-solid fa-trash"></i></button></div><?php endforeach; ?></div><button type="button" class="btn btn-sm btn-outline-primary mt-2 jd-add-item" data-target="responsibilityFields" data-name="responsibilities[]" data-limit="30" data-placeholder="مهمة أو مسؤولية واحدة"><i class="fa-solid fa-plus me-1"></i> إضافة مسؤولية</button></div>
+    <div class="jd-field jd-full"><label>المؤهلات والخبرات المطلوبة (بعد اعتمادها داخلياً)</label><small class="d-block mb-2">كل مؤهل أو خبرة في حقل مستقل. لا تُعتمد المتطلبات إلا بعد مراجعتها داخلياً.</small><div id="qualificationFields" class="jd-item-fields d-flex flex-column gap-2"><?php foreach ($editingQualifications as $index => $item): ?><div class="jd-item-row d-flex gap-2 align-items-start"><span class="pt-2 text-muted"><?= (int)($index + 1) ?>.</span><input type="text" name="qualifications[]" maxlength="1000" class="form-control" value="<?= e($item) ?>" placeholder="مؤهل أو خبرة مطلوبة"><button type="button" class="btn btn-outline-danger jd-remove-item" aria-label="حذف البند"><i class="fa-solid fa-trash"></i></button></div><?php endforeach; ?></div><button type="button" class="btn btn-sm btn-outline-primary mt-2 jd-add-item" data-target="qualificationFields" data-name="qualifications[]" data-limit="30" data-placeholder="مؤهل أو خبرة مطلوبة"><i class="fa-solid fa-plus me-1"></i> إضافة مؤهل / خبرة</button></div>
+    <div class="jd-field jd-full"><label>بنود إضافية خاصة بهذا المسمى في العقد (اختيارية)</label><small class="d-block mb-2">كل بند في حقل مستقل؛ تُترك فارغة ما لم توجد شروط مهنية خاصة موثقة ومعتمدة لهذا المسمى.</small><div id="termFields" class="jd-item-fields d-flex flex-column gap-2"><?php foreach ($editingTerms as $index => $item): ?><div class="jd-item-row d-flex gap-2 align-items-start"><span class="pt-2 text-muted"><?= (int)($index + 1) ?>.</span><input type="text" name="role_specific_terms[]" maxlength="1000" class="form-control" value="<?= e($item) ?>" placeholder="بند مهني موثق ومتفق عليه"><button type="button" class="btn btn-outline-danger jd-remove-item" aria-label="حذف البند"><i class="fa-solid fa-trash"></i></button></div><?php endforeach; ?></div><button type="button" class="btn btn-sm btn-outline-primary mt-2 jd-add-item" data-target="termFields" data-name="role_specific_terms[]" data-limit="20" data-placeholder="بند مهني موثق ومتفق عليه"><i class="fa-solid fa-plus me-1"></i> إضافة بند</button><small class="d-block mt-2">هذه البنود تُضاف إلى الشروط الخاصة للعقد عند اختيار الموظف؛ لا تضع هنا استحقاقات قانونية غير متحقق منها.</small></div>
     <div class="jd-field"><label for="description_status">حالة الوصف</label><select id="description_status" name="description_status" <?= $canApprove ? '' : 'disabled' ?>><option value="needs_review" <?= ($editing['description_status'] ?? 'needs_review') === 'needs_review' ? 'selected' : '' ?>>يحتاج مراجعة HR</option><?php if ($canApprove): ?><option value="approved" <?= ($editing['description_status'] ?? '') === 'approved' ? 'selected' : '' ?>>معتمد داخلياً</option><?php endif; ?></select><?php if (!$canApprove): ?><small>اعتماد الوصف متاح لمدير الموارد البشرية أو مدير النظام.</small><input type="hidden" name="description_status" value="needs_review"><?php endif; ?></div>
     <div class="jd-field d-flex align-items-center gap-2 pt-4"><input class="form-check-input mt-0" type="checkbox" id="is_active" name="is_active" value="1" <?= !isset($editing['is_active']) || (int)$editing['is_active'] === 1 ? 'checked' : '' ?>><label for="is_active" class="mb-0">متاح للاستخدام في العقود</label></div>
    </div>
@@ -215,36 +227,27 @@ require_once __DIR__ . '/../../includes/header.php';
  const toast=document.getElementById('jdSuccessToast');
  if(toast){
   let hideTimer=window.setTimeout(hideToast,5000);
-  function hideToast(){
-   toast.classList.add('is-hiding');
-   window.setTimeout(()=>toast.remove(),220);
-  }
+  function hideToast(){toast.classList.add('is-hiding');window.setTimeout(()=>toast.remove(),220);}
   const closeButton=toast.querySelector('.jd-toast-close');
   if(closeButton)closeButton.addEventListener('click',()=>{window.clearTimeout(hideTimer);hideToast();});
  }
- const container=document.getElementById('responsibilityFields');
- const addButton=document.getElementById('addResponsibility');
- if(!container||!addButton)return;
- function renumber(){
-  Array.from(container.querySelectorAll('.jd-responsibility-row')).forEach((row,index)=>{
-   const number=row.querySelector('span'); if(number)number.textContent=(index+1)+'.';
-  });
- }
- function addField(value=''){
-  if(container.querySelectorAll('.jd-responsibility-row').length>=30){alert('يمكن إضافة 30 مسؤولية كحد أقصى.');return;}
-  const row=document.createElement('div');row.className='jd-responsibility-row d-flex gap-2 align-items-start';
+ function renumber(container){Array.from(container.querySelectorAll('.jd-item-row')).forEach((row,index)=>{const number=row.querySelector('span');if(number)number.textContent=(index+1)+'.';});}
+ document.querySelectorAll('.jd-add-item').forEach(button=>button.addEventListener('click',()=>{
+  const container=document.getElementById(button.dataset.target);if(!container)return;
+  const limit=parseInt(button.dataset.limit||'30',10);
+  if(container.querySelectorAll('.jd-item-row').length>=limit){alert('يمكن إدخال '+limit+' بنداً كحد أقصى.');return;}
+  const row=document.createElement('div');row.className='jd-item-row d-flex gap-2 align-items-start';
   const number=document.createElement('span');number.className='pt-2 text-muted';
-  const input=document.createElement('input');input.type='text';input.name='responsibilities[]';input.maxLength=1000;input.className='form-control';input.placeholder='اكتب مهمة أو مسؤولية واحدة';input.value=value;
-  const remove=document.createElement('button');remove.type='button';remove.className='btn btn-outline-danger jd-remove-responsibility';remove.setAttribute('aria-label','حذف المسؤولية');remove.innerHTML='<i class="fa-solid fa-trash"></i>';
-  row.append(number,input,remove);container.appendChild(row);renumber();input.focus();
- }
- addButton.addEventListener('click',()=>addField());
- container.addEventListener('click',event=>{
-  const button=event.target.closest('.jd-remove-responsibility');if(!button)return;
-  button.closest('.jd-responsibility-row').remove();
-  if(!container.querySelector('.jd-responsibility-row'))addField();
-  renumber();
- });
+  const input=document.createElement('input');input.type='text';input.name=button.dataset.name;input.maxLength=1000;input.className='form-control';input.placeholder=button.dataset.placeholder||'';
+  const remove=document.createElement('button');remove.type='button';remove.className='btn btn-outline-danger jd-remove-item';remove.setAttribute('aria-label','حذف البند');remove.innerHTML='<i class="fa-solid fa-trash"></i>';
+  row.append(number,input,remove);container.appendChild(row);renumber(container);input.focus();
+ }));
+ document.querySelectorAll('.jd-item-fields').forEach(container=>container.addEventListener('click',event=>{
+  const button=event.target.closest('.jd-remove-item');if(!button)return;
+  button.closest('.jd-item-row').remove();
+  if(!container.querySelector('.jd-item-row')){const addButton=document.querySelector('.jd-add-item[data-target="'+container.id+'"]');if(addButton)addButton.click();}
+  renumber(container);
+ }));
 })();
 </script>
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>
