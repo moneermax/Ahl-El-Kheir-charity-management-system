@@ -465,7 +465,7 @@ require_once __DIR__ . '/../../includes/header.php';
   function setRepeatableItems(containerId,name,text){
     const container=document.getElementById(containerId);
     if(!container)return;
-    const items=(text||'').split(/\\r?\\n/).map(item=>item.trim()).filter(Boolean);
+    const items=(text||'').split(/\r?\n/).map(item=>item.trim()).filter(Boolean);
     container.innerHTML='';
     (items.length?items:['']).forEach(item=>addRepeatableItem(container,name,item));
   }
