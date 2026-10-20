@@ -1303,3 +1303,12 @@ Commit `4435226e37405e9a2963dd07af0d1c14f71e7f92` aligns general-template employ
 ## 2026-10-20 — HR job-description general fallback drafts
 
 The catalogue showed blank purpose/responsibility fields on general title-only fallback rows because an earlier cleanup migration removed exact generic proposals. New data-only migration `database/migrations/2026-10-20_hr_job_description_zzz_general_fallback_drafts.sql` restores distinct, broad, editable drafts only to active title-only records that remain `needs_review` and have blank fields. It preserves role-specific drafts and HR edits, and does not reactivate `HR Test` or change schema. Commit: `5b6a553b22ff5a0be3d0a2b6430556ccf5138be9`. Local migration application, SQL verification, PHP lint and browser checks are pending; do not rerun prior migrations.
+
+
+### 2026-10-20 — HR job-description qualification baseline and reorderable fields
+
+New data-only migration: `database/migrations/2026-10-20_hr_job_description_zzzz_qualification_baseline.sql`. It prepends the minimum high-school qualification and basic computer/office-program knowledge to active job-description templates, preserves prior qualification text, and returns changed descriptions to `needs_review`. Apply after the existing job-description seed/proposal/role-qualification migrations.
+
+The job-description catalogue and employment contract builder now support drag-to-reorder on purpose, responsibility, qualification and optional contract-term items, with automatic renumbering and saved/PDF order matching the visible order.
+
+**Source committed; local migration, PHP lint, browser and PDF verification pending.** Continue from `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`; do not treat this UI/data change as runtime verified until the user confirms local checks.
