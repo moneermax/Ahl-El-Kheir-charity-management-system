@@ -1186,3 +1186,7 @@ Migration draft `database/migrations/2026-10-20_hr_fm_payroll_transfer_workflow.
 
 ### FM payroll workflow redesign — 2026-10-20 Step 4 source checkpoint
 Committed period-level payment account settings, approved-row individual/group account overrides, private proof upload, authorized proof download, and legacy evidence attachment. New proof files use a 10 MiB limit and PDF/JPG/PNG MIME validation; uploading does not itself mark payroll paid or post accounting. Migration is still unapplied; local lint/runtime verification is pending. Continue with the separate explicit transfer-confirmation/accounting/notification gate before treating the redesigned workflow as operational.
+
+
+### FM payroll workflow redesign — 2026-10-20 Step 5 source checkpoint
+Added a CSRF-protected explicit transfer-confirmation action, proof/account gates, transactional proof confirmation + paid status + existing accounting posting, notification success reporting, and GM completion checks for proof plus employee statement notification. Generic paid-status POST is blocked. Source is committed on `main`; migration not applied and local PHP lint/runtime checks pending. See `docs/HR_FM_PAYROLL_TABLE_USABILITY_CONTINUATION.md` before proceeding.
