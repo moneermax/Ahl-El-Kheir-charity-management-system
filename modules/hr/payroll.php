@@ -11,6 +11,7 @@ require_once __DIR__ . '/lib_payroll_accounting.php';
 require_once __DIR__ . '/lib_salary_advance_payroll.php';
 require_once __DIR__ . '/lib_employee_incentives.php';
 require_once __DIR__ . '/lib_gm_payroll_period.php';
+require_once __DIR__ . '/lib_payroll_transfer.php';
 
 Session::start();
 $userRole = Session::getUserRole();
@@ -191,6 +192,47 @@ try {
             payrollRefreshDraftBaseSalary($pdo, $month, $year);
             hrPayrollApproveAll($pdo, $month, $year);
             $message = t('hr.payroll_msg_approve_all');
+        } elseif (in_array($action, ['save_period_payment_account', 'set_group_payment_account', 'set_row_payment_account', 'upload_payment_proof', 'upload_legacy_payment_evidence'], true)) {
+            if (!verify_csrf()) {
+                throw new RuntimeException('انتهت صلاحية النموذج أو رمز الحماية غير صالح. أعد تحميل الصفحة وحاول مرة أخرى.');
+            }
+            if ($action === 'save_period_payment_account') {
+                hrPayrollSavePeriodDefaultAccount(
+                    $pdo,
+                    $month,
+                    $year,
+                    (int)($_POST['default_payment_account_id'] ?? 0),
+                    Session::getUserId()
+                );
+                $message = 'تم حفظ حساب التحويل الافتراضي للفترة وتطبيقه على السجلات المعتمدة التي لا تملك حساباً محدداً.';
+            } elseif ($action === 'set_group_payment_account' || $action === 'set_row_payment_account') {
+                $ids = $action === 'set_row_payment_account'
+                    ? [(int)($_POST['payroll_id'] ?? 0)]
+                    : ($_POST['account_payroll_ids'] ?? []);
+                if (!is_array($ids)) {
+                    $ids = [];
+                }
+                $count = hrPayrollSetPaymentAccountForRows(
+                    $pdo,
+                    $ids,
+                    $month,
+                    $year,
+                    (int)($_POST['payment_account_id'] ?? 0)
+                );
+                $message = 'تم تعيين حساب التحويل لعدد ' . $count . ' من سجلات الرواتب المعتمدة.';
+            } else {
+                $legacyEvidence = $action === 'upload_legacy_payment_evidence';
+                hrPayrollUploadProof(
+                    $pdo,
+                    (int)($_POST['payroll_id'] ?? 0),
+                    $_FILES['proof_file'] ?? [],
+                    Session::getUserId(),
+                    $legacyEvidence
+                );
+                $message = $legacyEvidence
+                    ? 'تم إرفاق الدليل التاريخي دون تغيير حالة الراتب أو القيد المحاسبي.'
+                    : 'تم حفظ إثبات التحويل كإثبات مُجهز فقط؛ لم يتم تأكيد الدفع أو ترحيل المحاسبة.';
+            }
         }
     }
     payrollRefreshDraftBaseSalary($pdo, $selectedMonth, $selectedYear);
