@@ -3527,3 +3527,12 @@ The user identified that general title-only catalogue entries still opened with 
 The HR job-description catalogue and contract builder now support drag-to-reorder for repeatable purpose, responsibility, qualification and optional-term rows, with automatic numbering. The data-only migration `database/migrations/2026-10-20_hr_job_description_zzzz_qualification_baseline.sql` prepends a minimum high-school qualification and basic computer/office-program knowledge to active templates and returns changed descriptions to `needs_review`.
 
 Source is committed to `main`. Local migration application, PHP lint, browser drag/reorder behavior, and PDF order remain pending user verification. Do not mark runtime verified until confirmed.
+
+
+## 2026-10-20 — Employment contract automatic numbering
+
+Source committed; local runtime verification pending. In modules/hr/contract_builder.php, generating a contract PDF now creates a draft row in the existing hr_employee_contracts register and uses its saved ID to produce the established CTR-YYYY-000001 number. The read-only number field is not client-submitted. The record is created transactionally with PDF rendering; a one-use session token blocks resubmission duplicates. Overlapping draft/active contracts are rejected consistently with the existing contract helper.
+
+The builder does not call hrCreateEmployeeContract(), because that helper also changes salary history and may update the employee salary mirror/employment state for a current or past start date. Those effects remain behind the existing explicit activation workflow. No schema migration was required.
+
+Commit: 8ed43dc8c7e0f2e2c5693e1777bfb8324bdc3115. Local PHP lint, browser/PDF check, draft register check, overlap rejection and confirmation that salary history/current salary/employment state are unchanged remain pending.
