@@ -496,7 +496,13 @@ require_once __DIR__ . '/../../includes/header.php';
   refreshSupervisorOptions();
   select.addEventListener('change',function(){refreshSupervisorOptions();
     const option=this.options[this.selectedIndex];
-    if(!option||!option.value)return;
+    if(!option||!option.value){
+      setRepeatableItems('dutiesFields','duties[]','');
+      setRepeatableItems('specialTermsFields','special_terms[]','');
+      const status=document.getElementById('jobDescriptionStatus');
+      if(status){status.textContent='اختر موظفاً لتحميل بيانات الوصف الوظيفي.';status.className='text-warning-emphasis';}
+      return;
+    }
     Object.entries(mapping).forEach(([field,key])=>{
       const input=document.getElementById(field);
       const value=option.dataset[key];
