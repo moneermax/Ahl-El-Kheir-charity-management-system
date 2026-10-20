@@ -91,7 +91,7 @@ function hrPayrollSavePeriodDefaultAccount(PDO $pdo, int $month, int $year, int 
 
         $apply = $pdo->prepare(
             "UPDATE payroll SET payment_account_id = ?
-             WHERE month = ? AND year = ? AND status = 'approved' AND payment_account_id IS NULL"
+             WHERE month = ? AND year = ? AND status IN ('draft','approved') AND payment_account_id IS NULL"
         );
         $apply->execute([$resolvedAccountId, $month, $year]);
         $pdo->commit();
