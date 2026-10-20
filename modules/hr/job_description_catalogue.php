@@ -152,7 +152,16 @@ $templates = dbFetchAll(
          LEFT JOIN users u ON u.id = e.user_id
          LEFT JOIN roles er ON er.id = u.role_id
          WHERE TRIM(e.position) = j.position_title
-           AND (j.system_role_code = '' OR er.code = j.system_role_code)) AS employee_count
+           AND (
+             (j.system_role_code <> '' AND er.code = j.system_role_code)
+             OR (j.system_role_code = '' AND NOT EXISTS (
+                 SELECT 1 FROM hr_job_description_templates jr
+                 WHERE jr.position_title = j.position_title
+                   AND jr.system_role_code = er.code
+                   AND jr.system_role_code <> ''
+                   AND jr.is_active = 1
+             ))
+           )) AS employee_count
      FROM hr_job_description_templates j
      LEFT JOIN roles r ON r.code = j.system_role_code
      ORDER BY j.is_active DESC, j.position_title, j.system_role_code",
