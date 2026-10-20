@@ -3686,3 +3686,19 @@ Inspection of `modules/hr/lib_employee_provisioning.php`, `modules/users/index.p
 Source correction on `main`: collect and validate a hire date and positive initial monthly salary at account creation; pass them through the existing transactional provisioning path; create initial salary history using the hire date. No new table/column or migration was required. Existing effective-dated salary changes and payroll selection are preserved.
 
 Verification boundary: remote source updated; local PHP lint and runtime verification are not yet evidenced. September 2026 historical drafts remain unresolved because their actual historical salaries cannot be inferred from October values. Do not alter or approve those records until verified salary amounts are available.
+
+
+## 2026-10-20 — HR employment contract builder source audit
+
+The user clarified that the master employment contract should be an in-system page, not a separate Word document: HR fills editable fields, views the completed contract as PDF, and prints it for review/signature.
+
+Source inspection found the existing `modules/hr/contracts.php`, `modules/hr/lib_contract_salary.php`, contract-file metadata (`contract_file_path`), bundled `TCPDF/tcpdf.php`, and `storage/.htaccess` denial of direct storage access. Existing contract upload/list code remains unchanged in this stage; its direct URL construction for stored contract files is a security concern to review before expanding signed-document handling.
+
+Source added:
+- `modules/hr/contract_builder.php` — authorized HR/admin editable contract form, CSRF-checked PDF POST, basic field/date/type/frequency/salary validation, A4 RTL PDF and signature areas.
+- `modules/hr/contracts.php` — link to the builder.
+- `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md` — scope and next verification steps.
+
+Commits: builder `f0e5fdba4b32e179091478b092eccd5dd10f033f`; contracts-page link `ca14abbd85b490c5025f8367c1fe2d2caa43f88d`.
+
+**Evidence boundary:** source inspection only. PHP lint and real local Apache/browser verification have not been performed. No schema migration or database mutation was made. The schema dump could not be retrieved through the repository connector due to its size, so local schema must be inspected before any subsequent persistence/onboarding integration. Legal text is a draft and must be reviewed by a qualified Sudanese lawyer before use.
