@@ -1300,3 +1300,6 @@ Continue from `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`. The employee-wide a
 ### Follow-up — null-safe fallback employee counts
 
 Commit `4435226e37405e9a2963dd07af0d1c14f71e7f92` aligns general-template employee counting with contract-builder matching by treating NULL and empty `system_role_code` values as title-only fallbacks. Local lint and browser verification remain pending.
+## 2026-10-20 — HR job-description general fallback drafts
+
+The catalogue showed blank purpose/responsibility fields on general title-only fallback rows because an earlier cleanup migration removed exact generic proposals. New data-only migration `database/migrations/2026-10-20_hr_job_description_zzz_general_fallback_drafts.sql` restores distinct, broad, editable drafts only to active title-only records that remain `needs_review` and have blank fields. It preserves role-specific drafts and HR edits, and does not reactivate `HR Test` or change schema. Commit: `5b6a553b22ff5a0be3d0a2b6430556ccf5138be9`. Local migration application, SQL verification, PHP lint and browser checks are pending; do not rerun prior migrations.
