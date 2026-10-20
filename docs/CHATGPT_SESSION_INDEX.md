@@ -1169,3 +1169,8 @@ The follow-up request is implemented in source on `main`; local syntax/browser v
 
 ## 2026-10-19 — FM payroll table refinement follow-up
 Committed the follow-up to `modules/hr/payroll.php` and `modules/hr/lib_payroll_accounting.php`, plus Arabic/English catalog entries. The page now uses auto-sized columns with compact translated labels and full tooltips, a dark sticky header, translated English month names and visible payroll-page labels/messages, and checkbox-based selection for approving chosen draft rows. The new `hrPayrollApproveSelected()` helper validates all IDs against the selected period and draft state and applies approval atomically; it only sets approved/ready and does not pay or post accounting. Save remains necessary for explicit persistence of editable allowances/overtime/general deductions and their existing automatic recalculations, but is now compact and beside row actions. Static source audit passed; local PHP lint/browser verification pending. Details: `docs/HR_FM_PAYROLL_TABLE_USABILITY_CONTINUATION.md`.
+
+
+### FM payroll workflow redesign — 2026-10-20
+
+Step 2 source audit is documented in `docs/HR_FM_PAYROLL_TABLE_USABILITY_CONTINUATION.md`. Current account resolution, paid/accounting coupling, notification completion gap, statement authorization boundary, private storage requirement, proposed proof/default model and schema-retrieval blocker are recorded there. No application or database changes were made. Migration work is gated on verified local schema and storage conventions.
