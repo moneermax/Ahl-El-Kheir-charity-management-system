@@ -154,6 +154,18 @@ if (isset($_GET['saved'])) {
 $editing = $editingId > 0
     ? dbFetchOne('SELECT * FROM hr_job_description_templates WHERE id = ? LIMIT 1', [$editingId])
     : null;
+$editingRoleSpecificCount = 0;
+$editingGeneralIsEmpty = false;
+if ($editing && trim((string)($editing['system_role_code'] ?? '')) === '') {
+    $editingRoleSpecificCount = (int)(dbFetchOne(
+        "SELECT COUNT(*) AS total FROM hr_job_description_templates
+         WHERE position_title = ? AND TRIM(COALESCE(system_role_code, '')) <> '' AND is_active = 1",
+        [(string)$editing['position_title']]
+    )['total'] ?? 0);
+    $editingGeneralIsEmpty =
+        trim((string)($editing['role_purpose'] ?? '')) === ''
+        && trim((string)($editing['responsibilities'] ?? '')) === '';
+}
 $templates = dbFetchAll(
     "SELECT j.*, r.name_ar AS system_role_name,
         (SELECT COUNT(*) FROM employees e
@@ -169,7 +181,11 @@ $templates = dbFetchAll(
                    AND jr.system_role_code <> ''
                    AND jr.is_active = 1
              ))
-           )) AS employee_count
+           )) AS employee_count,
+        (SELECT COUNT(*) FROM hr_job_description_templates jr
+         WHERE jr.position_title = j.position_title
+           AND TRIM(COALESCE(jr.system_role_code, '')) <> ''
+           AND jr.is_active = 1) AS role_specific_template_count
      FROM hr_job_description_templates j
      LEFT JOIN roles r ON r.code = j.system_role_code
      ORDER BY j.is_active DESC, j.position_title, j.system_role_code",
@@ -194,6 +210,20 @@ require_once __DIR__ . '/../../includes/header.php';
  <?php if ($error): ?><div class="alert alert-danger"><?= e($error) ?></div><?php endif; ?>
  <div class="alert alert-info small">تم إنشاء سجل لكل مسمى وظيفي موجود في بيانات الموظفين عند تطبيق الترحيل، دون اختلاق مهام أو مؤهلات. أكمل الحقول ثم اعتمد الوصف من مدير الموارد البشرية أو مدير النظام. تغيير أي وصف معتمد يعيده إلى «يحتاج مراجعة» ما لم يُعتمد صراحةً في عملية الحفظ نفسها.</div>
  <div class="jd-card"><div class="jd-card-head"><?= $editing ? 'تعديل وصف وظيفي' : 'إضافة مسمى ووصف وظيفي' ?></div><div class="jd-card-body">
+  <?php if ($editing && trim((string)($editing['system_role_code'] ?? '')) === ''): ?>
+   <div class="alert <?= $editingGeneralIsEmpty && $editingRoleSpecificCount > 0 ? 'alert-warning' : 'alert-info' ?> small" role="status">
+    <strong>هذا سجل عام للمسمى الوظيفي، وليس وصفاً مرتبطاً بدور حساب محدد.</strong>
+    <?php if ($editingRoleSpecificCount > 0): ?>
+     <?php if ($editingGeneralIsEmpty): ?>
+      حقلا الغرض والمسؤوليات فارغان في هذا السجل العام، وتوجد <?= $editingRoleSpecificCount ?> سجلات نشطة مرتبطة بأدوار النظام لهذا المسمى. عند إعداد العقد، يُفضَّل الوصف المطابق لدور حساب الموظف أولاً؛ لذلك لا يلزم نسخ محتوى تلك السجلات إلى هذا السجل. استخدم قائمة الفهرس لفتح الوصف المرتبط بالدور عند الحاجة.
+     <?php else: ?>
+      توجد <?= $editingRoleSpecificCount ?> سجلات نشطة مرتبطة بأدوار النظام لهذا المسمى. يظل هذا السجل خياراً احتياطياً للموظفين الذين لا يتوفر لهم وصف مطابق لدور حسابهم.
+     <?php endif; ?>
+    <?php else: ?>
+     هذا السجل يُستخدم كخيار احتياطي عندما لا يتوفر وصف مطابق لدور حساب الموظف.
+    <?php endif; ?>
+   </div>
+  <?php endif; ?>
   <form method="post" action="<?= e(APP_URL) ?>modules/hr/job_description_catalogue.php">
    <?= csrf_field() ?><input type="hidden" name="action" value="save"><input type="hidden" name="id" value="<?= (int)($editing['id'] ?? 0) ?>">
    <div class="jd-grid">
@@ -217,7 +247,7 @@ require_once __DIR__ . '/../../includes/header.php';
   </form>
  </div></div>
  <div class="jd-card"><div class="jd-card-head">الأوصاف حسب المسمى الوظيفي ودور الحساب</div><div class="table-responsive"><table class="table table-hover jd-table mb-0"><thead class="table-light"><tr><th>المسمى الوظيفي</th><th>دور النظام</th><th>الموظفون</th><th>حالة الوصف</th><th>الاستخدام</th><th>آخر تحديث</th><th>الإجراء</th></tr></thead><tbody>
- <?php foreach ($templates as $item): ?><tr><td class="fw-bold"><?= e($item['position_title']) ?></td><td><?= e($item['system_role_name'] ?: ($item['system_role_code'] !== '' ? $item['system_role_code'] : 'عام / غير مرتبط بدور محدد')) ?></td><td><?= (int)$item['employee_count'] ?></td><td class="jd-status"><?php if ($item['description_status'] === 'approved'): ?><span class="badge bg-success">معتمد داخلياً</span><?php else: ?><span class="badge bg-warning text-dark">يحتاج مراجعة HR</span><?php endif; ?></td><td><?= (int)$item['is_active'] === 1 ? '<span class="text-success">مفعل</span>' : '<span class="text-muted">غير مفعل</span>' ?></td><td><?= e($item['updated_at'] ?? '') ?></td><td><a class="btn btn-sm btn-outline-primary" href="<?= e(APP_URL) ?>modules/hr/job_description_catalogue.php?id=<?= (int)$item['id'] ?>">تعديل</a></td></tr><?php endforeach; ?>
+ <?php foreach ($templates as $item): $isGeneralTemplate = trim((string)($item['system_role_code'] ?? '')) === ''; $templateFieldsEmpty = trim((string)($item['role_purpose'] ?? '')) === '' && trim((string)($item['responsibilities'] ?? '')) === ''; ?><tr><td class="fw-bold"><?= e($item['position_title']) ?></td><td><?php if ($isGeneralTemplate): ?>عام / خيار احتياطي<?php else: ?><?= e($item['system_role_name'] ?: $item['system_role_code']) ?><?php endif; ?><?php if ($isGeneralTemplate && (int)$item['role_specific_template_count'] > 0): ?><div class="small text-muted mt-1"><?= (int)$item['role_specific_template_count'] ?> وصفاً نشطاً حسب دور النظام</div><?php endif; ?><?php if ($isGeneralTemplate && $templateFieldsEmpty && (int)$item['role_specific_template_count'] > 0): ?><span class="badge bg-warning text-dark mt-1">احتياطي فارغ — توجد أوصاف حسب الدور</span><?php endif; ?></td><td><?= (int)$item['employee_count'] ?></td><td class="jd-status"><?php if ($item['description_status'] === 'approved'): ?><span class="badge bg-success">معتمد داخلياً</span><?php else: ?><span class="badge bg-warning text-dark">يحتاج مراجعة HR</span><?php endif; ?></td><td><?= (int)$item['is_active'] === 1 ? '<span class="text-success">مفعل</span>' : '<span class="text-muted">غير مفعل</span>' ?></td><td><?= e($item['updated_at'] ?? '') ?></td><td><a class="btn btn-sm btn-outline-primary" href="<?= e(APP_URL) ?>modules/hr/job_description_catalogue.php?id=<?= (int)$item['id'] ?>">تعديل</a></td></tr><?php endforeach; ?>
  <?php if (!$templates): ?><tr><td colspan="7" class="text-center text-muted p-4">لا توجد أوصاف بعد. تأكد من تطبيق ترحيل فهرس الأوصاف الوظيفية.</td></tr><?php endif; ?>
  </tbody></table></div></div>
  <div class="text-muted small mb-4">هذه حالة اعتماد داخلية للوصف الوظيفي وليست اعتماداً قانونياً لعقد العمل. تظل مراجعة محامٍ سوداني مؤهل مطلوبة قبل الاستخدام الرسمي للعقود.</div>
