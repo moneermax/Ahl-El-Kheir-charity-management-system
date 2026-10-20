@@ -49,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $items[] = $item;
                 }
                 if (count($items) > $maximum) throw new InvalidArgumentException('يمكن إدخال ' . $maximum . ' بنداً كحد أقصى في ' . $label . '.');
-                return implode("\\n", $items);
+                return implode("\n", $items);
             };
             $purpose = $readItems('role_purpose', 10, 'الغرض من الوظيفة');
             $responsibilities = $readItems('responsibilities', 30, 'المهام والمسؤوليات');
