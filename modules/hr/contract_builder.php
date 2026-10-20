@@ -196,6 +196,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
         if ($data['duties'] === '') {
             $data['duties'] = akContractTemplateText($jobTemplate);
         }
+        if (strlen($data['duties']) > 5000) {
+            throw new InvalidArgumentException('الوصف الوظيفي أطول من الحد المسموح به للعقد؛ اختصره من فهرس الأوصاف أو عدّله قبل التوليد.');
+        }
         $dutiesText = $data['duties'] !== '' ? nl2br($v('duties')) : 'تنفيذ المهام المرتبطة بالوظيفة والوصف الوظيفي والتعليمات المشروعة ذات الصلة.';
         $jobDescriptionNotice = $jobDescriptionStatus === 'approved'
             ? ''
@@ -232,7 +235,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
         $pdf->AddPage();
 
         if (is_file($logoPath)) {
-            $pdf->Image($logoPath, 168, 12, 25, 25, 'PNG');
+            $pdf->Image($logoPath, 168, 12, 25, 25);
         }
         $pdf->SetY(15);
         $pdf->SetFont('aealarabiya', 'B', 17);
@@ -256,7 +259,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
         </style>
         ' . $organizationContactHtml . '
         <p class="meta">رقم العقد: <b>' . ($data['contract_number'] !== '' ? $v('contract_number') : 'يُستكمل عند التسجيل') . '</b> &nbsp;&nbsp; تاريخ التحرير: <b>' . $v('issue_date') . '</b></p>
-        <p>تم إبرام هذا العقد بين جمعية أهل الخير الخيرية، ويشار إليها في هذا العقد بـ«الجمعية» أو «صاحب العمل»، وبين الموظف المبينة بياناته أدناه، ويشار إليه بـ«الموظف»، وفق أحكام هذا العقد وقوانين العمل السودانية السارية والسياسات المعتمدة المتوافقة معها.</p>
+        <p>تم إبرام هذا العقد بين ' . akContractEscape($organizationName) . '، ويشار إليها في هذا العقد بـ«الجمعية» أو «صاحب العمل»، وبين الموظف المبينة بياناته أدناه، ويشار إليه بـ«الموظف»، وفق أحكام هذا العقد وقوانين العمل السودانية السارية والسياسات المعتمدة المتوافقة معها.</p>
         <h2>أولاً: بيانات الطرفين والوظيفة</h2>
         <table cellpadding="5" border="1" bordercolor="#d6dde7">
           <tr><td width="50%"><b>اسم الموظف:</b> ' . $v('employee_name') . '</td><td width="50%"><b>الرقم الوطني/الهوية:</b> ' . ($data['national_id'] !== '' ? $v('national_id') : '—') . '</td></tr>
@@ -289,7 +292,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
         <h2>إقرار وتوقيع الطرفين</h2>
         <p>يقر الطرفان بأنهما قرآ العقد وفهما أحكامه، وأتيحت لهما فرصة طلب التوضيح، وأنهما تسلما نسخة موقعة منه. لا يُعد توقيع الموظف تنازلاً عن أي حق إلزامي مقرر بموجب القانون.</p>
         <table cellpadding="8" border="1" bordercolor="#d6dde7">
-          <tr><td width="50%"><b>عن جمعية أهل الخير الخيرية</b><br /><br />الاسم: __________________________<br /><br />الصفة: __________________________<br /><br />التوقيع والختم: ___________________<br /><br />التاريخ: _________________________</td><td width="50%"><b>الموظف</b><br /><br />الاسم: ' . $v('employee_name') . '<br /><br />التوقيع: _________________________<br /><br />التاريخ: _________________________</td></tr>
+          <tr><td width="50%"><b>عن ' . akContractEscape($organizationName) . '</b><br /><br />الاسم: __________________________<br /><br />الصفة: __________________________<br /><br />التوقيع والختم: ___________________<br /><br />التاريخ: _________________________</td><td width="50%"><b>الموظف</b><br /><br />الاسم: ' . $v('employee_name') . '<br /><br />التوقيع: _________________________<br /><br />التاريخ: _________________________</td></tr>
           <tr><td colspan="2"><b>الشاهد (إن لزم):</b> الاسم: __________________________ &nbsp; التوقيع: __________________ &nbsp; التاريخ: ______________</td></tr>
         </table>
         ';
@@ -317,6 +320,10 @@ $selectedPosition = trim((string)($selectedEmployee['position'] ?? ''));
 $selectedJobDescription = $jobDescriptionByPosition[$selectedPosition] ?? null;
 $selectedJobDuties = akContractTemplateText($selectedJobDescription);
 $selectedJobStatus = (string)($selectedJobDescription['description_status'] ?? 'needs_review');
+$portalLogoPath = (string)($organizationSettings['site_logo'] ?? 'assets/img/logo.png');
+if ($portalLogoPath === '' || strpos($portalLogoPath, '..') !== false || str_starts_with($portalLogoPath, '/')) {
+    $portalLogoPath = 'assets/img/logo.png';
+}
 $pageTitle = 'بوابة عقود العمل';
 $active = 'hr';
 require_once __DIR__ . '/../../includes/header.php';
@@ -325,7 +332,7 @@ require_once __DIR__ . '/../../includes/header.php';
 .contract-builder{max-width:1200px;margin:auto}.cb-hero{background:linear-gradient(120deg,#173f73,#2d67ad);color:#fff;padding:22px 26px;border-radius:14px;margin-bottom:18px}.cb-hero h1{font-size:1.4rem;font-weight:800;margin:0}.cb-hero p{margin:7px 0 0;font-size:.82rem;opacity:.92}.cb-card{background:#fff;border:1px solid #e4e9f0;border-radius:13px;box-shadow:0 3px 12px rgba(16,24,40,.05);margin-bottom:16px;overflow:hidden}.cb-head{padding:13px 17px;border-bottom:1px solid #e7ecf2;font-weight:800;color:#173f73}.cb-body{padding:17px}.cb-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.cb-field label{display:block;font-size:.76rem;font-weight:800;color:#344054;margin-bottom:5px}.cb-field input,.cb-field select,.cb-field textarea{width:100%;border:1px solid #b9c7d8;border-radius:8px;padding:9px 10px;font:inherit;font-size:.8rem;background:#fff}.cb-field textarea{min-height:78px}.cb-full{grid-column:1/-1}.cb-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:17px}.cb-actions .btn{font-size:.82rem;font-weight:700}.cb-note{font-size:.78rem;color:#475467;background:#f8fafc;border:1px solid #e4e9f0;padding:12px;border-radius:9px;margin-bottom:15px}.cb-error{font-size:.82rem}.cb-required{color:#b42318}@media(max-width:700px){.cb-grid{grid-template-columns:1fr}.cb-full{grid-column:auto}}
 </style>
 <div class="contract-builder">
-  <div class="cb-hero d-flex align-items-center justify-content-between gap-3 flex-wrap"><div class="d-flex align-items-center gap-3"><img src="<?= e(APP_URL . ((isset($organizationSettings['site_logo']) && $organizationSettings['site_logo'] !== '' && strpos($organizationSettings['site_logo'], '..') === false) ? $organizationSettings['site_logo'] : 'assets/img/logo.png')) ?>" alt="شعار جمعية أهل الخير" style="width:68px;height:68px;object-fit:contain;background:#fff;border-radius:10px;padding:5px"><div><h1><i class="fa-solid fa-file-signature me-2"></i>بوابة عقود العمل</h1><p><?= e(trim((string)($organizationSettings['org_name_ar'] ?? '')) ?: 'جمعية أهل الخير الخيرية') ?> — إعداد عقد مناسب للمسمى الوظيفي ثم معاينته وطباعته للتوقيع.</p><?php $portalContact = array_filter([trim((string)($organizationSettings['org_address'] ?? '')), trim((string)($organizationSettings['support_phone'] ?? '')), trim((string)($organizationSettings['support_email'] ?? ''))]); if ($portalContact): ?><small><?= e(implode(' | ', $portalContact)) ?></small><?php endif; ?></div></div><a class="btn btn-light btn-sm fw-bold" href="<?= e(APP_URL) ?>modules/hr/job_description_catalogue.php"><i class="fa-solid fa-list-check me-1"></i> إدارة الأوصاف الوظيفية</a></div>
+  <div class="cb-hero d-flex align-items-center justify-content-between gap-3 flex-wrap"><div class="d-flex align-items-center gap-3"><img src="<?= e(APP_URL . $portalLogoPath) ?>" alt="شعار جمعية أهل الخير" style="width:68px;height:68px;object-fit:contain;background:#fff;border-radius:10px;padding:5px"><div><h1><i class="fa-solid fa-file-signature me-2"></i>بوابة عقود العمل</h1><p><?= e(trim((string)($organizationSettings['org_name_ar'] ?? '')) ?: 'جمعية أهل الخير الخيرية') ?> — إعداد عقد مناسب للمسمى الوظيفي ثم معاينته وطباعته للتوقيع.</p><?php $portalContact = array_filter([trim((string)($organizationSettings['org_address'] ?? '')), trim((string)($organizationSettings['support_phone'] ?? '')), trim((string)($organizationSettings['support_email'] ?? ''))]); if ($portalContact): ?><small><?= e(implode(' | ', $portalContact)) ?></small><?php endif; ?></div></div><a class="btn btn-light btn-sm fw-bold" href="<?= e(APP_URL) ?>modules/hr/job_description_catalogue.php"><i class="fa-solid fa-list-check me-1"></i> إدارة الأوصاف الوظيفية</a></div>
   <?php if (!empty($errorMessage)): ?><div class="alert alert-danger cb-error"><?= e($errorMessage) ?></div><?php endif; ?>
   <div class="cb-note"><strong>ملاحظة قانونية:</strong> هذا نموذج تشغيلي أولي وليس اعتماداً قانونياً. يجب مراجعته بواسطة محامٍ مؤهل في السودان قبل استخدامه رسمياً، والتحقق من توافق الشروط والسياسات مع أحكام قانون العمل السوداني السارية. لا تُدخل أي استحقاق أو مدة قانونية غير متحقق منها.</div>
   <form method="post" action="<?= e(APP_URL) ?>modules/hr/contract_builder.php" target="_blank">
