@@ -3819,3 +3819,12 @@ Data change: `database/migrations/2026-10-20_hr_job_description_zzzz_qualificati
 Any modified description is marked `needs_review`; existing qualification text is preserved after the baseline items. This is not internal HR approval or legal approval. The migration must be applied after the existing job-description role-qualification and general-fallback migrations.
 
 Verification: source committed on `main`; local migration application, PHP syntax checks, browser interaction and generated-PDF ordering are pending. No runtime success is claimed.
+
+
+## 2026-10-20 — Automatic contract number reservation in the builder
+
+Source change committed on main (8ed43dc8c7e0f2e2c5693e1777bfb8324bdc3115). The employment contract builder reserves its number through a saved draft row in hr_employee_contracts; number format follows the existing helper's CTR- + start year + six-digit record ID convention. The number input is read-only and no longer submits a client-controlled value. Draft insertion, numbering, and PDF rendering are kept in one transaction, so a rendering failure rolls the draft back. A one-use session token prevents the same rendered form from creating a second draft on resubmission. Existing overlap rules for draft/active contracts are preserved.
+
+The builder intentionally bypasses hrCreateEmployeeContract() because that helper also changes salary history and may update the employee's current salary mirror and employment state for current/past start dates. The new builder path inserts only the draft contract record and optional weekly hours; it does not write salary history, update employees.basic_salary, or activate employment. Existing explicit activation behavior remains authoritative. No schema migration/runtime DDL was introduced.
+
+Evidence boundary: source commit only. Local PHP syntax validation and real XAMPP/MariaDB/browser verification are still required for the insert, generated PDF number, rollback behavior, overlap rejection, duplicate-submit guard, and unchanged salary/employment data.
