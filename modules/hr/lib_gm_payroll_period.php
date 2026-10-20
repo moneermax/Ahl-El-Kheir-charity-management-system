@@ -14,6 +14,7 @@ function hrGmPayrollPeriodState(PDO $pdo, int $month, int $year): array
     }
 
     require_once __DIR__ . '/lib_payroll_transfer.php';
+    require_once __DIR__ . '/lib_payroll_accounting.php';
     $transferSchemaAvailable = hrPayrollTransferSchemaAvailable($pdo);
     $periodEnd = date('Y-m-t', strtotime(sprintf('%04d-%02d-01', $year, $month)));
     $proofSelect = $transferSchemaAvailable ? 'pp.proof_state AS proof_state' : 'NULL AS proof_state';
