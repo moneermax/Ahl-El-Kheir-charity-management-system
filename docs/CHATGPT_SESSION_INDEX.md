@@ -1179,3 +1179,7 @@ Step 2 source audit is documented in `docs/HR_FM_PAYROLL_TABLE_USABILITY_CONTINU
 ### FM payroll workflow redesign — 2026-10-20 Step 2 closed
 
 Local schema output has been reviewed and the proposed data model finalized at design level. The continuation document records exact schema facts, account-policy boundary, period default, individual proof/evidence states, private authorized streaming, legacy paid evidence, employee notification success and GM completion requirements. No application/database changes yet. Proceed to authoring the migration and storage contract as the next separately documented step.
+
+### FM payroll workflow redesign — 2026-10-20 Step 3 draft
+
+Migration draft `database/migrations/2026-10-20_hr_fm_payroll_transfer_workflow.sql` is committed on `main` (`f1225411c429f0b0eb9486ccec03f6be02e1ed8a`). It introduces period account settings and per-payroll proof metadata only. It is not applied. The continuation doc defines private storage, safe upload/streaming, legacy evidence, and no-silent-replacement constraints. No application or database state changed.
