@@ -3397,3 +3397,9 @@ The source layer for period account defaults, explicit approved-row account over
 
 ### FM payroll workflow redesign — 2026-10-20 Step 5 source checkpoint
 The source now has a dedicated CSRF-protected transfer-confirmation action; the generic legacy paid-status POST is rejected. Confirmation requires a readable prepared proof and an active saved account, then confirms proof + marks paid + posts accounting in the same transaction. Employee notification outcome is explicit, and GM period completion requires every eligible employee to be paid/posted/journaled, have confirmed or legacy evidence, and have a recorded statement notification. Account changes are blocked after proof attachment. Source commits are on `main`; local PHP lint/runtime checks remain pending and the migration remains unapplied. Do not treat this workflow as operational until those local gates pass.
+
+## 2026-10-20 — Initial Employee Salary Capture
+
+The shared user-creation workflow now requires a hire date and a positive initial monthly basic salary, and employee provisioning uses those values to create the initial salary-history record effective on the hire date. Payroll's existing effective-dated salary selection remains the monthly source of truth; salary does not need to be re-entered each month.
+
+Source changes are committed on `main`. Local PHP syntax checks and runtime/browser verification remain pending. This does not repair historical September 2026 drafts: 18 employees were identified with zero payroll salary and zero matching salary-history salary, while positive records shown for most employees start on 2026-10-01. Do not backfill historical salaries without authoritative amounts.
