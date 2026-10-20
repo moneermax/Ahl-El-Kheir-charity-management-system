@@ -3416,3 +3416,11 @@ Commits: `f0e5fdba4b32e179091478b092eccd5dd10f033f`, `ca14abbd85b490c5025f8367c1
 ### Follow-up — contract form input validation
 
 Commit `eef4d17e02543e1327ed8cc3db9fee3b916aa11f` adds server-side field length, email and weekly-hours validation, requires an end date for fixed-term contracts, and removes the nationality assumption. Local lint and browser/PDF verification remain pending.
+
+## 2026-10-20 — HR employment contract portal (source committed; runtime pending)
+
+The new separate HR dashboard shortcut `بوابة عقود العمل` opens the existing contract PDF builder, now connected to an HR-maintained role-description catalogue. Migration: `database/migrations/2026-10-20_hr_job_description_catalogue.sql`. Catalogue UI: `modules/hr/job_description_catalogue.php`. Contract builder: `modules/hr/contract_builder.php`. Existing `العقود والرواتب` and salary-history workflow are preserved.
+
+Role matching uses the employee's actual `employees.position`, not application permission roles. Existing positions are seeded with empty descriptions and `needs_review` status; no job duties are represented as approved without HR review. Role-specific clauses are maintained independently of shared PDF layout. Organization logo and contact details are read from existing settings when configured.
+
+**Boundary:** source commits are present on `main`; local migration application, PHP/runtime/PDF/browser verification remain pending. Do not claim runtime success. Contract language requires review by a qualified Sudanese lawyer before official use. See `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`.
