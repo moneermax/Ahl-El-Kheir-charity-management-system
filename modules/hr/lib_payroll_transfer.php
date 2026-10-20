@@ -9,6 +9,13 @@ declare(strict_types=1);
  */
 const HR_PAYROLL_PROOF_MAX_BYTES = 10 * 1024 * 1024;
 
+function hrPayrollTransferSchemaAvailable(PDO $pdo): bool
+{
+    $settings = $pdo->query("SHOW TABLES LIKE 'hr_payroll_period_settings'")->fetchColumn();
+    $proofs = $pdo->query("SHOW TABLES LIKE 'hr_payroll_payment_proofs'")->fetchColumn();
+    return $settings !== false && $proofs !== false;
+}
+
 function hrPayrollProofStorageDirectory(): string
 {
     $storageRoot = realpath(dirname(__DIR__, 2) . '/storage');
