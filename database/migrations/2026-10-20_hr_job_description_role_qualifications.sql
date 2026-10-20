@@ -9,19 +9,22 @@ SET role_purpose = TRIM(SUBSTRING(
         CHAR_LENGTH('مسودة مستندة إلى مسارات النظام: ') + 1
     )),
     updated_at = CURRENT_TIMESTAMP
-WHERE role_purpose LIKE 'مسودة مستندة إلى مسارات النظام: %';
+WHERE description_status <> 'approved'
+  AND role_purpose LIKE 'مسودة مستندة إلى مسارات النظام: %';
 
 UPDATE hr_job_description_templates
 SET role_purpose = 'قيادة الجمعية وتوجيه الأولويات المؤسسية ومتابعة الأداء والحوكمة واتخاذ القرارات الإدارية ضمن الصلاحيات المعتمدة.',
     updated_at = CURRENT_TIMESTAMP
 WHERE position_title = 'موظف'
   AND system_role_code = ''
+  AND description_status <> 'approved'
   AND role_purpose = 'وصف عام مؤقت فقط: تنفيذ المهام التشغيلية التي يحددها القسم والمشرف المباشر كتابةً. يجب تخصيص المسؤوليات والصلاحيات لهذا الموظف قبل اعتماد الوصف.';
 
 UPDATE hr_job_description_templates
 SET responsibilities = '• تنفيذ الأعمال التشغيلية والإدارية المسندة ضمن نطاق القسم والصلاحيات المحددة.\n• تحديث السجلات والنماذج ذات الصلة بدقة وحفظ المستندات وفق الإجراءات المعتمدة.\n• التواصل مع المستفيدين والزملاء بمهنية وحماية البيانات الشخصية والسرية.\n• توثيق إنجاز المهام ورفع المخاطر والاستثناءات إلى المشرف المباشر.'
 WHERE position_title = 'موظف'
   AND system_role_code = ''
+  AND description_status <> 'approved'
   AND responsibilities = '• يحدد المشرف المباشر المهام اليومية والنتائج المتوقعة كتابةً.\n• الالتزام بسياسات الجمعية والسرية والحماية والسلامة.\n• توثيق العمل ورفع المخاطر أو التعارضات إلى المشرف.\n• هذه صياغة عامة غير كافية للاعتماد النهائي؛ يجب تخصيص المهام والصلاحيات قبل اعتماد الوصف.';
 
 UPDATE hr_job_description_templates
@@ -56,14 +59,7 @@ SET qualifications = CASE
     ELSE qualifications
 END,
 updated_at = CURRENT_TIMESTAMP
-WHERE qualifications IS NULL
-   OR TRIM(qualifications) = ''
-   OR qualifications = 'مسودة مقترحة غير معتمدة: تُحدد المؤهلات العلمية والخبرة والمهارات المطلوبة بالتناسب مع المهام الفعلية وبمراجعة الموارد البشرية والمشرف المختص. لا تُعد هذه العبارة شرط توظيف رسمياً ولا تستبدل متطلبات قانونية أو مهنية واجبة.';
-
-UPDATE hr_job_description_templates
-SET description_status = 'needs_review',
-    updated_at = CURRENT_TIMESTAMP
 WHERE description_status <> 'approved'
-  AND (role_purpose LIKE 'مسودة مستندة إلى مسارات النظام:%'
-       OR (position_title = 'موظف' AND system_role_code = ''
-           AND responsibilities LIKE '%هذه صياغة عامة غير كافية للاعتماد النهائي%'));
+  AND (qualifications IS NULL
+   OR TRIM(qualifications) = ''
+   OR qualifications = 'مسودة مقترحة غير معتمدة: تُحدد المؤهلات العلمية والخبرة والمهارات المطلوبة بالتناسب مع المهام الفعلية وبمراجعة الموارد البشرية والمشرف المختص. لا تُعد هذه العبارة شرط توظيف رسمياً ولا تستبدل متطلبات قانونية أو مهنية واجبة.');
