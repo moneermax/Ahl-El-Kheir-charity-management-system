@@ -3779,3 +3779,8 @@ These sources are benchmarks, not a claim that Ahl El Kheir must adopt another o
 A read-only local query established: 26 rows in `hr_job_description_templates`; 25 `qualifications` values start with literal question marks; zero rows are approved; one row has title `HR Test`. The four relevant columns are `utf8mb4_unicode_ci`. A separate diagnostic found no values in `role_purpose`, `responsibilities`, or `position_title` starting with question marks. The confirmed corruption scope is therefore limited to the qualifications prefix check; other values must be preserved.
 
 Corrective source is committed on `main`: explicit UTF-8 connection setup in the original seed migration and a separate data-only repair migration restricted to corrupted qualifications on unapproved non-`HR Test` rows. The repair uses the same Arabic role-specific drafts as the seed migration. No local application or post-repair result has yet been reported, so the issue remains open pending user execution and read-only verification.
+
+
+## 2026-10-20 — Job-description qualification encoding repair: verified result
+
+Post-repair local SQL reported `remaining_corrupted_qualifications = 0`. Hex previews of restored values begin with UTF-8 bytes for Arabic text (for example, after the leading bullet and space, `D985D8A4...`), not `3F` question-mark bytes. The `HR Test` row remained excluded and its qualification value remained NULL. PowerShell output displays Arabic position titles as mojibake; no byte-level diagnostic has established title corruption, so no title changes were made. Data repair is verified; page-level display and PDF acceptance remain open.
