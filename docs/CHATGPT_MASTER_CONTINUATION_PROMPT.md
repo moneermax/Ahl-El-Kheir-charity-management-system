@@ -1288,3 +1288,8 @@ Current continuation is `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`. Commit `6
 ## Follow-up — null-safe HR fallback counts
 
 Commit `4435226e37405e9a2963dd07af0d1c14f71e7f92` makes catalogue employee counts handle NULL and empty `system_role_code` as general fallback values, matching contract-builder selection. Local PHP lint and browser verification remain pending; no migration is required.
+## LATEST CHECKPOINT — 2026-10-20 — General job-description fallback drafts
+
+User evidence showed the general/title-only fallback records still had empty `الغرض من الوظيفة` and `المهام والمسؤوليات الأساسية` fields. The reason was the earlier `2026-10-20_hr_job_description_z_clear_unreviewed_generic_drafts.sql`, which cleared exact generic proposals. New migration committed to `main`: `database/migrations/2026-10-20_hr_job_description_zzz_general_fallback_drafts.sql` (commit `5b6a553b22ff5a0be3d0a2b6430556ccf5138be9`). It restores distinct, broad proposed text only to active title-only rows that remain `needs_review` and have blank purpose/responsibility fields. Existing non-empty text, role-specific records, approval states, qualifications, reporting lines, employee data and schema are preserved; `HR Test` remains excluded.
+
+**Next:** user runs `git checkout main` and `git pull --ff-only origin main`, then applies only the new migration using an explicit UTF-8 MySQL client. Verify active title-only rows have purpose/responsibilities and remain `needs_review`; then PHP-lint `modules/hr/job_description_catalogue.php` and browser-check the catalogue and employee-specific contract prefill. Do not rerun prior migrations. Local runtime acceptance is pending.
