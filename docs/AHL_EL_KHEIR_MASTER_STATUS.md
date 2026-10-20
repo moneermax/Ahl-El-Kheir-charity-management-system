@@ -3503,3 +3503,10 @@ The user applied the corrective migration with the MySQL client explicitly confi
 ## 2026-10-20 — Employment contract purpose field correction
 
 The latest contract-builder source change separates job purpose from responsibilities and exposes the catalogue's qualifications and reporting line as their own controls. The root cause was UI consolidation: `role_purpose` was folded into the combined duties textarea, leaving no `الغرض من الوظيفة` field. The employee selector now reloads these fields from the matching position + system-role template, with the generic position template as fallback. Commits: `73b91d1a40024564d7399a80ae91b011167dbf9c`, `8fc40930c4224f04dab7e1f8c9c96c4fdfafd4b7`, `ec565758660214ac371ef14b692b4265249fc2b7`, `4d3d030bc4b96537141eec16fc6e3e0e86bce05d`, `59332e20a7d186eae3f969a9a94c24b1e2225d44`, `59ecd7b5057d9fe2910ccc3314b073d305cc19d6`. Source committed; local lint/browser/PDF verification is pending. No schema or migration changes.
+
+
+## 2026-10-20 — HR job-description fallback catalogue clarity
+
+The employee-wide query returned active role-specific template matches for current linked employees except employee 21 (**HR Salary Test**), which has no active match. For **أخصائية شؤون الأمهات**, role-specific draft id 20 is populated while title-only fallback id 6 is empty. This is consistent with role-specific-first contract selection and the earlier cleanup of exact generic drafts; it is not evidence that the role-specific draft is missing.
+
+Commit `6264c897b2bbadb460e0ba0d3e0c029b1443312d` improves `modules/hr/job_description_catalogue.php` labels and warnings for general fallback records and counts active role-specific records by title. Related continuation documentation was updated. Status: source committed; local PHP lint and browser verification remain pending. No database changes or migration reruns.
