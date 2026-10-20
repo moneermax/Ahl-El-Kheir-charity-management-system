@@ -3784,3 +3784,8 @@ Corrective source is committed on `main`: explicit UTF-8 connection setup in the
 ## 2026-10-20 — Job-description qualification encoding repair: verified result
 
 Post-repair local SQL reported `remaining_corrupted_qualifications = 0`. Hex previews of restored values begin with UTF-8 bytes for Arabic text (for example, after the leading bullet and space, `D985D8A4...`), not `3F` question-mark bytes. The `HR Test` row remained excluded and its qualification value remained NULL. PowerShell output displays Arabic position titles as mojibake; no byte-level diagnostic has established title corruption, so no title changes were made. Data repair is verified; page-level display and PDF acceptance remain open.
+
+
+## 2026-10-20 — Contract-builder job-purpose field root cause and source correction
+
+Audit finding: `modules/hr/contract_builder.php` used a single combined `duties` field populated by `akContractTemplateText()`, so the separately stored `role_purpose` was not exposed in a dedicated contract form field. This explains the missing `الغرض من الوظيفة` draft control without assuming catalogue data is absent. Source changes on `main` now load purpose, responsibilities, qualifications and reporting line separately for the selected employee's position/system-role template and reconstruct those sections for PDF output. Commits: `73b91d1a40024564d7399a80ae91b011167dbf9c`, `8fc40930c4224f04dab7e1f8c9c96c4fdfafd4b7`, `ec565758660214ac371ef14b692b4265249fc2b7`, `4d3d030bc4b96537141eec16fc6e3e0e86bce05d`. Runtime status remains unverified until local PHP lint and browser/PDF checks are reported. No database changes.
