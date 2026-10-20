@@ -183,6 +183,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
             http_response_code(403);
             throw new RuntimeException('انتهت صلاحية النموذج. أعد تحميل الصفحة ثم حاول مرة أخرى.');
         }
+        $submittedBuilderToken = (string)($_POST['builder_submission_token'] ?? '');
+        $expectedBuilderToken = (string)($_SESSION['ak_contract_builder_submission_token'] ?? '');
+        if ($expectedBuilderToken === '' || $submittedBuilderToken === '' || !hash_equals($expectedBuilderToken, $submittedBuilderToken)) {
+            throw new RuntimeException('تم استخدام هذا النموذج أو انتهت صلاحيته. أعد تحميل الصفحة ثم حاول مرة أخرى.');
+        }
 
         $employeeId = filter_var($_POST['employee_id'] ?? null, FILTER_VALIDATE_INT);
         if (!$employeeId || $employeeId < 1) {
@@ -333,6 +338,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
         }
         $headerContact = $contactParts ? 'عقد عمل | ' . implode(' | ', $contactParts) : 'عقد عمل';
 
+        // Reserve the official number in the existing register, but keep the record a draft.
+        // Unlike hrCreateEmployeeContract(), this builder path must not alter salary history,
+        // the employee salary mirror, or employment state before HR explicitly activates it.
+        $pdo->beginTransaction();
+        if (!dbFetchOne('SELECT id FROM employees WHERE id = ? LIMIT 1 FOR UPDATE', [(int)$employeeId])) {
+            throw new RuntimeException('الموظف غير موجود.');
+        }
+        $overlap = dbFetchOne(
+            "SELECT id FROM hr_employee_contracts
+             WHERE employee_id = ? AND status IN ('draft','active')
+               AND start_date <= ? AND (end_date IS NULL OR end_date >= ?)
+             LIMIT 1",
+            [(int)$employeeId, $data['end_date'] ?: '9999-12-31', $data['start_date']]
+        );
+        if ($overlap) {
+            throw new RuntimeException('يوجد عقد آخر مسودة أو سارٍ متداخل مع الفترة المحددة؛ راجع سجل العقود قبل إنشاء مسودة جديدة.');
+        }
+        $insert = $pdo->prepare(
+            "INSERT INTO hr_employee_contracts
+                (employee_id, contract_number, contract_type, start_date, end_date, status,
+                 basic_salary, salary_currency, pay_frequency, probation_end_date,
+                 contract_file_path, notes, created_by)
+             VALUES (?, NULL, ?, ?, ?, 'draft', ?, ?, ?, NULL, NULL, ?, ?)"
+        );
+        $insert->execute([
+            (int)$employeeId,
+            $data['contract_type'],
+            $data['start_date'],
+            $data['end_date'],
+            (float)$data['basic_salary'],
+            APP_CURRENCY_CODE,
+            $data['pay_frequency'],
+            'مسودة منشأة من بوابة عقود العمل؛ لم تُفعّل ولم يُحدّث سجل الرواتب.',
+            Session::getUserID(),
+        ]);
+        $contractId = (int)$pdo->lastInsertId();
+        if ($contractId <= 0) {
+            throw new RuntimeException('تعذر حجز رقم العقد في سجل العقود.');
+        }
+        $data['contract_number'] = 'CTR-' . date('Y', strtotime($data['start_date'])) . '-' . str_pad((string)$contractId, 6, '0', STR_PAD_LEFT);
+        $pdo->prepare('UPDATE hr_employee_contracts SET contract_number = ? WHERE id = ?')->execute([$data['contract_number'], $contractId]);
+        if ($data['weekly_hours'] !== '') {
+            $pdo->prepare('UPDATE hr_employee_contracts SET working_hours_per_week = ? WHERE id = ?')
+                ->execute([(float)$data['weekly_hours'], $contractId]);
+        }
+
         require_once APP_DIR . '/TCPDF/tcpdf.php';
         $pdf = new TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
         $pdf->SetCreator(APP_NAME);
@@ -401,12 +452,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
 
         $pdf->SetFont('aealarabiya', '', 10.5);
         $pdf->writeHTML($html, true, false, true, false, '');
+        $pdfContent = $pdf->Output('Ahl-El-Kheir-Employment-Contract.pdf', 'S');
+        if (!$pdo->inTransaction()) {
+            throw new RuntimeException('تعذر تأكيد مسودة العقد في سجل العقود.');
+        }
+        $pdo->commit();
+        unset($_SESSION['ak_contract_builder_submission_token']);
         header('Cache-Control: private, no-store, max-age=0');
         header('Pragma: no-cache');
         header('X-Content-Type-Options: nosniff');
-        $pdf->Output('Ahl-El-Kheir-Employment-Contract.pdf', 'I');
+        header('Content-Type: application/pdf');
+        header('Content-Disposition: inline; filename="Ahl-El-Kheir-Employment-Contract.pdf"');
+        header('Content-Length: ' . strlen($pdfContent));
+        echo $pdfContent;
         exit;
     } catch (Throwable $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
         $errorMessage = $e->getMessage();
     }
 }
@@ -430,6 +493,10 @@ if ($portalLogoPath === '' || strpos($portalLogoPath, '..') !== false || str_sta
     || !is_file(APP_DIR . '/' . $portalLogoPath)) {
     $portalLogoPath = 'assets/img/logo.png';
 }
+if (empty($_SESSION['ak_contract_builder_submission_token'])) {
+    $_SESSION['ak_contract_builder_submission_token'] = bin2hex(random_bytes(32));
+}
+$builderSubmissionToken = (string)$_SESSION['ak_contract_builder_submission_token'];
 $pageTitle = 'بوابة عقود العمل';
 $active = 'hr';
 require_once __DIR__ . '/../../includes/header.php';
@@ -443,10 +510,11 @@ require_once __DIR__ . '/../../includes/header.php';
   <div class="cb-note"><strong>ملاحظة قانونية:</strong> هذا نموذج تشغيلي أولي وليس اعتماداً قانونياً. يجب مراجعته بواسطة محامٍ مؤهل في السودان قبل استخدامه رسمياً، والتحقق من توافق الشروط والسياسات مع أحكام قانون العمل السوداني السارية. لا تُدخل أي استحقاق أو مدة قانونية غير متحقق منها.</div>
   <form method="post" action="<?= e(APP_URL) ?>modules/hr/contract_builder.php" target="_blank">
     <?= csrf_field() ?>
+    <input type="hidden" name="builder_submission_token" value="<?= e($builderSubmissionToken) ?>">
     <input type="hidden" name="action" value="generate_pdf">
     <div class="cb-card"><div class="cb-head">بيانات العقد والموظف</div><div class="cb-body"><div class="cb-grid">
       <div class="cb-field cb-full"><label for="employee_id">اختيار ملف الموظف <span class="cb-required">*</span></label><select id="employee_id" name="employee_id" required><option value="">— اختر الموظف —</option><?php foreach ($employees as $employee): ?><?php $employeeTemplate = $jobDescriptionForEmployee($employee); ?><option value="<?= (int)$employee['id'] ?>" data-name="<?= e($employee['full_name']) ?>" data-basic-salary="<?= e((string)($employee['basic_salary'] ?? '')) ?>" data-national-id="<?= e($employee['national_id'] ?? '') ?>" data-phone="<?= e($employee['phone'] ?? '') ?>" data-email="<?= e($employee['email'] ?? '') ?>" data-address="<?= e($employee['address'] ?? '') ?>" data-position="<?= e($employee['position'] ?? '') ?>" data-department="<?= e($employee['department_name'] ?? '') ?>" data-purpose="<?= e((string)($employeeTemplate['role_purpose'] ?? '')) ?>" data-responsibilities="<?= e((string)($employeeTemplate['responsibilities'] ?? '')) ?>" data-qualifications="<?= e((string)($employeeTemplate['qualifications'] ?? '')) ?>" data-reporting-to="<?= e((string)($employeeTemplate['reporting_to'] ?? '')) ?>" data-description-status="<?= e((string)($employeeTemplate['description_status'] ?? 'needs_review')) ?>" data-role-terms="<?= e((string)($employeeTemplate['role_specific_terms'] ?? '')) ?>" data-system-role="<?= e((string)($employee['system_role_name'] ?? $employee['system_role_code'] ?? '')) ?>" <?= $selectedEmployeeId === (int)$employee['id'] ? 'selected' : '' ?>><?= e($employee['full_name']) ?> — <?= e($employee['employee_code']) ?><?php if (!empty($employee['system_role_name'])): ?> — <?= e($employee['system_role_name']) ?><?php endif; ?></option><?php endforeach; ?></select><small>يُحمّل الوصف المطابق للمسمى ودور حساب النظام عند توفره، ثم يستخدم الوصف العام للمسمى كخيار احتياطي. دور النظام دليل على مسارات العمل المتاحة وليس بديلاً عن تأكيد HR للمهام الفعلية.</small></div>
-      <div class="cb-field"><label>رقم العقد (اختياري)</label><input name="contract_number" maxlength="80" placeholder="يُستكمل عند التسجيل"></div>
+      <div class="cb-field"><label for="contract_number">رقم العقد (يُولّد تلقائياً)</label><input id="contract_number" maxlength="80" value="" placeholder="يُحجز عند إنشاء المسودة" readonly><small>يُخصص الرقم من سجل العقود عند توليد ملف PDF، ولا يمكن إدخاله يدوياً.</small></div>
       <div class="cb-field"><label>تاريخ تحرير العقد <span class="cb-required">*</span></label><input type="date" name="issue_date" value="<?= e(date('Y-m-d')) ?>" required></div>
       <div class="cb-field"><label>اسم الموظف <span class="cb-required">*</span></label><input id="employee_name" name="employee_name" maxlength="180" required value="<?= e($selectedEmployee['full_name'] ?? '') ?>"></div>
       <div class="cb-field"><label>الرقم الوطني / الهوية</label><input id="national_id" name="national_id" maxlength="100" value="<?= e($selectedEmployee['national_id'] ?? '') ?>"></div>
