@@ -190,6 +190,9 @@ try {
             $id = (int)($_POST['payroll_id'] ?? 0);
             $newStatus = (string)($_POST['status'] ?? '');
             $paymentAccountId = isset($_POST['payment_account_id']) && $_POST['payment_account_id'] !== '' ? (int)$_POST['payment_account_id'] : null;
+            if ($newStatus === 'paid') {
+                throw new RuntimeException('استخدم إجراء تأكيد تنفيذ التحويل بعد رفع الإثبات؛ لا يمكن تسجيل الدفع من إجراء تغيير الحالة القديم.');
+            }
             if ($newStatus === 'approved') {
                 payrollRefreshDraftBaseSalary($pdo, $month, $year);
             }
@@ -209,6 +212,9 @@ try {
         } elseif (in_array($action, ['save_period_payment_account', 'set_group_payment_account', 'set_row_payment_account', 'upload_payment_proof', 'upload_legacy_payment_evidence', 'confirm_transfer'], true)) {
             if (!verify_csrf()) {
                 throw new RuntimeException('انتهت صلاحية النموذج أو رمز الحماية غير صالح. أعد تحميل الصفحة وحاول مرة أخرى.');
+            }
+            if (!hrPayrollTransferSchemaAvailable($pdo)) {
+                throw new RuntimeException('يجب تطبيق ترحيل تجهيز تحويلات الرواتب قبل استخدام هذه الوظيفة.');
             }
             if ($action === 'save_period_payment_account') {
                 hrPayrollSavePeriodDefaultAccount(
