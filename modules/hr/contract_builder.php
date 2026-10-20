@@ -209,6 +209,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
             $configuredLogo = 'assets/img/logo.png';
         }
         $logoPath = APP_DIR . '/' . $configuredLogo;
+        if (!is_file($logoPath)) {
+            $logoPath = APP_DIR . '/assets/img/logo.png';
+        }
         $organizationName = trim((string)($organizationSettings['org_name_ar'] ?? '')) ?: 'جمعية أهل الخير الخيرية';
         $contactParts = [];
         foreach (['org_address' => 'العنوان', 'support_phone' => 'الهاتف', 'support_email' => 'البريد الإلكتروني'] as $key => $label) {
@@ -321,7 +324,8 @@ $selectedJobDescription = $jobDescriptionByPosition[$selectedPosition] ?? null;
 $selectedJobDuties = akContractTemplateText($selectedJobDescription);
 $selectedJobStatus = (string)($selectedJobDescription['description_status'] ?? 'needs_review');
 $portalLogoPath = (string)($organizationSettings['site_logo'] ?? 'assets/img/logo.png');
-if ($portalLogoPath === '' || strpos($portalLogoPath, '..') !== false || str_starts_with($portalLogoPath, '/')) {
+if ($portalLogoPath === '' || strpos($portalLogoPath, '..') !== false || str_starts_with($portalLogoPath, '/')
+    || !is_file(APP_DIR . '/' . $portalLogoPath)) {
     $portalLogoPath = 'assets/img/logo.png';
 }
 $pageTitle = 'بوابة عقود العمل';
