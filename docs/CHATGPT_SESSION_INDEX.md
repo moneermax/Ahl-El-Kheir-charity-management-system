@@ -1295,3 +1295,8 @@ Continue from `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`. The contract builde
 ### 2026-10-20 — HR job-description fallback catalogue clarity
 
 Continue from `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`. The employee-wide audit found that current linked employees have role-specific draft matches except HR Salary Test (employee 21), while some title-only rows are intentionally empty fallbacks. Commit `6264c897b2bbadb460e0ba0d3e0c029b1443312d` labels general fallback entries, shows active role-specific template counts, and warns when editing an empty fallback that has role-specific descriptions. Documentation update commit `ff90fae0ab121b85267490fe10679120af7cffab`. Source-only; local PHP lint and browser verification remain pending. Do not reactivate the HR Test template or change employee data without further evidence.
+
+
+### Follow-up — null-safe fallback employee counts
+
+Commit `4435226e37405e9a2963dd07af0d1c14f71e7f92` aligns general-template employee counting with contract-builder matching by treating NULL and empty `system_role_code` values as title-only fallbacks. Local lint and browser verification remain pending.
