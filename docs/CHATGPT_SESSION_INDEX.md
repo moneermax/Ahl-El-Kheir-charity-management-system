@@ -1183,3 +1183,6 @@ Local schema output has been reviewed and the proposed data model finalized at d
 ### FM payroll workflow redesign — 2026-10-20 Step 3 draft
 
 Migration draft `database/migrations/2026-10-20_hr_fm_payroll_transfer_workflow.sql` is committed on `main` (`f1225411c429f0b0eb9486ccec03f6be02e1ed8a`). It introduces period account settings and per-payroll proof metadata only. It is not applied. The continuation doc defines private storage, safe upload/streaming, legacy evidence, and no-silent-replacement constraints. No application or database state changed.
+
+### FM payroll workflow redesign — 2026-10-20 Step 4 source checkpoint
+Committed period-level payment account settings, approved-row individual/group account overrides, private proof upload, authorized proof download, and legacy evidence attachment. New proof files use a 10 MiB limit and PDF/JPG/PNG MIME validation; uploading does not itself mark payroll paid or post accounting. Migration is still unapplied; local lint/runtime verification is pending. Continue with the separate explicit transfer-confirmation/accounting/notification gate before treating the redesigned workflow as operational.
