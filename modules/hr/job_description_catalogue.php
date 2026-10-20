@@ -174,7 +174,7 @@ $templates = dbFetchAll(
          WHERE TRIM(e.position) = j.position_title
            AND (
              (j.system_role_code <> '' AND er.code = j.system_role_code)
-             OR (j.system_role_code = '' AND NOT EXISTS (
+             OR (TRIM(COALESCE(j.system_role_code, '')) = '' AND NOT EXISTS (
                  SELECT 1 FROM hr_job_description_templates jr
                  WHERE jr.position_title = j.position_title
                    AND jr.system_role_code = er.code
