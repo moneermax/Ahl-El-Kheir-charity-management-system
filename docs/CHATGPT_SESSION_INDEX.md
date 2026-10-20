@@ -1211,3 +1211,7 @@ The existing HR contract/salary page is `modules/hr/contracts.php`; contract met
 Source commits: `f0e5fdba4b32e179091478b092eccd5dd10f033f` (builder), `ca14abbd85b490c5025f8367c1fe2d2caa43f88d` (contracts-page link). Continuation: `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`.
 
 **Not yet verified locally:** PHP lint, authorized/unauthorized browser access, CSRF rejection, PDF Arabic rendering/pagination/print, and absence of database/storage writes. The contract wording is not legally approved; qualified Sudanese legal review is required before official use. Do not start the signed-contract/onboarding integration until this PDF acceptance boundary passes.
+
+### Follow-up — contract field validation
+
+Commit `eef4d17e02543e1327ed8cc3db9fee3b916aa11f` adds server-side length/email/weekly-hours validation, requires an end date for fixed-term contracts, and removes the assumed nationality default. Local PHP lint and browser/PDF acceptance remain pending.
