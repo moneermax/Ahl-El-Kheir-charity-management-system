@@ -1215,3 +1215,7 @@ Source commits: `f0e5fdba4b32e179091478b092eccd5dd10f033f` (builder), `ca14abbd8
 ### Follow-up — contract field validation
 
 Commit `eef4d17e02543e1327ed8cc3db9fee3b916aa11f` adds server-side length/email/weekly-hours validation, requires an end date for fixed-term contracts, and removes the assumed nationality default. Local PHP lint and browser/PDF acceptance remain pending.
+
+### 2026-10-20 — HR employment contract portal and role catalogue
+
+Source implementation is committed on `main`: separate HR dashboard shortcut `بوابة عقود العمل`, editable `hr_job_description_templates` catalogue/migration, role-matched job descriptions and role-specific contract terms, organization branding from existing settings, and review warnings for incomplete/unapproved descriptions. The migration has not yet been applied to the local database, and local PDF/browser behavior is not yet verified. Continue from `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`; do not invent job duties or mark catalogue placeholders approved. Sudanese lawyer review is required before official contract use.
