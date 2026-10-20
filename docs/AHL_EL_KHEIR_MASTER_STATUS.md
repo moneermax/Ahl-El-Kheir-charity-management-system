@@ -3510,3 +3510,8 @@ The latest contract-builder source change separates job purpose from responsibil
 The employee-wide query returned active role-specific template matches for current linked employees except employee 21 (**HR Salary Test**), which has no active match. For **أخصائية شؤون الأمهات**, role-specific draft id 20 is populated while title-only fallback id 6 is empty. This is consistent with role-specific-first contract selection and the earlier cleanup of exact generic drafts; it is not evidence that the role-specific draft is missing.
 
 Commit `6264c897b2bbadb460e0ba0d3e0c029b1443312d` improves `modules/hr/job_description_catalogue.php` labels and warnings for general fallback records and counts active role-specific records by title. Related continuation documentation was updated. Status: source committed; local PHP lint and browser verification remain pending. No database changes or migration reruns.
+
+
+## Follow-up — null-safe HR fallback counts
+
+Commit `4435226e37405e9a2963dd07af0d1c14f71e7f92` makes the catalogue employee count treat SQL NULL and empty `system_role_code` values consistently as general fallbacks, matching the contract builder's PHP normalization. Local PHP lint and browser verification remain pending.
