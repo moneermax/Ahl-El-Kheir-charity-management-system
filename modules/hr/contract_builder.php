@@ -434,7 +434,7 @@ require_once __DIR__ . '/../../includes/header.php';
       <div class="cb-field cb-full"><label>العنوان</label><input id="address" name="address" maxlength="500" value="<?= e($selectedEmployee['address'] ?? '') ?>"></div>
       <div class="cb-field"><label>المسمى الوظيفي (من ملف الموظف) <span class="cb-required">*</span></label><input id="position" name="position" maxlength="180" required readonly value="<?= e($selectedEmployee['position'] ?? '') ?>"></div>
       <div class="cb-field"><label>القسم</label><input id="department" name="department" maxlength="180" value="<?= e($selectedEmployee['department_name'] ?? '') ?>"></div>
-      <div class="cb-field"><label for="supervisor">المشرف المباشر (من الموظفين الحاليين)</label><select id="supervisor" name="supervisor"><option value="">— اختر المشرف المباشر —</option><?php foreach ($supervisorCandidates as $candidate): ?><option value="<?= e($candidate['full_name']) ?>" <?= (string)($_POST['supervisor'] ?? '') === (string)$candidate['full_name'] ? 'selected' : '' ?>><?= e($candidate['full_name']) ?><?php if (!empty($candidate['position'])): ?> — <?= e($candidate['position']) ?><?php endif; ?></option><?php endforeach; ?></select><small>اختر الشخص الفعلي من ملفات الموظفين الحالية. لا يُستنتج اسم المشرف من دور الصلاحيات أو من مسمى جهة الإشراف.</small></div>
+      <div class="cb-field"><label for="supervisor">المشرف المباشر (من الموظفين الحاليين)</label><select id="supervisor" name="supervisor"><option value="">— اختر المشرف المباشر —</option><?php foreach ($supervisorCandidates as $candidate): ?><option data-employee-id="<?= (int)$candidate['id'] ?>" value="<?= e($candidate['full_name']) ?>" <?= (string)($_POST['supervisor'] ?? '') === (string)$candidate['full_name'] ? 'selected' : '' ?>><?= e($candidate['full_name']) ?><?php if (!empty($candidate['position'])): ?> — <?= e($candidate['position']) ?><?php endif; ?></option><?php endforeach; ?></select><small>اختر الشخص الفعلي من ملفات الموظفين الحالية. لا يُستنتج اسم المشرف من دور الصلاحيات أو من مسمى جهة الإشراف.</small></div>
       <div class="cb-field"><label>مكان العمل</label><input name="work_location" maxlength="250" value="حسب تكليف الجمعية المكتوب"></div>
     </div></div></div>
     <div class="cb-card"><div class="cb-head">المدة والدوام والأجر</div><div class="cb-body"><div class="cb-grid">
@@ -463,7 +463,17 @@ require_once __DIR__ . '/../../includes/header.php';
   const select=document.getElementById('employee_id');
   if(!select)return;
   const mapping={employee_name:'name',national_id:'nationalId',phone:'phone',email:'email',address:'address',position:'position',department:'department',basic_salary:'basicSalary'};
-  select.addEventListener('change',function(){
+  const supervisorSelect=document.getElementById('supervisor');
+  function refreshSupervisorOptions(){
+    if(!supervisorSelect)return;
+    Array.from(supervisorSelect.options).forEach(option=>{
+      const isSelectedEmployee=option.dataset.employeeId===select.value;
+      option.disabled=isSelectedEmployee;
+      if(isSelectedEmployee&&option.selected)supervisorSelect.value='';
+    });
+  }
+  refreshSupervisorOptions();
+  select.addEventListener('change',function(){refreshSupervisorOptions();
     const option=this.options[this.selectedIndex];
     if(!option||!option.value)return;
     Object.entries(mapping).forEach(([field,key])=>{
