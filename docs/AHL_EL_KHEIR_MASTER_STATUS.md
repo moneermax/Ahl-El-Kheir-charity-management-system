@@ -3491,3 +3491,10 @@ Source changes on `main`:
 - `database/migrations/2026-10-20_hr_job_description_zz_role_qualifications_utf8_repair.sql` restores role-specific Arabic qualification drafts only where qualifications begin with literal question marks, while excluding approved rows and `HR Test`.
 
 The repair is data-only; no DDL or runtime schema changes. **Source committed; local repair application and verification are pending.** Do not rerun the original seed migration to repair non-empty question-mark values.
+
+
+## 2026-10-20 — Job-description qualifications UTF-8 repair VERIFIED
+
+The user applied the corrective migration with the MySQL client explicitly configured for utf8mb4. The verification query returned **0 remaining corrupted qualifications** for unapproved, non-`HR Test` rows. The qualifications hex previews show UTF-8 Arabic bytes, confirming the imported content is no longer replaced with ASCII question marks. The `HR Test` row remains excluded; its qualifications remain NULL. The PowerShell display of Arabic position titles is garbled, but display encoding is not proof of stored-byte corruption; no title repair is authorized without a separate byte-level check.
+
+**Closed:** qualifications encoding repair at the database-data boundary. **Still pending:** catalogue/browser and contract-builder/PDF acceptance for the broader job-description draft task. Do not repeat the repair migration or rewrite other fields without evidence.
