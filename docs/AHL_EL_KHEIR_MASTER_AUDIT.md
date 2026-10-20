@@ -3801,3 +3801,8 @@ Source commit `6264c897b2bbadb460e0ba0d3e0c029b1443312d` clarifies the catalogue
 ## Follow-up — null-safe HR fallback counts
 
 Commit `4435226e37405e9a2963dd07af0d1c14f71e7f92` normalizes NULL and empty `system_role_code` values for the catalogue's general-fallback employee-count condition. This is a read/query behavior correction only; no database data or schema was changed. Local PHP lint and browser verification remain pending.
+## 2026-10-20 — General fallback purpose/responsibility content gap
+
+Audit root cause: the general title-only fallback rows were empty by design after `2026-10-20_hr_job_description_z_clear_unreviewed_generic_drafts.sql` removed exact generic proposal text. This was distinct from the populated role-specific draft for `أخصائية شؤون الأمهات`; the previous warning correctly described fallback selection but did not meet the user's request for editable starting content in every applicable form.
+
+Source commit `5b6a553b22ff5a0be3d0a2b6430556ccf5138be9` adds the data-only migration `2026-10-20_hr_job_description_zzz_general_fallback_drafts.sql`. It restores separate broad position-level purpose/responsibility drafts only to active title-only rows awaiting review where either field is blank. It neither copies role-specific text nor overwrites non-empty content; approved/inactive rows, `HR Test`, qualifications, reporting lines, employee records and schema are preserved. This is source-committed only; local migration and UI verification remain pending.
