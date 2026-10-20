@@ -3678,3 +3678,11 @@ Committed the first source layer for period account defaults, row/group override
 
 ### 2026-10-20 — FM payroll workflow redesign Step 5 audit
 Source adds the explicit transfer confirmation gate and closes the generic paid-status bypass. Confirmation locks payroll/proof rows, requires prepared readable evidence and an active saved account, then updates proof confirmation, paid status, accounting journal and existing salary-advance application in the same transaction. Proof upload serializes against confirmation by locking payroll; account override is blocked after proof attachment. Employee notification helper returns reliable success/failure, with existing matching notification treated as success. GM completion now requires paid+posted+journal, confirmed/legacy proof, and successful employee statement notification for every eligible employee; retries can recover missing notifications, and GM notification remains idempotent. The migration is not applied and local PHP lint/runtime verification remains pending. No financial data was changed by source commits.
+
+## 2026-10-20 — Salary Onboarding / Payroll Effective-Date Finding
+
+Inspection of `modules/hr/lib_employee_provisioning.php`, `modules/users/index.php`, `modules/users/_create_user_form.php`, and `modules/hr/payroll.php` established the cause of the recurring zero-salary risk: automatic user provisioning hard-coded the employee's initial salary and salary-history entry to 0.00, while payroll correctly selects the history row effective at the end of the selected month. The account-creation form did not collect an initial salary or hire date.
+
+Source correction on `main`: collect and validate a hire date and positive initial monthly salary at account creation; pass them through the existing transactional provisioning path; create initial salary history using the hire date. No new table/column or migration was required. Existing effective-dated salary changes and payroll selection are preserved.
+
+Verification boundary: remote source updated; local PHP lint and runtime verification are not yet evidenced. September 2026 historical drafts remain unresolved because their actual historical salaries cannot be inferred from October values. Do not alter or approve those records until verified salary amounts are available.
