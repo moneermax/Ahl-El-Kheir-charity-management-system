@@ -3412,3 +3412,7 @@ Added `modules/hr/contract_builder.php` and linked it from `modules/hr/contracts
 Commits: `f0e5fdba4b32e179091478b092eccd5dd10f033f`, `ca14abbd85b490c5025f8367c1fe2d2caa43f88d`; continuation document: `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`.
 
 **Status: SOURCE ADDED — LOCAL VERIFICATION PENDING.** Do not call the PDF workflow complete until local PHP lint and browser checks confirm role access, CSRF rejection, PDF generation, Arabic RTL rendering, pagination and print quality. Qualified Sudanese legal review is required before official use. The second task—integrating contract preparation and signed-copy upload into employee onboarding—must wait until this PDF workflow is accepted and the actual local schema/storage behavior is inspected.
+
+### Follow-up — contract form input validation
+
+Commit `eef4d17e02543e1327ed8cc3db9fee3b916aa11f` adds server-side field length, email and weekly-hours validation, requires an end date for fixed-term contracts, and removes the nationality assumption. Local lint and browser/PDF verification remain pending.
