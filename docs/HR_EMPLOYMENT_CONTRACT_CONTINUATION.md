@@ -135,3 +135,20 @@ Research references used to shape common qualification profiles:
 These sources are benchmarks, not a claim that Ahl El Kheir must adopt another organization's minimum criteria. HR and the direct supervisor must confirm actual day-to-day duties, required education and experience, reporting line and role-specific conditions before approval. A system role documents workflow access; it does not prove which tasks an employee has personally performed.
 
 **Verification status: SOURCE COMMITTED; local migration application, PHP lint, catalogue browser check and contract PDF check remain pending.**
+
+
+## 2026-10-20 — Separate purpose/responsibility draft fields in contract builder
+
+Source commits on `main`: `73b91d1a40024564d7399a80ae91b011167dbf9c`, `8fc40930c4224f04dab7e1f8c9c96c4fdfafd4b7`, `ec565758660214ac371ef14b692b4265249fc2b7`, and `4d3d030bc4b96537141eec16fc6e3e0e86bce05d`.
+
+Root cause: the contract builder had collapsed catalogue `role_purpose` and `responsibilities` into one repeatable `duties` control. Therefore the agreed `الغرض من الوظيفة` field did not exist in the contract UI, even though the catalogue stores that content separately.
+
+The builder now renders separate repeatable controls for:
+- `الغرض من الوظيفة` from `role_purpose`;
+- `المهام والمسؤوليات الأساسية` from `responsibilities`;
+- `المؤهلات والخبرات المطلوبة` from `qualifications`;
+- `جهة الإشراف الوظيفي` from `reporting_to`.
+
+The employee selector supplies each field from the best matching position + system-role template, falling back to the generic position template. Switching employees refreshes all four fields; selecting the blank option clears them. Existing role-specific special terms remain separate. PDF generation rebuilds the job-description sections from the edited values and keeps the current pending-review warning. Existing database schema and catalogue content are unchanged; no migration/runtime DDL was added.
+
+**Verification status: SOURCE COMMITTED; local PHP lint, employee-switch browser check, and PDF inspection remain pending.** The repository connection cannot verify the user's XAMPP runtime. Next: pull `main`, lint `modules/hr/contract_builder.php`, then test two employees with distinct templates and verify purpose/responsibility/qualification sections in the PDF. Do not rerun migrations for this UI-only change.
