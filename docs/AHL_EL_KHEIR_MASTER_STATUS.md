@@ -3381,3 +3381,8 @@ The FM payroll page has compact auto-sized translated headings, full-label toolt
 ### FM payroll workflow redesign — 2026-10-20 Step 2 audit
 
 The account/proof workflow source audit and proposed data model are recorded in `docs/HR_FM_PAYROLL_TABLE_USABILITY_CONTINUATION.md`. The existing account resolver validates active status only and defaults to active account `1200`; the current paid transition couples status change and accounting posting, and notification completion helpers do not expose reliable success. A period default and per-payroll proof record are design candidates only. The schema file could not be retrieved through the repository connector, so exact DDL and foreign-key details remain unverified. No application/schema/data changes were made; do not create a migration until the user provides targeted local schema output.
+
+
+### FM payroll workflow redesign — 2026-10-20 Step 2 closed
+
+The user supplied local `SHOW CREATE TABLE` output for payroll, accounts, employees, users and notifications. Schema and migration conventions were reviewed; the finalized proposed period-default/proof model, explicit transfer-confirmation gate, legacy evidence path, private stream requirements and notification/GM completion gates are recorded in `docs/HR_FM_PAYROLL_TABLE_USABILITY_CONTINUATION.md`. Step 2 is design-only: no migration, source, schema or data was changed. Next step is authoring the migration and private-proof storage contract for review before application.
