@@ -173,11 +173,11 @@ $active = 'hr';
 require_once __DIR__ . '/../../includes/header.php';
 ?>
 <style>
-.jd-wrap{max-width:1400px;margin:auto}.jd-hero{background:linear-gradient(120deg,#173f73,#2d67ad);color:#fff;padding:20px 24px;border-radius:14px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;gap:14px}.jd-hero h1{font-size:1.35rem;font-weight:800;margin:0}.jd-hero p{margin:5px 0 0;font-size:.82rem;opacity:.9}.jd-card{background:#fff;border:1px solid #e4e9f0;border-radius:12px;overflow:hidden;margin-bottom:16px;box-shadow:0 3px 12px rgba(16,24,40,.04)}.jd-card-head{padding:13px 17px;border-bottom:1px solid #e7ecf2;font-weight:800;color:#173f73}.jd-card-body{padding:17px}.jd-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.jd-field label{display:block;font-size:.78rem;font-weight:800;margin-bottom:5px}.jd-field input,.jd-field select,.jd-field textarea{width:100%;border:1px solid #b9c7d8;border-radius:8px;padding:9px 10px;font:inherit;font-size:.82rem;background:#fff}.jd-field textarea{min-height:110px}.jd-responsibility-row input{min-width:0}.jd-responsibility-row>span{min-width:24px;text-align:center}.jd-full{grid-column:1/-1}.jd-table{font-size:.8rem}.jd-table td,.jd-table th{vertical-align:middle}.jd-status{white-space:nowrap}@media(max-width:720px){.jd-grid{grid-template-columns:1fr}.jd-full{grid-column:auto}.jd-hero{align-items:flex-start;flex-direction:column}}
+.jd-wrap{max-width:1400px;margin:auto}.jd-toast{position:fixed;top:1rem;left:1rem;z-index:1090;display:flex;align-items:center;gap:.7rem;max-width:min(92vw,460px);padding:13px 16px;background:#198754;color:#fff;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.18);font-size:.9rem;font-weight:700;direction:rtl;animation:jd-toast-in .2s ease-out}.jd-toast>i{font-size:1.15rem}.jd-toast-close{border:0;background:transparent;color:#fff;font-size:1.35rem;line-height:1;padding:0 .1rem;cursor:pointer;margin-inline-start:auto}.jd-toast.is-hiding{opacity:0;transform:translateY(-8px);transition:opacity .2s ease,transform .2s ease}@keyframes jd-toast-in{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}@media(prefers-reduced-motion:reduce){.jd-toast{animation:none}.jd-toast.is-hiding{transition:none}}.jd-hero{background:linear-gradient(120deg,#173f73,#2d67ad);color:#fff;padding:20px 24px;border-radius:14px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;gap:14px}.jd-hero h1{font-size:1.35rem;font-weight:800;margin:0}.jd-hero p{margin:5px 0 0;font-size:.82rem;opacity:.9}.jd-card{background:#fff;border:1px solid #e4e9f0;border-radius:12px;overflow:hidden;margin-bottom:16px;box-shadow:0 3px 12px rgba(16,24,40,.04)}.jd-card-head{padding:13px 17px;border-bottom:1px solid #e7ecf2;font-weight:800;color:#173f73}.jd-card-body{padding:17px}.jd-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.jd-field label{display:block;font-size:.78rem;font-weight:800;margin-bottom:5px}.jd-field input,.jd-field select,.jd-field textarea{width:100%;border:1px solid #b9c7d8;border-radius:8px;padding:9px 10px;font:inherit;font-size:.82rem;background:#fff}.jd-field textarea{min-height:110px}.jd-responsibility-row input{min-width:0}.jd-responsibility-row>span{min-width:24px;text-align:center}.jd-full{grid-column:1/-1}.jd-table{font-size:.8rem}.jd-table td,.jd-table th{vertical-align:middle}.jd-status{white-space:nowrap}@media(max-width:720px){.jd-grid{grid-template-columns:1fr}.jd-full{grid-column:auto}.jd-hero{align-items:flex-start;flex-direction:column}}
 </style>
 <div class="jd-wrap">
  <div class="jd-hero"><div><h1><i class="fa-solid fa-list-check me-2"></i>فهرس الأوصاف الوظيفية</h1><p>إدارة أوصاف الوظائف بصورة مستقلة عن تصميم عقد العمل؛ لا تُعامل الأوصاف غير المعتمدة على أنها أوصاف رسمية.</p></div><a class="btn btn-light btn-sm fw-bold" href="<?= e(APP_URL) ?>modules/hr/contract_builder.php"><i class="fa-solid fa-file-signature me-1"></i> بوابة عقود العمل</a></div>
- <?php if ($message): ?><div class="alert alert-success"><?= e($message) ?></div><?php endif; ?>
+ <?php if ($message): ?><div id="jdSuccessToast" class="jd-toast" role="status" aria-live="polite"><i class="fa-solid fa-circle-check" aria-hidden="true"></i><span><?= e($message) ?></span><button type="button" class="jd-toast-close" aria-label="إغلاق التنبيه">&times;</button></div><?php endif; ?>
  <?php if ($error): ?><div class="alert alert-danger"><?= e($error) ?></div><?php endif; ?>
  <div class="alert alert-info small">تم إنشاء سجل لكل مسمى وظيفي موجود في بيانات الموظفين عند تطبيق الترحيل، دون اختلاق مهام أو مؤهلات. أكمل الحقول ثم اعتمد الوصف من مدير الموارد البشرية أو مدير النظام. تغيير أي وصف معتمد يعيده إلى «يحتاج مراجعة» ما لم يُعتمد صراحةً في عملية الحفظ نفسها.</div>
  <div class="jd-card"><div class="jd-card-head"><?= $editing ? 'تعديل وصف وظيفي' : 'إضافة مسمى ووصف وظيفي' ?></div><div class="jd-card-body">
@@ -212,6 +212,16 @@ require_once __DIR__ . '/../../includes/header.php';
 </div>
 <script>
 (function(){
+ const toast=document.getElementById('jdSuccessToast');
+ if(toast){
+  let hideTimer=window.setTimeout(hideToast,5000);
+  function hideToast(){
+   toast.classList.add('is-hiding');
+   window.setTimeout(()=>toast.remove(),220);
+  }
+  const closeButton=toast.querySelector('.jd-toast-close');
+  if(closeButton)closeButton.addEventListener('click',()=>{window.clearTimeout(hideTimer);hideToast();});
+ }
  const container=document.getElementById('responsibilityFields');
  const addButton=document.getElementById('addResponsibility');
  if(!container||!addButton)return;
