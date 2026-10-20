@@ -3789,3 +3789,10 @@ Post-repair local SQL reported `remaining_corrupted_qualifications = 0`. Hex pre
 ## 2026-10-20 — Contract-builder job-purpose field root cause and source correction
 
 Audit finding: `modules/hr/contract_builder.php` used a single combined `duties` field populated by `akContractTemplateText()`, so the separately stored `role_purpose` was not exposed in a dedicated contract form field. This explains the missing `الغرض من الوظيفة` draft control without assuming catalogue data is absent. Source changes on `main` now load purpose, responsibilities, qualifications and reporting line separately for the selected employee's position/system-role template and reconstruct those sections for PDF output. Commits: `73b91d1a40024564d7399a80ae91b011167dbf9c`, `8fc40930c4224f04dab7e1f8c9c96c4fdfafd4b7`, `ec565758660214ac371ef14b692b4265249fc2b7`, `4d3d030bc4b96537141eec16fc6e3e0e86bce05d`, `59332e20a7d186eae3f969a9a94c24b1e2225d44`, `59ecd7b5057d9fe2910ccc3314b073d305cc19d6`. Runtime status remains unverified until local PHP lint and browser/PDF checks are reported. No database changes.
+
+
+## 2026-10-20 — HR job-description fallback catalogue clarity
+
+Audit evidence from the employee-wide query: linked employees with known system roles resolve to active role-specific draft records; employee 21 (**HR Salary Test**) has no active matching template. For **أخصائية شؤون الأمهات**, the populated nanny-specific draft (id 20) coexists with an empty title-only fallback (id 6). The contract builder's role-specific-first selection remains the intended behavior; the empty fallback should not be manually populated by copying role-specific content without an HR decision.
+
+Source commit `6264c897b2bbadb460e0ba0d3e0c029b1443312d` clarifies the catalogue by identifying general fallback rows, showing active role-specific counts, and warning on empty general rows where role-specific descriptions exist. Related continuation/status/session documents were updated. Verification boundary remains source-only until local PHP lint and configured XAMPP browser checks pass. No database changes.
