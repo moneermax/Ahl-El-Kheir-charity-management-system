@@ -79,3 +79,28 @@ The user requires documentation to be updated **after each completed step and be
 ### Current boundary
 
 This checkpoint records source inspection only. No payroll source, schema, migration, accounting record, or notification was changed. Full account-helper, upload-handler and schema details must be confirmed before choosing the exact migration and file-serving implementation. Local XAMPP verification remains the user's responsibility when exact commands are supplied.
+
+
+## 2026-10-20 — Step 2 account, proof and schema audit
+
+### Source-confirmed findings
+
+- `hrPayrollResolvePaymentAccount(PDO $pdo, ?int $requestedAccountId)` accepts any explicitly requested account whose `accounts.is_active = 1`; it does not check an account type/category. When no account is requested, it falls back to active account code `1200`. Preserve the existing fallback unless the actual account policy/schema proves a necessary change.
+- The current FM row action sends an optional `payment_account_id`, but the rendered payroll table has no account selector, proof upload, or separate transfer-confirmation step. `hrPayrollChangeStatus(..., 'paid')` currently changes status to paid and posts accounting in the same transaction; it must no longer be the route for an unconfirmed transfer.
+- `payroll.payment_account_id` is already read by accounting posting, so per-employee account overrides can use the existing row field. A period default is not represented in the inspected payroll helper/page. Group overrides can be applied as explicit per-row choices, provided the UI makes the affected rows clear and preserves individual overrides.
+- Employee notification helper `hrPayrollNotifyStatementAvailable()` currently returns `void`; both an existing matching notification and a failed insert are indistinguishable to completion logic. GM completion currently checks only paid + posted + journal ID. Both helpers need a reliable, idempotent success result/check after the payment workflow is separated.
+- The salary statement checks login, resolves the employee from the logged-in user, and requires the requested payroll to belong to that employee and be paid + posted. Keep this authorization boundary. `storage/.htaccess` denies direct web access, so proof downloads should go through an authenticated PHP endpoint that authorizes the employee/role against the payroll record and streams a generated storage path, never a user-supplied path.
+- The inspected statement source contains no proof rendering/download path. Repository code-search returned no usable upload/stream examples, so do not copy a guessed pattern.
+- The repository's schema file fetch returned an empty body even when requesting a bounded line range. This is a tooling/content retrieval limitation, not evidence that the schema is empty. Exact DDL types, foreign-key conventions, account classifications and current storage conventions are therefore **not yet verified**. Do not write or apply a migration until those facts are read from the user's actual local schema/repository checkout.
+
+### Proposed model — design only, not a migration
+
+1. Keep the existing `payroll.payment_account_id` as the resolved account for each employee. A period-scoped settings record is needed for the default account, keyed uniquely by payroll month/year; group and individual choices should resolve to the row-level account before transfer confirmation. The account dropdown must be populated from actual active account records and use the same validation policy as the server-side resolver.
+2. Store proof metadata in a dedicated per-payroll proof record rather than public web storage or a shared group file. Metadata should include a server-generated opaque storage name, original display name, validated media type/size, uploader and upload timestamp, plus distinct evidence/confirmation fields. Unique payroll linkage should prevent multiple active proofs for one payroll while allowing replacement to be audited if the existing audit conventions support it.
+3. Model the states distinctly: approved → proof uploaded/prepared → transfer explicitly confirmed → accounting posted → employee notification recorded. Upload alone is not confirmation. Confirmation and accounting posting must be one transaction boundary with row locking and duplicate-submit protection; notify only after commit. GM completion requires every eligible employee to satisfy all required states and have an individual proof.
+4. For legacy paid+posted payrolls, attach evidence without changing paid status, payment date, journal IDs or accounting rows. Legacy evidence attachment must be visibly distinct from a new transfer confirmation and must not cause accounting to repost. Until evidence is attached and validated, such a row is not proof-complete.
+5. Use a private storage directory guarded by server configuration, randomized storage names, MIME/content validation, upload size limits, safe streaming headers, authorization on every request, and no direct path exposure. Exact implementation must match the project's verified PHP/storage conventions.
+
+### Step 2 boundary / dependency
+
+The source-level workflow and proposed model are documented, but Step 2 is not marked fully closed because the schema source could not be retrieved through the repository connector and no upload-serving convention was found. Before creating the migration, obtain the relevant local `SHOW CREATE TABLE` output for `payroll`, `accounts`, `users`, and `notifications`, plus the relevant employee/user key definitions, and inspect local migration/storage examples. No application source, migration, live schema, payroll row or accounting record was changed in this step.
