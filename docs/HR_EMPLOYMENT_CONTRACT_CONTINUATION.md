@@ -170,3 +170,10 @@ This is a catalogue clarity change, not a data repair. It preserves role-specifi
 ### Follow-up: fallback employee-count consistency
 
 Commit `4435226e37405e9a2963dd07af0d1c14f71e7f92` makes the catalogue's general-template employee-count condition treat both SQL NULL and empty `system_role_code` as a general fallback. This aligns the count with the contract builder's existing PHP behavior, which casts NULL to an empty string. The source was re-fetched from `main` and the change is present. The commit has no reported status checks in the GitHub status response; local PHP lint and browser verification are still required.
+## 2026-10-20 — Restore editable drafts in general fallback descriptions
+
+The catalogue screenshot exposed a usability gap: the earlier `2026-10-20_hr_job_description_z_clear_unreviewed_generic_drafts.sql` deliberately cleared exact generic title-only proposals, leaving general fallback forms with empty purpose/responsibility fields. Role-specific records remained separate, but HR still needs a useful editable starting draft when opening a general fallback.
+
+Added data-only migration `database/migrations/2026-10-20_hr_job_description_zzz_general_fallback_drafts.sql` (commit `5b6a553b22ff5a0be3d0a2b6430556ccf5138be9`). It restores distinct, broad position-level draft purpose and responsibilities only for active, title-only records that remain `needs_review` and have blank fields. It does not copy role-specific text into fallback rows, overwrite non-empty content, alter approved/inactive records, change qualifications/reporting lines, reactivate `HR Test`, or modify employees/schema. All text remains an unapproved proposal for HR and direct-supervisor confirmation.
+
+**Next:** pull `main`; apply this new migration once to the configured `ahl_el_kheir` database using an explicit UTF-8 client; run a read-only check that active title-only records now have non-empty purpose/responsibilities while all statuses remain `needs_review`; lint the catalogue PHP file and verify the page and contract-builder employee switching locally. Do not rerun earlier migrations. Runtime verification is pending.
