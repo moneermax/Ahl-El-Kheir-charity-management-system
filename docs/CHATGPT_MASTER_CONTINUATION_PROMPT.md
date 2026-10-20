@@ -1273,3 +1273,8 @@ Committed to `main`:
 The user pulled `main`, applied `database/migrations/2026-10-20_hr_job_description_zz_role_qualifications_utf8_repair.sql` with `--default-character-set=utf8mb4`, and ran verification. Result: `remaining_corrupted_qualifications = 0`; qualification hex previews contain real UTF-8 Arabic bytes. `HR Test` remains excluded and its qualifications are NULL. PowerShell displays Arabic position titles as mojibake, but this does not by itself prove stored title corruption; do not modify them without byte-level evidence.
 
 The data-repair milestone is verified and closed. Continue the broader job-description draft task from the relevant continuation doc/source; catalogue/browser display and contract-builder/PDF acceptance have not yet been reported verified. Do not rerun either migration or reopen the encoding repair absent regression evidence.
+
+
+## 2026-10-20 — Contract builder: dedicated job-purpose draft field
+
+The latest source correction is committed on `main`: `modules/hr/contract_builder.php` now has separate repeatable controls for job purpose, responsibilities and qualifications, plus a reporting-line field. The former combined duties control was the root cause of the missing `الغرض من الوظيفة` field. Employee selection loads the corresponding position + system-role template, with generic-position fallback, and PDF output retains the separate section headings. Commits: `73b91d1a40024564d7399a80ae91b011167dbf9c`, `8fc40930c4224f04dab7e1f8c9c96c4fdfafd4b7`, `ec565758660214ac371ef14b692b4265249fc2b7`, `4d3d030bc4b96537141eec16fc6e3e0e86bce05d`. Next: pull `main`, PHP-lint `modules/hr/contract_builder.php`, and test employee switching and PDF sections on the real XAMPP URL. No migration is needed.
