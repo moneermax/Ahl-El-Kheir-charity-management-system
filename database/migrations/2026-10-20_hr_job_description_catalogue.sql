@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS hr_job_description_templates (
     responsibilities TEXT NULL,
     qualifications TEXT NULL,
     reporting_to VARCHAR(180) NULL,
+    role_specific_terms TEXT NULL,
     description_status ENUM('needs_review','approved') NOT NULL DEFAULT 'needs_review',
     is_active TINYINT(1) NOT NULL DEFAULT 1,
     created_by INT NULL,
