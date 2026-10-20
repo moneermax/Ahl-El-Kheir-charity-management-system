@@ -114,7 +114,7 @@ Source commit `7b0f675700651ea295569e3c410b44c7e39a679d` clears both repeatable 
 
 ## 2026-10-20 — Role-based qualification drafts from researched NGO job profiles
 
-Added data-only migration `database/migrations/2026-10-20_hr_job_description_role_qualifications.sql`. Apply it after the earlier 2026-10-20 job-description catalogue, proposals, system-role and generic-draft cleanup migrations, in filename order.
+Added data-only migration `database/migrations/2026-10-20_hr_job_description_zz_role_qualifications.sql`. Apply it after the earlier 2026-10-20 job-description catalogue, proposals, system-role and generic-draft cleanup migrations, in filename order.
 
 The migration:
 - removes the known “مسودة مستندة إلى مسارات النظام” seed prefix from unapproved role-purpose drafts so the field reads as the actual proposed purpose;
