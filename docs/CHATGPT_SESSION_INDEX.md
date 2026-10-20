@@ -1312,3 +1312,12 @@ New data-only migration: `database/migrations/2026-10-20_hr_job_description_zzzz
 The job-description catalogue and employment contract builder now support drag-to-reorder on purpose, responsibility, qualification and optional contract-term items, with automatic renumbering and saved/PDF order matching the visible order.
 
 **Source committed; local migration, PHP lint, browser and PDF verification pending.** Continue from `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`; do not treat this UI/data change as runtime verified until the user confirms local checks.
+
+
+## 2026-10-20 — Employment contract numbering and draft reservation
+
+modules/hr/contract_builder.php now reserves an official CTR-YYYY-000001 number from the existing hr_employee_contracts record ID during PDF generation. The number field is read-only and is no longer client-submitted. The builder creates a draft record in a transaction, rejects overlapping draft/active contracts using the existing contract-register rule, and commits only after TCPDF successfully renders the PDF. A one-use session token prevents browser resubmission from creating duplicate draft records.
+
+The builder intentionally does not call hrCreateEmployeeContract(): that helper also writes salary history and can update the employee salary mirror and employment state for current/past start dates. The new builder path leaves those changes to the existing explicit contract activation workflow. No schema migration was added.
+
+Source commit: 8ed43dc8c7e0f2e2c5693e1777bfb8324bdc3115. Runtime verification is pending on the user's XAMPP app/database; do not claim the database insert, PDF number, overlap rejection, or salary-history protection is runtime-proven. Continue from docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md.
