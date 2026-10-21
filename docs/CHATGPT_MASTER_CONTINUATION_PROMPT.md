@@ -1405,3 +1405,7 @@ The user reported that using Download in the browser PDF preview saved the contr
 ### 2026-10-21 — Current Contract Builder toast checkpoint
 
 The source-level error-toast change is committed on `main` as `197f53d75cf4546e8efd6a483e9ea850a18916b5`. Root cause: PDF form `target="_blank"` caused caught server errors to render at the top of a new full page. The error response now posts to the original page, which shows a toast near the initiating button and avoids navigating/scrolling the original form. Successful inline PDF response is unchanged. Next: user pulls `main`, runs PHP lint, and browser-tests one error case and one successful PDF preview. Do not claim runtime verification until user confirms.
+
+### 2026-10-21 — Contract Builder toast correction checkpoint
+
+Current source commit: `890b9ef95390af64820083a8567c6e5e7fc2ccb0`. The prior opener-message approach failed in browser testing; errors still rendered in the new tab. Replaced with original-page fetch submission and JSON error responses. Errors close the temporary preview tab and toast beside the clicked button; successful PDF responses open in the preview tab. Next: user pulls `main`, runs PHP lint, tests missing fixed-term end date and a successful PDF preview. Do not claim runtime verification until confirmed.
