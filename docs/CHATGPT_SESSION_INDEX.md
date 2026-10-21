@@ -1401,3 +1401,7 @@ The contract PDF header was corrected to prevent the logo from overflowing its h
 
 ### Contract-builder invalid-form feedback — 2026-10-21
 The caught error banner in `modules/hr/contract_builder.php` is now a fixed-position RTL toast with close/autohide behavior; business validation and PDF workflow are unchanged. Source-only until local lint/browser verification. See `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`.
+
+
+### Contract-builder validation no longer navigates to error page — 2026-10-21
+Commit `bd088d1f4d090506df48eecf666c270add50f91b` adds local fetch handling to `modules/hr/contract_builder.php`: server validation errors become current-page toasts; valid PDF responses still open in a new tab. Local lint/browser verification pending. See `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`.
