@@ -604,13 +604,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
         }
         $pdo->commit();
         unset($_SESSION['ak_contract_builder_submission_token']);
-        // This response is PDF-only; discard any buffered output so headers and bytes stay clean.
-        while (ob_get_level() > 0) { ob_end_clean(); }
         header('Cache-Control: private, no-store, max-age=0');
         header('Pragma: no-cache');
         header('X-Content-Type-Options: nosniff');
         header('Content-Type: application/pdf');
-        header("Content-Disposition: inline; filename=\"Ahl-El-Kheir-Employment-Contract.pdf\"; filename*=UTF-8''Ahl-El-Kheir-Employment-Contract.pdf");
+        header('Content-Disposition: inline; filename="Ahl-El-Kheir-Employment-Contract.pdf"');
         header('Content-Length: ' . strlen($pdfContent));
         echo $pdfContent;
         exit;
@@ -620,26 +618,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
         }
         $errorMessage = $e->getMessage();
     }
-}
-
-// Fetch submissions receive a JSON error so the preview tab never renders an
-// error page. The original form displays the error beside the initiating button.
-if (!empty($errorMessage)
-    && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST'
-    && ($_POST['action'] ?? '') === 'generate_pdf'
-    && strtolower((string)($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '')) === 'xmlhttprequest') {
-    while (ob_get_level() > 0) {
-        ob_end_clean();
-    }
-    if (http_response_code() < 400) {
-        http_response_code(422);
-    }
-    header('Content-Type: application/json; charset=UTF-8');
-    echo json_encode(
-        ['error' => (string)$errorMessage],
-        JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP
-    );
-    exit;
 }
 
 $selectedEmployee = null;
@@ -676,7 +654,7 @@ require_once __DIR__ . '/../../includes/header.php';
   <div class="cb-hero d-flex align-items-center justify-content-between gap-3 flex-wrap"><div class="d-flex align-items-center gap-3"><img src="<?= e(APP_URL . $portalLogoPath) ?>" alt="شعار جمعية أهل الخير" style="width:68px;height:68px;object-fit:contain;background:#fff;border-radius:10px;padding:5px"><div><h1><i class="fa-solid fa-file-signature me-2"></i>بوابة عقود العمل</h1><p><?= e(trim((string)($organizationSettings['org_name_ar'] ?? '')) ?: 'جمعية أهل الخير الخيرية') ?> — إعداد عقد مناسب للمسمى الوظيفي ثم معاينته وطباعته للتوقيع.</p><?php $portalContact = array_filter([trim((string)($organizationSettings['org_address'] ?? '')), trim((string)($organizationSettings['support_phone'] ?? '')), trim((string)($organizationSettings['support_email'] ?? ''))]); if ($portalContact): ?><small><?= e(implode(' | ', $portalContact)) ?></small><?php endif; ?></div></div><div class="d-flex gap-2 flex-wrap"><a class="btn btn-light btn-sm fw-bold" href="<?= e(APP_URL) ?>modules/hr/contracts.php<?= $selectedEmployeeId ? '?employee_id=' . $selectedEmployeeId . '&view=contracts' : '' ?>"><i class="fa-solid fa-folder-open me-1"></i> سجل العقود والرواتب</a><a class="btn btn-light btn-sm fw-bold" href="<?= e(APP_URL) ?>modules/hr/job_description_catalogue.php"><i class="fa-solid fa-list-check me-1"></i> إدارة الأوصاف الوظيفية</a></div></div>
   <?php if (!empty($errorMessage)): ?><div class="alert alert-danger cb-error"><?= e($errorMessage) ?></div><?php endif; ?>
   <div class="cb-note"><strong>ملاحظة قانونية:</strong> هذا نموذج تشغيلي أولي وليس اعتماداً قانونياً. يجب مراجعته بواسطة محامٍ مؤهل في السودان قبل استخدامه رسمياً، والتحقق من توافق الشروط والسياسات مع أحكام قانون العمل السوداني السارية. لا تُدخل أي استحقاق أو مدة قانونية غير متحقق منها.</div>
-  <form id="contractBuilderForm" method="post" action="<?= e(APP_URL) ?>modules/hr/contract_builder.php" target="_blank">
+  <form method="post" action="<?= e(APP_URL) ?>modules/hr/contract_builder.php" target="_blank">
     <?= csrf_field() ?>
     <input type="hidden" name="builder_submission_token" value="<?= e($builderSubmissionToken) ?>">
     <input type="hidden" name="action" value="generate_pdf">
@@ -722,73 +700,6 @@ require_once __DIR__ . '/../../includes/header.php';
 </div>
 <script>
 (function(){
-  const form=document.getElementById('contractBuilderForm');
-  let clickedButtonRect=null;
-  function showContractErrorToast(message){
-    const toast=document.createElement('div');
-    toast.setAttribute('role','alert');
-    toast.setAttribute('aria-live','assertive');
-    toast.style.cssText='position:fixed;z-index:20000;width:min(360px,calc(100vw - 24px));padding:12px 16px;border-radius:10px;background:#b42318;color:#fff;box-shadow:0 8px 28px rgba(16,24,40,.24);font-size:.9rem;line-height:1.6;direction:rtl;text-align:right;white-space:normal;';
-    toast.textContent=message||'تعذر إنشاء العقد. حاول مرة أخرى.';
-    document.body.appendChild(toast);
-    const rect=clickedButtonRect;
-    const width=toast.getBoundingClientRect().width;
-    const left=rect?Math.max(12,Math.min(rect.left,window.innerWidth-width-12)):Math.max(12,window.innerWidth-width-12);
-    const toastHeight=toast.getBoundingClientRect().height;
-    let top=rect?rect.bottom+10:16;
-    if(top+toastHeight>window.innerHeight-12)top=(rect?rect.top-toastHeight-10:16);
-    top=Math.max(12,Math.min(top,window.innerHeight-toastHeight-12));
-    toast.style.left=left+'px';
-    toast.style.top=top+'px';
-    const close=()=>{if(toast.isConnected)toast.remove();};
-    const timer=window.setTimeout(close,6000);
-    toast.addEventListener('click',()=>{window.clearTimeout(timer);close();});
-  }
-  if(form){
-    form.addEventListener('submit',async function(event){
-      event.preventDefault();
-      const button=event.submitter;
-      const rect=button?button.getBoundingClientRect():form.getBoundingClientRect();
-      clickedButtonRect={left:rect.left,top:rect.top,right:rect.right,bottom:rect.bottom};
-      const previewWindow=window.open('about:blank','_blank');
-      if(!previewWindow){
-        showContractErrorToast('يرجى السماح بالنوافذ المنبثقة لعرض العقد بصيغة PDF.');
-        return;
-      }
-      previewWindow.document.title='جارٍ إنشاء العقد…';
-      previewWindow.document.body.textContent='جارٍ إنشاء ملف PDF…';
-      if(button)button.disabled=true;
-      try{
-        const response=await fetch(form.action,{
-          method:'POST',
-          body:new FormData(form),
-          credentials:'same-origin',
-          headers:{'X-Requested-With':'XMLHttpRequest','Accept':'application/pdf, application/json'}
-        });
-        const contentType=(response.headers.get('Content-Type')||'').toLowerCase();
-        if(!response.ok||contentType.includes('application/json')||!contentType.includes('application/pdf')){
-          let message='تعذر إنشاء العقد. حاول مرة أخرى.';
-          if(contentType.includes('application/json')){
-            try{const payload=await response.json();if(payload&&payload.error)message=String(payload.error);}catch(e){}
-          }else{
-            try{const payload=await response.text();if(payload.trim())message=payload.replace(/<[^>]*>/g,' ').replace(/\\s+/g,' ').trim().slice(0,500);}catch(e){}
-          }
-          previewWindow.close();
-          showContractErrorToast(message);
-          return;
-        }
-        const pdfBlob=await response.blob();
-        const pdfUrl=URL.createObjectURL(pdfBlob);
-        previewWindow.location.replace(pdfUrl);
-        window.setTimeout(()=>URL.revokeObjectURL(pdfUrl),60000);
-      }catch(error){
-        previewWindow.close();
-        showContractErrorToast('تعذر الاتصال بالخادم لإنشاء العقد. تحقق من الاتصال ثم حاول مرة أخرى.');
-      }finally{
-        if(button)button.disabled=false;
-      }
-    });
-  }
   const select=document.getElementById('employee_id');
   if(!select)return;
   function renumber(container){
