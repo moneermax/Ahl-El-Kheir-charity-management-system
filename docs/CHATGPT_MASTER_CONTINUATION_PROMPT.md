@@ -1488,3 +1488,13 @@ The employee picker is now full-width list rows (not cards), commit `7464fc22c31
 
 Source commit `40f1198a3b0c54b022b2154b55a12dfce345b730` updates `modules/hr/contracts.php` to suppress footer elements inside the employee modal and to load internal contract/salary tabs via fetch without a full-page navigation. Contract Builder remains a separate page. Local PHP lint and browser verification are still required; do not claim runtime success until checked in the real XAMPP app.
 Follow-up commit `889a10e6f7368190f8e78a9d356a7fabd638b1c6` hides the shared page footer while the employee modal is open and restores it on close. Local runtime verification remains required.
+
+## 2026-10-21 — Secure viewing of uploaded employment contract copies
+
+Root cause confirmed from repository source: `storage/.htaccess` contains `Require all denied`, which correctly blocks direct HTTP access to `storage/hr_contracts/`. The contract register previously linked directly to `APP_URL . contract_file_path`, so Apache returned `403 Forbidden`.
+
+Source changes committed on `main`:
+- `773229e8753979ecfa66ec588b8626b96d1325a8` — change the contract-file link to `modules/hr/view_contract.php?contract_id=...`.
+- `a6576eb379988d11f8a112f9c6c073a14ee84c2a` — add the protected viewer. It applies the same HR manager / HR staff / admin role gate as the contract register, resolves the file through the existing contract record, confines real paths to `storage/hr_contracts/`, validates allowed extension and detected MIME type, and streams supported files inline. The storage-wide deny rule is intentionally unchanged; no schema change or migration is needed.
+
+**Verification status: SOURCE COMMITTED; local PHP lint and browser verification remain pending.** After pulling `main`, lint both `modules/hr/contracts.php` and `modules/hr/view_contract.php`, then open an uploaded PDF from the HR contract register while logged in with an allowed HR role. Also verify the raw `storage/hr_contracts/...` URL remains forbidden and a logged-out/non-HR request to the viewer is denied.
