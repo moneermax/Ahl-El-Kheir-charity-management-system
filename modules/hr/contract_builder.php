@@ -420,7 +420,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
         $contractNumberDisplay = '<span dir="ltr">' . $v('contract_number') . '</span>';
         $salaryDisplay = '<span dir="ltr">' . number_format((float)$data['basic_salary'], 2, '.', ',') . ' ' . akContractEscape(APP_CURRENCY_CODE) . '</span>';
         $organizationHeaderHtml = '
-        <table cellpadding="1" cellspacing="0" border="0">
+        <table cellpadding="2" cellspacing="0" border="1" bordercolor="#1b4d8f">
           <tr>
             <td width="10%" align="center" valign="middle"><img src="' . akContractEscape($logoHtmlPath) . '" width="24" /></td>
             <td width="66%" align="center" valign="middle">
