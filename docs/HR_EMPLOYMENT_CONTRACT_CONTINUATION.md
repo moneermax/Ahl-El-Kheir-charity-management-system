@@ -293,3 +293,9 @@ The user's rendered screenshot demonstrated that the earlier sizing-only change 
 ## 2026-10-21 — Voucher composition correction applied
 
 Commits `de20eb5745565f6ba9997ebf3e02c5ada6edd53f` and `e45a9d19e5b8d0bdcf198b345ac553ca00f677b6` update the contract PDF header markup to match the voucher's element order (logo, centered organization identity, framed number/date panel) and remove the extra rectangular outline around the navy bilingual title bar. Header uses 12%/64%/24% columns and 20 mm logo. Changes are source committed; local PHP lint and rendered layout/page-count checks are still pending.
+
+## 2026-10-21 — Contract-builder invalid-form feedback toast
+
+The contract builder's invalid/expired one-use submission-token message (`تم استخدام هذا النموذج أو انتهت صلاحيته. أعد تحميل الصفحة ثم حاول مرة أخرى.`) and other caught generation errors are now rendered in a fixed-position RTL error toast instead of an in-flow red alert. The toast overlays the page, includes an accessible alert region and close button, and dismisses automatically after seven seconds. The change is limited to `modules/hr/contract_builder.php` presentation; CSRF checks, one-use token validation, transaction rollback, contract-number reservation, overlap protection, PDF generation and form target are unchanged. No schema/migration or shared/global JavaScript changes.
+
+**Verification:** source committed only; local PHP lint and browser check remain required. Verify the expired-token message is fixed-position and does not add layout height; close/autohide work; valid PDF generation still opens in a new tab; token and overlap safeguards remain active. A normal browser document navigation itself can start at the top; this UI change prevents the message from pushing page content but does not intercept or suppress navigation.
