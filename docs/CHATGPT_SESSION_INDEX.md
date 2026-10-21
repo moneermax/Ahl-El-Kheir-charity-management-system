@@ -1409,3 +1409,6 @@ Commit `bd088d1f4d090506df48eecf666c270add50f91b` adds local fetch handling to `
 
 ### Contract-builder feedback positioning — 2026-10-21
 Commit `e41cadc856223cd861dcfced9983efbb8009231a` removes the viewport-fixed toast and renders server/client validation feedback in the form action area directly before the PDF button. Existing fetch/PDF and validation safeguards remain. Local PHP lint and browser verification are pending; see `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`.
+
+### Contract Builder rollback — 2026-10-21
+The post-redesign validation-toast experiments were rolled back after a malformed action-area form was found in `e41cadc`. Commit `d074486b7cff1a204ab3bf353c829a59ecef32f7` restores `modules/hr/contract_builder.php` to the voucher-style PDF checkpoint `e7f96e838c7c33ae2636a8b363cc2a421a77781b`. Local runtime verification is still pending; see `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`.
