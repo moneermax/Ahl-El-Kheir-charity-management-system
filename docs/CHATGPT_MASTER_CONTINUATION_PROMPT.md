@@ -1364,3 +1364,10 @@ After the user reported that the revised PDF still looked unprofessional and had
 ## 2026-10-21 — Active task: contract PDF alpha-PNG error
 
 Source inspection of the current `main` branch found the contract PDF directly embedded `assets/img/logo.png` in TCPDF HTML, while the shared print header and voucher pages use the same PNG through browser rendering. Settings and the contract-builder portal honor `site_logo`. The user confirmed `assets/img/logo.jpg` is the same logo; the PDF letterhead now uses that existing JPEG without changing browser pages, settings, Apache/PHP configuration, database schema, or contract lifecycle. Local PHP lint and actual PDF rendering are still required; preserve the existing contract overlap guard and avoid creating another draft for an already-covered period.
+
+
+## 2026-10-21 — Second contract PDF design revision (voucher-style hierarchy; runtime pending)
+
+Following user feedback that the employment contract still looked weaker than the existing vouchers, `modules/accounting/voucher_print.php` was re-read as the design reference. The contract's first-page composition has been revised to use a single bordered three-part letterhead (logo, centered bilingual organization identity, and boxed contract number/date), a full-width navy bilingual title bar, a compact employee/position and term summary, and a dedicated highlighted basic-salary band inspired by the voucher amount panel. Clause headings now use a pale-blue panel with navy text and a gold rule instead of a heavy filled bar, to improve readability across long legal text. Existing clauses, job-description content, signature page, logo JPEG compatibility fix, draft reservation/overlap guard, and activation workflow are preserved. No schema or accounting changes.
+
+**Verification status: SOURCE COMMITTED; local PHP lint and actual PDF visual inspection are still pending.** The rendered PDF must be inspected before deciding whether this revision is accepted; do not create another overlapping contract draft just to preview the design.

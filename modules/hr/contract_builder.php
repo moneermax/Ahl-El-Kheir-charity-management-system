@@ -420,35 +420,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
         $contractNumberDisplay = '<span dir="ltr">' . $v('contract_number') . '</span>';
         $salaryDisplay = '<span dir="ltr">' . number_format((float)$data['basic_salary'], 2, '.', ',') . ' ' . akContractEscape(APP_CURRENCY_CODE) . '</span>';
         $organizationHeaderHtml = '
-        <table cellpadding="4" border="0">
+        <table cellpadding="5" cellspacing="0" border="1" bordercolor="#1b4d8f">
           <tr>
-            <td width="20%" align="center" valign="middle"><img src="' . akContractEscape($logoHtmlPath) . '" width="76" /></td>
-            <td width="80%" align="right" valign="middle">
-              <div style="font-size:15pt;font-weight:bold;color:#173f73;">' . akContractEscape($organizationName) . '</div>
-              <div style="font-size:8.5pt;color:#344054;">' . akContractEscape($organizationNameEn) . '</div>
-              <div style="font-size:7.5pt;color:#667085;">' . akContractEscape(implode('  |  ', array_filter(array_map(static fn($key) => trim((string)($organizationSettings[$key] ?? '')), ['org_address', 'support_phone', 'support_email'])))) . '</div>
+            <td width="18%" align="center" valign="middle" bgcolor="#ffffff"><img src="' . akContractEscape($logoHtmlPath) . '" width="58" /></td>
+            <td width="48%" align="center" valign="middle" bgcolor="#ffffff">
+              <div style="font-size:13pt;font-weight:bold;color:#1b4d8f;">' . akContractEscape($organizationName) . '</div>
+              <div style="font-size:7.5pt;color:#344054;">' . akContractEscape($organizationNameEn) . '</div>
+              <div style="font-size:7pt;color:#667085;">' . akContractEscape(implode('  |  ', array_filter(array_map(static fn($key) => trim((string)($organizationSettings[$key] ?? '')), ['org_address', 'support_phone', 'support_email'])))) . '</div>
+            </td>
+            <td width="34%" align="center" valign="middle" bgcolor="#eef2f9">
+              <div style="font-size:7.5pt;color:#475467;">رقم العقد / Contract No.</div>
+              <div style="font-size:10pt;font-weight:bold;color:#1b4d8f;">' . $contractNumberDisplay . '</div>
+              <hr />
+              <div style="font-size:7.5pt;color:#475467;">تاريخ التحرير / Issue date</div>
+              <div style="font-size:9pt;font-weight:bold;">' . akContractEscape($issueDateDisplay) . '</div>
             </td>
           </tr>
         </table>
-        <hr />
+        <br />
         ';
         $html = '
         <style>
             body { font-family: aealarabiya; color: #172033; font-size: 10.5pt; line-height: 1.55; }
-            h2 { color: #ffffff; font-size: 11.5pt; font-weight: bold; background-color: #173f73; padding: 8px; border-bottom: 3px solid #9a7628; }
+            h2 { color: #1b4d8f; font-size: 11pt; font-weight: bold; background-color: #eef2f9; padding: 7px; border-bottom: 2px solid #9a7628; }
             p { margin-top: 4px; margin-bottom: 7px; }
             .meta { color: #475467; font-size: 9pt; }
             .rule { border: 1px solid #b9c3d3; padding: 6px; }
         </style>
         ' . $organizationHeaderHtml . '
-        <table cellpadding="6" border="1" bordercolor="#173f73">
-          <tr><td width="66%" bgcolor="#1b4d8f" align="center"><span style="color:#ffffff;font-size:18pt;font-weight:bold;">عقد عمل</span><br /><span style="color:#ffffff;font-size:9pt;">EMPLOYMENT CONTRACT</span></td><td width="34%" align="center" bgcolor="#eef2f9"><span style="color:#475467;font-size:8pt;">رقم العقد / Contract No.</span><br /><span dir="ltr" style="color:#1b4d8f;font-size:11pt;font-weight:bold;">' . $contractNumberDisplay . '</span><br /><span style="color:#475467;font-size:8pt;">تاريخ التحرير / Issue date</span><br /><span dir="ltr" style="font-size:9pt;font-weight:bold;">' . akContractEscape($issueDateDisplay) . '</span></td></tr>
+        <table cellpadding="5" cellspacing="0" border="1" bordercolor="#1b4d8f">
+          <tr><td bgcolor="#1b4d8f" align="center"><span style="color:#ffffff;font-size:17pt;font-weight:bold;">عقد عمل</span><br /><span style="color:#ffffff;font-size:9pt;">EMPLOYMENT CONTRACT</span></td></tr>
+        </table>
+        <table cellpadding="4" cellspacing="0" border="1" bordercolor="#b9c3d3">
+          <tr>
+            <td width="50%" align="center" bgcolor="#eef2f9"><span style="font-size:8pt;color:#475467;">اسم الموظف / EMPLOYEE</span><br /><span style="font-size:11pt;font-weight:bold;">' . $employeeNameDisplay . '</span></td>
+            <td width="50%" align="center" bgcolor="#eef2f9"><span style="font-size:8pt;color:#475467;">المسمى الوظيفي / POSITION</span><br /><span style="font-size:11pt;font-weight:bold;">' . $v('position') . '</span></td>
+          </tr>
+          <tr>
+            <td width="50%" align="center"><span style="font-size:8pt;color:#475467;">بداية العقد / START DATE</span><br /><span style="font-size:9.5pt;font-weight:bold;">' . akContractEscape($startDateDisplay) . '</span></td>
+            <td width="50%" align="center"><span style="font-size:8pt;color:#475467;">نهاية العقد / END DATE</span><br /><span style="font-size:9.5pt;font-weight:bold;">' . akContractEscape($endDateText) . '</span></td>
+          </tr>
+        </table>
+        <table cellpadding="5" cellspacing="0" border="1" bordercolor="#1b4d8f">
+          <tr>
+            <td width="42%" align="center" bgcolor="#eef2f9"><span style="font-size:8pt;color:#475467;">الأجر الأساسي / BASIC SALARY</span></td>
+            <td width="58%" align="center" bgcolor="#ffffff"><span style="font-size:16pt;font-weight:bold;color:#1b4d8f;">' . $salaryDisplay . '</span></td>
+          </tr>
         </table>
         <br />
-        <table cellpadding="5" border="1" bordercolor="#b9c3d3">
-          <tr><td width="50%" bgcolor="#eef2f9"><b>اسم الموظف / Employee</b><br />' . $employeeNameDisplay . '</td><td width="50%" bgcolor="#eef2f9"><b>المسمى الوظيفي / Position</b><br />' . $v('position') . '</td></tr>
-          <tr><td><b>بداية العقد / Start date</b><br /><span dir="ltr">' . akContractEscape($startDateDisplay) . '</span></td><td><b>نهاية العقد / End date</b><br /><span dir="ltr">' . akContractEscape($endDateText) . '</span></td></tr>
-        </table>
         <p>تم إبرام هذا العقد بين ' . akContractEscape($organizationName) . ' (<span dir="ltr">' . akContractEscape($organizationNameEn) . '</span>)، ويشار إليها في هذا العقد بـ«الجمعية» أو «صاحب العمل»، وبين الموظف المبينة بياناته أدناه، ويشار إليه بـ«الموظف»، وفق أحكام هذا العقد وقوانين العمل السودانية السارية والسياسات المعتمدة المتوافقة معها.</p>
         <h2>أولاً: بيانات الطرفين والوظيفة</h2>
         <table cellpadding="5" border="1" bordercolor="#d6dde7">

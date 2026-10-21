@@ -3589,3 +3589,10 @@ After the user reported that the revised PDF still looked unprofessional and had
 The contract PDF's direct HTML embedding of `assets/img/logo.png` triggered TCPDF's error requiring GD or Imagick for alpha-channel PNG images. Inspection of existing pages found the shared print header and accounting/salary-advance voucher pages use the PNG, while settings and the contract-builder portal honor `site_logo`. The user confirmed the existing `assets/img/logo.jpg` is the same organization logo. The PDF now uses this JPEG only in the TCPDF letterhead; no Apache/PHP configuration, database setting, schema, or contract lifecycle behavior was changed.
 
 **Status: source change committed; local PHP lint and browser/PDF rendering remain pending.**
+
+
+## 2026-10-21 — Second contract PDF design revision (voucher-style hierarchy; runtime pending)
+
+Following user feedback that the employment contract still looked weaker than the existing vouchers, `modules/accounting/voucher_print.php` was re-read as the design reference. The contract's first-page composition has been revised to use a single bordered three-part letterhead (logo, centered bilingual organization identity, and boxed contract number/date), a full-width navy bilingual title bar, a compact employee/position and term summary, and a dedicated highlighted basic-salary band inspired by the voucher amount panel. Clause headings now use a pale-blue panel with navy text and a gold rule instead of a heavy filled bar, to improve readability across long legal text. Existing clauses, job-description content, signature page, logo JPEG compatibility fix, draft reservation/overlap guard, and activation workflow are preserved. No schema or accounting changes.
+
+**Verification status: SOURCE COMMITTED; local PHP lint and actual PDF visual inspection are still pending.** The rendered PDF must be inspected before deciding whether this revision is accepted; do not create another overlapping contract draft just to preview the design.
