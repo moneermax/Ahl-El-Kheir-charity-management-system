@@ -344,7 +344,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
         if (!is_file($logoPath)) {
             $logoPath = APP_DIR . '/assets/img/logo.png';
         }
-        $organizationName = trim((string)($organizationSettings['org_name_ar'] ?? '')) ?: 'جمعية أهل الخير الخيرية';
+        $organizationName = (string)(ak_catalog('ar')['common.organization_name'] ?? 'منظمة أهل الخير النسوية لكفالة الأيتام');
+        $organizationNameEn = (string)(ak_catalog('en')['common.organization_name'] ?? 'Ahl El Kheir Women Organization for Orphan Sponsorship');
         $contactParts = [];
         foreach (['org_address' => 'العنوان', 'support_phone' => 'الهاتف', 'support_email' => 'البريد الإلكتروني'] as $key => $label) {
             $value = trim((string)($organizationSettings[$key] ?? ''));
@@ -423,31 +424,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
             : $v('employee_name');
         $contractNumberDisplay = '<span dir="ltr">' . $v('contract_number') . '</span>';
         $salaryDisplay = '<span dir="ltr">' . number_format((float)$data['basic_salary'], 2, '.', ',') . ' ' . akContractEscape(APP_CURRENCY_CODE) . '</span>';
-        $coverHtml = '
-        <style>
-            body { font-family: aealarabiya; color: #263445; font-size: 11pt; }
-            .cover-title { color: #17365d; font-size: 26pt; font-weight: bold; text-align: center; }
-            .cover-subtitle { color: #9a7628; font-size: 13pt; text-align: center; }
-            .cover-meta { color: #475467; font-size: 10pt; }
-        </style>
-        <table cellpadding="12" border="1" bordercolor="#c9a34a">
-          <tr><td align="center" bgcolor="#17365d"><span style="color:#ffffff;font-size:10pt;">' . akContractEscape($organizationName) . '</span></td></tr>
-          <tr><td align="center" bgcolor="#f7f4ec"><br /><br /><span style="color:#17365d;font-size:26pt;font-weight:bold;">عقد عمل</span><br /><br /><span style="color:#9a7628;font-size:13pt;">EMPLOYMENT CONTRACT</span><br /><br /><br /><span style="color:#263445;font-size:12pt;">' . $employeeNameDisplay . '</span><br /><br /><span style="color:#475467;font-size:10pt;">' . $v('position') . '</span><br /><br /><br /></td></tr>
-          <tr><td class="cover-meta" bgcolor="#ffffff">رقم العقد: ' . $contractNumberDisplay . '<br /><br />تاريخ التحرير: <span dir="ltr">' . akContractEscape($issueDateDisplay) . '</span><br /><br />بداية العقد: <span dir="ltr">' . akContractEscape($startDateDisplay) . '</span><br /><br />نهاية العقد: <span dir="ltr">' . akContractEscape($endDateText) . '</span></td></tr>
-        </table>
-        <br /><br /><p align="center" style="color:#475467;font-size:10pt;">أُعدّ هذا العقد وفق إطار قانون العمل السوداني، مع مراعاة ممارسات الحماية والنزاهة المعتمدة لدى المنظمات الإنسانية بما لا يتعارض مع الأحكام القانونية الآمرة.</p>
-        <br /><p align="center" style="color:#9a7628;font-size:9pt;">وثيقة عمل رسمية — تُستكمل مراجعتها وتوقيعاتها وفق الإجراءات المعتمدة</p>';
-        $pdf->writeHTML($coverHtml, true, false, true, false, '');
-        $pdf->AddPage();
-
         $html = '
         <style>
-            body { font-family: aealarabiya; color: #263445; font-size: 10.5pt; line-height: 1.55; }
-            h2 { color: #17365d; font-size: 12pt; font-weight: bold; background-color: #f4f6f9; border-bottom: 2px solid #c9a34a; padding: 7px; }
+            body { font-family: aealarabiya; color: #172033; font-size: 10.5pt; line-height: 1.5; }
+            h2 { color: #ffffff; font-size: 11.5pt; font-weight: bold; background-color: #1b4d8f; padding: 7px; border-bottom: 2px solid #9a7628; }
             .meta { color: #475467; font-size: 9pt; }
-            .rule { border: 1px solid #d6dde7; padding: 6px; }
-            .clause { margin-bottom: 5px; }
+            .rule { border: 1px solid #b9c3d3; padding: 6px; }
         </style>
+        <table cellpadding="5" border="1" bordercolor="#1b4d8f">
+          <tr><td width="66%" bgcolor="#1b4d8f" align="center"><span style="color:#ffffff;font-size:18pt;font-weight:bold;">عقد عمل</span><br /><span style="color:#ffffff;font-size:9pt;">EMPLOYMENT CONTRACT</span></td><td width="34%" align="center" bgcolor="#eef2f9"><span style="color:#475467;font-size:8pt;">رقم العقد / Contract No.</span><br /><span dir="ltr" style="color:#1b4d8f;font-size:11pt;font-weight:bold;">' . $contractNumberDisplay . '</span><br /><span style="color:#475467;font-size:8pt;">تاريخ التحرير / Issue date</span><br /><span dir="ltr" style="font-size:9pt;font-weight:bold;">' . akContractEscape($issueDateDisplay) . '</span></td></tr>
+        </table>
+        <br />
+        <table cellpadding="5" border="1" bordercolor="#b9c3d3">
+          <tr><td width="50%" bgcolor="#eef2f9"><b>اسم الموظف / Employee</b><br />' . $employeeNameDisplay . '</td><td width="50%" bgcolor="#eef2f9"><b>المسمى الوظيفي / Position</b><br />' . $v('position') . '</td></tr>
+          <tr><td><b>بداية العقد / Start date</b><br /><span dir="ltr">' . akContractEscape($startDateDisplay) . '</span></td><td><b>نهاية العقد / End date</b><br /><span dir="ltr">' . akContractEscape($endDateText) . '</span></td></tr>
+        </table>
+        <p>تم إبرام هذا العقد بين ' . akContractEscape($organizationName) . ' (<span dir="ltr">' . akContractEscape($organizationNameEn) . '</span>)، ويشار إليها في هذا العقد بـ«الجمعية» أو «صاحب العمل»، وبين الموظف المبينة بياناته أدناه، ويشار إليه بـ«الموظف»، وفق أحكام هذا العقد وقوانين العمل السودانية السارية والسياسات المعتمدة المتوافقة معها.</p>
         <h2>أولاً: بيانات الطرفين والوظيفة</h2>
         <table cellpadding="5" border="1" bordercolor="#d6dde7">
           <tr><td width="50%"><b>اسم الموظف:</b> ' . $employeeNameDisplay . '</td><td width="50%"><b>الرقم الوطني/الهوية:</b> ' . ($data['national_id'] !== '' ? $v('national_id') : '—') . '</td></tr>
@@ -480,8 +472,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
         <!-- SIGNATURE_PAGE_START -->
         <h2>إقرار وتوقيع الطرفين</h2>
         <p>يقر الطرفان بأنهما قرآ العقد وفهما أحكامه، وأتيحت لهما فرصة طلب التوضيح، وأنهما تسلما نسخة موقعة منه. لا يُعد توقيع الموظف تنازلاً عن أي حق إلزامي مقرر بموجب القانون.</p>
-        <table cellpadding="8" border="1" bordercolor="#d6dde7">
-          <tr><td width="50%"><b>عن ' . akContractEscape($organizationName) . '</b><br /><br />الاسم: __________________________<br /><br />الصفة: __________________________<br /><br />التوقيع والختم: ___________________<br /><br />التاريخ: _________________________</td><td width="50%"><b>الموظف</b><br /><br />الاسم: ' . $employeeNameDisplay . '<br /><br />التوقيع: _________________________<br /><br />التاريخ: _________________________</td></tr>
+        <table cellpadding="8" border="1" bordercolor="#1b4d8f">
+          <tr><td width="50%" bgcolor="#eef2f9"><b>عن ' . akContractEscape($organizationName) . '</b><br /><br />الاسم: __________________________<br /><br />الصفة: __________________________<br /><br />التوقيع والختم: ___________________<br /><br />التاريخ: _________________________</td><td width="50%" bgcolor="#eef2f9"><b>الموظف</b><br /><br />الاسم: ' . $employeeNameDisplay . '<br /><br />التوقيع: _________________________<br /><br />التاريخ: _________________________</td></tr>
           <tr><td colspan="2"><b>الشاهد (إن لزم):</b> الاسم: __________________________ &nbsp; التوقيع: __________________ &nbsp; التاريخ: ______________</td></tr>
         </table>
         ';
@@ -492,7 +484,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
             throw new RuntimeException('تعذر فصل صفحة التوقيعات في قالب العقد.');
         }
         $contractBodyHtml = substr($html, 0, $signatureOffset);
-        $signaturePageHtml = '<style>body { font-family: aealarabiya; color: #263445; font-size: 10.5pt; line-height: 1.55; } h2 { color: #17365d; font-size: 12pt; font-weight: bold; background-color: #f4f6f9; border-bottom: 2px solid #c9a34a; padding: 7px; }</style>' . substr($html, $signatureOffset + strlen($signatureMarker));
+        $signaturePageHtml = '<style>body { font-family: aealarabiya; color: #172033; font-size: 10.5pt; line-height: 1.5; } h2 { color: #ffffff; font-size: 11.5pt; font-weight: bold; background-color: #1b4d8f; padding: 7px; border-bottom: 2px solid #9a7628; }</style>' . substr($html, $signatureOffset + strlen($signatureMarker));
         $pdf->SetFont('aealarabiya', '', 10.5);
         $pdf->writeHTML($contractBodyHtml, true, false, true, false, '');
         $pdf->AddPage();
