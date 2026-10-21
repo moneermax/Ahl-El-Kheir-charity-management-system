@@ -422,3 +422,11 @@ Implemented in `modules/hr/contracts.php`:
 After the user pulled the employee-details modal change, local PHP lint reported an unexpected end of file on line 134, expecting `elseif`, `else`, or `endif`. Source inspection identified the exact cause: the employee-selection `if ($emp)` alternative-syntax block had no closing `endif`; the existing terminator closed the nested view switch instead. Commit `decb8a577df182396def4eea906220bd4b4b009a` adds the missing outer `endif` in `modules/hr/contracts.php` without changing application logic.
 
 **Verification boundary:** source correction is committed to `main`; the user's local PHP lint has not yet been rerun, and browser/runtime behavior is not verified. After pulling, run `php -l modules/hr/contracts.php` and report the exact result before browser testing. Preserve the existing untracked `storage/hr_contracts/` directory; it was not modified or included in the commit.
+
+## 2026-10-21 — HR employee details modal initialization timing fix
+
+The user reported that selecting an employee only refreshed the page and did not display the employee-details modal. Inspection of `modules/hr/contracts.php` and `includes/footer.php` identified the ordering defect: the page's inline script attempted to open the Bootstrap modal while the Bootstrap JavaScript bundle is loaded later in the shared footer. At that point `window.bootstrap` was not yet available, so the guarded modal-opening code silently did nothing.
+
+Commit `4fe5b9baaa09830c3bfc06b37c18c3f080660f45` wraps the page's existing employee search and modal initialization in `DOMContentLoaded`, which runs after the footer's Bootstrap bundle has loaded. The employee cards remain intentional: the earlier requirement moved employee-specific details out of the two-column page into a modal while letting the employee picker use the available page width. No query, authorization, contract, salary, or schema logic was changed.
+
+**Verification boundary:** source fix committed to `main`; local PHP lint and browser runtime are not yet verified. Pull the commit, run `php -l modules\\hr\\contracts.php`, then click one employee. Acceptance: URL refresh may occur, but the employee's contract/salary modal must open automatically. Test a second employee and the four modal sections. Preserve the untracked `storage/hr_contracts/` directory.
