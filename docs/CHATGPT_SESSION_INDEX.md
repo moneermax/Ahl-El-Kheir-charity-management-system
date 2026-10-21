@@ -1383,3 +1383,7 @@ Following user feedback that the employment contract still looked weaker than th
 ## 2026-10-21 — Employment contract PDF compact layout (source committed; runtime pending)
 
 Commit `ddffae6105a2da56bce1b5d706bc7d40e1f94ba2` keeps the branded letterhead only on the first page and compresses PDF typography, spacing, table padding, logo size and margins to target a two-page contract with a separate signature page. No schema change. Local PHP lint and actual PDF page-count/readability checks remain pending; continue from `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md` and do not claim the two-page target is verified until inspected in the configured XAMPP app.
+
+## 2026-10-21 — Contract PDF voucher-style header compression
+
+Commit `f30fd321ae7932daa2e87b7b70be8e3f97d437a3` inspects the existing voucher print design and compresses the contract letterhead to a smaller logo, narrower side cells, compact number/date panel, short title band and tighter typography/spacing. The signature page has no repeated header. Local PHP lint and exact PDF page-count/readability remain pending. Continue from `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`.
