@@ -360,3 +360,9 @@ The prior `window.opener.postMessage()` approach failed in the user's browser: t
 ## 2026-10-21 — Restore pre-toast Contract Builder source
 
 After the latest fetch-based toast experiment produced a local Apache “Not Found” response, `modules/hr/contract_builder.php` was restored exactly to checkpoint `e7f96e838c7c33ae2636a8b363cc2a421a77781b` in commit `8af298793a4c86d38d303516b2b03992b7258405`. This removes the toast/fetch submission changes and returns the form/PDF response path to the pre-toast implementation. The restored file blob matches checkpoint blob `01442b9fa87a0ab6c9d47d63175681cd1439854d`. Local XAMPP lint and browser/PDF behavior have not been verified by the assistant; pull `main` and test the existing workflow before considering it runtime-verified.
+
+## 2026-10-21 — Authoritative post-rollback checkpoint
+
+The latest source rollback is commit `8af298793a4c86d38d303516b2b03992b7258405`, restoring `modules/hr/contract_builder.php` to the pre-toast voucher-style PDF checkpoint `e7f96e838c7c33ae2636a8b363cc2a421a77781b`. The restored source blob matches the checkpoint. Treat this as the current source baseline; do not continue toast/fetch changes unless explicitly requested by the user.
+
+Runtime acceptance is still unverified after rollback: local XAMPP PHP lint, existing-contract viewing, normal contract creation, and actual PDF output must be checked before claiming the restored workflow works. Use `http://localhost:8081/AhlElKheir/` and preserve the existing draft/active overlap guard. Do not create a duplicate/overlapping contract solely for preview.
