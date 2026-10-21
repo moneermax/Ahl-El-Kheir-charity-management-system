@@ -3718,3 +3718,7 @@ A targeted source fix (`4fe5b9baaa09830c3bfc06b37c18c3f080660f45`) defers employ
 ## 2026-10-21 — HR employee selector presentation correction
 
 The employee selector now uses full-width list rows instead of cards (`7464fc22c31f613fcf26f3c33f32ca3d92be491c`). Modal initialization was separately deferred until `DOMContentLoaded` (`4fe5b9baaa09830c3bfc06b37c18c3f080660f45`). Local lint and browser verification pending; details in `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`.
+
+## 2026-10-21 — HR employee modal footer
+
+Removed the redundant footer row inside the HR employee modal while preserving the modal header close control and the main-page footer (`7c724c77e65a055e9eb66da7605dfe69ec9ad300`). Local lint/browser verification pending.
