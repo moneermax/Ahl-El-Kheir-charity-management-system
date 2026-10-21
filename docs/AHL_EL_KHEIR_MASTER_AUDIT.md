@@ -3914,3 +3914,7 @@ The expired/used form-token error and other caught builder errors are displayed 
 
 ## 2026-10-21 — Contract-builder validation navigation regression
 The reported jump was traced to `modules/hr/contract_builder.php` submitting with `target="_blank"`; the prior fixed toast was in the response document, not the original form page. Commit `bd088d1f4d090506df48eecf666c270add50f91b` keeps server-side error responses on the current form page via a page-local fetch handler while preserving new-tab PDF output. No changes to global same-page POST handling. Source committed; local syntax/browser verification pending.
+
+
+## 2026-10-21 — Contract Builder regression and rollback
+Audit finding: commit `e41cadc` introduced malformed action-area markup by leaving the PDF submit button incomplete and nesting the return link inside it. The source was restored by `d074486b7cff1a204ab3bf353c829a59ecef32f7` to the voucher-style PDF checkpoint `e7f96e8`, removing subsequent toast/fetch experiments. This is source-level evidence only; the restored form and PDF generation must still be verified in the local XAMPP runtime. See `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`.
