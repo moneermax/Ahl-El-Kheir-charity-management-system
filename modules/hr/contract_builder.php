@@ -239,6 +239,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
             'annual_leave' => akContractValue($_POST, 'annual_leave', 'وفق قانون العمل السوداني والسياسات المعتمدة'),
             'sick_leave' => akContractValue($_POST, 'sick_leave', 'وفق قانون العمل السوداني والسياسات المعتمدة'),
             'notice_period' => akContractValue($_POST, 'notice_period', 'وفق القانون واجب التطبيق وشروط العقد'),
+            'reporting_to' => akContractValue($_POST, 'reporting_to'),
             'duties' => (static function (): string {
                 $sections = [];
                 $purpose = array_values(array_filter(array_map(static fn($item) => trim((string)$item), is_array($_POST['role_purpose'] ?? null) ? $_POST['role_purpose'] : [$_POST['role_purpose'] ?? '']), static fn($item) => $item !== ''));
