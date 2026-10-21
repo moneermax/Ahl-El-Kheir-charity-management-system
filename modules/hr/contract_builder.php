@@ -401,14 +401,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
         $pdf->SetAuthor(APP_NAME_AR);
         $pdf->SetTitle('عقد عمل - ' . $data['employee_name']);
         $pdf->SetSubject('عقد عمل');
-        $pdf->setPrintHeader(true);
+        $pdf->setPrintHeader(false);
         $pdf->setPrintFooter(true);
-        $pdf->setHeaderData(is_file($logoPath) ? $logoPath : '', 20, $organizationName, $headerContact);
+        // The branded HTML letterhead embeds the exact voucher logo; avoid TCPDF's generic duplicate header.
         $pdf->setHeaderFont(['aealarabiya', '', 8]);
         $pdf->setFooterFont(['aealarabiya', '', 8]);
         $pdf->setHeaderMargin(5);
         $pdf->setFooterMargin(10);
-        $pdf->SetMargins(16, 30, 16);
+        $pdf->SetMargins(16, 12, 16);
         $pdf->SetAutoPageBreak(true, 17);
         $pdf->setRTL(true);
         $pdf->SetFont('aealarabiya', '', 11);
