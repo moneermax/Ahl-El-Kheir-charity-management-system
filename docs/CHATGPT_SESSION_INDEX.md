@@ -1426,3 +1426,7 @@ Source commit `197f53d75cf4546e8efd6a483e9ea850a18916b5` fixes the source-level 
 ### 2026-10-21 — Contract Builder error toast follow-up
 
 Commit `890b9ef95390af64820083a8567c6e5e7fc2ccb0` replaces the failed opener-message approach after user browser feedback showed errors still appearing in a new tab. The form now submits via same-page `fetch()`: JSON errors close the temporary tab and show a toast beside the initiating button; PDF responses still open in the preview tab. Local lint/browser verification is pending.
+
+### 2026-10-21 — Contract Builder toast experiment rollback
+
+Commit `8af298793a4c86d38d303516b2b03992b7258405` restores `modules/hr/contract_builder.php` exactly to pre-toast checkpoint `e7f96e838c7c33ae2636a8b363cc2a421a77781b` after the fetch-based experiment resulted in a local Apache “Not Found” report. The restored file blob matches the checkpoint. Local XAMPP verification remains pending.
