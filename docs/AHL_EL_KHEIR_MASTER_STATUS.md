@@ -3726,3 +3726,4 @@ Removed the redundant footer row inside the HR employee modal while preserving t
 ## 2026-10-21 — HR employee modal navigation checkpoint
 
 Source-only UI refinement in `modules/hr/contracts.php` (`40f1198a3b0c54b022b2154b55a12dfce345b730`): footer elements are suppressed within the employee popup; internal contract/salary tabs fetch and replace modal content without a full-page navigation. Contract Builder remains a normal separate-page link. Local lint and browser checks are pending, so runtime status is not yet verified.
+Follow-up commit `889a10e6f7368190f8e78a9d356a7fabd638b1c6` also hides the shared page footer for the duration of the employee modal and restores it on close. Runtime verification remains pending.
