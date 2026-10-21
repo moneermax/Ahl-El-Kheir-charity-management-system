@@ -1327,3 +1327,10 @@ The register continues to manage contract status and salary history. It now uplo
 No schema change or migration was introduced. The builder continues to reserve the official number and create a draft when PDF generation succeeds; this does not activate the contract or update salary history/employment state. The full editable clause text remains in the generated PDF, while the register stores its existing core fields.
 
 **Verification status: SOURCE COMMITTED; PHP lint, browser interaction, signed-copy upload, draft activation, salary-history/employment-state behavior, and generated PDF are NOT runtime verified.** Pull `main`, lint both changed PHP files, then test one non-production/appropriate employee record through the configured XAMPP URL. Do not create a second draft for an employee/date period already covered by an active or draft contract. Sudanese legal review remains required before official use.
+
+
+## 2026-10-21 — Current continuation: unify HR contract navigation (source only)
+
+The user pulled `main` successfully and confirmed a clean working tree before these changes. Commits `be9c2515ec0f387406f4e54180e103d2985869bf` and `f3263b20eb666de05d096bc6d30d0143e92b15b7` make `بوابة عقود العمل` the only contract-related dashboard shortcut. The portal now links to `modules/hr/contracts.php` (register/salary history) and `modules/hr/job_description_catalogue.php` (job descriptions). Do not delete the register yet: it still owns signed-copy upload, contract activation/termination/status and salary-history workflows. No DB/schema changes were made.
+
+Next: after syncing `main`, run PHP lint on `dashboard/hr_dashboard.php` and `modules/hr/contract_builder.php`, then use the configured local URL to verify that the dashboard has one contract entry and that the portal opens the register and catalogue. Then inspect whether register actions can safely be presented within the portal without duplicating business logic. Do not run contract generation against an employee/date range already covered by a draft or active contract. Do not claim runtime verification without local evidence.
