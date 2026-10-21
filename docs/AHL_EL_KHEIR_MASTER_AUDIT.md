@@ -3907,3 +3907,6 @@ After the user reiterated that the contract PDF should follow the existing vouch
 ## 2026-10-21 — Contract PDF header proportion finding
 
 Source review identified a concrete layout defect: a 24 mm logo was placed in a header cell only 10% of the table width. Commit `489f2967bb4bd7b7a1bdff71ffacc1bb86d65eb8` reduces the image to 14 mm, widens its cell to 12%, preserves the 24% contract number/date panel, adjusts the organization cell to 64%, and tightens padding. This is a source-only correction aligned with the voucher header composition. Local PDF output and the exact two-page acceptance condition remain unverified; automatic body pagination plus the forced signature page can still produce a third page if the body overflows.
+
+## 2026-10-21 — Contract-builder error toast scope note
+The expired/used form-token error and other caught builder errors are displayed in a fixed-position accessible toast rather than an in-flow alert. This is a presentation-only source change; all validation and contract lifecycle guards remain unchanged. Local lint/browser verification pending. Note: fixed positioning prevents the message from affecting document layout, but cannot prevent a full document navigation from naturally opening at its initial scroll position.
