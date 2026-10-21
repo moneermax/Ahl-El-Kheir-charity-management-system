@@ -3892,3 +3892,7 @@ Following user feedback that the employment contract still looked weaker than th
 ## 2026-10-21 — Employment contract PDF page-layout follow-up
 
 `modules/hr/contract_builder.php` was updated in commit `ddffae6105a2da56bce1b5d706bc7d40e1f94ba2` so the organizational letterhead appears only on the first page and the legal body uses tighter typography/spacing with a target of two pages including the signature page. This is a source change only. Local PHP syntax and rendered PDF page-count/readability are pending verification; no schema, migration, accounting, or contract activation behavior changed.
+
+## 2026-10-21 — Employment contract voucher-style layout follow-up
+
+The voucher's actual outer composition was inspected in `modules/accounting/voucher_print.php`. Commit `f30fd321ae7932daa2e87b7b70be8e3f97d437a3` reduces the contract logo/header size, narrows header columns, compacts the number/date panel/title and tightens body spacing. The repeated signature-page header remains removed. Source-only; exact rendered page count and readability still need local verification.
