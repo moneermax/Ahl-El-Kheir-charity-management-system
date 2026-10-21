@@ -335,9 +335,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
         // Internal HR review status belongs in the builder UI, not in the employee-facing contract.
         $jobDescriptionNotice = '';
         $specialTermsText = $data['special_terms'] !== '' ? nl2br($v('special_terms')) : 'لا توجد شروط خاصة إضافية.';
-        // Match the exact organization logo used by the existing voucher print layout.
-        // Use a filesystem path for TCPDF and an explicitly embedded image in the contract body.
-        $logoPath = APP_DIR . '/assets/img/logo.png';
+        // Use the existing opaque JPEG copy of the same organization logo for TCPDF.
+        // Browser pages keep their existing PNG/configured-logo behavior; this avoids TCPDF's alpha-PNG extension requirement.
+        $logoPath = APP_DIR . '/assets/img/logo.jpg';
         $logoHtmlPath = str_replace('\\', '/', $logoPath);
         $organizationName = (string)(ak_catalog('ar')['common.organization_name'] ?? 'منظمة أهل الخير النسوية لكفالة الأيتام');
         $organizationNameEn = (string)(ak_catalog('en')['common.organization_name'] ?? 'Ahl El Kheir Women Organization for Orphan Sponsorship');
@@ -403,7 +403,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
         $pdf->SetSubject('عقد عمل');
         $pdf->setPrintHeader(false);
         $pdf->setPrintFooter(true);
-        // The branded HTML letterhead embeds the exact voucher logo; avoid TCPDF's generic duplicate header.
+        // The branded HTML letterhead embeds the PDF-compatible JPEG logo; avoid TCPDF's generic duplicate header.
         $pdf->setHeaderFont(['aealarabiya', '', 8]);
         $pdf->setFooterFont(['aealarabiya', '', 8]);
         $pdf->setHeaderMargin(5);
