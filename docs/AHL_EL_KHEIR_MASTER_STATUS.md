@@ -3622,3 +3622,7 @@ A narrow presentation-only change replaces the in-flow error alert in `modules/h
 
 ## 2026-10-21 — Contract-builder validation navigation correction (source only)
 The fixed toast alone did not prevent the jump because the contract form targets a new tab and server-side validation HTML was displayed as a full document there. Commit `bd088d1f4d090506df48eecf666c270add50f91b` now handles submission locally: validation errors are toasted on the current form page and successful PDF responses still open in a new tab. No shared JS/database/business-rule change. PHP lint and local browser verification pending.
+
+
+## 2026-10-21 — Contract Builder source rollback
+The user reported contract viewing/creation became unusable after feedback-positioning changes. Inspection confirmed malformed `.cb-actions` markup in `e41cadc`. Commit `d074486b7cff1a204ab3bf353c829a59ecef32f7` restores the complete `modules/hr/contract_builder.php` source from the voucher-design checkpoint `e7f96e8`, removing the later toast/fetch changes. This restores the known source checkpoint, but local XAMPP lint/browser/PDF verification is not yet established. Details: `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`.
