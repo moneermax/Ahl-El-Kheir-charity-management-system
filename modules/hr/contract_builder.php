@@ -622,25 +622,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
     }
 }
 
-// A failed PDF submission must report back to the original form, not render an
-// error page in the PDF preview tab. The opener turns this message into a toast
-// next to the button that initiated the submission.
+// Fetch submissions receive a JSON error so the preview tab never renders an
+// error page. The original form displays the error beside the initiating button.
 if (!empty($errorMessage)
     && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST'
-    && ($_POST['action'] ?? '') === 'generate_pdf') {
+    && ($_POST['action'] ?? '') === 'generate_pdf'
+    && strtolower((string)($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '')) === 'xmlhttprequest') {
     while (ob_get_level() > 0) {
         ob_end_clean();
     }
-    header('Content-Type: text/html; charset=UTF-8');
-    $contractErrorJson = json_encode(
-        (string)$errorMessage,
+    if (http_response_code() < 400) {
+        http_response_code(422);
+    }
+    header('Content-Type: application/json; charset=UTF-8');
+    echo json_encode(
+        ['error' => (string)$errorMessage],
         JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP
     );
-    echo '<!doctype html><html lang="ar" dir="rtl"><meta charset="utf-8"><title>تعذر إنشاء العقد</title><body>'
-        . '<p>تعذر إنشاء العقد. ستظهر التفاصيل في الصفحة الأصلية.</p>'
-        . '<script>(function(){var message=' . $contractErrorJson . ';'
-        . 'try{if(window.opener&&!window.opener.closed){window.opener.postMessage({type:"ak-contract-builder-error",message:message},window.location.origin);window.close();return;}}catch(e){}'
-        . 'document.body.textContent=message;})();</script></body></html>';
     exit;
 }
 
@@ -747,14 +745,48 @@ require_once __DIR__ . '/../../includes/header.php';
     toast.addEventListener('click',()=>{window.clearTimeout(timer);close();});
   }
   if(form){
-    form.addEventListener('submit',function(event){
+    form.addEventListener('submit',async function(event){
+      event.preventDefault();
       const button=event.submitter;
-      clickedButtonRect=button?button.getBoundingClientRect():form.getBoundingClientRect();
-      clickedButtonRect={left:clickedButtonRect.left,top:clickedButtonRect.top,right:clickedButtonRect.right,bottom:clickedButtonRect.bottom};
-    });
-    window.addEventListener('message',function(event){
-      if(event.origin!==window.location.origin||!event.data||event.data.type!=='ak-contract-builder-error')return;
-      showContractErrorToast(String(event.data.message||'تعذر إنشاء العقد.'));
+      const rect=button?button.getBoundingClientRect():form.getBoundingClientRect();
+      clickedButtonRect={left:rect.left,top:rect.top,right:rect.right,bottom:rect.bottom};
+      const previewWindow=window.open('about:blank','_blank');
+      if(!previewWindow){
+        showContractErrorToast('يرجى السماح بالنوافذ المنبثقة لعرض العقد بصيغة PDF.');
+        return;
+      }
+      previewWindow.document.title='جارٍ إنشاء العقد…';
+      previewWindow.document.body.textContent='جارٍ إنشاء ملف PDF…';
+      if(button)button.disabled=true;
+      try{
+        const response=await fetch(form.action,{
+          method:'POST',
+          body:new FormData(form),
+          credentials:'same-origin',
+          headers:{'X-Requested-With':'XMLHttpRequest','Accept':'application/pdf, application/json'}
+        });
+        const contentType=(response.headers.get('Content-Type')||'').toLowerCase();
+        if(!response.ok||contentType.includes('application/json')||!contentType.includes('application/pdf')){
+          let message='تعذر إنشاء العقد. حاول مرة أخرى.';
+          if(contentType.includes('application/json')){
+            try{const payload=await response.json();if(payload&&payload.error)message=String(payload.error);}catch(e){}
+          }else{
+            try{const payload=await response.text();if(payload.trim())message=payload.replace(/<[^>]*>/g,' ').replace(/\\s+/g,' ').trim().slice(0,500);}catch(e){}
+          }
+          previewWindow.close();
+          showContractErrorToast(message);
+          return;
+        }
+        const pdfBlob=await response.blob();
+        const pdfUrl=URL.createObjectURL(pdfBlob);
+        previewWindow.location.replace(pdfUrl);
+        window.setTimeout(()=>URL.revokeObjectURL(pdfUrl),60000);
+      }catch(error){
+        previewWindow.close();
+        showContractErrorToast('تعذر الاتصال بالخادم لإنشاء العقد. تحقق من الاتصال ثم حاول مرة أخرى.');
+      }finally{
+        if(button)button.disabled=false;
+      }
     });
   }
   const select=document.getElementById('employee_id');
