@@ -3727,3 +3727,13 @@ Removed the redundant footer row inside the HR employee modal while preserving t
 
 Source-only UI refinement in `modules/hr/contracts.php` (`40f1198a3b0c54b022b2154b55a12dfce345b730`): footer elements are suppressed within the employee popup; internal contract/salary tabs fetch and replace modal content without a full-page navigation. Contract Builder remains a normal separate-page link. Local lint and browser checks are pending, so runtime status is not yet verified.
 Follow-up commit `889a10e6f7368190f8e78a9d356a7fabd638b1c6` also hides the shared page footer for the duration of the employee modal and restores it on close. Runtime verification remains pending.
+
+## 2026-10-21 — Secure viewing of uploaded employment contract copies
+
+Root cause confirmed from repository source: `storage/.htaccess` contains `Require all denied`, which correctly blocks direct HTTP access to `storage/hr_contracts/`. The contract register previously linked directly to `APP_URL . contract_file_path`, so Apache returned `403 Forbidden`.
+
+Source changes committed on `main`:
+- `773229e8753979ecfa66ec588b8626b96d1325a8` — change the contract-file link to `modules/hr/view_contract.php?contract_id=...`.
+- `a6576eb379988d11f8a112f9c6c073a14ee84c2a` — add the protected viewer. It applies the same HR manager / HR staff / admin role gate as the contract register, resolves the file through the existing contract record, confines real paths to `storage/hr_contracts/`, validates allowed extension and detected MIME type, and streams supported files inline. The storage-wide deny rule is intentionally unchanged; no schema change or migration is needed.
+
+**Verification status: SOURCE COMMITTED; local PHP lint and browser verification remain pending.** After pulling `main`, lint both `modules/hr/contracts.php` and `modules/hr/view_contract.php`, then open an uploaded PDF from the HR contract register while logged in with an allowed HR role. Also verify the raw `storage/hr_contracts/...` URL remains forbidden and a logged-out/non-HR request to the viewer is denied.
