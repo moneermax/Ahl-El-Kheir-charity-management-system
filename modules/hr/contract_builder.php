@@ -648,13 +648,13 @@ $active = 'hr';
 require_once __DIR__ . '/../../includes/header.php';
 ?>
 <style>
-.contract-builder{max-width:1200px;margin:auto}.cb-hero{background:linear-gradient(120deg,#173f73,#2d67ad);color:#fff;padding:22px 26px;border-radius:14px;margin-bottom:18px}.cb-hero h1{font-size:1.4rem;font-weight:800;margin:0}.cb-hero p{margin:7px 0 0;font-size:.82rem;opacity:.92}.cb-card{background:#fff;border:1px solid #e4e9f0;border-radius:13px;box-shadow:0 3px 12px rgba(16,24,40,.05);margin-bottom:16px;overflow:hidden}.cb-head{padding:13px 17px;border-bottom:1px solid #e7ecf2;font-weight:800;color:#173f73}.cb-body{padding:17px}.cb-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.cb-field label{display:block;font-size:.76rem;font-weight:800;color:#344054;margin-bottom:5px}.cb-field input,.cb-field select,.cb-field textarea{width:100%;border:1px solid #b9c7d8;border-radius:8px;padding:9px 10px;font:inherit;font-size:.8rem;background:#fff}.cb-field textarea{min-height:78px}.cb-full{grid-column:1/-1}.cb-repeat-list{display:grid;gap:9px;margin-bottom:9px}.cb-repeat-row{display:grid;grid-template-columns:auto auto minmax(0,1fr) auto;gap:8px;align-items:start}.cb-repeat-row textarea{min-height:64px}.cb-repeat-row .cb-remove-item{white-space:nowrap;margin-top:4px}.cb-item-number{padding-top:12px;color:#667085;min-width:1.5rem;text-align:center}.cb-drag-handle{cursor:grab;touch-action:none;align-self:start;margin-top:4px}.cb-drag-handle:active{cursor:grabbing}.cb-repeat-row.is-dragging{opacity:.45}.cb-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:17px}.cb-actions .btn{font-size:.82rem;font-weight:700}.cb-note{font-size:.78rem;color:#475467;background:#f8fafc;border:1px solid #e4e9f0;padding:12px;border-radius:9px;margin-bottom:15px}.cb-error-toast{position:relative;inset:auto;z-index:1;display:flex;align-items:flex-start;gap:.65rem;width:100%;max-width:100%;flex:0 0 100%;margin:0 0 4px;padding:.8rem 1rem;background:#fff1f0;color:#912018;border:1px solid #f3b7b3;border-right:4px solid #b42318;border-radius:10px;box-shadow:0 4px 12px rgba(16,24,40,.08);font-size:.88rem;line-height:1.7;direction:rtl}.cb-error-toast>i{margin-top:.3rem;flex:0 0 auto}.cb-error-toast span{flex:1}.cb-error-toast-close{border:0;background:transparent;color:inherit;font-size:1.35rem;line-height:1;cursor:pointer;padding:0 .15rem}.cb-error-toast.is-hiding{opacity:0;transform:translateY(-8px);transition:opacity .2s ease,transform .2s ease;pointer-events:none}.cb-required{color:#b42318}@media(max-width:700px){.cb-grid{grid-template-columns:1fr}.cb-full{grid-column:auto}}
+.contract-builder{max-width:1200px;margin:auto}.cb-hero{background:linear-gradient(120deg,#173f73,#2d67ad);color:#fff;padding:22px 26px;border-radius:14px;margin-bottom:18px}.cb-hero h1{font-size:1.4rem;font-weight:800;margin:0}.cb-hero p{margin:7px 0 0;font-size:.82rem;opacity:.92}.cb-card{background:#fff;border:1px solid #e4e9f0;border-radius:13px;box-shadow:0 3px 12px rgba(16,24,40,.05);margin-bottom:16px;overflow:hidden}.cb-head{padding:13px 17px;border-bottom:1px solid #e7ecf2;font-weight:800;color:#173f73}.cb-body{padding:17px}.cb-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.cb-field label{display:block;font-size:.76rem;font-weight:800;color:#344054;margin-bottom:5px}.cb-field input,.cb-field select,.cb-field textarea{width:100%;border:1px solid #b9c7d8;border-radius:8px;padding:9px 10px;font:inherit;font-size:.8rem;background:#fff}.cb-field textarea{min-height:78px}.cb-full{grid-column:1/-1}.cb-repeat-list{display:grid;gap:9px;margin-bottom:9px}.cb-repeat-row{display:grid;grid-template-columns:auto auto minmax(0,1fr) auto;gap:8px;align-items:start}.cb-repeat-row textarea{min-height:64px}.cb-repeat-row .cb-remove-item{white-space:nowrap;margin-top:4px}.cb-item-number{padding-top:12px;color:#667085;min-width:1.5rem;text-align:center}.cb-drag-handle{cursor:grab;touch-action:none;align-self:start;margin-top:4px}.cb-drag-handle:active{cursor:grabbing}.cb-repeat-row.is-dragging{opacity:.45}.cb-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:17px}.cb-actions .btn{font-size:.82rem;font-weight:700}.cb-note{font-size:.78rem;color:#475467;background:#f8fafc;border:1px solid #e4e9f0;padding:12px;border-radius:9px;margin-bottom:15px}.cb-error{font-size:.82rem}.cb-required{color:#b42318}@media(max-width:700px){.cb-grid{grid-template-columns:1fr}.cb-full{grid-column:auto}}
 </style>
 <div class="contract-builder">
   <div class="cb-hero d-flex align-items-center justify-content-between gap-3 flex-wrap"><div class="d-flex align-items-center gap-3"><img src="<?= e(APP_URL . $portalLogoPath) ?>" alt="شعار جمعية أهل الخير" style="width:68px;height:68px;object-fit:contain;background:#fff;border-radius:10px;padding:5px"><div><h1><i class="fa-solid fa-file-signature me-2"></i>بوابة عقود العمل</h1><p><?= e(trim((string)($organizationSettings['org_name_ar'] ?? '')) ?: 'جمعية أهل الخير الخيرية') ?> — إعداد عقد مناسب للمسمى الوظيفي ثم معاينته وطباعته للتوقيع.</p><?php $portalContact = array_filter([trim((string)($organizationSettings['org_address'] ?? '')), trim((string)($organizationSettings['support_phone'] ?? '')), trim((string)($organizationSettings['support_email'] ?? ''))]); if ($portalContact): ?><small><?= e(implode(' | ', $portalContact)) ?></small><?php endif; ?></div></div><div class="d-flex gap-2 flex-wrap"><a class="btn btn-light btn-sm fw-bold" href="<?= e(APP_URL) ?>modules/hr/contracts.php<?= $selectedEmployeeId ? '?employee_id=' . $selectedEmployeeId . '&view=contracts' : '' ?>"><i class="fa-solid fa-folder-open me-1"></i> سجل العقود والرواتب</a><a class="btn btn-light btn-sm fw-bold" href="<?= e(APP_URL) ?>modules/hr/job_description_catalogue.php"><i class="fa-solid fa-list-check me-1"></i> إدارة الأوصاف الوظيفية</a></div></div>
-  
+  <?php if (!empty($errorMessage)): ?><div class="alert alert-danger cb-error"><?= e($errorMessage) ?></div><?php endif; ?>
   <div class="cb-note"><strong>ملاحظة قانونية:</strong> هذا نموذج تشغيلي أولي وليس اعتماداً قانونياً. يجب مراجعته بواسطة محامٍ مؤهل في السودان قبل استخدامه رسمياً، والتحقق من توافق الشروط والسياسات مع أحكام قانون العمل السوداني السارية. لا تُدخل أي استحقاق أو مدة قانونية غير متحقق منها.</div>
-  <form id="contractBuilderForm" method="post" action="<?= e(APP_URL) ?>modules/hr/contract_builder.php" target="_blank">
+  <form method="post" action="<?= e(APP_URL) ?>modules/hr/contract_builder.php" target="_blank">
     <?= csrf_field() ?>
     <input type="hidden" name="builder_submission_token" value="<?= e($builderSubmissionToken) ?>">
     <input type="hidden" name="action" value="generate_pdf">
@@ -695,102 +695,10 @@ require_once __DIR__ . '/../../includes/header.php';
       <div class="cb-field cb-full"><label>المؤهلات والخبرات المطلوبة (مسودة للمراجعة)</label><div id="qualificationsFields" class="cb-repeat-list" data-name="qualifications[]"><?php foreach ($selectedJobQualificationItems as $qualificationItem): ?><div class="cb-repeat-row"><span class="cb-item-number" aria-hidden="true">1.</span><button type="button" class="btn btn-light btn-sm cb-drag-handle" aria-label="اسحب لإعادة ترتيب البند" title="اسحب لإعادة ترتيب البند"><i class="fa-solid fa-grip-vertical"></i></button><textarea name="qualifications[]" maxlength="1000" aria-label="مؤهل أو خبرة مطلوبة"><?= e($qualificationItem) ?></textarea><button type="button" class="btn btn-outline-danger btn-sm cb-remove-item" aria-label="حذف البند"><i class="fa-solid fa-trash"></i> حذف</button></div><?php endforeach; ?><?php if (!$selectedJobQualificationItems): ?><div class="cb-repeat-row"><span class="cb-item-number" aria-hidden="true">1.</span><button type="button" class="btn btn-light btn-sm cb-drag-handle" aria-label="اسحب لإعادة ترتيب البند" title="اسحب لإعادة ترتيب البند"><i class="fa-solid fa-grip-vertical"></i></button><textarea name="qualifications[]" maxlength="1000" aria-label="مؤهل أو خبرة مطلوبة" placeholder="تُحدد المؤهلات بعد مراجعة HR والمشرف المختص"></textarea><button type="button" class="btn btn-outline-danger btn-sm cb-remove-item" aria-label="حذف البند"><i class="fa-solid fa-trash"></i> حذف</button></div><?php endif; ?></div><button type="button" class="btn btn-outline-primary btn-sm cb-add-item" data-target="qualificationsFields"><i class="fa-solid fa-plus me-1"></i> إضافة مؤهل أو خبرة</button></div>
       <div class="cb-field cb-full"><label for="reporting_to">جهة الإشراف الوظيفي (وفق فهرس الوصف)</label><input id="reporting_to" name="reporting_to" maxlength="180" value="<?= e($selectedJobReportingTo) ?>" placeholder="تُراجع وتؤكد من الموارد البشرية"></div>
       <div class="cb-field cb-full"><label>الشروط الخاصة المتفق عليها / البنود المرتبطة بالمسمى</label><div id="specialTermsFields" class="cb-repeat-list" data-name="special_terms[]"><?php foreach (preg_split('/\\R/u', trim((string)($selectedJobDescription['role_specific_terms'] ?? ''))) ?: [] as $termItem): ?><?php if (trim($termItem) !== ''): ?><div class="cb-repeat-row"><span class="cb-item-number" aria-hidden="true">1.</span><button type="button" class="btn btn-light btn-sm cb-drag-handle" aria-label="اسحب لإعادة ترتيب البند" title="اسحب لإعادة ترتيب البند"><i class="fa-solid fa-grip-vertical"></i></button><textarea name="special_terms[]" maxlength="5000" aria-label="شرط خاص أو بند مرتبط بالمسمى"><?= e(trim($termItem)) ?></textarea><button type="button" class="btn btn-outline-danger btn-sm cb-remove-item" aria-label="حذف البند"><i class="fa-solid fa-trash"></i> حذف</button></div><?php endif; ?><?php endforeach; ?><?php if (trim((string)($selectedJobDescription['role_specific_terms'] ?? '')) === ''): ?><div class="cb-repeat-row"><span class="cb-item-number" aria-hidden="true">1.</span><button type="button" class="btn btn-light btn-sm cb-drag-handle" aria-label="اسحب لإعادة ترتيب البند" title="اسحب لإعادة ترتيب البند"><i class="fa-solid fa-grip-vertical"></i></button><textarea name="special_terms[]" maxlength="5000" aria-label="شرط خاص أو بند مرتبط بالمسمى" placeholder="أدخل شرطاً خاصاً متفقاً عليه كتابةً (اختياري)"></textarea><button type="button" class="btn btn-outline-danger btn-sm cb-remove-item" aria-label="حذف البند"><i class="fa-solid fa-trash"></i> حذف</button></div><?php endif; ?></div><button type="button" class="btn btn-outline-primary btn-sm cb-add-item" data-target="specialTermsFields"><i class="fa-solid fa-plus me-1"></i> إضافة شرط أو بند</button><small class="d-block mt-2">يُحمّل النص من فهرس المسمى الوظيفي عند توفره، ويمكن تعديله لهذا العقد فقط.</small></div>
-    </div><div class="cb-actions"><?php if (!empty($errorMessage)): ?><div class="cb-error-toast" role="alert" aria-live="assertive" aria-atomic="true"><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i><span><?= e($errorMessage) ?></span><button type="button" class="cb-error-toast-close" aria-label="إغلاق التنبيه">&times;</button></div><?php endif; ?><button type="submit" class="btn btn-primary"><a class="btn btn-outline-secondary" href="<?= e(APP_URL) ?>modules/hr/contracts.php<?= $selectedEmployeeId ? '?employee_id=' . $selectedEmployeeId . '&view=contracts' : '' ?>">العودة إلى العقود والرواتب</a></div></div></div>
+    </div><div class="cb-actions"><button type="submit" class="btn btn-primary"><i class="fa-solid fa-file-pdf me-1"></i> عرض العقد بصيغة PDF</button><a class="btn btn-outline-secondary" href="<?= e(APP_URL) ?>modules/hr/contracts.php<?= $selectedEmployeeId ? '?employee_id=' . $selectedEmployeeId . '&view=contracts' : '' ?>">العودة إلى العقود والرواتب</a></div></div></div>
   </form>
 </div>
 <script>
-(function(){
-  function showToast(message){
-    const form=document.getElementById('contractBuilderForm');
-    const actions=form&&form.querySelector('.cb-actions');
-    const submitButton=form&&form.querySelector('[type="submit"]');
-    if(!actions||!submitButton)return;
-    let toast=form.querySelector('.cb-error-toast');
-    if(!toast){
-      toast=document.createElement('div');
-      toast.className='cb-error-toast';
-      toast.setAttribute('role','alert');
-      toast.setAttribute('aria-live','assertive');
-      toast.setAttribute('aria-atomic','true');
-      toast.innerHTML='<i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i><span></span><button type="button" class="cb-error-toast-close" aria-label="إغلاق التنبيه">&times;</button>';
-    }
-    // Keep feedback in the form's action area, directly beside the button,
-    // rather than fixed to the viewport or appended to document.body.
-    actions.insertBefore(toast,submitButton);
-    const text=toast.querySelector('span');
-    if(text)text.textContent=message;
-    toast.classList.remove('is-hiding');
-    const dismiss=()=>{toast.classList.add('is-hiding');window.setTimeout(()=>toast.remove(),220);};
-    const close=toast.querySelector('.cb-error-toast-close');
-    if(close)close.onclick=dismiss;
-    if(toast._dismissTimer)window.clearTimeout(toast._dismissTimer);
-    toast._dismissTimer=window.setTimeout(dismiss,7000);
-  }
-  const initialToast=document.querySelector('.cb-error-toast');
-  if(initialToast){
-    const close=initialToast.querySelector('.cb-error-toast-close');
-    const dismiss=()=>{initialToast.classList.add('is-hiding');window.setTimeout(()=>initialToast.remove(),220);};
-    if(close)close.addEventListener('click',dismiss);
-    window.setTimeout(dismiss,7000);
-  }
-
-  const form=document.getElementById('contractBuilderForm');
-  if(form){
-    form.addEventListener('submit',async function(event){
-      event.preventDefault();
-      const contractType=form.querySelector('[name="contract_type"]');
-      const endDate=form.querySelector('[name="end_date"]');
-      if(contractType&&contractType.value==='fixed_term'&&endDate&&!endDate.value){
-        showToast('تاريخ نهاية العقد مطلوب للعقد محدد المدة.');
-        endDate.focus({preventScroll:true});
-        return;
-      }
-
-      // Open the PDF tab synchronously to avoid popup blockers, then fill it only
-      // if the server actually returns a PDF. Validation errors stay on this page.
-      const pdfWindow=window.open('about:blank','_blank');
-      if(!pdfWindow){
-        showToast('يرجى السماح بفتح نافذة جديدة لعرض ملف PDF.');
-        return;
-      }
-      pdfWindow.document.title='جاري إعداد العقد';
-      pdfWindow.document.body.textContent='جاري إعداد ملف PDF...';
-      const submitButton=event.submitter||form.querySelector('[type="submit"]');
-      if(submitButton)submitButton.disabled=true;
-      try{
-        const response=await fetch(form.action,{
-          method:'POST',
-          body:new FormData(form),
-          credentials:'same-origin',
-          redirect:'follow',
-          headers:{'X-Requested-With':'XMLHttpRequest','X-AK-Contract-Builder':'1'}
-        });
-        const contentType=String(response.headers.get('content-type')||'').toLowerCase();
-        if(response.ok&&contentType.includes('application/pdf')){
-          const pdfBlob=await response.blob();
-          const pdfUrl=URL.createObjectURL(pdfBlob);
-          pdfWindow.location.replace(pdfUrl);
-          window.setTimeout(()=>URL.revokeObjectURL(pdfUrl),60000);
-          return;
-        }
-        const html=await response.text();
-        const parsed=new DOMParser().parseFromString(html,'text/html');
-        const serverMessage=parsed.querySelector('.cb-error-toast span')||
-          parsed.querySelector('.alert-danger')||
-          parsed.querySelector('[role="alert"]');
-        const message=serverMessage?serverMessage.textContent.trim():'تعذر إنشاء العقد. راجع البيانات وحاول مرة أخرى.';
-        pdfWindow.close();
-        showToast(message);
-      }catch(error){
-        try{pdfWindow.close();}catch(closeError){}
-        showToast('تعذر الاتصال بالخادم لإعداد العقد. لم تتم إعادة إرسال الطلب تلقائياً؛ تحقق من النتيجة قبل المحاولة مجدداً.');
-        console.error('Contract builder submission failed:',error);
-      }finally{
-        if(submitButton)submitButton.disabled=false;
-      }
-    });
-  }
-})();
 (function(){
   const select=document.getElementById('employee_id');
   if(!select)return;
@@ -850,42 +758,3 @@ require_once __DIR__ . '/../../includes/header.php';
   const supervisorSelect=document.getElementById('supervisor');
   function refreshSupervisorOptions(){
     if(!supervisorSelect)return;
-    Array.from(supervisorSelect.options).forEach(option=>{
-      const isSelectedEmployee=option.dataset.employeeId===select.value;
-      option.disabled=isSelectedEmployee;
-      if(isSelectedEmployee&&option.selected)supervisorSelect.value='';
-    });
-  }
-  refreshSupervisorOptions();
-  select.addEventListener('change',function(){refreshSupervisorOptions();
-    const option=this.options[this.selectedIndex];
-    if(!option||!option.value){
-      setRepeatableItems('purposeFields','role_purpose[]','');
-      setRepeatableItems('responsibilitiesFields','responsibilities[]','');
-      setRepeatableItems('qualificationsFields','qualifications[]','');
-      const reportingTo=document.getElementById('reporting_to');if(reportingTo)reportingTo.value='';
-      setRepeatableItems('specialTermsFields','special_terms[]','');
-      const status=document.getElementById('jobDescriptionStatus');
-      if(status){status.textContent='اختر موظفاً لتحميل بيانات الوصف الوظيفي.';status.className='text-warning-emphasis';}
-      return;
-    }
-    Object.entries(mapping).forEach(([field,key])=>{
-      const input=document.getElementById(field);
-      const value=option.dataset[key];
-      if(input&&value!==undefined)input.value=value;
-    });
-    setRepeatableItems('purposeFields','role_purpose[]',option.dataset.purpose||'');
-    setRepeatableItems('responsibilitiesFields','responsibilities[]',option.dataset.responsibilities||'');
-    setRepeatableItems('qualificationsFields','qualifications[]',option.dataset.qualifications||'');
-    const reportingTo=document.getElementById('reporting_to');if(reportingTo)reportingTo.value=option.dataset.reportingTo||'';
-    setRepeatableItems('specialTermsFields','special_terms[]',option.dataset.roleTerms||'');
-    const status=document.getElementById('jobDescriptionStatus');
-    if(status){
-      const approved=option.dataset.descriptionStatus==='approved';
-      status.textContent=approved?'الوصف الوظيفي معتمد داخلياً.':'تنبيه: لا يوجد وصف معتمد لهذا المسمى؛ راجع فهرس الأوصاف الوظيفية قبل اعتماد العقد.';
-      status.className=approved?'text-success':'text-warning-emphasis';
-    }
-  });
-})();
-</script>
-<?php require_once __DIR__ . '/../../includes/footer.php'; ?>
