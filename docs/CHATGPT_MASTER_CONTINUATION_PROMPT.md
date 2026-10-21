@@ -1384,3 +1384,10 @@ Inspect commit `f30fd321ae7932daa2e87b7b70be8e3f97d437a3`: contract header now f
 ## 2026-10-21 — Contract PDF header proportion correction
 
 Commit `489f2967bb4bd7b7a1bdff71ffacc1bb86d65eb8` narrows the PDF logo to 14 mm, gives it a 12% header cell, retains the 24% number/date panel, sets the organization column to 64%, and reduces header padding to match the compact voucher composition. No legal wording, schema or contract lifecycle behavior changed. Pull `main`, run `D:\xampp\php\php.exe -l modules\hr\contract_builder.php`, then verify the generated PDF locally using an eligible existing contract period. Do not create a duplicate/overlapping draft. Two-page layout and readability remain unverified.
+
+## 2026-10-21 — Latest narrow UI change: contract-builder error toast
+`modules/hr/contract_builder.php` now displays caught generation errors in a fixed-position RTL toast (close button, seven-second auto-dismiss) instead of an in-flow alert. Validate locally with PHP lint and browser interaction. Do not alter the one-use token, CSRF, transaction, overlap guard, draft reservation or PDF flow when verifying. A fixed toast avoids layout shift but does not cancel native full-page navigation.
+
+
+## 2026-10-21 — Contract-builder form response handling
+Commit `bd088d1f4d090506df48eecf666c270add50f91b` fixes the cause of validation messages appearing after a page jump: the contract form's `_blank` target sent error HTML into a separate document. The local handler now renders server errors as toasts in the current form page and opens only actual PDF responses in a new tab. Verify PHP syntax, missing fixed-term end date, stale token, other server errors, and valid PDF behavior locally. Do not change global POST interception or contract business rules without new evidence.
