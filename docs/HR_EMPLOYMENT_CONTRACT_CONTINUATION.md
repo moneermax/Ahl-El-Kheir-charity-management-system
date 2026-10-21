@@ -348,3 +348,11 @@ Root cause: the PDF form submits to a new tab (`target="_blank"`), while caught 
 The error path now returns a small same-origin response that posts the error to the original page and closes the preview tab. The original page renders a dismissible, timed toast near the saved submit-button position. Successful PDF responses retain the existing inline PDF response and filename headers; the form page is not navigated for errors. No database, contract lifecycle or PDF layout changes.
 
 **Verification boundary:** source committed to `main`; local PHP lint and browser verification remain required. Test one intentional server-side validation failure and one successful PDF preview. Confirm the error appears next to the clicked button without scrolling/reloading the form page, the error tab closes, and successful PDF preview/download behavior remains unchanged. Do not mark runtime verified until these checks pass.
+
+### 2026-10-21 — Corrected contract-builder error response
+
+Follow-up source commit: `890b9ef95390af64820083a8567c6e5e7fc2ccb0`.
+
+The prior `window.opener.postMessage()` approach failed in the user's browser: the server error rendered in the newly opened tab, so the message was not delivered to the original page. Replaced that approach with a same-page `fetch()` submission. The original page now handles the response: JSON errors close the temporary preview tab and show the toast near the clicked button; successful PDF responses are converted to a blob and loaded into the preview tab. The original form page is not navigated for either outcome.
+
+**Verification:** source committed to `main`; local PHP lint and real-browser checks remain pending. Test the specific fixed-term contract case with missing end date, then a valid contract preview. Confirm the error toast appears beside the clicked button on the original page and successful preview still works.
