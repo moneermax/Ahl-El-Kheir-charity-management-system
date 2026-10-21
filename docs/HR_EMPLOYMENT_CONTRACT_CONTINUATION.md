@@ -338,3 +338,13 @@ Correction to rollback record: the complete 799-line checkpoint source was re-ap
 ## 2026-10-21 — Employment-contract PDF download filename hardening
 
 The user reported that using Download in the browser PDF preview saved the contract with a `.php` extension. Source inspection confirmed the PDF response already used `Content-Type: application/pdf` and an inline `filename="Ahl-El-Kheir-Employment-Contract.pdf"`, so the root cause is not proven without inspecting the actual local HTTP response headers. Commit `1cf3fb0b753b30b49ba5f950498ff534fb802de2` makes the response more robust by clearing any active output buffers immediately before PDF headers/body, and supplying both the ASCII `filename` and RFC 5987 `filename*` parameters while preserving `inline` preview behavior. This is source-only. After pulling `main`, run PHP lint and generate a PDF in the local XAMPP app; use the PDF viewer's Download control and confirm the saved file ends in `.pdf`. If it still saves as `.php`, inspect the actual response headers in browser DevTools before changing more code. Do not claim runtime success before this check.
+
+### 2026-10-21 — Contract-builder error feedback toast
+
+Source commit: `197f53d75cf4546e8efd6a483e9ea850a18916b5`.
+
+Root cause: the PDF form submits to a new tab (`target="_blank"`), while caught server-side errors were rendered as an inline alert at the top of the full HTML page. The error therefore appeared at the top of a separate tab instead of near the initiating button.
+
+The error path now returns a small same-origin response that posts the error to the original page and closes the preview tab. The original page renders a dismissible, timed toast near the saved submit-button position. Successful PDF responses retain the existing inline PDF response and filename headers; the form page is not navigated for errors. No database, contract lifecycle or PDF layout changes.
+
+**Verification boundary:** source committed to `main`; local PHP lint and browser verification remain required. Test one intentional server-side validation failure and one successful PDF preview. Confirm the error appears next to the clicked button without scrolling/reloading the form page, the error tab closes, and successful PDF preview/download behavior remains unchanged. Do not mark runtime verified until these checks pass.
