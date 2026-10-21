@@ -1508,3 +1508,4 @@ Removed the redundant modal-footer close-button row; the modal header close cont
 ### HR employment contracts modal checkpoint — 2026-10-21
 
 `modules/hr/contracts.php` now suppresses footer elements inside the employee modal and loads internal Contracts / Salary History / Salary Change tabs into the existing modal via fetch, avoiding full-page navigation for tab switching. The Contract Builder remains a separate page. Source commit: `40f1198a3b0c54b022b2154b55a12dfce345b730`. Local PHP lint and browser verification remain pending; do not describe as runtime verified until tested at `http://localhost:8081/AhlElKheir/`.
+Follow-up `889a10e6f7368190f8e78a9d356a7fabd638b1c6` hides the shared page footer while the employee modal is open and restores it on close. Local lint/browser verification remains pending.
