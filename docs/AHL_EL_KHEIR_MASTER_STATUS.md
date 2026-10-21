@@ -3722,3 +3722,7 @@ The employee selector now uses full-width list rows instead of cards (`7464fc22c
 ## 2026-10-21 — HR employee modal footer
 
 Removed the redundant footer row inside the HR employee modal while preserving the modal header close control and the main-page footer (`7c724c77e65a055e9eb66da7605dfe69ec9ad300`). Local lint/browser verification pending.
+
+## 2026-10-21 — HR employee modal navigation checkpoint
+
+Source-only UI refinement in `modules/hr/contracts.php` (`40f1198a3b0c54b022b2154b55a12dfce345b730`): footer elements are suppressed within the employee popup; internal contract/salary tabs fetch and replace modal content without a full-page navigation. Contract Builder remains a normal separate-page link. Local lint and browser checks are pending, so runtime status is not yet verified.
