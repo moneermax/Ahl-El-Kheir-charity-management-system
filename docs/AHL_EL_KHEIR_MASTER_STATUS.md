@@ -3714,3 +3714,7 @@ After the user pulled the employee-details modal change, local PHP lint reported
 ## 2026-10-21 — HR contracts modal initialization
 
 A targeted source fix (`4fe5b9baaa09830c3bfc06b37c18c3f080660f45`) defers employee search/modal initialization until `DOMContentLoaded`, after the shared footer loads Bootstrap JavaScript. Local PHP lint and browser verification remain pending; see `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`.
+
+## 2026-10-21 — HR employee selector presentation correction
+
+The employee selector now uses full-width list rows instead of cards (`7464fc22c31f613fcf26f3c33f32ca3d92be491c`). Modal initialization was separately deferred until `DOMContentLoaded` (`4fe5b9baaa09830c3bfc06b37c18c3f080660f45`). Local lint and browser verification pending; details in `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`.
