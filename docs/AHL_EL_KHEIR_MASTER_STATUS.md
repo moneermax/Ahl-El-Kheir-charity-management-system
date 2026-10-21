@@ -3626,3 +3626,5 @@ The fixed toast alone did not prevent the jump because the contract form targets
 
 ## 2026-10-21 — Contract Builder source rollback
 The user reported contract viewing/creation became unusable after feedback-positioning changes. Inspection confirmed malformed `.cb-actions` markup in `e41cadc`. Commit `d074486b7cff1a204ab3bf353c829a59ecef32f7` restores the complete `modules/hr/contract_builder.php` source from the voucher-design checkpoint `e7f96e8`, removing the later toast/fetch changes. This restores the known source checkpoint, but local XAMPP lint/browser/PDF verification is not yet established. Details: `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`.
+
+Correction to rollback record: the complete 799-line checkpoint source was re-applied and checked against the same 799-line source fetched from `e7f96e838c7c33ae2636a8b363cc2a421a77781b`. Final source commit: `7df2bc435d2a6464692895db62cb97ec03a2f109`. The complete file ends with the shared footer include; the PDF submit button and return link are separate. This comparison establishes source equality with the checkpoint, not local PHP/browser runtime success.
