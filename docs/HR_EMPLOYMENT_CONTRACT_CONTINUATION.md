@@ -293,3 +293,20 @@ The user's rendered screenshot demonstrated that the earlier sizing-only change 
 ## 2026-10-21 — Voucher composition correction applied
 
 Commits `de20eb5745565f6ba9997ebf3e02c5ada6edd53f` and `e45a9d19e5b8d0bdcf198b345ac553ca00f677b6` update the contract PDF header markup to match the voucher's element order (logo, centered organization identity, framed number/date panel) and remove the extra rectangular outline around the navy bilingual title bar. Header uses 12%/64%/24% columns and 20 mm logo. Changes are source committed; local PHP lint and rendered layout/page-count checks are still pending.
+
+## 2026-10-21 — Contract PDF rebuilt on the voucher composition; exactly two pages
+
+Root causes (found by rendering the real PDF, not by guesswork):
+- The letterhead was an HTML `<table>` inside `writeHTML`. TCPDF cannot express the voucher's rounded accent frame, circular logo, bordered number/date box or solid title bar, so every earlier width/padding tweak could only approximate it. The logo did not render at all in that table.
+- The header showed an **empty contract number**: `$v` is a `static fn` created before the reserved number was assigned to `$data`, so it captured the empty value.
+- The body was set at 7.2 pt / 1.05 line-height, spilled onto page 2, and an unconditional `AddPage()` pushed the signatures to a third page.
+- TCPDF ignores the table-level `bordercolor` attribute, so the "voucher" borders printed black.
+
+Change (`modules/hr/contract_builder.php` only; no clause text, schema, workflow or permission change):
+- Page-one letterhead is drawn natively with TCPDF primitives in the voucher's proportions: 2 px navy rounded frame (every page), 20 mm circular logo with grey ring, centred Arabic/English organisation block, 38 mm bordered number/date box showing the reserved contract number and issue date, 2 px header rule, solid navy title bar `عقد عمل | EMPLOYMENT CONTRACT`. The letterhead is not repeated on page two.
+- Key data uses the voucher's table language (`#eef2f9` label cells, `#b9c3d3` borders applied per cell) and a framed salary box like the voucher amount box.
+- Bilingual labels are drawn as separately positioned Arabic and English runs so bidi cannot move separators or punctuation.
+- Page fit: the PDF is rendered at the largest body size from 9.5 pt down to 7.0 pt that yields exactly two A4 pages; the signature section is always wholly on page two. If content is so long that even 7.0 pt needs a third page, the 7.0 pt result is still produced (three pages) — shorten the duties/special terms in that case.
+- Contract-number reservation, overlap guard, one-use token, transaction/rollback and draft-only behaviour are unchanged (PDF is still rendered before commit).
+
+Verification (sandbox: PHP 8.3 + MariaDB built from the repo schema/migrations, real login and real POST to `contract_builder.php`, output inspected with `pdfinfo`/`pdftoppm`): baseline reproduced at 3 pages; after the change typical and long (doubled) responsibilities both give exactly 2 A4 pages with the signature block on page two; header number now populated; draft row created with status `draft`. `php -l` passes. **Not verified:** Windows/XAMPP PHP 8.2 rendering, the configured organisation logo/address/phone settings (sandbox settings were empty, so the contact line is not exercised), print/Acrobat rendering, and Sudanese legal review remains required before official use.

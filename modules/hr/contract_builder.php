@@ -396,84 +396,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
         }
 
         require_once APP_DIR . '/TCPDF/tcpdf.php';
-        $pdf = new TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
-        $pdf->SetCreator(APP_NAME);
-        $pdf->SetAuthor(APP_NAME_AR);
-        $pdf->SetTitle('عقد عمل - ' . $data['employee_name']);
-        $pdf->SetSubject('عقد عمل');
-        $pdf->setPrintHeader(false);
-        $pdf->setPrintFooter(true);
-        // The branded HTML letterhead embeds the PDF-compatible JPEG logo; avoid TCPDF's generic duplicate header.
-        $pdf->setHeaderFont(['aealarabiya', '', 8]);
-        $pdf->setFooterFont(['aealarabiya', '', 8]);
-        $pdf->setHeaderMargin(5);
-        $pdf->setFooterMargin(10);
-        $pdf->SetMargins(9, 6, 9);
-        $pdf->SetAutoPageBreak(true, 9);
-        $pdf->setRTL(true);
-        $pdf->SetFont('aealarabiya', '', 11);
-        $pdf->AddPage();
 
         $employeeNameDisplay = preg_match('/[A-Za-z]/', $data['employee_name'])
             ? '<span dir="ltr">' . $v('employee_name') . '</span>'
             : $v('employee_name');
-        $contractNumberDisplay = '<span dir="ltr">' . $v('contract_number') . '</span>';
+        // $v() captured $data before the number was reserved, so read the reserved number directly.
+        $contractNumberText = (string)$data['contract_number'];
         $salaryDisplay = '<span dir="ltr">' . number_format((float)$data['basic_salary'], 2, '.', ',') . ' ' . akContractEscape(APP_CURRENCY_CODE) . '</span>';
-        $organizationHeaderHtml = '
-        <table cellpadding="1" cellspacing="0" border="0">
-          <tr>
-            <td width="12%" align="center" valign="middle"><img src="' . akContractEscape($logoHtmlPath) . '" width="20" /></td>
-            <td width="64%" align="center" valign="middle">
-              <div style="font-size:10pt;font-weight:bold;color:#1b4d8f;">' . akContractEscape($organizationName) . '</div>
-              <div style="font-size:6.5pt;color:#344054;">' . akContractEscape($organizationNameEn) . '</div>
-              <div style="font-size:6pt;color:#667085;">' . akContractEscape(implode('  |  ', array_filter(array_map(static fn($key) => trim((string)($organizationSettings[$key] ?? '')), ['org_address', 'support_phone'])))) . '</div>
-            </td>
-            <td width="24%" align="center" valign="middle" border="1" bordercolor="#1b4d8f" bgcolor="#ffffff">
-              <div style="font-size:6.5pt;color:#475467;">الرقم / No.</div>
-              <div style="font-size:8pt;font-weight:bold;color:#1b4d8f;">' . $contractNumberDisplay . '</div>
-              <div style="font-size:6.5pt;color:#475467;">التاريخ / Date</div>
-              <div style="font-size:7.5pt;font-weight:bold;">' . akContractEscape($issueDateDisplay) . '</div>
-            </td>
-          </tr>
-        </table>
-        <hr />
-        ';
+        $orgContactLine = implode('  |  ', array_filter(array_map(static fn($key) => trim((string)($organizationSettings[$key] ?? '')), ['org_address', 'support_phone'])));
+        // Key data in the voucher's table language (light label cells, #b9c3d3 borders) and the voucher's framed amount box.
         $html = '
-        <style>
-            body { font-family: aealarabiya; color: #172033; font-size: 7.2pt; line-height: 1.05; }
-            h2 { color: #1b4d8f; font-size: 7.8pt; font-weight: bold; background-color: #eef2f9; padding: 1px; border-bottom: 1px solid #9a7628; margin-top: 1px; margin-bottom: 1px; }
-            p { margin-top: 0; margin-bottom: 1px; }
-            .meta { color: #475467; font-size: 7.5pt; }
-            .rule { border: 1px solid #b9c3d3; padding: 3px; }
-        </style>
-        ' . $organizationHeaderHtml . '
-        <table cellpadding="2" cellspacing="0" border="0">
-          <tr><td bgcolor="#1b4d8f" align="center" border="0"><span style="color:#ffffff;font-size:11pt;font-weight:bold;">عقد عمل</span><span style="color:#ffffff;font-size:7pt;"> | EMPLOYMENT CONTRACT</span></td></tr>
-        </table>
-        <table cellpadding="1" cellspacing="0" border="1" bordercolor="#b9c3d3">
+        <table cellpadding="3" cellspacing="0" border="0" bordercolor="#b9c3d3">
           <tr>
-            <td width="50%" align="center" bgcolor="#eef2f9"><span style="font-size:8pt;color:#475467;">اسم الموظف / EMPLOYEE</span><br /><span style="font-size:11pt;font-weight:bold;">' . $employeeNameDisplay . '</span></td>
-            <td width="50%" align="center" bgcolor="#eef2f9"><span style="font-size:8pt;color:#475467;">المسمى الوظيفي / POSITION</span><br /><span style="font-size:11pt;font-weight:bold;">' . $v('position') . '</span></td>
+            <td style="border: 1px solid #b9c3d3;" width="19%" bgcolor="#eef2f9"><b>اسم الموظف</b><br /><span style="font-size:6.5pt;color:#555555;">Employee</span></td>
+            <td style="border: 1px solid #b9c3d3;" width="31%"><b>' . $employeeNameDisplay . '</b></td>
+            <td style="border: 1px solid #b9c3d3;" width="19%" bgcolor="#eef2f9"><b>المسمى الوظيفي</b><br /><span style="font-size:6.5pt;color:#555555;">Position</span></td>
+            <td style="border: 1px solid #b9c3d3;" width="31%"><b>' . $v('position') . '</b></td>
           </tr>
           <tr>
-            <td width="50%" align="center"><span style="font-size:8pt;color:#475467;">بداية العقد / START DATE</span><br /><span style="font-size:9.5pt;font-weight:bold;">' . akContractEscape($startDateDisplay) . '</span></td>
-            <td width="50%" align="center"><span style="font-size:8pt;color:#475467;">نهاية العقد / END DATE</span><br /><span style="font-size:9.5pt;font-weight:bold;">' . akContractEscape($endDateText) . '</span></td>
+            <td style="border: 1px solid #b9c3d3;" bgcolor="#eef2f9"><b>بداية العقد</b><br /><span style="font-size:6.5pt;color:#555555;">Start date</span></td>
+            <td style="border: 1px solid #b9c3d3;"><b>' . akContractEscape($startDateDisplay) . '</b></td>
+            <td style="border: 1px solid #b9c3d3;" bgcolor="#eef2f9"><b>نهاية العقد</b><br /><span style="font-size:6.5pt;color:#555555;">End date</span></td>
+            <td style="border: 1px solid #b9c3d3;"><b>' . akContractEscape($endDateText) . '</b></td>
           </tr>
         </table>
-        <table cellpadding="1" cellspacing="0" border="1" bordercolor="#1b4d8f">
+        <table cellpadding="0" cellspacing="0" border="0"><tr><td height="3"></td></tr></table>
+        <table align="center" width="64%" cellpadding="3" cellspacing="0" border="0" bordercolor="#1b4d8f">
           <tr>
-            <td width="42%" align="center" bgcolor="#eef2f9"><span style="font-size:8pt;color:#475467;">الأجر الأساسي / BASIC SALARY</span></td>
-            <td width="58%" align="center" bgcolor="#ffffff"><span style="font-size:16pt;font-weight:bold;color:#1b4d8f;">' . $salaryDisplay . '</span></td>
+            <td style="border: 1px solid #1b4d8f;" width="36%" align="center" bgcolor="#eef2f9"><b>الأجر الأساسي</b><br /><span style="font-size:6.5pt;color:#555555;">Basic salary</span></td>
+            <td style="border: 1px solid #1b4d8f;" width="64%" align="center"><span style="font-size:15pt;font-weight:bold;color:#1b4d8f;">' . $salaryDisplay . '</span></td>
           </tr>
         </table>
         <p>تم إبرام هذا العقد بين ' . akContractEscape($organizationName) . ' (<span dir="ltr">' . akContractEscape($organizationNameEn) . '</span>)، ويشار إليها في هذا العقد بـ«الجمعية» أو «صاحب العمل»، وبين الموظف المبينة بياناته أدناه، ويشار إليه بـ«الموظف»، وفق أحكام هذا العقد وقوانين العمل السودانية السارية والسياسات المعتمدة المتوافقة معها.</p>
         <h2>أولاً: بيانات الطرفين والوظيفة</h2>
-        <table cellpadding="1" border="1" bordercolor="#d6dde7">
-          <tr><td width="50%"><b>اسم الموظف:</b> ' . $employeeNameDisplay . '</td><td width="50%"><b>الرقم الوطني/الهوية:</b> ' . ($data['national_id'] !== '' ? $v('national_id') : '—') . '</td></tr>
-          <tr><td><b>الجنسية:</b> ' . $v('nationality') . '</td><td><b>المسمى الوظيفي:</b> ' . $v('position') . '</td></tr>
-          <tr><td><b>القسم:</b> ' . ($data['department'] !== '' ? $v('department') : '—') . '</td><td><b>المشرف المباشر:</b> ' . ($data['supervisor'] !== '' ? $v('supervisor') : '—') . '</td></tr>
-          <tr><td><b>العنوان:</b> ' . ($data['address'] !== '' ? $v('address') : '—') . '</td><td><b>الهاتف:</b> ' . ($data['phone'] !== '' ? $v('phone') : '—') . '</td></tr>
-          <tr><td><b>البريد الإلكتروني:</b> ' . ($data['email'] !== '' ? $v('email') : '—') . '</td><td><b>مكان العمل:</b> ' . ($data['work_location'] !== '' ? $v('work_location') : 'حسب تكليف الجمعية المكتوب') . '</td></tr>
+        <table cellpadding="2" border="0" bordercolor="#b9c3d3">
+          <tr><td style="border: 1px solid #b9c3d3;" width="50%"><b>اسم الموظف:</b> ' . $employeeNameDisplay . '</td><td style="border: 1px solid #b9c3d3;" width="50%"><b>الرقم الوطني/الهوية:</b> ' . ($data['national_id'] !== '' ? $v('national_id') : '—') . '</td></tr>
+          <tr><td style="border: 1px solid #b9c3d3;"><b>الجنسية:</b> ' . $v('nationality') . '</td><td style="border: 1px solid #b9c3d3;"><b>المسمى الوظيفي:</b> ' . $v('position') . '</td></tr>
+          <tr><td style="border: 1px solid #b9c3d3;"><b>القسم:</b> ' . ($data['department'] !== '' ? $v('department') : '—') . '</td><td style="border: 1px solid #b9c3d3;"><b>المشرف المباشر:</b> ' . ($data['supervisor'] !== '' ? $v('supervisor') : '—') . '</td></tr>
+          <tr><td style="border: 1px solid #b9c3d3;"><b>العنوان:</b> ' . ($data['address'] !== '' ? $v('address') : '—') . '</td><td style="border: 1px solid #b9c3d3;"><b>الهاتف:</b> ' . ($data['phone'] !== '' ? $v('phone') : '—') . '</td></tr>
+          <tr><td style="border: 1px solid #b9c3d3;"><b>البريد الإلكتروني:</b> ' . ($data['email'] !== '' ? $v('email') : '—') . '</td><td style="border: 1px solid #b9c3d3;"><b>مكان العمل:</b> ' . ($data['work_location'] !== '' ? $v('work_location') : 'حسب تكليف الجمعية المكتوب') . '</td></tr>
         </table>
         <h2>ثانياً: نوع العقد ومدته وفترة التجربة</h2>
         <p>نوع العقد: <b>' . akContractEscape($typeLabels[$data['contract_type']]) . '</b>. يبدأ في <b>' . akContractEscape($startDateDisplay) . '</b> وينتهي في <b>' . akContractEscape($endDateText) . '</b>. فترة التجربة: <b>' . akContractEscape($probationText) . '</b>. لا يغيّر هذا النص أي حماية أو شرط إلزامي مقرر بموجب القانون واجب التطبيق.</p>
@@ -499,9 +460,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
         <!-- SIGNATURE_PAGE_START -->
         <h2>إقرار وتوقيع الطرفين</h2>
         <p>يقر الطرفان بأنهما قرآ العقد وفهما أحكامه، وأتيحت لهما فرصة طلب التوضيح، وأنهما تسلما نسخة موقعة منه. لا يُعد توقيع الموظف تنازلاً عن أي حق إلزامي مقرر بموجب القانون.</p>
-        <table cellpadding="4" border="1" bordercolor="#1b4d8f">
-          <tr><td width="50%" bgcolor="#eef2f9"><b>عن ' . akContractEscape($organizationName) . '</b><br /><br />الاسم: __________________________<br /><br />الصفة: __________________________<br /><br />التوقيع والختم: ___________________<br /><br />التاريخ: _________________________</td><td width="50%" bgcolor="#eef2f9"><b>الموظف</b><br /><br />الاسم: ' . $employeeNameDisplay . '<br /><br />التوقيع: _________________________<br /><br />التاريخ: _________________________</td></tr>
-          <tr><td colspan="2"><b>الشاهد (إن لزم):</b> الاسم: __________________________ &nbsp; التوقيع: __________________ &nbsp; التاريخ: ______________</td></tr>
+        <table cellpadding="4" border="0" bordercolor="#b9c3d3">
+          <tr><td style="border: 1px solid #b9c3d3;" width="50%" bgcolor="#eef2f9"><b>عن ' . akContractEscape($organizationName) . '</b><br /><br />الاسم: __________________________<br /><br />الصفة: __________________________<br /><br />التوقيع والختم: ___________________<br /><br />التاريخ: _________________________</td><td style="border: 1px solid #b9c3d3;" width="50%" bgcolor="#eef2f9"><b>الموظف</b><br /><br />الاسم: ' . $employeeNameDisplay . '<br /><br />التوقيع: _________________________<br /><br />التاريخ: _________________________</td></tr>
+          <tr><td style="border: 1px solid #b9c3d3;" colspan="2"><b>الشاهد (إن لزم):</b> الاسم: __________________________ &nbsp; التوقيع: __________________ &nbsp; التاريخ: ______________</td></tr>
         </table>
         ';
 
@@ -511,11 +472,132 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
             throw new RuntimeException('تعذر فصل صفحة التوقيعات في قالب العقد.');
         }
         $contractBodyHtml = substr($html, 0, $signatureOffset);
-        $signaturePageHtml = '<style>body { font-family: aealarabiya; color: #172033; font-size: 8.5pt; line-height: 1.2; } h2 { color: #1b4d8f; font-size: 9pt; font-weight: bold; background-color: #eef2f9; padding: 3px; border-bottom: 2px solid #9a7628; margin-bottom: 3px; } p { margin-top: 1px; margin-bottom: 3px; }</style>' . substr($html, $signatureOffset + strlen($signatureMarker));
-        $pdf->SetFont('aealarabiya', '', 10.5);
-        $pdf->writeHTML($contractBodyHtml, true, false, true, false, '');
-        $pdf->AddPage();
-        $pdf->writeHTML($signaturePageHtml, true, false, true, false, '');
+        $signatureHtml = substr($html, $signatureOffset + strlen($signatureMarker));
+
+        // Voucher visual language: navy accent, rounded frame, circular logo, bordered number/date box, solid title bar.
+        $accent = [27, 77, 143];
+        $logoFile = $logoPath;
+        $renderContractPdf = static function (float $bodyPt) use (
+            $data, $organizationName, $organizationNameEn, $orgContactLine, $contractNumberText,
+            $logoFile, $contractBodyHtml, $signatureHtml, $accent
+        ): array {
+            $pdf = new TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
+            $pdf->SetCreator(APP_NAME);
+            $pdf->SetAuthor(APP_NAME_AR);
+            $pdf->SetTitle('عقد عمل - ' . $data['employee_name']);
+            $pdf->SetSubject('عقد عمل');
+            $pdf->setPrintHeader(false);   // the letterhead is drawn once, on page one only
+            $pdf->setPrintFooter(true);
+            $pdf->setFooterFont(['aealarabiya', '', 8]);
+            $pdf->setFooterMargin(10);
+            $pdf->SetMargins(15, 15, 15);   // 10 mm frame + 5 mm inner padding (matches the letterhead edges)
+            $pdf->SetAutoPageBreak(true, 24);
+            $pdf->setCellHeightRatio(1.28);
+            $pdf->AddPage();
+
+            // ---- Page-one letterhead (geometry is left-based; setTempRTL only drives Arabic text order) ----
+            $pdf->setRTL(false);
+            $line = static function ($pdf, float $x, float $y, float $w, float $h, string $text, float $pt, bool $bold, array $rgb, string $dir = 'R') {
+                $pdf->SetFont('aealarabiya', $bold ? 'B' : '', $pt);
+                $pdf->SetTextColor($rgb[0], $rgb[1], $rgb[2]);
+                $pdf->setTempRTL($dir);
+                $pdf->SetXY($x, $y);
+                $pdf->Cell($w, $h, $text, 0, 0, 'C', false, '', 1, false, 'T', 'M');
+                $pdf->setTempRTL(false);
+            };
+            // Bilingual label "<Arabic> / <English>" drawn as separately placed runs, so the bidi
+            // algorithm can never move the separator or punctuation across scripts.
+            $bilingual = static function ($pdf, float $cx, float $y, float $h, string $ar, string $en, string $sep, float $arPt, float $enPt, bool $arBold, array $rgb) {
+                $pdf->SetFont('aealarabiya', $arBold ? 'B' : '', $arPt);
+                $wAr = $pdf->GetStringWidth($ar) + 1;
+                $pdf->SetFont('aealarabiya', '', $enPt);
+                $wEn = $pdf->GetStringWidth($en) + 1;
+                $wSep = $pdf->GetStringWidth($sep) + 1;
+                $x = $cx + ($wAr + $wSep + $wEn) / 2;           // right edge; Arabic is read first
+                $pdf->SetTextColor($rgb[0], $rgb[1], $rgb[2]);
+                $runs = [[$ar, $wAr, $arPt, $arBold, 'R'], [$sep, $wSep, $enPt, false, 'L'], [$en, $wEn, $enPt, false, 'L']];
+                foreach ($runs as [$text, $w, $pt, $bold, $dir]) {
+                    $x -= $w;
+                    $pdf->SetFont('aealarabiya', $bold ? 'B' : '', $pt);
+                    $pdf->setTempRTL($dir);
+                    $pdf->SetXY($x, $y);
+                    $pdf->Cell($w, $h, $text, 0, 0, 'C', false, '', 0, false, 'T', 'M');
+                    $pdf->setTempRTL(false);
+                }
+            };
+            // circular logo, 20 mm, thin grey ring (voucher .v-logo)
+            $pdf->StartTransform();
+            $pdf->Circle(185, 25, 10, 0, 360, 'CNZ');
+            $pdf->Image($logoFile, 175, 15, 20, 20, 'JPG', '', '', false, 300);
+            $pdf->StopTransform();
+            $pdf->SetLineStyle(['width' => 0.26, 'color' => [187, 187, 187]]);
+            $pdf->Circle(185, 25, 10, 0, 360, 0, 'D');
+            // organisation block (voucher .v-org)
+            $line($pdf, 58, 16, 112, 7, $organizationName, 14, true, $accent);
+            $line($pdf, 58, 23.5, 112, 4, $organizationNameEn, 8.5, false, [68, 68, 68], 'L');
+            if ($orgContactLine !== '') $line($pdf, 58, 28, 112, 4, $orgContactLine, 8, false, [85, 85, 85]);
+            // number / date box (voucher .v-no)
+            $pdf->SetLineStyle(['width' => 0.26, 'color' => $accent]);
+            $pdf->RoundedRect(15, 15, 38, 20, 2, '1111', 'D');
+            $bilingual($pdf, 34, 16, 3.5, 'الرقم', 'No.', ' / ', 7.5, 7.5, false, [85, 85, 85]);
+            $line($pdf, 15, 19.6, 38, 6, $contractNumberText, 11.5, true, $accent, 'L');
+            $bilingual($pdf, 34, 26, 3.5, 'التاريخ', 'Date', ' / ', 7.5, 7.5, false, [85, 85, 85]);
+            $line($pdf, 15, 29.6, 38, 4.5, (string)$data['issue_date'], 10, true, [17, 17, 17], 'L');
+            // header rule (voucher .v-head border-bottom: 2px accent)
+            $pdf->SetLineStyle(['width' => 0.53, 'color' => $accent]);
+            $pdf->Line(15, 38, 195, 38);
+            // title bar (voucher .v-title)
+            $pdf->SetFillColor($accent[0], $accent[1], $accent[2]);
+            $pdf->RoundedRect(15, 41, 180, 9, 2, '1111', 'F');
+            $bilingual($pdf, 105, 41, 9, 'عقد عمل', 'EMPLOYMENT CONTRACT', '  |  ', 15, 11, true, [255, 255, 255]);
+            $pdf->setRTL(true);
+
+            // ---- Body ----
+            $pdf->SetTextColor(23, 32, 51);
+            $pdf->SetFont('aealarabiya', '', $bodyPt);
+            $pdf->SetY(53);
+            $css = '<style>'
+                . 'h2 { color: #1b4d8f; font-size: ' . ($bodyPt + 0.8) . 'pt; font-weight: bold; background-color: #eef2f9; padding: 2px; border-bottom: 1px solid #1b4d8f; margin-top: 2px; margin-bottom: 2px; }'
+                . ' p { margin-top: 0; margin-bottom: 2px; }'
+                . '</style>';
+            $pdf->writeHTML($css . $contractBodyHtml, true, false, true, false, '');
+
+            // ---- Signatures: always wholly on page two ----
+            $sigHtml = $css . '<table cellpadding="0" cellspacing="0" border="0"><tr><td height="5"></td></tr></table>' . $signatureHtml;
+            if ($pdf->getPage() === 1) {
+                $pdf->AddPage();
+                $pdf->SetFont('aealarabiya', '', $bodyPt);
+                $pdf->writeHTML($sigHtml, true, false, true, false, '');
+            } else {
+                $startPage = $pdf->getPage();
+                $pdf->startTransaction();
+                $pdf->writeHTML($sigHtml, true, false, true, false, '');
+                if ($pdf->getPage() !== $startPage) {
+                    $pdf = $pdf->rollbackTransaction(true);
+                    $pdf->AddPage();
+                    $pdf->SetFont('aealarabiya', '', $bodyPt);
+                    $pdf->writeHTML($sigHtml, true, false, true, false, '');
+                } else {
+                    $pdf->commitTransaction();
+                }
+            }
+
+            // ---- Rounded accent frame on every page (voucher .voucher border) ----
+            $pages = $pdf->getNumPages();
+            for ($page = 1; $page <= $pages; $page++) {
+                $pdf->setPage($page);
+                $pdf->SetLineStyle(['width' => 0.53, 'color' => $accent, 'dash' => 0]);
+                $pdf->RoundedRect(10, 10, 190, 267, 3, '1111', 'D');
+            }
+            return [$pdf, $pages];
+        };
+
+        // Largest body size that keeps the contract on exactly two A4 pages (signatures on page two).
+        $pdf = null;
+        foreach ([9.5, 9.0, 8.5, 8.0, 7.5, 7.0] as $candidatePt) {
+            [$pdf, $pageCount] = $renderContractPdf($candidatePt);
+            if ($pageCount === 2) break;
+        }
         $pdfContent = $pdf->Output('Ahl-El-Kheir-Employment-Contract.pdf', 'S');
         if (!$pdo->inTransaction()) {
             throw new RuntimeException('تعذر تأكيد مسودة العقد في سجل العقود.');
