@@ -221,3 +221,10 @@ The register continues to manage contract status and salary history. It now uplo
 No schema change or migration was introduced. The builder continues to reserve the official number and create a draft when PDF generation succeeds; this does not activate the contract or update salary history/employment state. The full editable clause text remains in the generated PDF, while the register stores its existing core fields.
 
 **Verification status: SOURCE COMMITTED; PHP lint, browser interaction, signed-copy upload, draft activation, salary-history/employment-state behavior, and generated PDF are NOT runtime verified.** Pull `main`, lint both changed PHP files, then test one non-production/appropriate employee record through the configured XAMPP URL. Do not create a second draft for an employee/date period already covered by an active or draft contract. Sudanese legal review remains required before official use.
+
+
+## 2026-10-21 — Single HR contract dashboard entry point (source committed; local verification pending)
+
+The dashboard now has only one contract-related shortcut, `بوابة عقود العمل`, targeting `modules/hr/contract_builder.php`. The separate dashboard card for `modules/hr/contracts.php` was removed. The portal header links to the contract register/salary-history workflow and the job-description catalogue. The register is not deleted because it still implements signed-copy upload/replacement, draft activation, active-contract termination/status handling and salary-history changes. The catalogue already provides a return link to the portal.
+
+Commits: `be9c2515ec0f387406f4e54180e103d2985869bf` and `f3263b20eb666de05d096bc6d30d0143e92b15b7`. No migration or database mutation was introduced. **Local verification remains pending.** Next: lint the two changed PHP files and confirm dashboard/portal/register/catalogue navigation in the real XAMPP app. Only consider deleting/redirecting the legacy register after its needed functionality is integrated and verified. Existing pending migration and job-description/PDF runtime checks remain outstanding; do not mark the broader contract feature complete.
