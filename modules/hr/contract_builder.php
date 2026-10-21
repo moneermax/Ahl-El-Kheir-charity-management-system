@@ -315,9 +315,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
         ];
         $frequencyLabels = ['monthly' => 'شهرياً', 'weekly' => 'أسبوعياً', 'daily' => 'يومياً', 'hourly' => 'بالساعة'];
         $v = static fn(string $key): string => akContractEscape((string)($data[$key] ?? '—'));
-        $endDateText = $data['end_date'] ?: 'لا يوجد تاريخ نهاية محدد';
+        $displayContractDate = static function (?string $date): string {
+            if ($date === null || $date === '') return '—';
+            $parsed = DateTime::createFromFormat('!Y-m-d', $date);
+            return $parsed ? $parsed->format('d/m/Y') : $date;
+        };
+        $issueDateDisplay = $displayContractDate($data['issue_date']);
+        $startDateDisplay = $displayContractDate($data['start_date']);
+        $endDateText = $data['end_date'] ? $displayContractDate($data['end_date']) : 'لا يوجد تاريخ نهاية محدد';
         $probationText = $data['probation'] !== '' ? $data['probation'] : 'وفق ما يجيزه القانون واجب التطبيق وما يتفق عليه كتابةً';
-        if ($data['probation_end_date'] !== null) $probationText .= ' (تنتهي بتاريخ ' . $data['probation_end_date'] . ')';
+        if ($data['probation_end_date'] !== null) $probationText .= ' (تنتهي بتاريخ ' . $displayContractDate($data['probation_end_date']) . ')';
         if ($data['duties'] === '' && !isset($_POST['role_purpose']) && !isset($_POST['responsibilities']) && !isset($_POST['qualifications'])) {
             $data['duties'] = akContractTemplateText($jobTemplate);
         }
@@ -411,33 +418,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
         $pdf->SetFont('aealarabiya', '', 11);
         $pdf->AddPage();
 
+        $employeeNameDisplay = preg_match('/[A-Za-z]/', $data['employee_name'])
+            ? '<span dir="ltr">' . $v('employee_name') . '</span>'
+            : $v('employee_name');
+        $contractNumberDisplay = '<span dir="ltr">' . $v('contract_number') . '</span>';
+        $salaryDisplay = '<span dir="ltr">' . number_format((float)$data['basic_salary'], 2, '.', ',') . ' ' . akContractEscape(APP_CURRENCY_CODE) . '</span>';
+        $coverHtml = '
+        <style>
+            body { font-family: aealarabiya; color: #263445; font-size: 11pt; }
+            .cover-title { color: #17365d; font-size: 26pt; font-weight: bold; text-align: center; }
+            .cover-subtitle { color: #9a7628; font-size: 13pt; text-align: center; }
+            .cover-meta { color: #475467; font-size: 10pt; }
+        </style>
+        <table cellpadding="12" border="1" bordercolor="#c9a34a">
+          <tr><td align="center" bgcolor="#17365d"><span style="color:#ffffff;font-size:10pt;">' . akContractEscape($organizationName) . '</span></td></tr>
+          <tr><td align="center" bgcolor="#f7f4ec"><br /><br /><span style="color:#17365d;font-size:26pt;font-weight:bold;">عقد عمل</span><br /><br /><span style="color:#9a7628;font-size:13pt;">EMPLOYMENT CONTRACT</span><br /><br /><br /><span style="color:#263445;font-size:12pt;">' . $employeeNameDisplay . '</span><br /><br /><span style="color:#475467;font-size:10pt;">' . $v('position') . '</span><br /><br /><br /></td></tr>
+          <tr><td class="cover-meta" bgcolor="#ffffff">رقم العقد: ' . $contractNumberDisplay . '<br /><br />تاريخ التحرير: <span dir="ltr">' . akContractEscape($issueDateDisplay) . '</span><br /><br />بداية العقد: <span dir="ltr">' . akContractEscape($startDateDisplay) . '</span><br /><br />نهاية العقد: <span dir="ltr">' . akContractEscape($endDateText) . '</span></td></tr>
+        </table>
+        <br /><br /><p align="center" style="color:#475467;font-size:10pt;">أُعدّ هذا العقد وفق إطار قانون العمل السوداني، مع مراعاة ممارسات الحماية والنزاهة المعتمدة لدى المنظمات الإنسانية بما لا يتعارض مع الأحكام القانونية الآمرة.</p>
+        <br /><p align="center" style="color:#9a7628;font-size:9pt;">وثيقة عمل رسمية — تُستكمل مراجعتها وتوقيعاتها وفق الإجراءات المعتمدة</p>';
+        $pdf->writeHTML($coverHtml, true, false, true, false, '');
+        $pdf->AddPage();
+
         $html = '
         <style>
             body { font-family: aealarabiya; color: #263445; font-size: 10.5pt; line-height: 1.55; }
-            h2 { color: #173f73; font-size: 12pt; font-weight: bold; background-color: #f0f4f9; padding: 5px; }
+            h2 { color: #17365d; font-size: 12pt; font-weight: bold; background-color: #f4f6f9; border-bottom: 2px solid #c9a34a; padding: 7px; }
             .meta { color: #475467; font-size: 9pt; }
             .rule { border: 1px solid #d6dde7; padding: 6px; }
             .clause { margin-bottom: 5px; }
         </style>
-        <p class="meta">رقم العقد: <b>' . ($data['contract_number'] !== '' ? $v('contract_number') : 'يُستكمل عند التسجيل') . '</b> &nbsp;&nbsp; تاريخ التحرير: <b>' . $v('issue_date') . '</b></p>
-        <p>تم إبرام هذا العقد بين ' . akContractEscape($organizationName) . '، ويشار إليها في هذا العقد بـ«الجمعية» أو «صاحب العمل»، وبين الموظف المبينة بياناته أدناه، ويشار إليه بـ«الموظف»، وفق أحكام هذا العقد وقوانين العمل السودانية السارية والسياسات المعتمدة المتوافقة معها.</p>
         <h2>أولاً: بيانات الطرفين والوظيفة</h2>
         <table cellpadding="5" border="1" bordercolor="#d6dde7">
-          <tr><td width="50%"><b>اسم الموظف:</b> ' . $v('employee_name') . '</td><td width="50%"><b>الرقم الوطني/الهوية:</b> ' . ($data['national_id'] !== '' ? $v('national_id') : '—') . '</td></tr>
+          <tr><td width="50%"><b>اسم الموظف:</b> ' . $employeeNameDisplay . '</td><td width="50%"><b>الرقم الوطني/الهوية:</b> ' . ($data['national_id'] !== '' ? $v('national_id') : '—') . '</td></tr>
           <tr><td><b>الجنسية:</b> ' . $v('nationality') . '</td><td><b>المسمى الوظيفي:</b> ' . $v('position') . '</td></tr>
           <tr><td><b>القسم:</b> ' . ($data['department'] !== '' ? $v('department') : '—') . '</td><td><b>المشرف المباشر:</b> ' . ($data['supervisor'] !== '' ? $v('supervisor') : '—') . '</td></tr>
           <tr><td><b>العنوان:</b> ' . ($data['address'] !== '' ? $v('address') : '—') . '</td><td><b>الهاتف:</b> ' . ($data['phone'] !== '' ? $v('phone') : '—') . '</td></tr>
           <tr><td><b>البريد الإلكتروني:</b> ' . ($data['email'] !== '' ? $v('email') : '—') . '</td><td><b>مكان العمل:</b> ' . ($data['work_location'] !== '' ? $v('work_location') : 'حسب تكليف الجمعية المكتوب') . '</td></tr>
         </table>
         <h2>ثانياً: نوع العقد ومدته وفترة التجربة</h2>
-        <p>نوع العقد: <b>' . akContractEscape($typeLabels[$data['contract_type']]) . '</b>. يبدأ في <b>' . $v('start_date') . '</b> وينتهي في <b>' . akContractEscape($endDateText) . '</b>. فترة التجربة: <b>' . akContractEscape($probationText) . '</b>. لا يغيّر هذا النص أي حماية أو شرط إلزامي مقرر بموجب القانون واجب التطبيق.</p>
+        <p>نوع العقد: <b>' . akContractEscape($typeLabels[$data['contract_type']]) . '</b>. يبدأ في <b>' . akContractEscape($startDateDisplay) . '</b> وينتهي في <b>' . akContractEscape($endDateText) . '</b>. فترة التجربة: <b>' . akContractEscape($probationText) . '</b>. لا يغيّر هذا النص أي حماية أو شرط إلزامي مقرر بموجب القانون واجب التطبيق.</p>
         <h2>ثالثاً: الغرض من الوظيفة والمهام والمسؤوليات والمؤهلات</h2>
         ' . $jobDescriptionNotice . '
         <p>' . $dutiesText . '</p>
         <h2>رابعاً: ساعات العمل والإجازات</h2>
         <p>ساعات العمل الأسبوعية: <b>' . ($data['weekly_hours'] !== '' ? $v('weekly_hours') . ' ساعة' : 'وفق الجدول المعتمد والقانون واجب التطبيق') . '</b>. أيام العمل: <b>' . ($data['working_days'] !== '' ? $v('working_days') : 'وفق الجدول المعتمد') . '</b>. الإجازة السنوية: <b>' . $v('annual_leave') . '</b>. الإجازة المرضية: <b>' . $v('sick_leave') . '</b>. وتراعى فترات الراحة والعطلات والإجازات النظامية وأي شروط أفضل مقررة بصورة صحيحة.</p>
         <h2>خامساً: الأجر والمزايا</h2>
-        <p>يتقاضى الموظف أجراً أساسياً قدره <b>' . number_format((float)$data['basic_salary'], 2, '.', ',') . ' ' . akContractEscape(APP_CURRENCY_CODE) . '</b>، يُدفع <b>' . akContractEscape($frequencyLabels[$data['pay_frequency']]) . '</b> وفق دورة الرواتب المعتمدة وبعد الاستقطاعات النظامية المسموح بها. البدلات: <b>' . $v('allowances') . '</b>. المزايا الأخرى: <b>' . $v('benefits') . '</b>. ولا ينشئ هذا العقد استحقاقاً مالياً غير مذكور صراحةً أو غير مقرر بموجب القانون أو سياسة معتمدة واجبة التطبيق.</p>
+        <p>يتقاضى الموظف أجراً أساسياً قدره <b>' . $salaryDisplay . '</b>، يُدفع <b>' . akContractEscape($frequencyLabels[$data['pay_frequency']]) . '</b> وفق دورة الرواتب المعتمدة وبعد الاستقطاعات النظامية المسموح بها. البدلات: <b>' . $v('allowances') . '</b>. المزايا الأخرى: <b>' . $v('benefits') . '</b>. ولا ينشئ هذا العقد استحقاقاً مالياً غير مذكور صراحةً أو غير مقرر بموجب القانون أو سياسة معتمدة واجبة التطبيق.</p>
         <h2>سادساً: السلوك المهني والحماية</h2>
         <p>يلتزم الموظف بمدونة السلوك والسياسات والتعليمات المشروعة للجمعية، وباحترام المستفيدين والزملاء والشركاء. يُحظر الاستغلال والانتهاك والتحرش والتمييز والتنمر وأي إساءة للطفل أو للشخص المستضعف. ويلتزم الموظف بمتطلبات الحماية من الاستغلال والانتهاك الجنسي (PSEA) وحماية الطفل، وبالإبلاغ عبر القنوات المعتمدة عن أي مخاوف أو مخالفات، وبالتعاون مع التحقيقات النظامية. وتُعالج الادعاءات بإجراءات عادلة وسرية وبما يتفق مع القانون والسياسات.</p>
         <h2>سابعاً: السرية والبيانات وتعارض المصالح</h2>
@@ -450,16 +477,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
         <p>يسعى الطرفان إلى معالجة الخلافات مهنياً وبحسن نية عبر قنوات الشكاوى المعتمدة، دون منع أي طرف من اللجوء إلى الجهات المختصة. يخضع العقد لقوانين جمهورية السودان السارية، وتُطبّق الأحكام القانونية الآمرة عند تعارضها مع أي شرط تعاقدي.</p>
         <h2>حادي عشر: التعديلات والشروط الخاصة</h2>
         <p>لا يكون أي تعديل نافذاً إلا إذا كان مكتوباً وموافقاً عليه من الطرفين، وبما لا يخالف القانون. الشروط الخاصة: ' . $specialTermsText . '</p>
+        <!-- SIGNATURE_PAGE_START -->
         <h2>إقرار وتوقيع الطرفين</h2>
         <p>يقر الطرفان بأنهما قرآ العقد وفهما أحكامه، وأتيحت لهما فرصة طلب التوضيح، وأنهما تسلما نسخة موقعة منه. لا يُعد توقيع الموظف تنازلاً عن أي حق إلزامي مقرر بموجب القانون.</p>
         <table cellpadding="8" border="1" bordercolor="#d6dde7">
-          <tr><td width="50%"><b>عن ' . akContractEscape($organizationName) . '</b><br /><br />الاسم: __________________________<br /><br />الصفة: __________________________<br /><br />التوقيع والختم: ___________________<br /><br />التاريخ: _________________________</td><td width="50%"><b>الموظف</b><br /><br />الاسم: ' . $v('employee_name') . '<br /><br />التوقيع: _________________________<br /><br />التاريخ: _________________________</td></tr>
+          <tr><td width="50%"><b>عن ' . akContractEscape($organizationName) . '</b><br /><br />الاسم: __________________________<br /><br />الصفة: __________________________<br /><br />التوقيع والختم: ___________________<br /><br />التاريخ: _________________________</td><td width="50%"><b>الموظف</b><br /><br />الاسم: ' . $employeeNameDisplay . '<br /><br />التوقيع: _________________________<br /><br />التاريخ: _________________________</td></tr>
           <tr><td colspan="2"><b>الشاهد (إن لزم):</b> الاسم: __________________________ &nbsp; التوقيع: __________________ &nbsp; التاريخ: ______________</td></tr>
         </table>
         ';
 
+        $signatureMarker = '<!-- SIGNATURE_PAGE_START -->';
+        $signatureOffset = strpos($html, $signatureMarker);
+        if ($signatureOffset === false) {
+            throw new RuntimeException('تعذر فصل صفحة التوقيعات في قالب العقد.');
+        }
+        $contractBodyHtml = substr($html, 0, $signatureOffset);
+        $signaturePageHtml = '<style>body { font-family: aealarabiya; color: #263445; font-size: 10.5pt; line-height: 1.55; } h2 { color: #17365d; font-size: 12pt; font-weight: bold; background-color: #f4f6f9; border-bottom: 2px solid #c9a34a; padding: 7px; }</style>' . substr($html, $signatureOffset + strlen($signatureMarker));
         $pdf->SetFont('aealarabiya', '', 10.5);
-        $pdf->writeHTML($html, true, false, true, false, '');
+        $pdf->writeHTML($contractBodyHtml, true, false, true, false, '');
+        $pdf->AddPage();
+        $pdf->writeHTML($signaturePageHtml, true, false, true, false, '');
         $pdfContent = $pdf->Output('Ahl-El-Kheir-Employment-Contract.pdf', 'S');
         if (!$pdo->inTransaction()) {
             throw new RuntimeException('تعذر تأكيد مسودة العقد في سجل العقود.');
