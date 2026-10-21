@@ -622,6 +622,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
     }
 }
 
+// A failed PDF submission must report back to the original form, not render an
+// error page in the PDF preview tab. The opener turns this message into a toast
+// next to the button that initiated the submission.
+if (!empty($errorMessage)
+    && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST'
+    && ($_POST['action'] ?? '') === 'generate_pdf') {
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+    header('Content-Type: text/html; charset=UTF-8');
+    $contractErrorJson = json_encode(
+        (string)$errorMessage,
+        JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP
+    );
+    echo '<!doctype html><html lang="ar" dir="rtl"><meta charset="utf-8"><title>تعذر إنشاء العقد</title><body>'
+        . '<p>تعذر إنشاء العقد. ستظهر التفاصيل في الصفحة الأصلية.</p>'
+        . '<script>(function(){var message=' . $contractErrorJson . ';'
+        . 'try{if(window.opener&&!window.opener.closed){window.opener.postMessage({type:"ak-contract-builder-error",message:message},window.location.origin);window.close();return;}}catch(e){}'
+        . 'document.body.textContent=message;})();</script></body></html>';
+    exit;
+}
+
 $selectedEmployee = null;
 foreach ($employees as $employee) {
     if ((int)$employee['id'] === $selectedEmployeeId) {
@@ -656,7 +678,7 @@ require_once __DIR__ . '/../../includes/header.php';
   <div class="cb-hero d-flex align-items-center justify-content-between gap-3 flex-wrap"><div class="d-flex align-items-center gap-3"><img src="<?= e(APP_URL . $portalLogoPath) ?>" alt="شعار جمعية أهل الخير" style="width:68px;height:68px;object-fit:contain;background:#fff;border-radius:10px;padding:5px"><div><h1><i class="fa-solid fa-file-signature me-2"></i>بوابة عقود العمل</h1><p><?= e(trim((string)($organizationSettings['org_name_ar'] ?? '')) ?: 'جمعية أهل الخير الخيرية') ?> — إعداد عقد مناسب للمسمى الوظيفي ثم معاينته وطباعته للتوقيع.</p><?php $portalContact = array_filter([trim((string)($organizationSettings['org_address'] ?? '')), trim((string)($organizationSettings['support_phone'] ?? '')), trim((string)($organizationSettings['support_email'] ?? ''))]); if ($portalContact): ?><small><?= e(implode(' | ', $portalContact)) ?></small><?php endif; ?></div></div><div class="d-flex gap-2 flex-wrap"><a class="btn btn-light btn-sm fw-bold" href="<?= e(APP_URL) ?>modules/hr/contracts.php<?= $selectedEmployeeId ? '?employee_id=' . $selectedEmployeeId . '&view=contracts' : '' ?>"><i class="fa-solid fa-folder-open me-1"></i> سجل العقود والرواتب</a><a class="btn btn-light btn-sm fw-bold" href="<?= e(APP_URL) ?>modules/hr/job_description_catalogue.php"><i class="fa-solid fa-list-check me-1"></i> إدارة الأوصاف الوظيفية</a></div></div>
   <?php if (!empty($errorMessage)): ?><div class="alert alert-danger cb-error"><?= e($errorMessage) ?></div><?php endif; ?>
   <div class="cb-note"><strong>ملاحظة قانونية:</strong> هذا نموذج تشغيلي أولي وليس اعتماداً قانونياً. يجب مراجعته بواسطة محامٍ مؤهل في السودان قبل استخدامه رسمياً، والتحقق من توافق الشروط والسياسات مع أحكام قانون العمل السوداني السارية. لا تُدخل أي استحقاق أو مدة قانونية غير متحقق منها.</div>
-  <form method="post" action="<?= e(APP_URL) ?>modules/hr/contract_builder.php" target="_blank">
+  <form id="contractBuilderForm" method="post" action="<?= e(APP_URL) ?>modules/hr/contract_builder.php" target="_blank">
     <?= csrf_field() ?>
     <input type="hidden" name="builder_submission_token" value="<?= e($builderSubmissionToken) ?>">
     <input type="hidden" name="action" value="generate_pdf">
@@ -702,6 +724,39 @@ require_once __DIR__ . '/../../includes/header.php';
 </div>
 <script>
 (function(){
+  const form=document.getElementById('contractBuilderForm');
+  let clickedButtonRect=null;
+  function showContractErrorToast(message){
+    const toast=document.createElement('div');
+    toast.setAttribute('role','alert');
+    toast.setAttribute('aria-live','assertive');
+    toast.style.cssText='position:fixed;z-index:20000;width:min(360px,calc(100vw - 24px));padding:12px 16px;border-radius:10px;background:#b42318;color:#fff;box-shadow:0 8px 28px rgba(16,24,40,.24);font-size:.9rem;line-height:1.6;direction:rtl;text-align:right;white-space:normal;';
+    toast.textContent=message||'تعذر إنشاء العقد. حاول مرة أخرى.';
+    document.body.appendChild(toast);
+    const rect=clickedButtonRect;
+    const width=toast.getBoundingClientRect().width;
+    const left=rect?Math.max(12,Math.min(rect.left,window.innerWidth-width-12)):Math.max(12,window.innerWidth-width-12);
+    const toastHeight=toast.getBoundingClientRect().height;
+    let top=rect?rect.bottom+10:16;
+    if(top+toastHeight>window.innerHeight-12)top=(rect?rect.top-toastHeight-10:16);
+    top=Math.max(12,Math.min(top,window.innerHeight-toastHeight-12));
+    toast.style.left=left+'px';
+    toast.style.top=top+'px';
+    const close=()=>{if(toast.isConnected)toast.remove();};
+    const timer=window.setTimeout(close,6000);
+    toast.addEventListener('click',()=>{window.clearTimeout(timer);close();});
+  }
+  if(form){
+    form.addEventListener('submit',function(event){
+      const button=event.submitter;
+      clickedButtonRect=button?button.getBoundingClientRect():form.getBoundingClientRect();
+      clickedButtonRect={left:clickedButtonRect.left,top:clickedButtonRect.top,right:clickedButtonRect.right,bottom:clickedButtonRect.bottom};
+    });
+    window.addEventListener('message',function(event){
+      if(event.origin!==window.location.origin||!event.data||event.data.type!=='ak-contract-builder-error')return;
+      showContractErrorToast(String(event.data.message||'تعذر إنشاء العقد.'));
+    });
+  }
   const select=document.getElementById('employee_id');
   if(!select)return;
   function renumber(container){
