@@ -433,3 +433,7 @@ Commit `4fe5b9baaa09830c3bfc06b37c18c3f080660f45` wraps the page's existing empl
 
 
 Follow-up UI correction: the user clarified that the employee selector should appear as a list, not clickable cards. Commit `7464fc22c31f613fcf26f3c33f32ca3d92be491c` changes only the selector presentation to full-width list rows, with a compact responsive layout on narrow screens. The modal timing fix remains in place. Local lint and browser verification are still pending.
+
+## 2026-10-21 — Remove redundant modal footer
+
+The employee-details modal had its own `modal-footer` containing a second “إغلاق” button, while the shared application page already provides its navigation/footer controls. Removed only that modal-footer block in commit `7c724c77e65a055e9eb66da7605dfe69ec9ad300`. The modal header close control remains, and the shared application footer is unchanged. Local PHP lint and browser verification are pending.
