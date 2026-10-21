@@ -420,10 +420,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
         $contractNumberDisplay = '<span dir="ltr">' . $v('contract_number') . '</span>';
         $salaryDisplay = '<span dir="ltr">' . number_format((float)$data['basic_salary'], 2, '.', ',') . ' ' . akContractEscape(APP_CURRENCY_CODE) . '</span>';
         $organizationHeaderHtml = '
-        <table cellpadding="2" cellspacing="0" border="1" bordercolor="#1b4d8f">
+        <table cellpadding="1" cellspacing="0" border="1" bordercolor="#1b4d8f">
           <tr>
-            <td width="10%" align="center" valign="middle"><img src="' . akContractEscape($logoHtmlPath) . '" width="24" /></td>
-            <td width="66%" align="center" valign="middle">
+            <td width="12%" align="center" valign="middle"><img src="' . akContractEscape($logoHtmlPath) . '" width="14" /></td>
+            <td width="64%" align="center" valign="middle">
               <div style="font-size:10pt;font-weight:bold;color:#1b4d8f;">' . akContractEscape($organizationName) . '</div>
               <div style="font-size:6.5pt;color:#344054;">' . akContractEscape($organizationNameEn) . '</div>
               <div style="font-size:6pt;color:#667085;">' . akContractEscape(implode('  |  ', array_filter(array_map(static fn($key) => trim((string)($organizationSettings[$key] ?? '')), ['org_address', 'support_phone'])))) . '</div>
