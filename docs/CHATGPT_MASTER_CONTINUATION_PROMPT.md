@@ -1479,3 +1479,7 @@ After the user pulled the employee-details modal change, local PHP lint reported
 ## 2026-10-21 — Current HR contracts modal checkpoint
 
 Employee selection was refreshing the page without opening the employee-details modal. Source inspection found modal initialization ran before Bootstrap JavaScript was loaded by `includes/footer.php`. Commit `4fe5b9baaa09830c3bfc06b37c18c3f080660f45` defers initialization until `DOMContentLoaded`. Local lint/browser verification is pending. Preserve untracked `storage/hr_contracts/`; next run PHP lint and test employee-card selection plus modal sections. Details in `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`.
+
+## 2026-10-21 — HR contracts latest checkpoint
+
+The employee picker is now full-width list rows (not cards), commit `7464fc22c31f613fcf26f3c33f32ca3d92be491c`. Modal initialization timing fix: `4fe5b9baaa09830c3bfc06b37c18c3f080660f45`. Local PHP lint/browser verification pending. Preserve untracked `storage/hr_contracts/`. See `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`.
