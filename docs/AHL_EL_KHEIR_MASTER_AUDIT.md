@@ -4002,3 +4002,7 @@ After the user pulled the employee-details modal change, local PHP lint reported
 ## 2026-10-21 — HR contracts modal initialization finding
 
 The employee-details modal's initialization ran before the Bootstrap bundle in `includes/footer.php`, causing card selection to reload the page without opening the modal. Commit `4fe5b9baaa09830c3bfc06b37c18c3f080660f45` defers the existing initialization to `DOMContentLoaded`. This is source-level evidence only; local lint and browser runtime acceptance remain pending. Detailed checkpoint: `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`.
+
+## 2026-10-21 — HR employee selector list presentation
+
+Following user feedback, the employee picker presentation was changed from cards to full-width list rows in commit `7464fc22c31f613fcf26f3c33f32ca3d92be491c`. The separate modal initialization timing fix is `4fe5b9baaa09830c3bfc06b37c18c3f080660f45`. Neither change has local PHP lint/browser verification yet. See `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`.
