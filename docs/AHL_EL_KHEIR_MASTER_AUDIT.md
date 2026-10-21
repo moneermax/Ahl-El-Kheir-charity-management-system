@@ -3896,3 +3896,10 @@ Following user feedback that the employment contract still looked weaker than th
 ## 2026-10-21 — Employment contract voucher-style layout follow-up
 
 The voucher's actual outer composition was inspected in `modules/accounting/voucher_print.php`. Commit `f30fd321ae7932daa2e87b7b70be8e3f97d437a3` reduces the contract logo/header size, narrows header columns, compacts the number/date panel/title and tightens body spacing. The repeated signature-page header remains removed. Source-only; exact rendered page count and readability still need local verification.
+
+
+## 2026-10-21 — Contract PDF header proportion correction
+
+After the user reiterated that the contract PDF should follow the existing voucher design, source inspection found a concrete sizing mismatch in `modules/hr/contract_builder.php`: the logo was rendered at 24 mm inside a 10%-width header cell, making it wider than its own column and increasing the header row height. Commit `489f2967bb4bd7b7a1bdff71ffacc1bb86d65eb8` reduces the logo to 14 mm, sets the logo cell to 12%, keeps the contract number/date panel at 24%, adjusts the organization cell to 64%, and reduces header-cell padding from 2 mm to 1 mm. This retains the existing voucher-style navy frame, organization identity, and boxed number/date panel. No schema, contract lifecycle, legal wording, or page-break logic changed.
+
+**Verification status: SOURCE COMMITTED; local PHP lint and rendered PDF/page-count verification remain pending.** Pull `main`, lint `modules/hr/contract_builder.php`, then preview only an eligible existing contract period (do not create an overlapping draft). Confirm the logo fits inside its cell, the header is compact, the contract is readable, and the PDF totals exactly two pages. The source still has automatic page breaks for the contract body followed by an explicit signature-page break, so a two-page result is not yet proven.
