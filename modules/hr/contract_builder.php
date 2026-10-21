@@ -620,6 +620,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
     }
 }
 
+// Return generation failures as JSON only for the page-local fetch handler.
+if (!empty($errorMessage)
+    && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST'
+    && ($_POST['action'] ?? '') === 'generate_pdf'
+    && strtolower((string)($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '')) === 'xmlhttprequest') {
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+    http_response_code(422);
+    header('Content-Type: application/json; charset=UTF-8');
+    header('Cache-Control: no-store');
+    echo json_encode(['error' => (string)$errorMessage], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
+    exit;
+}
+
 $selectedEmployee = null;
 foreach ($employees as $employee) {
     if ((int)$employee['id'] === $selectedEmployeeId) {
@@ -648,13 +663,13 @@ $active = 'hr';
 require_once __DIR__ . '/../../includes/header.php';
 ?>
 <style>
-.contract-builder{max-width:1200px;margin:auto}.cb-hero{background:linear-gradient(120deg,#173f73,#2d67ad);color:#fff;padding:22px 26px;border-radius:14px;margin-bottom:18px}.cb-hero h1{font-size:1.4rem;font-weight:800;margin:0}.cb-hero p{margin:7px 0 0;font-size:.82rem;opacity:.92}.cb-card{background:#fff;border:1px solid #e4e9f0;border-radius:13px;box-shadow:0 3px 12px rgba(16,24,40,.05);margin-bottom:16px;overflow:hidden}.cb-head{padding:13px 17px;border-bottom:1px solid #e7ecf2;font-weight:800;color:#173f73}.cb-body{padding:17px}.cb-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.cb-field label{display:block;font-size:.76rem;font-weight:800;color:#344054;margin-bottom:5px}.cb-field input,.cb-field select,.cb-field textarea{width:100%;border:1px solid #b9c7d8;border-radius:8px;padding:9px 10px;font:inherit;font-size:.8rem;background:#fff}.cb-field textarea{min-height:78px}.cb-full{grid-column:1/-1}.cb-repeat-list{display:grid;gap:9px;margin-bottom:9px}.cb-repeat-row{display:grid;grid-template-columns:auto auto minmax(0,1fr) auto;gap:8px;align-items:start}.cb-repeat-row textarea{min-height:64px}.cb-repeat-row .cb-remove-item{white-space:nowrap;margin-top:4px}.cb-item-number{padding-top:12px;color:#667085;min-width:1.5rem;text-align:center}.cb-drag-handle{cursor:grab;touch-action:none;align-self:start;margin-top:4px}.cb-drag-handle:active{cursor:grabbing}.cb-repeat-row.is-dragging{opacity:.45}.cb-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:17px}.cb-actions .btn{font-size:.82rem;font-weight:700}.cb-note{font-size:.78rem;color:#475467;background:#f8fafc;border:1px solid #e4e9f0;padding:12px;border-radius:9px;margin-bottom:15px}.cb-error{font-size:.82rem}.cb-required{color:#b42318}@media(max-width:700px){.cb-grid{grid-template-columns:1fr}.cb-full{grid-column:auto}}
+.contract-builder{max-width:1200px;margin:auto}.cb-hero{background:linear-gradient(120deg,#173f73,#2d67ad);color:#fff;padding:22px 26px;border-radius:14px;margin-bottom:18px}.cb-hero h1{font-size:1.4rem;font-weight:800;margin:0}.cb-hero p{margin:7px 0 0;font-size:.82rem;opacity:.92}.cb-card{background:#fff;border:1px solid #e4e9f0;border-radius:13px;box-shadow:0 3px 12px rgba(16,24,40,.05);margin-bottom:16px;overflow:hidden}.cb-head{padding:13px 17px;border-bottom:1px solid #e7ecf2;font-weight:800;color:#173f73}.cb-body{padding:17px}.cb-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.cb-field label{display:block;font-size:.76rem;font-weight:800;color:#344054;margin-bottom:5px}.cb-field input,.cb-field select,.cb-field textarea{width:100%;border:1px solid #b9c7d8;border-radius:8px;padding:9px 10px;font:inherit;font-size:.8rem;background:#fff}.cb-field textarea{min-height:78px}.cb-full{grid-column:1/-1}.cb-repeat-list{display:grid;gap:9px;margin-bottom:9px}.cb-repeat-row{display:grid;grid-template-columns:auto auto minmax(0,1fr) auto;gap:8px;align-items:start}.cb-repeat-row textarea{min-height:64px}.cb-repeat-row .cb-remove-item{white-space:nowrap;margin-top:4px}.cb-item-number{padding-top:12px;color:#667085;min-width:1.5rem;text-align:center}.cb-drag-handle{cursor:grab;touch-action:none;align-self:start;margin-top:4px}.cb-drag-handle:active{cursor:grabbing}.cb-repeat-row.is-dragging{opacity:.45}.cb-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:17px}.cb-actions .btn{font-size:.82rem;font-weight:700}.cb-note{font-size:.78rem;color:#475467;background:#f8fafc;border:1px solid #e4e9f0;padding:12px;border-radius:9px;margin-bottom:15px}.cb-error{font-size:.82rem}.cb-error-toast{position:fixed;top:1rem;left:1rem;z-index:1090;display:flex;align-items:center;gap:.7rem;max-width:min(92vw,460px);padding:13px 16px;background:#b42318;color:#fff;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.18);font-size:.9rem;font-weight:700;direction:rtl;animation:cb-toast-in .2s ease-out}.cb-error-toast>i{font-size:1.15rem}.cb-error-toast-close{border:0;background:transparent;color:#fff;font-size:1.35rem;line-height:1;padding:0 .1rem;cursor:pointer;margin-inline-start:auto}.cb-error-toast.is-hiding{opacity:0;transform:translateY(-8px);transition:opacity .2s ease,transform .2s ease}@keyframes cb-toast-in{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}@media(prefers-reduced-motion:reduce){.cb-error-toast{animation:none}.cb-error-toast.is-hiding{transition:none}}.cb-required{color:#b42318}@media(max-width:700px){.cb-grid{grid-template-columns:1fr}.cb-full{grid-column:auto}}
 </style>
 <div class="contract-builder">
   <div class="cb-hero d-flex align-items-center justify-content-between gap-3 flex-wrap"><div class="d-flex align-items-center gap-3"><img src="<?= e(APP_URL . $portalLogoPath) ?>" alt="شعار جمعية أهل الخير" style="width:68px;height:68px;object-fit:contain;background:#fff;border-radius:10px;padding:5px"><div><h1><i class="fa-solid fa-file-signature me-2"></i>بوابة عقود العمل</h1><p><?= e(trim((string)($organizationSettings['org_name_ar'] ?? '')) ?: 'جمعية أهل الخير الخيرية') ?> — إعداد عقد مناسب للمسمى الوظيفي ثم معاينته وطباعته للتوقيع.</p><?php $portalContact = array_filter([trim((string)($organizationSettings['org_address'] ?? '')), trim((string)($organizationSettings['support_phone'] ?? '')), trim((string)($organizationSettings['support_email'] ?? ''))]); if ($portalContact): ?><small><?= e(implode(' | ', $portalContact)) ?></small><?php endif; ?></div></div><div class="d-flex gap-2 flex-wrap"><a class="btn btn-light btn-sm fw-bold" href="<?= e(APP_URL) ?>modules/hr/contracts.php<?= $selectedEmployeeId ? '?employee_id=' . $selectedEmployeeId . '&view=contracts' : '' ?>"><i class="fa-solid fa-folder-open me-1"></i> سجل العقود والرواتب</a><a class="btn btn-light btn-sm fw-bold" href="<?= e(APP_URL) ?>modules/hr/job_description_catalogue.php"><i class="fa-solid fa-list-check me-1"></i> إدارة الأوصاف الوظيفية</a></div></div>
   <?php if (!empty($errorMessage)): ?><div class="alert alert-danger cb-error"><?= e($errorMessage) ?></div><?php endif; ?>
   <div class="cb-note"><strong>ملاحظة قانونية:</strong> هذا نموذج تشغيلي أولي وليس اعتماداً قانونياً. يجب مراجعته بواسطة محامٍ مؤهل في السودان قبل استخدامه رسمياً، والتحقق من توافق الشروط والسياسات مع أحكام قانون العمل السوداني السارية. لا تُدخل أي استحقاق أو مدة قانونية غير متحقق منها.</div>
-  <form method="post" action="<?= e(APP_URL) ?>modules/hr/contract_builder.php" target="_blank">
+  <form id="contractBuilderForm" method="post" action="<?= e(APP_URL) ?>modules/hr/contract_builder.php" target="_blank">
     <?= csrf_field() ?>
     <input type="hidden" name="builder_submission_token" value="<?= e($builderSubmissionToken) ?>">
     <input type="hidden" name="action" value="generate_pdf">
@@ -792,6 +807,87 @@ require_once __DIR__ . '/../../includes/header.php';
       const approved=option.dataset.descriptionStatus==='approved';
       status.textContent=approved?'الوصف الوظيفي معتمد داخلياً.':'تنبيه: لا يوجد وصف معتمد لهذا المسمى؛ راجع فهرس الأوصاف الوظيفية قبل اعتماد العقد.';
       status.className=approved?'text-success':'text-warning-emphasis';
+    }
+  });
+})();
+</script>
+<script>
+(function () {
+  const form = document.getElementById('contractBuilderForm');
+  if (!form) return;
+  let activeToast = null;
+  function showContractErrorToast(message) {
+    if (activeToast) activeToast.remove();
+    const toast = document.createElement('div');
+    toast.className = 'cb-error-toast';
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'assertive');
+    toast.setAttribute('aria-atomic', 'true');
+    const icon = document.createElement('i');
+    icon.className = 'fa-solid fa-circle-exclamation';
+    icon.setAttribute('aria-hidden', 'true');
+    const text = document.createElement('span');
+    text.textContent = message;
+    const close = document.createElement('button');
+    close.type = 'button';
+    close.className = 'cb-error-toast-close';
+    close.setAttribute('aria-label', 'إغلاق التنبيه');
+    close.textContent = '×';
+    toast.append(icon, text, close);
+    document.body.appendChild(toast);
+    activeToast = toast;
+    let hideTimer = window.setTimeout(hideToast, 5000);
+    function hideToast() {
+      if (!toast.isConnected) return;
+      toast.classList.add('is-hiding');
+      window.setTimeout(() => toast.remove(), 220);
+    }
+    close.addEventListener('click', function () {
+      window.clearTimeout(hideTimer);
+      hideToast();
+    });
+  }
+  form.addEventListener('submit', async function (event) {
+    event.preventDefault();
+    const button = event.submitter;
+    const previewWindow = window.open('about:blank', '_blank');
+    if (!previewWindow) {
+      showContractErrorToast('يرجى السماح بالنوافذ المنبثقة لعرض العقد بصيغة PDF.');
+      return;
+    }
+    previewWindow.document.title = 'جارٍ إنشاء العقد…';
+    if (previewWindow.document.body) previewWindow.document.body.textContent = 'جارٍ إنشاء ملف PDF…';
+    if (button) button.disabled = true;
+    try {
+      // Post to the exact current route instead of rebuilding the endpoint from APP_URL.
+      const response = await fetch(window.location.pathname, {
+        method: 'POST',
+        body: new FormData(form),
+        credentials: 'same-origin',
+        headers: {'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/pdf, application/json'}
+      });
+      const contentType = (response.headers.get('Content-Type') || '').toLowerCase();
+      if (!response.ok || !contentType.includes('application/pdf')) {
+        let message = 'تعذر إنشاء العقد. تحقق من البيانات ثم حاول مرة أخرى.';
+        if (contentType.includes('application/json')) {
+          try {
+            const payload = await response.json();
+            if (payload && payload.error) message = String(payload.error);
+          } catch (e) {}
+        }
+        previewWindow.close();
+        showContractErrorToast(message);
+        return;
+      }
+      const pdfBlob = await response.blob();
+      const pdfUrl = URL.createObjectURL(pdfBlob);
+      previewWindow.location.replace(pdfUrl);
+      window.setTimeout(() => URL.revokeObjectURL(pdfUrl), 60000);
+    } catch (error) {
+      if (!previewWindow.closed) previewWindow.close();
+      showContractErrorToast('تعذر الاتصال بالخادم لإنشاء العقد. تحقق من الاتصال ثم حاول مرة أخرى.');
+    } finally {
+      if (button) button.disabled = false;
     }
   });
 })();
