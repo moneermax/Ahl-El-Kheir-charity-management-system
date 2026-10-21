@@ -3638,3 +3638,9 @@ The user reported that using Download in the browser PDF preview saved the contr
 `modules/hr/contract_builder.php` commit `197f53d75cf4546e8efd6a483e9ea850a18916b5` routes caught PDF-generation errors from the `_blank` response back to the original page and displays a toast beside the clicked submit button, without navigating the original form page. Successful inline PDF response headers remain intact.
 
 Status: **SOURCE COMMITTED; LOCAL PHP LINT AND BROWSER VERIFICATION PENDING.**
+
+### 2026-10-21 — Contract Builder error toast correction
+
+Follow-up commit `890b9ef95390af64820083a8567c6e5e7fc2ccb0` corrects the previous approach that still displayed errors in the new tab. Form submission is handled by `fetch()` on the original page; error responses are JSON and become a toast beside the clicked button, while PDF responses continue to open in the preview tab.
+
+Status: **SOURCE COMMITTED; LOCAL PHP LINT AND BROWSER VERIFICATION PENDING.**
