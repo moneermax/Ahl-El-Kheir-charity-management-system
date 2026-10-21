@@ -105,6 +105,7 @@ $pageTitle='العقود والرواتب';require_once __DIR__.'/../../includes
   </div></div>
 </div>
 <?php endif; ?>
+<?php endif; ?>
 </div>
 <script>
 (function () {
