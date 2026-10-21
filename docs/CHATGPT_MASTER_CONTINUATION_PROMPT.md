@@ -1487,3 +1487,4 @@ The employee picker is now full-width list rows (not cards), commit `7464fc22c31
 ## Latest HR employment-contract UI checkpoint — 2026-10-21
 
 Source commit `40f1198a3b0c54b022b2154b55a12dfce345b730` updates `modules/hr/contracts.php` to suppress footer elements inside the employee modal and to load internal contract/salary tabs via fetch without a full-page navigation. Contract Builder remains a separate page. Local PHP lint and browser verification are still required; do not claim runtime success until checked in the real XAMPP app.
+Follow-up commit `889a10e6f7368190f8e78a9d356a7fabd638b1c6` hides the shared page footer while the employee modal is open and restores it on close. Local runtime verification remains required.
