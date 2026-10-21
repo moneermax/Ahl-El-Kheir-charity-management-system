@@ -3932,3 +3932,7 @@ Source inspection identified a concrete cause: `modules/hr/contract_builder.php`
 ### 2026-10-21 — Contract Builder toast correction audit
 
 User runtime feedback disproved the prior opener-message implementation: the error still appeared in the new tab. Commit `890b9ef95390af64820083a8567c6e5e7fc2ccb0` removes that message-bridge approach. The original form now submits via fetch, server-side errors return JSON for AJAX requests, and the original page shows the toast adjacent to the clicked button. Successful PDF responses are loaded into the preview tab. Source-level only; local PHP lint and browser verification remain pending.
+
+## 2026-10-21 — Contract Builder toast experiment rollback
+
+The user reported an Apache “Not Found” error after the fetch-based toast change. Rather than speculate about the local URL, commit `8af298793a4c86d38d303516b2b03992b7258405` restores `modules/hr/contract_builder.php` exactly to pre-toast checkpoint `e7f96e838c7c33ae2636a8b363cc2a421a77781b`. The restored file blob matches the checkpoint; runtime verification on the user's XAMPP instance remains outstanding.
