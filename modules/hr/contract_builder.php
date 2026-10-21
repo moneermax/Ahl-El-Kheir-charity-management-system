@@ -854,6 +854,15 @@ require_once __DIR__ . '/../../includes/header.php';
     showContractErrorToast(String(event.data.message || 'تعذر إنشاء العقد. تحقق من البيانات ثم حاول مرة أخرى.'));
   });
   form.addEventListener('submit', function (event) {
+    // This deterministic server-side validation is also checked before opening the PDF window,
+    // so this known validation error stays on the form page as a toast.
+    const contractType = form.elements.contract_type;
+    const endDate = form.elements.end_date;
+    if (contractType && contractType.value === 'fixed_term' && endDate && !endDate.value) {
+      event.preventDefault();
+      showContractErrorToast('تاريخ نهاية العقد مطلوب للعقد محدد المدة.');
+      return;
+    }
     const previewWindow = window.open('about:blank', 'contractPdfPreview');
     if (!previewWindow) {
       event.preventDefault();
