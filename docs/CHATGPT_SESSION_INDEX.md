@@ -1475,7 +1475,7 @@ For the next session, read the canonical project documentation and inspect curre
 
 User request: on `modules/hr/contracts.php`, selecting an employee should open the employee's contract/salary area as a popup, and the employee list should expand to use the width previously occupied by the two-column list/details layout.
 
-Source commit: `7dea0ee5f131fd740e2a2c3e5d2e6dafac8edbae` (on `main`).
+Source commit: `29f650e189f748777427ac90eafc630feac58a18` (on `main`).
 
 Implemented in `modules/hr/contracts.php`:
 - Replaced the narrow left-hand employee sidebar plus always-visible details panel with a full-width responsive employee-card grid.
