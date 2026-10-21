@@ -437,3 +437,12 @@ Follow-up UI correction: the user clarified that the employee selector should ap
 ## 2026-10-21 — Remove redundant modal footer
 
 The employee-details modal had its own `modal-footer` containing a second “إغلاق” button, while the shared application page already provides its navigation/footer controls. Removed only that modal-footer block in commit `7c724c77e65a055e9eb66da7605dfe69ec9ad300`. The modal header close control remains, and the shared application footer is unchanged. Local PHP lint and browser verification are pending.
+
+## 2026-10-21 — Employee modal footer suppression and in-modal tab navigation
+
+Source commit `40f1198a3b0c54b022b2154b55a12dfce345b730` updates `modules/hr/contracts.php`:
+- suppresses footer elements if they appear inside the employee modal;
+- intercepts the modal's internal Contracts / Salary History / Salary Change links, fetches the selected view, and replaces only the modal content instead of navigating/reloading the whole page;
+- leaves the separate Contract Builder link as normal navigation and leaves POST-based save/status/upload actions unchanged.
+
+**Verification boundary: SOURCE COMMITTED; local PHP lint and browser verification are pending.** Confirm the popup contains no footer and each internal tab changes content without a full-page refresh. If tab loading fails, the modal displays an inline error instead of silently navigating.
