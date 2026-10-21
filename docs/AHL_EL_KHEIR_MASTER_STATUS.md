@@ -3648,3 +3648,9 @@ Status: **SOURCE COMMITTED; LOCAL PHP LINT AND BROWSER VERIFICATION PENDING.**
 ## 2026-10-21 — Contract Builder restored before toast experiments
 
 `modules/hr/contract_builder.php` was restored in commit `8af298793a4c86d38d303516b2b03992b7258405` to exact checkpoint `e7f96e838c7c33ae2636a8b363cc2a421a77781b`, removing the recent toast/fetch changes. The file blob matches the checkpoint. Local PHP lint and browser/PDF runtime verification are still pending; do not treat the toast issue as fixed.
+
+## 2026-10-21 — Authoritative Contract Builder continuation state
+
+This checkpoint supersedes earlier entries that proposed further toast/fetch changes or asked to test those experiments. The latest documented rollback is commit `8af298793a4c86d38d303516b2b03992b7258405`: `modules/hr/contract_builder.php` was restored to the pre-toast voucher-style PDF checkpoint `e7f96e838c7c33ae2636a8b363cc2a421a77781b`; its source blob was reported to match that checkpoint. Do not reintroduce or continue the toast-positioning/fetch experiment unless the user explicitly requests it.
+
+This is source/checkpoint evidence only, not runtime acceptance. Local XAMPP PHP lint, existing-contract viewing, contract creation through the normal workflow, and generated PDF behavior have not been confirmed after the rollback. If verification is requested, use the configured app URL `http://localhost:8081/AhlElKheir/`, preserve the existing draft/active overlap guard, and do not create a duplicate contract merely to preview the PDF. Record only observed results; do not claim runtime success in advance. Continue from `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`.
