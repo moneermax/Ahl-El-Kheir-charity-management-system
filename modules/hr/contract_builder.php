@@ -332,18 +332,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
             throw new InvalidArgumentException('الوصف الوظيفي أطول من الحد المسموح به للعقد؛ اختصره من فهرس الأوصاف أو عدّله قبل التوليد.');
         }
         $dutiesText = $data['duties'] !== '' ? akContractDutiesHtml($data['duties']) : 'تنفيذ المهام المرتبطة بالوظيفة والوصف الوظيفي والتعليمات المشروعة ذات الصلة.';
-        $jobDescriptionNotice = $jobDescriptionStatus === 'approved'
-            ? ''
-            : '<p style="color:#8a4b08;background-color:#fff7e6;border:1px solid #e5c07b;padding:5px;"><b>تنبيه داخلي:</b> الوصف الوظيفي لهذا المسمى يحتاج مراجعة واعتماد الموارد البشرية، ولا يُعد وصفاً معتمداً.</p>';
+        // Internal HR review status belongs in the builder UI, not in the employee-facing contract.
+        $jobDescriptionNotice = '';
         $specialTermsText = $data['special_terms'] !== '' ? nl2br($v('special_terms')) : 'لا توجد شروط خاصة إضافية.';
-        $configuredLogo = (string)($organizationSettings['site_logo'] ?? 'assets/img/logo.png');
-        if ($configuredLogo === '' || strpos($configuredLogo, '..') !== false || str_starts_with($configuredLogo, '/')) {
-            $configuredLogo = 'assets/img/logo.png';
-        }
-        $logoPath = APP_DIR . '/' . $configuredLogo;
-        if (!is_file($logoPath)) {
-            $logoPath = APP_DIR . '/assets/img/logo.png';
-        }
+        // Match the exact organization logo used by the existing voucher print layout.
+        // Use a filesystem path for TCPDF and an explicitly embedded image in the contract body.
+        $logoPath = APP_DIR . '/assets/img/logo.png';
+        $logoHtmlPath = str_replace('\\', '/', $logoPath);
         $organizationName = (string)(ak_catalog('ar')['common.organization_name'] ?? 'منظمة أهل الخير النسوية لكفالة الأيتام');
         $organizationNameEn = (string)(ak_catalog('en')['common.organization_name'] ?? 'Ahl El Kheir Women Organization for Orphan Sponsorship');
         $contactParts = [];
@@ -424,14 +419,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
             : $v('employee_name');
         $contractNumberDisplay = '<span dir="ltr">' . $v('contract_number') . '</span>';
         $salaryDisplay = '<span dir="ltr">' . number_format((float)$data['basic_salary'], 2, '.', ',') . ' ' . akContractEscape(APP_CURRENCY_CODE) . '</span>';
+        $organizationHeaderHtml = '
+        <table cellpadding="4" border="0">
+          <tr>
+            <td width="20%" align="center" valign="middle"><img src="' . akContractEscape($logoHtmlPath) . '" width="76" /></td>
+            <td width="80%" align="right" valign="middle">
+              <div style="font-size:15pt;font-weight:bold;color:#173f73;">' . akContractEscape($organizationName) . '</div>
+              <div style="font-size:8.5pt;color:#344054;">' . akContractEscape($organizationNameEn) . '</div>
+              <div style="font-size:7.5pt;color:#667085;">' . akContractEscape(implode('  |  ', array_filter(array_map(static fn($key) => trim((string)($organizationSettings[$key] ?? '')), ['org_address', 'support_phone', 'support_email'])))) . '</div>
+            </td>
+          </tr>
+        </table>
+        <hr />
+        ';
         $html = '
         <style>
-            body { font-family: aealarabiya; color: #172033; font-size: 10.5pt; line-height: 1.5; }
-            h2 { color: #ffffff; font-size: 11.5pt; font-weight: bold; background-color: #1b4d8f; padding: 7px; border-bottom: 2px solid #9a7628; }
+            body { font-family: aealarabiya; color: #172033; font-size: 10.5pt; line-height: 1.55; }
+            h2 { color: #ffffff; font-size: 11.5pt; font-weight: bold; background-color: #173f73; padding: 8px; border-bottom: 3px solid #9a7628; }
+            p { margin-top: 4px; margin-bottom: 7px; }
             .meta { color: #475467; font-size: 9pt; }
             .rule { border: 1px solid #b9c3d3; padding: 6px; }
         </style>
-        <table cellpadding="5" border="1" bordercolor="#1b4d8f">
+        ' . $organizationHeaderHtml . '
+        <table cellpadding="6" border="1" bordercolor="#173f73">
           <tr><td width="66%" bgcolor="#1b4d8f" align="center"><span style="color:#ffffff;font-size:18pt;font-weight:bold;">عقد عمل</span><br /><span style="color:#ffffff;font-size:9pt;">EMPLOYMENT CONTRACT</span></td><td width="34%" align="center" bgcolor="#eef2f9"><span style="color:#475467;font-size:8pt;">رقم العقد / Contract No.</span><br /><span dir="ltr" style="color:#1b4d8f;font-size:11pt;font-weight:bold;">' . $contractNumberDisplay . '</span><br /><span style="color:#475467;font-size:8pt;">تاريخ التحرير / Issue date</span><br /><span dir="ltr" style="font-size:9pt;font-weight:bold;">' . akContractEscape($issueDateDisplay) . '</span></td></tr>
         </table>
         <br />
@@ -484,7 +494,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
             throw new RuntimeException('تعذر فصل صفحة التوقيعات في قالب العقد.');
         }
         $contractBodyHtml = substr($html, 0, $signatureOffset);
-        $signaturePageHtml = '<style>body { font-family: aealarabiya; color: #172033; font-size: 10.5pt; line-height: 1.5; } h2 { color: #ffffff; font-size: 11.5pt; font-weight: bold; background-color: #1b4d8f; padding: 7px; border-bottom: 2px solid #9a7628; }</style>' . substr($html, $signatureOffset + strlen($signatureMarker));
+        $signaturePageHtml = '<style>body { font-family: aealarabiya; color: #172033; font-size: 10.5pt; line-height: 1.55; } h2 { color: #ffffff; font-size: 11.5pt; font-weight: bold; background-color: #173f73; padding: 8px; border-bottom: 3px solid #9a7628; }</style>' . $organizationHeaderHtml . substr($html, $signatureOffset + strlen($signatureMarker));
         $pdf->SetFont('aealarabiya', '', 10.5);
         $pdf->writeHTML($contractBodyHtml, true, false, true, false, '');
         $pdf->AddPage();
