@@ -3928,3 +3928,7 @@ The user reported that using Download in the browser PDF preview saved the contr
 ### 2026-10-21 — Contract Builder toast placement audit note
 
 Source inspection identified a concrete cause: `modules/hr/contract_builder.php` submitted the PDF form to `_blank` and rendered caught errors as a top-of-page HTML alert in that response. Commit `197f53d75cf4546e8efd6a483e9ea850a18916b5` now sends that error back to the opener and displays it as a toast near the clicked button. Successful PDF response behavior is preserved. This is source-level evidence only; local PHP lint and browser runtime verification remain outstanding.
+
+### 2026-10-21 — Contract Builder toast correction audit
+
+User runtime feedback disproved the prior opener-message implementation: the error still appeared in the new tab. Commit `890b9ef95390af64820083a8567c6e5e7fc2ccb0` removes that message-bridge approach. The original form now submits via fetch, server-side errors return JSON for AJAX requests, and the original page shows the toast adjacent to the clicked button. Successful PDF responses are loaded into the preview tab. Source-level only; local PHP lint and browser verification remain pending.
