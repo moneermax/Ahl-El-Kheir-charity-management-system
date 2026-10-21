@@ -604,11 +604,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
         }
         $pdo->commit();
         unset($_SESSION['ak_contract_builder_submission_token']);
+        // This response is PDF-only; discard any buffered output so headers and bytes stay clean.
+        while (ob_get_level() > 0) { ob_end_clean(); }
         header('Cache-Control: private, no-store, max-age=0');
         header('Pragma: no-cache');
         header('X-Content-Type-Options: nosniff');
         header('Content-Type: application/pdf');
-        header('Content-Disposition: inline; filename="Ahl-El-Kheir-Employment-Contract.pdf"');
+        header("Content-Disposition: inline; filename=\"Ahl-El-Kheir-Employment-Contract.pdf\"; filename*=UTF-8''Ahl-El-Kheir-Employment-Contract.pdf");
         header('Content-Length: ' . strlen($pdfContent));
         echo $pdfContent;
         exit;
