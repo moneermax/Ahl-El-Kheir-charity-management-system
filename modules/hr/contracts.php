@@ -108,7 +108,7 @@ $pageTitle='العقود والرواتب';require_once __DIR__.'/../../includes
 <?php endif; ?>
 </div>
 <script>
-(function () {
+document.addEventListener('DOMContentLoaded', function () {
   const search = document.getElementById('es');
   const employees = Array.from(document.querySelectorAll('#elist .emp'));
   const empty = document.getElementById('employeeSearchEmpty');
@@ -128,7 +128,7 @@ $pageTitle='العقود والرواتب';require_once __DIR__.'/../../includes
   if (modal && window.bootstrap && window.bootstrap.Modal) {
     window.bootstrap.Modal.getOrCreateInstance(modal).show();
   }
-})();
+});
 </script>
 
 <div class="container-fluid px-3 pb-4"><div class="d-flex justify-content-start"><a href="<?php echo APP_URL; ?>modules/hr/index.php" class="btn btn-outline-secondary" onclick="return akGoBack(this.href);"><i class="fa-solid fa-arrow-right me-1"></i> العودة</a></div></div>
