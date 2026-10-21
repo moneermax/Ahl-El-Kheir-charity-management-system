@@ -1409,3 +1409,7 @@ The source-level error-toast change is committed on `main` as `197f53d75cf4546e8
 ### 2026-10-21 — Contract Builder toast correction checkpoint
 
 Current source commit: `890b9ef95390af64820083a8567c6e5e7fc2ccb0`. The prior opener-message approach failed in browser testing; errors still rendered in the new tab. Replaced with original-page fetch submission and JSON error responses. Errors close the temporary preview tab and toast beside the clicked button; successful PDF responses open in the preview tab. Next: user pulls `main`, runs PHP lint, tests missing fixed-term end date and a successful PDF preview. Do not claim runtime verification until confirmed.
+
+## 2026-10-21 — Contract Builder toast changes rolled back
+
+Current source commit: `8af298793a4c86d38d303516b2b03992b7258405`. `modules/hr/contract_builder.php` has been restored exactly to pre-toast checkpoint `e7f96e838c7c33ae2636a8b363cc2a421a77781b` after the latest fetch-based attempt produced a local Apache “Not Found” error. Do not continue toast experiments unless explicitly requested. Local PHP lint and browser/PDF behavior remain unverified; ask the user only to pull `main` and confirm the pre-toast contract workflow is restored.
