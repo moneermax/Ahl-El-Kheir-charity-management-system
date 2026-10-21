@@ -3842,3 +3842,10 @@ The register continues to manage contract status and salary history. It now uplo
 No schema change or migration was introduced. The builder continues to reserve the official number and create a draft when PDF generation succeeds; this does not activate the contract or update salary history/employment state. The full editable clause text remains in the generated PDF, while the register stores its existing core fields.
 
 **Verification status: SOURCE COMMITTED; PHP lint, browser interaction, signed-copy upload, draft activation, salary-history/employment-state behavior, and generated PDF are NOT runtime verified.** Pull `main`, lint both changed PHP files, then test one non-production/appropriate employee record through the configured XAMPP URL. Do not create a second draft for an employee/date period already covered by an active or draft contract. Sudanese legal review remains required before official use.
+
+
+## 2026-10-21 — HR contract navigation consolidation audit (source only)
+
+Inspected the dashboard, contract builder, register, job-description catalogue and current continuation documents. The dashboard previously presented two competing contract cards. The smallest justified change removes the register card, expands the remaining portal card description, and adds portal-header links to the register and catalogue. Existing register functions remain in `modules/hr/contracts.php`: signed-copy upload/replacement, contract status/activation/termination, and salary-history changes. The catalogue already links back to the portal. No business logic or database schema changed.
+
+Commits: `be9c2515ec0f387406f4e54180e103d2985869bf`, `f3263b20eb666de05d096bc6d30d0143e92b15b7`. Runtime status is **not verified**: local PHP lint and browser checks must confirm one dashboard entry and working portal-to-register/catalogue navigation. The register must not be deleted until its capabilities are migrated and verified.
