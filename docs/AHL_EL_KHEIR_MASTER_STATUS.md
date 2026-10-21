@@ -3550,3 +3550,10 @@ The register continues to manage contract status and salary history. It now uplo
 No schema change or migration was introduced. The builder continues to reserve the official number and create a draft when PDF generation succeeds; this does not activate the contract or update salary history/employment state. The full editable clause text remains in the generated PDF, while the register stores its existing core fields.
 
 **Verification status: SOURCE COMMITTED; PHP lint, browser interaction, signed-copy upload, draft activation, salary-history/employment-state behavior, and generated PDF are NOT runtime verified.** Pull `main`, lint both changed PHP files, then test one non-production/appropriate employee record through the configured XAMPP URL. Do not create a second draft for an employee/date period already covered by an active or draft contract. Sudanese legal review remains required before official use.
+
+
+## 2026-10-21 — HR contract portal is the single dashboard entry point (source only)
+
+Removed the separate `العقود والرواتب` card from `dashboard/hr_dashboard.php`; the dashboard now directs contract work through `modules/hr/contract_builder.php` only. Added portal-header navigation to the existing contract register/salary-history workflow and job-description catalogue. The legacy register remains a linked subordinate page because it contains signed-copy upload, contract activation/termination/status, and salary-history operations that have not been rebuilt into the builder. No contract records, signed files, schema, or migrations were changed.
+
+Commits: `be9c2515ec0f387406f4e54180e103d2985869bf`, `f3263b20eb666de05d096bc6d30d0143e92b15b7`. **Local PHP syntax/browser verification pending.** Keep the old register file until capability parity and safe navigation are verified; do not claim the legacy implementation has been removed.
