@@ -4006,3 +4006,7 @@ The employee-details modal's initialization ran before the Bootstrap bundle in `
 ## 2026-10-21 — HR employee selector list presentation
 
 Following user feedback, the employee picker presentation was changed from cards to full-width list rows in commit `7464fc22c31f613fcf26f3c33f32ca3d92be491c`. The separate modal initialization timing fix is `4fe5b9baaa09830c3bfc06b37c18c3f080660f45`. Neither change has local PHP lint/browser verification yet. See `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`.
+
+## 2026-10-21 — HR employee modal navigation checkpoint
+
+A narrow source update in `modules/hr/contracts.php` (`40f1198a3b0c54b022b2154b55a12dfce345b730`) suppresses footer elements within the employee modal and changes its internal contract/salary tabs to fetch the selected server-rendered view and replace modal content without a full-page navigation. The Contract Builder link remains separate. This is source-committed only; local PHP lint and browser behavior are not yet verified.
