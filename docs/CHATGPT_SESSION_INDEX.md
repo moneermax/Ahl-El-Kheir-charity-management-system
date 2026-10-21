@@ -1422,3 +1422,7 @@ The user reported that using Download in the browser PDF preview saved the contr
 ### 2026-10-21 — Contract Builder info/error toast
 
 Source commit `197f53d75cf4546e8efd6a483e9ea850a18916b5` fixes the source-level cause of contract-builder error messages appearing at the top of a new tab: the PDF form targets `_blank`, but the caught error was rendered as a full-page inline alert. Errors now post back to the original page and display as a toast beside the initiating button; successful PDF response behavior is preserved. Local PHP lint and browser verification are still pending.
+
+### 2026-10-21 — Contract Builder error toast follow-up
+
+Commit `890b9ef95390af64820083a8567c6e5e7fc2ccb0` replaces the failed opener-message approach after user browser feedback showed errors still appearing in a new tab. The form now submits via same-page `fetch()`: JSON errors close the temporary tab and show a toast beside the initiating button; PDF responses still open in the preview tab. Local lint/browser verification is pending.
