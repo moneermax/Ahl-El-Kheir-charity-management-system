@@ -3618,3 +3618,7 @@ Commit `489f2967bb4bd7b7a1bdff71ffacc1bb86d65eb8` corrects a logo/header proport
 
 ## 2026-10-21 — Contract-builder error feedback toast (source only)
 A narrow presentation-only change replaces the in-flow error alert in `modules/hr/contract_builder.php` with a fixed-position RTL toast. No shared JS, database, token/CSRF, transaction, contract numbering, overlap, or PDF logic changed. Local PHP lint and browser verification are pending; do not claim runtime verified.
+
+
+## 2026-10-21 — Contract-builder validation navigation correction (source only)
+The fixed toast alone did not prevent the jump because the contract form targets a new tab and server-side validation HTML was displayed as a full document there. Commit `bd088d1f4d090506df48eecf666c270add50f91b` now handles submission locally: validation errors are toasted on the current form page and successful PDF responses still open in a new tab. No shared JS/database/business-rule change. PHP lint and local browser verification pending.
