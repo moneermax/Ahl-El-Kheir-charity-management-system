@@ -1475,3 +1475,7 @@ Implemented in `modules/hr/contracts.php`:
 After the user pulled the employee-details modal change, local PHP lint reported an unexpected end of file on line 134, expecting `elseif`, `else`, or `endif`. Source inspection identified the exact cause: the employee-selection `if ($emp)` alternative-syntax block had no closing `endif`; the existing terminator closed the nested view switch instead. Commit `decb8a577df182396def4eea906220bd4b4b009a` adds the missing outer `endif` in `modules/hr/contracts.php` without changing application logic.
 
 **Verification boundary:** source correction is committed to `main`; the user's local PHP lint has not yet been rerun, and browser/runtime behavior is not verified. After pulling, run `php -l modules\hr\contracts.php` and report the exact result before browser testing. Preserve the existing untracked `storage/hr_contracts/` directory; it was not modified or included in the commit.
+
+## 2026-10-21 — Current HR contracts modal checkpoint
+
+Employee selection was refreshing the page without opening the employee-details modal. Source inspection found modal initialization ran before Bootstrap JavaScript was loaded by `includes/footer.php`. Commit `4fe5b9baaa09830c3bfc06b37c18c3f080660f45` defers initialization until `DOMContentLoaded`. Local lint/browser verification is pending. Preserve untracked `storage/hr_contracts/`; next run PHP lint and test employee-card selection plus modal sections. Details in `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`.
