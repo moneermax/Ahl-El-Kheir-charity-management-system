@@ -3600,3 +3600,7 @@ Following user feedback that the employment contract still looked weaker than th
 ## 2026-10-21 — Employment contract PDF layout follow-up
 
 Source commit `ddffae6105a2da56bce1b5d706bc7d40e1f94ba2` removes the repeated organizational letterhead from the signature page and compacts the contract PDF layout toward a two-page total. This is source-only; local PHP lint, exact page count and text readability remain unverified. Continue with `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`; no database migration or contract lifecycle change was introduced.
+
+## 2026-10-21 — Contract PDF header/layout follow-up
+
+Commit `f30fd321ae7932daa2e87b7b70be8e3f97d437a3` adjusts the employment contract PDF toward the compact outer composition of `modules/accounting/voucher_print.php`, reducing logo/header height and body spacing to target two pages including signatures. Source committed; local lint and PDF page-count/readability are unverified.
