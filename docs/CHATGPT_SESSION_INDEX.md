@@ -1405,3 +1405,7 @@ The caught error banner in `modules/hr/contract_builder.php` is now a fixed-posi
 
 ### Contract-builder validation no longer navigates to error page — 2026-10-21
 Commit `bd088d1f4d090506df48eecf666c270add50f91b` adds local fetch handling to `modules/hr/contract_builder.php`: server validation errors become current-page toasts; valid PDF responses still open in a new tab. Local lint/browser verification pending. See `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`.
+
+
+### Contract-builder feedback positioning — 2026-10-21
+Commit `e41cadc856223cd861dcfced9983efbb8009231a` removes the viewport-fixed toast and renders server/client validation feedback in the form action area directly before the PDF button. Existing fetch/PDF and validation safeguards remain. Local PHP lint and browser verification are pending; see `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`.
