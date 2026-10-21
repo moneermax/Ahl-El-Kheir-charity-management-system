@@ -602,8 +602,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
         if (!$pdo->inTransaction()) {
             throw new RuntimeException('تعذر تأكيد مسودة العقد في سجل العقود.');
         }
+        // Rotate the single-use token before commit; return it to the still-open form
+        // so the user can create another contract without reloading the page.
+        $nextBuilderSubmissionToken = bin2hex(random_bytes(32));
         $pdo->commit();
-        unset($_SESSION['ak_contract_builder_submission_token']);
+        $_SESSION['ak_contract_builder_submission_token'] = $nextBuilderSubmissionToken;
+        header('X-AK-Contract-Submission-Token: ' . $nextBuilderSubmissionToken);
         header('Cache-Control: private, no-store, max-age=0');
         header('Pragma: no-cache');
         header('X-Content-Type-Options: nosniff');
@@ -620,20 +624,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
     }
 }
 
-// Send generation failures back to the original form page; successful PDFs keep the native response/filename headers.
+// AJAX generation failures are returned as JSON for the original form's toast handler.
+// Keep a readable HTML fallback only for submissions made without the page's JavaScript.
 if (!empty($errorMessage)
     && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST'
     && ($_POST['action'] ?? '') === 'generate_pdf') {
     while (ob_get_level() > 0) {
         ob_end_clean();
     }
-    header('Content-Type: text/html; charset=UTF-8');
     header('Cache-Control: no-store');
-    $contractErrorJson = json_encode((string)$errorMessage, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
-    echo '<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>تعذر إنشاء العقد</title></head><body><p id="contract-error-fallback">' . e($errorMessage) . '</p><script>'
-        . 'const message=' . $contractErrorJson . ';'
-        . 'try{if(window.opener&&!window.opener.closed){window.opener.postMessage({type:"ak-contract-builder-error",message:message},window.location.origin);window.close();}}catch(e){}'
-        . '</script></body></html>';
+    if (strtolower((string)($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '')) === 'xmlhttprequest') {
+        if (http_response_code() < 400) {
+            http_response_code(422);
+        }
+        header('Content-Type: application/json; charset=UTF-8');
+        echo json_encode(
+            ['error' => (string)$errorMessage],
+            JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP
+        );
+        exit;
+    }
+    header('Content-Type: text/html; charset=UTF-8');
+    echo '<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>تعذر إنشاء العقد</title></head><body><p id="contract-error-fallback">' . e($errorMessage) . '</p></body></html>';
     exit;
 }
 
@@ -849,30 +861,59 @@ require_once __DIR__ . '/../../includes/header.php';
       hideToast();
     });
   }
-  window.addEventListener('message', function (event) {
-    if (event.origin !== window.location.origin || !event.data || event.data.type !== 'ak-contract-builder-error') return;
-    showContractErrorToast(String(event.data.message || 'تعذر إنشاء العقد. تحقق من البيانات ثم حاول مرة أخرى.'));
-  });
-  form.addEventListener('submit', function (event) {
-    // This deterministic server-side validation is also checked before opening the PDF window,
-    // so this known validation error stays on the form page as a toast.
+  form.addEventListener('submit', async function (event) {
+    event.preventDefault();
+    // Keep this known validation on the current page; the server remains authoritative.
     const contractType = form.elements.contract_type;
     const endDate = form.elements.end_date;
     if (contractType && contractType.value === 'fixed_term' && endDate && !endDate.value) {
-      event.preventDefault();
       showContractErrorToast('تاريخ نهاية العقد مطلوب للعقد محدد المدة.');
       return;
     }
+    const button = event.submitter;
     const previewWindow = window.open('about:blank', 'contractPdfPreview');
     if (!previewWindow) {
-      event.preventDefault();
       showContractErrorToast('يرجى السماح بالنوافذ المنبثقة لعرض العقد بصيغة PDF.');
       return;
     }
     previewWindow.document.title = 'جارٍ إنشاء العقد…';
     if (previewWindow.document.body) previewWindow.document.body.textContent = 'جارٍ إنشاء ملف PDF…';
-    // Let the browser submit the original form to this named window. This preserves
-    // the native PDF response headers and avoids a fetch/blob URL changing download behavior.
+    if (button) button.disabled = true;
+    try {
+      const response = await fetch(form.action, {
+        method: 'POST',
+        body: new FormData(form),
+        credentials: 'same-origin',
+        headers: {'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/pdf, application/json'}
+      });
+      const contentType = (response.headers.get('Content-Type') || '').toLowerCase();
+      if (!response.ok || !contentType.includes('application/pdf')) {
+        let message = 'تعذر إنشاء العقد. تحقق من البيانات ثم حاول مرة أخرى.';
+        if (contentType.includes('application/json')) {
+          try {
+            const payload = await response.json();
+            if (payload && payload.error) message = String(payload.error);
+          } catch (e) {}
+        }
+        if (!previewWindow.closed) previewWindow.close();
+        showContractErrorToast(message);
+        return;
+      }
+      // Successful generation consumes the submitted token and returns its replacement.
+      // Update the hidden field so this same form can be safely submitted again.
+      const nextToken = response.headers.get('X-AK-Contract-Submission-Token');
+      const tokenInput = form.elements.builder_submission_token;
+      if (nextToken && tokenInput) tokenInput.value = nextToken;
+      const pdfBlob = await response.blob();
+      const pdfUrl = URL.createObjectURL(pdfBlob);
+      previewWindow.location.replace(pdfUrl);
+      window.setTimeout(() => URL.revokeObjectURL(pdfUrl), 60000);
+    } catch (error) {
+      if (!previewWindow.closed) previewWindow.close();
+      showContractErrorToast('تعذر الاتصال بالخادم لإنشاء العقد. تحقق من الاتصال ثم حاول مرة أخرى.');
+    } finally {
+      if (button) button.disabled = false;
+    }
   });
 })();
 </script>
