@@ -289,3 +289,7 @@ Source inspection found the logo was rendered at 24 mm inside a 10%-width header
 ## 2026-10-21 — Corrected voucher-header mismatch
 
 The user's rendered screenshot demonstrated that the earlier sizing-only change did not match the voucher composition: it retained a full-width bordered grid, placed the number/date panel on the left because TCPDF RTL reverses cell display order, and left the logo undersized. Follow-up source comparison against `modules/accounting/voucher_print.php` led to commit `81f5401ee589814839a519b565bed942f6721733`: remove the enclosing grid border, put the number/date panel first in source so it renders at left under RTL, keep organization identity centered, restore a 20 mm logo at right, and retain the divider/title styling. This is a source correction, not a claim of visual success; local PHP lint and PDF page count still require checking. The explicit signature-page break and automatic body page breaks are unchanged.
+
+## 2026-10-21 — Voucher composition correction applied
+
+Commits `de20eb5745565f6ba9997ebf3e02c5ada6edd53f` and `e45a9d19e5b8d0bdcf198b345ac553ca00f677b6` update the contract PDF header markup to match the voucher's element order (logo, centered organization identity, framed number/date panel) and remove the extra rectangular outline around the navy bilingual title bar. Header uses 12%/64%/24% columns and 20 mm logo. Changes are source committed; local PHP lint and rendered layout/page-count checks are still pending.
