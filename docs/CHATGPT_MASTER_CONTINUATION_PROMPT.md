@@ -1391,3 +1391,7 @@ Commit `489f2967bb4bd7b7a1bdff71ffacc1bb86d65eb8` narrows the PDF logo to 14 mm,
 
 ## 2026-10-21 — Contract-builder form response handling
 Commit `bd088d1f4d090506df48eecf666c270add50f91b` fixes the cause of validation messages appearing after a page jump: the contract form's `_blank` target sent error HTML into a separate document. The local handler now renders server errors as toasts in the current form page and opens only actual PDF responses in a new tab. Verify PHP syntax, missing fixed-term end date, stale token, other server errors, and valid PDF behavior locally. Do not change global POST interception or contract business rules without new evidence.
+
+
+## Current Contract Builder state — 2026-10-21
+Do not continue the toast-positioning experiment. The user requested restoration to the source checkpoint where the voucher-style PDF design was completed. Commit `d074486b7cff1a204ab3bf353c829a59ecef32f7` restores `modules/hr/contract_builder.php` to `e7f96e8` and removes the later toast/fetch experiments after malformed `.cb-actions` markup was identified in `e41cadc`. Next verification belongs on the real local XAMPP app: run `php -l modules/hr/contract_builder.php`, then confirm existing-contract viewing and creating a contract for a current employee, and inspect the generated PDF. Do not claim verified until those checks actually pass.
