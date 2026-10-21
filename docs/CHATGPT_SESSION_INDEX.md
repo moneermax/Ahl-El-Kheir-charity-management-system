@@ -1504,3 +1504,7 @@ The selector was changed from cards to full-width list rows in `7464fc22c31f613f
 ## 2026-10-21 — HR employee modal footer
 
 Removed the redundant modal-footer close-button row; the modal header close control and main-page footer remain. Commit `7c724c77e65a055e9eb66da7605dfe69ec9ad300`. Local lint/browser verification pending. Details: `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md`.
+
+### HR employment contracts modal checkpoint — 2026-10-21
+
+`modules/hr/contracts.php` now suppresses footer elements inside the employee modal and loads internal Contracts / Salary History / Salary Change tabs into the existing modal via fetch, avoiding full-page navigation for tab switching. The Contract Builder remains a separate page. Source commit: `40f1198a3b0c54b022b2154b55a12dfce345b730`. Local PHP lint and browser verification remain pending; do not describe as runtime verified until tested at `http://localhost:8081/AhlElKheir/`.
