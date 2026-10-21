@@ -447,8 +447,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
             .rule { border: 1px solid #b9c3d3; padding: 3px; }
         </style>
         ' . $organizationHeaderHtml . '
-        <table cellpadding="1" cellspacing="0" border="1" bordercolor="#1b4d8f">
-          <tr><td bgcolor="#1b4d8f" align="center"><span style="color:#ffffff;font-size:11pt;font-weight:bold;">عقد عمل</span><span style="color:#ffffff;font-size:7pt;"> | EMPLOYMENT CONTRACT</span></td></tr>
+        <table cellpadding="2" cellspacing="0" border="0">
+          <tr><td bgcolor="#1b4d8f" align="center" border="0"><span style="color:#ffffff;font-size:11pt;font-weight:bold;">عقد عمل</span><span style="color:#ffffff;font-size:7pt;"> | EMPLOYMENT CONTRACT</span></td></tr>
         </table>
         <table cellpadding="1" cellspacing="0" border="1" bordercolor="#b9c3d3">
           <tr>
