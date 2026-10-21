@@ -1379,3 +1379,8 @@ Commit `ddffae6105a2da56bce1b5d706bc7d40e1f94ba2` removes the letterhead from th
 ## Latest contract PDF layout change — 2026-10-21
 
 Inspect commit `f30fd321ae7932daa2e87b7b70be8e3f97d437a3`: contract header now follows the compact voucher composition more closely, with a 24px logo, narrower side cells, compact number/date panel and title, and tighter body spacing. Header only appears on page one. Pull `main`, lint `modules/hr/contract_builder.php`, then inspect the real PDF via the configured XAMPP app and confirm exactly two pages with readable legal text. Runtime acceptance is pending; don't claim page count before evidence.
+
+
+## 2026-10-21 — Contract PDF header proportion correction
+
+Commit `489f2967bb4bd7b7a1bdff71ffacc1bb86d65eb8` narrows the PDF logo to 14 mm, gives it a 12% header cell, retains the 24% number/date panel, sets the organization column to 64%, and reduces header padding to match the compact voucher composition. No legal wording, schema or contract lifecycle behavior changed. Pull `main`, run `D:\xampp\php\php.exe -l modules\hr\contract_builder.php`, then verify the generated PDF locally using an eligible existing contract period. Do not create a duplicate/overlapping draft. Two-page layout and readability remain unverified.
