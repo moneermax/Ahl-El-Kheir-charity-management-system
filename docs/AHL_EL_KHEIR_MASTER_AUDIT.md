@@ -4010,3 +4010,4 @@ Following user feedback, the employee picker presentation was changed from cards
 ## 2026-10-21 — HR employee modal navigation checkpoint
 
 A narrow source update in `modules/hr/contracts.php` (`40f1198a3b0c54b022b2154b55a12dfce345b730`) suppresses footer elements within the employee modal and changes its internal contract/salary tabs to fetch the selected server-rendered view and replace modal content without a full-page navigation. The Contract Builder link remains separate. This is source-committed only; local PHP lint and browser behavior are not yet verified.
+Follow-up commit `889a10e6f7368190f8e78a9d356a7fabd638b1c6` hides the shared page footer while the employee modal is shown, restoring it when the modal closes. Runtime verification remains pending.
