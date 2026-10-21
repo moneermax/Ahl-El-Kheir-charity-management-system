@@ -422,18 +422,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
         $organizationHeaderHtml = '
         <table cellpadding="1" cellspacing="0" border="0">
           <tr>
+            <td width="12%" align="center" valign="middle"><img src="' . akContractEscape($logoHtmlPath) . '" width="20" /></td>
+            <td width="64%" align="center" valign="middle">
+              <div style="font-size:10pt;font-weight:bold;color:#1b4d8f;">' . akContractEscape($organizationName) . '</div>
+              <div style="font-size:6.5pt;color:#344054;">' . akContractEscape($organizationNameEn) . '</div>
+              <div style="font-size:6pt;color:#667085;">' . akContractEscape(implode('  |  ', array_filter(array_map(static fn($key) => trim((string)($organizationSettings[$key] ?? '')), ['org_address', 'support_phone'])))) . '</div>
+            </td>
             <td width="24%" align="center" valign="middle" border="1" bordercolor="#1b4d8f" bgcolor="#ffffff">
               <div style="font-size:6.5pt;color:#475467;">الرقم / No.</div>
               <div style="font-size:8pt;font-weight:bold;color:#1b4d8f;">' . $contractNumberDisplay . '</div>
               <div style="font-size:6.5pt;color:#475467;">التاريخ / Date</div>
               <div style="font-size:7.5pt;font-weight:bold;">' . akContractEscape($issueDateDisplay) . '</div>
             </td>
-            <td width="64%" align="center" valign="middle">
-              <div style="font-size:10pt;font-weight:bold;color:#1b4d8f;">' . akContractEscape($organizationName) . '</div>
-              <div style="font-size:6.5pt;color:#344054;">' . akContractEscape($organizationNameEn) . '</div>
-              <div style="font-size:6pt;color:#667085;">' . akContractEscape(implode('  |  ', array_filter(array_map(static fn($key) => trim((string)($organizationSettings[$key] ?? '')), ['org_address', 'support_phone'])))) . '</div>
-            </td>
-            <td width="12%" align="center" valign="middle"><img src="' . akContractEscape($logoHtmlPath) . '" width="20" /></td>
           </tr>
         </table>
         <hr />
