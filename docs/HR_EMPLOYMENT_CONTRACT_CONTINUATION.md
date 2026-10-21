@@ -446,3 +446,5 @@ Source commit `40f1198a3b0c54b022b2154b55a12dfce345b730` updates `modules/hr/con
 - leaves the separate Contract Builder link as normal navigation and leaves POST-based save/status/upload actions unchanged.
 
 **Verification boundary: SOURCE COMMITTED; local PHP lint and browser verification are pending.** Confirm the popup contains no footer and each internal tab changes content without a full-page refresh. If tab loading fails, the modal displays an inline error instead of silently navigating.
+
+Follow-up commit `889a10e6f7368190f8e78a9d356a7fabd638b1c6` also hides the shared application footer while the employee modal is open (and restores it when the modal closes), so the page footer cannot visually appear as part of the popup. Local verification remains pending.
