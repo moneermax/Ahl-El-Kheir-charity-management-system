@@ -3910,3 +3910,7 @@ Source review identified a concrete layout defect: a 24 mm logo was placed in a 
 
 ## 2026-10-21 — Contract-builder error toast scope note
 The expired/used form-token error and other caught builder errors are displayed in a fixed-position accessible toast rather than an in-flow alert. This is a presentation-only source change; all validation and contract lifecycle guards remain unchanged. Local lint/browser verification pending. Note: fixed positioning prevents the message from affecting document layout, but cannot prevent a full document navigation from naturally opening at its initial scroll position.
+
+
+## 2026-10-21 — Contract-builder validation navigation regression
+The reported jump was traced to `modules/hr/contract_builder.php` submitting with `target="_blank"`; the prior fixed toast was in the response document, not the original form page. Commit `bd088d1f4d090506df48eecf666c270add50f91b` keeps server-side error responses on the current form page via a page-local fetch handler while preserving new-tab PDF output. No changes to global same-page POST handling. Source committed; local syntax/browser verification pending.
