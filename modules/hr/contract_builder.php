@@ -758,3 +758,42 @@ require_once __DIR__ . '/../../includes/header.php';
   const supervisorSelect=document.getElementById('supervisor');
   function refreshSupervisorOptions(){
     if(!supervisorSelect)return;
+    Array.from(supervisorSelect.options).forEach(option=>{
+      const isSelectedEmployee=option.dataset.employeeId===select.value;
+      option.disabled=isSelectedEmployee;
+      if(isSelectedEmployee&&option.selected)supervisorSelect.value='';
+    });
+  }
+  refreshSupervisorOptions();
+  select.addEventListener('change',function(){refreshSupervisorOptions();
+    const option=this.options[this.selectedIndex];
+    if(!option||!option.value){
+      setRepeatableItems('purposeFields','role_purpose[]','');
+      setRepeatableItems('responsibilitiesFields','responsibilities[]','');
+      setRepeatableItems('qualificationsFields','qualifications[]','');
+      const reportingTo=document.getElementById('reporting_to');if(reportingTo)reportingTo.value='';
+      setRepeatableItems('specialTermsFields','special_terms[]','');
+      const status=document.getElementById('jobDescriptionStatus');
+      if(status){status.textContent='اختر موظفاً لتحميل بيانات الوصف الوظيفي.';status.className='text-warning-emphasis';}
+      return;
+    }
+    Object.entries(mapping).forEach(([field,key])=>{
+      const input=document.getElementById(field);
+      const value=option.dataset[key];
+      if(input&&value!==undefined)input.value=value;
+    });
+    setRepeatableItems('purposeFields','role_purpose[]',option.dataset.purpose||'');
+    setRepeatableItems('responsibilitiesFields','responsibilities[]',option.dataset.responsibilities||'');
+    setRepeatableItems('qualificationsFields','qualifications[]',option.dataset.qualifications||'');
+    const reportingTo=document.getElementById('reporting_to');if(reportingTo)reportingTo.value=option.dataset.reportingTo||'';
+    setRepeatableItems('specialTermsFields','special_terms[]',option.dataset.roleTerms||'');
+    const status=document.getElementById('jobDescriptionStatus');
+    if(status){
+      const approved=option.dataset.descriptionStatus==='approved';
+      status.textContent=approved?'الوصف الوظيفي معتمد داخلياً.':'تنبيه: لا يوجد وصف معتمد لهذا المسمى؛ راجع فهرس الأوصاف الوظيفية قبل اعتماد العقد.';
+      status.className=approved?'text-success':'text-warning-emphasis';
+    }
+  });
+})();
+</script>
+<?php require_once __DIR__ . '/../../includes/footer.php'; ?>
