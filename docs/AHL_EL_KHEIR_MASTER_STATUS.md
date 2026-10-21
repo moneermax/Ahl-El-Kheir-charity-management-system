@@ -3644,3 +3644,7 @@ Status: **SOURCE COMMITTED; LOCAL PHP LINT AND BROWSER VERIFICATION PENDING.**
 Follow-up commit `890b9ef95390af64820083a8567c6e5e7fc2ccb0` corrects the previous approach that still displayed errors in the new tab. Form submission is handled by `fetch()` on the original page; error responses are JSON and become a toast beside the clicked button, while PDF responses continue to open in the preview tab.
 
 Status: **SOURCE COMMITTED; LOCAL PHP LINT AND BROWSER VERIFICATION PENDING.**
+
+## 2026-10-21 — Contract Builder restored before toast experiments
+
+`modules/hr/contract_builder.php` was restored in commit `8af298793a4c86d38d303516b2b03992b7258405` to exact checkpoint `e7f96e838c7c33ae2636a8b363cc2a421a77781b`, removing the recent toast/fetch changes. The file blob matches the checkpoint. Local PHP lint and browser/PDF runtime verification are still pending; do not treat the toast issue as fixed.
