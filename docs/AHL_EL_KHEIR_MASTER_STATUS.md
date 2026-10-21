@@ -3615,3 +3615,6 @@ After the user reiterated that the contract PDF should follow the existing vouch
 ## 2026-10-21 — Contract PDF header sizing (source only)
 
 Commit `489f2967bb4bd7b7a1bdff71ffacc1bb86d65eb8` corrects a logo/header proportion mismatch in `modules/hr/contract_builder.php`: the logo is reduced from 24 mm to 14 mm and now fits a 12% header cell; the organization and number/date columns are 64% and 24%, with tighter cell padding. This is a narrow presentation change based on `modules/accounting/voucher_print.php`. No schema or contract lifecycle change. Local PHP lint, rendered PDF layout, readability and two-page count remain unverified.
+
+## 2026-10-21 — Contract-builder error feedback toast (source only)
+A narrow presentation-only change replaces the in-flow error alert in `modules/hr/contract_builder.php` with a fixed-position RTL toast. No shared JS, database, token/CSRF, transaction, contract numbering, overlap, or PDF logic changed. Local PHP lint and browser verification are pending; do not claim runtime verified.
