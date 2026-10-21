@@ -572,7 +572,7 @@ require_once __DIR__ . '/../../includes/header.php';
   <div class="cb-hero d-flex align-items-center justify-content-between gap-3 flex-wrap"><div class="d-flex align-items-center gap-3"><img src="<?= e(APP_URL . $portalLogoPath) ?>" alt="شعار جمعية أهل الخير" style="width:68px;height:68px;object-fit:contain;background:#fff;border-radius:10px;padding:5px"><div><h1><i class="fa-solid fa-file-signature me-2"></i>بوابة عقود العمل</h1><p><?= e(trim((string)($organizationSettings['org_name_ar'] ?? '')) ?: 'جمعية أهل الخير الخيرية') ?> — إعداد عقد مناسب للمسمى الوظيفي ثم معاينته وطباعته للتوقيع.</p><?php $portalContact = array_filter([trim((string)($organizationSettings['org_address'] ?? '')), trim((string)($organizationSettings['support_phone'] ?? '')), trim((string)($organizationSettings['support_email'] ?? ''))]); if ($portalContact): ?><small><?= e(implode(' | ', $portalContact)) ?></small><?php endif; ?></div></div><div class="d-flex gap-2 flex-wrap"><a class="btn btn-light btn-sm fw-bold" href="<?= e(APP_URL) ?>modules/hr/contracts.php<?= $selectedEmployeeId ? '?employee_id=' . $selectedEmployeeId . '&view=contracts' : '' ?>"><i class="fa-solid fa-folder-open me-1"></i> سجل العقود والرواتب</a><a class="btn btn-light btn-sm fw-bold" href="<?= e(APP_URL) ?>modules/hr/job_description_catalogue.php"><i class="fa-solid fa-list-check me-1"></i> إدارة الأوصاف الوظيفية</a></div></div>
   <?php if (!empty($errorMessage)): ?><div class="cb-error-toast" role="alert" aria-live="assertive" aria-atomic="true"><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i><span><?= e($errorMessage) ?></span><button type="button" class="cb-error-toast-close" aria-label="إغلاق التنبيه">&times;</button></div><?php endif; ?>
   <div class="cb-note"><strong>ملاحظة قانونية:</strong> هذا نموذج تشغيلي أولي وليس اعتماداً قانونياً. يجب مراجعته بواسطة محامٍ مؤهل في السودان قبل استخدامه رسمياً، والتحقق من توافق الشروط والسياسات مع أحكام قانون العمل السوداني السارية. لا تُدخل أي استحقاق أو مدة قانونية غير متحقق منها.</div>
-  <form method="post" action="<?= e(APP_URL) ?>modules/hr/contract_builder.php" target="_blank">
+  <form id="contractBuilderForm" method="post" action="<?= e(APP_URL) ?>modules/hr/contract_builder.php" target="_blank">
     <?= csrf_field() ?>
     <input type="hidden" name="builder_submission_token" value="<?= e($builderSubmissionToken) ?>">
     <input type="hidden" name="action" value="generate_pdf">
@@ -618,12 +618,89 @@ require_once __DIR__ . '/../../includes/header.php';
 </div>
 <script>
 (function(){
-  const toast=document.querySelector('.cb-error-toast');
-  if(toast){
+  function showToast(message){
+    let toast=document.querySelector('.cb-error-toast');
+    if(!toast){
+      toast=document.createElement('div');
+      toast.className='cb-error-toast';
+      toast.setAttribute('role','alert');
+      toast.setAttribute('aria-live','assertive');
+      toast.setAttribute('aria-atomic','true');
+      toast.innerHTML='<i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i><span></span><button type="button" class="cb-error-toast-close" aria-label="إغلاق التنبيه">&times;</button>';
+      document.body.appendChild(toast);
+    }
+    const text=toast.querySelector('span');
+    if(text)text.textContent=message;
+    toast.classList.remove('is-hiding');
     const dismiss=()=>{toast.classList.add('is-hiding');window.setTimeout(()=>toast.remove(),220);};
     const close=toast.querySelector('.cb-error-toast-close');
+    if(close)close.onclick=dismiss;
+    if(toast._dismissTimer)window.clearTimeout(toast._dismissTimer);
+    toast._dismissTimer=window.setTimeout(dismiss,7000);
+  }
+  const initialToast=document.querySelector('.cb-error-toast');
+  if(initialToast){
+    const close=initialToast.querySelector('.cb-error-toast-close');
+    const dismiss=()=>{initialToast.classList.add('is-hiding');window.setTimeout(()=>initialToast.remove(),220);};
     if(close)close.addEventListener('click',dismiss);
     window.setTimeout(dismiss,7000);
+  }
+
+  const form=document.getElementById('contractBuilderForm');
+  if(form){
+    form.addEventListener('submit',async function(event){
+      event.preventDefault();
+      const contractType=form.querySelector('[name="contract_type"]');
+      const endDate=form.querySelector('[name="end_date"]');
+      if(contractType&&contractType.value==='fixed_term'&&endDate&&!endDate.value){
+        showToast('تاريخ نهاية العقد مطلوب للعقد محدد المدة.');
+        endDate.focus({preventScroll:true});
+        return;
+      }
+
+      // Open the PDF tab synchronously to avoid popup blockers, then fill it only
+      // if the server actually returns a PDF. Validation errors stay on this page.
+      const pdfWindow=window.open('about:blank','_blank');
+      if(!pdfWindow){
+        showToast('يرجى السماح بفتح نافذة جديدة لعرض ملف PDF.');
+        return;
+      }
+      pdfWindow.document.title='جاري إعداد العقد';
+      pdfWindow.document.body.textContent='جاري إعداد ملف PDF...';
+      const submitButton=event.submitter||form.querySelector('[type="submit"]');
+      if(submitButton)submitButton.disabled=true;
+      try{
+        const response=await fetch(form.action,{
+          method:'POST',
+          body:new FormData(form),
+          credentials:'same-origin',
+          redirect:'follow',
+          headers:{'X-Requested-With':'XMLHttpRequest','X-AK-Contract-Builder':'1'}
+        });
+        const contentType=String(response.headers.get('content-type')||'').toLowerCase();
+        if(response.ok&&contentType.includes('application/pdf')){
+          const pdfBlob=await response.blob();
+          const pdfUrl=URL.createObjectURL(pdfBlob);
+          pdfWindow.location.replace(pdfUrl);
+          window.setTimeout(()=>URL.revokeObjectURL(pdfUrl),60000);
+          return;
+        }
+        const html=await response.text();
+        const parsed=new DOMParser().parseFromString(html,'text/html');
+        const serverMessage=parsed.querySelector('.cb-error-toast span')||
+          parsed.querySelector('.alert-danger')||
+          parsed.querySelector('[role="alert"]');
+        const message=serverMessage?serverMessage.textContent.trim():'تعذر إنشاء العقد. راجع البيانات وحاول مرة أخرى.';
+        pdfWindow.close();
+        showToast(message);
+      }catch(error){
+        try{pdfWindow.close();}catch(closeError){}
+        showToast('تعذر الاتصال بالخادم لإعداد العقد. لم تتم إعادة إرسال الطلب تلقائياً؛ تحقق من النتيجة قبل المحاولة مجدداً.');
+        console.error('Contract builder submission failed:',error);
+      }finally{
+        if(submitButton)submitButton.disabled=false;
+      }
+    });
   }
 })();
 (function(){
