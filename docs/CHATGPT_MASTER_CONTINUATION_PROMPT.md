@@ -1375,3 +1375,7 @@ Following user feedback that the employment contract still looked weaker than th
 ## Latest employment contract PDF layout follow-up — 2026-10-21
 
 Commit `ddffae6105a2da56bce1b5d706bc7d40e1f94ba2` removes the letterhead from the signature page and tightens PDF typography, margins, table padding and section spacing to target exactly two pages total. Runtime verification is pending. Next: pull `main`, lint `modules/hr/contract_builder.php`, generate/inspect an eligible contract using the configured XAMPP URL, and confirm one header on page one, no repeated header on page two, complete text, readable layout and exactly two pages. Do not bypass the existing draft/active overlap guard or claim runtime success before local evidence.
+
+## Latest contract PDF layout change — 2026-10-21
+
+Inspect commit `f30fd321ae7932daa2e87b7b70be8e3f97d437a3`: contract header now follows the compact voucher composition more closely, with a 24px logo, narrower side cells, compact number/date panel and title, and tighter body spacing. Header only appears on page one. Pull `main`, lint `modules/hr/contract_builder.php`, then inspect the real PDF via the configured XAMPP app and confirm exactly two pages with readable legal text. Runtime acceptance is pending; don't claim page count before evidence.
