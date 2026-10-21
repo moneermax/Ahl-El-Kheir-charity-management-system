@@ -602,12 +602,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
         if (!$pdo->inTransaction()) {
             throw new RuntimeException('تعذر تأكيد مسودة العقد في سجل العقود.');
         }
-        // Rotate the single-use token before commit; return it to the still-open form
-        // so the user can create another contract without reloading the page.
-        $nextBuilderSubmissionToken = bin2hex(random_bytes(32));
         $pdo->commit();
-        $_SESSION['ak_contract_builder_submission_token'] = $nextBuilderSubmissionToken;
-        header('X-AK-Contract-Submission-Token: ' . $nextBuilderSubmissionToken);
+        unset($_SESSION['ak_contract_builder_submission_token']);
         header('Cache-Control: private, no-store, max-age=0');
         header('Pragma: no-cache');
         header('X-Content-Type-Options: nosniff');
@@ -624,28 +620,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
     }
 }
 
-// AJAX generation failures are returned as JSON for the original form's toast handler.
-// Keep a readable HTML fallback only for submissions made without the page's JavaScript.
+// Report server-side generation errors to the original form as a toast. Keep the
+// normal PDF response untouched so the browser retains native inline/filename behavior.
 if (!empty($errorMessage)
     && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST'
     && ($_POST['action'] ?? '') === 'generate_pdf') {
     while (ob_get_level() > 0) {
         ob_end_clean();
     }
-    header('Cache-Control: no-store');
-    if (strtolower((string)($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '')) === 'xmlhttprequest') {
-        if (http_response_code() < 400) {
-            http_response_code(422);
-        }
-        header('Content-Type: application/json; charset=UTF-8');
-        echo json_encode(
-            ['error' => (string)$errorMessage],
-            JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP
-        );
-        exit;
+    if (empty($_SESSION['ak_contract_builder_submission_token'])) {
+        $_SESSION['ak_contract_builder_submission_token'] = bin2hex(random_bytes(32));
     }
+    $currentBuilderToken = (string)$_SESSION['ak_contract_builder_submission_token'];
     header('Content-Type: text/html; charset=UTF-8');
-    echo '<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>تعذر إنشاء العقد</title></head><body><p id="contract-error-fallback">' . e($errorMessage) . '</p></body></html>';
+    header('Cache-Control: no-store');
+    $contractErrorJson = json_encode((string)$errorMessage, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
+    $contractTokenJson = json_encode($currentBuilderToken, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
+    echo '<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>تعذر إنشاء العقد</title></head><body><p id="contract-error-fallback">' . e($errorMessage) . '</p><script>'
+        . 'const message=' . $contractErrorJson . ';const token=' . $contractTokenJson . ';'
+        . 'try{if(window.opener&&!window.opener.closed){window.opener.postMessage({type:"ak-contract-builder-error",message:message,token:token},window.location.origin);window.close();}}catch(e){}'
+        . '</script></body></html>';
     exit;
 }
 
@@ -861,59 +855,36 @@ require_once __DIR__ . '/../../includes/header.php';
       hideToast();
     });
   }
-  form.addEventListener('submit', async function (event) {
-    event.preventDefault();
+  window.addEventListener('message', function (event) {
+    if (event.origin !== window.location.origin || !event.data || event.data.type !== 'ak-contract-builder-error') return;
+    const tokenInput = form.elements.builder_submission_token;
+    if (tokenInput && typeof event.data.token === 'string' && event.data.token) {
+      tokenInput.value = event.data.token;
+    }
+    showContractErrorToast(String(event.data.message || 'تعذر إنشاء العقد. تحقق من البيانات ثم حاول مرة أخرى.'));
+  });
+  form.addEventListener('submit', function (event) {
     // Keep this known validation on the current page; the server remains authoritative.
     const contractType = form.elements.contract_type;
     const endDate = form.elements.end_date;
     if (contractType && contractType.value === 'fixed_term' && endDate && !endDate.value) {
+      event.preventDefault();
       showContractErrorToast('تاريخ نهاية العقد مطلوب للعقد محدد المدة.');
       return;
     }
-    const button = event.submitter;
-    const previewWindow = window.open('about:blank', 'contractPdfPreview');
-    if (!previewWindow) {
-      showContractErrorToast('يرجى السماح بالنوافذ المنبثقة لعرض العقد بصيغة PDF.');
+    // Use a fresh browsing-context name every time. A fixed name can accidentally
+    // reuse this tab if the user is currently in a previously opened preview window.
+    const previewName = 'contractPdfPreview_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+    const previewWindow = window.open('about:blank', previewName);
+    if (!previewWindow || previewWindow === window) {
+      event.preventDefault();
+      showContractErrorToast('تعذر فتح معاينة العقد في نافذة جديدة. تحقق من إعدادات النوافذ المنبثقة ثم حاول مرة أخرى.');
       return;
     }
+    form.target = previewName;
     previewWindow.document.title = 'جارٍ إنشاء العقد…';
     if (previewWindow.document.body) previewWindow.document.body.textContent = 'جارٍ إنشاء ملف PDF…';
-    if (button) button.disabled = true;
-    try {
-      const response = await fetch(form.action, {
-        method: 'POST',
-        body: new FormData(form),
-        credentials: 'same-origin',
-        headers: {'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/pdf, application/json'}
-      });
-      const contentType = (response.headers.get('Content-Type') || '').toLowerCase();
-      if (!response.ok || !contentType.includes('application/pdf')) {
-        let message = 'تعذر إنشاء العقد. تحقق من البيانات ثم حاول مرة أخرى.';
-        if (contentType.includes('application/json')) {
-          try {
-            const payload = await response.json();
-            if (payload && payload.error) message = String(payload.error);
-          } catch (e) {}
-        }
-        if (!previewWindow.closed) previewWindow.close();
-        showContractErrorToast(message);
-        return;
-      }
-      // Successful generation consumes the submitted token and returns its replacement.
-      // Update the hidden field so this same form can be safely submitted again.
-      const nextToken = response.headers.get('X-AK-Contract-Submission-Token');
-      const tokenInput = form.elements.builder_submission_token;
-      if (nextToken && tokenInput) tokenInput.value = nextToken;
-      const pdfBlob = await response.blob();
-      const pdfUrl = URL.createObjectURL(pdfBlob);
-      previewWindow.location.replace(pdfUrl);
-      window.setTimeout(() => URL.revokeObjectURL(pdfUrl), 60000);
-    } catch (error) {
-      if (!previewWindow.closed) previewWindow.close();
-      showContractErrorToast('تعذر الاتصال بالخادم لإنشاء العقد. تحقق من الاتصال ثم حاول مرة أخرى.');
-    } finally {
-      if (button) button.disabled = false;
-    }
+    // Leave the native form POST/PDF response intact; server errors message the opener.
   });
 })();
 </script>
