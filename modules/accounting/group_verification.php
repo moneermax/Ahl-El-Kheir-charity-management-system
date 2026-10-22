@@ -308,6 +308,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         <div class="col-12">
             <h2><i class="bi bi-clipboard-check me-2"></i>توثيق المجموعات والعائلات</h2>
             <p>الشهر الحالي: <strong><?php echo e($currentMonth); ?></strong></p>
+            <p class="mb-0"><a href="<?php echo APP_URL; ?>modules/accounting/nanny_pre_verification.php" class="btn btn-outline-primary btn-sm"><i class="fas fa-clipboard-check me-1"></i> التحقق المسبق للأسر</a></p>
         </div>
     </div>
 
