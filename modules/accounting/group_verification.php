@@ -13,10 +13,13 @@ if (!Session::isLoggedIn() || Session::getUserRole() !== 'nanny') {
     exit();
 }
 
-$uid = Session::getUserId();
-$currentMonth = date('Y-m');
+$uid = (int)Session::getUserId();
+$requestedMonth = (string)($_POST['month'] ?? $_GET['month'] ?? date('Y-m'));
+$monthIsValid = preg_match('/^([0-9]{4})-([0-9]{2})$/', $requestedMonth, $monthParts) === 1
+    && checkdate((int)$monthParts[2], 1, (int)$monthParts[1]);
+$currentMonth = $monthIsValid ? $requestedMonth : date('Y-m');
 $success_message = '';
-$error_message = '';
+$error_message = $monthIsValid ? '' : 'شهر الصرف المحدد غير صالح. اختر شهراً صحيحاً ثم حاول مرة أخرى.';
 
 // Get selected group from URL
 $selectedGroupId = isset($_GET['group_id']) ? (int)$_GET['group_id'] : null;
@@ -48,7 +51,7 @@ $familyBelongsToGroup = static function (int $familyId, int $groupId): bool {
 };
 
 // Handle POST actions
-if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && verify_csrf()) {
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && verify_csrf() && $monthIsValid) {
     // 1. Bulk verification. This only marks checks as verified; it never clears a check.
     if (isset($_POST['bulk_verify'])) {
         $gid = (int)($_POST['group_id'] ?? 0);
@@ -307,8 +310,16 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     <div class="row mb-4">
         <div class="col-12">
             <h2><i class="bi bi-clipboard-check me-2"></i>توثيق المجموعات والعائلات</h2>
-            <p>الشهر الحالي: <strong><?php echo e($currentMonth); ?></strong></p>
-            <p class="mb-0"><a href="<?php echo APP_URL; ?>modules/accounting/nanny_pre_verification.php" class="btn btn-outline-primary btn-sm"><i class="fas fa-clipboard-check me-1"></i> التحقق المسبق للأسر</a></p>
+            <p>شهر الصرف المحدد: <strong><?php echo e($currentMonth); ?></strong></p>
+            <form method="GET" class="d-flex flex-wrap align-items-end gap-2 mb-2">
+                <?php if ($selectedGroupId): ?><input type="hidden" name="group_id" value="<?php echo (int)$selectedGroupId; ?>"><?php endif; ?>
+                <div>
+                    <label for="verificationMonth" class="form-label mb-1">اختر شهر الصرف</label>
+                    <input type="month" class="form-control" id="verificationMonth" name="month" value="<?php echo e($currentMonth); ?>" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm">عرض الشهر</button>
+            </form>
+            <p class="mb-0"><a href="<?php echo APP_URL; ?>modules/accounting/nanny_pre_verification.php?month=<?php echo rawurlencode($currentMonth); ?>" class="btn btn-outline-primary btn-sm"><i class="fas fa-clipboard-check me-1"></i> التحقق المسبق للأسر</a></p>
         </div>
     </div>
 
@@ -324,7 +335,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 <div class="row g-3">
                     <?php foreach ($myGroups as $group): ?>
                         <div class="col-md-4">
-                            <a href="?group_id=<?php echo $group['group_id']; ?>" class="text-decoration-none">
+                            <a href="?group_id=<?php echo (int)$group['group_id']; ?>&amp;month=<?php echo rawurlencode($currentMonth); ?>" class="text-decoration-none">
                                 <div class="card h-100 <?php echo $selectedGroupId == $group['group_id'] ? 'border-primary border-2' : ''; ?>">
                                     <div class="card-body text-center">
                                         <h6><?php echo e($group['group_name']); ?></h6>
@@ -364,6 +375,8 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                             <?php echo csrf_field(); ?>
                             <input type="hidden" name="bulk_verify" value="1">
                             <input type="hidden" name="group_id" value="<?php echo (int)$selectedGroup['id']; ?>">
+                            <input type="hidden" name="month" value="<?php echo e($currentMonth); ?>">
+                            <input type="hidden" name="month" value="<?php echo e($currentMonth); ?>">
                             <div class="row g-3 align-items-end">
                                 <div class="col-lg-5">
                                     <label for="bulkOperation" class="form-label fw-bold">نوع التوثيق الجماعي</label>
@@ -573,6 +586,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                                 <form method="POST" action="" id="submitGroupForm">
                                     <?php echo csrf_field(); ?>
                                     <input type="hidden" name="group_id" value="<?php echo $selectedGroup['id']; ?>">
+                                    <input type="hidden" name="month" value="<?php echo e($currentMonth); ?>">
                                     <input type="hidden" name="submit_group" value="1">
                                     <button type="button" class="btn btn-success btn-lg" onclick="confirmSubmitGroup(<?php echo $counts['verified_count']; ?>, <?php echo $counts['unverified_count']; ?>, '<?php echo number_format($counts['verified_amount'], 0); ?>', '<?php echo number_format($counts['unverified_amount'], 0); ?>')">
                                         <i class="fas fa-paper-plane me-2"></i> إرسال الأسر الموثقة للمحاسب
