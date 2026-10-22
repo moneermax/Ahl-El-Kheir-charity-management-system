@@ -40,6 +40,7 @@ jobs:
             modules/accounting/lib_transaction_review.php
             modules/accounting/group_verification.php
             modules/accounting/nanny_pre_verification.php
+            lang/bridge/ar_to_en.php
             modules/accounting/lib_admin_fee_policy.php
             modules/accounting/lib.php
             modules/accounting/fm_review_queue.php
@@ -60,6 +61,7 @@ jobs:
           for file in "${files[@]}"; do
             php -l "$file"
           done
+          php tools/i18n_gap.php
 
   migration-mariadb-10-4:
     runs-on: ubuntu-latest
