@@ -4194,3 +4194,8 @@ The project owner explicitly approved online Arabic speech recognition with clea
 
 ## 2026-10-22 — AI assistant voice failure reporting
 A reported post-consent voice failure could not be diagnosed from the UI because the existing error handler collapsed most Web Speech API errors into one generic message. Commit `753a3b225c1a992bcb3a6b1ce627ea365fef3092` maps common error categories to staff-friendly messages and logs only the category to the browser console. This change improves observability but does not establish that the provider or recognition works. Local syntax and browser acceptance remain pending.
+## 2026-10-22 — AI assistant voice privacy and verification boundary
+
+The voice input implementation now uses explicit consent, browser MediaRecorder, and server-side Gemini transcription rather than browser-vendor SpeechRecognition. The PHP endpoint checks session authentication, CSRF, audio MIME type and size, and a per-session audio request limit; it returns transcript text only. Recording data is not persisted to chat history. Source commits: `d5d91e4`, `d30efdb`.
+
+This is a source implementation, not a runtime-verified fix. Verify PHP syntax, consent/decline, permission denial, Arabic and English transcription, editable transcript/no automatic submission, failure handling, and typing fallback locally before closing the issue. Do not enable paid billing or expose the API key.
