@@ -156,8 +156,23 @@ if ($action === 'transcribe_audio') {
     ]);
     $responseBody = curl_exec($ch);
     $status = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curlErrno = curl_errno($ch);
+    $curlError = trim((string)curl_error($ch));
     curl_close($ch);
     if (!is_string($responseBody) || $status < 200 || $status >= 300) {
+        $safeCurlError = preg_replace('/[\\r\\n]+/', ' ', $curlError) ?? '';
+        error_log('[Ahl El Kheir AI transcription] HTTP=' . $status . '; cURL errno=' . $curlErrno . '; cURL error=' . mb_substr($safeCurlError, 0, 240, 'UTF-8'));
+        $geminiError = '';
+        if (is_string($responseBody) && $responseBody !== '') {
+            $errorData = json_decode($responseBody, true);
+            if (is_array($errorData)) {
+                $geminiError = trim((string)($errorData['error']['status'] ?? $errorData['error']['message'] ?? ''));
+            }
+        }
+        if ($geminiError !== '') {
+            $safeGeminiError = preg_replace('/[\\r\\n]+/', ' ', $geminiError) ?? '';
+            error_log('[Ahl El Kheir AI transcription] Gemini response: ' . mb_substr($safeGeminiError, 0, 400, 'UTF-8'));
+        }
         ak_ai_json(502, ['ok' => false, 'message' => 'تعذر تحويل الصوت إلى نص الآن. تحقق من الاتصال ثم حاول مجدداً، أو اكتب سؤالك. / Gemini could not transcribe the audio right now. Check the connection and try again, or type your question.']);
     }
     $decoded = json_decode($responseBody, true);

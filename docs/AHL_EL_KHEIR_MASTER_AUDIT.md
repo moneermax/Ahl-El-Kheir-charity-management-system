@@ -4199,3 +4199,10 @@ A reported post-consent voice failure could not be diagnosed from the UI because
 The voice input implementation now uses explicit consent, browser MediaRecorder, and server-side Gemini transcription rather than browser-vendor SpeechRecognition. The PHP endpoint checks session authentication, CSRF, audio MIME type and size, and a per-session audio request limit; it returns transcript text only. Recording data is not persisted to chat history. Source commits: `d5d91e4`, `d30efdb`.
 
 This is a source implementation, not a runtime-verified fix. Verify PHP syntax, consent/decline, permission denial, Arabic and English transcription, editable transcript/no automatic submission, failure handling, and typing fallback locally before closing the issue. Do not enable paid billing or expose the API key.
+
+
+## 2026-10-22 — Gemini audio transcription diagnostic follow-up
+
+The user-approved MediaRecorder → Gemini transcription path reached the endpoint but returned the generic upstream-failure response in the browser. Source audit found the endpoint was discarding both cURL transport diagnostics and Gemini's structured error response, preventing a root-cause diagnosis. Commit `130af192c49aafae11c1369e7e884e9367016ac8` now logs the HTTP status, cURL errno/error, and a bounded Gemini error status/message to the PHP error log while keeping the user-facing response generic and never logging the API key or audio payload. It also removes the undefined `$lang` reference from the transcription prompt, using one language-neutral bilingual prompt.
+
+**Verification is pending.** The repository connector cannot run PHP lint or exercise the user's local Apache/PHP/Gemini request. Pull `main`, run `D:\\xampp\\php\\php.exe -l D:\\xampp\\htdocs\\AhlElKheir\\modules\\ai_assistant\\chat.php`, then make one short consented recording. If it fails, inspect `D:\\xampp\\apache\\logs\\error.log` for lines beginning `[Ahl El Kheir AI transcription]` and share only those lines; do not share the API key or audio. This is diagnostic instrumentation, not a claim that transcription now succeeds.
