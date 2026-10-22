@@ -1540,3 +1540,8 @@ Commit: `e3b458eb57e618acaf8c8bb0a06df79cd02ece7e`. Local PHP 8.2 lint and brows
 ### 2026-10-22 — Nanny group bulk verification
 
 Active task: `modules/accounting/group_verification.php`. Bulk verification supports one selected check across multiple selected families or all three checks, preserves unrelated flags, logs each family change in `verification_audit_log`, and enforces assigned-group scope server-side. See `docs/ACCOUNTING_NANNY_GROUP_VERIFICATION_CONTINUATION.md`. PHP syntax passed in GitHub Actions run `39715384849`; local runtime/browser verification remains pending. The same broad workflow had an unrelated Stage 5 salary-advance payroll integration failure; do not reopen that closed module for this task.
+
+
+### 2026-10-22 — Nanny group verification controls
+
+The individual family verification action had been displayed for non-pending groups, and its POST handler did not enforce pending status. Commit `e50686f0a8492506459e4465513d03778debc498` aligns the individual POST guard with bulk verification and hides the individual edit button/modal unless the selected group is pending. PHP lint and local runtime/browser verification remain pending; do not treat this as runtime-closed yet.
