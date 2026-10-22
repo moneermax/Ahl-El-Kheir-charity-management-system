@@ -164,7 +164,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && verify_csrf()) {
         $is_bank = isset($_POST['is_bank']) ? 1 : 0;
         $notes = trim($_POST['notes'] ?? '');
 
-        if (!$canAccessGroup($gid, $uid) || !$familyBelongsToGroup($family_id, $gid)) {
+        if (!$canAccessGroup($gid, $uid, true) || !$familyBelongsToGroup($family_id, $gid)) {
             $error_message = 'لا يمكنك تعديل توثيق هذه الأسرة؛ تحقق من تعيين المجموعة والأسرة.';
         } else {
             $pdo = db();
@@ -458,6 +458,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     <br><small class="text-muted"><?php echo date('Y-m-d H:i', strtotime($status['verified_at'])); ?></small>
                 <?php endif; ?>
             </td>
+<?php if (($selectedGroup['verification_status'] ?? '') === 'pending'): ?>
             <td>
                 <button type="button" class="btn btn-sm <?php echo $isComplete ? 'btn-success' : 'btn-primary'; ?>" data-bs-toggle="modal" data-bs-target="#modal<?php echo $f['id']; ?>">
                     <i class="bi <?php echo $isComplete ? 'bi-check-circle' : 'bi-pencil'; ?>"></i> 
@@ -540,6 +541,9 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     </form>
                 </div>
             </div>
+<?php else: ?>
+            <td><span class="text-muted">—</span></td>
+<?php endif; ?>
         </div>
     <?php endforeach; ?>
 </tbody>
