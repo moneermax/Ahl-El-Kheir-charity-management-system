@@ -4143,3 +4143,14 @@ These are source-only changes committed on `main`; PHP lint and local XAMPP beha
 - Added the `hr-job-description-migrations` CI job in `.github/workflows/php-syntax-check.yml`. It imports the checked-in schema into a disposable MariaDB 10.4.32 instance, applies all eight `2026-10-20_hr_job_description_*` migrations in filename sequence, and asserts that an approved HR-manager title-only catalogue row retains its approved status and blank content fields.
 - The same workflow now PHP-lints `modules/hr/contract_builder.php` and `modules/hr/job_description_catalogue.php`.
 - Repository-side safeguards are committed; local `ahl_el_kheir` remains untouched. Do not apply the migrations locally until the CI migration job completes successfully and a backup is available. Local page, prefill and PDF verification is still pending.
+
+## 2026-10-22 — Local verification evidence: HR job-description proposals migration
+
+Evidence from the user's local `ahl_el_kheir` database after applying `database/migrations/2026-10-20_hr_job_description_proposals.sql`:
+- Active rows with `description_status='needs_review'`: 23.
+- Active review rows with blank `reporting_to`: 0.
+- Approved records: IDs 6 and 20 remain `approved`, `is_active=1`, and have nonblank reporting lines.
+- Test record: ID 11 (`HR Test`) is `needs_review`, `is_active=0`.
+The mysql command returned no reported SQL error. The user had created a database backup before applying the migration.
+
+**Audit boundary:** this is direct evidence for the reporting-line backfill and the listed status/active safeguards, not a full before/after audit of every field changed by the SQL. It does not establish that the other seven migrations were applied, nor that the local Contract Builder/catalogue/browser/PDF workflow was runtime-tested. Do not infer Arabic text corruption from garbled console rendering alone; PowerShell/mysql literal encoding previously made direct Arabic-literal checks unreliable.
