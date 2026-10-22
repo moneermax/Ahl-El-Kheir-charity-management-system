@@ -1652,3 +1652,8 @@ Owner-approved scope: online Arabic browser speech recognition is permitted only
 
 ## AI assistant voice failure diagnostic — 2026-10-22
 The owner reports online Arabic speech recognition still fails after consent. Latest source commit `753a3b225c1a992bcb3a6b1ce627ea365fef3092` adds friendly messages for common recognition errors and console category logging. Pull main, lint `includes/ai_assistant_widget.php` and `modules/ai_assistant/chat.php`, retry the microphone once, and report the visible specific message. If still unresolved, inspect only the `Ahl El Kheir voice recognition error:` category in the browser console. Do not claim runtime success until verified; do not bypass consent or introduce another speech provider without review.
+## AI assistant voice transcription checkpoint — 2026-10-22
+
+The owner approved sending recorded audio to Google Gemini for transcription after clear consent before recording/transmission. Commits `d5d91e4` and `d30efdb` implement MediaRecorder capture, authenticated/CSRF-protected PHP transcription, size/MIME/rate limits, and editable transcript insertion without auto-send. Audio is not saved in chat history; the Gemini key remains server-side. This is not yet runtime verified.
+
+Next: pull `main`; run PHP 8.2 syntax checks on `includes/ai_assistant_widget.php` and `modules/ai_assistant/chat.php`; verify consent decline, microphone denial, Arabic/English transcript, manual stop and 20-second cap, editing before sending, API failure, and typing fallback at the real local URL with the existing `ahl_el_kheir` database. Preserve local untracked files and do not enable paid billing.
