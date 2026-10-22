@@ -170,10 +170,12 @@ $restrictedTerms = [
     'medical', 'health', 'diagnosis', 'address', 'phone', 'bank', 'iban', 'personal',
     'حافز', 'راتب', 'سلف', 'اسرة', 'كفالة', 'كفيل', 'مشرف', 'ناني', 'صرف',
     'تحقق', 'اعتماد', 'صلاحيات', 'مشروع', 'محاسبة', 'سياسة', 'حضور', 'مستفيد',
-    'موظف', 'طفل', 'يتيم', 'والدة', 'عنوان', 'هاتف', 'صحي', 'طبي', 'مرض', 'بيانات', 'اسم', 'بنك'
+    'موظف', 'طفل', 'يتيم', 'والدة', 'عنوان', 'هاتف', 'صحي', 'طبي', 'مرض', 'بيانات', 'بنك'
 ];
 foreach ($restrictedTerms as $term) {
-    if (mb_strpos($normalizedQuestion, ak_ai_normalize($term), 0, 'UTF-8') !== false) {
+    $normalizedTerm = ak_ai_normalize($term);
+    $pattern = '/(?<![\p{L}\p{N}])' . preg_quote($normalizedTerm, '/') . '(?![\p{L}\p{N}])/u';
+    if ($normalizedTerm !== '' && preg_match($pattern, $normalizedQuestion) === 1) {
         ak_ai_json(200, [
             'ok' => true,
             'mode' => 'not_sent',
