@@ -152,3 +152,89 @@ ak_ai_json(200, [
     'sources' => [],
     'message' => 'لم أجد إجابة موثقة في الجزء المسموح من دليل المستخدم. / I could not find a verified answer in the user-guide sections available to your role. Your question has not been sent to Google.',
 ]);
+
+if (($input['allow_google'] ?? false) !== true) {
+    ak_ai_json(200, [
+        'ok' => true,
+        'mode' => 'not_found',
+        'sources' => [],
+        'message' => 'لم أجد إجابة موثقة في الدليل المحلي. لم يتم إرسال سؤالك إلى Google. يمكنك تفعيل الموافقة للأسئلة العامة غير السرية فقط. / No verified local answer was found. Your question was not sent to Google. You may opt in for general, non-confidential questions only.',
+    ]);
+}
+
+$normalizedQuestion = ak_ai_normalize($question);
+$restrictedTerms = [
+    'ahl el kheir', 'family', 'families', 'sponsor', 'sponsorship', 'payroll',
+    'salary', 'advance', 'accounting', 'disbursement', 'verification', 'nanny',
+    'supervisor', 'workflow', 'permission', 'project', 'database', 'policy',
+    'approval', 'attendance', 'beneficiary', 'حافز', 'راتب', 'سلف', 'اسرة',
+    'كفالة', 'كفيل', 'مشرف', 'ناني', 'صرف', 'تحقق', 'اعتماد', 'صلاحيات',
+    'مشروع', 'محاسبة', 'سياسة', 'حضور', 'مستفيد'
+];
+foreach ($restrictedTerms as $term) {
+    if (mb_strpos($normalizedQuestion, ak_ai_normalize($term), 0, 'UTF-8') !== false) {
+        ak_ai_json(200, [
+            'ok' => true,
+            'mode' => 'not_sent',
+            'sources' => [],
+            'message' => 'لم يُرسل السؤال إلى Google لأنه يتعلق بالنظام أو بإجراء داخلي، ولم أجد إجابة موثقة في الدليل المتاح لدورك. / This question was not sent to Google because it concerns the application or an internal procedure, and no verified answer was found in the guide available to your role.',
+        ]);
+    }
+}
+if (str_contains($question, '@')
+    || preg_match('/[0-9]{7,}/', $question)
+    || preg_match('/password|api.?key|token|national.?id|account.?number|كلمة المرور|رقم الهوية|رقم الحساب/iu', $question)) {
+    ak_ai_json(200, [
+        'ok' => true,
+        'mode' => 'not_sent',
+        'sources' => [],
+        'message' => 'لم يُرسل السؤال إلى Google لأنه قد يتضمن معلومات حساسة. / This question was not sent to Google because it may contain sensitive information.',
+    ]);
+}
+
+$hostingAi = isset($hostingConfig['ai']) && is_array($hostingConfig['ai']) ? $hostingConfig['ai'] : [];
+$apiKey = trim((string)(getenv('GEMINI_API_KEY') ?: ($hostingAi['gemini_api_key'] ?? '')));
+$model = trim((string)(getenv('GEMINI_MODEL') ?: ($hostingAi['gemini_model'] ?? 'gemini-2.5-flash')));
+if ($apiKey === '' || !preg_match('/^[A-Za-z0-9._-]{1,80}$/', $model) || !function_exists('curl_init')) {
+    ak_ai_json(200, [
+        'ok' => true,
+        'mode' => 'unconfigured',
+        'sources' => [],
+        'message' => 'خدمة الإجابات العامة غير مهيأة بعد. لم يتم إرسال السؤال إلى أي خدمة خارجية. / General AI is not configured. Nothing was sent to an external service.',
+    ]);
+}
+
+$payload = [
+    'system_instruction' => ['parts' => [['text' => 'You are a general assistant. You have no access to Ahl El Kheir internal documentation, policies, database or records. Do not invent project-specific rules. If asked about internal procedures, say you cannot verify them and direct the user to the approved local guide or responsible staff. Answer concisely in Arabic or English.']]],
+    'contents' => [['role' => 'user', 'parts' => [['text' => $question]]]],
+    'generationConfig' => ['temperature' => 0.2, 'maxOutputTokens' => 450],
+];
+$url = 'https://generativelanguage.googleapis.com/v1beta/models/' . rawurlencode($model) . ':generateContent';
+$ch = curl_init($url);
+curl_setopt_array($ch, [
+    CURLOPT_POST => true,
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_HTTPHEADER => ['Content-Type: application/json', 'x-goog-api-key: ' . $apiKey],
+    CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+    CURLOPT_CONNECTTIMEOUT => 5,
+    CURLOPT_TIMEOUT => 18,
+    CURLOPT_SSL_VERIFYPEER => true,
+    CURLOPT_SSL_VERIFYHOST => 2,
+]);
+$responseBody = curl_exec($ch);
+$status = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
+if (!is_string($responseBody) || $status < 200 || $status >= 300) {
+    ak_ai_json(200, [
+        'ok' => true,
+        'mode' => 'unavailable',
+        'sources' => [],
+        'message' => 'تعذر الحصول على إجابة عامة الآن. استخدم الدليل المحلي أو حاول لاحقاً. / General AI is unavailable right now. Use the local guide or try again later.',
+    ]);
+}
+$decoded = json_decode($responseBody, true);
+$answer = trim((string)($decoded['candidates'][0]['content']['parts'][0]['text'] ?? ''));
+if ($answer === '') {
+    ak_ai_json(200, ['ok' => true, 'mode' => 'unavailable', 'message' => 'لم تصل إجابة قابلة للاستخدام. / No usable answer returned.']);
+}
+ak_ai_json(200, ['ok' => true, 'mode' => 'gemini_general', 'message' => $answer, 'sources' => []]);
