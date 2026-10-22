@@ -131,9 +131,7 @@ if ($action === 'transcribe_audio') {
         ak_ai_json(503, ['ok' => false, 'message' => 'الإدخال الصوتي غير مهيأ على الخادم. يمكنك كتابة سؤالك بدلاً من ذلك. / Voice transcription is not configured on the server. You can type your question instead.']);
     }
 
-    $transcriptionPrompt = $lang === 'ar'
-        ? 'Transcribe the spoken audio exactly into written text. The speaker may use Arabic, including Sudanese Arabic, or English. Preserve the language and meaning. Return only the transcription, with no commentary, translation, or labels.'
-        : 'Transcribe the spoken audio exactly into written text. The speaker may use English or Arabic. Preserve the language and meaning. Return only the transcription, with no commentary, translation, or labels.';
+    $transcriptionPrompt = 'Transcribe the spoken audio exactly into written text. The speaker may use Arabic, including Sudanese Arabic, or English. Preserve the original language and meaning. Return only the transcription, with no commentary, translation, or labels.';
     $payload = [
         'contents' => [[
             'role' => 'user',
@@ -158,8 +156,23 @@ if ($action === 'transcribe_audio') {
     ]);
     $responseBody = curl_exec($ch);
     $status = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curlErrno = curl_errno($ch);
+    $curlError = trim((string)curl_error($ch));
     curl_close($ch);
     if (!is_string($responseBody) || $status < 200 || $status >= 300) {
+        $safeCurlError = preg_replace('/[\\r\\n]+/', ' ', $curlError) ?? '';
+        error_log('[Ahl El Kheir AI transcription] HTTP=' . $status . '; cURL errno=' . $curlErrno . '; cURL error=' . mb_substr($safeCurlError, 0, 240, 'UTF-8'));
+        $geminiError = '';
+        if (is_string($responseBody) && $responseBody !== '') {
+            $errorData = json_decode($responseBody, true);
+            if (is_array($errorData)) {
+                $geminiError = trim((string)($errorData['error']['status'] ?? $errorData['error']['message'] ?? ''));
+            }
+        }
+        if ($geminiError !== '') {
+            $safeGeminiError = preg_replace('/[\\r\\n]+/', ' ', $geminiError) ?? '';
+            error_log('[Ahl El Kheir AI transcription] Gemini response: ' . mb_substr($safeGeminiError, 0, 400, 'UTF-8'));
+        }
         ak_ai_json(502, ['ok' => false, 'message' => 'تعذر تحويل الصوت إلى نص الآن. تحقق من الاتصال ثم حاول مجدداً، أو اكتب سؤالك. / Gemini could not transcribe the audio right now. Check the connection and try again, or type your question.']);
     }
     $decoded = json_decode($responseBody, true);
