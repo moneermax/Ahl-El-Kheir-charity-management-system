@@ -56,3 +56,40 @@ function ak_ai_normalize(string $value): string {
     $value = preg_replace('/[\x{064B}-\x{065F}\x{0670}\x{0640}]/u', '', $value) ?? $value;
     return preg_replace('/[^\p{L}\p{N}\s]/u', ' ', $value) ?? $value;
 }
+
+function ak_ai_allowed_sections(string $role): array {
+    $map = [
+        'admin' => ['## 1. All employees'],
+        'sudo' => ['## 1. All employees'],
+        'super_admin' => ['## 1. All employees'],
+        'general_manager' => ['## 1. All employees', '## 2. GM'],
+        'gm' => ['## 1. All employees', '## 2. GM'],
+        'vice_general_manager' => ['## 1. All employees', '## 3. VGM'],
+        'vgm' => ['## 1. All employees', '## 3. VGM'],
+        'financial_manager' => ['## 1. All employees', '## 4. FM'],
+        'fm' => ['## 1. All employees', '## 4. FM'],
+        'finance' => ['## 1. All employees', '## 4. FM'],
+        'accountant' => ['## 1. All employees', '## 5. Accountant / Accountant Staff'],
+        'accountant_staff' => ['## 1. All employees', '## 5. Accountant / Accountant Staff'],
+        'supervisor' => ['## 1. All employees', '## 6. Supervisor'],
+        'nanny' => ['## 1. All employees', '## 7. Nanny'],
+        'administration' => ['## 1. All employees', '## 8. Administration'],
+        'staff' => ['## 1. All employees', '## 9. Staff'],
+        'social_media' => ['## 1. All employees', '## 10. Social Media'],
+        'projects_manager' => ['## 1. All employees', '## 11. PM'],
+        'project_supervisor' => ['## 1. All employees', '## 12. PS'],
+        'hr_manager' => ['## 1. All employees', '## 13. HR Manager / HR Staff'],
+        'hr_staff' => ['## 1. All employees', '## 13. HR Manager / HR Staff'],
+    ];
+    return $map[$role] ?? ['## 1. All employees'];
+}
+
+function ak_ai_local_answer(string $question, string $role, string $root): ?array {
+    $path = $root . '/docs/AHL_EL_KHEIR_EMPLOYEE_TASKS_AND_USER_GUIDE.md';
+    if (!is_file($path) || !is_readable($path)) return null;
+    $content = file_get_contents($path);
+    if (!is_string($content) || $content === '') return null;
+    $allowed = ak_ai_allowed_sections($role);
+    $section = '';
+    $paragraph = '';
+    $candidates = [];
