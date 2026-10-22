@@ -167,8 +167,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && verify_csrf() && $monthIsVa
         $is_bank = isset($_POST['is_bank']) ? 1 : 0;
         $notes = trim($_POST['notes'] ?? '');
 
-        if (!$canAccessGroup($gid, $uid, true) || !$familyBelongsToGroup($family_id, $gid)) {
-            $error_message = 'لا يمكنك تعديل توثيق هذه الأسرة؛ تحقق من تعيين المجموعة وحالتها والأسرة.';
+        if (!$canAccessGroup($gid, $uid) || !$familyBelongsToGroup($family_id, $gid)) {
+            $error_message = 'لا يمكنك تعديل توثيق هذه الأسرة؛ تحقق من تعيين المجموعة والأسرة.';
         } else {
             $pdo = db();
             try {
@@ -473,7 +473,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 <?php endif; ?>
             </td>
 <td>
-                <?php if ($groupAllowsVerification): ?>
+                <?php if ($selectedGroup !== null): ?>
                 <button type="button" class="btn btn-sm <?php echo $isComplete ? 'btn-success' : 'btn-primary'; ?>" data-bs-toggle="modal" data-bs-target="#modal<?php echo $f['id']; ?>">
                     <i class="bi <?php echo $isComplete ? 'bi-check-circle' : 'bi-pencil'; ?>"></i> 
                     <?php echo $isComplete ? 'مراجعة' : 'توثيق'; ?>
@@ -484,7 +484,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             </td>
         </tr>
 
-        <?php if ($groupAllowsVerification): ?>
+        <?php if ($selectedGroup !== null): ?>
         <!-- Modal -->
         <div class="modal fade" id="modal<?php echo $f['id']; ?>" tabindex="-1">
             <div class="modal-dialog">
