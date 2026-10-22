@@ -38,6 +38,7 @@ jobs:
             modules/hr/salary_advance_processing.php
             modules/hr/salary_advance_request.php
             modules/accounting/lib_transaction_review.php
+            modules/accounting/group_verification.php
             modules/accounting/lib_admin_fee_policy.php
             modules/accounting/lib.php
             modules/accounting/fm_review_queue.php
