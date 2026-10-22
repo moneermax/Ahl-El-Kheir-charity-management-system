@@ -1648,3 +1648,7 @@ The user requested a bilingual role-aware assistant using the existing applicati
 - .github/workflows/php-syntax-check.yml: PHP lint coverage added.
 
 No database/schema changes or business actions. Local guide excerpts and internal project material are not sent to Google. Current limitations and the full verification checklist are in docs/CHATGPT_AI_ASSISTANT_CONTINUATION.md. PHP CI, local browser/session acceptance, and InfinityFree API connectivity remain unverified.
+
+
+### 2026-10-22 — AI assistant Arabic retrieval follow-up
+The first local browser test showed the assistant UI works, but the Arabic question about the first step after sign-in missed local retrieval and reached the unconfigured-Gemini fallback. Root cause: the canonical employee guide described sign-in only in English while retrieval is keyword-based. The guide now includes a reviewed Arabic/English post-login instruction: confirm the dashboard matches the user's job role, and complete a required password change if prompted. Retest the exact question locally before configuring Gemini. No application logic, schema, or privacy boundary changed.
