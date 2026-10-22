@@ -1660,3 +1660,6 @@ The assistant widget now omits the two introductory privacy notices from the pan
 
 ### 2026-10-22 — AI assistant launcher / chat history
 The assistant launcher has a gold gradient, stronger shadow, hover state, and keyboard-focus outline (commit `f2e92ac73692ac95a340c338811f565ed3839df3`). Persistent chat history is a requested next step but is not implemented: inspect the actual local `users` primary-key schema before writing a migration; never guess FK types or add runtime DDL. See `docs/CHATGPT_AI_ASSISTANT_CONTINUATION.md`.
+
+### 2026-10-22 — AI assistant persistent history
+Per-user chat history UI/API and explicit migration are committed on `main`: `database/migrations/2026-10-22_ai_assistant_chat_history.sql`. Local schema evidence confirmed `users.id INT UNSIGNED`, matching the FK. Application runtime does not create tables. Migration application and local PHP/browser/security verification remain pending. See `docs/CHATGPT_AI_ASSISTANT_CONTINUATION.md`.
