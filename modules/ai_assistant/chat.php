@@ -93,3 +93,28 @@ function ak_ai_local_answer(string $question, string $role, string $root): ?arra
     $section = '';
     $paragraph = '';
     $candidates = [];
+
+    $flush = static function () use (&$paragraph, &$section, &$candidates, $allowed): void {
+        $text = trim($paragraph);
+        if ($text !== '' && in_array($section, $allowed, true) && mb_strlen($text, 'UTF-8') >= 25 && mb_strlen($text, 'UTF-8') <= 1800) {
+            $candidates[] = ['section' => $section, 'text' => $text];
+        }
+        $paragraph = '';
+    };
+    foreach (preg_split('/\R/u', $content) ?: [] as $line) {
+        if (str_starts_with($line, '## ')) {
+            $flush();
+            $section = trim($line);
+        } elseif (trim($line) === '' || preg_match('/^#{1,4}\s/u', $line) || str_starts_with(trim($line), '|')) {
+            $flush();
+        } else {
+            $paragraph .= ($paragraph === '' ? '' : "\n") . $line;
+        }
+    }
+    $flush();
+    $normalizedQuestion = ak_ai_normalize($question);
+    $terms = array_values(array_unique(array_filter(
+        preg_split('/\s+/u', $normalizedQuestion) ?: [],
+        static fn(string $term): bool => mb_strlen($term, 'UTF-8') >= 3
+    )));
+    if (!$terms) return null;
