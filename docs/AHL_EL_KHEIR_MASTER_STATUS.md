@@ -3876,3 +3876,7 @@ The first local browser test showed the assistant UI works, but the Arabic quest
 
 ### 2026-10-22 — AI assistant UI refinement
 The assistant widget now omits the two introductory privacy notices from the panel, no longer renders source filenames below answers, shows a Font Awesome comments icon beside the launcher text, and starts with the Google-consent checkbox checked. The user's checkbox choice is retained between messages instead of being reset after each submission. The endpoint still performs local-first retrieval and still blocks internal/sensitive prompts from Google; a checked box does not bypass those filters. Source commit: `5149e20b6e42a393ca59fd6d84cec12edaf08372`. PHP lint and browser regression checks for this UI refinement are pending.
+
+
+### 2026-10-22 — AI assistant chat history
+The existing assistant now has source implementation for saved conversations, history listing/loading, and a new-chat action. Conversations and messages are scoped to the authenticated user in the endpoint; saved history is not supplied to Gemini. Migration `database/migrations/2026-10-22_ai_assistant_chat_history.sql` uses `users.id INT UNSIGNED`, confirmed by local `SHOW CREATE TABLE users`. Migration application and local runtime/security verification are pending. Do not describe this as runtime verified yet. Details: `docs/CHATGPT_AI_ASSISTANT_CONTINUATION.md`.
