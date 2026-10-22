@@ -162,18 +162,36 @@ if ($action === 'transcribe_audio') {
     if (!is_string($responseBody) || $status < 200 || $status >= 300) {
         $safeCurlError = preg_replace('/[\\r\\n]+/', ' ', $curlError) ?? '';
         error_log('[Ahl El Kheir AI transcription] HTTP=' . $status . '; cURL errno=' . $curlErrno . '; cURL error=' . mb_substr($safeCurlError, 0, 240, 'UTF-8'));
-        $geminiError = '';
+
+        $geminiErrorStatus = '';
+        $geminiErrorMessage = '';
         if (is_string($responseBody) && $responseBody !== '') {
             $errorData = json_decode($responseBody, true);
             if (is_array($errorData)) {
-                $geminiError = trim((string)($errorData['error']['status'] ?? $errorData['error']['message'] ?? ''));
+                $geminiErrorStatus = strtoupper(trim((string)($errorData['error']['status'] ?? '')));
+                $geminiErrorMessage = trim((string)($errorData['error']['message'] ?? ''));
             }
         }
-        if ($geminiError !== '') {
-            $safeGeminiError = preg_replace('/[\\r\\n]+/', ' ', $geminiError) ?? '';
+        $safeGeminiError = preg_replace('/[\\r\\n]+/', ' ', $geminiErrorStatus . ' ' . $geminiErrorMessage) ?? '';
+        if ($safeGeminiError !== '') {
             error_log('[Ahl El Kheir AI transcription] Gemini response: ' . mb_substr($safeGeminiError, 0, 400, 'UTF-8'));
         }
-        ak_ai_json(502, ['ok' => false, 'message' => 'تعذر تحويل الصوت إلى نص الآن. تحقق من الاتصال ثم حاول مجدداً، أو اكتب سؤالك. / Gemini could not transcribe the audio right now. Check the connection and try again, or type your question.']);
+
+        // Give the user a useful, non-technical next step without exposing provider details.
+        if ($curlErrno !== 0 || !is_string($responseBody)) {
+            $failureMessage = 'تعذر الاتصال بخدمة تحويل الصوت. يمكنك المحاولة لاحقاً أو كتابة سؤالك. / Could not reach the transcription service. Please try later or type your question.';
+        } elseif ($status === 401 || $status === 403 || str_contains($geminiErrorStatus, 'UNAUTHENTICATED') || str_contains($geminiErrorStatus, 'PERMISSION_DENIED') || stripos($geminiErrorMessage, 'api key') !== false) {
+            $failureMessage = 'إعداد الاتصال بخدمة تحويل الصوت يحتاج إلى مراجعة من مسؤول النظام. يمكنك كتابة سؤالك الآن. / The transcription service setup needs administrator attention. You can type your question for now.';
+        } elseif ($status === 429 || str_contains($geminiErrorStatus, 'RESOURCE_EXHAUSTED')) {
+            $failureMessage = 'خدمة تحويل الصوت مشغولة أو وصلت إلى حد الاستخدام المؤقت. حاول لاحقاً أو اكتب سؤالك. / The transcription service is temporarily rate-limited. Please try later or type your question.';
+        } elseif ($status === 404 || str_contains($geminiErrorStatus, 'NOT_FOUND')) {
+            $failureMessage = 'إعداد نموذج تحويل الصوت يحتاج إلى مراجعة من مسؤول النظام. يمكنك كتابة سؤالك الآن. / The transcription model setup needs administrator attention. You can type your question for now.';
+        } elseif ($status === 400 || str_contains($geminiErrorStatus, 'INVALID_ARGUMENT')) {
+            $failureMessage = 'تعذر قراءة صيغة هذا التسجيل. جرّب تسجيلاً قصيراً آخر أو اكتب سؤالك. / This recording format could not be processed. Try a short new recording or type your question.';
+        } else {
+            $failureMessage = 'تعذر تحويل الصوت إلى نص الآن. يمكنك المحاولة لاحقاً أو كتابة سؤالك. / Audio transcription is temporarily unavailable. Please try later or type your question.';
+        }
+        ak_ai_json(502, ['ok' => false, 'message' => $failureMessage]);
     }
     $decoded = json_decode($responseBody, true);
     $transcript = trim((string)($decoded['candidates'][0]['content']['parts'][0]['text'] ?? ''));
