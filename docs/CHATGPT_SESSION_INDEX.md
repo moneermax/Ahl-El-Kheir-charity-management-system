@@ -1679,3 +1679,8 @@ The owner approved online Arabic speech recognition only with clear consent befo
 
 ### 2026-10-22 — AI voice recognition diagnostic checkpoint
 Owner reports online Arabic speech recognition still fails after consent. Source audit found the widget hid all non-permission failures behind one generic message. Commit `753a3b225c1a992bcb3a6b1ce627ea365fef3092` adds plain-language messages for common failure categories and console-only category logging. This is not runtime-verified; see `docs/CHATGPT_AI_ASSISTANT_CONTINUATION.md` for the next verification step.
+### 2026-10-22 — AI assistant direct Gemini audio transcription
+
+The owner approved transmitting recorded voice to Google's Gemini API for transcription, after explicit consent before recording/transmission. Commits `d5d91e4` and `d30efdb` replace browser-vendor speech recognition with a MediaRecorder → authenticated PHP endpoint → Gemini transcription flow. The transcript appears in the editable question box and is not submitted automatically; audio is not saved in chat history. Server-side Gemini key required; do not enable paid billing.
+
+Local acceptance remains pending: pull main, PHP-lint `includes/ai_assistant_widget.php` and `modules/ai_assistant/chat.php`, then test consent, Arabic/English transcript, microphone denial, transcription failure, transcript editing, and typing fallback on the existing local app/database. Do not claim runtime success before user verification.
