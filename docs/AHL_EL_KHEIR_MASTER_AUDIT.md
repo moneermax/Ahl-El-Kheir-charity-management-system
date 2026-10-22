@@ -4190,3 +4190,7 @@ The user reported repeated failure to answer a Nanny group-navigation question d
 
 ## 2026-10-22 — AI assistant online speech privacy and acceptance boundary
 The project owner explicitly approved online Arabic speech recognition with clear user consent before audio processing and a typing fallback. Commit `18bf40af2f905b5509396d92e17374c0c79ecd7c` updates the existing assistant widget only. The consent prompt explains that the browser may send audio to its speech-recognition provider; recognition starts only after affirmative action. Consent is page-session-only, cancellation is available, and recognized text remains editable before the user submits it. The feature does not send audio to the PHP assistant endpoint. Actual provider behavior and browser availability remain browser-dependent. Local PHP syntax and runtime acceptance are pending; no success claim is made yet.
+
+
+## 2026-10-22 — AI assistant voice failure reporting
+A reported post-consent voice failure could not be diagnosed from the UI because the existing error handler collapsed most Web Speech API errors into one generic message. Commit `753a3b225c1a992bcb3a6b1ce627ea365fef3092` maps common error categories to staff-friendly messages and logs only the category to the browser console. This change improves observability but does not establish that the provider or recognition works. Local syntax and browser acceptance remain pending.
