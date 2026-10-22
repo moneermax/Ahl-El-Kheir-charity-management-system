@@ -3880,3 +3880,7 @@ The assistant widget now omits the two introductory privacy notices from the pan
 
 ### 2026-10-22 — AI assistant chat history
 The existing assistant now has source implementation for saved conversations, history listing/loading, and a new-chat action. Conversations and messages are scoped to the authenticated user in the endpoint; saved history is not supplied to Gemini. Migration `database/migrations/2026-10-22_ai_assistant_chat_history.sql` uses `users.id INT UNSIGNED`, confirmed by local `SHOW CREATE TABLE users`. Migration application and local runtime/security verification are pending. Do not describe this as runtime verified yet. Details: `docs/CHATGPT_AI_ASSISTANT_CONTINUATION.md`.
+
+## 2026-10-22 — AI assistant follow-up acceptance status
+
+The user reported that Arabic post-login guidance worked on a subsequent attempt, while the Arabic Nanny assigned-groups question missed local retrieval and on-device speech dictation failed. Follow-up source commits add Arabic Nanny navigation guidance, Arabic normalization, Arabic internal-workflow blocking from external AI, and visible browser speech error codes. These changes are committed on `main`; local lint and browser retest remain pending. Voice support must not be described as fixed until the exact browser error is diagnosed and successful dictation is verified. See `docs/CHATGPT_AI_ASSISTANT_CONTINUATION.md`.
