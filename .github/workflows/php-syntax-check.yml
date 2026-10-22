@@ -23,11 +23,13 @@ jobs:
           extensions: pdo_mysql
           coverage: none
 
-      - name: Lint salary-advance PHP files
+      - name: Lint selected PHP files
         shell: bash
         run: |
           set -euo pipefail
           files=(
+            modules/hr/contract_builder.php
+            modules/hr/job_description_catalogue.php
             modules/hr/lib_salary_advance_repayment.php
             modules/hr/lib_salary_advance_request.php
             modules/hr/lib_salary_advance_policy.php
