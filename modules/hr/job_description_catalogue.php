@@ -13,6 +13,23 @@ if (!Session::isLoggedIn() || !in_array($role, ['hr_manager', 'hr_staff', 'admin
 }
 $canApprove = in_array($role, ['hr_manager', 'admin'], true);
 $pdo = db();
+$jobDescriptionCatalogueAvailable = (bool) dbFetchOne(
+    "SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ? LIMIT 1",
+    ['hr_job_description_templates']
+);
+if (!$jobDescriptionCatalogueAvailable) {
+    http_response_code(503);
+    $pageTitle = 'فهرس الأوصاف الوظيفية';
+    $active = 'hr';
+    require_once __DIR__ . '/../../includes/header.php';
+    echo '<div class="container py-4"><div class="alert alert-warning" role="status">'
+        . 'فهرس الأوصاف الوظيفية غير مهيأ في قاعدة البيانات الحالية. لم يتم تغيير أي بيانات. '
+        . 'يجب تطبيق ترحيلات فهرس الأوصاف الوظيفية بالترتيب قبل استخدام هذه الصفحة. '
+        . '<a class="alert-link" href="' . e(APP_URL) . 'modules/hr/contract_builder.php">العودة إلى بوابة عقود العمل</a>'
+        . '</div></div>';
+    require_once __DIR__ . '/../../includes/footer.php';
+    exit;
+}
 $message = '';
 $error = '';
 $editingId = (int)($_GET['id'] ?? $_POST['id'] ?? 0);
