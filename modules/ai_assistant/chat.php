@@ -204,14 +204,24 @@ if ($action === 'transcribe_audio') {
         foreach ($decoded['steps'] as $step) {
             foreach ((array)($step['content'] ?? []) as $part) {
                 if (isset($part['text']) && is_string($part['text'])) {
-                    $transcript .= ($transcript === '' ? '' : "\\n") . $part['text'];
+                    $transcript .= ($transcript === '' ? '' : "\n") . $part['text'];
                 }
             }
         }
         $transcript = trim($transcript);
     }
     if ($transcript === '' || mb_strlen($transcript, 'UTF-8') > 1000) {
-        ak_ai_json(422, ['ok' => false, 'message' => 'لم نتمكن من استخراج نص واضح من التسجيل. حاول مرة أخرى أو اكتب سؤالك. / No usable transcript was returned. Try again or type your question.']);
+        // Diagnose the response contract without logging audio, API keys, or any returned transcript.
+        $responseShape = [
+            'json_valid' => is_array($decoded),
+            'top_level_keys' => is_array($decoded) ? array_slice(array_keys($decoded), 0, 20) : [],
+            'interaction_status' => is_array($decoded) ? (string)($decoded['status'] ?? '') : '',
+            'output_text_length' => is_array($decoded) ? mb_strlen((string)($decoded['output_text'] ?? ''), 'UTF-8') : 0,
+            'steps_count' => is_array($decoded) && is_array($decoded['steps'] ?? null) ? count($decoded['steps']) : 0,
+            'output_count' => is_array($decoded) && is_array($decoded['output'] ?? null) ? count($decoded['output']) : 0,
+        ];
+        error_log('[Ahl El Kheir AI transcription] Empty transcript response shape: ' . json_encode($responseShape, JSON_UNESCAPED_SLASHES));
+        ak_ai_json(422, ['ok' => false, 'message' => 'استجابت خدمة تحويل الصوت بصيغة غير متوقعة. تم تسجيل تفاصيل فنية آمنة للمراجعة؛ يمكنك كتابة سؤالك الآن. / The transcription service returned an unexpected response. Safe technical diagnostics were logged; you can type your question for now.']);
     }
     ak_ai_json(200, ['ok' => true, 'transcript' => $transcript]);
 }
