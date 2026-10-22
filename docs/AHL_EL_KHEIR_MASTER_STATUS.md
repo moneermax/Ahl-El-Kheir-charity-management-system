@@ -3896,3 +3896,6 @@ The owner approved online Arabic speech recognition with clear consent before au
 
 ## 2026-10-22 — AI assistant voice diagnostics
 The user reports voice recognition fails after consent. The widget previously hid the specific browser failure behind a generic message. Commit `753a3b225c1a992bcb3a6b1ce627ea365fef3092` adds plain-language handling for common speech-recognition errors. Runtime success is not claimed; local lint and browser retest are pending. Details: `docs/CHATGPT_AI_ASSISTANT_CONTINUATION.md`.
+## 2026-10-22 — AI assistant voice transcription implementation
+
+Implemented the owner-approved direct Gemini audio-transcription path on `main` (`d5d91e4`, `d30efdb`). Audio recording requires explicit consent, is sent to Gemini through the authenticated PHP endpoint, is not stored in chat history, and returns editable text without auto-submission. API key remains server-side. PHP lint and local browser/runtime acceptance are pending; do not mark voice fixed until verified against the existing local app and database.
