@@ -1544,4 +1544,4 @@ Active task: `modules/accounting/group_verification.php`. Bulk verification supp
 
 ### 2026-10-22 — Nanny group verification controls
 
-The individual family verification action had been displayed for non-pending groups, and its POST handler did not enforce pending status. Commit `e50686f0a8492506459e4465513d03778debc498` aligns the individual POST guard with bulk verification and hides the individual edit button/modal unless the selected group is pending. PHP lint and local runtime/browser verification remain pending; do not treat this as runtime-closed yet.
+The individual family verification action had been displayed for non-pending groups, and its POST handler did not enforce pending status. Commit `e50686f0a8492506459e4465513d03778debc498` adds the individual POST pending-state guard; follow-up commit `da5320d05e2656bb9d6e1f4a7a94b94b032fd177` corrects the markup so the individual edit button/modal only render for pending groups. PHP lint and local runtime/browser verification remain pending; do not treat this as runtime-closed yet.
