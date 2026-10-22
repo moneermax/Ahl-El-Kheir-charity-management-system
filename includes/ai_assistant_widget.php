@@ -10,7 +10,7 @@ $akAiCsrf = function_exists('csrf_token') ? csrf_token() : '';
     <form id="ak-ai-form"><label class="ak-ai-consent"><input type="checkbox" id="ak-ai-consent" checked> <?php echo e(AK_LANG === 'ar' ? 'أوافق على إرسال السؤال العام غير السري إلى Google' : 'Allow sending this general, non-confidential question to Google'); ?></label><div class="ak-ai-compose"><textarea id="ak-ai-question" rows="2" maxlength="1000" required></textarea><button type="button" id="ak-ai-mic" disabled aria-label="<?php echo e(AK_LANG === 'ar' ? 'إدخال صوتي' : 'Voice input'); ?>">🎙</button><button type="submit" id="ak-ai-send"><?php echo e(AK_LANG === 'ar' ? 'إرسال' : 'Send'); ?></button></div></form>
     <div id="ak-ai-voice-consent" role="dialog" aria-labelledby="ak-ai-voice-consent-title" hidden>
       <strong id="ak-ai-voice-consent-title"><?php echo e(AK_LANG === 'ar' ? 'الموافقة على الإدخال الصوتي' : 'Allow voice input'); ?></strong>
-      <p><?php echo e(AK_LANG === 'ar' ? 'لتحويل كلامك إلى نص، سيستخدم المتصفح خدمة التعرف على الكلام عبر الإنترنت، وقد يُرسل إليها صوتك لمعالجته. لن يبدأ الإدخال الصوتي قبل موافقتك. يمكنك الرفض وكتابة سؤالك بدلاً من ذلك.' : 'To turn your speech into text, your browser will use an online speech-recognition service and may send your audio to that provider for processing. Voice input will not start until you agree. You can decline and type your question instead.'); ?></p>
+      <p><?php echo e(AK_LANG === 'ar' ? 'سيُسجَّل صوتك بعد موافقتك، ثم يُرسل إلى Google Gemini عبر خادم أهل الخير لتحويله إلى نص. لن يُحفظ التسجيل في سجل المحادثة؛ سيظهر النص الناتج في مربع السؤال لتراجعه وتعدّله قبل الإرسال. يمكنك الإلغاء والكتابة بدلاً من ذلك.' : 'After you agree, your voice will be recorded and sent to Google Gemini through the Ahl El Kheir server for transcription. The audio recording will not be saved in chat history; the resulting text will appear in the question box for you to review and edit before sending. You can cancel and type instead.'); ?></p>
       <div class="ak-ai-voice-consent-actions"><button type="button" id="ak-ai-voice-allow"><?php echo e(AK_LANG === 'ar' ? 'أوافق وابدأ الإدخال الصوتي' : 'Agree and start voice input'); ?></button><button type="button" id="ak-ai-voice-cancel"><?php echo e(AK_LANG === 'ar' ? 'إلغاء واستخدام الكتابة' : 'Cancel and type instead'); ?></button></div>
     </div>
   </section>
@@ -91,77 +91,112 @@ form.addEventListener('submit',async function(event){
  }catch(error){waiting.remove();add(lang==='ar'?'تعذر الاتصال بالمساعد. حاول مرة أخرى.':'Could not connect to the assistant. Please try again.',false);}
  finally{send.disabled=false;input.focus();}
 });
-var SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
 var mic=document.getElementById('ak-ai-mic');
 var voiceConsentPanel=document.getElementById('ak-ai-voice-consent');
 var voiceAllow=document.getElementById('ak-ai-voice-allow');
 var voiceCancel=document.getElementById('ak-ai-voice-cancel');
 var voiceConsentGranted=false;
-var activeRecognition=null;
-function startOnlineRecognition(){
- if(!SpeechRecognition){add(lang==='ar'?'الإدخال الصوتي غير متاح هنا. يمكنك كتابة سؤالك في المربع.':'Voice input is unavailable here. You can type your question.',false);return;}
+var mediaStream=null;
+var mediaRecorder=null;
+var recordedChunks=[];
+var recordingTimer=null;
+var isRecording=false;
+var maxRecordingMs=20000;
+function voiceMessage(ar,en){add(lang==='ar'?ar:en,false);}
+function releaseMicrophone(){
+ if(recordingTimer!==null){window.clearTimeout(recordingTimer);recordingTimer=null;}
+ if(mediaStream){mediaStream.getTracks().forEach(function(track){track.stop();});mediaStream=null;}
+ mediaRecorder=null;
+ recordedChunks=[];
+ isRecording=false;
+ mic.disabled=false;
+ mic.textContent='🎙';
+ mic.setAttribute('aria-label',lang==='ar'?'إدخال صوتي':'Voice input');
+}
+async function startAudioRecording(){
+ if(!navigator.mediaDevices||typeof navigator.mediaDevices.getUserMedia!=='function'||typeof window.MediaRecorder==='undefined'){
+  voiceMessage('التسجيل الصوتي غير مدعوم في هذا المتصفح أو الاتصال الحالي. يمكنك كتابة سؤالك.','Audio recording is not supported by this browser or current connection. You can type your question.');
+  return;
+ }
  try{
-  var recognition=new SpeechRecognition();
-  activeRecognition=recognition;
-  recognition.lang=lang==='ar'?'ar-EG':'en-US';
-  recognition.interimResults=true;
-  recognition.continuous=false;
-  var before=input.value.trim();
-  recognition.onresult=function(event){
-   var transcript='';
-   for(var i=0;i<event.results.length;i++){
-    if(event.results[i].isFinal)transcript+=event.results[i][0].transcript;
-   }
-   if(transcript.trim())input.value=(before?before+' ':'')+transcript.trim();
-  };
-  recognition.onerror=function(event){
-   var code=(event&&event.error)?String(event.error):'unknown';
-   var messages={
-    'not-allowed':lang==='ar'?'لم يُسمح باستخدام الميكروفون. يمكنك السماح به في المتصفح أو كتابة سؤالك.':'Microphone access was not allowed. You can allow it in your browser or type your question.',
-    'service-not-allowed':lang==='ar'?'خدمة تحويل الصوت إلى نص غير متاحة لهذا الموقع حالياً. يمكنك كتابة سؤالك بدلاً من ذلك.':'The speech service is not available for this site right now. You can type your question instead.',
-    'network':lang==='ar'?'تعذر الاتصال بخدمة تحويل الصوت إلى نص. تحقق من اتصال الإنترنت ثم حاول مرة أخرى، أو اكتب سؤالك.':'Could not connect to the speech-recognition service. Check your internet connection and try again, or type your question.',
-    'no-speech':lang==='ar'?'لم نسمع كلاماً واضحاً. اضغط على الميكروفون وحاول التحدث بعد بدء الاستماع، أو اكتب سؤالك.':'No speech was detected. Press the microphone and speak after listening starts, or type your question.',
-    'audio-capture':lang==='ar'?'تعذر الوصول إلى الميكروفون. تأكد من توصيله وعدم استخدامه بواسطة تطبيق آخر، أو اكتب سؤالك.':'The microphone could not be accessed. Check that it is connected and not in use by another app, or type your question.',
-    'language-not-supported':lang==='ar'?'خدمة الصوت لا تدعم اللغة المختارة في هذا المتصفح. يمكنك كتابة سؤالك بدلاً من ذلك.':'The speech service does not support the selected language in this browser. You can type your question instead.',
-    'aborted':lang==='ar'?'تم إيقاف الإدخال الصوتي قبل اكتماله. حاول مرة أخرى أو اكتب سؤالك.':'Voice input stopped before completion. Try again or type your question.'
-   };
-   var detail=messages[code]||(lang==='ar'?'تعذر إكمال الإدخال الصوتي. يمكنك المحاولة مرة أخرى أو كتابة سؤالك.':'Voice input could not be completed. You can try again or type your question.');
-   if(window.console&&typeof window.console.warn==='function')window.console.warn('Ahl El Kheir voice recognition error:',code);
-   add(detail,false);
-  };
-  recognition.onend=function(){
-   if(activeRecognition===recognition)activeRecognition=null;
-   mic.disabled=false;
-   input.focus();
-  };
-  mic.disabled=true;
-  recognition.start();
+  mediaStream=await navigator.mediaDevices.getUserMedia({audio:true});
+  var mimeCandidates=['audio/webm;codecs=opus','audio/webm','audio/mp4','audio/ogg;codecs=opus'];
+  var selectedMime='';
+  for(var i=0;i<mimeCandidates.length;i++){
+   if(typeof MediaRecorder.isTypeSupported!=='function'||MediaRecorder.isTypeSupported(mimeCandidates[i])){selectedMime=mimeCandidates[i];break;}
+  }
+  mediaRecorder=selectedMime?new MediaRecorder(mediaStream,{mimeType:selectedMime}):new MediaRecorder(mediaStream);
+  recordedChunks=[];
+  mediaRecorder.addEventListener('dataavailable',function(event){if(event.data&&event.data.size>0)recordedChunks.push(event.data);});
+  mediaRecorder.addEventListener('stop',async function(){
+   if(recordingTimer!==null){window.clearTimeout(recordingTimer);recordingTimer=null;}
+   var recorder=mediaRecorder;
+   var mime=(recorder&&recorder.mimeType?recorder.mimeType:'audio/webm').split(';')[0].toLowerCase();
+   var blob=new Blob(recordedChunks,{type:mime});
+   if(mediaStream){mediaStream.getTracks().forEach(function(track){track.stop();});mediaStream=null;}
+   mediaRecorder=null;recordedChunks=[];isRecording=false;mic.disabled=true;mic.textContent='…';
+   if(blob.size<1000){releaseMicrophone();voiceMessage('لم يُلتقط صوت واضح. حاول مرة أخرى أو اكتب سؤالك.','No usable audio was captured. Try again or type your question.');return;}
+   if(blob.size>2400000){releaseMicrophone();voiceMessage('التسجيل طويل جداً. اضغط الميكروفون وسجّل سؤالاً أقصر.','The recording is too large. Record a shorter question.');return;}
+   voiceMessage('جارٍ إرسال التسجيل إلى Google Gemini لتحويله إلى نص…','Sending the recording to Google Gemini for transcription…');
+   try{
+    var base64=await new Promise(function(resolve,reject){
+     var reader=new FileReader();
+     reader.onerror=function(){reject(new Error('read-failed'));};
+     reader.onload=function(){
+      var result=String(reader.result||'');
+      var comma=result.indexOf(',');
+      if(comma<0){reject(new Error('invalid-data-url'));return;}
+      resolve(result.slice(comma+1));
+     };
+     reader.readAsDataURL(blob);
+    });
+    var data=await api({action:'transcribe_audio',audio_base64:base64,mime_type:mime});
+    if(!data.ok||!data.transcript)throw new Error(data.message||'transcription-failed');
+    var transcript=String(data.transcript).trim();
+    if(transcript)input.value=(input.value.trim()?input.value.trim()+' ':'')+transcript;
+    voiceMessage('اكتبي مراجعتك للنص ثم اضغطي إرسال عندما تكونين جاهزة.','Review or edit the transcript, then press Send when ready.');
+   }catch(error){
+    voiceMessage((error&&error.message&&error.message!=='transcription-failed')?error.message:'تعذر تحويل الصوت إلى نص الآن. يمكنك المحاولة مرة أخرى أو كتابة سؤالك.',
+     (error&&error.message&&error.message!=='transcription-failed')?error.message:'Gemini could not transcribe the audio right now. Try again or type your question.');
+   }finally{releaseMicrophone();input.focus();}
+  });
+  mediaRecorder.addEventListener('error',function(){
+   releaseMicrophone();
+   voiceMessage('حدث خطأ أثناء التسجيل. يمكنك المحاولة مرة أخرى أو كتابة سؤالك.','An error occurred while recording. Try again or type your question.');
+  });
+  mediaRecorder.start();
+  isRecording=true;
+  mic.textContent='■';
+  mic.setAttribute('aria-label',lang==='ar'?'إيقاف التسجيل وإرسال الصوت للتحويل إلى نص':'Stop recording and send audio for transcription');
+  voiceMessage('جارٍ التسجيل. اضغط ■ لإيقاف التسجيل وإرسال الصوت للتحويل إلى نص. سيتوقف التسجيل تلقائياً بعد 20 ثانية.','Recording. Press ■ to stop and send the audio for transcription. Recording stops automatically after 20 seconds.');
+  recordingTimer=window.setTimeout(function(){if(mediaRecorder&&mediaRecorder.state==='recording')mediaRecorder.stop();},maxRecordingMs);
  }catch(error){
-  activeRecognition=null;
-  mic.disabled=false;
-  add(lang==='ar'?'تعذر بدء الإدخال الصوتي. يمكنك كتابة سؤالك بدلاً من ذلك.':'Could not start voice input. You can type your question instead.',false);
+  releaseMicrophone();
+  voiceMessage('تعذر الوصول إلى الميكروفون. تحقق من إذن المتصفح أو اكتب سؤالك.','Could not access the microphone. Check browser permission or type your question.');
  }
 }
-if(SpeechRecognition){
- mic.disabled=false;
- mic.title=lang==='ar'?'إدخال السؤال بالصوت':'Enter question by voice';
- mic.addEventListener('click',function(){
-  if(voiceConsentGranted){startOnlineRecognition();return;}
+mic.disabled=!(navigator.mediaDevices&&typeof navigator.mediaDevices.getUserMedia==='function'&&typeof window.MediaRecorder!=='undefined');
+mic.title=mic.disabled?(lang==='ar'?'التسجيل الصوتي غير متاح؛ يمكنك كتابة سؤالك':'Audio recording unavailable; you can type your question'):(lang==='ar'?'تسجيل السؤال صوتياً':'Record your question');
+mic.addEventListener('click',function(){
+ if(isRecording){
+  if(mediaRecorder&&mediaRecorder.state==='recording')mediaRecorder.stop();
+  return;
+ }
+ if(!voiceConsentGranted){
   voiceConsentPanel.hidden=false;
   voiceAllow.focus();
- });
- voiceAllow.addEventListener('click',function(){
-  voiceConsentGranted=true;
-  voiceConsentPanel.hidden=true;
-  startOnlineRecognition();
- });
- voiceCancel.addEventListener('click',function(){
-  voiceConsentPanel.hidden=true;
-  input.focus();
- });
-}else{
- mic.disabled=true;
- mic.title=lang==='ar'?'الإدخال الصوتي غير متاح؛ يمكنك كتابة سؤالك':'Voice input unavailable; you can type your question';
-}
+  return;
+ }
+ startAudioRecording();
+});
+voiceAllow.addEventListener('click',function(){
+ voiceConsentGranted=true;
+ voiceConsentPanel.hidden=true;
+ startAudioRecording();
+});
+voiceCancel.addEventListener('click',function(){
+ voiceConsentPanel.hidden=true;
+ input.focus();
+});
 })(); 
 </script>
