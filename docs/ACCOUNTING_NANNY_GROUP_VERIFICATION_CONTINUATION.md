@@ -38,7 +38,7 @@ Inspection confirmed the inconsistency in both layers: the individual POST handl
 
 Source commit on `main`: `e50686f0a8492506459e4465513d03778debc498`.
 
-Verification: PHP lint and local browser/database runtime verification remain pending. Do not treat the feature as runtime-verified until those checks pass.
+Verification: PHP lint **PASS** in GitHub Actions run `39716749893` for source commit `da5320d05e2656bb9d6e1f4a7a94b94b032fd177`. Local browser/database runtime verification remains pending. Do not treat the feature as runtime-verified until that check passes.
 
 ## Verification boundary
 
