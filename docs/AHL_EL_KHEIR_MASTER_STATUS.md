@@ -3899,3 +3899,10 @@ The user reports voice recognition fails after consent. The widget previously hi
 ## 2026-10-22 — AI assistant voice transcription implementation
 
 Implemented the owner-approved direct Gemini audio-transcription path on `main` (`d5d91e4`, `d30efdb`). Audio recording requires explicit consent, is sent to Gemini through the authenticated PHP endpoint, is not stored in chat history, and returns editable text without auto-submission. API key remains server-side. PHP lint and local browser/runtime acceptance are pending; do not mark voice fixed until verified against the existing local app and database.
+
+
+## 2026-10-22 — Gemini audio transcription diagnostic follow-up
+
+The user-approved MediaRecorder → Gemini transcription path reached the endpoint but returned the generic upstream-failure response in the browser. Source audit found the endpoint was discarding both cURL transport diagnostics and Gemini's structured error response, preventing a root-cause diagnosis. Commit `130af192c49aafae11c1369e7e884e9367016ac8` now logs the HTTP status, cURL errno/error, and a bounded Gemini error status/message to the PHP error log while keeping the user-facing response generic and never logging the API key or audio payload. It also removes the undefined `$lang` reference from the transcription prompt, using one language-neutral bilingual prompt.
+
+**Verification is pending.** The repository connector cannot run PHP lint or exercise the user's local Apache/PHP/Gemini request. Pull `main`, run `D:\\xampp\\php\\php.exe -l D:\\xampp\\htdocs\\AhlElKheir\\modules\\ai_assistant\\chat.php`, then make one short consented recording. If it fails, inspect `D:\\xampp\\apache\\logs\\error.log` for lines beginning `[Ahl El Kheir AI transcription]` and share only those lines; do not share the API key or audio. This is diagnostic instrumentation, not a claim that transcription now succeeds.
