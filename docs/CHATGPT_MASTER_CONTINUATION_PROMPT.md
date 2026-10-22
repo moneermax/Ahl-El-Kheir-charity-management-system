@@ -1668,3 +1668,8 @@ The user-approved MediaRecorder → Gemini transcription path reached the endpoi
 ## 2026-10-22 — AI assistant audio transcription continuation
 
 Current status: **UNRESOLVED / DIAGNOSTIC UX IMPROVED, NOT RUNTIME VERIFIED**. The endpoint's JSON HTTP 502 is application-generated when cURL fails or Gemini returns a non-2xx response. The precise provider/network cause has not been established. Commit `3b7cc562c57b87533678146412cf0f44f5b1ca7c` adds plain-language failure categories; detailed provider errors remain server-side and API keys/audio are not logged. Next step: pull `main`, make one short recording after consent, and report only the friendly message shown by the assistant. Use that category to target the actual cause. Do not request browser DevTools/log inspection from the user unless simpler options are exhausted.
+
+## 2026-10-22 — Gemini transcription model update
+
+The user reproduced the model-setup error. Root cause identified from source plus current Google documentation: the endpoint defaulted to gemini-2.5-flash, which was shut down for the Gemini Developer API on October 16, 2026. Commit b4b7c6e7a3069a0c8d5eb254b37db9d9941f5927 changes the default to gemini-3.5-transcribe. Before declaring success, pull main, run PHP lint, and test one short consented recording. Check for an explicit GEMINI_MODEL environment variable or hosting.php ai.gemini_model override only if the new default still returns NOT_FOUND. Status remains unverified until real local test passes.
+
