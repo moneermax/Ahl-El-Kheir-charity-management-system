@@ -164,6 +164,7 @@ function ak_ai_normalize(string $value): string {
 }
 
 function ak_ai_allowed_sections(string $role): array {
+    $role = strtolower(trim($role));
     $map = [
         'admin' => ['## 1. All employees'],
         'sudo' => ['## 1. All employees'],
@@ -219,6 +220,19 @@ function ak_ai_local_answer(string $question, string $role, string $root): ?arra
     }
     $flush();
     $normalizedQuestion = ak_ai_normalize($question);
+
+    // Common Nanny navigation question: answer deterministically from the reviewed local guide.
+    // This avoids relying on keyword ranking for a high-frequency, role-specific task.
+    if (strtolower(trim($role)) === 'nanny'
+        && str_contains($normalizedQuestion, 'المجموعات')
+        && (str_contains($normalizedQuestion, 'مخصص') || str_contains($normalizedQuestion, 'مسند') || str_contains($normalizedQuestion, 'لي'))) {
+        return [
+            'answer' => 'لعرض المجموعات المسندة إليك، افتحي «توثيق المجموعات والعائلات» من لوحة الناني، ثم اختاري المجموعة لعرض الأسر التابعة لها. ولعرض الأسر النشطة في جميع مجموعاتك النشطة في صفحة واحدة، افتحي «التحقق المسبق للأسر». اختاري شهر الصرف الصحيح قبل مراجعة التحقق أو تعديله.',
+            'sources' => ['AHL_EL_KHEIR_EMPLOYEE_TASKS_AND_USER_GUIDE.md'],
+            'mode' => 'local_guide',
+        ];
+    }
+
     $terms = array_values(array_unique(array_filter(
         preg_split('/\s+/u', $normalizedQuestion) ?: [],
         static fn(string $term): bool => mb_strlen($term, 'UTF-8') >= 3
