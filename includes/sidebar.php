@@ -89,6 +89,7 @@ $menus = [
     'nanny' => [
         ['active' => 'dashboard', 'label_key' => 'navigation.dashboard', 'icon' => 'fa-gauge-high', 'url' => 'dashboard/nanny_dashboard.php'],
         ['active' => 'families', 'label_key' => 'navigation.family_register', 'icon' => 'fa-house-chimney', 'url' => 'modules/families/index.php'],
+        ['active' => 'nanny_pre_verification', 'label_key' => 'navigation.nanny_pre_verification', 'icon' => 'fa-clipboard-check', 'url' => 'modules/accounting/nanny_pre_verification.php'],
         $disbItem, $orphanFormsItem,
         $reportsItem,
     ],
