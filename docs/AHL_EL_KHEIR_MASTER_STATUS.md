@@ -3884,3 +3884,7 @@ The existing assistant now has source implementation for saved conversations, hi
 ## 2026-10-22 — AI assistant follow-up acceptance status
 
 The user reported that Arabic post-login guidance worked on a subsequent attempt, while the Arabic Nanny assigned-groups question missed local retrieval and on-device speech dictation failed. Follow-up source commits add Arabic Nanny navigation guidance, Arabic normalization, Arabic internal-workflow blocking from external AI, and visible browser speech error codes. These changes are committed on `main`; local lint and browser retest remain pending. Voice support must not be described as fixed until the exact browser error is diagnosed and successful dictation is verified. See `docs/CHATGPT_AI_ASSISTANT_CONTINUATION.md`.
+
+## 2026-10-22 — AI assistant launch-readiness follow-up
+
+A deterministic Arabic answer for the Nanny's assigned-groups workflow was committed to main (`dc0e7640fe98cb134590c0ec3e314c80133e16f4`), with role-code case normalization. It must still be linted and browser-tested locally. Voice input remains unresolved: the browser reports `language-not-supported` for on-device Arabic speech. Online voice recognition must not be enabled without the project owner's explicit privacy decision and a clear consent flow. See the AI assistant continuation document.
