@@ -547,6 +547,6 @@ document.addEventListener('DOMContentLoaded', function () {
     body.appendChild(wrapper);
 });
 </script>
-<?php include __DIR__ . '/ai_assistant_widget.php'; ?>
+<?php if (function_exists('is_logged_in') && is_logged_in()) include __DIR__ . '/ai_assistant_widget.php'; ?>
 </body>
 </html>
