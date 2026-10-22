@@ -1714,3 +1714,7 @@ Commit `7f1ab66a8e8b386eca3bfa4d0482138d82658241` changes the audio request to t
 ## 2026-10-22 — Gemini transcription still returns empty text
 
 After the Interactions API request/response correction, the owner tested both Arabic and English and still received the no-usable-transcript message. The precise provider response shape remains unverified. Commit `1b733cc0fef5aeca86b3753230afced29429509d` adds safe response-shape diagnostics only (JSON validity, top-level keys, interaction status, output text length, and step/output counts); it never logs the audio, API key, or transcript. The next action is one local pull, PHP lint, one short consented recording, then inspect only the matching `[Ahl El Kheir AI transcription] Empty transcript response shape:` line from Apache's error log. Diagnose that evidence before changing request structure again. Runtime success is not established.
+
+### 2026-10-22 — AI assistant Gemini transcription follow-up
+
+Gemini 3.5 Transcribe REST request flow was corrected in commit 87c37e4238858b6e126382f41476db8f49929e18: upload the consented recording through the Gemini Files API, then pass the returned file URI to the Interactions API. The user's previous log excerpt contained Apache startup notices only, not the application's diagnostic. Local PHP lint and one browser transcription test remain pending; do not mark voice transcription fixed before successful transcript insertion into the editable composer.
