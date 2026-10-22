@@ -5,7 +5,9 @@ require_once dirname(__DIR__, 2) . '/config/database.php';
 require_once dirname(__DIR__, 2) . '/config/functions.php';
 require_once dirname(__DIR__, 2) . '/config/session.php';
 header('Content-Type: application/json; charset=utf-8');
-header('Cache-Control: no-store');
+header('Cache-Control: no-store, max-age=0');
+header('X-Content-Type-Options: nosniff');
+header('Vary: Cookie');
 function ak_ai_json(int $status, array $data): never {
     http_response_code($status);
     echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
@@ -18,6 +20,10 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
 Session::start();
 if (!Session::isLoggedIn()) {
     ak_ai_json(401, ['ok' => false, 'message' => 'يرجى تسجيل الدخول أولاً. / Please sign in first.']);
+}
+$contentType = strtolower((string)($_SERVER['CONTENT_TYPE'] ?? ''));
+if (!str_contains($contentType, 'application/json')) {
+    ak_ai_json(415, ['ok' => false, 'message' => 'Unsupported content type.']);
 }
 
 $sentCsrf = (string)($_SERVER['HTTP_X_CSRF_TOKEN'] ?? '');
