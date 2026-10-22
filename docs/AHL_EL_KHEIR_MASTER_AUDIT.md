@@ -4215,3 +4215,12 @@ A browser request to the audio transcription endpoint returned JSON `HTTP 502`. 
 
 The endpoint's NOT_FOUND response is consistent with its source default gemini-2.5-flash. Current Google documentation records that model's Gemini Developer API shutdown on October 16, 2026, and documents gemini-3.5-transcribe as the dedicated transcription model supported by Generate Content. Commit b4b7c6e7a3069a0c8d5eb254b37db9d9941f5927 updates the default model. This is source-based root-cause evidence, not yet a local runtime proof; an explicit environment/deployment override may still supersede the default. Verify after pulling main.
 
+
+
+## 2026-10-22 — Gemini transcription API contract correction
+
+The user tested the updated dedicated model and received “No usable transcript was returned.” The endpoint had been changed to `gemini-3.5-transcribe` but still called the legacy `generateContent` endpoint and parsed the legacy `candidates[0].content.parts[0].text` response. Official Google documentation specifies that Gemini 3.5 Transcribe uses `POST /v1beta/interactions`, accepts audio content with `type`, `data`, and `mime_type`, and returns the transcript in `output_text` (or text content within response steps). This explains the observed successful upstream response with an empty transcript under the old parser.
+
+Commit `7f1ab66a8e8b386eca3bfa4d0482138d82658241` changes the audio request to the Interactions API, uses its `transcription_config.mode=smart`, maps browser `audio/mp4` to the API's documented `audio/m4a` MIME type, and reads `output_text` with a steps-content fallback. It preserves explicit consent, the editable composer, server-side API-key handling, existing size/rate checks, and typing fallback. Official reference: https://ai.google.dev/gemini-api/docs/transcribe and https://ai.google.dev/api/interactions-api-v1.
+
+**Verification status: source correction committed on main; local PHP lint and one real-browser Arabic/English transcription test are still pending.** Do not claim the transcription path is fixed until the user confirms that words appear in the editable composer without automatic submission. If the next test fails, diagnose the exact new user-facing response and existing server log evidence before changing code again.
