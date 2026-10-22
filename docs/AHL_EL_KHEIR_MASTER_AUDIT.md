@@ -4054,3 +4054,8 @@ Implementation committed in `modules/accounting/group_verification.php`:
 - individual verification and group submission also validate current assignment/scope.
 
 Schema inspection confirmed the existing family/month unique key and audit columns; no migration was added. GitHub Actions run `39715384849` passed the `php-lint` job with this page included. Local application/database runtime verification remains pending. The separate `migration-full-schema` job failed at the existing Stage 5 salary-advance payroll integration check (`يجب تطبيق ترحيل تجهيز تحويلات الرواتب قبل تأكيد الدفع`); this unrelated failure is recorded, not remediated under this task. This is an implementation checkpoint, not a runtime acceptance claim. Detailed test steps: `docs/ACCOUNTING_NANNY_GROUP_VERIFICATION_CONTINUATION.md`.
+
+
+## 2026-10-22 — Nanny individual verification state guard
+
+A reported UI inconsistency was confirmed by source inspection: bulk controls were restricted to pending groups, while individual controls were always rendered and the individual POST path omitted the pending-state condition. Commit `e50686f0a8492506459e4465513d03778debc498` adds the pending-state server guard and suppresses individual edit controls/modal for non-pending groups. This is a narrow authorization/workflow-state consistency correction; it does not modify stored verification records or group states. PHP lint and local runtime verification remain outstanding.
