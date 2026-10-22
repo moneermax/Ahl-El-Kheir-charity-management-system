@@ -3855,3 +3855,9 @@ These are source-only changes committed on `main`; PHP lint and local XAMPP beha
 - Added the `hr-job-description-migrations` CI job in `.github/workflows/php-syntax-check.yml`. It imports the checked-in schema into a disposable MariaDB 10.4.32 instance, applies all eight `2026-10-20_hr_job_description_*` migrations in filename sequence, and asserts that an approved HR-manager title-only catalogue row retains its approved status and blank content fields.
 - The same workflow now PHP-lints `modules/hr/contract_builder.php` and `modules/hr/job_description_catalogue.php`.
 - Repository-side safeguards are committed; local `ahl_el_kheir` remains untouched. Do not apply the migrations locally until the CI migration job completes successfully and a backup is available. Local page, prefill and PDF verification is still pending.
+
+## 2026-10-22 — HR job-description proposals migration: local verification update
+
+Applied locally: `database/migrations/2026-10-20_hr_job_description_proposals.sql` only. The user had backed up `ahl_el_kheir` first. The mysql command returned no reported SQL error. Follow-up read-only queries verified 23 active `needs_review` rows and zero blank reporting lines; approved rows 6 and 20 remain approved/active with reporting lines; `HR Test` row 11 is inactive and still `needs_review`.
+
+**Status:** proposals migration's reporting-line result and approved-row guard are verified against the local database. Do not describe all eight job-description migrations as applied. Focused local browser/prefill/PDF acceptance is still pending; PHP syntax checks and the dedicated migration CI job were already passing. The separate full-schema CI workflow's Stage 5 salary-advance regression failure remains unrelated and must not be represented as an HR migration failure or as an overall green workflow.
