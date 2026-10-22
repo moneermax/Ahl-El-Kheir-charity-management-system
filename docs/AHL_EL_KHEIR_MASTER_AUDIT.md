@@ -4186,3 +4186,7 @@ Observed browser evidence: the post-login Arabic question received a local guide
 ## 2026-10-22 — AI assistant launch-readiness audit update
 
 The user reported repeated failure to answer a Nanny group-navigation question despite Arabic guide content. A deterministic role-scoped local answer was added in commit `dc0e7640fe98cb134590c0ec3e314c80133e16f4`; local syntax and browser verification remain pending. Voice testing returned the browser's `language-not-supported` error for on-device Arabic. This establishes that the selected on-device path does not support the requested locale in that environment; it does not establish a microphone-permission problem. Online speech recognition remains blocked pending an explicit privacy decision and consent design.
+
+
+## 2026-10-22 — AI assistant online speech privacy and acceptance boundary
+The project owner explicitly approved online Arabic speech recognition with clear user consent before audio processing and a typing fallback. Commit `18bf40af2f905b5509396d92e17374c0c79ecd7c` updates the existing assistant widget only. The consent prompt explains that the browser may send audio to its speech-recognition provider; recognition starts only after affirmative action. Consent is page-session-only, cancellation is available, and recognized text remains editable before the user submits it. The feature does not send audio to the PHP assistant endpoint. Actual provider behavior and browser availability remain browser-dependent. Local PHP syntax and runtime acceptance are pending; no success claim is made yet.
