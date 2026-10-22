@@ -48,7 +48,22 @@ form.addEventListener('submit',async function(event){
   var response=await fetch(root.dataset.endpoint,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-CSRF-Token':root.dataset.csrf,'Accept':'application/json'},body:JSON.stringify({question:question,allow_google:consent.checked})});
   var data=await response.json();waiting.remove();add(data.message||data.answer||'No answer returned.',false,data.sources||[]);
  }catch(error){waiting.remove();add(lang==='ar'?'تعذر الاتصال بالمساعد. حاول مرة أخرى.':'Could not connect to the assistant. Please try again.',false);}
- finally{send.disabled=false;input.focus();}
+ finally{send.disabled=false;consent.checked=false;input.focus();}
 });
-})();
+var SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+var mic=document.getElementById('ak-ai-mic');
+if(SpeechRecognition&&'processLocally' in SpeechRecognition.prototype){
+ mic.disabled=false;
+ mic.title=lang==='ar'?'إملاء صوتي على الجهاز':'On-device dictation';
+ mic.addEventListener('click',function(){
+  try{
+   var recognition=new SpeechRecognition();recognition.processLocally=true;recognition.lang=lang==='ar'?'ar-EG':'en-US';recognition.interimResults=true;
+   var before=input.value;
+   recognition.onresult=function(event){var transcript='';for(var i=0;i<event.results.length;i++)transcript+=event.results[i][0].transcript;input.value=(before?before+' ':'')+transcript;};
+   recognition.onerror=function(){add(lang==='ar'?'تعذر الإملاء المحلي؛ اكتب سؤالك بدلاً منه.':'On-device dictation unavailable; please type instead.',false);};
+   recognition.start();
+  }catch(error){add(lang==='ar'?'الإملاء المحلي غير متاح في هذا المتصفح.':'On-device dictation is unavailable in this browser.',false);}
+ });
+}
+})(); 
 </script>
