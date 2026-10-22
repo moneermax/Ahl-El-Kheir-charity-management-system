@@ -115,12 +115,18 @@ function startOnlineRecognition(){
    if(transcript.trim())input.value=(before?before+' ':'')+transcript.trim();
   };
   recognition.onerror=function(event){
-   var detail;
-   if(event&&event.error==='not-allowed'){
-    detail=lang==='ar'?'لم يُسمح باستخدام الميكروفون. يمكنك السماح به من المتصفح أو كتابة سؤالك.':'Microphone access was not allowed. You can allow it in your browser or type your question.';
-   }else{
-    detail=lang==='ar'?'تعذر تحويل الصوت إلى نص الآن. يمكنك المحاولة مرة أخرى أو كتابة سؤالك.':'Voice input could not be completed. You can try again or type your question.';
-   }
+   var code=(event&&event.error)?String(event.error):'unknown';
+   var messages={
+    'not-allowed':lang==='ar'?'لم يُسمح باستخدام الميكروفون. يمكنك السماح به في المتصفح أو كتابة سؤالك.':'Microphone access was not allowed. You can allow it in your browser or type your question.',
+    'service-not-allowed':lang==='ar'?'خدمة تحويل الصوت إلى نص غير متاحة لهذا الموقع حالياً. يمكنك كتابة سؤالك بدلاً من ذلك.':'The speech service is not available for this site right now. You can type your question instead.',
+    'network':lang==='ar'?'تعذر الاتصال بخدمة تحويل الصوت إلى نص. تحقق من اتصال الإنترنت ثم حاول مرة أخرى، أو اكتب سؤالك.':'Could not connect to the speech-recognition service. Check your internet connection and try again, or type your question.',
+    'no-speech':lang==='ar'?'لم نسمع كلاماً واضحاً. اضغط على الميكروفون وحاول التحدث بعد بدء الاستماع، أو اكتب سؤالك.':'No speech was detected. Press the microphone and speak after listening starts, or type your question.',
+    'audio-capture':lang==='ar'?'تعذر الوصول إلى الميكروفون. تأكد من توصيله وعدم استخدامه بواسطة تطبيق آخر، أو اكتب سؤالك.':'The microphone could not be accessed. Check that it is connected and not in use by another app, or type your question.',
+    'language-not-supported':lang==='ar'?'خدمة الصوت لا تدعم اللغة المختارة في هذا المتصفح. يمكنك كتابة سؤالك بدلاً من ذلك.':'The speech service does not support the selected language in this browser. You can type your question instead.',
+    'aborted':lang==='ar'?'تم إيقاف الإدخال الصوتي قبل اكتماله. حاول مرة أخرى أو اكتب سؤالك.':'Voice input stopped before completion. Try again or type your question.'
+   };
+   var detail=messages[code]||(lang==='ar'?'تعذر إكمال الإدخال الصوتي. يمكنك المحاولة مرة أخرى أو كتابة سؤالك.':'Voice input could not be completed. You can try again or type your question.');
+   if(window.console&&typeof window.console.warn==='function')window.console.warn('Ahl El Kheir voice recognition error:',code);
    add(detail,false);
   };
   recognition.onend=function(){
