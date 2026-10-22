@@ -45,3 +45,8 @@ The microphone is enabled only if the browser exposes on-device speech recogniti
 ## Acceptance boundary
 
 Source changes are on main; no local PHP CLI, browser, live database, or InfinityFree runtime was available to this implementation session. Do not call the feature runtime-verified until the local/hosted checks above pass.
+
+
+## Follow-up security finding — 2026-10-22
+
+The repository root .htaccess only disables directory listings and there was no docs/.htaccess. Since the assistant reads internal project documentation from disk, docs/.htaccess was added with Require all denied to prevent direct HTTP access to internal documentation while preserving PHP filesystem reads. Verify this directive is honored on InfinityFree before deployment acceptance.
