@@ -14,14 +14,16 @@ if (!Session::isLoggedIn() || Session::getUserRole() !== 'nanny') {
 }
 
 $uid = (int)Session::getUserId();
-$currentMonth = date('Y-m');
+$requestedMonth = (string)($_POST['month'] ?? $_GET['month'] ?? date('Y-m'));
+$monthIsValid = preg_match('/^([0-9]{4})-([0-9]{2})$/', $requestedMonth, $monthParts) === 1
+    && checkdate((int)$monthParts[2], 1, (int)$monthParts[1]);
+$currentMonth = $monthIsValid ? $requestedMonth : date('Y-m');
 $success_message = '';
-$error_message = '';
+$error_message = $monthIsValid ? '' : 'شهر الصرف المحدد غير صالح. اختر شهراً صحيحاً ثم حاول مرة أخرى.';
 
 /**
- * Verification is stored by family + month, not by group. Only permit edits
- * for a family in this Nanny's pending groups, and avoid changing a family
- * also present in an active non-pending group whose monthly record is shared.
+ * Verification is stored by family + month, not by group. This Nanny may
+ * verify families in any active group currently assigned to them.
  */
 $canPreVerifyFamily = static function (int $familyId, int $nannyId): bool {
     return dbFetchOne(
@@ -35,27 +37,16 @@ $canPreVerifyFamily = static function (int $familyId, int $nannyId): bool {
                    ON gc.child_id = fc.id AND gc.left_date IS NULL
                INNER JOIN orphan_groups og
                    ON og.id = gc.group_id AND og.is_active = 1
-                      AND og.verification_status = 'pending'
                INNER JOIN nanny_group_assignments nga
                    ON nga.group_id = og.id AND nga.nanny_id = ? AND nga.end_date IS NULL
                WHERE fc.family_id = f.id AND fc.is_active = 1
-           )
-           AND NOT EXISTS (
-               SELECT 1
-               FROM family_children fc_locked
-               INNER JOIN group_children gc_locked
-                   ON gc_locked.child_id = fc_locked.id AND gc_locked.left_date IS NULL
-               INNER JOIN orphan_groups og_locked
-                   ON og_locked.id = gc_locked.group_id AND og_locked.is_active = 1
-               WHERE fc_locked.family_id = f.id
-                 AND COALESCE(og_locked.verification_status, '') <> 'pending'
            )
          LIMIT 1",
         [$familyId, $nannyId]
     ) !== null;
 };
 
-if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && $monthIsValid) {
     if (!verify_csrf()) {
         $error_message = 'انتهت صلاحية الطلب. حدّث الصفحة ثم حاول مرة أخرى.';
     } elseif (isset($_POST['bulk_verify'])) {
@@ -219,19 +210,9 @@ $families = dbFetchAll(
      INNER JOIN family_children fc ON fc.family_id = f.id AND fc.is_active = 1
      INNER JOIN group_children gc ON gc.child_id = fc.id AND gc.left_date IS NULL
      INNER JOIN orphan_groups og
-         ON og.id = gc.group_id AND og.is_active = 1 AND og.verification_status = 'pending'
+         ON og.id = gc.group_id AND og.is_active = 1
      INNER JOIN nanny_group_assignments nga
          ON nga.group_id = og.id AND nga.nanny_id = ? AND nga.end_date IS NULL
-     WHERE NOT EXISTS (
-         SELECT 1
-         FROM family_children fc_locked
-         INNER JOIN group_children gc_locked
-             ON gc_locked.child_id = fc_locked.id AND gc_locked.left_date IS NULL
-         INNER JOIN orphan_groups og_locked
-             ON og_locked.id = gc_locked.group_id AND og_locked.is_active = 1
-         WHERE fc_locked.family_id = f.id
-           AND COALESCE(og_locked.verification_status, '') <> 'pending'
-     )
      GROUP BY f.id, f.family_code, f.mother_name
      ORDER BY f.family_code ASC",
     [$uid]
@@ -261,9 +242,16 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
         <div>
             <h2><i class="fas fa-clipboard-check me-2"></i>التحقق المسبق للأسر</h2>
-            <p class="text-muted mb-0">شهر الصرف: <strong><?php echo e($currentMonth); ?></strong></p>
+            <p class="text-muted mb-2">شهر الصرف المحدد: <strong><?php echo e($currentMonth); ?></strong></p>
+            <form method="GET" class="d-flex flex-wrap align-items-end gap-2">
+                <div>
+                    <label for="verificationMonth" class="form-label mb-1">اختر شهر الصرف</label>
+                    <input type="month" class="form-control" id="verificationMonth" name="month" value="<?php echo e($currentMonth); ?>" required>
+                </div>
+                <button type="submit" class="btn btn-primary">عرض الشهر</button>
+            </form>
         </div>
-        <a href="<?php echo APP_URL; ?>modules/accounting/group_verification.php" class="btn btn-outline-primary">
+        <a href="<?php echo APP_URL; ?>modules/accounting/group_verification.php?month=<?php echo rawurlencode($currentMonth); ?>" class="btn btn-outline-primary">
             <i class="fas fa-people-group me-1"></i> الانتقال إلى توثيق المجموعة
         </a>
     </div>
@@ -271,7 +259,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     <div class="alert alert-info">
         <strong>هذه خطوة تمهيدية وليست إرسالاً للمحاسب.</strong>
         تُحفظ نقاط التحقق على سجل الأسرة لشهر الصرف المعروض، وستظهر في توثيق المجموعة للشهر نفسه.
-        الأسر التي لم تعد ضمن مجموعة قيد التوثيق لا يمكن تعديلها من هذه الصفحة.
+        تظهر هنا جميع الأسر النشطة ضمن المجموعات النشطة المسندة إليك، بصرف النظر عن حالة المجموعة.
     </div>
 
     <?php include dirname(__DIR__, 2) . '/includes/alerts.php'; ?>
@@ -295,13 +283,14 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         <div class="card"><div class="card-body text-center py-5">
             <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
             <h5>لا توجد أسر متاحة للتوثيق المسبق حالياً.</h5>
-            <p class="text-muted mb-0">تظهر هنا الأسر التابعة لمجموعاتك النشطة التي ما زالت قيد التوثيق.</p>
+            <p class="text-muted mb-0">تظهر هنا الأسر التابعة لجميع مجموعاتك النشطة، بصرف النظر عن حالة المجموعة.</p>
         </div></div>
     <?php else: ?>
         <form method="POST" id="bulkVerificationForm" class="border rounded bg-light p-3 mb-3"
               onsubmit="return confirmBulkVerification(event);">
             <?php echo csrf_field(); ?>
             <input type="hidden" name="bulk_verify" value="1">
+            <input type="hidden" name="month" value="<?php echo e($currentMonth); ?>">
             <div class="row g-3 align-items-end">
                 <div class="col-lg-5">
                     <label for="bulkOperation" class="form-label fw-bold">نوع التوثيق الجماعي</label>
@@ -382,6 +371,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                         <div class="modal-body">
                             <?php echo csrf_field(); ?>
                             <input type="hidden" name="verify_family" value="1">
+                            <input type="hidden" name="month" value="<?php echo e($currentMonth); ?>">
                             <input type="hidden" name="family_id" value="<?php echo (int)$family['id']; ?>">
                             <div class="alert alert-<?php echo $isComplete ? 'success' : 'info'; ?>">
                                 <?php if ($isComplete): ?>الأسرة موثقة بالكامل لشهر الصرف الحالي. يمكنك تعديل أي نقطة ثم الحفظ.
