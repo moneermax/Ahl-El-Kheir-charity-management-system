@@ -201,3 +201,92 @@ jobs:
           php tools/run_salary_advance_stage5_payroll_edge_tests.php
           php tools/run_salary_advance_1410_reconciliation.php
           php tools/test_salary_advance_rescheduling_payroll_concurrency.php
+
+  hr-job-description-migrations:
+    runs-on: ubuntu-latest
+    services:
+      mariadb:
+        image: mariadb:10.4.32
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: hr_job_description_migration_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install MariaDB client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mariadb-client
+
+      - name: Import checked-in schema
+        env:
+          MYSQL_PWD: root
+        run: |
+          mysql --host=127.0.0.1 --port=3306 --user=root --database=hr_job_description_migration_test < database/ahl_el_kheir.sql
+
+      - name: Apply HR catalogue migration sequence and verify approved-record preservation
+        env:
+          MYSQL_PWD: root
+        shell: bash
+        run: |
+          set -euo pipefail
+          mysql=(mysql --host=127.0.0.1 --port=3306 --user=root --database=hr_job_description_migration_test)
+          "${mysql[@]}" < database/migrations/2026-10-20_hr_job_description_catalogue.sql
+
+          # Build a CI-only approved-record fixture with intentionally blank fields.
+          # Proposal/backfill migrations must leave its status and content unchanged.
+          "${mysql[@]}" <<'SQL'
+          SET NAMES utf8mb4;
+          INSERT INTO hr_job_description_templates
+              (position_title, description_status, is_active, created_at, updated_at)
+          SELECT 'مدير الموارد البشرية', 'approved', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+          WHERE NOT EXISTS (
+              SELECT 1 FROM hr_job_description_templates
+              WHERE position_title = 'مدير الموارد البشرية'
+          );
+          UPDATE hr_job_description_templates
+          SET description_status = 'approved',
+              role_purpose = NULL,
+              responsibilities = NULL,
+              qualifications = NULL,
+              reporting_to = NULL,
+              is_active = 1
+          WHERE position_title = 'مدير الموارد البشرية';
+          SQL
+
+          for migration in \
+            database/migrations/2026-10-20_hr_job_description_proposals.sql \
+            database/migrations/2026-10-20_hr_job_description_system_roles.sql \
+            database/migrations/2026-10-20_hr_job_description_z_clear_unreviewed_generic_drafts.sql \
+            database/migrations/2026-10-20_hr_job_description_zz_role_qualifications.sql \
+            database/migrations/2026-10-20_hr_job_description_zz_role_qualifications_utf8_repair.sql \
+            database/migrations/2026-10-20_hr_job_description_zzz_general_fallback_drafts.sql \
+            database/migrations/2026-10-20_hr_job_description_zzzz_qualification_baseline.sql
+          do
+            "${mysql[@]}" < "$migration"
+          done
+
+          approved_guard=$("${mysql[@]}" --batch --skip-column-names -e "
+            SELECT IF(
+              COUNT(*) = 1
+              AND SUM(description_status = 'approved'
+                      AND role_purpose IS NULL
+                      AND responsibilities IS NULL
+                      AND qualifications IS NULL
+                      AND reporting_to IS NULL
+                      AND is_active = 1) = 1,
+              1, 0)
+            FROM hr_job_description_templates
+            WHERE position_title = 'مدير الموارد البشرية'
+              AND system_role_code = '';
+          ")
+          test "$approved_guard" = "1"
+
