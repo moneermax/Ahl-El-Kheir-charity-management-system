@@ -13,7 +13,10 @@ if (!defined('APP_URL')) { exit('Direct access not permitted'); }
 function get_latest_verification_status($family_id, $month, $nanny_id) {
     $result = ['is_orphan' => 0, 'is_mother' => 0, 'is_bank' => 0, 'is_fully_verified' => false, 'notes' => '', 'verified_at' => null];
     try {
-        $record = dbFetchOne("SELECT is_orphan_verified, is_mother_contact_verified, is_bank_verified, verification_notes, verified_at FROM nanny_family_verifications WHERE family_id = ? AND month = ? AND nanny_id = ? ORDER BY id DESC LIMIT 1", [$family_id, $month, $nanny_id]);
+        // The schema stores one shared verification record per family/month.
+        // nanny_id records who last verified it; it must not hide that monthly
+        // family status when the same family appears through another assigned group.
+        $record = dbFetchOne("SELECT is_orphan_verified, is_mother_contact_verified, is_bank_verified, verification_notes, verified_at FROM nanny_family_verifications WHERE family_id = ? AND month = ? ORDER BY id DESC LIMIT 1", [$family_id, $month]);
         if ($record) {
             $result['is_orphan'] = (int)($record['is_orphan_verified'] ?? 0);
             $result['is_mother'] = (int)($record['is_mother_contact_verified'] ?? 0);
