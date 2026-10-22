@@ -3892,3 +3892,7 @@ A deterministic Arabic answer for the Nanny's assigned-groups workflow was commi
 
 ## 2026-10-22 — AI assistant online voice consent milestone
 The owner approved online Arabic speech recognition with clear consent before audio processing and a typing fallback. Source commit `18bf40af2f905b5509396d92e17374c0c79ecd7c` adds an Arabic/English consent prompt before browser speech recognition, temporary page-only consent, editable transcripts, and non-technical failure messages. This is a source milestone only; local PHP lint and real-browser acceptance remain pending. Do not describe voice as runtime-verified until those checks pass. Detailed checklist: `docs/CHATGPT_AI_ASSISTANT_CONTINUATION.md`.
+
+
+## 2026-10-22 — AI assistant voice diagnostics
+The user reports voice recognition fails after consent. The widget previously hid the specific browser failure behind a generic message. Commit `753a3b225c1a992bcb3a6b1ce627ea365fef3092` adds plain-language handling for common speech-recognition errors. Runtime success is not claimed; local lint and browser retest are pending. Details: `docs/CHATGPT_AI_ASSISTANT_CONTINUATION.md`.
