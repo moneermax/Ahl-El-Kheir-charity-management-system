@@ -113,3 +113,14 @@ Privacy boundary: speech audio is handled by the browser's speech-recognition im
 
 ### 2026-10-22 — Voice recognition failure diagnostics
 After the owner reported that online recognition still failed after consent, source inspection found the widget mapped every non-permission recognition error to the same generic message, hiding the browser event's actual error category. Commit `753a3b225c1a992bcb3a6b1ce627ea365fef3092` maps common Web Speech API categories (network, no speech, microphone capture, service unavailable, unsupported language, blocked permission, aborted) to plain Arabic/English guidance. The underlying category is logged to the browser console for diagnosis, while no raw browser code is shown to staff. This is a diagnostic improvement, not proof that recognition works. Pull main and retry once; report the specific user-facing message. If it still fails, inspect the browser console warning `Ahl El Kheir voice recognition error:` and provide only the error category (not unrelated page data). Local PHP lint and browser verification remain pending.
+## 2026-10-22 — Direct Gemini audio transcription implementation
+
+The owner clarified and approved sending the actual recorded audio to Google's Gemini API for transcription, with explicit consent before recording and transmission. This replaces browser-vendor Web Speech recognition; the browser now records a short clip with MediaRecorder and posts the audio to the authenticated PHP endpoint.
+
+Source commits:
+- `d5d91e478235c323d10204762c802f3cb9cf2ca3` — adds the `transcribe_audio` action to `modules/ai_assistant/chat.php`, using the existing server-side Gemini key, strict MIME/size checks, per-session rate limiting, TLS verification, and a transcript-only response.
+- `d30efdbb97223f483dae9285027584a025637f61` — changes `includes/ai_assistant_widget.php` to ask consent before recording, record up to 20 seconds, send audio to the PHP endpoint for Gemini transcription, and insert the transcript into the editable question box without auto-submitting it.
+
+The recording is not written to chat history; only the user's edited/sent text and assistant response follow the existing history behavior. The API key remains server-side. The server must have `GEMINI_API_KEY` or the documented hosting configuration entry set; no paid billing should be enabled.
+
+**Verification is pending:** pull `main`, PHP-lint both assistant files, then test consent decline, microphone permission denial, recording stop/20-second cap, Arabic and English transcription, editable transcript/no auto-submit, API unavailable/unconfigured errors, and typing fallback on `http://localhost:8081/AhlElKheir/` using the existing `ahl_el_kheir` database. This implementation has not been runtime-verified, and no local browser/network test was possible from the repository editing session.
