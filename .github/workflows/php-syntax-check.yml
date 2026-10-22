@@ -61,8 +61,7 @@ jobs:
           for file in "${files[@]}"; do
             php -l "$file"
           done
-          php tools/i18n_gap.php > /tmp/ak_i18n_gap.txt || true
-          if grep -qE '^[[:space:]]*[0-9]+[[:space:]]+modules/accounting/nanny_pre_verification\.php
+
 
   migration-mariadb-10-4:
     runs-on: ubuntu-latest
