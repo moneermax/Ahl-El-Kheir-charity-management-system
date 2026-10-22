@@ -124,3 +124,10 @@ Source commits:
 The recording is not written to chat history; only the user's edited/sent text and assistant response follow the existing history behavior. The API key remains server-side. The server must have `GEMINI_API_KEY` or the documented hosting configuration entry set; no paid billing should be enabled.
 
 **Verification is pending:** pull `main`, PHP-lint both assistant files, then test consent decline, microphone permission denial, recording stop/20-second cap, Arabic and English transcription, editable transcript/no auto-submit, API unavailable/unconfigured errors, and typing fallback on `http://localhost:8081/AhlElKheir/` using the existing `ahl_el_kheir` database. This implementation has not been runtime-verified, and no local browser/network test was possible from the repository editing session.
+
+
+## 2026-10-22 — Gemini audio transcription diagnostic follow-up
+
+The user-approved MediaRecorder → Gemini transcription path reached the endpoint but returned the generic upstream-failure response in the browser. Source audit found the endpoint was discarding both cURL transport diagnostics and Gemini's structured error response, preventing a root-cause diagnosis. Commit `130af192c49aafae11c1369e7e884e9367016ac8` now logs the HTTP status, cURL errno/error, and a bounded Gemini error status/message to the PHP error log while keeping the user-facing response generic and never logging the API key or audio payload. It also removes the undefined `$lang` reference from the transcription prompt, using one language-neutral bilingual prompt.
+
+**Verification is pending.** The repository connector cannot run PHP lint or exercise the user's local Apache/PHP/Gemini request. Pull `main`, run `D:\\xampp\\php\\php.exe -l D:\\xampp\\htdocs\\AhlElKheir\\modules\\ai_assistant\\chat.php`, then make one short consented recording. If it fails, inspect `D:\\xampp\\apache\\logs\\error.log` for lines beginning `[Ahl El Kheir AI transcription]` and share only those lines; do not share the API key or audio. This is diagnostic instrumentation, not a claim that transcription now succeeds.
