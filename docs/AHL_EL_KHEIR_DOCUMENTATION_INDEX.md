@@ -147,3 +147,8 @@ See `HR_FM_PAYROLL_TABLE_USABILITY_CONTINUATION.md` for the current checkpoint: 
 
 ## HR Employment Contracts
 - `HR_EMPLOYMENT_CONTRACT_CONTINUATION.md` — current scope, source checkpoint, legal-review boundary, and local verification steps for the in-system editable contract PDF builder.
+
+
+## Nanny group verification continuation
+
+- `ACCOUNTING_NANNY_GROUP_VERIFICATION_CONTINUATION.md` — bulk verification design, existing schema constraints, security behavior, verification boundary, and local acceptance checks.
