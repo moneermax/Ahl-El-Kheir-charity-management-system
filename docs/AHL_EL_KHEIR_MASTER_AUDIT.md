@@ -4037,3 +4037,20 @@ Verification boundary: source is committed to `main`; local PHP 8.2 lint and bro
 At the user's request, removed the additional HTML preview wrapper and restored the prior direct authorized file response in `modules/hr/view_contract.php`. The HR contract register continues linking to that protected route; `storage/.htaccess` remains restrictive. The route sends the file with `Content-Disposition: inline`, allowing the browser's PDF viewer/settings to determine inline display versus download. No database/schema changes.
 
 Commit: `e3b458eb57e618acaf8c8bb0a06df79cd02ece7e`. Local PHP 8.2 lint and browser behavior remain unverified.
+
+
+---
+
+## 2026-10-22 — Nanny group bulk verification (verification pending)
+
+Scope: improve Nanny throughput for the three monthly family checks (orphan eligibility, mother contact, and bank-account details) without weakening evidence or the Accounting boundary.
+
+Implementation committed in `modules/accounting/group_verification.php`:
+- bulk selection supports a single chosen check or all three checks;
+- single-check bulk operations preserve the other two stored flags;
+- selected IDs are validated against the assigned group before writes;
+- bulk writes and each family's `verification_audit_log` record are atomic;
+- group assignment and pending-state checks are server-side;
+- individual verification and group submission also validate current assignment/scope.
+
+Schema inspection confirmed the existing family/month unique key and audit columns; no migration was added. The GitHub PHP syntax workflow now includes the page. Syntax workflow result and local application/database runtime verification remain pending. This is an implementation checkpoint, not a runtime acceptance claim. Detailed test steps: `docs/ACCOUNTING_NANNY_GROUP_VERIFICATION_CONTINUATION.md`.
