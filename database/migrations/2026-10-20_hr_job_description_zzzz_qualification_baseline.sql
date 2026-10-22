@@ -6,5 +6,6 @@ SET NAMES utf8mb4;
 UPDATE hr_job_description_templates
 SET qualifications = CONCAT('• الحد الأدنى للمؤهل الأكاديمي: شهادة الثانوية العامة أو ما يعادلها.\n• معرفة أساسية باستخدام الحاسوب وبرامج المكتب.', CASE WHEN NULLIF(TRIM(qualifications), '') IS NULL THEN '' ELSE CONCAT('\n', TRIM(qualifications)) END), description_status = 'needs_review', updated_at = CURRENT_TIMESTAMP
 WHERE is_active = 1
+  AND description_status <> 'approved'
   AND COALESCE(qualifications, '') NOT LIKE '%الحد الأدنى للمؤهل الأكاديمي: شهادة الثانوية العامة أو ما يعادلها.%'
   AND COALESCE(qualifications, '') NOT LIKE '%معرفة أساسية باستخدام الحاسوب وبرامج المكتب.%';
