@@ -4166,3 +4166,7 @@ Audit limitation: the sensitive-content filter is a conservative first pass, not
 ## 2026-10-22 — Internal documentation web-access guard
 
 Source review found the root .htaccess only disabled directory listings and docs had no local access-denial rule. Added docs/.htaccess with Apache 2.4 Require all denied. PHP filesystem retrieval remains available for the assistant, but direct HTTP access must be verified as denied on InfinityFree before deployment acceptance. This source safeguard has not been runtime-tested on the hosting account.
+
+
+### 2026-10-22 — AI assistant Arabic retrieval follow-up
+The first local browser test showed the assistant UI works, but the Arabic question about the first step after sign-in missed local retrieval and reached the unconfigured-Gemini fallback. Root cause: the canonical employee guide described sign-in only in English while retrieval is keyword-based. The guide now includes a reviewed Arabic/English post-login instruction: confirm the dashboard matches the user's job role, and complete a required password change if prompted. Retest the exact question locally before configuring Gemini. No application logic, schema, or privacy boundary changed.
