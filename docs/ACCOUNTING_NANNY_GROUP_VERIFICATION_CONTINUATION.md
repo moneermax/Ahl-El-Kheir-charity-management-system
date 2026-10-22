@@ -70,3 +70,12 @@ The page reuses `nanny_family_verifications` for the displayed payment month (`Y
 Server-side scope is limited to the logged-in Nanny's active assignments and pending groups. Because the schema stores one verification row per family/month rather than per group, families also present in active non-pending groups are excluded to avoid modifying a shared record already used by a submitted/locked group. This page does not submit groups to Accounting.
 
 **Verification boundary:** source committed to `main`; PHP 8.2 syntax lint PASS in GitHub Actions run `39719045605` (the `php-lint` job explicitly includes `modules/accounting/nanny_pre_verification.php`); local XAMPP/browser/database acceptance remains pending. Use the existing `ahl_el_kheir` database only; do not create a disposable database or reset operational data.
+
+
+## 2026-10-22 — Monthly scope correction
+
+This section supersedes the earlier pending-only scope description above: the preliminary page now includes families in every active group assigned to the Nanny, regardless of global group status. Both Nanny pages use a validated selected payment month and carry it across navigation and POSTs. Monthly checks remain keyed by family/month in the existing table. Group-page edits for the selected month are permitted for any active assigned group, while group submission remains pending-only and the downstream accounting workflow is unchanged.
+
+Source commits: `53190c05f7f4ba4bcfd0952e8a5fc17129d8a1f3`, `fd5d9c70e7b1c0be75e7a10b8823982f79f30f95`, `23722801177e921a82850b9c8ff15fcd6838fe55`, `7198ef5a3a488a404dfb73b41bc2c72e73def6a1`.
+
+Verification: PHP syntax and local runtime/browser acceptance pending. No DB schema/data changes were made.
