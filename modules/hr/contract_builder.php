@@ -14,6 +14,10 @@ if (!Session::isLoggedIn() || !in_array(Session::getUserRole(), $allowedRoles, t
 }
 
 $pdo = db();
+$jobDescriptionCatalogueAvailable = (bool) dbFetchOne(
+    "SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ? LIMIT 1",
+    ['hr_job_description_templates']
+);
 $employees = dbFetchAll(
     "SELECT e.id, e.user_id, e.employee_code, e.full_name, e.national_id, e.phone, e.email,
             e.address, e.position, e.basic_salary, d.name_ar AS department_name,
@@ -25,13 +29,13 @@ $employees = dbFetchAll(
      ORDER BY e.full_name",
     []
 );
-$jobDescriptions = dbFetchAll(
+$jobDescriptions = $jobDescriptionCatalogueAvailable ? dbFetchAll(
     "SELECT id, position_title, system_role_code, role_purpose, responsibilities, qualifications, reporting_to, role_specific_terms, description_status
      FROM hr_job_description_templates
      WHERE is_active = 1
      ORDER BY position_title, system_role_code",
     []
-);
+) : [];
 $jobDescriptionByPosition = [];
 $jobDescriptionByPositionRole = [];
 foreach ($jobDescriptions as $description) {
@@ -676,6 +680,7 @@ require_once __DIR__ . '/../../includes/header.php';
 <div class="contract-builder">
   <div class="cb-hero d-flex align-items-center justify-content-between gap-3 flex-wrap"><div class="d-flex align-items-center gap-3"><img src="<?= e(APP_URL . $portalLogoPath) ?>" alt="شعار جمعية أهل الخير" style="width:68px;height:68px;object-fit:contain;background:#fff;border-radius:10px;padding:5px"><div><h1><i class="fa-solid fa-file-signature me-2"></i>بوابة عقود العمل</h1><p><?= e(trim((string)($organizationSettings['org_name_ar'] ?? '')) ?: 'جمعية أهل الخير الخيرية') ?> — إعداد عقد مناسب للمسمى الوظيفي ثم معاينته وطباعته للتوقيع.</p><?php $portalContact = array_filter([trim((string)($organizationSettings['org_address'] ?? '')), trim((string)($organizationSettings['support_phone'] ?? '')), trim((string)($organizationSettings['support_email'] ?? ''))]); if ($portalContact): ?><small><?= e(implode(' | ', $portalContact)) ?></small><?php endif; ?></div></div><div class="d-flex gap-2 flex-wrap"><a class="btn btn-light btn-sm fw-bold" href="<?= e(APP_URL) ?>modules/hr/contracts.php<?= $selectedEmployeeId ? '?employee_id=' . $selectedEmployeeId . '&view=contracts' : '' ?>"><i class="fa-solid fa-folder-open me-1"></i> سجل العقود والرواتب</a><a class="btn btn-light btn-sm fw-bold" href="<?= e(APP_URL) ?>modules/hr/job_description_catalogue.php"><i class="fa-solid fa-list-check me-1"></i> إدارة الأوصاف الوظيفية</a></div></div>
   <?php if (!empty($errorMessage)): ?><div class="alert alert-danger cb-error"><?= e($errorMessage) ?></div><?php endif; ?>
+  <?php if (!$jobDescriptionCatalogueAvailable): ?><div class="alert alert-warning" role="status">فهرس الأوصاف الوظيفية غير مهيأ في قاعدة البيانات الحالية. يمكنك متابعة إعداد العقد يدوياً دون تعبئة تلقائية للوصف الوظيفي؛ ستظهر الأوصاف تلقائياً بعد تطبيق ترحيلات الفهرس.</div><?php endif; ?>
   <div class="cb-note"><strong>ملاحظة قانونية:</strong> هذا نموذج تشغيلي أولي وليس اعتماداً قانونياً. يجب مراجعته بواسطة محامٍ مؤهل في السودان قبل استخدامه رسمياً، والتحقق من توافق الشروط والسياسات مع أحكام قانون العمل السوداني السارية. لا تُدخل أي استحقاق أو مدة قانونية غير متحقق منها.</div>
   <form id="contractBuilderForm" method="post" action="<?= e(APP_URL) ?>modules/hr/contract_builder.php" target="contractPdfPreview">
     <?= csrf_field() ?>
