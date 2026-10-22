@@ -118,3 +118,37 @@ function ak_ai_local_answer(string $question, string $role, string $root): ?arra
         static fn(string $term): bool => mb_strlen($term, 'UTF-8') >= 3
     )));
     if (!$terms) return null;
+
+    $matches = [];
+    foreach ($candidates as $candidate) {
+        $normalized = ak_ai_normalize($candidate['text']);
+        $score = 0;
+        foreach ($terms as $term) {
+            if (mb_strpos($normalized, $term, 0, 'UTF-8') !== false) {
+                $score += mb_strlen($term, 'UTF-8') >= 6 ? 2 : 1;
+            }
+        }
+        if ($score >= 3) {
+            $matches[] = ['score' => $score, 'text' => $candidate['text']];
+        }
+    }
+    usort($matches, static fn(array $a, array $b): int => $b['score'] <=> $a['score']);
+    $matches = array_slice($matches, 0, 2);
+    if (!$matches) return null;
+    return [
+        'answer' => implode("\n\n", array_unique(array_column($matches, 'text'))),
+        'sources' => ['AHL_EL_KHEIR_EMPLOYEE_TASKS_AND_USER_GUIDE.md'],
+        'mode' => 'local_guide',
+    ];
+}
+
+$local = ak_ai_local_answer($question, $role, dirname(__DIR__, 2));
+if ($local !== null) {
+    ak_ai_json(200, ['ok' => true] + $local);
+}
+ak_ai_json(200, [
+    'ok' => true,
+    'mode' => 'not_found',
+    'sources' => [],
+    'message' => 'لم أجد إجابة موثقة في الجزء المسموح من دليل المستخدم. / I could not find a verified answer in the user-guide sections available to your role. Your question has not been sent to Google.',
+]);
