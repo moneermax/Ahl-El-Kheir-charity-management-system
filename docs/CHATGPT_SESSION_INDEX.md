@@ -1667,3 +1667,7 @@ Per-user chat history UI/API and explicit migration are committed on `main`: `da
 ### 2026-10-22 — AI assistant follow-up: Arabic Nanny question + voice diagnosis
 
 The Nanny guide now has Arabic instructions for viewing assigned groups and all active families across assigned groups; Arabic retrieval normalization and Arabic internal-workflow terms were added so missed Arabic questions do not fall through to external AI. The voice error now surfaces the browser's SpeechRecognition error code; voice is not yet verified/fixed. See `docs/CHATGPT_AI_ASSISTANT_CONTINUATION.md`. Local lint/browser retest of these latest commits remains pending.
+
+### 2026-10-22 — AI assistant launch-readiness follow-up
+
+Commit `dc0e7640fe98cb134590c0ec3e314c80133e16f4` adds a deterministic local Arabic answer for the Nanny's assigned-groups question and normalizes role-code case. Local lint/browser verification is pending. On-device Arabic speech recognition returned `language-not-supported`; online speech recognition requires an explicit privacy decision and clear user consent before implementation. See `docs/CHATGPT_AI_ASSISTANT_CONTINUATION.md`.
