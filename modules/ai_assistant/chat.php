@@ -131,9 +131,7 @@ if ($action === 'transcribe_audio') {
         ak_ai_json(503, ['ok' => false, 'message' => 'الإدخال الصوتي غير مهيأ على الخادم. يمكنك كتابة سؤالك بدلاً من ذلك. / Voice transcription is not configured on the server. You can type your question instead.']);
     }
 
-    $transcriptionPrompt = $lang === 'ar'
-        ? 'Transcribe the spoken audio exactly into written text. The speaker may use Arabic, including Sudanese Arabic, or English. Preserve the language and meaning. Return only the transcription, with no commentary, translation, or labels.'
-        : 'Transcribe the spoken audio exactly into written text. The speaker may use English or Arabic. Preserve the language and meaning. Return only the transcription, with no commentary, translation, or labels.';
+    $transcriptionPrompt = 'Transcribe the spoken audio exactly into written text. The speaker may use Arabic, including Sudanese Arabic, or English. Preserve the original language and meaning. Return only the transcription, with no commentary, translation, or labels.';
     $payload = [
         'contents' => [[
             'role' => 'user',
