@@ -3765,4 +3765,4 @@ The existing `modules/accounting/group_verification.php` now supports bulk marki
 
 No schema migration was needed. The existing `nanny_family_verifications` unique key is `(family_id, month)`, and the existing audit table supports before/after flags.
 
-A dedicated continuation document is `docs/ACCOUNTING_NANNY_GROUP_VERIFICATION_CONTINUATION.md`. The PHP syntax workflow has been updated to include this page; its result and local browser/runtime acceptance are still pending. Do not mark this feature closed until those checks pass.
+A dedicated continuation document is `docs/ACCOUNTING_NANNY_GROUP_VERIFICATION_CONTINUATION.md`. GitHub Actions run `39715384849` passed the `php-lint` job, which included this page. Local browser/runtime acceptance remains pending. The broad workflow's separate `migration-full-schema` job failed at its existing Stage 5 salary-advance payroll integration check (`يجب تطبيق ترحيل تجهيز تحويلات الرواتب قبل تأكيد الدفع`); this is unrelated to the Nanny page and must not reopen the closed salary-advance scope.

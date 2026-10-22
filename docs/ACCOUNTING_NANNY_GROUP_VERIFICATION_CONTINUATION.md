@@ -1,6 +1,6 @@
 # Nanny Group Verification — Bulk Workflow Continuation
 
-**Status:** Implementation committed; PHP syntax workflow and local runtime verification pending  
+**Status:** Implementation committed; PHP syntax passed; local runtime verification pending  
 **Baseline:** 2026-10-22  
 **Repository:** `moneermax/Ahl-El-Kheir-charity-management-system`  
 **Branch:** `main`  
@@ -35,7 +35,8 @@ The schema has one `nanny_family_verifications` row per family and month, regard
 ## Verification boundary
 
 - Source/schema inspection: complete.
-- PHP syntax: pending the GitHub Actions syntax-check workflow run that now includes `modules/accounting/group_verification.php`.
+- PHP syntax: **PASS** in GitHub Actions run `39715384849`; the `php-lint` job completed successfully and included `modules/accounting/group_verification.php`.
+- The same broad workflow's unrelated `migration-full-schema` job failed later during its existing Stage 5 salary-advance payroll integration check with `FAIL | Stage 5 payroll integration | يجب تطبيق ترحيل تجهيز تحويلات الرواتب قبل تأكيد الدفع.` This is not evidence of a failure in the Nanny page; do not reopen or alter the closed salary-advance module as part of this task.
 - Runtime/browser verification against the real local application and `ahl_el_kheir`: **not yet performed**.
 - No claim is made that runtime behavior has passed until the local workflow is exercised.
 
