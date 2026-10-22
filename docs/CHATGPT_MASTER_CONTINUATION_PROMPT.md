@@ -1610,3 +1610,12 @@ These are source-only changes committed on `main`; PHP lint and local XAMPP beha
 - Added the `hr-job-description-migrations` CI job in `.github/workflows/php-syntax-check.yml`. It imports the checked-in schema into a disposable MariaDB 10.4.32 instance, applies all eight `2026-10-20_hr_job_description_*` migrations in filename sequence, and asserts that an approved HR-manager title-only catalogue row retains its approved status and blank content fields.
 - The same workflow now PHP-lints `modules/hr/contract_builder.php` and `modules/hr/job_description_catalogue.php`.
 - Repository-side safeguards are committed; local `ahl_el_kheir` remains untouched. Do not apply the migrations locally until the CI migration job completes successfully and a backup is available. Local page, prefill and PDF verification is still pending.
+
+## 2026-10-22 — Latest HR job-description migration checkpoint
+
+The user applied `database/migrations/2026-10-20_hr_job_description_proposals.sql` to the local `ahl_el_kheir` database after making a backup. The command returned no reported SQL error. Verification:
+- 23 active `needs_review` entries; 0 have blank `reporting_to`.
+- Approved IDs 6 and 20 remain approved and active with reporting lines.
+- `HR Test` ID 11 is inactive and remains `needs_review`.
+
+Do not say all eight job-description migrations have been applied: only the proposals migration is confirmed applied in this checkpoint. This verifies the reporting-line result and the listed row safeguards, not every updated field. Local browser/prefill/PDF acceptance remains unverified. Do not rerun the migration or reopen completed unrelated work. If the user starts a new task, follow that new requirement while preserving this verification boundary.
