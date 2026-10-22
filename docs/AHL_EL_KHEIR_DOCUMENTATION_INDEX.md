@@ -152,3 +152,11 @@ See `HR_FM_PAYROLL_TABLE_USABILITY_CONTINUATION.md` for the current checkpoint: 
 ## Nanny group verification continuation
 
 - `ACCOUNTING_NANNY_GROUP_VERIFICATION_CONTINUATION.md` — bulk verification design, existing schema constraints, security behavior, verification boundary, and local acceptance checks.
+
+ 
+## 2026-10-22 — Role-aware AI assistant (initial source milestone)
+
+- Continuation: CHATGPT_AI_ASSISTANT_CONTINUATION.md.
+- Shared floating panel and authenticated JSON endpoint are committed on main. The endpoint searches only the signed-in role's permitted section of the employee user guide, then optionally calls Gemini for general questions only after per-question consent.
+- Internal documentation, application source, database rows and identity/role data are not sent to Google. No database/schema change was made.
+- Verification remains pending: PHP 8.2 CI lint, local browser/session/CSRF tests, and a real InfinityFree connectivity/quota check. Do not call runtime-verified yet.
