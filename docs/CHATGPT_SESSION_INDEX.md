@@ -1637,3 +1637,14 @@ The user applied only `database/migrations/2026-10-20_hr_job_description_proposa
 - Approved entries IDs 6 and 20 remain `approved`, active, and have reporting lines.
 - `HR Test` ID 11 is inactive and remains `needs_review`.
 This closes the local reporting-line backfill check only; it does not prove every field affected by the migration or the HR portal's browser/PDF behavior. Do not claim the entire eight-migration sequence was applied. The local browser acceptance remains unverified and may be resumed if needed; if the user provides a new requirement, prioritize that task without silently treating browser verification as complete.
+
+
+## 2026-10-22 — Role-aware AI assistant (initial source milestone)
+
+The user requested a bilingual role-aware assistant using the existing application, with Google Gemini free-tier generation only for carefully limited non-confidential general questions. Initial source is committed on main:
+- includes/ai_assistant_widget.php: shared floating panel, consent checkbox, text chat, and on-device-only speech dictation when supported.
+- includes/footer.php: includes the widget for logged-in sessions only.
+- modules/ai_assistant/chat.php: authenticated POST JSON endpoint, database-resolved active role, CSRF, bounded request size, per-session rate limit, role-section-filtered local user-guide retrieval, and consent-gated Gemini general-answer fallback.
+- .github/workflows/php-syntax-check.yml: PHP lint coverage added.
+
+No database/schema changes or business actions. Local guide excerpts and internal project material are not sent to Google. Current limitations and the full verification checklist are in docs/CHATGPT_AI_ASSISTANT_CONTINUATION.md. PHP CI, local browser/session acceptance, and InfinityFree API connectivity remain unverified.
