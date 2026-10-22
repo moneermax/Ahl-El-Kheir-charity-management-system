@@ -410,10 +410,36 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+function syncBulkFamilySelection() {
+    const form = document.getElementById('bulkVerificationForm');
+    if (!form) return [];
+
+    // Read the visible family checkboxes, which are associated with the form
+    // using the HTML form attribute but intentionally live outside its markup.
+    const selected = Array.from(document.querySelectorAll('.bulk-family-checkbox'))
+        .filter(function(checkbox) { return checkbox.checked; });
+
+    // Mirror selected IDs into controls physically inside the form. This makes
+    // selection explicit for FormData/native submission regardless of external
+    // form-control handling during page refreshes.
+    form.querySelectorAll('input[data-bulk-family-id="1"]').forEach(function(input) {
+        input.remove();
+    });
+    selected.forEach(function(checkbox) {
+        const hidden = document.createElement('input');
+        hidden.type = 'hidden';
+        hidden.name = 'family_ids[]';
+        hidden.value = checkbox.value;
+        hidden.setAttribute('data-bulk-family-id', '1');
+        form.appendChild(hidden);
+    });
+    return selected;
+}
+
 function confirmBulkVerification(event) {
     event.preventDefault();
     const form = document.getElementById('bulkVerificationForm');
-    const selected = document.querySelectorAll('.bulk-family-checkbox:checked');
+    const selected = syncBulkFamilySelection();
     const operation = document.getElementById('bulkOperation');
     const labels = {
         orphan: 'توثيق اليتيم فقط',
@@ -437,23 +463,45 @@ function confirmBulkVerification(event) {
         reverseButtons: true
     }).then((result) => {
         if (result.isConfirmed) {
+            // Remove this page's confirmation handler, then dispatch a normal
+            // submit event so the shared same-page POST handler can process it.
             form.onsubmit = null;
-            form.submit();
+            if (typeof form.requestSubmit === 'function') {
+                form.requestSubmit();
+            } else {
+                form.submit();
+            }
         }
     });
     return false;
 }
 
-document.addEventListener('DOMContentLoaded', function() {
+function initializeBulkFamilySelection() {
     const selectAll = document.getElementById('selectAllBulkFamilies');
+    const checkboxes = Array.from(document.querySelectorAll('.bulk-family-checkbox'));
     if (selectAll) {
         selectAll.addEventListener('change', function() {
-            document.querySelectorAll('.bulk-family-checkbox').forEach(function(checkbox) {
+            checkboxes.forEach(function(checkbox) {
                 checkbox.checked = selectAll.checked;
             });
+            syncBulkFamilySelection();
         });
     }
-});
+    checkboxes.forEach(function(checkbox) {
+        checkbox.addEventListener('change', function() {
+            if (selectAll) {
+                selectAll.checked = checkboxes.length > 0 && checkboxes.every(function(item) { return item.checked; });
+            }
+            syncBulkFamilySelection();
+        });
+    });
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeBulkFamilySelection, {once: true});
+} else {
+    initializeBulkFamilySelection();
+}
 
 document.addEventListener('DOMContentLoaded', function() {
     <?php if ($success_message !== ''): ?>
