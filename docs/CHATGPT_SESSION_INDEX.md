@@ -1535,3 +1535,8 @@ Verification boundary: source is committed to `main`; local PHP 8.2 lint and bro
 At the user's request, removed the additional HTML preview wrapper and restored the prior direct authorized file response in `modules/hr/view_contract.php`. The HR contract register continues linking to that protected route; `storage/.htaccess` remains restrictive. The route sends the file with `Content-Disposition: inline`, allowing the browser's PDF viewer/settings to determine inline display versus download. No database/schema changes.
 
 Commit: `e3b458eb57e618acaf8c8bb0a06df79cd02ece7e`. Local PHP 8.2 lint and browser behavior remain unverified.
+
+
+### 2026-10-22 — Nanny group bulk verification
+
+Active task: `modules/accounting/group_verification.php`. Bulk verification supports one selected check across multiple selected families or all three checks, preserves unrelated flags, logs each family change in `verification_audit_log`, and enforces assigned-group scope server-side. See `docs/ACCOUNTING_NANNY_GROUP_VERIFICATION_CONTINUATION.md`. PHP syntax workflow and local runtime/browser verification are still pending; do not describe the workflow as runtime-verified.
