@@ -32,6 +32,14 @@ Reduce repetitive work for Nannies responsible for large groups without changing
 
 The schema has one `nanny_family_verifications` row per family and month, regardless of Nanny. The implementation locks and updates that row when it exists, preserves the existing flags for one-check bulk operations, and records the current acting Nanny as the verifier. Historical rows in `verification_audit_log` are retained.
 
+## Follow-up fix — closed-group individual controls (2026-10-22)
+
+Inspection confirmed the inconsistency in both layers: the individual POST handler checked assignment and family membership but did not require `verification_status = 'pending'`, and the row action/modal rendered for every group state. The handler now requires the pending-state guard used by bulk verification, and individual edit controls/modal are rendered only for pending groups. Non-pending rows show a dash instead of an edit action. No group status or verification records were changed.
+
+Source commit on `main`: `e50686f0a8492506459e4465513d03778debc498`.
+
+Verification: PHP lint and local browser/database runtime verification remain pending. Do not treat the feature as runtime-verified until those checks pass.
+
 ## Verification boundary
 
 - Source/schema inspection: complete.
