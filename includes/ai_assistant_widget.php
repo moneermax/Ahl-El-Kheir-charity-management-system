@@ -8,7 +8,7 @@ $akAiCsrf = function_exists('csrf_token') ? csrf_token() : '';
     <p><?php echo e(AK_LANG === 'ar' ? 'تُبحث الأدلة المحلية أولاً. لا تُرسل الأسئلة إلى Google إلا بموافقتك.' : 'Local guides are searched first. Questions are sent to Google only with your consent.'); ?></p>
     <p class="ak-ai-notice"><?php echo e(AK_LANG === 'ar' ? 'لا تُرسل الأسئلة الداخلية أو الحساسة إلى Google.' : 'Internal or sensitive questions are not sent to Google.'); ?></p>
     <div id="ak-ai-messages" aria-live="polite"><div class="ak-ai-message"><?php echo e(AK_LANG === 'ar' ? 'مرحباً! اسأل عن استخدام النظام.' : 'Hello! Ask about using the system.'); ?></div></div>
-    <form id="ak-ai-form"><label class="ak-ai-consent"><input type="checkbox" id="ak-ai-consent"> <?php echo e(AK_LANG === 'ar' ? 'أوافق على إرسال السؤال العام غير السري إلى Google' : 'Allow sending this general, non-confidential question to Google'); ?></label><div class="ak-ai-compose"><textarea id="ak-ai-question" rows="2" maxlength="1000" required></textarea><button type="submit" id="ak-ai-send"><?php echo e(AK_LANG === 'ar' ? 'إرسال' : 'Send'); ?></button></div></form>
+    <form id="ak-ai-form"><label class="ak-ai-consent"><input type="checkbox" id="ak-ai-consent"> <?php echo e(AK_LANG === 'ar' ? 'أوافق على إرسال السؤال العام غير السري إلى Google' : 'Allow sending this general, non-confidential question to Google'); ?></label><div class="ak-ai-compose"><textarea id="ak-ai-question" rows="2" maxlength="1000" required></textarea><button type="button" id="ak-ai-mic" disabled aria-label="Microphone">🎙</button><button type="submit" id="ak-ai-send"><?php echo e(AK_LANG === 'ar' ? 'إرسال' : 'Send'); ?></button></div></form>
   </section>
 </div>
 
