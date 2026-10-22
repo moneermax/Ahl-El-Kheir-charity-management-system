@@ -160,3 +160,7 @@ See `HR_FM_PAYROLL_TABLE_USABILITY_CONTINUATION.md` for the current checkpoint: 
 - Shared floating panel and authenticated JSON endpoint are committed on main. The endpoint searches only the signed-in role's permitted section of the employee user guide, then optionally calls Gemini for general questions only after per-question consent.
 - Internal documentation, application source, database rows and identity/role data are not sent to Google. No database/schema change was made.
 - Verification remains pending: PHP 8.2 CI lint, local browser/session/CSRF tests, and a real InfinityFree connectivity/quota check. Do not call runtime-verified yet.
+
+
+## 2026-10-22 — AI assistant chat history
+See `CHATGPT_AI_ASSISTANT_CONTINUATION.md` for the gold launcher, persistent per-user history implementation, explicit database migration, and remaining local verification gates. History is not runtime verified until the migration is applied and cross-user isolation is tested.
