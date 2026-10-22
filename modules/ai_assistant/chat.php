@@ -40,3 +40,19 @@ if (count($recent) >= 8) {
 }
 $recent[] = $now;
 $_SESSION['ak_ai_request_times'] = $recent;
+
+$user = dbFetchOne(
+    "SELECT r.code AS role_code FROM users u JOIN roles r ON r.id = u.role_id WHERE u.id = ? AND u.is_active = 1 LIMIT 1",
+    [Session::getUserId()]
+);
+if (!$user || empty($user['role_code'])) {
+    ak_ai_json(403, ['ok' => false, 'message' => 'تعذر التحقق من صلاحية الحساب. / Could not verify account permissions.']);
+}
+$role = (string)$user['role_code'];
+
+function ak_ai_normalize(string $value): string {
+    $value = mb_strtolower($value, 'UTF-8');
+    $value = str_replace(['أ', 'إ', 'آ', 'ٱ', 'ى'], ['ا', 'ا', 'ا', 'ا', 'ي'], $value);
+    $value = preg_replace('/[\x{064B}-\x{065F}\x{0670}\x{0640}]/u', '', $value) ?? $value;
+    return preg_replace('/[^\p{L}\p{N}\s]/u', ' ', $value) ?? $value;
+}
