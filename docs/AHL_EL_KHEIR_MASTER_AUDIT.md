@@ -4154,3 +4154,10 @@ Evidence from the user's local `ahl_el_kheir` database after applying `database/
 The mysql command returned no reported SQL error. The user had created a database backup before applying the migration.
 
 **Audit boundary:** this is direct evidence for the reporting-line backfill and the listed status/active safeguards, not a full before/after audit of every field changed by the SQL. It does not establish that the other seven migrations were applied, nor that the local Contract Builder/catalogue/browser/PDF workflow was runtime-tested. Do not infer Arabic text corruption from garbled console rendering alone; PowerShell/mysql literal encoding previously made direct Arabic-literal checks unreliable.
+
+
+## 2026-10-22 — AI assistant security and verification boundary
+
+Initial source adds a read-only role-aware assistant. Local retrieval is restricted to the matching role section in the employee user guide. Gemini receives only a user's eligible general question after an explicit per-question opt-in; basic internal-workflow and sensitive-pattern checks block likely internal or personal questions. The key remains server-side. No arbitrary SQL/PHP, record reads, business mutations, or chat-history storage were introduced.
+
+Audit limitation: the sensitive-content filter is a conservative first pass, not a guarantee that every possible personal or confidential string can be detected. The feature has not yet passed PHP CI, local session/CSRF/role-boundary tests, or InfinityFree network/quota verification. Follow docs/CHATGPT_AI_ASSISTANT_CONTINUATION.md before deployment; do not claim runtime acceptance.
