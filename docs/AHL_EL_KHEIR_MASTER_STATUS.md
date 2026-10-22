@@ -3861,3 +3861,10 @@ These are source-only changes committed on `main`; PHP lint and local XAMPP beha
 Applied locally: `database/migrations/2026-10-20_hr_job_description_proposals.sql` only. The user had backed up `ahl_el_kheir` first. The mysql command returned no reported SQL error. Follow-up read-only queries verified 23 active `needs_review` rows and zero blank reporting lines; approved rows 6 and 20 remain approved/active with reporting lines; `HR Test` row 11 is inactive and still `needs_review`.
 
 **Status:** proposals migration's reporting-line result and approved-row guard are verified against the local database. Do not describe all eight job-description migrations as applied. Focused local browser/prefill/PDF acceptance is still pending; PHP syntax checks and the dedicated migration CI job were already passing. The separate full-schema CI workflow's Stage 5 salary-advance regression failure remains unrelated and must not be represented as an HR migration failure or as an overall green workflow.
+
+
+## 2026-10-22 — AI assistant initial source milestone
+
+Added a shared authenticated assistant panel, a role-filtered local employee-guide lookup, and an optional Gemini free-tier fallback for general non-confidential questions after per-question consent. The server resolves the active role from the database and enforces POST, session authentication, CSRF, input limits, and per-session rate limits. Internal documentation, source, database records, user identity, and role are not sent to Google. No schema change or business mutation capability was added.
+
+Source files: includes/ai_assistant_widget.php, includes/footer.php, modules/ai_assistant/chat.php, .github/workflows/php-syntax-check.yml. Continuation and limitations: docs/CHATGPT_AI_ASSISTANT_CONTINUATION.md. Source is committed; PHP CI, local runtime, and InfinityFree connectivity remain pending. Do not describe as runtime verified.
