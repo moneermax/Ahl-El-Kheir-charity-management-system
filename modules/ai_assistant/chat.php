@@ -167,9 +167,11 @@ $restrictedTerms = [
     'ahl el kheir', 'family', 'families', 'sponsor', 'sponsorship', 'payroll',
     'salary', 'advance', 'accounting', 'disbursement', 'verification', 'nanny',
     'supervisor', 'workflow', 'permission', 'project', 'database', 'policy',
-    'approval', 'attendance', 'beneficiary', 'حافز', 'راتب', 'سلف', 'اسرة',
-    'كفالة', 'كفيل', 'مشرف', 'ناني', 'صرف', 'تحقق', 'اعتماد', 'صلاحيات',
-    'مشروع', 'محاسبة', 'سياسة', 'حضور', 'مستفيد'
+    'approval', 'attendance', 'beneficiary', 'employee', 'child', 'orphan', 'mother',
+    'medical', 'health', 'diagnosis', 'address', 'phone', 'bank', 'iban', 'personal',
+    'حافز', 'راتب', 'سلف', 'اسرة', 'كفالة', 'كفيل', 'مشرف', 'ناني', 'صرف',
+    'تحقق', 'اعتماد', 'صلاحيات', 'مشروع', 'محاسبة', 'سياسة', 'حضور', 'مستفيد',
+    'موظف', 'طفل', 'يتيم', 'والدة', 'عنوان', 'هاتف', 'صحي', 'طبي', 'مرض', 'بيانات', 'اسم', 'بنك'
 ];
 foreach ($restrictedTerms as $term) {
     if (mb_strpos($normalizedQuestion, ak_ai_normalize($term), 0, 'UTF-8') !== false) {
