@@ -62,7 +62,6 @@ jobs:
             php -l "$file"
           done
 
-
   migration-mariadb-10-4:
     runs-on: ubuntu-latest
     services:
