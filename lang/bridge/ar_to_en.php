@@ -4761,4 +4761,6 @@ return [
 'أسرة في شهر الصرف . لن يتم إرسال المجموعة للمحاسب.' => 'families for the payment month. The group will not be submitted to Accounting.',
 ' أسرة في شهر الصرف ' => ' families for the payment month ',
 'الانتقال إلى توثيق المجموعة' => 'Go to group verification',
+'تحديد' => 'Select',
+'تُحفظ نقاط التحقق على سجل الأسرة لشهر الصرف المعروض، وستظهر في توثيق المجموعة للشهر نفسه. الأسر التي لم تعد ضمن مجموعة قيد التوثيق لا يمكن تعديلها من هذه الصفحة.' => 'Verification checks are saved on the family record for the displayed payment month and will appear in group verification for that same month. Families no longer in a group awaiting verification cannot be edited from this page.',
 ];
