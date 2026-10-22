@@ -1648,3 +1648,7 @@ User priority: prepare a dependable, staff-friendly assistant without exposing t
 
 ## AI assistant voice continuation — 2026-10-22
 Owner-approved scope: online Arabic browser speech recognition is permitted only after a clear consent prompt, with typing fallback. Implementation commit: `18bf40af2f905b5509396d92e17374c0c79ecd7c` in `includes/ai_assistant_widget.php`. Before additional changes, pull main, lint both assistant PHP files, then verify in the real local app: first microphone click shows consent without starting recognition; cancel starts no recognition; agree starts recognition; Arabic speech produces an editable transcript; browser denial/provider failure gives a simple message and typing still works; reload asks for consent again. Do not mark runtime-verified before those checks. See `docs/CHATGPT_AI_ASSISTANT_CONTINUATION.md`.
+
+
+## AI assistant voice failure diagnostic — 2026-10-22
+The owner reports online Arabic speech recognition still fails after consent. Latest source commit `753a3b225c1a992bcb3a6b1ce627ea365fef3092` adds friendly messages for common recognition errors and console category logging. Pull main, lint `includes/ai_assistant_widget.php` and `modules/ai_assistant/chat.php`, retry the microphone once, and report the visible specific message. If still unresolved, inspect only the `Ahl El Kheir voice recognition error:` category in the browser console. Do not claim runtime success until verified; do not bypass consent or introduce another speech provider without review.
