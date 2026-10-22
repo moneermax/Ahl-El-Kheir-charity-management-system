@@ -54,3 +54,5 @@ Development/production database dumps should be stored outside the Git repositor
 If a repository snapshot is ever found to contain real organizational data, do not rewrite or delete Git history automatically. Preserve a secure copy first, then handle repository-history cleanup as a separate, explicitly approved security task.
 
 - `2026-10-22_ai_assistant_chat_history.sql` — creates persistent AI-assistant conversations and messages, owned by `users.id`; apply explicitly before using the assistant's history features. The application never creates these tables at runtime.
+
+- `2026-10-22_ai_assistant_chat_history.sql` — creates persistent AI-assistant conversations and messages, owned by `users.id`; apply explicitly before using the assistant's history features. The application never creates these tables at runtime.
