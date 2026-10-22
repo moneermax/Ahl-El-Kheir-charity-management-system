@@ -158,7 +158,7 @@ try {
 
 function ak_ai_normalize(string $value): string {
     $value = mb_strtolower($value, 'UTF-8');
-    $value = str_replace(['أ', 'إ', 'آ', 'ٱ', 'ى'], ['ا', 'ا', 'ا', 'ا', 'ي'], $value);
+    $value = str_replace(['أ', 'إ', 'آ', 'ٱ', 'ى', 'ة'], ['ا', 'ا', 'ا', 'ا', 'ي', 'ه'], $value);
     $value = preg_replace('/[\x{064B}-\x{065F}\x{0670}\x{0640}]/u', '', $value) ?? $value;
     return preg_replace('/[^\p{L}\p{N}\s]/u', ' ', $value) ?? $value;
 }
@@ -268,6 +268,8 @@ $restrictedTerms = [
     'supervisor', 'workflow', 'permission', 'project', 'database', 'policy',
     'approval', 'attendance', 'beneficiary', 'employee', 'child', 'orphan', 'mother',
     'medical', 'health', 'diagnosis', 'address', 'phone', 'bank', 'iban', 'personal',
+    'مجموعه', 'مجموعات', 'الاسره', 'اسر', 'عائله', 'عائلات', 'توثيق', 'ناني',
+    'المخصصه', 'مسنده', 'صرف', 'تحقق', 'مستفيد', 'النظام', 'اجراء', 'صلاحيات',
     'حافز', 'راتب', 'سلف', 'اسرة', 'كفالة', 'كفيل', 'مشرف', 'ناني', 'صرف',
     'تحقق', 'اعتماد', 'صلاحيات', 'مشروع', 'محاسبة', 'سياسة', 'حضور', 'مستفيد',
     'موظف', 'طفل', 'يتيم', 'والدة', 'عنوان', 'هاتف', 'صحي', 'طبي', 'مرض', 'بيانات', 'بنك'
