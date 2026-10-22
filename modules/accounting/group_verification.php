@@ -62,7 +62,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && verify_csrf() && $monthIsVa
         $operation = (string)($_POST['bulk_operation'] ?? '');
         $allowedOperations = ['orphan', 'mother', 'bank', 'all'];
 
-        if (!$canAccessGroup($gid, $uid, true)) {
+        if (!$canAccessGroup($gid, $uid)) {
             $error_message = 'لا يمكن تنفيذ التوثيق الجماعي: المجموعة غير معينة لك حالياً أو لم تعد مفتوحة للتوثيق.';
         } elseif (empty($familyIds)) {
             $error_message = 'يرجى تحديد أسرة واحدة على الأقل.';
@@ -167,7 +167,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && verify_csrf() && $monthIsVa
         $is_bank = isset($_POST['is_bank']) ? 1 : 0;
         $notes = trim($_POST['notes'] ?? '');
 
-        if (!$canAccessGroup($gid, $uid, true) || !$familyBelongsToGroup($family_id, $gid)) {
+        if (!$canAccessGroup($gid, $uid) || !$familyBelongsToGroup($family_id, $gid)) {
             $error_message = 'لا يمكنك تعديل توثيق هذه الأسرة؛ تحقق من تعيين المجموعة والأسرة.';
         } else {
             $pdo = db();
@@ -369,9 +369,8 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     </h5>
                 </div>
                 <div class="card-body">
-                    <?php if (($selectedGroup['verification_status'] ?? '') === 'pending'): ?>
-                        <form method="POST" id="bulkVerificationForm" class="border rounded bg-light p-3 mb-3"
-                              onsubmit="return confirmBulkVerification(event);">
+                    <form method="POST" id="bulkVerificationForm" class="border rounded bg-light p-3 mb-3"
+                          onsubmit="return confirmBulkVerification(event);">
                             <?php echo csrf_field(); ?>
                             <input type="hidden" name="bulk_verify" value="1">
                             <input type="hidden" name="group_id" value="<?php echo (int)$selectedGroup['id']; ?>">
@@ -400,12 +399,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                                     </button>
                                 </div>
                             </div>
-                        </form>
-                    <?php else: ?>
-                        <div class="alert alert-info mb-3">
-                            المجموعة ليست في حالة «قيد التوثيق»؛ تم إيقاف التوثيق الجماعي منعاً لتغيير بيانات أُرسلت للمحاسب.
-                        </div>
-                    <?php endif; ?>
+                    </form>
                     <div class="table-responsive">
                         <table class="table table-hover mb-0">
                             <thead class="table-light">
@@ -432,7 +426,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                        name="family_ids[]" value="<?php echo (int)$f['id']; ?>"
                        form="bulkVerificationForm"
                        aria-label="<?php echo e('تحديد الأسرة ' . $f['family_code']); ?>"
-                       <?php echo (($selectedGroup['verification_status'] ?? '') !== 'pending') ? 'disabled' : ''; ?>>
+                       >
             </td>
             <td>
                 <span class="fw-bold"><?php echo e($f['family_code']); ?></span>
@@ -473,16 +467,13 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 <?php endif; ?>
             </td>
 <td>
-                <?php if (($selectedGroup['verification_status'] ?? '') === 'pending'): ?>
-                <button type="button" class="btn btn-sm <?php echo $isComplete ? 'btn-success' : 'btn-primary'; ?>" data-bs-toggle="modal" data-bs-target="#modal<?php echo $f['id']; ?>">
+                <button type="button" class="btn btn-sm <?php echo $isComplete ? 'btn-success' : 'btn-primary'; ?> data-bs-toggle="modal" data-bs-target="#modal<?php echo $f['id']; ?>">
                     <i class="bi <?php echo $isComplete ? 'bi-check-circle' : 'bi-pencil'; ?>"></i> 
                     <?php echo $isComplete ? 'مراجعة' : 'توثيق'; ?>
                 </button>
-                <?php else: ?><span class="text-muted">—</span><?php endif; ?>
             </td>
         </tr>
 
-        <?php if (($selectedGroup['verification_status'] ?? '') === 'pending'): ?>
         <!-- Modal -->
         <div class="modal fade" id="modal<?php echo $f['id']; ?>" tabindex="-1">
             <div class="modal-dialog">
@@ -558,7 +549,6 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 </div>
             </div>
         </div>
-        <?php endif; ?>
     <?php endforeach; ?>
 </tbody>
                         </table>
