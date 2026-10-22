@@ -4174,3 +4174,7 @@ The first local browser test showed the assistant UI works, but the Arabic quest
 
 ## 2026-10-22 — AI assistant UI refinement
 The assistant panel no longer displays the introductory privacy notices or local-guide filenames beneath answers. The launcher now includes a Font Awesome comments icon beside its label. Google consent starts checked and the user's choice persists across messages; server-side internal/sensitive prompt blocking remains in force. Source commit: `5149e20b6e42a393ca59fd6d84cec12edaf08372`. PHP lint and browser regression checks remain pending.
+
+
+## 2026-10-22 — AI assistant persistent chat history
+Source implementation adds user-owned conversation/message tables, a history list and load UI, and a new-conversation action. Endpoint ownership checks use the authenticated user ID for list/load/continuation; clients cannot access another user's conversation by supplying its ID. The history is not sent as context to Gemini. Migration: `database/migrations/2026-10-22_ai_assistant_chat_history.sql`; local schema confirms `users.id INT(10) UNSIGNED`. The migration has not yet been applied and PHP/browser runtime/security verification is pending. This checkpoint is implementation status only, not acceptance evidence. See `docs/CHATGPT_AI_ASSISTANT_CONTINUATION.md`.
