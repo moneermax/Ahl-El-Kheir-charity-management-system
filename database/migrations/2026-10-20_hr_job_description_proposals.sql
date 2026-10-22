@@ -56,10 +56,12 @@ reporting_to = CASE
     ELSE reporting_to
 END,
 updated_at = CURRENT_TIMESTAMP
-WHERE position_title <> 'HR Test';
+WHERE position_title <> 'HR Test'
+  AND description_status <> 'approved';
 
 UPDATE hr_job_description_templates
 SET is_active = 0,
     description_status = 'needs_review',
     updated_at = CURRENT_TIMESTAMP
-WHERE position_title = 'HR Test';
+WHERE position_title = 'HR Test'
+  AND description_status <> 'approved';
