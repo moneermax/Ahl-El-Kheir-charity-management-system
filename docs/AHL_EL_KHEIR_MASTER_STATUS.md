@@ -3770,4 +3770,4 @@ A dedicated continuation document is `docs/ACCOUNTING_NANNY_GROUP_VERIFICATION_C
 
 ## 2026-10-22 — Nanny group verification control consistency
 
-Follow-up server-side guard committed as `e50686f0a8492506459e4465513d03778debc498`; final pending-only UI markup correction committed as `da5320d05e2656bb9d6e1f4a7a94b94b032fd177`. Individual verification requires active assignment, family membership, and `verification_status = 'pending'` server-side; the UI renders the individual action/modal only for pending groups. No group status or verification data was changed. PHP lint and local browser/database verification remain pending.
+Follow-up server-side guard committed as `e50686f0a8492506459e4465513d03778debc498`; final pending-only UI markup correction committed as `da5320d05e2656bb9d6e1f4a7a94b94b032fd177`. Individual verification requires active assignment, family membership, and `verification_status = 'pending'` server-side; the UI renders the individual action/modal only for pending groups. No group status or verification data was changed. PHP lint passed in GitHub Actions run `39716749893`; local browser/database verification remains pending.
