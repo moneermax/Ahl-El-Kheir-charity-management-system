@@ -1624,3 +1624,7 @@ Do not say all eight job-description migrations have been applied: only the prop
 ## 2026-10-22 — New user requirement: role-aware AI assistant
 
 The active user-requested task is the Ahl El Kheir AI assistant, superseding the previously listed next tasks until the user changes direction. Read docs/CHATGPT_AI_ASSISTANT_CONTINUATION.md. Initial source is committed on main, but syntax CI and local/hosted runtime verification are pending. Continue by reviewing the committed source, correcting issues found by lint/source audit, adding deterministic tests for role-filtered retrieval/privacy gating, then asking the user to pull main and test on the existing local XAMPP app/database. Do not use a disposable database, add schema, send internal documentation to Google, expose the API key, or enable paid billing.
+
+
+### 2026-10-22 — AI assistant Arabic retrieval follow-up
+The first local browser test showed the assistant UI works, but the Arabic question about the first step after sign-in missed local retrieval and reached the unconfigured-Gemini fallback. Root cause: the canonical employee guide described sign-in only in English while retrieval is keyword-based. The guide now includes a reviewed Arabic/English post-login instruction: confirm the dashboard matches the user's job role, and complete a required password change if prompted. Retest the exact question locally before configuring Gemini. No application logic, schema, or privacy boundary changed.
