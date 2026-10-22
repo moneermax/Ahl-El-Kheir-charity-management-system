@@ -13,6 +13,12 @@ This guide describes implemented business tasks. It does not grant permissions.
 3. Complete a required password change if shown.
 4. Confirm the dashboard matches the job role.
 
+### After signing in / بعد تسجيل الدخول
+
+الخطوة الأولى بعد تسجيل الدخول هي التأكد من أن لوحة التحكم المعروضة تطابق دورك الوظيفي. إذا طلب النظام تغيير كلمة المرور، أكمل التغيير المطلوب.
+
+After signing in, first confirm that the displayed dashboard matches your job role. If the system requires a password change, complete it.
+
 ### Notifications
 1. Open the notification bell.
 2. Read the relevant item.
