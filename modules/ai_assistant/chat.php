@@ -122,8 +122,7 @@ if ($action === 'transcribe_audio') {
     if (!is_string($audioBytes) || strlen($audioBytes) < 1000 || strlen($audioBytes) > 2400000) {
         ak_ai_json(422, ['ok' => false, 'message' => 'التسجيل الصوتي فارغ أو طويل جداً. حاول تسجيلاً أقصر أو اكتب سؤالك. / The recording is empty or too large. Record a shorter clip or type your question.']);
     }
-    unset($audioBytes);
-
+    // Keep the validated bytes for the documented Gemini Files API upload.
     $hostingAi = isset($hostingConfig['ai']) && is_array($hostingConfig['ai']) ? $hostingConfig['ai'] : [];
     $apiKey = trim((string)(getenv('GEMINI_API_KEY') ?: ($hostingAi['gemini_api_key'] ?? '')));
     // Gemini 2.5 Flash was retired for the Gemini Developer API in October 2026.
@@ -133,14 +132,89 @@ if ($action === 'transcribe_audio') {
         ak_ai_json(503, ['ok' => false, 'message' => 'الإدخال الصوتي غير مهيأ على الخادم. يمكنك كتابة سؤالك بدلاً من ذلك. / Voice transcription is not configured on the server. You can type your question instead.']);
     }
 
-    // Gemini 3.5 Transcribe uses the Interactions API, not generateContent.
-    // Interactions API expects audio content as {type, data, mime_type}; it returns output_text/steps.
+    // Gemini's documented REST transcription flow uploads audio through Files API first,
+    // then passes the returned file URI to the Interactions API.
     $apiMimeType = $mimeType === 'audio/mp4' ? 'audio/m4a' : $mimeType;
+    $uploadUrl = '';
+    $uploadInit = curl_init('https://generativelanguage.googleapis.com/upload/v1beta/files');
+    curl_setopt_array($uploadInit, [
+        CURLOPT_POST => true,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_HEADERFUNCTION => static function ($handle, string $line) use (&$uploadUrl): int {
+            if (stripos($line, 'x-goog-upload-url:') === 0) {
+                $candidate = trim(substr($line, strlen('x-goog-upload-url:')));
+                $parts = parse_url($candidate);
+                if (is_array($parts) && strtolower((string)($parts['scheme'] ?? '')) === 'https'
+                    && strtolower((string)($parts['host'] ?? '')) === 'generativelanguage.googleapis.com') {
+                    $uploadUrl = $candidate;
+                }
+            }
+            return strlen($line);
+        },
+        CURLOPT_HTTPHEADER => [
+            'Content-Type: application/json',
+            'x-goog-api-key: ' . $apiKey,
+            'X-Goog-Upload-Protocol: resumable',
+            'X-Goog-Upload-Command: start',
+            'X-Goog-Upload-Header-Content-Length: ' . strlen($audioBytes),
+            'X-Goog-Upload-Header-Content-Type: ' . $mimeType,
+        ],
+        CURLOPT_POSTFIELDS => json_encode(['file' => ['display_name' => 'ahl-el-kheir-voice-transcription']], JSON_UNESCAPED_SLASHES),
+        CURLOPT_CONNECTTIMEOUT => 8,
+        CURLOPT_TIMEOUT => 20,
+        CURLOPT_SSL_VERIFYPEER => true,
+        CURLOPT_SSL_VERIFYHOST => 2,
+    ]);
+    $uploadInitBody = curl_exec($uploadInit);
+    $uploadInitStatus = (int)curl_getinfo($uploadInit, CURLINFO_HTTP_CODE);
+    $uploadInitErrno = curl_errno($uploadInit);
+    $uploadInitError = trim((string)curl_error($uploadInit));
+    curl_close($uploadInit);
+    if (!is_string($uploadInitBody) || $uploadInitStatus < 200 || $uploadInitStatus >= 300 || $uploadUrl === '') {
+        $safeUploadError = preg_replace('/[\\r\\n]+/', ' ', $uploadInitError) ?? '';
+        error_log('[Ahl El Kheir AI transcription] Files API init failed: HTTP=' . $uploadInitStatus . '; cURL errno=' . $uploadInitErrno . '; cURL error=' . mb_substr($safeUploadError, 0, 200, 'UTF-8'));
+        ak_ai_json(502, ['ok' => false, 'message' => 'تعذر تجهيز التسجيل لخدمة تحويل الصوت. يمكنك كتابة سؤالك الآن. / Could not prepare the recording for transcription. You can type your question for now.']);
+    }
+
+    $uploadAudio = curl_init($uploadUrl);
+    curl_setopt_array($uploadAudio, [
+        CURLOPT_POST => true,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_HTTPHEADER => [
+            'Content-Type: ' . $mimeType,
+            'Content-Length: ' . strlen($audioBytes),
+            'X-Goog-Upload-Offset: 0',
+            'X-Goog-Upload-Command: upload, finalize',
+        ],
+        CURLOPT_POSTFIELDS => $audioBytes,
+        CURLOPT_CONNECTTIMEOUT => 8,
+        CURLOPT_TIMEOUT => 30,
+        CURLOPT_SSL_VERIFYPEER => true,
+        CURLOPT_SSL_VERIFYHOST => 2,
+    ]);
+    $uploadBody = curl_exec($uploadAudio);
+    $uploadStatus = (int)curl_getinfo($uploadAudio, CURLINFO_HTTP_CODE);
+    $uploadErrno = curl_errno($uploadAudio);
+    $uploadError = trim((string)curl_error($uploadAudio));
+    curl_close($uploadAudio);
+    unset($audioBytes, $audioBase64);
+    $uploadedFile = is_string($uploadBody) ? json_decode($uploadBody, true) : null;
+    $fileUri = is_array($uploadedFile) ? trim((string)($uploadedFile['file']['uri'] ?? '')) : '';
+    $fileUriParts = $fileUri !== '' ? parse_url($fileUri) : false;
+    if (!is_string($uploadBody) || $uploadStatus < 200 || $uploadStatus >= 300
+        || !is_array($fileUriParts)
+        || strtolower((string)($fileUriParts['scheme'] ?? '')) !== 'https'
+        || strtolower((string)($fileUriParts['host'] ?? '')) !== 'generativelanguage.googleapis.com') {
+        $safeUploadError = preg_replace('/[\\r\\n]+/', ' ', $uploadError) ?? '';
+        error_log('[Ahl El Kheir AI transcription] Files API upload failed: HTTP=' . $uploadStatus . '; cURL errno=' . $uploadErrno . '; cURL error=' . mb_substr($safeUploadError, 0, 200, 'UTF-8'));
+        ak_ai_json(502, ['ok' => false, 'message' => 'تعذر رفع التسجيل إلى خدمة تحويل الصوت. يمكنك كتابة سؤالك الآن. / Could not upload the recording for transcription. You can type your question for now.']);
+    }
+
     $payload = [
         'model' => $model,
         'input' => [[
             'type' => 'audio',
-            'data' => $audioBase64,
+            'uri' => $fileUri,
             'mime_type' => $apiMimeType,
         ]],
         'generation_config' => [
