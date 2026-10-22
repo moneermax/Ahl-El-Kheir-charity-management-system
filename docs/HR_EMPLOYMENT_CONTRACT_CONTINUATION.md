@@ -498,3 +498,15 @@ These are source-only changes committed on `main`; PHP lint and local XAMPP beha
 - Added the `hr-job-description-migrations` CI job in `.github/workflows/php-syntax-check.yml`. It imports the checked-in schema into a disposable MariaDB 10.4.32 instance, applies all eight `2026-10-20_hr_job_description_*` migrations in filename sequence, and asserts that an approved HR-manager title-only catalogue row retains its approved status and blank content fields.
 - The same workflow now PHP-lints `modules/hr/contract_builder.php` and `modules/hr/job_description_catalogue.php`.
 - Repository-side safeguards are committed; local `ahl_el_kheir` remains untouched. Do not apply the migrations locally until the CI migration job completes successfully and a backup is available. Local page, prefill and PDF verification is still pending.
+
+## 2026-10-22 — Job-description proposals migration applied locally
+
+The user applied `database/migrations/2026-10-20_hr_job_description_proposals.sql` to local database `ahl_el_kheir` after creating a database dump backup. The mysql command returned no reported SQL error.
+
+Read-only verification:
+- `active_review_rows = 23`
+- `blank_reporting_lines = 0`
+- Approved records IDs 6 and 20 remain `approved`, active, with nonblank reporting lines.
+- `HR Test` ID 11 remains `needs_review` and is inactive.
+
+This closes the migration's reporting-line verification gate. It does not prove every field changed by the migration and does not establish that the other seven job-description migrations were applied. The existing PHP lint and dedicated CI migration job passed, but local Contract Builder/catalogue browser behavior and contract PDF behavior remain unverified. If resuming this module, make one focused browser check: open Contract Builder, confirm the job-description catalogue prefill is available and manual entry remains usable, then open the job-description catalogue page. Verify PDF behavior only if contract preview/download is part of the next task. Do not repeat the migration or touch existing contract files without a specific reason.
