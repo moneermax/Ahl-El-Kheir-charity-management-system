@@ -1632,3 +1632,7 @@ The first local browser test showed the assistant UI works, but the Arabic quest
 
 ## 2026-10-22 — AI assistant UI refinement
 The assistant panel no longer displays introductory privacy notices or local-guide filenames under answers. The launcher has a Font Awesome comments icon beside its label. Google consent starts checked and the selection persists between messages, while server-side internal/sensitive prompt blocking remains enabled. Source commit: `5149e20b6e42a393ca59fd6d84cec12edaf08372`. After pulling, PHP-lint the widget and test local answers, unchecked-consent fallback, and internal-question blocking. Do not configure paid billing.
+
+
+## 2026-10-22 — AI assistant follow-up
+The assistant launcher now has a gold gradient and improved hover/focus visibility (commit `f2e92ac73692ac95a340c338811f565ed3839df3`). The user requested persistent per-user chat history. Before implementing it, inspect the actual local `users` primary-key definition and schema constraints; the repository schema dump is too large for the current source reader to retrieve. Do not guess FK types or create tables at runtime. See `docs/CHATGPT_AI_ASSISTANT_CONTINUATION.md`.
