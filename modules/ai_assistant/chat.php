@@ -146,13 +146,6 @@ $local = ak_ai_local_answer($question, $role, dirname(__DIR__, 2));
 if ($local !== null) {
     ak_ai_json(200, ['ok' => true] + $local);
 }
-ak_ai_json(200, [
-    'ok' => true,
-    'mode' => 'not_found',
-    'sources' => [],
-    'message' => 'لم أجد إجابة موثقة في الجزء المسموح من دليل المستخدم. / I could not find a verified answer in the user-guide sections available to your role. Your question has not been sent to Google.',
-]);
-
 if (($input['allow_google'] ?? false) !== true) {
     ak_ai_json(200, [
         'ok' => true,
