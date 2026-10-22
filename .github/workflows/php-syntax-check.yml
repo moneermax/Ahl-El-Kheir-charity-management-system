@@ -47,6 +47,8 @@ jobs:
             modules/accounting/lib.php
             modules/accounting/fm_review_queue.php
             modules/accounting/lib_sponsor_payment_approval.php
+            modules/ai_assistant/chat.php
+            includes/ai_assistant_widget.php
             tools/run_hr_fm_sponsor_payment_approval_integration_tests.php
             tools/run_hr_project_incentive_payroll_rollback_tests.php
             tools/test_salary_advance_rescheduling_migration.php
