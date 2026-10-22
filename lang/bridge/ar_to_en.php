@@ -4756,4 +4756,9 @@ return [
 'حدد أسرة واحدة على الأقل قبل الحفظ.' => 'Select at least one family before saving.',
 'نعم، حفظ' => 'Yes, save',
 'تم بنجاح' => 'Success',
+'سيتم تنفيذ' => 'Will apply',
+'سيتم تنفيذ "' => 'Will apply "',
+'أسرة في شهر الصرف . لن يتم إرسال المجموعة للمحاسب.' => 'families for the payment month. The group will not be submitted to Accounting.',
+' أسرة في شهر الصرف ' => ' families for the payment month ',
+'الانتقال إلى توثيق المجموعة' => 'Go to group verification',
 ];
