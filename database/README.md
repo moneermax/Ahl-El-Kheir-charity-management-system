@@ -52,3 +52,5 @@ The Families list uses the actual `family_children` relationship for its orphan 
 Development/production database dumps should be stored outside the Git repository. If a temporary dump is needed locally, place it under `database/backups/`; that directory is ignored by Git.
 
 If a repository snapshot is ever found to contain real organizational data, do not rewrite or delete Git history automatically. Preserve a secure copy first, then handle repository-history cleanup as a separate, explicitly approved security task.
+
+- `2026-10-22_ai_assistant_chat_history.sql` — creates persistent AI-assistant conversations and messages, owned by `users.id`; apply explicitly before using the assistant's history features. The application never creates these tables at runtime.
