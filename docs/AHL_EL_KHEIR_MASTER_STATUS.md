@@ -3888,3 +3888,7 @@ The user reported that Arabic post-login guidance worked on a subsequent attempt
 ## 2026-10-22 — AI assistant launch-readiness follow-up
 
 A deterministic Arabic answer for the Nanny's assigned-groups workflow was committed to main (`dc0e7640fe98cb134590c0ec3e314c80133e16f4`), with role-code case normalization. It must still be linted and browser-tested locally. Voice input remains unresolved: the browser reports `language-not-supported` for on-device Arabic speech. Online voice recognition must not be enabled without the project owner's explicit privacy decision and a clear consent flow. See the AI assistant continuation document.
+
+
+## 2026-10-22 — AI assistant online voice consent milestone
+The owner approved online Arabic speech recognition with clear consent before audio processing and a typing fallback. Source commit `18bf40af2f905b5509396d92e17374c0c79ecd7c` adds an Arabic/English consent prompt before browser speech recognition, temporary page-only consent, editable transcripts, and non-technical failure messages. This is a source milestone only; local PHP lint and real-browser acceptance remain pending. Do not describe voice as runtime-verified until those checks pass. Detailed checklist: `docs/CHATGPT_AI_ASSISTANT_CONTINUATION.md`.
