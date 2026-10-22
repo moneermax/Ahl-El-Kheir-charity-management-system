@@ -9,6 +9,29 @@ header('Cache-Control: no-store, max-age=0');
 header('X-Content-Type-Options: nosniff');
 header('Vary: Cookie');
 function ak_ai_json(int $status, array $data): never {
+    $conversationId = (int)($GLOBALS['ak_ai_history_conversation_id'] ?? 0);
+    if ($status === 200 && ($data['ok'] ?? false) === true && isset($data['mode']) && $conversationId > 0) {
+        $answer = trim((string)($data['message'] ?? $data['answer'] ?? ''));
+        if ($answer !== '') {
+            try {
+                dbExecute(
+                    "INSERT INTO ai_assistant_messages (conversation_id, speaker, content, answer_mode) VALUES (?, 'assistant', ?, ?)",
+                    [$conversationId, $answer, (string)$data['mode']]
+                );
+                dbExecute(
+                    "UPDATE ai_assistant_conversations SET last_message_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?",
+                    [$conversationId, (int)$GLOBALS['ak_ai_history_user_id']]
+                );
+                $data['conversation_id'] = $conversationId;
+            } catch (Throwable $e) {
+                $status = 503;
+                $data = [
+                    'ok' => false,
+                    'message' => 'تعذر حفظ المحادثة حالياً. تحقق من تطبيق ترحيل سجل المساعد ثم حاول مجدداً. / Could not save this conversation. Verify the assistant history migration is applied, then try again.',
+                ];
+            }
+        }
+    }
     http_response_code($status);
     echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     exit;
@@ -35,8 +58,52 @@ if (!is_string($raw) || strlen($raw) > 5000) {
     ak_ai_json(413, ['ok' => false, 'message' => 'الرسالة طويلة جداً. / Message is too long.']);
 }
 $input = json_decode($raw, true);
-$question = is_array($input) ? trim((string)($input['question'] ?? '')) : '';
-if (!is_array($input) || $question === '' || mb_strlen($question, 'UTF-8') > 1000) {
+if (!is_array($input)) {
+    ak_ai_json(400, ['ok' => false, 'message' => 'طلب غير صالح. / Invalid request.']);
+}
+$action = (string)($input['action'] ?? 'ask');
+$historyUserId = Session::getUserId();
+
+if ($action === 'history_list' || $action === 'history_load') {
+    $activeUser = dbFetchOne("SELECT id FROM users WHERE id = ? AND is_active = 1 LIMIT 1", [$historyUserId]);
+    if (!$activeUser) {
+        ak_ai_json(403, ['ok' => false, 'message' => 'تعذر التحقق من صلاحية الحساب. / Could not verify account permissions.']);
+    }
+    try {
+        if ($action === 'history_list') {
+            $conversations = dbFetchAll(
+                "SELECT id, title, created_at, last_message_at FROM ai_assistant_conversations WHERE user_id = ? ORDER BY last_message_at DESC, id DESC LIMIT 50",
+                [$historyUserId]
+            );
+            ak_ai_json(200, ['ok' => true, 'conversations' => $conversations]);
+        }
+        $conversationId = filter_var($input['conversation_id'] ?? null, FILTER_VALIDATE_INT);
+        if (!$conversationId || $conversationId < 1) {
+            ak_ai_json(422, ['ok' => false, 'message' => 'محادثة غير صالحة. / Invalid conversation.']);
+        }
+        $conversation = dbFetchOne(
+            "SELECT id, title, created_at, last_message_at FROM ai_assistant_conversations WHERE id = ? AND user_id = ? LIMIT 1",
+            [$conversationId, $historyUserId]
+        );
+        if (!$conversation) {
+            ak_ai_json(404, ['ok' => false, 'message' => 'المحادثة غير موجودة. / Conversation not found.']);
+        }
+        $messages = dbFetchAll(
+            "SELECT id, speaker, content, answer_mode, created_at FROM ai_assistant_messages WHERE conversation_id = ? ORDER BY id DESC LIMIT 200",
+            [$conversationId]
+        );
+        $messages = array_reverse($messages);
+        ak_ai_json(200, ['ok' => true, 'conversation' => $conversation, 'messages' => $messages]);
+    } catch (Throwable $e) {
+        ak_ai_json(503, ['ok' => false, 'message' => 'سجل المحادثات غير مهيأ بعد. طبّق ترحيل قاعدة البيانات الخاص بالمساعد. / Chat history is not ready. Apply the assistant database migration.']);
+    }
+}
+
+if ($action !== 'ask') {
+    ak_ai_json(400, ['ok' => false, 'message' => 'إجراء غير معروف. / Unknown action.']);
+}
+$question = trim((string)($input['question'] ?? ''));
+if ($question === '' || mb_strlen($question, 'UTF-8') > 1000) {
     ak_ai_json(422, ['ok' => false, 'message' => 'اكتب سؤالاً لا يتجاوز 1000 حرف. / Enter a question of at most 1000 characters.']);
 }
 $now = time();
@@ -55,6 +122,39 @@ if (!$user || empty($user['role_code'])) {
     ak_ai_json(403, ['ok' => false, 'message' => 'تعذر التحقق من صلاحية الحساب. / Could not verify account permissions.']);
 }
 $role = (string)$user['role_code'];
+
+$conversationIdInput = filter_var($input['conversation_id'] ?? null, FILTER_VALIDATE_INT);
+try {
+    if ($conversationIdInput !== false && $conversationIdInput !== null && $conversationIdInput > 0) {
+        $ownedConversation = dbFetchOne(
+            "SELECT id FROM ai_assistant_conversations WHERE id = ? AND user_id = ? LIMIT 1",
+            [$conversationIdInput, Session::getUserId()]
+        );
+        if (!$ownedConversation) {
+            ak_ai_json(404, ['ok' => false, 'message' => 'المحادثة غير موجودة. / Conversation not found.']);
+        }
+        $conversationId = (int)$ownedConversation['id'];
+    } else {
+        $title = mb_substr(preg_replace('/\\s+/u', ' ', $question) ?? $question, 0, 180, 'UTF-8');
+        dbExecute(
+            "INSERT INTO ai_assistant_conversations (user_id, title, last_message_at) VALUES (?, ?, CURRENT_TIMESTAMP)",
+            [Session::getUserId(), $title]
+        );
+        $conversationId = (int)dbLastInsertId();
+    }
+    dbExecute(
+        "INSERT INTO ai_assistant_messages (conversation_id, speaker, content, answer_mode) VALUES (?, 'user', ?, NULL)",
+        [$conversationId, $question]
+    );
+    dbExecute(
+        "UPDATE ai_assistant_conversations SET last_message_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?",
+        [$conversationId, Session::getUserId()]
+    );
+    $GLOBALS['ak_ai_history_conversation_id'] = $conversationId;
+    $GLOBALS['ak_ai_history_user_id'] = Session::getUserId();
+} catch (Throwable $e) {
+    ak_ai_json(503, ['ok' => false, 'message' => 'تعذر حفظ سجل المحادثة. تأكد من تطبيق ترحيل قاعدة البيانات الخاص بالمساعد. / Could not save chat history. Verify the assistant database migration is applied.']);
+}
 
 function ak_ai_normalize(string $value): string {
     $value = mb_strtolower($value, 'UTF-8');
