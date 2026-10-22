@@ -4094,3 +4094,12 @@ After the user reported that the bulk-verification UI still showed “لم يت�
 The page now mirrors checked family IDs into hidden controls physically inside `bulkVerificationForm`, synchronizes that mirror when individual or select-all checkboxes change, and uses the synchronized selection count for confirmation. After confirmation it uses `requestSubmit()` where available so the shared same-page POST handler can process the request rather than bypassing the submit event with `form.submit()`.
 
 No schema/database changes were made. Source-level implementation is committed; PHP syntax check, browser behavior, and real local XAMPP/database verification are **pending**. The user will pull `main` and perform the local acceptance steps; do not mark fixed until the bank-only operation succeeds and preserves the orphan flag.
+
+
+## 2026-10-22 — Enforce locked group verification state
+
+The user confirmed the preliminary monthly bulk verification now works, then identified that the group-verification page still exposed editing controls for a group already marked `closed` when a future payment month was selected. Source inspection confirmed the live `main` version did not consistently enforce the documented pending-only rule: bulk and individual POST handlers called the assignment check without requiring pending status, and the table rendered selection/edit controls for every group state.
+
+Commit `465cbc77c29b2d1e410ba7938da21429ff548120` updates `modules/accounting/group_verification.php` so bulk and individual POSTs require `verification_status = 'pending'`; the bulk selector, family selection checkboxes, individual actions, and edit modals render only while the selected group is pending. Non-pending groups remain viewable for their saved monthly verification status, but cannot be edited through this page. Selecting a future month does not reopen a closed group. No database/schema changes or verification-record changes were made.
+
+**Verification status:** source committed to `main`; local PHP syntax check and browser verification against the existing `ahl_el_kheir` database are pending. Test the closed group in the UI with both its current and a future month: values should remain visible, all verification controls should be absent, and no data should change. Also confirm a pending group still exposes its verification controls. Do not mark runtime-verified until the user confirms these checks.
