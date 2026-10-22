@@ -55,3 +55,8 @@ The repository root .htaccess only disables directory listings and there was no 
 ## Source review follow-up — 2026-10-22
 
 A source audit found and corrected an unconditional not-found response that would have exited before the Gemini fallback. The endpoint now reaches the explicit-consent, general-question path after local retrieval misses. This is source-level correction only; it is not runtime proof. The latest relevant commit is 3033f565417aa516109f2328f50e136c64cae5e4.
+
+
+## Local retrieval test finding — 2026-10-22
+
+The first browser test asked in Arabic what to do first after signing in. The current keyword retriever missed the question because the employee guide described sign-in only in English. The canonical employee guide now includes a short, reviewed Arabic/English paragraph for the post-login dashboard check and required password change. Retest that exact Arabic question against the local guide before configuring Gemini. This change does not send guide content to Google and does not alter retrieval code or permissions.
