@@ -69,3 +69,9 @@ The assistant widget now omits the two introductory privacy notices from the pan
 ## UI refinement — 2026-10-22
 
 The assistant widget now omits the two introductory privacy notices from the panel, no longer renders source filenames below answers, shows a Font Awesome comments icon beside the launcher text, and starts with the Google-consent checkbox checked. The user's checkbox choice is retained between messages instead of being reset after each submission. The endpoint still performs local-first retrieval and blocks internal/sensitive prompts from Google; the checkbox does not bypass those filters. Source commit: `5149e20b6e42a393ca59fd6d84cec12edaf08372`. PHP lint and browser regression checks for this UI refinement are pending.
+
+
+### 2026-10-22 — Gold launcher + chat-history assessment
+The floating assistant launcher now uses a gold gradient, dark text, stronger shadow, brighter hover state, and visible keyboard-focus outline. Source commit: `f2e92ac73692ac95a340c338811f565ed3839df3`. PHP lint and browser verification remain pending.
+
+Persistent per-user chat history is not implemented yet. The assistant currently does not store conversations. The canonical `database/ahl_el_kheir.sql` dump is approximately 6.4 MB and the current repository reader cannot retrieve its contents, so the exact `users.id` type and FK compatibility could not be verified. Before implementing the history migration, inspect the actual local schema and confirm the user primary-key definition; do not guess it or create tables at runtime. Intended boundary: users may view only their own conversations; history should be loaded through authenticated, CSRF-protected server endpoints and should not be sent to Gemini as context.
