@@ -464,4 +464,23 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+document.addEventListener('DOMContentLoaded', function() {
+    <?php if ($success_message !== ''): ?>
+        Swal.fire({
+            title: 'تم بنجاح',
+            text: <?php echo json_encode($success_message, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT); ?>,
+            icon: 'success',
+            confirmButtonText: 'حسناً'
+        });
+    <?php endif; ?>
+    <?php if ($error_message !== ''): ?>
+        Swal.fire({
+            title: 'حدث خطأ',
+            text: <?php echo json_encode($error_message, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT); ?>,
+            icon: 'error',
+            confirmButtonText: 'حسناً'
+        });
+    <?php endif; ?>
+});
 </script>
