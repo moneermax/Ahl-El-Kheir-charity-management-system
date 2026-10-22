@@ -54,7 +54,7 @@ if ($sentCsrf === '' || empty($_SESSION['csrf_token']) || !hash_equals((string)$
     ak_ai_json(403, ['ok' => false, 'message' => 'انتهت صلاحية الطلب. حدّث الصفحة ثم حاول مجدداً. / Refresh the page and try again.']);
 }
 $raw = file_get_contents('php://input');
-if (!is_string($raw) || strlen($raw) > 5000) {
+if (!is_string($raw) || strlen($raw) > 4500000) {
     ak_ai_json(413, ['ok' => false, 'message' => 'الرسالة طويلة جداً. / Message is too long.']);
 }
 $input = json_decode($raw, true);
@@ -97,6 +97,77 @@ if ($action === 'history_list' || $action === 'history_load') {
     } catch (Throwable $e) {
         ak_ai_json(503, ['ok' => false, 'message' => 'سجل المحادثات غير مهيأ بعد. طبّق ترحيل قاعدة البيانات الخاص بالمساعد. / Chat history is not ready. Apply the assistant database migration.']);
     }
+}
+
+if ($action === 'transcribe_audio') {
+    $recentAudio = array_values(array_filter(
+        (array)($_SESSION['ak_ai_audio_request_times'] ?? []),
+        static fn($time) => is_int($time) && $time > time() - 60
+    ));
+    if (count($recentAudio) >= 5) {
+        ak_ai_json(429, ['ok' => false, 'message' => 'انتظر دقيقة قبل استخدام الإدخال الصوتي مجدداً. / Please wait a minute before using voice input again.']);
+    }
+    $recentAudio[] = time();
+    $_SESSION['ak_ai_audio_request_times'] = $recentAudio;
+
+    $audioBase64 = (string)($input['audio_base64'] ?? '');
+    $mimeType = strtolower(trim((string)($input['mime_type'] ?? '')));
+    if (!in_array($mimeType, ['audio/webm', 'audio/mp4', 'audio/ogg', 'audio/wav', 'audio/mpeg'], true)
+        || $audioBase64 === ''
+        || strlen($audioBase64) > 3300000
+        || !preg_match('/^[A-Za-z0-9+\\/]*={0,2}$/', $audioBase64)) {
+        ak_ai_json(422, ['ok' => false, 'message' => 'تعذر قراءة التسجيل الصوتي. حاول تسجيلاً أقصر أو اكتب سؤالك. / The audio recording is invalid or too large. Record a shorter clip or type your question.']);
+    }
+    $audioBytes = base64_decode($audioBase64, true);
+    if (!is_string($audioBytes) || strlen($audioBytes) < 1000 || strlen($audioBytes) > 2400000) {
+        ak_ai_json(422, ['ok' => false, 'message' => 'التسجيل الصوتي فارغ أو طويل جداً. حاول تسجيلاً أقصر أو اكتب سؤالك. / The recording is empty or too large. Record a shorter clip or type your question.']);
+    }
+    unset($audioBytes);
+
+    $hostingAi = isset($hostingConfig['ai']) && is_array($hostingConfig['ai']) ? $hostingConfig['ai'] : [];
+    $apiKey = trim((string)(getenv('GEMINI_API_KEY') ?: ($hostingAi['gemini_api_key'] ?? '')));
+    $model = trim((string)(getenv('GEMINI_MODEL') ?: ($hostingAi['gemini_model'] ?? 'gemini-2.5-flash')));
+    if ($apiKey === '' || !preg_match('/^[A-Za-z0-9._-]{1,80}$/', $model) || !function_exists('curl_init')) {
+        ak_ai_json(503, ['ok' => false, 'message' => 'الإدخال الصوتي غير مهيأ على الخادم. يمكنك كتابة سؤالك بدلاً من ذلك. / Voice transcription is not configured on the server. You can type your question instead.']);
+    }
+
+    $transcriptionPrompt = $lang === 'ar'
+        ? 'Transcribe the spoken audio exactly into written text. The speaker may use Arabic, including Sudanese Arabic, or English. Preserve the language and meaning. Return only the transcription, with no commentary, translation, or labels.'
+        : 'Transcribe the spoken audio exactly into written text. The speaker may use English or Arabic. Preserve the language and meaning. Return only the transcription, with no commentary, translation, or labels.';
+    $payload = [
+        'contents' => [[
+            'role' => 'user',
+            'parts' => [
+                ['text' => $transcriptionPrompt],
+                ['inline_data' => ['mime_type' => $mimeType, 'data' => $audioBase64]],
+            ],
+        ]],
+        'generationConfig' => ['temperature' => 0, 'maxOutputTokens' => 500],
+    ];
+    $url = 'https://generativelanguage.googleapis.com/v1beta/models/' . rawurlencode($model) . ':generateContent';
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_POST => true,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_HTTPHEADER => ['Content-Type: application/json', 'x-goog-api-key: ' . $apiKey],
+        CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+        CURLOPT_CONNECTTIMEOUT => 8,
+        CURLOPT_TIMEOUT => 45,
+        CURLOPT_SSL_VERIFYPEER => true,
+        CURLOPT_SSL_VERIFYHOST => 2,
+    ]);
+    $responseBody = curl_exec($ch);
+    $status = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    if (!is_string($responseBody) || $status < 200 || $status >= 300) {
+        ak_ai_json(502, ['ok' => false, 'message' => 'تعذر تحويل الصوت إلى نص الآن. تحقق من الاتصال ثم حاول مجدداً، أو اكتب سؤالك. / Gemini could not transcribe the audio right now. Check the connection and try again, or type your question.']);
+    }
+    $decoded = json_decode($responseBody, true);
+    $transcript = trim((string)($decoded['candidates'][0]['content']['parts'][0]['text'] ?? ''));
+    if ($transcript === '' || mb_strlen($transcript, 'UTF-8') > 1000) {
+        ak_ai_json(422, ['ok' => false, 'message' => 'لم نتمكن من استخراج نص واضح من التسجيل. حاول مرة أخرى أو اكتب سؤالك. / No usable transcript was returned. Try again or type your question.']);
+    }
+    ak_ai_json(200, ['ok' => true, 'transcript' => $transcript]);
 }
 
 if ($action !== 'ask') {
