@@ -32,9 +32,9 @@ Reduce repetitive work for Nannies responsible for large groups without changing
 
 The schema has one `nanny_family_verifications` row per family and month, regardless of Nanny. The implementation locks and updates that row when it exists, preserves the existing flags for one-check bulk operations, and records the current acting Nanny as the verifier. Historical rows in `verification_audit_log` are retained.
 
-## Follow-up fix — closed-group individual controls (2026-10-22)
+## Follow-up fix — closed-group individual controls refined (2026-10-22)
 
-Inspection confirmed the inconsistency in both layers: the individual POST handler checked assignment and family membership but did not require `verification_status = 'pending'`, and the row action/modal rendered for every group state. The handler now requires the pending-state guard used by bulk verification, and individual edit controls/modal are rendered only for pending groups. Non-pending rows show a dash instead of an edit action. No group status or verification records were changed.
+The initial pending-only restriction for individual edits was too strict for the Nanny's real workflow: a Nanny may reconnect with a family and need to reverify it for a historical payment month after the group has closed. The corrected rule is: individual family verification remains available for any active group still assigned to the logged-in Nanny, while bulk verification and group submission remain pending-only. The individual POST checks current assignment and active family membership; the bulk POST explicitly requires pending status. Monthly records remain keyed by family/month. No schema changes were made.
 
 Source commit on `main`: `e50686f0a8492506459e4465513d03778debc498`.
 
@@ -97,10 +97,12 @@ The page now mirrors checked family IDs into hidden controls physically inside `
 No schema/database changes were made. Source-level implementation is committed; PHP syntax check, browser behavior, and real local XAMPP/database verification are **pending**. The user will pull `main` and perform the local acceptance steps; do not mark fixed until the bank-only operation succeeds and preserves the orphan flag.
 
 
-## 2026-10-22 — Enforce locked group verification state
+## 2026-10-22 — Closed-group verification controls refined for Nanny workflow
 
-The user confirmed the preliminary monthly bulk verification now works, then identified that the group-verification page still exposed editing controls for a group already marked `closed` when a future payment month was selected. Source inspection confirmed the live `main` version did not consistently enforce the documented pending-only rule: bulk and individual POST handlers called the assignment check without requiring pending status, and the table rendered selection/edit controls for every group state.
+The user clarified that a Nanny may reconnect with a family later and need to reverify that family for an older payment month, even when the group is already closed. Commit `821774a06aa6434a31bc4538bfe37217ebafe55c` supersedes the earlier overly restrictive closed-group UI rule in `modules/accounting/group_verification.php`:
 
-Commit `465cbc77c29b2d1e410ba7938da21429ff548120` updates `modules/accounting/group_verification.php` so bulk and individual POSTs require `verification_status = 'pending'`; the bulk selector, family selection checkboxes, individual actions, and edit modals render only while the selected group is pending. Non-pending groups remain viewable for their saved monthly verification status, but cannot be edited through this page. Selecting a future month does not reopen a closed group. No database/schema changes or verification-record changes were made.
+- Individual family confirmation/edit actions remain available for any selected active group still assigned to the logged-in Nanny, including a closed group, and the individual POST guard permits this same assigned-group workflow. The selected payment month continues to scope the family/month verification record.
+- Bulk verification controls and family-selection checkboxes remain available only when the group status is `pending`. Bulk POSTs still require pending status, so a closed/processed group cannot be bulk-modified.
+- Group submission remains pending-only. No group status, schema, or verification data was changed by these source edits.
 
-**Verification status:** source committed to `main`; local PHP syntax check and browser verification against the existing `ahl_el_kheir` database are pending. Test the closed group in the UI with both its current and a future month: values should remain visible, all verification controls should be absent, and no data should change. Also confirm a pending group still exposes its verification controls. Do not mark runtime-verified until the user confirms these checks.
+This correction supersedes the preceding note that all closed-group individual controls should be hidden. The user must pull `main`, run PHP lint on `modules/accounting/group_verification.php`, and browser-test: closed group + historical/future month shows individual actions but no bulk controls; pending group shows both individual and bulk controls; individual save affects only the selected month; bulk POST against a non-pending group is rejected. Local runtime acceptance remains pending.
