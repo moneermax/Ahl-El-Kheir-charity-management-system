@@ -50,3 +50,8 @@ Source changes are on main; no local PHP CLI, browser, live database, or Infinit
 ## Follow-up security finding — 2026-10-22
 
 The repository root .htaccess only disables directory listings and there was no docs/.htaccess. Since the assistant reads internal project documentation from disk, docs/.htaccess was added with Require all denied to prevent direct HTTP access to internal documentation while preserving PHP filesystem reads. Verify this directive is honored on InfinityFree before deployment acceptance.
+
+
+## Source review follow-up — 2026-10-22
+
+A source audit found and corrected an unconditional not-found response that would have exited before the Gemini fallback. The endpoint now reaches the explicit-consent, general-question path after local retrieval misses. This is source-level correction only; it is not runtime proof. The latest relevant commit is 3033f565417aa516109f2328f50e136c64cae5e4.
