@@ -23,3 +23,32 @@ $akAiCsrf = function_exists('csrf_token') ? csrf_token() : '';
 #ak-ai-form{padding:10px;border-top:1px solid #e0e7ef}.ak-ai-consent{display:flex;gap:7px;align-items:flex-start;font-size:.68rem;line-height:1.5;margin-bottom:8px;color:#52657a}.ak-ai-compose{display:flex;align-items:flex-end;gap:5px}.ak-ai-compose textarea{flex:1;min-width:0;resize:vertical;border:1px solid #b7c7d9;border-radius:8px;padding:8px;font:inherit;font-size:.82rem}
 @media(max-width:600px){#ak-ai-assistant{inset-inline-end:10px;bottom:10px}#ak-ai-panel{position:fixed;inset-inline:7px;bottom:65px;width:auto;height:min(70dvh,600px)}}
 </style>
+
+<script>
+(function(){
+var root=document.getElementById('ak-ai-assistant');
+if(!root||root.dataset.ready==='1')return;
+root.dataset.ready='1';
+var lang=root.dataset.lang==='ar'?'ar':'en';
+var panel=document.getElementById('ak-ai-panel'),launcher=document.getElementById('ak-ai-launcher');
+var input=document.getElementById('ak-ai-question'),consent=document.getElementById('ak-ai-consent');
+var send=document.getElementById('ak-ai-send'),messages=document.getElementById('ak-ai-messages'),form=document.getElementById('ak-ai-form');
+function add(text,user,sources){
+ var el=document.createElement('div');el.className='ak-ai-message'+(user?' user':'');el.textContent=text;
+ if(sources&&sources.length){var s=document.createElement('small');s.textContent=(lang==='ar'?'المصدر: ':'Source: ')+sources.join(', ');el.appendChild(document.createElement('br'));el.appendChild(s);}
+ messages.appendChild(el);messages.scrollTop=messages.scrollHeight;return el;
+}
+launcher.addEventListener('click',function(){panel.hidden=!panel.hidden;launcher.setAttribute('aria-expanded',panel.hidden?'false':'true');if(!panel.hidden)input.focus();});
+document.getElementById('ak-ai-close').addEventListener('click',function(){panel.hidden=true;launcher.setAttribute('aria-expanded','false');launcher.focus();});
+form.addEventListener('submit',async function(event){
+ event.preventDefault();var question=input.value.trim();if(!question)return;
+ add(question,true);input.value='';send.disabled=true;
+ var waiting=add(lang==='ar'?'جارٍ البحث في الأدلة المحلية…':'Searching approved local guides…',false);
+ try{
+  var response=await fetch(root.dataset.endpoint,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-CSRF-Token':root.dataset.csrf,'Accept':'application/json'},body:JSON.stringify({question:question,allow_google:consent.checked})});
+  var data=await response.json();waiting.remove();add(data.message||data.answer||'No answer returned.',false,data.sources||[]);
+ }catch(error){waiting.remove();add(lang==='ar'?'تعذر الاتصال بالمساعد. حاول مرة أخرى.':'Could not connect to the assistant. Please try again.',false);}
+ finally{send.disabled=false;input.focus();}
+});
+})();
+</script>
