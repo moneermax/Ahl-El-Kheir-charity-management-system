@@ -375,7 +375,6 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                             <input type="hidden" name="bulk_verify" value="1">
                             <input type="hidden" name="group_id" value="<?php echo (int)$selectedGroup['id']; ?>">
                             <input type="hidden" name="month" value="<?php echo e($currentMonth); ?>">
-                            <input type="hidden" name="month" value="<?php echo e($currentMonth); ?>">
                             <div class="row g-3 align-items-end">
                                 <div class="col-lg-5">
                                     <label for="bulkOperation" class="form-label fw-bold">نوع التوثيق الجماعي</label>
@@ -467,7 +466,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 <?php endif; ?>
             </td>
 <td>
-                <button type="button" class="btn btn-sm <?php echo $isComplete ? 'btn-success' : 'btn-primary'; ?> data-bs-toggle="modal" data-bs-target="#modal<?php echo $f['id']; ?>">
+                <button type="button" class="btn btn-sm <?php echo $isComplete ? 'btn-success' : 'btn-primary'; ?>" data-bs-toggle="modal" data-bs-target="#modal<?php echo $f['id']; ?>">
                     <i class="bi <?php echo $isComplete ? 'bi-check-circle' : 'bi-pencil'; ?>"></i> 
                     <?php echo $isComplete ? 'مراجعة' : 'توثيق'; ?>
                 </button>
@@ -491,6 +490,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                         <div class="modal-body">
                             <input type="hidden" name="family_id" value="<?php echo (int)$f['id']; ?>">
                             <input type="hidden" name="group_id" value="<?php echo (int)$selectedGroup['id']; ?>">
+                            <input type="hidden" name="month" value="<?php echo e($currentMonth); ?>">
                             <?php echo csrf_field(); ?>
                             
                             <div class="alert alert-<?php echo $isComplete ? 'success' : 'info'; ?> mb-3">
