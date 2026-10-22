@@ -126,7 +126,9 @@ if ($action === 'transcribe_audio') {
 
     $hostingAi = isset($hostingConfig['ai']) && is_array($hostingConfig['ai']) ? $hostingConfig['ai'] : [];
     $apiKey = trim((string)(getenv('GEMINI_API_KEY') ?: ($hostingAi['gemini_api_key'] ?? '')));
-    $model = trim((string)(getenv('GEMINI_MODEL') ?: ($hostingAi['gemini_model'] ?? 'gemini-2.5-flash')));
+    // Gemini 2.5 Flash was retired for the Gemini Developer API in October 2026.
+    // Gemini 3.5 Transcribe is the current speech-to-text model and supports generateContent.
+    $model = trim((string)(getenv('GEMINI_MODEL') ?: ($hostingAi['gemini_model'] ?? 'gemini-3.5-transcribe')));
     if ($apiKey === '' || !preg_match('/^[A-Za-z0-9._-]{1,80}$/', $model) || !function_exists('curl_init')) {
         ak_ai_json(503, ['ok' => false, 'message' => 'الإدخال الصوتي غير مهيأ على الخادم. يمكنك كتابة سؤالك بدلاً من ذلك. / Voice transcription is not configured on the server. You can type your question instead.']);
     }
