@@ -1656,3 +1656,7 @@ The first local browser test showed the assistant UI works, but the Arabic quest
 
 ### 2026-10-22 — AI assistant UI refinement
 The assistant widget now omits the two introductory privacy notices from the panel, no longer renders source filenames below answers, shows a Font Awesome comments icon beside the launcher text, and starts with the Google-consent checkbox checked. The user's checkbox choice is retained between messages instead of being reset after each submission. The endpoint still performs local-first retrieval and still blocks internal/sensitive prompts from Google; a checked box does not bypass those filters. Source commit: `5149e20b6e42a393ca59fd6d84cec12edaf08372`. PHP lint and browser regression checks for this UI refinement are pending.
+
+
+### 2026-10-22 — AI assistant launcher / chat history
+The assistant launcher has a gold gradient, stronger shadow, hover state, and keyboard-focus outline (commit `f2e92ac73692ac95a340c338811f565ed3839df3`). Persistent chat history is a requested next step but is not implemented: inspect the actual local `users` primary-key schema before writing a migration; never guess FK types or add runtime DDL. See `docs/CHATGPT_AI_ASSISTANT_CONTINUATION.md`.
