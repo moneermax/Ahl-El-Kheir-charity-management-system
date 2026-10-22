@@ -133,18 +133,21 @@ if ($action === 'transcribe_audio') {
         ak_ai_json(503, ['ok' => false, 'message' => 'الإدخال الصوتي غير مهيأ على الخادم. يمكنك كتابة سؤالك بدلاً من ذلك. / Voice transcription is not configured on the server. You can type your question instead.']);
     }
 
-    $transcriptionPrompt = 'Transcribe the spoken audio exactly into written text. The speaker may use Arabic, including Sudanese Arabic, or English. Preserve the original language and meaning. Return only the transcription, with no commentary, translation, or labels.';
+    // Gemini 3.5 Transcribe uses the Interactions API, not generateContent.
+    // Interactions API expects audio content as {type, data, mime_type}; it returns output_text/steps.
+    $apiMimeType = $mimeType === 'audio/mp4' ? 'audio/m4a' : $mimeType;
     $payload = [
-        'contents' => [[
-            'role' => 'user',
-            'parts' => [
-                ['text' => $transcriptionPrompt],
-                ['inline_data' => ['mime_type' => $mimeType, 'data' => $audioBase64]],
-            ],
+        'model' => $model,
+        'input' => [[
+            'type' => 'audio',
+            'data' => $audioBase64,
+            'mime_type' => $apiMimeType,
         ]],
-        'generationConfig' => ['temperature' => 0, 'maxOutputTokens' => 500],
+        'generation_config' => [
+            'transcription_config' => ['mode' => 'smart'],
+        ],
     ];
-    $url = 'https://generativelanguage.googleapis.com/v1beta/models/' . rawurlencode($model) . ':generateContent';
+    $url = 'https://generativelanguage.googleapis.com/v1beta/interactions';
     $ch = curl_init($url);
     curl_setopt_array($ch, [
         CURLOPT_POST => true,
@@ -196,7 +199,17 @@ if ($action === 'transcribe_audio') {
         ak_ai_json(502, ['ok' => false, 'message' => $failureMessage]);
     }
     $decoded = json_decode($responseBody, true);
-    $transcript = trim((string)($decoded['candidates'][0]['content']['parts'][0]['text'] ?? ''));
+    $transcript = trim((string)($decoded['output_text'] ?? ''));
+    if ($transcript === '' && is_array($decoded['steps'] ?? null)) {
+        foreach ($decoded['steps'] as $step) {
+            foreach ((array)($step['content'] ?? []) as $part) {
+                if (isset($part['text']) && is_string($part['text'])) {
+                    $transcript .= ($transcript === '' ? '' : "\\n") . $part['text'];
+                }
+            }
+        }
+        $transcript = trim($transcript);
+    }
     if ($transcript === '' || mb_strlen($transcript, 'UTF-8') > 1000) {
         ak_ai_json(422, ['ok' => false, 'message' => 'لم نتمكن من استخراج نص واضح من التسجيل. حاول مرة أخرى أو اكتب سؤالك. / No usable transcript was returned. Try again or type your question.']);
     }
