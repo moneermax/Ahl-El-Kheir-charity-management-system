@@ -4210,3 +4210,8 @@ The user-approved MediaRecorder → Gemini transcription path reached the endpoi
 ## 2026-10-22 — AI assistant audio transcription failure boundary
 
 A browser request to the audio transcription endpoint returned JSON `HTTP 502`. Source inspection confirms this is set by the application when cURL fails or Gemini returns a non-2xx response. The precise cause is not yet evidenced; no matching diagnostic line was found in the first log locations checked. Commit `3b7cc562c57b87533678146412cf0f44f5b1ca7c` adds safe user-facing failure categories and retains detailed diagnostics server-side. This is not a verified transcription fix. Continue with one short recording after pulling `main`, then investigate based on the resulting user-facing category. Do not guess at the API key, model, or network as the cause.
+
+## 2026-10-22 — Gemini transcription model availability
+
+The endpoint's NOT_FOUND response is consistent with its source default gemini-2.5-flash. Current Google documentation records that model's Gemini Developer API shutdown on October 16, 2026, and documents gemini-3.5-transcribe as the dedicated transcription model supported by Generate Content. Commit b4b7c6e7a3069a0c8d5eb254b37db9d9941f5927 updates the default model. This is source-based root-cause evidence, not yet a local runtime proof; an explicit environment/deployment override may still supersede the default. Verify after pulling main.
+
