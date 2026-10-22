@@ -3766,3 +3766,8 @@ The existing `modules/accounting/group_verification.php` now supports bulk marki
 No schema migration was needed. The existing `nanny_family_verifications` unique key is `(family_id, month)`, and the existing audit table supports before/after flags.
 
 A dedicated continuation document is `docs/ACCOUNTING_NANNY_GROUP_VERIFICATION_CONTINUATION.md`. GitHub Actions run `39715384849` passed the `php-lint` job, which included this page. Local browser/runtime acceptance remains pending. The broad workflow's separate `migration-full-schema` job failed at its existing Stage 5 salary-advance payroll integration check (`يجب تطبيق ترحيل تجهيز تحويلات الرواتب قبل تأكيد الدفع`); this is unrelated to the Nanny page and must not reopen the closed salary-advance scope.
+
+
+## 2026-10-22 — Nanny group verification control consistency
+
+Follow-up source fix committed to `main`: `e50686f0a8492506459e4465513d03778debc498`. Individual verification now requires an active assignment, family membership, and `verification_status = 'pending'` server-side; the UI renders the individual action/modal only for pending groups. No group status or verification data was changed. PHP lint and local browser/database verification remain pending.
