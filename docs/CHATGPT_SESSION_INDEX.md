@@ -1671,3 +1671,7 @@ The Nanny guide now has Arabic instructions for viewing assigned groups and all 
 ### 2026-10-22 — AI assistant launch-readiness follow-up
 
 Commit `dc0e7640fe98cb134590c0ec3e314c80133e16f4` adds a deterministic local Arabic answer for the Nanny's assigned-groups question and normalizes role-code case. Local lint/browser verification is pending. On-device Arabic speech recognition returned `language-not-supported`; online speech recognition requires an explicit privacy decision and clear user consent before implementation. See `docs/CHATGPT_AI_ASSISTANT_CONTINUATION.md`.
+
+
+### 2026-10-22 — AI assistant online voice consent
+The owner approved online Arabic speech recognition only with clear consent before audio processing and a typing fallback. Source commit: `18bf40af2f905b5509396d92e17374c0c79ecd7c` (`includes/ai_assistant_widget.php`). The widget now requests consent before starting browser online recognition, retains approval only for the current page, and keeps the transcript editable before submission. Runtime acceptance is pending local PHP lint and browser tests; see `docs/CHATGPT_AI_ASSISTANT_CONTINUATION.md`. Preserve existing local files and use the existing `ahl_el_kheir` database.
