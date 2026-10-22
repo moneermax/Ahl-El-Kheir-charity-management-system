@@ -21,75 +21,237 @@ $error_message = '';
 // Get selected group from URL
 $selectedGroupId = isset($_GET['group_id']) ? (int)$_GET['group_id'] : null;
 
+// Verify that the current nanny still owns an active assignment to this group.
+$canAccessGroup = static function (int $groupId, int $nannyId, bool $mustBePending = false): bool {
+    $statusClause = $mustBePending ? " AND og.verification_status = 'pending'" : '';
+    return dbFetchOne(
+        "SELECT og.id
+         FROM orphan_groups og
+         INNER JOIN nanny_group_assignments nga
+            ON nga.group_id = og.id AND nga.nanny_id = ? AND nga.end_date IS NULL
+         WHERE og.id = ? AND og.is_active = 1" . $statusClause . "
+         LIMIT 1",
+        [$nannyId, $groupId]
+    ) !== null;
+};
+
+$familyBelongsToGroup = static function (int $familyId, int $groupId): bool {
+    return dbFetchOne(
+        "SELECT 1
+         FROM group_children gc
+         INNER JOIN family_children fc ON fc.id = gc.child_id
+         WHERE gc.group_id = ? AND gc.left_date IS NULL
+           AND fc.family_id = ? AND fc.is_active = 1
+         LIMIT 1",
+        [$groupId, $familyId]
+    ) !== null;
+};
+
 // Handle POST actions
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
-    
-    // 1. Handle individual family verification
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && verify_csrf()) {
+    // 1. Bulk verification. This only marks checks as verified; it never clears a check.
+    if (isset($_POST['bulk_verify'])) {
+        $gid = (int)($_POST['group_id'] ?? 0);
+        $rawFamilyIds = $_POST['family_ids'] ?? [];
+        $familyIds = is_array($rawFamilyIds)
+            ? array_values(array_unique(array_filter(array_map('intval', $rawFamilyIds), static fn($id) => $id > 0)))
+            : [];
+        $operation = (string)($_POST['bulk_operation'] ?? '');
+        $allowedOperations = ['orphan', 'mother', 'bank', 'all'];
+
+        if (!$canAccessGroup($gid, $uid, true)) {
+            $error_message = 'لا يمكن تنفيذ التوثيق الجماعي: المجموعة غير معينة لك حالياً أو لم تعد مفتوحة للتوثيق.';
+        } elseif (empty($familyIds)) {
+            $error_message = 'يرجى تحديد أسرة واحدة على الأقل.';
+        } elseif (count($familyIds) > 500) {
+            $error_message = 'عدد الأسر المحدد يتجاوز الحد المسموح للعملية الواحدة.';
+        } elseif (!in_array($operation, $allowedOperations, true)) {
+            $error_message = 'نوع التوثيق الجماعي غير صالح.';
+        } else {
+            try {
+                // Validate the entire selection before writing anything.
+                foreach ($familyIds as $familyId) {
+                    if (!$familyBelongsToGroup($familyId, $gid)) {
+                        throw new RuntimeException('تحتوي القائمة على أسرة ليست ضمن المجموعة المحددة. لم يتم حفظ أي تغييرات.');
+                    }
+                }
+
+                $pdo = db();
+                $pdo->beginTransaction();
+                $recordStmt = $pdo->prepare(
+                    "SELECT id, nanny_id, is_orphan_verified, is_mother_contact_verified, is_bank_verified, verification_notes
+                     FROM nanny_family_verifications
+                     WHERE family_id = ? AND month = ? FOR UPDATE"
+                );
+                $insertStmt = $pdo->prepare(
+                    "INSERT INTO nanny_family_verifications
+                     (family_id, month, nanny_id, is_orphan_verified, is_mother_contact_verified, is_bank_verified,
+                      verification_notes, verified_by_user_id, verified_at)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())"
+                );
+                $updateStmt = $pdo->prepare(
+                    "UPDATE nanny_family_verifications
+                     SET nanny_id = ?, is_orphan_verified = ?, is_mother_contact_verified = ?, is_bank_verified = ?,
+                         verified_by_user_id = ?, verified_at = NOW()
+                     WHERE id = ?"
+                );
+                $auditStmt = $pdo->prepare(
+                    "INSERT INTO verification_audit_log
+                     (family_id, month, nanny_id, old_orphan, old_mother, old_bank, new_orphan, new_mother, new_bank, changed_at)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())"
+                );
+
+                foreach ($familyIds as $familyId) {
+                    $recordStmt->execute([$familyId, $currentMonth]);
+                    $record = $recordStmt->fetch(PDO::FETCH_ASSOC);
+                    $oldOrphan = $record ? (int)$record['is_orphan_verified'] : 0;
+                    $oldMother = $record ? (int)$record['is_mother_contact_verified'] : 0;
+                    $oldBank = $record ? (int)$record['is_bank_verified'] : 0;
+
+                    $newOrphan = ($operation === 'orphan' || $operation === 'all') ? 1 : $oldOrphan;
+                    $newMother = ($operation === 'mother' || $operation === 'all') ? 1 : $oldMother;
+                    $newBank = ($operation === 'bank' || $operation === 'all') ? 1 : $oldBank;
+
+                    if ($record) {
+                        $updateStmt->execute([
+                            $uid, $newOrphan, $newMother, $newBank, $uid, (int)$record['id']
+                        ]);
+                    } else {
+                        $insertStmt->execute([
+                            $familyId, $currentMonth, $uid, $newOrphan, $newMother, $newBank, '', $uid
+                        ]);
+                    }
+
+                    // Audit failure must roll back the complete bulk operation.
+                    $auditStmt->execute([
+                        $familyId, $currentMonth, $uid,
+                        $oldOrphan, $oldMother, $oldBank,
+                        $newOrphan, $newMother, $newBank
+                    ]);
+                }
+
+                $pdo->commit();
+                $operationLabels = [
+                    'orphan' => 'توثيق اليتيم',
+                    'mother' => 'توثيق تواصل الأم',
+                    'bank' => 'توثيق الحساب البنكي',
+                    'all' => 'توثيق النقاط الثلاث'
+                ];
+                $success_message = sprintf(
+                    'تم حفظ %s بنجاح لـ %d أسرة، مع تسجيل سجل تدقيق لكل أسرة.',
+                    $operationLabels[$operation],
+                    count($familyIds)
+                );
+                $selectedGroupId = $gid;
+            } catch (Throwable $e) {
+                if (isset($pdo) && $pdo instanceof PDO && $pdo->inTransaction()) {
+                    $pdo->rollBack();
+                }
+                $error_message = $e instanceof RuntimeException
+                    ? $e->getMessage()
+                    : 'تعذر حفظ التوثيق الجماعي. لم يتم اعتماد العملية؛ يرجى المحاولة مرة أخرى.';
+                error_log('Nanny bulk family verification failed: ' . $e->getMessage());
+            }
+        }
+    }
+
+    // 2. Individual family verification.
     if (isset($_POST['verify_family'])) {
-        $family_id = (int)$_POST['family_id'];
+        $family_id = (int)($_POST['family_id'] ?? 0);
+        $gid = (int)($_POST['group_id'] ?? 0);
         $is_orphan = isset($_POST['is_orphan']) ? 1 : 0;
         $is_mother = isset($_POST['is_mother']) ? 1 : 0;
         $is_bank = isset($_POST['is_bank']) ? 1 : 0;
         $notes = trim($_POST['notes'] ?? '');
 
-        try {
-            // Get old status for audit
-            $old_status = get_latest_verification_status($family_id, $currentMonth, $uid);
-            
-            // Check if a record already exists for this family and month
-            $existing = dbFetchOne("SELECT id FROM nanny_family_verifications WHERE family_id = ? AND month = ?", [$family_id, $currentMonth]);
-            
-            if ($existing) {
-                // UPDATE existing record
-                dbExecute("UPDATE nanny_family_verifications 
-                           SET is_orphan_verified = ?, 
-                               is_mother_contact_verified = ?, 
-                               is_bank_verified = ?, 
-                               verification_notes = ?, 
-                               verified_by_user_id = ?, 
-                               verified_at = NOW()
-                           WHERE family_id = ? AND month = ?",
-                          [$is_orphan, $is_mother, $is_bank, $notes, $uid, $family_id, $currentMonth]);
-            } else {
-                // INSERT new record
-                dbExecute("INSERT INTO nanny_family_verifications 
-                           (family_id, month, nanny_id, is_orphan_verified, is_mother_contact_verified, is_bank_verified, verification_notes, verified_by_user_id, verified_at)
-                           VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())",
-                          [$family_id, $currentMonth, $uid, $is_orphan, $is_mother, $is_bank, $notes, $uid]);
+        if (!$canAccessGroup($gid, $uid) || !$familyBelongsToGroup($family_id, $gid)) {
+            $error_message = 'لا يمكنك تعديل توثيق هذه الأسرة؛ تحقق من تعيين المجموعة والأسرة.';
+        } else {
+            $pdo = db();
+            try {
+                $pdo->beginTransaction();
+                $existing = dbFetchOne(
+                    "SELECT id, is_orphan_verified, is_mother_contact_verified, is_bank_verified
+                     FROM nanny_family_verifications WHERE family_id = ? AND month = ? FOR UPDATE",
+                    [$family_id, $currentMonth]
+                );
+                $oldOrphan = $existing ? (int)$existing['is_orphan_verified'] : 0;
+                $oldMother = $existing ? (int)$existing['is_mother_contact_verified'] : 0;
+                $oldBank = $existing ? (int)$existing['is_bank_verified'] : 0;
+
+                if ($existing) {
+                    dbExecute(
+                        "UPDATE nanny_family_verifications
+                         SET nanny_id = ?, is_orphan_verified = ?, is_mother_contact_verified = ?, is_bank_verified = ?,
+                             verification_notes = ?, verified_by_user_id = ?, verified_at = NOW()
+                         WHERE id = ?",
+                        [$uid, $is_orphan, $is_mother, $is_bank, $notes, $uid, (int)$existing['id']]
+                    );
+                } else {
+                    dbExecute(
+                        "INSERT INTO nanny_family_verifications
+                         (family_id, month, nanny_id, is_orphan_verified, is_mother_contact_verified, is_bank_verified,
+                          verification_notes, verified_by_user_id, verified_at)
+                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())",
+                        [$family_id, $currentMonth, $uid, $is_orphan, $is_mother, $is_bank, $notes, $uid]
+                    );
+                }
+
+                dbExecute(
+                    "INSERT INTO verification_audit_log
+                     (family_id, month, nanny_id, old_orphan, old_mother, old_bank, new_orphan, new_mother, new_bank, changed_at)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())",
+                    [$family_id, $currentMonth, $uid, $oldOrphan, $oldMother, $oldBank, $is_orphan, $is_mother, $is_bank]
+                );
+                $pdo->commit();
+                $success_message = 'تم حفظ بيانات التوثيق بنجاح.';
+                $selectedGroupId = $gid;
+            } catch (Throwable $e) {
+                if ($pdo->inTransaction()) {
+                    $pdo->rollBack();
+                }
+                $error_message = 'تعذر حفظ بيانات التوثيق. لم يتم اعتماد التغيير؛ يرجى المحاولة مرة أخرى.';
+                error_log('Nanny individual family verification failed: ' . $e->getMessage());
             }
-            
-            // Get new status for audit
-            $new_status = get_latest_verification_status($family_id, $currentMonth, $uid);
-            
-            // Log the change
-            log_verification_change($family_id, $currentMonth, $uid, $old_status, $new_status);
-            
-            $success_message = 'تم حفظ بيانات التوثيق بنجاح.';
-        } catch (Throwable $e) {
-            $error_message = 'حدث خطأ: ' . $e->getMessage();
         }
     }
 
-    // 2. Handle GROUP SUBMISSION to Accountant (Stage 1)
+    // 3. Submit a group only while the current nanny still has an active assignment.
     if (isset($_POST['submit_group'])) {
-        $gid = (int)$_POST['group_id'];
-        
-        // Use centralized function to count verified families
-        $counts = count_verified_families_in_group($gid, $currentMonth, $uid);
-        
-        if ($counts['verified_count'] === 0) {
-            $error_message = 'لا يمكن إرسال المجموعة. لا توجد أي أسرة موثقة بالكامل.';
+        $gid = (int)($_POST['group_id'] ?? 0);
+        if (!$canAccessGroup($gid, $uid, true)) {
+            $error_message = 'لا يمكن إرسال المجموعة؛ تحقق من التعيين وحالة المجموعة.';
         } else {
-            try {
-                dbExecute("UPDATE orphan_groups SET verification_status = 'submitted', submitted_at = NOW() WHERE id = ?", [$gid]);
-                $success_message = sprintf(
-                    'تم إرسال %d أسرة موثقة للمحاسب بنجاح (المبلغ: %s ج.س). %d أسرة غير موثقة ستظل قابلة للتعديل.',
-                    $counts['verified_count'],
-                    number_format($counts['verified_amount'], 0),
-                    $counts['unverified_count']
-                );
-            } catch (Throwable $e) {
-                $error_message = 'حدث خطأ أثناء الإرسال: ' . $e->getMessage();
+            $counts = count_verified_families_in_group($gid, $currentMonth, $uid);
+            if ($counts['verified_count'] === 0) {
+                $error_message = 'لا يمكن إرسال المجموعة. لا توجد أي أسرة موثقة بالكامل.';
+            } else {
+                try {
+                    $changed = dbExecute(
+                        "UPDATE orphan_groups SET verification_status = 'submitted', submitted_at = NOW()
+                         WHERE id = ? AND is_active = 1 AND verification_status = 'pending'
+                           AND EXISTS (
+                               SELECT 1 FROM nanny_group_assignments
+                               WHERE group_id = orphan_groups.id AND nanny_id = ? AND end_date IS NULL
+                           )",
+                        [$gid, $uid]
+                    );
+                    if ($changed !== 1) {
+                        throw new RuntimeException('تغيرت حالة المجموعة أو تعيينها. حدّث الصفحة قبل الإرسال.');
+                    }
+                    $success_message = sprintf(
+                        'تم إرسال %d أسرة موثقة للمحاسب بنجاح (المبلغ: %s ج.س). %d أسرة غير موثقة ستظل قابلة للتعديل.',
+                        $counts['verified_count'],
+                        number_format($counts['verified_amount'], 0),
+                        $counts['unverified_count']
+                    );
+                    $selectedGroupId = $gid;
+                } catch (Throwable $e) {
+                    $error_message = $e instanceof RuntimeException
+                        ? $e->getMessage()
+                        : 'حدث خطأ أثناء الإرسال.';
+                    error_log('Nanny group submission failed: ' . $e->getMessage());
+                }
             }
         }
     }
@@ -115,7 +277,15 @@ $counts = ['verified_count' => 0, 'unverified_count' => 0, 'verified_amount' => 
 
 // If a group is selected, fetch its families
 if ($selectedGroupId) {
-    $selectedGroup = dbFetchOne("SELECT id, group_name, description, verification_status, submitted_at FROM orphan_groups WHERE id = ? AND is_active = 1", [$selectedGroupId]);
+    $selectedGroup = dbFetchOne(
+        "SELECT og.id, og.group_name, og.description, og.verification_status, og.submitted_at
+         FROM orphan_groups og
+         INNER JOIN nanny_group_assignments nga
+            ON nga.group_id = og.id AND nga.nanny_id = ? AND nga.end_date IS NULL
+         WHERE og.id = ? AND og.is_active = 1
+         LIMIT 1",
+        [$uid, $selectedGroupId]
+    );
     
     if ($selectedGroup) {
         // Use centralized function
@@ -186,11 +356,47 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                         <span class="badge bg-primary"><?php echo count($families); ?> عائلة</span>
                     </h5>
                 </div>
-                <div class="card-body p-0">
+                <div class="card-body">
+                    <?php if (($selectedGroup['verification_status'] ?? '') === 'pending'): ?>
+                        <form method="POST" id="bulkVerificationForm" class="border rounded bg-light p-3 mb-3"
+                              onsubmit="return confirmBulkVerification(event);">
+                            <?php echo csrf_field(); ?>
+                            <input type="hidden" name="bulk_verify" value="1">
+                            <input type="hidden" name="group_id" value="<?php echo (int)$selectedGroup['id']; ?>">
+                            <div class="row g-3 align-items-end">
+                                <div class="col-lg-5">
+                                    <label for="bulkOperation" class="form-label fw-bold">نوع التوثيق الجماعي</label>
+                                    <select class="form-select" id="bulkOperation" name="bulk_operation" required>
+                                        <option value="orphan">توثيق اليتيم فقط — مع الحفاظ على بقية التوثيقات</option>
+                                        <option value="mother">توثيق تواصل الأم فقط — مع الحفاظ على بقية التوثيقات</option>
+                                        <option value="bank">توثيق الحساب البنكي فقط — مع الحفاظ على بقية التوثيقات</option>
+                                        <option value="all">توثيق النقاط الثلاث المحددة كمنجزة</option>
+                                    </select>
+                                </div>
+                                <div class="col-lg-4">
+                                    <div class="small text-muted">حدد الأسر التي أُنجز التحقق منها فعلياً. لن يؤدي التوثيق الجماعي إلى إلغاء أي نقطة محفوظة.</div>
+                                    <div class="form-check mt-2">
+                                        <input class="form-check-input" type="checkbox" id="selectAllBulkFamilies">
+                                        <label class="form-check-label" for="selectAllBulkFamilies">تحديد / إلغاء تحديد كل الأسر</label>
+                                    </div>
+                                </div>
+                                <div class="col-lg-3 d-grid">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-check-double me-1"></i> حفظ التوثيق للأسر المحددة
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    <?php else: ?>
+                        <div class="alert alert-info mb-3">
+                            المجموعة ليست في حالة «قيد التوثيق»؛ تم إيقاف التوثيق الجماعي منعاً لتغيير بيانات أُرسلت للمحاسب.
+                        </div>
+                    <?php endif; ?>
                     <div class="table-responsive">
                         <table class="table table-hover mb-0">
                             <thead class="table-light">
                                 <tr>
+                                    <th class="text-center">تحديد</th>
                                     <th>الكود</th>
                                     <th>اسم الأم</th>
                                     <th class="text-center">توثيق اليتيم</th>
@@ -207,6 +413,13 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         $verifiedCount = (int)$status['is_orphan'] + (int)$status['is_mother'] + (int)$status['is_bank'];
     ?>
         <tr class="<?php echo $isComplete ? 'table-success' : ($verifiedCount > 0 ? 'table-warning' : ''); ?>">
+            <td class="text-center">
+                <input type="checkbox" class="form-check-input bulk-family-checkbox"
+                       name="family_ids[]" value="<?php echo (int)$f['id']; ?>"
+                       form="bulkVerificationForm"
+                       aria-label="<?php echo e('تحديد الأسرة ' . $f['family_code']); ?>"
+                       <?php echo (($selectedGroup['verification_status'] ?? '') !== 'pending') ? 'disabled' : ''; ?>>
+            </td>
             <td>
                 <span class="fw-bold"><?php echo e($f['family_code']); ?></span>
                 <?php if ($isComplete): ?>
@@ -268,7 +481,8 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body">
-                            <input type="hidden" name="family_id" value="<?php echo $f['id']; ?>">
+                            <input type="hidden" name="family_id" value="<?php echo (int)$f['id']; ?>">
+                            <input type="hidden" name="group_id" value="<?php echo (int)$selectedGroup['id']; ?>">
                             <?php echo csrf_field(); ?>
                             
                             <div class="alert alert-<?php echo $isComplete ? 'success' : 'info'; ?> mb-3">
@@ -404,6 +618,52 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 <!-- SweetAlert2 for confirmation -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+function confirmBulkVerification(event) {
+    event.preventDefault();
+    const form = document.getElementById('bulkVerificationForm');
+    const selected = document.querySelectorAll('.bulk-family-checkbox:checked');
+    const operation = document.getElementById('bulkOperation');
+    const labels = {
+        orphan: 'توثيق اليتيم',
+        mother: 'توثيق تواصل الأم',
+        bank: 'توثيق الحساب البنكي',
+        all: 'توثيق النقاط الثلاث'
+    };
+    if (!selected.length) {
+        Swal.fire({title: 'لم يتم تحديد أسر', text: 'حدد أسرة واحدة على الأقل قبل الحفظ.', icon: 'warning', confirmButtonText: 'حسناً'});
+        return false;
+    }
+    const count = selected.length;
+    Swal.fire({
+        title: 'تأكيد التوثيق الجماعي',
+        html: 'سيتم تطبيق <strong>' + labels[operation.value] + '</strong> على <strong>' + count + ' أسرة</strong> محددة.<br>لن تُلغى أي نقطة تحقق أخرى محفوظة، وسيُسجل التغيير لكل أسرة.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'نعم، حفظ التوثيق',
+        cancelButtonText: 'إلغاء',
+        confirmButtonColor: '#0d6efd',
+        cancelButtonColor: '#6c757d',
+        reverseButtons: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            form.onsubmit = null;
+            form.submit();
+        }
+    });
+    return false;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const selectAll = document.getElementById('selectAllBulkFamilies');
+    if (selectAll) {
+        selectAll.addEventListener('change', function() {
+            document.querySelectorAll('.bulk-family-checkbox:not(:disabled)').forEach(function(checkbox) {
+                checkbox.checked = selectAll.checked;
+            });
+        });
+    }
+});
+
 function confirmSubmitGroup(verifiedCount, unverifiedCount, verifiedAmount, unverifiedAmount) {
     // If there are no verified families, show warning
     if (verifiedCount === 0) {
