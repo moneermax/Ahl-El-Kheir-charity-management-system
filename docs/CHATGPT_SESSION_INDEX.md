@@ -1675,3 +1675,7 @@ Commit `dc0e7640fe98cb134590c0ec3e314c80133e16f4` adds a deterministic local Ara
 
 ### 2026-10-22 — AI assistant online voice consent
 The owner approved online Arabic speech recognition only with clear consent before audio processing and a typing fallback. Source commit: `18bf40af2f905b5509396d92e17374c0c79ecd7c` (`includes/ai_assistant_widget.php`). The widget now requests consent before starting browser online recognition, retains approval only for the current page, and keeps the transcript editable before submission. Runtime acceptance is pending local PHP lint and browser tests; see `docs/CHATGPT_AI_ASSISTANT_CONTINUATION.md`. Preserve existing local files and use the existing `ahl_el_kheir` database.
+
+
+### 2026-10-22 — AI voice recognition diagnostic checkpoint
+Owner reports online Arabic speech recognition still fails after consent. Source audit found the widget hid all non-permission failures behind one generic message. Commit `753a3b225c1a992bcb3a6b1ce627ea365fef3092` adds plain-language messages for common failure categories and console-only category logging. This is not runtime-verified; see `docs/CHATGPT_AI_ASSISTANT_CONTINUATION.md` for the next verification step.
