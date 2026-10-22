@@ -1521,3 +1521,8 @@ Commit: `e3b458eb57e618acaf8c8bb0a06df79cd02ece7e`. Local PHP 8.2 lint and brows
 Continue the existing implementation in `modules/accounting/group_verification.php`; do not rebuild or change schema speculatively. The feature supports bulk marking of one chosen check or all three checks for selected families, preserves unselected flags, and writes a per-family audit row transactionally. Assignment, family-in-group, and pending-group constraints are checked server-side. See `docs/ACCOUNTING_NANNY_GROUP_VERIFICATION_CONTINUATION.md`.
 
 GitHub Actions run `39715384849` passed the `php-lint` job for this page. A separate existing Stage 5 salary-advance payroll integration job failed because its expected payroll-transfer migration was not applied (`يجب تطبيق ترحيل تجهيز تحويلات الرواتب قبل تأكيد الدفع`); do not reopen that closed module for this task. Next ask the user to pull `main` and perform the documented acceptance checks against their current local application/database. Runtime acceptance is not yet proven; do not claim closure or create disposable databases.
+
+
+## 2026-10-22 — Nanny group verification follow-up
+
+Commit `e50686f0a8492506459e4465513d03778debc498` closes the source-level inconsistency where individual verification controls remained available for non-pending groups and the POST handler did not enforce pending status. Both the UI and server now restrict individual verification to pending groups with active nanny assignment and valid family membership. Next: run PHP syntax verification and local browser/database acceptance on the existing `ahl_el_kheir` environment only. Preserve existing records; do not reopen unrelated modules or create a disposable database. Runtime verification remains pending.
