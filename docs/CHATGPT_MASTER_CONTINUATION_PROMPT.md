@@ -1619,3 +1619,8 @@ The user applied `database/migrations/2026-10-20_hr_job_description_proposals.sq
 - `HR Test` ID 11 is inactive and remains `needs_review`.
 
 Do not say all eight job-description migrations have been applied: only the proposals migration is confirmed applied in this checkpoint. This verifies the reporting-line result and the listed row safeguards, not every updated field. Local browser/prefill/PDF acceptance remains unverified. Do not rerun the migration or reopen completed unrelated work. If the user starts a new task, follow that new requirement while preserving this verification boundary.
+
+
+## 2026-10-22 — New user requirement: role-aware AI assistant
+
+The active user-requested task is the Ahl El Kheir AI assistant, superseding the previously listed next tasks until the user changes direction. Read docs/CHATGPT_AI_ASSISTANT_CONTINUATION.md. Initial source is committed on main, but syntax CI and local/hosted runtime verification are pending. Continue by reviewing the committed source, correcting issues found by lint/source audit, adding deterministic tests for role-filtered retrieval/privacy gating, then asking the user to pull main and test on the existing local XAMPP app/database. Do not use a disposable database, add schema, send internal documentation to Google, expose the API key, or enable paid billing.
