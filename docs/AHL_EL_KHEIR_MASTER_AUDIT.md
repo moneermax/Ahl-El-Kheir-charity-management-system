@@ -4161,3 +4161,8 @@ The mysql command returned no reported SQL error. The user had created a databas
 Initial source adds a read-only role-aware assistant. Local retrieval is restricted to the matching role section in the employee user guide. Gemini receives only a user's eligible general question after an explicit per-question opt-in; basic internal-workflow and sensitive-pattern checks block likely internal or personal questions. The key remains server-side. No arbitrary SQL/PHP, record reads, business mutations, or chat-history storage were introduced.
 
 Audit limitation: the sensitive-content filter is a conservative first pass, not a guarantee that every possible personal or confidential string can be detected. The feature has not yet passed PHP CI, local session/CSRF/role-boundary tests, or InfinityFree network/quota verification. Follow docs/CHATGPT_AI_ASSISTANT_CONTINUATION.md before deployment; do not claim runtime acceptance.
+
+
+## 2026-10-22 — Internal documentation web-access guard
+
+Source review found the root .htaccess only disabled directory listings and docs had no local access-denial rule. Added docs/.htaccess with Apache 2.4 Require all denied. PHP filesystem retrieval remains available for the assistant, but direct HTTP access must be verified as denied on InfinityFree before deployment acceptance. This source safeguard has not been runtime-tested on the hosting account.
