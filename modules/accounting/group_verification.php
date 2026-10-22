@@ -458,15 +458,17 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     <br><small class="text-muted"><?php echo date('Y-m-d H:i', strtotime($status['verified_at'])); ?></small>
                 <?php endif; ?>
             </td>
-<?php if (($selectedGroup['verification_status'] ?? '') === 'pending'): ?>
-            <td>
+<td>
+                <?php if (($selectedGroup['verification_status'] ?? '') === 'pending'): ?>
                 <button type="button" class="btn btn-sm <?php echo $isComplete ? 'btn-success' : 'btn-primary'; ?>" data-bs-toggle="modal" data-bs-target="#modal<?php echo $f['id']; ?>">
                     <i class="bi <?php echo $isComplete ? 'bi-check-circle' : 'bi-pencil'; ?>"></i> 
                     <?php echo $isComplete ? 'مراجعة' : 'توثيق'; ?>
                 </button>
+                <?php else: ?><span class="text-muted">—</span><?php endif; ?>
             </td>
         </tr>
 
+        <?php if (($selectedGroup['verification_status'] ?? '') === 'pending'): ?>
         <!-- Modal -->
         <div class="modal fade" id="modal<?php echo $f['id']; ?>" tabindex="-1">
             <div class="modal-dialog">
@@ -541,10 +543,8 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     </form>
                 </div>
             </div>
-<?php else: ?>
-            <td><span class="text-muted">—</span></td>
-<?php endif; ?>
         </div>
+        <?php endif; ?>
     <?php endforeach; ?>
 </tbody>
                         </table>
