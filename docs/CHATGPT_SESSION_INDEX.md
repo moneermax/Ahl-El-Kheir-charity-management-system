@@ -1663,3 +1663,7 @@ The assistant launcher has a gold gradient, stronger shadow, hover state, and ke
 
 ### 2026-10-22 — AI assistant persistent history
 Per-user chat history UI/API and explicit migration are committed on `main`: `database/migrations/2026-10-22_ai_assistant_chat_history.sql`. Local schema evidence confirmed `users.id INT UNSIGNED`, matching the FK. Application runtime does not create tables. Migration application and local PHP/browser/security verification remain pending. See `docs/CHATGPT_AI_ASSISTANT_CONTINUATION.md`.
+
+### 2026-10-22 — AI assistant follow-up: Arabic Nanny question + voice diagnosis
+
+The Nanny guide now has Arabic instructions for viewing assigned groups and all active families across assigned groups; Arabic retrieval normalization and Arabic internal-workflow terms were added so missed Arabic questions do not fall through to external AI. The voice error now surfaces the browser's SpeechRecognition error code; voice is not yet verified/fixed. See `docs/CHATGPT_AI_ASSISTANT_CONTINUATION.md`. Local lint/browser retest of these latest commits remains pending.
