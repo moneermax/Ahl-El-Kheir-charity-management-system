@@ -62,7 +62,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && verify_csrf() && $monthIsVa
         $operation = (string)($_POST['bulk_operation'] ?? '');
         $allowedOperations = ['orphan', 'mother', 'bank', 'all'];
 
-        if (!$canAccessGroup($gid, $uid)) {
+        if (!$canAccessGroup($gid, $uid, true)) {
             $error_message = 'لا يمكن تنفيذ التوثيق الجماعي: المجموعة غير معينة لك حالياً أو لم تعد مفتوحة للتوثيق.';
         } elseif (empty($familyIds)) {
             $error_message = 'يرجى تحديد أسرة واحدة على الأقل.';
@@ -167,8 +167,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && verify_csrf() && $monthIsVa
         $is_bank = isset($_POST['is_bank']) ? 1 : 0;
         $notes = trim($_POST['notes'] ?? '');
 
-        if (!$canAccessGroup($gid, $uid) || !$familyBelongsToGroup($family_id, $gid)) {
-            $error_message = 'لا يمكنك تعديل توثيق هذه الأسرة؛ تحقق من تعيين المجموعة والأسرة.';
+        if (!$canAccessGroup($gid, $uid, true) || !$familyBelongsToGroup($family_id, $gid)) {
+            $error_message = 'لا يمكنك تعديل توثيق هذه الأسرة؛ تحقق من تعيين المجموعة وحالتها والأسرة.';
         } else {
             $pdo = db();
             try {
@@ -302,6 +302,9 @@ if ($selectedGroupId) {
     }
 }
 
+$groupAllowsVerification = $selectedGroup !== null
+    && ($selectedGroup['verification_status'] ?? '') === 'pending';
+
 $pageTitle = 'توثيق المجموعات والعائلات';
 include dirname(__DIR__, 2) . '/includes/header.php';
 ?>
@@ -369,6 +372,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     </h5>
                 </div>
                 <div class="card-body">
+                    <?php if ($groupAllowsVerification): ?>
                     <form method="POST" id="bulkVerificationForm" class="border rounded bg-light p-3 mb-3"
                           onsubmit="return confirmBulkVerification(event);">
                             <?php echo csrf_field(); ?>
@@ -399,11 +403,12 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                                 </div>
                             </div>
                     </form>
+                    <?php endif; ?>
                     <div class="table-responsive">
                         <table class="table table-hover mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th class="text-center">تحديد</th>
+                                    <?php if ($groupAllowsVerification): ?><th class="text-center">تحديد</th><?php endif; ?>
                                     <th>الكود</th>
                                     <th>اسم الأم</th>
                                     <th class="text-center">توثيق اليتيم</th>
@@ -420,6 +425,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         $verifiedCount = (int)$status['is_orphan'] + (int)$status['is_mother'] + (int)$status['is_bank'];
     ?>
         <tr class="<?php echo $isComplete ? 'table-success' : ($verifiedCount > 0 ? 'table-warning' : ''); ?>">
+            <?php if ($groupAllowsVerification): ?>
             <td class="text-center">
                 <input type="checkbox" class="form-check-input bulk-family-checkbox"
                        name="family_ids[]" value="<?php echo (int)$f['id']; ?>"
@@ -427,6 +433,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                        aria-label="<?php echo e('تحديد الأسرة ' . $f['family_code']); ?>"
                        >
             </td>
+            <?php endif; ?>
             <td>
                 <span class="fw-bold"><?php echo e($f['family_code']); ?></span>
                 <?php if ($isComplete): ?>
@@ -466,13 +473,18 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 <?php endif; ?>
             </td>
 <td>
+                <?php if ($groupAllowsVerification): ?>
                 <button type="button" class="btn btn-sm <?php echo $isComplete ? 'btn-success' : 'btn-primary'; ?>" data-bs-toggle="modal" data-bs-target="#modal<?php echo $f['id']; ?>">
                     <i class="bi <?php echo $isComplete ? 'bi-check-circle' : 'bi-pencil'; ?>"></i> 
                     <?php echo $isComplete ? 'مراجعة' : 'توثيق'; ?>
                 </button>
+                <?php else: ?>
+                    <span class="text-muted">—</span>
+                <?php endif; ?>
             </td>
         </tr>
 
+        <?php if ($groupAllowsVerification): ?>
         <!-- Modal -->
         <div class="modal fade" id="modal<?php echo $f['id']; ?>" tabindex="-1">
             <div class="modal-dialog">
@@ -549,6 +561,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 </div>
             </div>
         </div>
+        <?php endif; ?>
     <?php endforeach; ?>
 </tbody>
                         </table>
