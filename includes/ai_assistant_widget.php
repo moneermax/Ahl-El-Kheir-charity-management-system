@@ -95,7 +95,7 @@ if(SpeechRecognition&&'processLocally' in SpeechRecognition.prototype){
    var recognition=new SpeechRecognition();recognition.processLocally=true;recognition.lang=lang==='ar'?'ar-EG':'en-US';recognition.interimResults=true;
    var before=input.value;
    recognition.onresult=function(event){var transcript='';for(var i=0;i<event.results.length;i++)transcript+=event.results[i][0].transcript;input.value=(before?before+' ':'')+transcript;};
-   recognition.onerror=function(){add(lang==='ar'?'تعذر الإملاء المحلي؛ اكتب سؤالك بدلاً منه.':'On-device dictation unavailable; please type instead.',false);};
+   recognition.onerror=function(event){var code=(event&&event.error)?String(event.error):'unknown';var detail=lang==='ar'?'تعذر الإملاء المحلي (رمز المتصفح: '+code+'). تحقق من إذن الميكروفون وتوفر حزمة اللغة العربية المحلية، أو اكتب سؤالك.':'On-device dictation failed (browser code: '+code+'). Check microphone permission and local language-pack availability, or type your question.';add(detail,false);};
    recognition.start();
   }catch(error){add(lang==='ar'?'الإملاء المحلي غير متاح في هذا المتصفح.':'On-device dictation is unavailable in this browser.',false);}
  });
