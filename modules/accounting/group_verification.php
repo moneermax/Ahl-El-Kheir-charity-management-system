@@ -41,7 +41,7 @@ $familyBelongsToGroup = static function (int $familyId, int $groupId): bool {
          FROM group_children gc
          INNER JOIN family_children fc ON fc.id = gc.child_id
          WHERE gc.group_id = ? AND gc.left_date IS NULL
-           AND fc.family_id = ? AND fc.is_active = 1
+           AND fc.family_id = ?
          LIMIT 1",
         [$groupId, $familyId]
     ) !== null;
@@ -72,7 +72,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && verify_csrf()) {
                 // Validate the entire selection before writing anything.
                 foreach ($familyIds as $familyId) {
                     if (!$familyBelongsToGroup($familyId, $gid)) {
-                        throw new RuntimeException('تحتوي القائمة على أسرة ليست ضمن المجموعة المحددة. لم يتم حفظ أي تغييرات.');
+                        throw new DomainException('تحتوي القائمة على أسرة ليست ضمن المجموعة المحددة. لم يتم حفظ أي تغييرات.');
                     }
                 }
 
@@ -147,7 +147,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && verify_csrf()) {
                 if (isset($pdo) && $pdo instanceof PDO && $pdo->inTransaction()) {
                     $pdo->rollBack();
                 }
-                $error_message = $e instanceof RuntimeException
+                $error_message = $e instanceof DomainException
                     ? $e->getMessage()
                     : 'تعذر حفظ التوثيق الجماعي. لم يتم اعتماد العملية؛ يرجى المحاولة مرة أخرى.';
                 error_log('Nanny bulk family verification failed: ' . $e->getMessage());
@@ -237,7 +237,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && verify_csrf()) {
                         [$gid, $uid]
                     );
                     if ($changed !== 1) {
-                        throw new RuntimeException('تغيرت حالة المجموعة أو تعيينها. حدّث الصفحة قبل الإرسال.');
+                        throw new DomainException('تغيرت حالة المجموعة أو تعيينها. حدّث الصفحة قبل الإرسال.');
                     }
                     $success_message = sprintf(
                         'تم إرسال %d أسرة موثقة للمحاسب بنجاح (المبلغ: %s ج.س). %d أسرة غير موثقة ستظل قابلة للتعديل.',
@@ -247,7 +247,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && verify_csrf()) {
                     );
                     $selectedGroupId = $gid;
                 } catch (Throwable $e) {
-                    $error_message = $e instanceof RuntimeException
+                    $error_message = $e instanceof DomainException
                         ? $e->getMessage()
                         : 'حدث خطأ أثناء الإرسال.';
                     error_log('Nanny group submission failed: ' . $e->getMessage());
