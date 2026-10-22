@@ -60,3 +60,13 @@ Verification: PHP lint **PASS** in GitHub Actions run `39716749893` for source c
 8. Confirm group submission still sends only fully verified families through the existing accounting workflow.
 
 Do not create a new test database or alter the schema for these checks. Use the user's current local application/database and existing assigned groups.
+
+## 2026-10-22 — Nanny preliminary monthly family verification
+
+Added `modules/accounting/nanny_pre_verification.php` as a separate Nanny workspace and linked it from the Nanny sidebar and the existing group-verification page.
+
+The page reuses `nanny_family_verifications` for the displayed payment month (`YYYY-MM`); it introduces no separate preliminary status and requires no schema migration. Individual and bulk changes use the existing three flags and append per-family `verification_audit_log` records transactionally. Single-check bulk operations preserve the other flags; individual review can explicitly change or clear flags. The bulk selection is fully validated before writes.
+
+Server-side scope is limited to the logged-in Nanny's active assignments and pending groups. Because the schema stores one verification row per family/month rather than per group, families also present in active non-pending groups are excluded to avoid modifying a shared record already used by a submitted/locked group. This page does not submit groups to Accounting.
+
+**Verification boundary:** source committed to `main`; PHP lint and local XAMPP/browser/database acceptance are still required. Use the existing `ahl_el_kheir` database only; do not create a disposable database or reset operational data.
