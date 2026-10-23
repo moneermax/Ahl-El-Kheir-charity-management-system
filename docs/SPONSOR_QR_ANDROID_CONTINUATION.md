@@ -123,3 +123,6 @@ Latest changes on main:
 - Updated the build workflow to lint the endpoint and run when its PHP source changes.
 
 Deployment and verification gates still open: the latest Actions run must pass; install its APK and verify portrait orientation and the redesigned controls on the physical phone; copy the APK to the fixed path on the target system and test download while authenticated. A missing APK produces a deliberate 404 until deployment. Do not mark this complete before runtime evidence.
+
+
+Additional header integration: the shared authenticated system header now includes a “تنزيل تطبيق QR” link to the same in-system endpoint, so users can obtain the APK before installing the scanner. This link also requires the fixed APK file to be present in storage/apps on the deployed server.
