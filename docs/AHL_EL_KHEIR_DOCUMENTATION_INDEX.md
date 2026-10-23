@@ -164,3 +164,8 @@ See `HR_FM_PAYROLL_TABLE_USABILITY_CONTINUATION.md` for the current checkpoint: 
 
 ## 2026-10-22 — AI assistant chat history
 See `CHATGPT_AI_ASSISTANT_CONTINUATION.md` for the gold launcher, persistent per-user history implementation, explicit database migration, and remaining local verification gates. History is not runtime verified until the migration is applied and cross-user isolation is tested.
+
+
+## 2026-10-23 — Systematic document archive design opened
+
+The new independent task is a systematic archive for receipts and uploaded documents. Read `docs/DOCUMENT_ARCHIVE_CONTINUATION.md` before implementation. The current checkpoint is discovery/design only: no application code, database schema, stored files, or business records were changed. Source inspection found multiple storage roots and module-specific serving routes, plus runtime DDL in `modules/families/documents.php` and `modules/transactions/receipt_file.php`; preserve these as explicit audit findings and do not use runtime DDL. Recommended approach is a central searchable catalogue/version/audit layer, preserving domain authorization and business records, registering historical files in place first, and migrating physical files only after schema and host behavior are verified. Next: finish upload/serving/schema inventory, inspect the actual local `ahl_el_kheir` schema and hosting constraints, then finalize a migration design before implementation.
