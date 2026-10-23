@@ -97,7 +97,7 @@ async function loadConversation(id){
  try{
   var data=await api({action:'history_load',conversation_id:id});
   if(!data.ok)throw new Error(data.message||'Conversation unavailable');
-  currentConversationId=Number(data.conversation.id);messages.replaceChildren();
+  currentConversationId=Number(data.conversation.id);rememberConversationId(currentConversationId);messages.replaceChildren();
   (data.messages||[]).forEach(function(item){add(item.content,item.speaker==='user');});
   if(!data.messages||!data.messages.length)add(greeting,false);
   historyPanel.hidden=true;historyToggle.setAttribute('aria-expanded','false');messages.scrollTop=messages.scrollHeight;input.focus();
