@@ -860,6 +860,8 @@ if(!move_uploaded_file($file['tmp_name'],$storedAbsolutePath)) throw new Runtime
 $relativePath=$relativeDir.'/'.$stored;
 dbExecute('INSERT INTO project_documents (project_id,document_type,title,file_path,original_name,mime_type,file_size,document_date,issuer,reference_number,amount,currency_code,notes,uploaded_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)',[$id,'receipt','إيصال دفعة عمالة: '.$labor['provider_name'],$relativePath,$file['name'],$mime,$file['size'],$paymentDate,$labor['provider_name'],$voucherNo,$amount,$labor['currency_code']?:($project['currency_code']?:'SDG'),'مرفق مباشرة بدفعة من ميزانية المشروع.',akp_user_id()]);
 $primaryDocumentId=(int)(dbFetchOne('SELECT LAST_INSERT_ID() id')['id']??0);
+if($primaryDocumentId<=0) throw new RuntimeException('تعذر تسجيل إيصال دفعة العمالة.');
+akp_archive_register_project_file('project_documents', $primaryDocumentId, $id, $relativePath, (string)$file['name'], (string)$mime, (int)$file['size'], 'إيصال دفعة عمالة: ' . $labor['provider_name']);
 }
 dbExecute('INSERT INTO project_expenses (project_id,budget_id,budget_line_id,expense_date,category,description,vendor_name,vendor_contact,invoice_number,government_fee_type,amount,currency_code,transaction_reference,expense_account_id,payment_account_id,primary_document_id,status,submitted_by,posted_by,journal_entry_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',[$id,$approvedBudgetId>0?$approvedBudgetId:null,null,$paymentDate,'عمالة خارجية','دفعة عمالة من ميزانية المشروع: '.$labor['provider_name'].' — '.$labor['work_description'],$labor['provider_name'],$labor['phone']?:null,$voucherNo,null,$amount,$labor['currency_code']?:($project['currency_code']?:'SDG'),'LABOR:'.$laborId,null,null,$primaryDocumentId,'posted',akp_user_id(),akp_user_id(),null]);
 $expenseId=(int)(dbFetchOne('SELECT LAST_INSERT_ID() id')['id']??0);
@@ -886,7 +888,7 @@ dbExecute('START TRANSACTION'); try {$currency=akp_post_value('labor_currency',$
 akp_audit('UPDATE','project_labor_helper',$laborId,['project_id'=>$id,'amount'=>(float)$labor['payment_amount']],['project_id'=>$id,'amount'=>$amount,'paid'=>!empty($paymentExpense)]); $_SESSION['project_toast_success']='تم تعديل بيانات العمالة وتحديث المصروف المرتبط بها.';
 } elseif ($action === 'delete_labor') {
 if($role!=='project_supervisor'||!akp_is_primary_supervisor($id)||$closed)throw new RuntimeException('حذف بيانات العمالة الخارجية متاح لمشرف المشروع المكلّف فقط.'); $laborId=(int)($_POST['labor_id']??0); $labor=dbFetchOne('SELECT * FROM project_labor_helpers WHERE id=? AND project_id=?',[$laborId,$id]); if(!$labor)throw new RuntimeException('سجل العمالة غير موجود.'); $paymentExpense=dbFetchOne("SELECT * FROM project_expenses WHERE project_id=? AND transaction_reference=? AND status='posted' LIMIT 1",[$id,'LABOR:'.$laborId]); if($paymentExpense) throw new RuntimeException('لا يمكن حذف سجل العمالة بعد ترحيل مصروف الدفع؛ لا تُحذف السجلات المالية المرحلة.'); $receiptPath=null; if($paymentExpense&&!empty($paymentExpense['primary_document_id'])){$receipt=dbFetchOne("SELECT file_path FROM project_documents WHERE id=? AND project_id=? AND document_type='receipt'",[(int)$paymentExpense['primary_document_id'],$id]);$receiptPath=$receipt['file_path']??null;}
-dbExecute('START TRANSACTION');try{dbExecute('DELETE FROM project_labor_comments WHERE labor_id=?',[$laborId]);if($paymentExpense&&!empty($paymentExpense['primary_document_id']))dbExecute("DELETE FROM project_documents WHERE id=? AND project_id=? AND document_type='receipt'",[(int)$paymentExpense['primary_document_id'],$id]);if($paymentExpense)dbExecute("DELETE FROM project_expenses WHERE id=? AND project_id=? AND transaction_reference=? AND status='posted'",[(int)$paymentExpense['id'],$id,'LABOR:'.$laborId]);dbExecute('DELETE FROM project_labor_helpers WHERE id=? AND project_id=?',[$laborId,$id]);dbExecute('COMMIT');}catch(Throwable $e){dbExecute('ROLLBACK');throw $e;} if($receiptPath){$path=dirname(__DIR__,2).'/'.$receiptPath;if(is_file($path))@unlink($path);} akp_audit('DELETE','project_labor_helper',$laborId,['project_id'=>$id,'amount'=>(float)$labor['payment_amount'],'paid'=>!empty($paymentExpense)],null);$_SESSION['project_toast_success']='تم حذف سجل العمالة والمصروف المرتبط به وإعادة المبلغ إلى الرصيد المتاح للمشروع.';
+dbExecute('START TRANSACTION');try{dbExecute('DELETE FROM project_labor_comments WHERE labor_id=?',[$laborId]);if($paymentExpense&&!empty($paymentExpense['primary_document_id'])){akp_archive_unlink_project_source('project_documents',(int)$paymentExpense['primary_document_id'],$id);dbExecute("DELETE FROM project_documents WHERE id=? AND project_id=? AND document_type='receipt'",[(int)$paymentExpense['primary_document_id'],$id]);}if($paymentExpense)dbExecute("DELETE FROM project_expenses WHERE id=? AND project_id=? AND transaction_reference=? AND status='posted'",[(int)$paymentExpense['id'],$id,'LABOR:'.$laborId]);dbExecute('DELETE FROM project_labor_helpers WHERE id=? AND project_id=?',[$laborId,$id]);dbExecute('COMMIT');}catch(Throwable $e){dbExecute('ROLLBACK');throw $e;} /* archived receipt bytes are retained */ akp_audit('DELETE','project_labor_helper',$laborId,['project_id'=>$id,'amount'=>(float)$labor['payment_amount'],'paid'=>!empty($paymentExpense)],null);$_SESSION['project_toast_success']='تم حذف سجل العمالة والمصروف المرتبط به وإعادة المبلغ إلى الرصيد المتاح للمشروع.';
 } elseif ($action === 'comment_labor') {
 // ... (Original comment_labor logic preserved exactly)
 if (!akp_is_executive()) throw new RuntimeException('التعليق الإداري على العمالة الخارجية متاح للإدارة التنفيذية فقط.');
@@ -1022,6 +1024,7 @@ $returnProofDocumentId = (int)dbFetchOne("SELECT LAST_INSERT_ID() AS id")['id'];
 $returnProofReplaced = false;
 $returnProofOldPath = '';
 }
+akp_archive_register_project_file('project_documents', $returnProofDocumentId, $id, $returnProofRelativePath, (string)$file['name'], (string)$mime, (int)$file['size'], 'إثبات تسوية الرصيد المتبقي');
 }
 dbExecute('COMMIT');
 } catch (Throwable $e) {
@@ -1037,10 +1040,7 @@ akp_audit('UPDATE', 'project_document', $returnProofDocumentId, $oldAuditData, $
 } else {
 akp_audit('UPLOAD', 'project_document', $returnProofDocumentId, null, ['project_id'=>$id,'document_type'=>'funding_return_proof','amount'=>$closureControlledBalance,'uploaded_by_role'=>'project_supervisor']);
 }
-if ($returnProofReplaced && $returnProofOldPath) {
-$oldAbsolutePath = dirname(__DIR__, 2) . '/' . $returnProofOldPath;
-if ($oldAbsolutePath !== $returnProofStoredAbsolutePath && is_file($oldAbsolutePath)) @unlink($oldAbsolutePath);
-}
+// The previous funding-return proof remains preserved as an archive version.
 }
 $closureRequestHistoryId = (int)(dbFetchOne(
 "SELECT id FROM project_status_history
