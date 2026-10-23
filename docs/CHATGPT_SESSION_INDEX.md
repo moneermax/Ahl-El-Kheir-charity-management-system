@@ -1799,3 +1799,8 @@ It defines four catalogue tables: `document_archive_blobs`, `document_archive_do
 Evidence used: the repository SQL dump was retrieved via GitHub contents and parsed (5,691,158 characters); it defines the existing project tables and indexes, and contains no `document_archive_*` tables. The dump's project schema agrees with the supplied actual-DB column inventory for `project_documents` and `project_payment_evidence`. The migration follows the repository's existing InnoDB/utf8mb4/CREATE TABLE IF NOT EXISTS migration style.
 
 **Important status:** migration file only. It has not been executed against `ahl_el_kheir`; no PHP integration, file backfill, or runtime test has occurred. No existing files or source records have been changed. Before applying it, verify the live DB still has no archive objects and run the DDL against a disposable schema copy or an isolated test environment. Then implement an idempotent, report-only project-file registration/backfill and the project-document/payment-evidence adapters. Do not start physical migration or change replacement/deletion behavior until those adapters and acceptance checks are ready.
+
+
+## 2026-10-23 — Document archive continuation
+
+The document archive catalogue migration is committed and its five tables/indexes/FKs were verified in the user's local `ahl_el_kheir` database. Current pilot: read-only inventory of `project_documents` and `project_payment_evidence` using `tools/report_project_document_inventory.php`. The report has not yet been run against the local filesystem. Continue from `docs/DOCUMENT_ARCHIVE_CONTINUATION.md`; do not move, delete, rewrite, or backfill files/records during inventory.
