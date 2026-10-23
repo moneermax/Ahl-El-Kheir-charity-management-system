@@ -5,6 +5,7 @@ require_once dirname(__DIR__, 2) . '/config/config.php';
 require_once dirname(__DIR__, 2) . '/config/database.php';
 require_once dirname(__DIR__, 2) . '/config/functions.php';
 require_once dirname(__DIR__, 2) . '/config/session.php';
+require_once dirname(__DIR__, 2) . '/modules/sponsors/lib_sponsor_qr.php';
 Session::start();
 if (!Session::isLoggedIn()) { header('Location: ' . APP_URL . 'index.php'); exit(); }
 $role = Session::getUserRole();
@@ -145,7 +146,7 @@ if ($child) {
         $age = (new DateTime($child['birth_date']))->diff(new DateTime('today'))->y . ' ' . t('years');
     }
     /* FIX: post-pivot — sponsorships link via child_id (sp.family_id no longer exists) */
-    $ships = dbFetchAll("SELECT sp.monthly_amount, sp.start_date, s.full_name sname, s.sponsor_code
+    $ships = dbFetchAll("SELECT sp.sponsor_id, sp.monthly_amount, sp.start_date, s.full_name sname, s.sponsor_code
         FROM sponsorships sp JOIN sponsors s ON s.id = sp.sponsor_id
         WHERE sp.child_id = ? AND sp.status IN ('active','paused') ORDER BY sp.id", [(int)$childId]);
     foreach ($ships as $sh) { $totalMonthly += (float)$sh['monthly_amount']; if ($firstStart === '') $firstStart = $sh['start_date']; }
@@ -265,7 +266,7 @@ table.ak-main th{width:18%;font-weight:700}
 <tr><th><?php echo t('مدة الكفالة'); ?></th><td><?php echo t('من :'); ?> <?php echo $child ? $V($dmy($firstStart ?? '')) : '<span class="ak-blank"></span>'; ?> &nbsp;&nbsp; <?php echo t('إلى :'); ?> <span class="ak-blank"></span></td></tr>
 <tr><th><?php echo t('قيمة الكفالة'); ?></th><td><?php echo $child ? number_format((float)$totalMonthly, 0) : ''; ?> &nbsp; <?php echo t('قيمة التزامات أخرى'); ?> : <span class="ak-blank" style="min-width:60mm"></span></td></tr>
 <?php foreach ($ships as $sh): ?>
-<tr><th><?php echo t('الكفيل'); ?></th><td><?php echo $V($sh['sname'] ?? ''); ?> <span class="ak-code"><?php echo e($sh['sponsor_code'] ?? ''); ?></span></td><th><?php echo t('منذ'); ?></th><td><?php echo $V($dmy($sh['start_date'] ?? '')); ?></td></tr>
+<tr><th><?php echo t('الكفيل'); ?></th><td><?php echo $V($sh['sname'] ?? ''); ?> <span class="ak-code"><?php echo e($sh['sponsor_code'] ?? ''); ?></span><?php $sponsorQrData=akSponsorQrDataUri((int)($sh['sponsor_id']??0)); if($sponsorQrData!==''): ?><br><img src="<?php echo e($sponsorQrData); ?>" alt="QR <?php echo e($sh['sponsor_code']??''); ?>" style="width:22mm;height:22mm;image-rendering:pixelated;margin-top:2mm"><?php endif; ?></td><th><?php echo t('منذ'); ?></th><td><?php echo $V($dmy($sh['start_date'] ?? '')); ?></td></tr>
 <?php endforeach; ?>
 <tr class="ak-motto"><td colspan="4"><?php echo t('لا تحقرن قليلا من الخير تفعله .. فإن قليل الخير كثيره'); ?></td></tr>
 </table>
