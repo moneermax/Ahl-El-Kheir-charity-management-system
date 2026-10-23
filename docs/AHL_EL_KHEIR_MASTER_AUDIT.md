@@ -4238,3 +4238,6 @@ The consent prompt was separately updated in commit f89eaf85bc3b91389ab1c11abe54
 
 ## 2026-10-23 — AI assistant text-path source audit
 Reviewed the assistant endpoint and widget. Text chat uses authenticated CSRF-protected requests, local-first role-limited guide retrieval, gated general Gemini fallback, internal/sensitive prompt filters, and user-scoped conversation history. The general-text model default was changed to `gemini-3.5-flash-lite`; voice input was disabled in the UI and deferred. No local runtime was available to this review, so PHP lint/browser checks and the effective deployment model override remain unverified. Preserve the text-only fallback and do not claim acceptance before local verification.
+
+## 2026-10-23 — AI assistant cross-page state audit
+The assistant widget is included by the shared footer on authenticated pages, so page navigation reloads its JavaScript state. The active conversation ID is now stored per tab and its message list is restored using the existing `history_load` action, whose SQL filters by both conversation ID and authenticated user ID. Explicit New chat removes the active ID. Panel close-on-mouseleave follows the sidebar's existing behavior. No database or permission changes. Commits `9db6c37945f2af5e775dc4f9bf651acee7d657b7`, `ca5a1d8bb34e0325a5ea2da0e67b16ea7fd723cb`. Browser validation remains pending.
