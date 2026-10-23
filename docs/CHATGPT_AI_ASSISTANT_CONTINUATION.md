@@ -169,3 +169,12 @@ Review of Google's current Gemini 3.5 Transcribe REST examples identified a conc
 Status: source correction committed to main; local PHP lint and one browser transcription test are still required. Do not claim the feature is fixed until the transcript appears in the editable composer and is not auto-submitted. For a failure, share only a matching [Ahl El Kheir AI transcription] diagnostic line, not general Apache startup messages or secrets.
 
 The voice-consent prompt was also updated in commit f89eaf85bc3b91389ab1c11abe541c02a21abfb4 to disclose that Google may temporarily retain the uploaded audio file for up to 48 hours under its Files service. The app's chat history still does not save the audio; the returned transcript remains editable and is not automatically submitted. This disclosure accompanies, rather than replaces, the explicit consent prompt.
+
+
+## 2026-10-23 — Text chat review; voice deferred
+
+The general-text fallback default was updated from `gemini-2.5-flash` to `gemini-3.5-flash-lite` in commit `2bc42b03c5d9f5430d0e6ce07a22f39a57811a7b`. The microphone control is disabled and labelled as future development in commit `75c52595eef9cd6dd2d8ab71756f06103601c1c8`.
+
+Source review: text requests use authenticated, CSRF-protected POSTs, local-first role-limited guide retrieval, per-question Google consent for general fallback, internal/sensitive-question filters, and owner-scoped conversation history. Local answers do not call Google. The model can still be overridden by `GEMINI_MODEL` or `hosting.php`, which must be checked in the local environment.
+
+Runtime verification is **PENDING** because this review could not access the user's local Apache/PHP/browser, database, or Gemini configuration. After pulling `main`, lint both assistant PHP files and verify a known local-guide answer, no-consent fallback behavior, consented eligible general fallback, internal/sensitive-question blocking, and private persistent history. Do not retry voice while it is deferred; do not call text fully verified until local checks pass.
