@@ -149,7 +149,20 @@ if ($child) {
     $ships = dbFetchAll("SELECT sp.sponsor_id, sp.monthly_amount, sp.start_date, s.full_name sname, s.sponsor_code
         FROM sponsorships sp JOIN sponsors s ON s.id = sp.sponsor_id
         WHERE sp.child_id = ? AND sp.status IN ('active','paused') ORDER BY sp.id", [(int)$childId]);
-    foreach ($ships as $sh) { $totalMonthly += (float)$sh['monthly_amount']; if ($firstStart === '') $firstStart = $sh['start_date']; }
+    foreach ($ships as $sh) {
+        $totalMonthly += (float)$sh['monthly_amount'];
+        if ($firstStart === '') $firstStart = $sh['start_date'];
+    }
+}
+$sponsorQrItems = [];
+foreach ($ships as $sh) {
+    $sponsorQrData = akSponsorQrDataUri((int)($sh['sponsor_id'] ?? 0));
+    if ($sponsorQrData !== '') {
+        $sponsorQrItems[] = [
+            'data' => $sponsorQrData,
+            'code' => (string)($sh['sponsor_code'] ?? ''),
+        ];
+    }
 }
 $V = function ($x) { return ($x !== null && $x !== '') ? e($x) : '<span class="ak-blank"></span>'; };
 $akPrintOwnLetterhead = true; // official layout with its own letterhead: see assets/css/print.css
@@ -161,9 +174,11 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 .ak-sheet.blank{min-height:296mm}
 .ak-basmala{text-align:center;font-size:20px;line-height:1.4}
 .ak-org{text-align:center;color:#178a3f;font-weight:800;font-size:21px}
-.ak-band-row{position:relative}
+.ak-band-row{position:relative;min-height:27mm;display:flex;align-items:center;justify-content:center;padding:0 30mm}
 .ak-logo{position:absolute;top:50%;transform:translateY(-50%);right:0;width:27mm;height:27mm;border-radius:50%;overflow:hidden;border:1px solid #bbb;background:#fff;display:flex;align-items:center;justify-content:center}
 .ak-logo img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.ak-sponsor-qr-group{position:absolute;top:50%;left:0;transform:translateY(-50%);display:flex;align-items:center;gap:1.5mm;max-width:29mm}
+.ak-sponsor-qr{display:block;width:20mm;height:20mm;object-fit:contain;image-rendering:pixelated;flex:0 0 auto}
 .ak-flourish{display:block;width:360px;max-width:85%;height:30px;margin:1px auto}
 .ak-band-wrap{width:fit-content;margin:0 auto;padding:2px;background:#8d5a5a;clip-path:polygon(0 10px,10px 10px,10px 0,calc(100% - 10px) 0,calc(100% - 10px) 10px,100% 10px,100% calc(100% - 10px),calc(100% - 10px) calc(100% - 10px),calc(100% - 10px) 100%,10px 100%,10px calc(100% - 10px),0 calc(100% - 10px))}
 .ak-band{background:linear-gradient(180deg,#f2d2d2 0%,#e5bcbc 55%,#d9a7a7 100%);color:#000;text-align:center;font-weight:800;font-size:21px;padding:10px 80px;clip-path:polygon(0 10px,10px 10px,10px 0,calc(100% - 10px) 0,calc(100% - 10px) 10px,100% 10px,100% calc(100% - 10px),calc(100% - 10px) calc(100% - 10px),calc(100% - 10px) 100%,10px 100%,10px calc(100% - 10px),0 calc(100% - 10px))}
@@ -237,6 +252,7 @@ table.ak-main th{width:18%;font-weight:700}
 <div class="ak-org"><?php echo t('منظمة أهل الخير النسوية'); ?></div>
 <svg class="ak-flourish" viewBox="0 0 420 36" aria-hidden="true"><g fill="none" stroke="#c58a94" stroke-width="2" stroke-linecap="round"><path d="M210 18 C 190 4, 160 4, 150 18 C 160 32, 190 32, 210 18"/><path d="M210 18 C 230 4, 260 4, 270 18 C 260 32, 230 32, 210 18"/><path d="M150 18 C 120 6, 90 10, 70 18 C 90 26, 120 30, 150 18"/><path d="M270 18 C 300 6, 330 10, 350 18 C 330 26, 300 30, 270 18"/></g><g fill="#c58a94"><circle cx="210" cy="18" r="4"/><circle cx="70" cy="18" r="3"/><circle cx="350" cy="18" r="3"/><circle cx="120" cy="9" r="2"/><circle cx="300" cy="9" r="2"/><circle cx="120" cy="27" r="2"/><circle cx="300" cy="27" r="2"/></g></svg>
 <div class="ak-band-row">
+<?php if ($sponsorQrItems): ?><div class="ak-sponsor-qr-group" aria-label="<?php echo t('Sponsor QR code'); ?>"><?php foreach ($sponsorQrItems as $qrItem): ?><img class="ak-sponsor-qr" src="<?php echo e($qrItem['data']); ?>" alt="QR <?php echo e($qrItem['code']); ?>"><?php endforeach; ?></div><?php endif; ?>
 <div class="ak-logo"><img src="<?php echo asset('img/logo.png'); ?>" alt="<?php echo t('Ahl El Kheir Charity'); ?>"></div>
 <div class="ak-band-wrap"><div class="ak-band"><?php echo t('إستمارة يتيم'); ?></div></div>
 </div>
@@ -266,7 +282,7 @@ table.ak-main th{width:18%;font-weight:700}
 <tr><th><?php echo t('مدة الكفالة'); ?></th><td><?php echo t('من :'); ?> <?php echo $child ? $V($dmy($firstStart ?? '')) : '<span class="ak-blank"></span>'; ?> &nbsp;&nbsp; <?php echo t('إلى :'); ?> <span class="ak-blank"></span></td></tr>
 <tr><th><?php echo t('قيمة الكفالة'); ?></th><td><?php echo $child ? number_format((float)$totalMonthly, 0) : ''; ?> &nbsp; <?php echo t('قيمة التزامات أخرى'); ?> : <span class="ak-blank" style="min-width:60mm"></span></td></tr>
 <?php foreach ($ships as $sh): ?>
-<tr><th><?php echo t('الكفيل'); ?></th><td><?php echo $V($sh['sname'] ?? ''); ?> <span class="ak-code"><?php echo e($sh['sponsor_code'] ?? ''); ?></span><?php $sponsorQrData=akSponsorQrDataUri((int)($sh['sponsor_id']??0)); if($sponsorQrData!==''): ?><br><img src="<?php echo e($sponsorQrData); ?>" alt="QR <?php echo e($sh['sponsor_code']??''); ?>" style="width:22mm;height:22mm;image-rendering:pixelated;margin-top:2mm"><?php endif; ?></td><th><?php echo t('منذ'); ?></th><td><?php echo $V($dmy($sh['start_date'] ?? '')); ?></td></tr>
+<tr><th><?php echo t('الكفيل'); ?></th><td><?php echo $V($sh['sname'] ?? ''); ?> <span class="ak-code"><?php echo e($sh['sponsor_code'] ?? ''); ?></span></td><th><?php echo t('منذ'); ?></th><td><?php echo $V($dmy($sh['start_date'] ?? '')); ?></td></tr>
 <?php endforeach; ?>
 <tr class="ak-motto"><td colspan="4"><?php echo t('لا تحقرن قليلا من الخير تفعله .. فإن قليل الخير كثيره'); ?></td></tr>
 </table>
