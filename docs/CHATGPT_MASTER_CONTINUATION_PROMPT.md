@@ -1699,3 +1699,11 @@ Current task boundary: text chat is the supported path; voice is deferred and th
 
 ## 2026-10-23 — AI assistant conversation continuity
 The latest requested widget behavior is committed on `main`: current conversation ID is tab-scoped in `sessionStorage`, the conversation transcript is restored through the existing owner-checked history endpoint after full-page navigation, explicit New chat clears the active conversation, and the panel closes on `mouseleave` like the sidebar. Commits `9db6c37945f2af5e775dc4f9bf651acee7d657b7` and `ca5a1d8bb34e0325a5ea2da0e67b16ea7fd723cb`. Next step: user pulls `main`, lints the two PHP files, then verifies transcript restore/continued messages, New chat, and mouseleave close/reopen in the local XAMPP app. Runtime status is pending.
+
+## 2026-10-23 — AI text chat task boundary and next-session rule
+
+The text-chat implementation task is closed at the source/documentation boundary. Active conversation continuity across page navigation, explicit New chat separation, and panel close-on-mouseleave are committed on `main` (commits `9db6c37945f2af5e775dc4f9bf651acee7d657b7` and `ca5a1d8bb34e0325a5ea2da0e67b16ea7fd723cb`). Text fallback default and voice deferral are recorded in commits `2bc42b03c5d9f5430d0e6ce07a22f39a57811a7b` and `75c52595eef9cd6dd2d8ab71756f06103601c1c8`.
+
+Do not claim local runtime acceptance for PHP lint, cross-page restoration, New chat, or mouseleave unless the owner has confirmed those checks. If outstanding, use the short checklist in `docs/CHATGPT_AI_ASSISTANT_CONTINUATION.md`; otherwise do not reopen this task without concrete regression evidence. Voice transcription remains deferred.
+
+For the next chat, read the four required documents and the continuation document for the relevant module, inspect current `main`, source, schema and latest evidence, then identify the next genuinely open task. Do not preselect a task from stale chat history or automatically reopen any completed module. Existing-project-only, main-only, non-destructive Git, smallest justified change, verification, and documentation rules remain mandatory.
