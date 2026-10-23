@@ -484,10 +484,15 @@ body.theme-dark .filter-bar { background: #2d3748; }
         <i class="fas fa-search fa-2x mb-3 d-block"></i>
         <?php if ($q !== ''): ?>
             لا توجد نتائج مطابقة لبحثك "<strong><?php echo e($q); ?></strong>".
+        <?php elseif ($type === 'documents'): ?>
+            لا توجد مستندات مؤرشفة مطابقة في نطاق صلاحياتك.
         <?php else: ?>
             لا توجد بيانات متاحة في هذا القسم.
         <?php endif; ?>
     </div>
+    <?php if ($canSearchDocuments && $type !== 'documents'): ?>
+        <div class="text-center mb-4"><a class="btn btn-outline-primary" href="?type=documents&amp;q=<?php echo urlencode($q); ?>&amp;page=1"><i class="fas fa-box-archive me-1"></i> البحث في مستندات المشاريع</a></div>
+    <?php endif; ?>
 <?php else: ?>
 
     <ul class="nav nav-tabs mb-3">
