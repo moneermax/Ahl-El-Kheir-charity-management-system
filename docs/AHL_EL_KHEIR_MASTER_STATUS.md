@@ -4075,3 +4075,17 @@ The user clarified that the receipts they expected to see are uploaded by a nann
 - Keep **end-to-end acceptance** open until the user tests the existing Global Search in `http://localhost:8081/AhlElKheir/`: find a known present project document and receipt, open current and previous versions after a replacement, and confirm an unauthorized cross-project request is denied. Do not use the three missing files as test fixtures.
 - Treat nanny/family sponsorship payment proofs as an explicit scope extension, not as a defect that can be solved by bypassing current project receipt permissions.
 - Do not claim the entire document-archiving system is done. At the start of the next repository task, reread the canonical docs and inspect the real repository state before proceeding.
+
+
+## 2026-10-23 — Sponsor QR + Android scanner source checkpoint
+
+A new user requirement is now the active work unit: every sponsor should have a QR code, the QR should appear on orphan forms associated with that sponsor, and staff should be able to scan through an Android APK. The user chose authenticated/authorized access after scanning.
+
+Source changes on `main`:
+- `modules/sponsors/lib_sponsor_qr.php` generates a QR locally through the already bundled TCPDF 2D barcode library. QR payload is only the existing sponsor profile URL.
+- `modules/sponsors/view.php` adds a QR card and distinct active sponsored-orphan count.
+- `modules/families/orphan_form.php` and `modules/families/orphan_profile.php` add QR codes beside each linked sponsor.
+- `android/sponsor-qr-scanner/` adds a native Android camera scanner using ZXing and opens sponsor profiles in a WebView using the existing website session/authentication.
+- `.github/workflows/build-sponsor-qr-scanner.yml` builds an installable debug APK artifact.
+
+**Status: SOURCE IMPLEMENTATION ONLY; NOT VERIFIED.** No PHP lint, Android build result, Apache/browser test, physical-device scan, database count comparison, or role/scope runtime test has yet been evidenced. Follow `docs/SPONSOR_QR_ANDROID_CONTINUATION.md` for exact next steps. No schema migration was introduced. The previously documented project archive browser-acceptance gap remains separate and unchanged.
