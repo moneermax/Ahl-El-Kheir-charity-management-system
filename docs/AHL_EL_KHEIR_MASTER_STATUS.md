@@ -4094,3 +4094,7 @@ Source changes on `main`:
 ## New active task — Sponsor QR + Android scanner (2026-10-23)
 
 See `docs/SPONSOR_QR_ANDROID_CONTINUATION.md` for requirements, implementation inventory, and acceptance plan. Current Android dependency fix: `777f9b180ce61dade8c96649a8138e7f4bb85880`, excluding obsolete Kotlin `kotlin-stdlib-jdk7` / `kotlin-stdlib-jdk8` split artifacts that CI proved duplicate classes already included in `kotlin-stdlib:1.8.22`. Fix awaits the next Actions run; APK and runtime acceptance remain unverified.
+
+
+### Sponsor QR Android scanner — BuildConfig fix (2026-10-23)
+Actions job `120446032500` failed Java compilation due to missing generated `BuildConfig`. Since the app uses AGP 8.7.3 and `MainActivity.java` references `BuildConfig.DEBUG`, commit `ecdc34c19f1d5f5c370a95b3a902739693710b7f` enables BuildConfig generation in the app module. New Actions run and APK assembly are still unverified.
