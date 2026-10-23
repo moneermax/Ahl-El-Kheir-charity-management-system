@@ -4050,3 +4050,8 @@ Global Search now lists all present archive versions for active project source l
 ### Archive follow-up — searchable retained documents after source deletion (2026-10-23; runtime pending)
 
 The integrated archive search now includes present versions for active links and for unlinked source links whose business source row was deleted. For the latter, the project association comes from the archive event metadata and must still pass `akp_can_view_project()`; payment evidence remains restricted to roles allowed by the existing receipt endpoint. No archive row or file is deleted by this search path. This source change has not yet been locally linted or runtime-tested.
+
+ 
+### Archive pilot — catalogue registration verified locally; runtime acceptance pending (2026-10-23)
+
+User-reported evidence: all six archive/search PHP syntax checks pass. Local backfill applied 16 references (8 `project_documents`, 8 `project_payment_evidence`); second dry run reports 16 already registered, 0 to register, 0 path mismatches, 0 blob metadata mismatches, 0 reconciliation cases, and 3 known missing physical payment-evidence files. This verifies idempotent catalogue registration only. Browser acceptance of Global Search, project/role authorization, current and historical version retrieval, and upload/replacement automation remains open.
