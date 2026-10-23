@@ -4456,3 +4456,7 @@ A separate orphan-form presentation change was committed to `modules/families/or
 ### 2026-10-23 correction — restore original orphan form header
 
 The first QR header implementation introduced flex sizing, a 27mm minimum row height, and horizontal padding, which changed the original design. Corrective source commit `efe2eaf9b6aeaa1d25b7f136f9b9958f74e519a4` removes those changes and restores the original `.ak-band-row{position:relative}` rule. QR remains at the upper-left; logo/title markup and other form styling remain unchanged. Syntax and browser/print verification are pending.
+
+### 2026-10-23 follow-up — full-width sponsorship rows
+
+Source commit `d31c1fd6c56f25ecca15adb5833131b425264935` adds `colspan="3"` to the value cells for “مدة الكفالة” and “قيمة الكفالة”. Those rows share a table with four-column sponsor rows; spanning the remaining columns makes both row borders extend across the same full table width without changing their content or the QR header. PHP syntax and local browser/print appearance verification are still pending.
