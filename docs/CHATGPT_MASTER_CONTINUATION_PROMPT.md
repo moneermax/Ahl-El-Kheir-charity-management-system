@@ -1770,3 +1770,14 @@ It defines four catalogue tables: `document_archive_blobs`, `document_archive_do
 Evidence used: the repository SQL dump was retrieved via GitHub contents and parsed (5,691,158 characters); it defines the existing project tables and indexes, and contains no `document_archive_*` tables. The dump's project schema agrees with the supplied actual-DB column inventory for `project_documents` and `project_payment_evidence`. The migration follows the repository's existing InnoDB/utf8mb4/CREATE TABLE IF NOT EXISTS migration style.
 
 **Important status:** migration file only. It has not been executed against `ahl_el_kheir`; no PHP integration, file backfill, or runtime test has occurred. No existing files or source records have been changed. Before applying it, verify the live DB still has no archive objects and run the DDL against a disposable schema copy or an isolated test environment. Then implement an idempotent, report-only project-file registration/backfill and the project-document/payment-evidence adapters. Do not start physical migration or change replacement/deletion behavior until those adapters and acceptance checks are ready.
+
+
+## 2026-10-23 — Current active task: finish and verify project archive pilot
+
+The user chose to integrate archive search into the existing role-based Global Search Center; do not create a separate archive search page.
+
+Source implementation on `main` adds a `documents` search type and transactional archive registration hooks for project documents, expense/labor receipts, funding-return proof, and FM payment evidence. Search filters by active matching archive links, present blobs, project access, and the payment receipt endpoint's role allowlist. Previous file bytes are preserved on replacement; source deletion unlinks rather than purges archive bytes.
+
+**Runtime is still pending.** Start by pulling `main`, then PHP-lint:
+`modules/projects/lib_project_document_archive.php`, `modules/projects/view.php`, `modules/projects/view_fm.php`, `modules/search/index.php`, and `config/search_permissions.php`.
+Then run `tools/backfill_project_document_archive.php --apply` only against the already-confirmed local `ahl_el_kheir` database; the previously reviewed dry-run showed 16 planned registrations and 3 missing-file test artifacts. Do not recreate missing files. Rerun the tool without `--apply` to verify idempotence, then test Global Search and uploads/replacements in the real Apache application. Do not claim completion until those outputs are supplied and reviewed.
