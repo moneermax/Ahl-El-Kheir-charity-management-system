@@ -503,10 +503,12 @@ body.theme-dark .filter-bar { background: #2d3748; }
 
     <ul class="nav nav-tabs mb-3">
         <?php
-        $tabs = ['all' => 'الكل', 'families' => 'الأسر والأيتام (' . $resultCounts['families'] . ')',
-                 'sponsors' => 'الكفلاء (' . $resultCounts['sponsors'] . ')',
-                 'sponsorships' => 'الكفالات (' . $resultCounts['sponsorships'] . ')'];
-        if (!$hasNoPaymentsAccess) { $tabs['payments'] = 'الدفعات الشهرية (' . $resultCounts['payments'] . ')'; }
+        $tabs = [];
+        if (ak_search_can_type('all', $role)) { $tabs['all'] = 'الكل'; }
+        if (ak_search_can_type('families', $role)) { $tabs['families'] = 'الأسر والأيتام (' . $resultCounts['families'] . ')'; }
+        if (ak_search_can_type('sponsors', $role)) { $tabs['sponsors'] = 'الكفلاء (' . $resultCounts['sponsors'] . ')'; }
+        if (ak_search_can_type('sponsorships', $role)) { $tabs['sponsorships'] = 'الكفالات (' . $resultCounts['sponsorships'] . ')'; }
+        if (ak_search_can_type('payments', $role) && !$hasNoPaymentsAccess) { $tabs['payments'] = 'الدفعات الشهرية (' . $resultCounts['payments'] . ')'; }
         if ($canSearchDocuments) { $tabs['documents'] = 'مستندات المشاريع (' . $resultCounts['documents'] . ')'; }
         foreach ($tabs as $tv => $tl):
             $qs = http_build_query(['type' => $tv, 'q' => $q, 'status' => $status, 'month' => $month, 'page' => 1]);
