@@ -208,3 +208,18 @@ The owner confirmed that a local-guide text question works. Source review also c
 **Verification boundary:** this work is closed as an implementation task, but this session did not run local PHP lint or browser acceptance and therefore does not claim full runtime verification. If the owner has not already performed the checks locally, verify with the existing XAMPP application: lint `includes/ai_assistant_widget.php` and `modules/ai_assistant/chat.php`; ask a known local-guide question; navigate to another page and confirm the same transcript restores; send a follow-up and confirm it remains in that conversation; confirm New chat stays separate across navigation; confirm mouseleave closes the panel and the launcher reopens it. Check the effective `GEMINI_MODEL`/hosting override only if eligible general fallback is part of the acceptance test.
 
 Do not reopen this completed implementation task without a concrete regression. Do not retry voice transcription as part of text-chat acceptance; voice remains deferred. The next chat session should start by reading the required canonical documents and identifying the next genuinely open project task rather than assuming another AI-assistant change is needed.
+
+## 2026-10-23 — Account-isolated conversation restore and VGM assignment guidance
+
+A user reported that a different account in the same browser received the stale-conversation restoration error, then asked how to distribute families to nannies and received the generic internal-procedure block.
+
+Source review identified two separate causes:
+- The widget used one tab-scoped `sessionStorage` key for all signed-in users. The server correctly enforces conversation ownership, so an account switch can make the previous account's conversation ID fail the owner-scoped `history_load` lookup. The restore failure handler also left the failed ID in storage, causing repeat attempts.
+- Local retrieval had a deterministic Arabic shortcut for viewing nanny-assigned groups, but no corresponding verified VGM group/nanny assignment answer. The approved `modules/deputy_gm/groups.php` source confirms VGM-only group management, adding eligible children, and assigning a nanny to a group.
+
+Fixes committed on `main`:
+- `ad6d2c7ede03b7e665ff11b74af55949818b5a76`: namespace the active-conversation storage key by the server-rendered signed-in user ID; clear the active pointer after a failed restore so the widget does not retry the same invalid ID on every page.
+- `fb030a08ba65093b51cf31cba4979189457e87bf`: document the VGM group/nanny workflow in the approved employee guide.
+- `4fe4a98dc3bcf40e5122c04f069b1f3a40cb99dc`: provide a deterministic local answer for VGM/vice-GM roles only. It explains that assignment is to a group, children must be active and have active sponsorship, and current-month disbursement restricts membership edits. Other roles do not receive the VGM-only instructions.
+
+No schema or database changes. Source edits are committed, but PHP lint and real-browser testing have not been executed by this repository-editing session. Required acceptance: switch between two accounts in the same browser tab and confirm no cross-account restore attempt/error; confirm each account can still select its own saved history; as VGM, ask `كيف يمكنني توزيع الأسر على الحاضنات` and verify the documented local answer; as a non-VGM role, verify the VGM-only procedure is not returned. Also test a normal same-user navigation restore and a failed restore followed by a page reload. Do not claim runtime PASS before these checks.
