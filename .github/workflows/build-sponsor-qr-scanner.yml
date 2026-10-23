@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "android/sponsor-qr-scanner/**"
+      - "modules/sponsors/download_scanner_apk.php"
       - ".github/workflows/build-sponsor-qr-scanner.yml"
   workflow_dispatch:
 
@@ -32,6 +33,7 @@ jobs:
           php -l modules/sponsors/view.php
           php -l modules/families/orphan_form.php
           php -l modules/families/orphan_profile.php
+          php -l modules/sponsors/download_scanner_apk.php
 
       - name: Set up Java 17
         uses: actions/setup-java@v4
