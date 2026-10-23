@@ -1821,3 +1821,8 @@ The user clarified that the receipts they expected to see are uploaded by a nann
 ## 2026-10-23 — Active task: sponsor QR + Android scanner APK
 
 Continue from `docs/SPONSOR_QR_ANDROID_CONTINUATION.md`. Source-only work has added local TCPDF QR generation to sponsor profile/orphan sponsorship displays and a native Android ZXing/WebView companion with a GitHub Actions debug-APK workflow. QR payloads contain only the existing permission-checked sponsor profile URL; the existing PHP authentication and scope checks remain authoritative. No schema migration was added. PHP lint, Android build, Apache/browser, physical-device, count-reconciliation and authorization runtime checks are still pending. The previous project archive acceptance gap remains separate.
+
+
+## Current task — Sponsor QR + Android scanner (2026-10-23)
+
+Read `docs/SPONSOR_QR_ANDROID_CONTINUATION.md` and continue the existing feature on `main`. The previous Actions failure is now specifically traced to Kotlin 1.8.22 containing classes duplicated by legacy `kotlin-stdlib-jdk7/jdk8:1.6.21` artifacts pulled transitively via AndroidX lifecycle/coroutines. Fix commit: `777f9b180ce61dade8c96649a8138e7f4bb85880`; next action is verify the new GitHub Actions run and APK artifact. Do not claim build success until the run and artifact confirm it. Continue with local PHP lint, Apache runtime, read-only active sponsorship count reconciliation, authorization/supervisor-scope checks, and Android phone testing only after build succeeds.
