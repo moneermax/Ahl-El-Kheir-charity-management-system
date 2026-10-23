@@ -379,13 +379,18 @@ if ($canSearchDocuments && in_array($type, ['all', 'documents'], true)) {
 
     // Archive links are metadata pointers, never authorization grants.
     $paymentReceiptRoles = ['admin', 'financial_manager', 'general_manager', 'vice_general_manager', 'projects_manager', 'accountant', 'accountant_staff'];
+    $projectAccessCache = [];
     foreach ($archiveCandidates as $archiveRow) {
         // Match the payment receipt endpoint's role allowlist as well as project-level access.
         if ($archiveRow['source_table'] === 'project_payment_evidence'
             && !in_array($role, $paymentReceiptRoles, true)) {
             continue;
         }
-        if (akp_can_view_project((int)$archiveRow['project_id'])) {
+        $archiveProjectId = (int)$archiveRow['project_id'];
+        if (!array_key_exists($archiveProjectId, $projectAccessCache)) {
+            $projectAccessCache[$archiveProjectId] = akp_can_view_project($archiveProjectId);
+        }
+        if ($projectAccessCache[$archiveProjectId]) {
             $allDocuments[] = $archiveRow;
         }
     }
