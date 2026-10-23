@@ -174,10 +174,10 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 .ak-sheet.blank{min-height:296mm}
 .ak-basmala{text-align:center;font-size:20px;line-height:1.4}
 .ak-org{text-align:center;color:#178a3f;font-weight:800;font-size:21px}
-.ak-band-row{position:relative;min-height:27mm;display:flex;align-items:center;justify-content:center;padding:0 30mm}
+.ak-band-row{position:relative}
 .ak-logo{position:absolute;top:50%;transform:translateY(-50%);right:0;width:27mm;height:27mm;border-radius:50%;overflow:hidden;border:1px solid #bbb;background:#fff;display:flex;align-items:center;justify-content:center}
 .ak-logo img{width:100%;height:100%;object-fit:cover;border-radius:50%}
-.ak-sponsor-qr-group{position:absolute;top:50%;left:0;transform:translateY(-50%);display:flex;align-items:center;gap:1.5mm;max-width:29mm}
+.ak-sponsor-qr-group{position:absolute;top:50%;left:0;transform:translateY(-50%);display:flex;align-items:center;gap:1.5mm}
 .ak-sponsor-qr{display:block;width:20mm;height:20mm;object-fit:contain;image-rendering:pixelated;flex:0 0 auto}
 .ak-flourish{display:block;width:360px;max-width:85%;height:30px;margin:1px auto}
 .ak-band-wrap{width:fit-content;margin:0 auto;padding:2px;background:#8d5a5a;clip-path:polygon(0 10px,10px 10px,10px 0,calc(100% - 10px) 0,calc(100% - 10px) 10px,100% 10px,100% calc(100% - 10px),calc(100% - 10px) calc(100% - 10px),calc(100% - 10px) 100%,10px 100%,10px calc(100% - 10px),0 calc(100% - 10px))}
