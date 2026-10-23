@@ -169,3 +169,7 @@ The next active UI request is separate: move the sponsor QR code(s) on `modules/
 ### Follow-up correction — preserve original orphan form header styling (2026-10-23)
 
 The user reported that the first QR header change altered the original design. Corrective commit `efe2eaf9b6aeaa1d25b7f136f9b9958f74e519a4` restores the original `.ak-band-row{position:relative}` styling and removes the added flex/min-height/padding that changed the header geometry. The sponsor QR remains absolutely positioned at the upper-left of that original header line; the organization logo and centered form-title markup are unchanged, and QR images remain removed from sponsor table rows. PHP syntax/browser/print checks are pending for this corrective commit.
+
+### 2026-10-23 follow-up — full-width sponsorship rows
+
+Source commit `d31c1fd6c56f25ecca15adb5833131b425264935` adds `colspan="3"` to the value cells for “مدة الكفالة” and “قيمة الكفالة”. Those rows share a table with four-column sponsor rows; spanning the remaining columns makes both row borders extend across the same full table width without changing their content or the QR header. PHP syntax and local browser/print appearance verification are still pending.
