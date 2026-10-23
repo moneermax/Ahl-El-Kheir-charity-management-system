@@ -1829,3 +1829,8 @@ Automatic registration was wired in `modules/projects/view.php` for general proj
 A follow-up source change now returns each present version for active project archive links, labels the current version versus prior versions, and opens the selected version through `modules/projects/project_archive_version.php`. That endpoint resolves the source adapter, re-checks project authorization and the payment-receipt role allowlist, constrains storage to the project directory, and verifies stored byte size/SHA-256 before streaming. This supersedes the immediately previous note that historical versions were not yet separately searchable.
 
 Runtime remains pending. Add `modules/projects/project_archive_version.php` to the lint list and test access to both current and previous versions, including a denied cross-project request.
+
+
+### Archive follow-up — deleted source records remain searchable (2026-10-23; runtime pending)
+
+Global Search now also includes present archived versions whose source link is explicitly unlinked and whose source business row was deleted. The project association is recovered from archive event metadata and the result is still filtered by `akp_can_view_project()`; payment receipt results continue to respect the receipt endpoint's role allowlist. The version endpoint uses the same retained project metadata to authorize retrieval. This supersedes the immediately previous note that unlinked source records were not listed in search.
