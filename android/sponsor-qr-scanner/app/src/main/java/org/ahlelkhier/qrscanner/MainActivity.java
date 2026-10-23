@@ -155,8 +155,11 @@ public class MainActivity extends AppCompatActivity {
         }
 
         Uri target = Uri.parse(url);
-        if (!isInsideConfiguredApp(target) || !APK_DOWNLOAD_PATH.equals(target.getPath().substring(
-                Math.max(0, target.getPath().lastIndexOf(APK_DOWNLOAD_PATH)))) ) {
+        Uri base = Uri.parse(baseUrl);
+        String basePath = base.getPath() == null ? "/" : base.getPath();
+        if (!basePath.endsWith("/")) basePath += "/";
+        String expectedPath = basePath + APK_DOWNLOAD_PATH;
+        if (!isInsideConfiguredApp(target) || !expectedPath.equals(target.getPath())) {
             Toast.makeText(this, "رابط تنزيل غير صالح.", Toast.LENGTH_LONG).show();
             return;
         }
