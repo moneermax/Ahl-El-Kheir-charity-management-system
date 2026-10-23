@@ -306,3 +306,19 @@ D:\xampp\php\php.exe tools\backfill_project_document_archive.php --apply
 ```
  
 After apply, rerun without `--apply` to verify the same source rows report as already registered and no new archive rows are planned. This is metadata registration only; upload/replacement/deletion integration remains a separate, unimplemented phase. Do not claim local lint, dry-run, apply, rerun idempotence, or browser verification until actual output is supplied.
+
+
+## 2026-10-23 — Existing Global Search integration and automatic project-file registration (runtime pending)
+
+The user directed that archive search be integrated into the existing Global Search Center instead of a separate page.
+
+Source changes on `main`:
+- `config/search_permissions.php` now includes the `documents` type in the existing role policy where Global Search is available.
+- `modules/search/index.php` adds searchable current archived project documents and documented payment receipts. Results require an active source link whose path snapshot matches the current source row, a `present` blob, and `akp_can_view_project(project_id)`. Payment receipt results are also restricted to roles accepted by `project_payment_receipt.php`. Links use the existing authorized serving endpoints.
+- `modules/projects/lib_project_document_archive.php` verifies the source row, normalized relative path, canonical project-storage containment, actual MIME, byte size, and SHA-256. It creates/reuses a verified blob, adds a version, updates the source link, and records an event inside the caller's source transaction. Source unlink marks the link unlinked and preserves physical bytes.
+- `modules/projects/view.php` wires automatic registration for general project document upload/replacement, expense receipts, labor-payment receipts, and funding-return proof. Replacements no longer unlink the previous file; explicit deletions unlink source links and preserve the bytes.
+- `modules/projects/view_fm.php` wires automatic registration for payment-evidence upload/replacement and preserves the prior receipt after replacement.
+
+**Not yet runtime verified.** No PHP lint or Apache/browser verification has been run after these commits. Existing archive tables are applied locally. The previously reviewed dry-run for the one-time metadata backfill reported 16 source references, 16 planned registrations, 3 missing test-artifact file paths, and no invalid paths or blob/source conflicts. Once the user pulls the current `main`, lint the changed PHP files, run `tools/backfill_project_document_archive.php --apply` against the already-confirmed local `ahl_el_kheir`, then rerun dry-run to confirm idempotence. Do not recreate the three missing files. Test search access by role/project and verify upload/replacement creates archive metadata and preserves prior bytes.
+
+**Current remaining review point:** inspect all modified source branches during lint/runtime testing; verify project receipt replacements and metadata-only edits preserve accurate archive display metadata, then decide whether historical versions should also appear as separate search results. The current search result set intentionally exposes the current linked version through the existing domain endpoint; historical bytes are preserved but a historical-version download/search UI is not yet implemented.
