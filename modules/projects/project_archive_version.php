@@ -129,7 +129,9 @@ $actualSize = filesize($path);
 $actualHash = hash_file('sha256', $path);
 if ($actualSize === false || $actualHash === false
     || (int)$actualSize !== (int)$version['byte_size']
-    || (string)$actualHash !== (string)$version['sha256']) {
+    || (string)$actualHash !== (string)$version['sha256']
+    || ($version['byte_size_snapshot'] !== null && (int)$actualSize !== (int)$version['byte_size_snapshot'])
+    || ($version['sha256_snapshot'] !== null && (string)$actualHash !== (string)$version['sha256_snapshot'])) {
     http_response_code(409);
     exit('تعذر تقديم النسخة لأن فحص سلامة الملف لم ينجح.');
 }
