@@ -336,3 +336,12 @@ Local PHP lint and Apache/browser verification remain pending. Include the new e
 The latest Global Search query now includes present archived versions attached to unlinked source links when the original business row no longer exists. It resolves the project ID from `document_archive_events.metadata_json`, joins to the current project record, and applies `akp_can_view_project()`. Payment evidence remains filtered by the existing receipt endpoint role allowlist. The version endpoint similarly resolves deleted source records through archive event metadata. This supersedes the immediately preceding note that unlinked source records were not listed in search.
 
 Verify the MariaDB query on the local database after pulling, especially the `JSON_EXTRACT` / `JSON_UNQUOTE` project-ID resolution, plus download authorization for a deleted-source archive record.
+
+ 
+## 2026-10-23 — Local lint and backfill verified; browser checks pending
+
+The user pulled commit `45912eed` on local `main`. PHP syntax checks passed for `config/search_permissions.php`, `modules/search/index.php`, `modules/projects/lib_project_document_archive.php`, `modules/projects/project_archive_version.php`, `modules/projects/view.php`, and `modules/projects/view_fm.php`.
+
+The user ran `tools/backfill_project_document_archive.php --apply` against local `ahl_el_kheir`: 16 references registered (8 `project_documents`, 8 `project_payment_evidence`), 3 source paths have missing physical files, 0 invalid paths skipped, 0 path mismatches, 0 blob metadata mismatches, and 0 reconciliation cases. A second default dry run reported 16 already registered, 0 would register, and the same 3 missing files. This confirms idempotent catalogue registration for the inspected source set, not browser functionality.
+
+Next acceptance checks in `http://localhost:8081/AhlElKheir/`: use the existing Global Search Center to find a known present project document and payment receipt; confirm project permission filtering and payment role restrictions; open the current version; then replace one test document and verify both current and previous versions are searchable and retrievable. Also check a deliberately unauthorized project and verify denial. Do not use any of the three missing-file references as the download test.
