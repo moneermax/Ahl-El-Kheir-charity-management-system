@@ -4155,3 +4155,8 @@ The user must still install this fresh artifact and verify physical portrait sca
 The user confirmed deployment of the latest sponsor QR scanner APK to the existing in-system download path and closed that work item. The authenticated endpoint continues to serve `storage/apps/ahl-el-kheir-sponsor-qr-scanner.apk`; future builds must replace this exact file on the target server.
 
 The next active UI task is the orphan form header layout. In `modules/families/orphan_form.php`, sponsor QR code(s) were moved from the sponsorship table rows to the upper-left header area, aligned horizontally with the organization logo and form title. Sponsor name/code and sponsorship dates remain in their existing table rows. Source commit: `1e29a29b85b4bf4ac0da2cd7aff226019a71cff2`. Status: source change committed and PHP syntax passed in GitHub Actions run [40003543066](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40003543066), job `php-lint`. Browser/print verification remains pending. Do not claim full completion until that check passes.
+
+
+### 2026-10-23 correction — orphan form design preservation
+
+User reported the prior QR placement change disturbed the original orphan form design. Commit `efe2eaf9b6aeaa1d25b7f136f9b9958f74e519a4` restores the original header row layout CSS while retaining the sponsor QR at upper-left, aligned with the existing logo and form-title row. QR is still removed from sponsorship table rows. Verify PHP syntax and local browser/print output before closure; this is not yet runtime-accepted.

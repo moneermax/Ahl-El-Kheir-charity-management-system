@@ -4451,3 +4451,8 @@ The user must still install this fresh artifact and verify physical portrait sca
 The user confirmed the updated Android scanner APK was deployed to the existing fixed download path and closed the scanner task. Preserve the authenticated download endpoint and fixed filename; no alternate APK-serving route is introduced.
 
 A separate orphan-form presentation change was committed to `modules/families/orphan_form.php` (`1e29a29b85b4bf4ac0da2cd7aff226019a71cff2`): sponsor QR code(s) are now rendered in the upper-left header region, on the same horizontal header line as the organization logo and form title, instead of inside sponsorship rows. Sponsor identity/code and sponsorship dates remain in the table. PHP syntax passed in GitHub Actions run [40003543066](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40003543066), job `php-lint`, including `modules/families/orphan_form.php`. Browser/print verification remains pending: inspect the form in the local Apache application and print/PDF preview, including a form with no sponsor and one with multiple active/paused sponsorships if available. Do not change unrelated form behavior or treat source commit alone as runtime acceptance.
+
+
+### 2026-10-23 correction — restore original orphan form header
+
+The first QR header implementation introduced flex sizing, a 27mm minimum row height, and horizontal padding, which changed the original design. Corrective source commit `efe2eaf9b6aeaa1d25b7f136f9b9958f74e519a4` removes those changes and restores the original `.ak-band-row{position:relative}` rule. QR remains at the upper-left; logo/title markup and other form styling remain unchanged. Syntax and browser/print verification are pending.
