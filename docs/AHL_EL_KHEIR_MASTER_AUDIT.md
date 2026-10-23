@@ -4395,3 +4395,15 @@ GitHub Actions job `120438823455` (run `39961045578`) identified duplicate class
 
 ## 2026-10-23 — Android scanner BuildConfig generation
 Actions job `120446032500` failed at `:app:compileDebugJavaWithJavac` with unresolved `BuildConfig` references in `MainActivity.java`. The inspected module declares Android Gradle Plugin `8.7.3`; AGP 8 requires BuildConfig generation to be explicitly enabled when the generated class is used. Commit `ecdc34c19f1d5f5c370a95b3a902739693710b7f` adds `buildFeatures { buildConfig true }` to the app module. This is a source fix pending CI verification, not a verified successful APK build.
+
+
+## 2026-10-23 — Sponsor QR host diagnosis and portrait scanner change
+
+User confirmed that opening the existing system through the laptop LAN address and scanning the newly generated sponsor QR successfully opens the sponsor profile. The previously reported “رمز غير صالح” was caused by generating the QR while the website was opened at `localhost`; that URL points to the requesting device and does not match the phone scanner's configured laptop LAN host. No origin-validation bypass was added. For physical-phone testing, generate QR codes while browsing the site using the same LAN host/port/application path configured in the APK.
+
+Portrait change committed to main:
+- `android/sponsor-qr-scanner/app/src/main/AndroidManifest.xml`: lock `.MainActivity` to portrait.
+- `android/sponsor-qr-scanner/app/src/main/java/org/ahlelkhier/qrscanner/MainActivity.java`: set ZXing `setOrientationLocked(true)`, so the capture screen follows the portrait-locked activity.
+- `android/sponsor-qr-scanner/README.md`: document portrait behavior and the matching-host requirement.
+
+Source changes are committed, but the updated APK and physical-device portrait behavior are not yet verified. The Android workflow should build a new debug APK from these commits. After it succeeds, install that artifact and verify scanning while holding the phone upright. Keep existing website authentication, sponsor permissions, supervisor scope checks, and same-origin validation unchanged.
