@@ -333,7 +333,11 @@ $summary = [
 
 foreach ($plan as $item) {
     $action = $item['action'];
-    if (array_key_exists($action, $summary)) {
+    if ($action === 'would_register') {
+        if (!$apply) {
+            $summary['would_register']++;
+        }
+    } elseif (array_key_exists($action, $summary)) {
         $summary[$action]++;
     }
     if ($item['inspection']['status'] === 'missing' && $item['inspection']['eligible']) {
