@@ -109,3 +109,17 @@ Source changes are committed and the Android CI build has passed; the new APK ar
 GitHub Actions run [39990143104](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/39990143104) completed successfully on source commit `ea50c4f4cc24ad287381967d6c1a2c7e45a4ffd4`. PHP QR integration lint, Android duplicate-class check, Java compilation, debug APK assembly, and artifact upload all passed. Artifact: `ahl-el-kheir-sponsor-qr-scanner-debug-apk`, artifact ID `12517556746`, SHA-256 `46453215f819c7cbfb1a8bb8fd091cddde533488cd2b652061f1c2e8314b2980`, expires 2026-11-22.
 
 Remaining acceptance gate: install this newly built APK on the user's phone and confirm the scanner stays portrait while scanning, then scan a QR generated from the same LAN base URL and verify sponsor page opening. CI build success does not prove physical-device orientation behavior.
+
+
+## 2026-10-23 — Scanner UI refinement and in-system APK download
+
+User acceptance: scanning now opens the sponsor page when the site is opened through the laptop LAN IP matching the APK's configured base URL. The earlier invalid-QR error came from QR content using localhost; validation remains strict.
+
+Latest changes on main:
+- Reworked the Android screen with an Arabic-first header and one prominent scan action; removed the permanent server button.
+- Server configuration remains available by long-pressing the app title.
+- Added a header download action using the configured system URL.
+- Added authenticated endpoint modules/sponsors/download_scanner_apk.php; only the fixed APK file storage/apps/ahl-el-kheir-sponsor-qr-scanner.apk can be served. The storage deny rule is preserved.
+- Updated the build workflow to lint the endpoint and run when its PHP source changes.
+
+Deployment and verification gates still open: the latest Actions run must pass; install its APK and verify portrait orientation and the redesigned controls on the physical phone; copy the APK to the fixed path on the target system and test download while authenticated. A missing APK produces a deliberate 404 until deployment. Do not mark this complete before runtime evidence.
