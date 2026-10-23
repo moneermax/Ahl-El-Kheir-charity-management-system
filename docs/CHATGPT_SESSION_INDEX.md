@@ -1734,3 +1734,11 @@ The requested text-chat implementation task is closed at the source/documentatio
 The user confirmed a local-guide text answer works. The repository-editing session did not run local PHP lint or browser acceptance, so the implementation is documented as closed while full local runtime acceptance remains unverified. If not already checked by the user, verify the two assistant PHP files, cross-page transcript restore/continuation, New chat separation, and mouseleave close/reopen on `http://localhost:8081/AhlElKheir/`. Do not reopen without concrete regression evidence and do not retry voice.
 
 **Next session:** read all four required continuation/master documents plus the relevant module document, inspect current `main` and actual source/schema, then select the next genuinely open task. Do not assume the next task is AI chat or revive a closed module without evidence.
+
+## 2026-10-23 — AI assistant account-switch and workflow-answer follow-up
+
+A second user reported a conversation restore error and an unanswered question about assigning families to nannies. Source review found the active-conversation `sessionStorage` key was shared across accounts; the server correctly rejected a conversation owned by another user, but the failed ID remained stored. Commit `ad6d2c7ede03b7e665ff11b74af55949818b5a76` namespaces the key by signed-in user ID and clears the active pointer after restore failure.
+
+The VGM source `modules/deputy_gm/groups.php` confirms group-based assignment: VGM manages groups, adds eligible active children from active families with active sponsorship, and assigns a nanny to the group. The employee guide and role workflow were updated (commits `fb030a08ba65093b51cf31cba4979189457e87bf`, `9cd98ce9f1b86d521a34e2e8e55dcdc1dd982d40`); a deterministic local answer is limited to VGM/vice-GM roles (commit `4fe4a98dc3bcf40e5122c04f069b1f3a40cb99dc`). No schema changes.
+
+PHP lint and browser acceptance remain pending. Verify account switching, each account's own saved history, the VGM answer, and non-VGM role restrictions before marking this regression runtime-verified. See `docs/CHATGPT_AI_ASSISTANT_CONTINUATION.md`.
