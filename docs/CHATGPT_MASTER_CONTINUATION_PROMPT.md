@@ -1781,3 +1781,8 @@ Source implementation on `main` adds a `documents` search type and transactional
 **Runtime is still pending.** Start by pulling `main`, then PHP-lint:
 `modules/projects/lib_project_document_archive.php`, `modules/projects/view.php`, `modules/projects/view_fm.php`, `modules/search/index.php`, and `config/search_permissions.php`.
 Then run `tools/backfill_project_document_archive.php --apply` only against the already-confirmed local `ahl_el_kheir` database; the previously reviewed dry-run showed 16 planned registrations and 3 missing-file test artifacts. Do not recreate missing files. Rerun the tool without `--apply` to verify idempotence, then test Global Search and uploads/replacements in the real Apache application. Do not claim completion until those outputs are supplied and reviewed.
+
+
+### Archive follow-up — version-aware Global Search (2026-10-23)
+
+Historical versions are now listed separately in the existing Global Search when the archive blob is present and the source link remains active. Each row indicates whether it is the current or a previous version. Retrieval uses `modules/projects/project_archive_version.php`, which applies project authorization, the payment-receipt role allowlist, storage containment and SHA-256/size checks. Add this endpoint to the PHP lint list. Runtime verification is still pending; do not call the feature complete yet.
