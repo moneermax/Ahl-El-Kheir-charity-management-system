@@ -47,3 +47,10 @@ The debug build permits HTTP only for localhost/private-network IP addresses to 
 - [ ] Active sponsored-orphan count matches the database.
 - [ ] QR appears on sponsor profile and each linked sponsor row on the orphan form/profile.
 - [ ] The production HTTPS host is tested before release distribution.
+
+
+## Phone scanning orientation and local QR host
+
+- The app and camera capture screen are locked to portrait orientation; keep the phone upright while scanning.
+- For a physical phone on local Wi-Fi, open the website on the computer using the computer's LAN IP (for example, `http://192.168.18.9:8081/AhlElKheir/`) before opening the sponsor profile and displaying its QR. Do not generate a phone-scannable QR from a `localhost` page: `localhost` points to the device doing the request, so the phone cannot use the laptop's `localhost` address.
+- Keep the APK's configured base URL identical to the host, port, and application path used to generate the QR. The scanner intentionally rejects different hosts rather than weakening its origin checks.
