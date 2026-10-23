@@ -4160,3 +4160,7 @@ The next active UI task is the orphan form header layout. In `modules/families/o
 ### 2026-10-23 correction — orphan form design preservation
 
 User reported the prior QR placement change disturbed the original orphan form design. Commit `efe2eaf9b6aeaa1d25b7f136f9b9958f74e519a4` restores the original header row layout CSS while retaining the sponsor QR at upper-left, aligned with the existing logo and form-title row. QR is still removed from sponsorship table rows. Verify PHP syntax and local browser/print output before closure; this is not yet runtime-accepted.
+
+### 2026-10-23 follow-up — full-width sponsorship rows
+
+Source commit `d31c1fd6c56f25ecca15adb5833131b425264935` adds `colspan="3"` to the value cells for “مدة الكفالة” and “قيمة الكفالة”. Those rows share a table with four-column sponsor rows; spanning the remaining columns makes both row borders extend across the same full table width without changing their content or the QR header. PHP syntax and local browser/print appearance verification are still pending.
