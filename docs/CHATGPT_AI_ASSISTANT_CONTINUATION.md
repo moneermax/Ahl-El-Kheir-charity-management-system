@@ -231,3 +231,12 @@ A second user reported a stale-conversation restore error and an unanswered ques
 The approved source `modules/deputy_gm/groups.php` confirms that VGM manages groups, adds eligible active children from active families with active sponsorship, and assigns a nanny to a group. The employee guide documents this flow (commit `fb030a08ba65093b51cf31cba4979189457e87bf`); the assistant now answers this question deterministically for VGM/vice-GM roles only (commit `4fe4a98dc3bcf40e5122c04f069b1f3a40cb99dc`). No schema changes.
 
 Local PHP lint and browser acceptance remain pending. Test account switching in the same browser, each account's own saved history, the VGM Arabic assignment question, and that non-VGM roles do not receive VGM-only instructions. Do not claim runtime PASS before these checks.
+
+
+## 2026-10-23 — Final AI assistant acceptance preparation
+
+A static acceptance audit of current `main` found one concrete regression that prevented the agreed voice-input path from being tested or used: the microphone button still had the HTML `disabled` attribute and the widget script explicitly disabled it with the old “planned for a future update” label, despite the consented MediaRecorder → Gemini transcription implementation being present. This stale deferral code made the transcription implementation unreachable from the UI.
+
+The smallest correction removes the stale disabled state and future-development label while retaining the explicit consent dialog, recording limit, authenticated PHP endpoint, editable transcript, and no-auto-submit behavior. No schema/database changes.
+
+**Status:** source-level root cause identified and correction prepared on `main`. Still pending local PHP lint and real-browser acceptance; repository tooling cannot execute the user's XAMPP app, microphone, session, database, or configured Gemini credentials. The owner should be asked to pull/test only after the remaining source checks and documentation are committed. Required final browser matrix: account switching/history privacy; same-user navigation restore/New chat/mouseleave; VGM versus non-VGM local answer; no-consent and internal/sensitive-question blocking; eligible general fallback only with consent; voice consent decline, microphone permission, short Arabic/English recording, editable transcript/no auto-submit, and text fallback. Do not mark end-to-end complete until these local checks pass.

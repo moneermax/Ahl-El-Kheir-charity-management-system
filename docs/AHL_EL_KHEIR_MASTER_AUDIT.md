@@ -4263,3 +4263,12 @@ Corrections:
 - `9cd98ce9f1b86d521a34e2e8e55dcdc1dd982d40`: update the canonical roles/workflows document.
 
 No schema changes. Source correction only; local PHP lint and browser tests remain pending. Acceptance must include two-account browser switching, same-user history restoration, a VGM question, and confirmation that a non-VGM user is not given VGM-only instructions.
+
+
+## 2026-10-23 — Final AI assistant acceptance preparation
+
+A static acceptance audit of current `main` found one concrete regression that prevented the agreed voice-input path from being tested or used: the microphone button still had the HTML `disabled` attribute and the widget script explicitly disabled it with the old “planned for a future update” label, despite the consented MediaRecorder → Gemini transcription implementation being present. This stale deferral code made the transcription implementation unreachable from the UI.
+
+The smallest correction removes the stale disabled state and future-development label while retaining the explicit consent dialog, recording limit, authenticated PHP endpoint, editable transcript, and no-auto-submit behavior. No schema/database changes.
+
+**Status:** source-level root cause identified and correction prepared on `main`. Still pending local PHP lint and real-browser acceptance; repository tooling cannot execute the user's XAMPP app, microphone, session, database, or configured Gemini credentials. The owner should be asked to pull/test only after the remaining source checks and documentation are committed. Required final browser matrix: account switching/history privacy; same-user navigation restore/New chat/mouseleave; VGM versus non-VGM local answer; no-consent and internal/sensitive-question blocking; eligible general fallback only with consent; voice consent decline, microphone permission, short Arabic/English recording, editable transcript/no auto-submit, and text fallback. Do not mark end-to-end complete until these local checks pass.

@@ -3956,3 +3956,12 @@ A report from a second user exposed that active conversation storage was not iso
 The reported question about assigning families to nannies was missing from local retrieval. `modules/deputy_gm/groups.php` confirms VGM-only group management, eligible child membership, and nanny-to-group assignment. Commits `fb030a08ba65093b51cf31cba4979189457e87bf` and `4fe4a98dc3bcf40e5122c04f069b1f3a40cb99dc` add the guide entry and a role-restricted deterministic answer. No schema change.
 
 Status: source corrections committed; PHP lint and browser/runtime acceptance are pending. Do not claim full verification until account switching, same-user history, the VGM answer, and non-VGM role restrictions pass locally.
+
+
+## 2026-10-23 — Final AI assistant acceptance preparation
+
+A static acceptance audit of current `main` found one concrete regression that prevented the agreed voice-input path from being tested or used: the microphone button still had the HTML `disabled` attribute and the widget script explicitly disabled it with the old “planned for a future update” label, despite the consented MediaRecorder → Gemini transcription implementation being present. This stale deferral code made the transcription implementation unreachable from the UI.
+
+The smallest correction removes the stale disabled state and future-development label while retaining the explicit consent dialog, recording limit, authenticated PHP endpoint, editable transcript, and no-auto-submit behavior. No schema/database changes.
+
+**Status:** source-level root cause identified and correction prepared on `main`. Still pending local PHP lint and real-browser acceptance; repository tooling cannot execute the user's XAMPP app, microphone, session, database, or configured Gemini credentials. The owner should be asked to pull/test only after the remaining source checks and documentation are committed. Required final browser matrix: account switching/history privacy; same-user navigation restore/New chat/mouseleave; VGM versus non-VGM local answer; no-consent and internal/sensitive-question blocking; eligible general fallback only with consent; voice consent decline, microphone permission, short Arabic/English recording, editable transcript/no auto-submit, and text fallback. Do not mark end-to-end complete until these local checks pass.

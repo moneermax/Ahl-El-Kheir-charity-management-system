@@ -7,7 +7,7 @@ $akAiCsrf = function_exists('csrf_token') ? csrf_token() : '';
     <header><strong id="ak-ai-title"><?php echo e(AK_LANG === 'ar' ? 'مساعد أهل الخير' : 'Ahl El Kheir assistant'); ?></strong><div class="ak-ai-header-actions"><button type="button" id="ak-ai-history-toggle"><?php echo e(AK_LANG === 'ar' ? 'سجل المحادثات' : 'Chat history'); ?></button><button type="button" id="ak-ai-new-chat"><?php echo e(AK_LANG === 'ar' ? 'محادثة جديدة' : 'New chat'); ?></button><button type="button" id="ak-ai-close" aria-label="<?php echo e(AK_LANG === 'ar' ? 'إغلاق' : 'Close'); ?>">×</button></div></header>
     <div id="ak-ai-history" hidden><div id="ak-ai-history-items"></div></div>
     <div id="ak-ai-messages" aria-live="polite"><div class="ak-ai-message"><?php echo e(AK_LANG === 'ar' ? 'مرحباً! اسأل عن استخدام النظام.' : 'Hello! Ask about using the system.'); ?></div></div>
-    <form id="ak-ai-form"><label class="ak-ai-consent"><input type="checkbox" id="ak-ai-consent" checked> <?php echo e(AK_LANG === 'ar' ? 'أوافق على إرسال السؤال العام غير السري إلى Google' : 'Allow sending this general, non-confidential question to Google'); ?></label><div class="ak-ai-compose"><textarea id="ak-ai-question" rows="2" maxlength="1000" required></textarea><button type="button" id="ak-ai-mic" disabled aria-label="<?php echo e(AK_LANG === 'ar' ? 'إدخال صوتي' : 'Voice input'); ?>">🎙</button><button type="submit" id="ak-ai-send"><?php echo e(AK_LANG === 'ar' ? 'إرسال' : 'Send'); ?></button></div></form>
+    <form id="ak-ai-form"><label class="ak-ai-consent"><input type="checkbox" id="ak-ai-consent" checked> <?php echo e(AK_LANG === 'ar' ? 'أوافق على إرسال السؤال العام غير السري إلى Google' : 'Allow sending this general, non-confidential question to Google'); ?></label><div class="ak-ai-compose"><textarea id="ak-ai-question" rows="2" maxlength="1000" required></textarea><button type="button" id="ak-ai-mic" aria-label="<?php echo e(AK_LANG === 'ar' ? 'إدخال صوتي' : 'Voice input'); ?>">🎙</button><button type="submit" id="ak-ai-send"><?php echo e(AK_LANG === 'ar' ? 'إرسال' : 'Send'); ?></button></div></form>
     <div id="ak-ai-voice-consent" role="dialog" aria-labelledby="ak-ai-voice-consent-title" hidden>
       <strong id="ak-ai-voice-consent-title"><?php echo e(AK_LANG === 'ar' ? 'الموافقة على الإدخال الصوتي' : 'Allow voice input'); ?></strong>
       <p><?php echo e(AK_LANG === 'ar' ? 'سيُسجَّل صوتك بعد موافقتك، ثم يُرفع إلى Google Gemini عبر خادم أهل الخير لتحويله إلى نص. قد تحتفظ Google بالملف الصوتي مؤقتاً لمدة تصل إلى 48 ساعة وفق خدمة الملفات المستخدمة. لن يُحفظ التسجيل في سجل محادثات أهل الخير؛ سيظهر النص الناتج في مربع السؤال لتراجعه وتعدّله قبل الإرسال. يمكنك الإلغاء والكتابة بدلاً من ذلك.' : 'After you agree, your voice will be recorded and uploaded to Google Gemini through the Ahl El Kheir server for transcription. Google may retain the audio file temporarily for up to 48 hours under the file service used. Ahl El Kheir will not save the recording in chat history; the resulting text will appear in the question box for you to review and edit before sending. You can cancel and type instead.'); ?></p>
@@ -206,8 +206,7 @@ async function startAudioRecording(){
  }
 }
 restoreCurrentConversation();
-mic.disabled=true;
-mic.title=lang==='ar'?'الإدخال الصوتي قيد التطوير وسيُتاح لاحقاً':'Voice input is planned for a future update';
+mic.title=lang==='ar'?'إدخال صوتي':'Voice input';
 mic.setAttribute('aria-label',mic.title);
 mic.addEventListener('click',function(){
  if(isRecording){
