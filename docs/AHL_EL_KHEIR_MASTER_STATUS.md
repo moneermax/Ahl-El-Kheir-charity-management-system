@@ -3940,3 +3940,11 @@ Text chat received a source review. The general-text fallback default now uses `
 
 ## 2026-10-23 — AI assistant navigation continuity
 `includes/ai_assistant_widget.php` now persists the active conversation ID in tab-scoped `sessionStorage`, restores that conversation from the existing user-scoped history endpoint after page navigation, resets the active ID on explicit New chat, and closes the panel on mouse leave. Commits `9db6c37945f2af5e775dc4f9bf651acee7d657b7` and `ca5a1d8bb34e0325a5ea2da0e67b16ea7fd723cb`. No schema change. Local syntax/browser verification is pending; do not claim runtime acceptance until the user tests navigation and mouseleave.
+
+## 2026-10-23 — AI assistant text chat implementation boundary
+
+The text-chat implementation task is closed at the source/documentation boundary. The shared assistant retains local-first role-limited guidance, authenticated/CSRF-protected text requests, existing Google fallback consent and safety filters, and user-scoped conversation history. The active conversation is persisted per browser tab and restored after page navigation using the existing owner-checked history endpoint. Explicit New chat clears the active conversation; the floating panel closes on mouseleave. Relevant commits: `2bc42b03c5d9f5430d0e6ce07a22f39a57811a7b`, `75c52595eef9cd6dd2d8ab71756f06103601c1c8`, `9db6c37945f2af5e775dc4f9bf651acee7d657b7`, and `ca5a1d8bb34e0325a5ea2da0e67b16ea7fd723cb`.
+
+The owner confirmed a local-guide text answer works. Local PHP lint and the cross-page/mouseleave browser acceptance were not executed by this repository-editing session; do not describe those checks as passed unless the owner confirms them. If still outstanding, run the two PHP syntax checks and the short browser acceptance checklist documented in `docs/CHATGPT_AI_ASSISTANT_CONTINUATION.md`. Voice remains deferred and must not be folded into this task.
+
+This is a completed implementation checkpoint, not a direction to reopen AI chat. Begin the next session by inspecting the canonical documents and current repository state to choose the next open task from evidence.
