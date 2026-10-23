@@ -1892,3 +1892,17 @@ Source changes are committed, but the updated APK and physical-device portrait b
 GitHub Actions run [39990143104](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/39990143104) completed successfully on source commit `ea50c4f4cc24ad287381967d6c1a2c7e45a4ffd4`. PHP QR integration lint, Android duplicate-class check, Java compilation, debug APK assembly, and artifact upload all passed. Artifact: `ahl-el-kheir-sponsor-qr-scanner-debug-apk`, artifact ID `12517556746`, SHA-256 `46453215f819c7cbfb1a8bb8fd091cddde533488cd2b652061f1c2e8314b2980`, expires 2026-11-22.
 
 Remaining acceptance gate: install this newly built APK on the user's phone and confirm the scanner stays portrait while scanning, then scan a QR generated from the same LAN base URL and verify sponsor page opening. CI build success does not prove physical-device orientation behavior.
+
+
+## 2026-10-23 — Sponsor QR scanner UI and server-hosted APK download
+
+The user confirmed a sponsor QR opens the sponsor profile when the website is accessed through the laptop LAN IP matching the APK's configured base URL. The localhost QR mismatch is resolved by using the same host/port/application path on both sides.
+
+Latest source changes on main:
+- Android screen redesigned with a clean Arabic brand header and a single prominent scan action; removed the permanent server-settings button.
+- Server URL settings remain available by long-pressing the app title; this preserves local/LAN configuration without cluttering the main header.
+- Added a download action that requests the APK from the existing system host, not a third-party host.
+- Added authenticated endpoint modules/sponsors/download_scanner_apk.php; it serves only storage/apps/ahl-el-kheir-sponsor-qr-scanner.apk. Direct storage access remains denied.
+- CI now lints the download endpoint and runs for its source changes.
+
+Verification boundary: GitHub Actions build/lint and physical-device UI/download behavior are pending. The APK must be copied to storage/apps/ahl-el-kheir-sponsor-qr-scanner.apk on each target server after building; until then the endpoint intentionally returns 404 with an Arabic message. Do not claim the download is live before the file exists and authenticated download is tested.
