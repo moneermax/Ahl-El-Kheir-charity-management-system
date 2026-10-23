@@ -3,7 +3,7 @@
 **Repository:** `moneermax/Ahl-El-Kheir-charity-management-system`  
 **Branch:** `main`  
 **Baseline:** 2026-10-23  
-**Status:** Discovery and architecture design in progress. No application code or database schema has been changed for this task.
+**Status:** Archive catalogue schema committed and applied in the user's local `ahl_el_kheir` database; project-file inventory is the active read-only pilot. No application upload, serving, or file-lifecycle workflow has been changed.
 
 ## Goal
 
@@ -265,3 +265,22 @@ It defines four catalogue tables: `document_archive_blobs`, `document_archive_do
 Evidence used: the repository SQL dump was retrieved via GitHub contents and parsed (5,691,158 characters); it defines the existing project tables and indexes, and contains no `document_archive_*` tables. The dump's project schema agrees with the supplied actual-DB column inventory for `project_documents` and `project_payment_evidence`. The migration follows the repository's existing InnoDB/utf8mb4/CREATE TABLE IF NOT EXISTS migration style.
 
 **Important status:** migration file only. It has not been executed against `ahl_el_kheir`; no PHP integration, file backfill, or runtime test has occurred. No existing files or source records have been changed. Before applying it, verify the live DB still has no archive objects and run the DDL against a disposable schema copy or an isolated test environment. Then implement an idempotent, report-only project-file registration/backfill and the project-document/payment-evidence adapters. Do not start physical migration or change replacement/deletion behavior until those adapters and acceptance checks are ready.
+
+
+## 2026-10-23 — Catalogue schema and project-file inventory checkpoint
+
+The archive catalogue migration is committed at `4b5a141511a4d2469f36a3e2df7af2ad31d990d7`. The user verified that all five `document_archive_*` base tables, expected indexes, and foreign-key relationships exist in the local `ahl_el_kheir` database. This is local verification only; production application is not asserted.
+
+The user supplied live `SHOW CREATE TABLE` output for both pilot source tables:
+- `project_documents`: `file_path VARCHAR(500) NOT NULL`, with recorded original name, MIME type, and byte size.
+- `project_payment_evidence`: nullable `receipt_file_path VARCHAR(255)`, original name and MIME type; no recorded byte-size column. `funding_allocation_id` is unique.
+
+Added `tools/report_project_document_inventory.php`, a CLI-only, read-only JSON report over those two tables. It refuses to run unless configured for `ahl_el_kheir`; checks project-relative path scope and resolved-path containment, file existence, recorded size/MIME mismatches where metadata exists, shared path references, SHA-256 and distinct-path duplicate-content candidates. It does not write to the database, create output files, or change stored files.
+
+**Verification boundary:** report source is committed but has not yet been run against the local application filesystem. Do not claim inventory results, PHP lint success, production storage behavior, or completed backfill until the actual local report has been executed and inspected. Existing document/payment source records, paths, serving URLs, and authorization handlers remain unchanged.
+
+Run from the repository root:
+```powershell
+D:\xampp\php\php.exe tools\report_project_document_inventory.php
+```
+The JSON report is written to standard output only. Review the summary and any per-record `issues` before deciding on the next domain or any repair. No automatic repair or deletion is authorized.
