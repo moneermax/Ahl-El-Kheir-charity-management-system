@@ -284,3 +284,25 @@ Run from the repository root:
 D:\xampp\php\php.exe tools\report_project_document_inventory.php
 ```
 The JSON report is written to standard output only. Review the summary and any per-record `issues` before deciding on the next domain or any repair. No automatic repair or deletion is authorized.
+
+ 
+## 2026-10-23 — Project archive metadata backfill tool added
+ 
+The user ran `tools/report_project_document_inventory.php` against local `ahl_el_kheir` and the project filesystem. Result: 8 `project_documents` rows, 8 payment-evidence rows with paths, 16 total references, 3 missing/invalid references, 3 rows with issues, 0 shared-path references, and 3 duplicate-content candidate rows. The three missing receipt paths were searched by filename throughout `storage/documents/projects` and were not found. The user confirmed current pilot files/records are test data; do not create replacement receipt files.
+ 
+Added `tools/backfill_project_document_archive.php` on `main`. It defaults to dry-run; `--apply` is required to write archive metadata. It reads only `project_documents` and `project_payment_evidence`, validates project-relative path scope and resolved-file containment, hashes existing files, and plans one blob per normalized physical path with separate logical documents/versions/source links for each source record. Valid but absent files are represented as `missing` blobs with unknown byte/hash metadata. It does not move/delete files or modify source records. Invalid/out-of-scope paths are skipped. Existing source links with changed paths and existing blob metadata mismatches are reported and left untouched. Same-content files at distinct paths are not merged.
+ 
+**Verification boundary:** repository source was reviewed after commit, but PHP lint and local runtime execution have not been performed by this assistant. Do not run `--apply` until the dry-run JSON is reviewed. Next commands from repository root:
+ 
+```powershell
+D:\xampp\php\php.exe -l tools\backfill_project_document_archive.php
+D:\xampp\php\php.exe tools\backfill_project_document_archive.php
+```
+ 
+Review the JSON, especially `summary` and any actions `skipped_invalid_path`, `existing_source_path_mismatch`, `existing_blob_metadata_mismatch`, or `already_registered_needs_reconciliation`. Only after that report is reviewed should the user run:
+ 
+```powershell
+D:\xampp\php\php.exe tools\backfill_project_document_archive.php --apply
+```
+ 
+After apply, rerun without `--apply` to verify the same source rows report as already registered and no new archive rows are planned. This is metadata registration only; upload/replacement/deletion integration remains a separate, unimplemented phase. Do not claim local lint, dry-run, apply, rerun idempotence, or browser verification until actual output is supplied.
