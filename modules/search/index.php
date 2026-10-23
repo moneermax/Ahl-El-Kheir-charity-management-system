@@ -309,12 +309,23 @@ if ($canSearchDocuments && in_array($type, ['all', 'documents'], true)) {
             INNER JOIN document_archive_documents d ON d.id = l.document_id
             INNER JOIN document_archive_versions v ON v.document_id = l.document_id
             INNER JOIN document_archive_blobs b ON b.id = v.blob_id
-            INNER JOIN project_documents pd ON l.source_table = 'project_documents'
+            LEFT JOIN project_documents pd ON l.source_table = 'project_documents'
                 AND l.source_path_column = 'file_path'
                 AND l.source_record_id = pd.id
-                AND l.source_path_snapshot = pd.file_path
-            INNER JOIN other_projects p ON p.id = pd.project_id
-            WHERE l.link_status = 'active' AND b.storage_status = 'present'
+            LEFT JOIN (
+                SELECT e.document_id, e.source_table, e.source_record_id,
+                       MAX(CAST(JSON_UNQUOTE(JSON_EXTRACT(e.metadata_json, '$.project_id')) AS UNSIGNED)) AS project_id
+                FROM document_archive_events e
+                WHERE e.metadata_json IS NOT NULL
+                  AND JSON_EXTRACT(e.metadata_json, '$.project_id') IS NOT NULL
+                GROUP BY e.document_id, e.source_table, e.source_record_id
+            ) ep ON ep.document_id = l.document_id
+                AND ep.source_table = l.source_table
+                AND ep.source_record_id = l.source_record_id
+            INNER JOIN other_projects p ON p.id = COALESCE(pd.project_id, ep.project_id)
+            WHERE b.storage_status = 'present'
+              AND ((l.link_status = 'active' AND pd.id IS NOT NULL AND l.source_path_snapshot = pd.file_path)
+                OR (l.link_status = 'unlinked' AND pd.id IS NULL))
 
             UNION ALL
 
@@ -331,16 +342,27 @@ if ($canSearchDocuments && in_array($type, ['all', 'documents'], true)) {
             INNER JOIN document_archive_documents d ON d.id = l.document_id
             INNER JOIN document_archive_versions v ON v.document_id = l.document_id
             INNER JOIN document_archive_blobs b ON b.id = v.blob_id
-            INNER JOIN project_payment_evidence pe ON l.source_table = 'project_payment_evidence'
+            LEFT JOIN project_payment_evidence pe ON l.source_table = 'project_payment_evidence'
                 AND l.source_path_column = 'receipt_file_path'
                 AND l.source_record_id = pe.id
-                AND l.source_path_snapshot = pe.receipt_file_path
-            INNER JOIN other_projects p ON p.id = pe.project_id
-            WHERE l.link_status = 'active'
-                AND b.storage_status = 'present'
-                AND pe.status = 'documented'
-                AND pe.receipt_file_path IS NOT NULL
-                AND TRIM(pe.receipt_file_path) <> ''
+            LEFT JOIN (
+                SELECT e.document_id, e.source_table, e.source_record_id,
+                       MAX(CAST(JSON_UNQUOTE(JSON_EXTRACT(e.metadata_json, '$.project_id')) AS UNSIGNED)) AS project_id
+                FROM document_archive_events e
+                WHERE e.metadata_json IS NOT NULL
+                  AND JSON_EXTRACT(e.metadata_json, '$.project_id') IS NOT NULL
+                GROUP BY e.document_id, e.source_table, e.source_record_id
+            ) ep ON ep.document_id = l.document_id
+                AND ep.source_table = l.source_table
+                AND ep.source_record_id = l.source_record_id
+            INNER JOIN other_projects p ON p.id = COALESCE(pe.project_id, ep.project_id)
+            WHERE b.storage_status = 'present'
+              AND ((l.link_status = 'active' AND pe.id IS NOT NULL
+                    AND l.source_path_snapshot = pe.receipt_file_path
+                    AND pe.status = 'documented'
+                    AND pe.receipt_file_path IS NOT NULL
+                    AND TRIM(pe.receipt_file_path) <> '')
+                OR (l.link_status = 'unlinked' AND pe.id IS NULL))
         ) archive_rows
         WHERE (? = '' OR archive_rows.display_title LIKE ?
             OR archive_rows.original_name LIKE ?
