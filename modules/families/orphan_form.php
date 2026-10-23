@@ -279,8 +279,8 @@ table.ak-main th{width:18%;font-weight:700}
 <tr><th><?php echo t('صلتها باليتيم'); ?></th><td><?php echo $child ? $V($child['guardian_relationship'] ?? '') : '<span class="ak-blank"></span>'; ?></td><th><?php echo t('الرقم الوطني'); ?></th><td><?php echo $child ? $V($child['national_id'] ?? '') : '<span class="ak-blank"></span>'; ?></td></tr>
 </table>
 <table class="ak-main" style="margin-top:5px">
-<tr><th><?php echo t('مدة الكفالة'); ?></th><td><?php echo t('من :'); ?> <?php echo $child ? $V($dmy($firstStart ?? '')) : '<span class="ak-blank"></span>'; ?> &nbsp;&nbsp; <?php echo t('إلى :'); ?> <span class="ak-blank"></span></td></tr>
-<tr><th><?php echo t('قيمة الكفالة'); ?></th><td><?php echo $child ? number_format((float)$totalMonthly, 0) : ''; ?> &nbsp; <?php echo t('قيمة التزامات أخرى'); ?> : <span class="ak-blank" style="min-width:60mm"></span></td></tr>
+<tr><th><?php echo t('مدة الكفالة'); ?></th><td colspan="3"><?php echo t('من :'); ?> <?php echo $child ? $V($dmy($firstStart ?? '')) : '<span class="ak-blank"></span>'; ?> &nbsp;&nbsp; <?php echo t('إلى :'); ?> <span class="ak-blank"></span></td></tr>
+<tr><th><?php echo t('قيمة الكفالة'); ?></th><td colspan="3"><?php echo $child ? number_format((float)$totalMonthly, 0) : ''; ?> &nbsp; <?php echo t('قيمة التزامات أخرى'); ?> : <span class="ak-blank" style="min-width:60mm"></span></td></tr>
 <?php foreach ($ships as $sh): ?>
 <tr><th><?php echo t('الكفيل'); ?></th><td><?php echo $V($sh['sname'] ?? ''); ?> <span class="ak-code"><?php echo e($sh['sponsor_code'] ?? ''); ?></span></td><th><?php echo t('منذ'); ?></th><td><?php echo $V($dmy($sh['start_date'] ?? '')); ?></td></tr>
 <?php endforeach; ?>
