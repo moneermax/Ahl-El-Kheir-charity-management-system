@@ -1924,3 +1924,10 @@ GitHub Actions run [40001446199](https://github.com/moneermax/Ahl-El-Kheir-chari
 This build also includes the minimal home screen: one visible `مسح رمز QR للكفيل` button plus the required website WebView; branding and connection-status strips are removed. Long-press the scan button to change server settings.
 
 Next: install this newly built artifact, not the older APK, and verify the scanner stays portrait while the phone is rotated and still opens an authorized sponsor profile. CI success does not replace physical-device acceptance.
+
+
+## 2026-10-23 — Sponsor QR scanner closure and orphan form QR placement
+
+The user confirmed the newly built sponsor QR scanner APK was deployed to the fixed in-system download path and closed the scanner work item. See `docs/SPONSOR_QR_ANDROID_CONTINUATION.md`; do not reopen without regression evidence.
+
+Current task: on `modules/families/orphan_form.php`, position sponsor QR code(s) in the upper-left of the printed form header, horizontally aligned with the logo and `إستمارة يتيم` title. Sponsor table rows retain sponsor identity/code and dates only. Source change: `1e29a29b85b4bf4ac0da2cd7aff226019a71cff2`. Still pending PHP syntax validation and browser/print layout verification; do not call it runtime-verified yet.
