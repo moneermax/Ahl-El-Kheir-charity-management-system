@@ -139,3 +139,12 @@ Correction committed on `main`:
 Commits: `2c9f85f892f83012bc14f3583368a19dc856aba7` (manifest fix), `3f078f932fec323a2d56c665a0252b6ec18ad238` (documentation).
 
 Verification boundary: source change is committed, but a fresh GitHub Actions APK build and physical-phone retest are still required. Do not copy the older APK back to `storage/apps` or mark orientation fixed until the new artifact passes CI and the phone's camera capture screen stays portrait when the device is rotated.
+
+
+## 2026-10-23 — Physical portrait correction and simplified scanner screen
+
+The user installed the previously available APK and confirmed APK download/install works, but the camera scanner still opened horizontally. The latest Android workflow run before this fix, [40001005068](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40001005068), failed at manifest merging: ZXing's dependency declares `CaptureActivity` as `sensorLandscape`, conflicting with the app's `portrait` declaration. The manifest now declares the tools namespace and uses `tools:replace="android:screenOrientation"` on ZXing's capture activity to override that exact dependency attribute.
+
+The Android home screen is simplified to the **مسح رمز QR للكفيل** button plus the WebView required for website sign-in and sponsor profiles. The top branding/download header and connection-status strip are removed. Long-press the scan button to open server settings; the website's existing authenticated header remains the APK download route.
+
+Next acceptance gate: verify the new Actions run succeeds and produces a fresh APK; install that new artifact (not the previous APK), then confirm the camera remains portrait when the phone is rotated and that scanning still opens the authorized sponsor profile. CI success alone does not prove physical-device behavior.
