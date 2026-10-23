@@ -4375,3 +4375,14 @@ The user clarified that the receipts they expected to see are uploaded by a nann
 - Keep **end-to-end acceptance** open until the user tests the existing Global Search in `http://localhost:8081/AhlElKheir/`: find a known present project document and receipt, open current and previous versions after a replacement, and confirm an unauthorized cross-project request is denied. Do not use the three missing files as test fixtures.
 - Treat nanny/family sponsorship payment proofs as an explicit scope extension, not as a defect that can be solved by bypassing current project receipt permissions.
 - Do not claim the entire document-archiving system is done. At the start of the next repository task, reread the canonical docs and inspect the real repository state before proceeding.
+
+
+## 2026-10-23 — Sponsor QR and Android scanner (source checkpoint; acceptance open)
+
+The user requested a QR code for every sponsor, shown on the sponsor profile and on orphan forms linked to that sponsor, plus an installable Android APK for staff scanning. The user selected authorized access (Option B): QR scanning must not bypass existing authentication, role checks, or supervisor sponsor scope.
+
+Repository source now contains a local QR helper based on the bundled TCPDF 2D barcode implementation. QR payloads encode only the existing `modules/sponsors/view.php?id={id}` URL, not sponsor contact fields. Sponsor profile source adds a distinct active sponsored-child count using the established `sponsorships.child_id` relation and `status='active'`. The orphan form/profile source adds a QR beside each linked sponsor.
+
+A companion Android project at `android/sponsor-qr-scanner/` uses ZXing Android Embedded for camera scanning and loads the existing sponsor profile in a WebView. It stores a configurable server base URL, validates scanned sponsor URLs against that configured origin/path, and delegates login and authorization to the existing PHP application. Debug build configuration permits controlled local HTTP testing for private/local hosts; release configuration requires HTTPS. GitHub Actions workflow `.github/workflows/build-sponsor-qr-scanner.yml` is intended to produce a debug-signed test APK artifact.
+
+**Acceptance remains open.** The repository source has not yet been reported as PHP-linted; Android compilation, APK installation, physical camera scan, sponsor count/database reconciliation, printer scannability, and role/scope denial tests remain unverified. Continue from `docs/SPONSOR_QR_ANDROID_CONTINUATION.md`. No database schema change is currently justified. This task does not close or alter the separately pending project archive browser acceptance.
