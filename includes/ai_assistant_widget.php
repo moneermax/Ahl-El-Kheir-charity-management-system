@@ -1,7 +1,7 @@
 <?php
 $akAiCsrf = function_exists('csrf_token') ? csrf_token() : '';
 ?>
-<div id="ak-ai-assistant" data-endpoint="<?php echo e(APP_URL . 'modules/ai_assistant/chat.php'); ?>" data-csrf="<?php echo e($akAiCsrf); ?>" data-lang="<?php echo e(AK_LANG); ?>">
+<div id="ak-ai-assistant" data-endpoint="<?php echo e(APP_URL . 'modules/ai_assistant/chat.php'); ?>" data-csrf="<?php echo e($akAiCsrf); ?>" data-lang="<?php echo e(AK_LANG); ?>" data-user-id="<?php echo (int) current_user_id(); ?>">
   <button type="button" id="ak-ai-launcher" aria-controls="ak-ai-panel" aria-expanded="false"><i class="fa-solid fa-comments" aria-hidden="true"></i><span><?php echo e(AK_LANG === 'ar' ? 'مساعد أهل الخير' : 'Ahl El Kheir assistant'); ?></span></button>
   <section id="ak-ai-panel" role="dialog" aria-labelledby="ak-ai-title" hidden>
     <header><strong id="ak-ai-title"><?php echo e(AK_LANG === 'ar' ? 'مساعد أهل الخير' : 'Ahl El Kheir assistant'); ?></strong><div class="ak-ai-header-actions"><button type="button" id="ak-ai-history-toggle"><?php echo e(AK_LANG === 'ar' ? 'سجل المحادثات' : 'Chat history'); ?></button><button type="button" id="ak-ai-new-chat"><?php echo e(AK_LANG === 'ar' ? 'محادثة جديدة' : 'New chat'); ?></button><button type="button" id="ak-ai-close" aria-label="<?php echo e(AK_LANG === 'ar' ? 'إغلاق' : 'Close'); ?>">×</button></div></header>
@@ -40,7 +40,7 @@ var send=document.getElementById('ak-ai-send'),messages=document.getElementById(
 var historyPanel=document.getElementById('ak-ai-history'),historyItems=document.getElementById('ak-ai-history-items');
 var historyToggle=document.getElementById('ak-ai-history-toggle'),newChat=document.getElementById('ak-ai-new-chat');
 var currentConversationId=null;
-var currentConversationStorageKey='akAiCurrentConversationId';
+var currentConversationStorageKey='akAiCurrentConversationId:'+String(root.dataset.userId||'0');
 var greeting=lang==='ar'?'مرحباً! اسأل عن استخدام النظام.':'Hello! Ask about using the system.';
 function storedConversationId(){
  try{var value=Number(window.sessionStorage.getItem(currentConversationStorageKey)||0);return Number.isSafeInteger(value)&&value>0?value:null;}catch(error){return null;}
@@ -65,8 +65,8 @@ async function restoreCurrentConversation(){
   messages.scrollTop=messages.scrollHeight;
  }catch(error){
   if(storedConversationId()===savedId){
-   currentConversationId=null;clearMessages();
-   add(lang==='ar'?'تعذر استعادة المحادثة السابقة الآن. يمكنك فتح سجل المحادثات والمحاولة مجدداً.':'Could not restore the previous conversation right now. Open chat history to try again.',false);
+   currentConversationId=null;rememberConversationId(null);clearMessages();
+   add(lang==='ar'?'تعذر استعادة المحادثة السابقة الآن. يمكنك فتح سجل المحادثات واختيارها مجدداً.':'Could not restore the previous conversation right now. Open chat history and select it again.',false);
   }
  }
 }
