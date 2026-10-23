@@ -4350,3 +4350,8 @@ The integrated Global Search now enumerates each present version associated with
 ### Archive follow-up — unlinked archive entries remain discoverable (2026-10-23; runtime pending)
 
 Search now includes present archived versions for explicitly unlinked source records when their business row has been deleted. The project ID is recovered from archive event metadata, and project-level permission checks remain mandatory. This keeps retained evidence discoverable without treating archive metadata as an authorization grant. Local lint and runtime verification remain open.
+
+ 
+### Archive pilot — evidence from local syntax/backfill runs (2026-10-23)
+
+User verified `php -l` PASS for search permissions, Global Search, archive helper, archive-version endpoint, project profile and FM project page. The backfill `--apply` registered 16 inspected references; the subsequent dry run classified all 16 as already registered with no path or blob metadata mismatches and no reconciliation items. Three payment evidence source paths remain physically missing and are accurately represented as missing. This does not establish end-to-end runtime acceptance; browser authorization/search/upload/version tests are still required.
