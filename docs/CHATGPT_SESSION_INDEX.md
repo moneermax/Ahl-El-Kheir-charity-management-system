@@ -1906,3 +1906,12 @@ Latest source changes on main:
 - CI now lints the download endpoint and runs for its source changes.
 
 Verification boundary: GitHub Actions build/lint and physical-device UI/download behavior are pending. The APK must be copied to storage/apps/ahl-el-kheir-sponsor-qr-scanner.apk on each target server after building; until then the endpoint intentionally returns 404 with an Arabic message. Do not claim the download is live before the file exists and authenticated download is tested.
+
+
+## 2026-10-23 — Physical portrait correction and simplified scanner screen
+
+The user installed the previously available APK and confirmed APK download/install works, but the camera scanner still opened horizontally. The latest Android workflow run before this fix, [40001005068](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40001005068), failed at manifest merging: ZXing's dependency declares `CaptureActivity` as `sensorLandscape`, conflicting with the app's `portrait` declaration. The manifest now declares the tools namespace and uses `tools:replace="android:screenOrientation"` on ZXing's capture activity to override that exact dependency attribute.
+
+The Android home screen is simplified to the **مسح رمز QR للكفيل** button plus the WebView required for website sign-in and sponsor profiles. The top branding/download header and connection-status strip are removed. Long-press the scan button to open server settings; the website's existing authenticated header remains the APK download route.
+
+Next acceptance gate: verify the new Actions run succeeds and produces a fresh APK; install that new artifact (not the previous APK), then confirm the camera remains portrait when the phone is rotated and that scanning still opens the authorized sponsor profile. CI success alone does not prove physical-device behavior.
