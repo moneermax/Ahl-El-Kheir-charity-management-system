@@ -4320,3 +4320,12 @@ It defines four catalogue tables: `document_archive_blobs`, `document_archive_do
 Evidence used: the repository SQL dump was retrieved via GitHub contents and parsed (5,691,158 characters); it defines the existing project tables and indexes, and contains no `document_archive_*` tables. The dump's project schema agrees with the supplied actual-DB column inventory for `project_documents` and `project_payment_evidence`. The migration follows the repository's existing InnoDB/utf8mb4/CREATE TABLE IF NOT EXISTS migration style.
 
 **Important status:** migration file only. It has not been executed against `ahl_el_kheir`; no PHP integration, file backfill, or runtime test has occurred. No existing files or source records have been changed. Before applying it, verify the live DB still has no archive objects and run the DDL against a disposable schema copy or an isolated test environment. Then implement an idempotent, report-only project-file registration/backfill and the project-document/payment-evidence adapters. Do not start physical migration or change replacement/deletion behavior until those adapters and acceptance checks are ready.
+
+
+---
+
+# Document Archive — 2026-10-23 checkpoint
+
+A separate archive catalogue schema is committed in `database/migrations/2026-10-23_document_archive_catalogue.sql`. Local verification supplied by the user confirms five `document_archive_*` tables, expected indexes and foreign keys in `ahl_el_kheir`. This evidence is specific to the local database.
+
+The first read-only pilot covers `project_documents` and `project_payment_evidence`. Live table definitions were supplied by the user. `tools/report_project_document_inventory.php` is committed to report file existence, project-storage containment, shared path references, available size/MIME inconsistencies and SHA-256 duplicate-content candidates. It has not yet been run locally; no file inventory or production-host behavior is asserted. No existing business paths or authorization endpoints were changed.
