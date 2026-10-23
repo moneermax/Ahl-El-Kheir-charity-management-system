@@ -192,3 +192,19 @@ Commits `9db6c37945f2af5e775dc4f9bf651acee7d657b7` and `ca5a1d8bb34e0325a5ea2da0
 - Close the floating panel on `mouseleave`, and keep `aria-expanded` synchronized; explicit close still returns focus to the launcher.
 
 No database/schema change. Source edits are committed on `main`; local PHP lint, navigation/browser behavior, account-switch edge case, and mouseleave UX are **not yet runtime-verified**. Test one local-guide exchange, navigate to another page, reopen the assistant and confirm the same transcript is restored; continue chatting and verify the new exchange stays in the same conversation. Confirm mouse leave closes the panel and launcher click reopens it. Also verify New chat remains a new conversation across navigation.
+
+## 2026-10-23 — Text chat implementation task closed; voice deferred
+
+The requested text-chat implementation work is closed at the source/documentation boundary. This includes local-first role-limited answers, the existing consent/filter rules for eligible general Gemini fallback, authenticated and CSRF-protected requests, user-scoped saved conversations, restoration of the active conversation across full-page navigation, explicit New chat behavior, and closing the floating panel when the pointer leaves it.
+
+Relevant implementation commits:
+- `2bc42b03c5d9f5430d0e6ce07a22f39a57811a7b` — default general-text fallback model changed to `gemini-3.5-flash-lite` (environment/hosting configuration can override it).
+- `75c52595eef9cd6dd2d8ab71756f06103601c1c8` — microphone control disabled and marked as future development; voice is out of scope.
+- `9db6c37945f2af5e775dc4f9bf651acee7d657b7` — persist/restore active conversation across navigation.
+- `ca5a1d8bb34e0325a5ea2da0e67b16ea7fd723cb` — remember a conversation selected from history.
+
+The owner confirmed that a local-guide text question works. Source review also confirms the history-load endpoint scopes access to the authenticated owner. No database/schema change was made for navigation continuity.
+
+**Verification boundary:** this work is closed as an implementation task, but this session did not run local PHP lint or browser acceptance and therefore does not claim full runtime verification. If the owner has not already performed the checks locally, verify with the existing XAMPP application: lint `includes/ai_assistant_widget.php` and `modules/ai_assistant/chat.php`; ask a known local-guide question; navigate to another page and confirm the same transcript restores; send a follow-up and confirm it remains in that conversation; confirm New chat stays separate across navigation; confirm mouseleave closes the panel and the launcher reopens it. Check the effective `GEMINI_MODEL`/hosting override only if eligible general fallback is part of the acceptance test.
+
+Do not reopen this completed implementation task without a concrete regression. Do not retry voice transcription as part of text-chat acceptance; voice remains deferred. The next chat session should start by reading the required canonical documents and identifying the next genuinely open project task rather than assuming another AI-assistant change is needed.
