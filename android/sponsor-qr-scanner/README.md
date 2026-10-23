@@ -39,6 +39,7 @@ The debug build permits HTTP only for localhost/private-network IP addresses to 
 ## Acceptance checklist
 
 - [ ] APK installs and opens on a physical Android phone.
+- [ ] Main app screen and the separate ZXing camera capture screen both remain portrait when the phone is rotated.
 - [ ] Camera permission is requested and scanning succeeds.
 - [ ] Invalid QR and QR URLs from another host are rejected.
 - [ ] Existing website login works inside the app.
@@ -48,10 +49,9 @@ The debug build permits HTTP only for localhost/private-network IP addresses to 
 - [ ] QR appears on sponsor profile and each linked sponsor row on the orphan form/profile.
 - [ ] The production HTTPS host is tested before release distribution.
 
-
 ## Phone scanning orientation and local QR host
 
-- The app and camera capture screen are locked to portrait orientation; keep the phone upright while scanning.
+- The main activity and ZXing's separate `com.journeyapps.barcodescanner.CaptureActivity` are both explicitly locked to portrait in the Android manifest. `ScanOptions.setOrientationLocked(true)` alone preserves the current orientation; it is not the portrait constraint.
 - The main screen uses a single prominent **مسح رمز QR للكفيل** action. Server configuration remains available by long-pressing the app title, so the normal header is not crowded with a permanent server-settings button.
 - The **تنزيل التطبيق** button requests the APK from the authenticated system endpoint `modules/sponsors/download_scanner_apk.php`; the endpoint serves only `storage/apps/ahl-el-kheir-sponsor-qr-scanner.apk` and never redirects to an external file host.
 - Before the download button can serve an APK, an administrator must copy the built APK to `storage/apps/ahl-el-kheir-sponsor-qr-scanner.apk` on the target server. The `storage/.htaccess` deny rule remains in place; downloads go through the authenticated PHP endpoint.
