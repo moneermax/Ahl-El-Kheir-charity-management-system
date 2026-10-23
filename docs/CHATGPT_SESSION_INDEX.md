@@ -1719,3 +1719,7 @@ After the Interactions API request/response correction, the owner tested both Ar
 
 Gemini 3.5 Transcribe REST request flow was corrected in commit 87c37e4238858b6e126382f41476db8f49929e18: upload the consented recording through the Gemini Files API, then pass the returned file URI to the Interactions API. The user's previous log excerpt contained Apache startup notices only, not the application's diagnostic. Local PHP lint and one browser transcription test remain pending; do not mark voice transcription fixed before successful transcript insertion into the editable composer.
 The voice-consent prompt now discloses Google's temporary audio-file retention (up to 48 hours) for the Files API upload; commit f89eaf85bc3b91389ab1c11abe541c02a21abfb4.
+
+
+## 2026-10-23 — AI assistant text-first checkpoint
+Text chat source reviewed. Local guide retrieval is first and role-limited; Google fallback requires the text consent control and passes internal/sensitive-question filters. General-text default model updated to `gemini-3.5-flash-lite` (`2bc42b03c5d9f5430d0e6ce07a22f39a57811a7b`). Voice microphone disabled and labelled future development (`75c52595eef9cd6dd2d8ab71756f06103601c1c8`). Local runtime checks remain pending; do not describe text as fully verified until tested on the user's XAMPP app.
