@@ -4247,3 +4247,19 @@ The assistant widget is included by the shared footer on authenticated pages, so
 The text-chat implementation requested in this work unit is closed at the source/documentation boundary. Changes cover tab-scoped active-conversation persistence, restoration after full-page navigation through the existing authenticated and owner-scoped `history_load` action, explicit New chat separation, and panel close-on-mouseleave. Local-guide retrieval remains first; general Gemini fallback retains per-question consent and internal/sensitive-question restrictions. The microphone control is disabled and voice is deferred. Relevant commits: `2bc42b03c5d9f5430d0e6ce07a22f39a57811a7b`, `75c52595eef9cd6dd2d8ab71756f06103601c1c8`, `9db6c37945f2af5e775dc4f9bf651acee7d657b7`, and `ca5a1d8bb34e0325a5ea2da0e67b16ea7fd723cb`.
 
 The owner confirmed a local-guide answer works. This editing session did not execute local PHP lint or browser acceptance for cross-page restore and mouseleave behavior; those checks remain unverified unless separately confirmed by the owner. Do not promote them to runtime PASS without evidence. This is not a reason to reopen implementation absent a concrete regression. See `docs/CHATGPT_AI_ASSISTANT_CONTINUATION.md` for the bounded optional local acceptance checklist and next-session instruction.
+
+## 2026-10-23 — AI assistant account isolation and internal workflow retrieval
+
+Observed failure: a second account in the same browser received a previous-conversation restore error, and a question about assigning families to nannies was not answered from the local guide.
+
+Source root cause:
+- `includes/ai_assistant_widget.php` used a single tab `sessionStorage` key regardless of signed-in user. The history endpoint correctly enforces conversation ownership, but the widget retained the failed ID after the rejection.
+- `modules/ai_assistant/chat.php` had an Arabic shortcut for viewing assigned groups but no deterministic VGM answer for group/nanny assignment. `modules/deputy_gm/groups.php` is the authoritative VGM-only workflow source.
+
+Corrections:
+- `ad6d2c7ede03b7e665ff11b74af55949818b5a76`: namespace the key by signed-in user ID and clear the active pointer after restore failure.
+- `fb030a08ba65093b51cf31cba4979189457e87bf`: document the workflow in the employee guide.
+- `4fe4a98dc3bcf40e5122c04f069b1f3a40cb99dc`: deterministic answer restricted to VGM/vice-GM roles; it clarifies assignment is to a group and retains the child eligibility/current-month disbursement constraints.
+- `9cd98ce9f1b86d521a34e2e8e55dcdc1dd982d40`: update the canonical roles/workflows document.
+
+No schema changes. Source correction only; local PHP lint and browser tests remain pending. Acceptance must include two-account browser switching, same-user history restoration, a VGM question, and confirmation that a non-VGM user is not given VGM-only instructions.
