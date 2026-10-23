@@ -1357,6 +1357,16 @@ if (!empty($akPrintOwnLetterhead)) $akBodyClasses[] = 'ak-print-own';
                         </a>
                     <?php endif; ?>
 
+                    <a
+                        href="<?php echo APP_URL; ?>modules/sponsors/download_scanner_apk.php"
+                        class="qa-btn"
+                        style="background: #16804a;"
+                        title="<?php echo e(AK_LANG === 'ar' ? 'تنزيل تطبيق ماسح QR من النظام' : 'Download the QR scanner app from this system'); ?>"
+                    >
+                        <i class="fab fa-android" aria-hidden="true"></i>
+                        <span><?php echo e(AK_LANG === 'ar' ? 'تنزيل تطبيق QR' : 'Download QR app'); ?></span>
+                    </a>
+
                     <?php if ($canGlobalSearch): ?>
                         <a
                             href="<?php echo APP_URL; ?>modules/search/index.php"
