@@ -2,6 +2,7 @@
 // modules/projects/view.php - Project profile, financial controls, documents, operations, closure
 require_once dirname(__DIR__, 2) . '/modules/projects/project_lib.php';
 require_once dirname(__DIR__, 2) . '/modules/projects/project_funding_accounting.php';
+require_once dirname(__DIR__, 2) . '/modules/projects/lib_project_document_archive.php';
 require_once dirname(__DIR__, 2) . '/modules/accounting/lib.php';
 require_once dirname(__DIR__, 2) . '/modules/accounting/lib_transaction_review.php';
 require_once dirname(__DIR__, 2) . '/modules/hr/lib_employee_incentives.php';
@@ -713,10 +714,21 @@ $relativeDir = 'storage/documents/projects/' . $id;
 $absoluteDir = dirname(__DIR__, 2) . '/' . $relativeDir;
 if (!is_dir($absoluteDir) && !mkdir($absoluteDir, 0750, true)) throw new RuntimeException('تعذر إنشاء مجلد الوثائق.');
 $stored = bin2hex(random_bytes(16)) . '.' . $allowed[$mime];
-if (!move_uploaded_file($file['tmp_name'], $absoluteDir . '/' . $stored)) throw new RuntimeException('تعذر حفظ الملف.');
+$newStoredAbsolutePath = $absoluteDir . '/' . $stored;
 $relativePath = $relativeDir . '/' . $stored;
+dbExecute('START TRANSACTION');
+try {
+if (!move_uploaded_file($file['tmp_name'], $newStoredAbsolutePath)) throw new RuntimeException('تعذر حفظ الملف.');
 dbExecute('INSERT INTO project_documents (project_id, document_type, title, file_path, original_name, mime_type, file_size, document_date, issuer, reference_number, amount, currency_code, notes, uploaded_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)', [$id, akp_post_value('document_type', 'other'), akp_post_value('document_title'), $relativePath, $file['name'], $mime, $file['size'], akp_post_value('document_date') ?: null, akp_post_value('document_issuer') ?: null, akp_post_value('document_reference') ?: null, (float)(akp_post_value('document_amount') ?: 0), akp_post_value('document_currency', $project['currency_code'] ?: 'SDG'), akp_post_value('document_notes') ?: null, akp_user_id()]);
 $documentId = (int)(dbFetchOne('SELECT LAST_INSERT_ID() AS id')['id'] ?? 0);
+if ($documentId <= 0) throw new RuntimeException('تعذر تسجيل بيانات الوثيقة.');
+akp_archive_register_project_file('project_documents', $documentId, $id, $relativePath, (string)$file['name'], (string)$mime, (int)$file['size'], akp_post_value('document_title') ?: null);
+dbExecute('COMMIT');
+} catch (Throwable $archiveError) {
+if (db()->inTransaction()) dbExecute('ROLLBACK');
+if (is_file($newStoredAbsolutePath)) @unlink($newStoredAbsolutePath);
+throw $archiveError;
+}
 akp_audit('UPLOAD', 'project_document', $documentId, null, ['project_id' => $id, 'document_type' => akp_post_value('document_type', 'other')]);
 $_SESSION['project_toast_success'] = 'تم حفظ الوثيقة في التخزين المحمي.';
 } elseif ($action === 'edit_project_document') {
@@ -734,6 +746,8 @@ $title = akp_post_value('document_title');
 if ($title === '') throw new RuntimeException('عنوان الوثيقة مطلوب.');
 $newStoredAbsolutePath = null;
 $oldStoredPath = $doc['file_path'] ?? null;
+dbExecute('START TRANSACTION');
+try {
 if (!empty($_FILES['document']['name'])) {
 if ($_FILES['document']['error'] !== UPLOAD_ERR_OK) throw new RuntimeException('فشل في رفع الملف الجديد.');
 $file = $_FILES['document'];
@@ -752,9 +766,14 @@ dbExecute('UPDATE project_documents SET document_type = ?, title = ?, file_path 
 } else {
 dbExecute('UPDATE project_documents SET document_type = ?, title = ?, document_date = ?, issuer = ?, reference_number = ?, notes = ? WHERE id = ? AND project_id = ?', [$documentType, $title, akp_post_value('document_date') ?: null, akp_post_value('document_issuer') ?: null, akp_post_value('document_reference') ?: null, akp_post_value('document_notes') ?: null, $documentId, $id]);
 }
-if ($newStoredAbsolutePath && $oldStoredPath) {
-$oldAbsolutePath = dirname(__DIR__, 2) . '/' . $oldStoredPath;
-if ($oldAbsolutePath !== $newStoredAbsolutePath && is_file($oldAbsolutePath)) @unlink($oldAbsolutePath);
+if ($newStoredAbsolutePath) {
+    akp_archive_register_project_file('project_documents', $documentId, $id, $relativePath, (string)$file['name'], (string)$mime, (int)$file['size'], $title);
+}
+dbExecute('COMMIT');
+} catch (Throwable $archiveError) {
+if (db()->inTransaction()) dbExecute('ROLLBACK');
+if ($newStoredAbsolutePath && is_file($newStoredAbsolutePath)) @unlink($newStoredAbsolutePath);
+throw $archiveError;
 }
 akp_audit('UPDATE', 'project_document', $documentId, ['project_id'=>$id,'title'=>$doc['title'],'document_type'=>$doc['document_type']], ['project_id'=>$id,'title'=>$title,'document_type'=>$documentType]);
 $_SESSION['project_document_success'] = 'تم تعديل الوثيقة بنجاح.';
@@ -768,11 +787,14 @@ throw new RuntimeException('لا يمكن حذف إثبات تسوية الرص�
 }
 $linked = dbFetchOne('SELECT id FROM project_expenses WHERE project_id = ? AND primary_document_id = ? LIMIT 1', [$id, $documentId]);
 if ($linked) throw new RuntimeException('لا يمكن حذف وثيقة مرتبطة بمصروف.');
+dbExecute('START TRANSACTION');
+try {
+akp_archive_unlink_project_source('project_documents', $documentId, $id);
 dbExecute('DELETE FROM project_documents WHERE id = ? AND project_id = ? AND document_type <> \'receipt\' AND verification_status = \'unverified\'', [$documentId, $id]);
-$storedPath = $doc['file_path'] ?? null;
-if ($storedPath) {
-$absolutePath = dirname(__DIR__, 2) . '/' . $storedPath;
-if (is_file($absolutePath)) @unlink($absolutePath);
+dbExecute('COMMIT');
+} catch (Throwable $archiveError) {
+if (db()->inTransaction()) dbExecute('ROLLBACK');
+throw $archiveError;
 }
 akp_audit('DELETE', 'project_document', $documentId, ['project_id'=>$id,'title'=>$doc['title'],'document_type'=>$doc['document_type']], null);
 $_SESSION['project_document_success'] = 'تم حذف الوثيقة بنجاح.';
