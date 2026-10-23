@@ -60,6 +60,11 @@ jobs:
           if [ "$result" -ne 0 ]; then
             echo "Duplicate-class diagnostic output (matching lines and context):"
             grep -n -i -E -C 5 "duplicate class|duplicate.*found|Execution failed for task ':app:checkDebugDuplicateClasses'|What went wrong|Could not resolve|failed" duplicate-classes.log | tail -n 160 || tail -n 160 duplicate-classes.log
+            echo "Dependency path for legacy Kotlin JDK extensions:"
+            gradle --no-daemon :app:dependencyInsight --configuration debugRuntimeClasspath --dependency kotlin-stdlib-jdk8 || true
+            gradle --no-daemon :app:dependencyInsight --configuration debugRuntimeClasspath --dependency kotlin-stdlib-jdk7 || true
+            echo "Resolved Kotlin runtime dependencies:"
+            gradle --no-daemon :app:dependencies --configuration debugRuntimeClasspath | grep -E -C 2 "kotlin-stdlib|kotlin-stdlib-jdk7|kotlin-stdlib-jdk8" || true
             exit "$result"
           fi
           gradle --no-daemon :app:assembleDebug
