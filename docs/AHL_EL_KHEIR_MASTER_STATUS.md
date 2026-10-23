@@ -3933,3 +3933,7 @@ After the Interactions API request/response correction, the owner tested both Ar
 ## 2026-10-22 — AI assistant voice transcription follow-up
 
 Commit 87c37e4238858b6e126382f41476db8f49929e18 changes Gemini 3.5 Transcribe to the documented REST flow: Files API upload followed by an Interactions API request using the returned file URI. Runtime verification is pending on local XAMPP: PHP 8.2 syntax check and one consented browser recording. The previous Apache log excerpt contained startup notices only and did not provide the application diagnostic. Do not report the feature as fixed until the transcript is inserted into the editable composer without automatic submission.
+
+
+## 2026-10-23 — AI assistant text and voice status
+Text chat received a source review. The general-text fallback default now uses `gemini-3.5-flash-lite`; the microphone UI is disabled and marked as future development. Local guide retrieval, consent/filter flow, and user-scoped history were reviewed at source level. Local PHP lint and browser/runtime acceptance remain pending, including checking whether `GEMINI_MODEL` or `hosting.php` overrides the default. Do not claim runtime verification yet.
