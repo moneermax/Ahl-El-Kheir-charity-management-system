@@ -1791,3 +1791,8 @@ Historical versions are now listed separately in the existing Global Search when
 ### Archive follow-up — retained deleted-source records (2026-10-23)
 
 Global Search now includes present versions attached to unlinked source links when the original business row has been deleted. It derives the project association from archive event metadata and still applies `akp_can_view_project()` plus the payment receipt role allowlist. This source change is not yet runtime verified.
+
+ 
+### Archive pilot — latest local evidence (2026-10-23)
+
+The user pulled `45912eed`. All six changed PHP files passed local `php -l`. Backfill `--apply` registered 16 references (8 project documents, 8 payment evidence); the next dry run found 16 already registered, 0 planned writes, no path/blob metadata mismatches, no reconciliation cases, and 3 known missing payment-evidence files. Continue with real browser tests at `http://localhost:8081/AhlElKheir/`: Global Search finds known present docs/receipts; permission filtering is correct; current version opens; replacement preserves and exposes prior version; unauthorized cross-project access is denied. Do not call complete until those tests pass.
