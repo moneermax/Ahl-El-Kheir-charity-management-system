@@ -1869,3 +1869,7 @@ The active user-requested task is sponsor QR codes plus a companion Android scan
 ## Sponsor QR + Android scanner — 2026-10-23
 
 Active new feature checkpoint: `docs/SPONSOR_QR_ANDROID_CONTINUATION.md`. Sponsor QR PHP integration and native Android scanner source are on `main`; neither local application acceptance nor Android APK/device testing is complete. Current Android build fix `777f9b180ce61dade8c96649a8138e7f4bb85880` excludes obsolete Kotlin JDK 7/8 split artifacts after CI confirmed duplicate classes against Kotlin stdlib 1.8.22. Wait for GitHub Actions to verify before treating the APK as built.
+
+
+### Sponsor QR Android scanner — latest build checkpoint (2026-10-23)
+The duplicate Kotlin class fix is followed by a Java compile failure because `MainActivity.java` references `BuildConfig.DEBUG` while the AGP 8.7.3 module had not enabled BuildConfig generation. Commit `ecdc34c19f1d5f5c370a95b3a902739693710b7f` explicitly enables `buildFeatures.buildConfig`. Verify the new Actions run before proceeding; see `docs/SPONSOR_QR_ANDROID_CONTINUATION.md`.
