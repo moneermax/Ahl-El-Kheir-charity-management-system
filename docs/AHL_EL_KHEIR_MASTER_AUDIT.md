@@ -4345,3 +4345,8 @@ No runtime success is asserted from this source change. Required local acceptanc
 ### Archive follow-up — version-aware search and retrieval (2026-10-23; runtime pending)
 
 The integrated Global Search now enumerates each present version associated with an active project source link, distinguishing current from prior versions. A selected version is served by `modules/projects/project_archive_version.php`, which re-checks the source adapter, project access, payment-receipt role allowlist, canonical storage containment, and byte-size/SHA-256 integrity. This is a source-level implementation checkpoint only; local lint and authorized/unauthorized browser verification remain open.
+
+
+### Archive follow-up — unlinked archive entries remain discoverable (2026-10-23; runtime pending)
+
+Search now includes present archived versions for explicitly unlinked source records when their business row has been deleted. The project ID is recovered from archive event metadata, and project-level permission checks remain mandatory. This keeps retained evidence discoverable without treating archive metadata as an authorization grant. Local lint and runtime verification remain open.
