@@ -329,3 +329,10 @@ Source changes on `main`:
 A follow-up implementation supersedes the immediately preceding note that historical versions were not separately searchable. The existing Global Search now lists every present version for active project archive links and labels current versus prior versions. The selected version is served through `modules/projects/project_archive_version.php`, which validates the document/version relationship, resolves the project through the source adapter or retained archive event metadata, checks `akp_can_view_project()`, enforces the existing payment receipt role allowlist, constrains the path to the canonical project storage directory, and checks byte size/SHA-256 before serving.
 
 Local PHP lint and Apache/browser verification remain pending. Include the new endpoint in lint and verify current/prior version retrieval plus a denied cross-project request. Historical versions of source records whose links are unlinked are retained, but they are not listed by the current search query because search is limited to active source links.
+
+
+## 2026-10-23 — Follow-up: search includes retained unlinked records (runtime pending)
+
+The latest Global Search query now includes present archived versions attached to unlinked source links when the original business row no longer exists. It resolves the project ID from `document_archive_events.metadata_json`, joins to the current project record, and applies `akp_can_view_project()`. Payment evidence remains filtered by the existing receipt endpoint role allowlist. The version endpoint similarly resolves deleted source records through archive event metadata. This supersedes the immediately preceding note that unlinked source records were not listed in search.
+
+Verify the MariaDB query on the local database after pulling, especially the `JSON_EXTRACT` / `JSON_UNQUOTE` project-ID resolution, plus download authorization for a deleted-source archive record.
