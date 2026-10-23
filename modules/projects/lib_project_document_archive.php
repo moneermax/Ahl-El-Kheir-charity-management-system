@@ -54,7 +54,7 @@ if (!function_exists('akp_archive_register_project_file')) {
             throw new RuntimeException('Project archive source record was not found.');
         }
         $sourcePath = (string)($source[$pathColumn] ?? '');
-        $normalizedPath = str_replace('\\\\', '/', trim($relativePath));
+        $normalizedPath = str_replace(chr(92), '/', trim($relativePath));
         if ($sourcePath === '' || $sourcePath !== $normalizedPath || $relativePath !== $normalizedPath) {
             throw new RuntimeException('Project archive path does not match the committed source record.');
         }
