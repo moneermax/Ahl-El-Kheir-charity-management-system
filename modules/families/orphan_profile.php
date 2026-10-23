@@ -5,6 +5,7 @@ require_once dirname(__DIR__, 2) . '/config/database.php';
 require_once dirname(__DIR__, 2) . '/config/functions.php';
 require_once dirname(__DIR__, 2) . '/config/session.php';
 require_once dirname(__DIR__, 2) . '/config/sponsor_assignments.php';
+require_once dirname(__DIR__, 2) . '/modules/sponsors/lib_sponsor_qr.php';
 
 Session::start();
 if (!Session::isLoggedIn()) {
@@ -352,12 +353,13 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                         <?php $activeTotal = 0.0; foreach ($sponsorships as $spRow) if ($spRow['status'] === 'active') $activeTotal += (float)$spRow['monthly_amount']; ?>
                         <div class="table-responsive">
                             <table class="table table-bordered table-hover align-middle mb-2">
-                                <thead class="table-light"><tr><th>الكفيل</th><th>كود الكفيل</th><th>المبلغ الشهري</th><th>تاريخ البداية</th><th>الحالة</th><th class="text-center">الإجراء</th></tr></thead>
+                                <thead class="table-light"><tr><th>الكفيل</th><th>كود الكفيل</th><th>رمز QR</th><th>المبلغ الشهري</th><th>تاريخ البداية</th><th>الحالة</th><th class="text-center">الإجراء</th></tr></thead>
                                 <tbody>
                                 <?php foreach ($sponsorships as $spRow): ?>
                                     <tr>
                                         <td><strong><?php echo e($spRow['sponsor_name'] ?? '—'); ?></strong><?php if (!empty($spRow['sponsor_phone'])): ?><div class="small text-muted"><?php echo e($spRow['sponsor_phone']); ?></div><?php endif; ?></td>
                                         <td><?php echo e($spRow['sponsor_code'] ?? '—'); ?></td>
+                                        <td><?php $sponsorQrData=akSponsorQrDataUri((int)($spRow['sponsor_id']??0)); if($sponsorQrData!==''): ?><img src="<?php echo e($sponsorQrData); ?>" alt="QR <?php echo e($spRow['sponsor_code']??''); ?>" width="72" height="72" style="image-rendering:pixelated"><?php else: ?>—<?php endif; ?></td>
                                         <td><?php echo number_format((float)$spRow['monthly_amount'], 2); ?> ج.س</td>
                                         <td><?php echo e($spRow['start_date'] ?? '—'); ?></td>
                                         <td><?php $spStatusLabels=['active'=>'نشطة','paused'=>'موقوفة','completed'=>'مكتملة','cancelled'=>'ملغاة']; $spStatusClasses=['active'=>'bg-success','paused'=>'bg-warning text-dark','completed'=>'bg-info text-dark','cancelled'=>'bg-danger']; ?><span class="badge <?php echo $spStatusClasses[$spRow['status']] ?? 'bg-secondary'; ?>"><?php echo e($spStatusLabels[$spRow['status']] ?? $spRow['status']); ?></span></td>
