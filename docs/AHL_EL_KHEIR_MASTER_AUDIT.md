@@ -4340,3 +4340,8 @@ The archive pilot now follows the user's direction to reuse the existing Global 
 The new procedural project archive adapter registers verified blob metadata, logical documents, immutable versions, source links, and audit events within the source-record transaction. Project-document and project-payment-evidence upload/replacement flows were wired in the project manager/supervisor page and FM project page. Replacements preserve old physical bytes. Source deletion marks the archive link unlinked rather than deleting archived bytes.
 
 No runtime success is asserted from this source change. Required local acceptance remains: lint all changed PHP files; run the reviewed existing-record backfill with `--apply`; rerun dry-run to confirm idempotence; browser-test authorized and unauthorized search/download; verify upload creates archive rows and replacement increments version while preserving the prior file. The known three missing payment-evidence paths are test artifacts and must not be reconstructed.
+
+
+### Archive follow-up — version-aware search and retrieval (2026-10-23; runtime pending)
+
+The integrated Global Search now enumerates each present version associated with an active project source link, distinguishing current from prior versions. A selected version is served by `modules/projects/project_archive_version.php`, which re-checks the source adapter, project access, payment-receipt role allowlist, canonical storage containment, and byte-size/SHA-256 integrity. This is a source-level implementation checkpoint only; local lint and authorized/unauthorized browser verification remain open.
