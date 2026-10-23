@@ -131,7 +131,8 @@ public class MainActivity extends AppCompatActivity {
         options.setDesiredBarcodeFormats(ScanOptions.QR_CODE);
         options.setPrompt("وجّه الكاميرا إلى رمز QR للكفيل");
         options.setBeepEnabled(true);
-        options.setOrientationLocked(false);
+        // MainActivity is portrait-locked, so lock the capture screen to portrait too.
+        options.setOrientationLocked(true);
         scanLauncher.launch(options);
     }
 
