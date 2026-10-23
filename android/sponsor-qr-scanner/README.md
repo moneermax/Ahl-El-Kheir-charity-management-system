@@ -52,5 +52,8 @@ The debug build permits HTTP only for localhost/private-network IP addresses to 
 ## Phone scanning orientation and local QR host
 
 - The app and camera capture screen are locked to portrait orientation; keep the phone upright while scanning.
+- The main screen uses a single prominent **مسح رمز QR للكفيل** action. Server configuration remains available by long-pressing the app title, so the normal header is not crowded with a permanent server-settings button.
+- The **تنزيل التطبيق** button requests the APK from the authenticated system endpoint `modules/sponsors/download_scanner_apk.php`; the endpoint serves only `storage/apps/ahl-el-kheir-sponsor-qr-scanner.apk` and never redirects to an external file host.
+- Before the download button can serve an APK, an administrator must copy the built APK to `storage/apps/ahl-el-kheir-sponsor-qr-scanner.apk` on the target server. The `storage/.htaccess` deny rule remains in place; downloads go through the authenticated PHP endpoint.
 - For a physical phone on local Wi-Fi, open the website on the computer using the computer's LAN IP (for example, `http://192.168.18.9:8081/AhlElKheir/`) before opening the sponsor profile and displaying its QR. Do not generate a phone-scannable QR from a `localhost` page: `localhost` points to the device doing the request, so the phone cannot use the laptop's `localhost` address.
 - Keep the APK's configured base URL identical to the host, port, and application path used to generate the QR. The scanner intentionally rejects different hosts rather than weakening its origin checks.
