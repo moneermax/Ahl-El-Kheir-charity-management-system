@@ -298,6 +298,8 @@ if ($canSearchDocuments && in_array($type, ['all', 'documents'], true)) {
         FROM (
             SELECT l.source_table, l.source_record_id, l.source_path_column,
                    l.document_id, l.current_version_id, l.source_path_snapshot,
+                   v.id AS version_id, v.version_no,
+                   CASE WHEN v.id = l.current_version_id THEN 1 ELSE 0 END AS is_current_version,
                    v.original_name, v.mime_type_snapshot, v.created_at AS version_created_at,
                    b.storage_status, d.document_kind,
                    COALESCE(NULLIF(d.display_title, ''), NULLIF(pd.title, ''), v.original_name) AS display_title,
@@ -305,7 +307,7 @@ if ($canSearchDocuments && in_array($type, ['all', 'documents'], true)) {
                    pd.document_type AS source_category
             FROM document_archive_source_links l
             INNER JOIN document_archive_documents d ON d.id = l.document_id
-            INNER JOIN document_archive_versions v ON v.id = l.current_version_id AND v.document_id = l.document_id
+            INNER JOIN document_archive_versions v ON v.document_id = l.document_id
             INNER JOIN document_archive_blobs b ON b.id = v.blob_id
             INNER JOIN project_documents pd ON l.source_table = 'project_documents'
                 AND l.source_path_column = 'file_path'
@@ -318,6 +320,8 @@ if ($canSearchDocuments && in_array($type, ['all', 'documents'], true)) {
 
             SELECT l.source_table, l.source_record_id, l.source_path_column,
                    l.document_id, l.current_version_id, l.source_path_snapshot,
+                   v.id AS version_id, v.version_no,
+                   CASE WHEN v.id = l.current_version_id THEN 1 ELSE 0 END AS is_current_version,
                    v.original_name, v.mime_type_snapshot, v.created_at AS version_created_at,
                    b.storage_status, d.document_kind,
                    COALESCE(NULLIF(d.display_title, ''), CONCAT('إيصال دفع #', pe.id)) AS display_title,
@@ -325,7 +329,7 @@ if ($canSearchDocuments && in_array($type, ['all', 'documents'], true)) {
                    pe.payment_method AS source_category
             FROM document_archive_source_links l
             INNER JOIN document_archive_documents d ON d.id = l.document_id
-            INNER JOIN document_archive_versions v ON v.id = l.current_version_id AND v.document_id = l.document_id
+            INNER JOIN document_archive_versions v ON v.document_id = l.document_id
             INNER JOIN document_archive_blobs b ON b.id = v.blob_id
             INNER JOIN project_payment_evidence pe ON l.source_table = 'project_payment_evidence'
                 AND l.source_path_column = 'receipt_file_path'
@@ -643,13 +647,11 @@ body.theme-dark .filter-bar { background: #2d3748; }
             <?php if ($type === 'all' && $resultCounts['documents'] > 0): ?><a href="?type=documents&q=<?php echo urlencode($q); ?>&page=1" class="small">عرض الكل</a><?php endif; ?>
         </div>
         <div class="card-body p-0"><div class="table-container"><table class="table table-hover align-middle mb-0">
-            <thead><tr><th>اسم المستند</th><th>اسم الملف</th><th>المشروع</th><th>التصنيف</th><th>تاريخ الأرشفة</th><th></th></tr></thead>
+            <thead><tr><th>اسم المستند</th><th>اسم الملف</th><th>المشروع</th><th>التصنيف</th><th>النسخة</th><th>تاريخ الأرشفة</th><th>الحالة</th><th></th></tr></thead>
             <tbody>
             <?php foreach ($documents as $doc): ?>
                 <?php
-                    $documentUrl = $doc['source_table'] === 'project_payment_evidence'
-                        ? APP_URL . 'modules/projects/project_payment_receipt.php?id=' . (int)$doc['source_record_id']
-                        : APP_URL . 'modules/projects/serve_project_document.php?id=' . (int)$doc['source_record_id'];
+                    $documentUrl = APP_URL . 'modules/projects/project_archive_version.php?document_id=' . (int)$doc['document_id'] . '&version_id=' . (int)$doc['version_id'];
                     $documentKindLabel = $doc['document_kind'] === 'project_payment_receipt' ? 'إيصال دفع' : 'وثيقة مشروع';
                 ?>
                 <tr>
@@ -657,7 +659,9 @@ body.theme-dark .filter-bar { background: #2d3748; }
                     <td><?php echo e((string)$doc['original_name']); ?></td>
                     <td><?php echo e((string)$doc['project_code'] . ' — ' . (string)$doc['project_name']); ?></td>
                     <td><?php echo e($documentKindLabel); ?></td>
+                    <td>v<?php echo (int)$doc['version_no']; ?></td>
                     <td><?php echo e((string)$doc['version_created_at']); ?></td>
+                    <td><span class="badge bg-<?php echo !empty($doc['is_current_version']) ? 'success' : 'secondary'; ?>"><?php echo !empty($doc['is_current_version']) ? 'الإصدار الحالي' : 'نسخة سابقة'; ?></span></td>
                     <td><a target="_blank" rel="noopener" href="<?php echo e($documentUrl); ?>" class="btn btn-sm btn-outline-primary" aria-label="فتح المستند"><i class="fas fa-eye"></i></a></td>
                 </tr>
             <?php endforeach; ?>
