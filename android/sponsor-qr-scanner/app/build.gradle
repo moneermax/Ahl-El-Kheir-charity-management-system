@@ -30,6 +30,14 @@ android {
     }
 }
 
+// Kotlin 1.8+ folds the JDK 7/8 extension classes into kotlin-stdlib.
+ // Older transitive dependencies (via AndroidX lifecycle/coroutines) still request
+ // the legacy split artifacts, which duplicate classes already in kotlin-stdlib.
+configurations.configureEach {
+    exclude group: "org.jetbrains.kotlin", module: "kotlin-stdlib-jdk7"
+    exclude group: "org.jetbrains.kotlin", module: "kotlin-stdlib-jdk8"
+}
+
 dependencies {
     implementation "androidx.appcompat:appcompat:1.7.0"
     implementation "com.journeyapps:zxing-android-embedded:4.3.0"
