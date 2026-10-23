@@ -292,6 +292,16 @@ foreach ($rows as $row) {
         && $existingBlob !== null && $existingBlob['storage_status'] === 'missing'
         && $inspection['status'] === 'present') {
         $action = 'already_registered_needs_reconciliation';
+    } elseif ($existingLink === null && $existingBlob !== null && $inspection['eligible']) {
+        $metadataMismatch =
+            (string)$existingBlob['storage_status'] !== (string)$inspection['status']
+            || ($inspection['sha256'] !== null && (string)$existingBlob['sha256'] !== (string)$inspection['sha256'])
+            || ($inspection['byte_size'] !== null && (int)$existingBlob['byte_size'] !== (int)$inspection['byte_size'])
+            || ($inspection['detected_mime'] !== null
+                && (string)$existingBlob['detected_mime_type'] !== (string)$inspection['detected_mime']);
+        if ($metadataMismatch) {
+            $action = 'existing_blob_metadata_mismatch';
+        }
     }
 
     $plan[] = [
@@ -316,6 +326,7 @@ $summary = [
     'missing_file_references' => 0,
     'skipped_invalid_path' => 0,
     'existing_source_path_mismatch' => 0,
+    'existing_blob_metadata_mismatch' => 0,
     'already_registered_needs_reconciliation' => 0,
     'warnings' => 0,
 ];
@@ -324,9 +335,6 @@ foreach ($plan as $item) {
     $action = $item['action'];
     if (array_key_exists($action, $summary)) {
         $summary[$action]++;
-    }
-    if ($action === 'would_register') {
-        $summary['would_register']++;
     }
     if ($item['inspection']['status'] === 'missing' && $item['inspection']['eligible']) {
         $summary['missing_file_references']++;
