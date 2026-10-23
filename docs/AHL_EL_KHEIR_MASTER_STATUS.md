@@ -4022,3 +4022,21 @@ Evidence used: the repository SQL dump was retrieved via GitHub contents and par
 The archive catalogue migration (`database/migrations/2026-10-23_document_archive_catalogue.sql`) is committed. The user verified the five archive tables, indexes, and foreign keys in local database `ahl_el_kheir`; this does not claim production deployment.
 
 The active step is a read-only inventory of project document and payment receipt references via `tools/report_project_document_inventory.php`. It is committed but not yet locally executed, so no filesystem inventory findings or runtime verification are claimed. Continue using `docs/DOCUMENT_ARCHIVE_CONTINUATION.md`.
+
+
+---
+
+## 2026-10-23 — Project archive search integration and automatic upload registration (source implementation; runtime pending)
+
+The user's design decision is to extend the existing role-based Global Search Center rather than create a separate archive search page.
+
+Committed source changes:
+- `config/search_permissions.php`: adds the `documents` search type to the existing role policy for roles that already have search access; HR roles previously blocked from Global Search and the social-media role do not gain document search access.
+- `modules/search/index.php`: adds current archived project documents and documented payment receipts to Global Search. Search requires an active archive source link, a matching current business-row path, a present blob, and `akp_can_view_project(project_id)`. Payment receipts also respect the existing receipt endpoint role allowlist. Results open the existing permission-checked endpoints; archive IDs do not authorize downloads.
+- `modules/projects/lib_project_document_archive.php`: adds a transaction-bound project-file archive adapter. It verifies source ownership/path, storage-root containment, actual MIME/size/SHA-256, creates or reuses a verified blob, adds immutable versions, updates source links, and writes archive events. A source-unlink helper preserves physical bytes.
+- `modules/projects/view.php`: wires archive registration to general document uploads/replacements, expense receipts, labor-payment receipts, and funding-return proof. Replacement no longer deletes the prior file. Explicit deletion paths unlink archive source links and retain archived bytes.
+- `modules/projects/view_fm.php`: wires registration to payment-receipt upload/replacement and preserves previous receipt bytes after replacement.
+
+The catalogue migration is already applied in the user's local `ahl_el_kheir` database. Existing-document backfill remains a one-time migration operation, not a routine user workflow. The last reviewed dry-run reported 16 references and 16 planned registrations, with 3 missing-file references (test artifacts) and no invalid paths or metadata conflicts. Missing files must not be recreated.
+
+**Status: SOURCE IMPLEMENTATION COMMITTED; LOCAL LINT / RUNTIME VERIFICATION PENDING.** Do not describe the feature as complete until PHP lint passes for the changed files, the user applies the reviewed backfill and confirms idempotence, and browser tests prove role-scoped search, authorized opening, denied cross-project access, upload registration, replacement version preservation, and receipt replacement behavior.
