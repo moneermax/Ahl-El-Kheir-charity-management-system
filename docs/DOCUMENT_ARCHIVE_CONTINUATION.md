@@ -134,3 +134,22 @@ This is a design/discovery checkpoint, not an implementation-complete claim. The
 ### Next exact action
 
 Finish the remaining source/schema matrix for all source tables and deletion/reset workflows, then compare it with `database/ahl_el_kheir.sql` and the actual `ahl_el_kheir` schema before proposing explicit migration DDL. Do not implement the archive tables or change file lifecycle until that schema contract and the pilot category are justified by evidence.
+
+
+## Additional source review — 2026-10-23
+
+Further targeted inspection covered project funding evidence, disbursement reopening/reset flows, FINA settlement evidence retrieval, and salary-advance evidence replacement.
+
+- **Project funding payment evidence** (`modules/projects/view_fm.php`): financial-manager-only upload/edit handlers validate detected MIME (PDF/JPG/PNG), enforce 10 MB, write beneath `storage/documents/projects/<project_id>/payments/`, and remove newly uploaded files when the DB transaction fails. Replacing an existing receipt commits the new path and then unlinks the old file. This is another version-history integration point. The authenticated route `modules/projects/project_payment_receipt.php` constrains the path to that project's payments directory.
+- **Project evidence reset** (`modules/projects/project_funding_accounting.php`): pending `project_payment_evidence` rows can be deleted when funding allocations are removed. The source matrix must distinguish a pending row with no file from a documented row that carries receipt bytes; deletion behavior must not be generalized without reviewing those state predicates.
+- **Disbursement reopen** (`modules/accounting/disbursements.php`): reopening a family item sets `disbursement_items.receipt_file_path = NULL` as part of the DB reset. The inspected branch does not unlink the former receipt path there, so that path may become unreferenced by this column; confirm all other references before any cleanup. Final batch receipt upload writes a new path to `monthly_disbursements.receipt_file_path`; the inspected branch does not preserve an explicit prior-version reference.
+- **FINA settlement evidence serving** (`modules/accounting/fina_settlement_evidence.php`): access is restricted to the financial manager; retrieval resolves a settlement ID or stored path against `fina_settlements.evidence_path`, then constrains the canonical path to `storage/receipts/fina_settlements/`. It uses extension-derived MIME and private cache headers, not detected MIME or `no-store`.
+- **Salary advance evidence**: both payment receipt and direct repayment evidence are single-current-row replacement workflows. They validate detected MIME and size, write a new uniquely named file, update/insert metadata and audit inside a transaction, remove the new file on DB failure, and unlink the previous file after successful commit. This is robust failure cleanup for the current model, but it intentionally does not preserve prior file versions.
+
+### Schema inspection limitation and boundary
+
+The actual local database inventory supplied during this task confirms the listed source tables, path columns, key relationships, and column types. The repository SQL dump `database/ahl_el_kheir.sql` was requested through the repository file reader, but that reader returned an empty body for this large SQL file; no claim is made that its CREATE TABLE definitions or indexes were independently parsed in this pass. Before authoring migration DDL, retrieve the relevant CREATE TABLE definitions/indexes from a supported source (the actual `ahl_el_kheir` database output is acceptable) and compare them with the migration conventions. No DDL has been drafted or applied.
+
+### Updated next action
+
+Complete a concise matrix of each source table's file columns, source-record authorization adapter, upload validation, replacement behavior, delete/reset behavior, and serving route. Then finalize the catalogue/version/link/audit schema against verified CREATE TABLE and index definitions. Continue to register existing files in place first; no physical moves, deletes, or schema changes during discovery.
