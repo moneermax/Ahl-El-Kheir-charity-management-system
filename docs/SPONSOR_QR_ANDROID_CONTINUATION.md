@@ -126,3 +126,16 @@ Deployment and verification gates still open: the latest Actions run must pass; 
 
 
 Additional header integration: the shared authenticated system header now includes a “تنزيل تطبيق QR” link to the same in-system endpoint, so users can obtain the APK before installing the scanner. This link also requires the fixed APK file to be present in storage/apps on the deployed server.
+
+
+## 2026-10-23 — Corrected portrait constraint for ZXing capture screen
+
+Physical-device acceptance exposed that the prior portrait change was insufficient: the user installed the APK and reported the scanning camera still opened horizontally. Source inspection identified the distinction: `.MainActivity` is the launcher activity, while ZXing launches its own `com.journeyapps.barcodescanner.CaptureActivity`. `ScanOptions.setOrientationLocked(true)` locks the capture screen to the current orientation; it does not itself force portrait.
+
+Correction committed on `main`:
+- `android/sponsor-qr-scanner/app/src/main/AndroidManifest.xml` now explicitly declares ZXing's `CaptureActivity` with `android:screenOrientation="portrait"`, in addition to the existing portrait lock on `.MainActivity`.
+- Android README now explains both the separate capture activity and the real-device acceptance check.
+
+Commits: `2c9f85f892f83012bc14f3583368a19dc856aba7` (manifest fix), `3f078f932fec323a2d56c665a0252b6ec18ad238` (documentation).
+
+Verification boundary: source change is committed, but a fresh GitHub Actions APK build and physical-phone retest are still required. Do not copy the older APK back to `storage/apps` or mark orientation fixed until the new artifact passes CI and the phone's camera capture screen stays portrait when the device is rotated.
