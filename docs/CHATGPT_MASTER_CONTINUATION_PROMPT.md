@@ -1786,3 +1786,8 @@ Then run `tools/backfill_project_document_archive.php --apply` only against the 
 ### Archive follow-up — version-aware Global Search (2026-10-23)
 
 Historical versions are now listed separately in the existing Global Search when the archive blob is present and the source link remains active. Each row indicates whether it is the current or a previous version. Retrieval uses `modules/projects/project_archive_version.php`, which applies project authorization, the payment-receipt role allowlist, storage containment and SHA-256/size checks. Add this endpoint to the PHP lint list. Runtime verification is still pending; do not call the feature complete yet.
+
+
+### Archive follow-up — retained deleted-source records (2026-10-23)
+
+Global Search now includes present versions attached to unlinked source links when the original business row has been deleted. It derives the project association from archive event metadata and still applies `akp_can_view_project()` plus the payment receipt role allowlist. This source change is not yet runtime verified.
