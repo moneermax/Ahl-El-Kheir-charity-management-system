@@ -422,6 +422,17 @@ function ak_ai_local_answer(string $question, string $role, string $root): ?arra
     $flush();
     $normalizedQuestion = ak_ai_normalize($question);
 
+    // VGM group/nanny assignment is an internal workflow; answer only for roles authorized by the source page.
+    if (in_array(strtolower(trim($role)), ['vice_general_manager', 'vgm'], true)
+        && str_contains($normalizedQuestion, 'حاضن')
+        && (str_contains($normalizedQuestion, 'توزيع') || str_contains($normalizedQuestion, 'الاسر') || str_contains($normalizedQuestion, 'مجموعه') || str_contains($normalizedQuestion, 'مجموعات'))) {
+        return [
+            'answer' => 'افتح «إدارة مجموعات الأيتام» من صلاحيات نائب المدير العام (VGM). أنشئ مجموعة كمسودة وافتحها، ثم أضف الأيتام المؤهلين من الأسر النشطة (يشترط أن يكون اليتيم نشطاً وله كفالة نشطة). من قسم «الحاضنة الحالية وتعيين الحاضنة» اختر الحاضنة واضغط «تعيين». التعيين يكون للمجموعة وليس للأسرة مباشرة. أضف الأعضاء قبل تفعيل المجموعة؛ ولا يمكن تعديل العضوية بعد إنشاء صرف الشهر الحالي.',
+            'sources' => ['AHL_EL_KHEIR_EMPLOYEE_TASKS_AND_USER_GUIDE.md'],
+            'mode' => 'local_guide',
+        ];
+    }
+
     // Common Nanny navigation question: answer deterministically from the reviewed local guide.
     // This avoids relying on keyword ranking for a high-frequency, role-specific task.
     if (strtolower(trim($role)) === 'nanny'
