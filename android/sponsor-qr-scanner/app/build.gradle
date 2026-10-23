@@ -6,6 +6,12 @@ android {
     namespace "org.ahlelkhier.qrscanner"
     compileSdk 35
 
+    // Android Gradle Plugin 8 disables BuildConfig generation by default.
+    // MainActivity uses BuildConfig.DEBUG to separate local HTTP testing from HTTPS release use.
+    buildFeatures {
+        buildConfig true
+    }
+
     defaultConfig {
         applicationId "org.ahlelkhier.qrscanner"
         minSdk 24
