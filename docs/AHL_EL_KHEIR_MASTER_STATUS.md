@@ -3937,3 +3937,6 @@ Commit 87c37e4238858b6e126382f41476db8f49929e18 changes Gemini 3.5 Transcribe to
 
 ## 2026-10-23 — AI assistant text and voice status
 Text chat received a source review. The general-text fallback default now uses `gemini-3.5-flash-lite`; the microphone UI is disabled and marked as future development. Local guide retrieval, consent/filter flow, and user-scoped history were reviewed at source level. Local PHP lint and browser/runtime acceptance remain pending, including checking whether `GEMINI_MODEL` or `hosting.php` overrides the default. Do not claim runtime verification yet.
+
+## 2026-10-23 — AI assistant navigation continuity
+`includes/ai_assistant_widget.php` now persists the active conversation ID in tab-scoped `sessionStorage`, restores that conversation from the existing user-scoped history endpoint after page navigation, resets the active ID on explicit New chat, and closes the panel on mouse leave. Commits `9db6c37945f2af5e775dc4f9bf651acee7d657b7` and `ca5a1d8bb34e0325a5ea2da0e67b16ea7fd723cb`. No schema change. Local syntax/browser verification is pending; do not claim runtime acceptance until the user tests navigation and mouseleave.
