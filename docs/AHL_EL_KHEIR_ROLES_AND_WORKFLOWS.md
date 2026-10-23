@@ -154,3 +154,7 @@ The unfinished attendance same-page POST scroll-jump issue remains separate and 
 ## 2026-10-20 — Job-description source mapping
 
 The HR job-description catalogue may now hold separate drafts for the same employee position when the linked user accounts have different `roles.code` values. This is contextual evidence of which system workflows are available, not a grant of authority and not proof that the employee performs every accessible action. The documented workflow boundaries above remain authoritative: FM owns financial review and financial closure; VGM owns sponsor assignment/reassignment; PS performs assigned project execution and non-financial updates; HR roles process employee/attendance/leave/payroll workflows; Administration handles sponsor requests/Winback within its documented scope. HR and the direct supervisor must confirm actual day-to-day responsibilities before approving any description.
+
+## 2026-10-23 — VGM orphan-group and nanny assignment workflow
+
+The VGM manages orphan groups through `modules/deputy_gm/groups.php`: create a group, add eligible active children from active families with active sponsorship, assign a nanny to the group, then activate the group when ready. The application assigns the nanny to a group, not directly to a family. Membership changes are blocked after a disbursement exists for the current month, and historical membership/assignment records are preserved. These are VGM-only actions; other roles must use their authorized views and must not be given instructions implying they can perform this workflow.
