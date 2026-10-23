@@ -1816,3 +1816,8 @@ The user clarified that the receipts they expected to see are uploaded by a nann
 - Keep **end-to-end acceptance** open until the user tests the existing Global Search in `http://localhost:8081/AhlElKheir/`: find a known present project document and receipt, open current and previous versions after a replacement, and confirm an unauthorized cross-project request is denied. Do not use the three missing files as test fixtures.
 - Treat nanny/family sponsorship payment proofs as an explicit scope extension, not as a defect that can be solved by bypassing current project receipt permissions.
 - Do not claim the entire document-archiving system is done. At the start of the next repository task, reread the canonical docs and inspect the real repository state before proceeding.
+
+
+## 2026-10-23 — Active task: sponsor QR + Android scanner APK
+
+Continue from `docs/SPONSOR_QR_ANDROID_CONTINUATION.md`. Source-only work has added local TCPDF QR generation to sponsor profile/orphan sponsorship displays and a native Android ZXing/WebView companion with a GitHub Actions debug-APK workflow. QR payloads contain only the existing permission-checked sponsor profile URL; the existing PHP authentication and scope checks remain authoritative. No schema migration was added. PHP lint, Android build, Apache/browser, physical-device, count-reconciliation and authorization runtime checks are still pending. The previous project archive acceptance gap remains separate.
