@@ -57,3 +57,12 @@ The debug build permits HTTP only for localhost/private-network IP addresses to 
 - Before the download button can serve an APK, an administrator must copy the built APK to `storage/apps/ahl-el-kheir-sponsor-qr-scanner.apk` on the target server. The `storage/.htaccess` deny rule remains in place; downloads go through the authenticated PHP endpoint.
 - For a physical phone on local Wi-Fi, open the website on the computer using the computer's LAN IP (for example, `http://192.168.18.9:8081/AhlElKheir/`) before opening the sponsor profile and displaying its QR. Do not generate a phone-scannable QR from a `localhost` page: `localhost` points to the device doing the request, so the phone cannot use the laptop's `localhost` address.
 - Keep the APK's configured base URL identical to the host, port, and application path used to generate the QR. The scanner intentionally rejects different hosts rather than weakening its origin checks.
+
+
+## 2026-10-23 — Minimal main screen and enforced portrait capture
+
+Physical-device testing found the installed scanner still opened in landscape. The first attempt to explicitly set ZXing's separate `CaptureActivity` to portrait then failed CI because ZXing's own manifest declares `sensorLandscape`. The app manifest now uses `tools:replace="android:screenOrientation"` to override that library declaration; this override must be present in the APK for the portrait fix to take effect.
+
+The main screen now removes the blue branding/download header and connection-status strip. It keeps the single **مسح رمز QR للكفيل** button and the WebView below it because the WebView is required for the existing website login and sponsor profile. Long-press the scan button to open server settings. The existing website header still provides the APK download link, and downloads triggered inside the WebView remain supported.
+
+Acceptance remains open until CI produces a fresh APK and the user installs it and verifies that the camera stays portrait when the phone is rotated.
