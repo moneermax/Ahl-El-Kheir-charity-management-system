@@ -3948,3 +3948,11 @@ The text-chat implementation task is closed at the source/documentation boundary
 The owner confirmed a local-guide text answer works. Local PHP lint and the cross-page/mouseleave browser acceptance were not executed by this repository-editing session; do not describe those checks as passed unless the owner confirms them. If still outstanding, run the two PHP syntax checks and the short browser acceptance checklist documented in `docs/CHATGPT_AI_ASSISTANT_CONTINUATION.md`. Voice remains deferred and must not be folded into this task.
 
 This is a completed implementation checkpoint, not a direction to reopen AI chat. Begin the next session by inspecting the canonical documents and current repository state to choose the next open task from evidence.
+
+## 2026-10-23 — AI assistant account isolation and VGM guidance correction
+
+A report from a second user exposed that active conversation storage was not isolated per account in the same browser tab. The server correctly rejected a conversation belonging to another user; the widget's key was shared and the failure path retained the stale ID. Commit `ad6d2c7ede03b7e665ff11b74af55949818b5a76` scopes the key by signed-in user ID and clears the active pointer on restore failure.
+
+The reported question about assigning families to nannies was missing from local retrieval. `modules/deputy_gm/groups.php` confirms VGM-only group management, eligible child membership, and nanny-to-group assignment. Commits `fb030a08ba65093b51cf31cba4979189457e87bf` and `4fe4a98dc3bcf40e5122c04f069b1f3a40cb99dc` add the guide entry and a role-restricted deterministic answer. No schema change.
+
+Status: source corrections committed; PHP lint and browser/runtime acceptance are pending. Do not claim full verification until account switching, same-user history, the VGM answer, and non-VGM role restrictions pass locally.
