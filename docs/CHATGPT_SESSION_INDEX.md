@@ -1822,3 +1822,10 @@ A procedural adapter, `modules/projects/lib_project_document_archive.php`, regis
 Automatic registration was wired in `modules/projects/view.php` for general project-document uploads/replacements, project expense receipts, labor-payment receipts, and funding-return proof; deletion paths mark archive source links unlinked and preserve physical bytes. `modules/projects/view_fm.php` registers uploaded/replaced project payment evidence and no longer unlinks the previous receipt after replacement. The existing business authorization, validation, and audit flows remain in place.
 
 **Verification boundary:** these are repository-source changes only. PHP lint and Apache/browser/database runtime verification have not yet been run after these edits. The local archive migration was previously verified applied. Existing records still need the reviewed one-time metadata backfill; the last local dry-run reported 16 references, 16 planned registrations, 3 missing file references, and no path/blob metadata conflicts. Do not claim the feature is runtime verified until the user runs the specified lint checks, applies the backfill, confirms idempotence, and tests authorized/unauthorized search and upload/replacement flows.
+
+
+### Archive pilot follow-up — historical versions added to Global Search (2026-10-23)
+
+A follow-up source change now returns each present version for active project archive links, labels the current version versus prior versions, and opens the selected version through `modules/projects/project_archive_version.php`. That endpoint resolves the source adapter, re-checks project authorization and the payment-receipt role allowlist, constrains storage to the project directory, and verifies stored byte size/SHA-256 before streaming. This supersedes the immediately previous note that historical versions were not yet separately searchable.
+
+Runtime remains pending. Add `modules/projects/project_archive_version.php` to the lint list and test access to both current and previous versions, including a denied cross-project request.
