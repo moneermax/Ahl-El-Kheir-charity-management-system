@@ -76,3 +76,12 @@ Workflow commit `84cb9fe4621b0043c8546da24f74530e49c70749` removes the extra And
 The Android build reached Gradle task `:app:checkDebugDuplicateClasses` and failed, but the log excerpt supplied by the user did not name the duplicate classes. ZXing is only a hypothesis; do not change/remove dependencies until class names or dependency evidence identify the overlap.
 
 Workflow commit `36f464b6d6975c65499498cb14c19742ba01745e` changes the build step to run `:app:checkDebugDuplicateClasses --stacktrace --info`, print matching error lines with context, and upload `duplicate-classes.log` as artifact `sponsor-qr-scanner-build-diagnostic` on failure. This diagnostic workflow has not yet been run/verified. Next action: open the newest Actions run and inspect the printed duplicate class names, or download the diagnostic artifact. Fix only the dependency conflict established by that evidence.
+
+
+## 2026-10-23 — Kotlin duplicate-class root cause and targeted fix
+
+Workflow job `120438823455` (run `39961045578`) confirmed that the duplicate classes are between `kotlin-stdlib:1.8.22` and the legacy `kotlin-stdlib-jdk7:1.6.21` / `kotlin-stdlib-jdk8:1.6.21` artifacts. Gradle dependency insight showed the old split artifacts arriving transitively through AndroidX lifecycle and `kotlinx-coroutines-android:1.6.4`; the newer standard library already contains those JDK extension classes.
+
+Targeted fix committed on main: `777f9b180ce61dade8c96649a8138e7f4bb85880`. `android/sponsor-qr-scanner/app/build.gradle` now excludes only the obsolete `kotlin-stdlib-jdk7` and `kotlin-stdlib-jdk8` modules from Gradle configurations, retaining AppCompat and ZXing. This is a source-level fix; it is **not verified until the next GitHub Actions run passes duplicate-class validation and assembles the APK**.
+
+Next: inspect the run triggered by this commit. If duplicate-class validation passes, verify APK artifact upload. Do not report the APK as built until that artifact exists.
