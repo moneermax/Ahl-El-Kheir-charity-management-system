@@ -2,6 +2,7 @@
 // modules/projects/view_fm.php - Dedicated Financial Manager project review
 require_once dirname(__DIR__, 2) . '/modules/projects/project_lib.php';
 require_once dirname(__DIR__, 2) . '/modules/projects/project_funding_accounting.php';
+require_once dirname(__DIR__, 2) . '/modules/projects/lib_project_document_archive.php';
 require_once dirname(__DIR__, 2) . '/modules/accounting/lib.php';
 require_once dirname(__DIR__, 2) . '/modules/accounting/lib_transaction_review.php';
 require_once dirname(__DIR__, 2) . '/modules/hr/lib_employee_incentives.php';
@@ -244,6 +245,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $relative='storage/documents/projects/'.$id.'/payments/'.$name;
                 $changed = dbExecute("UPDATE project_payment_evidence SET status='documented',reference_number=?,receipt_file_path=?,receipt_original_name=?,receipt_mime_type=?,documented_by=?,documented_at=NOW() WHERE id=? AND project_id=? AND status='pending'",[$reference!==''?$reference:null,$relative,$file['name'],$mime,akp_user_id(),$paymentId,$id]);
                 if ($changed !== 1) throw new RuntimeException('تعذر توثيق إيصال التحويل؛ ربما تم توثيقه في طلب متزامن.');
+                akp_archive_register_project_file('project_payment_evidence', $paymentId, $id, $relative, (string)$file['name'], (string)$mime, (int)$file['size'], 'إيصال دفع المشروع #' . $paymentId);
                 akp_audit('DOCUMENT_PROJECT_PAYMENT_RECEIPT','project_payment_evidence',$paymentId,['status'=>'pending'],['status'=>'documented','payment_method'=>$payment['payment_method'],'reference'=>$reference,'receipt'=>$relative]);
                 dbExecute('COMMIT');
             } catch (Throwable $e) {
@@ -297,6 +299,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $setParts[]='receipt_mime_type=?'; $params[]=$newMime;
                     $params[]=$paymentId; $params[]=$id;
                     dbExecute("UPDATE project_payment_evidence SET ".implode(',',$setParts)." WHERE id=? AND project_id=?",$params);
+                    if ($storedPaymentReceiptPath) {
+                        akp_archive_register_project_file('project_payment_evidence', $paymentId, $id, (string)$newFilePath, (string)$newOriginal, (int)filesize($storedPaymentReceiptPath), 'إيصال دفع المشروع #' . $paymentId);
+                    }
                     akp_audit('EDIT_PROJECT_PAYMENT_EVIDENCE','project_payment_evidence',$paymentId,['payment_date'=>$payment['payment_date'],'reference'=>$payment['reference_number'],'receipt'=>$payment['receipt_file_path']],['payment_date'=>$paymentDate,'reference'=>$reference,'receipt'=>$newFilePath]);
                 }
                 dbExecute('COMMIT');
@@ -305,7 +310,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($storedPaymentReceiptPath && is_file($storedPaymentReceiptPath)) @unlink($storedPaymentReceiptPath);
                 throw $e;
             }
-            if ($oldPaymentReceiptPath && $storedPaymentReceiptPath && $oldPaymentReceiptPath !== $storedPaymentReceiptPath && is_file($oldPaymentReceiptPath)) @unlink($oldPaymentReceiptPath);
+            // The prior receipt remains as an immutable archive version.
             $asyncSuccessMessage='تم تعديل بيانات ومستند الدفع.';
         } elseif ($action === 'fm_confirm_payment_evidence') {
             if (akp_role() !== 'financial_manager') throw new RuntimeException('تأكيد مستندات التمويل النهائي محصور بالمدير المالي.');
