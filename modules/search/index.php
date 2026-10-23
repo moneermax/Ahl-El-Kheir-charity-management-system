@@ -13,6 +13,7 @@ require_once dirname(__DIR__, 2) . '/config/config.php';
 require_once dirname(__DIR__, 2) . '/config/database.php';
 require_once dirname(__DIR__, 2) . '/config/functions.php';
 require_once dirname(__DIR__, 2) . '/config/session.php';
+require_once dirname(__DIR__, 2) . '/config/search_permissions.php';
 
 Session::start();
 if (!Session::isLoggedIn()) {
@@ -27,15 +28,28 @@ $FULL_ACCESS   = ['admin', 'general_manager', 'vice_general_manager', 'financial
 $NO_ACCESS_ALL = ['hr_manager', 'hr_staff'];
 $NO_PAYMENTS   = ['administration', 'social_media'];
 
-$q      = trim((string)($_GET['q'] ?? ''));
-$type   = $_GET['type'] ?? 'all';
+$q = trim((string)($_GET['q'] ?? ''));
+$requestedType = trim((string)($_GET['type'] ?? ''));
+$roleAllowedTypes = ak_search_allowed_types($role);
+if ($requestedType === '') {
+    $type = ak_search_can_type('all', $role) ? 'all' : (string)($roleAllowedTypes[0] ?? '');
+    if ($type === '') { http_response_code(403); exit('You are not authorized to search this data type.'); }
+    $_GET['type'] = $type;
+} else {
+    $type = strtolower($requestedType);
+    if (!in_array($type, ['all', 'families', 'sponsors', 'sponsorships', 'payments', 'documents'], true)) {
+        http_response_code(400); exit('Invalid search type.');
+    }
+    if (!ak_search_can_type($type, $role)) {
+        http_response_code(403); exit('You are not authorized to search this data type.');
+    }
+}
 $status = trim((string)($_GET['status'] ?? ''));
 $month  = trim((string)($_GET['month'] ?? ''));
 $page   = max(1, (int)($_GET['page'] ?? 1));
 $perPage = 20;
 
-$allowedTypes = ['all', 'families', 'sponsors', 'sponsorships', 'payments'];
-if (!in_array($type, $allowedTypes, true)) { $type = 'all'; }
+$allowedTypes = ['all', 'families', 'sponsors', 'sponsorships', 'payments', 'documents'];
 
 $pageTitle = 'نتائج البحث';
 $active = 'search';
@@ -127,6 +141,7 @@ $allFamilies = [];
 $allSponsors = [];
 $allSponsorships = [];
 $allPayments = [];
+$allDocuments = [];
 $searched = true;
 
 $FAMILY_STATUS_LABELS = ['pending' => 'قيد الانتظار', 'active' => 'نشطة', 'paused' => 'موقوفة', 'completed' => 'مكتملة', 'archived' => 'مؤرشفة', 'inactive' => 'غير نشطة', 'closed' => 'مغلقة'];
@@ -272,6 +287,78 @@ if (!$hasNoAccess) {
     }
 }
 
+
+/* ---------------- Archived project documents ---------------- */
+$canSearchDocuments = ak_search_can_type('documents', $role);
+if ($canSearchDocuments && in_array($type, ['all', 'documents'], true)) {
+    require_once dirname(__DIR__, 2) . '/modules/projects/project_lib.php';
+
+    $archiveSql = "
+        SELECT archive_rows.*
+        FROM (
+            SELECT l.source_table, l.source_record_id, l.source_path_column,
+                   l.document_id, l.current_version_id, l.source_path_snapshot,
+                   v.original_name, v.mime_type_snapshot, v.created_at AS version_created_at,
+                   b.storage_status, d.document_kind,
+                   COALESCE(NULLIF(d.display_title, ''), NULLIF(pd.title, ''), v.original_name) AS display_title,
+                   p.id AS project_id, p.project_code, p.name AS project_name,
+                   pd.document_type AS source_category
+            FROM document_archive_source_links l
+            INNER JOIN document_archive_documents d ON d.id = l.document_id
+            INNER JOIN document_archive_versions v ON v.id = l.current_version_id AND v.document_id = l.document_id
+            INNER JOIN document_archive_blobs b ON b.id = v.blob_id
+            INNER JOIN project_documents pd ON l.source_table = 'project_documents'
+                AND l.source_path_column = 'file_path'
+                AND l.source_record_id = pd.id
+                AND l.source_path_snapshot = pd.file_path
+            INNER JOIN other_projects p ON p.id = pd.project_id
+            WHERE l.link_status = 'active' AND b.storage_status = 'present'
+
+            UNION ALL
+
+            SELECT l.source_table, l.source_record_id, l.source_path_column,
+                   l.document_id, l.current_version_id, l.source_path_snapshot,
+                   v.original_name, v.mime_type_snapshot, v.created_at AS version_created_at,
+                   b.storage_status, d.document_kind,
+                   COALESCE(NULLIF(d.display_title, ''), CONCAT('إيصال دفع #', pe.id)) AS display_title,
+                   p.id AS project_id, p.project_code, p.name AS project_name,
+                   pe.payment_method AS source_category
+            FROM document_archive_source_links l
+            INNER JOIN document_archive_documents d ON d.id = l.document_id
+            INNER JOIN document_archive_versions v ON v.id = l.current_version_id AND v.document_id = l.document_id
+            INNER JOIN document_archive_blobs b ON b.id = v.blob_id
+            INNER JOIN project_payment_evidence pe ON l.source_table = 'project_payment_evidence'
+                AND l.source_path_column = 'receipt_file_path'
+                AND l.source_record_id = pe.id
+                AND l.source_path_snapshot = pe.receipt_file_path
+            INNER JOIN other_projects p ON p.id = pe.project_id
+            WHERE l.link_status = 'active'
+                AND b.storage_status = 'present'
+                AND pe.status = 'documented'
+                AND pe.receipt_file_path IS NOT NULL
+                AND TRIM(pe.receipt_file_path) <> ''
+        ) archive_rows
+        WHERE (? = '' OR archive_rows.display_title LIKE ?
+            OR archive_rows.original_name LIKE ?
+            OR archive_rows.project_code LIKE ?
+            OR archive_rows.project_name LIKE ?
+            OR archive_rows.document_kind LIKE ?
+            OR archive_rows.source_category LIKE ?)
+        ORDER BY archive_rows.version_created_at DESC, archive_rows.document_id DESC
+    ";
+    $archiveLike = '%' . $q . '%';
+    $archiveCandidates = dbFetchAll($archiveSql, [
+        $q, $archiveLike, $archiveLike, $archiveLike, $archiveLike, $archiveLike, $archiveLike
+    ]);
+
+    // Archive links are metadata pointers, never authorization grants.
+    foreach ($archiveCandidates as $archiveRow) {
+        if (akp_can_view_project((int)$archiveRow['project_id'])) {
+            $allDocuments[] = $archiveRow;
+        }
+    }
+}
+
 function paginateArray($items, $page, $perPage) {
     $total = count($items);
     $offset = ($page - 1) * $perPage;
@@ -290,8 +377,15 @@ if ($type === 'all') {
     $sponsorsData = paginateArray($allSponsors, $page, $perPage);
     $sponsorshipsData = paginateArray($allSponsorships, $page, $perPage);
     $paymentsData = paginateArray($allPayments, $page, $perPage);
+    $documentsData = paginateArray($allDocuments, $page, $perPage);
 } else {
-    if ($type === 'families') {
+    if ($type === 'documents') {
+        $familiesData = ['data' => [], 'total' => 0, 'page' => 1, 'perPage' => $perPage, 'totalPages' => 0];
+        $sponsorsData = ['data' => [], 'total' => 0, 'page' => 1, 'perPage' => $perPage, 'totalPages' => 0];
+        $sponsorshipsData = ['data' => [], 'total' => 0, 'page' => 1, 'perPage' => $perPage, 'totalPages' => 0];
+        $paymentsData = ['data' => [], 'total' => 0, 'page' => 1, 'perPage' => $perPage, 'totalPages' => 0];
+        $documentsData = paginateArray($allDocuments, $page, $perPage);
+    } elseif ($type === 'families') {
         $familiesData = paginateArray($allFamilies, $page, $perPage);
         $sponsorsData = ['data' => [], 'total' => 0, 'page' => 1, 'perPage' => $perPage, 'totalPages' => 0];
         $sponsorshipsData = ['data' => [], 'total' => 0, 'page' => 1, 'perPage' => $perPage, 'totalPages' => 0];
@@ -314,16 +408,19 @@ if ($type === 'all') {
     }
 }
 
+if (!isset($documentsData)) { $documentsData = paginateArray($allDocuments, $page, $perPage); }
 $families = $familiesData['data'];
 $sponsors = $sponsorsData['data'];
 $sponsorships = $sponsorshipsData['data'];
 $payments = $paymentsData['data'];
+$documents = $documentsData['data'];
 
 $resultCounts = [
     'families' => $familiesData['total'],
     'sponsors' => $sponsorsData['total'],
     'sponsorships' => $sponsorshipsData['total'],
     'payments' => $paymentsData['total'],
+    'documents' => $documentsData['total'],
 ];
 $totalResults = array_sum($resultCounts);
 
@@ -332,8 +429,9 @@ if ($type === 'families') $currentTotalPages = $familiesData['totalPages'];
 elseif ($type === 'sponsors') $currentTotalPages = $sponsorsData['totalPages'];
 elseif ($type === 'sponsorships') $currentTotalPages = $sponsorshipsData['totalPages'];
 elseif ($type === 'payments') $currentTotalPages = $paymentsData['totalPages'];
+elseif ($type === 'documents') $currentTotalPages = $documentsData['totalPages'];
 else {
-    $currentTotalPages = max($familiesData['totalPages'], $sponsorsData['totalPages'], $sponsorshipsData['totalPages'], $paymentsData['totalPages']);
+    $currentTotalPages = max($familiesData['totalPages'], $sponsorsData['totalPages'], $sponsorshipsData['totalPages'], $paymentsData['totalPages'], $documentsData['totalPages']);
 }
 
 include dirname(__DIR__, 2) . '/includes/header.php';
@@ -368,7 +466,7 @@ body.theme-dark .filter-bar { background: #2d3748; }
         <?php echo $totalResults; ?> نتيجة
         <?php if ($type !== 'all'): ?>
             في <?php
-                $typeNames = ['families' => 'الأسر', 'sponsors' => 'الكفلاء', 'sponsorships' => 'الكفالات', 'payments' => 'الدفعات الشهرية'];
+                $typeNames = ['families' => 'الأسر', 'sponsors' => 'الكفلاء', 'sponsorships' => 'الكفالات', 'payments' => 'الدفعات الشهرية', 'documents' => 'مستندات المشاريع'];
                 echo e($typeNames[$type] ?? $type);
             ?>
         <?php endif; ?>
@@ -398,6 +496,7 @@ body.theme-dark .filter-bar { background: #2d3748; }
                  'sponsors' => 'الكفلاء (' . $resultCounts['sponsors'] . ')',
                  'sponsorships' => 'الكفالات (' . $resultCounts['sponsorships'] . ')'];
         if (!$hasNoPaymentsAccess) { $tabs['payments'] = 'الدفعات الشهرية (' . $resultCounts['payments'] . ')'; }
+        if ($canSearchDocuments) { $tabs['documents'] = 'مستندات المشاريع (' . $resultCounts['documents'] . ')'; }
         foreach ($tabs as $tv => $tl):
             $qs = http_build_query(['type' => $tv, 'q' => $q, 'status' => $status, 'month' => $month, 'page' => 1]);
         ?>
@@ -518,6 +617,40 @@ body.theme-dark .filter-bar { background: #2d3748; }
             </tr><?php endforeach; ?></tbody>
         </table></div>
         <?php if ($sponsorshipsData['totalPages'] > 1): ?><?php echo renderPagination($sponsorshipsData['totalPages'], $page, 'sponsorships', $q, $status, $month); ?><?php endif; ?>
+        </div>
+    </div>
+    <?php endif; ?>
+
+
+    <!-- Archived project documents -->
+    <?php if (in_array($type, ['all', 'documents'], true) && $canSearchDocuments && !empty($documents)): ?>
+    <div class="card mb-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <span><i class="fas fa-box-archive me-2"></i>مستندات المشاريع المؤرشفة (<?php echo $documentsData['total']; ?>)</span>
+            <?php if ($type === 'all' && $resultCounts['documents'] > 0): ?><a href="?type=documents&q=<?php echo urlencode($q); ?>&page=1" class="small">عرض الكل</a><?php endif; ?>
+        </div>
+        <div class="card-body p-0"><div class="table-container"><table class="table table-hover align-middle mb-0">
+            <thead><tr><th>اسم المستند</th><th>اسم الملف</th><th>المشروع</th><th>التصنيف</th><th>تاريخ الأرشفة</th><th></th></tr></thead>
+            <tbody>
+            <?php foreach ($documents as $doc): ?>
+                <?php
+                    $documentUrl = $doc['source_table'] === 'project_payment_evidence'
+                        ? APP_URL . 'modules/projects/project_payment_receipt.php?id=' . (int)$doc['source_record_id']
+                        : APP_URL . 'modules/projects/serve_project_document.php?id=' . (int)$doc['source_record_id'];
+                    $documentKindLabel = $doc['document_kind'] === 'project_payment_receipt' ? 'إيصال دفع' : 'وثيقة مشروع';
+                ?>
+                <tr>
+                    <td><?php echo e((string)$doc['display_title']); ?></td>
+                    <td><?php echo e((string)$doc['original_name']); ?></td>
+                    <td><?php echo e((string)$doc['project_code'] . ' — ' . (string)$doc['project_name']); ?></td>
+                    <td><?php echo e($documentKindLabel); ?></td>
+                    <td><?php echo e((string)$doc['version_created_at']); ?></td>
+                    <td><a target="_blank" rel="noopener" href="<?php echo e($documentUrl); ?>" class="btn btn-sm btn-outline-primary" aria-label="فتح المستند"><i class="fas fa-eye"></i></a></td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table></div>
+        <?php if ($documentsData['totalPages'] > 1): ?><?php echo renderPagination($documentsData['totalPages'], $page, 'documents', $q, '', ''); ?><?php endif; ?>
         </div>
     </div>
     <?php endif; ?>
