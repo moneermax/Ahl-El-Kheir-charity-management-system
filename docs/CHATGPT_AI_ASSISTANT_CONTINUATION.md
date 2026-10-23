@@ -223,3 +223,11 @@ Fixes committed on `main`:
 - `4fe4a98dc3bcf40e5122c04f069b1f3a40cb99dc`: provide a deterministic local answer for VGM/vice-GM roles only. It explains that assignment is to a group, children must be active and have active sponsorship, and current-month disbursement restricts membership edits. Other roles do not receive the VGM-only instructions.
 
 No schema or database changes. Source edits are committed, but PHP lint and real-browser testing have not been executed by this repository-editing session. Required acceptance: switch between two accounts in the same browser tab and confirm no cross-account restore attempt/error; confirm each account can still select its own saved history; as VGM, ask `كيف يمكنني توزيع الأسر على الحاضنات` and verify the documented local answer; as a non-VGM role, verify the VGM-only procedure is not returned. Also test a normal same-user navigation restore and a failed restore followed by a page reload. Do not claim runtime PASS before these checks.
+
+## 2026-10-23 — Account-isolated restore and VGM assignment guidance
+
+A second user reported a stale-conversation restore error and an unanswered question about assigning families to nannies. Source review found that the tab-scoped `sessionStorage` key was shared by all accounts, while the server correctly restricts conversation history to its owner. The failed restore also left the old ID stored. Commit `ad6d2c7ede03b7e665ff11b74af55949818b5a76` namespaces the key by signed-in user ID and clears the active pointer after restore failure.
+
+The approved source `modules/deputy_gm/groups.php` confirms that VGM manages groups, adds eligible active children from active families with active sponsorship, and assigns a nanny to a group. The employee guide documents this flow (commit `fb030a08ba65093b51cf31cba4979189457e87bf`); the assistant now answers this question deterministically for VGM/vice-GM roles only (commit `4fe4a98dc3bcf40e5122c04f069b1f3a40cb99dc`). No schema changes.
+
+Local PHP lint and browser acceptance remain pending. Test account switching in the same browser, each account's own saved history, the VGM Arabic assignment question, and that non-VGM roles do not receive VGM-only instructions. Do not claim runtime PASS before these checks.
