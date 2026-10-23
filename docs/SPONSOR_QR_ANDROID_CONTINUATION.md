@@ -85,3 +85,8 @@ Workflow job `120438823455` (run `39961045578`) confirmed that the duplicate cla
 Targeted fix committed on main: `777f9b180ce61dade8c96649a8138e7f4bb85880`. `android/sponsor-qr-scanner/app/build.gradle` now excludes only the obsolete `kotlin-stdlib-jdk7` and `kotlin-stdlib-jdk8` modules from Gradle configurations, retaining AppCompat and ZXing. This is a source-level fix; it is **not verified until the next GitHub Actions run passes duplicate-class validation and assembles the APK**.
 
 Next: inspect the run triggered by this commit. If duplicate-class validation passes, verify APK artifact upload. Do not report the APK as built until that artifact exists.
+
+
+## 2026-10-23 — BuildConfig compiler error
+
+Actions job `120446032500` reached `:app:compileDebugJavaWithJavac` and failed because `MainActivity.java` references `BuildConfig.DEBUG` but no `BuildConfig` class was generated. The module uses Android Gradle Plugin `8.7.3`; BuildConfig generation is disabled by default in AGP 8 unless enabled explicitly. Main commit `ecdc34c19f1d5f5c370a95b3a902739693710b7f` adds `buildFeatures { buildConfig true }` in `app/build.gradle`. This diagnosis is based on the module's actual AGP version and source references; the fix still requires a new Actions run to verify Java compilation and APK assembly.
