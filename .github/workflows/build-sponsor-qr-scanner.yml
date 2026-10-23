@@ -50,9 +50,28 @@ jobs:
         with:
           gradle-version: "8.9"
 
-      - name: Build installable debug APK
+      - name: Diagnose duplicate classes and build debug APK
         working-directory: android/sponsor-qr-scanner
-        run: gradle --no-daemon :app:assembleDebug
+        run: |
+          set +e
+          gradle --no-daemon :app:checkDebugDuplicateClasses --stacktrace --info > duplicate-classes.log 2>&1
+          result=$?
+          set -e
+          if [ "$result" -ne 0 ]; then
+            echo "Duplicate-class diagnostic output (matching lines and context):"
+            grep -n -i -E -C 5 "duplicate class|duplicate.*found|Execution failed for task ':app:checkDebugDuplicateClasses'|What went wrong|Could not resolve|failed" duplicate-classes.log | tail -n 160 || tail -n 160 duplicate-classes.log
+            exit "$result"
+          fi
+          gradle --no-daemon :app:assembleDebug
+
+      - name: Upload duplicate-class diagnostic log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sponsor-qr-scanner-build-diagnostic
+          path: android/sponsor-qr-scanner/duplicate-classes.log
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Publish APK artifact
         uses: actions/upload-artifact@v4
