@@ -1,9 +1,12 @@
 package org.ahlelkhier.qrscanner;
 
 import android.annotation.SuppressLint;
+import android.app.DownloadManager;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.text.InputType;
 import android.webkit.CookieManager;
 import android.webkit.WebResourceRequest;
@@ -27,9 +30,11 @@ import java.util.regex.Pattern;
 public class MainActivity extends AppCompatActivity {
     private static final String PREFS_NAME = "ahl_el_kheir_scanner";
     private static final String PREF_BASE_URL = "server_base_url";
+    private static final String APK_DOWNLOAD_PATH = "modules/sponsors/download_scanner_apk.php";
 
     private WebView webView;
     private TextView connectionStatus;
+    private TextView appTitle;
     private String baseUrl = "";
     private String pendingSponsorUrl;
     private boolean pendingSponsorRetried;
@@ -43,8 +48,9 @@ public class MainActivity extends AppCompatActivity {
 
         webView = findViewById(R.id.systemWebView);
         connectionStatus = findViewById(R.id.connectionStatus);
+        appTitle = findViewById(R.id.appTitle);
         Button scanButton = findViewById(R.id.scanButton);
-        Button serverButton = findViewById(R.id.serverButton);
+        Button downloadButton = findViewById(R.id.downloadButton);
 
         scanLauncher = registerForActivityResult(new ScanContract(), result -> {
             String contents = result.getContents();
@@ -70,6 +76,7 @@ public class MainActivity extends AppCompatActivity {
         webView.getSettings().setAllowFileAccess(false);
         webView.getSettings().setAllowContentAccess(false);
         webView.getSettings().setMixedContentMode(android.webkit.WebSettings.MIXED_CONTENT_NEVER_ALLOW);
+        webView.setDownloadListener((url, userAgent, contentDisposition, mimeType, contentLength) -> downloadApk(url));
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
@@ -82,7 +89,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
-                connectionStatus.setText("الخادم: " + baseUrl);
+                connectionStatus.setText("الخادم متصل");
                 if (pendingSponsorUrl == null) return;
 
                 if (url.equals(pendingSponsorUrl)) {
@@ -108,7 +115,12 @@ public class MainActivity extends AppCompatActivity {
         });
 
         scanButton.setOnClickListener(v -> startScan());
-        serverButton.setOnClickListener(v -> showServerDialog(baseUrl, !baseUrl.isEmpty()));
+        downloadButton.setOnClickListener(v -> downloadApk(baseUrl + APK_DOWNLOAD_PATH));
+        // Keep server configuration available without a permanent settings button.
+        appTitle.setOnLongClickListener(v -> {
+            showServerDialog(baseUrl, !baseUrl.isEmpty());
+            return true;
+        });
 
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
         baseUrl = prefs.getString(PREF_BASE_URL, "");
@@ -134,6 +146,44 @@ public class MainActivity extends AppCompatActivity {
         // MainActivity is portrait-locked, so lock the capture screen to portrait too.
         options.setOrientationLocked(true);
         scanLauncher.launch(options);
+    }
+
+    private void downloadApk(String url) {
+        if (baseUrl.isEmpty() || url == null || url.trim().isEmpty()) {
+            Toast.makeText(this, "عنوان النظام غير مضبوط.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        Uri target = Uri.parse(url);
+        if (!isInsideConfiguredApp(target) || !APK_DOWNLOAD_PATH.equals(target.getPath().substring(
+                Math.max(0, target.getPath().lastIndexOf(APK_DOWNLOAD_PATH)))) ) {
+            Toast.makeText(this, "رابط تنزيل غير صالح.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        try {
+            DownloadManager manager = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
+            if (manager == null) {
+                Toast.makeText(this, "خدمة التنزيل غير متاحة على هذا الجهاز.", Toast.LENGTH_LONG).show();
+                return;
+            }
+
+            DownloadManager.Request request = new DownloadManager.Request(target)
+                    .setTitle("ماسح QR - أهل الخير")
+                    .setDescription("تنزيل تطبيق ماسح QR من نظام أهل الخير")
+                    .setMimeType("application/vnd.android.package-archive")
+                    .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                    .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS,
+                            "Ahl-El-Kheir-Sponsor-QR-Scanner.apk");
+
+            String cookie = CookieManager.getInstance().getCookie(url);
+            if (cookie != null && !cookie.isEmpty()) request.addRequestHeader("Cookie", cookie);
+            request.addRequestHeader("User-Agent", webView.getSettings().getUserAgentString());
+            manager.enqueue(request);
+            Toast.makeText(this, "بدأ تنزيل التطبيق. ستجد الملف في مجلد التنزيلات.", Toast.LENGTH_LONG).show();
+        } catch (RuntimeException e) {
+            Toast.makeText(this, "تعذر بدء التنزيل. تحقق من الاتصال بالخادم.", Toast.LENGTH_LONG).show();
+        }
     }
 
     private void showServerDialog(String currentValue, boolean canCancel) {
