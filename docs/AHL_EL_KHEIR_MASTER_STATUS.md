@@ -4040,3 +4040,8 @@ Committed source changes:
 The catalogue migration is already applied in the user's local `ahl_el_kheir` database. Existing-document backfill remains a one-time migration operation, not a routine user workflow. The last reviewed dry-run reported 16 references and 16 planned registrations, with 3 missing-file references (test artifacts) and no invalid paths or metadata conflicts. Missing files must not be recreated.
 
 **Status: SOURCE IMPLEMENTATION COMMITTED; LOCAL LINT / RUNTIME VERIFICATION PENDING.** Do not describe the feature as complete until PHP lint passes for the changed files, the user applies the reviewed backfill and confirms idempotence, and browser tests prove role-scoped search, authorized opening, denied cross-project access, upload registration, replacement version preservation, and receipt replacement behavior.
+
+
+### Archive follow-up — historical versions searchable (2026-10-23; runtime pending)
+
+Global Search now lists all present archive versions for active project source links, labels current versus previous versions, and opens a selected version through `modules/projects/project_archive_version.php`. The endpoint validates the archive version-to-source association, resolves the project from the source record (or archive event metadata for a deleted source row), rechecks `akp_can_view_project()`, applies the existing payment receipt role allowlist, enforces canonical project-storage containment, and verifies the blob size/SHA-256 before serving. Historical version search/retrieval is source-implemented but not yet linted or runtime-tested locally.
