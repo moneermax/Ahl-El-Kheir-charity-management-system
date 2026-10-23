@@ -207,3 +207,47 @@ No archive table names, column types, foreign keys, or indexes are approved for 
 ### Recommended pilot boundary
 
 Pilot **project documents and project payment evidence** first because both have explicit project authorization checks and known source/serving routes, but keep them as separate source adapters. The pilot must be metadata-only for existing files and preserve the current URLs. Do not simultaneously retrofit all receipt, HR, family, and message flows. Before pilot code changes, inspect every read/write/delete path for these two domains and verify current table definitions and migration conventions.
+
+
+
+## 2026-10-23 — Pilot domain lifecycle review
+
+The recommended pilot remains project documents plus project payment evidence, but inspection of all major project handlers shows that this pilot is not a single upload hook. The following lifecycle operations must be covered before code changes.
+
+### project_documents lifecycle in modules/projects/view.php
+
+- Read/list: project document list is scoped by project ID; the serving endpoint loads a document by ID then calls akp_can_view_project(document.project_id) before path containment and streaming.
+- Expense receipt create: stores a new file and inserts project_documents metadata. On transaction failure it removes only the newly uploaded file.
+- Expense receipt edit: can update an existing receipt row or insert a new receipt row. On success, it unlinks the old physical file when its path changes. On failure, it cleans the newly uploaded file.
+- Expense receipt delete: deletes the project_documents row and then unlinks the file. This needs a version/link-aware archive action, not a direct physical deletion.
+- General project document upload: inserts project_documents metadata and cleans the new file if the database operation fails.
+- General project document replacement: updates the row to a new path and then unlinks the previous file. The row keeps only current file metadata, so history is not preserved in the existing source table.
+- General document deletion: only permits deletion of unverified documents, deletes the row, then unlinks the physical file.
+- Labor payment receipt: stores receipt metadata in project_documents; cleanup occurs if its DB operation fails. Labor-comment/payment deletion can also delete the linked document row; this path needs a dedicated review before inclusion in the pilot.
+- Funding-return proof: stores/updates a project_documents row and unlinks the previous proof after a successful update. This is another replacement path under the same table and must not be missed.
+- CSRF verification is present in the inspected project POST handler branches. Do not remove or bypass it during integration.
+
+### project_payment_evidence lifecycle
+
+- Upload and edit are in modules/projects/view_fm.php, not in the receipt-serving endpoint. The handlers require CSRF verification and check the project/financial workflow. They detect MIME from content, enforce a 10 MB limit, and generate a stored path under the project payments directory.
+- First upload updates a pending row to documented and stores receipt path, original name and MIME. If the DB transaction fails, the newly uploaded file is removed.
+- Editing payment evidence may replace the receipt path; after success the previous physical receipt is unlinked. Preserve the prior file as a historical archive version instead.
+- project_funding_accounting.php deletes pending evidence rows when a funding allocation reset/removal occurs. The current sync helper also updates or inserts pending evidence rows from funding allocations. A row may have no file while pending; never treat row deletion alone as permission to purge a file without checking its path and archive references.
+- project_payment_receipt.php only serves documented evidence, checks an explicit role allowlist, verifies akp_can_view_project(project_id), constrains the real path to the expected project payments storage area, and sends nosniff. Keep those checks in place.
+- FM evidence upload and edit create audit_log events. Archive events must complement, not replace, existing financial/business audit events.
+
+### Schema facts and unresolved schema verification
+
+- Live DB inventory provided for this task reports project_documents.file_path VARCHAR(500) NOT NULL and project_payment_evidence.receipt_file_path VARCHAR(255) NULL; the project_payment_evidence CREATE TABLE migration confirms its current migration shape, unique funding-allocation key, and project/status/method indexes.
+- No dedicated project_documents creation migration was found in the inspected migration directory; its complete current CREATE TABLE definition and indexes were not retrieved because the repository SQL dump reader returned an empty body.
+- The source confirms project_payment_evidence and project_documents are separate business concepts even though they both store project-related files. Keep separate adapters and retain their business-specific metadata and audit.
+- The source scan did not execute PHP, inspect the local filesystem, query the live database, or run a browser test. These are source-level findings only.
+
+### Pilot acceptance boundary before implementation
+
+1. Verify current SHOW CREATE TABLE and SHOW INDEX output for project_documents and project_payment_evidence in the actual ahl_el_kheir database, plus any archive-named objects.
+2. Define exact migration DDL and rollback/backfill plan; use no runtime DDL, triggers, views, stored procedures, or events.
+3. Register existing project file paths in place and idempotently. Shared physical paths must not produce duplicate blob records.
+4. Integrate all listed upload/replace/delete/reset branches as one reviewed pilot; replacement creates a new immutable version, source deletion unlinks only the source link, and physical bytes remain.
+5. Keep existing source columns, URLs, authorization checks, CSRF behavior, and financial audit events intact. New archive search/download must route through project authorization.
+6. Test rollback on a disposable copy or transactionally isolated fixture only after the migration contract is approved; do not touch the live project records or create another ad hoc database as part of discovery.
