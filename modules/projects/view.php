@@ -542,6 +542,8 @@ $storedAbsolutePath = $absoluteDir . '/' . $stored;
 if (!move_uploaded_file($file['tmp_name'], $storedAbsolutePath)) throw new RuntimeException('تعذر حفظ إيصال المصروف.');
 dbExecute('INSERT INTO project_documents (project_id, document_type, title, file_path, original_name, mime_type, file_size, document_date, issuer, reference_number, amount, currency_code, notes, uploaded_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)', [$id,'receipt','إيصال مصروف: '.$description,$relativeDir.'/'.$stored,$file['name'],$mime,$file['size'],$expenseDate ?: null,akp_post_value('vendor_name') ?: null,akp_post_value('invoice_number') ?: null,$amount,$project['currency_code'] ?: 'SDG','مرفق مباشرة بالمصروف المسجل بواسطة مشرف المشروع.',akp_user_id()]);
 $primaryDocumentId = (int)(dbFetchOne('SELECT LAST_INSERT_ID() AS id')['id'] ?? 0);
+if ($primaryDocumentId <= 0) throw new RuntimeException('تعذر تسجيل إيصال المصروف.');
+akp_archive_register_project_file('project_documents', $primaryDocumentId, $id, $relativeDir . '/' . $stored, (string)$file['name'], (string)$mime, (int)$file['size'], 'إيصال مصروف: ' . $description);
 }
 dbExecute('INSERT INTO project_expenses (project_id, budget_id, budget_line_id, expense_date, category, description, vendor_name, vendor_contact, invoice_number, government_fee_type, amount, currency_code, transaction_reference, expense_account_id, payment_account_id, primary_document_id, status, submitted_by, posted_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', [$id,$approvedBudgetId > 0 ? $approvedBudgetId : null,null,$expenseDate,$category,$description,akp_post_value('vendor_name') ?: null,null,akp_post_value('invoice_number') ?: null,null,$amount,$project['currency_code'] ?: 'SDG',akp_post_value('transaction_reference') ?: null,null,null,$primaryDocumentId,'posted',akp_user_id(),akp_user_id()]);
 $expenseId = (int)(dbFetchOne('SELECT LAST_INSERT_ID() AS id')['id'] ?? 0);
@@ -601,6 +603,9 @@ $primaryDocumentId = (int)(dbFetchOne('SELECT LAST_INSERT_ID() AS id')['id'] ?? 
 } elseif ($primaryDocumentId) {
 dbExecute('UPDATE project_documents SET title = ?, document_date = ?, issuer = ?, reference_number = ?, amount = ?, currency_code = ?, notes = ? WHERE id = ? AND project_id = ? AND document_type = \'receipt\'', ['إيصال مصروف: ' . $description, $expenseDate ?: null, akp_post_value('vendor_name') ?: null, akp_post_value('invoice_number') ?: null, $amount, $project['currency_code'] ?: 'SDG', 'مرفق مباشرة بالمصروف المسجل بواسطة مشرف المشروع.', $primaryDocumentId, $id]);
 }
+if ($storedAbsolutePath && $primaryDocumentId) {
+akp_archive_register_project_file('project_documents', $primaryDocumentId, $id, $relativePath, (string)$file['name'], (string)$mime, (int)$file['size'], 'إيصال مصروف: ' . $description);
+}
 dbExecute('UPDATE project_expenses SET expense_date = ?, category = ?, description = ?, vendor_name = ?, invoice_number = ?, amount = ?, currency_code = ?, primary_document_id = ?, status = \'posted\', posted_by = ? WHERE id = ? AND project_id = ?', [$expenseDate, $category, $description, akp_post_value('vendor_name') ?: null, akp_post_value('invoice_number') ?: null, $amount, $project['currency_code'] ?: 'SDG', $primaryDocumentId, akp_user_id(), $expenseId, $id]);
 dbExecute('COMMIT');
 } catch (Throwable $e) {
@@ -608,10 +613,7 @@ dbExecute('ROLLBACK');
 if ($storedAbsolutePath && is_file($storedAbsolutePath)) @unlink($storedAbsolutePath);
 throw $e;
 }
-if ($oldReceiptPath && $storedAbsolutePath) {
-$oldAbsolutePath = dirname(__DIR__, 2) . '/' . $oldReceiptPath;
-if ($oldAbsolutePath !== $storedAbsolutePath && is_file($oldAbsolutePath)) @unlink($oldAbsolutePath);
-}
+// Previous receipt bytes are retained as an immutable archive version.
 akp_audit('UPDATE', 'project_expense', $expenseId, ['project_id'=>$id,'amount'=>(float)$expense['amount']], ['project_id'=>$id,'amount'=>$amount,'primary_document_id'=>$primaryDocumentId]);
 $_SESSION['project_expense_success'] = 'تم تسجيل الدفع وخصم ' . number_format($amount, 2) . ' ' . ($project['currency_code'] ?: 'SDG') . ' من ميزانية المشروع وترحيل المصروف.';
 } elseif ($action === 'delete_ps_expense') {
@@ -627,6 +629,7 @@ $receiptPath = $receipt['file_path'] ?? null;
 dbExecute('START TRANSACTION');
 try {
 if (!empty($expense['primary_document_id'])) {
+akp_archive_unlink_project_source('project_documents', (int)$expense['primary_document_id'], $id);
 dbExecute('DELETE FROM project_documents WHERE id = ? AND project_id = ? AND document_type = \'receipt\'', [(int)$expense['primary_document_id'], $id]);
 }
 dbExecute('DELETE FROM project_expenses WHERE id = ? AND project_id = ? AND status = \'draft\'', [$expenseId, $id]);
@@ -635,10 +638,7 @@ dbExecute('COMMIT');
 dbExecute('ROLLBACK');
 throw $e;
 }
-if ($receiptPath) {
-$receiptAbsolutePath = dirname(__DIR__, 2) . '/' . $receiptPath;
-if (is_file($receiptAbsolutePath)) @unlink($receiptAbsolutePath);
-}
+// Receipt bytes remain available in the archive even after this draft expense is removed.
 akp_audit('DELETE', 'project_expense', $expenseId, ['project_id'=>$id,'amount'=>(float)$expense['amount']], null);
 $_SESSION['project_expense_success'] = 'تم حذف المصروف بنجاح.';
 } elseif ($action === 'add_expense') {
