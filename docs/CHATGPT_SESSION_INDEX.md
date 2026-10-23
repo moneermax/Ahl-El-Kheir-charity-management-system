@@ -1804,3 +1804,10 @@ Evidence used: the repository SQL dump was retrieved via GitHub contents and par
 ## 2026-10-23 — Document archive continuation
 
 The document archive catalogue migration is committed and its five tables/indexes/FKs were verified in the user's local `ahl_el_kheir` database. Current pilot: read-only inventory of `project_documents` and `project_payment_evidence` using `tools/report_project_document_inventory.php`. The report has not yet been run against the local filesystem. Continue from `docs/DOCUMENT_ARCHIVE_CONTINUATION.md`; do not move, delete, rewrite, or backfill files/records during inventory.
+
+ 
+## 2026-10-23 — Document archive pilot continuation
+ 
+The archive catalogue migration is applied and verified in the user's local `ahl_el_kheir` database. The read-only inventory ran locally: 16 references across `project_documents` and `project_payment_evidence`, with 3 missing/invalid references, 3 rows with issues, 0 shared paths, and 3 distinct-path duplicate-content candidates. The three missing payment receipt filenames were not found elsewhere under project storage; these are test artifacts and must not be recreated.
+ 
+Current implementation: `tools/backfill_project_document_archive.php` is committed on `main`. Default invocation is dry-run; `--apply` registers catalogue metadata without moving/deleting files or changing source records. Next gate is local PHP lint, then dry-run JSON review. Do not apply until suspicious actions are reviewed. After apply, rerun dry-run to verify idempotence. Upload/replacement/deletion integration is not yet implemented.
