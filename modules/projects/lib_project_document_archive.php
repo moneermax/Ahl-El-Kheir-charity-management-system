@@ -124,6 +124,9 @@ if (!function_exists('akp_archive_register_project_file')) {
         $isNewVersion = false;
         if ($link) {
             $documentId = (int)$link['document_id'];
+            if ($displayTitle !== null) {
+                dbExecute('UPDATE document_archive_documents SET display_title = ? WHERE id = ?', [$displayTitle, $documentId]);
+            }
             if ((string)$link['source_path_snapshot'] === $normalizedPath
                 && (string)$link['link_status'] === 'active') {
                 $current = dbFetchOne(
@@ -210,6 +213,36 @@ if (!function_exists('akp_archive_unlink_project_source')) {
         dbExecute(
             'INSERT INTO document_archive_events (event_type, document_id, version_id, source_table, source_record_id, source_path_column, actor_user_id, metadata_json) VALUES (\'source_unlinked\', ?, ?, ?, ?, ?, ?, ?)',
             [(int)$link['document_id'], (int)$link['current_version_id'], $sourceTable, $sourceId, $pathColumn, $actorId > 0 ? $actorId : null, $metadata]
+        );
+    }
+}
+
+if (!function_exists('akp_archive_update_project_document_title')) {
+    function akp_archive_update_project_document_title(
+        string $sourceTable,
+        int $sourceId,
+        int $projectId,
+        string $displayTitle
+    ): void {
+        if (!db()->inTransaction()) {
+            throw new RuntimeException('Project archive metadata update requires the source-record transaction.');
+        }
+        $pathColumn = $sourceTable === 'project_documents' ? 'file_path'
+            : ($sourceTable === 'project_payment_evidence' ? 'receipt_file_path' : '');
+        if ($pathColumn === '' || $sourceId <= 0 || $projectId <= 0) {
+            throw new RuntimeException('Invalid project archive metadata source.');
+        }
+        $link = dbFetchOne(
+            'SELECT id, document_id, current_version_id FROM document_archive_source_links WHERE source_table = ? AND source_record_id = ? AND source_path_column = ? LIMIT 1',
+            [$sourceTable, $sourceId, $pathColumn]
+        );
+        if (!$link) return;
+        $title = function_exists('mb_substr') ? mb_substr($displayTitle, 0, 255, 'UTF-8') : substr($displayTitle, 0, 255);
+        dbExecute('UPDATE document_archive_documents SET display_title = ? WHERE id = ?', [$title, (int)$link['document_id']]);
+        $metadata = json_encode(['project_id' => $projectId, 'display_title' => $title], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
+        dbExecute(
+            'INSERT INTO document_archive_events (event_type, document_id, version_id, source_table, source_record_id, source_path_column, actor_user_id, metadata_json) VALUES (\'metadata_updated\', ?, ?, ?, ?, ?, ?, ?)',
+            [(int)$link['document_id'], (int)$link['current_version_id'], $sourceTable, $sourceId, $pathColumn, (int)Session::getUserId() ?: null, $metadata]
         );
     }
 }
