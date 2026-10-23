@@ -4414,3 +4414,15 @@ Source changes are committed, but the updated APK and physical-device portrait b
 GitHub Actions run [39990143104](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/39990143104) completed successfully on source commit `ea50c4f4cc24ad287381967d6c1a2c7e45a4ffd4`. PHP QR integration lint, Android duplicate-class check, Java compilation, debug APK assembly, and artifact upload all passed. Artifact: `ahl-el-kheir-sponsor-qr-scanner-debug-apk`, artifact ID `12517556746`, SHA-256 `46453215f819c7cbfb1a8bb8fd091cddde533488cd2b652061f1c2e8314b2980`, expires 2026-11-22.
 
 Remaining acceptance gate: install this newly built APK on the user's phone and confirm the scanner stays portrait while scanning, then scan a QR generated from the same LAN base URL and verify sponsor page opening. CI build success does not prove physical-device orientation behavior.
+
+
+## 2026-10-23 — Sponsor QR scanner presentation and APK distribution
+
+Evidence update: the user confirmed scanning succeeds after generating the QR from the laptop LAN URL instead of localhost. No QR-origin validation was weakened.
+
+Source changes on main:
+- Android UI now has a cleaner Arabic header, a primary scan action, and an APK download action; permanent server-settings button removed. Long-press the title to access server configuration.
+- New authenticated endpoint modules/sponsors/download_scanner_apk.php serves the fixed path storage/apps/ahl-el-kheir-sponsor-qr-scanner.apk; no user-controlled path is accepted, and direct storage access remains denied.
+- Android build workflow now lints the endpoint and runs when it changes.
+
+Not yet proven: new CI run, installation of the newly built APK, physical portrait behavior, and end-to-end authenticated APK download. The actual APK must be deployed to the fixed storage path on the target server before downloads can succeed.
