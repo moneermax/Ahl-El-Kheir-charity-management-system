@@ -40,7 +40,36 @@ var send=document.getElementById('ak-ai-send'),messages=document.getElementById(
 var historyPanel=document.getElementById('ak-ai-history'),historyItems=document.getElementById('ak-ai-history-items');
 var historyToggle=document.getElementById('ak-ai-history-toggle'),newChat=document.getElementById('ak-ai-new-chat');
 var currentConversationId=null;
+var currentConversationStorageKey='akAiCurrentConversationId';
 var greeting=lang==='ar'?'مرحباً! اسأل عن استخدام النظام.':'Hello! Ask about using the system.';
+function storedConversationId(){
+ try{var value=Number(window.sessionStorage.getItem(currentConversationStorageKey)||0);return Number.isSafeInteger(value)&&value>0?value:null;}catch(error){return null;}
+}
+function rememberConversationId(id){
+ try{if(Number.isSafeInteger(Number(id))&&Number(id)>0)window.sessionStorage.setItem(currentConversationStorageKey,String(Number(id)));else window.sessionStorage.removeItem(currentConversationStorageKey);}catch(error){}
+}
+function closePanel(returnFocus){
+ panel.hidden=true;launcher.setAttribute('aria-expanded','false');
+ if(returnFocus)launcher.focus();
+}
+async function restoreCurrentConversation(){
+ var savedId=storedConversationId();
+ if(!savedId)return;
+ try{
+  var data=await api({action:'history_load',conversation_id:savedId});
+  if(!data.ok)throw new Error(data.message||'Conversation unavailable');
+  if(storedConversationId()!==savedId)return;
+  currentConversationId=Number(data.conversation.id);rememberConversationId(currentConversationId);messages.replaceChildren();
+  (data.messages||[]).forEach(function(item){add(item.content,item.speaker==='user');});
+  if(!data.messages||!data.messages.length)add(greeting,false);
+  messages.scrollTop=messages.scrollHeight;
+ }catch(error){
+  if(storedConversationId()===savedId){
+   currentConversationId=null;clearMessages();
+   add(lang==='ar'?'تعذر استعادة المحادثة السابقة الآن. يمكنك فتح سجل المحادثات والمحاولة مجدداً.':'Could not restore the previous conversation right now. Open chat history to try again.',false);
+  }
+ }
+}
 function add(text,user){
  var el=document.createElement('div');el.className='ak-ai-message'+(user?' user':'');el.textContent=text;
  messages.appendChild(el);messages.scrollTop=messages.scrollHeight;return el;
@@ -76,9 +105,10 @@ async function loadConversation(id){
  finally{historyItems.querySelectorAll('button').forEach(function(button){button.disabled=false;});}
 }
 launcher.addEventListener('click',function(){panel.hidden=!panel.hidden;launcher.setAttribute('aria-expanded',panel.hidden?'false':'true');if(!panel.hidden)input.focus();});
-document.getElementById('ak-ai-close').addEventListener('click',function(){panel.hidden=true;launcher.setAttribute('aria-expanded','false');launcher.focus();});
+document.getElementById('ak-ai-close').addEventListener('click',function(){closePanel(true);});
+panel.addEventListener('mouseleave',function(){if(!panel.hidden)closePanel(false);});
 historyToggle.addEventListener('click',function(){historyPanel.hidden=!historyPanel.hidden;historyToggle.setAttribute('aria-expanded',historyPanel.hidden?'false':'true');if(!historyPanel.hidden)refreshHistory();});
-newChat.addEventListener('click',function(){currentConversationId=null;clearMessages();historyPanel.hidden=true;historyToggle.setAttribute('aria-expanded','false');input.focus();});
+newChat.addEventListener('click',function(){currentConversationId=null;rememberConversationId(null);clearMessages();historyPanel.hidden=true;historyToggle.setAttribute('aria-expanded','false');input.focus();});
 form.addEventListener('submit',async function(event){
  event.preventDefault();var question=input.value.trim();if(!question)return;
  add(question,true);input.value='';send.disabled=true;
@@ -86,7 +116,7 @@ form.addEventListener('submit',async function(event){
  try{
   var data=await api({action:'ask',question:question,conversation_id:currentConversationId,allow_google:consent.checked});
   waiting.remove();
-  if(data.conversation_id)currentConversationId=Number(data.conversation_id);
+  if(data.conversation_id){currentConversationId=Number(data.conversation_id);rememberConversationId(currentConversationId);}
   add(data.message||data.answer||'No answer returned.',false);
  }catch(error){waiting.remove();add(lang==='ar'?'تعذر الاتصال بالمساعد. حاول مرة أخرى.':'Could not connect to the assistant. Please try again.',false);}
  finally{send.disabled=false;input.focus();}
@@ -175,6 +205,7 @@ async function startAudioRecording(){
   voiceMessage('تعذر الوصول إلى الميكروفون. تحقق من إذن المتصفح أو اكتب سؤالك.','Could not access the microphone. Check browser permission or type your question.');
  }
 }
+restoreCurrentConversation();
 mic.disabled=true;
 mic.title=lang==='ar'?'الإدخال الصوتي قيد التطوير وسيُتاح لاحقاً':'Voice input is planned for a future update';
 mic.setAttribute('aria-label',mic.title);
