@@ -4045,3 +4045,8 @@ The catalogue migration is already applied in the user's local `ahl_el_kheir` da
 ### Archive follow-up — historical versions searchable (2026-10-23; runtime pending)
 
 Global Search now lists all present archive versions for active project source links, labels current versus previous versions, and opens a selected version through `modules/projects/project_archive_version.php`. The endpoint validates the archive version-to-source association, resolves the project from the source record (or archive event metadata for a deleted source row), rechecks `akp_can_view_project()`, applies the existing payment receipt role allowlist, enforces canonical project-storage containment, and verifies the blob size/SHA-256 before serving. Historical version search/retrieval is source-implemented but not yet linted or runtime-tested locally.
+
+
+### Archive follow-up — searchable retained documents after source deletion (2026-10-23; runtime pending)
+
+The integrated archive search now includes present versions for active links and for unlinked source links whose business source row was deleted. For the latter, the project association comes from the archive event metadata and must still pass `akp_can_view_project()`; payment evidence remains restricted to roles allowed by the existing receipt endpoint. No archive row or file is deleted by this search path. This source change has not yet been locally linted or runtime-tested.
