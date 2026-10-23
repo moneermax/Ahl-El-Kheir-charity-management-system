@@ -1696,3 +1696,6 @@ The explicit voice-consent prompt also discloses possible temporary Google Files
 
 ## 2026-10-23 — AI assistant continuation
 Current task boundary: text chat is the supported path; voice is deferred and the microphone control is disabled. General-text default model is `gemini-3.5-flash-lite`, but local `GEMINI_MODEL`/`hosting.php` overrides must be checked. Next: pull `main`, lint `modules/ai_assistant/chat.php` and `includes/ai_assistant_widget.php`, then perform the documented local text acceptance checks. Runtime status is pending; do not claim fully verified.
+
+## 2026-10-23 — AI assistant conversation continuity
+The latest requested widget behavior is committed on `main`: current conversation ID is tab-scoped in `sessionStorage`, the conversation transcript is restored through the existing owner-checked history endpoint after full-page navigation, explicit New chat clears the active conversation, and the panel closes on `mouseleave` like the sidebar. Commits `9db6c37945f2af5e775dc4f9bf651acee7d657b7` and `ca5a1d8bb34e0325a5ea2da0e67b16ea7fd723cb`. Next step: user pulls `main`, lints the two PHP files, then verifies transcript restore/continued messages, New chat, and mouseleave close/reopen in the local XAMPP app. Runtime status is pending.
