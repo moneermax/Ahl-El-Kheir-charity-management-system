@@ -4391,3 +4391,7 @@ A companion Android project at `android/sponsor-qr-scanner/` uses ZXing Android 
 ## 2026-10-23 — Sponsor QR Android scanner build finding
 
 GitHub Actions job `120438823455` (run `39961045578`) identified duplicate classes between `kotlin-stdlib:1.8.22` and legacy `kotlin-stdlib-jdk7/jdk8:1.6.21`. Dependency insight traced the older split artifacts through AndroidX lifecycle / `kotlinx-coroutines-android:1.6.4`; this is not evidence of an AppCompat or ZXing class conflict. Main commit `777f9b180ce61dade8c96649a8138e7f4bb85880` excludes only the obsolete split modules. Await CI verification before marking the APK build successful; PHP, Apache/browser, database-count, authorization, and device acceptance are still pending.
+
+
+## 2026-10-23 — Android scanner BuildConfig generation
+Actions job `120446032500` failed at `:app:compileDebugJavaWithJavac` with unresolved `BuildConfig` references in `MainActivity.java`. The inspected module declares Android Gradle Plugin `8.7.3`; AGP 8 requires BuildConfig generation to be explicitly enabled when the generated class is used. Commit `ecdc34c19f1d5f5c370a95b3a902739693710b7f` adds `buildFeatures { buildConfig true }` to the app module. This is a source fix pending CI verification, not a verified successful APK build.
