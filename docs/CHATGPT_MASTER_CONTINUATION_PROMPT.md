@@ -1876,3 +1876,10 @@ GitHub Actions run [40001446199](https://github.com/moneermax/Ahl-El-Kheir-chari
 The home UI now has only the **مسح رمز QR للكفيل** native action and the required WebView; the extra branding/download header and connection-status strip are removed. Long-press the scan action to change server settings. The website's authenticated header remains available for downloading the APK.
 
 The user must still install this fresh artifact and verify physical portrait scanning and sponsor-profile opening. Do not describe device orientation as verified until the user confirms it.
+
+
+## 2026-10-23 — Current continuation boundary: orphan form QR placement
+
+Closed by user: latest sponsor QR scanner APK was deployed to the system's fixed download path. Do not reopen absent regression evidence. Details are in `docs/SPONSOR_QR_ANDROID_CONTINUATION.md`.
+
+Active task: review and verify commit `1e29a29b85b4bf4ac0da2cd7aff226019a71cff2` in `modules/families/orphan_form.php`. Sponsor QR code(s) were moved to the upper-left header, horizontally aligned with the logo and form title; the sponsorship table retains sponsor name/code and dates. Next: inspect the exact diff on `main`, run PHP syntax validation, then verify the orphan form in `http://localhost:8081/AhlElKheir/` and its print/PDF layout. Include existing single/multiple sponsorship and blank-form cases where available. Only close after evidence; do not modify unrelated form/schema behavior.
