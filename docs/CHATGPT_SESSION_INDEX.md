@@ -1726,3 +1726,11 @@ Text chat source reviewed. Local guide retrieval is first and role-limited; Goog
 
 ### 2026-10-23 — AI assistant conversation continues across pages
 The widget now stores the active conversation ID in tab-scoped `sessionStorage`, reloads its messages via the owner-checked `history_load` endpoint after navigation, clears the stored ID for explicit New chat, and closes the panel on `mouseleave` like the sidebar. Commits: `9db6c37945f2af5e775dc4f9bf651acee7d657b7`, `ca5a1d8bb34e0325a5ea2da0e67b16ea7fd723cb`. Local PHP/browser verification is pending.
+
+## 2026-10-23 — AI text chat implementation checkpoint
+
+The requested text-chat implementation task is closed at the source/documentation boundary. The shared assistant now remembers the active conversation in tab-scoped session storage, restores it through the existing authenticated owner-scoped history endpoint after page navigation, clears the active ID for explicit New chat, and closes the panel on mouseleave. Relevant commits: `9db6c37945f2af5e775dc4f9bf651acee7d657b7` and `ca5a1d8bb34e0325a5ea2da0e67b16ea7fd723cb`. Text path/source checkpoints include `2bc42b03c5d9f5430d0e6ce07a22f39a57811a7b` and `75c52595eef9cd6dd2d8ab71756f06103601c1c8` (voice deferred).
+
+The user confirmed a local-guide text answer works. The repository-editing session did not run local PHP lint or browser acceptance, so the implementation is documented as closed while full local runtime acceptance remains unverified. If not already checked by the user, verify the two assistant PHP files, cross-page transcript restore/continuation, New chat separation, and mouseleave close/reopen on `http://localhost:8081/AhlElKheir/`. Do not reopen without concrete regression evidence and do not retry voice.
+
+**Next session:** read all four required continuation/master documents plus the relevant module document, inspect current `main` and actual source/schema, then select the next genuinely open task. Do not assume the next task is AI chat or revive a closed module without evidence.
