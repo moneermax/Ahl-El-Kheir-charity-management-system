@@ -39,6 +39,7 @@ The debug build permits HTTP only for localhost/private-network IP addresses to 
 ## Acceptance checklist
 
 - [ ] APK installs and opens on a physical Android phone.
+- [ ] Main app screen and the separate ZXing camera capture screen both remain portrait when the phone is rotated.
 - [ ] Camera permission is requested and scanning succeeds.
 - [ ] Invalid QR and QR URLs from another host are rejected.
 - [ ] Existing website login works inside the app.
@@ -48,12 +49,29 @@ The debug build permits HTTP only for localhost/private-network IP addresses to 
 - [ ] QR appears on sponsor profile and each linked sponsor row on the orphan form/profile.
 - [ ] The production HTTPS host is tested before release distribution.
 
-
 ## Phone scanning orientation and local QR host
 
-- The app and camera capture screen are locked to portrait orientation; keep the phone upright while scanning.
+- The main activity and ZXing's separate `com.journeyapps.barcodescanner.CaptureActivity` are both explicitly locked to portrait in the Android manifest. `ScanOptions.setOrientationLocked(true)` alone preserves the current orientation; it is not the portrait constraint.
 - The main screen uses a single prominent **مسح رمز QR للكفيل** action. Server configuration remains available by long-pressing the app title, so the normal header is not crowded with a permanent server-settings button.
 - The **تنزيل التطبيق** button requests the APK from the authenticated system endpoint `modules/sponsors/download_scanner_apk.php`; the endpoint serves only `storage/apps/ahl-el-kheir-sponsor-qr-scanner.apk` and never redirects to an external file host.
 - Before the download button can serve an APK, an administrator must copy the built APK to `storage/apps/ahl-el-kheir-sponsor-qr-scanner.apk` on the target server. The `storage/.htaccess` deny rule remains in place; downloads go through the authenticated PHP endpoint.
 - For a physical phone on local Wi-Fi, open the website on the computer using the computer's LAN IP (for example, `http://192.168.18.9:8081/AhlElKheir/`) before opening the sponsor profile and displaying its QR. Do not generate a phone-scannable QR from a `localhost` page: `localhost` points to the device doing the request, so the phone cannot use the laptop's `localhost` address.
 - Keep the APK's configured base URL identical to the host, port, and application path used to generate the QR. The scanner intentionally rejects different hosts rather than weakening its origin checks.
+
+
+## 2026-10-23 — Minimal main screen and enforced portrait capture
+
+Physical-device testing found the installed scanner still opened in landscape. The first attempt to explicitly set ZXing's separate `CaptureActivity` to portrait then failed CI because ZXing's own manifest declares `sensorLandscape`. The app manifest now uses `tools:replace="android:screenOrientation"` to override that library declaration; this override must be present in the APK for the portrait fix to take effect.
+
+The main screen now removes the blue branding/download header and connection-status strip. It keeps the single **مسح رمز QR للكفيل** button and the WebView below it because the WebView is required for the existing website login and sponsor profile. Long-press the scan button to open server settings. The existing website header still provides the APK download link, and downloads triggered inside the WebView remain supported.
+
+Acceptance remains open until CI produces a fresh APK and the user installs it and verifies that the camera stays portrait when the phone is rotated.
+
+
+## 2026-10-23 — Corrected portrait build produced; device acceptance pending
+
+GitHub Actions run [40001446199](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40001446199) completed successfully on commit `29eee35eb4fc3bf9869913abcd4395fea77a93e9`. The Android duplicate-class check, manifest processing, Java compilation, debug APK assembly, and artifact upload completed successfully after adding `tools:replace="android:screenOrientation"` for ZXing's capture activity. Artifact: [`ahl-el-kheir-sponsor-qr-scanner-debug-apk`](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40001446199/artifacts/12522116796), artifact ID `12522116796`, expires 2026-11-22. Artifact ZIP SHA-256: `2b4eb5b801662bb05c1791ba0d0c1a5081822506c73c05a554bd55713c26ad1a`.
+
+This build also includes the minimal home screen: one visible `مسح رمز QR للكفيل` button plus the required website WebView; branding and connection-status strips are removed. Long-press the scan button to change server settings.
+
+Next: install this newly built artifact, not the older APK, and verify the scanner stays portrait while the phone is rotated and still opens an authorized sponsor profile. CI success does not replace physical-device acceptance.

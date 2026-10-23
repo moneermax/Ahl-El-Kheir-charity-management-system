@@ -14,7 +14,6 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -33,8 +32,6 @@ public class MainActivity extends AppCompatActivity {
     private static final String APK_DOWNLOAD_PATH = "modules/sponsors/download_scanner_apk.php";
 
     private WebView webView;
-    private TextView connectionStatus;
-    private TextView appTitle;
     private String baseUrl = "";
     private String pendingSponsorUrl;
     private boolean pendingSponsorRetried;
@@ -47,10 +44,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         webView = findViewById(R.id.systemWebView);
-        connectionStatus = findViewById(R.id.connectionStatus);
-        appTitle = findViewById(R.id.appTitle);
         Button scanButton = findViewById(R.id.scanButton);
-        Button downloadButton = findViewById(R.id.downloadButton);
 
         scanLauncher = registerForActivityResult(new ScanContract(), result -> {
             String contents = result.getContents();
@@ -89,7 +83,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
-                connectionStatus.setText("الخادم متصل");
                 if (pendingSponsorUrl == null) return;
 
                 if (url.equals(pendingSponsorUrl)) {
@@ -115,9 +108,8 @@ public class MainActivity extends AppCompatActivity {
         });
 
         scanButton.setOnClickListener(v -> startScan());
-        downloadButton.setOnClickListener(v -> downloadApk(baseUrl + APK_DOWNLOAD_PATH));
-        // Keep server configuration available without a permanent settings button.
-        appTitle.setOnLongClickListener(v -> {
+        // Keep server configuration accessible without another visible control.
+        scanButton.setOnLongClickListener(v -> {
             showServerDialog(baseUrl, !baseUrl.isEmpty());
             return true;
         });
@@ -276,7 +268,6 @@ public class MainActivity extends AppCompatActivity {
 
     private void loadHome() {
         if (webView != null && !baseUrl.isEmpty()) {
-            connectionStatus.setText("جارٍ الاتصال بالخادم...");
             webView.loadUrl(baseUrl);
         }
     }
