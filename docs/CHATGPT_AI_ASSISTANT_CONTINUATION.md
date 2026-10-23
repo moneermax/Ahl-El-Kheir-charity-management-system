@@ -178,3 +178,17 @@ The general-text fallback default was updated from `gemini-2.5-flash` to `gemini
 Source review: text requests use authenticated, CSRF-protected POSTs, local-first role-limited guide retrieval, per-question Google consent for general fallback, internal/sensitive-question filters, and owner-scoped conversation history. Local answers do not call Google. The model can still be overridden by `GEMINI_MODEL` or `hosting.php`, which must be checked in the local environment.
 
 Runtime verification is **PENDING** because this review could not access the user's local Apache/PHP/browser, database, or Gemini configuration. After pulling `main`, lint both assistant PHP files and verify a known local-guide answer, no-consent fallback behavior, consented eligible general fallback, internal/sensitive-question blocking, and private persistent history. Do not retry voice while it is deferred; do not call text fully verified until local checks pass.
+
+
+## 2026-10-23 — Continue assistant conversation across page navigation
+
+The user confirmed local-guide text answers work and requested the same active conversation to remain available while navigating between pages, plus automatic panel close when the pointer leaves the chat box (matching the sidebar's mouseleave behavior).
+
+Commits `9db6c37945f2af5e775dc4f9bf651acee7d657b7` and `ca5a1d8bb34e0325a5ea2da0e67b16ea7fd723cb` update `includes/ai_assistant_widget.php`:
+- Store the active conversation ID in tab-scoped `sessionStorage` when a response creates/returns it or when the user opens a saved conversation.
+- On each page load, request that conversation through the existing authenticated `history_load` endpoint and repopulate the message panel while keeping the panel closed.
+- The server already verifies conversation ownership against the signed-in user; if a restore fails, the UI displays a recoverable message and the user can open Chat history.
+- Clear the stored active ID when the user explicitly starts New chat.
+- Close the floating panel on `mouseleave`, and keep `aria-expanded` synchronized; explicit close still returns focus to the launcher.
+
+No database/schema change. Source edits are committed on `main`; local PHP lint, navigation/browser behavior, account-switch edge case, and mouseleave UX are **not yet runtime-verified**. Test one local-guide exchange, navigate to another page, reopen the assistant and confirm the same transcript is restored; continue chatting and verify the new exchange stays in the same conversation. Confirm mouse leave closes the panel and launcher click reopens it. Also verify New chat remains a new conversation across navigation.
