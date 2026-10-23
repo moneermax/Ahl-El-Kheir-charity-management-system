@@ -345,3 +345,23 @@ The user pulled commit `45912eed` on local `main`. PHP syntax checks passed for 
 The user ran `tools/backfill_project_document_archive.php --apply` against local `ahl_el_kheir`: 16 references registered (8 `project_documents`, 8 `project_payment_evidence`), 3 source paths have missing physical files, 0 invalid paths skipped, 0 path mismatches, 0 blob metadata mismatches, and 0 reconciliation cases. A second default dry run reported 16 already registered, 0 would register, and the same 3 missing files. This confirms idempotent catalogue registration for the inspected source set, not browser functionality.
 
 Next acceptance checks in `http://localhost:8081/AhlElKheir/`: use the existing Global Search Center to find a known present project document and payment receipt; confirm project permission filtering and payment role restrictions; open the current version; then replace one test document and verify both current and previous versions are searchable and retrievable. Also check a deliberately unauthorized project and verify denial. Do not use any of the three missing-file references as the download test.
+
+
+## 2026-10-23 — Archive pilot disposition — 2026-10-23
+
+The original pilot scope is limited to project documents (`project_documents`) and project payment evidence (`project_payment_evidence`), integrated into the existing role-based Global Search Center. Source implementation and one-time metadata registration are complete for this scope, but the overall feature is **not fully acceptance-closed** because real Apache/browser verification has not been reported.
+
+### Verified evidence
+- User-reported PHP syntax checks passed for all six changed files: `config/search_permissions.php`, `modules/search/index.php`, `modules/projects/lib_project_document_archive.php`, `modules/projects/project_archive_version.php`, `modules/projects/view.php`, and `modules/projects/view_fm.php`.
+- Against local `ahl_el_kheir`, the backfill registered 16 references (8 project documents and 8 project payment-evidence references). The subsequent dry run found all 16 already registered, with zero planned registrations, path mismatches, blob metadata mismatches, or reconciliation cases. This verifies idempotent catalogue registration for the inspected references only.
+- Three existing project payment-evidence references point to missing physical test-artifact files: evidence ID 4/project 7, ID 1/project 8, and ID 3/project 8. They must remain recorded as missing; do not recreate files or claim they can be retrieved.
+- These results do not prove browser search, download, authorization boundaries, automatic registration during live uploads, or replacement-version retrieval.
+
+### Scope clarification: nanny/family sponsorship payment proofs
+The user clarified that the receipts they expected to see are uploaded by a nanny as proof that she paid families or delivered monthly sponsorship to families. These are **not** the project payment-evidence records covered by the pilot. Search Center's empty archive result for that nanny does not prove those files are missing; the actual family-payment workflow has not yet been traced or integrated. Do not add the nanny role to the project-payment-evidence allowlist as a workaround. Any future extension must inspect the real upload handler, schema/path columns, serving route, and family-level permission rules, then integrate automatic registration and a safe backfill into the existing Global Search Center.
+
+### Disposition / next acceptance gate
+- Mark the **project archive implementation + existing-reference backfill phase** complete, with the above evidence and limitations.
+- Keep **end-to-end acceptance** open until the user tests the existing Global Search in `http://localhost:8081/AhlElKheir/`: find a known present project document and receipt, open current and previous versions after a replacement, and confirm an unauthorized cross-project request is denied. Do not use the three missing files as test fixtures.
+- Treat nanny/family sponsorship payment proofs as an explicit scope extension, not as a defect that can be solved by bypassing current project receipt permissions.
+- Do not claim the entire document-archiving system is done. At the start of the next repository task, reread the canonical docs and inspect the real repository state before proceeding.
