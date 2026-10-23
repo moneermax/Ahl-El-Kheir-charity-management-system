@@ -175,8 +175,9 @@ async function startAudioRecording(){
   voiceMessage('تعذر الوصول إلى الميكروفون. تحقق من إذن المتصفح أو اكتب سؤالك.','Could not access the microphone. Check browser permission or type your question.');
  }
 }
-mic.disabled=!(navigator.mediaDevices&&typeof navigator.mediaDevices.getUserMedia==='function'&&typeof window.MediaRecorder!=='undefined');
-mic.title=mic.disabled?(lang==='ar'?'التسجيل الصوتي غير متاح؛ يمكنك كتابة سؤالك':'Audio recording unavailable; you can type your question'):(lang==='ar'?'تسجيل السؤال صوتياً':'Record your question');
+mic.disabled=true;
+mic.title=lang==='ar'?'الإدخال الصوتي قيد التطوير وسيُتاح لاحقاً':'Voice input is planned for a future update';
+mic.setAttribute('aria-label',mic.title);
 mic.addEventListener('click',function(){
  if(isRecording){
   if(mediaRecorder&&mediaRecorder.state==='recording')mediaRecorder.stop();
