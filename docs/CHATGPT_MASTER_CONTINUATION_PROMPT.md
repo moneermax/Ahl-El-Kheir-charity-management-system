@@ -1826,3 +1826,7 @@ Continue from `docs/SPONSOR_QR_ANDROID_CONTINUATION.md`. Source-only work has ad
 ## Current task — Sponsor QR + Android scanner (2026-10-23)
 
 Read `docs/SPONSOR_QR_ANDROID_CONTINUATION.md` and continue the existing feature on `main`. The previous Actions failure is now specifically traced to Kotlin 1.8.22 containing classes duplicated by legacy `kotlin-stdlib-jdk7/jdk8:1.6.21` artifacts pulled transitively via AndroidX lifecycle/coroutines. Fix commit: `777f9b180ce61dade8c96649a8138e7f4bb85880`; next action is verify the new GitHub Actions run and APK artifact. Do not claim build success until the run and artifact confirm it. Continue with local PHP lint, Apache runtime, read-only active sponsorship count reconciliation, authorization/supervisor-scope checks, and Android phone testing only after build succeeds.
+
+
+## Sponsor QR Android scanner — latest checkpoint (2026-10-23)
+The Kotlin duplicate-class exclusion was committed as `777f9b180ce61dade8c96649a8138e7f4bb85880`. The next Actions run then failed compiling `MainActivity.java` because `BuildConfig` was unavailable. Inspected `android/sponsor-qr-scanner/build.gradle`: AGP is 8.7.3. Commit `ecdc34c19f1d5f5c370a95b3a902739693710b7f` enables BuildConfig generation via `buildFeatures { buildConfig true }`. Next action: inspect the new Actions run; do not claim success until compile, assemble, and APK artifact upload pass.
