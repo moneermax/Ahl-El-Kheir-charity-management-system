@@ -1834,3 +1834,8 @@ Runtime remains pending. Add `modules/projects/project_archive_version.php` to t
 ### Archive follow-up — deleted source records remain searchable (2026-10-23; runtime pending)
 
 Global Search now also includes present archived versions whose source link is explicitly unlinked and whose source business row was deleted. The project association is recovered from archive event metadata and the result is still filtered by `akp_can_view_project()`; payment receipt results continue to respect the receipt endpoint's role allowlist. The version endpoint uses the same retained project metadata to authorize retrieval. This supersedes the immediately previous note that unlinked source records were not listed in search.
+
+ 
+### Archive pilot — local lint and idempotent backfill verified (2026-10-23)
+
+The user pulled `45912eed` and confirmed all six changed PHP files pass `php -l`. Against local `ahl_el_kheir`, archive backfill registered 16 references (8 project documents + 8 payment evidence); the immediate dry run reported 16 already registered, 0 planned registrations, 0 path/blob metadata mismatches, 0 reconciliation cases, and 3 known missing physical payment-evidence files. Catalogue registration is verified; Global Search browser behavior, role boundaries, and version replacement/retrieval remain pending. See `docs/DOCUMENT_ARCHIVE_CONTINUATION.md`.
