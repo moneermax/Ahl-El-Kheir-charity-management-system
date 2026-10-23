@@ -23,21 +23,21 @@ if (!function_exists('ak_search_allowed_types')) {
         $role = $aliases[$role] ?? $role;
 
         return [
-            'admin' => ['families', 'sponsors', 'sponsorships', 'payments'],
-            'general_manager' => ['families', 'sponsors', 'sponsorships', 'payments'],
-            'vice_general_manager' => ['families', 'sponsors', 'sponsorships', 'payments'],
-            'financial_manager' => ['families', 'sponsors', 'sponsorships', 'payments'],
-            'accountant' => ['families', 'sponsors', 'sponsorships', 'payments'],
-            'supervisor' => ['families', 'sponsors', 'sponsorships', 'payments'],
-            'nanny' => ['families', 'sponsorships', 'payments'],
-            'accountant_staff' => ['families', 'sponsorships', 'payments'],
-            'administration' => ['families', 'sponsors', 'sponsorships'],
+            'admin' => ['families', 'sponsors', 'sponsorships', 'payments', 'documents'],
+            'general_manager' => ['families', 'sponsors', 'sponsorships', 'payments', 'documents'],
+            'vice_general_manager' => ['families', 'sponsors', 'sponsorships', 'payments', 'documents'],
+            'financial_manager' => ['families', 'sponsors', 'sponsorships', 'payments', 'documents'],
+            'accountant' => ['families', 'sponsors', 'sponsorships', 'payments', 'documents'],
+            'supervisor' => ['families', 'sponsors', 'sponsorships', 'payments', 'documents'],
+            'nanny' => ['families', 'sponsorships', 'payments', 'documents'],
+            'accountant_staff' => ['families', 'sponsorships', 'payments', 'documents'],
+            'administration' => ['families', 'sponsors', 'sponsorships', 'documents'],
             'social_media' => [],
             'hr_manager' => ['families', 'sponsors', 'sponsorships'],
             'hr_staff' => ['families', 'sponsors', 'sponsorships'],
-            'projects_manager' => ['families', 'sponsors', 'sponsorships'],
-            'project_supervisor' => ['families', 'sponsors', 'sponsorships'],
-            'staff' => ['families', 'sponsors', 'sponsorships'],
+            'projects_manager' => ['families', 'sponsors', 'sponsorships', 'documents'],
+            'project_supervisor' => ['families', 'sponsors', 'sponsorships', 'documents'],
+            'staff' => ['families', 'sponsors', 'sponsorships', 'documents'],
         ][$role] ?? [];
     }
 }
@@ -49,7 +49,7 @@ if (!function_exists('ak_search_can_type')) {
         $allowed = ak_search_allowed_types($role);
 
         if ($type === 'all') {
-            $allTypes = ['families', 'sponsors', 'sponsorships', 'payments'];
+            $allTypes = ['families', 'sponsors', 'sponsorships', 'payments', 'documents'];
 
             return count($allowed) === count($allTypes)
                 && !array_diff($allTypes, $allowed);
@@ -115,7 +115,7 @@ if (!function_exists('ak_search_enforce_request')) {
 
         if (!in_array(
             $requestedType,
-            ['all', 'families', 'sponsors', 'sponsorships', 'payments'],
+            ['all', 'families', 'sponsors', 'sponsorships', 'payments', 'documents'],
             true
         )) {
             http_response_code(400);
