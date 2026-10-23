@@ -1692,3 +1692,7 @@ After the Interactions API request/response correction, the owner tested both Ar
 
 Current code commit: 87c37e4238858b6e126382f41476db8f49929e18. Gemini 3.5 Transcribe now follows the documented REST flow: upload the consented audio via Files API, then pass its URI to Interactions API. Next: user pulls main, runs PHP 8.2 lint on modules\ai_assistant\chat.php, then performs one short consented browser recording. Confirm the transcript is editable and not auto-submitted. If it fails, inspect only matching [Ahl El Kheir AI transcription] lines in Apache's error log; startup notices are not relevant diagnostics. Do not claim runtime success before user verification.
 The explicit voice-consent prompt also discloses possible temporary Google Files API retention of the audio for up to 48 hours (commit f89eaf85bc3b91389ab1c11abe541c02a21abfb4). Verify the prompt in the browser as part of the next one-recording acceptance test.
+
+
+## 2026-10-23 — AI assistant continuation
+Current task boundary: text chat is the supported path; voice is deferred and the microphone control is disabled. General-text default model is `gemini-3.5-flash-lite`, but local `GEMINI_MODEL`/`hosting.php` overrides must be checked. Next: pull `main`, lint `modules/ai_assistant/chat.php` and `includes/ai_assistant_widget.php`, then perform the documented local text acceptance checks. Runtime status is pending; do not claim fully verified.
