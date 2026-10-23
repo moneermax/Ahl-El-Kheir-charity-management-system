@@ -78,6 +78,7 @@ foreach ($rows as $row) {
 }
 
 $hashCounts = [];
+$hashPathSets = [];
 foreach ($rows as $index => $row) {
     $storedPath = trim((string)$row['stored_path']);
     $normalized = str_replace('\\', '/', $storedPath);
@@ -143,6 +144,7 @@ foreach ($rows as $index => $row) {
                 }
                 if ($sha256 !== null) {
                     $hashCounts[$sha256] = ($hashCounts[$sha256] ?? 0) + 1;
+                    $hashPathSets[$sha256][$normalized] = true;
                 }
             }
         }
@@ -169,8 +171,8 @@ $summary = [
     'total_references' => count($rows),
     'missing_or_invalid_references' => 0,
     'shared_path_reference_rows' => 0,
-    'duplicate_content_reference_rows' => 0,
-    'metadata_issue_rows' => 0,
+    'duplicate_content_candidate_rows' => 0,
+    'rows_with_issues' => 0,
 ];
 
 foreach ($rows as $row) {
@@ -182,10 +184,10 @@ foreach ($rows as $row) {
         $summary['shared_path_reference_rows']++;
     }
     if (!empty($inventory['issues'])) {
-        $summary['metadata_issue_rows']++;
+        $summary['rows_with_issues']++;
     }
-    if ($inventory['sha256'] !== null && ($hashCounts[$inventory['sha256']] ?? 0) > 1) {
-        $summary['duplicate_content_reference_rows']++;
+    if ($inventory['sha256'] !== null && count($hashPathSets[$inventory['sha256']] ?? []) > 1) {
+        $summary['duplicate_content_candidate_rows']++;
     }
 }
 
