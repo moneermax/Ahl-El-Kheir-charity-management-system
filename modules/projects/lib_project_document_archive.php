@@ -240,9 +240,10 @@ if (!function_exists('akp_archive_update_project_document_title')) {
         $title = function_exists('mb_substr') ? mb_substr($displayTitle, 0, 255, 'UTF-8') : substr($displayTitle, 0, 255);
         dbExecute('UPDATE document_archive_documents SET display_title = ? WHERE id = ?', [$title, (int)$link['document_id']]);
         $metadata = json_encode(['project_id' => $projectId, 'display_title' => $title], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
+        $actorId = (int)Session::getUserId();
         dbExecute(
             'INSERT INTO document_archive_events (event_type, document_id, version_id, source_table, source_record_id, source_path_column, actor_user_id, metadata_json) VALUES (\'metadata_updated\', ?, ?, ?, ?, ?, ?, ?)',
-            [(int)$link['document_id'], (int)$link['current_version_id'], $sourceTable, $sourceId, $pathColumn, (int)Session::getUserId() ?: null, $metadata]
+            [(int)$link['document_id'], (int)$link['current_version_id'], $sourceTable, $sourceId, $pathColumn, $actorId > 0 ? $actorId : null, $metadata]
         );
     }
 }
