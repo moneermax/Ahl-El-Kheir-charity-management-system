@@ -18,6 +18,18 @@ jobs:
       - name: Check out main
         uses: actions/checkout@v4
 
+      - name: Set up PHP for source syntax checks
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+
+      - name: Lint QR integration PHP files
+        run: |
+          php -l modules/sponsors/lib_sponsor_qr.php
+          php -l modules/sponsors/view.php
+          php -l modules/families/orphan_form.php
+          php -l modules/families/orphan_profile.php
+
       - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
