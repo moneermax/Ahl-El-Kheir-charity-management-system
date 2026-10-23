@@ -1888,3 +1888,7 @@ Active task: review and verify commit `1e29a29b85b4bf4ac0da2cd7aff226019a71cff2`
 ### Current correction — original orphan form design restored
 
 Review commit `efe2eaf9b6aeaa1d25b7f136f9b9958f74e519a4`: the original orphan form header styling was restored by removing the flex/min-height/padding changes. The sponsor QR remains absolutely positioned at upper-left in the original header row. Next run PHP syntax validation and verify the local Apache form and print/PDF preview; do not close until the user confirms the original design is preserved.
+
+### 2026-10-23 follow-up — full-width sponsorship rows
+
+Source commit `d31c1fd6c56f25ecca15adb5833131b425264935` adds `colspan="3"` to the value cells for “مدة الكفالة” and “قيمة الكفالة”. Those rows share a table with four-column sponsor rows; spanning the remaining columns makes both row borders extend across the same full table width without changing their content or the QR header. PHP syntax and local browser/print appearance verification are still pending.
