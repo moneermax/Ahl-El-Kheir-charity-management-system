@@ -69,3 +69,10 @@ No local PHP lint, Android compilation, physical-device scan, Apache/browser, da
 The first GitHub Actions run passed all four PHP lint checks and Java 17 setup, then failed inside `android-actions/setup-android@v3`. The visible log ended with `/usr/local/lib/android/sdk/cmdline-tools/16.0/bin/sdkmanager` exiting with code 1 at “10% Computing updates...”. The supplied excerpt does not reveal the SDK manager's underlying diagnostic, so the exact network/repository cause is not proven.
 
 Workflow commit `84cb9fe4621b0043c8546da24f74530e49c70749` removes the extra Android SDK setup and package-install calls and instead checks for Android 35 and Build Tools 35.0.0 already present on the GitHub-hosted Ubuntu runner. This avoids the failing SDK-manager update path if those packages are present. **This adjustment is not yet verified**; wait for the new Actions run. If the package-directory check fails, inspect the runner image's installed SDK packages and choose a supported preinstalled version rather than guessing.
+
+
+## 2026-10-23 — Duplicate-class build diagnostic
+
+The Android build reached Gradle task `:app:checkDebugDuplicateClasses` and failed, but the log excerpt supplied by the user did not name the duplicate classes. ZXing is only a hypothesis; do not change/remove dependencies until class names or dependency evidence identify the overlap.
+
+Workflow commit `36f464b6d6975c65499498cb14c19742ba01745e` changes the build step to run `:app:checkDebugDuplicateClasses --stacktrace --info`, print matching error lines with context, and upload `duplicate-classes.log` as artifact `sponsor-qr-scanner-build-diagnostic` on failure. This diagnostic workflow has not yet been run/verified. Next action: open the newest Actions run and inspect the printed duplicate class names, or download the diagnostic artifact. Fix only the dependency conflict established by that evidence.
