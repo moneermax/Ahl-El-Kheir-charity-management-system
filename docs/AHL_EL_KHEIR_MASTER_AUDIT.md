@@ -4329,3 +4329,14 @@ Evidence used: the repository SQL dump was retrieved via GitHub contents and par
 A separate archive catalogue schema is committed in `database/migrations/2026-10-23_document_archive_catalogue.sql`. Local verification supplied by the user confirms five `document_archive_*` tables, expected indexes and foreign keys in `ahl_el_kheir`. This evidence is specific to the local database.
 
 The first read-only pilot covers `project_documents` and `project_payment_evidence`. Live table definitions were supplied by the user. `tools/report_project_document_inventory.php` is committed to report file existence, project-storage containment, shared path references, available size/MIME inconsistencies and SHA-256 duplicate-content candidates. It has not yet been run locally; no file inventory or production-host behavior is asserted. No existing business paths or authorization endpoints were changed.
+
+
+---
+
+## 2026-10-23 — Archive pilot: Global Search integration and upload hooks (runtime pending)
+
+The archive pilot now follows the user's direction to reuse the existing Global Search Center. The new `documents` search type is governed by the existing central search permission policy. Query results require a current matching source link and a present blob; each result is filtered through the project's existing `akp_can_view_project()` rule, with the payment receipt route's additional role allowlist applied before showing a link. Downloads continue through existing source endpoints rather than a generic archive-ID endpoint.
+
+The new procedural project archive adapter registers verified blob metadata, logical documents, immutable versions, source links, and audit events within the source-record transaction. Project-document and project-payment-evidence upload/replacement flows were wired in the project manager/supervisor page and FM project page. Replacements preserve old physical bytes. Source deletion marks the archive link unlinked rather than deleting archived bytes.
+
+No runtime success is asserted from this source change. Required local acceptance remains: lint all changed PHP files; run the reviewed existing-record backfill with `--apply`; rerun dry-run to confirm idempotence; browser-test authorized and unauthorized search/download; verify upload creates archive rows and replacement increments version while preserving the prior file. The known three missing payment-evidence paths are test artifacts and must not be reconstructed.
