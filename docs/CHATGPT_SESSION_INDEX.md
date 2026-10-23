@@ -1723,3 +1723,6 @@ The voice-consent prompt now discloses Google's temporary audio-file retention (
 
 ## 2026-10-23 — AI assistant text-first checkpoint
 Text chat source reviewed. Local guide retrieval is first and role-limited; Google fallback requires the text consent control and passes internal/sensitive-question filters. General-text default model updated to `gemini-3.5-flash-lite` (`2bc42b03c5d9f5430d0e6ce07a22f39a57811a7b`). Voice microphone disabled and labelled future development (`75c52595eef9cd6dd2d8ab71756f06103601c1c8`). Local runtime checks remain pending; do not describe text as fully verified until tested on the user's XAMPP app.
+
+### 2026-10-23 — AI assistant conversation continues across pages
+The widget now stores the active conversation ID in tab-scoped `sessionStorage`, reloads its messages via the owner-checked `history_load` endpoint after navigation, clears the stored ID for explicit New chat, and closes the panel on `mouseleave` like the sidebar. Commits: `9db6c37945f2af5e775dc4f9bf651acee7d657b7`, `ca5a1d8bb34e0325a5ea2da0e67b16ea7fd723cb`. Local PHP/browser verification is pending.
