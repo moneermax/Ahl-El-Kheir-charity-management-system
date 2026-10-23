@@ -4089,3 +4089,8 @@ Source changes on `main`:
 - `.github/workflows/build-sponsor-qr-scanner.yml` builds an installable debug APK artifact.
 
 **Status: SOURCE IMPLEMENTATION ONLY; NOT VERIFIED.** No PHP lint, Android build result, Apache/browser test, physical-device scan, database count comparison, or role/scope runtime test has yet been evidenced. Follow `docs/SPONSOR_QR_ANDROID_CONTINUATION.md` for exact next steps. No schema migration was introduced. The previously documented project archive browser-acceptance gap remains separate and unchanged.
+
+
+## New active task — Sponsor QR + Android scanner (2026-10-23)
+
+See `docs/SPONSOR_QR_ANDROID_CONTINUATION.md` for requirements, implementation inventory, and acceptance plan. Current Android dependency fix: `777f9b180ce61dade8c96649a8138e7f4bb85880`, excluding obsolete Kotlin `kotlin-stdlib-jdk7` / `kotlin-stdlib-jdk8` split artifacts that CI proved duplicate classes already included in `kotlin-stdlib:1.8.22`. Fix awaits the next Actions run; APK and runtime acceptance remain unverified.
