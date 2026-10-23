@@ -153,3 +153,57 @@ The actual local database inventory supplied during this task confirms the liste
 ### Updated next action
 
 Complete a concise matrix of each source table's file columns, source-record authorization adapter, upload validation, replacement behavior, delete/reset behavior, and serving route. Then finalize the catalogue/version/link/audit schema against verified CREATE TABLE and index definitions. Continue to register existing files in place first; no physical moves, deletes, or schema changes during discovery.
+
+
+
+## 2026-10-23 — Archive schema contract and source-link matrix (design only)
+
+This section records the next design boundary after targeted source inspection. It is not a migration and does not assert that the proposed table names already exist.
+
+### Expanded source matrix
+
+| Source domain | Source path field(s) / table | Upload or replacement behavior observed | Existing retrieval authorization route |
+|---|---|---|---|
+| Transactions and sponsor payments | transactions.receipt_path, transactions.unified_receipt_path; sponsor_payments.receipt_file_path, sponsor_payments.unified_receipt_path | New unique receipt paths; returned-record resubmission can replace a DB path and run cleanup; shared paths exist in real data | modules/transactions/receipt_file.php, receipt_sp.php; keep their source-record/supervisor scope checks |
+| FINA collection receipt | fina_collections.receipt_path | External collection receipt upload; removes newly stored file if its DB transaction fails | modules/accounting/fina_receipt.php; preserve FINA record ownership/supervisor restrictions |
+| FINA settlement evidence | fina_settlements.evidence_path | Upload handled by settlement helper; caller cleans new file on failed processing | modules/accounting/fina_settlement_evidence.php; financial-manager-only and settlement/path containment checks |
+| Family/return/disbursement receipts | disbursement_items.receipt_file_path; monthly_disbursements.receipt_file_path, return_receipt_file_path | Multiple receipt classes; reopen/reset can null a reference; uploads may occur in multi-step accounting flows | modules/accounting/disbursement_receipt.php, serve_receipt.php; preserve role, assigned-nanny and record-level checks |
+| Family documents | family_documents.file_path | Insert plus audit; current delete flow unlinks physical file before deleting row | modules/families/document_file.php; preserve family scope checks |
+| Orphan supporting documents | orphan_documents.file_path | Table exists but actual inventory reported zero rows; no upload writer was found in the inspected paths | modules/families/orphan_document_file.php; confirm this workflow before onboarding data |
+| Orphan photos | family_children.photo_path | orphan_form.php and orphan_profile.php write storage/photos; remove action clears DB path but the inspected branch does not unlink prior photo | orphan_form.php?photo=<child id>; this is a separate child-photo source, not orphan_documents |
+| Project documents | project_documents.file_path | Replacement updates path and unlinks prior file | modules/projects/serve_project_document.php; project permission check and canonical path containment |
+| Project funding evidence | project_payment_evidence.receipt_file_path | FM upload/edit; replacement unlinks prior file after DB commit; pending evidence rows may be deleted during allocation removal | modules/projects/project_payment_receipt.php; role allowlist plus project view permission and path containment |
+| HR contracts | hr_employee_contracts.contract_file_path | Replacement updates path; inspected upload does not remove prior file, so unreferenced files are possible | modules/hr/view_contract.php; employee/role authorization, constrained storage root, detected MIME and no-store headers |
+| Salary-advance payment receipt | hr_salary_advance_documents.file_path | One current row per request/type; replace row transactionally, remove new file on failure, unlink prior file after commit | modules/hr/salary_advance_receipt.php; employee/role checks and path containment |
+| Direct repayment evidence | hr_salary_advance_direct_repayment_documents.file_path | One current row per repayment; replacement cleans old file after successful commit | modules/hr/salary_advance_repayment_evidence.php; repayment-record access checks and path containment |
+| Message attachments | message_attachments.stored_name (stored as basename) | Upload cleanup on insert failure; delete removes DB row then unlinks file | modules/messages/download_attachment.php; message-read authorization; delete checks uploader/admin |
+
+The child-photo paths were added to scope because they are uploaded documents/images in the same application and are not represented in the earlier 13-table path inventory. They should be treated as a distinct source adapter in the catalogue plan. Do not silently include unrelated user avatars or other storage types without a matching requirement and source inventory.
+
+### Proposed conceptual schema contract (names remain provisional)
+
+Use four logical responsibilities, with exact physical table names finalized only after schema/index review:
+
+1. **Stored file/blob** — one row per unique physical relative storage key; capture detected MIME, byte size, SHA-256, original/display filename, storage state (present/missing/quarantined), and creation time. A shared path must resolve to one blob row, not duplicate blob rows.
+2. **Document/version** — a logical document identity and immutable version entries. Each version points to a stored blob and records uploader, original filename, detected MIME, size/hash snapshot, creation time, and optional previous version. A replacement creates a new version; it does not overwrite bytes or delete the previous version. A single blob/version may be linked from multiple source records where existing data shares one physical file.
+3. **Source link** — typed source locator (source_table, numeric source record ID, source path-column/key) and current archive version/blob reference, plus link timestamps/actor. Source links are pointers, not authorization grants. Because the source tables differ and some relationships are application-level only, do not add guessed polymorphic foreign keys. Per-domain adapters must re-check source-record authorization before search details or download.
+4. **Audit event** — append-only event records for registration, upload, new version, link/unlink, failed reconciliation, access-sensitive lifecycle actions, and reviewed archival actions; include actor (nullable only when a documented system operation needs it), event time, object/version/link identifiers, and bounded metadata. Never store raw file bytes or sensitive content in event metadata.
+
+Integrity rules for the design:
+
+- Existing paths are registered in place first. Initial registration is metadata-only and does not move, rename, rewrite, or delete files.
+- Same path referenced by several rows maps to one stored blob and several source links. Equal hashes at different paths remain separate blobs unless a reviewed process explicitly merges identity; hashes are not deletion instructions.
+- Physical bytes are immutable after registration. New uploads use opaque generated storage keys and create new blob/version rows. Source records continue using their existing path columns and routes during the compatibility phase.
+- Link changes and file/version metadata changes are transactional where possible. If filesystem writes precede a DB commit, failure cleanup removes only the newly created unreferenced file. Never remove the prior version after successful replacement.
+- A source unlink/deletion must not physically delete a blob while any current or historical version/link references it. Retention and physical purge are a separate future policy, disabled by default.
+- Search is an index over metadata and authorized source links, not a bypass around existing domain access checks. No generic endpoint accepts an archive ID and serves bytes without the source adapter.
+- Reconciliation is explicit and report-only initially: missing file, unreferenced path, path escape, size/hash mismatch, shared-path groups, and duplicate-content candidates. No automatic deduplication or cleanup.
+- New upload paths should use CSRF checks, extension plus detected-content MIME allowlists, explicit size limits, opaque names, no-store/nosniff delivery, and safe cleanup. Roll out per source adapter to avoid unrelated workflow changes.
+
+### Migration and implementation boundary
+
+No archive table names, column types, foreign keys, or indexes are approved for DDL yet. The repository reader cannot currently provide the full large database/ahl_el_kheir.sql dump body. The supplied live inventory does establish source column names/types and several FKs, but before writing the migration we still need verified current definitions/indexes for (a) archive-name collision, (b) user ID type and deletion semantics, (c) source column path limits, (d) installed migration style and index names, and (e) whether any archive-named objects already exist. The next implementation artifact should be a reviewable schema proposal with exact DDL and a rollback/backfill plan, not runtime DDL and not a live migration.
+
+### Recommended pilot boundary
+
+Pilot **project documents and project payment evidence** first because both have explicit project authorization checks and known source/serving routes, but keep them as separate source adapters. The pilot must be metadata-only for existing files and preserve the current URLs. Do not simultaneously retrofit all receipt, HR, family, and message flows. Before pilot code changes, inspect every read/write/delete path for these two domains and verify current table definitions and migration conventions.
