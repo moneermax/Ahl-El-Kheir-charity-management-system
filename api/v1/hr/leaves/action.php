@@ -75,6 +75,16 @@ try {
  ak_api_json(200,['ok'=>true,'data'=>['leave_id'=>$leaveId,'status'=>$action==='approve'?'hr_approved':'rejected','message'=>$action==='approve'?'Leave request approved.':'Leave request rejected.']]);
 } catch(Throwable $e) {
  if(db()->inTransaction()) db()->rollBack();
- $status=$e instanceof InvalidArgumentException?422:($e instanceof RuntimeException?409:500);
- ak_api_json($status,['ok'=>false,'error'=>['code'=>'leave_action_failed','message'=>$e->getMessage()]]);
+ if($e instanceof InvalidArgumentException) {
+  $status=422; $message=$e->getMessage();
+ } elseif($e instanceof PDOException) {
+  error_log('Mobile leave action database failure: '.$e->getMessage());
+  $status=500; $message='Unable to process the leave request.';
+ } elseif($e instanceof RuntimeException) {
+  $status=409; $message=$e->getMessage();
+ } else {
+  error_log('Mobile leave action unexpected failure: '.$e->getMessage());
+  $status=500; $message='Unable to process the leave request.';
+ }
+ ak_api_json($status,['ok'=>false,'error'=>['code'=>'leave_action_failed','message'=>$message]]);
 }
