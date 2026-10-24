@@ -35,6 +35,7 @@ jobs:
             api/v1/hr/leaves.php
             api/v1/hr/leaves/action.php
             api/v1/sponsors/index.php
+            api/v1/supervisors/index.php
             api/v1/sponsors/detail.php
             api/v1/sponsor_requests/index.php
             api/v1/sponsor_requests/action.php
