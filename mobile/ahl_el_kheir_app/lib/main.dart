@@ -4,6 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'projects_page.dart';
 import 'attendance_page.dart';
+import 'employees_page.dart';
 import 'leave_requests_page.dart';
 import 'sponsors_page.dart';
 import 'families_page.dart';
@@ -142,6 +143,15 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       throw const ApiFailure('Authentication is required.', statusCode: 401);
     }
     return call('GET', 'projects/detail.php?id=$projectId', token: token);
+  }
+
+  Future<Map<String, dynamic>> loadEmployees(String query, int page) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) {
+      throw const ApiFailure('Authentication is required.', statusCode: 401);
+    }
+    final q = Uri.encodeQueryComponent(query);
+    return call('GET', 'hr/employees.php?q=$q&page=$page', token: token);
   }
 
   Future<Map<String, dynamic>> loadAttendance(String? date) async {
@@ -320,6 +330,18 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                             ),
                           );
                         },
+                      ),
+                    ),
+                  if (['hr_manager', 'hr_staff', 'admin'].contains(user?['role_code']?.toString()))
+                    Card(
+                      child: ListTile(
+                        leading: const CircleAvatar(child: Icon(Icons.badge_outlined)),
+                        title: Text(english ? 'Employees' : 'الموظفون'),
+                        subtitle: Text(english ? 'Browse the staff directory' : 'استعراض دليل الموظفين'),
+                        trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+                        onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
+                          builder: (_) => EmployeesPage(english: english, loadPage: loadEmployees),
+                        )),
                       ),
                     ),
                   if (['hr_manager', 'hr_staff', 'admin'].contains(user?['role_code']?.toString()))
