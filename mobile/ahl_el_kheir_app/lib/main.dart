@@ -277,7 +277,7 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                               const SizedBox(height: 26),
                               Text(
-                                en ? 'Sign in to your account' : 'تسجيل الدخول إلى حسابك',
+                                en ? 'Sign in' : 'تسجيل الدخول',
                                 textAlign: TextAlign.start,
                                 style: const TextStyle(color: navy900, fontSize: 17, fontWeight: FontWeight.w800),
                               ),
