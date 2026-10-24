@@ -7,7 +7,22 @@ class SponsorDetailPage extends StatefulWidget {
 class _SponsorDetailPageState extends State<SponsorDetailPage>{
  bool loading=true;String? error;Map<String,dynamic> sponsor={};List<Map<String,dynamic>> ships=[];
  @override void initState(){super.initState();load();}
- Future<void> load()async{setState(()=>{loading=true,error=null});try{final d=await widget.loadDetail(widget.sponsorId);if(!mounted)return;setState(()=>{sponsor=Map<String,dynamic>.from(d['sponsor'] as Map),ships:(d['sponsorships'] as List? ?? []).whereType<Map>().map((x)=>Map<String,dynamic>.from(x)).toList()});}catch(e){if(mounted)setState(()=>error=e.toString());}finally{if(mounted)setState(()=>loading=false);}}
+ Future<void> load() async {
+  setState(() { loading = true; error = null; });
+  try {
+   final data = await widget.loadDetail(widget.sponsorId);
+   if (!mounted) return;
+   final raw = data['sponsorships'];
+   setState(() {
+    sponsor = Map<String, dynamic>.from(data['sponsor'] as Map);
+    ships = raw is List ? raw.whereType<Map>().map((x) => Map<String, dynamic>.from(x)).toList() : <Map<String, dynamic>>[];
+   });
+  } catch (e) {
+   if (mounted) setState(() => error = e.toString());
+  } finally {
+   if (mounted) setState(() => loading = false);
+  }
+ }
  String status(String s){final m=widget.english?const {'active':'Active','inactive':'Inactive','suspended':'Suspended','cancelled':'Cancelled'}:const {'active':'نشط','inactive':'غير نشط','suspended':'موقوف','cancelled':'ملغي'};return m[s]??s;}
  String gender(String s){final m=widget.english?const {'male':'Male','female':'Female'}:const {'male':'ذكر','female':'أنثى'};return m[s]??s;}
  @override Widget build(BuildContext context){final en=widget.english;return Scaffold(appBar:AppBar(title:Text(en?'Sponsor details':'تفاصيل الكفيل')),body:loading?const Center(child:CircularProgressIndicator()):error!=null?Center(child:Text(error!,textAlign:TextAlign.center)):RefreshIndicator(onRefresh:load,child:ListView(physics:const AlwaysScrollableScrollPhysics(),padding:const EdgeInsets.all(12),children:[

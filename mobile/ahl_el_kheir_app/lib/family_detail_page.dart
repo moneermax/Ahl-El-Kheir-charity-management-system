@@ -7,7 +7,24 @@ class FamilyDetailPage extends StatefulWidget {
 class _FamilyDetailPageState extends State<FamilyDetailPage>{
  bool loading=true;String? error;Map<String,dynamic> family={};List<Map<String,dynamic>> children=[],ships=[];
  @override void initState(){super.initState();load();}
- Future<void> load()async{setState(()=>{loading=true,error=null});try{final d=await widget.loadDetail(widget.familyId);if(!mounted)return;setState(()=>{family=Map<String,dynamic>.from(d['family'] as Map),children:(d['children'] as List? ?? []).whereType<Map>().map((x)=>Map<String,dynamic>.from(x)).toList(),ships:(d['sponsorships'] as List? ?? []).whereType<Map>().map((x)=>Map<String,dynamic>.from(x)).toList()});}catch(e){if(mounted)setState(()=>error=e.toString());}finally{if(mounted)setState(()=>loading=false);}}
+ Future<void> load() async {
+  setState(() { loading = true; error = null; });
+  try {
+   final data = await widget.loadDetail(widget.familyId);
+   if (!mounted) return;
+   final rawChildren = data['children'];
+   final rawShips = data['sponsorships'];
+   setState(() {
+    family = Map<String, dynamic>.from(data['family'] as Map);
+    children = rawChildren is List ? rawChildren.whereType<Map>().map((x) => Map<String, dynamic>.from(x)).toList() : <Map<String, dynamic>>[];
+    ships = rawShips is List ? rawShips.whereType<Map>().map((x) => Map<String, dynamic>.from(x)).toList() : <Map<String, dynamic>>[];
+   });
+  } catch (e) {
+   if (mounted) setState(() => error = e.toString());
+  } finally {
+   if (mounted) setState(() => loading = false);
+  }
+ }
  String status(String s){final m=widget.english?const {'active':'Active','pending':'Pending','paused':'Paused','completed':'Completed','archived':'Archived','inactive':'Inactive','closed':'Closed'}:const {'active':'نشطة','pending':'قيد المراجعة','paused':'موقوفة','completed':'مكتملة','archived':'مؤرشفة','inactive':'غير نشطة','closed':'مغلقة'};return m[s]??s;}
  String match(String s){final m=widget.english?const {'matched':'Sponsored','waiting_list':'Waiting list','lost_sponsor':'Lost sponsor','unmatched':'Not sponsored'}:const {'matched':'مكفول','waiting_list':'في الانتظار','lost_sponsor':'فقد كفيله','unmatched':'غير مكفول'};return m[s]??s;}
  @override Widget build(BuildContext context){final en=widget.english;return Scaffold(appBar:AppBar(title:Text(en?'Family details':'تفاصيل الأسرة')),body:loading?const Center(child:CircularProgressIndicator()):error!=null?Center(child:Text(error!,textAlign:TextAlign.center)):RefreshIndicator(onRefresh:load,child:ListView(physics:const AlwaysScrollableScrollPhysics(),padding:const EdgeInsets.all(12),children:[
