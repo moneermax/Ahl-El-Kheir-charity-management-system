@@ -1906,3 +1906,7 @@ Cloud run 40060794073 passed Dart analysis but failed the test because it launch
 
 ## 2026-10-24 — Mobile physical phone and theme follow-up
 Continue from `docs/MOBILE_APP_CONTINUATION.md`. User confirmed laptop LAN IP `192.168.18.9` and Apache port `881`; Flutter default targets `http://192.168.18.9:881/AhlElKheir/api/v1`. Login UI uses the existing website navy palette and `assets/img/logo.jpg`. Do not claim login works until CI passes, phone reaches the endpoint, `2026-10-24_mobile_api_sessions.sql` is confirmed applied to the intended `ahl_el_kheir` DB, and local API runtime/security checks pass. Do not expose XAMPP publicly.
+
+
+## 2026-10-24 — Flutter UI analyzer follow-up
+Brand/API URL source change is in `54a1c06d2855b0d58044adf7cb3bbf6d8860d366`; its first CI run failed `flutter analyze` because `Color.withOpacity` is deprecated in Flutter 3.47. Commit `6dbb17b7f4276eeeaad2e3f6c8c267d939ef35f6` uses `withValues(alpha: ...)`. Verify latest Actions run and artifact before asking user to install. Physical-device connectivity and API migration/runtime remain pending.
