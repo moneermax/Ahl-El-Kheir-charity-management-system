@@ -4474,3 +4474,7 @@ GitHub Actions run 40060794073 completed dependency resolution and Dart analysis
 
 ## 2026-10-24 — Flutter physical-device connection and brand alignment
 Finding: the first APK defaulted to `10.0.2.2:8081`, which is an Android-emulator host, not the user's physical handset. User confirmed local laptop host `192.168.18.9`, Apache port `881`. Source now targets that LAN URL and uses the existing website logo and navy design tokens. This is a source-level correction only; CI, handset connectivity, API migration, and runtime authentication remain unverified.
+
+
+## 2026-10-24 — Flutter theme CI analyzer finding
+Run `40062960757` reached `flutter analyze` and failed only on four `deprecated_member_use` infos for newly introduced `Color.withOpacity` calls (Flutter 3.47); build/test steps were skipped. Replaced the calls with `withValues(alpha: ...)` in commit `6dbb17b7f4276eeeaad2e3f6c8c267d939ef35f6`. Await the next run for actual verification; API reachability and migration/runtime remain unverified.
