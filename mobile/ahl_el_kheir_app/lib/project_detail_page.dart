@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 
 class ProjectDetailPage extends StatefulWidget {
-  const ProjectDetailPage({super.key, required this.projectId, required this.english, required this.loadDetail, required this.submitProgress, required this.createMilestone});
+  const ProjectDetailPage({super.key, required this.projectId, required this.english, required this.loadDetail, required this.submitProgress, required this.createMilestone, this.actOnMilestone});
   final int projectId;
   final bool english;
   final Future<Map<String, dynamic>> Function(int projectId) loadDetail;
   final Future<Map<String, dynamic>> Function(Map<String, dynamic> body) submitProgress;
   final Future<Map<String, dynamic>> Function(Map<String, dynamic> body) createMilestone;
+  final Future<Map<String, dynamic>> Function(Map<String, dynamic> body)? actOnMilestone;
   @override
   State<ProjectDetailPage> createState() => _ProjectDetailPageState();
 }
 
 class _ProjectDetailPageState extends State<ProjectDetailPage> {
-  bool loading = true, savingProgress = false, savingMilestone = false;
+  bool loading = true, savingProgress = false, savingMilestone = false, savingMilestoneAction = false;
   String? error;
   Map<String, dynamic> project = {};
   List<Map<String, dynamic>> team = [], milestones = [], progressUpdates = [], history = [];
@@ -87,6 +88,56 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
       if (mounted) setState(() => savingMilestone = false);
     }
   }
+  Future<void> _editMilestone(Map<String, dynamic> milestone) async {
+    final body = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (_) => _ProjectMilestoneDialog(projectId: widget.projectId, english: widget.english, existing: milestone),
+    );
+    if (body == null || !mounted || widget.actOnMilestone == null) return;
+    setState(() => savingMilestoneAction = true);
+    try {
+      await widget.actOnMilestone!({...body, 'action': 'edit', 'milestone_id': int.tryParse(milestone['id']?.toString() ?? '')});
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(widget.english ? 'Milestone updated.' : 'تم تعديل المرحلة.')));
+      await load();
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+    } finally {
+      if (mounted) setState(() => savingMilestoneAction = false);
+    }
+  }
+
+  Future<void> _deleteMilestone(Map<String, dynamic> milestone) async {
+    final en = widget.english;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(en ? 'Delete milestone?' : 'حذف المرحلة؟'),
+        content: Text(en ? 'This will permanently delete “${milestone['title'] ?? ''}”.' : 'سيتم حذف المرحلة «${milestone['title'] ?? ''}» نهائياً.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: Text(en ? 'Cancel' : 'إلغاء')),
+          FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: Text(en ? 'Delete' : 'حذف')),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted || widget.actOnMilestone == null) return;
+    final id = int.tryParse(milestone['id']?.toString() ?? '');
+    if (id == null || id < 1) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(en ? 'Invalid milestone ID.' : 'معرّف المرحلة غير صالح.')));
+      return;
+    }
+    setState(() => savingMilestoneAction = true);
+    try {
+      await widget.actOnMilestone!({'action': 'delete', 'project_id': widget.projectId, 'milestone_id': id});
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(en ? 'Milestone deleted.' : 'تم حذف المرحلة.')));
+      await load();
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+    } finally {
+      if (mounted) setState(() => savingMilestoneAction = false);
+    }
+  }
   String _amount(dynamic v) => (double.tryParse(v?.toString() ?? '') ?? 0).toStringAsFixed(2);
   String _date(dynamic v) => (v?.toString().isNotEmpty ?? false) ? v.toString() : (widget.english ? 'Not set' : 'غير محدد');
   @override
@@ -151,6 +202,19 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
             const SizedBox(height: 8), Text((en ? 'Planned date: ' : 'التاريخ المخطط: ') + _date(m['planned_date'])),
             const SizedBox(height: 6), LinearProgressIndicator(value: ((double.tryParse(m['completion_percent']?.toString() ?? '') ?? 0) / 100).clamp(0.0, 1.0)),
             const SizedBox(height: 4), Text(_amount(m['completion_percent']) + '%'),
+            if (project['can_add_milestone'] == true && widget.actOnMilestone != null)
+              Align(alignment: AlignmentDirectional.centerEnd, child: Wrap(spacing: 8, children: [
+                TextButton.icon(
+                  onPressed: savingMilestoneAction ? null : () => _editMilestone(m),
+                  icon: const Icon(Icons.edit_outlined),
+                  label: Text(en ? 'Edit' : 'تعديل'),
+                ),
+                TextButton.icon(
+                  onPressed: savingMilestoneAction ? null : () => _deleteMilestone(m),
+                  icon: const Icon(Icons.delete_outline_rounded),
+                  label: Text(en ? 'Delete' : 'حذف'),
+                ),
+              ])),
           ])))),
           _SectionTitle(en ? 'Progress updates' : 'تحديثات التقدم', count: progressUpdates.length),
           if (progressUpdates.isEmpty) _Empty(en ? 'No progress updates recorded.' : 'لا توجد تحديثات تقدم مسجلة.')
@@ -287,9 +351,10 @@ class _ProjectProgressDialogState extends State<_ProjectProgressDialog> {
 }
 
 class _ProjectMilestoneDialog extends StatefulWidget {
-  const _ProjectMilestoneDialog({required this.projectId, required this.english});
+  const _ProjectMilestoneDialog({required this.projectId, required this.english, this.existing});
   final int projectId;
   final bool english;
+  final Map<String, dynamic>? existing;
   @override
   State<_ProjectMilestoneDialog> createState() => _ProjectMilestoneDialogState();
 }
@@ -301,6 +366,18 @@ class _ProjectMilestoneDialogState extends State<_ProjectMilestoneDialog> {
   final percent = TextEditingController(text: '0');
   final notes = TextEditingController();
   String? validationError;
+
+  @override
+  void initState() {
+    super.initState();
+    final m = widget.existing;
+    if (m != null) {
+      title.text = m['title']?.toString() ?? '';
+      description.text = m['description']?.toString() ?? '';
+      date.text = m['planned_date']?.toString() ?? '';
+      percent.text = m['completion_percent']?.toString() ?? '0';
+    }
+  }
 
   @override
   void dispose() {
@@ -318,14 +395,14 @@ class _ProjectMilestoneDialogState extends State<_ProjectMilestoneDialog> {
   Widget build(BuildContext context) {
     final en = widget.english;
     return AlertDialog(
-      title: Text(en ? 'New project milestone' : 'مرحلة مشروع جديدة'),
+      title: Text(widget.existing == null ? (en ? 'New project milestone' : 'مرحلة مشروع جديدة') : (en ? 'Edit project milestone' : 'تعديل مرحلة المشروع')),
       content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
         if (validationError != null) Padding(padding: const EdgeInsets.only(bottom: 8), child: Text(validationError!, style: const TextStyle(color: Colors.red))),
         _field(title, en ? 'Title *' : 'عنوان المرحلة *'),
         _field(description, en ? 'Description' : 'الوصف', lines: 2),
         _field(date, en ? 'Planned date (YYYY-MM-DD)' : 'التاريخ المخطط (YYYY-MM-DD)'),
         _field(percent, en ? 'Completion %' : 'نسبة الإنجاز %', keyboardType: const TextInputType.numberWithOptions(decimal: true)),
-        _field(notes, en ? 'Notes' : 'ملاحظات', lines: 2),
+        if (widget.existing == null) _field(notes, en ? 'Notes' : 'ملاحظات', lines: 2),
       ])),
       actions: [
         TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(en ? 'Cancel' : 'إلغاء')),
@@ -351,7 +428,7 @@ class _ProjectMilestoneDialogState extends State<_ProjectMilestoneDialog> {
             'description': description.text.trim(),
             'planned_date': dateValue,
             'completion_percent': percentValue,
-            'notes': notes.text.trim(),
+            if (widget.existing == null) 'notes': notes.text.trim(),
           });
         }, child: Text(en ? 'Save' : 'حفظ')),
       ],
