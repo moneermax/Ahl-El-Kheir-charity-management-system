@@ -28,6 +28,11 @@ jobs:
         run: |
           set -euo pipefail
           files=(
+            api/v1/auth/login.php
+            api/v1/auth/logout.php
+            api/v1/auth/me.php
+            api/v1/notifications/index.php
+            api/v1/notifications/mark_read.php
             api/v1/projects/index.php
             api/v1/projects/detail.php
             api/v1/projects/progress_update.php
