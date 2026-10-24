@@ -4545,3 +4545,7 @@ The user retried login with the physical-phone APK and the latest Apache access-
 
 ## 2026-10-24 — Mobile application audit checkpoint
 The existing Flutter client is being expanded without replacing the procedural PHP system. Server-side authorization and record scopes remain authoritative. The transaction-register CI failure was an 8-pixel trailing-row RenderFlex overflow; commit `885ef809b431b174541d54c8c44ade3f97421172` moves the amount to the subtitle and leaves only the status chip trailing. Verify the matching Flutter CI run before marking this correction passed. Live API/database runtime testing remains separate from CI.
+
+
+## 2026-10-24 — Mobile transaction build passed; sponsorship work in progress
+The transaction register row-layout correction passed the full Flutter CI workflow at commit `885ef809b431b174541d54c8c44ade3f97421172`; the debug APK artifact was verified present and unexpired. A read-only sponsorship register was then added using the existing web module's role allowlist and supervisor scope helper. Its newer CI workflow remains pending. Live API/database and per-role runtime checks are not implied by CI.
