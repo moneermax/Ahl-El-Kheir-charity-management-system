@@ -37,6 +37,7 @@ jobs:
             api/v1/projects/detail.php
             api/v1/projects/progress_update.php
             api/v1/projects/milestone_create.php
+            api/v1/projects/milestone_action.php
             api/v1/hr/attendance.php
             api/v1/hr/employee_detail.php
             api/v1/hr/my_salary_statements.php
