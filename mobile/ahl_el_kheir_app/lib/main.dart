@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'projects_page.dart';
+import 'project_detail_page.dart';
 
 void main() => runApp(const AhlElKheirApp());
 
@@ -129,6 +130,14 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     return call('GET', 'projects/index.php?page=$page', token: token);
   }
 
+  Future<Map<String, dynamic>> loadProjectDetail(int projectId) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) {
+      throw const ApiFailure('Authentication is required.', statusCode: 401);
+    }
+    return call('GET', 'projects/detail.php?id=$projectId', token: token);
+  }
+
   @override
   Widget build(BuildContext context) => MaterialApp(
     title: english ? 'Ahl El Kheir' : 'أهل الخير',
@@ -220,6 +229,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                               builder: (_) => ProjectsPage(
                                 english: english,
                                 loadPage: loadProjects,
+                                loadDetail: loadProjectDetail,
                               ),
                             ),
                           );
