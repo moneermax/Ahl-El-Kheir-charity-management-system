@@ -279,3 +279,10 @@ The user retried login with the physical-phone APK and the latest Apache access-
 - Commit [bc39b23fdd036298f64ed80a3b09e2bb906c9653](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/commit/bc39b23fdd036298f64ed80a3b09e2bb906c9653) aligned `api/v1/sponsorships/detail.php` with the sponsorship list API's four-role allowlist: `admin`, `vice_general_manager`, `supervisor`, and `accountant`. The supervisor responsibility-scope check remains in place.
 - Source re-fetch on `main` confirms the detail endpoint allowlist. This is source verification only: PHP lint, Flutter analysis/tests/APK build, and live API role checks remain unverified for these latest commits. Do not request device testing yet.
 - Audit note: `api/v1/sponsors/detail.php` intentionally has a different role set from `api/v1/sponsors/index.php`; the web sponsor detail page has the same broader role set as the detail API, so no change was made there.
+
+
+## 2026-10-24 — Mobile sponsor-request attribution correction (CI pending)
+- Commits: Flutter card attribution `4999c0f4b82ecb50e72203d990488840486dabd1`; widget coverage `7f4f8f2159abe1e4f86d6864d75c75f5fb6587d4`; API attribution search `864608962c4ed3f9ac3ae2a1e86711f247170413`.
+- Flutter sponsor-request cards now display `brought_by_name`, falling back to `brought_by_user`; widget test checks the preferred name wins over the fallback.
+- API search now checks sponsor name, phone, source, `r.brought_by_name`, and joined `users.full_name`. The count query uses the same LEFT JOIN as the list query; five search placeholders have five matching parameters. No schema change was made.
+- Verification boundary: source changes are committed on `main`; GitHub commit status currently reports no status records for the API commit, and the Flutter workflow has not yet been confirmed. Do not claim PHP lint, Flutter analysis/tests, Android APK build, or artifact publication passed until actual CI evidence is available. Live Apache/MariaDB acceptance and device testing remain deferred.
