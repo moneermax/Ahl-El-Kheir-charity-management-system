@@ -1019,3 +1019,6 @@ Next: pull `main), run PHP syntax checks for the three changed project PHP pages
 ### 2026-10-19 — Project form validation ordering follow-up
 
 Follow-up source commit: `97ca44232ecec3bdb306992e46f5aec4ff6d770c`. The project create/edit form now opts out of the shared same-page POST interceptor so its existing client-side budget/team validation can run before submission. Server-side validation remains authoritative. This is still source-only verification; local PHP lint and browser verification are pending.
+
+## 2026-10-24 — Mobile API launch-boundary parity note
+Source audit of mobile project APIs found that project detail defaulted absent approval state to `approved`, while `akp_can_view_project()` and project portfolio use `draft`; this fallback is now `draft`. Mobile milestone creation also now enforces the approved/lifecycle operational gate for non-admin project supervisors, matching the existing web access boundary and progress API. The detail response's `can_add_milestone` flag matches the same gate. CI workflow [40119297504](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40119297504) passed all five PHP/database jobs. No project business rules or schema were changed; local runtime role tests remain open.
