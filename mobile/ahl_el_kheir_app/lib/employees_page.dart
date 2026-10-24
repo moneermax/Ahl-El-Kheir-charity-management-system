@@ -5,10 +5,12 @@ class EmployeesPage extends StatefulWidget {
     super.key,
     required this.english,
     required this.loadPage,
+    required this.openDetail,
   });
 
   final bool english;
   final Future<Map<String, dynamic>> Function(String query, int page) loadPage;
+  final void Function(Map<String, dynamic> employee) openDetail;
 
   @override
   State<EmployeesPage> createState() => _EmployeesPageState();
@@ -159,6 +161,7 @@ class _EmployeesPageState extends State<EmployeesPage> {
                                     title: Text(item['full_name']?.toString() ?? ''),
                                     subtitle: Text(subtitle),
                                     isThreeLine: subtitle.contains(' • '),
+                                    onTap: () => widget.openDetail(item),
                                     trailing: Column(
                                       mainAxisAlignment: MainAxisAlignment.center,
                                       crossAxisAlignment: CrossAxisAlignment.end,
