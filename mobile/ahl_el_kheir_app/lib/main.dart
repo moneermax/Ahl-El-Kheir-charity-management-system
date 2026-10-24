@@ -5,7 +5,6 @@ import 'package:http/http.dart' as http;
 import 'projects_page.dart';
 import 'attendance_page.dart';
 import 'employees_page.dart';
-import 'employee_detail_page.dart';
 import 'leave_requests_page.dart';
 import 'sponsors_page.dart';
 import 'supervisors_page.dart';
