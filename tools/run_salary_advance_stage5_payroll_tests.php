@@ -24,6 +24,12 @@ $pdo = db();
 ak_ensure_tables();
 ak_seed_accounts();
 
+$testActorId = (int)$pdo->query('SELECT id FROM users ORDER BY id ASC LIMIT 1')->fetchColumn();
+if ($testActorId <= 0) {
+    throw new RuntimeException('Stage 5 rollback-only fixture requires an existing user for the payment-proof audit foreign key.');
+}
+$_SESSION['user_id'] = $testActorId;
+
 function findFixture(PDO $pdo): ?array
 {
     return dbFetchOne(
