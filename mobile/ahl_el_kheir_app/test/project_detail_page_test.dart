@@ -71,7 +71,7 @@ void main() {
    loadDetail: (_) async {
     detailLoads++;
     return {
-     'project': {'id':32,'project_code':'PRJ-0032','name':'مشروع نشط','current_status':'active','approval_status':'approved','currency_code':'SDG','budget':1000,'funded':100,'expenses':0,'supervisor_name':'مشرف','can_add_milestone':true},
+     'project': {'id':32,'project_code':'PRJ-0032','name':'مشروع نشط','current_status':'active','approval_status':'approved','currency_code':'SDG','budget':1000,'funded':100,'expenses':0,'supervisor_name':'مشرف','can_add_milestone':true,'can_manage_milestones':true},
      'team': [], 'milestones': [], 'progress_updates': [], 'history': [],
     };
    },
