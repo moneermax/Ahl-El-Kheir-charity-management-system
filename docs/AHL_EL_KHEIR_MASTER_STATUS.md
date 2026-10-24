@@ -4435,3 +4435,8 @@ Flutter CI run [40114021559](https://github.com/moneermax/Ahl-El-Kheir-charity-m
 ## 2026-10-24 — Mobile employee details status
 
 Employee detail endpoint, Flutter detail screen, and directory navigation are implemented. Android CI passed at commit `a78bc176` ([run 40115151758](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40115151758)); later localization/test changes are pending latest CI [40115569057](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40115569057). Live API role/database verification and explicit PHP lint coverage for the new endpoint remain pending. The separate full-schema Stage 5 payroll test reports a missing payroll-transfer migration prerequisite; investigate its setup before changing anything.
+
+
+## 2026-10-24 — Employment-state localization refinement
+
+Refined the employee detail screen to show the actual localized employment-state name instead of collapsing every `working` category into a generic label; this preserves distinctions such as probation. Updated the Arabic widget test fixture to include both Arabic and English state names. Latest Android build/test run [40115687291](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40115687291) was queued at the last check. Earlier commit `a78bc176` passed analyzer, Flutter tests, and debug APK build; the newest revision still needs its own green result. PHP endpoint lint/runtime role tests remain outstanding, and the full-schema payroll migration prerequisite failure is separate.
