@@ -202,7 +202,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
             const SizedBox(height: 8), Text((en ? 'Planned date: ' : 'التاريخ المخطط: ') + _date(m['planned_date'])),
             const SizedBox(height: 6), LinearProgressIndicator(value: ((double.tryParse(m['completion_percent']?.toString() ?? '') ?? 0) / 100).clamp(0.0, 1.0)),
             const SizedBox(height: 4), Text(_amount(m['completion_percent']) + '%'),
-            if (project['can_add_milestone'] == true && widget.actOnMilestone != null)
+            if (project['can_manage_milestones'] == true && widget.actOnMilestone != null)
               Align(alignment: AlignmentDirectional.centerEnd, child: Wrap(spacing: 8, children: [
                 TextButton.icon(
                   key: ValueKey('edit-project-milestone-${m['id']}'),
