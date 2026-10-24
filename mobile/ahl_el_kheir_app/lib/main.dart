@@ -438,6 +438,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                                 loadDetail: loadProjectDetail,
                                 submitProgress: submitProjectProgressUpdate,
                                 createMilestone: createProjectMilestone,
+                                actOnMilestone: actOnProjectMilestone,
                               ),
                             ),
                           );
