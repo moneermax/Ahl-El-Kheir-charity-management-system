@@ -440,3 +440,8 @@ During continued mobile work, the existing full-schema CI job failed in its Stag
 
 ## 2026-10-24 — Follow-up CI fixture correction
 After the payroll-transfer migration/proof setup, CI exposed one more fixture issue: the CLI transition had no authenticated session user, so the proof confirmation FK correctly rejected actor ID 0. The rollback-only Stage 5 and concurrency harnesses now set a valid actor from the disposable DB. This is not a mobile API or production payroll code change. Fresh full-schema CI remains pending.
+
+## 2026-10-24 — Latest CI verification
+- Mobile financial review queue (`60883414`) passed Android workflow [40117632176](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40117632176): analyzer, widget tests, debug APK build, artifact publication.
+- Payroll-transfer CI fixture alignment passed [40118139681](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40118139681), all five jobs green. Full-schema output explicitly passed rollback-only Stage 5 payroll behavior, account 1410 reconciliation, payroll/rescheduling contention and retry, and fixture cleanup.
+- This is CI evidence only. API authorization and record-scope still need runtime verification against local Apache/MariaDB; no production host selected/configured yet.
