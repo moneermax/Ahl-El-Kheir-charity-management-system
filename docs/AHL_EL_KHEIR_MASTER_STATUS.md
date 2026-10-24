@@ -4492,3 +4492,7 @@ Verification: [Android workflow 40118666504](https://github.com/moneermax/Ahl-El
 
 ## 2026-10-24 — Project mobile API scope parity correction verified by CI
 The mobile project detail API now treats a missing `project_approval` row as `draft`, matching the existing web `akp_can_view_project()` and portfolio API. Mobile milestone creation now enforces the same non-admin project supervisor operational boundary as the web view/progress API: approval must be `approved`, lifecycle must be one of `active`, `reopened`, `completed`, `under_review`, or `cancelled`, and `closed` remains blocked; assignment checks remain in place. The detail API's `can_add_milestone` flag uses the same boundary. Workflow [40119297504](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40119297504) passed all five PHP/database jobs. This is source/CI verification, not live API acceptance.
+
+## 2026-10-24 — Mobile project milestone maintenance checkpoint
+
+Mobile project milestone edit/delete has been added on main using the existing project_milestones table and web workflow's editable fields. API authorization, project/milestone scoping, transaction locks, closed-project blocking, Flutter confirmation/refresh behavior, and a widget test are in source. Android run 40120100653 was pending at documentation time; do not claim CI success until checked. Live local API acceptance remains outstanding. See docs/MOBILE_APP_CONTINUATION.md for exact commits and gates.
