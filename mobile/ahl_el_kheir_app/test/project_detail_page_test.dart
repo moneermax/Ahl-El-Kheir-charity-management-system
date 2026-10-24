@@ -111,8 +111,8 @@ void main() {
    },
   )));
   await tester.pumpAndSettle();
-  await tester.scrollUntilVisible(find.text('Edit'), 350, scrollable: find.byType(Scrollable));
-  await tester.tap(find.text('Edit'));
+  await tester.scrollUntilVisible(find.byIcon(Icons.edit_outlined), 350, scrollable: find.byType(Scrollable));
+  await tester.tap(find.byIcon(Icons.edit_outlined));
   await tester.pumpAndSettle();
   expect(find.text('Edit project milestone'), findsOneWidget);
   await tester.enterText(find.byType(TextField).first, 'Updated milestone');
@@ -124,8 +124,8 @@ void main() {
   expect(actions.single['milestone_id'], 71);
   expect(actions.single['title'], 'Updated milestone');
 
-  await tester.scrollUntilVisible(find.text('Delete'), 350, scrollable: find.byType(Scrollable));
-  await tester.tap(find.text('Delete').first);
+  await tester.scrollUntilVisible(find.byIcon(Icons.delete_outline_rounded), 350, scrollable: find.byType(Scrollable));
+  await tester.tap(find.byIcon(Icons.delete_outline_rounded));
   await tester.pumpAndSettle();
   expect(find.text('Delete milestone?'), findsOneWidget);
   await tester.tap(find.text('Delete').last);
