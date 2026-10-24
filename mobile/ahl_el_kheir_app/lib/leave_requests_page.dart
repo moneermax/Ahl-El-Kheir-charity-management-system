@@ -33,7 +33,7 @@ class _LeaveRequestsPageState extends State<LeaveRequestsPage>{
   final result=await showDialog<Map<String,dynamic>>(context:context,builder:(ctx)=>StatefulBuilder(builder:(ctx,setLocal)=>AlertDialog(
    title:Text(widget.english?'New leave request':'طلب إجازة جديد'),
    content:SingleChildScrollView(child:Column(mainAxisSize:MainAxisSize.min,children:[
-    DropdownButtonFormField<String>(value:type,decoration:InputDecoration(labelText:widget.english?'Leave type':'نوع الإجازة'),items:[
+    DropdownButtonFormField<String>(initialValue:type,decoration:InputDecoration(labelText:widget.english?'Leave type':'نوع الإجازة'),items:[
      DropdownMenuItem(value:'annual',child:Text(widget.english?'Annual':'سنوية')),DropdownMenuItem(value:'sick',child:Text(widget.english?'Sick':'مرضية')),
      DropdownMenuItem(value:'emergency',child:Text(widget.english?'Emergency':'طارئة')),DropdownMenuItem(value:'unpaid',child:Text(widget.english?'Unpaid':'بدون أجر')),
      DropdownMenuItem(value:'remote_work_request',child:Text(widget.english?'Remote work':'طلب عمل عن بُعد')),
