@@ -4249,3 +4249,7 @@ The user retried login with the physical-phone APK and the latest Apache access-
 
 ## Mobile application — 2026-10-24
 The Flutter app in `mobile/ahl_el_kheir_app/` is being developed incrementally against the existing PHP API and role/scope rules. Current screen and endpoint inventory plus exact verification gaps are in `docs/MOBILE_APP_CONTINUATION.md`. The latest transaction-register CI layout correction is commit `885ef809b431b174541d54c8c44ade3f97421172`; its test/APK run has not yet been verified. Full-app completion and live API role-matrix acceptance are not claimed.
+
+
+## Mobile app — 2026-10-24 progress
+GitHub Actions run `40091698003` passed analysis, widget tests, debug APK build, and artifact publication for commit `885ef809b431b174541d54c8c44ade3f97421172`. A read-only sponsorship register has since been added to current `main`; its CI verification is pending. This is a progress checkpoint, not a claim that the complete app or live API runtime acceptance is finished. See `docs/MOBILE_APP_CONTINUATION.md`.
