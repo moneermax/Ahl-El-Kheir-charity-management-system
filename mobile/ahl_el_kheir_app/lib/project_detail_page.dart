@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 
 class ProjectDetailPage extends StatefulWidget {
-  const ProjectDetailPage({super.key, required this.projectId, required this.english, required this.loadDetail, required this.submitProgress});
+  const ProjectDetailPage({super.key, required this.projectId, required this.english, required this.loadDetail, required this.submitProgress, required this.createMilestone});
   final int projectId;
   final bool english;
   final Future<Map<String, dynamic>> Function(int projectId) loadDetail;
   final Future<Map<String, dynamic>> Function(Map<String, dynamic> body) submitProgress;
+  final Future<Map<String, dynamic>> Function(Map<String, dynamic> body) createMilestone;
   @override
   State<ProjectDetailPage> createState() => _ProjectDetailPageState();
 }
 
 class _ProjectDetailPageState extends State<ProjectDetailPage> {
-  bool loading = true, savingProgress = false;
+  bool loading = true, savingProgress = false, savingMilestone = false;
   String? error;
   Map<String, dynamic> project = {};
   List<Map<String, dynamic>> team = [], milestones = [], progressUpdates = [], history = [];
@@ -65,6 +66,27 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
       if (mounted) setState(() => savingProgress = false);
     }
   }
+  Future<void> _addMilestone() async {
+    final body = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (_) => _ProjectMilestoneDialog(projectId: widget.projectId, english: widget.english),
+    );
+    if (body == null || !mounted) return;
+    setState(() => savingMilestone = true);
+    try {
+      await widget.createMilestone(body);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(widget.english ? 'Milestone saved.' : 'تم حفظ المرحلة.')),
+      );
+      await load();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+    } finally {
+      if (mounted) setState(() => savingMilestone = false);
+    }
+  }
   String _amount(dynamic v) => (double.tryParse(v?.toString() ?? '') ?? 0).toStringAsFixed(2);
   String _date(dynamic v) => (v?.toString().isNotEmpty ?? false) ? v.toString() : (widget.english ? 'Not set' : 'غير محدد');
   @override
@@ -110,6 +132,17 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
             title: Text(m['full_name']?.toString() ?? ''), subtitle: Text(_section(m['section_code']?.toString() ?? '')),
             trailing: m['is_lead'] == true ? Text(en ? 'Lead' : 'قائد') : null,
           ))),
+          if (project['can_add_milestone'] == true)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: FilledButton.icon(
+                onPressed: savingMilestone ? null : _addMilestone,
+                icon: savingMilestone
+                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.flag_rounded),
+                label: Text(en ? 'Add milestone' : 'إضافة مرحلة'),
+              ),
+            ),
           _SectionTitle(en ? 'Milestones' : 'مراحل المشروع', count: milestones.length),
           if (milestones.isEmpty) _Empty(en ? 'No milestones recorded.' : 'لا توجد مراحل مسجلة.')
           else ...milestones.map((m) => Card(child: Padding(padding: const EdgeInsets.all(14), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -248,6 +281,79 @@ class _ProjectProgressDialogState extends State<_ProjectProgressDialog> {
           },
           child: Text(en ? 'Save' : 'حفظ'),
         ),
+      ],
+    );
+  }
+}
+
+class _ProjectMilestoneDialog extends StatefulWidget {
+  const _ProjectMilestoneDialog({required this.projectId, required this.english});
+  final int projectId;
+  final bool english;
+  @override
+  State<_ProjectMilestoneDialog> createState() => _ProjectMilestoneDialogState();
+}
+
+class _ProjectMilestoneDialogState extends State<_ProjectMilestoneDialog> {
+  final title = TextEditingController();
+  final description = TextEditingController();
+  final date = TextEditingController();
+  final percent = TextEditingController(text: '0');
+  final notes = TextEditingController();
+  String? validationError;
+
+  @override
+  void dispose() {
+    title.dispose(); description.dispose(); date.dispose(); percent.dispose(); notes.dispose();
+    super.dispose();
+  }
+
+  Widget _field(TextEditingController controller, String label, {int lines = 1, TextInputType? keyboardType}) => Padding(
+    padding: const EdgeInsets.only(bottom: 10),
+    child: TextField(controller: controller, maxLines: lines, keyboardType: keyboardType,
+      decoration: InputDecoration(labelText: label, border: const OutlineInputBorder(), isDense: true)),
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final en = widget.english;
+    return AlertDialog(
+      title: Text(en ? 'New project milestone' : 'مرحلة مشروع جديدة'),
+      content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
+        if (validationError != null) Padding(padding: const EdgeInsets.only(bottom: 8), child: Text(validationError!, style: const TextStyle(color: Colors.red))),
+        _field(title, en ? 'Title *' : 'عنوان المرحلة *'),
+        _field(description, en ? 'Description' : 'الوصف', lines: 2),
+        _field(date, en ? 'Planned date (YYYY-MM-DD)' : 'التاريخ المخطط (YYYY-MM-DD)'),
+        _field(percent, en ? 'Completion %' : 'نسبة الإنجاز %', keyboardType: const TextInputType.numberWithOptions(decimal: true)),
+        _field(notes, en ? 'Notes' : 'ملاحظات', lines: 2),
+      ])),
+      actions: [
+        TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(en ? 'Cancel' : 'إلغاء')),
+        FilledButton(onPressed: () {
+          final titleValue = title.text.trim();
+          final dateValue = date.text.trim();
+          final percentValue = double.tryParse(percent.text.trim().isEmpty ? '0' : percent.text.trim());
+          if (titleValue.isEmpty) {
+            setState(() => validationError = en ? 'A title is required.' : 'عنوان المرحلة مطلوب.');
+            return;
+          }
+          if (dateValue.isNotEmpty && !RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(dateValue)) {
+            setState(() => validationError = en ? 'Enter the planned date as YYYY-MM-DD.' : 'أدخل التاريخ المخطط بصيغة YYYY-MM-DD.');
+            return;
+          }
+          if (percentValue == null || !percentValue.isFinite || percentValue < 0 || percentValue > 100) {
+            setState(() => validationError = en ? 'Completion must be between 0 and 100.' : 'نسبة الإنجاز يجب أن تكون بين 0 و100.');
+            return;
+          }
+          Navigator.of(context).pop({
+            'project_id': widget.projectId,
+            'title': titleValue,
+            'description': description.text.trim(),
+            'planned_date': dateValue,
+            'completion_percent': percentValue,
+            'notes': notes.text.trim(),
+          });
+        }, child: Text(en ? 'Save' : 'حفظ')),
       ],
     );
   }
