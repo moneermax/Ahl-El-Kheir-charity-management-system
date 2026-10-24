@@ -28,6 +28,7 @@ require_once __DIR__ . '/../config/session.php';
 require_once __DIR__ . '/../modules/accounting/lib.php';
 require_once __DIR__ . '/../modules/hr/lib_salary_advance_payroll.php';
 require_once __DIR__ . '/../modules/hr/lib_payroll_accounting.php';
+require_once __DIR__ . '/../modules/hr/lib_payroll_transfer.php';
 require_once __DIR__ . '/../modules/hr/lib_salary_advance_repayment.php';
 
 $pdo = db();
@@ -48,6 +49,7 @@ $requiredTables = [
     'hr_salary_advance_repayment_plans',
     'hr_salary_advance_repayment_schedule',
     'hr_salary_advance_payroll_repayments',
+    'hr_payroll_payment_proofs',
 ];
 $checkTable = $pdo->prepare(
     'SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ?'
@@ -302,6 +304,8 @@ $policyId = (int)$fixture['policy_version_id'];
 // Use a deterministic balance independent of legacy sample data.
 $balance = 500.00;
 $planId = (int)($fixture['active_plan_id'] ?? 0);
+$proofPath = null;
+$storageKey = null;
 
 // This test database is disposable. Prepare an eligible request, an active
 // plan even when legacy data has no migrated active plan, and policy authorization.
@@ -364,12 +368,24 @@ try {
     concurrencyCheck($payrollId > 0 && $payrollId < 2147483647, 'temporary payroll ID must be within signed INT range');
 
     $basicSalary = round($balance + 1000000, 2);
+    $paymentAccountId = hrPayrollResolvePaymentAccount($pdo, null);
     $pdo->prepare(
         "INSERT INTO payroll
             (id, employee_id, month, year, basic_salary, allowances, overtime,
-             deductions, salary_advance_deduction, net_salary, status)
-         VALUES (?, ?, ?, ?, ?, 0, 0, 0, 0, ?, 'approved')"
-    )->execute([$payrollId, $employeeId, $targetMonth, $targetYear, $basicSalary, $basicSalary]);
+             deductions, salary_advance_deduction, net_salary, status, payment_account_id)
+         VALUES (?, ?, ?, ?, ?, 0, 0, 0, 0, ?, 'approved', ?)"
+    )->execute([$payrollId, $employeeId, $targetMonth, $targetYear, $basicSalary, $basicSalary, $paymentAccountId]);
+
+    $storageKey = hash('sha256', 'concurrency-' . $payrollId . '-' . bin2hex(random_bytes(16))) . '.pdf';
+    $proofPath = hrPayrollProofPath($storageKey);
+    if (file_put_contents($proofPath, "%PDF-1.4\n% Concurrency rollback-only fixture\n%%EOF\n") === false) {
+        throw new RuntimeException('Could not create the rollback-only payment proof fixture.');
+    }
+    $pdo->prepare(
+        "INSERT INTO hr_payroll_payment_proofs
+            (payroll_id, proof_state, storage_key, original_filename, detected_mime_type, file_size_bytes)
+         VALUES (?, 'prepared', ?, 'concurrency-fixture.pdf', 'application/pdf', ?)"
+    )->execute([$payrollId, $storageKey, filesize($proofPath)]);
     $pdo->commit();
 } catch (Throwable $e) {
     if ($pdo->inTransaction()) {
@@ -416,7 +432,11 @@ concurrencyCheck($retry['exit'] === 0, 'production payroll retry did not succeed
 
 // The database itself is disposable CI infrastructure. Remove the committed
 // payroll fixture; the successful posting attempt above was rolled back.
+$pdo->prepare('DELETE FROM hr_payroll_payment_proofs WHERE payroll_id = ?')->execute([$payrollId]);
 $pdo->prepare('DELETE FROM payroll WHERE id = ?')->execute([$payrollId]);
+if (is_string($proofPath) && is_file($proofPath)) {
+    @unlink($proofPath);
+}
 
 echo $blocked['stdout'] . "\n";
 echo $retry['stdout'] . "\n";
