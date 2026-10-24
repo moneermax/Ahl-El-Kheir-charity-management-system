@@ -3,14 +3,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ahl_el_kheir_app/projects_page.dart';
 
 void main() {
-  testWidgets('shows Arabic project portfolio and summary values', (tester) async {
+  testWidgets('shows Arabic project portfolio and searches through the API', (tester) async {
+    final requestedQueries = <String>[];
     await tester.pumpWidget(MaterialApp(
       home: Directionality(
         textDirection: TextDirection.rtl,
         child: ProjectsPage(
           english: false,
           loadDetail: (_) async => {'project': {}, 'team': [], 'milestones': [], 'history': []},
-          loadPage: (_) async => {
+          loadPage: (query, page) async {
+            requestedQueries.add(query);
+            return {
             'items': [{
               'id': 24,
               'project_code': 'PRJ-0024',
@@ -26,6 +29,7 @@ void main() {
             'total': 1,
             'page': 1,
             'pages': 1,
+            };
           },
         ),
       ),
@@ -37,5 +41,9 @@ void main() {
     expect(find.text('مغلق'), findsOneWidget);
     expect(find.text('الميزانية'), findsOneWidget);
     expect(find.text('المصروفات'), findsOneWidget);
+    await tester.enterText(find.byType(TextField), 'PRJ-0024');
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+    expect(requestedQueries, contains('PRJ-0024'));
   });
 }
