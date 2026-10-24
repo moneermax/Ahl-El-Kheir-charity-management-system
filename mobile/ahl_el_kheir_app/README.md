@@ -41,3 +41,5 @@ A successful build does not prove API connectivity, authorization against the li
 
 - Financial review queue now supports approve-and-post and return-for-correction through server-authorized API actions. Returns require a reason; approval uses the existing atomic accounting approval helper. PHP/database CI passed; Flutter CI and live API authorization/action acceptance remain pending.
 
+- Financial review queue: authorized financial-review roles can view pending supervisor collections/recent decisions, approve and post through the existing atomic sponsor-payment approval function, or return a pending payment with a required reason. CI passed; live local API/database acceptance remains outstanding.
+- General Manager sponsorship list/detail access now matches the existing web role boundary.
