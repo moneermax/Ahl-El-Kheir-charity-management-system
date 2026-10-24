@@ -1,10 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'project_detail_page.dart';
 
 class ProjectsPage extends StatefulWidget {
   const ProjectsPage({super.key, required this.english, required this.loadPage, required this.loadDetail});
   final bool english;
-  final Future<Map<String, dynamic>> Function(int page) loadPage;
+  final Future<Map<String, dynamic>> Function(String query, int page) loadPage;
   final Future<Map<String, dynamic>> Function(int projectId) loadDetail;
 
   @override
@@ -17,22 +18,25 @@ class _ProjectsPageState extends State<ProjectsPage> {
   String? error;
   List<Map<String, dynamic>> items = [];
   int total = 0, page = 1, pages = 1;
+  Timer? searchDebounce;
+  int loadGeneration = 0;
 
   @override
   void initState() { super.initState(); load(); }
 
   @override
-  void dispose() { search.dispose(); super.dispose(); }
+  void dispose() { searchDebounce?.cancel(); search.dispose(); super.dispose(); }
 
   Future<void> load() async {
+    final generation = ++loadGeneration;
     setState(() { loading = true; error = null; });
     try {
-      final data = await widget.loadPage(page);
+      final data = await widget.loadPage(search.text.trim(), page);
       final raw = data['items'];
       final next = raw is List
           ? raw.whereType<Map>().map((v) => Map<String, dynamic>.from(v)).toList()
           : <Map<String, dynamic>>[];
-      if (!mounted) return;
+      if (!mounted || generation != loadGeneration) return;
       setState(() {
         items = next;
         total = int.tryParse(data['total']?.toString() ?? '') ?? 0;
@@ -40,10 +44,17 @@ class _ProjectsPageState extends State<ProjectsPage> {
         pages = int.tryParse(data['pages']?.toString() ?? '') ?? 1;
       });
     } catch (e) {
-      if (mounted) setState(() => error = e.toString());
+      if (mounted && generation == loadGeneration) setState(() => error = e.toString());
     } finally {
-      if (mounted) setState(() => loading = false);
+      if (mounted && generation == loadGeneration) setState(() => loading = false);
     }
+  }
+
+  void searchChanged(String value) {
+    setState(() {});
+    searchDebounce?.cancel();
+    page = 1;
+    searchDebounce = Timer(const Duration(milliseconds: 350), load);
   }
 
   String statusLabel(String status) {
@@ -65,12 +76,8 @@ class _ProjectsPageState extends State<ProjectsPage> {
   @override
   Widget build(BuildContext context) {
     final en = widget.english;
-    final query = search.text.trim().toLowerCase();
-    final visible = items.where((item) {
-      final code = item['project_code']?.toString().toLowerCase() ?? '';
-      final name = item['name']?.toString().toLowerCase() ?? '';
-      return query.isEmpty || code.contains(query) || name.contains(query);
-    }).toList();
+    final query = search.text.trim();
+    final visible = items;
 
     return Scaffold(
       appBar: AppBar(title: Text(en ? 'Projects' : 'المشروعات')),
@@ -79,12 +86,12 @@ class _ProjectsPageState extends State<ProjectsPage> {
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
           child: TextField(
             controller: search,
-            onChanged: (_) => setState(() {}),
+            onChanged: searchChanged,
             decoration: InputDecoration(
               prefixIcon: const Icon(Icons.search_rounded),
               hintText: en ? 'Search projects' : 'بحث عن مشروع',
               suffixIcon: query.isEmpty ? null : IconButton(
-                onPressed: () { search.clear(); setState(() {}); },
+                onPressed: () { search.clear(); searchChanged(''); },
                 icon: const Icon(Icons.clear_rounded),
               ),
             ),
