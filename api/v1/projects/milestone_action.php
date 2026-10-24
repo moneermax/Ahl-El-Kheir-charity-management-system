@@ -10,7 +10,7 @@ $role = (string)$user['role_code'];
 $input = ak_api_read_json();
 $action = trim((string)($input['action'] ?? ''));
 
-if ($role !== 'project_supervisor') {
+if (!in_array($role, ['admin', 'project_supervisor'], true)) {
     ak_api_json(403, ['ok' => false, 'error' => ['code' => 'forbidden', 'message' => 'You do not have permission to manage project milestones.']]);
 }
 if (!in_array($action, ['edit', 'delete'], true)) {
