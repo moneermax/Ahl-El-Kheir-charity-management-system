@@ -24,14 +24,14 @@ class _LeaveRequestsPageState extends State<LeaveRequestsPage>{
  body:Column(children:[
  if(canQueue) Padding(padding:const EdgeInsets.fromLTRB(12,12,12,4),child:SegmentedButton<String>(
   segments:[ButtonSegment(value:'mine',label:Text(en?'My requests':'طلباتي')),ButtonSegment(value:'queue',label:Text(en?'Review queue':'طلبات للمراجعة'))],
-  selected:{view},onSelectionChanged:(v){setState(()=>{view=v.first,page=1});load();},
+  selected:{view},onSelectionChanged:(v){setState(() { view = v.first; page = 1; });load();},
  )),
  Padding(padding:const EdgeInsets.symmetric(horizontal:12,vertical:8),child:Row(children:[
-  Expanded(child:Text(en?'Records: ':'عدد الطلبات: '+total.toString())),
+  Expanded(child:Text((en?'Records: ':'عدد الطلبات: ')+total.toString())),
   DropdownButton<String>(value:status,items:[
    DropdownMenuItem(value:'all',child:Text(en?'All':'الكل')),DropdownMenuItem(value:'pending',child:Text(en?'Pending':'قيد المراجعة')),
    DropdownMenuItem(value:'hr_approved',child:Text(en?'Approved':'معتمدة')),DropdownMenuItem(value:'rejected',child:Text(en?'Rejected':'مرفوضة')),
-  ],onChanged:(v){if(v!=null){setState(()=>{status=v,page=1});load();}}),
+  ],onChanged:(v){if(v!=null){setState(() { status = v; page = 1; });load();}}),
  ])),
  Expanded(child:loading?const Center(child:CircularProgressIndicator()):error!=null?Center(child:Padding(padding:const EdgeInsets.all(24),child:Column(mainAxisSize:MainAxisSize.min,children:[Text(error!,textAlign:TextAlign.center),const SizedBox(height:12),OutlinedButton.icon(onPressed:load,icon:const Icon(Icons.refresh),label:Text(en?'Try again':'إعادة المحاولة'))]))):
  RefreshIndicator(onRefresh:load,child:items.isEmpty?ListView(children:[Padding(padding:const EdgeInsets.all(24),child:Text(en?'No leave requests found.':'لا توجد طلبات إجازة.',textAlign:TextAlign.center))]):ListView.separated(
