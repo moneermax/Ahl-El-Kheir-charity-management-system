@@ -9,6 +9,7 @@ import 'sponsors_page.dart';
 import 'families_page.dart';
 import 'transactions_page.dart';
 import 'sponsorships_page.dart';
+import 'sponsor_requests_page.dart';
 
 void main() => runApp(const AhlElKheirApp());
 
@@ -165,6 +166,13 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
     final q = Uri.encodeQueryComponent(query);
     return call('GET', 'sponsors/index.php?q=$q&status=$status&link_status=$linkStatus&page=$page', token: token);
+  }
+
+  Future<Map<String, dynamic>> loadSponsorRequests(String query, String status, int page) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    final q = Uri.encodeQueryComponent(query);
+    return call('GET', 'sponsor_requests/index.php?q=$q&status=$status&page=$page', token: token);
   }
 
   Future<Map<String, dynamic>> loadSponsorDetail(int id) async {
@@ -333,6 +341,16 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                       trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
                       onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
                         builder: (_) => SponsorsPage(english: english, loadSponsors: loadSponsors, loadDetail: loadSponsorDetail),
+                      )),
+                    )),
+                  if (['admin', 'vice_general_manager', 'general_manager', 'administration', 'staff', 'social_media'].contains(user?['role_code']?.toString()))
+                    Card(child: ListTile(
+                      leading: const CircleAvatar(child: Icon(Icons.campaign_outlined)),
+                      title: Text(english ? 'Sponsor requests' : 'طلبات الرعاية'),
+                      subtitle: Text(english ? 'Review sponsor leads and their current status' : 'مراجعة طلبات الرعاية وحالاتها الحالية'),
+                      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+                      onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
+                        builder: (_) => SponsorRequestsPage(english: english, loadRequests: loadSponsorRequests),
                       )),
                     )),
                   if (['admin', 'vice_general_manager', 'general_manager', 'supervisor', 'accountant'].contains(user?['role_code']?.toString()))
