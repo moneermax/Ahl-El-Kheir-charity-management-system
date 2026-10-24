@@ -4496,3 +4496,7 @@ The mobile project detail API now treats a missing `project_approval` row as `dr
 ## 2026-10-24 — Mobile project milestone maintenance checkpoint
 
 Mobile project milestone edit/delete has been added on main using the existing project_milestones table and web workflow's editable fields. API authorization, project/milestone scoping, transaction locks, closed-project blocking, Flutter confirmation/refresh behavior, and a widget test are in source. Android run 40120100653 was pending at documentation time; do not claim CI success until checked. Live local API acceptance remains outstanding. See docs/MOBILE_APP_CONTINUATION.md for exact commits and gates.
+
+## 2026-10-24 — Mobile milestone maintenance authorization parity
+
+Mobile project milestone edit/delete now uses a dedicated `can_manage_milestones` capability, distinct from creation, so admin accounts do not see maintenance controls that the web workflow denies. The mutation endpoint allows only assigned project supervisors, checks the milestone belongs to the requested project, and blocks closed projects. Flutter widget test and Android build verification are still pending after the latest source updates; live local Apache/MariaDB authorization acceptance is not yet performed. See `docs/MOBILE_APP_CONTINUATION.md`.
