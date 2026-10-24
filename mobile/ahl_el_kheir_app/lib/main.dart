@@ -156,6 +156,14 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     return call('GET', 'hr/leaves.php?view=$view&status=$status&page=$page', token: token);
   }
 
+  Future<Map<String, dynamic>> submitLeaveAction(String action, Map<String, dynamic> body) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) {
+      throw const ApiFailure('Authentication is required.', statusCode: 401);
+    }
+    return call('POST', 'hr/leaves/action.php', token: token, body: {'action': action, ...body});
+  }
+
   @override
   Widget build(BuildContext context) => MaterialApp(
     title: english ? 'Ahl El Kheir' : 'أهل الخير',
@@ -278,6 +286,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                           english: english,
                           roleCode: user?['role_code']?.toString() ?? '',
                           loadLeaves: loadLeaves,
+                          submitAction: submitLeaveAction,
                         ),
                       )),
                     ),
