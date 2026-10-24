@@ -2105,3 +2105,7 @@ The sponsor-request attribution issue #95 is closed after source and CI verifica
 ## 2026-10-24 — Mobile project progress updates (CI partially verified)
 
 Mobile project progress-update endpoint/form implemented using existing web permissions and fields, without schema changes. Flutter analysis/tests passed; APK build pending at last check; PHP lint passed. See `docs/MOBILE_APP_CONTINUATION.md`. Confirm latest CI, then continue mobile development. Do not request physical-device acceptance until broader release readiness; keep payroll issue #94 isolated.
+
+
+### 2026-10-24 — Mobile milestone creation checkpoint
+Mobile project detail now supports authenticated milestone creation via `api/v1/projects/milestone_create.php`, using existing milestone/history tables without schema changes. Server-side permission checks match the web operation boundary (admin or assigned primary/operations project supervisor) and reject closed projects. Flutter form/API wiring, refresh behavior, widget test and PHP lint workflow coverage are committed on `main`. CI is pending; live role/runtime and device acceptance remain outstanding. Do not request phone testing yet.
