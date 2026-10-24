@@ -28,7 +28,7 @@ Status: API authentication foundation source added; local PHP syntax/runtime ver
 - No refresh-token flow, password-reset/change API, persistent login throttling, device/session-management UI, or account-wide mobile-session revocation endpoint is included in this first slice.
 - The API does not yet expose business-module data. Do not treat a successful login as permission to access any module.
 - The mobile API migration has not been applied to any database. Do not run the endpoints until the migration is explicitly applied to the intended development database.
-- No PHP lint, runtime request, token expiry/revocation test, Android/iOS build, or remote-host compatibility test has yet been verified.
+- PHP 8.2 syntax checks for all four API PHP files passed in the existing sponsor-scanner GitHub Actions workflow on commit `20fda29d99c8fe57995aee165f2fa166ded1e2c6`. Local runtime requests, token expiry/revocation tests, mobile app builds, and remote-host compatibility remain unverified.
 - Review token lifetime and brute-force/rate-limiting controls before production deployment.
 
 ## Local verification plan
