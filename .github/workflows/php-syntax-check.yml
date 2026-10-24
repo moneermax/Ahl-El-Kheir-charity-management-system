@@ -29,6 +29,7 @@ jobs:
           set -euo pipefail
           files=(
             api/v1/projects/index.php
+            api/v1/projects/detail.php
             modules/hr/contract_builder.php
             modules/hr/job_description_catalogue.php
             modules/hr/lib_salary_advance_repayment.php
