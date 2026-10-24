@@ -99,6 +99,27 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     }
   }
 
+  Future<Map<String, dynamic>> loadNotifications(int page) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) {
+      throw const ApiFailure('Authentication is required.', statusCode: 401);
+    }
+    return call('GET', 'notifications/index.php?page=$page', token: token);
+  }
+
+  Future<void> markNotificationRead(int notificationId) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) {
+      throw const ApiFailure('Authentication is required.', statusCode: 401);
+    }
+    await call(
+      'POST',
+      'notifications/mark_read.php',
+      token: token,
+      body: {'notification_id': notificationId},
+    );
+  }
+
   @override
   Widget build(BuildContext context) => MaterialApp(
     title: english ? 'Ahl El Kheir' : 'أهل الخير',
@@ -124,22 +145,306 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
           ? LoginPage(english: english,
               toggle: () => setState(() => english = !english), submit: login)
           : Scaffold(
-              appBar: AppBar(title: Text(english ? 'Ahl El Kheir' : 'أهل الخير'),
-                actions: [TextButton(onPressed: () => setState(() => english = !english),
-                  child: Text(english ? 'العربية' : 'English'))]),
-              body: Center(child: Padding(padding: const EdgeInsets.all(24),
-                child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  const OrganizationLogo(size: 92),
-                  Text(english ? 'Signed in successfully' : 'تم تسجيل الدخول بنجاح',
-                    style: Theme.of(context).textTheme.headlineSmall),
-                  Text(user?['full_name']?.toString() ?? ''),
-                  Text('${english ? 'Role' : 'الدور'}: ${user?['role_code'] ?? ''}'),
-                  const SizedBox(height: 24),
-                  const Text('Business modules require server-side authorization.'),
-                  FilledButton(onPressed: logout,
-                    child: Text(english ? 'Sign out' : 'تسجيل الخروج')),
-                ]))))
+              appBar: AppBar(
+                title: Text(english ? 'Ahl El Kheir' : 'أهل الخير'),
+                actions: [
+                  TextButton(
+                    onPressed: () => setState(() => english = !english),
+                    child: Text(english ? 'العربية' : 'English'),
+                  ),
+                ],
+              ),
+              body: ListView(
+                padding: const EdgeInsets.all(20),
+                children: [
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        children: [
+                          const OrganizationLogo(size: 84),
+                          const SizedBox(height: 16),
+                          Text(
+                            english ? 'Welcome' : 'مرحباً',
+                            style: Theme.of(context).textTheme.headlineSmall,
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            user?['full_name']?.toString() ?? '',
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${english ? 'Role' : 'الدور'}: ${user?['role_code'] ?? ''}',
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Card(
+                    child: ListTile(
+                      leading: const CircleAvatar(
+                        child: Icon(Icons.notifications_none_rounded),
+                      ),
+                      title: Text(english ? 'Notifications' : 'الإشعارات'),
+                      subtitle: Text(
+                        english
+                            ? 'View your notification history'
+                            : 'عرض سجل الإشعارات الخاصة بك',
+                      ),
+                      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => NotificationPage(
+                              english: english,
+                              loadPage: loadNotifications,
+                              markRead: markNotificationRead,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  FilledButton.icon(
+                    onPressed: logout,
+                    icon: const Icon(Icons.logout_rounded),
+                    label: Text(english ? 'Sign out' : 'تسجيل الخروج'),
+                  ),
+                ],
+              ),
+            )
     ));
+}
+
+
+class NotificationPage extends StatefulWidget {
+  const NotificationPage({
+    super.key,
+    required this.english,
+    required this.loadPage,
+    required this.markRead,
+  });
+
+  final bool english;
+  final Future<Map<String, dynamic>> Function(int page) loadPage;
+  final Future<void> Function(int notificationId) markRead;
+
+  @override
+  State<NotificationPage> createState() => _NotificationPageState();
+}
+
+class _NotificationPageState extends State<NotificationPage> {
+  bool loading = true;
+  String? error;
+  List<Map<String, dynamic>> items = [];
+  int total = 0;
+  int unread = 0;
+  int page = 1;
+  int pages = 1;
+
+  @override
+  void initState() {
+    super.initState();
+    load();
+  }
+
+  Future<void> load() async {
+    setState(() {
+      loading = true;
+      error = null;
+    });
+    try {
+      final data = await widget.loadPage(page);
+      final rawItems = data['items'];
+      final nextItems = rawItems is List
+          ? rawItems
+              .whereType<Map>()
+              .map((item) => Map<String, dynamic>.from(item))
+              .toList()
+          : <Map<String, dynamic>>[];
+      if (!mounted) return;
+      setState(() {
+        items = nextItems;
+        total = int.tryParse(data['total']?.toString() ?? '') ?? 0;
+        unread = int.tryParse(data['unread']?.toString() ?? '') ?? 0;
+        page = int.tryParse(data['page']?.toString() ?? '') ?? 1;
+        pages = int.tryParse(data['pages']?.toString() ?? '') ?? 1;
+      });
+    } catch (e) {
+      if (mounted) setState(() => error = e.toString());
+    } finally {
+      if (mounted) setState(() => loading = false);
+    }
+  }
+
+  Future<void> markNotification(Map<String, dynamic> item) async {
+    final isRead = item['is_read'] == true || item['is_read'] == 1;
+    if (isRead) return;
+    final id = int.tryParse(item['id']?.toString() ?? '') ?? 0;
+    if (id < 1) return;
+    try {
+      await widget.markRead(id);
+      await load();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final en = widget.english;
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(en ? 'Notifications' : 'الإشعارات'),
+      ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsetsDirectional.fromSTEB(16, 12, 16, 8),
+            child: Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: Text(
+                en
+                    ? 'Total: $total  •  Unread: $unread'
+                    : 'الإجمالي: $total  •  غير المقروء: $unread',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ),
+          ),
+          Expanded(
+            child: loading
+                ? const Center(child: CircularProgressIndicator())
+                : error != null
+                    ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(error!, textAlign: TextAlign.center),
+                              const SizedBox(height: 12),
+                              OutlinedButton.icon(
+                                onPressed: load,
+                                icon: const Icon(Icons.refresh_rounded),
+                                label: Text(en ? 'Try again' : 'إعادة المحاولة'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    : items.isEmpty
+                        ? Center(
+                            child: Text(
+                              en ? 'No notifications yet.' : 'لا توجد إشعارات.',
+                            ),
+                          )
+                        : RefreshIndicator(
+                            onRefresh: load,
+                            child: ListView.separated(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 4,
+                              ),
+                              itemCount: items.length,
+                              separatorBuilder: (_, __) =>
+                                  const Divider(height: 1),
+                              itemBuilder: (context, index) {
+                                final item = items[index];
+                                final isRead = item['is_read'] == true ||
+                                    item['is_read'] == 1;
+                                return Card(
+                                  margin: const EdgeInsets.symmetric(vertical: 4),
+                                  child: ListTile(
+                                    leading: Icon(
+                                      isRead
+                                          ? Icons.notifications_none_rounded
+                                          : Icons.notifications_active_rounded,
+                                      color: isRead
+                                          ? Colors.grey
+                                          : const Color(0xFF1F4E8C),
+                                    ),
+                                    title: Text(
+                                      item['title']?.toString() ?? '',
+                                      style: TextStyle(
+                                        fontWeight: isRead
+                                            ? FontWeight.normal
+                                            : FontWeight.w700,
+                                      ),
+                                    ),
+                                    subtitle: Padding(
+                                      padding: const EdgeInsets.only(top: 5),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(item['body']?.toString() ?? ''),
+                                          if ((item['created_at']?.toString() ??
+                                                  '')
+                                              .isNotEmpty)
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.only(top: 6),
+                                              child: Text(
+                                                item['created_at'].toString(),
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .bodySmall,
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                    onTap: () => markNotification(item),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+          ),
+          if (!loading && error == null && pages > 1)
+            SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    OutlinedButton(
+                      onPressed: page > 1
+                          ? () {
+                              setState(() => page--);
+                              load();
+                            }
+                          : null,
+                      child: Text(en ? 'Previous' : 'السابق'),
+                    ),
+                    Text(en ? 'Page $page of $pages' : 'صفحة $page من $pages'),
+                    OutlinedButton(
+                      onPressed: page < pages
+                          ? () {
+                              setState(() => page++);
+                              load();
+                            }
+                          : null,
+                      child: Text(en ? 'Next' : 'التالي'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 }
 
 class OrganizationLogo extends StatelessWidget {
