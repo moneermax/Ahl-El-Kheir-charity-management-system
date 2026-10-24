@@ -36,3 +36,5 @@ The debug build permits HTTP for local development only. Netlify's static hostin
 GitHub Actions runs Flutter dependency resolution, static analysis, widget tests, Android debug APK compilation, and artifact publication. The latest employee-detail revision passed the Android workflow at [run 40115687291](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40115687291).
 
 A successful build does not prove API connectivity, authorization against the live database, or production readiness. The mobile API migration must be applied only to the explicitly confirmed local development database, and API role/scope runtime acceptance plus deployment configuration remain outstanding. Do not treat the debug APK as a production release.
+
+- Financial review queue (read-only): pending supervisor collections and the latest 20 approved/returned decisions for authorized financial-review roles. Approval/return and accounting posting are not exposed in this mobile slice; CI and live API acceptance are pending.
