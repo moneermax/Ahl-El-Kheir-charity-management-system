@@ -7,5 +7,7 @@ void main(){testWidgets('renders Arabic leave request and status', (tester)async
  'total':1,'page':1,'pages':1
  }))));
  await tester.pumpAndSettle();
+ await tester.tap(find.text('طلبات للمراجعة'));
+ await tester.pumpAndSettle();
  expect(find.text('طلبات الإجازة'),findsOneWidget);expect(find.text('طلباتي'),findsOneWidget);expect(find.text('سنوية'),findsOneWidget);expect(find.text('قيد المراجعة'),findsOneWidget);expect(find.text('سارة علي'),findsOneWidget);
 });}

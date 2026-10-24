@@ -7,5 +7,7 @@ void main(){testWidgets('shows Arabic attendance and keeps missing attendance di
  'items':[{'employee_id':1,'full_name':'أحمد حسين','department_name':'المشروعات','status':'present','check_in':'08:00','check_out':'','work_mode':'onsite'},{'employee_id':2,'full_name':'سارة علي','department_name':'الموارد البشرية','status':'missing','check_in':'','check_out':'','work_mode':''}]
  }))));
  await tester.pumpAndSettle();
- expect(find.text('الحضور والانصراف'),findsOneWidget);expect(find.text('أحمد حسين'),findsOneWidget);expect(find.text('حاضر'),findsOneWidget);expect(find.text('لا يوجد سجل'),findsWidgets);
+ expect(find.text('الحضور والانصراف'),findsOneWidget);expect(find.text('أحمد حسين'),findsOneWidget);expect(find.text('حاضر'),findsOneWidget);await tester.scrollUntilVisible(find.text('لا يوجد سجل'),400,scrollable:find.byType(Scrollable));
+ await tester.pumpAndSettle();
+ expect(find.text('لا يوجد سجل'),findsWidgets);
 });}
