@@ -15,6 +15,7 @@ void main() {
             ],
             'total': 1, 'page': 1, 'pages': 1,
           },
+          submitAction: (_, __) async => {'message': 'تم تحديث الحالة.'},
         ),
       ),
     ));
@@ -45,6 +46,7 @@ void main() {
             ],
             'total': 1, 'page': 1, 'pages': 1,
           },
+          submitAction: (_, __) async => {'message': 'تم تحديث الحالة.'},
         ),
       ),
     ));
@@ -52,3 +54,40 @@ void main() {
     expect(find.textContaining('بواسطة: موظف التسجيل'), findsOneWidget);
   });
 }
+
+
+  testWidgets('confirms and submits the contacted transition then reloads the queue', (tester) async {
+    var status = 'new';
+    var actionCalls = 0;
+    await tester.pumpWidget(MaterialApp(
+      home: Directionality(
+        textDirection: TextDirection.rtl,
+        child: SponsorRequestsPage(
+          english: false,
+          loadRequests: (_, __, ___) async => {
+            'items': [
+              {'id': 7, 'sponsor_name': 'سالم أحمد', 'status': status}
+            ],
+            'total': 1, 'page': 1, 'pages': 1,
+          },
+          submitAction: (action, id) async {
+            expect(action, 'mark_contacted');
+            expect(id, 7);
+            actionCalls++;
+            status = 'contacted';
+            return {'message': 'تم تحديث الحالة.'};
+          },
+        ),
+      ),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('تأكيد التواصل'), findsOneWidget);
+    await tester.tap(find.text('تأكيد التواصل'));
+    await tester.pumpAndSettle();
+    expect(find.text('تأكيد تسجيل التواصل؟'), findsOneWidget);
+    await tester.tap(find.text('تأكيد'));
+    await tester.pumpAndSettle();
+    expect(actionCalls, 1);
+    expect(find.text('تم التواصل'), findsOneWidget);
+    expect(find.text('تأكيد التواصل'), findsNothing);
+  });
