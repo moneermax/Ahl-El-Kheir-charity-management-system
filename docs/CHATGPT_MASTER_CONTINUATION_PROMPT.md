@@ -1977,3 +1977,7 @@ The user retried login with the physical-phone APK and the latest Apache access-
 
 ## Mobile app continuation — 2026-10-24
 Continue on `main` from the current repository head. Read `docs/MOBILE_APP_CONTINUATION.md` first. The user explicitly wants the app built and tested on GitHub as far as possible, with device testing requested only when the app is broadly complete. Transaction-register row overflow correction is commit `885ef809b431b174541d54c8c44ade3f97421172`; confirm Flutter tests and APK build before moving on. Never claim full completion or live API runtime proof from a passing APK build alone.
+
+
+## Mobile app continuation — 2026-10-24 update
+Transaction-register layout correction is verified green: workflow run `40091698003` passed Dart analysis, widget tests, debug APK build, and artifact publication. Current `main` additionally contains a read-only sponsorship register/API, with Arabic/English search, status filters, active monthly summary, and supervisor scope enforcement; its newer CI run is pending. Continue building on `main` and check the latest workflow before claiming the new screen passed. Do not ask for physical-device testing yet; the user wants that only after the app is broadly complete.
