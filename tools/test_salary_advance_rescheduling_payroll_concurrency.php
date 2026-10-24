@@ -117,6 +117,12 @@ function childPayrollTransition(PDO $pdo, string $mode, int $payrollId): never
 
     ak_ensure_tables();
     ak_seed_accounts();
+    $testActorId = (int)$pdo->query('SELECT id FROM users ORDER BY id ASC LIMIT 1')->fetchColumn();
+    if ($testActorId <= 0) {
+        fwrite(STDERR, "FAIL: payroll proof audit fixture requires an existing user.\n");
+        exit(1);
+    }
+    $_SESSION['user_id'] = $testActorId;
     $pdo->exec('SET SESSION innodb_lock_wait_timeout = 1');
 
     if ($mode === 'blocked') {
