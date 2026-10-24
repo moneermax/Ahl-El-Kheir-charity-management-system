@@ -37,6 +37,7 @@ jobs:
             api/v1/sponsors/index.php
             api/v1/sponsors/detail.php
             api/v1/sponsor_requests/index.php
+            api/v1/sponsor_requests/action.php
             api/v1/families/index.php
             api/v1/families/detail.php
             api/v1/transactions/index.php
