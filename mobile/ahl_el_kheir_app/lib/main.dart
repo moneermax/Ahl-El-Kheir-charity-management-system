@@ -12,6 +12,7 @@ import 'families_page.dart';
 import 'transactions_page.dart';
 import 'sponsorships_page.dart';
 import 'sponsor_requests_page.dart';
+import 'nanny_group_verification_page.dart';
 
 void main() => runApp(const AhlElKheirApp());
 
@@ -128,6 +129,20 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       token: token,
       body: {'notification_id': notificationId},
     );
+  }
+
+  Future<Map<String, dynamic>> loadNannyGroupVerification(String month, int? groupId) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    final params = <String, String>{'month': month};
+    if (groupId != null) params['group_id'] = groupId.toString();
+    return call('GET', 'nanny/group_verification.php?${Uri(queryParameters: params).query}', token: token);
+  }
+
+  Future<Map<String, dynamic>> submitNannyGroupVerificationAction(Map<String, dynamic> body) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('POST', 'nanny/group_verification_action.php', token: token, body: body);
   }
 
   Future<Map<String, dynamic>> loadProjects(String query, int page) async {
@@ -452,6 +467,20 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                       trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
                       onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
                         builder: (_) => FamiliesPage(english: english, loadFamilies: loadFamilies, loadDetail: loadFamilyDetail),
+                      )),
+                    )),
+                  if (user?['role_code']?.toString() == 'nanny')
+                    Card(child: ListTile(
+                      leading: const CircleAvatar(child: Icon(Icons.fact_check_rounded)),
+                      title: Text(english ? 'Group verification' : 'توثيق المجموعات'),
+                      subtitle: Text(english ? 'Verify family eligibility, contact and bank details' : 'التحقق من حالة الأيتام والتواصل والحسابات البنكية'),
+                      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+                      onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
+                        builder: (_) => NannyGroupVerificationPage(
+                          english: english,
+                          loadData: loadNannyGroupVerification,
+                          submitAction: submitNannyGroupVerificationAction,
+                        ),
                       )),
                     )),
                   const SizedBox(height: 12),
