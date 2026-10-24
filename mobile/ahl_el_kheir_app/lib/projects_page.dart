@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'project_detail_page.dart';
 
 class ProjectsPage extends StatefulWidget {
-  const ProjectsPage({super.key, required this.english, required this.loadPage});
+  const ProjectsPage({super.key, required this.english, required this.loadPage, required this.loadDetail});
   final bool english;
   final Future<Map<String, dynamic>> Function(int page) loadPage;
+  final Future<Map<String, dynamic>> Function(int projectId) loadDetail;
 
   @override
   State<ProjectsPage> createState() => _ProjectsPageState();
@@ -123,7 +125,10 @@ class _ProjectsPageState extends State<ProjectsPage> {
                             itemBuilder: (context, index) {
                               final project = visible[index];
                               final approval = project['approval_status']?.toString() ?? '';
-                              return Card(child: Padding(
+                              return Card(child: InkWell(
+                                borderRadius: BorderRadius.circular(12),
+                                onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => ProjectDetailPage(projectId: int.tryParse(project['id']?.toString() ?? '') ?? 0, english: en, loadDetail: widget.loadDetail))),
+                                child: Padding(
                                 padding: const EdgeInsets.all(14),
                                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                                   Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -160,7 +165,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
                                         (project['supervisor_name']?.toString() ?? ''),
                                       style: Theme.of(context).textTheme.bodySmall),
                                 ]),
-                              ));
+                              )));
                             },
                           ),
                         ),
