@@ -7,7 +7,7 @@ class LeaveRequestsPage extends StatefulWidget {
  @override State<LeaveRequestsPage> createState()=>_LeaveRequestsPageState();
 }
 class _LeaveRequestsPageState extends State<LeaveRequestsPage>{
- bool loading=true,submitting=false; String? error; String view='mine',status='all'; int page=1,pages=1,total=0;
+ bool loading=true,submitting=false,employeeLinked=true; String? error; String view='mine',status='all'; int page=1,pages=1,total=0;
  List<Map<String,dynamic>> items=[];
  bool get canQueue=>['hr_manager','hr_staff','general_manager','gm'].contains(widget.roleCode);
  @override void initState(){super.initState();load();}
@@ -15,7 +15,7 @@ class _LeaveRequestsPageState extends State<LeaveRequestsPage>{
   setState((){loading=true;error=null;});
   try{final d=await widget.loadLeaves(view,status,page);if(!mounted)return;setState((){
    final raw=d['items'];items=raw is List?raw.whereType<Map>().map((x)=>Map<String,dynamic>.from(x)).toList():<Map<String,dynamic>>[];
-   total=int.tryParse(d['total']?.toString()??'')??0;page=int.tryParse(d['page']?.toString()??'1')??1;pages=int.tryParse(d['pages']?.toString()??'1')??1;
+   total=int.tryParse(d['total']?.toString()??'')??0;page=int.tryParse(d['page']?.toString()??'1')??1;pages=int.tryParse(d['pages']?.toString()??'1')??1;employeeLinked=d['employee_linked']!=false;
   });}catch(e){if(mounted)setState(()=>error=e.toString());}finally{if(mounted)setState(()=>loading=false);}
  }
  String leaveType(String s){final m=widget.english?const {'annual':'Annual','sick':'Sick','emergency':'Emergency','unpaid':'Unpaid','remote_work_request':'Remote work'}:const {'annual':'سنوية','sick':'مرضية','emergency':'طارئة','unpaid':'بدون أجر','remote_work_request':'طلب عمل عن بُعد'};return m[s]??s;}
@@ -58,8 +58,17 @@ class _LeaveRequestsPageState extends State<LeaveRequestsPage>{
  String _date(dynamic v)=>v?.toString()??'';
  @override Widget build(BuildContext context){final en=widget.english;return Scaffold(
  appBar:AppBar(title:Text(en?'Leave requests':'طلبات الإجازة')),
- floatingActionButton:view=='mine'?FloatingActionButton.extended(onPressed:submitting?null:requestLeave,icon:const Icon(Icons.add),label:Text(en?'Request leave':'طلب إجازة')):null,
+ floatingActionButton:view=='mine'&&employeeLinked?FloatingActionButton.extended(onPressed:submitting?null:requestLeave,icon:const Icon(Icons.add),label:Text(en?'Request leave':'طلب إجازة')):null,
  body:Column(children:[
+ if(view=='mine'&&!employeeLinked) Padding(padding:const EdgeInsets.fromLTRB(16,12,16,4),child:Material(
+ color:Theme.of(context).colorScheme.surfaceContainerHighest,
+ borderRadius:BorderRadius.circular(12),
+ child:Padding(padding:const EdgeInsets.all(14),child:Text(en
+  ?'A linked employee profile is required to submit leave requests. Please contact HR.'
+  :'يلزم ربط حسابك بملف موظف لتقديم طلب إجازة. يرجى التواصل مع الموارد البشرية.',
+  textAlign:TextAlign.start,
+ )),
+ )),
  if(canQueue) Padding(padding:const EdgeInsets.fromLTRB(12,12,12,4),child:SegmentedButton<String>(
   segments:[ButtonSegment(value:'mine',label:Text(en?'My requests':'طلباتي')),ButtonSegment(value:'queue',label:Text(en?'Review queue':'طلبات للمراجعة'))],
   selected:{view},onSelectionChanged:(v){setState(() { view=v.first; page=1; });load();},
