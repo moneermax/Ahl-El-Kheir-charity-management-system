@@ -272,3 +272,10 @@ The user retried login with the physical-phone APK and the latest Apache access-
 - Corrected `api/v1/sponsorships/index.php` to enforce the same four-role allowlist, and corrected the Flutter home-screen entry to match. Server-side API authorization remains authoritative; no business data, schema, or workflow was changed.
 - Commits: API `350d18f1f5307ef1c273630489be321a5066f505`; Flutter navigation `39b65a7d887376e7fa451692483621bc718be5b8`.
 - Verification boundary: source comparison justifies the change, but PHP lint, Flutter analysis/tests/APK build, and live role-account runtime checks have not been confirmed for these commits. Do not claim the change is verified until actual CI evidence is available. No device testing requested yet.
+
+
+## 2026-10-24 — Sponsorship detail API role parity follow-up
+
+- Commit [bc39b23fdd036298f64ed80a3b09e2bb906c9653](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/commit/bc39b23fdd036298f64ed80a3b09e2bb906c9653) aligned `api/v1/sponsorships/detail.php` with the sponsorship list API's four-role allowlist: `admin`, `vice_general_manager`, `supervisor`, and `accountant`. The supervisor responsibility-scope check remains in place.
+- Source re-fetch on `main` confirms the detail endpoint allowlist. This is source verification only: PHP lint, Flutter analysis/tests/APK build, and live API role checks remain unverified for these latest commits. Do not request device testing yet.
+- Audit note: `api/v1/sponsors/detail.php` intentionally has a different role set from `api/v1/sponsors/index.php`; the web sponsor detail page has the same broader role set as the detail API, so no change was made there.
