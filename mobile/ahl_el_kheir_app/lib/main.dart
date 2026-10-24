@@ -186,6 +186,14 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     return call('POST', 'projects/milestone_create.php', token: token, body: body);
   }
 
+  Future<Map<String, dynamic>> actOnProjectMilestone(Map<String, dynamic> body) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) {
+      throw const ApiFailure('Authentication is required.', statusCode: 401);
+    }
+    return call('POST', 'projects/milestone_action.php', token: token, body: body);
+  }
+
   Future<Map<String, dynamic>> submitProjectProgressUpdate(Map<String, dynamic> body) async {
     final token = await storage.read(key: tokenKey);
     if (token == null || token.isEmpty) {
