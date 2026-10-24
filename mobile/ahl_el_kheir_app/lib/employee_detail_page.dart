@@ -57,7 +57,7 @@ class _EmployeeDetailPageState extends State<EmployeeDetailPage> {
       return label('Working', 'على رأس العمل');
     }
     final raw = widget.english
-        ? employee['employment_state_code']
+        ? employee['employment_state_name_en']
         : employee['employment_state_name'];
     final text = raw?.toString().trim() ?? '';
     return text.isEmpty ? '—' : text;
