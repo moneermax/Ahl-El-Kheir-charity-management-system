@@ -6,6 +6,7 @@ import 'projects_page.dart';
 import 'attendance_page.dart';
 import 'employees_page.dart';
 import 'employee_detail_page.dart';
+import 'my_salary_statements_page.dart';
 import 'leave_requests_page.dart';
 import 'sponsors_page.dart';
 import 'supervisors_page.dart';
@@ -218,6 +219,14 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       throw const ApiFailure('Authentication is required.', statusCode: 401);
     }
     return call('GET', 'hr/employee_detail.php?id=$id', token: token);
+  }
+
+  Future<Map<String, dynamic>> loadMySalaryStatements(int page) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) {
+      throw const ApiFailure('Authentication is required.', statusCode: 401);
+    }
+    return call('GET', 'hr/my_salary_statements.php?page=$page', token: token);
   }
 
   Future<Map<String, dynamic>> loadAttendance(String? date) async {
@@ -519,6 +528,21 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                         ),
                       )),
                     )),
+                  const SizedBox(height: 12),
+                  Card(
+                    child: ListTile(
+                      leading: const CircleAvatar(child: Icon(Icons.payments_outlined)),
+                      title: Text(english ? 'My salary statements' : 'كشوف رواتبي'),
+                      subtitle: Text(english ? 'View only paid and accounting-posted salary statements linked to your account' : 'عرض كشوف الرواتب المصروفة والمرحّلة محاسبياً والمرتبطة بحسابك فقط'),
+                      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+                      onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
+                        builder: (_) => MySalaryStatementsPage(
+                          english: english,
+                          loadPage: loadMySalaryStatements,
+                        ),
+                      )),
+                    ),
+                  ),
                   const SizedBox(height: 12),
                   Card(
                     child: ListTile(
