@@ -24,6 +24,7 @@ $row = dbFetchOne(
             e.hire_date, e.employment_type, e.work_mode,
             d.name_ar AS department_name_ar, d.name_en AS department_name_en,
             s.code AS employment_state_code, s.name_ar AS employment_state_name,
+            s.name_en AS employment_state_name_en,
             s.category AS employment_state_category
      FROM employees e
      LEFT JOIN departments d ON d.id = e.department_id
@@ -52,5 +53,6 @@ ak_api_json(200, ['ok' => true, 'data' => ['employee' => [
     'department_name_en' => (string)($row['department_name_en'] ?? ''),
     'employment_state_code' => (string)($row['employment_state_code'] ?? ''),
     'employment_state_name' => (string)($row['employment_state_name'] ?? ''),
+    'employment_state_name_en' => (string)($row['employment_state_name_en'] ?? ''),
     'employment_state_category' => (string)($row['employment_state_category'] ?? ''),
 ]]]);
