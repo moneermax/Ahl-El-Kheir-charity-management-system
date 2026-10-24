@@ -110,15 +110,20 @@ try {
         [$projectId, $dateRaw, $percent, $summary, $achievements !== '' ? $achievements : null, $issues !== '' ? $issues : null, $nextSteps !== '' ? $nextSteps : null, $userId]
     );
     $updateId = (int)db()->lastInsertId();
-    dbExecute(
-        "INSERT INTO audit_log (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent) VALUES (?, 'CREATE', 'project_progress_update', ?, NULL, ?, ?, ?)",
-        [$userId, $updateId, json_encode(['project_id' => $projectId], JSON_UNESCAPED_UNICODE), $_SERVER['REMOTE_ADDR'] ?? '', $_SERVER['HTTP_USER_AGENT'] ?? '']
-    );
     dbExecute('COMMIT');
 } catch (Throwable $e) {
     try { dbExecute('ROLLBACK'); } catch (Throwable $ignored) {}
     error_log('Mobile project progress update failed: ' . $e->getMessage());
     ak_api_json(500, ['ok' => false, 'error' => ['code' => 'progress_update_failed', 'message' => 'Unable to save the progress update.']]);
+}
+
+try {
+    dbExecute(
+        "INSERT INTO audit_log (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent) VALUES (?, 'CREATE', 'project_progress_update', ?, NULL, ?, ?, ?)",
+        [$userId, $updateId, json_encode(['project_id' => $projectId], JSON_UNESCAPED_UNICODE), $_SERVER['REMOTE_ADDR'] ?? '', $_SERVER['HTTP_USER_AGENT'] ?? '']
+    );
+} catch (Throwable $e) {
+    error_log('Mobile project progress audit failed: ' . $e->getMessage());
 }
 
 ak_api_json(200, ['ok' => true, 'data' => ['update_id' => $updateId, 'message' => 'Progress update saved.']]);
