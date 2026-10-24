@@ -75,7 +75,7 @@ class _SponsorRequestsPageState extends State<SponsorRequestsPage> {
       final result = await widget.submitAction(action, id);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(result['message']?.toString() ?? (en ? 'Status updated.' : 'تم تحديث الحالة.')),
+        content: Text(en ? 'Status updated.' : 'تم تحديث الحالة.'),
       ));
       await load();
     } catch (e) {
@@ -97,7 +97,7 @@ class _SponsorRequestsPageState extends State<SponsorRequestsPage> {
             Expanded(child: TextField(
               controller: search,
               onSubmitted: (_) { setState(() => page = 1); load(); },
-              decoration: InputDecoration(hintText: en ? 'Search name, phone or source' : 'بحث بالاسم أو الهاتف أو المصدر', prefixIcon: const Icon(Icons.search)),
+              decoration: InputDecoration(hintText: en ? 'Search name, phone, source or referrer' : 'بحث بالاسم أو الهاتف أو المصدر أو اسم المُحيل', prefixIcon: const Icon(Icons.search)),
             )),
             IconButton(onPressed: () { setState(() => page = 1); load(); }, icon: const Icon(Icons.search)),
           ]),
