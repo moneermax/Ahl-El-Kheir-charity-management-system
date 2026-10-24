@@ -188,11 +188,13 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     return call('GET', 'families/index.php?q=$q&status=$status&page=$page', token: token);
   }
 
-  Future<Map<String, dynamic>> loadTransactions(String query, String status, int page) async {
+  Future<Map<String, dynamic>> loadTransactions(String query, String status, int page, String from, String to) async {
     final token = await storage.read(key: tokenKey);
     if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
-    final q = Uri.encodeQueryComponent(query);
-    return call('GET', 'transactions/index.php?q=$q&status=$status&page=$page', token: token);
+    final params = <String, String>{'q': query, 'status': status, 'page': page.toString()};
+    if (from.isNotEmpty) params['from'] = from;
+    if (to.isNotEmpty) params['to'] = to;
+    return call('GET', 'transactions/index.php?${Uri(queryParameters: params).query}', token: token);
   }
 
   Future<Map<String, dynamic>> loadSponsorships(String query, String type, String status, int page) async {
