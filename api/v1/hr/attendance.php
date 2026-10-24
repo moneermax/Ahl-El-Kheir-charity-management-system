@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once dirname(__DIR__) . '/_bootstrap.php';
-require_once dirname(__DIR__, 2) . '/modules/hr/lib_attendance_integrity.php';
+require_once dirname(__DIR__, 3) . '/modules/hr/lib_attendance_integrity.php';
 ak_api_require_method('GET');
 $user = ak_api_authenticated_user();
 if (!in_array((string)$user['role_code'], ['hr_manager','hr_staff','admin'], true)) {

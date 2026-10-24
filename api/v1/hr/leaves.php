@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once dirname(__DIR__) . '/_bootstrap.php';
-require_once dirname(__DIR__, 2) . '/modules/hr/lib_employee_identity.php';
+require_once dirname(__DIR__, 3) . '/modules/hr/lib_employee_identity.php';
 ak_api_require_method('GET');
 $user=ak_api_authenticated_user();
 $userId=(int)$user['id']; $role=(string)$user['role_code'];
