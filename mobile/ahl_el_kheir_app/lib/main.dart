@@ -157,7 +157,7 @@ class OrganizationLogo extends StatelessWidget {
           border: Border.all(color: const Color(0xFFDCE7F5)),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF0A1F44).withOpacity(0.08),
+              color: const Color(0xFF0A1F44).withValues(alpha: 0.08),
               blurRadius: 16,
               offset: const Offset(0, 5),
             ),
@@ -236,11 +236,11 @@ class _LoginPageState extends State<LoginPage> {
                         onPressed: widget.toggle,
                         style: TextButton.styleFrom(
                           foregroundColor: Colors.white,
-                          backgroundColor: Colors.white.withOpacity(0.10),
+                          backgroundColor: Colors.white.withValues(alpha: 0.10),
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(24),
-                            side: BorderSide(color: Colors.white.withOpacity(0.24)),
+                            side: BorderSide(color: Colors.white.withValues(alpha: 0.24)),
                           ),
                         ),
                         icon: const Icon(Icons.language_rounded, size: 18),
@@ -251,7 +251,7 @@ class _LoginPageState extends State<LoginPage> {
                     Card(
                       color: Colors.white,
                       elevation: 18,
-                      shadowColor: Colors.black.withOpacity(0.22),
+                      shadowColor: Colors.black.withValues(alpha: 0.22),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(26, 30, 26, 26),
