@@ -4,7 +4,7 @@ require_once dirname(__DIR__) . '/_bootstrap.php';
 require_once dirname(__DIR__, 3) . '/config/sponsor_assignments.php';
 ak_api_require_method('GET');
 $user=ak_api_authenticated_user();$uid=(int)$user['id'];$role=(string)$user['role_code'];$id=max(0,(int)($_GET['id']??0));
-if(!in_array($role,['admin','vice_general_manager','general_manager','supervisor','accountant'],true))ak_api_json(403,['ok'=>false,'error'=>['code'=>'forbidden','message'=>'Sponsorship access is not allowed.']]);
+if(!in_array($role,['admin','vice_general_manager','supervisor','accountant'],true))ak_api_json(403,['ok'=>false,'error'=>['code'=>'forbidden','message'=>'Sponsorship access is not allowed.']]);
 if($id<1)ak_api_json(422,['ok'=>false,'error'=>['code'=>'invalid_sponsorship_id','message'=>'A valid sponsorship ID is required.']]);
 $s=dbFetchOne("SELECT sp.id,sp.sponsorship_code,sp.monthly_amount,sp.status,sp.start_date,sp.end_date,sp.pause_reason,sp.pause_start_date,sp.pause_end_date,s.id sponsor_id,s.full_name sponsor_name,s.sponsor_code,s.supervisor_id,s.first_letter_id,s.gender,fc.id child_id,fc.child_name,f.id family_id,f.mother_name,f.family_code FROM sponsorships sp JOIN sponsors s ON s.id=sp.sponsor_id JOIN family_children fc ON fc.id=sp.child_id JOIN families f ON f.id=fc.family_id WHERE sp.id=? LIMIT 1",[$id]);
 if(!$s)ak_api_json(404,['ok'=>false,'error'=>['code'=>'sponsorship_not_found','message'=>'Sponsorship not found.']]);
