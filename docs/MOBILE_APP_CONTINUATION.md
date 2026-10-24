@@ -88,3 +88,13 @@ Responses use `{"ok":true,"data":...}` or `{"ok":false,"error":{"code":"…","me
 
 ### Flutter theme build follow-up — analyzer correction
 The first branding build run `40062960757` stopped at `flutter analyze`: Flutter 3.47 reports `Color.withOpacity` as deprecated and this repository's analyzer treats infos as a failing result. Replaced the four new calls with `withValues(alpha: ...)` in commit `6dbb17b7f4276eeeaad2e3f6c8c267d939ef35f6`. Follow-up build on that commit is pending. This was a source compatibility issue; no API/network conclusion can be drawn from that run.
+
+## Local mobile API reachability checkpoint (2026-10-24)
+
+- Confirmed Apache listens on HTTP port 8081 and HTTPS port 4433; port 881 has no listener.
+- Confirmed the API login endpoint returns the expected JSON HTTP 405 for GET requests through both `http://127.0.0.1:8081/AhlElKheir/api/v1/auth/login.php` and `http://192.168.18.9:8081/AhlElKheir/api/v1/auth/login.php`.
+- Confirmed the same expected JSON HTTP 405 from the phone browser at `http://192.168.18.9:8081/AhlElKheir/api/v1/auth/login.php`. This verifies phone-to-laptop HTTP reachability and PHP endpoint routing, not login/database readiness.
+- Updated the Flutter source fallback and GitHub Actions workflow defaults to `http://192.168.18.9:8081/AhlElKheir/api/v1`. The previous default used port 881, where no listener exists.
+- Next: wait for the Flutter GitHub Actions build triggered by the source/workflow changes, download its APK artifact, install it, then test login only after confirming the `mobile_api_sessions` migration is applied to the intended development database and the API auth flow is runtime-ready. Do not use real credentials before that gate.
+- Local development HTTP is only for the trusted local Wi-Fi network. Do not expose XAMPP publicly; use a verified HTTPS API host for remote use.
+
