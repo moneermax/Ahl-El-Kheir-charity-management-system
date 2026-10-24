@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'projects_page.dart';
+import 'attendance_page.dart';
 
 void main() => runApp(const AhlElKheirApp());
 
@@ -137,6 +138,15 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     return call('GET', 'projects/detail.php?id=$projectId', token: token);
   }
 
+  Future<Map<String, dynamic>> loadAttendance(String? date) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) {
+      throw const ApiFailure('Authentication is required.', statusCode: 401);
+    }
+    final query = date == null || date.isEmpty ? '' : '?date=$date';
+    return call('GET', 'hr/attendance.php$query', token: token);
+  }
+
   @override
   Widget build(BuildContext context) => MaterialApp(
     title: english ? 'Ahl El Kheir' : 'أهل الخير',
@@ -233,6 +243,18 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                             ),
                           );
                         },
+                      ),
+                    ),
+                  if (['hr_manager', 'hr_staff', 'admin'].contains(user?['role_code']?.toString()))
+                    Card(
+                      child: ListTile(
+                        leading: const CircleAvatar(child: Icon(Icons.fact_check_outlined)),
+                        title: Text(english ? 'Attendance' : 'الحضور والانصراف'),
+                        subtitle: Text(english ? 'Review attendance records by date' : 'مراجعة سجلات الحضور حسب التاريخ'),
+                        trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+                        onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
+                          builder: (_) => AttendancePage(english: english, loadAttendance: loadAttendance),
+                        )),
                       ),
                     ),
                   const SizedBox(height: 12),
