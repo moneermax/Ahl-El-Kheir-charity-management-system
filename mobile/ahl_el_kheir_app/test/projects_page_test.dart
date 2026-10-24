@@ -12,6 +12,7 @@ void main() {
           english: false,
           loadDetail: (_) async => {'project': {}, 'team': [], 'milestones': [], 'history': []},
           submitProgress: (_) async => {'ok': true},
+          createMilestone: (_) async => {'ok': true},
           loadPage: (query, page) async {
             requestedQueries.add(query);
             return {
