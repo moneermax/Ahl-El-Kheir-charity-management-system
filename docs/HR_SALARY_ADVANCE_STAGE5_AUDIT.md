@@ -444,3 +444,6 @@ Evidence boundary:
 - No production payroll-generation code was changed as a result of the earlier read-only October simulation or this rollback-only test.
 
 The unfinished attendance same-page POST scroll-jump issue remains separate and must not be reopened during this work.
+
+## 2026-10-24 — CI-only payroll transfer fixture prerequisite
+A full-schema CI run surfaced a stale test setup: the Stage 5 payroll integration fixture called the production paid transition without applying the payroll-transfer migration or preparing a proof. `hrPayrollChangeStatus()` correctly refused to pay without the schema and prepared proof. The CI full-schema job now applies `2026-10-20_hr_fm_payroll_transfer_workflow.sql`; rollback-only Stage 5 payroll and payroll/rescheduling concurrency fixtures now include an active payment account and prepared proof metadata/file, with cleanup. This aligns test setup with the existing production workflow; it does not reopen or change the closed Stage 5 business behavior. Fresh CI is pending.
