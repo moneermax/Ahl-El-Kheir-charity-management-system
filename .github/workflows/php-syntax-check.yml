@@ -28,6 +28,7 @@ jobs:
         run: |
           set -euo pipefail
           files=(
+            api/v1/_bootstrap.php
             api/v1/auth/login.php
             api/v1/auth/logout.php
             api/v1/auth/me.php
@@ -211,6 +212,10 @@ jobs:
         run: |
           mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test < database/ahl_el_kheir.sql
           mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test < database/migrations/2026-10-20_hr_fm_payroll_transfer_workflow.sql
+          # Exercise the mobile bearer-session migration on the disposable full schema.
+          mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test < database/migrations/2026-10-24_mobile_api_sessions.sql
+          # The migration must be safely repeatable on the same schema.
+          mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test < database/migrations/2026-10-24_mobile_api_sessions.sql
 
       - name: Apply migration and verify full schema backfill
         env:
