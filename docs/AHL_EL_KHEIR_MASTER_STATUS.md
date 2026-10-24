@@ -4476,3 +4476,8 @@ Workflow run [40117632150](https://github.com/moneermax/Ahl-El-Kheir-charity-man
 
 ## 2026-10-24 — Follow-up CI failure: missing CLI audit actor (verification pending)
 The next full-schema run passed the missing-schema/proof gate but failed while confirming proof metadata: `confirmed_by_user_id=0` violated the foreign key to `users`. In CLI, `Session::getUserId()` returns `0` without `$_SESSION['user_id']`; the test harness had not established an actor. The production FK rejection is correct. The Stage 5 and concurrency rollback-only harnesses now populate the session user ID from an existing test user. Fresh CI is required before closing this test-harness correction.
+
+## 2026-10-24 — Mobile financial review queue and CI prerequisite correction verified
+- Android workflow [40117632176](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40117632176) completed successfully for `60883414`: analyzer, widget tests, debug APK build, and artifact publication passed.
+- CI workflow [40118139681](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40118139681) completed successfully across all five jobs. Its full-schema log confirms Stage 5 payroll edge cases, 1410 reconciliation, payroll/rescheduling lock timeout and retry, and rollback-only cleanup passed after the CI fixture applied the transfer migration and provided proof/audit actor fixtures.
+- Financial review queue remains read-only. No approval/return action or live local API role/data-scope verification is claimed. Live Apache/MariaDB mobile API acceptance and HTTPS PHP/MariaDB hosting are still outstanding.
