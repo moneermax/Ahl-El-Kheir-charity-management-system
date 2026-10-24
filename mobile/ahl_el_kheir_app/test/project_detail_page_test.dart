@@ -17,6 +17,9 @@ void main() {
   expect(find.text('الإيواء والتأهيل السكني'), findsOneWidget);
   expect(find.text('فريق المشروع'), findsOneWidget);
   expect(find.text('مراحل المشروع'), findsOneWidget);
+  await tester.scrollUntilVisible(find.text('أحمد حسين'), 400, scrollable: find.byType(Scrollable));
+  await tester.pumpAndSettle();
+  expect(find.text('أحمد حسين'), findsOneWidget);
   await tester.scrollUntilVisible(find.text('تحديثات التقدم'), 400, scrollable: find.byType(Scrollable));
   await tester.pumpAndSettle();
   expect(find.text('تحديثات التقدم'), findsOneWidget);
@@ -25,6 +28,5 @@ void main() {
   await tester.scrollUntilVisible(find.text('آخر التغييرات'), 400, scrollable: find.byType(Scrollable));
   await tester.pumpAndSettle();
   expect(find.text('آخر التغييرات'), findsOneWidget);
-  expect(find.text('أحمد حسين'), findsOneWidget);
  });
 }
