@@ -10,7 +10,7 @@ $role = (string)$user['role_code'];
 $input = ak_api_read_json();
 $action = trim((string)($input['action'] ?? ''));
 
-if (!in_array($role, ['admin', 'project_supervisor'], true)) {
+if ($role !== 'project_supervisor') {
     ak_api_json(403, ['ok' => false, 'error' => ['code' => 'forbidden', 'message' => 'You do not have permission to manage project milestones.']]);
 }
 if (!in_array($action, ['edit', 'delete'], true)) {
@@ -63,13 +63,6 @@ try {
         dbExecute('ROLLBACK');
         ak_api_json(409, ['ok' => false, 'error' => ['code' => 'project_closed', 'message' => 'Milestones cannot be changed on a closed project.']]);
     }
-    if ($role !== 'admin' && (
-        (string)$project['approval_status'] !== 'approved'
-        || !in_array($lifecycle, ['active', 'reopened', 'completed', 'under_review', 'cancelled'], true)
-    )) {
-        dbExecute('ROLLBACK');
-        ak_api_json(409, ['ok' => false, 'error' => ['code' => 'project_not_operational', 'message' => 'This project is not available for operational updates.']]);
-    }
     if ($role === 'project_supervisor') {
         $primary = dbFetchOne(
             'SELECT id FROM project_supervisor_assignments WHERE project_id = ? AND supervisor_user_id = ? AND ended_at IS NULL LIMIT 1',
@@ -111,21 +104,4 @@ try {
     ak_api_json(500, ['ok' => false, 'error' => ['code' => 'milestone_action_failed', 'message' => 'Unable to apply the milestone change.']]);
 }
 
-try {
-    dbExecute(
-        "INSERT INTO audit_log (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent) VALUES (?, ?, 'project_milestone', ?, ?, ?, ?, ?)",
-        [
-            $userId,
-            $action === 'edit' ? 'UPDATE' : 'DELETE',
-            (int)$milestoneId,
-            json_encode(['project_id' => (int)$projectId, 'title' => (string)$milestone['title'], 'planned_date' => (string)($milestone['planned_date'] ?? ''), 'completion_percent' => (float)$milestone['completion_percent']], JSON_UNESCAPED_UNICODE),
-            $action === 'edit' ? json_encode(['project_id' => (int)$projectId, 'title' => $title, 'planned_date' => $plannedDate, 'completion_percent' => (float)$percentRaw], JSON_UNESCAPED_UNICODE) : null,
-            $_SERVER['REMOTE_ADDR'] ?? '',
-            $_SERVER['HTTP_USER_AGENT'] ?? '',
-        ]
-    );
-} catch (Throwable $e) {
-    error_log('Mobile project milestone action audit failed: ' . $e->getMessage());
-}
-
-ak_api_json(200, ['ok' => true, 'data' => ['action' => $action, 'milestone_id' => (int)$milestoneId, 'message' => 'Milestone updated.']]);
+ak_api_json(200, ['ok' => true, 'data' => ['action' => $action, 'milestone_id' => (int)$milestoneId, 'message' => $action === 'edit' ? 'Milestone updated.' : 'Milestone deleted.']]);
