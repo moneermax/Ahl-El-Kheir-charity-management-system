@@ -4169,3 +4169,8 @@ Source commit `d31c1fd6c56f25ecca15adb5833131b425264935` adds `colspan="3"` to t
 ## 2026-10-24 — Flutter app cloud-build path
 
 The existing Flutter app foundation is being built through GitHub Actions so local Flutter installation is not required merely to produce an APK. Workflow: `.github/workflows/build-flutter-mobile-app.yml`; artifact: `ahl-el-kheir-flutter-android-debug-apk`. The workflow generates Android scaffolding on the runner, runs dependency resolution, Dart analysis, a widget smoke test, and debug APK compilation. **Acceptance status remains pending until the workflow succeeds and the artifact is verified.** This is not API runtime acceptance; the mobile session migration remains unapplied and API security controls must be reviewed before any public deployment.
+
+
+## 2026-10-24 — Flutter login widget test
+
+The first cloud run 40060794073 passed dependency resolution and Dart analysis but failed the widget test before APK compilation. The test was coupled to full-app startup and asynchronous secure-storage session restoration rather than just the login UI. It has been corrected to mount LoginPage directly in a test MaterialApp. Correction commit: b3216456948e71a80ae2629961efc78352769edf. Await the next Actions run; no APK success is established yet.
