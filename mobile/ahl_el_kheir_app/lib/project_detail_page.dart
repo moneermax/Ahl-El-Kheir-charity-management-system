@@ -13,7 +13,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
   bool loading = true;
   String? error;
   Map<String, dynamic> project = {};
-  List<Map<String, dynamic>> team = [], milestones = [], history = [];
+  List<Map<String, dynamic>> team = [], milestones = [], progressUpdates = [], history = [];
   @override
   void initState() { super.initState(); load(); }
   Future<void> load() async {
@@ -23,7 +23,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
       if (!mounted) return;
       setState(() {
         project = d['project'] is Map ? Map<String, dynamic>.from(d['project'] as Map) : {};
-        team = _maps(d['team']); milestones = _maps(d['milestones']); history = _maps(d['history']);
+        team = _maps(d['team']); milestones = _maps(d['milestones']); progressUpdates = _maps(d['progress_updates']); history = _maps(d['history']);
       });
     } catch (e) { if (mounted) setState(() => error = e.toString()); }
     finally { if (mounted) setState(() => loading = false); }
@@ -83,6 +83,18 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
             const SizedBox(height: 8), Text((en ? 'Planned date: ' : 'التاريخ المخطط: ') + _date(m['planned_date'])),
             const SizedBox(height: 6), LinearProgressIndicator(value: ((double.tryParse(m['completion_percent']?.toString() ?? '') ?? 0) / 100).clamp(0.0, 1.0)),
             const SizedBox(height: 4), Text(_amount(m['completion_percent']) + '%'),
+          ])))),
+          _SectionTitle(en ? 'Progress updates' : 'تحديثات التقدم', count: progressUpdates.length),
+          if (progressUpdates.isEmpty) _Empty(en ? 'No progress updates recorded.' : 'لا توجد تحديثات تقدم مسجلة.')
+          else ...progressUpdates.map((u) => Card(child: Padding(padding: const EdgeInsets.all(14), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(u['summary']?.toString() ?? '', style: const TextStyle(fontWeight: FontWeight.w800)),
+            const SizedBox(height: 6),
+            Text((en ? 'Date: ' : 'التاريخ: ') + _date(u['update_date'])),
+            Text((en ? 'Completion: ' : 'نسبة الإنجاز: ') + _amount(u['completion_percent']) + '%'),
+            if ((u['achievements']?.toString() ?? '').trim().isNotEmpty) Padding(padding: const EdgeInsets.only(top: 6), child: Text((en ? 'Achievements: ' : 'الإنجازات: ') + u['achievements'].toString())),
+            if ((u['issues']?.toString() ?? '').trim().isNotEmpty) Padding(padding: const EdgeInsets.only(top: 6), child: Text((en ? 'Issues: ' : 'المعوقات: ') + u['issues'].toString())),
+            if ((u['next_steps']?.toString() ?? '').trim().isNotEmpty) Padding(padding: const EdgeInsets.only(top: 6), child: Text((en ? 'Next steps: ' : 'الخطوات القادمة: ') + u['next_steps'].toString())),
+            if ((u['submitter_name']?.toString() ?? '').trim().isNotEmpty) Padding(padding: const EdgeInsets.only(top: 6), child: Text((en ? 'Submitted by: ' : 'بواسطة: ') + u['submitter_name'].toString(), style: const TextStyle(color: Color(0xFF64748B)))),
           ])))),
           _SectionTitle(en ? 'Recent history' : 'آخر التغييرات', count: history.length),
           if (history.isEmpty) _Empty(en ? 'No history recorded.' : 'لا يوجد سجل تغييرات.')

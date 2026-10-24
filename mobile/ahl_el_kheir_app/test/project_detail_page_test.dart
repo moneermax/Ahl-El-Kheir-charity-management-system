@@ -8,6 +8,7 @@ void main() {
     'project': {'id':24,'project_code':'PRJ-0024','name':'الإيواء والتأهيل السكني','description':'مشروع اختبار','current_status':'closed','approval_status':'approved','currency_code':'SDG','budget':10000.0,'funded':10000.0,'expenses':10000.0,'supervisor_name':'مشرف المشروع','closed_at':'2026-10-18 09:47:23','closure_summary':'اكتمل المشروع'},
     'team': [{'full_name':'أحمد حسين','section_code':'general','is_lead':true}],
     'milestones': [{'title':'التنفيذ','description':'مرحلة التنفيذ','planned_date':'2026-10-01','completion_percent':100.0}],
+    'progress_updates': [{'update_date':'2026-10-17','completion_percent':75.0,'summary':'تقدم التنفيذ','achievements':'اكتملت المرحلة الأولى','issues':'تأخر التوريد','next_steps':'استكمال الأعمال','submitter_name':'مشرف المشروع'}],
     'history': [{'old_status':'under_review','new_status':'closed','reason':'اكتمل المشروع','created_at':'2026-10-18','actor_name':'مدير المشاريع'}],
    },
   ))));
@@ -16,6 +17,11 @@ void main() {
   expect(find.text('الإيواء والتأهيل السكني'), findsOneWidget);
   expect(find.text('فريق المشروع'), findsOneWidget);
   expect(find.text('مراحل المشروع'), findsOneWidget);
+  await tester.scrollUntilVisible(find.text('تحديثات التقدم'), 400, scrollable: find.byType(Scrollable));
+  await tester.pumpAndSettle();
+  expect(find.text('تحديثات التقدم'), findsOneWidget);
+  expect(find.text('تقدم التنفيذ'), findsOneWidget);
+  expect(find.textContaining('تأخر التوريد'), findsOneWidget);
   await tester.scrollUntilVisible(find.text('آخر التغييرات'), 400, scrollable: find.byType(Scrollable));
   await tester.pumpAndSettle();
   expect(find.text('آخر التغييرات'), findsOneWidget);

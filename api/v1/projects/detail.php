@@ -53,6 +53,7 @@ $totals = dbFetchOne(
 ) ?: [];
 $team = dbFetchAll('SELECT pt.section_code,pt.is_lead,u.full_name FROM project_team pt JOIN users u ON u.id=pt.user_id WHERE pt.project_id=? AND pt.unassigned_at IS NULL ORDER BY pt.section_code,pt.is_lead DESC,u.full_name', [$projectId]);
 $milestones = dbFetchAll('SELECT m.title,m.description,m.planned_date,m.completion_percent FROM project_milestones m WHERE m.project_id=? ORDER BY m.planned_date,m.id', [$projectId]);
+$progressUpdates = dbFetchAll('SELECT p.update_date,p.completion_percent,p.summary,p.achievements,p.issues,p.next_steps,u.full_name AS submitter_name FROM project_progress_updates p LEFT JOIN users u ON u.id=p.submitted_by WHERE p.project_id=? ORDER BY p.update_date DESC,p.id DESC LIMIT 10', [$projectId]);
 $history = dbFetchAll('SELECT h.old_status,h.new_status,h.reason,h.created_at,u.full_name FROM project_status_history h LEFT JOIN users u ON u.id=h.changed_by WHERE h.project_id=? ORDER BY h.id DESC LIMIT 10', [$projectId]);
 $supervisor = dbFetchOne('SELECT u.full_name FROM project_supervisor_assignments psa JOIN users u ON u.id=psa.supervisor_user_id WHERE psa.project_id=? AND psa.ended_at IS NULL ORDER BY psa.id DESC LIMIT 1', [$projectId]);
 $budget = (float)($totals['approved_budget'] ?? 0);
@@ -69,5 +70,6 @@ ak_api_json(200, ['ok'=>true,'data'=>[
  ],
  'team'=>array_map(static fn(array $r): array=>['full_name'=>(string)$r['full_name'],'section_code'=>(string)$r['section_code'],'is_lead'=>(int)$r['is_lead']===1],$team),
  'milestones'=>array_map(static fn(array $r): array=>['title'=>(string)$r['title'],'description'=>(string)($r['description'] ?? ''),'planned_date'=>(string)($r['planned_date'] ?? ''),'completion_percent'=>(float)($r['completion_percent'] ?? 0)],$milestones),
+ 'progress_updates'=>array_map(static fn(array $r): array=>['update_date'=>(string)($r['update_date'] ?? ''),'completion_percent'=>(float)($r['completion_percent'] ?? 0),'summary'=>(string)($r['summary'] ?? ''),'achievements'=>(string)($r['achievements'] ?? ''),'issues'=>(string)($r['issues'] ?? ''),'next_steps'=>(string)($r['next_steps'] ?? ''),'submitter_name'=>(string)($r['submitter_name'] ?? '—')],$progressUpdates),
  'history'=>array_map(static fn(array $r): array=>['old_status'=>(string)($r['old_status'] ?? ''),'new_status'=>(string)($r['new_status'] ?? ''),'reason'=>(string)($r['reason'] ?? ''),'created_at'=>(string)($r['created_at'] ?? ''),'actor_name'=>(string)($r['full_name'] ?? '—')],$history)
 ]]);
