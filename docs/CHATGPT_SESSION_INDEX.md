@@ -2274,3 +2274,7 @@ The mobile financial review queue now supports approve-and-post and return-for-c
 
 ## 2026-10-24 — Project API operational-scope parity correction (CI passed)
 Source audit found `api/v1/projects/detail.php` defaulted missing approval rows to `approved`, unlike `akp_can_view_project()` and the portfolio API, which default to `draft`. It also found `milestone_create.php` checked assignment and closed status but omitted the operational approval/lifecycle gate enforced by the web project view and progress API. Corrected the detail fallback to `draft`, added the approved + allowed lifecycle gate for non-admin milestone creation, and aligned the detail response's `can_add_milestone` flag with that gate. PHP/database workflow [40119297504](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40119297504) passed all five jobs, including PHP lint. Live role/record-scope runtime tests remain open.
+
+## 2026-10-24 — Mobile project milestone maintenance checkpoint
+
+Milestone edit/delete API and Flutter controls have been committed to main. CI run 40120100653 was still in progress at this checkpoint. Source/CI must not be conflated with live Apache/MariaDB authorization acceptance. See docs/MOBILE_APP_CONTINUATION.md.
