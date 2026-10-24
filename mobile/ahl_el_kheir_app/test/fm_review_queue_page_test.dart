@@ -3,7 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('renders pending collections and recent review history', (tester) async {
+  testWidgets('renders review queue and requires a reason before return', (tester) async {
+    String? submittedAction;
+    String? submittedNote;
+    int? submittedId;
+
     await tester.pumpWidget(MaterialApp(
       home: Directionality(
         textDirection: TextDirection.rtl,
@@ -41,6 +45,11 @@ void main() {
               },
             ],
           },
+          submitAction: (id, action, note) async {
+            submittedId = id;
+            submittedAction = action;
+            submittedNote = note;
+          },
         ),
       ),
     ));
@@ -50,6 +59,20 @@ void main() {
     expect(find.textContaining('تحصيل #41'), findsOneWidget);
     expect(find.textContaining('12000.00 SDG'), findsOneWidget);
     expect(find.textContaining('يوجد إيصال مرفق'), findsOneWidget);
+    expect(find.text('اعتماد وترحيل'), findsOneWidget);
+
+    await tester.tap(find.text('إرجاع للتصحيح'));
+    await tester.pumpAndSettle();
+    expect(submittedAction, isNull);
+    expect(find.text('اكتب سبب الإرجاع قبل إعادة التحصيل.'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField), 'يرجى إرفاق إيصال أوضح');
+    await tester.tap(find.text('إرجاع للتصحيح'));
+    await tester.pumpAndSettle();
+    expect(submittedId, 41);
+    expect(submittedAction, 'return');
+    expect(submittedNote, 'يرجى إرفاق إيصال أوضح');
+
     await tester.tap(find.text('سجل المراجعات'));
     await tester.pumpAndSettle();
     expect(find.textContaining('تحصيل #40'), findsOneWidget);
