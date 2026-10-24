@@ -447,3 +447,6 @@ The unfinished attendance same-page POST scroll-jump issue remains separate and 
 
 ## 2026-10-24 — CI-only payroll transfer fixture prerequisite
 A full-schema CI run surfaced a stale test setup: the Stage 5 payroll integration fixture called the production paid transition without applying the payroll-transfer migration or preparing a proof. `hrPayrollChangeStatus()` correctly refused to pay without the schema and prepared proof. The CI full-schema job now applies `2026-10-20_hr_fm_payroll_transfer_workflow.sql`; rollback-only Stage 5 payroll and payroll/rescheduling concurrency fixtures now include an active payment account and prepared proof metadata/file, with cleanup. This aligns test setup with the existing production workflow; it does not reopen or change the closed Stage 5 business behavior. Fresh CI is pending.
+
+## 2026-10-24 — CLI proof-confirmation actor fixture
+The first proof-aware CI fixture exposed that CLI execution has no session actor by default: `Session::getUserId()` returned 0 and the proof-confirmation foreign key rejected it. The Stage 5 harness now supplies a real user ID from the disposable database in `$_SESSION` before invoking the production transition. The same actor setup was added to the concurrency harness's child process. This is test-fixture setup only; no production accounting/approval rule changed. Fresh CI pending.
