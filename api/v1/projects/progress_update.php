@@ -30,8 +30,8 @@ $lifecycleStatus = (string)($project['lifecycle_status'] ?? $project['status'] ?
 if ($lifecycleStatus === 'closed') {
     ak_api_json(409, ['ok' => false, 'error' => ['code' => 'project_closed', 'message' => 'Progress updates cannot be added to a closed project.']]);
 }
-if ((string)($project['approval_status'] ?? '') !== 'approved'
-    || !in_array($lifecycleStatus, ['active', 'reopened', 'completed', 'under_review', 'cancelled'], true)) {
+if ($role !== 'admin' && ((string)($project['approval_status'] ?? '') !== 'approved'
+    || !in_array($lifecycleStatus, ['active', 'reopened', 'completed', 'under_review', 'cancelled'], true))) {
     ak_api_json(409, ['ok' => false, 'error' => ['code' => 'project_not_operational', 'message' => 'This project is not available for operational updates.']]);
 }
 
@@ -55,7 +55,7 @@ $summary = trim((string)($input['summary'] ?? ''));
 if ($summary === '') {
     ak_api_json(422, ['ok' => false, 'error' => ['code' => 'summary_required', 'message' => 'A progress summary is required.']]);
 }
-if (mb_strlen($summary, 'UTF-8') > 500) {
+if ((function_exists('mb_strlen') ? mb_strlen($summary, 'UTF-8') : strlen($summary)) > 500) {
     ak_api_json(422, ['ok' => false, 'error' => ['code' => 'summary_too_long', 'message' => 'The progress summary cannot exceed 500 characters.']]);
 }
 $percentRaw = $input['completion_percent'] ?? 0;
@@ -89,8 +89,8 @@ try {
         [$projectId]
     );
     $lockedStatus = (string)($lockedProject['lifecycle_status'] ?? $lockedProject['status'] ?? '');
-    if (!$lockedProject || $lockedStatus === 'closed' || (string)($lockedProject['approval_status'] ?? '') !== 'approved'
-        || !in_array($lockedStatus, ['active', 'reopened', 'completed', 'under_review', 'cancelled'], true)) {
+    if (!$lockedProject || $lockedStatus === 'closed' || ($role !== 'admin' && ((string)($lockedProject['approval_status'] ?? '') !== 'approved'
+        || !in_array($lockedStatus, ['active', 'reopened', 'completed', 'under_review', 'cancelled'], true)))) {
         dbExecute('ROLLBACK');
         ak_api_json(409, ['ok' => false, 'error' => ['code' => 'project_state_changed', 'message' => 'The project state changed. Reload it and try again.']]);
     }
