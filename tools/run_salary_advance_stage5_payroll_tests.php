@@ -18,6 +18,7 @@ require_once __DIR__ . '/../config/session.php';
 require_once __DIR__ . '/../modules/accounting/lib.php';
 require_once __DIR__ . '/../modules/hr/lib_salary_advance_payroll.php';
 require_once __DIR__ . '/../modules/hr/lib_payroll_accounting.php';
+require_once __DIR__ . '/../modules/hr/lib_payroll_transfer.php';
 
 $pdo = db();
 ak_ensure_tables();
@@ -94,6 +95,7 @@ if ($basicSalary <= 0) {
 
 $payrollId = 0;
 $entryId = 0;
+$proofPath = null;
 
 try {
     $pdo->beginTransaction();
@@ -159,6 +161,22 @@ try {
         $basicSalary,
     ]);
     $payrollId = $fixturePayrollId;
+
+    // The production paid transition now requires a prepared private proof.
+    // Create disposable proof metadata and bytes for this rollback-only fixture.
+    $paymentAccountId = hrPayrollResolvePaymentAccount($pdo, null);
+    $pdo->prepare('UPDATE payroll SET payment_account_id = ? WHERE id = ?')
+        ->execute([$paymentAccountId, $payrollId]);
+    $storageKey = hash('sha256', 'stage5-' . $payrollId . '-' . bin2hex(random_bytes(16))) . '.pdf';
+    $proofPath = hrPayrollProofPath($storageKey);
+    if (file_put_contents($proofPath, "%PDF-1.4\n% Stage 5 rollback-only fixture\n%%EOF\n") === false) {
+        throw new RuntimeException('Could not create the rollback-only payment proof fixture.');
+    }
+    $pdo->prepare(
+        "INSERT INTO hr_payroll_payment_proofs
+            (payroll_id, proof_state, storage_key, original_filename, detected_mime_type, file_size_bytes)
+         VALUES (?, 'prepared', ?, 'stage5-fixture.pdf', 'application/pdf', ?)"
+    )->execute([$payrollId, $storageKey, filesize($proofPath)]);
 
     $payroll = dbFetchOne(
         "SELECT p.*, e.full_name AS employee_name, e.employee_code
@@ -314,11 +332,13 @@ try {
     echo "PASS | Duplicate repayment protection | request={$fixture['request_no']} | payroll_id={$payrollId}\n";
 
     $pdo->rollBack();
+    if (is_string($proofPath) && is_file($proofPath)) { @unlink($proofPath); }
     echo "PASS | Rollback-only cleanup | no payroll/request/schedule/journal mutation was committed.\n";
 } catch (Throwable $e) {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();
     }
+    if (is_string($proofPath) && is_file($proofPath)) { @unlink($proofPath); }
     fwrite(STDERR, "FAIL | Stage 5 payroll integration | " . $e->getMessage() . "\n");
     exit(1);
 }
