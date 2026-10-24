@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'projects_page.dart';
 import 'attendance_page.dart';
 import 'employees_page.dart';
+import 'employee_detail_page.dart';
 import 'leave_requests_page.dart';
 import 'sponsors_page.dart';
 import 'supervisors_page.dart';
@@ -209,6 +210,14 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     }
     final q = Uri.encodeQueryComponent(query);
     return call('GET', 'hr/employees.php?q=$q&page=$page', token: token);
+  }
+
+  Future<Map<String, dynamic>> loadEmployeeDetail(int id) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) {
+      throw const ApiFailure('Authentication is required.', statusCode: 401);
+    }
+    return call('GET', 'hr/employee_detail.php?id=$id', token: token);
   }
 
   Future<Map<String, dynamic>> loadAttendance(String? date) async {
