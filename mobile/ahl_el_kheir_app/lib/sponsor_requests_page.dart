@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
 class SponsorRequestsPage extends StatefulWidget {
-  const SponsorRequestsPage({super.key, required this.english, required this.loadRequests});
+  const SponsorRequestsPage({super.key, required this.english, required this.loadRequests, required this.submitAction});
   final bool english;
   final Future<Map<String, dynamic>> Function(String query, String status, int page) loadRequests;
+  final Future<Map<String, dynamic>> Function(String action, int requestId) submitAction;
   @override
   State<SponsorRequestsPage> createState() => _SponsorRequestsPageState();
 }
@@ -14,6 +15,7 @@ class _SponsorRequestsPageState extends State<SponsorRequestsPage> {
   String? error;
   String status = '';
   int page = 1, pages = 1, total = 0;
+  int? busyRequestId;
   List<Map<String, dynamic>> items = [];
 
   @override
@@ -45,6 +47,42 @@ class _SponsorRequestsPageState extends State<SponsorRequestsPage> {
       ? const {'new':'New','contacted':'Contacted','converted':'Converted','lost':'Lost'}
       : const {'new':'جديد','contacted':'تم التواصل','converted':'تم التحويل','lost':'مفقود'};
     return labels[value] ?? value;
+  }
+
+  Future<void> changeStatus(Map<String, dynamic> request, String action) async {
+    final en = widget.english;
+    final id = int.tryParse(request['id']?.toString() ?? '') ?? 0;
+    if (id < 1 || busyRequestId != null) return;
+    final title = action == 'mark_contacted'
+        ? (en ? 'Mark as contacted?' : 'تأكيد تسجيل التواصل؟')
+        : action == 'mark_lost'
+            ? (en ? 'Close this request?' : 'تأكيد إغلاق الطلب؟')
+            : (en ? 'Reopen this request?' : 'تأكيد إعادة فتح الطلب؟');
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(title),
+        content: Text(request['sponsor_name']?.toString() ?? ''),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(en ? 'Cancel' : 'إلغاء')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(en ? 'Confirm' : 'تأكيد')),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => busyRequestId = id);
+    try {
+      final result = await widget.submitAction(action, id);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(result['message']?.toString() ?? (en ? 'Status updated.' : 'تم تحديث الحالة.')),
+      ));
+      await load();
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+    } finally {
+      if (mounted) setState(() => busyRequestId = null);
+    }
   }
 
   @override
@@ -108,7 +146,11 @@ class _SponsorRequestsPageState extends State<SponsorRequestsPage> {
                           final attribution = broughtByName.isNotEmpty ? broughtByName : broughtByUser;
                           final created = request['created_at']?.toString() ?? '';
                           final notes = request['notes']?.toString() ?? '';
-                          return Card(child: ListTile(
+                          final currentStatus = request['status']?.toString() ?? '';
+                          return Card(child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              ListTile(
                             leading: const CircleAvatar(child: Icon(Icons.campaign_outlined)),
                             title: Text(request['sponsor_name']?.toString() ?? ''),
                             subtitle: Text([
@@ -120,7 +162,37 @@ class _SponsorRequestsPageState extends State<SponsorRequestsPage> {
                               if (notes.isNotEmpty) notes,
                             ].join('\n')),
                             isThreeLine: true,
-                            trailing: Chip(label: Text(statusLabel(request['status']?.toString() ?? ''))),
+                            trailing: Chip(label: Text(statusLabel(currentStatus))),
+                              ),
+                              if (['new', 'contacted', 'lost'].contains(currentStatus))
+                                Padding(
+                                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                                  child: Wrap(
+                                    spacing: 8,
+                                    runSpacing: 4,
+                                    children: [
+                                      if (currentStatus == 'new')
+                                        OutlinedButton.icon(
+                                          onPressed: busyRequestId == null ? () => changeStatus(request, 'mark_contacted') : null,
+                                          icon: const Icon(Icons.phone_outlined),
+                                          label: Text(en ? 'Mark contacted' : 'تأكيد التواصل'),
+                                        ),
+                                      if (currentStatus == 'new' || currentStatus == 'contacted')
+                                        OutlinedButton.icon(
+                                          onPressed: busyRequestId == null ? () => changeStatus(request, 'mark_lost') : null,
+                                          icon: const Icon(Icons.close_rounded),
+                                          label: Text(en ? 'Close request' : 'إغلاق الطلب'),
+                                        ),
+                                      if (currentStatus == 'lost')
+                                        OutlinedButton.icon(
+                                          onPressed: busyRequestId == null ? () => changeStatus(request, 'reopen') : null,
+                                          icon: const Icon(Icons.refresh_rounded),
+                                          label: Text(en ? 'Reopen' : 'إعادة فتح'),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                            ],
                           ));
                         },
                       ),
