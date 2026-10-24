@@ -45,7 +45,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
   Future<void> _addProgressUpdate() async {
     final body = await showDialog<Map<String, dynamic>>(
       context: context,
-      builder: (_) => _ProjectProgressDialog(english: widget.english),
+      builder: (_) => _ProjectProgressDialog(projectId: widget.projectId, english: widget.english),
     );
     if (body == null || !mounted) return;
     setState(() => savingProgress = true);
@@ -163,7 +163,8 @@ class _Empty extends StatelessWidget {
 }
 
 class _ProjectProgressDialog extends StatefulWidget {
-  const _ProjectProgressDialog({required this.english});
+  const _ProjectProgressDialog({required this.projectId, required this.english});
+  final int projectId;
   final bool english;
   @override
   State<_ProjectProgressDialog> createState() => _ProjectProgressDialogState();
@@ -236,7 +237,7 @@ class _ProjectProgressDialogState extends State<_ProjectProgressDialog> {
               return;
             }
             Navigator.of(context).pop({
-              'project_id': 0,
+              'project_id': widget.projectId,
               'summary': summaryValue,
               'update_date': dateValue,
               'completion_percent': percentValue,
