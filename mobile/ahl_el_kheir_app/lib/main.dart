@@ -147,6 +147,14 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     return call('GET', 'projects/detail.php?id=$projectId', token: token);
   }
 
+  Future<Map<String, dynamic>> submitProjectProgressUpdate(Map<String, dynamic> body) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) {
+      throw const ApiFailure('Authentication is required.', statusCode: 401);
+    }
+    return call('POST', 'projects/progress_update.php', token: token, body: body);
+  }
+
   Future<Map<String, dynamic>> loadSupervisors(String query, bool showArchived, int page) async {
     final token = await storage.read(key: tokenKey);
     if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
@@ -345,6 +353,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                                 english: english,
                                 loadPage: loadProjects,
                                 loadDetail: loadProjectDetail,
+                                submitProgress: submitProjectProgressUpdate,
                               ),
                             ),
                           );
