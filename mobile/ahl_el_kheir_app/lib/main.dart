@@ -7,6 +7,7 @@ import 'attendance_page.dart';
 import 'employees_page.dart';
 import 'leave_requests_page.dart';
 import 'sponsors_page.dart';
+import 'supervisors_page.dart';
 import 'families_page.dart';
 import 'transactions_page.dart';
 import 'sponsorships_page.dart';
@@ -144,6 +145,17 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       throw const ApiFailure('Authentication is required.', statusCode: 401);
     }
     return call('GET', 'projects/detail.php?id=$projectId', token: token);
+  }
+
+  Future<Map<String, dynamic>> loadSupervisors(String query, bool showArchived, int page) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    final params = <String, String>{
+      'q': query,
+      'show_archived': showArchived ? '1' : '0',
+      'page': page.toString(),
+    };
+    return call('GET', 'supervisors/index.php?${Uri(queryParameters: params).query}', token: token);
   }
 
   Future<Map<String, dynamic>> loadEmployees(String query, int page) async {
@@ -364,6 +376,16 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                       ),
                     ),
                   const SizedBox(height: 12),
+                  if (['admin', 'vice_general_manager'].contains(user?['role_code']?.toString()))
+                    Card(child: ListTile(
+                      leading: const CircleAvatar(child: Icon(Icons.supervisor_account_rounded)),
+                      title: Text(english ? 'Supervisors' : 'المشرفون'),
+                      subtitle: Text(english ? 'View supervisor assignments and status' : 'عرض المشرفين والحروف المسندة والحالة'),
+                      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+                      onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
+                        builder: (_) => SupervisorsPage(english: english, loadPage: loadSupervisors),
+                      )),
+                    )),
                   if (['admin', 'vice_general_manager', 'general_manager', 'supervisor'].contains(user?['role_code']?.toString()))
                     Card(child: ListTile(
                       leading: const CircleAvatar(child: Icon(Icons.volunteer_activism_rounded)),
