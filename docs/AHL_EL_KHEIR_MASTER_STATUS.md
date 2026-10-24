@@ -4164,3 +4164,8 @@ User reported the prior QR placement change disturbed the original orphan form d
 ### 2026-10-23 follow-up — full-width sponsorship rows
 
 Source commit `d31c1fd6c56f25ecca15adb5833131b425264935` adds `colspan="3"` to the value cells for “مدة الكفالة” and “قيمة الكفالة”. Those rows share a table with four-column sponsor rows; spanning the remaining columns makes both row borders extend across the same full table width without changing their content or the QR header. PHP syntax and local browser/print appearance verification are still pending.
+
+
+## 2026-10-24 — Flutter app cloud-build path
+
+The existing Flutter app foundation is being built through GitHub Actions so local Flutter installation is not required merely to produce an APK. Workflow: `.github/workflows/build-flutter-mobile-app.yml`; artifact: `ahl-el-kheir-flutter-android-debug-apk`. The workflow generates Android scaffolding on the runner, runs dependency resolution, Dart analysis, a widget smoke test, and debug APK compilation. **Acceptance status remains pending until the workflow succeeds and the artifact is verified.** This is not API runtime acceptance; the mobile session migration remains unapplied and API security controls must be reviewed before any public deployment.
