@@ -103,7 +103,7 @@ void main() {
    createMilestone: (_) async => {'ok': true},
    actOnMilestone: (body) async { actions.add(Map<String, dynamic>.from(body)); return {'ok': true}; },
    loadDetail: (_) async => {
-    'project': {'id':44,'project_code':'PRJ-0044','name':'Active project','current_status':'active','approval_status':'approved','currency_code':'SDG','budget':1000,'funded':0,'expenses':0,'can_add_milestone':true},
+    'project': {'id':44,'project_code':'PRJ-0044','name':'Active project','current_status':'active','approval_status':'approved','currency_code':'SDG','budget':1000,'funded':0,'expenses':0,'can_add_milestone':true,'can_manage_milestones':true},
     'team': [],
     'milestones': [{'id':71,'title':'Current milestone','description':'Old description','planned_date':'2026-10-25','completion_percent':20.0}],
     'progress_updates': [],
