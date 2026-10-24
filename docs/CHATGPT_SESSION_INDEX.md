@@ -1945,3 +1945,8 @@ Source commit `d31c1fd6c56f25ecca15adb5833131b425264935` adds `colspan="3"` to t
 ## 2026-10-24 — Flutter mobile app cloud-build continuation
 
 Continue from `docs/MOBILE_APP_CONTINUATION.md`. The Flutter source now has a GitHub Actions Android debug-APK workflow, generated Android scaffolding in the CI runner, and an Arabic login widget smoke test. The workflow accepts an API v1 base URL for manual builds; emulator default is `10.0.2.2`, physical devices need a reachable LAN host, and hosted servers must use HTTPS. Check the actual Actions run and artifact before claiming build success. API migration/runtime/security verification remains pending; do not expose XAMPP publicly.
+
+
+## 2026-10-24 — Flutter login widget-test correction
+
+GitHub run 40060794073 showed Dart analysis passing but the login widget test failing while launching full-app startup/session restoration. The test now mounts LoginPage directly so it tests the Arabic RTL login form without coupling to platform secure-storage initialization. Commit: b3216456948e71a80ae2629961efc78352769edf. Verify the next workflow run and APK artifact before claiming success.
