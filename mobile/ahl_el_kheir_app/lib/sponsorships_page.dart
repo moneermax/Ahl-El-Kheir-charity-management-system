@@ -56,7 +56,22 @@ class _SponsorshipsPageState extends State<SponsorshipsPage> {
       Padding(padding:const EdgeInsets.all(12), child:Wrap(spacing:12,runSpacing:6,children:[Text((en?'Records: ':'عدد الكفالات: ')+total.toString()),Text((en?'Active: ':'النشطة: ')+activeCount.toString()),Text((en?'Active monthly: ':'الإجمالي الشهري النشط: ')+activeMonthly.toStringAsFixed(2)+' SDG')])),
       Expanded(child: loading ? const Center(child:CircularProgressIndicator()) : error != null ? Center(child:Padding(padding:const EdgeInsets.all(24),child:Column(mainAxisSize:MainAxisSize.min,children:[Text(error!,textAlign:TextAlign.center),OutlinedButton(onPressed:load,child:Text(en?'Try again':'إعادة المحاولة'))]))) : RefreshIndicator(onRefresh:load,child:items.isEmpty ? ListView(children:[Padding(padding:const EdgeInsets.all(24),child:Text(en?'No sponsorships found.':'لا توجد كفالات',textAlign:TextAlign.center))]) : ListView.separated(physics:const AlwaysScrollableScrollPhysics(),padding:const EdgeInsets.all(12),itemCount:items.length,separatorBuilder:(_,__)=>const SizedBox(height:4),itemBuilder:(ctx,i){
         final s=items[i];
-        return Card(child:ListTile(leading:CircleAvatar(child:Icon(s['status']=='active'?Icons.favorite_rounded:Icons.volunteer_activism_rounded)),title:Text(s['sponsorship_code']?.toString()??'',style:const TextStyle(fontWeight:FontWeight.w800)),subtitle:Text((s['sponsor_name']?.toString()??'')+' ('+(s['sponsor_code']?.toString()??'')+')\n'+(s['child_name']?.toString()??'')+'\n'+(s['mother_name']?.toString()??'')+' ('+(s['family_code']?.toString()??'')+')\n'+(en?'Monthly: ':'المبلغ الشهري: ')+(double.tryParse(s['monthly_amount']?.toString()??'0')??0).toStringAsFixed(2)+' SDG · '+(s['start_date']?.toString()??''),isThreeLine:true,trailing:Chip(label:Text(statusLabel(s['status']?.toString()??'')))));
+        return Card(
+          child: ListTile(
+            leading: CircleAvatar(child: Icon(s['status'] == 'active' ? Icons.favorite_rounded : Icons.volunteer_activism_rounded)),
+            title: Text(s['sponsorship_code']?.toString() ?? '', style: const TextStyle(fontWeight: FontWeight.w800)),
+            subtitle: Text(
+              (s['sponsor_name']?.toString() ?? '') + ' (' + (s['sponsor_code']?.toString() ?? '') + ')\n' +
+              (s['child_name']?.toString() ?? '') + '\n' +
+              (s['mother_name']?.toString() ?? '') + ' (' + (s['family_code']?.toString() ?? '') + ')\n' +
+              (en ? 'Monthly: ' : 'المبلغ الشهري: ') +
+              (double.tryParse(s['monthly_amount']?.toString() ?? '0') ?? 0).toStringAsFixed(2) + ' SDG · ' +
+              (s['start_date']?.toString() ?? ''),
+            ),
+            isThreeLine: true,
+            trailing: Chip(label: Text(statusLabel(s['status']?.toString() ?? ''))),
+          ),
+        );
       }))),
       if(!loading && error==null && pages>1) SafeArea(top:false,child:Padding(padding:const EdgeInsets.all(10),child:Row(mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[OutlinedButton(onPressed:page>1?(){setState(()=>page--);load();}:null,child:Text(en?'Previous':'السابق')),Text(en?'Page '+page.toString()+' of '+pages.toString():'صفحة '+page.toString()+' من '+pages.toString()),OutlinedButton(onPressed:page<pages?(){setState(()=>page++);load();}:null,child:Text(en?'Next':'التالي'))]))),
     ]));
