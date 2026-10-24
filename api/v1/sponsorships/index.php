@@ -4,7 +4,7 @@ require_once dirname(__DIR__) . '/_bootstrap.php';
 require_once dirname(__DIR__, 3) . '/config/sponsor_assignments.php';
 ak_api_require_method('GET');
 $user=ak_api_authenticated_user();$uid=(int)$user['id'];$role=(string)$user['role_code'];
-if(!in_array($role,['admin','vice_general_manager','general_manager','supervisor','accountant'],true))ak_api_json(403,['ok'=>false,'error'=>['code'=>'forbidden','message'=>'Sponsorship access is not allowed.']]);
+if(!in_array($role,['admin','vice_general_manager','supervisor','accountant'],true))ak_api_json(403,['ok'=>false,'error'=>['code'=>'forbidden','message'=>'Sponsorship access is not allowed.']]);
 $q=trim((string)($_GET['q']??''));if(mb_strlen($q,'UTF-8')>100)ak_api_json(422,['ok'=>false,'error'=>['code'=>'invalid_search','message'=>'Search text is too long.']]);
 $type=(string)($_GET['stype']??'all');if(!in_array($type,['all','sponsor','orphan','family','code'],true))$type='all';
 $status=(string)($_GET['status']??'');if($status!==''&&!in_array($status,['active','paused','completed','cancelled'],true))ak_api_json(422,['ok'=>false,'error'=>['code'=>'invalid_status','message'=>'Invalid status filter.']]);
