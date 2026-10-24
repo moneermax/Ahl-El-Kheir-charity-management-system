@@ -9,6 +9,7 @@ void main() {
         textDirection: TextDirection.rtl,
         child: ProjectsPage(
           english: false,
+          loadDetail: (_) async => {'project': {}, 'team': [], 'milestones': [], 'history': []},
           loadPage: (_) async => {
             'items': [{
               'id': 24,
