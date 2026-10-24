@@ -4793,3 +4793,7 @@ Evidence from `modules/projects/project_lib.php::akp_can_view_project()` showed 
 ## 2026-10-24 — Mobile project milestone maintenance checkpoint
 
 Mobile project milestone edit/delete has been added on main using the existing project_milestones table and web workflow's editable fields. API authorization, project/milestone scoping, transaction locks, closed-project blocking, Flutter confirmation/refresh behavior, and a widget test are in source. Android run 40120100653 was pending at documentation time; do not claim CI success until checked. Live local API acceptance remains outstanding. See docs/MOBILE_APP_CONTINUATION.md for exact commits and gates.
+
+## 2026-10-24 — Mobile milestone maintenance authorization parity
+
+Evidence-driven correction: the web module's edit/delete gate is `akp_can_edit_section('operations', $id) || $closed`, and `akp_can_edit_section('operations')` is limited to assigned project supervisors. Therefore the mobile mutation API now rejects admin role for edit/delete, rechecks active primary/operations assignment, scopes milestone IDs to the project, and blocks closed projects. The detail API exposes a separate `can_manage_milestones` flag so the UI does not incorrectly show edit/delete controls merely because creation is available. CI is pending on the latest source SHA; live local Apache/MariaDB role and record-scope verification remains outstanding.
