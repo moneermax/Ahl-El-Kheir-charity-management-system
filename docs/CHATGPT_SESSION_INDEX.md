@@ -2278,3 +2278,7 @@ Source audit found `api/v1/projects/detail.php` defaulted missing approval rows 
 ## 2026-10-24 — Mobile project milestone maintenance checkpoint
 
 Milestone edit/delete API and Flutter controls have been committed to main. CI run 40120100653 was still in progress at this checkpoint. Source/CI must not be conflated with live Apache/MariaDB authorization acceptance. See docs/MOBILE_APP_CONTINUATION.md.
+
+## 2026-10-24 — Mobile milestone maintenance authorization parity
+
+Added milestone edit/delete endpoint and Flutter controls; separated maintenance permission from create permission to match web behavior. Current Android widget/APK and PHP/database CI runs are pending. No live local API runtime acceptance yet. See `docs/MOBILE_APP_CONTINUATION.md`.
