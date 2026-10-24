@@ -129,12 +129,13 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     );
   }
 
-  Future<Map<String, dynamic>> loadProjects(int page) async {
+  Future<Map<String, dynamic>> loadProjects(String query, int page) async {
     final token = await storage.read(key: tokenKey);
     if (token == null || token.isEmpty) {
       throw const ApiFailure('Authentication is required.', statusCode: 401);
     }
-    return call('GET', 'projects/index.php?page=$page', token: token);
+    final q = Uri.encodeQueryComponent(query);
+    return call('GET', 'projects/index.php?q=$q&page=$page', token: token);
   }
 
   Future<Map<String, dynamic>> loadProjectDetail(int projectId) async {
