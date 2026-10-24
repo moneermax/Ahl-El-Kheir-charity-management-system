@@ -25,12 +25,12 @@ if ($status !== '') {
     $params[] = $status;
 }
 if ($query !== '') {
-    $where[] = '(r.sponsor_name LIKE ? OR r.phone LIKE ? OR r.source LIKE ? OR r.sponsor_name LIKE ?)';
+    $where[] = '(r.sponsor_name LIKE ? OR r.phone LIKE ? OR r.source LIKE ? OR r.brought_by_name LIKE ? OR u.full_name LIKE ?)';
     $like = '%' . $query . '%';
-    array_push($params, $like, $like, $like, $like);
+    array_push($params, $like, $like, $like, $like, $like);
 }
 $whereSql = $where ? ' WHERE ' . implode(' AND ', $where) : '';
-$total = (int)(dbFetchOne('SELECT COUNT(*) AS total FROM sponsor_requests r' . $whereSql, $params)['total'] ?? 0);
+$total = (int)(dbFetchOne('SELECT COUNT(*) AS total FROM sponsor_requests r LEFT JOIN users u ON u.id = r.brought_by' . $whereSql, $params)['total'] ?? 0);
 $pages = max(1, (int)ceil($total / $perPage));
 $page = min($page, $pages);
 $offset = ($page - 1) * $perPage;
