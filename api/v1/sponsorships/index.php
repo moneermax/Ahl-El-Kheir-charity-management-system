@@ -1,0 +1,20 @@
+<?php
+declare(strict_types=1);
+require_once dirname(__DIR__) . '/_bootstrap.php';
+require_once dirname(__DIR__, 3) . '/config/sponsor_assignments.php';
+ak_api_require_method('GET');
+$user=ak_api_authenticated_user();$uid=(int)$user['id'];$role=(string)$user['role_code'];
+if(!in_array($role,['admin','vice_general_manager','general_manager','supervisor','accountant'],true))ak_api_json(403,['ok'=>false,'error'=>['code'=>'forbidden','message'=>'Sponsorship access is not allowed.']]);
+$q=trim((string)($_GET['q']??''));if(mb_strlen($q,'UTF-8')>100)ak_api_json(422,['ok'=>false,'error'=>['code'=>'invalid_search','message'=>'Search text is too long.']]);
+$type=(string)($_GET['stype']??'all');if(!in_array($type,['all','sponsor','orphan','family','code'],true))$type='all';
+$status=(string)($_GET['status']??'');if($status!==''&&!in_array($status,['active','paused','completed','cancelled'],true))ak_api_json(422,['ok'=>false,'error'=>['code'=>'invalid_status','message'=>'Invalid status filter.']]);
+$page=max(1,(int)($_GET['page']??1));$perPage=50;$scope=null;
+if($role==='supervisor'){$letters=dbFetchAll('SELECT letter_id FROM supervisor_letters WHERE supervisor_id=?',[$uid]);$ids=array_values(array_unique(array_map('intval',array_column($letters,'letter_id'))));$scope=[];if($ids){$marks=implode(',',array_fill(0,count($ids),'?'));foreach(dbFetchAll("SELECT id,first_letter_id,gender FROM sponsors WHERE first_letter_id IN ($marks)",$ids) as $s)if(supervisorCanAccessSponsor($uid,$s))$scope[]=(int)$s['id'];}}
+$rows=dbFetchAll("SELECT sp.id,sp.sponsorship_code,sp.monthly_amount,sp.status,sp.start_date,sp.pause_reason,s.id sponsor_id,s.full_name sponsor_name,s.sponsor_code,fc.id child_id,fc.child_name,f.id family_id,f.mother_name,f.family_code FROM sponsorships sp JOIN sponsors s ON s.id=sp.sponsor_id JOIN family_children fc ON fc.id=sp.child_id JOIN families f ON f.id=fc.family_id ORDER BY sp.id DESC");
+$norm=static function(string $v):string{$v=preg_replace('/[\x{064B}-\x{0652}\x{0640}\x{200B}-\x{200D}\x{FEFF}]/u','',$v);$v=str_replace(['أ','إ','آ','ٱ'],'ا',$v);$v=str_replace(['ة'],'ه',$v);$v=preg_replace('/\s+/u',' ',trim($v));return mb_strtolower($v,'UTF-8');};
+$needle=$norm($q);$filtered=[];
+foreach($rows as $r){if($scope!==null&&!in_array((int)$r['sponsor_id'],$scope,true))continue;if($status!==''&&(string)$r['status']!==$status)continue;if($needle!==''){$sn=$norm((string)$r['sponsor_name']);$cn=$norm((string)$r['child_name']);$fn=$norm((string)$r['mother_name']);$codes=mb_strtolower((string)$r['sponsorship_code'].' '.(string)$r['sponsor_code'].' '.(string)$r['family_code'],'UTF-8');$ok=match($type){'sponsor'=>str_starts_with($sn,$needle),'orphan'=>str_starts_with($cn,$needle),'family'=>str_starts_with($fn,$needle),'code'=>mb_strpos($codes,$needle,0,'UTF-8')!==false,default=>str_starts_with($sn,$needle)||str_starts_with($cn,$needle)||str_starts_with($fn,$needle)||mb_strpos($codes,$needle,0,'UTF-8')!==false};if(!$ok)continue;}$filtered[]=$r;}
+$total=count($filtered);$active=0;$monthly=0.0;foreach($filtered as $r)if($r['status']==='active'){$active++;$monthly+=(float)$r['monthly_amount'];}
+$pages=max(1,(int)ceil($total/$perPage));$page=min($page,$pages);$filtered=array_slice($filtered,($page-1)*$perPage,$perPage);
+$items=array_map(static fn(array $r):array=>['id'=>(int)$r['id'],'sponsorship_code'=>(string)($r['sponsorship_code']??''),'monthly_amount'=>(float)$r['monthly_amount'],'status'=>(string)$r['status'],'start_date'=>(string)($r['start_date']??''),'pause_reason'=>(string)($r['pause_reason']??''),'sponsor_id'=>(int)$r['sponsor_id'],'sponsor_name'=>(string)$r['sponsor_name'],'sponsor_code'=>(string)($r['sponsor_code']??''),'child_id'=>(int)$r['child_id'],'child_name'=>(string)$r['child_name'],'family_id'=>(int)$r['family_id'],'mother_name'=>(string)$r['mother_name'],'family_code'=>(string)$r['family_code']],$filtered);
+ak_api_json(200,['ok'=>true,'data'=>['items'=>$items,'total'=>$total,'page'=>$page,'pages'=>$pages,'active_count'=>$active,'active_monthly_total'=>$monthly]]);
