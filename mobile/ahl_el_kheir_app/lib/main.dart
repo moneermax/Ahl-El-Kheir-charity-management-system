@@ -7,6 +7,7 @@ import 'attendance_page.dart';
 import 'leave_requests_page.dart';
 import 'sponsors_page.dart';
 import 'families_page.dart';
+import 'transactions_page.dart';
 
 void main() => runApp(const AhlElKheirApp());
 
@@ -178,6 +179,13 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     return call('GET', 'families/index.php?q=$q&status=$status&page=$page', token: token);
   }
 
+  Future<Map<String, dynamic>> loadTransactions(String query, String status, int page) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    final q = Uri.encodeQueryComponent(query);
+    return call('GET', 'transactions/index.php?q=$q&status=$status&page=$page', token: token);
+  }
+
   Future<Map<String, dynamic>> loadFamilyDetail(int id) async {
     final token = await storage.read(key: tokenKey);
     if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
@@ -311,6 +319,16 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                       trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
                       onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
                         builder: (_) => SponsorsPage(english: english, loadSponsors: loadSponsors, loadDetail: loadSponsorDetail),
+                      )),
+                    )),
+                  if (['admin', 'vice_general_manager', 'general_manager', 'supervisor', 'accountant_staff', 'financial_manager'].contains(user?['role_code']?.toString()))
+                    Card(child: ListTile(
+                      leading: const CircleAvatar(child: Icon(Icons.receipt_long_rounded)),
+                      title: Text(english ? 'Transactions' : 'المعاملات'),
+                      subtitle: Text(english ? 'Review payment records within your role scope' : 'مراجعة سجلات المعاملات وفق صلاحياتك'),
+                      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+                      onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
+                        builder: (_) => TransactionsPage(english: english, loadTransactions: loadTransactions),
                       )),
                     )),
                   if (['admin', 'vice_general_manager', 'general_manager', 'supervisor', 'nanny'].contains(user?['role_code']?.toString()))
