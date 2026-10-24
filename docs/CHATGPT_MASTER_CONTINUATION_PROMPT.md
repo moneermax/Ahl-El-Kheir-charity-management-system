@@ -1902,3 +1902,7 @@ Read `docs/MOBILE_APP_CONTINUATION.md`. User does not need to install Flutter lo
 ## 2026-10-24 — Flutter login widget-test follow-up
 
 Cloud run 40060794073 passed Dart analysis but failed the test because it launched full-app startup/session restoration instead of isolating the login form. The test now mounts LoginPage directly with RTL directionality in commit b3216456948e71a80ae2629961efc78352769edf. Check the next workflow run and artifact. Do not claim APK success until confirmed; API runtime/security acceptance remains pending.
+
+
+## 2026-10-24 — Mobile physical phone and theme follow-up
+Continue from `docs/MOBILE_APP_CONTINUATION.md`. User confirmed laptop LAN IP `192.168.18.9` and Apache port `881`; Flutter default targets `http://192.168.18.9:881/AhlElKheir/api/v1`. Login UI uses the existing website navy palette and `assets/img/logo.jpg`. Do not claim login works until CI passes, phone reaches the endpoint, `2026-10-24_mobile_api_sessions.sql` is confirmed applied to the intended `ahl_el_kheir` DB, and local API runtime/security checks pass. Do not expose XAMPP publicly.

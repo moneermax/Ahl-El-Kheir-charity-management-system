@@ -4174,3 +4174,7 @@ The existing Flutter app foundation is being built through GitHub Actions so loc
 ## 2026-10-24 — Flutter login widget test
 
 The first cloud run 40060794073 passed dependency resolution and Dart analysis but failed the widget test before APK compilation. The test was coupled to full-app startup and asynchronous secure-storage session restoration rather than just the login UI. It has been corrected to mount LoginPage directly in a test MaterialApp. Correction commit: b3216456948e71a80ae2629961efc78352769edf. Await the next Actions run; no APK success is established yet.
+
+
+## 2026-10-24 — Mobile app physical-phone connection and branding
+The Flutter debug app's emulator-only default was inappropriate for the user's physical phone. User confirmed laptop LAN IP `192.168.18.9`, Apache port `881`; Flutter defaults now use `http://192.168.18.9:881/AhlElKheir/api/v1`. Login/signed-in UI uses the existing navy theme and website logo asset. CI and device verification remain pending; mobile API migration/runtime checks are not confirmed.

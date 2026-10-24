@@ -76,3 +76,11 @@ Responses use `{"ok":true,"data":...}` or `{"ok":false,"error":{"code":"…","me
 - The failed test launched the entire AhlElKheirApp and immediately expected the login form. App startup first performs asynchronous FlutterSecureStorage session restoration, so that UI test was coupled to a platform-storage startup path it did not need to validate.
 - Corrected mobile/ahl_el_kheir_app/test/login_screen_test.dart to mount the actual LoginPage directly inside MaterialApp with RTL directionality. This isolates the test to the Arabic login form without changing production behavior just to satisfy a test.
 - Correction commit: b3216456948e71a80ae2629961efc78352769edf. The subsequent GitHub Actions run must pass the test and publish the APK before build success can be claimed. API runtime/authentication remains unverified.
+
+
+## 2026-10-24 — Physical-phone API URL and original branding correction
+
+- User confirmed the phone-testing host is laptop LAN IP `192.168.18.9` and Apache port `881`, matching the prior QR-scanner setup. Flutter default and manual workflow default now use `http://192.168.18.9:881/AhlElKheir/api/v1`; this is for the current local network only and can change if the IP changes.
+- Reworked the Flutter login and signed-in shell to use the website's navy palette (`#0A1F44`, `#1F4E8C`), Arabic RTL-first branded card layout, improved field/button styling, and the actual organization logo source. The build workflow copies the existing website asset `assets/img/logo.jpg` into Flutter assets before dependency resolution/tests/build; it does not create a replacement logo.
+- Updated API URL does not itself prove connectivity or successful login. Phone and PC must share the network, Windows Firewall must permit Apache on port 881, and the URL must be reachable from the phone. The `mobile_api_sessions` migration is still not confirmed applied to `ahl_el_kheir`; do not use real credentials until migration and local API/runtime/security checks pass.
+- Verification status: source change committed; GitHub Actions analysis/test/build and artifact upload pending. Physical-device UI and HTTP checks remain pending.

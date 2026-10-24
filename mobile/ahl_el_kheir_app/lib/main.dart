@@ -23,7 +23,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
   static const storage = FlutterSecureStorage();
   static const tokenKey = 'mobile_access_token';
   static const baseUrl = String.fromEnvironment('API_BASE_URL',
-      defaultValue: 'http://10.0.2.2:8081/AhlElKheir/api/v1');
+      defaultValue: 'http://192.168.18.9:881/AhlElKheir/api/v1');
   bool english = false, loading = true;
   Map<String, dynamic>? user;
   String? error;
@@ -104,7 +104,18 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     title: english ? 'Ahl El Kheir' : 'أهل الخير',
     debugShowCheckedModeBanner: false,
     theme: ThemeData(useMaterial3: true,
-      colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF176B55))),
+      colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1F4E8C), primary: const Color(0xFF0A1F44), secondary: const Color(0xFF2E63A8)),
+      scaffoldBackgroundColor: const Color(0xFFF0F2F5),
+      fontFamily: 'Cairo',
+      appBarTheme: const AppBarTheme(backgroundColor: Colors.white, foregroundColor: Color(0xFF0A1F44), elevation: 0),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true, fillColor: const Color(0xFFF9FAFC),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF8AA6C8), width: 1.5)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF8AA6C8), width: 1.5)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF1F4E8C), width: 2)),
+      ),
+      filledButtonTheme: FilledButtonThemeData(style: FilledButton.styleFrom(backgroundColor: const Color(0xFF0A1F44), foregroundColor: Colors.white, minimumSize: const Size.fromHeight(52), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))))),
     home: Directionality(
       textDirection: english ? TextDirection.ltr : TextDirection.rtl,
       child: loading
@@ -118,7 +129,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                   child: Text(english ? 'العربية' : 'English'))]),
               body: Center(child: Padding(padding: const EdgeInsets.all(24),
                 child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  const Icon(Icons.volunteer_activism, size: 64),
+                  const OrganizationLogo(size: 92),
                   Text(english ? 'Signed in successfully' : 'تم تسجيل الدخول بنجاح',
                     style: Theme.of(context).textTheme.headlineSmall),
                   Text(user?['full_name']?.toString() ?? ''),
@@ -129,6 +140,42 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                     child: Text(english ? 'Sign out' : 'تسجيل الخروج')),
                 ]))))
     ));
+}
+
+class OrganizationLogo extends StatelessWidget {
+  const OrganizationLogo({super.key, this.size = 84});
+  final double size;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        width: size,
+        height: size,
+        padding: const EdgeInsets.all(7),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFFDCE7F5)),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF0A1F44).withOpacity(0.08),
+              blurRadius: 16,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(13),
+          child: Image.asset(
+            'assets/organization_logo.jpg',
+            fit: BoxFit.contain,
+            errorBuilder: (_, __, ___) => const Icon(
+              Icons.volunteer_activism_rounded,
+              size: 46,
+              color: Color(0xFF1F4E8C),
+            ),
+          ),
+        ),
+      );
 }
 
 class LoginPage extends StatefulWidget {
@@ -159,37 +206,145 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     final en = widget.english;
+    const navy950 = Color(0xFF081527);
+    const navy900 = Color(0xFF0A1F44);
+    const navy600 = Color(0xFF1F4E8C);
     return Scaffold(
-      appBar: AppBar(title: Text(en ? 'Ahl El Kheir' : 'أهل الخير'),
-        actions: [TextButton(onPressed: widget.toggle,
-          child: Text(en ? 'العربية' : 'English'))]),
-      body: Center(child: SingleChildScrollView(padding: const EdgeInsets.all(24),
-        child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 420),
-          child: Form(key: form, child: Column(crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Icon(Icons.volunteer_activism, size: 72),
-              Text(en ? 'Sign in' : 'تسجيل الدخول', textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.headlineMedium),
-              const SizedBox(height: 24),
-              TextFormField(controller: username, autocorrect: false,
-                decoration: InputDecoration(labelText: en ? 'Username' : 'اسم المستخدم'),
-                validator: (v) => v == null || v.trim().isEmpty
-                  ? (en ? 'Enter username' : 'أدخل اسم المستخدم') : null),
-              const SizedBox(height: 16),
-              TextFormField(controller: password, obscureText: true,
-                onFieldSubmitted: (_) { if (!busy) signIn(); },
-                decoration: InputDecoration(labelText: en ? 'Password' : 'كلمة المرور'),
-                validator: (v) => v == null || v.isEmpty
-                  ? (en ? 'Enter password' : 'أدخل كلمة المرور') : null),
-              if (error != null) Padding(padding: const EdgeInsets.all(12),
-                child: Text(error!, style: TextStyle(color: Theme.of(context).colorScheme.error))),
-              const SizedBox(height: 16),
-              FilledButton(onPressed: busy ? null : signIn,
-                child: busy ? const CircularProgressIndicator() : Text(en ? 'Sign in' : 'دخول')),
-              const SizedBox(height: 12),
-              Text(en ? 'Do not use real accounts until API runtime and security checks pass.'
-                : 'لا تستخدم حسابات حقيقية قبل اجتياز اختبارات API والأمان.',
-                textAlign: TextAlign.center),
-            ]))))));
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topRight,
+            end: Alignment.bottomLeft,
+            colors: [navy950, navy900, navy600],
+            stops: [0, 0.56, 1],
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 24),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 430),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Align(
+                      alignment: AlignmentDirectional.topEnd,
+                      child: TextButton.icon(
+                        onPressed: widget.toggle,
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          backgroundColor: Colors.white.withOpacity(0.10),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24),
+                            side: BorderSide(color: Colors.white.withOpacity(0.24)),
+                          ),
+                        ),
+                        icon: const Icon(Icons.language_rounded, size: 18),
+                        label: Text(en ? 'العربية' : 'English'),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Card(
+                      color: Colors.white,
+                      elevation: 18,
+                      shadowColor: Colors.black.withOpacity(0.22),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(26, 30, 26, 26),
+                        child: Form(
+                          key: form,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Center(child: OrganizationLogo(size: 106)),
+                              const SizedBox(height: 20),
+                              Text(
+                                en ? 'Ahl El Kheir' : 'أهل الخير',
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                  color: navy900, fontWeight: FontWeight.w800, height: 1.25,
+                                ),
+                              ),
+                              const SizedBox(height: 5),
+                              Text(
+                                en ? 'Charity Management System' : 'نظام إدارة الجمعية الخيرية',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
+                              ),
+                              const SizedBox(height: 26),
+                              Text(
+                                en ? 'Sign in to your account' : 'تسجيل الدخول إلى حسابك',
+                                textAlign: TextAlign.start,
+                                style: const TextStyle(color: navy900, fontSize: 17, fontWeight: FontWeight.w800),
+                              ),
+                              const SizedBox(height: 16),
+                              TextFormField(
+                                controller: username,
+                                autocorrect: false,
+                                textInputAction: TextInputAction.next,
+                                decoration: InputDecoration(
+                                  labelText: en ? 'Username' : 'اسم المستخدم',
+                                  prefixIcon: const Icon(Icons.person_outline_rounded),
+                                ),
+                                validator: (v) => v == null || v.trim().isEmpty
+                                  ? (en ? 'Enter username' : 'أدخل اسم المستخدم') : null,
+                              ),
+                              const SizedBox(height: 15),
+                              TextFormField(
+                                controller: password,
+                                obscureText: true,
+                                onFieldSubmitted: (_) { if (!busy) signIn(); },
+                                decoration: InputDecoration(
+                                  labelText: en ? 'Password' : 'كلمة المرور',
+                                  prefixIcon: const Icon(Icons.lock_outline_rounded),
+                                ),
+                                validator: (v) => v == null || v.isEmpty
+                                  ? (en ? 'Enter password' : 'أدخل كلمة المرور') : null,
+                              ),
+                              if (error != null) ...[
+                                const SizedBox(height: 14),
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFFF1F2),
+                                    border: Border.all(color: const Color(0xFFF5C2C7)),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(error!, style: const TextStyle(color: Color(0xFF842026), fontSize: 13)),
+                                ),
+                              ],
+                              const SizedBox(height: 20),
+                              FilledButton(
+                                onPressed: busy ? null : signIn,
+                                child: busy
+                                  ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
+                                  : Text(en ? 'Sign in' : 'دخول'),
+                              ),
+                              const SizedBox(height: 17),
+                              Text(
+                                en ? 'Secure access to Ahl El Kheir' : 'دخول آمن إلى نظام أهل الخير',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    const Text('AHL EL KHEIR', textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.white70, fontSize: 11, letterSpacing: 2.4, fontWeight: FontWeight.w700)),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

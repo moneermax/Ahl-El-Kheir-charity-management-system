@@ -4470,3 +4470,7 @@ The Flutter app is configured for cloud compilation through GitHub Actions. The 
 ## 2026-10-24 — Flutter widget test failure evidence
 
 GitHub Actions run 40060794073 completed dependency resolution and Dart analysis successfully, then failed at the Arabic login text assertion in login_screen_test.dart. The test launched the whole app, which begins asynchronous secure-storage session restoration, so the test was not isolated to the login form. The smallest correction was test-only: mount LoginPage directly with RTL directionality. Commit: b3216456948e71a80ae2629961efc78352769edf. The follow-up run must prove the test and APK build.
+
+
+## 2026-10-24 — Flutter physical-device connection and brand alignment
+Finding: the first APK defaulted to `10.0.2.2:8081`, which is an Android-emulator host, not the user's physical handset. User confirmed local laptop host `192.168.18.9`, Apache port `881`. Source now targets that LAN URL and uses the existing website logo and navy design tokens. This is a source-level correction only; CI, handset connectivity, API migration, and runtime authentication remain unverified.

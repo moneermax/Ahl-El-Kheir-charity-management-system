@@ -6,12 +6,13 @@ on:
     paths:
       - "mobile/ahl_el_kheir_app/**"
       - ".github/workflows/build-flutter-mobile-app.yml"
+      - "assets/img/logo.jpg"
   workflow_dispatch:
     inputs:
       api_base_url:
         description: "API v1 base URL (use HTTPS outside local development)"
         required: false
-        default: "http://10.0.2.2:8081/AhlElKheir/api/v1"
+        default: "http://192.168.18.9:881/AhlElKheir/api/v1"
         type: string
 
 permissions:
@@ -21,7 +22,7 @@ jobs:
   analyze-and-build:
     runs-on: ubuntu-latest
     env:
-      API_BASE_URL: ${{ inputs.api_base_url || 'http://10.0.2.2:8081/AhlElKheir/api/v1' }}
+      API_BASE_URL: ${{ inputs.api_base_url || 'http://192.168.18.9:881/AhlElKheir/api/v1' }}
     steps:
       - name: Check out main
         uses: actions/checkout@v4
@@ -42,6 +43,8 @@ jobs:
         run: |
           flutter create --platforms=android --project-name ahl_el_kheir_app --org org.ahlelkheir --no-pub "$RUNNER_TEMP/ahl_el_kheir_scaffold"
           cp -R "$RUNNER_TEMP/ahl_el_kheir_scaffold/android" mobile/ahl_el_kheir_app/android
+          mkdir -p mobile/ahl_el_kheir_app/assets
+          cp assets/img/logo.jpg mobile/ahl_el_kheir_app/assets/organization_logo.jpg
           mkdir -p mobile/ahl_el_kheir_app/android/app/src/debug
           cat > mobile/ahl_el_kheir_app/android/app/src/debug/AndroidManifest.xml <<'EOF'
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">

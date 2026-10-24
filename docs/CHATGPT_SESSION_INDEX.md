@@ -1950,3 +1950,7 @@ Continue from `docs/MOBILE_APP_CONTINUATION.md`. The Flutter source now has a Gi
 ## 2026-10-24 — Flutter login widget-test correction
 
 GitHub run 40060794073 showed Dart analysis passing but the login widget test failing while launching full-app startup/session restoration. The test now mounts LoginPage directly so it tests the Arabic RTL login form without coupling to platform secure-storage initialization. Commit: b3216456948e71a80ae2629961efc78352769edf. Verify the next workflow run and APK artifact before claiming success.
+
+
+## 2026-10-24 — Flutter phone connection and branding follow-up
+The user confirmed laptop LAN host `192.168.18.9` and Apache port `881`. Flutter default/workflow API URL now targets `http://192.168.18.9:881/AhlElKheir/api/v1`; the Flutter shell uses the existing website navy theme and `assets/img/logo.jpg`. Build/runtime verification pending. Read `docs/MOBILE_APP_CONTINUATION.md` before continuing.
