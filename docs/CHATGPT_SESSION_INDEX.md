@@ -1940,3 +1940,8 @@ After user feedback, commit `efe2eaf9b6aeaa1d25b7f136f9b9958f74e519a4` restores 
 ### 2026-10-23 follow-up — full-width sponsorship rows
 
 Source commit `d31c1fd6c56f25ecca15adb5833131b425264935` adds `colspan="3"` to the value cells for “مدة الكفالة” and “قيمة الكفالة”. Those rows share a table with four-column sponsor rows; spanning the remaining columns makes both row borders extend across the same full table width without changing their content or the QR header. PHP syntax and local browser/print appearance verification are still pending.
+
+
+## 2026-10-24 — Flutter mobile app cloud-build continuation
+
+Continue from `docs/MOBILE_APP_CONTINUATION.md`. The Flutter source now has a GitHub Actions Android debug-APK workflow, generated Android scaffolding in the CI runner, and an Arabic login widget smoke test. The workflow accepts an API v1 base URL for manual builds; emulator default is `10.0.2.2`, physical devices need a reachable LAN host, and hosted servers must use HTTPS. Check the actual Actions run and artifact before claiming build success. API migration/runtime/security verification remains pending; do not expose XAMPP publicly.
