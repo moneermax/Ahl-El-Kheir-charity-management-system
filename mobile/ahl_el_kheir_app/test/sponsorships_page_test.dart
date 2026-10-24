@@ -6,7 +6,7 @@ void main() {
   testWidgets('renders Arabic sponsorship list and active summary', (tester) async {
     await tester.pumpWidget(MaterialApp(home: Directionality(
       textDirection: TextDirection.rtl,
-      child: SponsorshipsPage(english: false, loadSponsorships: (_, __, ___, ____) async => {
+      child: SponsorshipsPage(english: false, loadDetail: (_) async => {'sponsorship': {}, 'payments': []}, loadSponsorships: (_, __, ___, ____) async => {
         'items': [{
           'id': 1, 'sponsorship_code': 'SH-000001', 'monthly_amount': 2000.0,
           'status': 'active', 'start_date': '2026-01-01', 'sponsor_name': 'محمد أحمد',

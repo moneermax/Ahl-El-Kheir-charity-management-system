@@ -9,6 +9,7 @@ import 'sponsors_page.dart';
 import 'families_page.dart';
 import 'transactions_page.dart';
 import 'sponsorships_page.dart';
+import 'sponsorship_detail_page.dart';
 
 void main() => runApp(const AhlElKheirApp());
 
@@ -194,6 +195,12 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     return call('GET', 'sponsorships/index.php?q=$q&stype=$type&status=$status&page=$page', token: token);
   }
 
+  Future<Map<String, dynamic>> loadSponsorshipDetail(int id) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('GET', 'sponsorships/detail.php?id=$id', token: token);
+  }
+
   Future<Map<String, dynamic>> loadFamilyDetail(int id) async {
     final token = await storage.read(key: tokenKey);
     if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
@@ -336,7 +343,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                       subtitle: Text(english ? 'Browse sponsorship records within your role scope' : 'استعراض سجلات الكفالات وفق صلاحيات حسابك'),
                       trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
                       onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
-                        builder: (_) => SponsorshipsPage(english: english, loadSponsorships: loadSponsorships),
+                        builder: (_) => SponsorshipsPage(english: english, loadSponsorships: loadSponsorships, loadDetail: loadSponsorshipDetail),
                       )),
                     )),
                   if (['admin', 'vice_general_manager', 'general_manager', 'supervisor', 'accountant_staff', 'financial_manager'].contains(user?['role_code']?.toString()))

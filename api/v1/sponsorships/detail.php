@@ -1,0 +1,13 @@
+<?php
+declare(strict_types=1);
+require_once dirname(__DIR__) . '/_bootstrap.php';
+require_once dirname(__DIR__, 3) . '/config/sponsor_assignments.php';
+ak_api_require_method('GET');
+$user=ak_api_authenticated_user();$uid=(int)$user['id'];$role=(string)$user['role_code'];$id=max(0,(int)($_GET['id']??0));
+if(!in_array($role,['admin','vice_general_manager','general_manager','supervisor','accountant'],true))ak_api_json(403,['ok'=>false,'error'=>['code'=>'forbidden','message'=>'Sponsorship access is not allowed.']]);
+if($id<1)ak_api_json(422,['ok'=>false,'error'=>['code'=>'invalid_sponsorship_id','message'=>'A valid sponsorship ID is required.']]);
+$s=dbFetchOne("SELECT sp.id,sp.sponsorship_code,sp.monthly_amount,sp.status,sp.start_date,sp.end_date,sp.pause_reason,sp.pause_start_date,sp.pause_end_date,s.id sponsor_id,s.full_name sponsor_name,s.sponsor_code,s.supervisor_id,s.first_letter_id,s.gender,fc.id child_id,fc.child_name,f.id family_id,f.mother_name,f.family_code FROM sponsorships sp JOIN sponsors s ON s.id=sp.sponsor_id JOIN family_children fc ON fc.id=sp.child_id JOIN families f ON f.id=fc.family_id WHERE sp.id=? LIMIT 1",[$id]);
+if(!$s)ak_api_json(404,['ok'=>false,'error'=>['code'=>'sponsorship_not_found','message'=>'Sponsorship not found.']]);
+if($role==='supervisor'&&!supervisorCanAccessSponsor($uid,$s))ak_api_json(403,['ok'=>false,'error'=>['code'=>'forbidden','message'=>'This sponsorship is outside your responsibility scope.']]);
+$payments=dbFetchAll("SELECT t.id,t.transaction_code,t.amount,t.transaction_date,t.payment_method,t.status,t.receipt_number FROM transactions t WHERE t.sponsorship_id=? ORDER BY t.transaction_date DESC,t.id DESC",[$id]);$paid=0.0;foreach($payments as $p)if($p['status']==='posted')$paid+=(float)$p['amount'];
+ak_api_json(200,['ok'=>true,'data'=>['sponsorship'=>['id'=>(int)$s['id'],'sponsorship_code'=>(string)($s['sponsorship_code']??''),'monthly_amount'=>(float)$s['monthly_amount'],'status'=>(string)$s['status'],'start_date'=>(string)($s['start_date']??''),'end_date'=>(string)($s['end_date']??''),'pause_reason'=>(string)($s['pause_reason']??''),'sponsor_name'=>(string)$s['sponsor_name'],'sponsor_code'=>(string)($s['sponsor_code']??''),'child_name'=>(string)$s['child_name'],'mother_name'=>(string)$s['mother_name'],'family_code'=>(string)$s['family_code'],'payment_count'=>count($payments),'total_paid'=>$paid],'payments'=>array_map(static fn(array $p):array=>['id'=>(int)$p['id'],'transaction_code'=>(string)$p['transaction_code'],'amount'=>(float)$p['amount'],'transaction_date'=>(string)$p['transaction_date'],'payment_method'=>(string)($p['payment_method']??''),'status'=>(string)$p['status'],'receipt_number'=>(string)($p['receipt_number']??'')],$payments)]]);

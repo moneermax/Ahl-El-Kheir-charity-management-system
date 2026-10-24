@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
 class SponsorshipsPage extends StatefulWidget {
-  const SponsorshipsPage({super.key, required this.english, required this.loadSponsorships});
+  const SponsorshipsPage({super.key, required this.english, required this.loadSponsorships, required this.loadDetail});
   final bool english;
   final Future<Map<String, dynamic>> Function(String query, String type, String status, int page) loadSponsorships;
+  final Future<Map<String, dynamic>> Function(int id) loadDetail;
   @override State<SponsorshipsPage> createState() => _SponsorshipsPageState();
 }
 class _SponsorshipsPageState extends State<SponsorshipsPage> {
@@ -58,6 +59,11 @@ class _SponsorshipsPageState extends State<SponsorshipsPage> {
         final s=items[i];
         return Card(
           child: ListTile(
+            onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => SponsorshipDetailPage(
+              sponsorshipId: int.tryParse(s['id']?.toString() ?? '') ?? 0,
+              english: en,
+              loadDetail: widget.loadDetail,
+            ))),
             leading: CircleAvatar(child: Icon(s['status'] == 'active' ? Icons.favorite_rounded : Icons.volunteer_activism_rounded)),
             title: Text(s['sponsorship_code']?.toString() ?? '', style: const TextStyle(fontWeight: FontWeight.w800)),
             subtitle: Text(
