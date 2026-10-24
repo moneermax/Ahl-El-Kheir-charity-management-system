@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'projects_page.dart';
 import 'attendance_page.dart';
 import 'employees_page.dart';
+import 'employee_detail_page.dart';
 import 'leave_requests_page.dart';
 import 'sponsors_page.dart';
 import 'supervisors_page.dart';
@@ -413,7 +414,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                         subtitle: Text(english ? 'Browse the staff directory' : 'استعراض دليل الموظفين'),
                         trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
                         onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
-                          builder: (_) => EmployeesPage(english: english, loadPage: loadEmployees),
+                          builder: (_) => EmployeesPage(english: english, loadPage: loadEmployees, openDetail: (employee) { final id = int.tryParse(employee['id']?.toString() ?? ''); if (id == null || id < 1) return; Navigator.push(context, MaterialPageRoute<void>(builder: (_) => EmployeeDetailPage(employeeId: id, english: english, loadDetail: loadEmployeeDetail))); }),
                         )),
                       ),
                     ),
