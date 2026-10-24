@@ -1954,3 +1954,7 @@ GitHub run 40060794073 showed Dart analysis passing but the login widget test fa
 
 ## 2026-10-24 — Flutter phone connection and branding follow-up
 The user confirmed laptop LAN host `192.168.18.9` and Apache port `881`. Flutter default/workflow API URL now targets `http://192.168.18.9:881/AhlElKheir/api/v1`; the Flutter shell uses the existing website navy theme and `assets/img/logo.jpg`. Build/runtime verification pending. Read `docs/MOBILE_APP_CONTINUATION.md` before continuing.
+
+
+### 2026-10-24 — Flutter navy/logo build analyzer correction
+Branding/API-host update commit `54a1c06d2855b0d58044adf7cb3bbf6d8860d366` failed `flutter analyze` because Flutter 3.47 flags `Color.withOpacity` as deprecated under strict analysis. Replaced with `withValues(alpha: ...)` in `6dbb17b7f4276eeeaad2e3f6c8c267d939ef35f6`. Check the follow-up Actions run before claiming APK availability.
