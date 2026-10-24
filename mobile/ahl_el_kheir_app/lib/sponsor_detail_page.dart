@@ -24,13 +24,17 @@ class _SponsorDetailPageState extends State<SponsorDetailPage>{
   }
  }
  String status(String s){final m=widget.english?const {'active':'Active','inactive':'Inactive','suspended':'Suspended','cancelled':'Cancelled'}:const {'active':'نشط','inactive':'غير نشط','suspended':'موقوف','cancelled':'ملغي'};return m[s]??s;}
- String gender(String s){final m=widget.english?const {'male':'Male','female':'Female'}:const {'male':'ذكر','female':'أنثى'};return m[s]??s;}
+ String gender(String s){final m=widget.english?const {'male':'Male','female':'Female','organization':'Organization','unknown':'Unknown'}:const {'male':'ذكر','female':'أنثى','organization':'جهة اعتبارية','unknown':'غير معروف'};return m[s]??s;}
  @override Widget build(BuildContext context){final en=widget.english;return Scaffold(appBar:AppBar(title:Text(en?'Sponsor details':'تفاصيل الكفيل')),body:loading?const Center(child:CircularProgressIndicator()):error!=null?Center(child:Text(error!,textAlign:TextAlign.center)):RefreshIndicator(onRefresh:load,child:ListView(physics:const AlwaysScrollableScrollPhysics(),padding:const EdgeInsets.all(12),children:[
  Card(child:Padding(padding:const EdgeInsets.all(16),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
  Text(sponsor['full_name']?.toString()??'',style:Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight:FontWeight.w800)),
  Text(sponsor['sponsor_code']?.toString()??'',style:const TextStyle(color:Color(0xFF64748B))),
  const SizedBox(height:10),Chip(label:Text(status(sponsor['status']?.toString()??''))),
  _Line(label:en?'Phone':'الهاتف',value:sponsor['phone']?.toString()??''),
+ _Line(label:en?'Email':'البريد الإلكتروني',value:sponsor['email']?.toString()??''),
+ _Line(label:en?'Address':'العنوان',value:sponsor['address']?.toString()??''),
+ _Line(label:en?'Sponsor type':'نوع الكفيل',value:sponsor['sponsor_type']?.toString()??''),
+ _Line(label:en?'Preferred payment':'طريقة الدفع المفضلة',value:sponsor['preferred_payment_method']?.toString()??''),
  _Line(label:en?'Gender':'الجنس',value:gender(sponsor['gender']?.toString()??'')),
  _Line(label:en?'First letter':'الحرف',value:sponsor['letter']?.toString()??''),
  _Line(label:en?'Supervisor':'المشرف',value:sponsor['supervisor_name']?.toString()??'—'),
