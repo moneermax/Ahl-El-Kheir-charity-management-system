@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
+import 'projects_page.dart';
 
 void main() => runApp(const AhlElKheirApp());
 
@@ -120,6 +121,14 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     );
   }
 
+  Future<Map<String, dynamic>> loadProjects(int page) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) {
+      throw const ApiFailure('Authentication is required.', statusCode: 401);
+    }
+    return call('GET', 'projects/index.php?page=$page', token: token);
+  }
+
   @override
   Widget build(BuildContext context) => MaterialApp(
     title: english ? 'Ahl El Kheir' : 'أهل الخير',
@@ -184,6 +193,40 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                     ),
                   ),
                   const SizedBox(height: 14),
+                  if ([
+                    'admin',
+                    'general_manager',
+                    'vice_general_manager',
+                    'projects_manager',
+                    'project_supervisor',
+                    'accountant',
+                    'financial_manager',
+                  ].contains(user?['role_code']?.toString()))
+                    Card(
+                      child: ListTile(
+                        leading: const CircleAvatar(
+                          child: Icon(Icons.folder_open_rounded),
+                        ),
+                        title: Text(english ? 'Projects' : 'المشروعات'),
+                        subtitle: Text(
+                          english
+                              ? 'View the project portfolio available to your role'
+                              : 'عرض المشروعات المتاحة وفق صلاحيات حسابك',
+                        ),
+                        trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => ProjectsPage(
+                                english: english,
+                                loadPage: loadProjects,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  const SizedBox(height: 12),
                   Card(
                     child: ListTile(
                       leading: const CircleAvatar(
