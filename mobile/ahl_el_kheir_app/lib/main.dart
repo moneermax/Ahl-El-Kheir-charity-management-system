@@ -479,7 +479,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                         builder: (_) => SponsorRequestsPage(english: english, loadRequests: loadSponsorRequests, submitAction: submitSponsorRequestAction),
                       )),
                     )),
-                  if (['admin', 'vice_general_manager', 'supervisor', 'accountant'].contains(user?['role_code']?.toString()))
+                  if (['admin', 'vice_general_manager', 'general_manager', 'supervisor', 'accountant'].contains(user?['role_code']?.toString()))
                     Card(child: ListTile(
                       leading: const CircleAvatar(child: Icon(Icons.volunteer_activism_rounded)),
                       title: Text(english ? 'Sponsorships' : 'الكفالات'),
