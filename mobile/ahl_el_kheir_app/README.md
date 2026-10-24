@@ -33,13 +33,9 @@ The debug build permits HTTP for local development only. Netlify's static hostin
 
 ## Verification boundary
 
-GitHub Actions runs Flutter dependency resolution, static analysis, widget tests, Android debug APK compilation, and artifact publication. The latest employee-detail revision passed the Android workflow at [run 40115687291](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40115687291).
+GitHub Actions runs Flutter dependency resolution, static analysis, widget tests, Android debug APK compilation, and artifact publication. The financial review action revision passed analyzer, widget tests, Android debug APK compilation, and artifact publication in [run 40118666504](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40118666504). PHP lint and all five PHP/database jobs passed in [run 40118666512](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40118666512).
 
 A successful build does not prove API connectivity, authorization against the live database, or production readiness. The mobile API migration must be applied only to the explicitly confirmed local development database, and API role/scope runtime acceptance plus deployment configuration remain outstanding. Do not treat the debug APK as a production release.
-
-- Financial review queue (read-only): pending supervisor collections and the latest 20 approved/returned decisions for authorized financial-review roles. Approval/return and accounting posting are not exposed in this mobile slice; CI and live API acceptance are pending.
-
-- Financial review queue now supports approve-and-post and return-for-correction through server-authorized API actions. Returns require a reason; approval uses the existing atomic accounting approval helper. PHP/database CI passed; Flutter CI and live API authorization/action acceptance remain pending.
 
 - Financial review queue: authorized financial-review roles can view pending supervisor collections/recent decisions, approve and post through the existing atomic sponsor-payment approval function, or return a pending payment with a required reason. CI passed; live local API/database acceptance remains outstanding.
 - General Manager sponsorship list/detail access now matches the existing web role boundary.
