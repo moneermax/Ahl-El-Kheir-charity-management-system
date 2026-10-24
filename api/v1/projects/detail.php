@@ -56,6 +56,15 @@ $milestones = dbFetchAll('SELECT m.title,m.description,m.planned_date,m.completi
 $progressUpdates = dbFetchAll('SELECT p.update_date,p.completion_percent,p.summary,p.achievements,p.issues,p.next_steps,u.full_name AS submitter_name FROM project_progress_updates p LEFT JOIN users u ON u.id=p.submitted_by WHERE p.project_id=? ORDER BY p.update_date DESC,p.id DESC LIMIT 10', [$projectId]);
 $history = dbFetchAll('SELECT h.old_status,h.new_status,h.reason,h.created_at,u.full_name FROM project_status_history h LEFT JOIN users u ON u.id=h.changed_by WHERE h.project_id=? ORDER BY h.id DESC LIMIT 10', [$projectId]);
 $supervisor = dbFetchOne('SELECT u.full_name FROM project_supervisor_assignments psa JOIN users u ON u.id=psa.supervisor_user_id WHERE psa.project_id=? AND psa.ended_at IS NULL ORDER BY psa.id DESC LIMIT 1', [$projectId]);
+$projectStatus = (string)($project['lifecycle_status'] ?? $project['status'] ?? '');
+$canAddProgress = $role === 'admin' && $projectStatus !== 'closed';
+if (!$canAddProgress && $role === 'project_supervisor'
+    && (string)$project['approval_status'] === 'approved'
+    && in_array($projectStatus, ['active', 'reopened', 'completed', 'under_review', 'cancelled'], true)) {
+ $primaryProgress = dbFetchOne('SELECT id FROM project_supervisor_assignments WHERE project_id=? AND supervisor_user_id=? AND ended_at IS NULL LIMIT 1', [$projectId,$userId]);
+ $operationsProgress = dbFetchOne("SELECT id FROM project_team WHERE project_id=? AND user_id=? AND section_code='operations' AND unassigned_at IS NULL LIMIT 1", [$projectId,$userId]);
+ $canAddProgress = (bool)$primaryProgress || (bool)$operationsProgress;
+}
 $budget = (float)($totals['approved_budget'] ?? 0);
 if ($budget <= 0) $budget = (float)($project['target_amount'] ?? 0);
 ak_api_json(200, ['ok'=>true,'data'=>[
@@ -66,7 +75,7 @@ ak_api_json(200, ['ok'=>true,'data'=>[
   'approval_status'=>(string)$project['approval_status'],'currency_code'=>(string)($project['currency_code'] ?? 'SDG'),
   'budget'=>$budget,'funded'=>(float)($totals['donation_total'] ?? 0)+(float)($totals['allocation_total'] ?? 0),
   'expenses'=>(float)($totals['expense_total'] ?? 0),'closed_at'=>(string)($project['closed_at'] ?? ''),
-  'closure_summary'=>(string)($project['closure_summary'] ?? ''),'supervisor_name'=>(string)($supervisor['full_name'] ?? '—')
+  'closure_summary'=>(string)($project['closure_summary'] ?? ''),'supervisor_name'=>(string)($supervisor['full_name'] ?? '—'),'can_add_progress'=>$canAddProgress
  ],
  'team'=>array_map(static fn(array $r): array=>['full_name'=>(string)$r['full_name'],'section_code'=>(string)$r['section_code'],'is_lead'=>(int)$r['is_lead']===1],$team),
  'milestones'=>array_map(static fn(array $r): array=>['title'=>(string)$r['title'],'description'=>(string)($r['description'] ?? ''),'planned_date'=>(string)($r['planned_date'] ?? ''),'completion_percent'=>(float)($r['completion_percent'] ?? 0)],$milestones),
