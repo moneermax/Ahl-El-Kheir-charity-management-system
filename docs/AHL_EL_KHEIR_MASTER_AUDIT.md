@@ -4736,3 +4736,8 @@ Employee detail API and Flutter UI/navigation plus Arabic widget coverage have b
 ## 2026-10-24 — Employee details verification evidence
 
 Android CI passed for employee details/navigation at commit `a78bc176` (run [40115151758](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40115151758)): analyzer clean, tests completed, debug APK built and published. Subsequent changes added an Arabic detail-page test and localized employment-state name; latest CI run [40115569057](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40115569057) was still in progress. The new PHP endpoint is not yet in the explicit PHP lint list, and live authorization/DB tests remain pending. A separate full-schema Stage 5 payroll test fails because its payroll-transfer migration prerequisite is missing; investigate setup independently.
+
+
+## 2026-10-24 — Employment-state localization refinement
+
+Refined the employee detail screen to show the actual localized employment-state name instead of collapsing every `working` category into a generic label; this preserves distinctions such as probation. Updated the Arabic widget test fixture to include both Arabic and English state names. Latest Android build/test run [40115687291](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40115687291) was queued at the last check. Earlier commit `a78bc176` passed analyzer, Flutter tests, and debug APK build; the newest revision still needs its own green result. PHP endpoint lint/runtime role tests remain outstanding, and the full-schema payroll migration prerequisite failure is separate.
