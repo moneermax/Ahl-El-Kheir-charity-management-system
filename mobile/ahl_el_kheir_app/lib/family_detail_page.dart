@@ -39,10 +39,24 @@ class _FamilyDetailPageState extends State<FamilyDetailPage>{
  ]))),
  Padding(padding:const EdgeInsets.fromLTRB(4,14,4,6),child:Text((en?'Children':'الأطفال')+' ('+children.length.toString()+')',style:Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight:FontWeight.w800))),
  if(children.isEmpty)Padding(padding:const EdgeInsets.all(16),child:Text(en?'No children recorded.':'لا يوجد أطفال مسجلون.'))
- else ...children.map((c)=>Card(child:ListTile(leading:CircleAvatar(child:Icon(c['is_critical']==true?Icons.priority_high_rounded:Icons.child_care_rounded)),title:Text(c['child_name']?.toString()??''),subtitle:Text((c['birth_date']?.toString()??'')+'\n'+match(c['match_status']?.toString()??'unmatched'),isThreeLine:true),trailing:c['is_critical']==true?Chip(label:Text(en?'Critical':'حالة حرجة')):null))),
+ else ...children.map((c) => Card(child: ListTile(
+  leading: CircleAvatar(child: Icon(c['is_critical'] == true ? Icons.priority_high_rounded : Icons.child_care_rounded)),
+  title: Text(c['child_name']?.toString() ?? ''),
+  subtitle: Text((c['birth_date']?.toString() ?? '') + '\n' + match(c['match_status']?.toString() ?? 'unmatched')),
+  isThreeLine: true,
+  trailing: c['is_critical'] == true ? Chip(label: Text(en ? 'Critical' : 'حالة حرجة')) : null,
+))),
  Padding(padding:const EdgeInsets.fromLTRB(4,14,4,6),child:Text(en?'Sponsorships':'الكفالات',style:Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight:FontWeight.w800))),
  if(ships.isEmpty)Padding(padding:const EdgeInsets.all(16),child:Text(en?'No sponsorships recorded.':'لا توجد كفالات مسجلة.'))
- else ...ships.map((s)=>Card(child:ListTile(title:Text(s['sponsor_name']?.toString()??''),subtitle:Text((s['sponsor_code']?.toString()??'')+'\n'+(s['child_name']?.toString()??'')+'\n'+(en?'Monthly: ':'المبلغ الشهري: ')+(double.tryParse(s['monthly_amount']?.toString()??'0')??0).toStringAsFixed(2)+' · '+(s['start_date']?.toString()??''),isThreeLine:true,trailing:Chip(label:Text(status(s['status']?.toString()??'')))))),
+ else ...ships.map((s) => Card(child: ListTile(
+  title: Text(s['sponsor_name']?.toString() ?? ''),
+  subtitle: Text((s['sponsor_code']?.toString() ?? '') + '\n' + (s['child_name']?.toString() ?? '') + '\n' +
+    (en ? 'Monthly: ' : 'المبلغ الشهري: ') +
+    (double.tryParse(s['monthly_amount']?.toString() ?? '0') ?? 0).toStringAsFixed(2) + ' · ' +
+    (s['start_date']?.toString() ?? '')),
+  isThreeLine: true,
+  trailing: Chip(label: Text(status(s['status']?.toString() ?? ''))),
+))),
  ])));}
 }
 class _Line extends StatelessWidget{const _Line({required this.label,required this.value});final String label,value;@override Widget build(BuildContext context)=>Padding(padding:const EdgeInsets.symmetric(vertical:3),child:Row(children:[Expanded(child:Text(label,style:const TextStyle(color:Color(0xFF64748B)))),const SizedBox(width:8),Flexible(child:Text(value,textAlign:TextAlign.end,style:const TextStyle(fontWeight:FontWeight.w700)))]));}

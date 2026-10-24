@@ -40,7 +40,16 @@ class _SponsorDetailPageState extends State<SponsorDetailPage>{
  ]))),
  Padding(padding:const EdgeInsets.fromLTRB(4,14,4,6),child:Text(en?'Sponsorships':'الكفالات',style:Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight:FontWeight.w800))),
  if(ships.isEmpty)Padding(padding:const EdgeInsets.all(18),child:Text(en?'No sponsorships found.':'لا توجد كفالات.'))
- else ...ships.map((s)=>Card(child:ListTile(title:Text(s['child_name']?.toString()??''),subtitle:Text((s['sponsorship_code']?.toString()??'')+'\n'+(s['mother_name']?.toString()??'')+' ('+(s['family_code']?.toString()??'')+')\n'+(en?'Monthly: ':'المبلغ الشهري: ')+(double.tryParse(s['monthly_amount']?.toString()??'0')??0).toStringAsFixed(2)+' · '+(s['start_date']?.toString()??''),isThreeLine:true,trailing:Chip(label:Text(status(s['status']?.toString()??'')))))),
+ else ...ships.map((s) => Card(child: ListTile(
+  title: Text(s['child_name']?.toString() ?? ''),
+  subtitle: Text((s['sponsorship_code']?.toString() ?? '') + '\n' +
+    (s['mother_name']?.toString() ?? '') + ' (' + (s['family_code']?.toString() ?? '') + ')\n' +
+    (en ? 'Monthly: ' : 'المبلغ الشهري: ') +
+    (double.tryParse(s['monthly_amount']?.toString() ?? '0') ?? 0).toStringAsFixed(2) + ' · ' +
+    (s['start_date']?.toString() ?? '')),
+  isThreeLine: true,
+  trailing: Chip(label: Text(status(s['status']?.toString() ?? ''))),
+))),
  ])));}
 }
 class _Line extends StatelessWidget{const _Line({required this.label,required this.value});final String label,value;@override Widget build(BuildContext context)=>Padding(padding:const EdgeInsets.symmetric(vertical:3),child:Row(children:[Expanded(child:Text(label,style:const TextStyle(color:Color(0xFF64748B)))),const SizedBox(width:8),Flexible(child:Text(value,textAlign:TextAlign.end,style:const TextStyle(fontWeight:FontWeight.w700)))]));}

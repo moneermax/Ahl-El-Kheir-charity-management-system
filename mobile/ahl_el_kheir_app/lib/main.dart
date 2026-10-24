@@ -7,8 +7,6 @@ import 'attendance_page.dart';
 import 'leave_requests_page.dart';
 import 'sponsors_page.dart';
 import 'families_page.dart';
-import 'sponsor_detail_page.dart';
-import 'family_detail_page.dart';
 
 void main() => runApp(const AhlElKheirApp());
 
