@@ -186,6 +186,12 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     return call('GET', 'sponsor_requests/index.php?q=$q&status=$status&page=$page', token: token);
   }
 
+  Future<Map<String, dynamic>> submitSponsorRequestAction(String action, int requestId) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('POST', 'sponsor_requests/action.php', token: token, body: {'action': action, 'request_id': requestId});
+  }
+
   Future<Map<String, dynamic>> loadSponsorDetail(int id) async {
     final token = await storage.read(key: tokenKey);
     if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
@@ -375,7 +381,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                       subtitle: Text(english ? 'Review sponsor leads and their current status' : 'مراجعة طلبات الرعاية وحالاتها الحالية'),
                       trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
                       onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
-                        builder: (_) => SponsorRequestsPage(english: english, loadRequests: loadSponsorRequests),
+                        builder: (_) => SponsorRequestsPage(english: english, loadRequests: loadSponsorRequests, submitAction: submitSponsorRequestAction),
                       )),
                     )),
                   if (['admin', 'vice_general_manager', 'supervisor', 'accountant'].contains(user?['role_code']?.toString()))
