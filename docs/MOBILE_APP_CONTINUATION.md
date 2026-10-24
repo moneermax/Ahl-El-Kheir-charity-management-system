@@ -184,3 +184,14 @@ The user retried login with the physical-phone APK and the latest Apache access-
 - Added read-only authenticated `GET /api/v1/sponsorships/index.php` and an Arabic-first/English Flutter sponsorship register with the existing web list's search-field/status filters, active count/monthly summary, paging, and supervisor sponsor-scope helper. The web module's actual role allowlist is preserved. No sponsorship create/pause/cancel actions are exposed.
 - Sponsorship screen widget test and PHP lint inclusion have been added. A newer Flutter workflow is running for the screen integration; wait for analysis, widget tests, APK build and artifact publication before marking it passed.
 - API/database runtime and account role-matrix testing remain unverified.
+
+
+## 2026-10-24 — Mobile sponsor request register added
+
+- Added authenticated read-only `GET /api/v1/sponsor_requests/index.php?q=&status=&page=1`. The endpoint follows the role allowlist in `modules/sponsors/requests.php` (`admin`, `vice_general_manager`, `general_manager`, `administration`, `staff`, `social_media`) and returns paginated request data with search and status filtering. It exposes no create, delete, conversion, reopen, or status-changing action.
+- Added an Arabic-first/English Flutter sponsor-request register with search, status filtering, refresh and paging, then connected it to the signed-in home screen only for the same authorized role set.
+- Added a widget test for Arabic request/status rendering and included the PHP endpoint in the PHP 8.2 lint list. No schema migration or runtime DDL was added.
+- Relevant commits: API `25e53e3b83482cf9e1964c313d42680f73abcfb1`; screen `24dca15bcee28b37e9a655f95582b4757197df7a`; widget test `6e8dc40f56489290cb8c7c3a4f0da84087b51528`; app navigation `e3ad346c1267736b4e725805e0c877e524e8f2ac`; PHP lint inclusion `66d15c6661ea153a0a61041e8cab439ee0744f63`.
+- **Verification status at this checkpoint:** Flutter workflow run `40093088822` and PHP verification workflow run `40093091580` are running. Do not call the new screen CI-verified until Flutter analysis, all widget tests, APK build and artifact publication pass, and the new endpoint's PHP lint step passes.
+- The PHP workflow's independent Stage 5 payroll integration job has been failing on earlier commits with `يجب تطبيق ترحيل تجهيز تحويلات الرواتب قبل تأكيد الدفع.` The PHP lint job itself passed on the prior run, but this unrelated closed salary-advance workflow failure must be investigated separately and must not be attributed to the mobile sponsor-request change or silently reopened as part of it.
+- No live Apache/MariaDB endpoint or role-account runtime test has been run for this new register. Do not ask for physical-device testing yet; continue building and verifying the remaining app on GitHub first.
