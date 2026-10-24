@@ -53,8 +53,6 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.textContaining('بواسطة: موظف التسجيل'), findsOneWidget);
   });
-}
-
 
   testWidgets('confirms and submits the contacted transition then reloads the queue', (tester) async {
     var status = 'new';
@@ -91,3 +89,4 @@ void main() {
     expect(find.text('تم التواصل'), findsOneWidget);
     expect(find.text('تأكيد التواصل'), findsNothing);
   });
+}
