@@ -3,10 +3,11 @@ import 'package:flutter/material.dart';
 import 'project_detail_page.dart';
 
 class ProjectsPage extends StatefulWidget {
-  const ProjectsPage({super.key, required this.english, required this.loadPage, required this.loadDetail});
+  const ProjectsPage({super.key, required this.english, required this.loadPage, required this.loadDetail, required this.submitProgress});
   final bool english;
   final Future<Map<String, dynamic>> Function(String query, int page) loadPage;
   final Future<Map<String, dynamic>> Function(int projectId) loadDetail;
+  final Future<Map<String, dynamic>> Function(Map<String, dynamic> body) submitProgress;
 
   @override
   State<ProjectsPage> createState() => _ProjectsPageState();
@@ -134,7 +135,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
                               final approval = project['approval_status']?.toString() ?? '';
                               return Card(child: InkWell(
                                 borderRadius: BorderRadius.circular(12),
-                                onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => ProjectDetailPage(projectId: int.tryParse(project['id']?.toString() ?? '') ?? 0, english: en, loadDetail: widget.loadDetail))),
+                                onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => ProjectDetailPage(projectId: int.tryParse(project['id']?.toString() ?? '') ?? 0, english: en, loadDetail: widget.loadDetail, submitProgress: widget.submitProgress))),
                                 child: Padding(
                                 padding: const EdgeInsets.all(14),
                                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
