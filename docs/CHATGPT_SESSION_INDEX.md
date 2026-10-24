@@ -2143,3 +2143,8 @@ The transaction register correction was fully green in GitHub Actions run `40091
 - Added an Arabic-first/English mobile directory page, navigation visible only to admin and vice general manager, and widget coverage for supervisor rendering and the archived filter. Added the endpoint to PHP lint workflow.
 - Commits: API `74fcb0550e5c057903712f10d320d06c7e49ceaa`; PHP lint workflow `6af0c6ffd5a35d18e88b914be2a02698e1f5256c`; Flutter page `98e444570207b102427fac79cc69e860115e1036`; app navigation/API wiring `8313b555b707829d24f08cb227c6669ec7ec8db1`; widget test `8397f8d7fe75d3a381bc00c9976f9c475b196640`.
 - Verification at documentation time: Flutter workflow `40108888325` at the test commit is in progress. PHP workflow has started; its full-schema Stage 5 payroll job has historically failed independently, so inspect the PHP lint job specifically and keep the known payroll issue deferred under #94. Do not claim this slice CI-verified until Dart analysis/tests/APK and endpoint PHP lint results are confirmed. Live Apache/MariaDB role tests and device acceptance remain pending; do not request phone testing yet.
+
+
+## 2026-10-24 — Mobile app continuation
+
+Sponsor-request attribution, status actions, and supervisor directory are source-complete with the CI evidence recorded in `docs/MOBILE_APP_CONTINUATION.md`. Issue #95 is closed. Continue the next role-safe mobile workflow from actual web source/schema and endpoint permissions. Live Apache/MariaDB role-matrix testing and physical-device acceptance remain deferred until the broader app reaches release readiness; do not repeat passed CI jobs or reopen issue #94 payroll work.
