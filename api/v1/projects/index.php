@@ -160,6 +160,24 @@ foreach ($projects as $project) {
     }
 }
 
+$query = trim((string)($_GET['q'] ?? ''));
+if ($query !== '') {
+    $needle = function_exists('mb_strtolower')
+        ? mb_strtolower($query, 'UTF-8')
+        : strtolower($query);
+    $visibleProjects = array_values(array_filter(
+        $visibleProjects,
+        static function (array $project) use ($needle): bool {
+            $code = (string)($project['project_code'] ?? '');
+            $name = (string)($project['name'] ?? '');
+            $haystack = function_exists('mb_strtolower')
+                ? mb_strtolower($code . ' ' . $name, 'UTF-8')
+                : strtolower($code . ' ' . $name);
+            return str_contains($haystack, $needle);
+        }
+    ));
+}
+
 $total = count($visibleProjects);
 $pages = max(1, (int)ceil($total / $perPage));
 $page = min($page, $pages);
