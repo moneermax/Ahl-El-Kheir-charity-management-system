@@ -4178,3 +4178,7 @@ The first cloud run 40060794073 passed dependency resolution and Dart analysis b
 
 ## 2026-10-24 — Mobile app physical-phone connection and branding
 The Flutter debug app's emulator-only default was inappropriate for the user's physical phone. User confirmed laptop LAN IP `192.168.18.9`, Apache port `881`; Flutter defaults now use `http://192.168.18.9:881/AhlElKheir/api/v1`. Login/signed-in UI uses the existing navy theme and website logo asset. CI and device verification remain pending; mobile API migration/runtime checks are not confirmed.
+
+
+## 2026-10-24 — Flutter brand update analyzer follow-up
+The first CI run after the mobile theme/API host change failed at `flutter analyze` because the new UI used deprecated `Color.withOpacity` calls under the current Flutter 3.47 analyzer. Commit `6dbb17b7f4276eeeaad2e3f6c8c267d939ef35f6` replaces those calls with `withValues(alpha: ...)`; follow-up CI pending. No physical phone or API runtime verification yet.
