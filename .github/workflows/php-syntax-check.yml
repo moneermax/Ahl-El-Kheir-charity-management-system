@@ -31,6 +31,7 @@ jobs:
             api/v1/projects/index.php
             api/v1/projects/detail.php
             api/v1/hr/attendance.php
+            api/v1/hr/employees.php
             api/v1/hr/leaves.php
             api/v1/hr/leaves/action.php
             api/v1/sponsors/index.php
