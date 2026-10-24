@@ -55,9 +55,6 @@ $summary = trim((string)($input['summary'] ?? ''));
 if ($summary === '') {
     ak_api_json(422, ['ok' => false, 'error' => ['code' => 'summary_required', 'message' => 'A progress summary is required.']]);
 }
-if ((function_exists('mb_strlen') ? mb_strlen($summary, 'UTF-8') : strlen($summary)) > 500) {
-    ak_api_json(422, ['ok' => false, 'error' => ['code' => 'summary_too_long', 'message' => 'The progress summary cannot exceed 500 characters.']]);
-}
 $percentRaw = $input['completion_percent'] ?? 0;
 if ($percentRaw === '' || $percentRaw === null) $percentRaw = 0;
 if (!is_numeric($percentRaw)) {
