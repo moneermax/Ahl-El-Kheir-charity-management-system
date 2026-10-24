@@ -35,6 +35,9 @@ function ak_api_read_json(): array
     }
 
     $raw = file_get_contents('php://input');
+    if ($raw !== false && strlen($raw) > 16384) {
+        ak_api_json(413, ['ok' => false, 'error' => ['code' => 'request_too_large', 'message' => 'Request body is too large.']]);
+    }
     if ($raw === false || trim($raw) === '') {
         return [];
     }

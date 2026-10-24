@@ -61,17 +61,17 @@ try {
 }
 
 $rawToken = bin2hex(random_bytes(32));
-$expiresAt = (new DateTimeImmutable('now'))->modify('+12 hours')->format('Y-m-d H:i:s');
 dbExecute(
-    'INSERT INTO mobile_api_sessions (user_id, token_hash, expires_at, ip_address, user_agent, created_at, last_used_at) VALUES (?, ?, ?, ?, ?, NOW(), NOW())',
+    'INSERT INTO mobile_api_sessions (user_id, token_hash, expires_at, ip_address, user_agent, created_at, last_used_at) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 12 HOUR), ?, ?, NOW(), NOW())',
     [
         (int)$user['id'],
         hash('sha256', $rawToken),
-        $expiresAt,
         substr((string)($_SERVER['REMOTE_ADDR'] ?? ''), 0, 45),
         substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 255),
     ]
 );
+$sessionExpiry = dbFetchOne('SELECT expires_at FROM mobile_api_sessions WHERE token_hash = ? LIMIT 1', [hash('sha256', $rawToken)]);
+$expiresAt = (string)($sessionExpiry['expires_at'] ?? '');
 
 ak_api_json(200, [
     'ok' => true,
