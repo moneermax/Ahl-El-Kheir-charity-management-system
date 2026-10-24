@@ -53,9 +53,6 @@ class _EmployeeDetailPageState extends State<EmployeeDetailPage> {
   }
 
   String employmentState() {
-    if (employee['employment_state_category'] == 'working') {
-      return label('Working', 'على رأس العمل');
-    }
     final raw = widget.english
         ? employee['employment_state_name_en']
         : employee['employment_state_name'];
