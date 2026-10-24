@@ -10,7 +10,7 @@ This Flutter app lives inside the existing Ahl El Kheir repository. It is separa
 - Project directory/details, milestones, and project progress updates.
 - Sponsor directory/details, sponsorships/details, and sponsor-request actions.
 - Supervisor directory, family directory/details, and transaction listing.
-- HR employee directory/details, attendance viewing, and leave-request workflow.
+- HR employee directory/details, attendance viewing, leave-request workflow, and self-service salary statements limited to paid/accounting-posted rows.
 - Nanny group verification and monthly preliminary family verification.
 
 This is incremental mobile coverage, not yet full parity with every web module. Each feature must retain the existing web workflow's role and record-scope rules; do not expose a web action in the app until its API authorization and behavior have been verified.
