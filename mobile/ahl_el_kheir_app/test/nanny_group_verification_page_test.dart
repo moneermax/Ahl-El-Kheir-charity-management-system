@@ -94,4 +94,67 @@ void main() {
     expect(actions.single['is_mother_contact_verified'], false);
     expect(loadedGroups, contains(5));
   });
+
+  testWidgets('closed group hides bulk actions but permits individual verification', (tester) async {
+    final actions = <Map<String, dynamic>>[];
+    await tester.pumpWidget(MaterialApp(
+      home: Directionality(
+        textDirection: TextDirection.rtl,
+        child: NannyGroupVerificationPage(
+          english: false,
+          loadData: (month, groupId) async => {
+            'month': month,
+            'groups': [{
+              'id': 8,
+              'group_name': 'مجموعة مغلقة',
+              'verification_status': 'closed',
+              'can_bulk_verify': false,
+              'can_submit': false,
+            }],
+            if (groupId != null) 'selected_group': {
+              'id': 8,
+              'group_name': 'مجموعة مغلقة',
+              'verification_status': 'closed',
+              'can_bulk_verify': false,
+              'can_submit': false,
+            },
+            'families': groupId == null ? [] : [{
+              'id': 22,
+              'family_code': 'FAM-0022',
+              'mother_name': 'وليّة الأمر',
+              'amount': 1200,
+              'is_orphan_verified': false,
+              'is_mother_contact_verified': true,
+              'is_bank_verified': true,
+              'verification_notes': '',
+              'is_fully_verified': false,
+            }],
+            'counts': {'verified_count': 0, 'unverified_count': 1, 'verified_amount': 0, 'unverified_amount': 1200},
+          },
+          submitAction: (body) async {
+            actions.add(Map<String, dynamic>.from(body));
+            return {'message': 'تم الحفظ'};
+          },
+        ),
+      ),
+    ));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('مجموعة مغلقة').first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('توثيق الكل'), findsNothing);
+    expect(find.text('إرسال للمحاسبة'), findsNothing);
+    expect(find.text('FAM-0022 · وليّة الأمر'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.edit_outlined).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('حفظ').last);
+    await tester.pumpAndSettle();
+
+    expect(actions, hasLength(1));
+    expect(actions.single['action'], 'verify_family');
+    expect(actions.single['group_id'], 8);
+    expect(actions.single['family_id'], 22);
+  });
+
 }
