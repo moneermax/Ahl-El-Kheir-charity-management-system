@@ -131,7 +131,7 @@ $projects = dbFetchAll(
                         AND (f.transaction_id IS NULL OR NOT EXISTS (
                             SELECT 1 FROM transactions t
                             WHERE t.id = f.transaction_id AND t.status = 'posted'
-                        )), 0) AS allocation_total,
+                        ))), 0) AS allocation_total,
             COALESCE((SELECT SUM(COALESCE(bl.approved_amount, bl.estimated_amount))
                       FROM project_budgets b
                       JOIN project_budget_lines bl ON bl.budget_id = b.id
