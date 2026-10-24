@@ -103,6 +103,9 @@ class _SponsorRequestsPageState extends State<SponsorRequestsPage> {
                           final genderLabel = en ? (gender == 'male' ? 'Male' : gender == 'female' ? 'Female' : gender) : (gender == 'male' ? 'ذكر' : gender == 'female' ? 'أنثى' : gender);
                           final phone = request['phone']?.toString() ?? '';
                           final source = request['source']?.toString() ?? '';
+                          final broughtByName = request['brought_by_name']?.toString().trim() ?? '';
+                          final broughtByUser = request['brought_by_user']?.toString().trim() ?? '';
+                          final attribution = broughtByName.isNotEmpty ? broughtByName : broughtByUser;
                           final created = request['created_at']?.toString() ?? '';
                           final notes = request['notes']?.toString() ?? '';
                           return Card(child: ListTile(
@@ -112,6 +115,7 @@ class _SponsorRequestsPageState extends State<SponsorRequestsPage> {
                               if (phone.isNotEmpty) phone,
                               if (genderLabel.isNotEmpty) genderLabel,
                               if (source.isNotEmpty) (en ? 'Source: ' : 'المصدر: ') + source,
+                              if (attribution.isNotEmpty) (en ? 'Brought by: ' : 'بواسطة: ') + attribution,
                               if (created.isNotEmpty) created,
                               if (notes.isNotEmpty) notes,
                             ].join('\n')),
