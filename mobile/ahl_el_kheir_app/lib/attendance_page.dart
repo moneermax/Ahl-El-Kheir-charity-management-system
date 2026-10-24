@@ -9,7 +9,7 @@ class _AttendancePageState extends State<AttendancePage>{
  bool loading=true; String? error,date; List<Map<String,dynamic>> items=[]; Map<String,dynamic> counts={}; int total=0;
  @override void initState(){super.initState();load();}
  Future<void> load() async {
-  setState(()=>{loading=true,error=null});
+  setState(() { loading = true; error = null; });
   try { final d=await widget.loadAttendance(date); if(!mounted)return; setState((){
    date=d['date']?.toString()??date; final raw=d['items'];
    items=raw is List?raw.whereType<Map>().map((v)=>Map<String,dynamic>.from(v)).toList():<Map<String,dynamic>>[];
