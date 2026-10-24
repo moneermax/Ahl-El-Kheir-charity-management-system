@@ -4,7 +4,7 @@ import 'package:ahl_el_kheir_app/project_detail_page.dart';
 void main() {
  testWidgets('renders Arabic project detail sections', (tester) async {
   await tester.pumpWidget(MaterialApp(home: Directionality(textDirection: TextDirection.rtl, child: ProjectDetailPage(
-   projectId: 24, english: false, submitProgress: (_) async => {'ok': true}, loadDetail: (_) async => {
+   projectId: 24, english: false, submitProgress: (_) async => {'ok': true}, createMilestone: (_) async => {'ok': true}, loadDetail: (_) async => {
     'project': {'id':24,'project_code':'PRJ-0024','name':'الإيواء والتأهيل السكني','description':'مشروع اختبار','current_status':'closed','approval_status':'approved','currency_code':'SDG','budget':10000.0,'funded':10000.0,'expenses':10000.0,'supervisor_name':'مشرف المشروع','closed_at':'2026-10-18 09:47:23','closure_summary':'اكتمل المشروع'},
     'team': [{'full_name':'أحمد حسين','section_code':'general','is_lead':true}],
     'milestones': [{'title':'التنفيذ','description':'مرحلة التنفيذ','planned_date':'2026-10-01','completion_percent':100.0}],
@@ -36,6 +36,7 @@ void main() {
    projectId: 31,
    english: false,
    submitProgress: (body) async { submitted = body; return {'ok': true}; },
+   createMilestone: (_) async => {'ok': true},
    loadDetail: (_) async {
     detailLoads++;
     return {
@@ -56,6 +57,39 @@ void main() {
   expect(submitted?['project_id'], 31);
   expect(submitted?['summary'], 'تقدم الأعمال');
   expect(submitted?['completion_percent'], 45.0);
+  expect(detailLoads, 2);
+ });
+
+ testWidgets('submits a project milestone and refreshes the detail', (tester) async {
+  var detailLoads = 0;
+  Map<String, dynamic>? submitted;
+  await tester.pumpWidget(MaterialApp(home: ProjectDetailPage(
+   projectId: 32,
+   english: false,
+   submitProgress: (_) async => {'ok': true},
+   createMilestone: (body) async { submitted = body; return {'ok': true}; },
+   loadDetail: (_) async {
+    detailLoads++;
+    return {
+     'project': {'id':32,'project_code':'PRJ-0032','name':'مشروع نشط','current_status':'active','approval_status':'approved','currency_code':'SDG','budget':1000,'funded':100,'expenses':0,'supervisor_name':'مشرف','can_add_milestone':true},
+     'team': [], 'milestones': [], 'progress_updates': [], 'history': [],
+    };
+   },
+  )));
+  await tester.pumpAndSettle();
+  expect(find.text('إضافة مرحلة'), findsOneWidget);
+  await tester.tap(find.text('إضافة مرحلة'));
+  await tester.pumpAndSettle();
+  expect(find.text('مرحلة مشروع جديدة'), findsOneWidget);
+  await tester.enterText(find.byType(TextField).at(0), 'مرحلة التوريد');
+  await tester.enterText(find.byType(TextField).at(2), '2026-11-01');
+  await tester.enterText(find.byType(TextField).at(3), '25');
+  await tester.tap(find.text('حفظ'));
+  await tester.pumpAndSettle();
+  expect(submitted?['project_id'], 32);
+  expect(submitted?['title'], 'مرحلة التوريد');
+  expect(submitted?['planned_date'], '2026-11-01');
+  expect(submitted?['completion_percent'], 25.0);
   expect(detailLoads, 2);
  });
 
