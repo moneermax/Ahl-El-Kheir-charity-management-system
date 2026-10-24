@@ -93,7 +93,6 @@ void main() {
   expect(detailLoads, 2);
  });
 
-}
 
  testWidgets('edits and deletes only the selected project milestone through the action callback', (tester) async {
   final actions = <Map<String, dynamic>>[];
@@ -136,3 +135,4 @@ void main() {
   expect(actions.last['project_id'], 44);
   expect(actions.last['milestone_id'], 71);
  });
+}
