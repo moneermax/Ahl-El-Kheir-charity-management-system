@@ -149,5 +149,5 @@ try {
     ak_api_json(409, ['ok' => false, 'error' => ['code' => 'verification_action_rejected', 'message' => $e->getMessage()]]);
 } catch (Throwable $e) {
     error_log('Mobile nanny group verification failed: ' . $e->getMessage());
-    ak_api_json(500, ['ok' => false, 'error' => ['code' => 'group_verification_failed', 'message' => 'Unable to save group verification.']);
+    ak_api_json(500, ['ok' => false, 'error' => ['code' => 'group_verification_failed', 'message' => 'Unable to save group verification.']]);
 }
