@@ -2206,3 +2206,8 @@ The mobile project detail flow now supports creating a project milestone through
 ## 2026-10-24 — Mobile nanny preliminary verification CI result
 
 Flutter CI run [40114021559](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40114021559) passed analysis, widget tests, Android debug APK build, and artifact publication for the preliminary-verification flow. PHP lint passed for both new endpoints in [40114002834](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40114002834). Latest PHP workflow [40114100014](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40114100014) had PHP lint, MariaDB 10.4 migration, and rescheduling tests passed; remaining jobs were still running at last check. This supersedes the older pending-CI note. Live API role-matrix and device acceptance remain pending.
+
+
+## 2026-10-24 — Employee detail mobile work
+
+The employee detail API, Flutter detail page, directory tap/navigation, and Arabic widget test have been added on `main`. Flutter CI run [40115161999](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40115161999) was still in progress at last check. PHP lint workflow does not yet explicitly include the new detail endpoint; live API role testing is pending. A separate full-schema Stage 5 payroll integration job failed due to a missing payroll-transfer migration prerequisite and must be investigated independently.
