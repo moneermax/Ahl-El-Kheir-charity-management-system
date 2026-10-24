@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 
 class ProjectDetailPage extends StatefulWidget {
-  const ProjectDetailPage({super.key, required this.projectId, required this.english, required this.loadDetail});
+  const ProjectDetailPage({super.key, required this.projectId, required this.english, required this.loadDetail, required this.submitProgress});
   final int projectId;
   final bool english;
   final Future<Map<String, dynamic>> Function(int projectId) loadDetail;
+  final Future<Map<String, dynamic>> Function(Map<String, dynamic> body) submitProgress;
   @override
   State<ProjectDetailPage> createState() => _ProjectDetailPageState();
 }
 
 class _ProjectDetailPageState extends State<ProjectDetailPage> {
-  bool loading = true;
+  bool loading = true, savingProgress = false;
   String? error;
   Map<String, dynamic> project = {};
   List<Map<String, dynamic>> team = [], milestones = [], progressUpdates = [], history = [];
@@ -41,6 +42,29 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
     final m = widget.english ? const {'general':'General','finance':'Finance','operations':'Operations','documents':'Documents','closure':'Closure'} : const {'general':'عام','finance':'مالي','operations':'تشغيلي','documents':'وثائق','closure':'إغلاق'};
     return m[s] ?? s;
   }
+  Future<void> _addProgressUpdate() async {
+    final body = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (_) => _ProjectProgressDialog(english: widget.english),
+    );
+    if (body == null || !mounted) return;
+    setState(() => savingProgress = true);
+    try {
+      await widget.submitProgress(body);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(widget.english ? 'Progress update saved.' : 'تم حفظ تحديث التقدم.')),
+      );
+      await load();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    } finally {
+      if (mounted) setState(() => savingProgress = false);
+    }
+  }
   String _amount(dynamic v) => (double.tryParse(v?.toString() ?? '') ?? 0).toStringAsFixed(2);
   String _date(dynamic v) => (v?.toString().isNotEmpty ?? false) ? v.toString() : (widget.english ? 'Not set' : 'غير محدد');
   @override
@@ -68,6 +92,17 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
             if ((project['closed_at']?.toString() ?? '').isNotEmpty) _Info(label: en ? 'Closed at' : 'تاريخ الإغلاق', value: project['closed_at'].toString()),
             if ((project['closure_summary']?.toString() ?? '').isNotEmpty) _Info(label: en ? 'Closure summary' : 'ملخص الإغلاق', value: project['closure_summary'].toString()),
           ]))),
+          if (project['can_add_progress'] == true)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: FilledButton.icon(
+                onPressed: savingProgress ? null : _addProgressUpdate,
+                icon: savingProgress
+                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.add_task_rounded),
+                label: Text(en ? 'Add progress update' : 'إضافة تحديث تقدم'),
+              ),
+            ),
           _SectionTitle(en ? 'Project team' : 'فريق المشروع', count: team.length),
           if (team.isEmpty) _Empty(en ? 'No active team assignments.' : 'لا توجد تكليفات فريق نشطة.')
           else ...team.map((m) => Card(child: ListTile(
@@ -125,4 +160,94 @@ class _Info extends StatelessWidget {
 class _Empty extends StatelessWidget {
   const _Empty(this.label); final String label;
   @override Widget build(BuildContext context) => Padding(padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8), child: Text(label, style: const TextStyle(color: Color(0xFF64748B))));
+}
+
+class _ProjectProgressDialog extends StatefulWidget {
+  const _ProjectProgressDialog({required this.english});
+  final bool english;
+  @override
+  State<_ProjectProgressDialog> createState() => _ProjectProgressDialogState();
+}
+
+class _ProjectProgressDialogState extends State<_ProjectProgressDialog> {
+  final summary = TextEditingController();
+  final percent = TextEditingController(text: '0');
+  final achievements = TextEditingController();
+  final issues = TextEditingController();
+  final nextSteps = TextEditingController();
+  late final TextEditingController date;
+  String? validationError;
+
+  @override
+  void initState() {
+    super.initState();
+    final now = DateTime.now();
+    date = TextEditingController(text: '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}');
+  }
+
+  @override
+  void dispose() {
+    summary.dispose(); percent.dispose(); achievements.dispose(); issues.dispose(); nextSteps.dispose(); date.dispose();
+    super.dispose();
+  }
+
+  Widget _field(TextEditingController controller, String label, {int lines = 1, TextInputType? keyboardType}) => Padding(
+    padding: const EdgeInsets.only(bottom: 10),
+    child: TextField(
+      controller: controller,
+      maxLines: lines,
+      keyboardType: keyboardType,
+      decoration: InputDecoration(labelText: label, border: const OutlineInputBorder(), isDense: true),
+    ),
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final en = widget.english;
+    return AlertDialog(
+      title: Text(en ? 'New progress update' : 'تحديث تقدم جديد'),
+      content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
+        if (validationError != null)
+          Padding(padding: const EdgeInsets.only(bottom: 8), child: Text(validationError!, style: const TextStyle(color: Colors.red))),
+        _field(summary, en ? 'Summary *' : 'ملخص التقدم *', lines: 2),
+        _field(date, en ? 'Date (YYYY-MM-DD) *' : 'التاريخ (YYYY-MM-DD) *'),
+        _field(percent, en ? 'Completion %' : 'نسبة الإنجاز %', keyboardType: const TextInputType.numberWithOptions(decimal: true)),
+        _field(achievements, en ? 'Achievements' : 'الإنجازات', lines: 2),
+        _field(issues, en ? 'Issues' : 'المعوقات', lines: 2),
+        _field(nextSteps, en ? 'Next steps' : 'الخطوات القادمة', lines: 2),
+      ])),
+      actions: [
+        TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(en ? 'Cancel' : 'إلغاء')),
+        FilledButton(
+          onPressed: () {
+            final summaryValue = summary.text.trim();
+            final dateValue = date.text.trim();
+            final percentValue = double.tryParse(percent.text.trim().isEmpty ? '0' : percent.text.trim());
+            if (summaryValue.isEmpty) {
+              setState(() => validationError = en ? 'A summary is required.' : 'ملخص التقدم مطلوب.');
+              return;
+            }
+            if (dateValue.isEmpty || !RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(dateValue)) {
+              setState(() => validationError = en ? 'Enter the date as YYYY-MM-DD.' : 'أدخل التاريخ بصيغة YYYY-MM-DD.');
+              return;
+            }
+            if (percentValue == null || !percentValue.isFinite || percentValue < 0 || percentValue > 100) {
+              setState(() => validationError = en ? 'Completion must be between 0 and 100.' : 'نسبة الإنجاز يجب أن تكون بين 0 و100.');
+              return;
+            }
+            Navigator.of(context).pop({
+              'project_id': 0,
+              'summary': summaryValue,
+              'update_date': dateValue,
+              'completion_percent': percentValue,
+              'achievements': achievements.text.trim(),
+              'issues': issues.text.trim(),
+              'next_steps': nextSteps.text.trim(),
+            });
+          },
+          child: Text(en ? 'Save' : 'حفظ'),
+        ),
+      ],
+    );
+  }
 }
