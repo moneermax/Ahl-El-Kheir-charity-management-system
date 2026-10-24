@@ -4465,3 +4465,8 @@ Source commit `d31c1fd6c56f25ecca15adb5833131b425264935` adds `colspan="3"` to t
 ## 2026-10-24 — Mobile Flutter CI verification boundary
 
 The Flutter app is configured for cloud compilation through GitHub Actions. The build workflow performs Dart analysis, a login-screen widget smoke test, and Android debug APK compilation, with a downloadable artifact retained for 30 days. These checks establish source/build evidence only after a successful run; they do not establish that the app can authenticate against XAMPP or a hosted server. The API migration remains unapplied, local API runtime tests remain pending, and login throttling/security review is required before public exposure. Debug HTTP support is scoped to the generated debug manifest; production API traffic must use HTTPS.
+
+
+## 2026-10-24 — Flutter widget test failure evidence
+
+GitHub Actions run 40060794073 completed dependency resolution and Dart analysis successfully, then failed at the Arabic login text assertion in login_screen_test.dart. The test launched the whole app, which begins asynchronous secure-storage session restoration, so the test was not isolated to the login form. The smallest correction was test-only: mount LoginPage directly with RTL directionality. Commit: b3216456948e71a80ae2629961efc78352769edf. The follow-up run must prove the test and APK build.
