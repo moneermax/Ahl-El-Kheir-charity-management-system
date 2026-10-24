@@ -10,6 +10,7 @@ void main() {
           textDirection: TextDirection.rtl,
           child: EmployeesPage(
             english: false,
+            openDetail: (_) {},
             loadPage: (query, page) async => {
               'items': [
                 {
