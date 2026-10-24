@@ -84,3 +84,7 @@ Responses use `{"ok":true,"data":...}` or `{"ok":false,"error":{"code":"…","me
 - Reworked the Flutter login and signed-in shell to use the website's navy palette (`#0A1F44`, `#1F4E8C`), Arabic RTL-first branded card layout, improved field/button styling, and the actual organization logo source. The build workflow copies the existing website asset `assets/img/logo.jpg` into Flutter assets before dependency resolution/tests/build; it does not create a replacement logo.
 - Updated API URL does not itself prove connectivity or successful login. Phone and PC must share the network, Windows Firewall must permit Apache on port 881, and the URL must be reachable from the phone. The `mobile_api_sessions` migration is still not confirmed applied to `ahl_el_kheir`; do not use real credentials until migration and local API/runtime/security checks pass.
 - Verification status: source change committed; GitHub Actions analysis/test/build and artifact upload pending. Physical-device UI and HTTP checks remain pending.
+
+
+### Flutter theme build follow-up — analyzer correction
+The first branding build run `40062960757` stopped at `flutter analyze`: Flutter 3.47 reports `Color.withOpacity` as deprecated and this repository's analyzer treats infos as a failing result. Replaced the four new calls with `withValues(alpha: ...)` in commit `6dbb17b7f4276eeeaad2e3f6c8c267d939ef35f6`. Follow-up build on that commit is pending. This was a source compatibility issue; no API/network conclusion can be drawn from that run.
