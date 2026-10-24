@@ -2210,3 +2210,7 @@ Fixed a source-level authorization mismatch in mobile project APIs: project deta
 ## 2026-10-24 — Current mobile continuation point
 
 Continue from the milestone maintenance change on main. Confirm the latest Android workflow and PHP lint workflow results for `api/v1/projects/milestone_action.php`. Fix only concrete CI failures. Then continue source/schema-led API role and record-scope audit. Live local Apache/MariaDB authorization/action tests remain outstanding; do not request physical-device testing until broader mobile release readiness. Do not reopen closed payroll/attendance work.
+
+## 2026-10-24 — Current continuation: milestone maintenance CI
+
+Latest mobile change separates milestone edit/delete permission from the creation capability. The mutation endpoint matches the web edit/delete role gate (assigned project supervisor; non-closed project) and enforces project-scoped milestone IDs. Check the latest Android workflow and PHP/database workflow before claiming verification. The new Flutter widget test had failed twice at the dialog-open assertion; stable keys and explicit visibility/tapping were added, then the capability fixture was updated. The latest relevant run was still pending at the last check. Do not ask for device testing until CI passes and the remaining API scope/runtime gates are assessed.
