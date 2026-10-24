@@ -2211,3 +2211,8 @@ Flutter CI run [40114021559](https://github.com/moneermax/Ahl-El-Kheir-charity-m
 ## 2026-10-24 — Employee detail mobile work
 
 The employee detail API, Flutter detail page, directory tap/navigation, and Arabic widget test have been added on `main`. Flutter CI run [40115161999](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40115161999) was still in progress at last check. PHP lint workflow does not yet explicitly include the new detail endpoint; live API role testing is pending. A separate full-schema Stage 5 payroll integration job failed due to a missing payroll-transfer migration prerequisite and must be investigated independently.
+
+
+## 2026-10-24 — Employee details build evidence
+
+The employee details feature has passed an Android build/test run at commit `a78bc176` ([run 40115151758](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40115151758)): analyzer clean, widget tests completed, debug APK built and uploaded. Later commits added a dedicated Arabic details test and localized English employment-state label; latest run [40115569057](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40115569057) remained in progress at last check. Live API authorization/database verification and PHP lint coverage for the new endpoint remain outstanding. Full-schema Stage 5 payroll migration prerequisite failure is separate and must be investigated before any change.
