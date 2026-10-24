@@ -72,7 +72,7 @@ class _SponsorRequestsPageState extends State<SponsorRequestsPage> {
     if (confirmed != true || !mounted) return;
     setState(() => busyRequestId = id);
     try {
-      final result = await widget.submitAction(action, id);
+      await widget.submitAction(action, id);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(en ? 'Status updated.' : 'تم تحديث الحالة.'),
