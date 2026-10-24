@@ -5,6 +5,8 @@ import 'package:http/http.dart' as http;
 import 'projects_page.dart';
 import 'attendance_page.dart';
 import 'leave_requests_page.dart';
+import 'sponsors_page.dart';
+import 'families_page.dart';
 
 void main() => runApp(const AhlElKheirApp());
 
@@ -156,6 +158,20 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     return call('GET', 'hr/leaves.php?view=$view&status=$status&page=$page', token: token);
   }
 
+  Future<Map<String, dynamic>> loadSponsors(String query, String status, String linkStatus, int page) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    final q = Uri.encodeQueryComponent(query);
+    return call('GET', 'sponsors/index.php?q=$q&status=$status&link_status=$linkStatus&page=$page', token: token);
+  }
+
+  Future<Map<String, dynamic>> loadFamilies(String query, String status, int page) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    final q = Uri.encodeQueryComponent(query);
+    return call('GET', 'families/index.php?q=$q&status=$status&page=$page', token: token);
+  }
+
   Future<Map<String, dynamic>> submitLeaveAction(String action, Map<String, dynamic> body) async {
     final token = await storage.read(key: tokenKey);
     if (token == null || token.isEmpty) {
@@ -274,6 +290,27 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                         )),
                       ),
                     ),
+                  const SizedBox(height: 12),
+                  if (['admin', 'vice_general_manager', 'general_manager', 'supervisor'].contains(user?['role_code']?.toString()))
+                    Card(child: ListTile(
+                      leading: const CircleAvatar(child: Icon(Icons.volunteer_activism_rounded)),
+                      title: Text(english ? 'Sponsors' : 'الكفلاء'),
+                      subtitle: Text(english ? 'Browse sponsors within your role scope' : 'استعراض الكفلاء وفق صلاحيات حسابك'),
+                      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+                      onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
+                        builder: (_) => SponsorsPage(english: english, loadSponsors: loadSponsors),
+                      )),
+                    )),
+                  if (['admin', 'vice_general_manager', 'general_manager', 'supervisor', 'nanny'].contains(user?['role_code']?.toString()))
+                    Card(child: ListTile(
+                      leading: const CircleAvatar(child: Icon(Icons.family_restroom_rounded)),
+                      title: Text(english ? 'Families' : 'الأسر'),
+                      subtitle: Text(english ? 'Browse families within your role scope' : 'استعراض الأسر وفق صلاحيات حسابك'),
+                      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+                      onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
+                        builder: (_) => FamiliesPage(english: english, loadFamilies: loadFamilies),
+                      )),
+                    )),
                   const SizedBox(height: 12),
                   Card(
                     child: ListTile(
