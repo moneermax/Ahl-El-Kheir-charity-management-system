@@ -42,8 +42,11 @@ $notes = trim((string)($input['notes'] ?? ''));
 try {
     dbExecute('START TRANSACTION');
     $project = dbFetchOne(
-        "SELECT op.id, COALESCE(pl.lifecycle_status, op.status) AS lifecycle_status
+        "SELECT op.id,
+                COALESCE(pa.approval_status, 'draft') AS approval_status,
+                COALESCE(pl.lifecycle_status, op.status) AS lifecycle_status
          FROM other_projects op
+         LEFT JOIN project_approval pa ON pa.project_id = op.id
          LEFT JOIN project_lifecycle pl ON pl.project_id = op.id
          WHERE op.id = ? FOR UPDATE",
         [$projectId]
@@ -55,6 +58,16 @@ try {
     if ((string)$project['lifecycle_status'] === 'closed') {
         dbExecute('ROLLBACK');
         ak_api_json(409, ['ok' => false, 'error' => ['code' => 'project_closed', 'message' => 'Milestones cannot be added to a closed project.']]);
+    }
+    if ($role !== 'admin' && (
+        (string)$project['approval_status'] !== 'approved'
+        || !in_array((string)$project['lifecycle_status'], ['active', 'reopened', 'completed', 'under_review', 'cancelled'], true)
+    )) {
+        dbExecute('ROLLBACK');
+        ak_api_json(409, ['ok' => false, 'error' => [
+            'code' => 'project_not_operational',
+            'message' => 'This project is not available for operational updates.',
+        ]]);
     }
 
     if ($role === 'project_supervisor') {
