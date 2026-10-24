@@ -73,8 +73,8 @@ if (!$canAddMilestone && $role === 'project_supervisor'
  $operationsMilestone = dbFetchOne("SELECT id FROM project_team WHERE project_id=? AND user_id=? AND section_code='operations' AND unassigned_at IS NULL LIMIT 1", [$projectId,$userId]);
  $canAddMilestone = (bool)$primaryMilestone || (bool)$operationsMilestone;
 }
-$canManageMilestones = false;
-if ($role === 'project_supervisor' && $projectStatus !== 'closed') {
+$canManageMilestones = $role === 'admin' && $projectStatus !== 'closed';
+if (!$canManageMilestones && $role === 'project_supervisor' && $projectStatus !== 'closed') {
  $primaryManageMilestones = dbFetchOne('SELECT id FROM project_supervisor_assignments WHERE project_id=? AND supervisor_user_id=? AND ended_at IS NULL LIMIT 1', [$projectId,$userId]);
  $operationsManageMilestones = dbFetchOne("SELECT id FROM project_team WHERE project_id=? AND user_id=? AND section_code='operations' AND unassigned_at IS NULL LIMIT 1", [$projectId,$userId]);
  $canManageMilestones = (bool)$primaryManageMilestones || (bool)$operationsManageMilestones;
