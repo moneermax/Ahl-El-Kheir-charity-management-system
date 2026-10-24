@@ -94,3 +94,45 @@ void main() {
  });
 
 }
+
+ testWidgets('edits and deletes only the selected project milestone through the action callback', (tester) async {
+  final actions = <Map<String, dynamic>>[];
+  await tester.pumpWidget(MaterialApp(home: ProjectDetailPage(
+   projectId: 44,
+   english: true,
+   submitProgress: (_) async => {'ok': true},
+   createMilestone: (_) async => {'ok': true},
+   actOnMilestone: (body) async { actions.add(Map<String, dynamic>.from(body)); return {'ok': true}; },
+   loadDetail: (_) async => {
+    'project': {'id':44,'project_code':'PRJ-0044','name':'Active project','current_status':'active','approval_status':'approved','currency_code':'SDG','budget':1000,'funded':0,'expenses':0,'can_add_milestone':true},
+    'team': [],
+    'milestones': [{'id':71,'title':'Current milestone','description':'Old description','planned_date':'2026-10-25','completion_percent':20.0}],
+    'progress_updates': [],
+    'history': [],
+   },
+  )));
+  await tester.pumpAndSettle();
+  await tester.scrollUntilVisible(find.text('Edit'), 350, scrollable: find.byType(Scrollable));
+  await tester.tap(find.text('Edit'));
+  await tester.pumpAndSettle();
+  expect(find.text('Edit project milestone'), findsOneWidget);
+  await tester.enterText(find.byType(TextField).first, 'Updated milestone');
+  await tester.tap(find.text('Save'));
+  await tester.pumpAndSettle();
+  expect(actions, hasLength(1));
+  expect(actions.single['action'], 'edit');
+  expect(actions.single['project_id'], 44);
+  expect(actions.single['milestone_id'], 71);
+  expect(actions.single['title'], 'Updated milestone');
+
+  await tester.scrollUntilVisible(find.text('Delete'), 350, scrollable: find.byType(Scrollable));
+  await tester.tap(find.text('Delete').first);
+  await tester.pumpAndSettle();
+  expect(find.text('Delete milestone?'), findsOneWidget);
+  await tester.tap(find.text('Delete').last);
+  await tester.pumpAndSettle();
+  expect(actions, hasLength(2));
+  expect(actions.last['action'], 'delete');
+  expect(actions.last['project_id'], 44);
+  expect(actions.last['milestone_id'], 71);
+ });
