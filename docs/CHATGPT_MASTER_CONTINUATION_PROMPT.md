@@ -1897,3 +1897,8 @@ Source commit `d31c1fd6c56f25ecca15adb5833131b425264935` adds `colspan="3"` to t
 ## 2026-10-24 — Flutter mobile cloud build
 
 Read `docs/MOBILE_APP_CONTINUATION.md`. User does not need to install Flutter locally just to build the Android APK: use `.github/workflows/build-flutter-mobile-app.yml` and download artifact `ahl-el-kheir-flutter-android-debug-apk` from the successful run. Verify the run and artifact before claiming build success. For a phone on the local network, manually dispatch the workflow with the laptop's reachable LAN API URL; for hosting, use HTTPS. Do not expose XAMPP. API migration/runtime/security acceptance remains separate and pending.
+
+
+## 2026-10-24 — Flutter login widget-test follow-up
+
+Cloud run 40060794073 passed Dart analysis but failed the test because it launched full-app startup/session restoration instead of isolating the login form. The test now mounts LoginPage directly with RTL directionality in commit b3216456948e71a80ae2629961efc78352769edf. Check the next workflow run and artifact. Do not claim APK success until confirmed; API runtime/security acceptance remains pending.
