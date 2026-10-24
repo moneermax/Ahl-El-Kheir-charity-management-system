@@ -478,3 +478,11 @@ After the payroll-transfer migration/proof setup, CI exposed one more fixture is
 - No new, unambiguous mobile-only authorization or record-scope mismatch was confirmed in this pass. No production code was changed speculatively.
 - This is not runtime acceptance or release sign-off. Remaining blockers: authenticated role-denial, cross-record isolation, state-transition/concurrency, and notification/audit-boundary checks against the actual local Apache/MariaDB app; verify the API schema/migrations on the intended local database before tests; rebuild the APK after any later Flutter changes; confirm an HTTPS-capable PHP/MariaDB hosting target. Netlify static hosting alone does not host this backend.
 - Continue with remaining concrete source checks, then prepare a repeatable, non-destructive local API acceptance harness. Do not test against live user data or request physical-device testing before the broader release-readiness gate.
+
+
+## 2026-10-24 — Mobile auth migration CI coverage
+
+- The current mobile API auth foundation depends on `database/migrations/2026-10-24_mobile_api_sessions.sql`; the checked-in base schema intentionally does not include the deployment migration. Application requests must never create this table.
+- Updated `.github/workflows/php-syntax-check.yml` to lint `api/v1/_bootstrap.php` and apply the mobile-session migration twice to the existing disposable MariaDB 10.4.32 full-schema CI database after importing the base schema and required payroll-transfer migration. This checks DDL compatibility with the checked-in schema and verifies the migration's declared repeat-run behavior without touching any local/user database.
+- Workflow change commit: `4fd136bb6646b960d8ea46548eab8757c65872d7`. CI has not yet completed for this change; do not claim the new checks passed until the resulting workflow run is green.
+- Source review of `_bootstrap.php`, login, `/me`, and logout found no new concrete defect in this pass. Known release gates remain: local migration-state confirmation, real Apache/MariaDB auth/session acceptance, role/record-scope/action acceptance, and an HTTPS-capable PHP/MariaDB hosting target. Rate limiting and refresh/session-management capabilities remain documented future security/product gaps; do not expose XAMPP publicly or request phone testing before the release-readiness gate.
