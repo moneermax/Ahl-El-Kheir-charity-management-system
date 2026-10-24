@@ -48,6 +48,7 @@ jobs:
           mkdir -p mobile/ahl_el_kheir_app/android/app/src/debug
           cat > mobile/ahl_el_kheir_app/android/app/src/debug/AndroidManifest.xml <<'EOF'
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+            <uses-permission android:name="android.permission.INTERNET" />
             <application android:usesCleartextTraffic="true" />
           </manifest>
           EOF
