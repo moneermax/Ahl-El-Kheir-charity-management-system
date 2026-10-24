@@ -60,8 +60,6 @@ class _FmReviewQueuePageState extends State<FmReviewQueuePage> with SingleTicker
       const SizedBox(height: 5),
       Text(amount.toStringAsFixed(2) + ' ' + (item['currency_code']?.toString() ?? 'SDG'), style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
       if (lines.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 7), child: Text(lines.join('\n'))),
-      if ((item['purpose_note']?.toString() ?? '').isNotEmpty) Padding(padding: const EdgeInsets.only(top: 5), child: Text((en ? 'Purpose note: ' : 'توضيح الغرض: ') + item['purpose_note'].toString())),
-      if ((item['notes']?.toString() ?? '').isNotEmpty) Padding(padding: const EdgeInsets.only(top: 5), child: Text((en ? 'Notes: ' : 'ملاحظات: ') + item['notes'].toString())),
     ])));
   }
 
