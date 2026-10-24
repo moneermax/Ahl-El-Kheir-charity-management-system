@@ -5,6 +5,14 @@ import 'package:http/http.dart' as http;
 
 void main() => runApp(const AhlElKheirApp());
 
+class ApiFailure implements Exception {
+  const ApiFailure(this.message, {this.statusCode});
+  final String message;
+  final int? statusCode;
+  @override
+  String toString() => message;
+}
+
 class AhlElKheirApp extends StatefulWidget {
   const AhlElKheirApp({super.key});
   @override
@@ -36,13 +44,14 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       if (json is! Map<String, dynamic>) throw const FormatException();
       if (response.statusCode < 200 || response.statusCode >= 300 || json['ok'] != true) {
         final e = json['error'];
-        throw Exception(e is Map ? (e['message'] ?? 'Request failed') : 'Request failed');
+        throw ApiFailure(e is Map ? (e['message']?.toString() ?? 'Request failed') : 'Request failed', statusCode: response.statusCode);
       }
       if (json['data'] is! Map<String, dynamic>) throw Exception('Invalid API response');
       return json['data'] as Map<String, dynamic>;
-    } catch (e) {
-      if (e is Exception) rethrow;
-      throw Exception(english ? 'Could not reach the API server.' : 'تعذر الاتصال بخادم API.');
+    } on ApiFailure {
+      rethrow;
+    } catch (_) {
+      throw ApiFailure(english ? 'Could not reach the API server.' : 'تعذر الاتصال بخادم API.');
     }
   }
 
@@ -59,8 +68,12 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         final data = await call('GET', 'auth/me.php', token: token);
         if (data['user'] is Map<String, dynamic>) user = data['user'] as Map<String, dynamic>;
       }
-    } catch (_) {
-      await storage.delete(key: tokenKey);
+    } catch (e) {
+      if (e is ApiFailure && (e.statusCode == 401 || e.statusCode == 403)) {
+        await storage.delete(key: tokenKey);
+      } else {
+        error = e.toString();
+      }
     } finally {
       if (mounted) setState(() => loading = false);
     }
