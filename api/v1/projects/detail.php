@@ -11,7 +11,7 @@ $allowedRoles = ['admin','general_manager','vice_general_manager','projects_mana
 if (!in_array($role, $allowedRoles, true)) ak_api_json(403, ['ok'=>false,'error'=>['code'=>'forbidden','message'=>'This account cannot access project details.']]);
 $project = dbFetchOne(
  "SELECT p.*, l.lifecycle_status, l.closed_at, l.closure_summary,
-         COALESCE(pa.approval_status, 'approved') AS approval_status
+         COALESCE(pa.approval_status, 'draft') AS approval_status
   FROM other_projects p
   LEFT JOIN project_lifecycle l ON l.project_id=p.id
   LEFT JOIN project_approval pa ON pa.project_id=p.id
