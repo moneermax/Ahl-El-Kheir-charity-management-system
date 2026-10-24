@@ -2100,3 +2100,8 @@ Transaction-register layout correction is verified green: workflow run `40091698
 ## 2026-10-24 — Mobile app continuation update
 
 The sponsor-request attribution issue #95 is closed after source and CI verification. Sponsor-request status actions are also CI-verified, and the supervisor directory Flutter workflow passed analysis/tests/APK build. Exact run IDs and acceptance boundaries are recorded in `docs/MOBILE_APP_CONTINUATION.md`. Continue the mobile app on `main`, inspect actual source/schema/permissions for the next workflow, and do not ask for device testing until the app reaches the agreed release-readiness gate. Keep live Apache/MariaDB role acceptance distinct from CI. Do not reopen the unrelated payroll CI issue #94 or closed payroll work without root-cause evidence.
+
+
+## 2026-10-24 — Mobile project progress updates (CI partially verified)
+
+Mobile project progress-update endpoint/form implemented using existing web permissions and fields, without schema changes. Flutter analysis/tests passed; APK build pending at last check; PHP lint passed. See `docs/MOBILE_APP_CONTINUATION.md`. Confirm latest CI, then continue mobile development. Do not request physical-device acceptance until broader release readiness; keep payroll issue #94 isolated.
