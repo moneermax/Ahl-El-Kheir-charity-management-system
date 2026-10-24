@@ -413,3 +413,10 @@ The employee directory now calls the new authenticated detail endpoint through t
 ## 2026-10-24 — Employment-state localization refinement
 
 Refined the employee detail screen to show the actual localized employment-state name instead of collapsing every `working` category into a generic label; this preserves distinctions such as probation. Updated the Arabic widget test fixture to include both Arabic and English state names. Latest Android build/test run [40115687291](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40115687291) was queued at the last check. Earlier commit `a78bc176` passed analyzer, Flutter tests, and debug APK build; the newest revision still needs its own green result. PHP endpoint lint/runtime role tests remain outstanding, and the full-schema payroll migration prerequisite failure is separate.
+
+## 2026-10-24 — Employee details CI closed; release-readiness boundary
+
+- Confirmed Flutter Android workflow [40115687291](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40115687291) completed with `analyze-and-build` success for feature commit `ed9e169ab8bf75be8592d6765181314679b1dd06`. This supersedes the earlier queued/pending note for that run.
+- Updated `mobile/ahl_el_kheir_app/README.md` because it incorrectly described the app as only a minimal signed-in screen. It now documents the integrated modules and clearly distinguishes incremental mobile coverage from full web parity.
+- Current release blockers are still explicit: live API/database role-and-scope acceptance, PHP lint coverage for `api/v1/hr/employee_detail.php`, and a confirmed HTTPS-compatible PHP/MariaDB hosting target. Netlify static hosting alone does not host this PHP/MariaDB backend. Do not ask for physical-device testing yet.
+- Next development must be selected from an existing web workflow not already covered by mobile, after inspecting its actual role/scope and schema. Do not duplicate the existing nanny verification workflows or reopen closed attendance/payroll work.
