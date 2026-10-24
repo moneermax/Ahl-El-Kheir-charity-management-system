@@ -168,3 +168,11 @@ The user retried login with the physical-phone APK and the latest Apache access-
 - GitHub Actions run `40086755903` passed `flutter analyze` and 10 widget tests, then failed the transaction-register test because the amount text and status chip together overflowed the trailing `ListTile` area by 8 pixels.
 - Commit `885ef809b431b174541d54c8c44ade3f97421172` moves the amount into the transaction subtitle and leaves the status chip in the trailing slot. A new Flutter workflow run is queued; verify its test and APK steps before treating this correction as passed.
 - The transaction register is read-only. No approve/return/cancel/void or receipt-file actions are exposed in the mobile client. Live API/database and role-scope runtime tests remain outstanding.
+
+
+## 2026-10-24 — Transaction register CI passed; sponsorship register added
+
+- Flutter run `40091698003` for commit `885ef809b431b174541d54c8c44ade3f97421172` completed successfully; Dart analysis, all widget tests, debug APK build and artifact publication passed. Artifact `ahl-el-kheir-flutter-android-debug-apk` was present and unexpired at verification time. This verifies that code checkpoint only, before the sponsorship screen was added.
+- Added read-only authenticated `GET /api/v1/sponsorships/index.php` and an Arabic-first/English Flutter sponsorship register with the same search-field/status filters, active count/monthly summary, paging, and supervisor sponsor-scope helper as the existing web list. The web module's actual role allowlist is preserved. No sponsorship create/pause/cancel actions are exposed.
+- Sponsorship screen widget test and PHP lint inclusion have been added. A newer Flutter workflow is running for the screen integration; wait for analysis, widget tests, APK build and artifact publication before marking it passed.
+- The sponsorship endpoint follows the actual `modules/sponsorships/index.php` SELECT and workflow semantics. API/database runtime and account role-matrix testing remain unverified.
