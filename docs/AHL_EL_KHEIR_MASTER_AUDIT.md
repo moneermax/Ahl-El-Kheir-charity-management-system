@@ -4460,3 +4460,8 @@ The first QR header implementation introduced flex sizing, a 27mm minimum row he
 ### 2026-10-23 follow-up — full-width sponsorship rows
 
 Source commit `d31c1fd6c56f25ecca15adb5833131b425264935` adds `colspan="3"` to the value cells for “مدة الكفالة” and “قيمة الكفالة”. Those rows share a table with four-column sponsor rows; spanning the remaining columns makes both row borders extend across the same full table width without changing their content or the QR header. PHP syntax and local browser/print appearance verification are still pending.
+
+
+## 2026-10-24 — Mobile Flutter CI verification boundary
+
+The Flutter app is configured for cloud compilation through GitHub Actions. The build workflow performs Dart analysis, a login-screen widget smoke test, and Android debug APK compilation, with a downloadable artifact retained for 30 days. These checks establish source/build evidence only after a successful run; they do not establish that the app can authenticate against XAMPP or a hosted server. The API migration remains unapplied, local API runtime tests remain pending, and login throttling/security review is required before public exposure. Debug HTTP support is scoped to the generated debug manifest; production API traffic must use HTTPS.
