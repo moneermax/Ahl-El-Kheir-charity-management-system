@@ -2282,3 +2282,7 @@ Milestone edit/delete API and Flutter controls have been committed to main. CI r
 ## 2026-10-24 — Mobile milestone maintenance authorization parity
 
 Added milestone edit/delete endpoint and Flutter controls; separated maintenance permission from create permission to match web behavior. On source SHA `b061ec3da52f6e949b663ee5d14eb3b5d0e00b23`, Dart analysis, all Flutter tests, debug APK build, and artifact publication passed in [40120835219](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40120835219). PHP/database workflow [40121128872](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40121128872) passed all jobs on SHA `2a664a66316319983dc32d48cdfa9024b770a71a`. No live local API runtime acceptance yet. See `docs/MOBILE_APP_CONTINUATION.md`.
+
+
+## 2026-10-24 — Mobile auth migration CI checkpoint
+The PHP/database workflow now lints `api/v1/_bootstrap.php` and applies `database/migrations/2026-10-24_mobile_api_sessions.sql` twice against the disposable full-schema MariaDB CI database. This is CI-only migration compatibility/idempotence coverage, not evidence that the local `ahl_el_kheir` database has the migration applied or that the API passes live runtime acceptance. Workflow change: `4fd136bb6646b960d8ea46548eab8757c65872d7`; docs checkpoint: `8ff1d7825ca8c9d29822811a23dc3f97269882fd`. Await the new CI run before claiming pass. Continue mobile release-readiness checks without repeating closed payroll/HR suites or requesting phone testing yet.
