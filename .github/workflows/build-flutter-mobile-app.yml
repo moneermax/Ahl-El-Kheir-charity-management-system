@@ -7,6 +7,12 @@ on:
       - "mobile/ahl_el_kheir_app/**"
       - ".github/workflows/build-flutter-mobile-app.yml"
   workflow_dispatch:
+    inputs:
+      api_base_url:
+        description: "API v1 base URL (use HTTPS outside local development)"
+        required: false
+        default: "http://10.0.2.2:8081/AhlElKheir/api/v1"
+        type: string
 
 permissions:
   contents: read
@@ -14,6 +20,8 @@ permissions:
 jobs:
   analyze-and-build:
     runs-on: ubuntu-latest
+    env:
+      API_BASE_URL: ${{ inputs.api_base_url || 'http://10.0.2.2:8081/AhlElKheir/api/v1' }}
     steps:
       - name: Check out main
         uses: actions/checkout@v4
@@ -34,6 +42,12 @@ jobs:
         run: |
           flutter create --platforms=android --project-name ahl_el_kheir_app --org org.ahlelkheir --no-pub "$RUNNER_TEMP/ahl_el_kheir_scaffold"
           cp -R "$RUNNER_TEMP/ahl_el_kheir_scaffold/android" mobile/ahl_el_kheir_app/android
+          mkdir -p mobile/ahl_el_kheir_app/android/app/src/debug
+          cat > mobile/ahl_el_kheir_app/android/app/src/debug/AndroidManifest.xml <<'EOF'
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+            <application android:usesCleartextTraffic="true" />
+          </manifest>
+          EOF
 
       - name: Resolve Flutter dependencies
         working-directory: mobile/ahl_el_kheir_app
@@ -49,7 +63,7 @@ jobs:
 
       - name: Build debug APK
         working-directory: mobile/ahl_el_kheir_app
-        run: flutter build apk --debug
+        run: flutter build apk --debug --dart-define=API_BASE_URL="$API_BASE_URL"
 
       - name: Publish Android APK
         uses: actions/upload-artifact@v4
