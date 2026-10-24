@@ -437,3 +437,6 @@ Refined the employee detail screen to show the actual localized employment-state
 
 ## 2026-10-24 — CI verification checkpoint
 During continued mobile work, the existing full-schema CI job failed in its Stage 5 payroll harness because the disposable database did not apply the required payroll-transfer migration and the harness had no prepared proof fixture. This was traced to the exact production guard and corrected in the CI-only migration setup and rollback-only test fixtures. No production payroll behavior changed. Fresh CI results are pending; do not call the overall pipeline green until every required job concludes successfully.
+
+## 2026-10-24 — Follow-up CI fixture correction
+After the payroll-transfer migration/proof setup, CI exposed one more fixture issue: the CLI transition had no authenticated session user, so the proof confirmation FK correctly rejected actor ID 0. The rollback-only Stage 5 and concurrency harnesses now set a valid actor from the disposable DB. This is not a mobile API or production payroll code change. Fresh full-schema CI remains pending.
