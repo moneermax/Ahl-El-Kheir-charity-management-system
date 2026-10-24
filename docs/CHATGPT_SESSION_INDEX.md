@@ -2148,3 +2148,8 @@ The transaction register correction was fully green in GitHub Actions run `40091
 ## 2026-10-24 — Mobile app continuation
 
 Sponsor-request attribution, status actions, and supervisor directory are source-complete with the CI evidence recorded in `docs/MOBILE_APP_CONTINUATION.md`. Issue #95 is closed. Continue the next role-safe mobile workflow from actual web source/schema and endpoint permissions. Live Apache/MariaDB role-matrix testing and physical-device acceptance remain deferred until the broader app reaches release readiness; do not repeat passed CI jobs or reopen issue #94 payroll work.
+
+
+## 2026-10-24 — Mobile project progress updates (CI partially verified)
+
+The mobile project progress-update feature is implemented on `main`. Source and CI boundaries are recorded in `docs/MOBILE_APP_CONTINUATION.md`; Flutter analysis/tests passed, Android APK build was pending, and PHP lint passed at the checkpoint. Live Apache/MariaDB role acceptance and device acceptance remain deferred.
