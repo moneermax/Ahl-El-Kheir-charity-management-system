@@ -11,6 +11,7 @@ import 'leave_requests_page.dart';
 import 'sponsors_page.dart';
 import 'supervisors_page.dart';
 import 'families_page.dart';
+import 'fm_review_queue_page.dart';
 import 'transactions_page.dart';
 import 'sponsorships_page.dart';
 import 'sponsor_requests_page.dart';
@@ -279,6 +280,14 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     return call('GET', 'families/index.php?q=$q&status=$status&page=$page', token: token);
   }
 
+  Future<Map<String, dynamic>> loadFmReviewQueue() async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) {
+      throw const ApiFailure('Authentication is required.', statusCode: 401);
+    }
+    return call('GET', 'accounting/fm_review_queue.php', token: token);
+  }
+
   Future<Map<String, dynamic>> loadTransactions(String query, String status, int page, String from, String to) async {
     final token = await storage.read(key: tokenKey);
     if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
@@ -478,6 +487,16 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                       trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
                       onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
                         builder: (_) => SponsorshipsPage(english: english, loadSponsorships: loadSponsorships, loadDetail: loadSponsorshipDetail),
+                      )),
+                    )),
+                  if (['financial_manager', 'fm', 'finance', 'admin', 'sudo', 'general_manager'].contains(user?['role_code']?.toString()))
+                    Card(child: ListTile(
+                      leading: const CircleAvatar(child: Icon(Icons.fact_check_outlined)),
+                      title: Text(english ? 'Financial review queue' : 'طابور المراجعة المالية'),
+                      subtitle: Text(english ? 'Review pending supervisor collections and recent decisions' : 'عرض تحصيلات المشرفين المعلقة وسجل المراجعات'),
+                      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+                      onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
+                        builder: (_) => FmReviewQueuePage(english: english, loadQueue: loadFmReviewQueue),
                       )),
                     )),
                   if (['admin', 'vice_general_manager', 'general_manager', 'supervisor', 'accountant_staff', 'financial_manager'].contains(user?['role_code']?.toString()))
