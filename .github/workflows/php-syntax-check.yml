@@ -35,6 +35,8 @@ jobs:
             api/v1/hr/attendance.php
             api/v1/nanny/group_verification.php
             api/v1/nanny/group_verification_action.php
+            api/v1/nanny/pre_verification.php
+            api/v1/nanny/pre_verification_action.php
             api/v1/hr/employees.php
             api/v1/hr/leaves.php
             api/v1/hr/leaves/action.php
