@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'sponsor_detail_page.dart';
 
 class SponsorsPage extends StatefulWidget {
-  const SponsorsPage({super.key, required this.english, required this.loadSponsors});
+  const SponsorsPage({super.key, required this.english, required this.loadSponsors, required this.loadDetail});
   final bool english;
   final Future<Map<String, dynamic>> Function(String query, String status, String linkStatus, int page) loadSponsors;
+  final Future<Map<String, dynamic>> Function(int id) loadDetail;
 
   @override
   State<SponsorsPage> createState() => _SponsorsPageState();
@@ -128,7 +130,7 @@ class _SponsorsPageState extends State<SponsorsPage> {
                           final sponsor = items[index];
                           final count = int.tryParse(sponsor['active_sponsorship_count']?.toString() ?? '0') ?? 0;
                           final phone = sponsor['phone']?.toString() ?? '';
-                          return Card(child: ListTile(
+                          return Card(child: InkWell(onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => SponsorDetailPage(sponsorId: int.tryParse(sponsor['id']?.toString() ?? '') ?? 0, english: en, loadDetail: widget.loadDetail))), child: ListTile(
                             leading: const CircleAvatar(child: Icon(Icons.volunteer_activism_rounded)),
                             title: Text(sponsor['full_name']?.toString() ?? ''),
                             subtitle: Text(
@@ -138,7 +140,7 @@ class _SponsorsPageState extends State<SponsorsPage> {
                             ),
                             isThreeLine: true,
                             trailing: Chip(label: Text(statusLabel(sponsor['status']?.toString() ?? ''))),
-                          ));
+                          )));
                         },
                       ),
                 ),

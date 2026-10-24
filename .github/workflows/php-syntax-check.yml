@@ -34,7 +34,9 @@ jobs:
             api/v1/hr/leaves.php
             api/v1/hr/leaves/action.php
             api/v1/sponsors/index.php
+            api/v1/sponsors/detail.php
             api/v1/families/index.php
+            api/v1/families/detail.php
             modules/hr/contract_builder.php
             modules/hr/job_description_catalogue.php
             modules/hr/lib_salary_advance_repayment.php

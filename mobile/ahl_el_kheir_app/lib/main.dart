@@ -7,6 +7,8 @@ import 'attendance_page.dart';
 import 'leave_requests_page.dart';
 import 'sponsors_page.dart';
 import 'families_page.dart';
+import 'sponsor_detail_page.dart';
+import 'family_detail_page.dart';
 
 void main() => runApp(const AhlElKheirApp());
 
@@ -165,11 +167,23 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     return call('GET', 'sponsors/index.php?q=$q&status=$status&link_status=$linkStatus&page=$page', token: token);
   }
 
+  Future<Map<String, dynamic>> loadSponsorDetail(int id) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('GET', 'sponsors/detail.php?id=$id', token: token);
+  }
+
   Future<Map<String, dynamic>> loadFamilies(String query, String status, int page) async {
     final token = await storage.read(key: tokenKey);
     if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
     final q = Uri.encodeQueryComponent(query);
     return call('GET', 'families/index.php?q=$q&status=$status&page=$page', token: token);
+  }
+
+  Future<Map<String, dynamic>> loadFamilyDetail(int id) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('GET', 'families/detail.php?id=$id', token: token);
   }
 
   Future<Map<String, dynamic>> submitLeaveAction(String action, Map<String, dynamic> body) async {
