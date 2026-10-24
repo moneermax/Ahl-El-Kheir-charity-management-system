@@ -33,6 +33,8 @@ jobs:
             api/v1/projects/progress_update.php
             api/v1/projects/milestone_create.php
             api/v1/hr/attendance.php
+            api/v1/hr/employee_detail.php
+            api/v1/hr/my_salary_statements.php
             api/v1/nanny/group_verification.php
             api/v1/nanny/group_verification_action.php
             api/v1/nanny/pre_verification.php
