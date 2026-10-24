@@ -19,6 +19,8 @@ void main() {
               'department_name_ar': 'البرامج',
               'hire_date': '2025-05-01',
               'employment_state_category': 'working',
+              'employment_state_name': 'على رأس العمل',
+              'employment_state_name_en': 'Active',
               'phone': '01000000000',
             },
           },
