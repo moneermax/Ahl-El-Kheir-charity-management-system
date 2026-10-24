@@ -531,6 +531,7 @@ class _NotificationPageState extends State<NotificationPage> {
     if (id < 1) return;
     try {
       await widget.markRead(id);
+      if (!mounted) return;
       await load();
     } catch (e) {
       if (!mounted) return;
