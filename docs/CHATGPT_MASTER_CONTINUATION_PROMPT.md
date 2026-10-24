@@ -2206,3 +2206,7 @@ Financial review queue is no longer read-only: the Flutter page offers Approve a
 
 ## 2026-10-24 — Latest project API scope audit checkpoint
 Fixed a source-level authorization mismatch in mobile project APIs: project detail now defaults missing approval state to `draft`; milestone creation now checks approval and lifecycle for non-admin supervisors, matching the existing web view/progress boundary; and `can_add_milestone` is computed consistently with the endpoint. CI [40119297504](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40119297504) passed all PHP/database jobs. Continue API role/record-scope audit with source evidence; local Apache/MariaDB runtime checks remain outstanding.
+
+## 2026-10-24 — Current mobile continuation point
+
+Continue from the milestone maintenance change on main. Confirm the latest Android workflow and PHP lint workflow results for `api/v1/projects/milestone_action.php`. Fix only concrete CI failures. Then continue source/schema-led API role and record-scope audit. Live local Apache/MariaDB authorization/action tests remain outstanding; do not request physical-device testing until broader mobile release readiness. Do not reopen closed payroll/attendance work.
