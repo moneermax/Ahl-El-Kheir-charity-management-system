@@ -26,7 +26,7 @@ $purposeLabels = [
 
 $pendingRows = dbFetchAll(
     "SELECT sp.id, sp.payment_type, sp.payment_period, sp.amount, sp.currency_code,
-            sp.payment_method, sp.created_at, sp.notes, sp.purpose_note,
+            sp.payment_method, sp.created_at,
             sp.receipt_file_path, sp.unified_receipt_path,
             u.full_name AS supervisor_name,
             spn.full_name AS sponsor_name, spn.sponsor_code,
@@ -73,8 +73,6 @@ $mapPayment = static function (array $row) use ($purposeLabels): array {
         'child_name' => (string)($row['child_name'] ?? ''),
         'reviewer_name' => (string)($row['reviewer_name'] ?? ''),
         'return_note' => (string)($row['return_note'] ?? ''),
-        'notes' => (string)($row['notes'] ?? ''),
-        'purpose_note' => (string)($row['purpose_note'] ?? ''),
         'has_receipt' => (string)($row['receipt_file_path'] ?? '') !== '',
         'has_unified_receipt' => (string)($row['unified_receipt_path'] ?? '') !== '',
         'status' => (string)($row['status'] ?? 'pending'),
