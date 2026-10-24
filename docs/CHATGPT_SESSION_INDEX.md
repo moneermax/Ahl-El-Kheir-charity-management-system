@@ -2281,4 +2281,4 @@ Milestone edit/delete API and Flutter controls have been committed to main. CI r
 
 ## 2026-10-24 — Mobile milestone maintenance authorization parity
 
-Added milestone edit/delete endpoint and Flutter controls; separated maintenance permission from create permission to match web behavior. Current Android widget/APK and PHP/database CI runs are pending. No live local API runtime acceptance yet. See `docs/MOBILE_APP_CONTINUATION.md`.
+Added milestone edit/delete endpoint and Flutter controls; separated maintenance permission from create permission to match web behavior. On source SHA `b061ec3da52f6e949b663ee5d14eb3b5d0e00b23`, Dart analysis and all Flutter tests passed; APK build/artifact publication were pending in run [40120835219](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40120835219). PHP/database workflow [40120835174](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40120835174) passed. No live local API runtime acceptance yet. See `docs/MOBILE_APP_CONTINUATION.md`.
