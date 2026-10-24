@@ -287,6 +287,18 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     }
     return call('GET', 'accounting/fm_review_queue.php', token: token);
   }
+ 
+  Future<void> submitFmReviewQueueAction(int paymentId, String action, String returnNote) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) {
+      throw const ApiFailure('Authentication is required.', statusCode: 401);
+    }
+    await call('POST', 'accounting/fm_review_queue_action.php', token: token, body: {
+      'payment_id': paymentId,
+      'action': action,
+      'return_note': returnNote,
+    });
+  }
 
   Future<Map<String, dynamic>> loadTransactions(String query, String status, int page, String from, String to) async {
     final token = await storage.read(key: tokenKey);
@@ -496,7 +508,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                       subtitle: Text(english ? 'Review pending supervisor collections and recent decisions' : 'عرض تحصيلات المشرفين المعلقة وسجل المراجعات'),
                       trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
                       onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
-                        builder: (_) => FmReviewQueuePage(english: english, loadQueue: loadFmReviewQueue),
+                        builder: (_) => FmReviewQueuePage(english: english, loadQueue: loadFmReviewQueue, submitAction: submitFmReviewQueueAction),
                       )),
                     )),
                   if (['admin', 'vice_general_manager', 'general_manager', 'supervisor', 'accountant_staff', 'financial_manager'].contains(user?['role_code']?.toString()))
