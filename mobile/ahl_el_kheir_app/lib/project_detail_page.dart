@@ -205,11 +205,13 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
             if (project['can_add_milestone'] == true && widget.actOnMilestone != null)
               Align(alignment: AlignmentDirectional.centerEnd, child: Wrap(spacing: 8, children: [
                 TextButton.icon(
+                  key: ValueKey('edit-project-milestone-${m['id']}'),
                   onPressed: savingMilestoneAction ? null : () => _editMilestone(m),
                   icon: const Icon(Icons.edit_outlined),
                   label: Text(en ? 'Edit' : 'تعديل'),
                 ),
                 TextButton.icon(
+                  key: ValueKey('delete-project-milestone-${m['id']}'),
                   onPressed: savingMilestoneAction ? null : () => _deleteMilestone(m),
                   icon: const Icon(Icons.delete_outline_rounded),
                   label: Text(en ? 'Delete' : 'حذف'),
