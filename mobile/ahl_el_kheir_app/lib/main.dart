@@ -13,6 +13,7 @@ import 'transactions_page.dart';
 import 'sponsorships_page.dart';
 import 'sponsor_requests_page.dart';
 import 'nanny_group_verification_page.dart';
+import 'nanny_pre_verification_page.dart';
 
 void main() => runApp(const AhlElKheirApp());
 
@@ -129,6 +130,18 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       token: token,
       body: {'notification_id': notificationId},
     );
+  }
+
+  Future<Map<String, dynamic>> loadNannyPreVerification(String month) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('GET', 'nanny/pre_verification.php?month=${Uri.encodeQueryComponent(month)}', token: token);
+  }
+
+  Future<Map<String, dynamic>> submitNannyPreVerificationAction(Map<String, dynamic> body) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('POST', 'nanny/pre_verification_action.php', token: token, body: body);
   }
 
   Future<Map<String, dynamic>> loadNannyGroupVerification(String month, int? groupId) async {
@@ -467,6 +480,20 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                       trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
                       onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
                         builder: (_) => FamiliesPage(english: english, loadFamilies: loadFamilies, loadDetail: loadFamilyDetail),
+                      )),
+                    )),
+                  if (user?['role_code']?.toString() == 'nanny')
+                    Card(child: ListTile(
+                      leading: const CircleAvatar(child: Icon(Icons.playlist_add_check_rounded)),
+                      title: Text(english ? 'Preliminary verification' : 'التحقق المسبق للأسر'),
+                      subtitle: Text(english ? 'Verify families across your active groups before group submission' : 'توثيق الأسر ضمن مجموعاتك النشطة قبل إرسال المجموعة'),
+                      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+                      onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
+                        builder: (_) => NannyPreVerificationPage(
+                          english: english,
+                          loadData: loadNannyPreVerification,
+                          submitAction: submitNannyPreVerificationAction,
+                        ),
                       )),
                     )),
                   if (user?['role_code']?.toString() == 'nanny')
