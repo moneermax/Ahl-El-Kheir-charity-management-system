@@ -73,6 +73,12 @@ if (!$canAddMilestone && $role === 'project_supervisor'
  $operationsMilestone = dbFetchOne("SELECT id FROM project_team WHERE project_id=? AND user_id=? AND section_code='operations' AND unassigned_at IS NULL LIMIT 1", [$projectId,$userId]);
  $canAddMilestone = (bool)$primaryMilestone || (bool)$operationsMilestone;
 }
+$canManageMilestones = false;
+if ($role === 'project_supervisor' && $projectStatus !== 'closed') {
+ $primaryManageMilestones = dbFetchOne('SELECT id FROM project_supervisor_assignments WHERE project_id=? AND supervisor_user_id=? AND ended_at IS NULL LIMIT 1', [$projectId,$userId]);
+ $operationsManageMilestones = dbFetchOne("SELECT id FROM project_team WHERE project_id=? AND user_id=? AND section_code='operations' AND unassigned_at IS NULL LIMIT 1", [$projectId,$userId]);
+ $canManageMilestones = (bool)$primaryManageMilestones || (bool)$operationsManageMilestones;
+}
 $budget = (float)($totals['approved_budget'] ?? 0);
 if ($budget <= 0) $budget = (float)($project['target_amount'] ?? 0);
 ak_api_json(200, ['ok'=>true,'data'=>[
@@ -83,7 +89,7 @@ ak_api_json(200, ['ok'=>true,'data'=>[
   'approval_status'=>(string)$project['approval_status'],'currency_code'=>(string)($project['currency_code'] ?? 'SDG'),
   'budget'=>$budget,'funded'=>(float)($totals['donation_total'] ?? 0)+(float)($totals['allocation_total'] ?? 0),
   'expenses'=>(float)($totals['expense_total'] ?? 0),'closed_at'=>(string)($project['closed_at'] ?? ''),
-  'closure_summary'=>(string)($project['closure_summary'] ?? ''),'supervisor_name'=>(string)($supervisor['full_name'] ?? '—'),'can_add_progress'=>$canAddProgress,'can_add_milestone'=>$canAddMilestone
+  'closure_summary'=>(string)($project['closure_summary'] ?? ''),'supervisor_name'=>(string)($supervisor['full_name'] ?? '—'),'can_add_progress'=>$canAddProgress,'can_add_milestone'=>$canAddMilestone,'can_manage_milestones'=>$canManageMilestones
  ],
  'team'=>array_map(static fn(array $r): array=>['full_name'=>(string)$r['full_name'],'section_code'=>(string)$r['section_code'],'is_lead'=>(int)$r['is_lead']===1],$team),
  'milestones'=>array_map(static fn(array $r): array=>['title'=>(string)$r['title'],'description'=>(string)($r['description'] ?? ''),'planned_date'=>(string)($r['planned_date'] ?? ''),'completion_percent'=>(float)($r['completion_percent'] ?? 0)],$milestones),
