@@ -4,6 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'projects_page.dart';
 import 'attendance_page.dart';
+import 'leave_requests_page.dart';
 
 void main() => runApp(const AhlElKheirApp());
 
@@ -147,6 +148,14 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     return call('GET', 'hr/attendance.php$query', token: token);
   }
 
+  Future<Map<String, dynamic>> loadLeaves(String view, String status, int page) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) {
+      throw const ApiFailure('Authentication is required.', statusCode: 401);
+    }
+    return call('GET', 'hr/leaves.php?view=$view&status=$status&page=$page', token: token);
+  }
+
   @override
   Widget build(BuildContext context) => MaterialApp(
     title: english ? 'Ahl El Kheir' : 'أهل الخير',
@@ -257,6 +266,22 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                         )),
                       ),
                     ),
+                  const SizedBox(height: 12),
+                  Card(
+                    child: ListTile(
+                      leading: const CircleAvatar(child: Icon(Icons.event_note_rounded)),
+                      title: Text(english ? 'Leave requests' : 'طلبات الإجازة'),
+                      subtitle: Text(english ? 'View your requests and authorized review queue' : 'متابعة طلباتك والطلبات المصرح بمراجعتها'),
+                      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+                      onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
+                        builder: (_) => LeaveRequestsPage(
+                          english: english,
+                          roleCode: user?['role_code']?.toString() ?? '',
+                          loadLeaves: loadLeaves,
+                        ),
+                      )),
+                    ),
+                  ),
                   const SizedBox(height: 12),
                   Card(
                     child: ListTile(
