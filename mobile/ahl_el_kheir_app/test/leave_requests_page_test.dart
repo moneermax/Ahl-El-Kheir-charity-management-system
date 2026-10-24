@@ -11,3 +11,25 @@ void main(){testWidgets('renders Arabic leave request and status', (tester)async
  await tester.pumpAndSettle();
  expect(find.text('طلبات الإجازة'),findsOneWidget);expect(find.text('طلباتي'),findsOneWidget);expect(find.text('سنوية'),findsOneWidget);expect(find.text('قيد المراجعة'),findsOneWidget);expect(find.text('سارة علي'),findsOneWidget);
 });}
+
+
+testWidgets('hides leave request action when account has no linked employee', (tester) async {
+ await tester.pumpWidget(MaterialApp(home:Directionality(
+  textDirection:TextDirection.rtl,
+  child:LeaveRequestsPage(
+   english:false,
+   roleCode:'staff',
+   submitAction:(_,__) async => {'message':'Saved'},
+   loadLeaves:(_,__,___) async => {
+    'items':[],
+    'total':0,
+    'page':1,
+    'pages':1,
+    'employee_linked':false,
+   },
+  ),
+ )));
+ await tester.pumpAndSettle();
+ expect(find.text('يلزم ربط حسابك بملف موظف لتقديم طلب إجازة. يرجى التواصل مع الموارد البشرية.'),findsOneWidget);
+ expect(find.byType(FloatingActionButton),findsNothing);
+});
