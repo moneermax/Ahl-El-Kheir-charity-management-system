@@ -52,7 +52,7 @@ $totals = dbFetchOne(
  [$projectId,$projectId,$projectId,$projectId]
 ) ?: [];
 $team = dbFetchAll('SELECT pt.section_code,pt.is_lead,u.full_name FROM project_team pt JOIN users u ON u.id=pt.user_id WHERE pt.project_id=? AND pt.unassigned_at IS NULL ORDER BY pt.section_code,pt.is_lead DESC,u.full_name', [$projectId]);
-$milestones = dbFetchAll('SELECT m.title,m.description,m.planned_date,m.completion_percent FROM project_milestones m WHERE m.project_id=? ORDER BY m.planned_date,m.id', [$projectId]);
+$milestones = dbFetchAll('SELECT m.id,m.title,m.description,m.planned_date,m.completion_percent FROM project_milestones m WHERE m.project_id=? ORDER BY m.planned_date,m.id', [$projectId]);
 $progressUpdates = dbFetchAll('SELECT p.update_date,p.completion_percent,p.summary,p.achievements,p.issues,p.next_steps,u.full_name AS submitter_name FROM project_progress_updates p LEFT JOIN users u ON u.id=p.submitted_by WHERE p.project_id=? ORDER BY p.update_date DESC,p.id DESC LIMIT 10', [$projectId]);
 $history = dbFetchAll('SELECT h.old_status,h.new_status,h.reason,h.created_at,u.full_name FROM project_status_history h LEFT JOIN users u ON u.id=h.changed_by WHERE h.project_id=? ORDER BY h.id DESC LIMIT 10', [$projectId]);
 $supervisor = dbFetchOne('SELECT u.full_name FROM project_supervisor_assignments psa JOIN users u ON u.id=psa.supervisor_user_id WHERE psa.project_id=? AND psa.ended_at IS NULL ORDER BY psa.id DESC LIMIT 1', [$projectId]);
