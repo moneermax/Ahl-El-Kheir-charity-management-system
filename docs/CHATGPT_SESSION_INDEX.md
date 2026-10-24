@@ -2255,3 +2255,9 @@ The full-schema CI job exposed that the existing Stage 5 payroll integration har
 
 ## 2026-10-24 — Follow-up CI fixture audit actor correction (CI pending)
 After the migration/proof fixture correction, the next full-schema run reached production payroll posting but failed its proof confirmation foreign key because the CLI harness had no authenticated `Session` user and `Session::getUserId()` returned `0`. The production code correctly rejected that invalid audit actor. Both rollback-only harnesses now seed `$_SESSION['user_id']` from an existing test-database user before exercising the paid transition. Await fresh CI.
+
+## 2026-10-24 — Mobile financial review queue CI passed; payroll CI fixture correction verified
+- Flutter workflow [40117632176](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40117632176) passed analyzer, widget tests, Android debug APK build, and artifact publication for commit `60883414`.
+- PHP/database workflow [40118139681](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40118139681) passed all five jobs: PHP lint, MariaDB 10.4 migration, HR job-description migrations, rescheduling-service tests, and full-schema migration/payroll regressions.
+- The full-schema log explicitly passed Stage 5 rollback-only payroll cases, account 1410 reconciliation, production payroll/rescheduling lock contention and retry, and rollback cleanup. The CI fixture now matches the production transfer-proof prerequisite; no production payment guard was weakened.
+- Live local Apache/MariaDB API authorization/record-scope tests remain outstanding. The app is not yet accepted as production-ready.
