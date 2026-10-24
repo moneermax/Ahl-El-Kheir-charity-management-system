@@ -4505,3 +4505,7 @@ Mobile project milestone edit/delete now uses a dedicated `can_manage_milestones
 ## 2026-10-24 — Mobile API audit checkpoint
 
 Current source-level review covered API authentication/session checks, project scope, sponsor/family/sponsorship access, HR employee/attendance/leave/self-service salary statements, nanny verification, notifications, sponsor requests, transaction listing, and FM review actions. No new concrete mobile-only authorization mismatch was confirmed; no production code change was made speculatively. Release readiness remains blocked on authenticated role/record-isolation and state-transition runtime acceptance against the actual local Apache/MariaDB app, confirmation of the intended DB migration state, and a confirmed HTTPS-capable PHP/MariaDB host. See `docs/MOBILE_APP_CONTINUATION.md` for the detailed checkpoint.
+
+
+## 2026-10-24 — Mobile API migration CI gate
+The PHP/database workflow now includes `api/v1/_bootstrap.php` in the selected PHP lint list and applies `database/migrations/2026-10-24_mobile_api_sessions.sql` twice in the disposable full-schema MariaDB 10.4.32 job. Change commit: `4fd136bb6646b960d8ea46548eab8757c65872d7`. CI verification is pending; do not call the gate passed until the run is green. This does not apply the migration to the local `ahl_el_kheir` database. Mobile release readiness still requires verified local migration state, controlled Apache/MariaDB authentication and authorization acceptance, and an HTTPS-capable PHP/MariaDB host. No phone testing yet.
