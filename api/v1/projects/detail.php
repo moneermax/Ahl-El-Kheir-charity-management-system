@@ -66,7 +66,9 @@ if (!$canAddProgress && $role === 'project_supervisor'
  $canAddProgress = (bool)$primaryProgress || (bool)$operationsProgress;
 }
 $canAddMilestone = $role === 'admin' && $projectStatus !== 'closed';
-if (!$canAddMilestone && $role === 'project_supervisor' && $projectStatus !== 'closed') {
+if (!$canAddMilestone && $role === 'project_supervisor'
+    && (string)$project['approval_status'] === 'approved'
+    && in_array($projectStatus, ['active', 'reopened', 'completed', 'under_review', 'cancelled'], true)) {
  $primaryMilestone = dbFetchOne('SELECT id FROM project_supervisor_assignments WHERE project_id=? AND supervisor_user_id=? AND ended_at IS NULL LIMIT 1', [$projectId,$userId]);
  $operationsMilestone = dbFetchOne("SELECT id FROM project_team WHERE project_id=? AND user_id=? AND section_code='operations' AND unassigned_at IS NULL LIMIT 1", [$projectId,$userId]);
  $canAddMilestone = (bool)$primaryMilestone || (bool)$operationsMilestone;
