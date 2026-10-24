@@ -2153,3 +2153,7 @@ Sponsor-request attribution, status actions, and supervisor directory are source
 ## 2026-10-24 — Mobile project progress updates (CI partially verified)
 
 The mobile project progress-update feature is implemented on `main`. Source and CI boundaries are recorded in `docs/MOBILE_APP_CONTINUATION.md`; Flutter analysis/tests passed, Android APK build was pending, and PHP lint passed at the checkpoint. Live Apache/MariaDB role acceptance and device acceptance remain deferred.
+
+
+### 2026-10-24 — Mobile milestone creation checkpoint
+The mobile project detail flow now supports creating a project milestone through authenticated `POST /api/v1/projects/milestone_create.php`, using the existing milestone and project-status-history tables without schema changes. Server-side authorization is limited to admin or a project supervisor with an active primary/operations assignment; closed projects are rejected. Flutter form, API wiring, refresh behavior, widget coverage, and PHP lint workflow changes are committed on `main`. CI is pending; live role/runtime and device acceptance remain outstanding. Do not request phone testing yet.
