@@ -47,3 +47,12 @@ Status: API authentication foundation source added; local PHP syntax/runtime ver
 - `POST /api/v1/auth/logout.php` header: `Authorization: Bearer <access_token>`
 
 Responses use `{"ok":true,"data":...}` or `{"ok":false,"error":{"code":"…","message":"…"}}`. Always use HTTPS outside local development.
+
+## Flutter foundation added (2026-10-24)
+
+- Added `mobile/ahl_el_kheir_app/` with a Flutter manifest, a minimal Arabic-first login screen, Arabic/English toggle, RTL/LTR direction, secure bearer-token storage, session restoration, logout, and a minimal signed-in screen.
+- The client targets the existing `api/v1/auth/login.php`, `me.php`, and `logout.php` routes. It does not expose business data or make client-side role checks an authorization boundary.
+- A temporary API/network failure during session restoration now preserves the token; explicit 401/403 responses clear it.
+- The source has not yet been compiled, analyzed, tested, or run on Android/iOS. Flutter platform scaffolding must be generated locally and dependencies resolved.
+- Canonical master documents were restored from parent commit `8193a2b32443482cd26fe36c8f1123d8bc374292` after a previous edit accidentally truncated them. Their historical contents are preserved.
+
