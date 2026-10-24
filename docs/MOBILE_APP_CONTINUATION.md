@@ -458,3 +458,8 @@ After the payroll-transfer migration/proof setup, CI exposed one more fixture is
 - Added widget test coverage for requiring a return reason and forwarding the return action. General Manager sponsorship access now matches the web module in mobile navigation and sponsorship list/detail API guards.
 - Android [40118666504](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40118666504) passed analyzer, tests, APK build, artifact publication. PHP/database [40118666512](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40118666512) passed all five jobs. All 31 PHP API endpoints are explicitly linted.
 - Still outstanding: live local Apache/MariaDB role/record-scope verification and real-data approve/return acceptance. Do not claim runtime verified from CI.
+
+## 2026-10-24 — Project API operational-scope parity correction
+- `api/v1/projects/detail.php` now defaults a missing approval record to `draft`, matching web `akp_can_view_project()` and the portfolio API.
+- `api/v1/projects/milestone_create.php` now blocks non-admin supervisor writes unless approval is `approved` and lifecycle is operational (`active`, `reopened`, `completed`, `under_review`, or `cancelled`); assignment checks and closed-project blocking remain. The project detail `can_add_milestone` flag now matches that gate.
+- PHP/database workflow [40119297504](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40119297504) passed all five jobs. Source/CI verification only; live local API role-scope acceptance remains outstanding.
