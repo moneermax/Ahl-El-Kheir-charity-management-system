@@ -18,7 +18,7 @@ void main() {
               'employee_code': 'EMP-0021',
               'employee_name': 'سارة علي',
               'basic_salary': 1500.0,
-              'allowances': 100.0,
+              'allowances': 80.0,
               'overtime': 0.0,
               'deductions': 50.0,
               'attendance_deduction': 25.0,
