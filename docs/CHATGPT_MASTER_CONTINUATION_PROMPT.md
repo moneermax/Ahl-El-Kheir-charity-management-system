@@ -1973,3 +1973,7 @@ The user retried login with the physical-phone APK and the latest Apache access-
 - The Flutter leave page now supports creating requests and the authorized review queue's approve/reject actions. Server-side authorization remains authoritative.
 - PHP lint passed for the new action endpoint in GitHub Actions run associated with commit `b3aff6ab25320b43fa033dcc38a3694d3097efc5`. The Flutter analysis/tests/APK build for this combined change are still pending. No live-database request/approval runtime test has been performed.
 - This supersedes the prior checkpoint statement that mobile leave requests were read-only: the list endpoint remains read-only, and the separate action endpoint now handles writes.
+
+
+## Mobile app continuation — 2026-10-24
+Continue on `main` from the current repository head. Read `docs/MOBILE_APP_CONTINUATION.md` first. The user explicitly wants the app built and tested on GitHub as far as possible, with device testing requested only when the app is broadly complete. Transaction-register row overflow correction is commit `885ef809b431b174541d54c8c44ade3f97421172`; confirm Flutter tests and APK build before moving on. Never claim full completion or live API runtime proof from a passing APK build alone.
