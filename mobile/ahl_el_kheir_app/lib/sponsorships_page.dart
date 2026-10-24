@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'sponsorship_detail_page.dart';
 
 class SponsorshipsPage extends StatefulWidget {
   const SponsorshipsPage({super.key, required this.english, required this.loadSponsorships, required this.loadDetail});

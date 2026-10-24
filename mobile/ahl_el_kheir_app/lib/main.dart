@@ -9,7 +9,6 @@ import 'sponsors_page.dart';
 import 'families_page.dart';
 import 'transactions_page.dart';
 import 'sponsorships_page.dart';
-import 'sponsorship_detail_page.dart';
 
 void main() => runApp(const AhlElKheirApp());
 
