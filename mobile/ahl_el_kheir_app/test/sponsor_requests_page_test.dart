@@ -11,7 +11,7 @@ void main() {
           english: false,
           loadRequests: (_, __, ___) async => {
             'items': [
-              {'id': 1, 'sponsor_name': 'أحمد محمد', 'phone': '0912345678', 'gender': 'male', 'source': 'فيسبوك', 'status': 'new', 'created_at': '2026-10-24', 'notes': ''}
+              {'id': 1, 'sponsor_name': 'أحمد محمد', 'phone': '0912345678', 'gender': 'male', 'source': 'فيسبوك', 'brought_by_name': 'سارة علي', 'brought_by_user': 'Fallback User', 'status': 'new', 'created_at': '2026-10-24', 'notes': ''}
             ],
             'total': 1, 'page': 1, 'pages': 1,
           },
@@ -23,5 +23,7 @@ void main() {
     expect(find.text('أحمد محمد'), findsOneWidget);
     expect(find.text('جديد'), findsOneWidget);
     expect(find.textContaining('فيسبوك'), findsOneWidget);
+    expect(find.textContaining('سارة علي'), findsOneWidget);
+    expect(find.textContaining('Fallback User'), findsNothing);
   });
 }
