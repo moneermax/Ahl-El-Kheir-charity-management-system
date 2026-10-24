@@ -27,14 +27,6 @@ if (!$project) {
 }
 
 $lifecycleStatus = (string)($project['lifecycle_status'] ?? $project['status'] ?? '');
-if ($lifecycleStatus === 'closed') {
-    ak_api_json(409, ['ok' => false, 'error' => ['code' => 'project_closed', 'message' => 'Progress updates cannot be added to a closed project.']]);
-}
-if ($role !== 'admin' && ((string)($project['approval_status'] ?? '') !== 'approved'
-    || !in_array($lifecycleStatus, ['active', 'reopened', 'completed', 'under_review', 'cancelled'], true))) {
-    ak_api_json(409, ['ok' => false, 'error' => ['code' => 'project_not_operational', 'message' => 'This project is not available for operational updates.']]);
-}
-
 $canEdit = $role === 'admin';
 if (!$canEdit && $role === 'project_supervisor') {
     $primary = dbFetchOne(
@@ -49,6 +41,13 @@ if (!$canEdit && $role === 'project_supervisor') {
 }
 if (!$canEdit) {
     ak_api_json(403, ['ok' => false, 'error' => ['code' => 'forbidden', 'message' => 'You do not have permission to add progress updates to this project.']]);
+}
+if ($lifecycleStatus === 'closed') {
+    ak_api_json(409, ['ok' => false, 'error' => ['code' => 'project_closed', 'message' => 'Progress updates cannot be added to a closed project.']]);
+}
+if ($role !== 'admin' && ((string)($project['approval_status'] ?? '') !== 'approved'
+    || !in_array($lifecycleStatus, ['active', 'reopened', 'completed', 'under_review', 'cancelled'], true))) {
+    ak_api_json(409, ['ok' => false, 'error' => ['code' => 'project_not_operational', 'message' => 'This project is not available for operational updates.']]);
 }
 
 $summary = trim((string)($input['summary'] ?? ''));
