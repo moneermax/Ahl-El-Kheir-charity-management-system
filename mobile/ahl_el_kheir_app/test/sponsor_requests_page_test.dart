@@ -26,4 +26,29 @@ void main() {
     expect(find.textContaining('سارة علي'), findsOneWidget);
     expect(find.textContaining('Fallback User'), findsNothing);
   });
+
+  testWidgets('falls back to account name when sponsor request attribution name is empty', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: Directionality(
+        textDirection: TextDirection.rtl,
+        child: SponsorRequestsPage(
+          english: false,
+          loadRequests: (_, __, ___) async => {
+            'items': [
+              {
+                'id': 2,
+                'sponsor_name': 'مريم أحمد',
+                'brought_by_name': '  ',
+                'brought_by_user': 'موظف التسجيل',
+                'status': 'new',
+              }
+            ],
+            'total': 1, 'page': 1, 'pages': 1,
+          },
+        ),
+      ),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('بواسطة: موظف التسجيل'), findsOneWidget);
+  });
 }
