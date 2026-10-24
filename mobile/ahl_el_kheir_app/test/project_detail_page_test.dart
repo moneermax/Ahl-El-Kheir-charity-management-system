@@ -111,7 +111,7 @@ void main() {
    },
   )));
   await tester.pumpAndSettle();
-  await tester.scrollUntilVisible(find.byIcon(Icons.edit_outlined), 350, scrollable: find.byType(Scrollable));
+  await tester.scrollUntilVisible(find.byKey(const ValueKey('edit-project-milestone-71')), 350, scrollable: find.byType(Scrollable));
   await tester.tap(find.byIcon(Icons.edit_outlined));
   await tester.pumpAndSettle();
   expect(find.text('Edit project milestone'), findsOneWidget);
@@ -124,7 +124,7 @@ void main() {
   expect(actions.single['milestone_id'], 71);
   expect(actions.single['title'], 'Updated milestone');
 
-  await tester.scrollUntilVisible(find.byIcon(Icons.delete_outline_rounded), 350, scrollable: find.byType(Scrollable));
+  await tester.scrollUntilVisible(find.byKey(const ValueKey('delete-project-milestone-71')), 350, scrollable: find.byType(Scrollable));
   await tester.tap(find.byIcon(Icons.delete_outline_rounded));
   await tester.pumpAndSettle();
   expect(find.text('Delete milestone?'), findsOneWidget);
