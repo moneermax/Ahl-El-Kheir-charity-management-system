@@ -2025,3 +2025,7 @@ The user retried login with the physical-phone APK and the latest Apache access-
 
 ### Mobile app continuation — 2026-10-24
 The Flutter app is being built inside the existing repository against authenticated PHP API v1 routes. Read `docs/MOBILE_APP_CONTINUATION.md` before mobile changes. The transaction-register row overflow correction is committed as `885ef809b431b174541d54c8c44ade3f97421172`; its GitHub Actions run is pending verification. Do not request device testing until the planned app work and automated checks are broadly complete.
+
+
+### Mobile app — sponsorship register added (2026-10-24)
+The transaction register correction was fully green in GitHub Actions run `40091698003`, including APK artifact publication. A read-only sponsorship register/API has now been added using the existing web module's role and supervisor scope rules. Its own CI run is pending; see `docs/MOBILE_APP_CONTINUATION.md` for details.
