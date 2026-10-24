@@ -2029,3 +2029,9 @@ The Flutter app is being built inside the existing repository against authentica
 
 ### Mobile app — sponsorship register added (2026-10-24)
 The transaction register correction was fully green in GitHub Actions run `40091698003`, including APK artifact publication. A read-only sponsorship register/API has now been added using the existing web module's role and supervisor scope rules. Its own CI run is pending; see `docs/MOBILE_APP_CONTINUATION.md` for details.
+
+
+## 2026-10-24 — Sponsor request register CI verified
+- Flutter workflow run `40093088822` for app integration commit `e3ad346c1267736b4e725805e0c877e524e8f2ac` completed successfully: dependency resolution, Dart analysis, widget tests, debug APK build, and artifact publication all passed. Artifact `ahl-el-kheir-flutter-android-debug-apk` (artifact id `12559303403`) was confirmed present and unexpired at verification time.
+- PHP verification run `40093091580` completed with the `php-lint` job passing, including the new `api/v1/sponsor_requests/index.php` endpoint. The independent Stage 5 payroll regression job failed at its existing acceptance check with `يجب تطبيق ترحيل تجهيز تحويلات الرواتب قبل تأكيد الدفع.`; the rescheduling, HR migration and MariaDB 10.4 jobs passed. This is not evidence of a mobile endpoint failure and does not reopen the closed salary-advance work.
+- Sponsor request screen now has CI evidence. API runtime against local Apache/MariaDB, per-role authorization and phone UI checks remain unverified. Continue building the remaining app on GitHub; do not request device testing yet.
